@@ -1,26 +1,26 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MAP_DATA, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT } from './constants';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { MAP_DATA, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, PLAYER_SPRITES, PLAYER_SIZE } from './constants';
 import { getTileData } from './utils/mapUtils';
-import { Position } from './types';
+import { Position, Direction } from './types';
 import HUD from './components/HUD';
-import Modal from './components/Modal';
 import DebugOverlay from './components/DebugOverlay';
+import { runSelfTests } from './utils/testUtils';
 
 const PLAYER_SPEED = 0.1; // tiles per frame
-const PLAYER_SIZE = 0.6; // fraction of a tile
+const ANIMATION_SPEED_MS = 150; // time between animation frames
 
 const App: React.FC = () => {
     const [playerPos, setPlayerPos] = useState<Position>({ x: 5, y: 5 });
-    const [isShopOpen, setShopOpen] = useState(false);
-    const [isCraftingOpen, setCraftingOpen] = useState(false);
+    const [direction, setDirection] = useState<Direction>(Direction.Down);
+    const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
 
     const keysPressed = useRef<Record<string, boolean>>({}).current;
-    const animationFrameId = useRef<number>();
+    const animationFrameId = useRef<number | null>(null);
+    const lastAnimationTime = useRef(Date.now());
 
-    const checkCollision = (pos: Position): boolean => {
+    const checkCollision = useCallback((pos: Position): boolean => {
         const halfSize = PLAYER_SIZE / 2;
-        // Bounding box of the player in tile coordinates
         const minTileX = Math.floor(pos.x - halfSize);
         const maxTileX = Math.floor(pos.x + halfSize);
         const minTileY = Math.floor(pos.y - halfSize);
@@ -35,7 +35,7 @@ const App: React.FC = () => {
             }
         }
         return false;
-    };
+    }, []);
 
     const handleKeyDown = (e: KeyboardEvent) => {
         keysPressed[e.key.toLowerCase()] = true;
@@ -48,46 +48,70 @@ const App: React.FC = () => {
     const handleKeyUp = (e: KeyboardEvent) => {
         keysPressed[e.key.toLowerCase()] = false;
     };
+    
+    const gameLoop = useCallback(() => {
+        let vectorX = 0;
+        let vectorY = 0;
+    
+        if (keysPressed['w'] || keysPressed['arrowup']) vectorY -= 1;
+        if (keysPressed['s'] || keysPressed['arrowdown']) vectorY += 1;
+        if (keysPressed['a'] || keysPressed['arrowleft']) vectorX -= 1;
+        if (keysPressed['d'] || keysPressed['arrowright']) vectorX += 1;
+
+        const isMoving = vectorX !== 0 || vectorY !== 0;
+
+        if (!isMoving) {
+            setAnimationFrame(0); // Reset to idle frame
+        } else {
+            // Determine direction
+            if (vectorY < 0) setDirection(Direction.Up);
+            else if (vectorY > 0) setDirection(Direction.Down);
+            else if (vectorX < 0) setDirection(Direction.Left);
+            else if (vectorX > 0) setDirection(Direction.Right);
+
+            // Animate based on time
+            const now = Date.now();
+            if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
+                lastAnimationTime.current = now;
+                setAnimationFrame(prev => (prev + 1) % PLAYER_SPRITES[direction].length);
+            }
+        }
+        
+        setPlayerPos(prevPos => {
+            if (!isMoving) return prevPos;
+
+            const magnitude = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
+            if (magnitude === 0) return prevPos;
+
+            const dx = (vectorX / magnitude) * PLAYER_SPEED;
+            const dy = (vectorY / magnitude) * PLAYER_SPEED;
+        
+            let nextPos = { ...prevPos };
+
+            const tempXPos = { ...nextPos, x: nextPos.x + dx };
+            if (!checkCollision(tempXPos)) {
+                nextPos.x += dx;
+            }
+        
+            const tempYPos = { ...nextPos, y: nextPos.y + dy };
+            if (!checkCollision(tempYPos)) {
+                nextPos.y += dy;
+            }
+            
+            nextPos.x = Math.max(PLAYER_SIZE / 2, Math.min(MAP_WIDTH - (PLAYER_SIZE / 2), nextPos.x));
+            nextPos.y = Math.max(PLAYER_SIZE / 2, Math.min(MAP_HEIGHT - (PLAYER_SIZE / 2), nextPos.y));
+            
+            return nextPos;
+        });
+
+        animationFrameId.current = requestAnimationFrame(gameLoop);
+    }, [direction, keysPressed, checkCollision]);
 
     useEffect(() => {
+        runSelfTests(); // Run sanity checks on startup
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
-
-        const gameLoop = () => {
-            setPlayerPos(prevPos => {
-                let nextPos = { ...prevPos };
-                let dx = 0;
-                let dy = 0;
-            
-                if (keysPressed['w'] || keysPressed['arrowup']) dy -= PLAYER_SPEED;
-                if (keysPressed['s'] || keysPressed['arrowdown']) dy += PLAYER_SPEED;
-                if (keysPressed['a'] || keysPressed['arrowleft']) dx -= PLAYER_SPEED;
-                if (keysPressed['d'] || keysPressed['arrowright']) dx += PLAYER_SPEED;
-
-                if (dx === 0 && dy === 0) return prevPos;
-            
-                // Move on x-axis and check for collision
-                nextPos.x += dx;
-                if (checkCollision(nextPos)) {
-                    nextPos.x = prevPos.x; // Collision, revert x
-                }
-            
-                // Move on y-axis and check for collision
-                nextPos.y += dy;
-                if (checkCollision(nextPos)) {
-                    nextPos.y = prevPos.y; // Collision, revert y
-                }
-                
-                // Clamp to map boundaries to prevent going off-map
-                nextPos.x = Math.max(PLAYER_SIZE / 2, Math.min(MAP_WIDTH - (PLAYER_SIZE / 2), nextPos.x));
-                nextPos.y = Math.max(PLAYER_SIZE / 2, Math.min(MAP_HEIGHT - (PLAYER_SIZE / 2), nextPos.y));
-                
-                return nextPos;
-            });
-
-            animationFrameId.current = requestAnimationFrame(gameLoop);
-        };
-
+        
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
         return () => {
@@ -97,10 +121,13 @@ const App: React.FC = () => {
                 cancelAnimationFrame(animationFrameId.current);
             }
         };
-    }, []);
-
+    }, [gameLoop]);
+    
     const cameraX = Math.min(MAP_WIDTH * TILE_SIZE - window.innerWidth, Math.max(0, playerPos.x * TILE_SIZE - window.innerWidth / 2));
     const cameraY = Math.min(MAP_HEIGHT * TILE_SIZE - window.innerHeight, Math.max(0, playerPos.y * TILE_SIZE - window.innerHeight / 2));
+
+    const playerFrames = PLAYER_SPRITES[direction];
+    const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
 
     return (
         <div className="bg-gray-900 text-white w-screen h-screen overflow-hidden font-sans relative select-none">
@@ -117,15 +144,25 @@ const App: React.FC = () => {
                     row.map((_, x) => {
                         const tileData = getTileData(x, y);
                         if (!tileData) return null;
+
+                        let imageUrl = 'none';
+                        if (tileData.image && tileData.image.length > 0) {
+                            // Deterministic random selection for tile variations
+                            const hash = (x * 13 + y * 29) % tileData.image.length;
+                            imageUrl = `url(${tileData.image[hash]})`;
+                        }
+
                         return (
                             <div
                                 key={`${x}-${y}`}
-                                className={`absolute ${tileData.color}`}
+                                className={`absolute bg-center bg-cover ${imageUrl === 'none' ? tileData.color : ''}`}
                                 style={{
                                     left: x * TILE_SIZE,
                                     top: y * TILE_SIZE,
                                     width: TILE_SIZE,
                                     height: TILE_SIZE,
+                                    backgroundImage: imageUrl,
+                                    imageRendering: 'pixelated',
                                 }}
                             />
                         );
@@ -134,29 +171,21 @@ const App: React.FC = () => {
 
                 {/* Render Player */}
                 <div
-                    className="absolute bg-red-500 rounded-full border-2 border-red-900"
+                    className="absolute bg-center bg-no-repeat bg-contain"
                     style={{
                         left: (playerPos.x - PLAYER_SIZE / 2) * TILE_SIZE,
                         top: (playerPos.y - PLAYER_SIZE / 2) * TILE_SIZE,
                         width: PLAYER_SIZE * TILE_SIZE,
                         height: PLAYER_SIZE * TILE_SIZE,
+                        backgroundImage: `url(${playerSpriteUrl})`,
+                        imageRendering: 'pixelated',
                     }}
                 />
 
                 {isDebugOpen && <DebugOverlay playerPos={playerPos} />}
             </div>
 
-            <HUD onOpenShop={() => setShopOpen(true)} onOpenCrafting={() => setCraftingOpen(true)} />
-            
-            <Modal isOpen={isShopOpen} onClose={() => setShopOpen(false)} title="Shop">
-                <p>Welcome to the shop! What can I get for you?</p>
-                <button onClick={() => setShopOpen(false)} className="mt-4 bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">Close</button>
-            </Modal>
-
-            <Modal isOpen={isCraftingOpen} onClose={() => setCraftingOpen(false)} title="Crafting">
-                <p>Let's craft something new!</p>
-                <button onClick={() => setCraftingOpen(false)} className="mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded">Close</button>
-            </Modal>
+            <HUD />
         </div>
     );
 };

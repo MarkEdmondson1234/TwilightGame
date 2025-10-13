@@ -1,3 +1,5 @@
+import React from 'react';
+
 export enum TileType {
   GRASS,
   ROCK,
@@ -24,4 +26,5 @@ export interface TileData {
     name: string;
     color: string;
     isSolid: boolean;
+    image?: string[];
 }

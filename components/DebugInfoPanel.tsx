@@ -1,6 +1,7 @@
 import React from 'react';
 import { Position } from '../types';
 import { getTileData } from '../utils/mapUtils';
+import { PLAYER_SIZE } from '../constants';
 
 interface DebugInfoPanelProps {
   playerPos: Position;
@@ -11,8 +12,7 @@ const DebugInfoPanel: React.FC<DebugInfoPanelProps> = ({ playerPos }) => {
   const currentTileY = Math.floor(playerPos.y);
   const tileData = getTileData(currentTileX, currentTileY);
 
-  const playerSize = 0.6;
-  const halfSize = playerSize / 2;
+  const halfSize = PLAYER_SIZE / 2;
 
   const minTileX = Math.floor(playerPos.x - halfSize);
   const maxTileX = Math.floor(playerPos.x + halfSize);

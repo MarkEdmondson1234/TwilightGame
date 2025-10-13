@@ -1,7 +1,7 @@
 import { MAP_DATA, TILE_LEGEND } from '../constants';
 import { TileType, TileData } from '../types';
 
-export function getTileData(tileX: number, tileY: number): TileData | null {
+export function getTileData(tileX: number, tileY: number): (Omit<TileData, 'type'> & {type: TileType}) | null {
   if (
     tileY < 0 ||
     tileY >= MAP_DATA.length ||
@@ -15,7 +15,8 @@ export function getTileData(tileX: number, tileY: number): TileData | null {
   
   if (!legendEntry) {
       // Fallback for safety, should not happen with correct data
-      return TILE_LEGEND[TileType.GRASS] ? { ...TILE_LEGEND[TileType.GRASS], type: TileType.GRASS } : null;
+      const fallbackEntry = TILE_LEGEND[TileType.GRASS];
+      return fallbackEntry ? { ...fallbackEntry, type: TileType.GRASS } : null;
   }
 
   return { ...legendEntry, type: tileType };
