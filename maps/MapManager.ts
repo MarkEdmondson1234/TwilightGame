@@ -1,4 +1,5 @@
 import { MapDefinition, Position, TileType, ColorScheme } from '../types';
+import { npcManager } from '../NPCManager';
 
 /**
  * MapManager - Single Source of Truth for all map data
@@ -37,6 +38,16 @@ class MapManager {
 
     this.currentMapId = mapId;
     this.currentMap = map;
+
+    // Always update NPCManager with current map (even if no NPCs)
+    if (map.npcs && map.npcs.length > 0) {
+      npcManager.registerNPCs(mapId, map.npcs);
+    } else {
+      // Register empty NPC array for maps without NPCs
+      npcManager.registerNPCs(mapId, []);
+    }
+    npcManager.setCurrentMap(mapId);
+
     return map;
   }
 

@@ -143,6 +143,31 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: [tileAssets.mushrooms]
   }, // MUSHROOM = 14
+  // Building tiles (15-18)
+  {
+    name: 'Building Wall',
+    color: 'bg-stone-600',
+    isSolid: true,
+    image: []
+  }, // BUILDING_WALL = 15
+  {
+    name: 'Building Roof',
+    color: 'bg-red-800',
+    isSolid: true,
+    image: []
+  }, // BUILDING_ROOF = 16
+  {
+    name: 'Building Door',
+    color: 'bg-amber-900',
+    isSolid: false,
+    image: []
+  }, // BUILDING_DOOR = 17
+  {
+    name: 'Building Window',
+    color: 'bg-cyan-400',
+    isSolid: true,
+    image: []
+  }, // BUILDING_WINDOW = 18
 ];
 
 // --- Procedural Map Generation ---

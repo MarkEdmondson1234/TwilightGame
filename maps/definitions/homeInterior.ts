@@ -46,7 +46,7 @@ export const homeInterior: MapDefinition = {
       fromPosition: { x: 6, y: 1 }, // Exit door at top-right
       tileType: TileType.EXIT_DOOR,
       toMapId: 'village',
-      toPosition: { x: 15, y: 25 }, // Spawn in village
+      toPosition: { x: 9, y: 28 }, // Spawn below the home building in village
       label: 'To Village',
     },
     {

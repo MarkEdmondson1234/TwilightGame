@@ -6,11 +6,13 @@ import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
 import TouchControls from './components/TouchControls';
+import DialogueBox from './components/DialogueBox';
 import { runSelfTests } from './utils/testUtils';
 import { initializeMaps, mapManager, transitionToMap } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
 import { generateCharacterSprites, DEFAULT_CHARACTER } from './utils/characterSprites';
+import { npcManager } from './NPCManager';
 
 const PLAYER_SPEED = 0.1; // tiles per frame
 const ANIMATION_SPEED_MS = 150; // time between animation frames
@@ -27,6 +29,7 @@ const App: React.FC = () => {
     const [direction, setDirection] = useState<Direction>(Direction.Down);
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
+    const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
 
     const isTouchDevice = useTouchDevice();
 
@@ -68,10 +71,46 @@ const App: React.FC = () => {
     }, []);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-        keysPressed[e.key.toLowerCase()] = true;
+        // Special keys that work even during dialogue
         if (e.key === 'F3') {
             e.preventDefault();
             setDebugOpen(prev => !prev);
+            return;
+        }
+
+        // Escape key to close dialogue
+        if (e.key === 'Escape') {
+            if (activeNPC) {
+                e.preventDefault();
+                setActiveNPC(null);
+            }
+            return;
+        }
+
+        // Action key (E or Enter) - close dialogue if open
+        if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
+            if (activeNPC) {
+                e.preventDefault();
+                setActiveNPC(null);
+                return;
+            }
+        }
+
+        // Don't process any other keys if dialogue is open
+        if (activeNPC) {
+            return;
+        }
+
+        // Now track movement keys (only if dialogue is closed)
+        keysPressed[e.key.toLowerCase()] = true;
+        // R key to reset to spawn point if stuck
+        if (e.key === 'r' || e.key === 'R') {
+            const currentMap = mapManager.getCurrentMap();
+            if (currentMap && currentMap.spawnPoint) {
+                console.log('[Reset] Teleporting to spawn point:', currentMap.spawnPoint);
+                setPlayerPos(currentMap.spawnPoint);
+                playerPosRef.current = currentMap.spawnPoint;
+            }
         }
         // Action key (E or Enter) to trigger transitions or mirror
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
@@ -104,6 +143,14 @@ const App: React.FC = () => {
 
             if (foundMirror) {
                 return; // Don't check for transitions if we found a mirror
+            }
+
+            // Check for NPC interaction
+            const nearbyNPC = npcManager.getNPCAtPosition(playerPosRef.current);
+            if (nearbyNPC) {
+                console.log(`[Action Key] Interacting with NPC: ${nearbyNPC.name}`);
+                setActiveNPC(nearbyNPC.id);
+                return; // Don't check for transitions if talking to NPC
             }
 
             const transitionData = mapManager.getTransitionAt(playerPosRef.current);
@@ -181,6 +228,14 @@ const App: React.FC = () => {
             return; // Don't check for transitions if we found a mirror
         }
 
+        // Check for NPC interaction
+        const nearbyNPC = npcManager.getNPCAtPosition(playerPosRef.current);
+        if (nearbyNPC) {
+            console.log(`[Touch Action] Interacting with NPC: ${nearbyNPC.name}`);
+            setActiveNPC(nearbyNPC.id);
+            return; // Don't check for transitions if talking to NPC
+        }
+
         const transitionData = mapManager.getTransitionAt(playerPosRef.current);
         if (transitionData) {
             const { transition } = transitionData;
@@ -210,9 +265,15 @@ const App: React.FC = () => {
     };
 
     const gameLoop = useCallback(() => {
+        // Pause movement when dialogue is open
+        if (activeNPC) {
+            animationFrameId.current = requestAnimationFrame(gameLoop);
+            return;
+        }
+
         let vectorX = 0;
         let vectorY = 0;
-    
+
         if (keysPressed['w'] || keysPressed['arrowup']) vectorY -= 1;
         if (keysPressed['s'] || keysPressed['arrowdown']) vectorY += 1;
         if (keysPressed['a'] || keysPressed['arrowleft']) vectorX -= 1;
@@ -269,7 +330,7 @@ const App: React.FC = () => {
         });
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
-    }, [direction, keysPressed, checkCollision, playerSprites]);
+    }, [direction, keysPressed, checkCollision, playerSprites, activeNPC]);
 
     // Disabled automatic transitions - now using action key (E or Enter)
 
@@ -448,6 +509,48 @@ const App: React.FC = () => {
                     );
                 })}
 
+                {/* Render NPCs */}
+                {npcManager.getCurrentMapNPCs().map((npc) => {
+                    // Check if player is near this NPC
+                    const dx = Math.abs(playerPos.x - npc.position.x);
+                    const dy = Math.abs(playerPos.y - npc.position.y);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const inRange = distance <= (npc.interactionRadius || 1.5);
+
+                    return (
+                        <React.Fragment key={npc.id}>
+                            {/* NPC Sprite */}
+                            <img
+                                src={npc.sprite}
+                                alt={npc.name}
+                                className="absolute"
+                                style={{
+                                    left: (npc.position.x - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
+                                    top: (npc.position.y - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
+                                    width: PLAYER_SIZE * spriteScale * TILE_SIZE,
+                                    height: PLAYER_SIZE * spriteScale * TILE_SIZE,
+                                    imageRendering: 'pixelated',
+                                }}
+                            />
+                            {/* Interaction prompt when in range */}
+                            {inRange && (
+                                <div
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        left: (npc.position.x + 0.5) * TILE_SIZE,
+                                        top: (npc.position.y - 0.5) * TILE_SIZE,
+                                        transform: 'translate(-50%, -50%)',
+                                    }}
+                                >
+                                    <div className="bg-blue-400 animate-pulse px-3 py-1 rounded-full text-xs font-bold text-white whitespace-nowrap shadow-lg">
+                                        [E] Talk to {npc.name}
+                                    </div>
+                                </div>
+                            )}
+                        </React.Fragment>
+                    );
+                })}
+
                 {/* Render Player */}
                 <img
                     src={playerSpriteUrl}
@@ -471,6 +574,12 @@ const App: React.FC = () => {
                     onDirectionPress={handleDirectionPress}
                     onDirectionRelease={handleDirectionRelease}
                     onActionPress={handleActionPress}
+                />
+            )}
+            {activeNPC && (
+                <DialogueBox
+                    npc={npcManager.getNPCById(activeNPC)!}
+                    onClose={() => setActiveNPC(null)}
                 />
             )}
         </div>

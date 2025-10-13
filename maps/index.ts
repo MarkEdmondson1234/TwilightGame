@@ -4,6 +4,10 @@ import { homeInterior } from './definitions/homeInterior';
 import { homeUpstairs } from './definitions/homeUpstairs';
 import { village } from './definitions/village';
 import { shop } from './definitions/shop';
+import { house1 } from './definitions/house1';
+import { house2 } from './definitions/house2';
+import { house3 } from './definitions/house3';
+import { house4 } from './definitions/house4';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
 import { gameState } from '../GameState';
 
@@ -22,6 +26,10 @@ export function initializeMaps(): void {
   mapManager.registerMap(homeUpstairs);
   mapManager.registerMap(village);
   mapManager.registerMap(shop);
+  mapManager.registerMap(house1);
+  mapManager.registerMap(house2);
+  mapManager.registerMap(house3);
+  mapManager.registerMap(house4);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs

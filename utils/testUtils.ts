@@ -7,6 +7,7 @@ import { TileType, Direction } from '../types';
 import { mapManager } from '../maps';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { GRID_CODES, parseGrid, gridToString } from '../maps/gridParser';
+import { isPositionValid, validatePositions } from './positionValidator';
 
 export function runSelfTests(): void {
   console.log("Running startup sanity checks...");
@@ -19,6 +20,7 @@ export function runSelfTests(): void {
   // === Map System Validation ===
   validateAllMaps();
   validateGridParser();
+  validateSpawnPoints();
 
   // === Procedural Map Check (basic) ===
   validateLegacyMapData();
@@ -185,6 +187,57 @@ function validateGridParser(): void {
         console.error(
           `[Sanity Check] Grid parser round-trip failed at (${x}, ${y})`
         );
+      }
+    }
+  }
+}
+
+/**
+ * Validate spawn points and NPC positions are not inside walls
+ */
+function validateSpawnPoints(): void {
+  const mapIds = mapManager.getAllMapIds();
+
+  for (const mapId of mapIds) {
+    const map = mapManager.getMap(mapId);
+    if (!map) continue;
+
+    // Validate map spawn point
+    if (map.spawnPoint && !isPositionValid(map.spawnPoint)) {
+      console.error(
+        `[Sanity Check] ⚠️ Map "${mapId}" spawn point (${map.spawnPoint.x}, ${map.spawnPoint.y}) is inside a wall!`
+      );
+    }
+
+    // Validate transition spawn points (require safe spawn tiles)
+    const transitionTests = map.transitions.map((t, idx) => ({
+      label: `${mapId} → ${t.label || t.toMapId} (${t.toPosition.x}, ${t.toPosition.y})`,
+      position: t.toPosition,
+    }));
+
+    if (transitionTests.length > 0) {
+      const { invalid, warnings } = validatePositions(transitionTests, undefined, true);
+      if (invalid.length > 0) {
+        console.error(`[Sanity Check] ⚠️ Invalid transition spawn points in "${mapId}":`, invalid);
+      }
+      if (warnings.length > 0) {
+        console.warn(`[Sanity Check] ⚠️ Transition spawns not on safe tiles in "${mapId}":`, warnings);
+      }
+    }
+
+    // Validate NPC positions (require safe spawn tiles)
+    if (map.npcs && map.npcs.length > 0) {
+      const npcTests = map.npcs.map(npc => ({
+        label: `NPC "${npc.name}" (${npc.position.x}, ${npc.position.y})`,
+        position: npc.position,
+      }));
+
+      const { invalid, warnings } = validatePositions(npcTests, undefined, true);
+      if (invalid.length > 0) {
+        console.error(`[Sanity Check] ⚠️ NPCs inside walls in "${mapId}":`, invalid);
+      }
+      if (warnings.length > 0) {
+        console.warn(`[Sanity Check] ⚠️ NPCs not on safe spawn tiles in "${mapId}":`, warnings);
       }
     }
   }

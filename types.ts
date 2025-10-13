@@ -21,6 +21,11 @@ export enum TileType {
   MIRROR,
   // Decorative (walkable)
   MUSHROOM,
+  // Building tiles (outdoor structures)
+  BUILDING_WALL,
+  BUILDING_ROOF,
+  BUILDING_DOOR,
+  BUILDING_WINDOW,
 }
 
 export interface Position {
@@ -82,7 +87,32 @@ export interface MapDefinition {
   isRandom: boolean; // True if procedurally generated
   spawnPoint: Position; // Default spawn position
   transitions: Transition[]; // Exit/entrance definitions
+  npcs?: NPC[]; // NPCs in this map (optional)
 }
 
 // Simple character-based grid for child-friendly map editing
 export type GridString = string; // Multi-line string with character codes
+
+// NPC (Non-Player Character) system
+export enum NPCBehavior {
+  STATIC,   // Stays in one place
+  WANDER,   // Randomly walks around
+  PATROL,   // Follows a set path
+}
+
+export interface DialogueNode {
+  id: string;
+  text: string;
+  responses?: { text: string; nextId: string }[]; // For branching dialogue
+}
+
+export interface NPC {
+  id: string;
+  name: string;
+  position: Position;
+  direction: Direction;
+  behavior: NPCBehavior;
+  sprite: string; // Path to sprite image, or array for animated
+  dialogue: DialogueNode[]; // Conversation tree
+  interactionRadius?: number; // How close player must be (default 1.5 tiles)
+}

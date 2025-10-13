@@ -151,20 +151,20 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
   return (
     <div className="fixed inset-0 bg-gray-900 text-white flex items-center justify-center z-50 overflow-hidden">
       <div className="w-full h-full flex flex-col md:flex-row">
-        {/* Left Panel - Character Preview */}
-        <div className="w-full md:w-1/2 bg-slate-800 flex flex-col items-center justify-center p-8 border-r border-slate-600">
+        {/* Left Panel - Character Preview (hidden on mobile, shown on desktop) */}
+        <div className="hidden md:flex md:w-1/2 bg-slate-800 flex-col items-center justify-center p-8 border-r border-slate-600">
           <h2 className="text-3xl font-bold text-teal-300 mb-8">
             {isEditMode ? 'Customize Your Character' : 'Create Your Character'}
           </h2>
 
           {/* Character Preview */}
-          <div className="relative w-64 h-64 bg-slate-700 rounded-lg border-4 border-slate-600 mb-4 flex items-center justify-center">
+          <div className="relative w-96 h-96 bg-slate-700 rounded-lg border-4 border-slate-600 mb-4 flex items-center justify-center">
             {/* Show actual character sprite if using custom character */}
             <div className="relative flex items-center justify-center">
               <img
                 src="/TwilightGame/assets/character1/base/down_0.png"
                 alt="Character Preview"
-                className="w-48 h-48"
+                className="w-80 h-80"
                 style={{ imageRendering: 'pixelated' }}
               />
               {/* Weapon indicator */}
@@ -184,6 +184,26 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
 
         {/* Right Panel - Customization Options */}
         <div className="w-full md:w-1/2 bg-slate-900 overflow-y-auto">
+          {/* Mobile header with small preview */}
+          <div className="md:hidden bg-slate-800 p-4 border-b border-slate-600 sticky top-0 z-10">
+            <h2 className="text-xl font-bold text-teal-300 mb-3 text-center">
+              {isEditMode ? 'Customize Your Character' : 'Create Your Character'}
+            </h2>
+            <div className="flex items-center justify-center gap-4">
+              <img
+                src="/TwilightGame/assets/character1/base/down_0.png"
+                alt="Character Preview"
+                className="w-20 h-20"
+                style={{ imageRendering: 'pixelated' }}
+              />
+              <div className="text-left">
+                <p className="text-lg font-bold text-yellow-400">{character.name || 'Enter Name'}</p>
+                <p className="text-xs text-gray-400">
+                  {WEAPON_OPTIONS.find(w => w.id === character.weapon)?.name} Wielder
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="p-6 space-y-4">
             {/* Base Character Selection */}
             <div className="bg-slate-800 rounded-lg p-4 border border-slate-600">
@@ -199,7 +219,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
                   <img
                     src="/TwilightGame/assets/character1/base/down_0.png"
                     alt="Character 1"
-                    className="w-16 h-16 mb-2"
+                    className="w-24 h-24 mb-2"
                     style={{ imageRendering: 'pixelated' }}
                   />
                   <span className="text-sm text-white font-medium">Character 1</span>

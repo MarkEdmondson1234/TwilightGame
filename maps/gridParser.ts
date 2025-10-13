@@ -20,6 +20,11 @@ export const GRID_CODES: Record<string, TileType> = {
   'T': TileType.TABLE,
   'H': TileType.CHAIR,
   'I': TileType.MIRROR, // Mirror (I looks like a mirror!)
+  // Buildings (outdoor structures)
+  'B': TileType.BUILDING_WALL,   // B = Building wall
+  'O': TileType.BUILDING_ROOF,   // O = rOof (top of building)
+  'N': TileType.BUILDING_DOOR,   // N = eNtrance
+  'V': TileType.BUILDING_WINDOW, // V = looks like a window
 };
 
 /**

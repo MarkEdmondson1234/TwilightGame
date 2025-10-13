@@ -113,7 +113,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       fromPosition: { x: 1, y: spawnY },
       tileType: TileType.PATH,
       toMapId: 'village',
-      toPosition: { x: 27, y: 12 },
+      toPosition: { x: 15, y: 15 }, // Center of main path - guaranteed safe
       label: 'Back to Village',
     },
     {
@@ -237,7 +237,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       fromPosition: { x: 1, y: exitY },
       tileType: TileType.MINE_ENTRANCE,
       toMapId: 'village',
-      toPosition: { x: 18, y: 11 },
+      toPosition: { x: 15, y: 15 }, // Center of main path - guaranteed safe
       label: 'Exit Cave',
     },
     {

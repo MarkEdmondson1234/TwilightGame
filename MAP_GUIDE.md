@@ -26,6 +26,21 @@ Maps are created using single-character codes. Just draw your map with these cha
 ### Furniture
 - `T` = Table (blocks movement)
 - `H` = Chair (walkable)
+- `I` = Mirror (walkable, opens character customization)
+
+### Buildings (Outdoor Structures)
+- `B` = Building Wall (blocks movement)
+- `O` = Building Roof (blocks movement)
+- `N` = Building Door/eNtrance (walkable)
+- `V` = Building Window (blocks movement)
+
+Use these to create buildings in outdoor areas! Example 2x2 house:
+```
+OOOO
+OBVB
+OBVB
+OBNB
+```
 
 ## Creating a New Map
 
