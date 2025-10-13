@@ -1,4 +1,5 @@
 import { TileType, TileData, Direction } from './types';
+import { tileAssets } from './assets';
 
 export const TILE_SIZE = 64;
 export const MAP_WIDTH = 50;
@@ -41,11 +42,11 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     color: 'bg-level-grass',
     isSolid: false,
     image: [
-      '/assets/tiles/grass_1.png',
-      '/assets/tiles/grass_2.png',
-      '/assets/tiles/grass_3.png',
-      '/assets/tiles/grass_4.png',
-      '/assets/tiles/grass_5.png',
+      tileAssets.grass_1,
+      tileAssets.grass_2,
+      tileAssets.grass_3,
+      tileAssets.grass_4,
+      tileAssets.grass_5,
     ]
   }, // GRASS = 0
   {
@@ -53,8 +54,8 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     color: 'bg-level-rock',
     isSolid: true,
     image: [
-      '/assets/tiles/rock_1.png',
-      '/assets/tiles/rock_2.png',      
+      tileAssets.rock_1,
+      tileAssets.rock_2,
     ]
   }, // ROCK = 1
   {
@@ -129,13 +130,19 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: []
   }, // CHAIR = 12
-  // Decorative (13)
+  {
+    name: 'Mirror',
+    color: 'bg-cyan-300',
+    isSolid: false,
+    image: []
+  }, // MIRROR = 13
+  // Decorative (14)
   {
     name: 'Mushroom',
     color: 'bg-level-mushroom',  // Will be set per map by color scheme
     isSolid: false,
-    image: ['/assets/tiles/mushrooms.png']
-  }, // MUSHROOM = 13
+    image: [tileAssets.mushrooms]
+  }, // MUSHROOM = 14
 ];
 
 // --- Procedural Map Generation ---

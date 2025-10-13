@@ -1,18 +1,24 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TILE_SIZE, PLAYER_SPRITES, PLAYER_SIZE } from './constants';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { TILE_SIZE, PLAYER_SIZE } from './constants';
 import { getTileData } from './utils/mapUtils';
 import { Position, Direction } from './types';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
+import CharacterCreator from './components/CharacterCreator';
+import TouchControls from './components/TouchControls';
 import { runSelfTests } from './utils/testUtils';
 import { initializeMaps, mapManager, transitionToMap } from './maps';
-import { gameState } from './GameState';
+import { gameState, CharacterCustomization } from './GameState';
+import { useTouchDevice } from './hooks/useTouchDevice';
+import { generateCharacterSprites, DEFAULT_CHARACTER } from './utils/characterSprites';
 
 const PLAYER_SPEED = 0.1; // tiles per frame
 const ANIMATION_SPEED_MS = 150; // time between animation frames
 
 const App: React.FC = () => {
+    const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
     const [isMapInitialized, setIsMapInitialized] = useState(false);
+    const [characterVersion, setCharacterVersion] = useState(0); // Track character changes
 
     // Load player location from saved state
     const savedLocation = gameState.getPlayerLocation();
@@ -22,11 +28,30 @@ const App: React.FC = () => {
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
 
+    const isTouchDevice = useTouchDevice();
+
+    // Generate player sprites based on character customization
+    const playerSprites = useMemo(() => {
+        const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
+        console.log('[App] Generating sprites for character:', character);
+        const sprites = generateCharacterSprites(character);
+        console.log('[App] Generated sprites:', sprites);
+        console.log('[App] Sample sprite URL:', sprites[Direction.Down][0]);
+        return sprites;
+    }, [characterVersion]); // Regenerate when character changes
+
     const keysPressed = useRef<Record<string, boolean>>({}).current;
     const animationFrameId = useRef<number | null>(null);
     const lastAnimationTime = useRef(Date.now());
     const lastTransitionTime = useRef<number>(0);
     const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
+
+    const handleCharacterCreated = (character: CharacterCustomization) => {
+        gameState.selectCharacter(character);
+        setShowCharacterCreator(false);
+        setCharacterVersion(prev => prev + 1); // Trigger sprite regeneration
+        console.log('[App] Character created:', character);
+    };
 
     const checkCollision = useCallback((pos: Position): boolean => {
         const halfSize = PLAYER_SIZE / 2;
@@ -52,10 +77,38 @@ const App: React.FC = () => {
             e.preventDefault();
             setDebugOpen(prev => !prev);
         }
-        // Action key (E or Enter) to trigger transitions
+        // Action key (E or Enter) to trigger transitions or mirror
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
             e.preventDefault();
             console.log(`[Action Key Pressed] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
+
+            // Check for mirror interaction first
+            const playerTileX = Math.floor(playerPosRef.current.x);
+            const playerTileY = Math.floor(playerPosRef.current.y);
+
+            // Check adjacent tiles for mirror
+            const adjacentTiles = [
+                { x: playerTileX, y: playerTileY },
+                { x: playerTileX - 1, y: playerTileY },
+                { x: playerTileX + 1, y: playerTileY },
+                { x: playerTileX, y: playerTileY - 1 },
+                { x: playerTileX, y: playerTileY + 1 },
+            ];
+
+            let foundMirror = false;
+            for (const tile of adjacentTiles) {
+                const tileData = getTileData(tile.x, tile.y);
+                if (tileData && tileData.type === 13) { // MIRROR tile type
+                    console.log(`[Action Key] Found mirror at (${tile.x}, ${tile.y})`);
+                    setShowCharacterCreator(true);
+                    foundMirror = true;
+                    break;
+                }
+            }
+
+            if (foundMirror) {
+                return; // Don't check for transitions if we found a mirror
+            }
 
             const transitionData = mapManager.getTransitionAt(playerPosRef.current);
             if (transitionData) {
@@ -89,7 +142,77 @@ const App: React.FC = () => {
     const handleKeyUp = (e: KeyboardEvent) => {
         keysPressed[e.key.toLowerCase()] = false;
     };
-    
+
+    // Touch control handlers
+    const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
+        const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+        keysPressed[keyMap[direction]] = true;
+    };
+
+    const handleDirectionRelease = (direction: 'up' | 'down' | 'left' | 'right') => {
+        const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+        keysPressed[keyMap[direction]] = false;
+    };
+
+    const handleActionPress = () => {
+        console.log(`[Touch Action] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
+
+        // Check for mirror interaction first
+        const playerTileX = Math.floor(playerPosRef.current.x);
+        const playerTileY = Math.floor(playerPosRef.current.y);
+
+        // Check adjacent tiles for mirror
+        const adjacentTiles = [
+            { x: playerTileX, y: playerTileY },
+            { x: playerTileX - 1, y: playerTileY },
+            { x: playerTileX + 1, y: playerTileY },
+            { x: playerTileX, y: playerTileY - 1 },
+            { x: playerTileX, y: playerTileY + 1 },
+        ];
+
+        let foundMirror = false;
+        for (const tile of adjacentTiles) {
+            const tileData = getTileData(tile.x, tile.y);
+            if (tileData && tileData.type === 13) { // MIRROR tile type
+                console.log(`[Touch Action] Found mirror at (${tile.x}, ${tile.y})`);
+                setShowCharacterCreator(true);
+                foundMirror = true;
+                break;
+            }
+        }
+
+        if (foundMirror) {
+            return; // Don't check for transitions if we found a mirror
+        }
+
+        const transitionData = mapManager.getTransitionAt(playerPosRef.current);
+        if (transitionData) {
+            const { transition } = transitionData;
+            console.log(`[Touch Action] Found transition at (${transition.fromPosition.x}, ${transition.fromPosition.y})`);
+            console.log(`[Touch Action] Transitioning from ${mapManager.getCurrentMapId()} to ${transition.toMapId}`);
+
+            try {
+                // Transition to new map (pass current map ID for depth tracking)
+                const currentMapIdValue = mapManager.getCurrentMapId();
+                const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition, currentMapIdValue || undefined);
+                console.log(`[Touch Action] Successfully loaded map: ${map.id} (${map.name})`);
+                setCurrentMapId(map.id);
+                setPlayerPos(spawn);
+                lastTransitionTime.current = Date.now();
+
+                // Save player location when transitioning maps
+                // Extract seed from random map IDs (e.g., "forest_1234" -> 1234)
+                const seedMatch = map.id.match(/_([\\d]+)$/);
+                const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+                gameState.updatePlayerLocation(map.id, spawn, seed);
+            } catch (error) {
+                console.error(`[Touch Action] ERROR transitioning to ${transition.toMapId}:`, error);
+            }
+        } else {
+            console.log(`[Touch Action] No transition found near player position`);
+        }
+    };
+
     const gameLoop = useCallback(() => {
         let vectorX = 0;
         let vectorY = 0;
@@ -114,7 +237,7 @@ const App: React.FC = () => {
             const now = Date.now();
             if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
                 lastAnimationTime.current = now;
-                setAnimationFrame(prev => (prev + 1) % PLAYER_SPRITES[direction].length);
+                setAnimationFrame(prev => (prev + 1) % playerSprites[direction].length);
             }
         }
         
@@ -150,7 +273,7 @@ const App: React.FC = () => {
         });
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
-    }, [direction, keysPressed, checkCollision]);
+    }, [direction, keysPressed, checkCollision, playerSprites]);
 
     // Disabled automatic transitions - now using action key (E or Enter)
 
@@ -236,8 +359,16 @@ const App: React.FC = () => {
         cameraY = Math.min(mapPixelHeight - window.innerHeight, Math.max(0, playerPos.y * TILE_SIZE - window.innerHeight / 2));
     }
 
-    const playerFrames = PLAYER_SPRITES[direction];
+    const playerFrames = playerSprites[direction];
     const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
+
+    console.log('[App] Current direction:', direction, 'Frame:', animationFrame);
+    console.log('[App] Player sprite URL:', playerSpriteUrl);
+
+    // Show character creator if no character selected
+    if (showCharacterCreator) {
+        return <CharacterCreator onComplete={handleCharacterCreated} />;
+    }
 
     if (!isMapInitialized || !currentMap) {
         return <div className="bg-gray-900 text-white w-screen h-screen flex items-center justify-center">Loading map...</div>;
@@ -321,14 +452,15 @@ const App: React.FC = () => {
                 })}
 
                 {/* Render Player */}
-                <div
-                    className="absolute bg-center bg-no-repeat bg-contain"
+                <img
+                    src={playerSpriteUrl}
+                    alt="Player"
+                    className="absolute"
                     style={{
                         left: (playerPos.x - PLAYER_SIZE / 2) * TILE_SIZE,
                         top: (playerPos.y - PLAYER_SIZE / 2) * TILE_SIZE,
                         width: PLAYER_SIZE * TILE_SIZE,
                         height: PLAYER_SIZE * TILE_SIZE,
-                        backgroundImage: `url(${playerSpriteUrl})`,
                         imageRendering: 'pixelated',
                     }}
                 />
@@ -337,6 +469,13 @@ const App: React.FC = () => {
             </div>
 
             <HUD />
+            {isTouchDevice && (
+                <TouchControls
+                    onDirectionPress={handleDirectionPress}
+                    onDirectionRelease={handleDirectionRelease}
+                    onActionPress={handleActionPress}
+                />
+            )}
         </div>
     );
 };

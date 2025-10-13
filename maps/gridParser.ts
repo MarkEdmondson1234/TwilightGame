@@ -19,6 +19,7 @@ export const GRID_CODES: Record<string, TileType> = {
   // Furniture
   'T': TileType.TABLE,
   'H': TileType.CHAIR,
+  'I': TileType.MIRROR, // Mirror (I looks like a mirror!)
 };
 
 /**

@@ -8,6 +8,7 @@ import { parseGrid } from '../gridParser';
  * - Stairs up at bottom (D)
  * - Exit door to village at top-right (E)
  * - Simple furniture layout
+ * - Mirror on the left wall (I)
  *
  * Grid Legend:
  * # = Wall
@@ -17,6 +18,7 @@ import { parseGrid } from '../gridParser';
  * H = Chair
  * D = Door (stairs up)
  * E = Exit Door (to village)
+ * I = Mirror
  */
 
 const gridString = `
@@ -25,7 +27,7 @@ const gridString = `
 #FCCCFF###
 #FCHTFF###
 #FCCCFF###
-#FFFFFFFF#
+#IFFFFFFF#
 #FFFFFFFF#
 ###D######
 `;

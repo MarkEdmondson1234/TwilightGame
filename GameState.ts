@@ -9,7 +9,23 @@
  * - Quest/achievement progress
  */
 
+export interface CharacterCustomization {
+  name: string;
+  skin: string;
+  hairStyle: string;
+  hairColor: string;
+  eyeColor: string;
+  clothesStyle: string;
+  clothesColor: string;
+  shoesStyle: string;
+  shoesColor: string;
+  glasses: string; // 'none', 'round', 'square', 'sunglasses'
+  weapon: string; // 'sword', 'axe', 'bow', 'staff'
+}
+
 export interface GameState {
+  // Character customization
+  selectedCharacter: CharacterCustomization | null;
   // Currency
   gold: number;
 
@@ -84,6 +100,23 @@ class GameStateManager {
           };
         }
 
+        // Migrate old save data that doesn't have character customization
+        if (!parsed.selectedCharacter) {
+          console.log('[GameState] No character found - will show character creator');
+          parsed.selectedCharacter = null;
+        }
+
+        // Validate character has all required fields (in case of partial old data)
+        if (parsed.selectedCharacter) {
+          const requiredFields = ['name', 'skin', 'hairStyle', 'hairColor', 'eyeColor', 'clothesStyle', 'clothesColor', 'shoesStyle', 'shoesColor', 'glasses', 'weapon'];
+          const hasAllFields = requiredFields.every(field => parsed.selectedCharacter[field] !== undefined);
+
+          if (!hasAllFields) {
+            console.log('[GameState] Character data incomplete - resetting to force re-creation');
+            parsed.selectedCharacter = null;
+          }
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -92,6 +125,7 @@ class GameStateManager {
 
     // Default initial state
     return {
+      selectedCharacter: null,
       gold: 0,
       forestDepth: 0,
       caveDepth: 0,
@@ -147,6 +181,22 @@ class GameStateManager {
    */
   getState(): Readonly<GameState> {
     return this.state;
+  }
+
+  // === Character Methods ===
+
+  selectCharacter(character: CharacterCustomization): void {
+    this.state.selectedCharacter = character;
+    console.log(`[GameState] Character selected: ${character.name}`);
+    this.notify();
+  }
+
+  getSelectedCharacter(): CharacterCustomization | null {
+    return this.state.selectedCharacter;
+  }
+
+  hasSelectedCharacter(): boolean {
+    return this.state.selectedCharacter !== null;
   }
 
   // === Currency Methods ===
