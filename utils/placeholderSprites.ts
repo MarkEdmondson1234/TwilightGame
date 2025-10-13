@@ -183,8 +183,6 @@ function getWeaponIcon(weapon: string, direction: Direction): string {
  * Generate all 4 frames for a direction
  */
 export function generatePlaceholderSprites(character: CharacterCustomization): Record<Direction, string[]> {
-  console.log('[PlaceholderSprites] Generating sprites for:', character.name);
-
   const sprites: Record<Direction, string[]> = {
     [Direction.Up]: [],
     [Direction.Down]: [],
@@ -194,15 +192,10 @@ export function generatePlaceholderSprites(character: CharacterCustomization): R
 
   for (let direction = Direction.Up; direction <= Direction.Right; direction++) {
     for (let frame = 0; frame < 4; frame++) {
-      const spriteUrl = generateSVGSprite(character, direction, frame);
-      sprites[direction].push(spriteUrl);
-      if (direction === Direction.Down && frame === 0) {
-        console.log('[PlaceholderSprites] Sample sprite URL (Down/0):', spriteUrl.substring(0, 100) + '...');
-      }
+      sprites[direction].push(generateSVGSprite(character, direction, frame));
     }
   }
 
-  console.log('[PlaceholderSprites] Generated', Object.keys(sprites).length, 'directions with', sprites[Direction.Down].length, 'frames each');
   return sprites;
 }
 

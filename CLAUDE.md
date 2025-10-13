@@ -125,14 +125,15 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 
 ## Development Guidelines
 
-1. **Always run sanity checks** (`runSelfTests()`) after modifying core systems
-2. **Never bypass SSoT**: Use MapManager for map data, `getTileData()` for tile access
-3. **Add constants to `constants.ts`**: Never hardcode values
-4. **Test new systems**: Add checks to `testUtils.ts` for new features
-5. **Preserve game loop**: Player movement uses `requestAnimationFrame` - be careful with state updates
-6. **Follow existing patterns**: Independent X/Y collision, deterministic tile variation selection
-7. **Map creation**: Use child-friendly grid codes, register all maps in `maps/index.ts`
-8. **Color schemes**: Every map must reference a valid color scheme from `colorSchemes.ts`
+1. **Validate changes**: After making code changes, ALWAYS run `npx tsc --noEmit` to check for TypeScript errors before considering the task complete
+2. **Always run sanity checks** (`runSelfTests()`) after modifying core systems - these run automatically on app startup
+3. **Never bypass SSoT**: Use MapManager for map data, `getTileData()` for tile access
+4. **Add constants to `constants.ts`**: Never hardcode values
+5. **Test new systems**: Add checks to `testUtils.ts` for new features
+6. **Preserve game loop**: Player movement uses `requestAnimationFrame` - be careful with state updates
+7. **Follow existing patterns**: Independent X/Y collision, deterministic tile variation selection
+8. **Map creation**: Use child-friendly grid codes, register all maps in `maps/index.ts`
+9. **Color schemes**: Every map must reference a valid color scheme from `colorSchemes.ts`
 
 ## Technical Notes
 

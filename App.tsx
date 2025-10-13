@@ -33,11 +33,7 @@ const App: React.FC = () => {
     // Generate player sprites based on character customization
     const playerSprites = useMemo(() => {
         const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
-        console.log('[App] Generating sprites for character:', character);
-        const sprites = generateCharacterSprites(character);
-        console.log('[App] Generated sprites:', sprites);
-        console.log('[App] Sample sprite URL:', sprites[Direction.Down][0]);
-        return sprites;
+        return generateCharacterSprites(character);
     }, [characterVersion]); // Regenerate when character changes
 
     const keysPressed = useRef<Record<string, boolean>>({}).current;
@@ -361,9 +357,6 @@ const App: React.FC = () => {
 
     const playerFrames = playerSprites[direction];
     const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
-
-    console.log('[App] Current direction:', direction, 'Frame:', animationFrame);
-    console.log('[App] Player sprite URL:', playerSpriteUrl);
 
     // Show character creator if no character selected
     if (showCharacterCreator) {

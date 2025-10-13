@@ -347,9 +347,14 @@ class GameStateManager {
 
   resetState(): void {
     this.state = {
+      selectedCharacter: null,
       gold: 0,
       forestDepth: 0,
       caveDepth: 0,
+      player: {
+        currentMapId: 'village',
+        position: { x: 15, y: 25 },
+      },
       inventory: {},
       farming: { plots: [] },
       crafting: { unlockedRecipes: [], materials: {} },

@@ -57,6 +57,7 @@ export interface ColorScheme {
     door: string;
     special: string;
     furniture: string;
+    mushroom: string;
     background: string;
   };
 }

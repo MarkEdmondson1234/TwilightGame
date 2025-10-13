@@ -3,35 +3,210 @@
 // FIX: Added and exported the 'runSelfTests' function to resolve the import error in App.tsx.
 // This function performs basic sanity checks as suggested by its usage context.
 import { TILE_LEGEND, MAP_DATA, MAP_WIDTH, MAP_HEIGHT } from '../constants';
-import { TileType } from '../types';
+import { TileType, Direction } from '../types';
+import { mapManager } from '../maps';
+import { COLOR_SCHEMES } from '../maps/colorSchemes';
+import { GRID_CODES, parseGrid, gridToString } from '../maps/gridParser';
 
 export function runSelfTests(): void {
   console.log("Running startup sanity checks...");
 
-  // Check if the number of tile types in the enum matches the legend.
+  // === Constants Validation ===
+  validateTileLegend();
+  validateColorSchemes();
+  validateGridCodes();
+
+  // === Map System Validation ===
+  validateAllMaps();
+  validateGridParser();
+
+  // === Procedural Map Check (basic) ===
+  validateLegacyMapData();
+
+  console.log("✓ All sanity checks complete.");
+}
+
+/**
+ * Validate TileType enum matches TILE_LEGEND
+ */
+function validateTileLegend(): void {
   const tileTypeCount = Object.keys(TileType).filter(key => isNaN(Number(key))).length;
   if (tileTypeCount !== TILE_LEGEND.length) {
     console.warn(
       `[Sanity Check] Mismatch: TileType enum has ${tileTypeCount} members, but TILE_LEGEND has ${TILE_LEGEND.length} entries.`
     );
   }
+}
 
-  // Check if map dimensions match the constants.
+/**
+ * Validate all color schemes have required properties
+ */
+function validateColorSchemes(): void {
+  const requiredColors = [
+    'grass', 'rock', 'water', 'path', 'floor', 'wall', 'carpet',
+    'door', 'special', 'furniture', 'mushroom', 'background'
+  ];
+
+  for (const [name, scheme] of Object.entries(COLOR_SCHEMES)) {
+    for (const color of requiredColors) {
+      if (!scheme.colors[color as keyof typeof scheme.colors]) {
+        console.error(
+          `[Sanity Check] Color scheme "${name}" missing required color: ${color}`
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Validate GRID_CODES covers all TileType enum values
+ */
+function validateGridCodes(): void {
+  const tileTypes = Object.keys(TileType).filter(key => isNaN(Number(key)));
+  const codedTypes = new Set(Object.values(GRID_CODES));
+
+  // Note: MUSHROOM (14) might not have a grid code if it's only used procedurally
+  const missingCodes = tileTypes
+    .map(name => TileType[name as keyof typeof TileType])
+    .filter(type => !codedTypes.has(type) && type !== TileType.MUSHROOM);
+
+  if (missingCodes.length > 0) {
+    console.warn(
+      `[Sanity Check] TileTypes without GRID_CODES: ${missingCodes.join(', ')}`
+    );
+  }
+}
+
+/**
+ * Validate all registered maps
+ */
+function validateAllMaps(): void {
+  const mapIds = mapManager.getAllMapIds();
+
+  for (const mapId of mapIds) {
+    const map = mapManager.getMap(mapId);
+    if (!map) continue;
+
+    // Check dimensions consistency
+    if (map.grid.length !== map.height) {
+      console.error(
+        `[Sanity Check] Map "${mapId}": grid has ${map.grid.length} rows but height is ${map.height}`
+      );
+    }
+
+    const inconsistentRows = map.grid
+      .map((row, i) => ({ len: row.length, index: i }))
+      .filter(r => r.len !== map.width);
+
+    if (inconsistentRows.length > 0) {
+      console.error(
+        `[Sanity Check] Map "${mapId}": rows with inconsistent width: ${inconsistentRows.map(r => r.index).join(', ')}`
+      );
+    }
+
+    // Validate color scheme exists
+    const colorScheme = mapManager.getColorScheme(map.colorScheme);
+    if (!colorScheme) {
+      console.error(
+        `[Sanity Check] Map "${mapId}": references non-existent color scheme "${map.colorScheme}"`
+      );
+    }
+
+    // Validate spawn point is within bounds
+    if (
+      map.spawnPoint.x < 0 || map.spawnPoint.x >= map.width ||
+      map.spawnPoint.y < 0 || map.spawnPoint.y >= map.height
+    ) {
+      console.error(
+        `[Sanity Check] Map "${mapId}": spawn point (${map.spawnPoint.x}, ${map.spawnPoint.y}) is out of bounds`
+      );
+    }
+
+    // Validate transitions
+    for (const transition of map.transitions) {
+      // Check fromPosition is within bounds
+      if (
+        transition.fromPosition.x < 0 || transition.fromPosition.x >= map.width ||
+        transition.fromPosition.y < 0 || transition.fromPosition.y >= map.height
+      ) {
+        console.error(
+          `[Sanity Check] Map "${mapId}": transition at (${transition.fromPosition.x}, ${transition.fromPosition.y}) is out of bounds`
+        );
+      }
+
+      // Check target map exists (skip RANDOM_* maps)
+      if (!transition.toMapId.startsWith('RANDOM_')) {
+        const targetMap = mapManager.getMap(transition.toMapId);
+        if (!targetMap) {
+          console.error(
+            `[Sanity Check] Map "${mapId}": transition references non-existent map "${transition.toMapId}"`
+          );
+        } else {
+          // Validate toPosition is within target map bounds
+          if (
+            transition.toPosition.x < 0 || transition.toPosition.x >= targetMap.width ||
+            transition.toPosition.y < 0 || transition.toPosition.y >= targetMap.height
+          ) {
+            console.error(
+              `[Sanity Check] Map "${mapId}": transition to "${transition.toMapId}" has out-of-bounds spawn (${transition.toPosition.x}, ${transition.toPosition.y})`
+            );
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Validate grid parser round-trip consistency
+ */
+function validateGridParser(): void {
+  // Test round-trip with a simple grid
+  const testGrid = `###
+#F#
+###`;
+
+  const parsed = parseGrid(testGrid);
+  const stringified = gridToString(parsed);
+  const reparsed = parseGrid(stringified);
+
+  // Check dimensions match
+  if (parsed.length !== reparsed.length ||
+      parsed[0].length !== reparsed[0].length) {
+    console.error(
+      `[Sanity Check] Grid parser round-trip failed: dimensions don't match`
+    );
+  }
+
+  // Check content matches
+  for (let y = 0; y < parsed.length; y++) {
+    for (let x = 0; x < parsed[y].length; x++) {
+      if (parsed[y][x] !== reparsed[y][x]) {
+        console.error(
+          `[Sanity Check] Grid parser round-trip failed at (${x}, ${y})`
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Validate legacy MAP_DATA (from constants.ts)
+ */
+function validateLegacyMapData(): void {
   if (MAP_DATA.length !== MAP_HEIGHT) {
     console.warn(
-        `[Sanity Check] Mismatch: MAP_DATA has ${MAP_DATA.length} rows, but MAP_HEIGHT is ${MAP_HEIGHT}.`
+      `[Sanity Check] MAP_DATA has ${MAP_DATA.length} rows, but MAP_HEIGHT is ${MAP_HEIGHT}.`
     );
   }
 
   const inconsistentRows = MAP_DATA
-    .map((row, i) => ({len: row.length, index: i}))
+    .map((row, i) => ({ len: row.length, index: i }))
     .filter(r => r.len !== MAP_WIDTH);
 
   if (inconsistentRows.length > 0) {
     console.warn(
-        `[Sanity Check] Mismatch: Some map rows do not match MAP_WIDTH (${MAP_WIDTH}). Problem rows: ${inconsistentRows.map(r => r.index).join(', ')}`
+      `[Sanity Check] MAP_DATA rows not matching MAP_WIDTH (${MAP_WIDTH}): ${inconsistentRows.map(r => r.index).join(', ')}`
     );
   }
-
-  console.log("Sanity checks complete.");
 }
