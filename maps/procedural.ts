@@ -12,7 +12,8 @@ function generatePatches(
   minSize: number,
   maxSize: number,
   width: number,
-  height: number
+  height: number,
+  excludeZone?: { centerX: number; centerY: number; radius: number }
 ): void {
   for (let i = 0; i < patchCount; i++) {
     const patchWidth = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
@@ -22,6 +23,15 @@ function generatePatches(
 
     for (let y = startY; y < startY + patchHeight && y < height; y++) {
       for (let x = startX; x < startX + patchWidth && x < width; x++) {
+        // Skip if in excluded zone
+        if (excludeZone) {
+          const dx = Math.abs(x - excludeZone.centerX);
+          const dy = Math.abs(y - excludeZone.centerY);
+          if (dx <= excludeZone.radius && dy <= excludeZone.radius) {
+            continue;
+          }
+        }
+
         if (map[y] && map[y][x] !== undefined && Math.random() > 0.25) {
           map[y][x] = tileType;
         }
@@ -44,24 +54,37 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
-  // Generate forest features
-  generatePatches(map, TileType.ROCK, 15, 1, 4, width, height);
-  generatePatches(map, TileType.WATER, 3, 3, 6, width, height);
-  generatePatches(map, TileType.PATH, 5, 2, 5, width, height);
+  // Spawn in the middle of the map
+  const spawnX = Math.floor(width / 2);
+  const spawnY = Math.floor(height / 2);
+  const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
-  // Clear spawn area
-  const spawnX = 5;
-  const spawnY = 15;
-  for (let y = spawnY - 1; y <= spawnY + 1; y++) {
-    for (let x = spawnX - 1; x <= spawnX + 1; x++) {
-      if (y >= 0 && y < height && x >= 0 && x < width) {
+  // Generate forest features, excluding spawn area
+  generatePatches(map, TileType.ROCK, 15, 1, 4, width, height, spawnZone);
+  generatePatches(map, TileType.WATER, 3, 3, 6, width, height, spawnZone);
+  generatePatches(map, TileType.PATH, 5, 2, 5, width, height, spawnZone);
+
+  // Clear spawn area AFTER generating features (9x9 grid)
+  for (let y = spawnY - 4; y <= spawnY + 4; y++) {
+    for (let x = spawnX - 4; x <= spawnX + 4; x++) {
+      if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
         map[y][x] = TileType.GRASS;
       }
     }
   }
 
-  // Place exit back to village on left side
-  map[15][1] = TileType.PATH;
+  // Place exit back to village on left side (middle of map)
+  map[spawnY][1] = TileType.PATH;
+
+  // Clear area around exit too
+  for (let y = spawnY - 1; y <= spawnY + 1; y++) {
+    for (let x = 1; x <= 3; x++) {
+      if (y >= 1 && y < height - 1) {
+        map[y][x] = TileType.GRASS;
+      }
+    }
+  }
+  map[spawnY][1] = TileType.PATH; // Re-place exit after clearing
 
   return {
     id: `forest_${seed}`,
@@ -74,10 +97,10 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     spawnPoint: { x: spawnX, y: spawnY },
     transitions: [
       {
-        fromPosition: { x: 1, y: 15 },
+        fromPosition: { x: 1, y: spawnY },
         tileType: TileType.PATH,
         toMapId: 'village',
-        toPosition: { x: 29, y: 12 },
+        toPosition: { x: 27, y: 12 },  // Moved 2 tiles left from edge
         label: 'Back to Village',
       },
     ],
@@ -98,24 +121,36 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     }
   }
 
-  // Generate cave features
-  generatePatches(map, TileType.WALL, 20, 1, 3, width, height);
-  generatePatches(map, TileType.WATER, 2, 2, 4, width, height);
-  generatePatches(map, TileType.ROCK, 10, 1, 2, width, height);
+  // Spawn in the middle of the map where it's safe
+  const spawnX = Math.floor(width / 2);
+  const spawnY = Math.floor(height / 2);
+  const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
-  // Clear spawn area
-  const spawnX = 5;
-  const spawnY = 5;
-  for (let y = spawnY - 1; y <= spawnY + 1; y++) {
-    for (let x = spawnX - 1; x <= spawnX + 1; x++) {
-      if (y >= 0 && y < height && x >= 0 && x < width) {
+  // Generate cave features, excluding spawn area
+  generatePatches(map, TileType.WALL, 20, 1, 3, width, height, spawnZone);
+  generatePatches(map, TileType.WATER, 2, 2, 4, width, height, spawnZone);
+  generatePatches(map, TileType.ROCK, 10, 1, 2, width, height, spawnZone);
+
+  // Clear spawn area AFTER generating features (9x9 grid)
+  for (let y = spawnY - 4; y <= spawnY + 4; y++) {
+    for (let x = spawnX - 4; x <= spawnX + 4; x++) {
+      if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
         map[y][x] = TileType.FLOOR;
       }
     }
   }
 
-  // Place mine entrance (exit)
-  map[5][1] = TileType.MINE_ENTRANCE;
+  // Place mine entrance (exit) on left side
+  map[Math.floor(height / 2)][1] = TileType.MINE_ENTRANCE;
+
+  // Clear area around mine entrance too
+  for (let y = Math.floor(height / 2) - 1; y <= Math.floor(height / 2) + 1; y++) {
+    for (let x = 1; x <= 3; x++) {
+      if (y >= 1 && y < height - 1) {
+        map[y][x] = TileType.FLOOR;
+      }
+    }
+  }
 
   return {
     id: `cave_${seed}`,
@@ -128,10 +163,10 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     spawnPoint: { x: spawnX, y: spawnY },
     transitions: [
       {
-        fromPosition: { x: 1, y: 5 },
+        fromPosition: { x: 1, y: Math.floor(height / 2) },
         tileType: TileType.MINE_ENTRANCE,
         toMapId: 'village',
-        toPosition: { x: 20, y: 11 },
+        toPosition: { x: 18, y: 11 },  // Moved 2 tiles left from mine entrance
         label: 'Exit Cave',
       },
     ],

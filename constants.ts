@@ -52,7 +52,10 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     name: 'Rock',
     color: 'bg-level-rock',
     isSolid: true,
-    image: []
+    image: [
+      '/assets/tiles/rock_1.png',
+      '/assets/tiles/rock_2.png',      
+    ]
   }, // ROCK = 1
   {
     name: 'Water',

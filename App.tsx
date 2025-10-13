@@ -21,6 +21,8 @@ const App: React.FC = () => {
     const keysPressed = useRef<Record<string, boolean>>({}).current;
     const animationFrameId = useRef<number | null>(null);
     const lastAnimationTime = useRef(Date.now());
+    const lastTransitionTime = useRef<number>(0);
+    const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
 
     const checkCollision = useCallback((pos: Position): boolean => {
         const halfSize = PLAYER_SIZE / 2;
@@ -45,6 +47,31 @@ const App: React.FC = () => {
         if (e.key === 'F3') {
             e.preventDefault();
             setDebugOpen(prev => !prev);
+        }
+        // Action key (E or Enter) to trigger transitions
+        if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
+            e.preventDefault();
+            console.log(`[Action Key Pressed] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
+
+            const transitionData = mapManager.getTransitionAt(playerPosRef.current);
+            if (transitionData) {
+                const { transition } = transitionData;
+                console.log(`[Action Key] Found transition at (${transition.fromPosition.x}, ${transition.fromPosition.y})`);
+                console.log(`[Action Key] Transitioning from ${mapManager.getCurrentMapId()} to ${transition.toMapId}`);
+
+                try {
+                    // Transition to new map
+                    const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition);
+                    console.log(`[Action Key] Successfully loaded map: ${map.id} (${map.name})`);
+                    setCurrentMapId(map.id);
+                    setPlayerPos(spawn);
+                    lastTransitionTime.current = Date.now();
+                } catch (error) {
+                    console.error(`[Action Key] ERROR transitioning to ${transition.toMapId}:`, error);
+                }
+            } else {
+                console.log(`[Action Key] No transition found near player position`);
+            }
         }
     };
 
@@ -88,43 +115,33 @@ const App: React.FC = () => {
 
             const dx = (vectorX / magnitude) * PLAYER_SPEED;
             const dy = (vectorY / magnitude) * PLAYER_SPEED;
-        
+
             let nextPos = { ...prevPos };
 
             const tempXPos = { ...nextPos, x: nextPos.x + dx };
             if (!checkCollision(tempXPos)) {
                 nextPos.x += dx;
             }
-        
+
             const tempYPos = { ...nextPos, y: nextPos.y + dy };
             if (!checkCollision(tempYPos)) {
                 nextPos.y += dy;
             }
-            
+
             const currentMap = mapManager.getCurrentMap();
             if (currentMap) {
                 nextPos.x = Math.max(PLAYER_SIZE / 2, Math.min(currentMap.width - (PLAYER_SIZE / 2), nextPos.x));
                 nextPos.y = Math.max(PLAYER_SIZE / 2, Math.min(currentMap.height - (PLAYER_SIZE / 2), nextPos.y));
             }
 
+            playerPosRef.current = nextPos; // Keep ref in sync
             return nextPos;
         });
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
     }, [direction, keysPressed, checkCollision]);
 
-    // Check for map transitions
-    useEffect(() => {
-        const transitionData = mapManager.getTransitionAt(playerPos);
-        if (transitionData) {
-            const { transition } = transitionData;
-
-            // Transition to new map
-            const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition);
-            setCurrentMapId(map.id);
-            setPlayerPos(spawn);
-        }
-    }, [playerPos]);
+    // Disabled automatic transitions - now using action key (E or Enter)
 
     // Initialize maps on startup (only once)
     useEffect(() => {
@@ -156,8 +173,26 @@ const App: React.FC = () => {
     const mapWidth = currentMap ? currentMap.width : 50;
     const mapHeight = currentMap ? currentMap.height : 30;
 
-    const cameraX = Math.min(mapWidth * TILE_SIZE - window.innerWidth, Math.max(0, playerPos.x * TILE_SIZE - window.innerWidth / 2));
-    const cameraY = Math.min(mapHeight * TILE_SIZE - window.innerHeight, Math.max(0, playerPos.y * TILE_SIZE - window.innerHeight / 2));
+    // Camera system: center small maps, follow player on large maps
+    const mapPixelWidth = mapWidth * TILE_SIZE;
+    const mapPixelHeight = mapHeight * TILE_SIZE;
+
+    let cameraX: number;
+    let cameraY: number;
+
+    // If map is smaller than viewport, center it
+    if (mapPixelWidth < window.innerWidth) {
+        cameraX = -(window.innerWidth - mapPixelWidth) / 2;
+    } else {
+        // Otherwise follow player
+        cameraX = Math.min(mapPixelWidth - window.innerWidth, Math.max(0, playerPos.x * TILE_SIZE - window.innerWidth / 2));
+    }
+
+    if (mapPixelHeight < window.innerHeight) {
+        cameraY = -(window.innerHeight - mapPixelHeight) / 2;
+    } else {
+        cameraY = Math.min(mapPixelHeight - window.innerHeight, Math.max(0, playerPos.y * TILE_SIZE - window.innerHeight / 2));
+    }
 
     const playerFrames = PLAYER_SPRITES[direction];
     const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
@@ -206,6 +241,42 @@ const App: React.FC = () => {
                         );
                     })
                 )}
+
+                {/* Render transition markers and labels */}
+                {currentMap.transitions.map((transition, idx) => {
+                    // Check if player is in range
+                    const dx = Math.abs(playerPos.x - transition.fromPosition.x);
+                    const dy = Math.abs(playerPos.y - transition.fromPosition.y);
+                    const inRange = dx < 1.5 && dy < 1.5;
+
+                    return (
+                        <React.Fragment key={`transition-${idx}`}>
+                            {/* Visual marker on the transition tile */}
+                            <div
+                                className={`absolute pointer-events-none border-4 ${inRange ? 'border-green-400 bg-green-400/30' : 'border-yellow-400 bg-yellow-400/20'}`}
+                                style={{
+                                    left: transition.fromPosition.x * TILE_SIZE,
+                                    top: transition.fromPosition.y * TILE_SIZE,
+                                    width: TILE_SIZE,
+                                    height: TILE_SIZE,
+                                }}
+                            />
+                            {/* Label above the tile */}
+                            <div
+                                className="absolute pointer-events-none"
+                                style={{
+                                    left: (transition.fromPosition.x + 0.5) * TILE_SIZE,
+                                    top: (transition.fromPosition.y - 0.5) * TILE_SIZE,
+                                    transform: 'translate(-50%, -50%)',
+                                }}
+                            >
+                                <div className={`${inRange ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'} px-3 py-1 rounded-full text-xs font-bold text-black whitespace-nowrap shadow-lg`}>
+                                    [E] {transition.label || transition.toMapId}
+                                </div>
+                            </div>
+                        </React.Fragment>
+                    );
+                })}
 
                 {/* Render Player */}
                 <div

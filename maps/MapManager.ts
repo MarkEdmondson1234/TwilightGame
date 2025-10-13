@@ -88,22 +88,31 @@ class MapManager {
 
   /**
    * Check if player is on a transition tile
+   * Checks if player's center is within 1.5 tiles of the transition position
    */
   getTransitionAt(position: Position): { transition: any; map: MapDefinition } | null {
     if (!this.currentMap) return null;
 
+    console.log(`[MapManager] Checking transitions for player at (${position.x.toFixed(2)}, ${position.y.toFixed(2)})`);
+    console.log(`[MapManager] Current map has ${this.currentMap.transitions.length} transitions:`);
+
     for (const transition of this.currentMap.transitions) {
-      if (
-        Math.floor(position.x) === transition.fromPosition.x &&
-        Math.floor(position.y) === transition.fromPosition.y
-      ) {
-        const targetMap = this.getMap(transition.toMapId);
-        if (targetMap) {
-          return { transition, map: targetMap };
-        }
+      // Check if player is close enough to the transition tile
+      const dx = Math.abs(position.x - transition.fromPosition.x);
+      const dy = Math.abs(position.y - transition.fromPosition.y);
+
+      console.log(`  - ${transition.label} at (${transition.fromPosition.x}, ${transition.fromPosition.y}): dx=${dx.toFixed(2)}, dy=${dy.toFixed(2)}`);
+
+      // Player needs to be within 1.5 tiles of the transition center (generous range)
+      if (dx < 1.5 && dy < 1.5) {
+        console.log(`  ✓ MATCH! Transition found to ${transition.toMapId}`);
+        // Return transition even if target map doesn't exist yet
+        // (RANDOM_* maps are generated on-demand by transitionToMap)
+        return { transition, map: null as any };
       }
     }
 
+    console.log(`[MapManager] No transition within range`);
     return null;
   }
 

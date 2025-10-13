@@ -65,31 +65,31 @@ export const village: MapDefinition = {
   spawnPoint: { x: 15, y: 25 }, // Near the home door
   transitions: [
     {
-      fromPosition: { x: 11, y: 25 }, // Door to home
+      fromPosition: { x: 10, y: 25 }, // Door to home (D tile)
       tileType: TileType.DOOR,
       toMapId: 'home_interior',
       toPosition: { x: 5, y: 6 },
       label: 'To Home',
     },
     {
-      fromPosition: { x: 12, y: 8 }, // Shop door
+      fromPosition: { x: 10, y: 8 }, // Shop door (S tile)
       tileType: TileType.SHOP_DOOR,
-      toMapId: 'RANDOM_SHOP',
-      toPosition: { x: 5, y: 8 },
+      toMapId: 'shop',
+      toPosition: { x: 7, y: 8 },
       label: 'To Shop',
     },
     {
-      fromPosition: { x: 20, y: 11 }, // Mine entrance
+      fromPosition: { x: 19, y: 11 }, // Mine entrance (M tile)
       tileType: TileType.MINE_ENTRANCE,
       toMapId: 'RANDOM_CAVE',
-      toPosition: { x: 5, y: 5 },
+      toPosition: { x: 17, y: 12 },  // Spawn in center of cave (safe zone)
       label: 'To Mine',
     },
     {
-      fromPosition: { x: 29, y: 12 }, // East exit to forest
-      tileType: TileType.PATH,
+      fromPosition: { x: 28, y: 12 }, // East exit to forest (last G before R border)
+      tileType: TileType.GRASS,
       toMapId: 'RANDOM_FOREST',
-      toPosition: { x: 2, y: 15 },
+      toPosition: { x: 20, y: 15 },  // Spawn in center of forest (safe zone)
       label: 'To Forest',
     },
   ],

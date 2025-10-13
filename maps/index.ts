@@ -1,7 +1,9 @@
 import { mapManager } from './MapManager';
 import { COLOR_SCHEMES } from './colorSchemes';
 import { homeInterior } from './definitions/homeInterior';
+import { homeUpstairs } from './definitions/homeUpstairs';
 import { village } from './definitions/village';
+import { shop } from './definitions/shop';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
 
 /**
@@ -16,7 +18,9 @@ export function initializeMaps(): void {
 
   // Register designed maps
   mapManager.registerMap(homeInterior);
+  mapManager.registerMap(homeUpstairs);
   mapManager.registerMap(village);
+  mapManager.registerMap(shop);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs

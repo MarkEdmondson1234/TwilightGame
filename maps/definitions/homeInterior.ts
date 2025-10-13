@@ -5,7 +5,7 @@ import { parseGrid } from '../gridParser';
  * Home Interior - Starting area
  *
  * A small cozy interior room with:
- * - Entrance door at bottom (D)
+ * - Stairs up at bottom (D)
  * - Exit door to village at top-right (E)
  * - Simple furniture layout
  *
@@ -15,7 +15,7 @@ import { parseGrid } from '../gridParser';
  * C = Carpet
  * T = Table
  * H = Chair
- * D = Door (entrance, not functional)
+ * D = Door (stairs up)
  * E = Exit Door (to village)
  */
 
@@ -46,6 +46,13 @@ export const homeInterior: MapDefinition = {
       toMapId: 'village',
       toPosition: { x: 15, y: 25 }, // Spawn in village
       label: 'To Village',
+    },
+    {
+      fromPosition: { x: 3, y: 7 }, // Stairs up at bottom
+      tileType: TileType.DOOR,
+      toMapId: 'home_upstairs',
+      toPosition: { x: 3, y: 6 }, // Spawn upstairs
+      label: 'Upstairs',
     },
   ],
 };
