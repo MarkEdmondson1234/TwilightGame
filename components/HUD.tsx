@@ -1,10 +1,12 @@
 import React from 'react';
 import { TILE_LEGEND } from '../constants';
 import { mapManager } from '../maps';
+import { useGameState } from '../hooks/useGameState';
 
 const HUD: React.FC = () => {
     const currentMap = mapManager.getCurrentMap();
     const mapName = currentMap ? currentMap.name : 'Loading...';
+    const { gold, forestDepth, caveDepth } = useGameState();
 
     return (
         <>
@@ -12,9 +14,18 @@ const HUD: React.FC = () => {
                 <div className="bg-black/50 p-3 rounded-lg border border-slate-700">
                     <h1 className="text-xl font-bold text-cyan-300">My Game</h1>
                     <p className="text-sm text-slate-300">Exploration Engine v0.1</p>
+                    <div className="mt-2 text-sm text-yellow-300">
+                        Gold: {gold}
+                    </div>
                 </div>
                 <div className="bg-black/50 p-3 rounded-lg border border-slate-700">
                     <p className="text-lg font-bold text-yellow-300">{mapName}</p>
+                    {forestDepth > 0 && (
+                        <p className="text-sm text-green-300">Forest Depth: {forestDepth}</p>
+                    )}
+                    {caveDepth > 0 && (
+                        <p className="text-sm text-purple-300">Cave Depth: {caveDepth}</p>
+                    )}
                 </div>
             </div>
 

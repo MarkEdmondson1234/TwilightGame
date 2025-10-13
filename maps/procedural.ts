@@ -1,4 +1,5 @@
 import { MapDefinition, TileType } from '../types';
+import { gameState } from '../GameState';
 
 /**
  * Procedural map generation functions
@@ -96,6 +97,61 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   }
   map[spawnY][1] = TileType.PATH; // Re-place exit after clearing
 
+  // Add deeper forest exit on right side
+  map[spawnY][width - 2] = TileType.PATH;
+  for (let y = spawnY - 1; y <= spawnY + 1; y++) {
+    for (let x = width - 3; x <= width - 2; x++) {
+      if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
+        map[y][x] = TileType.GRASS;
+      }
+    }
+  }
+  map[spawnY][width - 2] = TileType.PATH;
+
+  const transitions = [
+    {
+      fromPosition: { x: 1, y: spawnY },
+      tileType: TileType.PATH,
+      toMapId: 'village',
+      toPosition: { x: 27, y: 12 },
+      label: 'Back to Village',
+    },
+    {
+      fromPosition: { x: width - 2, y: spawnY },
+      tileType: TileType.PATH,
+      toMapId: 'RANDOM_FOREST',
+      toPosition: { x: 2, y: spawnY },
+      label: 'Deeper into Forest',
+    },
+  ];
+
+  // Shop spawn chance increases with depth: 1% at depth 1, +2% per level (max 25%)
+  const forestDepth = gameState.getForestDepth();
+  const shopChance = Math.min(0.01 + (forestDepth - 1) * 0.02, 0.25);
+
+  if (Math.random() < shopChance) {
+    const shopX = Math.floor(width * 0.75);
+    const shopY = Math.floor(height * 0.3);
+    map[shopY][shopX] = TileType.SHOP_DOOR;
+    // Clear area around shop
+    for (let y = shopY - 1; y <= shopY + 1; y++) {
+      for (let x = shopX - 1; x <= shopX + 1; x++) {
+        if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
+          map[y][x] = TileType.GRASS;
+        }
+      }
+    }
+    map[shopY][shopX] = TileType.SHOP_DOOR;
+    transitions.push({
+      fromPosition: { x: shopX, y: shopY },
+      tileType: TileType.SHOP_DOOR,
+      toMapId: 'RANDOM_SHOP',
+      toPosition: { x: 6, y: 7 },
+      label: 'To Shop',
+    });
+    console.log(`[Forest] Shop spawned at depth ${forestDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`);
+  }
+
   return {
     id: `forest_${seed}`,
     name: 'Forest',
@@ -105,15 +161,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     colorScheme: 'forest',
     isRandom: true,
     spawnPoint: { x: spawnX, y: spawnY },
-    transitions: [
-      {
-        fromPosition: { x: 1, y: spawnY },
-        tileType: TileType.PATH,
-        toMapId: 'village',
-        toPosition: { x: 27, y: 12 },  // Moved 2 tiles left from edge
-        label: 'Back to Village',
-      },
-    ],
+    transitions,
   };
 }
 
@@ -161,15 +209,71 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   }
 
   // Place mine entrance (exit) on left side
-  map[Math.floor(height / 2)][1] = TileType.MINE_ENTRANCE;
+  const exitY = Math.floor(height / 2);
+  map[exitY][1] = TileType.MINE_ENTRANCE;
 
   // Clear area around mine entrance too
-  for (let y = Math.floor(height / 2) - 1; y <= Math.floor(height / 2) + 1; y++) {
+  for (let y = exitY - 1; y <= exitY + 1; y++) {
     for (let x = 1; x <= 3; x++) {
       if (y >= 1 && y < height - 1) {
         map[y][x] = TileType.FLOOR;
       }
     }
+  }
+
+  // Add deeper cave entrance on right side
+  map[exitY][width - 2] = TileType.MINE_ENTRANCE;
+  for (let y = exitY - 1; y <= exitY + 1; y++) {
+    for (let x = width - 3; x <= width - 2; x++) {
+      if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
+        map[y][x] = TileType.FLOOR;
+      }
+    }
+  }
+  map[exitY][width - 2] = TileType.MINE_ENTRANCE;
+
+  const transitions = [
+    {
+      fromPosition: { x: 1, y: exitY },
+      tileType: TileType.MINE_ENTRANCE,
+      toMapId: 'village',
+      toPosition: { x: 18, y: 11 },
+      label: 'Exit Cave',
+    },
+    {
+      fromPosition: { x: width - 2, y: exitY },
+      tileType: TileType.MINE_ENTRANCE,
+      toMapId: 'RANDOM_CAVE',
+      toPosition: { x: 2, y: exitY },
+      label: 'Deeper into Cave',
+    },
+  ];
+
+  // Shop spawn chance increases with depth: 1% at depth 1, +2% per level (max 25%)
+  const caveDepth = gameState.getCaveDepth();
+  const shopChance = Math.min(0.01 + (caveDepth - 1) * 0.02, 0.25);
+
+  if (Math.random() < shopChance) {
+    const shopX = Math.floor(width * 0.75);
+    const shopY = Math.floor(height * 0.7);
+    map[shopY][shopX] = TileType.SHOP_DOOR;
+    // Clear area around shop
+    for (let y = shopY - 1; y <= shopY + 1; y++) {
+      for (let x = shopX - 1; x <= shopX + 1; x++) {
+        if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
+          map[y][x] = TileType.FLOOR;
+        }
+      }
+    }
+    map[shopY][shopX] = TileType.SHOP_DOOR;
+    transitions.push({
+      fromPosition: { x: shopX, y: shopY },
+      tileType: TileType.SHOP_DOOR,
+      toMapId: 'RANDOM_SHOP',
+      toPosition: { x: 6, y: 7 },
+      label: 'To Shop',
+    });
+    console.log(`[Cave] Shop spawned at depth ${caveDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`);
   }
 
   return {
@@ -181,19 +285,11 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     colorScheme: 'cave',
     isRandom: true,
     spawnPoint: { x: spawnX, y: spawnY },
-    transitions: [
-      {
-        fromPosition: { x: 1, y: Math.floor(height / 2) },
-        tileType: TileType.MINE_ENTRANCE,
-        toMapId: 'village',
-        toPosition: { x: 18, y: 11 },  // Moved 2 tiles left from mine entrance
-        label: 'Exit Cave',
-      },
-    ],
+    transitions,
   };
 }
 
-export function generateRandomShop(seed: number = Date.now()): MapDefinition {
+export function generateRandomShop(seed: number = Date.now(), returnToMapId?: string, returnToPosition?: { x: number; y: number }): MapDefinition {
   const width = 12;
   const height = 10;
   const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.FLOOR));
@@ -226,6 +322,10 @@ export function generateRandomShop(seed: number = Date.now()): MapDefinition {
   // Place shop door (exit) at bottom
   map[height - 1][6] = TileType.SHOP_DOOR;
 
+  // Exit back to where we came from (or village as default)
+  const exitMapId = returnToMapId || 'village';
+  const exitPosition = returnToPosition || { x: 12, y: 8 };
+
   return {
     id: `shop_${seed}`,
     name: 'Shop',
@@ -239,8 +339,8 @@ export function generateRandomShop(seed: number = Date.now()): MapDefinition {
       {
         fromPosition: { x: 6, y: height - 1 },
         tileType: TileType.SHOP_DOOR,
-        toMapId: 'village',
-        toPosition: { x: 12, y: 8 },
+        toMapId: exitMapId,
+        toPosition: exitPosition,
         label: 'Exit Shop',
       },
     ],

@@ -6,14 +6,18 @@ import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import { runSelfTests } from './utils/testUtils';
 import { initializeMaps, mapManager, transitionToMap } from './maps';
+import { gameState } from './GameState';
 
 const PLAYER_SPEED = 0.1; // tiles per frame
 const ANIMATION_SPEED_MS = 150; // time between animation frames
 
 const App: React.FC = () => {
     const [isMapInitialized, setIsMapInitialized] = useState(false);
-    const [currentMapId, setCurrentMapId] = useState<string>('home_interior');
-    const [playerPos, setPlayerPos] = useState<Position>({ x: 5, y: 6 });
+
+    // Load player location from saved state
+    const savedLocation = gameState.getPlayerLocation();
+    const [currentMapId, setCurrentMapId] = useState<string>(savedLocation.mapId);
+    const [playerPos, setPlayerPos] = useState<Position>(savedLocation.position);
     const [direction, setDirection] = useState<Direction>(Direction.Down);
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
@@ -60,12 +64,19 @@ const App: React.FC = () => {
                 console.log(`[Action Key] Transitioning from ${mapManager.getCurrentMapId()} to ${transition.toMapId}`);
 
                 try {
-                    // Transition to new map
-                    const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition);
+                    // Transition to new map (pass current map ID for depth tracking)
+                    const currentMapIdValue = mapManager.getCurrentMapId();
+                    const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition, currentMapIdValue || undefined);
                     console.log(`[Action Key] Successfully loaded map: ${map.id} (${map.name})`);
                     setCurrentMapId(map.id);
                     setPlayerPos(spawn);
                     lastTransitionTime.current = Date.now();
+
+                    // Save player location when transitioning maps
+                    // Extract seed from random map IDs (e.g., "forest_1234" -> 1234)
+                    const seedMatch = map.id.match(/_([\d]+)$/);
+                    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+                    gameState.updatePlayerLocation(map.id, spawn, seed);
                 } catch (error) {
                     console.error(`[Action Key] ERROR transitioning to ${transition.toMapId}:`, error);
                 }
@@ -147,8 +158,39 @@ const App: React.FC = () => {
     useEffect(() => {
         runSelfTests(); // Run sanity checks on startup
         initializeMaps(); // Initialize all maps and color schemes
-        mapManager.loadMap(currentMapId); // Load starting map
-        setIsMapInitialized(true);
+
+        // If loading a random map, regenerate it with the saved seed
+        const savedLocation = gameState.getPlayerLocation();
+        if (savedLocation.mapId.match(/^(forest|cave|shop)_\d+$/)) {
+            // Regenerate the random map with the saved seed
+            const mapType = savedLocation.mapId.split('_')[0];
+            const seed = savedLocation.seed || Date.now();
+
+            console.log(`[App] Regenerating ${mapType} map with seed ${seed}`);
+
+            // Import and call the appropriate generator
+            import('./maps/procedural').then(({ generateRandomForest, generateRandomCave, generateRandomShop }) => {
+                let newMap;
+                if (mapType === 'forest') {
+                    newMap = generateRandomForest(seed);
+                } else if (mapType === 'cave') {
+                    newMap = generateRandomCave(seed);
+                } else if (mapType === 'shop') {
+                    const playerLoc = gameState.getPlayerLocation();
+                    newMap = generateRandomShop(seed, playerLoc.mapId, playerLoc.position);
+                }
+
+                if (newMap) {
+                    mapManager.registerMap(newMap);
+                    mapManager.loadMap(newMap.id);
+                    setIsMapInitialized(true);
+                }
+            });
+        } else {
+            // Load regular map normally
+            mapManager.loadMap(currentMapId);
+            setIsMapInitialized(true);
+        }
     }, []); // Only run once on mount
 
     // Set up game loop and event listeners after map is initialized

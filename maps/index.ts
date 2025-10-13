@@ -5,6 +5,7 @@ import { homeUpstairs } from './definitions/homeUpstairs';
 import { village } from './definitions/village';
 import { shop } from './definitions/shop';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
+import { gameState } from '../GameState';
 
 /**
  * Initialize all maps and color schemes
@@ -31,8 +32,34 @@ export function initializeMaps(): void {
 
 /**
  * Handle transition to a map, generating random maps as needed
+ * Also updates game state for depth tracking
  */
-export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: number }) {
+export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: number }, fromMapId?: string) {
+  // Track depth changes
+  if (mapId.startsWith('RANDOM_')) {
+    const type = mapId.replace('RANDOM_', '').toLowerCase();
+
+    // Going deeper into forest/cave
+    if (type === 'forest') {
+      gameState.enterForest();
+    } else if (type === 'cave') {
+      gameState.enterCave();
+    }
+  } else if (mapId === 'village') {
+    // Coming back to village - reset all depth counters
+    const currentForestDepth = gameState.getForestDepth();
+    const currentCaveDepth = gameState.getCaveDepth();
+
+    if (currentForestDepth > 0) {
+      console.log(`[GameState] Exited forest completely (was at depth ${currentForestDepth})`);
+      gameState.resetForestDepth();
+    }
+    if (currentCaveDepth > 0) {
+      console.log(`[GameState] Exited cave completely (was at depth ${currentCaveDepth})`);
+      gameState.resetCaveDepth();
+    }
+  }
+
   // Handle RANDOM_* map IDs
   if (mapId.startsWith('RANDOM_')) {
     const type = mapId.replace('RANDOM_', '').toLowerCase();
@@ -46,7 +73,9 @@ export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: numb
         newMap = generateRandomCave();
         break;
       case 'shop':
-        newMap = generateRandomShop();
+        // Generate shop with exit back to the current map location from game state
+        const playerLocation = gameState.getPlayerLocation();
+        newMap = generateRandomShop(undefined, playerLocation.mapId, playerLocation.position);
         break;
       default:
         throw new Error(`Unknown random map type: ${type}`);
