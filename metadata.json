@@ -1,0 +1,5 @@
+{
+  "name": "Top-Down Game Engine",
+  "description": "A peaceful top-down exploration and crafting game engine with placeholder graphics, inspired by Stardew Valley. Players can move around the world, with stubs for future features like crafting, shops, and mining.",
+  "requestFramePermissions": []
+}
