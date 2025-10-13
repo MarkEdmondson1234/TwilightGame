@@ -1,0 +1,51 @@
+import { MapDefinition, TileType } from '../../types';
+import { parseGrid } from '../gridParser';
+
+/**
+ * Home Interior - Starting area
+ *
+ * A small cozy interior room with:
+ * - Entrance door at bottom (D)
+ * - Exit door to village at top-right (E)
+ * - Simple furniture layout
+ *
+ * Grid Legend:
+ * # = Wall
+ * F = Floor
+ * C = Carpet
+ * T = Table
+ * H = Chair
+ * D = Door (entrance, not functional)
+ * E = Exit Door (to village)
+ */
+
+const gridString = `
+##########
+#FFFFFE###
+#FCCCFF###
+#FCHTFF###
+#FCCCFF###
+#FFFFFFFF#
+#FFFFFFFF#
+###D######
+`;
+
+export const homeInterior: MapDefinition = {
+  id: 'home_interior',
+  name: 'Home',
+  width: 10,
+  height: 8,
+  grid: parseGrid(gridString),
+  colorScheme: 'indoor',
+  isRandom: false,
+  spawnPoint: { x: 5, y: 6 }, // Start near the bottom door
+  transitions: [
+    {
+      fromPosition: { x: 6, y: 1 }, // Exit door at top-right
+      tileType: TileType.EXIT_DOOR,
+      toMapId: 'village',
+      toPosition: { x: 15, y: 25 }, // Spawn in village
+      label: 'To Village',
+    },
+  ],
+};

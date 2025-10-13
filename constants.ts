@@ -33,51 +33,99 @@ export const PLAYER_SPRITES: Record<Direction, string[]> = {
   ],
 };
 
-// Tile images now point to placeholder URLs and support variations for all background types.
+// Tile images with placeholders - colors will be overridden by map's color scheme
 export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
+  // Outdoor tiles (0-3)
   {
     name: 'Grass',
     color: 'bg-level-grass',
     isSolid: false,
     image: [
+      '/assets/tiles/grass_1.png',
       '/assets/tiles/grass_2.png',
       '/assets/tiles/grass_3.png',
       '/assets/tiles/grass_4.png',
       '/assets/tiles/grass_5.png',
     ]
-  }, // GRASS
+  }, // GRASS = 0
   {
     name: 'Rock',
     color: 'bg-level-rock',
     isSolid: true,
-    image: [
-      'https://placehold.co/32x32/71717a/ffffff?text=R0',
-      'https://placehold.co/32x32/52525b/ffffff?text=R1',
-      'https://placehold.co/32x32/a1a1aa/ffffff?text=R2',
-    ]
-  }, // ROCK
+    image: []
+  }, // ROCK = 1
   {
     name: 'Water',
     color: 'bg-level-water',
     isSolid: true,
-    image: [
-      'https://placehold.co/32x32/3b82f6/ffffff?text=W0',
-      'https://placehold.co/32x32/60a5fa/ffffff?text=W1',
-      'https://placehold.co/32x32/2563eb/ffffff?text=W2',
-    ]
-  }, // WATER
+    image: []
+  }, // WATER = 2
   {
     name: 'Path',
     color: 'bg-level-path',
     isSolid: false,
-    image: [
-      'https://placehold.co/32x32/d97706/ffffff?text=P0',
-      'https://placehold.co/32x32/b45309/ffffff?text=P1',
-      'https://placehold.co/32x32/f59e0b/ffffff?text=P2',
-    ]
-  }, // PATH
-  { name: 'Shop Door', color: 'bg-level-special', isSolid: false, image: ['https://placehold.co/32x32/9333ea/ffffff?text=SHOP'] }, // SHOP_DOOR
-  { name: 'Mine Entrance', color: 'bg-level-special', isSolid: false, image: ['https://placehold.co/32x32/292524/ffffff?text=MINE'] }, // MINE_ENTRANCE
+    image: []
+  }, // PATH = 3
+
+  // Indoor tiles (4-6)
+  {
+    name: 'Floor',
+    color: 'bg-level-floor',
+    isSolid: false,
+    image: []
+  }, // FLOOR = 4
+  {
+    name: 'Wall',
+    color: 'bg-level-wall',
+    isSolid: true,
+    image: []
+  }, // WALL = 5
+  {
+    name: 'Carpet',
+    color: 'bg-level-carpet',
+    isSolid: false,
+    image: []
+  }, // CARPET = 6
+
+  // Transition tiles (7-10)
+  {
+    name: 'Door',
+    color: 'bg-level-door',
+    isSolid: false,
+    image: []
+  }, // DOOR = 7
+  {
+    name: 'Exit Door',
+    color: 'bg-level-special',
+    isSolid: false,
+    image: []
+  }, // EXIT_DOOR = 8
+  {
+    name: 'Shop Door',
+    color: 'bg-level-special',
+    isSolid: false,
+    image: []
+  }, // SHOP_DOOR = 9
+  {
+    name: 'Mine Entrance',
+    color: 'bg-level-special',
+    isSolid: false,
+    image: []
+  }, // MINE_ENTRANCE = 10
+
+  // Furniture/objects (11-12)
+  {
+    name: 'Table',
+    color: 'bg-level-furniture',
+    isSolid: true,
+    image: []
+  }, // TABLE = 11
+  {
+    name: 'Chair',
+    color: 'bg-level-furniture',
+    isSolid: false,
+    image: []
+  }, // CHAIR = 12
 ];
 
 // --- Procedural Map Generation ---
@@ -120,5 +168,15 @@ generatePatches(TileType.ROCK, 20, 1, 3); // 20 small clusters of rock
 map[10][10] = TileType.SHOP_DOOR;
 map[20][40] = TileType.MINE_ENTRANCE;
 
+// 5. Ensure player spawn area is clear (3x3 area around spawn point)
+export const PLAYER_SPAWN_X = 5;
+export const PLAYER_SPAWN_Y = 5;
+for (let y = PLAYER_SPAWN_Y - 1; y <= PLAYER_SPAWN_Y + 1; y++) {
+    for (let x = PLAYER_SPAWN_X - 1; x <= PLAYER_SPAWN_X + 1; x++) {
+        if (y >= 0 && y < MAP_HEIGHT && x >= 0 && x < MAP_WIDTH) {
+            map[y][x] = TileType.GRASS; // Clear spawn area
+        }
+    }
+}
 
 export const MAP_DATA: TileType[][] = map;

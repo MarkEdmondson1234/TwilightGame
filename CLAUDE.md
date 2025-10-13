@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A peaceful top-down exploration and crafting game engine built with React, Vite, and TypeScript. Inspired by Stardew Valley, it features tile-based movement, sprite animation, collision detection, and a procedurally generated map. Currently uses placeholder graphics with support for custom artwork.
+A peaceful top-down exploration and crafting game engine built with React, Vite, and TypeScript. Inspired by Stardew Valley, it features tile-based movement, sprite animation, collision detection, and a **multi-map system** supporting both designed and procedurally generated maps with transitions. Currently uses placeholder graphics with support for custom artwork.
 
 ## Development Commands
 
@@ -19,9 +19,11 @@ A peaceful top-down exploration and crafting game engine built with React, Vite,
 
 **Critical**: Shared data must have exactly one authoritative location. All code must read from that single source.
 
-- **Map Data**: `utils/mapUtils.ts` exports `getTileData(x, y)` - the ONLY function permitted to read raw `MAP_DATA` and `TILE_LEGEND`
-  - Physics engine, renderer, and debug overlays all use this function
-  - Never access `MAP_DATA` or `TILE_LEGEND` directly from other files
+- **Map Data**: `maps/MapManager.ts` is the single source of truth for all map data
+  - `utils/mapUtils.ts` exports `getTileData(x, y)` which queries MapManager
+  - Physics engine, renderer, and debug overlays all use `getTileData()`
+  - Never access map data directly - always use MapManager
+- **Current Systems**: MapManager handles all map loading, transitions, and color schemes
 - **Future Systems**: When adding inventory, crafting, NPCs, etc., create a single authoritative manager/utility for that data
 
 ### DRY Principle
@@ -44,11 +46,20 @@ The game tests fundamental assumptions on startup:
 
 ### Core Files
 
-- `App.tsx` - Main game loop, player movement, collision detection, rendering, camera system
-- `constants.ts` - All game constants, tile definitions, player sprites, procedural map generation
-- `types.ts` - TypeScript types (`TileType`, `Position`, `Direction`, `TileData`)
-- `utils/mapUtils.ts` - Single source of truth for map data access
+- `App.tsx` - Main game loop, player movement, collision detection, rendering, camera system, map transitions
+- `constants.ts` - Game constants (`TILE_SIZE`, `PLAYER_SIZE`), tile legend with all tile types
+- `types.ts` - TypeScript types including `TileType`, `Position`, `Direction`, `MapDefinition`, `Transition`, `ColorScheme`
+- `utils/mapUtils.ts` - Tile data access via MapManager
 - `utils/testUtils.ts` - Startup sanity checks
+
+### Map System (`maps/`)
+
+- `maps/MapManager.ts` - **Single source of truth** for all map data, transitions, and current map state
+- `maps/index.ts` - Map registry, initialization, handles RANDOM_* map generation
+- `maps/gridParser.ts` - Converts character-based grid strings to TileType arrays
+- `maps/colorSchemes.ts` - Color scheme definitions for different map themes
+- `maps/procedural.ts` - Random map generators (forest, cave, shop)
+- `maps/definitions/` - Designed map files (homeInterior, village, etc.)
 
 ### Components
 
@@ -64,15 +75,43 @@ The game tests fundamental assumptions on startup:
 - Animation: 4-frame walk cycle per direction (frame 0 = idle), controlled by `ANIMATION_SPEED_MS` (150ms)
 - Collision: Checks all tiles within player bounding box using `getTileData()`, independent X/Y axis collision
 
-**Map System** (`constants.ts:82-123`):
-- Procedurally generated 50x30 tile world with rock borders
-- Random patches of water (5 patches, 4-8 tiles), paths (8 patches, 3-6 tiles), rocks (20 clusters, 1-3 tiles)
-- Fixed interactable locations: Shop Door at (10,10), Mine Entrance at (20,40)
-- Supports tile variations for visual diversity
+**Map System** (`maps/MapManager.ts`):
+- Manages multiple maps (both designed and procedurally generated)
+- Handles map transitions when player steps on transition tiles
+- Applies color schemes dynamically per map theme
+- Supports both grid-based designed maps (child-friendly) and procedural generation
+- Starting map: `home_interior` (small indoor room)
+- Hub map: `village` (30x30 outdoor area with multiple exits)
+- Random maps: forest, cave, shop (generated on demand with `RANDOM_*` IDs)
 
-**Camera System** (`App.tsx:126-127`):
+**Tile System**:
+- 13 tile types: outdoor (grass, rock, water, path), indoor (floor, wall, carpet), transitions (doors), furniture (table, chair)
+- Child-friendly grid codes: `G`=grass, `R`=rock, `#`=wall, `F`=floor, `D`=door, etc.
+- Color schemes override tile colors per map theme (indoor, village, forest, cave, water_area, shop)
+- See `MAP_GUIDE.md` for map creation instructions
+
+**Transition System** (`App.tsx:115-126`):
+- Detects when player position matches a transition tile
+- Loads target map and teleports player to spawn point
+- Supports transitions to specific maps or random map generation
+- Each transition defines: from position, tile type, target map ID, spawn point
+
+**Camera System**:
 - Follows player with centered viewport
-- Clamped to map boundaries
+- Clamped to current map boundaries (varies per map)
+
+## Creating New Maps
+
+See `MAP_GUIDE.md` for complete instructions. Quick reference:
+
+1. Create file in `maps/definitions/yourMap.ts`
+2. Draw map using grid codes (`G`=grass, `#`=wall, `F`=floor, `D`=door, etc.)
+3. Use `parseGrid()` to convert string to TileType array
+4. Define transitions for doors/exits
+5. Choose color scheme (indoor, village, forest, cave, water_area, shop)
+6. Register in `maps/index.ts`
+
+Example: `G` for grass, `R` for rock, `#` for walls, `F` for floor, `D` for door
 
 ## Asset Management
 
@@ -82,16 +121,18 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 - Player sprites: `[direction]_[frame].png` (e.g., `down_0.png`, `right_2.png`)
 - Tile sprites: `[tileName]_[variation].png` (e.g., `grass_0.png`, `rock_1.png`)
 - All sprites use `imageRendering: 'pixelated'` for pixel art
-- Currently using placeholder URLs from placehold.co
+- Background colors from color scheme show through transparent PNGs
 
 ## Development Guidelines
 
 1. **Always run sanity checks** (`runSelfTests()`) after modifying core systems
-2. **Never bypass SSoT**: Use `getTileData()` for all map access
+2. **Never bypass SSoT**: Use MapManager for map data, `getTileData()` for tile access
 3. **Add constants to `constants.ts`**: Never hardcode values
 4. **Test new systems**: Add checks to `testUtils.ts` for new features
 5. **Preserve game loop**: Player movement uses `requestAnimationFrame` - be careful with state updates
 6. **Follow existing patterns**: Independent X/Y collision, deterministic tile variation selection
+7. **Map creation**: Use child-friendly grid codes, register all maps in `maps/index.ts`
+8. **Color schemes**: Every map must reference a valid color scheme from `colorSchemes.ts`
 
 ## Technical Notes
 

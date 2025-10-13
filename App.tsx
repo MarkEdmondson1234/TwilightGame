@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { MAP_DATA, TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, PLAYER_SPRITES, PLAYER_SIZE } from './constants';
+import { TILE_SIZE, PLAYER_SPRITES, PLAYER_SIZE } from './constants';
 import { getTileData } from './utils/mapUtils';
 import { Position, Direction } from './types';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import { runSelfTests } from './utils/testUtils';
+import { initializeMaps, mapManager, transitionToMap } from './maps';
 
 const PLAYER_SPEED = 0.1; // tiles per frame
 const ANIMATION_SPEED_MS = 150; // time between animation frames
 
 const App: React.FC = () => {
-    const [playerPos, setPlayerPos] = useState<Position>({ x: 5, y: 5 });
+    const [isMapInitialized, setIsMapInitialized] = useState(false);
+    const [currentMapId, setCurrentMapId] = useState<string>('home_interior');
+    const [playerPos, setPlayerPos] = useState<Position>({ x: 5, y: 6 });
     const [direction, setDirection] = useState<Direction>(Direction.Down);
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
@@ -98,20 +101,46 @@ const App: React.FC = () => {
                 nextPos.y += dy;
             }
             
-            nextPos.x = Math.max(PLAYER_SIZE / 2, Math.min(MAP_WIDTH - (PLAYER_SIZE / 2), nextPos.x));
-            nextPos.y = Math.max(PLAYER_SIZE / 2, Math.min(MAP_HEIGHT - (PLAYER_SIZE / 2), nextPos.y));
-            
+            const currentMap = mapManager.getCurrentMap();
+            if (currentMap) {
+                nextPos.x = Math.max(PLAYER_SIZE / 2, Math.min(currentMap.width - (PLAYER_SIZE / 2), nextPos.x));
+                nextPos.y = Math.max(PLAYER_SIZE / 2, Math.min(currentMap.height - (PLAYER_SIZE / 2), nextPos.y));
+            }
+
             return nextPos;
         });
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
     }, [direction, keysPressed, checkCollision]);
 
+    // Check for map transitions
+    useEffect(() => {
+        const transitionData = mapManager.getTransitionAt(playerPos);
+        if (transitionData) {
+            const { transition } = transitionData;
+
+            // Transition to new map
+            const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition);
+            setCurrentMapId(map.id);
+            setPlayerPos(spawn);
+        }
+    }, [playerPos]);
+
+    // Initialize maps on startup (only once)
     useEffect(() => {
         runSelfTests(); // Run sanity checks on startup
+        initializeMaps(); // Initialize all maps and color schemes
+        mapManager.loadMap(currentMapId); // Load starting map
+        setIsMapInitialized(true);
+    }, []); // Only run once on mount
+
+    // Set up game loop and event listeners after map is initialized
+    useEffect(() => {
+        if (!isMapInitialized) return;
+
         window.addEventListener('keydown', handleKeyDown);
         window.addEventListener('keyup', handleKeyUp);
-        
+
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
         return () => {
@@ -121,26 +150,34 @@ const App: React.FC = () => {
                 cancelAnimationFrame(animationFrameId.current);
             }
         };
-    }, [gameLoop]);
-    
-    const cameraX = Math.min(MAP_WIDTH * TILE_SIZE - window.innerWidth, Math.max(0, playerPos.x * TILE_SIZE - window.innerWidth / 2));
-    const cameraY = Math.min(MAP_HEIGHT * TILE_SIZE - window.innerHeight, Math.max(0, playerPos.y * TILE_SIZE - window.innerHeight / 2));
+    }, [isMapInitialized, gameLoop]);
+
+    const currentMap = mapManager.getCurrentMap();
+    const mapWidth = currentMap ? currentMap.width : 50;
+    const mapHeight = currentMap ? currentMap.height : 30;
+
+    const cameraX = Math.min(mapWidth * TILE_SIZE - window.innerWidth, Math.max(0, playerPos.x * TILE_SIZE - window.innerWidth / 2));
+    const cameraY = Math.min(mapHeight * TILE_SIZE - window.innerHeight, Math.max(0, playerPos.y * TILE_SIZE - window.innerHeight / 2));
 
     const playerFrames = PLAYER_SPRITES[direction];
     const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
+
+    if (!isMapInitialized || !currentMap) {
+        return <div className="bg-gray-900 text-white w-screen h-screen flex items-center justify-center">Loading map...</div>;
+    }
 
     return (
         <div className="bg-gray-900 text-white w-screen h-screen overflow-hidden font-sans relative select-none">
             <div
                 className="relative"
                 style={{
-                    width: MAP_WIDTH * TILE_SIZE,
-                    height: MAP_HEIGHT * TILE_SIZE,
+                    width: mapWidth * TILE_SIZE,
+                    height: mapHeight * TILE_SIZE,
                     transform: `translate(${-cameraX}px, ${-cameraY}px)`,
                 }}
             >
                 {/* Render Map */}
-                {MAP_DATA.map((row, y) =>
+                {currentMap.grid.map((row, y) =>
                     row.map((_, x) => {
                         const tileData = getTileData(x, y);
                         if (!tileData) return null;
