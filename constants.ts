@@ -1,6 +1,6 @@
 import { TileType, TileData, Direction } from './types';
 
-export const TILE_SIZE = 32;
+export const TILE_SIZE = 64;
 export const MAP_WIDTH = 50;
 export const MAP_HEIGHT = 30;
 export const PLAYER_SIZE = 0.8; // fraction of a tile
@@ -35,48 +35,49 @@ export const PLAYER_SPRITES: Record<Direction, string[]> = {
 
 // Tile images now point to placeholder URLs and support variations for all background types.
 export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
-  { 
-    name: 'Grass', 
-    color: 'bg-green-600', 
-    isSolid: false, 
+  {
+    name: 'Grass',
+    color: 'bg-level-grass',
+    isSolid: false,
     image: [
-      'https://placehold.co/32x32/22c55e/000000?text=G0',
-      'https://placehold.co/32x32/16a34a/000000?text=G1',
-      'https://placehold.co/32x32/4ade80/000000?text=G2',
+      '/assets/tiles/grass_2.png',
+      '/assets/tiles/grass_3.png',
+      '/assets/tiles/grass_4.png',
+      '/assets/tiles/grass_5.png',
     ]
   }, // GRASS
-  { 
-    name: 'Rock', 
-    color: 'bg-gray-600', 
-    isSolid: true, 
+  {
+    name: 'Rock',
+    color: 'bg-level-rock',
+    isSolid: true,
     image: [
       'https://placehold.co/32x32/71717a/ffffff?text=R0',
       'https://placehold.co/32x32/52525b/ffffff?text=R1',
       'https://placehold.co/32x32/a1a1aa/ffffff?text=R2',
-    ] 
+    ]
   }, // ROCK
-  { 
-    name: 'Water', 
-    color: 'bg-blue-500', 
-    isSolid: true, 
+  {
+    name: 'Water',
+    color: 'bg-level-water',
+    isSolid: true,
     image: [
       'https://placehold.co/32x32/3b82f6/ffffff?text=W0',
       'https://placehold.co/32x32/60a5fa/ffffff?text=W1',
       'https://placehold.co/32x32/2563eb/ffffff?text=W2',
     ]
   }, // WATER
-  { 
-    name: 'Path', 
-    color: 'bg-amber-700', 
-    isSolid: false, 
+  {
+    name: 'Path',
+    color: 'bg-level-path',
+    isSolid: false,
     image: [
       'https://placehold.co/32x32/d97706/ffffff?text=P0',
       'https://placehold.co/32x32/b45309/ffffff?text=P1',
       'https://placehold.co/32x32/f59e0b/ffffff?text=P2',
     ]
   }, // PATH
-  { name: 'Shop Door', color: 'bg-purple-600', isSolid: false, image: ['https://placehold.co/32x32/9333ea/ffffff?text=SHOP'] }, // SHOP_DOOR
-  { name: 'Mine Entrance', color: 'bg-stone-800', isSolid: false, image: ['https://placehold.co/32x32/292524/ffffff?text=MINE'] }, // MINE_ENTRANCE
+  { name: 'Shop Door', color: 'bg-level-special', isSolid: false, image: ['https://placehold.co/32x32/9333ea/ffffff?text=SHOP'] }, // SHOP_DOOR
+  { name: 'Mine Entrance', color: 'bg-level-special', isSolid: false, image: ['https://placehold.co/32x32/292524/ffffff?text=MINE'] }, // MINE_ENTRANCE
 ];
 
 // --- Procedural Map Generation ---

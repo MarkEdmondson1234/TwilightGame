@@ -6,6 +6,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Top-Down Game Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              // Custom color palette from your design
+              'palette-tan': '#D4A373',
+              'palette-lavender': '#C5C6D0',
+              'palette-cream': '#EFE9E1',
+              'palette-slate': '#6B7A8F',
+              'palette-periwinkle': '#A5B3D9',
+              'palette-brown': '#7D5A50',
+              'palette-orange': '#D4763C',
+              'palette-gold': '#E6A847',
+              'palette-chocolate': '#6B4423',
+              'palette-navy': '#3E3F5E',
+              'palette-purple': '#4B3F72',
+              'palette-plum': '#5C3D5C',
+              'palette-burgundy': '#A4414F',
+              'palette-charcoal': '#3B3B4A',
+              'palette-taupe': '#8C7A6B',
+              'palette-khaki': '#B8997E',
+              'palette-beige': '#C4A882',
+              'palette-rust': '#8B4513',
+              'palette-maroon': '#8B3A3A',
+              'palette-olive': '#6B7B3F',
+              'palette-sage': '#8FAC5F',
+              'palette-moss': '#A4B86F',
+              'palette-terracotta': '#C47849',
+              'palette-peach': '#E0956A',
+              'palette-mauve': '#B5A3C4',
+              'palette-iris': '#6B5B95',
+              'palette-mustard': '#D4B85B',
+              'palette-teal': '#1F4B5F',
+              'palette-rose': '#E05D6F',
+              'palette-sky': '#A8D8EA',
+              'palette-coral': '#FF8552',
+              'palette-violet': '#6B1D5C',
+              'palette-magenta': '#A8357D',
+              'palette-gray': '#6B6B6B',
+              'palette-black': '#1A1A1A',
+              'palette-ivory': '#F5E6D3',
+
+              // Level-specific color assignments (customize these)
+              'level-grass': '#8FAC5F',      // sage green
+              'level-water': '#A8D8EA',      // sky blue
+              'level-rock': '#6B6B6B',       // gray
+              'level-path': '#C4A882',       // beige
+              'level-special': '#6B5B95',    // iris purple
+              'level-bg': '#3B3B4A',         // charcoal
+            }
+          }
+        }
+      }
+    </script>
   <script type="importmap">
 {
   "imports": {

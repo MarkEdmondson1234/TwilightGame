@@ -147,15 +147,16 @@ const App: React.FC = () => {
 
                         let imageUrl = 'none';
                         if (tileData.image && tileData.image.length > 0) {
-                            // Deterministic random selection for tile variations
-                            const hash = (x * 13 + y * 29) % tileData.image.length;
-                            imageUrl = `url(${tileData.image[hash]})`;
+                            // Better deterministic random selection using a pseudo-random hash
+                            const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
+                            const index = Math.floor((hash % 1) * tileData.image.length);
+                            imageUrl = `url(${tileData.image[index]})`;
                         }
 
                         return (
                             <div
                                 key={`${x}-${y}`}
-                                className={`absolute bg-center bg-cover ${imageUrl === 'none' ? tileData.color : ''}`}
+                                className={`absolute bg-center bg-contain ${tileData.color}`}
                                 style={{
                                     left: x * TILE_SIZE,
                                     top: y * TILE_SIZE,
