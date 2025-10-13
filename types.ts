@@ -18,6 +18,8 @@ export enum TileType {
   // Furniture/objects
   TABLE,
   CHAIR,
+  // Decorative (walkable)
+  MUSHROOM,
 }
 
 export interface Position {

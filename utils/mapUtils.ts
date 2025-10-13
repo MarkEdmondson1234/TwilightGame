@@ -61,6 +61,9 @@ export function getTileData(tileX: number, tileY: number): (Omit<TileData, 'type
       case TileType.CHAIR:
         color = colorScheme.colors.furniture;
         break;
+      case TileType.MUSHROOM:
+        color = colorScheme.colors.mushroom;
+        break;
     }
   }
 

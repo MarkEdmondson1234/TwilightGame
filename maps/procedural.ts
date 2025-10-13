@@ -73,6 +73,16 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add mushrooms scattered throughout forest (walkable decoration)
+  for (let i = 0; i < 25; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles
+    if (map[y][x] === TileType.GRASS) {
+      map[y][x] = TileType.MUSHROOM;
+    }
+  }
+
   // Place exit back to village on left side (middle of map)
   map[spawnY][1] = TileType.PATH;
 
@@ -137,6 +147,16 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
         map[y][x] = TileType.FLOOR;
       }
+    }
+  }
+
+  // Add mushrooms scattered throughout cave (walkable decoration)
+  for (let i = 0; i < 30; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on floor tiles
+    if (map[y][x] === TileType.FLOOR) {
+      map[y][x] = TileType.MUSHROOM;
     }
   }
 

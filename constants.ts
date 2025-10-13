@@ -129,6 +129,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: []
   }, // CHAIR = 12
+  // Decorative (13)
+  {
+    name: 'Mushroom',
+    color: 'bg-level-mushroom',  // Will be set per map by color scheme
+    isSolid: false,
+    image: ['/assets/tiles/mushrooms.png']
+  }, // MUSHROOM = 13
 ];
 
 // --- Procedural Map Generation ---
