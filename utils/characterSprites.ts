@@ -88,17 +88,20 @@ function generatePlaceholderSprite(
 }
 
 /**
- * Generate custom sprite path (for when assets are added)
+ * Generate custom sprite layers for a character
  *
- * Future implementation will composite multiple sprite layers:
- * - /assets/player/base/{direction}_{frame}.png (body outline)
- * - /assets/player/skin/{skinTone}/{direction}_{frame}.png
- * - /assets/player/hair/{hairStyle}_{hairColor}/{direction}_{frame}.png
- * - /assets/player/clothes/{clothesStyle}_{clothesColor}/{direction}_{frame}.png
- * - /assets/player/shoes/{shoesStyle}_{shoesColor}/{direction}_{frame}.png
- * - /assets/player/glasses/{glassesType}/{direction}_{frame}.png (if not 'none')
+ * Layers system for compositing sprites:
+ * - Base character sprite (e.g., /assets/player/character1/default/{direction}_{frame}.png)
+ * - Optional variation layers on top (hats, clothes, accessories)
  *
- * The game will render these as stacked div backgrounds or use canvas compositing.
+ * Structure:
+ * /assets/player/{characterId}/base/{direction}_{frame}.png - Base character
+ * /assets/player/{characterId}/variations/{variationName}/{direction}_{frame}.png - Layered variations
+ *
+ * Example:
+ * /assets/player/character1/base/down_0.png
+ * /assets/player/character1/variations/winter_hat/down_0.png
+ * /assets/player/character1/variations/winter_coat/down_0.png
  */
 function generateCustomSprite(
   character: CharacterCustomization,
@@ -107,26 +110,31 @@ function generateCustomSprite(
 ): { layers: string[], fallbackUrl: string } {
   const directionName = ['up', 'down', 'left', 'right'][direction];
 
-  // Build layer paths (these would be actual sprite files)
+  // Map character customization to character ID
+  // For now, use character name as ID (can be more sophisticated later)
+  const characterId = character.name.toLowerCase().replace(/\s+/g, '_');
+
+  // Start with base character sprite
   const layers = [
-    `/assets/player/base/${directionName}_${frame}.png`,
-    `/assets/player/skin/${character.skin}/${directionName}_${frame}.png`,
+    `/assets/player/${characterId}/base/${directionName}_${frame}.png`,
   ];
 
-  // Only add hair if not bald
-  if (character.hairStyle !== 'bald') {
-    layers.push(`/assets/player/hair/${character.hairStyle}_${character.hairColor}/${directionName}_${frame}.png`);
+  // Add variation layers based on customization
+  // These are optional layers that go on top of the base
+  if (character.hairStyle && character.hairStyle !== 'bald') {
+    layers.push(`/assets/player/${characterId}/variations/hair_${character.hairStyle}/${directionName}_${frame}.png`);
   }
 
-  layers.push(
-    `/assets/player/clothes/${character.clothesStyle}_${character.clothesColor}/${directionName}_${frame}.png`,
-    `/assets/player/shoes/${character.shoesStyle}_${character.shoesColor}/${directionName}_${frame}.png`
-  );
-
-  // Add glasses if equipped
-  if (character.glasses !== 'none') {
-    layers.push(`/assets/player/glasses/${character.glasses}/${directionName}_${frame}.png`);
+  if (character.clothesStyle && character.clothesStyle !== 'default') {
+    layers.push(`/assets/player/${characterId}/variations/clothes_${character.clothesStyle}/${directionName}_${frame}.png`);
   }
+
+  if (character.glasses && character.glasses !== 'none') {
+    layers.push(`/assets/player/${characterId}/variations/glasses_${character.glasses}/${directionName}_${frame}.png`);
+  }
+
+  // Add any equipped items/accessories
+  // Future: iterate through character.equipment array
 
   // Fallback to placeholder
   const fallbackUrl = generatePlaceholderSprite(character, direction, frame);
@@ -137,8 +145,12 @@ function generateCustomSprite(
 /**
  * Generate all sprite URLs for a character (all directions and frames)
  *
- * Returns a Record<Direction, string[]> matching the PLAYER_SPRITES structure.
+ * Returns a Record<Direction, string[] | string[][]> matching the PLAYER_SPRITES structure.
  * Each direction has 4 frames (0 = idle, 1-3 = walking animation)
+ *
+ * Returns:
+ * - string[] for simple single-layer sprites (current temporary implementation)
+ * - string[][] for layered sprites (future: each frame can have multiple layers)
  */
 export function generateCharacterSprites(character: CharacterCustomization): Record<Direction, string[]> {
   try {
@@ -148,8 +160,31 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
       return generateSVGPlaceholders(DEFAULT_CHARACTER);
     }
 
-    // Use SVG placeholders for now
-    // When custom sprites are ready, check hasCustomSprites() and use generateCustomSprite()
+    // Use custom sprites if available
+    if (hasCustomSprites()) {
+      // Map character name to character ID (e.g., "Player" -> "character1")
+      // For now, default to "character1" for the main character
+      const characterId = 'character1'; // TODO: Map character.name to actual character IDs
+
+      const svgSprites = generateSVGPlaceholders(character);
+
+      // Assets in /public/ are served from root with base path
+      // Use down_0 for all directions until more sprites are drawn
+      const downSprite = `/TwilightGame/assets/${characterId}/base/down_0.png`;
+      return {
+        [Direction.Up]: [downSprite, downSprite, downSprite, downSprite],
+        [Direction.Down]: [
+          `/TwilightGame/assets/${characterId}/base/down_0.png`,
+          `/TwilightGame/assets/${characterId}/base/down_1.png`,
+          `/TwilightGame/assets/${characterId}/base/down_0.png`, // Reuse down_0 for frame 2
+          `/TwilightGame/assets/${characterId}/base/down_1.png`, // Reuse down_1 for frame 3
+        ],
+        [Direction.Left]: [downSprite, downSprite, downSprite, downSprite],
+        [Direction.Right]: [downSprite, downSprite, downSprite, downSprite],
+      };
+    }
+
+    // Fallback to SVG placeholders
     return generateSVGPlaceholders(character);
   } catch (error) {
     console.error('[CharacterSprites] Error generating sprites:', error);
@@ -175,12 +210,10 @@ export function generateCharacterSpriteLayers(
  * Check if custom sprite assets exist
  *
  * Helper function to detect if custom sprites are available.
- * Returns false for now (using placeholders), but can check for actual files later.
+ * Returns true now that we have custom artwork in /assets/player/
  */
 export function hasCustomSprites(): boolean {
-  // TODO: Implement asset detection when sprites are added
-  // Could check if /assets/player/base/down_0.png exists
-  return false;
+  return true;
 }
 
 /**

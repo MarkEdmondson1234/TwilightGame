@@ -159,69 +159,14 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
 
           {/* Character Preview */}
           <div className="relative w-64 h-64 bg-slate-700 rounded-lg border-4 border-slate-600 mb-4 flex items-center justify-center">
-            {/* Character visualization - simplified layered approach */}
-            <div className="relative w-48 h-48" style={{ imageRendering: 'pixelated' }}>
-              {/* Body (clothes) */}
-              <div
-                className={`absolute inset-0 ${CLOTHES_COLORS.find(c => c.id === character.clothesColor)?.color || 'bg-blue-600'} rounded-lg`}
-                style={{ top: '40%', height: '60%' }}
+            {/* Show actual character sprite if using custom character */}
+            <div className="relative flex items-center justify-center">
+              <img
+                src="/TwilightGame/assets/character1/base/down_0.png"
+                alt="Character Preview"
+                className="w-48 h-48"
+                style={{ imageRendering: 'pixelated' }}
               />
-
-              {/* Shoes */}
-              <div
-                className={`absolute ${SHOES_COLORS.find(c => c.id === character.shoesColor)?.color || 'bg-amber-800'}`}
-                style={{ bottom: 0, left: '20%', width: '25%', height: '15%', borderRadius: '4px' }}
-              />
-              <div
-                className={`absolute ${SHOES_COLORS.find(c => c.id === character.shoesColor)?.color || 'bg-amber-800'}`}
-                style={{ bottom: 0, right: '20%', width: '25%', height: '15%', borderRadius: '4px' }}
-              />
-
-              {/* Head (skin) */}
-              <div
-                className={`absolute ${SKIN_COLORS.find(c => c.id === character.skin)?.color || 'bg-amber-300'} rounded-full`}
-                style={{ top: '10%', left: '25%', width: '50%', height: '35%' }}
-              />
-
-              {/* Hair */}
-              {character.hairStyle !== 'bald' && (
-                <div
-                  className={`absolute ${HAIR_COLORS.find(c => c.id === character.hairColor)?.color || 'bg-amber-800'}`}
-                  style={{
-                    top: '8%',
-                    left: '22%',
-                    width: '56%',
-                    height: character.hairStyle === 'long' ? '45%' : '20%',
-                    borderRadius: character.hairStyle === 'curly' ? '50%' : '8px 8px 0 0',
-                  }}
-                />
-              )}
-
-              {/* Eyes */}
-              <div
-                className={`absolute ${EYE_COLORS.find(c => c.id === character.eyeColor)?.color || 'bg-amber-800'} rounded-full`}
-                style={{ top: '25%', left: '35%', width: '8%', height: '6%' }}
-              />
-              <div
-                className={`absolute ${EYE_COLORS.find(c => c.id === character.eyeColor)?.color || 'bg-amber-800'} rounded-full`}
-                style={{ top: '25%', right: '35%', width: '8%', height: '6%' }}
-              />
-
-              {/* Glasses */}
-              {character.glasses !== 'none' && (
-                <div
-                  className="absolute border-2 border-gray-900"
-                  style={{
-                    top: '23%',
-                    left: '28%',
-                    width: '44%',
-                    height: '12%',
-                    borderRadius: character.glasses === 'round' ? '50%' : '4px',
-                    backgroundColor: character.glasses === 'sunglasses' ? 'rgba(0,0,0,0.5)' : 'transparent',
-                  }}
-                />
-              )}
-
               {/* Weapon indicator */}
               <div className="absolute -right-12 bottom-8 text-4xl">
                 {WEAPON_OPTIONS.find(w => w.id === character.weapon)?.emoji}
@@ -240,6 +185,40 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
         {/* Right Panel - Customization Options */}
         <div className="w-full md:w-1/2 bg-slate-900 overflow-y-auto">
           <div className="p-6 space-y-4">
+            {/* Base Character Selection */}
+            <div className="bg-slate-800 rounded-lg p-4 border border-slate-600">
+              <label className="block text-sm font-bold text-teal-300 mb-3">Choose Your Character</label>
+              <div className="grid grid-cols-2 gap-4">
+                {/* Character 1 - Your daughter's character */}
+                <button
+                  onClick={() => setCharacter({ ...character, name: character.name || 'Character 1' })}
+                  className={`flex flex-col items-center p-4 bg-slate-700 hover:bg-slate-600 rounded-lg border-2 transition-all ${
+                    character.name === 'Character 1' ? 'border-teal-400' : 'border-transparent hover:border-teal-400'
+                  }`}
+                >
+                  <img
+                    src="/TwilightGame/assets/character1/base/down_0.png"
+                    alt="Character 1"
+                    className="w-16 h-16 mb-2"
+                    style={{ imageRendering: 'pixelated' }}
+                  />
+                  <span className="text-sm text-white font-medium">Character 1</span>
+                </button>
+
+                {/* Coming Soon placeholder for Character 2 */}
+                <button
+                  disabled
+                  className="flex flex-col items-center p-4 bg-slate-700 opacity-50 rounded-lg border-2 border-transparent cursor-not-allowed"
+                >
+                  <div className="w-16 h-16 mb-2 bg-slate-600 rounded flex items-center justify-center text-2xl">
+                    ?
+                  </div>
+                  <span className="text-sm text-gray-400 font-medium">Coming Soon</span>
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2 text-center">Select your base character</p>
+            </div>
+
             {/* Character Presets */}
             {!isEditMode && (
               <div className="bg-slate-800 rounded-lg p-4 border border-slate-600">
@@ -266,7 +245,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
                     );
                   })}
                 </div>
-                <p className="text-xs text-gray-400 mt-2 text-center">Click a preset to start, then customize below</p>
+                <p className="text-xs text-gray-400 mt-2 text-center">Or try these placeholder presets</p>
               </div>
             )}
 

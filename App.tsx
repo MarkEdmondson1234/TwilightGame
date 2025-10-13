@@ -358,6 +358,10 @@ const App: React.FC = () => {
     const playerFrames = playerSprites[direction];
     const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
 
+    // Scale up custom character sprites (they're higher resolution than placeholders)
+    const isCustomSprite = playerSpriteUrl.includes('/assets/character');
+    const spriteScale = isCustomSprite ? 3.5 : 1.0; // 3.5x larger for custom art
+
     // Show character creator if no character selected
     if (showCharacterCreator) {
         return <CharacterCreator onComplete={handleCharacterCreated} />;
@@ -450,10 +454,10 @@ const App: React.FC = () => {
                     alt="Player"
                     className="absolute"
                     style={{
-                        left: (playerPos.x - PLAYER_SIZE / 2) * TILE_SIZE,
-                        top: (playerPos.y - PLAYER_SIZE / 2) * TILE_SIZE,
-                        width: PLAYER_SIZE * TILE_SIZE,
-                        height: PLAYER_SIZE * TILE_SIZE,
+                        left: (playerPos.x - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
+                        top: (playerPos.y - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
+                        width: PLAYER_SIZE * spriteScale * TILE_SIZE,
+                        height: PLAYER_SIZE * spriteScale * TILE_SIZE,
                         imageRendering: 'pixelated',
                     }}
                 />
