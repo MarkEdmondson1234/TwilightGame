@@ -45,9 +45,9 @@ LXXXPXXXXXPXXXXXGGGL
 LXXXPXXXXXPXXXXXGGGL
 LXXXPXXXXXPXXXXXGGGL
 LPPPPPPPPPPPPPPPPGGL
-LGGGGGGGOOOBGGGGGGGR
-LGGGGGGGOBVBGGGGGGGR
-LGGGGGGGOBNBGGGGGGGR
+LGGGGGGGOOOBGGGGGGL
+LGGGGGGGOBVBGGGGGGL
+LGGGGGGGOBNBGGGGGGL
 LGGGGGGGGGGGGGGGGGGL
 LGGGGGGPPPPPPGGGUUGL
 LGGGGGGPGGGGGGGGGGGL
@@ -62,7 +62,7 @@ export const farmArea: MapDefinition = {
   grid: parseGrid(gridString),
   colorScheme: 'village',
   isRandom: false,
-  spawnPoint: { x: 10, y: 24 }, // On path near entrance
+  spawnPoint: { x: 8, y: 24 }, // On path near entrance (changed from 10 to 8 - on the P tile)
   transitions: [
     {
       fromPosition: { x: 10, y: 24 },

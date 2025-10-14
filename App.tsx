@@ -16,7 +16,7 @@ import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { getCrop } from './data/crops';
 
-const PLAYER_SPEED = 0.1; // tiles per frame
+const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = 150; // time between animation frames
 
 const App: React.FC = () => {
@@ -54,6 +54,7 @@ const App: React.FC = () => {
     const keysPressed = useRef<Record<string, boolean>>({}).current;
     const animationFrameId = useRef<number | null>(null);
     const lastAnimationTime = useRef(Date.now());
+    const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
     const lastTransitionTime = useRef<number>(0);
     const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
 
@@ -83,6 +84,12 @@ const App: React.FC = () => {
     }, []);
 
     const handleKeyDown = (e: KeyboardEvent) => {
+        // Ignore all keys if user is typing in an input/textarea
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+            return;
+        }
+
         // Special keys that work even during dialogue
         if (e.key === 'F3') {
             e.preventDefault();
@@ -341,6 +348,11 @@ const App: React.FC = () => {
     };
 
     const gameLoop = useCallback(() => {
+        // Calculate delta time for frame-rate independent movement
+        const now = Date.now();
+        const deltaTime = Math.min((now - lastFrameTime.current) / 1000, 0.1); // Cap at 100ms to avoid huge jumps
+        lastFrameTime.current = now;
+
         // Pause movement when dialogue is open
         if (activeNPC) {
             animationFrameId.current = requestAnimationFrame(gameLoop);
@@ -367,7 +379,6 @@ const App: React.FC = () => {
             else if (vectorX > 0) setDirection(Direction.Right);
 
             // Animate based on time - cycle through walking frames only
-            const now = Date.now();
             if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
                 lastAnimationTime.current = now;
                 setAnimationFrame(prev => {
@@ -379,15 +390,16 @@ const App: React.FC = () => {
                 });
             }
         }
-        
+
         setPlayerPos(prevPos => {
             if (!isMoving) return prevPos;
 
             const magnitude = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
             if (magnitude === 0) return prevPos;
 
-            const dx = (vectorX / magnitude) * PLAYER_SPEED;
-            const dy = (vectorY / magnitude) * PLAYER_SPEED;
+            // Delta-time based movement: speed * deltaTime gives consistent movement regardless of frame rate
+            const dx = (vectorX / magnitude) * PLAYER_SPEED * deltaTime;
+            const dy = (vectorY / magnitude) * PLAYER_SPEED * deltaTime;
 
             let nextPos = { ...prevPos };
 
@@ -707,6 +719,14 @@ const App: React.FC = () => {
                     onDirectionPress={handleDirectionPress}
                     onDirectionRelease={handleDirectionRelease}
                     onActionPress={handleActionPress}
+                    onResetPress={() => {
+                        const currentMap = mapManager.getCurrentMap();
+                        if (currentMap && currentMap.spawnPoint) {
+                            console.log('[Touch Reset] Teleporting to spawn point:', currentMap.spawnPoint);
+                            setPlayerPos(currentMap.spawnPoint);
+                            playerPosRef.current = currentMap.spawnPoint;
+                        }
+                    }}
                 />
             )}
             {activeNPC && (
