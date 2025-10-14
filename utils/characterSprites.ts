@@ -166,10 +166,7 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
       const characterId = character.characterId || 'character1';
 
       // Assets in /public/ are served from root with base path
-      // Detect if we're in production (GitHub Pages) or local dev
-      const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
-      const base = isProduction ? '/TwilightGame/' : '/';
-      const basePath = `${base}assets/${characterId}/base`;
+      const basePath = `/TwilightGame/assets/${characterId}/base`;
 
       // Fallback sprite for directions without custom sprites yet
       const fallbackSprite = `${basePath}/down_0.png`;
@@ -187,8 +184,18 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
           `${basePath}/down_0.png`, // Reuse down_0 for frame 2
           `${basePath}/down_1.png`, // Reuse down_1 for frame 3
         ],
-        [Direction.Left]: [fallbackSprite, fallbackSprite, fallbackSprite, fallbackSprite],
-        [Direction.Right]: [fallbackSprite, fallbackSprite, fallbackSprite, fallbackSprite],
+        [Direction.Left]: [
+          `${basePath}/left_0.png`,
+          `${basePath}/left_1.png`,
+          `${basePath}/left_2.png`,
+          `${basePath}/left_3.png`,
+        ],
+        [Direction.Right]: [
+          `${basePath}/right_0.png`,
+          `${basePath}/right_1.png`,
+          `${basePath}/right_2.png`,
+          `${basePath}/right_3.png`,
+        ],
       };
     }
 
