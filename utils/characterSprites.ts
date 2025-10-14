@@ -166,7 +166,10 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
       const characterId = character.characterId || 'character1';
 
       // Assets in /public/ are served from root with base path
-      const basePath = `/TwilightGame/assets/${characterId}/base`;
+      // Detect if we're in production (GitHub Pages) or local dev
+      const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+      const base = isProduction ? '/TwilightGame/' : '/';
+      const basePath = `${base}assets/${characterId}/base`;
 
       // Fallback sprite for directions without custom sprites yet
       const fallbackSprite = `${basePath}/down_0.png`;

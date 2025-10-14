@@ -140,7 +140,7 @@ export const village: MapDefinition = {
       position: { x: 7, y: 9 }, // On path near shop
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
-      sprite: '/TwilightGame/public/assets/npcs/elder.svg',
+      sprite: '/TwilightGame/assets/npcs/elder.svg',
       dialogue: [
         {
           id: 'greeting',
@@ -154,7 +154,7 @@ export const village: MapDefinition = {
       position: { x: 11, y: 11 }, // On path near shop entrance
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
-      sprite: '/TwilightGame/public/assets/npcs/shopkeeper.svg',
+      sprite: '/TwilightGame/assets/npcs/shopkeeper.svg',
       dialogue: [
         {
           id: 'greeting',
@@ -168,7 +168,7 @@ export const village: MapDefinition = {
       position: { x: 15, y: 17 }, // On main path in village center
       direction: Direction.Right,
       behavior: NPCBehavior.STATIC,
-      sprite: '/TwilightGame/public/assets/npcs/child.svg',
+      sprite: '/TwilightGame/assets/npcs/child.svg',
       dialogue: [
         {
           id: 'greeting',
