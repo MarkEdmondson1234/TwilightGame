@@ -162,25 +162,30 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
 
     // Use custom sprites if available
     if (hasCustomSprites()) {
-      // Map character name to character ID (e.g., "Player" -> "character1")
-      // For now, default to "character1" for the main character
-      const characterId = 'character1'; // TODO: Map character.name to actual character IDs
-
-      const svgSprites = generateSVGPlaceholders(character);
+      // Use characterId from character customization, fallback to 'character1'
+      const characterId = character.characterId || 'character1';
 
       // Assets in /public/ are served from root with base path
-      // Use down_0 for all directions until more sprites are drawn
-      const downSprite = `/TwilightGame/assets/${characterId}/base/down_0.png`;
+      const basePath = `/TwilightGame/assets/${characterId}/base`;
+
+      // Fallback sprite for directions without custom sprites yet
+      const fallbackSprite = `${basePath}/down_0.png`;
+
       return {
-        [Direction.Up]: [downSprite, downSprite, downSprite, downSprite],
-        [Direction.Down]: [
-          `/TwilightGame/assets/${characterId}/base/down_0.png`,
-          `/TwilightGame/assets/${characterId}/base/down_1.png`,
-          `/TwilightGame/assets/${characterId}/base/down_0.png`, // Reuse down_0 for frame 2
-          `/TwilightGame/assets/${characterId}/base/down_1.png`, // Reuse down_1 for frame 3
+        [Direction.Up]: [
+          `${basePath}/up_0.png`,
+          `${basePath}/up_1.png`,
+          `${basePath}/up_0.png`, // Reuse up_0 for frame 2
+          `${basePath}/up_1.png`, // Reuse up_1 for frame 3
         ],
-        [Direction.Left]: [downSprite, downSprite, downSprite, downSprite],
-        [Direction.Right]: [downSprite, downSprite, downSprite, downSprite],
+        [Direction.Down]: [
+          `${basePath}/down_0.png`,
+          `${basePath}/down_1.png`,
+          `${basePath}/down_0.png`, // Reuse down_0 for frame 2
+          `${basePath}/down_1.png`, // Reuse down_1 for frame 3
+        ],
+        [Direction.Left]: [fallbackSprite, fallbackSprite, fallbackSprite, fallbackSprite],
+        [Direction.Right]: [fallbackSprite, fallbackSprite, fallbackSprite, fallbackSprite],
       };
     }
 
@@ -220,6 +225,7 @@ export function hasCustomSprites(): boolean {
  * Default character for fallback
  */
 export const DEFAULT_CHARACTER: CharacterCustomization = {
+  characterId: 'character1',
   name: 'Player',
   skin: 'medium',
   hairStyle: 'short',

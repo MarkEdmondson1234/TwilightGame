@@ -27,7 +27,7 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
   village: {
     name: 'village',
     colors: {
-      grass: 'bg-palette-sage',
+      grass: 'bg-palette-khaki',
       rock: 'bg-palette-gray',
       water: 'bg-palette-sky',
       path: 'bg-palette-beige',

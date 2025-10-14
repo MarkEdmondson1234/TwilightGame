@@ -117,9 +117,10 @@ Example: `G` for grass, `R` for rock, `#` for walls, `F` for floor, `D` for door
 
 See `ASSETS.md` for complete asset guidelines. Key points:
 
-- Assets go in `/assets/player/` and `/assets/tiles/`
-- Player sprites: `[direction]_[frame].png` (e.g., `down_0.png`, `right_2.png`)
-- Tile sprites: `[tileName]_[variation].png` (e.g., `grass_0.png`, `rock_1.png`)
+- Assets go in `/public/assets/` (organized into character1/, npcs/, and tiles/ subdirectories)
+- Player sprites: Layered system in `/public/assets/character1/`
+- NPC sprites: SVG files in `/public/assets/npcs/`
+- Tile sprites: `[tileName]_[variation].png` (e.g., `grass_0.png`, `rock_1.png`) in `/public/assets/tiles/`
 - All sprites use `imageRendering: 'pixelated'` for pixel art
 - Background colors from color scheme show through transparent PNGs
 

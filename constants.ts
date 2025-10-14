@@ -168,6 +168,49 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,
     image: []
   }, // BUILDING_WINDOW = 18
+  // Farmland tiles (19-25)
+  {
+    name: 'Fallow Soil',
+    color: 'bg-amber-900',
+    isSolid: false,
+    image: []
+  }, // SOIL_FALLOW = 19
+  {
+    name: 'Tilled Soil',
+    color: 'bg-amber-950',
+    isSolid: false,
+    image: []
+  }, // SOIL_TILLED = 20
+  {
+    name: 'Planted Soil',
+    color: 'bg-green-900',
+    isSolid: false,
+    image: []
+  }, // SOIL_PLANTED = 21
+  {
+    name: 'Watered Soil',
+    color: 'bg-green-800',
+    isSolid: false,
+    image: []
+  }, // SOIL_WATERED = 22
+  {
+    name: 'Ready Crop',
+    color: 'bg-green-500',
+    isSolid: false,
+    image: []
+  }, // SOIL_READY = 23
+  {
+    name: 'Wilting Crop',
+    color: 'bg-yellow-700',
+    isSolid: false,
+    image: []
+  }, // SOIL_WILTING = 24
+  {
+    name: 'Dead Crop',
+    color: 'bg-gray-700',
+    isSolid: false,
+    image: []
+  }, // SOIL_DEAD = 25
 ];
 
 // --- Procedural Map Generation ---

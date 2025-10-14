@@ -9,7 +9,10 @@
  * - Quest/achievement progress
  */
 
+import { FarmPlot } from './types';
+
 export interface CharacterCustomization {
+  characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
   name: string;
   skin: string;
   hairStyle: string;
@@ -45,9 +48,11 @@ export interface GameState {
     [itemId: string]: number;  // itemId -> quantity
   };
 
-  // Farming
+  // Farming (plots are now managed by FarmManager and persisted here)
   farming: {
     plots: FarmPlot[];
+    currentTool: 'hoe' | 'seeds' | 'wateringCan' | 'hand'; // Current farming tool
+    selectedSeed: string | null; // Currently selected seed type
   };
 
   // Crafting
@@ -66,12 +71,7 @@ export interface GameState {
   };
 }
 
-export interface FarmPlot {
-  id: string;
-  cropType: string | null;
-  plantedAt: number | null;  // timestamp
-  growthStage: number;  // 0-3
-}
+// FarmPlot is now defined in types.ts to avoid circular dependencies
 
 class GameStateManager {
   private state: GameState;
@@ -108,13 +108,20 @@ class GameStateManager {
 
         // Validate character has all required fields (in case of partial old data)
         if (parsed.selectedCharacter) {
-          const requiredFields = ['name', 'skin', 'hairStyle', 'hairColor', 'eyeColor', 'clothesStyle', 'clothesColor', 'shoesStyle', 'shoesColor', 'glasses', 'weapon'];
+          const requiredFields = ['characterId', 'name', 'skin', 'hairStyle', 'hairColor', 'eyeColor', 'clothesStyle', 'clothesColor', 'shoesStyle', 'shoesColor', 'glasses', 'weapon'];
           const hasAllFields = requiredFields.every(field => parsed.selectedCharacter[field] !== undefined);
 
           if (!hasAllFields) {
             console.log('[GameState] Character data incomplete - resetting to force re-creation');
             parsed.selectedCharacter = null;
           }
+        }
+
+        // Migrate old farming data structure
+        if (!parsed.farming.currentTool) {
+          console.log('[GameState] Migrating old save data - adding farming tools');
+          parsed.farming.currentTool = 'hand';
+          parsed.farming.selectedSeed = 'radish';
         }
 
         return parsed;
@@ -136,6 +143,8 @@ class GameStateManager {
       inventory: {},
       farming: {
         plots: [],
+        currentTool: 'hand',
+        selectedSeed: 'radish', // Start with radish seeds
       },
       crafting: {
         unlockedRecipes: [],
@@ -345,6 +354,39 @@ class GameStateManager {
 
   // === Save/Load Methods ===
 
+  // === Farming Methods ===
+
+  setFarmingTool(tool: 'hoe' | 'seeds' | 'wateringCan' | 'hand'): void {
+    this.state.farming.currentTool = tool;
+    console.log(`[GameState] Switched to ${tool}`);
+    this.notify();
+  }
+
+  getFarmingTool(): 'hoe' | 'seeds' | 'wateringCan' | 'hand' {
+    return this.state.farming.currentTool;
+  }
+
+  setSelectedSeed(seedId: string | null): void {
+    this.state.farming.selectedSeed = seedId;
+    if (seedId) {
+      console.log(`[GameState] Selected seed: ${seedId}`);
+    }
+    this.notify();
+  }
+
+  getSelectedSeed(): string | null {
+    return this.state.farming.selectedSeed;
+  }
+
+  saveFarmPlots(plots: FarmPlot[]): void {
+    this.state.farming.plots = plots;
+    this.notify();
+  }
+
+  loadFarmPlots(): FarmPlot[] {
+    return this.state.farming.plots;
+  }
+
   resetState(): void {
     this.state = {
       selectedCharacter: null,
@@ -356,7 +398,7 @@ class GameStateManager {
         position: { x: 15, y: 25 },
       },
       inventory: {},
-      farming: { plots: [] },
+      farming: { plots: [], currentTool: 'hand', selectedSeed: 'radish' },
       crafting: { unlockedRecipes: [], materials: {} },
       stats: { gamesPlayed: 0, totalPlayTime: 0, mushroomsCollected: 0 },
     };

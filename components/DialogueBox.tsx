@@ -15,28 +15,18 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, onClose }) => {
   const currentDialogue = npc.dialogue[0];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 p-4">
-      <div className="bg-slate-800 rounded-lg border-4 border-slate-600 w-full max-w-2xl mb-4 shadow-2xl">
-        {/* NPC Name Header */}
-        <div className="bg-slate-700 px-6 py-3 border-b-2 border-slate-600 flex justify-between items-center">
-          <h3 className="text-xl font-bold text-teal-300">{npc.name}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl font-bold leading-none"
-          >
-            ×
-          </button>
-        </div>
-
+    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-end justify-center z-50">
+      <div className="bg-slate-900 border-t-4 border-teal-500 w-full max-w-3xl shadow-2xl">
         {/* Dialogue Content */}
-        <div className="p-6 space-y-4">
-          <p className="text-white text-lg leading-relaxed">
+        <div className="p-6">
+          <h3 className="text-teal-400 font-bold text-sm tracking-wide mb-3">{npc.name}</h3>
+          <p className="text-gray-100 text-xl leading-relaxed mb-4 font-serif">
             {currentDialogue.text}
           </p>
 
           {/* Response options (if any) */}
           {currentDialogue.responses && currentDialogue.responses.length > 0 && (
-            <div className="space-y-2">
+            <div className="space-y-2 mb-4">
               {currentDialogue.responses.map((response, index) => (
                 <button
                   key={index}
@@ -44,7 +34,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, onClose }) => {
                     // Future: navigate to response.nextId
                     console.log(`Selected response: ${response.text}`);
                   }}
-                  className="w-full bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg text-left transition-colors border-2 border-transparent hover:border-teal-400"
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-gray-200 px-4 py-3 text-left transition-colors border-l-2 border-transparent hover:border-teal-400"
                 >
                   → {response.text}
                 </button>
@@ -52,15 +42,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, onClose }) => {
             </div>
           )}
 
-          {/* Close button */}
-          <div className="pt-4 border-t border-slate-600">
-            <button
-              onClick={onClose}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg transition-colors"
-            >
-              Close [Esc]
-            </button>
-          </div>
+          <div className="text-right text-gray-500 text-sm">Press E to close</div>
         </div>
       </div>
     </div>

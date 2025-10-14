@@ -13,6 +13,8 @@ import { gameState, CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
 import { generateCharacterSprites, DEFAULT_CHARACTER } from './utils/characterSprites';
 import { npcManager } from './NPCManager';
+import { farmManager } from './utils/farmManager';
+import { getCrop } from './data/crops';
 
 const PLAYER_SPEED = 0.1; // tiles per frame
 const ANIMATION_SPEED_MS = 150; // time between animation frames
@@ -112,16 +114,70 @@ const App: React.FC = () => {
                 playerPosRef.current = currentMap.spawnPoint;
             }
         }
-        // Action key (E or Enter) to trigger transitions or mirror
+        // Action key (E or Enter) to trigger transitions, farming, or mirror
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
             e.preventDefault();
             console.log(`[Action Key Pressed] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
 
-            // Check for mirror interaction first
             const playerTileX = Math.floor(playerPosRef.current.x);
             const playerTileY = Math.floor(playerPosRef.current.y);
+            const currentMapIdValue = mapManager.getCurrentMapId();
+            const currentTime = Date.now();
 
-            // Check adjacent tiles for mirror
+            // Check for farm action first (on current tile)
+            if (currentMapIdValue) {
+                const tileData = getTileData(playerTileX, playerTileY);
+                const currentTool = gameState.getFarmingTool();
+
+                // Check if this is a farm tile or farm action
+                if (tileData && tileData.type >= 19 && tileData.type <= 25) { // Farm tiles
+                    const position = { x: playerTileX, y: playerTileY };
+                    let farmActionTaken = false;
+
+                    if (currentTool === 'hoe' && tileData.type === 19) { // Till fallow soil
+                        if (farmManager.tillSoil(currentMapIdValue, position, currentTime)) {
+                            console.log('[Action Key] Tilled soil');
+                            farmActionTaken = true;
+                        }
+                    } else if (currentTool === 'seeds' && tileData.type === 20) { // Plant in tilled soil
+                        const selectedSeed = gameState.getSelectedSeed();
+                        if (selectedSeed && farmManager.plantSeed(currentMapIdValue, position, selectedSeed, currentTime)) {
+                            console.log(`[Action Key] Planted ${selectedSeed}`);
+                            farmActionTaken = true;
+                        }
+                    } else if (currentTool === 'wateringCan' && (tileData.type === 21 || tileData.type === 22 || tileData.type === 24)) {
+                        // Water planted, watered, or wilting crops
+                        if (farmManager.waterPlot(currentMapIdValue, position, currentTime)) {
+                            console.log('[Action Key] Watered crop');
+                            farmActionTaken = true;
+                        }
+                    } else if (currentTool === 'hand' && tileData.type === 23) { // Harvest ready crop
+                        const result = farmManager.harvestCrop(currentMapIdValue, position, currentTime);
+                        if (result) {
+                            const crop = getCrop(result.cropId);
+                            if (crop) {
+                                gameState.addItem(result.cropId, result.yield);
+                                gameState.addGold(crop.sellPrice * result.yield);
+                                console.log(`[Action Key] Harvested ${result.yield}x ${crop.displayName}`);
+                            }
+                            farmActionTaken = true;
+                        }
+                    } else if (currentTool === 'hand' && tileData.type === 25) { // Clear dead crop
+                        if (farmManager.clearDeadCrop(currentMapIdValue, position, currentTime)) {
+                            console.log('[Action Key] Cleared dead crop');
+                            farmActionTaken = true;
+                        }
+                    }
+
+                    if (farmActionTaken) {
+                        // Save farm state to GameState
+                        gameState.saveFarmPlots(farmManager.getAllPlots());
+                        return; // Don't check for other interactions
+                    }
+                }
+            }
+
+            // Check for mirror interaction
             const adjacentTiles = [
                 { x: playerTileX, y: playerTileY },
                 { x: playerTileX - 1, y: playerTileY },
@@ -161,7 +217,6 @@ const App: React.FC = () => {
 
                 try {
                     // Transition to new map (pass current map ID for depth tracking)
-                    const currentMapIdValue = mapManager.getCurrentMapId();
                     const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition, currentMapIdValue || undefined);
                     console.log(`[Action Key] Successfully loaded map: ${map.id} (${map.name})`);
                     setCurrentMapId(map.id);
@@ -179,6 +234,17 @@ const App: React.FC = () => {
             } else {
                 console.log(`[Action Key] No transition found near player position`);
             }
+        }
+
+        // Tool switching keys (1-4)
+        if (e.key === '1') {
+            gameState.setFarmingTool('hand');
+        } else if (e.key === '2') {
+            gameState.setFarmingTool('hoe');
+        } else if (e.key === '3') {
+            gameState.setFarmingTool('seeds');
+        } else if (e.key === '4') {
+            gameState.setFarmingTool('wateringCan');
         }
     };
 
@@ -339,6 +405,14 @@ const App: React.FC = () => {
         runSelfTests(); // Run sanity checks on startup
         initializeMaps(); // Initialize all maps and color schemes
 
+        // Load farm plots from saved state
+        const savedPlots = gameState.loadFarmPlots();
+        farmManager.loadPlots(savedPlots);
+        console.log(`[App] Loaded ${savedPlots.length} farm plots from save`);
+
+        // Update farm states on startup
+        farmManager.updateAllPlots(Date.now());
+
         // If loading a random map, regenerate it with the saved seed
         const savedLocation = gameState.getPlayerLocation();
         if (savedLocation.mapId.match(/^(forest|cave|shop)_\d+$/)) {
@@ -445,8 +519,23 @@ const App: React.FC = () => {
                 {/* Render Map */}
                 {currentMap.grid.map((row, y) =>
                     row.map((_, x) => {
-                        const tileData = getTileData(x, y);
+                        // Check if this tile has a farm plot override
+                        let tileData = getTileData(x, y);
                         if (!tileData) return null;
+
+                        // Override tile appearance if there's an active farm plot here
+                        if (currentMapId) {
+                            const plot = farmManager.getPlot(currentMapId, { x, y });
+                            if (plot) {
+                                // Get the tile type for this plot's state
+                                const plotTileType = farmManager.getTileTypeForPlot(plot);
+                                // Get the visual data for this tile type
+                                const plotTileData = getTileData(x, y, plotTileType);
+                                if (plotTileData) {
+                                    tileData = plotTileData;
+                                }
+                            }
+                        }
 
                         let imageUrl = 'none';
                         if (tileData.image && tileData.image.length > 0) {

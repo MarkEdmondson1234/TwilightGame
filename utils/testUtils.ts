@@ -25,6 +25,9 @@ export function runSelfTests(): void {
   // === Procedural Map Check (basic) ===
   validateLegacyMapData();
 
+  // === Farm System Validation ===
+  validateFarmSystem();
+
   console.log("✓ All sanity checks complete.");
 }
 
@@ -262,4 +265,48 @@ function validateLegacyMapData(): void {
       `[Sanity Check] MAP_DATA rows not matching MAP_WIDTH (${MAP_WIDTH}): ${inconsistentRows.map(r => r.index).join(', ')}`
     );
   }
+}
+
+/**
+ * Validate farm system integrity
+ */
+function validateFarmSystem(): void {
+  // Import farm-related items dynamically to avoid circular dependencies
+  const farmTileTypes = [
+    TileType.SOIL_FALLOW,
+    TileType.SOIL_TILLED,
+    TileType.SOIL_PLANTED,
+    TileType.SOIL_WATERED,
+    TileType.SOIL_READY,
+    TileType.SOIL_WILTING,
+    TileType.SOIL_DEAD,
+  ];
+
+  // Check that all farm tile types have entries in TILE_LEGEND
+  for (const tileType of farmTileTypes) {
+    if (!TILE_LEGEND[tileType]) {
+      console.error(
+        `[Sanity Check] Farm tile type ${TileType[tileType]} (${tileType}) missing from TILE_LEGEND`
+      );
+    } else {
+      // Verify farm tiles are not solid (should be walkable)
+      if (TILE_LEGEND[tileType].isSolid) {
+        console.error(
+          `[Sanity Check] Farm tile ${TileType[tileType]} is marked as solid but should be walkable`
+        );
+      }
+    }
+  }
+
+  // Verify farm tile types are sequential and in correct range
+  const firstFarmTile = TileType.SOIL_FALLOW;
+  const lastFarmTile = TileType.SOIL_DEAD;
+
+  if (lastFarmTile - firstFarmTile !== 6) {
+    console.warn(
+      `[Sanity Check] Farm tile types are not sequential (expected 7 tiles, got ${lastFarmTile - firstFarmTile + 1})`
+    );
+  }
+
+  console.log(`[Sanity Check] Farm system: ${farmTileTypes.length} tile types validated`);
 }

@@ -4,36 +4,36 @@ This document outlines how to add your custom artwork to the game. The code has 
 
 ## File Structure
 
-All game art should be placed in a new top-level folder named `assets`. Inside this folder, we'll organize by category. You will need to create this `assets` folder.
+All game art is placed in `/public/assets/`. This folder is organized by category.
 
 ```
 .
-├── assets/
-│   ├── player/
-│   │   ├── down_0.png  (Idle/Standing frame facing down)
-│   │   ├── down_1.png  (Walk cycle frame 1)
-│   │   ├── down_2.png  (Walk cycle frame 2)
-│   │   ├── down_3.png  (Walk cycle frame 3)
-│   │   ├── up_0.png    (Idle/Standing frame facing up)
-│   │   ├── up_1.png
-│   │   ├── ... (and so on for 'left' and 'right')
-│   │
-│   └── tiles/
-│       ├── grass_0.png
-│       ├── grass_1.png
-│       ├── grass_2.png
-│       ├── rock_0.png
-│       ├── water_0.png
-│       ├── path_0.png
-│       ├── shop_door_0.png
-│       └── mine_entrance_0.png
+├── public/
+│   └── assets/
+│       ├── character1/        (Layered character customization system)
+│       │   ├── base/
+│       │   └── variations/
+│       │
+│       ├── npcs/              (NPC sprites)
+│       │   ├── elder.svg
+│       │   ├── shopkeeper.svg
+│       │   └── child.svg
+│       │
+│       └── tiles/             (Tile sprites)
+│           ├── grass_0.png
+│           ├── grass_1.png
+│           ├── grass_2.png
+│           ├── rock_0.png
+│           ├── water_0.png
+│           ├── path_0.png
+│           ├── shop_door_0.png
+│           └── mine_entrance_0.png
 │
 ├── index.html
-├── index.tsx
 └── ... (other project files)
 ```
 
-## Player Sprites (`/assets/player/`)
+## Player Sprites (`/public/assets/character1/`)
 
 The player sprite system now supports **layered customization**! Each character customization option (skin, hair, clothes, etc.) can have its own sprite layer that gets composited together.
 
@@ -50,8 +50,8 @@ If you want a simple single-sprite system:
 For character customization support, organize sprites by layer:
 
 ```
-assets/
-├── player/
+public/assets/
+├── character1/
 │   ├── base/                    # Base body outline (required)
 │   │   ├── down_0.png
 │   │   ├── down_1.png
@@ -107,7 +107,7 @@ assets/
 
 **Currently Using:** Placeholder sprites (color-coded). The system is ready to swap in custom layered sprites when you add them to the folders above.
 
-## Tile Sprites (`/assets/tiles/`)
+## Tile Sprites (`/public/assets/tiles/`)
 
 -   **File Naming:** Please name files as `[tileName]_[variationNumber].png`. For example: `grass_0.png`, `grass_1.png`.
 -   **Variations:** You can provide multiple versions for a tile (like grass) to make the world look more natural. The game will automatically and randomly pick between them. If a tile only has one look, just create a `_0` version (e.g., `rock_0.png`).

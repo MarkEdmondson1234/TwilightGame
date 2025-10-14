@@ -8,6 +8,7 @@ import { house1 } from './definitions/house1';
 import { house2 } from './definitions/house2';
 import { house3 } from './definitions/house3';
 import { house4 } from './definitions/house4';
+import { farmArea } from './definitions/farmArea';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
 import { gameState } from '../GameState';
 
@@ -30,6 +31,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(house2);
   mapManager.registerMap(house3);
   mapManager.registerMap(house4);
+  mapManager.registerMap(farmArea);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs

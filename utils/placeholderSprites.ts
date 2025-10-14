@@ -204,6 +204,7 @@ export function generatePlaceholderSprites(character: CharacterCustomization): R
  */
 export const CHARACTER_PRESETS: CharacterCustomization[] = [
   {
+    characterId: 'character1',
     name: 'Hero',
     skin: 'light',
     hairStyle: 'short',
@@ -217,6 +218,7 @@ export const CHARACTER_PRESETS: CharacterCustomization[] = [
     weapon: 'sword',
   },
   {
+    characterId: 'character1',
     name: 'Mage',
     skin: 'pale',
     hairStyle: 'long',
@@ -230,6 +232,7 @@ export const CHARACTER_PRESETS: CharacterCustomization[] = [
     weapon: 'staff',
   },
   {
+    characterId: 'character1',
     name: 'Ranger',
     skin: 'tan',
     hairStyle: 'short',
@@ -243,6 +246,7 @@ export const CHARACTER_PRESETS: CharacterCustomization[] = [
     weapon: 'bow',
   },
   {
+    characterId: 'character1',
     name: 'Warrior',
     skin: 'dark',
     hairStyle: 'bald',
@@ -256,6 +260,7 @@ export const CHARACTER_PRESETS: CharacterCustomization[] = [
     weapon: 'axe',
   },
   {
+    characterId: 'character1',
     name: 'Scholar',
     skin: 'medium',
     hairStyle: 'curly',
@@ -269,6 +274,7 @@ export const CHARACTER_PRESETS: CharacterCustomization[] = [
     weapon: 'staff',
   },
   {
+    characterId: 'character1',
     name: 'Rogue',
     skin: 'pale',
     hairStyle: 'spiky',

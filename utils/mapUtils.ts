@@ -5,9 +5,12 @@ import { mapManager } from '../maps';
 /**
  * Get tile data at a specific position
  * Single Source of Truth: Uses MapManager for current map data
+ * @param tileX - X coordinate
+ * @param tileY - Y coordinate
+ * @param overrideTileType - Optional tile type to use instead of reading from map (for farm plots)
  */
-export function getTileData(tileX: number, tileY: number): (Omit<TileData, 'type'> & {type: TileType}) | null {
-  const tileType = mapManager.getTileAt(tileX, tileY);
+export function getTileData(tileX: number, tileY: number, overrideTileType?: TileType): (Omit<TileData, 'type'> & {type: TileType}) | null {
+  const tileType = overrideTileType !== undefined ? overrideTileType : mapManager.getTileAt(tileX, tileY);
 
   if (tileType === null) {
     return null; // Out of bounds

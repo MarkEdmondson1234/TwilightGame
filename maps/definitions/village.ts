@@ -23,38 +23,39 @@ import { parseGrid } from '../gridParser';
  * O = Building Roof
  * N = Building Door (eNtrance)
  * V = Building Window
+ * X = Farm plot (fallow soil)
  */
 
 const gridString = `
 RRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 RGGGGOOOOGGPGGGGOOOOGGGGGWWWR
-RGGGGOBVBGGPGGGGOBVBGGGGGWWWR
-RGGGGOBVBGGPGGGGOBVBGGGGGWWWR
+RGGGGOBVBGGPGGGGOBVBXXXGGWWWR
+RGGGGOBVBGGPGGGGOBVBXXXGGWWWR
 RGGGGOBNBGGPGGGGOBNBGGGGGWWWR
 RGGGGGGPPPPPPPPGGGGGGGGGGWWWR
 RGGGGGGPGGGGGGGPGGGGGGGGGGGGR
 RGGGGGGPGGGGGGGPGGGGGGGGGGGGR
 RGGGGGGPOOOOOOGPGGGRRRRRRRRRR
-RGGGGGGPOBVBOGPGGGRGGGGGGGGR
-RGGGGGGPOBVBOGPGGGRGGGGGGGGR
-RGGGGGGPOBNBOGPGGGMGGGGGGGGR
-RGGGGGGPGGGGGGPGGGGGGGGGGGGGR
-RGGGGGGPPPPPPPPPGGGGGGGGGGGGR
-RGGGGGGGGGGPGGGGGGGGGGGGGGGGG
+RGGGGGGPOBVBOGPGGGRGGGGGGGGGGR
+RGGGGGGPOBVBOGPGGGRGGRGRRRRGGR
+RGGGGGGPOBNBOGPGGGMGGRXXXXRGGR
+RGGGGGGPGGGGGGPGGGGGGGGGGGGPP
+RGGGGGGPPPPPPPPPGGGGGGGGGGGPR
+RGGGGGGGGGGPGGGGGGGGGGGGGGGPR
 RPPPPPPPPPPPPPPPPPPPPPPPPPPPR
-RGGGGGGGGGGPGGGGGGGGGGGGGGGGG
+RGGGGGGGGGGPGGGGGGGGGGGGGGGGR
 RGOOOOGGGGPGGGGGGGGGOOOOGGGR
-RGOBVBGGGGPGGGGGGGGGOBVBGGGR
-RGOBVBGGGGPGGGGGGGGGOBVBGGGR
-RGOBNBGGGGPGGGGGGGGGOBVBGGGR
+RGOBVBXGGGPGGGGGGGGGOBVBGGGR
+RGOBVBXGGGPGGGGGGGGGOBVBGGGR
+RGOBNBXGGGPGGGGGGGGGOBVBGGGR
 RGGGGGGGGGGPGGGGGGGGOBNBGGGR
-RGGGGGGGGGGPGGGGGGGGGGGGGGGGG
+RGGGGGGGGGGPGGGGGGGGGGGGGGGGR
 RGGGGGGOOOOGGGGGGGGGGGGGGGGGR
 RGGGGGGOBVBGGGGGGGGGGGGGGGGGR
 RGGGGGGOBVBGGGGGGGGGGGGGGGGGR
-RGGGGGGOBNBPGGGGGGGGGGGGGGGGR
-RGGGGGGGGGGPGGGGGGGGGGGGGGGGG
-RGGGGGGGGGGPGGGGGGGGGGGGGGGGG
+RGGGGGGOBNBPGGGGGGGXXXXXGGGGR
+RGGGGGGGGGGPGGGGGGGXXXXXGGGGR
+RGGGGGGGGGGPPPPPPPPPPPPPPPPPP
 RRRRRRRRRRRRRRRRRRRRRRRRRRRRRR
 `;
 
@@ -124,6 +125,13 @@ export const village: MapDefinition = {
       toPosition: { x: 20, y: 15 },  // Spawn in center of forest (safe zone)
       label: 'To Forest',
     },
+    {
+      fromPosition: { x: 28, y: 28 }, // Bottom-right corner of village
+      tileType: TileType.GRASS,
+      toMapId: 'farm_area',
+      toPosition: { x: 10, y: 24 },
+      label: 'To Farm',
+    },
   ],
   npcs: [
     {
@@ -132,11 +140,11 @@ export const village: MapDefinition = {
       position: { x: 7, y: 9 }, // On path near shop
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
-      sprite: '/TwilightGame/assets/npcs/elder.svg',
+      sprite: '/TwilightGame/public/assets/npcs/elder.svg',
       dialogue: [
         {
           id: 'greeting',
-          text: 'Welcome to our village, traveler! Have you explored the forest yet?',
+          text: 'Hail and well met, traveller! Hast thou ventured into yon forest yet?',
         },
       ],
     },
@@ -146,11 +154,11 @@ export const village: MapDefinition = {
       position: { x: 11, y: 11 }, // On path near shop entrance
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
-      sprite: '/TwilightGame/assets/npcs/shopkeeper.svg',
+      sprite: '/TwilightGame/public/assets/npcs/shopkeeper.svg',
       dialogue: [
         {
           id: 'greeting',
-          text: 'Come inside and browse my wares! I have the finest goods in the village.',
+          text: 'Pray, come within and peruse mine wares! I possess the finest goods in all the village.',
         },
       ],
     },
@@ -160,11 +168,11 @@ export const village: MapDefinition = {
       position: { x: 15, y: 17 }, // On main path in village center
       direction: Direction.Right,
       behavior: NPCBehavior.STATIC,
-      sprite: '/TwilightGame/assets/npcs/child.svg',
+      sprite: '/TwilightGame/public/assets/npcs/child.svg',
       dialogue: [
         {
           id: 'greeting',
-          text: 'Hi! Do you want to play? My mom says I can\'t go to the forest alone...',
+          text: 'Well met! Wouldst thou care to play? My mum sayeth I mayn\'t venture to the forest alone...',
         },
       ],
     },

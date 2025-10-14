@@ -26,6 +26,14 @@ export enum TileType {
   BUILDING_ROOF,
   BUILDING_DOOR,
   BUILDING_WINDOW,
+  // Farmland tiles
+  SOIL_FALLOW,
+  SOIL_TILLED,
+  SOIL_PLANTED,
+  SOIL_WATERED,
+  SOIL_READY,
+  SOIL_WILTING,
+  SOIL_DEAD,
 }
 
 export interface Position {
@@ -115,4 +123,25 @@ export interface NPC {
   sprite: string; // Path to sprite image, or array for animated
   dialogue: DialogueNode[]; // Conversation tree
   interactionRadius?: number; // How close player must be (default 1.5 tiles)
+}
+
+// Farm system types
+export enum FarmPlotState {
+  FALLOW,      // Untilled ground
+  TILLED,      // Tilled, ready for seeds
+  PLANTED,     // Seeds planted, growing
+  WATERED,     // Watered, grows faster
+  READY,       // Crop ready to harvest
+  WILTING,     // Needs water soon
+  DEAD,        // Plant died from lack of water
+}
+
+export interface FarmPlot {
+  mapId: string;           // Which map this plot is on
+  position: Position;      // Tile position
+  state: FarmPlotState;    // Current state
+  cropType: string | null; // Crop ID (e.g., 'tomato', 'wheat')
+  plantedAt: number | null;    // Timestamp when planted
+  lastWatered: number | null;  // Timestamp when last watered
+  stateChangedAt: number;      // Timestamp of last state change
 }

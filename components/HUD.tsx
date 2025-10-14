@@ -6,8 +6,16 @@ import { useGameState } from '../hooks/useGameState';
 const HUD: React.FC = () => {
     const currentMap = mapManager.getCurrentMap();
     const mapName = currentMap ? currentMap.name : 'Loading...';
-    const { gold, forestDepth, caveDepth } = useGameState();
+    const { gold, forestDepth, caveDepth, farming } = useGameState();
     const [isLegendOpen, setIsLegendOpen] = useState(false);
+
+    // Tool display names and icons
+    const toolDisplay = {
+        hand: { name: 'Hand', icon: '✋', desc: 'Harvest/Clear' },
+        hoe: { name: 'Hoe', icon: '⚒️', desc: 'Till soil' },
+        seeds: { name: 'Seeds', icon: '🌱', desc: 'Plant crops' },
+        wateringCan: { name: 'Watering Can', icon: '💧', desc: 'Water plants' },
+    };
 
     return (
         <>
@@ -17,6 +25,16 @@ const HUD: React.FC = () => {
                     <p className="text-sm text-slate-300">Exploration Engine v0.1</p>
                     <div className="mt-2 text-sm text-yellow-300">
                         Gold: {gold}
+                    </div>
+                    <div className="mt-2 border-t border-slate-600 pt-2">
+                        <p className="text-xs text-slate-400 mb-1">Tool (1-4):</p>
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg">{toolDisplay[farming.currentTool].icon}</span>
+                            <div>
+                                <p className="text-sm font-bold text-green-300">{toolDisplay[farming.currentTool].name}</p>
+                                <p className="text-xs text-slate-400">{toolDisplay[farming.currentTool].desc}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div className="bg-black/50 p-3 rounded-lg border border-slate-700">

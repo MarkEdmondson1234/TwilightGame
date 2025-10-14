@@ -7,6 +7,13 @@ interface CharacterCreatorProps {
   onComplete: (character: CharacterCustomization) => void;
 }
 
+// Available character sprite sets
+const CHARACTER_OPTIONS = [
+  { id: 'character1', name: 'Character 1', description: 'Default character' },
+  { id: 'character2', name: 'Character 2', description: 'Alternative character' },
+  { id: 'character3', name: 'Character 3', description: 'Another option' },
+];
+
 // Customization options
 const SKIN_COLORS = [
   { id: 'pale', name: 'Pale', color: 'bg-amber-100' },
@@ -100,6 +107,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
 
   const [character, setCharacter] = useState<CharacterCustomization>(
     existingCharacter || {
+      characterId: 'character1',
       name: '',
       skin: 'medium',
       hairStyle: 'short',
@@ -124,6 +132,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
 
   const randomize = () => {
     setCharacter({
+      characterId: character.characterId, // Keep the character ID
       name: character.name, // Keep the name
       skin: SKIN_COLORS[Math.floor(Math.random() * SKIN_COLORS.length)].id,
       hairStyle: HAIR_STYLES[Math.floor(Math.random() * HAIR_STYLES.length)].id,
@@ -162,7 +171,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
             {/* Show actual character sprite if using custom character */}
             <div className="relative flex items-center justify-center">
               <img
-                src="/TwilightGame/assets/character1/base/down_0.png"
+                src={`/TwilightGame/assets/${character.characterId}/base/down_0.png`}
                 alt="Character Preview"
                 className="w-80 h-80"
                 style={{ imageRendering: 'pixelated' }}
@@ -191,7 +200,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
             </h2>
             <div className="flex items-center justify-center gap-4">
               <img
-                src="/TwilightGame/assets/character1/base/down_0.png"
+                src={`/TwilightGame/assets/${character.characterId}/base/down_0.png`}
                 alt="Character Preview"
                 className="w-20 h-20"
                 style={{ imageRendering: 'pixelated' }}
@@ -208,35 +217,38 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
             {/* Base Character Selection */}
             <div className="bg-slate-800 rounded-lg p-4 border border-slate-600">
               <label className="block text-sm font-bold text-teal-300 mb-3">Choose Your Character</label>
-              <div className="grid grid-cols-2 gap-4">
-                {/* Character 1 - Your daughter's character */}
-                <button
-                  onClick={() => setCharacter({ ...character, name: character.name || 'Character 1' })}
-                  className={`flex flex-col items-center p-4 bg-slate-700 hover:bg-slate-600 rounded-lg border-2 transition-all ${
-                    character.name === 'Character 1' ? 'border-teal-400' : 'border-transparent hover:border-teal-400'
-                  }`}
-                >
-                  <img
-                    src="/TwilightGame/assets/character1/base/down_0.png"
-                    alt="Character 1"
-                    className="w-24 h-24 mb-2"
-                    style={{ imageRendering: 'pixelated' }}
-                  />
-                  <span className="text-sm text-white font-medium">Character 1</span>
-                </button>
-
-                {/* Coming Soon placeholder for Character 2 */}
-                <button
-                  disabled
-                  className="flex flex-col items-center p-4 bg-slate-700 opacity-50 rounded-lg border-2 border-transparent cursor-not-allowed"
-                >
-                  <div className="w-16 h-16 mb-2 bg-slate-600 rounded flex items-center justify-center text-2xl">
-                    ?
-                  </div>
-                  <span className="text-sm text-gray-400 font-medium">Coming Soon</span>
-                </button>
+              <div className="grid grid-cols-3 gap-4">
+                {CHARACTER_OPTIONS.map((charOption) => (
+                  <button
+                    key={charOption.id}
+                    onClick={() => updateCharacter('characterId', charOption.id)}
+                    className={`flex flex-col items-center p-4 bg-slate-700 hover:bg-slate-600 rounded-lg border-2 transition-all ${
+                      character.characterId === charOption.id ? 'border-teal-400' : 'border-transparent hover:border-teal-400'
+                    }`}
+                  >
+                    <img
+                      src={`/TwilightGame/assets/${charOption.id}/base/down_0.png`}
+                      alt={charOption.name}
+                      className="w-24 h-24 mb-2"
+                      style={{ imageRendering: 'pixelated' }}
+                      onError={(e) => {
+                        // Fallback to placeholder if image doesn't exist
+                        e.currentTarget.style.display = 'none';
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          const placeholder = document.createElement('div');
+                          placeholder.className = 'w-24 h-24 mb-2 bg-slate-600 rounded flex items-center justify-center text-3xl';
+                          placeholder.textContent = '?';
+                          parent.insertBefore(placeholder, e.currentTarget);
+                        }
+                      }}
+                    />
+                    <span className="text-sm text-white font-medium">{charOption.name}</span>
+                    <span className="text-xs text-gray-400">{charOption.description}</span>
+                  </button>
+                ))}
               </div>
-              <p className="text-xs text-gray-400 mt-2 text-center">Select your base character</p>
+              <p className="text-xs text-gray-400 mt-2 text-center">Select your base character sprite set</p>
             </div>
 
             {/* Character Presets */}
@@ -251,7 +263,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
                     return (
                       <button
                         key={index}
-                        onClick={() => setCharacter({ ...preset, name: character.name })}
+                        onClick={() => setCharacter({ ...preset, characterId: character.characterId, name: character.name })}
                         className="flex flex-col items-center p-3 bg-slate-700 hover:bg-slate-600 rounded-lg border-2 border-transparent hover:border-teal-400 transition-all"
                       >
                         <img
