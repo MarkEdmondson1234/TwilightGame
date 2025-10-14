@@ -136,6 +136,45 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 8. **Map creation**: Use child-friendly grid codes, register all maps in `maps/index.ts`
 9. **Color schemes**: Every map must reference a valid color scheme from `colorSchemes.ts`
 
+## Testing with Chrome DevTools MCP
+
+Claude Code has access to Chrome DevTools via MCP (Model Context Protocol) tools for browser-based testing:
+
+**Available Testing Capabilities:**
+- Open the game at `http://localhost:3000` using `mcp__chrome-devtools__new_page`
+- Take snapshots of page content and screenshots using `take_snapshot` and `take_screenshot`
+- Simulate user interactions (clicks, keyboard input, form filling)
+- Inspect console messages and network requests
+- Evaluate JavaScript to test game state
+- Monitor performance and debug issues
+
+**When to Use Browser Testing:**
+- After implementing new features (test in real browser)
+- Debugging rendering or interaction issues
+- Validating map transitions and player movement
+- Checking asset loading and console errors
+- Testing character creation flow
+- Verifying UI/UX functionality
+
+**Testing Workflow:**
+1. Ensure dev server is running (`npm run dev`)
+2. Use MCP tools to open game in browser
+3. Take snapshots to verify rendering
+4. Simulate user interactions (clicks, keyboard)
+5. Check console for errors/warnings
+6. Validate against sanity check warnings
+7. Take screenshots for visual confirmation
+
+**Example Test Scenarios:**
+- Character creation → Start game → Verify village loads
+- Test WASD movement → Check collision detection
+- Navigate through map transitions → Verify spawn points
+- Interact with NPCs → Test dialogue system
+- Use farming tools → Check resource gathering
+
+**Specialized Testing Agent:**
+Claude Code includes a `game-tester` agent (`.claude/agents/game-tester.md`) that uses Chrome DevTools MCP tools to automatically test the game. Use this agent after implementing features or when debugging issues.
+
 ## Technical Notes
 
 - React 19.2.0 with functional components and hooks
