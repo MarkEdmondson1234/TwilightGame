@@ -11,6 +11,8 @@ export const tileAssets = {
   rock_1: new URL('./public/assets/tiles/rock_1.png', import.meta.url).href,
   rock_2: new URL('./public/assets/tiles/rock_2.png', import.meta.url).href,
   mushrooms: new URL('./public/assets/tiles/mushrooms.png', import.meta.url).href,
+  bush_1: new URL('./public/assets/tiles/bush_1.png', import.meta.url).href,
+  bricks_1: new URL('./public/assets/tiles/bricks_1.jpeg', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

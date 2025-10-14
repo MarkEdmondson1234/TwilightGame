@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { TILE_SIZE, PLAYER_SIZE } from './constants';
+import { TILE_SIZE, PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { getTileData } from './utils/mapUtils';
 import { Position, Direction } from './types';
 import HUD from './components/HUD';
@@ -366,14 +366,16 @@ const App: React.FC = () => {
             else if (vectorX < 0) setDirection(Direction.Left);
             else if (vectorX > 0) setDirection(Direction.Right);
 
-            // Animate based on time - start from frame 1 to skip idle frame
+            // Animate based on time - cycle through walking frames only
             const now = Date.now();
             if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
                 lastAnimationTime.current = now;
                 setAnimationFrame(prev => {
-                    // Cycle through frames 1 to length-1 (skip frame 0 which is idle)
-                    const nextFrame = prev + 1;
-                    return nextFrame >= playerSprites[direction].length ? 1 : nextFrame;
+                    // For left/right: use frames 1-2 (skip 0=idle, 3=blink)
+                    // For up/down: use frames 1-2 (skip 0=idle)
+                    // This gives consistent 2-frame walk cycles for all directions
+                    const nextFrame = prev === 0 ? 1 : (prev === 1 ? 2 : 1);
+                    return nextFrame;
                 });
             }
         }
@@ -667,6 +669,34 @@ const App: React.FC = () => {
                         imageRendering: 'pixelated',
                     }}
                 />
+
+                {/* Render Foreground Sprites (multi-tile sprites above player) */}
+                {currentMap.grid.map((row, y) =>
+                    row.map((_, x) => {
+                        const tileData = getTileData(x, y);
+                        if (!tileData) return null;
+
+                        // Find sprite metadata for this tile type
+                        const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
+                        if (!spriteMetadata || !spriteMetadata.isForeground) return null;
+
+                        return (
+                            <img
+                                key={`fg-${x}-${y}`}
+                                src={spriteMetadata.image}
+                                alt={tileData.name}
+                                className="absolute pointer-events-none"
+                                style={{
+                                    left: (x + spriteMetadata.offsetX) * TILE_SIZE,
+                                    top: (y + spriteMetadata.offsetY) * TILE_SIZE,
+                                    width: spriteMetadata.spriteWidth * TILE_SIZE,
+                                    height: spriteMetadata.spriteHeight * TILE_SIZE,
+                                    imageRendering: 'pixelated',
+                                }}
+                            />
+                        );
+                    })
+                )}
 
                 {isDebugOpen && <DebugOverlay playerPos={playerPos} />}
             </div>

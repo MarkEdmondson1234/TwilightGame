@@ -21,7 +21,9 @@ export enum TileType {
   MIRROR,
   // Decorative (walkable)
   MUSHROOM,
+  BUSH,
   // Building tiles (outdoor structures)
+  WALL_BOUNDARY,
   BUILDING_WALL,
   BUILDING_ROOF,
   BUILDING_DOOR,
@@ -54,6 +56,17 @@ export interface TileData {
     color: string;
     isSolid: boolean;
     image?: string[];
+}
+
+// Multi-tile sprite metadata for foreground rendering
+export interface SpriteMetadata {
+  tileType: TileType; // Which tile type triggers this sprite
+  spriteWidth: number; // Width in tiles
+  spriteHeight: number; // Height in tiles
+  offsetX: number; // X offset in tiles (0 = centered on tile)
+  offsetY: number; // Y offset in tiles (negative = extends upward)
+  image: string; // Path to sprite image
+  isForeground: boolean; // If true, renders after player
 }
 
 // Color scheme for a map theme

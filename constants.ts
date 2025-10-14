@@ -1,4 +1,4 @@
-import { TileType, TileData, Direction } from './types';
+import { TileType, TileData, Direction, SpriteMetadata } from './types';
 import { tileAssets } from './assets';
 
 export const TILE_SIZE = 64;
@@ -136,14 +136,26 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: []
   }, // MIRROR = 13
-  // Decorative (14)
+  // Decorative (14-15)
   {
     name: 'Mushroom',
     color: 'bg-level-mushroom',  // Will be set per map by color scheme
     isSolid: false,
     image: [tileAssets.mushrooms]
   }, // MUSHROOM = 14
-  // Building tiles (15-18)
+  {
+    name: 'Bush',
+    color: 'bg-level-grass',  // Base tile color (mostly hidden by sprite)
+    isSolid: true,
+    image: []
+  }, // BUSH = 15
+  // Building tiles (16-20)
+  {
+    name: 'Wall Boundary',
+    color: 'bg-stone-700',
+    isSolid: true,
+    image: [tileAssets.bricks_1]
+  }, // WALL_BOUNDARY = 16
   {
     name: 'Building Wall',
     color: 'bg-stone-600',
@@ -168,7 +180,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,
     image: []
   }, // BUILDING_WINDOW = 18
-  // Farmland tiles (19-25)
+  // Farmland tiles (21-27)
   {
     name: 'Fallow Soil',
     color: 'bg-amber-900',
@@ -265,3 +277,16 @@ for (let y = PLAYER_SPAWN_Y - 1; y <= PLAYER_SPAWN_Y + 1; y++) {
 }
 
 export const MAP_DATA: TileType[][] = map;
+
+// Multi-tile sprite definitions for foreground rendering
+export const SPRITE_METADATA: SpriteMetadata[] = [
+  {
+    tileType: TileType.BUSH,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: -0.5,   // Center horizontally on tile
+    offsetY: -1,     // Extends 1 tile upward
+    image: tileAssets.bush_1,
+    isForeground: true,
+  },
+];

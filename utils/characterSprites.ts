@@ -183,16 +183,16 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
           `${basePath}/down_2.png`, // Walk frame 2
         ],
         [Direction.Left]: [
-          `${basePath}/left_0.png`,
-          `${basePath}/left_1.png`,
-          `${basePath}/left_2.png`,
-          `${basePath}/left_3.png`,
+          `${basePath}/left_0.png`, // Idle/standing pose
+          `${basePath}/left_1.png`, // Walk frame 1
+          `${basePath}/left_2.png`, // Walk frame 2
+          // left_3.png (blink frame) excluded from walk cycle
         ],
         [Direction.Right]: [
-          `${basePath}/right_0.png`,
-          `${basePath}/right_1.png`,
-          `${basePath}/right_2.png`,
-          `${basePath}/right_3.png`,
+          `${basePath}/right_0.png`, // Idle/standing pose
+          `${basePath}/right_1.png`, // Walk frame 1
+          `${basePath}/right_2.png`, // Walk frame 2
+          // right_3.png (blink frame) excluded from walk cycle
         ],
       };
     }

@@ -46,11 +46,11 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const height = 30;
   const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.GRASS));
 
-  // Set borders to rocks
+  // Set borders to brick walls
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
-        map[y][x] = TileType.ROCK;
+        map[y][x] = TileType.WALL_BOUNDARY;
       }
     }
   }
@@ -81,6 +81,18 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles
     if (map[y][x] === TileType.GRASS) {
       map[y][x] = TileType.MUSHROOM;
+    }
+  }
+
+  // Add lots of bushes scattered throughout forest (solid decoration)
+  for (let i = 0; i < 40; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.BUSH;
     }
   }
 
