@@ -173,16 +173,14 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
 
       return {
         [Direction.Up]: [
-          `${basePath}/up_0.png`,
-          `${basePath}/up_1.png`,
-          `${basePath}/up_0.png`, // Reuse up_0 for frame 2
-          `${basePath}/up_1.png`, // Reuse up_1 for frame 3
+          `${basePath}/up_0.png`, // Idle/standing pose
+          `${basePath}/up_1.png`, // Walk frame 1
+          `${basePath}/up_2.png`, // Walk frame 2
         ],
         [Direction.Down]: [
-          `${basePath}/down_0.png`,
-          `${basePath}/down_1.png`,
-          `${basePath}/down_0.png`, // Reuse down_0 for frame 2
-          `${basePath}/down_1.png`, // Reuse down_1 for frame 3
+          `${basePath}/down_0.png`, // Idle/standing pose
+          `${basePath}/down_1.png`, // Walk frame 1
+          `${basePath}/down_2.png`, // Walk frame 2
         ],
         [Direction.Left]: [
           `${basePath}/left_0.png`,

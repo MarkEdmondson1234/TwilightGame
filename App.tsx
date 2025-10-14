@@ -38,7 +38,17 @@ const App: React.FC = () => {
     // Generate player sprites based on character customization
     const playerSprites = useMemo(() => {
         const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
-        return generateCharacterSprites(character);
+        const sprites = generateCharacterSprites(character);
+
+        // Preload all sprite images to prevent lag on first use
+        Object.values(sprites).forEach(directionFrames => {
+            directionFrames.forEach(spriteUrl => {
+                const img = new Image();
+                img.src = spriteUrl;
+            });
+        });
+
+        return sprites;
     }, [characterVersion]); // Regenerate when character changes
 
     const keysPressed = useRef<Record<string, boolean>>({}).current;
@@ -348,7 +358,7 @@ const App: React.FC = () => {
         const isMoving = vectorX !== 0 || vectorY !== 0;
 
         if (!isMoving) {
-            setAnimationFrame(0); // Reset to idle frame
+            setAnimationFrame(0); // Reset to idle frame (frame 0)
         } else {
             // Determine direction
             if (vectorY < 0) setDirection(Direction.Up);
@@ -356,11 +366,15 @@ const App: React.FC = () => {
             else if (vectorX < 0) setDirection(Direction.Left);
             else if (vectorX > 0) setDirection(Direction.Right);
 
-            // Animate based on time
+            // Animate based on time - start from frame 1 to skip idle frame
             const now = Date.now();
             if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
                 lastAnimationTime.current = now;
-                setAnimationFrame(prev => (prev + 1) % playerSprites[direction].length);
+                setAnimationFrame(prev => {
+                    // Cycle through frames 1 to length-1 (skip frame 0 which is idle)
+                    const nextFrame = prev + 1;
+                    return nextFrame >= playerSprites[direction].length ? 1 : nextFrame;
+                });
             }
         }
         
