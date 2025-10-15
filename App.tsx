@@ -32,6 +32,7 @@ const App: React.FC = () => {
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
+    const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
 
     const isTouchDevice = useTouchDevice();
 
@@ -353,6 +354,11 @@ const App: React.FC = () => {
         const deltaTime = Math.min((now - lastFrameTime.current) / 1000, 0.1); // Cap at 100ms to avoid huge jumps
         lastFrameTime.current = now;
 
+        // Update NPCs (they continue moving even when dialogue is open)
+        npcManager.updateNPCs(deltaTime);
+        // Force re-render to show NPC movement (increment counter every frame)
+        setNpcUpdateTrigger(prev => prev + 1);
+
         // Pause movement when dialogue is open
         if (activeNPC) {
             animationFrameId.current = requestAnimationFrame(gameLoop);
@@ -382,11 +388,10 @@ const App: React.FC = () => {
             if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
                 lastAnimationTime.current = now;
                 setAnimationFrame(prev => {
-                    // For left/right: use frames 1-2 (skip 0=idle, 3=blink)
-                    // For up/down: use frames 1-2 (skip 0=idle)
-                    // This gives consistent 2-frame walk cycles for all directions
-                    const nextFrame = prev === 0 ? 1 : (prev === 1 ? 2 : 1);
-                    return nextFrame;
+                    // Immediately start walk animation if coming from idle (frame 0)
+                    // Then cycle between frames 1 and 2 for smooth walk animation
+                    if (prev === 0) return 1;
+                    return prev === 1 ? 2 : 1;
                 });
             }
         }

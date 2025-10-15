@@ -142,7 +142,7 @@ export const village: MapDefinition = {
       name: 'Village Elder',
       position: { x: 7, y: 9 }, // On path near shop
       direction: Direction.Down,
-      behavior: NPCBehavior.STATIC,
+      behavior: NPCBehavior.WANDER,
       sprite: '/TwilightGame/assets/npcs/elder.svg',
       dialogue: [
         {
@@ -170,7 +170,7 @@ export const village: MapDefinition = {
       name: 'Village Child',
       position: { x: 15, y: 17 }, // On main path in village center
       direction: Direction.Right,
-      behavior: NPCBehavior.STATIC,
+      behavior: NPCBehavior.WANDER,
       sprite: '/TwilightGame/assets/npcs/child.svg',
       dialogue: [
         {
