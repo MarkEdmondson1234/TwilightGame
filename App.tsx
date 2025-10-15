@@ -530,6 +530,19 @@ const App: React.FC = () => {
         };
     }, [isMapInitialized, gameLoop]);
 
+    // Freeze/unfreeze NPC movement during dialogue
+    useEffect(() => {
+        if (activeNPC) {
+            npcManager.setNPCDialogueState(activeNPC, true);
+        }
+        // Cleanup: unfreeze when dialogue closes
+        return () => {
+            if (activeNPC) {
+                npcManager.setNPCDialogueState(activeNPC, false);
+            }
+        };
+    }, [activeNPC]);
+
     const currentMap = mapManager.getCurrentMap();
     const mapWidth = currentMap ? currentMap.width : 50;
     const mapHeight = currentMap ? currentMap.height : 30;

@@ -21,6 +21,7 @@ interface NPCState {
   moveDuration: number; // How long to move in current direction (ms)
   waitDuration: number; // How long to wait before next move (ms)
   isWaiting: boolean;
+  isInDialogue: boolean; // Freeze movement when talking to player
 }
 
 class NPCManagerClass {
@@ -47,6 +48,7 @@ class NPCManagerClass {
           moveDuration: 0,
           waitDuration: 0,
           isWaiting: true,
+          isInDialogue: false,
         });
       }
     });
@@ -159,6 +161,9 @@ class NPCManagerClass {
       const state = this.npcStates.get(npc.id);
       if (!state) return;
 
+      // Don't move if NPC is in dialogue
+      if (state.isInDialogue) return;
+
       const timeSinceLastMove = currentTime - state.lastMoveTime;
 
       // WANDER behavior
@@ -216,6 +221,16 @@ class NPCManagerClass {
 
       // TODO: Implement PATROL behavior
     });
+  }
+
+  /**
+   * Set dialogue state for an NPC (freeze/unfreeze movement)
+   */
+  setNPCDialogueState(npcId: string, inDialogue: boolean): void {
+    const state = this.npcStates.get(npcId);
+    if (state) {
+      state.isInDialogue = inDialogue;
+    }
   }
 
   /**
