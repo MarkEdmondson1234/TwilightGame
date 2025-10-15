@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface TouchControlsProps {
   onDirectionPress: (direction: 'up' | 'down' | 'left' | 'right') => void;
@@ -13,6 +13,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onActionPress,
   onResetPress,
 }) => {
+  const [showDevMenu, setShowDevMenu] = useState(false);
   const handleTouchStart = (direction: 'up' | 'down' | 'left' | 'right') => {
     return (e: React.TouchEvent) => {
       e.preventDefault();
@@ -83,13 +84,30 @@ const TouchControls: React.FC<TouchControlsProps> = ({
 
       {/* Action buttons on the right */}
       <div className="flex flex-col items-end gap-2">
-        {/* Reset button (R) */}
+        {/* Dev Menu Toggle - Small button */}
         <button
-          onTouchStart={handleResetTouch}
-          className="w-14 h-14 bg-orange-600/80 hover:bg-orange-500/80 active:bg-orange-400/80 rounded-full border-3 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-lg"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            setShowDevMenu(!showDevMenu);
+          }}
+          className="w-8 h-8 bg-slate-700/80 hover:bg-slate-600/80 active:bg-slate-500/80 rounded-full border-2 border-slate-500 flex items-center justify-center text-white font-bold text-xs shadow-lg"
         >
-          R
+          ⋯
         </button>
+
+        {/* Dev Menu - Reset button (R) - Only visible when menu open */}
+        {showDevMenu && (
+          <button
+            onTouchStart={(e) => {
+              handleResetTouch(e);
+              setShowDevMenu(false);
+            }}
+            className="w-14 h-14 bg-orange-600/80 hover:bg-orange-500/80 active:bg-orange-400/80 rounded-full border-3 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-lg"
+          >
+            R
+          </button>
+        )}
+
         {/* Action button (E) */}
         <button
           onTouchStart={handleActionTouch}
