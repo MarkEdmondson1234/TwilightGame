@@ -15,6 +15,7 @@ import { generateCharacterSprites, DEFAULT_CHARACTER } from './utils/characterSp
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { getCrop } from './data/crops';
+import { preloadAllAssets } from './utils/assetPreloader';
 
 const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = 150; // time between animation frames
@@ -41,12 +42,25 @@ const App: React.FC = () => {
         const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
         const sprites = generateCharacterSprites(character);
 
-        // Preload all sprite images to prevent lag on first use
+        // Preload all sprite images eagerly to prevent lag on first use
+        // Wait for all images to fully load before continuing
+        const preloadPromises: Promise<void>[] = [];
         Object.values(sprites).forEach(directionFrames => {
             directionFrames.forEach(spriteUrl => {
-                const img = new Image();
-                img.src = spriteUrl;
+                const promise = new Promise<void>((resolve) => {
+                    const img = new Image();
+                    img.onload = () => resolve();
+                    img.onerror = () => resolve(); // Resolve even on error to not block
+                    img.src = spriteUrl;
+                });
+                preloadPromises.push(promise);
             });
+        });
+
+        // Start preloading immediately (don't wait for promise to resolve here)
+        // This ensures the browser starts fetching all images right away
+        Promise.all(preloadPromises).then(() => {
+            console.log('[App] All player sprites preloaded');
         });
 
         return sprites;
@@ -58,6 +72,7 @@ const App: React.FC = () => {
     const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
     const lastTransitionTime = useRef<number>(0);
     const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
+    const lastDirectionRef = useRef<Direction>(direction); // Track direction changes
 
     const handleCharacterCreated = (character: CharacterCustomization) => {
         gameState.selectCharacter(character);
@@ -379,10 +394,17 @@ const App: React.FC = () => {
             setAnimationFrame(0); // Reset to idle frame (frame 0)
         } else {
             // Determine direction
-            if (vectorY < 0) setDirection(Direction.Up);
-            else if (vectorY > 0) setDirection(Direction.Down);
-            else if (vectorX < 0) setDirection(Direction.Left);
-            else if (vectorX > 0) setDirection(Direction.Right);
+            let newDirection: Direction | null = null;
+            if (vectorY < 0) newDirection = Direction.Up;
+            else if (vectorY > 0) newDirection = Direction.Down;
+            else if (vectorX < 0) newDirection = Direction.Left;
+            else if (vectorX > 0) newDirection = Direction.Right;
+
+            // Update direction when it changes
+            if (newDirection !== null && newDirection !== lastDirectionRef.current) {
+                setDirection(newDirection);
+                lastDirectionRef.current = newDirection;
+            }
 
             // Animate based on time - cycle through walking frames only
             if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
@@ -437,6 +459,16 @@ const App: React.FC = () => {
     useEffect(() => {
         runSelfTests(); // Run sanity checks on startup
         initializeMaps(); // Initialize all maps and color schemes
+
+        // Preload all assets early to prevent lag on first use
+        preloadAllAssets({
+            onProgress: (loaded, total) => {
+                console.log(`[App] Asset preload progress: ${loaded}/${total}`);
+            },
+            onComplete: () => {
+                console.log('[App] All assets preloaded successfully');
+            },
+        });
 
         // Load farm plots from saved state
         const savedPlots = gameState.loadFarmPlots();
