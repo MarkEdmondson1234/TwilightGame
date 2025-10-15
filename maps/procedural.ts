@@ -96,6 +96,18 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add lots of trees scattered throughout forest (solid decoration, taller than bushes)
+  for (let i = 0; i < 50; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.TREE;
+    }
+  }
+
   // Place exit back to village on left side (middle of map)
   map[spawnY][1] = TileType.PATH;
 

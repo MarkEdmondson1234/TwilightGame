@@ -147,28 +147,28 @@ const App: React.FC = () => {
                 const currentTool = gameState.getFarmingTool();
 
                 // Check if this is a farm tile or farm action
-                if (tileData && tileData.type >= 19 && tileData.type <= 25) { // Farm tiles
+                if (tileData && tileData.type >= 22 && tileData.type <= 28) { // Farm tiles
                     const position = { x: playerTileX, y: playerTileY };
                     let farmActionTaken = false;
 
-                    if (currentTool === 'hoe' && tileData.type === 19) { // Till fallow soil
+                    if (currentTool === 'hoe' && tileData.type === 22) { // Till fallow soil
                         if (farmManager.tillSoil(currentMapIdValue, position, currentTime)) {
                             console.log('[Action Key] Tilled soil');
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'seeds' && tileData.type === 20) { // Plant in tilled soil
+                    } else if (currentTool === 'seeds' && tileData.type === 23) { // Plant in tilled soil
                         const selectedSeed = gameState.getSelectedSeed();
                         if (selectedSeed && farmManager.plantSeed(currentMapIdValue, position, selectedSeed, currentTime)) {
                             console.log(`[Action Key] Planted ${selectedSeed}`);
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'wateringCan' && (tileData.type === 21 || tileData.type === 22 || tileData.type === 24)) {
+                    } else if (currentTool === 'wateringCan' && (tileData.type === 24 || tileData.type === 25 || tileData.type === 27)) {
                         // Water planted, watered, or wilting crops
                         if (farmManager.waterPlot(currentMapIdValue, position, currentTime)) {
                             console.log('[Action Key] Watered crop');
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'hand' && tileData.type === 23) { // Harvest ready crop
+                    } else if (currentTool === 'hand' && tileData.type === 26) { // Harvest ready crop
                         const result = farmManager.harvestCrop(currentMapIdValue, position, currentTime);
                         if (result) {
                             const crop = getCrop(result.cropId);
@@ -179,7 +179,7 @@ const App: React.FC = () => {
                             }
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'hand' && tileData.type === 25) { // Clear dead crop
+                    } else if (currentTool === 'hand' && tileData.type === 28) { // Clear dead crop
                         if (farmManager.clearDeadCrop(currentMapIdValue, position, currentTime)) {
                             console.log('[Action Key] Cleared dead crop');
                             farmActionTaken = true;

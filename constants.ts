@@ -149,80 +149,86 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,
     image: []
   }, // BUSH = 15
-  // Building tiles (16-20)
+  {
+    name: 'Tree',
+    color: 'bg-level-grass',  // Base tile color (mostly hidden by sprite)
+    isSolid: true,
+    image: []
+  }, // TREE = 16
+  // Building tiles (17-21)
   {
     name: 'Wall Boundary',
     color: 'bg-stone-700',
     isSolid: true,
     image: [tileAssets.bricks_1]
-  }, // WALL_BOUNDARY = 16
+  }, // WALL_BOUNDARY = 17
   {
     name: 'Building Wall',
     color: 'bg-stone-600',
     isSolid: true,
     image: []
-  }, // BUILDING_WALL = 15
+  }, // BUILDING_WALL = 18
   {
     name: 'Building Roof',
     color: 'bg-red-800',
     isSolid: true,
     image: []
-  }, // BUILDING_ROOF = 16
+  }, // BUILDING_ROOF = 19
   {
     name: 'Building Door',
     color: 'bg-amber-900',
     isSolid: false,
     image: []
-  }, // BUILDING_DOOR = 17
+  }, // BUILDING_DOOR = 20
   {
     name: 'Building Window',
     color: 'bg-cyan-400',
     isSolid: true,
     image: []
-  }, // BUILDING_WINDOW = 18
-  // Farmland tiles (21-27)
+  }, // BUILDING_WINDOW = 21
+  // Farmland tiles (22-28)
   {
     name: 'Fallow Soil',
     color: 'bg-amber-900',
     isSolid: false,
     image: []
-  }, // SOIL_FALLOW = 19
+  }, // SOIL_FALLOW = 22
   {
     name: 'Tilled Soil',
     color: 'bg-amber-950',
     isSolid: false,
     image: []
-  }, // SOIL_TILLED = 20
+  }, // SOIL_TILLED = 23
   {
     name: 'Planted Soil',
     color: 'bg-green-900',
     isSolid: false,
     image: []
-  }, // SOIL_PLANTED = 21
+  }, // SOIL_PLANTED = 24
   {
     name: 'Watered Soil',
     color: 'bg-green-800',
     isSolid: false,
     image: []
-  }, // SOIL_WATERED = 22
+  }, // SOIL_WATERED = 25
   {
     name: 'Ready Crop',
     color: 'bg-green-500',
     isSolid: false,
     image: []
-  }, // SOIL_READY = 23
+  }, // SOIL_READY = 26
   {
     name: 'Wilting Crop',
     color: 'bg-yellow-700',
     isSolid: false,
     image: []
-  }, // SOIL_WILTING = 24
+  }, // SOIL_WILTING = 27
   {
     name: 'Dead Crop',
     color: 'bg-gray-700',
     isSolid: false,
     image: []
-  }, // SOIL_DEAD = 25
+  }, // SOIL_DEAD = 28
 ];
 
 // --- Procedural Map Generation ---
@@ -287,6 +293,15 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally on tile
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.bush_1,
+    isForeground: true,
+  },
+  {
+    tileType: TileType.TREE,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 3, // 3 tiles tall
+    offsetX: -0.5,   // Center horizontally on tile
+    offsetY: -2,     // Extends 2 tiles upward
+    image: tileAssets.tree_1,
     isForeground: true,
   },
 ];

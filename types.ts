@@ -22,6 +22,7 @@ export enum TileType {
   // Decorative (walkable)
   MUSHROOM,
   BUSH,
+  TREE,
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,
