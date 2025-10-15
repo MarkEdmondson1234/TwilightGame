@@ -621,9 +621,11 @@ const App: React.FC = () => {
                             const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
                             const hashValue = hash % 1;
 
-                            // For grass tiles, only show image on 30% of tiles (sparse)
+                            // For grass tiles (and tiles with grass backgrounds), only show image on 30% of tiles (sparse)
                             // For other tiles, always show image
-                            const isGrassTile = tileData.type === TileType.GRASS;
+                            const isGrassTile = tileData.type === TileType.GRASS ||
+                                                tileData.type === TileType.TREE ||
+                                                tileData.type === TileType.TREE_BIG;
                             const showImage = isGrassTile ? hashValue < 0.3 : true;
 
                             if (showImage) {
@@ -648,6 +650,8 @@ const App: React.FC = () => {
                             // Determine which tiles should NOT be rotated (but can still be flipped/scaled)
                             const shouldNotRotate =
                                 tileData.type === TileType.GRASS ||
+                                tileData.type === TileType.TREE ||
+                                tileData.type === TileType.TREE_BIG ||
                                 tileData.type === TileType.WALL_BOUNDARY ||
                                 tileData.type === TileType.WALL ||
                                 tileData.type === TileType.DOOR ||

@@ -11,6 +11,7 @@ export const tileAssets = {
   bush_1: new URL('./public/assets/tiles/bush_1.png', import.meta.url).href,
   tree_1: new URL('./public/assets/tiles/tree_1.png', import.meta.url).href,
   tree_2: new URL('./public/assets/tiles/tree_2.png', import.meta.url).href,
+  tree_big_1: new URL('./public/assets/tiles/tree_big_1.png', import.meta.url).href,
   bricks_1: new URL('./public/assets/tiles/bricks_1.jpeg', import.meta.url).href,
 };
 

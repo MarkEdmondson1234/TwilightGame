@@ -19,9 +19,10 @@ export const GRID_CODES: Record<string, TileType> = {
   // Furniture
   'T': TileType.TABLE,
   'H': TileType.CHAIR,
-  'I': TileType.MIRROR, // Mirror (I looks like a mirror!)
-  'U': TileType.BUSH,   // U = bUsh (decorative)
-  'Y': TileType.TREE,   // Y = Tree (looks like a tree top)
+  'I': TileType.MIRROR,   // Mirror (I looks like a mirror!)
+  'U': TileType.BUSH,     // U = bUsh (decorative)
+  'Y': TileType.TREE,     // Y = Tree (looks like a tree top)
+  'Z': TileType.TREE_BIG, // Z = Big tree
   // Buildings (outdoor structures)
   'L': TileType.WALL_BOUNDARY,   // L = waLl boundary (brick walls)
   'B': TileType.BUILDING_WALL,   // B = Building wall
