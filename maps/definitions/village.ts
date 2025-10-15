@@ -148,20 +148,75 @@ export const village: MapDefinition = {
         {
           id: 'greeting',
           text: 'Hail and well met, traveller! Hast thou ventured into yon forest yet?',
+          responses: [
+            {
+              text: 'Yes, I explored the forest.',
+              nextId: 'forest_explored',
+            },
+            {
+              text: 'Not yet, what should I know?',
+              nextId: 'forest_warning',
+            },
+            {
+              text: 'Farewell, elder.',
+            },
+          ],
+        },
+        {
+          id: 'forest_explored',
+          text: 'Ah, a brave soul! The forest holds many secrets. Didst thou find any rare herbs or curious stones?',
+          responses: [
+            {
+              text: 'Tell me more about the forest secrets.',
+              nextId: 'forest_secrets',
+            },
+            {
+              text: 'I must be going.',
+            },
+          ],
+        },
+        {
+          id: 'forest_warning',
+          text: 'Be wary, young one! Strange creatures roam betwixt the trees. Take care to avoid the darker groves.',
+        },
+        {
+          id: 'forest_secrets',
+          text: 'Legends speak of ancient ruins deep within... but mayhaps that is a tale for another day.',
         },
       ],
     },
     {
       id: 'shopkeeper',
       name: 'Shopkeeper',
-      position: { x: 10, y: 12 }, // On path near shop entrance (moved from wall to path)
+      position: { x: 10, y: 12 }, // On path near shop entrance
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
       sprite: '/TwilightGame/assets/npcs/shopkeeper.svg',
       dialogue: [
         {
           id: 'greeting',
-          text: 'Pray, come within and peruse mine wares! I possess the finest goods in all the village.',
+          text: 'Welcome to my humble shop! I have the finest goods in all the village. What brings thee here today?',
+          responses: [
+            {
+              text: 'What do you sell?',
+              nextId: 'shop_wares',
+            },
+            {
+              text: 'Any news from travelers?',
+              nextId: 'shop_gossip',
+            },
+            {
+              text: 'Just browsing, thanks.',
+            },
+          ],
+        },
+        {
+          id: 'shop_wares',
+          text: 'I have seeds for farming, tools for crafting, and rare trinkets from distant lands. Come inside and see!',
+        },
+        {
+          id: 'shop_gossip',
+          text: 'Ah yes! A merchant from the east spoke of strange lights in the cave. Most peculiar indeed...',
         },
       ],
     },
@@ -175,7 +230,41 @@ export const village: MapDefinition = {
       dialogue: [
         {
           id: 'greeting',
-          text: 'Well met! Wouldst thou care to play? My mum sayeth I mayn\'t venture to the forest alone...',
+          text: 'Hi! Wanna play? My mom says I can\'t go to the forest alone. It\'s not fair!',
+          responses: [
+            {
+              text: 'What do you like to play?',
+              nextId: 'play_games',
+            },
+            {
+              text: 'Why can\'t you go to the forest?',
+              nextId: 'forest_story',
+            },
+            {
+              text: 'Maybe another time!',
+            },
+          ],
+        },
+        {
+          id: 'play_games',
+          text: 'I like hide and seek! And exploring! But mom says the forest is too dangerous...',
+        },
+        {
+          id: 'forest_story',
+          text: 'Mom says there are big scary monsters! But I bet they\'re not THAT scary. Are they?',
+          responses: [
+            {
+              text: 'They can be dangerous, listen to your mom.',
+              nextId: 'safety_lesson',
+            },
+            {
+              text: 'Maybe when you\'re older.',
+            },
+          ],
+        },
+        {
+          id: 'safety_lesson',
+          text: 'Okay... I guess I\'ll wait till I\'m bigger. Will you tell me about your adventures sometime?',
         },
       ],
     },

@@ -125,7 +125,7 @@ export enum NPCBehavior {
 export interface DialogueNode {
   id: string;
   text: string;
-  responses?: { text: string; nextId: string }[]; // For branching dialogue
+  responses?: { text: string; nextId?: string }[]; // For branching dialogue (no nextId = close dialogue)
 }
 
 export interface NPC {

@@ -872,6 +872,7 @@ const App: React.FC = () => {
             {activeNPC && (
                 <DialogueBox
                     npc={npcManager.getNPCById(activeNPC)!}
+                    playerSprite={playerSprites[Direction.Down][0]} // Forward-facing idle pose
                     onClose={() => setActiveNPC(null)}
                 />
             )}
