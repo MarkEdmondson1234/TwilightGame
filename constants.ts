@@ -39,7 +39,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Outdoor tiles (0-3)
   {
     name: 'Grass',
-    color: 'bg-level-grass',
+    color: 'bg-palette-sage',
     isSolid: false,
     image: [
       tileAssets.grass_1,
@@ -48,7 +48,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // GRASS = 0
   {
     name: 'Rock',
-    color: 'bg-level-rock',
+    color: 'bg-level-grass',  // Use grass color so rocks blend with ground
     isSolid: true,
     image: [
       tileAssets.rock_1,
@@ -142,13 +142,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // MUSHROOM = 14
   {
     name: 'Bush',
-    color: 'bg-level-grass',  // Uses grass color from map's color scheme
+    color: 'bg-level-grass',  // Dynamically replaced by map's grass color
     isSolid: true,
     image: []  // No image - uses color only so it matches the map's grass color
   }, // BUSH = 15
   {
     name: 'Tree',
-    color: 'bg-level-grass',  // Uses grass color from map's color scheme
+    color: 'bg-level-grass',  // Dynamically replaced by map's grass color
     isSolid: true,
     image: []  // No image - uses color only so it matches the map's grass color
   }, // TREE = 16

@@ -35,7 +35,7 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
         color = colorScheme.colors.grass;
         break;
       case TileType.ROCK:
-        color = colorScheme.colors.rock;
+        color = colorScheme.colors.grass;  // Rocks use grass color for blending
         break;
       case TileType.WATER:
         color = colorScheme.colors.water;
@@ -66,6 +66,10 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
         break;
       case TileType.MUSHROOM:
         color = colorScheme.colors.mushroom;
+        break;
+      case TileType.BUSH:
+      case TileType.TREE:
+        color = colorScheme.colors.grass; // Trees and bushes use grass color for background
         break;
     }
   }
