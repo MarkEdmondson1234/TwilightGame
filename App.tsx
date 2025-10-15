@@ -675,7 +675,16 @@ const App: React.FC = () => {
                                 sizeScale = 0.85 + (sizeHash % 1) * 0.3;
 
                                 // Rotation variation only for decorative objects (not grass/ground)
-                                const rotation = shouldNotRotate ? 0 : -15 + (rotHash % 1) * 30;
+                                // Soil tiles get 90-degree rotations, others get subtle rotations
+                                let rotation = 0;
+                                if (!shouldNotRotate) {
+                                    if (tileData.type === TileType.SOIL_FALLOW) {
+                                        // 90-degree increments (0, 90, 180, 270)
+                                        rotation = Math.floor(rotHash % 4) * 90;
+                                    } else {
+                                        rotation = -15 + (rotHash % 1) * 30;
+                                    }
+                                }
 
                                 // Combine transforms
                                 transform = `scaleX(${flipScaleX}) rotate(${rotation}deg)`;

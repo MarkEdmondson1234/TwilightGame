@@ -195,9 +195,12 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Farmland tiles (23-29)
   {
     name: 'Fallow Soil',
-    color: 'bg-amber-900',
+    color: 'bg-[#8B6F47]',
     isSolid: false,
-    image: [tileAssets.fallow_soil]
+    image: [
+      tileAssets.fallow_soil_1,
+      tileAssets.fallow_soil_2,
+    ]
   }, // SOIL_FALLOW = 23
   {
     name: 'Tilled Soil',

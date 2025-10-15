@@ -13,7 +13,8 @@ export const tileAssets = {
   tree_2: new URL('./public/assets/tiles/tree_2.png', import.meta.url).href,
   tree_big_1: new URL('./public/assets/tiles/tree_big_1.png', import.meta.url).href,
   bricks_1: new URL('./public/assets/tiles/bricks_1.jpeg', import.meta.url).href,
-  fallow_soil: new URL('./public/assets/tiles/fallow_soil.png', import.meta.url).href,
+  fallow_soil_1: new URL('./public/assets/tiles/fallow_soil_1.png', import.meta.url).href,
+  fallow_soil_2: new URL('./public/assets/tiles/fallow_soil_2.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)
