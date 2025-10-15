@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { TILE_SIZE, PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { getTileData } from './utils/mapUtils';
-import { Position, Direction } from './types';
+import { Position, Direction, TileType } from './types';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -602,27 +602,101 @@ const App: React.FC = () => {
                             }
                         }
 
-                        let imageUrl = 'none';
+                        // Select image variant using deterministic hash
+                        let selectedImage: string | null = null;
                         if (tileData.image && tileData.image.length > 0) {
-                            // Better deterministic random selection using a pseudo-random hash
                             const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
-                            const index = Math.floor((hash % 1) * tileData.image.length);
-                            imageUrl = `url(${tileData.image[index]})`;
+                            const hashValue = hash % 1;
+
+                            // For grass tiles, only show image on 30% of tiles (sparse)
+                            // For other tiles, always show image
+                            const isGrassTile = tileData.type === TileType.GRASS;
+                            const showImage = isGrassTile ? hashValue < 0.3 : true;
+
+                            if (showImage) {
+                                // Use a separate hash for image selection to avoid bias
+                                const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+                                const index = Math.floor((imageHash % 1) * tileData.image.length);
+                                selectedImage = tileData.image[index];
+                            }
+                        }
+
+                        // Add variations for tiles with images (rocks, mushrooms, grass, etc.)
+                        let transform = 'none';
+                        let filter = 'none';
+                        let sizeScale = 1.0;
+                        if (selectedImage) {
+                            // Use completely different hash seeds for each variation (avoid reusing previous hashes)
+                            const flipHash = Math.abs(Math.sin(x * 87.654 + y * 21.987) * 67890.1234);
+                            const sizeHash = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
+                            const rotHash = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
+                            const brightHash = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
+
+                            // Determine which tiles should NOT be rotated (but can still be flipped/scaled)
+                            const shouldNotRotate =
+                                tileData.type === TileType.GRASS ||
+                                tileData.type === TileType.WALL_BOUNDARY ||
+                                tileData.type === TileType.WALL ||
+                                tileData.type === TileType.DOOR ||
+                                tileData.type === TileType.FLOOR ||
+                                tileData.type === TileType.PATH;
+
+                            // Determine which tiles should have NO variations at all
+                            const shouldNotTransform =
+                                tileData.type === TileType.WALL_BOUNDARY ||
+                                tileData.type === TileType.WALL ||
+                                tileData.type === TileType.DOOR ||
+                                tileData.type === TileType.FLOOR ||
+                                tileData.type === TileType.PATH;
+
+                            if (!shouldNotTransform) {
+                                // Horizontal flip (left/right, 50% chance)
+                                const shouldFlipX = (flipHash % 1) > 0.5;
+                                const flipScaleX = shouldFlipX ? -1 : 1;
+
+                                // Size variation (0.85x to 1.15x)
+                                sizeScale = 0.85 + (sizeHash % 1) * 0.3;
+
+                                // Rotation variation only for decorative objects (not grass/ground)
+                                const rotation = shouldNotRotate ? 0 : -15 + (rotHash % 1) * 30;
+
+                                // Combine transforms
+                                transform = `scaleX(${flipScaleX}) rotate(${rotation}deg)`;
+
+                                // Brightness variation (0.9 to 1.1 = 90% to 110% brightness)
+                                const brightness = 0.9 + (brightHash % 1) * 0.2;
+                                filter = `brightness(${brightness})`;
+                            }
                         }
 
                         return (
                             <div
                                 key={`${x}-${y}`}
-                                className={`absolute bg-center bg-contain ${tileData.color}`}
+                                className={`absolute ${tileData.color}`}
                                 style={{
                                     left: x * TILE_SIZE,
                                     top: y * TILE_SIZE,
                                     width: TILE_SIZE,
                                     height: TILE_SIZE,
-                                    backgroundImage: imageUrl,
-                                    imageRendering: 'pixelated',
                                 }}
-                            />
+                            >
+                                {selectedImage && (
+                                    <img
+                                        src={selectedImage}
+                                        alt={tileData.name}
+                                        className="absolute"
+                                        style={{
+                                            left: (TILE_SIZE * (1 - sizeScale)) / 2,
+                                            top: (TILE_SIZE * (1 - sizeScale)) / 2,
+                                            width: TILE_SIZE * sizeScale,
+                                            height: TILE_SIZE * sizeScale,
+                                            imageRendering: 'pixelated',
+                                            transform: transform,
+                                            filter: filter,
+                                        }}
+                                    />
+                                )}
+                            </div>
                         );
                     })
                 )}
@@ -729,6 +803,33 @@ const App: React.FC = () => {
                         const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                         if (!spriteMetadata || !spriteMetadata.isForeground) return null;
 
+                        // Add variations using deterministic hash based on position
+                        const hash1 = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
+                        const hash2 = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
+                        const hash3 = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
+                        const hash4 = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
+
+                        // Horizontal flip (50% chance)
+                        const shouldFlip = (hash1 % 1) > 0.5;
+                        const flipScale = shouldFlip ? -1 : 1;
+
+                        // Size variation (0.85x to 1.15x)
+                        const sizeVariation = 0.85 + (hash2 % 1) * 0.3;
+
+                        // Rotation variation (-8 to +8 degrees for large sprites)
+                        const rotation = -8 + (hash3 % 1) * 16;
+
+                        // Brightness variation (0.9 to 1.1)
+                        const brightness = 0.9 + (hash4 % 1) * 0.2;
+
+                        // Calculate dimensions with size variation
+                        const variedWidth = spriteMetadata.spriteWidth * sizeVariation;
+                        const variedHeight = spriteMetadata.spriteHeight * sizeVariation;
+
+                        // Adjust position to keep sprite centered at original position
+                        const widthDiff = (spriteMetadata.spriteWidth - variedWidth) / 2;
+                        const heightDiff = (spriteMetadata.spriteHeight - variedHeight) / 2;
+
                         return (
                             <img
                                 key={`fg-${x}-${y}`}
@@ -736,11 +837,13 @@ const App: React.FC = () => {
                                 alt={tileData.name}
                                 className="absolute pointer-events-none"
                                 style={{
-                                    left: (x + spriteMetadata.offsetX) * TILE_SIZE,
-                                    top: (y + spriteMetadata.offsetY) * TILE_SIZE,
-                                    width: spriteMetadata.spriteWidth * TILE_SIZE,
-                                    height: spriteMetadata.spriteHeight * TILE_SIZE,
+                                    left: (x + spriteMetadata.offsetX + widthDiff) * TILE_SIZE,
+                                    top: (y + spriteMetadata.offsetY + heightDiff) * TILE_SIZE,
+                                    width: variedWidth * TILE_SIZE,
+                                    height: variedHeight * TILE_SIZE,
                                     imageRendering: 'pixelated',
+                                    transform: `scaleX(${flipScale}) rotate(${rotation}deg)`,
+                                    filter: `brightness(${brightness})`,
                                 }}
                             />
                         );

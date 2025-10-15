@@ -46,7 +46,7 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
     name: 'forest',
     colors: {
       grass: 'bg-palette-moss',
-      rock: 'bg-palette-taupe',
+      rock: 'bg-palette-moss',  // Same as grass for forest floor consistency
       water: 'bg-palette-teal',
       path: 'bg-palette-khaki',
       floor: 'bg-palette-olive',

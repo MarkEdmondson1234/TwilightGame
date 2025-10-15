@@ -44,9 +44,6 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     image: [
       tileAssets.grass_1,
       tileAssets.grass_2,
-      tileAssets.grass_3,
-      tileAssets.grass_4,
-      tileAssets.grass_5,
     ]
   }, // GRASS = 0
   {
@@ -145,15 +142,15 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // MUSHROOM = 14
   {
     name: 'Bush',
-    color: 'bg-level-grass',  // Base tile color (mostly hidden by sprite)
+    color: 'bg-level-grass',  // Uses grass color from map's color scheme
     isSolid: true,
-    image: []
+    image: []  // No image - uses color only so it matches the map's grass color
   }, // BUSH = 15
   {
     name: 'Tree',
-    color: 'bg-level-grass',  // Base tile color (mostly hidden by sprite)
+    color: 'bg-level-grass',  // Uses grass color from map's color scheme
     isSolid: true,
-    image: []
+    image: []  // No image - uses color only so it matches the map's grass color
   }, // TREE = 16
   // Building tiles (17-21)
   {
@@ -301,7 +298,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     spriteHeight: 3, // 3 tiles tall
     offsetX: -0.5,   // Center horizontally on tile
     offsetY: -2,     // Extends 2 tiles upward
-    image: tileAssets.tree_1,
+    image: tileAssets.tree_2,
     isForeground: true,
   },
 ];

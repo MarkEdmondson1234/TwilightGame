@@ -93,12 +93,13 @@ function getTileSpriteUrls(): string[] {
   // For now, we'll list the known tile assets that are commonly used
   const basePath = '/TwilightGame/assets/tiles';
   const knownTiles = [
-    'grass_0.png', 'grass_1.png', 'grass_2.png', 'grass_3.png',
-    'rock_0.png', 'rock_1.png', 'rock_2.png',
-    'bush_0.png', 'bush_1.png',
-    'tree_0.png', 'tree_1.png',
-    'door_0.png', 'door_1.png',
+    'grass_1.png', 'grass_2.png',
+    'rock_1.png', 'rock_2.png',
+    'bush_1.png',
+    'tree_1.png', 'tree_2.png',
+    'door_1.png',
     'mushrooms.png',
+    'bricks_1.jpeg',
   ];
 
   return knownTiles.map(file => `${basePath}/${file}`);
