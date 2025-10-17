@@ -30,6 +30,7 @@ export enum TileType {
   BUILDING_ROOF,
   BUILDING_DOOR,
   BUILDING_WINDOW,
+  COTTAGE,
   // Farmland tiles
   SOIL_FALLOW,
   SOIL_TILLED,
@@ -63,12 +64,17 @@ export interface TileData {
 // Multi-tile sprite metadata for foreground rendering
 export interface SpriteMetadata {
   tileType: TileType; // Which tile type triggers this sprite
-  spriteWidth: number; // Width in tiles
-  spriteHeight: number; // Height in tiles
+  spriteWidth: number; // Width in tiles (for rendering)
+  spriteHeight: number; // Height in tiles (for rendering)
   offsetX: number; // X offset in tiles (0 = centered on tile)
   offsetY: number; // Y offset in tiles (negative = extends upward)
   image: string; // Path to sprite image
   isForeground: boolean; // If true, renders after player
+  // Optional collision bounds (if different from sprite dimensions)
+  collisionWidth?: number; // Width in tiles for collision (defaults to spriteWidth)
+  collisionHeight?: number; // Height in tiles for collision (defaults to spriteHeight)
+  collisionOffsetX?: number; // X offset for collision box (defaults to offsetX)
+  collisionOffsetY?: number; // Y offset for collision box (defaults to offsetY)
 }
 
 // Color scheme for a map theme

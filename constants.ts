@@ -63,9 +63,9 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // WATER = 2
   {
     name: 'Path',
-    color: 'bg-level-path',
+    color: 'bg-level-grass',  // Use grass color as background so path sprites blend naturally
     isSolid: false,
-    image: []
+    image: [tileAssets.path_horizontal]  // Default; actual tile selected by pathTileSelector
   }, // PATH = 3
 
   // Indoor tiles (4-6)
@@ -192,7 +192,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,
     image: []
   }, // BUILDING_WINDOW = 22
-  // Farmland tiles (23-29)
+  {
+    name: 'Cottage',
+    color: 'bg-level-grass',  // Use grass color as background
+    isSolid: true,
+    image: []
+  }, // COTTAGE = 23
+  // Farmland tiles (24-30)
   {
     name: 'Fallow Soil',
     color: 'bg-[#8B6F47]',
@@ -303,15 +309,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.bush_1,
     isForeground: true,
+    // Collision only at the base (1x1)
+    collisionWidth: 1,
+    collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
   },
   {
     tileType: TileType.TREE,
     spriteWidth: 2,  // 2 tiles wide
     spriteHeight: 3, // 3 tiles tall
     offsetX: -0.5,   // Center horizontally on tile
-    offsetY: -2,     // Extends 2 tiles upward
+    offsetY: -1,     // Extends 2 tiles upward
     image: tileAssets.tree_2,
     isForeground: true,
+    // Collision only at the base (1x1)
+    collisionWidth: 0.2,
+    collisionHeight: 0.2,
+    collisionOffsetX: 0.3,
+    collisionOffsetY: 1,
   },
   {
     tileType: TileType.TREE_BIG,
@@ -321,5 +337,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: -3,     // Extends 3 tiles upward
     image: tileAssets.tree_big_1,
     isForeground: true,
+    // Collision only at the base (1x1)
+    collisionWidth: 0.5,
+    collisionHeight: 0.5,
+    collisionOffsetX: 0.5,
+    collisionOffsetY: 0,
+  },
+  {
+    tileType: TileType.COTTAGE,
+    spriteWidth: 6,  // 6 tiles wide (actual cottage width)
+    spriteHeight: 5, // 5 tiles tall (actual cottage height)
+    offsetX: -3,     // Offset to center cottage
+    offsetY: -4,     // Extends upward from K tile
+    image: tileAssets.cottage_wooden,
+    isForeground: true,
+    // Collision at the front wall (full width, but only bottom 2 rows)
+    collisionWidth: 3.2,
+    collisionHeight: 1.5,
+    collisionOffsetX: -1.7,
+    collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
 ];

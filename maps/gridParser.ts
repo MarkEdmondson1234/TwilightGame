@@ -28,6 +28,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'B': TileType.BUILDING_WALL,   // B = Building wall
   'O': TileType.BUILDING_ROOF,   // O = rOof (top of building)
   'N': TileType.BUILDING_DOOR,   // N = eNtrance
+  'K': TileType.COTTAGE,          // K = Cottage (wooden house)
   'V': TileType.BUILDING_WINDOW, // V = looks like a window
   // Farmland
   'X': TileType.SOIL_FALLOW,     // X = Farm plot (fallow soil)

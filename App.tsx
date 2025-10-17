@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { TILE_SIZE, PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { getTileData } from './utils/mapUtils';
+import { getPathTileImage } from './utils/pathTileSelector';
 import { Position, Direction, TileType } from './types';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -33,6 +34,7 @@ const App: React.FC = () => {
     const [direction, setDirection] = useState<Direction>(Direction.Down);
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
+    const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
 
@@ -79,12 +81,43 @@ const App: React.FC = () => {
         const maxTileX = Math.floor(pos.x + halfSize);
         const minTileY = Math.floor(pos.y - halfSize);
         const maxTileY = Math.floor(pos.y + halfSize);
-        
+
+        // First check regular tile collision
         for (let y = minTileY; y <= maxTileY; y++) {
             for (let x = minTileX; x <= maxTileX; x++) {
                 const tileData = getTileData(x, y);
-                if (tileData && tileData.isSolid) {
+                if (tileData && tileData.isSolid && !SPRITE_METADATA.find(s => s.tileType === tileData.type)) {
                     return true;
+                }
+            }
+        }
+
+        // Check for multi-tile sprite collision in a wider area
+        // Need to check tiles that might have sprites extending into player position
+        const searchRadius = 10; // Large enough to catch any sprite
+        for (let tileY = minTileY - searchRadius; tileY <= maxTileY + searchRadius; tileY++) {
+            for (let tileX = minTileX - searchRadius; tileX <= maxTileX + searchRadius; tileX++) {
+                const tileData = getTileData(tileX, tileY);
+                const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);
+
+                if (spriteMetadata && tileData?.isSolid) {
+                    // Use collision-specific dimensions if provided, otherwise use sprite dimensions
+                    const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
+                    const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
+                    const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
+                    const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
+
+                    // Calculate collision bounds based on tile position and metadata
+                    const spriteLeft = tileX + collisionOffsetX;
+                    const spriteRight = spriteLeft + collisionWidth;
+                    const spriteTop = tileY + collisionOffsetY;
+                    const spriteBottom = spriteTop + collisionHeight;
+
+                    // Check if player position overlaps with collision bounds
+                    if (pos.x + halfSize > spriteLeft && pos.x - halfSize < spriteRight &&
+                        pos.y + halfSize > spriteTop && pos.y - halfSize < spriteBottom) {
+                        return true;
+                    }
                 }
             }
         }
@@ -609,7 +642,14 @@ const App: React.FC = () => {
 
                         // Select image variant using deterministic hash
                         let selectedImage: string | null = null;
-                        if (tileData.image && tileData.image.length > 0) {
+                        let pathRotation = 0; // Track rotation for path tiles
+
+                        // Special handling for PATH tiles - select based on neighbors
+                        if (tileData.type === TileType.PATH) {
+                            const pathTile = getPathTileImage(x, y);
+                            selectedImage = pathTile.image;
+                            pathRotation = pathTile.rotation;
+                        } else if (tileData.image && tileData.image.length > 0) {
                             const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
                             const hashValue = hash % 1;
 
@@ -632,7 +672,11 @@ const App: React.FC = () => {
                         let transform = 'none';
                         let filter = 'none';
                         let sizeScale = 1.0;
-                        if (selectedImage) {
+
+                        // Apply path rotation if this is a path tile
+                        if (tileData.type === TileType.PATH && pathRotation !== 0) {
+                            transform = `rotate(${pathRotation}deg)`;
+                        } else if (selectedImage) {
                             // Use completely different hash seeds for each variation (avoid reusing previous hashes)
                             const flipHash = Math.abs(Math.sin(x * 87.654 + y * 21.987) * 67890.1234);
                             const sizeHash = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
@@ -663,8 +707,11 @@ const App: React.FC = () => {
                                 const shouldFlipX = (flipHash % 1) > 0.5;
                                 const flipScaleX = shouldFlipX ? -1 : 1;
 
-                                // Size variation (0.85x to 1.15x)
-                                sizeScale = 0.85 + (sizeHash % 1) * 0.3;
+                                // Size variation - more subtle for trees (0.95x to 1.05x), normal for others (0.85x to 1.15x)
+                                const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
+                                sizeScale = isTree
+                                    ? 0.95 + (sizeHash % 1) * 0.1  // Subtle variation for trees: 95% to 105%
+                                    : 0.85 + (sizeHash % 1) * 0.3; // Normal variation for other tiles: 85% to 115%
 
                                 // Rotation variation only for decorative objects (not grass/ground)
                                 // Soil tiles get 90-degree rotations, others get subtle rotations
@@ -718,42 +765,6 @@ const App: React.FC = () => {
                         );
                     })
                 )}
-
-                {/* Render transition markers and labels */}
-                {currentMap.transitions.map((transition, idx) => {
-                    // Check if player is in range
-                    const dx = Math.abs(playerPos.x - transition.fromPosition.x);
-                    const dy = Math.abs(playerPos.y - transition.fromPosition.y);
-                    const inRange = dx < 1.5 && dy < 1.5;
-
-                    return (
-                        <React.Fragment key={`transition-${idx}`}>
-                            {/* Visual marker on the transition tile */}
-                            <div
-                                className={`absolute pointer-events-none border-4 ${inRange ? 'border-green-400 bg-green-400/30' : 'border-yellow-400 bg-yellow-400/20'}`}
-                                style={{
-                                    left: transition.fromPosition.x * TILE_SIZE,
-                                    top: transition.fromPosition.y * TILE_SIZE,
-                                    width: TILE_SIZE,
-                                    height: TILE_SIZE,
-                                }}
-                            />
-                            {/* Label above the tile */}
-                            <div
-                                className="absolute pointer-events-none"
-                                style={{
-                                    left: (transition.fromPosition.x + 0.5) * TILE_SIZE,
-                                    top: (transition.fromPosition.y - 0.5) * TILE_SIZE,
-                                    transform: 'translate(-50%, -50%)',
-                                }}
-                            >
-                                <div className={`${inRange ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'} px-3 py-1 rounded-full text-xs font-bold text-black whitespace-nowrap shadow-lg`}>
-                                    [E] {transition.label || transition.toMapId}
-                                </div>
-                            </div>
-                        </React.Fragment>
-                    );
-                })}
 
                 {/* Render NPCs */}
                 {npcManager.getCurrentMapNPCs().map((npc) => {
@@ -821,24 +832,37 @@ const App: React.FC = () => {
                         const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                         if (!spriteMetadata || !spriteMetadata.isForeground) return null;
 
-                        // Add variations using deterministic hash based on position
-                        const hash1 = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
-                        const hash2 = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
-                        const hash3 = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
-                        const hash4 = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
+                        // Determine if this is a building (no transformations for buildings)
+                        const isBuilding = tileData.type === TileType.COTTAGE;
 
-                        // Horizontal flip (50% chance)
-                        const shouldFlip = (hash1 % 1) > 0.5;
-                        const flipScale = shouldFlip ? -1 : 1;
+                        // Add variations using deterministic hash based on position (only for non-buildings)
+                        let flipScale = 1;
+                        let sizeVariation = 1;
+                        let rotation = 0;
+                        let brightness = 1;
 
-                        // Size variation (0.85x to 1.15x)
-                        const sizeVariation = 0.85 + (hash2 % 1) * 0.3;
+                        if (!isBuilding) {
+                            const hash1 = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
+                            const hash2 = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
+                            const hash3 = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
+                            const hash4 = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
 
-                        // Rotation variation (-8 to +8 degrees for large sprites)
-                        const rotation = -8 + (hash3 % 1) * 16;
+                            // Horizontal flip (50% chance)
+                            const shouldFlip = (hash1 % 1) > 0.5;
+                            flipScale = shouldFlip ? -1 : 1;
 
-                        // Brightness variation (0.9 to 1.1)
-                        const brightness = 0.9 + (hash4 % 1) * 0.2;
+                            // Size variation - subtle for trees, normal for others
+                            const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
+                            sizeVariation = isTree
+                                ? 0.95 + (hash2 % 1) * 0.1  // Subtle: 95% to 105%
+                                : 0.85 + (hash2 % 1) * 0.3; // Normal: 85% to 115%
+
+                            // Rotation variation (-8 to +8 degrees for large sprites)
+                            rotation = -8 + (hash3 % 1) * 16;
+
+                            // Brightness variation (0.9 to 1.1)
+                            brightness = 0.9 + (hash4 % 1) * 0.2;
+                        }
 
                         // Calculate dimensions with size variation
                         const variedWidth = spriteMetadata.spriteWidth * sizeVariation;
@@ -868,10 +892,104 @@ const App: React.FC = () => {
                     })
                 )}
 
+                {/* Transition indicators (rendered after foreground sprites so they're always visible) */}
+                {currentMap.transitions.map((transition, idx) => {
+                    // Check if player is within 2 tiles
+                    const dx = Math.abs(playerPos.x - transition.fromPosition.x);
+                    const dy = Math.abs(playerPos.y - transition.fromPosition.y);
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const isNearby = distance <= 2;
+                    const isVeryClose = dx < 1.5 && dy < 1.5;
+
+                    // Only show transition indicators when player is within 2 tiles
+                    if (!isNearby) return null;
+
+                    return (
+                        <React.Fragment key={`transition-${idx}`}>
+                            {/* Visual marker on the transition tile */}
+                            <div
+                                className={`absolute pointer-events-none border-4 ${isVeryClose ? 'border-green-400 bg-green-400/30' : 'border-yellow-400 bg-yellow-400/20'}`}
+                                style={{
+                                    left: transition.fromPosition.x * TILE_SIZE,
+                                    top: transition.fromPosition.y * TILE_SIZE,
+                                    width: TILE_SIZE,
+                                    height: TILE_SIZE,
+                                }}
+                            />
+                            {/* Label above the tile */}
+                            <div
+                                className="absolute pointer-events-none"
+                                style={{
+                                    left: (transition.fromPosition.x + 0.5) * TILE_SIZE,
+                                    top: (transition.fromPosition.y - 0.5) * TILE_SIZE,
+                                    transform: 'translate(-50%, -50%)',
+                                }}
+                            >
+                                <div className={`${isVeryClose ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'} px-3 py-1 rounded-full text-xs font-bold text-black whitespace-nowrap shadow-lg`}>
+                                    [E] {transition.label || transition.toMapId}
+                                </div>
+                            </div>
+                        </React.Fragment>
+                    );
+                })}
+
+                {/* Debug: Show collision boxes for multi-tile sprites */}
+                {showCollisionBoxes && currentMap.grid.map((row, y) =>
+                    row.map((_, x) => {
+                        const tileData = getTileData(x, y);
+                        const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);
+
+                        if (!spriteMetadata || !tileData?.isSolid) return null;
+
+                        // Use collision-specific dimensions if provided, otherwise use sprite dimensions
+                        const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
+                        const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
+                        const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
+                        const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
+
+                        // Calculate collision bounds
+                        const collisionLeft = x + collisionOffsetX;
+                        const collisionTop = y + collisionOffsetY;
+
+                        return (
+                            <div
+                                key={`collision-${x}-${y}`}
+                                className="absolute pointer-events-none border-4 border-red-500"
+                                style={{
+                                    left: collisionLeft * TILE_SIZE,
+                                    top: collisionTop * TILE_SIZE,
+                                    width: collisionWidth * TILE_SIZE,
+                                    height: collisionHeight * TILE_SIZE,
+                                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                                }}
+                            >
+                                <div className="text-red-500 font-bold text-xs bg-white px-1">
+                                    Collision Box ({x},{y})
+                                </div>
+                            </div>
+                        );
+                    })
+                )}
+
                 {isDebugOpen && <DebugOverlay playerPos={playerPos} />}
             </div>
 
             <HUD />
+
+            {/* Collision Box Toggle Button */}
+            <div className="absolute bottom-4 right-4 z-10">
+                <button
+                    onClick={() => setShowCollisionBoxes(!showCollisionBoxes)}
+                    className={`px-4 py-2 rounded-lg border font-bold transition-colors pointer-events-auto ${
+                        showCollisionBoxes
+                            ? 'bg-red-500/80 border-red-700 text-white hover:bg-red-600/80'
+                            : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
+                    }`}
+                >
+                    {showCollisionBoxes ? '🔴 Hide Collision' : 'Show Collision'}
+                </button>
+            </div>
+
             {isTouchDevice && (
                 <TouchControls
                     onDirectionPress={handleDirectionPress}

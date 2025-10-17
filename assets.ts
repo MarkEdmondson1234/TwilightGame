@@ -15,6 +15,14 @@ export const tileAssets = {
   bricks_1: new URL('./public/assets-optimized/tiles/bricks_1.png', import.meta.url).href,
   fallow_soil_1: new URL('./public/assets-optimized/tiles/fallow_soil_1.png', import.meta.url).href,
   fallow_soil_2: new URL('./public/assets-optimized/tiles/fallow_soil_2.png', import.meta.url).href,
+  path_horizontal: new URL('./public/assets-optimized/tiles/path_horizontal.png', import.meta.url).href,
+  path_curve_bottom_to_right: new URL('./public/assets-optimized/tiles/path_curve_bottom_to_right.png', import.meta.url).href,
+  path_curve_left_to_bottom: new URL('./public/assets-optimized/tiles/path_curve_left_to_bottom.png', import.meta.url).href,
+  path_curve_left_to_top: new URL('./public/assets-optimized/tiles/path_curve_left_to_top.png', import.meta.url).href,
+  path_curve_top_to_right: new URL('./public/assets-optimized/tiles/path_curve_top_to_right.png', import.meta.url).href,
+  path_end_left: new URL('./public/assets-optimized/tiles/path_end_left.png', import.meta.url).href,
+  path_end_right: new URL('./public/assets-optimized/tiles/path_end_right.png', import.meta.url).href,
+  cottage_wooden: new URL('./public/assets-optimized/tiles/cottage_wooden_512.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

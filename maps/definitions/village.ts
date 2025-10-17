@@ -24,6 +24,7 @@ import { parseGrid } from '../gridParser';
  * O = Building Roof
  * N = Building Door (eNtrance)
  * V = Building Window
+ * K = Cottage (4x4 wooden house)
  * X = Farm plot (fallow soil)
  * U = Bush (decorative foliage)
  * Y = Tree (large decorative tree)
@@ -48,16 +49,16 @@ LGGGGGGPPPPPPPPPGGGGGGGGGGGPL
 LGGGGGGGGGGPGGGGGGGGGGGUUGGPL
 LPPPPPPPPPPPPPPPPPPPPPPPPPPPL
 LGGGGGGGGGGPGGGGGGGGGGGGGGGGL
-LZOOOGGGUGGPGGGGGGGGGOOOOGGL
-LGOBVBXGGGPGGGGGGGGGOBVBGGGL
-LGOBVBXGGGPGGGGGGGGGOBVBGGGL
-LGOBNBXGGGPGGGGGGGGGOBVBGGGL
-LGGGGGGGGGGPGGGGGGGGOBNBGGGL
+LZOOOGGGUGPPGGGGGGGGGGGGGGL
+LGOBVBXGGGPGGGGGGGGGGGGGGGGL
+LGOBVBXGGGPGGGGGGGGGGGGGGGGL
+LGOBNBXGGGPGGGGGGGGGGGGGGGGL
+LGGGGGGGGGGPGGGGGGGGGGGGGGGGL
 LGGGGGGGGGGPGGGGGGGGGGGGGYGUL
-LGGGGGGOOOOPGGGYGGGGGGGGGGUL
+LGGGGGGOOOOPGGGYGGGGKGGGGGGUL
 LGGGGGGOBVBPGGGGGGGGGGGGGGGUL
 LGGGGGGOBVBPGGGGGGGGGGGGGGYGL
-LGGGGGGOBNBPGGZGGGGXXXXXGGGGL
+LGGGGGGOBNBPGGZGGGGGGGGGGGGGL
 LGGGGGGGGGGPGGGGGGGXXXXXGGGGL
 LGGGGGGGGGGPPPPPPPPPPPPPPPPPP
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
@@ -109,11 +110,18 @@ export const village: MapDefinition = {
       label: 'To House',
     },
     {
-      fromPosition: { x: 22, y: 21 }, // South-east house
+      fromPosition: { x: 9, y: 26 }, // South-center house door (N tile)
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house4',
       toPosition: { x: 3, y: 4 },
       label: 'To House',
+    },
+    {
+      fromPosition: { x: 19.4, y: 23 }, // Cottage entrance (K tile)
+      tileType: TileType.COTTAGE,
+      toMapId: 'cottage_interior',
+      toPosition: { x: 5, y: 6 },
+      label: 'To Cottage',
     },
     {
       fromPosition: { x: 18, y: 11 }, // Mine entrance (M tile)

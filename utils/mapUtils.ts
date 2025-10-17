@@ -41,7 +41,7 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
         color = colorScheme.colors.water;
         break;
       case TileType.PATH:
-        color = colorScheme.colors.path;
+        color = colorScheme.colors.grass;  // Use grass color so path sprites blend naturally
         break;
       case TileType.FLOOR:
         color = colorScheme.colors.floor;
@@ -69,7 +69,9 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
         break;
       case TileType.BUSH:
       case TileType.TREE:
-        color = colorScheme.colors.grass; // Trees and bushes use grass color for background
+      case TileType.TREE_BIG:
+      case TileType.COTTAGE:
+        color = colorScheme.colors.grass; // Trees, bushes, and cottage use grass color for background
         break;
     }
   }
