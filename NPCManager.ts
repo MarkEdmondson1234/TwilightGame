@@ -150,10 +150,12 @@ class NPCManagerClass {
   /**
    * Update NPC movement and behavior
    * Call this in the game loop with deltaTime (seconds)
+   * Returns true if any NPC moved (position changed)
    */
-  updateNPCs(deltaTime: number): void {
+  updateNPCs(deltaTime: number): boolean {
     const currentTime = Date.now();
     const npcs = this.getCurrentMapNPCs();
+    let anyNPCMoved = false;
 
     npcs.forEach(npc => {
       if (npc.behavior === NPCBehavior.STATIC) return; // Static NPCs don't move
@@ -209,6 +211,7 @@ class NPCManagerClass {
             // Check collision before moving
             if (!this.checkCollision(newPos)) {
               npc.position = newPos;
+              anyNPCMoved = true; // NPC actually moved
             } else {
               // Hit an obstacle, stop and wait
               state.isWaiting = true;
@@ -221,6 +224,8 @@ class NPCManagerClass {
 
       // TODO: Implement PATROL behavior
     });
+
+    return anyNPCMoved;
   }
 
   /**

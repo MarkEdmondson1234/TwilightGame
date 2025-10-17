@@ -405,9 +405,11 @@ const App: React.FC = () => {
         lastFrameTime.current = now;
 
         // Update NPCs (they continue moving even when dialogue is open)
-        npcManager.updateNPCs(deltaTime);
-        // Force re-render to show NPC movement (increment counter every frame)
-        setNpcUpdateTrigger(prev => prev + 1);
+        const npcsMoved = npcManager.updateNPCs(deltaTime);
+        // Only trigger re-render if NPCs actually moved (not every frame)
+        if (npcsMoved) {
+            setNpcUpdateTrigger(prev => prev + 1);
+        }
 
         // Pause movement when dialogue is open
         if (activeNPC) {
@@ -617,6 +619,16 @@ const App: React.FC = () => {
     const isCustomSprite = playerSpriteUrl.includes('/assets/character') || playerSpriteUrl.startsWith('data:image');
     const spriteScale = isCustomSprite ? 3.0 : 1.0; // 3.0x for optimized sprites
 
+    // Performance optimization: Calculate visible tile range (viewport culling)
+    const visibleTileMinX = Math.max(0, Math.floor(cameraX / TILE_SIZE) - 1);
+    const visibleTileMaxX = Math.min(mapWidth - 1, Math.ceil((cameraX + window.innerWidth) / TILE_SIZE) + 1);
+    const visibleTileMinY = Math.max(0, Math.floor(cameraY / TILE_SIZE) - 1);
+    const visibleTileMaxY = Math.min(mapHeight - 1, Math.ceil((cameraY + window.innerHeight) / TILE_SIZE) + 1);
+
+    // Performance optimization: Cache season lookup (don't call TimeManager for every tile)
+    const currentSeason = TimeManager.getCurrentTime().season;
+    const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+
     // Show character creator if no character selected
     if (showCharacterCreator) {
         return <CharacterCreator onComplete={handleCharacterCreated} />;
@@ -639,6 +651,11 @@ const App: React.FC = () => {
                 {/* Render Map */}
                 {currentMap.grid.map((row, y) =>
                     row.map((_, x) => {
+                        // Performance: Skip tiles outside viewport
+                        if (x < visibleTileMinX || x > visibleTileMaxX || y < visibleTileMinY || y > visibleTileMaxY) {
+                            return null;
+                        }
+
                         // Check if this tile has a farm plot override
                         let tileData = getTileData(x, y);
                         if (!tileData) return null;
@@ -664,9 +681,7 @@ const App: React.FC = () => {
                         let imageArray: string[] | undefined = undefined;
 
                         if (tileData.seasonalImages) {
-                            // Use seasonal images if available
-                            const currentSeason = TimeManager.getCurrentTime().season;
-                            const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+                            // Use seasonal images if available (season cached above for performance)
                             imageArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
 
                         } else if (tileData.image) {
@@ -685,10 +700,8 @@ const App: React.FC = () => {
                             const baseTileData = getTileData(x, y, tileData.baseType);
                             if (baseTileData) {
                                 renderTileData = baseTileData;
-                                // Re-determine image array for base tile
+                                // Re-determine image array for base tile (season cached above)
                                 if (renderTileData.seasonalImages) {
-                                    const currentSeason = TimeManager.getCurrentTime().season;
-                                    const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
                                     imageArray = renderTileData.seasonalImages[seasonKey] || renderTileData.seasonalImages.default;
                                 } else if (renderTileData.image) {
                                     imageArray = renderTileData.image;
@@ -880,6 +893,13 @@ const App: React.FC = () => {
                 {/* Render Foreground Sprites (multi-tile sprites above player) */}
                 {currentMap.grid.map((row, y) =>
                     row.map((_, x) => {
+                        // Performance: Skip tiles outside viewport (with extra margin for large sprites)
+                        const margin = 5; // Extra margin for multi-tile sprites
+                        if (x < visibleTileMinX - margin || x > visibleTileMaxX + margin ||
+                            y < visibleTileMinY - margin || y > visibleTileMaxY + margin) {
+                            return null;
+                        }
+
                         const tileData = getTileData(x, y);
                         if (!tileData) return null;
 
@@ -931,11 +951,9 @@ const App: React.FC = () => {
                         const widthDiff = (spriteMetadata.spriteWidth - variedWidth) / 2;
                         const heightDiff = (spriteMetadata.spriteHeight - variedHeight) / 2;
 
-                        // Determine which image to use (seasonal or default)
+                        // Determine which image to use (seasonal or default) - season cached above
                         let spriteImage = spriteMetadata.image;
                         if (tileData.seasonalImages) {
-                            const currentSeason = TimeManager.getCurrentTime().season;
-                            const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
                             const seasonalArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
 
                             // Select seasonal image using the same hash method as regular tiles
