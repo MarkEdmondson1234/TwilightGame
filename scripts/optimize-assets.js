@@ -26,7 +26,7 @@ const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 
 // Configuration
 const SPRITE_SIZE = 256; // Resize character sprites to 256x256
-const TILE_SIZE = 64;    // Resize tile images to 64x64
+const TILE_SIZE = 128;    // Resize tile images to 128x128 (less aggressive)
 const COMPRESSION_QUALITY = 85; // PNG compression quality
 
 console.log('🎨 Starting asset optimization...\n');
@@ -176,13 +176,34 @@ async function optimizeTiles() {
 
     const originalSize = fs.statSync(inputPath).size;
 
-    await sharp(inputPath)
-      .resize(TILE_SIZE, TILE_SIZE, {
-        fit: 'contain',
-        background: { r: 0, g: 0, b: 0, alpha: 0 }
-      })
-      .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
-      .toFile(outputPath);
+    // Special handling for brick/wall textures - crop center instead of scaling down
+    if (file.includes('brick') || file.includes('wall')) {
+      const metadata = await sharp(inputPath).metadata();
+      const cropSize = Math.min(metadata.width, metadata.height) / 5; // Take center 1/5th for medium-sized bricks
+
+      await sharp(inputPath)
+        .extract({
+          left: Math.floor((metadata.width - cropSize) / 2),
+          top: Math.floor((metadata.height - cropSize) / 2),
+          width: Math.floor(cropSize),
+          height: Math.floor(cropSize)
+        })
+        .resize(TILE_SIZE, TILE_SIZE, {
+          fit: 'cover',
+          position: 'centre'
+        })
+        .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+        .toFile(outputPath);
+    } else {
+      // Regular tiles - scale to fit
+      await sharp(inputPath)
+        .resize(TILE_SIZE, TILE_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+        .toFile(outputPath);
+    }
 
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);

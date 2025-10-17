@@ -674,15 +674,15 @@ const App: React.FC = () => {
                                         // 90-degree increments (0, 90, 180, 270)
                                         rotation = Math.floor(rotHash % 4) * 90;
                                     } else {
-                                        rotation = -15 + (rotHash % 1) * 30;
+                                        rotation = -5 + (rotHash % 1) * 10; // Reduced from -15 to 30 → -5 to 10
                                     }
                                 }
 
                                 // Combine transforms
                                 transform = `scaleX(${flipScaleX}) rotate(${rotation}deg)`;
 
-                                // Brightness variation (0.9 to 1.1 = 90% to 110% brightness)
-                                const brightness = 0.9 + (brightHash % 1) * 0.2;
+                                // Brightness variation (0.95 to 1.05 = 95% to 105% brightness) - more subtle
+                                const brightness = 0.95 + (brightHash % 1) * 0.1;
                                 filter = `brightness(${brightness})`;
                             }
                         }
