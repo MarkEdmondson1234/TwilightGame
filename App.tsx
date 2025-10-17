@@ -7,6 +7,7 @@ import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
 import TouchControls from './components/TouchControls';
 import DialogueBox from './components/DialogueBox';
+import ColorSchemeEditor from './components/ColorSchemeEditor';
 import { runSelfTests } from './utils/testUtils';
 import { initializeMaps, mapManager, transitionToMap } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
@@ -18,6 +19,7 @@ import { farmManager } from './utils/farmManager';
 import { getCrop } from './data/crops';
 import { preloadAllAssets } from './utils/assetPreloader';
 import { TimeManager, Season } from './utils/TimeManager';
+import { initializePalette } from './palette';
 
 const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = 150; // time between animation frames
@@ -35,6 +37,7 @@ const App: React.FC = () => {
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
     const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
+    const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
 
@@ -135,6 +138,13 @@ const App: React.FC = () => {
         if (e.key === 'F3') {
             e.preventDefault();
             setDebugOpen(prev => !prev);
+            return;
+        }
+
+        // F4 key to toggle color editor
+        if (e.key === 'F4') {
+            e.preventDefault();
+            setShowColorEditor(prev => !prev);
             return;
         }
 
@@ -482,6 +492,13 @@ const App: React.FC = () => {
 
     // Initialize maps on startup (only once)
     useEffect(() => {
+        // Expose gameState to window for palette system
+        (window as any).gameState = gameState;
+
+        // Load saved custom colors and initialize palette
+        const savedColors = gameState.loadCustomColors();
+        initializePalette(savedColors); // Initialize color palette (must be first)
+
         runSelfTests(); // Run sanity checks on startup
         initializeMaps(); // Initialize all maps and color schemes
 
@@ -1031,8 +1048,8 @@ const App: React.FC = () => {
 
             <HUD />
 
-            {/* Collision Box Toggle Button */}
-            <div className="absolute bottom-4 right-4 z-10">
+            {/* Collision Box and Color Editor Toggle Buttons */}
+            <div className="absolute bottom-4 right-4 z-10 flex gap-2">
                 <button
                     onClick={() => setShowCollisionBoxes(!showCollisionBoxes)}
                     className={`px-4 py-2 rounded-lg border font-bold transition-colors pointer-events-auto ${
@@ -1042,6 +1059,17 @@ const App: React.FC = () => {
                     }`}
                 >
                     {showCollisionBoxes ? '🔴 Hide Collision' : 'Show Collision'}
+                </button>
+                <button
+                    onClick={() => setShowColorEditor(!showColorEditor)}
+                    className={`px-4 py-2 rounded-lg border font-bold transition-colors pointer-events-auto ${
+                        showColorEditor
+                            ? 'bg-purple-500/80 border-purple-700 text-white hover:bg-purple-600/80'
+                            : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
+                    }`}
+                    title="F4 to toggle"
+                >
+                    {showColorEditor ? '🎨 Hide Scheme' : '🎨 Edit Scheme'}
                 </button>
             </div>
 
@@ -1066,6 +1094,9 @@ const App: React.FC = () => {
                     playerSprite={getPortraitSprite(gameState.getSelectedCharacter() || DEFAULT_CHARACTER, Direction.Down)} // High-res portrait
                     onClose={() => setActiveNPC(null)}
                 />
+            )}
+            {showColorEditor && (
+                <ColorSchemeEditor onClose={() => setShowColorEditor(false)} />
             )}
         </div>
     );

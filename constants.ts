@@ -39,7 +39,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Outdoor tiles (0-3)
   {
     name: 'Grass',
-    color: 'bg-palette-sage',
+    color: 'bg-palette-sage',  // Base color, overridden by map color scheme
     isSolid: false,
     image: [
       tileAssets.grass_1,
@@ -48,7 +48,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // GRASS = 0
   {
     name: 'Rock',
-    color: 'bg-level-grass',  // Use grass color so rocks blend with ground
+    color: 'bg-palette-sage',  // Use grass color so rocks blend with ground
     isSolid: true,
     image: [
       tileAssets.rock_1,
@@ -57,13 +57,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // ROCK = 1
   {
     name: 'Water',
-    color: 'bg-level-water',
+    color: 'bg-palette-sky',  // Base water color
     isSolid: true,
     image: []
   }, // WATER = 2
   {
     name: 'Path',
-    color: 'bg-level-grass',  // Use grass color as background so stepping stones blend naturally
+    color: 'bg-palette-sage',  // Use grass color as background so stepping stones blend naturally
     isSolid: false,
     image: [
       tileAssets.stepping_stones_1,
@@ -84,19 +84,19 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Indoor tiles (4-6)
   {
     name: 'Floor',
-    color: 'bg-level-floor',
+    color: 'bg-palette-tan',  // Base floor color
     isSolid: false,
     image: []
   }, // FLOOR = 4
   {
     name: 'Wall',
-    color: 'bg-level-wall',
+    color: 'bg-palette-brown',  // Base wall color
     isSolid: true,
     image: []
   }, // WALL = 5
   {
     name: 'Carpet',
-    color: 'bg-level-carpet',
+    color: 'bg-palette-burgundy',  // Base carpet color
     isSolid: false,
     image: []
   }, // CARPET = 6
@@ -104,25 +104,25 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Transition tiles (7-10)
   {
     name: 'Door',
-    color: 'bg-level-door',
+    color: 'bg-palette-chocolate',  // Base door color
     isSolid: false,
     image: []
   }, // DOOR = 7
   {
     name: 'Exit Door',
-    color: 'bg-level-special',
+    color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
     image: []
   }, // EXIT_DOOR = 8
   {
     name: 'Shop Door',
-    color: 'bg-level-special',
+    color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
     image: []
   }, // SHOP_DOOR = 9
   {
     name: 'Mine Entrance',
-    color: 'bg-level-special',
+    color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
     image: []
   }, // MINE_ENTRANCE = 10
@@ -130,13 +130,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Furniture/objects (11-12)
   {
     name: 'Table',
-    color: 'bg-level-furniture',
+    color: 'bg-palette-khaki',  // Base furniture color
     isSolid: true,
     image: []
   }, // TABLE = 11
   {
     name: 'Chair',
-    color: 'bg-level-furniture',
+    color: 'bg-palette-khaki',  // Base furniture color
     isSolid: false,
     image: []
   }, // CHAIR = 12
@@ -149,25 +149,25 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Decorative (14-15)
   {
     name: 'Mushroom',
-    color: 'bg-level-mushroom',  // Will be set per map by color scheme
+    color: 'bg-palette-sage',  // Base color matches grass
     isSolid: false,
     image: [tileAssets.mushrooms]
   }, // MUSHROOM = 14
   {
     name: 'Bush',
-    color: 'bg-level-grass',  // Dynamically replaced by map's grass color
+    color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
     image: []  // No image - uses color only so it matches the map's grass color
   }, // BUSH = 15
   {
     name: 'Tree',
-    color: 'bg-level-grass',  // Dynamically replaced by map's grass color
+    color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
     image: []  // No image - uses color only so it matches the map's grass color
   }, // TREE = 16
   {
     name: 'Big Tree',
-    color: 'bg-level-grass',  // Dynamically replaced by map's grass color
+    color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
     image: [
       tileAssets.grass_1,
@@ -176,7 +176,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // TREE_BIG = 17
   {
     name: 'Cherry Tree',
-    color: 'bg-level-grass',  // Dynamically replaced by map's grass color
+    color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
     baseType: TileType.GRASS,  // Render grass underneath the cherry tree sprite
     seasonalImages: {
@@ -240,7 +240,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // BUILDING_WINDOW = 22
   {
     name: 'Cottage',
-    color: 'bg-level-grass',  // Use grass color as background
+    color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
     image: []
   }, // COTTAGE = 23

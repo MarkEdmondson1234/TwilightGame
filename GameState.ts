@@ -75,6 +75,11 @@ export interface GameState {
     totalPlayTime: number;  // in seconds
     mushroomsCollected: number;
   };
+
+  // Custom color palette (for user-customized colors)
+  customColors?: {
+    [colorName: string]: string;  // colorName -> hex value
+  };
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -391,6 +396,27 @@ class GameStateManager {
 
   loadFarmPlots(): FarmPlot[] {
     return this.state.farming.plots;
+  }
+
+  // Custom color palette management
+  saveCustomColors(colors: Record<string, string>): void {
+    this.state.customColors = colors;
+    this.notify();
+    console.log('[GameState] Custom colors saved:', Object.keys(colors).length, 'colors');
+  }
+
+  loadCustomColors(): Record<string, string> | undefined {
+    return this.state.customColors;
+  }
+
+  hasCustomColors(): boolean {
+    return !!this.state.customColors && Object.keys(this.state.customColors).length > 0;
+  }
+
+  clearCustomColors(): void {
+    this.state.customColors = undefined;
+    this.notify();
+    console.log('[GameState] Custom colors cleared');
   }
 
   resetState(): void {

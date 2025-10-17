@@ -1,6 +1,7 @@
 import { TILE_LEGEND } from '../constants';
 import { TileType, TileData } from '../types';
 import { mapManager } from '../maps';
+import { TimeManager } from './TimeManager';
 
 /**
  * Get tile data at a specific position
@@ -24,55 +25,92 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
     return fallbackEntry ? { ...fallbackEntry, type: TileType.GRASS } : null;
   }
 
-  // Apply current map's color scheme
-  const colorScheme = mapManager.getCurrentColorScheme();
+  // Start with base color from legend
   let color = legendEntry.color;
 
+  // Apply current map's color scheme
+  const colorScheme = mapManager.getCurrentColorScheme();
   if (colorScheme) {
-    // Map tile type to color scheme property
+    // Get base color from map's color scheme
+    let schemeColor: string | undefined;
+
     switch (tileType) {
       case TileType.GRASS:
-        color = colorScheme.colors.grass;
+        schemeColor = colorScheme.colors.grass;
         break;
       case TileType.ROCK:
-        color = colorScheme.colors.grass;  // Rocks use grass color for blending
+        schemeColor = colorScheme.colors.grass;  // Rocks use grass color for blending
         break;
       case TileType.WATER:
-        color = colorScheme.colors.water;
+        schemeColor = colorScheme.colors.water;
         break;
       case TileType.PATH:
-        color = colorScheme.colors.grass;  // Use grass color so path sprites blend naturally
+        schemeColor = colorScheme.colors.grass;  // Use grass color so path sprites blend naturally
         break;
       case TileType.FLOOR:
-        color = colorScheme.colors.floor;
+        schemeColor = colorScheme.colors.floor;
         break;
       case TileType.WALL:
-        color = colorScheme.colors.wall;
+        schemeColor = colorScheme.colors.wall;
         break;
       case TileType.CARPET:
-        color = colorScheme.colors.carpet;
+        schemeColor = colorScheme.colors.carpet;
         break;
       case TileType.DOOR:
       case TileType.EXIT_DOOR:
-        color = colorScheme.colors.door;
+        schemeColor = colorScheme.colors.door;
         break;
       case TileType.SHOP_DOOR:
       case TileType.MINE_ENTRANCE:
-        color = colorScheme.colors.special;
+        schemeColor = colorScheme.colors.special;
         break;
       case TileType.TABLE:
       case TileType.CHAIR:
-        color = colorScheme.colors.furniture;
+        schemeColor = colorScheme.colors.furniture;
         break;
       case TileType.MUSHROOM:
-        color = colorScheme.colors.mushroom;
+        schemeColor = colorScheme.colors.mushroom;
         break;
       case TileType.BUSH:
       case TileType.TREE:
       case TileType.TREE_BIG:
       case TileType.COTTAGE:
-        color = colorScheme.colors.grass; // Trees, bushes, and cottage use grass color for background
+        schemeColor = colorScheme.colors.grass; // Trees, bushes, and cottage use grass color for background
         break;
+    }
+
+    // Apply seasonal modifier if defined
+    if (schemeColor && colorScheme.seasonalModifiers) {
+      const currentSeason = TimeManager.getCurrentTime().season;
+      const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+      const seasonalOverride = colorScheme.seasonalModifiers[seasonKey];
+
+      if (seasonalOverride) {
+        // Check if this color property has a seasonal override
+        const colorKey = Object.entries(colorScheme.colors).find(([_, value]) => value === schemeColor)?.[0];
+        if (colorKey && seasonalOverride[colorKey as keyof typeof seasonalOverride]) {
+          schemeColor = seasonalOverride[colorKey as keyof typeof seasonalOverride];
+        }
+      }
+    }
+
+    // Apply time-of-day modifier if defined (applied after seasonal modifiers)
+    if (schemeColor && colorScheme.timeOfDayModifiers) {
+      const currentTimeOfDay = TimeManager.getCurrentTime().timeOfDay;
+      const timeOfDayKey = currentTimeOfDay.toLowerCase() as 'day' | 'night';
+      const timeOfDayOverride = colorScheme.timeOfDayModifiers[timeOfDayKey];
+
+      if (timeOfDayOverride) {
+        // Check if this color property has a time-of-day override
+        const colorKey = Object.entries(colorScheme.colors).find(([_, value]) => value === schemeColor)?.[0];
+        if (colorKey && timeOfDayOverride[colorKey as keyof typeof timeOfDayOverride]) {
+          schemeColor = timeOfDayOverride[colorKey as keyof typeof timeOfDayOverride];
+        }
+      }
+    }
+
+    if (schemeColor) {
+      color = schemeColor;
     }
   }
 

@@ -40,6 +40,32 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       mushroom: 'bg-palette-sage',
       background: 'bg-palette-moss',
     },
+    // Optional seasonal modifiers - subtle grass color shifts
+    seasonalModifiers: {
+      spring: {
+        grass: 'bg-palette-sage',  // Bright spring green (default sage)
+      },
+      summer: {
+        grass: 'bg-palette-olive',  // Warmer summer grass
+      },
+      autumn: {
+        grass: 'bg-palette-khaki',  // Golden autumn grass
+      },
+      winter: {
+        grass: 'bg-palette-slate',  // Cool winter grass
+        water: 'bg-palette-periwinkle',  // Frozen water tint
+      },
+    },
+    // Optional time-of-day modifiers - darker colors at night
+    timeOfDayModifiers: {
+      night: {
+        grass: 'bg-palette-moss',      // Darker grass at night
+        water: 'bg-palette-teal',      // Darker water at night
+        path: 'bg-palette-taupe',      // Darker path at night
+        floor: 'bg-palette-khaki',     // Darker floor at night
+        wall: 'bg-palette-chocolate',  // Darker wall at night
+      },
+    },
   },
 
   forest: {

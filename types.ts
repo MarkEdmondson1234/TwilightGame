@@ -105,6 +105,18 @@ export interface ColorScheme {
     mushroom: string;
     background: string;
   };
+  // Optional seasonal color overrides (only override colors that change per season)
+  seasonalModifiers?: {
+    spring?: Partial<ColorScheme['colors']>;
+    summer?: Partial<ColorScheme['colors']>;
+    autumn?: Partial<ColorScheme['colors']>;
+    winter?: Partial<ColorScheme['colors']>;
+  };
+  // Optional time-of-day color overrides (only override colors that change between day/night)
+  timeOfDayModifiers?: {
+    day?: Partial<ColorScheme['colors']>;
+    night?: Partial<ColorScheme['colors']>;
+  };
 }
 
 // Map transition/exit definition
