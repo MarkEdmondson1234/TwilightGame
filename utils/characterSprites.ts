@@ -1,6 +1,7 @@
 import { CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
 import { generatePlaceholderSprites as generateSVGPlaceholders } from './placeholderSprites';
+import { hasSpriteSheets, loadSpriteSheetAsFrames } from './spriteSheetLoader';
 
 /**
  * Character Sprite System
@@ -202,6 +203,60 @@ export function generateCharacterSprites(character: CharacterCustomization): Rec
   } catch (error) {
     console.error('[CharacterSprites] Error generating sprites:', error);
     return generateSVGPlaceholders(DEFAULT_CHARACTER);
+  }
+}
+
+/**
+ * Generate character sprites using optimized sprite sheets
+ *
+ * This async version loads sprite sheets and extracts individual frames.
+ * Sprite sheets are much more performant on mobile/iPad.
+ */
+export async function generateCharacterSpritesAsync(
+  character: CharacterCustomization
+): Promise<Record<Direction, string[]>> {
+  try {
+    // Ensure character has all required fields
+    if (!character || !character.name) {
+      console.warn('[CharacterSprites] Invalid character data, using default');
+      return generateSVGPlaceholders(DEFAULT_CHARACTER);
+    }
+
+    const characterId = character.characterId || 'character1';
+
+    // Try to use optimized sprite sheets first
+    const useSpriteSheets = await hasSpriteSheets();
+
+    if (useSpriteSheets) {
+      console.log('[CharacterSprites] Loading optimized sprite sheets...');
+
+      // Load all direction sprite sheets in parallel
+      const [downFrames, upFrames, leftFrames, rightFrames] = await Promise.all([
+        loadSpriteSheetAsFrames(characterId, Direction.Down).catch(() => null),
+        loadSpriteSheetAsFrames(characterId, Direction.Up).catch(() => null),
+        loadSpriteSheetAsFrames(characterId, Direction.Left).catch(() => null),
+        loadSpriteSheetAsFrames(characterId, Direction.Right).catch(() => null),
+      ]);
+
+      // If all sprite sheets loaded successfully, use them
+      if (downFrames && upFrames && leftFrames && rightFrames) {
+        console.log('[CharacterSprites] Sprite sheets loaded successfully');
+        return {
+          [Direction.Down]: downFrames,
+          [Direction.Up]: upFrames,
+          [Direction.Left]: leftFrames,
+          [Direction.Right]: rightFrames,
+        };
+      }
+
+      console.warn('[CharacterSprites] Some sprite sheets failed to load, falling back to individual sprites');
+    }
+
+    // Fallback to regular sprites
+    return generateCharacterSprites(character);
+  } catch (error) {
+    console.error('[CharacterSprites] Error loading sprite sheets:', error);
+    return generateCharacterSprites(character);
   }
 }
 

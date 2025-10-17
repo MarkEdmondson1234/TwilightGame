@@ -11,7 +11,8 @@ import { runSelfTests } from './utils/testUtils';
 import { initializeMaps, mapManager, transitionToMap } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
-import { generateCharacterSprites, DEFAULT_CHARACTER } from './utils/characterSprites';
+import { generateCharacterSprites, generateCharacterSpritesAsync, DEFAULT_CHARACTER } from './utils/characterSprites';
+import { getPortraitSprite } from './utils/portraitSprites';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { getCrop } from './data/crops';
@@ -38,32 +39,23 @@ const App: React.FC = () => {
     const isTouchDevice = useTouchDevice();
 
     // Generate player sprites based on character customization
-    const playerSprites = useMemo(() => {
+    // Start with synchronous sprites, then upgrade to sprite sheets if available
+    const [playerSprites, setPlayerSprites] = useState(() => {
         const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
-        const sprites = generateCharacterSprites(character);
+        return generateCharacterSprites(character);
+    });
 
-        // Preload all sprite images eagerly to prevent lag on first use
-        // Wait for all images to fully load before continuing
-        const preloadPromises: Promise<void>[] = [];
-        Object.values(sprites).forEach(directionFrames => {
-            directionFrames.forEach(spriteUrl => {
-                const promise = new Promise<void>((resolve) => {
-                    const img = new Image();
-                    img.onload = () => resolve();
-                    img.onerror = () => resolve(); // Resolve even on error to not block
-                    img.src = spriteUrl;
-                });
-                preloadPromises.push(promise);
-            });
+    // Load optimized sprite sheets asynchronously
+    useEffect(() => {
+        const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
+
+        // Try to load sprite sheets (async)
+        generateCharacterSpritesAsync(character).then(sprites => {
+            setPlayerSprites(sprites);
+            console.log('[App] Player sprites loaded (optimized)');
+        }).catch(error => {
+            console.error('[App] Failed to load sprite sheets, using fallback:', error);
         });
-
-        // Start preloading immediately (don't wait for promise to resolve here)
-        // This ensures the browser starts fetching all images right away
-        Promise.all(preloadPromises).then(() => {
-            console.log('[App] All player sprites preloaded');
-        });
-
-        return sprites;
     }, [characterVersion]); // Regenerate when character changes
 
     const keysPressed = useRef<Record<string, boolean>>({}).current;
@@ -572,8 +564,8 @@ const App: React.FC = () => {
     const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
 
     // Scale up custom character sprites (they're higher resolution than placeholders)
-    const isCustomSprite = playerSpriteUrl.includes('/assets/character');
-    const spriteScale = isCustomSprite ? 3.5 : 1.0; // 3.5x larger for custom art
+    const isCustomSprite = playerSpriteUrl.includes('/assets/character') || playerSpriteUrl.startsWith('data:image');
+    const spriteScale = isCustomSprite ? 3.0 : 1.0; // 3.0x for optimized sprites
 
     // Show character creator if no character selected
     if (showCharacterCreator) {
@@ -898,7 +890,7 @@ const App: React.FC = () => {
             {activeNPC && (
                 <DialogueBox
                     npc={npcManager.getNPCById(activeNPC)!}
-                    playerSprite={playerSprites[Direction.Down][0]} // Forward-facing idle pose
+                    playerSprite={getPortraitSprite(gameState.getSelectedCharacter() || DEFAULT_CHARACTER, Direction.Down)} // High-res portrait
                     onClose={() => setActiveNPC(null)}
                 />
             )}

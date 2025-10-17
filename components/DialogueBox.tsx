@@ -43,7 +43,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose })
               alt="Player"
               className="relative w-full h-full object-cover object-top"
               style={{
-                imageRendering: 'pixelated',
+                imageRendering: 'auto', // Smooth rendering for high-res portraits
                 transform: 'scale(1.8)',
                 transformOrigin: 'top center',
               }}
@@ -110,7 +110,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose })
               alt={npc.name}
               className="relative w-full h-full object-cover object-top"
               style={{
-                imageRendering: 'pixelated',
+                imageRendering: 'auto', // Smooth rendering for portraits
                 transform: 'scale(1.8)',
                 transformOrigin: 'top center',
               }}
@@ -132,7 +132,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose })
               alt={npc.name}
               className="relative w-full h-full object-cover object-top"
               style={{
-                imageRendering: 'pixelated',
+                imageRendering: 'auto', // Smooth rendering for portraits
                 transform: 'scale(1.8)',
                 transformOrigin: 'top center',
               }}
