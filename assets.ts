@@ -13,8 +13,6 @@ export const tileAssets = {
   tree_2: new URL('./public/assets-optimized/tiles/tree_2.png', import.meta.url).href,
   tree_big_1: new URL('./public/assets-optimized/tiles/tree_big_1.png', import.meta.url).href,
   bricks_1: new URL('./public/assets-optimized/tiles/bricks_1.png', import.meta.url).href,
-  fallow_soil_1: new URL('./public/assets-optimized/tiles/fallow_soil_1.png', import.meta.url).href,
-  fallow_soil_2: new URL('./public/assets-optimized/tiles/fallow_soil_2.png', import.meta.url).href,
   path_horizontal: new URL('./public/assets-optimized/tiles/path_horizontal.png', import.meta.url).href,
   path_curve_bottom_to_right: new URL('./public/assets-optimized/tiles/path_curve_bottom_to_right.png', import.meta.url).href,
   path_curve_left_to_bottom: new URL('./public/assets-optimized/tiles/path_curve_left_to_bottom.png', import.meta.url).href,
@@ -22,7 +20,18 @@ export const tileAssets = {
   path_curve_top_to_right: new URL('./public/assets-optimized/tiles/path_curve_top_to_right.png', import.meta.url).href,
   path_end_left: new URL('./public/assets-optimized/tiles/path_end_left.png', import.meta.url).href,
   path_end_right: new URL('./public/assets-optimized/tiles/path_end_right.png', import.meta.url).href,
+  stepping_stones_1: new URL('./public/assets/tiles/stepping_stones_1.png', import.meta.url).href,
+  stepping_stones_2: new URL('./public/assets/tiles/stepping_stones_2.png', import.meta.url).href,
   cottage_wooden: new URL('./public/assets-optimized/tiles/cottage_wooden_512.png', import.meta.url).href,
+};
+
+// Farming assets
+export const farmingAssets = {
+  fallow_soil_1: new URL('./public/assets/farming/fallow_soil_1.png', import.meta.url).href,
+  fallow_soil_2: new URL('./public/assets/farming/fallow_soil_2.png', import.meta.url).href,
+  tilled: new URL('./public/assets/farming/tilled.png', import.meta.url).href,
+  plant_pea_young: new URL('./public/assets/farming/plant_pea_young.png', import.meta.url).href,
+  plant_pea_adult: new URL('./public/assets/farming/plant_pea_adult.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

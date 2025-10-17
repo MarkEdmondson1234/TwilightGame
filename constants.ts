@@ -1,5 +1,5 @@
 import { TileType, TileData, Direction, SpriteMetadata } from './types';
-import { tileAssets } from './assets';
+import { tileAssets, farmingAssets } from './assets';
 
 export const TILE_SIZE = 64;
 export const MAP_WIDTH = 50;
@@ -63,9 +63,14 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // WATER = 2
   {
     name: 'Path',
-    color: 'bg-level-grass',  // Use grass color as background so path sprites blend naturally
+    color: 'bg-level-grass',  // Use grass color as background so stepping stones blend naturally
     isSolid: false,
-    image: [tileAssets.path_horizontal]  // Default; actual tile selected by pathTileSelector
+    image: [
+      tileAssets.stepping_stones_1,
+      tileAssets.stepping_stones_1,
+      tileAssets.stepping_stones_1,
+      tileAssets.stepping_stones_2  // stepping_stones_1 appears 75% of the time, stepping_stones_2 25%
+    ]
   }, // PATH = 3
 
   // Indoor tiles (4-6)
@@ -204,15 +209,15 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     color: 'bg-[#8B6F47]',
     isSolid: false,
     image: [
-      tileAssets.fallow_soil_1,
-      tileAssets.fallow_soil_2,
+      farmingAssets.fallow_soil_1,
+      farmingAssets.fallow_soil_2,
     ]
   }, // SOIL_FALLOW = 23
   {
     name: 'Tilled Soil',
-    color: 'bg-amber-950',
+    color: 'bg-[#8B6F47]',
     isSolid: false,
-    image: []
+    image: [farmingAssets.tilled]
   }, // SOIL_TILLED = 24
   {
     name: 'Planted Soil',

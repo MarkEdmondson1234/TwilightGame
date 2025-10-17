@@ -45,8 +45,6 @@ The game tests fundamental assumptions on startup:
 ## Documentation
 
 Detailed documentation is located in the [`docs/`](docs/) folder:
-
-- [`docs/PATH_SYSTEM.md`](docs/PATH_SYSTEM.md) - Path tile auto-selection system
 - [`docs/MAP_GUIDE.md`](docs/MAP_GUIDE.md) - Map creation guide
 - [`docs/ASSETS.md`](docs/ASSETS.md) - Asset management and guidelines
 - [`docs/FARMING.md`](docs/FARMING.md) - Farming system documentation
@@ -60,7 +58,6 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 - `constants.ts` - Game constants (`TILE_SIZE`, `PLAYER_SIZE`), tile legend with all tile types
 - `types.ts` - TypeScript types including `TileType`, `Position`, `Direction`, `MapDefinition`, `Transition`, `ColorScheme`
 - `utils/mapUtils.ts` - Tile data access via MapManager
-- `utils/pathTileSelector.ts` - Intelligent path tile selection based on neighbors
 - `utils/testUtils.ts` - Startup sanity checks
 
 ### Map System (`maps/`)

@@ -3,7 +3,7 @@
 ## Performance Optimization
 
 ### Character Sprite Optimization
-- [ ] Optimize left/right sprite PNGs (currently 630-755KB, should be ~300-400KB like up/down)
+- [x] Optimize left/right sprite PNGs (currently 630-755KB, should be ~300-400KB like up/down)
   - Files to optimize:
     - `public/assets/character1/base/left_0.png` (631K)
     - `public/assets/character1/base/left_1.png` (747K)

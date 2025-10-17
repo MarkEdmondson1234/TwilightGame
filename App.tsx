@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { TILE_SIZE, PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { getTileData } from './utils/mapUtils';
-import { getPathTileImage } from './utils/pathTileSelector';
 import { Position, Direction, TileType } from './types';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -188,28 +187,28 @@ const App: React.FC = () => {
                 const currentTool = gameState.getFarmingTool();
 
                 // Check if this is a farm tile or farm action
-                if (tileData && tileData.type >= 22 && tileData.type <= 28) { // Farm tiles
+                if (tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) { // Farm tiles
                     const position = { x: playerTileX, y: playerTileY };
                     let farmActionTaken = false;
 
-                    if (currentTool === 'hoe' && tileData.type === 22) { // Till fallow soil
+                    if (currentTool === 'hoe' && tileData.type === TileType.SOIL_FALLOW) { // Till fallow soil
                         if (farmManager.tillSoil(currentMapIdValue, position, currentTime)) {
                             console.log('[Action Key] Tilled soil');
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'seeds' && tileData.type === 23) { // Plant in tilled soil
+                    } else if (currentTool === 'seeds' && tileData.type === TileType.SOIL_TILLED) { // Plant in tilled soil
                         const selectedSeed = gameState.getSelectedSeed();
                         if (selectedSeed && farmManager.plantSeed(currentMapIdValue, position, selectedSeed, currentTime)) {
                             console.log(`[Action Key] Planted ${selectedSeed}`);
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'wateringCan' && (tileData.type === 24 || tileData.type === 25 || tileData.type === 27)) {
+                    } else if (currentTool === 'wateringCan' && (tileData.type === TileType.SOIL_PLANTED || tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_WILTING)) {
                         // Water planted, watered, or wilting crops
                         if (farmManager.waterPlot(currentMapIdValue, position, currentTime)) {
                             console.log('[Action Key] Watered crop');
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'hand' && tileData.type === 26) { // Harvest ready crop
+                    } else if (currentTool === 'hand' && tileData.type === TileType.SOIL_READY) { // Harvest ready crop
                         const result = farmManager.harvestCrop(currentMapIdValue, position, currentTime);
                         if (result) {
                             const crop = getCrop(result.cropId);
@@ -220,7 +219,7 @@ const App: React.FC = () => {
                             }
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'hand' && tileData.type === 28) { // Clear dead crop
+                    } else if (currentTool === 'hand' && tileData.type === TileType.SOIL_DEAD) { // Clear dead crop
                         if (farmManager.clearDeadCrop(currentMapIdValue, position, currentTime)) {
                             console.log('[Action Key] Cleared dead crop');
                             farmActionTaken = true;
@@ -247,7 +246,7 @@ const App: React.FC = () => {
             let foundMirror = false;
             for (const tile of adjacentTiles) {
                 const tileData = getTileData(tile.x, tile.y);
-                if (tileData && tileData.type === 13) { // MIRROR tile type
+                if (tileData && tileData.type === TileType.MIRROR) {
                     console.log(`[Action Key] Found mirror at (${tile.x}, ${tile.y})`);
                     setShowCharacterCreator(true);
                     foundMirror = true;
@@ -340,7 +339,7 @@ const App: React.FC = () => {
         let foundMirror = false;
         for (const tile of adjacentTiles) {
             const tileData = getTileData(tile.x, tile.y);
-            if (tileData && tileData.type === 13) { // MIRROR tile type
+            if (tileData && tileData.type === TileType.MIRROR) {
                 console.log(`[Touch Action] Found mirror at (${tile.x}, ${tile.y})`);
                 setShowCharacterCreator(true);
                 foundMirror = true;
@@ -642,14 +641,9 @@ const App: React.FC = () => {
 
                         // Select image variant using deterministic hash
                         let selectedImage: string | null = null;
-                        let pathRotation = 0; // Track rotation for path tiles
 
-                        // Special handling for PATH tiles - select based on neighbors
-                        if (tileData.type === TileType.PATH) {
-                            const pathTile = getPathTileImage(x, y);
-                            selectedImage = pathTile.image;
-                            pathRotation = pathTile.rotation;
-                        } else if (tileData.image && tileData.image.length > 0) {
+                        // All tiles with images use random selection now (including paths)
+                        if (tileData.image && tileData.image.length > 0) {
                             const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
                             const hashValue = hash % 1;
 
@@ -673,10 +667,7 @@ const App: React.FC = () => {
                         let filter = 'none';
                         let sizeScale = 1.0;
 
-                        // Apply path rotation if this is a path tile
-                        if (tileData.type === TileType.PATH && pathRotation !== 0) {
-                            transform = `rotate(${pathRotation}deg)`;
-                        } else if (selectedImage) {
+                        if (selectedImage) {
                             // Use completely different hash seeds for each variation (avoid reusing previous hashes)
                             const flipHash = Math.abs(Math.sin(x * 87.654 + y * 21.987) * 67890.1234);
                             const sizeHash = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
@@ -692,15 +683,14 @@ const App: React.FC = () => {
                                 tileData.type === TileType.WALL ||
                                 tileData.type === TileType.DOOR ||
                                 tileData.type === TileType.FLOOR ||
-                                tileData.type === TileType.PATH;
+                                tileData.type === TileType.SOIL_TILLED;
 
                             // Determine which tiles should have NO variations at all
                             const shouldNotTransform =
                                 tileData.type === TileType.WALL_BOUNDARY ||
                                 tileData.type === TileType.WALL ||
                                 tileData.type === TileType.DOOR ||
-                                tileData.type === TileType.FLOOR ||
-                                tileData.type === TileType.PATH;
+                                tileData.type === TileType.FLOOR;
 
                             if (!shouldNotTransform) {
                                 // Horizontal flip (left/right, 50% chance)
@@ -708,20 +698,30 @@ const App: React.FC = () => {
                                 const flipScaleX = shouldFlipX ? -1 : 1;
 
                                 // Size variation - more subtle for trees (0.95x to 1.05x), normal for others (0.85x to 1.15x)
+                                // No size variation for tilled soil, more variation for paths
                                 const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
-                                sizeScale = isTree
+                                const isTilledSoil = tileData.type === TileType.SOIL_TILLED;
+                                const isPath = tileData.type === TileType.PATH;
+                                sizeScale = isTilledSoil
+                                    ? 1.0  // No size variation for tilled soil
+                                    : isPath
+                                    ? 0.7 + (sizeHash % 1) * 0.6  // More pronounced variation for stepping stones: 70% to 130%
+                                    : isTree
                                     ? 0.95 + (sizeHash % 1) * 0.1  // Subtle variation for trees: 95% to 105%
                                     : 0.85 + (sizeHash % 1) * 0.3; // Normal variation for other tiles: 85% to 115%
 
                                 // Rotation variation only for decorative objects (not grass/ground)
-                                // Soil tiles get 90-degree rotations, others get subtle rotations
                                 let rotation = 0;
                                 if (!shouldNotRotate) {
                                     if (tileData.type === TileType.SOIL_FALLOW) {
-                                        // 90-degree increments (0, 90, 180, 270)
-                                        rotation = Math.floor(rotHash % 4) * 90;
+                                        // Fallow soil: Only 0 or 180 degrees (horizontal flip only, no vertical)
+                                        rotation = (rotHash % 1) > 0.5 ? 180 : 0;
+                                    } else if (tileData.type === TileType.PATH) {
+                                        // Stepping stones: Full 360 degree rotation for maximum variety
+                                        rotation = (rotHash % 1) * 360;
                                     } else {
-                                        rotation = -5 + (rotHash % 1) * 10; // Reduced from -15 to 30 → -5 to 10
+                                        // Other tiles: Subtle rotation
+                                        rotation = -5 + (rotHash % 1) * 10;
                                     }
                                 }
 
