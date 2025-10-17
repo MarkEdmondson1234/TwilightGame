@@ -24,6 +24,7 @@ export enum TileType {
   BUSH,
   TREE,
   TREE_BIG,
+  CHERRY_TREE,
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,
@@ -53,12 +54,22 @@ export enum Direction {
   Right,
 }
 
+export interface SeasonalImageSet {
+  spring?: string[];  // Images to use in spring (higher frequency if defined)
+  summer?: string[];  // Images to use in summer
+  autumn?: string[];  // Images to use in autumn
+  winter?: string[];  // Images to use in winter
+  default: string[];  // Default images used in all seasons
+}
+
 export interface TileData {
     type: TileType;
     name: string;
     color: string;
     isSolid: boolean;
-    image?: string[];
+    image?: string[];  // Simple array of images (backward compatible)
+    seasonalImages?: SeasonalImageSet;  // Seasonal variations (new)
+    baseType?: TileType;  // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
 }
 
 // Multi-tile sprite metadata for foreground rendering

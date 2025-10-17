@@ -17,6 +17,7 @@ import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { getCrop } from './data/crops';
 import { preloadAllAssets } from './utils/assetPreloader';
+import { TimeManager, Season } from './utils/TimeManager';
 
 const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = 150; // time between animation frames
@@ -642,23 +643,60 @@ const App: React.FC = () => {
                         // Select image variant using deterministic hash
                         let selectedImage: string | null = null;
 
+                        // Determine which image array to use (seasonal or regular)
+                        let imageArray: string[] | undefined = undefined;
+
+                        if (tileData.seasonalImages) {
+                            // Use seasonal images if available
+                            const currentSeason = TimeManager.getCurrentTime().season;
+                            const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+                            imageArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
+
+                        } else if (tileData.image) {
+                            // Fall back to regular images
+                            imageArray = tileData.image;
+                        }
+
+                        // Check if this tile has a foreground sprite (if so, don't render its own background image)
+                        const hasForegroundSprite = SPRITE_METADATA.some(s =>
+                            s.tileType === tileData.type && s.isForeground
+                        );
+
+                        // If this tile has a baseType (like cherry trees on grass), use base tile's visuals
+                        let renderTileData = tileData;
+                        if (hasForegroundSprite && tileData.baseType !== undefined) {
+                            const baseTileData = getTileData(x, y, tileData.baseType);
+                            if (baseTileData) {
+                                renderTileData = baseTileData;
+                                // Re-determine image array for base tile
+                                if (renderTileData.seasonalImages) {
+                                    const currentSeason = TimeManager.getCurrentTime().season;
+                                    const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+                                    imageArray = renderTileData.seasonalImages[seasonKey] || renderTileData.seasonalImages.default;
+                                } else if (renderTileData.image) {
+                                    imageArray = renderTileData.image;
+                                }
+                            }
+                        }
+
                         // All tiles with images use random selection now (including paths)
-                        if (tileData.image && tileData.image.length > 0) {
+                        if (imageArray && imageArray.length > 0 && (!hasForegroundSprite || tileData.baseType !== undefined)) {
                             const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
                             const hashValue = hash % 1;
 
                             // For grass tiles (and tiles with grass backgrounds), only show image on 30% of tiles (sparse)
                             // For other tiles, always show image
-                            const isGrassTile = tileData.type === TileType.GRASS ||
-                                                tileData.type === TileType.TREE ||
-                                                tileData.type === TileType.TREE_BIG;
+                            // Use renderTileData since we might be rendering base tile (e.g., grass under cherry tree)
+                            const isGrassTile = renderTileData.type === TileType.GRASS ||
+                                                renderTileData.type === TileType.TREE ||
+                                                renderTileData.type === TileType.TREE_BIG;
                             const showImage = isGrassTile ? hashValue < 0.3 : true;
 
                             if (showImage) {
                                 // Use a separate hash for image selection to avoid bias
                                 const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-                                const index = Math.floor((imageHash % 1) * tileData.image.length);
-                                selectedImage = tileData.image[index];
+                                const index = Math.floor((imageHash % 1) * imageArray.length);
+                                selectedImage = imageArray[index];
                             }
                         }
 
@@ -737,7 +775,7 @@ const App: React.FC = () => {
                         return (
                             <div
                                 key={`${x}-${y}`}
-                                className={`absolute ${tileData.color}`}
+                                className={`absolute ${renderTileData.color}`}
                                 style={{
                                     left: x * TILE_SIZE,
                                     top: y * TILE_SIZE,
@@ -748,7 +786,7 @@ const App: React.FC = () => {
                                 {selectedImage && (
                                     <img
                                         src={selectedImage}
-                                        alt={tileData.name}
+                                        alt={renderTileData.name}
                                         className="absolute"
                                         style={{
                                             left: (TILE_SIZE * (1 - sizeScale)) / 2,
@@ -851,17 +889,21 @@ const App: React.FC = () => {
                             const shouldFlip = (hash1 % 1) > 0.5;
                             flipScale = shouldFlip ? -1 : 1;
 
-                            // Size variation - subtle for trees, normal for others
-                            const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
+                            // Size variation - very subtle for trees, normal for others
+                            const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH || tileData.type === TileType.CHERRY_TREE;
                             sizeVariation = isTree
-                                ? 0.95 + (hash2 % 1) * 0.1  // Subtle: 95% to 105%
+                                ? 0.98 + (hash2 % 1) * 0.04  // Very subtle: 98% to 102%
                                 : 0.85 + (hash2 % 1) * 0.3; // Normal: 85% to 115%
 
-                            // Rotation variation (-8 to +8 degrees for large sprites)
-                            rotation = -8 + (hash3 % 1) * 16;
+                            // Rotation variation - none for trees, subtle for others
+                            if (!isTree) {
+                                rotation = -8 + (hash3 % 1) * 16;
+                            }
 
-                            // Brightness variation (0.9 to 1.1)
-                            brightness = 0.9 + (hash4 % 1) * 0.2;
+                            // Brightness variation - none for trees, subtle for others
+                            if (!isTree) {
+                                brightness = 0.9 + (hash4 % 1) * 0.2;
+                            }
                         }
 
                         // Calculate dimensions with size variation
@@ -872,10 +914,23 @@ const App: React.FC = () => {
                         const widthDiff = (spriteMetadata.spriteWidth - variedWidth) / 2;
                         const heightDiff = (spriteMetadata.spriteHeight - variedHeight) / 2;
 
+                        // Determine which image to use (seasonal or default)
+                        let spriteImage = spriteMetadata.image;
+                        if (tileData.seasonalImages) {
+                            const currentSeason = TimeManager.getCurrentTime().season;
+                            const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+                            const seasonalArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
+
+                            // Select seasonal image using the same hash method as regular tiles
+                            const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+                            const index = Math.floor((imageHash % 1) * seasonalArray.length);
+                            spriteImage = seasonalArray[index];
+                        }
+
                         return (
                             <img
                                 key={`fg-${x}-${y}`}
-                                src={spriteMetadata.image}
+                                src={spriteImage}
                                 alt={tileData.name}
                                 className="absolute pointer-events-none"
                                 style={{

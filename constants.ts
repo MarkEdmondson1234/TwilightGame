@@ -174,7 +174,40 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
       tileAssets.grass_2,
     ]  // Use grass images as background so it matches surrounding grass
   }, // TREE_BIG = 17
-  // Building tiles (18-22)
+  {
+    name: 'Cherry Tree',
+    color: 'bg-level-grass',  // Dynamically replaced by map's grass color
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the cherry tree sprite
+    seasonalImages: {
+      spring: [
+        tileAssets.tree_cherry_spring,
+        tileAssets.tree_cherry_spring,
+        tileAssets.tree_cherry_spring,  // Cherry blossoms appear 75% in spring
+        tileAssets.tree_1,
+      ],
+      summer: [
+        tileAssets.tree_cherry_summer_fruit,
+        tileAssets.tree_cherry_summer_fruit,  // Cherry trees with fruit 50% in summer
+        tileAssets.tree_cherry_summer_no_fruit,  // Cherry trees without fruit 25%
+        tileAssets.tree_1,  // Regular trees 25%
+      ],
+      autumn: [
+        tileAssets.tree_cherry_autumn,
+        tileAssets.tree_cherry_autumn,
+        tileAssets.tree_cherry_autumn,  // Cherry trees with pink/red foliage 75% in autumn
+        tileAssets.tree_2,  // Regular trees 25%
+      ],
+      winter: [
+        tileAssets.tree_cherry_winter,
+        tileAssets.tree_cherry_winter,
+        tileAssets.tree_cherry_winter,  // Cherry trees with snow 75% in winter
+        tileAssets.tree_1,  // Regular trees 25%
+      ],
+      default: [tileAssets.tree_1, tileAssets.tree_2],  // Fallback
+    }
+  }, // CHERRY_TREE = 18
+  // Building tiles (19-23)
   {
     name: 'Wall Boundary',
     color: 'bg-stone-700',
@@ -369,5 +402,19 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 1.5,
     collisionOffsetX: -1.7,
     collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
+  },
+  {
+    tileType: TileType.CHERRY_TREE,
+    spriteWidth: 4,  // 4 tiles wide (larger than regular tree)
+    spriteHeight: 4, // 4 tiles tall
+    offsetX: -1.5,   // Center horizontally on tile
+    offsetY: -3,     // Extends 3 tiles upward
+    image: tileAssets.tree_cherry_autumn,  // Default image (will be overridden by seasonal logic)
+    isForeground: true,
+    // Collision only at the base trunk (1x1)
+    collisionWidth: 0.3,
+    collisionHeight: 0.3,
+    collisionOffsetX: 0.35,
+    collisionOffsetY: 0.35,
   },
 ];
