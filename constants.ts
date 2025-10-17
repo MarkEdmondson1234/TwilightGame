@@ -68,8 +68,16 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     image: [
       tileAssets.stepping_stones_1,
       tileAssets.stepping_stones_1,
-      tileAssets.stepping_stones_1,
-      tileAssets.stepping_stones_2  // stepping_stones_1 appears 75% of the time, stepping_stones_2 25%
+      tileAssets.stepping_stones_1,  // stepping_stones_1: 25%
+      tileAssets.stepping_stones_2,
+      tileAssets.stepping_stones_2,
+      tileAssets.stepping_stones_2,  // stepping_stones_2: 25%
+      tileAssets.stepping_stones_3,
+      tileAssets.stepping_stones_3,
+      tileAssets.stepping_stones_3,  // stepping_stones_3: 25%
+      tileAssets.stepping_stones_4,
+      tileAssets.stepping_stones_4,
+      tileAssets.stepping_stones_4   // stepping_stones_4: 25%
     ]
   }, // PATH = 3
 

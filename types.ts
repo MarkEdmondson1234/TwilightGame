@@ -162,7 +162,10 @@ export interface FarmPlot {
   position: Position;      // Tile position
   state: FarmPlotState;    // Current state
   cropType: string | null; // Crop ID (e.g., 'tomato', 'wheat')
-  plantedAt: number | null;    // Timestamp when planted
-  lastWatered: number | null;  // Timestamp when last watered
-  stateChangedAt: number;      // Timestamp of last state change
+  plantedAtDay: number | null;    // Game day when planted (totalDays from TimeManager)
+  plantedAtHour: number | null;   // Game hour when planted (0-23)
+  lastWateredDay: number | null;  // Game day when last watered
+  lastWateredHour: number | null; // Game hour when last watered
+  stateChangedAtDay: number;      // Game day of last state change
+  stateChangedAtHour: number;     // Game hour of last state change
 }

@@ -20,18 +20,20 @@ export const tileAssets = {
   path_curve_top_to_right: new URL('./public/assets-optimized/tiles/path_curve_top_to_right.png', import.meta.url).href,
   path_end_left: new URL('./public/assets-optimized/tiles/path_end_left.png', import.meta.url).href,
   path_end_right: new URL('./public/assets-optimized/tiles/path_end_right.png', import.meta.url).href,
-  stepping_stones_1: new URL('./public/assets/tiles/stepping_stones_1.png', import.meta.url).href,
-  stepping_stones_2: new URL('./public/assets/tiles/stepping_stones_2.png', import.meta.url).href,
+  stepping_stones_1: new URL('./public/assets-optimized/tiles/stepping_stones_1.png', import.meta.url).href,
+  stepping_stones_2: new URL('./public/assets-optimized/tiles/stepping_stones_2.png', import.meta.url).href,
+  stepping_stones_3: new URL('./public/assets-optimized/tiles/stepping_stones_3.png', import.meta.url).href,
+  stepping_stones_4: new URL('./public/assets-optimized/tiles/stepping_stones_4.png', import.meta.url).href,
   cottage_wooden: new URL('./public/assets-optimized/tiles/cottage_wooden_512.png', import.meta.url).href,
 };
 
-// Farming assets
+// Farming assets - Use optimized versions for better performance
 export const farmingAssets = {
-  fallow_soil_1: new URL('./public/assets/farming/fallow_soil_1.png', import.meta.url).href,
-  fallow_soil_2: new URL('./public/assets/farming/fallow_soil_2.png', import.meta.url).href,
-  tilled: new URL('./public/assets/farming/tilled.png', import.meta.url).href,
-  plant_pea_young: new URL('./public/assets/farming/plant_pea_young.png', import.meta.url).href,
-  plant_pea_adult: new URL('./public/assets/farming/plant_pea_adult.png', import.meta.url).href,
+  fallow_soil_1: new URL('./public/assets-optimized/farming/fallow_soil_1.png', import.meta.url).href,
+  fallow_soil_2: new URL('./public/assets-optimized/farming/fallow_soil_2.png', import.meta.url).href,
+  tilled: new URL('./public/assets-optimized/farming/tilled.png', import.meta.url).href,
+  plant_pea_young: new URL('./public/assets-optimized/farming/plant_pea_young.png', import.meta.url).href,
+  plant_pea_adult: new URL('./public/assets-optimized/farming/plant_pea_adult.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

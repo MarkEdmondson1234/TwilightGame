@@ -37,6 +37,7 @@ function createDirectories() {
     OPTIMIZED_DIR,
     path.join(OPTIMIZED_DIR, 'character1'),
     path.join(OPTIMIZED_DIR, 'tiles'),
+    path.join(OPTIMIZED_DIR, 'farming'),
     path.join(OPTIMIZED_DIR, 'npcs')
   ];
 
@@ -215,6 +216,46 @@ async function optimizeTiles() {
   console.log(`\n  Optimized ${optimized} tile images\n`);
 }
 
+// Optimize farming sprites
+async function optimizeFarming() {
+  console.log('🌾 Optimizing farming sprites...');
+
+  const farmingDir = path.join(ASSETS_DIR, 'farming');
+  if (!fs.existsSync(farmingDir)) {
+    console.log('⚠️  No farming sprites found, skipping...');
+    return;
+  }
+
+  const files = fs.readdirSync(farmingDir);
+  let optimized = 0;
+
+  for (const file of files) {
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    const inputPath = path.join(farmingDir, file);
+    const outputPath = path.join(OPTIMIZED_DIR, 'farming', file.replace(/\.jpeg$/i, '.png'));
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Farming tiles - scale to fit tile size
+    await sharp(inputPath)
+      .resize(TILE_SIZE, TILE_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} farming sprites\n`);
+}
+
 // Optimize NPC sprites
 async function optimizeNPCs() {
   console.log('👥 Optimizing NPC sprites...');
@@ -267,6 +308,7 @@ async function main() {
     createDirectories();
     await generateCharacterSpriteSheets();
     await optimizeTiles();
+    await optimizeFarming();
     await optimizeNPCs();
 
     console.log('✨ Asset optimization complete!');

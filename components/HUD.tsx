@@ -1,13 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TILE_LEGEND } from '../constants';
 import { mapManager } from '../maps';
 import { useGameState } from '../hooks/useGameState';
+import { TimeManager, GameTime } from '../utils/TimeManager';
 
 const HUD: React.FC = () => {
     const currentMap = mapManager.getCurrentMap();
     const mapName = currentMap ? currentMap.name : 'Loading...';
     const { gold, forestDepth, caveDepth, farming } = useGameState();
     const [isLegendOpen, setIsLegendOpen] = useState(false);
+    const [currentTime, setCurrentTime] = useState<GameTime>(TimeManager.getCurrentTime());
+
+    // Update time every second
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentTime(TimeManager.getCurrentTime());
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, []);
 
     // Tool display names and icons
     const toolDisplay = {
@@ -39,8 +50,18 @@ const HUD: React.FC = () => {
                 </div>
                 <div className="bg-black/50 p-3 rounded-lg border border-slate-700">
                     <p className="text-lg font-bold text-yellow-300">{mapName}</p>
+                    <div className="mt-2 border-t border-slate-600 pt-2">
+                        <p className="text-md font-bold text-cyan-300">{currentTime.season} {currentTime.day}</p>
+                        <p className="text-xs text-slate-400">Year {currentTime.year}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-400">Hour {currentTime.hour}:00</span>
+                            <span className={`text-xs font-bold ${currentTime.timeOfDay === 'Day' ? 'text-yellow-400' : 'text-blue-400'}`}>
+                                {currentTime.timeOfDay === 'Day' ? '☀️ Day' : '🌙 Night'}
+                            </span>
+                        </div>
+                    </div>
                     {forestDepth > 0 && (
-                        <p className="text-sm text-green-300">Forest Depth: {forestDepth}</p>
+                        <p className="text-sm text-green-300 mt-2">Forest Depth: {forestDepth}</p>
                     )}
                     {caveDepth > 0 && (
                         <p className="text-sm text-purple-300">Cave Depth: {caveDepth}</p>

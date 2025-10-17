@@ -192,24 +192,24 @@ const App: React.FC = () => {
                     let farmActionTaken = false;
 
                     if (currentTool === 'hoe' && tileData.type === TileType.SOIL_FALLOW) { // Till fallow soil
-                        if (farmManager.tillSoil(currentMapIdValue, position, currentTime)) {
+                        if (farmManager.tillSoil(currentMapIdValue, position)) {
                             console.log('[Action Key] Tilled soil');
                             farmActionTaken = true;
                         }
                     } else if (currentTool === 'seeds' && tileData.type === TileType.SOIL_TILLED) { // Plant in tilled soil
                         const selectedSeed = gameState.getSelectedSeed();
-                        if (selectedSeed && farmManager.plantSeed(currentMapIdValue, position, selectedSeed, currentTime)) {
+                        if (selectedSeed && farmManager.plantSeed(currentMapIdValue, position, selectedSeed)) {
                             console.log(`[Action Key] Planted ${selectedSeed}`);
                             farmActionTaken = true;
                         }
                     } else if (currentTool === 'wateringCan' && (tileData.type === TileType.SOIL_PLANTED || tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_WILTING)) {
                         // Water planted, watered, or wilting crops
-                        if (farmManager.waterPlot(currentMapIdValue, position, currentTime)) {
+                        if (farmManager.waterPlot(currentMapIdValue, position)) {
                             console.log('[Action Key] Watered crop');
                             farmActionTaken = true;
                         }
                     } else if (currentTool === 'hand' && tileData.type === TileType.SOIL_READY) { // Harvest ready crop
-                        const result = farmManager.harvestCrop(currentMapIdValue, position, currentTime);
+                        const result = farmManager.harvestCrop(currentMapIdValue, position);
                         if (result) {
                             const crop = getCrop(result.cropId);
                             if (crop) {
@@ -220,7 +220,7 @@ const App: React.FC = () => {
                             farmActionTaken = true;
                         }
                     } else if (currentTool === 'hand' && tileData.type === TileType.SOIL_DEAD) { // Clear dead crop
-                        if (farmManager.clearDeadCrop(currentMapIdValue, position, currentTime)) {
+                        if (farmManager.clearDeadCrop(currentMapIdValue, position)) {
                             console.log('[Action Key] Cleared dead crop');
                             farmActionTaken = true;
                         }
@@ -499,8 +499,8 @@ const App: React.FC = () => {
         farmManager.loadPlots(savedPlots);
         console.log(`[App] Loaded ${savedPlots.length} farm plots from save`);
 
-        // Update farm states on startup
-        farmManager.updateAllPlots(Date.now());
+        // Update farm states on startup (uses TimeManager internally)
+        farmManager.updateAllPlots();
 
         // If loading a random map, regenerate it with the saved seed
         const savedLocation = gameState.getPlayerLocation();

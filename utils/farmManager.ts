@@ -3,11 +3,14 @@
  *
  * Following SSoT principle: this is the ONLY place that manages farm plots.
  * All farm state queries and updates go through this manager.
+ *
+ * Uses TimeManager for all time calculations (game days/hours, not real time)
  */
 
 import { FarmPlot, FarmPlotState, Position, TileType } from '../types';
 import { getCrop } from '../data/crops';
 import { mapManager } from '../maps/MapManager';
+import { TimeManager } from './TimeManager';
 
 class FarmManager {
   private plots: Map<string, FarmPlot> = new Map(); // key: "mapId:x:y"
@@ -61,11 +64,12 @@ class FarmManager {
    * Update all farm plots for the current time
    * Called when player enters a map
    */
-  updateAllPlots(currentTime: number): void {
+  updateAllPlots(): void {
+    const currentGameTime = TimeManager.getCurrentTime();
     const updated: FarmPlot[] = [];
 
     for (const plot of this.plots.values()) {
-      const updatedPlot = this.calculatePlotState(plot, currentTime);
+      const updatedPlot = this.calculatePlotState(plot, currentGameTime.totalDays, currentGameTime.totalHours);
       if (updatedPlot !== plot) {
         this.registerPlot(updatedPlot);
         updated.push(updatedPlot);
@@ -78,10 +82,10 @@ class FarmManager {
   }
 
   /**
-   * Calculate what state a plot should be in based on timestamps
+   * Calculate what state a plot should be in based on game time
    * This is the core logic - all state transitions happen here
    */
-  private calculatePlotState(plot: FarmPlot, currentTime: number): FarmPlot {
+  private calculatePlotState(plot: FarmPlot, currentDay: number, currentHour: number): FarmPlot {
     // States that don't auto-transition
     if (plot.state === FarmPlotState.FALLOW || plot.state === FarmPlotState.TILLED) {
       return plot;
@@ -99,33 +103,40 @@ class FarmManager {
       return plot;
     }
 
-    const timeSincePlanted = plot.plantedAt ? currentTime - plot.plantedAt : 0;
-    const timeSinceWatered = plot.lastWatered ? currentTime - plot.lastWatered : Infinity;
+    // Calculate time since planted (in game days)
+    const daysSincePlanted = plot.plantedAtDay !== null ? currentDay - plot.plantedAtDay : 0;
+
+    // Calculate time since watered (in game hours)
+    const hoursSinceWatered = plot.lastWateredDay !== null && plot.lastWateredHour !== null
+      ? (currentDay - plot.lastWateredDay) * 24 + (currentHour - plot.lastWateredHour)
+      : Infinity;
 
     // Check if plant should be dead
     if (plot.state === FarmPlotState.WILTING) {
-      const timeSinceStateChange = currentTime - plot.stateChangedAt;
-      if (timeSinceStateChange >= crop.deathGracePeriod) {
+      const hoursSinceStateChange = (currentDay - plot.stateChangedAtDay) * 24 + (currentHour - plot.stateChangedAtHour);
+      if (hoursSinceStateChange >= crop.deathGracePeriod) {
         console.log(`[FarmManager] Crop died at ${plot.position.x},${plot.position.y}`);
         return {
           ...plot,
           state: FarmPlotState.DEAD,
-          stateChangedAt: currentTime,
+          stateChangedAtDay: currentDay,
+          stateChangedAtHour: currentHour,
         };
       }
     }
 
     // Check if plant should be wilting
     if (plot.state === FarmPlotState.PLANTED || plot.state === FarmPlotState.WATERED) {
-      const needsWater = timeSinceWatered > crop.waterNeededInterval;
+      const needsWater = hoursSinceWatered > crop.waterNeededInterval;
       if (needsWater) {
-        const timeSinceNeeded = timeSinceWatered - crop.waterNeededInterval;
-        if (timeSinceNeeded >= crop.wiltingGracePeriod) {
+        const hoursSinceNeeded = hoursSinceWatered - crop.waterNeededInterval;
+        if (hoursSinceNeeded >= crop.wiltingGracePeriod) {
           console.log(`[FarmManager] Crop wilting at ${plot.position.x},${plot.position.y}`);
           return {
             ...plot,
             state: FarmPlotState.WILTING,
-            stateChangedAt: currentTime,
+            stateChangedAtDay: currentDay,
+            stateChangedAtHour: currentHour,
           };
         }
       }
@@ -133,15 +144,16 @@ class FarmManager {
 
     // Check if plant is ready to harvest
     if (plot.state === FarmPlotState.PLANTED || plot.state === FarmPlotState.WATERED) {
-      const isWatered = timeSinceWatered < crop.waterNeededInterval;
+      const isWatered = hoursSinceWatered < crop.waterNeededInterval;
       const growthTime = isWatered ? crop.growthTimeWatered : crop.growthTime;
 
-      if (timeSincePlanted >= growthTime) {
+      if (daysSincePlanted >= growthTime) {
         console.log(`[FarmManager] Crop ready at ${plot.position.x},${plot.position.y}`);
         return {
           ...plot,
           state: FarmPlotState.READY,
-          stateChangedAt: currentTime,
+          stateChangedAtDay: currentDay,
+          stateChangedAtHour: currentHour,
         };
       }
     }
@@ -152,7 +164,7 @@ class FarmManager {
   /**
    * Till a fallow soil tile
    */
-  tillSoil(mapId: string, position: Position, currentTime: number): boolean {
+  tillSoil(mapId: string, position: Position): boolean {
     const key = this.getPlotKey(mapId, position);
     const existing = this.plots.get(key);
 
@@ -161,14 +173,18 @@ class FarmManager {
       return false;
     }
 
+    const gameTime = TimeManager.getCurrentTime();
     const plot: FarmPlot = {
       mapId,
       position: { x: Math.floor(position.x), y: Math.floor(position.y) },
       state: FarmPlotState.TILLED,
       cropType: null,
-      plantedAt: null,
-      lastWatered: null,
-      stateChangedAt: currentTime,
+      plantedAtDay: null,
+      plantedAtHour: null,
+      lastWateredDay: null,
+      lastWateredHour: null,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
     };
 
     this.registerPlot(plot);
@@ -179,7 +195,7 @@ class FarmManager {
   /**
    * Plant seeds in tilled soil
    */
-  plantSeed(mapId: string, position: Position, cropId: string, currentTime: number): boolean {
+  plantSeed(mapId: string, position: Position, cropId: string): boolean {
     const plot = this.getPlot(mapId, position);
     if (!plot || plot.state !== FarmPlotState.TILLED) {
       return false;
@@ -191,13 +207,17 @@ class FarmManager {
       return false;
     }
 
+    const gameTime = TimeManager.getCurrentTime();
     const updatedPlot: FarmPlot = {
       ...plot,
       state: FarmPlotState.PLANTED,
       cropType: cropId,
-      plantedAt: currentTime,
-      lastWatered: currentTime, // Planting counts as initial watering
-      stateChangedAt: currentTime,
+      plantedAtDay: gameTime.totalDays,
+      plantedAtHour: gameTime.hour,
+      lastWateredDay: gameTime.totalDays, // Planting counts as initial watering
+      lastWateredHour: gameTime.hour,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
     };
 
     this.registerPlot(updatedPlot);
@@ -208,7 +228,7 @@ class FarmManager {
   /**
    * Water a planted crop
    */
-  waterPlot(mapId: string, position: Position, currentTime: number): boolean {
+  waterPlot(mapId: string, position: Position): boolean {
     const plot = this.getPlot(mapId, position);
     if (!plot) {
       return false;
@@ -223,11 +243,14 @@ class FarmManager {
       return false;
     }
 
+    const gameTime = TimeManager.getCurrentTime();
     const updatedPlot: FarmPlot = {
       ...plot,
       state: FarmPlotState.WATERED,
-      lastWatered: currentTime,
-      stateChangedAt: currentTime,
+      lastWateredDay: gameTime.totalDays,
+      lastWateredHour: gameTime.hour,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
     };
 
     this.registerPlot(updatedPlot);
@@ -239,7 +262,7 @@ class FarmManager {
    * Harvest a ready crop
    * Returns the crop ID and yield
    */
-  harvestCrop(mapId: string, position: Position, currentTime: number): { cropId: string; yield: number } | null {
+  harvestCrop(mapId: string, position: Position): { cropId: string; yield: number } | null {
     const plot = this.getPlot(mapId, position);
     if (!plot || plot.state !== FarmPlotState.READY || !plot.cropType) {
       return null;
@@ -250,14 +273,18 @@ class FarmManager {
       return null;
     }
 
+    const gameTime = TimeManager.getCurrentTime();
     // Reset plot to tilled state after harvest
     const updatedPlot: FarmPlot = {
       ...plot,
       state: FarmPlotState.TILLED,
       cropType: null,
-      plantedAt: null,
-      lastWatered: null,
-      stateChangedAt: currentTime,
+      plantedAtDay: null,
+      plantedAtHour: null,
+      lastWateredDay: null,
+      lastWateredHour: null,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
     };
 
     this.registerPlot(updatedPlot);
@@ -272,19 +299,23 @@ class FarmManager {
   /**
    * Clear a dead crop (returns plot to fallow state)
    */
-  clearDeadCrop(mapId: string, position: Position, currentTime: number): boolean {
+  clearDeadCrop(mapId: string, position: Position): boolean {
     const plot = this.getPlot(mapId, position);
     if (!plot || plot.state !== FarmPlotState.DEAD) {
       return false;
     }
 
+    const gameTime = TimeManager.getCurrentTime();
     const updatedPlot: FarmPlot = {
       ...plot,
       state: FarmPlotState.FALLOW,
       cropType: null,
-      plantedAt: null,
-      lastWatered: null,
-      stateChangedAt: currentTime,
+      plantedAtDay: null,
+      plantedAtHour: null,
+      lastWateredDay: null,
+      lastWateredHour: null,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
     };
 
     this.registerPlot(updatedPlot);
@@ -326,12 +357,13 @@ class FarmManager {
   /**
    * Get plot info for debugging
    */
-  getPlotInfo(mapId: string, position: Position, currentTime: number): string | null {
+  getPlotInfo(mapId: string, position: Position): string | null {
     const plot = this.getPlot(mapId, position);
     if (!plot) {
       return null;
     }
 
+    const gameTime = TimeManager.getCurrentTime();
     const crop = plot.cropType ? getCrop(plot.cropType) : null;
     const lines = [
       `State: ${FarmPlotState[plot.state]}`,
@@ -339,17 +371,16 @@ class FarmManager {
 
     if (crop) {
       lines.push(`Crop: ${crop.displayName}`);
-      if (plot.plantedAt) {
-        const elapsed = currentTime - plot.plantedAt;
-        const minutes = Math.floor(elapsed / 60000);
-        const seconds = Math.floor((elapsed % 60000) / 1000);
-        lines.push(`Age: ${minutes}m ${seconds}s`);
+      if (plot.plantedAtDay !== null) {
+        const daysSincePlanted = gameTime.totalDays - plot.plantedAtDay;
+        const hoursSincePlanted = (gameTime.totalDays - plot.plantedAtDay) * 24 + (gameTime.hour - (plot.plantedAtHour || 0));
+        lines.push(`Age: ${daysSincePlanted}d ${hoursSincePlanted % 24}h`);
       }
-      if (plot.lastWatered) {
-        const timeSince = currentTime - plot.lastWatered;
-        const minutes = Math.floor(timeSince / 60000);
-        const seconds = Math.floor((timeSince % 60000) / 1000);
-        lines.push(`Last watered: ${minutes}m ${seconds}s ago`);
+      if (plot.lastWateredDay !== null && plot.lastWateredHour !== null) {
+        const hoursSinceWatered = (gameTime.totalDays - plot.lastWateredDay) * 24 + (gameTime.hour - plot.lastWateredHour);
+        const daysSince = Math.floor(hoursSinceWatered / 24);
+        const hoursRemaining = hoursSinceWatered % 24;
+        lines.push(`Last watered: ${daysSince}d ${hoursRemaining}h ago`);
       }
     }
 

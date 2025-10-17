@@ -12,6 +12,7 @@ A peaceful top-down exploration and crafting game engine built with React, Vite,
 - `npm run dev` - Start development server (Vite on port 3000)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
+- `npm run optimize-assets` - Optimize images using Sharp (automatically runs before build)
 
 ## Core Architecture Principles
 
@@ -48,6 +49,7 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 - [`docs/MAP_GUIDE.md`](docs/MAP_GUIDE.md) - Map creation guide
 - [`docs/ASSETS.md`](docs/ASSETS.md) - Asset management and guidelines
 - [`docs/FARMING.md`](docs/FARMING.md) - Farming system documentation
+- [`docs/TIME_SYSTEM.md`](docs/TIME_SYSTEM.md) - Time/calendar system (seasons, days, years)
 - [`docs/COORDINATE_GUIDE.md`](docs/COORDINATE_GUIDE.md) - Position system reference
 
 ## Code Organization
@@ -125,12 +127,26 @@ Example: `G` for grass, `R` for rock, `#` for walls, `F` for floor, `D` for door
 
 See `ASSETS.md` for complete asset guidelines. Key points:
 
-- Assets go in `/public/assets/` (organized into character1/, npcs/, and tiles/ subdirectories)
+- Assets go in `/public/assets/` (organized into character1/, npcs/, tiles/, and farming/ subdirectories)
 - Player sprites: Layered system in `/public/assets/character1/`
 - NPC sprites: SVG files in `/public/assets/npcs/`
 - Tile sprites: `[tileName]_[variation].png` (e.g., `grass_0.png`, `rock_1.png`) in `/public/assets/tiles/`
+- Farming sprites: In `/public/assets/farming/` (e.g., `fallow_soil_1.png`, `tilled.png`)
 - All sprites use `imageRendering: 'pixelated'` for pixel art
 - Background colors from color scheme show through transparent PNGs
+
+### Image Optimization
+
+- **Script**: `npm run optimize-assets` - Uses Sharp to optimize all images
+- **Source**: Original high-quality images in `/public/assets/`
+- **Output**: Optimized images in `/public/assets-optimized/` (typically 95-99% size reduction)
+- **Automatic**: Optimization runs automatically before `npm run build`
+- **Asset References**: Always import from optimized versions in `assets.ts` when available
+- **What it optimizes**:
+  - Character sprite sheets (combines multiple frames into single sheets)
+  - Tile images (resizes to 64x64, optimizes compression)
+  - NPC sprites (optimizes SVGs or PNGs)
+- **When to run manually**: After adding new assets to `/public/assets/`
 
 ## Development Guidelines
 

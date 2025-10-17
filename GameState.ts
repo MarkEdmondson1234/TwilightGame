@@ -4,12 +4,14 @@
  * Manages:
  * - Player inventory and currency
  * - Exploration depth (forest/cave levels)
+ * - Game time (seasons, days, years)
  * - Farming data
  * - Crafting recipes and materials
  * - Quest/achievement progress
  */
 
 import { FarmPlot } from './types';
+import { GameTime } from './utils/TimeManager';
 
 export interface CharacterCustomization {
   characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
@@ -31,6 +33,10 @@ export interface GameState {
   selectedCharacter: CharacterCustomization | null;
   // Currency
   gold: number;
+
+  // Time tracking (read-only, calculated from real time)
+  // This is stored for display purposes but actual time comes from TimeManager
+  lastKnownTime?: GameTime;
 
   // Exploration depth
   forestDepth: number;  // How deep into the forest
