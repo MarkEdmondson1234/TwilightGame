@@ -86,7 +86,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     name: 'Floor',
     color: 'bg-palette-tan',  // Base floor color
     isSolid: false,
-    image: []
+    image: [tileAssets.floor_1]
   }, // FLOOR = 4
   {
     name: 'Wall',
