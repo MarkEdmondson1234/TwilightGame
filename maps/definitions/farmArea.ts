@@ -8,7 +8,7 @@ import { parseGrid } from '../gridParser';
  * - Multiple farming plots organized in fields
  * - Path network for easy access
  * - Small pond for ambiance
- * - Tool shed (building)
+ * - Seed shed (building with door)
  * - Exit back to village
  *
  * Grid Legend:
@@ -20,7 +20,7 @@ import { parseGrid } from '../gridParser';
  * U = Bush (decorative foliage)
  * X = Farm plot (fallow soil)
  * Z = Big Tree (extra large tree)
- * B = Building Wall (tool shed)
+ * B = Building Wall (seed shed)
  * O = Building Roof
  * N = Building Door
  * V = Building Window
@@ -71,6 +71,13 @@ export const farmArea: MapDefinition = {
       toMapId: 'village',
       toPosition: { x: 27, y: 27 }, // Return to village bottom-right corner
       label: 'Back to Village',
+    },
+    {
+      fromPosition: { x: 10, y: 21 }, // Tool/Seed shed door
+      tileType: TileType.BUILDING_DOOR,
+      toMapId: 'seed_shed',
+      toPosition: { x: 5, y: 4 },
+      label: 'To Seed Shed',
     },
   ],
   npcs: [], // No NPCs yet, but could add a farmer NPC later

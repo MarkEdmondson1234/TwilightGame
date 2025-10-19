@@ -11,6 +11,8 @@ import { FarmPlot, FarmPlotState, Position, TileType } from '../types';
 import { getCrop } from '../data/crops';
 import { mapManager } from '../maps/MapManager';
 import { TimeManager } from './TimeManager';
+import { inventoryManager } from './inventoryManager';
+import { getSeedItemId, getCropItemId } from '../data/items';
 
 class FarmManager {
   private plots: Map<string, FarmPlot> = new Map(); // key: "mapId:x:y"
@@ -168,8 +170,11 @@ class FarmManager {
     const key = this.getPlotKey(mapId, position);
     const existing = this.plots.get(key);
 
+    console.log(`[FarmManager] tillSoil called: mapId=${mapId}, position=(${position.x},${position.y}), existing=${existing ? `state=${FarmPlotState[existing.state]}` : 'none'}`);
+
     // Can only till fallow soil or create new plots
     if (existing && existing.state !== FarmPlotState.FALLOW) {
+      console.warn(`[FarmManager] Cannot till: plot already exists with state ${FarmPlotState[existing.state]}`);
       return false;
     }
 
@@ -194,6 +199,7 @@ class FarmManager {
 
   /**
    * Plant seeds in tilled soil
+   * Requires player to have seeds in inventory (consumes 1 seed)
    */
   plantSeed(mapId: string, position: Position, cropId: string): boolean {
     const plot = this.getPlot(mapId, position);
@@ -204,6 +210,19 @@ class FarmManager {
     const crop = getCrop(cropId);
     if (!crop) {
       console.warn('[FarmManager] Unknown crop:', cropId);
+      return false;
+    }
+
+    // Check if player has seeds
+    const seedItemId = getSeedItemId(cropId);
+    if (!inventoryManager.hasItem(seedItemId, 1)) {
+      console.warn(`[FarmManager] Not enough seeds for ${cropId}`);
+      return false;
+    }
+
+    // Consume seed from inventory
+    if (!inventoryManager.removeItem(seedItemId, 1)) {
+      console.warn(`[FarmManager] Failed to consume seed for ${cropId}`);
       return false;
     }
 
@@ -221,7 +240,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    console.log(`[FarmManager] Planted ${cropId} at ${position.x},${position.y}`);
+    console.log(`[FarmManager] Planted ${cropId} at ${position.x},${position.y} (used 1 seed)`);
     return true;
   }
 
@@ -260,6 +279,7 @@ class FarmManager {
 
   /**
    * Harvest a ready crop
+   * Adds harvested crops to inventory
    * Returns the crop ID and yield
    */
   harvestCrop(mapId: string, position: Position): { cropId: string; yield: number } | null {
@@ -272,6 +292,10 @@ class FarmManager {
     if (!crop) {
       return null;
     }
+
+    // Add harvested crops to inventory
+    const cropItemId = getCropItemId(plot.cropType);
+    inventoryManager.addItem(cropItemId, crop.harvestYield);
 
     const gameTime = TimeManager.getCurrentTime();
     // Reset plot to tilled state after harvest

@@ -28,6 +28,9 @@ export function runSelfTests(): void {
   // === Farm System Validation ===
   validateFarmSystem();
 
+  // === Inventory System Validation ===
+  validateInventorySystem();
+
   console.log("✓ All sanity checks complete.");
 }
 
@@ -310,3 +313,46 @@ function validateFarmSystem(): void {
 
   console.log(`[Sanity Check] Farm system: ${farmTileTypes.length} tile types validated`);
 }
+
+/**
+ * Validate inventory system integrity
+ */
+function validateInventorySystem(): void {
+  // Dynamic import to avoid circular dependencies
+  import('../data/items').then(({ ITEMS, getItem, getSeedForCrop, getCropItemId, getSeedItemId }) => {
+    import('../data/crops').then(({ CROPS }) => {
+      // Validate that all crops have corresponding seed and crop items
+      for (const cropId of Object.keys(CROPS)) {
+        const seedItem = getSeedForCrop(cropId);
+        if (!seedItem) {
+          console.error(
+            `[Sanity Check] Crop "${cropId}" has no corresponding seed item`
+          );
+        }
+
+        const cropItemId = getCropItemId(cropId);
+        const cropItem = getItem(cropItemId);
+        if (!cropItem) {
+          console.error(
+            `[Sanity Check] Crop "${cropId}" has no corresponding crop item (expected "${cropItemId}")`
+          );
+        }
+      }
+
+      // Validate that all seed items reference valid crops
+      for (const [itemId, item] of Object.entries(ITEMS)) {
+        if (item.category === 'seed' && item.cropId) {
+          const crop = CROPS[item.cropId];
+          if (!crop) {
+            console.error(
+              `[Sanity Check] Seed item "${itemId}" references non-existent crop "${item.cropId}"`
+            );
+          }
+        }
+      }
+
+      console.log(`[Sanity Check] Inventory system: ${Object.keys(ITEMS).length} items validated`);
+    });
+  });
+}
+

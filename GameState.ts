@@ -49,9 +49,10 @@ export interface GameState {
     currentMapSeed?: number;  // For regenerating random maps
   };
 
-  // Inventory
+  // Inventory (managed by InventoryManager)
   inventory: {
-    [itemId: string]: number;  // itemId -> quantity
+    items: { itemId: string; quantity: number }[];  // Stackable items
+    tools: string[];  // Owned tools (IDs)
   };
 
   // Farming (plots are now managed by FarmManager and persisted here)
@@ -135,6 +136,27 @@ class GameStateManager {
           parsed.farming.selectedSeed = 'radish';
         }
 
+        // Migrate old inventory structure (object to new format)
+        if (parsed.inventory && !Array.isArray(parsed.inventory.items)) {
+          console.log('[GameState] Migrating old inventory format');
+          const oldInventory = parsed.inventory as Record<string, number>;
+          parsed.inventory = {
+            items: Object.entries(oldInventory).map(([itemId, quantity]) => ({
+              itemId,
+              quantity,
+            })),
+            tools: [],
+          };
+        }
+
+        // Ensure inventory has both fields
+        if (!parsed.inventory.items) {
+          parsed.inventory.items = [];
+        }
+        if (!parsed.inventory.tools) {
+          parsed.inventory.tools = [];
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -151,7 +173,10 @@ class GameStateManager {
         currentMapId: 'village',
         position: { x: 15, y: 25 },
       },
-      inventory: {},
+      inventory: {
+        items: [],
+        tools: [],
+      },
       farming: {
         plots: [],
         currentTool: 'hand',
@@ -313,26 +338,19 @@ class GameStateManager {
   }
 
   // === Inventory Methods ===
+  // Note: Inventory is managed by InventoryManager, these methods just persist to GameState
 
-  addItem(itemId: string, quantity: number = 1): void {
-    this.state.inventory[itemId] = (this.state.inventory[itemId] || 0) + quantity;
-    console.log(`[GameState] +${quantity} ${itemId} (total: ${this.state.inventory[itemId]})`);
+  saveInventory(items: { itemId: string; quantity: number }[], tools: string[]): void {
+    this.state.inventory.items = items;
+    this.state.inventory.tools = tools;
     this.notify();
   }
 
-  removeItem(itemId: string, quantity: number = 1): boolean {
-    const current = this.state.inventory[itemId] || 0;
-    if (current >= quantity) {
-      this.state.inventory[itemId] = current - quantity;
-      console.log(`[GameState] -${quantity} ${itemId} (remaining: ${this.state.inventory[itemId]})`);
-      this.notify();
-      return true;
-    }
-    return false;
-  }
-
-  getItemCount(itemId: string): number {
-    return this.state.inventory[itemId] || 0;
+  loadInventory(): { items: { itemId: string; quantity: number }[]; tools: string[] } {
+    return {
+      items: this.state.inventory.items || [],
+      tools: this.state.inventory.tools || [],
+    };
   }
 
   // === Crafting Methods ===
@@ -429,7 +447,10 @@ class GameStateManager {
         currentMapId: 'village',
         position: { x: 15, y: 25 },
       },
-      inventory: {},
+      inventory: {
+        items: [],
+        tools: [],
+      },
       farming: { plots: [], currentTool: 'hand', selectedSeed: 'radish' },
       crafting: { unlockedRecipes: [], materials: {} },
       stats: { gamesPlayed: 0, totalPlayTime: 0, mushroomsCollected: 0 },

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { mapManager } from '../maps';
 import { useGameState } from '../hooks/useGameState';
 import { TimeManager, GameTime } from '../utils/TimeManager';
+import { inventoryManager } from '../utils/inventoryManager';
+import { getSeedItemId } from '../data/items';
 
 const HUD: React.FC = () => {
     const currentMap = mapManager.getCurrentMap();
@@ -44,6 +46,18 @@ const HUD: React.FC = () => {
                                 <p className="text-xs text-slate-400">{toolDisplay[farming.currentTool].desc}</p>
                             </div>
                         </div>
+                        {farming.currentTool === 'seeds' && farming.selectedSeed && (
+                            <div className="mt-2 bg-black/30 p-2 rounded border border-green-700">
+                                <p className="text-xs text-slate-400">Selected (5-9):</p>
+                                <p className="text-sm font-bold text-green-400 capitalize">{farming.selectedSeed}</p>
+                                <p className="text-xs text-yellow-300">
+                                    Seeds: {inventoryManager.getQuantity(getSeedItemId(farming.selectedSeed))}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-1">
+                                    5=Radish 6=Tomato 7=Wheat<br/>8=Corn 9=Pumpkin
+                                </p>
+                            </div>
+                        )}
                     </div>
                 </div>
                 <div className="bg-black/50 p-3 rounded-lg border border-slate-700">

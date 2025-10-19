@@ -11,6 +11,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'F': TileType.FLOOR,
   '#': TileType.WALL,
   'C': TileType.CARPET,
+  'r': TileType.RUG,
   // Transitions
   'D': TileType.DOOR,
   'E': TileType.EXIT_DOOR,

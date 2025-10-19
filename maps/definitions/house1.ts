@@ -8,6 +8,7 @@ import { parseGrid } from '../gridParser';
  * F = Floor
  * # = Wall
  * C = Carpet
+ * r = Rug (cottagecore decorative rug)
  * D = Door (exit)
  * T = Table
  * H = Chair
@@ -17,7 +18,7 @@ const gridString = `
 #######
 #FFFFF#
 #FCTFF#
-#FFHFFD
+#FrHFFD
 #FFFFF#
 #######
 `;

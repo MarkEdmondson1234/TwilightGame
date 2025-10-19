@@ -44,7 +44,7 @@ LGGGGGGPGGGGGGGPGGGGGGGGUGGL
 LGGGGGGPOOOOOUGPGGGRRRRRRRRL
 LGGGGGGPOBVBOGPGGGLLGGGGGGGGL
 LGGGGGGPOBVBOGPGGLLLGRGRRRRGL
-LGGGGGGPOBNBOGPGGLMLGRXXXXRGL
+LGGGGGGPOBNBOGPGGLMLGRXXXGGGL
 LGGGGGGPGGGGGGPGGGGGGGGGGGGP
 LGGGGGGPPPPPPPPPGGGGGGGGGGGPL
 LGGGGGGGGGGPGGGGGGGGGGGUUGGPL
@@ -83,7 +83,7 @@ export const village: MapDefinition = {
       label: 'To Home',
     },
     {
-      fromPosition: { x: 6, y: 4 }, // North-west house
+      fromPosition: { x: 7, y: 4 }, // North-west house
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house1',
       toPosition: { x: 3, y: 4 },
@@ -198,7 +198,7 @@ export const village: MapDefinition = {
     {
       id: 'shopkeeper',
       name: 'Shopkeeper',
-      position: { x: 10, y: 12 }, // On path near shop entrance
+      position: { x: 8, y: 12 }, // On path near shop entrance (moved left to not block door)
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
       sprite: '/TwilightGame/assets/npcs/shopkeeper.svg',

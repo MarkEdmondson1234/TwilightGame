@@ -10,6 +10,7 @@ export enum TileType {
   FLOOR,
   WALL,
   CARPET,
+  RUG,
   // Transition tiles
   DOOR,
   EXIT_DOOR,

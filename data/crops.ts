@@ -3,19 +3,26 @@
  * All times are in milliseconds (for easy timestamp math)
  */
 
+export enum CropRarity {
+  COMMON = 'common',
+  UNCOMMON = 'uncommon',
+  RARE = 'rare',
+  VERY_RARE = 'very_rare',
+}
+
 export interface CropDefinition {
   id: string;
   name: string;
   displayName: string;
 
-  // Growth timing (in milliseconds)
-  growthTime: number;          // Time from planted to ready
-  growthTimeWatered: number;   // Time when watered (faster)
+  // Growth timing (in game days, not real time - managed by TimeManager)
+  growthTime: number;          // Game days from planted to ready
+  growthTimeWatered: number;   // Game days when watered (faster)
 
-  // Water requirements
-  waterNeededInterval: number; // How often plant needs water
-  wiltingGracePeriod: number;  // Time before wilting after water needed
-  deathGracePeriod: number;    // Time before death after wilting
+  // Water requirements (in game hours)
+  waterNeededInterval: number; // Game hours before plant needs water
+  wiltingGracePeriod: number;  // Game hours before wilting after water needed
+  deathGracePeriod: number;    // Game hours before death after wilting
 
   // Rewards
   harvestYield: number;        // Number of items produced
@@ -25,6 +32,7 @@ export interface CropDefinition {
   // Visual/flavor
   description: string;
   seedCost: number;            // Cost to buy seeds
+  rarity: CropRarity;          // Seed rarity (for foraging drops)
 }
 
 // Time constants (for readability)
@@ -52,6 +60,7 @@ export const CROPS: Record<string, CropDefinition> = {
     experience: 5,
     description: 'Quick-growing root vegetable. Great for beginners!',
     seedCost: 5,
+    rarity: CropRarity.COMMON,
   },
 
   // Medium-growth crop (5 minutes)
@@ -69,6 +78,7 @@ export const CROPS: Record<string, CropDefinition> = {
     experience: 15,
     description: 'Juicy red tomatoes. Needs regular watering.',
     seedCost: 15,
+    rarity: CropRarity.COMMON,
   },
 
   // Longer-growth crop (10 minutes)
@@ -86,6 +96,7 @@ export const CROPS: Record<string, CropDefinition> = {
     experience: 20,
     description: 'Golden wheat for baking. Hardy and reliable.',
     seedCost: 10,
+    rarity: CropRarity.UNCOMMON,
   },
 
   // Premium long-growth crop (15 minutes)
@@ -103,6 +114,7 @@ export const CROPS: Record<string, CropDefinition> = {
     experience: 30,
     description: 'Sweet corn. Takes time but very profitable.',
     seedCost: 25,
+    rarity: CropRarity.RARE,
   },
 
   // High-value specialty crop (20 minutes)
@@ -120,6 +132,7 @@ export const CROPS: Record<string, CropDefinition> = {
     experience: 50,
     description: 'Giant orange pumpkin. Requires patience and care.',
     seedCost: 50,
+    rarity: CropRarity.VERY_RARE,
   },
 };
 

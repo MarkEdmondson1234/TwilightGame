@@ -8,6 +8,7 @@ import CharacterCreator from './components/CharacterCreator';
 import TouchControls from './components/TouchControls';
 import DialogueBox from './components/DialogueBox';
 import ColorSchemeEditor from './components/ColorSchemeEditor';
+import HelpBrowser from './components/HelpBrowser';
 import { runSelfTests } from './utils/testUtils';
 import { initializeMaps, mapManager, transitionToMap } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
@@ -20,6 +21,7 @@ import { getCrop } from './data/crops';
 import { preloadAllAssets } from './utils/assetPreloader';
 import { TimeManager, Season } from './utils/TimeManager';
 import { initializePalette } from './palette';
+import { inventoryManager } from './utils/inventoryManager';
 
 const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = 150; // time between animation frames
@@ -38,8 +40,10 @@ const App: React.FC = () => {
     const [isDebugOpen, setDebugOpen] = useState(false);
     const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
     const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
+    const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
+    const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
 
     const isTouchDevice = useTouchDevice();
 
@@ -135,6 +139,12 @@ const App: React.FC = () => {
         }
 
         // Special keys that work even during dialogue
+        if (e.key === 'F1') {
+            e.preventDefault();
+            setShowHelpBrowser(prev => !prev);
+            return;
+        }
+
         if (e.key === 'F3') {
             e.preventDefault();
             setDebugOpen(prev => !prev);
@@ -148,8 +158,13 @@ const App: React.FC = () => {
             return;
         }
 
-        // Escape key to close dialogue
+        // Escape key to close dialogue or help browser
         if (e.key === 'Escape') {
+            if (showHelpBrowser) {
+                e.preventDefault();
+                setShowHelpBrowser(false);
+                return;
+            }
             if (activeNPC) {
                 e.preventDefault();
                 setActiveNPC(null);
@@ -182,6 +197,19 @@ const App: React.FC = () => {
                 playerPosRef.current = currentMap.spawnPoint;
             }
         }
+        // F5 key to reset all farm plots (debug)
+        if (e.key === 'F5') {
+            e.preventDefault();
+            const currentMapIdValue = mapManager.getCurrentMapId();
+            if (currentMapIdValue) {
+                // Clear all plots for current map
+                const allPlots = farmManager.getAllPlots();
+                const otherMapPlots = allPlots.filter(plot => plot.mapId !== currentMapIdValue);
+                farmManager.loadPlots(otherMapPlots);
+                gameState.saveFarmPlots(otherMapPlots);
+                console.log(`[Reset] Cleared all farm plots for map: ${currentMapIdValue}`);
+            }
+        }
         // Action key (E or Enter) to trigger transitions, farming, or mirror
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
             e.preventDefault();
@@ -196,41 +224,59 @@ const App: React.FC = () => {
             if (currentMapIdValue) {
                 const tileData = getTileData(playerTileX, playerTileY);
                 const currentTool = gameState.getFarmingTool();
+                const position = { x: playerTileX, y: playerTileY };
 
-                // Check if this is a farm tile or farm action
-                if (tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) { // Farm tiles
-                    const position = { x: playerTileX, y: playerTileY };
+                // Get the actual plot state (if it exists)
+                const plot = farmManager.getPlot(currentMapIdValue, position);
+                const plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
+
+                console.log(`[Action Key] Tile at (${playerTileX}, ${playerTileY}): visual type=${tileData?.type}, plot type=${plotTileType}, currentTool=${currentTool}`);
+
+                // Check if this is a farm tile or farm action (check both visual tile and plot state)
+                if ((tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) ||
+                    (plotTileType >= TileType.SOIL_FALLOW && plotTileType <= TileType.SOIL_DEAD)) {
+                    console.log(`[Action Key] Farm tile detected! Visual: ${tileData?.type}, Plot state: ${plotTileType}`);
                     let farmActionTaken = false;
 
-                    if (currentTool === 'hoe' && tileData.type === TileType.SOIL_FALLOW) { // Till fallow soil
+                    if (currentTool === 'hoe' && plotTileType === TileType.SOIL_FALLOW) { // Till fallow soil
+                        console.log(`[Action Key] Attempting to till soil at (${playerTileX}, ${playerTileY})`);
                         if (farmManager.tillSoil(currentMapIdValue, position)) {
                             console.log('[Action Key] Tilled soil');
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'seeds' && tileData.type === TileType.SOIL_TILLED) { // Plant in tilled soil
+                    } else if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) { // Plant in tilled soil
                         const selectedSeed = gameState.getSelectedSeed();
+                        console.log(`[Action Key] Attempting to plant: selectedSeed=${selectedSeed}`);
                         if (selectedSeed && farmManager.plantSeed(currentMapIdValue, position, selectedSeed)) {
+                            // FarmManager consumed seed from inventory, save it
+                            const inventoryData = inventoryManager.getInventoryData();
+                            gameState.saveInventory(inventoryData.items, inventoryData.tools);
                             console.log(`[Action Key] Planted ${selectedSeed}`);
                             farmActionTaken = true;
+                        } else {
+                            console.log(`[Action Key] Failed to plant: selectedSeed=${selectedSeed}, check inventory`);
                         }
-                    } else if (currentTool === 'wateringCan' && (tileData.type === TileType.SOIL_PLANTED || tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_WILTING)) {
+                    } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING)) {
                         // Water planted, watered, or wilting crops
                         if (farmManager.waterPlot(currentMapIdValue, position)) {
                             console.log('[Action Key] Watered crop');
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'hand' && tileData.type === TileType.SOIL_READY) { // Harvest ready crop
+                    } else if (currentTool === 'hand' && plotTileType === TileType.SOIL_READY) { // Harvest ready crop
                         const result = farmManager.harvestCrop(currentMapIdValue, position);
                         if (result) {
                             const crop = getCrop(result.cropId);
                             if (crop) {
-                                gameState.addItem(result.cropId, result.yield);
+                                // FarmManager already added crops to inventory, just add gold
                                 gameState.addGold(crop.sellPrice * result.yield);
+                                // Save inventory to GameState
+                                const inventoryData = inventoryManager.getInventoryData();
+                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
                                 console.log(`[Action Key] Harvested ${result.yield}x ${crop.displayName}`);
                             }
                             farmActionTaken = true;
                         }
-                    } else if (currentTool === 'hand' && tileData.type === TileType.SOIL_DEAD) { // Clear dead crop
+                    } else if (currentTool === 'hand' && plotTileType === TileType.SOIL_DEAD) { // Clear dead crop
                         if (farmManager.clearDeadCrop(currentMapIdValue, position)) {
                             console.log('[Action Key] Cleared dead crop');
                             farmActionTaken = true;
@@ -240,6 +286,8 @@ const App: React.FC = () => {
                     if (farmActionTaken) {
                         // Save farm state to GameState
                         gameState.saveFarmPlots(farmManager.getAllPlots());
+                        // Force re-render to show updated tile
+                        setFarmUpdateTrigger((prev: number) => prev + 1);
                         return; // Don't check for other interactions
                     }
                 }
@@ -313,6 +361,21 @@ const App: React.FC = () => {
             gameState.setFarmingTool('seeds');
         } else if (e.key === '4') {
             gameState.setFarmingTool('wateringCan');
+        }
+
+        // Seed selection (keys 5-9) - only works when Seeds tool is selected
+        if (gameState.getFarmingTool() === 'seeds') {
+            if (e.key === '5') {
+                gameState.setSelectedSeed('radish');
+            } else if (e.key === '6') {
+                gameState.setSelectedSeed('tomato');
+            } else if (e.key === '7') {
+                gameState.setSelectedSeed('wheat');
+            } else if (e.key === '8') {
+                gameState.setSelectedSeed('corn');
+            } else if (e.key === '9') {
+                gameState.setSelectedSeed('pumpkin');
+            }
         }
     };
 
@@ -514,6 +577,19 @@ const App: React.FC = () => {
             },
         });
 
+        // Load inventory from saved state
+        const savedInventory = gameState.loadInventory();
+        if (savedInventory.items.length > 0 || savedInventory.tools.length > 0) {
+            inventoryManager.loadInventory(savedInventory.items, savedInventory.tools);
+            console.log(`[App] Loaded inventory: ${savedInventory.items.length} items, ${savedInventory.tools.length} tools`);
+        } else {
+            // First time: initialize with starter items
+            inventoryManager.initializeStarterItems();
+            const inventoryData = inventoryManager.getInventoryData();
+            gameState.saveInventory(inventoryData.items, inventoryData.tools);
+            console.log('[App] Initialized starter inventory');
+        }
+
         // Load farm plots from saved state
         const savedPlots = gameState.loadFarmPlots();
         farmManager.loadPlots(savedPlots);
@@ -657,11 +733,12 @@ const App: React.FC = () => {
                         }
 
                         // Check if this tile has a farm plot override
+                        // (farmUpdateTrigger forces re-render when farm plots change)
                         let tileData = getTileData(x, y);
                         if (!tileData) return null;
 
                         // Override tile appearance if there's an active farm plot here
-                        if (currentMapId) {
+                        if (currentMapId && farmUpdateTrigger >= 0) { // Include farmUpdateTrigger to force re-evaluation
                             const plot = farmManager.getPlot(currentMapId, { x, y });
                             if (plot) {
                                 // Get the tile type for this plot's state
@@ -750,15 +827,13 @@ const App: React.FC = () => {
                                 tileData.type === TileType.WALL_BOUNDARY ||
                                 tileData.type === TileType.WALL ||
                                 tileData.type === TileType.DOOR ||
-                                tileData.type === TileType.FLOOR ||
                                 tileData.type === TileType.SOIL_TILLED;
 
                             // Determine which tiles should have NO variations at all
                             const shouldNotTransform =
                                 tileData.type === TileType.WALL_BOUNDARY ||
                                 tileData.type === TileType.WALL ||
-                                tileData.type === TileType.DOOR ||
-                                tileData.type === TileType.FLOOR;
+                                tileData.type === TileType.DOOR;
 
                             if (!shouldNotTransform) {
                                 // Horizontal flip (left/right, 50% chance)
@@ -766,12 +841,13 @@ const App: React.FC = () => {
                                 const flipScaleX = shouldFlipX ? -1 : 1;
 
                                 // Size variation - more subtle for trees (0.95x to 1.05x), normal for others (0.85x to 1.15x)
-                                // No size variation for tilled soil, more variation for paths
+                                // No size variation for tilled soil or floor tiles, more variation for paths
                                 const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
                                 const isTilledSoil = tileData.type === TileType.SOIL_TILLED;
+                                const isFloor = tileData.type === TileType.FLOOR;
                                 const isPath = tileData.type === TileType.PATH;
-                                sizeScale = isTilledSoil
-                                    ? 1.0  // No size variation for tilled soil
+                                sizeScale = isTilledSoil || isFloor
+                                    ? 1.0  // No size variation for tilled soil or floor tiles
                                     : isPath
                                     ? 0.7 + (sizeHash % 1) * 0.6  // More pronounced variation for stepping stones: 70% to 130%
                                     : isTree
@@ -781,7 +857,11 @@ const App: React.FC = () => {
                                 // Rotation variation only for decorative objects (not grass/ground)
                                 let rotation = 0;
                                 if (!shouldNotRotate) {
-                                    if (tileData.type === TileType.SOIL_FALLOW) {
+                                    if (tileData.type === TileType.FLOOR) {
+                                        // Floor tiles: 0, 90, 180, or 270 degrees (cardinal rotations for tiled pattern)
+                                        const rotationIndex = Math.floor((rotHash % 1) * 4);
+                                        rotation = rotationIndex * 90;
+                                    } else if (tileData.type === TileType.SOIL_FALLOW) {
                                         // Fallow soil: Only 0 or 180 degrees (horizontal flip only, no vertical)
                                         rotation = (rotHash % 1) > 0.5 ? 180 : 0;
                                     } else if (tileData.type === TileType.PATH) {
@@ -830,6 +910,35 @@ const App: React.FC = () => {
                                     />
                                 )}
                             </div>
+                        );
+                    })
+                )}
+
+                {/* Render background multi-tile sprites (like rugs) */}
+                {currentMap.grid.map((row, y) =>
+                    row.map((_, x) => {
+                        const tileData = getTileData(x, y);
+                        if (!tileData) return null;
+
+                        // Find sprite metadata for this tile type
+                        const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
+                        if (!spriteMetadata || spriteMetadata.isForeground) return null;
+
+                        // Render the multi-tile sprite (no transformations for rugs)
+                        return (
+                            <img
+                                key={`bg-sprite-${x}-${y}`}
+                                src={spriteMetadata.image}
+                                alt={tileData.name}
+                                className="absolute pointer-events-none"
+                                style={{
+                                    left: (x + spriteMetadata.offsetX) * TILE_SIZE,
+                                    top: (y + spriteMetadata.offsetY) * TILE_SIZE,
+                                    width: spriteMetadata.spriteWidth * TILE_SIZE,
+                                    height: spriteMetadata.spriteHeight * TILE_SIZE,
+                                    imageRendering: 'pixelated',
+                                }}
+                            />
                         );
                     })
                 )}
@@ -907,8 +1016,8 @@ const App: React.FC = () => {
                         const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                         if (!spriteMetadata || !spriteMetadata.isForeground) return null;
 
-                        // Determine if this is a building (no transformations for buildings)
-                        const isBuilding = tileData.type === TileType.COTTAGE;
+                        // Determine if this is a building or rug (no transformations for these)
+                        const isBuilding = tileData.type === TileType.COTTAGE || tileData.type === TileType.RUG;
 
                         // Add variations using deterministic hash based on position (only for non-buildings)
                         let flipScale = 1;
@@ -1066,6 +1175,21 @@ const App: React.FC = () => {
 
             <HUD />
 
+            {/* Help Button - Top Right */}
+            <div className="absolute top-4 right-4 z-10">
+                <button
+                    onClick={() => setShowHelpBrowser(!showHelpBrowser)}
+                    className={`w-12 h-12 rounded-full border-4 font-bold text-2xl transition-all pointer-events-auto shadow-lg ${
+                        showHelpBrowser
+                            ? 'bg-amber-500 border-amber-700 text-white hover:bg-amber-600 scale-110'
+                            : 'bg-black/70 border-slate-600 text-amber-400 hover:bg-black/90 hover:border-amber-500 hover:scale-105'
+                    }`}
+                    title="Help [F1]"
+                >
+                    ?
+                </button>
+            </div>
+
             {/* Collision Box and Color Editor Toggle Buttons */}
             <div className="absolute bottom-4 right-4 z-10 flex gap-2">
                 <button
@@ -1111,10 +1235,35 @@ const App: React.FC = () => {
                     npc={npcManager.getNPCById(activeNPC)!}
                     playerSprite={getPortraitSprite(gameState.getSelectedCharacter() || DEFAULT_CHARACTER, Direction.Down)} // High-res portrait
                     onClose={() => setActiveNPC(null)}
+                    onNodeChange={(npcId, nodeId) => {
+                        // Handle seed pickup from seed shed NPCs
+                        if (npcId.startsWith('seed_keeper_')) {
+                            if (nodeId === 'take_radish') {
+                                inventoryManager.addItem('seed_radish', 10);
+                                const inventoryData = inventoryManager.getInventoryData();
+                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+                            } else if (nodeId === 'take_tomato') {
+                                inventoryManager.addItem('seed_tomato', 10);
+                                const inventoryData = inventoryManager.getInventoryData();
+                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+                            } else if (nodeId === 'take_wheat') {
+                                inventoryManager.addItem('seed_wheat', 5);
+                                const inventoryData = inventoryManager.getInventoryData();
+                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+                            } else if (nodeId === 'take_corn') {
+                                inventoryManager.addItem('seed_corn', 3);
+                                const inventoryData = inventoryManager.getInventoryData();
+                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+                            }
+                        }
+                    }}
                 />
             )}
             {showColorEditor && (
                 <ColorSchemeEditor onClose={() => setShowColorEditor(false)} />
+            )}
+            {showHelpBrowser && (
+                <HelpBrowser onClose={() => setShowHelpBrowser(false)} />
             )}
         </div>
     );

@@ -5,6 +5,7 @@ interface DialogueBoxProps {
   npc: NPC;
   playerSprite: string; // Current player sprite (idle frame)
   onClose: () => void;
+  onNodeChange?: (npcId: string, nodeId: string) => void; // Callback when dialogue node changes
 }
 
 /**
@@ -12,7 +13,7 @@ interface DialogueBoxProps {
  * Displays player character on left, NPC on right (zoomed to top half)
  * Supports dialogue trees and has hooks for future AI integration
  */
-const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose }) => {
+const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, onNodeChange }) => {
   const [currentNodeId, setCurrentNodeId] = useState<string>('greeting');
 
   // Find current dialogue node
@@ -21,6 +22,10 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose })
   const handleResponse = (nextId?: string) => {
     if (nextId) {
       setCurrentNodeId(nextId);
+      // Notify parent about node change (for handling item pickups, etc.)
+      if (onNodeChange) {
+        onNodeChange(npc.id, nextId);
+      }
     } else {
       // No next node, close dialogue
       onClose();

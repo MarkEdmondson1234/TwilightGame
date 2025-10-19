@@ -100,8 +100,14 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: []
   }, // CARPET = 6
+  {
+    name: 'Rug',
+    color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
+    isSolid: false,
+    image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+  }, // RUG = 7
 
-  // Transition tiles (7-10)
+  // Transition tiles (8-11)
   {
     name: 'Door',
     color: 'bg-palette-chocolate',  // Base door color
@@ -262,34 +268,34 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   }, // SOIL_TILLED = 24
   {
     name: 'Planted Soil',
-    color: 'bg-green-900',
+    color: 'bg-[#8B6F47]', // Use tilled soil color as background
     isSolid: false,
-    image: []
-  }, // SOIL_PLANTED = 25
+    image: [farmingAssets.plant_pea_young] // Young plant sprite
+  }, // SOIL_PLANTED = 28
   {
     name: 'Watered Soil',
-    color: 'bg-green-800',
+    color: 'bg-[#6B5537]', // Darker brown for wet soil
     isSolid: false,
-    image: []
-  }, // SOIL_WATERED = 26
+    image: [farmingAssets.plant_pea_young] // Young plant sprite (same as planted)
+  }, // SOIL_WATERED = 29
   {
     name: 'Ready Crop',
-    color: 'bg-green-500',
+    color: 'bg-[#6B5537]', // Darker brown for mature plant's soil
     isSolid: false,
-    image: []
-  }, // SOIL_READY = 27
+    image: [farmingAssets.plant_pea_adult] // Mature plant sprite
+  }, // SOIL_READY = 30
   {
     name: 'Wilting Crop',
-    color: 'bg-yellow-700',
+    color: 'bg-[#9B7F57]', // Lighter dried soil
     isSolid: false,
-    image: []
-  }, // SOIL_WILTING = 28
+    image: [farmingAssets.plant_pea_young] // Wilting plant (reuse young plant, could add brown tint later)
+  }, // SOIL_WILTING = 31
   {
     name: 'Dead Crop',
-    color: 'bg-gray-700',
+    color: 'bg-[#7B6047]', // Dead soil color
     isSolid: false,
-    image: []
-  }, // SOIL_DEAD = 29
+    image: [] // No plant sprite - just show dead soil
+  }, // SOIL_DEAD = 32
 ];
 
 // --- Procedural Map Generation ---
@@ -347,6 +353,20 @@ export const MAP_DATA: TileType[][] = map;
 
 // Multi-tile sprite definitions for foreground rendering
 export const SPRITE_METADATA: SpriteMetadata[] = [
+  {
+    tileType: TileType.RUG,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: 0,      // No offset - rug sits on floor
+    offsetY: 0,      // No offset - rug sits on floor
+    image: tileAssets.rug_cottagecore,
+    isForeground: false,  // Render under player (it's a floor decoration)
+    // No collision - rugs are walkable
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+  },
   {
     tileType: TileType.BUSH,
     spriteWidth: 2,  // 2 tiles wide
