@@ -270,13 +270,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     name: 'Planted Soil',
     color: 'bg-[#8B6F47]', // Use tilled soil color as background
     isSolid: false,
-    image: [farmingAssets.plant_pea_young] // Young plant sprite
+    image: [farmingAssets.seedling] // Generic seedling sprite (just planted)
   }, // SOIL_PLANTED = 28
   {
     name: 'Watered Soil',
     color: 'bg-[#6B5537]', // Darker brown for wet soil
     isSolid: false,
-    image: [farmingAssets.plant_pea_young] // Young plant sprite (same as planted)
+    image: [farmingAssets.seedling] // Seedling on wet soil
   }, // SOIL_WATERED = 29
   {
     name: 'Ready Crop',

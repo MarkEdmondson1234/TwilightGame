@@ -182,6 +182,12 @@ export enum FarmPlotState {
   DEAD,        // Plant died from lack of water
 }
 
+export enum CropGrowthStage {
+  SEEDLING = 0,    // 0-33% growth
+  YOUNG = 1,       // 33-66% growth
+  ADULT = 2,       // 66-100% growth (ready to harvest)
+}
+
 export interface FarmPlot {
   mapId: string;           // Which map this plot is on
   position: Position;      // Tile position
@@ -193,4 +199,8 @@ export interface FarmPlot {
   lastWateredHour: number | null; // Game hour when last watered
   stateChangedAtDay: number;      // Game day of last state change
   stateChangedAtHour: number;     // Game hour of last state change
+  // Real timestamps for crop growth (milliseconds since epoch)
+  plantedAtTimestamp: number | null;    // Real time when planted (Date.now())
+  lastWateredTimestamp: number | null;  // Real time when last watered
+  stateChangedAtTimestamp: number;      // Real time of last state change
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { TILE_SIZE, PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { getTileData } from './utils/mapUtils';
-import { Position, Direction, TileType } from './types';
+import { Position, Direction, TileType, FarmPlotState } from './types';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -22,6 +22,7 @@ import { preloadAllAssets } from './utils/assetPreloader';
 import { TimeManager, Season } from './utils/TimeManager';
 import { initializePalette } from './palette';
 import { inventoryManager } from './utils/inventoryManager';
+import { farmingAssets } from './assets';
 
 const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = 150; // time between animation frames
@@ -284,6 +285,8 @@ const App: React.FC = () => {
                     }
 
                     if (farmActionTaken) {
+                        // Update all plots to check for state changes (e.g., planted -> ready)
+                        farmManager.updateAllPlots();
                         // Save farm state to GameState
                         gameState.saveFarmPlots(farmManager.getAllPlots());
                         // Force re-render to show updated tile
@@ -641,12 +644,19 @@ const App: React.FC = () => {
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
+        // Update farm plots every 2 seconds to check for crop growth and visual updates
+        const farmUpdateInterval = setInterval(() => {
+            farmManager.updateAllPlots();
+            setFarmUpdateTrigger((prev: number) => prev + 1); // Force re-render for growth stages
+        }, 2000); // Check every 2 seconds for smoother visual updates
+
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
             if (animationFrameId.current) {
                 cancelAnimationFrame(animationFrameId.current);
             }
+            clearInterval(farmUpdateInterval);
         };
     }, [isMapInitialized, gameLoop]);
 
@@ -738,6 +748,7 @@ const App: React.FC = () => {
                         if (!tileData) return null;
 
                         // Override tile appearance if there's an active farm plot here
+                        let growthStage: number | null = null;
                         if (currentMapId && farmUpdateTrigger >= 0) { // Include farmUpdateTrigger to force re-evaluation
                             const plot = farmManager.getPlot(currentMapId, { x, y });
                             if (plot) {
@@ -747,6 +758,13 @@ const App: React.FC = () => {
                                 const plotTileData = getTileData(x, y, plotTileType);
                                 if (plotTileData) {
                                     tileData = plotTileData;
+                                }
+                                // Get growth stage for all growing crops (planted, watered, ready, wilting)
+                                if (plot.state === FarmPlotState.PLANTED ||
+                                    plot.state === FarmPlotState.WATERED ||
+                                    plot.state === FarmPlotState.READY ||
+                                    plot.state === FarmPlotState.WILTING) {
+                                    growthStage = farmManager.getGrowthStage(plot);
                                 }
                             }
                         }
@@ -800,10 +818,27 @@ const App: React.FC = () => {
                             const showImage = isGrassTile ? hashValue < 0.3 : true;
 
                             if (showImage) {
-                                // Use a separate hash for image selection to avoid bias
-                                const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-                                const index = Math.floor((imageHash % 1) * imageArray.length);
-                                selectedImage = imageArray[index];
+                                // For farm plots with growth stages, select sprite based on stage
+                                if (growthStage !== null && (
+                                    tileData.type === TileType.SOIL_PLANTED ||
+                                    tileData.type === TileType.SOIL_WATERED ||
+                                    tileData.type === TileType.SOIL_READY ||
+                                    tileData.type === TileType.SOIL_WILTING
+                                )) {
+                                    // Override with growth-stage-specific sprite
+                                    if (growthStage === 0) { // SEEDLING
+                                        selectedImage = farmingAssets.seedling;
+                                    } else if (growthStage === 1) { // YOUNG
+                                        selectedImage = farmingAssets.plant_pea_young;
+                                    } else { // ADULT
+                                        selectedImage = farmingAssets.plant_pea_adult;
+                                    }
+                                } else {
+                                    // Use a separate hash for image selection to avoid bias
+                                    const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+                                    const index = Math.floor((imageHash % 1) * imageArray.length);
+                                    selectedImage = imageArray[index];
+                                }
                             }
                         }
 
@@ -846,7 +881,13 @@ const App: React.FC = () => {
                                 const isTilledSoil = tileData.type === TileType.SOIL_TILLED;
                                 const isFloor = tileData.type === TileType.FLOOR;
                                 const isPath = tileData.type === TileType.PATH;
-                                sizeScale = isTilledSoil || isFloor
+
+                                // Special scaling for adult plants (make them GLORIOUS!)
+                                const isAdultPlant = growthStage === 2; // CropGrowthStage.ADULT
+
+                                sizeScale = isAdultPlant
+                                    ? 2.5  // Adult plants are GLORIOUS and large!
+                                    : isTilledSoil || isFloor
                                     ? 1.0  // No size variation for tilled soil or floor tiles
                                     : isPath
                                     ? 0.7 + (sizeHash % 1) * 0.6  // More pronounced variation for stepping stones: 70% to 130%

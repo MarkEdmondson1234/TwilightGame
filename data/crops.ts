@@ -28,6 +28,8 @@ export interface CropDefinition {
   harvestYield: number;        // Number of items produced
   sellPrice: number;           // Gold per item
   experience: number;          // XP for harvesting (future use)
+  seedDropMin: number;         // Minimum seeds dropped on harvest (1-3)
+  seedDropMax: number;         // Maximum seeds dropped on harvest (1-3)
 
   // Visual/flavor
   description: string;
@@ -41,8 +43,15 @@ const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
 /**
+ * Testing mode: Set to true for accelerated growth (milliseconds), false for game time (game days)
+ * When true: Crops grow in real minutes for testing
+ * When false: Crops grow based on in-game days (1 real day ≈ 0.933 game days)
+ */
+export const TESTING_MODE = true; // TODO: Set to false for production
+
+/**
  * All available crops
- * Times are balanced for gameplay testing - can be adjusted
+ * Times use real milliseconds when TESTING_MODE=true, or game days when false
  */
 export const CROPS: Record<string, CropDefinition> = {
   // Fast-growing crop for testing (2 minutes)
@@ -58,6 +67,8 @@ export const CROPS: Record<string, CropDefinition> = {
     harvestYield: 1,
     sellPrice: 10,
     experience: 5,
+    seedDropMin: 1,
+    seedDropMax: 3,
     description: 'Quick-growing root vegetable. Great for beginners!',
     seedCost: 5,
     rarity: CropRarity.COMMON,
@@ -76,6 +87,8 @@ export const CROPS: Record<string, CropDefinition> = {
     harvestYield: 3,
     sellPrice: 25,
     experience: 15,
+    seedDropMin: 1,
+    seedDropMax: 3,
     description: 'Juicy red tomatoes. Needs regular watering.',
     seedCost: 15,
     rarity: CropRarity.COMMON,
@@ -94,6 +107,8 @@ export const CROPS: Record<string, CropDefinition> = {
     harvestYield: 5,
     sellPrice: 15,
     experience: 20,
+    seedDropMin: 1,
+    seedDropMax: 3,
     description: 'Golden wheat for baking. Hardy and reliable.',
     seedCost: 10,
     rarity: CropRarity.UNCOMMON,
@@ -112,6 +127,8 @@ export const CROPS: Record<string, CropDefinition> = {
     harvestYield: 4,
     sellPrice: 40,
     experience: 30,
+    seedDropMin: 1,
+    seedDropMax: 3,
     description: 'Sweet corn. Takes time but very profitable.',
     seedCost: 25,
     rarity: CropRarity.RARE,
@@ -130,6 +147,8 @@ export const CROPS: Record<string, CropDefinition> = {
     harvestYield: 1,
     sellPrice: 150,
     experience: 50,
+    seedDropMin: 1,
+    seedDropMax: 3,
     description: 'Giant orange pumpkin. Requires patience and care.',
     seedCost: 50,
     rarity: CropRarity.VERY_RARE,
