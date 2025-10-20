@@ -933,7 +933,11 @@ const App: React.FC = () => {
                                     top: y * TILE_SIZE,
                                     width: TILE_SIZE,
                                     height: TILE_SIZE,
-                                    overflow: 'visible', // Allow adult plants to overflow
+                                    // Only set overflow and z-index for adult plants to avoid performance issues
+                                    ...(isAdultPlant ? {
+                                        overflow: 'visible',
+                                        zIndex: y,
+                                    } : {}),
                                 }}
                             >
                                 {selectedImage && (
@@ -952,7 +956,6 @@ const App: React.FC = () => {
                                             imageRendering: 'pixelated',
                                             transform: transform,
                                             filter: filter,
-                                            zIndex: isAdultPlant ? 10 : undefined, // Adult plants render on top
                                         }}
                                     />
                                 )}
