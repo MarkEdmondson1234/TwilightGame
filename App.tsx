@@ -847,9 +847,6 @@ const App: React.FC = () => {
                         let filter = 'none';
                         let sizeScale = 1.0;
 
-                        // Check if this is an adult plant (needs to be defined early for image rendering)
-                        const isAdultPlant = growthStage === 2; // CropGrowthStage.ADULT
-
                         if (selectedImage) {
                             // Use completely different hash seeds for each variation (avoid reusing previous hashes)
                             const flipHash = Math.abs(Math.sin(x * 87.654 + y * 21.987) * 67890.1234);
@@ -879,17 +876,18 @@ const App: React.FC = () => {
                                 const flipScaleX = shouldFlipX ? -1 : 1;
 
                                 // Size variation - more subtle for trees (0.95x to 1.05x), normal for others (0.85x to 1.15x)
-                                // No size variation for tilled soil or floor tiles, more variation for paths
+                                // No size variation for tilled soil, floor tiles, or farm plants
                                 const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
                                 const isTilledSoil = tileData.type === TileType.SOIL_TILLED;
                                 const isFloor = tileData.type === TileType.FLOOR;
                                 const isPath = tileData.type === TileType.PATH;
+                                const isFarmPlant = tileData.type === TileType.SOIL_PLANTED ||
+                                                    tileData.type === TileType.SOIL_WATERED ||
+                                                    tileData.type === TileType.SOIL_READY ||
+                                                    tileData.type === TileType.SOIL_WILTING;
 
-                                // Use the isAdultPlant variable defined earlier for scaling
-                                sizeScale = isAdultPlant
-                                    ? 2.5  // Adult plants are GLORIOUS and large!
-                                    : isTilledSoil || isFloor
-                                    ? 1.0  // No size variation for tilled soil or floor tiles
+                                sizeScale = isTilledSoil || isFloor || isFarmPlant
+                                    ? 1.0  // No size variation for tilled soil, floor tiles, or farm plants
                                     : isPath
                                     ? 0.7 + (sizeHash % 1) * 0.6  // More pronounced variation for stepping stones: 70% to 130%
                                     : isTree
@@ -933,11 +931,6 @@ const App: React.FC = () => {
                                     top: y * TILE_SIZE,
                                     width: TILE_SIZE,
                                     height: TILE_SIZE,
-                                    // Only set overflow and z-index for adult plants to avoid performance issues
-                                    ...(isAdultPlant ? {
-                                        overflow: 'visible',
-                                        zIndex: y,
-                                    } : {}),
                                 }}
                             >
                                 {selectedImage && (
@@ -946,11 +939,8 @@ const App: React.FC = () => {
                                         alt={renderTileData.name}
                                         className="absolute"
                                         style={{
-                                            // For adult plants, anchor to bottom-center so they grow upward
-                                            // For other tiles, center them normally
                                             left: (TILE_SIZE * (1 - sizeScale)) / 2,
-                                            bottom: isAdultPlant ? 0 : undefined,
-                                            top: isAdultPlant ? undefined : (TILE_SIZE * (1 - sizeScale)) / 2,
+                                            top: (TILE_SIZE * (1 - sizeScale)) / 2,
                                             width: TILE_SIZE * sizeScale,
                                             height: TILE_SIZE * sizeScale,
                                             imageRendering: 'pixelated',
