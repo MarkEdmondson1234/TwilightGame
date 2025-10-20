@@ -324,6 +324,14 @@ const App: React.FC = () => {
             const nearbyNPC = npcManager.getNPCAtPosition(playerPosRef.current);
             if (nearbyNPC) {
                 console.log(`[Action Key] Interacting with NPC: ${nearbyNPC.name}`);
+
+                // Trigger NPC event if it has animated states (e.g., cat)
+                if (nearbyNPC.animatedStates) {
+                    npcManager.triggerNPCEvent(nearbyNPC.id, 'interact');
+                    return; // Don't open dialogue for animated NPCs
+                }
+
+                // Open dialogue for regular NPCs
                 setActiveNPC(nearbyNPC.id);
                 return; // Don't check for transitions if talking to NPC
             }
@@ -1062,8 +1070,8 @@ const App: React.FC = () => {
                         const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                         if (!spriteMetadata || !spriteMetadata.isForeground) return null;
 
-                        // Determine if this is a building or rug (no transformations for these)
-                        const isBuilding = tileData.type === TileType.COTTAGE || tileData.type === TileType.RUG;
+                        // Determine if this is a building, rug, or bed (no transformations for these)
+                        const isBuilding = tileData.type === TileType.COTTAGE || tileData.type === TileType.RUG || tileData.type === TileType.BED;
 
                         // Add variations using deterministic hash based on position (only for non-buildings)
                         let flipScale = 1;

@@ -296,6 +296,12 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: [] // No plant sprite - just show dead soil
   }, // SOIL_DEAD = 32
+  {
+    name: 'Bed',
+    color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
+    isSolid: true,
+    image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+  }, // BED = 33
 ];
 
 // --- Procedural Map Generation ---
@@ -364,6 +370,20 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // No collision - rugs are walkable
     collisionWidth: 0,
     collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+  },
+  {
+    tileType: TileType.BED,
+    spriteWidth: 3,  // 3 tiles wide (wider bed)
+    spriteHeight: 4, // 4 tiles tall
+    offsetX: 0,      // Start at the anchor tile
+    offsetY: 0,      // Start at the anchor tile
+    image: tileAssets.cottage_bed,
+    isForeground: true,  // Render over player (it's furniture)
+    // Full collision - beds are solid (3 tiles wide, 4 tiles tall)
+    collisionWidth: 3,
+    collisionHeight: 4,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
   },

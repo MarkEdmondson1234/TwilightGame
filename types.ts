@@ -41,6 +41,8 @@ export enum TileType {
   SOIL_READY,
   SOIL_WILTING,
   SOIL_DEAD,
+  // Indoor furniture (multi-tile)
+  BED,
 }
 
 export interface Position {
@@ -169,6 +171,26 @@ export interface NPC {
   portraitSprite?: string; // Optional high-res sprite for dialogue portraits
   dialogue: DialogueNode[]; // Conversation tree
   interactionRadius?: number; // How close player must be (default 1.5 tiles)
+  animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations
+}
+
+// Animated NPC state machine (for NPCs like the cat with multiple behavioral states)
+export interface AnimatedNPCStates {
+  currentState: string; // Current state name (e.g., 'sleeping', 'angry', 'standing')
+  states: {
+    [stateName: string]: {
+      sprites: string[]; // Array of sprite paths for animation frames
+      animationSpeed: number; // Milliseconds per frame
+      transitionsTo?: { // Optional state transitions
+        [eventName: string]: string; // Event name -> target state
+      };
+      duration?: number; // Optional: auto-transition after X milliseconds
+      nextState?: string; // Optional: state to transition to after duration
+    };
+  };
+  lastStateChange: number; // Timestamp of last state change
+  lastFrameChange: number; // Timestamp of last animation frame change
+  currentFrame: number; // Current animation frame index
 }
 
 // Farm system types

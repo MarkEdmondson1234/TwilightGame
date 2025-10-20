@@ -27,7 +27,9 @@ const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 // Configuration
 const SPRITE_SIZE = 256; // Resize character sprites to 256x256
 const TILE_SIZE = 128;    // Resize tile images to 128x128 (less aggressive)
+const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
 const COMPRESSION_QUALITY = 85; // PNG compression quality
+const HIGH_QUALITY = 95; // Higher quality for detailed furniture
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -177,8 +179,18 @@ async function optimizeTiles() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Special handling for large furniture (beds, etc.) - keep higher resolution and quality
+    if (file.includes('bed')) {
+      await sharp(inputPath)
+        .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality, less compression
+        .toFile(outputPath);
+    }
     // Special handling for brick/wall textures - crop center instead of scaling down
-    if (file.includes('brick') || file.includes('wall')) {
+    else if (file.includes('brick') || file.includes('wall')) {
       const metadata = await sharp(inputPath).metadata();
       const cropSize = Math.min(metadata.width, metadata.height) / 5; // Take center 1/5th for medium-sized bricks
 

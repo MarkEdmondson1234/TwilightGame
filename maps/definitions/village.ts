@@ -1,5 +1,6 @@
 import { MapDefinition, TileType, Direction, NPCBehavior } from '../../types';
 import { parseGrid } from '../gridParser';
+import { createCatNPC } from '../../utils/npcFactories';
 
 /**
  * Village - Central hub area
@@ -279,5 +280,7 @@ export const village: MapDefinition = {
         },
       ],
     },
+    // Add cat NPC using factory function
+    createCatNPC('village_cat', { x: 25, y: 23 }, 'Sleepy Cat'),
   ],
 };

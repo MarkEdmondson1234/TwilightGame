@@ -148,6 +148,79 @@ class NPCManagerClass {
   }
 
   /**
+   * Update animated NPC states (for NPCs with state machines like the cat)
+   */
+  private updateAnimatedStates(currentTime: number): void {
+    const npcs = this.getCurrentMapNPCs();
+
+    npcs.forEach(npc => {
+      if (!npc.animatedStates) return;
+
+      const states = npc.animatedStates;
+      const currentState = states.states[states.currentState];
+      if (!currentState) return;
+
+      // Update animation frame
+      if (currentTime - states.lastFrameChange >= currentState.animationSpeed) {
+        states.currentFrame = (states.currentFrame + 1) % currentState.sprites.length;
+        states.lastFrameChange = currentTime;
+
+        // Update NPC sprite to current frame
+        npc.sprite = currentState.sprites[states.currentFrame];
+      }
+
+      // Check for auto-transitions (duration-based state changes)
+      if (currentState.duration && currentState.nextState) {
+        const timeInState = currentTime - states.lastStateChange;
+        if (timeInState >= currentState.duration) {
+          this.transitionNPCState(npc.id, currentState.nextState);
+        }
+      }
+    });
+  }
+
+  /**
+   * Transition an animated NPC to a new state
+   */
+  transitionNPCState(npcId: string, newState: string): void {
+    const npc = this.getNPCById(npcId);
+    if (!npc || !npc.animatedStates) return;
+
+    const states = npc.animatedStates;
+    if (!states.states[newState]) {
+      console.warn(`[NPCManager] Invalid state transition: ${states.currentState} -> ${newState} for NPC ${npcId}`);
+      return;
+    }
+
+    console.log(`[NPCManager] NPC ${npcId} transitioning: ${states.currentState} -> ${newState}`);
+
+    states.currentState = newState;
+    states.lastStateChange = Date.now();
+    states.currentFrame = 0;
+    states.lastFrameChange = Date.now();
+
+    // Update sprite to first frame of new state
+    const newStateData = states.states[newState];
+    npc.sprite = newStateData.sprites[0];
+  }
+
+  /**
+   * Trigger an event on an animated NPC (e.g., 'interact')
+   */
+  triggerNPCEvent(npcId: string, eventName: string): void {
+    const npc = this.getNPCById(npcId);
+    if (!npc || !npc.animatedStates) return;
+
+    const states = npc.animatedStates;
+    const currentState = states.states[states.currentState];
+
+    if (currentState.transitionsTo && currentState.transitionsTo[eventName]) {
+      const nextState = currentState.transitionsTo[eventName];
+      this.transitionNPCState(npcId, nextState);
+    }
+  }
+
+  /**
    * Update NPC movement and behavior
    * Call this in the game loop with deltaTime (seconds)
    * Returns true if any NPC moved (position changed)
@@ -156,6 +229,9 @@ class NPCManagerClass {
     const currentTime = Date.now();
     const npcs = this.getCurrentMapNPCs();
     let anyNPCMoved = false;
+
+    // Update animated states for all NPCs
+    this.updateAnimatedStates(currentTime);
 
     npcs.forEach(npc => {
       if (npc.behavior === NPCBehavior.STATIC) return; // Static NPCs don't move

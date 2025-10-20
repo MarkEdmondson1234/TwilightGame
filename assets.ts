@@ -32,6 +32,7 @@ export const tileAssets = {
   cottage_wooden: new URL('./public/assets-optimized/tiles/cottage_wooden_512.png', import.meta.url).href,
   floor_1: new URL('./public/assets-optimized/tiles/floor_1.png', import.meta.url).href,
   rug_cottagecore: new URL('./public/assets-optimized/tiles/rug_cottagecore.png', import.meta.url).href,
+  cottage_bed: new URL('./public/assets-optimized/tiles/cottage_bed.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance
@@ -47,6 +48,11 @@ export const farmingAssets = {
 // NPC assets - Use optimized versions for better performance
 export const npcAssets = {
   little_girl: new URL('./public/assets-optimized/npcs/little_girl.png', import.meta.url).href,
+  cat_sleeping_01: new URL('./public/assets/npcs/cat/cat_sleeping_01.png', import.meta.url).href,
+  cat_sleeping_02: new URL('./public/assets/npcs/cat/cat_sleeping_02.png', import.meta.url).href,
+  cat_sleeping_angry: new URL('./public/assets/npcs/cat/cat_sleeping_angry.png', import.meta.url).href,
+  cat_stand_01: new URL('./public/assets/npcs/cat/cat_stand_01.png', import.meta.url).href,
+  cat_stand_02: new URL('./public/assets/npcs/cat/cat_stand_02.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

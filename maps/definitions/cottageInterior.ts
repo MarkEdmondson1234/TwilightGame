@@ -8,6 +8,7 @@ import { parseGrid } from '../gridParser';
  * - Exit door at bottom center
  * - Simple furniture layout
  * - Wooden floor
+ * - Cozy bed (2x1 tiles)
  *
  * Grid Legend:
  * # = Wall
@@ -16,13 +17,14 @@ import { parseGrid } from '../gridParser';
  * r = Rug (cottagecore decorative rug)
  * T = Table
  * H = Chair
+ * A = Bed (2x4 tiles - 2 wide, 4 tall)
  * E = Exit Door (back to village)
  */
 
 const gridString = `
 ############
-#FFFTFFFFTF#
-#FFFFFFFFFFH
+#FFFFTFFAFF#
+#HFFFFFFFFF#
 #FFCCCFFFFF#
 #FFrFFCCCFF#
 #FFCCCFFFFF#
