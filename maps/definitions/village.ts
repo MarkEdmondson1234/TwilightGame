@@ -212,7 +212,7 @@ export const village: MapDefinition = {
               nextId: 'shop_wares',
             },
             {
-              text: 'Any news from travelers?',
+              text: 'Any news from travellers?',
               nextId: 'shop_gossip',
             },
             {
@@ -236,11 +236,12 @@ export const village: MapDefinition = {
       position: { x: 15, y: 17 }, // On main path in village center
       direction: Direction.Right,
       behavior: NPCBehavior.WANDER,
-      sprite: '/TwilightGame/assets/npcs/child.svg',
+      sprite: '/TwilightGame/assets-optimized/npcs/little_girl.png',
+      portraitSprite: '/TwilightGame/assets/npcs/little_girl.png', // High-res for dialogue
       dialogue: [
         {
           id: 'greeting',
-          text: 'Hi! Wanna play? My mom says I can\'t go to the forest alone. It\'s not fair!',
+          text: 'Hi! Want to play? My mum says I can\'t go to the forest alone. It\'s not fair!',
           responses: [
             {
               text: 'What do you like to play?',
@@ -257,14 +258,14 @@ export const village: MapDefinition = {
         },
         {
           id: 'play_games',
-          text: 'I like hide and seek! And exploring! But mom says the forest is too dangerous...',
+          text: 'I like hide and seek! And exploring! But mum says the forest is too dangerous...',
         },
         {
           id: 'forest_story',
-          text: 'Mom says there are big scary monsters! But I bet they\'re not THAT scary. Are they?',
+          text: 'Mum says there are big scary monsters! But I bet they\'re not THAT scary. Are they?',
           responses: [
             {
-              text: 'They can be dangerous, listen to your mom.',
+              text: 'They can be dangerous, listen to your mum.',
               nextId: 'safety_lesson',
             },
             {

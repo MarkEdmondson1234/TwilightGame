@@ -165,7 +165,8 @@ export interface NPC {
   position: Position;
   direction: Direction;
   behavior: NPCBehavior;
-  sprite: string; // Path to sprite image, or array for animated
+  sprite: string; // Path to sprite image, or array for animated (optimized for in-game use)
+  portraitSprite?: string; // Optional high-res sprite for dialogue portraits
   dialogue: DialogueNode[]; // Conversation tree
   interactionRadius?: number; // How close player must be (default 1.5 tiles)
 }

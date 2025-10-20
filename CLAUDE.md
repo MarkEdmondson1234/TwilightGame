@@ -6,13 +6,26 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A peaceful top-down exploration and crafting game engine built with React, Vite, and TypeScript. Inspired by Stardew Valley, it features tile-based movement, sprite animation, collision detection, and a **multi-map system** supporting both designed and procedurally generated maps with transitions. Currently uses placeholder graphics with support for custom artwork.
 
+## Language and Localisation
+
+**IMPORTANT**: This game uses **British English** exclusively.
+
+- Use "mum" not "mom"
+- Use "colour" not "color" (in dialogue/UI text, not code)
+- Use "traveller" not "traveler"
+- Use "favourite" not "favorite"
+- Avoid Americanisms like "wanna", "gonna", "gotta"
+- When writing dialogue, use proper British spelling and phrasing
+
+This applies to all user-facing text including: dialogue, item descriptions, UI labels, and documentation.
+
 ## Development Commands
 
 - `npm install` - Install dependencies
 - `npm run dev` - Start development server (Vite on port 3000)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
-- `npm run optimize-assets` - Optimize images using Sharp (automatically runs before build)
+- `npm run optimize-assets` - Optimise images using Sharp (automatically runs before build)
 
 ## Core Architecture Principles
 

@@ -924,6 +924,9 @@ const App: React.FC = () => {
                         const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                         if (!spriteMetadata || spriteMetadata.isForeground) return null;
 
+                        // Use smooth rendering for multi-tile sprites (they look better scaled up)
+                        const useSmoothRendering = spriteMetadata.spriteWidth >= 2 || spriteMetadata.spriteHeight >= 2;
+
                         // Render the multi-tile sprite (no transformations for rugs)
                         return (
                             <img
@@ -936,7 +939,7 @@ const App: React.FC = () => {
                                     top: (y + spriteMetadata.offsetY) * TILE_SIZE,
                                     width: spriteMetadata.spriteWidth * TILE_SIZE,
                                     height: spriteMetadata.spriteHeight * TILE_SIZE,
-                                    imageRendering: 'pixelated',
+                                    imageRendering: useSmoothRendering ? 'auto' : 'pixelated',
                                 }}
                             />
                         );
@@ -951,6 +954,9 @@ const App: React.FC = () => {
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     const inRange = distance <= (npc.interactionRadius || 1.5);
 
+                    // NPCs use 4.0x scale for better visibility (larger than player)
+                    const npcScale = 4.0;
+
                     return (
                         <React.Fragment key={npc.id}>
                             {/* NPC Sprite */}
@@ -959,10 +965,10 @@ const App: React.FC = () => {
                                 alt={npc.name}
                                 className="absolute"
                                 style={{
-                                    left: (npc.position.x - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
-                                    top: (npc.position.y - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
-                                    width: PLAYER_SIZE * spriteScale * TILE_SIZE,
-                                    height: PLAYER_SIZE * spriteScale * TILE_SIZE,
+                                    left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE,
+                                    top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE,
+                                    width: PLAYER_SIZE * npcScale * TILE_SIZE,
+                                    height: PLAYER_SIZE * npcScale * TILE_SIZE,
                                     imageRendering: 'pixelated',
                                 }}
                             />
@@ -1071,6 +1077,10 @@ const App: React.FC = () => {
                             spriteImage = seasonalArray[index];
                         }
 
+                        // Use smooth rendering for large decorative sprites (trees, cottages)
+                        // They look better with anti-aliasing when scaled up
+                        const useSmoothRendering = spriteMetadata.spriteWidth >= 2 || spriteMetadata.spriteHeight >= 2;
+
                         return (
                             <img
                                 key={`fg-${x}-${y}`}
@@ -1082,7 +1092,7 @@ const App: React.FC = () => {
                                     top: (y + spriteMetadata.offsetY + heightDiff) * TILE_SIZE,
                                     width: variedWidth * TILE_SIZE,
                                     height: variedHeight * TILE_SIZE,
-                                    imageRendering: 'pixelated',
+                                    imageRendering: useSmoothRendering ? 'auto' : 'pixelated',
                                     transform: `scaleX(${flipScale}) rotate(${rotation}deg)`,
                                     filter: `brightness(${brightness})`,
                                 }}

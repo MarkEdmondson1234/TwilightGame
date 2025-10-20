@@ -111,7 +111,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
 
             {/* NPC Sprite - Mobile (smaller) */}
             <img
-              src={npc.sprite}
+              src={npc.portraitSprite || npc.sprite}
               alt={npc.name}
               className="relative w-full h-full object-cover object-top"
               style={{
@@ -133,7 +133,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
 
             {/* NPC Sprite - Zoomed to show top half (portrait style) */}
             <img
-              src={npc.sprite}
+              src={npc.portraitSprite || npc.sprite}
               alt={npc.name}
               className="relative w-full h-full object-cover object-top"
               style={{
