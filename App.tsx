@@ -847,6 +847,9 @@ const App: React.FC = () => {
                         let filter = 'none';
                         let sizeScale = 1.0;
 
+                        // Check if this is an adult plant (needs to be defined early for image rendering)
+                        const isAdultPlant = growthStage === 2; // CropGrowthStage.ADULT
+
                         if (selectedImage) {
                             // Use completely different hash seeds for each variation (avoid reusing previous hashes)
                             const flipHash = Math.abs(Math.sin(x * 87.654 + y * 21.987) * 67890.1234);
@@ -882,9 +885,7 @@ const App: React.FC = () => {
                                 const isFloor = tileData.type === TileType.FLOOR;
                                 const isPath = tileData.type === TileType.PATH;
 
-                                // Special scaling for adult plants (make them GLORIOUS!)
-                                const isAdultPlant = growthStage === 2; // CropGrowthStage.ADULT
-
+                                // Use the isAdultPlant variable defined earlier for scaling
                                 sizeScale = isAdultPlant
                                     ? 2.5  // Adult plants are GLORIOUS and large!
                                     : isTilledSoil || isFloor
@@ -932,6 +933,7 @@ const App: React.FC = () => {
                                     top: y * TILE_SIZE,
                                     width: TILE_SIZE,
                                     height: TILE_SIZE,
+                                    overflow: 'visible', // Allow adult plants to overflow
                                 }}
                             >
                                 {selectedImage && (
@@ -940,13 +942,17 @@ const App: React.FC = () => {
                                         alt={renderTileData.name}
                                         className="absolute"
                                         style={{
+                                            // For adult plants, anchor to bottom-center so they grow upward
+                                            // For other tiles, center them normally
                                             left: (TILE_SIZE * (1 - sizeScale)) / 2,
-                                            top: (TILE_SIZE * (1 - sizeScale)) / 2,
+                                            bottom: isAdultPlant ? 0 : undefined,
+                                            top: isAdultPlant ? undefined : (TILE_SIZE * (1 - sizeScale)) / 2,
                                             width: TILE_SIZE * sizeScale,
                                             height: TILE_SIZE * sizeScale,
                                             imageRendering: 'pixelated',
                                             transform: transform,
                                             filter: filter,
+                                            zIndex: isAdultPlant ? 10 : undefined, // Adult plants render on top
                                         }}
                                     />
                                 )}

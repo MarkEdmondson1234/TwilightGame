@@ -21,7 +21,8 @@ vi.mock('../utils/TimeManager', () => ({
 // Mock inventoryManager
 vi.mock('../utils/inventoryManager', () => ({
   inventoryManager: {
-    consumeItem: vi.fn((itemId: string, quantity: number) => true),
+    removeItem: vi.fn((itemId: string, quantity: number) => true),
+    hasItem: vi.fn((itemId: string, quantity: number) => true),
     addItem: vi.fn((itemId: string, quantity: number) => {}),
     getInventoryData: vi.fn(() => ({ items: {}, tools: {} })),
   },
@@ -75,7 +76,8 @@ describe('FarmManager', () => {
   describe('plantSeed', () => {
     beforeEach(() => {
       // Mock successful seed consumption
-      vi.mocked(inventoryManager.consumeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.removeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.hasItem).mockReturnValue(true);
     });
 
     it('should plant seed on tilled soil', () => {
@@ -88,7 +90,7 @@ describe('FarmManager', () => {
       const result = farmManager.plantSeed('test_map', position, 'radish');
 
       expect(result).toBe(true);
-      expect(inventoryManager.consumeItem).toHaveBeenCalledWith('seed_radish', 1);
+      expect(inventoryManager.removeItem).toHaveBeenCalledWith('seed_radish', 1);
 
       const plot = farmManager.getPlot('test_map', position);
       expect(plot?.state).toBe(FarmPlotState.PLANTED);
@@ -104,7 +106,7 @@ describe('FarmManager', () => {
       const result = farmManager.plantSeed('test_map', position, 'radish');
 
       expect(result).toBe(false);
-      expect(inventoryManager.consumeItem).not.toHaveBeenCalled();
+      expect(inventoryManager.removeItem).not.toHaveBeenCalled();
     });
 
     it('should not plant if no seeds in inventory', () => {
@@ -114,7 +116,8 @@ describe('FarmManager', () => {
       farmManager.tillSoil('test_map', position);
 
       // Mock no seeds available
-      vi.mocked(inventoryManager.consumeItem).mockReturnValue(false);
+      vi.mocked(inventoryManager.removeItem).mockReturnValue(false);
+      vi.mocked(inventoryManager.hasItem).mockReturnValue(false);
 
       // Try to plant
       const result = farmManager.plantSeed('test_map', position, 'radish');
@@ -129,7 +132,8 @@ describe('FarmManager', () => {
 
   describe('waterPlot', () => {
     beforeEach(() => {
-      vi.mocked(inventoryManager.consumeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.removeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.hasItem).mockReturnValue(true);
     });
 
     it('should water a planted crop', () => {
@@ -185,7 +189,8 @@ describe('FarmManager', () => {
 
   describe('harvestCrop', () => {
     beforeEach(() => {
-      vi.mocked(inventoryManager.consumeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.removeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.hasItem).mockReturnValue(true);
     });
 
     it('should harvest a ready crop', () => {
@@ -271,7 +276,8 @@ describe('FarmManager', () => {
 
   describe('getTileTypeForPlot', () => {
     beforeEach(() => {
-      vi.mocked(inventoryManager.consumeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.removeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.hasItem).mockReturnValue(true);
     });
 
     it('should return correct TileType for each state', () => {
@@ -323,10 +329,10 @@ describe('FarmManager', () => {
       farmManager.tillSoil('map1', { x: 2, y: 2 });
       farmManager.tillSoil('map2', { x: 3, y: 3 });
 
-      const map1Plots = farmManager.getPlotsByMap('map1');
+      const map1Plots = farmManager.getPlotsForMap('map1');
       expect(map1Plots.length).toBe(2);
 
-      const map2Plots = farmManager.getPlotsByMap('map2');
+      const map2Plots = farmManager.getPlotsForMap('map2');
       expect(map2Plots.length).toBe(1);
     });
 
