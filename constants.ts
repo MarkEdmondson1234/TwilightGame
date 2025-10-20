@@ -381,11 +381,11 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: 0,      // Start at the anchor tile
     image: tileAssets.cottage_bed,
     isForeground: true,  // Render over player (it's furniture)
-    // Full collision - beds are solid (3 tiles wide, 4 tiles tall)
-    collisionWidth: 3,
-    collisionHeight: 4,
-    collisionOffsetX: 0,
-    collisionOffsetY: 0,
+    // Collision adjusted to match actual bed footprint (mattress only)
+    collisionWidth: 2,     // Narrower - just the mattress width
+    collisionHeight: 2.5,    // Just the mattress area (bottom 2 tiles)
+    collisionOffsetX: 0.5, // Center the collision horizontally
+    collisionOffsetY: 1.5, // Start collision at the mattress, not the headboard
   },
   {
     tileType: TileType.BUSH,
