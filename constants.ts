@@ -137,7 +137,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   {
     name: 'Table',
     color: 'bg-palette-khaki',  // Base furniture color
-    isSolid: true,
+    isSolid: false,  // Walkable - removed blocking
     image: []
   }, // TABLE = 11
   {
@@ -302,6 +302,12 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   }, // BED = 33
+  {
+    name: 'Sofa',
+    color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
+    isSolid: true,
+    image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+  }, // SOFA = 34
 ];
 
 // --- Procedural Map Generation ---
@@ -361,10 +367,10 @@ export const MAP_DATA: TileType[][] = map;
 export const SPRITE_METADATA: SpriteMetadata[] = [
   {
     tileType: TileType.RUG,
-    spriteWidth: 2,  // 2 tiles wide
-    spriteHeight: 2, // 2 tiles tall
-    offsetX: 0,      // No offset - rug sits on floor
-    offsetY: 0,      // No offset - rug sits on floor
+    spriteWidth: 3,  // 3 tiles wide
+    spriteHeight: 3, // 3 tiles tall
+    offsetX: -0.5,   // Center horizontally (extend 0.5 tiles left)
+    offsetY: -0.5,   // Center vertically (extend 0.5 tiles up)
     image: tileAssets.rug_cottagecore,
     isForeground: false,  // Render under player (it's a floor decoration)
     // No collision - rugs are walkable
@@ -375,14 +381,14 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.BED,
-    spriteWidth: 3,  // 3 tiles wide (wider bed)
+    spriteWidth: 4,  // 4 tiles wide (wider bed)
     spriteHeight: 4, // 4 tiles tall
-    offsetX: 0,      // Start at the anchor tile
+    offsetX: -0.5,   // Center horizontally (extend left)
     offsetY: 0,      // Start at the anchor tile
     image: tileAssets.cottage_bed,
     isForeground: true,  // Render over player (it's furniture)
     // Collision adjusted to match actual bed footprint (mattress only)
-    collisionWidth: 2,     // Narrower - just the mattress width
+    collisionWidth: 2.2,     // Wider collision for bigger bed
     collisionHeight: 2.5,    // Just the mattress area (bottom 2 tiles)
     collisionOffsetX: 0.5, // Center the collision horizontally
     collisionOffsetY: 1.5, // Start collision at the mattress, not the headboard
@@ -456,5 +462,19 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0.3,
     collisionOffsetX: 0.35,
     collisionOffsetY: 0.35,
+  },
+  {
+    tileType: TileType.SOFA,
+    spriteWidth: 3,  // 3 tiles wide
+    spriteHeight: 2.25, // Natural aspect ratio of image (2732/2048 * 3/4.33 ≈ 2.25)
+    offsetX: 0,      // Start at anchor tile
+    offsetY: -1.25,  // Extends upward slightly
+    image: tileAssets.sofa,
+    isForeground: false,  // Render UNDER player to avoid transforms
+    // Collision covers the sofa seating area
+    collisionWidth: 2.5,
+    collisionHeight: 0.5,
+    collisionOffsetX: 0.3,
+    collisionOffsetY: 0,
   },
 ];

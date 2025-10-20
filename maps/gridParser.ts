@@ -22,6 +22,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'H': TileType.CHAIR,
   'I': TileType.MIRROR,   // Mirror (I looks like a mirror!)
   'A': TileType.BED,      // A = bed (A bed to sleep in!)
+  '@': TileType.SOFA,     // @ = sofa (comfortable seating)
   'U': TileType.BUSH,        // U = bUsh (decorative)
   'Y': TileType.TREE,        // Y = Tree (looks like a tree top)
   'Z': TileType.TREE_BIG,    // Z = Big tree

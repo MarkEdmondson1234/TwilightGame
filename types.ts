@@ -43,6 +43,7 @@ export enum TileType {
   SOIL_DEAD,
   // Indoor furniture (multi-tile)
   BED,
+  SOFA,
 }
 
 export interface Position {

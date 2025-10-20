@@ -162,6 +162,37 @@ See `ASSETS.md` for complete asset guidelines. Key points:
   - Tile images (resizes to 64x64, optimizes compression)
   - NPC sprites (optimizes SVGs or PNGs)
 - **When to run manually**: After adding new assets to `/public/assets/`
+- **Exception for multi-tile sprites**: Large furniture sprites (beds, sofas) should use original high-res images to avoid distortion from 64x64 resize
+
+### Multi-Tile Sprite Guidelines
+
+Multi-tile sprites (furniture, large objects) require special handling:
+
+1. **Single Anchor Point**: Use only ONE grid character (e.g., `@` for sofa) in map definitions
+   - ❌ WRONG: `@@@` creates 3 duplicate overlapping sprites
+   - ✅ CORRECT: `@` single anchor automatically renders full 3-tile wide sprite
+
+2. **Asset References**: For multi-tile sprites, use original high-res images (not optimized versions)
+   - Add comment: `// Use original high-res`
+   - Example: `sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href`
+
+3. **Sprite Metadata**: Configure in `SPRITE_METADATA` array in `constants.ts`
+   - Set dimensions to match natural aspect ratio (don't distort image)
+   - Use `isForeground: false` to avoid CSS transforms (renders in clean background layer)
+   - Set collision boxes separately from visual dimensions
+
+4. **Example Setup**:
+   ```typescript
+   // Sofa: 2732x2048 image → 3 tiles wide × 2.25 tiles tall (preserves aspect ratio)
+   {
+     tileType: TileType.SOFA,
+     spriteWidth: 3, spriteHeight: 2.25,  // Visual size (natural ratio)
+     offsetX: 0, offsetY: -1.25,
+     image: tileAssets.sofa,
+     isForeground: false,  // No CSS transforms
+     collisionWidth: 3, collisionHeight: 1,  // Functional collision area
+   }
+   ```
 
 ## Development Guidelines
 

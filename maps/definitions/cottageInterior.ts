@@ -6,30 +6,27 @@ import { parseGrid } from '../gridParser';
  *
  * A rustic interior with:
  * - Exit door at bottom center
- * - Simple furniture layout
- * - Wooden floor
- * - Cozy bed (2x1 tiles)
+ * - Bed, sofa, and rug
  *
  * Grid Legend:
  * # = Wall
  * F = Floor
  * C = Carpet
  * r = Rug (cottagecore decorative rug)
- * T = Table
- * H = Chair
- * A = Bed (2x4 tiles - 2 wide, 4 tall)
+ * A = Bed (4x4 tiles)
  * E = Exit Door (back to village)
+ * @ = Sofa (3 tiles wide, 1 tile tall)
  */
 
 const gridString = `
 ############
-#FFFFTFFAFF#
-#HFFFFFFFFF#
-#FFCCCFFFFF#
-#FFrFFCCCFF#
-#FFCCCFFFFF#
-#FFFFETFFFF#
-#FFFFEFFF###
+#FFFFFFAFFF#
+#FF@FFFFFFF#
+#FFFFFFFFFF#
+#FFrFFFFFFF#
+#FFFFFFFFFF#
+#FFFFFFFFFF#
+#FFFFFFFFFF###
 ######E#####
 `;
 

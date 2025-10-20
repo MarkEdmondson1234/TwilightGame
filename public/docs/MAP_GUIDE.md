@@ -24,9 +24,12 @@ Maps are created using single-character codes. Just draw your map with these cha
 - `M` = Mine Entrance (transition tile)
 
 ### Furniture
-- `T` = Table (blocks movement)
+- `T` = Table (walkable)
 - `H` = Chair (walkable)
 - `I` = Mirror (walkable, opens character customization)
+- `A` = Bed (blocks movement, multi-tile 4x4)
+- `@` = Sofa (blocks movement, multi-tile 3x1 horizontal)
+- `r` = Rug (walkable, multi-tile 3x3 decorative)
 
 ### Buildings (Outdoor Structures)
 - `B` = Building Wall (blocks movement)
@@ -111,6 +114,36 @@ Transitions allow players to move between maps. You can link to:
    - `'RANDOM_CAVE'` - Generates a random cave
    - `'RANDOM_SHOP'` - Generates a random shop
 
+## Multi-Tile Objects (Important!)
+
+Some objects like beds, sofas, and rugs span multiple tiles. **IMPORTANT RULE:**
+
+✅ **Use only ONE character** for multi-tile objects
+❌ **DO NOT repeat the character multiple times**
+
+### Examples:
+
+**CORRECT - Single anchor point:**
+```
+#######
+#@FFFF#  ← Single @ creates full 3-tile wide sofa
+#FCTFF#
+```
+
+**WRONG - Multiple anchors create duplicates:**
+```
+#######
+#@@@FF#  ← Creates 3 overlapping sofas! ❌
+#FCTFF#
+```
+
+### Multi-Tile Furniture:
+- **Bed (`A`)**: Place ONE `A` - creates 4×4 tile bed automatically
+- **Sofa (`@`)**: Place ONE `@` - creates 3-tile wide sofa automatically
+- **Rug (`r`)**: Place ONE `r` - creates 3×3 tile rug automatically
+
+The sprite will automatically render across the correct number of tiles from the single anchor point!
+
 ## Tips for Child-Friendly Map Making
 
 1. **Keep it visual** - The grid codes create a picture of your map in the code
@@ -118,6 +151,7 @@ Transitions allow players to move between maps. You can link to:
 3. **Start small** - Try a 10x10 map first
 4. **Test in-game** - Walk around and make sure transitions work
 5. **Draw it first** - Sketch your map on graph paper before coding
+6. **One anchor for big objects** - Remember: only one character for multi-tile furniture!
 
 ## Example: A Simple House
 

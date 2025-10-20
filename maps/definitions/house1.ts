@@ -10,15 +10,14 @@ import { parseGrid } from '../gridParser';
  * C = Carpet
  * r = Rug (cottagecore decorative rug)
  * D = Door (exit)
- * T = Table
- * H = Chair
+ * @ = Sofa (3 tiles wide, 1 tile tall)
  */
 
 const gridString = `
 #######
+#@FFFF#
 #FFFFF#
-#FCTFF#
-#FrHFFD
+#FrFFFD
 #FFFFF#
 #######
 `;

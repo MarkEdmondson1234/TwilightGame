@@ -6,23 +6,22 @@ import { parseGrid } from '../gridParser';
  *
  * A cozy upstairs bedroom with:
  * - Stairs down at bottom (D)
- * - Simple furniture
+ * - Sofa
  *
  * Grid Legend:
  * # = Wall
  * F = Floor
  * C = Carpet
- * T = Table
- * H = Chair
  * D = Door (stairs down)
+ * @ = Sofa (3 tiles wide, 1 tile tall)
  */
 
 const gridString = `
 ##########
+#FF@FFFFF#
 #FFFFFFFF#
-#FCCCCCFF#
-#FCHTTHFF#
-#FCCCCCFF#
+#FFFFFFFF#
+#FFFFFFFF#
 #FFFFFFFF#
 #FFFFFFFF#
 ###D######

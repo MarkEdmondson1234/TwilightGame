@@ -94,6 +94,76 @@ Adding a new grass variation:
 - All sprites use `imageRendering: 'pixelated'` for pixel art
 - Background colors from color schemes show through transparent PNGs
 
+## Multi-Tile Sprites (Furniture, Large Objects)
+
+Some tiles span multiple grid squares (beds, sofas, rugs, trees, etc.). These require special handling:
+
+### Key Rules for Multi-Tile Sprites:
+
+1. **Single Anchor Point**: Use only ONE grid character (e.g., `@`) in the map grid. The sprite will render across multiple tiles automatically.
+   - ❌ WRONG: `@@@` (creates 3 duplicate sprites)
+   - ✅ CORRECT: `@` (single anchor, sprite spans 3 tiles)
+
+2. **Use Original High-Res Images**: For large sprites, DO NOT use the optimized version if it causes quality issues.
+   - The optimization script resizes to 64x64 for single tiles, which distorts multi-tile sprites
+   - Use original image path: `new URL('./public/assets/tiles/sofa.png', import.meta.url).href`
+   - Add comment: `// Use original high-res`
+
+3. **Sprite Metadata Configuration**:
+   - Add entry to `SPRITE_METADATA` array in `constants.ts`
+   - Set `spriteWidth` and `spriteHeight` to match the image's natural aspect ratio
+   - DO NOT force dimensions that distort the image
+   - Example: 2732x2048 image → use 3 tiles wide × 2.25 tiles tall (preserves ~4:3 ratio)
+
+4. **Avoid CSS Transforms**:
+   - Set `isForeground: false` to render in background layer (no transforms)
+   - Background layer uses clean rendering without scale/rotate transforms
+   - Use `isForeground: true` only if the object should render over the player AND you want variation transforms
+
+5. **Collision Boxes**:
+   - Set collision dimensions separately from sprite dimensions
+   - Collision should match the functional footprint (where player can't walk)
+   - Example: Sofa might be 3×2.25 visually but only block 3×1 at the base
+   ```typescript
+   collisionWidth: 3,
+   collisionHeight: 1,
+   collisionOffsetX: 0,
+   collisionOffsetY: 0,
+   ```
+
+### Example Multi-Tile Sprite Setup:
+
+```typescript
+// In assets.ts
+sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href,  // Use original high-res
+
+// In constants.ts SPRITE_METADATA array
+{
+  tileType: TileType.SOFA,
+  spriteWidth: 3,      // Match natural aspect ratio
+  spriteHeight: 2.25,  // Don't distort the image
+  offsetX: 0,
+  offsetY: -1.25,      // Extends upward from anchor
+  image: tileAssets.sofa,
+  isForeground: false, // No CSS transforms
+  collisionWidth: 3,   // Functional collision area
+  collisionHeight: 1,
+  collisionOffsetX: 0,
+  collisionOffsetY: 0,
+}
+```
+
+### Map Grid Usage:
+
+```typescript
+// In map definition gridString
+const gridString = `
+#######
+#@FFFF#  // Single @ anchor - sofa renders 3 tiles wide automatically
+#FCTFF#
+`;
+```
+
 ## Related Documentation
 
 - [ASSETS.md](../../../docs/ASSETS.md) - Complete asset guidelines

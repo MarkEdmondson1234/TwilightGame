@@ -7,28 +7,25 @@ import { parseGrid } from '../gridParser';
  * A small cozy interior room with:
  * - Stairs up at bottom (D)
  * - Exit door to village at top-right (E)
- * - Simple furniture layout
- * - Mirror on the left wall (I)
+ * - Sofa and rug
  *
  * Grid Legend:
  * # = Wall
  * F = Floor
  * C = Carpet
  * r = Rug (cottagecore decorative rug)
- * T = Table
- * H = Chair
  * D = Door (stairs up)
  * E = Exit Door (to village)
- * I = Mirror
+ * @ = Sofa (3 tiles wide, 1 tile tall)
  */
 
 const gridString = `
 ##########
-#FFFFFE###
-#FCCCFF###
-#FCHTFF###
+#F@FFFE###
+#FFFFFFF###
+#FFFFFFF###
 #FrFFFF###
-#IFFFFFFF#
+#FFFFFFFF#
 #FFFFFFFF#
 ###D######
 `;
