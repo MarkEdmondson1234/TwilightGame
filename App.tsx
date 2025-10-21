@@ -975,11 +975,22 @@ const App: React.FC = () => {
                         // Use smooth rendering for multi-tile sprites (they look better scaled up)
                         const useSmoothRendering = spriteMetadata.spriteWidth >= 2 || spriteMetadata.spriteHeight >= 2;
 
+                        // Select sprite image (handle both string and array)
+                        let spriteImage: string;
+                        if (Array.isArray(spriteMetadata.image)) {
+                            // Select image using deterministic hash based on position
+                            const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+                            const index = Math.floor((imageHash % 1) * spriteMetadata.image.length);
+                            spriteImage = spriteMetadata.image[index];
+                        } else {
+                            spriteImage = spriteMetadata.image;
+                        }
+
                         // Render the multi-tile sprite (no transformations for rugs)
                         return (
                             <img
                                 key={`bg-sprite-${x}-${y}`}
-                                src={spriteMetadata.image}
+                                src={spriteImage}
                                 alt={tileData.name}
                                 className="absolute pointer-events-none"
                                 style={{
@@ -1115,7 +1126,7 @@ const App: React.FC = () => {
                         const heightDiff = (spriteMetadata.spriteHeight - variedHeight) / 2;
 
                         // Determine which image to use (seasonal or default) - season cached above
-                        let spriteImage = spriteMetadata.image;
+                        let spriteImage: string;
                         if (tileData.seasonalImages) {
                             const seasonalArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
 
@@ -1123,6 +1134,13 @@ const App: React.FC = () => {
                             const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
                             const index = Math.floor((imageHash % 1) * seasonalArray.length);
                             spriteImage = seasonalArray[index];
+                        } else if (Array.isArray(spriteMetadata.image)) {
+                            // Select image from array using deterministic hash
+                            const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+                            const index = Math.floor((imageHash % 1) * spriteMetadata.image.length);
+                            spriteImage = spriteMetadata.image[index];
+                        } else {
+                            spriteImage = spriteMetadata.image;
                         }
 
                         // Use smooth rendering for large decorative sprites (trees, cottages)

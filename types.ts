@@ -83,7 +83,7 @@ export interface SpriteMetadata {
   spriteHeight: number; // Height in tiles (for rendering)
   offsetX: number; // X offset in tiles (0 = centered on tile)
   offsetY: number; // Y offset in tiles (negative = extends upward)
-  image: string; // Path to sprite image
+  image: string | string[]; // Path to sprite image, or array for random variations
   isForeground: boolean; // If true, renders after player
   // Optional collision bounds (if different from sprite dimensions)
   collisionWidth?: number; // Width in tiles for collision (defaults to spriteWidth)

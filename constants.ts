@@ -469,7 +469,10 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     spriteHeight: 2.25, // Natural aspect ratio of image (2732/2048 * 3/4.33 ≈ 2.25)
     offsetX: 0,      // Start at anchor tile
     offsetY: -1.25,  // Extends upward slightly
-    image: tileAssets.sofa,
+    image: [
+      tileAssets.sofa_01,
+      tileAssets.sofa_02,
+    ],
     isForeground: false,  // Render UNDER player to avoid transforms
     // Collision covers the sofa seating area
     collisionWidth: 2.5,

@@ -33,7 +33,8 @@ export const tileAssets = {
   floor_1: new URL('./public/assets-optimized/tiles/floor_1.png', import.meta.url).href,
   rug_cottagecore: new URL('./public/assets-optimized/tiles/rug_cottagecore.png', import.meta.url).href,
   cottage_bed: new URL('./public/assets-optimized/tiles/cottage_bed.png', import.meta.url).href,
-  sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href,  // Use original high-res
+  sofa_01: new URL('./public/assets-optimized/tiles/sofa_01.png', import.meta.url).href,
+  sofa_02: new URL('./public/assets-optimized/tiles/sofa_02.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance
