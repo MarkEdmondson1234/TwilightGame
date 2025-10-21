@@ -20,13 +20,13 @@ import { parseGrid } from '../gridParser';
  */
 
 const gridString = `
-##########
-#F@FFFE###
-#FFFFFFF###
-#FFFFFFF###
-#FrFFFF###
-#FFFFFFFF#
-#FFFFFFFF#
+#######E##
+#ffffffff#
+#ff@fffff##
+#ffffffff##
+#frffffff#
+#ffffffff#
+#ffffffff#
 ###D######
 `;
 

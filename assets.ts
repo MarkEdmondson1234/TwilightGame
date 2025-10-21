@@ -31,8 +31,10 @@ export const tileAssets = {
   stepping_stones_4: new URL('./public/assets-optimized/tiles/stepping_stones_4.png', import.meta.url).href,
   cottage_wooden: new URL('./public/assets-optimized/tiles/cottage_wooden_512.png', import.meta.url).href,
   floor_1: new URL('./public/assets-optimized/tiles/floor_1.png', import.meta.url).href,
+  floor_light: new URL('./public/assets-optimized/tiles/floor_light.png', import.meta.url).href,
+  floor_dark: new URL('./public/assets-optimized/tiles/floor_dark.png', import.meta.url).href,
   rug_cottagecore: new URL('./public/assets-optimized/tiles/rug_cottagecore.png', import.meta.url).href,
-  cottage_bed: new URL('./public/assets-optimized/tiles/cottage_bed.png', import.meta.url).href,
+  cottage_bed: new URL('./public/assets-optimized/tiles/bed-cottage-square.png', import.meta.url).href,
   sofa_01: new URL('./public/assets-optimized/tiles/sofa_01.png', import.meta.url).href,
   sofa_02: new URL('./public/assets-optimized/tiles/sofa_02.png', import.meta.url).href,
 };

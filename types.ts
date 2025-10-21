@@ -8,6 +8,8 @@ export enum TileType {
   PATH,
   // Indoor tiles
   FLOOR,
+  FLOOR_LIGHT,
+  FLOOR_DARK,
   WALL,
   CARPET,
   RUG,

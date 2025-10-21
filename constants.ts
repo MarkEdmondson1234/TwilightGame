@@ -81,7 +81,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     ]
   }, // PATH = 3
 
-  // Indoor tiles (4-6)
+  // Indoor tiles (4-8)
   {
     name: 'Floor',
     color: 'bg-palette-tan',  // Base floor color
@@ -89,11 +89,23 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     image: [tileAssets.floor_1]
   }, // FLOOR = 4
   {
+    name: 'Floor Light',
+    color: 'bg-palette-tan',  // Base floor color
+    isSolid: false,
+    image: [tileAssets.floor_light]
+  }, // FLOOR_LIGHT = 5
+  {
+    name: 'Floor Dark',
+    color: 'bg-palette-tan',  // Base floor color
+    isSolid: false,
+    image: [tileAssets.floor_dark]
+  }, // FLOOR_DARK = 6
+  {
     name: 'Wall',
     color: 'bg-palette-brown',  // Base wall color
     isSolid: true,
     image: []
-  }, // WALL = 5
+  }, // WALL = 7
   {
     name: 'Carpet',
     color: 'bg-palette-burgundy',  // Base carpet color
@@ -381,17 +393,17 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.BED,
-    spriteWidth: 4,  // 4 tiles wide (wider bed)
-    spriteHeight: 4, // 4 tiles tall
-    offsetX: -0.5,   // Center horizontally (extend left)
-    offsetY: 0,      // Start at the anchor tile
+    spriteWidth: 3,  // 3 tiles wide (square bed)
+    spriteHeight: 3, // 3 tiles tall (square aspect ratio)
+    offsetX: -1,     // Center horizontally (extend 1 tile left)
+    offsetY: -1,     // Center vertically (extend 1 tile up)
     image: tileAssets.cottage_bed,
     isForeground: true,  // Render over player (it's furniture)
-    // Collision adjusted to match actual bed footprint (mattress only)
-    collisionWidth: 2.2,     // Wider collision for bigger bed
-    collisionHeight: 2.5,    // Just the mattress area (bottom 2 tiles)
-    collisionOffsetX: 0.5, // Center the collision horizontally
-    collisionOffsetY: 1.5, // Start collision at the mattress, not the headboard
+    // Collision: 2x2 centered on the mattress area
+    collisionWidth: 2,
+    collisionHeight: 2,
+    collisionOffsetX: 0,  // Centered
+    collisionOffsetY: 0,  // Centered
   },
   {
     tileType: TileType.BUSH,
@@ -466,18 +478,18 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   {
     tileType: TileType.SOFA,
     spriteWidth: 3,  // 3 tiles wide
-    spriteHeight: 2.25, // Natural aspect ratio of image (2732/2048 * 3/4.33 ≈ 2.25)
+    spriteHeight: 3, // 3 tiles tall (matching bed size)
     offsetX: 0,      // Start at anchor tile
-    offsetY: -1.25,  // Extends upward slightly
+    offsetY: -2,     // Extends 2 tiles upward
     image: [
       tileAssets.sofa_01,
       tileAssets.sofa_02,
     ],
     isForeground: false,  // Render UNDER player to avoid transforms
-    // Collision covers the sofa seating area
-    collisionWidth: 2.5,
-    collisionHeight: 0.5,
-    collisionOffsetX: 0.3,
+    // Collision covers the sofa seating area (front edge)
+    collisionWidth: 2.8,
+    collisionHeight: 1,
+    collisionOffsetX: 0.1,
     collisionOffsetY: 0,
   },
 ];

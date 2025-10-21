@@ -870,7 +870,10 @@ const App: React.FC = () => {
                                 tileData.type === TileType.WALL_BOUNDARY ||
                                 tileData.type === TileType.WALL ||
                                 tileData.type === TileType.DOOR ||
-                                tileData.type === TileType.SOIL_TILLED;
+                                tileData.type === TileType.SOIL_TILLED ||
+                                tileData.type === TileType.FLOOR ||
+                                tileData.type === TileType.FLOOR_LIGHT ||
+                                tileData.type === TileType.FLOOR_DARK;
 
                             // Determine which tiles should have NO variations at all
                             const shouldNotTransform =
@@ -887,7 +890,7 @@ const App: React.FC = () => {
                                 // No size variation for tilled soil, floor tiles, or farm plants
                                 const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
                                 const isTilledSoil = tileData.type === TileType.SOIL_TILLED;
-                                const isFloor = tileData.type === TileType.FLOOR;
+                                const isFloor = tileData.type === TileType.FLOOR || tileData.type === TileType.FLOOR_LIGHT || tileData.type === TileType.FLOOR_DARK;
                                 const isPath = tileData.type === TileType.PATH;
                                 const isFarmPlant = tileData.type === TileType.SOIL_PLANTED ||
                                                     tileData.type === TileType.SOIL_WATERED ||
@@ -902,14 +905,10 @@ const App: React.FC = () => {
                                     ? 0.95 + (sizeHash % 1) * 0.1  // Subtle variation for trees: 95% to 105%
                                     : 0.85 + (sizeHash % 1) * 0.3; // Normal variation for other tiles: 85% to 115%
 
-                                // Rotation variation only for decorative objects (not grass/ground)
+                                // Rotation variation only for decorative objects (not grass/ground/floors)
                                 let rotation = 0;
                                 if (!shouldNotRotate) {
-                                    if (tileData.type === TileType.FLOOR) {
-                                        // Floor tiles: 0, 90, 180, or 270 degrees (cardinal rotations for tiled pattern)
-                                        const rotationIndex = Math.floor((rotHash % 1) * 4);
-                                        rotation = rotationIndex * 90;
-                                    } else if (tileData.type === TileType.SOIL_FALLOW) {
+                                    if (tileData.type === TileType.SOIL_FALLOW) {
                                         // Fallow soil: Only 0 or 180 degrees (horizontal flip only, no vertical)
                                         rotation = (rotHash % 1) > 0.5 ? 180 : 0;
                                     } else if (tileData.type === TileType.PATH) {
@@ -962,47 +961,45 @@ const App: React.FC = () => {
                     })
                 )}
 
-                {/* Render background multi-tile sprites (like rugs) */}
-                {currentMap.grid.map((row, y) =>
-                    row.map((_, x) => {
-                        const tileData = getTileData(x, y);
-                        if (!tileData) return null;
+                {/* Render background multi-tile sprites (like rugs, sofas) in order from SPRITE_METADATA */}
+                {SPRITE_METADATA.filter(s => !s.isForeground).map((spriteMetadata) =>
+                    currentMap.grid.map((row, y) =>
+                        row.map((_, x) => {
+                            const tileData = getTileData(x, y);
+                            if (!tileData || tileData.type !== spriteMetadata.tileType) return null;
 
-                        // Find sprite metadata for this tile type
-                        const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
-                        if (!spriteMetadata || spriteMetadata.isForeground) return null;
+                            // Use smooth rendering for multi-tile sprites (they look better scaled up)
+                            const useSmoothRendering = spriteMetadata.spriteWidth >= 2 || spriteMetadata.spriteHeight >= 2;
 
-                        // Use smooth rendering for multi-tile sprites (they look better scaled up)
-                        const useSmoothRendering = spriteMetadata.spriteWidth >= 2 || spriteMetadata.spriteHeight >= 2;
+                            // Select sprite image (handle both string and array)
+                            let spriteImage: string;
+                            if (Array.isArray(spriteMetadata.image)) {
+                                // Select image using deterministic hash based on position
+                                const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+                                const index = Math.floor((imageHash % 1) * spriteMetadata.image.length);
+                                spriteImage = spriteMetadata.image[index];
+                            } else {
+                                spriteImage = spriteMetadata.image;
+                            }
 
-                        // Select sprite image (handle both string and array)
-                        let spriteImage: string;
-                        if (Array.isArray(spriteMetadata.image)) {
-                            // Select image using deterministic hash based on position
-                            const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-                            const index = Math.floor((imageHash % 1) * spriteMetadata.image.length);
-                            spriteImage = spriteMetadata.image[index];
-                        } else {
-                            spriteImage = spriteMetadata.image;
-                        }
-
-                        // Render the multi-tile sprite (no transformations for rugs)
-                        return (
-                            <img
-                                key={`bg-sprite-${x}-${y}`}
-                                src={spriteImage}
-                                alt={tileData.name}
-                                className="absolute pointer-events-none"
-                                style={{
-                                    left: (x + spriteMetadata.offsetX) * TILE_SIZE,
-                                    top: (y + spriteMetadata.offsetY) * TILE_SIZE,
-                                    width: spriteMetadata.spriteWidth * TILE_SIZE,
-                                    height: spriteMetadata.spriteHeight * TILE_SIZE,
-                                    imageRendering: useSmoothRendering ? 'auto' : 'pixelated',
-                                }}
-                            />
-                        );
-                    })
+                            // Render the multi-tile sprite (no transformations)
+                            return (
+                                <img
+                                    key={`bg-sprite-${spriteMetadata.tileType}-${x}-${y}`}
+                                    src={spriteImage}
+                                    alt={tileData.name}
+                                    className="absolute pointer-events-none"
+                                    style={{
+                                        left: (x + spriteMetadata.offsetX) * TILE_SIZE,
+                                        top: (y + spriteMetadata.offsetY) * TILE_SIZE,
+                                        width: spriteMetadata.spriteWidth * TILE_SIZE,
+                                        height: spriteMetadata.spriteHeight * TILE_SIZE,
+                                        imageRendering: useSmoothRendering ? 'auto' : 'pixelated',
+                                    }}
+                                />
+                            );
+                        })
+                    )
                 )}
 
                 {/* Render NPCs */}

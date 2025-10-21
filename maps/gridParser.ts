@@ -9,6 +9,8 @@ export const GRID_CODES: Record<string, TileType> = {
   'P': TileType.PATH,
   // Indoor
   'F': TileType.FLOOR,
+  'f': TileType.FLOOR_LIGHT,  // f = light floor (lowercase f)
+  'Q': TileType.FLOOR_DARK,   // Q = dark floor
   '#': TileType.WALL,
   'C': TileType.CARPET,
   'r': TileType.RUG,

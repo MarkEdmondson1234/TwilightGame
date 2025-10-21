@@ -3,10 +3,10 @@ import { parseGrid } from '../gridParser';
 
 const gridString = `
 #######
-#@FFFF#
-#FFFFF#
-#FFFFFD
-#FFFFF#
+#fffff#
+#f@fff#
+#fffffD
+#fffff#
 #######
 `;
 
