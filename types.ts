@@ -92,6 +92,15 @@ export interface SpriteMetadata {
   collisionHeight?: number; // Height in tiles for collision (defaults to spriteHeight)
   collisionOffsetX?: number; // X offset for collision box (defaults to offsetX)
   collisionOffsetY?: number; // Y offset for collision box (defaults to offsetY)
+  // Optional CSS transform controls (for foreground sprites only)
+  enableFlip?: boolean; // Enable horizontal flip variation (default: true for foreground)
+  enableRotation?: boolean; // Enable rotation variation (default: true for foreground)
+  enableScale?: boolean; // Enable size variation (default: true for foreground)
+  enableBrightness?: boolean; // Enable brightness variation (default: true for foreground)
+  // Fine-tune transform ranges (only used if corresponding enable* is true)
+  scaleRange?: { min: number; max: number }; // Size variation range (default: 0.85-1.15 or 0.98-1.02 for trees)
+  rotationRange?: { min: number; max: number }; // Rotation in degrees (default: -2 to 2)
+  brightnessRange?: { min: number; max: number }; // Brightness multiplier (default: 0.95-1.05)
 }
 
 // Color scheme for a map theme

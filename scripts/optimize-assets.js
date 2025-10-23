@@ -179,8 +179,8 @@ async function optimizeTiles() {
 
     const originalSize = fs.statSync(inputPath).size;
 
-    // Special handling for large furniture (beds, sofas, rugs, etc.) - keep higher resolution and quality
-    if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage')) {
+    // Special handling for large furniture (beds, sofas, rugs, tables, etc.) - keep higher resolution and quality
+    if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table')) {
       await sharp(inputPath)
         .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
           fit: 'contain',

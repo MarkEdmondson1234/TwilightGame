@@ -163,12 +163,33 @@ npx tsc --noEmit
 - Image property type mismatches (string vs string[])
 - Import errors from assets.ts
 
-### 8. Test in Game (Optional but Recommended)
+### 8. Restart Dev Server (IMPORTANT!)
 
-Start the dev server and verify the sprite renders correctly:
+**CRITICAL**: After adding new assets, you MUST restart the dev server for the new sprites to load properly:
 
 ```bash
+# Kill the dev server (Ctrl+C in terminal)
+# Then restart:
 npm run dev
+```
+
+**Why this is necessary:**
+- HMR (Hot Module Replacement) may not properly reload new asset files
+- Vite needs a full restart to recognize and bundle new assets added to `assets.ts`
+- Without restart, sprites may show as missing or display "Table"/"Chair" text labels instead of images
+
+**Symptoms of not restarting:**
+- Text labels ("Table", "Chair") appear instead of sprites
+- Sprites don't render at all
+- 404 errors in browser console for new assets
+
+### 9. Test in Game (Optional but Recommended)
+
+After restarting the dev server, refresh your browser and verify the sprite renders correctly:
+
+```bash
+# Server should be running at:
+http://localhost:4000/TwilightGame/
 ```
 
 Then check:
@@ -177,6 +198,7 @@ Then check:
 - Variations appear random but consistent per position
 - Collision boxes work correctly (for multi-tile sprites)
 - Image quality looks good (not overly compressed)
+- Player cannot walk through solid furniture (tables, chairs, beds)
 
 ## Asset Key Naming Convention
 

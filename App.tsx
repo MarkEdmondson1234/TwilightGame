@@ -1080,40 +1080,44 @@ const App: React.FC = () => {
                         const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                         if (!spriteMetadata || !spriteMetadata.isForeground) return null;
 
-                        // Determine if this is a building, rug, or bed (no transformations for these)
-                        const isBuilding = tileData.type === TileType.COTTAGE || tileData.type === TileType.RUG || tileData.type === TileType.BED;
+                        // Generate deterministic hashes for this position
+                        const hash1 = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
+                        const hash2 = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
+                        const hash3 = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
+                        const hash4 = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
 
-                        // Add variations using deterministic hash based on position (only for non-buildings)
+                        // Apply CSS transforms based on sprite metadata settings
                         let flipScale = 1;
                         let sizeVariation = 1;
                         let rotation = 0;
                         let brightness = 1;
 
-                        if (!isBuilding) {
-                            const hash1 = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
-                            const hash2 = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
-                            const hash3 = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
-                            const hash4 = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
-
-                            // Horizontal flip (50% chance)
+                        // Horizontal flip (defaults to enabled for foreground sprites)
+                        const enableFlip = spriteMetadata.enableFlip !== false; // default true
+                        if (enableFlip) {
                             const shouldFlip = (hash1 % 1) > 0.5;
                             flipScale = shouldFlip ? -1 : 1;
+                        }
 
-                            // Size variation - very subtle for trees, normal for others
-                            const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH || tileData.type === TileType.CHERRY_TREE;
-                            sizeVariation = isTree
-                                ? 0.98 + (hash2 % 1) * 0.04  // Very subtle: 98% to 102%
-                                : 0.85 + (hash2 % 1) * 0.3; // Normal: 85% to 115%
+                        // Size variation (defaults to enabled with range based on settings)
+                        const enableScale = spriteMetadata.enableScale !== false; // default true
+                        if (enableScale) {
+                            const scaleRange = spriteMetadata.scaleRange || { min: 0.85, max: 1.15 }; // default range
+                            sizeVariation = scaleRange.min + (hash2 % 1) * (scaleRange.max - scaleRange.min);
+                        }
 
-                            // Rotation variation - none for trees, subtle for others
-                            if (!isTree) {
-                                rotation = -8 + (hash3 % 1) * 16;
-                            }
+                        // Rotation variation (defaults to enabled)
+                        const enableRotation = spriteMetadata.enableRotation !== false; // default true
+                        if (enableRotation) {
+                            const rotationRange = spriteMetadata.rotationRange || { min: -8, max: 8 }; // default range
+                            rotation = rotationRange.min + (hash3 % 1) * (rotationRange.max - rotationRange.min);
+                        }
 
-                            // Brightness variation - none for trees, subtle for others
-                            if (!isTree) {
-                                brightness = 0.9 + (hash4 % 1) * 0.2;
-                            }
+                        // Brightness variation (defaults to enabled)
+                        const enableBrightness = spriteMetadata.enableBrightness !== false; // default true
+                        if (enableBrightness) {
+                            const brightnessRange = spriteMetadata.brightnessRange || { min: 0.9, max: 1.1 }; // default range
+                            brightness = brightnessRange.min + (hash4 % 1) * (brightnessRange.max - brightnessRange.min);
                         }
 
                         // Calculate dimensions with size variation

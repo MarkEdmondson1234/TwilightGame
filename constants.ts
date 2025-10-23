@@ -149,7 +149,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   {
     name: 'Table',
     color: 'bg-palette-khaki',  // Base furniture color
-    isSolid: false,  // Walkable - removed blocking
+    isSolid: true,  // Solid - can't walk through tables
     image: []
   }, // TABLE = 11
   {
@@ -399,10 +399,15 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: -1,     // Center vertically (extend 1 tile up)
     image: tileAssets.cottage_bed,
     isForeground: true,  // Render over player (it's furniture)
+    // Disable all CSS transforms for clean furniture rendering
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
     // Collision: 2x2 centered on the mattress area
-    collisionWidth: 2,
+    collisionWidth: 1.5,
     collisionHeight: 2,
-    collisionOffsetX: 0,  // Centered
+    collisionOffsetX: -0.2,  // Centered
     collisionOffsetY: 0,  // Centered
   },
   {
@@ -418,6 +423,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 1,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
+    // Transform controls: subtle scaling only, no rotation/brightness for bushes
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.98, max: 1.02 },
   },
   {
     tileType: TileType.TREE,
@@ -432,6 +443,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0.2,
     collisionOffsetX: 0.3,
     collisionOffsetY: 1,
+    // Transform controls: subtle scaling only, no rotation/brightness for trees
+    enableFlip: true,
+    enableRotation: false,  // No rotation for trees
+    enableScale: true,
+    enableBrightness: false,  // No brightness variation for trees
+    scaleRange: { min: 0.98, max: 1.02 },  // Very subtle: 98% to 102%
   },
   {
     tileType: TileType.TREE_BIG,
@@ -446,6 +463,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0.5,
     collisionOffsetX: 0.5,
     collisionOffsetY: 0,
+    // Transform controls: subtle scaling only, no rotation/brightness for trees
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.98, max: 1.02 },
   },
   {
     tileType: TileType.COTTAGE,
@@ -474,6 +497,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0.3,
     collisionOffsetX: 0.35,
     collisionOffsetY: 0.35,
+    // Transform controls: subtle scaling only, no rotation/brightness for trees
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.98, max: 1.02 },
   },
   {
     tileType: TileType.SOFA,
@@ -485,11 +514,30 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
       tileAssets.sofa_01,
       tileAssets.sofa_02,
     ],
-    isForeground: false,  // Render UNDER player to avoid transforms
+    isForeground: true,  // Render OVER player (allows walking behind)
+    // Disable all CSS transforms for clean furniture rendering
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
     // Collision covers the sofa seating area (front edge)
-    collisionWidth: 2.8,
+    collisionWidth: 2.6,
     collisionHeight: 1,
     collisionOffsetX: 0.1,
-    collisionOffsetY: 0,
+    collisionOffsetY: -0.8,
+  },
+  {
+    tileType: TileType.TABLE,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall (square coffee table)
+    offsetX: 0,      // Start at anchor tile
+    offsetY: -1,     // Extends 1 tile upward
+    image: tileAssets.sofa_table,
+    isForeground: false,  // Render UNDER player (floor furniture)
+    // Collision covers the table surface
+    collisionWidth: 1.5,
+    collisionHeight: 0.5,
+    collisionOffsetX: 0.3,
+    collisionOffsetY: -0.4,
   },
 ];

@@ -37,6 +37,7 @@ export const tileAssets = {
   cottage_bed: new URL('./public/assets-optimized/tiles/bed-cottage-square.png', import.meta.url).href,
   sofa_01: new URL('./public/assets-optimized/tiles/sofa_01.png', import.meta.url).href,
   sofa_02: new URL('./public/assets-optimized/tiles/sofa_02.png', import.meta.url).href,
+  sofa_table: new URL('./public/assets-optimized/tiles/sofa_table.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance

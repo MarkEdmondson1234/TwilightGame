@@ -24,7 +24,7 @@ const gridString = `
 #FFFFFFFFAF#
 #F@FFFFFFFF#
 #FFrFFFFFFF#
-#FFFFFFFFFF#
+#FFTFFFFFFF#
 #FFFFFFFFFF#
 #FFFFFFFFFF###
 ######E#####
