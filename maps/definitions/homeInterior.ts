@@ -8,23 +8,28 @@ import { parseGrid } from '../gridParser';
  * - Stairs up at bottom (D)
  * - Exit door to village at top-right (E)
  * - Sofa and rug
+ * - Chimney on right wall
+ * - Stove in kitchen area
  *
  * Grid Legend:
  * # = Wall
  * F = Floor
+ * f = Floor Light
  * C = Carpet
  * r = Rug (cottagecore decorative rug)
  * D = Door (stairs up)
  * E = Exit Door (to village)
  * @ = Sofa (3 tiles wide, 1 tile tall)
+ * & = Chimney (2x2)
+ * $ = Stove (2 tiles wide, 3 tiles tall)
  */
 
 const gridString = `
 #######E##
 #ffffffff#
-#ff@fffff##
-#ffffffff##
-#frffffff#
+#$fffffff##
+#fffff@ff&#
+#fffrffff#
 #ffffffff#
 #ffffffff#
 ###D######
@@ -41,7 +46,7 @@ export const homeInterior: MapDefinition = {
   spawnPoint: { x: 5, y: 6 }, // Start near the bottom door
   transitions: [
     {
-      fromPosition: { x: 6, y: 1 }, // Exit door at top-right
+      fromPosition: { x: 7, y: 0 }, // Exit door at top-right
       tileType: TileType.EXIT_DOOR,
       toMapId: 'village',
       toPosition: { x: 9, y: 28 }, // Spawn below the home building in village

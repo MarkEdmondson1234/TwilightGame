@@ -46,6 +46,8 @@ export enum TileType {
   // Indoor furniture (multi-tile)
   BED,
   SOFA,
+  CHIMNEY,
+  STOVE,
 }
 
 export interface Position {

@@ -6,17 +6,20 @@ import { parseGrid } from '../gridParser';
  *
  * Grid Legend:
  * F = Floor
+ * Q = Floor Dark
  * # = Wall
  * C = Carpet
  * r = Rug (cottagecore decorative rug)
  * D = Door (exit)
  * @ = Sofa (3 tiles wide, 1 tile tall)
+ * & = Chimney (2x2)
+ * $ = Stove (2 tiles wide, 3 tiles tall)
  */
 
 const gridString = `
 #######
-#QQQQQ#
-#Q@rQQ#
+#$QQQQ#
+#Qr@Q&#
 #QQQQQD
 #QQQQQ#
 #######

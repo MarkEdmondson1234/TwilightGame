@@ -320,6 +320,18 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   }, // SOFA = 34
+  {
+    name: 'Chimney',
+    color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
+    isSolid: true,
+    image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+  }, // CHIMNEY = 35
+  {
+    name: 'Stove',
+    color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
+    isSolid: true,  // Players cannot walk through stoves
+    image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+  }, // STOVE = 36
 ];
 
 // --- Procedural Map Generation ---
@@ -478,8 +490,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: -4,     // Extends upward from K tile
     image: tileAssets.cottage_wooden,
     isForeground: true,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
     // Collision at the front wall (full width, but only bottom 2 rows)
-    collisionWidth: 3.2,
+    collisionWidth: 3.0,
     collisionHeight: 1.5,
     collisionOffsetX: -1.7,
     collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
@@ -508,8 +524,8 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     tileType: TileType.SOFA,
     spriteWidth: 3,  // 3 tiles wide
     spriteHeight: 3, // 3 tiles tall (matching bed size)
-    offsetX: 0,      // Start at anchor tile
-    offsetY: -2,     // Extends 2 tiles upward
+    offsetX: -0.4,      // Start at anchor tile
+    offsetY: -1,     // Extends 2 tiles upward
     image: [
       tileAssets.sofa_01,
       tileAssets.sofa_02,
@@ -521,10 +537,10 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision covers the sofa seating area (front edge)
-    collisionWidth: 2.6,
-    collisionHeight: 1,
-    collisionOffsetX: 0.1,
-    collisionOffsetY: -0.8,
+    collisionWidth: 2.4,
+    collisionHeight: 1.1,
+    collisionOffsetX: -0.1,
+    collisionOffsetY: 0.4,
   },
   {
     tileType: TileType.TABLE,
@@ -539,5 +555,43 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0.5,
     collisionOffsetX: 0.3,
     collisionOffsetY: -0.4,
+  },
+  {
+    tileType: TileType.CHIMNEY,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: -1,      // Start at anchor tile
+    offsetY: -1,     // Extends 1 tile upward
+    image: tileAssets.chimney,
+    isForeground: false,  // Render UNDER player (background wall decoration)
+    // Disable all CSS transforms for clean furniture rendering
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision - chimney blocks movement
+    collisionWidth: 2,
+    collisionHeight: 2,
+    collisionOffsetX: 0,
+    collisionOffsetY: -1,
+  },
+  {
+    tileType: TileType.STOVE,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 3, // 3 tiles tall (includes chimney pipe on top)
+    offsetX: -0.5,      // Start at anchor tile
+    offsetY: -2,     // Extends 2 tiles upward
+    image: tileAssets.stove,
+    isForeground: false,  // Render UNDER player (floor furniture)
+    // Disable all CSS transforms for clean furniture rendering
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision - stove blocks movement (full footprint)
+    collisionWidth: 1,
+    collisionHeight: 3,  // Only block the base, allow walking behind
+    collisionOffsetX: 0,
+    collisionOffsetY: -2,
   },
 ];

@@ -21,6 +21,23 @@ Use this skill when you need to:
 
 ## Workflow
 
+### Quick Reference: Files to Update
+
+When adding a **new tile type** (not just a variation), you'll need to update these files:
+
+1. **types.ts** - Add new `TileType` enum entry
+2. **assets.ts** - Register the asset file path
+3. **constants.ts** - Add to `TILE_LEGEND` array
+4. **constants.ts** - Add to `SPRITE_METADATA` array (for multi-tile sprites)
+5. **maps/gridParser.ts** - Add character code mapping
+6. **map definition files** - Use the new tile in maps
+
+For **variations of existing tiles**, you only need:
+1. **assets.ts** - Register the variation asset
+2. **constants.ts** - Update existing `TILE_LEGEND` or `SPRITE_METADATA` entry to use array of images
+
+---
+
 ### 1. Verify Asset Files Exist
 
 First, check that the asset files exist at the expected location:
@@ -317,6 +334,173 @@ Adding sofa variations (`sofa_01.png`, `sofa_02.png`):
    npm run dev
    ```
 
+### Example 3: Adding a Completely New Multi-Tile Sprite (Full Workflow)
+
+Adding a chimney sprite (`chimney.png`) as a new 2x2 tile type:
+
+**Step 1: Verify the asset file**
+```bash
+ls -lh /Users/mark/dev/TwilightGame/public/assets/tiles/chimney.png
+# Output: -rw-r--r--  1.7M chimney.png
+```
+
+**Step 2: Add TileType enum to types.ts**
+```typescript
+// In types.ts, add to the TileType enum
+export enum TileType {
+  // ... existing types
+  BED,
+  SOFA,
+  CHIMNEY,  // Add new type here
+}
+```
+
+**Step 3: Register asset in assets.ts**
+```typescript
+// In assets.ts
+export const tileAssets = {
+  // ... existing assets
+  chimney: new URL('./public/assets-optimized/tiles/chimney.png', import.meta.url).href,
+};
+```
+
+**Step 4: Add to TILE_LEGEND in constants.ts**
+```typescript
+// In constants.ts, add after SOFA entry
+{
+  name: 'Chimney',
+  color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
+  isSolid: true,  // Players cannot walk through chimneys
+  image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+}, // CHIMNEY = 35
+```
+
+**Step 5: Add to SPRITE_METADATA in constants.ts**
+```typescript
+// In constants.ts SPRITE_METADATA array, add chimney configuration
+{
+  tileType: TileType.CHIMNEY,
+  spriteWidth: 2,  // 2 tiles wide
+  spriteHeight: 2, // 2 tiles tall
+  offsetX: 0,      // Start at anchor tile
+  offsetY: -1,     // Extends 1 tile upward
+  image: tileAssets.chimney,
+  isForeground: false,  // Render UNDER player (background wall decoration)
+  // Disable all CSS transforms for clean rendering
+  enableFlip: false,
+  enableRotation: false,
+  enableScale: false,
+  enableBrightness: false,
+  // Collision - chimney blocks movement
+  collisionWidth: 2,
+  collisionHeight: 2,
+  collisionOffsetX: 0,
+  collisionOffsetY: -1,
+},
+```
+
+**Step 6: Add character code to gridParser.ts**
+```typescript
+// In maps/gridParser.ts, add to GRID_CODES
+export const GRID_CODES: Record<string, TileType> = {
+  // ... existing codes
+  '@': TileType.SOFA,
+  '&': TileType.CHIMNEY,  // & = chimney (brick structure)
+  'U': TileType.BUSH,
+  // ...
+};
+```
+
+**Step 7: Run asset optimization**
+```bash
+npm run optimize-assets
+# Output: ✅ chimney.png: 1744.1KB → 4.2KB (saved 99.8%)
+```
+
+**Step 8: Verify optimized file**
+```bash
+ls -lh /Users/mark/dev/TwilightGame/public/assets-optimized/tiles/chimney.png
+# Output: -rw-r--r--  4.2K chimney.png
+```
+
+**Step 9: Add to map definitions**
+```typescript
+// In maps/definitions/homeInterior.ts
+const gridString = `
+#######E##
+#ffffffff#
+#ff@fffff##
+#ffffffff&#  // Chimney on right wall
+#frffffff#
+#ffffffff#
+#ffffffff#
+###D######
+`;
+```
+
+**Step 10: Run TypeScript validation**
+```bash
+npx tsc --noEmit
+# Should complete with no errors
+```
+
+**Step 11: Test in game**
+```bash
+npm run dev
+# Navigate to the house interiors and verify chimney appears on right wall
+```
+
+**Key Takeaways from Chimney Implementation:**
+- New tile types require updates to 5 files: `types.ts`, `assets.ts`, `constants.ts` (TILE_LEGEND + SPRITE_METADATA), `gridParser.ts`, and map files
+- Grid character codes should be intuitive: `&` for chimney (looks like bricks)
+- Multi-tile sprites need `offsetY` to position correctly (negative values extend upward)
+- Always use `isForeground: false` for wall decorations (renders under player)
+- Collision dimensions can differ from visual dimensions
+- Optimization is extremely effective (99.8% reduction in this case!)
+
+## Common Pitfalls and Solutions
+
+### 1. TypeScript Errors After Adding Tile
+**Problem:** TypeScript compilation fails with enum errors
+**Solution:** Make sure you added the tile type to the `TileType` enum in `types.ts` BEFORE adding it to `constants.ts`
+
+### 2. Sprite Doesn't Appear in Game
+**Problem:** Tile shows as blank or text label appears
+**Solution:**
+- Check that asset optimization ran successfully
+- Verify optimized file exists in `assets-optimized/tiles/`
+- **Restart the dev server** (critical for new assets!)
+
+### 3. Sprite Appears Distorted
+**Problem:** Multi-tile sprite looks stretched or squashed
+**Solution:**
+- Match `spriteWidth` and `spriteHeight` to image's natural aspect ratio
+- Don't force square dimensions on rectangular images
+- Consider using original high-res if optimization caused issues
+
+### 4. Player Walks Through Solid Objects
+**Problem:** Collision detection doesn't work for furniture
+**Solution:**
+- Set `isSolid: true` in TILE_LEGEND
+- Configure collision box in SPRITE_METADATA
+- Ensure `collisionWidth` and `collisionHeight` are set correctly
+- Check that `collisionOffsetX/Y` align with visual footprint
+
+### 5. Duplicate Sprites Rendering
+**Problem:** Multiple sprites appear overlapping (e.g., sofa appears 3 times wide)
+**Solution:** Use only ONE anchor character in map grid (e.g., `@` not `@@@`)
+
+### 6. Chimney/Wall Decoration Renders Wrong Layer
+**Problem:** Wall decoration appears over player instead of behind
+**Solution:** Set `isForeground: false` in SPRITE_METADATA for wall decorations
+
+### 7. Grid Character Not Recognized
+**Problem:** Map shows grass/default tiles instead of new sprite
+**Solution:**
+- Add character mapping in `maps/gridParser.ts` GRID_CODES
+- Choose an intuitive, unused character (e.g., `&` for chimney)
+- Update map legend comments to document the character
+
 ## Important Notes
 
 - **ALWAYS use `assets-optimized/` path** in assets.ts for all tile sprites
@@ -330,6 +514,7 @@ Adding sofa variations (`sofa_01.png`, `sofa_02.png`):
 - All sprites use `imageRendering: 'pixelated'` for pixel art (except large multi-tile sprites use 'auto')
 - Background colors from color schemes show through transparent PNGs
 - **Variations are selected deterministically** based on tile position (same position = same variation every time)
+- **CRITICAL:** Always restart dev server after adding new assets for proper loading
 
 ## Multi-Tile Sprites (Furniture, Large Objects)
 

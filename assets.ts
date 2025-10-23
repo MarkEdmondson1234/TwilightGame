@@ -38,6 +38,8 @@ export const tileAssets = {
   sofa_01: new URL('./public/assets-optimized/tiles/sofa_01.png', import.meta.url).href,
   sofa_02: new URL('./public/assets-optimized/tiles/sofa_02.png', import.meta.url).href,
   sofa_table: new URL('./public/assets-optimized/tiles/sofa_table.png', import.meta.url).href,
+  chimney: new URL('./public/assets-optimized/tiles/chimney.png', import.meta.url).href,
+  stove: new URL('./public/assets-optimized/tiles/stove.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance
