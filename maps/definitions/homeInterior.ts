@@ -27,8 +27,8 @@ import { parseGrid } from '../gridParser';
 const gridString = `
 #######E##
 #ffffffff#
-#$fffffff##
-#fffff@ff&#
+#$ff@ffff##
+#ffffffff&#
 #fffrffff#
 #ffffffff#
 #ffffffff#
