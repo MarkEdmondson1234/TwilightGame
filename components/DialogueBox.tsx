@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NPC, DialogueNode } from '../types';
+import { getDialogue } from '../services/dialogueService';
 
 interface DialogueBoxProps {
   npc: NPC;
@@ -15,9 +16,16 @@ interface DialogueBoxProps {
  */
 const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, onNodeChange }) => {
   const [currentNodeId, setCurrentNodeId] = useState<string>('greeting');
+  const [currentDialogue, setCurrentDialogue] = useState<DialogueNode | null>(null);
 
-  // Find current dialogue node
-  const currentDialogue = npc.dialogue.find(node => node.id === currentNodeId) || npc.dialogue[0];
+  // Load dialogue node with seasonal/time-of-day context
+  useEffect(() => {
+    const loadDialogue = async () => {
+      const dialogue = await getDialogue(npc, currentNodeId);
+      setCurrentDialogue(dialogue);
+    };
+    loadDialogue();
+  }, [npc, currentNodeId]);
 
   const handleResponse = (nextId?: string) => {
     if (nextId) {
@@ -31,6 +39,11 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
       onClose();
     }
   };
+
+  // Don't render until dialogue is loaded
+  if (!currentDialogue) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-end sm:items-center justify-center z-50 p-2 sm:p-4">

@@ -160,7 +160,17 @@ export enum NPCBehavior {
 
 export interface DialogueNode {
   id: string;
-  text: string;
+  text: string; // Default text (used when no seasonal variant matches)
+  seasonalText?: { // Optional seasonal variations of the text
+    spring?: string;
+    summer?: string;
+    autumn?: string;
+    winter?: string;
+  };
+  timeOfDayText?: { // Optional time-of-day variations
+    day?: string;
+    night?: string;
+  };
   responses?: { text: string; nextId?: string }[]; // For branching dialogue (no nextId = close dialogue)
 }
 
@@ -175,6 +185,7 @@ export interface NPC {
   dialogue: DialogueNode[]; // Conversation tree
   interactionRadius?: number; // How close player must be (default 1.5 tiles)
   animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations
+  scale?: number; // Optional: sprite scale multiplier (default 4.0)
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)

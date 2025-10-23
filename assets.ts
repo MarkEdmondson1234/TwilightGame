@@ -49,14 +49,18 @@ export const farmingAssets = {
   plant_pea_adult: new URL('./public/assets-optimized/farming/plant_pea_adult.png', import.meta.url).href,
 };
 
-// NPC assets - Use optimized versions for better performance
+// NPC assets - Use optimized versions for in-game sprites, originals for portraits
 export const npcAssets = {
   little_girl: new URL('./public/assets-optimized/npcs/little_girl.png', import.meta.url).href,
+  little_girl_portrait: new URL('./public/assets/npcs/little_girl.png', import.meta.url).href,
   cat_sleeping_01: new URL('./public/assets/npcs/cat/cat_sleeping_01.png', import.meta.url).href,
   cat_sleeping_02: new URL('./public/assets/npcs/cat/cat_sleeping_02.png', import.meta.url).href,
   cat_sleeping_angry: new URL('./public/assets/npcs/cat/cat_sleeping_angry.png', import.meta.url).href,
   cat_stand_01: new URL('./public/assets/npcs/cat/cat_stand_01.png', import.meta.url).href,
   cat_stand_02: new URL('./public/assets/npcs/cat/cat_stand_02.png', import.meta.url).href,
+  elderly_01: new URL('./public/assets-optimized/npcs/elderly_01.png', import.meta.url).href,
+  elderly_02: new URL('./public/assets-optimized/npcs/elderly_02.png', import.meta.url).href,
+  elderly_portrait: new URL('./public/assets/npcs/elderly_01.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

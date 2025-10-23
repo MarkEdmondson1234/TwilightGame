@@ -9,6 +9,7 @@
  */
 
 import { DialogueNode, NPC } from '../types';
+import { TimeManager, Season, TimeOfDay } from '../utils/TimeManager';
 
 /**
  * NPC Persona - Defines personality, speaking style, and knowledge
@@ -167,11 +168,45 @@ Include 2-4 response options for the player.`;
 }
 
 /**
+ * Get the appropriate text for a dialogue node based on current season and time
+ */
+function getContextualText(node: DialogueNode): string {
+  const gameTime = TimeManager.getCurrentTime();
+
+  // Check for seasonal text first
+  if (node.seasonalText) {
+    const seasonKey = gameTime.season.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+    if (node.seasonalText[seasonKey]) {
+      return node.seasonalText[seasonKey]!;
+    }
+  }
+
+  // Check for time-of-day text
+  if (node.timeOfDayText) {
+    const timeKey = gameTime.timeOfDay.toLowerCase() as 'day' | 'night';
+    if (node.timeOfDayText[timeKey]) {
+      return node.timeOfDayText[timeKey]!;
+    }
+  }
+
+  // Default to base text
+  return node.text;
+}
+
+/**
  * Get static fallback dialogue
  * Uses the pre-written dialogue trees from NPC definition
  */
 function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null {
-  return npc.dialogue.find(node => node.id === currentNodeId) || npc.dialogue[0] || null;
+  const node = npc.dialogue.find(n => n.id === currentNodeId) || npc.dialogue[0] || null;
+
+  if (!node) return null;
+
+  // Return a new node with the contextual text
+  return {
+    ...node,
+    text: getContextualText(node),
+  };
 }
 
 /**

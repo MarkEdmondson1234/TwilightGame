@@ -325,15 +325,17 @@ const App: React.FC = () => {
             if (nearbyNPC) {
                 console.log(`[Action Key] Interacting with NPC: ${nearbyNPC.name}`);
 
-                // Trigger NPC event if it has animated states (e.g., cat)
+                // Trigger NPC event if it has animated states
                 if (nearbyNPC.animatedStates) {
                     npcManager.triggerNPCEvent(nearbyNPC.id, 'interact');
-                    return; // Don't open dialogue for animated NPCs
                 }
 
-                // Open dialogue for regular NPCs
-                setActiveNPC(nearbyNPC.id);
-                return; // Don't check for transitions if talking to NPC
+                // Open dialogue if the NPC has dialogue (even if it also has animated states)
+                if (nearbyNPC.dialogue && nearbyNPC.dialogue.length > 0) {
+                    setActiveNPC(nearbyNPC.id);
+                }
+
+                return; // Don't check for transitions if interacting with NPC
             }
 
             const transitionData = mapManager.getTransitionAt(playerPosRef.current);
@@ -1010,8 +1012,8 @@ const App: React.FC = () => {
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     const inRange = distance <= (npc.interactionRadius || 1.5);
 
-                    // NPCs use 4.0x scale for better visibility (larger than player)
-                    const npcScale = 4.0;
+                    // NPCs use 4.0x scale by default, but can be customized per NPC
+                    const npcScale = npc.scale || 4.0;
 
                     return (
                         <React.Fragment key={npc.id}>
