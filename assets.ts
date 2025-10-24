@@ -7,6 +7,7 @@ export const tileAssets = {
   grass_2: new URL('./public/assets-optimized/tiles/grass_2.png', import.meta.url).href,
   rock_1: new URL('./public/assets-optimized/tiles/rock_1.png', import.meta.url).href,
   rock_2: new URL('./public/assets-optimized/tiles/rock_2.png', import.meta.url).href,
+  door_1: new URL('./public/assets-optimized/tiles/door_1.png', import.meta.url).href,
   mushrooms: new URL('./public/assets-optimized/tiles/mushrooms.png', import.meta.url).href,
   bush_1: new URL('./public/assets-optimized/tiles/bush_1.png', import.meta.url).href,
   tree_1: new URL('./public/assets-optimized/tiles/tree_1.png', import.meta.url).href,

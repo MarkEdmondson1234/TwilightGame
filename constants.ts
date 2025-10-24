@@ -118,31 +118,36 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   }, // RUG = 7
-
+  {
+    name: 'Door',
+    color: 'bg-palette-brown',
+    isSolid: false,
+    image: [tileAssets.door_1]
+  },
   // Transition tiles (8-11)
   {
     name: 'Door',
     color: 'bg-palette-chocolate',  // Base door color
     isSolid: false,
-    image: []
+    image: [tileAssets.door_1]
   }, // DOOR = 7
   {
     name: 'Exit Door',
     color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
-    image: []
+    image: [tileAssets.door_1]
   }, // EXIT_DOOR = 8
   {
     name: 'Shop Door',
     color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
-    image: []
+    image: [tileAssets.door_1]
   }, // SHOP_DOOR = 9
   {
     name: 'Mine Entrance',
     color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
-    image: []
+    image: [tileAssets.door_1]
   }, // MINE_ENTRANCE = 10
 
   // Furniture/objects (11-12)
@@ -230,13 +235,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     name: 'Wall Boundary',
     color: 'bg-stone-700',
     isSolid: true,
-    image: [tileAssets.bricks_1]
+    image: []
   }, // WALL_BOUNDARY = 18
   {
     name: 'Building Wall',
     color: 'bg-stone-600',
     isSolid: true,
-    image: []
+    image: [tileAssets.bricks_1]
   }, // BUILDING_WALL = 19
   {
     name: 'Building Roof',

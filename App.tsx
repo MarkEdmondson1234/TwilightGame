@@ -880,6 +880,9 @@ const App: React.FC = () => {
                             // Determine which tiles should have NO variations at all
                             const shouldNotTransform =
                                 tileData.type === TileType.WALL_BOUNDARY ||
+                                tileData.type === TileType.BUILDING_WALL ||
+                                tileData.type === TileType.BUILDING_ROOF ||
+                                tileData.type === TileType.BUILDING_DOOR ||
                                 tileData.type === TileType.WALL ||
                                 tileData.type === TileType.DOOR;
 
