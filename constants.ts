@@ -207,13 +207,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
         tileAssets.tree_cherry_spring,
         tileAssets.tree_cherry_spring,
         tileAssets.tree_cherry_spring,  // Cherry blossoms appear 75% in spring
-        tileAssets.tree_1,
+        tileAssets.tree_2,
       ],
       summer: [
         tileAssets.tree_cherry_summer_fruit,
         tileAssets.tree_cherry_summer_fruit,  // Cherry trees with fruit 50% in summer
         tileAssets.tree_cherry_summer_no_fruit,  // Cherry trees without fruit 25%
-        tileAssets.tree_1,  // Regular trees 25%
+        tileAssets.tree_2,  // Regular trees 25%
       ],
       autumn: [
         tileAssets.tree_cherry_autumn,
@@ -225,7 +225,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
         tileAssets.tree_cherry_winter,
         tileAssets.tree_cherry_winter,
         tileAssets.tree_cherry_winter,  // Cherry trees with snow 75% in winter
-        tileAssets.tree_1,  // Regular trees 25%
+        tileAssets.tree_2,  // Regular trees 25%
       ],
       default: [tileAssets.tree_1, tileAssets.tree_2],  // Fallback
     }
