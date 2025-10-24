@@ -582,9 +582,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.STOVE,
-    spriteWidth: 2,  // 2 tiles wide
+    spriteWidth: 3,  // 2 tiles wide
     spriteHeight: 3, // 3 tiles tall (includes chimney pipe on top)
-    offsetX: -0.5,      // Start at anchor tile
+    offsetX: -0.8,      // Start at anchor tile
     offsetY: -2,     // Extends 2 tiles upward
     image: tileAssets.stove,
     isForeground: false,  // Render UNDER player (floor furniture)
@@ -594,7 +594,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision - stove blocks movement (full footprint)
-    collisionWidth: 1,
+    collisionWidth: 1.6,
     collisionHeight: 3,  // Only block the base, allow walking behind
     collisionOffsetX: 0,
     collisionOffsetY: -2,
