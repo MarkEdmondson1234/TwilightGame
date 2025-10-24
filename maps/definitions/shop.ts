@@ -46,7 +46,7 @@ export const shop: MapDefinition = {
       fromPosition: { x: 6, y: 10 }, // Shop door at bottom
       tileType: TileType.SHOP_DOOR,
       toMapId: 'village',
-      toPosition: { x: 10, y: 13 },
+      toPosition: { x: 10, y: 14 },
       label: 'Exit Shop',
     },
   ],

@@ -39,31 +39,31 @@ import { npcAssets } from '../../assets';
 const gridString = `
 ZLULYZLLULYLLULUUULLUYLLYULJL
 LZGGGGGZGGGPGGZGGGGGGGZGGWWWL
-YGGGGGGGGGGPGGGGGkGGXXXGGWWWJ
+YGGGGGGGGGGPGGGGkGGGXXXGGWWWJ
 LGGGGGGGGGGPGGGGGGGGXXXGGWWWL
 YGZGGGGKGGGPGGGGsGGGGGGGGWWWL
-YYGGGGGPPPPPPPPGGGGGGGGGGWWUL
+YYGGGGGPPPPPPPPPPPPGGGGGGWWUL
 YGGGGGGPGGGGGGGPGGGGGGGGGGGGZ
 LGGGGGGPGGGGGGGPGGGGGGGGUGGL
-YGGGGGGPOOOOOUGPGGGGGGGGRGRL
-LGGGGGGPOBVBOGPGGGOOGGGGGGGGL
-JGGGGGGPOBVBOGPGGOOOGRGRGGRGJ
-LZGGGGGPOBNBOGPGGOMOGRXXXGGGL
+YGGGGGGPGGGGGGGPGGGGGGGGRGRL
+LGGGGGGPGGGGGGPGGGOOGGGGGGGGL
+JGGGGGGPGGGGGGPGGOOOGRGRGGRGJ
+LZGGGGGPGzGGGGPGGOMOGRXXXGGGL
 YGGGGGGPGGGGGGPGGGGGGGGGGGGP
 LGGGGGGPPPPPPPPPGGGGGGGGGGGPZ
 LGGGGGGGGGGPGGGGGGGGGGGUUGGPU
 LPPPPPPPPPPPPPPPPPPPPPPPPPPPL
 ZGGGGGGGGGGPGGGGGGGGGGGGGGGGY
-UZOOOGGGUGPPGGGGGGGGGGGGGGGGL
-LGOBVBXGGGPGGGGGGGGGGGGGGGGL
-ZGOBVBXGGGPGGGGGGGGGGGGGGGGZ
-LGOBNBXGGGPGGGGGGGGGGGGGGGGL
+UZGGGGGGUGPPGGGGGGGGGGGGGGGGL
+LGGGGGXGGGPGGGGGGGGGGGGGGGGL
+ZGzGGGXGGGPGGGGGGGGGGGGGGGGZ
+LGGGGGXGGGPGGGGGGGGGGGGGGGGL
 LGGGGGGGGGGPGGGGGJGGGGGGGGGGZ
 ZGGGGGGGGGGPGGGGGGGGGGGGGGGGU
-UGGGGGGOOOOPGGGGGGGGKGGGGGGUL
-YGGGGGGOBVBPGGGGGGGGGGGGGGGUJ
-LGGGGGGOBVBPGGGGGGGGGGGGGGGGL
-JGGGGGGOBNBPGGGGGGGGGGGGGGGGL
+UGGGGGGGGGGPGGGGGGGGKGGGGGGUL
+YGGGGGGkGGGPGGGGGGGGGGGGGGGUJ
+LGGGGGGGGGGPGGGGGGGGGGGGGGGGL
+JGGGGGGGGGGPGGGGGGGGGGGGGGGGL
 LGGGGGGGGGGPGGGGGGGXXXXXGGGGU
 ZGYGGGGGGGGPPPPPPPPPPPPPPPPPP
 YLYLJLZLYLUULULJLYLULULUYLLUUU
@@ -80,44 +80,37 @@ export const village: MapDefinition = {
   spawnPoint: { x: 15, y: 27 }, // On the path below the home building
   transitions: [
     {
-      fromPosition: { x: 9, y: 26 }, // Home building door (N tile)
+      fromPosition: { x: 8.2, y: 26 }, // Home building door (N tile)
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'home_interior',
       toPosition: { x: 5, y: 6 },
       label: 'To Home',
     },
     {
-      fromPosition: { x: 7, y: 4 }, // North-west house
+      fromPosition: { x: 6.5, y: 4.2 }, // North-west house
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house1',
       toPosition: { x: 3, y: 4 },
       label: 'To House',
     },
     {
-      fromPosition: { x: 18, y: 4 }, // North-east house
+      fromPosition: { x: 17.2, y: 4 }, // North-east house
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house2',
       toPosition: { x: 3, y: 4 },
       label: 'To House',
     },
     {
-      fromPosition: { x: 10, y: 11 }, // Shop building (middle-left)
+      fromPosition: { x: 10.3, y: 12.7 }, // Shop building (middle-left)
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'shop',
       toPosition: { x: 7, y: 8 },
       label: 'To Shop',
     },
     {
-      fromPosition: { x: 4, y: 20 }, // South-west house
+      fromPosition: { x: 3.3, y: 20 }, // South-west house
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house3',
-      toPosition: { x: 3, y: 4 },
-      label: 'To House',
-    },
-    {
-      fromPosition: { x: 9, y: 26 }, // South-center house door (N tile)
-      tileType: TileType.BUILDING_DOOR,
-      toMapId: 'house4',
       toPosition: { x: 3, y: 4 },
       label: 'To House',
     },

@@ -35,7 +35,7 @@ export const PLAYER_SPRITES: Record<Direction, string[]> = {
 };
 
 // Tile images with placeholders - colors will be overridden by map's color scheme
-// this match match the order of enum TileTypes in types.ts
+// this MUST match the order of enum TileTypes in types.ts
 export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Outdoor tiles (0-3)
   {
@@ -266,13 +266,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     name: 'Cottage Stone',
     color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
-    image: [tileAssets.cottage_stone]
+    image: []
   }, // COTTAGE = 24
   {
     name: 'Cottage Flowers',
     color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
-    image: [tileAssets.cottage_w_flowers]
+    image: []
   }, // COTTAGE = 25
   // Farmland tiles (26-30)
   {
@@ -611,9 +611,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   {
     tileType: TileType.COTTAGE_STONE,
     spriteWidth: 6,  // 6 tiles wide (actual cottage width)
-    spriteHeight: 5, // 5 tiles tall (actual cottage height)
-    offsetX: 0,     // Offset to center cottage
-    offsetY: 0,     // Extends upward from K tile
+    spriteHeight: 6, // 5 tiles tall (actual cottage height)
+    offsetX: -1.2,     // Offset to center cottage
+    offsetY: -3,     // Extends upward from K tile
     image: tileAssets.cottage_stone,
     isForeground: true,
     enableFlip: false,
@@ -621,17 +621,17 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision at the front wall (full width, but only bottom 2 rows)
-    collisionWidth: 3.0,
-    collisionHeight: 1.5,
-    collisionOffsetX: -1.7,
-    collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
+    collisionWidth: 3.2,
+    collisionHeight: 3,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
   {
     tileType: TileType.COTTAGE_FLOWERS,
     spriteWidth: 6,  // 6 tiles wide (actual cottage width)
-    spriteHeight: 5, // 5 tiles tall (actual cottage height)
-    offsetX: 0,     // Offset to center cottage
-    offsetY: 0,     // Extends upward from K tile
+    spriteHeight: 6, // 5 tiles tall (actual cottage height)
+    offsetX: -1,     // Offset to center cottage
+    offsetY: -4,     // Extends upward from K tile
     image: tileAssets.cottage_w_flowers,
     isForeground: true,
     enableFlip: false,
@@ -639,9 +639,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision at the front wall (full width, but only bottom 2 rows)
-    collisionWidth: 3.0,
-    collisionHeight: 1.5,
-    collisionOffsetX: -1.7,
-    collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
+    collisionWidth: 3.6,
+    collisionHeight: 3.4,
+    collisionOffsetX: 0,
+    collisionOffsetY: -1.4,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
 ];
