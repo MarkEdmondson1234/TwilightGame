@@ -35,6 +35,8 @@ export enum TileType {
   BUILDING_DOOR,
   BUILDING_WINDOW,
   COTTAGE,
+  COTTAGE_STONE,
+  COTTAGE_FLOWERS,
   // Farmland tiles
   SOIL_FALLOW,
   SOIL_TILLED,
@@ -47,7 +49,7 @@ export enum TileType {
   BED,
   SOFA,
   CHIMNEY,
-  STOVE,
+  STOVE
 }
 
 export interface Position {

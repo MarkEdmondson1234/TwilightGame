@@ -35,6 +35,7 @@ export const PLAYER_SPRITES: Record<Direction, string[]> = {
 };
 
 // Tile images with placeholders - colors will be overridden by map's color scheme
+// this match match the order of enum TileTypes in types.ts
 export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
   // Outdoor tiles (0-3)
   {
@@ -118,12 +119,6 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: false,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   }, // RUG = 7
-  {
-    name: 'Door',
-    color: 'bg-palette-brown',
-    isSolid: false,
-    image: [tileAssets.door_1]
-  },
   // Transition tiles (8-11)
   {
     name: 'Door',
@@ -267,7 +262,19 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,
     image: []
   }, // COTTAGE = 23
-  // Farmland tiles (24-30)
+  {
+    name: 'Cottage Stone',
+    color: 'bg-palette-sage',  // Base grass color for background
+    isSolid: true,
+    image: [tileAssets.cottage_stone]
+  }, // COTTAGE = 24
+  {
+    name: 'Cottage Flowers',
+    color: 'bg-palette-sage',  // Base grass color for background
+    isSolid: true,
+    image: [tileAssets.cottage_w_flowers]
+  }, // COTTAGE = 25
+  // Farmland tiles (26-30)
   {
     name: 'Fallow Soil',
     color: 'bg-[#8B6F47]',
@@ -276,13 +283,13 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
       farmingAssets.fallow_soil_1,
       farmingAssets.fallow_soil_2,
     ]
-  }, // SOIL_FALLOW = 23
+  }, // SOIL_FALLOW = 26
   {
     name: 'Tilled Soil',
     color: 'bg-[#8B6F47]',
     isSolid: false,
     image: [farmingAssets.tilled]
-  }, // SOIL_TILLED = 24
+  }, // SOIL_TILLED = 27
   {
     name: 'Planted Soil',
     color: 'bg-[#8B6F47]', // Use tilled soil color as background
@@ -337,6 +344,7 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
     isSolid: true,  // Players cannot walk through stoves
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   }, // STOVE = 36
+
 ];
 
 // --- Procedural Map Generation ---
@@ -505,6 +513,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetX: -1.7,
     collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
+
   {
     tileType: TileType.CHERRY_TREE,
     spriteWidth: 4,  // 4 tiles wide (larger than regular tree)
@@ -598,5 +607,41 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 3,  // Only block the base, allow walking behind
     collisionOffsetX: 0,
     collisionOffsetY: -2,
+  },
+  {
+    tileType: TileType.COTTAGE_STONE,
+    spriteWidth: 6,  // 6 tiles wide (actual cottage width)
+    spriteHeight: 5, // 5 tiles tall (actual cottage height)
+    offsetX: 0,     // Offset to center cottage
+    offsetY: 0,     // Extends upward from K tile
+    image: tileAssets.cottage_stone,
+    isForeground: true,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision at the front wall (full width, but only bottom 2 rows)
+    collisionWidth: 3.0,
+    collisionHeight: 1.5,
+    collisionOffsetX: -1.7,
+    collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
+  },
+  {
+    tileType: TileType.COTTAGE_FLOWERS,
+    spriteWidth: 6,  // 6 tiles wide (actual cottage width)
+    spriteHeight: 5, // 5 tiles tall (actual cottage height)
+    offsetX: 0,     // Offset to center cottage
+    offsetY: 0,     // Extends upward from K tile
+    image: tileAssets.cottage_w_flowers,
+    isForeground: true,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision at the front wall (full width, but only bottom 2 rows)
+    collisionWidth: 3.0,
+    collisionHeight: 1.5,
+    collisionOffsetX: -1.7,
+    collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
 ];

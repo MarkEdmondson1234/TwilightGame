@@ -23,6 +23,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'T': TileType.TABLE,
   'H': TileType.CHAIR,
   'I': TileType.MIRROR,   // Mirror (I looks like a mirror!)
+  // interior
   'A': TileType.BED,      // A = bed (A bed to sleep in!)
   '@': TileType.SOFA,     // @ = sofa (comfortable seating)
   '&': TileType.CHIMNEY,  // & = chimney (brick structure)
@@ -37,9 +38,13 @@ export const GRID_CODES: Record<string, TileType> = {
   'O': TileType.BUILDING_ROOF,   // O = rOof (top of building)
   'N': TileType.BUILDING_DOOR,   // N = eNtrance
   'K': TileType.COTTAGE,          // K = Cottage (wooden house)
+  // manual
+  'z': TileType.COTTAGE_FLOWERS,
+  'k': TileType.COTTAGE_STONE,
   'V': TileType.BUILDING_WINDOW, // V = looks like a window
   // Farmland
   'X': TileType.SOIL_FALLOW,     // X = Farm plot (fallow soil)
+
 };
 
 /**

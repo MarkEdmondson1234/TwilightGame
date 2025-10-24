@@ -31,6 +31,8 @@ export const tileAssets = {
   stepping_stones_3: new URL('./public/assets-optimized/tiles/stepping_stones_3.png', import.meta.url).href,
   stepping_stones_4: new URL('./public/assets-optimized/tiles/stepping_stones_4.png', import.meta.url).href,
   cottage_wooden: new URL('./public/assets-optimized/tiles/cottage_wooden_512.png', import.meta.url).href,
+  cottage_stone: new URL('./public/assets-optimized/tiles/cottage_stone.png', import.meta.url).href,
+  cottage_w_flowers: new URL('./public/assets-optimized/tiles/cottage_w_flowers.png', import.meta.url).href,
   floor_1: new URL('./public/assets-optimized/tiles/floor_1.png', import.meta.url).href,
   floor_light: new URL('./public/assets-optimized/tiles/floor_light.png', import.meta.url).href,
   floor_dark: new URL('./public/assets-optimized/tiles/floor_dark.png', import.meta.url).href,
@@ -65,6 +67,9 @@ export const npcAssets = {
   elderly_01: new URL('./public/assets-optimized/npcs/elderly_01.png', import.meta.url).href,
   elderly_02: new URL('./public/assets-optimized/npcs/elderly_02.png', import.meta.url).href,
   elderly_portrait: new URL('./public/assets/npcs/elderly_01.png', import.meta.url).href,
+  old_woman_01: new URL('./public/assets-optimized/npcs/old_woman_knitting_01.png', import.meta.url).href,
+  old_woman_02: new URL('./public/assets-optimized/npcs/old_woman_knitting_02.png', import.meta.url).href,
+  old_woman_portrait: new URL('./public/assets/npcs/old_woman_knitting_02.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

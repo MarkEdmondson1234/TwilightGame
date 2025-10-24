@@ -75,6 +75,9 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
       case TileType.TREE:
       case TileType.TREE_BIG:
       case TileType.COTTAGE:
+      case TileType.CHERRY_TREE:
+      case TileType.COTTAGE_FLOWERS:
+      case TileType.COTTAGE_STONE:
         schemeColor = colorScheme.colors.grass; // Trees, bushes, and cottage use grass color for background
         break;
     }
