@@ -27,6 +27,7 @@ const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 
 // Configuration
 const SPRITE_SIZE = 256; // Resize character sprites to 256x256
+const NPC_SIZE = 512; // Resize NPC sprites to 512x512 (higher res for dialogue portraits)
 const TILE_SIZE = 128;    // Resize tile images to 128x128 (less aggressive)
 const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
 const COMPRESSION_QUALITY = 85; // PNG compression quality
@@ -296,15 +297,15 @@ async function optimizeNPCs() {
       continue;
     }
 
-    // PNGs - resize and compress
+    // PNGs - resize and compress at higher resolution for dialogue portraits
     const originalSize = fs.statSync(inputPath).size;
 
     await sharp(inputPath)
-      .resize(SPRITE_SIZE, SPRITE_SIZE, {
+      .resize(NPC_SIZE, NPC_SIZE, {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
-      .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+      .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for portraits
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;

@@ -129,7 +129,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
               className="relative w-full h-full object-cover object-top"
               style={{
                 imageRendering: 'auto', // Smooth rendering for portraits
-                transform: 'scale(1.8)',
+                transform: 'scale(2.5)', // Increased from 1.8 for larger NPC portraits
                 transformOrigin: 'top center',
               }}
             />
@@ -151,7 +151,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
               className="relative w-full h-full object-cover object-top"
               style={{
                 imageRendering: 'auto', // Smooth rendering for portraits
-                transform: 'scale(1.8)',
+                transform: 'scale(2.5)', // Increased from 1.8 for larger NPC portraits
                 transformOrigin: 'top center',
               }}
             />

@@ -73,8 +73,10 @@ export const npcAssets = {
   old_woman_portrait: new URL('./public/assets/npcs/old_woman_knitting_02.png', import.meta.url).href,
   shopkeeper_fox_01: new URL('./public/assets-optimized/npcs/shop_keeper_fox_01.png', import.meta.url).href,
   shopkeeper_fox_02: new URL('./public/assets-optimized/npcs/shop_keeper_fox_02.png', import.meta.url).href,
+  shopkeeper_fox_portrait: new URL('./public/assets/npcs/shop_keeper_fox_01.png', import.meta.url).href,
   dog_01: new URL('./public/assets-optimized/npcs/dog_01.png', import.meta.url).href,
   dog_02: new URL('./public/assets-optimized/npcs/dog_02.png', import.meta.url).href,
+  dog_portrait: new URL('./public/assets/npcs/dog_01.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

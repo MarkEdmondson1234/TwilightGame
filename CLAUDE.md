@@ -205,9 +205,9 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 - **Automatic**: Optimization runs automatically before `npm run build`
 - **Asset References**: Always import from optimized versions in `assets.ts` when available
 - **What it optimizes**:
-  - Character sprite sheets (combines multiple frames into single sheets)
+  - Character sprite sheets (combines multiple frames into single sheets, 256x256)
   - Tile images (resizes to 128x128, optimizes compression)
-  - NPC sprites (optimizes SVGs or PNGs)
+  - NPC sprites (resizes PNGs to 512x512 at 95% quality for sharp dialogue portraits, copies SVGs)
   - Animated GIFs (resizes to 512x512, 60-80% size reduction with gifsicle)
 - **When to run manually**: After adding new assets to `/public/assets/`
 - **Exception for multi-tile sprites**: Large furniture sprites (beds, sofas) should use original high-res images to avoid distortion from resize
