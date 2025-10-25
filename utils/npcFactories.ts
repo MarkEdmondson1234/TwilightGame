@@ -206,6 +206,7 @@ export function createCatNPC(
     direction: Direction.Down,
     behavior: NPCBehavior.STATIC, // Cat doesn't wander
     sprite: npcAssets.cat_sleeping_01, // Initial sprite
+    portraitSprite: npcAssets.cat_portrait, // Original for dialogue
     scale: 2.5, // Smaller than default 4.0, about player-sized
     dialogue: [
       {
@@ -393,6 +394,7 @@ export function createDogNPC(
     direction: Direction.Down,
     behavior: NPCBehavior.WANDER, // Will be overridden by follow behavior
     sprite: npcAssets.dog_01,
+    portraitSprite: npcAssets.dog_portrait, // Original for dialogue
     scale: 2.5,
     dialogue: [
       {

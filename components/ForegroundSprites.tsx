@@ -42,19 +42,9 @@ const ForegroundSprites: React.FC<ForegroundSpritesProps> = ({
                     const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                     if (!spriteMetadata || !spriteMetadata.isForeground) return null;
 
-                    // Apply CSS transforms based on sprite metadata settings (using centralized utility)
-                    const spriteTransforms = calculateSpriteTransforms(
-                        spriteMetadata,
-                        x,
-                        y,
-                        spriteMetadata.spriteWidth,
-                        spriteMetadata.spriteHeight
-                    );
-
-                    const { flipScale, rotation, brightness, variedWidth, variedHeight, widthDiff, heightDiff } = spriteTransforms;
-
                     // Determine which image to use (seasonal or default) - season cached above
                     let spriteImage: string;
+                    let selectedImageIndex: number | undefined;
                     if (tileData.seasonalImages) {
                         const seasonalArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
 
@@ -62,14 +52,29 @@ const ForegroundSprites: React.FC<ForegroundSpritesProps> = ({
                         const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
                         const index = Math.floor((imageHash % 1) * seasonalArray.length);
                         spriteImage = seasonalArray[index];
+                        selectedImageIndex = index;
                     } else if (Array.isArray(spriteMetadata.image)) {
                         // Select image from array using deterministic hash
                         const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
                         const index = Math.floor((imageHash % 1) * spriteMetadata.image.length);
                         spriteImage = spriteMetadata.image[index];
+                        selectedImageIndex = index;
                     } else {
                         spriteImage = spriteMetadata.image;
                     }
+
+                    // Apply CSS transforms based on sprite metadata settings (using centralized utility)
+                    // Pass selectedImageIndex for lake edge rotation logic
+                    const spriteTransforms = calculateSpriteTransforms(
+                        spriteMetadata,
+                        x,
+                        y,
+                        spriteMetadata.spriteWidth,
+                        spriteMetadata.spriteHeight,
+                        selectedImageIndex
+                    );
+
+                    const { flipScale, rotation, brightness, variedWidth, variedHeight, widthDiff, heightDiff } = spriteTransforms;
 
                     // Use smooth rendering for large decorative sprites (trees, cottages)
                     // They look better with anti-aliasing when scaled up

@@ -27,11 +27,13 @@ import {
  * L = Wall boundary (trees for map edges)
  * R = Rock (in-map decorative obstacles)
  * P = Path
- * W = Water
+ * W = Water (old, use lake tiles below instead)
+ * Lake tiles: w = center, < = left edge, > = right edge, ^ = top edge, v = bottom edge
  * D = Door (back to home)
  * S = Shop Door
  * s = TileType.COTTAGE_STONE,
  * k = TileType.COTTAGE_FLOWERS,
+ * % = TileType.SHOP (seasonal shop building)
  * M = Mine Entrance
  * B = Building Wall
  * O = Building Roof
@@ -47,17 +49,17 @@ import {
 
 const gridString = `
 ZLULYZLLULYLLULUUULLUYLLYULJL
-LZGGGGGZGGGPGGZGGGGGGGZGGWWWL
-YGGGGGGGGGGPGGGGkGGGXXXGGWWWJ
-LGGGGGGGGGGPGGGGGGGGXXXGGWWWL
-YGZGGGGKGGGPGGGGsGGGGGGGGWWWL
-YYGGGGGPPPPPPPPPPPPGGGGGGWWUL
-YGGGGGGPGGGGGGGPGGGGGGGGGGGGZ
-LGGGGGGPGGGGGGGPGGGGGGGGUGGL
-YGGGGGGPGGGGGGGPGGGGGGGGRGRL
+LZGGGGGZGGGPGGZGGGGGGGZGGG^^L
+YGGGGGGGGGGPGGGGkGGGXXXGG<WWW
+LGGGGGGGGGGPGGGGGGGGXXXGG<WWW
+YGZGGGGKGGGPGGGGsGGGGGGGG<WWW
+YYGGGGGPPPPPPPPPPPPGGGGGG<WWW
+YGGGGGGPGGGGGGGPGGGGGGGGGGvvv
+LGGGGGGPGGGGGGGPGGGGGGGGUGGGL
+YGGGGGGPGGGGGGGPGGGGGGGGRGRGL
 LGGGGGGPGGGGGGPGGGOOGGGGGGGGL
 JGGGGGGPGGGGGGPGGOOOGRGRGGRGJ
-LZGGGGGPGzGGGGPGGOMOGRXXXGGGL
+LZGGGGGGPG%GGGPGGOMOGRXXXGGGL
 YGGGGGGPGGGGGGPGGGGGGGGGGGGP
 LGGGGGGPPPPPPPPPGGGGGGGGGGGPZ
 LGGGGGGGGGGPGGGGGGGGGGGUUGGPU
@@ -110,8 +112,8 @@ export const village: MapDefinition = {
       label: 'To House',
     },
     {
-      fromPosition: { x: 10.3, y: 12.7 }, // Shop building (middle-left)
-      tileType: TileType.BUILDING_DOOR,
+      fromPosition: { x: 11.5, y: 12.5 }, // Shop building (next to fox)
+      tileType: TileType.SHOP,
       toMapId: 'shop',
       toPosition: { x: 7, y: 8 },
       label: 'To Shop',

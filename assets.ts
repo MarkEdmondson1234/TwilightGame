@@ -33,6 +33,10 @@ export const tileAssets = {
   cottage_wooden: new URL('./public/assets-optimized/tiles/cottage_wooden_512.png', import.meta.url).href,
   cottage_stone: new URL('./public/assets-optimized/tiles/cottage_stone.png', import.meta.url).href,
   cottage_w_flowers: new URL('./public/assets-optimized/tiles/cottage_w_flowers.png', import.meta.url).href,
+  shop_spring: new URL('./public/assets-optimized/tiles/shop/shop_spring.png', import.meta.url).href,
+  shop_summer: new URL('./public/assets-optimized/tiles/shop/shop_summer.png', import.meta.url).href,
+  shop_autumn: new URL('./public/assets-optimized/tiles/shop/shop_autumn.png', import.meta.url).href,
+  shop_winter: new URL('./public/assets-optimized/tiles/shop/shop_winter.png', import.meta.url).href,
   floor_1: new URL('./public/assets-optimized/tiles/floor_1.png', import.meta.url).href,
   floor_light: new URL('./public/assets-optimized/tiles/floor_light.png', import.meta.url).href,
   floor_dark: new URL('./public/assets-optimized/tiles/floor_dark.png', import.meta.url).href,
@@ -43,6 +47,12 @@ export const tileAssets = {
   sofa_table: new URL('./public/assets-optimized/tiles/sofa_table.png', import.meta.url).href,
   chimney: new URL('./public/assets-optimized/tiles/chimney.png', import.meta.url).href,
   stove: new URL('./public/assets-optimized/tiles/stove.png', import.meta.url).href,
+  // Lake tiles (directional edges for proper water rendering)
+  water_center: new URL('./public/assets-optimized/tiles/lake/water_middle.png', import.meta.url).href,
+  water_left: new URL('./public/assets-optimized/tiles/lake/water_left.png', import.meta.url).href,
+  water_right: new URL('./public/assets-optimized/tiles/lake/lake_right.png', import.meta.url).href,
+  water_top: new URL('./public/assets-optimized/tiles/lake/lake_top.png', import.meta.url).href,
+  water_bottom: new URL('./public/assets-optimized/tiles/lake/lake_bottom.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance
@@ -65,6 +75,7 @@ export const npcAssets = {
   cat_sleeping_angry: new URL('./public/assets/npcs/cat/cat_sleeping_angry.png', import.meta.url).href,
   cat_stand_01: new URL('./public/assets/npcs/cat/cat_stand_01.png', import.meta.url).href,
   cat_stand_02: new URL('./public/assets/npcs/cat/cat_stand_02.png', import.meta.url).href,
+  cat_portrait: new URL('./public/assets/npcs/cat/cat_sleeping_01.png', import.meta.url).href, // Original for dialogue
   elderly_01: new URL('./public/assets-optimized/npcs/elderly_01.png', import.meta.url).href,
   elderly_02: new URL('./public/assets-optimized/npcs/elderly_02.png', import.meta.url).href,
   elderly_portrait: new URL('./public/assets/npcs/elderly_01.png', import.meta.url).href,
@@ -76,7 +87,7 @@ export const npcAssets = {
   shopkeeper_fox_portrait: new URL('./public/assets/npcs/shop_keeper_fox_01.png', import.meta.url).href,
   dog_01: new URL('./public/assets-optimized/npcs/dog_01.png', import.meta.url).href,
   dog_02: new URL('./public/assets-optimized/npcs/dog_02.png', import.meta.url).href,
-  dog_portrait: new URL('./public/assets/npcs/dog_01.png', import.meta.url).href,
+  dog_portrait: new URL('./public/assets/npcs/dog_01.png', import.meta.url).href, // Original for dialogue
 };
 
 // Player assets (add your custom sprites here when ready)

@@ -5,7 +5,13 @@ export const GRID_CODES: Record<string, TileType> = {
   // Outdoor
   'G': TileType.GRASS,
   'R': TileType.ROCK,
-  'W': TileType.WATER,
+  'W': TileType.WATER_CENTER,     // W = water center (updated to use new lake tiles)
+  // Lake tiles (directional edges for proper water rendering)
+  'w': TileType.WATER_CENTER,     // w = water center (same as W, for consistency)
+  '<': TileType.WATER_LEFT,       // < = left edge (arrow pointing left)
+  '>': TileType.WATER_RIGHT,      // > = right edge (arrow pointing right)
+  '^': TileType.WATER_TOP,        // ^ = top edge (arrow pointing up)
+  'v': TileType.WATER_BOTTOM,     // v = bottom edge (arrow pointing down)
   'P': TileType.PATH,
   // Indoor
   'F': TileType.FLOOR,
@@ -41,6 +47,7 @@ export const GRID_CODES: Record<string, TileType> = {
   // manual
   'z': TileType.COTTAGE_FLOWERS,
   'k': TileType.COTTAGE_STONE,
+  '%': TileType.SHOP,             // % = Shop (seasonal building)
   'V': TileType.BUILDING_WINDOW, // V = looks like a window
   // Farmland
   'X': TileType.SOIL_FALLOW,     // X = Farm plot (fallow soil)

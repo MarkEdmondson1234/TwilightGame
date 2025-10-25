@@ -29,12 +29,14 @@ function generateTileHashes(x: number, y: number) {
  * @param tileData - The tile data (includes transforms config)
  * @param x - Tile X position (for deterministic randomness)
  * @param y - Tile Y position (for deterministic randomness)
+ * @param imageIndex - Index of selected image (for lake edge rotation)
  * @returns Transform styles to apply to the tile
  */
 export function calculateTileTransforms(
     tileData: TileData,
     x: number,
-    y: number
+    y: number,
+    imageIndex?: number
 ): TileTransformResult {
     // Default: no transforms
     if (!tileData.transforms) {
@@ -73,6 +75,23 @@ export function calculateTileTransforms(
         } else if (transforms.rotationMode === 'flip180') {
             // Only 0 or 180 degrees (e.g., fallow soil)
             rotation = (hashes.rotHash % 1) > 0.5 ? 180 : 0;
+        } else if (transforms.rotationMode?.startsWith('lake_edge_')) {
+            // Lake edge rotation: rotate the randomly selected image to face the correct direction
+            // Image array order: [left, right, top, bottom]
+            // imageIndex: 0 = left, 1 = right, 2 = top, 3 = bottom
+            const selectedEdge = imageIndex || 0;
+            const targetEdge = transforms.rotationMode.replace('lake_edge_', '');
+
+            // Rotation needed to transform each source edge into each target edge
+            // Rows = source (selected image), Columns = target (tile type)
+            const rotationMatrix: Record<number, Record<string, number>> = {
+                0: { left: 0,   right: 180, top: 90,  bottom: 270 },  // left source
+                1: { left: 180, right: 0,   top: 270, bottom: 90  },  // right source
+                2: { left: 270, right: 90,  top: 0,   bottom: 180 },  // top source
+                3: { left: 90,  right: 270, top: 180, bottom: 0   },  // bottom source
+            };
+
+            rotation = rotationMatrix[selectedEdge]?.[targetEdge] || 0;
         } else {
             // Subtle rotation (default)
             const rotationRange = transforms.rotationRange || { min: -5, max: 10 };
@@ -109,7 +128,8 @@ export function calculateSpriteTransforms(
     x: number,
     y: number,
     spriteWidth: number,
-    spriteHeight: number
+    spriteHeight: number,
+    imageIndex?: number
 ): {
     flipScale: number;
     sizeVariation: number;
@@ -141,8 +161,27 @@ export function calculateSpriteTransforms(
 
     // Rotation variation (defaults to disabled)
     if (transforms.enableRotation === true) {
-        const rotationRange = transforms.rotationRange || { min: -8, max: 8 };
-        rotation = rotationRange.min + (hashes.rotHash % 1) * (rotationRange.max - rotationRange.min);
+        if (transforms.rotationMode?.startsWith('lake_edge_')) {
+            // Lake edge rotation: rotate the randomly selected image to face the correct direction
+            // Image array order: [left, right, top, bottom]
+            // imageIndex: 0 = left, 1 = right, 2 = top, 3 = bottom
+            const selectedEdge = imageIndex || 0;
+            const targetEdge = transforms.rotationMode.replace('lake_edge_', '');
+
+            // Rotation needed to transform each source edge into each target edge
+            // Rows = source (selected image), Columns = target (tile type)
+            const rotationMatrix: Record<number, Record<string, number>> = {
+                0: { left: 0,   right: 180, top: 90,  bottom: 270 },  // left source
+                1: { left: 180, right: 0,   top: 270, bottom: 90  },  // right source
+                2: { left: 270, right: 90,  top: 0,   bottom: 180 },  // top source
+                3: { left: 90,  right: 270, top: 180, bottom: 0   },  // bottom source
+            };
+
+            rotation = rotationMatrix[selectedEdge]?.[targetEdge] || 0;
+        } else {
+            const rotationRange = transforms.rotationRange || { min: -8, max: 8 };
+            rotation = rotationRange.min + (hashes.rotHash % 1) * (rotationRange.max - rotationRange.min);
+        }
     }
 
     // Brightness variation (defaults to disabled)

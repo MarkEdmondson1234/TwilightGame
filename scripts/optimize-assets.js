@@ -30,13 +30,33 @@ const SPRITE_SIZE = 256; // Resize character sprites to 256x256
 const NPC_SIZE = 512; // Resize NPC sprites to 512x512 (higher res for dialogue portraits)
 const TILE_SIZE = 128;    // Resize tile images to 128x128 (less aggressive)
 const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
+const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
 const COMPRESSION_QUALITY = 85; // PNG compression quality
 const HIGH_QUALITY = 95; // Higher quality for detailed furniture
+const SHOP_QUALITY = 98; // Very high quality for shop buildings (minimal compression)
 const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for effects)
 
 console.log('🎨 Starting asset optimization...\n');
 
-// Create optimized directory structure
+// Recursively get all files in a directory
+function getAllFiles(dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+
+  files.forEach(file => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+
+    if (stat.isDirectory()) {
+      getAllFiles(filePath, fileList);
+    } else {
+      fileList.push(filePath);
+    }
+  });
+
+  return fileList;
+}
+
+// Create optimized directory structure (mirrors source structure)
 function createDirectories() {
   const dirs = [
     OPTIMIZED_DIR,
@@ -172,19 +192,37 @@ async function optimizeTiles() {
     return;
   }
 
-  const files = fs.readdirSync(tilesDir);
+  const allFiles = getAllFiles(tilesDir);
   let optimized = 0;
 
-  for (const file of files) {
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
-    const inputPath = path.join(tilesDir, file);
-    const outputPath = path.join(OPTIMIZED_DIR, 'tiles', file.replace(/\.jpeg$/i, '.png'));
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(tilesDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'tiles', relativePath.replace(/\.jpeg$/i, '.png'));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Special handling for shop buildings - extra large size with very high quality (minimal compression)
+    if (file.includes('shop')) {
+      await sharp(inputPath)
+        .resize(SHOP_SIZE, SHOP_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: SHOP_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
+        .toFile(outputPath);
+    }
     // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, etc.) - keep higher resolution and quality
-    if (file.includes('tree_cherry') || file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
+    else if (file.includes('tree_cherry') || file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
       await sharp(inputPath)
         .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
           fit: 'contain',
@@ -225,7 +263,9 @@ async function optimizeTiles() {
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
 
-    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    // Show relative path for files in subdirectories
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
     optimized++;
   }
 
@@ -242,14 +282,22 @@ async function optimizeFarming() {
     return;
   }
 
-  const files = fs.readdirSync(farmingDir);
+  const allFiles = getAllFiles(farmingDir);
   let optimized = 0;
 
-  for (const file of files) {
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
-    const inputPath = path.join(farmingDir, file);
-    const outputPath = path.join(OPTIMIZED_DIR, 'farming', file.replace(/\.jpeg$/i, '.png'));
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(farmingDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'farming', relativePath.replace(/\.jpeg$/i, '.png'));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     const originalSize = fs.statSync(inputPath).size;
 
@@ -265,7 +313,9 @@ async function optimizeFarming() {
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
 
-    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    // Show relative path for files in subdirectories
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
     optimized++;
   }
 
@@ -282,14 +332,22 @@ async function optimizeNPCs() {
     return;
   }
 
-  const files = fs.readdirSync(npcsDir);
+  const allFiles = getAllFiles(npcsDir);
   let optimized = 0;
 
-  for (const file of files) {
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
     if (!file.match(/\.(png|svg)$/i)) continue;
 
-    const inputPath = path.join(npcsDir, file);
-    const outputPath = path.join(OPTIMIZED_DIR, 'npcs', file);
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(npcsDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'npcs', relativePath);
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     // SVGs - just copy (they're already small)
     if (file.endsWith('.svg')) {
@@ -311,7 +369,9 @@ async function optimizeNPCs() {
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
 
-    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    // Show relative path for files in subdirectories
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
     optimized++;
   }
 
@@ -338,7 +398,7 @@ async function optimizeAnimations() {
     return;
   }
 
-  const files = fs.readdirSync(animationsDir);
+  const allFiles = getAllFiles(animationsDir);
   let optimized = 0;
   const hasGifsicleInstalled = hasGifsicle();
 
@@ -347,11 +407,19 @@ async function optimizeAnimations() {
     console.log('   Install with: brew install gifsicle (macOS) or apt-get install gifsicle (Linux)\n');
   }
 
-  for (const file of files) {
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
     if (!file.match(/\.gif$/i)) continue;
 
-    const inputPath = path.join(animationsDir, file);
-    const outputPath = path.join(OPTIMIZED_DIR, 'animations', file);
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(animationsDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'animations', relativePath);
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     const originalSize = fs.statSync(inputPath).size;
 
@@ -366,15 +434,19 @@ async function optimizeAnimations() {
         const optimizedSize = fs.statSync(outputPath).size;
         const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
 
-        console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+        // Show relative path for files in subdirectories
+        const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+        console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
       } catch (error) {
-        console.log(`  ⚠️  ${file}: optimization failed, copying original`);
+        const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+        console.log(`  ⚠️  ${displayPath}: optimization failed, copying original`);
         fs.copyFileSync(inputPath, outputPath);
       }
     } else {
       // Just copy if gifsicle not available
       fs.copyFileSync(inputPath, outputPath);
-      console.log(`  ℹ️  ${file}: ${(originalSize / 1024).toFixed(1)}KB (copied without optimization)`);
+      const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+      console.log(`  ℹ️  ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB (copied without optimization)`);
     }
 
     optimized++;

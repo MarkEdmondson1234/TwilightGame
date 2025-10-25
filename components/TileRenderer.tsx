@@ -71,6 +71,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
 
                     // Select image variant using deterministic hash
                     let selectedImage: string | null = null;
+                    let selectedImageIndex: number | undefined = undefined;
 
                     // Determine which image array to use (seasonal or regular)
                     let imageArray: string[] | undefined = undefined;
@@ -138,13 +139,14 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                                 const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
                                 const index = Math.floor((imageHash % 1) * imageArray.length);
                                 selectedImage = imageArray[index];
+                                selectedImageIndex = index; // Store for lake edge rotation
                             }
                         }
                     }
 
                     // Calculate transforms using centralized utility (respects tile's transform settings)
                     const { transform, filter, sizeScale } = selectedImage
-                        ? calculateTileTransforms(tileData, x, y)
+                        ? calculateTileTransforms(tileData, x, y, selectedImageIndex)
                         : { transform: 'none', filter: 'none', sizeScale: 1.0 };
 
                     return (

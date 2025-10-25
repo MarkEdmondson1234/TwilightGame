@@ -70,6 +70,61 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: true,
     image: []
   },
+  // Lake tiles with directional edges for proper water rendering
+  [TileType.WATER_CENTER]: {
+    name: 'Water Center',
+    color: 'bg-palette-sky',
+    isSolid: true,
+    image: [tileAssets.water_center]
+  },
+  [TileType.WATER_LEFT]: {
+    name: 'Water Left Edge',
+    color: 'bg-palette-sky',
+    isSolid: true,
+    // All edge variations - will be randomly selected and rotated to face left
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
+    transforms: {
+      enableRotation: true,
+      rotationMode: 'lake_edge_left'  // Custom mode for lake edge rotation
+    }
+  },
+  [TileType.WATER_RIGHT]: {
+    name: 'Water Right Edge',
+    color: 'bg-palette-sky',
+    isSolid: true,
+    // All edge variations - will be randomly selected and rotated to face right
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
+    transforms: {
+      enableRotation: true,
+      rotationMode: 'lake_edge_right'  // Custom mode for lake edge rotation
+    }
+  },
+  [TileType.WATER_TOP]: {
+    name: 'Water Top Edge',
+    color: 'bg-palette-sky',
+    isSolid: true,
+    // All edge variations - will be randomly selected and rotated to face top
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
+    transforms: {
+      enableRotation: true,
+      rotationMode: 'lake_edge_top'  // Custom mode for lake edge rotation
+    }
+  },
+  [TileType.WATER_BOTTOM]: {
+    name: 'Water Bottom Edge',
+    color: 'bg-palette-sky',
+    isSolid: true,
+    // All edge variations - will be randomly selected and rotated to face bottom
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
+    transforms: {
+      enableRotation: true,
+      rotationMode: 'lake_edge_bottom'  // Custom mode for lake edge rotation
+    }
+  },
   [TileType.PATH]: {
     name: 'Path',
     color: 'bg-palette-sage',  // Use grass color as background so stepping stones blend naturally
@@ -299,6 +354,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
     image: []
+  },
+  [TileType.SHOP]: {
+    name: 'Shop',
+    color: 'bg-palette-sage',  // Base grass color for background
+    isSolid: true,
+    image: [],
+    seasonalImages: {
+      spring: [tileAssets.shop_spring],
+      summer: [tileAssets.shop_summer],
+      autumn: [tileAssets.shop_autumn],
+      winter: [tileAssets.shop_winter],
+      default: [tileAssets.shop_spring],  // Default to spring
+    }
   },
 
   // Farmland tiles
@@ -583,6 +651,60 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     scaleRange: { min: 0.98, max: 1.02 },
   },
+
+  // Lake edge tiles - need to be foreground sprites so baseType (grass) renders underneath
+  {
+    tileType: TileType.WATER_LEFT,
+    spriteWidth: 1,
+    spriteHeight: 1,
+    offsetX: 0,
+    offsetY: 0,
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    isForeground: true,
+    collisionWidth: 1.0,
+    collisionHeight: 1.0,
+    enableRotation: true,
+    rotationMode: 'lake_edge_left',
+  },
+  {
+    tileType: TileType.WATER_RIGHT,
+    spriteWidth: 1,
+    spriteHeight: 1,
+    offsetX: 0,
+    offsetY: 0,
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    isForeground: true,
+    collisionWidth: 1.0,
+    collisionHeight: 1.0,
+    enableRotation: true,
+    rotationMode: 'lake_edge_right',
+  },
+  {
+    tileType: TileType.WATER_TOP,
+    spriteWidth: 1,
+    spriteHeight: 1,
+    offsetX: 0,
+    offsetY: 0,
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    isForeground: true,
+    collisionWidth: 1.0,
+    collisionHeight: 1.0,
+    enableRotation: true,
+    rotationMode: 'lake_edge_top',
+  },
+  {
+    tileType: TileType.WATER_BOTTOM,
+    spriteWidth: 1,
+    spriteHeight: 1,
+    offsetX: 0,
+    offsetY: 0,
+    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    isForeground: true,
+    collisionWidth: 1.0,
+    collisionHeight: 1.0,
+    enableRotation: true,
+    rotationMode: 'lake_edge_bottom',
+  },
   {
     tileType: TileType.SOFA,
     spriteWidth: 3,  // 3 tiles wide
@@ -692,6 +814,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 3.4,
     collisionOffsetX: 0,
     collisionOffsetY: -1.4,  // Just the bottom 2 rows (player can walk behind roof/chimney)
+  },
+  {
+    tileType: TileType.SHOP,
+    spriteWidth: 6,  // 6 tiles wide (shop building width)
+    spriteHeight: 6, // 6 tiles tall (shop building height)
+    offsetX: -1,     // Offset to center shop
+    offsetY: -4,     // Extends upward from anchor tile
+    image: tileAssets.shop_spring,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision at the front of the shop (player cannot walk through building)
+    collisionWidth: 4.8,
+    collisionHeight: 4.4,
+    collisionOffsetX: -0.3,
+    collisionOffsetY: -2.2,  // Just the bottom area (player can walk behind roof)
   },
 ];
 

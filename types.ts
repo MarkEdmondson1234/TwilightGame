@@ -5,6 +5,12 @@ export enum TileType {
   GRASS,
   ROCK,
   WATER,
+  // Lake tiles (directional edges for proper water rendering)
+  WATER_CENTER,
+  WATER_LEFT,
+  WATER_RIGHT,
+  WATER_TOP,
+  WATER_BOTTOM,
   PATH,
   // Indoor tiles
   FLOOR,
@@ -37,6 +43,7 @@ export enum TileType {
   COTTAGE,
   COTTAGE_STONE,
   COTTAGE_FLOWERS,
+  SHOP,
   // Farmland tiles
   SOIL_FALLOW,
   SOIL_TILLED,
@@ -84,7 +91,7 @@ export interface TileTransformSettings {
     brightnessRange?: { min: number; max: number }; // Brightness multiplier
 
     // Special rotation modes for specific tile types
-    rotationMode?: 'subtle' | 'full360' | 'flip180';  // Rotation behavior
+    rotationMode?: 'subtle' | 'full360' | 'flip180' | 'lake_edge_left' | 'lake_edge_right' | 'lake_edge_top' | 'lake_edge_bottom';  // Rotation behavior
 }
 
 export interface TileData {
@@ -121,6 +128,7 @@ export interface SpriteMetadata {
   scaleRange?: { min: number; max: number }; // Size variation range (default: 0.85-1.15 or 0.98-1.02 for trees)
   rotationRange?: { min: number; max: number }; // Rotation in degrees (default: -2 to 2)
   brightnessRange?: { min: number; max: number }; // Brightness multiplier (default: 0.95-1.05)
+  rotationMode?: 'subtle' | 'full360' | 'flip180' | 'lake_edge_left' | 'lake_edge_right' | 'lake_edge_top' | 'lake_edge_bottom'; // Special rotation modes
 }
 
 // Color scheme for a map theme

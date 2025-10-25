@@ -42,6 +42,11 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
         schemeColor = colorScheme.colors.grass;  // Rocks use grass color for blending
         break;
       case TileType.WATER:
+      case TileType.WATER_CENTER:
+      case TileType.WATER_LEFT:
+      case TileType.WATER_RIGHT:
+      case TileType.WATER_TOP:
+      case TileType.WATER_BOTTOM:
         schemeColor = colorScheme.colors.water;
         break;
       case TileType.PATH:
