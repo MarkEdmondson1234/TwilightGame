@@ -449,6 +449,7 @@ export function createShopkeeperNPC(
     direction: Direction.Down,
     behavior: NPCBehavior.STATIC,
     sprite: npcAssets.shopkeeper_fox_01,
+    portraitSprite: npcAssets.shopkeeper_fox_portrait,
     scale: 3.0,
     animatedStates,
     dialogue: [
