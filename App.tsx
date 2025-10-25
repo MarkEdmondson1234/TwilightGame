@@ -9,23 +9,23 @@ import TouchControls from './components/TouchControls';
 import DialogueBox from './components/DialogueBox';
 import ColorSchemeEditor from './components/ColorSchemeEditor';
 import HelpBrowser from './components/HelpBrowser';
-import { runSelfTests } from './utils/testUtils';
-import { initializeMaps, mapManager, transitionToMap } from './maps';
+import { initializeGame } from './utils/gameInitializer';
+import { mapManager, transitionToMap } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
+import { calculateTileTransforms, calculateSpriteTransforms } from './utils/tileRenderUtils';
 import { useTouchDevice } from './hooks/useTouchDevice';
+import { useKeyboardControls } from './hooks/useKeyboardControls';
+import { useTouchControls } from './hooks/useTouchControls';
+import { useCollisionDetection } from './hooks/useCollisionDetection';
+import { usePlayerMovement } from './hooks/usePlayerMovement';
 import { generateCharacterSprites, generateCharacterSpritesAsync, DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { getCrop } from './data/crops';
-import { preloadAllAssets } from './utils/assetPreloader';
 import { TimeManager, Season } from './utils/TimeManager';
-import { initializePalette } from './palette';
 import { inventoryManager } from './utils/inventoryManager';
 import { farmingAssets } from './assets';
-
-const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
-const ANIMATION_SPEED_MS = 150; // time between animation frames
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
@@ -70,7 +70,6 @@ const App: React.FC = () => {
 
     const keysPressed = useRef<Record<string, boolean>>({}).current;
     const animationFrameId = useRef<number | null>(null);
-    const lastAnimationTime = useRef(Date.now());
     const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
     const lastTransitionTime = useRef<number>(0);
     const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
@@ -83,396 +82,57 @@ const App: React.FC = () => {
         console.log('[App] Character created:', character);
     };
 
-    const checkCollision = useCallback((pos: Position): boolean => {
-        const halfSize = PLAYER_SIZE / 2;
-        const minTileX = Math.floor(pos.x - halfSize);
-        const maxTileX = Math.floor(pos.x + halfSize);
-        const minTileY = Math.floor(pos.y - halfSize);
-        const maxTileY = Math.floor(pos.y + halfSize);
-
-        // First check regular tile collision
-        for (let y = minTileY; y <= maxTileY; y++) {
-            for (let x = minTileX; x <= maxTileX; x++) {
-                const tileData = getTileData(x, y);
-                if (tileData && tileData.isSolid && !SPRITE_METADATA.find(s => s.tileType === tileData.type)) {
-                    return true;
-                }
-            }
-        }
-
-        // Check for multi-tile sprite collision in a wider area
-        // Need to check tiles that might have sprites extending into player position
-        const searchRadius = 10; // Large enough to catch any sprite
-        for (let tileY = minTileY - searchRadius; tileY <= maxTileY + searchRadius; tileY++) {
-            for (let tileX = minTileX - searchRadius; tileX <= maxTileX + searchRadius; tileX++) {
-                const tileData = getTileData(tileX, tileY);
-                const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);
-
-                if (spriteMetadata && tileData?.isSolid) {
-                    // Use collision-specific dimensions if provided, otherwise use sprite dimensions
-                    const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
-                    const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
-                    const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
-                    const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
-
-                    // Calculate collision bounds based on tile position and metadata
-                    const spriteLeft = tileX + collisionOffsetX;
-                    const spriteRight = spriteLeft + collisionWidth;
-                    const spriteTop = tileY + collisionOffsetY;
-                    const spriteBottom = spriteTop + collisionHeight;
-
-                    // Check if player position overlaps with collision bounds
-                    if (pos.x + halfSize > spriteLeft && pos.x - halfSize < spriteRight &&
-                        pos.y + halfSize > spriteTop && pos.y - halfSize < spriteBottom) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }, []);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-        // Ignore all keys if user is typing in an input/textarea
-        const target = e.target as HTMLElement;
-        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-            return;
-        }
-
-        // Special keys that work even during dialogue
-        if (e.key === 'F1') {
-            e.preventDefault();
-            setShowHelpBrowser(prev => !prev);
-            return;
-        }
-
-        if (e.key === 'F3') {
-            e.preventDefault();
-            setDebugOpen(prev => !prev);
-            return;
-        }
-
-        // F4 key to toggle color editor
-        if (e.key === 'F4') {
-            e.preventDefault();
-            setShowColorEditor(prev => !prev);
-            return;
-        }
-
-        // Escape key to close dialogue or help browser
-        if (e.key === 'Escape') {
-            if (showHelpBrowser) {
-                e.preventDefault();
-                setShowHelpBrowser(false);
-                return;
-            }
-            if (activeNPC) {
-                e.preventDefault();
-                setActiveNPC(null);
-            }
-            return;
-        }
-
-        // Action key (E or Enter) - close dialogue if open
-        if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
-            if (activeNPC) {
-                e.preventDefault();
-                setActiveNPC(null);
-                return;
-            }
-        }
-
-        // Don't process any other keys if dialogue is open
-        if (activeNPC) {
-            return;
-        }
-
-        // Now track movement keys (only if dialogue is closed)
-        keysPressed[e.key.toLowerCase()] = true;
-        // R key to reset to spawn point if stuck
-        if (e.key === 'r' || e.key === 'R') {
-            const currentMap = mapManager.getCurrentMap();
-            if (currentMap && currentMap.spawnPoint) {
-                console.log('[Reset] Teleporting to spawn point:', currentMap.spawnPoint);
-                setPlayerPos(currentMap.spawnPoint);
-                playerPosRef.current = currentMap.spawnPoint;
-            }
-        }
-        // F5 key to reset all farm plots (debug)
-        if (e.key === 'F5') {
-            e.preventDefault();
-            const currentMapIdValue = mapManager.getCurrentMapId();
-            if (currentMapIdValue) {
-                // Clear all plots for current map
-                const allPlots = farmManager.getAllPlots();
-                const otherMapPlots = allPlots.filter(plot => plot.mapId !== currentMapIdValue);
-                farmManager.loadPlots(otherMapPlots);
-                gameState.saveFarmPlots(otherMapPlots);
-                console.log(`[Reset] Cleared all farm plots for map: ${currentMapIdValue}`);
-            }
-        }
-        // Action key (E or Enter) to trigger transitions, farming, or mirror
-        if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
-            e.preventDefault();
-            console.log(`[Action Key Pressed] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
-
-            const playerTileX = Math.floor(playerPosRef.current.x);
-            const playerTileY = Math.floor(playerPosRef.current.y);
-            const currentMapIdValue = mapManager.getCurrentMapId();
-            const currentTime = Date.now();
-
-            // Check for farm action first (on current tile)
-            if (currentMapIdValue) {
-                const tileData = getTileData(playerTileX, playerTileY);
-                const currentTool = gameState.getFarmingTool();
-                const position = { x: playerTileX, y: playerTileY };
-
-                // Get the actual plot state (if it exists)
-                const plot = farmManager.getPlot(currentMapIdValue, position);
-                const plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
-
-                console.log(`[Action Key] Tile at (${playerTileX}, ${playerTileY}): visual type=${tileData?.type}, plot type=${plotTileType}, currentTool=${currentTool}`);
-
-                // Check if this is a farm tile or farm action (check both visual tile and plot state)
-                if ((tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) ||
-                    (plotTileType >= TileType.SOIL_FALLOW && plotTileType <= TileType.SOIL_DEAD)) {
-                    console.log(`[Action Key] Farm tile detected! Visual: ${tileData?.type}, Plot state: ${plotTileType}`);
-                    let farmActionTaken = false;
-
-                    if (currentTool === 'hoe' && plotTileType === TileType.SOIL_FALLOW) { // Till fallow soil
-                        console.log(`[Action Key] Attempting to till soil at (${playerTileX}, ${playerTileY})`);
-                        if (farmManager.tillSoil(currentMapIdValue, position)) {
-                            console.log('[Action Key] Tilled soil');
-                            farmActionTaken = true;
-                        }
-                    } else if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) { // Plant in tilled soil
-                        const selectedSeed = gameState.getSelectedSeed();
-                        console.log(`[Action Key] Attempting to plant: selectedSeed=${selectedSeed}`);
-                        if (selectedSeed && farmManager.plantSeed(currentMapIdValue, position, selectedSeed)) {
-                            // FarmManager consumed seed from inventory, save it
-                            const inventoryData = inventoryManager.getInventoryData();
-                            gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                            console.log(`[Action Key] Planted ${selectedSeed}`);
-                            farmActionTaken = true;
-                        } else {
-                            console.log(`[Action Key] Failed to plant: selectedSeed=${selectedSeed}, check inventory`);
-                        }
-                    } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING)) {
-                        // Water planted, watered, or wilting crops
-                        if (farmManager.waterPlot(currentMapIdValue, position)) {
-                            console.log('[Action Key] Watered crop');
-                            farmActionTaken = true;
-                        }
-                    } else if (currentTool === 'hand' && plotTileType === TileType.SOIL_READY) { // Harvest ready crop
-                        const result = farmManager.harvestCrop(currentMapIdValue, position);
-                        if (result) {
-                            const crop = getCrop(result.cropId);
-                            if (crop) {
-                                // FarmManager already added crops to inventory, just add gold
-                                gameState.addGold(crop.sellPrice * result.yield);
-                                // Save inventory to GameState
-                                const inventoryData = inventoryManager.getInventoryData();
-                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                                console.log(`[Action Key] Harvested ${result.yield}x ${crop.displayName}`);
-                            }
-                            farmActionTaken = true;
-                        }
-                    } else if (currentTool === 'hand' && plotTileType === TileType.SOIL_DEAD) { // Clear dead crop
-                        if (farmManager.clearDeadCrop(currentMapIdValue, position)) {
-                            console.log('[Action Key] Cleared dead crop');
-                            farmActionTaken = true;
-                        }
-                    }
-
-                    if (farmActionTaken) {
-                        // Update all plots to check for state changes (e.g., planted -> ready)
-                        farmManager.updateAllPlots();
-                        // Save farm state to GameState
-                        gameState.saveFarmPlots(farmManager.getAllPlots());
-                        // Force re-render to show updated tile
-                        setFarmUpdateTrigger((prev: number) => prev + 1);
-                        return; // Don't check for other interactions
-                    }
-                }
-            }
-
-            // Check for mirror interaction
-            const adjacentTiles = [
-                { x: playerTileX, y: playerTileY },
-                { x: playerTileX - 1, y: playerTileY },
-                { x: playerTileX + 1, y: playerTileY },
-                { x: playerTileX, y: playerTileY - 1 },
-                { x: playerTileX, y: playerTileY + 1 },
-            ];
-
-            let foundMirror = false;
-            for (const tile of adjacentTiles) {
-                const tileData = getTileData(tile.x, tile.y);
-                if (tileData && tileData.type === TileType.MIRROR) {
-                    console.log(`[Action Key] Found mirror at (${tile.x}, ${tile.y})`);
-                    setShowCharacterCreator(true);
-                    foundMirror = true;
-                    break;
-                }
-            }
-
-            if (foundMirror) {
-                return; // Don't check for transitions if we found a mirror
-            }
-
-            // Check for NPC interaction
-            const nearbyNPC = npcManager.getNPCAtPosition(playerPosRef.current);
-            if (nearbyNPC) {
-                console.log(`[Action Key] Interacting with NPC: ${nearbyNPC.name}`);
-
-                // Trigger NPC event if it has animated states
-                if (nearbyNPC.animatedStates) {
-                    npcManager.triggerNPCEvent(nearbyNPC.id, 'interact');
-                }
-
-                // Open dialogue if the NPC has dialogue (even if it also has animated states)
-                if (nearbyNPC.dialogue && nearbyNPC.dialogue.length > 0) {
-                    setActiveNPC(nearbyNPC.id);
-                }
-
-                return; // Don't check for transitions if interacting with NPC
-            }
-
-            const transitionData = mapManager.getTransitionAt(playerPosRef.current);
-            if (transitionData) {
-                const { transition } = transitionData;
-                console.log(`[Action Key] Found transition at (${transition.fromPosition.x}, ${transition.fromPosition.y})`);
-                console.log(`[Action Key] Transitioning from ${mapManager.getCurrentMapId()} to ${transition.toMapId}`);
-
-                try {
-                    // Transition to new map (pass current map ID for depth tracking)
-                    const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition, currentMapIdValue || undefined);
-                    console.log(`[Action Key] Successfully loaded map: ${map.id} (${map.name})`);
-                    setCurrentMapId(map.id);
-                    setPlayerPos(spawn);
-                    lastTransitionTime.current = Date.now();
-
-                    // Save player location when transitioning maps
-                    // Extract seed from random map IDs (e.g., "forest_1234" -> 1234)
-                    const seedMatch = map.id.match(/_([\d]+)$/);
-                    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
-                    gameState.updatePlayerLocation(map.id, spawn, seed);
-                } catch (error) {
-                    console.error(`[Action Key] ERROR transitioning to ${transition.toMapId}:`, error);
-                }
-            } else {
-                console.log(`[Action Key] No transition found near player position`);
-            }
-        }
-
-        // Tool switching keys (1-4)
-        if (e.key === '1') {
-            gameState.setFarmingTool('hand');
-        } else if (e.key === '2') {
-            gameState.setFarmingTool('hoe');
-        } else if (e.key === '3') {
-            gameState.setFarmingTool('seeds');
-        } else if (e.key === '4') {
-            gameState.setFarmingTool('wateringCan');
-        }
-
-        // Seed selection (keys 5-9) - only works when Seeds tool is selected
-        if (gameState.getFarmingTool() === 'seeds') {
-            if (e.key === '5') {
-                gameState.setSelectedSeed('radish');
-            } else if (e.key === '6') {
-                gameState.setSelectedSeed('tomato');
-            } else if (e.key === '7') {
-                gameState.setSelectedSeed('wheat');
-            } else if (e.key === '8') {
-                gameState.setSelectedSeed('corn');
-            } else if (e.key === '9') {
-                gameState.setSelectedSeed('pumpkin');
-            }
-        }
+    // Map transition handler
+    const handleMapTransition = (mapId: string, spawnPos: Position) => {
+        setCurrentMapId(mapId);
+        setPlayerPos(spawnPos);
+        lastTransitionTime.current = Date.now();
     };
 
-    const handleKeyUp = (e: KeyboardEvent) => {
-        keysPressed[e.key.toLowerCase()] = false;
+    // Farm update handler
+    const handleFarmUpdate = () => {
+        setFarmUpdateTrigger((prev: number) => prev + 1);
     };
 
-    // Touch control handlers
-    const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
-        const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
-        keysPressed[keyMap[direction]] = true;
-    };
+    // Setup keyboard controls
+    useKeyboardControls({
+        playerPosRef,
+        activeNPC,
+        showHelpBrowser,
+        keysPressed,
+        onShowCharacterCreator: setShowCharacterCreator,
+        onSetActiveNPC: setActiveNPC,
+        onSetDebugOpen: setDebugOpen,
+        onSetShowColorEditor: setShowColorEditor,
+        onSetShowHelpBrowser: setShowHelpBrowser,
+        onSetPlayerPos: setPlayerPos,
+        onMapTransition: handleMapTransition,
+        onFarmUpdate: handleFarmUpdate,
+    });
 
-    const handleDirectionRelease = (direction: 'up' | 'down' | 'left' | 'right') => {
-        const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
-        keysPressed[keyMap[direction]] = false;
-    };
+    // Setup touch controls
+    const touchControls = useTouchControls({
+        playerPosRef,
+        keysPressed,
+        onShowCharacterCreator: setShowCharacterCreator,
+        onSetActiveNPC: setActiveNPC,
+        onSetPlayerPos: setPlayerPos,
+        onMapTransition: handleMapTransition,
+    });
 
-    const handleActionPress = () => {
-        console.log(`[Touch Action] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
+    // Setup collision detection
+    const { checkCollision } = useCollisionDetection();
 
-        // Check for mirror interaction first
-        const playerTileX = Math.floor(playerPosRef.current.x);
-        const playerTileY = Math.floor(playerPosRef.current.y);
-
-        // Check adjacent tiles for mirror
-        const adjacentTiles = [
-            { x: playerTileX, y: playerTileY },
-            { x: playerTileX - 1, y: playerTileY },
-            { x: playerTileX + 1, y: playerTileY },
-            { x: playerTileX, y: playerTileY - 1 },
-            { x: playerTileX, y: playerTileY + 1 },
-        ];
-
-        let foundMirror = false;
-        for (const tile of adjacentTiles) {
-            const tileData = getTileData(tile.x, tile.y);
-            if (tileData && tileData.type === TileType.MIRROR) {
-                console.log(`[Touch Action] Found mirror at (${tile.x}, ${tile.y})`);
-                setShowCharacterCreator(true);
-                foundMirror = true;
-                break;
-            }
-        }
-
-        if (foundMirror) {
-            return; // Don't check for transitions if we found a mirror
-        }
-
-        // Check for NPC interaction
-        const nearbyNPC = npcManager.getNPCAtPosition(playerPosRef.current);
-        if (nearbyNPC) {
-            console.log(`[Touch Action] Interacting with NPC: ${nearbyNPC.name}`);
-            setActiveNPC(nearbyNPC.id);
-            return; // Don't check for transitions if talking to NPC
-        }
-
-        const transitionData = mapManager.getTransitionAt(playerPosRef.current);
-        if (transitionData) {
-            const { transition } = transitionData;
-            console.log(`[Touch Action] Found transition at (${transition.fromPosition.x}, ${transition.fromPosition.y})`);
-            console.log(`[Touch Action] Transitioning from ${mapManager.getCurrentMapId()} to ${transition.toMapId}`);
-
-            try {
-                // Transition to new map (pass current map ID for depth tracking)
-                const currentMapIdValue = mapManager.getCurrentMapId();
-                const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition, currentMapIdValue || undefined);
-                console.log(`[Touch Action] Successfully loaded map: ${map.id} (${map.name})`);
-                setCurrentMapId(map.id);
-                setPlayerPos(spawn);
-                lastTransitionTime.current = Date.now();
-
-                // Save player location when transitioning maps
-                // Extract seed from random map IDs (e.g., "forest_1234" -> 1234)
-                const seedMatch = map.id.match(/_([\\d]+)$/);
-                const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
-                gameState.updatePlayerLocation(map.id, spawn, seed);
-            } catch (error) {
-                console.error(`[Touch Action] ERROR transitioning to ${transition.toMapId}:`, error);
-            }
-        } else {
-            console.log(`[Touch Action] No transition found near player position`);
-        }
-    };
+    // Setup player movement
+    const { updatePlayerMovement } = usePlayerMovement({
+        keysPressed,
+        checkCollision,
+        playerPosRef,
+        lastDirectionRef,
+        onSetDirection: setDirection,
+        onSetAnimationFrame: setAnimationFrame,
+        onSetPlayerPos: setPlayerPos,
+    });
 
     const gameLoop = useCallback(() => {
         // Calculate delta time for frame-rate independent movement
@@ -493,164 +153,23 @@ const App: React.FC = () => {
             return;
         }
 
-        let vectorX = 0;
-        let vectorY = 0;
-
-        if (keysPressed['w'] || keysPressed['arrowup']) vectorY -= 1;
-        if (keysPressed['s'] || keysPressed['arrowdown']) vectorY += 1;
-        if (keysPressed['a'] || keysPressed['arrowleft']) vectorX -= 1;
-        if (keysPressed['d'] || keysPressed['arrowright']) vectorX += 1;
-
-        const isMoving = vectorX !== 0 || vectorY !== 0;
-
-        if (!isMoving) {
-            setAnimationFrame(0); // Reset to idle frame (frame 0)
-        } else {
-            // Determine direction
-            let newDirection: Direction | null = null;
-            if (vectorY < 0) newDirection = Direction.Up;
-            else if (vectorY > 0) newDirection = Direction.Down;
-            else if (vectorX < 0) newDirection = Direction.Left;
-            else if (vectorX > 0) newDirection = Direction.Right;
-
-            // Update direction when it changes
-            if (newDirection !== null && newDirection !== lastDirectionRef.current) {
-                setDirection(newDirection);
-                lastDirectionRef.current = newDirection;
-            }
-
-            // Animate based on time - cycle through walking frames only
-            if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
-                lastAnimationTime.current = now;
-                setAnimationFrame(prev => {
-                    // Immediately start walk animation if coming from idle (frame 0)
-                    // Then cycle between frames 1 and 2 for smooth walk animation
-                    if (prev === 0) return 1;
-                    return prev === 1 ? 2 : 1;
-                });
-            }
-        }
-
-        setPlayerPos(prevPos => {
-            if (!isMoving) return prevPos;
-
-            const magnitude = Math.sqrt(vectorX * vectorX + vectorY * vectorY);
-            if (magnitude === 0) return prevPos;
-
-            // Delta-time based movement: speed * deltaTime gives consistent movement regardless of frame rate
-            const dx = (vectorX / magnitude) * PLAYER_SPEED * deltaTime;
-            const dy = (vectorY / magnitude) * PLAYER_SPEED * deltaTime;
-
-            let nextPos = { ...prevPos };
-
-            const tempXPos = { ...nextPos, x: nextPos.x + dx };
-            if (!checkCollision(tempXPos)) {
-                nextPos.x += dx;
-            }
-
-            const tempYPos = { ...nextPos, y: nextPos.y + dy };
-            if (!checkCollision(tempYPos)) {
-                nextPos.y += dy;
-            }
-
-            const currentMap = mapManager.getCurrentMap();
-            if (currentMap) {
-                nextPos.x = Math.max(PLAYER_SIZE / 2, Math.min(currentMap.width - (PLAYER_SIZE / 2), nextPos.x));
-                nextPos.y = Math.max(PLAYER_SIZE / 2, Math.min(currentMap.height - (PLAYER_SIZE / 2), nextPos.y));
-            }
-
-            playerPosRef.current = nextPos; // Keep ref in sync
-            return nextPos;
-        });
+        // Update player movement (handles input, animation, collision, and position)
+        updatePlayerMovement(deltaTime, now);
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
-    }, [direction, keysPressed, checkCollision, playerSprites, activeNPC]);
+    }, [updatePlayerMovement, activeNPC]);
 
     // Disabled automatic transitions - now using action key (E or Enter)
 
-    // Initialize maps on startup (only once)
+    // Initialize game on startup (only once)
     useEffect(() => {
-        // Expose gameState to window for palette system
-        (window as any).gameState = gameState;
-
-        // Load saved custom colors and initialize palette
-        const savedColors = gameState.loadCustomColors();
-        initializePalette(savedColors); // Initialize color palette (must be first)
-
-        runSelfTests(); // Run sanity checks on startup
-        initializeMaps(); // Initialize all maps and color schemes
-
-        // Preload all assets early to prevent lag on first use
-        preloadAllAssets({
-            onProgress: (loaded, total) => {
-                console.log(`[App] Asset preload progress: ${loaded}/${total}`);
-            },
-            onComplete: () => {
-                console.log('[App] All assets preloaded successfully');
-            },
-        });
-
-        // Load inventory from saved state
-        const savedInventory = gameState.loadInventory();
-        if (savedInventory.items.length > 0 || savedInventory.tools.length > 0) {
-            inventoryManager.loadInventory(savedInventory.items, savedInventory.tools);
-            console.log(`[App] Loaded inventory: ${savedInventory.items.length} items, ${savedInventory.tools.length} tools`);
-        } else {
-            // First time: initialize with starter items
-            inventoryManager.initializeStarterItems();
-            const inventoryData = inventoryManager.getInventoryData();
-            gameState.saveInventory(inventoryData.items, inventoryData.tools);
-            console.log('[App] Initialized starter inventory');
-        }
-
-        // Load farm plots from saved state
-        const savedPlots = gameState.loadFarmPlots();
-        farmManager.loadPlots(savedPlots);
-        console.log(`[App] Loaded ${savedPlots.length} farm plots from save`);
-
-        // Update farm states on startup (uses TimeManager internally)
-        farmManager.updateAllPlots();
-
-        // If loading a random map, regenerate it with the saved seed
-        const savedLocation = gameState.getPlayerLocation();
-        if (savedLocation.mapId.match(/^(forest|cave|shop)_\d+$/)) {
-            // Regenerate the random map with the saved seed
-            const mapType = savedLocation.mapId.split('_')[0];
-            const seed = savedLocation.seed || Date.now();
-
-            console.log(`[App] Regenerating ${mapType} map with seed ${seed}`);
-
-            // Import and call the appropriate generator
-            import('./maps/procedural').then(({ generateRandomForest, generateRandomCave, generateRandomShop }) => {
-                let newMap;
-                if (mapType === 'forest') {
-                    newMap = generateRandomForest(seed);
-                } else if (mapType === 'cave') {
-                    newMap = generateRandomCave(seed);
-                } else if (mapType === 'shop') {
-                    const playerLoc = gameState.getPlayerLocation();
-                    newMap = generateRandomShop(seed, playerLoc.mapId, playerLoc.position);
-                }
-
-                if (newMap) {
-                    mapManager.registerMap(newMap);
-                    mapManager.loadMap(newMap.id);
-                    setIsMapInitialized(true);
-                }
-            });
-        } else {
-            // Load regular map normally
-            mapManager.loadMap(currentMapId);
-            setIsMapInitialized(true);
-        }
+        initializeGame(currentMapId, setIsMapInitialized);
     }, []); // Only run once on mount
 
-    // Set up game loop and event listeners after map is initialized
+    // Set up game loop and farm update interval after map is initialized
+    // Note: Keyboard event listeners now managed by useKeyboardControls hook
     useEffect(() => {
         if (!isMapInitialized) return;
-
-        window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
 
@@ -661,8 +180,6 @@ const App: React.FC = () => {
         }, 2000); // Check every 2 seconds for smoother visual updates
 
         return () => {
-            window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
             if (animationFrameId.current) {
                 cancelAnimationFrame(animationFrameId.current);
             }
@@ -852,87 +369,10 @@ const App: React.FC = () => {
                             }
                         }
 
-                        // Add variations for tiles with images (rocks, mushrooms, grass, etc.)
-                        let transform = 'none';
-                        let filter = 'none';
-                        let sizeScale = 1.0;
-
-                        if (selectedImage) {
-                            // Use completely different hash seeds for each variation (avoid reusing previous hashes)
-                            const flipHash = Math.abs(Math.sin(x * 87.654 + y * 21.987) * 67890.1234);
-                            const sizeHash = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
-                            const rotHash = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
-                            const brightHash = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
-
-                            // Determine which tiles should NOT be rotated (but can still be flipped/scaled)
-                            const shouldNotRotate =
-                                tileData.type === TileType.GRASS ||
-                                tileData.type === TileType.TREE ||
-                                tileData.type === TileType.TREE_BIG ||
-                                tileData.type === TileType.WALL_BOUNDARY ||
-                                tileData.type === TileType.WALL ||
-                                tileData.type === TileType.DOOR ||
-                                tileData.type === TileType.SOIL_TILLED ||
-                                tileData.type === TileType.FLOOR ||
-                                tileData.type === TileType.FLOOR_LIGHT ||
-                                tileData.type === TileType.FLOOR_DARK;
-
-                            // Determine which tiles should have NO variations at all
-                            const shouldNotTransform =
-                                tileData.type === TileType.WALL_BOUNDARY ||
-                                tileData.type === TileType.BUILDING_WALL ||
-                                tileData.type === TileType.BUILDING_ROOF ||
-                                tileData.type === TileType.BUILDING_DOOR ||
-                                tileData.type === TileType.WALL ||
-                                tileData.type === TileType.DOOR;
-
-                            if (!shouldNotTransform) {
-                                // Horizontal flip (left/right, 50% chance)
-                                const shouldFlipX = (flipHash % 1) > 0.5;
-                                const flipScaleX = shouldFlipX ? -1 : 1;
-
-                                // Size variation - more subtle for trees (0.95x to 1.05x), normal for others (0.85x to 1.15x)
-                                // No size variation for tilled soil, floor tiles, or farm plants
-                                const isTree = tileData.type === TileType.TREE || tileData.type === TileType.TREE_BIG || tileData.type === TileType.BUSH;
-                                const isTilledSoil = tileData.type === TileType.SOIL_TILLED;
-                                const isFloor = tileData.type === TileType.FLOOR || tileData.type === TileType.FLOOR_LIGHT || tileData.type === TileType.FLOOR_DARK;
-                                const isPath = tileData.type === TileType.PATH;
-                                const isFarmPlant = tileData.type === TileType.SOIL_PLANTED ||
-                                                    tileData.type === TileType.SOIL_WATERED ||
-                                                    tileData.type === TileType.SOIL_READY ||
-                                                    tileData.type === TileType.SOIL_WILTING;
-
-                                sizeScale = isTilledSoil || isFloor || isFarmPlant
-                                    ? 1.0  // No size variation for tilled soil, floor tiles, or farm plants
-                                    : isPath
-                                    ? 0.7 + (sizeHash % 1) * 0.6  // More pronounced variation for stepping stones: 70% to 130%
-                                    : isTree
-                                    ? 0.95 + (sizeHash % 1) * 0.1  // Subtle variation for trees: 95% to 105%
-                                    : 0.85 + (sizeHash % 1) * 0.3; // Normal variation for other tiles: 85% to 115%
-
-                                // Rotation variation only for decorative objects (not grass/ground/floors)
-                                let rotation = 0;
-                                if (!shouldNotRotate) {
-                                    if (tileData.type === TileType.SOIL_FALLOW) {
-                                        // Fallow soil: Only 0 or 180 degrees (horizontal flip only, no vertical)
-                                        rotation = (rotHash % 1) > 0.5 ? 180 : 0;
-                                    } else if (tileData.type === TileType.PATH) {
-                                        // Stepping stones: Full 360 degree rotation for maximum variety
-                                        rotation = (rotHash % 1) * 360;
-                                    } else {
-                                        // Other tiles: Subtle rotation
-                                        rotation = -5 + (rotHash % 1) * 10;
-                                    }
-                                }
-
-                                // Combine transforms
-                                transform = `scaleX(${flipScaleX}) rotate(${rotation}deg)`;
-
-                                // Brightness variation (0.95 to 1.05 = 95% to 105% brightness) - more subtle
-                                const brightness = 0.95 + (brightHash % 1) * 0.1;
-                                filter = `brightness(${brightness})`;
-                            }
-                        }
+                        // Calculate transforms using centralized utility (respects tile's transform settings)
+                        const { transform, filter, sizeScale } = selectedImage
+                            ? calculateTileTransforms(tileData, x, y)
+                            : { transform: 'none', filter: 'none', sizeScale: 1.0 };
 
                         return (
                             <div
@@ -1083,53 +523,16 @@ const App: React.FC = () => {
                         const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData.type);
                         if (!spriteMetadata || !spriteMetadata.isForeground) return null;
 
-                        // Generate deterministic hashes for this position
-                        const hash1 = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
-                        const hash2 = Math.abs(Math.sin(x * 93.9898 + y * 47.233) * 28473.5453);
-                        const hash3 = Math.abs(Math.sin(x * 51.1234 + y * 31.567) * 19283.1234);
-                        const hash4 = Math.abs(Math.sin(x * 73.4567 + y * 89.123) * 37492.8765);
+                        // Apply CSS transforms based on sprite metadata settings (using centralized utility)
+                        const spriteTransforms = calculateSpriteTransforms(
+                            spriteMetadata,
+                            x,
+                            y,
+                            spriteMetadata.spriteWidth,
+                            spriteMetadata.spriteHeight
+                        );
 
-                        // Apply CSS transforms based on sprite metadata settings
-                        let flipScale = 1;
-                        let sizeVariation = 1;
-                        let rotation = 0;
-                        let brightness = 1;
-
-                        // Horizontal flip (defaults to enabled for foreground sprites)
-                        const enableFlip = spriteMetadata.enableFlip !== false; // default true
-                        if (enableFlip) {
-                            const shouldFlip = (hash1 % 1) > 0.5;
-                            flipScale = shouldFlip ? -1 : 1;
-                        }
-
-                        // Size variation (defaults to enabled with range based on settings)
-                        const enableScale = spriteMetadata.enableScale !== false; // default true
-                        if (enableScale) {
-                            const scaleRange = spriteMetadata.scaleRange || { min: 0.85, max: 1.15 }; // default range
-                            sizeVariation = scaleRange.min + (hash2 % 1) * (scaleRange.max - scaleRange.min);
-                        }
-
-                        // Rotation variation (defaults to enabled)
-                        const enableRotation = spriteMetadata.enableRotation !== false; // default true
-                        if (enableRotation) {
-                            const rotationRange = spriteMetadata.rotationRange || { min: -8, max: 8 }; // default range
-                            rotation = rotationRange.min + (hash3 % 1) * (rotationRange.max - rotationRange.min);
-                        }
-
-                        // Brightness variation (defaults to enabled)
-                        const enableBrightness = spriteMetadata.enableBrightness !== false; // default true
-                        if (enableBrightness) {
-                            const brightnessRange = spriteMetadata.brightnessRange || { min: 0.9, max: 1.1 }; // default range
-                            brightness = brightnessRange.min + (hash4 % 1) * (brightnessRange.max - brightnessRange.min);
-                        }
-
-                        // Calculate dimensions with size variation
-                        const variedWidth = spriteMetadata.spriteWidth * sizeVariation;
-                        const variedHeight = spriteMetadata.spriteHeight * sizeVariation;
-
-                        // Adjust position to keep sprite centered at original position
-                        const widthDiff = (spriteMetadata.spriteWidth - variedWidth) / 2;
-                        const heightDiff = (spriteMetadata.spriteHeight - variedHeight) / 2;
+                        const { flipScale, rotation, brightness, variedWidth, variedHeight, widthDiff, heightDiff } = spriteTransforms;
 
                         // Determine which image to use (seasonal or default) - season cached above
                         let spriteImage: string;
@@ -1321,17 +724,10 @@ const App: React.FC = () => {
 
             {isTouchDevice && (
                 <TouchControls
-                    onDirectionPress={handleDirectionPress}
-                    onDirectionRelease={handleDirectionRelease}
-                    onActionPress={handleActionPress}
-                    onResetPress={() => {
-                        const currentMap = mapManager.getCurrentMap();
-                        if (currentMap && currentMap.spawnPoint) {
-                            console.log('[Touch Reset] Teleporting to spawn point:', currentMap.spawnPoint);
-                            setPlayerPos(currentMap.spawnPoint);
-                            playerPosRef.current = currentMap.spawnPoint;
-                        }
-                    }}
+                    onDirectionPress={touchControls.handleDirectionPress}
+                    onDirectionRelease={touchControls.handleDirectionRelease}
+                    onActionPress={touchControls.handleActionPress}
+                    onResetPress={touchControls.handleResetPress}
                 />
             )}
             {activeNPC && (

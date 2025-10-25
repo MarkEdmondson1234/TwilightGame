@@ -36,13 +36,51 @@ export function runSelfTests(): void {
 
 /**
  * Validate TileType enum matches TILE_LEGEND
+ * Ensures all TileType enum values have corresponding TILE_LEGEND entries
  */
 function validateTileLegend(): void {
-  const tileTypeCount = Object.keys(TileType).filter(key => isNaN(Number(key))).length;
-  if (tileTypeCount !== TILE_LEGEND.length) {
-    console.warn(
-      `[Sanity Check] Mismatch: TileType enum has ${tileTypeCount} members, but TILE_LEGEND has ${TILE_LEGEND.length} entries.`
+  const tileTypeNames = Object.keys(TileType).filter(key => isNaN(Number(key)));
+  const legendKeys = Object.keys(TILE_LEGEND).map(key => parseInt(key, 10));
+
+  // Check that all enum values have TILE_LEGEND entries
+  const missingInLegend: string[] = [];
+  for (const name of tileTypeNames) {
+    const enumValue = TileType[name as keyof typeof TileType];
+    if (TILE_LEGEND[enumValue] === undefined) {
+      missingInLegend.push(`${name} (${enumValue})`);
+    }
+  }
+
+  if (missingInLegend.length > 0) {
+    console.error(
+      `[Sanity Check] ❌ CRITICAL: TileType enum values missing from TILE_LEGEND:`,
+      missingInLegend
     );
+  }
+
+  // Check for extra TILE_LEGEND keys not in enum
+  const validEnumValues = new Set(
+    tileTypeNames.map(name => TileType[name as keyof typeof TileType])
+  );
+  const extraKeys = legendKeys.filter(key => !validEnumValues.has(key));
+
+  if (extraKeys.length > 0) {
+    console.error(
+      `[Sanity Check] ❌ CRITICAL: TILE_LEGEND has keys not in TileType enum:`,
+      extraKeys
+    );
+  }
+
+  // Verify count matches
+  if (tileTypeNames.length !== legendKeys.length) {
+    console.error(
+      `[Sanity Check] ❌ Count mismatch: TileType has ${tileTypeNames.length} members, TILE_LEGEND has ${legendKeys.length} entries`
+    );
+  }
+
+  // All checks passed
+  if (missingInLegend.length === 0 && extraKeys.length === 0) {
+    console.log(`[Sanity Check] ✓ TILE_LEGEND validated: ${tileTypeNames.length} tile types`);
   }
 }
 

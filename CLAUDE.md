@@ -71,11 +71,32 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 
 ### Core Files
 
-- `App.tsx` - Main game loop, player movement, collision detection, rendering, camera system, map transitions
+- `App.tsx` - Main component: rendering, camera system, game loop orchestration (771 lines)
 - `constants.ts` - Game constants (`TILE_SIZE`, `PLAYER_SIZE`), tile legend with all tile types
 - `types.ts` - TypeScript types including `TileType`, `Position`, `Direction`, `MapDefinition`, `Transition`, `ColorScheme`
+
+### Hooks (`hooks/`)
+
+Custom React hooks for game systems:
+
+- `hooks/useKeyboardControls.ts` - Keyboard input handling (F-keys, WASD, E, R, tool switching)
+- `hooks/useTouchControls.ts` - Touch control handling (direction pad, action button)
+- `hooks/useCollisionDetection.ts` - Player collision detection (tiles and multi-tile sprites)
+- `hooks/usePlayerMovement.ts` - Player movement logic (input processing, animation, position updates)
+- `hooks/useTouchDevice.ts` - Touch device detection
+
+### Utilities (`utils/`)
+
+Pure functions and game systems:
+
+- `utils/gameInitializer.ts` - Game startup (palette, maps, assets, inventory, farm plots)
+- `utils/actionHandlers.ts` - Shared action logic (mirror, NPC, transition, farming interactions)
 - `utils/mapUtils.ts` - Tile data access via MapManager
 - `utils/testUtils.ts` - Startup sanity checks
+- `utils/tileRenderUtils.ts` - Tile transform calculations
+- `utils/farmManager.ts` - Farm plot management
+- `utils/characterSprites.ts` - Character sprite generation
+- `utils/TimeManager.ts` - In-game time/calendar system
 
 ### Map System (`maps/`)
 
@@ -86,44 +107,67 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 - `maps/procedural.ts` - Random map generators (forest, cave, shop)
 - `maps/definitions/` - Designed map files (homeInterior, village, etc.)
 
-### Components
+### Components (`components/`)
 
-- `components/HUD.tsx` - Heads-up display
+- `components/HUD.tsx` - Heads-up display (time, gold, tools, inventory)
+- `components/TouchControls.tsx` - Mobile touch controls UI
 - `components/DebugOverlay.tsx` - Debug information (toggle with F3)
 - `components/DebugInfoPanel.tsx` - Debug panel component
+- `components/CharacterCreator.tsx` - Character customization UI
+- `components/DialogueBox.tsx` - NPC dialogue display
+- `components/ColorSchemeEditor.tsx` - Runtime color scheme editing
+- `components/HelpBrowser.tsx` - In-game documentation browser (F1)
 - `components/Modal.tsx` - Modal component
 
 ### Game Systems
 
-**Player System** (`App.tsx:9-106`):
-- Movement: WASD/Arrow keys, normalized diagonal movement at `PLAYER_SPEED` (0.1 tiles/frame)
-- Animation: 4-frame walk cycle per direction (frame 0 = idle), controlled by `ANIMATION_SPEED_MS` (150ms)
-- Collision: Checks all tiles within player bounding box using `getTileData()`, independent X/Y axis collision
+**Input System** (`hooks/useKeyboardControls.ts`, `hooks/useTouchControls.ts`):
+- Keyboard: WASD/arrows for movement, E/Enter for actions, F-keys for UI, 1-9 for tools/seeds
+- Touch: On-screen D-pad and action button for mobile devices
+- Shared action handlers in `utils/actionHandlers.ts` eliminate code duplication
+- Architecture: Input hooks → Action handlers → Game state updates
+
+**Player System** (`hooks/usePlayerMovement.ts`, `hooks/useCollisionDetection.ts`):
+- Movement: Frame-rate independent delta-time based movement (5.0 tiles/second)
+- Animation: 4-frame walk cycle per direction (frame 0 = idle), 150ms between frames
+- Collision: Independent X/Y axis collision, supports both regular tiles and multi-tile sprites
+- Boundary: Clamped to current map bounds
+- Architecture: Isolated collision detection and movement logic in dedicated hooks
 
 **Map System** (`maps/MapManager.ts`):
-- Manages multiple maps (both designed and procedurally generated)
-- Handles map transitions when player steps on transition tiles
+- **Single Source of Truth**: All map data flows through MapManager
+- Supports designed maps (grid-based) and procedurally generated maps (random seed-based)
+- Handles map transitions when player activates transition tiles
 - Applies color schemes dynamically per map theme
-- Supports both grid-based designed maps (child-friendly) and procedural generation
 - Starting map: `home_interior` (small indoor room)
 - Hub map: `village` (30x30 outdoor area with multiple exits)
 - Random maps: forest, cave, shop (generated on demand with `RANDOM_*` IDs)
 
-**Tile System**:
-- 13 tile types: outdoor (grass, rock, water, path), indoor (floor, wall, carpet), transitions (doors), furniture (table, chair)
+**Tile System** (`constants.ts`, `utils/tileRenderUtils.ts`):
+- Tile data stored in `TILE_LEGEND` Record (not array - order-independent)
+- 13+ tile types: outdoor (grass, rock, water, path), indoor (floor, wall, carpet), transitions (doors), furniture (table, chair, sofa, bed)
 - Child-friendly grid codes: `G`=grass, `R`=rock, `#`=wall, `F`=floor, `D`=door, etc.
 - Color schemes override tile colors per map theme (indoor, village, forest, cave, water_area, shop)
+- Optional transforms (flip, rotate, scale, brightness) defined per tile type (opt-in model)
 - See `MAP_GUIDE.md` for map creation instructions
 
-**Transition System** (`App.tsx:115-126`):
-- Detects when player position matches a transition tile
-- Loads target map and teleports player to spawn point
-- Supports transitions to specific maps or random map generation
-- Each transition defines: from position, tile type, target map ID, spawn point
+**Action System** (`utils/actionHandlers.ts`):
+- Mirror interaction: Opens character creator
+- NPC interaction: Triggers dialogue or events
+- Map transitions: Loads new map and teleports player
+- Farming actions: Till, plant, water, harvest based on current tool
+- Architecture: Reusable action functions shared between keyboard and touch input
 
-**Camera System**:
+**Initialization System** (`utils/gameInitializer.ts`):
+- Game startup orchestration: palette → self-tests → maps → assets → inventory → farm plots
+- Handles regeneration of random maps from saved seeds
+- Initializes starter inventory for new players
+- Runs all sanity checks before game starts
+
+**Camera System** (`App.tsx`):
 - Follows player with centered viewport
 - Clamped to current map boundaries (varies per map)
+- Viewport culling: Only renders visible tiles for performance
 
 ## Creating New Maps
 
@@ -194,6 +238,174 @@ Multi-tile sprites (furniture, large objects) require special handling:
    }
    ```
 
+## Code Maintenance Guidelines
+
+**CRITICAL**: These guidelines keep the codebase clean, maintainable, and a joy to work with. Follow them rigorously to prevent technical debt.
+
+### File Size and Component Complexity
+
+**The 500-Line Rule**: No single file should exceed ~500 lines. When a file approaches this limit, it's time to refactor.
+
+**Warning Signs That Refactoring Is Needed:**
+- File exceeds 500 lines
+- Function/component exceeds 100 lines
+- More than 3 levels of nesting
+- Duplicated code between functions
+- Multiple responsibilities in one file
+- Difficulty finding specific logic
+- Long import lists (>15 imports)
+
+**How to Refactor (Lessons from App.tsx refactoring):**
+
+1. **Extract Input Handlers to Hooks**
+   - Move keyboard/touch/controller input to `hooks/useKeyboardControls.ts`, `hooks/useTouchControls.ts`
+   - Benefits: Testable, reusable, separates concerns
+   - Example: Reduced App.tsx from 1,302 → 950 lines (-27%)
+
+2. **Extract Shared Logic to Utilities**
+   - Common action patterns go to `utils/actionHandlers.ts`
+   - Eliminates duplication between input methods
+   - Makes logic reusable across the codebase
+
+3. **Extract Complex Calculations to Hooks**
+   - Collision detection → `hooks/useCollisionDetection.ts`
+   - Player movement → `hooks/usePlayerMovement.ts`
+   - Benefits: Isolated, testable, easy to modify
+
+4. **Extract Initialization to Utilities**
+   - Game startup logic → `utils/gameInitializer.ts`
+   - Keeps component focused on rendering and state
+   - Example: 75 lines of init code → 1 function call
+
+5. **Extract Large Rendering to Components**
+   - If a render section is >100 lines, extract to component
+   - Pass props for data, keep parent clean
+   - Use React.memo for performance
+
+**Refactoring Checklist:**
+- [ ] Run `npx tsc --noEmit` before and after
+- [ ] Test in browser after changes
+- [ ] Update documentation if APIs change
+- [ ] Remove unused imports
+- [ ] Remove dead code
+- [ ] Check HMR still works
+
+### Organization Patterns
+
+**File Structure:**
+```
+hooks/           - Custom React hooks (input, collision, movement, etc.)
+utils/           - Pure functions and utilities (no React)
+components/      - Reusable UI components
+maps/            - Map system (definitions, manager, generators)
+data/            - Game data (crops, items, NPCs)
+```
+
+**Naming Conventions:**
+- Hooks: `use` prefix (e.g., `usePlayerMovement.ts`)
+- Components: PascalCase (e.g., `TileRenderer.tsx`)
+- Utilities: camelCase (e.g., `gameInitializer.ts`)
+- Types: PascalCase (e.g., `Position`, `Direction`)
+- Constants: SCREAMING_SNAKE_CASE (e.g., `TILE_SIZE`)
+
+**When to Create a New File:**
+- Logic is >100 lines
+- Logic is reused in 2+ places
+- Logic has a single, clear responsibility
+- You want to test it independently
+
+### Code Quality Standards
+
+**TypeScript:**
+- Always use strict mode
+- No `any` types (use `unknown` and type guards)
+- Define interfaces for all data structures
+- Use discriminated unions for state variants
+- Export types alongside functions
+
+**React Hooks:**
+- Keep hooks focused (one responsibility)
+- Return objects, not arrays (clearer API)
+- Use `useCallback` for functions passed as props
+- Use `useMemo` for expensive calculations
+- Document hook parameters with TypeScript interfaces
+
+**Performance:**
+- Avoid re-renders: use refs for values that don't affect rendering
+- Memoize expensive operations
+- Keep game loop lean (delegate to hooks/utilities)
+- Use `React.memo` for components that rarely change
+
+**Comments:**
+- Explain **why**, not **what** (code should be self-documenting)
+- Add comments for non-obvious algorithms
+- Document tricky edge cases
+- Keep comments up-to-date when code changes
+
+### Testing and Validation
+
+**Before Committing:**
+1. Run `npx tsc --noEmit` - Must pass with zero errors
+2. Test in browser - Game must run without console errors
+3. Check HMR - Changes should hot-reload
+4. Review self-tests - Startup sanity checks must pass
+
+**When Adding Features:**
+1. Add constants to `constants.ts` (no magic numbers)
+2. Add TypeScript types to `types.ts`
+3. Add sanity checks to `utils/testUtils.ts` for critical systems
+4. Update relevant documentation in `docs/`
+
+### Don't Repeat Yourself (DRY)
+
+**Common Duplication Patterns to Avoid:**
+- Same logic in keyboard and touch handlers → Extract to `utils/actionHandlers.ts`
+- Repeated calculations in render → Extract to hook or utility
+- Multiple files accessing same data → Create single source of truth (manager/utility)
+- Similar components with slight variations → Use props to handle variations
+
+**When You Notice Duplication:**
+1. Extract common logic to utility function
+2. Create shared hook if React-specific
+3. Document the new function
+4. Replace all duplicates with the extracted version
+5. Run TypeScript check to catch any issues
+
+### Single Responsibility Principle
+
+**Each file/function should do ONE thing well:**
+- ✅ GOOD: `useKeyboardControls` - handles keyboard input only
+- ❌ BAD: `useInput` - handles keyboard, mouse, touch, gamepad, and gestures
+
+**Each hook should have a clear, focused API:**
+- ✅ GOOD: `useCollisionDetection()` returns `{ checkCollision }`
+- ❌ BAD: `useGame()` returns 50+ functions and values
+
+**Each utility should solve one problem:**
+- ✅ GOOD: `gameInitializer.ts` - handles game startup
+- ❌ BAD: `gameHelpers.ts` - 2,000 lines of random utilities
+
+### Performance Optimization
+
+**Game Loop Optimization:**
+- Keep game loop <50 lines
+- Delegate to hooks and utilities
+- Avoid state updates in tight loops
+- Use refs for values that change every frame
+- Only trigger re-renders when visuals need updating
+
+**Rendering Optimization:**
+- Cull off-screen tiles (viewport culling)
+- Use `React.memo` for static components
+- Avoid inline function creation in render
+- Use stable object references (useCallback, useMemo)
+
+**Asset Optimization:**
+- Run `npm run optimize-assets` after adding images
+- Use sprite sheets instead of individual frames
+- Lazy-load assets not needed at startup
+- Preload critical assets in `gameInitializer.ts`
+
 ## Development Guidelines
 
 1. **Validate changes**: After making code changes, ALWAYS run `npx tsc --noEmit` to check for TypeScript errors before considering the task complete
@@ -205,6 +417,8 @@ Multi-tile sprites (furniture, large objects) require special handling:
 7. **Follow existing patterns**: Independent X/Y collision, deterministic tile variation selection
 8. **Map creation**: Use child-friendly grid codes, register all maps in `maps/index.ts`
 9. **Color schemes**: Every map must reference a valid color scheme from `colorSchemes.ts`
+10. **Watch file sizes**: Refactor files that exceed 500 lines (see Code Maintenance Guidelines above)
+11. **Extract, don't expand**: When adding features, create new focused files rather than growing existing ones
 
 ## Testing with Chrome DevTools MCP
 

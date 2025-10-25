@@ -72,6 +72,21 @@ export interface SeasonalImageSet {
   default: string[];  // Default images used in all seasons
 }
 
+export interface TileTransformSettings {
+    enableFlip?: boolean;      // Enable horizontal flip (default: false)
+    enableRotation?: boolean;  // Enable rotation (default: false)
+    enableScale?: boolean;     // Enable size variation (default: false)
+    enableBrightness?: boolean; // Enable brightness variation (default: false)
+
+    // Fine-tune ranges (only used if corresponding enable* is true)
+    scaleRange?: { min: number; max: number };      // Size variation range
+    rotationRange?: { min: number; max: number };   // Rotation in degrees
+    brightnessRange?: { min: number; max: number }; // Brightness multiplier
+
+    // Special rotation modes for specific tile types
+    rotationMode?: 'subtle' | 'full360' | 'flip180';  // Rotation behavior
+}
+
 export interface TileData {
     type: TileType;
     name: string;
@@ -80,6 +95,7 @@ export interface TileData {
     image?: string[];  // Simple array of images (backward compatible)
     seasonalImages?: SeasonalImageSet;  // Seasonal variations (new)
     baseType?: TileType;  // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
+    transforms?: TileTransformSettings;  // Transform settings (optional, defaults to no transforms)
 }
 
 // Multi-tile sprite metadata for foreground rendering

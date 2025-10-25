@@ -35,10 +35,10 @@ export const PLAYER_SPRITES: Record<Direction, string[]> = {
 };
 
 // Tile images with placeholders - colors will be overridden by map's color scheme
-// this MUST match the order of enum TileTypes in types.ts
-export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
-  // Outdoor tiles (0-3)
-  {
+// Now defined as a Record, no ordering requirement!
+export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
+  // Outdoor tiles
+  [TileType.GRASS]: {
     name: 'Grass',
     color: 'bg-palette-sage',  // Base color, overridden by map color scheme
     isSolid: false,
@@ -46,23 +46,31 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
       tileAssets.grass_1,
       tileAssets.grass_2,
     ]
-  }, // GRASS = 0
-  {
+  },
+  [TileType.ROCK]: {
     name: 'Rock',
     color: 'bg-palette-sage',  // Use grass color so rocks blend with ground
     isSolid: true,
     image: [
       tileAssets.rock_1,
       tileAssets.rock_2,
-    ]
-  }, // ROCK = 1
-  {
+    ],
+    transforms: {
+      enableFlip: true,
+      enableScale: true,
+      enableRotation: true,
+      enableBrightness: true,
+      scaleRange: { min: 0.85, max: 1.15 },
+      rotationRange: { min: -5, max: 10 },
+    },
+  },
+  [TileType.WATER]: {
     name: 'Water',
     color: 'bg-palette-sky',  // Base water color
     isSolid: true,
     image: []
-  }, // WATER = 2
-  {
+  },
+  [TileType.PATH]: {
     name: 'Path',
     color: 'bg-palette-sage',  // Use grass color as background so stepping stones blend naturally
     isSolid: false,
@@ -79,111 +87,128 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
       tileAssets.stepping_stones_4,
       tileAssets.stepping_stones_4,
       tileAssets.stepping_stones_4   // stepping_stones_4: 25%
-    ]
-  }, // PATH = 3
+    ],
+    transforms: {
+      enableFlip: true,
+      enableScale: true,
+      enableRotation: true,
+      rotationMode: 'full360',  // Full 360-degree rotation for variety
+      scaleRange: { min: 0.7, max: 1.3 },  // More pronounced variation for stepping stones
+    },
+  },
 
-  // Indoor tiles (4-8)
-  {
+  // Indoor tiles
+  [TileType.FLOOR]: {
     name: 'Floor',
     color: 'bg-palette-tan',  // Base floor color
     isSolid: false,
     image: [tileAssets.floor_1]
-  }, // FLOOR = 4
-  {
+  },
+  [TileType.FLOOR_LIGHT]: {
     name: 'Floor Light',
     color: 'bg-palette-tan',  // Base floor color
     isSolid: false,
     image: [tileAssets.floor_light]
-  }, // FLOOR_LIGHT = 5
-  {
+  },
+  [TileType.FLOOR_DARK]: {
     name: 'Floor Dark',
     color: 'bg-palette-tan',  // Base floor color
     isSolid: false,
     image: [tileAssets.floor_dark]
-  }, // FLOOR_DARK = 6
-  {
+  },
+  [TileType.WALL]: {
     name: 'Wall',
     color: 'bg-palette-brown',  // Base wall color
     isSolid: true,
     image: []
-  }, // WALL = 7
-  {
+  },
+  [TileType.CARPET]: {
     name: 'Carpet',
     color: 'bg-palette-burgundy',  // Base carpet color
     isSolid: false,
     image: []
-  }, // CARPET = 6
-  {
+  },
+  [TileType.RUG]: {
     name: 'Rug',
     color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
     isSolid: false,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
-  }, // RUG = 7
-  // Transition tiles (8-11)
-  {
+  },
+
+  // Transition tiles
+  [TileType.DOOR]: {
     name: 'Door',
     color: 'bg-palette-chocolate',  // Base door color
     isSolid: false,
     image: [tileAssets.door_1]
-  }, // DOOR = 7
-  {
+  },
+  [TileType.EXIT_DOOR]: {
     name: 'Exit Door',
     color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
     image: [tileAssets.door_1]
-  }, // EXIT_DOOR = 8
-  {
+  },
+  [TileType.SHOP_DOOR]: {
     name: 'Shop Door',
     color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
     image: [tileAssets.door_1]
-  }, // SHOP_DOOR = 9
-  {
+  },
+  [TileType.MINE_ENTRANCE]: {
     name: 'Mine Entrance',
     color: 'bg-palette-rust',  // Base special tile color
     isSolid: false,
     image: [tileAssets.door_1]
-  }, // MINE_ENTRANCE = 10
+  },
 
-  // Furniture/objects (11-12)
-  {
+  // Furniture/objects
+  [TileType.TABLE]: {
     name: 'Table',
     color: 'bg-palette-khaki',  // Base furniture color
     isSolid: true,  // Solid - can't walk through tables
     image: []
-  }, // TABLE = 11
-  {
+  },
+  [TileType.CHAIR]: {
     name: 'Chair',
     color: 'bg-palette-khaki',  // Base furniture color
     isSolid: false,
     image: []
-  }, // CHAIR = 12
-  {
+  },
+  [TileType.MIRROR]: {
     name: 'Mirror',
     color: 'bg-cyan-300',
     isSolid: false,
     image: []
-  }, // MIRROR = 13
-  // Decorative (14-15)
-  {
+  },
+
+  // Decorative
+  [TileType.MUSHROOM]: {
     name: 'Mushroom',
     color: 'bg-palette-sage',  // Base color matches grass
     isSolid: false,
-    image: [tileAssets.mushrooms]
-  }, // MUSHROOM = 14
-  {
+    image: [tileAssets.mushrooms],
+    transforms: {
+      enableFlip: true,
+      enableScale: true,
+      enableRotation: true,
+      enableBrightness: true,
+      scaleRange: { min: 0.85, max: 1.15 },
+      rotationRange: { min: -5, max: 10 },
+    },
+  },
+  [TileType.BUSH]: {
     name: 'Bush',
     color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
     image: []  // No image - uses color only so it matches the map's grass color
-  }, // BUSH = 15
-  {
+  },
+  [TileType.TREE]: {
     name: 'Tree',
     color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
     image: []  // No image - uses color only so it matches the map's grass color
-  }, // TREE = 16
-  {
+  },
+  [TileType.TREE_BIG]: {
     name: 'Big Tree',
     color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
@@ -191,8 +216,8 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
       tileAssets.grass_1,
       tileAssets.grass_2,
     ]  // Use grass images as background so it matches surrounding grass
-  }, // TREE_BIG = 17
-  {
+  },
+  [TileType.CHERRY_TREE]: {
     name: 'Cherry Tree',
     color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
@@ -224,128 +249,152 @@ export const TILE_LEGEND: Omit<TileData, 'type'>[] = [
       ],
       default: [tileAssets.tree_1, tileAssets.tree_2],  // Fallback
     }
-  }, // CHERRY_TREE = 18
-  // Building tiles (19-23)
-  {
+  },
+
+  // Building tiles
+  [TileType.WALL_BOUNDARY]: {
     name: 'Wall Boundary',
     color: 'bg-stone-700',
     isSolid: true,
     image: []
-  }, // WALL_BOUNDARY = 18
-  {
+  },
+  [TileType.BUILDING_WALL]: {
     name: 'Building Wall',
     color: 'bg-stone-600',
     isSolid: true,
     image: [tileAssets.bricks_1]
-  }, // BUILDING_WALL = 19
-  {
+  },
+  [TileType.BUILDING_ROOF]: {
     name: 'Building Roof',
     color: 'bg-red-800',
     isSolid: true,
     image: []
-  }, // BUILDING_ROOF = 20
-  {
+  },
+  [TileType.BUILDING_DOOR]: {
     name: 'Building Door',
     color: 'bg-amber-900',
     isSolid: false,
     image: []
-  }, // BUILDING_DOOR = 21
-  {
+  },
+  [TileType.BUILDING_WINDOW]: {
     name: 'Building Window',
     color: 'bg-cyan-400',
     isSolid: true,
     image: []
-  }, // BUILDING_WINDOW = 22
-  {
+  },
+  [TileType.COTTAGE]: {
     name: 'Cottage',
     color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
     image: []
-  }, // COTTAGE = 23
-  {
+  },
+  [TileType.COTTAGE_STONE]: {
     name: 'Cottage Stone',
     color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
     image: []
-  }, // COTTAGE = 24
-  {
+  },
+  [TileType.COTTAGE_FLOWERS]: {
     name: 'Cottage Flowers',
     color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
     image: []
-  }, // COTTAGE = 25
-  // Farmland tiles (26-30)
-  {
+  },
+
+  // Farmland tiles
+  [TileType.SOIL_FALLOW]: {
     name: 'Fallow Soil',
     color: 'bg-[#8B6F47]',
     isSolid: false,
     image: [
       farmingAssets.fallow_soil_1,
       farmingAssets.fallow_soil_2,
-    ]
-  }, // SOIL_FALLOW = 26
-  {
+    ],
+    transforms: {
+      enableFlip: true,
+      enableRotation: true,
+      enableBrightness: true,
+      rotationMode: 'flip180',  // Only 0 or 180 degrees (horizontal flip only)
+    },
+  },
+  [TileType.SOIL_TILLED]: {
     name: 'Tilled Soil',
     color: 'bg-[#8B6F47]',
     isSolid: false,
     image: [farmingAssets.tilled]
-  }, // SOIL_TILLED = 27
-  {
+  },
+  [TileType.SOIL_PLANTED]: {
     name: 'Planted Soil',
     color: 'bg-[#8B6F47]', // Use tilled soil color as background
     isSolid: false,
     image: [farmingAssets.seedling] // Generic seedling sprite (just planted)
-  }, // SOIL_PLANTED = 28
-  {
+  },
+  [TileType.SOIL_WATERED]: {
     name: 'Watered Soil',
     color: 'bg-[#6B5537]', // Darker brown for wet soil
     isSolid: false,
     image: [farmingAssets.seedling] // Seedling on wet soil
-  }, // SOIL_WATERED = 29
-  {
+  },
+  [TileType.SOIL_READY]: {
     name: 'Ready Crop',
     color: 'bg-[#6B5537]', // Darker brown for mature plant's soil
     isSolid: false,
     image: [farmingAssets.plant_pea_adult] // Mature plant sprite
-  }, // SOIL_READY = 30
-  {
+  },
+  [TileType.SOIL_WILTING]: {
     name: 'Wilting Crop',
     color: 'bg-[#9B7F57]', // Lighter dried soil
     isSolid: false,
     image: [farmingAssets.plant_pea_young] // Wilting plant (reuse young plant, could add brown tint later)
-  }, // SOIL_WILTING = 31
-  {
+  },
+  [TileType.SOIL_DEAD]: {
     name: 'Dead Crop',
     color: 'bg-[#7B6047]', // Dead soil color
     isSolid: false,
     image: [] // No plant sprite - just show dead soil
-  }, // SOIL_DEAD = 32
-  {
+  },
+
+  // Indoor furniture (multi-tile)
+  [TileType.BED]: {
     name: 'Bed',
     color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
     isSolid: true,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
-  }, // BED = 33
-  {
+  },
+  [TileType.SOFA]: {
     name: 'Sofa',
     color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
     isSolid: true,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
-  }, // SOFA = 34
-  {
+  },
+  [TileType.CHIMNEY]: {
     name: 'Chimney',
     color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
     isSolid: true,
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
-  }, // CHIMNEY = 35
-  {
+  },
+  [TileType.STOVE]: {
     name: 'Stove',
     color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
     isSolid: true,  // Players cannot walk through stoves
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
-  }, // STOVE = 36
+  },
+};
 
-];
+// === COMPILE-TIME VALIDATION ===
+// TypeScript compile-time check: TILE_LEGEND must have entries for ALL TileType enum values
+// If this fails to compile, you've added a TileType without adding it to TILE_LEGEND (or vice versa)
+
+// Ensure TILE_LEGEND is exhaustive (has all TileType keys)
+type _AssertTileLegendExhaustive = Record<TileType, Omit<TileData, 'type'>> extends typeof TILE_LEGEND
+  ? typeof TILE_LEGEND extends Record<TileType, Omit<TileData, 'type'>>
+    ? true
+    : { ERROR: 'TILE_LEGEND has extra keys not in TileType enum' }
+  : { ERROR: 'TILE_LEGEND is missing TileType entries' };
+
+// Trigger the type check
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _tileLegendExhaustivenessCheck: _AssertTileLegendExhaustive = true;
 
 // --- Procedural Map Generation ---
 
