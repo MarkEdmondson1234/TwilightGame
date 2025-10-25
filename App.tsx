@@ -18,14 +18,20 @@ import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useTouchControls } from './hooks/useTouchControls';
 import { useCollisionDetection } from './hooks/useCollisionDetection';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
-import { generateCharacterSprites, generateCharacterSpritesAsync, DEFAULT_CHARACTER } from './utils/characterSprites';
+import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
+import { useCamera } from './hooks/useCamera';
+import { useViewportCulling } from './hooks/useViewportCulling';
+import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
+import { handleDialogueAction } from './utils/dialogueHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { getCrop } from './data/crops';
 import { TimeManager, Season } from './utils/TimeManager';
-import { inventoryManager } from './utils/inventoryManager';
 import { farmingAssets } from './assets';
+import GameUIControls from './components/GameUIControls';
+import DebugCollisionBoxes from './components/DebugCollisionBoxes';
+import TransitionIndicators from './components/TransitionIndicators';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
@@ -48,25 +54,8 @@ const App: React.FC = () => {
 
     const isTouchDevice = useTouchDevice();
 
-    // Generate player sprites based on character customization
-    // Start with synchronous sprites, then upgrade to sprite sheets if available
-    const [playerSprites, setPlayerSprites] = useState(() => {
-        const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
-        return generateCharacterSprites(character);
-    });
-
-    // Load optimized sprite sheets asynchronously
-    useEffect(() => {
-        const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
-
-        // Try to load sprite sheets (async)
-        generateCharacterSpritesAsync(character).then(sprites => {
-            setPlayerSprites(sprites);
-            console.log('[App] Player sprites loaded (optimized)');
-        }).catch(error => {
-            console.error('[App] Failed to load sprite sheets, using fallback:', error);
-        });
-    }, [characterVersion]); // Regenerate when character changes
+    // Use character sprites hook for loading and managing player sprites
+    const playerSprites = useCharacterSprites(characterVersion, gameState.getSelectedCharacter());
 
     const keysPressed = useRef<Record<string, boolean>>({}).current;
     const animationFrameId = useRef<number | null>(null);
@@ -204,39 +193,24 @@ const App: React.FC = () => {
     const mapWidth = currentMap ? currentMap.width : 50;
     const mapHeight = currentMap ? currentMap.height : 30;
 
-    // Camera system: center small maps, follow player on large maps
-    const mapPixelWidth = mapWidth * TILE_SIZE;
-    const mapPixelHeight = mapHeight * TILE_SIZE;
+    // Use camera hook for positioning
+    const { cameraX, cameraY } = useCamera({
+        playerPos,
+        mapWidth,
+        mapHeight,
+    });
 
-    let cameraX: number;
-    let cameraY: number;
+    // Use viewport culling hook for performance optimization
+    const { minX: visibleTileMinX, maxX: visibleTileMaxX, minY: visibleTileMinY, maxY: visibleTileMaxY } = useViewportCulling({
+        cameraX,
+        cameraY,
+        mapWidth,
+        mapHeight,
+        margin: 1,
+    });
 
-    // If map is smaller than viewport, center it
-    if (mapPixelWidth < window.innerWidth) {
-        cameraX = -(window.innerWidth - mapPixelWidth) / 2;
-    } else {
-        // Otherwise follow player
-        cameraX = Math.min(mapPixelWidth - window.innerWidth, Math.max(0, playerPos.x * TILE_SIZE - window.innerWidth / 2));
-    }
-
-    if (mapPixelHeight < window.innerHeight) {
-        cameraY = -(window.innerHeight - mapPixelHeight) / 2;
-    } else {
-        cameraY = Math.min(mapPixelHeight - window.innerHeight, Math.max(0, playerPos.y * TILE_SIZE - window.innerHeight / 2));
-    }
-
-    const playerFrames = playerSprites[direction];
-    const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
-
-    // Scale up custom character sprites (they're higher resolution than placeholders)
-    const isCustomSprite = playerSpriteUrl.includes('/assets/character') || playerSpriteUrl.startsWith('data:image');
-    const spriteScale = isCustomSprite ? 3.0 : 1.0; // 3.0x for optimized sprites
-
-    // Performance optimization: Calculate visible tile range (viewport culling)
-    const visibleTileMinX = Math.max(0, Math.floor(cameraX / TILE_SIZE) - 1);
-    const visibleTileMaxX = Math.min(mapWidth - 1, Math.ceil((cameraX + window.innerWidth) / TILE_SIZE) + 1);
-    const visibleTileMinY = Math.max(0, Math.floor(cameraY / TILE_SIZE) - 1);
-    const visibleTileMaxY = Math.min(mapHeight - 1, Math.ceil((cameraY + window.innerHeight) / TILE_SIZE) + 1);
+    // Get player sprite info (URL and scale)
+    const { playerSpriteUrl, spriteScale } = getPlayerSpriteInfo(playerSprites, direction, animationFrame);
 
     // Performance optimization: Cache season lookup (don't call TimeManager for every tile)
     const currentSeason = TimeManager.getCurrentTime().season;
@@ -577,150 +551,32 @@ const App: React.FC = () => {
                 )}
 
                 {/* Transition indicators (rendered after foreground sprites so they're always visible) */}
-                {currentMap.transitions.map((transition, idx) => {
-                    // Check if player is within 2 tiles
-                    const dx = Math.abs(playerPos.x - transition.fromPosition.x);
-                    const dy = Math.abs(playerPos.y - transition.fromPosition.y);
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const isNearby = distance <= 2;
-                    const isVeryClose = dx < 1.5 && dy < 1.5;
-
-                    // Only show transition indicators when player is within 2 tiles
-                    if (!isNearby) return null;
-
-                    return (
-                        <React.Fragment key={`transition-${idx}`}>
-                            {/* Visual marker on the transition tile */}
-                            <div
-                                className={`absolute pointer-events-none border-4 ${isVeryClose ? 'border-green-400 bg-green-400/30' : 'border-yellow-400 bg-yellow-400/20'}`}
-                                style={{
-                                    left: transition.fromPosition.x * TILE_SIZE,
-                                    top: transition.fromPosition.y * TILE_SIZE,
-                                    width: TILE_SIZE,
-                                    height: TILE_SIZE,
-                                }}
-                            />
-                            {/* Label above the tile */}
-                            <div
-                                className="absolute pointer-events-none"
-                                style={{
-                                    left: (transition.fromPosition.x + 0.5) * TILE_SIZE,
-                                    top: (transition.fromPosition.y - 0.5) * TILE_SIZE,
-                                    transform: 'translate(-50%, -50%)',
-                                }}
-                            >
-                                <div className={`${isVeryClose ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'} px-3 py-1 rounded-full text-xs font-bold text-black whitespace-nowrap shadow-lg`}>
-                                    [E] {transition.label || transition.toMapId}
-                                </div>
-                            </div>
-                        </React.Fragment>
-                    );
-                })}
+                <TransitionIndicators
+                    currentMap={currentMap}
+                    playerPos={playerPos}
+                    lastTransitionTime={lastTransitionTime.current}
+                />
 
                 {/* Debug: Show collision boxes for multi-tile sprites */}
-                {showCollisionBoxes && currentMap.grid.map((row, y) =>
-                    row.map((_, x) => {
-                        const tileData = getTileData(x, y);
-                        const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);
-
-                        if (!spriteMetadata || !tileData?.isSolid) return null;
-
-                        // Use collision-specific dimensions if provided, otherwise use sprite dimensions
-                        const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
-                        const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
-                        const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
-                        const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
-
-                        // Calculate collision bounds
-                        const collisionLeft = x + collisionOffsetX;
-                        const collisionTop = y + collisionOffsetY;
-
-                        return (
-                            <React.Fragment key={`collision-${x}-${y}`}>
-                                {/* Collision Box */}
-                                <div
-                                    className="absolute pointer-events-none border-4 border-red-500"
-                                    style={{
-                                        left: collisionLeft * TILE_SIZE,
-                                        top: collisionTop * TILE_SIZE,
-                                        width: collisionWidth * TILE_SIZE,
-                                        height: collisionHeight * TILE_SIZE,
-                                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                                    }}
-                                >
-                                    <div className="text-red-500 font-bold text-xs bg-white px-1">
-                                        Collision Box ({x},{y})
-                                    </div>
-                                </div>
-                                {/* Anchor Point Marker (0,0) - shows tile position */}
-                                <div
-                                    className="absolute pointer-events-none"
-                                    style={{
-                                        left: x * TILE_SIZE,
-                                        top: y * TILE_SIZE,
-                                        width: 16,
-                                        height: 16,
-                                    }}
-                                >
-                                    {/* Crosshair for anchor point */}
-                                    <div className="absolute w-full h-0.5 bg-blue-500 top-1/2" />
-                                    <div className="absolute w-0.5 h-full bg-blue-500 left-1/2" />
-                                    {/* Center dot */}
-                                    <div className="absolute w-2 h-2 bg-blue-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                                    {/* Label */}
-                                    <div className="absolute top-4 left-4 text-blue-500 font-bold text-xs bg-white px-1 whitespace-nowrap">
-                                        Anchor (0,0)
-                                    </div>
-                                </div>
-                            </React.Fragment>
-                        );
-                    })
-                )}
+                <DebugCollisionBoxes
+                    visible={showCollisionBoxes}
+                    currentMap={currentMap}
+                />
 
                 {isDebugOpen && <DebugOverlay playerPos={playerPos} />}
             </div>
 
             <HUD />
 
-            {/* Help Button - Top Right */}
-            <div className="absolute top-4 right-4 z-10">
-                <button
-                    onClick={() => setShowHelpBrowser(!showHelpBrowser)}
-                    className={`w-12 h-12 rounded-full border-4 font-bold text-2xl transition-all pointer-events-auto shadow-lg ${
-                        showHelpBrowser
-                            ? 'bg-amber-500 border-amber-700 text-white hover:bg-amber-600 scale-110'
-                            : 'bg-black/70 border-slate-600 text-amber-400 hover:bg-black/90 hover:border-amber-500 hover:scale-105'
-                    }`}
-                    title="Help [F1]"
-                >
-                    ?
-                </button>
-            </div>
-
-            {/* Collision Box and Color Editor Toggle Buttons */}
-            <div className="absolute bottom-4 right-4 z-10 flex gap-2">
-                <button
-                    onClick={() => setShowCollisionBoxes(!showCollisionBoxes)}
-                    className={`px-4 py-2 rounded-lg border font-bold transition-colors pointer-events-auto ${
-                        showCollisionBoxes
-                            ? 'bg-red-500/80 border-red-700 text-white hover:bg-red-600/80'
-                            : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
-                    }`}
-                >
-                    {showCollisionBoxes ? '🔴 Hide Collision' : 'Show Collision'}
-                </button>
-                <button
-                    onClick={() => setShowColorEditor(!showColorEditor)}
-                    className={`px-4 py-2 rounded-lg border font-bold transition-colors pointer-events-auto ${
-                        showColorEditor
-                            ? 'bg-purple-500/80 border-purple-700 text-white hover:bg-purple-600/80'
-                            : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
-                    }`}
-                    title="F4 to toggle"
-                >
-                    {showColorEditor ? '🎨 Hide Scheme' : '🎨 Edit Scheme'}
-                </button>
-            </div>
+            {/* Game UI Controls (Help, Collision, Color Editor) */}
+            <GameUIControls
+                showHelpBrowser={showHelpBrowser}
+                onToggleHelpBrowser={() => setShowHelpBrowser(!showHelpBrowser)}
+                showCollisionBoxes={showCollisionBoxes}
+                onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
+                showColorEditor={showColorEditor}
+                onToggleColorEditor={() => setShowColorEditor(!showColorEditor)}
+            />
 
             {isTouchDevice && (
                 <TouchControls
@@ -735,28 +591,7 @@ const App: React.FC = () => {
                     npc={npcManager.getNPCById(activeNPC)!}
                     playerSprite={getPortraitSprite(gameState.getSelectedCharacter() || DEFAULT_CHARACTER, Direction.Down)} // High-res portrait
                     onClose={() => setActiveNPC(null)}
-                    onNodeChange={(npcId, nodeId) => {
-                        // Handle seed pickup from seed shed NPCs
-                        if (npcId.startsWith('seed_keeper_')) {
-                            if (nodeId === 'take_radish') {
-                                inventoryManager.addItem('seed_radish', 10);
-                                const inventoryData = inventoryManager.getInventoryData();
-                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                            } else if (nodeId === 'take_tomato') {
-                                inventoryManager.addItem('seed_tomato', 10);
-                                const inventoryData = inventoryManager.getInventoryData();
-                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                            } else if (nodeId === 'take_wheat') {
-                                inventoryManager.addItem('seed_wheat', 5);
-                                const inventoryData = inventoryManager.getInventoryData();
-                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                            } else if (nodeId === 'take_corn') {
-                                inventoryManager.addItem('seed_corn', 3);
-                                const inventoryData = inventoryManager.getInventoryData();
-                                gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                            }
-                        }
-                    }}
+                    onNodeChange={handleDialogueAction}
                 />
             )}
             {showColorEditor && (
