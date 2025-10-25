@@ -59,6 +59,7 @@ export const farmingAssets = {
 export const npcAssets = {
   little_girl: new URL('./public/assets-optimized/npcs/little_girl.png', import.meta.url).href,
   little_girl_portrait: new URL('./public/assets/npcs/little_girl.png', import.meta.url).href,
+  // Cat assets: Using originals (in subfolder, not auto-optimized by script)
   cat_sleeping_01: new URL('./public/assets/npcs/cat/cat_sleeping_01.png', import.meta.url).href,
   cat_sleeping_02: new URL('./public/assets/npcs/cat/cat_sleeping_02.png', import.meta.url).href,
   cat_sleeping_angry: new URL('./public/assets/npcs/cat/cat_sleeping_angry.png', import.meta.url).href,
@@ -70,13 +71,23 @@ export const npcAssets = {
   old_woman_01: new URL('./public/assets-optimized/npcs/old_woman_knitting_01.png', import.meta.url).href,
   old_woman_02: new URL('./public/assets-optimized/npcs/old_woman_knitting_02.png', import.meta.url).href,
   old_woman_portrait: new URL('./public/assets/npcs/old_woman_knitting_02.png', import.meta.url).href,
-  shopkeeper_fox_01: new URL('./public/assets/npcs/shop_keeper_fox_01.png', import.meta.url).href,
-  shopkeeper_fox_02: new URL('./public/assets/npcs/shop_keeper_fox_02.png', import.meta.url).href,
-  dog_01: new URL('./public/assets/npcs/dog_01.png', import.meta.url).href,
-  dog_02: new URL('./public/assets/npcs/dog_02.png', import.meta.url).href,
+  shopkeeper_fox_01: new URL('./public/assets-optimized/npcs/shop_keeper_fox_01.png', import.meta.url).href,
+  shopkeeper_fox_02: new URL('./public/assets-optimized/npcs/shop_keeper_fox_02.png', import.meta.url).href,
+  dog_01: new URL('./public/assets-optimized/npcs/dog_01.png', import.meta.url).href,
+  dog_02: new URL('./public/assets-optimized/npcs/dog_02.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)
 export const playerAssets = {
   // Example: down_0: new URL('./public/assets/player/down_0.png', import.meta.url).href,
+};
+
+// Animation assets - Animated GIFs for environmental effects
+// Note: GIFs ARE optimized by the asset pipeline (resized to 512x512 with gifsicle)
+export const animationAssets = {
+  cherry_spring_petals: new URL('./public/assets-optimized/animations/cherry_spring_petals.gif', import.meta.url).href,
+  // Future animations:
+  // rain: new URL('./public/assets-optimized/animations/rain.gif', import.meta.url).href,
+  // snow: new URL('./public/assets-optimized/animations/snow.gif', import.meta.url).href,
+  // fireflies: new URL('./public/assets-optimized/animations/fireflies.gif', import.meta.url).href,
 };

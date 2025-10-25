@@ -81,6 +81,9 @@ export interface GameState {
   customColors?: {
     [colorName: string]: string;  // colorName -> hex value
   };
+
+  // Weather system (for environmental effects and animations)
+  weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -157,6 +160,12 @@ class GameStateManager {
           parsed.inventory.tools = [];
         }
 
+        // Migrate old save data that doesn't have weather
+        if (!parsed.weather) {
+          console.log('[GameState] Migrating old save data - adding weather system');
+          parsed.weather = 'clear';
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -191,6 +200,7 @@ class GameStateManager {
         totalPlayTime: 0,
         mushroomsCollected: 0,
       },
+      weather: 'clear', // Default weather
     };
   }
 
@@ -437,6 +447,17 @@ class GameStateManager {
     console.log('[GameState] Custom colors cleared');
   }
 
+  // Weather management
+  setWeather(weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'): void {
+    this.state.weather = weather;
+    this.notify();
+    console.log(`[GameState] Weather set to: ${weather}`);
+  }
+
+  getWeather(): 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms' {
+    return this.state.weather || 'clear';
+  }
+
   resetState(): void {
     this.state = {
       selectedCharacter: null,
@@ -454,6 +475,7 @@ class GameStateManager {
       farming: { plots: [], currentTool: 'hand', selectedSeed: 'radish' },
       crafting: { unlockedRecipes: [], materials: {} },
       stats: { gamesPlayed: 0, totalPlayTime: 0, mushroomsCollected: 0 },
+      weather: 'clear',
     };
     console.log('[GameState] State reset');
     this.notify();

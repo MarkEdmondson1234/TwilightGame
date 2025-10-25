@@ -14,6 +14,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
 import sharp from 'sharp';
 import Spritesmith from 'spritesmith';
 
@@ -30,6 +31,7 @@ const TILE_SIZE = 128;    // Resize tile images to 128x128 (less aggressive)
 const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
 const COMPRESSION_QUALITY = 85; // PNG compression quality
 const HIGH_QUALITY = 95; // Higher quality for detailed furniture
+const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for effects)
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -40,7 +42,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'character1'),
     path.join(OPTIMIZED_DIR, 'tiles'),
     path.join(OPTIMIZED_DIR, 'farming'),
-    path.join(OPTIMIZED_DIR, 'npcs')
+    path.join(OPTIMIZED_DIR, 'npcs'),
+    path.join(OPTIMIZED_DIR, 'animations')
   ];
 
   dirs.forEach(dir => {
@@ -314,6 +317,71 @@ async function optimizeNPCs() {
   console.log(`\n  Optimized ${optimized} NPC sprites\n`);
 }
 
+// Check if gifsicle is installed
+function hasGifsicle() {
+  try {
+    execSync('which gifsicle', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Optimize animated GIFs
+async function optimizeAnimations() {
+  console.log('🎬 Optimizing animated GIFs...');
+
+  const animationsDir = path.join(ASSETS_DIR, 'animations');
+  if (!fs.existsSync(animationsDir)) {
+    console.log('⚠️  No animations found, skipping...');
+    return;
+  }
+
+  const files = fs.readdirSync(animationsDir);
+  let optimized = 0;
+  const hasGifsicleInstalled = hasGifsicle();
+
+  if (!hasGifsicleInstalled) {
+    console.log('⚠️  gifsicle not found - GIFs will be copied without optimization');
+    console.log('   Install with: brew install gifsicle (macOS) or apt-get install gifsicle (Linux)\n');
+  }
+
+  for (const file of files) {
+    if (!file.match(/\.gif$/i)) continue;
+
+    const inputPath = path.join(animationsDir, file);
+    const outputPath = path.join(OPTIMIZED_DIR, 'animations', file);
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    if (hasGifsicleInstalled) {
+      try {
+        // Optimize GIF with gifsicle: resize and optimize
+        execSync(
+          `gifsicle --resize ${ANIMATION_SIZE}x${ANIMATION_SIZE} --optimize=3 --colors 256 "${inputPath}" -o "${outputPath}"`,
+          { stdio: 'pipe' }
+        );
+
+        const optimizedSize = fs.statSync(outputPath).size;
+        const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+        console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+      } catch (error) {
+        console.log(`  ⚠️  ${file}: optimization failed, copying original`);
+        fs.copyFileSync(inputPath, outputPath);
+      }
+    } else {
+      // Just copy if gifsicle not available
+      fs.copyFileSync(inputPath, outputPath);
+      console.log(`  ℹ️  ${file}: ${(originalSize / 1024).toFixed(1)}KB (copied without optimization)`);
+    }
+
+    optimized++;
+  }
+
+  console.log(`\n  Processed ${optimized} animation file(s)\n`);
+}
+
 // Main execution
 async function main() {
   try {
@@ -322,6 +390,7 @@ async function main() {
     await optimizeTiles();
     await optimizeFarming();
     await optimizeNPCs();
+    await optimizeAnimations();
 
     console.log('✨ Asset optimization complete!');
     console.log(`📁 Optimized assets saved to: ${OPTIMIZED_DIR}`);

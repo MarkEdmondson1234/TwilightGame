@@ -19,15 +19,20 @@ All game art is placed in `/public/assets/`. This folder is organized by categor
 │       │   ├── shopkeeper.svg
 │       │   └── child.svg
 │       │
-│       └── tiles/             (Tile sprites)
-│           ├── grass_0.png
-│           ├── grass_1.png
-│           ├── grass_2.png
-│           ├── rock_0.png
-│           ├── water_0.png
-│           ├── path_0.png
-│           ├── shop_door_0.png
-│           └── mine_entrance_0.png
+│       ├── tiles/             (Tile sprites)
+│       │   ├── grass_0.png
+│       │   ├── grass_1.png
+│       │   ├── grass_2.png
+│       │   ├── rock_0.png
+│       │   ├── water_0.png
+│       │   ├── path_0.png
+│       │   ├── shop_door_0.png
+│       │   └── mine_entrance_0.png
+│       │
+│       └── animations/        (Animated GIF effects)
+│           ├── cherry_spring_petals.gif
+│           ├── rain.gif        (future)
+│           └── fireflies.gif   (future)
 │
 ├── index.html
 └── ... (other project files)
@@ -113,3 +118,55 @@ public/assets/
 -   **Variations:** You can provide multiple versions for a tile (like grass) to make the world look more natural. The game will automatically and randomly pick between them. If a tile only has one look, just create a `_0` version (e.g., `rock_0.png`).
 -   **Size:** All tile sprites **must** be square (e.g., 32x32 pixels).
 -   **Seamless Tiling:** Design them so they look good when placed next to each other.
+
+## Animation Effects (`/public/assets/animations/`)
+
+Environmental animations add atmosphere and life to the game world. These are animated GIFs that appear automatically near specific tile types when conditions are met.
+
+### File Format
+-   **Recommended:** Animated GIF (`.gif`)
+-   **Also supported:** Animated PNG (`.apng`)
+-   **Important:** Animation files ARE optimized by the asset pipeline!
+
+### Automatic Optimization
+
+When you run `npm run optimize-assets`, GIFs are automatically:
+-   **Resized** to 512x512 pixels (regardless of source size)
+-   **Compressed** using gifsicle (60-80% file size reduction typical)
+-   **Output** to `/public/assets-optimized/animations/`
+
+**Requirements:**
+-   Install gifsicle: `brew install gifsicle` (macOS) or `apt-get install gifsicle` (Linux)
+-   If gifsicle is not installed, files are copied without optimization
+
+**Scale Values:** Since optimized GIFs are 512x512px:
+-   Small effects: `scale: 0.25` (~128px / 2 tiles)
+-   Medium effects: `scale: 0.5` (~256px / 4 tiles)
+-   Large effects: `scale: 0.8` (~410px / 6.4 tiles)
+
+### File Guidelines
+-   **File Naming:** Descriptive names like `cherry_spring_petals.gif`, `rain.gif`, `chimney_smoke.gif`, `fireflies.gif`
+-   **Source Size:** Any size is fine! Optimization resizes to 512x512
+-   **Transparency:** Use transparent backgrounds for overlay effects (falling petals, rain, etc.)
+-   **Loop Quality:** Ensure smooth looping - first and last frames should match seamlessly
+-   **Optimization:** The asset pipeline handles optimization automatically!
+
+### Examples in Game
+-   **Cherry Blossom Petals** (`cherry_spring_petals.gif`): Falls near cherry trees in spring
+-   **Future examples**: Rain, snow, fireflies, chimney smoke, magic sparkles
+
+### How Animations Work
+1. Placed in `/public/assets/animations/`
+2. Registered in `assets.ts` → `animationAssets` object
+3. Configured in `constants.ts` → `TILE_ANIMATIONS` array
+4. Automatically rendered near trigger tiles when conditions match
+
+### Configuration
+Animations can be configured with:
+-   **Trigger Tiles:** Which tile types trigger the animation (e.g., `TileType.CHERRY_TREE`)
+-   **Layers:** Background (behind everything), Midground (behind player), Foreground (above player)
+-   **Conditions:** Seasonal (spring/summer/autumn/winter) or time-of-day (day/night)
+-   **Positioning:** Offset from tile, radius of effect
+-   **Appearance:** Opacity, scale, looping
+
+See `.claude/skills/add-animation/SKILL.md` for complete implementation guide.

@@ -23,6 +23,7 @@ export interface KeyboardControlsConfig {
     onShowCharacterCreator: (show: boolean) => void;
     onSetActiveNPC: (npcId: string | null) => void;
     onSetDebugOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
+    onSetShowDevTools: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowColorEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowHelpBrowser: (show: boolean) => void;
     onSetPlayerPos: (pos: Position) => void;
@@ -39,6 +40,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onShowCharacterCreator,
         onSetActiveNPC,
         onSetDebugOpen,
+        onSetShowDevTools,
         onSetShowColorEditor,
         onSetShowHelpBrowser,
         onSetPlayerPos,
@@ -66,8 +68,19 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // F4 key to toggle color editor
+        // F4 key to toggle DevTools
         if (e.key === 'F4') {
+            e.preventDefault();
+            console.log('[Keyboard] F4 pressed - toggling DevTools');
+            onSetShowDevTools((prev) => {
+                console.log('[Keyboard] DevTools prev state:', prev, 'new state:', !prev);
+                return !prev;
+            });
+            return;
+        }
+
+        // F5 key to toggle color editor
+        if (e.key === 'F5') {
             e.preventDefault();
             onSetShowColorEditor((prev) => !prev);
             return;

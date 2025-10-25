@@ -53,10 +53,19 @@ export class TimeManager {
     Season.WINTER,
   ];
 
+  // Dev mode: Override time for testing/debugging
+  private static timeOverride: GameTime | null = null;
+
   /**
    * Get the current game time based on real-world time
+   * (or override time if set via setTimeOverride)
    */
   static getCurrentTime(): GameTime {
+    // Return override if set (for dev/testing)
+    if (TimeManager.timeOverride) {
+      return TimeManager.timeOverride;
+    }
+
     const now = Date.now();
     const msSinceStart = now - TimeManager.GAME_START_DATE;
 
@@ -135,5 +144,53 @@ export class TimeManager {
    */
   static isCurrentSeason(season: Season): boolean {
     return TimeManager.getCurrentTime().season === season;
+  }
+
+  /**
+   * Set a time override for development/testing
+   * @param override Partial time object (missing fields calculated from provided fields)
+   */
+  static setTimeOverride(override: Partial<GameTime>): void {
+    const currentTime = TimeManager.timeOverride || TimeManager.getCurrentTime();
+
+    // Merge override with current time
+    const season = override.season !== undefined ? override.season : currentTime.season;
+    const day = override.day !== undefined ? override.day : currentTime.day;
+    const hour = override.hour !== undefined ? override.hour : currentTime.hour;
+    const year = override.year !== undefined ? override.year : currentTime.year;
+
+    // Calculate derived fields
+    const seasonIndex = TimeManager.SEASON_ORDER.indexOf(season);
+    const dayInYear = seasonIndex * TimeManager.DAYS_PER_SEASON + (day - 1);
+    const totalDays = year * TimeManager.DAYS_PER_YEAR + dayInYear;
+    const totalHours = totalDays * 24 + hour;
+    const timeOfDay = hour >= 6 && hour < 20 ? TimeOfDay.DAY : TimeOfDay.NIGHT;
+
+    TimeManager.timeOverride = {
+      year,
+      season,
+      day,
+      totalDays,
+      hour,
+      timeOfDay,
+      totalHours,
+    };
+
+    console.log('[TimeManager] Time override set:', TimeManager.timeOverride);
+  }
+
+  /**
+   * Clear time override and return to real-world time
+   */
+  static clearTimeOverride(): void {
+    TimeManager.timeOverride = null;
+    console.log('[TimeManager] Time override cleared, using real-world time');
+  }
+
+  /**
+   * Check if time is currently overridden
+   */
+  static hasTimeOverride(): boolean {
+    return TimeManager.timeOverride !== null;
   }
 }

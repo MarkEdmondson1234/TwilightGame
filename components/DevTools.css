@@ -1,0 +1,234 @@
+.devtools-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+}
+
+.devtools-panel {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border: 2px solid #475569;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: #e2e8f0;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.devtools-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 2px solid #475569;
+  background: #334155;
+}
+
+.devtools-header h2 {
+  margin: 0;
+  font-size: 16px;
+  color: #60a5fa;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+}
+
+.devtools-close {
+  background: none;
+  border: none;
+  color: #f87171;
+  font-size: 32px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
+  transition: all 0.2s;
+}
+
+.devtools-close:hover {
+  color: #fca5a5;
+  transform: scale(1.1);
+}
+
+.devtools-content {
+  padding: 20px;
+}
+
+.devtools-warning {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 10px;
+  text-align: center;
+  border: 2px solid #fbbf24;
+}
+
+.devtools-section {
+  margin-bottom: 24px;
+}
+
+.devtools-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 12px;
+  color: #34d399;
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.5);
+  border-bottom: 1px solid #475569;
+  padding-bottom: 8px;
+}
+
+.devtools-control {
+  margin-bottom: 16px;
+}
+
+.devtools-control label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 10px;
+  color: #cbd5e1;
+}
+
+.devtools-control select,
+.devtools-control input[type="range"] {
+  width: 100%;
+  padding: 8px;
+  background: #0f172a;
+  border: 2px solid #475569;
+  border-radius: 4px;
+  color: #e2e8f0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+}
+
+.devtools-control select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 32px;
+}
+
+.devtools-control select:hover,
+.devtools-control select:focus {
+  border-color: #60a5fa;
+  outline: none;
+}
+
+.devtools-control input[type="range"] {
+  height: 8px;
+  padding: 0;
+  cursor: pointer;
+}
+
+.devtools-control input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #60a5fa;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+}
+
+.devtools-control input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background: #60a5fa;
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+}
+
+.devtools-value {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 10px;
+  color: #60a5fa;
+}
+
+.devtools-button {
+  width: 100%;
+  padding: 12px;
+  background: #3b82f6;
+  border: 2px solid #2563eb;
+  border-radius: 6px;
+  color: white;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.devtools-button:hover {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.devtools-button:active {
+  transform: translateY(0);
+}
+
+.devtools-reset {
+  background: #8b5cf6;
+  border-color: #7c3aed;
+}
+
+.devtools-reset:hover {
+  background: #7c3aed;
+  border-color: #6d28d9;
+}
+
+.devtools-status {
+  background: #0f172a;
+  border: 2px solid #475569;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 10px;
+}
+
+.devtools-status p {
+  margin: 8px 0;
+  color: #cbd5e1;
+}
+
+.devtools-status strong {
+  color: #60a5fa;
+}
+
+.devtools-footer {
+  padding: 12px 20px;
+  border-top: 2px solid #475569;
+  text-align: center;
+  background: #334155;
+}
+
+.devtools-footer p {
+  margin: 0;
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.devtools-footer kbd {
+  background: #1e293b;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #475569;
+  color: #60a5fa;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+}

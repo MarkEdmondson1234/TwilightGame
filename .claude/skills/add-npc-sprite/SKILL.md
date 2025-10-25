@@ -133,7 +133,103 @@ Use descriptive, lowercase names with underscores:
 - SVG sprites scale smoothly at any size
 - Ensure transparent backgrounds for proper rendering
 
+## Creating NPC Instances in Maps
+
+**IMPORTANT**: After adding NPC assets, you'll need to create NPC instances in map files. Follow the **factory function pattern** for consistency:
+
+### Step 5: Create Factory Function (Recommended)
+
+Create a reusable NPC factory function in `utils/npcFactories.ts`:
+
+```typescript
+/**
+ * Create a [NPC Type] NPC with [description]
+ *
+ * @param id Unique ID for this NPC
+ * @param position Where to place the NPC
+ * @param name Optional name (defaults to "[NPC Type]")
+ */
+export function create[NpcType]NPC(
+  id: string,
+  position: Position,
+  name: string = '[NPC Type]'
+): NPC {
+  const now = Date.now();
+
+  // For animated NPCs, define animation states
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'idle',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      idle: {
+        sprites: [npcAssets.npc_01, npcAssets.npc_02],
+        animationSpeed: 500, // ms per frame
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    behavior: NPCBehavior.STATIC, // or WANDER
+    sprite: npcAssets.npc_01,
+    portraitSprite: npcAssets.npc_portrait, // optional high-res
+    scale: 3.0, // optional size (default 4.0)
+    animatedStates, // optional for animated NPCs
+    dialogue: [
+      {
+        id: 'greeting',
+        text: 'Hello, traveller!',
+        seasonalText: { // optional seasonal variations
+          spring: 'Spring greetings!',
+          // ...
+        },
+        responses: [ // optional branching dialogue
+          { text: 'Hello!', nextId: 'follow_up' },
+        ],
+      },
+    ],
+    interactionRadius: 1.5, // optional (default 1.5)
+  };
+}
+```
+
+### Step 6: Use Factory in Map Definition
+
+In your map file (e.g., `maps/definitions/village.ts`):
+
+```typescript
+import { createMerchantNPC } from '../../utils/npcFactories';
+
+export const village: MapDefinition = {
+  // ... map definition
+  npcs: [
+    // Clean, one-line NPC creation
+    createMerchantNPC('merchant_1', { x: 10, y: 15 }),
+    createVillageElderNPC('elder', { x: 20, y: 20 }),
+  ],
+};
+```
+
+### Benefits of Factory Functions
+
+- **Clean map files**: Village.ts reduced from 404 → 169 lines (58% reduction!)
+- **Reusable NPCs**: Create multiple instances easily
+- **Centralized behavior**: Update NPC dialogue/behavior in one place
+- **Consistent pattern**: All NPCs created the same way
+- **DRY principle**: No duplicate NPC definitions
+
+### When to Use Inline vs Factory
+
+- **Factory function**: For any NPC you might reuse or has complex dialogue (recommended for all NPCs)
+- **Inline definition**: Only for truly unique, one-off NPCs with minimal dialogue
+
 ## Related Documentation
 
 - [ASSETS.md](../../../docs/ASSETS.md) - Complete asset guidelines
 - [assets.ts](../../../assets.ts) - Centralized asset registry
+- [npcFactories.ts](../../../utils/npcFactories.ts) - NPC factory function examples

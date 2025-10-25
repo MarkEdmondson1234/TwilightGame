@@ -8,6 +8,7 @@ import TouchControls from './components/TouchControls';
 import DialogueBox from './components/DialogueBox';
 import ColorSchemeEditor from './components/ColorSchemeEditor';
 import HelpBrowser from './components/HelpBrowser';
+import DevTools from './components/DevTools';
 import { initializeGame } from './utils/gameInitializer';
 import { mapManager } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
@@ -32,6 +33,8 @@ import TileRenderer from './components/TileRenderer';
 import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
 import NPCRenderer from './components/NPCRenderer';
+import AnimationOverlay from './components/AnimationOverlay';
+import WeatherOverlay from './components/WeatherOverlay';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
@@ -46,6 +49,7 @@ const App: React.FC = () => {
     const [animationFrame, setAnimationFrame] = useState(0);
     const [isDebugOpen, setDebugOpen] = useState(false);
     const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
+    const [showDevTools, setShowDevTools] = useState(false); // Toggle dev tools panel
     const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
     const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
@@ -92,6 +96,7 @@ const App: React.FC = () => {
         onShowCharacterCreator: setShowCharacterCreator,
         onSetActiveNPC: setActiveNPC,
         onSetDebugOpen: setDebugOpen,
+        onSetShowDevTools: setShowDevTools,
         onSetShowColorEditor: setShowColorEditor,
         onSetShowHelpBrowser: setShowHelpBrowser,
         onSetPlayerPos: setPlayerPos,
@@ -155,6 +160,11 @@ const App: React.FC = () => {
         initializeGame(currentMapId, setIsMapInitialized);
     }, []); // Only run once on mount
 
+    // Debug logging for DevTools state
+    useEffect(() => {
+        console.log('[App] showDevTools changed to:', showDevTools);
+    }, [showDevTools]);
+
     // Set up game loop and farm update interval after map is initialized
     // Note: Keyboard event listeners now managed by useKeyboardControls hook
     useEffect(() => {
@@ -212,9 +222,11 @@ const App: React.FC = () => {
     // Get player sprite info (URL and scale)
     const { playerSpriteUrl, spriteScale } = getPlayerSpriteInfo(playerSprites, direction, animationFrame);
 
-    // Performance optimization: Cache season lookup (don't call TimeManager for every tile)
-    const currentSeason = TimeManager.getCurrentTime().season;
+    // Performance optimization: Cache season and time lookups (don't call TimeManager for every tile/animation)
+    const currentTime = TimeManager.getCurrentTime();
+    const currentSeason = currentTime.season;
     const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+    const timeOfDay: 'day' | 'night' = currentTime.hour >= 6 && currentTime.hour < 20 ? 'day' : 'night';
 
     // Show character creator if no character selected
     if (showCharacterCreator) {
@@ -252,8 +264,36 @@ const App: React.FC = () => {
                 {/* Render Background Multi-Tile Sprites */}
                 <BackgroundSprites currentMap={currentMap} />
 
+                {/* Render Background Animations (behind everything) */}
+                <AnimationOverlay
+                    currentMap={currentMap}
+                    visibleRange={{
+                        minX: visibleTileMinX,
+                        maxX: visibleTileMaxX,
+                        minY: visibleTileMinY,
+                        maxY: visibleTileMaxY,
+                    }}
+                    seasonKey={seasonKey}
+                    timeOfDay={timeOfDay}
+                    layer="background"
+                />
+
                 {/* Render NPCs */}
                 <NPCRenderer playerPos={playerPos} npcUpdateTrigger={npcUpdateTrigger} />
+
+                {/* Render Midground Animations (behind player, above NPCs) */}
+                <AnimationOverlay
+                    currentMap={currentMap}
+                    visibleRange={{
+                        minX: visibleTileMinX,
+                        maxX: visibleTileMaxX,
+                        minY: visibleTileMinY,
+                        maxY: visibleTileMaxY,
+                    }}
+                    seasonKey={seasonKey}
+                    timeOfDay={timeOfDay}
+                    layer="midground"
+                />
 
                 {/* Render Player */}
                 <img
@@ -279,6 +319,28 @@ const App: React.FC = () => {
                         maxY: visibleTileMaxY,
                     }}
                     seasonKey={seasonKey}
+                />
+
+                {/* Render Foreground Animations (above everything - falling petals, etc.) */}
+                <AnimationOverlay
+                    currentMap={currentMap}
+                    visibleRange={{
+                        minX: visibleTileMinX,
+                        maxX: visibleTileMaxX,
+                        minY: visibleTileMinY,
+                        maxY: visibleTileMaxY,
+                    }}
+                    seasonKey={seasonKey}
+                    timeOfDay={timeOfDay}
+                    layer="foreground"
+                />
+
+                {/* Render Weather Effects (fullscreen weather animations) */}
+                <WeatherOverlay
+                    weather={gameState.getWeather()}
+                    layer="foreground"
+                    viewportWidth={window.innerWidth}
+                    viewportHeight={window.innerHeight}
                 />
 
                 {/* Transition indicators (rendered after foreground sprites so they're always visible) */}
@@ -324,6 +386,12 @@ const App: React.FC = () => {
                     onClose={() => setActiveNPC(null)}
                     onNodeChange={handleDialogueAction}
                 />
+            )}
+            {showDevTools && (
+                <DevTools onClose={() => {
+                    console.log('[App] Closing DevTools');
+                    setShowDevTools(false);
+                }} />
             )}
             {showColorEditor && (
                 <ColorSchemeEditor onClose={() => setShowColorEditor(false)} />

@@ -1,5 +1,5 @@
 import { TileType, TileData, Direction, SpriteMetadata } from './types';
-import { tileAssets, farmingAssets } from './assets';
+import { tileAssets, farmingAssets, animationAssets } from './assets';
 
 export const TILE_SIZE = 64;
 export const MAP_WIDTH = 50;
@@ -693,4 +693,79 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetX: 0,
     collisionOffsetY: -1.4,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
+];
+
+/**
+ * TILE_ANIMATIONS - Environmental effects that appear near specific tile types
+ *
+ * These animations automatically render near matching tiles when conditions are met.
+ * Useful for: falling petals, fireflies, smoke, sparkles, etc.
+ */
+export const TILE_ANIMATIONS: import('./types').TileAnimation[] = [
+  // Falling cherry petals (single animation per tree)
+  // Note: Optimized GIF is 512x512px, scale values adjusted for tile size (64px)
+  {
+    id: 'cherry_petals_spring',
+    image: animationAssets.cherry_spring_petals,
+    tileType: TileType.CHERRY_TREE,
+    offsetX: -0.75, // Moved left from tree center
+    offsetY: -1.5, // Just above the tree canopy
+    radius: 1, // Only right at the tree
+    layer: 'foreground',
+    loop: true,
+    opacity: 0.85, // Medium opacity
+    scale: 0.35, // ~180px (2.8 tiles wide) - nice balance between small and large
+    conditions: {
+      season: 'spring',
+    },
+  },
+  // Future examples:
+  // {
+  //   id: 'chimney_smoke',
+  //   image: animationAssets.chimney_smoke,
+  //   tileType: TileType.CHIMNEY,
+  //   offsetX: 0,
+  //   offsetY: -3,
+  //   radius: 1,
+  //   layer: 'foreground',
+  //   loop: true,
+  //   conditions: { timeOfDay: 'day' },
+  // },
+];
+
+/**
+ * WEATHER_ANIMATIONS - Fullscreen environmental effects based on weather state
+ *
+ * These animations render across the entire visible viewport when the weather matches.
+ * Use DevTools (F4) to change weather and test these effects.
+ */
+export const WEATHER_ANIMATIONS: import('./types').WeatherAnimation[] = [
+  {
+    id: 'cherry_blossoms_weather',
+    image: animationAssets.cherry_spring_petals,
+    weather: 'cherry_blossoms',
+    layer: 'foreground',
+    loop: true,
+    opacity: 0.6,
+    scale: 0.8, // ~410px (6.4 tiles wide) - large atmospheric effect (512px optimized)
+  },
+  // Future weather effects:
+  // {
+  //   id: 'rain_weather',
+  //   image: animationAssets.rain,
+  //   weather: 'rain',
+  //   layer: 'foreground',
+  //   loop: true,
+  //   opacity: 0.7,
+  //   scale: 1.0,
+  // },
+  // {
+  //   id: 'snow_weather',
+  //   image: animationAssets.snow,
+  //   weather: 'snow',
+  //   layer: 'foreground',
+  //   loop: true,
+  //   opacity: 0.8,
+  //   scale: 1.2,
+  // },
 ];
