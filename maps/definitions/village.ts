@@ -1,6 +1,6 @@
 import { MapDefinition, TileType, Direction, NPCBehavior } from '../../types';
 import { parseGrid } from '../gridParser';
-import { createCatNPC } from '../../utils/npcFactories';
+import { createCatNPC, createOldWomanKnittingNPC, createDogNPC } from '../../utils/npcFactories';
 import { npcAssets } from '../../assets';
 
 /**
@@ -250,7 +250,20 @@ export const village: MapDefinition = {
       position: { x: 8, y: 12 }, // On path near shop entrance (moved left to not block door)
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
-      sprite: '/TwilightGame/assets/npcs/shopkeeper.svg',
+      sprite: npcAssets.shopkeeper_fox_01,
+      scale: 3.0,
+      animatedStates: {
+        currentState: 'idle',
+        states: {
+          idle: {
+            sprites: [npcAssets.shopkeeper_fox_01, npcAssets.shopkeeper_fox_02],
+            animationSpeed: 500, // Friendly, attentive animation
+          },
+        },
+        lastStateChange: Date.now(),
+        lastFrameChange: Date.now(),
+        currentFrame: 0,
+      },
       dialogue: [
         {
           id: 'greeting',
@@ -382,5 +395,9 @@ export const village: MapDefinition = {
     },
     // Add cat NPC using factory function
     createCatNPC('village_cat', { x: 25, y: 23 }, 'Sleepy Cat'),
+    // Add old woman knitting near the cat
+    createOldWomanKnittingNPC('old_woman_knitting', { x: 23, y: 23 }, 'Old Woman'),
+    // Add dog that follows the little girl
+    createDogNPC('village_dog', { x: 16, y: 17 }, 'child', 'Friendly Dog'),
   ],
 };

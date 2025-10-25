@@ -244,8 +244,44 @@ class NPCManagerClass {
 
       const timeSinceLastMove = currentTime - state.lastMoveTime;
 
+      // FOLLOW behavior (for NPCs with followTarget)
+      if (npc.followTarget) {
+        const targetNPC = this.getNPCById(npc.followTarget);
+        if (targetNPC) {
+          const dx = targetNPC.position.x - npc.position.x;
+          const dy = targetNPC.position.y - npc.position.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          // Follow if target is more than 2 tiles away, but not too close (stay 1-2 tiles away)
+          if (distance > 2.0) {
+            // Move towards target
+            const movement = this.NPC_SPEED * deltaTime * 1.2; // Slightly faster to catch up
+            let newPos = { ...npc.position };
+
+            // Normalize direction and move
+            const moveX = (dx / distance) * movement;
+            const moveY = (dy / distance) * movement;
+
+            newPos.x += moveX;
+            newPos.y += moveY;
+
+            // Update direction based on movement
+            if (Math.abs(dx) > Math.abs(dy)) {
+              npc.direction = dx > 0 ? Direction.Right : Direction.Left;
+            } else {
+              npc.direction = dy > 0 ? Direction.Down : Direction.Up;
+            }
+
+            // Check collision before moving
+            if (!this.checkCollision(newPos)) {
+              npc.position = newPos;
+              anyNPCMoved = true;
+            }
+          }
+        }
+      }
       // WANDER behavior
-      if (npc.behavior === NPCBehavior.WANDER) {
+      else if (npc.behavior === NPCBehavior.WANDER) {
         if (state.isWaiting) {
           // Waiting between moves
           if (timeSinceLastMove >= state.waitDuration) {

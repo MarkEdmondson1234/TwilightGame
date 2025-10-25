@@ -215,6 +215,7 @@ export interface NPC {
   interactionRadius?: number; // How close player must be (default 1.5 tiles)
   animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations
   scale?: number; // Optional: sprite scale multiplier (default 4.0)
+  followTarget?: string; // Optional: ID of NPC to follow (for companion NPCs like dogs)
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)
