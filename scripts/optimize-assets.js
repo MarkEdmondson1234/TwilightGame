@@ -211,8 +211,8 @@ async function optimizeTiles() {
 
     const originalSize = fs.statSync(inputPath).size;
 
-    // Special handling for shop buildings - extra large size with very high quality (minimal compression)
-    if (file.includes('shop')) {
+    // Special handling for large multi-tile sprites (shop, mine entrance) - extra large size with very high quality (minimal compression)
+    if (file.includes('shop') || file.includes('mine_entrance')) {
       await sharp(inputPath)
         .resize(SHOP_SIZE, SHOP_SIZE, {
           fit: 'contain',

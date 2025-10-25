@@ -211,9 +211,9 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.MINE_ENTRANCE]: {
     name: 'Mine Entrance',
-    color: 'bg-palette-rust',  // Base special tile color
-    isSolid: false,
-    image: [tileAssets.door_1]
+    color: 'bg-palette-sage',  // Base grass color for background
+    isSolid: true,  // Player cannot walk through the rocks
+    image: []  // Uses multi-tile sprite from SPRITE_METADATA
   },
 
   // Furniture/objects
@@ -832,6 +832,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 4.4,
     collisionOffsetX: -0.3,
     collisionOffsetY: -2.2,  // Just the bottom area (player can walk behind roof)
+  },
+  {
+    tileType: TileType.MINE_ENTRANCE,
+    spriteWidth: 4,  // 4 tiles wide (mine entrance with rocks)
+    spriteHeight: 4, // 4 tiles tall
+    offsetX: -1.5,   // Center the sprite on the anchor tile
+    offsetY: -1.5,     // Extends 3 tiles upward from anchor
+    image: tileAssets.mine_entrance,
+    isForeground: false,  // Render in background layer
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision only at the entrance opening (center area at bottom)
+    collisionWidth: 2,
+    collisionHeight: 1,
+    collisionOffsetX: -0.5,
+    collisionOffsetY: 0,
   },
 ];
 
