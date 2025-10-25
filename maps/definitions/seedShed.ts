@@ -38,7 +38,7 @@ export const seedShed: MapDefinition = {
       fromPosition: { x: 5, y: 5 }, // Door at bottom
       tileType: TileType.DOOR,
       toMapId: 'farm_area',
-      toPosition: { x: 13, y: 22 }, // Exit to farm area, on grass south of building
+      toPosition: { x: 8, y: 22 }, // Exit to farm area, on grass south of building
       label: 'Exit to Farm',
     },
   ],

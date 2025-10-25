@@ -368,6 +368,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.shop_spring],  // Default to spring
     }
   },
+  [TileType.GARDEN_SHED]: {
+    name: 'Garden Shed',
+    color: 'bg-palette-sage',  // Base grass color for background
+    isSolid: true,
+    image: [],
+    seasonalImages: {
+      spring: [tileAssets.garden_shed_spring],
+      summer: [tileAssets.garden_shed_summer],
+      autumn: [tileAssets.garden_shed_autumn],
+      winter: [tileAssets.garden_shed_winter],
+      default: [tileAssets.garden_shed_spring],  // Default to spring
+    }
+  },
 
   // Farmland tiles
   [TileType.SOIL_FALLOW]: {
@@ -849,6 +862,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionWidth: 2,
     collisionHeight: 1,
     collisionOffsetX: -0.5,
+    collisionOffsetY: 0,
+  },
+  {
+    tileType: TileType.GARDEN_SHED,
+    spriteWidth: 6,  // 6 tiles wide (garden shed on stilts with stairs)
+    spriteHeight: 6, // 6 tiles tall
+    offsetX: -2.5,   // Position sprite relative to anchor
+    offsetY: -4,     // Extends upward from anchor
+    image: tileAssets.garden_shed_spring,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision at the front of the shed (player cannot walk through building or stairs)
+    collisionWidth: 3,
+    collisionHeight: 1,
+    collisionOffsetX: -1,
     collisionOffsetY: 0,
   },
 ];

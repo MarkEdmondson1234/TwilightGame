@@ -48,6 +48,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'z': TileType.COTTAGE_FLOWERS,
   'k': TileType.COTTAGE_STONE,
   '%': TileType.SHOP,             // % = Shop (seasonal building)
+  '~': TileType.GARDEN_SHED,      // ~ = Garden shed (seasonal farm building)
   'V': TileType.BUILDING_WINDOW, // V = looks like a window
   // Farmland
   'X': TileType.SOIL_FALLOW,     // X = Farm plot (fallow soil)

@@ -44,6 +44,7 @@ export enum TileType {
   COTTAGE_STONE,
   COTTAGE_FLOWERS,
   SHOP,
+  GARDEN_SHED,
   // Farmland tiles
   SOIL_FALLOW,
   SOIL_TILLED,
