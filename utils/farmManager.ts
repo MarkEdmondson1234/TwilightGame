@@ -148,7 +148,8 @@ class FarmManager {
     }
 
     // Check if plant is ready to harvest
-    if (plot.state === FarmPlotState.PLANTED || plot.state === FarmPlotState.WATERED) {
+    // Can become ready from PLANTED, WATERED, or WILTING states
+    if (plot.state === FarmPlotState.PLANTED || plot.state === FarmPlotState.WATERED || plot.state === FarmPlotState.WILTING) {
       const isWatered = msSinceWatered < crop.waterNeededInterval;
       const growthTime = isWatered ? crop.growthTimeWatered : crop.growthTime;
 
@@ -480,6 +481,35 @@ class FarmManager {
     }
 
     return lines.join('\n');
+  }
+
+  /**
+   * DEBUG: Advance time for all farm plots by specified milliseconds
+   * This rewinds timestamps to simulate time passing
+   */
+  debugAdvanceTime(milliseconds: number): void {
+    console.log(`[FarmManager DEBUG] Advancing time by ${milliseconds}ms`);
+
+    for (const plot of this.plots.values()) {
+      const updatedPlot = { ...plot };
+
+      // Rewind timestamps (subtract time to make them "older")
+      if (updatedPlot.plantedAtTimestamp !== null) {
+        updatedPlot.plantedAtTimestamp -= milliseconds;
+      }
+      if (updatedPlot.lastWateredTimestamp !== null) {
+        updatedPlot.lastWateredTimestamp -= milliseconds;
+      }
+      if (updatedPlot.stateChangedAtTimestamp) {
+        updatedPlot.stateChangedAtTimestamp -= milliseconds;
+      }
+
+      this.registerPlot(updatedPlot);
+    }
+
+    // Trigger update to recalculate states
+    this.updateAllPlots();
+    console.log(`[FarmManager DEBUG] Time advanced, plots updated`);
   }
 }
 

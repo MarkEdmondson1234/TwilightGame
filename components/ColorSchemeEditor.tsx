@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getPalette, GamePalette, updatePaletteColor, exportPalette, PaletteColor } from '../palette';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { mapManager } from '../maps';
-import { ColorScheme } from '../types';
+import { ColorScheme, TileType } from '../types';
+import { COLOR_SCHEMES } from '../maps/colorSchemes';
+import { TILE_LEGEND } from '../constants';
 
 interface ColorSchemeEditorProps {
   onClose: () => void;
+  onColorChange: () => void;  // Callback to trigger re-render in App
 }
 
 type TileColorKey = keyof ColorScheme['colors'];
@@ -14,31 +17,178 @@ type TimeKey = 'day' | 'night';
 
 const TILE_TYPES: { key: TileColorKey; label: string; description: string }[] = [
   { key: 'grass', label: 'Grass', description: 'Ground/outdoor grass tiles' },
-  { key: 'rock', label: 'Rock', description: 'Rock tiles (usually matches grass)' },
+  { key: 'rock', label: 'Rock', description: 'Background under rock sprites' },
   { key: 'water', label: 'Water', description: 'Water/pond tiles' },
-  { key: 'path', label: 'Path', description: 'Path background (stepping stones)' },
+  { key: 'path', label: 'Path', description: 'Background under path sprites' },
   { key: 'floor', label: 'Floor', description: 'Indoor floor tiles' },
   { key: 'wall', label: 'Wall', description: 'Indoor wall tiles' },
   { key: 'carpet', label: 'Carpet', description: 'Indoor carpet tiles' },
-  { key: 'door', label: 'Door', description: 'Door tiles' },
+  { key: 'door', label: 'Door', description: 'Background under door sprites' },
   { key: 'special', label: 'Special', description: 'Special tiles (exits, mine entrance)' },
-  { key: 'furniture', label: 'Furniture', description: 'Tables, chairs' },
-  { key: 'mushroom', label: 'Mushroom', description: 'Decorative mushrooms' },
-  { key: 'background', label: 'Background', description: 'Map background color' },
+  { key: 'furniture', label: 'Furniture', description: 'Background under furniture sprites' },
+  { key: 'mushroom', label: 'Mushroom', description: 'Background under mushroom sprites' },
+  { key: 'background', label: 'Background', description: 'Map background color (empty space)' },
 ];
 
-const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
+// Map TileType enum to ColorScheme color keys
+const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
+  [TileType.GRASS]: 'grass',
+  [TileType.ROCK]: 'rock',
+  [TileType.WATER]: 'water',
+  [TileType.WATER_CENTER]: 'water',
+  [TileType.WATER_LEFT]: 'water',
+  [TileType.WATER_RIGHT]: 'water',
+  [TileType.WATER_TOP]: 'water',
+  [TileType.WATER_BOTTOM]: 'water',
+  [TileType.PATH]: 'path',
+  [TileType.FLOOR]: 'floor',
+  [TileType.FLOOR_LIGHT]: 'floor',
+  [TileType.FLOOR_DARK]: 'floor',
+  [TileType.WALL]: 'wall',
+  [TileType.WALL_BOUNDARY]: 'wall',
+  [TileType.BUILDING_WALL]: 'wall',
+  [TileType.CARPET]: 'carpet',
+  [TileType.RUG]: 'carpet',
+  [TileType.DOOR]: 'door',
+  [TileType.EXIT_DOOR]: 'door',
+  [TileType.SHOP_DOOR]: 'door',
+  [TileType.BUILDING_DOOR]: 'door',
+  [TileType.MINE_ENTRANCE]: 'special',
+  [TileType.TABLE]: 'furniture',
+  [TileType.CHAIR]: 'furniture',
+  [TileType.MUSHROOM]: 'mushroom',
+  [TileType.SOIL_FALLOW]: 'grass',
+  [TileType.SOIL_TILLED]: 'path',
+  [TileType.SOIL_PLANTED]: 'grass',
+  [TileType.SOIL_WATERED]: 'path',
+  [TileType.SOIL_READY]: 'grass',
+  [TileType.SOIL_WILTING]: 'grass',
+  [TileType.SOIL_DEAD]: 'grass',
+};
+
+/**
+ * Check if a tile type's background color is visible
+ * (i.e., not completely obscured by a sprite image)
+ */
+const isTileColorVisible = (tileType: TileType): boolean => {
+  const tileData = TILE_LEGEND[tileType];
+
+  // If tile has no images or seasonal images, background is fully visible
+  if (!tileData.image && !tileData.seasonalImages) {
+    return true;
+  }
+
+  // If tile has images, check if they exist (array length > 0)
+  const hasImages = (tileData.image && tileData.image.length > 0) ||
+    (tileData.seasonalImages && tileData.seasonalImages.default.length > 0);
+
+  // If tile has images, background is typically not visible
+  // Exception: Some tiles like water and path have transparent sprites that show background
+  // We'll consider these specific cases as visible
+  const transparentTiles = [
+    TileType.WATER, TileType.WATER_CENTER, TileType.WATER_LEFT,
+    TileType.WATER_RIGHT, TileType.WATER_TOP, TileType.WATER_BOTTOM,
+    TileType.GRASS, TileType.FLOOR, TileType.FLOOR_LIGHT, TileType.FLOOR_DARK,
+    TileType.WALL, TileType.CARPET, TileType.RUG, TileType.PATH
+  ];
+
+  if (transparentTiles.includes(tileType)) {
+    return true;
+  }
+
+  // For tiles with opaque sprites, background isn't visible
+  return !hasImages;
+};
+
+/**
+ * Check if a color key has any visible tiles using it on the current map
+ */
+const isColorKeyVisible = (colorKey: TileColorKey, grid: TileType[][]): boolean => {
+  // Background is always visible
+  if (colorKey === 'background') {
+    return true;
+  }
+
+  // Check all tiles on the map
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      const tileType = grid[y][x];
+      const tileColorKey = TILE_TYPE_TO_COLOR_KEY[tileType];
+
+      // If this tile uses our color key and its color is visible
+      if (tileColorKey === colorKey && isTileColorVisible(tileType)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Analyze current map to count tile usage
+ */
+const analyzeMapTiles = (grid: TileType[][]): Map<TileColorKey, number> => {
+  const tileUsage = new Map<TileColorKey, number>();
+
+  // Always show background
+  tileUsage.set('background', 1);
+
+  for (let y = 0; y < grid.length; y++) {
+    for (let x = 0; x < grid[y].length; x++) {
+      const tileType = grid[y][x];
+      const colorKey = TILE_TYPE_TO_COLOR_KEY[tileType];
+      if (colorKey) {
+        tileUsage.set(colorKey, (tileUsage.get(colorKey) || 0) + 1);
+      }
+    }
+  }
+
+  return tileUsage;
+};
+
+const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorChange }) => {
   const [palette, setPalette] = useState<GamePalette>(getPalette());
   const paletteColors = Object.keys(palette) as (keyof GamePalette)[];
 
   const currentMap = mapManager.getCurrentMap();
   const currentScheme = mapManager.getCurrentColorScheme();
 
+  // Get current time context
+  const currentTime = TimeManager.getCurrentTime();
+  const currentSeason = currentTime.season.toLowerCase() as SeasonKey;
+  // Even hours = day, odd hours = night (matches TimeManager logic)
+  const currentTimeOfDay: TimeKey = currentTime.hour % 2 === 0 ? 'day' : 'night';
+
   const [selectedTile, setSelectedTile] = useState<TileColorKey>('grass');
-  const [activeTab, setActiveTab] = useState<'palette' | 'base' | 'seasonal' | 'timeOfDay'>('palette');
+  const [activeTab, setActiveTab] = useState<'quick' | 'advanced'>('quick');
   const [editedScheme, setEditedScheme] = useState<ColorScheme | null>(currentScheme);
   const [showExport, setShowExport] = useState(false);
-  const [selectedPaletteColor, setSelectedPaletteColor] = useState<keyof GamePalette | null>(null);
+  const [expandedTiles, setExpandedTiles] = useState<Set<TileColorKey>>(new Set());
+
+  // Quick Edit: which season/time are we editing?
+  const [editingSeason, setEditingSeason] = useState<SeasonKey | 'base'>(currentSeason);
+  const [editingTime, setEditingTime] = useState<TimeKey | 'base'>(currentTimeOfDay);
+
+  // Quick Edit: show palette picker for a specific tile
+  const [showPalettePicker, setShowPalettePicker] = useState<TileColorKey | null>(null);
+
+  // Analyze which tiles are actually used on this map
+  const tileUsage = useMemo(() => {
+    if (!currentMap) return new Map<TileColorKey, number>();
+    return analyzeMapTiles(currentMap.grid);
+  }, [currentMap?.id]);
+
+  // Filter to show only tiles that exist on this map
+  const relevantTiles = useMemo(() => {
+    return TILE_TYPES.filter(tile => tileUsage.has(tile.key));
+  }, [tileUsage]);
+
+  // Filter to show only VISIBLE tiles (those where color actually matters)
+  const visibleRelevantTiles = useMemo(() => {
+    if (!currentMap) return [];
+    return relevantTiles.filter(tile => isColorKeyVisible(tile.key, currentMap.grid));
+  }, [relevantTiles, currentMap]);
 
   // Refresh palette display when colors change
   useEffect(() => {
@@ -48,9 +198,6 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
     return () => clearInterval(interval);
   }, []);
 
-  const currentTime = TimeManager.getCurrentTime();
-  const currentSeason = currentTime.season.toLowerCase() as SeasonKey;
-  const currentTimeOfDay = currentTime.timeOfDay.toLowerCase() as TimeKey;
 
   // Update edited scheme when map changes
   useEffect(() => {
@@ -68,16 +215,79 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
     );
   }
 
+  // Live update function - applies changes immediately
+  const applyChangesLive = (newScheme: ColorScheme) => {
+    console.log('[ColorSchemeEditor] Applying changes live:', newScheme.name);
+
+    // Update the color scheme in MapManager
+    mapManager.registerColorScheme(newScheme);
+
+    // Force map reload to apply changes
+    if (currentMap) {
+      console.log('[ColorSchemeEditor] Reloading map:', currentMap.id);
+      mapManager.loadMap(currentMap.id);
+
+      // Notify App component to trigger TileRenderer re-render
+      onColorChange();
+    }
+  };
+
+  const handleQuickColorChange = (tileKey: TileColorKey, colorKey: keyof GamePalette) => {
+    setEditedScheme(prev => {
+      if (!prev) return prev;
+
+      const newScheme = { ...prev };
+
+      // For quick edit, we modify the color that's currently active
+      // This could be base, seasonal, or time-of-day depending on current context
+
+      // Check if there's a time-of-day override active
+      if (prev.timeOfDayModifiers?.[currentTimeOfDay]?.[tileKey]) {
+        newScheme.timeOfDayModifiers = {
+          ...prev.timeOfDayModifiers,
+          [currentTimeOfDay]: {
+            ...prev.timeOfDayModifiers[currentTimeOfDay],
+            [tileKey]: `bg-palette-${colorKey}`,
+          },
+        };
+      }
+      // Check if there's a seasonal override active
+      else if (prev.seasonalModifiers?.[currentSeason]?.[tileKey]) {
+        newScheme.seasonalModifiers = {
+          ...prev.seasonalModifiers,
+          [currentSeason]: {
+            ...prev.seasonalModifiers[currentSeason],
+            [tileKey]: `bg-palette-${colorKey}`,
+          },
+        };
+      }
+      // Otherwise modify base color
+      else {
+        newScheme.colors = {
+          ...prev.colors,
+          [tileKey]: `bg-palette-${colorKey}`,
+        };
+      }
+
+      // Apply changes live
+      applyChangesLive(newScheme);
+
+      return newScheme;
+    });
+  };
+
   const handleBaseColorChange = (tileKey: TileColorKey, colorKey: keyof GamePalette) => {
     setEditedScheme(prev => {
       if (!prev) return prev;
-      return {
+      const newScheme = {
         ...prev,
         colors: {
           ...prev.colors,
           [tileKey]: `bg-palette-${colorKey}`,
         },
       };
+      applyChangesLive(newScheme);
+      return newScheme;
     });
   };
 
@@ -102,10 +312,12 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
         newModifiers[season]![tileKey] = `bg-palette-${colorKey}`;
       }
 
-      return {
+      const newScheme = {
         ...prev,
         seasonalModifiers: Object.keys(newModifiers).length > 0 ? newModifiers : undefined,
       };
+      applyChangesLive(newScheme);
+      return newScheme;
     });
   };
 
@@ -130,26 +342,13 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
         newModifiers[timeOfDay]![tileKey] = `bg-palette-${colorKey}`;
       }
 
-      return {
+      const newScheme = {
         ...prev,
         timeOfDayModifiers: Object.keys(newModifiers).length > 0 ? newModifiers : undefined,
       };
+      applyChangesLive(newScheme);
+      return newScheme;
     });
-  };
-
-  const applyChanges = () => {
-    if (!editedScheme) return;
-
-    // Update the color scheme in MapManager
-    mapManager.registerColorScheme(editedScheme);
-
-    // Force map reload to apply changes
-    if (currentMap) {
-      mapManager.loadMap(currentMap.id);
-    }
-
-    // TODO: Save to GameState
-    alert('Changes applied! Walk around to see the effect.');
   };
 
   const exportScheme = () => {
@@ -159,6 +358,35 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
     navigator.clipboard.writeText(code).then(() => {
       alert('Color scheme code copied to clipboard!');
     });
+  };
+
+  const resetToOriginal = () => {
+    if (!currentMap || !editedScheme) return;
+
+    // Find the original color scheme from COLOR_SCHEMES
+    const originalScheme = COLOR_SCHEMES[editedScheme.name];
+
+    if (!originalScheme) {
+      alert('Could not find original color scheme!');
+      return;
+    }
+
+    if (confirm(`Reset to original ${originalScheme.name} color scheme? This will undo all your changes.`)) {
+      // Create a deep copy of the original scheme
+      const resetScheme: ColorScheme = {
+        name: originalScheme.name,
+        colors: { ...originalScheme.colors },
+        seasonalModifiers: originalScheme.seasonalModifiers
+          ? JSON.parse(JSON.stringify(originalScheme.seasonalModifiers))
+          : undefined,
+        timeOfDayModifiers: originalScheme.timeOfDayModifiers
+          ? JSON.parse(JSON.stringify(originalScheme.timeOfDayModifiers))
+          : undefined,
+      };
+
+      setEditedScheme(resetScheme);
+      applyChangesLive(resetScheme);
+    }
   };
 
   const generateColorSchemeCode = (scheme: ColorScheme): string => {
@@ -216,6 +444,46 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
     return baseColor;
   };
 
+  // Get color for a specific editing context (season/time)
+  const getColorForContext = (tileKey: TileColorKey, season: SeasonKey | 'base', time: TimeKey | 'base'): string => {
+    if (!editedScheme) return 'bg-palette-sage';
+
+    // Check for time override first (if not base)
+    if (time !== 'base' && editedScheme.timeOfDayModifiers?.[time]?.[tileKey]) {
+      return editedScheme.timeOfDayModifiers[time][tileKey]!;
+    }
+
+    // Check for seasonal override (if not base)
+    if (season !== 'base' && editedScheme.seasonalModifiers?.[season]?.[tileKey]) {
+      return editedScheme.seasonalModifiers[season][tileKey]!;
+    }
+
+    // Fall back to base color
+    return editedScheme.colors[tileKey];
+  };
+
+  // Set color for a specific editing context
+  const setColorForContext = (tileKey: TileColorKey, paletteColorKey: keyof GamePalette, season: SeasonKey | 'base', time: TimeKey | 'base') => {
+    console.log('[setColorForContext]', { tileKey, paletteColorKey, season, time });
+
+    // Priority: Time > Season > Base
+    // If user selected a specific time (not base), modify time-of-day
+    if (time !== 'base') {
+      console.log('[setColorForContext] Calling handleTimeOfDayColorChange');
+      handleTimeOfDayColorChange(time, tileKey, paletteColorKey);
+    }
+    // If user selected a specific season (not base), modify seasonal
+    else if (season !== 'base') {
+      console.log('[setColorForContext] Calling handleSeasonalColorChange');
+      handleSeasonalColorChange(season, tileKey, paletteColorKey);
+    }
+    // Otherwise, modify base colors
+    else {
+      console.log('[setColorForContext] Calling handleBaseColorChange');
+      handleBaseColorChange(tileKey, paletteColorKey);
+    }
+  };
+
   const extractColorName = (colorClass: string): keyof GamePalette | null => {
     const match = colorClass.match(/bg-palette-(\w+)/);
     return match ? (match[1] as keyof GamePalette) : null;
@@ -227,76 +495,89 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] flex flex-col">
+      <div className="bg-gray-800 rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700">
           <div>
             <h2 className="text-xl font-bold text-white">Color Scheme Editor</h2>
             <p className="text-sm text-gray-400">
-              Map: {currentMap.name} ({editedScheme.name} scheme)
+              {currentMap.name} • {editedScheme.name} • {visibleRelevantTiles.length} visible colors on this map
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl leading-none"
+            className="text-gray-400 hover:text-white text-2xl leading-none px-2"
+            title="Close editor"
           >
             ×
           </button>
         </div>
 
         {/* Current Context */}
-        <div className="px-4 py-2 bg-gray-900/50 border-b border-gray-700">
+        <div className="px-4 py-3 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-b border-gray-700">
           <div className="flex items-center justify-between text-sm">
-            <div>
-              <span className="text-gray-400">Season: </span>
-              <span className="text-white font-semibold">{currentTime.season}</span>
-              <span className="text-gray-400 ml-4">Time: </span>
-              <span className="text-white font-semibold">{currentTime.timeOfDay}</span>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">Season:</span>
+                <span className="px-2 py-1 bg-green-600 rounded text-white font-semibold">{currentTime.season}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-400">Time:</span>
+                <span className="px-2 py-1 bg-blue-600 rounded text-white font-semibold">{currentTime.timeOfDay}</span>
+              </div>
             </div>
-            <div className="text-xs text-gray-500">
-              Changes apply immediately - walk around to see the effect!
+            <div className="text-xs text-green-400 font-semibold">
+              ✨ Changes are live! Move around to see them.
             </div>
           </div>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-2 p-4 border-b border-gray-700">
-          <button
-            onClick={applyChanges}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded text-white font-semibold"
-          >
-            ✓ Apply Scheme
-          </button>
-          <button
-            onClick={() => {
-              const paletteJson = exportPalette();
-              navigator.clipboard.writeText(paletteJson).then(() => {
-                alert('Palette colors copied to clipboard!');
-              });
-            }}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 rounded text-white font-semibold"
-          >
-            Copy Palette
-          </button>
-          <button
-            onClick={exportScheme}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold"
-          >
-            Copy Scheme
-          </button>
-          <button
-            onClick={() => setShowExport(!showExport)}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white font-semibold"
-          >
-            {showExport ? 'Hide' : 'Show'} Export
-          </button>
+        {/* Export Controls */}
+        <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-gray-700 bg-gray-900/50">
+          <div className="text-xs text-gray-400">
+            Game is currently showing: <span className="text-white font-semibold">{currentTime.season} {currentTime.timeOfDay}</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={resetToOriginal}
+              className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm font-semibold"
+              title="Reset to original color scheme"
+            >
+              ↺ Reset
+            </button>
+            <button
+              onClick={() => setShowExport(!showExport)}
+              className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-white text-sm font-semibold"
+              title="Show export options"
+            >
+              {showExport ? '▲ Hide' : '▼ Export'}
+            </button>
+          </div>
         </div>
 
         {/* Export View */}
         {showExport && (
           <div className="p-4 bg-gray-900 border-b border-gray-700">
-            <div className="mb-2 text-sm font-semibold text-gray-400">
-              Code for maps/colorSchemes.ts:
+            <div className="flex gap-2 mb-3">
+              <button
+                onClick={() => {
+                  const paletteJson = exportPalette();
+                  navigator.clipboard.writeText(paletteJson).then(() => {
+                    alert('Palette JSON copied to clipboard!');
+                  });
+                }}
+                className="px-3 py-2 bg-orange-600 hover:bg-orange-700 rounded text-white text-sm font-semibold"
+                title="Copy palette hex colors as JSON"
+              >
+                📋 Copy Palette JSON
+              </button>
+              <button
+                onClick={exportScheme}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white text-sm font-semibold"
+                title="Copy color scheme code for colorSchemes.ts"
+              >
+                📋 Copy Scheme Code
+              </button>
             </div>
             <div className="bg-black rounded p-3 max-h-48 overflow-y-auto">
               <pre className="text-xs text-green-400 font-mono whitespace-pre">
@@ -307,334 +588,487 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose }) => {
         )}
 
         {/* Main Content */}
-        <div className="flex-1 overflow-hidden flex">
-          {/* Left: Tile Type List */}
-          <div className="w-64 border-r border-gray-700 overflow-y-auto">
-            <div className="p-2">
-              <div className="text-xs font-semibold text-gray-400 mb-2 px-2">TILE TYPES</div>
-              {TILE_TYPES.map(tile => {
-                const isActive = selectedTile === tile.key;
-                const colorClass = getCurrentColor(tile.key);
-                const colorName = extractColorName(colorClass);
-                const hexColor = colorName ? palette[colorName]?.hex : '#000000';
-
-                return (
-                  <button
-                    key={tile.key}
-                    onClick={() => setSelectedTile(tile.key)}
-                    className={`w-full text-left p-2 rounded mb-1 transition-colors ${
-                      isActive
-                        ? 'bg-blue-600 text-white'
-                        : 'hover:bg-gray-700 text-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 rounded border border-gray-600"
-                        style={{ backgroundColor: hexColor }}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold truncate">{tile.label}</div>
-                        <div className="text-xs text-gray-400 truncate">{colorName || 'none'}</div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {/* Tabs */}
+          <div className="flex border-b border-gray-700 bg-gray-900/50">
+            <button
+              onClick={() => setActiveTab('quick')}
+              className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
+                activeTab === 'quick'
+                  ? 'bg-gray-700 text-white border-b-2 border-green-500'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              title="Quick edit for current season and time"
+            >
+              ⚡ Quick Edit
+            </button>
+            <button
+              onClick={() => setActiveTab('advanced')}
+              className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
+                activeTab === 'advanced'
+                  ? 'bg-gray-700 text-white border-b-2 border-blue-500'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              title="Advanced: palette colors, seasons, time of day"
+            >
+              🔧 Advanced
+            </button>
           </div>
 
-          {/* Right: Color Editor */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Tabs */}
-            <div className="flex border-b border-gray-700">
-              <button
-                onClick={() => setActiveTab('palette')}
-                className={`px-6 py-3 font-semibold transition-colors ${
-                  activeTab === 'palette'
-                    ? 'bg-gray-700 text-white border-b-2 border-blue-500'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                🎨 Edit Palette
-              </button>
-              <button
-                onClick={() => setActiveTab('base')}
-                className={`px-6 py-3 font-semibold transition-colors ${
-                  activeTab === 'base'
-                    ? 'bg-gray-700 text-white border-b-2 border-blue-500'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Base Color
-              </button>
-              <button
-                onClick={() => setActiveTab('seasonal')}
-                className={`px-6 py-3 font-semibold transition-colors ${
-                  activeTab === 'seasonal'
-                    ? 'bg-gray-700 text-white border-b-2 border-blue-500'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Seasonal
-              </button>
-              <button
-                onClick={() => setActiveTab('timeOfDay')}
-                className={`px-6 py-3 font-semibold transition-colors ${
-                  activeTab === 'timeOfDay'
-                    ? 'bg-gray-700 text-white border-b-2 border-blue-500'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Day/Night
-              </button>
-            </div>
+          {/* Content Area */}
+          <div className="flex-1 overflow-hidden flex">
 
-            {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {/* Palette Tab - Edit hex colors */}
-              {activeTab === 'palette' && (
-                <div>
-                  <div className="mb-4">
-                    <h3 className="text-lg font-bold text-white mb-1">Edit Palette Colors</h3>
-                    <p className="text-sm text-gray-400">
-                      Change the actual hex colors in the palette. These changes apply everywhere this color is used.
-                    </p>
+            {/* Quick Edit Tab - Simple color picker interface */}
+            {activeTab === 'quick' && (
+              <div className="flex-1 overflow-y-auto">
+                {/* Season/Time Selector */}
+                <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-900/40 to-blue-900/40 border-b border-purple-600/50 p-3">
+                  <div className="text-sm text-white font-bold mb-2">
+                    ✏️ You are editing: {editingSeason === 'base' ? 'Base Colors' : editingSeason} • {editingTime === 'base' ? 'Day' : 'Night'}
                   </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {paletteColors.map(colorKey => {
-                      const color = palette[colorKey] as PaletteColor;
-                      const isSelected = selectedPaletteColor === colorKey;
-
-                      return (
-                        <div
-                          key={colorKey}
-                          className={`border-2 rounded-lg overflow-hidden cursor-pointer transition-all ${
-                            isSelected
-                              ? 'border-blue-500 shadow-lg shadow-blue-500/50'
-                              : 'border-gray-700 hover:border-gray-600'
-                          }`}
-                          onClick={() => setSelectedPaletteColor(colorKey)}
+                  <div className="text-xs text-gray-300 mb-2">Select which palette layer to edit:</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Season Selector */}
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Season</div>
+                      <div className="grid grid-cols-5 gap-1">
+                        <button
+                          onClick={() => setEditingSeason('base')}
+                          className={`px-2 py-1 text-xs rounded ${editingSeason === 'base' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
+                          title="Base colors (no seasonal override)"
                         >
-                          {/* Color Preview */}
-                          <div
-                            className="h-20 w-full"
-                            style={{ backgroundColor: color.hex }}
-                          />
+                          Base
+                        </button>
+                        {(['spring', 'summer', 'autumn', 'winter'] as SeasonKey[]).map(season => (
+                          <button
+                            key={season}
+                            onClick={() => setEditingSeason(season)}
+                            className={`px-2 py-1 text-xs rounded capitalize ${
+                              editingSeason === season
+                                ? 'bg-green-600 text-white'
+                                : season === currentSeason
+                                ? 'bg-green-900/30 text-green-300 hover:bg-green-800'
+                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                            }`}
+                            title={season === currentSeason ? `${season} (currently active)` : season}
+                          >
+                            {season === currentSeason ? '●' : ''}{season.slice(0, 3)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                          {/* Color Info */}
-                          <div className="p-2 bg-gray-900">
-                            <div className="text-xs font-semibold text-white mb-1">
-                              {colorKey}
-                            </div>
-                            <div className="text-xs text-gray-400 mb-2">
-                              {color.description}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="color"
-                                value={color.hex}
-                                onChange={(e) => {
-                                  updatePaletteColor(colorKey, e.target.value);
-                                  setPalette(getPalette());
-                                }}
-                                className="w-8 h-8 rounded cursor-pointer"
-                                onClick={(e) => e.stopPropagation()}
+                    {/* Time Selector */}
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Time of Day</div>
+                      <div className="grid grid-cols-2 gap-1">
+                        <button
+                          onClick={() => setEditingTime('base')}
+                          className={`px-2 py-1 text-xs rounded ${
+                            editingTime === 'base'
+                              ? 'bg-blue-600 text-white'
+                              : currentTimeOfDay === 'day'
+                              ? 'bg-blue-900/30 text-blue-300 hover:bg-blue-800'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                          title={currentTimeOfDay === 'day' ? 'Day (currently active) - uses base colors' : 'Day - uses base colors'}
+                        >
+                          {currentTimeOfDay === 'day' ? '●' : ''}Day
+                        </button>
+                        <button
+                          onClick={() => setEditingTime('night')}
+                          className={`px-2 py-1 text-xs rounded ${
+                            editingTime === 'night'
+                              ? 'bg-orange-600 text-white'
+                              : currentTimeOfDay === 'night'
+                              ? 'bg-orange-900/30 text-orange-300 hover:bg-orange-800'
+                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                          }`}
+                          title={currentTimeOfDay === 'night' ? 'Night (currently active) - darker colors' : 'Night - darker colors'}
+                        >
+                          {currentTimeOfDay === 'night' ? '●' : ''}Night
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4">
+
+                <div className="space-y-4">
+                  {visibleRelevantTiles.map(tile => {
+                    // Get color for the current editing context
+                    const editingColorClass = getColorForContext(tile.key, editingSeason, editingTime);
+                    const editingColorName = extractColorName(editingColorClass);
+                    const editingHex = editingColorName ? palette[editingColorName]?.hex : '#000000';
+                    const count = tileUsage.get(tile.key) || 0;
+
+                    // Get original color from COLOR_SCHEMES (base color always)
+                    const originalScheme = COLOR_SCHEMES[editedScheme.name];
+                    const originalColorClass = originalScheme?.colors[tile.key];
+                    const originalColorName = originalColorClass ? extractColorName(originalColorClass) : null;
+                    const originalHex = originalColorName ? palette[originalColorName]?.hex : '#000000';
+
+                    const isPalettePickerOpen = showPalettePicker === tile.key;
+
+                    return (
+                      <div key={tile.key} className="border border-gray-700 rounded-lg bg-gray-900/50">
+                        <div className="p-4">
+                          <div className="mb-3">
+                            <h3 className="text-lg font-bold text-white">{tile.label}</h3>
+                            <p className="text-xs text-gray-400">
+                              {tile.description} • {count} {count === 1 ? 'tile' : 'tiles'}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-3">
+                            {/* Current Color */}
+                            <div className="flex flex-col items-center">
+                              <div className="text-xs text-gray-400 mb-2">Current</div>
+                              <div
+                                className="w-16 h-16 rounded border-2 border-green-500 shadow-lg"
+                                style={{ backgroundColor: editingHex }}
+                                title={`${editingColorName} (${editingHex})`}
                               />
-                              <input
-                                type="text"
-                                value={color.hex}
-                                onChange={(e) => {
-                                  if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
-                                    updatePaletteColor(colorKey, e.target.value);
-                                    setPalette(getPalette());
+                              <div className="text-xs text-white mt-1 font-semibold capitalize">{editingColorName || 'none'}</div>
+                            </div>
+
+                            {/* Default Color */}
+                            <div className="flex flex-col items-center">
+                              <div className="text-xs text-gray-400 mb-2">Default</div>
+                              <div
+                                className="w-16 h-16 rounded border-2 border-gray-600 cursor-pointer hover:border-blue-500 transition-colors"
+                                style={{ backgroundColor: originalHex }}
+                                title={`Reset to ${originalColorName} (${originalHex})`}
+                                onClick={() => {
+                                  if (originalColorName) {
+                                    setColorForContext(tile.key, originalColorName, editingSeason, editingTime);
                                   }
                                 }}
-                                className="flex-1 px-2 py-1 bg-black border border-gray-700 rounded text-xs font-mono text-white"
-                                onClick={(e) => e.stopPropagation()}
                               />
+                              <div className="text-xs text-gray-400 mt-1 capitalize">{originalColorName || 'none'}</div>
+                            </div>
+
+                            {/* Choose Color Button */}
+                            <div className="flex flex-col items-center">
+                              <div className="text-xs text-gray-400 mb-2">Choose</div>
+                              <button
+                                onClick={() => setShowPalettePicker(isPalettePickerOpen ? null : tile.key)}
+                                className="w-16 h-16 rounded border-2 border-purple-500 hover:border-purple-400 transition-colors bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center"
+                                title="Choose from palette"
+                              >
+                                <span className="text-2xl">🎨</span>
+                              </button>
+                              <div className="text-xs text-purple-400 mt-1">Palette</div>
                             </div>
                           </div>
+
+                          {/* Palette Picker */}
+                          {isPalettePickerOpen && (
+                            <div className="mt-4 p-3 border-t border-gray-700 bg-gray-800/50">
+                              <div className="text-xs font-semibold text-white mb-2">Choose from palette:</div>
+                              <div className="grid grid-cols-6 gap-2">
+                                {paletteColors.map(colorKey => {
+                                  const color = palette[colorKey];
+                                  const isActive = editingColorName === colorKey;
+
+                                  return (
+                                    <button
+                                      key={colorKey}
+                                      onClick={() => {
+                                        setColorForContext(tile.key, colorKey, editingSeason, editingTime);
+                                        setShowPalettePicker(null);
+                                      }}
+                                      className={`p-1 rounded border-2 transition-all hover:scale-105 ${
+                                        isActive
+                                          ? 'border-green-500 shadow-lg shadow-green-500/50'
+                                          : 'border-gray-700 hover:border-purple-500'
+                                      }`}
+                                      title={`${colorKey} (${color.hex})`}
+                                    >
+                                      <div
+                                        className="w-full h-10 rounded"
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                      <div className="text-xs text-white mt-1 truncate">{colorKey}</div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div className="mt-3 flex items-center justify-between">
+                                <div className="text-xs text-gray-400">Or pick custom color:</div>
+                                <input
+                                  type="color"
+                                  value={editingHex}
+                                  onChange={(e) => {
+                                    if (editingColorName && editedScheme) {
+                                      // Update the palette color
+                                      updatePaletteColor(editingColorName, e.target.value);
+                                      setPalette(getPalette());
+
+                                      // Trigger map reload to show the change
+                                      applyChangesLive(editedScheme);
+                                    }
+                                  }}
+                                  className="w-20 h-8 rounded cursor-pointer border border-gray-600"
+                                  title="Pick a custom color"
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="mt-4 p-3 bg-blue-900/30 border border-blue-700 rounded">
-                    <p className="text-sm text-blue-300">
-                      💡 <strong>Tip:</strong> First customize your palette colors here, then use the other tabs to map them to tiles!
-                    </p>
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-
-              {/* Tile-specific tabs only show when not on palette tab */}
-              {activeTab !== 'palette' && (
-                <div className="mb-4">
-                  <h3 className="text-lg font-bold text-white mb-1">{selectedTileData.label}</h3>
-                  <p className="text-sm text-gray-400">{selectedTileData.description}</p>
-                  <div className="mt-2 text-sm">
-                    <span className="text-gray-400">Currently showing: </span>
-                    <span className="text-white font-semibold">{currentColorName || 'none'}</span>
-                  </div>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Base Color Tab */}
-              {activeTab === 'base' && (
-                <div>
-                  <div className="mb-3 text-sm text-gray-400">
-                    Select the base color for {selectedTileData.label.toLowerCase()} tiles:
-                  </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {paletteColors.map(colorKey => {
-                      const color = palette[colorKey];
-                      const isActive = editedScheme.colors[selectedTile] === `bg-palette-${colorKey}`;
+            {/* Advanced Tab - Full control */}
+            {activeTab === 'advanced' && (
+              <div className="flex-1 overflow-hidden flex">
+                {/* Left: Tile selector (shows ALL tiles) */}
+                <div className="w-64 border-r border-gray-700 overflow-y-auto bg-gray-900/30">
+                  <div className="p-2">
+                    <div className="text-xs font-semibold text-gray-400 mb-2 px-2">
+                      ALL TILE TYPES ({TILE_TYPES.length})
+                    </div>
+                    {TILE_TYPES.map(tile => {
+                      const isActive = selectedTile === tile.key;
+                      const colorClass = getCurrentColor(tile.key);
+                      const colorName = extractColorName(colorClass);
+                      const hexColor = colorName ? palette[colorName]?.hex : '#000000';
+                      const count = tileUsage.get(tile.key);
+                      const onThisMap = count !== undefined;
+                      const isVisible = currentMap ? isColorKeyVisible(tile.key, currentMap.grid) : false;
 
                       return (
                         <button
-                          key={colorKey}
-                          onClick={() => handleBaseColorChange(selectedTile, colorKey)}
-                          className={`p-3 rounded border-2 transition-all ${
+                          key={tile.key}
+                          onClick={() => setSelectedTile(tile.key)}
+                          className={`w-full text-left p-2 rounded mb-1 transition-colors ${
                             isActive
-                              ? 'border-blue-500 shadow-lg'
-                              : 'border-gray-700 hover:border-gray-600'
+                              ? 'bg-blue-600 text-white'
+                              : onThisMap
+                              ? 'hover:bg-gray-700 text-gray-200'
+                              : 'hover:bg-gray-800 text-gray-500'
                           }`}
+                          title={
+                            !onThisMap
+                              ? 'Not on this map'
+                              : !isVisible
+                              ? `${count} tiles (color hidden by sprites)`
+                              : `${count} tiles on this map`
+                          }
                         >
-                          <div
-                            className="w-full h-12 rounded mb-2"
-                            style={{ backgroundColor: color.hex }}
-                          />
-                          <div className="text-xs font-semibold text-white">{colorKey}</div>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-6 h-6 rounded border ${onThisMap ? 'border-gray-600' : 'border-gray-800'}`}
+                              style={{ backgroundColor: hexColor }}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="text-sm font-semibold truncate flex items-center gap-1">
+                                {tile.label}
+                                {onThisMap && <span className="text-xs">({count})</span>}
+                                {onThisMap && !isVisible && <span className="text-xs text-yellow-500" title="Color hidden by sprite">👁️</span>}
+                              </div>
+                              <div className="text-xs text-gray-400 truncate">{colorName || 'none'}</div>
+                            </div>
+                          </div>
                         </button>
                       );
                     })}
                   </div>
                 </div>
-              )}
 
-              {/* Seasonal Tab */}
-              {activeTab === 'seasonal' && (
-                <div>
-                  <div className="mb-3 text-sm text-gray-400">
-                    Override {selectedTileData.label.toLowerCase()} color for specific seasons (optional):
+                {/* Right: Advanced editing options */}
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* Sub-tabs for advanced features */}
+                  <div className="flex border-b border-gray-700 bg-gray-800/50">
+                    <button
+                      onClick={() => setSelectedTile(selectedTile)} // Dummy to show we're in base color mode
+                      className="px-4 py-2 font-semibold text-white bg-gray-700 border-b-2 border-blue-500 text-sm"
+                    >
+                      Base Color
+                    </button>
                   </div>
-                  {(['spring', 'summer', 'autumn', 'winter'] as SeasonKey[]).map(season => {
-                    const seasonalColor = editedScheme.seasonalModifiers?.[season]?.[selectedTile];
-                    const activeColor = seasonalColor ? extractColorName(seasonalColor) : null;
 
-                    return (
-                      <div key={season} className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-white capitalize">{season}</h4>
-                          {activeColor && (
-                            <button
-                              onClick={() => handleSeasonalColorChange(season, selectedTile, 'none')}
-                              className="text-xs text-red-400 hover:text-red-300"
-                            >
-                              Clear Override
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-6 gap-2">
-                          {paletteColors.map(colorKey => {
-                            const color = palette[colorKey];
-                            const isActive = activeColor === colorKey;
-
-                            return (
-                              <button
-                                key={colorKey}
-                                onClick={() => handleSeasonalColorChange(season, selectedTile, colorKey)}
-                                className={`p-2 rounded border transition-all ${
-                                  isActive
-                                    ? 'border-blue-500 shadow-lg'
-                                    : 'border-gray-700 hover:border-gray-600'
-                                }`}
-                                title={colorKey}
-                              >
-                                <div
-                                  className="w-full h-8 rounded"
-                                  style={{ backgroundColor: color.hex }}
-                                />
-                              </button>
-                            );
-                          })}
-                        </div>
+                  <div className="flex-1 overflow-y-auto p-4">
+                    {/* Tile info header */}
+                    <div className="mb-4 p-3 bg-gray-900/70 border border-gray-700 rounded">
+                      <h3 className="text-lg font-bold text-white mb-1">{selectedTileData.label}</h3>
+                      <p className="text-sm text-gray-400">{selectedTileData.description}</p>
+                      <div className="mt-2 text-sm">
+                        <span className="text-gray-400">Currently showing: </span>
+                        <span className="text-white font-semibold">{currentColorName || 'none'}</span>
+                        {tileUsage.get(selectedTile) && (
+                          <span className="ml-2 text-gray-500">
+                            • {tileUsage.get(selectedTile)} tiles on this map
+                          </span>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
 
-              {/* Time of Day Tab */}
-              {activeTab === 'timeOfDay' && (
-                <div>
-                  <div className="mb-3 text-sm text-gray-400">
-                    Override {selectedTileData.label.toLowerCase()} color for day/night (optional):
+                    {/* Base Color Selection */}
+                    <div className="mb-6">
+                      <h4 className="text-sm font-semibold text-white mb-2">Base Color</h4>
+                      <div className="mb-2 text-xs text-gray-400">
+                        Select the default color for {selectedTileData.label.toLowerCase()} tiles:
+                      </div>
+                      <div className="grid grid-cols-6 gap-2">
+                        {paletteColors.map(colorKey => {
+                          const color = palette[colorKey];
+                          const isActive = editedScheme.colors[selectedTile] === `bg-palette-${colorKey}`;
+
+                          return (
+                            <button
+                              key={colorKey}
+                              onClick={() => handleBaseColorChange(selectedTile, colorKey)}
+                              className={`p-2 rounded border-2 transition-all hover:scale-105 ${
+                                isActive
+                                  ? 'border-blue-500 shadow-lg'
+                                  : 'border-gray-700 hover:border-gray-600'
+                              }`}
+                              title={`${colorKey} (${color.hex})`}
+                            >
+                              <div
+                                className="w-full h-10 rounded mb-1"
+                                style={{ backgroundColor: color.hex }}
+                              />
+                              <div className="text-xs font-semibold text-white truncate">{colorKey}</div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Seasonal Overrides */}
+                    <div className="mb-6">
+                      <h4 className="text-sm font-semibold text-white mb-2">Seasonal Overrides (Optional)</h4>
+                      <div className="mb-3 text-xs text-gray-400">
+                        Override {selectedTileData.label.toLowerCase()} color for specific seasons:
+                      </div>
+                      <div className="space-y-3">
+                        {(['spring', 'summer', 'autumn', 'winter'] as SeasonKey[]).map(season => {
+                          const seasonalColor = editedScheme.seasonalModifiers?.[season]?.[selectedTile];
+                          const activeColor = seasonalColor ? extractColorName(seasonalColor) : null;
+
+                          return (
+                            <div key={season} className="p-3 bg-gray-900/50 border border-gray-700 rounded">
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="text-sm font-semibold text-white capitalize">{season}</h5>
+                                {activeColor && (
+                                  <button
+                                    onClick={() => handleSeasonalColorChange(season, selectedTile, 'none')}
+                                    className="text-xs text-red-400 hover:text-red-300"
+                                  >
+                                    ✕ Clear
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-8 gap-1">
+                                {paletteColors.map(colorKey => {
+                                  const color = palette[colorKey];
+                                  const isActive = activeColor === colorKey;
+
+                                  return (
+                                    <button
+                                      key={colorKey}
+                                      onClick={() => handleSeasonalColorChange(season, selectedTile, colorKey)}
+                                      className={`p-1 rounded border transition-all ${
+                                        isActive
+                                          ? 'border-green-500 shadow-lg'
+                                          : 'border-gray-700 hover:border-gray-500'
+                                      }`}
+                                      title={colorKey}
+                                    >
+                                      <div
+                                        className="w-full h-6 rounded"
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Time of Day Overrides */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-white mb-2">Time of Day Overrides (Optional)</h4>
+                      <div className="mb-3 text-xs text-gray-400">
+                        Override {selectedTileData.label.toLowerCase()} color for day/night:
+                      </div>
+                      <div className="space-y-3">
+                        {(['day', 'night'] as TimeKey[]).map(time => {
+                          const timeColor = editedScheme.timeOfDayModifiers?.[time]?.[selectedTile];
+                          const activeColor = timeColor ? extractColorName(timeColor) : null;
+
+                          return (
+                            <div key={time} className="p-3 bg-gray-900/50 border border-gray-700 rounded">
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="text-sm font-semibold text-white capitalize">{time}</h5>
+                                {activeColor && (
+                                  <button
+                                    onClick={() => handleTimeOfDayColorChange(time, selectedTile, 'none')}
+                                    className="text-xs text-red-400 hover:text-red-300"
+                                  >
+                                    ✕ Clear
+                                  </button>
+                                )}
+                              </div>
+                              <div className="grid grid-cols-8 gap-1">
+                                {paletteColors.map(colorKey => {
+                                  const color = palette[colorKey];
+                                  const isActive = activeColor === colorKey;
+
+                                  return (
+                                    <button
+                                      key={colorKey}
+                                      onClick={() => handleTimeOfDayColorChange(time, selectedTile, colorKey)}
+                                      className={`p-1 rounded border transition-all ${
+                                        isActive
+                                          ? 'border-green-500 shadow-lg'
+                                          : 'border-gray-700 hover:border-gray-500'
+                                      }`}
+                                      title={colorKey}
+                                    >
+                                      <div
+                                        className="w-full h-6 rounded"
+                                        style={{ backgroundColor: color.hex }}
+                                      />
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
-                  {(['day', 'night'] as TimeKey[]).map(time => {
-                    const timeColor = editedScheme.timeOfDayModifiers?.[time]?.[selectedTile];
-                    const activeColor = timeColor ? extractColorName(timeColor) : null;
-
-                    return (
-                      <div key={time} className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h4 className="text-sm font-semibold text-white capitalize">{time}</h4>
-                          {activeColor && (
-                            <button
-                              onClick={() => handleTimeOfDayColorChange(time, selectedTile, 'none')}
-                              className="text-xs text-red-400 hover:text-red-300"
-                            >
-                              Clear Override
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-6 gap-2">
-                          {paletteColors.map(colorKey => {
-                            const color = palette[colorKey];
-                            const isActive = activeColor === colorKey;
-
-                            return (
-                              <button
-                                key={colorKey}
-                                onClick={() => handleTimeOfDayColorChange(time, selectedTile, colorKey)}
-                                className={`p-2 rounded border transition-all ${
-                                  isActive
-                                    ? 'border-blue-500 shadow-lg'
-                                    : 'border-gray-700 hover:border-gray-600'
-                                }`}
-                                title={colorKey}
-                              >
-                                <div
-                                  className="w-full h-8 rounded"
-                                  style={{ backgroundColor: color.hex }}
-                                />
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-gray-900 border-t border-gray-700 text-sm text-gray-400">
-          <div className="mb-2 font-semibold text-white">How to use:</div>
-          <ul className="space-y-1 text-xs">
-            <li>• <strong className="text-white">🎨 Edit Palette</strong> - Customize the actual hex colors (e.g., make sage greener)</li>
-            <li>• <strong className="text-white">Base Color</strong> - Choose which palette color each tile type uses</li>
-            <li>• <strong className="text-white">Seasonal</strong> - Override tile colors per season (optional)</li>
-            <li>• <strong className="text-white">Day/Night</strong> - Override tile colors for day/night (optional)</li>
-            <li>• Click <strong className="text-green-400">"Apply Scheme"</strong> to see tile mapping changes immediately</li>
-            <li>• Click <strong className="text-orange-400">"Copy Palette"</strong> to get hex values for palette.ts</li>
-            <li>• Click <strong className="text-blue-400">"Copy Scheme"</strong> to get tile mappings for colorSchemes.ts</li>
-          </ul>
+        <div className="px-4 py-3 bg-gradient-to-r from-gray-900 to-gray-800 border-t border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-400">
+              <strong className="text-white">Quick Edit:</strong> Simple color pickers - Current, Default, Experiment •
+              <strong className="text-white ml-2">Advanced:</strong> Palette grid with full seasonal/time control
+            </div>
+            <div className="text-xs text-gray-500">
+              <strong className="text-red-400">↺ Reset</strong> to restore defaults •
+              <strong className="text-purple-400">▼ Export</strong> to copy code
+            </div>
+          </div>
         </div>
       </div>
     </div>

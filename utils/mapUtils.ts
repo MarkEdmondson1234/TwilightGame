@@ -50,7 +50,7 @@ export function getTileData(tileX: number, tileY: number, overrideTileType?: Til
         schemeColor = colorScheme.colors.water;
         break;
       case TileType.PATH:
-        schemeColor = colorScheme.colors.grass;  // Use grass color so path sprites blend naturally
+        schemeColor = colorScheme.colors.path;  // Use path color - transparent stepping stones show background
         break;
       case TileType.FLOOR:
         schemeColor = colorScheme.colors.floor;

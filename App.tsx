@@ -56,6 +56,7 @@ const App: React.FC = () => {
     const [showDevTools, setShowDevTools] = useState(false); // Toggle dev tools panel
     const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
     const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
+    const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
     const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
@@ -316,6 +317,7 @@ const App: React.FC = () => {
                     }}
                     seasonKey={seasonKey}
                     farmUpdateTrigger={farmUpdateTrigger}
+                    colorSchemeVersion={colorSchemeVersion}
                 />
 
                 {/* Render Background Multi-Tile Sprites */}
@@ -455,7 +457,10 @@ const App: React.FC = () => {
                 }} />
             )}
             {showColorEditor && (
-                <ColorSchemeEditor onClose={() => setShowColorEditor(false)} />
+                <ColorSchemeEditor
+                    onClose={() => setShowColorEditor(false)}
+                    onColorChange={() => setColorSchemeVersion(v => v + 1)}
+                />
             )}
             {showHelpBrowser && (
                 <HelpBrowser onClose={() => setShowHelpBrowser(false)} />

@@ -52,6 +52,7 @@ export const tileAssets = {
   chimney: new URL('./public/assets-optimized/tiles/chimney.png', import.meta.url).href,
   stove: new URL('./public/assets-optimized/tiles/stove.png', import.meta.url).href,
   mine_entrance: new URL('./public/assets-optimized/tiles/mine_entrance.png', import.meta.url).href,
+  mine_floor: new URL('./public/assets-optimized/tiles/mine_floor.png', import.meta.url).href,
   // Lake tiles (directional edges for proper water rendering)
   water_center: new URL('./public/assets-optimized/tiles/lake/water_middle.png', import.meta.url).href,
   water_left: new URL('./public/assets-optimized/tiles/lake/water_left.png', import.meta.url).href,

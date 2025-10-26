@@ -126,30 +126,14 @@ Environmental animations add atmosphere and life to the game world. These are an
 ### File Format
 -   **Recommended:** Animated GIF (`.gif`)
 -   **Also supported:** Animated PNG (`.apng`)
--   **Important:** Animation files ARE optimized by the asset pipeline!
-
-### Automatic Optimization
-
-When you run `npm run optimize-assets`, GIFs are automatically:
--   **Resized** to 512x512 pixels (regardless of source size)
--   **Compressed** using gifsicle (60-80% file size reduction typical)
--   **Output** to `/public/assets-optimized/animations/`
-
-**Requirements:**
--   Install gifsicle: `brew install gifsicle` (macOS) or `apt-get install gifsicle` (Linux)
--   If gifsicle is not installed, files are copied without optimization
-
-**Scale Values:** Since optimized GIFs are 512x512px:
--   Small effects: `scale: 0.25` (~128px / 2 tiles)
--   Medium effects: `scale: 0.5` (~256px / 4 tiles)
--   Large effects: `scale: 0.8` (~410px / 6.4 tiles)
+-   **Important:** Animation files are NOT processed by the optimization pipeline - use original files directly
 
 ### File Guidelines
 -   **File Naming:** Descriptive names like `cherry_spring_petals.gif`, `rain.gif`, `chimney_smoke.gif`, `fireflies.gif`
--   **Source Size:** Any size is fine! Optimization resizes to 512x512
 -   **Transparency:** Use transparent backgrounds for overlay effects (falling petals, rain, etc.)
 -   **Loop Quality:** Ensure smooth looping - first and last frames should match seamlessly
--   **Optimization:** The asset pipeline handles optimization automatically!
+-   **File Size:** Keep under 100KB when possible for performance (aim for 30-50KB)
+-   **Optimization:** Reduce colors, optimize frame count, use tools like ezgif.com
 
 ### Examples in Game
 -   **Cherry Blossom Petals** (`cherry_spring_petals.gif`): Falls near cherry trees in spring

@@ -17,6 +17,7 @@ interface TileRendererProps {
     };
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter';
     farmUpdateTrigger: number;
+    colorSchemeVersion?: number;  // Cache-busting prop to force re-render when colors change
 }
 
 /**
@@ -32,6 +33,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
     visibleRange,
     seasonKey,
     farmUpdateTrigger,
+    colorSchemeVersion, // Unused - just for cache busting
 }) => {
     return (
         <>

@@ -157,7 +157,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Floor',
     color: 'bg-palette-tan',  // Base floor color
     isSolid: false,
-    image: [tileAssets.floor_1]
+    image: [tileAssets.mine_floor]
   },
   [TileType.FLOOR_LIGHT]: {
     name: 'Floor Light',

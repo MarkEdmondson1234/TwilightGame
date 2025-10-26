@@ -86,6 +86,16 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
+        // F6 key to advance farm time (debug)
+        if (e.key === 'F6') {
+            e.preventDefault();
+            // Advance time by 1 minute (60 seconds)
+            farmManager.debugAdvanceTime(60 * 1000);
+            gameState.saveFarmPlots(farmManager.getAllPlots());
+            console.log('[Debug] Advanced farm time by 1 minute');
+            return;
+        }
+
         // Escape key to close dialogue or help browser
         if (e.key === 'Escape') {
             if (showHelpBrowser) {
