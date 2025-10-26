@@ -48,8 +48,8 @@ export const elderMemoryCutscene: CutsceneDefinition = {
         text: 'Ah, but I remember a summer long ago... The sky was just as blue, and the clouds drifted by without a care in the world.',
       },
       transitionOut: {
-        type: 'crossfade',
-        duration: 600, // Smooth crossfade between scenes
+        type: 'fade',
+        duration: 0, // Instant cut - keeps camera moving!
       },
     },
     {
@@ -74,8 +74,8 @@ export const elderMemoryCutscene: CutsceneDefinition = {
         text: 'I was but a young lad then, lying beneath the cherry tree, dreaming of adventures beyond the village. Time moves swiftly, traveller.',
       },
       transitionOut: {
-        type: 'crossfade',
-        duration: 600, // Smooth crossfade
+        type: 'fade',
+        duration: 0, // Instant cut
       },
     },
     {
