@@ -24,6 +24,16 @@ export async function initializeGame(
     runSelfTests(); // Run sanity checks on startup
     initializeMaps(); // Initialize all maps and color schemes
 
+    // Load custom color schemes from saved state
+    const state = gameState.getState();
+    if (state.customColorSchemes) {
+        console.log('[gameInitializer] Loading custom color schemes from save data');
+        Object.values(state.customColorSchemes).forEach((scheme: any) => {
+            mapManager.registerColorScheme(scheme);
+            console.log(`[gameInitializer] Loaded custom scheme: ${scheme.name}`);
+        });
+    }
+
     // Preload all assets early to prevent lag on first use
     await preloadAllAssets({
         onProgress: (loaded, total) => {

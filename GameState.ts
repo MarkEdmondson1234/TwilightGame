@@ -82,6 +82,11 @@ export interface GameState {
     [colorName: string]: string;  // colorName -> hex value
   };
 
+  // Custom color schemes (for user-modified map color schemes)
+  customColorSchemes?: {
+    [schemeName: string]: any;  // ColorScheme objects (using any to avoid circular imports)
+  };
+
   // Weather system (for environmental effects and animations)
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
 
@@ -460,6 +465,20 @@ class GameStateManager {
     this.state.customColors = undefined;
     this.notify();
     console.log('[GameState] Custom colors cleared');
+  }
+
+  // Color scheme management
+  saveColorScheme(scheme: any): void {
+    if (!this.state.customColorSchemes) {
+      this.state.customColorSchemes = {};
+    }
+    this.state.customColorSchemes[scheme.name] = scheme;
+    this.notify();
+    console.log('[GameState] Color scheme saved:', scheme.name);
+  }
+
+  loadColorSchemes(): Record<string, any> | undefined {
+    return this.state.customColorSchemes;
   }
 
   // Weather management

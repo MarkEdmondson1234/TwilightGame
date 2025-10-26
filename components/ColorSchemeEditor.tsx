@@ -5,6 +5,7 @@ import { mapManager } from '../maps';
 import { ColorScheme, TileType } from '../types';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { TILE_LEGEND } from '../constants';
+import { gameState } from '../GameState';
 
 interface ColorSchemeEditorProps {
   onClose: () => void;
@@ -221,6 +222,9 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
 
     // Update the color scheme in MapManager
     mapManager.registerColorScheme(newScheme);
+
+    // Save to GameState for persistence
+    gameState.saveColorScheme(newScheme);
 
     // Force map reload to apply changes
     if (currentMap) {
