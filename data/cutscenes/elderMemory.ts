@@ -29,16 +29,15 @@ export const elderMemoryCutscene: CutsceneDefinition = {
     {
       id: 'memory_begins',
       backgroundLayers: [
+        // Sky - simple pan
         {
           image: 'summer_sky_cutscene.png',
           zIndex: 0,
           animation: {
-            type: 'pan-and-zoom',
-            duration: 10000, // Slower, more contemplative
+            type: 'pan',
+            duration: 10000,
             panFrom: 'left',
             panTo: 'right',
-            zoomFrom: 1.0,
-            zoomTo: 2.2, // Dramatic zoom (300 DPI can handle it!)
             easing: 'ease-in-out',
           },
         },
@@ -49,23 +48,45 @@ export const elderMemoryCutscene: CutsceneDefinition = {
       },
       transitionOut: {
         type: 'fade',
-        duration: 0, // Instant cut - keeps camera moving!
+        duration: 800,
       },
     },
     {
       id: 'memory_continues',
       backgroundLayers: [
+        // Sky
         {
           image: 'summer_sky_cutscene.png',
           zIndex: 0,
           animation: {
-            type: 'pan-and-zoom',
-            duration: 8000,
-            panFrom: 'right',
-            panTo: 'left', // Pan back across the sky
-            zoomFrom: 2.2,
-            zoomTo: 1.5, // Zoom out but stay close
-            easing: 'ease-out',
+            type: 'zoom',
+            duration: 10000,
+            zoomFrom: 1.0,
+            zoomTo: 1.3,
+            easing: 'ease-in',
+          },
+        },
+        // Cherry tree - foreground (solid)
+        {
+          image: 'summer_just_cherry.PNG',
+          zIndex: 1,
+          animation: {
+            type: 'zoom',
+            duration: 10000,
+            zoomFrom: 1.0,
+            zoomTo: 1.2,
+            easing: 'ease-in-out',
+          },
+        },
+      ],
+      characters: [
+        {
+          characterId: 'village_elder',
+          position: { x: 75, y: 65 }, // Bottom RIGHT side
+          scale: 0.8, // Much smaller!
+          entrance: {
+            type: 'fade',
+            duration: 1500,
           },
         },
       ],
@@ -75,20 +96,33 @@ export const elderMemoryCutscene: CutsceneDefinition = {
       },
       transitionOut: {
         type: 'fade',
-        duration: 0, // Instant cut
+        duration: 800,
       },
     },
     {
       id: 'memory_reflection',
       backgroundLayers: [
+        // Sky - zoom out
         {
           image: 'summer_sky_cutscene.png',
           zIndex: 0,
           animation: {
             type: 'zoom',
-            duration: 5000,
-            zoomFrom: 1.5,
-            zoomTo: 1.0, // Final slow zoom out to reveal full sky
+            duration: 8000,
+            zoomFrom: 1.3,
+            zoomTo: 1.0,
+            easing: 'ease-out',
+          },
+        },
+        // Hills in distance (solid)
+        {
+          image: 'summer_just_hills.PNG',
+          zIndex: 1,
+          animation: {
+            type: 'zoom',
+            duration: 8000,
+            zoomFrom: 1.2,
+            zoomTo: 1.0,
             easing: 'ease-out',
           },
         },
@@ -99,7 +133,7 @@ export const elderMemoryCutscene: CutsceneDefinition = {
       },
       transitionOut: {
         type: 'fade',
-        duration: 1000, // Final fade to black to return to game
+        duration: 1200, // Final fade to black to return to game
       },
     },
   ],

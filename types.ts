@@ -57,7 +57,9 @@ export enum TileType {
   BED,
   SOFA,
   CHIMNEY,
-  STOVE
+  STOVE,
+  // Outdoor structures
+  WELL
 }
 
 export interface Position {

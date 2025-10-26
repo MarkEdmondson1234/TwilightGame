@@ -59,6 +59,9 @@ export const tileAssets = {
   water_right: new URL('./public/assets-optimized/tiles/lake/lake_right.png', import.meta.url).href,
   water_top: new URL('./public/assets-optimized/tiles/lake/lake_top.png', import.meta.url).href,
   water_bottom: new URL('./public/assets-optimized/tiles/lake/lake_bottom.png', import.meta.url).href,
+  // Well assets (2x2 multi-tile sprite with seasonal variation)
+  well: new URL('./public/assets-optimized/tiles/well.png', import.meta.url).href,
+  well_winter: new URL('./public/assets-optimized/tiles/well_in_winter.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance

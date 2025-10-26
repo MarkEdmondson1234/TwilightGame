@@ -487,6 +487,17 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: true,  // Players cannot walk through stoves
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   },
+  [TileType.WELL]: {
+    name: 'Well',
+    color: 'bg-palette-sage',  // Base grass color (shows through transparent parts)
+    isSolid: true,  // Players cannot walk through wells
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    baseType: TileType.GRASS,  // Render grass underneath for natural ground
+    seasonalImages: {
+      winter: [tileAssets.well_winter],  // Snow-covered well in winter
+      default: [tileAssets.well],  // Stone well in other seasons
+    }
+  },
 };
 
 // === COMPILE-TIME VALIDATION ===
@@ -907,6 +918,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionWidth: 3,
     collisionHeight: 1,
     collisionOffsetX: -1,
+    collisionOffsetY: 0,
+  },
+  {
+    tileType: TileType.WELL,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall (stone well with dark opening)
+    offsetX: -0.6,      // Start at anchor tile
+    offsetY: -0.7,     // Extends 1 tile upward
+    image: tileAssets.well,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,  // Render over player (it's a structure)
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision - well blocks movement (full 2x2 footprint)
+    collisionWidth: 1,
+    collisionHeight: 1.2,
+    collisionOffsetX: 0,
     collisionOffsetY: 0,
   },
 ];

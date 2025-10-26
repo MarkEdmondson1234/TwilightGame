@@ -187,7 +187,7 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
         </div>
       )}
 
-      {/* Dialogue Box (Bottom) */}
+      {/* Dialogue Box (Bottom) - MUST BE ON TOP */}
       {currentScene.dialogue && showDialogue && !isTransitioning && (
         <DialogueDisplay
           dialogue={currentScene.dialogue}
@@ -197,7 +197,7 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
       )}
 
       {/* Skip Hint */}
-      <div className="absolute top-4 right-4 text-white text-sm opacity-70">
+      <div className="absolute top-4 right-4 text-white text-sm opacity-70 z-50">
         Press ESC to skip
       </div>
     </div>
@@ -431,7 +431,7 @@ const DialogueDisplay: React.FC<DialogueDisplayProps> = ({ dialogue, onAdvance, 
   const dialogueText = getText();
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-6 animate-fade-in">
+    <div className="absolute bottom-0 left-0 right-0 p-6 animate-fade-in z-[100]">
       <div className="max-w-5xl mx-auto bg-gradient-to-b from-slate-900/95 to-black/95 border-t-4 border-amber-600 rounded-t-lg shadow-2xl">
         {/* Speaker Name */}
         {dialogue.speaker && (

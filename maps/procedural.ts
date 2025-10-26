@@ -187,6 +187,27 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add rare well spawn (10% chance of appearing in forest)
+  if (Math.random() < 0.1) {
+    // Find a suitable 2x2 grass area away from spawn zone
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const x = Math.floor(Math.random() * (width - 4)) + 2;
+      const y = Math.floor(Math.random() * (height - 4)) + 2;
+      const dx = Math.abs(x - spawnX);
+      const dy = Math.abs(y - spawnY);
+
+      // Check if 2x2 area is clear and away from spawn
+      if (dx > 5 && dy > 5 &&
+          map[y][x] === TileType.GRASS &&
+          map[y][x+1] === TileType.GRASS &&
+          map[y+1] && map[y+1][x] === TileType.GRASS &&
+          map[y+1] && map[y+1][x+1] === TileType.GRASS) {
+        map[y][x] = TileType.WELL;
+        break;
+      }
+    }
+  }
+
   // Add cherry trees scattered throughout forest (seasonal variety, ~10% of regular trees)
   for (let i = 0; i < 5; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
@@ -320,6 +341,27 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     // Only place on floor tiles
     if (map[y][x] === TileType.FLOOR) {
       map[y][x] = TileType.MUSHROOM;
+    }
+  }
+
+  // Add rare well spawn in cave (5% chance - rarer than forest)
+  if (Math.random() < 0.05) {
+    // Find a suitable 2x2 floor area away from spawn zone
+    for (let attempt = 0; attempt < 20; attempt++) {
+      const x = Math.floor(Math.random() * (width - 4)) + 2;
+      const y = Math.floor(Math.random() * (height - 4)) + 2;
+      const dx = Math.abs(x - spawnX);
+      const dy = Math.abs(y - spawnY);
+
+      // Check if 2x2 area is clear and away from spawn
+      if (dx > 5 && dy > 5 &&
+          map[y][x] === TileType.FLOOR &&
+          map[y][x+1] === TileType.FLOOR &&
+          map[y+1] && map[y+1][x] === TileType.FLOOR &&
+          map[y+1] && map[y+1][x+1] === TileType.FLOOR) {
+        map[y][x] = TileType.WELL;
+        break;
+      }
     }
   }
 
