@@ -77,7 +77,7 @@ export const summerCutscene: CutsceneDefinition = {
       id: 'summer_arrival',
       backgroundLayers: [
         {
-          image: 'summer_fields.png',
+          image: 'summer_sky_cutscene.png',
           zIndex: 0,
           animation: {
             type: 'zoom',
@@ -90,7 +90,7 @@ export const summerCutscene: CutsceneDefinition = {
       ],
       dialogue: {
         speaker: 'Season Narrator',
-        text: 'Summer\'s warmth embraces the village. Crops grow tall under the sun\'s golden rays.',
+        text: 'Summer\'s warmth embraces the village. Clouds drift lazily across brilliant blue skies.',
         autoAdvance: {
           delay: 3500,
         },

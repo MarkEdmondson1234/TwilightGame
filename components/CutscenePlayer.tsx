@@ -214,31 +214,72 @@ interface BackgroundLayerProps {
 }
 
 const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitioning }) => {
-  const getTransform = (animation?: CutsceneLayerAnimation): string => {
-    if (!animation || animation.type === 'static') {
-      return `translate(${layer.offsetX || 0}%, ${layer.offsetY || 0}%)`;
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Trigger animation on mount
+  useEffect(() => {
+    // Small delay to ensure CSS transition triggers
+    const timer = setTimeout(() => setIsAnimating(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const getPanOffset = (direction: 'left' | 'right' | 'top' | 'bottom' | 'center', zoom: number = 1.0): { x: number; y: number } => {
+    // Pan amount scales with zoom (more zoom = more visible pan)
+    const panAmount = (zoom - 1.0) * 50; // Pan by 50% of the extra zoom area
+
+    switch (direction) {
+      case 'left': return { x: panAmount, y: 0 };
+      case 'right': return { x: -panAmount, y: 0 };
+      case 'top': return { x: 0, y: panAmount };
+      case 'bottom': return { x: 0, y: -panAmount };
+      case 'center':
+      default: return { x: 0, y: 0 };
     }
-
-    // Start with base offset
-    let transform = `translate(${layer.offsetX || 0}%, ${layer.offsetY || 0}%)`;
-
-    // For simple animations, we'll use CSS transitions
-    // More complex animations would need @keyframes in a stylesheet
-    if (animation.type === 'zoom') {
-      const zoom = animation.zoomTo || 1.2;
-      transform += ` scale(${zoom})`;
-    }
-
-    return transform;
   };
 
-  const getTransition = (animation?: CutsceneLayerAnimation): string => {
+  const getTransform = (animating: boolean): string => {
+    const animation = layer.animation;
+    const baseOffsetX = layer.offsetX || 0;
+    const baseOffsetY = layer.offsetY || 0;
+
     if (!animation || animation.type === 'static') {
+      return `translate(${baseOffsetX}%, ${baseOffsetY}%)`;
+    }
+
+    if (animation.type === 'zoom') {
+      const zoomFrom = animation.zoomFrom || 1.0;
+      const zoomTo = animation.zoomTo || 1.2;
+      const zoom = animating ? zoomTo : zoomFrom;
+      return `translate(${baseOffsetX}%, ${baseOffsetY}%) scale(${zoom})`;
+    }
+
+    if (animation.type === 'pan') {
+      const panFrom = getPanOffset(animation.panFrom || 'left');
+      const panTo = getPanOffset(animation.panTo || 'right');
+      const pan = animating ? panTo : panFrom;
+      return `translate(${baseOffsetX + pan.x}%, ${baseOffsetY + pan.y}%)`;
+    }
+
+    if (animation.type === 'pan-and-zoom') {
+      const zoomFrom = animation.zoomFrom || 1.0;
+      const zoomTo = animation.zoomTo || 1.2;
+      const zoom = animating ? zoomTo : zoomFrom;
+      const panFrom = getPanOffset(animation.panFrom || 'left', zoomFrom);
+      const panTo = getPanOffset(animation.panTo || 'right', zoomTo);
+      const pan = animating ? panTo : panFrom;
+      return `translate(${baseOffsetX + pan.x}%, ${baseOffsetY + pan.y}%) scale(${zoom})`;
+    }
+
+    return `translate(${baseOffsetX}%, ${baseOffsetY}%)`;
+  };
+
+  const getTransition = (): string => {
+    if (!layer.animation || layer.animation.type === 'static') {
       return 'opacity 500ms';
     }
 
-    const duration = animation.duration || 5000;
-    const easing = animation.easing || 'ease-in-out';
+    const duration = layer.animation.duration || 5000;
+    const easing = layer.animation.easing || 'ease-in-out';
     return `opacity 500ms, transform ${duration}ms ${easing}`;
   };
 
@@ -246,11 +287,11 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
     <div
       className="absolute inset-0 bg-cover bg-center"
       style={{
-        backgroundImage: `url(/assets/cutscenes/${layer.image})`,
+        backgroundImage: `url(/TwilightGame/assets-optimized/cutscenes/${layer.image})`,
         zIndex: layer.zIndex,
         opacity: isTransitioning ? 0 : (layer.opacity || 1),
-        transform: getTransform(layer.animation),
-        transition: getTransition(layer.animation),
+        transform: getTransform(isAnimating),
+        transition: getTransition(),
       }}
     />
   );

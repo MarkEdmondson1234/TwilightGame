@@ -111,9 +111,18 @@ export function createVillageElderNPC(
             nextId: 'village_constants',
           },
           {
+            text: 'Tell me a story from your past.',
+            nextId: 'summer_memory',
+          },
+          {
             text: 'Thank you for sharing.',
           },
         ],
+      },
+      {
+        id: 'summer_memory',
+        text: 'A story from my past? Ah yes... let me show thee.',
+        responses: [], // No responses - cutscene will trigger automatically
       },
       {
         id: 'elder_history',

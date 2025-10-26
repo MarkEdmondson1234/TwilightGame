@@ -13,6 +13,7 @@ import {
   autumnCutscene,
   winterCutscene,
 } from './seasonChange';
+import { elderMemoryCutscene } from './elderMemory';
 
 /**
  * All registered cutscenes
@@ -24,6 +25,7 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   summerCutscene,
   autumnCutscene,
   winterCutscene,
+  elderMemoryCutscene,
 ];
 
 /**

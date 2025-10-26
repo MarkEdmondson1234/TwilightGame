@@ -36,6 +36,9 @@ const COMPRESSION_QUALITY = 85; // PNG compression quality
 const HIGH_QUALITY = 95; // Higher quality for detailed furniture
 const SHOP_QUALITY = 98; // Very high quality for shop buildings (minimal compression)
 const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for effects)
+const CUTSCENE_WIDTH = 1920; // Cutscene images: 1920x1080 (16:9 aspect ratio)
+const CUTSCENE_HEIGHT = 1080;
+const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -65,7 +68,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'tiles'),
     path.join(OPTIMIZED_DIR, 'farming'),
     path.join(OPTIMIZED_DIR, 'npcs'),
-    path.join(OPTIMIZED_DIR, 'animations')
+    path.join(OPTIMIZED_DIR, 'animations'),
+    path.join(OPTIMIZED_DIR, 'cutscenes')
   ];
 
   dirs.forEach(dir => {
@@ -460,6 +464,66 @@ async function optimizeAnimations() {
   console.log(`\n  Processed ${optimized} animation file(s)\n`);
 }
 
+// Optimize cutscene images
+async function optimizeCutscenes() {
+  console.log('🎬 Optimizing cutscene images...');
+
+  const cutscenesDir = path.join(ASSETS_DIR, 'cutscenes');
+  if (!fs.existsSync(cutscenesDir)) {
+    console.log('⚠️  No cutscene images found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(cutscenesDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(cutscenesDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'cutscenes', relativePath.replace(/\.jpeg$/i, '.png'));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Get image metadata to check dimensions
+    const metadata = await sharp(inputPath).metadata();
+
+    // If image is already larger than 1920x1080, keep it larger for panning/zooming
+    // Otherwise resize to 1920x1080 minimum
+    const shouldUpscale = metadata.width < CUTSCENE_WIDTH || metadata.height < CUTSCENE_HEIGHT;
+    const targetWidth = shouldUpscale ? CUTSCENE_WIDTH : metadata.width;
+    const targetHeight = shouldUpscale ? CUTSCENE_HEIGHT : metadata.height;
+
+    // Resize with high quality (or keep original size if larger)
+    await sharp(inputPath)
+      .resize(targetWidth, targetHeight, {
+        fit: shouldUpscale ? 'cover' : 'inside', // Cover if upscaling, inside if preserving larger size
+        position: 'centre',
+        withoutEnlargement: !shouldUpscale // Don't enlarge if already large enough
+      })
+      .png({ quality: CUTSCENE_QUALITY, compressionLevel: 6 }) // High quality, moderate compression
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    // Show relative path for files in subdirectories
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} cutscene image(s)\n`);
+}
+
 // Main execution
 async function main() {
   try {
@@ -469,6 +533,7 @@ async function main() {
     await optimizeFarming();
     await optimizeNPCs();
     await optimizeAnimations();
+    await optimizeCutscenes();
 
     console.log('✨ Asset optimization complete!');
     console.log(`📁 Optimized assets saved to: ${OPTIMIZED_DIR}`);

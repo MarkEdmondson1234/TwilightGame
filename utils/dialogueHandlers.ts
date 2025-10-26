@@ -1,11 +1,22 @@
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
+import { cutsceneManager } from './CutsceneManager';
 
 /**
  * Handle dialogue node changes and trigger associated actions
- * Currently handles seed pickup from seed keeper NPCs
+ * Handles seed pickup from seed keeper NPCs and dialogue-triggered cutscenes
  */
 export function handleDialogueAction(npcId: string, nodeId: string): void {
+    // Check for dialogue-triggered cutscenes
+    const triggeredCutscene = cutsceneManager.checkAndTriggerCutscenes({
+        npcId,
+        nodeId,
+    });
+
+    if (triggeredCutscene) {
+        console.log(`[dialogueHandlers] Triggered cutscene from dialogue: ${triggeredCutscene}`);
+    }
+
     // Handle seed pickup from seed shed NPCs
     if (npcId.startsWith('seed_keeper_')) {
         handleSeedPickup(nodeId);
