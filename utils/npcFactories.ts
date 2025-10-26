@@ -461,7 +461,7 @@ export function createShopkeeperNPC(
     behavior: NPCBehavior.STATIC,
     sprite: npcAssets.shopkeeper_fox_01,
     portraitSprite: npcAssets.shopkeeper_fox_portrait,
-    scale: 3.0,
+    scale: 3.5,
     animatedStates,
     dialogue: [
       {
