@@ -603,3 +603,119 @@ export function createVillageChildNPC(
     ],
   };
 }
+
+/**
+ * Create a Mum NPC with gentle animation
+ *
+ * Behavior:
+ * - Static position (stays at home)
+ * - Gentle idle animation
+ * - Warm, caring dialogue with seasonal variations
+ *
+ * @param id Unique ID for this NPC
+ * @param position Where to place the NPC
+ * @param name Optional name (defaults to "Mum")
+ */
+export function createMumNPC(
+  id: string,
+  position: Position,
+  name: string = 'Mum'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'idle',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      idle: {
+        sprites: [npcAssets.mum_01, npcAssets.mum_02],
+        animationSpeed: 700, // Gentle, calm animation
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    behavior: NPCBehavior.STATIC,
+    sprite: npcAssets.mum_01,
+    portraitSprite: npcAssets.mum_portrait,
+    scale: 4.0,
+    dialogue: [
+      {
+        id: 'greeting',
+        text: 'Hello, love! Welcome home. Have you had a good day?',
+        seasonalText: {
+          spring: 'Good morning, dear! Spring is here - perfect weather for the garden. Would you like some breakfast before you head out?',
+          summer: 'Hello, sweetheart! It\'s warm today. I\'ve made some cold lemonade if you\'d like some.',
+          autumn: 'Welcome home, love. The leaves are turning such beautiful colours. I\'ve been thinking about making some autumn preserves.',
+          winter: 'Come in from the cold, dear! I\'ve got the fire going. Warm yourself up before you go back out.',
+        },
+        timeOfDayText: {
+          day: 'Hello, love! I\'m just tidying up around the house. Is there anything you need?',
+          night: 'You\'re back late, dear! I hope you\'re not working too hard. Get some rest, won\'t you?',
+        },
+        responses: [
+          {
+            text: 'What are you working on?',
+            nextId: 'home_tasks',
+          },
+          {
+            text: 'Tell me about the village.',
+            nextId: 'village_chat',
+          },
+          {
+            text: 'I should get going.',
+          },
+        ],
+      },
+      {
+        id: 'home_tasks',
+        text: 'Oh, just the usual - keeping the house tidy, preparing meals. It\'s simple work, but it keeps me busy.',
+        seasonalText: {
+          spring: 'I\'ve been planting flowers in the window boxes. The spring blooms bring such joy to our home!',
+          summer: 'I\'m preserving berries for winter. The summer harvest is always bountiful if we care for it properly.',
+          autumn: 'Making warm blankets and preparing for the colder months. Winter will be here before we know it.',
+          winter: 'Keeping the fire going and making hearty soups. It\'s important to stay warm and well-fed in winter.',
+        },
+        responses: [
+          {
+            text: 'Can I help with anything?',
+            nextId: 'offer_help',
+          },
+          {
+            text: 'That sounds lovely.',
+          },
+        ],
+      },
+      {
+        id: 'offer_help',
+        text: 'That\'s very sweet of you, dear. Just knowing you\'re safe and happy is help enough. But do take care of yourself out there.',
+      },
+      {
+        id: 'village_chat',
+        text: 'The village is such a peaceful place. I\'m grateful we have such lovely neighbours. Everyone looks after each other here.',
+        seasonalText: {
+          spring: 'The village comes alive in spring! Children playing in the fields, farmers planting crops... it\'s a wonderful time of year.',
+          summer: 'Summer brings travellers through the village. I always enjoy hearing their stories from faraway places.',
+          autumn: 'Autumn is harvest time. The whole village works together to bring in the crops. It\'s beautiful to see.',
+          winter: 'Winter can be hard, but the village pulls together. We share what we have and keep each other warm.',
+        },
+        responses: [
+          {
+            text: 'It is peaceful here.',
+          },
+          {
+            text: 'Thank you for the chat.',
+          },
+        ],
+      },
+    ],
+    animatedStates,
+    interactionRadius: 1.5,
+  };
+}

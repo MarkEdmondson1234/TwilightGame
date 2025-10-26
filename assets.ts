@@ -95,6 +95,9 @@ export const npcAssets = {
   dog_01: new URL('./public/assets-optimized/npcs/dog_01.png', import.meta.url).href,
   dog_02: new URL('./public/assets-optimized/npcs/dog_02.png', import.meta.url).href,
   dog_portrait: new URL('./public/assets/npcs/dog_01.png', import.meta.url).href, // Original for dialogue
+  mum_01: new URL('./public/assets-optimized/npcs/mum_01.png', import.meta.url).href,
+  mum_02: new URL('./public/assets-optimized/npcs/mum_02.png', import.meta.url).href,
+  mum_portrait: new URL('./public/assets/npcs/mum_01.png', import.meta.url).href, // Original for dialogue
 };
 
 // Player assets (add your custom sprites here when ready)

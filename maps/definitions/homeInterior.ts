@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { createMumNPC } from '../../utils/npcFactories';
 
 /**
  * Home Interior - Starting area
@@ -59,5 +60,8 @@ export const homeInterior: MapDefinition = {
       toPosition: { x: 3, y: 6 }, // Spawn upstairs
       label: 'Upstairs',
     },
+  ],
+  npcs: [
+    createMumNPC('mum_home', { x: 3, y: 5 }, 'Mum'),
   ],
 };
