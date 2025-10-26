@@ -21,8 +21,20 @@ This applies to all user-facing text including: dialogue, item descriptions, UI 
 
 ## Development Commands
 
+**Makefile Commands** (recommended):
+- `make` or `make help` - Show all available commands
+- `make install` - Install dependencies
+- `make dev` - Start development server (Vite on port 4000)
+- `make build` - Build for production
+- `make preview` - Preview production build
+- `make optimize-assets` - Optimise images using Sharp
+- `make typecheck` - Check TypeScript for errors
+- `make clean` - Remove build artifacts
+- `make test-game` - Open game in browser for testing
+
+**NPM Commands** (also available):
 - `npm install` - Install dependencies
-- `npm run dev` - Start development server (Vite on port 3000)
+- `npm run dev` - Start development server (Vite on port 4000)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run optimize-assets` - Optimise images using Sharp (automatically runs before build)

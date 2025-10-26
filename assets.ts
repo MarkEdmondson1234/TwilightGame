@@ -65,9 +65,10 @@ export const farmingAssets = {
   fallow_soil_1: new URL('./public/assets-optimized/farming/fallow_soil_1.png', import.meta.url).href,
   fallow_soil_2: new URL('./public/assets-optimized/farming/fallow_soil_2.png', import.meta.url).href,
   tilled: new URL('./public/assets-optimized/farming/tilled.png', import.meta.url).href,
-  seedling: new URL('./public/assets-optimized/farming/seedling.png', import.meta.url).href, // Generic planted sprite
+  seedling: new URL('./public/assets-optimized/farming/seedling.png', import.meta.url).href,
   plant_pea_young: new URL('./public/assets-optimized/farming/plant_pea_young.png', import.meta.url).href,
   plant_pea_adult: new URL('./public/assets-optimized/farming/plant_pea_adult.png', import.meta.url).href,
+  wilted_plant: new URL('./public/assets-optimized/farming/wilted_plant.png', import.meta.url).href,
 };
 
 // NPC assets - Use optimized versions for in-game sprites, originals for portraits

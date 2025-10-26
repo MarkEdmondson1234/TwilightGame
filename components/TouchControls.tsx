@@ -1,10 +1,17 @@
 import React, { useState } from 'react';
 
+type Tool = 'hand' | 'hoe' | 'seeds' | 'wateringCan';
+type CropType = 'radish' | 'tomato' | 'wheat' | 'corn' | 'pumpkin';
+
 interface TouchControlsProps {
   onDirectionPress: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onDirectionRelease: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onActionPress: () => void;
   onResetPress: () => void;
+  currentTool: Tool;
+  selectedSeed: CropType | null;
+  onToolChange: (tool: Tool) => void;
+  onSeedChange: (seed: CropType) => void;
 }
 
 const TouchControls: React.FC<TouchControlsProps> = ({
@@ -12,8 +19,31 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionRelease,
   onActionPress,
   onResetPress,
+  currentTool,
+  selectedSeed,
+  onToolChange,
+  onSeedChange,
 }) => {
   const [showDevMenu, setShowDevMenu] = useState(false);
+  const [showToolMenu, setShowToolMenu] = useState(false);
+  const [showSeedMenu, setShowSeedMenu] = useState(false);
+
+  // Tool display data
+  const tools: Array<{ id: Tool; icon: string; name: string }> = [
+    { id: 'hand', icon: '✋', name: 'Hand' },
+    { id: 'hoe', icon: '⚒️', name: 'Hoe' },
+    { id: 'seeds', icon: '🌱', name: 'Seeds' },
+    { id: 'wateringCan', icon: '💧', name: 'Water' },
+  ];
+
+  // Seed display data
+  const seeds: Array<{ id: CropType; icon: string; name: string }> = [
+    { id: 'radish', icon: '🥕', name: 'Radish' },
+    { id: 'tomato', icon: '🍅', name: 'Tomato' },
+    { id: 'wheat', icon: '🌾', name: 'Wheat' },
+    { id: 'corn', icon: '🌽', name: 'Corn' },
+    { id: 'pumpkin', icon: '🎃', name: 'Pumpkin' },
+  ];
   const handleTouchStart = (direction: 'up' | 'down' | 'left' | 'right') => {
     return (e: React.TouchEvent) => {
       e.preventDefault();
@@ -107,6 +137,92 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             R
           </button>
         )}
+
+        {/* Tool selector */}
+        <div className="flex flex-col items-end gap-2">
+          {/* Current tool button - tap to toggle tool menu */}
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              setShowToolMenu(!showToolMenu);
+              setShowSeedMenu(false);
+            }}
+            className={`w-16 h-16 rounded-lg border-3 flex flex-col items-center justify-center text-white font-bold shadow-lg ${
+              currentTool === 'hand' ? 'bg-slate-600/80 border-slate-400' :
+              currentTool === 'hoe' ? 'bg-amber-700/80 border-amber-500' :
+              currentTool === 'seeds' ? 'bg-green-700/80 border-green-500' :
+              'bg-blue-600/80 border-blue-400'
+            }`}
+          >
+            <span className="text-2xl">{tools.find(t => t.id === currentTool)?.icon}</span>
+            <span className="text-xs">{tools.find(t => t.id === currentTool)?.name}</span>
+          </button>
+
+          {/* Tool menu - shows when tool button is tapped */}
+          {showToolMenu && (
+            <div className="flex flex-col gap-1 bg-black/70 p-2 rounded-lg border border-slate-600">
+              {tools.map((tool) => (
+                <button
+                  key={tool.id}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    onToolChange(tool.id);
+                    setShowToolMenu(false);
+                    if (tool.id === 'seeds') {
+                      setShowSeedMenu(true);
+                    }
+                  }}
+                  className={`w-14 h-14 rounded-lg border-2 flex flex-col items-center justify-center text-white text-xs shadow-lg ${
+                    currentTool === tool.id
+                      ? 'bg-yellow-500/80 border-yellow-300'
+                      : 'bg-slate-700/80 border-slate-500'
+                  }`}
+                >
+                  <span className="text-xl">{tool.icon}</span>
+                  <span>{tool.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Seed selector - shows when seeds tool is active */}
+          {currentTool === 'seeds' && (
+            <button
+              onTouchStart={(e) => {
+                e.preventDefault();
+                setShowSeedMenu(!showSeedMenu);
+              }}
+              className="w-14 h-14 bg-green-800/80 border-2 border-green-600 rounded-lg flex flex-col items-center justify-center text-white shadow-lg"
+            >
+              <span className="text-xl">{seeds.find(s => s.id === selectedSeed)?.icon || '🌱'}</span>
+              <span className="text-xs">{seeds.find(s => s.id === selectedSeed)?.name || 'Pick'}</span>
+            </button>
+          )}
+
+          {/* Seed menu - shows when seed button is tapped */}
+          {showSeedMenu && currentTool === 'seeds' && (
+            <div className="flex flex-col gap-1 bg-black/70 p-2 rounded-lg border border-green-600">
+              {seeds.map((seed) => (
+                <button
+                  key={seed.id}
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    onSeedChange(seed.id);
+                    setShowSeedMenu(false);
+                  }}
+                  className={`w-14 h-14 rounded-lg border-2 flex flex-col items-center justify-center text-white text-xs shadow-lg ${
+                    selectedSeed === seed.id
+                      ? 'bg-green-500/80 border-green-300'
+                      : 'bg-slate-700/80 border-slate-500'
+                  }`}
+                >
+                  <span className="text-xl">{seed.icon}</span>
+                  <span>{seed.name}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Action button (E) */}
         <button

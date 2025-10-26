@@ -408,31 +408,58 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Planted Soil',
     color: 'bg-[#8B6F47]', // Use tilled soil color as background
     isSolid: false,
-    image: [farmingAssets.seedling] // Generic seedling sprite (just planted)
+    image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
+    transforms: {
+      enableScale: true,
+      enableFlip: true,
+      scaleRange: { min: 1.3, max: 1.5 }, // Scale 130-150% for overlap effect
+    },
   },
   [TileType.SOIL_WATERED]: {
     name: 'Watered Soil',
     color: 'bg-[#6B5537]', // Darker brown for wet soil
     isSolid: false,
-    image: [farmingAssets.seedling] // Seedling on wet soil
+    image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
+    transforms: {
+      enableScale: true,
+      enableFlip: true,
+      scaleRange: { min: 1.3, max: 1.5 }, // Scale 130-150% for overlap effect
+    },
   },
   [TileType.SOIL_READY]: {
     name: 'Ready Crop',
     color: 'bg-[#6B5537]', // Darker brown for mature plant's soil
     isSolid: false,
-    image: [farmingAssets.plant_pea_adult] // Mature plant sprite
+    image: [farmingAssets.plant_pea_adult], // Fallback image (overridden by growth stage in TileRenderer)
+    transforms: {
+      enableScale: true,
+      enableFlip: true,
+      scaleRange: { min: 1.4, max: 1.6 }, // Larger scale for mature plants
+    },
   },
   [TileType.SOIL_WILTING]: {
     name: 'Wilting Crop',
     color: 'bg-[#9B7F57]', // Lighter dried soil
     isSolid: false,
-    image: [farmingAssets.plant_pea_young] // Wilting plant (reuse young plant, could add brown tint later)
+    image: [farmingAssets.wilted_plant], // Fallback image (overridden by growth stage in TileRenderer)
+    transforms: {
+      enableScale: true,
+      enableFlip: true,
+      scaleRange: { min: 1.2, max: 1.4 },
+    },
   },
   [TileType.SOIL_DEAD]: {
     name: 'Dead Crop',
     color: 'bg-[#7B6047]', // Dead soil color
     isSolid: false,
-    image: [] // No plant sprite - just show dead soil
+    image: [farmingAssets.wilted_plant], // Fallback image (rotated 90°)
+    transforms: {
+      enableScale: true,
+      enableFlip: true,
+      enableRotation: true,
+      scaleRange: { min: 1.2, max: 1.4 },
+      rotationRange: { min: 90, max: 90 }, // Lay flat on ground
+    },
   },
 
   // Indoor furniture (multi-tile)

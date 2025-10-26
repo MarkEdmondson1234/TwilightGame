@@ -35,11 +35,15 @@ import ForegroundSprites from './components/ForegroundSprites';
 import NPCRenderer from './components/NPCRenderer';
 import AnimationOverlay from './components/AnimationOverlay';
 import WeatherOverlay from './components/WeatherOverlay';
+import CutscenePlayer from './components/CutscenePlayer';
+import { cutsceneManager } from './utils/CutsceneManager';
+import { ALL_CUTSCENES } from './data/cutscenes';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
     const [isMapInitialized, setIsMapInitialized] = useState(false);
     const [characterVersion, setCharacterVersion] = useState(0); // Track character changes
+    const [isCutscenePlaying, setIsCutscenePlaying] = useState(false); // Track cutscene state
 
     // Load player location from saved state
     const savedLocation = gameState.getPlayerLocation();
@@ -86,6 +90,51 @@ const App: React.FC = () => {
     const handleFarmUpdate = () => {
         setFarmUpdateTrigger((prev: number) => prev + 1);
     };
+
+    // Cutscene completion handler
+    const handleCutsceneComplete = (action: { action: string; mapId?: string; position?: { x: number; y: number } }) => {
+        console.log('[App] Cutscene completed with action:', action);
+
+        if (action.action === 'transition' && action.mapId && action.position) {
+            // Transition to new map
+            handleMapTransition(action.mapId, action.position);
+        } else if (action.action === 'return') {
+            // Stay where we are (already at saved position)
+            console.log('[App] Returning to saved position');
+        }
+
+        setIsCutscenePlaying(false);
+    };
+
+    // Initialize cutscene system
+    useEffect(() => {
+        // Register all cutscenes
+        cutsceneManager.registerCutscenes(ALL_CUTSCENES);
+
+        // Load completed cutscenes from saved state
+        const completedCutscenes = gameState.getCompletedCutscenes();
+        const lastSeasonTriggered = gameState.getLastSeasonTriggered();
+        cutsceneManager.loadState(completedCutscenes, lastSeasonTriggered);
+
+        // Subscribe to cutscene state changes
+        const unsubscribe = cutsceneManager.subscribe((state) => {
+            setIsCutscenePlaying(state.isPlaying);
+
+            // Sync completed cutscenes to game state
+            if (state.completedCutscenes.length > 0) {
+                state.completedCutscenes.forEach((id) => {
+                    gameState.markCutsceneCompleted(id);
+                });
+            }
+
+            // Sync last season triggered to game state
+            if (state.lastSeasonTriggered) {
+                gameState.setLastSeasonTriggered(state.lastSeasonTriggered);
+            }
+        });
+
+        return unsubscribe;
+    }, []);
 
     // Setup keyboard controls
     useKeyboardControls({
@@ -141,17 +190,25 @@ const App: React.FC = () => {
             setNpcUpdateTrigger(prev => prev + 1);
         }
 
-        // Pause movement when dialogue is open
-        if (activeNPC) {
+        // Pause movement when dialogue or cutscene is active
+        if (activeNPC || isCutscenePlaying) {
             animationFrameId.current = requestAnimationFrame(gameLoop);
             return;
+        }
+
+        // Check for position-based cutscene triggers (only when not in dialogue/cutscene)
+        if (!activeNPC && !isCutscenePlaying) {
+            cutsceneManager.checkAndTriggerCutscenes({
+                playerPosition: playerPosRef.current,
+                currentMapId,
+            });
         }
 
         // Update player movement (handles input, animation, collision, and position)
         updatePlayerMovement(deltaTime, now);
 
         animationFrameId.current = requestAnimationFrame(gameLoop);
-    }, [updatePlayerMovement, activeNPC]);
+    }, [updatePlayerMovement, activeNPC, isCutscenePlaying, currentMapId]);
 
     // Disabled automatic transitions - now using action key (E or Enter)
 
@@ -377,6 +434,10 @@ const App: React.FC = () => {
                     onDirectionRelease={touchControls.handleDirectionRelease}
                     onActionPress={touchControls.handleActionPress}
                     onResetPress={touchControls.handleResetPress}
+                    currentTool={gameState.getFarmingTool()}
+                    selectedSeed={gameState.getSelectedSeed() as 'radish' | 'tomato' | 'wheat' | 'corn' | 'pumpkin' | null}
+                    onToolChange={(tool) => gameState.setFarmingTool(tool)}
+                    onSeedChange={(seed) => gameState.setSelectedSeed(seed)}
                 />
             )}
             {activeNPC && (
@@ -398,6 +459,9 @@ const App: React.FC = () => {
             )}
             {showHelpBrowser && (
                 <HelpBrowser onClose={() => setShowHelpBrowser(false)} />
+            )}
+            {isCutscenePlaying && (
+                <CutscenePlayer onComplete={handleCutsceneComplete} />
             )}
         </div>
     );

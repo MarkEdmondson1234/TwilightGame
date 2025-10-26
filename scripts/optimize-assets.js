@@ -29,6 +29,7 @@ const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 const SPRITE_SIZE = 256; // Resize character sprites to 256x256
 const NPC_SIZE = 512; // Resize NPC sprites to 512x512 (higher res for dialogue portraits)
 const TILE_SIZE = 128;    // Resize tile images to 128x128 (less aggressive)
+const FARMING_PLANT_SIZE = 384; // Larger size for farming plant sprites (crops need to be visible and overlap)
 const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
 const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
 const COMPRESSION_QUALITY = 85; // PNG compression quality
@@ -301,9 +302,13 @@ async function optimizeFarming() {
 
     const originalSize = fs.statSync(inputPath).size;
 
-    // Farming tiles - scale to fit tile size
+    // Plant sprites (seedling, pea, wilted) - use larger size for visibility
+    // Soil sprites (fallow, tilled) - use regular tile size
+    const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted');
+    const targetSize = isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
+
     await sharp(inputPath)
-      .resize(TILE_SIZE, TILE_SIZE, {
+      .resize(targetSize, targetSize, {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })

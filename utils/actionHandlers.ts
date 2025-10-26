@@ -160,8 +160,8 @@ export function handleFarmAction(
             } else {
                 console.log(`[Action] Failed to plant: selectedSeed=${selectedSeed}, check inventory`);
             }
-        } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING)) {
-            // Water planted, watered, or wilting crops
+        } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
+            // Water planted, watered, wilting, or ready crops (watering ready crops keeps them fresh)
             if (farmManager.waterPlot(currentMapId, position)) {
                 console.log('[Action] Watered crop');
                 farmActionTaken = true;

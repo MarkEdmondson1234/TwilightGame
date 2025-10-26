@@ -84,6 +84,12 @@ export interface GameState {
 
   // Weather system (for environmental effects and animations)
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
+
+  // Cutscene progress tracking
+  cutscenes: {
+    completed: string[]; // IDs of cutscenes that have been viewed
+    lastSeasonTriggered?: string; // Track last season for season change cutscenes
+  };
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -166,6 +172,12 @@ class GameStateManager {
           parsed.weather = 'clear';
         }
 
+        // Migrate old save data that doesn't have cutscene tracking
+        if (!parsed.cutscenes) {
+          console.log('[GameState] Migrating old save data - adding cutscene tracking');
+          parsed.cutscenes = { completed: [] };
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -201,6 +213,9 @@ class GameStateManager {
         mushroomsCollected: 0,
       },
       weather: 'clear', // Default weather
+      cutscenes: {
+        completed: [],
+      },
     };
   }
 
@@ -458,6 +473,42 @@ class GameStateManager {
     return this.state.weather || 'clear';
   }
 
+  // Cutscene management
+  markCutsceneCompleted(cutsceneId: string): void {
+    if (!this.state.cutscenes.completed.includes(cutsceneId)) {
+      this.state.cutscenes.completed.push(cutsceneId);
+      this.notify();
+      console.log(`[GameState] Cutscene completed: ${cutsceneId}`);
+    }
+  }
+
+  hasCutsceneCompleted(cutsceneId: string): boolean {
+    return this.state.cutscenes.completed.includes(cutsceneId);
+  }
+
+  getCompletedCutscenes(): string[] {
+    return [...this.state.cutscenes.completed];
+  }
+
+  loadCutsceneProgress(completedCutscenes: string[], lastSeasonTriggered?: string): void {
+    this.state.cutscenes.completed = completedCutscenes;
+    this.state.cutscenes.lastSeasonTriggered = lastSeasonTriggered;
+    this.notify();
+  }
+
+  getLastSeasonTriggered(): string | undefined {
+    return this.state.cutscenes.lastSeasonTriggered;
+  }
+
+  setLastSeasonTriggered(season: string): void {
+    this.state.cutscenes.lastSeasonTriggered = season;
+    this.notify();
+  }
+
+  getGold(): number {
+    return this.state.gold;
+  }
+
   resetState(): void {
     this.state = {
       selectedCharacter: null,
@@ -476,6 +527,7 @@ class GameStateManager {
       crafting: { unlockedRecipes: [], materials: {} },
       stats: { gamesPlayed: 0, totalPlayTime: 0, mushroomsCollected: 0 },
       weather: 'clear',
+      cutscenes: { completed: [] },
     };
     console.log('[GameState] State reset');
     this.notify();
