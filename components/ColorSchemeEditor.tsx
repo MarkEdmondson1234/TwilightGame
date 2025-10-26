@@ -494,63 +494,46 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
   const currentColorName = extractColorName(currentColorClass);
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-      <div className="bg-gray-800 rounded-lg shadow-2xl max-w-5xl w-full max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-2">
+      <div className="bg-gray-800 rounded shadow-2xl max-w-4xl w-full max-h-[95vh] flex flex-col text-sm">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700">
           <div>
-            <h2 className="text-xl font-bold text-white">Color Scheme Editor</h2>
-            <p className="text-sm text-gray-400">
-              {currentMap.name} • {editedScheme.name} • {visibleRelevantTiles.length} visible colors on this map
+            <h2 className="text-base font-bold text-white">Colour Scheme Editor</h2>
+            <p className="text-xs text-gray-400">
+              {currentMap.name} • {visibleRelevantTiles.length} colours
             </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white text-2xl leading-none px-2"
-            title="Close editor"
+            className="text-gray-400 hover:text-white text-xl leading-none px-2"
+            title="Close (ESC)"
           >
             ×
           </button>
         </div>
 
-        {/* Current Context */}
-        <div className="px-4 py-3 bg-gradient-to-r from-blue-900/30 to-purple-900/30 border-b border-gray-700">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Season:</span>
-                <span className="px-2 py-1 bg-green-600 rounded text-white font-semibold">{currentTime.season}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Time:</span>
-                <span className="px-2 py-1 bg-blue-600 rounded text-white font-semibold">{currentTime.timeOfDay}</span>
-              </div>
-            </div>
-            <div className="text-xs text-green-400 font-semibold">
-              ✨ Changes are live! Move around to see them.
-            </div>
+        {/* Controls - Compact row */}
+        <div className="flex items-center justify-between gap-2 px-3 py-1.5 border-b border-gray-700 bg-gray-900/50">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-gray-400">Now:</span>
+            <span className="px-1.5 py-0.5 bg-green-600/80 rounded text-white">{currentTime.season}</span>
+            <span className="px-1.5 py-0.5 bg-blue-600/80 rounded text-white">{currentTime.timeOfDay}</span>
           </div>
-        </div>
-
-        {/* Export Controls */}
-        <div className="flex items-center justify-between gap-2 px-4 py-2 border-b border-gray-700 bg-gray-900/50">
-          <div className="text-xs text-gray-400">
-            Game is currently showing: <span className="text-white font-semibold">{currentTime.season} {currentTime.timeOfDay}</span>
-          </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               onClick={resetToOriginal}
-              className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white text-sm font-semibold"
-              title="Reset to original color scheme"
+              className="px-2 py-0.5 bg-red-600 hover:bg-red-700 rounded text-white text-xs"
+              title="Reset to original"
             >
-              ↺ Reset
+              ↺
             </button>
             <button
               onClick={() => setShowExport(!showExport)}
-              className="px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-white text-sm font-semibold"
-              title="Show export options"
+              className="px-2 py-0.5 bg-purple-600 hover:bg-purple-700 rounded text-white text-xs"
+              title="Export code"
             >
-              {showExport ? '▲ Hide' : '▼ Export'}
+              {showExport ? '▲' : '▼'}
             </button>
           </div>
         </div>
@@ -593,23 +576,21 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
           <div className="flex border-b border-gray-700 bg-gray-900/50">
             <button
               onClick={() => setActiveTab('quick')}
-              className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
+              className={`px-4 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 activeTab === 'quick'
                   ? 'bg-gray-700 text-white border-b-2 border-green-500'
                   : 'text-gray-400 hover:text-white'
               }`}
-              title="Quick edit for current season and time"
             >
-              ⚡ Quick Edit
+              ⚡ Quick
             </button>
             <button
               onClick={() => setActiveTab('advanced')}
-              className={`px-6 py-3 font-semibold transition-colors flex items-center gap-2 ${
+              className={`px-4 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                 activeTab === 'advanced'
                   ? 'bg-gray-700 text-white border-b-2 border-blue-500'
                   : 'text-gray-400 hover:text-white'
               }`}
-              title="Advanced: palette colors, seasons, time of day"
             >
               🔧 Advanced
             </button>
@@ -622,20 +603,18 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
             {activeTab === 'quick' && (
               <div className="flex-1 overflow-y-auto">
                 {/* Season/Time Selector */}
-                <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-900/40 to-blue-900/40 border-b border-purple-600/50 p-3">
-                  <div className="text-sm text-white font-bold mb-2">
-                    ✏️ You are editing: {editingSeason === 'base' ? 'Base Colors' : editingSeason} • {editingTime === 'base' ? 'Day' : 'Night'}
+                <div className="sticky top-0 z-10 bg-gradient-to-r from-purple-900/40 to-blue-900/40 border-b border-purple-600/50 p-2">
+                  <div className="text-xs text-white font-bold mb-1">
+                    ✏️ Editing: {editingSeason === 'base' ? 'Base' : editingSeason} • {editingTime === 'base' ? 'Day' : 'Night'}
                   </div>
-                  <div className="text-xs text-gray-300 mb-2">Select which palette layer to edit:</div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     {/* Season Selector */}
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Season</div>
-                      <div className="grid grid-cols-5 gap-1">
+                      <div className="text-[10px] text-gray-500 mb-0.5">Season</div>
+                      <div className="grid grid-cols-5 gap-0.5">
                         <button
                           onClick={() => setEditingSeason('base')}
-                          className={`px-2 py-1 text-xs rounded ${editingSeason === 'base' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}
-                          title="Base colors (no seasonal override)"
+                          className={`px-1 py-0.5 text-[10px] rounded ${editingSeason === 'base' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`}
                         >
                           Base
                         </button>
@@ -643,14 +622,13 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
                           <button
                             key={season}
                             onClick={() => setEditingSeason(season)}
-                            className={`px-2 py-1 text-xs rounded capitalize ${
+                            className={`px-1 py-0.5 text-[10px] rounded capitalize ${
                               editingSeason === season
                                 ? 'bg-green-600 text-white'
                                 : season === currentSeason
-                                ? 'bg-green-900/30 text-green-300 hover:bg-green-800'
-                                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                                ? 'bg-green-900/30 text-green-300'
+                                : 'bg-gray-700 text-gray-300'
                             }`}
-                            title={season === currentSeason ? `${season} (currently active)` : season}
                           >
                             {season === currentSeason ? '●' : ''}{season.slice(0, 3)}
                           </button>
@@ -660,31 +638,29 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
 
                     {/* Time Selector */}
                     <div>
-                      <div className="text-xs text-gray-500 mb-1">Time of Day</div>
-                      <div className="grid grid-cols-2 gap-1">
+                      <div className="text-[10px] text-gray-500 mb-0.5">Time</div>
+                      <div className="grid grid-cols-2 gap-0.5">
                         <button
                           onClick={() => setEditingTime('base')}
-                          className={`px-2 py-1 text-xs rounded ${
+                          className={`px-1 py-0.5 text-[10px] rounded ${
                             editingTime === 'base'
                               ? 'bg-blue-600 text-white'
                               : currentTimeOfDay === 'day'
-                              ? 'bg-blue-900/30 text-blue-300 hover:bg-blue-800'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              ? 'bg-blue-900/30 text-blue-300'
+                              : 'bg-gray-700 text-gray-300'
                           }`}
-                          title={currentTimeOfDay === 'day' ? 'Day (currently active) - uses base colors' : 'Day - uses base colors'}
                         >
                           {currentTimeOfDay === 'day' ? '●' : ''}Day
                         </button>
                         <button
                           onClick={() => setEditingTime('night')}
-                          className={`px-2 py-1 text-xs rounded ${
+                          className={`px-1 py-0.5 text-[10px] rounded ${
                             editingTime === 'night'
                               ? 'bg-orange-600 text-white'
                               : currentTimeOfDay === 'night'
-                              ? 'bg-orange-900/30 text-orange-300 hover:bg-orange-800'
-                              : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                              ? 'bg-orange-900/30 text-orange-300'
+                              : 'bg-gray-700 text-gray-300'
                           }`}
-                          title={currentTimeOfDay === 'night' ? 'Night (currently active) - darker colors' : 'Night - darker colors'}
                         >
                           {currentTimeOfDay === 'night' ? '●' : ''}Night
                         </button>
@@ -693,134 +669,145 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
                   </div>
                 </div>
 
-                <div className="p-4">
+                <div className="p-2">
+                  {/* Table Layout */}
+                  <table className="w-full text-xs">
+                    <thead className="border-b border-gray-700 sticky top-0 bg-gray-800">
+                      <tr className="text-[10px] text-gray-400">
+                        <th className="text-left py-1 px-2">Tile</th>
+                        <th className="text-center py-1 px-1">Count</th>
+                        <th className="text-center py-1 px-1">Current</th>
+                        <th className="text-center py-1 px-1">Default</th>
+                        <th className="text-center py-1 px-1">Pick</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleRelevantTiles.map(tile => {
+                        // Get color for the current editing context
+                        const editingColorClass = getColorForContext(tile.key, editingSeason, editingTime);
+                        const editingColorName = extractColorName(editingColorClass);
+                        const editingHex = editingColorName ? palette[editingColorName]?.hex : '#000000';
+                        const count = tileUsage.get(tile.key) || 0;
 
-                <div className="space-y-4">
-                  {visibleRelevantTiles.map(tile => {
-                    // Get color for the current editing context
-                    const editingColorClass = getColorForContext(tile.key, editingSeason, editingTime);
-                    const editingColorName = extractColorName(editingColorClass);
-                    const editingHex = editingColorName ? palette[editingColorName]?.hex : '#000000';
-                    const count = tileUsage.get(tile.key) || 0;
+                        // Get original color from COLOR_SCHEMES (base color always)
+                        const originalScheme = COLOR_SCHEMES[editedScheme.name];
+                        const originalColorClass = originalScheme?.colors[tile.key];
+                        const originalColorName = originalColorClass ? extractColorName(originalColorClass) : null;
+                        const originalHex = originalColorName ? palette[originalColorName]?.hex : '#000000';
 
-                    // Get original color from COLOR_SCHEMES (base color always)
-                    const originalScheme = COLOR_SCHEMES[editedScheme.name];
-                    const originalColorClass = originalScheme?.colors[tile.key];
-                    const originalColorName = originalColorClass ? extractColorName(originalColorClass) : null;
-                    const originalHex = originalColorName ? palette[originalColorName]?.hex : '#000000';
+                        const isPalettePickerOpen = showPalettePicker === tile.key;
 
-                    const isPalettePickerOpen = showPalettePicker === tile.key;
+                        return (
+                          <React.Fragment key={tile.key}>
+                            <tr className="border-b border-gray-700/50 hover:bg-gray-700/30">
+                              {/* Tile Name */}
+                              <td className="py-1 px-2 text-white font-semibold">{tile.label}</td>
 
-                    return (
-                      <div key={tile.key} className="border border-gray-700 rounded-lg bg-gray-900/50">
-                        <div className="p-4">
-                          <div className="mb-3">
-                            <h3 className="text-lg font-bold text-white">{tile.label}</h3>
-                            <p className="text-xs text-gray-400">
-                              {tile.description} • {count} {count === 1 ? 'tile' : 'tiles'}
-                            </p>
-                          </div>
+                              {/* Count */}
+                              <td className="py-1 px-1 text-center text-gray-400 text-[10px]">{count}</td>
 
-                          <div className="grid grid-cols-3 gap-3">
-                            {/* Current Color */}
-                            <div className="flex flex-col items-center">
-                              <div className="text-xs text-gray-400 mb-2">Current</div>
-                              <div
-                                className="w-16 h-16 rounded border-2 border-green-500 shadow-lg"
-                                style={{ backgroundColor: editingHex }}
-                                title={`${editingColorName} (${editingHex})`}
-                              />
-                              <div className="text-xs text-white mt-1 font-semibold capitalize">{editingColorName || 'none'}</div>
-                            </div>
+                              {/* Current Color */}
+                              <td className="py-1 px-1">
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <div
+                                    className="w-8 h-8 rounded border border-green-500"
+                                    style={{ backgroundColor: editingHex }}
+                                    title={editingColorName || ''}
+                                  />
+                                  <div className="text-[9px] text-white capitalize">{editingColorName}</div>
+                                </div>
+                              </td>
 
-                            {/* Default Color */}
-                            <div className="flex flex-col items-center">
-                              <div className="text-xs text-gray-400 mb-2">Default</div>
-                              <div
-                                className="w-16 h-16 rounded border-2 border-gray-600 cursor-pointer hover:border-blue-500 transition-colors"
-                                style={{ backgroundColor: originalHex }}
-                                title={`Reset to ${originalColorName} (${originalHex})`}
-                                onClick={() => {
-                                  if (originalColorName) {
-                                    setColorForContext(tile.key, originalColorName, editingSeason, editingTime);
-                                  }
-                                }}
-                              />
-                              <div className="text-xs text-gray-400 mt-1 capitalize">{originalColorName || 'none'}</div>
-                            </div>
+                              {/* Default Color */}
+                              <td className="py-1 px-1">
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <div
+                                    className="w-8 h-8 rounded border border-gray-600 cursor-pointer hover:border-blue-500"
+                                    style={{ backgroundColor: originalHex }}
+                                    title={`Reset to ${originalColorName}`}
+                                    onClick={() => {
+                                      if (originalColorName) {
+                                        setColorForContext(tile.key, originalColorName, editingSeason, editingTime);
+                                      }
+                                    }}
+                                  />
+                                  <div className="text-[9px] text-gray-400 capitalize">{originalColorName}</div>
+                                </div>
+                              </td>
 
-                            {/* Choose Color Button */}
-                            <div className="flex flex-col items-center">
-                              <div className="text-xs text-gray-400 mb-2">Choose</div>
-                              <button
-                                onClick={() => setShowPalettePicker(isPalettePickerOpen ? null : tile.key)}
-                                className="w-16 h-16 rounded border-2 border-purple-500 hover:border-purple-400 transition-colors bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center"
-                                title="Choose from palette"
-                              >
-                                <span className="text-2xl">🎨</span>
-                              </button>
-                              <div className="text-xs text-purple-400 mt-1">Palette</div>
-                            </div>
-                          </div>
+                              {/* Pick Button */}
+                              <td className="py-1 px-1">
+                                <div className="flex justify-center">
+                                  <button
+                                    onClick={() => setShowPalettePicker(isPalettePickerOpen ? null : tile.key)}
+                                    className="w-8 h-8 rounded border border-purple-500 hover:border-purple-400 bg-gradient-to-br from-purple-600 to-purple-800 flex items-center justify-center"
+                                    title="Choose colour"
+                                  >
+                                    <span className="text-sm">🎨</span>
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
 
-                          {/* Palette Picker */}
-                          {isPalettePickerOpen && (
-                            <div className="mt-4 p-3 border-t border-gray-700 bg-gray-800/50">
-                              <div className="text-xs font-semibold text-white mb-2">Choose from palette:</div>
-                              <div className="grid grid-cols-6 gap-2">
-                                {paletteColors.map(colorKey => {
-                                  const color = palette[colorKey];
-                                  const isActive = editingColorName === colorKey;
+                            {/* Palette Picker Row */}
+                            {isPalettePickerOpen && (
+                              <tr>
+                                <td colSpan={5} className="py-2 px-2 bg-gray-800/50 border-b border-gray-700">
+                                  <div className="text-[10px] font-semibold text-white mb-1">Choose colour:</div>
+                                  <div className="grid grid-cols-12 gap-1 mb-2">
+                                    {paletteColors.map(colorKey => {
+                                      const color = palette[colorKey];
+                                      const isActive = editingColorName === colorKey;
 
-                                  return (
-                                    <button
-                                      key={colorKey}
-                                      onClick={() => {
-                                        setColorForContext(tile.key, colorKey, editingSeason, editingTime);
-                                        setShowPalettePicker(null);
+                                      return (
+                                        <button
+                                          key={colorKey}
+                                          onClick={() => {
+                                            setColorForContext(tile.key, colorKey, editingSeason, editingTime);
+                                            setShowPalettePicker(null);
+                                          }}
+                                          className={`p-0.5 rounded border ${
+                                            isActive
+                                              ? 'border-green-500'
+                                              : 'border-gray-700 hover:border-purple-500'
+                                          }`}
+                                          title={colorKey}
+                                        >
+                                          <div
+                                            className="w-full h-6 rounded"
+                                            style={{ backgroundColor: color.hex }}
+                                          />
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] text-gray-400">Custom:</span>
+                                    <input
+                                      type="color"
+                                      value={editingHex}
+                                      onChange={(e) => {
+                                        if (editingColorName && editedScheme) {
+                                          // Update the palette color
+                                          updatePaletteColor(editingColorName, e.target.value);
+                                          setPalette(getPalette());
+
+                                          // Trigger map reload to show the change
+                                          applyChangesLive(editedScheme);
+                                        }
                                       }}
-                                      className={`p-1 rounded border-2 transition-all hover:scale-105 ${
-                                        isActive
-                                          ? 'border-green-500 shadow-lg shadow-green-500/50'
-                                          : 'border-gray-700 hover:border-purple-500'
-                                      }`}
-                                      title={`${colorKey} (${color.hex})`}
-                                    >
-                                      <div
-                                        className="w-full h-10 rounded"
-                                        style={{ backgroundColor: color.hex }}
-                                      />
-                                      <div className="text-xs text-white mt-1 truncate">{colorKey}</div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                              <div className="mt-3 flex items-center justify-between">
-                                <div className="text-xs text-gray-400">Or pick custom color:</div>
-                                <input
-                                  type="color"
-                                  value={editingHex}
-                                  onChange={(e) => {
-                                    if (editingColorName && editedScheme) {
-                                      // Update the palette color
-                                      updatePaletteColor(editingColorName, e.target.value);
-                                      setPalette(getPalette());
-
-                                      // Trigger map reload to show the change
-                                      applyChangesLive(editedScheme);
-                                    }
-                                  }}
-                                  className="w-20 h-8 rounded cursor-pointer border border-gray-600"
-                                  title="Pick a custom color"
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                                      className="h-6 w-12 rounded cursor-pointer border border-gray-600"
+                                      title="Custom colour"
+                                    />
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
@@ -999,12 +986,12 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
 
                     {/* Time of Day Overrides */}
                     <div>
-                      <h4 className="text-sm font-semibold text-white mb-2">Time of Day Overrides (Optional)</h4>
+                      <h4 className="text-sm font-semibold text-white mb-2">Night Override (Optional)</h4>
                       <div className="mb-3 text-xs text-gray-400">
-                        Override {selectedTileData.label.toLowerCase()} color for day/night:
+                        Override {selectedTileData.label.toLowerCase()} colour at night (day uses base/seasonal colours):
                       </div>
                       <div className="space-y-3">
-                        {(['day', 'night'] as TimeKey[]).map(time => {
+                        {(['night'] as TimeKey[]).map(time => {
                           const timeColor = editedScheme.timeOfDayModifiers?.[time]?.[selectedTile];
                           const activeColor = timeColor ? extractColorName(timeColor) : null;
 
