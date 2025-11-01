@@ -166,8 +166,8 @@ export function handleFarmAction(
                 console.log('[Action] Watered crop');
                 farmActionTaken = true;
             }
-        } else if (currentTool === 'hand' && plotTileType === TileType.SOIL_READY) {
-            // Harvest ready crop
+        } else if (plotTileType === TileType.SOIL_READY) {
+            // Harvest ready crop (works with any tool - no need to switch to hand)
             const result = farmManager.harvestCrop(currentMapId, position);
             if (result) {
                 const crop = getCrop(result.cropId);

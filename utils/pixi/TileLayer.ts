@@ -241,18 +241,15 @@ export class TileLayer {
       const shouldFlip = transforms.transform.includes('scaleX(-1)');
       if (shouldFlip) {
         sprite.scale.x = -Math.abs(sprite.scale.x);
-        // Adjust anchor and position for flip
-        sprite.anchor.set(1, 0);
-        sprite.x = (x + 1) * TILE_SIZE;
       } else {
         sprite.scale.x = Math.abs(sprite.scale.x);
-        // Reset anchor and position for normal orientation
-        sprite.anchor.set(0, 0);
-        sprite.x = x * TILE_SIZE;
       }
 
-      // Ensure Y position is always correct
-      sprite.y = y * TILE_SIZE;
+      // Always use center anchor to keep sprite centered on tile
+      // This prevents position shifts when flip transform is applied
+      sprite.anchor.set(0.5, 0.5);
+      sprite.x = (x + 0.5) * TILE_SIZE;
+      sprite.y = (y + 0.5) * TILE_SIZE;
     }
   }
 
@@ -387,7 +384,9 @@ export class TileLayer {
    */
   private cullSprites(visibleRange: { minX: number; maxX: number; minY: number; maxY: number }): void {
     this.sprites.forEach((sprite, key) => {
-      const coords = key.replace('_base', '').split(',').map(Number);
+      // Remove all key suffixes: _base, _sprite, _color
+      const baseKey = key.replace(/_base|_sprite|_color$/g, '');
+      const coords = baseKey.split(',').map(Number);
       const [x, y] = coords;
       const visible =
         x >= visibleRange.minX &&

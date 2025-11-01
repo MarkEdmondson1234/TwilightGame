@@ -444,7 +444,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
       enableScale: true,
-      enableFlip: true,
+      enableFlip: false, // Disabled - prevents sprites from shifting to adjacent tiles
       scaleRange: { min: 1.3, max: 1.5 }, // Scale 130-150% for overlap effect
     },
   },
@@ -455,7 +455,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
       enableScale: true,
-      enableFlip: true,
+      enableFlip: false, // Disabled - prevents sprites from shifting to adjacent tiles
       scaleRange: { min: 1.3, max: 1.5 }, // Scale 130-150% for overlap effect
     },
   },
@@ -466,7 +466,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [farmingAssets.plant_pea_adult], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
       enableScale: true,
-      enableFlip: true,
+      enableFlip: false, // Disabled - prevents sprites from shifting to adjacent tiles
       scaleRange: { min: 1.4, max: 1.6 }, // Larger scale for mature plants
     },
   },
@@ -477,7 +477,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [farmingAssets.wilted_plant], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
       enableScale: true,
-      enableFlip: true,
+      enableFlip: false, // Disabled - prevents sprites from shifting to adjacent tiles
       scaleRange: { min: 1.2, max: 1.4 },
     },
   },
