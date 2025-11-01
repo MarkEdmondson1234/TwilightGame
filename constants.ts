@@ -6,6 +6,10 @@ export const MAP_WIDTH = 50;
 export const MAP_HEIGHT = 30;
 export const PLAYER_SIZE = 0.8; // fraction of a tile
 
+// PixiJS Feature Flag - Set to true to use WebGL rendering (10-100x faster)
+// Set to false to use DOM rendering (fallback for compatibility)
+export const USE_PIXI_RENDERER = true; // Enabled for testing
+
 // Player sprites now point to placeholder URLs. Frame 0 is idle.
 export const PLAYER_SPRITES: Record<Direction, string[]> = {
   [Direction.Down]: [
@@ -45,7 +49,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [
       tileAssets.grass_1,
       tileAssets.grass_2,
-    ]
+    ],
+    transforms: {
+      enableFlip: true,  // Horizontal flipping for variety
+      enableScale: true,
+      scaleRange: { min: 0.95, max: 1.05 },  // Very subtle size variation (5%)
+    },
   },
   [TileType.ROCK]: {
     name: 'Rock',
@@ -148,7 +157,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       enableScale: true,
       enableRotation: true,
       rotationMode: 'full360',  // Full 360-degree rotation for variety
-      scaleRange: { min: 0.7, max: 1.3 },  // More pronounced variation for stepping stones
+      scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation (was 0.7-1.3, too extreme)
     },
   },
 
@@ -249,7 +258,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.MIRROR]: {
     name: 'Mirror',
-    color: 'bg-cyan-300',
+    color: 'bg-palette-sky',
     isSolid: false,
     image: []
   },
@@ -327,31 +336,31 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   // Building tiles
   [TileType.WALL_BOUNDARY]: {
     name: 'Wall Boundary',
-    color: 'bg-stone-700',
+    color: 'bg-palette-taupe',
     isSolid: true,
     image: []
   },
   [TileType.BUILDING_WALL]: {
     name: 'Building Wall',
-    color: 'bg-stone-600',
+    color: 'bg-palette-gray',
     isSolid: true,
     image: [tileAssets.bricks_1]
   },
   [TileType.BUILDING_ROOF]: {
     name: 'Building Roof',
-    color: 'bg-red-800',
+    color: 'bg-palette-maroon',
     isSolid: true,
     image: []
   },
   [TileType.BUILDING_DOOR]: {
     name: 'Building Door',
-    color: 'bg-amber-900',
+    color: 'bg-palette-chocolate',
     isSolid: false,
     image: []
   },
   [TileType.BUILDING_WINDOW]: {
     name: 'Building Window',
-    color: 'bg-cyan-400',
+    color: 'bg-palette-sky',
     isSolid: true,
     image: []
   },
@@ -403,7 +412,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   // Farmland tiles
   [TileType.SOIL_FALLOW]: {
     name: 'Fallow Soil',
-    color: 'bg-[#8B6F47]',
+    color: 'bg-palette-khaki',
     isSolid: false,
     image: [
       farmingAssets.fallow_soil_1,
@@ -418,13 +427,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_TILLED]: {
     name: 'Tilled Soil',
-    color: 'bg-[#8B6F47]',
+    color: 'bg-palette-khaki',
     isSolid: false,
     image: [farmingAssets.tilled]
   },
   [TileType.SOIL_PLANTED]: {
     name: 'Planted Soil',
-    color: 'bg-[#8B6F47]', // Use tilled soil color as background
+    color: 'bg-palette-khaki', // Use tilled soil color as background
     isSolid: false,
     image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
@@ -435,7 +444,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_WATERED]: {
     name: 'Watered Soil',
-    color: 'bg-[#6B5537]', // Darker brown for wet soil
+    color: 'bg-palette-chocolate', // Darker brown for wet soil
     isSolid: false,
     image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
@@ -446,7 +455,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_READY]: {
     name: 'Ready Crop',
-    color: 'bg-[#6B5537]', // Darker brown for mature plant's soil
+    color: 'bg-palette-chocolate', // Darker brown for mature plant's soil
     isSolid: false,
     image: [farmingAssets.plant_pea_adult], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
@@ -457,7 +466,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_WILTING]: {
     name: 'Wilting Crop',
-    color: 'bg-[#9B7F57]', // Lighter dried soil
+    color: 'bg-palette-beige', // Lighter dried soil
     isSolid: false,
     image: [farmingAssets.wilted_plant], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
@@ -468,7 +477,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_DEAD]: {
     name: 'Dead Crop',
-    color: 'bg-[#7B6047]', // Dead soil color
+    color: 'bg-palette-taupe', // Dead soil color
     isSolid: false,
     image: [farmingAssets.wilted_plant], // Fallback image (rotated 90°)
     transforms: {
@@ -836,7 +845,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.8,      // Start at anchor tile
     offsetY: -2,     // Extends 2 tiles upward
     image: tileAssets.stove,
-    isForeground: false,  // Render UNDER player (floor furniture)
+    isForeground: true,  // Render OVER player (tall furniture)
     // Disable all CSS transforms for clean furniture rendering
     enableFlip: false,
     enableRotation: false,

@@ -481,6 +481,20 @@ class GameStateManager {
     return this.state.customColorSchemes;
   }
 
+  clearColorSchemes(): void {
+    this.state.customColorSchemes = undefined;
+    this.notify();
+    console.log('[GameState] Color schemes cleared');
+  }
+
+  clearColorScheme(schemeName: string): void {
+    if (this.state.customColorSchemes && this.state.customColorSchemes[schemeName]) {
+      delete this.state.customColorSchemes[schemeName];
+      this.notify();
+      console.log('[GameState] Color scheme cleared:', schemeName);
+    }
+  }
+
   // Weather management
   setWeather(weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'): void {
     this.state.weather = weather;

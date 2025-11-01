@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { getPalette, GamePalette, updatePaletteColor, exportPalette, PaletteColor } from '../palette';
+import { getPalette, GamePalette, updatePaletteColor, exportPalette, PaletteColor, resetPalette } from '../palette';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { mapManager } from '../maps';
 import { ColorScheme, TileType } from '../types';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { TILE_LEGEND } from '../constants';
 import { gameState } from '../GameState';
+import { ColorResolver } from '../utils/ColorResolver';
+import TimeControlPanel from './TimeControlPanel';
 
 interface ColorSchemeEditorProps {
   onClose: () => void;
@@ -31,41 +33,8 @@ const TILE_TYPES: { key: TileColorKey; label: string; description: string }[] = 
   { key: 'background', label: 'Background', description: 'Map background color (empty space)' },
 ];
 
-// Map TileType enum to ColorScheme color keys
-const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
-  [TileType.GRASS]: 'grass',
-  [TileType.ROCK]: 'rock',
-  [TileType.WATER]: 'water',
-  [TileType.WATER_CENTER]: 'water',
-  [TileType.WATER_LEFT]: 'water',
-  [TileType.WATER_RIGHT]: 'water',
-  [TileType.WATER_TOP]: 'water',
-  [TileType.WATER_BOTTOM]: 'water',
-  [TileType.PATH]: 'path',
-  [TileType.FLOOR]: 'floor',
-  [TileType.FLOOR_LIGHT]: 'floor',
-  [TileType.FLOOR_DARK]: 'floor',
-  [TileType.WALL]: 'wall',
-  [TileType.WALL_BOUNDARY]: 'wall',
-  [TileType.BUILDING_WALL]: 'wall',
-  [TileType.CARPET]: 'carpet',
-  [TileType.RUG]: 'carpet',
-  [TileType.DOOR]: 'door',
-  [TileType.EXIT_DOOR]: 'door',
-  [TileType.SHOP_DOOR]: 'door',
-  [TileType.BUILDING_DOOR]: 'door',
-  [TileType.MINE_ENTRANCE]: 'special',
-  [TileType.TABLE]: 'furniture',
-  [TileType.CHAIR]: 'furniture',
-  [TileType.MUSHROOM]: 'mushroom',
-  [TileType.SOIL_FALLOW]: 'grass',
-  [TileType.SOIL_TILLED]: 'path',
-  [TileType.SOIL_PLANTED]: 'grass',
-  [TileType.SOIL_WATERED]: 'path',
-  [TileType.SOIL_READY]: 'grass',
-  [TileType.SOIL_WILTING]: 'grass',
-  [TileType.SOIL_DEAD]: 'grass',
-};
+// Use ColorResolver's mapping for consistency
+const TILE_TYPE_TO_COLOR_KEY = ColorResolver.TILE_TYPE_TO_COLOR_KEY;
 
 /**
  * Check if a tile type's background color is visible
@@ -158,14 +127,15 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
   // Get current time context
   const currentTime = TimeManager.getCurrentTime();
   const currentSeason = currentTime.season.toLowerCase() as SeasonKey;
-  // Even hours = day, odd hours = night (matches TimeManager logic)
-  const currentTimeOfDay: TimeKey = currentTime.hour % 2 === 0 ? 'day' : 'night';
+  // Use TimeManager's calculated time-of-day (single source of truth)
+  const currentTimeOfDay: TimeKey = currentTime.timeOfDay === 'Day' ? 'day' : 'night';
 
   const [selectedTile, setSelectedTile] = useState<TileColorKey>('grass');
   const [activeTab, setActiveTab] = useState<'quick' | 'advanced'>('quick');
   const [editedScheme, setEditedScheme] = useState<ColorScheme | null>(currentScheme);
   const [showExport, setShowExport] = useState(false);
   const [expandedTiles, setExpandedTiles] = useState<Set<TileColorKey>>(new Set());
+  const [showTimeControls, setShowTimeControls] = useState(true); // Show time controls by default
 
   // Quick Edit: which season/time are we editing?
   const [editingSeason, setEditingSeason] = useState<SeasonKey | 'base'>(currentSeason);
@@ -202,7 +172,9 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
 
   // Update edited scheme when map changes
   useEffect(() => {
-    setEditedScheme(mapManager.getCurrentColorScheme());
+    const currentScheme = mapManager.getCurrentColorScheme();
+    console.log('[ColorSchemeEditor] Scheme loaded from MapManager:', currentScheme?.name);
+    setEditedScheme(currentScheme);
   }, [currentMap?.id]);
 
   if (!editedScheme || !currentMap) {
@@ -234,6 +206,91 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
       // Notify App component to trigger TileRenderer re-render
       onColorChange();
     }
+  };
+
+  // Reset current color scheme to defaults
+  const handleResetToDefaults = () => {
+    if (!editedScheme || !currentMap) return;
+
+    const confirmed = window.confirm(
+      `Reset "${editedScheme.name}" colour scheme to defaults?\n\n` +
+      `This will restore all base, seasonal, and night colours for this map.\n\n` +
+      `(Palette colours will not be affected)`
+    );
+
+    if (!confirmed) return;
+
+    console.log('[ColorSchemeEditor] Resetting scheme to defaults:', editedScheme.name);
+
+    // Get default scheme from COLOR_SCHEMES
+    const defaultScheme = COLOR_SCHEMES[editedScheme.name];
+
+    if (defaultScheme) {
+      // Clear this scheme from localStorage
+      gameState.clearColorScheme(editedScheme.name);
+
+      // Apply default scheme
+      setEditedScheme(defaultScheme);
+      mapManager.registerColorScheme(defaultScheme);
+      mapManager.loadMap(currentMap.id);
+      onColorChange();
+
+      console.log('[ColorSchemeEditor] Scheme reset to defaults and cleared from localStorage');
+    } else {
+      console.warn('[ColorSchemeEditor] No default scheme found for:', editedScheme.name);
+      alert(`Could not find default scheme for "${editedScheme.name}"`);
+    }
+  };
+
+  // Reset all color schemes AND palette to defaults
+  const handleResetAllColors = () => {
+    const confirmed = window.confirm(
+      `⚠️ Reset ALL colours to defaults?\n\n` +
+      `This will:\n` +
+      `• Reset all colour schemes (all maps)\n` +
+      `• Reset palette colours to defaults\n` +
+      `• Clear all customisations from localStorage\n\n` +
+      `This action cannot be undone!`
+    );
+
+    if (!confirmed) return;
+
+    console.log('[ColorSchemeEditor] Resetting ALL colours to defaults');
+
+    // Clear ALL custom color schemes from localStorage
+    gameState.clearColorSchemes();
+
+    // Clear ALL custom palette colors from localStorage
+    gameState.clearCustomColors();
+
+    // Reset palette to defaults
+    resetPalette();
+
+    // Reset all color schemes to defaults
+    Object.values(COLOR_SCHEMES).forEach(scheme => {
+      mapManager.registerColorScheme(scheme);
+    });
+
+    // Force editor to reload the current scheme from defaults
+    if (currentMap) {
+      const defaultScheme = COLOR_SCHEMES[currentMap.colorScheme || 'village'];
+      console.log('[ColorSchemeEditor] Loading default scheme for:', currentMap.colorScheme, defaultScheme);
+
+      // Update editor state with fresh default scheme
+      setEditedScheme({ ...defaultScheme }); // Clone to force React update
+
+      // Reload map with defaults
+      mapManager.loadMap(currentMap.id);
+
+      // Trigger App re-render
+      onColorChange();
+    }
+
+    // Refresh palette display
+    setPalette(getPalette());
+
+    console.log('[ColorSchemeEditor] All colours reset to defaults and localStorage cleared');
+    alert('All colours have been reset to defaults!');
   };
 
   const handleQuickColorChange = (tileKey: TileColorKey, colorKey: keyof GamePalette) => {
@@ -508,13 +565,48 @@ const ColorSchemeEditor: React.FC<ColorSchemeEditorProps> = ({ onClose, onColorC
               {currentMap.name} • {visibleRelevantTiles.length} colours
             </p>
           </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleResetToDefaults}
+              className="px-3 py-1 text-xs font-semibold text-yellow-400 hover:text-yellow-300 border border-yellow-400/50 hover:border-yellow-300 rounded transition-colors"
+              title="Reset current colour scheme to defaults"
+            >
+              ↺ Reset Scheme
+            </button>
+            <button
+              onClick={handleResetAllColors}
+              className="px-3 py-1 text-xs font-semibold text-red-400 hover:text-red-300 border border-red-400/50 hover:border-red-300 rounded transition-colors"
+              title="Reset ALL colours (schemes + palette) to defaults"
+            >
+              ⚠ Reset All
+            </button>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white text-xl leading-none px-2"
+              title="Close (ESC)"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        {/* Time Controls Panel */}
+        <div className="border-b border-gray-700 bg-gray-900/30">
           <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-white text-xl leading-none px-2"
-            title="Close (ESC)"
+            onClick={() => setShowTimeControls(!showTimeControls)}
+            className="w-full px-3 py-2 flex items-center justify-between text-sm font-semibold text-white hover:bg-gray-800/50 transition-colors"
           >
-            ×
+            <span>⏰ Time & Season Controls</span>
+            <span className="text-gray-400">{showTimeControls ? '▲' : '▼'}</span>
           </button>
+          {showTimeControls && (
+            <div className="px-3 pb-3">
+              <TimeControlPanel
+                compact={true}
+                onTimeChange={onColorChange}
+              />
+            </div>
+          )}
         </div>
 
         {/* Controls - Compact row */}

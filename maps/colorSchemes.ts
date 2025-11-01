@@ -30,7 +30,7 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       grass: 'bg-palette-sage',
       rock: 'bg-palette-gray',
       water: 'bg-palette-sky',
-      path: 'bg-palette-beige',
+      path: 'bg-palette-sage',  // Match grass background
       floor: 'bg-palette-tan',
       wall: 'bg-palette-brown',
       carpet: 'bg-palette-olive',
@@ -43,29 +43,37 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
     // Optional seasonal modifiers - subtle grass color shifts
     seasonalModifiers: {
       spring: {
-        grass: 'bg-palette-sage',  // Bright spring green (default sage)
+        grass: 'bg-palette-sage',  // Default sage green
+        path: 'bg-palette-sage',   // Match grass
       },
       summer: {
-        grass: 'bg-palette-olive',  // Warmer summer grass
+        grass: 'bg-palette-olive',  // Warmer olive
+        path: 'bg-palette-olive',   // Match grass
       },
       autumn: {
-        grass: 'bg-palette-khaki',  // Golden autumn grass
+        grass: 'bg-palette-olive',  // Olive (same as summer)
+        path: 'bg-palette-olive',   // Match grass
       },
       winter: {
-        grass: 'bg-palette-slate',  // Cool winter grass
+        grass: 'bg-palette-snow',  // Snow white
+        path: 'bg-palette-snow',   // Match grass
         water: 'bg-palette-periwinkle',  // Frozen water tint
       },
     },
     // Optional time-of-day modifiers - darker colors at night
     timeOfDayModifiers: {
       night: {
-        grass: 'bg-palette-moss',      // Darker grass at night
+        grass: 'bg-palette-moss',      // Darker grass at night (default for spring/summer/autumn)
+        path: 'bg-palette-moss',       // Match grass at night
         water: 'bg-palette-teal',      // Darker water at night
-        path: 'bg-palette-taupe',      // Darker path at night
         floor: 'bg-palette-khaki',     // Darker floor at night
         wall: 'bg-palette-chocolate',  // Darker wall at night
       },
     },
+    // Winter-specific night overrides (time-of-day takes priority over seasonal)
+    // Note: Currently, we can't do season-specific time overrides in the color scheme format
+    // Winter night will use the regular night modifier (moss) instead of snow
+    // This is a limitation we could address later if needed
   },
 
   forest: {

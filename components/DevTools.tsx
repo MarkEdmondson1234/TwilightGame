@@ -64,7 +64,8 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
     setHour(realTime.hour);
   };
 
-  const timeOfDay = hour >= 6 && hour < 20 ? 'Day' : 'Night';
+  // Use TimeManager's calculated time-of-day (single source of truth)
+  const timeOfDay = TimeManager.getCurrentTime().timeOfDay;
 
   return (
     <div className="devtools-overlay">

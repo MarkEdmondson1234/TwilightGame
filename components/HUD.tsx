@@ -33,7 +33,7 @@ const HUD: React.FC = () => {
             <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-10 pointer-events-none">
                 <div className="bg-black/50 p-3 rounded-lg border border-slate-700">
                     <h1 className="text-xl font-bold text-cyan-300">My Game</h1>
-                    <p className="text-sm text-slate-300">Exploration Engine v0.1</p>
+                    <p className="text-sm text-slate-300">Exploration Engine v0.2</p>
                     <div className="mt-2 text-sm text-yellow-300">
                         Gold: {gold}
                     </div>

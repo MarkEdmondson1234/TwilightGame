@@ -90,7 +90,7 @@ export class TimeManager {
     const totalHours = Math.floor(msSinceStart / msPerGameHour);
     const hour = totalHours % 24; // 0-23
 
-    // Determine time of day based on even/odd hours
+    // Determine time of day - alternates every real-life hour (even = day, odd = night)
     const timeOfDay = hour % 2 === 0 ? TimeOfDay.DAY : TimeOfDay.NIGHT;
 
     return {
@@ -164,7 +164,7 @@ export class TimeManager {
     const dayInYear = seasonIndex * TimeManager.DAYS_PER_SEASON + (day - 1);
     const totalDays = year * TimeManager.DAYS_PER_YEAR + dayInYear;
     const totalHours = totalDays * 24 + hour;
-    const timeOfDay = hour >= 6 && hour < 20 ? TimeOfDay.DAY : TimeOfDay.NIGHT;
+    const timeOfDay = hour % 2 === 0 ? TimeOfDay.DAY : TimeOfDay.NIGHT;
 
     TimeManager.timeOverride = {
       year,

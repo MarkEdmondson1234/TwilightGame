@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { TILE_SIZE, PLAYER_SIZE } from './constants';
+import * as PIXI from 'pixi.js';
+import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER } from './constants';
 import { Position, Direction } from './types';
+import { textureManager } from './utils/TextureManager';
+import { TileLayer } from './utils/pixi/TileLayer';
+import { PlayerSprite } from './utils/pixi/PlayerSprite';
+import { SpriteLayer } from './utils/pixi/SpriteLayer';
+import { tileAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -60,6 +66,10 @@ const App: React.FC = () => {
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
     const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
+    const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
+        const time = TimeManager.getCurrentTime();
+        return time.timeOfDay === 'Day' ? 'day' : 'night';
+    }); // Track time-of-day for reactivity (from TimeManager)
 
     const isTouchDevice = useTouchDevice();
 
@@ -72,6 +82,15 @@ const App: React.FC = () => {
     const lastTransitionTime = useRef<number>(0);
     const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
     const lastDirectionRef = useRef<Direction>(direction); // Track direction changes
+
+    // PixiJS refs
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const pixiAppRef = useRef<PIXI.Application | null>(null);
+    const tileLayerRef = useRef<TileLayer | null>(null);
+    const backgroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
+    const playerSpriteRef = useRef<PlayerSprite | null>(null);
+    const foregroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
+    const [isPixiInitialized, setIsPixiInitialized] = useState(false);
 
     const handleCharacterCreated = (character: CharacterCustomization) => {
         gameState.selectCharacter(character);
@@ -136,6 +155,21 @@ const App: React.FC = () => {
 
         return unsubscribe;
     }, []);
+
+    // Poll for time-of-day changes (check every 10 seconds for dev responsiveness)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const time = TimeManager.getCurrentTime();
+            const newTimeOfDay: 'day' | 'night' = time.timeOfDay === 'Day' ? 'day' : 'night';
+
+            if (newTimeOfDay !== timeOfDayState) {
+                console.log(`[App] Time of day changed: ${timeOfDayState} → ${newTimeOfDay}`);
+                setTimeOfDayState(newTimeOfDay);
+            }
+        }, 10000); // Check every 10 seconds
+
+        return () => clearInterval(interval);
+    }, [timeOfDayState]);
 
     // Setup keyboard controls
     useKeyboardControls({
@@ -268,6 +302,12 @@ const App: React.FC = () => {
         mapHeight,
     });
 
+    // Performance optimization: Cache season and time lookups (don't call TimeManager for every tile/animation)
+    const currentTime = TimeManager.getCurrentTime();
+    const currentSeason = currentTime.season;
+    const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+    const timeOfDay = timeOfDayState; // Use state for reactivity
+
     // Use viewport culling hook for performance optimization
     const { minX: visibleTileMinX, maxX: visibleTileMaxX, minY: visibleTileMinY, maxY: visibleTileMaxY } = useViewportCulling({
         cameraX,
@@ -277,14 +317,187 @@ const App: React.FC = () => {
         margin: 1,
     });
 
+    // Create visible range object for rendering
+    const visibleRange = {
+        minX: visibleTileMinX,
+        maxX: visibleTileMaxX,
+        minY: visibleTileMinY,
+        maxY: visibleTileMaxY,
+    };
+
     // Get player sprite info (URL and scale)
     const { playerSpriteUrl, spriteScale } = getPlayerSpriteInfo(playerSprites, direction, animationFrame);
 
-    // Performance optimization: Cache season and time lookups (don't call TimeManager for every tile/animation)
-    const currentTime = TimeManager.getCurrentTime();
-    const currentSeason = currentTime.season;
-    const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
-    const timeOfDay: 'day' | 'night' = currentTime.hour >= 6 && currentTime.hour < 20 ? 'day' : 'night';
+    // Initialize PixiJS renderer (if enabled) - must be after all variable declarations
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !canvasRef.current || !isMapInitialized) return;
+
+        const initPixi = async () => {
+            console.log('[App] Initializing PixiJS renderer...');
+            const startTime = performance.now();
+
+            try {
+                // Get dynamic background color from color scheme
+                const { ColorResolver } = await import('./utils/ColorResolver');
+                const colorScheme = mapManager.getCurrentColorScheme();
+                const bgColorClass = colorScheme?.colors.background || 'bg-palette-moss';
+                const backgroundColor = ColorResolver.paletteToHex(bgColorClass);
+
+                // Create PixiJS Application
+                const app = new PIXI.Application();
+                await app.init({
+                    canvas: canvasRef.current!,
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                    backgroundColor,
+                    antialias: false, // Critical for pixel art
+                    resolution: window.devicePixelRatio || 1,
+                    autoDensity: true,
+                });
+
+                pixiAppRef.current = app;
+
+                // Preload all tile textures
+                console.log('[App] Preloading textures...');
+                await textureManager.loadBatch(tileAssets);
+
+                // Create tile layer
+                const tileLayer = new TileLayer();
+                tileLayerRef.current = tileLayer;
+                app.stage.addChild(tileLayer.getContainer());
+
+                // Create background sprite layer (furniture under player)
+                const backgroundSpriteLayer = new SpriteLayer(false);
+                backgroundSpriteLayerRef.current = backgroundSpriteLayer;
+                app.stage.addChild(backgroundSpriteLayer.getContainer());
+
+                // Create player sprite
+                const playerSprite = new PlayerSprite();
+                playerSpriteRef.current = playerSprite;
+                app.stage.addChild(playerSprite.getContainer());
+
+                // Create foreground sprite layer (furniture over player)
+                const foregroundSpriteLayer = new SpriteLayer(true);
+                foregroundSpriteLayerRef.current = foregroundSpriteLayer;
+                app.stage.addChild(foregroundSpriteLayer.getContainer());
+
+                // Initial render
+                const currentMap = mapManager.getCurrentMap();
+                if (currentMap) {
+                    tileLayer.renderTiles(currentMap, currentMapId, visibleRange, seasonKey);
+                    backgroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                    foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                    tileLayer.updateCamera(cameraX, cameraY);
+                    backgroundSpriteLayer.updateCamera(cameraX, cameraY);
+                    playerSprite.updateCamera(cameraX, cameraY);
+                    foregroundSpriteLayer.updateCamera(cameraX, cameraY);
+                }
+
+                const endTime = performance.now();
+                console.log(`[App] ✓ PixiJS initialized in ${(endTime - startTime).toFixed(0)}ms`);
+                setIsPixiInitialized(true);
+            } catch (error) {
+                console.error('[App] Failed to initialize PixiJS:', error);
+            }
+        };
+
+        initPixi();
+
+        return () => {
+            // Cleanup PixiJS on unmount
+            if (pixiAppRef.current) {
+                console.log('[App] Destroying PixiJS application');
+                pixiAppRef.current.destroy(true);
+                pixiAppRef.current = null;
+            }
+            if (tileLayerRef.current) {
+                tileLayerRef.current.clear();
+                tileLayerRef.current = null;
+            }
+            if (backgroundSpriteLayerRef.current) {
+                backgroundSpriteLayerRef.current.clear();
+                backgroundSpriteLayerRef.current = null;
+            }
+            if (playerSpriteRef.current) {
+                playerSpriteRef.current.destroy();
+                playerSpriteRef.current = null;
+            }
+            if (foregroundSpriteLayerRef.current) {
+                foregroundSpriteLayerRef.current.clear();
+                foregroundSpriteLayerRef.current = null;
+            }
+        };
+    }, [isMapInitialized]); // Only initialize once when map is ready
+
+    // Update PixiJS renderer when map/camera changes
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
+
+        const currentMap = mapManager.getCurrentMap();
+        if (currentMap) {
+            // Render all layers
+            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey);
+
+            if (backgroundSpriteLayerRef.current) {
+                backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+            }
+
+            if (foregroundSpriteLayerRef.current) {
+                foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+            }
+
+            // Update all cameras
+            tileLayerRef.current.updateCamera(cameraX, cameraY);
+
+            if (backgroundSpriteLayerRef.current) {
+                backgroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
+            }
+
+            if (playerSpriteRef.current) {
+                playerSpriteRef.current.updateCamera(cameraX, cameraY);
+            }
+
+            if (foregroundSpriteLayerRef.current) {
+                foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
+            }
+
+            // Log sprite count for debugging (only occasionally)
+            const stats = tileLayerRef.current.getSpriteCount();
+            if (stats.total > 0 && stats.total % 100 === 0) {
+                console.log(`[TileLayer] Sprites: ${stats.visible}/${stats.total} visible`);
+            }
+        }
+    }, [currentMapId, visibleRange, seasonKey, timeOfDay, cameraX, cameraY, isPixiInitialized]);
+
+    // Re-render PixiJS when color scheme changes (ColorSchemeEditor updates)
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
+
+        console.log('[App] Color scheme changed, re-rendering PixiJS tiles...');
+
+        const currentMap = mapManager.getCurrentMap();
+        if (currentMap) {
+            // Re-render all tiles with new colors
+            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey);
+
+            // Update background sprite layer
+            if (backgroundSpriteLayerRef.current) {
+                backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+            }
+
+            // Update foreground sprite layer
+            if (foregroundSpriteLayerRef.current) {
+                foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+            }
+        }
+    }, [colorSchemeVersion, isPixiInitialized]);
+
+    // Update player sprite when player state changes
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !isPixiInitialized || !playerSpriteRef.current) return;
+
+        playerSpriteRef.current.update(playerPos, direction, animationFrame, playerSpriteUrl, spriteScale);
+    }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized]);
 
     // Show character creator if no character selected
     if (showCharacterCreator) {
@@ -297,31 +510,54 @@ const App: React.FC = () => {
 
     return (
         <div className="bg-gray-900 text-white w-screen h-screen overflow-hidden font-sans relative select-none">
+            {/* PixiJS Renderer (WebGL - High Performance) */}
+            {USE_PIXI_RENDERER && (
+                <canvas
+                    ref={canvasRef}
+                    className="absolute top-0 left-0"
+                    style={{ imageRendering: 'pixelated' }}
+                />
+            )}
+
+            {/* DOM Tile Renderer (Only when PixiJS is disabled) */}
+            {!USE_PIXI_RENDERER && (
+                <div
+                    className="relative"
+                    style={{
+                        width: mapWidth * TILE_SIZE,
+                        height: mapHeight * TILE_SIZE,
+                        transform: `translate(${-cameraX}px, ${-cameraY}px)`,
+                    }}
+                >
+                    {/* Render Map Tiles */}
+                    <TileRenderer
+                        currentMap={currentMap}
+                        currentMapId={currentMapId}
+                        visibleRange={{
+                            minX: visibleTileMinX,
+                            maxX: visibleTileMaxX,
+                            minY: visibleTileMinY,
+                            maxY: visibleTileMaxY,
+                        }}
+                        seasonKey={seasonKey}
+                        farmUpdateTrigger={farmUpdateTrigger}
+                        colorSchemeVersion={colorSchemeVersion}
+                    />
+                </div>
+            )}
+
+            {/* Hybrid Layer: Sprites/Player/NPCs (Always rendered with DOM, works with both renderers) */}
             <div
                 className="relative"
                 style={{
                     width: mapWidth * TILE_SIZE,
                     height: mapHeight * TILE_SIZE,
                     transform: `translate(${-cameraX}px, ${-cameraY}px)`,
+                    pointerEvents: 'none', // Allow clicks to pass through to canvas
                 }}
             >
-                {/* Render Map Tiles */}
-                <TileRenderer
-                    currentMap={currentMap}
-                    currentMapId={currentMapId}
-                    visibleRange={{
-                        minX: visibleTileMinX,
-                        maxX: visibleTileMaxX,
-                        minY: visibleTileMinY,
-                        maxY: visibleTileMaxY,
-                    }}
-                    seasonKey={seasonKey}
-                    farmUpdateTrigger={farmUpdateTrigger}
-                    colorSchemeVersion={colorSchemeVersion}
-                />
-
-                {/* Render Background Multi-Tile Sprites */}
-                <BackgroundSprites currentMap={currentMap} />
+                {/* Render Background Multi-Tile Sprites (only in DOM mode) */}
+                {!USE_PIXI_RENDERER && <BackgroundSprites currentMap={currentMap} />}
 
                 {/* Render Background Animations (behind everything) */}
                 <AnimationOverlay
@@ -354,31 +590,35 @@ const App: React.FC = () => {
                     layer="midground"
                 />
 
-                {/* Render Player */}
-                <img
-                    src={playerSpriteUrl}
-                    alt="Player"
-                    className="absolute"
-                    style={{
-                        left: (playerPos.x - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
-                        top: (playerPos.y - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
-                        width: PLAYER_SIZE * spriteScale * TILE_SIZE,
-                        height: PLAYER_SIZE * spriteScale * TILE_SIZE,
-                        imageRendering: 'pixelated',
-                    }}
-                />
+                {/* Render Player (only in DOM mode, PixiJS renders it via PlayerSprite) */}
+                {!USE_PIXI_RENDERER && (
+                    <img
+                        src={playerSpriteUrl}
+                        alt="Player"
+                        className="absolute"
+                        style={{
+                            left: (playerPos.x - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
+                            top: (playerPos.y - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
+                            width: PLAYER_SIZE * spriteScale * TILE_SIZE,
+                            height: PLAYER_SIZE * spriteScale * TILE_SIZE,
+                            imageRendering: 'pixelated',
+                        }}
+                    />
+                )}
 
-                {/* Render Foreground Multi-Tile Sprites (above player) */}
-                <ForegroundSprites
-                    currentMap={currentMap}
-                    visibleRange={{
-                        minX: visibleTileMinX,
-                        maxX: visibleTileMaxX,
-                        minY: visibleTileMinY,
-                        maxY: visibleTileMaxY,
-                    }}
-                    seasonKey={seasonKey}
-                />
+                {/* Render Foreground Multi-Tile Sprites (above player) - Only in DOM mode */}
+                {!USE_PIXI_RENDERER && (
+                    <ForegroundSprites
+                        currentMap={currentMap}
+                        visibleRange={{
+                            minX: visibleTileMinX,
+                            maxX: visibleTileMaxX,
+                            minY: visibleTileMinY,
+                            maxY: visibleTileMaxY,
+                        }}
+                        seasonKey={seasonKey}
+                    />
+                )}
 
                 {/* Render Foreground Animations (above everything - falling petals, etc.) */}
                 <AnimationOverlay
