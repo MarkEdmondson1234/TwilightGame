@@ -43,6 +43,7 @@ import AnimationOverlay from './components/AnimationOverlay';
 import WeatherOverlay from './components/WeatherOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
+import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnimation';
 import { ALL_CUTSCENES } from './data/cutscenes';
 
 const App: React.FC = () => {
@@ -66,6 +67,8 @@ const App: React.FC = () => {
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
     const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
+    const [farmActionAnimation, setFarmActionAnimation] = useState<FarmActionType | null>(null); // Current farm action animation
+    const [farmActionKey, setFarmActionKey] = useState(0); // Force animation retrigger for same action type
     const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
         const time = TimeManager.getCurrentTime();
         return time.timeOfDay === 'Day' ? 'day' : 'night';
@@ -110,6 +113,12 @@ const App: React.FC = () => {
     const handleFarmUpdate = () => {
         setFarmUpdateTrigger((prev: number) => prev + 1);
     };
+
+    // Farm animation completion handler
+    const handleAnimationComplete = useCallback(() => {
+        console.log('[App] Animation complete callback called');
+        setFarmActionAnimation(null);
+    }, []);
 
     // Cutscene completion handler
     const handleCutsceneComplete = (action: { action: string; mapId?: string; position?: { x: number; y: number } }) => {
@@ -186,6 +195,15 @@ const App: React.FC = () => {
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
         onFarmUpdate: handleFarmUpdate,
+        onFarmActionAnimation: (action) => {
+            console.log('[App] Farm action animation triggered:', action);
+            setFarmActionAnimation(action);
+            setFarmActionKey(prev => {
+                const newKey = prev + 1;
+                console.log('[App] Animation key updated:', prev, '->', newKey);
+                return newKey;
+            });
+        },
     });
 
     // Setup touch controls
@@ -656,6 +674,17 @@ const App: React.FC = () => {
                 />
 
                 {isDebugOpen && <DebugOverlay playerPos={playerPos} />}
+
+                {/* Farm Action Animation (icon above player) */}
+                {farmActionAnimation && (
+                    <FarmActionAnimation
+                        key={farmActionKey}
+                        playerX={playerPos.x * TILE_SIZE}
+                        playerY={playerPos.y * TILE_SIZE}
+                        action={farmActionAnimation}
+                        onComplete={handleAnimationComplete}
+                    />
+                )}
             </div>
 
             <HUD />

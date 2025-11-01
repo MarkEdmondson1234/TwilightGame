@@ -29,6 +29,7 @@ export interface KeyboardControlsConfig {
     onSetPlayerPos: (pos: Position) => void;
     onMapTransition: (mapId: string, spawnPos: Position) => void;
     onFarmUpdate: () => void;
+    onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
 }
 
 export function useKeyboardControls(config: KeyboardControlsConfig) {
@@ -46,6 +47,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onSetPlayerPos,
         onMapTransition,
         onFarmUpdate,
+        onFarmActionAnimation,
     } = config;
 
     const handleKeyDown = useRef((e: KeyboardEvent) => {
@@ -161,7 +163,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             // Check for farm action first (on current tile)
             if (currentMapId) {
                 const currentTool = gameState.getFarmingTool();
-                const farmActionTaken = handleFarmAction(playerPosRef.current, currentTool, currentMapId);
+                const farmActionTaken = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
 
                 if (farmActionTaken) {
                     onFarmUpdate();

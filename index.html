@@ -11,6 +11,19 @@
     <title>Twilight Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Color palette now defined in palette.ts and applied at runtime -->
+    <style>
+      /* Farm action animation - float up and fade out */
+      @keyframes farmActionFloat {
+        0% {
+          transform: translateY(0);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(-50px);
+          opacity: 0;
+        }
+      }
+    </style>
   </head>
   <body class="bg-gray-900 text-white overflow-hidden">
     <div id="root"></div>

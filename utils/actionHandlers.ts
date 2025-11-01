@@ -120,7 +120,8 @@ export function checkTransition(playerPos: Position, currentMapId: string | null
 export function handleFarmAction(
     playerPos: Position,
     currentTool: string,
-    currentMapId: string
+    currentMapId: string,
+    onAnimationTrigger?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void
 ): boolean {
     const playerTileX = Math.floor(playerPos.x);
     const playerTileY = Math.floor(playerPos.y);
@@ -145,6 +146,7 @@ export function handleFarmAction(
             console.log(`[Action] Attempting to till soil at (${playerTileX}, ${playerTileY})`);
             if (farmManager.tillSoil(currentMapId, position)) {
                 console.log('[Action] Tilled soil');
+                onAnimationTrigger?.('till');
                 farmActionTaken = true;
             }
         } else if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) {
@@ -156,6 +158,7 @@ export function handleFarmAction(
                 const inventoryData = inventoryManager.getInventoryData();
                 gameState.saveInventory(inventoryData.items, inventoryData.tools);
                 console.log(`[Action] Planted ${selectedSeed}`);
+                onAnimationTrigger?.('plant');
                 farmActionTaken = true;
             } else {
                 console.log(`[Action] Failed to plant: selectedSeed=${selectedSeed}, check inventory`);
@@ -164,6 +167,7 @@ export function handleFarmAction(
             // Water planted, watered, wilting, or ready crops (watering ready crops keeps them fresh)
             if (farmManager.waterPlot(currentMapId, position)) {
                 console.log('[Action] Watered crop');
+                onAnimationTrigger?.('water');
                 farmActionTaken = true;
             }
         } else if (plotTileType === TileType.SOIL_READY) {
@@ -179,12 +183,14 @@ export function handleFarmAction(
                     gameState.saveInventory(inventoryData.items, inventoryData.tools);
                     console.log(`[Action] Harvested ${result.yield}x ${crop.displayName}`);
                 }
+                onAnimationTrigger?.('harvest');
                 farmActionTaken = true;
             }
         } else if (currentTool === 'hand' && plotTileType === TileType.SOIL_DEAD) {
             // Clear dead crop
             if (farmManager.clearDeadCrop(currentMapId, position)) {
                 console.log('[Action] Cleared dead crop');
+                onAnimationTrigger?.('clear');
                 farmActionTaken = true;
             }
         }
