@@ -47,8 +47,7 @@ export class WeatherLayer {
   private particles: Particle[] = [];
   private particlePool: PIXI.Sprite[] = [];
 
-  private fogSprite: PIXI.Sprite | null = null;
-  private fogScrollX: number = 0;
+  private fogSprite: PIXI.TilingSprite | null = null;
 
   private viewportWidth: number;
   private viewportHeight: number;
@@ -229,20 +228,18 @@ export class WeatherLayer {
       return;
     }
 
-    // Create fog sprite (fullscreen overlay)
-    this.fogSprite = new PIXI.Sprite(texture);
-    this.fogSprite.width = this.viewportWidth * config.scale;
-    this.fogSprite.height = this.viewportHeight * config.scale;
+    // Create tiling fog sprite (seamless scrolling)
+    this.fogSprite = new PIXI.TilingSprite({
+      texture,
+      width: this.viewportWidth,
+      height: this.viewportHeight,
+    });
     this.fogSprite.alpha = config.alpha;
-
-    // Center fog
-    this.fogSprite.x = (this.viewportWidth - this.fogSprite.width) / 2;
-    this.fogSprite.y = (this.viewportHeight - this.fogSprite.height) / 2;
+    this.fogSprite.tileScale.set(config.scale, config.scale);
 
     this.fogContainer.addChild(this.fogSprite);
-    this.fogScrollX = 0;
 
-    console.log(`[WeatherLayer] Setup fog overlay for ${weather}`);
+    console.log(`[WeatherLayer] Setup fog overlay for ${weather} using TilingSprite`);
   }
 
   /**
@@ -400,15 +397,13 @@ export class WeatherLayer {
     const config = FOG_CONFIGS[this.currentWeather];
     if (!config) return;
 
-    // Scroll fog horizontally
-    this.fogScrollX += config.scrollSpeed * deltaTime;
+    // Scroll fog horizontally using tilePosition (seamless wrapping)
+    this.fogSprite.tilePosition.x += config.scrollSpeed * deltaTime;
 
-    // Wrap around when scrolled a full width
-    if (this.fogScrollX >= this.fogSprite.width) {
-      this.fogScrollX = 0;
+    // Optional: Wrap tilePosition to prevent floating-point precision issues over time
+    if (Math.abs(this.fogSprite.tilePosition.x) > 10000) {
+      this.fogSprite.tilePosition.x = 0;
     }
-
-    this.fogSprite.x = (this.viewportWidth - this.fogSprite.width) / 2 + this.fogScrollX;
   }
 
   /**
@@ -442,7 +437,6 @@ export class WeatherLayer {
       this.fogSprite = null;
     }
     this.fogContainer.removeChildren();
-    this.fogScrollX = 0;
   }
 
   /**
@@ -471,6 +465,15 @@ export class WeatherLayer {
    */
   getWeather(): WeatherType {
     return this.currentWeather;
+  }
+
+  /**
+   * Show or hide weather effects
+   * Use this to hide weather in indoor locations
+   */
+  setVisible(visible: boolean): void {
+    this.container.visible = visible;
+    console.log(`[WeatherLayer] Visibility set to ${visible}`);
   }
 
   /**

@@ -8,6 +8,7 @@ import { PlayerSprite } from './utils/pixi/PlayerSprite';
 import { SpriteLayer } from './utils/pixi/SpriteLayer';
 import { WeatherLayer } from './utils/pixi/WeatherLayer';
 import { WeatherManager } from './utils/WeatherManager';
+import { shouldShowWeather } from './data/weatherConfig';
 import { tileAssets, farmingAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -179,6 +180,15 @@ const App: React.FC = () => {
 
         return unsubscribe;
     }, []);
+
+    // Update weather visibility based on current map (hide weather indoors)
+    useEffect(() => {
+        if (weatherLayerRef.current) {
+            const showWeather = shouldShowWeather(currentMapId);
+            weatherLayerRef.current.setVisible(showWeather);
+            console.log(`[App] Weather visibility for map '${currentMapId}': ${showWeather}`);
+        }
+    }, [currentMapId]);
 
     // Poll for time-of-day changes and weather updates (check every 10 seconds)
     useEffect(() => {

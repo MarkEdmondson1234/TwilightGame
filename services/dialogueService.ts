@@ -10,6 +10,7 @@
 
 import { DialogueNode, NPC } from '../types';
 import { TimeManager, Season, TimeOfDay } from '../utils/TimeManager';
+import { gameState } from '../GameState';
 
 /**
  * NPC Persona - Defines personality, speaking style, and knowledge
@@ -168,12 +169,19 @@ Include 2-4 response options for the player.`;
 }
 
 /**
- * Get the appropriate text for a dialogue node based on current season and time
+ * Get the appropriate text for a dialogue node based on current weather, season, and time
+ * Priority order: weather > seasonal > time-of-day > default
  */
 function getContextualText(node: DialogueNode): string {
   const gameTime = TimeManager.getCurrentTime();
+  const currentWeather = gameState.getWeather();
 
-  // Check for seasonal text first
+  // Check for weather-specific text first (highest priority)
+  if (node.weatherText && node.weatherText[currentWeather]) {
+    return node.weatherText[currentWeather]!;
+  }
+
+  // Check for seasonal text
   if (node.seasonalText) {
     const seasonKey = gameTime.season.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
     if (node.seasonalText[seasonKey]) {

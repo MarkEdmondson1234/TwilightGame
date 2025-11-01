@@ -124,9 +124,16 @@ export const ZONE_WEATHER_PROBABILITIES: Record<WeatherZone, Partial<SeasonalWea
  * Add new maps here as they're created
  */
 export const MAP_WEATHER_ZONES: Record<string, WeatherZone> = {
-  // Indoor locations
+  // Indoor locations (houses, shops, sheds)
   'home_interior': 'indoor',
+  'homeUpstairs': 'indoor',
+  'cottageInterior': 'indoor',
+  'house1': 'indoor',
+  'house2': 'indoor',
+  'house3': 'indoor',
+  'house4': 'indoor',
   'shop': 'indoor',
+  'seedShed': 'indoor',
 
   // Forest locations
   'forest': 'forest',
@@ -137,9 +144,10 @@ export const MAP_WEATHER_ZONES: Record<string, WeatherZone> = {
   'mine': 'cave',
   'RANDOM_CAVE_*': 'cave',  // Pattern match
 
-  // Default outdoor (village, paths, etc.)
+  // Default outdoor (village, paths, farm area, etc.)
   'village': 'default',
   'path': 'default',
+  'farmArea': 'default',
   // Any unmapped location defaults to 'default' zone
 };
 
@@ -164,6 +172,15 @@ export function getWeatherZone(mapId: string): WeatherZone {
 
   // Default to outdoor weather
   return 'default';
+}
+
+/**
+ * Check if a map should show weather effects
+ * Indoor maps should not display weather
+ */
+export function shouldShowWeather(mapId: string): boolean {
+  const zone = getWeatherZone(mapId);
+  return zone !== 'indoor';
 }
 
 /**

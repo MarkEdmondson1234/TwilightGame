@@ -65,6 +65,14 @@ export function createVillageElderNPC(
           autumn: 'Hail and well met, traveller! See how the cherry leaves turn crimson and gold. \'Tis my favourite season, watching nature\'s gentle farewell.',
           winter: 'Hail and well met, traveller! Even in winter\'s grasp, this old tree stands strong. Much like we villagers, eh?',
         },
+        weatherText: {
+          rain: 'Hail and well met, traveller! A perfect day for the crops, this rain. Come, shelter beneath the tree with me.',
+          snow: 'Hail and well met, traveller! The snow falls gently today. Even in winter\'s grasp, there is beauty to behold.',
+          fog: 'Hail and well met, traveller! Can\'t see much through this fog, can we? Best stay close to the path.',
+          mist: 'Hail and well met, traveller! The mist creeps in like an old memory. Mysterious, yet somehow comforting.',
+          storm: 'Hail and well met, traveller! Quite a storm we\'re having! Best seek shelter until it passes.',
+          cherry_blossoms: 'Hail and well met, traveller! Behold the petals dancing on the wind! \'Tis a sight that never grows old, no matter how many springs I witness.',
+        },
         responses: [
           {
             text: 'The tree is beautiful.',
@@ -477,6 +485,14 @@ export function createShopkeeperNPC(
           day: 'Welcome to my humble shop! A fine day for business, is it not? What brings thee here?',
           night: 'Good evening, traveller! Working late tonight? I keep my shop open for night owls like thyself. What dost thou need?',
         },
+        weatherText: {
+          rain: 'Come in, come in! Get out of that rain! A wet day brings customers seeking shelter - and shopping, I hope! What can I get for thee?',
+          snow: 'Brrr! Snowy weather is good for business - everyone needs warm supplies! Come closer to the fire and tell me what thou needest.',
+          fog: 'Welcome, friend! Hard to see in this fog, isn\'t it? Good thing my shop is well-lit! What brings thee through the mist?',
+          mist: 'Ah, misty weather! Perfect for a warm cup of tea and some shopping, wouldn\'t thou say? Browse at thy leisure!',
+          storm: 'Thank goodness thou made it here safely in this storm! Stay as long as thou needest - my shop is thy shelter. Now, what can I get for thee?',
+          cherry_blossoms: 'Isn\'t it magical? The petals drift past my shop windows like pink snowflakes! Such weather is good for the soul - and good for business! What can I help thee find?',
+        },
         responses: [
           {
             text: 'What do you sell?',
@@ -553,6 +569,14 @@ export function createVillageChildNPC(
         timeOfDayText: {
           day: 'Hi! Want to play? The sun is out and it\'s perfect for adventures!',
           night: 'Hi! I\'m supposed to be in bed, but I snuck out. Don\'t tell mum, okay? Want to look at the stars with me?',
+        },
+        weatherText: {
+          rain: 'Hi! Look at the rain! I want to jump in puddles but mum says I\'ll catch a cold. Do you like splashing in puddles?',
+          snow: 'Hi! It\'s snowing! It\'s snowing! Can we build a snowman? Please? I promise I\'ll wear my warmest coat!',
+          fog: 'Hi! Everything looks so spooky in the fog! It\'s like we\'re in a ghost story! Are you scared? I\'m not scared at all!',
+          mist: 'Hi! The mist makes everything look magical, doesn\'t it? Like fairies could appear any moment! Do you believe in fairies?',
+          storm: 'Hi! Wow, that thunder is SO loud! It makes me jump but in a fun way! Mum says we should stay inside but it\'s exciting, isn\'t it?',
+          cherry_blossoms: 'Hi! Look at all the petals falling! It\'s like pink snow! I\'ve been trying to catch them - want to see how many we can catch together?',
         },
         responses: [
           {
@@ -667,6 +691,14 @@ export function createMumNPC(
         timeOfDayText: {
           day: 'Hello, love! I\'m just tidying up around the house. Is there anything you need?',
           night: 'You\'re back late, dear! I hope you\'re not working too hard. Get some rest, won\'t you?',
+        },
+        weatherText: {
+          rain: 'Come in out of that rain, dear! You\'ll catch your death of cold. Let me get you a towel and some warm tea.',
+          snow: 'It\'s snowing heavily out there! Please be careful if you go outside. And do wear a scarf, won\'t you?',
+          fog: 'This fog is quite thick today. Do be careful if you\'re going out - it\'s easy to lose your way in weather like this.',
+          mist: 'Such a misty day! Rather peaceful, isn\'t it? Perfect weather for staying home and having a cup of tea.',
+          storm: 'Goodness, what a storm! I do hope everyone in the village is safe. Please stay inside until it passes, love.',
+          cherry_blossoms: 'Look at those beautiful petals falling! The cherry tree is in full bloom. It reminds me of when you were little - you loved catching the petals.',
         },
         responses: [
           {

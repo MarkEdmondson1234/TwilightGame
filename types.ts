@@ -215,6 +215,15 @@ export interface DialogueNode {
     day?: string;
     night?: string;
   };
+  weatherText?: { // Optional weather variations of the text
+    clear?: string;
+    rain?: string;
+    snow?: string;
+    fog?: string;
+    mist?: string;
+    storm?: string;
+    cherry_blossoms?: string;
+  };
   responses?: { text: string; nextId?: string }[]; // For branching dialogue (no nextId = close dialogue)
 }
 
