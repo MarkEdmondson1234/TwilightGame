@@ -157,7 +157,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Floor',
     color: 'bg-palette-tan',  // Base floor color
     isSolid: false,
-    image: [tileAssets.mine_floor]
+    image: [tileAssets.floor_light]
   },
   [TileType.FLOOR_LIGHT]: {
     name: 'Floor Light',
@@ -176,6 +176,24 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-brown',  // Base wall color
     isSolid: true,
     image: []
+  },
+  [TileType.WOODEN_WALL_POOR]: {
+    name: 'Wooden Wall (Poor)',
+    color: 'bg-palette-brown',  // Base wall color
+    isSolid: true,
+    image: [tileAssets.wooden_wall_poor]
+  },
+  [TileType.WOODEN_WALL]: {
+    name: 'Wooden Wall',
+    color: 'bg-palette-brown',  // Base wall color
+    isSolid: true,
+    image: [tileAssets.wooden_wall]
+  },
+  [TileType.WOODEN_WALL_POSH]: {
+    name: 'Wooden Wall (Posh)',
+    color: 'bg-palette-brown',  // Base wall color
+    isSolid: true,
+    image: [tileAssets.wooden_wall_posh]
   },
   [TileType.CARPET]: {
     name: 'Carpet',

@@ -1,13 +1,23 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
 
+/**
+ * House 3 Interior - Modest house with poor wooden walls
+ *
+ * Grid Legend:
+ * 1 = Wooden Wall (Poor)
+ * f = Floor Light
+ * @ = Sofa
+ * D = Door
+ */
+
 const gridString = `
-#######
-#fffff#
-#f@fff#
-#fffffD
-#fffff#
-#######
+1111111
+1fffff1
+1f@fff1
+1fffffD
+1fffff1
+1111111
 `;
 
 export const house3: MapDefinition = {

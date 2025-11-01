@@ -7,7 +7,7 @@ import { parseGrid } from '../gridParser';
  * Grid Legend:
  * F = Floor
  * Q = Floor Dark
- * # = Wall
+ * 2 = Wooden Wall (Regular)
  * C = Carpet
  * r = Rug (cottagecore decorative rug)
  * D = Door (exit)
@@ -17,12 +17,12 @@ import { parseGrid } from '../gridParser';
  */
 
 const gridString = `
-#######
-#$QQQQ#
-#Qr@Q&#
-#QQQQQD
-#QQQQQ#
-#######
+2222222
+2$QQQQ2
+2Qr@Q&2
+2QQQQQD
+2QQQQQ2
+2222222
 `;
 
 export const house1: MapDefinition = {

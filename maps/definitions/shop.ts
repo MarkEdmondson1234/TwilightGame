@@ -10,7 +10,7 @@ import { parseGrid } from '../gridParser';
  * - Exit back to village
  *
  * Grid Legend:
- * # = Wall
+ * 3 = Wooden Wall (Posh)
  * F = Floor
  * C = Carpet
  * T = Table
@@ -19,17 +19,17 @@ import { parseGrid } from '../gridParser';
  */
 
 const gridString = `
-##############
-#FFFFFFFFFFTT#
-#FFFFFFFFFFTT#
-#FFFFFFFFFFTT#
-#FFFFFFFFFFTT#
-#CCCCCCCCCCCC#
-#CCCCCCCCCCCC#
-#CCCCCCCCCCCC#
-#FFFFFFFFFFFF#
-#FFFFFFFFFFFF#
-######S#######
+33333333333333
+3FFFFFFFFFFTT3
+3FFFFFFFFFFTT3
+3FFFFFFFFFFTT3
+3FFFFFFFFFFTT3
+3CCCCCCCCCCCC3
+3CCCCCCCCCCCC3
+3CCCCCCCCCCCC3
+3FFFFFFFFFFFF3
+3FFFFFFFFFFFF3
+333333S3333333
 `;
 
 export const shop: MapDefinition = {

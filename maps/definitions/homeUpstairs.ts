@@ -10,7 +10,7 @@ import { parseGrid } from '../gridParser';
  * - Chimney on right wall
  *
  * Grid Legend:
- * # = Wall
+ * 2 = Wooden Wall (Regular)
  * F = Floor
  * C = Carpet
  * D = Door (stairs down)
@@ -20,14 +20,14 @@ import { parseGrid } from '../gridParser';
  */
 
 const gridString = `
-##########
-#ff@fffff#
-#ffffffff#
-#ffrfffff#
-#fffffAf&#
-#ffffffff#
-#ffffffff#
-###D######
+2222222222
+2ff@fffff2
+2ffffffff2
+2ffrfffff2
+2fffffAf&2
+2ffffffff2
+2ffffffff2
+222D222222
 `;
 
 export const homeUpstairs: MapDefinition = {

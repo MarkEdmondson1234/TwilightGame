@@ -9,7 +9,7 @@ import { parseGrid } from '../gridParser';
  * - Bed, sofa, and rug
  *
  * Grid Legend:
- * # = Wall
+ * 3 = Wooden Wall (Posh)
  * F = Floor
  * C = Carpet
  * r = Rug (cottagecore decorative rug)
@@ -19,15 +19,15 @@ import { parseGrid } from '../gridParser';
  */
 
 const gridString = `
-############
-#FFFFFFFFFF#
-#FFFFFFFFAF#
-#F@FFFFFFFF#
-#FFrFFFFFFF#
-#FFTFFFFFFF#
-#FFFFFFFFFF#
-#FFFFFFFFFF###
-######E#####
+333333333333
+3FFFFFFFFFF3
+3FFFFFFFFAF3
+3F@FFFFFFFF3
+3FFrFFFFFFF3
+3FFTFFFFFFF3
+3FFFFFFFFFF3
+3FFFFFFFFFF333
+333333E333333
 `;
 
 export const cottageInterior: MapDefinition = {

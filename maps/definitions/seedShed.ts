@@ -9,19 +9,19 @@ import { parseGrid } from '../gridParser';
  * seeds are unlimited and free to support testing and early gameplay.
  *
  * Grid Legend:
- * # = Wall
+ * 1 = Wooden Wall (Poor)
  * F = Floor
  * T = Table (seed displays)
  * D = Door (exit)
  */
 
 const gridString = `
-###########
-#TTTTTTTTT#
-#FFFFFFFFF#
-#FFFFFFFFF#
-#FFFFFFFFF#
-#####D#####
+11111111111
+1TTTTTTTTT1
+1FFFFFFFFF1
+1FFFFFFFFF1
+1FFFFFFFFF1
+11111D11111
 `;
 
 export const seedShed: MapDefinition = {

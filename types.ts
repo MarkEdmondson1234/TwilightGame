@@ -17,6 +17,9 @@ export enum TileType {
   FLOOR_LIGHT,
   FLOOR_DARK,
   WALL,
+  WOODEN_WALL_POOR,
+  WOODEN_WALL,
+  WOODEN_WALL_POSH,
   CARPET,
   RUG,
   // Transition tiles

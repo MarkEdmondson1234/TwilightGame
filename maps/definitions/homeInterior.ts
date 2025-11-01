@@ -13,7 +13,7 @@ import { createMumNPC } from '../../utils/npcFactories';
  * - Stove in kitchen area
  *
  * Grid Legend:
- * # = Wall
+ * 2 = Wooden Wall (Regular)
  * F = Floor
  * f = Floor Light
  * C = Carpet
@@ -26,14 +26,14 @@ import { createMumNPC } from '../../utils/npcFactories';
  */
 
 const gridString = `
-#######E##
-#ffffffff#
-#$ff@ffff##
-#ffffffff&#
-#fffrffff#
-#ffffffff#
-#ffffffff#
-###D######
+2222222E22
+2ffffffff2
+2$ff@ffff22
+2ffffffff&2
+2fffrffff2
+2ffffffff2
+2ffffffff2
+222D222222
 `;
 
 export const homeInterior: MapDefinition = {
