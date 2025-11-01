@@ -24,15 +24,18 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE, TILE_LEGEND, SPRITE_METADATA } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
-import { MapDefinition, TileType } from '../../types';
+import { MapDefinition, TileType, FarmPlotState } from '../../types';
 import { getColorHex } from '../../palette';
 import { mapManager } from '../../maps';
 import { calculateTileTransforms } from '../tileRenderUtils';
+import { farmManager } from '../farmManager';
+import { farmingAssets } from '../../assets';
 
 export class TileLayer {
   private container: PIXI.Container;
   private sprites: Map<string, PIXI.Sprite | PIXI.Graphics> = new Map();
   private currentMapId: string | null = null;
+  private farmUpdateTrigger: number = 0;
 
   constructor() {
     this.container = new PIXI.Container();
@@ -55,8 +58,12 @@ export class TileLayer {
     map: MapDefinition,
     mapId: string,
     visibleRange: { minX: number; maxX: number; minY: number; maxY: number },
-    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter'
+    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
+    farmUpdateTrigger: number
   ): void {
+    // Store farmUpdateTrigger for use in renderTile
+    this.farmUpdateTrigger = farmUpdateTrigger;
+
     // Clear all sprites if map changed
     if (this.currentMapId !== mapId) {
       this.clear();
@@ -69,7 +76,7 @@ export class TileLayer {
     // Render visible tiles
     for (let y = visibleRange.minY; y <= visibleRange.maxY; y++) {
       for (let x = visibleRange.minX; x <= visibleRange.maxX; x++) {
-        this.renderTile(x, y, seasonKey, map);
+        this.renderTile(x, y, seasonKey, map, mapId);
       }
     }
   }
@@ -78,15 +85,37 @@ export class TileLayer {
    * Render a single tile at grid position (x, y)
    * Uses deterministic hash for tile variation (matches DOM renderer)
    */
-  private renderTile(x: number, y: number, seasonKey: 'spring' | 'summer' | 'autumn' | 'winter', map: MapDefinition): void {
+  private renderTile(x: number, y: number, seasonKey: 'spring' | 'summer' | 'autumn' | 'winter', map: MapDefinition, mapId: string): void {
     const key = `${x},${y}`;
-    const tileData = getTileData(x, y);
+    let tileData = getTileData(x, y);
 
     if (!tileData) {
       // No tile data, hide sprite if it exists
       const sprite = this.sprites.get(key);
       if (sprite) sprite.visible = false;
       return;
+    }
+
+    // Check for farm plot override (farmUpdateTrigger forces re-evaluation)
+    let growthStage: number | null = null;
+    if (mapId && this.farmUpdateTrigger >= 0) {
+      const plot = farmManager.getPlot(mapId, { x, y });
+      if (plot) {
+        // Get the tile type for this plot's state
+        const plotTileType = farmManager.getTileTypeForPlot(plot);
+        // Get the visual data for this tile type
+        const plotTileData = getTileData(x, y, plotTileType);
+        if (plotTileData) {
+          tileData = plotTileData;
+        }
+        // Get growth stage for all growing crops (planted, watered, ready, wilting)
+        if (plot.state === FarmPlotState.PLANTED ||
+            plot.state === FarmPlotState.WATERED ||
+            plot.state === FarmPlotState.READY ||
+            plot.state === FarmPlotState.WILTING) {
+          growthStage = farmManager.getGrowthStage(plot);
+        }
+      }
     }
 
     // Check if this tile has a baseType (e.g., grass under tree)
@@ -124,10 +153,27 @@ export class TileLayer {
       const showImage = isGrassTile ? hashValue < 0.3 : true;
 
       if (showImage) {
-        // Use a separate hash for image selection
-        const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-        const index = Math.floor((imageHash % 1) * imageArray.length);
-        imageUrl = imageArray[index];
+        // Override sprite for farm plot growth stages
+        if (growthStage !== null && (
+            tileData.type === TileType.SOIL_PLANTED ||
+            tileData.type === TileType.SOIL_WATERED ||
+            tileData.type === TileType.SOIL_READY ||
+            tileData.type === TileType.SOIL_WILTING
+        )) {
+          // Override with growth-stage-specific sprite
+          if (growthStage === 0) { // SEEDLING
+            imageUrl = farmingAssets.seedling;
+          } else if (growthStage === 1) { // YOUNG
+            imageUrl = farmingAssets.plant_pea_young;
+          } else { // ADULT
+            imageUrl = farmingAssets.plant_pea_adult;
+          }
+        } else {
+          // Use a separate hash for image selection
+          const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+          const index = Math.floor((imageHash % 1) * imageArray.length);
+          imageUrl = imageArray[index];
+        }
       }
     }
 
@@ -162,8 +208,10 @@ export class TileLayer {
       sprite = new PIXI.Sprite(texture);
       sprite.x = x * TILE_SIZE;
       sprite.y = y * TILE_SIZE;
-      sprite.width = TILE_SIZE;
-      sprite.height = TILE_SIZE;
+
+      // Calculate scale based on texture size vs desired render size
+      const textureScale = TILE_SIZE / texture.width;
+      sprite.scale.set(textureScale, textureScale);
       sprite.zIndex = 1; // Above color background (z=0)
 
       this.container.addChild(sprite);
@@ -173,6 +221,14 @@ export class TileLayer {
       const newTexture = textureManager.getTexture(imageUrl);
       if (newTexture && sprite.texture !== newTexture) {
         sprite.texture = newTexture;
+        // Recalculate scale for new texture size
+        const textureScale = TILE_SIZE / newTexture.width;
+        sprite.scale.set(textureScale, textureScale);
+
+        // Reset position and anchor (texture change might need different positioning)
+        sprite.anchor.set(0, 0);
+        sprite.x = x * TILE_SIZE;
+        sprite.y = y * TILE_SIZE;
       }
       sprite.visible = true;
     }
@@ -181,17 +237,22 @@ export class TileLayer {
     if (sprite instanceof PIXI.Sprite) {
       const transforms = calculateTileTransforms(tileData, x, y, 0);
 
-      // Apply horizontal flip
-      sprite.scale.x = transforms.transform.includes('scaleX(-1)') ? -1 : 1;
-
-      // Adjust anchor if flipped so sprite stays in same position
-      if (sprite.scale.x === -1) {
+      // Apply horizontal flip by negating scale.x (preserves magnitude)
+      const shouldFlip = transforms.transform.includes('scaleX(-1)');
+      if (shouldFlip) {
+        sprite.scale.x = -Math.abs(sprite.scale.x);
+        // Adjust anchor and position for flip
         sprite.anchor.set(1, 0);
         sprite.x = (x + 1) * TILE_SIZE;
       } else {
+        sprite.scale.x = Math.abs(sprite.scale.x);
+        // Reset anchor and position for normal orientation
         sprite.anchor.set(0, 0);
         sprite.x = x * TILE_SIZE;
       }
+
+      // Ensure Y position is always correct
+      sprite.y = y * TILE_SIZE;
     }
   }
 

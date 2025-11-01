@@ -30,6 +30,18 @@ For character customization with multiple layers (skin, hair, clothes, shoes, gl
 - Sprites organized by direction: up, down, left, right
 - 4 frames per direction (frame 0 = idle, frames 1-3 = walking animation)
 
+## Rendering Architecture Note
+
+**TwilightGame uses PixiJS WebGL rendering** for high performance (10-100x faster than DOM).
+
+**What this means for you:**
+- **Asset registration** (in `assets.ts`): Unchanged
+- **Texture preloading**: Character sprites automatically preloaded into PixiJS TextureManager on game startup
+- **Rendering**: Handled by `PlayerSprite.ts` (PixiJS) with movement logic in `App.tsx`
+- **You don't need PixiJS knowledge** - just register your assets as documented below
+
+No additional configuration needed beyond asset registration - the rendering engine handles texture loading and sprite composition automatically
+
 ## File Naming Convention
 
 All character sprites must follow this pattern:

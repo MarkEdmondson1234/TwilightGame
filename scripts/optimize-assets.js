@@ -28,7 +28,7 @@ const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 // Configuration
 const SPRITE_SIZE = 256; // Resize character sprites to 256x256
 const NPC_SIZE = 512; // Resize NPC sprites to 512x512 (higher res for dialogue portraits)
-const TILE_SIZE = 128;    // Resize tile images to 128x128 (less aggressive)
+const TILE_SIZE = 256;    // Resize tile images to 256x256 (4x game render size, preserves detail)
 const FARMING_PLANT_SIZE = 384; // Larger size for farming plant sprites (crops need to be visible and overlap)
 const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
 const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
@@ -236,8 +236,9 @@ async function optimizeTiles() {
         .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality, less compression
         .toFile(outputPath);
     }
-    // Special handling for brick/wall textures - crop center instead of scaling down
-    else if (file.includes('brick') || file.includes('wall')) {
+    // Special handling for brick textures - crop center instead of scaling down
+    // Note: Wooden walls should NOT be cropped (they need to show all boards)
+    else if (file.includes('brick') && !file.includes('wall')) {
       const metadata = await sharp(inputPath).metadata();
       const cropSize = Math.min(metadata.width, metadata.height) / 5; // Take center 1/5th for medium-sized bricks
 
@@ -251,6 +252,16 @@ async function optimizeTiles() {
         .resize(TILE_SIZE, TILE_SIZE, {
           fit: 'cover',
           position: 'centre'
+        })
+        .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+        .toFile(outputPath);
+    }
+    // Wooden wall tiles - scale normally to preserve all boards
+    else if (file.includes('wall')) {
+      await sharp(inputPath)
+        .resize(TILE_SIZE, TILE_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
         .toFile(outputPath);

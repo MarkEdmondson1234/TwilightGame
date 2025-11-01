@@ -17,6 +17,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'F': TileType.FLOOR,
   'f': TileType.FLOOR_LIGHT,  // f = light floor (lowercase f)
   'Q': TileType.FLOOR_DARK,   // Q = dark floor
+  'm': TileType.MINE_FLOOR,   // m = mine floor (rocky cave floor)
   '#': TileType.WALL,
   '1': TileType.WOODEN_WALL_POOR,  // 1 = wooden wall (poor quality)
   '2': TileType.WOODEN_WALL,       // 2 = wooden wall (regular)

@@ -19,6 +19,19 @@ Use this skill when you need to:
 - The tile image file should be ready (PNG format, square dimensions like 32x32 or 64x64)
 - Know the tile name and variation number
 
+## Rendering Architecture Note
+
+**TwilightGame uses PixiJS WebGL rendering** for high performance (10-100x faster than DOM).
+
+**What this means for you:**
+- **Asset registration** (in `assets.ts`): Unchanged
+- **Configuration** (in `constants.ts`): Unchanged
+- **Rendering**: Automatically handled by PixiJS (`TileLayer`, `SpriteLayer`, texture loading)
+- **Transforms**: Configured once in constants, applied internally by rendering engine
+- **DOM fallback**: Available via `TileRenderer.tsx` for backward compatibility
+
+**You don't need to understand PixiJS internals** - just register your assets and configure tiles/sprites as documented below. The rendering engine handles everything automatically.
+
 ## Workflow
 
 ### Quick Reference: Files to Update
@@ -108,7 +121,7 @@ If adding multiple variations of the same tile type:
      }
      ```
 
-3. **Random selection happens automatically** - the rendering code will use a deterministic hash to select variations based on tile position.
+3. **Random selection happens automatically** - the rendering engine (PixiJS `TileLayer` or DOM `TileRenderer`) uses a deterministic hash to select variations based on tile position.
 
 ### 4. Update Optimization Script (Multi-Tile Sprites Only)
 
@@ -259,9 +272,18 @@ Adding a new grass variation (`grass_3.png`):
        tileAssets.grass_1,
        tileAssets.grass_2,
        tileAssets.grass_3,  // Add new variation
-     ]
+     ],
+     transforms: {  // Optional transforms (applied by rendering engine)
+       enableFlip: true,      // Horizontal flip variation
+       enableScale: true,     // Size variation
+       scaleRange: { min: 0.95, max: 1.05 },
+     }
    },
    ```
+
+   **Note:** Transforms are configured here but applied automatically by the rendering engine:
+   - **PixiJS renderer** (default): Uses `sprite.scale.x`, `sprite.rotation`, `sprite.tint`
+   - **DOM renderer** (fallback): Uses CSS `transform` and `filter` properties
 
 4. **Run optimization:**
    ```bash
@@ -537,10 +559,19 @@ Some tiles span multiple grid squares (beds, sofas, rugs, trees, etc.). These re
    - DO NOT force dimensions that distort the image
    - Example: 2732x2048 image → use 3 tiles wide × 2.25 tiles tall (preserves ~4:3 ratio)
 
-4. **Avoid CSS Transforms**:
-   - Set `isForeground: false` to render in background layer (no transforms)
-   - Background layer uses clean rendering without scale/rotate transforms
+4. **Transform Configuration**:
+   - Set `isForeground: false` to render in background layer (clean rendering)
+   - Background layer avoids aggressive scale/rotate transforms for better quality
    - Use `isForeground: true` only if the object should render over the player AND you want variation transforms
+
+   **Rendering Note:**
+   Multi-tile sprites are rendered by:
+   - **PixiJS** (default): `SpriteLayer.ts` (separate background/foreground layers)
+   - **DOM Fallback**: `ForegroundSprites.tsx` + `BackgroundSprites.tsx`
+
+   The `isForeground` flag controls layering in both renderers:
+   - `false`: Renders under player (background objects, furniture)
+   - `true`: Renders over player (trees, tall objects)
 
 5. **Collision Boxes**:
    - Set collision dimensions separately from sprite dimensions
@@ -567,7 +598,7 @@ sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href,  // Use o
   offsetX: 0,
   offsetY: -1.25,      // Extends upward from anchor
   image: tileAssets.sofa,
-  isForeground: false, // No CSS transforms
+  isForeground: false, // Clean rendering (no aggressive transforms)
   collisionWidth: 3,   // Functional collision area
   collisionHeight: 1,
   collisionOffsetX: 0,
@@ -588,6 +619,21 @@ const gridString = `
 
 ## Related Documentation
 
-- [ASSETS.md](../../../docs/ASSETS.md) - Complete asset guidelines
+### Asset Guidelines
+- [ASSETS.md](../../../docs/ASSETS.MD) - Complete asset guidelines
 - [MAP_GUIDE.md](../../../docs/MAP_GUIDE.md) - Using tiles in maps
+
+### Configuration Files
 - [assets.ts](../../../assets.ts) - Centralized asset registry
+- [constants.ts](../../../constants.ts) - Tile configuration (TILE_LEGEND, SPRITE_METADATA)
+- [types.ts](../../../types.ts) - TypeScript type definitions
+
+### Rendering System (PixiJS)
+- [utils/pixi/TileLayer.ts](../../../utils/pixi/TileLayer.ts) - PixiJS single-tile renderer
+- [utils/pixi/SpriteLayer.ts](../../../utils/pixi/SpriteLayer.ts) - PixiJS multi-tile sprite renderer
+- [utils/pixi/TextureManager.ts](../../../utils/pixi/TextureManager.ts) - Asset preloading and texture management
+
+### Rendering System (DOM Fallback)
+- [components/TileRenderer.tsx](../../../components/TileRenderer.tsx) - DOM single-tile renderer
+- [components/ForegroundSprites.tsx](../../../components/ForegroundSprites.tsx) - DOM foreground sprites
+- [components/BackgroundSprites.tsx](../../../components/BackgroundSprites.tsx) - DOM background sprites

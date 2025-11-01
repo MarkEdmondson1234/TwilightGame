@@ -147,9 +147,9 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                     }
 
                     // Calculate transforms using centralized utility (respects tile's transform settings)
-                    const { transform, filter, sizeScale } = selectedImage
+                    const { transform, filter } = selectedImage
                         ? calculateTileTransforms(tileData, x, y, selectedImageIndex)
-                        : { transform: 'none', filter: 'none', sizeScale: 1.0 };
+                        : { transform: 'none', filter: 'none' };
 
                     return (
                         <div
@@ -168,13 +168,14 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                                     alt={renderTileData.name}
                                     className="absolute"
                                     style={{
-                                        left: (TILE_SIZE * (1 - sizeScale)) / 2,
-                                        top: (TILE_SIZE * (1 - sizeScale)) / 2,
-                                        width: TILE_SIZE * sizeScale,
-                                        height: TILE_SIZE * sizeScale,
+                                        left: 0,
+                                        top: 0,
+                                        width: TILE_SIZE,
+                                        height: TILE_SIZE,
                                         imageRendering: 'pixelated',
                                         transform: transform,
                                         filter: filter,
+                                        transformOrigin: 'center center',
                                     }}
                                 />
                             )}

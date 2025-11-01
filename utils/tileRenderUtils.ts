@@ -105,8 +105,9 @@ export function calculateTileTransforms(
         brightness = brightnessRange.min + (hashes.brightHash % 1) * (brightnessRange.max - brightnessRange.min);
     }
 
-    // Combine transforms
-    const transform = `scaleX(${flipScaleX}) rotate(${rotation}deg)`;
+    // Combine transforms - apply uniform scale, then flip, then rotate
+    // Order matters: scale applies uniformly to both axes, scaleX only flips horizontally
+    const transform = `scale(${sizeScale}) scaleX(${flipScaleX}) rotate(${rotation}deg)`;
     const filter = transforms.enableBrightness ? `brightness(${brightness})` : 'none';
 
     return {

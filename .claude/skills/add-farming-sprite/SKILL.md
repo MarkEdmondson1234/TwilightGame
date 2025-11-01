@@ -21,6 +21,19 @@ Use this skill when you need to:
 - Know what the sprite represents (soil state, plant stage, crop type)
 - Understand which farm state or crop this sprite is for
 
+## Rendering Architecture Note
+
+**TwilightGame uses PixiJS WebGL rendering** for high performance (10-100x faster than DOM).
+
+**What this means for you:**
+- **Asset registration** (in `assets.ts`): Unchanged
+- **Rendering**: Farm plot sprites are automatically rendered by the tile system
+  - **PixiJS** (default): `TileLayer.ts` handles all tile rendering including farm plots
+  - **DOM Fallback**: `TileRenderer.tsx` with farm plot override logic
+- **You don't need PixiJS knowledge** - just register your assets as documented below
+
+The rendering engine automatically selects the appropriate sprite based on farm plot state, crop type, growth stage, and current season
+
 ## Farming Sprite Categories
 
 ### Soil States
@@ -185,3 +198,6 @@ Design sprites to match these color themes or create custom visuals.
 - [FARMING.md](../../../docs/FARMING.md) - Complete farming system guide
 - [ASSETS.md](../../../docs/ASSETS.md) - General asset guidelines
 - [assets.ts](../../../assets.ts) - Centralized asset registry
+- **Rendering:**
+  - [utils/pixi/TileLayer.ts](../../../utils/pixi/TileLayer.ts) - PixiJS tile renderer (includes farm plots)
+  - [components/TileRenderer.tsx](../../../components/TileRenderer.tsx) - DOM fallback renderer

@@ -180,6 +180,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: false,
     image: [tileAssets.floor_dark]
   },
+  [TileType.MINE_FLOOR]: {
+    name: 'Mine Floor',
+    color: 'bg-stone-700',  // Rocky mine floor color
+    isSolid: false,
+    image: [tileAssets.mine_floor]
+  },
   [TileType.WALL]: {
     name: 'Wall',
     color: 'bg-palette-brown',  // Base wall color
@@ -412,7 +418,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   // Farmland tiles
   [TileType.SOIL_FALLOW]: {
     name: 'Fallow Soil',
-    color: 'bg-palette-khaki',
+    color: 'bg-palette-brown',  // Distinct medium brown - clearly different from grass
     isSolid: false,
     image: [
       farmingAssets.fallow_soil_1,
@@ -427,13 +433,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_TILLED]: {
     name: 'Tilled Soil',
-    color: 'bg-palette-khaki',
+    color: 'bg-palette-chocolate',  // Darker rich brown for freshly tilled soil
     isSolid: false,
     image: [farmingAssets.tilled]
   },
   [TileType.SOIL_PLANTED]: {
     name: 'Planted Soil',
-    color: 'bg-palette-khaki', // Use tilled soil color as background
+    color: 'bg-palette-chocolate', // Rich brown soil as background for plants
     isSolid: false,
     image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
@@ -466,7 +472,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_WILTING]: {
     name: 'Wilting Crop',
-    color: 'bg-palette-beige', // Lighter dried soil
+    color: 'bg-palette-tan', // Lighter dried/dusty soil - tan but distinct from grass
     isSolid: false,
     image: [farmingAssets.wilted_plant], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
@@ -477,7 +483,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_DEAD]: {
     name: 'Dead Crop',
-    color: 'bg-palette-taupe', // Dead soil color
+    color: 'bg-palette-taupe', // Gray-brown for dead/depleted soil
     isSolid: false,
     image: [farmingAssets.wilted_plant], // Fallback image (rotated 90°)
     transforms: {

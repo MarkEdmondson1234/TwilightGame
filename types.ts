@@ -16,6 +16,7 @@ export enum TileType {
   FLOOR,
   FLOOR_LIGHT,
   FLOOR_DARK,
+  MINE_FLOOR,
   WALL,
   WOODEN_WALL_POOR,
   WOODEN_WALL,

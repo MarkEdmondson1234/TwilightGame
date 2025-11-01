@@ -6,7 +6,7 @@ import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { PlayerSprite } from './utils/pixi/PlayerSprite';
 import { SpriteLayer } from './utils/pixi/SpriteLayer';
-import { tileAssets } from './assets';
+import { tileAssets, farmingAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -351,15 +351,15 @@ const App: React.FC = () => {
                     height: window.innerHeight,
                     backgroundColor,
                     antialias: false, // Critical for pixel art
-                    resolution: window.devicePixelRatio || 1,
-                    autoDensity: true,
+                    resolution: 1, // Use 1 for consistent rendering across all displays
+                    autoDensity: false, // Disable to keep textures at intended size
                 });
 
                 pixiAppRef.current = app;
 
-                // Preload all tile textures
+                // Preload all tile and farming textures
                 console.log('[App] Preloading textures...');
-                await textureManager.loadBatch(tileAssets);
+                await textureManager.loadBatch({ ...tileAssets, ...farmingAssets });
 
                 // Create tile layer
                 const tileLayer = new TileLayer();
@@ -384,7 +384,7 @@ const App: React.FC = () => {
                 // Initial render
                 const currentMap = mapManager.getCurrentMap();
                 if (currentMap) {
-                    tileLayer.renderTiles(currentMap, currentMapId, visibleRange, seasonKey);
+                    tileLayer.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
                     backgroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     tileLayer.updateCamera(cameraX, cameraY);
@@ -436,7 +436,7 @@ const App: React.FC = () => {
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
             // Render all layers
-            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey);
+            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
 
             if (backgroundSpriteLayerRef.current) {
                 backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
@@ -467,7 +467,7 @@ const App: React.FC = () => {
                 console.log(`[TileLayer] Sprites: ${stats.visible}/${stats.total} visible`);
             }
         }
-    }, [currentMapId, visibleRange, seasonKey, timeOfDay, cameraX, cameraY, isPixiInitialized]);
+    }, [currentMapId, visibleRange, seasonKey, timeOfDay, cameraX, cameraY, isPixiInitialized, farmUpdateTrigger]);
 
     // Re-render PixiJS when color scheme changes (ColorSchemeEditor updates)
     useEffect(() => {
@@ -478,7 +478,7 @@ const App: React.FC = () => {
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
             // Re-render all tiles with new colors
-            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey);
+            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
 
             // Update background sprite layer
             if (backgroundSpriteLayerRef.current) {
