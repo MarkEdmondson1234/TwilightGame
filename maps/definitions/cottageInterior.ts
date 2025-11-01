@@ -20,21 +20,20 @@ import { parseGrid } from '../gridParser';
 
 const gridString = `
 333333333333
-3FFFFFFFFFF3
-3FFFFFFFFAF3
-3F@FFFFFFFF3
-3FFrFFFFFFF3
-3FFTFFFFFFF3
-3FFFFFFFFFF3
-3FFFFFFFFFF333
-333333E333333
+333333333333
+FFFFFFFFFFFF
+F@FFFFFFFAFF
+FrFFFFFFFFFF
+FTFFFFFFFFFF
+FFFFFFFFFFFF
+FFFFFFFFFFFF
 `;
 
 export const cottageInterior: MapDefinition = {
   id: 'cottage_interior',
   name: 'Cottage',
   width: 12,
-  height: 9,
+  height: 8,
   grid: parseGrid(gridString),
   colorScheme: 'indoor',
   isRandom: false,
