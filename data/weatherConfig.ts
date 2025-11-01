@@ -3,11 +3,22 @@
  *
  * Defines weather probabilities per season and particle effect presets.
  * Uses British English throughout.
+ *
+ * Map-specific weather zones allow different areas to have unique weather patterns:
+ * - Forest: More fog/mist
+ * - Cave/Mine: Minimal weather (just mist/dust)
+ * - Village/Outdoor: Standard seasonal weather
+ * - Indoor: No weather effects
  */
 
 import { Season } from '../utils/TimeManager';
 
 export type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
+
+/**
+ * Weather zones for different map types
+ */
+export type WeatherZone = 'default' | 'forest' | 'cave' | 'indoor';
 
 /**
  * Weather probability configuration per season
@@ -65,6 +76,95 @@ export const WEATHER_PROBABILITIES: Record<Season, SeasonalWeatherProbabilities>
     cherry_blossoms: 0,  // No cherry blossoms
   },
 };
+
+/**
+ * Weather zone probabilities - override seasonal probabilities for specific map types
+ * These apply regardless of season
+ */
+export const ZONE_WEATHER_PROBABILITIES: Record<WeatherZone, Partial<SeasonalWeatherProbabilities> | null> = {
+  // Default zone uses seasonal probabilities (no override)
+  default: null,
+
+  // Forest: Heavy fog/mist, some rain, no storms
+  forest: {
+    clear: 20,           // Less clear in dense forest
+    rain: 25,            // Moderate rain
+    snow: 15,            // Snow in winter (will be 0 in other seasons via seasonal base)
+    fog: 30,             // Common fog
+    mist: 25,            // Common mist
+    storm: 0,            // No storms in protected forest
+    cherry_blossoms: 0,
+  },
+
+  // Cave/Mine: Mostly mist (like dust), no rain/snow/storms
+  cave: {
+    clear: 50,           // Mostly clear underground
+    rain: 0,             // No rain underground
+    snow: 0,             // No snow underground
+    fog: 0,              // No fog underground
+    mist: 50,            // Dusty/misty atmosphere
+    storm: 0,            // No storms underground
+    cherry_blossoms: 0,
+  },
+
+  // Indoor: Always clear (no weather effects)
+  indoor: {
+    clear: 100,          // Always clear indoors
+    rain: 0,
+    snow: 0,
+    fog: 0,
+    mist: 0,
+    storm: 0,
+    cherry_blossoms: 0,
+  },
+};
+
+/**
+ * Map each map ID to a weather zone
+ * Add new maps here as they're created
+ */
+export const MAP_WEATHER_ZONES: Record<string, WeatherZone> = {
+  // Indoor locations
+  'home_interior': 'indoor',
+  'shop': 'indoor',
+
+  // Forest locations
+  'forest': 'forest',
+  'RANDOM_FOREST_*': 'forest',  // Pattern match
+
+  // Cave/Mine locations
+  'cave': 'cave',
+  'mine': 'cave',
+  'RANDOM_CAVE_*': 'cave',  // Pattern match
+
+  // Default outdoor (village, paths, etc.)
+  'village': 'default',
+  'path': 'default',
+  // Any unmapped location defaults to 'default' zone
+};
+
+/**
+ * Get weather zone for a map ID
+ */
+export function getWeatherZone(mapId: string): WeatherZone {
+  // Direct match
+  if (MAP_WEATHER_ZONES[mapId]) {
+    return MAP_WEATHER_ZONES[mapId];
+  }
+
+  // Pattern match (e.g., RANDOM_FOREST_123 matches RANDOM_FOREST_*)
+  for (const [pattern, zone] of Object.entries(MAP_WEATHER_ZONES)) {
+    if (pattern.endsWith('*')) {
+      const prefix = pattern.slice(0, -1);
+      if (mapId.startsWith(prefix)) {
+        return zone;
+      }
+    }
+  }
+
+  // Default to outdoor weather
+  return 'default';
+}
 
 /**
  * Weather duration in game hours
@@ -179,10 +279,26 @@ export const FOG_CONFIGS: Partial<Record<WeatherType, FogConfig>> = {
 };
 
 /**
- * Helper function to select random weather based on seasonal probabilities
+ * Helper function to select random weather based on seasonal and zone probabilities
+ * @param season Current season
+ * @param mapId Optional map ID to determine weather zone (uses default zone if not provided)
  */
-export function selectRandomWeather(season: Season): WeatherType {
-  const probabilities = WEATHER_PROBABILITIES[season];
+export function selectRandomWeather(season: Season, mapId?: string): WeatherType {
+  // Start with seasonal probabilities
+  let probabilities = { ...WEATHER_PROBABILITIES[season] };
+
+  // Apply zone-specific overrides if map ID is provided
+  if (mapId) {
+    const zone = getWeatherZone(mapId);
+    const zoneOverrides = ZONE_WEATHER_PROBABILITIES[zone];
+
+    if (zoneOverrides) {
+      // Merge zone probabilities (zone overrides season)
+      probabilities = { ...probabilities, ...zoneOverrides } as SeasonalWeatherProbabilities;
+      console.log(`[WeatherConfig] Using ${zone} zone weather for map ${mapId}`);
+    }
+  }
+
   const total = Object.values(probabilities).reduce((sum, prob) => sum + prob, 0);
 
   // Generate random number between 0 and total

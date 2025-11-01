@@ -20,6 +20,7 @@
  */
 
 import { TimeManager, TimeOfDay } from './TimeManager';
+import { mapManager } from '../maps';
 import {
   WeatherType,
   selectRandomWeather,
@@ -73,19 +74,20 @@ export class WeatherManager {
   }
 
   /**
-   * Update weather based on current season
+   * Update weather based on current season and map zone
    */
   private updateWeather(): void {
     const currentTime = TimeManager.getCurrentTime();
     const currentWeather = this.gameState.getWeather();
+    const currentMapId = mapManager.getCurrentMapId();
 
-    // Select new weather based on season probabilities
-    const newWeather = selectRandomWeather(currentTime.season);
+    // Select new weather based on season and map zone probabilities
+    const newWeather = selectRandomWeather(currentTime.season, currentMapId);
 
     // Only change if different (avoid redundant updates)
     if (newWeather !== currentWeather) {
       console.log(
-        `[WeatherManager] Changing weather to ${newWeather} (season: ${currentTime.season})`
+        `[WeatherManager] Changing weather to ${newWeather} (season: ${currentTime.season}, map: ${currentMapId})`
       );
       this.gameState.setWeather(newWeather);
     }
