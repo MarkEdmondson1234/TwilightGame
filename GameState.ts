@@ -89,6 +89,8 @@ export interface GameState {
 
   // Weather system (for environmental effects and animations)
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
+  automaticWeather: boolean; // Enable/disable automatic weather changes
+  nextWeatherCheckTime: number; // Timestamp (ms) for next automatic weather change
 
   // Cutscene progress tracking
   cutscenes: {
@@ -177,6 +179,15 @@ class GameStateManager {
           parsed.weather = 'clear';
         }
 
+        // Migrate old save data that doesn't have automatic weather
+        if (parsed.automaticWeather === undefined) {
+          console.log('[GameState] Migrating old save data - adding automatic weather');
+          parsed.automaticWeather = false;
+        }
+        if (!parsed.nextWeatherCheckTime) {
+          parsed.nextWeatherCheckTime = 0;
+        }
+
         // Migrate old save data that doesn't have cutscene tracking
         if (!parsed.cutscenes) {
           console.log('[GameState] Migrating old save data - adding cutscene tracking');
@@ -218,6 +229,8 @@ class GameStateManager {
         mushroomsCollected: 0,
       },
       weather: 'clear', // Default weather
+      automaticWeather: false, // Disabled by default (user can enable in DevTools)
+      nextWeatherCheckTime: 0, // No check scheduled initially
       cutscenes: {
         completed: [],
       },
@@ -506,6 +519,25 @@ class GameStateManager {
     return this.state.weather || 'clear';
   }
 
+  setAutomaticWeather(enabled: boolean): void {
+    this.state.automaticWeather = enabled;
+    this.notify();
+    console.log(`[GameState] Automatic weather ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  getAutomaticWeather(): boolean {
+    return this.state.automaticWeather ?? false;
+  }
+
+  setNextWeatherCheckTime(timestamp: number): void {
+    this.state.nextWeatherCheckTime = timestamp;
+    this.saveState(); // Save immediately to persist across sessions
+  }
+
+  getNextWeatherCheckTime(): number {
+    return this.state.nextWeatherCheckTime ?? 0;
+  }
+
   // Cutscene management
   markCutsceneCompleted(cutsceneId: string): void {
     if (!this.state.cutscenes.completed.includes(cutsceneId)) {
@@ -560,6 +592,8 @@ class GameStateManager {
       crafting: { unlockedRecipes: [], materials: {} },
       stats: { gamesPlayed: 0, totalPlayTime: 0, mushroomsCollected: 0 },
       weather: 'clear',
+      automaticWeather: false,
+      nextWeatherCheckTime: 0,
       cutscenes: { completed: [] },
     };
     console.log('[GameState] State reset');

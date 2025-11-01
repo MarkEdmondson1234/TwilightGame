@@ -6,6 +6,8 @@ import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { PlayerSprite } from './utils/pixi/PlayerSprite';
 import { SpriteLayer } from './utils/pixi/SpriteLayer';
+import { WeatherLayer } from './utils/pixi/WeatherLayer';
+import { WeatherManager } from './utils/WeatherManager';
 import { tileAssets, farmingAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -40,7 +42,6 @@ import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
 import NPCRenderer from './components/NPCRenderer';
 import AnimationOverlay from './components/AnimationOverlay';
-import WeatherOverlay from './components/WeatherOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnimation';
@@ -93,6 +94,8 @@ const App: React.FC = () => {
     const backgroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
     const playerSpriteRef = useRef<PlayerSprite | null>(null);
     const foregroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
+    const weatherLayerRef = useRef<WeatherLayer | null>(null);
+    const weatherManagerRef = useRef<WeatherManager | null>(null);
     const [isPixiInitialized, setIsPixiInitialized] = useState(false);
 
     const handleCharacterCreated = (character: CharacterCustomization) => {
@@ -165,7 +168,19 @@ const App: React.FC = () => {
         return unsubscribe;
     }, []);
 
-    // Poll for time-of-day changes (check every 10 seconds for dev responsiveness)
+    // Subscribe to weather state changes (for manual weather changes via DevTools)
+    useEffect(() => {
+        const unsubscribe = gameState.subscribe((state) => {
+            if (weatherLayerRef.current && state.weather !== weatherLayerRef.current.getWeather()) {
+                console.log(`[App] Weather changed to: ${state.weather}`);
+                weatherLayerRef.current.setWeather(state.weather);
+            }
+        });
+
+        return unsubscribe;
+    }, []);
+
+    // Poll for time-of-day changes and weather updates (check every 10 seconds)
     useEffect(() => {
         const interval = setInterval(() => {
             const time = TimeManager.getCurrentTime();
@@ -174,6 +189,11 @@ const App: React.FC = () => {
             if (newTimeOfDay !== timeOfDayState) {
                 console.log(`[App] Time of day changed: ${timeOfDayState} → ${newTimeOfDay}`);
                 setTimeOfDayState(newTimeOfDay);
+            }
+
+            // Check for automatic weather updates
+            if (weatherManagerRef.current) {
+                weatherManagerRef.current.checkWeatherUpdate();
             }
         }, 10000); // Check every 10 seconds
 
@@ -241,6 +261,11 @@ const App: React.FC = () => {
         // Only trigger re-render if NPCs actually moved (not every frame)
         if (npcsMoved) {
             setNpcUpdateTrigger(prev => prev + 1);
+        }
+
+        // Update weather particles
+        if (weatherLayerRef.current) {
+            weatherLayerRef.current.update(deltaTime);
         }
 
         // Pause movement when dialogue or cutscene is active
@@ -398,6 +423,33 @@ const App: React.FC = () => {
                 const foregroundSpriteLayer = new SpriteLayer(true);
                 foregroundSpriteLayerRef.current = foregroundSpriteLayer;
                 app.stage.addChild(foregroundSpriteLayer.getContainer());
+
+                // Create weather layer (particle effects above everything)
+                console.log('='.repeat(60));
+                console.log('[App] 🌦️ INITIALIZING WEATHER LAYER');
+                console.log('='.repeat(60));
+                try {
+                    const weatherLayer = new WeatherLayer(window.innerWidth, window.innerHeight);
+                    weatherLayerRef.current = weatherLayer;
+                    console.log('[App] ✓ WeatherLayer instance created, loading textures...');
+                    await weatherLayer.loadTextures();
+                    console.log('[App] ✓ Textures loaded, adding to stage...');
+                    app.stage.addChild(weatherLayer.getContainer());
+                    console.log('[App] ✓ Weather layer container added to stage');
+
+                    // Set initial weather
+                    const currentWeather = gameState.getWeather();
+                    weatherLayer.setWeather(currentWeather);
+                    console.log(`[App] Initial weather set to: ${currentWeather}`);
+
+                    // Initialize weather manager
+                    const weatherManager = new WeatherManager(gameState);
+                    weatherManagerRef.current = weatherManager;
+                    weatherManager.initialize();
+                } catch (error) {
+                    console.error('[App] Failed to initialize weather layer:', error);
+                    console.log('[App] Continuing without weather effects...');
+                }
 
                 // Initial render
                 const currentMap = mapManager.getCurrentMap();
@@ -652,13 +704,7 @@ const App: React.FC = () => {
                     layer="foreground"
                 />
 
-                {/* Render Weather Effects (fullscreen weather animations) */}
-                <WeatherOverlay
-                    weather={gameState.getWeather()}
-                    layer="foreground"
-                    viewportWidth={window.innerWidth}
-                    viewportHeight={window.innerHeight}
-                />
+                {/* Weather effects now handled by PixiJS WeatherLayer */}
 
                 {/* Transition indicators (rendered after foreground sprites so they're always visible) */}
                 <TransitionIndicators

@@ -120,3 +120,11 @@ export const animationAssets = {
   // snow: new URL('./public/assets-optimized/animations/snow.gif', import.meta.url).href,
   // fireflies: new URL('./public/assets-optimized/animations/fireflies.gif', import.meta.url).href,
 };
+
+// Particle assets - PNG sprites for weather particle systems
+export const particleAssets = {
+  rain: new URL('./public/assets/particles/rain.png', import.meta.url).href,
+  snow: new URL('./public/assets/particles/snow.png', import.meta.url).href,
+  fog: new URL('./public/assets/particles/fog.png', import.meta.url).href,
+  mist: new URL('./public/assets/particles/mist.png', import.meta.url).href,
+};

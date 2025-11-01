@@ -19,10 +19,14 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
   const currentWeather = gameState.getWeather() || 'clear';
   console.log('[DevTools] Current weather:', currentWeather);
 
+  const currentAutomaticWeather = gameState.getAutomaticWeather();
+  console.log('[DevTools] Automatic weather:', currentAutomaticWeather);
+
   const [season, setSeason] = useState<Season>(currentTime.season);
   const [day, setDay] = useState<number>(currentTime.day);
   const [hour, setHour] = useState<number>(currentTime.hour);
   const [weather, setWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(currentWeather);
+  const [automaticWeather, setAutomaticWeather] = useState<boolean>(currentAutomaticWeather);
 
   // Sync state when time changes externally
   useEffect(() => {
@@ -54,6 +58,12 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
   const handleWeatherChange = (newWeather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms') => {
     setWeather(newWeather);
     gameState.setWeather(newWeather);
+  };
+
+  const handleAutomaticWeatherToggle = (enabled: boolean) => {
+    setAutomaticWeather(enabled);
+    gameState.setAutomaticWeather(enabled);
+    console.log(`[DevTools] Automatic weather ${enabled ? 'enabled' : 'disabled'}`);
   };
 
   const handleResetToRealTime = () => {
@@ -136,10 +146,25 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
             <h3>Weather Control</h3>
 
             <div className="devtools-control">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={automaticWeather}
+                  onChange={(e) => handleAutomaticWeatherToggle(e.target.checked)}
+                />
+                {' '}Automatic Weather
+              </label>
+              <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                {automaticWeather ? 'Weather changes automatically based on season' : 'Manual weather control'}
+              </small>
+            </div>
+
+            <div className="devtools-control">
               <label>Current Weather</label>
               <select
                 value={weather}
                 onChange={(e) => handleWeatherChange(e.target.value as any)}
+                disabled={automaticWeather}
               >
                 <option value="clear">Clear</option>
                 <option value="rain">Rain</option>
@@ -149,6 +174,11 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
                 <option value="storm">Storm</option>
                 <option value="cherry_blossoms">Cherry Blossoms</option>
               </select>
+              {automaticWeather && (
+                <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                  Disable automatic weather to manually change
+                </small>
+              )}
             </div>
           </div>
 

@@ -181,6 +181,243 @@ Pure functions and game systems:
 - Clamped to current map boundaries (varies per map)
 - Viewport culling: Only renders visible tiles for performance
 
+## PixiJS Rendering System
+
+**Status**: Active (Feature-flagged with `USE_PIXI_RENDERER` in `constants.ts`)
+
+PixiJS is a WebGL-based 2D rendering engine that provides 10-100x performance improvements over DOM-based rendering. The game uses PixiJS v8.14.0 for GPU-accelerated sprite rendering.
+
+### Why PixiJS?
+
+**Performance Benefits:**
+- **10-100x faster rendering**: WebGL GPU acceleration vs DOM manipulation
+- **Consistent 60 FPS**: Smooth gameplay on all devices
+- **Scalability**: Support for thousands of sprites (vs ~500 with DOM)
+- **Lower memory usage**: GPU textures vs DOM nodes
+- **Future capabilities**: Particle effects, lighting, shaders, post-processing
+
+**Current vs Future:**
+- **DOM Renderer**: 30x30 map = ~1,800 DOM nodes, 30-45 FPS
+- **PixiJS Renderer**: 30x30 map = 1 canvas element, 60 FPS
+
+### Architecture
+
+The PixiJS implementation uses a **class-based layer system** with three primary rendering layers:
+
+```
+┌─────────────────────────────────────────┐
+│         React Component (App.tsx)       │
+│  - State management                     │
+│  - Game loop orchestration              │
+└──────────────────┬──────────────────────┘
+                   │
+┌──────────────────▼──────────────────────┐
+│        PixiJS Application (Canvas)      │
+│  - WebGL/Canvas Renderer                │
+│  - Stage (root container)               │
+└──────────────────┬──────────────────────┘
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+┌───────▼────────┐   ┌────────▼────────┐
+│  TileLayer     │   │  SpriteLayer    │
+│  (z-index 0-1) │   │  (background    │
+│  - Background  │   │   z-index 50)   │
+│    colors      │   │  - Multi-tile   │
+│  - Tile images │   │    sprites      │
+└────────────────┘   │  (foreground    │
+                     │   z-index 200)  │
+        ┌────────────┴────────┐
+        │                     │
+┌───────▼────────┐   ┌────────▼────────┐
+│  PlayerSprite  │   │  Future Layers  │
+│  (z-index 100) │   │  - Particles    │
+│  - Character   │   │  - Lighting     │
+│    animation   │   │  - Effects      │
+└────────────────┘   └─────────────────┘
+```
+
+### Core PixiJS Files
+
+**Rendering Layers** (`utils/pixi/`):
+- `TileLayer.ts` - Renders background tiles (colors and sprites), handles farm plot states
+- `SpriteLayer.ts` - Renders multi-tile sprites (furniture, buildings, trees) in background/foreground
+- `PlayerSprite.ts` - Renders player character with animation
+
+**Utilities** (`utils/`):
+- `TextureManager.ts` - Texture loading, caching, and management (PIXI.Texture instances)
+- `ColorResolver.ts` - Converts palette colors to PixiJS hex format
+
+**Constants** (`constants.ts`):
+- `USE_PIXI_RENDERER` - Feature flag to toggle between PixiJS and DOM rendering
+
+### Key Concepts
+
+**Texture Management:**
+- All images loaded as `PIXI.Texture` via `TextureManager`
+- Textures cached and reused (no recreation on re-render)
+- `SCALE_MODES.NEAREST` for pixel-perfect rendering (no anti-aliasing)
+- Textures preloaded during game initialization
+
+**Layer System:**
+- **TileLayer**: Background colors (z=0) and tile sprites (z=1)
+- **SpriteLayer (background)**: Multi-tile sprites like beds, sofas (z=50)
+- **PlayerSprite**: Character sprite (z=100)
+- **SpriteLayer (foreground)**: Trees, buildings that appear in front of player (z=200)
+
+**Sprite Reuse & Culling:**
+- Sprites created once and reused (position/texture updated)
+- Viewport culling: Sprites outside visible range set to `visible=false`
+- Map changes trigger full sprite cleanup and recreation
+
+**Camera System:**
+- Camera implemented by moving containers (`container.x = -cameraX`)
+- Player remains centered, world moves around them
+- Each layer updates camera position independently
+
+### Working with PixiJS
+
+**Adding New Sprites:**
+1. Add texture to `TextureManager` during initialization
+2. Create or update sprite in appropriate layer (TileLayer/SpriteLayer)
+3. Set position, size, z-index, and visibility
+4. Apply transforms if needed (flip, rotate, scale)
+
+**Example - Adding a tile sprite:**
+```typescript
+// In TileLayer.renderTile()
+const texture = textureManager.getTexture(imageUrl);
+const sprite = new PIXI.Sprite(texture);
+sprite.x = x * TILE_SIZE;
+sprite.y = y * TILE_SIZE;
+sprite.width = TILE_SIZE;
+sprite.height = TILE_SIZE;
+sprite.zIndex = 1;
+this.container.addChild(sprite);
+```
+
+**Texture Loading:**
+```typescript
+// In TextureManager.ts
+const texture = await textureManager.loadTexture(key, url);
+// Texture cached for future use
+```
+
+**Color Rendering (Tiles without images):**
+```typescript
+// TileLayer uses PIXI.Graphics for solid colors
+const graphics = new PIXI.Graphics();
+graphics.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+graphics.fill(hexColor); // Uses palette colors
+```
+
+### Performance Guidelines
+
+**DO:**
+- ✅ Reuse sprites (update texture/position instead of recreating)
+- ✅ Use viewport culling (`sprite.visible = false` for off-screen)
+- ✅ Batch similar sprites in same container
+- ✅ Use `zIndex` for layering (instead of multiple containers)
+- ✅ Preload all textures during initialization
+- ✅ Use `SCALE_MODES.NEAREST` for pixel art
+
+**DON'T:**
+- ❌ Create/destroy sprites every frame
+- ❌ Render off-screen sprites
+- ❌ Use anti-aliasing for pixel art
+- ❌ Load textures during render loop
+- ❌ Recreate containers unnecessarily
+
+### Feature Flag
+
+The game supports **both** rendering systems via feature flag:
+
+```typescript
+// constants.ts
+export const USE_PIXI_RENDERER = true; // Toggle PixiJS on/off
+```
+
+- `true`: PixiJS WebGL rendering (high performance)
+- `false`: DOM-based rendering (fallback, better compatibility)
+
+This allows:
+- A/B performance testing
+- Instant rollback if issues arise
+- Gradual migration of rendering features
+
+### PixiJS Skills
+
+The codebase includes a specialized skill for PixiJS development:
+
+- **`add-pixi-component`** - Adds new PixiJS rendering components (layers, sprites, effects)
+
+Use this skill when:
+- Implementing new PixiJS-based renderers
+- Adding particle effects or lighting systems
+- Creating custom shaders or post-processing
+- Migrating DOM components to PixiJS
+
+### Future Enhancements
+
+Once PixiJS is fully adopted, these features become possible:
+
+**Particle Systems** (`@pixi/particle-emitter`):
+- Rain/snow (1,000+ particles)
+- Falling cherry blossoms (seasonal)
+- Fireflies (night time)
+- Sparkles (item pickup, level up)
+- Dust clouds (running)
+
+**Lighting System** (PixiJS filters):
+- Day/night ambient lighting
+- Lanterns/torches (point lights)
+- Firefly glow
+- Campfire flickering
+
+**Post-Processing Effects**:
+- Bloom (glowing objects)
+- Depth of field (blur distant objects)
+- Color grading (cinematic look)
+- Vignette (focus attention)
+
+**Advanced Features**:
+- Custom WebGL shaders (water ripples, grass swaying)
+- Larger maps (100x100+ tiles with chunked loading)
+- Real-time weather effects
+- Dynamic shadows
+
+### Documentation
+
+**Detailed Documentation:**
+- `design_docs/planned/PIXI_MIGRATION.md` - Comprehensive migration guide, API design, testing strategy
+- `design_docs/planned/PIXI_API_REFERENCE.md` - PixiJS API reference
+- `.claude/skills/add-pixi-component/` - Skill for adding PixiJS components
+
+**Official PixiJS Resources:**
+- [PixiJS Documentation](https://pixijs.com/docs)
+- [PixiJS Examples](https://pixijs.com/examples)
+- [@pixi/react GitHub](https://github.com/pixijs/pixi-react)
+
+### Debugging PixiJS
+
+**Chrome DevTools:**
+- Inspect canvas element in Elements tab
+- Monitor GPU usage in Performance tab
+- Check texture loading in Network tab
+- Profile rendering with Performance profiler
+
+**In-Game Debug Overlay (F3):**
+- Shows sprite counts per layer
+- Displays FPS and render time
+- Lists loaded textures
+- Shows viewport culling stats
+
+**Common Issues:**
+- **Black screen**: Check texture loading errors in console
+- **Low FPS**: Check sprite count and viewport culling
+- **Blurry sprites**: Ensure `SCALE_MODES.NEAREST` is set
+- **Z-ordering issues**: Verify `zIndex` values and `sortableChildren = true`
+
 ## Creating New Maps
 
 See `MAP_GUIDE.md` for complete instructions. Quick reference:
