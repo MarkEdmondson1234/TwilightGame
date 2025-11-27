@@ -39,6 +39,7 @@ export const GRID_CODES: Record<string, TileType> = {
   '&': TileType.CHIMNEY,  // & = chimney (brick structure)
   '$': TileType.STOVE,    // $ = stove (vertical pipe like $ symbol)
   'U': TileType.BUSH,        // U = bUsh (decorative)
+  'e': TileType.FERN,        // e = fErn (forest floor plant)
   'Y': TileType.TREE,        // Y = Tree (looks like a tree top)
   'Z': TileType.TREE_BIG,    // Z = Big tree
   'J': TileType.CHERRY_TREE, // J = Cherry tree (seasonal)
