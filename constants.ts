@@ -286,9 +286,9 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.FERN]: {
     name: 'Fern',
-    color: 'bg-palette-sage',  // Base color matches grass
+    color: 'bg-palette-sage',  // Base color matches grass (moss green)
     isSolid: false,
-    image: [tileAssets.forest_fern1],
+    image: [tileAssets.forest_fern1, tileAssets.forest_fern2],
     transforms: {
       enableFlip: true,
       enableScale: true,

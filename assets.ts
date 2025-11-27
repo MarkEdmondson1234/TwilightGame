@@ -66,6 +66,7 @@ export const tileAssets = {
   well: new URL('./public/assets-optimized/tiles/well.png', import.meta.url).href,
   well_winter: new URL('./public/assets-optimized/tiles/well_in_winter.png', import.meta.url).href,
   forest_fern1: new URL('./public/assets-optimized/tiles/forest_fern1.png', import.meta.url).href,
+  forest_fern2: new URL('./public/assets-optimized/tiles/forest_fern2.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance
