@@ -284,6 +284,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       rotationRange: { min: -5, max: 10 },
     },
   },
+  [TileType.FERN]: {
+    name: 'Fern',
+    color: 'bg-palette-sage',  // Base color matches grass
+    isSolid: false,
+    image: [tileAssets.forest_fern1],
+    transforms: {
+      enableFlip: true,
+      enableScale: true,
+      enableRotation: true,
+      enableBrightness: true,
+      scaleRange: { min: 0.8, max: 1.2 },
+      rotationRange: { min: -8, max: 8 },
+    },
+  },
   [TileType.BUSH]: {
     name: 'Bush',
     color: 'bg-palette-sage',  // Base grass color for blending

@@ -151,6 +151,16 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add ferns scattered throughout forest (walkable decoration, quite common)
+  for (let i = 0; i < 45; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles
+    if (map[y][x] === TileType.GRASS) {
+      map[y][x] = TileType.FERN;
+    }
+  }
+
   // Add lots of bushes scattered throughout forest (solid decoration)
   for (let i = 0; i < 40; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;

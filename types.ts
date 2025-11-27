@@ -34,6 +34,7 @@ export enum TileType {
   MIRROR,
   // Decorative (walkable)
   MUSHROOM,
+  FERN,
   BUSH,
   TREE,
   TREE_BIG,
