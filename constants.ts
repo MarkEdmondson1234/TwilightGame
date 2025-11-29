@@ -291,7 +291,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage',  // Fallback color
     isSolid: false,
     baseType: TileType.GRASS,  // Render grass underneath (uses map's color scheme)
-    image: [tileAssets.forest_fern1, tileAssets.forest_fern2],
+    image: [tileAssets.forest_fern3, tileAssets.forest_fern3, tileAssets.forest_fern3, tileAssets.forest_fern1, tileAssets.forest_fern2],
     transforms: {
       enableFlip: true,
       enableScale: true,

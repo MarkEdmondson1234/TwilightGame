@@ -30,53 +30,47 @@ const HUD: React.FC = () => {
 
     return (
         <>
-            <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-10 pointer-events-none">
-                <div className="bg-black/50 p-3 rounded-lg border border-slate-700">
-                    <h1 className="text-xl font-bold text-cyan-300">My Game</h1>
-                    <p className="text-sm text-slate-300">Exploration Engine v0.2</p>
-                    <div className="mt-2 text-sm text-yellow-300">
-                        Gold: {gold}
+            {/* Left HUD Panel - Game info and tools */}
+            <div className="absolute top-2 left-2 z-10 pointer-events-none">
+                <div className="bg-black/60 p-2 sm:p-3 rounded-lg border border-slate-700 max-w-[160px] sm:max-w-[200px]">
+                    <div className="flex items-center justify-between">
+                        <span className="text-sm sm:text-base font-bold text-yellow-300">💰 {gold}</span>
                     </div>
-                    <div className="mt-2 border-t border-slate-600 pt-2">
-                        <p className="text-xs text-slate-400 mb-1">Tool (1-4):</p>
-                        <div className="flex items-center gap-2">
-                            <span className="text-lg">{toolDisplay[farming.currentTool].icon}</span>
-                            <div>
-                                <p className="text-sm font-bold text-green-300">{toolDisplay[farming.currentTool].name}</p>
-                                <p className="text-xs text-slate-400">{toolDisplay[farming.currentTool].desc}</p>
-                            </div>
+                    <div className="mt-1 pt-1 border-t border-slate-600">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                            <span className="text-base sm:text-lg">{toolDisplay[farming.currentTool].icon}</span>
+                            <span className="text-xs sm:text-sm font-bold text-green-300">{toolDisplay[farming.currentTool].name}</span>
                         </div>
                         {farming.currentTool === 'seeds' && farming.selectedSeed && (
-                            <div className="mt-2 bg-black/30 p-2 rounded border border-green-700">
-                                <p className="text-xs text-slate-400">Selected (5-9):</p>
-                                <p className="text-sm font-bold text-green-400 capitalize">{farming.selectedSeed}</p>
+                            <div className="mt-1 bg-black/30 p-1 sm:p-2 rounded border border-green-700">
+                                <p className="text-xs font-bold text-green-400 capitalize">{farming.selectedSeed}</p>
                                 <p className="text-xs text-yellow-300">
-                                    Seeds: {inventoryManager.getQuantity(getSeedItemId(farming.selectedSeed))}
-                                </p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    5=Radish 6=Tomato 7=Wheat<br/>8=Corn 9=Pumpkin
+                                    × {inventoryManager.getQuantity(getSeedItemId(farming.selectedSeed))}
                                 </p>
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="bg-black/50 p-3 rounded-lg border border-slate-700">
-                    <p className="text-lg font-bold text-yellow-300">{mapName}</p>
-                    <div className="mt-2 border-t border-slate-600 pt-2">
-                        <p className="text-md font-bold text-cyan-300">{currentTime.season} {currentTime.day}</p>
-                        <p className="text-xs text-slate-400">Year {currentTime.year}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-slate-400">Hour {currentTime.hour}:00</span>
+            </div>
+
+            {/* Right HUD Panel - Location and time (positioned to avoid help button) */}
+            <div className="absolute top-2 right-16 sm:right-20 z-10 pointer-events-none">
+                <div className="bg-black/60 p-2 sm:p-3 rounded-lg border border-slate-700">
+                    <p className="text-sm sm:text-base font-bold text-yellow-300 truncate max-w-[120px] sm:max-w-[150px]">{mapName}</p>
+                    <div className="mt-1 pt-1 border-t border-slate-600">
+                        <p className="text-xs sm:text-sm font-bold text-cyan-300">{currentTime.season} {currentTime.day}</p>
+                        <div className="flex items-center gap-1 sm:gap-2">
+                            <span className="text-xs text-slate-400">{currentTime.hour}:00</span>
                             <span className={`text-xs font-bold ${currentTime.timeOfDay === 'Day' ? 'text-yellow-400' : 'text-blue-400'}`}>
-                                {currentTime.timeOfDay === 'Day' ? '☀️ Day' : '🌙 Night'}
+                                {currentTime.timeOfDay === 'Day' ? '☀️' : '🌙'}
                             </span>
                         </div>
                     </div>
                     {forestDepth > 0 && (
-                        <p className="text-sm text-green-300 mt-2">Forest Depth: {forestDepth}</p>
+                        <p className="text-xs text-green-300 mt-1">Depth: {forestDepth}</p>
                     )}
                     {caveDepth > 0 && (
-                        <p className="text-sm text-purple-300">Cave Depth: {caveDepth}</p>
+                        <p className="text-xs text-purple-300">Depth: {caveDepth}</p>
                     )}
                 </div>
             </div>

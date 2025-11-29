@@ -67,6 +67,7 @@ export const tileAssets = {
   well_winter: new URL('./public/assets-optimized/tiles/well_in_winter.png', import.meta.url).href,
   forest_fern1: new URL('./public/assets-optimized/tiles/forest_fern1.png', import.meta.url).href,
   forest_fern2: new URL('./public/assets-optimized/tiles/forest_fern2.png', import.meta.url).href,
+  forest_fern3: new URL('./public/assets-optimized/tiles/forest_fern3.png', import.meta.url).href,
   // Oak tree assets (seasonal variations)
   oak_tree_spring: new URL('./public/assets-optimized/tiles/oak_tree_spring.png', import.meta.url).href,
   oak_tree_summer: new URL('./public/assets-optimized/tiles/oak_tree_summer.png', import.meta.url).href,

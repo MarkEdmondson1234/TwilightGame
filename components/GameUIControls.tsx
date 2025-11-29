@@ -24,10 +24,10 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
     return (
         <>
             {/* Help Button - Top Right */}
-            <div className="absolute top-4 right-4 z-10">
+            <div className="absolute top-2 right-2 z-10">
                 <button
                     onClick={onToggleHelpBrowser}
-                    className={`w-12 h-12 rounded-full border-4 font-bold text-2xl transition-all pointer-events-auto shadow-lg ${
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-3 sm:border-4 font-bold text-xl sm:text-2xl transition-all pointer-events-auto shadow-lg ${
                         showHelpBrowser
                             ? 'bg-amber-500 border-amber-700 text-white hover:bg-amber-600 scale-110'
                             : 'bg-black/70 border-slate-600 text-amber-400 hover:bg-black/90 hover:border-amber-500 hover:scale-105'
@@ -38,28 +38,28 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
                 </button>
             </div>
 
-            {/* Collision Box and Color Editor Toggle Buttons - Bottom Right */}
-            <div className="absolute bottom-4 right-4 z-10 flex gap-2">
+            {/* Dev Toggle Buttons - Bottom Left (away from touch controls on right) */}
+            <div className="absolute bottom-52 sm:bottom-4 left-2 z-10 flex flex-col sm:flex-row gap-1 sm:gap-2">
                 <button
                     onClick={onToggleCollisionBoxes}
-                    className={`px-4 py-2 rounded-lg border font-bold transition-colors pointer-events-auto ${
+                    className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg border text-xs sm:text-sm font-bold transition-colors pointer-events-auto ${
                         showCollisionBoxes
                             ? 'bg-red-500/80 border-red-700 text-white hover:bg-red-600/80'
                             : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
                     }`}
                 >
-                    {showCollisionBoxes ? '🔴 Hide Collision' : 'Show Collision'}
+                    {showCollisionBoxes ? '🔴' : '⬜'} Collision
                 </button>
                 <button
                     onClick={onToggleColorEditor}
-                    className={`px-4 py-2 rounded-lg border font-bold transition-colors pointer-events-auto ${
+                    className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg border text-xs sm:text-sm font-bold transition-colors pointer-events-auto ${
                         showColorEditor
                             ? 'bg-purple-500/80 border-purple-700 text-white hover:bg-purple-600/80'
                             : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
                     }`}
                     title="F4 to toggle"
                 >
-                    {showColorEditor ? '🎨 Hide Scheme' : '🎨 Edit Scheme'}
+                    🎨 Scheme
                 </button>
             </div>
         </>
