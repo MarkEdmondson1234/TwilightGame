@@ -153,15 +153,20 @@ export function handleFarmAction(
             // Plant in tilled soil
             const selectedSeed = gameState.getSelectedSeed();
             console.log(`[Action] Attempting to plant: selectedSeed=${selectedSeed}`);
-            if (selectedSeed && farmManager.plantSeed(currentMapId, position, selectedSeed)) {
-                // FarmManager consumed seed from inventory, save it
-                const inventoryData = inventoryManager.getInventoryData();
-                gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                console.log(`[Action] Planted ${selectedSeed}`);
-                onAnimationTrigger?.('plant');
-                farmActionTaken = true;
+            if (selectedSeed) {
+                const plantResult = farmManager.plantSeed(currentMapId, position, selectedSeed);
+                if (plantResult.success) {
+                    // FarmManager consumed seed from inventory, save it
+                    const inventoryData = inventoryManager.getInventoryData();
+                    gameState.saveInventory(inventoryData.items, inventoryData.tools);
+                    console.log(`[Action] Planted ${selectedSeed}`);
+                    onAnimationTrigger?.('plant');
+                    farmActionTaken = true;
+                } else {
+                    console.log(`[Action] Failed to plant: ${plantResult.reason}`);
+                }
             } else {
-                console.log(`[Action] Failed to plant: selectedSeed=${selectedSeed}, check inventory`);
+                console.log(`[Action] No seed selected`);
             }
         } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
             // Water planted, watered, wilting, or ready crops (watering ready crops keeps them fresh)
@@ -177,11 +182,15 @@ export function handleFarmAction(
                 const crop = getCrop(result.cropId);
                 if (crop) {
                     // FarmManager already added crops to inventory, just add gold
-                    gameState.addGold(crop.sellPrice * result.yield);
+                    // Quality affects sell price: normal=1x, good=1.5x, excellent=2x
+                    const qualityMultiplier = result.quality === 'excellent' ? 2.0 : result.quality === 'good' ? 1.5 : 1.0;
+                    const totalGold = Math.floor(crop.sellPrice * result.yield * qualityMultiplier);
+                    gameState.addGold(totalGold);
                     // Save inventory to GameState
                     const inventoryData = inventoryManager.getInventoryData();
                     gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                    console.log(`[Action] Harvested ${result.yield}x ${crop.displayName}`);
+                    const qualityStr = result.quality !== 'normal' ? ` (${result.quality} quality, ${qualityMultiplier}x gold!)` : '';
+                    console.log(`[Action] Harvested ${result.yield}x ${crop.displayName}${qualityStr} for ${totalGold} gold`);
                 }
                 onAnimationTrigger?.('harvest');
                 farmActionTaken = true;

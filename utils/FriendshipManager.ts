@@ -13,6 +13,22 @@
 import { NPCFriendship, FriendshipTier, NPC } from '../types';
 import { gameState } from '../GameState';
 import { TimeManager } from './TimeManager';
+import { inventoryManager } from './inventoryManager';
+
+// Tier reward definitions - items given when reaching a tier with certain NPCs
+// Format: { npcId: { tier: [{ itemId, quantity }] } }
+const TIER_REWARDS: Record<string, Record<FriendshipTier, Array<{ itemId: string; quantity: number }>>> = {
+  // Old Man (Jebediah) gives seeds when you become acquaintances
+  'village_elder': {
+    'stranger': [],
+    'acquaintance': [
+      { itemId: 'seed_sunflower', quantity: 3 },
+      { itemId: 'seed_pea', quantity: 3 },
+      { itemId: 'seed_salad', quantity: 3 },
+    ],
+    'good_friend': [],
+  },
+};
 
 // Friendship constants
 const POINTS_PER_LEVEL = 100;
@@ -119,10 +135,12 @@ class FriendshipManagerClass {
 
   /**
    * Add friendship points (clamped to valid range)
+   * Automatically checks for tier changes and gives rewards
    */
   addPoints(npcId: string, amount: number, reason: string): void {
     const friendship = this.getFriendship(npcId);
     const oldLevel = this.getFriendshipLevel(npcId);
+    const oldTier = this.getFriendshipTier(npcId);
 
     friendship.points = Math.max(MIN_POINTS, Math.min(MAX_POINTS, friendship.points + amount));
 
@@ -136,7 +154,49 @@ class FriendshipManagerClass {
       console.log(`[FriendshipManager] 🎉 ${npcId} friendship increased to level ${newLevel}!`);
     }
 
+    // Check for tier change and give rewards
+    if (newTier !== oldTier) {
+      console.log(`[FriendshipManager] 🌟 ${npcId} is now a ${newTier}!`);
+      this.giveTierReward(npcId, newTier, friendship);
+    }
+
     this.save();
+  }
+
+  /**
+   * Give tier reward items when friendship tier changes
+   */
+  private giveTierReward(npcId: string, tier: FriendshipTier, friendship: NPCFriendship): void {
+    const npcRewards = TIER_REWARDS[npcId];
+    if (!npcRewards) return;
+
+    const rewards = npcRewards[tier];
+    if (!rewards || rewards.length === 0) return;
+
+    // Check if already received this tier's reward
+    const rewardKey = `${npcId}_${tier}`;
+    if (friendship.rewardsReceived?.includes(rewardKey)) {
+      console.log(`[FriendshipManager] Already received ${tier} reward from ${npcId}`);
+      return;
+    }
+
+    // Give the rewards
+    for (const reward of rewards) {
+      inventoryManager.addItem(reward.itemId, reward.quantity);
+      console.log(`[FriendshipManager] 🎁 Received ${reward.quantity}x ${reward.itemId} from ${npcId}!`);
+    }
+
+    // Track that reward was received
+    if (!friendship.rewardsReceived) {
+      friendship.rewardsReceived = [];
+    }
+    friendship.rewardsReceived.push(rewardKey);
+
+    // Save inventory
+    const inventoryData = inventoryManager.getInventoryData();
+    gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+    console.log(`[FriendshipManager] 🎁 ${npcId} gave you a gift for becoming their ${tier}!`);
   }
 
   /**

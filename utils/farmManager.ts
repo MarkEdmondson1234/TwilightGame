@@ -8,9 +8,9 @@
  */
 
 import { FarmPlot, FarmPlotState, Position, TileType, CropGrowthStage } from '../types';
-import { getCrop, TESTING_MODE } from '../data/crops';
+import { getCrop, canPlantInSeason, QUALITY_MULTIPLIERS, CropQuality, TESTING_MODE } from '../data/crops';
 import { mapManager } from '../maps/MapManager';
-import { TimeManager } from './TimeManager';
+import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
 
@@ -209,33 +209,41 @@ class FarmManager {
   /**
    * Plant seeds in tilled soil
    * Requires player to have seeds in inventory (consumes 1 seed)
+   * Enforces seasonal planting restrictions
    */
-  plantSeed(mapId: string, position: Position, cropId: string): boolean {
+  plantSeed(mapId: string, position: Position, cropId: string): { success: boolean; reason?: string } {
     const plot = this.getPlot(mapId, position);
     if (!plot || plot.state !== FarmPlotState.TILLED) {
-      return false;
+      return { success: false, reason: 'Soil must be tilled first' };
     }
 
     const crop = getCrop(cropId);
     if (!crop) {
       console.warn('[FarmManager] Unknown crop:', cropId);
-      return false;
+      return { success: false, reason: 'Unknown crop type' };
+    }
+
+    // Check seasonal restrictions
+    const gameTime = TimeManager.getCurrentTime();
+    if (!canPlantInSeason(cropId, gameTime.season)) {
+      const seasonNames = crop.plantSeasons.map(s => s).join(', ');
+      console.warn(`[FarmManager] Cannot plant ${cropId} in ${gameTime.season} (only: ${seasonNames})`);
+      return { success: false, reason: `${crop.displayName} can only be planted in ${seasonNames}` };
     }
 
     // Check if player has seeds
     const seedItemId = getSeedItemId(cropId);
     if (!inventoryManager.hasItem(seedItemId, 1)) {
       console.warn(`[FarmManager] Not enough seeds for ${cropId}`);
-      return false;
+      return { success: false, reason: 'No seeds available' };
     }
 
     // Consume seed from inventory
     if (!inventoryManager.removeItem(seedItemId, 1)) {
       console.warn(`[FarmManager] Failed to consume seed for ${cropId}`);
-      return false;
+      return { success: false, reason: 'Failed to use seed' };
     }
 
-    const gameTime = TimeManager.getCurrentTime();
     const now = Date.now();
     const updatedPlot: FarmPlot = {
       ...plot,
@@ -250,11 +258,28 @@ class FarmManager {
       plantedAtTimestamp: now,
       lastWateredTimestamp: now, // Planting counts as initial watering
       stateChangedAtTimestamp: now,
+      quality: 'normal', // Default quality
+      fertiliserApplied: false,
     };
 
     this.registerPlot(updatedPlot);
-    console.log(`[FarmManager] Planted ${cropId} at ${position.x},${position.y} (used 1 seed)`);
-    return true;
+    console.log(`[FarmManager] Planted ${cropId} at ${position.x},${position.y} in ${gameTime.season} (used 1 seed)`);
+    return { success: true };
+  }
+
+  /**
+   * Check if a crop can be planted in the current season
+   */
+  canPlantCropNow(cropId: string): boolean {
+    const gameTime = TimeManager.getCurrentTime();
+    return canPlantInSeason(cropId, gameTime.season);
+  }
+
+  /**
+   * Get the current season
+   */
+  getCurrentSeason(): Season {
+    return TimeManager.getCurrentTime().season;
   }
 
   /**
@@ -300,12 +325,75 @@ class FarmManager {
   }
 
   /**
+   * Apply fertiliser to a growing crop
+   * Requires player to have fertiliser in inventory (consumes 1)
+   * Improves final crop quality when harvested
+   */
+  applyFertiliser(mapId: string, position: Position): { success: boolean; reason?: string } {
+    const plot = this.getPlot(mapId, position);
+    if (!plot) {
+      return { success: false, reason: 'No plot here' };
+    }
+
+    // Can only fertilise planted/watered/wilting crops (not ready/dead/fallow/tilled)
+    if (
+      plot.state !== FarmPlotState.PLANTED &&
+      plot.state !== FarmPlotState.WATERED &&
+      plot.state !== FarmPlotState.WILTING
+    ) {
+      return { success: false, reason: 'Can only fertilise growing crops' };
+    }
+
+    // Check if already fertilised
+    if (plot.fertiliserApplied) {
+      return { success: false, reason: 'Already fertilised' };
+    }
+
+    // Check if player has fertiliser
+    if (!inventoryManager.hasItem('fertiliser', 1)) {
+      return { success: false, reason: 'No fertiliser available' };
+    }
+
+    // Consume fertiliser from inventory
+    if (!inventoryManager.removeItem('fertiliser', 1)) {
+      return { success: false, reason: 'Failed to use fertiliser' };
+    }
+
+    // Determine new quality - fertiliser improves quality by one tier
+    // normal -> good, good -> excellent
+    let newQuality: 'normal' | 'good' | 'excellent' = 'good';
+    if (plot.quality === 'good') {
+      newQuality = 'excellent';
+    }
+
+    const updatedPlot: FarmPlot = {
+      ...plot,
+      fertiliserApplied: true,
+      quality: newQuality,
+    };
+
+    this.registerPlot(updatedPlot);
+    console.log(`[FarmManager] Applied fertiliser at ${position.x},${position.y}, quality now ${newQuality}`);
+    return { success: true };
+  }
+
+  /**
+   * Get the quality of a plot's crop
+   */
+  getPlotQuality(mapId: string, position: Position): 'normal' | 'good' | 'excellent' | null {
+    const plot = this.getPlot(mapId, position);
+    if (!plot || !plot.cropType) return null;
+    return plot.quality ?? 'normal';
+  }
+
+  /**
    * Harvest a ready crop
    * Adds harvested crops to inventory
    * Also gives 1-3 random seeds back
-   * Returns the crop ID and yield
+   * Quality affects sell value (tracked in inventory as item metadata)
+   * Returns the crop ID, yield, quality, and seeds dropped
    */
-  harvestCrop(mapId: string, position: Position): { cropId: string; yield: number; seedsDropped: number } | null {
+  harvestCrop(mapId: string, position: Position): { cropId: string; yield: number; seedsDropped: number; quality: 'normal' | 'good' | 'excellent' } | null {
     const plot = this.getPlot(mapId, position);
     if (!plot || plot.state !== FarmPlotState.READY || !plot.cropType) {
       return null;
@@ -315,6 +403,9 @@ class FarmManager {
     if (!crop) {
       return null;
     }
+
+    // Get quality before reset
+    const quality = plot.quality ?? 'normal';
 
     // Add harvested crops to inventory
     const cropItemId = getCropItemId(plot.cropType);
@@ -341,15 +432,19 @@ class FarmManager {
       plantedAtTimestamp: null,
       lastWateredTimestamp: null,
       stateChangedAtTimestamp: now,
+      quality: undefined,      // Reset quality
+      fertiliserApplied: undefined, // Reset fertiliser
     };
 
     this.registerPlot(updatedPlot);
-    console.log(`[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName} + ${seedsDropped}x seeds at ${position.x},${position.y}`);
+    const qualityStr = quality !== 'normal' ? ` (${quality} quality)` : '';
+    console.log(`[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr} + ${seedsDropped}x seeds at ${position.x},${position.y}`);
 
     return {
       cropId: plot.cropType,
       yield: crop.harvestYield,
       seedsDropped,
+      quality,
     };
   }
 

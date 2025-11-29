@@ -215,6 +215,7 @@ export interface NPCFriendship {
   lastTalkedDay: number;       // Game day of last interaction (for daily talk bonus)
   isSpecialFriend: boolean;    // Unlocked through crisis events
   crisisCompleted?: string;    // Which crisis event was completed (if any)
+  rewardsReceived?: string[];  // Track which tier rewards have been received (e.g., 'village_elder_acquaintance')
 }
 
 export interface FriendshipConfig {
@@ -326,6 +327,9 @@ export interface FarmPlot {
   plantedAtTimestamp: number | null;    // Real time when planted (Date.now())
   lastWateredTimestamp: number | null;  // Real time when last watered
   stateChangedAtTimestamp: number;      // Real time of last state change
+  // Quality system (optional for backward compatibility)
+  quality?: 'normal' | 'good' | 'excellent';  // Crop quality level
+  fertiliserApplied?: boolean;                 // Whether fertiliser was used
 }
 
 // Animation system types

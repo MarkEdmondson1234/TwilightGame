@@ -95,11 +95,176 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Pumpkin Seeds',
     category: ItemCategory.SEED,
     description: 'Giant pumpkin seeds. Requires patience and care.',
-    rarity: ItemRarity.VERY_RARE,
+    rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 25,
     buyPrice: 50,
     cropId: 'pumpkin',
+  },
+
+  // New shop seeds
+  seed_potato: {
+    id: 'seed_potato',
+    name: 'seed_potato',
+    displayName: 'Potato Seeds',
+    category: ItemCategory.SEED,
+    description: 'Hearty potato seeds. A staple for any garden.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 2,
+    buyPrice: 5,
+    cropId: 'potato',
+  },
+
+  seed_melon: {
+    id: 'seed_melon',
+    name: 'seed_melon',
+    displayName: 'Melon Seeds',
+    category: ItemCategory.SEED,
+    description: 'Sweet melon seeds. Refreshing on a hot day!',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 15,
+    buyPrice: 30,
+    cropId: 'melon',
+  },
+
+  seed_chili: {
+    id: 'seed_chili',
+    name: 'seed_chili',
+    displayName: 'Chili Seeds',
+    category: ItemCategory.SEED,
+    description: 'Spicy chili pepper seeds. Handle with care!',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 7,
+    buyPrice: 15,
+    cropId: 'chili',
+  },
+
+  seed_spinach: {
+    id: 'seed_spinach',
+    name: 'seed_spinach',
+    displayName: 'Spinach Seeds',
+    category: ItemCategory.SEED,
+    description: 'Nutritious spinach seeds. Grows quickly!',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 8,
+    cropId: 'spinach',
+  },
+
+  seed_broccoli: {
+    id: 'seed_broccoli',
+    name: 'seed_broccoli',
+    displayName: 'Broccoli Seeds',
+    category: ItemCategory.SEED,
+    description: 'Healthy broccoli seeds. Best eaten fresh.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 10,
+    buyPrice: 20,
+    cropId: 'broccoli',
+  },
+
+  seed_cauliflower: {
+    id: 'seed_cauliflower',
+    name: 'seed_cauliflower',
+    displayName: 'Cauliflower Seeds',
+    category: ItemCategory.SEED,
+    description: 'Creamy cauliflower seeds. Lovely roasted.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 12,
+    buyPrice: 25,
+    cropId: 'cauliflower',
+  },
+
+  // Friendship seeds (from Old Man - no buy price)
+  seed_sunflower: {
+    id: 'seed_sunflower',
+    name: 'seed_sunflower',
+    displayName: 'Sunflower Seeds',
+    category: ItemCategory.SEED,
+    description: 'Bright sunflower seeds. A gift from a friend.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 10,
+    cropId: 'sunflower',
+  },
+
+  seed_salad: {
+    id: 'seed_salad',
+    name: 'seed_salad',
+    displayName: 'Lettuce Seeds',
+    category: ItemCategory.SEED,
+    description: 'Crisp lettuce seeds. Perfect for salads.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 3,
+    cropId: 'salad',
+  },
+
+  seed_onion: {
+    id: 'seed_onion',
+    name: 'seed_onion',
+    displayName: 'Onion Seeds',
+    category: ItemCategory.SEED,
+    description: 'Pungent onion seeds. Plant in autumn!',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 5,
+    cropId: 'onion',
+  },
+
+  seed_pea: {
+    id: 'seed_pea',
+    name: 'seed_pea',
+    displayName: 'Pea Seeds',
+    category: ItemCategory.SEED,
+    description: 'Sweet pea seeds. Delicious fresh from the pod.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 3,
+    cropId: 'pea',
+  },
+
+  seed_cucumber: {
+    id: 'seed_cucumber',
+    name: 'seed_cucumber',
+    displayName: 'Cucumber Seeds',
+    category: ItemCategory.SEED,
+    description: 'Cool cucumber seeds. Lovely in sandwiches.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 4,
+    cropId: 'cucumber',
+  },
+
+  seed_carrot: {
+    id: 'seed_carrot',
+    name: 'seed_carrot',
+    displayName: 'Carrot Seeds',
+    category: ItemCategory.SEED,
+    description: 'Crunchy carrot seeds. Good for you!',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 3,
+    cropId: 'carrot',
+  },
+
+  // Forage seeds
+  seed_strawberry: {
+    id: 'seed_strawberry',
+    name: 'seed_strawberry',
+    displayName: 'Strawberry Seeds',
+    category: ItemCategory.SEED,
+    description: 'Wild strawberry seeds. Found whilst foraging.',
+    rarity: ItemRarity.RARE,
+    stackable: true,
+    sellPrice: 15,
+    cropId: 'strawberry',
   },
 
   // ===== CROPS (harvested) =====
@@ -151,6 +316,149 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A giant orange pumpkin.',
     stackable: true,
     sellPrice: 150,
+  },
+
+  // New harvested crops
+  crop_potato: {
+    id: 'crop_potato',
+    name: 'crop_potato',
+    displayName: 'Potato',
+    category: ItemCategory.CROP,
+    description: 'A hearty potato. Perfect for roasting.',
+    stackable: true,
+    sellPrice: 20,
+  },
+
+  crop_melon: {
+    id: 'crop_melon',
+    name: 'crop_melon',
+    displayName: 'Melon',
+    category: ItemCategory.CROP,
+    description: 'A sweet, refreshing melon.',
+    stackable: true,
+    sellPrice: 80,
+  },
+
+  crop_chili: {
+    id: 'crop_chili',
+    name: 'crop_chili',
+    displayName: 'Chili Pepper',
+    category: ItemCategory.CROP,
+    description: 'A spicy chili pepper. Handle with care!',
+    stackable: true,
+    sellPrice: 15,
+  },
+
+  crop_spinach: {
+    id: 'crop_spinach',
+    name: 'crop_spinach',
+    displayName: 'Spinach',
+    category: ItemCategory.CROP,
+    description: 'Fresh, nutritious spinach leaves.',
+    stackable: true,
+    sellPrice: 12,
+  },
+
+  crop_broccoli: {
+    id: 'crop_broccoli',
+    name: 'crop_broccoli',
+    displayName: 'Broccoli',
+    category: ItemCategory.CROP,
+    description: 'Healthy green broccoli florets.',
+    stackable: true,
+    sellPrice: 35,
+  },
+
+  crop_cauliflower: {
+    id: 'crop_cauliflower',
+    name: 'crop_cauliflower',
+    displayName: 'Cauliflower',
+    category: ItemCategory.CROP,
+    description: 'Creamy white cauliflower.',
+    stackable: true,
+    sellPrice: 45,
+  },
+
+  crop_sunflower: {
+    id: 'crop_sunflower',
+    name: 'crop_sunflower',
+    displayName: 'Sunflower',
+    category: ItemCategory.CROP,
+    description: 'A bright, cheerful sunflower.',
+    stackable: true,
+    sellPrice: 50,
+  },
+
+  crop_salad: {
+    id: 'crop_salad',
+    name: 'crop_salad',
+    displayName: 'Lettuce',
+    category: ItemCategory.CROP,
+    description: 'Crisp, fresh lettuce leaves.',
+    stackable: true,
+    sellPrice: 15,
+  },
+
+  crop_onion: {
+    id: 'crop_onion',
+    name: 'crop_onion',
+    displayName: 'Onion',
+    category: ItemCategory.CROP,
+    description: 'A pungent onion. Makes you cry!',
+    stackable: true,
+    sellPrice: 20,
+  },
+
+  crop_pea: {
+    id: 'crop_pea',
+    name: 'crop_pea',
+    displayName: 'Peas',
+    category: ItemCategory.CROP,
+    description: 'Sweet little peas in a pod.',
+    stackable: true,
+    sellPrice: 8,
+  },
+
+  crop_cucumber: {
+    id: 'crop_cucumber',
+    name: 'crop_cucumber',
+    displayName: 'Cucumber',
+    category: ItemCategory.CROP,
+    description: 'A cool, crisp cucumber.',
+    stackable: true,
+    sellPrice: 18,
+  },
+
+  crop_carrot: {
+    id: 'crop_carrot',
+    name: 'crop_carrot',
+    displayName: 'Carrot',
+    category: ItemCategory.CROP,
+    description: 'A crunchy orange carrot.',
+    stackable: true,
+    sellPrice: 15,
+  },
+
+  crop_strawberry: {
+    id: 'crop_strawberry',
+    name: 'crop_strawberry',
+    displayName: 'Strawberry',
+    category: ItemCategory.CROP,
+    description: 'Sweet wild strawberries.',
+    stackable: true,
+    sellPrice: 30,
+  },
+
+  // ===== MATERIALS =====
+  fertiliser: {
+    id: 'fertiliser',
+    name: 'fertiliser',
+    displayName: 'Fertiliser',
+    category: ItemCategory.MATERIAL,
+    description: 'Enriches soil for better crop quality. Apply when watering.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 15,
   },
 
   // ===== TOOLS =====
@@ -249,4 +557,43 @@ export function generateForageItem(): ItemDefinition | null {
   }
 
   return items[Math.floor(Math.random() * items.length)];
+}
+
+/**
+ * Generate a random seed from foraging in the forest
+ * Uses rarity weights: 40% common, 30% uncommon, 20% rare, 10% very rare
+ * Returns null if the forage attempt finds nothing (50% chance)
+ */
+export function generateForageSeed(): ItemDefinition | null {
+  // 50% chance to find nothing
+  if (Math.random() < 0.5) {
+    return null;
+  }
+
+  const roll = Math.random() * 100;
+
+  let rarity: ItemRarity;
+  if (roll < 40) {
+    rarity = ItemRarity.COMMON;
+  } else if (roll < 70) {
+    rarity = ItemRarity.UNCOMMON;
+  } else if (roll < 90) {
+    rarity = ItemRarity.RARE;
+  } else {
+    rarity = ItemRarity.VERY_RARE;
+  }
+
+  // Get only seed items with this rarity
+  const seeds = Object.values(ITEMS).filter(
+    item => item.category === ItemCategory.SEED && item.rarity === rarity
+  );
+
+  if (seeds.length === 0) {
+    // Fallback to any seed if no seeds at this rarity
+    const allSeeds = getAllSeeds();
+    if (allSeeds.length === 0) return null;
+    return allSeeds[Math.floor(Math.random() * allSeeds.length)];
+  }
+
+  return seeds[Math.floor(Math.random() * seeds.length)];
 }
