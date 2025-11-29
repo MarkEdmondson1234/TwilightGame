@@ -206,6 +206,24 @@ export enum NPCBehavior {
   PATROL,   // Follows a set path
 }
 
+// Friendship system types
+export type FriendshipTier = 'stranger' | 'acquaintance' | 'good_friend';
+
+export interface NPCFriendship {
+  npcId: string;
+  points: number;              // 0-900 (100 points per level, levels 1-9)
+  lastTalkedDay: number;       // Game day of last interaction (for daily talk bonus)
+  isSpecialFriend: boolean;    // Unlocked through crisis events
+  crisisCompleted?: string;    // Which crisis event was completed (if any)
+}
+
+export interface FriendshipConfig {
+  canBefriend: boolean;        // Can this NPC be befriended?
+  startingPoints: number;      // Initial friendship (0 for strangers, 900 for family)
+  likedFoodTypes?: string[];   // Food categories they like (for gift system)
+  crisisId?: string;           // ID of their crisis event (for Special Friend)
+}
+
 export interface DialogueNode {
   id: string;
   text: string; // Default text (used when no seasonal variant matches)
@@ -229,6 +247,9 @@ export interface DialogueNode {
     cherry_blossoms?: string;
   };
   responses?: { text: string; nextId?: string }[]; // For branching dialogue (no nextId = close dialogue)
+  // Friendship requirements for this dialogue node
+  requiredFriendshipTier?: FriendshipTier;  // Only show if friendship >= tier
+  requiredSpecialFriend?: boolean;           // Only show if special friend
 }
 
 export interface NPC {
@@ -244,6 +265,7 @@ export interface NPC {
   animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations
   scale?: number; // Optional: sprite scale multiplier (default 4.0)
   followTarget?: string; // Optional: ID of NPC to follow (for companion NPCs like dogs)
+  friendshipConfig?: FriendshipConfig; // Optional: friendship system configuration
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)

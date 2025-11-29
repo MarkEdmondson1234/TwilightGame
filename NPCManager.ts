@@ -326,6 +326,18 @@ class NPCManagerClass {
       }
       // WANDER behavior
       else if (npc.behavior === NPCBehavior.WANDER) {
+        // If NPC has animated states, only move when in a "roaming" or "walking" state
+        // This synchronizes movement with the animation state machine
+        if (npc.animatedStates) {
+          const currentAnimState = npc.animatedStates.currentState;
+          // Only allow movement in states that should show walking animation
+          if (currentAnimState !== 'roaming' && currentAnimState !== 'walking') {
+            // Force waiting state when not in a movement animation state
+            state.isWaiting = true;
+            return; // Skip movement updates, just animate in place
+          }
+        }
+
         if (state.isWaiting) {
           // Waiting between moves
           if (timeSinceLastMove >= state.waitDuration) {

@@ -133,6 +133,14 @@ export const npcAssets = {
   umbrawolf_walk4: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf4.png', import.meta.url).href,
   umbrawolf_walk5: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf5.png', import.meta.url).href,
   umbrawolf_walk6: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf6.png', import.meta.url).href,
+  // Witch Wolf assets (rare forest creature with blinking animation)
+  witch_wolf_01: new URL('./public/assets/npcs/witch/witch_wolf_01.png', import.meta.url).href,
+  witch_wolf_02: new URL('./public/assets/npcs/witch/witch_wolf_02.png', import.meta.url).href,
+  witch_wolf_portrait: new URL('./public/assets/npcs/witch/witch_wolf_01.png', import.meta.url).href,
+  // Chill Bear assets (peaceful forest creature drinking tea)
+  chill_bear_01: new URL('./public/assets/npcs/bear/chill_bear_tea_01.png', import.meta.url).href,
+  chill_bear_02: new URL('./public/assets/npcs/bear/chill_bear_tea_02.png', import.meta.url).href,
+  chill_bear_portrait: new URL('./public/assets/npcs/bear/chill_bear_tea_01.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

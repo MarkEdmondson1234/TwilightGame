@@ -47,6 +47,7 @@ import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnimation';
 import { ALL_CUTSCENES } from './data/cutscenes';
+import WeatherTintOverlay from './components/WeatherTintOverlay';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
@@ -66,6 +67,7 @@ const App: React.FC = () => {
     const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
     const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
     const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
+    const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
     const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
@@ -176,6 +178,8 @@ const App: React.FC = () => {
                 console.log(`[App] Weather changed to: ${state.weather}`);
                 weatherLayerRef.current.setWeather(state.weather);
             }
+            // Update React state for WeatherTintOverlay
+            setCurrentWeather(state.weather);
         });
 
         return unsubscribe;
@@ -682,6 +686,7 @@ const App: React.FC = () => {
                             width: PLAYER_SIZE * spriteScale * TILE_SIZE,
                             height: PLAYER_SIZE * spriteScale * TILE_SIZE,
                             imageRendering: 'pixelated',
+                            zIndex: Math.floor(playerPos.y) * 10, // Depth sorting with sprites/NPCs
                         }}
                     />
                 )}
@@ -742,6 +747,12 @@ const App: React.FC = () => {
                     />
                 )}
             </div>
+
+            {/* Weather tint overlay - applies weather visual effects over NPCs */}
+            <WeatherTintOverlay
+                weather={currentWeather}
+                visible={shouldShowWeather(currentMapId)}
+            />
 
             <HUD />
 

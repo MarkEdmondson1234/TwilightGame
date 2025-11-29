@@ -1069,17 +1069,17 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.SPRUCE_TREE,
-    spriteWidth: 4,    // 4 tiles wide (towering forest conifer)
+    spriteWidth: 6,    // 4 tiles wide (towering forest conifer)
     spriteHeight: 8,   // 8 tiles tall (proper forest tree)
-    offsetX: -1.5,     // Center horizontally on tile
+    offsetX: -3,     // Center horizontally on tile
     offsetY: -7,       // Extends 7 tiles upward
     image: tileAssets.spruce_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     isForeground: true,
     // Collision only at the base trunk (small area)
-    collisionWidth: 0.3,
+    collisionWidth: 0.4,
     collisionHeight: 0.3,
-    collisionOffsetX: 0.35,
-    collisionOffsetY: 0.35,
+    collisionOffsetX: -0.3,
+    collisionOffsetY: -1,
     // Transform controls: more variation for natural forest feel
     enableFlip: true,
     enableRotation: false,

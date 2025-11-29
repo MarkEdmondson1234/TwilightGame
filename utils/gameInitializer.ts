@@ -5,6 +5,7 @@ import { initializePalette } from '../palette';
 import { preloadAllAssets } from './assetPreloader';
 import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
+import { friendshipManager } from './FriendshipManager';
 
 /**
  * Initialize the game on startup
@@ -61,6 +62,10 @@ export async function initializeGame(
     const savedPlots = gameState.loadFarmPlots();
     farmManager.loadPlots(savedPlots);
     console.log(`[App] Loaded ${savedPlots.length} farm plots from save`);
+
+    // Load friendships from saved state
+    friendshipManager.initialise();
+    console.log(`[App] Initialised friendship system`);
 
     // Update farm states on startup (uses TimeManager internally)
     farmManager.updateAllPlots();

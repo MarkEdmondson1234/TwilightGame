@@ -23,9 +23,14 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
     const loadDialogue = async () => {
       const dialogue = await getDialogue(npc, currentNodeId);
       setCurrentDialogue(dialogue);
+
+      // Notify parent when dialogue starts (greeting node) for friendship tracking
+      if (currentNodeId === 'greeting' && onNodeChange) {
+        onNodeChange(npc.id, currentNodeId);
+      }
     };
     loadDialogue();
-  }, [npc, currentNodeId]);
+  }, [npc, currentNodeId, onNodeChange]);
 
   const handleResponse = (nextId?: string) => {
     if (nextId) {

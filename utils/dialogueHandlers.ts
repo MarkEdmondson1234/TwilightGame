@@ -1,12 +1,22 @@
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { cutsceneManager } from './CutsceneManager';
+import { friendshipManager } from './FriendshipManager';
+import { npcManager } from '../NPCManager';
 
 /**
  * Handle dialogue node changes and trigger associated actions
- * Handles seed pickup from seed keeper NPCs and dialogue-triggered cutscenes
+ * Handles:
+ * - Friendship points (daily talk bonus on greeting)
+ * - Seed pickup from seed keeper NPCs
+ * - Dialogue-triggered cutscenes
  */
 export function handleDialogueAction(npcId: string, nodeId: string): void {
+    // Award friendship points when dialogue starts (greeting node)
+    if (nodeId === 'greeting') {
+        handleFriendshipTalk(npcId);
+    }
+
     // Check for dialogue-triggered cutscenes
     const triggeredCutscene = cutsceneManager.checkAndTriggerCutscenes({
         npcId,
@@ -21,6 +31,22 @@ export function handleDialogueAction(npcId: string, nodeId: string): void {
     if (npcId.startsWith('seed_keeper_')) {
         handleSeedPickup(nodeId);
     }
+}
+
+/**
+ * Handle friendship points for talking to an NPC
+ */
+function handleFriendshipTalk(npcId: string): void {
+    const npc = npcManager.getNPCById(npcId);
+    if (!npc) return;
+
+    // Only award friendship to befriendable NPCs
+    if (npc.friendshipConfig?.canBefriend === false) {
+        return;
+    }
+
+    // Record the daily talk (awards points if not already talked today)
+    friendshipManager.recordDailyTalk(npcId, npc);
 }
 
 /**

@@ -22,11 +22,15 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
   const currentAutomaticWeather = gameState.getAutomaticWeather();
   console.log('[DevTools] Automatic weather:', currentAutomaticWeather);
 
+  const currentDriftSpeed = gameState.getWeatherDriftSpeed();
+  console.log('[DevTools] Drift speed:', currentDriftSpeed);
+
   const [season, setSeason] = useState<Season>(currentTime.season);
   const [day, setDay] = useState<number>(currentTime.day);
   const [hour, setHour] = useState<number>(currentTime.hour);
   const [weather, setWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(currentWeather);
   const [automaticWeather, setAutomaticWeather] = useState<boolean>(currentAutomaticWeather);
+  const [driftSpeed, setDriftSpeed] = useState<number>(currentDriftSpeed);
 
   // Sync state when time changes externally
   useEffect(() => {
@@ -64,6 +68,12 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
     setAutomaticWeather(enabled);
     gameState.setAutomaticWeather(enabled);
     console.log(`[DevTools] Automatic weather ${enabled ? 'enabled' : 'disabled'}`);
+  };
+
+  const handleDriftSpeedChange = (newSpeed: number) => {
+    setDriftSpeed(newSpeed);
+    gameState.setWeatherDriftSpeed(newSpeed);
+    console.log(`[DevTools] Drift speed set to ${newSpeed}x`);
   };
 
   const handleResetToRealTime = () => {
@@ -179,6 +189,22 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose }) => {
                   Disable automatic weather to manually change
                 </small>
               )}
+            </div>
+
+            <div className="devtools-control">
+              <label>Drift Speed ({driftSpeed.toFixed(1)}x)</label>
+              <input
+                type="range"
+                min="0.1"
+                max="5.0"
+                step="0.1"
+                value={driftSpeed}
+                onChange={(e) => handleDriftSpeedChange(parseFloat(e.target.value))}
+              />
+              <span className="devtools-value">{driftSpeed.toFixed(1)}x</span>
+              <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                Controls particle and fog drift speed (0.1x = slow, 5x = fast)
+              </small>
             </div>
           </div>
 

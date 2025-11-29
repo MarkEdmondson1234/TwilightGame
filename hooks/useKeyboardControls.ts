@@ -5,7 +5,7 @@
 
 import { useEffect, useRef, MutableRefObject } from 'react';
 import { Position } from '../types';
-import { mapManager } from '../maps';
+import { mapManager, transitionToMap } from '../maps';
 import { farmManager } from '../utils/farmManager';
 import { gameState } from '../GameState';
 import {
@@ -95,6 +95,20 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             farmManager.debugAdvanceTime(60 * 1000);
             gameState.saveFarmPlots(farmManager.getAllPlots());
             console.log('[Debug] Advanced farm time by 1 minute');
+            return;
+        }
+
+        // F7 key to teleport to NPC debug map
+        if (e.key === 'F7') {
+            e.preventDefault();
+            console.log('[Debug] Teleporting to NPC debug showcase...');
+            try {
+                const { map, spawn } = transitionToMap('debug_npcs', { x: 15, y: 25 });
+                onMapTransition(map.id, spawn);
+                console.log(`[Debug] Loaded debug map: ${map.name}`);
+            } catch (error) {
+                console.error('[Debug] Failed to load debug map:', error);
+            }
             return;
         }
 

@@ -70,6 +70,60 @@ This directory contains design documents for planned features and architectural 
 
 ---
 
+## Game Design Documents
+
+Story, quests, and gameplay systems designed by Sanne.
+
+### Game Systems
+
+| File | Description | Status |
+|------|-------------|--------|
+| [system_farming.md](./system_farming.md) | Kitchen garden, crops, seasons, selling produce | Partial |
+| [system_cooking.md](./system_cooking.md) | Cooking recipes, specialisations, food for friendship | Planned |
+
+**Implemented**: [system_friendship.md](../implemented/system_friendship.md) - Befriending villagers, friendship levels
+
+### Events
+
+| File | Description | Status |
+|------|-------------|--------|
+| [events_cyclic.md](./events_cyclic.md) | Seasonal events, travelling salesman, book club | Planned |
+| [events_random.md](./events_random.md) | Weather, illness, plant pests, runaway dog | Planned |
+
+### Quests
+
+| File | Description | Trigger |
+|------|-------------|---------|
+| [quest_ghost_boy.md](./quest_ghost_boy.md) | The ghost boy trapped by the warlock | Year 1, Spring, Day 5 |
+| [quest_bear.md](./quest_bear.md) | The bear and the rotten truffles | Year 1, Autumn |
+| [quest_fairy_queen.md](./quest_fairy_queen.md) | Fairies, becoming small, visiting the fairy realm | Old Man's task |
+| [quest_witch_apprentice.md](./quest_witch_apprentice.md) | Learning magic from the Witch in the Woods | After Fairy Queen |
+
+### Quest Dependencies
+
+```
+Old Man's Task (3 plants)
+    │
+    ▼
+Fairy Bluebells → Morgan the Fairy → Fairy Dust
+    │
+    ▼
+Visit Fairy Queen (needs wings + shrinking)
+    │
+    ▼
+Old Woman reveals Witch location
+    │
+    ▼
+Become Witch's Apprentice → Full Witch
+    │
+    ▼
+Witch's Brew (rescue the Witch)
+```
+
+**Original combined document**: [game_design_story_sanne.md](./game_design_story_sanne.md)
+
+---
+
 ## Related Files
 
 ```
@@ -77,7 +131,11 @@ design_docs/
 ├── planned/               # This directory
 │   ├── README.md         # You are here
 │   ├── PIXI_MIGRATION.md
-│   └── PIXI_API_REFERENCE.md
+│   ├── PIXI_API_REFERENCE.md
+│   ├── game_design_story_sanne.md  # Original design doc
+│   ├── system_*.md       # Game systems
+│   ├── events_*.md       # Event systems
+│   └── quest_*.md        # Quest storylines
 ├── implemented/          # Completed features
 └── archived/             # Rejected or superseded plans
 ```

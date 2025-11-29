@@ -40,6 +40,10 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger }
                     shouldFlip = currentFrame % 2 === 1;
                 }
 
+                // Z-index based on Y position for proper depth sorting with foreground sprites
+                // Use floor of Y position * 10 to match ForegroundSprites z-index calculation
+                const zIndex = Math.floor(npc.position.y) * 10;
+
                 return (
                     <React.Fragment key={npc.id}>
                         {/* NPC Sprite */}
@@ -54,6 +58,7 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger }
                                 height: PLAYER_SIZE * npcScale * TILE_SIZE,
                                 imageRendering: 'pixelated',
                                 transform: shouldFlip ? 'scaleX(-1)' : undefined,
+                                zIndex,
                             }}
                         />
 

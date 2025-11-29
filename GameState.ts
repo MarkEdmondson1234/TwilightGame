@@ -10,7 +10,7 @@
  * - Quest/achievement progress
  */
 
-import { FarmPlot } from './types';
+import { FarmPlot, NPCFriendship } from './types';
 import { GameTime } from './utils/TimeManager';
 
 export interface CharacterCustomization {
@@ -97,6 +97,11 @@ export interface GameState {
   cutscenes: {
     completed: string[]; // IDs of cutscenes that have been viewed
     lastSeasonTriggered?: string; // Track last season for season change cutscenes
+  };
+
+  // NPC relationships and friendship (managed by FriendshipManager)
+  relationships: {
+    npcFriendships: NPCFriendship[];
   };
 }
 
@@ -201,6 +206,12 @@ class GameStateManager {
           parsed.weatherDriftSpeed = 1.0; // Default normal speed
         }
 
+        // Migrate old save data that doesn't have relationships
+        if (!parsed.relationships) {
+          console.log('[GameState] Migrating old save data - adding relationships');
+          parsed.relationships = { npcFriendships: [] };
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -241,6 +252,9 @@ class GameStateManager {
       weatherDriftSpeed: 1.0, // Default normal drift speed
       cutscenes: {
         completed: [],
+      },
+      relationships: {
+        npcFriendships: [],
       },
     };
   }
@@ -592,6 +606,17 @@ class GameStateManager {
     return this.state.gold;
   }
 
+  // === Friendship/Relationship Methods ===
+
+  saveFriendships(friendships: NPCFriendship[]): void {
+    this.state.relationships.npcFriendships = friendships;
+    this.notify();
+  }
+
+  loadFriendships(): NPCFriendship[] {
+    return this.state.relationships?.npcFriendships || [];
+  }
+
   resetState(): void {
     this.state = {
       selectedCharacter: null,
@@ -614,6 +639,7 @@ class GameStateManager {
       nextWeatherCheckTime: 0,
       weatherDriftSpeed: 1.0,
       cutscenes: { completed: [] },
+      relationships: { npcFriendships: [] },
     };
     console.log('[GameState] State reset');
     this.notify();

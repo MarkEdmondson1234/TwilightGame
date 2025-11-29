@@ -1,6 +1,6 @@
 import { MapDefinition, TileType } from '../types';
 import { gameState } from '../GameState';
-import { createUmbraWolfNPC } from '../utils/npcFactories';
+import { createUmbraWolfNPC, createWitchWolfNPC, createChillBearNPC } from '../utils/npcFactories';
 
 /**
  * Procedural map generation functions
@@ -349,6 +349,54 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     'Umbra Wolf'
   );
 
+  // NPCs array starts with the Umbra Wolf
+  const npcs = [umbraWolf];
+
+  // Witch Wolf: 1 in 5 chance (20%) of spawning - rare mystical encounter
+  // Use seed-based random for deterministic spawning
+  const witchWolfChance = ((seed * 13) % 100) / 100; // Pseudo-random based on seed
+  if (witchWolfChance < 0.2) {
+    // Place witch wolf in a different location from umbra wolf
+    let witchX, witchY;
+    do {
+      witchX = Math.floor(((seed * 7) % (width - 6)) + 3);
+      witchY = Math.floor(((seed * 11) % (height - 6)) + 3);
+    } while (
+      (Math.abs(witchX - spawnX) < 6 && Math.abs(witchY - spawnY) < 6) ||
+      (Math.abs(witchX - wolfX) < 5 && Math.abs(witchY - wolfY) < 5)
+    );
+
+    const witchWolf = createWitchWolfNPC(
+      `witch_wolf_${seed}`,
+      { x: witchX, y: witchY },
+      'Witch Wolf'
+    );
+    npcs.push(witchWolf);
+    console.log(`[Forest] 🐺✨ Rare Witch Wolf spawned at (${witchX}, ${witchY})!`);
+  }
+
+  // Chill Bear: 20% chance of spawning - peaceful tea-drinking forest creature
+  const chillBearChance = ((seed * 17) % 100) / 100; // Pseudo-random based on seed
+  if (chillBearChance < 0.2) {
+    // Place chill bear in a different location from other NPCs
+    let bearX: number, bearY: number;
+    do {
+      bearX = Math.floor(((seed * 19) % (width - 6)) + 3);
+      bearY = Math.floor(((seed * 23) % (height - 6)) + 3);
+    } while (
+      (Math.abs(bearX - spawnX) < 6 && Math.abs(bearY - spawnY) < 6) ||
+      (Math.abs(bearX - wolfX) < 5 && Math.abs(bearY - wolfY) < 5)
+    );
+
+    const chillBear = createChillBearNPC(
+      `chill_bear_${seed}`,
+      { x: bearX, y: bearY },
+      'Chill Bear'
+    );
+    npcs.push(chillBear);
+    console.log(`[Forest] 🐻☕ Chill Bear spawned at (${bearX}, ${bearY})!`);
+  }
+
   return {
     id: `forest_${seed}`,
     name: 'Forest',
@@ -359,7 +407,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     isRandom: true,
     spawnPoint: { x: spawnX, y: spawnY },
     transitions,
-    npcs: [umbraWolf],
+    npcs,
   };
 }
 

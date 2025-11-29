@@ -23,6 +23,7 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { particleAssets } from '../../assets';
+import { gameState } from '../../GameState';
 import {
   WeatherType,
   PARTICLE_CONFIGS,
@@ -266,6 +267,9 @@ export class WeatherLayer {
     const config = PARTICLE_CONFIGS[this.currentWeather];
     if (!config) return;
 
+    // Get drift speed multiplier from game state
+    const driftSpeed = gameState.getWeatherDriftSpeed();
+
     // Emit new particles
     this.timeSinceLastEmit += deltaTime;
     const emitInterval = 1 / config.emitRate;
@@ -295,12 +299,12 @@ export class WeatherLayer {
         continue;
       }
 
-      // Apply velocity and gravity
-      particle.velocityX += config.gravity.x * deltaTime;
-      particle.velocityY += config.gravity.y * deltaTime;
+      // Apply velocity and gravity (modified by drift speed)
+      particle.velocityX += config.gravity.x * deltaTime * driftSpeed;
+      particle.velocityY += config.gravity.y * deltaTime * driftSpeed;
 
-      particle.sprite.x += particle.velocityX * deltaTime;
-      particle.sprite.y += particle.velocityY * deltaTime;
+      particle.sprite.x += particle.velocityX * deltaTime * driftSpeed;
+      particle.sprite.y += particle.velocityY * deltaTime * driftSpeed;
 
       // Fade out near end of life
       const lifeRatio = particle.life / particle.maxLife;
@@ -397,8 +401,11 @@ export class WeatherLayer {
     const config = FOG_CONFIGS[this.currentWeather];
     if (!config) return;
 
-    // Scroll fog horizontally using tilePosition (seamless wrapping)
-    this.fogSprite.tilePosition.x += config.scrollSpeed * deltaTime;
+    // Get drift speed multiplier from game state
+    const driftSpeed = gameState.getWeatherDriftSpeed();
+
+    // Scroll fog horizontally using tilePosition (seamless wrapping, modified by drift speed)
+    this.fogSprite.tilePosition.x += config.scrollSpeed * deltaTime * driftSpeed;
 
     // Optional: Wrap tilePosition to prevent floating-point precision issues over time
     if (Math.abs(this.fogSprite.tilePosition.x) > 10000) {

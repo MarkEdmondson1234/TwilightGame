@@ -11,7 +11,7 @@
  * - Easier to maintain and test
  */
 
-import { NPC, NPCBehavior, Direction, Position, AnimatedNPCStates } from '../types';
+import { NPC, NPCBehavior, Direction, Position, AnimatedNPCStates, FriendshipConfig } from '../types';
 import { npcAssets } from '../assets';
 
 /**
@@ -151,6 +151,10 @@ export function createVillageElderNPC(
       },
     ],
     animatedStates,
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 0,
+    },
   };
 }
 
@@ -241,6 +245,10 @@ export function createCatNPC(
     ],
     interactionRadius: 1.2, // Must be close to interact
     animatedStates,
+    friendshipConfig: {
+      canBefriend: false, // Cats can't be befriended in the friendship system
+      startingPoints: 0,
+    },
   };
 }
 
@@ -364,6 +372,12 @@ export function createOldWomanKnittingNPC(
     ],
     animatedStates,
     interactionRadius: 1.5,
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 0,
+      likedFoodTypes: ['baked'],
+      crisisId: 'old_man_death',
+    },
   };
 }
 
@@ -426,6 +440,10 @@ export function createDogNPC(
     animatedStates,
     interactionRadius: 1.0,
     followTarget: targetNPCId, // Store which NPC to follow
+    friendshipConfig: {
+      canBefriend: false, // Dogs can't be befriended in the friendship system
+      startingPoints: 0,
+    },
   };
 }
 
@@ -528,6 +546,11 @@ export function createShopkeeperNPC(
         },
       },
     ],
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 0,
+      likedFoodTypes: ['savoury'],
+    },
   };
 }
 
@@ -634,6 +657,12 @@ export function createVillageChildNPC(
         },
       },
     ],
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 0,
+      likedFoodTypes: ['dessert'],
+      crisisId: 'mother_illness',
+    },
   };
 }
 
@@ -758,6 +787,10 @@ export function createMumNPC(
     ],
     animatedStates,
     interactionRadius: 1.5,
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 900, // Maximum friendship from start (family)
+    },
   };
 }
 
@@ -781,7 +814,7 @@ export function createUmbraWolfNPC(
   const now = Date.now();
 
   const animatedStates: AnimatedNPCStates = {
-    currentState: 'roaming',
+    currentState: 'standing',  // Start standing still
     lastStateChange: now,
     lastFrameChange: now,
     currentFrame: 0,
@@ -796,7 +829,7 @@ export function createUmbraWolfNPC(
           npcAssets.umbrawolf_walk5,
           npcAssets.umbrawolf_walk6,
         ],
-        animationSpeed: 150, // Smooth 6-frame walk cycle
+        animationSpeed: 280, // Slower, more deliberate walk cycle
         // Direction-specific sprites
         directionalSprites: {
           // Up: back view, 2-frame animation (flip on odd frames in NPCRenderer)
@@ -805,11 +838,28 @@ export function createUmbraWolfNPC(
           down: [npcAssets.umbrawolf_front, npcAssets.umbrawolf_front],
           // Left/Right use default sprites (left is flipped in NPCRenderer)
         },
+        duration: 3500, // Walk for 3.5 seconds then stand
+        nextState: 'standing',
+      },
+      standing: {
+        // Standing still, watching the forest
+        sprites: [npcAssets.umbrawolf_standing1, npcAssets.umbrawolf_standing2],
+        animationSpeed: 1500, // Slow, subtle idle animation
+        duration: 10000, // Stand for 10 seconds then sit
+        nextState: 'resting',
       },
       resting: {
+        // Sitting down, resting
         sprites: [npcAssets.umbrawolf_sitting],
-        animationSpeed: 1000, // Slow, peaceful breathing
-        duration: 8000, // Rest for 8 seconds
+        animationSpeed: 2000, // Very slow, peaceful breathing
+        duration: 15000, // Rest for 15 seconds
+        nextState: 'standing_brief', // Brief stand before walking
+      },
+      standing_brief: {
+        // Brief standing before walking again
+        sprites: [npcAssets.umbrawolf_standing1, npcAssets.umbrawolf_standing2],
+        animationSpeed: 1500,
+        duration: 5000, // Stand for 5 seconds then walk
         nextState: 'roaming',
       },
     },
@@ -821,7 +871,7 @@ export function createUmbraWolfNPC(
     position,
     direction: Direction.Right, // Walking sprites face right (flipped for left)
     behavior: NPCBehavior.WANDER,
-    sprite: npcAssets.umbrawolf_walk1,
+    sprite: npcAssets.umbrawolf_standing1, // Start with standing sprite
     portraitSprite: npcAssets.umbrawolf_portrait,
     scale: 5.0,  // Large, imposing forest creature
     dialogue: [
@@ -861,5 +911,278 @@ export function createUmbraWolfNPC(
     ],
     animatedStates,
     interactionRadius: 2.0, // Can interact from a bit further away
+    friendshipConfig: {
+      canBefriend: false, // Wild creature
+      startingPoints: 0,
+    },
+  };
+}
+
+/**
+ * Create a Witch Wolf NPC - a rare, mystical forest creature
+ *
+ * Behavior:
+ * - Stationary (sits still, watching)
+ * - Blinking animation
+ * - Cryptic, mysterious dialogue
+ * - Very rare spawn (1 in 5 forest generations)
+ *
+ * @param id Unique ID for this witch wolf
+ * @param position Starting position
+ * @param name Optional name (defaults to "Witch Wolf")
+ */
+export function createWitchWolfNPC(
+  id: string,
+  position: Position,
+  name: string = 'Witch Wolf'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'watching',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      watching: {
+        // Blinking animation - mostly eyes open, occasional blink
+        sprites: [
+          npcAssets.witch_wolf_01, // Eyes open
+          npcAssets.witch_wolf_01, // Eyes open
+          npcAssets.witch_wolf_01, // Eyes open
+          npcAssets.witch_wolf_01, // Eyes open
+          npcAssets.witch_wolf_01, // Eyes open
+          npcAssets.witch_wolf_02, // Blink
+        ],
+        animationSpeed: 800, // Slow, deliberate blinks
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down, // Facing the player
+    behavior: NPCBehavior.STATIC,
+    sprite: npcAssets.witch_wolf_01,
+    portraitSprite: npcAssets.witch_wolf_portrait,
+    scale: 4.5,  // Large, mystical presence
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*The wolf\'s golden eyes fix upon you with unsettling intensity. You sense ancient wisdom... and something else. Magic, perhaps.*',
+        seasonalText: {
+          spring: '*Cherry blossoms drift past the wolf\'s silver-white fur. Her eyes hold the promise of new beginnings... and old debts.*',
+          summer: '*Heat shimmers around the wolf, yet her fur remains pristine white. She regards you as one might study an interesting insect.*',
+          autumn: '*The wolf sits perfectly still among the falling leaves, a ghost in the dying forest. Her gaze pierces your soul.*',
+          winter: '*She is nearly invisible against the snow, only her golden eyes betraying her presence. The cold deepens as she watches.*',
+        },
+        responses: [
+          {
+            text: 'Bow respectfully.',
+            nextId: 'respect',
+          },
+          {
+            text: 'Ask who she is.',
+            nextId: 'question',
+          },
+          {
+            text: 'Step back nervously.',
+          },
+        ],
+      },
+      {
+        id: 'respect',
+        text: '*The wolf\'s eyes soften, almost imperceptibly. A voice echoes in your mind - not heard, but felt: "You have manners, little one. That is... rare. Perhaps we shall meet again."*',
+        seasonalText: {
+          spring: '*"The forest remembers those who show kindness. Plant well, and I shall watch over your seeds."*',
+          summer: '*"The sun burns bright, but shadows remain. Walk carefully, respectful one."*',
+          autumn: '*"Change comes for all things. You accept this with grace. Good."*',
+          winter: '*"The cold tests the spirit. Yours burns warm enough... for now."*',
+        },
+      },
+      {
+        id: 'question',
+        text: '*A sound like wind through branches fills your mind: "I am what remains when the old magic fades. I am what watches when mortals sleep. I am... patient." Her eyes glitter with ancient amusement.*',
+        responses: [
+          {
+            text: 'Ask what she wants.',
+            nextId: 'purpose',
+          },
+          {
+            text: 'Thank her and leave.',
+          },
+        ],
+      },
+      {
+        id: 'purpose',
+        text: '*"Want?" The voice seems amused. "I observe. I remember. I wait for those who might... interest me. You have potential, little gardener. Tend your soil. Grow strong. Perhaps one day, you will be ready to learn."*',
+      },
+    ],
+    animatedStates,
+    interactionRadius: 2.5, // Slightly larger interaction range for the mystical creature
+    friendshipConfig: {
+      canBefriend: false, // Mystical creature
+      startingPoints: 0,
+    },
+  };
+}
+
+/**
+ * Create a Chill Bear NPC - a peaceful forest creature enjoying tea
+ *
+ * Behaviour:
+ * - Stationary (sits contentedly with tea)
+ * - Gentle sipping animation
+ * - Calm, friendly dialogue
+ * - 20% chance of appearing in forest
+ *
+ * @param id Unique ID for this bear
+ * @param position Starting position
+ * @param name Optional name (defaults to "Chill Bear")
+ */
+export function createChillBearNPC(
+  id: string,
+  position: Position,
+  name: string = 'Chill Bear'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'sipping',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      sipping: {
+        // Gentle tea-sipping animation
+        sprites: [
+          npcAssets.chill_bear_01,
+          npcAssets.chill_bear_01,
+          npcAssets.chill_bear_02,
+          npcAssets.chill_bear_01,
+        ],
+        animationSpeed: 1200, // Slow, relaxed animation
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down, // Facing the player
+    behavior: NPCBehavior.STATIC,
+    sprite: npcAssets.chill_bear_01,
+    portraitSprite: npcAssets.chill_bear_portrait,
+    scale: 5.0, // Large, friendly presence
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*The bear looks up from its tea and rumbles warmly.* "Would you like a cup of tea?"',
+        seasonalText: {
+          spring: '*The bear breathes in the spring air and smiles.* "Lovely day for a cuppa, isn\'t it? Would you like some tea?"',
+          summer: '*The bear fans itself with a large paw.* "Hot out today! Fancy some iced tea?"',
+          autumn: '*The bear gestures at the falling leaves.* "Perfect weather for a warm brew. Would you like a cup?"',
+          winter: '*The bear wraps its paws around a steaming mug.* "Come, warm yourself. Tea?"',
+        },
+        responses: [
+          {
+            text: 'Yes please!',
+            nextId: 'accept_tea',
+          },
+          {
+            text: 'Do you have coffee?',
+            nextId: 'coffee_question',
+          },
+          {
+            text: 'Aren\'t you dangerous?',
+            nextId: 'dangerous_question',
+          },
+          {
+            text: 'No thank you.',
+            nextId: 'decline_politely',
+          },
+        ],
+      },
+      {
+        id: 'accept_tea',
+        text: '*The bear\'s eyes light up with genuine delight. It pours you a cup of fragrant tea with surprising delicacy.* "Made it myself. Honey from the old oak, herbs from the meadow. Good stuff."',
+        seasonalText: {
+          spring: '*The bear hands you a cup filled with cherry blossom tea.* "Spring blend. Picked the petals this morning. Very refreshing."',
+          summer: '*The bear drops a sprig of mint into your iced tea.* "Wild mint. Grows by the stream. Keeps you cool."',
+          autumn: '*The bear adds a cinnamon stick to your cup.* "Autumn special. Bit of apple, bit of spice. Warms the belly."',
+          winter: '*The bear ladles steaming tea from a pot by the fire.* "Extra honey in winter. Good for the soul."',
+        },
+        responses: [
+          {
+            text: 'This is delicious!',
+            nextId: 'tea_compliment',
+          },
+        ],
+      },
+      {
+        id: 'coffee_question',
+        text: '*The bear scratches its chin thoughtfully.* "Coffee? Tried it once. Made me all jittery. Couldn\'t nap properly for three days. Stick with tea, much better."',
+        responses: [
+          {
+            text: 'Tea sounds good then.',
+            nextId: 'accept_tea',
+          },
+          {
+            text: 'Fair enough!',
+          },
+        ],
+      },
+      {
+        id: 'dangerous_question',
+        text: '*The bear blinks slowly, completely unbothered.* "Dangerous? Hmm. Only to a good honeycomb, I suppose. Or a fresh berry pie. Speaking of which, have you tried the blackberries this season? Absolutely wonderful."',
+        seasonalText: {
+          spring: '*The bear chuckles softly.* "Only danger here is eating too many spring rolls. The mushrooms by the stream are lovely this time of year, by the way."',
+          summer: '*The bear waves a paw dismissively.* "Too hot to be dangerous. The real threat is the heat. Have you had any elderflower cordial? Very refreshing."',
+          autumn: '*The bear pats its round belly.* "Dangerous? I suppose I\'m a menace to any pie left unattended. The apples are perfect right now, you know."',
+          winter: '*The bear yawns contentedly.* "Far too sleepy to be dangerous. Besides, life\'s too short. Want to hear about my grandmother\'s recipe for honeyed porridge?"',
+        },
+        responses: [
+          {
+            text: 'Tell me more about the food.',
+            nextId: 'food_chat',
+          },
+          {
+            text: 'You\'re quite chill, aren\'t you?',
+            nextId: 'chill_response',
+          },
+        ],
+      },
+      {
+        id: 'food_chat',
+        text: '*The bear\'s eyes grow dreamy.* "Ah, food. The mushrooms here are sublime. And there\'s a bee colony in the old oak that makes the sweetest honey. Sometimes I just sit and watch the clouds, thinking about my next meal."',
+        seasonalText: {
+          spring: '"Fresh fiddleheads, wild garlic, the first strawberries... Spring is a feast for those who know where to look."',
+          summer: '"Berries everywhere! Raspberries, blueberries, blackberries. And the fish practically jump into your paws."',
+          autumn: '"Nuts and mushrooms, apples and late berries. I spend most of autumn just... collecting. Very satisfying."',
+          winter: '"I live off my preserves in winter. Dried berries, honeycomb, roasted chestnuts. Cosy eating."',
+        },
+      },
+      {
+        id: 'chill_response',
+        text: '*The bear smiles - a warm, genuine smile.* "Life is too beautiful to be stressed. The sun rises, the seasons turn, the tea brews. What more could one want?"',
+      },
+      {
+        id: 'decline_politely',
+        text: '*The bear nods understandingly.* "No worries, friend. The forest is here whenever you change your mind. Safe travels, and mind the good mushroom patches on your way - the orange ones are delicious."',
+      },
+      {
+        id: 'tea_compliment',
+        text: '*The bear beams with pride.* "Family recipe. My grandmother taught me. She always said the secret was patience - let it steep, don\'t rush it. Like most good things in life."',
+      },
+    ],
+    animatedStates,
+    interactionRadius: 2.0, // Friendly approach distance
+    friendshipConfig: {
+      canBefriend: false, // Wild creature (for now - could change with bear quest)
+      startingPoints: 0,
+    },
   };
 }
