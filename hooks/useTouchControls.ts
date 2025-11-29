@@ -12,6 +12,8 @@ import {
     checkNPCInteraction,
     checkTransition,
     handleFarmAction,
+    handleForageAction,
+    ForageResult,
 } from '../utils/actionHandlers';
 
 export interface TouchControlsConfig {
@@ -23,6 +25,7 @@ export interface TouchControlsConfig {
     onMapTransition: (mapId: string, spawnPos: Position) => void;
     onFarmUpdate: () => void;
     onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
+    onForageResult?: (result: ForageResult) => void;
 }
 
 export function useTouchControls(config: TouchControlsConfig) {
@@ -35,6 +38,7 @@ export function useTouchControls(config: TouchControlsConfig) {
         onMapTransition,
         onFarmUpdate,
         onFarmActionAnimation,
+        onForageResult,
     } = config;
 
     const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -99,10 +103,20 @@ export function useTouchControls(config: TouchControlsConfig) {
         }
     };
 
+    const handleForagePress = () => {
+        const currentMapId = mapManager.getCurrentMapId();
+        if (currentMapId) {
+            const result = handleForageAction(playerPosRef.current, currentMapId);
+            console.log(`[Touch Forage] ${result.message}`);
+            onForageResult?.(result);
+        }
+    };
+
     return {
         handleDirectionPress,
         handleDirectionRelease,
         handleActionPress,
         handleResetPress,
+        handleForagePress,
     };
 }

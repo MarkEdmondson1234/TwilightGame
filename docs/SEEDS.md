@@ -65,7 +65,7 @@ Explore the **Forest** to discover wild seeds! Press **F** whilst standing on gr
 **How to Forage:**
 1. Travel to the forest (from village, head north-east)
 2. Stand on grass, ferns, or mushroom tiles
-3. Press **F** to search for seeds
+3. Press **F** to search for seeds (or tap the 🌿 button on touch devices)
 4. You have a 50% chance of finding something each time
 
 **Forage Seeds:**

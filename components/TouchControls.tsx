@@ -8,6 +8,7 @@ interface TouchControlsProps {
   onDirectionRelease: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onActionPress: () => void;
   onResetPress: () => void;
+  onForagePress?: () => void;
   currentTool: Tool;
   selectedSeed: CropType | null;
   onToolChange: (tool: Tool) => void;
@@ -21,6 +22,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionRelease,
   onActionPress,
   onResetPress,
+  onForagePress,
   currentTool,
   selectedSeed,
   onToolChange,
@@ -204,8 +206,22 @@ const TouchControls: React.FC<TouchControlsProps> = ({
           </div>
         )}
 
-        {/* Cooking buttons row */}
+        {/* Cooking and foraging buttons row */}
         <div className="flex items-center gap-2">
+          {/* Forage button */}
+          {onForagePress && (
+            <button
+              onTouchStart={(e) => {
+                e.preventDefault();
+                onForagePress();
+              }}
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-700/90 hover:bg-emerald-600/90 active:bg-emerald-500/90 rounded-xl border-2 border-emerald-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-lg"
+              title="Forage"
+            >
+              🌿
+            </button>
+          )}
+
           {/* Recipe Book button */}
           {onShowRecipeBook && (
             <button

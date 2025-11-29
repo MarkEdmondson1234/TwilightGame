@@ -19,6 +19,27 @@ A peaceful top-down exploration and crafting game engine built with React, Vite,
 
 This applies to all user-facing text including: dialogue, item descriptions, UI labels, and documentation.
 
+## Touch/iPad Support
+
+**IMPORTANT**: All game features must work on both keyboard AND touch devices (iPad).
+
+When implementing new features:
+- **Keyboard controls**: Add key bindings to `hooks/useKeyboardControls.ts`
+- **Touch controls**: Add corresponding touch handlers to `hooks/useTouchControls.ts`
+- **Touch UI**: Add buttons to `components/TouchControls.tsx` if the feature needs a dedicated button
+
+**Input Architecture:**
+- Shared action logic goes in `utils/actionHandlers.ts` (used by both keyboard and touch)
+- Both input hooks should call the same action handler functions
+- Touch buttons should be optional props (render only when callback provided)
+
+**Example - Adding a new action:**
+1. Create handler in `utils/actionHandlers.ts`: `handleNewAction(playerPos, mapId)`
+2. Add to keyboard: F key in `useKeyboardControls.ts`
+3. Add to touch hook: `handleNewActionPress()` in `useTouchControls.ts`
+4. Add button: Optional `onNewActionPress` prop in `TouchControls.tsx`
+5. Wire up in `App.tsx`: Pass callbacks to both hooks and component
+
 ## Development Commands
 
 **Makefile Commands** (recommended):
