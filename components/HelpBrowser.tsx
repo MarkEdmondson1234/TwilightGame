@@ -15,6 +15,7 @@ interface DocFile {
 const DOC_FILES: DocFile[] = [
   { name: 'getting-started', title: '🎮 Getting Started', path: '/TwilightGame/docs/GETTING_STARTED.md' },
   { name: 'farming', title: '🌾 Farming Guide', path: '/TwilightGame/docs/FARMING.md' },
+  { name: 'seeds', title: '🌱 Seeds Guide', path: '/TwilightGame/docs/SEEDS.md' },
   { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },
   // Developer docs excluded: MAP_GUIDE, ASSETS, COORDINATE_GUIDE
 ];

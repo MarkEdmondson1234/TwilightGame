@@ -11,6 +11,7 @@ import {
     checkMirrorInteraction,
     checkNPCInteraction,
     checkTransition,
+    handleFarmAction,
 } from '../utils/actionHandlers';
 
 export interface TouchControlsConfig {
@@ -20,6 +21,8 @@ export interface TouchControlsConfig {
     onSetActiveNPC: (npcId: string | null) => void;
     onSetPlayerPos: (pos: Position) => void;
     onMapTransition: (mapId: string, spawnPos: Position) => void;
+    onFarmUpdate: () => void;
+    onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
 }
 
 export function useTouchControls(config: TouchControlsConfig) {
@@ -30,6 +33,8 @@ export function useTouchControls(config: TouchControlsConfig) {
         onSetActiveNPC,
         onSetPlayerPos,
         onMapTransition,
+        onFarmUpdate,
+        onFarmActionAnimation,
     } = config;
 
     const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -45,7 +50,20 @@ export function useTouchControls(config: TouchControlsConfig) {
     const handleActionPress = () => {
         console.log(`[Touch Action] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
 
-        // Check for mirror interaction first
+        const currentMapId = mapManager.getCurrentMapId();
+
+        // Check for farm action first (on current tile)
+        if (currentMapId) {
+            const currentTool = gameState.getFarmingTool();
+            const farmActionTaken = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
+
+            if (farmActionTaken) {
+                onFarmUpdate();
+                return; // Don't check for other interactions
+            }
+        }
+
+        // Check for mirror interaction
         const foundMirror = checkMirrorInteraction(playerPosRef.current);
         if (foundMirror) {
             onShowCharacterCreator(true);
@@ -60,7 +78,6 @@ export function useTouchControls(config: TouchControlsConfig) {
         }
 
         // Check for transition
-        const currentMapId = mapManager.getCurrentMapId();
         const transitionResult = checkTransition(playerPosRef.current, currentMapId);
 
         if (transitionResult.success && transitionResult.mapId && transitionResult.spawnPosition) {

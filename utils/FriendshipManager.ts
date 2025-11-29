@@ -14,6 +14,8 @@ import { NPCFriendship, FriendshipTier, NPC } from '../types';
 import { gameState } from '../GameState';
 import { TimeManager } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
+import { getItem, ItemCategory } from '../data/items';
+import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -224,19 +226,56 @@ class FriendshipManagerClass {
    * Returns the points awarded and a reaction type
    */
   giveGift(npcId: string, itemId: string, npc?: NPC): { points: number; reaction: 'loved' | 'liked' | 'neutral' } {
-    const config = npc?.friendshipConfig;
-    const likedTypes = config?.likedFoodTypes ?? [];
+    const item = getItem(itemId);
+    if (!item) {
+      console.warn(`[FriendshipManager] Unknown item: ${itemId}`);
+      return { points: 0, reaction: 'neutral' };
+    }
 
-    // TODO: Check item type against liked types when item system exists
-    // For now, assume all food items are 'neutral'
-    const isLiked = false; // Will be: likedTypes.includes(getItemType(itemId))
+    // Check if this is a food item
+    if (item.category === ItemCategory.FOOD) {
+      // Find which recipe produces this food to get its category
+      const recipeCategory = this.getFoodRecipeCategory(itemId);
+      if (recipeCategory) {
+        const isLoved = this.doesNpcLoveCategory(npcId, recipeCategory);
 
-    const points = isLiked ? LIKED_GIFT_POINTS : GIFT_POINTS;
-    const reaction = isLiked ? 'loved' : 'neutral';
+        if (isLoved) {
+          const points = LIKED_GIFT_POINTS;
+          this.addPoints(npcId, points, `loved food gift: ${item.displayName}`);
+          console.log(`[FriendshipManager] 💕 ${npcId} loves ${item.displayName}!`);
+          return { points, reaction: 'loved' };
+        }
+      }
 
-    this.addPoints(npcId, points, `gift: ${itemId}`);
+      // Food but not loved category
+      const points = GIFT_POINTS;
+      this.addPoints(npcId, points, `food gift: ${item.displayName}`);
+      console.log(`[FriendshipManager] 😊 ${npcId} appreciates ${item.displayName}`);
+      return { points, reaction: 'liked' };
+    }
 
-    return { points, reaction };
+    // Non-food gifts
+    const points = GIFT_POINTS;
+    this.addPoints(npcId, points, `gift: ${item.displayName}`);
+    return { points, reaction: 'neutral' };
+  }
+
+  /**
+   * Get the recipe category for a food item
+   */
+  private getFoodRecipeCategory(foodItemId: string): RecipeCategory | null {
+    // Find the recipe that produces this food
+    const recipe = Object.values(RECIPES).find(r => r.resultItemId === foodItemId);
+    return recipe?.category ?? null;
+  }
+
+  /**
+   * Check if an NPC loves a particular food category
+   */
+  private doesNpcLoveCategory(npcId: string, category: RecipeCategory): boolean {
+    const preferences = NPC_FOOD_PREFERENCES[npcId];
+    if (!preferences) return false;
+    return preferences.includes(category);
   }
 
   /**

@@ -11,6 +11,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { getCrop } from '../data/crops';
+import { generateForageSeed } from '../data/items';
 
 export interface ActionResult {
     handled: boolean;
@@ -214,4 +215,70 @@ export function handleFarmAction(
     }
 
     return false;
+}
+
+/**
+ * Forageable tile types - tiles where players can search for wild seeds
+ */
+const FORAGEABLE_TILES: TileType[] = [
+    TileType.FERN,
+    TileType.MUSHROOM,
+    TileType.GRASS,
+];
+
+/**
+ * Handle foraging action - search for wild seeds on forageable tiles
+ * Only works in forest/outdoor maps
+ * Returns result with found seed info, or null if nothing found
+ */
+export interface ForageResult {
+    found: boolean;
+    seedId?: string;
+    seedName?: string;
+    message: string;
+}
+
+export function handleForageAction(
+    playerPos: Position,
+    currentMapId: string
+): ForageResult {
+    // Only allow foraging in forest maps
+    if (!currentMapId.startsWith('forest')) {
+        return { found: false, message: 'You can only forage in the forest.' };
+    }
+
+    const playerTileX = Math.floor(playerPos.x);
+    const playerTileY = Math.floor(playerPos.y);
+    const tileData = getTileData(playerTileX, playerTileY);
+
+    if (!tileData) {
+        return { found: false, message: 'Nothing to forage here.' };
+    }
+
+    // Check if standing on a forageable tile
+    if (!FORAGEABLE_TILES.includes(tileData.type)) {
+        return { found: false, message: 'Nothing to forage here.' };
+    }
+
+    // Attempt to forage - uses rarity-weighted random drops
+    const seed = generateForageSeed();
+
+    if (!seed) {
+        // 50% chance to find nothing (built into generateForageSeed)
+        console.log('[Forage] Searched but found nothing');
+        return { found: false, message: 'You searched but found nothing this time.' };
+    }
+
+    // Found a seed! Add to inventory
+    inventoryManager.addItem(seed.id, 1);
+    const inventoryData = inventoryManager.getInventoryData();
+    gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+    console.log(`[Forage] Found ${seed.displayName}!`);
+    return {
+        found: true,
+        seedId: seed.id,
+        seedName: seed.displayName,
+        message: `You found ${seed.displayName}!`,
+    };
 }

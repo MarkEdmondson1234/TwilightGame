@@ -8,6 +8,8 @@ export enum ItemCategory {
   CROP = 'crop',
   TOOL = 'tool',
   MATERIAL = 'material',
+  INGREDIENT = 'ingredient',  // Cooking ingredients (shop-bought)
+  FOOD = 'food',              // Cooked food items
   MISC = 'misc',
 }
 
@@ -480,6 +482,345 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Waters crops to help them grow faster.',
     stackable: false,
     buyPrice: 75,
+  },
+
+  // ===== COOKING INGREDIENTS (shop-bought) =====
+
+  // Basic ingredients (Mother stocks these)
+  tea_leaves: {
+    id: 'tea_leaves',
+    name: 'tea_leaves',
+    displayName: 'Tea Leaves',
+    category: ItemCategory.INGREDIENT,
+    description: 'Dried tea leaves. Perfect for a nice cuppa.',
+    stackable: true,
+    sellPrice: 2,
+    buyPrice: 5,
+  },
+
+  water: {
+    id: 'water',
+    name: 'water',
+    displayName: 'Water',
+    category: ItemCategory.INGREDIENT,
+    description: 'Fresh water from the well.',
+    stackable: true,
+    sellPrice: 0,
+    buyPrice: 1,
+  },
+
+  // Dairy
+  milk: {
+    id: 'milk',
+    name: 'milk',
+    displayName: 'Milk',
+    category: ItemCategory.INGREDIENT,
+    description: 'Fresh milk from the village dairy.',
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 8,
+  },
+
+  cream: {
+    id: 'cream',
+    name: 'cream',
+    displayName: 'Cream',
+    category: ItemCategory.INGREDIENT,
+    description: 'Rich, thick cream.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 12,
+  },
+
+  butter: {
+    id: 'butter',
+    name: 'butter',
+    displayName: 'Butter',
+    category: ItemCategory.INGREDIENT,
+    description: 'Churned butter. Essential for baking.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 10,
+  },
+
+  cheese: {
+    id: 'cheese',
+    name: 'cheese',
+    displayName: 'Cheese',
+    category: ItemCategory.INGREDIENT,
+    description: 'Aged village cheese.',
+    stackable: true,
+    sellPrice: 8,
+    buyPrice: 20,
+  },
+
+  egg: {
+    id: 'egg',
+    name: 'egg',
+    displayName: 'Egg',
+    category: ItemCategory.INGREDIENT,
+    description: 'A fresh egg from the village hens.',
+    stackable: true,
+    sellPrice: 2,
+    buyPrice: 5,
+  },
+
+  // Pantry staples
+  flour: {
+    id: 'flour',
+    name: 'flour',
+    displayName: 'Flour',
+    category: ItemCategory.INGREDIENT,
+    description: 'Ground wheat flour for baking.',
+    stackable: true,
+    sellPrice: 2,
+    buyPrice: 6,
+  },
+
+  sugar: {
+    id: 'sugar',
+    name: 'sugar',
+    displayName: 'Sugar',
+    category: ItemCategory.INGREDIENT,
+    description: 'Sweet white sugar.',
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 8,
+  },
+
+  salt: {
+    id: 'salt',
+    name: 'salt',
+    displayName: 'Salt',
+    category: ItemCategory.INGREDIENT,
+    description: 'Sea salt for seasoning.',
+    stackable: true,
+    sellPrice: 1,
+    buyPrice: 3,
+  },
+
+  yeast: {
+    id: 'yeast',
+    name: 'yeast',
+    displayName: 'Yeast',
+    category: ItemCategory.INGREDIENT,
+    description: 'Dried yeast for bread-making.',
+    stackable: true,
+    sellPrice: 2,
+    buyPrice: 5,
+  },
+
+  olive_oil: {
+    id: 'olive_oil',
+    name: 'olive_oil',
+    displayName: 'Olive Oil',
+    category: ItemCategory.INGREDIENT,
+    description: 'Golden olive oil for cooking.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 15,
+  },
+
+  vanilla: {
+    id: 'vanilla',
+    name: 'vanilla',
+    displayName: 'Vanilla Extract',
+    category: ItemCategory.INGREDIENT,
+    description: 'Pure vanilla extract. Smells divine!',
+    stackable: true,
+    sellPrice: 8,
+    buyPrice: 20,
+  },
+
+  // Proteins
+  meat: {
+    id: 'meat',
+    name: 'meat',
+    displayName: 'Meat',
+    category: ItemCategory.INGREDIENT,
+    description: 'Fresh meat from the butcher.',
+    stackable: true,
+    sellPrice: 15,
+    buyPrice: 35,
+  },
+
+  minced_meat: {
+    id: 'minced_meat',
+    name: 'minced_meat',
+    displayName: 'Minced Meat',
+    category: ItemCategory.INGREDIENT,
+    description: 'Ground meat for sauces and pies.',
+    stackable: true,
+    sellPrice: 12,
+    buyPrice: 30,
+  },
+
+  // Specialty ingredients
+  pasta: {
+    id: 'pasta',
+    name: 'pasta',
+    displayName: 'Pasta',
+    category: ItemCategory.INGREDIENT,
+    description: 'Dried pasta. Ready to cook.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 10,
+  },
+
+  bread: {
+    id: 'bread',
+    name: 'bread',
+    displayName: 'Bread',
+    category: ItemCategory.INGREDIENT,
+    description: 'A loaf of crusty bread.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 12,
+  },
+
+  chocolate: {
+    id: 'chocolate',
+    name: 'chocolate',
+    displayName: 'Chocolate',
+    category: ItemCategory.INGREDIENT,
+    description: 'Dark cooking chocolate.',
+    stackable: true,
+    sellPrice: 10,
+    buyPrice: 25,
+  },
+
+  almonds: {
+    id: 'almonds',
+    name: 'almonds',
+    displayName: 'Almonds',
+    category: ItemCategory.INGREDIENT,
+    description: 'Ground almonds for marzipan.',
+    stackable: true,
+    sellPrice: 8,
+    buyPrice: 20,
+  },
+
+  strawberry_jam: {
+    id: 'strawberry_jam',
+    name: 'strawberry_jam',
+    displayName: 'Strawberry Jam',
+    category: ItemCategory.INGREDIENT,
+    description: 'Sweet strawberry preserve.',
+    stackable: true,
+    sellPrice: 10,
+    buyPrice: 25,
+  },
+
+  // ===== COOKED FOOD =====
+
+  food_tea: {
+    id: 'food_tea',
+    name: 'food_tea',
+    displayName: 'Cup of Tea',
+    category: ItemCategory.FOOD,
+    description: 'A warm, comforting cup of tea.',
+    stackable: true,
+    sellPrice: 5,
+  },
+
+  food_french_toast: {
+    id: 'food_french_toast',
+    name: 'food_french_toast',
+    displayName: 'French Toast',
+    category: ItemCategory.FOOD,
+    description: 'Sweet eggy bread, golden and crispy.',
+    stackable: true,
+    sellPrice: 20,
+  },
+
+  food_spaghetti: {
+    id: 'food_spaghetti',
+    name: 'food_spaghetti',
+    displayName: 'Spaghetti with Meat Sauce',
+    category: ItemCategory.FOOD,
+    description: 'Pasta with a rich, hearty meat sauce.',
+    stackable: true,
+    sellPrice: 45,
+  },
+
+  food_pizza: {
+    id: 'food_pizza',
+    name: 'food_pizza',
+    displayName: 'Potato Pizza',
+    category: ItemCategory.FOOD,
+    description: 'Rustic pizza with golden potato slices.',
+    stackable: true,
+    sellPrice: 50,
+  },
+
+  food_roast_dinner: {
+    id: 'food_roast_dinner',
+    name: 'food_roast_dinner',
+    displayName: 'Roast Dinner',
+    category: ItemCategory.FOOD,
+    description: 'A proper Sunday roast with all the trimmings.',
+    stackable: true,
+    sellPrice: 80,
+  },
+
+  food_crepes: {
+    id: 'food_crepes',
+    name: 'food_crepes',
+    displayName: 'Crepes',
+    category: ItemCategory.FOOD,
+    description: 'Thin French pancakes with strawberry jam.',
+    stackable: true,
+    sellPrice: 35,
+  },
+
+  food_marzipan_chocolates: {
+    id: 'food_marzipan_chocolates',
+    name: 'food_marzipan_chocolates',
+    displayName: 'Marzipan Chocolates',
+    category: ItemCategory.FOOD,
+    description: 'Handmade chocolates with sweet marzipan.',
+    stackable: true,
+    sellPrice: 60,
+  },
+
+  food_ice_cream: {
+    id: 'food_ice_cream',
+    name: 'food_ice_cream',
+    displayName: 'Vanilla Ice Cream',
+    category: ItemCategory.FOOD,
+    description: 'Creamy homemade vanilla ice cream.',
+    stackable: true,
+    sellPrice: 55,
+  },
+
+  food_bread: {
+    id: 'food_bread',
+    name: 'food_bread',
+    displayName: 'Fresh Bread',
+    category: ItemCategory.FOOD,
+    description: 'A warm loaf of homemade bread.',
+    stackable: true,
+    sellPrice: 25,
+  },
+
+  food_cookies: {
+    id: 'food_cookies',
+    name: 'food_cookies',
+    displayName: 'Cookies',
+    category: ItemCategory.FOOD,
+    description: 'Crispy, buttery biscuits.',
+    stackable: true,
+    sellPrice: 15,
+  },
+
+  food_chocolate_cake: {
+    id: 'food_chocolate_cake',
+    name: 'food_chocolate_cake',
+    displayName: 'Chocolate Cake',
+    category: ItemCategory.FOOD,
+    description: 'A rich, decadent chocolate cake.',
+    stackable: true,
+    sellPrice: 90,
   },
 };
 

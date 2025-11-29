@@ -103,6 +103,17 @@ export interface GameState {
   relationships: {
     npcFriendships: NPCFriendship[];
   };
+
+  // Cooking system (managed by CookingManager)
+  cooking: {
+    unlockedRecipes: string[];
+    recipeProgress: Record<string, {
+      recipeId: string;
+      timesCooked: number;
+      isMastered: boolean;
+      unlockedAt: number;
+    }>;
+  };
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -212,6 +223,12 @@ class GameStateManager {
           parsed.relationships = { npcFriendships: [] };
         }
 
+        // Migrate old save data that doesn't have cooking
+        if (!parsed.cooking) {
+          console.log('[GameState] Migrating old save data - adding cooking');
+          parsed.cooking = { unlockedRecipes: [], recipeProgress: {} };
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -255,6 +272,10 @@ class GameStateManager {
       },
       relationships: {
         npcFriendships: [],
+      },
+      cooking: {
+        unlockedRecipes: [],
+        recipeProgress: {},
       },
     };
   }
@@ -617,6 +638,33 @@ class GameStateManager {
     return this.state.relationships?.npcFriendships || [];
   }
 
+  // === Cooking Methods ===
+
+  saveCookingState(cooking: {
+    unlockedRecipes: string[];
+    recipeProgress: Record<string, {
+      recipeId: string;
+      timesCooked: number;
+      isMastered: boolean;
+      unlockedAt: number;
+    }>;
+  }): void {
+    this.state.cooking = cooking;
+    this.notify();
+  }
+
+  loadCookingState(): {
+    unlockedRecipes: string[];
+    recipeProgress: Record<string, {
+      recipeId: string;
+      timesCooked: number;
+      isMastered: boolean;
+      unlockedAt: number;
+    }>;
+  } | null {
+    return this.state.cooking || null;
+  }
+
   resetState(): void {
     this.state = {
       selectedCharacter: null,
@@ -640,6 +688,7 @@ class GameStateManager {
       weatherDriftSpeed: 1.0,
       cutscenes: { completed: [] },
       relationships: { npcFriendships: [] },
+      cooking: { unlockedRecipes: [], recipeProgress: {} },
     };
     console.log('[GameState] State reset');
     this.notify();

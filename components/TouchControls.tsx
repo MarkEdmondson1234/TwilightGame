@@ -12,6 +12,8 @@ interface TouchControlsProps {
   selectedSeed: CropType | null;
   onToolChange: (tool: Tool) => void;
   onSeedChange: (seed: CropType) => void;
+  onShowCookingUI?: () => void;
+  onShowRecipeBook?: () => void;
 }
 
 const TouchControls: React.FC<TouchControlsProps> = ({
@@ -23,6 +25,8 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   selectedSeed,
   onToolChange,
   onSeedChange,
+  onShowCookingUI,
+  onShowRecipeBook,
 }) => {
   const [showDevMenu, setShowDevMenu] = useState(false);
   const [showToolMenu, setShowToolMenu] = useState(false);
@@ -199,6 +203,37 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             ))}
           </div>
         )}
+
+        {/* Cooking buttons row */}
+        <div className="flex items-center gap-2">
+          {/* Recipe Book button */}
+          {onShowRecipeBook && (
+            <button
+              onTouchStart={(e) => {
+                e.preventDefault();
+                onShowRecipeBook();
+              }}
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-xl border-2 border-teal-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-lg"
+              title="Recipe Book"
+            >
+              📖
+            </button>
+          )}
+
+          {/* Cooking button */}
+          {onShowCookingUI && (
+            <button
+              onTouchStart={(e) => {
+                e.preventDefault();
+                onShowCookingUI();
+              }}
+              className="w-12 h-12 sm:w-14 sm:h-14 bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-xl border-2 border-amber-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-lg"
+              title="Cook"
+            >
+              🍳
+            </button>
+          )}
+        </div>
 
         {/* Action button row */}
         <div className="flex items-center gap-3">

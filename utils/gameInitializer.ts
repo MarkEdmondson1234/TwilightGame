@@ -6,6 +6,7 @@ import { preloadAllAssets } from './assetPreloader';
 import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { friendshipManager } from './FriendshipManager';
+import { cookingManager } from './CookingManager';
 
 /**
  * Initialize the game on startup
@@ -66,6 +67,10 @@ export async function initializeGame(
     // Load friendships from saved state
     friendshipManager.initialise();
     console.log(`[App] Initialised friendship system`);
+
+    // Load cooking progress from saved state
+    cookingManager.initialise();
+    console.log(`[App] Initialised cooking system`);
 
     // Update farm states on startup (uses TimeManager internally)
     farmManager.updateAllPlots();

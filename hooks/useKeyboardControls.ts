@@ -13,12 +13,16 @@ import {
     checkNPCInteraction,
     checkTransition,
     handleFarmAction,
+    handleForageAction,
+    ForageResult,
 } from '../utils/actionHandlers';
 
 export interface KeyboardControlsConfig {
     playerPosRef: MutableRefObject<Position>;
     activeNPC: string | null;
     showHelpBrowser: boolean;
+    showCookingUI: boolean;
+    showRecipeBook: boolean;
     keysPressed: Record<string, boolean>;
     onShowCharacterCreator: (show: boolean) => void;
     onSetActiveNPC: (npcId: string | null) => void;
@@ -26,10 +30,13 @@ export interface KeyboardControlsConfig {
     onSetShowDevTools: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowColorEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowHelpBrowser: (show: boolean) => void;
+    onSetShowCookingUI: (show: boolean) => void;
+    onSetShowRecipeBook: (show: boolean) => void;
     onSetPlayerPos: (pos: Position) => void;
     onMapTransition: (mapId: string, spawnPos: Position) => void;
     onFarmUpdate: () => void;
     onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
+    onForageResult?: (result: ForageResult) => void;
 }
 
 export function useKeyboardControls(config: KeyboardControlsConfig) {
@@ -37,6 +44,8 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         playerPosRef,
         activeNPC,
         showHelpBrowser,
+        showCookingUI,
+        showRecipeBook,
         keysPressed,
         onShowCharacterCreator,
         onSetActiveNPC,
@@ -44,10 +53,13 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onSetShowDevTools,
         onSetShowColorEditor,
         onSetShowHelpBrowser,
+        onSetShowCookingUI,
+        onSetShowRecipeBook,
         onSetPlayerPos,
         onMapTransition,
         onFarmUpdate,
         onFarmActionAnimation,
+        onForageResult,
     } = config;
 
     const handleKeyDown = useRef((e: KeyboardEvent) => {
@@ -112,11 +124,21 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // Escape key to close dialogue or help browser
+        // Escape key to close dialogue, help browser, or cooking UIs
         if (e.key === 'Escape') {
             if (showHelpBrowser) {
                 e.preventDefault();
                 onSetShowHelpBrowser(false);
+                return;
+            }
+            if (showCookingUI) {
+                e.preventDefault();
+                onSetShowCookingUI(false);
+                return;
+            }
+            if (showRecipeBook) {
+                e.preventDefault();
+                onSetShowRecipeBook(false);
                 return;
             }
             if (activeNPC) {
@@ -126,17 +148,27 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // Action key (E or Enter) - close dialogue if open
+        // Action key (E or Enter) - close dialogue or cooking UIs if open
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
             if (activeNPC) {
                 e.preventDefault();
                 onSetActiveNPC(null);
                 return;
             }
+            if (showCookingUI) {
+                e.preventDefault();
+                onSetShowCookingUI(false);
+                return;
+            }
+            if (showRecipeBook) {
+                e.preventDefault();
+                onSetShowRecipeBook(false);
+                return;
+            }
         }
 
-        // Don't process any other keys if dialogue is open
-        if (activeNPC) {
+        // Don't process any other keys if dialogue or cooking UI is open
+        if (activeNPC || showCookingUI || showRecipeBook) {
             return;
         }
 
@@ -235,6 +267,32 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             } else if (e.key === '9') {
                 gameState.setSelectedSeed('pumpkin');
             }
+        }
+
+        // F key to forage for seeds (only in forest)
+        if (e.key === 'f' || e.key === 'F') {
+            e.preventDefault();
+            const currentMapId = mapManager.getCurrentMapId();
+            if (currentMapId) {
+                const result = handleForageAction(playerPosRef.current, currentMapId);
+                console.log(`[Forage] ${result.message}`);
+                onForageResult?.(result);
+            }
+            return;
+        }
+
+        // C key to open cooking interface
+        if (e.key === 'c' || e.key === 'C') {
+            e.preventDefault();
+            onSetShowCookingUI(true);
+            return;
+        }
+
+        // B key to open recipe book
+        if (e.key === 'b' || e.key === 'B') {
+            e.preventDefault();
+            onSetShowRecipeBook(true);
+            return;
         }
     }).current;
 

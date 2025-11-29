@@ -299,6 +299,10 @@ class InventoryManager {
 
     // Start with some radish seeds for testing
     this.addItem('seed_radish', 10);
+
+    // Start with cooking ingredients for tea (starter recipe)
+    this.addItem('tea_leaves', 5);
+    this.addItem('water', 10);
   }
 }
 

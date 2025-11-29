@@ -48,6 +48,8 @@ import { cutsceneManager } from './utils/CutsceneManager';
 import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnimation';
 import { ALL_CUTSCENES } from './data/cutscenes';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
+import CookingInterface from './components/CookingInterface';
+import RecipeBook from './components/RecipeBook';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
@@ -66,6 +68,8 @@ const App: React.FC = () => {
     const [showDevTools, setShowDevTools] = useState(false); // Toggle dev tools panel
     const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
     const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
+    const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
+    const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
     const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
     const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
@@ -219,6 +223,8 @@ const App: React.FC = () => {
         playerPosRef,
         activeNPC,
         showHelpBrowser,
+        showCookingUI,
+        showRecipeBook,
         keysPressed,
         onShowCharacterCreator: setShowCharacterCreator,
         onSetActiveNPC: setActiveNPC,
@@ -226,6 +232,8 @@ const App: React.FC = () => {
         onSetShowDevTools: setShowDevTools,
         onSetShowColorEditor: setShowColorEditor,
         onSetShowHelpBrowser: setShowHelpBrowser,
+        onSetShowCookingUI: setShowCookingUI,
+        onSetShowRecipeBook: setShowRecipeBook,
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
         onFarmUpdate: handleFarmUpdate,
@@ -248,6 +256,12 @@ const App: React.FC = () => {
         onSetActiveNPC: setActiveNPC,
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
+        onFarmUpdate: handleFarmUpdate,
+        onFarmActionAnimation: (action) => {
+            console.log('[Touch] Farm action animation triggered:', action);
+            setFarmActionAnimation(action);
+            setFarmActionKey(prev => prev + 1);
+        },
     });
 
     // Setup collision detection
@@ -776,6 +790,8 @@ const App: React.FC = () => {
                     selectedSeed={gameState.getSelectedSeed() as 'radish' | 'tomato' | 'wheat' | 'corn' | 'pumpkin' | null}
                     onToolChange={(tool) => gameState.setFarmingTool(tool)}
                     onSeedChange={(seed) => gameState.setSelectedSeed(seed)}
+                    onShowCookingUI={() => setShowCookingUI(true)}
+                    onShowRecipeBook={() => setShowRecipeBook(true)}
                 />
             )}
             {activeNPC && (
@@ -800,6 +816,18 @@ const App: React.FC = () => {
             )}
             {showHelpBrowser && (
                 <HelpBrowser onClose={() => setShowHelpBrowser(false)} />
+            )}
+            {showCookingUI && (
+                <CookingInterface
+                    isOpen={showCookingUI}
+                    onClose={() => setShowCookingUI(false)}
+                />
+            )}
+            {showRecipeBook && (
+                <RecipeBook
+                    isOpen={showRecipeBook}
+                    onClose={() => setShowRecipeBook(false)}
+                />
             )}
             {isCutscenePlaying && (
                 <CutscenePlayer onComplete={handleCutsceneComplete} />
