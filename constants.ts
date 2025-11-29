@@ -136,8 +136,9 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.PATH]: {
     name: 'Path',
-    color: 'bg-palette-sage',  // Use grass color as background so stepping stones blend naturally
+    color: 'bg-palette-sage',  // Fallback color
     isSolid: false,
+    baseType: TileType.GRASS,  // Render grass underneath so stepping stones blend with map's grass color
     image: [
       tileAssets.stepping_stones_1,
       tileAssets.stepping_stones_1,
@@ -296,8 +297,8 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       enableScale: true,
       enableRotation: true,
       enableBrightness: true,
-      scaleRange: { min: 0.8, max: 1.2 },
-      rotationRange: { min: -8, max: 8 },
+      scaleRange: { min: 0.6, max: 1.8 },  // More size variation for natural forest floor
+      rotationRange: { min: -15, max: 15 },
     },
   },
   [TileType.BUSH]: {
@@ -1048,10 +1049,10 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.OAK_TREE,
-    spriteWidth: 3,  // 3 tiles wide (medium deciduous tree)
-    spriteHeight: 3, // 3 tiles tall
-    offsetX: -1,     // Center horizontally on tile
-    offsetY: -2,     // Extends 2 tiles upward
+    spriteWidth: 5,  // 5 tiles wide (large deciduous tree)
+    spriteHeight: 6, // 6 tiles tall (proper forest oak)
+    offsetX: -2,     // Center horizontally on tile
+    offsetY: -5,     // Extends 5 tiles upward
     image: tileAssets.oak_tree_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     isForeground: true,
     // Collision only at the base trunk (small area)
@@ -1059,12 +1060,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0.3,
     collisionOffsetX: 0.35,
     collisionOffsetY: 0.35,
-    // Transform controls: subtle scaling only, no rotation for trees
+    // Transform controls: more variation for natural forest feel
     enableFlip: true,
     enableRotation: false,
     enableScale: true,
     enableBrightness: false,
-    scaleRange: { min: 0.98, max: 1.02 },
+    scaleRange: { min: 0.85, max: 1.15 },  // More size variation
   },
   {
     tileType: TileType.SPRUCE_TREE,

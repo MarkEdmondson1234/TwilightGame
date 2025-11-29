@@ -91,6 +91,7 @@ export interface GameState {
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
   automaticWeather: boolean; // Enable/disable automatic weather changes
   nextWeatherCheckTime: number; // Timestamp (ms) for next automatic weather change
+  weatherDriftSpeed: number; // Multiplier for weather particle/fog drift speed (1.0 = normal)
 
   // Cutscene progress tracking
   cutscenes: {
@@ -194,6 +195,12 @@ class GameStateManager {
           parsed.cutscenes = { completed: [] };
         }
 
+        // Migrate old save data that doesn't have weather drift speed
+        if (parsed.weatherDriftSpeed === undefined) {
+          console.log('[GameState] Migrating old save data - adding weather drift speed');
+          parsed.weatherDriftSpeed = 1.0; // Default normal speed
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -231,6 +238,7 @@ class GameStateManager {
       weather: 'clear', // Default weather
       automaticWeather: false, // Disabled by default (user can enable in DevTools)
       nextWeatherCheckTime: 0, // No check scheduled initially
+      weatherDriftSpeed: 1.0, // Default normal drift speed
       cutscenes: {
         completed: [],
       },
@@ -529,6 +537,16 @@ class GameStateManager {
     return this.state.automaticWeather ?? false;
   }
 
+  setWeatherDriftSpeed(speed: number): void {
+    this.state.weatherDriftSpeed = Math.max(0.1, Math.min(5.0, speed)); // Clamp between 0.1x and 5x
+    this.notify();
+    console.log(`[GameState] Weather drift speed set to: ${this.state.weatherDriftSpeed}x`);
+  }
+
+  getWeatherDriftSpeed(): number {
+    return this.state.weatherDriftSpeed ?? 1.0;
+  }
+
   setNextWeatherCheckTime(timestamp: number): void {
     this.state.nextWeatherCheckTime = timestamp;
     this.saveState(); // Save immediately to persist across sessions
@@ -594,6 +612,7 @@ class GameStateManager {
       weather: 'clear',
       automaticWeather: false,
       nextWeatherCheckTime: 0,
+      weatherDriftSpeed: 1.0,
       cutscenes: { completed: [] },
     };
     console.log('[GameState] State reset');

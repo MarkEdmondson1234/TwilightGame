@@ -33,7 +33,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.WATER_RIGHT]: 'water',
   [TileType.WATER_TOP]: 'water',
   [TileType.WATER_BOTTOM]: 'water',
-  [TileType.PATH]: 'path',
+  [TileType.PATH]: 'grass',  // Use grass color so stepping stones blend naturally
   [TileType.FLOOR]: 'floor',
   [TileType.FLOOR_LIGHT]: 'floor',
   [TileType.FLOOR_DARK]: 'floor',
