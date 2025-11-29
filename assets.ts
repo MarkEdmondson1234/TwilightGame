@@ -67,6 +67,19 @@ export const tileAssets = {
   well_winter: new URL('./public/assets-optimized/tiles/well_in_winter.png', import.meta.url).href,
   forest_fern1: new URL('./public/assets-optimized/tiles/forest_fern1.png', import.meta.url).href,
   forest_fern2: new URL('./public/assets-optimized/tiles/forest_fern2.png', import.meta.url).href,
+  // Oak tree assets (seasonal variations)
+  oak_tree_spring: new URL('./public/assets-optimized/tiles/oak_tree_spring.png', import.meta.url).href,
+  oak_tree_summer: new URL('./public/assets-optimized/tiles/oak_tree_summer.png', import.meta.url).href,
+  oak_tree_autumn: new URL('./public/assets-optimized/tiles/oak_tree_autumn.png', import.meta.url).href,
+  oak_tree_winter: new URL('./public/assets-optimized/tiles/oak_tree_winter.png', import.meta.url).href,
+  // Fairy oak assets (seasonal variations)
+  fairy_oak_spring: new URL('./public/assets-optimized/tiles/fairy_oak_spring.png', import.meta.url).href,
+  fairy_oak_summer: new URL('./public/assets-optimized/tiles/fairy_oak_summer.png', import.meta.url).href,
+  fairy_oak_autumn: new URL('./public/assets-optimized/tiles/fairy_oak_autumn.png', import.meta.url).href,
+  fairy_oak_winter: new URL('./public/assets-optimized/tiles/fairy_oak_winter.png', import.meta.url).href,
+  // Spruce tree assets (evergreen with winter variation)
+  spruce_tree: new URL('./public/assets-optimized/tiles/spruce_tree.png', import.meta.url).href,
+  spruce_tree_winter: new URL('./public/assets-optimized/tiles/spruce_tree_winter.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance
@@ -106,6 +119,20 @@ export const npcAssets = {
   mum_01: new URL('./public/assets-optimized/npcs/mum_01.png', import.meta.url).href,
   mum_02: new URL('./public/assets-optimized/npcs/mum_02.png', import.meta.url).href,
   mum_portrait: new URL('./public/assets/npcs/mum_01.png', import.meta.url).href, // Original for dialogue
+  // Umbra Wolf assets (forest creature)
+  umbrawolf_standing1: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_standing1.png', import.meta.url).href,
+  umbrawolf_standing2: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_standing2.png', import.meta.url).href,
+  umbrawolf_sitting: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_sitting.png', import.meta.url).href,
+  umbrawolf_front: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_front.png', import.meta.url).href,
+  umbrawolf_back: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_back.png', import.meta.url).href,
+  umbrawolf_portrait: new URL('./public/assets/npcs/umbra_wolf/umbrawolf_front.png', import.meta.url).href, // Original for dialogue
+  // Walking animation frames (facing right - flip for left)
+  umbrawolf_walk1: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf1.png', import.meta.url).href,
+  umbrawolf_walk2: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf2.png', import.meta.url).href,
+  umbrawolf_walk3: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf3.png', import.meta.url).href,
+  umbrawolf_walk4: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf4.png', import.meta.url).href,
+  umbrawolf_walk5: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf5.png', import.meta.url).href,
+  umbrawolf_walk6: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf6.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

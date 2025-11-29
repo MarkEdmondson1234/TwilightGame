@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../types';
 import { gameState } from '../GameState';
+import { createUmbraWolfNPC } from '../utils/npcFactories';
 
 /**
  * Procedural map generation functions
@@ -128,7 +129,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
   // Generate forest features, excluding spawn area
-  generatePatches(map, TileType.ROCK, 15, 1, 4, width, height, spawnZone);
+  generatePatches(map, TileType.ROCK, 5, 1, 3, width, height, spawnZone);  // Reduced rocks (was 15)
   generateLakes(map, 2, 3, 7, width, height, spawnZone); // 2 lakes with proper edges
   generatePatches(map, TileType.PATH, 5, 2, 5, width, height, spawnZone);
 
@@ -230,6 +231,42 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add oak trees scattered throughout forest (seasonal variety, common)
+  for (let i = 0; i < 15; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.OAK_TREE;
+    }
+  }
+
+  // Add rare fairy oak (magical tree, very rare - max 1 per forest)
+  for (let i = 0; i < 1; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.FAIRY_OAK;
+    }
+  }
+
+  // Add spruce trees scattered throughout forest (evergreen conifers)
+  for (let i = 0; i < 12; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.SPRUCE_TREE;
+    }
+  }
+
   // Place exit back to village on left side (middle of map)
   map[spawnY][1] = TileType.PATH;
 
@@ -298,6 +335,20 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     console.log(`[Forest] Shop spawned at depth ${forestDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`);
   }
 
+  // Add Umbra Wolf NPC that roams the forest
+  // Place wolf in a random location away from spawn point
+  let wolfX, wolfY;
+  do {
+    wolfX = Math.floor(Math.random() * (width - 4)) + 2;
+    wolfY = Math.floor(Math.random() * (height - 4)) + 2;
+  } while (Math.abs(wolfX - spawnX) < 8 && Math.abs(wolfY - spawnY) < 8);
+
+  const umbraWolf = createUmbraWolfNPC(
+    `umbra_wolf_${seed}`,
+    { x: wolfX, y: wolfY },
+    'Umbra Wolf'
+  );
+
   return {
     id: `forest_${seed}`,
     name: 'Forest',
@@ -308,6 +359,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     isRandom: true,
     spawnPoint: { x: spawnX, y: spawnY },
     transitions,
+    npcs: [umbraWolf],
   };
 }
 

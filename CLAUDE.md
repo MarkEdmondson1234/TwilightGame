@@ -462,6 +462,26 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 - **Exception for multi-tile sprites**: Large furniture sprites (beds, sofas) should use original high-res images to avoid distortion from resize
 - **GIF Optimization**: If gifsicle is not installed, GIFs are copied without optimization (with a helpful install message)
 
+### Tile Background Colors and ColorResolver
+
+**IMPORTANT**: When tiles show wrong background colours (visible boxes that don't match the map's grass colour), the issue is almost NEVER the image transparency. Common mistakes to avoid:
+
+1. **8-bit colormap PNGs DO have transparency** - Don't assume "8-bit colormap" means no alpha. The optimization script preserves transparency. NEVER switch to original large images as a "fix".
+
+2. **The real issue is usually ColorResolver** - Tile background colours come from the color scheme, NOT the TILE_LEGEND `color` property directly. The system works as follows:
+   - `ColorResolver.getTileColor(tileType)` resolves the correct colour from the map's color scheme
+   - `TILE_TYPE_TO_COLOR_KEY` in `utils/ColorResolver.ts` maps tile types to scheme keys (e.g., FERN → 'grass')
+   - When adding new tile types, add them to `TILE_TYPE_TO_COLOR_KEY` in ColorResolver.ts
+
+3. **Rendering must use ColorResolver**:
+   - ✅ CORRECT: `ColorResolver.getTileColor(renderTileData.type)`
+   - ❌ WRONG: `renderTileData.color` (bypasses color scheme)
+
+4. **When adding new decorative tiles** (trees, ferns, flowers):
+   - Add entry to `TILE_TYPE_TO_COLOR_KEY` mapping to 'grass' (or appropriate key)
+   - Set `baseType: TileType.GRASS` in TILE_LEGEND (for tiles with foreground sprites)
+   - Use optimized assets (not originals) - they work fine
+
 ### Multi-Tile Sprite Guidelines
 
 Multi-tile sprites (furniture, large objects) require special handling:

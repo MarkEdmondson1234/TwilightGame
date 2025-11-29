@@ -272,8 +272,9 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   // Decorative
   [TileType.MUSHROOM]: {
     name: 'Mushroom',
-    color: 'bg-palette-sage',  // Base color matches grass
+    color: 'bg-palette-sage',  // Fallback color
     isSolid: false,
+    baseType: TileType.GRASS,  // Render grass underneath (uses map's color scheme)
     image: [tileAssets.mushrooms],
     transforms: {
       enableFlip: true,
@@ -286,8 +287,9 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.FERN]: {
     name: 'Fern',
-    color: 'bg-palette-sage',  // Base color matches grass (moss green)
+    color: 'bg-palette-sage',  // Fallback color
     isSolid: false,
+    baseType: TileType.GRASS,  // Render grass underneath (uses map's color scheme)
     image: [tileAssets.forest_fern1, tileAssets.forest_fern2],
     transforms: {
       enableFlip: true,
@@ -350,6 +352,45 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
         tileAssets.tree_2,  // Regular trees 25%
       ],
       default: [tileAssets.tree_1, tileAssets.tree_2],  // Fallback
+    }
+  },
+  [TileType.OAK_TREE]: {
+    name: 'Oak Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the oak tree sprite
+    seasonalImages: {
+      spring: [tileAssets.oak_tree_spring],
+      summer: [tileAssets.oak_tree_summer],
+      autumn: [tileAssets.oak_tree_autumn],
+      winter: [tileAssets.oak_tree_winter],
+      default: [tileAssets.oak_tree_summer],
+    }
+  },
+  [TileType.FAIRY_OAK]: {
+    name: 'Fairy Oak',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the fairy oak sprite
+    seasonalImages: {
+      spring: [tileAssets.fairy_oak_spring],
+      summer: [tileAssets.fairy_oak_summer],
+      autumn: [tileAssets.fairy_oak_autumn],
+      winter: [tileAssets.fairy_oak_winter],
+      default: [tileAssets.fairy_oak_summer],
+    }
+  },
+  [TileType.SPRUCE_TREE]: {
+    name: 'Spruce Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the spruce tree sprite
+    seasonalImages: {
+      spring: [tileAssets.spruce_tree],
+      summer: [tileAssets.spruce_tree],
+      autumn: [tileAssets.spruce_tree],
+      winter: [tileAssets.spruce_tree_winter],
+      default: [tileAssets.spruce_tree],
     }
   },
 
@@ -984,6 +1025,66 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 1.2,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
+  },
+  {
+    tileType: TileType.FAIRY_OAK,
+    spriteWidth: 5,  // 5 tiles wide (magical large tree)
+    spriteHeight: 5, // 5 tiles tall
+    offsetX: -2,     // Center horizontally on tile
+    offsetY: -4,     // Extends 4 tiles upward
+    image: tileAssets.fairy_oak_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision only at the base trunk (small area)
+    collisionWidth: 0.5,
+    collisionHeight: 0.5,
+    collisionOffsetX: 0.25,
+    collisionOffsetY: 0.25,
+    // Transform controls: subtle scaling only, no rotation for magical trees
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.98, max: 1.02 },
+  },
+  {
+    tileType: TileType.OAK_TREE,
+    spriteWidth: 3,  // 3 tiles wide (medium deciduous tree)
+    spriteHeight: 3, // 3 tiles tall
+    offsetX: -1,     // Center horizontally on tile
+    offsetY: -2,     // Extends 2 tiles upward
+    image: tileAssets.oak_tree_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision only at the base trunk (small area)
+    collisionWidth: 0.3,
+    collisionHeight: 0.3,
+    collisionOffsetX: 0.35,
+    collisionOffsetY: 0.35,
+    // Transform controls: subtle scaling only, no rotation for trees
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.98, max: 1.02 },
+  },
+  {
+    tileType: TileType.SPRUCE_TREE,
+    spriteWidth: 4,    // 4 tiles wide (towering forest conifer)
+    spriteHeight: 8,   // 8 tiles tall (proper forest tree)
+    offsetX: -1.5,     // Center horizontally on tile
+    offsetY: -7,       // Extends 7 tiles upward
+    image: tileAssets.spruce_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision only at the base trunk (small area)
+    collisionWidth: 0.3,
+    collisionHeight: 0.3,
+    collisionOffsetX: 0.35,
+    collisionOffsetY: 0.35,
+    // Transform controls: more variation for natural forest feel
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.85, max: 1.15 },  // More size variation for natural look
   },
 ];
 

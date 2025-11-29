@@ -760,3 +760,106 @@ export function createMumNPC(
     interactionRadius: 1.5,
   };
 }
+
+/**
+ * Create an Umbra Wolf NPC that roams the forest
+ *
+ * Behavior:
+ * - Wanders through the forest
+ * - Animated standing/walking sprites
+ * - Mysterious, wild creature dialogue
+ *
+ * @param id Unique ID for this wolf
+ * @param position Starting position
+ * @param name Optional name (defaults to "Umbra Wolf")
+ */
+export function createUmbraWolfNPC(
+  id: string,
+  position: Position,
+  name: string = 'Umbra Wolf'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'roaming',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      roaming: {
+        // Default sprites (used for left/right movement)
+        sprites: [
+          npcAssets.umbrawolf_walk1,
+          npcAssets.umbrawolf_walk2,
+          npcAssets.umbrawolf_walk3,
+          npcAssets.umbrawolf_walk4,
+          npcAssets.umbrawolf_walk5,
+          npcAssets.umbrawolf_walk6,
+        ],
+        animationSpeed: 150, // Smooth 6-frame walk cycle
+        // Direction-specific sprites
+        directionalSprites: {
+          // Up: back view, 2-frame animation (flip on odd frames in NPCRenderer)
+          up: [npcAssets.umbrawolf_back, npcAssets.umbrawolf_back],
+          // Down: front view, 2-frame animation (flip on odd frames in NPCRenderer)
+          down: [npcAssets.umbrawolf_front, npcAssets.umbrawolf_front],
+          // Left/Right use default sprites (left is flipped in NPCRenderer)
+        },
+      },
+      resting: {
+        sprites: [npcAssets.umbrawolf_sitting],
+        animationSpeed: 1000, // Slow, peaceful breathing
+        duration: 8000, // Rest for 8 seconds
+        nextState: 'roaming',
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Right, // Walking sprites face right (flipped for left)
+    behavior: NPCBehavior.WANDER,
+    sprite: npcAssets.umbrawolf_walk1,
+    portraitSprite: npcAssets.umbrawolf_portrait,
+    scale: 5.0,  // Large, imposing forest creature
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*The wolf regards you with intelligent, glowing eyes. It seems neither hostile nor friendly - merely curious.*',
+        seasonalText: {
+          spring: '*The wolf\'s dark fur glistens in the spring light. It tilts its head, watching you with ancient wisdom.*',
+          summer: '*The wolf pants softly in the summer heat, its shadowy form seeming to shimmer at the edges.*',
+          autumn: '*Fallen leaves cling to the wolf\'s dark coat. It watches you silently, a guardian of the changing forest.*',
+          winter: '*Snow dusts the wolf\'s midnight fur. Its breath mists in the cold air as it studies you intently.*',
+        },
+        timeOfDayText: {
+          day: '*In the dappled forest light, the wolf appears almost translucent, like a shadow given form.*',
+          night: '*The wolf\'s eyes gleam in the darkness. It is truly in its element under the stars.*',
+        },
+        responses: [
+          {
+            text: 'Hold out your hand cautiously.',
+            nextId: 'approach',
+          },
+          {
+            text: 'Back away slowly.',
+          },
+        ],
+      },
+      {
+        id: 'approach',
+        text: '*The wolf sniffs the air around your hand. For a moment, you feel a strange connection - as if the creature knows your heart. Then it turns and pads silently into the shadows.*',
+        seasonalText: {
+          spring: '*The wolf\'s nose twitches, catching the scent of spring blooms on your skin. It seems... almost pleased.*',
+          summer: '*The wolf\'s tongue lolls briefly in what might be a canine smile. The forest spirits favour the brave.*',
+          autumn: '*The wolf huffs softly, its warm breath carrying the scent of fallen leaves and ancient earth.*',
+          winter: '*The wolf presses its cold nose to your palm, then vanishes into the swirling snow like a dream.*',
+        },
+      },
+    ],
+    animatedStates,
+    interactionRadius: 2.0, // Can interact from a bit further away
+  };
+}

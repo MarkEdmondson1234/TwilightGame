@@ -39,6 +39,9 @@ export enum TileType {
   TREE,
   TREE_BIG,
   CHERRY_TREE,
+  OAK_TREE,
+  FAIRY_OAK,
+  SPRUCE_TREE,
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,
@@ -248,13 +251,20 @@ export interface AnimatedNPCStates {
   currentState: string; // Current state name (e.g., 'sleeping', 'angry', 'standing')
   states: {
     [stateName: string]: {
-      sprites: string[]; // Array of sprite paths for animation frames
+      sprites: string[]; // Array of sprite paths for animation frames (default/fallback)
       animationSpeed: number; // Milliseconds per frame
       transitionsTo?: { // Optional state transitions
         [eventName: string]: string; // Event name -> target state
       };
       duration?: number; // Optional: auto-transition after X milliseconds
       nextState?: string; // Optional: state to transition to after duration
+      // Optional: direction-specific sprites (overrides 'sprites' when NPC faces that direction)
+      directionalSprites?: {
+        up?: string[];    // Sprites for facing up (back view)
+        down?: string[];  // Sprites for facing down (front view)
+        left?: string[];  // Sprites for facing left (side view, will be flipped)
+        right?: string[]; // Sprites for facing right (side view)
+      };
     };
   };
   lastStateChange: number; // Timestamp of last state change

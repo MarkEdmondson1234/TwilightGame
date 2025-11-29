@@ -5,6 +5,7 @@ import { TILE_SIZE, SPRITE_METADATA } from '../constants';
 import { calculateTileTransforms } from '../utils/tileRenderUtils';
 import { farmManager } from '../utils/farmManager';
 import { farmingAssets } from '../assets';
+import { ColorResolver } from '../utils/ColorResolver';
 
 interface TileRendererProps {
     currentMap: MapDefinition;
@@ -151,10 +152,14 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                         ? calculateTileTransforms(tileData, x, y, selectedImageIndex)
                         : { transform: 'none', filter: 'none' };
 
+                    // Use ColorResolver to get correct color from color scheme (not TILE_LEGEND fallback)
+                    // ColorResolver handles season/time-of-day modifiers automatically
+                    const tileColor = ColorResolver.getTileColor(renderTileData.type);
+
                     return (
                         <div
                             key={`${x}-${y}`}
-                            className={`absolute ${renderTileData.color}`}
+                            className={`absolute ${tileColor}`}
                             style={{
                                 left: x * TILE_SIZE,
                                 top: y * TILE_SIZE,

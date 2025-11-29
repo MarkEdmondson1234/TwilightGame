@@ -149,9 +149,11 @@ class NPCManagerClass {
 
   /**
    * Update animated NPC states (for NPCs with state machines like the cat)
+   * Returns true if any animation frame changed (needs re-render)
    */
-  private updateAnimatedStates(currentTime: number): void {
+  private updateAnimatedStates(currentTime: number): boolean {
     const npcs = this.getCurrentMapNPCs();
+    let anyAnimationChanged = false;
 
     npcs.forEach(npc => {
       if (!npc.animatedStates) return;
@@ -160,13 +162,49 @@ class NPCManagerClass {
       const currentState = states.states[states.currentState];
       if (!currentState) return;
 
+      // Determine which sprite array to use based on direction
+      let spriteArray = currentState.sprites; // Default fallback
+
+      if (currentState.directionalSprites) {
+        const dirSprites = currentState.directionalSprites;
+        switch (npc.direction) {
+          case Direction.Up:
+            if (dirSprites.up && dirSprites.up.length > 0) spriteArray = dirSprites.up;
+            break;
+          case Direction.Down:
+            if (dirSprites.down && dirSprites.down.length > 0) spriteArray = dirSprites.down;
+            break;
+          case Direction.Left:
+            if (dirSprites.left && dirSprites.left.length > 0) spriteArray = dirSprites.left;
+            break;
+          case Direction.Right:
+            if (dirSprites.right && dirSprites.right.length > 0) spriteArray = dirSprites.right;
+            break;
+        }
+      }
+
       // Update animation frame
       if (currentTime - states.lastFrameChange >= currentState.animationSpeed) {
-        states.currentFrame = (states.currentFrame + 1) % currentState.sprites.length;
+        // Reset frame if sprite array changed (different length)
+        if (states.currentFrame >= spriteArray.length) {
+          states.currentFrame = 0;
+        }
+        states.currentFrame = (states.currentFrame + 1) % spriteArray.length;
         states.lastFrameChange = currentTime;
 
-        // Update NPC sprite to current frame
-        npc.sprite = currentState.sprites[states.currentFrame];
+        // Update NPC sprite to current frame from appropriate array
+        npc.sprite = spriteArray[states.currentFrame];
+        anyAnimationChanged = true; // Animation frame changed
+      } else {
+        // Even when not advancing frame, ensure correct sprite array is used
+        const oldSprite = npc.sprite;
+        if (states.currentFrame >= spriteArray.length) {
+          states.currentFrame = 0;
+        }
+        npc.sprite = spriteArray[states.currentFrame];
+        if (npc.sprite !== oldSprite) {
+          anyAnimationChanged = true; // Sprite changed due to direction change
+        }
       }
 
       // Check for auto-transitions (duration-based state changes)
@@ -174,9 +212,12 @@ class NPCManagerClass {
         const timeInState = currentTime - states.lastStateChange;
         if (timeInState >= currentState.duration) {
           this.transitionNPCState(npc.id, currentState.nextState);
+          anyAnimationChanged = true; // State transition
         }
       }
     });
+
+    return anyAnimationChanged;
   }
 
   /**
@@ -223,15 +264,18 @@ class NPCManagerClass {
   /**
    * Update NPC movement and behavior
    * Call this in the game loop with deltaTime (seconds)
-   * Returns true if any NPC moved (position changed)
+   * Returns true if any NPC moved or animation changed (needs re-render)
    */
   updateNPCs(deltaTime: number): boolean {
     const currentTime = Date.now();
     const npcs = this.getCurrentMapNPCs();
     let anyNPCMoved = false;
 
-    // Update animated states for all NPCs
-    this.updateAnimatedStates(currentTime);
+    // Update animated states for all NPCs (returns true if any animation changed)
+    const animationChanged = this.updateAnimatedStates(currentTime);
+    if (animationChanged) {
+      anyNPCMoved = true;
+    }
 
     npcs.forEach(npc => {
       if (npc.behavior === NPCBehavior.STATIC) return; // Static NPCs don't move
@@ -325,10 +369,42 @@ class NPCManagerClass {
               npc.position = newPos;
               anyNPCMoved = true; // NPC actually moved
             } else {
-              // Hit an obstacle, stop and wait
-              state.isWaiting = true;
-              state.waitDuration = 500 + Math.random() * 1000;
-              state.lastMoveTime = currentTime;
+              // Hit an obstacle, try other directions before giving up
+              const allDirections = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+              const otherDirections = allDirections.filter(d => d !== state.moveDirection);
+
+              // Shuffle other directions for variety
+              for (let i = otherDirections.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [otherDirections[i], otherDirections[j]] = [otherDirections[j], otherDirections[i]];
+              }
+
+              let foundAlternative = false;
+              for (const dir of otherDirections) {
+                const altPos = { ...npc.position };
+                switch (dir) {
+                  case Direction.Up: altPos.y -= movement; break;
+                  case Direction.Down: altPos.y += movement; break;
+                  case Direction.Left: altPos.x -= movement; break;
+                  case Direction.Right: altPos.x += movement; break;
+                }
+                if (!this.checkCollision(altPos)) {
+                  // Found a clear direction, switch to it
+                  state.moveDirection = dir;
+                  npc.direction = dir;
+                  npc.position = altPos;
+                  anyNPCMoved = true;
+                  foundAlternative = true;
+                  break;
+                }
+              }
+
+              // If no clear direction found, wait briefly then try again
+              if (!foundAlternative) {
+                state.isWaiting = true;
+                state.waitDuration = 300 + Math.random() * 500; // Shorter wait
+                state.lastMoveTime = currentTime;
+              }
             }
           }
         }

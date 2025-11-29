@@ -1,5 +1,5 @@
 import React from 'react';
-import { Position } from '../types';
+import { Position, Direction } from '../types';
 import { TILE_SIZE, PLAYER_SIZE } from '../constants';
 import { npcManager } from '../NPCManager';
 
@@ -27,6 +27,19 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger }
                 // NPC sprite scale (default 4.0x)
                 const npcScale = npc.scale || 4.0;
 
+                // Determine if sprite should be flipped horizontally
+                // - Left direction: always flip (walk sprites face right by default)
+                // - Up/Down with 2-frame directional animation: flip on odd frames for walking effect
+                let shouldFlip = npc.direction === Direction.Left;
+
+                // Check for up/down directional sprite animation (flip on odd frames)
+                if ((npc.direction === Direction.Up || npc.direction === Direction.Down) &&
+                    npc.animatedStates?.states[npc.animatedStates.currentState]?.directionalSprites) {
+                    const currentFrame = npc.animatedStates.currentFrame;
+                    // Flip on odd frames to create 2-frame walking animation
+                    shouldFlip = currentFrame % 2 === 1;
+                }
+
                 return (
                     <React.Fragment key={npc.id}>
                         {/* NPC Sprite */}
@@ -40,6 +53,7 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger }
                                 width: PLAYER_SIZE * npcScale * TILE_SIZE,
                                 height: PLAYER_SIZE * npcScale * TILE_SIZE,
                                 imageRendering: 'pixelated',
+                                transform: shouldFlip ? 'scaleX(-1)' : undefined,
                             }}
                         />
 
