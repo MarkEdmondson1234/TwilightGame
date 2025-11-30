@@ -381,6 +381,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.fairy_oak_summer],
     }
   },
+  [TileType.FAIRY_OAK_GIANT]: {
+    name: 'Giant Fairy Oak',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the fairy oak sprite
+    image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+  },
   [TileType.SPRUCE_TREE]: {
     name: 'Spruce Tree',
     color: 'bg-palette-sage',  // Base grass color for blending
@@ -1086,6 +1093,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.85, max: 1.15 },  // More size variation for natural look
+  },
+  {
+    tileType: TileType.FAIRY_OAK_GIANT,
+    spriteWidth: 10,   // 10 tiles wide (enormous ancient fairy oak)
+    spriteHeight: 10,  // 10 tiles tall
+    offsetX: -5,       // Center horizontally on tile
+    offsetY: -9,       // Extends 9 tiles upward
+    image: tileAssets.fairy_oak_summer,  // Uses same seasonal images as regular fairy oak
+    isForeground: true,
+    // Collision at the massive trunk base (large central area)
+    collisionWidth: 2,
+    collisionHeight: 2,
+    collisionOffsetX: -0.5,
+    collisionOffsetY: -0.5,
+    // No transforms - this is a unique, sacred tree
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
   },
 ];
 

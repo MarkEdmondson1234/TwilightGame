@@ -123,7 +123,8 @@ export const npcAssets = {
   // Umbra Wolf assets (forest creature)
   umbrawolf_standing1: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_standing1.png', import.meta.url).href,
   umbrawolf_standing2: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_standing2.png', import.meta.url).href,
-  umbrawolf_sitting: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_sitting.png', import.meta.url).href,
+  umbrawolf_sitting_01: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_sitting_01.png', import.meta.url).href,
+  umbrawolf_sitting_02: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_sitting_02.png', import.meta.url).href,
   umbrawolf_front: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_front.png', import.meta.url).href,
   umbrawolf_back: new URL('./public/assets-optimized/npcs/umbra_wolf/umbrawolf_back.png', import.meta.url).href,
   umbrawolf_portrait: new URL('./public/assets/npcs/umbra_wolf/umbrawolf_front.png', import.meta.url).href, // Original for dialogue
@@ -142,6 +143,14 @@ export const npcAssets = {
   chill_bear_01: new URL('./public/assets/npcs/bear/chill_bear_tea_01.png', import.meta.url).href,
   chill_bear_02: new URL('./public/assets/npcs/bear/chill_bear_tea_02.png', import.meta.url).href,
   chill_bear_portrait: new URL('./public/assets/npcs/bear/chill_bear_tea_01.png', import.meta.url).href,
+  // Stella assets (fairy of the deep forest)
+  stella_01: new URL('./public/assets/npcs/stella/stella_01.png', import.meta.url).href,
+  stella_02: new URL('./public/assets/npcs/stella/stella_02.png', import.meta.url).href,
+  stella_portrait: new URL('./public/assets/npcs/stella/stella_01.png', import.meta.url).href,
+  // Morgan assets (fairy companion)
+  morgan_01: new URL('./public/assets/npcs/morgan/morgan_01.png', import.meta.url).href,
+  morgan_02: new URL('./public/assets/npcs/morgan/morgan_02.png', import.meta.url).href,
+  morgan_portrait: new URL('./public/assets/npcs/morgan/morgan_01.png', import.meta.url).href,
 };
 
 // Player assets (add your custom sprites here when ready)

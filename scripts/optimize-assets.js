@@ -26,7 +26,7 @@ const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 
 // Configuration
-const SPRITE_SIZE = 256; // Resize character sprites to 256x256
+const SPRITE_SIZE = 512; // Resize character sprites to 512x512 (higher res to avoid pixelation)
 const NPC_SIZE = 512; // Resize NPC sprites to 512x512 (higher res for dialogue portraits)
 const TILE_SIZE = 256;    // Resize tile images to 256x256 (4x game render size, preserves detail)
 const FARMING_PLANT_SIZE = 384; // Larger size for farming plant sprites (crops need to be visible and overlap)
@@ -121,7 +121,7 @@ async function generateCharacterSpriteSheets() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+        .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for main character
         .toFile(tempPath);
       resizedFrames.push(tempPath);
     }
@@ -139,7 +139,7 @@ async function generateCharacterSpriteSheets() {
 
         // Save sprite sheet
         await sharp(result.image)
-          .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+          .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for main character
           .toFile(outputPath);
 
         // Save metadata (frame positions)

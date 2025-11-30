@@ -41,6 +41,7 @@ export enum TileType {
   CHERRY_TREE,
   OAK_TREE,
   FAIRY_OAK,
+  FAIRY_OAK_GIANT,  // Enormous 10x10 fairy oak for the deep forest
   SPRUCE_TREE,
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,

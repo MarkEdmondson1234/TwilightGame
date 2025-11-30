@@ -243,17 +243,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
-  // Add rare fairy oak (magical tree, very rare - max 1 per forest)
-  for (let i = 0; i < 1; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.FAIRY_OAK;
-    }
-  }
+  // Fairy oak removed from random forests - now only found in the sacred Deep Forest grove
 
   // Add spruce trees scattered throughout forest (evergreen conifers)
   for (let i = 0; i < 12; i++) {
@@ -291,6 +281,15 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   }
   map[spawnY][width - 2] = TileType.PATH;
 
+  // 20% chance to discover the sacred Deep Forest grove instead of another random forest
+  const deepForestChance = ((seed * 29) % 100) / 100; // Pseudo-random based on seed
+  const deeperForestDestination = deepForestChance < 0.2 ? 'deep_forest' : 'RANDOM_FOREST';
+  const deeperForestLabel = deepForestChance < 0.2 ? 'A Strange Light Ahead...' : 'Deeper into Forest';
+
+  if (deepForestChance < 0.2) {
+    console.log(`[Forest] ✨ Rare path to the Sacred Grove discovered! (chance was ${(deepForestChance * 100).toFixed(1)}%)`);
+  }
+
   const transitions = [
     {
       fromPosition: { x: 1, y: spawnY },
@@ -302,9 +301,9 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     {
       fromPosition: { x: width - 2, y: spawnY },
       tileType: TileType.PATH,
-      toMapId: 'RANDOM_FOREST',
-      toPosition: { x: 2, y: spawnY },
-      label: 'Deeper into Forest',
+      toMapId: deeperForestDestination,
+      toPosition: deeperForestDestination === 'deep_forest' ? { x: 17, y: 33 } : { x: 2, y: spawnY },
+      label: deeperForestLabel,
     },
   ];
 

@@ -849,9 +849,9 @@ export function createUmbraWolfNPC(
         nextState: 'resting',
       },
       resting: {
-        // Sitting down, resting
-        sprites: [npcAssets.umbrawolf_sitting],
-        animationSpeed: 2000, // Very slow, peaceful breathing
+        // Sitting down, resting - 2-frame breathing animation
+        sprites: [npcAssets.umbrawolf_sitting_01, npcAssets.umbrawolf_sitting_02],
+        animationSpeed: 1500, // Slow, peaceful breathing
         duration: 15000, // Rest for 15 seconds
         nextState: 'standing_brief', // Brief stand before walking
       },
@@ -967,7 +967,7 @@ export function createWitchWolfNPC(
     behavior: NPCBehavior.STATIC,
     sprite: npcAssets.witch_wolf_01,
     portraitSprite: npcAssets.witch_wolf_portrait,
-    scale: 4.5,  // Large, mystical presence
+    scale: 3.0,  // Mystical presence, smaller than umbra wolf
     dialogue: [
       {
         id: 'greeting',
@@ -1183,6 +1183,292 @@ export function createChillBearNPC(
     friendshipConfig: {
       canBefriend: false, // Wild creature (for now - could change with bear quest)
       startingPoints: 0,
+    },
+  };
+}
+
+/**
+ * Create Stella NPC - the fairy guardian of the deep forest
+ *
+ * Behaviour:
+ * - Stationary (sits near the fairy oak)
+ * - Gentle glowing animation
+ * - Mystical, wise dialogue about the forest and nature
+ * - Always present in the deep forest clearing
+ *
+ * @param id Unique ID for Stella
+ * @param position Starting position
+ * @param name Optional name (defaults to "Stella")
+ */
+export function createStellaNPC(
+  id: string,
+  position: Position,
+  name: string = 'Stella'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'idle',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      idle: {
+        // Gentle glowing animation
+        sprites: [
+          npcAssets.stella_01,
+          npcAssets.stella_02,
+        ],
+        animationSpeed: 1000, // Slow, ethereal animation
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    behavior: NPCBehavior.STATIC,
+    sprite: npcAssets.stella_01,
+    portraitSprite: npcAssets.stella_portrait,
+    scale: 1.0, // Very small fairy presence
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*A gentle light emanates from the small fairy. Her voice is like wind chimes.* "Welcome, traveller. Few find their way to this sacred place."',
+        seasonalText: {
+          spring: '*The fairy\'s wings shimmer with spring colours.* "Ah, the season of awakening! The forest stirs with new life. Can you feel it, traveller?"',
+          summer: '*Warm golden light surrounds the fairy.* "Summer\'s embrace reaches even here, to the heart of the deep forest. Welcome, sun-touched one."',
+          autumn: '*The fairy\'s glow takes on amber hues.* "The leaves whisper their farewells. Autumn teaches us that endings can be beautiful too."',
+          winter: '*A soft silver light surrounds the fairy.* "Even in winter\'s stillness, the forest dreams. I tend those dreams, traveller."',
+        },
+        responses: [
+          {
+            text: 'Who are you?',
+            nextId: 'introduction',
+          },
+          {
+            text: 'Tell me about this tree.',
+            nextId: 'fairy_oak_lore',
+          },
+          {
+            text: 'What are those glowing bugs?',
+            nextId: 'flower_bugs',
+          },
+          {
+            text: 'I should go.',
+          },
+        ],
+      },
+      {
+        id: 'introduction',
+        text: '"I am Stella, keeper of the fairy oak and guardian of these woods. For centuries I have watched over this place, where the veil between worlds grows thin."',
+        seasonalText: {
+          spring: '"In spring, I help the forest remember how to bloom. Every petal, every new leaf - they all carry a piece of old magic."',
+          summer: '"Summer is when I rest the least. So much life to nurture, so many creatures to guide. But I would not have it any other way."',
+          autumn: '"Autumn is my time of reflection. As the leaves fall, I gather their memories and weave them into dreams for winter."',
+          winter: '"In winter, I sing to the sleeping trees. They do not hear, but it comforts me to know they are not truly alone."',
+        },
+        responses: [
+          {
+            text: 'Why is this place special?',
+            nextId: 'sacred_grove',
+          },
+          {
+            text: 'Thank you for sharing.',
+          },
+        ],
+      },
+      {
+        id: 'fairy_oak_lore',
+        text: '"The Fairy Oak is older than memory itself. Its roots drink from underground rivers that flow from the world\'s beginning. Its branches touch the sky where stars are born."',
+        seasonalText: {
+          spring: '"In spring, the oak weeps with joy - those are the silver droplets you see on its bark. Each one holds a wish from someone long ago."',
+          summer: '"See how its leaves catch the sun? In summer, the tree stores sunlight in its heartwood. That light feeds the forest through the dark months."',
+          autumn: '"When its leaves turn gold, the tree is preparing its gift - magic stored for a thousand summers, released slowly into the earth."',
+          winter: '"Even without leaves, the oak dreams. I can hear it sometimes - memories of forests that covered the world before humans came."',
+        },
+        responses: [
+          {
+            text: 'Can the tree grant wishes?',
+            nextId: 'tree_wishes',
+          },
+          {
+            text: 'That\'s incredible.',
+          },
+        ],
+      },
+      {
+        id: 'tree_wishes',
+        text: '"The tree does not grant wishes in the way you might hope. But if you plant a seed at its roots with a pure heart, the forest will remember your kindness. And the forest has ways of repaying its friends."',
+      },
+      {
+        id: 'flower_bugs',
+        text: '"Ah, Celestia\'s children! They are not bugs, but tiny spirits of light. They tend the flowers that grow in the oak\'s shadow - flowers that bloom with starlight."',
+        seasonalText: {
+          spring: '"In spring, the flower spirits are most active. They dance from bloom to bloom, carrying pollen made of moonbeams."',
+          summer: '"Summer nights are their favourite. They gather at the oak\'s roots and tell stories in a language of light."',
+          autumn: '"As the flowers fade, the spirits grow quiet. But they do not leave - they sleep within the seeds, waiting for spring."',
+          winter: '"In winter, look closely at the snowflakes. Sometimes the spirits ride them down from the clouds, just to visit."',
+        },
+        responses: [
+          {
+            text: 'Who is Celestia?',
+            nextId: 'celestia_lore',
+          },
+          {
+            text: 'They\'re beautiful.',
+          },
+        ],
+      },
+      {
+        id: 'celestia_lore',
+        text: '"Celestia was the first fairy of this forest, long before even I was born. She planted the fairy oak from a seed of pure starlight. When her time ended, she became the stars themselves - and her children, the flower spirits, remain to honour her memory."',
+        responses: [
+          {
+            text: 'A beautiful story.',
+          },
+        ],
+      },
+      {
+        id: 'sacred_grove',
+        text: '"This grove is where the old magic still flows freely. The trees remember songs from before language. The stones hold secrets of the earth\'s youth. And sometimes, if you listen carefully, you can hear the whispers of those who came before."',
+      },
+    ],
+    animatedStates,
+    interactionRadius: 2.0,
+    friendshipConfig: {
+      canBefriend: true, // Can befriend Stella through repeated visits and kindness
+      startingPoints: 0,
+      crisisId: 'fairy_oak_blight', // Future crisis event
+    },
+  };
+}
+
+/**
+ * Create Morgan NPC - a playful fairy companion
+ *
+ * Behaviour:
+ * - Stationary with gentle animation
+ * - Cheerful, curious personality
+ * - Interested in the player's adventures
+ *
+ * @param id Unique ID for Morgan
+ * @param position Starting position
+ * @param name Optional name (defaults to "Morgan")
+ */
+export function createMorganNPC(
+  id: string,
+  position: Position,
+  name: string = 'Morgan'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'idle',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      idle: {
+        // Gentle glowing animation
+        sprites: [
+          npcAssets.morgan_01,
+          npcAssets.morgan_02,
+        ],
+        animationSpeed: 800, // Slightly faster than Stella - more energetic
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    behavior: NPCBehavior.STATIC,
+    sprite: npcAssets.morgan_01,
+    portraitSprite: npcAssets.morgan_portrait,
+    scale: 1.5, // Tiny fairy presence, same as Stella
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*The fairy zips around excitedly, leaving trails of sparkles.* "Oh! A visitor! Hello, hello! I\'m Morgan! What brings you to the forest today?"',
+        seasonalText: {
+          spring: '*Morgan bounces between blooming flowers.* "Spring is the BEST! Everything is waking up! Have you seen the butterflies? They\'re my friends!"',
+          summer: '*The fairy fans herself with a tiny leaf.* "Phew! It\'s warm today! But I love it! The fireflies come out at night - you should stay and watch!"',
+          autumn: '*Morgan catches a falling leaf and rides it down.* "Wheee! I love leaf-surfing! Autumn is so colourful! Like a rainbow fell on the trees!"',
+          winter: '*The fairy shivers but grins.* "Brrr! Cold but beautiful! I make snow angels - want to see? They\'re very tiny ones!"',
+        },
+        responses: [
+          {
+            text: 'Nice to meet you, Morgan!',
+            nextId: 'friendly',
+          },
+          {
+            text: 'Do you live here?',
+            nextId: 'home',
+          },
+          {
+            text: 'You seem very energetic!',
+            nextId: 'energetic',
+          },
+          {
+            text: 'I should get going.',
+          },
+        ],
+      },
+      {
+        id: 'friendly',
+        text: '"Nice to meet YOU! I always love making new friends! The forest can be lonely sometimes, even with all the animals. But Stella says I talk too much to ever be truly alone!" *giggles*',
+        responses: [
+          {
+            text: 'Who is Stella?',
+            nextId: 'about_stella',
+          },
+          {
+            text: 'You don\'t talk too much!',
+          },
+        ],
+      },
+      {
+        id: 'home',
+        text: '"I live all over the forest! But I like to stay near the flowers best. They\'re so pretty and they smell nice! Sometimes I sleep in a tulip - it\'s like a tiny bed!"',
+        seasonalText: {
+          spring: '"In spring there are SO many flower beds to choose from! Tulips, daffodils, bluebells... I try a different one each night!"',
+          summer: '"Summer flowers are the biggest! I can stretch out in a sunflower and watch the stars. It\'s the best!"',
+          autumn: '"When the flowers go to sleep, I find cosy spots in the mushroom caps. They\'re a bit damp but very cosy!"',
+          winter: '"In winter I curl up in hollow trees with the dormice. They\'re very warm and cuddly - don\'t tell them I said that!"',
+        },
+      },
+      {
+        id: 'energetic',
+        text: '"Stella says I have \'more energy than a spring storm\'! I just love flying and exploring and meeting people and collecting pretty things and..." *takes a breath* "...and everything!"',
+        responses: [
+          {
+            text: 'What do you collect?',
+            nextId: 'collecting',
+          },
+          {
+            text: 'That sounds exhausting!',
+          },
+        ],
+      },
+      {
+        id: 'about_stella',
+        text: '"Stella is the wisest fairy in the whole forest! She\'s been here for AGES - like, hundreds of years! She looks after the big tree and teaches me about magic. She\'s like my big sister!"',
+      },
+      {
+        id: 'collecting',
+        text: '"Oh, all sorts! Shiny pebbles, pretty feathers, dewdrops - did you know you can carry dewdrops if you\'re very careful? I have a whole collection! And seeds - I plant them everywhere so more flowers grow!"',
+      },
+    ],
+    animatedStates,
+    interactionRadius: 2.0,
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 10, // Morgan is naturally friendly
     },
   };
 }

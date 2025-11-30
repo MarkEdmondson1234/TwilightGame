@@ -11,6 +11,8 @@ import {
   createUmbraWolfNPC,
   createWitchWolfNPC,
   createChillBearNPC,
+  createStellaNPC,
+  createMorganNPC,
 } from '../../utils/npcFactories';
 
 /**
@@ -83,6 +85,10 @@ const npcs = [
   createUmbraWolfNPC('debug_umbra_wolf', { x: 6, y: 18 }, 'Umbra Wolf'),
   createWitchWolfNPC('debug_witch_wolf', { x: 14, y: 18 }, 'Witch Wolf'),
   createChillBearNPC('debug_chill_bear', { x: 22, y: 18 }, 'Chill Bear'),
+
+  // Row 5: Fairies (tiny)
+  createStellaNPC('debug_stella', { x: 6, y: 22 }, 'Stella'),
+  createMorganNPC('debug_morgan', { x: 10, y: 22 }, 'Morgan'),
 ];
 
 export const debugNPCs: MapDefinition = {
