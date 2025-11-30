@@ -38,7 +38,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.FLOOR_LIGHT]: 'floor',
   [TileType.FLOOR_DARK]: 'floor',
   [TileType.WALL]: 'wall',
-  [TileType.WALL_BOUNDARY]: 'wall',
+  [TileType.WALL_BOUNDARY]: 'grass',  // Blend with map's grass colour (e.g., sage in village)
   [TileType.BUILDING_WALL]: 'wall',
   [TileType.CARPET]: 'carpet',
   [TileType.RUG]: 'carpet',
@@ -64,8 +64,8 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.COTTAGE]: 'grass',
   [TileType.COTTAGE_FLOWERS]: 'grass',
   [TileType.COTTAGE_STONE]: 'grass',
-  [TileType.BUILDING_ROOF]: 'special',
-  [TileType.BUILDING_WINDOW]: 'special',
+  [TileType.BUILDING_ROOF]: 'grass',  // Blend with map's grass colour (decorative buildings)
+  [TileType.BUILDING_WINDOW]: 'grass',  // Blend with map's grass colour (decorative buildings)
   [TileType.MIRROR]: 'special',
 };
 
