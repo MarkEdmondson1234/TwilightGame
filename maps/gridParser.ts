@@ -63,6 +63,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'X': TileType.SOIL_FALLOW,     // X = Farm plot (fallow soil)
   // Outdoor structures
   '=': TileType.WELL,            // = = Well (horizontal lines like stone well)
+  '?': TileType.WITCH_HUT,       // ? = Witch hut (mysterious magical dwelling)
 
 };
 

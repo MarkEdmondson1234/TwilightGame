@@ -68,7 +68,8 @@ export enum TileType {
   CHIMNEY,
   STOVE,
   // Outdoor structures
-  WELL
+  WELL,
+  WITCH_HUT  // Witch's magical house built into a giant tree (20x20 tiles)
 }
 
 export interface Position {

@@ -157,6 +157,13 @@ export const village: MapDefinition = {
       toPosition: { x: 10, y: 24 },
       label: 'To Farm',
     },
+    {
+      fromPosition: { x: 9, y: 11 }, // Next to shop (hidden path)
+      tileType: TileType.GRASS,
+      toMapId: 'witch_hut',
+      toPosition: { x: 11, y: 28 },  // Spawn at south entrance of witch hut
+      label: 'To Hidden Grove',
+    },
   ],
   npcs: [
     // Village Elder - wise NPC near cherry tree

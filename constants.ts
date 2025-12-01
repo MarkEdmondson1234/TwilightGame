@@ -594,6 +594,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.well],  // Stone well in other seasons
     }
   },
+  [TileType.WITCH_HUT]: {
+    name: 'Witch Hut',
+    color: 'bg-palette-sage',  // Base grass color (shows through transparent parts)
+    isSolid: true,  // Most of the structure is solid (collisions defined in SPRITE_METADATA)
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    baseType: TileType.GRASS,  // Render grass underneath for natural ground
+  },
 };
 
 // === COMPILE-TIME VALIDATION ===
@@ -1108,6 +1115,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetX: -0.5,
     collisionOffsetY: -0.5,
     // No transforms - this is a unique, sacred tree
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+  },
+  {
+    tileType: TileType.WITCH_HUT,
+    spriteWidth: 16,   // 16 tiles wide (upscaled from 640px image for better visibility)
+    spriteHeight: 16,  // 16 tiles tall
+    offsetX: -8,       // Center horizontally on anchor tile
+    offsetY: -15,      // Extends 15 tiles upward from anchor
+    image: tileAssets.witch_hut,
+    isForeground: true,
+    // Collision: Covers main building and pond area (water at bottom)
+    // Full width coverage to prevent walking through water
+    collisionWidth: 12,
+    collisionHeight: 10,
+    collisionOffsetX: -6,   // Center the collision horizontally
+    collisionOffsetY: -10,  // Position to cover building and pond area
+    // No transforms - this is a unique magical structure
     enableFlip: false,
     enableRotation: false,
     enableScale: false,

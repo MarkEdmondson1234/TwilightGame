@@ -32,9 +32,11 @@ const TILE_SIZE = 256;    // Resize tile images to 256x256 (4x game render size,
 const FARMING_PLANT_SIZE = 384; // Larger size for farming plant sprites (crops need to be visible and overlap)
 const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
 const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
+const WITCH_HUT_SIZE = 640; // 10x10 tiles (10 * 64px = 640px) - reduced from 20x20 to prevent browser crashes
 const COMPRESSION_QUALITY = 85; // PNG compression quality
 const HIGH_QUALITY = 95; // Higher quality for detailed furniture
 const SHOP_QUALITY = 98; // Very high quality for shop buildings (minimal compression)
+const WITCH_HUT_QUALITY = 98; // Very high quality for witch hut (large building, minimal compression)
 const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for effects)
 const CUTSCENE_WIDTH = 1920; // Cutscene images: 1920x1080 (16:9 aspect ratio)
 const CUTSCENE_HEIGHT = 1080;
@@ -69,7 +71,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'farming'),
     path.join(OPTIMIZED_DIR, 'npcs'),
     path.join(OPTIMIZED_DIR, 'animations'),
-    path.join(OPTIMIZED_DIR, 'cutscenes')
+    path.join(OPTIMIZED_DIR, 'cutscenes'),
+    path.join(OPTIMIZED_DIR, 'witchhut')
   ];
 
   dirs.forEach(dir => {
@@ -216,8 +219,18 @@ async function optimizeTiles() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Special handling for witch hut - 20x20 tiles (1280x1280px)
+    if (file.includes('witch_hut') || inputPath.includes('witchhut')) {
+      await sharp(inputPath)
+        .resize(WITCH_HUT_SIZE, WITCH_HUT_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
+        .toFile(outputPath);
+    }
     // Special handling for large multi-tile sprites (shop, mine entrance, garden shed) - extra large size with very high quality (minimal compression)
-    if (file.includes('shop') || file.includes('mine_entrance') || file.includes('garden_shed')) {
+    else if (file.includes('shop') || file.includes('mine_entrance') || file.includes('garden_shed')) {
       await sharp(inputPath)
         .resize(SHOP_SIZE, SHOP_SIZE, {
           fit: 'contain',
@@ -535,6 +548,56 @@ async function optimizeCutscenes() {
   console.log(`\n  Optimized ${optimized} cutscene image(s)\n`);
 }
 
+// Optimize witch hut assets
+async function optimizeWitchHut() {
+  console.log('🏚️  Optimizing witch hut assets...');
+
+  const witchHutDir = path.join(ASSETS_DIR, 'witchhut');
+  if (!fs.existsSync(witchHutDir)) {
+    console.log('⚠️  No witch hut assets found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(witchHutDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(witchHutDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'witchhut', relativePath.replace(/\.jpeg$/i, '.png'));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Witch hut - 20x20 tiles (1280x1280px) with very high quality
+    await sharp(inputPath)
+      .resize(WITCH_HUT_SIZE, WITCH_HUT_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    // Show relative path for files in subdirectories
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} witch hut asset(s)\n`);
+}
+
 // Main execution
 async function main() {
   try {
@@ -545,6 +608,7 @@ async function main() {
     await optimizeNPCs();
     await optimizeAnimations();
     await optimizeCutscenes();
+    await optimizeWitchHut();
 
     console.log('✨ Asset optimization complete!');
     console.log(`📁 Optimized assets saved to: ${OPTIMIZED_DIR}`);
