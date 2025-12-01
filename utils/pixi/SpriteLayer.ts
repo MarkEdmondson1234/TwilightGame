@@ -19,7 +19,7 @@
 
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE, SPRITE_METADATA } from '../../constants';
-import { MapDefinition, SpriteMetadata } from '../../types';
+import { MapDefinition, SpriteMetadata, TileType } from '../../types';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
 
@@ -30,15 +30,20 @@ export class SpriteLayer {
   private isForeground: boolean;
   // Cache max sprite size for viewport margin calculation (shared across instances)
   private static maxSpriteSize: number | null = null;
+  // Cache sprite metadata by tile type for O(1) lookup instead of O(n) find()
+  private static spriteMetadataMap: Map<TileType, SpriteMetadata> | null = null;
 
   constructor(isForeground: boolean = false) {
     this.container = new PIXI.Container();
     this.container.sortableChildren = true;
     this.isForeground = isForeground;
 
-    // Initialize max sprite size cache once
+    // Initialize caches once (shared across all instances)
     if (SpriteLayer.maxSpriteSize === null) {
       SpriteLayer.maxSpriteSize = Math.max(...SPRITE_METADATA.map(m => Math.max(m.spriteWidth, m.spriteHeight)));
+    }
+    if (SpriteLayer.spriteMetadataMap === null) {
+      SpriteLayer.spriteMetadataMap = new Map(SPRITE_METADATA.map(m => [m.tileType, m]));
     }
   }
 
@@ -76,8 +81,8 @@ export class SpriteLayer {
         const tileData = getTileData(x, y);
         if (!tileData) continue;
 
-        // Find sprite metadata for this tile type
-        const spriteMetadata = SPRITE_METADATA.find(m => m.tileType === tileData.type);
+        // Find sprite metadata for this tile type (O(1) lookup from cache)
+        const spriteMetadata = SpriteLayer.spriteMetadataMap!.get(tileData.type);
         if (!spriteMetadata) continue;
 
         // Only render sprites matching this layer (foreground/background)
