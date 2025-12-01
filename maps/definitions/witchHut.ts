@@ -72,8 +72,15 @@ export const witchHut: MapDefinition = {
       fromPosition: { x: 11, y: 29 },
       tileType: TileType.PATH,
       toMapId: 'village',
-      toPosition: { x: 27, y: 2 }, // Return to village (will be updated)
+      toPosition: { x: 9, y: 11 },
       label: 'Return to Village',
+    },
+    {
+      fromPosition: { x: 15, y: 18 },
+      tileType: TileType.GRASS,
+      toMapId: 'witch_hut_interior',
+      toPosition: { x: 7, y: 14 },
+      label: 'Enter Witch Hut',
     },
   ],
   npcs: [

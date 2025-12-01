@@ -8,7 +8,19 @@
       "Bash(node check-dimensions.js:*)",
       "Bash(npx tsc:*)",
       "SlashCommand(/test-game)",
-      "Bash(open \"http://localhost:3001/TwilightGame/\")"
+      "Bash(open \"http://localhost:3001/TwilightGame/\")",
+      "Bash(git config:*)",
+      "Bash(gh:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git credential-cache:*)",
+      "Bash(git credential:*)",
+      "Bash(npm run optimize-assets:witchhut:*)",
+      "Bash(node scripts/optimize-assets.js:*)",
+      "Bash(node -e:*)",
+      "Bash(git add:*)",
+      "Bash(git restore:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

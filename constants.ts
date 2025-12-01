@@ -604,14 +604,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   [TileType.WITCH_HUT_LOWER]: {
     name: 'Witch Hut (Lower)',
     color: 'bg-palette-sage',
-    isSolid: false,  // Lower structure - player walks in front
+    isSolid: true,  // Has collision box for pond area
     image: [],
     baseType: TileType.GRASS,
   },
   [TileType.WITCH_HUT_UPPER]: {
     name: 'Witch Hut (Upper)',
     color: 'bg-palette-sage',
-    isSolid: false,  // Upper tree - player walks behind
+    isSolid: true,  // Has collision box for tree/building
     image: [],
     baseType: TileType.GRASS,
   },
@@ -1161,9 +1161,11 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: 3,        // Position lower half below the upper half
     image: tileAssets.witch_hut_lower,
     isForeground: false,  // Player appears in front of lower structure
-    // No collision on lower layer - walkable
-    collisionWidth: 0,
-    collisionHeight: 0,
+    // Collision on lower layer - pond only (left of stairs)
+    collisionWidth: 3,
+    collisionHeight: 2,
+    collisionOffsetX: -5,
+    collisionOffsetY: 3,  // Moved up 2 tiles (from 5 to 3)
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -1177,11 +1179,11 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: -5,       // Position upper half at same level as original
     image: tileAssets.witch_hut_upper,
     isForeground: true,  // Player appears behind tree canopy
-    // Collision on upper layer - tree trunk/canopy
+    // Collision on upper layer - tree trunk/canopy (smaller by 2 tiles)
     collisionWidth: 4,
-    collisionHeight: 6,
+    collisionHeight: 4,  // Reduced from 6 to 4
     collisionOffsetX: -2,
-    collisionOffsetY: -2,
+    collisionOffsetY: -1,  // Moved down 1 tile (from -2 to -1)
     enableFlip: false,
     enableRotation: false,
     enableScale: false,

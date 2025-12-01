@@ -14,6 +14,7 @@ import { seedShed } from './definitions/seedShed';
 import { debugNPCs } from './definitions/debugNPCs';
 import { deepForest } from './definitions/deepForest';
 import { witchHut } from './definitions/witchHut';
+import { witchHutInterior } from './definitions/witchHutInterior';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
 import { gameState } from '../GameState';
 
@@ -42,6 +43,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(debugNPCs);
   mapManager.registerMap(deepForest);
   mapManager.registerMap(witchHut);
+  mapManager.registerMap(witchHutInterior);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs
