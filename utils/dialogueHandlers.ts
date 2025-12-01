@@ -3,6 +3,7 @@ import { gameState } from '../GameState';
 import { cutsceneManager } from './CutsceneManager';
 import { friendshipManager } from './FriendshipManager';
 import { npcManager } from '../NPCManager';
+import { cookingManager } from './CookingManager';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -10,6 +11,7 @@ import { npcManager } from '../NPCManager';
  * - Friendship points (daily talk bonus on greeting)
  * - Seed pickup from seed keeper NPCs
  * - Dialogue-triggered cutscenes
+ * - Recipe teaching from Mum
  */
 export function handleDialogueAction(npcId: string, nodeId: string): void {
     // Award friendship points when dialogue starts (greeting node)
@@ -30,6 +32,11 @@ export function handleDialogueAction(npcId: string, nodeId: string): void {
     // Handle seed pickup from seed shed NPCs
     if (npcId.startsWith('seed_keeper_')) {
         handleSeedPickup(nodeId);
+    }
+
+    // Handle recipe teaching from Mum
+    if (npcId.includes('mum')) {
+        handleRecipeTeaching(nodeId);
     }
 }
 
@@ -66,5 +73,32 @@ function handleSeedPickup(nodeId: string): void {
         const inventoryData = inventoryManager.getInventoryData();
         gameState.saveInventory(inventoryData.items, inventoryData.tools);
         console.log(`[dialogueHandlers] Added ${action.quantity}x ${action.itemId} to inventory`);
+    }
+}
+
+/**
+ * Handle recipe teaching from Mum based on dialogue node ID
+ */
+function handleRecipeTeaching(nodeId: string): void {
+    // Map dialogue nodes to recipe IDs
+    const recipeNodes: Record<string, string> = {
+        'learn_french_toast': 'french_toast',
+        'learn_spaghetti': 'spaghetti_meat_sauce',
+        'learn_crepes': 'crepes_strawberry',
+        'learn_marzipan': 'marzipan_chocolates',
+        'learn_ice_cream': 'vanilla_ice_cream',
+        'learn_bread': 'bread',
+        'learn_biscuits': 'cookies',
+        'learn_chocolate_cake': 'chocolate_cake',
+        'learn_potato_pizza': 'potato_pizza',
+        'learn_roast_dinner': 'roast_dinner',
+    };
+
+    const recipeId = recipeNodes[nodeId];
+    if (recipeId) {
+        const result = cookingManager.unlockRecipe(recipeId);
+        if (result) {
+            console.log(`[dialogueHandlers] Mum taught you how to make: ${recipeId}`);
+        }
     }
 }

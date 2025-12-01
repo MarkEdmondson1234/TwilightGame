@@ -15,6 +15,7 @@ import {
     checkTransition,
     handleFarmAction,
     handleForageAction,
+    checkCookingLocation,
     ForageResult,
 } from '../utils/actionHandlers';
 
@@ -289,10 +290,16 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // C key to open cooking interface
+        // C key to open cooking interface (only if near stove or campfire)
         if (e.key === 'c' || e.key === 'C') {
             e.preventDefault();
-            onSetShowCookingUI(true);
+            const cookingLocation = checkCookingLocation(playerPosRef.current);
+            if (cookingLocation.found) {
+                console.log(`[Keyboard] Opening cooking UI at ${cookingLocation.locationType}`);
+                onSetShowCookingUI(true);
+            } else {
+                console.log('[Keyboard] No stove or campfire nearby');
+            }
             return;
         }
 

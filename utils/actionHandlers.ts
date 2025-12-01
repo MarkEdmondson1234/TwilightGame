@@ -26,6 +26,12 @@ export interface TransitionResult {
     spawnPosition?: Position;
 }
 
+export interface CookingLocationResult {
+    found: boolean;
+    locationType?: 'stove' | 'campfire';
+    position?: Position;
+}
+
 /**
  * Check for and handle stove interaction (opens cooking interface)
  * Checks adjacent tiles for stove
@@ -308,4 +314,47 @@ export function handleForageAction(
         seedName: seed.displayName,
         message: `You found ${seed.displayName}!`,
     };
+}
+
+/**
+ * Check for cooking locations (stove or campfire) near the player
+ * Returns the type and position of the cooking location if found
+ */
+export function checkCookingLocation(playerPos: Position): CookingLocationResult {
+    const playerTileX = Math.floor(playerPos.x);
+    const playerTileY = Math.floor(playerPos.y);
+
+    // Check player's current tile and adjacent tiles (not diagonal)
+    const tilesToCheck = [
+        { x: playerTileX, y: playerTileY },
+        { x: playerTileX - 1, y: playerTileY },
+        { x: playerTileX + 1, y: playerTileY },
+        { x: playerTileX, y: playerTileY - 1 },
+        { x: playerTileX, y: playerTileY + 1 },
+    ];
+
+    for (const tile of tilesToCheck) {
+        const tileData = getTileData(tile.x, tile.y);
+        if (!tileData) continue;
+
+        if (tileData.type === TileType.STOVE) {
+            console.log(`[Action] Found stove at (${tile.x}, ${tile.y})`);
+            return {
+                found: true,
+                locationType: 'stove',
+                position: tile,
+            };
+        }
+
+        if (tileData.type === TileType.CAMPFIRE) {
+            console.log(`[Action] Found campfire at (${tile.x}, ${tile.y})`);
+            return {
+                found: true,
+                locationType: 'campfire',
+                position: tile,
+            };
+        }
+    }
+
+    return { found: false };
 }

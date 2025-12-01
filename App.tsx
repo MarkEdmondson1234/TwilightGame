@@ -32,6 +32,7 @@ import { useViewportCulling } from './hooks/useViewportCulling';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
+import { checkCookingLocation } from './utils/actionHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { TimeManager } from './utils/TimeManager';
@@ -69,6 +70,7 @@ const App: React.FC = () => {
     const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
     const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
     const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
+    const [cookingLocationType, setCookingLocationType] = useState<'stove' | 'campfire' | null>(null); // Track cooking location type
     const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
     const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
     const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
@@ -232,7 +234,17 @@ const App: React.FC = () => {
         onSetShowDevTools: setShowDevTools,
         onSetShowColorEditor: setShowColorEditor,
         onSetShowHelpBrowser: setShowHelpBrowser,
-        onSetShowCookingUI: setShowCookingUI,
+        onSetShowCookingUI: (show) => {
+            if (show) {
+                const cookingLocation = checkCookingLocation(playerPosRef.current);
+                if (cookingLocation.found) {
+                    setCookingLocationType(cookingLocation.locationType || null);
+                    setShowCookingUI(true);
+                }
+            } else {
+                setShowCookingUI(false);
+            }
+        },
         onSetShowRecipeBook: setShowRecipeBook,
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
@@ -795,7 +807,13 @@ const App: React.FC = () => {
                     selectedSeed={gameState.getSelectedSeed() as 'radish' | 'tomato' | 'wheat' | 'corn' | 'pumpkin' | null}
                     onToolChange={(tool) => gameState.setFarmingTool(tool)}
                     onSeedChange={(seed) => gameState.setSelectedSeed(seed)}
-                    onShowCookingUI={() => setShowCookingUI(true)}
+                    onShowCookingUI={() => {
+                        const cookingLocation = checkCookingLocation(playerPos);
+                        if (cookingLocation.found) {
+                            setCookingLocationType(cookingLocation.locationType || null);
+                            setShowCookingUI(true);
+                        }
+                    }}
                     onShowRecipeBook={() => setShowRecipeBook(true)}
                 />
             )}
@@ -826,6 +844,7 @@ const App: React.FC = () => {
                 <CookingInterface
                     isOpen={showCookingUI}
                     onClose={() => setShowCookingUI(false)}
+                    locationType={cookingLocationType || 'stove'}
                 />
             )}
             {showRecipeBook && (

@@ -63,6 +63,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'X': TileType.SOIL_FALLOW,     // X = Farm plot (fallow soil)
   // Outdoor structures
   '=': TileType.WELL,            // = = Well (horizontal lines like stone well)
+  'q': TileType.CAMPFIRE,        // q = Campfire (looks like fire/smoke)
   '?': TileType.WITCH_HUT,       // ? = Witch hut (mysterious magical dwelling) - DEPRECATED
   '[': TileType.WITCH_HUT_LOWER, // [ = Witch hut lower half (steps, pond)
   ']': TileType.WITCH_HUT_UPPER, // ] = Witch hut upper half (tree canopy)

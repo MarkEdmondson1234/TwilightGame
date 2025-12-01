@@ -739,6 +739,10 @@ export function createMumNPC(
             nextId: 'village_chat',
           },
           {
+            text: 'Can you teach me to cook?',
+            nextId: 'teach_cooking',
+          },
+          {
             text: 'I should get going.',
           },
         ],
@@ -783,6 +787,144 @@ export function createMumNPC(
             text: 'Thank you for the chat.',
           },
         ],
+      },
+      {
+        id: 'teach_cooking',
+        text: 'Oh, I\'d love to teach you! Cooking is such a wonderful skill. Let me show you some of my favourite recipes.',
+        responses: [
+          {
+            text: 'I\'d like to learn French Toast.',
+            nextId: 'learn_french_toast',
+          },
+          {
+            text: 'Can you teach me some savoury dishes?',
+            nextId: 'learn_savoury',
+          },
+          {
+            text: 'I want to learn about desserts.',
+            nextId: 'learn_desserts',
+          },
+          {
+            text: 'Tell me about baking.',
+            nextId: 'learn_baking',
+          },
+          {
+            text: 'Maybe later.',
+          },
+        ],
+      },
+      {
+        id: 'learn_french_toast',
+        text: 'Ah, French Toast! That\'s the perfect recipe to start with. It\'s simple but delicious. You\'ll need bread, eggs, milk, and a bit of sugar. I\'ll write it down for you.',
+        responses: [],
+      },
+      {
+        id: 'learn_savoury',
+        text: 'Savoury dishes are hearty and satisfying. What would you like to learn?',
+        responses: [
+          {
+            text: 'Spaghetti with meat sauce.',
+            nextId: 'learn_spaghetti',
+          },
+          {
+            text: 'Pizza with potatoes.',
+            nextId: 'learn_potato_pizza',
+          },
+          {
+            text: 'Roast dinner.',
+            nextId: 'learn_roast_dinner',
+          },
+          {
+            text: 'Not right now.',
+          },
+        ],
+      },
+      {
+        id: 'learn_spaghetti',
+        text: 'Spaghetti with meat sauce - a family favourite! You\'ll need pasta, tomatoes, beef mince, and some herbs. I\'ll add it to your recipe book.',
+        responses: [],
+      },
+      {
+        id: 'learn_potato_pizza',
+        text: 'Pizza with potatoes is a rustic treat! Flour for the base, potatoes, cheese, and a bit of olive oil. Delicious!',
+        responses: [],
+      },
+      {
+        id: 'learn_roast_dinner',
+        text: 'A proper Sunday roast! Meat, potatoes, carrots, and broccoli - all the trimmings. I\'ll show you how.',
+        responses: [],
+      },
+      {
+        id: 'learn_desserts',
+        text: 'Desserts are my speciality! Let me show you something sweet.',
+        responses: [
+          {
+            text: 'Teach me crêpes!',
+            nextId: 'learn_crepes',
+          },
+          {
+            text: 'What about marzipan chocolates?',
+            nextId: 'learn_marzipan',
+          },
+          {
+            text: 'Ice cream sounds lovely!',
+            nextId: 'learn_ice_cream',
+          },
+          {
+            text: 'Never mind.',
+          },
+        ],
+      },
+      {
+        id: 'learn_baking',
+        text: 'Baking is wonderful! The smell of fresh bread fills the whole house. What would you like to learn?',
+        responses: [
+          {
+            text: 'How to make bread.',
+            nextId: 'learn_bread',
+          },
+          {
+            text: 'Biscuits, please!',
+            nextId: 'learn_biscuits',
+          },
+          {
+            text: 'Chocolate cake!',
+            nextId: 'learn_chocolate_cake',
+          },
+          {
+            text: 'Not right now.',
+          },
+        ],
+      },
+      {
+        id: 'learn_crepes',
+        text: 'Crêpes with strawberry jam - delightful! They\'re thin and delicate. I\'ll write down the recipe for you.',
+        responses: [],
+      },
+      {
+        id: 'learn_marzipan',
+        text: 'Marzipan chocolates are a bit tricky, but so rewarding! You\'ll need almonds, sugar, and good dark chocolate. Here\'s the recipe.',
+        responses: [],
+      },
+      {
+        id: 'learn_ice_cream',
+        text: 'Homemade vanilla ice cream - nothing beats it! You\'ll need cream, sugar, vanilla, and patience. I\'ll add it to your book.',
+        responses: [],
+      },
+      {
+        id: 'learn_bread',
+        text: 'Bread is the foundation of cooking! Flour, water, yeast, salt - simple ingredients, but the technique matters. I\'ll teach you.',
+        responses: [],
+      },
+      {
+        id: 'learn_biscuits',
+        text: 'Biscuits are perfect with a cup of tea! Butter, flour, sugar - and they bake up lovely and crisp. Here\'s the recipe.',
+        responses: [],
+      },
+      {
+        id: 'learn_chocolate_cake',
+        text: 'Chocolate cake! Everyone\'s favourite. Rich, moist, and absolutely delicious. I\'ll show you how to make it.',
+        responses: [],
       },
     ],
     animatedStates,
