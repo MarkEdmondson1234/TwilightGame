@@ -20,7 +20,8 @@ import { parseGrid } from '../gridParser';
  * e = Fern (forest floor plant)
  * U = Bush (decorative foliage)
  * P = Path
- * ? = Witch Hut (20x20 SINGLE ANCHOR POINT at center)
+ * [ = Witch Hut Lower (steps, pond) - player walks in front
+ * ] = Witch Hut Upper (tree canopy) - player walks behind
  */
 
 // 30x30 map - witch hut centered at (15, 15)
@@ -39,7 +40,7 @@ YGGGGYGGGGGGGGGGGGGGGGGGGYGGGY
 YGGGGGGGGGGGGGGGGGGGGGGGGGGGGY
 YGGGGGGGYGGGGGGGGGGGYGGGGGGGGY
 YGGGGGGGGGGGGGGGGGGGGGGGGGGGGY
-YoGGGGGGGGGGGGG?GGGGGGGGGGGGGGY
+YoGGGGGGGGGGGGG[]GGGGGGGGGGGGGY
 YGGGGGGGGGGGGGGGGGGGGGGGGGGGGt
 YGGGGGGGGGGGGGGGGGGGGGGGGGGGGY
 YGGGGGGGYGGGGGGGGGGGYGGGGGGGGY

@@ -601,6 +601,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS,  // Render grass underneath for natural ground
   },
+  [TileType.WITCH_HUT_LOWER]: {
+    name: 'Witch Hut (Lower)',
+    color: 'bg-palette-sage',
+    isSolid: false,  // Lower structure - player walks in front
+    image: [],
+    baseType: TileType.GRASS,
+  },
+  [TileType.WITCH_HUT_UPPER]: {
+    name: 'Witch Hut (Upper)',
+    color: 'bg-palette-sage',
+    isSolid: false,  // Upper tree - player walks behind
+    image: [],
+    baseType: TileType.GRASS,
+  },
 };
 
 // === COMPILE-TIME VALIDATION ===
@@ -1122,19 +1136,52 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.WITCH_HUT,
-    spriteWidth: 16,   // 16 tiles wide (upscaled from 640px image for better visibility)
+    spriteWidth: 16,   // 16 tiles wide (upscaled from 896px image for better visibility)
     spriteHeight: 16,  // 16 tiles tall
     offsetX: -8,       // Center horizontally on anchor tile
-    offsetY: -15,      // Extends 15 tiles upward from anchor
+    offsetY: -5,       // Positions door at anchor point (shifted down from -15)
     image: tileAssets.witch_hut,
     isForeground: true,
-    // Collision: Covers main building and pond area (water at bottom)
-    // Full width coverage to prevent walking through water
-    collisionWidth: 12,
-    collisionHeight: 10,
-    collisionOffsetX: -6,   // Center the collision horizontally
-    collisionOffsetY: -10,  // Position to cover building and pond area
+    // DEPRECATED: Use WITCH_HUT_LOWER + WITCH_HUT_UPPER for proper layering
+    collisionWidth: 4,     // Slim to cover just the tree trunk/roof center
+    collisionHeight: 6,    // Upper portion only (roof and upper structure)
+    collisionOffsetX: -2,  // Center the collision on the building (adjusted for 4-tile width)
+    collisionOffsetY: -2,  // Position at roof level (moved down 3 tiles from -5)
     // No transforms - this is a unique magical structure
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+  },
+  {
+    tileType: TileType.WITCH_HUT_LOWER,
+    spriteWidth: 16,   // 16 tiles wide
+    spriteHeight: 8,   // 8 tiles tall (lower half)
+    offsetX: -8,       // Center horizontally on anchor tile
+    offsetY: 3,        // Position lower half below the upper half
+    image: tileAssets.witch_hut_lower,
+    isForeground: false,  // Player appears in front of lower structure
+    // No collision on lower layer - walkable
+    collisionWidth: 0,
+    collisionHeight: 0,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+  },
+  {
+    tileType: TileType.WITCH_HUT_UPPER,
+    spriteWidth: 16,   // 16 tiles wide
+    spriteHeight: 8,   // 8 tiles tall (upper half)
+    offsetX: -9,       // Shift left by 1 tile to align with lower half
+    offsetY: -5,       // Position upper half at same level as original
+    image: tileAssets.witch_hut_upper,
+    isForeground: true,  // Player appears behind tree canopy
+    // Collision on upper layer - tree trunk/canopy
+    collisionWidth: 4,
+    collisionHeight: 6,
+    collisionOffsetX: -2,
+    collisionOffsetY: -2,
     enableFlip: false,
     enableRotation: false,
     enableScale: false,

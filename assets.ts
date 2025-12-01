@@ -81,8 +81,10 @@ export const tileAssets = {
   // Spruce tree assets (evergreen with winter variation)
   spruce_tree: new URL('./public/assets-optimized/tiles/spruce_tree.png', import.meta.url).href,
   spruce_tree_winter: new URL('./public/assets-optimized/tiles/spruce_tree_winter.png', import.meta.url).href,
-  // Witch hut asset (use optimized version - 20x20 tiles, 1280x1280px)
-  witch_hut: new URL('./public/assets-optimized/witchhut/witch_hut.png', import.meta.url).href,
+  // Witch hut assets (split into layers for proper z-ordering)
+  witch_hut: new URL('./public/assets-optimized/witchhut/witch_hut.png', import.meta.url).href,  // DEPRECATED
+  witch_hut_lower: new URL('./public/assets-optimized/witchhut/witch_hut_lower.png', import.meta.url).href,
+  witch_hut_upper: new URL('./public/assets-optimized/witchhut/witch_hut_upper.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance

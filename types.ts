@@ -69,7 +69,9 @@ export enum TileType {
   STOVE,
   // Outdoor structures
   WELL,
-  WITCH_HUT  // Witch's magical house built into a giant tree (20x20 tiles)
+  WITCH_HUT,  // Witch's magical house built into a giant tree (20x20 tiles) - DEPRECATED: Use WITCH_HUT_LOWER + WITCH_HUT_UPPER instead
+  WITCH_HUT_LOWER,  // Lower half of witch hut (steps, pond) - background layer
+  WITCH_HUT_UPPER   // Upper half of witch hut (tree canopy) - foreground layer
 }
 
 export interface Position {

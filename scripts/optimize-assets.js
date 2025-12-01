@@ -32,7 +32,7 @@ const TILE_SIZE = 256;    // Resize tile images to 256x256 (4x game render size,
 const FARMING_PLANT_SIZE = 384; // Larger size for farming plant sprites (crops need to be visible and overlap)
 const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
 const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
-const WITCH_HUT_SIZE = 640; // 10x10 tiles (10 * 64px = 640px) - reduced from 20x20 to prevent browser crashes
+const WITCH_HUT_SIZE = 896; // 14x14 tiles (14 * 64px = 896px) - balanced between quality and performance
 const COMPRESSION_QUALITY = 85; // PNG compression quality
 const HIGH_QUALITY = 95; // Higher quality for detailed furniture
 const SHOP_QUALITY = 98; // Very high quality for shop buildings (minimal compression)
