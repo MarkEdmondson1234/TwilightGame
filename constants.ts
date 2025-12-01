@@ -583,6 +583,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: true,  // Players cannot walk through stoves
     image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   },
+  [TileType.CAMPFIRE]: {
+    name: 'Campfire',
+    color: 'bg-palette-sage',  // Base grass color (shows through transparent parts)
+    isSolid: false,  // Players can walk over campfires (decorative, can use for cooking)
+    image: [],  // No single-tile image for now - can add asset later
+    baseType: TileType.GRASS,  // Render grass underneath for natural ground
+  },
   [TileType.WELL]: {
     name: 'Well',
     color: 'bg-palette-sage',  // Base grass color (shows through transparent parts)

@@ -7,13 +7,15 @@ import { inventoryManager } from '../utils/inventoryManager';
 interface CookingInterfaceProps {
   isOpen: boolean;
   onClose: () => void;
+  locationType: 'stove' | 'campfire';
 }
 
 /**
  * CookingInterface - Modal overlay for the cooking system
  * Shows recipes, ingredients, and allows player to cook
+ * Campfire cooking has 10% higher failure rate than stove
  */
-const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose }) => {
+const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, locationType }) => {
   const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
@@ -54,9 +56,28 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose }) 
   const handleCook = () => {
     if (!recipe) return;
 
-    const result = cookingManager.cook(recipe.id);
-    setCookingResult(result);
-    setShowResult(true);
+    // Campfire has 10% higher failure rate
+    const campfireFailure = locationType === 'campfire' && Math.random() < 0.10;
+
+    if (campfireFailure) {
+      // Cooking failed - ingredients are wasted
+      // Still consume ingredients to make failure meaningful
+      recipe.ingredients.forEach(ing => {
+        inventoryManager.removeItem(ing.itemId, ing.quantity);
+      });
+
+      const result: CookingResult = {
+        success: false,
+        message: `Oh no! The dish burnt on the campfire. Cooking on a campfire is tricky!`,
+      };
+      setCookingResult(result);
+      setShowResult(true);
+    } else {
+      // Normal cooking
+      const result = cookingManager.cook(recipe.id);
+      setCookingResult(result);
+      setShowResult(true);
+    }
 
     // Auto-hide result after 3 seconds
     setTimeout(() => {
@@ -88,9 +109,15 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose }) 
       <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-amber-800 px-4 py-3 border-b-2 border-amber-600 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-amber-200 flex items-center gap-2">
-            <span>🍳</span> Kitchen
-          </h2>
+          <div>
+            <h2 className="text-2xl font-bold text-amber-200 flex items-center gap-2">
+              <span>{locationType === 'campfire' ? '🔥' : '🍳'}</span>
+              {locationType === 'campfire' ? 'Campfire Cooking' : 'Kitchen'}
+            </h2>
+            {locationType === 'campfire' && (
+              <p className="text-amber-300 text-sm mt-1">⚠️ 10% higher chance of failure!</p>
+            )}
+          </div>
           <button
             onClick={onClose}
             className="text-amber-300 hover:text-white transition-colors text-2xl font-bold px-2"
