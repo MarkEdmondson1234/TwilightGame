@@ -16,6 +16,7 @@ import {
   CutsceneCharacter,
   CutsceneDialogue,
   CutsceneLayerAnimation,
+  CutsceneWeatherEffect,
 } from '../types';
 import { cutsceneManager } from '../utils/CutsceneManager';
 import { TimeManager } from '../utils/TimeManager';
@@ -185,6 +186,14 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
             />
           ))}
         </div>
+      )}
+
+      {/* Weather Effect Overlay */}
+      {currentScene.weatherEffect && (
+        <WeatherEffectOverlay
+          effect={currentScene.weatherEffect}
+          isTransitioning={isTransitioning}
+        />
       )}
 
       {/* Dialogue Box (Bottom) - MUST BE ON TOP */}
@@ -476,6 +485,192 @@ const DialogueDisplay: React.FC<DialogueDisplayProps> = ({ dialogue, onAdvance, 
           )}
         </div>
       </div>
+    </div>
+  );
+};
+
+/**
+ * Weather Effect Overlay Component
+ * Renders CSS-based particle effects for cutscenes
+ */
+interface WeatherEffectOverlayProps {
+  effect: CutsceneWeatherEffect;
+  isTransitioning: boolean;
+}
+
+const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isTransitioning }) => {
+  const getParticleCount = (): number => {
+    switch (effect.intensity) {
+      case 'light': return 30;
+      case 'heavy': return 100;
+      case 'medium':
+      default: return 60;
+    }
+  };
+
+  const opacity = isTransitioning ? 0 : (effect.opacity ?? 0.7);
+  const particleCount = getParticleCount();
+
+  // Get effect-specific styles
+  const getEffectStyles = () => {
+    switch (effect.type) {
+      case 'rain':
+        return {
+          particleClass: 'weather-rain',
+          animationDuration: '0.8s',
+          particleStyle: {
+            width: '2px',
+            height: '20px',
+            background: 'linear-gradient(to bottom, rgba(174,194,224,0) 0%, rgba(174,194,224,0.8) 100%)',
+            borderRadius: '0 0 2px 2px',
+          },
+        };
+      case 'snow':
+        return {
+          particleClass: 'weather-snow',
+          animationDuration: '4s',
+          particleStyle: {
+            width: '8px',
+            height: '8px',
+            background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 100%)',
+            borderRadius: '50%',
+            boxShadow: '0 0 4px rgba(255,255,255,0.5)',
+          },
+        };
+      case 'cherry_blossoms':
+        return {
+          particleClass: 'weather-petals',
+          animationDuration: '6s',
+          particleStyle: {
+            width: '12px',
+            height: '12px',
+            background: 'radial-gradient(ellipse at 30% 30%, rgba(255,192,203,0.9) 0%, rgba(255,182,193,0.7) 50%, rgba(255,105,180,0.4) 100%)',
+            borderRadius: '50% 0 50% 50%',
+          },
+        };
+      case 'falling_leaves':
+        return {
+          particleClass: 'weather-leaves',
+          animationDuration: '5s',
+          particleStyle: {
+            width: '14px',
+            height: '10px',
+            background: 'linear-gradient(135deg, rgba(210,105,30,0.9) 0%, rgba(139,69,19,0.8) 50%, rgba(184,134,11,0.7) 100%)',
+            borderRadius: '50% 0',
+          },
+        };
+      case 'fog':
+        return {
+          particleClass: 'weather-fog',
+          animationDuration: '20s',
+          particleStyle: {
+            width: '200px',
+            height: '100px',
+            background: 'radial-gradient(ellipse, rgba(200,200,200,0.3) 0%, rgba(200,200,200,0) 70%)',
+            borderRadius: '50%',
+          },
+        };
+      case 'mist':
+        return {
+          particleClass: 'weather-mist',
+          animationDuration: '15s',
+          particleStyle: {
+            width: '150px',
+            height: '80px',
+            background: 'radial-gradient(ellipse, rgba(220,220,220,0.2) 0%, rgba(220,220,220,0) 70%)',
+            borderRadius: '50%',
+          },
+        };
+      case 'fireflies':
+        return {
+          particleClass: 'weather-fireflies',
+          animationDuration: '3s',
+          particleStyle: {
+            width: '6px',
+            height: '6px',
+            background: 'radial-gradient(circle, rgba(255,255,150,1) 0%, rgba(255,200,50,0.6) 50%, rgba(255,150,0,0) 100%)',
+            borderRadius: '50%',
+            boxShadow: '0 0 8px rgba(255,255,100,0.8), 0 0 16px rgba(255,200,50,0.4)',
+          },
+        };
+      default:
+        return {
+          particleClass: '',
+          animationDuration: '3s',
+          particleStyle: {},
+        };
+    }
+  };
+
+  const { particleClass, animationDuration, particleStyle } = getEffectStyles();
+
+  // Generate particles with random positions and delays
+  const particles = Array.from({ length: particleCount }, (_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    animationDelay: `${Math.random() * parseFloat(animationDuration)}s`,
+    animationDuration: `${parseFloat(animationDuration) * (0.8 + Math.random() * 0.4)}s`,
+  }));
+
+  return (
+    <div
+      className="absolute inset-0 pointer-events-none z-30 overflow-hidden"
+      style={{ opacity, transition: 'opacity 500ms' }}
+    >
+      <style>{`
+        @keyframes weather-fall {
+          0% { transform: translateY(-20px) translateX(0); }
+          100% { transform: translateY(110vh) translateX(20px); }
+        }
+        @keyframes weather-fall-snow {
+          0% { transform: translateY(-20px) translateX(0) rotate(0deg); }
+          50% { transform: translateY(55vh) translateX(-15px) rotate(180deg); }
+          100% { transform: translateY(110vh) translateX(10px) rotate(360deg); }
+        }
+        @keyframes weather-fall-petal {
+          0% { transform: translateY(-20px) translateX(0) rotate(0deg); }
+          25% { transform: translateY(27vh) translateX(-30px) rotate(90deg); }
+          50% { transform: translateY(55vh) translateX(20px) rotate(180deg); }
+          75% { transform: translateY(82vh) translateX(-20px) rotate(270deg); }
+          100% { transform: translateY(110vh) translateX(10px) rotate(360deg); }
+        }
+        @keyframes weather-fall-leaf {
+          0% { transform: translateY(-20px) translateX(0) rotate(0deg) scaleX(1); }
+          25% { transform: translateY(27vh) translateX(-40px) rotate(45deg) scaleX(-1); }
+          50% { transform: translateY(55vh) translateX(30px) rotate(90deg) scaleX(1); }
+          75% { transform: translateY(82vh) translateX(-30px) rotate(135deg) scaleX(-1); }
+          100% { transform: translateY(110vh) translateX(10px) rotate(180deg) scaleX(1); }
+        }
+        @keyframes weather-drift {
+          0% { transform: translateX(-100px); }
+          100% { transform: translateX(calc(100vw + 200px)); }
+        }
+        @keyframes weather-glow {
+          0%, 100% { opacity: 0.2; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        .weather-rain { animation: weather-fall linear infinite; }
+        .weather-snow { animation: weather-fall-snow linear infinite; }
+        .weather-petals { animation: weather-fall-petal ease-in-out infinite; }
+        .weather-leaves { animation: weather-fall-leaf ease-in-out infinite; }
+        .weather-fog, .weather-mist { animation: weather-drift linear infinite; }
+        .weather-fireflies { animation: weather-glow ease-in-out infinite; }
+      `}</style>
+      {particles.map((particle) => (
+        <div
+          key={particle.id}
+          className={`absolute ${particleClass}`}
+          style={{
+            ...particleStyle,
+            left: particle.left,
+            top: effect.type === 'fog' || effect.type === 'mist' || effect.type === 'fireflies'
+              ? `${Math.random() * 80}%`
+              : '-20px',
+            animationDelay: particle.animationDelay,
+            animationDuration: particle.animationDuration,
+          }}
+        />
+      ))}
     </div>
   );
 };

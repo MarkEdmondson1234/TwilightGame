@@ -472,11 +472,21 @@ export interface CutsceneDialogue {
  * Individual scene within a cutscene
  * A cutscene is made up of multiple scenes that transition between each other
  */
+/**
+ * Weather effect overlay for cutscene scenes
+ */
+export interface CutsceneWeatherEffect {
+  type: 'rain' | 'snow' | 'cherry_blossoms' | 'fog' | 'mist' | 'falling_leaves' | 'fireflies';
+  intensity?: 'light' | 'medium' | 'heavy'; // Density of particles (default: medium)
+  opacity?: number; // Overall effect opacity 0-1 (default: 0.7)
+}
+
 export interface CutsceneScene {
   id: string; // Unique identifier for this scene
   backgroundLayers: CutsceneBackgroundLayer[]; // Layered background images
   characters?: CutsceneCharacter[]; // Characters positioned in scene
   dialogue?: CutsceneDialogue; // Dialogue for this scene
+  weatherEffect?: CutsceneWeatherEffect; // Optional weather/particle overlay
   duration?: number; // Optional: auto-advance after X milliseconds (overrides dialogue advance)
   // Scene transition
   transitionOut?: {
