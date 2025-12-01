@@ -20,7 +20,7 @@ interface AnimationOverlayProps {
  * AnimationOverlay - Renders animated GIFs based on tile-based triggers
  *
  * Features:
- * - Automatically finds matching tiles in visible area
+ * - Only iterates visible tiles (not full grid) for performance
  * - Checks seasonal and time-of-day conditions
  * - Supports radius-based placement around trigger tiles
  * - Viewport culling for performance
@@ -36,104 +36,98 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
   // Filter animations for this layer
   const layerAnimations = TILE_ANIMATIONS.filter(anim => anim.layer === layer);
 
+  // Early exit if no animations for this layer
+  if (layerAnimations.length === 0) {
+    return null;
+  }
+
   // Track which animations we've already rendered (to avoid duplicates)
   const renderedAnimations = new Set<string>();
+  const animationElements: React.ReactNode[] = [];
 
-  return (
-    <>
-      {currentMap.grid.map((row, y) =>
-        row.map((_, x) => {
-          // Performance: Skip tiles outside visible viewport (with margin for radius)
-          const margin = 5; // Extra margin to catch nearby trigger tiles
-          if (
-            x < visibleRange.minX - margin ||
-            x > visibleRange.maxX + margin ||
-            y < visibleRange.minY - margin ||
-            y > visibleRange.maxY + margin
-          ) {
-            return null;
+  // Calculate visible range with margin (for animations that extend beyond trigger tile)
+  const margin = 5;
+  const startX = Math.max(0, visibleRange.minX - margin);
+  const endX = Math.min(currentMap.width - 1, visibleRange.maxX + margin);
+  const startY = Math.max(0, visibleRange.minY - margin);
+  const endY = Math.min(currentMap.height - 1, visibleRange.maxY + margin);
+
+  // Only iterate visible tiles (not full grid)
+  for (let y = startY; y <= endY; y++) {
+    for (let x = startX; x <= endX; x++) {
+      const tileData = getTileData(x, y);
+      if (!tileData) continue;
+
+      // Find animations that match this tile type
+      for (const animation of layerAnimations) {
+        if (animation.tileType !== tileData.type) continue;
+
+        // Check conditions
+        if (animation.conditions) {
+          if (animation.conditions.season && animation.conditions.season !== seasonKey) {
+            continue;
           }
+          if (animation.conditions.timeOfDay && animation.conditions.timeOfDay !== timeOfDay) {
+            continue;
+          }
+        }
 
-          const tileData = getTileData(x, y);
-          if (!tileData) return null;
+        // Create unique key based on position (to avoid rendering same animation multiple times)
+        const animKey = `${animation.id}-${x}-${y}`;
 
-          // Find animations that match this tile type
-          const matchingAnimations = layerAnimations.filter(
-            anim => anim.tileType === tileData.type
-          );
+        // Skip if we've already rendered this animation at this position
+        if (renderedAnimations.has(animKey)) {
+          continue;
+        }
+        renderedAnimations.add(animKey);
 
-          return matchingAnimations.map((animation) => {
-            // Check conditions
-            if (animation.conditions) {
-              if (animation.conditions.season && animation.conditions.season !== seasonKey) {
-                return null;
-              }
-              if (animation.conditions.timeOfDay && animation.conditions.timeOfDay !== timeOfDay) {
-                return null;
-              }
-              // Future: weather condition support
-            }
+        // Calculate base position of trigger tile
+        const tileX = x * TILE_SIZE;
+        const tileY = y * TILE_SIZE;
 
-            // Calculate base position of trigger tile
-            const tileX = x * TILE_SIZE;
-            const tileY = y * TILE_SIZE;
+        // Calculate animation position based on offset
+        const scale = animation.scale || 1;
+        const gifSize = 512; // Optimized GIF size
+        const scaledSize = gifSize * scale;
 
-            // Calculate animation position based on offset
-            // Note: GIF images are 512x512px, so we need to center them properly
-            const scale = animation.scale || 1;
-            const gifSize = 512; // Optimized GIF size
-            const scaledSize = gifSize * scale;
+        // Position includes offset from tile center, minus half the scaled GIF size to center it
+        const animX = tileX + (animation.offsetX * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
+        const animY = tileY + (animation.offsetY * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
 
-            // Position includes offset from tile center, minus half the scaled GIF size to center it
-            const animX = tileX + (animation.offsetX * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
-            const animY = tileY + (animation.offsetY * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
+        // Check if animation is within visible bounds (accounting for scale)
+        if (
+          animX + scaledSize < visibleRange.minX * TILE_SIZE ||
+          animX - scaledSize > visibleRange.maxX * TILE_SIZE ||
+          animY + scaledSize < visibleRange.minY * TILE_SIZE ||
+          animY - scaledSize > visibleRange.maxY * TILE_SIZE
+        ) {
+          continue;
+        }
 
-            // Create unique key based on position (to avoid rendering same animation multiple times)
-            const animKey = `${animation.id}-${x}-${y}`;
+        animationElements.push(
+          <img
+            key={animKey}
+            src={animation.image}
+            alt={`Animation ${animation.id}`}
+            className="absolute pointer-events-none"
+            style={{
+              left: animX,
+              top: animY,
+              width: gifSize,
+              height: gifSize,
+              transform: `scale(${scale})`,
+              transformOrigin: 'top left',
+              opacity: animation.opacity ?? 1,
+              pointerEvents: 'none',
+              imageRendering: 'auto',
+            }}
+          />
+        );
+      }
+    }
+  }
 
-            // Skip if we've already rendered this animation at this position
-            if (renderedAnimations.has(animKey)) {
-              return null;
-            }
-            renderedAnimations.add(animKey);
-
-            // Check if animation is within visible bounds (accounting for scale)
-            const estimatedSize = scaledSize;
-            if (
-              animX + estimatedSize < visibleRange.minX * TILE_SIZE ||
-              animX - estimatedSize > visibleRange.maxX * TILE_SIZE ||
-              animY + estimatedSize < visibleRange.minY * TILE_SIZE ||
-              animY - estimatedSize > visibleRange.maxY * TILE_SIZE
-            ) {
-              return null;
-            }
-
-            return (
-              <img
-                key={animKey}
-                src={animation.image}
-                alt={`Animation ${animation.id}`}
-                className="absolute pointer-events-none"
-                style={{
-                  left: animX,
-                  top: animY,
-                  width: gifSize,
-                  height: gifSize,
-                  transform: `scale(${scale})`,
-                  transformOrigin: 'top left', // Scale from top-left since we positioned from there
-                  opacity: animation.opacity ?? 1,
-                  // Prevent interaction
-                  pointerEvents: 'none',
-                  // Ensure smooth animation
-                  imageRendering: 'auto',
-                }}
-              />
-            );
-          });
-        })
-      )}
-    </>
-  );
+  return <>{animationElements}</>;
 };
 
 export default AnimationOverlay;

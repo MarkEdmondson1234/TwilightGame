@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER } from './constants';
 import { Position, Direction } from './types';
@@ -388,13 +388,13 @@ const App: React.FC = () => {
         margin: 1,
     });
 
-    // Create visible range object for rendering
-    const visibleRange = {
+    // Create visible range object for rendering (memoized to prevent unnecessary re-renders)
+    const visibleRange = useMemo(() => ({
         minX: visibleTileMinX,
         maxX: visibleTileMaxX,
         minY: visibleTileMinY,
         maxY: visibleTileMaxY,
-    };
+    }), [visibleTileMinX, visibleTileMaxX, visibleTileMinY, visibleTileMaxY]);
 
     // Get player sprite info (URL and scale)
     const { playerSpriteUrl, spriteScale } = getPlayerSpriteInfo(playerSprites, direction, animationFrame);
@@ -527,13 +527,13 @@ const App: React.FC = () => {
         };
     }, [isMapInitialized]); // Only initialize once when map is ready
 
-    // Update PixiJS renderer when map/camera changes
+    // Update PixiJS tiles when map/viewport/season changes (NOT on every camera move)
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
 
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
-            // Render all layers
+            // Render all layers (only when viewport or map data changes)
             tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
 
             if (backgroundSpriteLayerRef.current) {
@@ -544,28 +544,32 @@ const App: React.FC = () => {
                 foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
             }
 
-            // Update all cameras
-            tileLayerRef.current.updateCamera(cameraX, cameraY);
-
-            if (backgroundSpriteLayerRef.current) {
-                backgroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
-            }
-
-            if (playerSpriteRef.current) {
-                playerSpriteRef.current.updateCamera(cameraX, cameraY);
-            }
-
-            if (foregroundSpriteLayerRef.current) {
-                foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
-            }
-
             // Log sprite count for debugging (only occasionally)
             const stats = tileLayerRef.current.getSpriteCount();
             if (stats.total > 0 && stats.total % 100 === 0) {
                 console.log(`[TileLayer] Sprites: ${stats.visible}/${stats.total} visible`);
             }
         }
-    }, [currentMapId, visibleRange, seasonKey, timeOfDay, cameraX, cameraY, isPixiInitialized, farmUpdateTrigger]);
+    }, [currentMapId, visibleRange, seasonKey, timeOfDay, isPixiInitialized, farmUpdateTrigger]);
+
+    // Update PixiJS camera position (lightweight, runs every frame)
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !isPixiInitialized) return;
+
+        // Camera updates are cheap - just moving container positions
+        if (tileLayerRef.current) {
+            tileLayerRef.current.updateCamera(cameraX, cameraY);
+        }
+        if (backgroundSpriteLayerRef.current) {
+            backgroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
+        }
+        if (playerSpriteRef.current) {
+            playerSpriteRef.current.updateCamera(cameraX, cameraY);
+        }
+        if (foregroundSpriteLayerRef.current) {
+            foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
+        }
+    }, [cameraX, cameraY, isPixiInitialized]);
 
     // Re-render PixiJS when color scheme changes (ColorSchemeEditor updates)
     useEffect(() => {

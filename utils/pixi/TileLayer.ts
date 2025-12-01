@@ -36,18 +36,26 @@ export class TileLayer {
   private sprites: Map<string, PIXI.Sprite | PIXI.Graphics> = new Map();
   private currentMapId: string | null = null;
   private farmUpdateTrigger: number = 0;
+  // Cache of tile types that have multi-tile sprites (O(1) lookup instead of O(n))
+  private static multiTileSpriteTypes: Set<TileType> | null = null;
 
   constructor() {
     this.container = new PIXI.Container();
     this.container.sortableChildren = true; // Enable z-sorting for base tiles
+
+    // Initialize the cache once
+    if (TileLayer.multiTileSpriteTypes === null) {
+      TileLayer.multiTileSpriteTypes = new Set(SPRITE_METADATA.map(meta => meta.tileType));
+    }
   }
 
   /**
    * Check if a tile type has a multi-tile sprite definition
    * Multi-tile sprites are rendered by SpriteLayer, not TileLayer
+   * Uses cached Set for O(1) lookup instead of O(n) array search
    */
   private isMultiTileSprite(tileType: TileType): boolean {
-    return SPRITE_METADATA.some(meta => meta.tileType === tileType);
+    return TileLayer.multiTileSpriteTypes!.has(tileType);
   }
 
   /**

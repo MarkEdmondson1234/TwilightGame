@@ -28,11 +28,18 @@ export class SpriteLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private currentMapId: string | null = null;
   private isForeground: boolean;
+  // Cache max sprite size for viewport margin calculation (shared across instances)
+  private static maxSpriteSize: number | null = null;
 
   constructor(isForeground: boolean = false) {
     this.container = new PIXI.Container();
     this.container.sortableChildren = true;
     this.isForeground = isForeground;
+
+    // Initialize max sprite size cache once
+    if (SpriteLayer.maxSpriteSize === null) {
+      SpriteLayer.maxSpriteSize = Math.max(...SPRITE_METADATA.map(m => Math.max(m.spriteWidth, m.spriteHeight)));
+    }
   }
 
   /**
@@ -53,9 +60,19 @@ export class SpriteLayer {
     // Track which sprites we've rendered this frame
     const renderedKeys = new Set<string>();
 
-    // Scan visible area for multi-tile sprites
-    for (let y = visibleRange.minY; y <= visibleRange.maxY; y++) {
-      for (let x = visibleRange.minX; x <= visibleRange.maxX; x++) {
+    // Use cached max sprite dimensions for proper margin
+    // Large sprites (like witch hut 16x16) need extra search area so their anchor
+    // tiles are found even when the anchor is outside visible range but sprite extends into it
+    const margin = Math.ceil(SpriteLayer.maxSpriteSize! / 2) + 2; // Half sprite size + buffer
+
+    // Scan expanded area for multi-tile sprites (clamped to map bounds)
+    const startY = Math.max(0, visibleRange.minY - margin);
+    const endY = Math.min(map.height - 1, visibleRange.maxY + margin);
+    const startX = Math.max(0, visibleRange.minX - margin);
+    const endX = Math.min(map.width - 1, visibleRange.maxX + margin);
+
+    for (let y = startY; y <= endY; y++) {
+      for (let x = startX; x <= endX; x++) {
         const tileData = getTileData(x, y);
         if (!tileData) continue;
 

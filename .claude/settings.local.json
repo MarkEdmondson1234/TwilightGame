@@ -6,7 +6,9 @@
       "Bash(npm install)",
       "Bash(npm run optimize-assets:*)",
       "Bash(node check-dimensions.js:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "SlashCommand(/test-game)",
+      "Bash(open \"http://localhost:3001/TwilightGame/\")"
     ],
     "deny": [],
     "ask": []
