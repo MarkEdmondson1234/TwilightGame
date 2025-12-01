@@ -72,7 +72,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'npcs'),
     path.join(OPTIMIZED_DIR, 'animations'),
     path.join(OPTIMIZED_DIR, 'cutscenes'),
-    path.join(OPTIMIZED_DIR, 'witchhut')
+    path.join(OPTIMIZED_DIR, 'witchhut'),
+    path.join(OPTIMIZED_DIR, 'cooking')
   ];
 
   dirs.forEach(dir => {
@@ -598,6 +599,54 @@ async function optimizeWitchHut() {
   console.log(`\n  Optimized ${optimized} witch hut asset(s)\n`);
 }
 
+// Optimize cooking/food sprites
+const COOKING_SIZE = 256; // Food images at 256x256 for inventory icons
+async function optimizeCooking() {
+  console.log('🍳 Optimizing cooking sprites...');
+
+  const cookingDir = path.join(ASSETS_DIR, 'cooking');
+  if (!fs.existsSync(cookingDir)) {
+    console.log('⚠️  No cooking sprites found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(cookingDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(cookingDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'cooking', relativePath.replace(/\.jpeg$/i, '.png'));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    await sharp(inputPath)
+      .resize(COOKING_SIZE, COOKING_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ quality: HIGH_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} cooking sprite(s)\n`);
+}
+
 // Main execution
 async function main() {
   try {
@@ -609,6 +658,7 @@ async function main() {
     await optimizeAnimations();
     await optimizeCutscenes();
     await optimizeWitchHut();
+    await optimizeCooking();
 
     console.log('✨ Asset optimization complete!');
     console.log(`📁 Optimized assets saved to: ${OPTIMIZED_DIR}`);

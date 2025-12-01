@@ -253,6 +253,7 @@ const App: React.FC = () => {
         playerPosRef,
         keysPressed,
         onShowCharacterCreator: setShowCharacterCreator,
+        onSetShowCookingUI: setShowCookingUI,
         onSetActiveNPC: setActiveNPC,
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,

@@ -10,6 +10,7 @@ import { farmManager } from '../utils/farmManager';
 import { gameState } from '../GameState';
 import {
     checkMirrorInteraction,
+    checkStoveInteraction,
     checkNPCInteraction,
     checkTransition,
     handleFarmAction,
@@ -222,6 +223,13 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             if (foundMirror) {
                 onShowCharacterCreator(true);
                 return; // Don't check for transitions if we found a mirror
+            }
+
+            // Check for stove interaction (opens cooking interface)
+            const foundStove = checkStoveInteraction(playerPosRef.current);
+            if (foundStove) {
+                onSetShowCookingUI(true);
+                return; // Don't check for other interactions if we found a stove
             }
 
             // Check for NPC interaction

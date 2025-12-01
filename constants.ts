@@ -607,6 +607,11 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: true,  // Has collision box for pond area
     image: [],
     baseType: TileType.GRASS,
+    seasonalImages: {
+      default: [tileAssets.witch_hut_lower],
+      autumn: [tileAssets.witch_hut_autumn_lower],
+      // TODO: Add winter variant
+    },
   },
   [TileType.WITCH_HUT_UPPER]: {
     name: 'Witch Hut (Upper)',
@@ -614,6 +619,11 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: true,  // Has collision box for tree/building
     image: [],
     baseType: TileType.GRASS,
+    seasonalImages: {
+      default: [tileAssets.witch_hut_upper],
+      autumn: [tileAssets.witch_hut_autumn_upper],
+      // TODO: Add winter variant
+    },
   },
 };
 

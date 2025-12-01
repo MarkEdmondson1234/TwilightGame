@@ -27,6 +27,33 @@ export interface TransitionResult {
 }
 
 /**
+ * Check for and handle stove interaction (opens cooking interface)
+ * Checks adjacent tiles for stove
+ */
+export function checkStoveInteraction(playerPos: Position): boolean {
+    const playerTileX = Math.floor(playerPos.x);
+    const playerTileY = Math.floor(playerPos.y);
+
+    const adjacentTiles = [
+        { x: playerTileX, y: playerTileY },
+        { x: playerTileX - 1, y: playerTileY },
+        { x: playerTileX + 1, y: playerTileY },
+        { x: playerTileX, y: playerTileY - 1 },
+        { x: playerTileX, y: playerTileY + 1 },
+    ];
+
+    for (const tile of adjacentTiles) {
+        const tileData = getTileData(tile.x, tile.y);
+        if (tileData && tileData.type === TileType.STOVE) {
+            console.log(`[Action] Found stove at (${tile.x}, ${tile.y})`);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Check for and handle mirror interaction (opens character creator)
  * Checks adjacent tiles (including diagonal) for mirrors
  */

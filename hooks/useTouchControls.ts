@@ -9,6 +9,7 @@ import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import {
     checkMirrorInteraction,
+    checkStoveInteraction,
     checkNPCInteraction,
     checkTransition,
     handleFarmAction,
@@ -20,6 +21,7 @@ export interface TouchControlsConfig {
     playerPosRef: MutableRefObject<Position>;
     keysPressed: Record<string, boolean>;
     onShowCharacterCreator: (show: boolean) => void;
+    onSetShowCookingUI: (show: boolean) => void;
     onSetActiveNPC: (npcId: string | null) => void;
     onSetPlayerPos: (pos: Position) => void;
     onMapTransition: (mapId: string, spawnPos: Position) => void;
@@ -33,6 +35,7 @@ export function useTouchControls(config: TouchControlsConfig) {
         playerPosRef,
         keysPressed,
         onShowCharacterCreator,
+        onSetShowCookingUI,
         onSetActiveNPC,
         onSetPlayerPos,
         onMapTransition,
@@ -72,6 +75,13 @@ export function useTouchControls(config: TouchControlsConfig) {
         if (foundMirror) {
             onShowCharacterCreator(true);
             return; // Don't check for transitions if we found a mirror
+        }
+
+        // Check for stove interaction (opens cooking interface)
+        const foundStove = checkStoveInteraction(playerPosRef.current);
+        if (foundStove) {
+            onSetShowCookingUI(true);
+            return; // Don't check for other interactions if we found a stove
         }
 
         // Check for NPC interaction

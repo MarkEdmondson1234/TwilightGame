@@ -85,6 +85,9 @@ export const tileAssets = {
   witch_hut: new URL('./public/assets-optimized/witchhut/witch_hut.png', import.meta.url).href,  // DEPRECATED
   witch_hut_lower: new URL('./public/assets-optimized/witchhut/witch_hut_lower.png', import.meta.url).href,
   witch_hut_upper: new URL('./public/assets-optimized/witchhut/witch_hut_upper.png', import.meta.url).href,
+  // Witch hut autumn variants
+  witch_hut_autumn_lower: new URL('./public/assets-optimized/witchhut/witch_hut_autumn_lower.png', import.meta.url).href,
+  witch_hut_autumn_upper: new URL('./public/assets-optimized/witchhut/witch_hut_autumn_upper.png', import.meta.url).href,
 };
 
 // Farming assets - Use optimized versions for better performance
@@ -96,6 +99,15 @@ export const farmingAssets = {
   plant_pea_young: new URL('./public/assets-optimized/farming/plant_pea_young.png', import.meta.url).href,
   plant_pea_adult: new URL('./public/assets-optimized/farming/plant_pea_adult.png', import.meta.url).href,
   wilted_plant: new URL('./public/assets-optimized/farming/wilted_plant.png', import.meta.url).href,
+};
+
+// Cooking assets - Food items and ingredients
+export const cookingAssets = {
+  cookies: new URL('./public/assets-optimized/cooking/cookies.png', import.meta.url).href,
+  cup_of_tea: new URL('./public/assets-optimized/cooking/cup_of_tea.png', import.meta.url).href,
+  milk: new URL('./public/assets-optimized/cooking/milk.png', import.meta.url).href,
+  roast_dinner: new URL('./public/assets-optimized/cooking/roast_dinner.png', import.meta.url).href,
+  tea: new URL('./public/assets-optimized/cooking/tea.png', import.meta.url).href,
 };
 
 // NPC assets - Use optimized versions for in-game sprites, originals for portraits
