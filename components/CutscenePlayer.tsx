@@ -512,12 +512,13 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
   const particleCount = getParticleCount();
 
   // Get effect-specific styles
+  // Durations are deliberately slow for a gentle, cinematic feel
   const getEffectStyles = () => {
     switch (effect.type) {
       case 'rain':
         return {
           particleClass: 'weather-rain',
-          animationDuration: '0.8s',
+          animationDuration: '2.5s', // Slower rain
           particleStyle: {
             width: '2px',
             height: '20px',
@@ -528,7 +529,7 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       case 'snow':
         return {
           particleClass: 'weather-snow',
-          animationDuration: '4s',
+          animationDuration: '12s', // Very slow, gentle snowfall
           particleStyle: {
             width: '8px',
             height: '8px',
@@ -540,7 +541,7 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       case 'cherry_blossoms':
         return {
           particleClass: 'weather-petals',
-          animationDuration: '6s',
+          animationDuration: '15s', // Slow, dreamy petal fall
           particleStyle: {
             width: '12px',
             height: '12px',
@@ -551,7 +552,7 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       case 'falling_leaves':
         return {
           particleClass: 'weather-leaves',
-          animationDuration: '5s',
+          animationDuration: '12s', // Slow, tumbling leaves
           particleStyle: {
             width: '14px',
             height: '10px',
@@ -562,7 +563,7 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       case 'fog':
         return {
           particleClass: 'weather-fog',
-          animationDuration: '20s',
+          animationDuration: '40s', // Very slow fog drift
           particleStyle: {
             width: '200px',
             height: '100px',
@@ -573,7 +574,7 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       case 'mist':
         return {
           particleClass: 'weather-mist',
-          animationDuration: '15s',
+          animationDuration: '30s', // Slow mist drift
           particleStyle: {
             width: '150px',
             height: '80px',
@@ -584,7 +585,7 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       case 'fireflies':
         return {
           particleClass: 'weather-fireflies',
-          animationDuration: '3s',
+          animationDuration: '5s', // Slower, more gentle glow
           particleStyle: {
             width: '6px',
             height: '6px',
@@ -596,7 +597,7 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       default:
         return {
           particleClass: '',
-          animationDuration: '3s',
+          animationDuration: '8s',
           particleStyle: {},
         };
     }
@@ -620,40 +621,45 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
       <style>{`
         @keyframes weather-fall {
           0% { transform: translateY(-20px) translateX(0); }
-          100% { transform: translateY(110vh) translateX(20px); }
+          100% { transform: translateY(110vh) translateX(10px); }
         }
         @keyframes weather-fall-snow {
           0% { transform: translateY(-20px) translateX(0) rotate(0deg); }
-          50% { transform: translateY(55vh) translateX(-15px) rotate(180deg); }
-          100% { transform: translateY(110vh) translateX(10px) rotate(360deg); }
+          25% { transform: translateY(27vh) translateX(8px) rotate(45deg); }
+          50% { transform: translateY(55vh) translateX(-8px) rotate(90deg); }
+          75% { transform: translateY(82vh) translateX(6px) rotate(135deg); }
+          100% { transform: translateY(110vh) translateX(0) rotate(180deg); }
         }
         @keyframes weather-fall-petal {
           0% { transform: translateY(-20px) translateX(0) rotate(0deg); }
-          25% { transform: translateY(27vh) translateX(-30px) rotate(90deg); }
-          50% { transform: translateY(55vh) translateX(20px) rotate(180deg); }
-          75% { transform: translateY(82vh) translateX(-20px) rotate(270deg); }
-          100% { transform: translateY(110vh) translateX(10px) rotate(360deg); }
+          20% { transform: translateY(22vh) translateX(-15px) rotate(72deg); }
+          40% { transform: translateY(44vh) translateX(12px) rotate(144deg); }
+          60% { transform: translateY(66vh) translateX(-10px) rotate(216deg); }
+          80% { transform: translateY(88vh) translateX(8px) rotate(288deg); }
+          100% { transform: translateY(110vh) translateX(0) rotate(360deg); }
         }
         @keyframes weather-fall-leaf {
           0% { transform: translateY(-20px) translateX(0) rotate(0deg) scaleX(1); }
-          25% { transform: translateY(27vh) translateX(-40px) rotate(45deg) scaleX(-1); }
-          50% { transform: translateY(55vh) translateX(30px) rotate(90deg) scaleX(1); }
-          75% { transform: translateY(82vh) translateX(-30px) rotate(135deg) scaleX(-1); }
-          100% { transform: translateY(110vh) translateX(10px) rotate(180deg) scaleX(1); }
+          20% { transform: translateY(22vh) translateX(-20px) rotate(36deg) scaleX(0.8); }
+          40% { transform: translateY(44vh) translateX(15px) rotate(72deg) scaleX(-0.9); }
+          60% { transform: translateY(66vh) translateX(-12px) rotate(108deg) scaleX(0.85); }
+          80% { transform: translateY(88vh) translateX(10px) rotate(144deg) scaleX(-0.95); }
+          100% { transform: translateY(110vh) translateX(0) rotate(180deg) scaleX(1); }
         }
         @keyframes weather-drift {
-          0% { transform: translateX(-100px); }
-          100% { transform: translateX(calc(100vw + 200px)); }
+          0% { transform: translateX(-100px) translateY(0); }
+          50% { transform: translateX(50vw) translateY(10px); }
+          100% { transform: translateX(calc(100vw + 200px)) translateY(0); }
         }
         @keyframes weather-glow {
-          0%, 100% { opacity: 0.2; transform: scale(0.8); }
-          50% { opacity: 1; transform: scale(1.2); }
+          0%, 100% { opacity: 0.3; transform: scale(0.9); }
+          50% { opacity: 1; transform: scale(1.1); }
         }
         .weather-rain { animation: weather-fall linear infinite; }
-        .weather-snow { animation: weather-fall-snow linear infinite; }
+        .weather-snow { animation: weather-fall-snow ease-in-out infinite; }
         .weather-petals { animation: weather-fall-petal ease-in-out infinite; }
         .weather-leaves { animation: weather-fall-leaf ease-in-out infinite; }
-        .weather-fog, .weather-mist { animation: weather-drift linear infinite; }
+        .weather-fog, .weather-mist { animation: weather-drift ease-in-out infinite; }
         .weather-fireflies { animation: weather-glow ease-in-out infinite; }
       `}</style>
       {particles.map((particle) => (
