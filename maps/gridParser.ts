@@ -49,6 +49,7 @@ export const GRID_CODES: Record<string, TileType> = {
   '!': TileType.FAIRY_OAK_GIANT, // ! = Giant Fairy Oak (enormous 10x10, deep forest only)
   't': TileType.SPRUCE_TREE, // t = spruce Tree (evergreen conifer)
   'y': TileType.WILLOW_TREE, // y = willYw tree (graceful weeping willow)
+  'i': TileType.WILD_IRIS,   // i = Iris (wild iris flower, grows near water)
   // Buildings (outdoor structures)
   'L': TileType.WALL_BOUNDARY,   // L = waLl boundary (brick walls)
   'B': TileType.BUILDING_WALL,   // B = Building wall

@@ -147,16 +147,22 @@ export function checkTransition(playerPos: Position, currentMapId: string | null
     }
 }
 
+export interface FarmActionResult {
+    handled: boolean;
+    message?: string;
+    messageType?: 'info' | 'warning' | 'error' | 'success';
+}
+
 /**
  * Handle farming actions based on current tool and tile
- * Returns true if an action was taken
+ * Returns result with whether action was taken and optional feedback message
  */
 export function handleFarmAction(
     playerPos: Position,
     currentTool: string,
     currentMapId: string,
     onAnimationTrigger?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void
-): boolean {
+): FarmActionResult {
     const playerTileX = Math.floor(playerPos.x);
     const playerTileY = Math.floor(playerPos.y);
     const tileData = getTileData(playerTileX, playerTileY);
@@ -198,9 +204,20 @@ export function handleFarmAction(
                     farmActionTaken = true;
                 } else {
                     console.log(`[Action] Failed to plant: ${plantResult.reason}`);
+                    // Return the failure reason to show to user
+                    return {
+                        handled: false,
+                        message: plantResult.reason,
+                        messageType: 'warning',
+                    };
                 }
             } else {
                 console.log(`[Action] No seed selected`);
+                return {
+                    handled: false,
+                    message: 'Select a seed type first (keys 5-9)',
+                    messageType: 'info',
+                };
             }
         } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
             // Water planted, watered, wilting, or ready crops (watering ready crops keeps them fresh)
@@ -243,11 +260,11 @@ export function handleFarmAction(
             farmManager.updateAllPlots();
             // Save farm state to GameState
             gameState.saveFarmPlots(farmManager.getAllPlots());
-            return true;
+            return { handled: true };
         }
     }
 
-    return false;
+    return { handled: false };
 }
 
 /**

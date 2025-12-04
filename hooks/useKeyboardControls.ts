@@ -17,6 +17,7 @@ import {
     handleForageAction,
     checkCookingLocation,
     ForageResult,
+    FarmActionResult,
 } from '../utils/actionHandlers';
 
 export interface KeyboardControlsConfig {
@@ -39,6 +40,7 @@ export interface KeyboardControlsConfig {
     onFarmUpdate: () => void;
     onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
     onForageResult?: (result: ForageResult) => void;
+    onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
 }
 
 export function useKeyboardControls(config: KeyboardControlsConfig) {
@@ -62,6 +64,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onFarmUpdate,
         onFarmActionAnimation,
         onForageResult,
+        onShowToast,
     } = config;
 
     const handleKeyDown = useRef((e: KeyboardEvent) => {
@@ -211,11 +214,17 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             // Check for farm action first (on current tile)
             if (currentMapId) {
                 const currentTool = gameState.getFarmingTool();
-                const farmActionTaken = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
+                const farmResult = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
 
-                if (farmActionTaken) {
+                if (farmResult.handled) {
                     onFarmUpdate();
                     return; // Don't check for other interactions
+                }
+
+                // Show feedback message if action failed with a reason
+                if (farmResult.message && onShowToast) {
+                    onShowToast(farmResult.message, farmResult.messageType || 'warning');
+                    return; // Don't check for other interactions after showing message
                 }
             }
 

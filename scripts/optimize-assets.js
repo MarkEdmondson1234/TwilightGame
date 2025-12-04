@@ -27,8 +27,8 @@ const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 
 // Configuration - Image Showcase Quality
 // This game prioritises beautiful artwork, so we use higher resolutions than typical games
-const SPRITE_SIZE = 512; // Resize character sprites to 512x512 (higher res to avoid pixelation)
-const NPC_SIZE = 768; // Resize NPC sprites to 768x768 (high res for dialogue portraits - key showcase)
+const SPRITE_SIZE = 1024; // Resize character sprites to 1024x1024 (highest quality - main character is most important)
+const NPC_SIZE = 1024; // Resize NPC sprites to 1024x1024 (match player quality for consistency)
 const TILE_SIZE = 256;    // Resize tile images to 256x256 (4x game render size, preserves detail)
 const FARMING_PLANT_SIZE = 512; // Larger size for farming plant sprites (crops are key visual elements)
 const LARGE_FURNITURE_SIZE = 768; // Larger size for multi-tile furniture like beds, sofas (showcase quality)
@@ -128,7 +128,7 @@ async function generateCharacterSpriteSheets() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for main character
+        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
         .toFile(tempPath);
       resizedFrames.push(tempPath);
     }
@@ -146,7 +146,7 @@ async function generateCharacterSpriteSheets() {
 
         // Save sprite sheet
         await sharp(result.image)
-          .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for main character
+          .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
           .toFile(outputPath);
 
         // Save metadata (frame positions)

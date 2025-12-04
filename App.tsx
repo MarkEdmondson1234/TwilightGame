@@ -52,6 +52,7 @@ import { performanceMonitor } from './utils/PerformanceMonitor';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
 import CookingInterface from './components/CookingInterface';
 import RecipeBook from './components/RecipeBook';
+import Toast, { useToast } from './components/Toast';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
@@ -86,6 +87,9 @@ const App: React.FC = () => {
     }); // Track time-of-day for reactivity (from TimeManager)
 
     const isTouchDevice = useTouchDevice();
+
+    // Toast notifications for user feedback
+    const { messages: toastMessages, showToast, dismissToast } = useToast();
 
     // Use character sprites hook for loading and managing player sprites
     const playerSprites = useCharacterSprites(characterVersion, gameState.getSelectedCharacter());
@@ -259,6 +263,7 @@ const App: React.FC = () => {
                 return newKey;
             });
         },
+        onShowToast: showToast,
     });
 
     // Setup touch controls
@@ -276,6 +281,7 @@ const App: React.FC = () => {
             setFarmActionAnimation(action);
             setFarmActionKey(prev => prev + 1);
         },
+        onShowToast: showToast,
     });
 
     // Setup collision detection
@@ -860,6 +866,9 @@ const App: React.FC = () => {
             {isCutscenePlaying && (
                 <CutscenePlayer onComplete={handleCutsceneComplete} />
             )}
+
+            {/* Toast notifications for user feedback */}
+            <Toast messages={toastMessages} onDismiss={dismissToast} />
         </div>
     );
 };

@@ -427,6 +427,24 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.willow_tree],
     }
   },
+  [TileType.WILD_IRIS]: {
+    name: 'Wild Iris',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: false,  // Walkable - decorative flower
+    baseType: TileType.GRASS,  // Render grass underneath the iris sprite
+    seasonalImages: {
+      spring: [tileAssets.wild_iris_spring],
+      summer: [tileAssets.wild_iris_summer],
+      autumn: [tileAssets.wild_iris_autumn],
+      winter: [tileAssets.wild_iris_winter],
+      default: [tileAssets.wild_iris_summer],
+    },
+    transforms: {
+      enableFlip: true,  // Horizontal flipping for variety
+      enableScale: true,
+      scaleRange: { min: 0.8, max: 1.2 },  // Size variation
+    },
+  },
 
   // Building tiles
   [TileType.WALL_BOUNDARY]: {
@@ -1153,6 +1171,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 },  // Subtle size variation
+  },
+  {
+    tileType: TileType.WILD_IRIS,
+    spriteWidth: 2,    // 2 tiles wide (flowering clump near water)
+    spriteHeight: 2,   // 2 tiles tall
+    offsetX: -0.5,     // Center horizontally on tile
+    offsetY: -1,       // Extends 1 tile upward
+    image: tileAssets.wild_iris_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // No collision - walkable decorative flower
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: variety for natural waterside look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.85, max: 1.15 },  // Size variation for natural look
   },
   {
     tileType: TileType.FAIRY_OAK_GIANT,
