@@ -56,6 +56,23 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.95, max: 1.05 },  // Very subtle size variation (5%)
     },
   },
+  [TileType.TUFT]: {
+    name: 'Tuft Grass',
+    color: 'bg-palette-sage',  // Same background as grass, overridden by map color scheme
+    isSolid: false,
+    seasonalImages: {
+      spring: [tileAssets.tuft_spring],
+      summer: [tileAssets.tuft],  // Default summer tuft
+      autumn: [tileAssets.tuft_autumn],
+      winter: [tileAssets.tuft_winter],
+      default: [tileAssets.tuft],
+    },
+    transforms: {
+      enableFlip: true,  // Horizontal flipping for variety
+      enableScale: true,
+      scaleRange: { min: 0.8, max: 1.4 },  // Varied sizes - some small, some large tufts
+    },
+  },
   [TileType.ROCK]: {
     name: 'Rock',
     color: 'bg-palette-sage',  // Use grass color so rocks blend with ground
@@ -302,10 +319,22 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
   },
   [TileType.BUSH]: {
-    name: 'Bush',
+    name: 'Hawthorn Bush',
     color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
-    image: []  // No image - uses color only so it matches the map's grass color
+    baseType: TileType.GRASS,  // Render grass underneath the bush sprite
+    seasonalImages: {
+      spring: [tileAssets.hawthorn_spring],
+      summer: [tileAssets.hawthorn_summer],
+      autumn: [tileAssets.hawthorn_autumn],
+      winter: [tileAssets.hawthorn_winter],
+      default: [tileAssets.hawthorn_summer],
+    },
+    transforms: {
+      enableFlip: true,  // Horizontal flipping for variety
+      enableScale: true,
+      scaleRange: { min: 0.85, max: 1.15 },  // Slight size variation
+    },
   },
   [TileType.TREE]: {
     name: 'Tree',
@@ -328,31 +357,15 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: true,
     baseType: TileType.GRASS,  // Render grass underneath the cherry tree sprite
     seasonalImages: {
-      spring: [
-        tileAssets.tree_cherry_spring,
-        tileAssets.tree_cherry_spring,
-        tileAssets.tree_cherry_spring,  // Cherry blossoms appear 75% in spring
-        tileAssets.tree_2,
-      ],
+      spring: [tileAssets.tree_cherry_spring],
       summer: [
         tileAssets.tree_cherry_summer_fruit,
-        tileAssets.tree_cherry_summer_fruit,  // Cherry trees with fruit 50% in summer
-        tileAssets.tree_cherry_summer_no_fruit,  // Cherry trees without fruit 25%
-        tileAssets.tree_2,  // Regular trees 25%
+        tileAssets.tree_cherry_summer_fruit,  // Cherry trees with fruit 66%
+        tileAssets.tree_cherry_summer_no_fruit,  // Cherry trees without fruit 33%
       ],
-      autumn: [
-        tileAssets.tree_cherry_autumn,
-        tileAssets.tree_cherry_autumn,
-        tileAssets.tree_cherry_autumn,  // Cherry trees with pink/red foliage 75% in autumn
-        tileAssets.tree_2,  // Regular trees 25%
-      ],
-      winter: [
-        tileAssets.tree_cherry_winter,
-        tileAssets.tree_cherry_winter,
-        tileAssets.tree_cherry_winter,  // Cherry trees with snow 75% in winter
-        tileAssets.tree_2,  // Regular trees 25%
-      ],
-      default: [tileAssets.tree_1, tileAssets.tree_2],  // Fallback
+      autumn: [tileAssets.tree_cherry_autumn],
+      winter: [tileAssets.tree_cherry_winter],
+      default: [tileAssets.tree_cherry_summer_no_fruit],
     }
   },
   [TileType.OAK_TREE]: {
@@ -608,30 +621,6 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS,  // Render grass underneath for natural ground
   },
-  [TileType.WITCH_HUT_LOWER]: {
-    name: 'Witch Hut (Lower)',
-    color: 'bg-palette-sage',
-    isSolid: true,  // Has collision box for pond area
-    image: [],
-    baseType: TileType.GRASS,
-    seasonalImages: {
-      default: [tileAssets.witch_hut_lower],
-      autumn: [tileAssets.witch_hut_autumn_lower],
-      // TODO: Add winter variant
-    },
-  },
-  [TileType.WITCH_HUT_UPPER]: {
-    name: 'Witch Hut (Upper)',
-    color: 'bg-palette-sage',
-    isSolid: true,  // Has collision box for tree/building
-    image: [],
-    baseType: TileType.GRASS,
-    seasonalImages: {
-      default: [tileAssets.witch_hut_upper],
-      autumn: [tileAssets.witch_hut_autumn_upper],
-      // TODO: Add winter variant
-    },
-  },
 };
 
 // === COMPILE-TIME VALIDATION ===
@@ -759,11 +748,11 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.TREE,
-    spriteWidth: 2,  // 2 tiles wide
+    spriteWidth: 3,  // 3 tiles wide
     spriteHeight: 3, // 3 tiles tall
     offsetX: -0.5,   // Center horizontally on tile
     offsetY: -1,     // Extends 2 tiles upward
-    image: tileAssets.tree_2,
+    image: tileAssets.oak_tree_summer,  // Use oak tree (seasonal handled by TILE_LEGEND)
     isForeground: true,
     // Collision only at the base (1x1)
     collisionWidth: 0.2,
@@ -1156,51 +1145,14 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     spriteWidth: 16,   // 16 tiles wide (upscaled from 896px image for better visibility)
     spriteHeight: 16,  // 16 tiles tall
     offsetX: -8,       // Center horizontally on anchor tile
-    offsetY: -5,       // Positions door at anchor point (shifted down from -15)
+    offsetY: -5,       // Positions door at anchor point
     image: tileAssets.witch_hut,
     isForeground: true,
-    // DEPRECATED: Use WITCH_HUT_LOWER + WITCH_HUT_UPPER for proper layering
     collisionWidth: 4,     // Slim to cover just the tree trunk/roof center
     collisionHeight: 6,    // Upper portion only (roof and upper structure)
-    collisionOffsetX: -2,  // Center the collision on the building (adjusted for 4-tile width)
-    collisionOffsetY: -2,  // Position at roof level (moved down 3 tiles from -5)
+    collisionOffsetX: -2,  // Center the collision on the building
+    collisionOffsetY: -2,  // Position at roof level
     // No transforms - this is a unique magical structure
-    enableFlip: false,
-    enableRotation: false,
-    enableScale: false,
-    enableBrightness: false,
-  },
-  {
-    tileType: TileType.WITCH_HUT_LOWER,
-    spriteWidth: 16,   // 16 tiles wide
-    spriteHeight: 8,   // 8 tiles tall (lower half)
-    offsetX: -8,       // Center horizontally on anchor tile
-    offsetY: 3,        // Position lower half below the upper half
-    image: tileAssets.witch_hut_lower,
-    isForeground: false,  // Player appears in front of lower structure
-    // Collision on lower layer - pond only (left of stairs)
-    collisionWidth: 3,
-    collisionHeight: 2,
-    collisionOffsetX: -5,
-    collisionOffsetY: 3,  // Moved up 2 tiles (from 5 to 3)
-    enableFlip: false,
-    enableRotation: false,
-    enableScale: false,
-    enableBrightness: false,
-  },
-  {
-    tileType: TileType.WITCH_HUT_UPPER,
-    spriteWidth: 16,   // 16 tiles wide
-    spriteHeight: 8,   // 8 tiles tall (upper half)
-    offsetX: -9,       // Shift left by 1 tile to align with lower half
-    offsetY: -5,       // Position upper half at same level as original
-    image: tileAssets.witch_hut_upper,
-    isForeground: true,  // Player appears behind tree canopy
-    // Collision on upper layer - tree trunk/canopy (smaller by 2 tiles)
-    collisionWidth: 4,
-    collisionHeight: 4,  // Reduced from 6 to 4
-    collisionOffsetX: -2,
-    collisionOffsetY: -1,  // Moved down 1 tile (from -2 to -1)
     enableFlip: false,
     enableRotation: false,
     enableScale: false,

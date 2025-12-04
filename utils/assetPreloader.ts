@@ -96,7 +96,6 @@ function getTileSpriteUrls(): string[] {
     'grass_1.png', 'grass_2.png',
     'rock_1.png', 'rock_2.png',
     'bush_1.png',
-    'tree_1.png', 'tree_2.png',
     'door_1.png',
     'mushrooms.png',
     'bricks_1.jpeg',

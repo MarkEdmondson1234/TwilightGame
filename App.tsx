@@ -48,6 +48,7 @@ import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnimation';
 import { ALL_CUTSCENES } from './data/cutscenes';
+import { performanceMonitor } from './utils/PerformanceMonitor';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
 import CookingInterface from './components/CookingInterface';
 import RecipeBook from './components/RecipeBook';
@@ -292,6 +293,9 @@ const App: React.FC = () => {
     });
 
     const gameLoop = useCallback(() => {
+        // Start performance measurement for this frame
+        performanceMonitor.frameStart();
+
         // Calculate delta time for frame-rate independent movement
         const now = Date.now();
         const deltaTime = Math.min((now - lastFrameTime.current) / 1000, 0.1); // Cap at 100ms to avoid huge jumps
@@ -311,6 +315,7 @@ const App: React.FC = () => {
 
         // Pause movement when dialogue or cutscene is active
         if (activeNPC || isCutscenePlaying) {
+            performanceMonitor.frameEnd();
             animationFrameId.current = requestAnimationFrame(gameLoop);
             return;
         }
@@ -326,6 +331,8 @@ const App: React.FC = () => {
         // Update player movement (handles input, animation, collision, and position)
         updatePlayerMovement(deltaTime, now);
 
+        // End performance measurement for this frame
+        performanceMonitor.frameEnd();
         animationFrameId.current = requestAnimationFrame(gameLoop);
     }, [updatePlayerMovement, activeNPC, isCutscenePlaying, currentMapId]);
 

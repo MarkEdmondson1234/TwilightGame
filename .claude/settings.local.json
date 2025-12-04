@@ -20,7 +20,9 @@
       "Bash(node -e:*)",
       "Bash(git add:*)",
       "Bash(git restore:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(curl:*)",
+      "Bash(node scripts/perf-test.js:*)"
     ],
     "deny": [],
     "ask": []

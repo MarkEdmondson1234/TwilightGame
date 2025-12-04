@@ -39,6 +39,7 @@ export const GRID_CODES: Record<string, TileType> = {
   '&': TileType.CHIMNEY,  // & = chimney (brick structure)
   '$': TileType.STOVE,    // $ = stove (vertical pipe like $ symbol)
   'U': TileType.BUSH,        // U = bUsh (decorative)
+  'u': TileType.MUSHROOM,    // u = mUshroom (decorative forest floor)
   'e': TileType.FERN,        // e = fErn (forest floor plant)
   'Y': TileType.TREE,        // Y = Tree (looks like a tree top)
   'Z': TileType.TREE_BIG,    // Z = Big tree
@@ -64,9 +65,7 @@ export const GRID_CODES: Record<string, TileType> = {
   // Outdoor structures
   '=': TileType.WELL,            // = = Well (horizontal lines like stone well)
   'q': TileType.CAMPFIRE,        // q = Campfire (looks like fire/smoke)
-  '?': TileType.WITCH_HUT,       // ? = Witch hut (mysterious magical dwelling) - DEPRECATED
-  '[': TileType.WITCH_HUT_LOWER, // [ = Witch hut lower half (steps, pond)
-  ']': TileType.WITCH_HUT_UPPER, // ] = Witch hut upper half (tree canopy)
+  '?': TileType.WITCH_HUT,       // ? = Witch hut (mysterious magical dwelling)
 
 };
 

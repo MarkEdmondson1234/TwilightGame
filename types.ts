@@ -3,6 +3,7 @@ import React from 'react';
 export enum TileType {
   // Outdoor tiles
   GRASS,
+  TUFT,  // Grass with tufts - seasonal variation (replaces 90% of grass)
   ROCK,
   WATER,
   // Lake tiles (directional edges for proper water rendering)
@@ -70,9 +71,7 @@ export enum TileType {
   // Outdoor structures
   WELL,
   CAMPFIRE,  // Campfire for outdoor cooking (higher failure rate than stove)
-  WITCH_HUT,  // Witch's magical house built into a giant tree (20x20 tiles) - DEPRECATED: Use WITCH_HUT_LOWER + WITCH_HUT_UPPER instead
-  WITCH_HUT_LOWER,  // Lower half of witch hut (steps, pond) - background layer
-  WITCH_HUT_UPPER   // Upper half of witch hut (tree canopy) - foreground layer
+  WITCH_HUT,  // Witch's magical house built into a giant tree (16x16 tiles)
 }
 
 export interface Position {
