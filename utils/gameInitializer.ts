@@ -7,6 +7,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { friendshipManager } from './FriendshipManager';
 import { cookingManager } from './CookingManager';
+import { performanceMonitor } from './PerformanceMonitor';
 
 /**
  * Initialize the game on startup
@@ -16,8 +17,10 @@ export async function initializeGame(
     currentMapId: string,
     onMapInitialized: (initialized: boolean) => void
 ): Promise<void> {
-    // Expose gameState to window for palette system
+    // Expose game objects to window for testing/debugging
     (window as any).gameState = gameState;
+    (window as any).mapManager = mapManager;
+    (window as any).__PERF_MONITOR__ = performanceMonitor;
 
     // Load saved custom colors and initialize palette
     const savedColors = gameState.loadCustomColors();

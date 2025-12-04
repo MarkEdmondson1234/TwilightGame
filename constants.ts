@@ -62,10 +62,10 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: false,
     seasonalImages: {
       spring: [tileAssets.tuft_spring],
-      summer: [tileAssets.tuft],  // Default summer tuft
+      summer: [tileAssets.tuft_01, tileAssets.tuft_02],  // Multiple summer variations
       autumn: [tileAssets.tuft_autumn],
       winter: [tileAssets.tuft_winter],
-      default: [tileAssets.tuft],
+      default: [tileAssets.tuft_01, tileAssets.tuft_02],
     },
     transforms: {
       enableFlip: true,  // Horizontal flipping for variety
@@ -412,6 +412,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       autumn: [tileAssets.spruce_tree],
       winter: [tileAssets.spruce_tree_winter],
       default: [tileAssets.spruce_tree],
+    }
+  },
+  [TileType.WILLOW_TREE]: {
+    name: 'Willow Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the willow tree sprite
+    seasonalImages: {
+      spring: [tileAssets.willow_tree],  // Use summer for spring
+      summer: [tileAssets.willow_tree],
+      autumn: [tileAssets.willow_tree_autumn],
+      winter: [tileAssets.willow_tree_winter],
+      default: [tileAssets.willow_tree],
     }
   },
 
@@ -1120,6 +1133,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.85, max: 1.15 },  // More size variation for natural look
+  },
+  {
+    tileType: TileType.WILLOW_TREE,
+    spriteWidth: 3,    // 3 tiles wide (graceful weeping willow)
+    spriteHeight: 3,   // 3 tiles tall
+    offsetX: -1,       // Center horizontally on tile
+    offsetY: -2,       // Extends 2 tiles upward
+    image: tileAssets.willow_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision only at the base trunk (small area)
+    collisionWidth: 0.3,
+    collisionHeight: 0.3,
+    collisionOffsetX: 0.35,
+    collisionOffsetY: 0.35,
+    // Transform controls: subtle variation for graceful trees
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Subtle size variation
   },
   {
     tileType: TileType.FAIRY_OAK_GIANT,

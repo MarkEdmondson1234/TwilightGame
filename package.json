@@ -15,9 +15,11 @@
     "perf": "node scripts/perf-test.js",
     "perf:movement": "node scripts/perf-test.js --scenario movement",
     "perf:stress": "node scripts/perf-test.js --scenario stress",
-    "perf:baseline": "node scripts/perf-test.js --save perf-baseline.json",
-    "perf:compare": "node scripts/perf-test.js --compare perf-baseline.json",
-    "perf:headed": "node scripts/perf-test.js --headed --verbose"
+    "perf:baseline": "node scripts/perf-test.js --duration 15000 --save perf-baseline.json",
+    "perf:compare": "node scripts/perf-test.js --duration 15000 --compare perf-baseline.json",
+    "perf:headed": "node scripts/perf-test.js --headed --verbose",
+    "perf:village": "node scripts/perf-test.js --map village --scenario movement",
+    "perf:help": "node scripts/perf-test.js --help"
   },
   "dependencies": {
     "@pixi/react": "^8.0.3",

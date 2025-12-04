@@ -66,8 +66,9 @@ export const tileAssets = {
   forest_fern1: new URL('./public/assets-optimized/tiles/forest_fern1.png', import.meta.url).href,
   forest_fern2: new URL('./public/assets-optimized/tiles/forest_fern2.png', import.meta.url).href,
   forest_fern3: new URL('./public/assets-optimized/tiles/forest_fern3.png', import.meta.url).href,
-  // Tuft grass assets (seasonal variations)
-  tuft: new URL('./public/assets-optimized/tiles/tuft/tuft.png', import.meta.url).href,
+  // Tuft grass assets (seasonal and style variations)
+  tuft_01: new URL('./public/assets-optimized/tiles/tuft/tuft_01.png', import.meta.url).href,
+  tuft_02: new URL('./public/assets-optimized/tiles/tuft/tuft_02.png', import.meta.url).href,
   tuft_spring: new URL('./public/assets-optimized/tiles/tuft/tuft_spring.png', import.meta.url).href,
   tuft_autumn: new URL('./public/assets-optimized/tiles/tuft/tuft_autumn.png', import.meta.url).href,
   tuft_winter: new URL('./public/assets-optimized/tiles/tuft/tuft_winter.png', import.meta.url).href,
@@ -89,6 +90,10 @@ export const tileAssets = {
   // Spruce tree assets (evergreen with winter variation)
   spruce_tree: new URL('./public/assets-optimized/tiles/spruce_tree.png', import.meta.url).href,
   spruce_tree_winter: new URL('./public/assets-optimized/tiles/spruce_tree_winter.png', import.meta.url).href,
+  // Willow tree assets (seasonal variations)
+  willow_tree: new URL('./public/assets-optimized/tiles/willow/willow_tree.png', import.meta.url).href,
+  willow_tree_autumn: new URL('./public/assets-optimized/tiles/willow/willow_tree_autumn.png', import.meta.url).href,
+  willow_tree_winter: new URL('./public/assets-optimized/tiles/willow/willow_tree_winter.png', import.meta.url).href,
   // Witch hut asset
   witch_hut: new URL('./public/assets-optimized/witchhut/witch_hut.png', import.meta.url).href,
 };

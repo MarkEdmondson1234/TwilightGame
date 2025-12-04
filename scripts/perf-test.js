@@ -39,6 +39,7 @@ const CONFIG = {
   warmupMs: parseInt(getArg('warmup') || '5000', 10),
   durationMs: parseInt(getArg('duration') || '10000', 10),
   scenario: getArg('scenario') || 'idle',
+  map: getArg('map'), // e.g., 'village', 'deep_forest', 'witch_hut'
   saveFile: getArg('save'),
   compareFile: getArg('compare'),
   headed: hasArg('headed'),
@@ -77,24 +78,121 @@ function logMetric(name, value, unit = '', threshold = null) {
 async function waitForGame(page) {
   log('Waiting for game to initialise...', 'dim');
 
-  // Wait for the canvas or game container to appear
+  // First wait for the page to fully load
+  try {
+    await page.waitForFunction(
+      () => document.readyState === 'complete',
+      { timeout: 10000 }
+    );
+    log('  Page loaded', 'dim');
+  } catch (e) {
+    log('  Page load timeout, continuing...', 'yellow');
+  }
+
+  // Wait a bit for React to hydrate
+  await new Promise(r => setTimeout(r, 2000));
+
+  // Check for and skip character creation screen
+  await skipCharacterCreation(page);
+
+  // Check what elements are on the page
+  const pageInfo = await page.evaluate(() => {
+    const canvas = document.querySelector('canvas');
+    const divs = document.querySelectorAll('div').length;
+    const hasPerf = typeof window.__PERF_MONITOR__ !== 'undefined';
+    const hasMapManager = typeof window.mapManager !== 'undefined';
+    return {
+      hasCanvas: !!canvas,
+      divCount: divs,
+      hasPerfMonitor: hasPerf,
+      hasMapManager: hasMapManager,
+    };
+  });
+
+  // Always log in headless mode since we can't see the browser
+  log(`  Canvas: ${pageInfo.hasCanvas}, Divs: ${pageInfo.divCount}, PerfMonitor: ${pageInfo.hasPerfMonitor}, MapManager: ${pageInfo.hasMapManager}`, 'dim');
+
+  // Wait for the canvas OR a substantial DOM OR the mapManager to be ready
+  // The mapManager being ready indicates the game has fully initialized
   await page.waitForFunction(
     () => {
-      // Check for PixiJS canvas or DOM game container
       const canvas = document.querySelector('canvas');
-      const gameContainer = document.querySelector('[class*="game"]');
-      return canvas || gameContainer;
+      const divs = document.querySelectorAll('div').length;
+      const hasMapManager = typeof window.mapManager !== 'undefined';
+      const hasPerfMonitor = typeof window.__PERF_MONITOR__ !== 'undefined';
+      // Game is ready if: canvas exists, OR lots of divs, OR mapManager is ready
+      return canvas || divs > 50 || (hasMapManager && hasPerfMonitor);
     },
     { timeout: 30000 }
   );
+  log('  Game container found', 'dim');
 
-  // Wait for performance monitor to be available
+  // Wait for performance monitor to be available (should already be true but double-check)
   await page.waitForFunction(
     () => typeof window.__PERF_MONITOR__ !== 'undefined',
-    { timeout: 30000 }
+    { timeout: 5000 }
   );
+  log('  Performance monitor ready', 'dim');
+
+  // Wait a bit for the game loop to start
+  await new Promise(r => setTimeout(r, 1000));
 
   log('Game initialised!', 'green');
+}
+
+async function skipCharacterCreation(page) {
+  log('  Checking for character creation screen...', 'dim');
+
+  // Look for "Start Game" or similar button
+  const clicked = await page.evaluate(() => {
+    // Look for buttons with common start game text
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const startButton = buttons.find(
+      (btn) =>
+        btn.textContent?.toLowerCase().includes('start') ||
+        btn.textContent?.toLowerCase().includes('play') ||
+        btn.textContent?.toLowerCase().includes('begin') ||
+        btn.textContent?.toLowerCase().includes('confirm')
+    );
+
+    if (startButton) {
+      startButton.click();
+      return true;
+    }
+    return false;
+  });
+
+  if (clicked) {
+    log('  Clicked start button', 'dim');
+    await new Promise((r) => setTimeout(r, 1000));
+  } else {
+    log('  No start button found (may already be in game)', 'dim');
+  }
+}
+
+async function navigateToMap(page, mapId) {
+  log(`Navigating to map: ${mapId}`, 'cyan');
+
+  // Use the game's map manager to teleport to a specific map
+  const success = await page.evaluate((targetMap) => {
+    // Access the mapManager through the window (if exposed) or through game state
+    if (typeof window.mapManager !== 'undefined') {
+      window.mapManager.loadMap(targetMap);
+      return true;
+    }
+
+    // Try to find and use the transition system
+    // This is a fallback that simulates walking to a transition
+    console.log(`Map navigation requested: ${targetMap}`);
+    return false;
+  }, mapId);
+
+  if (success) {
+    log(`  Loaded map: ${mapId}`, 'dim');
+    await new Promise((r) => setTimeout(r, 1000));
+  } else {
+    log(`  Could not auto-navigate to ${mapId} (use manual movement scenarios)`, 'yellow');
+  }
 }
 
 async function getMetrics(page) {
@@ -143,6 +241,42 @@ async function runScenario(page, scenario) {
         await page.keyboard.press('KeyS');
         await page.keyboard.press('KeyA');
       }
+      break;
+
+    case 'explore':
+      // Move around exploring the map for extended period
+      const directions = ['KeyW', 'KeyD', 'KeyS', 'KeyA'];
+      for (let i = 0; i < 10; i++) {
+        const dir = directions[i % 4];
+        await page.keyboard.down(dir);
+        await new Promise((r) => setTimeout(r, 500));
+        await page.keyboard.up(dir);
+        await new Promise((r) => setTimeout(r, 100));
+      }
+      break;
+
+    case 'diagonal':
+      // Diagonal movement (common in games)
+      await page.keyboard.down('KeyW');
+      await page.keyboard.down('KeyD');
+      await new Promise((r) => setTimeout(r, 2000));
+      await page.keyboard.up('KeyW');
+      await page.keyboard.up('KeyD');
+      await page.keyboard.down('KeyS');
+      await page.keyboard.down('KeyA');
+      await new Promise((r) => setTimeout(r, 2000));
+      await page.keyboard.up('KeyS');
+      await page.keyboard.up('KeyA');
+      break;
+
+    case 'npc':
+      // Walk to and interact with NPCs (uses E key)
+      await page.keyboard.down('KeyW');
+      await new Promise((r) => setTimeout(r, 500));
+      await page.keyboard.up('KeyW');
+      await page.keyboard.press('KeyE');
+      await new Promise((r) => setTimeout(r, 500));
+      await page.keyboard.press('KeyE');
       break;
 
     default:
@@ -310,10 +444,42 @@ function compareResults(current, baseline) {
 }
 
 async function main() {
+  // Show help if requested
+  if (hasArg('help') || hasArg('h')) {
+    log('\n🎮 TwilightGame Performance Test\n', 'cyan');
+    log('Usage: node scripts/perf-test.js [options]\n', 'reset');
+    log('Options:', 'yellow');
+    log('  --url URL            Dev server URL (default: http://localhost:4000)', 'dim');
+    log('  --warmup MS          Warmup time in ms (default: 5000)', 'dim');
+    log('  --duration MS        Test duration in ms (default: 10000)', 'dim');
+    log('  --scenario NAME      Test scenario (default: idle)', 'dim');
+    log('  --map ID             Map to test on (e.g., village, deep_forest)', 'dim');
+    log('  --save FILE          Save results to JSON file', 'dim');
+    log('  --compare FILE       Compare results against baseline JSON', 'dim');
+    log('  --headed             Show browser window', 'dim');
+    log('  --verbose            Show detailed output', 'dim');
+    log('\nScenarios:', 'yellow');
+    log('  idle               Just let the game run (default)', 'dim');
+    log('  movement           Move in all 4 directions', 'dim');
+    log('  continuous-movement  Keep moving diagonally', 'dim');
+    log('  explore            Explore around the map', 'dim');
+    log('  diagonal           Diagonal movement patterns', 'dim');
+    log('  stress             Rapid input stress test', 'dim');
+    log('  npc                Walk and interact with NPCs', 'dim');
+    log('\nExamples:', 'yellow');
+    log('  npm run perf                              # Basic test', 'dim');
+    log('  npm run perf -- --map village --duration 30000', 'dim');
+    log('  npm run perf -- --scenario stress --headed', 'dim');
+    log('  npm run perf:baseline                     # Save baseline', 'dim');
+    log('  npm run perf:compare                      # Compare to baseline', 'dim');
+    log('');
+    process.exit(0);
+  }
+
   log('\n🎮 TwilightGame Performance Test\n', 'cyan');
   log(`URL: ${CONFIG.url}`, 'dim');
   log(`Warmup: ${CONFIG.warmupMs / 1000}s | Duration: ${CONFIG.durationMs / 1000}s`, 'dim');
-  log(`Scenario: ${CONFIG.scenario}`, 'dim');
+  log(`Scenario: ${CONFIG.scenario}${CONFIG.map ? ` on map: ${CONFIG.map}` : ''}`, 'dim');
   log(`Mode: ${CONFIG.headed ? 'Headed (visible)' : 'Headless'}`, 'dim');
   log('');
 
@@ -327,6 +493,10 @@ async function main() {
         '--enable-precise-memory-info', // Enable detailed memory metrics
         '--disable-gpu-vsync', // Disable vsync for consistent measurements
         '--disable-frame-rate-limit', // Remove frame rate cap
+        '--enable-webgl', // Enable WebGL for PixiJS
+        '--use-gl=swiftshader', // Software rendering for headless WebGL
+        '--disable-software-rasterizer',
+        '--no-sandbox', // Required for some CI environments
       ],
     });
 
@@ -350,6 +520,11 @@ async function main() {
 
     // Wait for game to initialise
     await waitForGame(page);
+
+    // Navigate to specific map if requested
+    if (CONFIG.map) {
+      await navigateToMap(page, CONFIG.map);
+    }
 
     // Warmup period
     log(`Warming up for ${CONFIG.warmupMs / 1000}s...`, 'dim');

@@ -22,7 +22,10 @@
       "Bash(git restore:*)",
       "Bash(git reset:*)",
       "Bash(curl:*)",
-      "Bash(node scripts/perf-test.js:*)"
+      "Bash(node scripts/perf-test.js:*)",
+      "Skill(skill-builder)",
+      "Bash(/Users/mark/.claude/skills/skill-builder/scripts/create_skill.sh:*)",
+      "Skill(profile-game)"
     ],
     "deny": [],
     "ask": []

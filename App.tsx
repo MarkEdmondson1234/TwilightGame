@@ -293,8 +293,8 @@ const App: React.FC = () => {
     });
 
     const gameLoop = useCallback(() => {
-        // Start performance measurement for this frame
-        performanceMonitor.frameStart();
+        // Track frame-to-frame timing for performance metrics
+        performanceMonitor.tick();
 
         // Calculate delta time for frame-rate independent movement
         const now = Date.now();
@@ -315,7 +315,6 @@ const App: React.FC = () => {
 
         // Pause movement when dialogue or cutscene is active
         if (activeNPC || isCutscenePlaying) {
-            performanceMonitor.frameEnd();
             animationFrameId.current = requestAnimationFrame(gameLoop);
             return;
         }
@@ -331,8 +330,6 @@ const App: React.FC = () => {
         // Update player movement (handles input, animation, collision, and position)
         updatePlayerMovement(deltaTime, now);
 
-        // End performance measurement for this frame
-        performanceMonitor.frameEnd();
         animationFrameId.current = requestAnimationFrame(gameLoop);
     }, [updatePlayerMovement, activeNPC, isCutscenePlaying, currentMapId]);
 

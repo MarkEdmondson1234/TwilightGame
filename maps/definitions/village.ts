@@ -48,16 +48,17 @@ import {
  * J = Cherry Tree (seasonal tree with blossoms/fruit)
  * o = Oak Tree (seasonal oak tree)
  * t = Spruce Tree (evergreen conifer)
+ * y = Willow Tree (graceful weeping willow)
  * = = Well (stone well, 2x2 sprite with winter variation)
  */
 
 const gridString = `
-oLULYoLtULoLtULUUULLUoLLYULJL
+oLULYoLtULoLtULUUULLUoLLyULJL
 LoGGGGGZGGGPGGoGGGGGGGZeGG^^L
-tGGGGGGGGGGPGGGGkGGGXXXGG<WWW
+tGGGGGGGGGGPGGGGkGGGXXXyG<WWW
 LGGGGGGGGGGPGGGGGGGGXXXeG<WWW
 oGoGGGGKGGGPGGGGsGGGGGGGG<WWW
-YtGGGGGPPPPPPPPPPPPGGGGeG<WWW
+YtGGGGGPPPPPPPPPPPPGGGGyG<WWW
 oGGGGGGPGGGGGGGPGGGGGGGGGGvvv
 LGGGGGGPGGGGGGGPGGGGGGGeUGGGL
 tGGGGGGPGGGGGGGPGGGGGGGGRGRGe

@@ -2,17 +2,15 @@
  * PerformanceMonitor - Tracks game performance metrics for profiling
  *
  * Metrics tracked:
- * - FPS (frames per second)
- * - Frame time (ms per frame)
+ * - FPS (frames per second) - based on frame-to-frame timing
+ * - Frame time (ms per frame) - time between successive frames
  * - Frame time variance (jank detection)
  * - JS heap size (memory)
  * - Sprite/node counts
  *
  * Usage:
- *   // In game loop:
- *   performanceMonitor.frameStart();
- *   // ... game logic ...
- *   performanceMonitor.frameEnd();
+ *   // In game loop (call once per frame):
+ *   performanceMonitor.tick();
  *
  *   // Get current metrics:
  *   const metrics = performanceMonitor.getMetrics();
@@ -53,10 +51,9 @@ const SAMPLE_SIZE = 60; // Track last 60 frames for averages
 
 class PerformanceMonitor {
   private frameTimes: number[] = [];
-  private lastFrameStart: number = 0;
+  private lastTickTime: number = 0;
   private startTime: number = 0;
   private frameCount: number = 0;
-  private isRunning: boolean = false;
   private snapshots: PerformanceSnapshot[] = [];
 
   // External counts (set by renderers)
@@ -68,27 +65,39 @@ class PerformanceMonitor {
   }
 
   /**
-   * Call at the start of each frame
+   * Call once per frame to measure frame-to-frame timing.
+   * This measures the actual time between successive frames,
+   * which accurately represents FPS.
    */
-  frameStart(): void {
-    this.lastFrameStart = performance.now();
-    this.isRunning = true;
+  tick(): void {
+    const now = performance.now();
+
+    if (this.lastTickTime > 0) {
+      const frameTime = now - this.lastTickTime;
+      this.frameTimes.push(frameTime);
+      this.frameCount++;
+
+      // Keep only last SAMPLE_SIZE frames
+      if (this.frameTimes.length > SAMPLE_SIZE) {
+        this.frameTimes.shift();
+      }
+    }
+
+    this.lastTickTime = now;
   }
 
   /**
-   * Call at the end of each frame
+   * @deprecated Use tick() instead. Kept for backwards compatibility.
+   */
+  frameStart(): void {
+    this.tick();
+  }
+
+  /**
+   * @deprecated No longer needed with tick(). Kept for backwards compatibility.
    */
   frameEnd(): void {
-    if (!this.isRunning || this.lastFrameStart === 0) return;
-
-    const frameTime = performance.now() - this.lastFrameStart;
-    this.frameTimes.push(frameTime);
-    this.frameCount++;
-
-    // Keep only last SAMPLE_SIZE frames
-    if (this.frameTimes.length > SAMPLE_SIZE) {
-      this.frameTimes.shift();
-    }
+    // No-op - tick() handles everything now
   }
 
   /**
@@ -192,7 +201,7 @@ class PerformanceMonitor {
    */
   reset(): void {
     this.frameTimes = [];
-    this.lastFrameStart = 0;
+    this.lastTickTime = 0;
     this.startTime = performance.now();
     this.frameCount = 0;
     this.snapshots = [];
