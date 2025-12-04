@@ -25,16 +25,19 @@ const PUBLIC_DIR = path.join(__dirname, '../public');
 const ASSETS_DIR = path.join(PUBLIC_DIR, 'assets');
 const OPTIMIZED_DIR = path.join(PUBLIC_DIR, 'assets-optimized');
 
-// Configuration
+// Configuration - Image Showcase Quality
+// This game prioritises beautiful artwork, so we use higher resolutions than typical games
 const SPRITE_SIZE = 512; // Resize character sprites to 512x512 (higher res to avoid pixelation)
-const NPC_SIZE = 512; // Resize NPC sprites to 512x512 (higher res for dialogue portraits)
+const NPC_SIZE = 768; // Resize NPC sprites to 768x768 (high res for dialogue portraits - key showcase)
 const TILE_SIZE = 256;    // Resize tile images to 256x256 (4x game render size, preserves detail)
-const FARMING_PLANT_SIZE = 384; // Larger size for farming plant sprites (crops need to be visible and overlap)
-const LARGE_FURNITURE_SIZE = 512; // Larger size for multi-tile furniture like beds
+const FARMING_PLANT_SIZE = 512; // Larger size for farming plant sprites (crops are key visual elements)
+const LARGE_FURNITURE_SIZE = 768; // Larger size for multi-tile furniture like beds, sofas (showcase quality)
+const TREE_SIZE = 1024; // Extra large for trees (major visual elements, worth the extra quality)
 const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
-const WITCH_HUT_SIZE = 896; // 14x14 tiles (14 * 64px = 896px) - balanced between quality and performance
+const WITCH_HUT_SIZE = 1024; // Witch hut at 1024px for best quality (major landmark)
 const COMPRESSION_QUALITY = 85; // PNG compression quality
 const HIGH_QUALITY = 95; // Higher quality for detailed furniture
+const SHOWCASE_QUALITY = 97; // Very high quality for showcase assets (trees, NPCs)
 const SHOP_QUALITY = 98; // Very high quality for shop buildings (minimal compression)
 const WITCH_HUT_QUALITY = 98; // Very high quality for witch hut (large building, minimal compression)
 const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for effects)
@@ -240,8 +243,18 @@ async function optimizeTiles() {
         .png({ quality: SHOP_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
         .toFile(outputPath);
     }
-    // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, etc.) - keep higher resolution and quality
-    else if (file.includes('tree_cherry') || file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
+    // Special handling for trees - highest resolution as they're major visual elements
+    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak')) {
+      await sharp(inputPath)
+        .resize(TREE_SIZE, TREE_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees
+        .toFile(outputPath);
+    }
+    // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, cottages, etc.) - keep higher resolution and quality
+    else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
       await sharp(inputPath)
         .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
           fit: 'contain',
@@ -331,17 +344,19 @@ async function optimizeFarming() {
 
     const originalSize = fs.statSync(inputPath).size;
 
-    // Plant sprites (seedling, pea, wilted) - use larger size for visibility
+    // Plant sprites (seedling, pea, wilted) - use larger size for visibility (showcase quality)
     // Soil sprites (fallow, tilled) - use regular tile size
     const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted');
     const targetSize = isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
+    const targetQuality = isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
+    const targetCompression = isPlantSprite ? 6 : 9;
 
     await sharp(inputPath)
       .resize(targetSize, targetSize, {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
-      .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+      .png({ quality: targetQuality, compressionLevel: targetCompression })
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;
@@ -389,7 +404,7 @@ async function optimizeNPCs() {
       continue;
     }
 
-    // PNGs - resize and compress at higher resolution for dialogue portraits
+    // PNGs - resize and compress at higher resolution for dialogue portraits (key showcase assets)
     const originalSize = fs.statSync(inputPath).size;
 
     await sharp(inputPath)
@@ -397,7 +412,7 @@ async function optimizeNPCs() {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
-      .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for portraits
+      .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for NPCs
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;

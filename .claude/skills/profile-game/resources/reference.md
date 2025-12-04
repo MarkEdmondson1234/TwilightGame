@@ -121,24 +121,46 @@ Exit code: 0 = OK, 1 = regression detected
 
 ## CI Integration
 
-Example GitHub Actions workflow:
+### GitHub Actions Workflow
 
-```yaml
-name: Performance Test
-on: [push]
-jobs:
-  perf:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm run dev &
-      - run: sleep 5
-      - run: npm run perf:compare
+The project includes a full CI workflow at `.github/workflows/performance.yml` that:
+
+1. **Runs on every PR and push to main**
+2. **Injects a test character** - Skips character creation automatically
+3. **Tests on village map** (30x30) with movement scenario
+4. **Compares against baseline** - Downloaded from previous main branch runs
+5. **Posts PR comments** - Shows regression report with emoji indicators
+6. **Updates baseline on merge** - New baseline uploaded for future comparisons
+
+### NPM Scripts for CI
+
+```bash
+# Run CI-style test (used by GitHub Actions)
+npm run perf:ci
+
+# Generate markdown report from results
+npm run perf:report
 ```
+
+### Manual Baseline Workflow
+
+```bash
+# 1. Create baseline before changes
+npm run perf:baseline
+
+# 2. Make code changes...
+
+# 3. Compare against baseline
+npm run perf:compare
+```
+
+### Regression Thresholds
+
+The CI reports regression if:
+- **FPS** drops by more than 10%
+- **Frame Time** increases by more than 15%
+- **Jank (max frame)** increases by more than 50%
+- **Memory growth** increases by more than 25%
 
 ## Troubleshooting
 

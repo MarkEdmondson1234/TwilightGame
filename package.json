@@ -12,13 +12,15 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:run": "vitest run",
-    "perf": "node scripts/perf-test.js",
-    "perf:movement": "node scripts/perf-test.js --scenario movement",
-    "perf:stress": "node scripts/perf-test.js --scenario stress",
-    "perf:baseline": "node scripts/perf-test.js --duration 15000 --save perf-baseline.json",
-    "perf:compare": "node scripts/perf-test.js --duration 15000 --compare perf-baseline.json",
-    "perf:headed": "node scripts/perf-test.js --headed --verbose",
-    "perf:village": "node scripts/perf-test.js --map village --scenario movement",
+    "perf": "node scripts/perf-test.js --map village --scenario movement",
+    "perf:movement": "node scripts/perf-test.js --map village --scenario movement",
+    "perf:stress": "node scripts/perf-test.js --map village --scenario stress",
+    "perf:baseline": "node scripts/perf-test.js --map village --scenario movement --duration 15000 --save perf-baseline.json",
+    "perf:compare": "node scripts/perf-test.js --map village --scenario movement --duration 15000 --compare perf-baseline.json",
+    "perf:headed": "node scripts/perf-test.js --map village --headed --verbose",
+    "perf:village": "node scripts/perf-test.js --map village --scenario explore",
+    "perf:report": "node scripts/perf-report.js",
+    "perf:ci": "node scripts/perf-test.js --map village --scenario movement --duration 15000 --github --save perf-results.json",
     "perf:help": "node scripts/perf-test.js --help"
   },
   "dependencies": {
@@ -40,6 +42,7 @@
     "spritesmith": "^3.5.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "wait-on": "^8.0.5"
   }
 }

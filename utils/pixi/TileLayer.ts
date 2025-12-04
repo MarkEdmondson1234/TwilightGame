@@ -38,6 +38,10 @@ export class TileLayer {
   private farmUpdateTrigger: number = 0;
   // Cache of tile types that have multi-tile sprites (O(1) lookup instead of O(n))
   private static multiTileSpriteTypes: Set<TileType> | null = null;
+  // Cache colors to avoid unnecessary redraws (key -> hex color)
+  private colorCache: Map<string, number> = new Map();
+  // Cache hex color conversions (colorClass -> hex)
+  private static hexColorCache: Map<string, number> = new Map();
 
   constructor() {
     this.container = new PIXI.Container();
@@ -329,12 +333,17 @@ export class TileLayer {
 
   /**
    * Render a solid color tile (for tiles without images)
+   * Uses caching to avoid expensive redraws when color hasn't changed
    */
   private renderColorTile(x: number, y: number, colorClass: string, map: MapDefinition, customKey?: string): void {
     const key = customKey || `${x},${y}`;
 
-    // Convert Tailwind class to hex color
+    // Convert Tailwind class to hex color (cached)
     const hexColor = this.getHexFromTailwind(colorClass, map);
+
+    // Check if color has changed since last render
+    const cachedColor = this.colorCache.get(key);
+    const colorChanged = cachedColor !== hexColor;
 
     // Get or create Graphics object
     let graphics = this.sprites.get(key);
@@ -352,11 +361,14 @@ export class TileLayer {
     }
 
     if (graphics instanceof PIXI.Graphics) {
-      // Draw colored rectangle using PixiJS v8 simplified API
-      graphics.clear();
-      graphics.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
-      graphics.fill(hexColor);
-      graphics.zIndex = customKey && customKey.includes('_base') ? -1 : 0;
+      // Only redraw if color changed or graphics was just created
+      if (colorChanged || !cachedColor) {
+        graphics.clear();
+        graphics.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+        graphics.fill(hexColor);
+        graphics.zIndex = customKey && customKey.includes('_base') ? -1 : 0;
+        this.colorCache.set(key, hexColor);
+      }
       graphics.visible = true;
     }
   }
@@ -364,26 +376,38 @@ export class TileLayer {
   /**
    * Convert palette color class to hex color
    * Only supports palette colors: 'bg-palette-sage' → '#87AE73'
+   * Results are cached for performance
    */
   private getHexFromTailwind(colorClass: string, map: MapDefinition): number {
+    // Check cache first
+    const cached = TileLayer.hexColorCache.get(colorClass);
+    if (cached !== undefined) {
+      return cached;
+    }
+
     // Extract palette color name: bg-palette-colorname
     const paletteMatch = colorClass.match(/bg-palette-(\w+)/);
 
+    let result: number;
     if (paletteMatch) {
       const colorName = paletteMatch[1];
       const hex = getColorHex(colorName as any);
 
       if (!hex || hex === '#000000') {
         console.warn(`[TileLayer] Palette color "${colorName}" not found in palette.ts, defaulting to black`);
-        return 0x000000;
+        result = 0x000000;
+      } else {
+        result = parseInt(hex.replace('#', ''), 16);
       }
-
-      return parseInt(hex.replace('#', ''), 16);
+    } else {
+      // If not a palette color, warn and default to black
+      console.warn(`[TileLayer] Invalid color format: "${colorClass}" - must use bg-palette-* format`);
+      result = 0x000000;
     }
 
-    // If not a palette color, warn and default to black
-    console.warn(`[TileLayer] Invalid color format: "${colorClass}" - must use bg-palette-* format`);
-    return 0x000000;
+    // Cache the result
+    TileLayer.hexColorCache.set(colorClass, result);
+    return result;
   }
 
   /**
@@ -411,6 +435,7 @@ export class TileLayer {
   clear(): void {
     this.sprites.forEach(sprite => sprite.destroy());
     this.sprites.clear();
+    this.colorCache.clear(); // Clear color cache when map changes
     console.log('[TileLayer] Cleared all sprites');
   }
 

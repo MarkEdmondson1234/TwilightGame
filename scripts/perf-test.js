@@ -35,7 +35,7 @@ const getArg = (name) => {
 const hasArg = (name) => args.includes(`--${name}`);
 
 const CONFIG = {
-  url: getArg('url') || 'http://localhost:4000',
+  url: getArg('url') || 'http://localhost:4000/TwilightGame/',
   warmupMs: parseInt(getArg('warmup') || '5000', 10),
   durationMs: parseInt(getArg('duration') || '10000', 10),
   scenario: getArg('scenario') || 'idle',
@@ -44,7 +44,11 @@ const CONFIG = {
   compareFile: getArg('compare'),
   headed: hasArg('headed'),
   verbose: hasArg('verbose'),
+  github: hasArg('github'), // GitHub Actions output mode
 };
+
+// Check if running in GitHub Actions
+const isGitHubActions = process.env.GITHUB_ACTIONS === 'true' || CONFIG.github;
 
 // ANSI colour codes for terminal output
 const colours = {
@@ -143,56 +147,155 @@ async function waitForGame(page) {
 async function skipCharacterCreation(page) {
   log('  Checking for character creation screen...', 'dim');
 
-  // Look for "Start Game" or similar button
-  const clicked = await page.evaluate(() => {
-    // Look for buttons with common start game text
-    const buttons = Array.from(document.querySelectorAll('button'));
-    const startButton = buttons.find(
-      (btn) =>
-        btn.textContent?.toLowerCase().includes('start') ||
-        btn.textContent?.toLowerCase().includes('play') ||
-        btn.textContent?.toLowerCase().includes('begin') ||
-        btn.textContent?.toLowerCase().includes('confirm')
-    );
+  // Try multiple times to find and click start button
+  let attempts = 0;
+  const maxAttempts = 5;
 
-    if (startButton) {
-      startButton.click();
-      return true;
+  while (attempts < maxAttempts) {
+    const clicked = await page.evaluate(() => {
+      // Look for buttons with common start game text
+      const buttons = Array.from(document.querySelectorAll('button'));
+      const startButton = buttons.find(
+        (btn) =>
+          btn.textContent?.toLowerCase().includes('start') ||
+          btn.textContent?.toLowerCase().includes('play') ||
+          btn.textContent?.toLowerCase().includes('begin') ||
+          btn.textContent?.toLowerCase().includes('confirm')
+      );
+
+      if (startButton) {
+        startButton.click();
+        return true;
+      }
+      return false;
+    });
+
+    if (clicked) {
+      log('  Clicked start button', 'dim');
+      await new Promise((r) => setTimeout(r, 1500));
+
+      // Verify we're in the game by checking for game elements
+      const inGame = await verifyInGame(page);
+      if (inGame) {
+        log('  Verified: Now in game world', 'dim');
+        return;
+      }
     }
-    return false;
-  });
 
-  if (clicked) {
-    log('  Clicked start button', 'dim');
-    await new Promise((r) => setTimeout(r, 1000));
-  } else {
-    log('  No start button found (may already be in game)', 'dim');
+    attempts++;
+    await new Promise((r) => setTimeout(r, 500));
   }
+
+  // Check if we're already in game
+  const inGame = await verifyInGame(page);
+  if (inGame) {
+    log('  Already in game world', 'dim');
+  } else {
+    log('  Warning: Could not verify game state', 'yellow');
+  }
+}
+
+async function verifyInGame(page) {
+  return await page.evaluate(() => {
+    // Check for signs we're in the actual game:
+    // 1. MapManager has a current map loaded
+    // 2. No character creator modal visible
+    // 3. Game container exists
+
+    const hasMapManager = typeof window.mapManager !== 'undefined';
+    const hasCurrentMap = hasMapManager && window.mapManager.getCurrentMap();
+    const hasCharacterCreator = document.querySelector('[class*="character-creator"]') ||
+                                 document.querySelector('button')?.textContent?.toLowerCase().includes('start');
+
+    // We're in game if we have a map and no character creator
+    return hasCurrentMap && !hasCharacterCreator;
+  });
 }
 
 async function navigateToMap(page, mapId) {
   log(`Navigating to map: ${mapId}`, 'cyan');
 
   // Use the game's map manager to teleport to a specific map
-  const success = await page.evaluate((targetMap) => {
-    // Access the mapManager through the window (if exposed) or through game state
+  const result = await page.evaluate((targetMap) => {
+    // Access the mapManager through the window (if exposed)
     if (typeof window.mapManager !== 'undefined') {
-      window.mapManager.loadMap(targetMap);
-      return true;
+      try {
+        window.mapManager.loadMap(targetMap);
+        const currentMap = window.mapManager.getCurrentMap();
+        return {
+          success: true,
+          mapId: currentMap?.id || 'unknown',
+          mapSize: currentMap ? `${currentMap.width}x${currentMap.height}` : 'unknown',
+        };
+      } catch (e) {
+        return { success: false, error: e.message };
+      }
     }
-
-    // Try to find and use the transition system
-    // This is a fallback that simulates walking to a transition
-    console.log(`Map navigation requested: ${targetMap}`);
-    return false;
+    return { success: false, error: 'mapManager not available' };
   }, mapId);
 
-  if (success) {
-    log(`  Loaded map: ${mapId}`, 'dim');
+  if (result.success) {
+    log(`  Loaded map: ${result.mapId} (${result.mapSize})`, 'dim');
     await new Promise((r) => setTimeout(r, 1000));
   } else {
-    log(`  Could not auto-navigate to ${mapId} (use manual movement scenarios)`, 'yellow');
+    log(`  Could not navigate to ${mapId}: ${result.error}`, 'yellow');
   }
+}
+
+async function logCurrentGameState(page) {
+  const state = await page.evaluate(() => {
+    const mapManager = window.mapManager;
+    const currentMap = mapManager?.getCurrentMap();
+
+    return {
+      hasMapManager: !!mapManager,
+      currentMapId: currentMap?.id || 'none',
+      mapSize: currentMap ? `${currentMap.width}x${currentMap.height}` : 'N/A',
+      hasPerfMonitor: typeof window.__PERF_MONITOR__ !== 'undefined',
+    };
+  });
+
+  log(`  Game state: Map=${state.currentMapId} (${state.mapSize}), PerfMonitor=${state.hasPerfMonitor}`, 'dim');
+  return state;
+}
+
+/**
+ * Set up a test character in localStorage to skip character creation
+ * This needs to be done BEFORE navigating to the game
+ */
+async function setupTestCharacter(page, url) {
+  // Navigate to the origin first to set localStorage
+  const origin = new URL(url).origin;
+  await page.goto(origin, { waitUntil: 'domcontentloaded' });
+
+  // Pre-made test character and game state
+  const testGameState = {
+    selectedCharacter: {
+      characterId: 'character1',
+      name: 'TestPlayer',
+      skin: 'light',
+      hairStyle: 'short',
+      hairColor: 'brown',
+      eyeColor: 'blue',
+      clothesStyle: 'shirt',
+      clothesColor: 'green',
+      shoesStyle: 'boots',
+      shoesColor: 'brown',
+      glasses: 'none',
+      weapon: 'sword',
+    },
+    gold: 100,
+    forestDepth: 0,
+    caveDepth: 0,
+    currentMapId: 'village',
+    playerPosition: { x: 15, y: 15 },
+  };
+
+  await page.evaluate((state) => {
+    localStorage.setItem('twilight_game_state', JSON.stringify(state));
+  }, testGameState);
+
+  log('  Injected test character into localStorage', 'dim');
 }
 
 async function getMetrics(page) {
@@ -392,6 +495,52 @@ function printResults(results) {
   }
 
   log('\n========================================\n', 'cyan');
+
+  // GitHub Actions output
+  if (isGitHubActions) {
+    printGitHubSummary(results);
+  }
+}
+
+function printGitHubSummary(results) {
+  // Output GitHub Actions Job Summary
+  const summary = `
+## Performance Test Results
+
+| Metric | Value | Status |
+|--------|-------|--------|
+| **FPS (avg)** | ${results.fps.avg} fps | ${results.fps.avg >= 55 ? ':white_check_mark:' : results.fps.avg >= 30 ? ':warning:' : ':x:'} |
+| **FPS (min)** | ${results.fps.min} fps | ${results.fps.min >= 45 ? ':white_check_mark:' : results.fps.min >= 20 ? ':warning:' : ':x:'} |
+| **Frame Time (avg)** | ${results.frameTime.avg} ms | ${results.frameTime.avg <= 20 ? ':white_check_mark:' : results.frameTime.avg <= 33 ? ':warning:' : ':x:'} |
+| **Jank (worst)** | ${results.jank.maxFrameTime} ms | ${results.jank.maxFrameTime <= 50 ? ':white_check_mark:' : ':warning:'} |
+${results.memory ? `| **Memory Growth** | ${results.memory.growthMB} MB | ${results.memory.growthMB <= 10 ? ':white_check_mark:' : ':warning:'} |` : ''}
+`;
+
+  // Write to GitHub step summary if available
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    writeFileSync(process.env.GITHUB_STEP_SUMMARY, summary, { flag: 'a' });
+    console.log('Wrote summary to GITHUB_STEP_SUMMARY');
+  }
+
+  // Output annotations for warnings/errors
+  if (results.fps.avg < 30) {
+    console.log(`::error::Critical: Average FPS (${results.fps.avg}) is below 30 fps`);
+  } else if (results.fps.avg < 45) {
+    console.log(`::warning::Average FPS (${results.fps.avg}) is below target (45 fps)`);
+  }
+
+  if (results.jank.maxFrameTime > 100) {
+    console.log(`::warning::High jank detected: ${results.jank.maxFrameTime}ms worst frame`);
+  }
+
+  if (results.memory && results.memory.growthMB > 20) {
+    console.log(`::warning::High memory growth: ${results.memory.growthMB}MB during test`);
+  }
+
+  // Set output variables
+  console.log(`::set-output name=fps::${results.fps.avg}`);
+  console.log(`::set-output name=frame_time::${results.frameTime.avg}`);
+  console.log(`::set-output name=jank::${results.jank.maxFrameTime}`);
 }
 
 function compareResults(current, baseline) {
@@ -508,6 +657,10 @@ async function main() {
     // Enable performance metrics
     await page.setCacheEnabled(false);
 
+    // Inject pre-made character into localStorage to skip character creation
+    log('Setting up test character...', 'dim');
+    await setupTestCharacter(page, CONFIG.url);
+
     // Navigate to game
     log(`Navigating to ${CONFIG.url}...`, 'dim');
     try {
@@ -521,9 +674,14 @@ async function main() {
     // Wait for game to initialise
     await waitForGame(page);
 
-    // Navigate to specific map if requested
-    if (CONFIG.map) {
-      await navigateToMap(page, CONFIG.map);
+    // Log current game state
+    await logCurrentGameState(page);
+
+    // Navigate to specific map if requested, otherwise use village for CI
+    const targetMap = CONFIG.map || (isGitHubActions ? 'village' : null);
+    if (targetMap) {
+      await navigateToMap(page, targetMap);
+      await logCurrentGameState(page);
     }
 
     // Warmup period
