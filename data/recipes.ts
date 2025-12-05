@@ -1,3 +1,5 @@
+import { cookingAssets } from '../assets';
+
 /**
  * Recipe definitions for the cooking system
  *
@@ -18,6 +20,10 @@
 
 export type RecipeCategory = 'starter' | 'tutorial' | 'savoury' | 'dessert' | 'baking';
 
+// Cooking domains for skill progression (excludes starter/tutorial)
+export type CookingDomain = 'savoury' | 'dessert' | 'baking';
+export const COOKING_DOMAINS: CookingDomain[] = ['savoury', 'dessert', 'baking'];
+
 export interface RecipeIngredient {
   itemId: string;
   quantity: number;
@@ -37,6 +43,7 @@ export interface RecipeDefinition {
   friendshipValue: number;   // How much friendship when gifted
   unlockRequirement?: string; // Recipe ID that must be mastered first
   teacherNpc?: string;       // NPC ID who teaches this recipe
+  image?: string;            // Optional image URL for the recipe
 }
 
 /**
@@ -54,12 +61,14 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     ingredients: [
       { itemId: 'tea_leaves', quantity: 1 },
       { itemId: 'water', quantity: 1 },
+      { itemId: 'milk', quantity: 1 },
     ],
     cookingTime: 10,
     difficulty: 1,
     resultItemId: 'food_tea',
     resultQuantity: 1,
     friendshipValue: 5,
+    image: cookingAssets.cup_of_tea,
   },
 
   // ===== TUTORIAL RECIPES (Mother teaches) =====
@@ -335,4 +344,18 @@ export function getFoodFriendshipBonus(recipeCategory: RecipeCategory, npcId: st
   if (!preferences) return 1.0;
 
   return preferences.includes(recipeCategory) ? 2.0 : 1.0;
+}
+
+/**
+ * Check if a category is a cooking domain (for skill progression)
+ */
+export function isCookingDomain(category: RecipeCategory): category is CookingDomain {
+  return COOKING_DOMAINS.includes(category as CookingDomain);
+}
+
+/**
+ * Get all recipes in a specific cooking domain
+ */
+export function getRecipesByDomain(domain: CookingDomain): RecipeDefinition[] {
+  return Object.values(RECIPES).filter(recipe => recipe.category === domain);
 }

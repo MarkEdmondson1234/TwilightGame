@@ -26,7 +26,18 @@
       "Skill(skill-builder)",
       "Bash(/Users/mark/.claude/skills/skill-builder/scripts/create_skill.sh:*)",
       "Skill(profile-game)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(taskkill:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(mcp__chrome-devtools__new_page:*)",
+      "Bash(open \"http://localhost:4002/TwilightGame/\")",
+      "Bash(env)",
+      "Bash(powershell:*)",
+      "Bash(netstat:*)",
+      "Bash(npm run perf:*)",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

@@ -7,9 +7,10 @@ import { TileLayer } from './utils/pixi/TileLayer';
 import { PlayerSprite } from './utils/pixi/PlayerSprite';
 import { SpriteLayer } from './utils/pixi/SpriteLayer';
 import { WeatherLayer } from './utils/pixi/WeatherLayer';
+import { PlacedItemsLayer } from './utils/pixi/PlacedItemsLayer';
 import { WeatherManager } from './utils/WeatherManager';
 import { shouldShowWeather } from './data/weatherConfig';
-import { tileAssets, farmingAssets } from './assets';
+import { tileAssets, farmingAssets, cookingAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -42,6 +43,7 @@ import TransitionIndicators from './components/TransitionIndicators';
 import TileRenderer from './components/TileRenderer';
 import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
+import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
 import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
@@ -81,6 +83,7 @@ const App: React.FC = () => {
     const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
     const [farmActionAnimation, setFarmActionAnimation] = useState<FarmActionType | null>(null); // Current farm action animation
     const [farmActionKey, setFarmActionKey] = useState(0); // Force animation retrigger for same action type
+    const [placedItemsUpdateTrigger, setPlacedItemsUpdateTrigger] = useState(0); // Force re-render when placed items change
     const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
         const time = TimeManager.getCurrentTime();
         return time.timeOfDay === 'Day' ? 'day' : 'night';
@@ -107,6 +110,7 @@ const App: React.FC = () => {
     const tileLayerRef = useRef<TileLayer | null>(null);
     const backgroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
     const playerSpriteRef = useRef<PlayerSprite | null>(null);
+    const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
     const foregroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
     const weatherLayerRef = useRef<WeatherLayer | null>(null);
     const weatherManagerRef = useRef<WeatherManager | null>(null);
@@ -191,6 +195,9 @@ const App: React.FC = () => {
             }
             // Update React state for WeatherTintOverlay
             setCurrentWeather(state.weather);
+
+            // Trigger re-render when placed items change
+            setPlacedItemsUpdateTrigger(prev => prev + 1);
         });
 
         return unsubscribe;
@@ -451,9 +458,13 @@ const App: React.FC = () => {
 
                 pixiAppRef.current = app;
 
-                // Preload all tile and farming textures
+                // Preload all tile, farming, and cooking textures
                 console.log('[App] Preloading textures...');
-                await textureManager.loadBatch({ ...tileAssets, ...farmingAssets });
+                await textureManager.loadBatch({
+                    ...tileAssets,
+                    ...farmingAssets,
+                    ...cookingAssets
+                });
 
                 // Create tile layer
                 const tileLayer = new TileLayer();
@@ -469,6 +480,11 @@ const App: React.FC = () => {
                 const playerSprite = new PlayerSprite();
                 playerSpriteRef.current = playerSprite;
                 app.stage.addChild(playerSprite.getContainer());
+
+                // Create placed items layer (food items, dropped objects - above player)
+                const placedItemsLayer = new PlacedItemsLayer();
+                placedItemsLayerRef.current = placedItemsLayer;
+                app.stage.addChild(placedItemsLayer.getContainer());
 
                 // Create foreground sprite layer (furniture over player)
                 const foregroundSpriteLayer = new SpriteLayer(true);
@@ -507,10 +523,13 @@ const App: React.FC = () => {
                 if (currentMap) {
                     tileLayer.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
                     backgroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                    const placedItems = gameState.getPlacedItems(currentMapId);
+                    placedItemsLayer.renderItems(placedItems, visibleRange);
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     tileLayer.updateCamera(cameraX, cameraY);
                     backgroundSpriteLayer.updateCamera(cameraX, cameraY);
                     playerSprite.updateCamera(cameraX, cameraY);
+                    placedItemsLayer.updateCamera(cameraX, cameraY);
                     foregroundSpriteLayer.updateCamera(cameraX, cameraY);
                 }
 
@@ -563,6 +582,11 @@ const App: React.FC = () => {
                 backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
             }
 
+            if (placedItemsLayerRef.current) {
+                const placedItems = gameState.getPlacedItems(currentMapId);
+                placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
+            }
+
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
             }
@@ -573,7 +597,7 @@ const App: React.FC = () => {
                 console.log(`[TileLayer] Sprites: ${stats.visible}/${stats.total} visible`);
             }
         }
-    }, [currentMapId, visibleRange, seasonKey, timeOfDay, isPixiInitialized, farmUpdateTrigger]);
+    }, [currentMapId, visibleRange, seasonKey, timeOfDay, isPixiInitialized, farmUpdateTrigger, placedItemsUpdateTrigger]);
 
     // Update PixiJS camera position (lightweight, runs every frame)
     useEffect(() => {
@@ -588,6 +612,9 @@ const App: React.FC = () => {
         }
         if (playerSpriteRef.current) {
             playerSpriteRef.current.updateCamera(cameraX, cameraY);
+        }
+        if (placedItemsLayerRef.current) {
+            placedItemsLayerRef.current.updateCamera(cameraX, cameraY);
         }
         if (foregroundSpriteLayerRef.current) {
             foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
@@ -608,6 +635,12 @@ const App: React.FC = () => {
             // Update background sprite layer
             if (backgroundSpriteLayerRef.current) {
                 backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+            }
+
+            // Update placed items layer
+            if (placedItemsLayerRef.current) {
+                const placedItems = gameState.getPlacedItems(currentMapId);
+                placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
             }
 
             // Update foreground sprite layer
@@ -729,6 +762,16 @@ const App: React.FC = () => {
                             imageRendering: 'pixelated',
                             zIndex: Math.floor(playerPos.y) * 10, // Depth sorting with sprites/NPCs
                         }}
+                    />
+                )}
+
+                {/* Render Placed Items (food, decorations) - Between player and foreground */}
+                {!USE_PIXI_RENDERER && (
+                    <PlacedItems
+                        key={`placed-items-${placedItemsUpdateTrigger}`}
+                        items={gameState.getPlacedItems(currentMap.id)}
+                        cameraX={cameraX}
+                        cameraY={cameraY}
                     />
                 )}
 
@@ -861,6 +904,20 @@ const App: React.FC = () => {
                 <RecipeBook
                     isOpen={showRecipeBook}
                     onClose={() => setShowRecipeBook(false)}
+                    playerPosition={playerPos}
+                    currentMapId={currentMap.id}
+                    nearbyNPCs={(() => {
+                        // Get NPCs within 2 tiles of player
+                        const range = 2;
+                        const npcs = npcManager.getCurrentMapNPCs();
+                        return npcs
+                            .filter(npc => {
+                                const dx = Math.abs(npc.position.x - playerPos.x);
+                                const dy = Math.abs(npc.position.y - playerPos.y);
+                                return dx <= range && dy <= range;
+                            })
+                            .map(npc => npc.id);
+                    })()}
                 />
             )}
             {isCutscenePlaying && (

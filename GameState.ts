@@ -10,7 +10,7 @@
  * - Quest/achievement progress
  */
 
-import { FarmPlot, NPCFriendship } from './types';
+import { FarmPlot, NPCFriendship, PlacedItem } from './types';
 import { GameTime } from './utils/TimeManager';
 
 export interface CharacterCustomization {
@@ -104,6 +104,9 @@ export interface GameState {
     npcFriendships: NPCFriendship[];
   };
 
+  // Placed items (food, decorations, etc. on maps)
+  placedItems: PlacedItem[];
+
   // Cooking system (managed by CookingManager)
   cooking: {
     unlockedRecipes: string[];
@@ -113,6 +116,11 @@ export interface GameState {
       isMastered: boolean;
       unlockedAt: number;
     }>;
+  };
+
+  // Status effects
+  statusEffects: {
+    feelingSick: boolean;  // Prevents leaving village, acquired from eating terrible food
   };
 }
 
@@ -229,6 +237,18 @@ class GameStateManager {
           parsed.cooking = { unlockedRecipes: [], recipeProgress: {} };
         }
 
+        // Migrate old save data that doesn't have status effects
+        if (!parsed.statusEffects) {
+          console.log('[GameState] Migrating old save data - adding status effects');
+          parsed.statusEffects = { feelingSick: false };
+        }
+
+        // Migrate old save data that doesn't have placed items
+        if (!parsed.placedItems) {
+          console.log('[GameState] Migrating old save data - adding placed items');
+          parsed.placedItems = [];
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -273,9 +293,13 @@ class GameStateManager {
       relationships: {
         npcFriendships: [],
       },
+      placedItems: [],
       cooking: {
         unlockedRecipes: [],
         recipeProgress: {},
+      },
+      statusEffects: {
+        feelingSick: false,
       },
     };
   }
@@ -665,6 +689,31 @@ class GameStateManager {
     return this.state.cooking || null;
   }
 
+  // === Status Effects Methods ===
+
+  /**
+   * Set feeling sick status (prevents leaving village)
+   */
+  setFeelingSick(value: boolean): void {
+    this.state.statusEffects.feelingSick = value;
+    this.notify();
+  }
+
+  /**
+   * Check if player is feeling sick
+   */
+  isFeelingSick(): boolean {
+    return this.state.statusEffects.feelingSick;
+  }
+
+  /**
+   * Clear feeling sick status
+   */
+  clearFeelingSickStatus(): void {
+    this.state.statusEffects.feelingSick = false;
+    this.notify();
+  }
+
   resetState(): void {
     this.state = {
       selectedCharacter: null,
@@ -688,9 +737,36 @@ class GameStateManager {
       weatherDriftSpeed: 1.0,
       cutscenes: { completed: [] },
       relationships: { npcFriendships: [] },
+      placedItems: [],
       cooking: { unlockedRecipes: [], recipeProgress: {} },
+      statusEffects: { feelingSick: false },
     };
     console.log('[GameState] State reset');
+    this.notify();
+  }
+
+  // === Placed Items Methods ===
+
+  /**
+   * Add a placed item to the current map
+   */
+  addPlacedItem(item: PlacedItem): void {
+    this.state.placedItems.push(item);
+    this.notify();
+  }
+
+  /**
+   * Get all placed items for a specific map
+   */
+  getPlacedItems(mapId: string): PlacedItem[] {
+    return this.state.placedItems.filter(item => item.mapId === mapId);
+  }
+
+  /**
+   * Remove a placed item by ID
+   */
+  removePlacedItem(itemId: string): void {
+    this.state.placedItems = this.state.placedItems.filter(item => item.id !== itemId);
     this.notify();
   }
 
