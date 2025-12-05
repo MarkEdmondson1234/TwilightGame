@@ -1,20 +1,28 @@
 import React, { useState, useMemo } from 'react';
 import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../data/recipes';
 import { getItem } from '../data/items';
-import { cookingManager } from '../utils/CookingManager';
+import { cookingManager, CookingResult } from '../utils/CookingManager';
+import { inventoryManager } from '../utils/inventoryManager';
+import { gameState } from '../GameState';
+import { PlacedItem } from '../types';
 
 interface RecipeBookProps {
   isOpen: boolean;
   onClose: () => void;
+  playerPosition?: { x: number; y: number };
+  currentMapId?: string;
+  nearbyNPCs?: string[]; // IDs of NPCs near the player
 }
 
 /**
  * RecipeBook - Modal for viewing all recipes and discovery
  * Shows locked recipes as hints for players to discover
  */
-const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose }) => {
+const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition, currentMapId, nearbyNPCs = [] }) => {
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
   const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
+  const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
+  const [showResult, setShowResult] = useState(false);
 
   // Get all recipes grouped by category
   const allRecipes = useMemo(() => {
@@ -46,6 +54,95 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose }) => {
       return prereq ? `Master "${prereq.displayName}" first` : 'Complete prerequisite recipe';
     }
     return 'Discover through gameplay';
+  };
+
+  // Get detailed cooking instructions for specific recipes
+  const getRecipeInstructions = (recipeId: string): string[] | null => {
+    const instructions: Record<string, string[]> = {
+      tea: [
+        'Boil some water.',
+        'Add a tea bag to a cup, and pour boiling water over it.',
+        'Let it sit for 6 minutes.',
+        'Dispose of the tea bag, and add some milk - and the tea is done. Presto!',
+      ],
+    };
+    return instructions[recipeId] || null;
+  };
+
+  // Handle cooking from recipe book
+  const handleCook = (recipeId: string) => {
+    const isNearMum = nearbyNPCs.some(npcId => npcId.includes('mum'));
+
+    let result: CookingResult;
+
+    // If near Mum and cooking Tea, create food directly without consuming ingredients
+    if (isNearMum && recipeId === 'tea') {
+      const recipe = getRecipe(recipeId);
+      if (recipe) {
+        // Add the food item to inventory
+        inventoryManager.addItem(recipe.resultItemId, recipe.resultQuantity);
+
+        result = {
+          success: true,
+          message: `Cooked ${recipe.resultQuantity}× ${recipe.displayName} with Mum's help!`,
+          foodProduced: {
+            itemId: recipe.resultItemId,
+            quantity: recipe.resultQuantity,
+          },
+        };
+      } else {
+        result = { success: false, message: 'Recipe not found.' };
+      }
+    } else {
+      // Normal cooking with ingredients
+      result = cookingManager.cook(recipeId);
+    }
+
+    setCookingResult(result);
+    setShowResult(true);
+
+    // If cooking succeeded and we have position/map info, place the food sprite
+    if (result.success && result.foodProduced && playerPosition && currentMapId) {
+      const recipe = getRecipe(recipeId);
+      if (recipe?.image) {
+        // Place the food item near the player (1 tile in front)
+        const placedItem: PlacedItem = {
+          id: `food_${Date.now()}_${Math.random()}`,
+          itemId: result.foodProduced.itemId,
+          position: {
+            x: Math.round(playerPosition.x),
+            y: Math.round(playerPosition.y) - 1, // Place 1 tile above player
+          },
+          mapId: currentMapId,
+          image: recipe.image,
+          timestamp: Date.now(),
+        };
+        gameState.addPlacedItem(placedItem);
+        console.log('[RecipeBook] Placed food sprite:', placedItem);
+        console.log('[RecipeBook] All placed items after adding:', gameState.getPlacedItems(currentMapId));
+      }
+    }
+
+    // Auto-hide result after 3 seconds
+    setTimeout(() => {
+      setShowResult(false);
+      setCookingResult(null);
+    }, 3000);
+  };
+
+  // Check if player has ingredients OR is near Mum (can cook Tea for free)
+  const canCook = (recipeId: string) => {
+    // If player is near Mum NPC, they can cook Tea for free
+    const isNearMum = nearbyNPCs.some(npcId => npcId.includes('mum'));
+    if (isNearMum && recipeId === 'tea') {
+      return true;
+    }
+    // Otherwise, check if they have the ingredients
+    return cookingManager.hasIngredients(recipeId);
+  };
+
+  const hasIngredients = (recipeId: string) => {
+    return cookingManager.hasIngredients(recipeId);
   };
 
   // Category filter buttons
@@ -161,6 +258,18 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose }) => {
                     <p className="text-slate-400 text-sm mt-1">{recipe.description}</p>
                   </div>
 
+                  {/* Recipe Image */}
+                  {recipe.image && (
+                    <div className="flex justify-center">
+                      <img
+                        src={recipe.image}
+                        alt={recipe.displayName}
+                        className="rounded-lg border-2 border-teal-600/50 max-w-xs w-full object-contain"
+                        style={{ imageRendering: 'pixelated' }}
+                      />
+                    </div>
+                  )}
+
                   {/* Stats */}
                   <div className="flex flex-wrap gap-3 text-sm">
                     <div className="bg-slate-700/50 px-3 py-2 rounded">
@@ -226,6 +335,27 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose }) => {
                     </div>
                   </div>
 
+                  {/* Instructions (if available) */}
+                  {(() => {
+                    const instructions = getRecipeInstructions(recipe.id);
+                    if (!instructions) return null;
+
+                    return (
+                      <div>
+                        <h4 className="text-teal-300 font-bold mb-2">Instructions</h4>
+                        <div className="bg-slate-700/20 px-4 py-3 rounded">
+                          <ol className="list-decimal list-inside space-y-2 text-slate-200 text-sm">
+                            {instructions.map((step, index) => (
+                              <li key={index} className="leading-relaxed">
+                                {step}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {/* Result */}
                   <div className="bg-green-900/30 px-3 py-2 rounded border border-green-700/50">
                     <span className="text-green-400">Produces:</span>
@@ -233,6 +363,44 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose }) => {
                       {recipe.resultQuantity}× {getItem(recipe.resultItemId)?.displayName || recipe.resultItemId}
                     </span>
                   </div>
+
+                  {/* Cook Button */}
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => handleCook(recipe.id)}
+                      disabled={!canCook(recipe.id)}
+                      className={`px-6 py-3 rounded-lg font-bold text-lg transition-all ${
+                        canCook(recipe.id)
+                          ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg hover:shadow-xl'
+                          : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                      }`}
+                    >
+                      🍳 Cook!
+                    </button>
+                    {!canCook(recipe.id) && !hasIngredients(recipe.id) && (
+                      <p className="text-sm text-slate-400 italic">
+                        You don't have all the ingredients
+                      </p>
+                    )}
+                    {canCook(recipe.id) && !hasIngredients(recipe.id) && nearbyNPCs.some(id => id.includes('mum')) && (
+                      <p className="text-sm text-teal-300 italic">
+                        ✨ Mum is helping you cook!
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Cooking Result Message */}
+                  {showResult && cookingResult && (
+                    <div
+                      className={`px-4 py-3 rounded-lg border-2 text-center font-bold ${
+                        cookingResult.success
+                          ? 'bg-green-900/50 border-green-600 text-green-200'
+                          : 'bg-red-900/50 border-red-600 text-red-200'
+                      }`}
+                    >
+                      {cookingResult.message}
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* Locked Recipe View */

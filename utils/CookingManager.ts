@@ -22,12 +22,63 @@ import {
   getRecipe,
   canUnlockRecipe,
   NPC_FOOD_PREFERENCES,
+  CookingDomain,
+  COOKING_DOMAINS,
+  isCookingDomain,
+  getRecipesByDomain,
 } from '../data/recipes';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 
 // Constants
 const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
+
+// Cooking skill level definitions
+export interface CookingSkillLevel {
+  level: number;
+  name: string;
+  teaFailRate: number;      // Failure rate for tea specifically
+  otherFailRate: number;    // Failure rate for all other recipes
+  description: string;
+}
+
+export const COOKING_SKILL_LEVELS: Record<number, CookingSkillLevel> = {
+  0: {
+    level: 0,
+    name: 'Beginner',
+    teaFailRate: 0.10,
+    otherFailRate: 1.0, // 100% failure (can't cook other recipes)
+    description: 'You can only make tea, and even that goes wrong sometimes.',
+  },
+  1: {
+    level: 1,
+    name: 'Novice',
+    teaFailRate: 0.0,
+    otherFailRate: 0.30,
+    description: 'You\'ve learned your first recipe! Tea is easy now, but other dishes are still challenging.',
+  },
+  2: {
+    level: 2,
+    name: 'Apprentice',
+    teaFailRate: 0.0,
+    otherFailRate: 0.20,
+    description: 'You\'ve mastered one cooking domain. Things are getting easier!',
+  },
+  3: {
+    level: 3,
+    name: 'Cook',
+    teaFailRate: 0.0,
+    otherFailRate: 0.10,
+    description: 'You\'ve mastered two cooking domains. You\'re becoming quite skilled!',
+  },
+  4: {
+    level: 4,
+    name: 'Master Chef',
+    teaFailRate: 0.0,
+    otherFailRate: 0.01,
+    description: 'You\'ve mastered all three cooking domains! You rarely make mistakes now.',
+  },
+};
 
 export interface RecipeProgress {
   recipeId: string;
@@ -46,6 +97,8 @@ export interface CookingResult {
   message: string;
   foodProduced?: { itemId: string; quantity: number };
   masteryAchieved?: boolean;
+  isTerrible?: boolean;      // True if cooking failed and produced terrible food
+  feelingSick?: boolean;     // True if player got sick from making terrible food
 }
 
 class CookingManagerClass {
@@ -136,6 +189,60 @@ class CookingManagerClass {
   }
 
   /**
+   * Get all mastered domains
+   */
+  getMasteredDomains(): CookingDomain[] {
+    const masteredDomains: Set<CookingDomain> = new Set();
+
+    COOKING_DOMAINS.forEach(domain => {
+      if (this.isDomainMastered(domain)) {
+        masteredDomains.add(domain);
+      }
+    });
+
+    return Array.from(masteredDomains);
+  }
+
+  /**
+   * Get count of mastered domains
+   */
+  getMasteredDomainCount(): number {
+    return this.getMasteredDomains().length;
+  }
+
+  /**
+   * Check if a domain is mastered (all recipes in domain are mastered)
+   */
+  isDomainMastered(domain: CookingDomain): boolean {
+    const domainRecipes = getRecipesByDomain(domain);
+    if (domainRecipes.length === 0) return false;
+
+    return domainRecipes.every(recipe => this.isRecipeMastered(recipe.id));
+  }
+
+  /**
+   * Get cooking skill level based on mastered domains and recipes
+   */
+  getCookingSkillLevel(): number {
+    const masteredDomains = this.getMasteredDomainCount();
+    const unlockedCount = this.unlockedRecipes.size;
+
+    if (masteredDomains >= 3) return 4;  // Master Chef
+    if (masteredDomains >= 2) return 3;  // Cook
+    if (masteredDomains >= 1) return 2;  // Apprentice
+    if (unlockedCount > 1) return 1;     // Novice (learned first non-tea recipe)
+    return 0;  // Beginner (only tea)
+  }
+
+  /**
+   * Get current skill info with failure rates
+   */
+  getSkillInfo(): CookingSkillLevel {
+    const level = this.getCookingSkillLevel();
+    return COOKING_SKILL_LEVELS[level];
+  }
+
+  /**
    * Unlock a recipe (player learns it)
    */
   unlockRecipe(recipeId: string): boolean {
@@ -222,8 +329,10 @@ class CookingManagerClass {
   /**
    * Cook a recipe - consumes ingredients and produces food
    * Returns result with success/failure and any produced items
+   * @param recipeId - Recipe to cook
+   * @param campfireBonus - Optional bonus failure rate when cooking at campfire (default 0)
    */
-  cook(recipeId: string): CookingResult {
+  cook(recipeId: string, campfireBonus = 0): CookingResult {
     const recipe = getRecipe(recipeId);
     if (!recipe) {
       return { success: false, message: 'Unknown recipe.' };
@@ -246,48 +355,95 @@ class CookingManagerClass {
       inventoryManager.removeItem(ing.itemId, ing.quantity);
     });
 
-    // Produce food
-    inventoryManager.addItem(recipe.resultItemId, recipe.resultQuantity);
+    // Determine if cooking succeeds based on skill level
+    const skillInfo = this.getSkillInfo();
+    const isTea = recipeId === 'tea';
+    const baseFailRate = isTea ? skillInfo.teaFailRate : skillInfo.otherFailRate;
+    const totalFailRate = Math.min(1.0, baseFailRate + campfireBonus);
+    const cookingFailed = Math.random() < totalFailRate;
 
-    // Update progress
+    // Produce food (normal or terrible)
+    let resultItemId: string;
+    let resultQuantity: number;
+    let feelingSick = false;
+
+    if (cookingFailed) {
+      // Cooking failed - produce terrible food
+      resultItemId = `terrible_${recipe.resultItemId}`;
+      resultQuantity = recipe.resultQuantity;
+      inventoryManager.addItem(resultItemId, resultQuantity);
+
+      // 10% chance of getting sick from terrible food
+      if (Math.random() < 0.10) {
+        feelingSick = true;
+        gameState.setFeelingSick(true);
+        console.log('[CookingManager] 😷 You feel sick from the terrible food...');
+      }
+    } else {
+      // Cooking succeeded - produce normal food
+      resultItemId = recipe.resultItemId;
+      resultQuantity = recipe.resultQuantity;
+      inventoryManager.addItem(resultItemId, resultQuantity);
+    }
+
+    // Update progress (only on success)
     let progress = this.recipeProgress.get(recipeId);
     let masteryAchieved = false;
 
-    if (!progress) {
-      progress = {
-        recipeId,
-        timesCooked: 1,
-        isMastered: false,
-        unlockedAt: 0, // TODO: Get current game day from TimeManager
-      };
-      this.recipeProgress.set(recipeId, progress);
+    if (!cookingFailed) {
+      if (!progress) {
+        progress = {
+          recipeId,
+          timesCooked: 1,
+          isMastered: false,
+          unlockedAt: 0, // TODO: Get current game day from TimeManager
+        };
+        this.recipeProgress.set(recipeId, progress);
+      } else {
+        progress.timesCooked++;
+      }
+
+      // Check for mastery
+      if (!progress.isMastered && progress.timesCooked >= MASTERY_THRESHOLD) {
+        progress.isMastered = true;
+        masteryAchieved = true;
+        console.log(`[CookingManager] 🌟 Mastered recipe: ${recipe.displayName}!`);
+      }
+    }
+
+    // Log result
+    if (cookingFailed) {
+      console.log(`[CookingManager] 💥 Cooking failed! Made terrible ${recipe.displayName}`);
     } else {
-      progress.timesCooked++;
+      console.log(`[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`);
     }
-
-    // Check for mastery
-    if (!progress.isMastered && progress.timesCooked >= MASTERY_THRESHOLD) {
-      progress.isMastered = true;
-      masteryAchieved = true;
-      console.log(`[CookingManager] 🌟 Mastered recipe: ${recipe.displayName}!`);
-    }
-
-    console.log(`[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress.timesCooked}x total)`);
 
     // Save inventory and cooking state
     this.saveInventory();
     this.save();
 
+    // Build result message
+    let message: string;
+    if (cookingFailed) {
+      message = feelingSick
+        ? `You made terrible ${recipe.displayName}... and now you feel sick.`
+        : `You made terrible ${recipe.displayName}. Better luck next time!`;
+    } else {
+      message = masteryAchieved
+        ? `Cooked ${resultQuantity}x ${recipe.displayName}! You've mastered this recipe!`
+        : `Cooked ${resultQuantity}x ${recipe.displayName}!`;
+    }
+
     return {
-      success: true,
-      message: masteryAchieved
-        ? `Cooked ${recipe.resultQuantity}x ${recipe.displayName}! You've mastered this recipe!`
-        : `Cooked ${recipe.resultQuantity}x ${recipe.displayName}!`,
+      success: !cookingFailed,
+      message,
       foodProduced: {
-        itemId: recipe.resultItemId,
-        quantity: recipe.resultQuantity,
+        itemId: resultItemId,
+        quantity: resultQuantity,
       },
       masteryAchieved,
+      isTerrible: cookingFailed,
+      feelingSick,
     };
   }
 

@@ -225,11 +225,29 @@ class FriendshipManagerClass {
    * Give a gift to an NPC
    * Returns the points awarded and a reaction type
    */
-  giveGift(npcId: string, itemId: string, npc?: NPC): { points: number; reaction: 'loved' | 'liked' | 'neutral' } {
+  giveGift(npcId: string, itemId: string, npc?: NPC): { points: number; reaction: 'loved' | 'liked' | 'neutral' | 'disliked' } {
     const item = getItem(itemId);
     if (!item) {
       console.warn(`[FriendshipManager] Unknown item: ${itemId}`);
       return { points: 0, reaction: 'neutral' };
+    }
+
+    // Check if this is terrible food (starts with "terrible_")
+    const isTerrible = itemId.startsWith('terrible_');
+    if (isTerrible) {
+      const isSpecial = this.isSpecialFriend(npcId);
+
+      if (isSpecial) {
+        // Special Friends are understanding and don't lose friendship
+        console.log(`[FriendshipManager] 😅 ${npcId} (Special Friend) tries your terrible food but doesn't mind`);
+        return { points: 0, reaction: 'neutral' };
+      } else {
+        // Regular NPCs lose 1 friendship point
+        const points = -1;
+        this.addPoints(npcId, points, `terrible food gift: ${item.displayName}`);
+        console.log(`[FriendshipManager] 😖 ${npcId} is disgusted by your terrible food (-1 point)`);
+        return { points, reaction: 'disliked' };
+      }
     }
 
     // Check if this is a food item

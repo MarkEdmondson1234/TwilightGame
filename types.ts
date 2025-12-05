@@ -81,6 +81,16 @@ export interface Position {
   y: number;
 }
 
+// Placed item (food, decoration, etc.) that appears on the map
+export interface PlacedItem {
+  id: string;  // Unique ID for this placed item
+  itemId: string;  // Item type (e.g., 'food_tea')
+  position: Position;  // Grid position
+  mapId: string;  // Which map it's on
+  image: string;  // Image URL
+  timestamp: number;  // When it was placed
+}
+
 export enum Direction {
   Up,
   Down,
