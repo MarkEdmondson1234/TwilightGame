@@ -55,7 +55,7 @@ import RecipeBook from './components/RecipeBook';
 import Toast, { useToast } from './components/Toast';
 
 const App: React.FC = () => {
-    const [showCharacterCreator, setShowCharacterCreator] = useState(!gameState.hasSelectedCharacter());
+    const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
     const [isMapInitialized, setIsMapInitialized] = useState(false);
     const [characterVersion, setCharacterVersion] = useState(0); // Track character changes
     const [isCutscenePlaying, setIsCutscenePlaying] = useState(false); // Track cutscene state
