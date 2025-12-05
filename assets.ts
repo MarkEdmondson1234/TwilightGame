@@ -95,6 +95,7 @@ export const tileAssets = {
   willow_tree_autumn: new URL('./public/assets-optimized/tiles/willow/willow_tree_autumn.png', import.meta.url).href,
   willow_tree_winter: new URL('./public/assets-optimized/tiles/willow/willow_tree_winter.png', import.meta.url).href,
   // Wild iris assets (seasonal variations - grows near water)
+  // Optimized at 768x768 with HIGH_QUALITY (keyword: iris in optimize-assets.js)
   wild_iris_spring: new URL('./public/assets-optimized/tiles/wild_iris/iris_spring.png', import.meta.url).href,
   wild_iris_summer: new URL('./public/assets-optimized/tiles/wild_iris/iris_summer.png', import.meta.url).href,
   wild_iris_autumn: new URL('./public/assets-optimized/tiles/wild_iris/iris_autumn.png', import.meta.url).href,

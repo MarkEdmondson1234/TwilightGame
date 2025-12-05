@@ -31,6 +31,7 @@ const SPRITE_SIZE = 1024; // Resize character sprites to 1024x1024 (highest qual
 const NPC_SIZE = 1024; // Resize NPC sprites to 1024x1024 (match player quality for consistency)
 const TILE_SIZE = 256;    // Resize tile images to 256x256 (4x game render size, preserves detail)
 const FARMING_PLANT_SIZE = 512; // Larger size for farming plant sprites (crops are key visual elements)
+const FLOWER_SIZE = 768; // Larger size for decorative flowers like iris (2x2 multi-tile sprites)
 const LARGE_FURNITURE_SIZE = 768; // Larger size for multi-tile furniture like beds, sofas (showcase quality)
 const TREE_SIZE = 1024; // Extra large for trees (major visual elements, worth the extra quality)
 const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
@@ -251,6 +252,16 @@ async function optimizeTiles() {
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees
+        .toFile(outputPath);
+    }
+    // Special handling for decorative flowers (iris, etc.) - 2x2 multi-tile sprites need higher resolution
+    else if (file.includes('iris') || inputPath.includes('wild_iris')) {
+      await sharp(inputPath)
+        .resize(FLOWER_SIZE, FLOWER_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ palette: false, compressionLevel: 6 }) // Force RGBA for smooth gradients
         .toFile(outputPath);
     }
     // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, cottages, etc.) - keep higher resolution and quality

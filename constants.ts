@@ -1134,9 +1134,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.SPRUCE_TREE,
-    spriteWidth: 6,    // 4 tiles wide (towering forest conifer)
+    spriteWidth: 8,    // 4 tiles wide (towering forest conifer)
     spriteHeight: 8,   // 8 tiles tall (proper forest tree)
-    offsetX: -3,     // Center horizontally on tile
+    offsetX: -1,     // Center horizontally on tile
     offsetY: -7,       // Extends 7 tiles upward
     image: tileAssets.spruce_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     isForeground: true,
@@ -1154,8 +1154,8 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.WILLOW_TREE,
-    spriteWidth: 3,    // 3 tiles wide (graceful weeping willow)
-    spriteHeight: 3,   // 3 tiles tall
+    spriteWidth: 8,    // 3 tiles wide (graceful weeping willow)
+    spriteHeight: 8,   // 3 tiles tall
     offsetX: -1,       // Center horizontally on tile
     offsetY: -2,       // Extends 2 tiles upward
     image: tileAssets.willow_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)

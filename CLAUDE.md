@@ -754,6 +754,51 @@ Claude Code has access to Chrome DevTools via MCP (Model Context Protocol) tools
 **Specialized Testing Agent:**
 Claude Code includes a `game-tester` agent (`.claude/agents/game-tester.md`) that uses Chrome DevTools MCP tools to automatically test the game. Use this agent after implementing features or when debugging issues.
 
+## Claude Skills
+
+**IMPORTANT**: Use these skills proactively when the user's request matches the skill's purpose. Skills provide step-by-step workflows for common tasks.
+
+### Available Skills
+
+| Skill | Trigger Phrases | Purpose |
+|-------|-----------------|---------|
+| **dev-server** | "start server", "launch game", "run dev" | Kill old servers, start fresh dev server |
+| **profile-game** | "check performance", "profile", "FPS", "slowdown" | Run headless performance tests |
+| **add-tile-sprite** | "add tile", "new sprite", "add flower", "add tree" | Add tile assets with keyword optimization |
+| **add-npc-sprite** | "add NPC", "new character", "add villager" | Add NPC sprites and factory functions |
+| **add-character-sprite** | "player sprite", "character customization" | Add player character layers |
+| **add-farming-sprite** | "crop sprite", "farming", "soil", "plant" | Add farming system sprites |
+| **add-animation** | "add animation", "particle effect", "weather effect" | Add GIF animations to tiles/weather |
+| **add-pixi-component** | "PixiJS", "WebGL", "particle system", "shader" | Add PixiJS rendering components |
+
+### When to Use Skills
+
+**Use skills when:**
+- User asks to add assets (tiles, NPCs, animations)
+- User reports performance issues (profile-game)
+- User wants to start/restart the dev server
+- The task matches a skill's trigger phrases
+
+**Example usage:**
+- User: "Add a rose flower near the pond" → Use **add-tile-sprite** skill
+- User: "The game is slow" → Use **profile-game** skill
+- User: "Start the game" → Use **dev-server** skill
+- User: "Add rain particles" → Use **add-animation** skill
+
+### Asset Optimization Keywords
+
+When adding new tile types, the optimization script uses **filename keywords** to determine size/quality:
+
+| Keyword | Size | Use Case |
+|---------|------|----------|
+| `tree_`, `oak_`, `willow_` | 1024px | Trees |
+| `iris`, `rose`, flowers | 768px | Decorative flowers (2x2) |
+| `bed`, `sofa`, furniture | 768px | Multi-tile furniture |
+| `shop`, buildings | 1024px | Large buildings |
+| *(default)* | 256px | Regular tiles |
+
+**To add new keywords**: Edit `scripts/optimize-assets.js` in `optimizeTiles()`.
+
 ## Technical Notes
 
 - React 19.2.0 with functional components and hooks

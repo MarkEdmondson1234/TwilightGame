@@ -77,12 +77,24 @@ export const tileAssets = {
 
 **Important**:
 - **ALWAYS use `assets-optimized/` path** for all tiles
-- The optimization script handles different sprite types automatically:
-  - **Single-tile sprites** (grass, rocks): Resized to 128x128, quality 85%
-  - **Multi-tile furniture** (beds, sofas, rugs): Kept at 512x512, quality 95% (less aggressive)
-  - **Textures** (bricks, walls): Center-cropped then resized
+- The optimization script uses a **keyword-based system** to determine size and quality:
 
-**If adding a new multi-tile sprite type** (not bed/sofa/rug/cottage), you may need to update the optimization script to recognize it (see Step 4a below).
+### Optimization Keywords (scripts/optimize-assets.js)
+
+| Keyword | Size | Quality | Use Case |
+|---------|------|---------|----------|
+| `tree_`, `_tree`, `oak_`, `spruce_`, `willow_`, `fairy_oak` | 1024px | 97% SHOWCASE | Trees (major visuals) |
+| `iris`, `wild_iris` | 768px | RGBA | Decorative flowers (2x2) |
+| `shop`, `mine_entrance`, `garden_shed` | 1024px | 98% | Large buildings (6x6) |
+| `witch_hut` | 1024px | 98% | Witch hut building |
+| `bed`, `sofa`, `rug`, `cottage`, `table`, `stove`, `chimney` | 768px | 95% | Multi-tile furniture |
+| `brick` (no `wall`) | 256px crop | 85% | Brick textures |
+| `wall` | 256px | 85% | Wall tiles |
+| *(default)* | 256px | 85% | Regular tiles |
+
+**To add a new keyword**, edit `scripts/optimize-assets.js` and add an `else if` block in `optimizeTiles()`.
+
+**If adding a new multi-tile sprite type** (not in the table above), you MUST update the optimization script to recognize it (see Step 4a below).
 
 ### 3. Add Variations (Optional)
 
@@ -123,28 +135,36 @@ If adding multiple variations of the same tile type:
 
 3. **Random selection happens automatically** - the rendering engine (PixiJS `TileLayer` or DOM `TileRenderer`) uses a deterministic hash to select variations based on tile position.
 
-### 4. Update Optimization Script (Multi-Tile Sprites Only)
+### 4. Update Optimization Script (New Asset Types Only)
 
-**Only needed if adding a NEW type of multi-tile furniture** (e.g., first time adding a wardrobe, table, etc.):
+**Only needed if adding a NEW type** not covered by existing keywords (see table above).
 
-Edit `/scripts/optimize-assets.js` to add your sprite type to the large furniture check (around line 183):
+Edit `/scripts/optimize-assets.js` in the `optimizeTiles()` function (~line 250):
 
+**Example: Adding a new flower type (e.g., "rose"):**
 ```javascript
-// Special handling for large furniture (beds, etc.) - keep higher resolution and quality
-if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('wardrobe')) {
+// Special handling for decorative flowers - 2x2 multi-tile sprites
+else if (file.includes('iris') || file.includes('rose') || inputPath.includes('wild_iris')) {
   await sharp(inputPath)
-    .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
+    .resize(FLOWER_SIZE, FLOWER_SIZE, {
       fit: 'contain',
       background: { r: 0, g: 0, b: 0, alpha: 0 }
     })
-    .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality, less compression
+    .png({ palette: false, compressionLevel: 6 }) // Force RGBA for smooth gradients
     .toFile(outputPath);
 }
 ```
 
+**Key settings by sprite type:**
+- **Trees/NPCs**: `TREE_SIZE (1024)`, `SHOWCASE_QUALITY (97%)`
+- **Flowers**: `FLOWER_SIZE (768)`, `palette: false` for RGBA
+- **Furniture**: `LARGE_FURNITURE_SIZE (768)`, `HIGH_QUALITY (95%)`
+- **Buildings**: `SHOP_SIZE (1024)`, `SHOP_QUALITY (98%)`
+- **Regular tiles**: `TILE_SIZE (256)`, `COMPRESSION_QUALITY (85%)`
+
 **Skip this step if**:
-- Adding variations of existing furniture (sofa_01, sofa_02, bed_02, etc.)
-- Adding single-tile sprites (grass, rocks, floors)
+- Adding variations of existing types (sofa_01, iris_spring, tree_oak_02)
+- The filename already matches an existing keyword
 
 ### 5. Run Asset Optimization
 
