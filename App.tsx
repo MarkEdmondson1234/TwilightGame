@@ -547,6 +547,10 @@ const App: React.FC = () => {
                 foregroundSpriteLayerRef.current.clear();
                 foregroundSpriteLayerRef.current = null;
             }
+            if (weatherLayerRef.current) {
+                weatherLayerRef.current.destroy();
+                weatherLayerRef.current = null;
+            }
         };
     }, [isMapInitialized]); // Only initialize once when map is ready
 
