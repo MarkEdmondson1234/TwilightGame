@@ -88,7 +88,7 @@ export const tileAssets = {
   fairy_oak_autumn: '/TwilightGame/assets-optimized/tiles/fairy_oak_autumn.png',
   fairy_oak_winter: '/TwilightGame/assets-optimized/tiles/fairy_oak_winter.png',
   // Spruce tree assets (evergreen with winter variation)
-  spruce_tree: '/TwilightGame/assets-optimized/tiles/spruce_tree.png',
+  spruce_tree: '/TwilightGame/assets-optimized/tiles/spruce_tree.png?v=3',
   spruce_tree_winter: '/TwilightGame/assets-optimized/tiles/spruce_tree_winter.png',
   // Willow tree assets (seasonal variations)
   willow_tree: '/TwilightGame/assets-optimized/tiles/willow/willow_tree.png',
