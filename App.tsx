@@ -19,6 +19,7 @@ import DialogueBox from './components/DialogueBox';
 import ColorSchemeEditor from './components/ColorSchemeEditor';
 import HelpBrowser from './components/HelpBrowser';
 import DevTools from './components/DevTools';
+import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
 import { initializeGame } from './utils/gameInitializer';
 import { mapManager } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
@@ -72,6 +73,7 @@ const App: React.FC = () => {
     const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
     const [showDevTools, setShowDevTools] = useState(false); // Toggle dev tools panel
     const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
+    const [showSpriteEditor, setShowSpriteEditor] = useState(false); // Toggle sprite metadata editor (F8, dev only)
     const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
     const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
     const [cookingLocationType, setCookingLocationType] = useState<'stove' | 'campfire' | null>(null); // Track cooking location type
@@ -245,6 +247,7 @@ const App: React.FC = () => {
         onSetDebugOpen: setDebugOpen,
         onSetShowDevTools: setShowDevTools,
         onSetShowColorEditor: setShowColorEditor,
+        onSetShowSpriteEditor: setShowSpriteEditor,
         onSetShowHelpBrowser: setShowHelpBrowser,
         onSetShowCookingUI: (show) => {
             if (show) {
@@ -892,6 +895,12 @@ const App: React.FC = () => {
                 <ColorSchemeEditor
                     onClose={() => setShowColorEditor(false)}
                     onColorChange={() => setColorSchemeVersion(v => v + 1)}
+                />
+            )}
+            {import.meta.env.DEV && showSpriteEditor && (
+                <SpriteMetadataEditor
+                    onClose={() => setShowSpriteEditor(false)}
+                    onApply={() => setColorSchemeVersion(v => v + 1)} // Reuse color scheme version to trigger re-render
                 />
             )}
             {showHelpBrowser && (

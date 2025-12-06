@@ -32,6 +32,7 @@ export interface KeyboardControlsConfig {
     onSetDebugOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowDevTools: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowColorEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
+    onSetShowSpriteEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowHelpBrowser: (show: boolean) => void;
     onSetShowCookingUI: (show: boolean) => void;
     onSetShowRecipeBook: (show: boolean) => void;
@@ -56,6 +57,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onSetDebugOpen,
         onSetShowDevTools,
         onSetShowColorEditor,
+        onSetShowSpriteEditor,
         onSetShowHelpBrowser,
         onSetShowCookingUI,
         onSetShowRecipeBook,
@@ -126,6 +128,14 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             } catch (error) {
                 console.error('[Debug] Failed to load debug map:', error);
             }
+            return;
+        }
+
+        // F8 key to toggle Sprite Metadata Editor (dev only)
+        if (e.key === 'F8') {
+            e.preventDefault();
+            console.log('[Keyboard] F8 pressed - toggling Sprite Metadata Editor');
+            onSetShowSpriteEditor((prev) => !prev);
             return;
         }
 

@@ -1,0 +1,460 @@
+/* Sprite Metadata Editor Styles */
+
+.sprite-editor-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sprite-editor-panel {
+  background: #1a1a2e;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 1400px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Header */
+.sprite-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #16213e;
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.sprite-editor-title h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.sprite-editor-subtitle {
+  font-size: 12px;
+  color: #888;
+}
+
+.sprite-editor-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.sprite-editor-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 28px;
+  cursor: pointer;
+  padding: 0 8px;
+  line-height: 1;
+}
+
+.sprite-editor-close:hover {
+  color: #fff;
+}
+
+/* Buttons */
+.sprite-editor-btn {
+  padding: 8px 16px;
+  border: 1px solid #444;
+  background: #2a2a4a;
+  color: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s ease;
+}
+
+.sprite-editor-btn:hover {
+  background: #3a3a5a;
+  border-color: #555;
+}
+
+.sprite-editor-btn-primary {
+  background: #4a90d9;
+  border-color: #4a90d9;
+}
+
+.sprite-editor-btn-primary:hover {
+  background: #5aa0e9;
+}
+
+.sprite-editor-btn-warning {
+  background: #d94a4a;
+  border-color: #d94a4a;
+}
+
+.sprite-editor-btn-warning:hover {
+  background: #e95a5a;
+}
+
+.sprite-editor-btn-small {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* Main content */
+.sprite-editor-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Left panel - Gallery */
+.sprite-editor-gallery {
+  width: 350px;
+  border-right: 1px solid #2a2a4a;
+  display: flex;
+  flex-direction: column;
+  background: #12121f;
+}
+
+.sprite-editor-filters {
+  padding: 12px;
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.sprite-editor-search {
+  width: 100%;
+  padding: 8px 12px;
+  background: #1a1a2e;
+  border: 1px solid #3a3a5a;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.sprite-editor-search:focus {
+  outline: none;
+  border-color: #4a90d9;
+}
+
+.sprite-editor-search::placeholder {
+  color: #666;
+}
+
+.sprite-editor-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  align-content: start;
+}
+
+/* Sprite card */
+.sprite-card {
+  background: #1a1a2e;
+  border: 2px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.sprite-card:hover {
+  border-color: #4a4a6a;
+  transform: translateY(-2px);
+}
+
+.sprite-card.selected {
+  border-color: #4a90d9;
+  background: #1a2a3e;
+}
+
+.sprite-card.modified {
+  border-color: #d9a04a;
+}
+
+.sprite-card.selected.modified {
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px #d9a04a;
+}
+
+.sprite-card-preview {
+  width: 100%;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #12121f;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.sprite-card-info {
+  text-align: center;
+}
+
+.sprite-card-name {
+  font-size: 10px;
+  color: #ccc;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sprite-card-size {
+  font-size: 9px;
+  color: #666;
+}
+
+.sprite-card-modified-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+  background: #d9a04a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #000;
+  font-weight: bold;
+}
+
+/* Right panel - Details */
+.sprite-editor-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sprite-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #16213e;
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.sprite-details-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #fff;
+}
+
+.sprite-details-actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* Preview area */
+.sprite-preview-container {
+  padding: 16px;
+  background: #12121f;
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.sprite-preview-controls {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  font-size: 12px;
+  color: #aaa;
+}
+
+.sprite-preview-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.sprite-preview-controls input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.sprite-preview-controls input[type="range"] {
+  width: 80px;
+  margin: 0 6px;
+}
+
+.sprite-preview-area {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto;
+  background: #0a0a14;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+}
+
+.sprite-preview-grid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(100, 100, 150, 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(100, 100, 150, 0.3) 1px, transparent 1px);
+}
+
+.sprite-preview-sprite {
+  position: relative;
+}
+
+.sprite-preview-anchor {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background: #4a90d9;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  cursor: help;
+}
+
+.sprite-preview-collision {
+  position: absolute;
+  background: rgba(220, 80, 80, 0.3);
+  border: 2px solid rgba(220, 80, 80, 0.8);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Metadata form */
+.sprite-metadata-form {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.sprite-form-section {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #2a2a4a;
+}
+
+.sprite-form-section:last-child {
+  border-bottom: none;
+}
+
+.sprite-form-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sprite-form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.sprite-form-row label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.sprite-form-row input[type="number"] {
+  width: 80px;
+  padding: 6px 10px;
+  background: #1a1a2e;
+  border: 1px solid #3a3a5a;
+  border-radius: 4px;
+  color: #fff;
+  font-size: 13px;
+}
+
+.sprite-form-row input[type="number"]:focus {
+  outline: none;
+  border-color: #4a90d9;
+}
+
+.sprite-form-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sprite-form-checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.sprite-form-checkboxes input[type="checkbox"] {
+  cursor: pointer;
+}
+
+/* Placeholder */
+.sprite-editor-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  font-size: 14px;
+}
+
+/* Footer */
+.sprite-editor-footer {
+  padding: 12px 20px;
+  background: #16213e;
+  border-top: 1px solid #2a2a4a;
+  text-align: center;
+}
+
+.sprite-editor-footer p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.sprite-editor-footer kbd {
+  padding: 2px 6px;
+  background: #2a2a4a;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #aaa;
+}
+
+/* Scrollbar styling */
+.sprite-editor-grid::-webkit-scrollbar,
+.sprite-metadata-form::-webkit-scrollbar {
+  width: 8px;
+}
+
+.sprite-editor-grid::-webkit-scrollbar-track,
+.sprite-metadata-form::-webkit-scrollbar-track {
+  background: #12121f;
+}
+
+.sprite-editor-grid::-webkit-scrollbar-thumb,
+.sprite-metadata-form::-webkit-scrollbar-thumb {
+  background: #3a3a5a;
+  border-radius: 4px;
+}
+
+.sprite-editor-grid::-webkit-scrollbar-thumb:hover,
+.sprite-metadata-form::-webkit-scrollbar-thumb:hover {
+  background: #4a4a6a;
+}
