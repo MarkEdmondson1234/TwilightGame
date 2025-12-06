@@ -87,6 +87,21 @@ function normalizePathCase(filePath) {
   return path.join(dir, base + ext);
 }
 
+/**
+ * Delete a file if it exists, handling case-sensitivity issues on Windows.
+ * On Windows, if a file exists as "brambles_winter.PNG" and we try to write
+ * "brambles_winter.png", Sharp will update the existing file but NOT rename it.
+ * This causes issues when the code references the lowercase version.
+ *
+ * This function deletes the file first to ensure Sharp creates it with the
+ * correct casing.
+ */
+function deleteIfExists(filePath) {
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
+  }
+}
+
 // Recursively get all files in a directory
 function getAllFiles(dir, fileList = []) {
   const files = fs.readdirSync(dir);
@@ -265,6 +280,9 @@ async function optimizeTiles() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
     // Special handling for witch hut - 20x20 tiles (1280x1280px)
     if (file.includes('witch_hut') || inputPath.includes('witchhut')) {
       await sharp(inputPath)
@@ -417,6 +435,9 @@ async function optimizeFarming() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
     // Plant sprites (seedling, pea, wilted) - use larger size for visibility (showcase quality)
     // Soil sprites (fallow, tilled) - use regular tile size
     const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted');
@@ -480,6 +501,9 @@ async function optimizeNPCs() {
 
     // PNGs - resize and compress at higher resolution for dialogue portraits (key showcase assets)
     const originalSize = fs.statSync(inputPath).size;
+
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
 
     await sharp(inputPath)
       .resize(NPC_SIZE, NPC_SIZE, {
@@ -547,6 +571,9 @@ async function optimizeAnimations() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
     if (hasGifsicleInstalled) {
       try {
         // Optimize GIF with gifsicle: resize and optimize
@@ -609,6 +636,9 @@ async function optimizeCutscenes() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
     // Get image metadata to check dimensions
     const metadata = await sharp(inputPath).metadata();
 
@@ -670,6 +700,9 @@ async function optimizeWitchHut() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
     // Witch hut - 20x20 tiles (1280x1280px) with very high quality
     await sharp(inputPath)
       .resize(WITCH_HUT_SIZE, WITCH_HUT_SIZE, {
@@ -722,6 +755,9 @@ async function optimizeCooking() {
 
     const originalSize = fs.statSync(inputPath).size;
 
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
     await sharp(inputPath)
       .resize(COOKING_SIZE, COOKING_SIZE, {
         fit: 'contain',
@@ -769,6 +805,9 @@ async function optimizeCauldron() {
     }
 
     const originalSize = fs.statSync(inputPath).size;
+
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
 
     // Resize to 256x256 for tile-size animation frames
     // IMPORTANT: palette: false forces RGBA output (PixiJS v8 can't decode 8-bit colormap PNGs)

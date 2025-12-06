@@ -67,6 +67,7 @@ export const tileAssets = {
   // Tuft grass assets (seasonal and style variations)
   tuft_01: '/TwilightGame/assets-optimized/tiles/tuft/tuft_01.png',
   tuft_02: '/TwilightGame/assets-optimized/tiles/tuft/tuft_02.png',
+  tuft_sparse: '/TwilightGame/assets-optimized/tiles/tuft/tuft_sparse.png',
   tuft_spring: '/TwilightGame/assets-optimized/tiles/tuft/tuft_spring.png',
   tuft_autumn: '/TwilightGame/assets-optimized/tiles/tuft/tuft_autumn.png',
   tuft_winter: '/TwilightGame/assets-optimized/tiles/tuft/tuft_winter.png',

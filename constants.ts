@@ -62,10 +62,10 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     isSolid: false,
     seasonalImages: {
       spring: [tileAssets.tuft_spring],
-      summer: [tileAssets.tuft_01, tileAssets.tuft_02],  // Multiple summer variations
+      summer: [tileAssets.tuft_01, tileAssets.tuft_02, tileAssets.tuft_sparse],  // 33% sparse (1/3)
       autumn: [tileAssets.tuft_autumn],
       winter: [tileAssets.tuft_winter],
-      default: [tileAssets.tuft_01, tileAssets.tuft_02],
+      default: [tileAssets.tuft_01, tileAssets.tuft_02, tileAssets.tuft_sparse],  // 33% sparse (1/3)
     },
     transforms: {
       enableFlip: true,  // Horizontal flipping for variety
