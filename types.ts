@@ -79,6 +79,7 @@ export enum TileType {
   CAMPFIRE,  // Campfire for outdoor cooking (higher failure rate than stove)
   WITCH_HUT,  // Witch's magical house built into a giant tree (16x16 tiles)
   CAULDRON,  // Animated bubbling cauldron (witch's brewing pot)
+  TREE_STUMP,  // Tree stump (2x2 forest decoration)
 }
 
 export interface Position {

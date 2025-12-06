@@ -11,6 +11,7 @@ export const tileAssets = {
   mushrooms: '/TwilightGame/assets-optimized/tiles/mushrooms.png',
   bush_1: '/TwilightGame/assets-optimized/tiles/bush_1.png',
   tree_big_1: '/TwilightGame/assets-optimized/tiles/tree_big_1.png',
+  stump: '/TwilightGame/assets-optimized/tiles/stump.png',
   tree_cherry_spring: '/TwilightGame/assets-optimized/tiles/tree_cherry_spring.png',
   tree_cherry_summer_fruit: '/TwilightGame/assets-optimized/tiles/tree_cherry_summer_fruit.png',
   tree_cherry_summer_no_fruit: '/TwilightGame/assets-optimized/tiles/tree_cherry_summer_no_fruit.png',

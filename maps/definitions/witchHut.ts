@@ -24,6 +24,7 @@ import { parseGrid } from '../gridParser';
  * s = Wild Strawberry (forageable plant)
  * u = Mushroom (regular mushrooms - fairy ring)
  * x = Giant Mushroom (magical witch hut mushrooms)
+ * | = Tree Stump (2x2 forest decoration)
  * P = Path
  * ? = Witch Hut (magical dwelling)
  * + = Cauldron (bubbling animated pot)
@@ -31,9 +32,9 @@ import { parseGrid } from '../gridParser';
 
 // 30x30 map - witch hut centered at (15, 15)
 const gridString = `
-GGGGGGGsGGbssGGGYGGGGGYGGGbYYY
-boGeGeGGsessssGGGGuuuGGGesGGeY
-beGGGsGeeGssGGGGGGuGGGuGGYGebY
+GGGGGGGsGGbssGGGeGGGGGYGGGbYYY
+boGeGeGGsessssGGGeuuuGGGesGGeY
+beGGGsGeeGssGGGG|GuGGGuGGYGebY
 beGeGGxesGGGGGGGGuGGGGuGGGGGGY
 YGGoYGGGeGGeGGsGuGG+GGuGYeGGeY
 eGGGGGGeeGGGGGGGuGGGGGuGeGGGGt

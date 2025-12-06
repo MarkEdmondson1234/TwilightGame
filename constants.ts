@@ -722,6 +722,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     ],
     animationSpeed: 80,  // 80ms per frame = 12.5 FPS bubbling effect
   },
+  [TileType.TREE_STUMP]: {
+    name: 'Tree Stump',
+    color: 'bg-palette-sage',  // Base grass color
+    isSolid: true,  // Cannot walk through stumps
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    baseType: TileType.GRASS,  // Render grass underneath
+  },
 };
 
 // === COMPILE-TIME VALIDATION ===
@@ -1233,6 +1240,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
       tileAssets.cauldron_9,
     ],
     animationSpeed: 80,  // 80ms per frame = 12.5 FPS bubbling effect
+  },
+  {
+    tileType: TileType.TREE_STUMP,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall (square stump)
+    offsetX: -0.5,   // Center horizontally
+    offsetY: -0.5,   // Center vertically
+    image: tileAssets.stump,
+    isForeground: false,  // Render under player (ground-level decoration)
+    enableFlip: true,  // Horizontal flip for variety
+    enableRotation: false,  // No rotation - roots go down into the earth!
+    enableScale: true,  // Slight size variation
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
+    // Collision at the stump (1x1 centered)
+    collisionWidth: 1,
+    collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
   },
   {
     tileType: TileType.FAIRY_OAK,
