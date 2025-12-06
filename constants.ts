@@ -1226,10 +1226,10 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.WILD_IRIS,
-    spriteWidth: 2,    // 2 tiles wide (flowering clump near water)
-    spriteHeight: 2,   // 2 tiles tall
-    offsetX: -0.5,     // Center horizontally on tile
-    offsetY: -1,       // Extends 1 tile upward
+    spriteWidth: 3,    // 3 tiles wide (flowering clump near water)
+    spriteHeight: 3,   // 3 tiles tall
+    offsetX: -1,       // Center horizontally on tile
+    offsetY: -2,       // Extends 2 tiles upward
     image: tileAssets.wild_iris_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     isForeground: true,
     // No collision - walkable decorative flower

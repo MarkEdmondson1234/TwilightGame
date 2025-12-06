@@ -95,7 +95,7 @@ export const tileAssets = {
   willow_tree_autumn: '/TwilightGame/assets-optimized/tiles/willow/willow_tree_autumn.png',
   willow_tree_winter: '/TwilightGame/assets-optimized/tiles/willow/willow_tree_winter.png',
   // Wild iris assets (seasonal variations - grows near water)
-  // Optimized at 768x768 with HIGH_QUALITY (keyword: iris in optimize-assets.js)
+  // Optimized at 768x768 with SHOWCASE_QUALITY (keyword: iris in optimize-assets.js)
   wild_iris_spring: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_spring.png',
   wild_iris_summer: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_summer.png',
   wild_iris_autumn: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_autumn.png',

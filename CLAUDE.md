@@ -466,22 +466,86 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 
 ### Image Optimization
 
-- **Script**: `npm run optimize-assets` - Uses Sharp and gifsicle to optimize all images
+The optimization script (`scripts/optimize-assets.js`) uses Sharp and gifsicle to optimize all game assets.
+
+#### Running the Optimizer
+
+- **Command**: `npm run optimize-assets` - Optimizes all images
+- **Automatic**: Runs automatically before `npm run build`
 - **Requirements**:
   - Sharp (installed via npm)
   - gifsicle (install: `brew install gifsicle` on macOS, `apt-get install gifsicle` on Linux)
 - **Source**: Original high-quality images in `/public/assets/`
 - **Output**: Optimized images in `/public/assets-optimized/` (typically 95-99% size reduction)
-- **Automatic**: Optimization runs automatically before `npm run build`
-- **Asset References**: Always import from optimized versions in `assets.ts` when available
-- **What it optimizes**:
-  - Character sprite sheets (combines multiple frames into single sheets, 256x256)
-  - Tile images (resizes to 128x128, optimizes compression)
-  - NPC sprites (resizes PNGs to 512x512 at 95% quality for sharp dialogue portraits, copies SVGs)
-  - Animated GIFs (resizes to 512x512, 60-80% size reduction with gifsicle)
 - **When to run manually**: After adding new assets to `/public/assets/`
-- **Exception for multi-tile sprites**: Large furniture sprites (beds, sofas) should use original high-res images to avoid distortion from resize
-- **GIF Optimization**: If gifsicle is not installed, GIFs are copied without optimization (with a helpful install message)
+
+#### What Gets Optimized
+
+The script optimizes different asset types with appropriate settings:
+
+| Asset Type | Size | Quality | Compression | Use Case |
+|------------|------|---------|-------------|----------|
+| **Character sprites** | 1024×1024 | Showcase (97%) | Level 4 | Player character (highest priority) |
+| **NPC sprites** | 1024×1024 | Showcase (97%) | Level 4 | Dialogue portraits (sharp detail) |
+| **Trees** | 1024×1024 | Showcase (97%) | Level 4 | Major visual elements |
+| **Decorative flowers** | 768×768 | Showcase (97%) | Level 4 | Multi-tile plants (iris, roses) |
+| **Large furniture** | 768×768 | High (95%) | Level 6 | Beds, sofas, tables |
+| **Shop buildings** | 1024×1024 | Very High (98%) | Level 4 | 6×6 buildings with detail |
+| **Farming sprites** | 512×512 | High (95%) | Level 6 | Crop plants (key gameplay) |
+| **Regular tiles** | 256×256 | Standard (85%) | Level 6 | Grass, rocks, paths |
+| **Animated GIFs** | 512×512 | N/A | gifsicle | Weather effects, particles |
+
+#### Quality Settings
+
+Quality constants in `scripts/optimize-assets.js`:
+
+```javascript
+const COMPRESSION_QUALITY = 85;      // Standard quality (regular tiles)
+const HIGH_QUALITY = 95;             // High quality (furniture, crops)
+const SHOWCASE_QUALITY = 97;         // Showcase quality (trees, flowers, NPCs)
+const SHOP_QUALITY = 98;             // Very high quality (large buildings)
+```
+
+**Compression Level** (Sharp PNG):
+- Lower = better quality, larger files (e.g., 4)
+- Higher = more compression, smaller files (e.g., 6-9)
+
+#### Customizing Optimization
+
+**Adding new keywords** (automatic size/quality detection):
+
+Edit `scripts/optimize-assets.js` in the `optimizeTiles()` function:
+
+```javascript
+// Example: Add "lavender" as a decorative flower
+else if (file.includes('iris') || file.includes('rose') || file.includes('lavender')) {
+  await sharp(inputPath)
+    .resize(FLOWER_SIZE, FLOWER_SIZE, {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 }
+    })
+    .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 })
+    .toFile(outputPath);
+}
+```
+
+**Changing quality for specific assets**:
+
+1. Find the asset's keyword match in `optimizeTiles()`
+2. Adjust `quality` (0-100) or `compressionLevel` (0-9)
+3. Re-run `npm run optimize-assets`
+
+**Example - Making iris even higher quality**:
+```javascript
+.png({ quality: 98, compressionLevel: 3 }) // Maximum quality
+```
+
+#### Important Notes
+
+- **Asset References**: Always import from `/public/assets-optimized/` in `assets.ts`
+- **Multi-tile sprites**: Use optimized versions (they preserve transparency and quality)
+- **GIF Optimization**: If gifsicle is not installed, GIFs are copied without optimization
+- **Re-optimization**: Safe to run multiple times - overwrites previous output
 
 ### Tile Background Colors and ColorResolver
 
@@ -792,7 +856,7 @@ When adding new tile types, the optimization script uses **filename keywords** t
 | Keyword | Size | Use Case |
 |---------|------|----------|
 | `tree_`, `oak_`, `willow_` | 1024px | Trees |
-| `iris`, `rose`, flowers | 768px | Decorative flowers (2x2) |
+| `iris`, `rose`, flowers | 768px | Decorative flowers (3x3) |
 | `bed`, `sofa`, furniture | 768px | Multi-tile furniture |
 | `shop`, buildings | 1024px | Large buildings |
 | *(default)* | 256px | Regular tiles |

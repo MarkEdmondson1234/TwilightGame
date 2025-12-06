@@ -261,7 +261,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ palette: false, compressionLevel: 6 }) // Force RGBA for smooth gradients
+        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for beautiful flowers
         .toFile(outputPath);
     }
     // Special handling for brambles - 2x2 multi-tile sprites at medium quality (512x512)
