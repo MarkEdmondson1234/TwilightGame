@@ -119,6 +119,7 @@ export const farmingAssets = {
 export const cookingAssets = {
   cookies: '/TwilightGame/assets-optimized/cooking/cookies.png',
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
+  french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png?v=2',
   milk: '/TwilightGame/assets-optimized/cooking/milk.png',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
   tea: '/TwilightGame/assets-optimized/cooking/tea.png',

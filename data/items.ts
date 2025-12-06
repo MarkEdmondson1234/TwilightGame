@@ -632,6 +632,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
     buyPrice: 20,
   },
 
+  cinnamon: {
+    id: 'cinnamon',
+    name: 'cinnamon',
+    displayName: 'Cinnamon',
+    category: ItemCategory.INGREDIENT,
+    description: 'Fragrant ground cinnamon. Perfect for sweet dishes.',
+    stackable: true,
+    sellPrice: 6,
+    buyPrice: 15,
+  },
+
   // Proteins
   meat: {
     id: 'meat',

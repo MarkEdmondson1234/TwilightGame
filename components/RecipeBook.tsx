@@ -56,9 +56,15 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
     return 'Discover through gameplay';
   };
 
-  // Get detailed cooking instructions for specific recipes
+  // Get detailed cooking instructions for a recipe
   const getRecipeInstructions = (recipeId: string): string[] | null => {
-    const instructions: Record<string, string[]> = {
+    const recipe = getRecipe(recipeId);
+    if (recipe?.instructions) {
+      return recipe.instructions;
+    }
+
+    // Fallback for recipes without instructions defined in recipe data
+    const fallbackInstructions: Record<string, string[]> = {
       tea: [
         'Boil some water.',
         'Add a tea bag to a cup, and pour boiling water over it.',
@@ -66,7 +72,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
         'Dispose of the tea bag, and add some milk - and the tea is done. Presto!',
       ],
     };
-    return instructions[recipeId] || null;
+    return fallbackInstructions[recipeId] || null;
   };
 
   // Handle cooking from recipe book

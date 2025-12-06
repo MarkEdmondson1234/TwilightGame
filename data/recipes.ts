@@ -44,6 +44,7 @@ export interface RecipeDefinition {
   unlockRequirement?: string; // Recipe ID that must be mastered first
   teacherNpc?: string;       // NPC ID who teaches this recipe
   image?: string;            // Optional image URL for the recipe
+  instructions?: string[];   // Optional step-by-step cooking instructions
 }
 
 /**
@@ -80,17 +81,27 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     category: 'tutorial',
     description: 'Sweet eggy bread. Mother\'s first cooking lesson.',
     ingredients: [
-      { itemId: 'bread', quantity: 2 },
+      { itemId: 'bread', quantity: 1 },
       { itemId: 'egg', quantity: 1 },
       { itemId: 'milk', quantity: 1 },
+      { itemId: 'cinnamon', quantity: 1 },
       { itemId: 'sugar', quantity: 1 },
+      { itemId: 'salt', quantity: 1 },
+      { itemId: 'butter', quantity: 1 },
     ],
     cookingTime: 20,
     difficulty: 1,
     resultItemId: 'food_french_toast',
-    resultQuantity: 2,
+    resultQuantity: 1,
     friendshipValue: 15,
     teacherNpc: 'mother',
+    image: cookingAssets.french_toast,
+    instructions: [
+      'Put egg, milk, cinnamon, sugar and salt in a shallow, but wide bowl, and stir.',
+      'Put a frying pan on the stove and make sure it\'s quite hot.',
+      'Dip the slice of toast in your mixture so it\'s wet, but not soggy. Add the butter to the pan, and fry the bread on both sides for 3 minutes each or until it looks nice and golden.',
+      'Serve it on a plate. Yummy!',
+    ],
   },
 
   // ===== SAVOURY RECIPES =====
