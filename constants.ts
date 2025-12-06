@@ -459,6 +459,24 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 2x2 multi-tile sprite (see SPRITE_METADATA below)
   },
+  [TileType.WILD_STRAWBERRY]: {
+    name: 'Wild Strawberry',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: false,  // Walkable - forageable plant
+    baseType: TileType.GRASS,  // Render grass underneath the strawberry sprite
+    seasonalImages: {
+      spring: [tileAssets.wild_strawberry_spring],
+      summer: [tileAssets.wild_strawberry_summer],
+      autumn: [tileAssets.wild_strawberry_autumn],
+      winter: [],  // Dormant in winter - no sprite shown
+      default: [tileAssets.wild_strawberry_summer],
+    },
+    transforms: {
+      enableFlip: true,  // Horizontal flipping for variety
+      enableScale: true,
+      scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
+    },
+  },
 
   // Building tiles
   [TileType.WALL_BOUNDARY]: {

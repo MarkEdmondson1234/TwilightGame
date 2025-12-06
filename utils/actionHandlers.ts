@@ -274,6 +274,7 @@ const FORAGEABLE_TILES: TileType[] = [
     TileType.FERN,
     TileType.MUSHROOM,
     TileType.GRASS,
+    TileType.WILD_STRAWBERRY,
 ];
 
 /**
@@ -310,7 +311,43 @@ export function handleForageAction(
         return { found: false, message: 'Nothing to forage here.' };
     }
 
-    // Attempt to forage - uses rarity-weighted random drops
+    // Special handling for wild strawberry plants
+    if (tileData.type === TileType.WILD_STRAWBERRY) {
+        // 70% chance to find strawberries (more common than seed foraging)
+        if (Math.random() < 0.7) {
+            // Random yield: 2-5 strawberries
+            const berryYield = Math.floor(Math.random() * 4) + 2; // 2-5
+            inventoryManager.addItem('crop_strawberry', berryYield);
+
+            // 30% chance to also get seeds when picking berries
+            const gotSeeds = Math.random() < 0.3;
+            let seedCount = 0;
+            if (gotSeeds) {
+                seedCount = Math.floor(Math.random() * 2) + 1; // 1-2 seeds
+                inventoryManager.addItem('seed_strawberry', seedCount);
+            }
+
+            const inventoryData = inventoryManager.getInventoryData();
+            gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+            const message = gotSeeds
+                ? `You picked ${berryYield} strawberries and found ${seedCount} seeds!`
+                : `You picked ${berryYield} strawberries!`;
+
+            console.log(`[Forage] ${message}`);
+            return {
+                found: true,
+                seedId: gotSeeds ? 'seed_strawberry' : undefined,
+                seedName: gotSeeds ? 'Strawberry Seeds' : undefined,
+                message,
+            };
+        } else {
+            console.log('[Forage] Strawberry plant had no ripe berries');
+            return { found: false, message: 'This strawberry plant has no ripe berries yet.' };
+        }
+    }
+
+    // Regular foraging for other tiles - uses rarity-weighted random drops
     const seed = generateForageSeed();
 
     if (!seed) {

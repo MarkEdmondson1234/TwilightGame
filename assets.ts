@@ -105,6 +105,10 @@ export const tileAssets = {
   brambles_summer: '/TwilightGame/assets-optimized/tiles/brambles/brambles_summer.png',
   brambles_autumn: '/TwilightGame/assets-optimized/tiles/brambles/brambles_autumn.png',
   brambles_winter: '/TwilightGame/assets-optimized/tiles/brambles/brambles_winter.png',
+  // Wild strawberry assets (seasonal variations - forageable in forest)
+  wild_strawberry_spring: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_spring.png',
+  wild_strawberry_summer: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_summer.png',
+  wild_strawberry_autumn: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_autumn.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
 };
