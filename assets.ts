@@ -111,6 +111,10 @@ export const tileAssets = {
   wild_strawberry_autumn: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_autumn.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
+  // Giant mushroom assets (magical mushrooms for witch hut area)
+  // Optimized at 1024x1024 with SHOWCASE_QUALITY (keyword: mushroom in optimize-assets.js)
+  giant_mushroom: '/TwilightGame/assets-optimized/tiles/giant_mushroom.png',
+  giant_mushroom_winter: '/TwilightGame/assets-optimized/tiles/giant_mushroom_winter.png',
 };
 
 // Farming assets - Use optimized versions for better performance

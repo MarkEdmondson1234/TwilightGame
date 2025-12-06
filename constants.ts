@@ -477,6 +477,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
     },
   },
+  [TileType.GIANT_MUSHROOM]: {
+    name: 'Giant Mushroom',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - tree-like obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the mushroom sprite
+    seasonalImages: {
+      spring: [tileAssets.giant_mushroom],
+      summer: [tileAssets.giant_mushroom],
+      autumn: [tileAssets.giant_mushroom],
+      winter: [tileAssets.giant_mushroom_winter],
+      default: [tileAssets.giant_mushroom],
+    }
+  },
 
   // Building tiles
   [TileType.WALL_BOUNDARY]: {
@@ -1223,6 +1236,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 },  // Subtle size variation
+  },
+  {
+    tileType: TileType.GIANT_MUSHROOM,
+    spriteWidth: 5,    // 5 tiles wide (magical giant mushroom)
+    spriteHeight: 5,   // 5 tiles tall
+    offsetX: -2,       // Center horizontally on tile
+    offsetY: -4,       // Extends 4 tiles upward
+    image: tileAssets.giant_mushroom,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision at the mushroom stem base
+    collisionWidth: 0.8,
+    collisionHeight: 0.8,
+    collisionOffsetX: 0.1,
+    collisionOffsetY: 0.1,
+    // Transform controls: subtle variation for magical mushrooms
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 },  // More variation for magical feel
   },
   {
     tileType: TileType.WILD_IRIS,

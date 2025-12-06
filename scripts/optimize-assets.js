@@ -245,13 +245,13 @@ async function optimizeTiles() {
         .toFile(outputPath);
     }
     // Special handling for trees - highest resolution as they're major visual elements
-    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak')) {
+    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak') || file.includes('giant_mushroom')) {
       await sharp(inputPath)
         .resize(TREE_SIZE, TREE_SIZE, {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees
+        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees and giant mushrooms
         .toFile(outputPath);
     }
     // Special handling for decorative flowers (iris, etc.) - 2x2 multi-tile sprites need higher resolution
@@ -262,6 +262,16 @@ async function optimizeTiles() {
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for beautiful flowers
+        .toFile(outputPath);
+    }
+    // Special handling for tuft grass - decorative ground cover with fine detail
+    else if (file.includes('tuft') || inputPath.includes('tuft')) {
+      await sharp(inputPath)
+        .resize(FARMING_PLANT_SIZE, FARMING_PLANT_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality to preserve grass blade detail
         .toFile(outputPath);
     }
     // Special handling for brambles - 2x2 multi-tile sprites at medium quality (512x512)
