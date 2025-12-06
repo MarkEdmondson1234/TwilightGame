@@ -148,14 +148,17 @@ export class TileLayer {
     }
 
     // Determine which image array to use
-    const imageArray = tileData.seasonalImages
+    let imageData = tileData.seasonalImages
       ? tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default
       : tileData.image;
+
+    // Normalize to array (handle both single strings and arrays)
+    const imageArray = Array.isArray(imageData) ? imageData : (imageData ? [imageData] : []);
 
     // Select image variant using deterministic hash
     let imageUrl: string | null = null;
 
-    if (imageArray && imageArray.length > 0) {
+    if (imageArray.length > 0) {
       const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
       const hashValue = hash % 1;
 

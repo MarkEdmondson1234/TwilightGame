@@ -63,8 +63,6 @@ export const tileAssets = {
   // Well assets (2x2 multi-tile sprite with seasonal variation)
   well: '/TwilightGame/assets-optimized/tiles/well.png',
   well_winter: '/TwilightGame/assets-optimized/tiles/well_in_winter.png',
-  forest_fern1: '/TwilightGame/assets-optimized/tiles/forest_fern1.png',
-  forest_fern2: '/TwilightGame/assets-optimized/tiles/forest_fern2.png',
   forest_fern3: '/TwilightGame/assets-optimized/tiles/forest_fern3.png',
   // Tuft grass assets (seasonal and style variations)
   tuft_01: '/TwilightGame/assets-optimized/tiles/tuft/tuft_01.png',
