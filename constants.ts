@@ -706,9 +706,9 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Cauldron',
     color: 'bg-palette-sage',  // Base grass color (blends with surroundings)
     isSolid: true,  // Cannot walk through the cauldron
-    image: [tileAssets.cauldron_1],  // Static fallback image
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS,  // Render grass underneath
-    // Animation: Bubbling cauldron effect (9 frames)
+    // Animation: Bubbling cauldron effect (9 frames) - defined in SPRITE_METADATA
     animationFrames: [
       tileAssets.cauldron_1,
       tileAssets.cauldron_2,
@@ -720,7 +720,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       tileAssets.cauldron_8,
       tileAssets.cauldron_9,
     ],
-    animationSpeed: 150,  // 150ms per frame = ~6.7 FPS bubbling effect
+    animationSpeed: 80,  // 80ms per frame = 12.5 FPS bubbling effect
   },
 };
 
@@ -1202,6 +1202,37 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 1.2,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
+  },
+  {
+    tileType: TileType.CAULDRON,
+    spriteWidth: 3,  // 3 tiles wide (bubbling cauldron)
+    spriteHeight: 3, // 3 tiles tall (square aspect ratio)
+    offsetX: -1,     // Center horizontally (extend 1 tile left)
+    offsetY: -1,     // Center vertically (extend 1 tile up)
+    image: tileAssets.cauldron_1,  // First frame (overridden by animationFrames)
+    isForeground: false,  // Render under player (so player can stand near it)
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision at the base (1x1 centered)
+    collisionWidth: 1,
+    collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Animation frames (bubbling effect)
+    animationFrames: [
+      tileAssets.cauldron_1,
+      tileAssets.cauldron_2,
+      tileAssets.cauldron_3,
+      tileAssets.cauldron_4,
+      tileAssets.cauldron_5,
+      tileAssets.cauldron_6,
+      tileAssets.cauldron_7,
+      tileAssets.cauldron_8,
+      tileAssets.cauldron_9,
+    ],
+    animationSpeed: 80,  // 80ms per frame = 12.5 FPS bubbling effect
   },
   {
     tileType: TileType.FAIRY_OAK,

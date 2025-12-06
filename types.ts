@@ -164,6 +164,9 @@ export interface SpriteMetadata {
   rotationRange?: { min: number; max: number }; // Rotation in degrees (default: -2 to 2)
   brightnessRange?: { min: number; max: number }; // Brightness multiplier (default: 0.95-1.05)
   rotationMode?: 'subtle' | 'full360' | 'flip180' | 'lake_edge_left' | 'lake_edge_right' | 'lake_edge_top' | 'lake_edge_bottom'; // Special rotation modes
+  // Optional animation support (for multi-tile sprites with animation frames)
+  animationFrames?: string[]; // Array of image paths for animation frames
+  animationSpeed?: number; // Milliseconds per frame (e.g., 150ms = ~6.7 FPS)
 }
 
 // Color scheme for a map theme

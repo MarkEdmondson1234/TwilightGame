@@ -52,7 +52,9 @@
       "Bash(npm run optimize-assets:wild_iris:*)",
       "Bash(open \"http://localhost:4001/TwilightGame/\")",
       "Bash(ls:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git rm:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

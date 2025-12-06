@@ -28,6 +28,8 @@ export class SpriteLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private currentMapId: string | null = null;
   private isForeground: boolean;
+  // Animation tracking for multi-tile sprites (like cauldron)
+  private animatedSprites: Map<string, { frames: string[]; speed: number }> = new Map();
   // Cache max sprite size for viewport margin calculation (shared across instances)
   private static maxSpriteSize: number | null = null;
   // Cache sprite metadata by tile type for O(1) lookup instead of O(n) find()
@@ -116,6 +118,21 @@ export class SpriteLayer {
   ): void {
     const key = `${anchorX},${anchorY}`;
 
+    // Check for animation frames first
+    if (metadata.animationFrames && metadata.animationFrames.length > 0) {
+      // Track this animated sprite
+      const speed = metadata.animationSpeed || 150; // Default 150ms per frame
+      this.animatedSprites.set(key, { frames: metadata.animationFrames, speed });
+
+      // Calculate current frame based on time
+      const currentTime = Date.now();
+      const frameIndex = Math.floor(currentTime / speed) % metadata.animationFrames.length;
+      const imageUrl = metadata.animationFrames[frameIndex];
+
+      this.renderSpriteWithImage(anchorX, anchorY, metadata, imageUrl);
+      return;
+    }
+
     // Determine which image to use (seasonal or regular)
     let imageUrl: string | null = null;
 
@@ -148,6 +165,20 @@ export class SpriteLayer {
     }
 
     if (!imageUrl) return;
+
+    this.renderSpriteWithImage(anchorX, anchorY, metadata, imageUrl);
+  }
+
+  /**
+   * Render sprite with a specific image URL
+   */
+  private renderSpriteWithImage(
+    anchorX: number,
+    anchorY: number,
+    metadata: SpriteMetadata,
+    imageUrl: string
+  ): void {
+    const key = `${anchorX},${anchorY}`;
 
     // Get or create sprite
     let sprite = this.sprites.get(key);
@@ -202,6 +233,7 @@ export class SpriteLayer {
   clear(): void {
     this.sprites.forEach(sprite => sprite.destroy());
     this.sprites.clear();
+    this.animatedSprites.clear();
     console.log(`[SpriteLayer] Cleared all ${this.isForeground ? 'foreground' : 'background'} sprites`);
   }
 
