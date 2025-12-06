@@ -50,7 +50,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MINE_ENTRANCE]: 'special',
   [TileType.TABLE]: 'furniture',
   [TileType.CHAIR]: 'furniture',
-  [TileType.MUSHROOM]: 'mushroom',
+  [TileType.MUSHROOM]: 'grass',  // Regular mushrooms sit on grass background
   // Farm tiles removed - they should use base colors from TILE_LEGEND, not color scheme overrides
   // This allows farm tiles to always show as brown/chocolate regardless of map theme
   [TileType.BUSH]: 'grass',
