@@ -41,6 +41,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'U': TileType.BUSH,        // U = bUsh (decorative)
   'u': TileType.MUSHROOM,    // u = mUshroom (decorative forest floor)
   'x': TileType.GIANT_MUSHROOM, // x = Giant mushroom (magical witch hut area)
+  'g': TileType.SAMBUCA_BUSH, // g = Sambuca bush (magical witch hut area)
   'e': TileType.FERN,        // e = fErn (forest floor plant)
   'Y': TileType.TREE,        // Y = Tree (looks like a tree top)
   'Z': TileType.TREE_BIG,    // Z = Big tree

@@ -49,6 +49,7 @@ export enum TileType {
   BRAMBLES,  // Thorny brambles (seasonal variations, solid obstacle)
   WILD_STRAWBERRY,  // Wild strawberry plants (forageable in forest, seasonal variations)
   GIANT_MUSHROOM,  // Giant magical mushroom (appears on witch hut map, tree-like)
+  SAMBUCA_BUSH,  // Sambuca bush (appears on witch hut map, seasonal variations)
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,

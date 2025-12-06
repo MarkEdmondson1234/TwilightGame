@@ -123,6 +123,11 @@ export const tileAssets = {
   // Giant mushroom assets (magical mushrooms for witch hut area)
   giant_mushroom: '/TwilightGame/assets-optimized/tiles/giant_mushroom.png',
   giant_mushroom_winter: '/TwilightGame/assets-optimized/tiles/giant_mushroom_winter.png',
+  // Sambuca bush assets (seasonal bushes for witch hut area)
+  sambuca_bush_spring: '/TwilightGame/assets-optimized/tiles/sambuca_bush_spring.png',
+  sambuca_bush_summer: '/TwilightGame/assets-optimized/tiles/sambuca_bush_summer.png',
+  sambuca_bush_autumn: '/TwilightGame/assets-optimized/tiles/sambuca_bush_autumn.png',
+  sambuca_bush_winter: '/TwilightGame/assets-optimized/tiles/sambuca_bush_winter.png',
 };
 
 // Farming assets - Use optimized versions for better performance

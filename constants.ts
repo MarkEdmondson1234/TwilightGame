@@ -61,10 +61,10 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage',  // Same background as grass, overridden by map color scheme
     isSolid: false,
     seasonalImages: {
-      spring: [tileAssets.tuft_spring],
+      spring: [tileAssets.tuft_spring, tileAssets.tuft_sparse],  // 50% sparse (1/2)
       summer: [tileAssets.tuft_01, tileAssets.tuft_02, tileAssets.tuft_sparse],  // 33% sparse (1/3)
-      autumn: [tileAssets.tuft_autumn],
-      winter: [tileAssets.tuft_winter],
+      autumn: [tileAssets.tuft_autumn, tileAssets.tuft_sparse],  // 50% sparse (1/2)
+      winter: [tileAssets.tuft_winter, tileAssets.tuft_sparse],  // 50% sparse (1/2)
       default: [tileAssets.tuft_01, tileAssets.tuft_02, tileAssets.tuft_sparse],  // 33% sparse (1/3)
     },
     transforms: {
@@ -480,6 +480,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       autumn: [tileAssets.giant_mushroom],
       winter: [tileAssets.giant_mushroom_winter],
       default: [tileAssets.giant_mushroom],
+    }
+  },
+  [TileType.SAMBUCA_BUSH]: {
+    name: 'Sambuca Bush',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - bush obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the bush sprite
+    seasonalImages: {
+      spring: [tileAssets.sambuca_bush_spring],
+      summer: [tileAssets.sambuca_bush_summer],
+      autumn: [tileAssets.sambuca_bush_autumn],
+      winter: [tileAssets.sambuca_bush_winter],
+      default: [tileAssets.sambuca_bush_summer],
     }
   },
 
@@ -1289,6 +1302,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.9, max: 1.1 },  // More variation for magical feel
+  },
+  {
+    tileType: TileType.SAMBUCA_BUSH,
+    spriteWidth: 4,    // 4 tiles wide (small tree/large bush)
+    spriteHeight: 4,   // 4 tiles tall
+    offsetX: -1.5,     // Center horizontally on tile
+    offsetY: -3,       // Extends 3 tiles upward
+    image: tileAssets.sambuca_bush_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision at the trunk/base
+    collisionWidth: 0.8,
+    collisionHeight: 0.8,
+    collisionOffsetX: 0.1,
+    collisionOffsetY: 0.1,
+    // Transform controls: variation for natural tree-like look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
   },
   {
     tileType: TileType.WILD_IRIS,
