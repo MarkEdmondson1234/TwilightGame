@@ -46,6 +46,7 @@ export enum TileType {
   SPRUCE_TREE,
   WILLOW_TREE,
   WILD_IRIS,  // Flowering plant that grows near water
+  BRAMBLES,  // Thorny brambles (seasonal variations, solid obstacle)
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,

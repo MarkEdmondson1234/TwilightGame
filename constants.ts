@@ -445,6 +445,24 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.8, max: 1.2 },  // Size variation
     },
   },
+  [TileType.BRAMBLES]: {
+    name: 'Brambles',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - thorny obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the brambles sprite
+    seasonalImages: {
+      spring: [tileAssets.brambles_spring],
+      summer: [tileAssets.brambles_summer],
+      autumn: [tileAssets.brambles_autumn],
+      winter: [tileAssets.brambles_winter],
+      default: [tileAssets.brambles_summer],
+    },
+    transforms: {
+      enableFlip: true,  // Horizontal flipping for variety
+      enableScale: true,
+      scaleRange: { min: 0.85, max: 1.15 },  // Slight size variation
+    },
+  },
 
   // Building tiles
   [TileType.WALL_BOUNDARY]: {

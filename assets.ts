@@ -100,6 +100,11 @@ export const tileAssets = {
   wild_iris_summer: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_summer.png',
   wild_iris_autumn: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_autumn.png',
   wild_iris_winter: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_winter.png',
+  // Brambles assets (seasonal variations - thorny obstacles)
+  brambles_spring: '/TwilightGame/assets-optimized/tiles/brambles/brambles_spring.png',
+  brambles_summer: '/TwilightGame/assets-optimized/tiles/brambles/brambles_summer.png',
+  brambles_autumn: '/TwilightGame/assets-optimized/tiles/brambles/brambles_autumn.png',
+  brambles_winter: '/TwilightGame/assets-optimized/tiles/brambles/brambles_winter.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
 };
