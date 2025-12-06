@@ -457,11 +457,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       winter: [tileAssets.brambles_winter],
       default: [tileAssets.brambles_summer],
     },
-    transforms: {
-      enableFlip: true,  // Horizontal flipping for variety
-      enableScale: true,
-      scaleRange: { min: 0.85, max: 1.15 },  // Slight size variation
-    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA below)
   },
 
   // Building tiles
@@ -794,6 +790,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.98, max: 1.02 },
+  },
+  {
+    tileType: TileType.BRAMBLES,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: -0.5,   // Center horizontally on tile
+    offsetY: -1,     // Extends 1 tile upward
+    image: tileAssets.brambles_summer,  // Seasonal images handled by TILE_LEGEND
+    isForeground: true,
+    // Collision at the base (1x1)
+    collisionWidth: 1,
+    collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle scaling, flipping for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
   },
   {
     tileType: TileType.TREE,

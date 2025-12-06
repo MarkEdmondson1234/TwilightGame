@@ -264,6 +264,16 @@ async function optimizeTiles() {
         .png({ palette: false, compressionLevel: 6 }) // Force RGBA for smooth gradients
         .toFile(outputPath);
     }
+    // Special handling for brambles - 2x2 multi-tile sprites at medium quality (512x512)
+    else if (file.includes('brambles') || inputPath.includes('brambles')) {
+      await sharp(inputPath)
+        .resize(512, 512, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed thorns
+        .toFile(outputPath);
+    }
     // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, cottages, etc.) - keep higher resolution and quality
     else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
       await sharp(inputPath)
