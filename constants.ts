@@ -308,15 +308,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage',  // Fallback color
     isSolid: false,
     baseType: TileType.GRASS,  // Render grass underneath (uses map's color scheme)
-    image: tileAssets.forest_fern3,
-    transforms: {
-      enableFlip: true,
-      enableScale: true,
-      enableRotation: true,
-      enableBrightness: true,
-      scaleRange: { min: 0.6, max: 1.8 },  // More size variation for natural forest floor
-      rotationRange: { min: -15, max: 15 },
-    },
+    // Multi-tile sprite (2x2) - image and transforms defined in SPRITE_METADATA
   },
   [TileType.BUSH]: {
     name: 'Hawthorn Bush',
@@ -841,6 +833,27 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
+  },
+  {
+    tileType: TileType.FERN,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: -0.5,   // Center horizontally on tile
+    offsetY: -1,     // Extends 1 tile upward
+    image: tileAssets.forest_fern3,
+    isForeground: false,  // Background layer (below player)
+    // No collision - ferns are walkable ground cover
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: variety for natural forest floor
+    enableFlip: true,
+    enableRotation: true,
+    enableScale: true,
+    enableBrightness: true,
+    scaleRange: { min: 0.8, max: 1.2 },  // Size variation
+    rotationRange: { min: -15, max: 15 },  // Slight rotation
   },
   {
     tileType: TileType.TREE,
