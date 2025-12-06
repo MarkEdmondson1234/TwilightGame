@@ -110,6 +110,7 @@ export class TileLayer {
 
     // Check for farm plot override (farmUpdateTrigger forces re-evaluation)
     let growthStage: number | null = null;
+    let cropType: string | null = null;
     if (mapId && this.farmUpdateTrigger >= 0) {
       const plot = farmManager.getPlot(mapId, { x, y });
       if (plot) {
@@ -126,6 +127,7 @@ export class TileLayer {
             plot.state === FarmPlotState.READY ||
             plot.state === FarmPlotState.WILTING) {
           growthStage = farmManager.getGrowthStage(plot);
+          cropType = plot.cropType;
         }
       }
     }
@@ -166,19 +168,21 @@ export class TileLayer {
 
       if (showImage) {
         // Override sprite for farm plot growth stages
-        if (growthStage !== null && (
+        if (growthStage !== null && cropType && (
             tileData.type === TileType.SOIL_PLANTED ||
             tileData.type === TileType.SOIL_WATERED ||
             tileData.type === TileType.SOIL_READY ||
             tileData.type === TileType.SOIL_WILTING
         )) {
-          // Override with growth-stage-specific sprite
+          // Override with growth-stage-specific sprite based on crop type
           if (growthStage === 0) { // SEEDLING
             imageUrl = farmingAssets.seedling;
           } else if (growthStage === 1) { // YOUNG
-            imageUrl = farmingAssets.plant_pea_young;
+            // Use crop-specific young sprite if available, otherwise use generic
+            imageUrl = (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
           } else { // ADULT
-            imageUrl = farmingAssets.plant_pea_adult;
+            // Use crop-specific adult sprite if available, otherwise use generic
+            imageUrl = (farmingAssets as any)[`plant_${cropType}_adult`] || farmingAssets.seedling;
           }
         } else {
           // Use a separate hash for image selection

@@ -117,6 +117,8 @@ export const farmingAssets = {
   seedling: '/TwilightGame/assets-optimized/farming/seedling.png',
   plant_pea_young: '/TwilightGame/assets-optimized/farming/plant_pea_young.png',
   plant_pea_adult: '/TwilightGame/assets-optimized/farming/plant_pea_adult.png',
+  plant_strawberry_young: '/TwilightGame/assets-optimized/farming/plant_strawberry_young.png',
+  plant_strawberry_adult: '/TwilightGame/assets-optimized/farming/plant_strawberry_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 

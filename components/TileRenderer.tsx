@@ -52,6 +52,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
 
                     // Override tile appearance if there's an active farm plot here
                     let growthStage: number | null = null;
+                    let cropType: string | null = null;
                     if (currentMapId && farmUpdateTrigger >= 0) { // Include farmUpdateTrigger to force re-evaluation
                         const plot = farmManager.getPlot(currentMapId, { x, y });
                         if (plot) {
@@ -68,6 +69,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                                 plot.state === FarmPlotState.READY ||
                                 plot.state === FarmPlotState.WILTING) {
                                 growthStage = farmManager.getGrowthStage(plot);
+                                cropType = plot.cropType;
                             }
                         }
                     }
@@ -122,20 +124,22 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                         const showImage = isGrassTile ? hashValue < 0.3 : true;
 
                         if (showImage) {
-                            // For farm plots with growth stages, select sprite based on stage
-                            if (growthStage !== null && (
+                            // For farm plots with growth stages, select sprite based on stage and crop type
+                            if (growthStage !== null && cropType && (
                                 tileData.type === TileType.SOIL_PLANTED ||
                                 tileData.type === TileType.SOIL_WATERED ||
                                 tileData.type === TileType.SOIL_READY ||
                                 tileData.type === TileType.SOIL_WILTING
                             )) {
-                                // Override with growth-stage-specific sprite
+                                // Override with growth-stage-specific sprite based on crop type
                                 if (growthStage === 0) { // SEEDLING
                                     selectedImage = farmingAssets.seedling;
                                 } else if (growthStage === 1) { // YOUNG
-                                    selectedImage = farmingAssets.plant_pea_young;
+                                    // Use crop-specific young sprite if available, otherwise use generic
+                                    selectedImage = (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
                                 } else { // ADULT
-                                    selectedImage = farmingAssets.plant_pea_adult;
+                                    // Use crop-specific adult sprite if available, otherwise use generic
+                                    selectedImage = (farmingAssets as any)[`plant_${cropType}_adult`] || farmingAssets.seedling;
                                 }
                             } else {
                                 // Use a separate hash for image selection to avoid bias
