@@ -76,6 +76,7 @@ export enum TileType {
   WELL,
   CAMPFIRE,  // Campfire for outdoor cooking (higher failure rate than stove)
   WITCH_HUT,  // Witch's magical house built into a giant tree (16x16 tiles)
+  CAULDRON,  // Animated bubbling cauldron (witch's brewing pot)
 }
 
 export interface Position {
@@ -132,6 +133,9 @@ export interface TileData {
     seasonalImages?: SeasonalImageSet;  // Seasonal variations (new)
     baseType?: TileType;  // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
     transforms?: TileTransformSettings;  // Transform settings (optional, defaults to no transforms)
+    // Animation support (for tiles like cauldrons that cycle through frames)
+    animationFrames?: string[];  // Array of image paths to cycle through
+    animationSpeed?: number;  // Milliseconds per frame (default: 150)
 }
 
 // Multi-tile sprite metadata for foreground rendering

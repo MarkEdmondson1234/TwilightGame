@@ -7,6 +7,17 @@
  * 2. Resizes and compresses individual tile images
  * 3. Preserves originals in /public/assets/
  * 4. Outputs optimized assets to /public/assets-optimized/
+ * 5. Validates all PNGs are in RGBA format (not 8-bit colormap)
+ *
+ * IMPORTANT: PixiJS v8 Compatibility
+ * ----------------------------------
+ * PixiJS v8 CANNOT decode 8-bit colormap (indexed color) PNGs.
+ * All PNG outputs must use `palette: false` in Sharp options to ensure
+ * RGBA format output. The script includes a final validation step that
+ * scans for and fixes any 8-bit colormap PNGs automatically.
+ *
+ * If you see "InvalidStateError: The source image could not be decoded"
+ * in the browser console, it means a PNG is in 8-bit colormap format.
  *
  * Run: npm run optimize-assets
  */
@@ -77,7 +88,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'animations'),
     path.join(OPTIMIZED_DIR, 'cutscenes'),
     path.join(OPTIMIZED_DIR, 'witchhut'),
-    path.join(OPTIMIZED_DIR, 'cooking')
+    path.join(OPTIMIZED_DIR, 'cooking'),
+    path.join(OPTIMIZED_DIR, 'cauldron')
   ];
 
   dirs.forEach(dir => {
@@ -129,7 +141,7 @@ async function generateCharacterSpriteSheets() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
+        .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
         .toFile(tempPath);
       resizedFrames.push(tempPath);
     }
@@ -147,7 +159,7 @@ async function generateCharacterSpriteSheets() {
 
         // Save sprite sheet
         await sharp(result.image)
-          .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
+          .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
           .toFile(outputPath);
 
         // Save metadata (frame positions)
@@ -231,7 +243,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
+        .png({ palette: false, quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
         .toFile(outputPath);
     }
     // Special handling for large multi-tile sprites (shop, mine entrance, garden shed) - extra large size with very high quality (minimal compression)
@@ -241,7 +253,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: SHOP_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
+        .png({ palette: false, quality: SHOP_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
         .toFile(outputPath);
     }
     // Special handling for trees - highest resolution as they're major visual elements
@@ -251,7 +263,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees
+        .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees
         .toFile(outputPath);
     }
     // Special handling for decorative flowers (iris, etc.) - 2x2 multi-tile sprites need higher resolution
@@ -261,7 +273,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for beautiful flowers
+        .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for beautiful flowers
         .toFile(outputPath);
     }
     // Special handling for brambles - 2x2 multi-tile sprites at medium quality (512x512)
@@ -271,7 +283,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed thorns
+        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed thorns
         .toFile(outputPath);
     }
     // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, cottages, etc.) - keep higher resolution and quality
@@ -281,7 +293,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality, less compression
+        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality, less compression
         .toFile(outputPath);
     }
     // Special handling for brick textures - crop center instead of scaling down
@@ -301,7 +313,7 @@ async function optimizeTiles() {
           fit: 'cover',
           position: 'centre'
         })
-        .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+        .png({ palette: false, quality: COMPRESSION_QUALITY, compressionLevel: 9 })
         .toFile(outputPath);
     }
     // Wooden wall tiles - scale normally to preserve all boards
@@ -311,7 +323,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+        .png({ palette: false, quality: COMPRESSION_QUALITY, compressionLevel: 9 })
         .toFile(outputPath);
     } else {
       // Regular tiles - scale to fit
@@ -320,7 +332,7 @@ async function optimizeTiles() {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
-        .png({ quality: COMPRESSION_QUALITY, compressionLevel: 9 })
+        .png({ palette: false, quality: COMPRESSION_QUALITY, compressionLevel: 9 })
         .toFile(outputPath);
     }
 
@@ -377,7 +389,7 @@ async function optimizeFarming() {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
-      .png({ quality: targetQuality, compressionLevel: targetCompression })
+      .png({ palette: false, quality: targetQuality, compressionLevel: targetCompression })
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;
@@ -433,7 +445,7 @@ async function optimizeNPCs() {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
-      .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for NPCs
+      .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for NPCs
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;
@@ -570,7 +582,7 @@ async function optimizeCutscenes() {
         position: 'centre',
         withoutEnlargement: !shouldUpscale // Don't enlarge if already large enough
       })
-      .png({ quality: CUTSCENE_QUALITY, compressionLevel: 6 }) // High quality, moderate compression
+      .png({ palette: false, quality: CUTSCENE_QUALITY, compressionLevel: 6 }) // High quality, moderate compression
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;
@@ -620,7 +632,7 @@ async function optimizeWitchHut() {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
-      .png({ quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
+      .png({ palette: false, quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;
@@ -670,7 +682,7 @@ async function optimizeCooking() {
         fit: 'contain',
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
-      .png({ quality: HIGH_QUALITY, compressionLevel: 6 })
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
       .toFile(outputPath);
 
     const optimizedSize = fs.statSync(outputPath).size;
@@ -681,6 +693,110 @@ async function optimizeCooking() {
   }
 
   console.log(`\n  Optimized ${optimized} cooking sprite(s)\n`);
+}
+
+// Optimize cauldron animation frames
+async function optimizeCauldron() {
+  console.log('🧙 Optimizing cauldron animation frames...');
+
+  const cauldronDir = path.join(ASSETS_DIR, 'cauldron');
+  if (!fs.existsSync(cauldronDir)) {
+    console.log('⚠️  No cauldron assets found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(cauldronDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure
+    const relativePath = path.relative(cauldronDir, inputPath);
+    const outputPath = path.join(OPTIMIZED_DIR, 'cauldron', relativePath.replace(/\.jpeg$/i, '.png'));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Resize to 256x256 for tile-size animation frames
+    // IMPORTANT: palette: false forces RGBA output (PixiJS v8 can't decode 8-bit colormap PNGs)
+    await sharp(inputPath)
+      .resize(256, 256, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 9 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} cauldron frame(s)\n`);
+}
+
+/**
+ * Validate and fix any 8-bit colormap PNGs
+ * PixiJS v8 cannot decode 8-bit colormap PNGs - they must be RGBA format
+ * This function scans all optimized PNGs and converts any that are in colormap format
+ */
+async function validateAndFixColormapPNGs() {
+  console.log('🔍 Validating PNG formats (checking for 8-bit colormap issues)...');
+
+  // execSync is already imported at the top of the file
+
+  // Find all 8-bit colormap PNGs using the file command
+  let colormapFiles = [];
+  try {
+    const result = execSync(
+      `find "${OPTIMIZED_DIR}" -name "*.png" -exec sh -c 'file "$1" | grep -q "8-bit colormap" && echo "$1"' _ {} \\;`,
+      { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 }
+    ).trim();
+    colormapFiles = result.split('\n').filter(f => f.length > 0);
+  } catch (err) {
+    // find returns non-zero if no matches, which is fine
+    colormapFiles = [];
+  }
+
+  if (colormapFiles.length === 0) {
+    console.log('  ✅ All PNGs are in RGBA format (PixiJS compatible)');
+    return;
+  }
+
+  console.log(`  ⚠️  Found ${colormapFiles.length} 8-bit colormap PNG(s) - converting to RGBA...`);
+
+  let fixed = 0;
+  let failed = 0;
+
+  for (const file of colormapFiles) {
+    try {
+      const tempFile = file + '.tmp';
+      await sharp(file)
+        .png({ palette: false, compressionLevel: 9 })
+        .toFile(tempFile);
+      fs.renameSync(tempFile, file);
+      fixed++;
+      console.log(`  ✅ Fixed: ${path.basename(file)}`);
+    } catch (err) {
+      failed++;
+      console.error(`  ❌ Failed to fix: ${path.basename(file)} - ${err.message}`);
+    }
+  }
+
+  console.log(`  📊 Validation complete: ${fixed} fixed, ${failed} failed`);
+
+  if (failed > 0) {
+    console.warn('  ⚠️  Some files could not be converted. Check the errors above.');
+  }
 }
 
 // Main execution
@@ -695,6 +811,10 @@ async function main() {
     await optimizeCutscenes();
     await optimizeWitchHut();
     await optimizeCooking();
+    await optimizeCauldron();
+
+    // Final validation - check and fix any 8-bit colormap PNGs
+    await validateAndFixColormapPNGs();
 
     console.log('✨ Asset optimization complete!');
     console.log(`📁 Optimized assets saved to: ${OPTIMIZED_DIR}`);

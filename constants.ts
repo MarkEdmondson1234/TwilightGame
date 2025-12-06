@@ -684,6 +684,26 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS,  // Render grass underneath for natural ground
   },
+  [TileType.CAULDRON]: {
+    name: 'Cauldron',
+    color: 'bg-palette-sage',  // Base grass color (blends with surroundings)
+    isSolid: true,  // Cannot walk through the cauldron
+    image: [tileAssets.cauldron_1],  // Static fallback image
+    baseType: TileType.GRASS,  // Render grass underneath
+    // Animation: Bubbling cauldron effect (9 frames)
+    animationFrames: [
+      tileAssets.cauldron_1,
+      tileAssets.cauldron_2,
+      tileAssets.cauldron_3,
+      tileAssets.cauldron_4,
+      tileAssets.cauldron_5,
+      tileAssets.cauldron_6,
+      tileAssets.cauldron_7,
+      tileAssets.cauldron_8,
+      tileAssets.cauldron_9,
+    ],
+    animationSpeed: 150,  // 150ms per frame = ~6.7 FPS bubbling effect
+  },
 };
 
 // === COMPILE-TIME VALIDATION ===

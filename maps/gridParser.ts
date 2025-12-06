@@ -70,7 +70,7 @@ export const GRID_CODES: Record<string, TileType> = {
   '=': TileType.WELL,            // = = Well (horizontal lines like stone well)
   'q': TileType.CAMPFIRE,        // q = Campfire (looks like fire/smoke)
   '?': TileType.WITCH_HUT,       // ? = Witch hut (mysterious magical dwelling)
-
+  '+': TileType.CAULDRON,        // + = Cauldron (bubbling witch's pot)
 };
 
 /**

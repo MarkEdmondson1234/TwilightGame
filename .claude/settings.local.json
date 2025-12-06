@@ -37,7 +37,11 @@
       "Bash(netstat:*)",
       "Bash(npm run perf:*)",
       "Bash(cat:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(pgrep:*)",
+      "Bash(lsof:*)",
+      "Bash(open \"http://localhost:4000/TwilightGame/\")",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

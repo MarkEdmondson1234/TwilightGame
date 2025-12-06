@@ -88,7 +88,7 @@ export const tileAssets = {
   fairy_oak_autumn: '/TwilightGame/assets-optimized/tiles/fairy_oak_autumn.png',
   fairy_oak_winter: '/TwilightGame/assets-optimized/tiles/fairy_oak_winter.png',
   // Spruce tree assets (evergreen with winter variation)
-  spruce_tree: '/TwilightGame/assets-optimized/tiles/spruce_tree.png?v=3',
+  spruce_tree: '/TwilightGame/assets-optimized/tiles/spruce_tree.png',
   spruce_tree_winter: '/TwilightGame/assets-optimized/tiles/spruce_tree_winter.png',
   // Willow tree assets (seasonal variations)
   willow_tree: '/TwilightGame/assets-optimized/tiles/willow/willow_tree.png',
@@ -111,6 +111,16 @@ export const tileAssets = {
   wild_strawberry_autumn: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_autumn.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
+  // Cauldron animation frames (cache-busted after RGBA fix)
+  cauldron_1: '/TwilightGame/assets-optimized/cauldron/cauldron_1.png?v=2',
+  cauldron_2: '/TwilightGame/assets-optimized/cauldron/cauldron_2.png?v=2',
+  cauldron_3: '/TwilightGame/assets-optimized/cauldron/cauldron_3.png?v=2',
+  cauldron_4: '/TwilightGame/assets-optimized/cauldron/cauldron_4.png?v=2',
+  cauldron_5: '/TwilightGame/assets-optimized/cauldron/cauldron_5.png?v=2',
+  cauldron_6: '/TwilightGame/assets-optimized/cauldron/cauldron_6.png?v=2',
+  cauldron_7: '/TwilightGame/assets-optimized/cauldron/cauldron_7.png?v=2',
+  cauldron_8: '/TwilightGame/assets-optimized/cauldron/cauldron_8.png?v=2',
+  cauldron_9: '/TwilightGame/assets-optimized/cauldron/cauldron_9.png?v=2',
 };
 
 // Farming assets - Use optimized versions for better performance

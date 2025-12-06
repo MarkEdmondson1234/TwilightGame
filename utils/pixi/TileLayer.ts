@@ -42,6 +42,8 @@ export class TileLayer {
   private colorCache: Map<string, number> = new Map();
   // Cache hex color conversions (colorClass -> hex)
   private static hexColorCache: Map<string, number> = new Map();
+  // Track animated tile positions for frame cycling
+  private animatedTiles: Map<string, { frames: string[]; speed: number }> = new Map();
 
   constructor() {
     this.container = new PIXI.Container();
@@ -144,6 +146,12 @@ export class TileLayer {
     if (this.isMultiTileSprite(tileData.type)) {
       // Only render color background - SpriteLayer will render the sprite
       this.renderColorTile(x, y, tileData.color, map);
+      return;
+    }
+
+    // Check if this tile has animation frames (e.g., cauldron)
+    if (tileData.animationFrames && tileData.animationFrames.length > 0) {
+      this.renderAnimatedTile(x, y, tileData, map);
       return;
     }
 
@@ -378,6 +386,68 @@ export class TileLayer {
   }
 
   /**
+   * Render an animated tile (cycles through frames based on time)
+   * Used for tiles like the bubbling cauldron
+   */
+  private renderAnimatedTile(x: number, y: number, tileData: any, map: MapDefinition): void {
+    const key = `${x},${y}`;
+    const spriteKey = `${x},${y}_sprite`;
+    const frames = tileData.animationFrames as string[];
+    const speed = tileData.animationSpeed || 150; // Default 150ms per frame
+
+    // Always render background color first
+    this.renderColorTile(x, y, tileData.color, map, `${x},${y}_color`);
+
+    // Track this animated tile
+    this.animatedTiles.set(key, { frames, speed });
+
+    // Calculate current frame based on time
+    const currentTime = Date.now();
+    const frameIndex = Math.floor(currentTime / speed) % frames.length;
+    const imageUrl = frames[frameIndex];
+
+    // Get or create sprite
+    let sprite = this.sprites.get(spriteKey);
+
+    if (!sprite || sprite instanceof PIXI.Graphics) {
+      // Create new sprite (or replace Graphics with Sprite)
+      if (sprite instanceof PIXI.Graphics) {
+        this.container.removeChild(sprite);
+        this.sprites.delete(spriteKey);
+      }
+
+      const texture = textureManager.getTexture(imageUrl);
+      if (!texture) {
+        console.warn(`[TileLayer] Animated texture not loaded: ${imageUrl}`);
+        return;
+      }
+
+      sprite = new PIXI.Sprite(texture);
+      sprite.anchor.set(0.5, 0.5);
+      sprite.x = (x + 0.5) * TILE_SIZE;
+      sprite.y = (y + 0.5) * TILE_SIZE;
+
+      // Calculate scale based on texture size vs desired render size
+      const textureScale = TILE_SIZE / texture.width;
+      sprite.scale.set(textureScale, textureScale);
+      sprite.zIndex = 1; // Above color background
+
+      this.container.addChild(sprite);
+      this.sprites.set(spriteKey, sprite);
+    } else if (sprite instanceof PIXI.Sprite) {
+      // Update texture for current animation frame
+      const newTexture = textureManager.getTexture(imageUrl);
+      if (newTexture && sprite.texture !== newTexture) {
+        sprite.texture = newTexture;
+        // Recalculate scale for new texture size
+        const textureScale = TILE_SIZE / newTexture.width;
+        sprite.scale.set(textureScale, textureScale);
+      }
+      sprite.visible = true;
+    }
+  }
+
+  /**
    * Convert palette color class to hex color
    * Only supports palette colors: 'bg-palette-sage' → '#87AE73'
    * Results are cached for performance
@@ -440,6 +510,7 @@ export class TileLayer {
     this.sprites.forEach(sprite => sprite.destroy());
     this.sprites.clear();
     this.colorCache.clear(); // Clear color cache when map changes
+    this.animatedTiles.clear(); // Clear animated tile tracking
     console.log('[TileLayer] Cleared all sprites');
   }
 
