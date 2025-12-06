@@ -8,6 +8,19 @@
  * 3. Preserves originals in /public/assets/
  * 4. Outputs optimized assets to /public/assets-optimized/
  * 5. Validates all PNGs are in RGBA format (not 8-bit colormap)
+ * 6. Normalizes all output filenames to lowercase
+ *
+ * IMPORTANT: Cross-Platform Compatibility (Windows/macOS)
+ * -------------------------------------------------------
+ * Windows filesystems are case-insensitive, which can create files with
+ * mixed casing (e.g., "Spruce_tree.PNG" instead of "spruce_tree.png").
+ * These files work locally but break when:
+ * - Deployed to case-sensitive servers (Linux, most web hosts)
+ * - Referenced with lowercase paths in code (assets.ts)
+ * - Fetched by Vite's dev server (case-sensitive URL matching)
+ *
+ * This script normalizes ALL output filenames to lowercase using the
+ * normalizePathCase() function to ensure consistency across platforms.
  *
  * IMPORTANT: PixiJS v8 Compatibility
  * ----------------------------------
@@ -58,6 +71,21 @@ const CUTSCENE_HEIGHT = 1080;
 const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
 
 console.log('🎨 Starting asset optimization...\n');
+
+/**
+ * Normalize a file path to lowercase for cross-platform compatibility.
+ * Windows filesystems are case-insensitive, which can create files with
+ * mixed casing (e.g., "Spruce_tree.PNG") that break on case-sensitive
+ * servers or when referenced with lowercase in code.
+ *
+ * This function ensures all output filenames are lowercase.
+ */
+function normalizePathCase(filePath) {
+  const dir = path.dirname(filePath);
+  const ext = path.extname(filePath).toLowerCase(); // .PNG → .png
+  const base = path.basename(filePath, path.extname(filePath)).toLowerCase();
+  return path.join(dir, base + ext);
+}
 
 // Recursively get all files in a directory
 function getAllFiles(dir, fileList = []) {
@@ -225,8 +253,9 @@ async function optimizeTiles() {
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(tilesDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'tiles', relativePath.replace(/\.jpeg$/i, '.png'));
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'tiles', relativePath.replace(/\.jpeg$/i, '.png')));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);
@@ -257,7 +286,7 @@ async function optimizeTiles() {
         .toFile(outputPath);
     }
     // Special handling for trees - highest resolution as they're major visual elements
-    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak')) {
+    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak') || file.includes('giant_mushroom')) {
       await sharp(inputPath)
         .resize(TREE_SIZE, TREE_SIZE, {
           fit: 'contain',
@@ -266,14 +295,24 @@ async function optimizeTiles() {
         .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees
         .toFile(outputPath);
     }
-    // Special handling for decorative flowers (iris, etc.) - 2x2 multi-tile sprites need higher resolution
-    else if (file.includes('iris') || inputPath.includes('wild_iris')) {
+    // Special handling for decorative flowers (iris, ferns, etc.) - multi-tile sprites need higher resolution
+    else if (file.includes('iris') || inputPath.includes('wild_iris') || file.includes('fern')) {
       await sharp(inputPath)
         .resize(FLOWER_SIZE, FLOWER_SIZE, {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for beautiful flowers
+        .toFile(outputPath);
+    }
+    // Special handling for tuft grass - decorative ground cover with fine detail
+    else if (file.includes('tuft') || inputPath.includes('tuft')) {
+      await sharp(inputPath)
+        .resize(FARMING_PLANT_SIZE, FARMING_PLANT_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality to preserve grass blade detail
         .toFile(outputPath);
     }
     // Special handling for brambles - 2x2 multi-tile sprites at medium quality (512x512)
@@ -366,8 +405,9 @@ async function optimizeFarming() {
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(farmingDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'farming', relativePath.replace(/\.jpeg$/i, '.png'));
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'farming', relativePath.replace(/\.jpeg$/i, '.png')));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);
@@ -422,8 +462,9 @@ async function optimizeNPCs() {
     if (!file.match(/\.(png|svg)$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(npcsDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'npcs', relativePath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'npcs', relativePath));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);
@@ -494,8 +535,9 @@ async function optimizeAnimations() {
     if (!file.match(/\.gif$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(animationsDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'animations', relativePath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'animations', relativePath));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);
@@ -555,8 +597,9 @@ async function optimizeCutscenes() {
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(cutscenesDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'cutscenes', relativePath.replace(/\.jpeg$/i, '.png'));
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'cutscenes', relativePath.replace(/\.jpeg$/i, '.png')));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);
@@ -615,8 +658,9 @@ async function optimizeWitchHut() {
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(witchHutDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'witchhut', relativePath.replace(/\.jpeg$/i, '.png'));
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'witchhut', relativePath.replace(/\.jpeg$/i, '.png')));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);
@@ -666,8 +710,9 @@ async function optimizeCooking() {
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(cookingDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'cooking', relativePath.replace(/\.jpeg$/i, '.png'));
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'cooking', relativePath.replace(/\.jpeg$/i, '.png')));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);
@@ -713,8 +758,9 @@ async function optimizeCauldron() {
     if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
 
     // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
     const relativePath = path.relative(cauldronDir, inputPath);
-    const outputPath = path.join(OPTIMIZED_DIR, 'cauldron', relativePath.replace(/\.jpeg$/i, '.png'));
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'cauldron', relativePath.replace(/\.jpeg$/i, '.png')));
 
     // Ensure output subdirectory exists
     const outputDir = path.dirname(outputPath);

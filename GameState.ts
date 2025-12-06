@@ -770,6 +770,29 @@ class GameStateManager {
     this.notify();
   }
 
+  /**
+   * Remove all decayed items from all maps
+   * Returns the number of items removed
+   */
+  removeDecayedItems(): number {
+    const initialCount = this.state.placedItems.length;
+    const currentTime = Date.now();
+
+    // Import decay manager
+    const { shouldDecay } = require('./utils/itemDecayManager');
+
+    this.state.placedItems = this.state.placedItems.filter(item => !shouldDecay(item, currentTime));
+
+    const removedCount = initialCount - this.state.placedItems.length;
+
+    if (removedCount > 0) {
+      this.notify();
+      console.log(`[GameState] Removed ${removedCount} decayed item(s)`);
+    }
+
+    return removedCount;
+  }
+
   exportState(): string {
     return JSON.stringify(this.state, null, 2);
   }

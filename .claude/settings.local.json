@@ -27,7 +27,12 @@
       "Bash(/Users/mark/.claude/skills/skill-builder/scripts/create_skill.sh:*)",
       "Skill(profile-game)",
       "Bash(npm install:*)",
-      "Bash(taskkill:*)",
+      "Bash(npm run optimize-assets:witchhut:spruce_tree:*)",
+      "Skill(dev-server)",
+      "Bash(bash:*)",
+      "Bash(done)",
+      "Bash(node check-brambles.js:*)",
+      "Bash(node check-brambles.cjs:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(mcp__chrome-devtools__new_page:*)",
@@ -41,7 +46,11 @@
       "Bash(pgrep:*)",
       "Bash(lsof:*)",
       "Bash(open \"http://localhost:4000/TwilightGame/\")",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(git log:*)",
+      "Bash(find:*)",
+      "Bash(npm run optimize-assets:wild_iris:*)",
+      "Bash(open \"http://localhost:4001/TwilightGame/\")"
     ],
     "deny": [],
     "ask": []

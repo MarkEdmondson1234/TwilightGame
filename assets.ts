@@ -63,8 +63,6 @@ export const tileAssets = {
   // Well assets (2x2 multi-tile sprite with seasonal variation)
   well: '/TwilightGame/assets-optimized/tiles/well.png',
   well_winter: '/TwilightGame/assets-optimized/tiles/well_in_winter.png',
-  forest_fern1: '/TwilightGame/assets-optimized/tiles/forest_fern1.png',
-  forest_fern2: '/TwilightGame/assets-optimized/tiles/forest_fern2.png',
   forest_fern3: '/TwilightGame/assets-optimized/tiles/forest_fern3.png',
   // Tuft grass assets (seasonal and style variations)
   tuft_01: '/TwilightGame/assets-optimized/tiles/tuft/tuft_01.png',
@@ -111,16 +109,19 @@ export const tileAssets = {
   wild_strawberry_autumn: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_autumn.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
-  // Cauldron animation frames (cache-busted after RGBA fix)
-  cauldron_1: '/TwilightGame/assets-optimized/cauldron/cauldron_1.png?v=2',
-  cauldron_2: '/TwilightGame/assets-optimized/cauldron/cauldron_2.png?v=2',
-  cauldron_3: '/TwilightGame/assets-optimized/cauldron/cauldron_3.png?v=2',
-  cauldron_4: '/TwilightGame/assets-optimized/cauldron/cauldron_4.png?v=2',
-  cauldron_5: '/TwilightGame/assets-optimized/cauldron/cauldron_5.png?v=2',
-  cauldron_6: '/TwilightGame/assets-optimized/cauldron/cauldron_6.png?v=2',
-  cauldron_7: '/TwilightGame/assets-optimized/cauldron/cauldron_7.png?v=2',
-  cauldron_8: '/TwilightGame/assets-optimized/cauldron/cauldron_8.png?v=2',
-  cauldron_9: '/TwilightGame/assets-optimized/cauldron/cauldron_9.png?v=2',
+  // Cauldron animation frames
+  cauldron_1: '/TwilightGame/assets-optimized/cauldron/cauldron_1.png',
+  cauldron_2: '/TwilightGame/assets-optimized/cauldron/cauldron_2.png',
+  cauldron_3: '/TwilightGame/assets-optimized/cauldron/cauldron_3.png',
+  cauldron_4: '/TwilightGame/assets-optimized/cauldron/cauldron_4.png',
+  cauldron_5: '/TwilightGame/assets-optimized/cauldron/cauldron_5.png',
+  cauldron_6: '/TwilightGame/assets-optimized/cauldron/cauldron_6.png',
+  cauldron_7: '/TwilightGame/assets-optimized/cauldron/cauldron_7.png',
+  cauldron_8: '/TwilightGame/assets-optimized/cauldron/cauldron_8.png',
+  cauldron_9: '/TwilightGame/assets-optimized/cauldron/cauldron_9.png',
+  // Giant mushroom assets (magical mushrooms for witch hut area)
+  giant_mushroom: '/TwilightGame/assets-optimized/tiles/giant_mushroom.png',
+  giant_mushroom_winter: '/TwilightGame/assets-optimized/tiles/giant_mushroom_winter.png',
 };
 
 // Farming assets - Use optimized versions for better performance
