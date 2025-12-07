@@ -451,6 +451,16 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 30,
   },
 
+  crop_blackberry: {
+    id: 'crop_blackberry',
+    name: 'crop_blackberry',
+    displayName: 'Blackberry',
+    category: ItemCategory.CROP,
+    description: 'Juicy wild blackberries.',
+    stackable: true,
+    sellPrice: 35,
+  },
+
   // ===== MATERIALS =====
   fertiliser: {
     id: 'fertiliser',

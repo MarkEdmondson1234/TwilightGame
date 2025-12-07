@@ -12,6 +12,7 @@ import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { getCrop } from '../data/crops';
 import { generateForageSeed } from '../data/items';
+import { TimeManager, Season } from './TimeManager';
 
 export interface ActionResult {
     handled: boolean;
@@ -204,6 +205,56 @@ export function handleFarmAction(
             message: message,
             messageType: 'success',
         };
+    }
+
+    // Check for blackberry harvesting from adjacent brambles with hand tool (summer only)
+    if (currentTool === 'hand') {
+        // Check adjacent tiles (including diagonals) for brambles
+        const adjacentTiles = [
+            { x: playerTileX - 1, y: playerTileY },     // left
+            { x: playerTileX + 1, y: playerTileY },     // right
+            { x: playerTileX, y: playerTileY - 1 },     // up
+            { x: playerTileX, y: playerTileY + 1 },     // down
+            { x: playerTileX - 1, y: playerTileY - 1 }, // top-left
+            { x: playerTileX + 1, y: playerTileY - 1 }, // top-right
+            { x: playerTileX - 1, y: playerTileY + 1 }, // bottom-left
+            { x: playerTileX + 1, y: playerTileY + 1 }, // bottom-right
+        ];
+
+        for (const tile of adjacentTiles) {
+            const adjacentTileData = getTileData(tile.x, tile.y);
+            if (adjacentTileData && adjacentTileData.type === TileType.BRAMBLES) {
+                const currentSeason = TimeManager.getCurrentTime().season;
+
+                if (currentSeason !== Season.SUMMER) {
+                    console.log(`[Action] Brambles have no ripe blackberries (current season: ${currentSeason})`);
+                    return {
+                        handled: false,
+                        message: 'The brambles have no ripe berries yet.',
+                        messageType: 'info',
+                    };
+                }
+
+                console.log('[Action] Attempting to harvest blackberries from brambles');
+
+                // Random yield: 3-7 blackberries (wild-only, cannot be planted)
+                const berryYield = Math.floor(Math.random() * 5) + 3; // 3-7
+                inventoryManager.addItem('crop_blackberry', berryYield);
+
+                const inventoryData = inventoryManager.getInventoryData();
+                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+                const message = `Picked ${berryYield} blackberries!`;
+
+                console.log(`[Action] ${message}`);
+                onAnimationTrigger?.('harvest');
+                return {
+                    handled: true,
+                    message: message,
+                    messageType: 'success',
+                };
+            }
+        }
     }
 
     // Check if this is a farm tile or farm action (check both visual tile and plot state)
