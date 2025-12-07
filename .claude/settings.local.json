@@ -54,7 +54,8 @@
       "Bash(ls:*)",
       "Bash(git stash:*)",
       "Bash(git rm:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
