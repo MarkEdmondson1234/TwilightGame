@@ -174,6 +174,38 @@ export function handleFarmAction(
 
     console.log(`[Action] Tile at (${playerTileX}, ${playerTileY}): visual type=${tileData?.type}, plot type=${plotTileType}, currentTool=${currentTool}`);
 
+    // Check for wild strawberry harvesting with hand tool
+    if (currentTool === 'hand' && tileData && tileData.type === TileType.WILD_STRAWBERRY) {
+        console.log('[Action] Attempting to harvest wild strawberries');
+
+        // Random yield: 2-5 strawberries (always successful)
+        const berryYield = Math.floor(Math.random() * 4) + 2; // 2-5
+        inventoryManager.addItem('crop_strawberry', berryYield);
+
+        // 30% chance to also get seeds when picking berries
+        const gotSeeds = Math.random() < 0.3;
+        let seedCount = 0;
+        if (gotSeeds) {
+            seedCount = Math.floor(Math.random() * 2) + 1; // 1-2 seeds
+            inventoryManager.addItem('seed_strawberry', seedCount);
+        }
+
+        const inventoryData = inventoryManager.getInventoryData();
+        gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+        const message = gotSeeds
+            ? `Picked ${berryYield} strawberries and found ${seedCount} seeds!`
+            : `Picked ${berryYield} strawberries!`;
+
+        console.log(`[Action] ${message}`);
+        onAnimationTrigger?.('harvest');
+        return {
+            handled: true,
+            message: message,
+            messageType: 'success',
+        };
+    }
+
     // Check if this is a farm tile or farm action (check both visual tile and plot state)
     if ((tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) ||
         (plotTileType !== undefined && plotTileType >= TileType.SOIL_FALLOW && plotTileType <= TileType.SOIL_DEAD)) {
