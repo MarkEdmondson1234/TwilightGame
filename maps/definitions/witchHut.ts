@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { createWitchWolfNPC } from '../../utils/npcFactories';
 
 /**
  * Witch Hut - Mysterious magical dwelling in the deep forest
@@ -91,7 +92,8 @@ export const witchHut: MapDefinition = {
     },
   ],
   npcs: [
-    // TODO: Add witch NPC when ready
+    // The witch and her wolf familiar, tending to the cauldron
+    createWitchWolfNPC('witch', { x: 18, y: 4 }, 'The Witch'),
     // TODO: Add familiar/pet NPCs (black cat, owl, etc.)
   ],
   // Note: Witch hut sprite is placed at center (15, 15) but map uses '?' anchor

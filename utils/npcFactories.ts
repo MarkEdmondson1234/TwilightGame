@@ -1113,53 +1113,157 @@ export function createWitchWolfNPC(
     dialogue: [
       {
         id: 'greeting',
-        text: '*The wolf\'s golden eyes fix upon you with unsettling intensity. You sense ancient wisdom... and something else. Magic, perhaps.*',
+        text: '*A woman stands beside the bubbling cauldron, her wolf companion at her side. She looks up with knowing eyes.* "Ah, a visitor to my humble glade. Welcome, traveller. I am the Witch of the Woods."',
         seasonalText: {
-          spring: '*Cherry blossoms drift past the wolf\'s silver-white fur. Her eyes hold the promise of new beginnings... and old debts.*',
-          summer: '*Heat shimmers around the wolf, yet her fur remains pristine white. She regards you as one might study an interesting insect.*',
-          autumn: '*The wolf sits perfectly still among the falling leaves, a ghost in the dying forest. Her gaze pierces your soul.*',
-          winter: '*She is nearly invisible against the snow, only her golden eyes betraying her presence. The cold deepens as she watches.*',
+          spring: '*The witch stirs her cauldron, spring flowers floating on its surface.* "Spring brings new life, new magic. The forest awakens, and with it, old knowledge stirs. What brings you to my dwelling?"',
+          summer: '*The witch wipes her brow, though the heat doesn\'t seem to trouble her.* "Summer\'s warmth makes my herbs grow strong. Even now, my garden flourishes. How may I help you, traveller?"',
+          autumn: '*The witch gathers fallen leaves, adding them to her cauldron.* "Autumn teaches us that endings are beginnings in disguise. The forest prepares for rest, but magic never sleeps. What do you seek?"',
+          winter: '*Snow dusts the witch\'s dark robes, but she seems unbothered by the cold.* "Winter is the season of contemplation. The earth rests, dreams, remembers. Tell me, what brings you out in such weather?"',
         },
         responses: [
           {
-            text: 'Bow respectfully.',
-            nextId: 'respect',
+            text: 'Who are you?',
+            nextId: 'introduction',
           },
           {
-            text: 'Ask who she is.',
-            nextId: 'question',
+            text: 'What are you brewing?',
+            nextId: 'cauldron',
           },
           {
-            text: 'Step back nervously.',
+            text: 'Could you teach me magic?',
+            nextId: 'apprentice',
+          },
+          {
+            text: 'Just passing through.',
           },
         ],
       },
       {
-        id: 'respect',
-        text: '*The wolf\'s eyes soften, almost imperceptibly. A voice echoes in your mind - not heard, but felt: "You have manners, little one. That is... rare. Perhaps we shall meet again."*',
+        id: 'introduction',
+        text: '"I am the Witch of the Woods, keeper of old magic and tender of this sacred glade. I have lived here for... well, longer than most can remember. My companion here is Shadow." *The wolf\'s ears perk up at the name.*',
         seasonalText: {
-          spring: '*"The forest remembers those who show kindness. Plant well, and I shall watch over your seeds."*',
-          summer: '*"The sun burns bright, but shadows remain. Walk carefully, respectful one."*',
-          autumn: '*"Change comes for all things. You accept this with grace. Good."*',
-          winter: '*"The cold tests the spirit. Yours burns warm enough... for now."*',
+          spring: '"I\'ve watched spring return to this forest for centuries. Each year brings new blossoms, new life, new possibilities."',
+          summer: '"Summer is when my garden is most abundant. I grow plants with magical properties - and a few vegetables for my sandwiches, of course."',
+          autumn: '"In autumn, I harvest what I\'ve grown and prepare for winter. The changing leaves remind me that all things transform, given time."',
+          winter: '"Winter is my season for brewing, for reading old tomes, for remembering. The cold keeps away those who aren\'t truly dedicated."',
         },
-      },
-      {
-        id: 'question',
-        text: '*A sound like wind through branches fills your mind: "I am what remains when the old magic fades. I am what watches when mortals sleep. I am... patient." Her eyes glitter with ancient amusement.*',
         responses: [
           {
-            text: 'Ask what she wants.',
-            nextId: 'purpose',
+            text: 'Tell me about your magic.',
+            nextId: 'magic_talk',
           },
           {
-            text: 'Thank her and leave.',
+            text: 'What\'s it like living here?',
+            nextId: 'glade_life',
+          },
+          {
+            text: 'Could you teach me?',
+            nextId: 'apprentice',
           },
         ],
       },
       {
-        id: 'purpose',
-        text: '*"Want?" The voice seems amused. "I observe. I remember. I wait for those who might... interest me. You have potential, little gardener. Tend your soil. Grow strong. Perhaps one day, you will be ready to learn."*',
+        id: 'cauldron',
+        text: '"Ah, my cauldron! Currently brewing a restorative tonic. Nettle, elderflower, a touch of moonwater... magic is often simpler than people think. It\'s about understanding nature, really."',
+        seasonalText: {
+          spring: '"Spring tonics are my favourite - cherry blossom essence for renewal, primrose for hope. Delicate work, but worth it."',
+          summer: '"In summer I make cooling draughts. The heat makes brewing tricky, but the herbs are at their strongest."',
+          autumn: '"Autumn brews are hearty - mushroom broths, root extracts. They sustain through the dark months ahead."',
+          winter: '"Winter potions require patience. Everything takes longer in the cold, but the results are powerful. Slow magic, deep magic."',
+        },
+        responses: [
+          {
+            text: 'Could you teach me to brew?',
+            nextId: 'apprentice',
+          },
+          {
+            text: 'Fascinating!',
+          },
+        ],
+      },
+      {
+        id: 'apprentice',
+        text: '*The witch pauses, studying you carefully.* "An apprentice? I haven\'t taken one in... years. Decades, perhaps. The last one didn\'t have the patience for it." *She stirs her cauldron thoughtfully.* "Magic isn\'t learned from books alone, you understand. It requires dedication. Hard work."',
+        responses: [
+          {
+            text: 'I\'m willing to work hard.',
+            nextId: 'apprentice_interest',
+          },
+          {
+            text: 'What would it involve?',
+            nextId: 'apprentice_details',
+          },
+          {
+            text: 'Perhaps another time.',
+          },
+        ],
+      },
+      {
+        id: 'apprentice_interest',
+        text: '"Mmm, you say that now." *She smiles slightly.* "Tell you what - if you\'re serious about learning, prove yourself first. I need a proper kitchen garden. Grow me at least three different crops. Show me you can nurture living things. Then we\'ll talk about magic."',
+        seasonalText: {
+          spring: '"Spring is the perfect time to start a garden. Plant well, tend carefully, and show me what you can grow."',
+          summer: '"Summer growing is straightforward - water regularly, mind the weeds. If you can manage that, perhaps you have potential."',
+          autumn: '"Autumn planting requires knowledge - what thrives in cooler weather? Show me you understand the seasons."',
+          winter: '"Winter is challenging for growing, but there are ways. Prove you can work with nature, not against it."',
+        },
+        responses: [
+          {
+            text: 'I\'ll do it!',
+            nextId: 'apprentice_accepted',
+          },
+          {
+            text: 'What else do you need?',
+            nextId: 'pickled_onions',
+          },
+        ],
+      },
+      {
+        id: 'apprentice_details',
+        text: '"Magic is about understanding the world - the plants, the seasons, the way energy flows through all living things. You\'d learn to brew potions, to coax magic from herbs, to read the patterns in nature. Eventually, if you proved worthy, I might teach you to cast proper spells."',
+        responses: [
+          {
+            text: 'That sounds wonderful!',
+            nextId: 'apprentice_interest',
+          },
+          {
+            text: 'I need to think about it.',
+          },
+        ],
+      },
+      {
+        id: 'apprentice_accepted',
+        text: '"Good! I look forward to seeing what you can grow. Shadow here will keep an eye on your progress." *The wolf huffs, as if amused.* "When you\'ve established your garden, come back and we\'ll begin your lessons."',
+      },
+      {
+        id: 'pickled_onions',
+        text: '*The witch\'s eyes light up.* "Ah! Well, if you really want to impress me... I do love pickled onions in my sandwiches. Sharp, tangy, perfect. If you can make a proper batch, I\'ll know you\'re serious about learning the craft."',
+        responses: [
+          {
+            text: 'I\'ll bring you some!',
+            nextId: 'apprentice_accepted',
+          },
+          {
+            text: 'Noted!',
+          },
+        ],
+      },
+      {
+        id: 'magic_talk',
+        text: '"Magic is all around us - in the growth of a seed, the turn of the seasons, the pull of the moon on the tides. I simply... help it along. Guide it. Shape it to purpose. It\'s not about power, it\'s about harmony."',
+      },
+      {
+        id: 'glade_life',
+        text: '"Peaceful, mostly. I have my garden, my brewing, Shadow for company. The forest provides what I need. Sometimes travellers find their way here, which makes for pleasant conversation." *She smiles.* "It can be lonely, I admit. Perhaps that\'s why I\'m considering an apprentice."',
+        responses: [
+          {
+            text: 'I could be that apprentice.',
+            nextId: 'apprentice',
+          },
+          {
+            text: 'It sounds lovely here.',
+          },
+        ],
       },
     ],
     animatedStates,
