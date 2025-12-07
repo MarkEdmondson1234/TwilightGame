@@ -4,6 +4,7 @@ export enum TileType {
   // Outdoor tiles
   GRASS,
   TUFT,  // Grass with tufts - seasonal variation (replaces 90% of grass)
+  TUFT_SPARSE,  // Sparse tuft variant - less visual intensity (uses only sparse images)
   ROCK,
   WATER,
   // Lake tiles (directional edges for proper water rendering)

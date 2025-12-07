@@ -27,6 +27,7 @@ type TimeKey = 'day' | 'night';
 const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.GRASS]: 'grass',
   [TileType.TUFT]: 'grass',  // Tuft grass uses same background as regular grass
+  [TileType.TUFT_SPARSE]: 'grass',  // Sparse tuft variant uses same background as grass
   [TileType.ROCK]: 'rock',
   [TileType.WATER]: 'water',
   [TileType.WATER_CENTER]: 'water',

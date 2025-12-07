@@ -60,6 +60,8 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Tuft Grass',
     color: 'bg-palette-sage',  // Same background as grass, overridden by map color scheme
     isSolid: false,
+    baseType: TileType.GRASS,  // Render grass underneath
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     seasonalImages: {
       spring: [tileAssets.tuft_spring, tileAssets.tuft_sparse],  // 50% sparse (1/2)
       summer: [tileAssets.tuft_01, tileAssets.tuft_02, tileAssets.tuft_sparse],  // 33% sparse (1/3)
@@ -67,10 +69,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       winter: [tileAssets.tuft_winter, tileAssets.tuft_sparse],  // 50% sparse (1/2)
       default: [tileAssets.tuft_01, tileAssets.tuft_02, tileAssets.tuft_sparse],  // 33% sparse (1/3)
     },
+  },
+  [TileType.TUFT_SPARSE]: {
+    name: 'Village Green',
+    color: 'bg-palette-sage',  // Same background as grass, overridden by map color scheme
+    isSolid: false,
+    baseType: TileType.GRASS,  // Render grass underneath
+    image: [tileAssets.village_green],  // Regular 1x1 tile (not multi-tile sprite)
     transforms: {
-      enableFlip: true,  // Horizontal flipping for variety
+      enableFlip: true,
+      enableRotation: true,
       enableScale: true,
-      scaleRange: { min: 0.8, max: 1.4 },  // Varied sizes - some small, some large tufts
+      enableBrightness: true,
+      scaleRange: { min: 0.9, max: 1.1 },
+      rotationRange: { min: -15, max: 15 },
     },
   },
   [TileType.ROCK]: {
@@ -1257,6 +1269,27 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // Collision at the stump (1x1 centered)
     collisionWidth: 1,
     collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+  },
+  {
+    tileType: TileType.TUFT,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall (larger tuft patch)
+    offsetX: -0.5,   // Center horizontally
+    offsetY: -0.5,   // Center vertically
+    image: tileAssets.tuft_01,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: false,  // Render under player (ground decoration)
+    enableFlip: true,  // Horizontal flip for variety
+    enableRotation: true,  // Rotation for natural placement
+    enableScale: true,  // Size variation
+    enableBrightness: true,  // Slight brightness variation
+    scaleRange: { min: 0.85, max: 1.15 },  // Varied sizes
+    rotationRange: { min: -15, max: 15 },  // Slight rotation
+    brightnessRange: { min: 0.95, max: 1.05 },  // Subtle brightness variation
+    // No collision - tufts are walkable ground cover
+    collisionWidth: 0,
+    collisionHeight: 0,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
   },

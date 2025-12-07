@@ -4,6 +4,7 @@ import { TileType } from '../types';
 export const GRID_CODES: Record<string, TileType> = {
   // Outdoor
   'G': TileType.GRASS,
+  ',': TileType.TUFT_SPARSE,  // , = Sparse tuft (less visual intensity than regular tuft)
   'R': TileType.ROCK,
   'W': TileType.WATER_CENTER,     // W = water center (updated to use new lake tiles)
   // Lake tiles (directional edges for proper water rendering)
