@@ -449,6 +449,24 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.8, max: 1.2 },  // Size variation
     },
   },
+  [TileType.POND_FLOWERS]: {
+    name: 'Pond Flowers',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: false,  // Walkable - decorative water flowers
+    baseType: TileType.GRASS,  // Render grass underneath the pond flower sprite
+    seasonalImages: {
+      spring: [tileAssets.pond_flowers_spring_summer],  // Same sprite for spring and summer
+      summer: [tileAssets.pond_flowers_spring_summer],
+      autumn: [tileAssets.pond_flowers_autumn],
+      winter: [tileAssets.pond_flowers_winter],
+      default: [tileAssets.pond_flowers_spring_summer],
+    },
+    transforms: {
+      enableFlip: true,  // Horizontal flipping for variety
+      enableScale: true,
+      scaleRange: { min: 0.8, max: 1.2 },  // Size variation
+    },
+  },
   [TileType.BRAMBLES]: {
     name: 'Brambles',
     color: 'bg-palette-sage',  // Base grass color for blending
@@ -1427,6 +1445,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetX: 0,
     collisionOffsetY: 0,
     // Transform controls: variety for natural waterside look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.85, max: 1.15 },  // Size variation for natural look
+  },
+  {
+    tileType: TileType.POND_FLOWERS,
+    spriteWidth: 2,    // 2 tiles wide (floating pond flowers)
+    spriteHeight: 2,   // 2 tiles tall
+    offsetX: -0.5,     // Center horizontally on tile
+    offsetY: -1,       // Extends 1 tile upward
+    image: tileAssets.pond_flowers_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // No collision - walkable decorative flower
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: variety for natural pond look
     enableFlip: true,
     enableRotation: false,
     enableScale: true,

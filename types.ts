@@ -47,6 +47,7 @@ export enum TileType {
   SPRUCE_TREE,
   WILLOW_TREE,
   WILD_IRIS,  // Flowering plant that grows near water
+  POND_FLOWERS,  // Pond flowers (seasonal variations, spring/summer use same sprite)
   BRAMBLES,  // Thorny brambles (seasonal variations, solid obstacle)
   WILD_STRAWBERRY,  // Wild strawberry plants (forageable in forest, seasonal variations)
   GIANT_MUSHROOM,  // Giant magical mushroom (appears on witch hut map, tree-like)

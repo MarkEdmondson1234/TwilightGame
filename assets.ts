@@ -101,6 +101,10 @@ export const tileAssets = {
   wild_iris_summer: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_summer.png',
   wild_iris_autumn: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_autumn.png',
   wild_iris_winter: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_winter.png',
+  // Pond flowers assets (seasonal variations - spring/summer use same sprite)
+  pond_flowers_spring_summer: '/TwilightGame/assets-optimized/tiles/pond_flowers_spring_summer.png',
+  pond_flowers_autumn: '/TwilightGame/assets-optimized/tiles/pond_flowers_autumn.png',
+  pond_flowers_winter: '/TwilightGame/assets-optimized/tiles/pond_flowers_winter.png',
   // Brambles assets (seasonal variations - thorny obstacles)
   brambles_spring: '/TwilightGame/assets-optimized/tiles/brambles/brambles_spring.png',
   brambles_summer: '/TwilightGame/assets-optimized/tiles/brambles/brambles_summer.png',

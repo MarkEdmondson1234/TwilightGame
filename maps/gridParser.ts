@@ -54,6 +54,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'y': TileType.WILLOW_TREE, // y = willYw tree (graceful weeping willow)
   '|': TileType.TREE_STUMP,  // | = Tree stump (vertical trunk, 2x2 forest decoration)
   'i': TileType.WILD_IRIS,   // i = Iris (wild iris flower, grows near water)
+  'p': TileType.POND_FLOWERS, // p = Pond flowers (floating flowers, seasonal colors)
   'b': TileType.BRAMBLES,    // b = Brambles (thorny obstacle with seasonal colors)
   's': TileType.WILD_STRAWBERRY, // s = Strawberry (wild forageable strawberry plants)
   // Buildings (outdoor structures)

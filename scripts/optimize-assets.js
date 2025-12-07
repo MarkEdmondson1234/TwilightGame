@@ -313,8 +313,8 @@ async function optimizeTiles() {
         .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for trees
         .toFile(outputPath);
     }
-    // Special handling for decorative flowers (iris, ferns, etc.) - multi-tile sprites need higher resolution
-    else if (file.includes('iris') || inputPath.includes('wild_iris') || file.includes('fern')) {
+    // Special handling for decorative flowers (iris, pond flowers, ferns, etc.) - multi-tile sprites need higher resolution
+    else if (file.includes('iris') || inputPath.includes('wild_iris') || file.includes('pond_flowers') || file.includes('fern')) {
       await sharp(inputPath)
         .resize(FLOWER_SIZE, FLOWER_SIZE, {
           fit: 'contain',
