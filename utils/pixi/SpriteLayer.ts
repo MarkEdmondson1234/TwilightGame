@@ -140,7 +140,7 @@ export class SpriteLayer {
     const tileData = getTileData(anchorX, anchorY);
 
     if (tileData?.seasonalImages) {
-      const seasonalArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
+      const seasonalArray = seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default;
       if (seasonalArray && seasonalArray.length > 0) {
         // Use deterministic hash for variant selection
         const hash = Math.abs(Math.sin(anchorX * 99.123 + anchorY * 45.678) * 12345.6789);

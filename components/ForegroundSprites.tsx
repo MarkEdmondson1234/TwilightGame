@@ -59,7 +59,9 @@ const ForegroundSprites: React.FC<ForegroundSpritesProps> = ({
                 let spriteImage: string;
                 let selectedImageIndex: number | undefined;
                 if (tileData.seasonalImages) {
-                    const seasonalArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
+                    const seasonalArray = seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default;
+                    // Skip if seasonal array is empty (dormant season like winter: [])
+                    if (seasonalArray.length === 0) continue;
                     const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
                     const index = Math.floor((imageHash % 1) * seasonalArray.length);
                     spriteImage = seasonalArray[index];

@@ -34,7 +34,7 @@ import { useViewportCulling } from './hooks/useViewportCulling';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
-import { checkCookingLocation } from './utils/actionHandlers';
+import { checkCookingLocation, getAvailableInteractions, FarmActionResult, ForageResult, TransitionResult } from './utils/actionHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { TimeManager } from './utils/TimeManager';
@@ -56,6 +56,8 @@ import WeatherTintOverlay from './components/WeatherTintOverlay';
 import CookingInterface from './components/CookingInterface';
 import RecipeBook from './components/RecipeBook';
 import Toast, { useToast } from './components/Toast';
+import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
+import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
@@ -91,7 +93,15 @@ const App: React.FC = () => {
         return time.timeOfDay === 'Day' ? 'day' : 'night';
     }); // Track time-of-day for reactivity (from TimeManager)
 
+    // Radial menu state
+    const [radialMenuVisible, setRadialMenuVisible] = useState(false);
+    const [radialMenuPosition, setRadialMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+    const [radialMenuOptions, setRadialMenuOptions] = useState<RadialMenuOption[]>([]);
+
     const isTouchDevice = useTouchDevice();
+
+    // Game container ref for click detection
+    const gameContainerRef = useRef<HTMLDivElement | null>(null);
 
     // Toast notifications for user feedback
     const { messages: toastMessages, showToast, dismissToast } = useToast();
@@ -308,6 +318,83 @@ const App: React.FC = () => {
         onSetPlayerPos: setPlayerPos,
     });
 
+    // Handle canvas click for interactions
+    const handleCanvasClick = useCallback((clickInfo: MouseClickInfo) => {
+        console.log('[Mouse Click] Checking interactions at:', clickInfo.tilePos);
+
+        // Don't process clicks during dialogue, cutscenes, or UI overlays
+        if (activeNPC || isCutscenePlaying || showHelpBrowser || showCookingUI || showRecipeBook || showCharacterCreator) {
+            console.log('[Mouse Click] Ignoring click - UI overlay active');
+            return;
+        }
+
+        // Get all available interactions at the clicked position
+        const interactions = getAvailableInteractions({
+            position: clickInfo.worldPos,
+            currentMapId: currentMapId,
+            currentTool: gameState.getFarmingTool(),
+            selectedSeed: gameState.getSelectedSeed(),
+            onMirror: () => setShowCharacterCreator(true),
+            onNPC: (npcId) => setActiveNPC(npcId),
+            onTransition: (result: TransitionResult) => {
+                if (result.success && result.mapId && result.spawnPosition) {
+                    handleMapTransition(result.mapId, result.spawnPosition);
+                    // Save player location when transitioning
+                    const seedMatch = result.mapId.match(/_([\d]+)$/);
+                    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+                    gameState.updatePlayerLocation(result.mapId, result.spawnPosition, seed);
+                }
+            },
+            onCooking: (locationType) => {
+                setCookingLocationType(locationType);
+                setShowCookingUI(true);
+            },
+            onFarmAction: (result: FarmActionResult) => {
+                if (result.handled) {
+                    handleFarmUpdate();
+                }
+                if (result.message) {
+                    showToast(result.message, result.messageType || 'info');
+                }
+            },
+            onFarmAnimation: (action) => {
+                setFarmActionAnimation(action);
+                setFarmActionKey(prev => prev + 1);
+            },
+            onForage: (result: ForageResult) => {
+                showToast(result.message, result.found ? 'success' : 'info');
+            },
+        });
+
+        console.log(`[Mouse Click] Found ${interactions.length} interactions`);
+
+        // If no interactions, do nothing
+        if (interactions.length === 0) {
+            return;
+        }
+
+        // If only one interaction, execute it immediately
+        if (interactions.length === 1) {
+            console.log('[Mouse Click] Executing single interaction:', interactions[0].label);
+            interactions[0].execute();
+            return;
+        }
+
+        // If multiple interactions, show radial menu
+        console.log('[Mouse Click] Showing radial menu with options:', interactions.map(i => i.label));
+        const menuOptions: RadialMenuOption[] = interactions.map((interaction, index) => ({
+            id: `${interaction.type}_${index}`,
+            label: interaction.label,
+            icon: interaction.icon,
+            color: interaction.color,
+            onSelect: interaction.execute,
+        }));
+
+        setRadialMenuOptions(menuOptions);
+        setRadialMenuPosition(clickInfo.screenPos);
+        setRadialMenuVisible(true);
+    }, [activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, currentMapId, handleMapTransition, handleFarmUpdate, showToast]);
+
     const gameLoop = useCallback(() => {
         // Track frame-to-frame timing for performance metrics
         performanceMonitor.tick();
@@ -404,6 +491,21 @@ const App: React.FC = () => {
         playerPos,
         mapWidth,
         mapHeight,
+    });
+
+    // Debug: Log touch device status
+    useEffect(() => {
+        console.log('[App] Touch device detection:', isTouchDevice);
+        console.log('[App] Mouse controls will be:', isTouchDevice ? 'DISABLED' : 'ENABLED');
+    }, [isTouchDevice]);
+
+    // Setup mouse controls (must be after camera hook)
+    useMouseControls({
+        containerRef: gameContainerRef,
+        cameraX: cameraX,
+        cameraY: cameraY,
+        onCanvasClick: handleCanvasClick,
+        enabled: !isTouchDevice, // Disable mouse controls on touch devices
     });
 
     // Performance optimization: Cache season and time lookups (don't call TimeManager for every tile/animation)
@@ -674,7 +776,10 @@ const App: React.FC = () => {
     }
 
     return (
-        <div className="bg-gray-900 text-white w-screen h-screen overflow-hidden font-sans relative select-none">
+        <div
+            ref={gameContainerRef}
+            className="bg-gray-900 text-white w-screen h-screen overflow-hidden font-sans relative select-none"
+        >
             {/* PixiJS Renderer (WebGL - High Performance) */}
             {USE_PIXI_RENDERER && (
                 <canvas
@@ -935,6 +1040,15 @@ const App: React.FC = () => {
             )}
             {isCutscenePlaying && (
                 <CutscenePlayer onComplete={handleCutsceneComplete} />
+            )}
+
+            {/* Radial menu for multiple interaction options */}
+            {radialMenuVisible && (
+                <RadialMenu
+                    position={radialMenuPosition}
+                    options={radialMenuOptions}
+                    onClose={() => setRadialMenuVisible(false)}
+                />
             )}
 
             {/* Toast notifications for user feedback */}

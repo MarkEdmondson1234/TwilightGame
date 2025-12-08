@@ -114,6 +114,7 @@ Custom React hooks for game systems:
 
 - `hooks/useKeyboardControls.ts` - Keyboard input handling (F-keys, WASD, E, R, tool switching)
 - `hooks/useTouchControls.ts` - Touch control handling (direction pad, action button)
+- `hooks/useMouseControls.ts` - Mouse click handling (canvas click detection, coordinate mapping)
 - `hooks/useCollisionDetection.ts` - Player collision detection (tiles and multi-tile sprites)
 - `hooks/usePlayerMovement.ts` - Player movement logic (input processing, animation, position updates)
 - `hooks/useTouchDevice.ts` - Touch device detection
@@ -144,6 +145,7 @@ Pure functions and game systems:
 
 - `components/HUD.tsx` - Heads-up display (time, gold, tools, inventory)
 - `components/TouchControls.tsx` - Mobile touch controls UI
+- `components/RadialMenu.tsx` - Circular menu for multiple interaction options (click-based)
 - `components/DebugOverlay.tsx` - Debug information (toggle with F3)
 - `components/DebugInfoPanel.tsx` - Debug panel component
 - `components/CharacterCreator.tsx` - Character customization UI
@@ -154,11 +156,23 @@ Pure functions and game systems:
 
 ### Game Systems
 
-**Input System** (`hooks/useKeyboardControls.ts`, `hooks/useTouchControls.ts`):
-- Keyboard: WASD/arrows for movement, E/Enter for actions, F-keys for UI, 1-9 for tools/seeds
-- Touch: On-screen D-pad and action button for mobile devices
+**Input System** (`hooks/useKeyboardControls.ts`, `hooks/useTouchControls.ts`, `hooks/useMouseControls.ts`):
+- **Mouse**: Click anywhere to interact with objects, NPCs, tiles
+  - Single interaction: Auto-executes immediately
+  - Multiple interactions: Radial menu appears with options in a circle
+  - Disabled on touch devices (to avoid conflicts with touch controls)
+- **Keyboard**: WASD/arrows for movement, E/Enter for actions, F-keys for UI, 1-9 for tools/seeds (legacy support)
+- **Touch**: On-screen D-pad and action button for mobile devices
 - Shared action handlers in `utils/actionHandlers.ts` eliminate code duplication
 - Architecture: Input hooks → Action handlers → Game state updates
+
+**Interaction System** (`utils/actionHandlers.ts`, `components/RadialMenu.tsx`):
+- Click-based: Primary interaction method - click on objects/tiles to interact
+- `getAvailableInteractions()`: Returns all possible interactions at a position
+- Interaction types: mirror, NPC, transition, cooking, farming (till, plant, water, harvest, clear), foraging, berry harvesting
+- **Multi-seed planting**: When clicking tilled soil with seeds tool, radial menu shows all available seed types
+- **Radial menu**: Circular menu that displays options around click point with icons and colours
+- Each interaction has: label, icon (emoji), colour (hex), and execute callback
 
 **Player System** (`hooks/usePlayerMovement.ts`, `hooks/useCollisionDetection.ts`):
 - Movement: Frame-rate independent delta-time based movement (5.0 tiles/second)

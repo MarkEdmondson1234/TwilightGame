@@ -83,7 +83,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
 
                     if (tileData.seasonalImages) {
                         // Use seasonal images if available (season cached above for performance)
-                        imageArray = tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default;
+                        imageArray = seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default;
 
                     } else if (tileData.image) {
                         // Fall back to regular images
@@ -103,7 +103,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                             renderTileData = baseTileData;
                             // Re-determine image array for base tile (season cached above)
                             if (renderTileData.seasonalImages) {
-                                imageArray = renderTileData.seasonalImages[seasonKey] || renderTileData.seasonalImages.default;
+                                imageArray = seasonKey in renderTileData.seasonalImages ? renderTileData.seasonalImages[seasonKey] : renderTileData.seasonalImages.default;
                             } else if (renderTileData.image) {
                                 imageArray = renderTileData.image;
                             }

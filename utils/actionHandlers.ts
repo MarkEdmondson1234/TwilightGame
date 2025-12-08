@@ -495,3 +495,320 @@ export function checkCookingLocation(playerPos: Position): CookingLocationResult
 
     return { found: false };
 }
+
+/**
+ * Available interaction types
+ */
+export type InteractionType =
+    | 'mirror'
+    | 'npc'
+    | 'transition'
+    | 'cooking'
+    | 'farm_till'
+    | 'farm_plant'
+    | 'farm_water'
+    | 'farm_harvest'
+    | 'farm_clear'
+    | 'harvest_strawberry'
+    | 'harvest_blackberry'
+    | 'forage';
+
+export interface AvailableInteraction {
+    type: InteractionType;
+    label: string;
+    icon?: string;
+    color?: string;
+    /** Additional data needed to execute the interaction */
+    data?: any;
+    /** Execute this interaction */
+    execute: () => void;
+}
+
+export interface GetInteractionsConfig {
+    position: Position;
+    currentMapId: string;
+    currentTool: string;
+    selectedSeed: string | null;
+    onMirror?: () => void;
+    onNPC?: (npcId: string) => void;
+    onTransition?: (result: TransitionResult) => void;
+    onCooking?: (locationType: 'stove' | 'campfire') => void;
+    onFarmAction?: (result: FarmActionResult) => void;
+    onFarmAnimation?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
+    onForage?: (result: ForageResult) => void;
+}
+
+/**
+ * Get all available interactions at a specific position
+ * Returns an array of interaction options that can be presented to the player
+ */
+export function getAvailableInteractions(config: GetInteractionsConfig): AvailableInteraction[] {
+    const {
+        position,
+        currentMapId,
+        currentTool,
+        selectedSeed,
+        onMirror,
+        onNPC,
+        onTransition,
+        onCooking,
+        onFarmAction,
+        onFarmAnimation,
+        onForage,
+    } = config;
+
+    const interactions: AvailableInteraction[] = [];
+    const tileX = Math.floor(position.x);
+    const tileY = Math.floor(position.y);
+    const tileData = getTileData(tileX, tileY);
+    const tilePos = { x: tileX, y: tileY };
+
+    // Check for mirror interaction
+    if (checkMirrorInteraction(position)) {
+        interactions.push({
+            type: 'mirror',
+            label: 'Customise Character',
+            icon: '🪞',
+            color: '#a78bfa',
+            execute: () => onMirror?.(),
+        });
+    }
+
+    // Check for NPC interaction
+    const npcId = checkNPCInteraction(position);
+    if (npcId) {
+        const npc = npcManager.getNPCAtPosition(position);
+        interactions.push({
+            type: 'npc',
+            label: `Talk to ${npc?.name || 'NPC'}`,
+            icon: '💬',
+            color: '#60a5fa',
+            data: { npcId },
+            execute: () => onNPC?.(npcId),
+        });
+    }
+
+    // Check for transition
+    const transitionData = mapManager.getTransitionAt(position);
+    if (transitionData) {
+        const { transition } = transitionData;
+        interactions.push({
+            type: 'transition',
+            label: 'Go Through Door',
+            icon: '🚪',
+            color: '#34d399',
+            execute: () => {
+                try {
+                    const result = transitionToMap(transition.toMapId, transition.toPosition, currentMapId || undefined);
+                    const map = result.map;
+                    const seedMatch = map.id.match(/_([\d]+)$/);
+                    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+                    onTransition?.({
+                        success: true,
+                        mapId: map.id,
+                        mapName: map.name,
+                        spawnPosition: result.spawn,
+                    });
+                } catch (error) {
+                    console.error(`[Action] ERROR transitioning:`, error);
+                }
+            },
+        });
+    }
+
+    // Check for cooking location
+    const cookingLoc = checkCookingLocation(position);
+    if (cookingLoc.found && cookingLoc.locationType) {
+        interactions.push({
+            type: 'cooking',
+            label: cookingLoc.locationType === 'stove' ? 'Use Stove' : 'Use Campfire',
+            icon: cookingLoc.locationType === 'stove' ? '🍳' : '🔥',
+            color: '#f97316',
+            data: { locationType: cookingLoc.locationType },
+            execute: () => onCooking?.(cookingLoc.locationType!),
+        });
+    }
+
+    // Check for wild strawberry harvesting
+    if (tileData && tileData.type === TileType.WILD_STRAWBERRY && currentTool === 'hand') {
+        interactions.push({
+            type: 'harvest_strawberry',
+            label: 'Pick Strawberries',
+            icon: '🍓',
+            color: '#ef4444',
+            execute: () => {
+                const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                onFarmAction?.(farmResult);
+            },
+        });
+    }
+
+    // Check for blackberry harvesting from adjacent brambles
+    if (currentTool === 'hand') {
+        const adjacentTiles = [
+            { x: tileX - 1, y: tileY },
+            { x: tileX + 1, y: tileY },
+            { x: tileX, y: tileY - 1 },
+            { x: tileX, y: tileY + 1 },
+            { x: tileX - 1, y: tileY - 1 },
+            { x: tileX + 1, y: tileY - 1 },
+            { x: tileX - 1, y: tileY + 1 },
+            { x: tileX + 1, y: tileY + 1 },
+        ];
+
+        const hasBrambles = adjacentTiles.some(tile => {
+            const adjacentTileData = getTileData(tile.x, tile.y);
+            return adjacentTileData && adjacentTileData.type === TileType.BRAMBLES;
+        });
+
+        if (hasBrambles) {
+            interactions.push({
+                type: 'harvest_blackberry',
+                label: 'Pick Blackberries',
+                icon: '🫐',
+                color: '#7c3aed',
+                execute: () => {
+                    const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                    onFarmAction?.(farmResult);
+                },
+            });
+        }
+    }
+
+    // Check for farming actions
+    const plot = farmManager.getPlot(currentMapId, tilePos);
+    const plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
+
+    if (plotTileType !== undefined && plotTileType >= TileType.SOIL_FALLOW && plotTileType <= TileType.SOIL_DEAD) {
+        // Till soil
+        if (currentTool === 'hoe' && plotTileType === TileType.SOIL_FALLOW) {
+            interactions.push({
+                type: 'farm_till',
+                label: 'Till Soil',
+                icon: '🔨',
+                color: '#92400e',
+                execute: () => {
+                    const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                    onFarmAction?.(farmResult);
+                },
+            });
+        }
+
+        // Plant seeds - show option for each seed type the player has
+        if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) {
+            // Get all seeds from inventory
+            const inventory = inventoryManager.getInventoryData().items;
+            const availableSeeds = inventory
+                .filter(item => item.itemId.startsWith('seed_') && item.quantity > 0)
+                .map(item => item.itemId.replace('seed_', '')); // Remove 'seed_' prefix
+
+            if (availableSeeds.length === 0) {
+                // No seeds available
+                interactions.push({
+                    type: 'farm_plant',
+                    label: 'No Seeds Available',
+                    icon: '🌱',
+                    color: '#6b7280',
+                    execute: () => {
+                        onFarmAction?.({
+                            handled: false,
+                            message: 'You have no seeds to plant',
+                            messageType: 'warning',
+                        });
+                    },
+                });
+            } else {
+                // Add interaction for each available seed type
+                const seedIcons: Record<string, string> = {
+                    radish: '🥕',
+                    tomato: '🍅',
+                    wheat: '🌾',
+                    corn: '🌽',
+                    pumpkin: '🎃',
+                    strawberry: '🍓',
+                };
+
+                availableSeeds.forEach(seedType => {
+                    interactions.push({
+                        type: 'farm_plant',
+                        label: `Plant ${seedType.charAt(0).toUpperCase() + seedType.slice(1)}`,
+                        icon: seedIcons[seedType] || '🌱',
+                        color: '#16a34a',
+                        execute: () => {
+                            // Set the selected seed and plant it
+                            gameState.setSelectedSeed(seedType);
+                            const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                            onFarmAction?.(farmResult);
+                        },
+                    });
+                });
+            }
+        }
+
+        // Water crop
+        if (currentTool === 'wateringCan' && (
+            plotTileType === TileType.SOIL_PLANTED ||
+            plotTileType === TileType.SOIL_WATERED ||
+            plotTileType === TileType.SOIL_WILTING ||
+            plotTileType === TileType.SOIL_READY
+        )) {
+            interactions.push({
+                type: 'farm_water',
+                label: 'Water Crop',
+                icon: '💧',
+                color: '#0ea5e9',
+                execute: () => {
+                    const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                    onFarmAction?.(farmResult);
+                },
+            });
+        }
+
+        // Harvest crop
+        if (plotTileType === TileType.SOIL_READY) {
+            interactions.push({
+                type: 'farm_harvest',
+                label: 'Harvest Crop',
+                icon: '🌾',
+                color: '#eab308',
+                execute: () => {
+                    const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                    onFarmAction?.(farmResult);
+                },
+            });
+        }
+
+        // Clear dead crop
+        if (currentTool === 'hand' && plotTileType === TileType.SOIL_DEAD) {
+            interactions.push({
+                type: 'farm_clear',
+                label: 'Clear Dead Crop',
+                icon: '🗑️',
+                color: '#6b7280',
+                execute: () => {
+                    const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                    onFarmAction?.(farmResult);
+                },
+            });
+        }
+    }
+
+    // Check for forage (only in forest)
+    if (currentMapId.startsWith('forest') && tileData) {
+        const forageableTiles = [TileType.FERN, TileType.MUSHROOM, TileType.GRASS, TileType.WILD_STRAWBERRY];
+        if (forageableTiles.includes(tileData.type)) {
+            interactions.push({
+                type: 'forage',
+                label: 'Search for Seeds',
+                icon: '🔍',
+                color: '#059669',
+                execute: () => {
+                    const result = handleForageAction(position, currentMapId);
+                    onForage?.(result);
+                },
+            });
+        }
+    }
+
+    return interactions;
+}

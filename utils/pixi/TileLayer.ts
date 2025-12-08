@@ -157,7 +157,7 @@ export class TileLayer {
 
     // Determine which image array to use
     let imageData = tileData.seasonalImages
-      ? tileData.seasonalImages[seasonKey] || tileData.seasonalImages.default
+      ? (seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default)
       : tileData.image;
 
     // Normalize to array (handle both single strings and arrays)
@@ -298,7 +298,7 @@ export class TileLayer {
     let imageUrl: string | null = null;
 
     if (baseTileData.seasonalImages) {
-      const seasonalArray = baseTileData.seasonalImages[seasonKey] || baseTileData.seasonalImages.default;
+      const seasonalArray = seasonKey in baseTileData.seasonalImages ? baseTileData.seasonalImages[seasonKey] : baseTileData.seasonalImages.default;
       if (seasonalArray && seasonalArray.length > 0) {
         const hash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
         const index = Math.floor((hash % 1) * seasonalArray.length);
