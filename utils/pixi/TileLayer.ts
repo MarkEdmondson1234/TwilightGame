@@ -28,6 +28,7 @@ import { MapDefinition, TileType, FarmPlotState } from '../../types';
 import { getColorHex } from '../../palette';
 import { mapManager } from '../../maps';
 import { calculateTileTransforms } from '../tileRenderUtils';
+import { ColorResolver } from '../ColorResolver';
 import { farmManager } from '../farmManager';
 import { farmingAssets } from '../../assets';
 
@@ -99,7 +100,13 @@ export class TileLayer {
    * Render a single tile at grid position (x, y)
    * Uses deterministic hash for tile variation (matches DOM renderer)
    */
-  private renderTile(x: number, y: number, seasonKey: 'spring' | 'summer' | 'autumn' | 'winter', map: MapDefinition, mapId: string): void {
+  private renderTile(
+    x: number,
+    y: number,
+    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
+    map: MapDefinition,
+    mapId: string
+  ): void {
     const key = `${x},${y}`;
     let tileData = getTileData(x, y);
 
@@ -145,7 +152,8 @@ export class TileLayer {
     // TileLayer only needs to render the color background, not the image
     if (this.isMultiTileSprite(tileData.type)) {
       // Only render color background - SpriteLayer will render the sprite
-      this.renderColorTile(x, y, tileData.color, map);
+      const resolvedColor = ColorResolver.getTileColor(tileData.type);
+      this.renderColorTile(x, y, resolvedColor, map);
       return;
     }
 
@@ -206,10 +214,16 @@ export class TileLayer {
 
     // Always render background color first (even if we'll show sprite on top)
     // This ensures color-only tiles and sprite tiles have matching backgrounds
-    this.renderColorTile(x, y, tileData.color, map, `${x},${y}_color`);
+    const resolvedColor = ColorResolver.getTileColor(tileData.type);
+    this.renderColorTile(x, y, resolvedColor, map, `${x},${y}_color`);
 
     if (!imageUrl) {
-      // No sprite image to render, color is already done
+      // No sprite image to render, but hide existing sprite if present
+      const spriteKey = `${x},${y}_sprite`;
+      const existingSprite = this.sprites.get(spriteKey);
+      if (existingSprite) {
+        existingSprite.visible = false;
+      }
       return;
     }
 
@@ -312,7 +326,8 @@ export class TileLayer {
 
     if (!imageUrl) {
       // No image - render base color (now with dynamic color from getTileData!)
-      this.renderColorTile(x, y, baseTileData.color, mapManager.getCurrentMap()!, baseKey);
+      const resolvedColor = ColorResolver.getTileColor(baseType as TileType);
+      this.renderColorTile(x, y, resolvedColor, mapManager.getCurrentMap()!, baseKey);
       return;
     }
 
@@ -328,7 +343,8 @@ export class TileLayer {
       const texture = textureManager.getTexture(imageUrl);
       if (!texture) {
         // Fallback to color with dynamic color resolution
-        this.renderColorTile(x, y, baseTileData.color, mapManager.getCurrentMap()!, baseKey);
+        const resolvedColor = ColorResolver.getTileColor(baseType as TileType);
+        this.renderColorTile(x, y, resolvedColor, mapManager.getCurrentMap()!, baseKey);
         return;
       }
 
@@ -399,7 +415,8 @@ export class TileLayer {
     const speed = tileData.animationSpeed || 150; // Default 150ms per frame
 
     // Always render background color first
-    this.renderColorTile(x, y, tileData.color, map, `${x},${y}_color`);
+    const resolvedColor = ColorResolver.getTileColor(tileData.type);
+    this.renderColorTile(x, y, resolvedColor, map, `${x},${y}_color`);
 
     // Track this animated tile
     this.animatedTiles.set(key, { frames, speed });

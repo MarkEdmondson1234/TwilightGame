@@ -62,6 +62,7 @@ export interface GamePalette {
   charcoal: PaletteColor;
   gray: PaletteColor;
   black: PaletteColor;
+  snow: PaletteColor;
 }
 
 /**
@@ -116,6 +117,7 @@ export const DEFAULT_PALETTE: GamePalette = {
   charcoal: { name: 'charcoal', hex: '#3B3B4A', description: 'Dark gray' },
   gray: { name: 'gray', hex: '#6B6B6B', description: 'Medium gray' },
   black: { name: 'black', hex: '#1A1A1A', description: 'Near black' },
+  snow: { name: 'snow', hex: '#EFF7FA', description: 'Icy white-blue (winter grass)' },
 };
 
 /**

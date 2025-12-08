@@ -115,23 +115,23 @@ export class ColorResolver {
     // 4. Get scheme color
     let schemeColor = colorScheme.colors[colorKey];
 
-    // 5. Apply seasonal modifier (if defined)
-    const season = options?.season || TimeManager.getCurrentTime().season;
-    if (colorScheme.seasonalModifiers) {
-      const seasonKey = season.toLowerCase() as SeasonKey;
-      const seasonalOverride = colorScheme.seasonalModifiers[seasonKey];
-      if (seasonalOverride && seasonalOverride[colorKey]) {
-        schemeColor = seasonalOverride[colorKey]!;
-      }
-    }
-
-    // 6. Apply time-of-day modifier (if defined)
+    // 5. Apply time-of-day modifier first (if defined)
     const timeOfDay = options?.timeOfDay || TimeManager.getCurrentTime().timeOfDay;
     if (colorScheme.timeOfDayModifiers) {
       const timeKey = timeOfDay.toLowerCase() as TimeKey;
       const timeOverride = colorScheme.timeOfDayModifiers[timeKey];
       if (timeOverride && timeOverride[colorKey]) {
         schemeColor = timeOverride[colorKey]!;
+      }
+    }
+
+    // 6. Apply seasonal modifier (if defined) - takes priority over time-of-day
+    const season = options?.season || TimeManager.getCurrentTime().season;
+    if (colorScheme.seasonalModifiers) {
+      const seasonKey = season.toLowerCase() as SeasonKey;
+      const seasonalOverride = colorScheme.seasonalModifiers[seasonKey];
+      if (seasonalOverride && seasonalOverride[colorKey]) {
+        schemeColor = seasonalOverride[colorKey]!;
       }
     }
 

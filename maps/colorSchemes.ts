@@ -92,6 +92,14 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       mushroom: 'bg-palette-moss',  // Same as grass for forest
       background: 'bg-palette-olive',
     },
+    // Seasonal modifiers for winter snow
+    seasonalModifiers: {
+      winter: {
+        grass: 'bg-palette-snow',  // Snow white in winter
+        path: 'bg-palette-snow',   // Match grass
+        water: 'bg-palette-periwinkle',  // Frozen water tint
+      },
+    },
   },
 
   cave: {
@@ -127,6 +135,14 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       furniture: 'bg-palette-lavender',
       mushroom: 'bg-palette-sage',
       background: 'bg-palette-teal',
+    },
+    // Seasonal modifiers for winter snow
+    seasonalModifiers: {
+      winter: {
+        grass: 'bg-palette-snow',  // Snow white in winter
+        path: 'bg-palette-snow',   // Match grass
+        water: 'bg-palette-periwinkle',  // Frozen water tint
+      },
     },
   },
 
