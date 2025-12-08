@@ -685,10 +685,10 @@ const App: React.FC = () => {
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
             // Render all layers (only when viewport or map data changes)
-            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
+            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger, currentWeather);
 
             if (backgroundSpriteLayerRef.current) {
-                backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
             }
 
             if (placedItemsLayerRef.current) {
@@ -697,7 +697,7 @@ const App: React.FC = () => {
             }
 
             if (foregroundSpriteLayerRef.current) {
-                foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
             }
 
             // Log sprite count for debugging (only occasionally)
@@ -739,11 +739,11 @@ const App: React.FC = () => {
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
             // Re-render all tiles with new colors
-            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
+            tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger, currentWeather);
 
             // Update background sprite layer
             if (backgroundSpriteLayerRef.current) {
-                backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                backgroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
             }
 
             // Update placed items layer
@@ -754,7 +754,7 @@ const App: React.FC = () => {
 
             // Update foreground sprite layer
             if (foregroundSpriteLayerRef.current) {
-                foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
             }
         }
     }, [colorSchemeVersion, isPixiInitialized]);

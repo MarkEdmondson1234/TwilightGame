@@ -74,7 +74,8 @@ export class TileLayer {
     mapId: string,
     visibleRange: { minX: number; maxX: number; minY: number; maxY: number },
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
-    farmUpdateTrigger: number
+    farmUpdateTrigger: number,
+    currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
   ): void {
     // Store farmUpdateTrigger for use in renderTile
     this.farmUpdateTrigger = farmUpdateTrigger;
@@ -91,7 +92,7 @@ export class TileLayer {
     // Render visible tiles
     for (let y = visibleRange.minY; y <= visibleRange.maxY; y++) {
       for (let x = visibleRange.minX; x <= visibleRange.maxX; x++) {
-        this.renderTile(x, y, seasonKey, map, mapId);
+        this.renderTile(x, y, seasonKey, map, mapId, currentWeather);
       }
     }
   }
@@ -105,7 +106,8 @@ export class TileLayer {
     y: number,
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
     map: MapDefinition,
-    mapId: string
+    mapId: string,
+    currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
   ): void {
     const key = `${x},${y}`;
     let tileData = getTileData(x, y);
@@ -116,6 +118,13 @@ export class TileLayer {
       if (sprite) sprite.visible = false;
       return;
     }
+
+    // Determine if we should hide this sprite during snowfall
+    const hideSpriteDuringSnow = currentWeather === 'snow' && (
+      tileData.type === TileType.TUFT ||
+      tileData.type === TileType.PATH ||
+      tileData.type === TileType.TUFT_SPARSE
+    );
 
     // Check for farm plot override (farmUpdateTrigger forces re-evaluation)
     let growthStage: number | null = null;
@@ -183,7 +192,7 @@ export class TileLayer {
       const isGrassTile = tileData.type === TileType.GRASS ||
                           tileData.type === TileType.TREE ||
                           tileData.type === TileType.TREE_BIG;
-      const showImage = isGrassTile ? hashValue < 0.3 : true;
+      const showImage = (isGrassTile ? hashValue < 0.3 : true) && !hideSpriteDuringSnow;
 
       if (showImage) {
         // Override sprite for farm plot growth stages

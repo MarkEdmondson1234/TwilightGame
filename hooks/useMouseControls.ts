@@ -32,22 +32,12 @@ export function useMouseControls(config: MouseControlsConfig) {
     const { containerRef, cameraX, cameraY, onCanvasClick, enabled } = config;
 
     useEffect(() => {
-        console.log('[Mouse Controls] Hook initialized, enabled:', enabled);
-
         const container = containerRef.current;
-        if (!container) {
-            console.warn('[Mouse Controls] Container ref is null');
-            return;
-        }
-
-        if (!enabled) {
-            console.log('[Mouse Controls] Mouse controls disabled');
+        if (!container || !enabled) {
             return;
         }
 
         const handleClick = (e: MouseEvent) => {
-            console.log('[Mouse Controls] Click detected!');
-
             // Get click position relative to container
             const rect = container.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
@@ -67,16 +57,12 @@ export function useMouseControls(config: MouseControlsConfig) {
                 tilePos: { x: Math.floor(worldTileX), y: Math.floor(worldTileY) },
             };
 
-            console.log(`[Mouse Click] Screen: (${screenX}, ${screenY}), World: (${worldTileX.toFixed(2)}, ${worldTileY.toFixed(2)}), Tile: (${clickInfo.tilePos.x}, ${clickInfo.tilePos.y})`);
-
             onCanvasClick(clickInfo);
         };
 
-        console.log('[Mouse Controls] Adding click listener to container');
         container.addEventListener('click', handleClick);
 
         return () => {
-            console.log('[Mouse Controls] Removing click listener');
             container.removeEventListener('click', handleClick);
         };
     }, [containerRef, cameraX, cameraY, onCanvasClick, enabled]);

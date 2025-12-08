@@ -56,7 +56,8 @@ export class SpriteLayer {
     map: MapDefinition,
     mapId: string,
     visibleRange: { minX: number; maxX: number; minY: number; maxY: number },
-    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter'
+    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
+    currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
   ): void {
     // Clear all sprites if map changed
     if (this.currentMapId !== mapId) {
@@ -89,6 +90,19 @@ export class SpriteLayer {
 
         // Only render sprites matching this layer (foreground/background)
         if (spriteMetadata.isForeground !== this.isForeground) continue;
+
+        // Hide ferns and tufts during snowfall (creates "blanket of snow" effect)
+        if (currentWeather === 'snow' && (
+          tileData.type === TileType.FERN ||
+          tileData.type === TileType.TUFT
+        )) {
+          const key = `${x},${y}`;
+          const existingSprite = this.sprites.get(key);
+          if (existingSprite) {
+            existingSprite.visible = false;
+          }
+          continue;
+        }
 
         // Use tile position as unique key (only render once per anchor point)
         const key = `${x},${y}`;
