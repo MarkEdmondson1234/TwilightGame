@@ -33,8 +33,13 @@ const HUD: React.FC = () => {
             {/* Left HUD Panel - Game info and tools */}
             <div className="absolute top-2 left-2 z-10 pointer-events-none">
                 <div className="bg-black/60 p-2 sm:p-3 rounded-lg border border-slate-700 max-w-[160px] sm:max-w-[200px]">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm sm:text-base font-bold text-yellow-300">💰 {gold}</span>
+                    <div className="flex items-center justify-between gap-2">
+                        <img
+                            src="/TwilightGame/assets-optimized/ui/wallet.png"
+                            alt="Gold"
+                            className="w-5 h-5 sm:w-6 sm:h-6"
+                        />
+                        <span className="text-sm sm:text-base font-bold text-yellow-300">{gold}</span>
                     </div>
                     <div className="mt-1 pt-1 border-t border-slate-600">
                         <div className="flex items-center gap-1 sm:gap-2">
