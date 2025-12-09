@@ -36,9 +36,9 @@ const HUD: React.FC = () => {
                     <img
                         src="/TwilightGame/assets-optimized/ui/wallet.png"
                         alt="Gold"
-                        className="w-16 h-16 sm:w-20 sm:h-20 drop-shadow-lg"
+                        className="w-[70px] h-[70px] sm:w-[88px] sm:h-[88px] drop-shadow-lg"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: '5px' }}>
                         <span
                             className="text-lg sm:text-xl font-bold text-yellow-300"
                             style={{
