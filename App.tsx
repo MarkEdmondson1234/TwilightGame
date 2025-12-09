@@ -20,6 +20,7 @@ import ColorSchemeEditor from './components/ColorSchemeEditor';
 import HelpBrowser from './components/HelpBrowser';
 import DevTools from './components/DevTools';
 import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
+import Bookshelf from './components/Bookshelf';
 import { initializeGame } from './utils/gameInitializer';
 import { mapManager } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
@@ -951,6 +952,24 @@ const App: React.FC = () => {
             />
 
             <HUD />
+
+            {/* Bookshelf UI - Recipe book shortcuts */}
+            <Bookshelf
+                playerPosition={playerPos}
+                currentMapId={currentMap.id}
+                nearbyNPCs={(() => {
+                    // Get NPCs within 2 tiles of player
+                    const range = 2;
+                    const npcs = npcManager.getCurrentMapNPCs();
+                    return npcs
+                        .filter(npc => {
+                            const dx = Math.abs(npc.position.x - playerPos.x);
+                            const dy = Math.abs(npc.position.y - playerPos.y);
+                            return dx <= range && dy <= range;
+                        })
+                        .map(npc => npc.id);
+                })()}
+            />
 
             {/* Game UI Controls (Help, Collision, Color Editor) */}
             <GameUIControls

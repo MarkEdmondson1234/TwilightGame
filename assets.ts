@@ -240,3 +240,11 @@ export const particleAssets = {
   fog: '/TwilightGame/assets/particles/fog.png',
   mist: '/TwilightGame/assets/particles/mist.png',
 };
+
+// UI assets - Interface elements (bookshelf, wallet, etc.)
+export const uiAssets = {
+  bookshelf_base: '/TwilightGame/assets-optimized/ui/bookshelf_base.png',
+  book_recipes: '/TwilightGame/assets-optimized/ui/book_recipes.png',
+  book_magic: '/TwilightGame/assets-optimized/ui/book_magic.png',
+  wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
+};

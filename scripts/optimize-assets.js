@@ -132,7 +132,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'cutscenes'),
     path.join(OPTIMIZED_DIR, 'witchhut'),
     path.join(OPTIMIZED_DIR, 'cooking'),
-    path.join(OPTIMIZED_DIR, 'cauldron')
+    path.join(OPTIMIZED_DIR, 'cauldron'),
+    path.join(OPTIMIZED_DIR, 'ui')
   ];
 
   dirs.forEach(dir => {
@@ -829,6 +830,56 @@ async function optimizeCauldron() {
   console.log(`\n  Optimized ${optimized} cauldron frame(s)\n`);
 }
 
+// Optimize UI sprites (bookshelf, wallet, etc.)
+// IMPORTANT: Preserves original aspect ratios - only compresses, doesn't resize
+async function optimizeUI() {
+  console.log('🎨 Optimizing UI sprites...');
+
+  const uiDir = path.join(ASSETS_DIR, 'ui');
+  if (!fs.existsSync(uiDir)) {
+    console.log('⚠️  No UI sprites found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(uiDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
+    const relativePath = path.relative(uiDir, inputPath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'ui', relativePath.replace(/\.jpeg$/i, '.png')));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
+    // UI sprites: Preserve original dimensions and aspect ratio
+    // Only compress - do NOT resize to avoid stretching artwork
+    await sharp(inputPath)
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} UI sprite(s)\n`);
+}
+
 /**
  * Validate and fix any 8-bit colormap PNGs
  * PixiJS v8 cannot decode 8-bit colormap PNGs - they must be RGBA format
@@ -897,6 +948,7 @@ async function main() {
     await optimizeWitchHut();
     await optimizeCooking();
     await optimizeCauldron();
+    await optimizeUI();
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

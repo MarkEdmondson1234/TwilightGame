@@ -38,8 +38,8 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
                 </button>
             </div>
 
-            {/* Dev Toggle Buttons - Bottom Left (away from touch controls on right) */}
-            <div className="absolute bottom-52 sm:bottom-4 left-2 z-10 flex flex-col sm:flex-row gap-1 sm:gap-2">
+            {/* Dev Toggle Buttons - Bottom Right (moved to avoid bookshelf) */}
+            <div className="absolute bottom-2 right-2 z-10 flex flex-col sm:flex-row gap-1 sm:gap-2">
                 <button
                     onClick={onToggleCollisionBoxes}
                     className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg border text-xs sm:text-sm font-bold transition-colors pointer-events-auto ${
