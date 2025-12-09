@@ -30,31 +30,42 @@ const HUD: React.FC = () => {
 
     return (
         <>
-            {/* Left HUD Panel - Game info and tools */}
+            {/* Floating Wallet - Gold display */}
             <div className="absolute top-2 left-2 z-10 pointer-events-none">
+                <div className="relative">
+                    <img
+                        src="/TwilightGame/assets-optimized/ui/wallet.png"
+                        alt="Gold"
+                        className="w-16 h-16 sm:w-20 sm:h-20 drop-shadow-lg"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <span
+                            className="text-lg sm:text-xl font-bold text-yellow-300"
+                            style={{
+                                textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.8), 1px -1px 2px rgba(0,0,0,0.8), -1px 1px 2px rgba(0,0,0,0.8)'
+                            }}
+                        >
+                            {gold}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Left HUD Panel - Tools */}
+            <div className="absolute top-24 left-2 z-10 pointer-events-none">
                 <div className="bg-black/60 p-2 sm:p-3 rounded-lg border border-slate-700 max-w-[160px] sm:max-w-[200px]">
-                    <div className="flex items-center justify-between gap-2">
-                        <img
-                            src="/TwilightGame/assets-optimized/ui/wallet.png"
-                            alt="Gold"
-                            className="w-5 h-5 sm:w-6 sm:h-6"
-                        />
-                        <span className="text-sm sm:text-base font-bold text-yellow-300">{gold}</span>
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <span className="text-base sm:text-lg">{toolDisplay[farming.currentTool].icon}</span>
+                        <span className="text-xs sm:text-sm font-bold text-green-300">{toolDisplay[farming.currentTool].name}</span>
                     </div>
-                    <div className="mt-1 pt-1 border-t border-slate-600">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                            <span className="text-base sm:text-lg">{toolDisplay[farming.currentTool].icon}</span>
-                            <span className="text-xs sm:text-sm font-bold text-green-300">{toolDisplay[farming.currentTool].name}</span>
+                    {farming.currentTool === 'seeds' && farming.selectedSeed && (
+                        <div className="mt-1 bg-black/30 p-1 sm:p-2 rounded border border-green-700">
+                            <p className="text-xs font-bold text-green-400 capitalize">{farming.selectedSeed}</p>
+                            <p className="text-xs text-yellow-300">
+                                × {inventoryManager.getQuantity(getSeedItemId(farming.selectedSeed))}
+                            </p>
                         </div>
-                        {farming.currentTool === 'seeds' && farming.selectedSeed && (
-                            <div className="mt-1 bg-black/30 p-1 sm:p-2 rounded border border-green-700">
-                                <p className="text-xs font-bold text-green-400 capitalize">{farming.selectedSeed}</p>
-                                <p className="text-xs text-yellow-300">
-                                    × {inventoryManager.getQuantity(getSeedItemId(farming.selectedSeed))}
-                                </p>
-                            </div>
-                        )}
-                    </div>
+                    )}
                 </div>
             </div>
 
