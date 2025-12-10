@@ -341,10 +341,17 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
   },
   [TileType.TREE]: {
-    name: 'Tree',
+    name: 'Birch Tree',
     color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
-    image: []  // No image - uses color only so it matches the map's grass color
+    baseType: TileType.GRASS,  // Render grass underneath the birch tree sprite
+    seasonalImages: {
+      spring: [tileAssets.birch_spring],
+      summer: [tileAssets.birch_summer],
+      autumn: [tileAssets.birch_autumn],
+      winter: [tileAssets.birch_winter],
+      default: [tileAssets.birch_summer],
+    }
   },
   [TileType.TREE_BIG]: {
     name: 'Big Tree',
@@ -927,11 +934,11 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.TREE,
-    spriteWidth: 3,  // 3 tiles wide
-    spriteHeight: 3, // 3 tiles tall
-    offsetX: -0.5,   // Center horizontally on tile
-    offsetY: -1,     // Extends 2 tiles upward
-    image: tileAssets.oak_tree_summer,  // Use oak tree (seasonal handled by TILE_LEGEND)
+    spriteWidth: 6,  // 6 tiles wide
+    spriteHeight: 6, // 6 tiles tall (maintains 1:1 aspect ratio of 1000x1000 source image)
+    offsetX: -2.5,   // Center horizontally on tile
+    offsetY: -5,     // Extends 5 tiles upward
+    image: tileAssets.birch_summer,  // Use birch tree (seasonal handled by TILE_LEGEND)
     isForeground: true,
     // Collision only at the base (1x1)
     collisionWidth: 0.2,

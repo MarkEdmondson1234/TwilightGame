@@ -305,7 +305,7 @@ async function optimizeTiles() {
         .toFile(outputPath);
     }
     // Special handling for trees - highest resolution as they're major visual elements
-    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak') || file.includes('giant_mushroom')) {
+    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('birch_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak') || file.includes('giant_mushroom')) {
       await sharp(inputPath)
         .resize(TREE_SIZE, TREE_SIZE, {
           fit: 'contain',
