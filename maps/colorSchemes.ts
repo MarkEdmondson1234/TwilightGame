@@ -162,5 +162,13 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       mushroom: 'bg-palette-cream',
       background: 'bg-palette-maroon',
     },
+    // Seasonal modifiers for winter snow
+    seasonalModifiers: {
+      winter: {
+        grass: 'bg-palette-snow',  // Snow white in winter
+        path: 'bg-palette-snow',   // Match grass
+        water: 'bg-palette-periwinkle',  // Frozen water tint
+      },
+    },
   },
 };
