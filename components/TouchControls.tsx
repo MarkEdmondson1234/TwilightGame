@@ -75,7 +75,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   };
 
   return (
-    <div className="fixed bottom-6 left-0 right-0 flex justify-between px-4 sm:px-6 pointer-events-auto z-20">
+    <div className="fixed bottom-48 sm:bottom-52 left-0 right-0 flex justify-between px-4 sm:px-6 pointer-events-auto z-20">
       {/* D-Pad on the left - larger touch targets */}
       <div className="relative w-44 h-44 sm:w-48 sm:h-48">
         {/* Up */}

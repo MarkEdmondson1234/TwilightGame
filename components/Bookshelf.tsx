@@ -9,7 +9,7 @@ interface BookshelfProps {
 }
 
 /**
- * Bookshelf UI component with clickable books for recipe books
+ * Book UI component with clickable books for recipe books
  * - Recipe Book (left): Opens regular recipe book
  * - Magic Recipe Book (right): Opens magic recipe book (future feature, currently locked)
  */
@@ -32,10 +32,10 @@ const Bookshelf: React.FC<BookshelfProps> = ({ playerPosition, currentMapId, nea
 
   return (
     <>
-      {/* Bookshelf Container - Responsive scaling */}
+      {/* Books Container - Responsive scaling */}
       <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 z-40 scale-50 sm:scale-75 md:scale-100 origin-bottom-left">
-        {/* Books container - positioned independently */}
-        <div className="absolute left-0 bottom-[190px] flex gap-0 items-end">
+        {/* Books - positioned directly at bottom */}
+        <div className="flex gap-0 items-end">
           {/* Recipe Book (left book) - clickable - 93×398 natural ratio, scaled down by 20px */}
           <button
             onClick={handleRecipeBookClick}
@@ -82,14 +82,6 @@ const Bookshelf: React.FC<BookshelfProps> = ({ playerPosition, currentMapId, nea
             )}
           </button>
         </div>
-
-        {/* Base shelf image - scaled down to 50% */}
-        <img
-          src={uiAssets.bookshelf_base}
-          alt="Bookshelf"
-          className="w-[18rem] h-48 drop-shadow-2xl"
-          style={{ imageRendering: 'auto' }}
-        />
       </div>
 
       {/* Recipe Book Modal */}
