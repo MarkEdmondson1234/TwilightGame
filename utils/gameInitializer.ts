@@ -20,6 +20,7 @@ export async function initializeGame(
     // Expose game objects to window for testing/debugging
     (window as any).gameState = gameState;
     (window as any).mapManager = mapManager;
+    (window as any).inventoryManager = inventoryManager;
     (window as any).__PERF_MONITOR__ = performanceMonitor;
 
     // Load saved custom colors and initialize palette
@@ -51,15 +52,21 @@ export async function initializeGame(
 
     // Load inventory from saved state
     const savedInventory = gameState.loadInventory();
+    console.log('[gameInitializer] Loading inventory from saved state:', {
+        items: savedInventory.items,
+        tools: savedInventory.tools
+    });
+
     if (savedInventory.items.length > 0 || savedInventory.tools.length > 0) {
         inventoryManager.loadInventory(savedInventory.items, savedInventory.tools);
-        console.log(`[App] Loaded inventory: ${savedInventory.items.length} items, ${savedInventory.tools.length} tools`);
+        console.log(`[gameInitializer] Loaded inventory: ${savedInventory.items.length} items, ${savedInventory.tools.length} tools`);
     } else {
         // First time: initialize with starter items
+        console.log('[gameInitializer] No saved inventory found, initializing starter items');
         inventoryManager.initializeStarterItems();
         const inventoryData = inventoryManager.getInventoryData();
         gameState.saveInventory(inventoryData.items, inventoryData.tools);
-        console.log('[App] Initialized starter inventory');
+        console.log('[gameInitializer] Initialized starter inventory');
     }
 
     // Load farm plots from saved state

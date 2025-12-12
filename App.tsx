@@ -47,6 +47,7 @@ import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
 import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
+import Inventory, { InventoryItem } from './components/Inventory';
 import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
@@ -59,6 +60,8 @@ import RecipeBook from './components/RecipeBook';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
 import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
+import { inventoryManager } from './utils/inventoryManager';
+import { convertInventoryToUI } from './utils/inventoryUIHelper';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
@@ -81,6 +84,9 @@ const App: React.FC = () => {
     const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
     const [cookingLocationType, setCookingLocationType] = useState<'stove' | 'campfire' | null>(null); // Track cooking location type
     const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
+    const [showInventory, setShowInventory] = useState(false); // Toggle inventory UI
+    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
+    const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
     const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
     const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
@@ -196,6 +202,9 @@ const App: React.FC = () => {
             }
         });
 
+        // Load inventory from InventoryManager
+        setInventoryItems(convertInventoryToUI());
+
         return unsubscribe;
     }, []);
 
@@ -211,6 +220,9 @@ const App: React.FC = () => {
 
             // Trigger re-render when placed items change
             setPlacedItemsUpdateTrigger(prev => prev + 1);
+
+            // Update inventory UI when inventory changes
+            setInventoryItems(convertInventoryToUI());
         });
 
         return unsubscribe;
@@ -252,6 +264,7 @@ const App: React.FC = () => {
         showHelpBrowser,
         showCookingUI,
         showRecipeBook,
+        showInventory,
         keysPressed,
         onShowCharacterCreator: setShowCharacterCreator,
         onSetActiveNPC: setActiveNPC,
@@ -272,6 +285,7 @@ const App: React.FC = () => {
             }
         },
         onSetShowRecipeBook: setShowRecipeBook,
+        onSetShowInventory: setShowInventory,
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
         onFarmUpdate: handleFarmUpdate,
@@ -285,6 +299,7 @@ const App: React.FC = () => {
             });
         },
         onShowToast: showToast,
+        onSetSelectedItemSlot: setSelectedItemSlot,
     });
 
     // Setup touch controls
@@ -971,7 +986,7 @@ const App: React.FC = () => {
                 })()}
             />
 
-            {/* Game UI Controls (Help, Collision, Color Editor) */}
+            {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
             <GameUIControls
                 showHelpBrowser={showHelpBrowser}
                 onToggleHelpBrowser={() => setShowHelpBrowser(!showHelpBrowser)}
@@ -979,6 +994,7 @@ const App: React.FC = () => {
                 onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
                 showColorEditor={showColorEditor}
                 onToggleColorEditor={() => setShowColorEditor(!showColorEditor)}
+                onToggleInventory={() => setShowInventory(!showInventory)}
             />
 
             {isTouchDevice && (
@@ -987,10 +1003,6 @@ const App: React.FC = () => {
                     onDirectionRelease={touchControls.handleDirectionRelease}
                     onActionPress={touchControls.handleActionPress}
                     onResetPress={touchControls.handleResetPress}
-                    currentTool={gameState.getFarmingTool()}
-                    selectedSeed={gameState.getSelectedSeed() as 'radish' | 'tomato' | 'wheat' | 'corn' | 'pumpkin' | null}
-                    onToolChange={(tool) => gameState.setFarmingTool(tool)}
-                    onSeedChange={(seed) => gameState.setSelectedSeed(seed)}
                     onShowCookingUI={() => {
                         const cookingLocation = checkCookingLocation(playerPos);
                         if (cookingLocation.found) {
@@ -1029,6 +1041,18 @@ const App: React.FC = () => {
             )}
             {showHelpBrowser && (
                 <HelpBrowser onClose={() => setShowHelpBrowser(false)} />
+            )}
+            {showInventory && (
+                <Inventory
+                    isOpen={showInventory}
+                    onClose={() => setShowInventory(false)}
+                    items={inventoryItems}
+                    selectedSlot={selectedItemSlot}
+                    onItemClick={(item, slotIndex) => {
+                        setSelectedItemSlot(slotIndex);
+                        console.log(`Selected ${item.name} in slot ${slotIndex}`);
+                    }}
+                />
             )}
             {showCookingUI && (
                 <CookingInterface

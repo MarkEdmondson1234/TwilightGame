@@ -12,6 +12,7 @@
  */
 
 import { ItemCategory, getItem, ITEMS } from '../data/items';
+import { gameState } from '../GameState';
 
 export interface InventoryItem {
   itemId: string;
@@ -21,6 +22,14 @@ export interface InventoryItem {
 class InventoryManager {
   private items: Map<string, number> = new Map(); // itemId -> quantity
   private tools: Set<string> = new Set(); // tool IDs owned
+
+  /**
+   * Save inventory to game state (triggers UI updates)
+   */
+  private saveToGameState(): void {
+    const data = this.getInventoryData();
+    gameState.saveInventory(data.items, data.tools);
+  }
 
   /**
    * Add an item to inventory
@@ -36,6 +45,7 @@ class InventoryManager {
     if (item.category === ItemCategory.TOOL) {
       this.tools.add(itemId);
       console.log(`[InventoryManager] Acquired tool: ${item.displayName}`);
+      this.saveToGameState();
       return true;
     }
 
@@ -56,6 +66,7 @@ class InventoryManager {
 
     this.items.set(itemId, newAmount);
     console.log(`[InventoryManager] +${quantity} ${item.displayName} (total: ${newAmount})`);
+    this.saveToGameState();
     return true;
   }
 
@@ -89,6 +100,7 @@ class InventoryManager {
     }
 
     console.log(`[InventoryManager] -${quantity} ${item.displayName} (remaining: ${newAmount})`);
+    this.saveToGameState();
     return true;
   }
 

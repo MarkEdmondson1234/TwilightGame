@@ -26,6 +26,7 @@ export interface KeyboardControlsConfig {
     showHelpBrowser: boolean;
     showCookingUI: boolean;
     showRecipeBook: boolean;
+    showInventory: boolean;
     keysPressed: Record<string, boolean>;
     onShowCharacterCreator: (show: boolean) => void;
     onSetActiveNPC: (npcId: string | null) => void;
@@ -36,12 +37,14 @@ export interface KeyboardControlsConfig {
     onSetShowHelpBrowser: (show: boolean) => void;
     onSetShowCookingUI: (show: boolean) => void;
     onSetShowRecipeBook: (show: boolean) => void;
+    onSetShowInventory: (show: boolean) => void;
     onSetPlayerPos: (pos: Position) => void;
     onMapTransition: (mapId: string, spawnPos: Position) => void;
     onFarmUpdate: () => void;
     onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
     onForageResult?: (result: ForageResult) => void;
     onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
+    onSetSelectedItemSlot?: (slot: number | null) => void;
 }
 
 export function useKeyboardControls(config: KeyboardControlsConfig) {
@@ -51,6 +54,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         showHelpBrowser,
         showCookingUI,
         showRecipeBook,
+        showInventory,
         keysPressed,
         onShowCharacterCreator,
         onSetActiveNPC,
@@ -61,12 +65,14 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onSetShowHelpBrowser,
         onSetShowCookingUI,
         onSetShowRecipeBook,
+        onSetShowInventory,
         onSetPlayerPos,
         onMapTransition,
         onFarmUpdate,
         onFarmActionAnimation,
         onForageResult,
         onShowToast,
+        onSetSelectedItemSlot,
     } = config;
 
     const handleKeyDown = useRef((e: KeyboardEvent) => {
@@ -104,6 +110,13 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         if (e.key === 'F5') {
             e.preventDefault();
             onSetShowColorEditor((prev) => !prev);
+            return;
+        }
+
+        // I key to toggle inventory
+        if (e.key === 'i' || e.key === 'I') {
+            e.preventDefault();
+            onSetShowInventory(!showInventory);
             return;
         }
 
@@ -271,30 +284,12 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             }
         }
 
-        // Tool switching keys (1-4)
-        if (e.key === '1') {
-            gameState.setFarmingTool('hand');
-        } else if (e.key === '2') {
-            gameState.setFarmingTool('hoe');
-        } else if (e.key === '3') {
-            gameState.setFarmingTool('seeds');
-        } else if (e.key === '4') {
-            gameState.setFarmingTool('wateringCan');
-        }
-
-        // Seed selection (keys 5-9) - only works when Seeds tool is selected
-        if (gameState.getFarmingTool() === 'seeds') {
-            if (e.key === '5') {
-                gameState.setSelectedSeed('radish');
-            } else if (e.key === '6') {
-                gameState.setSelectedSeed('tomato');
-            } else if (e.key === '7') {
-                gameState.setSelectedSeed('wheat');
-            } else if (e.key === '8') {
-                gameState.setSelectedSeed('corn');
-            } else if (e.key === '9') {
-                gameState.setSelectedSeed('pumpkin');
-            }
+        // Keys 1-9 for quick slot selection (inventory system)
+        if (e.key >= '1' && e.key <= '9') {
+            const slotIndex = parseInt(e.key) - 1; // Convert 1-9 to 0-8
+            onSetSelectedItemSlot?.(slotIndex);
+            console.log(`[Inventory] Quick slot ${e.key} selected (index: ${slotIndex})`);
+            return;
         }
 
         // F key to forage for seeds (only in forest)
