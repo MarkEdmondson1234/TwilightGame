@@ -294,8 +294,8 @@ async function optimizeTiles() {
         .png({ palette: false, quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
         .toFile(outputPath);
     }
-    // Special handling for large multi-tile sprites (shop, mine entrance, garden shed) - extra large size with very high quality (minimal compression)
-    else if (file.includes('shop') || file.includes('mine_entrance') || file.includes('garden_shed')) {
+    // Special handling for large multi-tile sprites (shop, cottage, mine entrance, garden shed) - extra large size with very high quality (minimal compression)
+    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed')) {
       await sharp(inputPath)
         .resize(SHOP_SIZE, SHOP_SIZE, {
           fit: 'contain',
@@ -344,8 +344,8 @@ async function optimizeTiles() {
         .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed thorns
         .toFile(outputPath);
     }
-    // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, cottages, etc.) - keep higher resolution and quality
-    else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
+    // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, etc.) - keep higher resolution and quality
+    else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
       await sharp(inputPath)
         .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
           fit: 'contain',
