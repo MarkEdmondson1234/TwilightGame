@@ -51,14 +51,6 @@ export async function initializeGame(
     });
 
     // Load inventory from saved state
-    // ONE-TIME FIX: Check if we need to reset inventory (version flag in localStorage)
-    const inventoryResetVersion = localStorage.getItem('inventoryResetVersion');
-    if (inventoryResetVersion !== '2024-12-13') {
-        console.log('[gameInitializer] Resetting inventory to new starter items (one-time migration)');
-        gameState.clearInventory();
-        localStorage.setItem('inventoryResetVersion', '2024-12-13');
-    }
-
     const savedInventory = gameState.loadInventory();
     console.log('[gameInitializer] Loading inventory from saved state:', {
         items: savedInventory.items,

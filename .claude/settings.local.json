@@ -55,7 +55,13 @@
       "Bash(git stash:*)",
       "Bash(git rm:*)",
       "Bash(findstr:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(start:*)",
+      "Skill(add-tile-sprite)",
+      "Skill(add-npc-sprite)",
+      "Bash(timeout:*)",
+      "Bash(file:*)",
+      "Bash(git revert:*)"
     ],
     "deny": [],
     "ask": []

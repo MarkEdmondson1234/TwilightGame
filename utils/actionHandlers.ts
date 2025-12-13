@@ -671,7 +671,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
 
     if (plotTileType !== undefined && plotTileType >= TileType.SOIL_FALLOW && plotTileType <= TileType.SOIL_DEAD) {
         // Till soil
-        if (currentTool === 'hoe' && plotTileType === TileType.SOIL_FALLOW) {
+        if (currentTool === 'tool_hoe' && plotTileType === TileType.SOIL_FALLOW) {
             interactions.push({
                 type: 'farm_till',
                 label: 'Till Soil',
@@ -685,7 +685,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         }
 
         // Plant seeds - show option for each seed type the player has
-        if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) {
+        if (currentTool === 'tool_seeds' && plotTileType === TileType.SOIL_TILLED) {
             // Get all seeds from inventory
             const inventory = inventoryManager.getInventoryData().items;
             const availableSeeds = inventory
@@ -736,7 +736,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         }
 
         // Water crop
-        if (currentTool === 'wateringCan' && (
+        if (currentTool === 'tool_watering_can' && (
             plotTileType === TileType.SOIL_PLANTED ||
             plotTileType === TileType.SOIL_WATERED ||
             plotTileType === TileType.SOIL_WILTING ||
