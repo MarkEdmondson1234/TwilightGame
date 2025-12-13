@@ -494,6 +494,13 @@ class GameStateManager {
     };
   }
 
+  clearInventory(): void {
+    this.state.inventory.items = [];
+    this.state.inventory.tools = [];
+    this.notify();
+    console.log('[GameState] Inventory cleared - will reload starter items on next refresh');
+  }
+
   // === Crafting Methods ===
 
   unlockRecipe(recipeId: string): void {

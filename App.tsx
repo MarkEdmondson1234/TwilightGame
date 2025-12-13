@@ -265,6 +265,8 @@ const App: React.FC = () => {
         showCookingUI,
         showRecipeBook,
         showInventory,
+        selectedItemSlot,
+        inventoryItems,
         keysPressed,
         onShowCharacterCreator: setShowCharacterCreator,
         onSetActiveNPC: setActiveNPC,
@@ -305,6 +307,8 @@ const App: React.FC = () => {
     // Setup touch controls
     const touchControls = useTouchControls({
         playerPosRef,
+        selectedItemSlot,
+        inventoryItems,
         keysPressed,
         onShowCharacterCreator: setShowCharacterCreator,
         onSetShowCookingUI: setShowCookingUI,
@@ -345,11 +349,17 @@ const App: React.FC = () => {
         }
 
         // Get all available interactions at the clicked position
+        // Get selected item from inventory (if any)
+        const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+        const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
+
+        console.log('[Mouse Click] Using tool from inventory:', currentTool, '(slot:', selectedItemSlot, ')');
+
         const interactions = getAvailableInteractions({
             position: clickInfo.worldPos,
             currentMapId: currentMapId,
-            currentTool: gameState.getFarmingTool(),
-            selectedSeed: gameState.getSelectedSeed(),
+            currentTool: currentTool,
+            selectedSeed: null, // Seeds are now part of the tool system
             onMirror: () => setShowCharacterCreator(true),
             onNPC: (npcId) => setActiveNPC(npcId),
             onTransition: (result: TransitionResult) => {

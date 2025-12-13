@@ -252,4 +252,5 @@ export const uiAssets = {
   book_recipes: '/TwilightGame/assets-optimized/ui/book_recipes.png',
   book_magic: '/TwilightGame/assets-optimized/ui/book_magic.png',
   wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
+  satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
 };

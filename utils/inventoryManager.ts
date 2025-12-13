@@ -309,8 +309,14 @@ class InventoryManager {
     this.addItem('tool_hoe', 1);
     this.addItem('tool_watering_can', 1);
 
-    // Start with some radish seeds for testing
-    this.addItem('seed_radish', 10);
+    // Start with a variety of seeds for farming
+    this.addItem('seed_radish', 15);
+    this.addItem('seed_tomato', 8);
+    this.addItem('seed_wheat', 20);
+
+    // Start with some harvested crops/materials
+    this.addItem('crop_blackberry', 12); // Wild berries
+    this.addItem('crop_radish', 5);
 
     // Start with cooking ingredients for tea (starter recipe)
     this.addItem('tea_leaves', 5);

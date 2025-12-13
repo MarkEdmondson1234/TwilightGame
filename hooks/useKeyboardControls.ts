@@ -27,6 +27,8 @@ export interface KeyboardControlsConfig {
     showCookingUI: boolean;
     showRecipeBook: boolean;
     showInventory: boolean;
+    selectedItemSlot: number | null;
+    inventoryItems: Array<{ id: string; name: string; icon: string; quantity: number; value?: number }>;
     keysPressed: Record<string, boolean>;
     onShowCharacterCreator: (show: boolean) => void;
     onSetActiveNPC: (npcId: string | null) => void;
@@ -55,6 +57,8 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         showCookingUI,
         showRecipeBook,
         showInventory,
+        selectedItemSlot,
+        inventoryItems,
         keysPressed,
         onShowCharacterCreator,
         onSetActiveNPC,
@@ -236,7 +240,12 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
 
             // Check for farm action first (on current tile)
             if (currentMapId) {
-                const currentTool = gameState.getFarmingTool();
+                // Get selected item from inventory (if any)
+                const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+                const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
+
+                console.log(`[Keyboard Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlot})`);
+
                 const farmResult = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
 
                 if (farmResult.handled) {

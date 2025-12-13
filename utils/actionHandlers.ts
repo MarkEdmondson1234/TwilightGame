@@ -264,7 +264,7 @@ export function handleFarmAction(
 
         let farmActionTaken = false;
 
-        if (currentTool === 'hoe' && plotTileType === TileType.SOIL_FALLOW) {
+        if (currentTool === 'tool_hoe' && plotTileType === TileType.SOIL_FALLOW) {
             // Till fallow soil
             console.log(`[Action] Attempting to till soil at (${playerTileX}, ${playerTileY})`);
             if (farmManager.tillSoil(currentMapId, position)) {
@@ -272,37 +272,27 @@ export function handleFarmAction(
                 onAnimationTrigger?.('till');
                 farmActionTaken = true;
             }
-        } else if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) {
-            // Plant in tilled soil
-            const selectedSeed = gameState.getSelectedSeed();
-            console.log(`[Action] Attempting to plant: selectedSeed=${selectedSeed}`);
-            if (selectedSeed) {
-                const plantResult = farmManager.plantSeed(currentMapId, position, selectedSeed);
-                if (plantResult.success) {
-                    // FarmManager consumed seed from inventory, save it
-                    const inventoryData = inventoryManager.getInventoryData();
-                    gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                    console.log(`[Action] Planted ${selectedSeed}`);
-                    onAnimationTrigger?.('plant');
-                    farmActionTaken = true;
-                } else {
-                    console.log(`[Action] Failed to plant: ${plantResult.reason}`);
-                    // Return the failure reason to show to user
-                    return {
-                        handled: false,
-                        message: plantResult.reason,
-                        messageType: 'warning',
-                    };
-                }
+        } else if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
+            // Plant in tilled soil - currentTool is the seed ID (e.g., 'seed_radish')
+            console.log(`[Action] Attempting to plant: ${currentTool}`);
+            const plantResult = farmManager.plantSeed(currentMapId, position, currentTool);
+            if (plantResult.success) {
+                // FarmManager consumed seed from inventory, save it
+                const inventoryData = inventoryManager.getInventoryData();
+                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+                console.log(`[Action] Planted ${currentTool}`);
+                onAnimationTrigger?.('plant');
+                farmActionTaken = true;
             } else {
-                console.log(`[Action] No seed selected`);
+                console.log(`[Action] Failed to plant: ${plantResult.reason}`);
+                // Return the failure reason to show to user
                 return {
                     handled: false,
-                    message: 'Select a seed type first (keys 5-9)',
-                    messageType: 'info',
+                    message: plantResult.reason,
+                    messageType: 'warning',
                 };
             }
-        } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
+        } else if (currentTool === 'tool_watering_can' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
             // Water planted, watered, wilting, or ready crops (watering ready crops keeps them fresh)
             if (farmManager.waterPlot(currentMapId, position)) {
                 console.log('[Action] Watered crop');
