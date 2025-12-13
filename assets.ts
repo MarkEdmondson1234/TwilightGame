@@ -29,7 +29,7 @@ export const tileAssets = {
   stepping_stones_2: '/TwilightGame/assets-optimized/tiles/stepping_stones_2.png',
   stepping_stones_3: '/TwilightGame/assets-optimized/tiles/stepping_stones_3.png',
   stepping_stones_4: '/TwilightGame/assets-optimized/tiles/stepping_stones_4.png',
-  cottage_wooden: '/TwilightGame/assets-optimized/tiles/cottage_wooden_512.png',
+  cottage_wooden: '/TwilightGame/assets-optimized/tiles/cottage_small_spring.png',
   cottage_stone: '/TwilightGame/assets-optimized/tiles/cottage_stone.png',
   cottage_w_flowers: '/TwilightGame/assets-optimized/tiles/cottage_w_flowers.png',
   shop_spring: '/TwilightGame/assets-optimized/tiles/shop/shop_spring.png',
