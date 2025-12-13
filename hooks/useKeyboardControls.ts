@@ -199,8 +199,8 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             }
         }
 
-        // Don't process any other keys if dialogue or cooking UI is open
-        if (activeNPC || showCookingUI || showRecipeBook) {
+        // Don't process any other keys if dialogue, cooking UI, recipe book, or inventory is open
+        if (activeNPC || showCookingUI || showRecipeBook || showInventory) {
             return;
         }
 

@@ -202,9 +202,6 @@ const App: React.FC = () => {
             }
         });
 
-        // Load inventory from InventoryManager
-        setInventoryItems(convertInventoryToUI());
-
         return unsubscribe;
     }, []);
 
@@ -467,6 +464,10 @@ const App: React.FC = () => {
     // Initialize game on startup (only once)
     useEffect(() => {
         initializeGame(currentMapId, setIsMapInitialized);
+
+        // Load inventory AFTER game initialization
+        // This ensures inventory is loaded before we try to display it
+        setInventoryItems(convertInventoryToUI());
     }, []); // Only run once on mount
 
     // Debug logging for DevTools state
