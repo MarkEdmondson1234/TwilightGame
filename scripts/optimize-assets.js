@@ -69,6 +69,7 @@ const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for
 const CUTSCENE_WIDTH = 1920; // Cutscene images: 1920x1080 (16:9 aspect ratio)
 const CUTSCENE_HEIGHT = 1080;
 const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
+const ITEM_SIZE = 256; // Resize item sprites to 256x256 (inventory icons, tool sprites)
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -880,6 +881,55 @@ async function optimizeUI() {
   console.log(`\n  Optimized ${optimized} UI sprite(s)\n`);
 }
 
+async function optimizeItems() {
+  console.log('🎒 Optimizing item sprites...');
+
+  const itemsDir = path.join(ASSETS_DIR, 'items');
+  const outputDir = path.join(OPTIMIZED_DIR, 'items');
+
+  if (!fs.existsSync(itemsDir)) {
+    console.log('  ℹ️  No items directory found, skipping...\n');
+    return;
+  }
+
+  // Ensure output directory exists
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  const files = fs.readdirSync(itemsDir).filter(f => /\.(png|jpg|jpeg)$/i.test(f));
+
+  let optimized = 0;
+
+  for (const file of files) {
+    const inputPath = path.join(itemsDir, file);
+    const normalizedFile = normalizePathCase(file);
+    const outputPath = path.join(outputDir, normalizedFile);
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Delete existing output if it exists
+    deleteIfExists(outputPath);
+
+    // Optimize item sprites to 256x256 with good quality
+    await sharp(inputPath)
+      .resize(ITEM_SIZE, ITEM_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} item sprite(s)\n`);
+}
+
 /**
  * Validate and fix any 8-bit colormap PNGs
  * PixiJS v8 cannot decode 8-bit colormap PNGs - they must be RGBA format
@@ -949,6 +999,7 @@ async function main() {
     await optimizeCooking();
     await optimizeCauldron();
     await optimizeUI();
+    await optimizeItems();
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

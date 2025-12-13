@@ -93,8 +93,16 @@ const Inventory: React.FC<InventoryProps> = ({
                   {/* Item Icon */}
                   {item && (
                     <>
-                      <div className="absolute inset-0 flex items-center justify-center text-3xl">
-                        {item.icon}
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        {item.icon.startsWith('/') || item.icon.startsWith('http') ? (
+                          <img
+                            src={item.icon}
+                            alt={item.name}
+                            className="w-12 h-12 object-contain pixelated"
+                          />
+                        ) : (
+                          <span className="text-3xl">{item.icon}</span>
+                        )}
                       </div>
 
                       {/* Quantity Badge (only if > 1) */}

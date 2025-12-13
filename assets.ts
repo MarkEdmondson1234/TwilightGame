@@ -254,3 +254,12 @@ export const uiAssets = {
   wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
   satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
 };
+
+// Item assets - Inventory items, tools, seeds, resources
+export const itemAssets = {
+  hoe: '/TwilightGame/assets-optimized/items/hoe.png',
+  watering_can: '/TwilightGame/assets-optimized/items/watering_can.png',
+  water: '/TwilightGame/assets-optimized/items/water.png',
+  carrot_seeds: '/TwilightGame/assets-optimized/items/carrot_seeds.png',
+  radish_seeds: '/TwilightGame/assets-optimized/items/radish_seeds.png',
+};

@@ -6,10 +6,28 @@
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
+import { itemAssets } from '../assets';
 
 /**
- * Item icon mapping - maps item IDs to emoji icons
- * TODO: Replace with actual sprite assets
+ * Item sprite mapping - maps item IDs to sprite URLs
+ * Falls back to emoji icons for items without sprites
+ */
+const ITEM_SPRITE_MAP: Record<string, string> = {
+  // Tools
+  tool_hoe: itemAssets.hoe,
+  tool_watering_can: itemAssets.watering_can,
+
+  // Ingredients
+  water: itemAssets.water,
+
+  // Seeds
+  seed_carrot: itemAssets.carrot_seeds,
+  seed_radish: itemAssets.radish_seeds,
+};
+
+/**
+ * Item emoji fallback - maps item IDs to emoji icons
+ * Used for items that don't have sprite assets yet
  */
 const ITEM_ICON_MAP: Record<string, string> = {
   // Seeds
@@ -98,9 +116,16 @@ const ITEM_ICON_MAP: Record<string, string> = {
 };
 
 /**
- * Get icon for an item (with fallback to default icon)
+ * Get icon for an item
+ * Returns sprite URL if available, otherwise returns emoji fallback
  */
 function getItemIcon(itemId: string): string {
+  // Check for sprite first
+  if (ITEM_SPRITE_MAP[itemId]) {
+    return ITEM_SPRITE_MAP[itemId];
+  }
+
+  // Fall back to emoji
   return ITEM_ICON_MAP[itemId] || '📦';
 }
 
