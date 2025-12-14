@@ -1,6 +1,6 @@
 import { MapDefinition, TileType } from '../types';
 import { gameState } from '../GameState';
-import { createUmbraWolfNPC, createWitchWolfNPC, createChillBearNPC } from '../utils/npcFactories';
+import { createUmbraWolfNPC, createWitchWolfNPC, createChillBearNPC, createBunnyflyNPC } from '../utils/npcFactories';
 
 /**
  * Procedural map generation functions
@@ -394,6 +394,32 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     );
     npcs.push(chillBear);
     console.log(`[Forest] 🐻☕ Chill Bear spawned at (${bearX}, ${bearY})!`);
+  }
+
+  // Bunnyfly: 80% chance of spawning (very common) - gentle forest creatures
+  const bunnyflyChance = ((seed * 31) % 100) / 100; // Pseudo-random based on seed
+  if (bunnyflyChance < 0.8) {
+    // Spawn 1-3 bunnflies for a flutter effect
+    const bunnyflyCount = Math.floor(((seed * 37) % 3)) + 1; // 1-3 bunnflies
+    for (let i = 0; i < bunnyflyCount; i++) {
+      // Place each bunnyfly in a different location
+      let bunnyflyX: number, bunnyflyY: number;
+      do {
+        bunnyflyX = Math.floor(((seed * (41 + i * 3)) % (width - 6)) + 3);
+        bunnyflyY = Math.floor(((seed * (43 + i * 5)) % (height - 6)) + 3);
+      } while (
+        (Math.abs(bunnyflyX - spawnX) < 6 && Math.abs(bunnyflyY - spawnY) < 6) ||
+        (Math.abs(bunnyflyX - wolfX) < 4 && Math.abs(bunnyflyY - wolfY) < 4)
+      );
+
+      const bunnyfly = createBunnyflyNPC(
+        `bunnyfly_${seed}_${i}`,
+        { x: bunnyflyX, y: bunnyflyY },
+        i === 0 ? 'Bunnyfly' : `Bunnyfly ${i + 1}`
+      );
+      npcs.push(bunnyfly);
+    }
+    console.log(`[Forest] 🐰🦋 ${bunnyflyCount} Bunnyfly(s) spawned!`);
   }
 
   return {

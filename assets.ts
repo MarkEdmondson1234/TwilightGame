@@ -221,6 +221,15 @@ export const npcAssets = {
   morgan_01: '/TwilightGame/assets/npcs/morgan/morgan_01.png',
   morgan_02: '/TwilightGame/assets/npcs/morgan/morgan_02.png',
   morgan_portrait: '/TwilightGame/assets/npcs/morgan/morgan_01.png',
+  // Bunnyfly assets (forest creature - butterfly-bunny hybrid)
+  // Using originals (1000x1000) for maximum quality - small creatures need crisp detail
+  bunnyfly_01: '/TwilightGame/assets/npcs/bunnyfly_01.png',
+  bunnyfly_02: '/TwilightGame/assets/npcs/bunnyfly_02.png',
+  bunnyfly_portrait: '/TwilightGame/assets/npcs/bunnyfly_01.png',
+  // Duck assets (pond creature)
+  duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
+  duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',
+  duck_portrait: '/TwilightGame/assets/npcs/duck_01.png',
 };
 
 // Player assets (add your custom sprites here when ready)

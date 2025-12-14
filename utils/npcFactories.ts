@@ -1718,3 +1718,95 @@ export function createMorganNPC(
     },
   };
 }
+
+/**
+ * Create a Bunnyfly NPC (butterfly-bunny hybrid forest creature)
+ *
+ * Behavior:
+ * - Wanders through the forest
+ * - Gentle fluttering animation (wings)
+ * - Shy, curious dialogue about the forest
+ *
+ * @param id Unique ID for this bunnyfly
+ * @param position Starting position
+ * @param name Optional name (defaults to "Bunnyfly")
+ */
+export function createBunnyflyNPC(
+  id: string,
+  position: Position,
+  name: string = 'Bunnyfly'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'roaming',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      roaming: {
+        sprites: [npcAssets.bunnyfly_01, npcAssets.bunnyfly_02],
+        animationSpeed: 400, // Gentle wing fluttering (400ms per frame) while flying around
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    behavior: NPCBehavior.WANDER,
+    sprite: npcAssets.bunnyfly_01,
+    portraitSprite: npcAssets.bunnyfly_portrait,
+    scale: 2.5, // Small, delicate creature
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*The bunnyfly hovers near you, its tiny wings fluttering softly. It seems curious but shy.*',
+        seasonalText: {
+          spring: '*The bunnyfly circles around the spring flowers, its pastel wings catching the sunlight. It twitches its little nose at you.*',
+          summer: '*The bunnyfly flits between sunbeams, leaving a trail of sparkles. It seems especially playful in the warm weather.*',
+          autumn: '*The bunnyfly\'s wings shimmer with autumn colours as it drifts amongst the falling leaves. It watches you with bright, gentle eyes.*',
+          winter: '*Surprisingly, the bunnyfly still flutters about in the cold. Perhaps it has some magical warmth within? It tilts its head curiously.*',
+        },
+        timeOfDayText: {
+          day: '*In the forest light, the bunnyfly\'s wings create tiny rainbows. It seems drawn to patches of sunlight.*',
+          night: '*The bunnyfly glows softly in the darkness, its wings luminescent. What a magical little creature!*',
+        },
+        weatherText: {
+          rain: '*The bunnyfly shelters beneath a large leaf, peering out at you with curious eyes. It seems to be waiting for the rain to pass.*',
+          snow: '*Snowflakes settle on the bunnyfly\'s soft fur. It shakes them off with a tiny sneeze before continuing to flutter about.*',
+          fog: '*The bunnyfly appears and disappears in the mist like a dream. Is it real, or just a forest spirit?*',
+          mist: '*The bunnyfly drifts through the mist, almost ethereal. It seems perfectly at home in this mystical atmosphere.*',
+          cherry_blossoms: '*The bunnyfly dances amongst the falling petals, indistinguishable from the pink blooms. Such grace!*',
+        },
+        responses: [
+          {
+            text: 'Reach out gently.',
+            nextId: 'approach',
+          },
+          {
+            text: 'Watch it flutter away.',
+          },
+        ],
+      },
+      {
+        id: 'approach',
+        text: '*The bunnyfly lands on your outstretched hand for just a moment. Its fur is impossibly soft. Then, with a gentle flutter, it takes flight again, circling you once before drifting deeper into the forest.*',
+        seasonalText: {
+          spring: '*The bunnyfly lands briefly on your hand, leaving behind the faint scent of spring blossoms. A gift from the forest!*',
+          summer: '*The tiny creature\'s warmth is like a sunbeam on your palm. It seems to smile before fluttering away.*',
+          autumn: '*The bunnyfly\'s wings dust your hand with shimmering autumn-coloured powder. How lovely!*',
+          winter: '*Despite the cold, the bunnyfly radiates gentle warmth. A small comfort in the winter forest.*',
+        },
+      },
+    ],
+    animatedStates,
+    interactionRadius: 1.5,
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 5, // Naturally timid but friendly
+    },
+  };
+}
