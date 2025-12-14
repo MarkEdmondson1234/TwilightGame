@@ -28,7 +28,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.GRASS]: 'grass',
   [TileType.TUFT]: 'grass',  // Tuft grass uses same background as regular grass
   [TileType.TUFT_SPARSE]: 'grass',  // Sparse tuft variant uses same background as grass
-  [TileType.ROCK]: 'rock',
+  [TileType.ROCK]: 'grass',  // Rocks sit on grass background
   [TileType.WATER]: 'water',
   [TileType.WATER_CENTER]: 'water',
   [TileType.WATER_LEFT]: 'water',
@@ -79,6 +79,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MIRROR]: 'special',
   [TileType.WITCH_HUT]: 'grass',  // Witch hut sits on grass
   [TileType.CAULDRON]: 'grass',  // Cauldron sits on grass
+  [TileType.WELL]: 'grass',  // Well sits on grass background
 };
 
 export class ColorResolver {
