@@ -594,7 +594,11 @@ Multi-tile sprites (furniture, large objects) require special handling:
    - Example: `sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href`
 
 3. **Sprite Metadata**: Configure in `SPRITE_METADATA` array in `constants.ts`
-   - Set dimensions to match natural aspect ratio (don't distort image)
+   - **CRITICAL**: Assume all sprite images uploaded are square (1:1 aspect ratio)
+   - **Always preserve the original aspect ratio** when setting `spriteWidth` and `spriteHeight`
+   - If a sprite is 1000×1000px (square), use equal dimensions like 6×6, NOT 6×5
+   - Example: `cottage_small_spring.png` is square, so use `spriteWidth: 6, spriteHeight: 6` (not 6×5)
+   - Stretching square images to rectangular dimensions makes them look distorted
    - Use `isForeground: false` to avoid CSS transforms (renders in clean background layer)
    - Set collision boxes separately from visual dimensions
 
