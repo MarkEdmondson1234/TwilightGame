@@ -890,6 +890,19 @@ export function getSeedItemId(cropId: string): string {
 }
 
 /**
+ * Get crop ID from seed item ID
+ * @param seedItemId The seed item ID (e.g., 'seed_radish')
+ * @returns The crop ID (e.g., 'radish') or null if not a valid seed
+ */
+export function getCropIdFromSeed(seedItemId: string): string | null {
+  const item = getItem(seedItemId);
+  if (!item || item.category !== ItemCategory.SEED) {
+    return null;
+  }
+  return item.cropId || null;
+}
+
+/**
  * Get all items by rarity (for foraging drops)
  */
 export function getItemsByRarity(rarity: ItemRarity): ItemDefinition[] {

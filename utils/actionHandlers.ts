@@ -11,7 +11,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { getCrop } from '../data/crops';
-import { generateForageSeed } from '../data/items';
+import { generateForageSeed, getCropIdFromSeed } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 
 export interface ActionResult {
@@ -274,13 +274,23 @@ export function handleFarmAction(
             }
         } else if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
             // Plant in tilled soil - currentTool is the seed ID (e.g., 'seed_radish')
-            console.log(`[Action] Attempting to plant: ${currentTool}`);
-            const plantResult = farmManager.plantSeed(currentMapId, position, currentTool);
+            // Extract crop ID from seed item ID
+            const cropId = getCropIdFromSeed(currentTool);
+            if (!cropId) {
+                console.warn(`[Action] Invalid seed item: ${currentTool}`);
+                return {
+                    handled: false,
+                    message: 'Invalid seed type',
+                    messageType: 'warning',
+                };
+            }
+            console.log(`[Action] Attempting to plant: ${currentTool} (crop: ${cropId})`);
+            const plantResult = farmManager.plantSeed(currentMapId, position, cropId);
             if (plantResult.success) {
                 // FarmManager consumed seed from inventory, save it
                 const inventoryData = inventoryManager.getInventoryData();
                 gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                console.log(`[Action] Planted ${currentTool}`);
+                console.log(`[Action] Planted ${cropId}`);
                 onAnimationTrigger?.('plant');
                 farmActionTaken = true;
             } else {
@@ -684,53 +694,42 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             });
         }
 
-        // Plant seeds - show option for each seed type the player has
-        if (currentTool === 'tool_seeds' && plotTileType === TileType.SOIL_TILLED) {
-            // Get all seeds from inventory
-            const inventory = inventoryManager.getInventoryData().items;
-            const availableSeeds = inventory
-                .filter(item => item.itemId.startsWith('seed_') && item.quantity > 0)
-                .map(item => item.itemId.replace('seed_', '')); // Remove 'seed_' prefix
-
-            if (availableSeeds.length === 0) {
-                // No seeds available
-                interactions.push({
-                    type: 'farm_plant',
-                    label: 'No Seeds Available',
-                    icon: '🌱',
-                    color: '#6b7280',
-                    execute: () => {
-                        onFarmAction?.({
-                            handled: false,
-                            message: 'You have no seeds to plant',
-                            messageType: 'warning',
-                        });
-                    },
-                });
-            } else {
-                // Add interaction for each available seed type
+        // Plant seeds - if player has a seed item selected, allow planting
+        if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
+            // Player has a specific seed selected (e.g., 'seed_radish')
+            const cropId = getCropIdFromSeed(currentTool);
+            if (cropId) {
+                const crop = getCrop(cropId);
                 const seedIcons: Record<string, string> = {
                     radish: '🥕',
                     tomato: '🍅',
                     wheat: '🌾',
                     corn: '🌽',
                     pumpkin: '🎃',
+                    potato: '🥔',
+                    melon: '🍉',
+                    chili: '🌶️',
+                    spinach: '🥬',
+                    broccoli: '🥦',
+                    cauliflower: '🥬',
+                    sunflower: '🌻',
+                    salad: '🥗',
+                    onion: '🧅',
+                    pea: '🫛',
+                    cucumber: '🥒',
+                    carrot: '🥕',
                     strawberry: '🍓',
                 };
 
-                availableSeeds.forEach(seedType => {
-                    interactions.push({
-                        type: 'farm_plant',
-                        label: `Plant ${seedType.charAt(0).toUpperCase() + seedType.slice(1)}`,
-                        icon: seedIcons[seedType] || '🌱',
-                        color: '#16a34a',
-                        execute: () => {
-                            // Set the selected seed and plant it
-                            gameState.setSelectedSeed(seedType);
-                            const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
-                            onFarmAction?.(farmResult);
-                        },
-                    });
+                interactions.push({
+                    type: 'farm_plant',
+                    label: `Plant ${crop?.displayName || cropId}`,
+                    icon: seedIcons[cropId] || '🌱',
+                    color: '#16a34a',
+                    execute: () => {
+                        const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                        onFarmAction?.(farmResult);
+                    },
                 });
             }
         }
