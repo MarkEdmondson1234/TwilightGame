@@ -55,36 +55,36 @@ import {
  */
 
 const gridString = `
-oLULYoLtULoLtULUUULLUoLLyULJLo
-LoG,G,GZGG,PG,oG,G,,G,ZeGi^^LG
-tG,G,,G,,,GPG,G,kGG,XXXyGi<WWW
-LG,,G,,,G,,PG,,,,GG,XXXei<WWWW
-oGoG,G,GKGGP,G,,sG,G,,G,Gi<WWW
-YtG,G,,PPPPPPPPPPPPPG,G,yGi<WW
-oG,,G,,P,G,,,G,PG,,G,G,,iivvvv
+oLULYoLtULoLtULUUULLUoLLGULJLG
+LoG,G,GeGG,,,,oG,G,,G,eeGiGLGG
+tG,G,,G,,,XXX,G,kXXXXXGG,yGGeG
+LG,,G,,,G,XXX,,,,XXXXXGeGeGeGG
+oGoG,G,GKGGP,G,,sG,,,,G,GG,GGG
+YtG,G,,PPPPPPPPPPPGG,G,,,G,,GG
+oG,,G,,P,G,,,G,PG,,G,G,,,,GGGG
 LG,,G,,P,,G,,G,PG,G,,G,eUGGGLG
 tG,G,,,P,G,,,G,PG,,G,,,,RGRGeG
 LG,,G,,PG,G,,,PG,,G,,G,,,,,GLG
 JG,G,,,PG,,G,,PG,G,,GMGR,RG,Re
-LoG,G,,GPe%G,,PG,G,,G,RXXXeGGL
-oG,,G,,PG,G,,,PG,,G,,G,,,,,PGG
-LG,G,,,PPPPPPPPPPG,,G,,G,,,GPe
-tG,,G,,,G,,PG,G,,,G,,,,UUG,PUG
-LPPPPPPPPPPPPPPPPPPPPPPPPPPPPP
+LoG,G,,GPe%G,,PG,G,,GPR,,,eGGL
+oG,,G,,PG,G,,,PG,,G,,P,,,,PPPP
+LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
+tG,,G,,,G,,PG,G,,,G,,,,UUG,,UG
+LPPPPPPPPPPPP,,,GG,,,eG,,G,,eG
 oG,G,,,G,,,PG,,G,,G,,,G,,,,GeY
-UoG,,G,,UGPPGGG,G,,Ge=G,G,,G,t
-LG,G,GXGGGPG,,G,,G,,,,,,,,,GLG
-oGzG,,XGGGPG,G,,G,,,,G,,,G,,oG
-LG,G,GXGG,PG,,G,,eG,G,,G,,,GLG
+UoG,,G,,UGPPGGG,G,,Ge=i,G,,G,t
+LG,G,GXXGGPG,,G,,G,i,,i,,,,GLG
+oGzG,,XXGGPG,G,,G,,,,G,,,G,,oG
+LG,G,GXXG,PG,,G,,eG,G,,G,,,GLG
 tG,,G,,G,,,PG,G,,GJG,G,,,G,,Ge
 oG,G,,,G,,,PG,,G,,G,,,,G,,,GGU
 UG,,G,,,G,,PG,G,,,G,,GKG,G,,eU
-tG,G,,,kG,,PG,,G,,G,,G,G,,,GUJ
-LG,,G,,,,G,PG,G,,,G,,,,,G,eGGL
-JG,G,,,G,,,PG,,G,,G,,,,,G,GeGt
-LG,,G,,G,,,PG,G,,,GXXXXXeG,,GU
-oGoG,G,,,G,PPPPPPPPPPPPPPPPPPP
-tLoLJLoLtLUULULJLoLULULUoLLUUU
+tG,G,,,kG,,PPPPPPPP,,G,G,,,GUJ
+LG,,G,,,,G,,G,GP,,G,,,,,G,eGGL
+JG,G,J,G,,U,G,,P,,GXXXXXG,GeGt
+LG,,GXXX,,G,G,GP,,GXXXXXeG,,GU
+oGoG,XXX,G,,,G,P,,G,G,,G,U,,,,
+tLoLG,UGLUJLULG,,L,L,LUoLL,,,,
 `;
 
 export const village: MapDefinition = {
@@ -154,7 +154,7 @@ export const village: MapDefinition = {
       label: 'To Forest',
     },
     {
-      fromPosition: { x: 28, y: 28 }, // Bottom-right corner of village
+      fromPosition: { x: 15, y: 28 }, // Bottom-center of village
       tileType: TileType.GRASS,
       toMapId: 'farm_area',
       toPosition: { x: 10, y: 24 },
@@ -176,9 +176,9 @@ export const village: MapDefinition = {
     // Village Child - wandering little girl
     createVillageChildNPC('child', { x: 15, y: 17 }),
     // Add cat NPC using factory function
-    createCatNPC('village_cat', { x: 25, y: 23 }, 'Sleepy Cat'),
+    createCatNPC('village_cat', { x: 25, y: 20 }, 'Sleepy Cat'),
     // Add old woman knitting near the cat
-    createOldWomanKnittingNPC('old_woman_knitting', { x: 23, y: 23 }, 'Old Woman'),
+    createOldWomanKnittingNPC('old_woman_knitting', { x: 23, y: 25 }, 'Old Woman'),
     // Add dog that follows the little girl
     createDogNPC('village_dog', { x: 16, y: 17 }, 'child', 'Friendly Dog'),
   ],
