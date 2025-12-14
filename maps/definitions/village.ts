@@ -83,9 +83,9 @@ UG,,G,,,G,,PG,G,,,G,,GKG,G,,eU
 tG,G,,,kG,,PPPPPPPP,,G,G,,,GUJ
 LG,,G,,,,G,,G,GP,,G,,,,,G,eGGL
 JG,G,J,G,,U,G,,P,,GXXXXXG,GeGt
-LG,,GXXX,,G,G,GP,,GXXXXXeG,,GU
-oGoG,XXX,G,,,G,P,,G,G,,G,U,,,,
-tLoLG,UGLUJLULG,,L,L,LUoLL,,o,
+LG,,XXXG,,G,G,GP,,GXXXXXeG,,GU
+oGoG,,GG,G,,JG,P,,G,G,,G,U,,,,
+tLoLG,G,,GGLULG,,L,L,LUoLL,,o,
 `;
 
 export const village: MapDefinition = {
@@ -127,7 +127,7 @@ export const village: MapDefinition = {
       label: 'To Shop',
     },
     {
-      fromPosition: { x: 3.3, y: 20 }, // South-west house
+      fromPosition: { x: 3.3, y: 21 }, // South-west house (moved down 1 tile for better accessibility)
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house3',
       toPosition: { x: 3, y: 4 },
