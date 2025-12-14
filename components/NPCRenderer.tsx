@@ -28,9 +28,17 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger }
                 const npcScale = npc.scale || 4.0;
 
                 // Determine if sprite should be flipped horizontally
-                // - Left direction: always flip (walk sprites face right by default)
-                // - Up/Down with 2-frame directional animation: flip on odd frames for walking effect
-                let shouldFlip = npc.direction === Direction.Left;
+                // - Default: flip when facing left (sprites face right by default)
+                // - reverseFlip: flip when facing right (for sprites that naturally face left, like ducks)
+                // - noFlip: never flip
+                let shouldFlip = false;
+                if (!npc.noFlip) {
+                    if (npc.reverseFlip) {
+                        shouldFlip = npc.direction === Direction.Right;
+                    } else {
+                        shouldFlip = npc.direction === Direction.Left;
+                    }
+                }
 
                 // Check for up/down directional sprite animation (flip on odd frames)
                 if ((npc.direction === Direction.Up || npc.direction === Direction.Down) &&

@@ -297,6 +297,8 @@ export interface NPC {
   scale?: number; // Optional: sprite scale multiplier (default 4.0)
   followTarget?: string; // Optional: ID of NPC to follow (for companion NPCs like dogs)
   friendshipConfig?: FriendshipConfig; // Optional: friendship system configuration
+  noFlip?: boolean; // Optional: disable horizontal flipping entirely
+  reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)

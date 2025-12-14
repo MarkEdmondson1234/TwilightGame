@@ -7,6 +7,7 @@ import {
   createVillageElderNPC,
   createShopkeeperNPC,
   createVillageChildNPC,
+  createDuckNPC,
 } from '../../utils/npcFactories';
 
 // Note: All NPCs now use factory functions from npcFactories.ts
@@ -84,7 +85,7 @@ LG,,G,,,,G,,G,GP,,G,,,,,G,eGGL
 JG,G,J,G,,U,G,,P,,GXXXXXG,GeGt
 LG,,GXXX,,G,G,GP,,GXXXXXeG,,GU
 oGoG,XXX,G,,,G,P,,G,G,,G,U,,,,
-tLoLG,UGLUJLULG,,L,L,LUoLL,,,,
+tLoLG,UGLUJLULG,,L,L,LUoLL,,o,
 `;
 
 export const village: MapDefinition = {
@@ -181,5 +182,9 @@ export const village: MapDefinition = {
     createOldWomanKnittingNPC('old_woman_knitting', { x: 23, y: 25 }, 'Old Woman'),
     // Add dog that follows the little girl
     createDogNPC('village_dog', { x: 16, y: 17 }, 'child', 'Friendly Dog'),
+    // Duck - spring seasonal creature near the well/pond area (TODO: implement seasonal spawning)
+    // Currently spawns year-round, but dialogue indicates it should only be present in spring
+    // Single duck to make it feel more special and rare
+    createDuckNPC('village_duck', { x: 20, y: 17 }, 'Duck'),
   ],
 };

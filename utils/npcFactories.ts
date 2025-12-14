@@ -1810,3 +1810,86 @@ export function createBunnyflyNPC(
     },
   };
 }
+
+/**
+ * Create a Duck NPC (pond creature that appears in spring)
+ *
+ * Behavior:
+ * - Wanders near water/ponds
+ * - Gentle paddling animation
+ * - Seasonal appearance (spring only)
+ * - Simple, cheerful duck dialogue
+ *
+ * @param id Unique ID for this duck
+ * @param position Starting position (should be near water)
+ * @param name Optional name (defaults to "Duck")
+ */
+export function createDuckNPC(
+  id: string,
+  position: Position,
+  name: string = 'Duck'
+): NPC {
+  const now = Date.now();
+
+  const animatedStates: AnimatedNPCStates = {
+    currentState: 'roaming',
+    lastStateChange: now,
+    lastFrameChange: now,
+    currentFrame: 0,
+    states: {
+      roaming: {
+        sprites: [npcAssets.duck_01, npcAssets.duck_02],
+        animationSpeed: 500, // Gentle paddling animation (500ms per frame)
+      },
+    },
+  };
+
+  return {
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    behavior: NPCBehavior.WANDER,
+    sprite: npcAssets.duck_01,
+    portraitSprite: npcAssets.duck_portrait,
+    scale: 2.5, // Small pond creature
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*Quack! Quack!* The duck waddles closer, looking at you with bright, curious eyes.',
+        seasonalText: {
+          spring: '*Quack quack!* The duck seems especially happy in the spring sunshine, splashing playfully in the pond.',
+          summer: '*Quack...* The duck looks a bit warm. Perhaps it will return when the weather cools.',
+          autumn: '*Quack?* The duck seems to be preparing to fly south for winter.',
+          winter: '*This duck has flown south for the winter and will return in spring.*',
+        },
+        weatherText: {
+          rain: '*Quack quack quack!* The duck is absolutely delighted by the rain, splashing about with pure joy!',
+          snow: '*The duck has flown south for winter. It will return when the snow melts.*',
+          fog: '*Quack?* The duck peers through the mist, a bit confused but still cheerful.',
+          mist: '*Quack!* The duck glides through the misty water like a graceful ghost.',
+        },
+        responses: [
+          {
+            text: 'Toss some breadcrumbs.',
+            nextId: 'feeding',
+          },
+          {
+            text: 'Just watch the duck.',
+          },
+        ],
+      },
+      {
+        id: 'feeding',
+        text: '*Quack quack quack!* The duck eagerly gobbles up the breadcrumbs, then waddles around your feet hoping for more. What a friendly little creature!',
+      },
+    ],
+    animatedStates,
+    interactionRadius: 1.5,
+    friendshipConfig: {
+      canBefriend: false, // Ducks are wild creatures, can't befriend like villagers
+      startingPoints: 0,
+    },
+    reverseFlip: true, // Duck sprite faces left naturally, so flip when walking right instead of left
+  };
+}
