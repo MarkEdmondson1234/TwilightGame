@@ -28,8 +28,8 @@ import { createMumNPC } from '../../utils/npcFactories';
 const gridString = `
 2222222E22
 2ffffffff2
-2$ff@ffff22
-2ffffffff&2
+2$ff@ffff2
+2ffffffff&
 2fffrffff2
 2ffffffff2
 2ffffffff2

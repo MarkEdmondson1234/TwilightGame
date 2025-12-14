@@ -975,7 +975,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   {
     tileType: TileType.COTTAGE,
     spriteWidth: 6,  // 6 tiles wide (actual cottage width)
-    spriteHeight: 5, // 5 tiles tall (actual cottage height)
+    spriteHeight: 6, // 5 tiles tall (actual cottage height)
     offsetX: -3,     // Offset to center cottage
     offsetY: -4,     // Extends upward from K tile
     image: tileAssets.cottage_wooden,
