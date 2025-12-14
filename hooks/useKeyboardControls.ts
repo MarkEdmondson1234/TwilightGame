@@ -79,6 +79,14 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onSetSelectedItemSlot,
     } = config;
 
+    // Create refs for values that need to be accessed in the event handler with latest values
+    const selectedItemSlotRef = useRef(selectedItemSlot);
+    const inventoryItemsRef = useRef(inventoryItems);
+
+    // Update refs when values change
+    selectedItemSlotRef.current = selectedItemSlot;
+    inventoryItemsRef.current = inventoryItems;
+
     const handleKeyDown = useRef((e: KeyboardEvent) => {
         // Ignore all keys if user is typing in an input/textarea
         const target = e.target as HTMLElement;
@@ -240,11 +248,11 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
 
             // Check for farm action first (on current tile)
             if (currentMapId) {
-                // Get selected item from inventory (if any)
-                const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+                // Get selected item from inventory (if any) - use refs to get latest values
+                const selectedItem = selectedItemSlotRef.current !== null ? inventoryItemsRef.current[selectedItemSlotRef.current] : null;
                 const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
 
-                console.log(`[Keyboard Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlot})`);
+                console.log(`[Keyboard Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlotRef.current})`);
 
                 const farmResult = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
 

@@ -61,7 +61,9 @@
       "Skill(add-npc-sprite)",
       "Bash(timeout:*)",
       "Bash(file:*)",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(for file in \"c:\\Github files\\TwilightGame\\public\\assets\\items\"/*.png)",
+      "Bash(do file \"$file\")"
     ],
     "deny": [],
     "ask": []

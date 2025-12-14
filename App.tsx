@@ -416,7 +416,7 @@ const App: React.FC = () => {
         setRadialMenuOptions(menuOptions);
         setRadialMenuPosition(clickInfo.screenPos);
         setRadialMenuVisible(true);
-    }, [activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, currentMapId, handleMapTransition, handleFarmUpdate, showToast]);
+    }, [activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, currentMapId, handleMapTransition, handleFarmUpdate, showToast, selectedItemSlot, inventoryItems]);
 
     const gameLoop = useCallback(() => {
         // Track frame-to-frame timing for performance metrics

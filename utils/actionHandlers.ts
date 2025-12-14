@@ -345,6 +345,30 @@ export function handleFarmAction(
             gameState.saveFarmPlots(farmManager.getAllPlots());
             return { handled: true };
         }
+
+        // If we detected a farm tile but no action was taken, provide helpful feedback
+        if (currentTool === 'hand') {
+            // Give specific guidance based on the plot state
+            if (plotTileType === TileType.SOIL_FALLOW) {
+                return {
+                    handled: false,
+                    message: 'Select a hoe to till this soil',
+                    messageType: 'info',
+                };
+            } else if (plotTileType === TileType.SOIL_TILLED) {
+                return {
+                    handled: false,
+                    message: 'Select seeds to plant',
+                    messageType: 'info',
+                };
+            } else if (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING) {
+                return {
+                    handled: false,
+                    message: 'Select a watering can to water this crop',
+                    messageType: 'info',
+                };
+            }
+        }
     }
 
     return { handled: false };
