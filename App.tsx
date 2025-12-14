@@ -463,11 +463,16 @@ const App: React.FC = () => {
 
     // Initialize game on startup (only once)
     useEffect(() => {
-        initializeGame(currentMapId, setIsMapInitialized);
+        const init = async () => {
+            await initializeGame(currentMapId, setIsMapInitialized);
 
-        // Load inventory AFTER game initialization
-        // This ensures inventory is loaded before we try to display it
-        setInventoryItems(convertInventoryToUI());
+            // Load inventory AFTER game initialization completes
+            // This ensures inventory is loaded before we try to display it
+            setInventoryItems(convertInventoryToUI());
+            console.log('[App] Inventory loaded after game initialization');
+        };
+
+        init();
     }, []); // Only run once on mount
 
     // Debug logging for DevTools state
