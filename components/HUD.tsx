@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { mapManager } from '../maps';
 import { useGameState } from '../hooks/useGameState';
 import { TimeManager, GameTime } from '../utils/TimeManager';
-import { inventoryManager } from '../utils/inventoryManager';
-import { getSeedItemId } from '../data/items';
 
 const HUD: React.FC = () => {
     const currentMap = mapManager.getCurrentMap();
     const mapName = currentMap ? currentMap.name : 'Loading...';
-    const { gold, forestDepth, caveDepth, farming } = useGameState();
+    const { gold, forestDepth, caveDepth } = useGameState();
     const [currentTime, setCurrentTime] = useState<GameTime>(TimeManager.getCurrentTime());
 
     // Update time every second
@@ -20,35 +18,25 @@ const HUD: React.FC = () => {
         return () => clearInterval(interval);
     }, []);
 
-    // Tool display names and icons
-    const toolDisplay = {
-        hand: { name: 'Hand', icon: '✋', desc: 'Harvest/Clear' },
-        hoe: { name: 'Hoe', icon: '⚒️', desc: 'Till soil' },
-        seeds: { name: 'Seeds', icon: '🌱', desc: 'Plant crops' },
-        wateringCan: { name: 'Watering Can', icon: '💧', desc: 'Water plants' },
-    };
-
     return (
         <>
-            {/* Left HUD Panel - Game info and tools */}
+            {/* Floating Wallet - Gold display */}
             <div className="absolute top-2 left-2 z-10 pointer-events-none">
-                <div className="bg-black/60 p-2 sm:p-3 rounded-lg border border-slate-700 max-w-[160px] sm:max-w-[200px]">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm sm:text-base font-bold text-yellow-300">💰 {gold}</span>
-                    </div>
-                    <div className="mt-1 pt-1 border-t border-slate-600">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                            <span className="text-base sm:text-lg">{toolDisplay[farming.currentTool].icon}</span>
-                            <span className="text-xs sm:text-sm font-bold text-green-300">{toolDisplay[farming.currentTool].name}</span>
-                        </div>
-                        {farming.currentTool === 'seeds' && farming.selectedSeed && (
-                            <div className="mt-1 bg-black/30 p-1 sm:p-2 rounded border border-green-700">
-                                <p className="text-xs font-bold text-green-400 capitalize">{farming.selectedSeed}</p>
-                                <p className="text-xs text-yellow-300">
-                                    × {inventoryManager.getQuantity(getSeedItemId(farming.selectedSeed))}
-                                </p>
-                            </div>
-                        )}
+                <div className="relative">
+                    <img
+                        src="/TwilightGame/assets-optimized/ui/wallet.png"
+                        alt="Gold"
+                        className="w-[70px] h-[70px] sm:w-[88px] sm:h-[88px] drop-shadow-lg"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center" style={{ paddingTop: '5px' }}>
+                        <span
+                            className="text-lg sm:text-xl font-bold text-yellow-300"
+                            style={{
+                                textShadow: '2px 2px 4px rgba(0,0,0,0.8), -1px -1px 2px rgba(0,0,0,0.8), 1px -1px 2px rgba(0,0,0,0.8), -1px 1px 2px rgba(0,0,0,0.8)'
+                            }}
+                        >
+                            {gold}
+                        </span>
                     </div>
                 </div>
             </div>

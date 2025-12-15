@@ -12,6 +12,7 @@
 
 import { FarmPlot, NPCFriendship, PlacedItem } from './types';
 import { GameTime } from './utils/TimeManager';
+import { shouldDecay } from './utils/itemDecayManager';
 
 export interface CharacterCustomization {
   characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
@@ -196,6 +197,37 @@ class GameStateManager {
         }
         if (!parsed.inventory.tools) {
           parsed.inventory.tools = [];
+        }
+
+        // Migrate old save data to ensure starter tools exist
+        const hasHoe = parsed.inventory.tools.includes('tool_hoe');
+        const hasWateringCan = parsed.inventory.tools.includes('tool_watering_can');
+        if (!hasHoe || !hasWateringCan) {
+          console.log('[GameState] Migrating old save data - adding missing starter tools');
+          if (!hasHoe) {
+            parsed.inventory.tools.push('tool_hoe');
+          }
+          if (!hasWateringCan) {
+            parsed.inventory.tools.push('tool_watering_can');
+          }
+        }
+
+        // Ensure starter seeds and ingredients exist
+        const hasRadishSeeds = parsed.inventory.items.some((item: any) => item.itemId === 'seed_radish');
+        const hasTeaLeaves = parsed.inventory.items.some((item: any) => item.itemId === 'tea_leaves');
+        const hasWater = parsed.inventory.items.some((item: any) => item.itemId === 'water');
+
+        if (!hasRadishSeeds || !hasTeaLeaves || !hasWater) {
+          console.log('[GameState] Migrating old save data - adding starter items');
+          if (!hasRadishSeeds) {
+            parsed.inventory.items.push({ itemId: 'seed_radish', quantity: 10 });
+          }
+          if (!hasTeaLeaves) {
+            parsed.inventory.items.push({ itemId: 'tea_leaves', quantity: 5 });
+          }
+          if (!hasWater) {
+            parsed.inventory.items.push({ itemId: 'water', quantity: 10 });
+          }
         }
 
         // Migrate old save data that doesn't have weather
@@ -461,6 +493,13 @@ class GameStateManager {
       items: this.state.inventory.items || [],
       tools: this.state.inventory.tools || [],
     };
+  }
+
+  clearInventory(): void {
+    this.state.inventory.items = [];
+    this.state.inventory.tools = [];
+    this.notify();
+    console.log('[GameState] Inventory cleared - will reload starter items on next refresh');
   }
 
   // === Crafting Methods ===
@@ -777,9 +816,6 @@ class GameStateManager {
   removeDecayedItems(): number {
     const initialCount = this.state.placedItems.length;
     const currentTime = Date.now();
-
-    // Import decay manager
-    const { shouldDecay } = require('./utils/itemDecayManager');
 
     this.state.placedItems = this.state.placedItems.filter(item => !shouldDecay(item, currentTime));
 

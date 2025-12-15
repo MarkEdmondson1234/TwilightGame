@@ -11,7 +11,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { getCrop } from '../data/crops';
-import { generateForageSeed } from '../data/items';
+import { generateForageSeed, getCropIdFromSeed } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 
 export interface ActionResult {
@@ -264,7 +264,7 @@ export function handleFarmAction(
 
         let farmActionTaken = false;
 
-        if (currentTool === 'hoe' && plotTileType === TileType.SOIL_FALLOW) {
+        if (currentTool === 'tool_hoe' && plotTileType === TileType.SOIL_FALLOW) {
             // Till fallow soil
             console.log(`[Action] Attempting to till soil at (${playerTileX}, ${playerTileY})`);
             if (farmManager.tillSoil(currentMapId, position)) {
@@ -272,37 +272,37 @@ export function handleFarmAction(
                 onAnimationTrigger?.('till');
                 farmActionTaken = true;
             }
-        } else if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) {
-            // Plant in tilled soil
-            const selectedSeed = gameState.getSelectedSeed();
-            console.log(`[Action] Attempting to plant: selectedSeed=${selectedSeed}`);
-            if (selectedSeed) {
-                const plantResult = farmManager.plantSeed(currentMapId, position, selectedSeed);
-                if (plantResult.success) {
-                    // FarmManager consumed seed from inventory, save it
-                    const inventoryData = inventoryManager.getInventoryData();
-                    gameState.saveInventory(inventoryData.items, inventoryData.tools);
-                    console.log(`[Action] Planted ${selectedSeed}`);
-                    onAnimationTrigger?.('plant');
-                    farmActionTaken = true;
-                } else {
-                    console.log(`[Action] Failed to plant: ${plantResult.reason}`);
-                    // Return the failure reason to show to user
-                    return {
-                        handled: false,
-                        message: plantResult.reason,
-                        messageType: 'warning',
-                    };
-                }
-            } else {
-                console.log(`[Action] No seed selected`);
+        } else if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
+            // Plant in tilled soil - currentTool is the seed ID (e.g., 'seed_radish')
+            // Extract crop ID from seed item ID
+            const cropId = getCropIdFromSeed(currentTool);
+            if (!cropId) {
+                console.warn(`[Action] Invalid seed item: ${currentTool}`);
                 return {
                     handled: false,
-                    message: 'Select a seed type first (keys 5-9)',
-                    messageType: 'info',
+                    message: 'Invalid seed type',
+                    messageType: 'warning',
                 };
             }
-        } else if (currentTool === 'wateringCan' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
+            console.log(`[Action] Attempting to plant: ${currentTool} (crop: ${cropId})`);
+            const plantResult = farmManager.plantSeed(currentMapId, position, cropId);
+            if (plantResult.success) {
+                // FarmManager consumed seed from inventory, save it
+                const inventoryData = inventoryManager.getInventoryData();
+                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+                console.log(`[Action] Planted ${cropId}`);
+                onAnimationTrigger?.('plant');
+                farmActionTaken = true;
+            } else {
+                console.log(`[Action] Failed to plant: ${plantResult.reason}`);
+                // Return the failure reason to show to user
+                return {
+                    handled: false,
+                    message: plantResult.reason,
+                    messageType: 'warning',
+                };
+            }
+        } else if (currentTool === 'tool_watering_can' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
             // Water planted, watered, wilting, or ready crops (watering ready crops keeps them fresh)
             if (farmManager.waterPlot(currentMapId, position)) {
                 console.log('[Action] Watered crop');
@@ -344,6 +344,30 @@ export function handleFarmAction(
             // Save farm state to GameState
             gameState.saveFarmPlots(farmManager.getAllPlots());
             return { handled: true };
+        }
+
+        // If we detected a farm tile but no action was taken, provide helpful feedback
+        if (currentTool === 'hand') {
+            // Give specific guidance based on the plot state
+            if (plotTileType === TileType.SOIL_FALLOW) {
+                return {
+                    handled: false,
+                    message: 'Select a hoe to till this soil',
+                    messageType: 'info',
+                };
+            } else if (plotTileType === TileType.SOIL_TILLED) {
+                return {
+                    handled: false,
+                    message: 'Select seeds to plant',
+                    messageType: 'info',
+                };
+            } else if (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING) {
+                return {
+                    handled: false,
+                    message: 'Select a watering can to water this crop',
+                    messageType: 'info',
+                };
+            }
         }
     }
 
@@ -511,7 +535,10 @@ export type InteractionType =
     | 'farm_clear'
     | 'harvest_strawberry'
     | 'harvest_blackberry'
-    | 'forage';
+    | 'forage'
+    | 'pickup_item'
+    | 'eat_item'
+    | 'taste_item';
 
 export interface AvailableInteraction {
     type: InteractionType;
@@ -522,6 +549,13 @@ export interface AvailableInteraction {
     data?: any;
     /** Execute this interaction */
     execute: () => void;
+}
+
+export interface PlacedItemAction {
+    action: 'pickup' | 'eat' | 'taste';
+    itemId: string;
+    placedItemId: string;
+    imageUrl: string;  // Sprite image URL for inventory display
 }
 
 export interface GetInteractionsConfig {
@@ -536,6 +570,7 @@ export interface GetInteractionsConfig {
     onFarmAction?: (result: FarmActionResult) => void;
     onFarmAnimation?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
     onForage?: (result: ForageResult) => void;
+    onPlacedItemAction?: (action: PlacedItemAction) => void;
 }
 
 /**
@@ -555,6 +590,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         onFarmAction,
         onFarmAnimation,
         onForage,
+        onPlacedItemAction,
     } = config;
 
     const interactions: AvailableInteraction[] = [];
@@ -562,6 +598,59 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     const tileY = Math.floor(position.y);
     const tileData = getTileData(tileX, tileY);
     const tilePos = { x: tileX, y: tileY };
+
+    // Check for placed items (food, etc.) at this position
+    const placedItems = gameState.getPlacedItems(currentMapId);
+    const itemAtPosition = placedItems.find(item =>
+        item.position.x === tileX && item.position.y === tileY
+    );
+
+    if (itemAtPosition && onPlacedItemAction) {
+        // Pick up option
+        interactions.push({
+            type: 'pickup_item',
+            label: 'Pick Up',
+            icon: '👋',
+            color: '#10b981',
+            data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+            execute: () => onPlacedItemAction({
+                action: 'pickup',
+                itemId: itemAtPosition.itemId,
+                placedItemId: itemAtPosition.id,
+                imageUrl: itemAtPosition.image,
+            }),
+        });
+
+        // Eat option
+        interactions.push({
+            type: 'eat_item',
+            label: 'Eat',
+            icon: '🍽️',
+            color: '#f59e0b',
+            data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+            execute: () => onPlacedItemAction({
+                action: 'eat',
+                itemId: itemAtPosition.itemId,
+                placedItemId: itemAtPosition.id,
+                imageUrl: itemAtPosition.image,
+            }),
+        });
+
+        // Taste option
+        interactions.push({
+            type: 'taste_item',
+            label: 'Taste',
+            icon: '👅',
+            color: '#ec4899',
+            data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+            execute: () => onPlacedItemAction({
+                action: 'taste',
+                itemId: itemAtPosition.itemId,
+                placedItemId: itemAtPosition.id,
+                imageUrl: itemAtPosition.image,
+            }),
+        });
+    }
 
     // Check for mirror interaction
     if (checkMirrorInteraction(position)) {
@@ -681,7 +770,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
 
     if (plotTileType !== undefined && plotTileType >= TileType.SOIL_FALLOW && plotTileType <= TileType.SOIL_DEAD) {
         // Till soil
-        if (currentTool === 'hoe' && plotTileType === TileType.SOIL_FALLOW) {
+        if (currentTool === 'tool_hoe' && plotTileType === TileType.SOIL_FALLOW) {
             interactions.push({
                 type: 'farm_till',
                 label: 'Till Soil',
@@ -694,59 +783,48 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             });
         }
 
-        // Plant seeds - show option for each seed type the player has
-        if (currentTool === 'seeds' && plotTileType === TileType.SOIL_TILLED) {
-            // Get all seeds from inventory
-            const inventory = inventoryManager.getInventoryData().items;
-            const availableSeeds = inventory
-                .filter(item => item.itemId.startsWith('seed_') && item.quantity > 0)
-                .map(item => item.itemId.replace('seed_', '')); // Remove 'seed_' prefix
-
-            if (availableSeeds.length === 0) {
-                // No seeds available
-                interactions.push({
-                    type: 'farm_plant',
-                    label: 'No Seeds Available',
-                    icon: '🌱',
-                    color: '#6b7280',
-                    execute: () => {
-                        onFarmAction?.({
-                            handled: false,
-                            message: 'You have no seeds to plant',
-                            messageType: 'warning',
-                        });
-                    },
-                });
-            } else {
-                // Add interaction for each available seed type
+        // Plant seeds - if player has a seed item selected, allow planting
+        if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
+            // Player has a specific seed selected (e.g., 'seed_radish')
+            const cropId = getCropIdFromSeed(currentTool);
+            if (cropId) {
+                const crop = getCrop(cropId);
                 const seedIcons: Record<string, string> = {
                     radish: '🥕',
                     tomato: '🍅',
                     wheat: '🌾',
                     corn: '🌽',
                     pumpkin: '🎃',
+                    potato: '🥔',
+                    melon: '🍉',
+                    chili: '🌶️',
+                    spinach: '🥬',
+                    broccoli: '🥦',
+                    cauliflower: '🥬',
+                    sunflower: '🌻',
+                    salad: '🥗',
+                    onion: '🧅',
+                    pea: '🫛',
+                    cucumber: '🥒',
+                    carrot: '🥕',
                     strawberry: '🍓',
                 };
 
-                availableSeeds.forEach(seedType => {
-                    interactions.push({
-                        type: 'farm_plant',
-                        label: `Plant ${seedType.charAt(0).toUpperCase() + seedType.slice(1)}`,
-                        icon: seedIcons[seedType] || '🌱',
-                        color: '#16a34a',
-                        execute: () => {
-                            // Set the selected seed and plant it
-                            gameState.setSelectedSeed(seedType);
-                            const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
-                            onFarmAction?.(farmResult);
-                        },
-                    });
+                interactions.push({
+                    type: 'farm_plant',
+                    label: `Plant ${crop?.displayName || cropId}`,
+                    icon: seedIcons[cropId] || '🌱',
+                    color: '#16a34a',
+                    execute: () => {
+                        const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                        onFarmAction?.(farmResult);
+                    },
                 });
             }
         }
 
         // Water crop
-        if (currentTool === 'wateringCan' && (
+        if (currentTool === 'tool_watering_can' && (
             plotTileType === TileType.SOIL_PLANTED ||
             plotTileType === TileType.SOIL_WATERED ||
             plotTileType === TileType.SOIL_WILTING ||

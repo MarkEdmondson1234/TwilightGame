@@ -29,7 +29,7 @@ export const tileAssets = {
   stepping_stones_2: '/TwilightGame/assets-optimized/tiles/stepping_stones_2.png',
   stepping_stones_3: '/TwilightGame/assets-optimized/tiles/stepping_stones_3.png',
   stepping_stones_4: '/TwilightGame/assets-optimized/tiles/stepping_stones_4.png',
-  cottage_wooden: '/TwilightGame/assets-optimized/tiles/cottage_wooden_512.png',
+  cottage_wooden: '/TwilightGame/assets-optimized/tiles/cottage_small_spring.png',
   cottage_stone: '/TwilightGame/assets-optimized/tiles/cottage_stone.png',
   cottage_w_flowers: '/TwilightGame/assets-optimized/tiles/cottage_w_flowers.png',
   shop_spring: '/TwilightGame/assets-optimized/tiles/shop/shop_spring.png',
@@ -88,6 +88,11 @@ export const tileAssets = {
   fairy_oak_summer: '/TwilightGame/assets-optimized/tiles/fairy_oak_summer.png',
   fairy_oak_autumn: '/TwilightGame/assets-optimized/tiles/fairy_oak_autumn.png',
   fairy_oak_winter: '/TwilightGame/assets-optimized/tiles/fairy_oak_winter.png',
+  // Birch tree assets (seasonal variations)
+  birch_spring: '/TwilightGame/assets-optimized/tiles/birch_spring.png',
+  birch_summer: '/TwilightGame/assets-optimized/tiles/birch_summer.png',
+  birch_autumn: '/TwilightGame/assets-optimized/tiles/birch_autumn.png',
+  birch_winter: '/TwilightGame/assets-optimized/tiles/birch_winter.png',
   // Spruce tree assets (evergreen with winter variation)
   spruce_tree: '/TwilightGame/assets-optimized/tiles/spruce_tree.png',
   spruce_tree_winter: '/TwilightGame/assets-optimized/tiles/spruce_tree_winter.png',
@@ -216,6 +221,15 @@ export const npcAssets = {
   morgan_01: '/TwilightGame/assets/npcs/morgan/morgan_01.png',
   morgan_02: '/TwilightGame/assets/npcs/morgan/morgan_02.png',
   morgan_portrait: '/TwilightGame/assets/npcs/morgan/morgan_01.png',
+  // Bunnyfly assets (forest creature - butterfly-bunny hybrid)
+  // Using originals (1000x1000) for maximum quality - small creatures need crisp detail
+  bunnyfly_01: '/TwilightGame/assets/npcs/bunnyfly_01.png',
+  bunnyfly_02: '/TwilightGame/assets/npcs/bunnyfly_02.png',
+  bunnyfly_portrait: '/TwilightGame/assets/npcs/bunnyfly_01.png',
+  // Duck assets (pond creature)
+  duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
+  duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',
+  duck_portrait: '/TwilightGame/assets/npcs/duck_01.png',
 };
 
 // Player assets (add your custom sprites here when ready)
@@ -239,4 +253,22 @@ export const particleAssets = {
   snow: '/TwilightGame/assets/particles/snow.png',
   fog: '/TwilightGame/assets/particles/fog.png',
   mist: '/TwilightGame/assets/particles/mist.png',
+};
+
+// UI assets - Interface elements (bookshelf, wallet, etc.)
+export const uiAssets = {
+  bookshelf_base: '/TwilightGame/assets-optimized/ui/bookshelf_base.png',
+  book_recipes: '/TwilightGame/assets-optimized/ui/book_recipes.png',
+  book_magic: '/TwilightGame/assets-optimized/ui/book_magic.png',
+  wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
+  satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
+};
+
+// Item assets - Inventory items, tools, seeds, resources
+export const itemAssets = {
+  hoe: '/TwilightGame/assets-optimized/items/hoe.png',
+  watering_can: '/TwilightGame/assets-optimized/items/watering_can.png',
+  water: '/TwilightGame/assets-optimized/items/water.png',
+  carrot_seeds: '/TwilightGame/assets-optimized/items/carrot_seeds.png',
+  radish_seeds: '/TwilightGame/assets-optimized/items/radish_seeds.png',
 };

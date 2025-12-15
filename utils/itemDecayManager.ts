@@ -9,7 +9,7 @@ import { PlacedItem } from '../types';
 
 // Constants
 const DECAY_TIME_MS = 2 * 60 * 1000; // 2 minutes in milliseconds
-const WARNING_TIME_MS = 30 * 1000; // Start warning 30 seconds before decay
+const WARNING_TIME_MS = 10 * 1000; // Start warning 10 seconds before decay
 
 /**
  * Check if a placed item should be removed due to decay

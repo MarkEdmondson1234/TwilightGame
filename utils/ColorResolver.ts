@@ -28,13 +28,13 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.GRASS]: 'grass',
   [TileType.TUFT]: 'grass',  // Tuft grass uses same background as regular grass
   [TileType.TUFT_SPARSE]: 'grass',  // Sparse tuft variant uses same background as grass
-  [TileType.ROCK]: 'rock',
+  [TileType.ROCK]: 'grass',  // Rocks sit on grass background
   [TileType.WATER]: 'water',
   [TileType.WATER_CENTER]: 'water',
-  [TileType.WATER_LEFT]: 'water',
-  [TileType.WATER_RIGHT]: 'water',
-  [TileType.WATER_TOP]: 'water',
-  [TileType.WATER_BOTTOM]: 'water',
+  [TileType.WATER_LEFT]: 'grass',  // Edge tiles use grass background for natural shoreline
+  [TileType.WATER_RIGHT]: 'grass',  // Edge tiles use grass background for natural shoreline
+  [TileType.WATER_TOP]: 'grass',  // Edge tiles use grass background for natural shoreline
+  [TileType.WATER_BOTTOM]: 'grass',  // Edge tiles use grass background for natural shoreline
   [TileType.PATH]: 'grass',  // Use grass color so stepping stones blend naturally
   [TileType.FLOOR]: 'floor',
   [TileType.FLOOR_LIGHT]: 'floor',
@@ -79,6 +79,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MIRROR]: 'special',
   [TileType.WITCH_HUT]: 'grass',  // Witch hut sits on grass
   [TileType.CAULDRON]: 'grass',  // Cauldron sits on grass
+  [TileType.WELL]: 'grass',  // Well sits on grass background
 };
 
 export class ColorResolver {

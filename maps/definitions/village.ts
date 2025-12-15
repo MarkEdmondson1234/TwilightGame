@@ -7,6 +7,7 @@ import {
   createVillageElderNPC,
   createShopkeeperNPC,
   createVillageChildNPC,
+  createDuckNPC,
 } from '../../utils/npcFactories';
 
 // Note: All NPCs now use factory functions from npcFactories.ts
@@ -55,36 +56,36 @@ import {
  */
 
 const gridString = `
-oLULYoLtULoLtULUUULLUoLLyULJL
-LoG,G,GZGG,PG,oG,G,,G,ZeGi^^L
-tG,G,,G,,,GPG,G,kGG,XXXyGi<WWW
-LG,,G,,,G,,PG,,,,GG,XXXei<WWW
-oGoG,G,GKGGP,G,,sG,G,,G,Gi<WWW
-YtG,G,,PPPPPPPPPPPPPG,G,yGi<WWW
-oG,,G,,P,G,,,G,PG,,G,G,,iivvv
-LG,,G,,P,,G,,G,PG,G,,G,eUGGGL
-tG,G,,,P,G,,,G,PG,,G,,,,RGRGe
-LG,,G,,PG,G,,,PG,,G,,G,,,,,GL
-JG,G,,,PG,,G,,PG,G,,GMGR,RG,RGe
-LoG,G,,GPe%G,,PG,G,,G,RXXXeGGL
-oG,,G,,PG,G,,,PG,,G,,G,,,,,P
-LG,G,,,PPPPPPPPPPG,,G,,G,,,GPe
-tG,,G,,,G,,PG,G,,,G,,,,UUG,PU
-LPPPPPPPPPPPPPPPPPPPPPPPPPPPL
+oLULYoLtULoLtULUUULLUoLLGULJLG
+LoG,G,GeGG,,,,oG,G,,G,eeGiGLGG
+tG,G,,G,,,XXX,G,kXXXXXGG,yGGeG
+LG,,G,,,G,XXX,,,,XXXXXGeGeGeGG
+oGoG,G,GKGGP,G,,sG,,,,G,GG,GGG
+YtG,G,,PPPPPPPPPPPGG,G,,,G,,GG
+oG,,G,,P,G,,,G,PG,,G,G,,,,GGGG
+LG,,G,,P,,G,,G,PG,G,,G,eUGGGLG
+tG,G,,,P,G,,,G,PG,,G,,,,RGRGeG
+LG,,G,,PG,G,,,PG,,G,,G,,,,,GLG
+JG,G,,,PG,,G,,PG,G,,GMGR,RG,Re
+LoG,G,,GPe%G,,PG,G,,GPR,,,eGGL
+oG,,G,,PG,G,,,PG,,G,,P,,,,PPPP
+LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
+tG,,G,,,G,,PG,G,,,G,,,,UUG,,UG
+LPPPPPPPPPPPP,,,GG,,,eG,,G,,eG
 oG,G,,,G,,,PG,,G,,G,,,G,,,,GeY
-UoG,,G,,UGPPGGG,G,,Ge=G,G,,G,t
-LG,G,GXGGGPG,,G,,G,,,,,,,,,GL
-oGzG,,XGGGPG,G,,G,,,,G,,,G,,o
-LG,G,GXGG,PG,,G,,eG,G,,G,,,GL
+UoG,,G,,UGPPGGG,G,,Ge=i,G,,G,t
+LG,G,GXXGGPG,,G,,G,i,,i,,,,GLG
+oGzG,,XXGGPG,G,,G,,,,G,,,G,,oG
+LG,G,GXXG,PG,,G,,eG,G,,G,,,GLG
 tG,,G,,G,,,PG,G,,GJG,G,,,G,,Ge
 oG,G,,,G,,,PG,,G,,G,,,,G,,,GGU
-UG,,G,,,G,,PG,G,,,G,,GKG,G,,eUL
-tG,G,,,kG,,PG,,G,,G,,G,G,,,GUJ
-LG,,G,,,,G,PG,G,,,G,,,,,G,eGGL
-JG,G,,,G,,,PG,,G,,G,,,,,G,GeGt
-LG,,G,,G,,,PG,G,,,GXXXXXeG,,GU
-oGoG,G,,,G,PPPPPPPPPPPPPPPPPPPP
-tLoLJLoLtLUULULJLoLULULUoLLUUU
+UG,,G,,,G,,PG,G,,,G,,GKG,G,,eU
+tG,G,,,kG,,PPPPPPPP,,G,G,,,GUJ
+LG,,G,,,,G,,G,GP,,G,,,,,G,eGGL
+JG,G,J,G,,U,G,,P,,GXXXXXG,GeGt
+LG,,XXXG,,G,G,GP,,GXXXXXeG,,GU
+oGoG,,GG,G,,JG,P,,G,G,,G,U,,,,
+tLoLG,G,,GGLULG,,L,L,LUoLL,,o,
 `;
 
 export const village: MapDefinition = {
@@ -98,7 +99,7 @@ export const village: MapDefinition = {
   spawnPoint: { x: 15, y: 27 }, // On the path below the home building
   transitions: [
     {
-      fromPosition: { x: 8.2, y: 26 }, // Home building door (N tile)
+      fromPosition: { x: 8.2, y: 27 }, // Home building door (N tile) - lowered to be level with farm plots
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'home_interior',
       toPosition: { x: 5, y: 6 },
@@ -126,7 +127,7 @@ export const village: MapDefinition = {
       label: 'To Shop',
     },
     {
-      fromPosition: { x: 3.3, y: 20 }, // South-west house
+      fromPosition: { x: 3.3, y: 21 }, // South-west house (moved down 1 tile for better accessibility)
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house3',
       toPosition: { x: 3, y: 4 },
@@ -154,7 +155,7 @@ export const village: MapDefinition = {
       label: 'To Forest',
     },
     {
-      fromPosition: { x: 28, y: 28 }, // Bottom-right corner of village
+      fromPosition: { x: 15, y: 28 }, // Bottom-center of village
       tileType: TileType.GRASS,
       toMapId: 'farm_area',
       toPosition: { x: 10, y: 24 },
@@ -176,10 +177,14 @@ export const village: MapDefinition = {
     // Village Child - wandering little girl
     createVillageChildNPC('child', { x: 15, y: 17 }),
     // Add cat NPC using factory function
-    createCatNPC('village_cat', { x: 25, y: 23 }, 'Sleepy Cat'),
+    createCatNPC('village_cat', { x: 25, y: 20 }, 'Sleepy Cat'),
     // Add old woman knitting near the cat
-    createOldWomanKnittingNPC('old_woman_knitting', { x: 23, y: 23 }, 'Old Woman'),
+    createOldWomanKnittingNPC('old_woman_knitting', { x: 23, y: 25 }, 'Old Woman'),
     // Add dog that follows the little girl
     createDogNPC('village_dog', { x: 16, y: 17 }, 'child', 'Friendly Dog'),
+    // Duck - spring seasonal creature near the well/pond area (TODO: implement seasonal spawning)
+    // Currently spawns year-round, but dialogue indicates it should only be present in spring
+    // Single duck to make it feel more special and rare
+    createDuckNPC('village_duck', { x: 20, y: 17 }, 'Duck'),
   ],
 };

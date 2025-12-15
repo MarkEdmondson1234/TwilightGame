@@ -36,6 +36,7 @@ export class TileLayer {
   private container: PIXI.Container;
   private sprites: Map<string, PIXI.Sprite | PIXI.Graphics> = new Map();
   private currentMapId: string | null = null;
+  private currentSeason: string | null = null;
   private farmUpdateTrigger: number = 0;
   // Cache of tile types that have multi-tile sprites (O(1) lookup instead of O(n))
   private static multiTileSpriteTypes: Set<TileType> | null = null;
@@ -91,6 +92,12 @@ export class TileLayer {
     if (map.renderMode === 'background-image') {
       console.log(`[TileLayer] Skipping tile rendering for background-image map: ${mapId}`);
       return;
+    }
+
+    // Clear color cache if season changed (to allow seasonal color updates)
+    if (this.currentSeason !== seasonKey) {
+      this.colorCache.clear();
+      this.currentSeason = seasonKey;
     }
 
     // Hide sprites outside visible range (culling)

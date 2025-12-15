@@ -1,4 +1,5 @@
 import React from 'react';
+import { uiAssets } from '../assets';
 
 interface GameUIControlsProps {
     showHelpBrowser: boolean;
@@ -7,10 +8,11 @@ interface GameUIControlsProps {
     onToggleCollisionBoxes: () => void;
     showColorEditor: boolean;
     onToggleColorEditor: () => void;
+    onToggleInventory: () => void;
 }
 
 /**
- * Game UI control buttons (Help, Collision, Color Editor)
+ * Game UI control buttons (Help, Collision, Color Editor, Inventory)
  * Positioned as overlay elements on the game viewport
  */
 const GameUIControls: React.FC<GameUIControlsProps> = ({
@@ -20,6 +22,7 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
     onToggleCollisionBoxes,
     showColorEditor,
     onToggleColorEditor,
+    onToggleInventory,
 }) => {
     return (
         <>
@@ -38,8 +41,28 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
                 </button>
             </div>
 
-            {/* Dev Toggle Buttons - Bottom Left (away from touch controls on right) */}
-            <div className="absolute bottom-52 sm:bottom-4 left-2 z-10 flex flex-col sm:flex-row gap-1 sm:gap-2">
+            {/* Inventory Button - Bottom Right above dev buttons */}
+            <div className="absolute bottom-16 sm:bottom-14 right-2 z-10">
+                <button
+                    onClick={onToggleInventory}
+                    className="transition-transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg pointer-events-auto"
+                    title="Inventory"
+                >
+                    <img
+                        src={uiAssets.satchel}
+                        alt="Inventory"
+                        className="drop-shadow-2xl block"
+                        style={{
+                            imageRendering: 'auto',
+                            width: '256px',
+                            height: '256px'
+                        }}
+                    />
+                </button>
+            </div>
+
+            {/* Dev Toggle Buttons - Bottom Right (moved to avoid bookshelf) */}
+            <div className="absolute bottom-2 right-2 z-10 flex flex-col sm:flex-row gap-1 sm:gap-2">
                 <button
                     onClick={onToggleCollisionBoxes}
                     className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg border text-xs sm:text-sm font-bold transition-colors pointer-events-auto ${

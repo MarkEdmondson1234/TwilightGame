@@ -1,6 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
-import { createStellaNPC } from '../../utils/npcFactories';
+import { createStellaNPC, createBunnyflyNPC } from '../../utils/npcFactories';
 
 /**
  * Deep Forest - Sacred grove of the Giant Fairy Oak
@@ -90,6 +90,22 @@ export const deepForest: MapDefinition = {
       'stella_deep_forest',
       { x: 19, y: 19 }, // Just to the right of the fairy oak anchor
       'Stella'
+    ),
+    // Bunnyflies - magical creatures that flutter around the sacred grove
+    createBunnyflyNPC(
+      'bunnyfly_deep_forest_1',
+      { x: 12, y: 22 }, // West of the fairy oak
+      'Bunnyfly'
+    ),
+    createBunnyflyNPC(
+      'bunnyfly_deep_forest_2',
+      { x: 25, y: 16 }, // East of the fairy oak
+      'Bunnyfly'
+    ),
+    createBunnyflyNPC(
+      'bunnyfly_deep_forest_3',
+      { x: 17, y: 10 }, // North of the fairy oak
+      'Bunnyfly'
     ),
   ],
 };

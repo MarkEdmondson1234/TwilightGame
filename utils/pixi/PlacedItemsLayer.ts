@@ -21,10 +21,13 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { PlacedItem } from '../../types';
 import { textureManager } from '../TextureManager';
+import { shouldShowDecayWarning } from '../itemDecayManager';
 
 export class PlacedItemsLayer {
   private container: PIXI.Container;
   private sprites: Map<string, PIXI.Sprite> = new Map();
+  private blinkState: Map<string, boolean> = new Map(); // Track blink state for each item
+  private lastBlinkTime: number = 0;
 
   constructor() {
     this.container = new PIXI.Container();
@@ -48,6 +51,16 @@ export class PlacedItemsLayer {
     visibleRange: { minX: number; maxX: number; minY: number; maxY: number }
   ): void {
     const renderedKeys = new Set<string>();
+    const currentTime = Date.now();
+
+    // Update blink state every 1000ms (1 second) for decay warning animation
+    if (currentTime - this.lastBlinkTime > 1000) {
+      this.lastBlinkTime = currentTime;
+      // Toggle all blink states
+      for (const key of this.blinkState.keys()) {
+        this.blinkState.set(key, !this.blinkState.get(key));
+      }
+    }
 
     // Render each placed item
     for (const item of items) {
@@ -84,12 +97,22 @@ export class PlacedItemsLayer {
 
         this.sprites.set(key, sprite);
         this.container.addChild(sprite);
+        this.blinkState.set(key, false);
       }
 
       // Update sprite position and visibility
       sprite.x = item.position.x * TILE_SIZE;
       sprite.y = item.position.y * TILE_SIZE;
       sprite.visible = inRange;
+
+      // Apply decay warning visual effect (blinking)
+      const showWarning = shouldShowDecayWarning(item);
+      if (showWarning) {
+        const blinkOn = this.blinkState.get(key) ?? false;
+        sprite.alpha = blinkOn ? 0.6 : 0.3;
+      } else {
+        sprite.alpha = 1.0;
+      }
     }
 
     // Remove sprites for items that no longer exist
@@ -97,6 +120,7 @@ export class PlacedItemsLayer {
       if (!renderedKeys.has(key)) {
         sprite.destroy();
         this.sprites.delete(key);
+        this.blinkState.delete(key);
       }
     }
   }
@@ -117,6 +141,7 @@ export class PlacedItemsLayer {
       sprite.destroy();
     }
     this.sprites.clear();
+    this.blinkState.clear();
   }
 
   /**

@@ -20,6 +20,8 @@ import {
 
 export interface TouchControlsConfig {
     playerPosRef: MutableRefObject<Position>;
+    selectedItemSlot: number | null;
+    inventoryItems: Array<{ id: string; name: string; icon: string; quantity: number; value?: number }>;
     keysPressed: Record<string, boolean>;
     onShowCharacterCreator: (show: boolean) => void;
     onSetShowCookingUI: (show: boolean) => void;
@@ -35,6 +37,8 @@ export interface TouchControlsConfig {
 export function useTouchControls(config: TouchControlsConfig) {
     const {
         playerPosRef,
+        selectedItemSlot,
+        inventoryItems,
         keysPressed,
         onShowCharacterCreator,
         onSetShowCookingUI,
@@ -64,7 +68,12 @@ export function useTouchControls(config: TouchControlsConfig) {
 
         // Check for farm action first (on current tile)
         if (currentMapId) {
-            const currentTool = gameState.getFarmingTool();
+            // Get selected item from inventory (if any)
+            const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+            const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
+
+            console.log(`[Touch Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlot})`);
+
             const farmResult = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
 
             if (farmResult.handled) {

@@ -69,6 +69,7 @@ const ANIMATION_SIZE = 512; // Resize animated GIFs to 512x512 (good balance for
 const CUTSCENE_WIDTH = 1920; // Cutscene images: 1920x1080 (16:9 aspect ratio)
 const CUTSCENE_HEIGHT = 1080;
 const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
+const ITEM_SIZE = 256; // Resize item sprites to 256x256 (inventory icons, tool sprites)
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -132,7 +133,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'cutscenes'),
     path.join(OPTIMIZED_DIR, 'witchhut'),
     path.join(OPTIMIZED_DIR, 'cooking'),
-    path.join(OPTIMIZED_DIR, 'cauldron')
+    path.join(OPTIMIZED_DIR, 'cauldron'),
+    path.join(OPTIMIZED_DIR, 'ui')
   ];
 
   dirs.forEach(dir => {
@@ -293,8 +295,8 @@ async function optimizeTiles() {
         .png({ palette: false, quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
         .toFile(outputPath);
     }
-    // Special handling for large multi-tile sprites (shop, mine entrance, garden shed) - extra large size with very high quality (minimal compression)
-    else if (file.includes('shop') || file.includes('mine_entrance') || file.includes('garden_shed')) {
+    // Special handling for large multi-tile sprites (shop, cottage, mine entrance, garden shed) - extra large size with very high quality (minimal compression)
+    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed')) {
       await sharp(inputPath)
         .resize(SHOP_SIZE, SHOP_SIZE, {
           fit: 'contain',
@@ -304,7 +306,7 @@ async function optimizeTiles() {
         .toFile(outputPath);
     }
     // Special handling for trees - highest resolution as they're major visual elements
-    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak') || file.includes('giant_mushroom')) {
+    else if (file.includes('tree_') || file.includes('_tree') || file.includes('oak_') || file.includes('birch_') || file.includes('spruce_') || file.includes('willow_') || file.includes('fairy_oak') || file.includes('giant_mushroom')) {
       await sharp(inputPath)
         .resize(TREE_SIZE, TREE_SIZE, {
           fit: 'contain',
@@ -343,8 +345,8 @@ async function optimizeTiles() {
         .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed thorns
         .toFile(outputPath);
     }
-    // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, cottages, etc.) - keep higher resolution and quality
-    else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('cottage') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
+    // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, etc.) - keep higher resolution and quality
+    else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
       await sharp(inputPath)
         .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
           fit: 'contain',
@@ -829,6 +831,105 @@ async function optimizeCauldron() {
   console.log(`\n  Optimized ${optimized} cauldron frame(s)\n`);
 }
 
+// Optimize UI sprites (bookshelf, wallet, etc.)
+// IMPORTANT: Preserves original aspect ratios - only compresses, doesn't resize
+async function optimizeUI() {
+  console.log('🎨 Optimizing UI sprites...');
+
+  const uiDir = path.join(ASSETS_DIR, 'ui');
+  if (!fs.existsSync(uiDir)) {
+    console.log('⚠️  No UI sprites found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(uiDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure
+    // Normalize to lowercase for cross-platform compatibility (Windows creates mixed-case files)
+    const relativePath = path.relative(uiDir, inputPath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'ui', relativePath.replace(/\.jpeg$/i, '.png')));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
+    // UI sprites: Preserve original dimensions and aspect ratio
+    // Only compress - do NOT resize to avoid stretching artwork
+    await sharp(inputPath)
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} UI sprite(s)\n`);
+}
+
+async function optimizeItems() {
+  console.log('🎒 Optimizing item sprites...');
+
+  const itemsDir = path.join(ASSETS_DIR, 'items');
+  const outputDir = path.join(OPTIMIZED_DIR, 'items');
+
+  if (!fs.existsSync(itemsDir)) {
+    console.log('  ℹ️  No items directory found, skipping...\n');
+    return;
+  }
+
+  // Ensure output directory exists
+  if (!fs.existsSync(outputDir)) {
+    fs.mkdirSync(outputDir, { recursive: true });
+  }
+
+  const files = fs.readdirSync(itemsDir).filter(f => /\.(png|jpg|jpeg)$/i.test(f));
+
+  let optimized = 0;
+
+  for (const file of files) {
+    const inputPath = path.join(itemsDir, file);
+    const normalizedFile = normalizePathCase(file);
+    const outputPath = path.join(outputDir, normalizedFile);
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Delete existing output if it exists
+    deleteIfExists(outputPath);
+
+    // Optimize item sprites to 256x256 with good quality
+    await sharp(inputPath)
+      .resize(ITEM_SIZE, ITEM_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} item sprite(s)\n`);
+}
+
 /**
  * Validate and fix any 8-bit colormap PNGs
  * PixiJS v8 cannot decode 8-bit colormap PNGs - they must be RGBA format
@@ -897,6 +998,8 @@ async function main() {
     await optimizeWitchHut();
     await optimizeCooking();
     await optimizeCauldron();
+    await optimizeUI();
+    await optimizeItems();
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

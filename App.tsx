@@ -21,6 +21,7 @@ import ColorSchemeEditor from './components/ColorSchemeEditor';
 import HelpBrowser from './components/HelpBrowser';
 import DevTools from './components/DevTools';
 import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
+import Bookshelf from './components/Bookshelf';
 import { initializeGame } from './utils/gameInitializer';
 import { mapManager } from './maps';
 import { gameState, CharacterCustomization } from './GameState';
@@ -35,7 +36,7 @@ import { useViewportCulling } from './hooks/useViewportCulling';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
-import { checkCookingLocation, getAvailableInteractions, FarmActionResult, ForageResult, TransitionResult } from './utils/actionHandlers';
+import { checkCookingLocation, getAvailableInteractions, FarmActionResult, ForageResult, TransitionResult, PlacedItemAction } from './utils/actionHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { TimeManager } from './utils/TimeManager';
@@ -47,6 +48,7 @@ import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
 import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
+import Inventory, { InventoryItem } from './components/Inventory';
 import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
@@ -59,6 +61,8 @@ import RecipeBook from './components/RecipeBook';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
 import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
+import { inventoryManager } from './utils/inventoryManager';
+import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHelper';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
@@ -81,6 +85,9 @@ const App: React.FC = () => {
     const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
     const [cookingLocationType, setCookingLocationType] = useState<'stove' | 'campfire' | null>(null); // Track cooking location type
     const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
+    const [showInventory, setShowInventory] = useState(false); // Toggle inventory UI
+    const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
+    const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
     const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
     const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
@@ -212,6 +219,9 @@ const App: React.FC = () => {
 
             // Trigger re-render when placed items change
             setPlacedItemsUpdateTrigger(prev => prev + 1);
+
+            // Update inventory UI when inventory changes
+            setInventoryItems(convertInventoryToUI());
         });
 
         return unsubscribe;
@@ -246,6 +256,19 @@ const App: React.FC = () => {
         return () => clearInterval(interval);
     }, [timeOfDayState]);
 
+    // Check for decayed placed items every 10 seconds
+    useEffect(() => {
+        const decayInterval = setInterval(() => {
+            const removedCount = gameState.removeDecayedItems();
+            if (removedCount > 0) {
+                console.log(`[App] Removed ${removedCount} decayed item(s)`);
+                setPlacedItemsUpdateTrigger(prev => prev + 1); // Force re-render
+            }
+        }, 10000); // Check every 10 seconds
+
+        return () => clearInterval(decayInterval);
+    }, []);
+
     // Setup keyboard controls
     useKeyboardControls({
         playerPosRef,
@@ -253,6 +276,9 @@ const App: React.FC = () => {
         showHelpBrowser,
         showCookingUI,
         showRecipeBook,
+        showInventory,
+        selectedItemSlot,
+        inventoryItems,
         keysPressed,
         onShowCharacterCreator: setShowCharacterCreator,
         onSetActiveNPC: setActiveNPC,
@@ -273,6 +299,7 @@ const App: React.FC = () => {
             }
         },
         onSetShowRecipeBook: setShowRecipeBook,
+        onSetShowInventory: setShowInventory,
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
         onFarmUpdate: handleFarmUpdate,
@@ -286,11 +313,14 @@ const App: React.FC = () => {
             });
         },
         onShowToast: showToast,
+        onSetSelectedItemSlot: setSelectedItemSlot,
     });
 
     // Setup touch controls
     const touchControls = useTouchControls({
         playerPosRef,
+        selectedItemSlot,
+        inventoryItems,
         keysPressed,
         onShowCharacterCreator: setShowCharacterCreator,
         onSetShowCookingUI: setShowCookingUI,
@@ -331,11 +361,17 @@ const App: React.FC = () => {
         }
 
         // Get all available interactions at the clicked position
+        // Get selected item from inventory (if any)
+        const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+        const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
+
+        console.log('[Mouse Click] Using tool from inventory:', currentTool, '(slot:', selectedItemSlot, ')');
+
         const interactions = getAvailableInteractions({
             position: clickInfo.worldPos,
             currentMapId: currentMapId,
-            currentTool: gameState.getFarmingTool(),
-            selectedSeed: gameState.getSelectedSeed(),
+            currentTool: currentTool,
+            selectedSeed: null, // Seeds are now part of the tool system
             onMirror: () => setShowCharacterCreator(true),
             onNPC: (npcId) => setActiveNPC(npcId),
             onTransition: (result: TransitionResult) => {
@@ -366,6 +402,27 @@ const App: React.FC = () => {
             onForage: (result: ForageResult) => {
                 showToast(result.message, result.found ? 'success' : 'info');
             },
+            onPlacedItemAction: (action: PlacedItemAction) => {
+                if (action.action === 'pickup') {
+                    // Register the sprite image for this item in inventory
+                    registerItemSprite(action.itemId, action.imageUrl);
+                    // Add item to inventory
+                    inventoryManager.addItem(action.itemId, 1);
+                    // Remove from placed items
+                    gameState.removePlacedItem(action.placedItemId);
+                    // Trigger re-render
+                    setPlacedItemsUpdateTrigger(prev => prev + 1);
+                    showToast('Picked up item', 'success');
+                } else if (action.action === 'eat') {
+                    // Remove from placed items
+                    gameState.removePlacedItem(action.placedItemId);
+                    // Trigger re-render
+                    setPlacedItemsUpdateTrigger(prev => prev + 1);
+                    showToast('Ate the food', 'info');
+                } else if (action.action === 'taste') {
+                    showToast('Mmm, tasty!', 'info');
+                }
+            },
         });
 
         console.log(`[Mouse Click] Found ${interactions.length} interactions`);
@@ -395,7 +452,7 @@ const App: React.FC = () => {
         setRadialMenuOptions(menuOptions);
         setRadialMenuPosition(clickInfo.screenPos);
         setRadialMenuVisible(true);
-    }, [activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, currentMapId, handleMapTransition, handleFarmUpdate, showToast]);
+    }, [activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, currentMapId, handleMapTransition, handleFarmUpdate, showToast, selectedItemSlot, inventoryItems]);
 
     const gameLoop = useCallback(() => {
         // Track frame-to-frame timing for performance metrics
@@ -442,7 +499,16 @@ const App: React.FC = () => {
 
     // Initialize game on startup (only once)
     useEffect(() => {
-        initializeGame(currentMapId, setIsMapInitialized);
+        const init = async () => {
+            await initializeGame(currentMapId, setIsMapInitialized);
+
+            // Load inventory AFTER game initialization completes
+            // This ensures inventory is loaded before we try to display it
+            setInventoryItems(convertInventoryToUI());
+            console.log('[App] Inventory loaded after game initialization');
+        };
+
+        init();
     }, []); // Only run once on mount
 
     // Debug logging for DevTools state
@@ -990,7 +1056,25 @@ const App: React.FC = () => {
 
             <HUD />
 
-            {/* Game UI Controls (Help, Collision, Color Editor) */}
+            {/* Bookshelf UI - Recipe book shortcuts */}
+            <Bookshelf
+                playerPosition={playerPos}
+                currentMapId={currentMap.id}
+                nearbyNPCs={(() => {
+                    // Get NPCs within 2 tiles of player
+                    const range = 2;
+                    const npcs = npcManager.getCurrentMapNPCs();
+                    return npcs
+                        .filter(npc => {
+                            const dx = Math.abs(npc.position.x - playerPos.x);
+                            const dy = Math.abs(npc.position.y - playerPos.y);
+                            return dx <= range && dy <= range;
+                        })
+                        .map(npc => npc.id);
+                })()}
+            />
+
+            {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
             <GameUIControls
                 showHelpBrowser={showHelpBrowser}
                 onToggleHelpBrowser={() => setShowHelpBrowser(!showHelpBrowser)}
@@ -998,6 +1082,7 @@ const App: React.FC = () => {
                 onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
                 showColorEditor={showColorEditor}
                 onToggleColorEditor={() => setShowColorEditor(!showColorEditor)}
+                onToggleInventory={() => setShowInventory(!showInventory)}
             />
 
             {isTouchDevice && (
@@ -1006,10 +1091,6 @@ const App: React.FC = () => {
                     onDirectionRelease={touchControls.handleDirectionRelease}
                     onActionPress={touchControls.handleActionPress}
                     onResetPress={touchControls.handleResetPress}
-                    currentTool={gameState.getFarmingTool()}
-                    selectedSeed={gameState.getSelectedSeed() as 'radish' | 'tomato' | 'wheat' | 'corn' | 'pumpkin' | null}
-                    onToolChange={(tool) => gameState.setFarmingTool(tool)}
-                    onSeedChange={(seed) => gameState.setSelectedSeed(seed)}
                     onShowCookingUI={() => {
                         const cookingLocation = checkCookingLocation(playerPos);
                         if (cookingLocation.found) {
@@ -1048,6 +1129,18 @@ const App: React.FC = () => {
             )}
             {showHelpBrowser && (
                 <HelpBrowser onClose={() => setShowHelpBrowser(false)} />
+            )}
+            {showInventory && (
+                <Inventory
+                    isOpen={showInventory}
+                    onClose={() => setShowInventory(false)}
+                    items={inventoryItems}
+                    selectedSlot={selectedItemSlot}
+                    onItemClick={(item, slotIndex) => {
+                        setSelectedItemSlot(slotIndex);
+                        console.log(`Selected ${item.name} in slot ${slotIndex}`);
+                    }}
+                />
             )}
             {showCookingUI && (
                 <CookingInterface

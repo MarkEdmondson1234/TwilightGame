@@ -119,49 +119,33 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Water Left Edge',
     color: 'bg-palette-sky',
     isSolid: true,
-    // All edge variations - will be randomly selected and rotated to face left
-    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    // Use only the left edge image (no rotation needed)
+    image: [tileAssets.water_left],
     baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
-    transforms: {
-      enableRotation: true,
-      rotationMode: 'lake_edge_left'  // Custom mode for lake edge rotation
-    }
   },
   [TileType.WATER_RIGHT]: {
     name: 'Water Right Edge',
     color: 'bg-palette-sky',
     isSolid: true,
-    // All edge variations - will be randomly selected and rotated to face right
-    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    // Use only the right edge image (no rotation needed)
+    image: [tileAssets.water_right],
     baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
-    transforms: {
-      enableRotation: true,
-      rotationMode: 'lake_edge_right'  // Custom mode for lake edge rotation
-    }
   },
   [TileType.WATER_TOP]: {
     name: 'Water Top Edge',
     color: 'bg-palette-sky',
     isSolid: true,
-    // All edge variations - will be randomly selected and rotated to face top
-    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    // Use only the top edge image (no rotation needed)
+    image: [tileAssets.water_top],
     baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
-    transforms: {
-      enableRotation: true,
-      rotationMode: 'lake_edge_top'  // Custom mode for lake edge rotation
-    }
   },
   [TileType.WATER_BOTTOM]: {
     name: 'Water Bottom Edge',
     color: 'bg-palette-sky',
     isSolid: true,
-    // All edge variations - will be randomly selected and rotated to face bottom
-    image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
+    // Use only the bottom edge image (no rotation needed)
+    image: [tileAssets.water_bottom],
     baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
-    transforms: {
-      enableRotation: true,
-      rotationMode: 'lake_edge_bottom'  // Custom mode for lake edge rotation
-    }
   },
   [TileType.PATH]: {
     name: 'Path',
@@ -341,10 +325,17 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
   },
   [TileType.TREE]: {
-    name: 'Tree',
+    name: 'Birch Tree',
     color: 'bg-palette-sage',  // Base grass color for blending
     isSolid: true,
-    image: []  // No image - uses color only so it matches the map's grass color
+    baseType: TileType.GRASS,  // Render grass underneath the birch tree sprite
+    seasonalImages: {
+      spring: [tileAssets.birch_spring],
+      summer: [tileAssets.birch_summer],
+      autumn: [tileAssets.birch_autumn],
+      winter: [tileAssets.birch_winter],
+      default: [tileAssets.birch_summer],
+    }
   },
   [TileType.TREE_BIG]: {
     name: 'Big Tree',
@@ -927,11 +918,11 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.TREE,
-    spriteWidth: 3,  // 3 tiles wide
-    spriteHeight: 3, // 3 tiles tall
-    offsetX: -0.5,   // Center horizontally on tile
-    offsetY: -1,     // Extends 2 tiles upward
-    image: tileAssets.oak_tree_summer,  // Use oak tree (seasonal handled by TILE_LEGEND)
+    spriteWidth: 6,  // 6 tiles wide
+    spriteHeight: 6, // 6 tiles tall (maintains 1:1 aspect ratio of 1000x1000 source image)
+    offsetX: -2.5,   // Center horizontally on tile
+    offsetY: -5,     // Extends 5 tiles upward
+    image: tileAssets.birch_summer,  // Use birch tree (seasonal handled by TILE_LEGEND)
     isForeground: true,
     // Collision only at the base (1x1)
     collisionWidth: 0.2,
@@ -968,7 +959,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   {
     tileType: TileType.COTTAGE,
     spriteWidth: 6,  // 6 tiles wide (actual cottage width)
-    spriteHeight: 5, // 5 tiles tall (actual cottage height)
+    spriteHeight: 6, // 5 tiles tall (actual cottage height)
     offsetX: -3,     // Offset to center cottage
     offsetY: -4,     // Extends upward from K tile
     image: tileAssets.cottage_wooden,
@@ -1375,13 +1366,13 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     tileType: TileType.WILLOW_TREE,
     spriteWidth: 8,    // 3 tiles wide (graceful weeping willow)
     spriteHeight: 8,   // 3 tiles tall
-    offsetX: -1,       // Center horizontally on tile
-    offsetY: -2,       // Extends 2 tiles upward
+    offsetX: -3.5,       // Center horizontally on tile
+    offsetY: -5.5,       // Extends 2 tiles upward
     image: tileAssets.willow_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     isForeground: true,
     // Collision only at the base trunk (small area)
     collisionWidth: 0.3,
-    collisionHeight: 0.3,
+    collisionHeight: 1.6,
     collisionOffsetX: 0.35,
     collisionOffsetY: 0.35,
     // Transform controls: subtle variation for graceful trees
