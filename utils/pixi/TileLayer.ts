@@ -86,6 +86,13 @@ export class TileLayer {
       this.currentMapId = mapId;
     }
 
+    // Skip tile rendering for background-image maps
+    // BackgroundImageLayer handles rendering, collision still uses grid
+    if (map.renderMode === 'background-image') {
+      console.log(`[TileLayer] Skipping tile rendering for background-image map: ${mapId}`);
+      return;
+    }
+
     // Hide sprites outside visible range (culling)
     this.cullSprites(visibleRange);
 

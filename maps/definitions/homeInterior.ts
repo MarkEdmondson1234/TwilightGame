@@ -60,6 +60,13 @@ export const homeInterior: MapDefinition = {
       toPosition: { x: 3, y: 6 }, // Spawn upstairs
       label: 'Upstairs',
     },
+    {
+      fromPosition: { x: 9, y: 3 }, // Near chimney on right side - leads to kitchen
+      tileType: TileType.CHIMNEY,
+      toMapId: 'mums_kitchen',
+      toPosition: { x: 4, y: 6 }, // Spawn in kitchen
+      label: "To Mum's Kitchen",
+    },
   ],
   npcs: [
     createMumNPC('mum_home', { x: 3, y: 5 }, 'Mum'),

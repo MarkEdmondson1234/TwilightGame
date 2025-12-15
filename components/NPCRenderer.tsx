@@ -6,13 +6,14 @@ import { npcManager } from '../NPCManager';
 interface NPCRendererProps {
     playerPos: Position;
     npcUpdateTrigger: number;
+    characterScale?: number; // Map-level scale multiplier for all characters
 }
 
 /**
  * Renders NPCs with interaction prompts
  * Shows "[E] Talk to {name}" when player is in range
  */
-const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger }) => {
+const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, characterScale = 1.0 }) => {
     return (
         <>
             {npcManager.getCurrentMapNPCs().map((npc) => {
@@ -24,8 +25,8 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger }
                 // Check if player is in interaction range
                 const inRange = distance <= (npc.interactionRadius || 1.5);
 
-                // NPC sprite scale (default 4.0x)
-                const npcScale = npc.scale || 4.0;
+                // NPC sprite scale (default 4.0x) * map characterScale
+                const npcScale = (npc.scale || 4.0) * characterScale;
 
                 // Determine if sprite should be flipped horizontally
                 // - Left direction: always flip (walk sprites face right by default)

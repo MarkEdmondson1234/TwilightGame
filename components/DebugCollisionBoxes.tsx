@@ -9,15 +9,49 @@ interface DebugCollisionBoxesProps {
 }
 
 /**
- * Debug visualization for multi-tile sprite collision boxes
- * Shows collision bounds and anchor points for sprites
+ * Debug visualization for collision boxes and walkmesh
+ * Shows:
+ * - Multi-tile sprite collision boxes (red)
+ * - Walkmesh grid for background-image rooms (red = solid, green = walkable)
  */
 const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, currentMap }) => {
     if (!visible) return null;
 
+    const isBackgroundImageRoom = currentMap.renderMode === 'background-image';
+
     return (
         <>
-            {currentMap.grid.map((row, y) =>
+            {/* Walkmesh Grid Overlay for background-image rooms */}
+            {isBackgroundImageRoom && currentMap.grid.map((row, y) =>
+                row.map((_, x) => {
+                    const tileData = getTileData(x, y);
+                    if (!tileData) return null;
+
+                    return (
+                        <div
+                            key={`walkmesh-${x}-${y}`}
+                            className="absolute pointer-events-none border border-white/30"
+                            style={{
+                                left: x * TILE_SIZE,
+                                top: y * TILE_SIZE,
+                                width: TILE_SIZE,
+                                height: TILE_SIZE,
+                                backgroundColor: tileData.isSolid
+                                    ? 'rgba(255, 0, 0, 0.4)'  // Red = solid/blocked
+                                    : 'rgba(0, 255, 0, 0.2)', // Green = walkable
+                            }}
+                        >
+                            {/* Show coordinates on hover-sized tiles */}
+                            <span className="text-[6px] text-white font-mono opacity-70">
+                                {x},{y}
+                            </span>
+                        </div>
+                    );
+                })
+            )}
+
+            {/* Multi-tile sprite collision boxes (for tiled rooms) */}
+            {!isBackgroundImageRoom && currentMap.grid.map((row, y) =>
                 row.map((_, x) => {
                     const tileData = getTileData(x, y);
                     const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);

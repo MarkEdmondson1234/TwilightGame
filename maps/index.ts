@@ -15,6 +15,7 @@ import { debugNPCs } from './definitions/debugNPCs';
 import { deepForest } from './definitions/deepForest';
 import { witchHut } from './definitions/witchHut';
 import { witchHutInterior } from './definitions/witchHutInterior';
+import { mumsKitchen } from './definitions/mumsKitchen';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
 import { gameState } from '../GameState';
 
@@ -44,6 +45,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(deepForest);
   mapManager.registerMap(witchHut);
   mapManager.registerMap(witchHutInterior);
+  mapManager.registerMap(mumsKitchen);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs

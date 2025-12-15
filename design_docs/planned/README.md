@@ -80,6 +80,7 @@ Story, quests, and gameplay systems designed by Sanne.
 |------|-------------|--------|
 | [system_farming.md](./system_farming.md) | Kitchen garden, crops, seasons, selling produce | Partial |
 | [system_cooking.md](./system_cooking.md) | Cooking recipes, specialisations, food for friendship | Planned |
+| [system_background_interiors.md](./system_background_interiors.md) | Background image rooms with walkmesh, parallax, windows | Planned |
 
 **Implemented**: [system_friendship.md](../implemented/system_friendship.md) - Befriending villagers, friendship levels
 

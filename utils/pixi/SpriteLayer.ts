@@ -65,6 +65,12 @@ export class SpriteLayer {
       this.currentMapId = mapId;
     }
 
+    // Skip sprite rendering for background-image maps
+    // Background image already includes furniture visuals
+    if (map.renderMode === 'background-image') {
+      return;
+    }
+
     // Track which sprites we've rendered this frame
     const renderedKeys = new Set<string>();
 

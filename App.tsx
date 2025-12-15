@@ -8,6 +8,7 @@ import { PlayerSprite } from './utils/pixi/PlayerSprite';
 import { SpriteLayer } from './utils/pixi/SpriteLayer';
 import { WeatherLayer } from './utils/pixi/WeatherLayer';
 import { PlacedItemsLayer } from './utils/pixi/PlacedItemsLayer';
+import { BackgroundImageLayer } from './utils/pixi/BackgroundImageLayer';
 import { WeatherManager } from './utils/WeatherManager';
 import { shouldShowWeather } from './data/weatherConfig';
 import { tileAssets, farmingAssets, cookingAssets } from './assets';
@@ -120,6 +121,7 @@ const App: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const pixiAppRef = useRef<PIXI.Application | null>(null);
     const tileLayerRef = useRef<TileLayer | null>(null);
+    const backgroundImageLayerRef = useRef<BackgroundImageLayer | null>(null);
     const backgroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
     const playerSpriteRef = useRef<PlayerSprite | null>(null);
     const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
@@ -571,6 +573,11 @@ const App: React.FC = () => {
                     ...cookingAssets
                 });
 
+                // Create background image layer (for background-image render mode rooms)
+                const backgroundImageLayer = new BackgroundImageLayer();
+                backgroundImageLayerRef.current = backgroundImageLayer;
+                app.stage.addChild(backgroundImageLayer.getContainer());
+
                 // Create tile layer
                 const tileLayer = new TileLayer();
                 tileLayerRef.current = tileLayer;
@@ -626,11 +633,16 @@ const App: React.FC = () => {
                 // Initial render
                 const currentMap = mapManager.getCurrentMap();
                 if (currentMap) {
+                    // Load background image layers (for background-image render mode)
+                    if (currentMap.renderMode === 'background-image') {
+                        await backgroundImageLayer.loadLayers(currentMap, currentMapId);
+                    }
                     tileLayer.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
                     backgroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     const placedItems = gameState.getPlacedItems(currentMapId);
                     placedItemsLayer.renderItems(placedItems, visibleRange);
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                    backgroundImageLayer.updateCamera(cameraX, cameraY);
                     tileLayer.updateCamera(cameraX, cameraY);
                     backgroundSpriteLayer.updateCamera(cameraX, cameraY);
                     playerSprite.updateCamera(cameraX, cameraY);
@@ -659,6 +671,10 @@ const App: React.FC = () => {
                 tileLayerRef.current.clear();
                 tileLayerRef.current = null;
             }
+            if (backgroundImageLayerRef.current) {
+                backgroundImageLayerRef.current.clear();
+                backgroundImageLayerRef.current = null;
+            }
             if (backgroundSpriteLayerRef.current) {
                 backgroundSpriteLayerRef.current.clear();
                 backgroundSpriteLayerRef.current = null;
@@ -684,6 +700,21 @@ const App: React.FC = () => {
 
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
+            // Load background image layers (for background-image render mode)
+            if (backgroundImageLayerRef.current) {
+                if (currentMap.renderMode === 'background-image') {
+                    // Async load - use IIFE to handle in useEffect
+                    (async () => {
+                        console.log('[App] Loading background layers for', currentMapId);
+                        await backgroundImageLayerRef.current?.loadLayers(currentMap, currentMapId);
+                        console.log('[App] Background layers loaded for', currentMapId);
+                    })();
+                } else {
+                    // Clear background layers when switching to tiled map
+                    backgroundImageLayerRef.current.clear();
+                }
+            }
+
             // Render all layers (only when viewport or map data changes)
             tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger, currentWeather);
 
@@ -713,6 +744,9 @@ const App: React.FC = () => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized) return;
 
         // Camera updates are cheap - just moving container positions
+        if (backgroundImageLayerRef.current) {
+            backgroundImageLayerRef.current.updateCamera(cameraX, cameraY);
+        }
         if (tileLayerRef.current) {
             tileLayerRef.current.updateCamera(cameraX, cameraY);
         }
@@ -763,8 +797,12 @@ const App: React.FC = () => {
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !playerSpriteRef.current) return;
 
-        playerSpriteRef.current.update(playerPos, direction, animationFrame, playerSpriteUrl, spriteScale);
-    }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized]);
+        // Apply map's characterScale multiplier (default 1.0)
+        const mapCharacterScale = currentMap?.characterScale ?? 1.0;
+        const effectiveScale = spriteScale * mapCharacterScale;
+
+        playerSpriteRef.current.update(playerPos, direction, animationFrame, playerSpriteUrl, effectiveScale);
+    }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized, currentMap?.characterScale]);
 
     // Show character creator if no character selected
     if (showCharacterCreator) {
@@ -844,7 +882,7 @@ const App: React.FC = () => {
                 />
 
                 {/* Render NPCs */}
-                <NPCRenderer playerPos={playerPos} npcUpdateTrigger={npcUpdateTrigger} />
+                <NPCRenderer playerPos={playerPos} npcUpdateTrigger={npcUpdateTrigger} characterScale={currentMap?.characterScale} />
 
                 {/* Render Midground Animations (behind player, above NPCs) */}
                 <AnimationOverlay
