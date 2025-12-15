@@ -535,7 +535,10 @@ export type InteractionType =
     | 'farm_clear'
     | 'harvest_strawberry'
     | 'harvest_blackberry'
-    | 'forage';
+    | 'forage'
+    | 'pickup_item'
+    | 'eat_item'
+    | 'taste_item';
 
 export interface AvailableInteraction {
     type: InteractionType;
@@ -546,6 +549,13 @@ export interface AvailableInteraction {
     data?: any;
     /** Execute this interaction */
     execute: () => void;
+}
+
+export interface PlacedItemAction {
+    action: 'pickup' | 'eat' | 'taste';
+    itemId: string;
+    placedItemId: string;
+    imageUrl: string;  // Sprite image URL for inventory display
 }
 
 export interface GetInteractionsConfig {
@@ -560,6 +570,7 @@ export interface GetInteractionsConfig {
     onFarmAction?: (result: FarmActionResult) => void;
     onFarmAnimation?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
     onForage?: (result: ForageResult) => void;
+    onPlacedItemAction?: (action: PlacedItemAction) => void;
 }
 
 /**
@@ -579,6 +590,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         onFarmAction,
         onFarmAnimation,
         onForage,
+        onPlacedItemAction,
     } = config;
 
     const interactions: AvailableInteraction[] = [];
@@ -586,6 +598,59 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     const tileY = Math.floor(position.y);
     const tileData = getTileData(tileX, tileY);
     const tilePos = { x: tileX, y: tileY };
+
+    // Check for placed items (food, etc.) at this position
+    const placedItems = gameState.getPlacedItems(currentMapId);
+    const itemAtPosition = placedItems.find(item =>
+        item.position.x === tileX && item.position.y === tileY
+    );
+
+    if (itemAtPosition && onPlacedItemAction) {
+        // Pick up option
+        interactions.push({
+            type: 'pickup_item',
+            label: 'Pick Up',
+            icon: '👋',
+            color: '#10b981',
+            data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+            execute: () => onPlacedItemAction({
+                action: 'pickup',
+                itemId: itemAtPosition.itemId,
+                placedItemId: itemAtPosition.id,
+                imageUrl: itemAtPosition.image,
+            }),
+        });
+
+        // Eat option
+        interactions.push({
+            type: 'eat_item',
+            label: 'Eat',
+            icon: '🍽️',
+            color: '#f59e0b',
+            data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+            execute: () => onPlacedItemAction({
+                action: 'eat',
+                itemId: itemAtPosition.itemId,
+                placedItemId: itemAtPosition.id,
+                imageUrl: itemAtPosition.image,
+            }),
+        });
+
+        // Taste option
+        interactions.push({
+            type: 'taste_item',
+            label: 'Taste',
+            icon: '👅',
+            color: '#ec4899',
+            data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+            execute: () => onPlacedItemAction({
+                action: 'taste',
+                itemId: itemAtPosition.itemId,
+                placedItemId: itemAtPosition.id,
+                imageUrl: itemAtPosition.image,
+            }),
+        });
+    }
 
     // Check for mirror interaction
     if (checkMirrorInteraction(position)) {

@@ -35,7 +35,7 @@ import { useViewportCulling } from './hooks/useViewportCulling';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
-import { checkCookingLocation, getAvailableInteractions, FarmActionResult, ForageResult, TransitionResult } from './utils/actionHandlers';
+import { checkCookingLocation, getAvailableInteractions, FarmActionResult, ForageResult, TransitionResult, PlacedItemAction } from './utils/actionHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { TimeManager } from './utils/TimeManager';
@@ -61,7 +61,7 @@ import Toast, { useToast } from './components/Toast';
 import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
 import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
 import { inventoryManager } from './utils/inventoryManager';
-import { convertInventoryToUI } from './utils/inventoryUIHelper';
+import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHelper';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
@@ -399,6 +399,27 @@ const App: React.FC = () => {
             },
             onForage: (result: ForageResult) => {
                 showToast(result.message, result.found ? 'success' : 'info');
+            },
+            onPlacedItemAction: (action: PlacedItemAction) => {
+                if (action.action === 'pickup') {
+                    // Register the sprite image for this item in inventory
+                    registerItemSprite(action.itemId, action.imageUrl);
+                    // Add item to inventory
+                    inventoryManager.addItem(action.itemId, 1);
+                    // Remove from placed items
+                    gameState.removePlacedItem(action.placedItemId);
+                    // Trigger re-render
+                    setPlacedItemsUpdateTrigger(prev => prev + 1);
+                    showToast('Picked up item', 'success');
+                } else if (action.action === 'eat') {
+                    // Remove from placed items
+                    gameState.removePlacedItem(action.placedItemId);
+                    // Trigger re-render
+                    setPlacedItemsUpdateTrigger(prev => prev + 1);
+                    showToast('Ate the food', 'info');
+                } else if (action.action === 'taste') {
+                    showToast('Mmm, tasty!', 'info');
+                }
             },
         });
 

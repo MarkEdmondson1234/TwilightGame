@@ -26,6 +26,15 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
 };
 
 /**
+ * Register a custom sprite for an item ID
+ * Used when picking up placed items to preserve their sprite image
+ */
+export function registerItemSprite(itemId: string, imageUrl: string): void {
+  ITEM_SPRITE_MAP[itemId] = imageUrl;
+  console.log(`[InventoryUIHelper] Registered sprite for ${itemId}: ${imageUrl}`);
+}
+
+/**
  * Item emoji fallback - maps item IDs to emoji icons
  * Used for items that don't have sprite assets yet
  */
