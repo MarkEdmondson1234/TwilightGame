@@ -254,6 +254,19 @@ const App: React.FC = () => {
         return () => clearInterval(interval);
     }, [timeOfDayState]);
 
+    // Check for decayed placed items every 10 seconds
+    useEffect(() => {
+        const decayInterval = setInterval(() => {
+            const removedCount = gameState.removeDecayedItems();
+            if (removedCount > 0) {
+                console.log(`[App] Removed ${removedCount} decayed item(s)`);
+                setPlacedItemsUpdateTrigger(prev => prev + 1); // Force re-render
+            }
+        }, 10000); // Check every 10 seconds
+
+        return () => clearInterval(decayInterval);
+    }, []);
+
     // Setup keyboard controls
     useKeyboardControls({
         playerPosRef,

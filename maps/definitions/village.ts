@@ -99,7 +99,7 @@ export const village: MapDefinition = {
   spawnPoint: { x: 15, y: 27 }, // On the path below the home building
   transitions: [
     {
-      fromPosition: { x: 8.2, y: 26 }, // Home building door (N tile)
+      fromPosition: { x: 8.2, y: 27 }, // Home building door (N tile) - lowered to be level with farm plots
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'home_interior',
       toPosition: { x: 5, y: 6 },

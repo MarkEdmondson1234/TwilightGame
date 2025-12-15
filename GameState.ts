@@ -12,6 +12,7 @@
 
 import { FarmPlot, NPCFriendship, PlacedItem } from './types';
 import { GameTime } from './utils/TimeManager';
+import { shouldDecay } from './utils/itemDecayManager';
 
 export interface CharacterCustomization {
   characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
@@ -815,9 +816,6 @@ class GameStateManager {
   removeDecayedItems(): number {
     const initialCount = this.state.placedItems.length;
     const currentTime = Date.now();
-
-    // Import decay manager
-    const { shouldDecay } = require('./utils/itemDecayManager');
 
     this.state.placedItems = this.state.placedItems.filter(item => !shouldDecay(item, currentTime));
 
