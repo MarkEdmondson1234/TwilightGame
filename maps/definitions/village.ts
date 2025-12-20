@@ -123,7 +123,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 11.5, y: 12.5 }, // Shop building (next to fox)
       tileType: TileType.SHOP,
       toMapId: 'shop',
-      toPosition: { x: 7, y: 8 },
+      toPosition: { x: 30, y: 28 }, // New shop interior spawn point
       label: 'To Shop',
     },
     {
