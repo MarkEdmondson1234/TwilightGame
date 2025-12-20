@@ -46,10 +46,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Grass',
     color: 'bg-palette-sage',  // Base color, overridden by map color scheme
     isSolid: false,
-    image: [
-      tileAssets.grass_1,
-      tileAssets.grass_2,
-    ],
+    seasonalImages: {
+      spring: [tileAssets.grass_1, tileAssets.grass_2],
+      summer: [tileAssets.grass_1, tileAssets.grass_2],
+      autumn: [tileAssets.grass_1, tileAssets.grass_2],
+      winter: [tileAssets.grass_2],  // Hide grass_1 in winter (only show grass_2)
+      default: [tileAssets.grass_1, tileAssets.grass_2],
+    },
     transforms: {
       enableFlip: true,  // Horizontal flipping for variety
       enableScale: true,
@@ -1128,7 +1131,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     spriteWidth: 6,  // 6 tiles wide (actual cottage width)
     spriteHeight: 6, // 5 tiles tall (actual cottage height)
     offsetX: -1.2,     // Offset to center cottage
-    offsetY: -3,     // Extends upward from K tile
+    offsetY: -1.5,     // Extends upward from K tile
     image: tileAssets.cottage_stone,
     isForeground: true,
     enableFlip: false,
@@ -1137,7 +1140,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     // Collision at the front wall (full width, but only bottom 2 rows)
     collisionWidth: 3.2,
-    collisionHeight: 3,
+    collisionHeight: 3.8,
     collisionOffsetX: 0,
     collisionOffsetY: 0,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },

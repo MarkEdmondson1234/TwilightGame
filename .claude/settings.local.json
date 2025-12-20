@@ -12,7 +12,6 @@
       "Bash(git config:*)",
       "Bash(gh:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)",
       "Bash(git credential-cache:*)",
       "Bash(git credential:*)",
       "Bash(npm run optimize-assets:witchhut:*)",
@@ -63,9 +62,15 @@
       "Bash(file:*)",
       "Bash(git revert:*)",
       "Bash(for file in \"c:\\Github files\\TwilightGame\\public\\assets\\items\"/*.png)",
-      "Bash(do file \"$file\")"
+      "Bash(do file \"$file\")",
+      "Bash(echo:*)",
+      "Bash(dir:*)",
+      "Bash(ren:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [
+      "Bash(git push:*)"
+    ]
   }
 }
