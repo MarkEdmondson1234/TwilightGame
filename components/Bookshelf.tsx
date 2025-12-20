@@ -33,7 +33,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({ playerPosition, currentMapId, nea
   return (
     <>
       {/* Books Container - Responsive scaling */}
-      <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 z-40 scale-50 sm:scale-75 md:scale-100 origin-bottom-left">
+      <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 z-[1000] scale-50 sm:scale-75 md:scale-100 origin-bottom-left">
         {/* Books - positioned directly at bottom */}
         <div className="flex gap-0 items-end">
           {/* Recipe Book (left book) - clickable - 93×398 natural ratio, scaled down by 20px */}

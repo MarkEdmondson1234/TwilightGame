@@ -64,7 +64,7 @@ export const homeInterior: MapDefinition = {
       fromPosition: { x: 9, y: 3 }, // Near chimney on right side - leads to kitchen
       tileType: TileType.CHIMNEY,
       toMapId: 'mums_kitchen',
-      toPosition: { x: 4, y: 6 }, // Spawn in kitchen
+      toPosition: { x: 7, y: 6 }, // Spawn on kitchen floor (center of walkable area)
       label: "To Mum's Kitchen",
     },
   ],

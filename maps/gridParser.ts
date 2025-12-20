@@ -1,5 +1,38 @@
 import { TileType } from '../types';
 
+/**
+ * Global validation errors collected during map registration
+ * These are displayed on screen to help developers quickly fix issues
+ */
+export interface MapValidationError {
+  mapId: string;
+  errors: string[];
+  warnings: string[];
+}
+
+let validationErrors: MapValidationError[] = [];
+
+/**
+ * Get all collected validation errors
+ */
+export function getValidationErrors(): MapValidationError[] {
+  return validationErrors;
+}
+
+/**
+ * Clear all validation errors (call after displaying them)
+ */
+export function clearValidationErrors(): void {
+  validationErrors = [];
+}
+
+/**
+ * Check if there are any critical validation errors
+ */
+export function hasValidationErrors(): boolean {
+  return validationErrors.some(v => v.errors.length > 0);
+}
+
 // Character code to TileType mapping for child-friendly map editing
 export const GRID_CODES: Record<string, TileType> = {
   // Outdoor
@@ -123,4 +156,95 @@ export function gridToString(grid: TileType[][]): string {
   return grid.map(row =>
     row.map(tile => reverseMap[tile] || '?').join('')
   ).join('\n');
+}
+
+/**
+ * Validates a map definition and logs any errors
+ * Call this during development to catch common issues
+ */
+export function validateMapDefinition(map: {
+  id: string;
+  width: number;
+  height: number;
+  grid: TileType[][];
+  spawnPoint?: { x: number; y: number };
+  transitions?: Array<{ fromPosition: { x: number; y: number } }>;
+  npcs?: Array<{ position: { x: number; y: number }; name?: string }>;
+}): boolean {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Check grid dimensions
+  const actualHeight = map.grid.length;
+  const actualWidth = map.grid[0]?.length ?? 0;
+
+  if (actualHeight !== map.height) {
+    errors.push(`Grid height mismatch: declared ${map.height}, actual ${actualHeight} rows`);
+  }
+
+  if (actualWidth !== map.width) {
+    errors.push(`Grid width mismatch: declared ${map.width}, actual ${actualWidth} columns`);
+  }
+
+  // Check for inconsistent row widths
+  for (let y = 0; y < map.grid.length; y++) {
+    if (map.grid[y].length !== actualWidth) {
+      errors.push(`Row ${y} has ${map.grid[y].length} columns, expected ${actualWidth}`);
+    }
+  }
+
+  // Check spawn point bounds
+  if (map.spawnPoint) {
+    const { x, y } = map.spawnPoint;
+    if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
+      errors.push(`Spawn point (${x}, ${y}) is out of bounds (0-${map.width - 1}, 0-${map.height - 1})`);
+    }
+  }
+
+  // Check transition positions
+  if (map.transitions) {
+    for (const t of map.transitions) {
+      const { x, y } = t.fromPosition;
+      if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
+        errors.push(`Transition at (${x}, ${y}) is out of bounds`);
+      }
+    }
+  }
+
+  // Check NPC positions
+  if (map.npcs) {
+    for (const npc of map.npcs) {
+      const { x, y } = npc.position;
+      if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
+        warnings.push(`NPC "${npc.name || 'unknown'}" at (${x}, ${y}) is out of bounds`);
+      }
+    }
+  }
+
+  // Collect errors for display
+  if (errors.length > 0 || warnings.length > 0) {
+    validationErrors.push({
+      mapId: map.id,
+      errors,
+      warnings,
+    });
+
+    // Also log to console for immediate feedback
+    console.group(`🗺️ Map Validation: ${map.id}`);
+    console.log(`Declared: ${map.width}x${map.height}, Actual grid: ${actualWidth}x${actualHeight}`);
+
+    if (errors.length > 0) {
+      console.error('❌ ERRORS:');
+      errors.forEach(e => console.error(`  - ${e}`));
+    }
+
+    if (warnings.length > 0) {
+      console.warn('⚠️ WARNINGS:');
+      warnings.forEach(w => console.warn(`  - ${w}`));
+    }
+
+    console.groupEnd();
+  }
+
+  return errors.length === 0;
 }

@@ -10,40 +10,39 @@ import { createMumNPC } from '../../utils/npcFactories';
  * bookshelf, stairs going up on right, purple rug in center.
  *
  * Image dimensions: 960x540 pixels
- * At TILE_SIZE of 32: 960/32 = 30 tiles wide, 540/32 ≈ 17 tiles tall
+ * Grid is 15x9 tiles to match observed image coverage at 100% zoom.
  *
  * Walkmesh Grid Legend:
  * . = Floor (walkable)
- * # = Wall/Obstacle (solid)
- * F = Furniture (solid - stove, bookshelf, armchair)
- * D = Door (transition back to home_interior)
+ * # = Wall/Obstacle (solid - walls, outside image area)
+ * D = Door (transition)
  *
  * The grid is invisible - only used for collision!
  */
 
+// 15 columns x 9 rows - matches observed tile coverage of 960x540 image
+// Walkmesh designed to match furniture layout in kitchen image
 const gridString = `
-##############################
-#FFFF........................#
-#FFFF........................#
-#FFFF........................#
-#FFFF.FFFF..........FFFFFFFF##
-#FFFF.FFFF..........FFFFFFFF.#
-#.....FFFF...................#
-#............................#
-#............................#
-#............................#
-######D#######################
+###############
+###############
+###############
+###############
+###############
+##...........##
+##...........##
+#D...........##
+###############
 `;
 
 export const mumsKitchen: MapDefinition = {
   id: 'mums_kitchen',
   name: "Mum's Kitchen",
-  width: 30,
-  height: 16,
+  width: 15,
+  height: 9,  // 15x9 tiles to match observed image coverage
   grid: parseGrid(gridString),
   colorScheme: 'indoor',
   isRandom: false,
-  spawnPoint: { x: 10, y: 12 }, // Start in the middle of the room
+  spawnPoint: { x: 7, y: 6 }, // Center of walkable area
   renderMode: 'background-image',
   characterScale: 1.5, // Make player/NPCs larger to fit the room scale
 
@@ -54,7 +53,8 @@ export const mumsKitchen: MapDefinition = {
       zIndex: -100,
       parallaxFactor: 1.0,
       opacity: 1.0,
-      useNativeSize: true,  // Use image's 960x540 dimensions
+      width: 960,           // Explicit image dimensions for accurate centering
+      height: 540,
       centered: true,       // Center in viewport
     },
   ],
@@ -62,7 +62,7 @@ export const mumsKitchen: MapDefinition = {
   // Transitions
   transitions: [
     {
-      fromPosition: { x: 6, y: 15 }, // Door at bottom (where D is in grid)
+      fromPosition: { x: 1, y: 7 }, // Door at left side (where D is in grid)
       tileType: TileType.DOOR,
       toMapId: 'home_interior',
       toPosition: { x: 5, y: 3 }, // Back to home interior
@@ -70,8 +70,8 @@ export const mumsKitchen: MapDefinition = {
     },
   ],
 
-  // NPCs - Mum is in the image reading in armchair (roughly position 12, 5)
+  // NPCs - Mum is in the image reading in armchair
   npcs: [
-    createMumNPC('mum_kitchen', { x: 12, y: 5 }, 'Mum'),
+    createMumNPC('mum_kitchen', { x: 7, y: 5 }, 'Mum'),
   ],
 };

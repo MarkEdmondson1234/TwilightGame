@@ -89,6 +89,42 @@ The game tests fundamental assumptions on startup:
 - Current checks: collision engine validates against defined constants
 - When adding new systems, add corresponding sanity checks to `testUtils.ts`
 
+### Map Validation
+
+**IMPORTANT**: All maps are validated at registration and loading time. The `validateMapDefinition()` function in `maps/gridParser.ts` catches common issues:
+
+**What It Checks:**
+- Grid dimensions match declared `width` and `height`
+- All grid rows have consistent width
+- `spawnPoint` is within map bounds
+- Transition `fromPosition` values are within map bounds
+- NPC positions are within map bounds
+
+**When It Runs:**
+- At map registration (`mapManager.registerMap()`) - catches issues at startup
+- At map loading (`mapManager.loadMap()`) - catches issues during transitions
+
+**Console Output:**
+```
+🗺️ Map Validation: mums_kitchen
+Declared: 15x9, Actual grid: 15x9
+❌ ERRORS:
+  - Spawn point (15, 13) is out of bounds (0-14, 0-8)
+⚠️ WARNINGS:
+  - NPC "Mum" at (7, 4) is out of bounds
+```
+
+**When Creating/Modifying Maps:**
+1. Check browser console for validation messages
+2. Fix any ❌ ERRORS before testing (these break gameplay)
+3. Review ⚠️ WARNINGS (NPCs may appear in walls)
+4. Ensure transition `toPosition` values are valid for the TARGET map (not just the source)
+
+**Common Mistakes:**
+- Transition spawn positions that exceed target map bounds
+- Grid string rows that don't match declared dimensions
+- NPCs placed in wall tiles (walkable area only: rows with `.` or `F`)
+
 ## Documentation
 
 Detailed documentation is located in the [`docs/`](docs/) folder:
@@ -794,8 +830,9 @@ data/            - Game data (crops, items, NPCs)
 7. **Follow existing patterns**: Independent X/Y collision, deterministic tile variation selection
 8. **Map creation**: Use child-friendly grid codes, register all maps in `maps/index.ts`
 9. **Color schemes**: Every map must reference a valid color scheme from `colorSchemes.ts`
-10. **Watch file sizes**: Refactor files that exceed 500 lines (see Code Maintenance Guidelines above)
-11. **Extract, don't expand**: When adding features, create new focused files rather than growing existing ones
+10. **Check map validation**: After creating/modifying maps, check browser console for validation errors (see Map Validation section)
+11. **Watch file sizes**: Refactor files that exceed 500 lines (see Code Maintenance Guidelines above)
+12. **Extract, don't expand**: When adding features, create new focused files rather than growing existing ones
 
 ## Testing with Chrome DevTools MCP
 

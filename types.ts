@@ -278,6 +278,8 @@ export interface MapDefinition {
   windowViews?: WindowView[];           // Windows showing outside scenes
   sourceMapId?: string;                 // For window views: which map player came from
   characterScale?: number;              // Scale multiplier for player/NPCs (default: 1.0)
+  gridOffset?: Position;                // Offset for grid/player/NPC rendering (pixels) - use with centered images
+  gridTileSize?: number;                // Override TILE_SIZE for this map (pixels) - useful for background-image rooms
 }
 
 // Simple character-based grid for child-friendly map editing
@@ -353,6 +355,7 @@ export interface NPC {
   friendshipConfig?: FriendshipConfig; // Optional: friendship system configuration
   noFlip?: boolean; // Optional: disable horizontal flipping entirely
   reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
+  zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)

@@ -24,6 +24,7 @@ import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetada
 import Bookshelf from './components/Bookshelf';
 import { initializeGame } from './utils/gameInitializer';
 import { mapManager } from './maps';
+import { getValidationErrors, hasValidationErrors, MapValidationError } from './maps/gridParser';
 import { gameState, CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
@@ -46,6 +47,7 @@ import TransitionIndicators from './components/TransitionIndicators';
 import TileRenderer from './components/TileRenderer';
 import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
+import ForegroundImageLayers from './components/ForegroundImageLayers';
 import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
 import Inventory, { InventoryItem } from './components/Inventory';
@@ -67,6 +69,7 @@ import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHel
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
     const [isMapInitialized, setIsMapInitialized] = useState(false);
+    const [mapErrors, setMapErrors] = useState<MapValidationError[]>([]); // Map validation errors to display
     const [characterVersion, setCharacterVersion] = useState(0); // Track character changes
     const [isCutscenePlaying, setIsCutscenePlaying] = useState(false); // Track cutscene state
 
@@ -502,6 +505,14 @@ const App: React.FC = () => {
         const init = async () => {
             await initializeGame(currentMapId, setIsMapInitialized);
 
+            // Check for validation errors after initialization
+            if (hasValidationErrors()) {
+                const errors = getValidationErrors();
+                setMapErrors(errors);
+                console.error('[App] Map validation errors detected - game will not load until fixed');
+                return; // Don't continue initialization if there are errors
+            }
+
             // Load inventory AFTER game initialization completes
             // This ensures inventory is loaded before we try to display it
             setInventoryItems(convertInventoryToUI());
@@ -553,6 +564,57 @@ const App: React.FC = () => {
     const currentMap = mapManager.getCurrentMap();
     const mapWidth = currentMap ? currentMap.width : 50;
     const mapHeight = currentMap ? currentMap.height : 30;
+
+    // Calculate effective grid offset for centered background-image rooms
+    // This aligns the collision grid/player/NPCs with the centered background image
+    // IMPORTANT: Use canvas dimensions, not window dimensions, to handle browser zoom correctly
+    const effectiveGridOffset = useMemo((): Position | undefined => {
+        if (!currentMap) return undefined;
+
+        // Use explicit gridOffset if provided
+        if (currentMap.gridOffset) return currentMap.gridOffset;
+
+        // For background-image rooms with centered layers, calculate offset dynamically
+        if (currentMap.renderMode === 'background-image' && currentMap.backgroundLayers) {
+            const centeredLayer = currentMap.backgroundLayers.find(layer => layer.centered);
+            if (centeredLayer) {
+                // Get image dimensions (use explicit or calculate from grid)
+                let imageWidth: number;
+                let imageHeight: number;
+
+                if (centeredLayer.width && centeredLayer.height) {
+                    imageWidth = centeredLayer.width;
+                    imageHeight = centeredLayer.height;
+                } else if (centeredLayer.useNativeSize) {
+                    // For native size, we need to know the actual image dimensions
+                    // For now, use map grid dimensions as fallback (960x540 for kitchen, 1920x1080 for shop)
+                    // TODO: Get actual texture dimensions from TextureManager
+                    imageWidth = currentMap.width * TILE_SIZE;
+                    imageHeight = currentMap.height * TILE_SIZE;
+                } else {
+                    imageWidth = currentMap.width * TILE_SIZE;
+                    imageHeight = currentMap.height * TILE_SIZE;
+                }
+
+                // Apply scale if present
+                const scale = centeredLayer.scale ?? 1.0;
+                imageWidth *= scale;
+                imageHeight *= scale;
+
+                // Use window dimensions for centering (consistent with camera calculation)
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+
+                // Calculate centering offset based on viewport size
+                const offsetX = (viewportWidth - imageWidth) / 2;
+                const offsetY = (viewportHeight - imageHeight) / 2;
+
+                return { x: offsetX, y: offsetY };
+            }
+        }
+
+        return undefined;
+    }, [currentMap, currentMapId]); // Recalculate when map changes
 
     // Use camera hook for positioning
     const { cameraX, cameraY } = useCamera({
@@ -642,6 +704,11 @@ const App: React.FC = () => {
                 // Create background image layer (for background-image render mode rooms)
                 const backgroundImageLayer = new BackgroundImageLayer();
                 backgroundImageLayerRef.current = backgroundImageLayer;
+                // Set viewport dimensions using canvas size (not window size) for browser zoom handling
+                backgroundImageLayer.setViewportDimensions(
+                    canvasRef.current?.clientWidth ?? window.innerWidth,
+                    canvasRef.current?.clientHeight ?? window.innerHeight
+                );
                 app.stage.addChild(backgroundImageLayer.getContainer());
 
                 // Create tile layer
@@ -760,6 +827,36 @@ const App: React.FC = () => {
         };
     }, [isMapInitialized]); // Only initialize once when map is ready
 
+    // Handle window resize (browser zoom, window resize) - update PixiJS canvas size
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !isPixiInitialized || !pixiAppRef.current) return;
+
+        const handleResize = () => {
+            const app = pixiAppRef.current;
+            if (!app) return;
+
+            // Resize the PixiJS renderer to match the new window size
+            app.renderer.resize(window.innerWidth, window.innerHeight);
+
+            // Update background image layer viewport dimensions
+            if (backgroundImageLayerRef.current && canvasRef.current) {
+                backgroundImageLayerRef.current.setViewportDimensions(
+                    canvasRef.current.clientWidth ?? window.innerWidth,
+                    canvasRef.current.clientHeight ?? window.innerHeight
+                );
+            }
+
+            console.log(`[App] Resized PixiJS renderer to ${window.innerWidth}x${window.innerHeight}`);
+        };
+
+        // Handle resize events (includes browser zoom)
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [isPixiInitialized]);
+
     // Update PixiJS tiles when map/viewport/season changes (NOT on every camera move)
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
@@ -809,26 +906,60 @@ const App: React.FC = () => {
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized) return;
 
+        const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
+
+        // Update viewport dimensions (use canvas size for browser zoom handling)
+        if (backgroundImageLayerRef.current && canvasRef.current) {
+            backgroundImageLayerRef.current.setViewportDimensions(
+                canvasRef.current.clientWidth ?? window.innerWidth,
+                canvasRef.current.clientHeight ?? window.innerHeight
+            );
+        }
+
         // Camera updates are cheap - just moving container positions
+        // For background-image rooms: background stays fixed (centered), other layers also stay fixed
+        // For tiled rooms: all layers scroll with camera
         if (backgroundImageLayerRef.current) {
             backgroundImageLayerRef.current.updateCamera(cameraX, cameraY);
         }
-        if (tileLayerRef.current) {
-            tileLayerRef.current.updateCamera(cameraX, cameraY);
+        if (isBackgroundImageRoom) {
+            // For background-image rooms, reset container positions to (0, 0)
+            // Player/NPCs are positioned via gridOffset to align with centered background
+            if (playerSpriteRef.current) {
+                playerSpriteRef.current.updateCamera(0, 0); // Reset to no offset
+            }
+            // Other layers are hidden in background-image rooms, but reset them too
+            if (tileLayerRef.current) {
+                tileLayerRef.current.updateCamera(0, 0);
+            }
+            if (backgroundSpriteLayerRef.current) {
+                backgroundSpriteLayerRef.current.updateCamera(0, 0);
+            }
+            if (placedItemsLayerRef.current) {
+                placedItemsLayerRef.current.updateCamera(0, 0);
+            }
+            if (foregroundSpriteLayerRef.current) {
+                foregroundSpriteLayerRef.current.updateCamera(0, 0);
+            }
+        } else {
+            // For tiled rooms, apply camera transform normally
+            if (tileLayerRef.current) {
+                tileLayerRef.current.updateCamera(cameraX, cameraY);
+            }
+            if (backgroundSpriteLayerRef.current) {
+                backgroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
+            }
+            if (playerSpriteRef.current) {
+                playerSpriteRef.current.updateCamera(cameraX, cameraY);
+            }
+            if (placedItemsLayerRef.current) {
+                placedItemsLayerRef.current.updateCamera(cameraX, cameraY);
+            }
+            if (foregroundSpriteLayerRef.current) {
+                foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
+            }
         }
-        if (backgroundSpriteLayerRef.current) {
-            backgroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
-        }
-        if (playerSpriteRef.current) {
-            playerSpriteRef.current.updateCamera(cameraX, cameraY);
-        }
-        if (placedItemsLayerRef.current) {
-            placedItemsLayerRef.current.updateCamera(cameraX, cameraY);
-        }
-        if (foregroundSpriteLayerRef.current) {
-            foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
-        }
-    }, [cameraX, cameraY, isPixiInitialized]);
+    }, [cameraX, cameraY, isPixiInitialized, currentMap?.renderMode]);
 
     // Re-render PixiJS when color scheme changes (ColorSchemeEditor updates)
     useEffect(() => {
@@ -863,16 +994,77 @@ const App: React.FC = () => {
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !playerSpriteRef.current) return;
 
+        // For background-image rooms, hide PixiJS player sprite (DOM player is used instead for z-ordering)
+        if (currentMap?.renderMode === 'background-image') {
+            playerSpriteRef.current.setVisible(false);
+            return;
+        }
+
+        // Show player sprite for normal rooms
+        playerSpriteRef.current.setVisible(true);
+
         // Apply map's characterScale multiplier (default 1.0)
         const mapCharacterScale = currentMap?.characterScale ?? 1.0;
         const effectiveScale = spriteScale * mapCharacterScale;
 
-        playerSpriteRef.current.update(playerPos, direction, animationFrame, playerSpriteUrl, effectiveScale);
-    }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized, currentMap?.characterScale]);
+        // Pass gridOffset directly for background-image rooms (PixiJS handles positioning consistently)
+        playerSpriteRef.current.update(playerPos, direction, animationFrame, playerSpriteUrl, effectiveScale, effectiveGridOffset);
+    }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized, currentMap?.characterScale, currentMap?.renderMode, effectiveGridOffset]);
 
     // Show character creator if no character selected
     if (showCharacterCreator) {
         return <CharacterCreator onComplete={handleCharacterCreated} />;
+    }
+
+    // Show validation errors screen if there are map errors
+    if (mapErrors.length > 0) {
+        return (
+            <div className="bg-red-900 text-white w-screen h-screen overflow-auto p-8 font-mono">
+                <h1 className="text-3xl font-bold mb-4">⚠️ Map Validation Errors</h1>
+                <p className="text-lg mb-6 text-red-200">
+                    The game cannot start until these errors are fixed. Check the map definition files.
+                </p>
+                <div className="space-y-6">
+                    {mapErrors.map((mapError, idx) => (
+                        <div key={idx} className={`p-4 rounded ${mapError.errors.length > 0 ? 'bg-red-800' : 'bg-yellow-800'}`}>
+                            <h2 className="text-xl font-bold mb-2">
+                                {mapError.errors.length > 0 ? '❌' : '⚠️'} Map: {mapError.mapId}
+                            </h2>
+                            {mapError.errors.length > 0 && (
+                                <div className="mb-2">
+                                    <h3 className="font-semibold text-red-300">Errors:</h3>
+                                    <ul className="list-disc list-inside ml-4">
+                                        {mapError.errors.map((err, i) => (
+                                            <li key={i} className="text-red-100">{err}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                            {mapError.warnings.length > 0 && (
+                                <div>
+                                    <h3 className="font-semibold text-yellow-300">Warnings:</h3>
+                                    <ul className="list-disc list-inside ml-4">
+                                        {mapError.warnings.map((warn, i) => (
+                                            <li key={i} className="text-yellow-100">{warn}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+                <div className="mt-8 p-4 bg-gray-800 rounded">
+                    <h3 className="font-bold mb-2">How to fix:</h3>
+                    <ol className="list-decimal list-inside space-y-1 text-gray-300">
+                        <li>Check the map files in <code className="bg-gray-700 px-1 rounded">maps/definitions/</code></li>
+                        <li>Ensure grid dimensions match declared width/height</li>
+                        <li>Verify all rows have the same number of columns</li>
+                        <li>Check spawn points and transitions are within bounds</li>
+                        <li>Save the file - HMR will reload automatically</li>
+                    </ol>
+                </div>
+            </div>
+        );
     }
 
     if (!isMapInitialized || !currentMap) {
@@ -921,12 +1113,16 @@ const App: React.FC = () => {
             )}
 
             {/* Hybrid Layer: Sprites/Player/NPCs (Always rendered with DOM, works with both renderers) */}
+            {/* For background-image rooms: skip camera transform, use fixed positioning aligned with centered image */}
+            {/* For tiled rooms: apply camera transform for scrolling */}
             <div
                 className="relative"
                 style={{
-                    width: mapWidth * TILE_SIZE,
-                    height: mapHeight * TILE_SIZE,
-                    transform: `translate(${-cameraX}px, ${-cameraY}px)`,
+                    width: currentMap?.renderMode === 'background-image' ? '100%' : mapWidth * TILE_SIZE,
+                    height: currentMap?.renderMode === 'background-image' ? '100%' : mapHeight * TILE_SIZE,
+                    transform: currentMap?.renderMode === 'background-image'
+                        ? 'none'  // No camera transform for background-image rooms (image is fixed/centered)
+                        : `translate(${-cameraX}px, ${-cameraY}px)`,
                     pointerEvents: 'none', // Allow clicks to pass through to canvas
                 }}
             >
@@ -948,7 +1144,18 @@ const App: React.FC = () => {
                 />
 
                 {/* Render NPCs */}
-                <NPCRenderer playerPos={playerPos} npcUpdateTrigger={npcUpdateTrigger} characterScale={currentMap?.characterScale} />
+                {/* For background-image rooms, pass gridOffset directly (no camera compensation needed since parent has no transform) */}
+                <NPCRenderer
+                    playerPos={playerPos}
+                    npcUpdateTrigger={npcUpdateTrigger}
+                    characterScale={currentMap?.characterScale}
+                    gridOffset={effectiveGridOffset}
+                />
+
+                {/* Render Foreground Image Layers (for background-image rooms like shop) */}
+                {/* These render as DOM elements so they can properly layer with NPCs */}
+                {/* Z-index from layer config (e.g., 200) ensures counter appears in front of fox */}
+                <ForegroundImageLayers currentMap={currentMap} />
 
                 {/* Render Midground Animations (behind player, above NPCs) */}
                 <AnimationOverlay
@@ -964,22 +1171,31 @@ const App: React.FC = () => {
                     layer="midground"
                 />
 
-                {/* Render Player (only in DOM mode, PixiJS renders it via PlayerSprite) */}
-                {!USE_PIXI_RENDERER && (
-                    <img
-                        src={playerSpriteUrl}
-                        alt="Player"
-                        className="absolute"
-                        style={{
-                            left: (playerPos.x - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
-                            top: (playerPos.y - (PLAYER_SIZE * spriteScale) / 2) * TILE_SIZE,
-                            width: PLAYER_SIZE * spriteScale * TILE_SIZE,
-                            height: PLAYER_SIZE * spriteScale * TILE_SIZE,
-                            imageRendering: 'pixelated',
-                            zIndex: Math.floor(playerPos.y) * 10, // Depth sorting with sprites/NPCs
-                        }}
-                    />
-                )}
+                {/* Render Player as DOM element when:
+                    - PixiJS is disabled, OR
+                    - In background-image rooms (for proper z-ordering with NPCs/foreground layers)
+                */}
+                {(!USE_PIXI_RENDERER || currentMap?.renderMode === 'background-image') && (() => {
+                    // Apply map's characterScale multiplier (default 1.0)
+                    const mapCharacterScale = currentMap?.characterScale ?? 1.0;
+                    const effectiveScale = spriteScale * mapCharacterScale;
+                    return (
+                        <img
+                            src={playerSpriteUrl}
+                            alt="Player"
+                            className="absolute"
+                            style={{
+                                // For background-image rooms, use gridOffset for positioning
+                                left: (playerPos.x - (PLAYER_SIZE * effectiveScale) / 2) * TILE_SIZE + (effectiveGridOffset?.x ?? 0),
+                                top: (playerPos.y - (PLAYER_SIZE * effectiveScale) / 2) * TILE_SIZE + (effectiveGridOffset?.y ?? 0),
+                                width: PLAYER_SIZE * effectiveScale * TILE_SIZE,
+                                height: PLAYER_SIZE * effectiveScale * TILE_SIZE,
+                                imageRendering: 'pixelated',
+                                zIndex: Math.floor(playerPos.y) * 10, // Depth sorting with sprites/NPCs
+                            }}
+                        />
+                    );
+                })()}
 
                 {/* Render Placed Items (food, decorations) - Between player and foreground */}
                 {!USE_PIXI_RENDERER && (
@@ -1029,9 +1245,11 @@ const App: React.FC = () => {
                 />
 
                 {/* Debug: Show collision boxes for multi-tile sprites */}
+                {/* For background-image rooms, pass gridOffset directly (no camera compensation needed since parent has no transform) */}
                 <DebugCollisionBoxes
                     visible={showCollisionBoxes}
                     currentMap={currentMap}
+                    gridOffset={effectiveGridOffset}
                 />
 
                 {isDebugOpen && <DebugOverlay playerPos={playerPos} />}

@@ -32,11 +32,17 @@ interface LayerSprite {
   height: number;
 }
 
+interface ViewportDimensions {
+  width: number;
+  height: number;
+}
+
 export class BackgroundImageLayer {
   private container: PIXI.Container;
   private backgroundSprites: LayerSprite[] = [];
   private foregroundSprites: LayerSprite[] = [];
   private currentMapId: string | null = null;
+  private viewportDimensions: ViewportDimensions = { width: 0, height: 0 };
 
   constructor() {
     this.container = new PIXI.Container();
@@ -44,12 +50,25 @@ export class BackgroundImageLayer {
   }
 
   /**
+   * Set viewport dimensions for centering calculations
+   * Use canvas dimensions, not window dimensions, to handle browser zoom correctly
+   */
+  setViewportDimensions(width: number, height: number): void {
+    this.viewportDimensions = { width, height };
+  }
+
+  /**
    * Load and render background layers for a map
    * Should be called when entering a background-image room
+   *
+   * @param map - The map definition
+   * @param mapId - The map ID
+   * @param skipForeground - If true, skip foreground layers (render them as DOM instead)
    */
   async loadLayers(
     map: MapDefinition,
-    mapId: string
+    mapId: string,
+    skipForeground: boolean = true // Default to true - foreground layers render as DOM for proper NPC z-ordering
   ): Promise<void> {
     // Skip if already loaded for this map
     if (this.currentMapId === mapId && this.backgroundSprites.length > 0) {
@@ -79,7 +98,9 @@ export class BackgroundImageLayer {
     }
 
     // Load foreground layers (render in front of player)
-    if (map.foregroundLayers) {
+    // Skip if skipForeground is true - these will be rendered as DOM elements instead
+    // for proper z-ordering with NPCs
+    if (map.foregroundLayers && !skipForeground) {
       for (const layer of map.foregroundLayers) {
         const layerSprite = await this.createLayerSprite(layer, map);
         if (layerSprite) {
@@ -88,7 +109,7 @@ export class BackgroundImageLayer {
       }
     }
 
-    console.log(`[BackgroundImageLayer] Loaded ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground layers for ${mapId}`);
+    console.log(`[BackgroundImageLayer] Loaded ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground layers for ${mapId}${skipForeground ? ' (foreground skipped - DOM render)' : ''}`);
   }
 
   /**
@@ -151,6 +172,7 @@ export class BackgroundImageLayer {
 
     if (layer.centered) {
       // Center the image in the viewport
+      // Use window dimensions for consistency with DOM element positioning
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       baseX = (viewportWidth - finalWidth) / 2;
@@ -186,12 +208,14 @@ export class BackgroundImageLayer {
    * Centered layers stay fixed in the viewport center
    */
   updateCamera(cameraX: number, cameraY: number): void {
+    // Use window dimensions for consistency with DOM element positioning
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
     // Update background sprites
     for (const layerSprite of this.backgroundSprites) {
       if (layerSprite.centered) {
         // Centered layers stay fixed in viewport - recalculate center position
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
         layerSprite.sprite.x = (viewportWidth - layerSprite.width) / 2;
         layerSprite.sprite.y = (viewportHeight - layerSprite.height) / 2;
       } else {
@@ -207,8 +231,6 @@ export class BackgroundImageLayer {
     for (const layerSprite of this.foregroundSprites) {
       if (layerSprite.centered) {
         // Centered layers stay fixed in viewport
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
         layerSprite.sprite.x = (viewportWidth - layerSprite.width) / 2;
         layerSprite.sprite.y = (viewportHeight - layerSprite.height) / 2;
       } else {

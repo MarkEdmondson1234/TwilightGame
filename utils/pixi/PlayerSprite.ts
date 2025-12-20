@@ -45,7 +45,8 @@ export class PlayerSprite {
     direction: Direction,
     animationFrame: number,
     spriteUrl: string,
-    spriteScale: number = 1
+    spriteScale: number = 1,
+    gridOffset?: Position
   ): Promise<void> {
     // Load texture if changed
     if (this.currentSpriteUrl !== spriteUrl) {
@@ -61,10 +62,12 @@ export class PlayerSprite {
       }
     }
 
-    // Update position (convert tile coords to pixels)
+    // Update position (convert tile coords to pixels, add grid offset for centered rooms)
     const size = PLAYER_SIZE * spriteScale;
-    this.sprite.x = playerPos.x * TILE_SIZE;
-    this.sprite.y = playerPos.y * TILE_SIZE;
+    const offsetX = gridOffset?.x ?? 0;
+    const offsetY = gridOffset?.y ?? 0;
+    this.sprite.x = playerPos.x * TILE_SIZE + offsetX;
+    this.sprite.y = playerPos.y * TILE_SIZE + offsetY;
 
     // Update size
     this.sprite.width = size * TILE_SIZE;
@@ -101,6 +104,13 @@ export class PlayerSprite {
    */
   show(): void {
     this.sprite.visible = true;
+  }
+
+  /**
+   * Set player sprite visibility
+   */
+  setVisible(visible: boolean): void {
+    this.sprite.visible = visible;
   }
 
   /**

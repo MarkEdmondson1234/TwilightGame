@@ -1,5 +1,6 @@
 import { MapDefinition, Position, TileType, ColorScheme } from '../types';
 import { npcManager } from '../NPCManager';
+import { validateMapDefinition } from './gridParser';
 
 /**
  * MapManager - Single Source of Truth for all map data
@@ -17,6 +18,8 @@ class MapManager {
    * Register a map definition
    */
   registerMap(map: MapDefinition): void {
+    // Validate at registration time to catch issues early
+    validateMapDefinition(map);
     this.maps.set(map.id, map);
   }
 
@@ -34,6 +37,12 @@ class MapManager {
     const map = this.maps.get(mapId);
     if (!map) {
       throw new Error(`Map not found: ${mapId}`);
+    }
+
+    // Validate map definition to catch common issues
+    const isValid = validateMapDefinition(map);
+    if (!isValid) {
+      console.error(`[MapManager] ⚠️ Map '${mapId}' has validation errors (see above). Loading anyway...`);
     }
 
     this.currentMapId = mapId;

@@ -21,7 +21,7 @@ const HUD: React.FC = () => {
     return (
         <>
             {/* Floating Wallet - Gold display */}
-            <div className="absolute top-2 left-2 z-10 pointer-events-none">
+            <div className="absolute top-2 left-2 z-[1000] pointer-events-none">
                 <div className="relative">
                     <img
                         src="/TwilightGame/assets-optimized/ui/wallet.png"
@@ -42,7 +42,7 @@ const HUD: React.FC = () => {
             </div>
 
             {/* Right HUD Panel - Location and time (positioned to avoid help button) */}
-            <div className="absolute top-2 right-16 sm:right-20 z-10 pointer-events-none">
+            <div className="absolute top-2 right-16 sm:right-20 z-[1000] pointer-events-none">
                 <div className="bg-black/60 p-2 sm:p-3 rounded-lg border border-slate-700">
                     <p className="text-sm sm:text-base font-bold text-yellow-300 truncate max-w-[120px] sm:max-w-[150px]">{mapName}</p>
                     <div className="mt-1 pt-1 border-t border-slate-600">

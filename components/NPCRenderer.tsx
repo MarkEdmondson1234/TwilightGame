@@ -7,13 +7,16 @@ interface NPCRendererProps {
     playerPos: Position;
     npcUpdateTrigger: number;
     characterScale?: number; // Map-level scale multiplier for all characters
+    gridOffset?: Position;   // Offset for background-image rooms with centered layers
 }
 
 /**
  * Renders NPCs with interaction prompts
  * Shows "[E] Talk to {name}" when player is in range
  */
-const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, characterScale = 1.0 }) => {
+const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, characterScale = 1.0, gridOffset }) => {
+    const offsetX = gridOffset?.x ?? 0;
+    const offsetY = gridOffset?.y ?? 0;
     return (
         <>
             {npcManager.getCurrentMapNPCs().map((npc) => {
@@ -49,9 +52,9 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                     shouldFlip = currentFrame % 2 === 1;
                 }
 
-                // Z-index based on Y position for proper depth sorting with foreground sprites
-                // Use floor of Y position * 10 to match ForegroundSprites z-index calculation
-                const zIndex = Math.floor(npc.position.y) * 10;
+                // Z-index: use override if provided (for layered rooms like shop),
+                // otherwise calculate based on Y position for depth sorting
+                const zIndex = npc.zIndexOverride ?? Math.floor(npc.position.y) * 10;
 
                 return (
                     <React.Fragment key={npc.id}>
@@ -61,8 +64,8 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                             alt={npc.name}
                             className="absolute pointer-events-none"
                             style={{
-                                left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE,
-                                top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE,
+                                left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetX,
+                                top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY,
                                 width: PLAYER_SIZE * npcScale * TILE_SIZE,
                                 height: PLAYER_SIZE * npcScale * TILE_SIZE,
                                 imageRendering: 'pixelated',
@@ -76,8 +79,8 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                             <div
                                 className="absolute pointer-events-none"
                                 style={{
-                                    left: npc.position.x * TILE_SIZE,
-                                    top: (npc.position.y - 1) * TILE_SIZE,
+                                    left: npc.position.x * TILE_SIZE + offsetX,
+                                    top: (npc.position.y - 1) * TILE_SIZE + offsetY,
                                     transform: 'translateX(-50%)',
                                     zIndex: 1000,
                                 }}

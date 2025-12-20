@@ -1,11 +1,12 @@
 import React from 'react';
-import { MapDefinition } from '../types';
+import { MapDefinition, Position } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { SPRITE_METADATA, TILE_SIZE } from '../constants';
 
 interface DebugCollisionBoxesProps {
     visible: boolean;
     currentMap: MapDefinition;
+    gridOffset?: Position; // Offset for background-image rooms with centered layers
 }
 
 /**
@@ -14,10 +15,12 @@ interface DebugCollisionBoxesProps {
  * - Multi-tile sprite collision boxes (red)
  * - Walkmesh grid for background-image rooms (red = solid, green = walkable)
  */
-const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, currentMap }) => {
+const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, currentMap, gridOffset }) => {
     if (!visible) return null;
 
     const isBackgroundImageRoom = currentMap.renderMode === 'background-image';
+    const offsetX = gridOffset?.x ?? 0;
+    const offsetY = gridOffset?.y ?? 0;
 
     return (
         <>
@@ -32,10 +35,11 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, curr
                             key={`walkmesh-${x}-${y}`}
                             className="absolute pointer-events-none border border-white/30"
                             style={{
-                                left: x * TILE_SIZE,
-                                top: y * TILE_SIZE,
+                                left: x * TILE_SIZE + offsetX,
+                                top: y * TILE_SIZE + offsetY,
                                 width: TILE_SIZE,
                                 height: TILE_SIZE,
+                                zIndex: 500, // Above foreground layers (65), below modals (1000+)
                                 backgroundColor: tileData.isSolid
                                     ? 'rgba(255, 0, 0, 0.4)'  // Red = solid/blocked
                                     : 'rgba(0, 255, 0, 0.2)', // Green = walkable
@@ -79,6 +83,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, curr
                                     width: collisionWidth * TILE_SIZE,
                                     height: collisionHeight * TILE_SIZE,
                                     backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                                    zIndex: 500, // Above foreground layers (65), below modals (1000+)
                                 }}
                             >
                                 <div className="text-red-500 font-bold text-xs bg-white px-1">
@@ -93,6 +98,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, curr
                                     top: y * TILE_SIZE,
                                     width: 16,
                                     height: 16,
+                                    zIndex: 501, // Above collision boxes
                                 }}
                             >
                                 {/* Crosshair for anchor point */}

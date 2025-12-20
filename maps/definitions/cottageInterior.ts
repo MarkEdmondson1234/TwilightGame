@@ -40,7 +40,7 @@ export const cottageInterior: MapDefinition = {
   spawnPoint: { x: 6, y: 7 }, // Start near the bottom door
   transitions: [
     {
-      fromPosition: { x: 6, y: 8 }, // Exit door at bottom
+      fromPosition: { x: 6, y: 7 }, // Exit door at bottom (row 7, within 8-row grid)
       tileType: TileType.EXIT_DOOR,
       toMapId: 'village',
       toPosition: { x: 20, y: 24 }, // Spawn below the cottage in village
