@@ -1,7 +1,7 @@
 # Makefile for TwilightGame
 # Provides convenient shortcuts for common development tasks
 
-.PHONY: help install dev build preview optimize-assets typecheck clean test-game
+.PHONY: help install dev build preview optimize-assets typecheck clean test-game reload
 
 # Default target - show help
 help:
@@ -15,6 +15,7 @@ help:
 	@echo "  make optimize-assets Optimise images (runs before build)"
 	@echo "  make typecheck       Check TypeScript for errors"
 	@echo "  make clean           Remove build artifacts"
+	@echo "  make reload          Restart dev server (fixes HMR cascade hangs)"
 	@echo "  make test-game       Launch game tester agent in Chrome"
 	@echo ""
 
@@ -46,6 +47,12 @@ typecheck:
 clean:
 	rm -rf dist
 	rm -rf node_modules/.vite
+
+# Reload dev server (kills existing, clears cache, restarts)
+# Use this after large changes (git pull, Claude edits) when HMR gets overwhelmed
+# Cross-platform: works on macOS, Linux, and Windows
+reload:
+	npm run dev:reload
 
 # Launch game tester agent in Chrome (requires dev server running)
 test-game:

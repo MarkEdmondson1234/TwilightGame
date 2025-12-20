@@ -51,11 +51,40 @@ When implementing new features:
 - `make optimize-assets` - Optimise images using Sharp
 - `make typecheck` - Check TypeScript for errors
 - `make clean` - Remove build artifacts
+- `make reload` - **Restart dev server** (fixes HMR cascade hangs)
 - `make test-game` - Open game in browser for testing
 
-**NPM Commands** (also available):
+### Handling HMR Cascade Hangs
+
+**IMPORTANT**: When many files change at once (git sync, Claude making multiple edits), Vite's Hot Module Replacement can overwhelm the browser, causing it to hang.
+
+**Symptoms:**
+- Browser becomes unresponsive
+- Game won't load (infinite loading)
+- JavaScript consuming high CPU
+
+**Solution - Use `make reload`:**
+```bash
+make reload
+```
+
+This command:
+1. Stops any running Vite servers
+2. Clears Vite's cache
+3. Restarts a fresh dev server
+4. Reminds you to hard-refresh the browser (Cmd+Shift+R)
+
+**When to use:**
+- After git pull/sync brings in many file changes
+- When the browser hangs after Claude makes multiple file edits
+- If HMR updates seem to be piling up in the console
+- Whenever the game won't load after code changes
+
+**NPM Commands** (cross-platform - works on macOS, Linux, Windows):
 - `npm install` - Install dependencies
 - `npm run dev` - Start development server (Vite on port 4000)
+- `npm run dev:start` - Kill existing servers and start fresh
+- `npm run dev:reload` - **Full reload with cache clear** (fixes HMR hangs)
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run optimize-assets` - Optimise images using Sharp (automatically runs before build)

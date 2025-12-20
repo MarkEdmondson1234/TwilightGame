@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:start": "node scripts/dev-server.js",
+    "dev:reload": "node scripts/dev-server.js --reload",
     "build": "npm run optimize-assets && vite build",
     "preview": "vite preview",
     "optimize-assets": "node scripts/optimize-assets.js",
