@@ -1179,6 +1179,10 @@ const App: React.FC = () => {
                     // Apply map's characterScale multiplier (default 1.0)
                     const mapCharacterScale = currentMap?.characterScale ?? 1.0;
                     const effectiveScale = spriteScale * mapCharacterScale;
+                    // Calculate feet position for z-ordering (same as NPCs)
+                    // Player is centered on position, but visual feet aren't at sprite bottom
+                    // Use a smaller offset (~0.3 tiles) to approximate where feet actually appear
+                    const feetY = playerPos.y + 0.3;
                     return (
                         <img
                             src={playerSpriteUrl}
@@ -1191,7 +1195,7 @@ const App: React.FC = () => {
                                 width: PLAYER_SIZE * effectiveScale * TILE_SIZE,
                                 height: PLAYER_SIZE * effectiveScale * TILE_SIZE,
                                 imageRendering: 'pixelated',
-                                zIndex: Math.floor(playerPos.y) * 10, // Depth sorting with sprites/NPCs
+                                zIndex: Math.floor(feetY) * 10, // Depth sorting based on feet position
                             }}
                         />
                     );

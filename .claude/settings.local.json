@@ -70,7 +70,8 @@
       "Bash(for f in /Users/mark/dev/TwilightGame/public/assets/rooms/home/grocery_shop/*.png)",
       "Bash(do echo \"$f:\")",
       "Bash(sips:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:reload:*)"
     ],
     "deny": [],
     "ask": [

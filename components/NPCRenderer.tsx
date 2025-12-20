@@ -31,6 +31,13 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                 // NPC sprite scale (default 4.0x) * map characterScale
                 const npcScale = (npc.scale || 4.0) * characterScale;
 
+                // Calculate feet position for z-ordering
+                // NPCs are centered on their position, but the visual character's feet
+                // are NOT at the bottom of the sprite (there's padding in sprite images)
+                // Use a smaller offset (~0.3 tiles) to approximate where feet actually appear
+                const feetOffset = 0.3;
+                const feetY = npc.position.y + feetOffset;
+
                 // Determine if sprite should be flipped horizontally
                 // - Default: flip when facing left (sprites face right by default)
                 // - reverseFlip: flip when facing right (for sprites that naturally face left, like ducks)
@@ -53,8 +60,8 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                 }
 
                 // Z-index: use override if provided (for layered rooms like shop),
-                // otherwise calculate based on Y position for depth sorting
-                const zIndex = npc.zIndexOverride ?? Math.floor(npc.position.y) * 10;
+                // otherwise calculate based on feet Y position for proper depth sorting
+                const zIndex = npc.zIndexOverride ?? Math.floor(feetY) * 10;
 
                 return (
                     <React.Fragment key={npc.id}>

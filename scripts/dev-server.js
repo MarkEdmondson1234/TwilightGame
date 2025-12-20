@@ -8,10 +8,14 @@
  *   node scripts/dev-server.js --reload - Full reload (clears Vite cache)
  */
 
-const { spawn, exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import { spawn, exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isWindows = os.platform() === 'win32';
 const projectRoot = path.resolve(__dirname, '..');
