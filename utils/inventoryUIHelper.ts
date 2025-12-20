@@ -6,7 +6,7 @@
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
-import { itemAssets } from '../assets';
+import { itemAssets, groceryAssets } from '../assets';
 
 /**
  * Item sprite mapping - maps item IDs to sprite URLs
@@ -23,6 +23,34 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   // Seeds
   seed_carrot: itemAssets.carrot_seeds,
   seed_radish: itemAssets.radish_seeds,
+
+  // Grocery items (cooking ingredients)
+  butter: groceryAssets.butter,
+  egg: groceryAssets.egg,
+  flour: groceryAssets.flour,
+  gravy: groceryAssets.gravy,
+  milk: groceryAssets.milk,
+  potatoes: groceryAssets.sack_of_potatoes,
+  salt: groceryAssets.salt,
+  sugar: groceryAssets.sugar,
+  tuna: groceryAssets.canned_tuna,
+  yeast: groceryAssets.yeast,
+  vanilla: groceryAssets.vanilla_pods,
+  cinnamon: groceryAssets.cinnamon,
+  meat: groceryAssets.minced_meat,
+  minced_meat: groceryAssets.minced_meat,
+  pasta: groceryAssets.dried_spaghetti,
+  bread: groceryAssets.bread,
+  chocolate: groceryAssets.chocolate_bar,
+  basil: groceryAssets.basil,
+  thyme: groceryAssets.thyme,
+  allspice: groceryAssets.allspice,
+  curry_powder: groceryAssets.curry,
+  baking_powder: groceryAssets.baking_powder,
+  cocoa_powder: groceryAssets.cocoa_powder,
+  rice: groceryAssets.rice,
+  tomato_tin: groceryAssets.canned_tomato,
+  tomato_fresh: groceryAssets.tomato,
 };
 
 /**

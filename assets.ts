@@ -154,14 +154,42 @@ export const farmingAssets = {
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 
-// Cooking assets - Food items and ingredients
+// Cooking assets - Prepared food items (cooked dishes)
 export const cookingAssets = {
   cookies: '/TwilightGame/assets-optimized/cooking/cookies.png',
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png?v=2',
-  milk: '/TwilightGame/assets-optimized/cooking/milk.png',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
   tea: '/TwilightGame/assets-optimized/cooking/tea.png',
+};
+
+// Grocery assets - Cooking ingredients (raw items from shop)
+export const groceryAssets = {
+  allspice: '/TwilightGame/assets-optimized/items/grocery/allspice.png',
+  baking_powder: '/TwilightGame/assets-optimized/items/grocery/baking_powder.png',
+  basil: '/TwilightGame/assets-optimized/items/grocery/basil.png',
+  bread: '/TwilightGame/assets-optimized/items/grocery/bread.png',
+  butter: '/TwilightGame/assets-optimized/items/grocery/butter.png',
+  canned_tomato: '/TwilightGame/assets-optimized/items/grocery/canned_tomato.png',
+  canned_tuna: '/TwilightGame/assets-optimized/items/grocery/canned_tuna.png',
+  chocolate_bar: '/TwilightGame/assets-optimized/items/grocery/chocolate_bar.png',
+  cinnamon: '/TwilightGame/assets-optimized/items/grocery/cinnamon.png',
+  cocoa_powder: '/TwilightGame/assets-optimized/items/grocery/cocoa_powder.png',
+  curry: '/TwilightGame/assets-optimized/items/grocery/curry.png',
+  dried_spaghetti: '/TwilightGame/assets-optimized/items/grocery/dried_spaghetti.png',
+  egg: '/TwilightGame/assets-optimized/items/grocery/egg.png',
+  flour: '/TwilightGame/assets-optimized/items/grocery/flour.png',
+  gravy: '/TwilightGame/assets-optimized/items/grocery/gravy.png',
+  milk: '/TwilightGame/assets-optimized/items/grocery/milk.png',
+  minced_meat: '/TwilightGame/assets-optimized/items/grocery/minced_meat.png',
+  rice: '/TwilightGame/assets-optimized/items/grocery/rice.png',
+  sack_of_potatoes: '/TwilightGame/assets-optimized/items/grocery/sack_of_potatoes.png',
+  salt: '/TwilightGame/assets-optimized/items/grocery/salt.png',
+  sugar: '/TwilightGame/assets-optimized/items/grocery/sugar.png',
+  thyme: '/TwilightGame/assets-optimized/items/grocery/thyme.png',
+  tomato: '/TwilightGame/assets-optimized/items/grocery/tomato.png',
+  vanilla_pods: '/TwilightGame/assets-optimized/items/grocery/vanilla_pods.png',
+  yeast: '/TwilightGame/assets-optimized/items/grocery/yeast.png',
 };
 
 // NPC assets - Use optimized versions for in-game sprites, originals for portraits

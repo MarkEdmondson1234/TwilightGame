@@ -300,6 +300,25 @@ class InventoryManager {
   }
 
   /**
+   * Clear all inventory items and tools (for testing)
+   */
+  clearAll(): void {
+    this.items.clear();
+    this.tools.clear();
+    console.log('[InventoryManager] Cleared all inventory');
+    this.saveToGameState();
+  }
+
+  /**
+   * Reset inventory to starter items (for testing)
+   */
+  resetToStarter(): void {
+    this.clearAll();
+    this.initializeStarterItems();
+    console.log('[InventoryManager] Reset to starter items');
+  }
+
+  /**
    * Initialize with starter items
    */
   initializeStarterItems(): void {
@@ -321,6 +340,36 @@ class InventoryManager {
     // Start with cooking ingredients for tea (starter recipe)
     this.addItem('tea_leaves', 5);
     this.addItem('water', 10);
+
+    // DEV: Add all grocery ingredients for testing
+    this.addItem('milk', 1);
+    this.addItem('cream', 1);
+    this.addItem('butter', 1);
+    this.addItem('cheese', 1);
+    this.addItem('egg', 1);
+    this.addItem('flour', 1);
+    this.addItem('sugar', 1);
+    this.addItem('salt', 1);
+    this.addItem('yeast', 1);
+    this.addItem('olive_oil', 1);
+    this.addItem('vanilla', 1);
+    this.addItem('cinnamon', 1);
+    this.addItem('meat', 1);
+    this.addItem('minced_meat', 1);
+    this.addItem('pasta', 1);
+    this.addItem('bread', 1);
+    this.addItem('chocolate', 1);
+    this.addItem('almonds', 1);
+    this.addItem('strawberry_jam', 1);
+    this.addItem('basil', 1);
+    this.addItem('thyme', 1);
+    this.addItem('allspice', 1);
+    this.addItem('curry_powder', 1);
+    this.addItem('baking_powder', 1);
+    this.addItem('cocoa_powder', 1);
+    this.addItem('rice', 1);
+    this.addItem('tomato_tin', 1);
+    this.addItem('tomato_fresh', 1);
   }
 }
 

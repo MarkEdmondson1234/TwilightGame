@@ -3,6 +3,8 @@
  * Defines all items that can be collected, stored, and used in the game
  */
 
+import { groceryAssets } from '../assets';
+
 export enum ItemCategory {
   SEED = 'seed',
   CROP = 'crop',
@@ -32,6 +34,7 @@ export interface ItemDefinition {
   sellPrice?: number;         // Gold value when sold
   buyPrice?: number;          // Cost to purchase
   cropId?: string;            // For seeds, which crop they grow into
+  image?: string;             // Optional sprite image URL
 }
 
 /**
@@ -529,6 +532,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 3,
     buyPrice: 8,
+    image: groceryAssets.milk,
   },
 
   cream: {
@@ -540,6 +544,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 12,
+    // Note: No cream sprite yet - add cream.png to grocery folder
   },
 
   butter: {
@@ -551,6 +556,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 4,
     buyPrice: 10,
+    image: groceryAssets.butter,
   },
 
   cheese: {
@@ -562,6 +568,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 8,
     buyPrice: 20,
+    // Note: No cheese sprite yet - add cheese.png to grocery folder
   },
 
   egg: {
@@ -573,6 +580,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 2,
     buyPrice: 5,
+    image: groceryAssets.egg,
   },
 
   // Pantry staples
@@ -585,6 +593,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 2,
     buyPrice: 6,
+    image: groceryAssets.flour,
   },
 
   sugar: {
@@ -596,6 +605,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 3,
     buyPrice: 8,
+    image: groceryAssets.sugar,
   },
 
   salt: {
@@ -607,6 +617,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 1,
     buyPrice: 3,
+    image: groceryAssets.salt,
   },
 
   yeast: {
@@ -618,6 +629,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 2,
     buyPrice: 5,
+    image: groceryAssets.yeast,
   },
 
   olive_oil: {
@@ -629,6 +641,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 15,
+    // Note: No olive_oil sprite yet - add olive_oil.png to grocery folder
   },
 
   vanilla: {
@@ -640,6 +653,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 8,
     buyPrice: 20,
+    image: groceryAssets.vanilla_pods,
   },
 
   cinnamon: {
@@ -651,6 +665,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 6,
     buyPrice: 15,
+    image: groceryAssets.cinnamon,
   },
 
   // Proteins
@@ -663,6 +678,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 15,
     buyPrice: 35,
+    image: groceryAssets.minced_meat,
   },
 
   minced_meat: {
@@ -674,6 +690,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 12,
     buyPrice: 30,
+    image: groceryAssets.minced_meat, // Same sprite as meat (both use minced_meat.png)
   },
 
   // Specialty ingredients
@@ -686,6 +703,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 4,
     buyPrice: 10,
+    image: groceryAssets.dried_spaghetti,
   },
 
   bread: {
@@ -697,6 +715,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 12,
+    image: groceryAssets.bread,
   },
 
   chocolate: {
@@ -708,6 +727,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 10,
     buyPrice: 25,
+    image: groceryAssets.chocolate_bar,
   },
 
   almonds: {
@@ -719,6 +739,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 8,
     buyPrice: 20,
+    // Note: No almonds sprite yet - add almonds.png to grocery folder
   },
 
   strawberry_jam: {
@@ -730,6 +751,154 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 10,
     buyPrice: 25,
+    // Note: No strawberry_jam sprite yet - add strawberry_jam.png to grocery folder
+  },
+
+  // Herbs and spices
+  basil: {
+    id: 'basil',
+    name: 'basil',
+    displayName: 'Basil',
+    category: ItemCategory.INGREDIENT,
+    description: 'Fresh basil leaves. Perfect for Italian dishes.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 10,
+    image: groceryAssets.basil,
+  },
+
+  thyme: {
+    id: 'thyme',
+    name: 'thyme',
+    displayName: 'Thyme',
+    category: ItemCategory.INGREDIENT,
+    description: 'Dried thyme. A versatile herb for roasts.',
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 8,
+    image: groceryAssets.thyme,
+  },
+
+  allspice: {
+    id: 'allspice',
+    name: 'allspice',
+    displayName: 'Allspice',
+    category: ItemCategory.INGREDIENT,
+    description: 'Ground allspice. Warm and aromatic.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 12,
+    image: groceryAssets.allspice,
+  },
+
+  curry_powder: {
+    id: 'curry_powder',
+    name: 'curry_powder',
+    displayName: 'Curry Powder',
+    category: ItemCategory.INGREDIENT,
+    description: 'Fragrant curry powder for spicy dishes.',
+    stackable: true,
+    sellPrice: 6,
+    buyPrice: 15,
+    image: groceryAssets.curry,
+  },
+
+  // Baking ingredients
+  baking_powder: {
+    id: 'baking_powder',
+    name: 'baking_powder',
+    displayName: 'Baking Powder',
+    category: ItemCategory.INGREDIENT,
+    description: 'Raising agent for cakes and biscuits.',
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 7,
+    image: groceryAssets.baking_powder,
+  },
+
+  cocoa_powder: {
+    id: 'cocoa_powder',
+    name: 'cocoa_powder',
+    displayName: 'Cocoa Powder',
+    category: ItemCategory.INGREDIENT,
+    description: 'Pure cocoa powder for chocolate treats.',
+    stackable: true,
+    sellPrice: 8,
+    buyPrice: 18,
+    image: groceryAssets.cocoa_powder,
+  },
+
+  // Other ingredients
+  rice: {
+    id: 'rice',
+    name: 'rice',
+    displayName: 'Rice',
+    category: ItemCategory.INGREDIENT,
+    description: 'Long grain rice. A filling staple.',
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 8,
+    image: groceryAssets.rice,
+  },
+
+  tomato_tin: {
+    id: 'tomato_tin',
+    name: 'tomato_tin',
+    displayName: 'Tinned Tomatoes',
+    category: ItemCategory.INGREDIENT,
+    description: 'Canned tomatoes. Perfect for sauces.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 10,
+    image: groceryAssets.canned_tomato,
+  },
+
+  tomato_fresh: {
+    id: 'tomato_fresh',
+    name: 'tomato_fresh',
+    displayName: 'Fresh Tomato',
+    category: ItemCategory.INGREDIENT,
+    description: 'A ripe, fresh tomato from the shop.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 12,
+    image: groceryAssets.tomato,
+  },
+
+  tuna: {
+    id: 'tuna',
+    name: 'tuna',
+    displayName: 'Tinned Tuna',
+    category: ItemCategory.INGREDIENT,
+    description: 'Canned tuna. Perfect for sandwiches and salads.',
+    stackable: true,
+    sellPrice: 6,
+    buyPrice: 15,
+    image: groceryAssets.canned_tuna,
+  },
+
+  gravy: {
+    id: 'gravy',
+    name: 'gravy',
+    displayName: 'Gravy Granules',
+    category: ItemCategory.INGREDIENT,
+    description: 'Rich gravy granules for a hearty sauce.',
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 8,
+    image: groceryAssets.gravy,
+  },
+
+  potatoes: {
+    id: 'potatoes',
+    name: 'potatoes',
+    displayName: 'Potatoes',
+    category: ItemCategory.INGREDIENT,
+    description: 'A sack of fresh potatoes from the shop.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 10,
+    image: groceryAssets.sack_of_potatoes,
   },
 
   // ===== COOKED FOOD =====

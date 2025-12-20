@@ -885,26 +885,28 @@ async function optimizeItems() {
   console.log('🎒 Optimizing item sprites...');
 
   const itemsDir = path.join(ASSETS_DIR, 'items');
-  const outputDir = path.join(OPTIMIZED_DIR, 'items');
 
   if (!fs.existsSync(itemsDir)) {
     console.log('  ℹ️  No items directory found, skipping...\n');
     return;
   }
 
-  // Ensure output directory exists
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  const files = fs.readdirSync(itemsDir).filter(f => /\.(png|jpg|jpeg)$/i.test(f));
-
+  const allFiles = getAllFiles(itemsDir);
   let optimized = 0;
 
-  for (const file of files) {
-    const inputPath = path.join(itemsDir, file);
-    const normalizedFile = normalizePathCase(file);
-    const outputPath = path.join(outputDir, normalizedFile);
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure (e.g., grocery/egg.png)
+    const relativePath = path.relative(itemsDir, inputPath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'items', relativePath.replace(/\.jpeg$/i, '.png')));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
 
     const originalSize = fs.statSync(inputPath).size;
 
@@ -923,7 +925,9 @@ async function optimizeItems() {
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
 
-    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    // Show relative path for files in subdirectories
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
     optimized++;
   }
 
