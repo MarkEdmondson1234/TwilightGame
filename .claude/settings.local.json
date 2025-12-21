@@ -71,7 +71,8 @@
       "Bash(do echo \"$f:\")",
       "Bash(sips:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run dev:reload:*)"
+      "Bash(npm run dev:reload:*)",
+      "Bash(wc:*)"
     ],
     "deny": [],
     "ask": [
