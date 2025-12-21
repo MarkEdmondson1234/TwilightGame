@@ -356,13 +356,18 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const witchWolfChance = ((seed * 13) % 100) / 100; // Pseudo-random based on seed
   if (witchWolfChance < 0.2) {
     // Place witch wolf in a different location from umbra wolf
-    let witchX, witchY;
+    let witchX: number, witchY: number;
+    let attempts = 0;
+    const maxAttempts = 20;
     do {
-      witchX = Math.floor(((seed * 7) % (width - 6)) + 3);
-      witchY = Math.floor(((seed * 11) % (height - 6)) + 3);
+      // Add attempt counter to vary position on each iteration
+      witchX = Math.floor(((seed * 7 + attempts * 5) % (width - 6)) + 3);
+      witchY = Math.floor(((seed * 11 + attempts * 9) % (height - 6)) + 3);
+      attempts++;
     } while (
-      (Math.abs(witchX - spawnX) < 6 && Math.abs(witchY - spawnY) < 6) ||
-      (Math.abs(witchX - wolfX) < 5 && Math.abs(witchY - wolfY) < 5)
+      attempts < maxAttempts &&
+      ((Math.abs(witchX - spawnX) < 6 && Math.abs(witchY - spawnY) < 6) ||
+       (Math.abs(witchX - wolfX) < 5 && Math.abs(witchY - wolfY) < 5))
     );
 
     const witchWolf = createWitchWolfNPC(
@@ -379,12 +384,17 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   if (chillBearChance < 0.2) {
     // Place chill bear in a different location from other NPCs
     let bearX: number, bearY: number;
+    let attempts = 0;
+    const maxAttempts = 20;
     do {
-      bearX = Math.floor(((seed * 19) % (width - 6)) + 3);
-      bearY = Math.floor(((seed * 23) % (height - 6)) + 3);
+      // Add attempt counter to vary position on each iteration
+      bearX = Math.floor(((seed * 19 + attempts * 7) % (width - 6)) + 3);
+      bearY = Math.floor(((seed * 23 + attempts * 11) % (height - 6)) + 3);
+      attempts++;
     } while (
-      (Math.abs(bearX - spawnX) < 6 && Math.abs(bearY - spawnY) < 6) ||
-      (Math.abs(bearX - wolfX) < 5 && Math.abs(bearY - wolfY) < 5)
+      attempts < maxAttempts &&
+      ((Math.abs(bearX - spawnX) < 6 && Math.abs(bearY - spawnY) < 6) ||
+       (Math.abs(bearX - wolfX) < 5 && Math.abs(bearY - wolfY) < 5))
     );
 
     const chillBear = createChillBearNPC(
@@ -404,12 +414,17 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     for (let i = 0; i < bunnyflyCount; i++) {
       // Place each bunnyfly in a different location
       let bunnyflyX: number, bunnyflyY: number;
+      let attempts = 0;
+      const maxAttempts = 20;
       do {
-        bunnyflyX = Math.floor(((seed * (41 + i * 3)) % (width - 6)) + 3);
-        bunnyflyY = Math.floor(((seed * (43 + i * 5)) % (height - 6)) + 3);
+        // Add attempt counter to vary position on each iteration
+        bunnyflyX = Math.floor(((seed * (41 + i * 3) + attempts * 13) % (width - 6)) + 3);
+        bunnyflyY = Math.floor(((seed * (43 + i * 5) + attempts * 17) % (height - 6)) + 3);
+        attempts++;
       } while (
-        (Math.abs(bunnyflyX - spawnX) < 6 && Math.abs(bunnyflyY - spawnY) < 6) ||
-        (Math.abs(bunnyflyX - wolfX) < 4 && Math.abs(bunnyflyY - wolfY) < 4)
+        attempts < maxAttempts &&
+        ((Math.abs(bunnyflyX - spawnX) < 6 && Math.abs(bunnyflyY - spawnY) < 6) ||
+         (Math.abs(bunnyflyX - wolfX) < 4 && Math.abs(bunnyflyY - wolfY) < 4))
       );
 
       const bunnyfly = createBunnyflyNPC(

@@ -6,6 +6,7 @@ interface TransitionIndicatorsProps {
     currentMap: MapDefinition;
     playerPos: Position;
     lastTransitionTime: number;
+    gridOffset?: Position; // Offset for background-image rooms with centered layers
 }
 
 /**
@@ -16,7 +17,10 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
     currentMap,
     playerPos,
     lastTransitionTime,
+    gridOffset,
 }) => {
+    const offsetX = gridOffset?.x ?? 0;
+    const offsetY = gridOffset?.y ?? 0;
     return (
         <>
             {currentMap.transitions.map((transition, idx) => {
@@ -40,8 +44,8 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
                                     : 'border-yellow-400 bg-yellow-400/20'
                             }`}
                             style={{
-                                left: transition.fromPosition.x * TILE_SIZE,
-                                top: transition.fromPosition.y * TILE_SIZE,
+                                left: transition.fromPosition.x * TILE_SIZE + offsetX,
+                                top: transition.fromPosition.y * TILE_SIZE + offsetY,
                                 width: TILE_SIZE,
                                 height: TILE_SIZE,
                             }}
@@ -50,8 +54,8 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
                         <div
                             className="absolute pointer-events-none"
                             style={{
-                                left: (transition.fromPosition.x + 0.5) * TILE_SIZE,
-                                top: (transition.fromPosition.y - 0.5) * TILE_SIZE,
+                                left: (transition.fromPosition.x + 0.5) * TILE_SIZE + offsetX,
+                                top: (transition.fromPosition.y - 0.5) * TILE_SIZE + offsetY,
                                 transform: 'translate(-50%, -50%)',
                             }}
                         >

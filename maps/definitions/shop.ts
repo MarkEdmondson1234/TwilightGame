@@ -28,6 +28,7 @@ import { createShopkeeperNPC } from '../../utils/npcFactories';
 
 // 19 columns x 11 rows - matches observed image coverage at 1200x675
 // Walkable floor is in the bottom portion (wooden floor area)
+// S = Shop door transition (center of bottom walkable row)
 const gridString = `
 ###################
 ###################
@@ -36,10 +37,10 @@ const gridString = `
 ###################
 ###################
 ###################
-##...............##
-##...............##
-#S...............##
 ###################
+##...............##
+##...............##
+#########S#########
 `;
 
 export const shop: MapDefinition = {
@@ -50,7 +51,7 @@ export const shop: MapDefinition = {
   grid: parseGrid(gridString),
   colorScheme: 'shop',
   isRandom: false,
-  spawnPoint: { x: 10, y: 8 }, // Start in center of walkable floor
+  spawnPoint: { x: 10, y: 10 }, // Start in center of walkable floor
   renderMode: 'background-image',
   characterScale: 2.5, // Larger characters for this room
 
@@ -84,7 +85,7 @@ export const shop: MapDefinition = {
   // Transitions
   transitions: [
     {
-      fromPosition: { x: 1, y: 9 }, // Shop door at left side (where S is in grid)
+      fromPosition: { x: 9, y: 9 }, // Shop door at center bottom (where S is in grid)
       tileType: TileType.SHOP_DOOR,
       toMapId: 'village',
       toPosition: { x: 10, y: 14 }, // Back to village

@@ -1,6 +1,7 @@
 import { MapDefinition, Position, TileType, ColorScheme } from '../types';
 import { npcManager } from '../NPCManager';
 import { validateMapDefinition } from './gridParser';
+import { TILE_LEGEND, PLAYER_SIZE } from '../constants';
 
 /**
  * MapManager - Single Source of Truth for all map data
@@ -97,13 +98,106 @@ class MapManager {
   }
 
   /**
+   * Check if a position is valid (not inside a wall) for a specific map
+   * Uses the map's grid directly to avoid circular dependencies
+   */
+  private isPositionValidForMap(map: MapDefinition, pos: Position, entitySize: number = PLAYER_SIZE): boolean {
+    const halfSize = entitySize / 2;
+    const minTileX = Math.floor(pos.x - halfSize);
+    const maxTileX = Math.floor(pos.x + halfSize);
+    const minTileY = Math.floor(pos.y - halfSize);
+    const maxTileY = Math.floor(pos.y + halfSize);
+
+    for (let y = minTileY; y <= maxTileY; y++) {
+      for (let x = minTileX; x <= maxTileX; x++) {
+        // Check bounds
+        if (y < 0 || y >= map.grid.length || x < 0 || x >= map.grid[0].length) {
+          return false; // Out of bounds = invalid
+        }
+        const tileType = map.grid[y][x];
+        const tileData = TILE_LEGEND[tileType];
+        if (tileData && tileData.isSolid) {
+          return false; // Position would collide with wall
+        }
+      }
+    }
+    return true; // Position is safe
+  }
+
+  /**
+   * Find nearest valid position for a specific map
+   */
+  private findNearestValidPositionForMap(map: MapDefinition, target: Position, searchRadius: number = 5): Position | null {
+    // Check target first
+    if (this.isPositionValidForMap(map, target)) {
+      return target;
+    }
+
+    // Spiral search outward from target
+    for (let radius = 0.5; radius <= searchRadius; radius += 0.5) {
+      const steps = Math.max(4, Math.floor(radius * 8));
+      for (let i = 0; i < steps; i++) {
+        const angle = (i / steps) * Math.PI * 2;
+        const testPos = {
+          x: target.x + Math.cos(angle) * radius,
+          y: target.y + Math.sin(angle) * radius,
+        };
+
+        if (this.isPositionValidForMap(map, testPos)) {
+          return testPos;
+        }
+      }
+    }
+
+    return null; // No valid position found within search radius
+  }
+
+  /**
    * Transition to a new map
+   * Validates spawn position and finds nearest safe square if invalid
    */
   transitionToMap(mapId: string, spawnPoint?: Position): { map: MapDefinition; spawn: Position } {
     const map = this.loadMap(mapId);
-    const spawn = spawnPoint || map.spawnPoint;
+    const requestedSpawn = spawnPoint || map.spawnPoint;
 
-    return { map, spawn };
+    // Validate the spawn position using the loaded map
+    if (!this.isPositionValidForMap(map, requestedSpawn)) {
+      console.warn(
+        `[MapManager] ⚠️ Invalid spawn position (${requestedSpawn.x}, ${requestedSpawn.y}) in map '${mapId}' - position is inside a wall or obstacle`
+      );
+
+      // Try to find nearest valid position
+      const safeSpawn = this.findNearestValidPositionForMap(map, requestedSpawn, 5);
+      if (safeSpawn) {
+        console.warn(
+          `[MapManager] ✓ Found safe spawn at (${safeSpawn.x.toFixed(2)}, ${safeSpawn.y.toFixed(2)})`
+        );
+        return { map, spawn: safeSpawn };
+      } else {
+        // Last resort: use map's default spawn point
+        console.warn(
+          `[MapManager] ⚠️ Could not find safe spawn near requested position, using map default: (${map.spawnPoint.x}, ${map.spawnPoint.y})`
+        );
+
+        // Validate the default spawn too
+        if (!this.isPositionValidForMap(map, map.spawnPoint)) {
+          const defaultSafe = this.findNearestValidPositionForMap(map, map.spawnPoint, 5);
+          if (defaultSafe) {
+            console.warn(
+              `[MapManager] ✓ Default spawn also invalid, using safe position: (${defaultSafe.x.toFixed(2)}, ${defaultSafe.y.toFixed(2)})`
+            );
+            return { map, spawn: defaultSafe };
+          }
+          // If even that fails, just return something - game will handle collision
+          console.error(
+            `[MapManager] ❌ No valid spawn found in map '${mapId}' - player may be stuck!`
+          );
+        }
+        return { map, spawn: map.spawnPoint };
+      }
+    }
+
+    return { map, spawn: requestedSpawn };
   }
 
   /**

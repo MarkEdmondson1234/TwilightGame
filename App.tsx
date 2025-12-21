@@ -1253,10 +1253,12 @@ const App: React.FC = () => {
                 {/* Weather effects now handled by PixiJS WeatherLayer */}
 
                 {/* Transition indicators (rendered after foreground sprites so they're always visible) */}
+                {/* For background-image rooms, pass gridOffset directly (no camera compensation needed since parent has no transform) */}
                 <TransitionIndicators
                     currentMap={currentMap}
                     playerPos={playerPos}
                     lastTransitionTime={lastTransitionTime.current}
+                    gridOffset={effectiveGridOffset}
                 />
 
                 {/* Debug: Show collision boxes for multi-tile sprites */}
