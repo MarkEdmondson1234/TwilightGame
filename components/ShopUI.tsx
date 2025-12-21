@@ -145,7 +145,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
           itemId,
           quantity,
           playerGold,
-          getEmptySlots()
+          getEmptySlots(),
+          playerInventory
         );
         setFeedback({ message: validation.message, type: 'error' });
       }

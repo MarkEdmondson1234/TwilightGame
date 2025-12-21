@@ -88,7 +88,8 @@ export class ShopManager {
     itemId: string,
     quantity: number,
     playerGold: number,
-    inventorySpace: number
+    inventorySpace: number,
+    playerInventory: InventoryItem[]
   ): TransactionResult {
     // Get shop item
     const shopInventory = this.getCurrentInventory();
@@ -138,9 +139,11 @@ export class ShopManager {
     }
 
     // Check inventory space
-    // Stackable items only need 1 slot (if player already has the item, they need 0 slots)
+    // Stackable items only need 1 slot if player doesn't have the item already
+    // If player already has the item, they need 0 slots (it stacks)
     // Non-stackable items need quantity slots
-    const slotsNeeded = itemDef.stackable ? 1 : quantity;
+    const hasItem = playerInventory.some(item => item.itemId === itemId);
+    const slotsNeeded = itemDef.stackable ? (hasItem ? 0 : 1) : quantity;
     if (inventorySpace < slotsNeeded) {
       return {
         success: false,
@@ -230,11 +233,14 @@ export class ShopManager {
     playerInventory: InventoryItem[]
   ): { gold: number; inventory: InventoryItem[]; result: TransactionResult } | null {
     // Validate transaction
+    const emptySlots = this.getEmptySlots(playerInventory);
+
     const validation = this.validateBuyTransaction(
       itemId,
       quantity,
       playerGold,
-      this.getEmptySlots(playerInventory)
+      emptySlots,
+      playerInventory
     );
 
     if (!validation.success || validation.goldChange === undefined) {
@@ -312,10 +318,10 @@ export class ShopManager {
   /**
    * Calculate number of empty inventory slots
    * @param inventory Player's inventory
-   * @param maxSlots Maximum inventory size (default 20)
+   * @param maxSlots Maximum inventory size (default 36)
    * @returns Number of empty slots
    */
-  private getEmptySlots(inventory: InventoryItem[], maxSlots: number = 20): number {
+  private getEmptySlots(inventory: InventoryItem[], maxSlots: number = 36): number {
     return maxSlots - inventory.length;
   }
 
