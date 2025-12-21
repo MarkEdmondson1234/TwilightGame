@@ -192,7 +192,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // Action key (E or Enter) - close dialogue or cooking/shop UIs if open
+        // Action key (E or Enter) - close dialogue or cooking/shop/inventory UIs if open
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
             if (activeNPC) {
                 e.preventDefault();
@@ -212,6 +212,11 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             if (showRecipeBook) {
                 e.preventDefault();
                 onSetShowRecipeBook(false);
+                return;
+            }
+            if (showInventory) {
+                e.preventDefault();
+                onSetShowInventory(false);
                 return;
             }
         }
