@@ -72,7 +72,12 @@
       "Bash(sips:*)",
       "Bash(npm run build:*)",
       "Bash(npm run dev:reload:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npm run test:run:*)",
+      "Bash(nvm list:*)",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(nvm use:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": [

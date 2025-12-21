@@ -149,18 +149,6 @@ export function updatePaletteColor(colorName: keyof GamePalette, hex: string): v
 }
 
 /**
- * Update multiple colors at once
- */
-export function updatePaletteColors(colors: Partial<Record<keyof GamePalette, string>>): void {
-  Object.entries(colors).forEach(([name, hex]) => {
-    if (currentPalette[name as keyof GamePalette] && hex) {
-      currentPalette[name as keyof GamePalette].hex = hex;
-    }
-  });
-  applyPaletteToDOM();
-}
-
-/**
  * Reset palette to defaults
  */
 export function resetPalette(): void {
@@ -198,13 +186,6 @@ export function applyPaletteToDOM(): void {
  */
 export function getColorHex(colorName: keyof GamePalette): string {
   return currentPalette[colorName]?.hex || '#000000';
-}
-
-/**
- * Get Tailwind class name for a palette color
- */
-export function getPaletteClass(colorName: keyof GamePalette): string {
-  return `bg-palette-${colorName}`;
 }
 
 /**
@@ -251,15 +232,3 @@ export function exportPalette(): string {
   return JSON.stringify(exportData, null, 2);
 }
 
-/**
- * Import palette from JSON
- */
-export function importPalette(json: string): void {
-  try {
-    const data = JSON.parse(json);
-    updatePaletteColors(data);
-    console.log('[Palette] Imported custom palette');
-  } catch (error) {
-    console.error('[Palette] Failed to import palette:', error);
-  }
-}
