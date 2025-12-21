@@ -65,6 +65,7 @@ import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
 import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
 import { inventoryManager } from './utils/inventoryManager';
 import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHelper';
+import ShopUI from './components/ShopUI';
 
 const App: React.FC = () => {
     const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
@@ -90,6 +91,7 @@ const App: React.FC = () => {
     const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
     const [showInventory, setShowInventory] = useState(false); // Toggle inventory UI
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
+    const [showShopUI, setShowShopUI] = useState(false); // Toggle shop UI
     const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
     const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
     const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
@@ -280,6 +282,7 @@ const App: React.FC = () => {
         showCookingUI,
         showRecipeBook,
         showInventory,
+        showShopUI,
         selectedItemSlot,
         inventoryItems,
         keysPressed,
@@ -303,6 +306,14 @@ const App: React.FC = () => {
         },
         onSetShowRecipeBook: setShowRecipeBook,
         onSetShowInventory: setShowInventory,
+        onSetShowShopUI: (show) => {
+            // Only allow opening shop when inside shop map
+            if (show && currentMapId === 'shop') {
+                setShowShopUI(true);
+            } else {
+                setShowShopUI(false);
+            }
+        },
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
         onFarmUpdate: handleFarmUpdate,
@@ -1369,6 +1380,33 @@ const App: React.FC = () => {
                     isOpen={showCookingUI}
                     onClose={() => setShowCookingUI(false)}
                     locationType={cookingLocationType || 'stove'}
+                />
+            )}
+            {showShopUI && (
+                <ShopUI
+                    isOpen={showShopUI}
+                    onClose={() => setShowShopUI(false)}
+                    playerGold={gameState.getGold()}
+                    playerInventory={gameState.getState().inventory.items}
+                    onTransaction={(newGold, newInventory) => {
+                        // Calculate gold change
+                        const currentGold = gameState.getGold();
+                        const goldDifference = newGold - currentGold;
+
+                        if (goldDifference > 0) {
+                            gameState.addGold(goldDifference);
+                        } else if (goldDifference < 0) {
+                            gameState.spendGold(Math.abs(goldDifference));
+                        }
+
+                        // Update inventory
+                        const currentTools = gameState.getState().inventory.tools;
+                        gameState.saveInventory(newInventory, currentTools);
+
+                        // Update UI inventory display
+                        const uiInventory = convertInventoryToUI();
+                        setInventoryItems(uiInventory);
+                    }}
                 />
             )}
             {showRecipeBook && (

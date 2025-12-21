@@ -27,6 +27,7 @@ export interface KeyboardControlsConfig {
     showCookingUI: boolean;
     showRecipeBook: boolean;
     showInventory: boolean;
+    showShopUI: boolean;
     selectedItemSlot: number | null;
     inventoryItems: Array<{ id: string; name: string; icon: string; quantity: number; value?: number }>;
     keysPressed: Record<string, boolean>;
@@ -40,6 +41,7 @@ export interface KeyboardControlsConfig {
     onSetShowCookingUI: (show: boolean) => void;
     onSetShowRecipeBook: (show: boolean) => void;
     onSetShowInventory: (show: boolean) => void;
+    onSetShowShopUI: (show: boolean) => void;
     onSetPlayerPos: (pos: Position) => void;
     onMapTransition: (mapId: string, spawnPos: Position) => void;
     onFarmUpdate: () => void;
@@ -57,6 +59,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         showCookingUI,
         showRecipeBook,
         showInventory,
+        showShopUI,
         selectedItemSlot,
         inventoryItems,
         keysPressed,
@@ -70,6 +73,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onSetShowCookingUI,
         onSetShowRecipeBook,
         onSetShowInventory,
+        onSetShowShopUI,
         onSetPlayerPos,
         onMapTransition,
         onFarmUpdate,
@@ -188,7 +192,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // Action key (E or Enter) - close dialogue or cooking UIs if open
+        // Action key (E or Enter) - close dialogue or cooking/shop UIs if open
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
             if (activeNPC) {
                 e.preventDefault();
@@ -200,6 +204,11 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
                 onSetShowCookingUI(false);
                 return;
             }
+            if (showShopUI) {
+                e.preventDefault();
+                onSetShowShopUI(false);
+                return;
+            }
             if (showRecipeBook) {
                 e.preventDefault();
                 onSetShowRecipeBook(false);
@@ -207,8 +216,8 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             }
         }
 
-        // Don't process any other keys if dialogue, cooking UI, recipe book, or inventory is open
-        if (activeNPC || showCookingUI || showRecipeBook || showInventory) {
+        // Don't process any other keys if dialogue, cooking UI, shop UI, recipe book, or inventory is open
+        if (activeNPC || showCookingUI || showShopUI || showRecipeBook || showInventory) {
             return;
         }
 
@@ -280,6 +289,12 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             if (foundStove) {
                 onSetShowCookingUI(true);
                 return; // Don't check for other interactions if we found a stove
+            }
+
+            // Check for shop interaction (opens shop UI when inside shop map)
+            if (currentMapId === 'shop') {
+                onSetShowShopUI(true);
+                return; // Don't check for other interactions if in shop
             }
 
             // Check for NPC interaction
