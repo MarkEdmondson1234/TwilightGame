@@ -3,7 +3,7 @@
  * Defines all items that can be collected, stored, and used in the game
  */
 
-import { groceryAssets } from '../assets';
+import { groceryAssets, itemAssets } from '../assets';
 
 export enum ItemCategory {
   SEED = 'seed',
@@ -462,6 +462,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Juicy wild blackberries.',
     stackable: true,
     sellPrice: 35,
+    image: itemAssets.blackberries,
   },
 
   // ===== MATERIALS =====
@@ -641,7 +642,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 15,
-    // Note: No olive_oil sprite yet - add olive_oil.png to grocery folder
+    image: groceryAssets.olive_oil,
   },
 
   vanilla: {
@@ -751,7 +752,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 10,
     buyPrice: 25,
-    // Note: No strawberry_jam sprite yet - add strawberry_jam.png to grocery folder
+    image: groceryAssets.strawberry_jam,
   },
 
   // Herbs and spices

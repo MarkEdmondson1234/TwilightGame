@@ -190,6 +190,8 @@ export const groceryAssets = {
   tomato: '/TwilightGame/assets-optimized/items/grocery/tomato.png',
   vanilla_pods: '/TwilightGame/assets-optimized/items/grocery/vanilla_pods.png',
   yeast: '/TwilightGame/assets-optimized/items/grocery/yeast.png',
+  olive_oil: '/TwilightGame/assets-optimized/items/grocery/olive_oil.png',
+  strawberry_jam: '/TwilightGame/assets-optimized/items/grocery/strawberry_jam.png',
 };
 
 // NPC assets - Use optimized versions for in-game sprites, originals for portraits
@@ -299,4 +301,5 @@ export const itemAssets = {
   water: '/TwilightGame/assets-optimized/items/water.png',
   carrot_seeds: '/TwilightGame/assets-optimized/items/carrot_seeds.png',
   radish_seeds: '/TwilightGame/assets-optimized/items/radish_seeds.png',
+  blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
 };
