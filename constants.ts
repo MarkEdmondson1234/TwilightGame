@@ -778,6 +778,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
   },
+  {
+    tileType: TileType.MAGICAL_LAKE,
+    spriteWidth: 12,   // 12 tiles wide (large magical lake)
+    spriteHeight: 12,  // 12 tiles tall (square aspect ratio - source image is 3000x3000)
+    offsetX: -6,       // Center horizontally on anchor tile
+    offsetY: -6,       // Center vertically on anchor tile
+    image: tileAssets.magical_lake,
+    isForeground: false,  // Render under player/NPCs (it's water)
+    // Collision covers most of the lake (10x10 inner area, leaving 1-tile walkable shore)
+    collisionWidth: 10,
+    collisionHeight: 2,
+    collisionOffsetX: -6,
+    collisionOffsetY: 0,
+    // No transforms - this is a unique magical feature
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+  },
 ];
 
 /**

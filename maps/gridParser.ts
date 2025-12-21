@@ -110,6 +110,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'q': TileType.CAMPFIRE,        // q = Campfire (looks like fire/smoke)
   '?': TileType.WITCH_HUT,       // ? = Witch hut (mysterious magical dwelling)
   '+': TileType.CAULDRON,        // + = Cauldron (bubbling witch's pot)
+  '(': TileType.MAGICAL_LAKE,    // ( = Magical lake (12x12 mystical water feature, curves like a pool)
 };
 
 /**

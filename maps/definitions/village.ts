@@ -168,6 +168,13 @@ export const village: MapDefinition = {
       toPosition: { x: 11, y: 28 },  // Spawn at south entrance of witch hut
       label: 'To Hidden Grove',
     },
+    {
+      fromPosition: { x: 4, y: 14 }, // DEBUG: Quick access to magical lake (3 down from Hidden Grove)
+      tileType: TileType.GRASS,
+      toMapId: 'magical_lake',
+      toPosition: { x: 14, y: 28 },  // Spawn at south entrance of magical lake
+      label: 'To Magical Lake (Debug)',
+    },
   ],
   npcs: [
     // Village Elder - wise NPC near cherry tree

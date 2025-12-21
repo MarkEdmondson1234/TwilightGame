@@ -35,6 +35,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.WATER_RIGHT]: 'grass',  // Edge tiles use grass background for natural shoreline
   [TileType.WATER_TOP]: 'grass',  // Edge tiles use grass background for natural shoreline
   [TileType.WATER_BOTTOM]: 'grass',  // Edge tiles use grass background for natural shoreline
+  [TileType.MAGICAL_LAKE]: 'grass',  // Magical lake uses grass background for shoreline
   [TileType.PATH]: 'grass',  // Use grass color so stepping stones blend naturally
   [TileType.FLOOR]: 'floor',
   [TileType.FLOOR_LIGHT]: 'floor',

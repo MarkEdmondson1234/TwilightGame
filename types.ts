@@ -13,6 +13,7 @@ export enum TileType {
   WATER_RIGHT,
   WATER_TOP,
   WATER_BOTTOM,
+  MAGICAL_LAKE,  // Large 12x12 magical lake tile (multi-tile sprite for forest lake scene)
   PATH,
   // Indoor tiles
   FLOOR,

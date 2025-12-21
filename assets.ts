@@ -139,6 +139,9 @@ export const tileAssets = {
   sambuca_bush_summer: '/TwilightGame/assets-optimized/tiles/sambuca_bush_summer.png',
   sambuca_bush_autumn: '/TwilightGame/assets-optimized/tiles/sambuca_bush_autumn.png',
   sambuca_bush_winter: '/TwilightGame/assets-optimized/tiles/sambuca_bush_winter.png',
+  // Magical lake asset (12x12 multi-tile sprite for forest lake scene)
+  // Optimized at 2048px with showcase quality (97%, compression level 3)
+  magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',
 };
 
 // Farming assets - Use optimized versions for better performance
@@ -260,6 +263,10 @@ export const npcAssets = {
   duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
   duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',
   duck_portrait: '/TwilightGame/assets/npcs/duck_01.png',
+  // Mother Sea assets (mystical lake spirit - rises from the magical lake)
+  mother_sea_01: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_01.png',
+  mother_sea_02: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_02.png',
+  mother_sea_portrait: '/TwilightGame/assets/npcs/mother_sea/mother-sea_01.png',
 };
 
 // Player assets (add your custom sprites here when ready)

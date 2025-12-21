@@ -27,4 +27,5 @@ export {
   createStellaNPC,
   createMorganNPC,
   createBunnyflyNPC,
+  createMotherSeaNPC,
 } from './npcs';

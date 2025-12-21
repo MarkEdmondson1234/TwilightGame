@@ -83,6 +83,13 @@ export const deepForest: MapDefinition = {
       toPosition: { x: 2, y: 15 }, // Return to random forest
       label: 'Leave Sacred Grove',
     },
+    {
+      fromPosition: { x: 7, y: 27 },
+      tileType: TileType.PATH,
+      toMapId: 'magical_lake',
+      toPosition: { x: 14, y: 28 }, // South entrance of magical lake
+      label: 'To Magical Lake',
+    },
   ],
   npcs: [
     // Stella - fairy guardian of the grove, positioned near the giant fairy oak
