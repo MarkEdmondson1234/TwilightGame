@@ -67,17 +67,8 @@
       "Bash(dir:*)",
       "Bash(ren:*)",
       "Bash(taskkill:*)",
-      "Bash(for f in /Users/mark/dev/TwilightGame/public/assets/rooms/home/grocery_shop/*.png)",
-      "Bash(do echo \"$f:\")",
-      "Bash(sips:*)",
-      "Bash(npm run build:*)",
-      "Bash(npm run dev:reload:*)",
-      "Bash(wc:*)",
-      "Bash(npm run test:run:*)",
-      "Bash(nvm list:*)",
-      "Bash(source ~/.nvm/nvm.sh)",
-      "Bash(nvm use:*)",
-      "Bash(node:*)"
+      "Skill(add-inventory-sprite)",
+      "Skill(add-inventory-sprite:*)"
     ],
     "deny": [],
     "ask": [

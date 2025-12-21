@@ -1410,23 +1410,31 @@ const App: React.FC = () => {
                     playerGold={gameState.getGold()}
                     playerInventory={gameState.getState().inventory.items}
                     onTransaction={(newGold, newInventory) => {
+                        console.log('[App] onTransaction called:', { newGold, newInventoryLength: newInventory.length });
+
                         // Calculate gold change
                         const currentGold = gameState.getGold();
                         const goldDifference = newGold - currentGold;
 
+                        console.log('[App] Gold change:', { currentGold, newGold, goldDifference });
+
                         if (goldDifference > 0) {
                             gameState.addGold(goldDifference);
+                            console.log('[App] Added gold:', goldDifference);
                         } else if (goldDifference < 0) {
                             gameState.spendGold(Math.abs(goldDifference));
+                            console.log('[App] Spent gold:', Math.abs(goldDifference));
                         }
 
                         // Update inventory
                         const currentTools = gameState.getState().inventory.tools;
                         gameState.saveInventory(newInventory, currentTools);
+                        console.log('[App] Saved inventory:', newInventory);
 
                         // Update UI inventory display
                         const uiInventory = convertInventoryToUI();
                         setInventoryItems(uiInventory);
+                        console.log('[App] Updated UI inventory:', uiInventory.length);
                     }}
                 />
             )}

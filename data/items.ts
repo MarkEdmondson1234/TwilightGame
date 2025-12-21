@@ -53,6 +53,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 2,
     buyPrice: 5,
     cropId: 'radish',
+    image: itemAssets.radish_seeds,
   },
 
   seed_tomato: {
@@ -66,6 +67,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 7,
     buyPrice: 15,
     cropId: 'tomato',
+    image: itemAssets.tomato_seeds,
   },
 
   seed_wheat: {
@@ -281,6 +283,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A fresh, crunchy radish.',
     stackable: true,
     sellPrice: 10,
+    image: itemAssets.radishes,
   },
 
   crop_tomato: {
@@ -291,6 +294,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A juicy red tomato.',
     stackable: true,
     sellPrice: 25,
+    image: groceryAssets.tomato,
   },
 
   crop_wheat: {
