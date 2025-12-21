@@ -38,9 +38,9 @@ const gridString = `
 ###################
 ###################
 ###################
+#########....######
 ##...............##
-##...............##
-#########S#########
+###################
 `;
 
 export const shop: MapDefinition = {
@@ -85,21 +85,24 @@ export const shop: MapDefinition = {
   // Transitions
   transitions: [
     {
-      fromPosition: { x: 9, y: 9 }, // Shop door at center bottom (where S is in grid)
+      fromPosition: { x: 5, y: 10 }, // Shop door at center bottom (where S is in grid)
       tileType: TileType.SHOP_DOOR,
       toMapId: 'village',
-      toPosition: { x: 10, y: 14 }, // Back to village
+      toPosition: { x: 12, y: 14 }, // Back to village
       label: 'Exit Shop',
     },
   ],
 
-  // NPCs - Fox shopkeeper behind the counter (around y: 5-6 area)
+  // NPCs - Fox behind the counter (around y: 5-6 area)
+  // Uses 'shop_counter_fox' ID to distinguish from village shopkeeper (triggers shop UI)
   // zIndexOverride: 50 puts fox between background (-100) and player (100)
   // This means fox appears BEHIND the counter foreground layer (200)
+  // interactionRadius: 4 allows interaction from the walkable floor area (y:8-9)
   npcs: [
     {
-      ...createShopkeeperNPC('fox_shopkeeper', { x: 6, y: 6 }, 'Fox'),
+      ...createShopkeeperNPC('shop_counter_fox', { x: 9, y: 6 }, 'Fox'),
       zIndexOverride: 50, // Behind player, behind counter
+      interactionRadius: 4, // Larger radius to reach from in front of counter
     },
   ],
 };

@@ -48,6 +48,7 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
                                 top: transition.fromPosition.y * TILE_SIZE + offsetY,
                                 width: TILE_SIZE,
                                 height: TILE_SIZE,
+                                zIndex: 500, // Above foreground layers (65) but below UI (1000)
                             }}
                         />
                         {/* Label above the tile */}
@@ -57,6 +58,7 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
                                 left: (transition.fromPosition.x + 0.5) * TILE_SIZE + offsetX,
                                 top: (transition.fromPosition.y - 0.5) * TILE_SIZE + offsetY,
                                 transform: 'translate(-50%, -50%)',
+                                zIndex: 500, // Above foreground layers (65) but below UI (1000)
                             }}
                         >
                             <div

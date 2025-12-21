@@ -291,13 +291,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
                 return; // Don't check for other interactions if we found a stove
             }
 
-            // Check for shop interaction (opens shop UI when inside shop map)
-            if (currentMapId === 'shop') {
-                onSetShowShopUI(true);
-                return; // Don't check for other interactions if in shop
-            }
-
-            // Check for NPC interaction
+            // Check for NPC interaction (including shop fox which opens shop UI)
             const npcId = checkNPCInteraction(playerPosRef.current);
             if (npcId) {
                 onSetActiveNPC(npcId);

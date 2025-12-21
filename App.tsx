@@ -44,6 +44,7 @@ import { TimeManager } from './utils/TimeManager';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
+import NPCInteractionIndicators from './components/NPCInteractionIndicators';
 import TileRenderer from './components/TileRenderer';
 import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
@@ -273,6 +274,17 @@ const App: React.FC = () => {
 
         return () => clearInterval(decayInterval);
     }, []);
+
+    // Intercept shop counter fox interaction to open shop UI instead of dialogue
+    // Only the 'shop_counter_fox' NPC inside the shop triggers the shop UI
+    // The village 'shopkeeper' NPC just shows normal dialogue
+    useEffect(() => {
+        if (activeNPC === 'shop_counter_fox') {
+            // Clear the NPC dialogue and open shop UI instead
+            setActiveNPC(null);
+            setShowShopUI(true);
+        }
+    }, [activeNPC]);
 
     // Setup keyboard controls
     useKeyboardControls({
@@ -1258,6 +1270,13 @@ const App: React.FC = () => {
                     currentMap={currentMap}
                     playerPos={playerPos}
                     lastTransitionTime={lastTransitionTime.current}
+                    gridOffset={effectiveGridOffset}
+                />
+
+                {/* NPC interaction indicators (shows when player is near interactable NPCs) */}
+                <NPCInteractionIndicators
+                    npcs={npcManager.getCurrentMapNPCs()}
+                    playerPos={playerPos}
                     gridOffset={effectiveGridOffset}
                 />
 
