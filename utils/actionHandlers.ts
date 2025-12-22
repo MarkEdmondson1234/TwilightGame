@@ -478,6 +478,60 @@ export function handleForageAction(
 }
 
 /**
+ * Check for well interaction near the player
+ * Wells are 2x2 multi-tile sprites, so check current tile and adjacent tiles
+ */
+export function checkWellInteraction(playerPos: Position): boolean {
+    const playerTileX = Math.floor(playerPos.x);
+    const playerTileY = Math.floor(playerPos.y);
+
+    // Check player's current tile and adjacent tiles (including diagonals for 2x2 well)
+    const tilesToCheck = [
+        { x: playerTileX, y: playerTileY },
+        { x: playerTileX - 1, y: playerTileY },
+        { x: playerTileX + 1, y: playerTileY },
+        { x: playerTileX, y: playerTileY - 1 },
+        { x: playerTileX, y: playerTileY + 1 },
+        { x: playerTileX - 1, y: playerTileY - 1 },
+        { x: playerTileX + 1, y: playerTileY - 1 },
+        { x: playerTileX - 1, y: playerTileY + 1 },
+        { x: playerTileX + 1, y: playerTileY + 1 },
+    ];
+
+    for (const tile of tilesToCheck) {
+        const tileData = getTileData(tile.x, tile.y);
+        if (tileData && tileData.type === TileType.WELL) {
+            console.log(`[Action] Found well at (${tile.x}, ${tile.y})`);
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Handle collecting water from the well
+ * Adds water items to inventory
+ */
+export function handleCollectWater(): { success: boolean; message: string } {
+    // Add 3-5 water items to inventory (random)
+    const waterAmount = Math.floor(Math.random() * 3) + 3; // 3-5
+    inventoryManager.addItem('water', waterAmount);
+
+    // Save inventory
+    const inventoryData = inventoryManager.getInventoryData();
+    gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+    const message = `Collected ${waterAmount} water from the well!`;
+    console.log(`[Action] ${message}`);
+
+    return {
+        success: true,
+        message,
+    };
+}
+
+/**
  * Check for cooking locations (stove or campfire) near the player
  * Returns the type and position of the cooking location if found
  */
@@ -538,7 +592,8 @@ export type InteractionType =
     | 'forage'
     | 'pickup_item'
     | 'eat_item'
-    | 'taste_item';
+    | 'taste_item'
+    | 'collect_water';
 
 export interface AvailableInteraction {
     type: InteractionType;
@@ -571,6 +626,7 @@ export interface GetInteractionsConfig {
     onFarmAnimation?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
     onForage?: (result: ForageResult) => void;
     onPlacedItemAction?: (action: PlacedItemAction) => void;
+    onCollectWater?: (result: { success: boolean; message: string }) => void;
 }
 
 /**
@@ -591,6 +647,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         onFarmAnimation,
         onForage,
         onPlacedItemAction,
+        onCollectWater,
     } = config;
 
     const interactions: AvailableInteraction[] = [];
@@ -715,6 +772,20 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             color: '#f97316',
             data: { locationType: cookingLoc.locationType },
             execute: () => onCooking?.(cookingLoc.locationType!),
+        });
+    }
+
+    // Check for well interaction (collect water)
+    if (checkWellInteraction(position)) {
+        interactions.push({
+            type: 'collect_water',
+            label: 'Collect Water',
+            icon: '💧',
+            color: '#06b6d4',
+            execute: () => {
+                const result = handleCollectWater();
+                onCollectWater?.(result);
+            },
         });
     }
 

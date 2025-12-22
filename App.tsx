@@ -449,6 +449,12 @@ const App: React.FC = () => {
                     showToast('Mmm, tasty!', 'info');
                 }
             },
+            onCollectWater: (result) => {
+                if (result.success) {
+                    handleFarmUpdate(); // Update inventory display
+                    showToast(result.message, 'success');
+                }
+            },
         });
 
         console.log(`[Mouse Click] Found ${interactions.length} interactions`);
