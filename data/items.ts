@@ -525,6 +525,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 0,
     buyPrice: 1,
+    image: itemAssets.water,
   },
 
   // Dairy
