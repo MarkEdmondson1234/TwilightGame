@@ -179,20 +179,12 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
                 onSetShowRecipeBook(false);
                 return;
             }
-            if (activeNPC) {
-                e.preventDefault();
-                onSetActiveNPC(null);
-            }
             return;
         }
 
-        // Action key (E or Enter) - close dialogue or cooking/shop/inventory UIs if open
+        // Action key (E or Enter) - close cooking/shop/inventory UIs if open
+        // Note: Dialogue (activeNPC) is handled by DialogueBox component directly
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
-            if (activeNPC) {
-                e.preventDefault();
-                onSetActiveNPC(null);
-                return;
-            }
             if (showCookingUI) {
                 e.preventDefault();
                 onSetShowCookingUI(false);

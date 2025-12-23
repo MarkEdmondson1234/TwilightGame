@@ -106,9 +106,9 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
           <div
             className="relative flex-shrink-0"
             style={{
-              width: '38%',
-              height: '85%',
-              marginBottom: '8%',
+              width: '45%',
+              height: '95%',
+              marginBottom: '18%',
             }}
           >
             <img
@@ -131,9 +131,9 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
         <div
           className="relative flex-shrink-0"
           style={{
-            width: isSmallScreen ? '60%' : '38%',
-            height: isSmallScreen ? '60%' : '85%',
-            marginBottom: isSmallScreen ? '30%' : '8%',
+            width: isSmallScreen ? '70%' : '45%',
+            height: isSmallScreen ? '70%' : '95%',
+            marginBottom: isSmallScreen ? '35%' : '18%',
           }}
         >
           <img
@@ -259,7 +259,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
               onClick={() => onClose()}
               className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 text-sm opacity-80 hover:opacity-100 px-4 py-2"
             >
-              <span>Press E to continue</span>
+              <span>Click to continue</span>
               <span className="animate-bounce">▼</span>
             </button>
           </div>
@@ -277,10 +277,6 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
         style={{ zIndex: -1 }}
       />
 
-      {/* Help text - desktop only */}
-      <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 text-gray-500 text-xs pb-1">
-        Press ESC or E to close
-      </div>
     </div>
   );
 };
