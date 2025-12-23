@@ -537,22 +537,12 @@ mysteriousGarden: {
 
 ## Runtime Color Modification
 
-The palette can be modified at runtime, allowing for in-game customization, accessibility features, or dynamic themes.
+The palette provides colour definitions used by all tiles in the game.
 
-### Modifying Colors in Code
+### Accessing Colors in Code
 
 ```typescript
-import { updatePaletteColor, updatePaletteColors, getPalette, getColorHex } from './palette';
-
-// Change a single color
-updatePaletteColor('sage', '#90EE90');  // Brighter green grass
-
-// Change multiple colors at once
-updatePaletteColors({
-  sage: '#90EE90',
-  sky: '#87CEEB',
-  water: '#4682B4',
-});
+import { getPalette, getColorHex } from './palette';
 
 // Get current palette
 const palette = getPalette();
@@ -562,41 +552,12 @@ console.log(palette.sage.hex);  // Current sage color
 const sageHex = getColorHex('sage');  // '#87AE73'
 ```
 
-### Export/Import Palettes
+### How Colours Are Applied
 
-Players can save and load custom color palettes:
-
-```typescript
-import { exportPalette, importPalette, resetPalette } from './palette';
-
-// Export current palette as JSON
-const paletteJSON = exportPalette();
-localStorage.setItem('customPalette', paletteJSON);
-
-// Import saved palette
-const savedPalette = localStorage.getItem('customPalette');
-if (savedPalette) {
-  importPalette(savedPalette);
-}
-
-// Reset to defaults
-resetPalette();
-```
-
-### In-Game Color Editor (Future)
-
-To add an in-game color picker:
-
-1. Create UI component with color inputs
-2. Call `updatePaletteColor()` when user changes a color
-3. Changes apply immediately to all tiles using that color
-4. Save to localStorage for persistence
-
-**Example use cases:**
-- Accessibility: High-contrast mode for colorblind players
-- Personalization: Custom color themes
-- Day/night: Programmatically darken all colors at night
-- Special events: Holiday-themed palettes
+1. **TILE_LEGEND** defines base colours for each tile type
+2. **Color schemes** override colours per map theme (indoor, village, forest, cave)
+3. **ColorResolver** resolves the final colour using the current map's scheme
+4. **Palette** provides the hex values for palette colour names
 
 ## Related Documentation
 

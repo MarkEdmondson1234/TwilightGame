@@ -24,13 +24,49 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE, TILE_LEGEND, SPRITE_METADATA } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
-import { MapDefinition, TileType, FarmPlotState } from '../../types';
+import { MapDefinition, TileType, FarmPlotState, CropGrowthStage } from '../../types';
 import { getColorHex } from '../../palette';
 import { mapManager } from '../../maps';
 import { calculateTileTransforms } from '../tileRenderUtils';
 import { ColorResolver } from '../ColorResolver';
 import { farmManager } from '../farmManager';
 import { farmingAssets } from '../../assets';
+
+/**
+ * Crop sprite sizing configuration per growth stage
+ * Crops grow from seedling (small) to adult (large multi-tile sprite)
+ */
+interface CropSpriteConfig {
+  width: number;   // Width in tiles
+  height: number;  // Height in tiles
+  offsetX: number; // Horizontal offset (negative = extend left)
+  offsetY: number; // Vertical offset (negative = extend upward)
+  zIndex: number;  // Render layer (higher = in front)
+}
+
+const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
+  [CropGrowthStage.SEEDLING]: {
+    width: 1,
+    height: 1,
+    offsetX: 0,
+    offsetY: 0,
+    zIndex: 1,
+  },
+  [CropGrowthStage.YOUNG]: {
+    width: 1.5,
+    height: 1.5,
+    offsetX: -0.25,   // Center horizontally: -(width-1)/2
+    offsetY: -0.5,    // Extend upward from soil
+    zIndex: 50,       // Above ground level
+  },
+  [CropGrowthStage.ADULT]: {
+    width: 2,
+    height: 2,
+    offsetX: -0.5,    // Center horizontally: -(width-1)/2
+    offsetY: -2,      // Extend 1 tile upward from soil
+    zIndex: 100,      // Same level as player for proper sorting
+  },
+};
 
 export class TileLayer {
   private container: PIXI.Container;
@@ -153,12 +189,16 @@ export class TileLayer {
         if (plotTileData) {
           tileData = plotTileData;
         }
-        // Get growth stage for all growing crops (planted, watered, ready, wilting)
+        // Get growth stage for all growing crops (planted, watered, ready, wilting, dead)
         if (plot.state === FarmPlotState.PLANTED ||
             plot.state === FarmPlotState.WATERED ||
             plot.state === FarmPlotState.READY ||
-            plot.state === FarmPlotState.WILTING) {
-          growthStage = farmManager.getGrowthStage(plot);
+            plot.state === FarmPlotState.WILTING ||
+            plot.state === FarmPlotState.DEAD) {
+          // Dead plants render at ADULT size (they were grown before dying)
+          growthStage = plot.state === FarmPlotState.DEAD
+            ? CropGrowthStage.ADULT
+            : farmManager.getGrowthStage(plot);
           cropType = plot.cropType;
         }
       }
@@ -214,10 +254,13 @@ export class TileLayer {
             tileData.type === TileType.SOIL_PLANTED ||
             tileData.type === TileType.SOIL_WATERED ||
             tileData.type === TileType.SOIL_READY ||
-            tileData.type === TileType.SOIL_WILTING
+            tileData.type === TileType.SOIL_WILTING ||
+            tileData.type === TileType.SOIL_DEAD
         )) {
-          // Override with growth-stage-specific sprite based on crop type
-          if (growthStage === 0) { // SEEDLING
+          // Dead plants use wilted_plant sprite at ADULT size
+          if (tileData.type === TileType.SOIL_DEAD) {
+            imageUrl = farmingAssets.wilted_plant;
+          } else if (growthStage === 0) { // SEEDLING
             imageUrl = farmingAssets.seedling;
           } else if (growthStage === 1) { // YOUNG
             // Use crop-specific young sprite if available, otherwise use generic
@@ -250,6 +293,18 @@ export class TileLayer {
       return;
     }
 
+    // Check if this is a crop sprite that needs multi-tile rendering
+    const isCropSprite = growthStage !== null && cropType && (
+      tileData.type === TileType.SOIL_PLANTED ||
+      tileData.type === TileType.SOIL_WATERED ||
+      tileData.type === TileType.SOIL_READY ||
+      tileData.type === TileType.SOIL_WILTING ||
+      tileData.type === TileType.SOIL_DEAD
+    );
+
+    // Get crop sprite config if applicable
+    const cropConfig = isCropSprite ? CROP_SPRITE_CONFIG[growthStage as CropGrowthStage] : null;
+
     // Get or create sprite (will be rendered on top of color background)
     // Use separate key for sprite vs color background
     const spriteKey = `${x},${y}_sprite`;
@@ -270,13 +325,24 @@ export class TileLayer {
       }
 
       sprite = new PIXI.Sprite(texture);
-      sprite.x = x * TILE_SIZE;
-      sprite.y = y * TILE_SIZE;
 
-      // Calculate scale based on texture size vs desired render size
-      const textureScale = TILE_SIZE / texture.width;
-      sprite.scale.set(textureScale, textureScale);
-      sprite.zIndex = 1; // Above color background (z=0)
+      // Position and size based on whether this is a crop sprite
+      if (cropConfig) {
+        // Multi-tile crop sprite rendering
+        sprite.x = (x + cropConfig.offsetX) * TILE_SIZE;
+        sprite.y = (y + cropConfig.offsetY) * TILE_SIZE;
+        sprite.width = cropConfig.width * TILE_SIZE;
+        sprite.height = cropConfig.height * TILE_SIZE;
+        sprite.zIndex = cropConfig.zIndex;
+      } else {
+        // Standard single-tile rendering
+        sprite.x = x * TILE_SIZE;
+        sprite.y = y * TILE_SIZE;
+        // Calculate scale based on texture size vs desired render size
+        const textureScale = TILE_SIZE / texture.width;
+        sprite.scale.set(textureScale, textureScale);
+        sprite.zIndex = 1; // Above color background (z=0)
+      }
 
       this.container.addChild(sprite);
       this.sprites.set(spriteKey, sprite);
@@ -285,11 +351,22 @@ export class TileLayer {
       const newTexture = textureManager.getTexture(imageUrl);
       if (newTexture && sprite.texture !== newTexture) {
         sprite.texture = newTexture;
-        // Recalculate scale for new texture size
-        const textureScale = TILE_SIZE / newTexture.width;
-        sprite.scale.set(textureScale, textureScale);
+      }
 
-        // Reset position and anchor (texture change might need different positioning)
+      // Always update position/size for crop sprites (growth stage may have changed)
+      if (cropConfig) {
+        sprite.x = (x + cropConfig.offsetX) * TILE_SIZE;
+        sprite.y = (y + cropConfig.offsetY) * TILE_SIZE;
+        sprite.width = cropConfig.width * TILE_SIZE;
+        sprite.height = cropConfig.height * TILE_SIZE;
+        sprite.zIndex = cropConfig.zIndex;
+        sprite.anchor.set(0, 0);
+        // Don't reset scale - width/height already set the correct scale internally
+      } else {
+        // Recalculate scale for new texture size
+        const textureScale = TILE_SIZE / (newTexture || sprite.texture).width;
+        sprite.scale.set(textureScale, textureScale);
+        // Reset position and anchor
         sprite.anchor.set(0, 0);
         sprite.x = x * TILE_SIZE;
         sprite.y = y * TILE_SIZE;

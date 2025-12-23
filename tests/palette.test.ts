@@ -157,33 +157,10 @@ describe('palette.ts', () => {
   });
 
   describe('initializePalette()', () => {
-    it('initializes with defaults when no saved colors', () => {
+    it('initializes with default palette', () => {
       initializePalette();
 
       expect(getColorHex('sage')).toBe(DEFAULT_PALETTE.sage.hex);
-    });
-
-    it('applies saved custom colors', () => {
-      const savedColors = {
-        sage: '#AABBCC',
-        brown: '#112233',
-      };
-
-      initializePalette(savedColors);
-
-      expect(getColorHex('sage')).toBe('#AABBCC');
-      expect(getColorHex('brown')).toBe('#112233');
-    });
-
-    it('ignores unknown color names in saved colors', () => {
-      const savedColors = {
-        unknownColor: '#FF0000',
-        sage: '#AABBCC',
-      };
-
-      // Should not throw
-      expect(() => initializePalette(savedColors)).not.toThrow();
-      expect(getColorHex('sage')).toBe('#AABBCC');
     });
 
     it('applies CSS to DOM', () => {

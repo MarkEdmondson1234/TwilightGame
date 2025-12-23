@@ -215,7 +215,6 @@ Pure functions and game systems:
 - `components/DebugInfoPanel.tsx` - Debug panel component
 - `components/CharacterCreator.tsx` - Character customization UI
 - `components/DialogueBox.tsx` - NPC dialogue display
-- `components/ColorSchemeEditor.tsx` - Runtime color scheme editing
 - `components/HelpBrowser.tsx` - In-game documentation browser (F1)
 - `components/Modal.tsx` - Modal component
 

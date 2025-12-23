@@ -4,8 +4,8 @@
  * NPCs that appear in home/family settings.
  */
 
-import { NPC, NPCBehavior, Direction, Position, AnimatedNPCStates, FriendshipConfig } from '../../types';
-import { npcAssets } from '../../assets';
+import { NPC, NPCBehavior, Direction, Position, AnimatedNPCStates } from '../../types';
+import { npcAssets, dialogueSpriteAssets } from '../../assets';
 
 /**
  * Create a Mum NPC with gentle animation
@@ -47,11 +47,14 @@ export function createMumNPC(
     behavior: NPCBehavior.STATIC,
     sprite: npcAssets.mum_01,
     portraitSprite: npcAssets.mum_portrait,
+    // Dialogue expression sprites - shows different emotions during conversation
+    dialogueExpressions: dialogueSpriteAssets.mum,
     scale: 4.0,
     dialogue: [
       {
         id: 'greeting',
         text: 'Hello, love! Welcome home. Have you had a good day?',
+        expression: 'smile', // Warm welcoming smile
         seasonalText: {
           spring: 'Good morning, dear! Spring is here - perfect weather for the garden. Would you like some breakfast before you head out?',
           summer: 'Hello, sweetheart! It\'s warm today. I\'ve made some cold lemonade if you\'d like some.',
@@ -91,6 +94,7 @@ export function createMumNPC(
       {
         id: 'home_tasks',
         text: 'Oh, just the usual - keeping the house tidy, preparing meals. It\'s simple work, but it keeps me busy.',
+        expression: 'default', // Thoughtful
         seasonalText: {
           spring: 'I\'ve been planting flowers in the window boxes. The spring blooms bring such joy to our home!',
           summer: 'I\'m preserving berries for winter. The summer harvest is always bountiful if we care for it properly.',
@@ -110,6 +114,7 @@ export function createMumNPC(
       {
         id: 'offer_help',
         text: 'That\'s very sweet of you, dear. Just knowing you\'re safe and happy is help enough. But do take care of yourself out there.',
+        expression: 'happy', // Touched by the offer
       },
       {
         id: 'village_chat',
@@ -132,6 +137,7 @@ export function createMumNPC(
       {
         id: 'teach_cooking',
         text: 'Oh, I\'d love to teach you! Cooking is such a wonderful skill. Let me show you some of my favourite recipes.',
+        expression: 'happy', // Excited to teach
         responses: [
           {
             text: 'I\'d like to learn French Toast.',
@@ -157,6 +163,7 @@ export function createMumNPC(
       {
         id: 'learn_french_toast',
         text: 'Ah, French Toast! That\'s the perfect recipe to start with. It\'s simple but delicious. You\'ll need bread, eggs, milk, and a bit of sugar. I\'ll write it down for you.',
+        expression: 'smile', // Warm teaching moment
         responses: [],
       },
       {

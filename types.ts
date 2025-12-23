@@ -1,5 +1,3 @@
-import React from 'react';
-
 export enum TileType {
   // Outdoor tiles
   GRASS,
@@ -338,6 +336,9 @@ export interface DialogueNode {
   // Friendship requirements for this dialogue node
   requiredFriendshipTier?: FriendshipTier;  // Only show if friendship >= tier
   requiredSpecialFriend?: boolean;           // Only show if special friend
+  // Expression/emotion for dialogue character sprite (e.g., 'smile', 'happy', 'thinky')
+  // If set, uses dialogueExpressions[expression] from NPC, otherwise uses default dialogueSprite
+  expression?: string;
 }
 
 export interface NPC {
@@ -347,7 +348,12 @@ export interface NPC {
   direction: Direction;
   behavior: NPCBehavior;
   sprite: string; // Path to sprite image, or array for animated (optimized for in-game use)
-  portraitSprite?: string; // Optional high-res sprite for dialogue portraits
+  portraitSprite?: string; // Optional high-res sprite for dialogue portraits (zoomed crop)
+  dialogueSprite?: string; // Optional special dialogue artwork (full character, shown large behind dialogue window)
+  // Expression-based dialogue sprites (maps expression name to image URL)
+  // Use with DialogueNode.expression to show different emotions/poses during dialogue
+  // e.g., { smile: '/assets/mum_smile.png', happy: '/assets/mum_happy.png' }
+  dialogueExpressions?: Record<string, string>;
   dialogue: DialogueNode[]; // Conversation tree
   interactionRadius?: number; // How close player must be (default 1.5 tiles)
   animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations

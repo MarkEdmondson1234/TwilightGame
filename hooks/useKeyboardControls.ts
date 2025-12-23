@@ -35,7 +35,6 @@ export interface KeyboardControlsConfig {
     onSetActiveNPC: (npcId: string | null) => void;
     onSetDebugOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowDevTools: (show: boolean | ((prev: boolean) => boolean)) => void;
-    onSetShowColorEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowSpriteEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
     onSetShowHelpBrowser: (show: boolean) => void;
     onSetShowCookingUI: (show: boolean) => void;
@@ -67,7 +66,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         onSetActiveNPC,
         onSetDebugOpen,
         onSetShowDevTools,
-        onSetShowColorEditor,
         onSetShowSpriteEditor,
         onSetShowHelpBrowser,
         onSetShowCookingUI,
@@ -111,21 +109,18 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // F4 key to toggle DevTools
+        // === F-KEY DEBUG TOOLS ===
+        // F1: Help Browser (handled above)
+        // F3: Debug Overlay (collision boxes, tile info)
+        // F4: DevTools Panel (time, weather, farming controls)
+        // F6: Quick farm time advance (+1 min)
+        // F7: Debug teleport to NPC showcase (dev only)
+        // F8: Sprite Metadata Editor (dev only)
+
+        // F4: DevTools Panel - time/weather/farming controls
         if (e.key === 'F4') {
             e.preventDefault();
-            console.log('[Keyboard] F4 pressed - toggling DevTools');
-            onSetShowDevTools((prev) => {
-                console.log('[Keyboard] DevTools prev state:', prev, 'new state:', !prev);
-                return !prev;
-            });
-            return;
-        }
-
-        // F5 key to toggle color editor
-        if (e.key === 'F5') {
-            e.preventDefault();
-            onSetShowColorEditor((prev) => !prev);
+            onSetShowDevTools((prev) => !prev);
             return;
         }
 
@@ -136,17 +131,17 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // F6 key to advance farm time (debug)
+        // F6: Quick farm time advance (+1 min) - also available in F4 DevTools
         if (e.key === 'F6') {
             e.preventDefault();
-            // Advance time by 1 minute (60 seconds)
             farmManager.debugAdvanceTime(60 * 1000);
             gameState.saveFarmPlots(farmManager.getAllPlots());
+            onFarmUpdate();
             console.log('[Debug] Advanced farm time by 1 minute');
             return;
         }
 
-        // F7 key to teleport to NPC debug map
+        // F7: Debug teleport to NPC showcase map (dev only)
         if (e.key === 'F7') {
             e.preventDefault();
             console.log('[Debug] Teleporting to NPC debug showcase...');
@@ -160,10 +155,9 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // F8 key to toggle Sprite Metadata Editor (dev only)
+        // F8: Sprite Metadata Editor (dev only)
         if (e.key === 'F8') {
             e.preventDefault();
-            console.log('[Keyboard] F8 pressed - toggling Sprite Metadata Editor');
             onSetShowSpriteEditor((prev) => !prev);
             return;
         }
@@ -236,20 +230,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
                 console.log('[Reset] Teleporting to spawn point:', currentMap.spawnPoint);
                 onSetPlayerPos(currentMap.spawnPoint);
                 playerPosRef.current = currentMap.spawnPoint;
-            }
-        }
-
-        // F5 key to reset all farm plots (debug)
-        if (e.key === 'F5') {
-            e.preventDefault();
-            const currentMapId = mapManager.getCurrentMapId();
-            if (currentMapId) {
-                // Clear all plots for current map
-                const allPlots = farmManager.getAllPlots();
-                const otherMapPlots = allPlots.filter(plot => plot.mapId !== currentMapId);
-                farmManager.loadPlots(otherMapPlots);
-                gameState.saveFarmPlots(otherMapPlots);
-                console.log(`[Reset] Cleared all farm plots for map: ${currentMapId}`);
             }
         }
 

@@ -26,6 +26,7 @@ export interface GamePalette {
   // Earth Tones
   brown: PaletteColor;
   chocolate: PaletteColor;
+  espresso: PaletteColor;
   rust: PaletteColor;
   maroon: PaletteColor;
   terracotta: PaletteColor;
@@ -143,7 +144,6 @@ export function updatePaletteColor(colorName: keyof GamePalette, hex: string): v
       hex,
     };
     applyPaletteToDOM();
-    saveCurrentPaletteToGameState(); // Auto-save on change
   } else {
     console.warn(`[Palette] Color '${colorName}' not found in palette`);
   }
@@ -192,38 +192,14 @@ export function getColorHex(colorName: keyof GamePalette): string {
 /**
  * Initialize palette on app startup
  * Call this early in your app initialization
- * Optionally load saved custom colors from GameState
  */
-export function initializePalette(savedColors?: Record<string, string>): void {
-  if (savedColors && Object.keys(savedColors).length > 0) {
-    // Apply saved custom colors
-    Object.entries(savedColors).forEach(([name, hex]) => {
-      if (currentPalette[name as keyof GamePalette]) {
-        currentPalette[name as keyof GamePalette].hex = hex;
-      }
-    });
-    console.log('[Palette] Loaded', Object.keys(savedColors).length, 'custom colors');
-  }
-
+export function initializePalette(): void {
   applyPaletteToDOM();
-  console.log('[Palette] Initialized with', Object.keys(currentPalette).length, 'colors'); // Includes espresso
+  console.log('[Palette] Initialized with', Object.keys(currentPalette).length, 'colors');
 }
 
 /**
- * Save current palette to GameState
- */
-export function saveCurrentPaletteToGameState(): void {
-  if (typeof window !== 'undefined' && (window as any).gameState) {
-    const allColors: Record<string, string> = {};
-    Object.entries(currentPalette).forEach(([name, color]) => {
-      allColors[name] = color.hex;
-    });
-    (window as any).gameState.saveCustomColors(allColors);
-  }
-}
-
-/**
- * Export palette as JSON (for saving/loading custom palettes)
+ * Export palette as JSON (for testing/debugging)
  */
 export function exportPalette(): string {
   const exportData: Record<string, string> = {};

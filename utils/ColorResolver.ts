@@ -22,7 +22,7 @@ type TimeKey = 'day' | 'night';
 
 /**
  * Map TileType enum to ColorScheme color keys
- * Extracted from ColorSchemeEditor for consistency
+ * Maps tile types to the color scheme keys used for background colours
  */
 const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.GRASS]: 'grass',
@@ -196,8 +196,7 @@ export class ColorResolver {
   }
 
   /**
-   * Export the tile type to color key mapping
-   * Used by ColorSchemeEditor for UI rendering
+   * Export the tile type to color key mapping for external use
    */
   public static get TILE_TYPE_TO_COLOR_KEY() {
     return TILE_TYPE_TO_COLOR_KEY;

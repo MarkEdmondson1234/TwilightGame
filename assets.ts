@@ -305,6 +305,41 @@ export const uiAssets = {
   satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
 };
 
+// Dialogue UI assets - Animated dialogue window frames
+export const dialogueAssets = {
+  // Animation frames for dialogue window (subtle animation effect)
+  frame_01: '/TwilightGame/assets/dialogue/dialog_01.png',
+  frame_02: '/TwilightGame/assets/dialogue/dialog_02.png',
+  frame_03: '/TwilightGame/assets/dialogue/dialog_03.png',
+  frame_04: '/TwilightGame/assets/dialogue/dialog_04.png',
+  frame_05: '/TwilightGame/assets/dialogue/dialog_05.png',
+  frame_06: '/TwilightGame/assets/dialogue/dialog_06.png',
+};
+
+// All dialogue frames as array for animation cycling
+export const dialogueFrames = [
+  '/TwilightGame/assets/dialogue/dialog_01.png',
+  '/TwilightGame/assets/dialogue/dialog_02.png',
+  '/TwilightGame/assets/dialogue/dialog_03.png',
+  '/TwilightGame/assets/dialogue/dialog_04.png',
+  '/TwilightGame/assets/dialogue/dialog_05.png',
+  '/TwilightGame/assets/dialogue/dialog_06.png',
+];
+
+// Dialogue character sprites - Special artwork for dialogue scenes (larger, more expressive)
+// These are optional - NPCs will fall back to portraitSprite > sprite if not defined
+// Organised by NPC with expression variants (default, smile, happy, thinky, etc.)
+export const dialogueSpriteAssets = {
+  // Mum dialogue expressions (default, happy, smile)
+  mum: {
+    default: '/TwilightGame/assets/npcs/mum/dialogue/mum_default.png',
+    happy: '/TwilightGame/assets/npcs/mum/dialogue/mum_happy.png',
+    smile: '/TwilightGame/assets/npcs/mum/dialogue/mum_smile.png',
+  },
+  // Add more NPCs as artwork becomes available
+  // shopkeeper: { default: '...', happy: '...', etc. },
+};
+
 // Item assets - Inventory items, tools, seeds, resources
 export const itemAssets = {
   hoe: '/TwilightGame/assets-optimized/items/hoe.png',

@@ -17,7 +17,6 @@ import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
 import TouchControls from './components/TouchControls';
 import DialogueBox from './components/DialogueBox';
-import ColorSchemeEditor from './components/ColorSchemeEditor';
 import HelpBrowser from './components/HelpBrowser';
 import DevTools from './components/DevTools';
 import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
@@ -85,7 +84,6 @@ const App: React.FC = () => {
     const [isDebugOpen, setDebugOpen] = useState(false);
     const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
     const [showDevTools, setShowDevTools] = useState(false); // Toggle dev tools panel
-    const [showColorEditor, setShowColorEditor] = useState(false); // Toggle color editor
     const [showSpriteEditor, setShowSpriteEditor] = useState(false); // Toggle sprite metadata editor (F8, dev only)
     const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
     const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
@@ -95,7 +93,7 @@ const App: React.FC = () => {
     const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
     const [showShopUI, setShowShopUI] = useState(false); // Toggle shop UI
     const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
-    const [colorSchemeVersion, setColorSchemeVersion] = useState(0); // Increments when color scheme changes (for cache busting)
+    const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
     const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
@@ -303,7 +301,6 @@ const App: React.FC = () => {
         onSetActiveNPC: setActiveNPC,
         onSetDebugOpen: setDebugOpen,
         onSetShowDevTools: setShowDevTools,
-        onSetShowColorEditor: setShowColorEditor,
         onSetShowSpriteEditor: setShowSpriteEditor,
         onSetShowHelpBrowser: setShowHelpBrowser,
         onSetShowCookingUI: (show) => {
@@ -999,15 +996,15 @@ const App: React.FC = () => {
         }
     }, [cameraX, cameraY, isPixiInitialized, currentMap?.renderMode]);
 
-    // Re-render PixiJS when color scheme changes (ColorSchemeEditor updates)
+    // Re-render PixiJS when render version changes (sprite metadata, season, etc.)
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
 
-        console.log('[App] Color scheme changed, re-rendering PixiJS tiles...');
+        console.log('[App] Render version changed, re-rendering PixiJS tiles...');
 
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
-            // Re-render all tiles with new colors
+            // Re-render all tiles
             tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger, currentWeather);
 
             // Update background sprite layer
@@ -1026,7 +1023,7 @@ const App: React.FC = () => {
                 foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
             }
         }
-    }, [colorSchemeVersion, isPixiInitialized]);
+    }, [renderVersion, isPixiInitialized]);
 
     // Update player sprite when player state changes
     useEffect(() => {
@@ -1146,7 +1143,7 @@ const App: React.FC = () => {
                         }}
                         seasonKey={seasonKey}
                         farmUpdateTrigger={farmUpdateTrigger}
-                        colorSchemeVersion={colorSchemeVersion}
+                        renderVersion={renderVersion}
                     />
                 </div>
             )}
@@ -1324,38 +1321,41 @@ const App: React.FC = () => {
                 visible={shouldShowWeather(currentMapId)}
             />
 
-            <HUD />
+            {/* Hide UI elements during dialogue */}
+            {!activeNPC && (
+                <>
+                    <HUD />
 
-            {/* Bookshelf UI - Recipe book shortcuts */}
-            <Bookshelf
-                playerPosition={playerPos}
-                currentMapId={currentMap.id}
-                nearbyNPCs={(() => {
-                    // Get NPCs within 2 tiles of player
-                    const range = 2;
-                    const npcs = npcManager.getCurrentMapNPCs();
-                    return npcs
-                        .filter(npc => {
-                            const dx = Math.abs(npc.position.x - playerPos.x);
-                            const dy = Math.abs(npc.position.y - playerPos.y);
-                            return dx <= range && dy <= range;
-                        })
-                        .map(npc => npc.id);
-                })()}
-            />
+                    {/* Bookshelf UI - Recipe book shortcuts */}
+                    <Bookshelf
+                        playerPosition={playerPos}
+                        currentMapId={currentMap.id}
+                        nearbyNPCs={(() => {
+                            // Get NPCs within 2 tiles of player
+                            const range = 2;
+                            const npcs = npcManager.getCurrentMapNPCs();
+                            return npcs
+                                .filter(npc => {
+                                    const dx = Math.abs(npc.position.x - playerPos.x);
+                                    const dy = Math.abs(npc.position.y - playerPos.y);
+                                    return dx <= range && dy <= range;
+                                })
+                                .map(npc => npc.id);
+                        })()}
+                    />
 
-            {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
-            <GameUIControls
-                showHelpBrowser={showHelpBrowser}
-                onToggleHelpBrowser={() => setShowHelpBrowser(!showHelpBrowser)}
-                showCollisionBoxes={showCollisionBoxes}
-                onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
-                showColorEditor={showColorEditor}
-                onToggleColorEditor={() => setShowColorEditor(!showColorEditor)}
-                onToggleInventory={() => setShowInventory(!showInventory)}
-            />
+                    {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
+                    <GameUIControls
+                        showHelpBrowser={showHelpBrowser}
+                        onToggleHelpBrowser={() => setShowHelpBrowser(!showHelpBrowser)}
+                        showCollisionBoxes={showCollisionBoxes}
+                        onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
+                        onToggleInventory={() => setShowInventory(!showInventory)}
+                    />
+                </>
+            )}
 
-            {isTouchDevice && (
+            {isTouchDevice && !activeNPC && (
                 <TouchControls
                     onDirectionPress={touchControls.handleDirectionPress}
                     onDirectionRelease={touchControls.handleDirectionRelease}
@@ -1380,21 +1380,21 @@ const App: React.FC = () => {
                 />
             )}
             {showDevTools && (
-                <DevTools onClose={() => {
-                    console.log('[App] Closing DevTools');
-                    setShowDevTools(false);
-                }} />
-            )}
-            {showColorEditor && (
-                <ColorSchemeEditor
-                    onClose={() => setShowColorEditor(false)}
-                    onColorChange={() => setColorSchemeVersion(v => v + 1)}
+                <DevTools
+                    onClose={() => {
+                        console.log('[App] Closing DevTools');
+                        setShowDevTools(false);
+                    }}
+                    onFarmUpdate={() => {
+                        console.log('[App] Farm update triggered from DevTools');
+                        setFarmUpdateTrigger((prev: number) => prev + 1);
+                    }}
                 />
             )}
             {import.meta.env.DEV && showSpriteEditor && (
                 <SpriteMetadataEditor
                     onClose={() => setShowSpriteEditor(false)}
-                    onApply={() => setColorSchemeVersion(v => v + 1)} // Reuse color scheme version to trigger re-render
+                    onApply={() => setRenderVersion(v => v + 1)} // Trigger re-render when sprite metadata changes
                 />
             )}
             {showHelpBrowser && (

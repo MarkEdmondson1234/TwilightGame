@@ -39,7 +39,11 @@ Stand on a farm tile and press `E` to perform an action with your current tool:
 - **Hand + Dead Crop** → Clears dead plant (returns plot to fallow state)
 
 ### Debug Controls
-- **F5** - Reset all farm plots on current map (useful for testing)
+- **F4** - Open DevTools panel with farming controls:
+  - View plot statistics (total, growing, ready)
+  - Advance growth time (+1 min, +5 min, +1 hour buttons)
+  - Reset all plots on current map
+- **F6** - Quick advance farm time by 1 minute (keyboard shortcut)
 
 ## Farm Tile States
 
@@ -249,16 +253,21 @@ newCrop: {
 - Check that the tile is in FALLOW state (not already tilled)
 - If tile shows brown but won't till, it may already be tilled - check console logs
 
+## Recent Improvements
+
+- ✅ **Multi-tile crop rendering** - Crops now grow visually from small seedlings (1x1) to young plants (1.5x2) to large adult plants (2x2.5)
+- ✅ **Crop-specific sprites** - Tomato, sunflower, strawberry, and pea have unique young/adult sprites
+- ✅ **Fertiliser support** - Apply fertiliser to improve crop quality (normal → good → excellent)
+- ✅ **Quality system** - Crop quality affects sell price (1x/1.5x/2x multipliers)
+- ✅ **Seasonal planting** - Crops can only be planted in specific seasons
+- ✅ **F4 DevTools integration** - Full farming debug controls in the DevTools panel
+
 ## Future Enhancements
 
 Potential additions:
-- Seed purchasing system (shop integration)
-- Crop-specific sprites (currently all crops use pea plant placeholders)
-- Fertilizer for faster growth
-- Crop quality/star ratings
-- Seasonal crops (crops that only grow in certain seasons)
 - Multi-harvest crops (e.g., tomato plants that produce multiple times)
 - Farm upgrades (sprinklers for auto-watering)
 - Crop processing (e.g., wheat → flour → bread)
 - Scarecrows to protect crops from crows
 - Companion planting bonuses
+- More crop-specific sprites (wheat, corn, pumpkin, etc.)

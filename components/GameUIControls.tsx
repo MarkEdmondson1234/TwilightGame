@@ -6,13 +6,11 @@ interface GameUIControlsProps {
     onToggleHelpBrowser: () => void;
     showCollisionBoxes: boolean;
     onToggleCollisionBoxes: () => void;
-    showColorEditor: boolean;
-    onToggleColorEditor: () => void;
     onToggleInventory: () => void;
 }
 
 /**
- * Game UI control buttons (Help, Collision, Color Editor, Inventory)
+ * Game UI control buttons (Help, Collision, Inventory)
  * Positioned as overlay elements on the game viewport
  */
 const GameUIControls: React.FC<GameUIControlsProps> = ({
@@ -20,8 +18,6 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
     onToggleHelpBrowser,
     showCollisionBoxes,
     onToggleCollisionBoxes,
-    showColorEditor,
-    onToggleColorEditor,
     onToggleInventory,
 }) => {
     return (
@@ -70,19 +66,9 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
                             ? 'bg-red-500/80 border-red-700 text-white hover:bg-red-600/80'
                             : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
                     }`}
+                    title="F3 for debug overlay"
                 >
                     {showCollisionBoxes ? '🔴' : '⬜'} Collision
-                </button>
-                <button
-                    onClick={onToggleColorEditor}
-                    className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg border text-xs sm:text-sm font-bold transition-colors pointer-events-auto ${
-                        showColorEditor
-                            ? 'bg-purple-500/80 border-purple-700 text-white hover:bg-purple-600/80'
-                            : 'bg-black/50 border-slate-700 text-slate-400 hover:bg-black/70'
-                    }`}
-                    title="F4 to toggle"
-                >
-                    🎨 Scheme
                 </button>
             </div>
         </>

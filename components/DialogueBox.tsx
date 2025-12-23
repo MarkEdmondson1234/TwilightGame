@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NPC, DialogueNode } from '../types';
 import { getDialogue } from '../services/dialogueService';
+import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 
 interface DialogueBoxProps {
   npc: NPC;
@@ -10,13 +11,51 @@ interface DialogueBoxProps {
 }
 
 /**
- * DialogueBox - Shows NPC dialogue with portraits in a modal overlay
- * Displays player character on left, NPC on right (zoomed to top half)
- * Supports dialogue trees and has hooks for future AI integration
+ * DialogueBox - Shows NPC dialogue with an animated hand-drawn window
+ *
+ * Layout:
+ * - Full screen overlay with gradient background
+ * - Player character large on the LEFT (no frame, behind dialogue)
+ * - NPC character large on the RIGHT (no frame, behind dialogue)
+ * - Animated dialogue window at bottom center
+ * - Name in wooden nameplate, text in main area
+ *
+ * The dialogue frame is 1000x1000 but the actual drawn content is:
+ * - Wooden nameplate: ~13% from left, ~35% from top
+ * - Grey text area: ~5% from left, ~43% from top, ~90% wide, ~35% tall
  */
 const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, onNodeChange }) => {
   const [currentNodeId, setCurrentNodeId] = useState<string>('greeting');
   const [currentDialogue, setCurrentDialogue] = useState<DialogueNode | null>(null);
+
+  // Animate the dialogue window frame
+  const { currentFrame } = useDialogueAnimation(150, true);
+
+  // Check if we're on a small screen (for responsive adjustments)
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsSmallScreen(window.innerWidth < 768 || window.innerHeight < 500);
+    };
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
+
+  // Get the NPC sprite based on current expression
+  // Priority: expression-specific > default dialogueSprite > portraitSprite > sprite
+  const getNpcSprite = () => {
+    // Check if current dialogue has an expression and NPC has expression sprites
+    if (currentDialogue?.expression && npc.dialogueExpressions) {
+      const expressionSprite = npc.dialogueExpressions[currentDialogue.expression];
+      if (expressionSprite) return expressionSprite;
+    }
+    // Fall back to default dialogue sprite hierarchy
+    return npc.dialogueExpressions?.default || npc.dialogueSprite || npc.portraitSprite || npc.sprite;
+  };
+
+  const npcDialogueSprite = getNpcSprite();
 
   // Load dialogue node with seasonal/time-of-day context
   useEffect(() => {
@@ -51,117 +90,196 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-70 flex items-end sm:items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-amber-600 rounded-lg w-full max-w-5xl shadow-2xl flex flex-col sm:flex-row overflow-hidden max-h-[90vh]">
-        {/* Player Portrait - Left Side on desktop, hidden on mobile */}
-        <div className="hidden sm:flex w-72 bg-slate-950 border-r-4 border-teal-600 flex-col items-center justify-start p-4">
-          <div className="text-teal-400 font-bold text-lg mb-2">You</div>
-          <div className="relative w-full h-64 overflow-hidden">
-            {/* Portrait Background */}
-            <div className="absolute inset-0 bg-teal-500 opacity-20 rounded-lg"></div>
+    <div className="fixed inset-0 z-50 overflow-hidden">
+      {/* Background gradient overlay */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'linear-gradient(180deg, rgba(30, 30, 50, 0.85) 0%, rgba(20, 20, 35, 0.95) 100%)',
+        }}
+      />
 
-            {/* Player Sprite - Zoomed to show top half (portrait style) */}
+      {/* Character container - positions characters behind dialogue */}
+      <div className="absolute inset-0 flex items-end justify-between pointer-events-none">
+        {/* Player character - LEFT side (hidden on small screens) */}
+        {!isSmallScreen && (
+          <div
+            className="relative flex-shrink-0"
+            style={{
+              width: '38%',
+              height: '85%',
+              marginBottom: '8%',
+            }}
+          >
             <img
               src={playerSprite}
-              alt="Player"
-              className="relative w-full h-full object-cover object-top"
+              alt="You"
+              className="absolute bottom-0 left-0 w-full h-full object-contain object-bottom"
               style={{
-                imageRendering: 'auto', // Smooth rendering for high-res portraits
-                transform: 'scale(1.8)',
-                transformOrigin: 'top center',
+                imageRendering: 'auto',
+                filter: 'drop-shadow(0 0 40px rgba(100, 200, 255, 0.4))',
+                transform: 'scaleX(-1)', // Face towards NPC
               }}
             />
           </div>
+        )}
+
+        {/* Spacer when player hidden */}
+        {isSmallScreen && <div className="flex-1" />}
+
+        {/* NPC character - RIGHT side (centered on small screens) */}
+        <div
+          className="relative flex-shrink-0"
+          style={{
+            width: isSmallScreen ? '60%' : '38%',
+            height: isSmallScreen ? '60%' : '85%',
+            marginBottom: isSmallScreen ? '30%' : '8%',
+          }}
+        >
+          <img
+            src={npcDialogueSprite}
+            alt={npc.name}
+            className="absolute bottom-0 w-full h-full object-contain object-bottom"
+            style={{
+              imageRendering: 'auto',
+              filter: 'drop-shadow(0 0 40px rgba(255, 200, 100, 0.4))',
+              right: isSmallScreen ? 'auto' : '0',
+              left: isSmallScreen ? '50%' : 'auto',
+              transform: isSmallScreen ? 'translateX(-50%)' : 'none',
+            }}
+          />
         </div>
 
-        {/* Dialogue Content - Center */}
-        <div className="flex-1 p-4 sm:p-6 flex flex-col overflow-y-auto">
-          {/* NPC Name Header */}
-          <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-amber-600">
-            <div className="w-2 h-2 bg-teal-400 rounded-full animate-pulse"></div>
-            <h3 className="text-amber-400 font-bold text-xl tracking-wide">{npc.name}</h3>
+        {/* Spacer when player hidden */}
+        {isSmallScreen && <div className="flex-1" />}
+      </div>
+
+      {/* Dialogue window container - bottom of screen */}
+      {/* The frame image is 1000x1000, dialogue box is in lower ~50% */}
+      <div
+        className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto overflow-hidden"
+        style={{
+          width: 'min(95vw, 950px)',
+          height: 'min(45vh, 320px)',
+          bottom: '60px', // Space for response buttons
+        }}
+      >
+        {/* Animated dialogue frame background - show full image, positioned so box is visible */}
+        <img
+          src={currentFrame}
+          alt=""
+          className="absolute"
+          style={{
+            imageRendering: 'auto',
+            width: '100%',
+            height: 'auto',
+            bottom: '-55%', // Position so the dialogue box portion is visible
+          }}
+        />
+
+        {/* Content overlay - positioned relative to visible dialogue box */}
+        <div className="absolute inset-0">
+          {/* Name area - positioned over wooden nameplate */}
+          <div
+            className="absolute flex items-center justify-center"
+            style={{
+              top: '8%',
+              left: '10%',
+              width: '30%',
+              height: '22%',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+                fontSize: 'clamp(1.1rem, 3vw, 1.6rem)',
+                fontWeight: 'bold',
+                color: '#4a3228',
+                textShadow: '0 1px 2px rgba(255,255,255,0.5)',
+                letterSpacing: '0.05em',
+              }}
+            >
+              {npc.name}
+            </span>
           </div>
 
-          {/* Dialogue Text */}
-          <div className="flex-1 mb-4 sm:mb-6">
-            <p className="text-gray-100 text-base sm:text-lg leading-relaxed font-serif italic">
-              "{currentDialogue.text}"
+          {/* Main text area - positioned in grey box with scroll */}
+          <div
+            className="absolute overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600"
+            style={{
+              top: '32%',
+              left: '6%',
+              right: '6%',
+              height: '55%',
+              padding: '2% 3%',
+            }}
+          >
+            <p
+              className="leading-relaxed"
+              style={{
+                fontFamily: 'Georgia, "Times New Roman", serif',
+                fontSize: 'clamp(0.95rem, 2.2vw, 1.2rem)',
+                color: '#e8e8e8',
+                textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                lineHeight: '1.6',
+              }}
+            >
+              {currentDialogue.text}
             </p>
           </div>
+        </div>
+      </div>
 
-          {/* Response Options */}
-          {currentDialogue.responses && currentDialogue.responses.length > 0 ? (
-            <div className="space-y-2">
-              <p className="text-gray-400 text-sm mb-2">Choose your response:</p>
-              {currentDialogue.responses.map((response, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleResponse(response.nextId)}
-                  className="w-full bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-gray-100 px-3 sm:px-4 py-2 sm:py-3 text-left text-sm sm:text-base transition-all border-l-4 border-transparent hover:border-amber-500 rounded"
-                >
-                  <span className="text-amber-400 mr-2">▶</span>
-                  {response.text}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center">
+      {/* Response buttons - at very bottom */}
+      <div
+        className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto"
+        style={{
+          bottom: '12px',
+          width: 'min(90vw, 900px)',
+        }}
+      >
+        {currentDialogue.responses && currentDialogue.responses.length > 0 ? (
+          <div className="flex flex-wrap gap-2 justify-center">
+            {currentDialogue.responses.map((response, index) => (
               <button
-                onClick={() => onClose()}
-                className="bg-amber-600 hover:bg-amber-500 active:bg-amber-400 text-slate-900 font-bold px-6 py-3 rounded transition-colors"
+                key={index}
+                onClick={() => handleResponse(response.nextId)}
+                className="bg-slate-700 bg-opacity-90 hover:bg-slate-600 active:bg-slate-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-slate-500 hover:border-amber-400"
+                style={{
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                }}
               >
-                Continue [E]
+                {response.text}
               </button>
-            </div>
-          )}
-
-          {/* Help Text - Hide on mobile */}
-          <div className="hidden sm:block text-center text-gray-500 text-xs mt-4">
-            Press ESC or E to close
+            ))}
           </div>
-        </div>
-
-        {/* NPC Portrait - Right Side on desktop, Top on mobile */}
-        <div className="sm:hidden w-full bg-slate-950 border-t-4 sm:border-t-0 sm:border-l-4 border-amber-600 flex flex-row sm:flex-col items-center justify-center p-3 order-first">
-          <div className="relative w-20 h-20 overflow-hidden mr-3">
-            {/* Portrait Background */}
-            <div className="absolute inset-0 bg-amber-500 opacity-20 rounded-lg"></div>
-
-            {/* NPC Sprite - Mobile (smaller) */}
-            <img
-              src={npc.portraitSprite || npc.sprite}
-              alt={npc.name}
-              className="relative w-full h-full object-cover object-top"
-              style={{
-                imageRendering: 'auto', // Smooth rendering for portraits
-                transform: 'scale(1.8)', // Proper scale for high-res portrait images
-                transformOrigin: 'top center',
-              }}
-            />
+        ) : (
+          <div className="flex justify-center">
+            <button
+              onClick={() => onClose()}
+              className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 text-sm opacity-80 hover:opacity-100 px-4 py-2"
+            >
+              <span>Press E to continue</span>
+              <span className="animate-bounce">▼</span>
+            </button>
           </div>
-          <div className="text-amber-400 font-bold text-base">{npc.name}</div>
-        </div>
+        )}
+      </div>
 
-        {/* NPC Portrait - Right Side (Desktop only) */}
-        <div className="hidden sm:flex w-72 bg-slate-950 border-l-4 border-amber-600 flex-col items-center justify-start p-4">
-          <div className="text-amber-400 font-bold text-lg mb-2">{npc.name}</div>
-          <div className="relative w-full h-64 overflow-hidden">
-            {/* Portrait Background */}
-            <div className="absolute inset-0 bg-amber-500 opacity-20 rounded-lg"></div>
+      {/* Mobile touch area for closing - tap anywhere outside dialogue */}
+      <div
+        className="absolute inset-0 sm:hidden"
+        onClick={() => {
+          if (!currentDialogue.responses || currentDialogue.responses.length === 0) {
+            onClose();
+          }
+        }}
+        style={{ zIndex: -1 }}
+      />
 
-            {/* NPC Sprite - Zoomed to show top half (portrait style) */}
-            <img
-              src={npc.portraitSprite || npc.sprite}
-              alt={npc.name}
-              className="relative w-full h-full object-cover object-top"
-              style={{
-                imageRendering: 'auto', // Smooth rendering for portraits
-                transform: 'scale(1.8)', // Proper scale for high-res portrait images
-                transformOrigin: 'top center',
-              }}
-            />
-          </div>
-        </div>
+      {/* Help text - desktop only */}
+      <div className="hidden sm:block absolute bottom-0 left-1/2 transform -translate-x-1/2 text-gray-500 text-xs pb-1">
+        Press ESC or E to close
       </div>
     </div>
   );
