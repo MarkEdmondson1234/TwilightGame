@@ -259,6 +259,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 3,
     cropId: 'carrot',
+    image: itemAssets.carrot_seeds,
   },
 
   // Forage seeds

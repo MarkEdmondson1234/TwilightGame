@@ -20,8 +20,18 @@ class TextureManager {
   private loading = new Map<string, Promise<Texture>>();
 
   /**
+   * Determine if a texture should use smooth (linear) scaling
+   * Farming sprites are high-res (512px) artwork that need smooth downscaling
+   */
+  private shouldUseSmoothScaling(url: string | undefined): boolean {
+    if (!url) return false;
+    return url.includes('/farming/') || url.includes('farming\\');
+  }
+
+  /**
    * Load a single texture asynchronously
    * Automatically configures for pixel art (nearest neighbor scaling)
+   * Farming sprites use smooth scaling for better quality when downscaled
    */
   async loadTexture(key: string, url: string): Promise<Texture> {
     // Return cached texture if already loaded
@@ -36,8 +46,8 @@ class TextureManager {
 
     // Start loading
     const promise = Assets.load<Texture>(url).then(texture => {
-      // Configure for pixel art (no blurring)
-      texture.source.scaleMode = 'nearest';
+      // Use smooth scaling for farming sprites (high-res artwork), nearest for pixel art
+      texture.source.scaleMode = this.shouldUseSmoothScaling(url) ? 'linear' : 'nearest';
 
       // Cache texture
       this.textures.set(key, texture);
@@ -74,8 +84,10 @@ class TextureManager {
       // Configure and cache each texture
       Object.entries(loadedAssets as Record<string, Texture>).forEach(([key, texture]) => {
         if (texture && texture.source) {
-          texture.source.scaleMode = 'nearest'; // Pixel art
-          this.textures.set(assets[key], texture); // Cache by URL
+          const url = assets[key];
+          // Use smooth scaling for farming sprites (high-res artwork), nearest for pixel art
+          texture.source.scaleMode = this.shouldUseSmoothScaling(url) ? 'linear' : 'nearest';
+          this.textures.set(url, texture); // Cache by URL
         }
       });
 

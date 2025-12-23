@@ -451,12 +451,14 @@ async function optimizeFarming() {
     // Delete output file if it exists (handles case-sensitivity issues on Windows)
     deleteIfExists(outputPath);
 
-    // Plant sprites (seedling, pea, wilted) - use larger size for visibility (showcase quality)
+    // Plant sprites (seedling, plant_*, wilted, crop stages) - use larger size for visibility
+    // Reduced compression level to 5 for better quality (user feedback: less compression needed)
     // Soil sprites (fallow, tilled) - use regular tile size
-    const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted');
+    const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted') ||
+                          file.includes('_young') || file.includes('_adult');
     const targetSize = isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
     const targetQuality = isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
-    const targetCompression = isPlantSprite ? 6 : 9;
+    const targetCompression = isPlantSprite ? 5 : 9;
 
     await sharp(inputPath)
       .resize(targetSize, targetSize, {

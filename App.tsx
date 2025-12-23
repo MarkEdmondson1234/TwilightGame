@@ -25,6 +25,7 @@ import Bookshelf from './components/Bookshelf';
 import { initializeGame } from './utils/gameInitializer';
 import { mapManager } from './maps';
 import { getValidationErrors, hasValidationErrors, MapValidationError } from './maps/gridParser';
+import { ColorResolver } from './utils/ColorResolver';
 import { gameState, CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
@@ -892,6 +893,14 @@ const App: React.FC = () => {
 
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {
+            // Update PixiJS background color for current map
+            if (pixiAppRef.current) {
+                const colorScheme = mapManager.getCurrentColorScheme();
+                const bgColorClass = colorScheme?.colors.background || 'bg-palette-moss';
+                const backgroundColor = ColorResolver.paletteToHex(bgColorClass);
+                pixiAppRef.current.renderer.background.color = backgroundColor;
+            }
+
             // Load background image layers (for background-image render mode)
             if (backgroundImageLayerRef.current) {
                 if (currentMap.renderMode === 'background-image') {
@@ -1103,7 +1112,8 @@ const App: React.FC = () => {
     return (
         <div
             ref={gameContainerRef}
-            className="bg-gray-900 text-white w-screen h-screen overflow-hidden font-sans relative select-none"
+            className="text-white w-screen h-screen overflow-hidden font-sans relative select-none"
+            style={{ backgroundColor: '#5A7247' }}
         >
             {/* PixiJS Renderer (WebGL - High Performance) */}
             {USE_PIXI_RENDERER && (

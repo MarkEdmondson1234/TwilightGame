@@ -154,6 +154,10 @@ export const farmingAssets = {
   plant_pea_adult: '/TwilightGame/assets-optimized/farming/plant_pea_adult.png',
   plant_strawberry_young: '/TwilightGame/assets-optimized/farming/plant_strawberry_young.png',
   plant_strawberry_adult: '/TwilightGame/assets-optimized/farming/plant_strawberry_adult.png',
+  plant_sunflower_young: '/TwilightGame/assets-optimized/farming/sunflower_young.png',
+  plant_sunflower_adult: '/TwilightGame/assets-optimized/farming/sunflower_adult.png',
+  plant_tomato_young: '/TwilightGame/assets-optimized/farming/tomato_young.png',
+  plant_tomato_adult: '/TwilightGame/assets-optimized/farming/tomato_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 

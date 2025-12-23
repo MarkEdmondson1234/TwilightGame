@@ -606,7 +606,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_WATERED]: {
     name: 'Watered Soil',
-    color: 'bg-palette-chocolate', // Darker brown for wet soil
+    color: 'bg-palette-espresso', // Very dark brown for wet soil
     isSolid: false,
     image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {
@@ -617,7 +617,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.SOIL_READY]: {
     name: 'Ready Crop',
-    color: 'bg-palette-chocolate', // Darker brown for mature plant's soil
+    color: 'bg-palette-espresso', // Very dark brown for wet soil (watered mature plant)
     isSolid: false,
     image: [farmingAssets.plant_pea_adult], // Fallback image (overridden by growth stage in TileRenderer)
     transforms: {

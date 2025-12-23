@@ -26,7 +26,7 @@ import { createShopkeeperNPC } from '../../utils/npcFactories';
  * - UI elements: z-index 1000+ - always on top
  */
 
-// 19 columns x 11 rows - matches observed image coverage at 1200x675
+// 19 columns x 12 rows - matches observed image coverage at 1200x675
 // Walkable floor is in the bottom portion (wooden floor area)
 // S = Shop door transition (center of bottom walkable row)
 const gridString = `
@@ -40,6 +40,7 @@ const gridString = `
 ###################
 #########....######
 ##...............##
+##...............##
 ###################
 `;
 
@@ -47,7 +48,7 @@ export const shop: MapDefinition = {
   id: 'shop',
   name: 'Village Shop',
   width: 19,
-  height: 11,
+  height: 12,
   grid: parseGrid(gridString),
   colorScheme: 'shop',
   isRandom: false,

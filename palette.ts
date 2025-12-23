@@ -81,6 +81,7 @@ export const DEFAULT_PALETTE: GamePalette = {
   // Earth Tones
   brown: { name: 'brown', hex: '#7D5A50', description: 'Medium brown' },
   chocolate: { name: 'chocolate', hex: '#6B4423', description: 'Dark brown' },
+  espresso: { name: 'espresso', hex: '#301D0D', description: 'Very dark brown (wet soil)' },
   rust: { name: 'rust', hex: '#8B4513', description: 'Reddish brown' },
   maroon: { name: 'maroon', hex: '#8B3A3A', description: 'Dark red-brown' },
   terracotta: { name: 'terracotta', hex: '#C47849', description: 'Orange-brown' },
@@ -205,7 +206,7 @@ export function initializePalette(savedColors?: Record<string, string>): void {
   }
 
   applyPaletteToDOM();
-  console.log('[Palette] Initialized with', Object.keys(currentPalette).length, 'colors');
+  console.log('[Palette] Initialized with', Object.keys(currentPalette).length, 'colors'); // Includes espresso
 }
 
 /**
