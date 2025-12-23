@@ -108,7 +108,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
             style={{
               width: '45%',
               height: '95%',
-              marginBottom: '18%',
+              marginBottom: '8%',
             }}
           >
             <img
@@ -133,7 +133,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
           style={{
             width: isSmallScreen ? '70%' : '45%',
             height: isSmallScreen ? '70%' : '95%',
-            marginBottom: isSmallScreen ? '35%' : '18%',
+            marginBottom: isSmallScreen ? '35%' : '8%',
           }}
         >
           <img
