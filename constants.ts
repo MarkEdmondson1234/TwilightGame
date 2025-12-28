@@ -742,6 +742,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
   },
   {
+    tileType: TileType.DEAD_SPRUCE,
+    spriteWidth: 4,    // 4 tiles wide (tall barren tree)
+    spriteHeight: 7,   // 7 tiles tall (tall dead conifer)
+    offsetX: -1.5,     // Center horizontally on tile
+    offsetY: -6,       // Extends 6 tiles upward
+    image: tileAssets.dead_spruce,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision only at the base trunk (small area)
+    collisionWidth: 0.3,
+    collisionHeight: 0.3,
+    collisionOffsetX: 0.35,
+    collisionOffsetY: 0.35,
+    // Transform controls: variation for natural dead tree look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.85, max: 1.15 },  // More size variation for organic feel
+  },
+  {
     tileType: TileType.WILD_IRIS,
     spriteWidth: 3,    // 3 tiles wide (flowering clump near water)
     spriteHeight: 3,   // 3 tiles tall

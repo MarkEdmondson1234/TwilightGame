@@ -522,6 +522,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.sambuca_bush_summer],
     }
   },
+  [TileType.DEAD_SPRUCE]: {
+    name: 'Dead Spruce',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - tree obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the tree sprite
+    seasonalImages: {
+      spring: [tileAssets.dead_spruce],
+      summer: [tileAssets.dead_spruce],
+      autumn: [tileAssets.dead_spruce],
+      winter: [tileAssets.dead_spruce_winter],
+      default: [tileAssets.dead_spruce],
+    }
+  },
 
   // Building tiles
   [TileType.WALL_BOUNDARY]: {

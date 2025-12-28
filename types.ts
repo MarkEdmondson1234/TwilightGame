@@ -53,6 +53,7 @@ export enum TileType {
   VILLAGE_FLOWERS,  // Village decorative flowers (seasonal variations, appears in village)
   GIANT_MUSHROOM,  // Giant magical mushroom (appears on witch hut map, tree-like)
   SAMBUCA_BUSH,  // Sambuca bush (appears on witch hut map, seasonal variations)
+  DEAD_SPRUCE,  // Dead spruce tree (appears in forest, barren tree with winter variation)
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,

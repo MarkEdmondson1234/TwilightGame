@@ -151,6 +151,9 @@ export const tileAssets = {
   sambuca_bush_summer: '/TwilightGame/assets-optimized/tiles/sambuca_bush_summer.png',
   sambuca_bush_autumn: '/TwilightGame/assets-optimized/tiles/sambuca_bush_autumn.png',
   sambuca_bush_winter: '/TwilightGame/assets-optimized/tiles/sambuca_bush_winter.png',
+  // Dead spruce tree assets (barren tree for forest areas)
+  dead_spruce: '/TwilightGame/assets-optimized/tiles/forest/dead_spruce.png',
+  dead_spruce_winter: '/TwilightGame/assets-optimized/tiles/forest/dead_spruce_winter.png',
   // Magical lake asset (12x12 multi-tile sprite for forest lake scene)
   // Optimized at 2048px with showcase quality (97%, compression level 3)
   magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',
