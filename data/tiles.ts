@@ -468,6 +468,21 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
     },
   },
+  [TileType.VILLAGE_FLOWERS]: {
+    name: 'Village Flowers',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: false,  // Walkable - decorative flower
+    baseType: TileType.GRASS,  // Render grass underneath the flower sprite
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    seasonalImages: {
+      spring: [tileAssets.village_flowers_spring],
+      summer: [tileAssets.village_flowers_summer],
+      autumn: [tileAssets.village_flowers_autumn],
+      winter: [tileAssets.village_flowers_winter],
+      default: [tileAssets.village_flowers_summer],
+    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA below)
+  },
   [TileType.GIANT_MUSHROOM]: {
     name: 'Giant Mushroom',
     color: 'bg-palette-sage',  // Base grass color for blending

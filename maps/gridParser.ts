@@ -91,6 +91,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'p': TileType.POND_FLOWERS, // p = Pond flowers (floating flowers, seasonal colors)
   'b': TileType.BRAMBLES,    // b = Brambles (thorny obstacle with seasonal colors)
   's': TileType.WILD_STRAWBERRY, // s = Strawberry (wild forageable strawberry plants)
+  'l': TileType.VILLAGE_FLOWERS, // l = Village flowers (decorative flowers in village, stem-like)
   // Buildings (outdoor structures)
   'L': TileType.WALL_BOUNDARY,   // L = waLl boundary (brick walls)
   'B': TileType.BUILDING_WALL,   // B = Building wall

@@ -175,6 +175,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
   },
   {
+    tileType: TileType.VILLAGE_FLOWERS,
+    spriteWidth: 2,  // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: -0.5,   // Center horizontally on tile
+    offsetY: -1,     // Extends 1 tile upward
+    image: tileAssets.village_flowers_summer,  // Seasonal images handled by TILE_LEGEND
+    isForeground: true,  // Render in front of player
+    // Collision: walkable (no collision)
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: flipping for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Slight variation
+  },
+  {
     tileType: TileType.FERN,
     spriteWidth: 2,  // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall

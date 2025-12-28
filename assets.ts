@@ -106,6 +106,12 @@ export const tileAssets = {
   wild_iris_summer: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_summer.png',
   wild_iris_autumn: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_autumn.png',
   wild_iris_winter: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_winter.png',
+  // Village flowers assets (seasonal variations - decorative flowers in village)
+  // Optimized at 768x768 with SHOWCASE_QUALITY
+  village_flowers_spring: '/TwilightGame/assets-optimized/tiles/village/flowers_village_spring.png',
+  village_flowers_summer: '/TwilightGame/assets-optimized/tiles/village/flowers_village_summer.png',
+  village_flowers_autumn: '/TwilightGame/assets-optimized/tiles/village/flowers_village_autumn.png',
+  village_flowers_winter: '/TwilightGame/assets-optimized/tiles/village/flowers_village_winter.png',
   // Pond flowers assets (seasonal variations - spring/summer use same sprite)
   pond_flowers_spring_summer: '/TwilightGame/assets-optimized/tiles/pond_flowers_spring_summer.png',
   pond_flowers_autumn: '/TwilightGame/assets-optimized/tiles/pond_flowers_autumn.png',

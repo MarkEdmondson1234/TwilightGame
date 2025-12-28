@@ -49,6 +49,7 @@ export enum TileType {
   POND_FLOWERS,  // Pond flowers (seasonal variations, spring/summer use same sprite)
   BRAMBLES,  // Thorny brambles (seasonal variations, solid obstacle)
   WILD_STRAWBERRY,  // Wild strawberry plants (forageable in forest, seasonal variations)
+  VILLAGE_FLOWERS,  // Village decorative flowers (seasonal variations, appears in village)
   GIANT_MUSHROOM,  // Giant magical mushroom (appears on witch hut map, tree-like)
   SAMBUCA_BUSH,  // Sambuca bush (appears on witch hut map, seasonal variations)
   // Building tiles (outdoor structures)
