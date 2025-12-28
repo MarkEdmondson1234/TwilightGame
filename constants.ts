@@ -682,6 +682,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.95, max: 1.05 },  // Subtle size variation
   },
   {
+    tileType: TileType.LILAC_TREE,
+    spriteWidth: 3,    // 3 tiles wide (medium flowering bush)
+    spriteHeight: 3,   // 3 tiles tall (preserve square aspect ratio)
+    offsetX: -1,       // Center horizontally on tile
+    offsetY: -2,       // Extends 2 tiles upward
+    image: tileAssets.lilac_tree_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision at the base of the bush
+    collisionWidth: 0.8,
+    collisionHeight: 1,
+    collisionOffsetX: 0.1,
+    collisionOffsetY: 0,
+    // Transform controls: variation for natural look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Slight size variation
+  },
+  {
     tileType: TileType.GIANT_MUSHROOM,
     spriteWidth: 5,    // 5 tiles wide (magical giant mushroom)
     spriteHeight: 5,   // 5 tiles tall

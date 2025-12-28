@@ -400,6 +400,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.willow_tree],
     }
   },
+  [TileType.LILAC_TREE]: {
+    name: 'Lilac Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the lilac sprite
+    seasonalImages: {
+      spring: [tileAssets.lilac_tree_spring],
+      summer: [tileAssets.lilac_tree_summer],
+      autumn: [tileAssets.lilac_tree_autumn],
+      winter: [tileAssets.lilac_tree_winter],
+      default: [tileAssets.lilac_tree_summer],
+    }
+  },
   [TileType.WILD_IRIS]: {
     name: 'Wild Iris',
     color: 'bg-palette-sage',  // Base grass color for blending

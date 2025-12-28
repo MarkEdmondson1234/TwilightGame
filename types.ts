@@ -45,6 +45,7 @@ export enum TileType {
   FAIRY_OAK_GIANT,  // Enormous 10x10 fairy oak for the deep forest
   SPRUCE_TREE,
   WILLOW_TREE,
+  LILAC_TREE,  // Lilac bush/tree (seasonal flowering shrub)
   WILD_IRIS,  // Flowering plant that grows near water
   POND_FLOWERS,  // Pond flowers (seasonal variations, spring/summer use same sprite)
   BRAMBLES,  // Thorny brambles (seasonal variations, solid obstacle)

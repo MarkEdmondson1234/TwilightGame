@@ -100,6 +100,12 @@ export const tileAssets = {
   willow_tree: '/TwilightGame/assets-optimized/tiles/willow/willow_tree.png',
   willow_tree_autumn: '/TwilightGame/assets-optimized/tiles/willow/willow_tree_autumn.png',
   willow_tree_winter: '/TwilightGame/assets-optimized/tiles/willow/willow_tree_winter.png',
+  // Lilac tree assets (seasonal variations - flowering shrub/small tree)
+  // Optimized at 768x768 with SHOWCASE_QUALITY (keyword: lilac in optimize-assets.js)
+  lilac_tree_spring: '/TwilightGame/assets-optimized/tiles/village/lilac_spring.png',
+  lilac_tree_summer: '/TwilightGame/assets-optimized/tiles/village/lilac_summer.png',
+  lilac_tree_autumn: '/TwilightGame/assets-optimized/tiles/village/lilac_autumn.png',
+  lilac_tree_winter: '/TwilightGame/assets-optimized/tiles/village/lilac_winter.png',
   // Wild iris assets (seasonal variations - grows near water)
   // Optimized at 768x768 with SHOWCASE_QUALITY (keyword: iris in optimize-assets.js)
   wild_iris_spring: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_spring.png',
