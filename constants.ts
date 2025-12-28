@@ -268,8 +268,8 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision at the front wall (full width, but only bottom 2 rows)
-    collisionWidth: 3.0,
-    collisionHeight: 1.5,
+    collisionWidth: 4.0,
+    collisionHeight: 2.5,
     collisionOffsetX: -1.7,
     collisionOffsetY: -1.2,  // Just the bottom 2 rows (player can walk behind roof/chimney)
   },

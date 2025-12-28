@@ -57,35 +57,35 @@ import {
 
 const gridString = `
 oLULYoLtULoLtULUUULLUoLLGULJLG
-LoG,G,GeGG,,,,oG,G,,G,eeGiGLGG
+LoG,G,GeGG,,l,oG,G,,G,eeGGGLGG
 tG,G,,G,,,XXX,G,kXXXXXGG,yGGeG
-LG,,G,,,G,XXX,,,,XXXXXGeGeGeGG
-oGoG,G,GKGGP,G,,sG,,,,G,GG,GGG
-YtG,G,,PPPPPPPPPPPGG,G,,,G,,GG
-oG,,G,,P,G,,,G,PG,,G,G,,,,GGGG
-LG,,G,,P,,G,,G,PG,G,,G,eUGGGLG
+LG,,c,,,G,XXX,c,,XXXXXGeGeGeGG
+oGol,G,GKGGP,l,,sG,,l,G,Gl,lGG
+Ytl,G,,PPPPPPPPPPPGG,G,,,G,,GG
+oG,,l,,P,l,,,G,PG,,G,G,,,,cGGG
+LG,,G,,P,,Gl,G,PG,G,,G,eUGlGLG
 tG,G,,,P,G,,,G,PG,,G,,,,RGRGeG
-LG,,G,,PG,G,,,PG,,G,,G,,,,,GLG
-JG,G,,,PG,,G,,PG,G,,GMGR,RG,Re
-LoG,G,,GPe%G,,PG,G,,GPR,,,eGGL
-oG,,G,,PG,G,,,PG,,G,,P,,,,PPPP
+Lc,,G,,PG,G,,,PG,,G,,l,,,,,GLG
+JG,G,,,PG,,G,,PG,l,,lMGR,RG,Re
+LoG,Gc,GPe%G,,PG,G,,GPR,,,eGGL
+oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
 LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
-tG,,G,,,G,,PG,G,,,G,,,,UUG,,UG
+tG,,G,,,G,,PG,l,,lG,l,,UGG,,UG
 LPPPPPPPPPPPP,,,GG,,,eG,,G,,eG
-oG,G,,,G,,,PG,,G,,G,,,G,,,,GeY
-UoG,,G,,UGPPGGG,G,,Ge=i,G,,G,t
-LG,G,GXXGGPG,,G,,G,i,,i,,,,GLG
+oG,G,,,G,,,PG,cG,,Gl,lG,,l,GeY
+UoG,cG,,UGPPGGG,G,,Ge=i,G,,G,t
+LG,G,GXXGGPG,,G,,G,i,,i,,l,GLG
 oGzG,,XXGGPG,G,,G,,,,G,,,G,,oG
 LG,G,GXXG,PG,,G,,eG,G,,G,,,GLG
 tG,,G,,G,,,PG,G,,GJG,G,,,G,,Ge
 oG,G,,,G,,,PG,,G,,G,,,,G,,,GGU
-UG,,G,,,G,,PG,G,,,G,,GKG,G,,eU
-tG,G,,,kG,,PPPPPPPP,,G,G,,,GUJ
-LG,,G,,,,G,,G,GP,,G,,,,,G,eGGL
+UG,,G,l,c,,PG,G,,cG,,GKG,G,,eU
+tG,G,,,kG,,PPPPPPPP,,G,G,,cGUJ
+LG,,G,,,,G,,G,lP,,l,,,,,G,eGGL
 JG,G,J,G,,U,G,,P,,GXXXXXG,GeGt
-LG,,XXXG,,G,G,GP,,GXXXXXeG,,GU
-oGoG,,GG,G,,JG,P,,G,G,,G,U,,,,
-tLoLG,G,,GGLULG,,L,L,LUoLL,,o,
+LG,,XXXG,,G,G,,Pl,GXXXXXeG,,GU
+oGoc,,GG,G,,JG,P,,G,G,,l,U,,,,
+tLoLG,l,,lGLULG,,L,L,LUoLL,,o,
 `;
 
 export const village: MapDefinition = {
@@ -183,10 +183,10 @@ export const village: MapDefinition = {
     createShopkeeperNPC('shopkeeper', { x: 8, y: 12 }),
     // Village Child - wandering little girl
     createVillageChildNPC('child', { x: 15, y: 17 }),
-    // Add cat NPC using factory function
-    createCatNPC('village_cat', { x: 25, y: 20 }, 'Sleepy Cat'),
-    // Add old woman knitting near the cat
-    createOldWomanKnittingNPC('old_woman_knitting', { x: 23, y: 25 }, 'Old Woman'),
+    // Add cat NPC using factory function - positioned left of old woman
+    createCatNPC('village_cat', { x: 17, y: 26 }, 'Sleepy Cat'),
+    // Add old woman knitting near the farm plots (row 4 from bottom)
+    createOldWomanKnittingNPC('old_woman_knitting', { x: 18, y: 26 }, 'Old Woman'),
     // Add dog that follows the little girl
     createDogNPC('village_dog', { x: 16, y: 17 }, 'child', 'Friendly Dog'),
     // Duck - spring seasonal creature near the well/pond area (TODO: implement seasonal spawning)
