@@ -368,6 +368,7 @@ export interface NPC {
   noFlip?: boolean; // Optional: disable horizontal flipping entirely
   reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
+  visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)

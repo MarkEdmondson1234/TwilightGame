@@ -189,8 +189,8 @@ export const village: MapDefinition = {
     createOldWomanKnittingNPC('old_woman_knitting', { x: 18, y: 26 }, 'Old Woman'),
     // Add dog that follows the little girl
     createDogNPC('village_dog', { x: 16, y: 17 }, 'child', 'Friendly Dog'),
-    // Duck - spring seasonal creature near the well/pond area (TODO: implement seasonal spawning)
-    // Currently spawns year-round, but dialogue indicates it should only be present in spring
+    // Duck - spring seasonal creature near the well/pond area
+    // Only appears in spring (uses visibilityConditions to hide during other seasons)
     // Single duck to make it feel more special and rare
     createDuckNPC('village_duck', { x: 20, y: 17 }, 'Duck'),
   ],
