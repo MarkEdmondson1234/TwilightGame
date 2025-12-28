@@ -188,7 +188,6 @@ export const cookingAssets = {
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png?v=2',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
-  tea: '/TwilightGame/assets-optimized/cooking/tea.png',
 };
 
 // Grocery assets - Cooking ingredients (raw items from shop)
@@ -214,11 +213,13 @@ export const groceryAssets = {
   sack_of_potatoes: '/TwilightGame/assets-optimized/items/grocery/sack_of_potatoes.png',
   salt: '/TwilightGame/assets-optimized/items/grocery/salt.png',
   sugar: '/TwilightGame/assets-optimized/items/grocery/sugar.png',
+  tea: '/TwilightGame/assets-optimized/cooking/tea.png',
   thyme: '/TwilightGame/assets-optimized/items/grocery/thyme.png',
   tomato: '/TwilightGame/assets-optimized/items/grocery/tomato.png',
   vanilla_pods: '/TwilightGame/assets-optimized/items/grocery/vanilla_pods.png',
   yeast: '/TwilightGame/assets-optimized/items/grocery/yeast.png',
   olive_oil: '/TwilightGame/assets-optimized/items/grocery/olive_oil.png',
+  sunflower_oil: '/TwilightGame/assets-optimized/items/grocery/sunflower_oil.png',
   strawberry_jam: '/TwilightGame/assets-optimized/items/grocery/strawberry_jam.png',
 };
 

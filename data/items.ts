@@ -515,6 +515,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 2,
     buyPrice: 5,
+    image: groceryAssets.tea,
   },
 
   water: {
@@ -649,6 +650,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 5,
     buyPrice: 15,
     image: groceryAssets.olive_oil,
+  },
+
+  sunflower_oil: {
+    id: 'sunflower_oil',
+    name: 'sunflower_oil',
+    displayName: 'Sunflower Oil',
+    category: ItemCategory.INGREDIENT,
+    description: 'Light sunflower oil. Perfect for frying.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 12,
+    image: groceryAssets.sunflower_oil,
   },
 
   vanilla: {

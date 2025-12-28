@@ -1,4 +1,6 @@
 import React from 'react';
+import ItemTooltip, { TooltipContent } from './ItemTooltip';
+import { getItem } from '../data/items';
 
 export interface InventoryItem {
   id: string;
@@ -72,7 +74,17 @@ const Inventory: React.FC<InventoryProps> = ({
               const isEmpty = item === null;
               const isSelected = selectedSlot === index;
 
-              return (
+              // Get full item definition for tooltip
+              const itemDef = item ? getItem(item.id) : null;
+              const tooltipContent: TooltipContent | null = item && itemDef ? {
+                name: item.name,
+                description: itemDef.description,
+                image: item.icon,
+                quantity: item.quantity,
+                additionalInfo: isSelected ? '[SELECTED]' : undefined,
+              } : null;
+
+              const slotButton = (
                 <button
                   key={index}
                   onClick={() => handleSlotClick(item, index)}
@@ -88,7 +100,6 @@ const Inventory: React.FC<InventoryProps> = ({
                     ${isEmpty ? 'cursor-default' : 'cursor-pointer hover:scale-105'}
                   `}
                   disabled={isEmpty}
-                  title={item ? `${item.name} (${item.quantity})${isSelected ? ' [SELECTED]' : ''}` : undefined}
                 >
                   {/* Item Icon */}
                   {item && (
@@ -121,6 +132,15 @@ const Inventory: React.FC<InventoryProps> = ({
                     </div>
                   )}
                 </button>
+              );
+
+              // Wrap with tooltip if item exists
+              return tooltipContent ? (
+                <ItemTooltip key={index} content={tooltipContent}>
+                  {slotButton}
+                </ItemTooltip>
+              ) : (
+                slotButton
               );
             })}
           </div>
