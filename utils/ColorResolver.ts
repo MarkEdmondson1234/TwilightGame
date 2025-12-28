@@ -73,6 +73,8 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.GIANT_MUSHROOM]: 'grass',
   [TileType.SAMBUCA_BUSH]: 'grass',
   [TileType.DEAD_SPRUCE]: 'grass',
+  [TileType.FIR_TREE_SMALL]: 'grass',
+  [TileType.SPRUCE_TREE_SMALL]: 'grass',
   [TileType.FERN]: 'grass',
   [TileType.TREE_STUMP]: 'grass',
   [TileType.COTTAGE]: 'grass',

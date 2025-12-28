@@ -154,6 +154,12 @@ export const tileAssets = {
   // Dead spruce tree assets (barren tree for forest areas)
   dead_spruce: '/TwilightGame/assets-optimized/tiles/forest/dead_spruce.png',
   dead_spruce_winter: '/TwilightGame/assets-optimized/tiles/forest/dead_spruce_winter.png',
+  // Small fir tree assets (walkable underbrush for forest areas)
+  fir_tree_small: '/TwilightGame/assets-optimized/tiles/forest/fir_tree_small.png',
+  fir_tree_small_winter: '/TwilightGame/assets-optimized/tiles/forest/fir_tree_small_winter.png',
+  // Small spruce tree assets (solid obstacle for forest areas)
+  spruce_tree_small: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small.png',
+  spruce_tree_small_winter: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small_winter.png',
   // Magical lake asset (12x12 multi-tile sprite for forest lake scene)
   // Optimized at 2048px with showcase quality (97%, compression level 3)
   magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',

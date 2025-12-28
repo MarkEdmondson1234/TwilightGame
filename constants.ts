@@ -762,6 +762,46 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.85, max: 1.15 },  // More size variation for organic feel
   },
   {
+    tileType: TileType.FIR_TREE_SMALL,
+    spriteWidth: 3,    // 3 tiles wide (small underbrush tree)
+    spriteHeight: 3,   // 3 tiles tall
+    offsetX: -1,       // Center horizontally on tile
+    offsetY: -2,       // Extends 2 tiles upward
+    image: tileAssets.fir_tree_small,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // No collision - walkable underbrush
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: variation for natural underbrush look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
+  },
+  {
+    tileType: TileType.SPRUCE_TREE_SMALL,
+    spriteWidth: 4,    // 4 tiles wide (small forest tree)
+    spriteHeight: 4,   // 4 tiles tall
+    offsetX: -1.5,     // Center horizontally on tile
+    offsetY: -3,       // Extends 3 tiles upward
+    image: tileAssets.spruce_tree_small,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,
+    // Collision at the trunk base
+    collisionWidth: 0.6,
+    collisionHeight: 0.6,
+    collisionOffsetX: 0.2,
+    collisionOffsetY: 0.2,
+    // Transform controls: variation for natural small tree look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
+  },
+  {
     tileType: TileType.WILD_IRIS,
     spriteWidth: 3,    // 3 tiles wide (flowering clump near water)
     spriteHeight: 3,   // 3 tiles tall

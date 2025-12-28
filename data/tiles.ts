@@ -535,6 +535,32 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.dead_spruce],
     }
   },
+  [TileType.FIR_TREE_SMALL]: {
+    name: 'Small Fir Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: false,  // Walkable - underbrush decoration
+    baseType: TileType.GRASS,  // Render grass underneath the sprite
+    seasonalImages: {
+      spring: [tileAssets.fir_tree_small],
+      summer: [tileAssets.fir_tree_small],
+      autumn: [tileAssets.fir_tree_small],
+      winter: [tileAssets.fir_tree_small_winter],
+      default: [tileAssets.fir_tree_small],
+    }
+  },
+  [TileType.SPRUCE_TREE_SMALL]: {
+    name: 'Small Spruce Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - small tree obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the sprite
+    seasonalImages: {
+      spring: [tileAssets.spruce_tree_small],
+      summer: [tileAssets.spruce_tree_small],
+      autumn: [tileAssets.spruce_tree_small],
+      winter: [tileAssets.spruce_tree_small_winter],
+      default: [tileAssets.spruce_tree_small],
+    }
+  },
 
   // Building tiles
   [TileType.WALL_BOUNDARY]: {

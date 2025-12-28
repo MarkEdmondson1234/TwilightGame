@@ -54,6 +54,8 @@ export enum TileType {
   GIANT_MUSHROOM,  // Giant magical mushroom (appears on witch hut map, tree-like)
   SAMBUCA_BUSH,  // Sambuca bush (appears on witch hut map, seasonal variations)
   DEAD_SPRUCE,  // Dead spruce tree (appears in forest, barren tree with winter variation)
+  FIR_TREE_SMALL,  // Small fir tree (walkable underbrush decoration, seasonal variations)
+  SPRUCE_TREE_SMALL,  // Small spruce tree (solid obstacle, seasonal variations)
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,
