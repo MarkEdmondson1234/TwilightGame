@@ -2,16 +2,16 @@
  * TimeManager - Single Source of Truth for game time
  *
  * Time system:
- * - 1 real month ≈ 1 game year
+ * - 1 real month ≈ 1 game year (336 game days)
  * - 1 real week = 1 game season (84 game days)
- * - 2 real hours = 1 game day (1 hour day phase, 1 hour night phase)
+ * - 2 real hours = 1 game day (fast day/night cycle)
  * - 5 real minutes = 1 game hour
  * - 12 game days per real day
  *
  * Seasonal day/night variation:
- * - Summer: Long days (5am-9pm = 16 hours daylight)
+ * - Summer: Long days (5am-9pm = 15 hours daylight)
  * - Winter: Short days (8am-4pm = 8 hours daylight)
- * - Spring/Autumn: Medium days (6am-6pm = 12 hours daylight)
+ * - Spring/Autumn: Medium days (6am-6pm = 10-12 hours daylight)
  *
  * Year 0 starts on October 17, 2025 00:00:00 UTC
  */
@@ -61,7 +61,8 @@ export class TimeManager {
   private static readonly GAME_START_DATE = new Date('2025-10-17T00:00:00Z').getTime();
 
   // Time constants
-  private static readonly DAYS_PER_SEASON = 84;  // 1 real week = 84 game days
+  // 1 real week = 1 game season: 168 hours / 2 hours per day = 84 game days
+  private static readonly DAYS_PER_SEASON = 84;
   private static readonly SEASONS_PER_YEAR = 4;
   private static readonly DAYS_PER_YEAR = TimeManager.DAYS_PER_SEASON * TimeManager.SEASONS_PER_YEAR; // 336 days
 

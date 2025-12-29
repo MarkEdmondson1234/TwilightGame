@@ -36,7 +36,7 @@ The actual current time is **always recalculated** via `TimeManager.getCurrentTi
 Real-world time maps to in-game time with this ratio:
 - **1 real month ≈ 1 game year** (336 game days)
 - **1 real week = 1 game season** (84 game days)
-- **2 real hours = 1 game day** (1 hour day phase, 1 hour night phase)
+- **2 real hours = 1 game day** (fast day/night cycle)
 - **5 real minutes = 1 game hour**
 - **12 game days per real day**
 
@@ -290,8 +290,8 @@ Given current real-world timestamp `now`:
 ```typescript
 const GAME_START = new Date('2025-10-17T00:00:00Z').getTime();
 const MS_PER_GAME_DAY = 2 * 60 * 60 * 1000; // 2 hours = 7,200,000 ms
-const DAYS_PER_SEASON = 84;
-const DAYS_PER_YEAR = 336; // 84 × 4 seasons
+const DAYS_PER_SEASON = 84;  // 1 week = 168 hours / 2 = 84 days
+const DAYS_PER_YEAR = 336;   // 84 × 4 seasons
 
 const msSinceStart = now - GAME_START;
 const totalDays = Math.floor(msSinceStart / MS_PER_GAME_DAY);
