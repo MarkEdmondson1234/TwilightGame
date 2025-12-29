@@ -329,8 +329,14 @@ const ShopUI: React.FC<ShopUIProps> = ({
   return (
     <>
       {/* Main Shop UI */}
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto">
-        <div className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col">
+      <div
+        className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto"
+        onClick={onClose}
+      >
+        <div
+          className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header with Gold Display and Close Button */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-3xl font-bold text-amber-200">General Store</h2>

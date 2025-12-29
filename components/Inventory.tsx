@@ -53,8 +53,14 @@ const Inventory: React.FC<InventoryProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto">
-      <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] flex flex-col">
+    <div
+      className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-amber-200">{title}</h2>
