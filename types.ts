@@ -45,12 +45,17 @@ export enum TileType {
   FAIRY_OAK_GIANT,  // Enormous 10x10 fairy oak for the deep forest
   SPRUCE_TREE,
   WILLOW_TREE,
+  LILAC_TREE,  // Lilac bush/tree (seasonal flowering shrub)
   WILD_IRIS,  // Flowering plant that grows near water
   POND_FLOWERS,  // Pond flowers (seasonal variations, spring/summer use same sprite)
   BRAMBLES,  // Thorny brambles (seasonal variations, solid obstacle)
   WILD_STRAWBERRY,  // Wild strawberry plants (forageable in forest, seasonal variations)
+  VILLAGE_FLOWERS,  // Village decorative flowers (seasonal variations, appears in village)
   GIANT_MUSHROOM,  // Giant magical mushroom (appears on witch hut map, tree-like)
   SAMBUCA_BUSH,  // Sambuca bush (appears on witch hut map, seasonal variations)
+  DEAD_SPRUCE,  // Dead spruce tree (appears in forest, barren tree with winter variation)
+  FIR_TREE_SMALL,  // Small fir tree (walkable underbrush decoration, seasonal variations)
+  SPRUCE_TREE_SMALL,  // Small spruce tree (solid obstacle, seasonal variations)
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,
@@ -363,6 +368,7 @@ export interface NPC {
   noFlip?: boolean; // Optional: disable horizontal flipping entirely
   reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
+  visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)

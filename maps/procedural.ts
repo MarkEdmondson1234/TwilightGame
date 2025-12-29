@@ -257,6 +257,40 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add dead spruce trees scattered throughout forest (barren conifers)
+  for (let i = 0; i < 5; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.DEAD_SPRUCE;
+    }
+  }
+
+  // Add small fir trees scattered throughout forest (walkable underbrush)
+  for (let i = 0; i < 25; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles
+    if (map[y][x] === TileType.GRASS) {
+      map[y][x] = TileType.FIR_TREE_SMALL;
+    }
+  }
+
+  // Add small spruce trees scattered throughout forest (solid small trees)
+  for (let i = 0; i < 18; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.SPRUCE_TREE_SMALL;
+    }
+  }
+
   // Place exit back to village on left side (middle of map)
   map[spawnY][1] = TileType.PATH;
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Position, Direction } from '../types';
 import { TILE_SIZE, PLAYER_SIZE } from '../constants';
 import { npcManager } from '../NPCManager';
+import { TimeManager } from '../utils/TimeManager';
 
 interface NPCRendererProps {
     playerPos: Position;
@@ -20,6 +21,24 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
     return (
         <>
             {npcManager.getCurrentMapNPCs().map((npc) => {
+                // Check visibility conditions (seasonal, time of day, weather)
+                if (npc.visibilityConditions) {
+                    const conditions = npc.visibilityConditions;
+                    const currentTime = TimeManager.getCurrentTime();
+
+                    // Check season condition
+                    if (conditions.season && conditions.season !== currentTime.season.toLowerCase()) {
+                        return null; // Hide NPC if season doesn't match
+                    }
+
+                    // Check time of day condition
+                    if (conditions.timeOfDay && conditions.timeOfDay !== currentTime.timeOfDay.toLowerCase()) {
+                        return null; // Hide NPC if time of day doesn't match
+                    }
+
+                    // Weather conditions can be added here in the future
+                }
+
                 // Calculate distance from player to NPC
                 const dx = Math.abs(playerPos.x - npc.position.x);
                 const dy = Math.abs(playerPos.y - npc.position.y);

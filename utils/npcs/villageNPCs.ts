@@ -727,5 +727,8 @@ export function createDuckNPC(
       startingPoints: 0,
     },
     reverseFlip: true, // Duck sprite faces left naturally, so flip when walking right instead of left
+    visibilityConditions: {
+      season: 'spring', // Duck only appears in spring (migrates south for other seasons)
+    },
   };
 }

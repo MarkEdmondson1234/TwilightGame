@@ -400,6 +400,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.willow_tree],
     }
   },
+  [TileType.LILAC_TREE]: {
+    name: 'Lilac Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,
+    baseType: TileType.GRASS,  // Render grass underneath the lilac sprite
+    seasonalImages: {
+      spring: [tileAssets.lilac_tree_spring],
+      summer: [tileAssets.lilac_tree_summer],
+      autumn: [tileAssets.lilac_tree_autumn],
+      winter: [tileAssets.lilac_tree_winter],
+      default: [tileAssets.lilac_tree_summer],
+    }
+  },
   [TileType.WILD_IRIS]: {
     name: 'Wild Iris',
     color: 'bg-palette-sage',  // Base grass color for blending
@@ -468,6 +481,21 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
     },
   },
+  [TileType.VILLAGE_FLOWERS]: {
+    name: 'Village Flowers',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: false,  // Walkable - decorative flower
+    baseType: TileType.GRASS,  // Render grass underneath the flower sprite
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    seasonalImages: {
+      spring: [tileAssets.village_flowers_spring],
+      summer: [tileAssets.village_flowers_summer],
+      autumn: [tileAssets.village_flowers_autumn],
+      winter: [tileAssets.village_flowers_winter],
+      default: [tileAssets.village_flowers_summer],
+    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA below)
+  },
   [TileType.GIANT_MUSHROOM]: {
     name: 'Giant Mushroom',
     color: 'bg-palette-sage',  // Base grass color for blending
@@ -492,6 +520,45 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       autumn: [tileAssets.sambuca_bush_autumn],
       winter: [tileAssets.sambuca_bush_winter],
       default: [tileAssets.sambuca_bush_summer],
+    }
+  },
+  [TileType.DEAD_SPRUCE]: {
+    name: 'Dead Spruce',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - tree obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the tree sprite
+    seasonalImages: {
+      spring: [tileAssets.dead_spruce],
+      summer: [tileAssets.dead_spruce],
+      autumn: [tileAssets.dead_spruce],
+      winter: [tileAssets.dead_spruce_winter],
+      default: [tileAssets.dead_spruce],
+    }
+  },
+  [TileType.FIR_TREE_SMALL]: {
+    name: 'Small Fir Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: false,  // Walkable - underbrush decoration
+    baseType: TileType.GRASS,  // Render grass underneath the sprite
+    seasonalImages: {
+      spring: [tileAssets.fir_tree_small],
+      summer: [tileAssets.fir_tree_small],
+      autumn: [tileAssets.fir_tree_small],
+      winter: [tileAssets.fir_tree_small_winter],
+      default: [tileAssets.fir_tree_small],
+    }
+  },
+  [TileType.SPRUCE_TREE_SMALL]: {
+    name: 'Small Spruce Tree',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - small tree obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the sprite
+    seasonalImages: {
+      spring: [tileAssets.spruce_tree_small],
+      summer: [tileAssets.spruce_tree_small],
+      autumn: [tileAssets.spruce_tree_small],
+      winter: [tileAssets.spruce_tree_small_winter],
+      default: [tileAssets.spruce_tree_small],
     }
   },
 

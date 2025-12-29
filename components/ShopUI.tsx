@@ -13,6 +13,7 @@ import { shopManager } from '../utils/ShopManager';
 import { ShopItem } from '../data/shopInventory';
 import { getItem, ItemDefinition } from '../data/items';
 import { TimeManager } from '../utils/TimeManager';
+import ItemTooltip, { TooltipContent } from './ItemTooltip';
 
 interface ShopUIProps {
   isOpen: boolean;
@@ -211,40 +212,48 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
     const canAfford = playerGold >= shopItem.buyPrice;
 
-    return (
-      <button
-        key={shopItem.itemId}
-        onClick={() =>
-          handleDragStart(shopItem.itemId, true, shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold))
-        }
-        className={`
-          relative aspect-square rounded-lg border-2 transition-all
-          ${canAfford
-            ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 hover:scale-105 cursor-pointer'
-            : 'bg-gray-900/40 border-gray-600 cursor-not-allowed opacity-50'
-          }
-        `}
-        disabled={!canAfford}
-        title={`${itemDef.displayName}\nBuy: ${shopItem.buyPrice}g${canAfford ? '' : ' (cannot afford)'}`}
-      >
-        {/* Item Image/Icon */}
-        <div className="absolute inset-0 flex items-center justify-center p-2">
-          {itemDef.image ? (
-            <img
-              src={itemDef.image}
-              alt={itemDef.displayName}
-              className="max-w-full max-h-full object-contain pixelated"
-            />
-          ) : (
-            <span className="text-3xl">📦</span>
-          )}
-        </div>
+    // Tooltip content
+    const tooltipContent: TooltipContent = {
+      name: itemDef.displayName,
+      description: itemDef.description,
+      image: itemDef.image,
+      additionalInfo: canAfford ? `Buy: ${shopItem.buyPrice}g` : `Buy: ${shopItem.buyPrice}g (cannot afford)`,
+    };
 
-        {/* Price Tag */}
-        <div className="absolute bottom-0 right-0 bg-yellow-600/90 text-white text-xs font-bold px-1.5 py-0.5 rounded-tl-lg rounded-br-lg">
-          {shopItem.buyPrice}g
-        </div>
-      </button>
+    return (
+      <ItemTooltip key={shopItem.itemId} content={tooltipContent}>
+        <button
+          onClick={() =>
+            handleDragStart(shopItem.itemId, true, shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold))
+          }
+          className={`
+            relative aspect-square rounded-lg border-2 transition-all
+            ${canAfford
+              ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 hover:scale-105 cursor-pointer'
+              : 'bg-gray-900/40 border-gray-600 cursor-not-allowed opacity-50'
+            }
+          `}
+          disabled={!canAfford}
+        >
+          {/* Item Image/Icon */}
+          <div className="absolute inset-0 flex items-center justify-center p-2">
+            {itemDef.image ? (
+              <img
+                src={itemDef.image}
+                alt={itemDef.displayName}
+                className="max-w-full max-h-full object-contain pixelated"
+              />
+            ) : (
+              <span className="text-3xl">📦</span>
+            )}
+          </div>
+
+          {/* Price Tag */}
+          <div className="absolute bottom-0 right-0 bg-yellow-600/90 text-white text-xs font-bold px-1.5 py-0.5 rounded-tl-lg rounded-br-lg">
+            {shopItem.buyPrice}g
+          </div>
+        </button>
+      </ItemTooltip>
     );
   };
 
@@ -267,35 +276,44 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
     const sellPrice = shopManager.getMaxSellQuantity(inventoryItem.itemId, playerInventory);
 
-    return (
-      <button
-        key={inventoryItem.itemId}
-        onClick={() =>
-          handleDragStart(inventoryItem.itemId, false, inventoryItem.quantity)
-        }
-        className="relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 hover:scale-105 cursor-pointer transition-all"
-        title={`${itemDef.displayName} (${inventoryItem.quantity})\nSell: ${sellPrice || 0}g each`}
-      >
-        {/* Item Image/Icon */}
-        <div className="absolute inset-0 flex items-center justify-center p-2">
-          {itemDef.image ? (
-            <img
-              src={itemDef.image}
-              alt={itemDef.displayName}
-              className="max-w-full max-h-full object-contain pixelated"
-            />
-          ) : (
-            <span className="text-3xl">📦</span>
-          )}
-        </div>
+    // Tooltip content
+    const tooltipContent: TooltipContent = {
+      name: itemDef.displayName,
+      description: itemDef.description,
+      image: itemDef.image,
+      quantity: inventoryItem.quantity,
+      additionalInfo: `Sell: ${sellPrice || 0}g each`,
+    };
 
-        {/* Quantity Badge */}
-        {inventoryItem.quantity > 1 && (
-          <div className="absolute bottom-0 right-0 bg-black/80 text-white text-xs font-bold px-1.5 py-0.5 rounded-tl-lg rounded-br-lg min-w-[20px] text-center">
-            {inventoryItem.quantity}
+    return (
+      <ItemTooltip key={inventoryItem.itemId} content={tooltipContent}>
+        <button
+          onClick={() =>
+            handleDragStart(inventoryItem.itemId, false, inventoryItem.quantity)
+          }
+          className="relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 hover:scale-105 cursor-pointer transition-all"
+        >
+          {/* Item Image/Icon */}
+          <div className="absolute inset-0 flex items-center justify-center p-2">
+            {itemDef.image ? (
+              <img
+                src={itemDef.image}
+                alt={itemDef.displayName}
+                className="max-w-full max-h-full object-contain pixelated"
+              />
+            ) : (
+              <span className="text-3xl">📦</span>
+            )}
           </div>
-        )}
-      </button>
+
+          {/* Quantity Badge */}
+          {inventoryItem.quantity > 1 && (
+            <div className="absolute bottom-0 right-0 bg-black/80 text-white text-xs font-bold px-1.5 py-0.5 rounded-tl-lg rounded-br-lg min-w-[20px] text-center">
+              {inventoryItem.quantity}
+            </div>
+          )}
+        </button>
+      </ItemTooltip>
     );
   };
 

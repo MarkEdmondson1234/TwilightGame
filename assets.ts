@@ -100,12 +100,24 @@ export const tileAssets = {
   willow_tree: '/TwilightGame/assets-optimized/tiles/willow/willow_tree.png',
   willow_tree_autumn: '/TwilightGame/assets-optimized/tiles/willow/willow_tree_autumn.png',
   willow_tree_winter: '/TwilightGame/assets-optimized/tiles/willow/willow_tree_winter.png',
+  // Lilac tree assets (seasonal variations - flowering shrub/small tree)
+  // Optimized at 768x768 with SHOWCASE_QUALITY (keyword: lilac in optimize-assets.js)
+  lilac_tree_spring: '/TwilightGame/assets-optimized/tiles/village/lilac_spring.png',
+  lilac_tree_summer: '/TwilightGame/assets-optimized/tiles/village/lilac_summer.png',
+  lilac_tree_autumn: '/TwilightGame/assets-optimized/tiles/village/lilac_autumn.png',
+  lilac_tree_winter: '/TwilightGame/assets-optimized/tiles/village/lilac_winter.png',
   // Wild iris assets (seasonal variations - grows near water)
   // Optimized at 768x768 with SHOWCASE_QUALITY (keyword: iris in optimize-assets.js)
   wild_iris_spring: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_spring.png',
   wild_iris_summer: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_summer.png',
   wild_iris_autumn: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_autumn.png',
   wild_iris_winter: '/TwilightGame/assets-optimized/tiles/wild_iris/iris_winter.png',
+  // Village flowers assets (seasonal variations - decorative flowers in village)
+  // Optimized at 768x768 with SHOWCASE_QUALITY
+  village_flowers_spring: '/TwilightGame/assets-optimized/tiles/village/flowers_village_spring.png',
+  village_flowers_summer: '/TwilightGame/assets-optimized/tiles/village/flowers_village_summer.png',
+  village_flowers_autumn: '/TwilightGame/assets-optimized/tiles/village/flowers_village_autumn.png',
+  village_flowers_winter: '/TwilightGame/assets-optimized/tiles/village/flowers_village_winter.png',
   // Pond flowers assets (seasonal variations - spring/summer use same sprite)
   pond_flowers_spring_summer: '/TwilightGame/assets-optimized/tiles/pond_flowers_spring_summer.png',
   pond_flowers_autumn: '/TwilightGame/assets-optimized/tiles/pond_flowers_autumn.png',
@@ -139,6 +151,15 @@ export const tileAssets = {
   sambuca_bush_summer: '/TwilightGame/assets-optimized/tiles/sambuca_bush_summer.png',
   sambuca_bush_autumn: '/TwilightGame/assets-optimized/tiles/sambuca_bush_autumn.png',
   sambuca_bush_winter: '/TwilightGame/assets-optimized/tiles/sambuca_bush_winter.png',
+  // Dead spruce tree assets (barren tree for forest areas)
+  dead_spruce: '/TwilightGame/assets-optimized/tiles/forest/dead_spruce.png',
+  dead_spruce_winter: '/TwilightGame/assets-optimized/tiles/forest/dead_spruce_winter.png',
+  // Small fir tree assets (walkable underbrush for forest areas)
+  fir_tree_small: '/TwilightGame/assets-optimized/tiles/forest/fir_tree_small.png',
+  fir_tree_small_winter: '/TwilightGame/assets-optimized/tiles/forest/fir_tree_small_winter.png',
+  // Small spruce tree assets (solid obstacle for forest areas)
+  spruce_tree_small: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small.png',
+  spruce_tree_small_winter: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small_winter.png',
   // Magical lake asset (12x12 multi-tile sprite for forest lake scene)
   // Optimized at 2048px with showcase quality (97%, compression level 3)
   magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',
@@ -167,7 +188,6 @@ export const cookingAssets = {
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png?v=2',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
-  tea: '/TwilightGame/assets-optimized/cooking/tea.png',
 };
 
 // Grocery assets - Cooking ingredients (raw items from shop)
@@ -193,11 +213,13 @@ export const groceryAssets = {
   sack_of_potatoes: '/TwilightGame/assets-optimized/items/grocery/sack_of_potatoes.png',
   salt: '/TwilightGame/assets-optimized/items/grocery/salt.png',
   sugar: '/TwilightGame/assets-optimized/items/grocery/sugar.png',
+  tea: '/TwilightGame/assets-optimized/cooking/tea.png',
   thyme: '/TwilightGame/assets-optimized/items/grocery/thyme.png',
   tomato: '/TwilightGame/assets-optimized/items/grocery/tomato.png',
   vanilla_pods: '/TwilightGame/assets-optimized/items/grocery/vanilla_pods.png',
   yeast: '/TwilightGame/assets-optimized/items/grocery/yeast.png',
   olive_oil: '/TwilightGame/assets-optimized/items/grocery/olive_oil.png',
+  sunflower_oil: '/TwilightGame/assets-optimized/items/grocery/sunflower_oil.png',
   strawberry_jam: '/TwilightGame/assets-optimized/items/grocery/strawberry_jam.png',
 };
 
