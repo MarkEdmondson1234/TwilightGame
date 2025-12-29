@@ -1,11 +1,12 @@
 /**
  * Home NPC Factory Functions
- * 
+ *
  * NPCs that appear in home/family settings.
  */
 
-import { NPC, NPCBehavior, Direction, Position, AnimatedNPCStates } from '../../types';
+import { NPC, Direction, Position } from '../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../assets';
+import { createStaticNPC } from './createNPC';
 
 /**
  * Create a Mum NPC with gentle animation
@@ -14,6 +15,8 @@ import { npcAssets, dialogueSpriteAssets } from '../../assets';
  * - Static position (stays at home)
  * - Gentle idle animation
  * - Warm, caring dialogue with seasonal variations
+ *
+ * Uses createStaticNPC factory with dialogueExpressions.
  *
  * @param id Unique ID for this NPC
  * @param position Where to place the NPC
@@ -24,37 +27,25 @@ export function createMumNPC(
   position: Position,
   name: string = 'Mum'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'idle',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
+  return createStaticNPC({
+    id,
+    name,
+    position,
+    sprite: npcAssets.mum_01,
+    portraitSprite: npcAssets.mum_portrait,
+    dialogueExpressions: dialogueSpriteAssets.mum,
+    scale: 4.0,
     states: {
       idle: {
         sprites: [npcAssets.mum_01, npcAssets.mum_02],
         animationSpeed: 700, // Gentle, calm animation
       },
     },
-  };
-
-  return {
-    id,
-    name,
-    position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.STATIC,
-    sprite: npcAssets.mum_01,
-    portraitSprite: npcAssets.mum_portrait,
-    // Dialogue expression sprites - shows different emotions during conversation
-    dialogueExpressions: dialogueSpriteAssets.mum,
-    scale: 4.0,
     dialogue: [
       {
         id: 'greeting',
         text: 'Hello, love! Welcome home. Have you had a good day?',
-        expression: 'smile', // Warm welcoming smile
+        expression: 'smile',
         seasonalText: {
           spring: 'Good morning, dear! Spring is here - perfect weather for the garden. Would you like some breakfast before you head out?',
           summer: 'Hello, sweetheart! It\'s warm today. I\'ve made some cold lemonade if you\'d like some.',
@@ -74,27 +65,16 @@ export function createMumNPC(
           cherry_blossoms: 'Look at those beautiful petals falling! The cherry tree is in full bloom. It reminds me of when you were little - you loved catching the petals.',
         },
         responses: [
-          {
-            text: 'What are you working on?',
-            nextId: 'home_tasks',
-          },
-          {
-            text: 'Tell me about the village.',
-            nextId: 'village_chat',
-          },
-          {
-            text: 'Can you teach me to cook?',
-            nextId: 'teach_cooking',
-          },
-          {
-            text: 'I should get going.',
-          },
+          { text: 'What are you working on?', nextId: 'home_tasks' },
+          { text: 'Tell me about the village.', nextId: 'village_chat' },
+          { text: 'Can you teach me to cook?', nextId: 'teach_cooking' },
+          { text: 'I should get going.' },
         ],
       },
       {
         id: 'home_tasks',
         text: 'Oh, just the usual - keeping the house tidy, preparing meals. It\'s simple work, but it keeps me busy.',
-        expression: 'default', // Thoughtful
+        expression: 'default',
         seasonalText: {
           spring: 'I\'ve been planting flowers in the window boxes. The spring blooms bring such joy to our home!',
           summer: 'I\'m preserving berries for winter. The summer harvest is always bountiful if we care for it properly.',
@@ -102,19 +82,14 @@ export function createMumNPC(
           winter: 'Keeping the fire going and making hearty soups. It\'s important to stay warm and well-fed in winter.',
         },
         responses: [
-          {
-            text: 'Can I help with anything?',
-            nextId: 'offer_help',
-          },
-          {
-            text: 'That sounds lovely.',
-          },
+          { text: 'Can I help with anything?', nextId: 'offer_help' },
+          { text: 'That sounds lovely.' },
         ],
       },
       {
         id: 'offer_help',
         text: 'That\'s very sweet of you, dear. Just knowing you\'re safe and happy is help enough. But do take care of yourself out there.',
-        expression: 'happy', // Touched by the offer
+        expression: 'happy',
       },
       {
         id: 'village_chat',
@@ -126,161 +101,71 @@ export function createMumNPC(
           winter: 'Winter can be hard, but the village pulls together. We share what we have and keep each other warm.',
         },
         responses: [
-          {
-            text: 'It is peaceful here.',
-          },
-          {
-            text: 'Thank you for the chat.',
-          },
+          { text: 'It is peaceful here.' },
+          { text: 'Thank you for the chat.' },
         ],
       },
       {
         id: 'teach_cooking',
         text: 'Oh, I\'d love to teach you! Cooking is such a wonderful skill. Let me show you some of my favourite recipes.',
-        expression: 'happy', // Excited to teach
+        expression: 'happy',
         responses: [
-          {
-            text: 'I\'d like to learn French Toast.',
-            nextId: 'learn_french_toast',
-          },
-          {
-            text: 'Can you teach me some savoury dishes?',
-            nextId: 'learn_savoury',
-          },
-          {
-            text: 'I want to learn about desserts.',
-            nextId: 'learn_desserts',
-          },
-          {
-            text: 'Tell me about baking.',
-            nextId: 'learn_baking',
-          },
-          {
-            text: 'Maybe later.',
-          },
+          { text: 'I\'d like to learn French Toast.', nextId: 'learn_french_toast' },
+          { text: 'Can you teach me some savoury dishes?', nextId: 'learn_savoury' },
+          { text: 'I want to learn about desserts.', nextId: 'learn_desserts' },
+          { text: 'Tell me about baking.', nextId: 'learn_baking' },
+          { text: 'Maybe later.' },
         ],
       },
       {
         id: 'learn_french_toast',
         text: 'Ah, French Toast! That\'s the perfect recipe to start with. It\'s simple but delicious. You\'ll need bread, eggs, milk, and a bit of sugar. I\'ll write it down for you.',
-        expression: 'smile', // Warm teaching moment
+        expression: 'smile',
         responses: [],
       },
       {
         id: 'learn_savoury',
         text: 'Savoury dishes are hearty and satisfying. What would you like to learn?',
         responses: [
-          {
-            text: 'Spaghetti with meat sauce.',
-            nextId: 'learn_spaghetti',
-          },
-          {
-            text: 'Pizza with potatoes.',
-            nextId: 'learn_potato_pizza',
-          },
-          {
-            text: 'Roast dinner.',
-            nextId: 'learn_roast_dinner',
-          },
-          {
-            text: 'Not right now.',
-          },
+          { text: 'Spaghetti with meat sauce.', nextId: 'learn_spaghetti' },
+          { text: 'Pizza with potatoes.', nextId: 'learn_potato_pizza' },
+          { text: 'Roast dinner.', nextId: 'learn_roast_dinner' },
+          { text: 'Not right now.' },
         ],
       },
-      {
-        id: 'learn_spaghetti',
-        text: 'Spaghetti with meat sauce - a family favourite! You\'ll need pasta, tomatoes, beef mince, and some herbs. I\'ll add it to your recipe book.',
-        responses: [],
-      },
-      {
-        id: 'learn_potato_pizza',
-        text: 'Pizza with potatoes is a rustic treat! Flour for the base, potatoes, cheese, and a bit of olive oil. Delicious!',
-        responses: [],
-      },
-      {
-        id: 'learn_roast_dinner',
-        text: 'A proper Sunday roast! Meat, potatoes, carrots, and broccoli - all the trimmings. I\'ll show you how.',
-        responses: [],
-      },
+      { id: 'learn_spaghetti', text: 'Spaghetti with meat sauce - a family favourite! You\'ll need pasta, tomatoes, beef mince, and some herbs. I\'ll add it to your recipe book.', responses: [] },
+      { id: 'learn_potato_pizza', text: 'Pizza with potatoes is a rustic treat! Flour for the base, potatoes, cheese, and a bit of olive oil. Delicious!', responses: [] },
+      { id: 'learn_roast_dinner', text: 'A proper Sunday roast! Meat, potatoes, carrots, and broccoli - all the trimmings. I\'ll show you how.', responses: [] },
       {
         id: 'learn_desserts',
         text: 'Desserts are my speciality! Let me show you something sweet.',
         responses: [
-          {
-            text: 'Teach me crêpes!',
-            nextId: 'learn_crepes',
-          },
-          {
-            text: 'What about marzipan chocolates?',
-            nextId: 'learn_marzipan',
-          },
-          {
-            text: 'Ice cream sounds lovely!',
-            nextId: 'learn_ice_cream',
-          },
-          {
-            text: 'Never mind.',
-          },
+          { text: 'Teach me crêpes!', nextId: 'learn_crepes' },
+          { text: 'What about marzipan chocolates?', nextId: 'learn_marzipan' },
+          { text: 'Ice cream sounds lovely!', nextId: 'learn_ice_cream' },
+          { text: 'Never mind.' },
         ],
       },
       {
         id: 'learn_baking',
         text: 'Baking is wonderful! The smell of fresh bread fills the whole house. What would you like to learn?',
         responses: [
-          {
-            text: 'How to make bread.',
-            nextId: 'learn_bread',
-          },
-          {
-            text: 'Biscuits, please!',
-            nextId: 'learn_biscuits',
-          },
-          {
-            text: 'Chocolate cake!',
-            nextId: 'learn_chocolate_cake',
-          },
-          {
-            text: 'Not right now.',
-          },
+          { text: 'How to make bread.', nextId: 'learn_bread' },
+          { text: 'Biscuits, please!', nextId: 'learn_biscuits' },
+          { text: 'Chocolate cake!', nextId: 'learn_chocolate_cake' },
+          { text: 'Not right now.' },
         ],
       },
-      {
-        id: 'learn_crepes',
-        text: 'Crêpes with strawberry jam - delightful! They\'re thin and delicate. I\'ll write down the recipe for you.',
-        responses: [],
-      },
-      {
-        id: 'learn_marzipan',
-        text: 'Marzipan chocolates are a bit tricky, but so rewarding! You\'ll need almonds, sugar, and good dark chocolate. Here\'s the recipe.',
-        responses: [],
-      },
-      {
-        id: 'learn_ice_cream',
-        text: 'Homemade vanilla ice cream - nothing beats it! You\'ll need cream, sugar, vanilla, and patience. I\'ll add it to your book.',
-        responses: [],
-      },
-      {
-        id: 'learn_bread',
-        text: 'Bread is the foundation of cooking! Flour, water, yeast, salt - simple ingredients, but the technique matters. I\'ll teach you.',
-        responses: [],
-      },
-      {
-        id: 'learn_biscuits',
-        text: 'Biscuits are perfect with a cup of tea! Butter, flour, sugar - and they bake up lovely and crisp. Here\'s the recipe.',
-        responses: [],
-      },
-      {
-        id: 'learn_chocolate_cake',
-        text: 'Chocolate cake! Everyone\'s favourite. Rich, moist, and absolutely delicious. I\'ll show you how to make it.',
-        responses: [],
-      },
+      { id: 'learn_crepes', text: 'Crêpes with strawberry jam - delightful! They\'re thin and delicate. I\'ll write down the recipe for you.', responses: [] },
+      { id: 'learn_marzipan', text: 'Marzipan chocolates are a bit tricky, but so rewarding! You\'ll need almonds, sugar, and good dark chocolate. Here\'s the recipe.', responses: [] },
+      { id: 'learn_ice_cream', text: 'Homemade vanilla ice cream - nothing beats it! You\'ll need cream, sugar, vanilla, and patience. I\'ll add it to your book.', responses: [] },
+      { id: 'learn_bread', text: 'Bread is the foundation of cooking! Flour, water, yeast, salt - simple ingredients, but the technique matters. I\'ll teach you.', responses: [] },
+      { id: 'learn_biscuits', text: 'Biscuits are perfect with a cup of tea! Butter, flour, sugar - and they bake up lovely and crisp. Here\'s the recipe.', responses: [] },
+      { id: 'learn_chocolate_cake', text: 'Chocolate cake! Everyone\'s favourite. Rich, moist, and absolutely delicious. I\'ll show you how to make it.', responses: [] },
     ],
-    animatedStates,
-    interactionRadius: 1.5,
     friendshipConfig: {
       canBefriend: true,
       startingPoints: 900, // Maximum friendship from start (family)
     },
-  };
+  });
 }
-

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Position, Direction } from '../types';
-import { TILE_SIZE, PLAYER_SIZE } from '../constants';
+import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER } from '../constants';
 import { npcManager } from '../NPCManager';
 import { TimeManager } from '../utils/TimeManager';
 
@@ -12,8 +12,14 @@ interface NPCRendererProps {
 }
 
 /**
- * Renders NPCs with interaction prompts
- * Shows "[E] Talk to {name}" when player is in range
+ * Renders NPC interaction prompts (and sprites when not using PixiJS)
+ *
+ * When USE_PIXI_RENDERER is true:
+ * - NPC sprites are rendered by NPCLayer in PixiJS for proper z-ordering
+ * - This component only renders "[E] Talk to {name}" prompts as DOM overlays
+ *
+ * When USE_PIXI_RENDERER is false:
+ * - This component renders both sprites and interaction prompts as DOM elements
  */
 const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, characterScale = 1.0, gridOffset }) => {
     const offsetX = gridOffset?.x ?? 0;
@@ -50,17 +56,11 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                 // NPC sprite scale (default 4.0x) * map characterScale
                 const npcScale = (npc.scale || 4.0) * characterScale;
 
-                // Calculate feet position for z-ordering
-                // NPCs are centered on their position, but the visual character's feet
-                // are NOT at the bottom of the sprite (there's padding in sprite images)
-                // Use a smaller offset (~0.3 tiles) to approximate where feet actually appear
+                // Calculate feet position for z-ordering (only used for DOM rendering)
                 const feetOffset = 0.3;
                 const feetY = npc.position.y + feetOffset;
 
-                // Determine if sprite should be flipped horizontally
-                // - Default: flip when facing left (sprites face right by default)
-                // - reverseFlip: flip when facing right (for sprites that naturally face left, like ducks)
-                // - noFlip: never flip
+                // Determine if sprite should be flipped horizontally (only for DOM rendering)
                 let shouldFlip = false;
                 if (!npc.noFlip) {
                     if (npc.reverseFlip) {
@@ -74,33 +74,33 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                 if ((npc.direction === Direction.Up || npc.direction === Direction.Down) &&
                     npc.animatedStates?.states[npc.animatedStates.currentState]?.directionalSprites) {
                     const currentFrame = npc.animatedStates.currentFrame;
-                    // Flip on odd frames to create 2-frame walking animation
                     shouldFlip = currentFrame % 2 === 1;
                 }
 
-                // Z-index: use override if provided (for layered rooms like shop),
-                // otherwise calculate based on feet Y position for proper depth sorting
+                // Z-index for DOM rendering
                 const zIndex = npc.zIndexOverride ?? Math.floor(feetY) * 10;
 
                 return (
                     <React.Fragment key={npc.id}>
-                        {/* NPC Sprite */}
-                        <img
-                            src={npc.sprite}
-                            alt={npc.name}
-                            className="absolute pointer-events-none"
-                            style={{
-                                left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetX,
-                                top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY,
-                                width: PLAYER_SIZE * npcScale * TILE_SIZE,
-                                height: PLAYER_SIZE * npcScale * TILE_SIZE,
-                                imageRendering: 'pixelated',
-                                transform: shouldFlip ? 'scaleX(-1)' : undefined,
-                                zIndex,
-                            }}
-                        />
+                        {/* NPC Sprite - Only render as DOM when NOT using PixiJS */}
+                        {!USE_PIXI_RENDERER && (
+                            <img
+                                src={npc.sprite}
+                                alt={npc.name}
+                                className="absolute pointer-events-none"
+                                style={{
+                                    left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetX,
+                                    top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY,
+                                    width: PLAYER_SIZE * npcScale * TILE_SIZE,
+                                    height: PLAYER_SIZE * npcScale * TILE_SIZE,
+                                    imageRendering: 'pixelated',
+                                    transform: shouldFlip ? 'scaleX(-1)' : undefined,
+                                    zIndex,
+                                }}
+                            />
+                        )}
 
-                        {/* Interaction Prompt (when in range) */}
+                        {/* Interaction Prompt (when in range) - Always rendered as DOM */}
                         {inRange && (
                             <div
                                 className="absolute pointer-events-none"

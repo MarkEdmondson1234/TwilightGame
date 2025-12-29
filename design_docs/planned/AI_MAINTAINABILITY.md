@@ -350,6 +350,9 @@ data/
 | 2025-12-29 | Migrated all villageNPCs to use createNPC factory | VillageElder, Cat, OldWoman, Dog, Shopkeeper now use factory |
 | 2025-12-29 | Updated DebugInfoPanel, farmManager, positionValidator | Now use `getTileCoords()` instead of inline Math.floor |
 | 2025-12-29 | Added "Reusable Utilities & Patterns" section to CLAUDE.md | Prevents future duplication by documenting utilities |
+| 2025-12-29 | Migrated homeNPCs.ts (Mum) to use createStaticNPC factory | Reduced ~115 lines of boilerplate |
+| 2025-12-29 | Migrated forestNPCs.ts (7 NPCs) to use createNPC factory | Reduced 1008→775 lines (-23%), all forest NPCs now use factory |
+| 2025-12-29 | Fixed NPC z-ordering bug with foreground sprites | NPCs now correctly appear behind trees/buildings based on Y position |
 
 ---
 

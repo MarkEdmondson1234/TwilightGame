@@ -71,7 +71,9 @@
       "Skill(add-inventory-sprite:*)",
       "Bash(grep:*)",
       "Bash(wc:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Skill(test-game)",
+      "Skill(test-game:*)"
     ],
     "deny": [],
     "ask": [

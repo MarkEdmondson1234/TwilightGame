@@ -11,9 +11,10 @@ import { WeatherLayer } from './utils/pixi/WeatherLayer';
 import { DarknessLayer } from './utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from './utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from './utils/pixi/BackgroundImageLayer';
+import { NPCLayer } from './utils/pixi/NPCLayer';
 import { WeatherManager } from './utils/WeatherManager';
 import { shouldShowWeather } from './data/weatherConfig';
-import { tileAssets, farmingAssets, cookingAssets } from './assets';
+import { tileAssets, farmingAssets, cookingAssets, npcAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -142,6 +143,7 @@ const App: React.FC = () => {
     const playerSpriteRef = useRef<PlayerSprite | null>(null);
     const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
     const foregroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
+    const npcLayerRef = useRef<NPCLayer | null>(null);
     const shadowLayerRef = useRef<ShadowLayer | null>(null);
     const weatherLayerRef = useRef<WeatherLayer | null>(null);
     const darknessLayerRef = useRef<DarknessLayer | null>(null);
@@ -729,12 +731,13 @@ const App: React.FC = () => {
                 // Enable z-index sorting on stage for proper layer ordering
                 app.stage.sortableChildren = true;
 
-                // Preload all tile, farming, and cooking textures
+                // Preload all tile, farming, cooking, and NPC textures
                 console.log('[App] Preloading textures...');
                 await textureManager.loadBatch({
                     ...tileAssets,
                     ...farmingAssets,
-                    ...cookingAssets
+                    ...cookingAssets,
+                    ...npcAssets
                 });
 
                 // Create background image layer (for background-image render mode rooms)
@@ -778,6 +781,11 @@ const App: React.FC = () => {
                 const foregroundSpriteLayer = new SpriteLayer(true);
                 foregroundSpriteLayerRef.current = foregroundSpriteLayer;
                 app.stage.addChild(foregroundSpriteLayer.getContainer());
+
+                // Create NPC layer (renders NPCs with proper z-ordering relative to trees)
+                const npcLayer = new NPCLayer();
+                npcLayerRef.current = npcLayer;
+                app.stage.addChild(npcLayer.getContainer());
 
                 // Create weather layer (particle effects above everything)
                 console.log('='.repeat(60));
@@ -828,6 +836,7 @@ const App: React.FC = () => {
                         shadowLayerRef.current.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
                     }
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+                    npcLayer.renderNPCs(currentMapId, currentMap.characterScale ?? 1.0, undefined);
                     backgroundImageLayer.updateCamera(cameraX, cameraY);
                     tileLayer.updateCamera(cameraX, cameraY);
                     backgroundSpriteLayer.updateCamera(cameraX, cameraY);
@@ -837,6 +846,7 @@ const App: React.FC = () => {
                         shadowLayerRef.current.updateCamera(cameraX, cameraY);
                     }
                     foregroundSpriteLayer.updateCamera(cameraX, cameraY);
+                    npcLayer.updateCamera(cameraX, cameraY);
                 }
 
                 const endTime = performance.now();
@@ -875,6 +885,10 @@ const App: React.FC = () => {
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.clear();
                 foregroundSpriteLayerRef.current = null;
+            }
+            if (npcLayerRef.current) {
+                npcLayerRef.current.clear();
+                npcLayerRef.current = null;
             }
             if (shadowLayerRef.current) {
                 shadowLayerRef.current.clear();
@@ -1030,6 +1044,9 @@ const App: React.FC = () => {
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.updateCamera(0, 0);
             }
+            if (npcLayerRef.current) {
+                npcLayerRef.current.updateCamera(0, 0);
+            }
         } else {
             // For tiled rooms, apply camera transform normally
             if (tileLayerRef.current) {
@@ -1049,6 +1066,9 @@ const App: React.FC = () => {
             }
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
+            }
+            if (npcLayerRef.current) {
+                npcLayerRef.current.updateCamera(cameraX, cameraY);
             }
         }
     }, [cameraX, cameraY, isPixiInitialized, currentMap?.renderMode]);
@@ -1086,6 +1106,11 @@ const App: React.FC = () => {
                 foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
             }
 
+            // Update NPC layer
+            if (npcLayerRef.current) {
+                npcLayerRef.current.renderNPCs(currentMapId, currentMap.characterScale ?? 1.0, effectiveGridOffset);
+            }
+
             // Update darkness layer (global darkness for caves/forests)
             if (darknessLayerRef.current) {
                 const { season, timeOfDay: tod } = TimeManager.getCurrentTime();
@@ -1098,7 +1123,7 @@ const App: React.FC = () => {
                 );
             }
         }
-    }, [renderVersion, isPixiInitialized]);
+    }, [renderVersion, isPixiInitialized, npcUpdateTrigger]);
 
     // Update player sprite when player state changes
     useEffect(() => {

@@ -227,7 +227,7 @@ export const groceryAssets = {
   spinach_bundle: '/TwilightGame/assets-optimized/items/grocery/spinach_bundle.png',
 };
 
-// NPC assets - Use optimized versions for in-game sprites, originals for portraits
+// NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
 export const npcAssets = {
   little_girl: '/TwilightGame/assets-optimized/npcs/little_girl.png',
   little_girl_portrait: '/TwilightGame/assets/npcs/little_girl.png',
@@ -237,7 +237,7 @@ export const npcAssets = {
   cat_sleeping_angry: '/TwilightGame/assets/npcs/cat/cat_sleeping_angry.png',
   cat_stand_01: '/TwilightGame/assets/npcs/cat/cat_stand_01.png',
   cat_stand_02: '/TwilightGame/assets/npcs/cat/cat_stand_02.png',
-  cat_portrait: '/TwilightGame/assets/npcs/cat/cat_sleeping_01.png', // Original for dialogue
+  cat_portrait: '/TwilightGame/assets/npcs/cat/cat_sleeping_01.png',
   elderly_01: '/TwilightGame/assets-optimized/npcs/elderly_01.png',
   elderly_02: '/TwilightGame/assets-optimized/npcs/elderly_02.png',
   elderly_portrait: '/TwilightGame/assets/npcs/elderly_01.png',
@@ -249,10 +249,10 @@ export const npcAssets = {
   shopkeeper_fox_portrait: '/TwilightGame/assets/npcs/shop_keeper_fox_01.png',
   dog_01: '/TwilightGame/assets-optimized/npcs/dog_01.png',
   dog_02: '/TwilightGame/assets-optimized/npcs/dog_02.png',
-  dog_portrait: '/TwilightGame/assets/npcs/dog_01.png', // Original for dialogue
+  dog_portrait: '/TwilightGame/assets/npcs/dog_01.png',
   mum_01: '/TwilightGame/assets-optimized/npcs/mum_01.png',
   mum_02: '/TwilightGame/assets-optimized/npcs/mum_02.png',
-  mum_portrait: '/TwilightGame/assets/npcs/mum_01.png', // Original for dialogue
+  mum_portrait: '/TwilightGame/assets/npcs/mum_01.png',
   // Umbra Wolf assets (forest creature)
   umbrawolf_standing1: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing1.png',
   umbrawolf_standing2: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing2.png',
@@ -260,7 +260,7 @@ export const npcAssets = {
   umbrawolf_sitting_02: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_sitting_02.png',
   umbrawolf_front: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_front.png',
   umbrawolf_back: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_back.png',
-  umbrawolf_portrait: '/TwilightGame/assets/npcs/umbra_wolf/umbrawolf_front.png', // Original for dialogue
+  umbrawolf_portrait: '/TwilightGame/assets/npcs/umbra_wolf/umbrawolf_front.png',
   // Walking animation frames (facing right - flip for left)
   umbrawolf_walk1: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf1.png',
   umbrawolf_walk2: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf2.png',
