@@ -379,7 +379,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
             {/* Shop Inventory (Left) */}
             <div className="flex flex-col">
               <h3 className="text-xl font-bold text-emerald-300 mb-3">Shop Stock</h3>
-              <div className="flex-1 overflow-y-auto pr-2">
+              <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] shop-scrollbar">
                 <div className="grid grid-cols-6 gap-2">
                   {shopInventory.map(shopItem => renderShopSlot(shopItem))}
                 </div>
@@ -392,7 +392,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
             {/* Player Inventory (Right) */}
             <div className="flex flex-col">
               <h3 className="text-xl font-bold text-amber-300 mb-3">Your Inventory</h3>
-              <div className="flex-1 overflow-y-auto pr-2">
+              <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] player-inventory-scrollbar">
                 <div className="grid grid-cols-6 gap-2">
                   {playerSlots.map((item, index) => renderPlayerSlot(item, index))}
                 </div>

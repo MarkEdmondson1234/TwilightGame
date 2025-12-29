@@ -67,7 +67,7 @@ const Inventory: React.FC<InventoryProps> = ({
         </div>
 
         {/* Inventory Grid - Scrollable */}
-        <div className="overflow-y-auto flex-1 pr-2">
+        <div className="overflow-y-auto flex-1 pr-2 max-h-[500px] inventory-scrollbar">
           <div className="grid grid-cols-9 gap-2">
             {slots.map((item, index) => {
               const isQuickSlot = index < 9;
