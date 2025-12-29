@@ -21,7 +21,7 @@
  */
 
 import * as PIXI from 'pixi.js';
-import { TILE_SIZE, TILE_LEGEND, SPRITE_METADATA } from '../../constants';
+import { TILE_SIZE } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
 import { MapDefinition, TileType, FarmPlotState, CropGrowthStage } from '../../types';
@@ -31,6 +31,9 @@ import { calculateTileTransforms } from '../tileRenderUtils';
 import { ColorResolver } from '../ColorResolver';
 import { farmManager } from '../farmManager';
 import { farmingAssets } from '../../assets';
+import { selectVariant, getPositionHash } from '../spriteVariantUtils';
+import { metadataCache } from '../MetadataCache';
+import { PixiLayer } from './PixiLayer';
 
 /**
  * Crop sprite sizing configuration per growth stage
@@ -98,14 +101,11 @@ const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
   },
 };
 
-export class TileLayer {
-  private container: PIXI.Container;
+export class TileLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite | PIXI.Graphics> = new Map();
   private currentMapId: string | null = null;
   private currentSeason: string | null = null;
   private farmUpdateTrigger: number = 0;
-  // Cache of tile types that have multi-tile sprites (O(1) lookup instead of O(n))
-  private static multiTileSpriteTypes: Set<TileType> | null = null;
   // Cache colors to avoid unnecessary redraws (key -> hex color)
   private colorCache: Map<string, number> = new Map();
   // Cache hex color conversions (colorClass -> hex)
@@ -114,22 +114,7 @@ export class TileLayer {
   private animatedTiles: Map<string, { frames: string[]; speed: number }> = new Map();
 
   constructor() {
-    this.container = new PIXI.Container();
-    this.container.sortableChildren = true; // Enable z-sorting for base tiles
-
-    // Initialize the cache once
-    if (TileLayer.multiTileSpriteTypes === null) {
-      TileLayer.multiTileSpriteTypes = new Set(SPRITE_METADATA.map(meta => meta.tileType));
-    }
-  }
-
-  /**
-   * Check if a tile type has a multi-tile sprite definition
-   * Multi-tile sprites are rendered by SpriteLayer, not TileLayer
-   * Uses cached Set for O(1) lookup instead of O(n) array search
-   */
-  private isMultiTileSprite(tileType: TileType): boolean {
-    return TileLayer.multiTileSpriteTypes!.has(tileType);
+    super(0, true); // Z-index 0: Base tile layer
   }
 
   /**
@@ -243,7 +228,7 @@ export class TileLayer {
     // Check if this tile has a multi-tile sprite definition
     // Multi-tile sprites (cherry trees, beds, sofas) are rendered by SpriteLayer
     // TileLayer only needs to render the color background, not the image
-    if (this.isMultiTileSprite(tileData.type)) {
+    if (metadataCache.isMultiTileSprite(tileData.type)) {
       // Only render color background - SpriteLayer will render the sprite
       const resolvedColor = ColorResolver.getTileColor(tileData.type);
       this.renderColorTile(x, y, resolvedColor, map);
@@ -268,15 +253,12 @@ export class TileLayer {
     let imageUrl: string | null = null;
 
     if (imageArray.length > 0) {
-      const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
-      const hashValue = hash % 1;
-
       // For grass tiles, only show image on 30% of tiles (sparse grass tufts)
       // For other tiles, always show image
       const isGrassTile = tileData.type === TileType.GRASS ||
                           tileData.type === TileType.TREE ||
                           tileData.type === TileType.TREE_BIG;
-      const showImage = (isGrassTile ? hashValue < 0.3 : true) && !hideSpriteDuringSnow;
+      const showImage = (isGrassTile ? getPositionHash(x, y) < 0.3 : true) && !hideSpriteDuringSnow;
 
       if (showImage) {
         // Override sprite for farm plot growth stages
@@ -300,10 +282,8 @@ export class TileLayer {
             imageUrl = (farmingAssets as any)[`plant_${cropType}_adult`] || farmingAssets.seedling;
           }
         } else {
-          // Use a separate hash for image selection
-          const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-          const index = Math.floor((imageHash % 1) * imageArray.length);
-          imageUrl = imageArray[index];
+          // Select image variant deterministically
+          imageUrl = imageArray[selectVariant(x, y, imageArray.length)];
         }
       }
     }
@@ -454,14 +434,10 @@ export class TileLayer {
     if (baseTileData.seasonalImages) {
       const seasonalArray = seasonKey in baseTileData.seasonalImages ? baseTileData.seasonalImages[seasonKey] : baseTileData.seasonalImages.default;
       if (seasonalArray && seasonalArray.length > 0) {
-        const hash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-        const index = Math.floor((hash % 1) * seasonalArray.length);
-        imageUrl = seasonalArray[index];
+        imageUrl = seasonalArray[selectVariant(x, y, seasonalArray.length)];
       }
     } else if (baseTileData.image && baseTileData.image.length > 0) {
-      const hash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-      const index = Math.floor((hash % 1) * baseTileData.image.length);
-      imageUrl = baseTileData.image[index];
+      imageUrl = baseTileData.image[selectVariant(x, y, baseTileData.image.length)];
     }
 
     if (!imageUrl) {
@@ -672,21 +648,6 @@ export class TileLayer {
     this.colorCache.clear(); // Clear color cache when map changes
     this.animatedTiles.clear(); // Clear animated tile tracking
     console.log('[TileLayer] Cleared all sprites');
-  }
-
-  /**
-   * Get the container for adding to stage
-   */
-  getContainer(): PIXI.Container {
-    return this.container;
-  }
-
-  /**
-   * Update camera position (moves world, not camera)
-   */
-  updateCamera(cameraX: number, cameraY: number): void {
-    this.container.x = -cameraX;
-    this.container.y = -cameraY;
   }
 
   /**

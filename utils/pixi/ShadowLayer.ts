@@ -18,10 +18,13 @@
  */
 
 import * as PIXI from 'pixi.js';
-import { TILE_SIZE, SPRITE_METADATA } from '../../constants';
-import { MapDefinition, SpriteMetadata, TileType } from '../../types';
+import { TILE_SIZE } from '../../constants';
+import { MapDefinition, SpriteMetadata } from '../../types';
 import { getTileData } from '../mapUtils';
 import { Season } from '../TimeManager';
+import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
+import { metadataCache } from '../MetadataCache';
+import { PixiLayer } from './PixiLayer';
 
 // Shadow configuration
 const SHADOW_CONFIG = {
@@ -54,32 +57,12 @@ const SEASON_MODIFIERS: Record<string, number> = {
 // Weather that blocks shadows
 const SHADOW_BLOCKING_WEATHER = ['rain', 'snow', 'fog', 'mist', 'storm'];
 
-export class ShadowLayer {
-  private container: PIXI.Container;
+export class ShadowLayer extends PixiLayer {
   private shadows: Map<string, PIXI.Graphics> = new Map();
   private currentMapId: string | null = null;
 
-  // Cache sprite metadata for O(1) lookup
-  private static spriteMetadataMap: Map<TileType, SpriteMetadata> | null = null;
-  // Cache max sprite size for viewport margin
-  private static maxSpriteSize: number | null = null;
-
   constructor() {
-    this.container = new PIXI.Container();
-    this.container.sortableChildren = true;
-
-    // Initialize caches
-    if (ShadowLayer.spriteMetadataMap === null) {
-      ShadowLayer.spriteMetadataMap = new Map(
-        SPRITE_METADATA.filter(m => m.isForeground).map(m => [m.tileType, m])
-      );
-    }
-    if (ShadowLayer.maxSpriteSize === null) {
-      const foregroundSprites = SPRITE_METADATA.filter(m => m.isForeground);
-      ShadowLayer.maxSpriteSize = foregroundSprites.length > 0
-        ? Math.max(...foregroundSprites.map(m => Math.max(m.spriteWidth, m.spriteHeight)))
-        : 4;
-    }
+    super(10, true); // Z-index 10: Below sprites but above tiles
   }
 
   /**
@@ -185,22 +168,17 @@ export class ShadowLayer {
     // Track rendered shadows
     const renderedKeys = new Set<string>();
 
-    // Use cached max sprite size for margin
-    const margin = Math.ceil(ShadowLayer.maxSpriteSize! / 2) + 2;
+    // Calculate scan area with margin for large foreground sprites
+    const margin = calculateSpriteMargin(metadataCache.maxForegroundSize);
+    const bounds = calculateScanBounds(visibleRange, map.width, map.height, margin);
 
-    // Scan for foreground sprites
-    const startY = Math.max(0, visibleRange.minY - margin);
-    const endY = Math.min(map.height - 1, visibleRange.maxY + margin);
-    const startX = Math.max(0, visibleRange.minX - margin);
-    const endX = Math.min(map.width - 1, visibleRange.maxX + margin);
-
-    for (let y = startY; y <= endY; y++) {
-      for (let x = startX; x <= endX; x++) {
+    for (let y = bounds.startY; y <= bounds.endY; y++) {
+      for (let x = bounds.startX; x <= bounds.endX; x++) {
         const tileData = getTileData(x, y);
         if (!tileData) continue;
 
         // Only render shadows for foreground sprites
-        const spriteMetadata = ShadowLayer.spriteMetadataMap!.get(tileData.type);
+        const spriteMetadata = metadataCache.getForegroundMetadata(tileData.type);
         if (!spriteMetadata) continue;
 
         const key = `${x},${y}`;
@@ -296,27 +274,12 @@ export class ShadowLayer {
   }
 
   /**
-   * Update camera position
-   */
-  updateCamera(cameraX: number, cameraY: number): void {
-    this.container.x = -cameraX;
-    this.container.y = -cameraY;
-  }
-
-  /**
    * Clear all shadows (when changing maps)
    */
   clear(): void {
     this.shadows.forEach(shadow => shadow.destroy());
     this.shadows.clear();
     console.log('[ShadowLayer] Cleared all shadows');
-  }
-
-  /**
-   * Get container for adding to stage
-   */
-  getContainer(): PIXI.Container {
-    return this.container;
   }
 
   /**

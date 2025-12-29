@@ -20,20 +20,19 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction } from '../../types';
 import { textureManager } from '../TextureManager';
+import { PixiLayer } from './PixiLayer';
 
-export class PlayerSprite {
+export class PlayerSprite extends PixiLayer {
   private sprite: PIXI.Sprite;
-  private container: PIXI.Container;
   private currentSpriteUrl: string | null = null;
 
   constructor() {
-    this.container = new PIXI.Container();
-    this.container.sortableChildren = true;
+    super(100, true); // Z-index 100: Above tiles, below foreground sprites
 
     // Create player sprite
     this.sprite = new PIXI.Sprite();
     this.sprite.anchor.set(0.5, 0.5); // Center anchor for rotation/scaling
-    this.sprite.zIndex = 100; // Above tiles, below foreground sprites
+    this.sprite.zIndex = 100;
     this.container.addChild(this.sprite);
   }
 
@@ -78,21 +77,6 @@ export class PlayerSprite {
   }
 
   /**
-   * Get the container for adding to stage
-   */
-  getContainer(): PIXI.Container {
-    return this.container;
-  }
-
-  /**
-   * Update camera position (moves world, not camera)
-   */
-  updateCamera(cameraX: number, cameraY: number): void {
-    this.container.x = -cameraX;
-    this.container.y = -cameraY;
-  }
-
-  /**
    * Hide the player sprite
    */
   hide(): void {
@@ -114,10 +98,10 @@ export class PlayerSprite {
   }
 
   /**
-   * Clean up resources
+   * Clear the player sprite (required by PixiLayer)
    */
-  destroy(): void {
-    this.sprite.destroy();
-    this.container.destroy();
+  clear(): void {
+    this.sprite.visible = false;
+    this.currentSpriteUrl = null;
   }
 }

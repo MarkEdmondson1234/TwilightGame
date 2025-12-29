@@ -22,25 +22,16 @@ import { TILE_SIZE } from '../../constants';
 import { PlacedItem } from '../../types';
 import { textureManager } from '../TextureManager';
 import { shouldShowDecayWarning } from '../itemDecayManager';
+import { PixiLayer } from './PixiLayer';
 
-export class PlacedItemsLayer {
-  private container: PIXI.Container;
+export class PlacedItemsLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private blinkState: Map<string, boolean> = new Map(); // Track blink state for each item
   private lastBlinkTime: number = 0;
 
   constructor() {
-    this.container = new PIXI.Container();
-    this.container.sortableChildren = true;
     // Z-index 150: Between player (100) and foreground sprites (200)
-    this.container.zIndex = 150;
-  }
-
-  /**
-   * Get the PIXI container
-   */
-  getContainer(): PIXI.Container {
-    return this.container;
+    super(150, true);
   }
 
   /**
@@ -126,14 +117,6 @@ export class PlacedItemsLayer {
   }
 
   /**
-   * Update camera position
-   */
-  updateCamera(cameraX: number, cameraY: number): void {
-    this.container.x = -cameraX;
-    this.container.y = -cameraY;
-  }
-
-  /**
    * Clear all sprites (call when changing maps)
    */
   clear(): void {
@@ -142,13 +125,5 @@ export class PlacedItemsLayer {
     }
     this.sprites.clear();
     this.blinkState.clear();
-  }
-
-  /**
-   * Destroy the layer
-   */
-  destroy(): void {
-    this.clear();
-    this.container.destroy();
   }
 }
