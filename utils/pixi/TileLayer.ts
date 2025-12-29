@@ -50,7 +50,7 @@ interface CropSpriteConfig {
  */
 const CROP_ADULT_SIZES: Record<string, { width: number; height: number; offsetX: number; offsetY: number }> = {
   // Large crops (2 tiles)
-  tomato: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
+  tomato: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
   pumpkin: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
   corn: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
   sunflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
@@ -61,7 +61,7 @@ const CROP_ADULT_SIZES: Record<string, { width: number; height: number; offsetX:
   cauliflower: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
 
   // Small/leafy crops (1 tile) - default, but listed for clarity
-  spinach: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  spinach: { width: 1, height: 1, offsetX: 0, offsetY: 1 },
   salad: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
   radish: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
   carrot: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
@@ -414,7 +414,8 @@ export class TileLayer {
     }
 
     // Apply transforms (flip, rotation, scale, brightness)
-    if (sprite instanceof PIXI.Sprite) {
+    // Skip transforms for crop sprites - they handle their own positioning
+    if (sprite instanceof PIXI.Sprite && !cropConfig) {
       const transforms = calculateTileTransforms(tileData, x, y, 0);
 
       // Apply horizontal flip by negating scale.x (preserves magnitude)
