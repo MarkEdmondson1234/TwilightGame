@@ -231,7 +231,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
           className={`
             relative aspect-square rounded-lg border-2 transition-all
             ${canAfford
-              ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 hover:scale-105 cursor-pointer'
+              ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 cursor-pointer'
               : 'bg-gray-900/40 border-gray-600 cursor-not-allowed opacity-50'
             }
           `}
@@ -293,7 +293,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
           onClick={() =>
             handleDragStart(inventoryItem.itemId, false, inventoryItem.quantity)
           }
-          className="relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 hover:scale-105 cursor-pointer transition-all"
+          className="relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 cursor-pointer transition-all"
         >
           {/* Item Image/Icon */}
           <div className="absolute inset-0 flex items-center justify-center p-2">
@@ -331,8 +331,14 @@ const ShopUI: React.FC<ShopUIProps> = ({
   return (
     <>
       {/* Main Shop UI */}
-      <div className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_SHOP)} pointer-events-auto`}>
-        <div className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col">
+      <div
+        className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_SHOP)} pointer-events-auto`}
+        onClick={onClose}
+      >
+        <div
+          className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header with Gold Display and Close Button */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-3xl font-bold text-amber-200">General Store</h2>
@@ -381,7 +387,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
             {/* Shop Inventory (Left) */}
             <div className="flex flex-col">
               <h3 className="text-xl font-bold text-emerald-300 mb-3">Shop Stock</h3>
-              <div className="flex-1 overflow-y-auto pr-2">
+              <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] shop-scrollbar">
                 <div className="grid grid-cols-6 gap-2">
                   {shopInventory.map(shopItem => renderShopSlot(shopItem))}
                 </div>
@@ -394,7 +400,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
             {/* Player Inventory (Right) */}
             <div className="flex flex-col">
               <h3 className="text-xl font-bold text-amber-300 mb-3">Your Inventory</h3>
-              <div className="flex-1 overflow-y-auto pr-2">
+              <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] player-inventory-scrollbar">
                 <div className="grid grid-cols-6 gap-2">
                   {playerSlots.map((item, index) => renderPlayerSlot(item, index))}
                 </div>

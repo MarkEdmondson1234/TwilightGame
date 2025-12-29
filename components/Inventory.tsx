@@ -54,8 +54,14 @@ const Inventory: React.FC<InventoryProps> = ({
   };
 
   return (
-    <div className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_INVENTORY_MODAL)} pointer-events-auto`}>
-      <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] flex flex-col">
+    <div
+      className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_INVENTORY_MODAL)} pointer-events-auto`}
+      onClick={onClose}
+    >
+      <div
+        className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-amber-200">{title}</h2>
@@ -68,7 +74,7 @@ const Inventory: React.FC<InventoryProps> = ({
         </div>
 
         {/* Inventory Grid - Scrollable */}
-        <div className="overflow-y-auto flex-1 pr-2">
+        <div className="overflow-y-auto flex-1 pr-2 max-h-[500px] inventory-scrollbar">
           <div className="grid grid-cols-9 gap-2">
             {slots.map((item, index) => {
               const isQuickSlot = index < 9;
@@ -98,7 +104,7 @@ const Inventory: React.FC<InventoryProps> = ({
                         : 'bg-amber-950/40 border-amber-700 hover:bg-amber-900/60'
                       }`
                     }
-                    ${isEmpty ? 'cursor-default' : 'cursor-pointer hover:scale-105'}
+                    ${isEmpty ? 'cursor-default' : 'cursor-pointer'}
                   `}
                   disabled={isEmpty}
                 >

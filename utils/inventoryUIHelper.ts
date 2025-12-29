@@ -59,6 +59,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_radish: itemAssets.radishes,
   crop_tomato: groceryAssets.tomato,
   crop_blackberry: itemAssets.blackberries,
+  crop_spinach: groceryAssets.spinach_bundle,
 };
 
 /**
