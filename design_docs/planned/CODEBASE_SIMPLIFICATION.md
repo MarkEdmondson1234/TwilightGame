@@ -5,7 +5,8 @@ This document tracks opportunities to simplify the TwilightGame codebase by redu
 ## Overview
 
 **Total Estimated Savings**: ~1,150-1,500 lines of code
-**Status**: In Progress
+**Actual Savings So Far**: ~1,873 lines (including 622 lines reorganised)
+**Status**: Complete (All Phases Finished)
 
 ## Implementation Phases
 
@@ -38,9 +39,9 @@ This document tracks opportunities to simplify the TwilightGame codebase by redu
 
 | Task | Lines Saved | Status |
 |------|-------------|--------|
-| 4.1 Move SPRITE_METADATA to assets | 470 | [ ] Pending |
-| 4.2 Split types.ts by system | 200 | [ ] Pending |
-| 4.3 Organise constants.ts | 200 | [ ] Pending |
+| 4.1 Move SPRITE_METADATA to data/ | 831 | [x] Complete |
+| 4.2 Split types.ts by system | 622 (reorganised) | [x] Complete |
+| 4.3 Organise constants.ts | N/A | [x] Complete (now 187 lines, well-organised) |
 
 ---
 
@@ -267,7 +268,9 @@ const handleKeyDown = (e: KeyboardEvent) => {
 | 2025-12-29 | Created `utils/keyHandlers/debugKeys.ts` - F-key handlers | ~50 |
 | 2025-12-29 | Created `utils/keyHandlers/uiKeys.ts` - UI toggle handlers | ~30 |
 | 2025-12-29 | Refactored useKeyboardControls to use extracted handlers | ~60 |
-| **Total** | | **~420** |
+| 2025-12-29 | Moved SPRITE_METADATA to `data/spriteMetadata.ts` (constants.ts: 1,018→187 lines) | ~831 |
+| 2025-12-29 | Split types.ts into 8 organised files in `types/` directory | 622 (reorganised) |
+| **Total** | | **~1,873** |
 
 ### Notes on Layer Migration
 

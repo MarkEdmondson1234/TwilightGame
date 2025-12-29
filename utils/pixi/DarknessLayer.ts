@@ -2,35 +2,34 @@
  * DarknessLayer - Global darkness overlay for different map areas
  *
  * Adds a semi-transparent dark overlay to create atmosphere:
- * - Caves/Mines: 20% darkness (always dark underground)
- * - Forests: 10% base darkness, varies by season:
- *   - Summer: 5% (bright, lots of light through canopy)
- *   - Spring/Autumn: 10% (moderate)
- *   - Winter: 15% (bare trees let more light through, but grey skies)
+ * - Caves/Mines: 40% darkness during day, 60% at night
+ * - Forests: 20-30% during day (varies by season), 50-60% at night
  *
  * The overlay covers the entire viewport and is rendered above all game content
  * but below UI elements.
  */
 
 import * as PIXI from 'pixi.js';
-import { Season } from '../TimeManager';
+import { Season, TimeOfDay } from '../TimeManager';
 
 // Darkness configuration by color scheme
 const DARKNESS_CONFIG: Record<string, {
-  baseDarkness: number;
-  seasonModifiers?: Record<string, number>;
+  baseDarkness: number;          // Base darkness level (day time)
+  nightMultiplier: number;       // Multiplier for night time (e.g., 2.0 = double darkness)
+  seasonModifiers?: Record<string, number>;  // Season-specific day darkness
 }> = {
   cave: {
-    baseDarkness: 0.20,  // 20% darkness in caves
-    // Caves don't vary with season - always dark
+    baseDarkness: 0.40,          // 40% darkness in caves during day
+    nightMultiplier: 1.5,        // 60% at night (caves are always dark)
   },
   forest: {
-    baseDarkness: 0.10,  // 10% base darkness in forests
+    baseDarkness: 0.25,          // 25% base darkness in forests
+    nightMultiplier: 2.0,        // Double darkness at night (50%)
     seasonModifiers: {
-      [Season.SUMMER]: 0.05,   // Bright summer sun, lots of canopy
-      [Season.SPRING]: 0.10,  // Moderate
-      [Season.AUTUMN]: 0.12,  // Slightly darker, some leaves falling
-      [Season.WINTER]: 0.08,  // Bare trees let more light through
+      [Season.SUMMER]: 0.20,     // 20% - bright summer canopy
+      [Season.SPRING]: 0.25,     // 25% - moderate
+      [Season.AUTUMN]: 0.30,     // 30% - leaves falling, slightly darker
+      [Season.WINTER]: 0.22,     // 22% - bare trees let more light through
     },
   },
   // Other color schemes can be added here
@@ -39,12 +38,17 @@ const DARKNESS_CONFIG: Record<string, {
   // shop: no darkness (lit shop)
 };
 
+// Maximum darkness cap (don't go fully black)
+const MAX_DARKNESS = 0.70;
+
 export class DarknessLayer {
   private container: PIXI.Container;
   private overlay: PIXI.Graphics;
   private currentDarkness: number = 0;
   private viewportWidth: number = 0;
   private viewportHeight: number = 0;
+  private lastColorScheme: string = '';
+  private lastTimeOfDay: string = '';
 
   constructor() {
     this.container = new PIXI.Container();
@@ -52,14 +56,17 @@ export class DarknessLayer {
 
     this.overlay = new PIXI.Graphics();
     this.container.addChild(this.overlay);
+
+    console.log('[DarknessLayer] Initialized with zIndex:', this.container.zIndex);
   }
 
   /**
-   * Update the darkness overlay based on map color scheme and season
+   * Update the darkness overlay based on map color scheme, season, and time of day
    */
   update(
     colorScheme: string,
     season: Season | string,
+    timeOfDay: TimeOfDay | string,
     viewportWidth: number,
     viewportHeight: number
   ): void {
@@ -68,27 +75,50 @@ export class DarknessLayer {
 
     // If no darkness config for this scheme, hide the overlay
     if (!config) {
+      if (this.overlay.visible) {
+        console.log(`[DarknessLayer] No config for colorScheme '${colorScheme}', hiding overlay`);
+      }
       this.overlay.visible = false;
+      this.currentDarkness = 0;
       return;
     }
 
-    // Calculate darkness level
-    let darkness = config.baseDarkness;
+    // Calculate base darkness level (day time)
+    let baseDarkness = config.baseDarkness;
 
     // Apply seasonal modifier if available
     if (config.seasonModifiers && config.seasonModifiers[season] !== undefined) {
-      darkness = config.seasonModifiers[season];
+      baseDarkness = config.seasonModifiers[season];
     }
+
+    // Apply night multiplier
+    let darkness = baseDarkness;
+    if (timeOfDay === TimeOfDay.NIGHT || timeOfDay === 'Night') {
+      darkness = baseDarkness * config.nightMultiplier;
+    }
+
+    // Cap at maximum darkness
+    darkness = Math.min(darkness, MAX_DARKNESS);
 
     // Only update if darkness changed or viewport size changed
     const sizeChanged = viewportWidth !== this.viewportWidth || viewportHeight !== this.viewportHeight;
-    if (darkness === this.currentDarkness && !sizeChanged) {
+    const schemeChanged = colorScheme !== this.lastColorScheme;
+    const timeChanged = timeOfDay !== this.lastTimeOfDay;
+
+    if (darkness === this.currentDarkness && !sizeChanged && !schemeChanged && !timeChanged) {
       return;
+    }
+
+    // Log changes for debugging
+    if (schemeChanged || timeChanged || Math.abs(darkness - this.currentDarkness) > 0.01) {
+      console.log(`[DarknessLayer] Updating: scheme=${colorScheme}, season=${season}, timeOfDay=${timeOfDay}, darkness=${(darkness * 100).toFixed(0)}%`);
     }
 
     this.currentDarkness = darkness;
     this.viewportWidth = viewportWidth;
     this.viewportHeight = viewportHeight;
+    this.lastColorScheme = colorScheme;
+    this.lastTimeOfDay = String(timeOfDay);
 
     // Redraw the overlay
     this.overlay.clear();

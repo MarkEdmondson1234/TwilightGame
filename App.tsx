@@ -726,6 +726,9 @@ const App: React.FC = () => {
 
                 pixiAppRef.current = app;
 
+                // Enable z-index sorting on stage for proper layer ordering
+                app.stage.sortableChildren = true;
+
                 // Preload all tile, farming, and cooking textures
                 console.log('[App] Preloading textures...');
                 await textureManager.loadBatch({
@@ -967,10 +970,11 @@ const App: React.FC = () => {
 
             // Update darkness layer (global darkness for caves/forests)
             if (darknessLayerRef.current) {
-                const { season } = TimeManager.getCurrentTime();
+                const { season, timeOfDay: tod } = TimeManager.getCurrentTime();
                 darknessLayerRef.current.update(
                     currentMap.colorScheme,
                     season,
+                    tod,
                     window.innerWidth,
                     window.innerHeight
                 );
@@ -1084,10 +1088,11 @@ const App: React.FC = () => {
 
             // Update darkness layer (global darkness for caves/forests)
             if (darknessLayerRef.current) {
-                const { season } = TimeManager.getCurrentTime();
+                const { season, timeOfDay: tod } = TimeManager.getCurrentTime();
                 darknessLayerRef.current.update(
                     currentMap.colorScheme,
                     season,
+                    tod,
                     window.innerWidth,
                     window.innerHeight
                 );
