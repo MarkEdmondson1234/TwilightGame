@@ -1,6 +1,7 @@
 import React from 'react';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { getItem } from '../data/items';
+import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
 
 export interface InventoryItem {
   id: string;
@@ -53,7 +54,7 @@ const Inventory: React.FC<InventoryProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto">
+    <div className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_INVENTORY_MODAL)} pointer-events-auto`}>
       <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex justify-between items-center mb-4">

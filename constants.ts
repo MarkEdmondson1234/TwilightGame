@@ -897,6 +897,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
   },
+  {
+    tileType: TileType.SMALL_LAKE,
+    spriteWidth: 6,    // 6 tiles wide (smaller pond)
+    spriteHeight: 6,   // 6 tiles tall (square aspect ratio - same image as magical lake)
+    offsetX: -3,       // Center horizontally on anchor tile
+    offsetY: -3,       // Center vertically on anchor tile
+    image: tileAssets.magical_lake,  // Same image, scaled down
+    isForeground: false,  // Render under player/NPCs (it's water)
+    // Collision covers inner area (4x4), leaving walkable shore
+    collisionWidth: 4,
+    collisionHeight: 1,
+    collisionOffsetX: -2,
+    collisionOffsetY: 0,
+    // No transforms
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+  },
 ];
 
 /**

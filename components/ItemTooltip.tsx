@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Z_TOOLTIP, zClass } from '../zIndex';
 
 export interface TooltipContent {
   name: string;
@@ -108,7 +109,7 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
       {/* Tooltip Portal */}
       {isVisible && (
         <div
-          className="fixed z-[9999] pointer-events-none"
+          className={`fixed ${zClass(Z_TOOLTIP)} pointer-events-none`}
           style={{
             left: `${position.x}px`,
             top: `${position.y}px`,

@@ -3,6 +3,7 @@ import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../data/re
 import { getItem } from '../data/items';
 import { cookingManager, CookingResult } from '../utils/CookingManager';
 import { inventoryManager } from '../utils/inventoryManager';
+import { Z_COOKING, zClass } from '../zIndex';
 
 interface CookingInterfaceProps {
   isOpen: boolean;
@@ -105,7 +106,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-2 sm:p-4">
+    <div className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_COOKING)} p-2 sm:p-4`}>
       <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-amber-800 px-4 py-3 border-b-2 border-amber-600 flex items-center justify-between">

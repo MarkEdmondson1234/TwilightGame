@@ -42,73 +42,6 @@ function generatePatches(
   }
 }
 
-/**
- * Generate lakes with proper directional edge tiles
- * Creates rectangular lakes with bordered edges
- */
-function generateLakes(
-  map: TileType[][],
-  lakeCount: number,
-  minSize: number,
-  maxSize: number,
-  width: number,
-  height: number,
-  excludeZone?: { centerX: number; centerY: number; radius: number }
-): void {
-  for (let i = 0; i < lakeCount; i++) {
-    const lakeWidth = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-    const lakeHeight = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-    const startX = Math.floor(Math.random() * (width - lakeWidth - 2)) + 1;
-    const startY = Math.floor(Math.random() * (height - lakeHeight - 2)) + 1;
-
-    // Skip if in excluded zone
-    if (excludeZone) {
-      const dx = Math.abs(startX + lakeWidth / 2 - excludeZone.centerX);
-      const dy = Math.abs(startY + lakeHeight / 2 - excludeZone.centerY);
-      if (dx <= excludeZone.radius + lakeWidth / 2 && dy <= excludeZone.radius + lakeHeight / 2) {
-        continue;
-      }
-    }
-
-    // Create lake with proper edges
-    for (let y = startY; y < startY + lakeHeight && y < height - 1; y++) {
-      for (let x = startX; x < startX + lakeWidth && x < width - 1; x++) {
-        if (!map[y] || map[y][x] === undefined) continue;
-
-        // Skip if already water (don't overwrite edges from other lakes)
-        if (map[y][x] === TileType.WATER_CENTER ||
-            map[y][x] === TileType.WATER_LEFT ||
-            map[y][x] === TileType.WATER_RIGHT ||
-            map[y][x] === TileType.WATER_TOP ||
-            map[y][x] === TileType.WATER_BOTTOM) {
-          continue;
-        }
-
-        const isTop = y === startY;
-        const isBottom = y === startY + lakeHeight - 1;
-        const isLeft = x === startX;
-        const isRight = x === startX + lakeWidth - 1;
-
-        // Determine which tile to use based on position
-        if (isTop && !isLeft && !isRight) {
-          map[y][x] = TileType.WATER_TOP;
-        } else if (isBottom && !isLeft && !isRight) {
-          map[y][x] = TileType.WATER_BOTTOM;
-        } else if (isLeft && !isTop && !isBottom) {
-          map[y][x] = TileType.WATER_LEFT;
-        } else if (isRight && !isTop && !isBottom) {
-          map[y][x] = TileType.WATER_RIGHT;
-        } else if (!isTop && !isBottom && !isLeft && !isRight) {
-          map[y][x] = TileType.WATER_CENTER;
-        } else {
-          // Corners - use center for now (could add corner tiles later)
-          map[y][x] = TileType.WATER_CENTER;
-        }
-      }
-    }
-  }
-}
-
 export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const width = 40;
   const height = 30;
@@ -130,8 +63,63 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
   // Generate forest features, excluding spawn area
   generatePatches(map, TileType.ROCK, 5, 1, 3, width, height, spawnZone);  // Reduced rocks (was 15)
-  generateLakes(map, 2, 3, 7, width, height, spawnZone); // 2 lakes with proper edges
   generatePatches(map, TileType.PATH, 5, 2, 5, width, height, spawnZone);
+
+  // Add a static lake (50% chance) - looks much better than procedural rectangular lakes
+  // SMALL_LAKE is 6x6, MAGICAL_LAKE is 12x12
+  const lakeChance = ((seed * 41) % 100) / 100;
+  if (lakeChance < 0.5) {
+    // 70% small lake, 30% large magical lake
+    const isSmallLake = ((seed * 53) % 100) / 100 < 0.7;
+    const lakeType = isSmallLake ? TileType.SMALL_LAKE : TileType.MAGICAL_LAKE;
+    const clearRadius = isSmallLake ? 4 : 7;  // Clear area around lake
+
+    // Pick a corner location for the lake (away from spawn in center and exits on sides)
+    const lakeCorner = ((seed * 47) % 4);  // 0=top-right, 1=bottom-right, 2=top-left, 3=bottom-left
+    let lakeX: number, lakeY: number;
+
+    // Small lakes can go anywhere, large lakes need corner placement
+    if (isSmallLake) {
+      // Small lake: more flexible positioning
+      const margin = 5;  // Keep away from edges
+      switch (lakeCorner) {
+        case 0: lakeX = width - margin - 3; lakeY = margin + 3; break;      // top-right
+        case 1: lakeX = width - margin - 3; lakeY = height - margin - 3; break; // bottom-right
+        case 2: lakeX = margin + 8; lakeY = margin + 3; break;              // top-left (avoid exit)
+        default: lakeX = margin + 8; lakeY = height - margin - 3; break;   // bottom-left
+      }
+    } else {
+      // Large lake: only top-right or bottom-right corners (avoid exits on sides)
+      if (lakeCorner % 2 === 0) {
+        lakeX = width - 10; lakeY = 8;           // top-right
+      } else {
+        lakeX = width - 10; lakeY = height - 8;  // bottom-right
+      }
+    }
+
+    // Place the lake anchor
+    map[lakeY][lakeX] = lakeType;
+
+    // Clear area around the lake anchor to ensure no trees/rocks overlap
+    for (let dy = -clearRadius; dy <= clearRadius; dy++) {
+      for (let dx = -clearRadius; dx <= clearRadius; dx++) {
+        const clearY = lakeY + dy;
+        const clearX = lakeX + dx;
+        if (clearY >= 1 && clearY < height - 1 && clearX >= 1 && clearX < width - 1) {
+          // Only clear if it's a normal terrain tile (not boundaries)
+          if (map[clearY][clearX] === TileType.GRASS ||
+              map[clearY][clearX] === TileType.ROCK ||
+              map[clearY][clearX] === TileType.PATH) {
+            map[clearY][clearX] = TileType.GRASS;
+          }
+        }
+      }
+    }
+    // Re-place the lake anchor after clearing
+    map[lakeY][lakeX] = lakeType;
+    const lakeName = isSmallLake ? 'Small pond' : 'Magical lake';
+    console.log(`[Forest] 🌊 ${lakeName} spawned at (${lakeX}, ${lakeY})`);
+  }
 
   // Clear spawn area AFTER generating features (9x9 grid)
   for (let y = spawnY - 4; y <= spawnY + 4; y++) {

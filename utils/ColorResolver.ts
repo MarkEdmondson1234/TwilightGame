@@ -36,6 +36,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.WATER_TOP]: 'grass',  // Edge tiles use grass background for natural shoreline
   [TileType.WATER_BOTTOM]: 'grass',  // Edge tiles use grass background for natural shoreline
   [TileType.MAGICAL_LAKE]: 'grass',  // Magical lake uses grass background for shoreline
+  [TileType.SMALL_LAKE]: 'grass',   // Small lake uses grass background for shoreline
   [TileType.PATH]: 'grass',  // Use grass color so stepping stones blend naturally
   [TileType.FLOOR]: 'floor',
   [TileType.FLOOR_LIGHT]: 'floor',
@@ -205,5 +206,88 @@ export class ColorResolver {
    */
   public static get TILE_TYPE_TO_COLOR_KEY() {
     return TILE_TYPE_TO_COLOR_KEY;
+  }
+
+  /**
+   * Color source types for tracing
+   */
+  public static readonly ColorSource = {
+    BASE: 'base',           // From TILE_LEGEND
+    SCHEME: 'scheme',       // From map's color scheme
+    TIME: 'time',           // From time-of-day modifier
+    SEASONAL: 'seasonal',   // From seasonal modifier
+  } as const;
+
+  /**
+   * Trace the color resolution chain for debugging
+   * Shows exactly where the final color came from
+   *
+   * @param tileType - The type of tile
+   * @param options - Optional overrides for season/time
+   * @returns Object with final color, source, and full trace
+   */
+  public static traceTileColor(
+    tileType: TileType,
+    options?: {
+      season?: Season;
+      timeOfDay?: 'day' | 'night';
+    }
+  ): {
+    finalColor: string;
+    source: 'base' | 'scheme' | 'time' | 'seasonal';
+    colorKey: string | null;
+    trace: Array<{ layer: string; color: string; applied: boolean }>;
+  } {
+    const trace: Array<{ layer: string; color: string; applied: boolean }> = [];
+    let source: 'base' | 'scheme' | 'time' | 'seasonal' = 'base';
+
+    // 1. Base color from TILE_LEGEND
+    const baseColor = TILE_LEGEND[tileType]?.color || 'bg-palette-sage';
+    trace.push({ layer: 'Base (TILE_LEGEND)', color: baseColor, applied: true });
+    let finalColor = baseColor;
+
+    // 2. Get color scheme
+    const colorScheme = mapManager.getCurrentColorScheme();
+    const colorKey = this.getTileColorKey(tileType);
+
+    if (!colorScheme || !colorKey) {
+      return { finalColor, source, colorKey, trace };
+    }
+
+    // 3. Scheme color
+    const schemeColor = colorScheme.colors[colorKey];
+    if (schemeColor) {
+      trace.push({ layer: `Scheme (${colorScheme.name}.${colorKey})`, color: schemeColor, applied: true });
+      finalColor = schemeColor;
+      source = 'scheme';
+    } else {
+      trace.push({ layer: `Scheme (${colorScheme.name}.${colorKey})`, color: '—', applied: false });
+    }
+
+    // 4. Time-of-day modifier
+    const timeOfDay = options?.timeOfDay || TimeManager.getCurrentTime().timeOfDay;
+    const timeKey = timeOfDay.toLowerCase() as TimeKey;
+    const timeOverride = colorScheme.timeOfDayModifiers?.[timeKey]?.[colorKey];
+    if (timeOverride) {
+      trace.push({ layer: `Time (${timeKey}.${colorKey})`, color: timeOverride, applied: true });
+      finalColor = timeOverride;
+      source = 'time';
+    } else {
+      trace.push({ layer: `Time (${timeKey}.${colorKey})`, color: '—', applied: false });
+    }
+
+    // 5. Seasonal modifier (overrides time-of-day)
+    const season = options?.season || TimeManager.getCurrentTime().season;
+    const seasonKey = season.toLowerCase() as SeasonKey;
+    const seasonalOverride = colorScheme.seasonalModifiers?.[seasonKey]?.[colorKey];
+    if (seasonalOverride) {
+      trace.push({ layer: `Season (${seasonKey}.${colorKey})`, color: seasonalOverride, applied: true });
+      finalColor = seasonalOverride;
+      source = 'seasonal';
+    } else {
+      trace.push({ layer: `Season (${seasonKey}.${colorKey})`, color: '—', applied: false });
+    }
+
+    return { finalColor, source, colorKey, trace };
   }
 }

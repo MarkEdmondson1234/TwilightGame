@@ -125,6 +125,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [tileAssets.magical_lake],
     baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
   },
+  [TileType.SMALL_LAKE]: {
+    name: 'Small Lake',
+    color: 'bg-palette-sky',
+    isSolid: true,  // Multi-tile sprite - collision handled by SPRITE_METADATA
+    image: [tileAssets.magical_lake],  // Same image, just rendered smaller
+    baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
+  },
   [TileType.PATH]: {
     name: 'Path',
     color: 'bg-palette-sage',  // Fallback color

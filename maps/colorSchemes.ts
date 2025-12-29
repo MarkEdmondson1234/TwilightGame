@@ -70,10 +70,9 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
         wall: 'bg-palette-chocolate',  // Darker wall at night
       },
     },
-    // Winter-specific night overrides (time-of-day takes priority over seasonal)
-    // Note: Currently, we can't do season-specific time overrides in the color scheme format
-    // Winter night will use the regular night modifier (moss) instead of snow
-    // This is a limitation we could address later if needed
+    // Note: Seasonal modifiers take priority over time-of-day modifiers
+    // When a season defines a colour (e.g., winter snow), night modifiers won't apply to that colour
+    // This ensures consistent seasonal appearance regardless of time of day
   },
 
   forest: {

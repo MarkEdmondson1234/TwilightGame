@@ -8,6 +8,8 @@
  * - Touch support for iPad
  */
 
+import { Z_SHOP, Z_SHOP_CONFIRM, zClass } from '../zIndex';
+
 import React, { useState, useEffect } from 'react';
 import { shopManager } from '../utils/ShopManager';
 import { ShopItem } from '../data/shopInventory';
@@ -329,7 +331,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
   return (
     <>
       {/* Main Shop UI */}
-      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto">
+      <div className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_SHOP)} pointer-events-auto`}>
         <div className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col">
           {/* Header with Gold Display and Close Button */}
           <div className="flex justify-between items-center mb-4">
@@ -407,7 +409,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
       {/* Quantity Slider Modal */}
       {showQuantitySlider && pendingTransaction && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[2100] pointer-events-auto">
+        <div className={`fixed inset-0 bg-black/90 flex items-center justify-center ${zClass(Z_SHOP_CONFIRM)} pointer-events-auto`}>
           <div className="bg-gradient-to-b from-slate-700 to-slate-800 border-4 border-slate-500 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-2xl font-bold text-white mb-4">
               {pendingTransaction.fromShop ? 'Buy' : 'Sell'} How Many?

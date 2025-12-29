@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Z_HELP_BROWSER, zClass } from '../zIndex';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -39,7 +40,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
   }, [selectedDoc]);
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+    <div className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_HELP_BROWSER)} p-4`}>
       <div className="bg-slate-900 border-4 border-slate-700 rounded-lg w-full max-w-6xl h-[90vh] flex flex-col shadow-2xl">
         {/* Header */}
         <div className="bg-slate-800 border-b-4 border-slate-700 p-4 flex items-center justify-between">

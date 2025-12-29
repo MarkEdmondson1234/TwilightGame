@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CharacterCustomization, gameState } from '../GameState';
 import { CHARACTER_PRESETS, generatePlaceholderSprites } from '../utils/placeholderSprites';
 import { Direction } from '../types';
+import { Z_CHARACTER_CREATOR, zClass } from '../zIndex';
 
 interface CharacterCreatorProps {
   onComplete: (character: CharacterCustomization) => void;
@@ -158,7 +159,7 @@ const CharacterCreator: React.FC<CharacterCreatorProps> = ({ onComplete }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-gray-900 text-white flex items-center justify-center z-50 overflow-hidden">
+    <div className={`fixed inset-0 bg-gray-900 text-white flex items-center justify-center ${zClass(Z_CHARACTER_CREATOR)} overflow-hidden`}>
       <div className="w-full h-full flex flex-col md:flex-row">
         {/* Left Panel - Character Preview (hidden on mobile, shown on desktop) */}
         <div className="hidden md:flex md:w-1/2 bg-slate-800 flex-col items-center justify-center p-8 border-r border-slate-600">

@@ -23,6 +23,7 @@ import { TimeManager } from '../utils/TimeManager';
 import { npcManager } from '../NPCManager';
 import { gameState } from '../GameState';
 import { getPortraitSprite } from '../utils/portraitSprites';
+import { Z_CUTSCENE, zClass } from '../zIndex';
 
 interface CutscenePlayerProps {
   onComplete: (action: { action: string; mapId?: string; position?: { x: number; y: number } }) => void;
@@ -161,7 +162,7 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black overflow-hidden">
+    <div className={`fixed inset-0 ${zClass(Z_CUTSCENE)} bg-black overflow-hidden`}>
       {/* Background Layers */}
       <div className="absolute inset-0">
         {currentScene.backgroundLayers

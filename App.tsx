@@ -59,6 +59,8 @@ import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnim
 import { ALL_CUTSCENES } from './data/cutscenes';
 import { performanceMonitor } from './utils/PerformanceMonitor';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
+import ForegroundParallax from './components/ForegroundParallax';
+import CloudShadows from './components/CloudShadows';
 import CookingInterface from './components/CookingInterface';
 import RecipeBook from './components/RecipeBook';
 import Toast, { useToast } from './components/Toast';
@@ -1315,11 +1317,32 @@ const App: React.FC = () => {
                 )}
             </div>
 
+            {/* Cloud shadows - subtle moving shadows on the ground for outdoor maps */}
+            {['village', 'forest', 'water_area'].includes(currentMap?.colorScheme ?? '') && currentMap && (
+                <CloudShadows
+                    cameraX={cameraX}
+                    cameraY={cameraY}
+                    mapWidth={currentMap.width}
+                    mapHeight={currentMap.height}
+                    weather={currentWeather}
+                />
+            )}
+
             {/* Weather tint overlay - applies weather visual effects over NPCs */}
             <WeatherTintOverlay
                 weather={currentWeather}
                 visible={shouldShowWeather(currentMapId)}
             />
+
+            {/* Foreground parallax trees - decorative framing for outdoor maps */}
+            {['village', 'forest', 'water_area'].includes(currentMap?.colorScheme ?? '') && currentMap && (
+                <ForegroundParallax
+                    cameraX={cameraX}
+                    cameraY={cameraY}
+                    mapWidth={currentMap.width}
+                    mapHeight={currentMap.height}
+                />
+            )}
 
             {/* Hide UI elements during dialogue */}
             {!activeNPC && (

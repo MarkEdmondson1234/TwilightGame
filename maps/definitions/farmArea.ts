@@ -7,7 +7,7 @@ import { parseGrid } from '../gridParser';
  * A peaceful farming area with:
  * - Multiple farming plots organized in fields
  * - Path network for easy access
- * - Small pond for ambiance
+ * - Small pond for ambiance (6x6 lake sprite)
  * - Seed shed (building with door)
  * - Exit back to village
  *
@@ -16,7 +16,7 @@ import { parseGrid } from '../gridParser';
  * L = Wall boundary (brick walls for map edges)
  * R = Rock (in-map decorative obstacles)
  * P = Path
- * W = Water
+ * ) = Small Lake (6x6 pond sprite)
  * U = Bush (decorative foliage)
  * e = Fern (forest floor plant)
  * X = Farm plot (fallow soil)
@@ -30,11 +30,11 @@ import { parseGrid } from '../gridParser';
  */
 
 const gridString = `
-ULL<WWWWWLoZLLoLLoLL
-LG<WWWWWW>oGGoGGGePU
-Ut<WWWWWW>GGGGGGUGPU
-LGe<wwww>GGGGGGGGGPL
-UGGGvvvvGGGGGGGGGGPt
+ULLGGGGGGLoZLLoLLoLL
+LGGGGGGGGGoGGoGGGePU
+UtGGGGGGGGGGGGGGUGPU
+LGeGG)GGGGGGGGGGGGPL
+UGGGGGGGGGGGGGGGGGPt
 oGGeGGGGGGGGGGGGGGPL
 UPPPPPPPPPPPPPPPPPPL
 UXXXPXXXXXPXXXXXUGeo

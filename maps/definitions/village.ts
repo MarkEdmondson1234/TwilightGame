@@ -29,8 +29,8 @@ import {
  * L = Wall boundary (trees for map edges)
  * R = Rock (in-map decorative obstacles)
  * P = Path
- * W = Water (old, use lake tiles below instead)
- * Lake tiles: w = center, < = left edge, > = right edge, ^ = top edge, v = bottom edge
+ * ( = Magical Lake (12x12 lake sprite)
+ * ) = Small Lake (6x6 pond sprite)
  * D = Door (back to home)
  * S = Shop Door
  * s = TileType.COTTAGE_STONE,
@@ -134,7 +134,7 @@ export const village: MapDefinition = {
       label: 'To House',
     },
     {
-      fromPosition: { x: 19.4, y: 23 }, // Cottage entrance (K tile)
+      fromPosition: { x: 21.4, y: 24 }, // Cottage entrance (K tile)
       tileType: TileType.COTTAGE,
       toMapId: 'cottage_interior',
       toPosition: { x: 5, y: 6 },

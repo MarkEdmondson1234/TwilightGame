@@ -68,7 +68,8 @@
       "Bash(ren:*)",
       "Bash(taskkill:*)",
       "Skill(add-inventory-sprite)",
-      "Skill(add-inventory-sprite:*)"
+      "Skill(add-inventory-sprite:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": [

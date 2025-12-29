@@ -282,22 +282,26 @@ See `docs/TIME_SYSTEM.md` for details on the time system.
 
 ### Interaction with Seasons
 
-Time-of-day modifiers are **applied after** seasonal modifiers. This means:
+**Important:** Seasonal modifiers take **priority over** time-of-day modifiers.
 
-1. Base color is determined
+The application order is:
+1. Base color from TILE_LEGEND
 2. Map color scheme overrides it
-3. Seasonal modifier overrides that
-4. Time-of-day modifier overrides the seasonal color
+3. Time-of-day modifier applied first
+4. Seasonal modifier applied second (overrides time-of-day if defined)
 
 **Example flow:**
 ```
 Base: bg-palette-sage (grass)
 → Map: bg-palette-sage (village grass)
-→ Season: bg-palette-khaki (autumn grass)
-→ Time: bg-palette-taupe (autumn grass at night)
+→ Time: bg-palette-moss (night modifier - applied first)
+→ Season: bg-palette-olive (summer - overrides night)
+Final: bg-palette-olive
 ```
 
-This allows night lighting to darken seasonal colors appropriately!
+**Limitation:** When a seasonal modifier is defined for a color, night modifiers have no effect for that color. This is intentional to ensure seasonal colours are consistent.
+
+**Workaround:** If you need season-specific night colours, you can define darker seasonal colours that work for both day and night, or leave seasonal modifiers undefined for colours that should respond to time-of-day.
 
 ## How Colors are Applied
 

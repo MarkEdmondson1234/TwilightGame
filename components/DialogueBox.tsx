@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NPC, DialogueNode } from '../types';
 import { getDialogue } from '../services/dialogueService';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
+import { Z_DIALOGUE, zClass } from '../zIndex';
 
 interface DialogueBoxProps {
   npc: NPC;
@@ -90,7 +91,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
   }
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}>
       {/* Background gradient overlay */}
       <div
         className="absolute inset-0"

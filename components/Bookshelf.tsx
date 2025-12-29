@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import RecipeBook from './RecipeBook';
 import { uiAssets } from '../assets';
+import { Z_HUD, Z_BOOKSHELF_MODAL, zClass } from '../zIndex';
 
 interface BookshelfProps {
   playerPosition?: { x: number; y: number };
@@ -33,7 +34,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({ playerPosition, currentMapId, nea
   return (
     <>
       {/* Books Container - Responsive scaling */}
-      <div className="fixed bottom-2 sm:bottom-4 left-2 sm:left-4 z-[1000] scale-50 sm:scale-75 md:scale-100 origin-bottom-left">
+      <div className={`fixed bottom-2 sm:bottom-4 left-2 sm:left-4 ${zClass(Z_HUD)} scale-50 sm:scale-75 md:scale-100 origin-bottom-left`}>
         {/* Books - positioned directly at bottom */}
         <div className="flex gap-0 items-end">
           {/* Recipe Book (left book) - clickable - 93×398 natural ratio, scaled down by 20px */}
@@ -95,7 +96,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({ playerPosition, currentMapId, nea
 
       {/* Magic Recipe Book Modal (placeholder for future feature) */}
       {isMagicBookOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50">
+        <div className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_BOOKSHELF_MODAL)}`}>
           <div className="bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-purple-600 rounded-lg p-8 max-w-md">
             <h2 className="text-2xl font-bold text-purple-200 mb-4 text-center">
               ✨ Magic Recipe Book ✨

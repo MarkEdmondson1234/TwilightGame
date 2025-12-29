@@ -1,5 +1,6 @@
 import React from 'react';
 import { uiAssets } from '../assets';
+import { Z_HUD, zClass } from '../zIndex';
 
 interface GameUIControlsProps {
     showHelpBrowser: boolean;
@@ -23,7 +24,7 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
     return (
         <>
             {/* Help Button - Top Right */}
-            <div className="absolute top-2 right-2 z-[1000]">
+            <div className={`absolute top-2 right-2 ${zClass(Z_HUD)}`}>
                 <button
                     onClick={onToggleHelpBrowser}
                     className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-3 sm:border-4 font-bold text-xl sm:text-2xl transition-all pointer-events-auto shadow-lg ${
@@ -38,7 +39,7 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
             </div>
 
             {/* Inventory Button - Bottom Right above dev buttons */}
-            <div className="absolute bottom-16 sm:bottom-14 right-2 z-[1000]">
+            <div className={`absolute bottom-16 sm:bottom-14 right-2 ${zClass(Z_HUD)}`}>
                 <button
                     onClick={onToggleInventory}
                     className="transition-transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg pointer-events-auto"
@@ -58,7 +59,7 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
             </div>
 
             {/* Dev Toggle Buttons - Bottom Right (moved to avoid bookshelf) */}
-            <div className="absolute bottom-2 right-2 z-[1000] flex flex-col sm:flex-row gap-1 sm:gap-2">
+            <div className={`absolute bottom-2 right-2 ${zClass(Z_HUD)} flex flex-col sm:flex-row gap-1 sm:gap-2`}>
                 <button
                     onClick={onToggleCollisionBoxes}
                     className={`px-2 sm:px-3 py-1 sm:py-2 rounded-lg border text-xs sm:text-sm font-bold transition-colors pointer-events-auto ${

@@ -8,6 +8,8 @@ import { inventoryManager } from './inventoryManager';
 import { friendshipManager } from './FriendshipManager';
 import { cookingManager } from './CookingManager';
 import { performanceMonitor } from './PerformanceMonitor';
+import { TimeManager, Season } from './TimeManager';
+import { ColorResolver } from './ColorResolver';
 
 /**
  * Initialize the game on startup
@@ -22,6 +24,22 @@ export async function initializeGame(
     (window as any).mapManager = mapManager;
     (window as any).inventoryManager = inventoryManager;
     (window as any).__PERF_MONITOR__ = performanceMonitor;
+
+    // Dev tools for colour system testing
+    (window as any).TimeManager = TimeManager;
+    (window as any).Season = Season;
+    (window as any).ColorResolver = ColorResolver;
+
+    // Log dev commands help
+    console.log(`
+[Dev Tools] Colour system commands:
+  TimeManager.setTimeOverride({ season: Season.WINTER })  // Set to winter
+  TimeManager.setTimeOverride({ season: Season.SUMMER, hour: 1 })  // Summer night
+  TimeManager.clearTimeOverride()  // Return to real time
+  TimeManager.getCurrentTime()  // Show current game time
+  ColorResolver.getTileColor(0)  // Get grass tile colour
+  ColorResolver.traceTileColor(0)  // Trace colour resolution (shows all layers)
+    `);
 
     initializePalette(); // Initialize color palette (must be first)
     runSelfTests(); // Run sanity checks on startup
