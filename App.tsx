@@ -12,7 +12,6 @@ import { WeatherLayer } from './utils/pixi/WeatherLayer';
 import { DarknessLayer } from './utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from './utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from './utils/pixi/BackgroundImageLayer';
-import { NPCLayer } from './utils/pixi/NPCLayer';
 import { WeatherManager } from './utils/WeatherManager';
 import { shouldShowWeather } from './data/weatherConfig';
 import { tileAssets, farmingAssets, cookingAssets, npcAssets } from './assets';
@@ -145,7 +144,6 @@ const App: React.FC = () => {
     const npcLayerRef = useRef<NPCLayer | null>(null);
     const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
     const foregroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
-    const npcLayerRef = useRef<NPCLayer | null>(null);
     const shadowLayerRef = useRef<ShadowLayer | null>(null);
     const weatherLayerRef = useRef<WeatherLayer | null>(null);
     const darknessLayerRef = useRef<DarknessLayer | null>(null);
@@ -789,11 +787,6 @@ const App: React.FC = () => {
                 foregroundSpriteLayerRef.current = foregroundSpriteLayer;
                 app.stage.addChild(foregroundSpriteLayer.getContainer());
 
-                // Create NPC layer (renders NPCs with proper z-ordering relative to trees)
-                const npcLayer = new NPCLayer();
-                npcLayerRef.current = npcLayer;
-                app.stage.addChild(npcLayer.getContainer());
-
                 // Create weather layer (particle effects above everything)
                 console.log('='.repeat(60));
                 console.log('[App] 🌦️ INITIALIZING WEATHER LAYER');
@@ -843,7 +836,8 @@ const App: React.FC = () => {
                         shadowLayerRef.current.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
                     }
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
-                    npcLayer.renderNPCs(currentMapId, currentMap.characterScale ?? 1.0, undefined);
+                    const npcs = npcManager.getCurrentMapNPCs();
+                    npcLayer.renderNPCs(npcs, currentMap.characterScale ?? 1.0, undefined);
                     backgroundImageLayer.updateCamera(cameraX, cameraY);
                     tileLayer.updateCamera(cameraX, cameraY);
                     backgroundSpriteLayer.updateCamera(cameraX, cameraY);
@@ -896,10 +890,6 @@ const App: React.FC = () => {
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.clear();
                 foregroundSpriteLayerRef.current = null;
-            }
-            if (npcLayerRef.current) {
-                npcLayerRef.current.clear();
-                npcLayerRef.current = null;
             }
             if (shadowLayerRef.current) {
                 shadowLayerRef.current.clear();
@@ -1125,7 +1115,8 @@ const App: React.FC = () => {
 
             // Update NPC layer
             if (npcLayerRef.current) {
-                npcLayerRef.current.renderNPCs(currentMapId, currentMap.characterScale ?? 1.0, effectiveGridOffset);
+                const npcs = npcManager.getCurrentMapNPCs();
+                npcLayerRef.current.renderNPCs(npcs, currentMap.characterScale ?? 1.0, effectiveGridOffset);
             }
 
             // Update darkness layer (global darkness for caves/forests)
