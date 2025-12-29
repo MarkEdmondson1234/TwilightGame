@@ -1,6 +1,6 @@
 import { NPC, Position, Direction, NPCBehavior } from './types';
 import { getTileData } from './utils/mapUtils';
-import { PLAYER_SIZE } from './constants';
+import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
 
 /**
  * NPCManager - Single Source of Truth for all NPC data
@@ -127,7 +127,8 @@ class NPCManagerClass {
   }
 
   /**
-   * Check if position would collide with solid tiles
+   * Check if position would collide with solid tiles or multi-tile sprites
+   * Uses the same collision detection logic as the player (from useCollisionDetection.ts)
    */
   private checkCollision(pos: Position): boolean {
     const halfSize = this.NPC_SIZE / 2;
@@ -136,11 +137,42 @@ class NPCManagerClass {
     const minTileY = Math.floor(pos.y - halfSize);
     const maxTileY = Math.floor(pos.y + halfSize);
 
+    // First check regular tile collision
     for (let y = minTileY; y <= maxTileY; y++) {
       for (let x = minTileX; x <= maxTileX; x++) {
         const tileData = getTileData(x, y);
-        if (tileData && tileData.isSolid) {
+        if (tileData && tileData.isSolid && !SPRITE_METADATA.find(s => s.tileType === tileData.type)) {
           return true;
+        }
+      }
+    }
+
+    // Check for multi-tile sprite collision in a wider area
+    // Need to check tiles that might have sprites extending into NPC position
+    const searchRadius = 10; // Large enough to catch any sprite
+    for (let tileY = minTileY - searchRadius; tileY <= maxTileY + searchRadius; tileY++) {
+      for (let tileX = minTileX - searchRadius; tileX <= maxTileX + searchRadius; tileX++) {
+        const tileData = getTileData(tileX, tileY);
+        const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);
+
+        if (spriteMetadata && tileData?.isSolid) {
+          // Use collision-specific dimensions if provided, otherwise use sprite dimensions
+          const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
+          const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
+          const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
+          const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
+
+          // Calculate collision bounds based on tile position and metadata
+          const spriteLeft = tileX + collisionOffsetX;
+          const spriteRight = spriteLeft + collisionWidth;
+          const spriteTop = tileY + collisionOffsetY;
+          const spriteBottom = spriteTop + collisionHeight;
+
+          // Check if NPC position overlaps with collision bounds
+          if (pos.x + halfSize > spriteLeft && pos.x - halfSize < spriteRight &&
+              pos.y + halfSize > spriteTop && pos.y - halfSize < spriteBottom) {
+            return true;
+          }
         }
       }
     }

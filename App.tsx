@@ -6,6 +6,7 @@ import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { PlayerSprite } from './utils/pixi/PlayerSprite';
 import { SpriteLayer } from './utils/pixi/SpriteLayer';
+import { NPCLayer } from './utils/pixi/NPCLayer';
 import { ShadowLayer } from './utils/pixi/ShadowLayer';
 import { WeatherLayer } from './utils/pixi/WeatherLayer';
 import { DarknessLayer } from './utils/pixi/DarknessLayer';
@@ -140,6 +141,7 @@ const App: React.FC = () => {
     const backgroundImageLayerRef = useRef<BackgroundImageLayer | null>(null);
     const backgroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
     const playerSpriteRef = useRef<PlayerSprite | null>(null);
+    const npcLayerRef = useRef<NPCLayer | null>(null);
     const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
     const foregroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
     const shadowLayerRef = useRef<ShadowLayer | null>(null);
@@ -762,6 +764,11 @@ const App: React.FC = () => {
                 playerSpriteRef.current = playerSprite;
                 app.stage.addChild(playerSprite.getContainer());
 
+                // Create NPC layer (NPCs with dynamic z-index for depth sorting)
+                const npcLayer = new NPCLayer();
+                npcLayerRef.current = npcLayer;
+                app.stage.addChild(npcLayer.getContainer());
+
                 // Create placed items layer (food items, dropped objects - above player)
                 const placedItemsLayer = new PlacedItemsLayer();
                 placedItemsLayerRef.current = placedItemsLayer;
@@ -871,6 +878,10 @@ const App: React.FC = () => {
             if (playerSpriteRef.current) {
                 playerSpriteRef.current.destroy();
                 playerSpriteRef.current = null;
+            }
+            if (npcLayerRef.current) {
+                npcLayerRef.current.clear();
+                npcLayerRef.current = null;
             }
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.clear();
@@ -1014,6 +1025,9 @@ const App: React.FC = () => {
             if (playerSpriteRef.current) {
                 playerSpriteRef.current.updateCamera(0, 0); // Reset to no offset
             }
+            if (npcLayerRef.current) {
+                npcLayerRef.current.updateCamera(0, 0); // Reset to no offset
+            }
             // Other layers are hidden in background-image rooms, but reset them too
             if (tileLayerRef.current) {
                 tileLayerRef.current.updateCamera(0, 0);
@@ -1040,6 +1054,9 @@ const App: React.FC = () => {
             }
             if (playerSpriteRef.current) {
                 playerSpriteRef.current.updateCamera(cameraX, cameraY);
+            }
+            if (npcLayerRef.current) {
+                npcLayerRef.current.updateCamera(cameraX, cameraY);
             }
             if (placedItemsLayerRef.current) {
                 placedItemsLayerRef.current.updateCamera(cameraX, cameraY);
@@ -1120,6 +1137,26 @@ const App: React.FC = () => {
         // Pass gridOffset directly for background-image rooms (PixiJS handles positioning consistently)
         playerSpriteRef.current.update(playerPos, direction, animationFrame, playerSpriteUrl, effectiveScale, effectiveGridOffset);
     }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized, currentMap?.characterScale, currentMap?.renderMode, effectiveGridOffset]);
+
+    // Update NPC layer when NPCs change
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !isPixiInitialized || !npcLayerRef.current) return;
+
+        // For background-image rooms, hide PixiJS NPCs (DOM NPCs are used instead for z-ordering)
+        if (currentMap?.renderMode === 'background-image') {
+            npcLayerRef.current.clear();
+            return;
+        }
+
+        // Get current NPCs from manager
+        const npcs = npcManager.getCurrentMapNPCs();
+
+        // Apply map's characterScale multiplier (default 1.0)
+        const mapCharacterScale = currentMap?.characterScale ?? 1.0;
+
+        // Render NPCs in PixiJS
+        npcLayerRef.current.renderNPCs(npcs, mapCharacterScale, effectiveGridOffset);
+    }, [npcUpdateTrigger, isPixiInitialized, currentMap?.characterScale, currentMap?.renderMode, effectiveGridOffset]);
 
     // Show character creator if no character selected
     if (showCharacterCreator) {
@@ -1254,21 +1291,12 @@ const App: React.FC = () => {
                     layer="background"
                 />
 
-                {/* Render NPCs */}
-                {/* For background-image rooms, pass gridOffset directly (no camera compensation needed since parent has no transform) */}
-                <NPCRenderer
-                    playerPos={playerPos}
-                    npcUpdateTrigger={npcUpdateTrigger}
-                    characterScale={currentMap?.characterScale}
-                    gridOffset={effectiveGridOffset}
-                />
-
                 {/* Render Foreground Image Layers (for background-image rooms like shop) */}
                 {/* These render as DOM elements so they can properly layer with NPCs */}
                 {/* Z-index from layer config (e.g., 200) ensures counter appears in front of fox */}
                 <ForegroundImageLayers currentMap={currentMap} />
 
-                {/* Render Midground Animations (behind player, above NPCs) */}
+                {/* Render Midground Animations (behind player and NPCs) */}
                 <AnimationOverlay
                     currentMap={currentMap}
                     visibleRange={{
@@ -1312,6 +1340,19 @@ const App: React.FC = () => {
                     );
                 })()}
 
+                {/* Render NPCs as DOM elements when:
+                    - PixiJS is disabled, OR
+                    - In background-image rooms (for proper z-ordering with foreground layers)
+                */}
+                {(!USE_PIXI_RENDERER || currentMap?.renderMode === 'background-image') && (
+                    <NPCRenderer
+                        playerPos={playerPos}
+                        npcUpdateTrigger={npcUpdateTrigger}
+                        characterScale={currentMap?.characterScale}
+                        gridOffset={effectiveGridOffset}
+                    />
+                )}
+
                 {/* Render Placed Items (food, decorations) - Between player and foreground */}
                 {!USE_PIXI_RENDERER && (
                     <PlacedItems
@@ -1322,7 +1363,7 @@ const App: React.FC = () => {
                     />
                 )}
 
-                {/* Render Foreground Multi-Tile Sprites (above player) - Only in DOM mode */}
+                {/* Render Foreground Multi-Tile Sprites (above player and NPCs based on z-index) - Only in DOM mode */}
                 {!USE_PIXI_RENDERER && (
                     <ForegroundSprites
                         currentMap={currentMap}
