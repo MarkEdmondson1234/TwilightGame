@@ -31,7 +31,7 @@ import { PixiLayer } from './PixiLayer';
 const SHADOW_CONFIG = {
   // Base shadow properties
   baseAlpha: 0.25,          // Base shadow opacity
-  color: 0x000000,          // Shadow color (black)
+  color: 0x112115,          // Shadow color (dark green)
   blur: 8,                  // Shadow blur amount
 
   // Shadow size relative to sprite
