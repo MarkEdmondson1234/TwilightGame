@@ -367,6 +367,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh, nutritious spinach leaves.',
     stackable: true,
     sellPrice: 12,
+    image: groceryAssets.spinach_bundle,
   },
 
   crop_broccoli: {
@@ -576,7 +577,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 8,
     buyPrice: 20,
-    // Note: No cheese sprite yet - add cheese.png to grocery folder
+    image: groceryAssets.cheese,
   },
 
   egg: {
