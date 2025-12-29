@@ -376,4 +376,5 @@ export const itemAssets = {
   tomato_seeds: '/TwilightGame/assets-optimized/items/tomato_seeds.png',
   radishes: '/TwilightGame/assets-optimized/items/radishes.png',
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
+  strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',
 };

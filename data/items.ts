@@ -458,6 +458,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Sweet wild strawberries.',
     stackable: true,
     sellPrice: 30,
+    image: itemAssets.strawberry,
   },
 
   crop_blackberry: {
