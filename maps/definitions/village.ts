@@ -181,14 +181,14 @@ export const village: MapDefinition = {
     createVillageElderNPC('village_elder', { x: 15, y: 22 }),
     // Shopkeeper - fox merchant near shop entrance
     createShopkeeperNPC('shopkeeper', { x: 8, y: 12 }),
-    // Village Child - wandering little girl
-    createVillageChildNPC('child', { x: 15, y: 17 }),
+    // Village Child - wandering little girl (moved to open area near path)
+    createVillageChildNPC('child', { x: 12, y: 8 }),
     // Add cat NPC using factory function - positioned left of old woman
     createCatNPC('village_cat', { x: 17, y: 26 }, 'Sleepy Cat'),
     // Add old woman knitting near the farm plots (row 4 from bottom)
-    createOldWomanKnittingNPC('old_woman_knitting', { x: 18, y: 26 }, 'Old Woman'),
+    createOldWomanKnittingNPC('old_woman_knitting', { x: 18, y: 27 }, 'Old Woman'),
     // Add dog that follows the little girl
-    createDogNPC('village_dog', { x: 16, y: 17 }, 'child', 'Friendly Dog'),
+    createDogNPC('village_dog', { x: 13, y: 8 }, 'child', 'Friendly Dog'),
     // Duck - spring seasonal creature near the well/pond area
     // Only appears in spring (uses visibilityConditions to hide during other seasons)
     // Single duck to make it feel more special and rare

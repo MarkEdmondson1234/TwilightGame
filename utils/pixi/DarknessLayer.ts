@@ -11,6 +11,9 @@
  * - Dusk: Gradual darkening (day → night transition)
  * - Night: Full darkness (base × nightMultiplier)
  *
+ * The overlay colour is configurable (defaults to 0x241E3B - a dark purple-blue).
+ * Pass a colour to the constructor or use setColor() to change it at runtime.
+ *
  * The overlay covers the entire viewport and is rendered above all game content
  * but below UI elements.
  */
@@ -55,6 +58,9 @@ const DARKNESS_CONFIG: Record<string, {
 // Maximum darkness cap (don't go fully black)
 const MAX_DARKNESS = 0.70;
 
+// Default darkness colour - a dark purple-blue for atmospheric effect
+export const DEFAULT_DARKNESS_COLOR = 0x241E3B;
+
 export class DarknessLayer {
   private container: PIXI.Container;
   private overlay: PIXI.Graphics;
@@ -63,8 +69,12 @@ export class DarknessLayer {
   private viewportHeight: number = 0;
   private lastColorScheme: string = '';
   private lastTimeOfDay: string = '';
+  private darknessColor: number = DEFAULT_DARKNESS_COLOR;
 
-  constructor() {
+  constructor(color?: number) {
+    if (color !== undefined) {
+      this.darknessColor = color;
+    }
     this.container = new PIXI.Container();
     this.container.zIndex = 500;  // High z-index to render on top of game content
 
@@ -140,7 +150,7 @@ export class DarknessLayer {
       // Add extra margin for camera movement
       const margin = 100;
       this.overlay.rect(-margin, -margin, viewportWidth + margin * 2, viewportHeight + margin * 2);
-      this.overlay.fill({ color: 0x000000, alpha: darkness });
+      this.overlay.fill({ color: this.darknessColor, alpha: darkness });
       this.overlay.visible = true;
     } else {
       this.overlay.visible = false;
@@ -176,6 +186,23 @@ export class DarknessLayer {
    */
   getCurrentDarkness(): number {
     return this.currentDarkness;
+  }
+
+  /**
+   * Get current darkness colour
+   */
+  getColor(): number {
+    return this.darknessColor;
+  }
+
+  /**
+   * Set darkness colour (hex number, e.g., 0x241E3B)
+   */
+  setColor(color: number): void {
+    this.darknessColor = color;
+    // Force redraw on next update by resetting viewport
+    this.viewportWidth = 0;
+    this.viewportHeight = 0;
   }
 
   /**

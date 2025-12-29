@@ -21,11 +21,16 @@ class TextureManager {
 
   /**
    * Determine if a texture should use smooth (linear) scaling
-   * Farming sprites are high-res (512px) artwork that need smooth downscaling
+   * High-res artwork (farming, NPCs) needs smooth downscaling
+   * Pixel art tiles use nearest neighbor for crisp edges
    */
   private shouldUseSmoothScaling(url: string | undefined): boolean {
     if (!url) return false;
-    return url.includes('/farming/') || url.includes('farming\\');
+    // Farming sprites (512px+ artwork)
+    if (url.includes('/farming/') || url.includes('farming\\')) return true;
+    // NPC sprites (high-res character artwork)
+    if (url.includes('/npcs/') || url.includes('npcs\\')) return true;
+    return false;
   }
 
   /**
@@ -46,8 +51,13 @@ class TextureManager {
 
     // Start loading
     const promise = Assets.load<Texture>(url).then(texture => {
-      // Use smooth scaling for farming sprites (high-res artwork), nearest for pixel art
-      texture.source.scaleMode = this.shouldUseSmoothScaling(url) ? 'linear' : 'nearest';
+      const useSmooth = this.shouldUseSmoothScaling(url);
+      // Use smooth scaling for farming/NPC sprites (high-res artwork), nearest for pixel art
+      texture.source.scaleMode = useSmooth ? 'linear' : 'nearest';
+      // Enable mipmaps for smooth-scaled textures (prevents aliasing when downscaling)
+      if (useSmooth) {
+        texture.source.autoGenerateMipmaps = true;
+      }
 
       // Cache texture
       this.textures.set(key, texture);
@@ -85,8 +95,13 @@ class TextureManager {
       Object.entries(loadedAssets as Record<string, Texture>).forEach(([key, texture]) => {
         if (texture && texture.source) {
           const url = assets[key];
-          // Use smooth scaling for farming sprites (high-res artwork), nearest for pixel art
-          texture.source.scaleMode = this.shouldUseSmoothScaling(url) ? 'linear' : 'nearest';
+          const useSmooth = this.shouldUseSmoothScaling(url);
+          // Use smooth scaling for farming/NPC sprites (high-res artwork), nearest for pixel art
+          texture.source.scaleMode = useSmooth ? 'linear' : 'nearest';
+          // Enable mipmaps for smooth-scaled textures (prevents aliasing when downscaling)
+          if (useSmooth) {
+            texture.source.autoGenerateMipmaps = true;
+          }
           this.textures.set(url, texture); // Cache by URL
         }
       });

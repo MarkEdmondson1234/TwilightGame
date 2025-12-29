@@ -1,11 +1,12 @@
 /**
  * Forest/Wildlife NPC Factory Functions
- * 
+ *
  * NPCs that appear in forest areas and outdoor wilderness.
  */
 
-import { NPC, NPCBehavior, Direction, Position, AnimatedNPCStates, FriendshipConfig } from '../../types';
+import { NPC, Direction, Position } from '../../types';
 import { npcAssets } from '../../assets';
+import { createStaticNPC, createWanderingNPC } from './createNPC';
 
 /**
  * Create an Umbra Wolf NPC that roams the forest
@@ -14,6 +15,8 @@ import { npcAssets } from '../../assets';
  * - Wanders through the forest
  * - Animated standing/walking sprites
  * - Mysterious, wild creature dialogue
+ *
+ * Uses createWanderingNPC factory with complex state machine.
  *
  * @param id Unique ID for this wolf
  * @param position Starting position
@@ -24,16 +27,18 @@ export function createUmbraWolfNPC(
   position: Position,
   name: string = 'Umbra Wolf'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'standing',  // Start standing still
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
+  return createWanderingNPC({
+    id,
+    name,
+    position,
+    direction: Direction.Right,
+    sprite: npcAssets.umbrawolf_standing1,
+    portraitSprite: npcAssets.umbrawolf_portrait,
+    scale: 5.0,
+    interactionRadius: 2.0,
+    initialState: 'standing',
     states: {
       roaming: {
-        // Default sprites (used for left/right movement)
         sprites: [
           npcAssets.umbrawolf_walk1,
           npcAssets.umbrawolf_walk2,
@@ -42,51 +47,33 @@ export function createUmbraWolfNPC(
           npcAssets.umbrawolf_walk5,
           npcAssets.umbrawolf_walk6,
         ],
-        animationSpeed: 280, // Slower, more deliberate walk cycle
-        // Direction-specific sprites
+        animationSpeed: 280,
         directionalSprites: {
-          // Up: back view, 2-frame animation (flip on odd frames in NPCRenderer)
           up: [npcAssets.umbrawolf_back, npcAssets.umbrawolf_back],
-          // Down: front view, 2-frame animation (flip on odd frames in NPCRenderer)
           down: [npcAssets.umbrawolf_front, npcAssets.umbrawolf_front],
-          // Left/Right use default sprites (left is flipped in NPCRenderer)
         },
-        duration: 3500, // Walk for 3.5 seconds then stand
+        duration: 3500,
         nextState: 'standing',
       },
       standing: {
-        // Standing still, watching the forest
         sprites: [npcAssets.umbrawolf_standing1, npcAssets.umbrawolf_standing2],
-        animationSpeed: 1500, // Slow, subtle idle animation
-        duration: 10000, // Stand for 10 seconds then sit
+        animationSpeed: 1500,
+        duration: 10000,
         nextState: 'resting',
       },
       resting: {
-        // Sitting down, resting - 2-frame breathing animation
         sprites: [npcAssets.umbrawolf_sitting_01, npcAssets.umbrawolf_sitting_02],
-        animationSpeed: 1500, // Slow, peaceful breathing
-        duration: 15000, // Rest for 15 seconds
-        nextState: 'standing_brief', // Brief stand before walking
+        animationSpeed: 1500,
+        duration: 15000,
+        nextState: 'standing_brief',
       },
       standing_brief: {
-        // Brief standing before walking again
         sprites: [npcAssets.umbrawolf_standing1, npcAssets.umbrawolf_standing2],
         animationSpeed: 1500,
-        duration: 5000, // Stand for 5 seconds then walk
+        duration: 5000,
         nextState: 'roaming',
       },
     },
-  };
-
-  return {
-    id,
-    name,
-    position,
-    direction: Direction.Right, // Walking sprites face right (flipped for left)
-    behavior: NPCBehavior.WANDER,
-    sprite: npcAssets.umbrawolf_standing1, // Start with standing sprite
-    portraitSprite: npcAssets.umbrawolf_portrait,
-    scale: 5.0,  // Large, imposing forest creature
     dialogue: [
       {
         id: 'greeting',
@@ -102,13 +89,8 @@ export function createUmbraWolfNPC(
           night: '*The wolf\'s eyes gleam in the darkness. It is truly in its element under the stars.*',
         },
         responses: [
-          {
-            text: 'Hold out your hand cautiously.',
-            nextId: 'approach',
-          },
-          {
-            text: 'Back away slowly.',
-          },
+          { text: 'Hold out your hand cautiously.', nextId: 'approach' },
+          { text: 'Back away slowly.' },
         ],
       },
       {
@@ -122,13 +104,11 @@ export function createUmbraWolfNPC(
         },
       },
     ],
-    animatedStates,
-    interactionRadius: 2.0, // Can interact from a bit further away
     friendshipConfig: {
-      canBefriend: false, // Wild creature
+      canBefriend: false,
       startingPoints: 0,
     },
-  };
+  });
 }
 
 /**
@@ -140,6 +120,8 @@ export function createUmbraWolfNPC(
  * - Cryptic, mysterious dialogue
  * - Very rare spawn (1 in 5 forest generations)
  *
+ * Uses createStaticNPC factory.
+ *
  * @param id Unique ID for this witch wolf
  * @param position Starting position
  * @param name Optional name (defaults to "Witch Wolf")
@@ -149,38 +131,29 @@ export function createWitchWolfNPC(
   position: Position,
   name: string = 'Witch Wolf'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'watching',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      watching: {
-        // Blinking animation - mostly eyes open, occasional blink
-        sprites: [
-          npcAssets.witch_wolf_01, // Eyes open
-          npcAssets.witch_wolf_01, // Eyes open
-          npcAssets.witch_wolf_01, // Eyes open
-          npcAssets.witch_wolf_01, // Eyes open
-          npcAssets.witch_wolf_01, // Eyes open
-          npcAssets.witch_wolf_02, // Blink
-        ],
-        animationSpeed: 800, // Slow, deliberate blinks
-      },
-    },
-  };
-
-  return {
+  return createStaticNPC({
     id,
     name,
     position,
-    direction: Direction.Down, // Facing the player
-    behavior: NPCBehavior.STATIC,
+    direction: Direction.Down,
     sprite: npcAssets.witch_wolf_01,
     portraitSprite: npcAssets.witch_wolf_portrait,
-    scale: 3.0,  // Mystical presence, smaller than umbra wolf
+    scale: 3.0,
+    interactionRadius: 2.5,
+    states: {
+      watching: {
+        sprites: [
+          npcAssets.witch_wolf_01,
+          npcAssets.witch_wolf_01,
+          npcAssets.witch_wolf_01,
+          npcAssets.witch_wolf_01,
+          npcAssets.witch_wolf_01,
+          npcAssets.witch_wolf_02,
+        ],
+        animationSpeed: 800,
+      },
+    },
+    initialState: 'watching',
     dialogue: [
       {
         id: 'greeting',
@@ -192,21 +165,10 @@ export function createWitchWolfNPC(
           winter: '*Snow dusts the witch\'s dark robes, but she seems unbothered by the cold.* "Winter is the season of contemplation. The earth rests, dreams, remembers. Tell me, what brings you out in such weather?"',
         },
         responses: [
-          {
-            text: 'Who are you?',
-            nextId: 'introduction',
-          },
-          {
-            text: 'What are you brewing?',
-            nextId: 'cauldron',
-          },
-          {
-            text: 'Could you teach me magic?',
-            nextId: 'apprentice',
-          },
-          {
-            text: 'Just passing through.',
-          },
+          { text: 'Who are you?', nextId: 'introduction' },
+          { text: 'What are you brewing?', nextId: 'cauldron' },
+          { text: 'Could you teach me magic?', nextId: 'apprentice' },
+          { text: 'Just passing through.' },
         ],
       },
       {
@@ -219,18 +181,9 @@ export function createWitchWolfNPC(
           winter: '"Winter is my season for brewing, for reading old tomes, for remembering. The cold keeps away those who aren\'t truly dedicated."',
         },
         responses: [
-          {
-            text: 'Tell me about your magic.',
-            nextId: 'magic_talk',
-          },
-          {
-            text: 'What\'s it like living here?',
-            nextId: 'glade_life',
-          },
-          {
-            text: 'Could you teach me?',
-            nextId: 'apprentice',
-          },
+          { text: 'Tell me about your magic.', nextId: 'magic_talk' },
+          { text: 'What\'s it like living here?', nextId: 'glade_life' },
+          { text: 'Could you teach me?', nextId: 'apprentice' },
         ],
       },
       {
@@ -243,30 +196,17 @@ export function createWitchWolfNPC(
           winter: '"Winter potions require patience. Everything takes longer in the cold, but the results are powerful. Slow magic, deep magic."',
         },
         responses: [
-          {
-            text: 'Could you teach me to brew?',
-            nextId: 'apprentice',
-          },
-          {
-            text: 'Fascinating!',
-          },
+          { text: 'Could you teach me to brew?', nextId: 'apprentice' },
+          { text: 'Fascinating!' },
         ],
       },
       {
         id: 'apprentice',
         text: '*The witch pauses, studying you carefully.* "An apprentice? I haven\'t taken one in... years. Decades, perhaps. The last one didn\'t have the patience for it." *She stirs her cauldron thoughtfully.* "Magic isn\'t learned from books alone, you understand. It requires dedication. Hard work."',
         responses: [
-          {
-            text: 'I\'m willing to work hard.',
-            nextId: 'apprentice_interest',
-          },
-          {
-            text: 'What would it involve?',
-            nextId: 'apprentice_details',
-          },
-          {
-            text: 'Perhaps another time.',
-          },
+          { text: 'I\'m willing to work hard.', nextId: 'apprentice_interest' },
+          { text: 'What would it involve?', nextId: 'apprentice_details' },
+          { text: 'Perhaps another time.' },
         ],
       },
       {
@@ -279,27 +219,16 @@ export function createWitchWolfNPC(
           winter: '"Winter is challenging for growing, but there are ways. Prove you can work with nature, not against it."',
         },
         responses: [
-          {
-            text: 'I\'ll do it!',
-            nextId: 'apprentice_accepted',
-          },
-          {
-            text: 'What else do you need?',
-            nextId: 'pickled_onions',
-          },
+          { text: 'I\'ll do it!', nextId: 'apprentice_accepted' },
+          { text: 'What else do you need?', nextId: 'pickled_onions' },
         ],
       },
       {
         id: 'apprentice_details',
         text: '"Magic is about understanding the world - the plants, the seasons, the way energy flows through all living things. You\'d learn to brew potions, to coax magic from herbs, to read the patterns in nature. Eventually, if you proved worthy, I might teach you to cast proper spells."',
         responses: [
-          {
-            text: 'That sounds wonderful!',
-            nextId: 'apprentice_interest',
-          },
-          {
-            text: 'I need to think about it.',
-          },
+          { text: 'That sounds wonderful!', nextId: 'apprentice_interest' },
+          { text: 'I need to think about it.' },
         ],
       },
       {
@@ -310,13 +239,8 @@ export function createWitchWolfNPC(
         id: 'pickled_onions',
         text: '*The witch\'s eyes light up.* "Ah! Well, if you really want to impress me... I do love pickled onions in my sandwiches. Sharp, tangy, perfect. If you can make a proper batch, I\'ll know you\'re serious about learning the craft."',
         responses: [
-          {
-            text: 'I\'ll bring you some!',
-            nextId: 'apprentice_accepted',
-          },
-          {
-            text: 'Noted!',
-          },
+          { text: 'I\'ll bring you some!', nextId: 'apprentice_accepted' },
+          { text: 'Noted!' },
         ],
       },
       {
@@ -327,23 +251,16 @@ export function createWitchWolfNPC(
         id: 'glade_life',
         text: '"Peaceful, mostly. I have my garden, my brewing, Shadow for company. The forest provides what I need. Sometimes travellers find their way here, which makes for pleasant conversation." *She smiles.* "It can be lonely, I admit. Perhaps that\'s why I\'m considering an apprentice."',
         responses: [
-          {
-            text: 'I could be that apprentice.',
-            nextId: 'apprentice',
-          },
-          {
-            text: 'It sounds lovely here.',
-          },
+          { text: 'I could be that apprentice.', nextId: 'apprentice' },
+          { text: 'It sounds lovely here.' },
         ],
       },
     ],
-    animatedStates,
-    interactionRadius: 2.5, // Slightly larger interaction range for the mystical creature
     friendshipConfig: {
-      canBefriend: false, // Mystical creature
+      canBefriend: false,
       startingPoints: 0,
     },
-  };
+  });
 }
 
 /**
@@ -355,6 +272,8 @@ export function createWitchWolfNPC(
  * - Calm, friendly dialogue
  * - 20% chance of appearing in forest
  *
+ * Uses createStaticNPC factory.
+ *
  * @param id Unique ID for this bear
  * @param position Starting position
  * @param name Optional name (defaults to "Chill Bear")
@@ -364,36 +283,27 @@ export function createChillBearNPC(
   position: Position,
   name: string = 'Chill Bear'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'sipping',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
+  return createStaticNPC({
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    sprite: npcAssets.chill_bear_01,
+    portraitSprite: npcAssets.chill_bear_portrait,
+    scale: 5.0,
+    interactionRadius: 2.0,
     states: {
       sipping: {
-        // Gentle tea-sipping animation
         sprites: [
           npcAssets.chill_bear_01,
           npcAssets.chill_bear_01,
           npcAssets.chill_bear_02,
           npcAssets.chill_bear_01,
         ],
-        animationSpeed: 1200, // Slow, relaxed animation
+        animationSpeed: 1200,
       },
     },
-  };
-
-  return {
-    id,
-    name,
-    position,
-    direction: Direction.Down, // Facing the player
-    behavior: NPCBehavior.STATIC,
-    sprite: npcAssets.chill_bear_01,
-    portraitSprite: npcAssets.chill_bear_portrait,
-    scale: 5.0, // Large, friendly presence
+    initialState: 'sipping',
     dialogue: [
       {
         id: 'greeting',
@@ -405,22 +315,10 @@ export function createChillBearNPC(
           winter: '*The bear wraps its paws around a steaming mug.* "Come, warm yourself. Tea?"',
         },
         responses: [
-          {
-            text: 'Yes please!',
-            nextId: 'accept_tea',
-          },
-          {
-            text: 'Do you have coffee?',
-            nextId: 'coffee_question',
-          },
-          {
-            text: 'Aren\'t you dangerous?',
-            nextId: 'dangerous_question',
-          },
-          {
-            text: 'No thank you.',
-            nextId: 'decline_politely',
-          },
+          { text: 'Yes please!', nextId: 'accept_tea' },
+          { text: 'Do you have coffee?', nextId: 'coffee_question' },
+          { text: 'Aren\'t you dangerous?', nextId: 'dangerous_question' },
+          { text: 'No thank you.', nextId: 'decline_politely' },
         ],
       },
       {
@@ -432,24 +330,14 @@ export function createChillBearNPC(
           autumn: '*The bear adds a cinnamon stick to your cup.* "Autumn special. Bit of apple, bit of spice. Warms the belly."',
           winter: '*The bear ladles steaming tea from a pot by the fire.* "Extra honey in winter. Good for the soul."',
         },
-        responses: [
-          {
-            text: 'This is delicious!',
-            nextId: 'tea_compliment',
-          },
-        ],
+        responses: [{ text: 'This is delicious!', nextId: 'tea_compliment' }],
       },
       {
         id: 'coffee_question',
         text: '*The bear scratches its chin thoughtfully.* "Coffee? Tried it once. Made me all jittery. Couldn\'t nap properly for three days. Stick with tea, much better."',
         responses: [
-          {
-            text: 'Tea sounds good then.',
-            nextId: 'accept_tea',
-          },
-          {
-            text: 'Fair enough!',
-          },
+          { text: 'Tea sounds good then.', nextId: 'accept_tea' },
+          { text: 'Fair enough!' },
         ],
       },
       {
@@ -462,14 +350,8 @@ export function createChillBearNPC(
           winter: '*The bear yawns contentedly.* "Far too sleepy to be dangerous. Besides, life\'s too short. Want to hear about my grandmother\'s recipe for honeyed porridge?"',
         },
         responses: [
-          {
-            text: 'Tell me more about the food.',
-            nextId: 'food_chat',
-          },
-          {
-            text: 'You\'re quite chill, aren\'t you?',
-            nextId: 'chill_response',
-          },
+          { text: 'Tell me more about the food.', nextId: 'food_chat' },
+          { text: 'You\'re quite chill, aren\'t you?', nextId: 'chill_response' },
         ],
       },
       {
@@ -495,13 +377,11 @@ export function createChillBearNPC(
         text: '*The bear beams with pride.* "Family recipe. My grandmother taught me. She always said the secret was patience - let it steep, don\'t rush it. Like most good things in life."',
       },
     ],
-    animatedStates,
-    interactionRadius: 2.0, // Friendly approach distance
     friendshipConfig: {
-      canBefriend: false, // Wild creature (for now - could change with bear quest)
+      canBefriend: false,
       startingPoints: 0,
     },
-  };
+  });
 }
 
 /**
@@ -513,6 +393,8 @@ export function createChillBearNPC(
  * - Mystical, wise dialogue about the forest and nature
  * - Always present in the deep forest clearing
  *
+ * Uses createStaticNPC factory.
+ *
  * @param id Unique ID for Stella
  * @param position Starting position
  * @param name Optional name (defaults to "Stella")
@@ -522,34 +404,21 @@ export function createStellaNPC(
   position: Position,
   name: string = 'Stella'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'idle',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      idle: {
-        // Gentle glowing animation
-        sprites: [
-          npcAssets.stella_01,
-          npcAssets.stella_02,
-        ],
-        animationSpeed: 1000, // Slow, ethereal animation
-      },
-    },
-  };
-
-  return {
+  return createStaticNPC({
     id,
     name,
     position,
     direction: Direction.Down,
-    behavior: NPCBehavior.STATIC,
     sprite: npcAssets.stella_01,
     portraitSprite: npcAssets.stella_portrait,
-    scale: 1.0, // Very small fairy presence
+    scale: 1.0,
+    interactionRadius: 2.0,
+    states: {
+      idle: {
+        sprites: [npcAssets.stella_01, npcAssets.stella_02],
+        animationSpeed: 1000,
+      },
+    },
     dialogue: [
       {
         id: 'greeting',
@@ -561,21 +430,10 @@ export function createStellaNPC(
           winter: '*A soft silver light surrounds the fairy.* "Even in winter\'s stillness, the forest dreams. I tend those dreams, traveller."',
         },
         responses: [
-          {
-            text: 'Who are you?',
-            nextId: 'introduction',
-          },
-          {
-            text: 'Tell me about this tree.',
-            nextId: 'fairy_oak_lore',
-          },
-          {
-            text: 'What are those glowing bugs?',
-            nextId: 'flower_bugs',
-          },
-          {
-            text: 'I should go.',
-          },
+          { text: 'Who are you?', nextId: 'introduction' },
+          { text: 'Tell me about this tree.', nextId: 'fairy_oak_lore' },
+          { text: 'What are those glowing bugs?', nextId: 'flower_bugs' },
+          { text: 'I should go.' },
         ],
       },
       {
@@ -588,13 +446,8 @@ export function createStellaNPC(
           winter: '"In winter, I sing to the sleeping trees. They do not hear, but it comforts me to know they are not truly alone."',
         },
         responses: [
-          {
-            text: 'Why is this place special?',
-            nextId: 'sacred_grove',
-          },
-          {
-            text: 'Thank you for sharing.',
-          },
+          { text: 'Why is this place special?', nextId: 'sacred_grove' },
+          { text: 'Thank you for sharing.' },
         ],
       },
       {
@@ -607,13 +460,8 @@ export function createStellaNPC(
           winter: '"Even without leaves, the oak dreams. I can hear it sometimes - memories of forests that covered the world before humans came."',
         },
         responses: [
-          {
-            text: 'Can the tree grant wishes?',
-            nextId: 'tree_wishes',
-          },
-          {
-            text: 'That\'s incredible.',
-          },
+          { text: 'Can the tree grant wishes?', nextId: 'tree_wishes' },
+          { text: 'That\'s incredible.' },
         ],
       },
       {
@@ -630,37 +478,26 @@ export function createStellaNPC(
           winter: '"In winter, look closely at the snowflakes. Sometimes the spirits ride them down from the clouds, just to visit."',
         },
         responses: [
-          {
-            text: 'Who is Celestia?',
-            nextId: 'celestia_lore',
-          },
-          {
-            text: 'They\'re beautiful.',
-          },
+          { text: 'Who is Celestia?', nextId: 'celestia_lore' },
+          { text: 'They\'re beautiful.' },
         ],
       },
       {
         id: 'celestia_lore',
         text: '"Celestia was the first fairy of this forest, long before even I was born. She planted the fairy oak from a seed of pure starlight. When her time ended, she became the stars themselves - and her children, the flower spirits, remain to honour her memory."',
-        responses: [
-          {
-            text: 'A beautiful story.',
-          },
-        ],
+        responses: [{ text: 'A beautiful story.' }],
       },
       {
         id: 'sacred_grove',
         text: '"This grove is where the old magic still flows freely. The trees remember songs from before language. The stones hold secrets of the earth\'s youth. And sometimes, if you listen carefully, you can hear the whispers of those who came before."',
       },
     ],
-    animatedStates,
-    interactionRadius: 2.0,
     friendshipConfig: {
-      canBefriend: true, // Can befriend Stella through repeated visits and kindness
+      canBefriend: true,
       startingPoints: 0,
-      crisisId: 'fairy_oak_blight', // Future crisis event
+      crisisId: 'fairy_oak_blight',
     },
-  };
+  });
 }
 
 /**
@@ -671,6 +508,8 @@ export function createStellaNPC(
  * - Cheerful, curious personality
  * - Interested in the player's adventures
  *
+ * Uses createStaticNPC factory.
+ *
  * @param id Unique ID for Morgan
  * @param position Starting position
  * @param name Optional name (defaults to "Morgan")
@@ -680,34 +519,21 @@ export function createMorganNPC(
   position: Position,
   name: string = 'Morgan'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'idle',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      idle: {
-        // Gentle glowing animation
-        sprites: [
-          npcAssets.morgan_01,
-          npcAssets.morgan_02,
-        ],
-        animationSpeed: 800, // Slightly faster than Stella - more energetic
-      },
-    },
-  };
-
-  return {
+  return createStaticNPC({
     id,
     name,
     position,
     direction: Direction.Down,
-    behavior: NPCBehavior.STATIC,
     sprite: npcAssets.morgan_01,
     portraitSprite: npcAssets.morgan_portrait,
-    scale: 1.5, // Tiny fairy presence, same as Stella
+    scale: 1.5,
+    interactionRadius: 2.0,
+    states: {
+      idle: {
+        sprites: [npcAssets.morgan_01, npcAssets.morgan_02],
+        animationSpeed: 800,
+      },
+    },
     dialogue: [
       {
         id: 'greeting',
@@ -719,34 +545,18 @@ export function createMorganNPC(
           winter: '*The fairy shivers but grins.* "Brrr! Cold but beautiful! I make snow angels - want to see? They\'re very tiny ones!"',
         },
         responses: [
-          {
-            text: 'Nice to meet you, Morgan!',
-            nextId: 'friendly',
-          },
-          {
-            text: 'Do you live here?',
-            nextId: 'home',
-          },
-          {
-            text: 'You seem very energetic!',
-            nextId: 'energetic',
-          },
-          {
-            text: 'I should get going.',
-          },
+          { text: 'Nice to meet you, Morgan!', nextId: 'friendly' },
+          { text: 'Do you live here?', nextId: 'home' },
+          { text: 'You seem very energetic!', nextId: 'energetic' },
+          { text: 'I should get going.' },
         ],
       },
       {
         id: 'friendly',
         text: '"Nice to meet YOU! I always love making new friends! The forest can be lonely sometimes, even with all the animals. But Stella says I talk too much to ever be truly alone!" *giggles*',
         responses: [
-          {
-            text: 'Who is Stella?',
-            nextId: 'about_stella',
-          },
-          {
-            text: 'You don\'t talk too much!',
-          },
+          { text: 'Who is Stella?', nextId: 'about_stella' },
+          { text: 'You don\'t talk too much!' },
         ],
       },
       {
@@ -763,13 +573,8 @@ export function createMorganNPC(
         id: 'energetic',
         text: '"Stella says I have \'more energy than a spring storm\'! I just love flying and exploring and meeting people and collecting pretty things and..." *takes a breath* "...and everything!"',
         responses: [
-          {
-            text: 'What do you collect?',
-            nextId: 'collecting',
-          },
-          {
-            text: 'That sounds exhausting!',
-          },
+          { text: 'What do you collect?', nextId: 'collecting' },
+          { text: 'That sounds exhausting!' },
         ],
       },
       {
@@ -781,13 +586,11 @@ export function createMorganNPC(
         text: '"Oh, all sorts! Shiny pebbles, pretty feathers, dewdrops - did you know you can carry dewdrops if you\'re very careful? I have a whole collection! And seeds - I plant them everywhere so more flowers grow!"',
       },
     ],
-    animatedStates,
-    interactionRadius: 2.0,
     friendshipConfig: {
       canBefriend: true,
-      startingPoints: 10, // Morgan is naturally friendly
+      startingPoints: 10,
     },
-  };
+  });
 }
 
 /**
@@ -798,6 +601,8 @@ export function createMorganNPC(
  * - Gentle fluttering animation (wings)
  * - Shy, curious dialogue about the forest
  *
+ * Uses createWanderingNPC factory.
+ *
  * @param id Unique ID for this bunnyfly
  * @param position Starting position
  * @param name Optional name (defaults to "Bunnyfly")
@@ -807,30 +612,22 @@ export function createBunnyflyNPC(
   position: Position,
   name: string = 'Bunnyfly'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'roaming',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      roaming: {
-        sprites: [npcAssets.bunnyfly_01, npcAssets.bunnyfly_02],
-        animationSpeed: 400, // Gentle wing fluttering (400ms per frame) while flying around
-      },
-    },
-  };
-
-  return {
+  return createWanderingNPC({
     id,
     name,
     position,
     direction: Direction.Down,
-    behavior: NPCBehavior.WANDER,
     sprite: npcAssets.bunnyfly_01,
     portraitSprite: npcAssets.bunnyfly_portrait,
-    scale: 2.5, // Small, delicate creature
+    scale: 2.5,
+    interactionRadius: 1.5,
+    states: {
+      roaming: {
+        sprites: [npcAssets.bunnyfly_01, npcAssets.bunnyfly_02],
+        animationSpeed: 400,
+      },
+    },
+    initialState: 'roaming',
     dialogue: [
       {
         id: 'greeting',
@@ -853,13 +650,8 @@ export function createBunnyflyNPC(
           cherry_blossoms: '*The bunnyfly dances amongst the falling petals, indistinguishable from the pink blooms. Such grace!*',
         },
         responses: [
-          {
-            text: 'Reach out gently.',
-            nextId: 'approach',
-          },
-          {
-            text: 'Watch it flutter away.',
-          },
+          { text: 'Reach out gently.', nextId: 'approach' },
+          { text: 'Watch it flutter away.' },
         ],
       },
       {
@@ -873,13 +665,11 @@ export function createBunnyflyNPC(
         },
       },
     ],
-    animatedStates,
-    interactionRadius: 1.5,
     friendshipConfig: {
       canBefriend: true,
-      startingPoints: 5, // Naturally timid but friendly
+      startingPoints: 5,
     },
-  };
+  });
 }
 
 /**
@@ -891,6 +681,8 @@ export function createBunnyflyNPC(
  * - Ancient, mysterious dialogue about the lake and forest
  * - Offers wisdom and blessings to those who approach respectfully
  *
+ * Uses createStaticNPC factory.
+ *
  * @param id Unique ID for this spirit
  * @param position Starting position (should be center of magical lake)
  * @param name Optional name (defaults to "Mother Sea")
@@ -900,31 +692,22 @@ export function createMotherSeaNPC(
   position: Position,
   name: string = 'Mother Sea'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'rising',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      rising: {
-        // Gentle floating/breathing animation as she rises from the lake
-        sprites: [npcAssets.mother_sea_01, npcAssets.mother_sea_02],
-        animationSpeed: 1500, // Slow, ethereal movement (1.5 seconds per frame)
-      },
-    },
-  };
-
-  return {
+  return createStaticNPC({
     id,
     name,
     position,
-    direction: Direction.Down, // Facing the player/shore
-    behavior: NPCBehavior.STATIC, // Rises from the lake, doesn't wander
+    direction: Direction.Down,
     sprite: npcAssets.mother_sea_01,
     portraitSprite: npcAssets.mother_sea_portrait,
-    scale: 6.0, // Large, impressive lake spirit
+    scale: 6.0,
+    interactionRadius: 3.0,
+    states: {
+      rising: {
+        sprites: [npcAssets.mother_sea_01, npcAssets.mother_sea_02],
+        animationSpeed: 1500,
+      },
+    },
+    initialState: 'rising',
     dialogue: [
       {
         id: 'greeting',
@@ -945,18 +728,9 @@ export function createMotherSeaNPC(
           mist: '*The mist rises from the lake to embrace Mother Sea. Ancient and eternal, she speaks of times before memory.*',
         },
         responses: [
-          {
-            text: 'Bow respectfully.',
-            nextId: 'blessing',
-          },
-          {
-            text: 'Ask about the magical lake.',
-            nextId: 'lake_wisdom',
-          },
-          {
-            text: 'Listen quietly.',
-            nextId: 'quiet_wisdom',
-          },
+          { text: 'Bow respectfully.', nextId: 'blessing' },
+          { text: 'Ask about the magical lake.', nextId: 'lake_wisdom' },
+          { text: 'Listen quietly.', nextId: 'quiet_wisdom' },
         ],
       },
       {
@@ -973,13 +747,8 @@ export function createMotherSeaNPC(
         id: 'lake_wisdom',
         text: '"This lake has existed since before the first trees grew in this forest. Its waters connect to all the waters of the world - every river, every sea, every tear and every rainfall."',
         responses: [
-          {
-            text: 'Ask about the forest.',
-            nextId: 'forest_wisdom',
-          },
-          {
-            text: 'Thank her and take your leave.',
-          },
+          { text: 'Ask about the forest.', nextId: 'forest_wisdom' },
+          { text: 'Thank her and take your leave.' },
         ],
       },
       {
@@ -997,11 +766,9 @@ export function createMotherSeaNPC(
         },
       },
     ],
-    animatedStates,
-    interactionRadius: 3.0, // Can interact from further away (she's in the lake)
     friendshipConfig: {
       canBefriend: true,
-      startingPoints: 100, // Immediately friendly - ancient spirits recognise pure hearts
+      startingPoints: 100,
     },
-  };
+  });
 }
