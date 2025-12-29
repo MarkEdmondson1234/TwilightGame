@@ -97,7 +97,7 @@ const Inventory: React.FC<InventoryProps> = ({
                         : 'bg-amber-950/40 border-amber-700 hover:bg-amber-900/60'
                       }`
                     }
-                    ${isEmpty ? 'cursor-default' : 'cursor-pointer hover:scale-105'}
+                    ${isEmpty ? 'cursor-default' : 'cursor-pointer'}
                   `}
                   disabled={isEmpty}
                 >

@@ -229,7 +229,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
           className={`
             relative aspect-square rounded-lg border-2 transition-all
             ${canAfford
-              ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 hover:scale-105 cursor-pointer'
+              ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 cursor-pointer'
               : 'bg-gray-900/40 border-gray-600 cursor-not-allowed opacity-50'
             }
           `}
@@ -291,7 +291,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
           onClick={() =>
             handleDragStart(inventoryItem.itemId, false, inventoryItem.quantity)
           }
-          className="relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 hover:scale-105 cursor-pointer transition-all"
+          className="relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 cursor-pointer transition-all"
         >
           {/* Item Image/Icon */}
           <div className="absolute inset-0 flex items-center justify-center p-2">
