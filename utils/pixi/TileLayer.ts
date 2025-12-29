@@ -60,10 +60,10 @@ const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
     zIndex: 50,       // Above ground level
   },
   [CropGrowthStage.ADULT]: {
-    width: 2,
-    height: 2,
-    offsetX: -0.5,    // Center horizontally: -(width-1)/2
-    offsetY: -2,      // Extend 1 tile upward from soil
+    width: 1,
+    height: 1,
+    offsetX: 0,       // Center horizontally: -(width-1)/2
+    offsetY: -0.5,    // Extend half a tile upward from soil
     zIndex: 100,      // Same level as player for proper sorting
   },
 };
