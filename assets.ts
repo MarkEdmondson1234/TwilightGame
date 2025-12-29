@@ -179,6 +179,8 @@ export const farmingAssets = {
   plant_sunflower_adult: '/TwilightGame/assets-optimized/farming/sunflower_adult.png',
   plant_tomato_young: '/TwilightGame/assets-optimized/farming/tomato_young.png',
   plant_tomato_adult: '/TwilightGame/assets-optimized/farming/tomato_adult.png',
+  plant_spinach_young: '/TwilightGame/assets-optimized/farming/spinach_young.png',
+  plant_spinach_adult: '/TwilightGame/assets-optimized/farming/spinach_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 
@@ -221,6 +223,8 @@ export const groceryAssets = {
   olive_oil: '/TwilightGame/assets-optimized/items/grocery/olive_oil.png',
   sunflower_oil: '/TwilightGame/assets-optimized/items/grocery/sunflower_oil.png',
   strawberry_jam: '/TwilightGame/assets-optimized/items/grocery/strawberry_jam.png',
+  cheese: '/TwilightGame/assets-optimized/items/grocery/cheese.png',
+  spinach_bundle: '/TwilightGame/assets-optimized/items/grocery/spinach_bundle.png',
 };
 
 // NPC assets - Use optimized versions for in-game sprites, originals for portraits
