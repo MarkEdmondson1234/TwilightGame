@@ -78,8 +78,8 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
   forest: {
     name: 'forest',
     colors: {
-      grass: 'bg-palette-moss',
-      rock: 'bg-palette-moss',  // Same as grass for forest floor consistency
+      grass: 'bg-palette-forest',
+      rock: 'bg-palette-forest',  // Same as grass for forest floor consistency
       water: 'bg-palette-teal',
       path: 'bg-palette-khaki',
       floor: 'bg-palette-olive',
@@ -88,7 +88,7 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       door: 'bg-palette-chocolate',
       special: 'bg-palette-olive',
       furniture: 'bg-palette-rust',
-      mushroom: 'bg-palette-moss',  // Same as grass for forest
+      mushroom: 'bg-palette-forest',  // Same as grass for forest
       background: 'bg-palette-olive',
     },
     // Seasonal modifiers for winter snow

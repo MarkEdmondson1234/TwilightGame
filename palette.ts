@@ -39,6 +39,8 @@ export interface GamePalette {
   olive: PaletteColor;
   sage: PaletteColor;
   moss: PaletteColor;
+  lush: PaletteColor;
+  forest: PaletteColor;
 
   // Blues/Purples
   navy: PaletteColor;
@@ -92,9 +94,11 @@ export const DEFAULT_PALETTE: GamePalette = {
   beige: { name: 'beige', hex: '#C4A882', description: 'Pale tan' },
 
   // Greens
-  olive: { name: 'olive', hex: '#6B8E23', description: 'Yellow-green' },
-  sage: { name: 'sage', hex: '#87AE73', description: 'Muted green' },
+  olive: { name: 'olive', hex: '#5C6B3D', description: 'Yellow-green' },
+  sage: { name: 'sage', hex: '#67785F', description: 'Muted green' },
   moss: { name: 'moss', hex: '#5A7247', description: 'Dark green' },
+  lush: { name: 'lush', hex: '#2A610F', description: 'Lush green' },
+  forest: { name: 'forest', hex: '#284520', description: 'Forest floor green' },
 
   // Blues/Purples
   navy: { name: 'navy', hex: '#3E3F5E', description: 'Dark blue' },
