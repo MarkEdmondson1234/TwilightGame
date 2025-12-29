@@ -293,6 +293,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.98, max: 1.02 },
+    // Rounded shadow for cherry tree canopy
+    shadowWidthRatio: 0.55,
+    shadowHeightRatio: 0.25,
   },
 
   // Lake edge tiles - need to be foreground sprites so baseType (grass) renders underneath
@@ -640,6 +643,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.85, max: 1.15 },  // More size variation
+    // Broad shadow for deciduous tree with wide canopy
+    shadowWidthRatio: 0.6,
+    shadowHeightRatio: 0.25,
   },
   {
     tileType: TileType.SPRUCE_TREE,
@@ -660,6 +666,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.85, max: 1.15 },  // More size variation for natural look
+    // Narrow elongated shadow for conical tree shape
+    shadowWidthRatio: 0.25,
+    shadowHeightRatio: 0.12,
   },
   {
     tileType: TileType.WILLOW_TREE,
@@ -680,6 +689,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 },  // Subtle size variation
+    // Wider shadow for weeping willow with drooping branches
+    shadowWidthRatio: 0.5,
+    shadowHeightRatio: 0.2,
   },
   {
     tileType: TileType.LILAC_TREE,
@@ -800,6 +812,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.9, max: 1.1 },  // Subtle size variation
+    // Narrow shadow for small conical tree
+    shadowWidthRatio: 0.3,
+    shadowHeightRatio: 0.15,
   },
   {
     tileType: TileType.WILD_IRIS,
@@ -859,6 +874,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableRotation: false,
     enableScale: false,
     enableBrightness: false,
+    // Large broad shadow for giant fairy oak
+    shadowWidthRatio: 0.6,
+    shadowHeightRatio: 0.25,
   },
   {
     tileType: TileType.WITCH_HUT,
@@ -877,6 +895,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableRotation: false,
     enableScale: false,
     enableBrightness: false,
+    // Large shadow for building structure
+    shadowWidthRatio: 0.4,
+    shadowHeightRatio: 0.15,
   },
   {
     tileType: TileType.MAGICAL_LAKE,

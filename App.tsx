@@ -6,7 +6,9 @@ import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { PlayerSprite } from './utils/pixi/PlayerSprite';
 import { SpriteLayer } from './utils/pixi/SpriteLayer';
+import { ShadowLayer } from './utils/pixi/ShadowLayer';
 import { WeatherLayer } from './utils/pixi/WeatherLayer';
+import { DarknessLayer } from './utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from './utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from './utils/pixi/BackgroundImageLayer';
 import { WeatherManager } from './utils/WeatherManager';
@@ -140,7 +142,9 @@ const App: React.FC = () => {
     const playerSpriteRef = useRef<PlayerSprite | null>(null);
     const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
     const foregroundSpriteLayerRef = useRef<SpriteLayer | null>(null);
+    const shadowLayerRef = useRef<ShadowLayer | null>(null);
     const weatherLayerRef = useRef<WeatherLayer | null>(null);
+    const darknessLayerRef = useRef<DarknessLayer | null>(null);
     const weatherManagerRef = useRef<WeatherManager | null>(null);
     const [isPixiInitialized, setIsPixiInitialized] = useState(false);
 
@@ -760,6 +764,11 @@ const App: React.FC = () => {
                 placedItemsLayerRef.current = placedItemsLayer;
                 app.stage.addChild(placedItemsLayer.getContainer());
 
+                // Create shadow layer (shadows beneath foreground sprites like trees)
+                const shadowLayer = new ShadowLayer();
+                shadowLayerRef.current = shadowLayer;
+                app.stage.addChild(shadowLayer.getContainer());
+
                 // Create foreground sprite layer (furniture over player)
                 const foregroundSpriteLayer = new SpriteLayer(true);
                 foregroundSpriteLayerRef.current = foregroundSpriteLayer;
@@ -792,6 +801,12 @@ const App: React.FC = () => {
                     console.log('[App] Continuing without weather effects...');
                 }
 
+                // Initialize darkness layer (global darkness for caves/forests)
+                const darknessLayer = new DarknessLayer();
+                darknessLayerRef.current = darknessLayer;
+                app.stage.addChild(darknessLayer.getContainer());
+                console.log('[App] ✓ Darkness layer initialized');
+
                 // Initial render
                 const currentMap = mapManager.getCurrentMap();
                 if (currentMap) {
@@ -803,12 +818,15 @@ const App: React.FC = () => {
                     backgroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     const placedItems = gameState.getPlacedItems(currentMapId);
                     placedItemsLayer.renderItems(placedItems, visibleRange);
+                    const { hour, season } = TimeManager.getCurrentTime();
+                    shadowLayer.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     backgroundImageLayer.updateCamera(cameraX, cameraY);
                     tileLayer.updateCamera(cameraX, cameraY);
                     backgroundSpriteLayer.updateCamera(cameraX, cameraY);
                     playerSprite.updateCamera(cameraX, cameraY);
                     placedItemsLayer.updateCamera(cameraX, cameraY);
+                    shadowLayer.updateCamera(cameraX, cameraY);
                     foregroundSpriteLayer.updateCamera(cameraX, cameraY);
                 }
 
@@ -848,6 +866,10 @@ const App: React.FC = () => {
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.clear();
                 foregroundSpriteLayerRef.current = null;
+            }
+            if (shadowLayerRef.current) {
+                shadowLayerRef.current.clear();
+                shadowLayerRef.current = null;
             }
             if (weatherLayerRef.current) {
                 weatherLayerRef.current.destroy();
@@ -927,8 +949,25 @@ const App: React.FC = () => {
                 placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
             }
 
+            // Render shadows for foreground sprites (trees, buildings)
+            if (shadowLayerRef.current) {
+                const { hour, season } = TimeManager.getCurrentTime();
+                shadowLayerRef.current.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
+            }
+
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
+            }
+
+            // Update darkness layer (global darkness for caves/forests)
+            if (darknessLayerRef.current) {
+                const { season } = TimeManager.getCurrentTime();
+                darknessLayerRef.current.update(
+                    currentMap.colorScheme,
+                    season,
+                    window.innerWidth,
+                    window.innerHeight
+                );
             }
 
             // Log sprite count for debugging (only occasionally)
@@ -975,6 +1014,9 @@ const App: React.FC = () => {
             if (placedItemsLayerRef.current) {
                 placedItemsLayerRef.current.updateCamera(0, 0);
             }
+            if (shadowLayerRef.current) {
+                shadowLayerRef.current.updateCamera(0, 0);
+            }
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.updateCamera(0, 0);
             }
@@ -991,6 +1033,9 @@ const App: React.FC = () => {
             }
             if (placedItemsLayerRef.current) {
                 placedItemsLayerRef.current.updateCamera(cameraX, cameraY);
+            }
+            if (shadowLayerRef.current) {
+                shadowLayerRef.current.updateCamera(cameraX, cameraY);
             }
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.updateCamera(cameraX, cameraY);
@@ -1020,9 +1065,26 @@ const App: React.FC = () => {
                 placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
             }
 
+            // Update shadow layer
+            if (shadowLayerRef.current) {
+                const { hour, season } = TimeManager.getCurrentTime();
+                shadowLayerRef.current.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
+            }
+
             // Update foreground sprite layer
             if (foregroundSpriteLayerRef.current) {
                 foregroundSpriteLayerRef.current.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, currentWeather);
+            }
+
+            // Update darkness layer (global darkness for caves/forests)
+            if (darknessLayerRef.current) {
+                const { season } = TimeManager.getCurrentTime();
+                darknessLayerRef.current.update(
+                    currentMap.colorScheme,
+                    season,
+                    window.innerWidth,
+                    window.innerHeight
+                );
             }
         }
     }, [renderVersion, isPixiInitialized]);

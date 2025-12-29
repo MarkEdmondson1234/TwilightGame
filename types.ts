@@ -175,6 +175,11 @@ export interface SpriteMetadata {
   // Optional animation support (for multi-tile sprites with animation frames)
   animationFrames?: string[]; // Array of image paths for animation frames
   animationSpeed?: number; // Milliseconds per frame (e.g., 150ms = ~6.7 FPS)
+  // Shadow configuration (optional - uses defaults if not specified)
+  shadowEnabled?: boolean; // Whether to show shadow (default: true for foreground sprites)
+  shadowWidthRatio?: number; // Shadow width as fraction of sprite width (default: 0.7)
+  shadowHeightRatio?: number; // Shadow height as fraction of width (default: 0.3, use lower for tall thin sprites)
+  shadowOffsetY?: number; // Extra Y offset for shadow in tiles (default: 0)
 }
 
 // Color scheme for a map theme

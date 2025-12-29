@@ -476,7 +476,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const width = 35;
   const height = 25;
-  const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.MINE_FLOOR));
+  // Use neutral FLOOR_DARK as base, then scatter MINE_FLOOR for texture
+  const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.FLOOR_DARK));
 
   // Set borders to walls
   for (let y = 0; y < height; y++) {
@@ -492,6 +493,15 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const spawnY = Math.floor(height / 2);
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
+  // Add scattered MINE_FLOOR tiles for texture (~10% of floor)
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      if (map[y][x] === TileType.FLOOR_DARK && Math.random() < 0.10) {
+        map[y][x] = TileType.MINE_FLOOR;
+      }
+    }
+  }
+
   // Generate cave features, excluding spawn area
   generatePatches(map, TileType.WALL, 20, 1, 3, width, height, spawnZone);
   generatePatches(map, TileType.WATER, 2, 2, 4, width, height, spawnZone);
@@ -501,7 +511,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   for (let y = spawnY - 4; y <= spawnY + 4; y++) {
     for (let x = spawnX - 4; x <= spawnX + 4; x++) {
       if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
-        map[y][x] = TileType.MINE_FLOOR;
+        map[y][x] = TileType.FLOOR_DARK;
       }
     }
   }
@@ -510,8 +520,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   for (let i = 0; i < 30; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
     const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on mine floor tiles
-    if (map[y][x] === TileType.MINE_FLOOR) {
+    // Only place on floor tiles (FLOOR_DARK or MINE_FLOOR)
+    if (map[y][x] === TileType.FLOOR_DARK || map[y][x] === TileType.MINE_FLOOR) {
       map[y][x] = TileType.MUSHROOM;
     }
   }
@@ -519,6 +529,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   // Add rare well spawn in cave (5% chance - rarer than forest)
   if (Math.random() < 0.05) {
     // Find a suitable 2x2 floor area away from spawn zone
+    const isFloor = (tile: TileType) => tile === TileType.FLOOR_DARK || tile === TileType.MINE_FLOOR;
     for (let attempt = 0; attempt < 20; attempt++) {
       const x = Math.floor(Math.random() * (width - 4)) + 2;
       const y = Math.floor(Math.random() * (height - 4)) + 2;
@@ -527,10 +538,10 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
 
       // Check if 2x2 area is clear and away from spawn
       if (dx > 5 && dy > 5 &&
-          map[y][x] === TileType.MINE_FLOOR &&
-          map[y][x+1] === TileType.MINE_FLOOR &&
-          map[y+1] && map[y+1][x] === TileType.MINE_FLOOR &&
-          map[y+1] && map[y+1][x+1] === TileType.MINE_FLOOR) {
+          isFloor(map[y][x]) &&
+          isFloor(map[y][x+1]) &&
+          map[y+1] && isFloor(map[y+1][x]) &&
+          map[y+1] && isFloor(map[y+1][x+1])) {
         map[y][x] = TileType.WELL;
         break;
       }
@@ -545,7 +556,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   for (let y = exitY - 1; y <= exitY + 1; y++) {
     for (let x = 1; x <= 3; x++) {
       if (y >= 1 && y < height - 1) {
-        map[y][x] = TileType.MINE_FLOOR;
+        map[y][x] = TileType.FLOOR_DARK;
       }
     }
   }
@@ -555,7 +566,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   for (let y = exitY - 1; y <= exitY + 1; y++) {
     for (let x = width - 3; x <= width - 2; x++) {
       if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
-        map[y][x] = TileType.MINE_FLOOR;
+        map[y][x] = TileType.FLOOR_DARK;
       }
     }
   }

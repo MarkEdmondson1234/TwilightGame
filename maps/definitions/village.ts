@@ -141,7 +141,7 @@ export const village: MapDefinition = {
       label: 'To Cottage',
     },
     {
-      fromPosition: { x: 20, y: 11 }, // Mine entrance (M tile)
+      fromPosition: { x: 21, y: 10.5 }, // Mine entrance (M tile)
       tileType: TileType.MINE_ENTRANCE,
       toMapId: 'RANDOM_CAVE',
       toPosition: { x: 17, y: 12 },  // Spawn in center of cave (safe zone)
