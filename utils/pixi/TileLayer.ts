@@ -44,6 +44,36 @@ interface CropSpriteConfig {
   zIndex: number;  // Render layer (higher = in front)
 }
 
+/**
+ * Per-crop adult size overrides
+ * Allows specific crops to have custom sizes when fully grown
+ */
+const CROP_ADULT_SIZES: Record<string, { width: number; height: number; offsetX: number; offsetY: number }> = {
+  // Large crops (2 tiles)
+  tomato: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
+  pumpkin: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
+  corn: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
+  sunflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
+
+  // Medium crops (1.5 tiles)
+  melon: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
+  broccoli: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
+  cauliflower: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
+
+  // Small/leafy crops (1 tile) - default, but listed for clarity
+  spinach: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  salad: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  radish: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  carrot: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  onion: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  pea: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  potato: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  wheat: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  cucumber: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  chili: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  strawberry: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+};
+
 const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
   [CropGrowthStage.SEEDLING]: {
     width: 1,
@@ -60,7 +90,7 @@ const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
     zIndex: 50,       // Above ground level
   },
   [CropGrowthStage.ADULT]: {
-    width: 1,
+    width: 1,         // Default size (overridden by CROP_ADULT_SIZES)
     height: 1,
     offsetX: 0,       // Center horizontally: -(width-1)/2
     offsetY: -0.5,    // Extend half a tile upward from soil
@@ -303,7 +333,16 @@ export class TileLayer {
     );
 
     // Get crop sprite config if applicable
-    const cropConfig = isCropSprite ? CROP_SPRITE_CONFIG[growthStage as CropGrowthStage] : null;
+    let cropConfig = isCropSprite ? { ...CROP_SPRITE_CONFIG[growthStage as CropGrowthStage] } : null;
+
+    // Apply per-crop size overrides for adult stage
+    if (cropConfig && growthStage === CropGrowthStage.ADULT && cropType && CROP_ADULT_SIZES[cropType]) {
+      const override = CROP_ADULT_SIZES[cropType];
+      cropConfig.width = override.width;
+      cropConfig.height = override.height;
+      cropConfig.offsetX = override.offsetX;
+      cropConfig.offsetY = override.offsetY;
+    }
 
     // Get or create sprite (will be rendered on top of color background)
     // Use separate key for sprite vs color background
