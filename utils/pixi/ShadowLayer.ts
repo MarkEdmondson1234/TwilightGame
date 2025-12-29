@@ -21,7 +21,8 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { MapDefinition, SpriteMetadata } from '../../types';
 import { getTileData } from '../mapUtils';
-import { Season } from '../TimeManager';
+import { Season, DaylightHours, SEASONAL_DAYLIGHT } from '../TimeManager';
+// DaylightHours is used in calculateShadowParams parameter type
 import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
@@ -66,21 +67,24 @@ export class ShadowLayer extends PixiLayer {
   }
 
   /**
-   * Calculate shadow offset and stretch based on hour (0-23)
+   * Calculate shadow offset and stretch based on hour and seasonal daylight
    *
-   * Sun path approximation:
-   * - Hour 6: Sunrise (East) - shadow points West
-   * - Hour 12: Noon (overhead) - shadow points South, short
-   * - Hour 18: Sunset (West) - shadow points East
+   * Sun path approximation (varies by season):
+   * - Sunrise: Sun rises in East → Long shadows pointing West
+   * - Noon: Sun overhead → Short shadows pointing South
+   * - Sunset: Sun sets in West → Long shadows pointing East
+   * - Night: No shadows (or very faint ambient occlusion)
    */
-  private calculateShadowParams(hour: number): {
+  private calculateShadowParams(hour: number, daylight: DaylightHours): {
     offsetX: number;
     offsetY: number;
     stretch: number;
     alpha: number;
   } {
-    // Night time (before 5am or after 8pm) - very faint/no shadows
-    if (hour < 5 || hour > 20) {
+    const { dawn, sunrise, sunset, dusk } = daylight;
+
+    // Night time - very faint/no shadows
+    if (hour < dawn || hour >= dusk) {
       return {
         offsetX: 0,
         offsetY: SHADOW_CONFIG.maxOffsetY * 0.3,
@@ -89,27 +93,39 @@ export class ShadowLayer extends PixiLayer {
       };
     }
 
-    // Dawn/dusk (5-6am, 7-8pm) - transition
-    if (hour < 6 || hour > 19) {
-      const transitionAlpha = hour < 6 ? (hour - 5) * 0.5 : (20 - hour) * 0.5;
+    // Dawn (before sunrise) - transition, shadows pointing West
+    if (hour < sunrise) {
+      const transitionProgress = (hour - dawn) / (sunrise - dawn);
       return {
-        offsetX: hour < 6 ? -SHADOW_CONFIG.maxOffsetX : SHADOW_CONFIG.maxOffsetX,
+        offsetX: -SHADOW_CONFIG.maxOffsetX,
         offsetY: SHADOW_CONFIG.maxOffsetY,
         stretch: SHADOW_CONFIG.maxStretch * 0.8,
-        alpha: transitionAlpha * SHADOW_CONFIG.baseAlpha,
+        alpha: transitionProgress * SHADOW_CONFIG.baseAlpha,
       };
     }
 
-    // Daytime (6am - 7pm)
-    // Map hour to sun angle: 6am = -90°, 12pm = 0°, 6pm = 90°
-    const sunProgress = (hour - 6) / 13; // 0 at 6am, 1 at 7pm
+    // Dusk (after sunset) - transition, shadows pointing East
+    if (hour >= sunset) {
+      const transitionProgress = 1 - (hour - sunset) / (dusk - sunset);
+      return {
+        offsetX: SHADOW_CONFIG.maxOffsetX,
+        offsetY: SHADOW_CONFIG.maxOffsetY,
+        stretch: SHADOW_CONFIG.maxStretch * 0.8,
+        alpha: transitionProgress * SHADOW_CONFIG.baseAlpha,
+      };
+    }
+
+    // Daytime (sunrise to sunset)
+    // Map hour to sun angle based on seasonal day length
+    const dayLength = sunset - sunrise;
+    const sunProgress = (hour - sunrise) / dayLength; // 0 at sunrise, 1 at sunset
     const sunAngle = (sunProgress - 0.5) * Math.PI; // -π/2 to π/2
 
     // X offset: negative in morning (shadow West), positive in evening (shadow East)
     const offsetX = Math.sin(sunAngle) * SHADOW_CONFIG.maxOffsetX;
 
     // Y offset: always some southward component, minimum at noon
-    const noonProximity = 1 - Math.abs(sunProgress - 0.46); // Peak around noon (hour 12)
+    const noonProximity = 1 - Math.abs(sunProgress - 0.5); // Peak at solar noon
     const offsetY = SHADOW_CONFIG.maxOffsetY * (0.3 + 0.7 * (1 - noonProximity));
 
     // Stretch: longest at sunrise/sunset, shortest at noon
@@ -152,8 +168,11 @@ export class ShadowLayer extends PixiLayer {
       return;
     }
 
-    // Calculate shadow parameters for current hour
-    const shadowParams = this.calculateShadowParams(hour);
+    // Get seasonal daylight hours
+    const daylight = SEASONAL_DAYLIGHT[season as Season] ?? SEASONAL_DAYLIGHT[Season.SPRING];
+
+    // Calculate shadow parameters for current hour and season
+    const shadowParams = this.calculateShadowParams(hour, daylight);
 
     // Apply seasonal modifier
     const seasonMod = SEASON_MODIFIERS[season] ?? 1.0;

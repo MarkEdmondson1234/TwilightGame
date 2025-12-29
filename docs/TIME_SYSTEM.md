@@ -29,36 +29,39 @@ The actual current time is **always recalculated** via `TimeManager.getCurrentTi
 ### Epoch (Year 0)
 - **Start Date**: October 17, 2025 00:00:00 UTC
 - All in-game years are calculated from this timestamp
-- Year 0 = any time during the first 28 in-game days
+- Year 0 = any time during the first 336 in-game days
 
 ### Time Scaling
 
 Real-world time maps to in-game time with this ratio:
-- **1 real month (30 days) = 1 game year (28 days)**
-- **1 real day ≈ 0.933 game days**
-- **1 game day ≈ 25.7 real hours**
+- **1 real month ≈ 1 game year** (336 game days)
+- **1 real week = 1 game season** (84 game days)
+- **2 real hours = 1 game day** (1 hour day phase, 1 hour night phase)
+- **5 real minutes = 1 game hour**
+- **12 game days per real day**
 
 ### Calendar Structure
 
 **Year Structure:**
 - 4 seasons per year
-- 7 days per season
-- **28 total days per year**
+- 84 days per season
+- **336 total days per year**
 
 **Season Order:**
-1. Spring (Days 1-7)
-2. Summer (Days 8-14)
-3. Autumn (Days 15-21)
-4. Winter (Days 22-28)
+1. Spring (Days 1-84)
+2. Summer (Days 85-168)
+3. Autumn (Days 169-252)
+4. Winter (Days 253-336)
 
 ### Duration Examples
 
 | Real Time | In-Game Time |
 |-----------|--------------|
-| 1 day | ~1 day |
-| 1 week | ~6.5 days (almost 1 season) |
-| 2 weeks | ~13 days (nearly 2 seasons) |
-| 1 month | 1 full year (28 days) |
+| 5 minutes | 1 hour |
+| 2 hours | 1 day |
+| 1 day | 12 days |
+| 1 week | 84 days (1 season) |
+| 1 month | ~336 days (1 year) |
 
 ## API Reference
 
@@ -129,10 +132,14 @@ setTimeout(() => {
 
 ```typescript
 interface GameTime {
-  year: number;        // Years since October 17, 2025 (0, 1, 2...)
-  season: Season;      // Current season (SPRING/SUMMER/AUTUMN/WINTER)
-  day: number;         // Day within season (1-7)
-  totalDays: number;   // Total days since epoch
+  year: number;           // Years since October 17, 2025 (0, 1, 2...)
+  season: Season;         // Current season (SPRING/SUMMER/AUTUMN/WINTER)
+  day: number;            // Day within season (1-84)
+  totalDays: number;      // Total days since epoch
+  hour: number;           // Hour of day (0-23)
+  timeOfDay: TimeOfDay;   // Dawn, Day, Dusk, or Night
+  totalHours: number;     // Total hours since epoch
+  daylight: DaylightHours; // Current season's sunrise/sunset times
 }
 ```
 
@@ -146,6 +153,43 @@ enum Season {
   WINTER = 'Winter',
 }
 ```
+
+### TimeOfDay Enum
+
+```typescript
+enum TimeOfDay {
+  DAWN = 'Dawn',    // Between dawn and sunrise
+  DAY = 'Day',      // Between sunrise and sunset
+  DUSK = 'Dusk',    // Between sunset and dusk
+  NIGHT = 'Night',  // After dusk, before dawn
+}
+```
+
+## Seasonal Daylight
+
+Day length varies by season, affecting shadows, darkness overlays, and ambient lighting.
+
+### Daylight Hours by Season
+
+| Season | Dawn | Sunrise | Sunset | Dusk | Daylight Hours |
+|--------|------|---------|--------|------|----------------|
+| Spring | 5am  | 6am     | 6pm    | 7pm  | 12 hours |
+| Summer | 4am  | 5am     | 8pm    | 9pm  | 15 hours |
+| Autumn | 6am  | 7am     | 5pm    | 6pm  | 10 hours |
+| Winter | 7am  | 8am     | 4pm    | 5pm  | 8 hours |
+
+### Effects of Time of Day
+
+**Shadows** (ShadowLayer):
+- **Night**: Very faint ambient occlusion (alpha 0.05)
+- **Dawn**: Transition, long shadows pointing West
+- **Day**: Dynamic shadows based on sun position
+- **Dusk**: Transition, long shadows pointing East
+
+**Darkness** (DarknessLayer):
+- **Day**: Base darkness (varies by map type)
+- **Dawn/Dusk**: 40% darker than day
+- **Night**: Double darkness
 
 ## Usage Patterns
 
@@ -245,22 +289,29 @@ Given current real-world timestamp `now`:
 
 ```typescript
 const GAME_START = new Date('2025-10-17T00:00:00Z').getTime();
-const MS_PER_GAME_DAY = (30 * 24 * 60 * 60 * 1000) / 28;
+const MS_PER_GAME_DAY = 2 * 60 * 60 * 1000; // 2 hours = 7,200,000 ms
+const DAYS_PER_SEASON = 84;
+const DAYS_PER_YEAR = 336; // 84 × 4 seasons
 
 const msSinceStart = now - GAME_START;
 const totalDays = Math.floor(msSinceStart / MS_PER_GAME_DAY);
-const year = Math.floor(totalDays / 28);
-const dayInYear = totalDays % 28;
-const seasonIndex = Math.floor(dayInYear / 7);
-const day = (dayInYear % 7) + 1;
+const year = Math.floor(totalDays / DAYS_PER_YEAR);
+const dayInYear = totalDays % DAYS_PER_YEAR;
+const seasonIndex = Math.floor(dayInYear / DAYS_PER_SEASON);
+const day = (dayInYear % DAYS_PER_SEASON) + 1;
+
+// Hours: 5 real minutes = 1 game hour
+const msPerGameHour = MS_PER_GAME_DAY / 24; // ~300,000 ms = 5 minutes
+const totalHours = Math.floor(msSinceStart / msPerGameHour);
+const hour = totalHours % 24;
 ```
 
-### Why 28 Days?
+### Why These Numbers?
 
-- Divides evenly into 4 seasons (7 days each)
-- Close to real-world month (30 days)
-- Simple mental math for players
-- Allows ~13 years per real-world year
+- **2 hours per game day**: Creates a satisfying day/night cycle during gameplay sessions
+- **84 days per season**: 1 real week = 1 game season (intuitive mapping)
+- **336 days per year**: 1 real month ≈ 1 game year
+- **5 minutes per game hour**: Allows players to experience full day cycles in a session
 
 ## Testing
 

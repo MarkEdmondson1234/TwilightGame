@@ -2,10 +2,16 @@
  * TimeManager - Single Source of Truth for game time
  *
  * Time system:
- * - Real time: 1 month (30 days) = 1 week (7 days real time)
- * - Day length: 1 real day = ~4.3 in-game days
- * - Each season = 7 in-game days = ~1.6 real days
- * - Full year (28 days) = ~6.5 real days
+ * - 1 real month ≈ 1 game year
+ * - 1 real week = 1 game season (84 game days)
+ * - 2 real hours = 1 game day (1 hour day phase, 1 hour night phase)
+ * - 5 real minutes = 1 game hour
+ * - 12 game days per real day
+ *
+ * Seasonal day/night variation:
+ * - Summer: Long days (5am-9pm = 16 hours daylight)
+ * - Winter: Short days (8am-4pm = 8 hours daylight)
+ * - Spring/Autumn: Medium days (6am-6pm = 12 hours daylight)
  *
  * Year 0 starts on October 17, 2025 00:00:00 UTC
  */
@@ -18,18 +24,36 @@ export enum Season {
 }
 
 export enum TimeOfDay {
+  DAWN = 'Dawn',
   DAY = 'Day',
+  DUSK = 'Dusk',
   NIGHT = 'Night',
 }
+
+// Seasonal sunrise/sunset times (24-hour format)
+export interface DaylightHours {
+  dawn: number;      // Hour when dawn begins
+  sunrise: number;   // Hour when full day begins
+  sunset: number;    // Hour when dusk begins
+  dusk: number;      // Hour when full night begins
+}
+
+export const SEASONAL_DAYLIGHT: Record<Season, DaylightHours> = {
+  [Season.SPRING]: { dawn: 5, sunrise: 6, sunset: 18, dusk: 19 },   // 12 hours daylight
+  [Season.SUMMER]: { dawn: 4, sunrise: 5, sunset: 20, dusk: 21 },   // 15 hours daylight
+  [Season.AUTUMN]: { dawn: 6, sunrise: 7, sunset: 17, dusk: 18 },   // 10 hours daylight
+  [Season.WINTER]: { dawn: 7, sunrise: 8, sunset: 16, dusk: 17 },   // 8 hours daylight
+};
 
 export interface GameTime {
   year: number;        // Years since October 17, 2025
   season: Season;      // Current season
-  day: number;         // Day within season (1-7)
+  day: number;         // Day within season (1-84)
   totalDays: number;   // Total days since game start
   hour: number;        // Hour of day (0-23)
-  timeOfDay: TimeOfDay; // Day or Night (even hours = day, odd hours = night)
+  timeOfDay: TimeOfDay; // Dawn, Day, Dusk, or Night (varies by season)
   totalHours: number;  // Total hours since game start
+  daylight: DaylightHours; // Current season's daylight hours
 }
 
 export class TimeManager {
@@ -37,14 +61,15 @@ export class TimeManager {
   private static readonly GAME_START_DATE = new Date('2025-10-17T00:00:00Z').getTime();
 
   // Time constants
-  private static readonly DAYS_PER_SEASON = 7;
+  private static readonly DAYS_PER_SEASON = 84;  // 1 real week = 84 game days
   private static readonly SEASONS_PER_YEAR = 4;
-  private static readonly DAYS_PER_YEAR = TimeManager.DAYS_PER_SEASON * TimeManager.SEASONS_PER_YEAR; // 28 days
+  private static readonly DAYS_PER_YEAR = TimeManager.DAYS_PER_SEASON * TimeManager.SEASONS_PER_YEAR; // 336 days
 
   // Real time to game time conversion
-  // 1 real month (30 days) = 1 game year (28 days)
-  // 1 real day = 28/30 game days = 0.933 game days
-  private static readonly MS_PER_GAME_DAY = (30 * 24 * 60 * 60 * 1000) / TimeManager.DAYS_PER_YEAR;
+  // 2 real hours = 1 game day (1 hour day phase, 1 hour night phase)
+  // 12 game days per real day
+  // 5 real minutes = 1 game hour
+  private static readonly MS_PER_GAME_DAY = 2 * 60 * 60 * 1000; // 7,200,000 ms = 2 hours
 
   private static readonly SEASON_ORDER = [
     Season.SPRING,
@@ -75,23 +100,27 @@ export class TimeManager {
     // Calculate year
     const year = Math.floor(totalDays / TimeManager.DAYS_PER_YEAR);
 
-    // Calculate day within the year (0-27)
+    // Calculate day within the year (0-335)
     const dayInYear = totalDays % TimeManager.DAYS_PER_YEAR;
 
     // Calculate season (0-3)
     const seasonIndex = Math.floor(dayInYear / TimeManager.DAYS_PER_SEASON);
     const season = TimeManager.SEASON_ORDER[seasonIndex];
 
-    // Calculate day within season (1-7)
+    // Calculate day within season (1-84)
     const day = (dayInYear % TimeManager.DAYS_PER_SEASON) + 1;
 
     // Calculate hours - 24 hours per game day
+    // 5 real minutes = 1 game hour
     const msPerGameHour = TimeManager.MS_PER_GAME_DAY / 24;
     const totalHours = Math.floor(msSinceStart / msPerGameHour);
     const hour = totalHours % 24; // 0-23
 
-    // Determine time of day - alternates every real-life hour (even = day, odd = night)
-    const timeOfDay = hour % 2 === 0 ? TimeOfDay.DAY : TimeOfDay.NIGHT;
+    // Get seasonal daylight hours
+    const daylight = SEASONAL_DAYLIGHT[season];
+
+    // Determine time of day based on seasonal sunrise/sunset
+    const timeOfDay = TimeManager.getTimeOfDayForHour(hour, daylight);
 
     return {
       year,
@@ -101,7 +130,23 @@ export class TimeManager {
       hour,
       timeOfDay,
       totalHours,
+      daylight,
     };
+  }
+
+  /**
+   * Determine time of day based on hour and seasonal daylight hours
+   */
+  private static getTimeOfDayForHour(hour: number, daylight: DaylightHours): TimeOfDay {
+    if (hour >= daylight.sunrise && hour < daylight.sunset) {
+      return TimeOfDay.DAY;
+    } else if (hour >= daylight.dawn && hour < daylight.sunrise) {
+      return TimeOfDay.DAWN;
+    } else if (hour >= daylight.sunset && hour < daylight.dusk) {
+      return TimeOfDay.DUSK;
+    } else {
+      return TimeOfDay.NIGHT;
+    }
   }
 
   /**
@@ -164,7 +209,10 @@ export class TimeManager {
     const dayInYear = seasonIndex * TimeManager.DAYS_PER_SEASON + (day - 1);
     const totalDays = year * TimeManager.DAYS_PER_YEAR + dayInYear;
     const totalHours = totalDays * 24 + hour;
-    const timeOfDay = hour % 2 === 0 ? TimeOfDay.DAY : TimeOfDay.NIGHT;
+
+    // Get seasonal daylight hours and determine time of day
+    const daylight = SEASONAL_DAYLIGHT[season];
+    const timeOfDay = TimeManager.getTimeOfDayForHour(hour, daylight);
 
     TimeManager.timeOverride = {
       year,
@@ -174,6 +222,7 @@ export class TimeManager {
       hour,
       timeOfDay,
       totalHours,
+      daylight,
     };
 
     console.log('[TimeManager] Time override set:', TimeManager.timeOverride);

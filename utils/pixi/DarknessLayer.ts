@@ -5,12 +5,26 @@
  * - Caves/Mines: 40% darkness during day, 60% at night
  * - Forests: 20-30% during day (varies by season), 50-60% at night
  *
+ * Supports four time-of-day states with smooth transitions:
+ * - Dawn: Gradual brightening (night → day transition)
+ * - Day: Full daylight (base darkness)
+ * - Dusk: Gradual darkening (day → night transition)
+ * - Night: Full darkness (base × nightMultiplier)
+ *
  * The overlay covers the entire viewport and is rendered above all game content
  * but below UI elements.
  */
 
 import * as PIXI from 'pixi.js';
 import { Season, TimeOfDay } from '../TimeManager';
+
+// Darkness multipliers for each time of day
+const TIME_OF_DAY_MULTIPLIERS: Record<TimeOfDay, number> = {
+  [TimeOfDay.DAY]: 1.0,      // Base darkness
+  [TimeOfDay.DAWN]: 1.4,     // 40% darker than day (transitioning from night)
+  [TimeOfDay.DUSK]: 1.4,     // 40% darker than day (transitioning to night)
+  [TimeOfDay.NIGHT]: 2.0,    // Double darkness at night
+};
 
 // Darkness configuration by color scheme
 const DARKNESS_CONFIG: Record<string, {
@@ -91,11 +105,9 @@ export class DarknessLayer {
       baseDarkness = config.seasonModifiers[season];
     }
 
-    // Apply night multiplier
-    let darkness = baseDarkness;
-    if (timeOfDay === TimeOfDay.NIGHT || timeOfDay === 'Night') {
-      darkness = baseDarkness * config.nightMultiplier;
-    }
+    // Apply time-of-day multiplier (dawn, day, dusk, night)
+    const todMultiplier = TIME_OF_DAY_MULTIPLIERS[timeOfDay as TimeOfDay] ?? 1.0;
+    let darkness = baseDarkness * todMultiplier;
 
     // Cap at maximum darkness
     darkness = Math.min(darkness, MAX_DARKNESS);
