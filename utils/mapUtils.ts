@@ -1,7 +1,65 @@
 import { TILE_LEGEND } from '../constants';
-import { TileType, TileData } from '../types';
+import { TileType, TileData, Position } from '../types';
 import { mapManager } from '../maps';
 import { ColorResolver } from './ColorResolver';
+
+/**
+ * Convert world position to tile coordinates
+ * Use this instead of manual Math.floor(pos.x), Math.floor(pos.y)
+ */
+export function getTileCoords(pos: Position): Position {
+  return {
+    x: Math.floor(pos.x),
+    y: Math.floor(pos.y),
+  };
+}
+
+/**
+ * Get adjacent tiles (including current position)
+ * Returns: [current, left, right, up, down]
+ */
+export function getAdjacentTiles(pos: Position): Position[] {
+  const tile = getTileCoords(pos);
+  return [
+    tile,
+    { x: tile.x - 1, y: tile.y },
+    { x: tile.x + 1, y: tile.y },
+    { x: tile.x, y: tile.y - 1 },
+    { x: tile.x, y: tile.y + 1 },
+  ];
+}
+
+/**
+ * Get tiles in a square radius around a position
+ * Useful for area effects like watering, explosions, etc.
+ */
+export function getTilesInRadius(center: Position, radius: number): Position[] {
+  const tiles: Position[] = [];
+  const centerTile = getTileCoords(center);
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      tiles.push({ x: centerTile.x + dx, y: centerTile.y + dy });
+    }
+  }
+  return tiles;
+}
+
+/**
+ * Check if two positions are on the same tile
+ */
+export function isSameTile(pos1: Position, pos2: Position): boolean {
+  return Math.floor(pos1.x) === Math.floor(pos2.x) &&
+         Math.floor(pos1.y) === Math.floor(pos2.y);
+}
+
+/**
+ * Get Manhattan distance between two tile positions
+ */
+export function getTileDistance(pos1: Position, pos2: Position): number {
+  const tile1 = getTileCoords(pos1);
+  const tile2 = getTileCoords(pos2);
+  return Math.abs(tile1.x - tile2.x) + Math.abs(tile1.y - tile2.y);
+}
 
 /**
  * Simple seeded random for deterministic grass/tuft selection
