@@ -10,6 +10,10 @@ export const PLAYER_SIZE = 0.8; // fraction of a tile
 // Set to false to use DOM rendering (fallback for compatibility)
 export const USE_PIXI_RENDERER = true; // Enabled for testing
 
+// Sprite Shadows Feature Flag - Dynamic shadows for trees/buildings based on time of day
+// Set to false to disable shadows (minimal performance impact, mostly aesthetic preference)
+export const USE_SPRITE_SHADOWS = true;
+
 // Player sprites now point to placeholder URLs. Frame 0 is idle.
 export const PLAYER_SPRITES: Record<Direction, string[]> = {
   [Direction.Down]: [

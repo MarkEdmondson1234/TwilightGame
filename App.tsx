@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
-import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER } from './constants';
+import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, USE_SPRITE_SHADOWS } from './constants';
 import { Position, Direction } from './types';
 import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
@@ -765,9 +765,11 @@ const App: React.FC = () => {
                 app.stage.addChild(placedItemsLayer.getContainer());
 
                 // Create shadow layer (shadows beneath foreground sprites like trees)
-                const shadowLayer = new ShadowLayer();
-                shadowLayerRef.current = shadowLayer;
-                app.stage.addChild(shadowLayer.getContainer());
+                if (USE_SPRITE_SHADOWS) {
+                    const shadowLayer = new ShadowLayer();
+                    shadowLayerRef.current = shadowLayer;
+                    app.stage.addChild(shadowLayer.getContainer());
+                }
 
                 // Create foreground sprite layer (furniture over player)
                 const foregroundSpriteLayer = new SpriteLayer(true);
@@ -818,15 +820,19 @@ const App: React.FC = () => {
                     backgroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     const placedItems = gameState.getPlacedItems(currentMapId);
                     placedItemsLayer.renderItems(placedItems, visibleRange);
-                    const { hour, season } = TimeManager.getCurrentTime();
-                    shadowLayer.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
+                    if (shadowLayerRef.current) {
+                        const { hour, season } = TimeManager.getCurrentTime();
+                        shadowLayerRef.current.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
+                    }
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     backgroundImageLayer.updateCamera(cameraX, cameraY);
                     tileLayer.updateCamera(cameraX, cameraY);
                     backgroundSpriteLayer.updateCamera(cameraX, cameraY);
                     playerSprite.updateCamera(cameraX, cameraY);
                     placedItemsLayer.updateCamera(cameraX, cameraY);
-                    shadowLayer.updateCamera(cameraX, cameraY);
+                    if (shadowLayerRef.current) {
+                        shadowLayerRef.current.updateCamera(cameraX, cameraY);
+                    }
                     foregroundSpriteLayer.updateCamera(cameraX, cameraY);
                 }
 
