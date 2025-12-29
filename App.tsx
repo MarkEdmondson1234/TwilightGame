@@ -378,8 +378,8 @@ const App: React.FC = () => {
     const handleCanvasClick = useCallback((clickInfo: MouseClickInfo) => {
         console.log('[Mouse Click] Checking interactions at:', clickInfo.tilePos);
 
-        // Don't process clicks during dialogue, cutscenes, or UI overlays
-        if (activeNPC || isCutscenePlaying || showHelpBrowser || showCookingUI || showRecipeBook || showCharacterCreator) {
+        // Don't process clicks during dialogue, cutscenes, or UI overlays (including inventory)
+        if (activeNPC || isCutscenePlaying || showHelpBrowser || showCookingUI || showRecipeBook || showCharacterCreator || showInventory) {
             console.log('[Mouse Click] Ignoring click - UI overlay active');
             return;
         }
@@ -482,7 +482,7 @@ const App: React.FC = () => {
         setRadialMenuOptions(menuOptions);
         setRadialMenuPosition(clickInfo.screenPos);
         setRadialMenuVisible(true);
-    }, [activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, currentMapId, handleMapTransition, handleFarmUpdate, showToast, selectedItemSlot, inventoryItems]);
+    }, [activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, showInventory, currentMapId, handleMapTransition, handleFarmUpdate, showToast, selectedItemSlot, inventoryItems]);
 
     const gameLoop = useCallback(() => {
         // Track frame-to-frame timing for performance metrics

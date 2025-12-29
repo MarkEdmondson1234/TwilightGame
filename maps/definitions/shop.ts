@@ -60,7 +60,7 @@ export const shop: MapDefinition = {
   // Images are 1920x1080, rendered at 1200x675 (62.5% scale)
   backgroundLayers: [
     {
-      image: '/TwilightGame/assets/rooms/home/grocery_shop/grocery_shop_back.png',
+      image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_back.png',
       zIndex: -100,         // Behind everything
       parallaxFactor: 1.0,
       opacity: 1.0,
@@ -73,7 +73,7 @@ export const shop: MapDefinition = {
   // Foreground layer - counter (renders in front of fox, behind player)
   foregroundLayers: [
     {
-      image: '/TwilightGame/assets/rooms/home/grocery_shop/grocery_shop_front.png',
+      image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_front.png',
       zIndex: 65,           // Between fox (50) and player (70+)
       parallaxFactor: 1.0,
       opacity: 1.0,

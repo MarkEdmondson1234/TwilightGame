@@ -26,11 +26,11 @@ const gridString = `
 ###############
 ###############
 ###############
-###############
-###############
-##...........##
-##...........##
-#D...........##
+###########.###
+###########.###
+#####........##
+####.........##
+###D.........##
 ###############
 `;
 
@@ -62,10 +62,10 @@ export const mumsKitchen: MapDefinition = {
   // Transitions
   transitions: [
     {
-      fromPosition: { x: 1, y: 7 }, // Door at left side (where D is in grid)
+      fromPosition: { x: 4, y: 8 }, // Door at left side (where D is in grid)
       tileType: TileType.DOOR,
       toMapId: 'home_interior',
-      toPosition: { x: 5, y: 3 }, // Back to home interior
+      toPosition: { x: 5, y: 5 }, // Back to home interior
       label: 'To Hallway',
     },
   ],
