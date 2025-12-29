@@ -721,9 +721,9 @@ const App: React.FC = () => {
                     width: window.innerWidth,
                     height: window.innerHeight,
                     backgroundColor,
-                    antialias: false, // Critical for pixel art
-                    resolution: 1, // Use 1 for consistent rendering across all displays
-                    autoDensity: false, // Disable to keep textures at intended size
+                    antialias: true, // Enable for smoother high-res artwork (NPCs)
+                    resolution: window.devicePixelRatio || 1, // Native resolution for crisp rendering
+                    autoDensity: true, // Auto-adjust canvas CSS size
                 });
 
                 pixiAppRef.current = app;
