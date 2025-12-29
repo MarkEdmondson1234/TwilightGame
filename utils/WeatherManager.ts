@@ -27,12 +27,24 @@ import {
   getRandomWeatherDuration,
 } from '../data/weatherConfig';
 
+/**
+ * Interface for GameState methods used by WeatherManager
+ * Avoids circular imports while maintaining type safety
+ */
+export interface IWeatherGameState {
+  getAutomaticWeather(): boolean;
+  getNextWeatherCheckTime(): number;
+  getWeather(): WeatherType;
+  setWeather(weather: WeatherType): void;
+  setNextWeatherCheckTime(time: number): void;
+}
+
 export class WeatherManager {
-  private gameState: any; // GameState instance
+  private gameState: IWeatherGameState;
   private lastTimeOfDay: TimeOfDay | null = null;
   private manualOverride: boolean = false;
 
-  constructor(gameState: any) {
+  constructor(gameState: IWeatherGameState) {
     this.gameState = gameState;
   }
 

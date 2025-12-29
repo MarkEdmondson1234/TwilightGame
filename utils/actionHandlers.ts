@@ -4,7 +4,7 @@
  */
 
 import { Position, TileType } from '../types';
-import { getTileData } from './mapUtils';
+import { getTileData, getAdjacentTiles, getTileCoords, getSurroundingTiles } from './mapUtils';
 import { mapManager, transitionToMap } from '../maps';
 import { npcManager } from '../NPCManager';
 import { farmManager } from './farmManager';
@@ -38,18 +38,7 @@ export interface CookingLocationResult {
  * Checks adjacent tiles for stove
  */
 export function checkStoveInteraction(playerPos: Position): boolean {
-    const playerTileX = Math.floor(playerPos.x);
-    const playerTileY = Math.floor(playerPos.y);
-
-    const adjacentTiles = [
-        { x: playerTileX, y: playerTileY },
-        { x: playerTileX - 1, y: playerTileY },
-        { x: playerTileX + 1, y: playerTileY },
-        { x: playerTileX, y: playerTileY - 1 },
-        { x: playerTileX, y: playerTileY + 1 },
-    ];
-
-    for (const tile of adjacentTiles) {
+    for (const tile of getAdjacentTiles(playerPos)) {
         const tileData = getTileData(tile.x, tile.y);
         if (tileData && tileData.type === TileType.STOVE) {
             console.log(`[Action] Found stove at (${tile.x}, ${tile.y})`);
@@ -65,18 +54,7 @@ export function checkStoveInteraction(playerPos: Position): boolean {
  * Checks adjacent tiles (including diagonal) for mirrors
  */
 export function checkMirrorInteraction(playerPos: Position): boolean {
-    const playerTileX = Math.floor(playerPos.x);
-    const playerTileY = Math.floor(playerPos.y);
-
-    const adjacentTiles = [
-        { x: playerTileX, y: playerTileY },
-        { x: playerTileX - 1, y: playerTileY },
-        { x: playerTileX + 1, y: playerTileY },
-        { x: playerTileX, y: playerTileY - 1 },
-        { x: playerTileX, y: playerTileY + 1 },
-    ];
-
-    for (const tile of adjacentTiles) {
+    for (const tile of getAdjacentTiles(playerPos)) {
         const tileData = getTileData(tile.x, tile.y);
         if (tileData && tileData.type === TileType.MIRROR) {
             console.log(`[Action] Found mirror at (${tile.x}, ${tile.y})`);
@@ -164,16 +142,14 @@ export function handleFarmAction(
     currentMapId: string,
     onAnimationTrigger?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void
 ): FarmActionResult {
-    const playerTileX = Math.floor(playerPos.x);
-    const playerTileY = Math.floor(playerPos.y);
-    const tileData = getTileData(playerTileX, playerTileY);
-    const position = { x: playerTileX, y: playerTileY };
+    const position = getTileCoords(playerPos);
+    const tileData = getTileData(position.x, position.y);
 
     // Get the actual plot state (if it exists)
     const plot = farmManager.getPlot(currentMapId, position);
     const plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
 
-    console.log(`[Action] Tile at (${playerTileX}, ${playerTileY}): visual type=${tileData?.type}, plot type=${plotTileType}, currentTool=${currentTool}`);
+    console.log(`[Action] Tile at (${position.x}, ${position.y}): visual type=${tileData?.type}, plot type=${plotTileType}, currentTool=${currentTool}`);
 
     // Check for wild strawberry harvesting with hand tool
     if (currentTool === 'hand' && tileData && tileData.type === TileType.WILD_STRAWBERRY) {
@@ -210,18 +186,7 @@ export function handleFarmAction(
     // Check for blackberry harvesting from adjacent brambles with hand tool (summer only)
     if (currentTool === 'hand') {
         // Check adjacent tiles (including diagonals) for brambles
-        const adjacentTiles = [
-            { x: playerTileX - 1, y: playerTileY },     // left
-            { x: playerTileX + 1, y: playerTileY },     // right
-            { x: playerTileX, y: playerTileY - 1 },     // up
-            { x: playerTileX, y: playerTileY + 1 },     // down
-            { x: playerTileX - 1, y: playerTileY - 1 }, // top-left
-            { x: playerTileX + 1, y: playerTileY - 1 }, // top-right
-            { x: playerTileX - 1, y: playerTileY + 1 }, // bottom-left
-            { x: playerTileX + 1, y: playerTileY + 1 }, // bottom-right
-        ];
-
-        for (const tile of adjacentTiles) {
+        for (const tile of getSurroundingTiles(playerPos)) {
             const adjacentTileData = getTileData(tile.x, tile.y);
             if (adjacentTileData && adjacentTileData.type === TileType.BRAMBLES) {
                 const currentSeason = TimeManager.getCurrentTime().season;
@@ -266,7 +231,7 @@ export function handleFarmAction(
 
         if (currentTool === 'tool_hoe' && plotTileType === TileType.SOIL_FALLOW) {
             // Till fallow soil
-            console.log(`[Action] Attempting to till soil at (${playerTileX}, ${playerTileY})`);
+            console.log(`[Action] Attempting to till soil at (${position.x}, ${position.y})`);
             if (farmManager.tillSoil(currentMapId, position)) {
                 console.log('[Action] Tilled soil');
                 onAnimationTrigger?.('till');
@@ -600,8 +565,8 @@ export interface AvailableInteraction {
     label: string;
     icon?: string;
     color?: string;
-    /** Additional data needed to execute the interaction */
-    data?: any;
+    /** Additional data for debugging/testing (interaction logic is in execute callback) */
+    data?: unknown;
     /** Execute this interaction */
     execute: () => void;
 }

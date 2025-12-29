@@ -62,6 +62,24 @@ export function getTileDistance(pos1: Position, pos2: Position): number {
 }
 
 /**
+ * Get surrounding tiles including diagonals (8 neighbours, not including center)
+ * Returns: [left, right, up, down, top-left, top-right, bottom-left, bottom-right]
+ */
+export function getSurroundingTiles(pos: Position): Position[] {
+  const tile = getTileCoords(pos);
+  return [
+    { x: tile.x - 1, y: tile.y },     // left
+    { x: tile.x + 1, y: tile.y },     // right
+    { x: tile.x, y: tile.y - 1 },     // up
+    { x: tile.x, y: tile.y + 1 },     // down
+    { x: tile.x - 1, y: tile.y - 1 }, // top-left
+    { x: tile.x + 1, y: tile.y - 1 }, // top-right
+    { x: tile.x - 1, y: tile.y + 1 }, // bottom-left
+    { x: tile.x + 1, y: tile.y + 1 }, // bottom-right
+  ];
+}
+
+/**
  * Simple seeded random for deterministic grass/tuft selection
  * Uses position-based seed for consistent results across renders
  */

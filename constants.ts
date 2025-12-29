@@ -14,6 +14,42 @@ export const USE_PIXI_RENDERER = true; // Enabled for testing
 // Set to false to disable shadows (minimal performance impact, mostly aesthetic preference)
 export const USE_SPRITE_SHADOWS = true;
 
+/**
+ * TIMING - Animation and game timing constants (in milliseconds)
+ *
+ * Centralised timing values to avoid magic numbers scattered across the codebase.
+ * Use these constants instead of hardcoded values for consistency.
+ */
+export const TIMING = {
+  // Player animation
+  PLAYER_FRAME_MS: 150,           // Player walk cycle frame duration
+  PLAYER_SPEED: 5.0,              // Player movement speed (tiles per second)
+
+  // NPC animation
+  NPC_FRAME_MS: 280,              // NPC animation frame duration
+  NPC_IDLE_DELAY_MS: 800,         // Delay before NPC returns to idle
+  NPC_MOVEMENT_SPEED: 1.0,        // NPC movement speed (tiles per second)
+
+  // UI and interactions
+  DIALOGUE_DELAY_MS: 800,         // Delay for dialogue transitions
+  TOAST_DURATION_MS: 3000,        // How long toast messages display
+  MODAL_TRANSITION_MS: 200,       // Modal open/close animation
+
+  // Game systems
+  MAP_TRANSITION_MS: 1000,        // Map transition fade duration
+  WEATHER_CHECK_MS: 3000,         // Interval for weather update checks
+  AUTOSAVE_INTERVAL_MS: 60000,    // Autosave frequency
+  TIME_POLL_INTERVAL_MS: 1000,    // Game time update poll rate
+
+  // Farming
+  WATER_ANIMATION_MS: 500,        // Watering can animation
+  HARVEST_ANIMATION_MS: 300,      // Harvest action animation
+  TILL_ANIMATION_MS: 400,         // Hoe tilling animation
+
+  // Tile animations
+  DEFAULT_TILE_ANIMATION_MS: 150, // Default animated tile frame rate
+} as const;
+
 // Player sprites now point to placeholder URLs. Frame 0 is idle.
 export const PLAYER_SPRITES: Record<Direction, string[]> = {
   [Direction.Down]: [

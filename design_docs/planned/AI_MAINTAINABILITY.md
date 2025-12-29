@@ -335,7 +335,11 @@ data/
 
 | Date | Change | Impact |
 |------|--------|--------|
-| | | |
+| 2025-12-29 | Added tile coordinate utilities to `mapUtils.ts` | Reduced duplication in actionHandlers.ts |
+| 2025-12-29 | Fixed `any` types in GameState.ts, WeatherManager.ts, actionHandlers.ts, TileLayer.ts | 10 type holes fixed |
+| 2025-12-29 | Added `TIMING` constants to `constants.ts` | Centralised 15+ timing values |
+| 2025-12-29 | Updated TileLayer.ts to use `TIMING.DEFAULT_TILE_ANIMATION_MS` | Example migration |
+| 2025-12-29 | Created `hooks/usePixiRenderer.ts` stub | Architecture outline for next extraction |
 
 ---
 

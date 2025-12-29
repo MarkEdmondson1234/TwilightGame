@@ -21,10 +21,10 @@
  */
 
 import * as PIXI from 'pixi.js';
-import { TILE_SIZE } from '../../constants';
+import { TILE_SIZE, TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
-import { MapDefinition, TileType, FarmPlotState, CropGrowthStage } from '../../types';
+import { MapDefinition, TileType, TileData, FarmPlotState, CropGrowthStage } from '../../types';
 import { getColorHex } from '../../palette';
 import { mapManager } from '../../maps';
 import { calculateTileTransforms } from '../tileRenderUtils';
@@ -524,11 +524,11 @@ export class TileLayer extends PixiLayer {
    * Render an animated tile (cycles through frames based on time)
    * Used for tiles like the bubbling cauldron
    */
-  private renderAnimatedTile(x: number, y: number, tileData: any, map: MapDefinition): void {
+  private renderAnimatedTile(x: number, y: number, tileData: TileData, map: MapDefinition): void {
     const key = `${x},${y}`;
     const spriteKey = `${x},${y}_sprite`;
     const frames = tileData.animationFrames as string[];
-    const speed = tileData.animationSpeed || 150; // Default 150ms per frame
+    const speed = tileData.animationSpeed || TIMING.DEFAULT_TILE_ANIMATION_MS;
 
     // Always render background color first
     const resolvedColor = ColorResolver.getTileColor(tileData.type);

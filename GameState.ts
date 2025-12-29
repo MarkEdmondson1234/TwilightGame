@@ -10,7 +10,7 @@
  * - Quest/achievement progress
  */
 
-import { FarmPlot, NPCFriendship, PlacedItem } from './types';
+import { FarmPlot, NPCFriendship, PlacedItem, ColorScheme } from './types';
 import { GameTime } from './utils/TimeManager';
 import { shouldDecay } from './utils/itemDecayManager';
 
@@ -85,7 +85,7 @@ export interface GameState {
 
   // Custom color schemes (for user-modified map color schemes)
   customColorSchemes?: {
-    [schemeName: string]: any;  // ColorScheme objects (using any to avoid circular imports)
+    [schemeName: string]: ColorScheme;
   };
 
   // Weather system (for environmental effects and animations)
@@ -213,9 +213,9 @@ class GameStateManager {
         }
 
         // Ensure starter seeds and ingredients exist
-        const hasRadishSeeds = parsed.inventory.items.some((item: any) => item.itemId === 'seed_radish');
-        const hasTeaLeaves = parsed.inventory.items.some((item: any) => item.itemId === 'tea_leaves');
-        const hasWater = parsed.inventory.items.some((item: any) => item.itemId === 'water');
+        const hasRadishSeeds = parsed.inventory.items.some((item: { itemId: string }) => item.itemId === 'seed_radish');
+        const hasTeaLeaves = parsed.inventory.items.some((item: { itemId: string }) => item.itemId === 'tea_leaves');
+        const hasWater = parsed.inventory.items.some((item: { itemId: string }) => item.itemId === 'water');
 
         if (!hasRadishSeeds || !hasTeaLeaves || !hasWater) {
           console.log('[GameState] Migrating old save data - adding starter items');
@@ -587,7 +587,7 @@ class GameStateManager {
   }
 
   // Color scheme management
-  saveColorScheme(scheme: any): void {
+  saveColorScheme(scheme: ColorScheme): void {
     if (!this.state.customColorSchemes) {
       this.state.customColorSchemes = {};
     }
@@ -596,7 +596,7 @@ class GameStateManager {
     console.log('[GameState] Color scheme saved:', scheme.name);
   }
 
-  loadColorSchemes(): Record<string, any> | undefined {
+  loadColorSchemes(): Record<string, ColorScheme> | undefined {
     return this.state.customColorSchemes;
   }
 
