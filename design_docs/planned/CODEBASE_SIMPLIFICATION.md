@@ -29,10 +29,10 @@ This document tracks opportunities to simplify the TwilightGame codebase by redu
 
 | Task | Lines Saved | Status |
 |------|-------------|--------|
-| 3.1 Extract debug key handlers | 50 | [ ] Pending |
-| 3.2 Extract movement handlers | 30 | [ ] Pending |
-| 3.3 Extract inventory handlers | 30 | [ ] Pending |
-| 3.4 Refactor useKeyboardControls | 40 | [ ] Pending |
+| 3.1 Extract debug key handlers | 50 | [x] Complete |
+| 3.2 Extract UI key handlers | 30 | [x] Complete |
+| 3.3 Refactor useKeyboardControls | 60 | [x] Complete |
+| 3.4 Extract remaining handlers | 30 | [ ] Pending (optional) |
 
 ### Phase 4: File Organisation (Hard, Major Refactoring)
 
@@ -264,7 +264,10 @@ const handleKeyDown = (e: KeyboardEvent) => {
 | 2025-12-29 | Migrated SpriteLayer to extend PixiLayer | ~15 |
 | 2025-12-29 | Migrated TileLayer to extend PixiLayer | ~15 |
 | 2025-12-29 | Migrated PlayerSprite to extend PixiLayer | ~15 |
-| **Total** | | **~280** |
+| 2025-12-29 | Created `utils/keyHandlers/debugKeys.ts` - F-key handlers | ~50 |
+| 2025-12-29 | Created `utils/keyHandlers/uiKeys.ts` - UI toggle handlers | ~30 |
+| 2025-12-29 | Refactored useKeyboardControls to use extracted handlers | ~60 |
+| **Total** | | **~420** |
 
 ### Notes on Layer Migration
 

@@ -5,8 +5,7 @@
 
 import { useEffect, useRef, MutableRefObject } from 'react';
 import { Position } from '../types';
-import { mapManager, transitionToMap } from '../maps';
-import { farmManager } from '../utils/farmManager';
+import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import {
     checkMirrorInteraction,
@@ -17,8 +16,15 @@ import {
     handleForageAction,
     checkCookingLocation,
     ForageResult,
-    FarmActionResult,
 } from '../utils/actionHandlers';
+import {
+    handleDebugKey,
+    handleEscape,
+    handleInventoryToggle,
+    handleRecipeBook,
+    handleActionCloseUI,
+    isBlockingUIOpen,
+} from '../utils/keyHandlers';
 
 export interface KeyboardControlsConfig {
     playerPosRef: MutableRefObject<Position>;
@@ -89,6 +95,29 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     selectedItemSlotRef.current = selectedItemSlot;
     inventoryItemsRef.current = inventoryItems;
 
+    // Build handlers object for key handler utilities
+    const uiHandlers = {
+        showHelpBrowser,
+        showCookingUI,
+        showRecipeBook,
+        showInventory,
+        showShopUI,
+        onSetShowHelpBrowser,
+        onSetShowCookingUI,
+        onSetShowRecipeBook,
+        onSetShowInventory,
+        onSetShowShopUI,
+    };
+
+    const debugHandlers = {
+        ...uiHandlers,
+        onSetDebugOpen,
+        onSetShowDevTools,
+        onSetShowSpriteEditor,
+        onFarmUpdate,
+        onMapTransition,
+    };
+
     const handleKeyDown = useRef((e: KeyboardEvent) => {
         // Ignore all keys if user is typing in an input/textarea
         const target = e.target as HTMLElement;
@@ -96,119 +125,37 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             return;
         }
 
-        // Special keys that work even during dialogue
-        if (e.key === 'F1') {
+        // Debug keys (F1-F8) work even during dialogue
+        if (handleDebugKey(e.key, debugHandlers)) {
             e.preventDefault();
-            onSetShowHelpBrowser(!showHelpBrowser);
             return;
         }
 
-        if (e.key === 'F3') {
-            e.preventDefault();
-            onSetDebugOpen((prev) => !prev);
-            return;
-        }
-
-        // === F-KEY DEBUG TOOLS ===
-        // F1: Help Browser (handled above)
-        // F3: Debug Overlay (collision boxes, tile info)
-        // F4: DevTools Panel (time, weather, farming controls)
-        // F6: Quick farm time advance (+1 min)
-        // F7: Debug teleport to NPC showcase (dev only)
-        // F8: Sprite Metadata Editor (dev only)
-
-        // F4: DevTools Panel - time/weather/farming controls
-        if (e.key === 'F4') {
-            e.preventDefault();
-            onSetShowDevTools((prev) => !prev);
-            return;
-        }
-
-        // I key to toggle inventory
+        // I key to toggle inventory (works during dialogue)
         if (e.key === 'i' || e.key === 'I') {
             e.preventDefault();
-            onSetShowInventory(!showInventory);
+            handleInventoryToggle(uiHandlers);
             return;
         }
 
-        // F6: Quick farm time advance (+1 min) - also available in F4 DevTools
-        if (e.key === 'F6') {
-            e.preventDefault();
-            farmManager.debugAdvanceTime(60 * 1000);
-            gameState.saveFarmPlots(farmManager.getAllPlots());
-            onFarmUpdate();
-            console.log('[Debug] Advanced farm time by 1 minute');
-            return;
-        }
-
-        // F7: Debug teleport to NPC showcase map (dev only)
-        if (e.key === 'F7') {
-            e.preventDefault();
-            console.log('[Debug] Teleporting to NPC debug showcase...');
-            try {
-                const { map, spawn } = transitionToMap('debug_npcs', { x: 15, y: 25 });
-                onMapTransition(map.id, spawn);
-                console.log(`[Debug] Loaded debug map: ${map.name}`);
-            } catch (error) {
-                console.error('[Debug] Failed to load debug map:', error);
-            }
-            return;
-        }
-
-        // F8: Sprite Metadata Editor (dev only)
-        if (e.key === 'F8') {
-            e.preventDefault();
-            onSetShowSpriteEditor((prev) => !prev);
-            return;
-        }
-
-        // Escape key to close dialogue, help browser, or cooking UIs
+        // Escape key to close modals
         if (e.key === 'Escape') {
-            if (showHelpBrowser) {
+            if (handleEscape(uiHandlers)) {
                 e.preventDefault();
-                onSetShowHelpBrowser(false);
-                return;
-            }
-            if (showCookingUI) {
-                e.preventDefault();
-                onSetShowCookingUI(false);
-                return;
-            }
-            if (showRecipeBook) {
-                e.preventDefault();
-                onSetShowRecipeBook(false);
-                return;
             }
             return;
         }
 
-        // Action key (E or Enter) - close cooking/shop/inventory UIs if open
-        // Note: Dialogue (activeNPC) is handled by DialogueBox component directly
+        // Action key (E or Enter) - close open UIs first
         if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
-            if (showCookingUI) {
+            if (handleActionCloseUI(uiHandlers)) {
                 e.preventDefault();
-                onSetShowCookingUI(false);
-                return;
-            }
-            if (showShopUI) {
-                e.preventDefault();
-                onSetShowShopUI(false);
-                return;
-            }
-            if (showRecipeBook) {
-                e.preventDefault();
-                onSetShowRecipeBook(false);
-                return;
-            }
-            if (showInventory) {
-                e.preventDefault();
-                onSetShowInventory(false);
                 return;
             }
         }
 
-        // Don't process any other keys if dialogue, cooking UI, shop UI, recipe book, or inventory is open
-        if (activeNPC || showCookingUI || showShopUI || showRecipeBook || showInventory) {
+        // Don't process gameplay keys if blocking UI is open
+        if (isBlockingUIOpen(activeNPC, uiHandlers)) {
             return;
         }
 
@@ -323,7 +270,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         // B key to open recipe book
         if (e.key === 'b' || e.key === 'B') {
             e.preventDefault();
-            onSetShowRecipeBook(true);
+            handleRecipeBook(uiHandlers);
             return;
         }
     }).current;
