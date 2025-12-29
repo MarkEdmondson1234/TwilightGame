@@ -1,41 +1,30 @@
 /**
  * Village NPC Factory Functions
- * 
+ *
  * NPCs that appear in the village area.
  */
 
 import { NPC, NPCBehavior, Direction, Position, AnimatedNPCStates, FriendshipConfig } from '../../types';
 import { npcAssets } from '../../assets';
+import { createWanderingNPC, createNPC, createStaticNPC } from './createNPC';
 
 export function createVillageElderNPC(
   id: string,
   position: Position,
   name: string = 'Village Elder'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'idle',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
+  return createStaticNPC({
+    id,
+    name,
+    position,
+    sprite: npcAssets.elderly_01,
+    portraitSprite: npcAssets.elderly_portrait,
     states: {
       idle: {
         sprites: [npcAssets.elderly_01, npcAssets.elderly_02],
         animationSpeed: 800, // Slow gentle animation (800ms per frame)
       },
     },
-  };
-
-  return {
-    id,
-    name,
-    position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.STATIC,
-    sprite: npcAssets.elderly_01,
-    portraitSprite: npcAssets.elderly_portrait,
-    scale: 3.0,
     dialogue: [
       {
         id: 'greeting',
@@ -131,12 +120,11 @@ export function createVillageElderNPC(
         text: 'The cherry tree blooms. The seasons turn. Neighbours help neighbours. These truths endure, traveller.',
       },
     ],
-    animatedStates,
     friendshipConfig: {
       canBefriend: true,
       startingPoints: 0,
     },
-  };
+  });
 }
 
 /**
@@ -148,6 +136,8 @@ export function createVillageElderNPC(
  * - Interact while angry: Stands up and stays standing for 10 seconds
  * - After timeouts: Returns to sleeping
  *
+ * Uses createStaticNPC factory with complex state machine.
+ *
  * @param id Unique ID for this cat
  * @param position Where to place the cat
  * @param name Optional name (defaults to "Cat")
@@ -157,80 +147,46 @@ export function createCatNPC(
   position: Position,
   name: string = 'Cat'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'sleeping',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      sleeping: {
-        sprites: [
-          npcAssets.cat_sleeping_01,
-          npcAssets.cat_sleeping_02,
-        ],
-        animationSpeed: 1000, // 1 second per frame (slow, peaceful breathing)
-        transitionsTo: {
-          interact: 'angry', // First interaction makes cat angry
-        },
-      },
-      angry: {
-        sprites: [
-          npcAssets.cat_sleeping_angry,
-        ],
-        animationSpeed: 500, // Static, but could add shake animation
-        duration: 10000, // Stay angry for 10 seconds
-        nextState: 'sleeping', // Auto-return to sleeping
-        transitionsTo: {
-          interact: 'standing', // Interact while angry makes cat stand
-        },
-      },
-      standing: {
-        sprites: [
-          npcAssets.cat_stand_01,
-          npcAssets.cat_stand_02,
-        ],
-        animationSpeed: 500, // Faster animation (alert/annoyed)
-        duration: 10000, // Stay standing for 10 seconds
-        nextState: 'sleeping', // Auto-return to sleeping
-        transitionsTo: {
-          // No interactions while standing - cat is done with you
-        },
-      },
-    },
-  };
-
-  return {
+  return createStaticNPC({
     id,
     name,
     position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.STATIC, // Cat doesn't wander
-    sprite: npcAssets.cat_sleeping_01, // Initial sprite
-    portraitSprite: npcAssets.cat_portrait, // Original for dialogue
-    scale: 2.5, // Smaller than default 4.0, about player-sized
+    sprite: npcAssets.cat_sleeping_01,
+    portraitSprite: npcAssets.cat_portrait,
+    scale: 2.5, // Smaller than default, about player-sized
+    interactionRadius: 1.2,
+    states: {
+      sleeping: {
+        sprites: [npcAssets.cat_sleeping_01, npcAssets.cat_sleeping_02],
+        animationSpeed: 1000, // Slow, peaceful breathing
+        transitionsTo: { interact: 'angry' },
+      },
+      angry: {
+        sprites: [npcAssets.cat_sleeping_angry],
+        animationSpeed: 500,
+        duration: 10000,
+        nextState: 'sleeping',
+        transitionsTo: { interact: 'standing' },
+      },
+      standing: {
+        sprites: [npcAssets.cat_stand_01, npcAssets.cat_stand_02],
+        animationSpeed: 500,
+        duration: 10000,
+        nextState: 'sleeping',
+        transitionsTo: {}, // No interactions while standing
+      },
+    },
+    initialState: 'sleeping',
     dialogue: [
-      {
-        id: 'cat_sleeping',
-        text: '*purr* *purr* The cat is sleeping peacefully.',
-      },
-      {
-        id: 'cat_angry',
-        text: 'Mrrrow! The cat glares at you with narrowed eyes.',
-      },
-      {
-        id: 'cat_standing',
-        text: 'The cat stands up and stretches, clearly annoyed by your persistence.',
-      },
+      { id: 'cat_sleeping', text: '*purr* *purr* The cat is sleeping peacefully.' },
+      { id: 'cat_angry', text: 'Mrrrow! The cat glares at you with narrowed eyes.' },
+      { id: 'cat_standing', text: 'The cat stands up and stretches, clearly annoyed by your persistence.' },
     ],
-    interactionRadius: 1.2, // Must be close to interact
-    animatedStates,
     friendshipConfig: {
-      canBefriend: false, // Cats can't be befriended in the friendship system
+      canBefriend: false,
       startingPoints: 0,
     },
-  };
+  });
 }
 
 /**
@@ -261,6 +217,8 @@ export function getCatDialogue(npc: NPC): string {
  * - Gentle knitting animation
  * - Warm, grandmotherly dialogue
  *
+ * Uses createStaticNPC factory.
+ *
  * @param id Unique ID for this NPC
  * @param position Where to place the NPC
  * @param name Optional name (defaults to "Old Woman")
@@ -270,33 +228,19 @@ export function createOldWomanKnittingNPC(
   position: Position,
   name: string = 'Old Woman'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'knitting',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      knitting: {
-        sprites: [
-          npcAssets.old_woman_01,
-          npcAssets.old_woman_02,
-        ],
-        animationSpeed: 600, // Gentle knitting rhythm
-      },
-    },
-  };
-
-  return {
+  return createStaticNPC({
     id,
     name,
     position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.STATIC,
     sprite: npcAssets.old_woman_01,
     portraitSprite: npcAssets.old_woman_portrait,
-    scale: 3.0,
+    states: {
+      knitting: {
+        sprites: [npcAssets.old_woman_01, npcAssets.old_woman_02],
+        animationSpeed: 600, // Gentle knitting rhythm
+      },
+    },
+    initialState: 'knitting',
     dialogue: [
       {
         id: 'greeting',
@@ -351,15 +295,13 @@ export function createOldWomanKnittingNPC(
         text: 'Indeed! Every corner, every tree... I remember when the elder was just a young lad. And now he sits by that cherry tree pretending to be wise!',
       },
     ],
-    animatedStates,
-    interactionRadius: 1.5,
     friendshipConfig: {
       canBefriend: true,
       startingPoints: 0,
       likedFoodTypes: ['baked'],
       crisisId: 'old_man_death',
     },
-  };
+  });
 }
 
 /**
@@ -369,6 +311,8 @@ export function createOldWomanKnittingNPC(
  * - Follows a target NPC (usually the little girl)
  * - Simple tail-wagging animation
  * - Playful dialogue
+ *
+ * Uses createWanderingNPC factory with followTarget.
  *
  * @param id Unique ID for this dog
  * @param position Initial position
@@ -381,51 +325,31 @@ export function createDogNPC(
   targetNPCId: string,
   name: string = 'Dog'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'wagging',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
-    states: {
-      wagging: {
-        sprites: [
-          npcAssets.dog_01,
-          npcAssets.dog_02,
-        ],
-        animationSpeed: 300, // Quick tail wag
-      },
-    },
-  };
-
-  return {
+  return createWanderingNPC({
     id,
     name,
     position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.WANDER, // Will be overridden by follow behavior
     sprite: npcAssets.dog_01,
-    portraitSprite: npcAssets.dog_portrait, // Original for dialogue
+    portraitSprite: npcAssets.dog_portrait,
     scale: 2.5,
-    dialogue: [
-      {
-        id: 'greeting',
-        text: '*Woof! Woof!* The dog wags its tail excitedly.',
-      },
-      {
-        id: 'happy',
-        text: '*The dog jumps around playfully, then runs back to its friend.*',
-      },
-    ],
-    animatedStates,
     interactionRadius: 1.0,
-    followTarget: targetNPCId, // Store which NPC to follow
+    states: {
+      wagging: {
+        sprites: [npcAssets.dog_01, npcAssets.dog_02],
+        animationSpeed: 300, // Quick tail wag
+      },
+    },
+    initialState: 'wagging',
+    dialogue: [
+      { id: 'greeting', text: '*Woof! Woof!* The dog wags its tail excitedly.' },
+      { id: 'happy', text: '*The dog jumps around playfully, then runs back to its friend.*' },
+    ],
+    followTarget: targetNPCId,
     friendshipConfig: {
-      canBefriend: false, // Dogs can't be befriended in the friendship system
+      canBefriend: false,
       startingPoints: 0,
     },
-  };
+  });
 }
 
 /**
@@ -436,6 +360,8 @@ export function createDogNPC(
  * - Friendly, attentive animation
  * - Seasonal and time-of-day dialogue about shop wares and village gossip
  *
+ * Uses createStaticNPC factory.
+ *
  * @param id Unique ID for this shopkeeper
  * @param position Where to place the NPC
  * @param name Optional name (defaults to "Shopkeeper")
@@ -445,31 +371,19 @@ export function createShopkeeperNPC(
   position: Position,
   name: string = 'Shopkeeper'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'idle',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
+  return createStaticNPC({
+    id,
+    name,
+    position,
+    sprite: npcAssets.shopkeeper_fox_01,
+    portraitSprite: npcAssets.shopkeeper_fox_portrait,
+    scale: 3.5,
     states: {
       idle: {
         sprites: [npcAssets.shopkeeper_fox_01, npcAssets.shopkeeper_fox_02],
         animationSpeed: 500, // Friendly, attentive animation
       },
     },
-  };
-
-  return {
-    id,
-    name,
-    position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.STATIC,
-    sprite: npcAssets.shopkeeper_fox_01,
-    portraitSprite: npcAssets.shopkeeper_fox_portrait,
-    scale: 3.5,
-    animatedStates,
     dialogue: [
       {
         id: 'greeting',
@@ -532,7 +446,7 @@ export function createShopkeeperNPC(
       startingPoints: 0,
       likedFoodTypes: ['savoury'],
     },
-  };
+  });
 }
 
 /**
@@ -543,6 +457,8 @@ export function createShopkeeperNPC(
  * - No animation (static sprite)
  * - Playful, curious dialogue with seasonal variations
  *
+ * Uses the createNPC factory to reduce boilerplate.
+ *
  * @param id Unique ID for this child
  * @param position Starting position
  * @param name Optional name (defaults to "Village Child")
@@ -552,12 +468,11 @@ export function createVillageChildNPC(
   position: Position,
   name: string = 'Village Child'
 ): NPC {
-  return {
+  return createWanderingNPC({
     id,
     name,
     position,
     direction: Direction.Right,
-    behavior: NPCBehavior.WANDER,
     sprite: npcAssets.little_girl,
     portraitSprite: npcAssets.little_girl_portrait,
     dialogue: [
@@ -644,7 +559,7 @@ export function createVillageChildNPC(
       likedFoodTypes: ['dessert'],
       crisisId: 'mother_illness',
     },
-  };
+  });
 }
 
 /**
@@ -656,6 +571,8 @@ export function createVillageChildNPC(
  * - Seasonal appearance (spring only)
  * - Simple, cheerful duck dialogue
  *
+ * Uses the createNPC factory with animated states and visibility conditions.
+ *
  * @param id Unique ID for this duck
  * @param position Starting position (should be near water)
  * @param name Optional name (defaults to "Duck")
@@ -665,30 +582,21 @@ export function createDuckNPC(
   position: Position,
   name: string = 'Duck'
 ): NPC {
-  const now = Date.now();
-
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'roaming',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
+  return createNPC({
+    id,
+    name,
+    position,
+    behavior: NPCBehavior.WANDER,
+    sprite: npcAssets.duck_01,
+    portraitSprite: npcAssets.duck_portrait,
+    scale: 2.5, // Small pond creature
     states: {
       roaming: {
         sprites: [npcAssets.duck_01, npcAssets.duck_02],
         animationSpeed: 500, // Gentle paddling animation (500ms per frame)
       },
     },
-  };
-
-  return {
-    id,
-    name,
-    position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.WANDER,
-    sprite: npcAssets.duck_01,
-    portraitSprite: npcAssets.duck_portrait,
-    scale: 2.5, // Small pond creature
+    initialState: 'roaming',
     dialogue: [
       {
         id: 'greeting',
@@ -720,7 +628,6 @@ export function createDuckNPC(
         text: '*Quack quack quack!* The duck eagerly gobbles up the breadcrumbs, then waddles around your feet hoping for more. What a friendly little creature!',
       },
     ],
-    animatedStates,
     interactionRadius: 1.5,
     friendshipConfig: {
       canBefriend: false, // Ducks are wild creatures, can't befriend like villagers
@@ -730,5 +637,5 @@ export function createDuckNPC(
     visibilityConditions: {
       season: 'spring', // Duck only appears in spring (migrates south for other seasons)
     },
-  };
+  });
 }

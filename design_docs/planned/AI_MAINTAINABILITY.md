@@ -340,6 +340,16 @@ data/
 | 2025-12-29 | Added `TIMING` constants to `constants.ts` | Centralised 15+ timing values |
 | 2025-12-29 | Updated TileLayer.ts to use `TIMING.DEFAULT_TILE_ANIMATION_MS` | Example migration |
 | 2025-12-29 | Created `hooks/usePixiRenderer.ts` stub | Architecture outline for next extraction |
+| 2025-12-29 | Created `utils/pixi/PixiLayerManager.ts` | Utility for coordinating all PixiJS layers |
+| 2025-12-29 | Created `utils/npcs/createNPC.ts` | Base NPC factory with `createNPC()`, `createStaticNPC()`, `createWanderingNPC()` |
+| 2025-12-29 | Added `tests/mapUtils.test.ts` | 21 tests for tile coordinate utilities |
+| 2025-12-29 | Extended `createNPC` factory with all NPC properties | Supports dialogueExpressions, followTarget, reverseFlip, visibilityConditions |
+| 2025-12-29 | Migrated `createVillageChildNPC` to use `createWanderingNPC()` | First real NPC using factory |
+| 2025-12-29 | Migrated `createDuckNPC` to use `createNPC()` with states | Demonstrates animated states + visibility conditions |
+| 2025-12-29 | Added `transitionsTo` support to StateConfig | Enables complex state machines like the Cat NPC |
+| 2025-12-29 | Migrated all villageNPCs to use createNPC factory | VillageElder, Cat, OldWoman, Dog, Shopkeeper now use factory |
+| 2025-12-29 | Updated DebugInfoPanel, farmManager, positionValidator | Now use `getTileCoords()` instead of inline Math.floor |
+| 2025-12-29 | Added "Reusable Utilities & Patterns" section to CLAUDE.md | Prevents future duplication by documenting utilities |
 
 ---
 

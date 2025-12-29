@@ -13,6 +13,7 @@ import { mapManager } from '../maps/MapManager';
 import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
+import { getTileCoords } from './mapUtils';
 
 class FarmManager {
   private plots: Map<string, FarmPlot> = new Map(); // key: "mapId:x:y"
@@ -21,7 +22,8 @@ class FarmManager {
    * Generate a unique key for a plot position
    */
   private getPlotKey(mapId: string, position: Position): string {
-    return `${mapId}:${Math.floor(position.x)}:${Math.floor(position.y)}`;
+    const tile = getTileCoords(position);
+    return `${mapId}:${tile.x}:${tile.y}`;
   }
 
   /**
@@ -185,9 +187,10 @@ class FarmManager {
 
     const gameTime = TimeManager.getCurrentTime();
     const now = Date.now();
+    const tile = getTileCoords(position);
     const plot: FarmPlot = {
       mapId,
-      position: { x: Math.floor(position.x), y: Math.floor(position.y) },
+      position: tile,
       state: FarmPlotState.TILLED,
       cropType: null,
       plantedAtDay: null,

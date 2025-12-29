@@ -70,7 +70,8 @@
       "Skill(add-inventory-sprite)",
       "Skill(add-inventory-sprite:*)",
       "Bash(grep:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(npx vitest:*)"
     ],
     "deny": [],
     "ask": [

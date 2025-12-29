@@ -22,11 +22,14 @@ import {
   Direction,
   Position,
   AnimatedNPCStates,
-  AnimatedNPCState,
   FriendshipConfig,
   DialogueNode,
+  AnimationConditions,
 } from '../../types';
 import { TIMING } from '../../constants';
+
+// Type for a single animated state (extracted from AnimatedNPCStates)
+type AnimatedNPCState = AnimatedNPCStates['states'][string];
 
 /**
  * Configuration for an animated state
@@ -39,6 +42,8 @@ export interface StateConfig {
   duration?: number;
   /** Next state to transition to (optional) */
   nextState?: string;
+  /** Event-based state transitions (e.g., { interact: 'angry' }) */
+  transitionsTo?: { [eventName: string]: string };
   /** Direction-specific sprites (optional) */
   directionalSprites?: {
     up?: string[];
@@ -73,10 +78,14 @@ export interface NPCConfig {
   // Friendship (optional)
   friendshipConfig?: FriendshipConfig;
 
-  // Movement (for WANDER/PATROL behaviors)
-  movementSpeed?: number;
-  wanderRadius?: number;
-  patrolPath?: Position[];
+  // Additional optional properties
+  dialogueSprite?: string;
+  dialogueExpressions?: Record<string, string>;
+  followTarget?: string;
+  noFlip?: boolean;
+  reverseFlip?: boolean;
+  zIndexOverride?: number;
+  visibilityConditions?: AnimationConditions;
 }
 
 /**
@@ -87,7 +96,6 @@ const DEFAULTS = {
   behavior: NPCBehavior.STATIC,
   scale: 3.0,
   interactionRadius: 1.5,
-  movementSpeed: TIMING.NPC_MOVEMENT_SPEED,
   animationSpeed: TIMING.NPC_FRAME_MS,
 };
 
@@ -108,6 +116,7 @@ function createAnimatedStates(
       animationSpeed: config.animationSpeed ?? DEFAULTS.animationSpeed,
       duration: config.duration,
       nextState: config.nextState,
+      transitionsTo: config.transitionsTo,
       directionalSprites: config.directionalSprites,
     };
   }
@@ -152,9 +161,14 @@ export function createNPC(config: NPCConfig): NPC {
     states,
     initialState = 'idle',
     friendshipConfig,
-    movementSpeed,
-    wanderRadius,
-    patrolPath,
+    // Additional optional properties
+    dialogueSprite,
+    dialogueExpressions,
+    followTarget,
+    noFlip,
+    reverseFlip,
+    zIndexOverride,
+    visibilityConditions,
   } = config;
 
   // Create animated states if provided
@@ -174,30 +188,17 @@ export function createNPC(config: NPCConfig): NPC {
     interactionRadius,
   };
 
-  // Add optional properties
-  if (portraitSprite) {
-    npc.portraitSprite = portraitSprite;
-  }
-
-  if (animatedStates) {
-    npc.animatedStates = animatedStates;
-  }
-
-  if (friendshipConfig) {
-    npc.friendshipConfig = friendshipConfig;
-  }
-
-  if (movementSpeed !== undefined) {
-    npc.movementSpeed = movementSpeed;
-  }
-
-  if (wanderRadius !== undefined) {
-    npc.wanderRadius = wanderRadius;
-  }
-
-  if (patrolPath) {
-    npc.patrolPath = patrolPath;
-  }
+  // Add optional properties (only if defined)
+  if (portraitSprite) npc.portraitSprite = portraitSprite;
+  if (animatedStates) npc.animatedStates = animatedStates;
+  if (friendshipConfig) npc.friendshipConfig = friendshipConfig;
+  if (dialogueSprite) npc.dialogueSprite = dialogueSprite;
+  if (dialogueExpressions) npc.dialogueExpressions = dialogueExpressions;
+  if (followTarget) npc.followTarget = followTarget;
+  if (noFlip !== undefined) npc.noFlip = noFlip;
+  if (reverseFlip !== undefined) npc.reverseFlip = reverseFlip;
+  if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
+  if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
 
   return npc;
 }
@@ -215,12 +216,9 @@ export function createStaticNPC(config: Omit<NPCConfig, 'behavior'>): NPC {
 /**
  * Quick factory for wandering NPCs
  */
-export function createWanderingNPC(
-  config: Omit<NPCConfig, 'behavior'> & { wanderRadius?: number }
-): NPC {
+export function createWanderingNPC(config: Omit<NPCConfig, 'behavior'>): NPC {
   return createNPC({
     ...config,
     behavior: NPCBehavior.WANDER,
-    wanderRadius: config.wanderRadius ?? 3,
   });
 }

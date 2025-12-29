@@ -1,5 +1,5 @@
 import { Position, TileType } from '../types';
-import { getTileData } from './mapUtils';
+import { getTileData, getTileCoords } from './mapUtils';
 import { PLAYER_SIZE } from '../constants';
 
 /**
@@ -50,9 +50,8 @@ export function isPositionValid(pos: Position, entitySize: number = PLAYER_SIZE)
  * Safe tiles: PATH, CARPET, FLOOR, GRASS, DOOR, BUILDING_DOOR, CHAIR
  */
 export function isOnSafeSpawnTile(pos: Position): boolean {
-  const tileX = Math.floor(pos.x);
-  const tileY = Math.floor(pos.y);
-  const tileData = getTileData(tileX, tileY);
+  const tile = getTileCoords(pos);
+  const tileData = getTileData(tile.x, tile.y);
 
   if (!tileData) return false;
 

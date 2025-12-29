@@ -1,6 +1,6 @@
 import React from 'react';
 import { Position } from '../types';
-import { getTileData } from '../utils/mapUtils';
+import { getTileData, getTileCoords } from '../utils/mapUtils';
 import { PLAYER_SIZE } from '../constants';
 import { mapManager } from '../maps';
 import { TimeManager } from '../utils/TimeManager';
@@ -15,9 +15,8 @@ interface DebugInfoPanelProps {
 }
 
 const DebugInfoPanel: React.FC<DebugInfoPanelProps> = ({ playerPos, clickedTile, onClearClick }) => {
-  const currentTileX = Math.floor(playerPos.x);
-  const currentTileY = Math.floor(playerPos.y);
-  const tileData = getTileData(currentTileX, currentTileY);
+  const currentTile = getTileCoords(playerPos);
+  const tileData = getTileData(currentTile.x, currentTile.y);
 
   // Get clicked tile data if available
   const clickedTileData = clickedTile ? getTileData(clickedTile.x, clickedTile.y) : null;
@@ -56,7 +55,7 @@ const DebugInfoPanel: React.FC<DebugInfoPanelProps> = ({ playerPos, clickedTile,
     <div className={`fixed bottom-4 right-4 bg-black/70 p-3 rounded-lg border border-slate-700 text-sm text-white font-mono space-y-1 ${zClass(Z_DEBUG_PANEL)}`}>
       <h3 className="text-md font-bold text-cyan-300 mb-2">Debug Info (F3)</h3>
       <div>Player Pos: ({playerPos.x.toFixed(2)}, {playerPos.y.toFixed(2)})</div>
-      <div>Current Tile: ({currentTileX}, {currentTileY})</div>
+      <div>Current Tile: ({currentTile.x}, {currentTile.y})</div>
        {tileData && (
         <>
             <div>Tile Name: {tileData.name}</div>

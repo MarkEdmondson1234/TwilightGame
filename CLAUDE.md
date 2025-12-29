@@ -847,6 +847,120 @@ data/            - Game data (crops, items, NPCs)
 - Lazy-load assets not needed at startup
 - Preload critical assets in `gameInitializer.ts`
 
+## Reusable Utilities & Patterns
+
+**IMPORTANT**: Before writing new code, check if a utility already exists. Using existing utilities reduces bugs and keeps the codebase consistent.
+
+### Tile Coordinate Utilities (`utils/mapUtils.ts`)
+
+When working with tile positions, **always use these utilities** instead of inline `Math.floor()`:
+
+```typescript
+import { getTileCoords, getAdjacentTiles, getSurroundingTiles, isSameTile, getTileDistance, getTilesInRadius } from './mapUtils';
+
+// ✅ CORRECT - Use utilities
+const tile = getTileCoords(playerPos);
+const nearby = getAdjacentTiles(playerPos);
+
+// ❌ WRONG - Don't use inline Math.floor
+const tileX = Math.floor(playerPos.x);
+const tileY = Math.floor(playerPos.y);
+```
+
+| Function | Purpose |
+|----------|---------|
+| `getTileCoords(pos)` | Convert world position to tile coordinates |
+| `getAdjacentTiles(pos)` | Get current tile + 4 cardinal neighbours |
+| `getSurroundingTiles(pos)` | Get 8 neighbours (no center) |
+| `isSameTile(pos1, pos2)` | Check if two positions are on same tile |
+| `getTileDistance(pos1, pos2)` | Manhattan distance between tiles |
+| `getTilesInRadius(pos, radius)` | Get all tiles in square radius |
+
+### NPC Factory (`utils/npcs/createNPC.ts`)
+
+When creating NPCs, **always use the factory functions** instead of manual object construction:
+
+```typescript
+import { createNPC, createStaticNPC, createWanderingNPC } from './createNPC';
+
+// ✅ CORRECT - Use factory
+export function createMyNPC(id: string, position: Position): NPC {
+  return createWanderingNPC({
+    id,
+    name: 'My NPC',
+    position,
+    sprite: npcAssets.my_npc,
+    dialogue: [...],
+    states: {  // Optional: animated states
+      idle: { sprites: [sprite1, sprite2], animationSpeed: 500 }
+    },
+  });
+}
+
+// ❌ WRONG - Don't manually construct with Date.now() boilerplate
+const now = Date.now();
+const animatedStates = { currentState: 'idle', lastStateChange: now, ... };
+return { id, name, position, animatedStates, ... };
+```
+
+**Factory handles automatically:**
+- `Date.now()` timestamps for animation states
+- Default values (direction, scale, interactionRadius)
+- Optional property handling (dialogueExpressions, visibilityConditions, etc.)
+
+### Timing Constants (`constants.ts`)
+
+**Never use magic numbers for timing**. Use `TIMING` constants:
+
+```typescript
+import { TIMING } from '../../constants';
+
+// ✅ CORRECT - Use constants
+animationSpeed: TIMING.NPC_FRAME_MS,      // 280ms
+duration: TIMING.TOAST_DURATION_MS,        // 3000ms
+
+// ❌ WRONG - Don't use magic numbers
+animationSpeed: 280,
+duration: 3000,
+```
+
+**Available timing constants:**
+- `TIMING.PLAYER_FRAME_MS` (150) - Player animation
+- `TIMING.NPC_FRAME_MS` (280) - NPC animation
+- `TIMING.DIALOGUE_DELAY_MS` (800) - Dialogue pauses
+- `TIMING.MAP_TRANSITION_MS` (1000) - Map transitions
+- `TIMING.WEATHER_CHECK_MS` (3000) - Weather updates
+- See `constants.ts` for full list
+
+### Testing New Utilities
+
+When adding new utility functions, **write tests**:
+
+```typescript
+// tests/myUtils.test.ts
+/** @vitest-environment node */
+import { describe, it, expect } from 'vitest';
+
+describe('myUtils', () => {
+  it('should do the thing', () => {
+    expect(myFunction(input)).toEqual(expected);
+  });
+});
+```
+
+Run tests with: `npx vitest run tests/myUtils.test.ts`
+
+### Before You Code Checklist
+
+1. **Check for existing utilities** - Search the codebase for similar patterns
+2. **Use factories** - NPCs use `createNPC()`, not manual construction
+3. **Use coordinate utilities** - `getTileCoords()`, not `Math.floor()`
+4. **Use timing constants** - `TIMING.X`, not magic numbers
+5. **Write tests** - New utilities should have test coverage
+6. **Update docs** - Add new utilities to this section
+
+---
+
 ## Development Guidelines
 
 1. **Validate changes**: After making code changes, ALWAYS run `npx tsc --noEmit` to check for TypeScript errors before considering the task complete
