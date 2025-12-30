@@ -25,6 +25,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   seed_radish: itemAssets.radish_seeds,
   seed_tomato: itemAssets.tomato_seeds,
   seed_salad: itemAssets.salad_seeds,
+  seed_spinach: itemAssets.spinach_seeds,
   seed_sunflower: itemAssets.sunflower_seeds,
 
   // Grocery items (cooking ingredients)
@@ -86,7 +87,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
   seed_pumpkin: '🎃',
   seed_melon: '🍉',
   seed_chili: '🌶️',
-  seed_spinach: '🥬',
   seed_broccoli: '🥦',
   seed_cauliflower: '🥬',
   seed_onion: '🧅',

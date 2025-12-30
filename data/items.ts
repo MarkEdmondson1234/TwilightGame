@@ -129,6 +129,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Spinach Seeds',
     category: ItemCategory.SEED,
     description: 'Nutritious spinach seeds. Grows quickly!',
+    image: itemAssets.spinach_seeds,
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 4,
