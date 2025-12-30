@@ -709,7 +709,11 @@ const App: React.FC = () => {
                 npcs = [...npcs, ...layerNPCs];
             }
         }
-        return npcs;
+        // Deduplicate NPCs by ID (layer NPCs take precedence over map NPCs)
+        const uniqueNPCs = Array.from(
+            new Map(npcs.map(npc => [npc.id, npc])).values()
+        );
+        return uniqueNPCs;
     }, [currentMapId, npcUpdateTrigger]);
 
     // Get player sprite info (URL and scale)
