@@ -7,7 +7,7 @@ describe('Crop Growth System', () => {
     it('should have all required crops', () => {
       expect(CROPS.radish).toBeDefined();
       expect(CROPS.tomato).toBeDefined();
-      expect(CROPS.wheat).toBeDefined();
+      expect(CROPS.salad).toBeDefined();
       expect(CROPS.corn).toBeDefined();
       expect(CROPS.pumpkin).toBeDefined();
     });

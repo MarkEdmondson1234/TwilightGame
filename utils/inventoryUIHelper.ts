@@ -79,10 +79,8 @@ export function registerItemSprite(itemId: string, imageUrl: string): void {
  */
 const ITEM_ICON_MAP: Record<string, string> = {
   // Seeds (items without sprites)
-  seed_wheat: '🌾',
   seed_corn: '🌽',
   seed_pumpkin: '🎃',
-  seed_potato: '🥔',
   seed_melon: '🍉',
   seed_chili: '🌶️',
   seed_spinach: '🥬',
@@ -96,7 +94,7 @@ const ITEM_ICON_MAP: Record<string, string> = {
   seed_strawberry: '🍓',
 
   // Crops (items without sprites)
-  crop_wheat: '🌾',
+  crop_salad: '🥗',
   crop_corn: '🌽',
   crop_pumpkin: '🎃',
   crop_potato: '🥔',
@@ -105,7 +103,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
   crop_broccoli: '🥦',
   crop_cauliflower: '🥬',
   crop_sunflower: '🌻',
-  crop_salad: '🥗',
   crop_onion: '🧅',
   crop_pea: '🫛',
   crop_cucumber: '🥒',

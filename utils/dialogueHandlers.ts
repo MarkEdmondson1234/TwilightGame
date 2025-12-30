@@ -63,7 +63,7 @@ function handleSeedPickup(nodeId: string): void {
     const seedActions: Record<string, { itemId: string; quantity: number }> = {
         'take_radish': { itemId: 'seed_radish', quantity: 10 },
         'take_tomato': { itemId: 'seed_tomato', quantity: 10 },
-        'take_wheat': { itemId: 'seed_wheat', quantity: 5 },
+        'take_salad': { itemId: 'seed_salad', quantity: 5 },
         'take_corn': { itemId: 'seed_corn', quantity: 3 },
     };
 

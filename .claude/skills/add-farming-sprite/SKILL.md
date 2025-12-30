@@ -57,7 +57,7 @@ Current crop types:
 - Pea (example: `plant_pea_young.png`, `plant_pea_adult.png`)
 - Radish (2 minutes to grow)
 - Tomato (5 minutes to grow)
-- Wheat (10 minutes to grow)
+- Salad (10 minutes to grow)
 - Corn (15 minutes to grow)
 - Pumpkin (20 minutes to grow)
 

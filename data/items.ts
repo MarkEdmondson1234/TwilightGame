@@ -70,19 +70,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.tomato_seeds,
   },
 
-  seed_wheat: {
-    id: 'seed_wheat',
-    name: 'seed_wheat',
-    displayName: 'Wheat Seeds',
-    category: ItemCategory.SEED,
-    description: 'Golden wheat seeds. Hardy and reliable.',
-    rarity: ItemRarity.UNCOMMON,
-    stackable: true,
-    sellPrice: 5,
-    buyPrice: 10,
-    cropId: 'wheat',
-  },
-
   seed_corn: {
     id: 'seed_corn',
     name: 'seed_corn',
@@ -110,19 +97,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
   },
 
   // New shop seeds
-  seed_potato: {
-    id: 'seed_potato',
-    name: 'seed_potato',
-    displayName: 'Potato Seeds',
-    category: ItemCategory.SEED,
-    description: 'Hearty potato seeds. A staple for any garden.',
-    rarity: ItemRarity.COMMON,
-    stackable: true,
-    sellPrice: 2,
-    buyPrice: 5,
-    cropId: 'potato',
-  },
-
   seed_melon: {
     id: 'seed_melon',
     name: 'seed_melon',
@@ -204,12 +178,13 @@ export const ITEMS: Record<string, ItemDefinition> = {
   seed_salad: {
     id: 'seed_salad',
     name: 'seed_salad',
-    displayName: 'Lettuce Seeds',
+    displayName: 'Salad Seeds',
     category: ItemCategory.SEED,
-    description: 'Crisp lettuce seeds. Perfect for salads.',
-    rarity: ItemRarity.COMMON,
+    description: 'Fresh lettuce seeds. Perfect for salads.',
+    rarity: ItemRarity.UNCOMMON,
     stackable: true,
-    sellPrice: 3,
+    sellPrice: 5,
+    buyPrice: 10,
     cropId: 'salad',
   },
 
@@ -296,16 +271,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 25,
     image: groceryAssets.tomato,
-  },
-
-  crop_wheat: {
-    id: 'crop_wheat',
-    name: 'crop_wheat',
-    displayName: 'Wheat',
-    category: ItemCategory.CROP,
-    description: 'Golden wheat stalks.',
-    stackable: true,
-    sellPrice: 15,
   },
 
   crop_corn: {
@@ -403,9 +368,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
   crop_salad: {
     id: 'crop_salad',
     name: 'crop_salad',
-    displayName: 'Lettuce',
+    displayName: 'Salad Greens',
     category: ItemCategory.CROP,
-    description: 'Crisp, fresh lettuce leaves.',
+    description: 'Fresh lettuce leaves.',
     stackable: true,
     sellPrice: 15,
   },

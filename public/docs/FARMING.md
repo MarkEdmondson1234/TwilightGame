@@ -44,7 +44,7 @@ You can also **click directly on farm tiles** to interact with them! A circular 
 5. A young plant appears and grows over time!
 
 **Available Crops:**
-- Radish, Tomato, Strawberry, Pea, Sunflower, Wheat, Corn, Pumpkin, and more!
+- Radish, Tomato, Strawberry, Pea, Sunflower, Salad, Corn, Pumpkin, and more!
 
 **Note:** You need seeds in your inventory to plant. Get free starter seeds from the Seed Shed in the farm area!
 
@@ -83,7 +83,7 @@ Different crops take different amounts of time to grow. Watered crops grow faste
 | Strawberry | 4 min | 3 min | Spring, Summer |
 | Tomato | 5 min | 3.5 min | Spring, Summer |
 | Sunflower | 6 min | 4 min | Summer |
-| Wheat | 10 min | 7 min | Summer, Autumn |
+| Salad | 10 min | 7 min | Spring, Summer |
 | Corn | 15 min | 10 min | Summer |
 | Pumpkin | 20 min | 14 min | Autumn |
 
@@ -150,9 +150,9 @@ Visit the Seed Shed in the farm area to get more seeds from friendly NPCs. They'
 
 ### Watch the Seasons
 Different crops grow in different seasons:
-- **Spring:** Radish, Pea, Strawberry, Tomato
+- **Spring:** Radish, Pea, Strawberry, Tomato, Salad
 - **Summer:** Most crops grow well
-- **Autumn:** Wheat, Pumpkin, Radish
+- **Autumn:** Pumpkin, Radish
 - **Winter:** Limited growing season
 
 Check the current season in the HUD before planting!

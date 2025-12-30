@@ -98,8 +98,8 @@ export const seedShed: MapDefinition = {
       ],
     },
     {
-      id: 'seed_keeper_wheat',
-      name: 'Wheat Seeds',
+      id: 'seed_keeper_salad',
+      name: 'Salad Seeds',
       position: { x: 6, y: 1 },
       direction: Direction.Down,
       behavior: NPCBehavior.STATIC,
@@ -107,11 +107,11 @@ export const seedShed: MapDefinition = {
       dialogue: [
         {
           id: 'pickup',
-          text: 'Take some Wheat Seeds! (Free while in testing)',
+          text: 'Take some Salad Seeds! (Free while in testing)',
           responses: [
             {
-              text: 'Take 5 Wheat Seeds',
-              nextId: 'take_wheat',
+              text: 'Take 5 Salad Seeds',
+              nextId: 'take_salad',
             },
             {
               text: 'No thanks',
@@ -119,8 +119,8 @@ export const seedShed: MapDefinition = {
           ],
         },
         {
-          id: 'take_wheat',
-          text: 'You received 5 Wheat Seeds!',
+          id: 'take_salad',
+          text: 'You received 5 Salad Seeds!',
         },
       ],
     },

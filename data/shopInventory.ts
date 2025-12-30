@@ -41,18 +41,6 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     sellPrice: 2,  // Matches existing item definition
     stock: 'unlimited',
   },
-  {
-    itemId: 'seed_wheat',
-    buyPrice: 10,
-    sellPrice: 5,
-    stock: 'unlimited',
-  },
-  {
-    itemId: 'seed_potato',
-    buyPrice: 5,
-    sellPrice: 2,
-    stock: 'unlimited',
-  },
 
   // Spring/Summer seeds
   {
