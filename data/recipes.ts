@@ -252,14 +252,19 @@ export const RECIPES: Record<string, RecipeDefinition> = {
   cookies: {
     id: 'cookies',
     name: 'cookies',
-    displayName: 'Cookies',
+    displayName: 'Chocolate Cookies',
     category: 'baking',
-    description: 'Crispy, buttery biscuits.',
+    description: 'Rich chocolate cookies with melted chocolate chips.',
     ingredients: [
-      { itemId: 'flour', quantity: 2 },
       { itemId: 'butter', quantity: 1 },
       { itemId: 'sugar', quantity: 1 },
       { itemId: 'egg', quantity: 1 },
+      { itemId: 'flour', quantity: 2 },
+      { itemId: 'vanilla', quantity: 1 },
+      { itemId: 'baking_powder', quantity: 1 },
+      { itemId: 'salt', quantity: 1 },
+      { itemId: 'cocoa_powder', quantity: 1 },
+      { itemId: 'chocolate', quantity: 2 },
     ],
     cookingTime: 25,
     difficulty: 1,
@@ -267,6 +272,12 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultQuantity: 6,
     friendshipValue: 15,
     unlockRequirement: 'french_toast',
+    instructions: [
+      'Whisk sugar and butter until it becomes light and fluffy. Add the egg and whisk again.',
+      'In another bowl, mix flour, vanilla, baking powder and salt, then add it to the sugar mix by pouring it through a finely meshed sieve - that\'s how you avoid clumps. Stir it thoroughly, then add the chocolate chips.',
+      'Shape the dough into balls, and press them onto a baking tray covered with baking paper. Try not to eat too much of the dough! It\'s even better as cookies!',
+      'Bake in the oven at 175 degrees for 14 minutes until they begin to turn crisp, but are still slightly mushy in the middle. Allow to cool before eating.',
+    ],
   },
 
   chocolate_cake: {
