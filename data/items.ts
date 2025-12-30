@@ -586,9 +586,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
   sugar: {
     id: 'sugar',
     name: 'sugar',
-    displayName: 'Sugar',
+    displayName: 'Cane Sugar',
     category: ItemCategory.INGREDIENT,
-    description: 'Sweet white sugar.',
+    description: 'Brown sugar granules.',
     stackable: true,
     sellPrice: 3,
     buyPrice: 8,
