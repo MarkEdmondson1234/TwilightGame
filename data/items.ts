@@ -646,9 +646,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
   vanilla: {
     id: 'vanilla',
     name: 'vanilla',
-    displayName: 'Vanilla Extract',
+    displayName: 'Vanilla Pods',
     category: ItemCategory.INGREDIENT,
-    description: 'Pure vanilla extract. Smells divine!',
+    description: 'A rich vanilla aroma emanates from the pods.',
     stackable: true,
     sellPrice: 8,
     buyPrice: 20,
