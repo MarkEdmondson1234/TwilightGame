@@ -314,26 +314,26 @@ export const CROPS: Record<string, CropDefinition> = {
     seedSource: 'friendship',
   },
 
-  // Salad/Lettuce - Spring/Summer planting
+  // Salad/Lettuce - Spring/Summer planting (now shop item replacing wheat)
   salad: {
     id: 'salad',
     name: 'salad',
-    displayName: 'Lettuce',
+    displayName: 'Salad Greens',
     plantSeasons: [Season.SPRING, Season.SUMMER],
-    growthTime: 3 * MINUTE,
-    growthTimeWatered: 2 * MINUTE,
-    waterNeededInterval: 1 * MINUTE,
-    wiltingGracePeriod: 30 * 1000,
-    deathGracePeriod: 30 * 1000,
-    harvestYield: 2,
+    growthTime: 10 * MINUTE,
+    growthTimeWatered: 7 * MINUTE,
+    waterNeededInterval: 3 * MINUTE,
+    wiltingGracePeriod: 2 * MINUTE,
+    deathGracePeriod: 1 * MINUTE,
+    harvestYield: 5,
     sellPrice: 15,
-    experience: 8,
+    experience: 20,
     seedDropMin: 1,
     seedDropMax: 3,
-    description: 'Crisp lettuce leaves. Perfect for salads.',
-    seedCost: 0,
-    rarity: CropRarity.COMMON,
-    seedSource: 'friendship',
+    description: 'Fresh lettuce greens. Perfect for salads.',
+    seedCost: 10,
+    rarity: CropRarity.UNCOMMON,
+    seedSource: 'shop',
   },
 
   // Onion - Autumn planting (unique!)
@@ -449,28 +449,6 @@ export const CROPS: Record<string, CropDefinition> = {
   },
 
   // ===== KEPT FROM ORIGINAL (but updated) =====
-
-  // Wheat - kept as shop item
-  wheat: {
-    id: 'wheat',
-    name: 'wheat',
-    displayName: 'Wheat',
-    plantSeasons: [Season.SPRING, Season.SUMMER],
-    growthTime: 10 * MINUTE,
-    growthTimeWatered: 7 * MINUTE,
-    waterNeededInterval: 3 * MINUTE,
-    wiltingGracePeriod: 2 * MINUTE,
-    deathGracePeriod: 1 * MINUTE,
-    harvestYield: 5,
-    sellPrice: 15,
-    experience: 20,
-    seedDropMin: 1,
-    seedDropMax: 3,
-    description: 'Golden wheat for baking. Hardy and reliable.',
-    seedCost: 10,
-    rarity: CropRarity.UNCOMMON,
-    seedSource: 'shop',
-  },
 
   // Corn - kept as shop item
   corn: {

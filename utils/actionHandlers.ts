@@ -828,7 +828,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
                 const seedIcons: Record<string, string> = {
                     radish: '🥕',
                     tomato: '🍅',
-                    wheat: '🌾',
+                    salad: '🥗',
                     corn: '🌽',
                     pumpkin: '🎃',
                     potato: '🥔',
@@ -838,7 +838,6 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
                     broccoli: '🥦',
                     cauliflower: '🥬',
                     sunflower: '🌻',
-                    salad: '🥗',
                     onion: '🧅',
                     pea: '🫛',
                     cucumber: '🥒',

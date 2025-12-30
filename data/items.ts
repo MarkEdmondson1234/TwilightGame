@@ -70,19 +70,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.tomato_seeds,
   },
 
-  seed_wheat: {
-    id: 'seed_wheat',
-    name: 'seed_wheat',
-    displayName: 'Wheat Seeds',
-    category: ItemCategory.SEED,
-    description: 'Golden wheat seeds. Hardy and reliable.',
-    rarity: ItemRarity.UNCOMMON,
-    stackable: true,
-    sellPrice: 5,
-    buyPrice: 10,
-    cropId: 'wheat',
-  },
-
   seed_corn: {
     id: 'seed_corn',
     name: 'seed_corn',
@@ -110,19 +97,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
   },
 
   // New shop seeds
-  seed_potato: {
-    id: 'seed_potato',
-    name: 'seed_potato',
-    displayName: 'Potato Seeds',
-    category: ItemCategory.SEED,
-    description: 'Hearty potato seeds. A staple for any garden.',
-    rarity: ItemRarity.COMMON,
-    stackable: true,
-    sellPrice: 2,
-    buyPrice: 5,
-    cropId: 'potato',
-  },
-
   seed_melon: {
     id: 'seed_melon',
     name: 'seed_melon',
@@ -204,21 +178,22 @@ export const ITEMS: Record<string, ItemDefinition> = {
   seed_salad: {
     id: 'seed_salad',
     name: 'seed_salad',
-    displayName: 'Lettuce Seeds',
+    displayName: 'Salad Seeds',
     category: ItemCategory.SEED,
-    description: 'Crisp lettuce seeds. Perfect for salads.',
-    rarity: ItemRarity.COMMON,
+    description: 'Fresh lettuce seeds. Perfect for salads.',
+    rarity: ItemRarity.UNCOMMON,
     stackable: true,
-    sellPrice: 3,
+    sellPrice: 5,
+    buyPrice: 10,
     cropId: 'salad',
   },
 
   seed_onion: {
     id: 'seed_onion',
     name: 'seed_onion',
-    displayName: 'Onion Seeds',
+    displayName: 'Onion Sets',
     category: ItemCategory.SEED,
-    description: 'Pungent onion seeds. Plant in autumn!',
+    description: 'Small onion bulbs for planting. Plant in autumn!',
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 5,
@@ -296,16 +271,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 25,
     image: groceryAssets.tomato,
-  },
-
-  crop_wheat: {
-    id: 'crop_wheat',
-    name: 'crop_wheat',
-    displayName: 'Wheat',
-    category: ItemCategory.CROP,
-    description: 'Golden wheat stalks.',
-    stackable: true,
-    sellPrice: 15,
   },
 
   crop_corn: {
@@ -403,9 +368,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
   crop_salad: {
     id: 'crop_salad',
     name: 'crop_salad',
-    displayName: 'Lettuce',
+    displayName: 'Salad Greens',
     category: ItemCategory.CROP,
-    description: 'Crisp, fresh lettuce leaves.',
+    description: 'Fresh lettuce leaves.',
     stackable: true,
     sellPrice: 15,
   },
@@ -493,6 +458,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Used to till soil for planting.',
     stackable: false,
     buyPrice: 50,
+    image: itemAssets.hoe,
   },
 
   tool_watering_can: {
@@ -503,6 +469,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Waters crops to help them grow faster.',
     stackable: false,
     buyPrice: 75,
+    image: itemAssets.watering_can,
   },
 
   // ===== COOKING INGREDIENTS (shop-bought) =====
@@ -581,6 +548,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.cheese,
   },
 
+  almonds: {
+    id: 'almonds',
+    name: 'almonds',
+    displayName: 'Almonds',
+    category: ItemCategory.INGREDIENT,
+    description: 'A tasty nutritious snack or ingredient.',
+    stackable: true,
+    sellPrice: 6,
+    buyPrice: 15,
+    image: groceryAssets.almonds,
+  },
+
   egg: {
     id: 'egg',
     name: 'egg',
@@ -609,9 +588,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
   sugar: {
     id: 'sugar',
     name: 'sugar',
-    displayName: 'Sugar',
+    displayName: 'Cane Sugar',
     category: ItemCategory.INGREDIENT,
-    description: 'Sweet white sugar.',
+    description: 'Brown sugar granules.',
     stackable: true,
     sellPrice: 3,
     buyPrice: 8,
@@ -669,9 +648,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
   vanilla: {
     id: 'vanilla',
     name: 'vanilla',
-    displayName: 'Vanilla Extract',
+    displayName: 'Vanilla Pods',
     category: ItemCategory.INGREDIENT,
-    description: 'Pure vanilla extract. Smells divine!',
+    description: 'A rich vanilla aroma emanates from the pods.',
     stackable: true,
     sellPrice: 8,
     buyPrice: 20,
@@ -750,18 +729,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 10,
     buyPrice: 25,
     image: groceryAssets.chocolate_bar,
-  },
-
-  almonds: {
-    id: 'almonds',
-    name: 'almonds',
-    displayName: 'Almonds',
-    category: ItemCategory.INGREDIENT,
-    description: 'Ground almonds for marzipan.',
-    stackable: true,
-    sellPrice: 8,
-    buyPrice: 20,
-    // Note: No almonds sprite yet - add almonds.png to grocery folder
   },
 
   strawberry_jam: {

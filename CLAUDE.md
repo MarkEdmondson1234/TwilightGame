@@ -1070,7 +1070,8 @@ Claude Code includes a `game-tester` agent (`.claude/agents/game-tester.md`) tha
 | **add-npc-sprite** | "add NPC", "new character", "add villager" | Add NPC sprites and factory functions |
 | **add-character-sprite** | "player sprite", "character customization" | Add player character layers |
 | **add-farming-sprite** | "crop sprite", "farming", "soil", "plant" | Add farming system sprites |
-| **add-inventory-sprite** | "add grocery item", "inventory sprite", "item image" | Add inventory item sprites (grocery, tools, seeds) |
+| **add-inventory-sprite** | "inventory sprite", "item image", "tool sprite" | Add inventory item sprites (general items) |
+| **add-grocery-item** | "add ingredient", "grocery item", "cooking ingredient", "shop item" | Add grocery items as ingredients and shop inventory |
 | **add-animation** | "add animation", "particle effect", "weather effect" | Add GIF animations to tiles/weather |
 | **add-pixi-component** | "PixiJS", "WebGL", "particle system", "shader" | Add PixiJS rendering components |
 
@@ -1087,7 +1088,7 @@ Claude Code includes a `game-tester` agent (`.claude/agents/game-tester.md`) tha
 - User: "The game is slow" → Use **profile-game** skill
 - User: "Start the game" → Use **dev-server** skill
 - User: "Add rain particles" → Use **add-animation** skill
-- User: "I have drawings for grocery items" → Use **add-inventory-sprite** skill
+- User: "Add almonds as an ingredient" → Use **add-grocery-item** skill
 
 ### Asset Optimization Keywords
 

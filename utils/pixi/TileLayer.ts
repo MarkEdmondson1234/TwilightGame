@@ -72,7 +72,6 @@ const CROP_ADULT_SIZES: Record<string, { width: number; height: number; offsetX:
   onion: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
   pea: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
   potato: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  wheat: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
   cucumber: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
   chili: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
   strawberry: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },

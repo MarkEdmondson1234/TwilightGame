@@ -24,7 +24,7 @@ The farming system allows players to grow crops on special farm tiles. Each farm
 When using the Seeds tool (key 3), press these keys to select which crop to plant:
 - **5** - Radish Seeds (fast - 2 min)
 - **6** - Tomato Seeds (medium - 5 min)
-- **7** - Wheat Seeds (long - 10 min)
+- **7** - Salad Seeds (long - 10 min)
 - **8** - Corn Seeds (premium - 15 min)
 - **9** - Pumpkin Seeds (specialty - 20 min)
 
@@ -87,10 +87,10 @@ Farm tiles now show visual sprites and colors for each state:
 - Yield: 3 tomatoes
 - Sell price: 25 gold each (75 total)
 
-### Wheat (Long - 10 minutes)
+### Salad Greens (Long - 10 minutes)
 - Growth time: 10 minutes (7 min if watered)
 - Needs water every: 3 minutes
-- Yield: 5 wheat
+- Yield: 5 salad greens
 - Sell price: 15 gold each (75 total)
 
 ### Corn (Premium - 15 minutes)
@@ -121,7 +121,7 @@ Farm tiles now show visual sprites and colors for each state:
 
 4. **Select seeds** - Switch to Seeds (key `3`), then press keys `5-9` to choose crop type
    - The HUD shows your selected seed and quantity
-   - 5=Radish, 6=Tomato, 7=Wheat, 8=Corn, 9=Pumpkin
+   - 5=Radish, 6=Tomato, 7=Salad, 8=Corn, 9=Pumpkin
 
 5. **Plant seeds** - Press `E` on tilled soil (consumes 1 seed from inventory)
 
@@ -267,7 +267,7 @@ newCrop: {
 Potential additions:
 - Multi-harvest crops (e.g., tomato plants that produce multiple times)
 - Farm upgrades (sprinklers for auto-watering)
-- Crop processing (e.g., wheat → flour → bread)
+- Crop processing (e.g., grain → flour → bread)
 - Scarecrows to protect crops from crows
 - Companion planting bonuses
-- More crop-specific sprites (wheat, corn, pumpkin, etc.)
+- More crop-specific sprites (salad, corn, pumpkin, etc.)

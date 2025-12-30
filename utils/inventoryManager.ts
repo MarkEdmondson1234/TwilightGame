@@ -331,7 +331,7 @@ class InventoryManager {
     // Start with a variety of seeds for farming
     this.addItem('seed_radish', 15);
     this.addItem('seed_tomato', 8);
-    this.addItem('seed_wheat', 20);
+    this.addItem('seed_salad', 20);
 
     // Start with some harvested crops/materials
     this.addItem('crop_blackberry', 12); // Wild berries

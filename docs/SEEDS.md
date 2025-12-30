@@ -16,7 +16,7 @@ The quickest way to get started is the **Seed Shed** in the farm area:
 **Available at the Seed Shed:**
 - Radish Seeds (10) - fast growing, great for beginners
 - Tomato Seeds (10) - medium growth time
-- Wheat Seeds (5) - longer growth, good yields
+- Salad Seeds (5) - longer growth, good yields
 - Corn Seeds (3) - slow but profitable
 
 > Note: The Seed Shed provides unlimited free seeds during testing. In the future, this will be replaced with a proper shop system.
@@ -28,9 +28,8 @@ Some seeds can be purchased from shops using gold:
 | Seed | Cost | Growth | Best For |
 |------|------|--------|----------|
 | Radish | 5g | Fast (2 min) | Beginners |
-| Potato | 5g | Medium (8 min) | Reliable income |
 | Spinach | 8g | Fast (4 min) | Quick harvests |
-| Wheat | 10g | Medium (10 min) | Baking ingredients |
+| Salad | 10g | Medium (10 min) | Fresh greens |
 | Chili | 15g | Medium (10 min) | Spicy dishes |
 | Broccoli | 20g | Medium (10 min) | Healthy crops |
 | Cauliflower | 25g | Medium (12 min) | Cooking |
@@ -56,7 +55,7 @@ Befriending villagers unlocks special seed rewards! The **Old Man (Jebediah)** i
 - Tomato Seeds - a classic garden favourite
 - Carrot Seeds - crunchy and nutritious
 - Cucumber Seeds - cool and refreshing
-- Onion Seeds - plant in autumn only!
+- Onion Sets - plant in autumn only!
 
 ### 4. Foraging Seeds
 
@@ -91,7 +90,7 @@ When you harvest fully-grown crops, there's a chance to receive seeds back:
 
 | Source | Seeds Available | How to Unlock |
 |--------|----------------|---------------|
-| Seed Shed | Radish, Tomato, Wheat, Corn | Visit the farm area |
+| Seed Shed | Radish, Tomato, Salad, Corn | Visit the farm area |
 | Shops | Most common seeds | Buy with gold |
 | Friendship | Sunflower, Pea, Lettuce, Tomato, Carrot, Cucumber, Onion | Befriend villagers |
 | Foraging | Strawberry | Explore the forest |
@@ -111,8 +110,8 @@ Not all seeds can be planted year-round:
 
 | Season | Available Crops |
 |--------|----------------|
-| Spring | Most crops (Radish, Potato, Tomato, Wheat, Corn, etc.) |
-| Summer | Radish, Spinach, Lettuce, Chili, Wheat, Corn, Carrot |
+| Spring | Most crops (Radish, Tomato, Salad, Corn, etc.) |
+| Summer | Radish, Spinach, Lettuce, Chili, Salad, Corn, Carrot |
 | Autumn | Onion (only season for this crop!) |
 | Winter | Nothing can be planted |
 

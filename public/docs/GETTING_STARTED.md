@@ -22,7 +22,7 @@ Welcome to your new farming adventure! This guide will help you get started with
 ### Seed Selection (when Seeds tool is active)
 - **5** - Radish Seeds (fast - 2 min)
 - **6** - Tomato Seeds (medium - 5 min)
-- **7** - Wheat Seeds (long - 10 min)
+- **7** - Salad Seeds (long - 10 min)
 - **8** - Corn Seeds (premium - 15 min)
 - **9** - Pumpkin Seeds (specialty - 20 min)
 
@@ -100,7 +100,7 @@ Press **E** when the indicator is green to travel to a new area.
 ### Crop Strategy
 - **Radishes** - Fast and easy, great for beginners
 - **Tomatoes** - Better profit, needs more attention
-- **Wheat** - Hardy crop, good bulk harvest
+- **Salad Greens** - Hardy crop, good bulk harvest
 - **Corn** - Premium crop, requires patience
 - **Pumpkins** - Specialty crop, huge profit but takes longest
 
