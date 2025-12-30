@@ -6,7 +6,7 @@
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
-import { itemAssets, groceryAssets } from '../assets';
+import { itemAssets, groceryAssets, cookingAssets } from '../assets';
 
 /**
  * Item sprite mapping - maps item IDs to sprite URLs
@@ -19,6 +19,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
 
   // Ingredients
   water: itemAssets.water,
+  tea_leaves: groceryAssets.tea,
 
   // Seeds
   seed_carrot: itemAssets.carrot_seeds,
@@ -68,6 +69,12 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_spinach: groceryAssets.spinach_bundle,
   crop_salad: groceryAssets.salad_head,
   crop_broccoli: groceryAssets.broccoli_head,
+
+  // Cooked Food
+  food_tea: cookingAssets.cup_of_tea,
+  food_french_toast: cookingAssets.french_toast,
+  food_roast_dinner: cookingAssets.roast_dinner,
+  food_cookies: cookingAssets.cookies,
 };
 
 /**
