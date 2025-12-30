@@ -228,7 +228,6 @@ export const groceryAssets = {
   cheese: '/TwilightGame/assets-optimized/items/grocery/cheese.png',
   spinach_bundle: '/TwilightGame/assets-optimized/items/grocery/spinach_bundle.png',
   almonds: '/TwilightGame/assets-optimized/items/grocery/almonds.png',
-  salad_seeds: '/TwilightGame/assets-optimized/items/grocery/salad_seeds.png',
   salad_head: '/TwilightGame/assets-optimized/items/grocery/salad_head.png',
 };
 
@@ -379,6 +378,8 @@ export const itemAssets = {
   carrot_seeds: '/TwilightGame/assets-optimized/items/carrot_seeds.png',
   radish_seeds: '/TwilightGame/assets-optimized/items/radish_seeds.png',
   tomato_seeds: '/TwilightGame/assets-optimized/items/tomato_seeds.png',
+  salad_seeds: '/TwilightGame/assets-optimized/items/salad_seeds.png',
+  sunflower_seeds: '/TwilightGame/assets-optimized/items/sunflower_seeds.png',
   radishes: '/TwilightGame/assets-optimized/items/radishes.png',
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',
