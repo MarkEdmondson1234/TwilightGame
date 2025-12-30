@@ -1595,10 +1595,14 @@ const App: React.FC = () => {
                             console.log('[App] Spent gold:', Math.abs(goldDifference));
                         }
 
-                        // Update inventory
+                        // Update InventoryManager with new inventory (CRITICAL: Must sync InventoryManager)
                         const currentTools = gameState.getState().inventory.tools;
+                        inventoryManager.loadInventory(newInventory, currentTools);
+                        console.log('[App] Updated InventoryManager with new inventory');
+
+                        // Save to GameState (InventoryManager.loadInventory doesn't auto-save)
                         gameState.saveInventory(newInventory, currentTools);
-                        console.log('[App] Saved inventory:', newInventory);
+                        console.log('[App] Saved inventory to GameState');
 
                         // Update UI inventory display
                         const uiInventory = convertInventoryToUI();
