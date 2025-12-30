@@ -217,7 +217,7 @@ export const groceryAssets = {
   sack_of_potatoes: '/TwilightGame/assets-optimized/items/grocery/sack_of_potatoes.png',
   salt: '/TwilightGame/assets-optimized/items/grocery/salt.png',
   sugar: '/TwilightGame/assets-optimized/items/grocery/sugar.png',
-  tea: '/TwilightGame/assets-optimized/cooking/tea.png',
+  tea: '/TwilightGame/assets-optimized/items/grocery/tea.png',
   thyme: '/TwilightGame/assets-optimized/items/grocery/thyme.png',
   tomato: '/TwilightGame/assets-optimized/items/grocery/tomato.png',
   vanilla_pods: '/TwilightGame/assets-optimized/items/grocery/vanilla_pods.png',
