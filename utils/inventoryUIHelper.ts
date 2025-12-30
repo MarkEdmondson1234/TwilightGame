@@ -27,6 +27,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   seed_salad: itemAssets.salad_seeds,
   seed_spinach: itemAssets.spinach_seeds,
   seed_sunflower: itemAssets.sunflower_seeds,
+  seed_broccoli: itemAssets.broccoli_seeds,
 
   // Grocery items (cooking ingredients)
   butter: groceryAssets.butter,
@@ -66,6 +67,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_blackberry: itemAssets.blackberries,
   crop_spinach: groceryAssets.spinach_bundle,
   crop_salad: groceryAssets.salad_head,
+  crop_broccoli: groceryAssets.broccoli_head,
 };
 
 /**
@@ -87,7 +89,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
   seed_pumpkin: '🎃',
   seed_melon: '🍉',
   seed_chili: '🌶️',
-  seed_broccoli: '🥦',
   seed_cauliflower: '🥬',
   seed_onion: '🧅',
   seed_pea: '🫛',
@@ -100,7 +101,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
   crop_potato: '🥔',
   crop_melon: '🍉',
   crop_chili: '🌶️',
-  crop_broccoli: '🥦',
   crop_cauliflower: '🥬',
   crop_sunflower: '🌻',
   crop_onion: '🧅',

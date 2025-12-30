@@ -183,6 +183,8 @@ export const farmingAssets = {
   plant_tomato_adult: '/TwilightGame/assets-optimized/farming/tomato_adult.png',
   plant_spinach_young: '/TwilightGame/assets-optimized/farming/spinach_young.png',
   plant_spinach_adult: '/TwilightGame/assets-optimized/farming/spinach_adult.png',
+  plant_broccoli_young: '/TwilightGame/assets-optimized/farming/broccoli_young.png',
+  plant_broccoli_adult: '/TwilightGame/assets-optimized/farming/broccoli_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 
@@ -229,6 +231,7 @@ export const groceryAssets = {
   spinach_bundle: '/TwilightGame/assets-optimized/items/grocery/spinach_bundle.png',
   almonds: '/TwilightGame/assets-optimized/items/grocery/almonds.png',
   salad_head: '/TwilightGame/assets-optimized/items/grocery/salad_head.png',
+  broccoli_head: '/TwilightGame/assets-optimized/items/grocery/broccoli_head.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
@@ -381,6 +384,7 @@ export const itemAssets = {
   salad_seeds: '/TwilightGame/assets-optimized/items/salad_seeds.png',
   spinach_seeds: '/TwilightGame/assets-optimized/items/spinach_seeds.png',
   sunflower_seeds: '/TwilightGame/assets-optimized/items/sunflower_seeds.png',
+  broccoli_seeds: '/TwilightGame/assets-optimized/items/broccoli_seeds.png',
   radishes: '/TwilightGame/assets-optimized/items/radishes.png',
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',

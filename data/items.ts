@@ -143,6 +143,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Broccoli Seeds',
     category: ItemCategory.SEED,
     description: 'Healthy broccoli seeds. Best eaten fresh.',
+    image: itemAssets.broccoli_seeds,
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 10,
@@ -345,6 +346,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Healthy green broccoli florets.',
     stackable: true,
     sellPrice: 35,
+    image: groceryAssets.broccoli_head,
   },
 
   crop_cauliflower: {
