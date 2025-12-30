@@ -374,6 +374,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh lettuce leaves.',
     stackable: true,
     sellPrice: 15,
+    image: groceryAssets.salad_head,
   },
 
   crop_onion: {

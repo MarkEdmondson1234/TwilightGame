@@ -63,6 +63,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_tomato: groceryAssets.tomato,
   crop_blackberry: itemAssets.blackberries,
   crop_spinach: groceryAssets.spinach_bundle,
+  crop_salad: groceryAssets.salad_head,
 };
 
 /**
@@ -94,7 +95,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
   seed_strawberry: '🍓',
 
   // Crops (items without sprites)
-  crop_salad: '🥗',
   crop_corn: '🌽',
   crop_pumpkin: '🎃',
   crop_potato: '🥔',

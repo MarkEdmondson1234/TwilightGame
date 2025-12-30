@@ -54,6 +54,7 @@ Invoke this skill when:
 - User mentions "inventory sprite", "item image", "grocery sprite"
 - User wants to replace emoji placeholders with real images
 - User reports sprites showing as emojis instead of images (missing ITEM_SPRITE_MAP entry)
+- User adds a crop that should also be purchasable at the shop (like spinach or salad)
 
 **Trigger phrases:**
 - "Add [item] sprite to inventory"
@@ -61,6 +62,7 @@ Invoke this skill when:
 - "Upload [ingredient] image"
 - "Add sprite for [tool/seed/item]"
 - "Why is [item] showing as emoji?"
+- "Make this crop buyable at the shop like spinach"
 
 ## Workflow
 
@@ -149,6 +151,10 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   chocolate: groceryAssets.chocolate_bar,
   vanilla: groceryAssets.vanilla_pods,
 
+  // Crops (harvested items that also appear in shop)
+  crop_spinach: groceryAssets.spinach_bundle,
+  crop_salad: groceryAssets.salad_head,
+
   // ← Add new items here:
   new_item: groceryAssets.new_item,
 };
@@ -162,6 +168,54 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
 meat: groceryAssets.minced_meat,
 minced_meat: groceryAssets.minced_meat,
 ```
+
+**Remove emoji fallbacks when adding sprites:**
+```typescript
+// In ITEM_ICON_MAP (emoji fallback section)
+const ITEM_ICON_MAP: Record<string, string> = {
+  crop_salad: '🥗',  // ← Remove this line when adding sprite
+};
+```
+
+If an item has an emoji fallback in `ITEM_ICON_MAP` and you add a sprite, remove the emoji entry to avoid confusion. The sprite in `ITEM_SPRITE_MAP` takes precedence, but removing the fallback keeps the code clean.
+
+### 4b. Special Case: Crops That Are Also Shop Items
+
+Some crops can be both **harvested from farming** AND **purchased at the shop** (like spinach or salad). These require additional setup beyond the standard three-location pattern.
+
+**Example: Adding salad as both a crop and shop item**
+
+1. **Complete steps 1-4** above (asset registration, items.ts, inventoryUIHelper.ts)
+
+2. **Add to shop inventory** (`data/shopInventory.ts`):
+   ```typescript
+   export const GENERAL_STORE_INVENTORY: ShopItem[] = [
+     // ...existing items
+     {
+       itemId: 'crop_salad',  // The harvested crop item ID
+       buyPrice: 35,          // Overpriced (normally sells for 15g)
+       sellPrice: 15,         // Match the crop's sellPrice from items.ts
+       stock: 'unlimited',
+       availableSeasons: ['spring', 'summer'],  // When salad grows
+     },
+   ];
+   ```
+
+3. **Pattern to follow:**
+   - Buy price should be ~2-3x the sell price (overpriced)
+   - Sell price should match the crop's `sellPrice` in `items.ts`
+   - Available seasons should match when the crop can be planted (`data/crops.ts`)
+   - This allows players to buy the crop directly instead of farming it
+
+**Why do this?**
+- Players can buy crops they haven't grown yet
+- Useful for cooking recipes that need specific ingredients
+- Creates a trade-off: grow cheaply or buy expensively for convenience
+
+**Examples of dual-purpose crops:**
+- `crop_spinach` - Available spring/summer at 30g (sells for 12g)
+- `crop_salad` - Available spring/summer at 35g (sells for 15g)
+- `crop_tomato` - Available summer/autumn as "tomato_fresh" at 12g (sells for 5g)
 
 ### 5. Run Asset Optimization
 
@@ -246,18 +300,37 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
 ### Issue: Image shows as broken/missing (beige brick emoji)
 
 **Causes:**
-1. Optimized file doesn't exist yet
+1. Optimized file doesn't exist yet (most common)
 2. Path mismatch between `assets.ts` and actual file location
 3. Cached inventory data with old broken paths
+4. Browser cached the missing image
 
 **Fixes:**
-1. Run `npm run optimize-assets`
-2. Check filename matches exactly (case-sensitive on some systems)
-3. Clear localStorage and reload:
+1. **First, check if optimized file exists:**
+   ```bash
+   ls "c:\Github files\TwilightGame\public\assets-optimized\items\grocery\your_item.png"
+   ```
+   If it says "No such file", run optimization:
+   ```bash
+   npm run optimize-assets
+   ```
+
+2. **Hard refresh browser** to clear cached assets:
+   - Windows/Linux: `Ctrl + Shift + R`
+   - Mac: `Cmd + Shift + R`
+
+3. Check filename matches exactly (case-sensitive on some systems)
+
+4. If still broken, clear localStorage and reload:
    ```javascript
    localStorage.clear();
    location.reload();
    ```
+
+**Common workflow:**
+After adding a sprite to `assets.ts` and `inventoryUIHelper.ts`, you MUST:
+1. Run `npm run optimize-assets` (creates the optimized version)
+2. Hard refresh browser (Ctrl+Shift+R) to clear cache
 
 ### Issue: Optimization script skips my sprite
 
@@ -310,9 +383,12 @@ When adding a new inventory item sprite:
 - [ ] 2. Register in `assets.ts` → appropriate assets object (e.g., `groceryAssets`)
 - [ ] 3. Link in `data/items.ts` → item definition `image` property (optional)
 - [ ] 4. **CRITICAL:** Map in `utils/inventoryUIHelper.ts` → `ITEM_SPRITE_MAP`
-- [ ] 5. Run `npm run optimize-assets`
+- [ ] 4b. Remove emoji fallback from `ITEM_ICON_MAP` if it exists (keeps code clean)
+- [ ] 4c. (Optional) If crop is also shop item, add to `data/shopInventory.ts`
+- [ ] 5. Run `npm run optimize-assets` (creates optimized version)
 - [ ] 6. Run `npx tsc --noEmit` (validate TypeScript)
 - [ ] 7. Test in game (add item to inventory, verify sprite displays)
+- [ ] 8. Hard refresh browser (Ctrl+Shift+R) to clear cached assets
 
 ## Progressive Disclosure
 

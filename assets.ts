@@ -229,6 +229,7 @@ export const groceryAssets = {
   spinach_bundle: '/TwilightGame/assets-optimized/items/grocery/spinach_bundle.png',
   almonds: '/TwilightGame/assets-optimized/items/grocery/almonds.png',
   salad_seeds: '/TwilightGame/assets-optimized/items/grocery/salad_seeds.png',
+  salad_head: '/TwilightGame/assets-optimized/items/grocery/salad_head.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
