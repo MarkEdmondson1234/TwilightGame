@@ -186,6 +186,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 5,
     buyPrice: 10,
     cropId: 'salad',
+    image: groceryAssets.salad_seeds,
   },
 
   seed_onion: {

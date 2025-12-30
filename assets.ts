@@ -173,6 +173,8 @@ export const farmingAssets = {
   seedling: '/TwilightGame/assets-optimized/farming/seedling.png',
   plant_pea_young: '/TwilightGame/assets-optimized/farming/plant_pea_young.png',
   plant_pea_adult: '/TwilightGame/assets-optimized/farming/plant_pea_adult.png',
+  plant_salad_young: '/TwilightGame/assets-optimized/farming/salad_young.png',
+  plant_salad_adult: '/TwilightGame/assets-optimized/farming/salad_adult.png',
   plant_strawberry_young: '/TwilightGame/assets-optimized/farming/plant_strawberry_young.png',
   plant_strawberry_adult: '/TwilightGame/assets-optimized/farming/plant_strawberry_adult.png',
   plant_sunflower_young: '/TwilightGame/assets-optimized/farming/sunflower_young.png',
@@ -226,6 +228,7 @@ export const groceryAssets = {
   cheese: '/TwilightGame/assets-optimized/items/grocery/cheese.png',
   spinach_bundle: '/TwilightGame/assets-optimized/items/grocery/spinach_bundle.png',
   almonds: '/TwilightGame/assets-optimized/items/grocery/almonds.png',
+  salad_seeds: '/TwilightGame/assets-optimized/items/grocery/salad_seeds.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
