@@ -581,6 +581,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.cheese,
   },
 
+  almonds: {
+    id: 'almonds',
+    name: 'almonds',
+    displayName: 'Almonds',
+    category: ItemCategory.INGREDIENT,
+    description: 'Crunchy roasted almonds.',
+    stackable: true,
+    sellPrice: 6,
+    buyPrice: 15,
+    image: groceryAssets.almonds,
+  },
+
   egg: {
     id: 'egg',
     name: 'egg',
@@ -750,18 +762,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 10,
     buyPrice: 25,
     image: groceryAssets.chocolate_bar,
-  },
-
-  almonds: {
-    id: 'almonds',
-    name: 'almonds',
-    displayName: 'Almonds',
-    category: ItemCategory.INGREDIENT,
-    description: 'Ground almonds for marzipan.',
-    stackable: true,
-    sellPrice: 8,
-    buyPrice: 20,
-    // Note: No almonds sprite yet - add almonds.png to grocery folder
   },
 
   strawberry_jam: {

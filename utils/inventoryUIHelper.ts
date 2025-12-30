@@ -54,12 +54,14 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   tomato_fresh: groceryAssets.tomato,
   olive_oil: groceryAssets.olive_oil,
   strawberry_jam: groceryAssets.strawberry_jam,
+  cheese: groceryAssets.cheese,
+  almonds: groceryAssets.almonds,
 
   // Crops
   crop_radish: itemAssets.radishes,
   crop_tomato: groceryAssets.tomato,
   crop_blackberry: itemAssets.blackberries,
-  // crop_spinach: groceryAssets.spinach_bundle, // TODO: Add spinach asset
+  crop_spinach: groceryAssets.spinach_bundle,
 };
 
 /**
@@ -76,9 +78,7 @@ export function registerItemSprite(itemId: string, imageUrl: string): void {
  * Used for items that don't have sprite assets yet
  */
 const ITEM_ICON_MAP: Record<string, string> = {
-  // Seeds
-  seed_radish: '🥕',
-  seed_tomato: '🍅',
+  // Seeds (items without sprites)
   seed_wheat: '🌾',
   seed_corn: '🌽',
   seed_pumpkin: '🎃',
@@ -93,19 +93,15 @@ const ITEM_ICON_MAP: Record<string, string> = {
   seed_onion: '🧅',
   seed_pea: '🫛',
   seed_cucumber: '🥒',
-  seed_carrot: '🥕',
   seed_strawberry: '🍓',
 
-  // Crops
-  crop_radish: '🥕',
-  crop_tomato: '🍅',
+  // Crops (items without sprites)
   crop_wheat: '🌾',
   crop_corn: '🌽',
   crop_pumpkin: '🎃',
   crop_potato: '🥔',
   crop_melon: '🍉',
   crop_chili: '🌶️',
-  crop_spinach: '🥬',
   crop_broccoli: '🥦',
   crop_cauliflower: '🥬',
   crop_sunflower: '🌻',
@@ -115,37 +111,13 @@ const ITEM_ICON_MAP: Record<string, string> = {
   crop_cucumber: '🥒',
   crop_carrot: '🥕',
   crop_strawberry: '🍓',
-  crop_blackberry: '🫐',
-
-  // Tools
-  tool_hoe: '⚒️',
-  tool_watering_can: '💧',
 
   // Materials
   fertiliser: '💩',
 
-  // Ingredients
+  // Ingredients (items without sprites)
   tea_leaves: '🍵',
-  water: '💧',
-  milk: '🥛',
   cream: '🍶',
-  butter: '🧈',
-  cheese: '🧀',
-  egg: '🥚',
-  flour: '🌾',
-  sugar: '🍬',
-  salt: '🧂',
-  yeast: '🍞',
-  olive_oil: '🫒',
-  vanilla: '🌸',
-  cinnamon: '🌰',
-  meat: '🥩',
-  minced_meat: '🍖',
-  pasta: '🍝',
-  bread: '🍞',
-  chocolate: '🍫',
-  almonds: '🌰',
-  strawberry_jam: '🍓',
 
   // Cooked Food
   food_tea: '☕',

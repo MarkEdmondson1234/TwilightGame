@@ -202,6 +202,12 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
+    itemId: 'almonds',
+    buyPrice: 15,
+    sellPrice: 6,
+    stock: 'unlimited',
+  },
+  {
     itemId: 'egg',
     buyPrice: 5,
     sellPrice: 2,
@@ -289,12 +295,6 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     itemId: 'chocolate',
     buyPrice: 25,
     sellPrice: 10,
-    stock: 'unlimited',
-  },
-  {
-    itemId: 'almonds',
-    buyPrice: 20,
-    sellPrice: 8,
     stock: 'unlimited',
   },
 
