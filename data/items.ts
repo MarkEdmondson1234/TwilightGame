@@ -551,7 +551,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'almonds',
     displayName: 'Almonds',
     category: ItemCategory.INGREDIENT,
-    description: 'Crunchy roasted almonds.',
+    description: 'A tasty nutritious snack or ingredient.',
     stackable: true,
     sellPrice: 6,
     buyPrice: 15,
