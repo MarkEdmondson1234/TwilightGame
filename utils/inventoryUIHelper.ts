@@ -32,6 +32,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
 
   // Grocery items (cooking ingredients)
   butter: groceryAssets.butter,
+  cream: groceryAssets.cream,
   egg: groceryAssets.egg,
   flour: groceryAssets.flour,
   gravy: groceryAssets.gravy,
@@ -58,6 +59,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   tomato_tin: groceryAssets.canned_tomato,
   tomato_fresh: groceryAssets.tomato,
   olive_oil: groceryAssets.olive_oil,
+  sunflower_oil: groceryAssets.sunflower_oil,
   strawberry_jam: groceryAssets.strawberry_jam,
   cheese: groceryAssets.cheese,
   almonds: groceryAssets.almonds,
@@ -66,6 +68,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_radish: itemAssets.radishes,
   crop_tomato: groceryAssets.tomato,
   crop_blackberry: itemAssets.blackberries,
+  crop_strawberry: itemAssets.strawberry,
   crop_spinach: groceryAssets.spinach_bundle,
   crop_salad: groceryAssets.salad_head,
   crop_broccoli: groceryAssets.broccoli_head,
@@ -121,7 +124,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
 
   // Ingredients (items without sprites)
   tea_leaves: '🍵',
-  cream: '🍶',
 
   // Cooked Food
   food_tea: '☕',
