@@ -1,34 +1,36 @@
-import { MapDefinition, TileType } from '../../types';
+import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createShopkeeperNPC } from '../../utils/npcFactories';
+import {
+  Z_PARALLAX_FAR,
+  Z_SPRITE_BACKGROUND,
+  Z_INTERIOR_FOREGROUND,
+} from '../../zIndex';
 
 /**
  * Shop - Village Grocery Shop Interior
  *
  * A cosy grocery shop using background-image rendering mode.
- * Two-layer system: backgroundLayers (back wall) + foregroundLayers (counter).
+ * Uses the unified layers system for clear z-ordering.
  *
  * Image dimensions: 1920x1080 pixels (rendered at 1200x675, ~62.5% scale)
- * Grid is 19x11 tiles to match observed image coverage.
+ * Grid is 19x12 tiles for collision detection.
  *
  * Walkmesh Grid Legend:
  * . = Floor (walkable - wooden floor area)
  * # = Wall/Obstacle (solid - shelves, counter, walls)
- * S = Shop Door (transition back to village)
  *
  * The grid is invisible - only used for collision!
  *
- * Z-ordering (how layers stack):
- * - backgroundLayers[0]: z-index -100 (back wall, shelves) - behind everything
- * - Fox shopkeeper NPC: z-index 50 (via zIndexOverride) - behind counter
- * - Counter foreground: z-index 65 - in front of fox, behind player
- * - Player: z-index 70-90 (based on Y position 7-9) - in front of counter
- * - UI elements: z-index 1000+ - always on top
+ * Layer ordering (back to front):
+ * 1. Background image (Z_PARALLAX_FAR = -100) - back wall, shelves
+ * 2. Fox shopkeeper (Z_SPRITE_BACKGROUND = 50) - behind counter
+ * 3. Counter foreground (Z_INTERIOR_FOREGROUND = 65) - in front of fox
+ * 4. Player (Z_PLAYER = 100) - in front of everything except UI
  */
 
 // 19 columns x 12 rows - matches observed image coverage at 1200x675
 // Walkable floor is in the bottom portion (wooden floor area)
-// S = Shop door transition (center of bottom walkable row)
 const gridString = `
 ###################
 ###################
@@ -44,6 +46,51 @@ const gridString = `
 ###################
 `;
 
+// Create the fox NPC (will have zIndexOverride set from layer)
+const foxShopkeeper = {
+  ...createShopkeeperNPC('shop_counter_fox', { x: 9, y: 6 }, 'Fox'),
+  interactionRadius: 4, // Larger radius to reach from in front of counter
+};
+
+/**
+ * Unified layers array - defines all visual elements in z-order
+ * Each layer's zIndex determines its depth relative to others
+ */
+const shopLayers: RoomLayer[] = [
+  // Layer 1: Background image (back wall and shelves)
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_back.png',
+    zIndex: Z_PARALLAX_FAR,  // -100: Behind everything
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 1200,
+    height: 675,
+    centered: true,
+  },
+
+  // Layer 2: Fox shopkeeper (behind the counter)
+  {
+    type: 'npc',
+    npc: foxShopkeeper,
+    zIndex: Z_SPRITE_BACKGROUND,  // 50: Behind counter, behind player
+  },
+
+  // Layer 3: Counter foreground (in front of fox, behind player)
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_front.png',
+    zIndex: Z_INTERIOR_FOREGROUND,  // 65: In front of fox, behind player
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 1200,
+    height: 675,
+    centered: true,
+  },
+
+  // Player is implicitly at Z_PLAYER (100) - in front of counter
+];
+
 export const shop: MapDefinition = {
   id: 'shop',
   name: 'Village Shop',
@@ -56,37 +103,13 @@ export const shop: MapDefinition = {
   renderMode: 'background-image',
   characterScale: 2.5, // Larger characters for this room
 
-  // Background layer - back wall and shelves
-  // Images are 1920x1080, rendered at 1200x675 (62.5% scale)
-  backgroundLayers: [
-    {
-      image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_back.png',
-      zIndex: -100,         // Behind everything
-      parallaxFactor: 1.0,
-      opacity: 1.0,
-      width: 1200,
-      height: 675,
-      centered: true,
-    },
-  ],
-
-  // Foreground layer - counter (renders in front of fox, behind player)
-  foregroundLayers: [
-    {
-      image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_front.png',
-      zIndex: 65,           // Between fox (50) and player (70+)
-      parallaxFactor: 1.0,
-      opacity: 1.0,
-      width: 1200,
-      height: 675,
-      centered: true,
-    },
-  ],
+  // Unified layer system - all visual elements in z-order
+  layers: shopLayers,
 
   // Transitions
   transitions: [
     {
-      fromPosition: { x: 5, y: 10 }, // Shop door at center bottom (where S is in grid)
+      fromPosition: { x: 5, y: 10 }, // Shop door at center bottom
       tileType: TileType.SHOP_DOOR,
       toMapId: 'village',
       toPosition: { x: 12, y: 14 }, // Back to village
@@ -94,16 +117,6 @@ export const shop: MapDefinition = {
     },
   ],
 
-  // NPCs - Fox behind the counter (around y: 5-6 area)
-  // Uses 'shop_counter_fox' ID to distinguish from village shopkeeper (triggers shop UI)
-  // zIndexOverride: 50 puts fox between background (-100) and player (100)
-  // This means fox appears BEHIND the counter foreground layer (200)
-  // interactionRadius: 4 allows interaction from the walkable floor area (y:8-9)
-  npcs: [
-    {
-      ...createShopkeeperNPC('shop_counter_fox', { x: 9, y: 6 }, 'Fox'),
-      zIndexOverride: 50, // Behind player, behind counter
-      interactionRadius: 4, // Larger radius to reach from in front of counter
-    },
-  ],
+  // Note: NPCs are defined in the layers array above
+  // This ensures proper z-ordering with image layers
 };

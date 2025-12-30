@@ -2,26 +2,28 @@
  * BackgroundImageLayer - PixiJS-based background image rendering for interiors
  *
  * Renders large background images instead of tile-by-tile for interior rooms.
- * Supports multiple layers with parallax scrolling for depth effects.
+ * Uses a unified layer system where images and NPCs can be defined together
+ * with explicit z-ordering.
  *
  * Features:
  * - Large background images (hand-painted rooms)
- * - Multiple layers with z-index ordering
+ * - Unified layers array with images and NPCs
+ * - Z-index ordering for precise depth control
  * - Parallax scrolling (layers move at different speeds)
- * - Foreground layers (render in front of player)
  *
  * Usage:
  *   const bgLayer = new BackgroundImageLayer();
- *   app.stage.addChild(bgLayer.getContainer());
- *   await bgLayer.loadLayers(map.backgroundLayers, textureManager);
+ *   bgLayer.setStage(app.stage);
+ *   await bgLayer.loadLayers(map, mapId);
  *   bgLayer.updateCamera(cameraX, cameraY);
  */
 
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { textureManager } from '../TextureManager';
-import { BackgroundLayer, MapDefinition } from '../../types';
-import { Z_PARALLAX_FAR } from '../../zIndex';
+import { MapDefinition, RoomLayer, ImageRoomLayer, NPC } from '../../types';
+import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
+import { npcManager } from '../../NPCManager';
 
 interface LayerSprite {
   sprite: PIXI.Sprite;
@@ -39,15 +41,31 @@ interface ViewportDimensions {
 }
 
 export class BackgroundImageLayer {
-  private container: PIXI.Container;
+  // Background container for layers behind everything
+  private backgroundContainer: PIXI.Container;
+  // Foreground sprites added directly to stage (not in container) for proper z-index sorting
+  private foregroundSpritesOnStage: PIXI.Sprite[] = [];
   private backgroundSprites: LayerSprite[] = [];
   private foregroundSprites: LayerSprite[] = [];
   private currentMapId: string | null = null;
   private viewportDimensions: ViewportDimensions = { width: 0, height: 0 };
+  private stageRef: PIXI.Container | null = null;
+  // NPCs extracted from unified layers (with zIndexOverride set)
+  private layerNPCs: NPC[] = [];
 
   constructor() {
-    this.container = new PIXI.Container();
-    this.container.sortableChildren = true;
+    // Background container - behind all game content
+    this.backgroundContainer = new PIXI.Container();
+    this.backgroundContainer.sortableChildren = true;
+    this.backgroundContainer.zIndex = Z_PARALLAX_FAR; // -100
+  }
+
+  /**
+   * Set the stage reference for adding foreground sprites directly
+   * This allows foreground layers to have individual z-indices that sort with player/NPCs
+   */
+  setStage(stage: PIXI.Container): void {
+    this.stageRef = stage;
   }
 
   /**
@@ -88,53 +106,90 @@ export class BackgroundImageLayer {
       return;
     }
 
-    // Load background layers (render behind player)
-    if (map.backgroundLayers) {
-      for (const layer of map.backgroundLayers) {
-        const layerSprite = await this.createLayerSprite(layer, map);
-        if (layerSprite) {
-          this.backgroundSprites.push(layerSprite);
-        }
+    // Clear layer NPCs
+    this.layerNPCs = [];
+
+    // Process unified layers array
+    if (map.layers && map.layers.length > 0) {
+      await this.processUnifiedLayers(map.layers, map);
+      console.log(`[BackgroundImageLayer] Loaded unified layers for ${mapId}: ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground images, ${this.layerNPCs.length} NPCs`);
+
+      // Register layer NPCs with npcManager so they're found by interaction handlers
+      if (this.layerNPCs.length > 0) {
+        // Get existing NPCs for this map and combine with layer NPCs
+        const existingNPCs = npcManager.getNPCsForMap(mapId);
+        const combinedNPCs = [...existingNPCs, ...this.layerNPCs];
+        npcManager.registerNPCs(mapId, combinedNPCs);
+        console.log(`[BackgroundImageLayer] Registered ${this.layerNPCs.length} layer NPCs with npcManager`);
       }
     }
-
-    // Load foreground layers (render in front of player)
-    // Skip if skipForeground is true - these will be rendered as DOM elements instead
-    // for proper z-ordering with NPCs
-    if (map.foregroundLayers && !skipForeground) {
-      for (const layer of map.foregroundLayers) {
-        const layerSprite = await this.createLayerSprite(layer, map);
-        if (layerSprite) {
-          this.foregroundSprites.push(layerSprite);
-        }
-      }
-    }
-
-    console.log(`[BackgroundImageLayer] Loaded ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground layers for ${mapId}${skipForeground ? ' (foreground skipped - DOM render)' : ''}`);
   }
 
   /**
-   * Create a sprite for a single layer
+   * Process unified layers array - handles both images and NPCs
+   * All elements are added directly to stage with their z-index for proper sorting
    */
-  private async createLayerSprite(
-    layer: BackgroundLayer,
+  private async processUnifiedLayers(layers: RoomLayer[], map: MapDefinition): Promise<void> {
+    if (!this.stageRef) {
+      console.warn('[BackgroundImageLayer] Stage reference not set, cannot process unified layers');
+      return;
+    }
+
+    for (const layer of layers) {
+      if (layer.type === 'image') {
+        // Image layer - add directly to stage for proper z-index sorting
+        const layerSprite = await this.createImageLayerSprite(layer, map);
+        if (layerSprite) {
+          // Categorize by z-index for reference (background vs foreground)
+          if (layer.zIndex < Z_PLAYER) {
+            this.backgroundSprites.push(layerSprite);
+          } else {
+            this.foregroundSprites.push(layerSprite);
+          }
+          this.stageRef.addChild(layerSprite.sprite);
+          this.foregroundSpritesOnStage.push(layerSprite.sprite);
+        }
+      } else if (layer.type === 'npc') {
+        // NPC layer - extract NPC with zIndexOverride set from layer's zIndex
+        const npcWithZIndex: NPC = {
+          ...layer.npc,
+          zIndexOverride: layer.zIndex,
+        };
+        this.layerNPCs.push(npcWithZIndex);
+      }
+    }
+  }
+
+  /**
+   * Get NPCs extracted from unified layers (with zIndexOverride set)
+   * Call this after loadLayers to get NPCs that should be rendered
+   */
+  getLayerNPCs(): NPC[] {
+    return this.layerNPCs;
+  }
+
+  /**
+   * Create a sprite for an image layer
+   * Sprites are added directly to stage for proper z-index sorting with player/NPCs
+   */
+  private async createImageLayerSprite(
+    layer: ImageRoomLayer,
     map: MapDefinition
   ): Promise<LayerSprite | null> {
     // Ensure texture is loaded
     let texture = textureManager.getTexture(layer.image);
 
     if (!texture) {
-      // Try to load it
       try {
         texture = await textureManager.loadTexture(layer.image, layer.image);
       } catch (err) {
-        console.error(`[BackgroundImageLayer] Failed to load texture: ${layer.image}`, err);
+        console.error(`[BackgroundImageLayer] Failed to load foreground texture: ${layer.image}`, err);
         return null;
       }
     }
 
     if (!texture) {
-      console.warn(`[BackgroundImageLayer] Texture not available: ${layer.image}`);
+      console.warn(`[BackgroundImageLayer] Foreground texture not available: ${layer.image}`);
       return null;
     }
 
@@ -145,35 +200,29 @@ export class BackgroundImageLayer {
     let targetHeight: number;
 
     if (layer.width && layer.height) {
-      // Use explicit width/height if provided
       targetWidth = layer.width;
       targetHeight = layer.height;
     } else if (layer.useNativeSize) {
-      // Use the image's natural dimensions
       targetWidth = texture.width;
       targetHeight = texture.height;
     } else {
-      // Default: Scale to fit map grid dimensions
       const mapWidthPx = map.width * TILE_SIZE;
       const mapHeightPx = map.height * TILE_SIZE;
       targetWidth = mapWidthPx;
       targetHeight = mapHeightPx;
     }
 
-    // Apply scale multiplier if provided
     const scale = layer.scale ?? 1.0;
     const finalWidth = targetWidth * scale;
     const finalHeight = targetHeight * scale;
     sprite.width = finalWidth;
     sprite.height = finalHeight;
 
-    // Calculate position - either manual offset or centered in viewport
+    // Calculate position
     let baseX = layer.offsetX ?? 0;
     let baseY = layer.offsetY ?? 0;
 
     if (layer.centered) {
-      // Center the image in the viewport
-      // Use window dimensions for consistency with DOM element positioning
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
       baseX = (viewportWidth - finalWidth) / 2;
@@ -183,14 +232,12 @@ export class BackgroundImageLayer {
     sprite.x = baseX;
     sprite.y = baseY;
 
-    // Apply z-index
-    sprite.zIndex = layer.zIndex ?? Z_PARALLAX_FAR;
-
-    // Apply opacity
+    // IMPORTANT: Use the layer's z-index for proper depth sorting with player/NPCs
+    // The shop counter (z-index 65) will sort between fox (50) and player (100)
+    sprite.zIndex = layer.zIndex;
     sprite.alpha = layer.opacity ?? 1.0;
 
-    // Add to container
-    this.container.addChild(sprite);
+    console.log(`[BackgroundImageLayer] Created foreground sprite with z-index ${sprite.zIndex}`);
 
     return {
       sprite,
@@ -271,21 +318,28 @@ export class BackgroundImageLayer {
     }
     this.backgroundSprites = [];
 
-    // Destroy foreground sprites
-    for (const layerSprite of this.foregroundSprites) {
-      layerSprite.sprite.destroy();
+    // Remove foreground sprites from stage and destroy them
+    for (const sprite of this.foregroundSpritesOnStage) {
+      if (this.stageRef && sprite.parent === this.stageRef) {
+        this.stageRef.removeChild(sprite);
+      }
+      sprite.destroy();
     }
+    this.foregroundSpritesOnStage = [];
     this.foregroundSprites = [];
+
+    // Clear layer NPCs
+    this.layerNPCs = [];
 
     this.currentMapId = null;
     console.log('[BackgroundImageLayer] Cleared all layers');
   }
 
   /**
-   * Get the container for adding to stage
+   * Get the background container for adding to stage (behind game content)
    */
   getContainer(): PIXI.Container {
-    return this.container;
+    return this.backgroundContainer;
   }
 
   /**

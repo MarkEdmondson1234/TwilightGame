@@ -27,10 +27,21 @@ import { Z_PLAYER } from '../../zIndex';
 export class NPCLayer extends PixiLayer {
   private npcSprites: Map<string, PIXI.Sprite> = new Map();
   private currentTextures: Map<string, string> = new Map();
+  // NPCs with zIndexOverride below Z_PLAYER are added directly to stage for proper z-sorting
+  private stageSprites: Map<string, PIXI.Sprite> = new Map();
+  private stageRef: PIXI.Container | null = null;
 
   constructor() {
     // Base z-index same as player, individual sprites have dynamic z-index for depth sorting
     super(Z_PLAYER, true);
+  }
+
+  /**
+   * Set stage reference for NPCs that need to sort with other stage elements
+   * NPCs with zIndexOverride < Z_PLAYER will be added directly to stage
+   */
+  setStage(stage: PIXI.Container): void {
+    this.stageRef = stage;
   }
 
   /**
@@ -50,13 +61,22 @@ export class NPCLayer extends PixiLayer {
     for (const npc of npcs) {
       renderedIds.add(npc.id);
 
+      // Determine if this NPC should be on stage (for low z-index sorting) or in container
+      const needsStageZSort = npc.zIndexOverride !== undefined && npc.zIndexOverride < Z_PLAYER;
+      const useStage = needsStageZSort && this.stageRef !== null;
+
       // Get or create sprite for this NPC
-      let sprite = this.npcSprites.get(npc.id);
+      let sprite = useStage ? this.stageSprites.get(npc.id) : this.npcSprites.get(npc.id);
       if (!sprite) {
         sprite = new PIXI.Sprite();
         sprite.anchor.set(0.5, 0.5); // Center anchor
-        this.container.addChild(sprite);
-        this.npcSprites.set(npc.id, sprite);
+        if (useStage) {
+          this.stageRef!.addChild(sprite);
+          this.stageSprites.set(npc.id, sprite);
+        } else {
+          this.container.addChild(sprite);
+          this.npcSprites.set(npc.id, sprite);
+        }
       }
 
       // Load texture if changed
@@ -129,7 +149,11 @@ export class NPCLayer extends PixiLayer {
     for (const [npcId, sprite] of this.npcSprites.entries()) {
       if (!renderedIds.has(npcId)) {
         sprite.visible = false;
-        // Don't remove from map - keep for reuse if NPC returns
+      }
+    }
+    for (const [npcId, sprite] of this.stageSprites.entries()) {
+      if (!renderedIds.has(npcId)) {
+        sprite.visible = false;
       }
     }
   }
@@ -142,6 +166,16 @@ export class NPCLayer extends PixiLayer {
       sprite.destroy();
     }
     this.npcSprites.clear();
+
+    // Clear stage sprites (remove from stage first)
+    for (const sprite of this.stageSprites.values()) {
+      if (this.stageRef && sprite.parent === this.stageRef) {
+        this.stageRef.removeChild(sprite);
+      }
+      sprite.destroy();
+    }
+    this.stageSprites.clear();
+
     this.currentTextures.clear();
   }
 }

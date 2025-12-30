@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, USE_SPRITE_SHADOWS } from './constants';
-import { Position, Direction } from './types';
+import { Position, Direction, ImageRoomLayer } from './types';
 import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { PlayerSprite } from './utils/pixi/PlayerSprite';
@@ -52,7 +52,7 @@ import NPCInteractionIndicators from './components/NPCInteractionIndicators';
 import TileRenderer from './components/TileRenderer';
 import BackgroundSprites from './components/BackgroundSprites';
 import ForegroundSprites from './components/ForegroundSprites';
-import ForegroundImageLayers from './components/ForegroundImageLayers';
+// ForegroundImageLayers removed - now rendered by PixiJS BackgroundImageLayer
 import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
 import Inventory, { InventoryItem } from './components/Inventory';
@@ -610,9 +610,12 @@ const App: React.FC = () => {
         // Use explicit gridOffset if provided
         if (currentMap.gridOffset) return currentMap.gridOffset;
 
-        // For background-image rooms with centered layers, calculate offset dynamically
-        if (currentMap.renderMode === 'background-image' && currentMap.backgroundLayers) {
-            const centeredLayer = currentMap.backgroundLayers.find(layer => layer.centered);
+        // For background-image rooms, find centered image layer
+        if (currentMap.renderMode === 'background-image' && currentMap.layers) {
+            const centeredLayer = currentMap.layers.find(
+                layer => layer.type === 'image' && (layer as ImageRoomLayer).centered
+            ) as ImageRoomLayer | undefined;
+
             if (centeredLayer) {
                 // Get image dimensions (use explicit or calculate from grid)
                 let imageWidth: number;
@@ -623,8 +626,7 @@ const App: React.FC = () => {
                     imageHeight = centeredLayer.height;
                 } else if (centeredLayer.useNativeSize) {
                     // For native size, we need to know the actual image dimensions
-                    // For now, use map grid dimensions as fallback (960x540 for kitchen, 1920x1080 for shop)
-                    // TODO: Get actual texture dimensions from TextureManager
+                    // For now, use map grid dimensions as fallback
                     imageWidth = currentMap.width * TILE_SIZE;
                     imageHeight = currentMap.height * TILE_SIZE;
                 } else {
@@ -697,6 +699,19 @@ const App: React.FC = () => {
         maxY: visibleTileMaxY,
     }), [visibleTileMinX, visibleTileMaxX, visibleTileMinY, visibleTileMaxY]);
 
+    // Combined NPCs: npcManager NPCs + layer NPCs (for background-image rooms)
+    // Used for interactions, indicators, and rendering
+    const allNPCs = useMemo(() => {
+        let npcs = npcManager.getCurrentMapNPCs();
+        if (backgroundImageLayerRef.current) {
+            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs();
+            if (layerNPCs.length > 0) {
+                npcs = [...npcs, ...layerNPCs];
+            }
+        }
+        return npcs;
+    }, [currentMapId, npcUpdateTrigger]);
+
     // Get player sprite info (URL and scale)
     const { playerSpriteUrl, spriteScale } = getPlayerSpriteInfo(playerSprites, direction, animationFrame);
 
@@ -749,6 +764,8 @@ const App: React.FC = () => {
                     canvasRef.current?.clientWidth ?? window.innerWidth,
                     canvasRef.current?.clientHeight ?? window.innerHeight
                 );
+                // Set stage reference so foreground sprites can be added directly for proper z-index sorting
+                backgroundImageLayer.setStage(app.stage);
                 app.stage.addChild(backgroundImageLayer.getContainer());
 
                 // Create tile layer
@@ -769,7 +786,12 @@ const App: React.FC = () => {
                 // Create NPC layer (NPCs with dynamic z-index for depth sorting)
                 const npcLayer = new NPCLayer();
                 npcLayerRef.current = npcLayer;
+                // Set stage reference so NPCs with low zIndexOverride can sort with other stage elements
+                npcLayer.setStage(app.stage);
                 app.stage.addChild(npcLayer.getContainer());
+
+                // Note: Foreground image layers (like shop counter) are added directly to stage
+                // by BackgroundImageLayer.loadLayers() with their individual z-indices for proper sorting
 
                 // Create placed items layer (food items, dropped objects - above player)
                 const placedItemsLayer = new PlacedItemsLayer();
@@ -824,9 +846,10 @@ const App: React.FC = () => {
                 // Initial render
                 const currentMap = mapManager.getCurrentMap();
                 if (currentMap) {
-                    // Load background image layers (for background-image render mode)
+                    // Load background and foreground image layers (for background-image render mode)
+                    // skipForeground: false means PixiJS renders ALL layers (no DOM hybrid)
                     if (currentMap.renderMode === 'background-image') {
-                        await backgroundImageLayer.loadLayers(currentMap, currentMapId);
+                        await backgroundImageLayer.loadLayers(currentMap, currentMapId, false);
                     }
                     tileLayer.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger);
                     backgroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
@@ -837,7 +860,12 @@ const App: React.FC = () => {
                         shadowLayerRef.current.renderShadows(currentMap, currentMapId, visibleRange, hour, season, currentWeather);
                     }
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
-                    const npcs = npcManager.getCurrentMapNPCs();
+                    let npcs = npcManager.getCurrentMapNPCs();
+                    // Add NPCs from unified layers (for background-image rooms using layers array)
+                    const layerNPCs = backgroundImageLayer.getLayerNPCs();
+                    if (layerNPCs.length > 0) {
+                        npcs = [...npcs, ...layerNPCs];
+                    }
                     npcLayer.renderNPCs(npcs, currentMap.characterScale ?? 1.0, undefined);
                     backgroundImageLayer.updateCamera(cameraX, cameraY);
                     tileLayer.updateCamera(cameraX, cameraY);
@@ -947,14 +975,15 @@ const App: React.FC = () => {
                 pixiAppRef.current.renderer.background.color = backgroundColor;
             }
 
-            // Load background image layers (for background-image render mode)
+            // Load background and foreground image layers (for background-image render mode)
+            // skipForeground: false means PixiJS renders ALL layers (no DOM hybrid)
             if (backgroundImageLayerRef.current) {
                 if (currentMap.renderMode === 'background-image') {
                     // Async load - use IIFE to handle in useEffect
                     (async () => {
-                        console.log('[App] Loading background layers for', currentMapId);
-                        await backgroundImageLayerRef.current?.loadLayers(currentMap, currentMapId);
-                        console.log('[App] Background layers loaded for', currentMapId);
+                        console.log('[App] Loading background/foreground layers for', currentMapId);
+                        await backgroundImageLayerRef.current?.loadLayers(currentMap, currentMapId, false);
+                        console.log('[App] All image layers loaded for', currentMapId);
                     })();
                 } else {
                     // Clear background layers when switching to tiled map
@@ -1116,7 +1145,14 @@ const App: React.FC = () => {
 
             // Update NPC layer
             if (npcLayerRef.current) {
-                const npcs = npcManager.getCurrentMapNPCs();
+                let npcs = npcManager.getCurrentMapNPCs();
+                // Add NPCs from unified layers (for background-image rooms using layers array)
+                if (backgroundImageLayerRef.current) {
+                    const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs();
+                    if (layerNPCs.length > 0) {
+                        npcs = [...npcs, ...layerNPCs];
+                    }
+                }
                 npcLayerRef.current.renderNPCs(npcs, currentMap.characterScale ?? 1.0, effectiveGridOffset);
             }
 
@@ -1132,48 +1168,44 @@ const App: React.FC = () => {
                 );
             }
         }
-    }, [renderVersion, isPixiInitialized, npcUpdateTrigger]);
+    }, [renderVersion, isPixiInitialized, npcUpdateTrigger, currentMapId]);
 
     // Update player sprite when player state changes
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !playerSpriteRef.current) return;
 
-        // For background-image rooms, hide PixiJS player sprite (DOM player is used instead for z-ordering)
-        if (currentMap?.renderMode === 'background-image') {
-            playerSpriteRef.current.setVisible(false);
-            return;
-        }
-
-        // Show player sprite for normal rooms
+        // Ensure player sprite is visible
         playerSpriteRef.current.setVisible(true);
 
         // Apply map's characterScale multiplier (default 1.0)
         const mapCharacterScale = currentMap?.characterScale ?? 1.0;
         const effectiveScale = spriteScale * mapCharacterScale;
 
-        // Pass gridOffset directly for background-image rooms (PixiJS handles positioning consistently)
+        // Update player position and animation (works for all map types including background-image rooms)
         playerSpriteRef.current.update(playerPos, direction, animationFrame, playerSpriteUrl, effectiveScale, effectiveGridOffset);
-    }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized, currentMap?.characterScale, currentMap?.renderMode, effectiveGridOffset]);
+    }, [playerPos, direction, animationFrame, playerSpriteUrl, spriteScale, isPixiInitialized, currentMap?.characterScale, effectiveGridOffset]);
 
     // Update NPC layer when NPCs change
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !npcLayerRef.current) return;
 
-        // For background-image rooms, hide PixiJS NPCs (DOM NPCs are used instead for z-ordering)
-        if (currentMap?.renderMode === 'background-image') {
-            npcLayerRef.current.clear();
-            return;
-        }
-
         // Get current NPCs from manager
-        const npcs = npcManager.getCurrentMapNPCs();
+        let npcs = npcManager.getCurrentMapNPCs();
+
+        // Add NPCs from unified layers (for background-image rooms using layers array)
+        if (backgroundImageLayerRef.current) {
+            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs();
+            if (layerNPCs.length > 0) {
+                npcs = [...npcs, ...layerNPCs];
+            }
+        }
 
         // Apply map's characterScale multiplier (default 1.0)
         const mapCharacterScale = currentMap?.characterScale ?? 1.0;
 
-        // Render NPCs in PixiJS
+        // Render NPCs in PixiJS (works for all map types including background-image rooms)
         npcLayerRef.current.renderNPCs(npcs, mapCharacterScale, effectiveGridOffset);
-    }, [npcUpdateTrigger, isPixiInitialized, currentMap?.characterScale, currentMap?.renderMode, effectiveGridOffset]);
+    }, [npcUpdateTrigger, isPixiInitialized, currentMap?.characterScale, effectiveGridOffset, currentMapId]);
 
     // Show character creator if no character selected
     if (showCharacterCreator) {
@@ -1308,10 +1340,8 @@ const App: React.FC = () => {
                     layer="background"
                 />
 
-                {/* Render Foreground Image Layers (for background-image rooms like shop) */}
-                {/* These render as DOM elements so they can properly layer with NPCs */}
-                {/* Z-index from layer config (e.g., 200) ensures counter appears in front of fox */}
-                <ForegroundImageLayers currentMap={currentMap} />
+                {/* Foreground Image Layers are now rendered by PixiJS BackgroundImageLayer */}
+                {/* (skipForeground: false enables full PixiJS rendering for background-image rooms) */}
 
                 {/* Render Midground Animations (behind player and NPCs) */}
                 <AnimationOverlay
@@ -1327,17 +1357,12 @@ const App: React.FC = () => {
                     layer="midground"
                 />
 
-                {/* Render Player as DOM element when:
-                    - PixiJS is disabled, OR
-                    - In background-image rooms (for proper z-ordering with NPCs/foreground layers)
-                */}
-                {(!USE_PIXI_RENDERER || currentMap?.renderMode === 'background-image') && (() => {
+                {/* Render Player as DOM element when PixiJS is disabled */}
+                {!USE_PIXI_RENDERER && (() => {
                     // Apply map's characterScale multiplier (default 1.0)
                     const mapCharacterScale = currentMap?.characterScale ?? 1.0;
                     const effectiveScale = spriteScale * mapCharacterScale;
                     // Calculate feet position for z-ordering (same as NPCs)
-                    // Player is centered on position, but visual feet aren't at sprite bottom
-                    // Use a smaller offset (~0.3 tiles) to approximate where feet actually appear
                     const feetY = playerPos.y + 0.3;
                     return (
                         <img
@@ -1345,23 +1370,19 @@ const App: React.FC = () => {
                             alt="Player"
                             className="absolute"
                             style={{
-                                // For background-image rooms, use gridOffset for positioning
                                 left: (playerPos.x - (PLAYER_SIZE * effectiveScale) / 2) * TILE_SIZE + (effectiveGridOffset?.x ?? 0),
                                 top: (playerPos.y - (PLAYER_SIZE * effectiveScale) / 2) * TILE_SIZE + (effectiveGridOffset?.y ?? 0),
                                 width: PLAYER_SIZE * effectiveScale * TILE_SIZE,
                                 height: PLAYER_SIZE * effectiveScale * TILE_SIZE,
                                 imageRendering: 'pixelated',
-                                zIndex: Z_PLAYER + Math.floor(feetY), // Depth sorting based on feet position
+                                zIndex: Z_PLAYER + Math.floor(feetY),
                             }}
                         />
                     );
                 })()}
 
-                {/* Render NPCs as DOM elements when:
-                    - PixiJS is disabled, OR
-                    - In background-image rooms (for proper z-ordering with foreground layers)
-                */}
-                {(!USE_PIXI_RENDERER || currentMap?.renderMode === 'background-image') && (
+                {/* Render NPCs as DOM elements when PixiJS is disabled */}
+                {!USE_PIXI_RENDERER && (
                     <NPCRenderer
                         playerPos={playerPos}
                         npcUpdateTrigger={npcUpdateTrigger}
@@ -1421,7 +1442,7 @@ const App: React.FC = () => {
 
                 {/* NPC interaction indicators (shows when player is near interactable NPCs) */}
                 <NPCInteractionIndicators
-                    npcs={npcManager.getCurrentMapNPCs()}
+                    npcs={allNPCs}
                     playerPos={playerPos}
                     gridOffset={effectiveGridOffset}
                 />
@@ -1487,8 +1508,7 @@ const App: React.FC = () => {
                         nearbyNPCs={(() => {
                             // Get NPCs within 2 tiles of player
                             const range = 2;
-                            const npcs = npcManager.getCurrentMapNPCs();
-                            return npcs
+                            return allNPCs
                                 .filter(npc => {
                                     const dx = Math.abs(npc.position.x - playerPos.x);
                                     const dy = Math.abs(npc.position.y - playerPos.y);
@@ -1621,8 +1641,7 @@ const App: React.FC = () => {
                     nearbyNPCs={(() => {
                         // Get NPCs within 2 tiles of player
                         const range = 2;
-                        const npcs = npcManager.getCurrentMapNPCs();
-                        return npcs
+                        return allNPCs
                             .filter(npc => {
                                 const dx = Math.abs(npc.position.x - playerPos.x);
                                 const dy = Math.abs(npc.position.y - playerPos.y);

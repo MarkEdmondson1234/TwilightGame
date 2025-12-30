@@ -6,7 +6,7 @@
  * Types have been organised into logical groups:
  * - types/core.ts - Base types (TileType, Position, Direction, PlacedItem)
  * - types/tiles.ts - Tile and sprite types (TileData, SpriteMetadata, ColorScheme)
- * - types/maps.ts - Map types (MapDefinition, Transition, BackgroundLayer)
+ * - types/maps.ts - Map types (MapDefinition, Transition, RoomLayer)
  * - types/npc.ts - NPC types (NPC, DialogueNode, friendship types)
  * - types/animation.ts - Animation types (TileAnimation, MapAnimation)
  * - types/farm.ts - Farming types (FarmPlot, FarmPlotState)

@@ -41,6 +41,13 @@ export const Z_SHADOWS = 10;
 /** Background sprites (beds, sofas - behind player) */
 export const Z_SPRITE_BACKGROUND = 50;
 
+/**
+ * Interior room foreground - elements that appear in front of NPCs but behind player
+ * Example: Shop counter appears in front of fox shopkeeper, but player walks in front of it
+ * Use this z-index for image layers in background-image rooms that need to be between NPCs and player
+ */
+export const Z_INTERIOR_FOREGROUND = 65;
+
 /** Player character */
 export const Z_PLAYER = 100;
 

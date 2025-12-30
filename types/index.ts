@@ -25,7 +25,9 @@ export type {
 export type {
   Transition,
   MapRenderMode,
-  BackgroundLayer,
+  ImageRoomLayer,
+  NPCRoomLayer,
+  RoomLayer,
   WindowView,
   MapDefinition,
   GridString,

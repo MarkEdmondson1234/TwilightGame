@@ -4,7 +4,7 @@
  * Types related to map definitions and transitions:
  * - Transition (map exit/entrance definitions)
  * - MapRenderMode ('tiled' or 'background-image')
- * - BackgroundLayer (layered background images)
+ * - RoomLayer (unified layer system for background-image rooms)
  * - WindowView (windows showing outside scenes)
  * - MapDefinition (complete map definition)
  * - GridString (character-based grid for map editing)
@@ -33,24 +33,58 @@ export interface Transition {
  */
 export type MapRenderMode = 'tiled' | 'background-image';
 
+// ============================================================================
+// Unified Room Layer System
+// ============================================================================
+
 /**
- * Background layer for rooms using background-image render mode
- * Multiple layers can be stacked for parallax/depth effects
+ * Base properties shared by all room layer types
  */
-export interface BackgroundLayer {
-  image: string;              // Path to image (e.g., '/assets/rooms/kitchen.png')
-  zIndex: number;             // Layer order (-100 = far back, 200+ = foreground)
-  parallaxFactor?: number;    // Camera scroll multiplier (default: 1.0, <1 = slower/farther)
+interface BaseRoomLayer {
+  zIndex: number;             // Layer order - see zIndex.ts for constants
+  parallaxFactor?: number;    // Camera scroll multiplier (default: 1.0)
   opacity?: number;           // 0.0 - 1.0 (default: 1.0)
-  offsetX?: number;           // Position offset in pixels (default: 0)
-  offsetY?: number;           // Position offset in pixels (default: 0)
-  // Size options (choose one approach)
-  scale?: number;             // Scale multiplier (default: 1.0) - applies to calculated size
-  useNativeSize?: boolean;    // If true, use image's natural dimensions (ignore grid)
-  width?: number;             // Override width in pixels (optional)
-  height?: number;            // Override height in pixels (optional)
-  centered?: boolean;         // If true, center image in viewport (default: false)
 }
+
+/**
+ * Image layer - renders a background/foreground image
+ */
+export interface ImageRoomLayer extends BaseRoomLayer {
+  type: 'image';
+  image: string;              // Path to image
+  offsetX?: number;           // Position offset in pixels
+  offsetY?: number;
+  scale?: number;             // Scale multiplier
+  useNativeSize?: boolean;    // Use image's natural dimensions
+  width?: number;             // Override width in pixels
+  height?: number;            // Override height in pixels
+  centered?: boolean;         // Center image in viewport
+}
+
+/**
+ * NPC layer - places an NPC at a specific z-depth
+ * The NPC's zIndexOverride will be set from the layer's zIndex
+ */
+export interface NPCRoomLayer extends BaseRoomLayer {
+  type: 'npc';
+  npc: NPC;                   // The NPC definition (from factory function)
+}
+
+/**
+ * Unified room layer - can be an image or an NPC
+ * Layers are rendered in zIndex order, allowing precise control over depth
+ *
+ * Example usage in shop.ts:
+ * ```
+ * layers: [
+ *   { type: 'image', image: 'back.png', zIndex: Z_PARALLAX_FAR, ... },
+ *   { type: 'npc', npc: createShopkeeperNPC(...), zIndex: Z_SPRITE_BACKGROUND },
+ *   { type: 'image', image: 'counter.png', zIndex: Z_INTERIOR_FOREGROUND, ... },
+ *   // Player is implicitly at Z_PLAYER (100)
+ * ]
+ * ```
+ */
+export type RoomLayer = ImageRoomLayer | NPCRoomLayer;
 
 /**
  * Window view showing outside scenes through interior windows
@@ -83,8 +117,7 @@ export interface MapDefinition {
 
   // Background interior system (optional)
   renderMode?: MapRenderMode;           // Default: 'tiled'
-  backgroundLayers?: BackgroundLayer[]; // Layered background images
-  foregroundLayers?: BackgroundLayer[]; // Layers that render in front of player
+  layers?: RoomLayer[];                 // All layers (images + NPCs) in z-order
   windowViews?: WindowView[];           // Windows showing outside scenes
   sourceMapId?: string;                 // For window views: which map player came from
   characterScale?: number;              // Scale multiplier for player/NPCs (default: 1.0)
