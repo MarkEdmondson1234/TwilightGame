@@ -3,7 +3,7 @@
  * Defines all items that can be collected, stored, and used in the game
  */
 
-import { groceryAssets, itemAssets } from '../assets';
+import { cookingAssets, groceryAssets, itemAssets } from '../assets';
 
 export enum ItemCategory {
   SEED = 'seed',
@@ -903,6 +903,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A warm, comforting cup of tea.',
     stackable: true,
     sellPrice: 5,
+    image: cookingAssets.cup_of_tea,
   },
 
   food_french_toast: {
@@ -913,6 +914,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Sweet eggy bread, golden and crispy.',
     stackable: true,
     sellPrice: 20,
+    image: cookingAssets.french_toast,
   },
 
   food_spaghetti: {
@@ -943,6 +945,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A proper Sunday roast with all the trimmings.',
     stackable: true,
     sellPrice: 80,
+    image: cookingAssets.roast_dinner,
   },
 
   food_crepes: {
@@ -993,6 +996,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Crispy, buttery biscuits.',
     stackable: true,
     sellPrice: 15,
+    image: cookingAssets.cookies,
   },
 
   food_chocolate_cake: {
