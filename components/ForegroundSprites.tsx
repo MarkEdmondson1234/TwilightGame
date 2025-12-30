@@ -3,6 +3,7 @@ import { MapDefinition } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { SPRITE_METADATA, TILE_SIZE } from '../constants';
 import { calculateSpriteTransforms } from '../utils/tileRenderUtils';
+import { Z_SPRITE_FOREGROUND } from '../zIndex';
 
 interface ForegroundSpritesProps {
     currentMap: MapDefinition;
@@ -112,7 +113,7 @@ const ForegroundSprites: React.FC<ForegroundSpritesProps> = ({
                 const useSmoothRendering = spriteMetadata.spriteWidth >= 2 || spriteMetadata.spriteHeight >= 2;
 
                 // Z-index based on Y position for additional CSS-based depth sorting
-                const zIndex = y * 10;
+                const zIndex = Z_SPRITE_FOREGROUND + y;
 
                 return (
                     <img

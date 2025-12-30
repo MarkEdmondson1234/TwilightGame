@@ -932,6 +932,47 @@ duration: 3000,
 - `TIMING.WEATHER_CHECK_MS` (3000) - Weather updates
 - See `constants.ts` for full list
 
+### Z-Index Constants (`zIndex.ts`)
+
+**CRITICAL**: Never use hardcoded z-index values. Always import from `zIndex.ts`:
+
+```typescript
+import { Z_PLAYER, Z_SPRITE_FOREGROUND, Z_HUD, zClass } from '../zIndex';
+
+// ✅ CORRECT - Use constants
+sprite.zIndex = Z_PLAYER;
+container.zIndex = Z_SPRITE_FOREGROUND;
+
+// ✅ CORRECT - Dynamic depth sorting with base constant
+sprite.zIndex = Z_PLAYER + Math.floor(feetY);  // NPCs/player: 100 + Y offset
+
+// ✅ CORRECT - Tailwind class helper for React components
+<div className={zClass(Z_HUD)}>  // Outputs: z-[1000]
+
+// ❌ WRONG - Don't use hardcoded values
+sprite.zIndex = 100;
+sprite.zIndex = Math.floor(feetY) * 10;  // Can produce values outside intended range!
+```
+
+**Z-Index Layer Ranges (defined in `zIndex.ts`):**
+| Range | Layer | Constants |
+|-------|-------|-----------|
+| -100 to -1 | Parallax backgrounds | `Z_PARALLAX_FAR`, `Z_TILE_BASE` |
+| 0-99 | Game world base | `Z_TILE_BACKGROUND`, `Z_TILE_SPRITES`, `Z_SHADOWS`, `Z_SPRITE_BACKGROUND` |
+| 100-199 | Player/NPC level | `Z_PLAYER`, `Z_PLACED_ITEMS` |
+| 200-299 | Foreground sprites | `Z_SPRITE_FOREGROUND`, `Z_FOREGROUND_PARALLAX` |
+| 300-399 | Weather effects | `Z_WEATHER_TINT`, `Z_WEATHER_PARTICLES` |
+| 400-499 | Game overlays | `Z_RADIAL_MENU`, `Z_ACTION_PROMPTS` |
+| 500-599 | Debug overlays | `Z_DEBUG_TILES`, `Z_DEBUG_TRANSITIONS` |
+| 1000-1099 | HUD elements | `Z_HUD`, `Z_INVENTORY`, `Z_TOUCH_CONTROLS` |
+| 2000-2099 | Modals/dialogues | `Z_MODAL`, `Z_DIALOGUE`, `Z_CHARACTER_CREATOR` |
+| 3000+ | Critical overlays | `Z_TOOLTIP`, `Z_TOAST`, `Z_LOADING`, `Z_ERROR` |
+
+**When adding new layers:**
+1. Check `zIndex.ts` for the appropriate range
+2. Add a new constant if needed (follow the naming convention `Z_LAYER_NAME`)
+3. Import and use the constant - never hardcode values
+
 ### Testing New Utilities
 
 When adding new utility functions, **write tests**:

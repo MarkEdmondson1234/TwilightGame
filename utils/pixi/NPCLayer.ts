@@ -22,14 +22,15 @@ import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction, NPC } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
+import { Z_PLAYER } from '../../zIndex';
 
 export class NPCLayer extends PixiLayer {
   private npcSprites: Map<string, PIXI.Sprite> = new Map();
   private currentTextures: Map<string, string> = new Map();
 
   constructor() {
-    // Base z-index 100 (same as player), but individual sprites have dynamic z-index
-    super(100, true);
+    // Base z-index same as player, individual sprites have dynamic z-index for depth sorting
+    super(Z_PLAYER, true);
   }
 
   /**
@@ -116,8 +117,9 @@ export class NPCLayer extends PixiLayer {
       const feetY = npc.position.y + feetOffset;
 
       // Z-index: use override if provided (for layered rooms like shop),
-      // otherwise calculate based on feet Y position for proper depth sorting
-      sprite.zIndex = npc.zIndexOverride ?? Math.floor(feetY) * 10;
+      // otherwise calculate based on feet Y position for proper depth sorting.
+      // Base of Z_PLAYER (100) + Y offset keeps NPCs in the 100-199 range.
+      sprite.zIndex = npc.zIndexOverride ?? (Z_PLAYER + Math.floor(feetY));
 
       // Show sprite
       sprite.visible = true;

@@ -1,8 +1,9 @@
 import React from 'react';
 import { Position, Direction } from '../types';
-import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER } from '../constants';
+import { TILE_SIZE, PLAYER_SIZE } from '../constants';
 import { npcManager } from '../NPCManager';
 import { TimeManager } from '../utils/TimeManager';
+import { Z_PLAYER } from '../zIndex';
 
 interface NPCRendererProps {
     playerPos: Position;
@@ -78,27 +79,29 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                 }
 
                 // Z-index for DOM rendering
-                const zIndex = npc.zIndexOverride ?? Math.floor(feetY) * 10;
+                const zIndex = npc.zIndexOverride ?? (Z_PLAYER + Math.floor(feetY));
 
                 return (
                     <React.Fragment key={npc.id}>
-                        {/* NPC Sprite - Only render as DOM when NOT using PixiJS */}
-                        {!USE_PIXI_RENDERER && (
-                            <img
-                                src={npc.sprite}
-                                alt={npc.name}
-                                className="absolute pointer-events-none"
-                                style={{
-                                    left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetX,
-                                    top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY,
-                                    width: PLAYER_SIZE * npcScale * TILE_SIZE,
-                                    height: PLAYER_SIZE * npcScale * TILE_SIZE,
-                                    imageRendering: 'pixelated',
-                                    transform: shouldFlip ? 'scaleX(-1)' : undefined,
-                                    zIndex,
-                                }}
-                            />
-                        )}
+                        {/* NPC Sprite - Rendered as DOM element
+                            App.tsx controls when this component is shown:
+                            - When PixiJS is disabled, OR
+                            - In background-image rooms (where PixiJS NPCs are cleared)
+                        */}
+                        <img
+                            src={npc.sprite}
+                            alt={npc.name}
+                            className="absolute pointer-events-none"
+                            style={{
+                                left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetX,
+                                top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY,
+                                width: PLAYER_SIZE * npcScale * TILE_SIZE,
+                                height: PLAYER_SIZE * npcScale * TILE_SIZE,
+                                imageRendering: 'pixelated',
+                                transform: shouldFlip ? 'scaleX(-1)' : undefined,
+                                zIndex,
+                            }}
+                        />
 
                         {/* Interaction Prompt (when in range) - Always rendered as DOM */}
                         {inRange && (

@@ -23,6 +23,7 @@ import { PlacedItem } from '../../types';
 import { textureManager } from '../TextureManager';
 import { shouldShowDecayWarning } from '../itemDecayManager';
 import { PixiLayer } from './PixiLayer';
+import { Z_PLACED_ITEMS } from '../../zIndex';
 
 export class PlacedItemsLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
@@ -79,7 +80,7 @@ export class PlacedItemsLayer extends PixiLayer {
         sprite = new PIXI.Sprite(texture);
         sprite.width = TILE_SIZE;
         sprite.height = TILE_SIZE;
-        sprite.zIndex = 150;
+        sprite.zIndex = Z_PLACED_ITEMS;
 
         // Use nearest neighbor scaling for pixel-perfect rendering
         if (texture.source) {

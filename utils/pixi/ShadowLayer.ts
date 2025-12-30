@@ -26,6 +26,7 @@ import { Season, DaylightHours, SEASONAL_DAYLIGHT } from '../TimeManager';
 import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
+import { Z_SHADOWS } from '../../zIndex';
 
 // Shadow configuration
 const SHADOW_CONFIG = {
@@ -238,7 +239,7 @@ export class ShadowLayer extends PixiLayer {
 
     if (!shadow) {
       shadow = new PIXI.Graphics();
-      shadow.zIndex = 10; // Below sprites (50) but above tiles (0-1)
+      shadow.zIndex = Z_SHADOWS;
       this.container.addChild(shadow);
       this.shadows.set(key, shadow);
     }

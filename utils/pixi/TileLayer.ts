@@ -34,6 +34,7 @@ import { farmingAssets } from '../../assets';
 import { selectVariant, getPositionHash } from '../spriteVariantUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
+import { Z_TILE_BASE, Z_TILE_BACKGROUND, Z_TILE_SPRITES, Z_SPRITE_BACKGROUND, Z_PLAYER } from '../../zIndex';
 
 /**
  * Crop sprite sizing configuration per growth stage
@@ -83,21 +84,21 @@ const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
     height: 1,
     offsetX: 0,
     offsetY: 0,
-    zIndex: 1,
+    zIndex: Z_TILE_SPRITES,
   },
   [CropGrowthStage.YOUNG]: {
     width: 1.5,
     height: 1.5,
     offsetX: -0.25,   // Center horizontally: -(width-1)/2
     offsetY: -0.5,    // Extend upward from soil
-    zIndex: 50,       // Above ground level
+    zIndex: Z_SPRITE_BACKGROUND,
   },
   [CropGrowthStage.ADULT]: {
     width: 1,         // Default size (overridden by CROP_ADULT_SIZES)
     height: 1,
     offsetX: 0,       // Center horizontally: -(width-1)/2
     offsetY: -0.5,    // Extend half a tile upward from soil
-    zIndex: 100,      // Same level as player for proper sorting
+    zIndex: Z_PLAYER,
   },
 };
 
@@ -360,7 +361,7 @@ export class TileLayer extends PixiLayer {
         // Calculate scale based on texture size vs desired render size
         const textureScale = TILE_SIZE / texture.width;
         sprite.scale.set(textureScale, textureScale);
-        sprite.zIndex = 1; // Above color background (z=0)
+        sprite.zIndex = Z_TILE_SPRITES;
       }
 
       this.container.addChild(sprite);
@@ -469,7 +470,7 @@ export class TileLayer extends PixiLayer {
       baseSprite.y = y * TILE_SIZE;
       baseSprite.width = TILE_SIZE;
       baseSprite.height = TILE_SIZE;
-      baseSprite.zIndex = -1; // Below main tile
+      baseSprite.zIndex = Z_TILE_BASE;
 
       this.container.addChild(baseSprite);
       this.sprites.set(baseKey, baseSprite);
@@ -513,7 +514,7 @@ export class TileLayer extends PixiLayer {
         graphics.clear();
         graphics.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         graphics.fill(hexColor);
-        graphics.zIndex = customKey && customKey.includes('_base') ? -1 : 0;
+        graphics.zIndex = customKey && customKey.includes('_base') ? Z_TILE_BASE : Z_TILE_BACKGROUND;
         this.colorCache.set(key, hexColor);
       }
       graphics.visible = true;
@@ -566,7 +567,7 @@ export class TileLayer extends PixiLayer {
       // Calculate scale based on texture size vs desired render size
       const textureScale = TILE_SIZE / texture.width;
       sprite.scale.set(textureScale, textureScale);
-      sprite.zIndex = 1; // Above color background
+      sprite.zIndex = Z_TILE_SPRITES;
 
       this.container.addChild(sprite);
       this.sprites.set(spriteKey, sprite);

@@ -20,6 +20,7 @@
 
 import * as PIXI from 'pixi.js';
 import { Season, TimeOfDay } from '../TimeManager';
+import { Z_WEATHER_TINT } from '../../zIndex';
 
 // Darkness multipliers for each time of day
 const TIME_OF_DAY_MULTIPLIERS: Record<TimeOfDay, number> = {
@@ -76,7 +77,7 @@ export class DarknessLayer {
       this.darknessColor = color;
     }
     this.container = new PIXI.Container();
-    this.container.zIndex = 500;  // High z-index to render on top of game content
+    this.container.zIndex = Z_WEATHER_TINT;
 
     this.overlay = new PIXI.Graphics();
     this.container.addChild(this.overlay);

@@ -21,6 +21,7 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { BackgroundLayer, MapDefinition } from '../../types';
+import { Z_PARALLAX_FAR } from '../../zIndex';
 
 interface LayerSprite {
   sprite: PIXI.Sprite;
@@ -183,7 +184,7 @@ export class BackgroundImageLayer {
     sprite.y = baseY;
 
     // Apply z-index
-    sprite.zIndex = layer.zIndex ?? -100;
+    sprite.zIndex = layer.zIndex ?? Z_PARALLAX_FAR;
 
     // Apply opacity
     sprite.alpha = layer.opacity ?? 1.0;

@@ -30,6 +30,7 @@ import {
   FOG_CONFIGS,
   ParticleConfig,
 } from '../../data/weatherConfig';
+import { Z_WEATHER_PARTICLES, Z_WEATHER_TINT } from '../../zIndex';
 
 interface Particle {
   sprite: PIXI.Sprite;
@@ -68,12 +69,12 @@ export class WeatherLayer {
 
     // Particle container (for rain, snow, etc.)
     this.particleContainer = new PIXI.Container();
-    this.particleContainer.zIndex = 1000; // Above everything except UI
+    this.particleContainer.zIndex = Z_WEATHER_PARTICLES;
     this.container.addChild(this.particleContainer);
 
     // Fog container (for fog, mist overlays)
     this.fogContainer = new PIXI.Container();
-    this.fogContainer.zIndex = 999; // Behind particles
+    this.fogContainer.zIndex = Z_WEATHER_TINT;
     this.container.addChild(this.fogContainer);
   }
 

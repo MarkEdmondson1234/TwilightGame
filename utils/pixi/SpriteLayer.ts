@@ -26,6 +26,7 @@ import { selectVariant } from '../spriteVariantUtils';
 import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
+import { Z_SPRITE_FOREGROUND, Z_SPRITE_BACKGROUND } from '../../zIndex';
 
 export class SpriteLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
@@ -35,8 +36,7 @@ export class SpriteLayer extends PixiLayer {
   private animatedSprites: Map<string, { frames: string[]; speed: number }> = new Map();
 
   constructor(isForeground: boolean = false) {
-    // Foreground: z-index 200, Background: z-index 50
-    super(isForeground ? 200 : 50, true);
+    super(isForeground ? Z_SPRITE_FOREGROUND : Z_SPRITE_BACKGROUND, true);
     this.isForeground = isForeground;
   }
 
@@ -194,7 +194,7 @@ export class SpriteLayer extends PixiLayer {
       sprite.anchor.set(0, 0); // Top-left anchor for tile alignment
 
       // Set z-index based on layer
-      sprite.zIndex = this.isForeground ? 200 : 50; // Foreground above player (100), background below
+      sprite.zIndex = this.isForeground ? Z_SPRITE_FOREGROUND : Z_SPRITE_BACKGROUND;
 
       this.container.addChild(sprite);
       this.sprites.set(key, sprite);

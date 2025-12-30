@@ -23,6 +23,9 @@
 // GAME WORLD LAYERS (0-299)
 // =============================================================================
 
+/** Base layer below tiles (grass bases under trees) */
+export const Z_TILE_BASE = -1;
+
 /** Base tile layer (grass, floor, water) */
 export const Z_TILE_BACKGROUND = 0;
 
@@ -32,11 +35,17 @@ export const Z_TILE_SPRITES = 1;
 /** Sky decorations (clouds - above background, below game content) */
 export const Z_SKY_DECORATIONS = 5;
 
+/** Shadow layer (shadows beneath sprites, above tiles) */
+export const Z_SHADOWS = 10;
+
 /** Background sprites (beds, sofas - behind player) */
 export const Z_SPRITE_BACKGROUND = 50;
 
 /** Player character */
 export const Z_PLAYER = 100;
+
+/** Placed items (food, dropped objects - above player) */
+export const Z_PLACED_ITEMS = 150;
 
 /** Foreground sprites (trees, buildings - in front of player) */
 export const Z_SPRITE_FOREGROUND = 200;

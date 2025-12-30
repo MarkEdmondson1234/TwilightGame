@@ -44,6 +44,7 @@ import { checkCookingLocation, getAvailableInteractions, FarmActionResult, Forag
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { TimeManager } from './utils/TimeManager';
+import { Z_PLAYER } from './zIndex';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
@@ -1350,7 +1351,7 @@ const App: React.FC = () => {
                                 width: PLAYER_SIZE * effectiveScale * TILE_SIZE,
                                 height: PLAYER_SIZE * effectiveScale * TILE_SIZE,
                                 imageRendering: 'pixelated',
-                                zIndex: Math.floor(feetY) * 10, // Depth sorting based on feet position
+                                zIndex: Z_PLAYER + Math.floor(feetY), // Depth sorting based on feet position
                             }}
                         />
                     );

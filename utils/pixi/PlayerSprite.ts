@@ -21,18 +21,19 @@ import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
+import { Z_PLAYER } from '../../zIndex';
 
 export class PlayerSprite extends PixiLayer {
   private sprite: PIXI.Sprite;
   private currentSpriteUrl: string | null = null;
 
   constructor() {
-    super(100, true); // Z-index 100: Above tiles, below foreground sprites
+    super(Z_PLAYER, true); // Above tiles, below foreground sprites
 
     // Create player sprite
     this.sprite = new PIXI.Sprite();
     this.sprite.anchor.set(0.5, 0.5); // Center anchor for rotation/scaling
-    this.sprite.zIndex = 100;
+    this.sprite.zIndex = Z_PLAYER;
     this.container.addChild(this.sprite);
   }
 
