@@ -34,15 +34,32 @@ const Inventory: React.FC<InventoryProps> = ({
   items,
   onItemClick,
   selectedSlot = null,
-  maxSlots = 36, // Default to 36 slots (9 quick + 27 regular)
+  maxSlots, // Optional prop - if provided, limits capacity; otherwise unlimited
   title = 'Inventory',
 }) => {
   if (!isOpen) return null;
 
+  // Calculate dynamic slot count for unlimited inventory
+  const COLS = 9;
+  const MIN_ROWS = 4; // Always show at least 4 rows (36 slots) for quick slots + buffer
+  const BUFFER_ROWS = 1; // Show one extra empty row after last item
+
+  let displaySlots: number;
+  if (maxSlots !== undefined) {
+    // Limited inventory mode (e.g., for trading UI)
+    displaySlots = maxSlots;
+  } else {
+    // Unlimited inventory mode - grow dynamically
+    const usedSlots = items.length;
+    const requiredRows = Math.ceil(usedSlots / COLS) + BUFFER_ROWS;
+    const totalRows = Math.max(MIN_ROWS, requiredRows);
+    displaySlots = totalRows * COLS;
+  }
+
   // Create array of slots (empty or with items)
-  const slots: (InventoryItem | null)[] = Array(maxSlots).fill(null);
+  const slots: (InventoryItem | null)[] = Array(displaySlots).fill(null);
   items.forEach((item, index) => {
-    if (index < maxSlots) {
+    if (index < displaySlots) {
       slots[index] = item;
     }
   });
@@ -74,7 +91,7 @@ const Inventory: React.FC<InventoryProps> = ({
         </div>
 
         {/* Inventory Grid - Scrollable */}
-        <div className="overflow-y-auto flex-1 pr-2 max-h-[500px] inventory-scrollbar">
+        <div className="overflow-y-scroll flex-1 pr-2 max-h-[500px] inventory-scrollbar">
           <div className="grid grid-cols-9 gap-2">
             {slots.map((item, index) => {
               const isQuickSlot = index < 9;
@@ -155,7 +172,12 @@ const Inventory: React.FC<InventoryProps> = ({
 
         {/* Footer Info */}
         <div className="mt-4 pt-4 border-t border-amber-700 text-amber-300 text-sm">
-          <p>Slots: {items.length} / {maxSlots}</p>
+          <p>
+            {maxSlots !== undefined
+              ? `Slots: ${items.length} / ${maxSlots}`
+              : `Items: ${items.length}${items.length > 0 ? ' (unlimited capacity)' : ''}`
+            }
+          </p>
           <p className="text-xs text-amber-400 mt-1">
             First 9 slots are quick slots (1-9 keys)
           </p>

@@ -148,7 +148,6 @@ const ShopUI: React.FC<ShopUIProps> = ({
           itemId,
           quantity,
           playerGold,
-          getEmptySlots(),
           playerInventory
         );
         setFeedback({ message: validation.message, type: 'error' });
@@ -173,14 +172,6 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
     setShowQuantitySlider(false);
     setPendingTransaction(null);
-  };
-
-  /**
-   * Calculate empty inventory slots
-   */
-  const getEmptySlots = (): number => {
-    const maxSlots = 36;
-    return maxSlots - playerInventory.length;
   };
 
   /**
@@ -319,11 +310,19 @@ const ShopUI: React.FC<ShopUIProps> = ({
     );
   };
 
-  // Create slots for player inventory (fill empty slots)
-  const maxSlots = 36;
-  const playerSlots: ({ itemId: string; quantity: number } | null)[] = Array(maxSlots).fill(null);
+  // Create slots for player inventory (dynamic unlimited capacity)
+  const COLS = 6;
+  const MIN_ROWS = 6; // Minimum 6 rows for shop display
+  const BUFFER_ROWS = 1; // Show one extra empty row after last item
+
+  const usedSlots = playerInventory.length;
+  const requiredRows = Math.ceil(usedSlots / COLS) + BUFFER_ROWS;
+  const totalRows = Math.max(MIN_ROWS, requiredRows);
+  const displaySlots = totalRows * COLS;
+
+  const playerSlots: ({ itemId: string; quantity: number } | null)[] = Array(displaySlots).fill(null);
   playerInventory.forEach((item, index) => {
-    if (index < maxSlots) {
+    if (index < displaySlots) {
       playerSlots[index] = item;
     }
   });
@@ -406,7 +405,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-400">
-                Click to sell • {playerInventory.length} / {maxSlots} slots
+                Click to sell • {playerInventory.length} items
               </div>
             </div>
           </div>

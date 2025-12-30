@@ -81,14 +81,13 @@ export class ShopManager {
    * @param itemId Item to buy
    * @param quantity Quantity to buy
    * @param playerGold Player's current gold
-   * @param inventorySpace Number of empty inventory slots
+   * @param playerInventory Player's current inventory
    * @returns Validation result
    */
   public validateBuyTransaction(
     itemId: string,
     quantity: number,
     playerGold: number,
-    inventorySpace: number,
     playerInventory: InventoryItem[]
   ): TransactionResult {
     // Get shop item
@@ -138,18 +137,7 @@ export class ShopManager {
       };
     }
 
-    // Check inventory space
-    // Stackable items only need 1 slot if player doesn't have the item already
-    // If player already has the item, they need 0 slots (it stacks)
-    // Non-stackable items need quantity slots
-    const hasItem = playerInventory.some(item => item.itemId === itemId);
-    const slotsNeeded = itemDef.stackable ? (hasItem ? 0 : 1) : quantity;
-    if (inventorySpace < slotsNeeded) {
-      return {
-        success: false,
-        message: `Not enough inventory space (need ${slotsNeeded} slot${slotsNeeded > 1 ? 's' : ''})`,
-      };
-    }
+    // No inventory space check - unlimited capacity!
 
     // Transaction valid
     return {
@@ -233,13 +221,10 @@ export class ShopManager {
     playerInventory: InventoryItem[]
   ): { gold: number; inventory: InventoryItem[]; result: TransactionResult } | null {
     // Validate transaction
-    const emptySlots = this.getEmptySlots(playerInventory);
-
     const validation = this.validateBuyTransaction(
       itemId,
       quantity,
       playerGold,
-      emptySlots,
       playerInventory
     );
 
@@ -313,16 +298,6 @@ export class ShopManager {
       inventory: newInventory,
       result: validation,
     };
-  }
-
-  /**
-   * Calculate number of empty inventory slots
-   * @param inventory Player's inventory
-   * @param maxSlots Maximum inventory size (default 36)
-   * @returns Number of empty slots
-   */
-  private getEmptySlots(inventory: InventoryItem[], maxSlots: number = 36): number {
-    return maxSlots - inventory.length;
   }
 
   /**
