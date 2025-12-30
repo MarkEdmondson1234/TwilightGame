@@ -458,6 +458,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Used to till soil for planting.',
     stackable: false,
     buyPrice: 50,
+    image: itemAssets.hoe,
   },
 
   tool_watering_can: {
@@ -468,6 +469,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Waters crops to help them grow faster.',
     stackable: false,
     buyPrice: 75,
+    image: itemAssets.watering_can,
   },
 
   // ===== COOKING INGREDIENTS (shop-bought) =====
