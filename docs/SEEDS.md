@@ -55,7 +55,7 @@ Befriending villagers unlocks special seed rewards! The **Old Man (Jebediah)** i
 - Tomato Seeds - a classic garden favourite
 - Carrot Seeds - crunchy and nutritious
 - Cucumber Seeds - cool and refreshing
-- Onion Seeds - plant in autumn only!
+- Onion Sets - plant in autumn only!
 
 ### 4. Foraging Seeds
 
