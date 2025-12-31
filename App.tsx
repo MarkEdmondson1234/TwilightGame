@@ -704,7 +704,8 @@ const App: React.FC = () => {
     const allNPCs = useMemo(() => {
         let npcs = npcManager.getCurrentMapNPCs();
         if (backgroundImageLayerRef.current) {
-            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs();
+            // Pass currentMapId to prevent stale NPCs from wrong maps
+            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId);
             if (layerNPCs.length > 0) {
                 npcs = [...npcs, ...layerNPCs];
             }
@@ -866,7 +867,7 @@ const App: React.FC = () => {
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     let npcs = npcManager.getCurrentMapNPCs();
                     // Add NPCs from unified layers (for background-image rooms using layers array)
-                    const layerNPCs = backgroundImageLayer.getLayerNPCs();
+                    const layerNPCs = backgroundImageLayer.getLayerNPCs(currentMapId);
                     if (layerNPCs.length > 0) {
                         npcs = [...npcs, ...layerNPCs];
                     }
@@ -1152,7 +1153,7 @@ const App: React.FC = () => {
                 let npcs = npcManager.getCurrentMapNPCs();
                 // Add NPCs from unified layers (for background-image rooms using layers array)
                 if (backgroundImageLayerRef.current) {
-                    const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs();
+                    const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId);
                     if (layerNPCs.length > 0) {
                         npcs = [...npcs, ...layerNPCs];
                     }
@@ -1198,7 +1199,7 @@ const App: React.FC = () => {
 
         // Add NPCs from unified layers (for background-image rooms using layers array)
         if (backgroundImageLayerRef.current) {
-            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs();
+            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId);
             if (layerNPCs.length > 0) {
                 npcs = [...npcs, ...layerNPCs];
             }

@@ -34,6 +34,23 @@ export const QUALITY_MULTIPLIERS: Record<CropQuality, number> = {
   [CropQuality.EXCELLENT]: 2.0,
 };
 
+/**
+ * Quality progression when fertiliser is applied
+ * normal → good → excellent (max, stays at excellent)
+ */
+export const QUALITY_PROGRESSION: Record<CropQuality, CropQuality> = {
+  [CropQuality.NORMAL]: CropQuality.GOOD,
+  [CropQuality.GOOD]: CropQuality.EXCELLENT,
+  [CropQuality.EXCELLENT]: CropQuality.EXCELLENT, // Already at max
+};
+
+/**
+ * Get the next quality level after applying fertiliser
+ */
+export function getNextQuality(current: CropQuality): CropQuality {
+  return QUALITY_PROGRESSION[current];
+}
+
 export interface CropDefinition {
   id: string;
   name: string;
@@ -79,11 +96,16 @@ const GAME_HOUR = 5 * MINUTE;  // 300,000 ms
 const GAME_DAY = 2 * HOUR;      // 7,200,000 ms (2 real hours)
 
 /**
- * Testing mode: Set to true for accelerated growth (milliseconds), false for game time (game days)
- * When true: Crops grow in real minutes for testing
- * When false: Crops grow based on in-game days (1 real day ≈ 0.933 game days)
+ * Testing mode: When true, crops grow in real minutes (for testing)
+ * When false, crops grow based on in-game time (for production)
+ *
+ * Automatically enabled in development mode.
+ * Can be overridden with: VITE_TESTING_MODE=false npm run dev
+ *
+ * In production builds, this is always false unless explicitly set.
  */
-export const TESTING_MODE = true; // TODO: Set to false for production
+export const TESTING_MODE = import.meta.env.DEV ||
+  import.meta.env.VITE_TESTING_MODE === 'true';
 
 /**
  * All available crops
@@ -491,16 +513,6 @@ export function getCrop(cropId: string): CropDefinition | undefined {
  */
 export function getAllCropIds(): string[] {
   return Object.keys(CROPS);
-}
-
-/**
- * Calculate growth progress (0-1)
- */
-export function getGrowthProgress(crop: CropDefinition, plantedAt: number, lastWatered: number | null, now: number): number {
-  const elapsed = now - plantedAt;
-  const isWatered = lastWatered && (now - lastWatered) < crop.waterNeededInterval;
-  const totalTime = isWatered ? crop.growthTimeWatered : crop.growthTime;
-  return Math.min(1, elapsed / totalTime);
 }
 
 /**

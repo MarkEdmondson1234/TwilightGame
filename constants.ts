@@ -15,6 +15,19 @@ export const USE_PIXI_RENDERER = true; // Enabled for testing
 export const USE_SPRITE_SHADOWS = true;
 
 /**
+ * DEBUG - Verbose logging flags for development
+ *
+ * Toggle these to enable detailed logging for specific game systems.
+ * All flags are automatically disabled in production builds.
+ */
+export const DEBUG = {
+  FARM: import.meta.env.DEV && false,    // Farm operations (till, plant, water, harvest)
+  NPC: import.meta.env.DEV && false,     // NPC movement and interactions
+  MAP: import.meta.env.DEV && false,     // Map transitions and loading
+  COLLISION: import.meta.env.DEV && false, // Collision detection
+} as const;
+
+/**
  * TIMING - Animation and game timing constants (in milliseconds)
  *
  * Centralised timing values to avoid magic numbers scattered across the codebase.
@@ -48,6 +61,17 @@ export const TIMING = {
 
   // Tile animations
   DEFAULT_TILE_ANIMATION_MS: 150, // Default animated tile frame rate
+} as const;
+
+/**
+ * GROWTH_THRESHOLDS - Crop growth stage transitions
+ *
+ * Controls when crops visually transition between growth stages.
+ * Progress is 0-1 (0% to 100% of growth time).
+ */
+export const GROWTH_THRESHOLDS = {
+  SEEDLING_TO_YOUNG: 0.33,  // 0-33% = seedling sprite
+  YOUNG_TO_ADULT: 0.66,     // 33-66% = young sprite, 66-100% = adult sprite
 } as const;
 
 // Player sprites now point to placeholder URLs. Frame 0 is idle.

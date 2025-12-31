@@ -1,10 +1,40 @@
+/**
+ * @vitest-environment node
+ *
+ * Uses node environment to avoid jsdom compatibility issues with webidl-conversions.
+ * The farmManager module has browser dependencies through its import chain,
+ * so we mock those modules to test the core logic.
+ */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Mock constants - use importOriginal to get real values, only override what's needed
+vi.mock('../constants', async (importOriginal) => {
+  const actual = await importOriginal() as Record<string, unknown>;
+  return {
+    ...actual,
+    // Override import.meta.env dependent values
+    DEBUG: {
+      FARM: false,
+      NPC: false,
+      MAP: false,
+      COLLISION: false,
+    },
+  };
+});
+
+// Must import after mocks are set up
 import { farmManager } from '../utils/farmManager';
-import { FarmPlotState } from '../types';
+import { FarmPlotState, FarmPlot } from '../types';
 import { inventoryManager } from '../utils/inventoryManager';
 
-// Mock TimeManager
+// Mock TimeManager with Season enum
 vi.mock('../utils/TimeManager', () => ({
+  Season: {
+    SPRING: 'Spring',
+    SUMMER: 'Summer',
+    AUTUMN: 'Autumn',
+    WINTER: 'Winter',
+  },
   TimeManager: {
     getCurrentTime: () => ({
       year: 0,
@@ -89,7 +119,7 @@ describe('FarmManager', () => {
       // Plant seed
       const result = farmManager.plantSeed('test_map', position, 'radish');
 
-      expect(result).toBe(true);
+      expect(result.success).toBe(true);
       expect(inventoryManager.removeItem).toHaveBeenCalledWith('seed_radish', 1);
 
       const plot = farmManager.getPlot('test_map', position);
@@ -105,7 +135,7 @@ describe('FarmManager', () => {
       // Try to plant without tilling
       const result = farmManager.plantSeed('test_map', position, 'radish');
 
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
       expect(inventoryManager.removeItem).not.toHaveBeenCalled();
     });
 
@@ -122,7 +152,7 @@ describe('FarmManager', () => {
       // Try to plant
       const result = farmManager.plantSeed('test_map', position, 'radish');
 
-      expect(result).toBe(false);
+      expect(result.success).toBe(false);
 
       const plot = farmManager.getPlot('test_map', position);
       expect(plot?.state).toBe(FarmPlotState.TILLED); // Still tilled
@@ -211,7 +241,7 @@ describe('FarmManager', () => {
       expect(result?.yield).toBe(1); // Radish yields 1
 
       // Should add crop AND seeds (1-3 seeds per harvest based on crop definition)
-      expect(inventoryManager.addItem).toHaveBeenCalledWith('radish', 1);
+      expect(inventoryManager.addItem).toHaveBeenCalledWith('crop_radish', 1);
       expect(inventoryManager.addItem).toHaveBeenCalledWith('seed_radish', expect.any(Number));
 
       // Plot should be tilled again
@@ -299,6 +329,8 @@ describe('FarmManager', () => {
         plantedAtTimestamp: null,
         lastWateredTimestamp: null,
         stateChangedAtTimestamp: Date.now(),
+        quality: 'normal',
+        fertiliserApplied: false,
       }]);
       let plot = farmManager.getPlot('test_map', position)!;
       expect(farmManager.getTileTypeForPlot(plot)).toBe(26); // SOIL_FALLOW
@@ -338,7 +370,7 @@ describe('FarmManager', () => {
     });
 
     it('should load plots correctly', () => {
-      const plots = [
+      const plots: FarmPlot[] = [
         {
           mapId: 'test_map',
           position: { x: 1, y: 1 },
@@ -353,6 +385,8 @@ describe('FarmManager', () => {
           plantedAtTimestamp: null,
           lastWateredTimestamp: null,
           stateChangedAtTimestamp: Date.now(),
+          quality: 'normal',
+          fertiliserApplied: false,
         },
       ];
 

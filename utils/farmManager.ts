@@ -8,12 +8,13 @@
  */
 
 import { FarmPlot, FarmPlotState, Position, TileType, CropGrowthStage } from '../types';
-import { getCrop, canPlantInSeason, QUALITY_MULTIPLIERS, CropQuality, TESTING_MODE } from '../data/crops';
+import { getCrop, canPlantInSeason, CropQuality, getNextQuality } from '../data/crops';
 import { mapManager } from '../maps/MapManager';
 import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
 import { getTileCoords } from './mapUtils';
+import { GROWTH_THRESHOLDS, DEBUG } from '../constants';
 
 class FarmManager {
   private plots: Map<string, FarmPlot> = new Map(); // key: "mapId:x:y"
@@ -30,6 +31,23 @@ class FarmManager {
    * Register a farm plot (or update existing one)
    */
   registerPlot(plot: FarmPlot): void {
+    // Validate required fields
+    if (!plot.mapId || !plot.position) {
+      console.warn('[FarmManager] Invalid plot: missing mapId or position', plot);
+      return;
+    }
+
+    // Validate state consistency - growing states require plantedAtTimestamp
+    const growingStates = [
+      FarmPlotState.PLANTED,
+      FarmPlotState.WATERED,
+      FarmPlotState.WILTING,
+      FarmPlotState.READY,
+    ];
+    if (growingStates.includes(plot.state) && plot.plantedAtTimestamp === null) {
+      console.warn('[FarmManager] Invalid plot: growing state without plantedAtTimestamp', plot);
+    }
+
     const key = this.getPlotKey(plot.mapId, plot.position);
     this.plots.set(key, plot);
   }
@@ -81,7 +99,7 @@ class FarmManager {
       }
     }
 
-    if (updated.length > 0) {
+    if (updated.length > 0 && DEBUG.FARM) {
       console.log(`[FarmManager] Updated ${updated.length} plots`);
     }
   }
@@ -120,7 +138,7 @@ class FarmManager {
     if (plot.state === FarmPlotState.WILTING) {
       const msSinceStateChange = now - plot.stateChangedAtTimestamp;
       if (msSinceStateChange >= crop.deathGracePeriod) {
-        console.log(`[FarmManager] Crop died at ${plot.position.x},${plot.position.y}`);
+        if (DEBUG.FARM) console.log(`[FarmManager] Crop died at ${plot.position.x},${plot.position.y}`);
         return {
           ...plot,
           state: FarmPlotState.DEAD,
@@ -137,7 +155,7 @@ class FarmManager {
       if (needsWater) {
         const msSinceNeeded = msSinceWatered - crop.waterNeededInterval;
         if (msSinceNeeded >= crop.wiltingGracePeriod) {
-          console.log(`[FarmManager] Crop wilting at ${plot.position.x},${plot.position.y}`);
+          if (DEBUG.FARM) console.log(`[FarmManager] Crop wilting at ${plot.position.x},${plot.position.y}`);
           return {
             ...plot,
             state: FarmPlotState.WILTING,
@@ -150,13 +168,16 @@ class FarmManager {
     }
 
     // Check if plant is ready to harvest
-    // Can become ready from PLANTED, WATERED, or WILTING states
+    // DESIGN NOTE: Wilting crops CAN still mature and become harvestable. This is
+    // intentional forgiving gameplay - players can salvage neglected crops if they
+    // mature before the deathGracePeriod expires. The crop still dies if not
+    // harvested in time, but this gives a window of opportunity.
     if (plot.state === FarmPlotState.PLANTED || plot.state === FarmPlotState.WATERED || plot.state === FarmPlotState.WILTING) {
       const isWatered = msSinceWatered < crop.waterNeededInterval;
       const growthTime = isWatered ? crop.growthTimeWatered : crop.growthTime;
 
       if (msSincePlanted >= growthTime) {
-        console.log(`[FarmManager] Crop ready at ${plot.position.x},${plot.position.y}`);
+        if (DEBUG.FARM) console.log(`[FarmManager] Crop ready at ${plot.position.x},${plot.position.y}`);
         return {
           ...plot,
           state: FarmPlotState.READY,
@@ -177,7 +198,7 @@ class FarmManager {
     const key = this.getPlotKey(mapId, position);
     const existing = this.plots.get(key);
 
-    console.log(`[FarmManager] tillSoil called: mapId=${mapId}, position=(${position.x},${position.y}), existing=${existing ? `state=${FarmPlotState[existing.state]}` : 'none'}`);
+    if (DEBUG.FARM) console.log(`[FarmManager] tillSoil called: mapId=${mapId}, position=(${position.x},${position.y}), existing=${existing ? `state=${FarmPlotState[existing.state]}` : 'none'}`);
 
     // Can only till fallow soil or create new plots
     if (existing && existing.state !== FarmPlotState.FALLOW) {
@@ -202,10 +223,12 @@ class FarmManager {
       plantedAtTimestamp: null,
       lastWateredTimestamp: null,
       stateChangedAtTimestamp: now,
+      quality: 'normal',
+      fertiliserApplied: false,
     };
 
     this.registerPlot(plot);
-    console.log(`[FarmManager] Tilled soil at ${position.x},${position.y}`);
+    if (DEBUG.FARM) console.log(`[FarmManager] Tilled soil at ${position.x},${position.y}`);
     return true;
   }
 
@@ -266,7 +289,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    console.log(`[FarmManager] Planted ${cropId} at ${position.x},${position.y} in ${gameTime.season} (used 1 seed)`);
+    if (DEBUG.FARM) console.log(`[FarmManager] Planted ${cropId} at ${position.x},${position.y} in ${gameTime.season} (used 1 seed)`);
     return { success: true };
   }
 
@@ -323,7 +346,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    console.log(`[FarmManager] Watered crop at ${position.x},${position.y}`);
+    if (DEBUG.FARM) console.log(`[FarmManager] Watered crop at ${position.x},${position.y}`);
     return true;
   }
 
@@ -362,12 +385,8 @@ class FarmManager {
       return { success: false, reason: 'Failed to use fertiliser' };
     }
 
-    // Determine new quality - fertiliser improves quality by one tier
-    // normal -> good, good -> excellent
-    let newQuality: 'normal' | 'good' | 'excellent' = 'good';
-    if (plot.quality === 'good') {
-      newQuality = 'excellent';
-    }
+    // Determine new quality using progression helper
+    const newQuality = getNextQuality(plot.quality as CropQuality);
 
     const updatedPlot: FarmPlot = {
       ...plot,
@@ -376,7 +395,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    console.log(`[FarmManager] Applied fertiliser at ${position.x},${position.y}, quality now ${newQuality}`);
+    if (DEBUG.FARM) console.log(`[FarmManager] Applied fertiliser at ${position.x},${position.y}, quality now ${newQuality}`);
     return { success: true };
   }
 
@@ -386,7 +405,7 @@ class FarmManager {
   getPlotQuality(mapId: string, position: Position): 'normal' | 'good' | 'excellent' | null {
     const plot = this.getPlot(mapId, position);
     if (!plot || !plot.cropType) return null;
-    return plot.quality ?? 'normal';
+    return plot.quality;
   }
 
   /**
@@ -408,7 +427,7 @@ class FarmManager {
     }
 
     // Get quality before reset
-    const quality = plot.quality ?? 'normal';
+    const quality = plot.quality;
 
     // Add harvested crops to inventory
     const cropItemId = getCropItemId(plot.cropType);
@@ -435,13 +454,15 @@ class FarmManager {
       plantedAtTimestamp: null,
       lastWateredTimestamp: null,
       stateChangedAtTimestamp: now,
-      quality: undefined,      // Reset quality
-      fertiliserApplied: undefined, // Reset fertiliser
+      quality: 'normal',        // Reset quality
+      fertiliserApplied: false, // Reset fertiliser
     };
 
     this.registerPlot(updatedPlot);
-    const qualityStr = quality !== 'normal' ? ` (${quality} quality)` : '';
-    console.log(`[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr} + ${seedsDropped}x seeds at ${position.x},${position.y}`);
+    if (DEBUG.FARM) {
+      const qualityStr = quality !== 'normal' ? ` (${quality} quality)` : '';
+      console.log(`[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr} + ${seedsDropped}x seeds at ${position.x},${position.y}`);
+    }
 
     return {
       cropId: plot.cropType,
@@ -461,6 +482,7 @@ class FarmManager {
     }
 
     const gameTime = TimeManager.getCurrentTime();
+    const now = Date.now();
     const updatedPlot: FarmPlot = {
       ...plot,
       state: FarmPlotState.FALLOW,
@@ -471,10 +493,15 @@ class FarmManager {
       lastWateredHour: null,
       stateChangedAtDay: gameTime.totalDays,
       stateChangedAtHour: gameTime.hour,
+      plantedAtTimestamp: null,
+      lastWateredTimestamp: null,
+      stateChangedAtTimestamp: now,
+      quality: 'normal',        // Reset quality
+      fertiliserApplied: false, // Reset fertiliser
     };
 
     this.registerPlot(updatedPlot);
-    console.log(`[FarmManager] Cleared dead crop at ${position.x},${position.y}`);
+    if (DEBUG.FARM) console.log(`[FarmManager] Cleared dead crop at ${position.x},${position.y}`);
     return true;
   }
 
@@ -538,10 +565,10 @@ class FarmManager {
     // Calculate growth progress (0 to 1)
     const progress = Math.min(1, elapsed / totalGrowthTime);
 
-    // Return stage based on progress
-    if (progress < 0.33) {
+    // Return stage based on progress thresholds
+    if (progress < GROWTH_THRESHOLDS.SEEDLING_TO_YOUNG) {
       return CropGrowthStage.SEEDLING;
-    } else if (progress < 0.66) {
+    } else if (progress < GROWTH_THRESHOLDS.YOUNG_TO_ADULT) {
       return CropGrowthStage.YOUNG;
     } else {
       return CropGrowthStage.ADULT;

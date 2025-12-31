@@ -41,7 +41,7 @@ export interface FarmPlot {
   plantedAtTimestamp: number | null;    // Real time when planted (Date.now())
   lastWateredTimestamp: number | null;  // Real time when last watered
   stateChangedAtTimestamp: number;      // Real time of last state change
-  // Quality system (optional for backward compatibility)
-  quality?: 'normal' | 'good' | 'excellent';  // Crop quality level
-  fertiliserApplied?: boolean;                 // Whether fertiliser was used
+  // Quality system (always initialised with defaults)
+  quality: 'normal' | 'good' | 'excellent';   // Crop quality level
+  fertiliserApplied: boolean;                  // Whether fertiliser was used
 }

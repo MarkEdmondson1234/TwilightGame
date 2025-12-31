@@ -163,8 +163,14 @@ export class BackgroundImageLayer {
   /**
    * Get NPCs extracted from unified layers (with zIndexOverride set)
    * Call this after loadLayers to get NPCs that should be rendered
+   * @param forMapId - Only return NPCs if they belong to this map (prevents stale data)
    */
-  getLayerNPCs(): NPC[] {
+  getLayerNPCs(forMapId?: string): NPC[] {
+    // If a map ID is provided, only return NPCs if they belong to that map
+    // This prevents stale NPCs from appearing on wrong maps during transitions
+    if (forMapId && this.currentMapId !== forMapId) {
+      return [];
+    }
     return this.layerNPCs;
   }
 
