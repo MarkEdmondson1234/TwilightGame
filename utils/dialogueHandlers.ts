@@ -98,7 +98,9 @@ function handleRecipeTeaching(nodeId: string): void {
     if (recipeId) {
         const result = cookingManager.unlockRecipe(recipeId);
         if (result) {
-            console.log(`[dialogueHandlers] Mum taught you how to make: ${recipeId}`);
+            console.log(`[dialogueHandlers] ✅ Mum taught you how to make: ${recipeId}`);
+        } else {
+            console.log(`[dialogueHandlers] ❌ Failed to unlock recipe: ${recipeId}`);
         }
     }
 }

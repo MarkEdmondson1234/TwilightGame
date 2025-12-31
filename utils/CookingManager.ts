@@ -270,23 +270,30 @@ class CookingManagerClass {
 
   /**
    * Unlock a recipe (player learns it)
+   * Returns true if unlocked, false if already unlocked or prerequisites not met
    */
   unlockRecipe(recipeId: string): boolean {
     const recipe = getRecipe(recipeId);
     if (!recipe) {
-      console.warn(`[CookingManager] Unknown recipe: ${recipeId}`);
+      console.warn(`[CookingManager] ❌ Unknown recipe: ${recipeId}`);
       return false;
     }
 
     if (this.unlockedRecipes.has(recipeId)) {
-      console.log(`[CookingManager] Recipe already unlocked: ${recipe.displayName}`);
+      console.log(`[CookingManager] ℹ️ Recipe already unlocked: ${recipe.displayName}`);
       return false;
     }
 
     // Check prerequisites
     const masteredIds = this.getMasteredRecipeIds();
     if (!canUnlockRecipe(recipeId, masteredIds)) {
-      console.warn(`[CookingManager] Prerequisites not met for: ${recipe.displayName}`);
+      if (recipe.unlockRequirement) {
+        const prereqRecipe = getRecipe(recipe.unlockRequirement);
+        const prereqName = prereqRecipe?.displayName || recipe.unlockRequirement;
+        console.warn(`[CookingManager] ⚠️ Cannot unlock "${recipe.displayName}" - must master "${prereqName}" first`);
+      } else {
+        console.warn(`[CookingManager] ⚠️ Prerequisites not met for: ${recipe.displayName}`);
+      }
       return false;
     }
 
