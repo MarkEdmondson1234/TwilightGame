@@ -194,6 +194,7 @@ export const farmingAssets = {
 
 // Cooking assets - Prepared food items (cooked dishes)
 export const cookingAssets = {
+  chocolate_cake: '/TwilightGame/assets-optimized/cooking/chocolate_cake.png',
   cookies: '/TwilightGame/assets-optimized/cooking/cookies.png',
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png?v=2',

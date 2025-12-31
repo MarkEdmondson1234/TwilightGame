@@ -555,6 +555,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.cheese,
   },
 
+  buttermilk: {
+    id: 'buttermilk',
+    name: 'buttermilk',
+    displayName: 'Buttermilk',
+    category: ItemCategory.INGREDIENT,
+    description: 'Tangy cultured buttermilk. Perfect for baking.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 10,
+    // Note: No buttermilk sprite yet - add buttermilk.png to grocery folder
+  },
+
   almonds: {
     id: 'almonds',
     name: 'almonds',
@@ -602,6 +614,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 3,
     buyPrice: 8,
     image: groceryAssets.sugar,
+  },
+
+  honey: {
+    id: 'honey',
+    name: 'honey',
+    displayName: 'Honey',
+    category: ItemCategory.INGREDIENT,
+    description: 'Golden honey from local bees. Sweet and sticky.',
+    stackable: true,
+    sellPrice: 8,
+    buyPrice: 20,
+    // Note: No honey sprite yet - add honey.png to grocery folder
   },
 
   salt: {
@@ -1011,6 +1035,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A rich, decadent chocolate cake.',
     stackable: true,
     sellPrice: 90,
+    image: cookingAssets.chocolate_cake,
   },
 };
 

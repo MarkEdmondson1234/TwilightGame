@@ -59,6 +59,7 @@ Invoke this skill when:
 - User wants to replace emoji placeholders with real images
 - User reports sprites showing as emojis instead of images (missing ITEM_SPRITE_MAP entry)
 - User adds a crop that should also be purchasable at the shop (like spinach or salad)
+- User adds cooked food sprites (recipes that produce food items)
 
 **Trigger phrases:**
 - "Add [item] sprite to inventory"
@@ -67,6 +68,7 @@ Invoke this skill when:
 - "Add sprite for [tool/seed/item]"
 - "Why is [item] showing as emoji?"
 - "Make this crop buyable at the shop like spinach"
+- "Add sprite for [cooked food]"
 
 ## Workflow
 
@@ -78,6 +80,7 @@ Invoke this skill when:
 - **Tools**: `/public/assets/items/tools/`
 - **Seeds**: `/public/assets/items/seeds/`
 - **Resources** (crafting materials): `/public/assets/items/resources/`
+- **Cooked food** (finished recipes): `/public/assets/cooking/`
 
 **If user hasn't uploaded yet**, recommend the appropriate subfolder based on item category.
 
@@ -194,7 +197,89 @@ const ITEM_ICON_MAP: Record<string, string> = {
 
 If an item has an emoji fallback in `ITEM_ICON_MAP` and you add a sprite, remove the emoji entry to avoid confusion. The sprite in `ITEM_SPRITE_MAP` takes precedence, but removing the fallback keeps the code clean.
 
-### 4b. Special Case: Crops That Are Also Shop Items
+### 4b. Special Case: Cooked Food Items
+
+Cooked food items (recipes that produce food) require **four locations** instead of three, plus the recipe must have an `image` property to spawn the food sprite near the player.
+
+**Example: Adding chocolate_cake sprite**
+
+1. **Upload sprite**: `/public/assets/cooking/chocolate_cake.png`
+
+2. **Register in `assets.ts`** (in `cookingAssets` object):
+   ```typescript
+   export const cookingAssets = {
+     // ...existing items
+     chocolate_cake: '/TwilightGame/assets-optimized/cooking/chocolate_cake.png',
+   };
+   ```
+
+3. **Link in `data/items.ts`** (the cooked food item):
+   ```typescript
+   food_chocolate_cake: {
+     id: 'food_chocolate_cake',
+     name: 'food_chocolate_cake',
+     displayName: 'Chocolate Cake',
+     category: ItemCategory.FOOD,
+     description: 'A rich, decadent chocolate cake.',
+     stackable: true,
+     sellPrice: 90,
+     image: cookingAssets.chocolate_cake,  // ← REQUIRED
+   },
+   ```
+
+4. **Map in `utils/inventoryUIHelper.ts`** (ITEM_SPRITE_MAP):
+   ```typescript
+   const ITEM_SPRITE_MAP: Record<string, string> = {
+     // Cooked Food
+     food_tea: cookingAssets.cup_of_tea,
+     food_french_toast: cookingAssets.french_toast,
+     food_chocolate_cake: cookingAssets.chocolate_cake,  // ← Add this
+   };
+   ```
+
+5. **Add to recipe in `data/recipes.ts`**:
+   ```typescript
+   chocolate_cake: {
+     id: 'chocolate_cake',
+     name: 'chocolate_cake',
+     displayName: 'Chocolate Cake',
+     // ...ingredients, cookingTime, etc.
+     image: cookingAssets.chocolate_cake,  // ← REQUIRED for spawning
+     instructions: [...],
+   },
+   ```
+
+6. **Run optimization**:
+   ```bash
+   npm run optimize-assets
+   ```
+
+**Why the recipe needs `image` property:**
+
+When you cook a recipe successfully, the game spawns the food sprite near the player (1 tile above). This happens in `components/RecipeBook.tsx`:
+
+```typescript
+// After successful cooking
+if (result.success && result.foodProduced && playerPosition && currentMapId) {
+  const recipe = getRecipe(recipeId);
+  if (recipe?.image) {  // ← Checks for this!
+    // Place the food item near the player
+    const placedItem: PlacedItem = {
+      // ...
+      image: recipe.image,  // ← Uses recipe's image
+    };
+    gameState.addPlacedItem(placedItem);
+  }
+}
+```
+
+**Four locations for cooked food:**
+1. `assets.ts` - cookingAssets object
+2. `data/items.ts` - food_* item definition (for inventory display)
+3. `utils/inventoryUIHelper.ts` - ITEM_SPRITE_MAP (for inventory rendering)
+4. `data/recipes.ts` - recipe definition (for spawning sprite after cooking)
+
+### 4c. Special Case: Crops That Are Also Shop Items
 
 Some crops can be both **harvested from farming** AND **purchased at the shop** (like spinach or salad). These require additional setup beyond the standard three-location pattern.
 

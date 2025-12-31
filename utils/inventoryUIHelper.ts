@@ -80,6 +80,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   food_french_toast: cookingAssets.french_toast,
   food_roast_dinner: cookingAssets.roast_dinner,
   food_cookies: cookingAssets.cookies,
+  food_chocolate_cake: cookingAssets.chocolate_cake,
 };
 
 /**
