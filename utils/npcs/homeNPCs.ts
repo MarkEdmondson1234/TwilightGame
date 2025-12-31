@@ -110,11 +110,65 @@ export function createMumNPC(
         text: 'Oh, I\'d love to teach you! Cooking is such a wonderful skill. Let me show you some of my favourite recipes.',
         expression: 'happy',
         responses: [
-          { text: 'I\'d like to learn French Toast.', nextId: 'learn_french_toast' },
-          { text: 'Can you teach me some savoury dishes?', nextId: 'learn_savoury' },
-          { text: 'I want to learn about desserts.', nextId: 'learn_desserts' },
-          { text: 'Tell me about baking.', nextId: 'learn_baking' },
+          // First time - learn French Toast
+          { text: 'I\'d like to learn French Toast.', nextId: 'learn_french_toast', hiddenIfRecipeUnlocked: 'french_toast' },
+
+          // After mastering French Toast - choose a domain (only shown if no domain started)
+          { text: 'Can you teach me some savoury dishes?', nextId: 'choose_savoury', requiredRecipeMastered: 'french_toast', hiddenIfAnyDomainStarted: true },
+          { text: 'I want to learn about desserts.', nextId: 'choose_dessert', requiredRecipeMastered: 'french_toast', hiddenIfAnyDomainStarted: true },
+          { text: 'Tell me about baking.', nextId: 'choose_baking', requiredRecipeMastered: 'french_toast', hiddenIfAnyDomainStarted: true },
+
+          // Continue with current domain (shown if domain started but not mastered)
+          { text: 'Continue with savoury cooking.', nextId: 'learn_savoury', requiredDomainStarted: 'savoury', hiddenIfDomainMastered: 'savoury' },
+          { text: 'Continue with desserts.', nextId: 'learn_desserts', requiredDomainStarted: 'dessert', hiddenIfDomainMastered: 'dessert' },
+          { text: 'Continue with baking.', nextId: 'learn_baking', requiredDomainStarted: 'baking', hiddenIfDomainMastered: 'baking' },
+
+          // Start new domain (shown if a different domain is mastered, allowing player to start another)
+          { text: 'Teach me about savoury dishes.', nextId: 'choose_savoury', hiddenIfDomainStarted: 'savoury', requiredDomainMastered: 'dessert' },
+          { text: 'Teach me about savoury dishes.', nextId: 'choose_savoury', hiddenIfDomainStarted: 'savoury', requiredDomainMastered: 'baking' },
+          { text: 'Teach me about desserts.', nextId: 'choose_dessert', hiddenIfDomainStarted: 'dessert', requiredDomainMastered: 'savoury' },
+          { text: 'Teach me about desserts.', nextId: 'choose_dessert', hiddenIfDomainStarted: 'dessert', requiredDomainMastered: 'baking' },
+          { text: 'Teach me about baking.', nextId: 'choose_baking', hiddenIfDomainStarted: 'baking', requiredDomainMastered: 'savoury' },
+          { text: 'Teach me about baking.', nextId: 'choose_baking', hiddenIfDomainStarted: 'baking', requiredDomainMastered: 'dessert' },
+
+          // Progress check
+          { text: 'Show me what you\'ve taught me already.', nextId: 'not_ready', hiddenIfRecipeMastered: 'french_toast', requiredRecipeUnlocked: 'french_toast' },
           { text: 'Maybe later.' },
+        ],
+      },
+      {
+        id: 'not_ready',
+        text: 'Show me you\'ve mastered cooking French Toast, and I\'ll show you more recipes. Practice makes perfect, love!',
+        expression: 'default',
+        responses: [
+          { text: 'I understand.' },
+        ],
+      },
+      {
+        id: 'choose_savoury',
+        text: 'Savoury cooking is a wonderful path! Hearty meals that fill the belly and warm the soul. But listen carefully, dear - once you commit to learning savoury cooking, I need you to master all three recipes before we move on to other areas. Cooking requires focus and dedication. Are you sure you want to start with savoury dishes?',
+        expression: 'default',
+        responses: [
+          { text: 'Yes, teach me savoury cooking!', nextId: 'learn_savoury' },
+          { text: 'Let me think about it.', nextId: 'teach_cooking' },
+        ],
+      },
+      {
+        id: 'choose_dessert',
+        text: 'Desserts are my favourite! Sweet treats that bring joy to everyone. But remember, love - once you choose desserts, you must master all three recipes before moving to other areas. It\'s important to finish what you start. Are you ready to commit to learning desserts?',
+        expression: 'happy',
+        responses: [
+          { text: 'Yes, I want to learn desserts!', nextId: 'learn_desserts' },
+          { text: 'Maybe I should reconsider.', nextId: 'teach_cooking' },
+        ],
+      },
+      {
+        id: 'choose_baking',
+        text: 'Baking is an art! Fresh bread, lovely biscuits, decadent cakes. But I must warn you - once you begin baking, you need to master all three recipes before we explore other cooking paths. Baking demands patience and practice. Are you certain you want to start with baking?',
+        expression: 'smile',
+        responses: [
+          { text: 'Absolutely! Teach me baking.', nextId: 'learn_baking' },
+          { text: 'I need to think it over.', nextId: 'teach_cooking' },
         ],
       },
       {

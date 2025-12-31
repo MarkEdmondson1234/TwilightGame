@@ -123,21 +123,37 @@ class CookingManagerClass {
       });
     }
 
-    // Starter recipes are always available
+    // Starter recipes are always available (MUST be added regardless of saved state)
     Object.values(RECIPES).forEach(recipe => {
       if (recipe.category === 'starter') {
         this.unlockedRecipes.add(recipe.id);
       }
     });
 
+    // CRITICAL: Ensure tea is always unlocked (defensive programming)
+    if (!this.unlockedRecipes.has('tea')) {
+      console.warn('[CookingManager] ⚠️ Tea was missing from unlocked recipes! Re-adding it.');
+      this.unlockedRecipes.add('tea');
+    }
+
     this.initialised = true;
     console.log(`[CookingManager] Initialised with ${this.unlockedRecipes.size} unlocked recipes`);
+    console.log(`[CookingManager] Unlocked recipes:`, Array.from(this.unlockedRecipes));
+
+    // Save initial state to ensure starter recipes are persisted
+    this.save();
   }
 
   /**
    * Check if a recipe is unlocked (player knows it)
    */
   isRecipeUnlocked(recipeId: string): boolean {
+    // Starter recipes are ALWAYS unlocked, regardless of saved state
+    const recipe = getRecipe(recipeId);
+    if (recipe && recipe.category === 'starter') {
+      return true;
+    }
+
     return this.unlockedRecipes.has(recipeId);
   }
 
@@ -153,7 +169,17 @@ class CookingManagerClass {
    * Get all unlocked recipes
    */
   getUnlockedRecipes(): RecipeDefinition[] {
-    return Array.from(this.unlockedRecipes)
+    // Create a set to ensure uniqueness
+    const recipeIds = new Set(this.unlockedRecipes);
+
+    // ALWAYS include starter recipes (defensive programming)
+    Object.values(RECIPES).forEach(recipe => {
+      if (recipe.category === 'starter') {
+        recipeIds.add(recipe.id);
+      }
+    });
+
+    return Array.from(recipeIds)
       .map(id => getRecipe(id))
       .filter((r): r is RecipeDefinition => r !== undefined);
   }
@@ -527,7 +553,17 @@ class CookingManagerClass {
       }
     });
 
+    // CRITICAL: Ensure tea is always unlocked (defensive programming)
+    if (!this.unlockedRecipes.has('tea')) {
+      console.warn('[CookingManager] ⚠️ Tea was missing after reset! Re-adding it.');
+      this.unlockedRecipes.add('tea');
+    }
+
     console.log('[CookingManager] Reset cooking progress');
+    console.log(`[CookingManager] Unlocked recipes after reset:`, Array.from(this.unlockedRecipes));
+
+    // Save reset state to persist starter recipes
+    this.save();
   }
 
   /**

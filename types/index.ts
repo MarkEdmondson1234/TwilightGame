@@ -42,6 +42,7 @@ export type {
   NPCFriendship,
   FriendshipConfig,
   DialogueNode,
+  DialogueResponse,
   NPC,
   AnimatedNPCStates,
 } from './npc';

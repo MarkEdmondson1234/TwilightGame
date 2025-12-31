@@ -271,7 +271,11 @@ class GameStateManager {
         // Migrate old save data that doesn't have cooking
         if (!parsed.cooking) {
           console.log('[GameState] Migrating old save data - adding cooking');
-          parsed.cooking = { unlockedRecipes: [], recipeProgress: {} };
+          parsed.cooking = { unlockedRecipes: ['tea'], recipeProgress: {} }; // Tea is always unlocked
+        } else if (!parsed.cooking.unlockedRecipes.includes('tea')) {
+          // Ensure tea is always unlocked, even in existing saves
+          console.log('[GameState] Migrating old save data - ensuring tea is unlocked');
+          parsed.cooking.unlockedRecipes.push('tea');
         }
 
         // Migrate old save data that doesn't have status effects
@@ -338,7 +342,7 @@ class GameStateManager {
       },
       placedItems: [],
       cooking: {
-        unlockedRecipes: [],
+        unlockedRecipes: ['tea'], // Tea is always unlocked from the start
         recipeProgress: {},
       },
       statusEffects: {

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { NPC, DialogueNode } from '../types';
+import { NPC, DialogueNode, DialogueResponse } from '../types';
 import { getDialogue } from '../services/dialogueService';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { Z_DIALOGUE, zClass } from '../zIndex';
+import { cookingManager } from '../utils/CookingManager';
 
 interface DialogueBoxProps {
   npc: NPC;
@@ -57,6 +58,87 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
   };
 
   const npcDialogueSprite = getNpcSprite();
+
+  // Filter responses based on cooking conditions
+  const filterResponses = (responses: DialogueResponse[] | undefined): DialogueResponse[] => {
+    if (!responses) return [];
+
+    return responses.filter(response => {
+      // Check if recipe needs to be unlocked
+      if (response.requiredRecipeUnlocked) {
+        if (!cookingManager.isRecipeUnlocked(response.requiredRecipeUnlocked)) {
+          return false;
+        }
+      }
+
+      // Check if recipe needs to be mastered
+      if (response.requiredRecipeMastered) {
+        if (!cookingManager.isRecipeMastered(response.requiredRecipeMastered)) {
+          return false;
+        }
+      }
+
+      // Check if should be hidden when recipe is unlocked
+      if (response.hiddenIfRecipeUnlocked) {
+        if (cookingManager.isRecipeUnlocked(response.hiddenIfRecipeUnlocked)) {
+          return false;
+        }
+      }
+
+      // Check if should be hidden when recipe is mastered
+      if (response.hiddenIfRecipeMastered) {
+        if (cookingManager.isRecipeMastered(response.hiddenIfRecipeMastered)) {
+          return false;
+        }
+      }
+
+      // Check if domain needs to be mastered
+      if (response.requiredDomainMastered) {
+        if (!cookingManager.isDomainMastered(response.requiredDomainMastered as any)) {
+          return false;
+        }
+      }
+
+      // Check if domain needs to be started (at least one recipe unlocked)
+      if (response.requiredDomainStarted) {
+        const domainRecipes = cookingManager.getRecipesByCategory(response.requiredDomainStarted as any);
+        const anyUnlocked = domainRecipes.some(r => cookingManager.isRecipeUnlocked(r.id));
+        if (!anyUnlocked) {
+          return false;
+        }
+      }
+
+      // Check if should be hidden when domain is started (any recipe unlocked)
+      if (response.hiddenIfDomainStarted) {
+        const domainRecipes = cookingManager.getRecipesByCategory(response.hiddenIfDomainStarted as any);
+        const anyUnlocked = domainRecipes.some(r => cookingManager.isRecipeUnlocked(r.id));
+        if (anyUnlocked) {
+          return false;
+        }
+      }
+
+      // Check if should be hidden when domain is mastered
+      if (response.hiddenIfDomainMastered) {
+        if (cookingManager.isDomainMastered(response.hiddenIfDomainMastered as any)) {
+          return false;
+        }
+      }
+
+      // Check if should be hidden when any domain is started but not mastered
+      if (response.hiddenIfAnyDomainStarted) {
+        const masteredCount = cookingManager.getMasteredDomainCount();
+        const unlockedRecipes = cookingManager.getUnlockedRecipes();
+        const hasStartedDomain = unlockedRecipes.some(r =>
+          r.category === 'savoury' || r.category === 'dessert' || r.category === 'baking'
+        );
+        if (hasStartedDomain && masteredCount < 3) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  };
 
   // Load dialogue node with seasonal/time-of-day context
   useEffect(() => {
@@ -239,9 +321,11 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
           width: 'min(90vw, 900px)',
         }}
       >
-        {currentDialogue.responses && currentDialogue.responses.length > 0 ? (
+        {(() => {
+          const filteredResponses = filterResponses(currentDialogue.responses);
+          return filteredResponses.length > 0 ? (
           <div className="flex flex-wrap gap-2 justify-center">
-            {currentDialogue.responses.map((response, index) => (
+            {filteredResponses.map((response, index) => (
               <button
                 key={index}
                 onClick={() => handleResponse(response.nextId)}
@@ -264,7 +348,8 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
               <span className="animate-bounce">▼</span>
             </button>
           </div>
-        )}
+        );
+        })()}
       </div>
 
       {/* Mobile touch area for closing - tap anywhere outside dialogue */}

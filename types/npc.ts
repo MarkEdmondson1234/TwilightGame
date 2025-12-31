@@ -60,13 +60,29 @@ export interface DialogueNode {
     storm?: string;
     cherry_blossoms?: string;
   };
-  responses?: { text: string; nextId?: string }[]; // For branching dialogue (no nextId = close dialogue)
+  responses?: DialogueResponse[]; // For branching dialogue (no nextId = close dialogue)
   // Friendship requirements for this dialogue node
   requiredFriendshipTier?: FriendshipTier;  // Only show if friendship >= tier
   requiredSpecialFriend?: boolean;           // Only show if special friend
   // Expression/emotion for dialogue character sprite (e.g., 'smile', 'happy', 'thinky')
   // If set, uses dialogueExpressions[expression] from NPC, otherwise uses default dialogueSprite
   expression?: string;
+}
+
+export interface DialogueResponse {
+  text: string;
+  nextId?: string;
+  // Cooking requirements for this response option
+  requiredRecipeUnlocked?: string;  // Only show if this recipe is unlocked
+  requiredRecipeMastered?: string;  // Only show if this recipe is mastered
+  hiddenIfRecipeUnlocked?: string;  // Hide if this recipe is already unlocked
+  hiddenIfRecipeMastered?: string;  // Hide if this recipe is already mastered
+  // Cooking domain requirements (savoury, dessert, baking)
+  requiredDomainMastered?: string;  // Only show if this cooking domain is mastered
+  requiredDomainStarted?: string;   // Only show if this domain has been started (any recipe unlocked)
+  hiddenIfDomainStarted?: string;   // Hide if any recipe in this domain is unlocked
+  hiddenIfDomainMastered?: string;  // Hide if this domain is fully mastered
+  hiddenIfAnyDomainStarted?: boolean; // Hide if player has started any domain (not mastered yet)
 }
 
 export interface NPC {
