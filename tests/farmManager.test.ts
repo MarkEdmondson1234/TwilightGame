@@ -24,7 +24,7 @@ vi.mock('../constants', async (importOriginal) => {
 
 // Must import after mocks are set up
 import { farmManager } from '../utils/farmManager';
-import { FarmPlotState, FarmPlot } from '../types';
+import { FarmPlotState, FarmPlot, TileType } from '../types';
 import { inventoryManager } from '../utils/inventoryManager';
 
 // Mock TimeManager with Season enum
@@ -244,9 +244,9 @@ describe('FarmManager', () => {
       expect(inventoryManager.addItem).toHaveBeenCalledWith('crop_radish', 1);
       expect(inventoryManager.addItem).toHaveBeenCalledWith('seed_radish', expect.any(Number));
 
-      // Plot should be tilled again
+      // Plot should be fallow (needs re-tilling before planting again)
       const updatedPlot = farmManager.getPlot('test_map', position);
-      expect(updatedPlot?.state).toBe(FarmPlotState.TILLED);
+      expect(updatedPlot?.state).toBe(FarmPlotState.FALLOW);
       expect(updatedPlot?.cropType).toBeNull();
     });
 
@@ -333,17 +333,17 @@ describe('FarmManager', () => {
         fertiliserApplied: false,
       }]);
       let plot = farmManager.getPlot('test_map', position)!;
-      expect(farmManager.getTileTypeForPlot(plot)).toBe(26); // SOIL_FALLOW
+      expect(farmManager.getTileTypeForPlot(plot)).toBe(TileType.SOIL_FALLOW);
 
       // Tilled
       farmManager.tillSoil('test_map', position);
       plot = farmManager.getPlot('test_map', position)!;
-      expect(farmManager.getTileTypeForPlot(plot)).toBe(27); // SOIL_TILLED
+      expect(farmManager.getTileTypeForPlot(plot)).toBe(TileType.SOIL_TILLED);
 
       // Planted
       farmManager.plantSeed('test_map', position, 'radish');
       plot = farmManager.getPlot('test_map', position)!;
-      expect(farmManager.getTileTypeForPlot(plot)).toBe(28); // SOIL_PLANTED
+      expect(farmManager.getTileTypeForPlot(plot)).toBe(TileType.SOIL_PLANTED);
     });
   });
 

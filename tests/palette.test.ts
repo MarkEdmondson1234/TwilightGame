@@ -1,7 +1,10 @@
 /**
+ * @vitest-environment happy-dom
+ *
  * Palette System Tests
  *
  * Tests critical palette functions to prevent regressions during refactoring.
+ * Uses happy-dom instead of jsdom to avoid webidl-conversions compatibility issues.
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';

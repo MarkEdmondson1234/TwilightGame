@@ -966,6 +966,26 @@ const App: React.FC = () => {
         };
     }, [isPixiInitialized]);
 
+    // Handle background image layers when map changes (separate from rendering to avoid clearing on every viewport change)
+    useEffect(() => {
+        if (!USE_PIXI_RENDERER || !isPixiInitialized || !backgroundImageLayerRef.current) return;
+
+        const currentMap = mapManager.getCurrentMap();
+        if (!currentMap) return;
+
+        if (currentMap.renderMode === 'background-image') {
+            // Async load - use IIFE to handle in useEffect
+            (async () => {
+                console.log('[App] Loading background/foreground layers for', currentMapId);
+                await backgroundImageLayerRef.current?.loadLayers(currentMap, currentMapId, false);
+                console.log('[App] All image layers loaded for', currentMapId);
+            })();
+        } else {
+            // Clear background layers when switching to tiled map
+            backgroundImageLayerRef.current.clear();
+        }
+    }, [currentMapId, isPixiInitialized]); // Only run when map changes, not on viewport changes
+
     // Update PixiJS tiles when map/viewport/season changes (NOT on every camera move)
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
@@ -981,20 +1001,8 @@ const App: React.FC = () => {
             }
 
             // Load background and foreground image layers (for background-image render mode)
-            // skipForeground: false means PixiJS renders ALL layers (no DOM hybrid)
-            if (backgroundImageLayerRef.current) {
-                if (currentMap.renderMode === 'background-image') {
-                    // Async load - use IIFE to handle in useEffect
-                    (async () => {
-                        console.log('[App] Loading background/foreground layers for', currentMapId);
-                        await backgroundImageLayerRef.current?.loadLayers(currentMap, currentMapId, false);
-                        console.log('[App] All image layers loaded for', currentMapId);
-                    })();
-                } else {
-                    // Clear background layers when switching to tiled map
-                    backgroundImageLayerRef.current.clear();
-                }
-            }
+            // Note: Loading/clearing is handled by a separate useEffect that only runs on map change
+            // This avoids clearing on every visibleRange change
 
             // Render all layers (only when viewport or map data changes)
             tileLayerRef.current.renderTiles(currentMap, currentMapId, visibleRange, seasonKey, farmUpdateTrigger, currentWeather);
@@ -1115,11 +1123,9 @@ const App: React.FC = () => {
         }
     }, [cameraX, cameraY, isPixiInitialized, currentMap?.renderMode]);
 
-    // Re-render PixiJS when render version changes (sprite metadata, season, etc.)
+    // Re-render PixiJS layers when NPC positions change or render version bumps
     useEffect(() => {
         if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
-
-        console.log('[App] Render version changed, re-rendering PixiJS tiles...');
 
         const currentMap = mapManager.getCurrentMap();
         if (currentMap) {

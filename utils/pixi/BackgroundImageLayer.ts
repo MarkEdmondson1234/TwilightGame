@@ -338,7 +338,6 @@ export class BackgroundImageLayer {
     this.layerNPCs = [];
 
     this.currentMapId = null;
-    console.log('[BackgroundImageLayer] Cleared all layers');
   }
 
   /**
