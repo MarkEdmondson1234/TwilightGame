@@ -32,6 +32,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
 
   // Grocery items (cooking ingredients)
   butter: groceryAssets.butter,
+  cream: groceryAssets.cream,
   egg: groceryAssets.egg,
   flour: groceryAssets.flour,
   gravy: groceryAssets.gravy,

@@ -212,6 +212,7 @@ export const groceryAssets = {
   chocolate_bar: '/TwilightGame/assets-optimized/items/grocery/chocolate_bar.png',
   cinnamon: '/TwilightGame/assets-optimized/items/grocery/cinnamon.png',
   cocoa_powder: '/TwilightGame/assets-optimized/items/grocery/cocoa_powder.png',
+  cream: '/TwilightGame/assets-optimized/items/grocery/cream.png',
   curry: '/TwilightGame/assets-optimized/items/grocery/curry.png',
   dried_spaghetti: '/TwilightGame/assets-optimized/items/grocery/dried_spaghetti.png',
   egg: '/TwilightGame/assets-optimized/items/grocery/egg.png',
