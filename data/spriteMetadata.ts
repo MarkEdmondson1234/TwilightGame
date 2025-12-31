@@ -832,10 +832,10 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   {
     tileType: TileType.SMALL_LAKE,
     spriteWidth: 6,    // 6 tiles wide (smaller pond)
-    spriteHeight: 6,   // 6 tiles tall (square aspect ratio - same image as magical lake)
+    spriteHeight: 6,   // 6 tiles tall (square aspect ratio)
     offsetX: -3,       // Center horizontally on anchor tile
     offsetY: -3,       // Center vertically on anchor tile
-    image: tileAssets.magical_lake,  // Same image, scaled down
+    image: tileAssets.forest_pond_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     isForeground: false,  // Render under player/NPCs (it's water)
     // Collision covers inner area (4x4), leaving walkable shore
     collisionWidth: 4,

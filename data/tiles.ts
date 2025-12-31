@@ -126,10 +126,17 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
   },
   [TileType.SMALL_LAKE]: {
-    name: 'Small Lake',
+    name: 'Forest Pond',
     color: 'bg-palette-sky',
     isSolid: true,  // Multi-tile sprite - collision handled by SPRITE_METADATA
-    image: [tileAssets.magical_lake],  // Same image, just rendered smaller
+    image: [tileAssets.forest_pond_spring_summer],  // Default image
+    seasonalImages: {
+      spring: [tileAssets.forest_pond_spring_summer],
+      summer: [tileAssets.forest_pond_spring_summer],
+      autumn: [tileAssets.forest_pond_autumn],
+      winter: [tileAssets.forest_pond_winter],
+      default: [tileAssets.forest_pond_spring_summer],
+    },
     baseType: TileType.GRASS,  // Render grass underneath for natural shoreline
   },
   [TileType.PATH]: {

@@ -160,6 +160,10 @@ export const tileAssets = {
   // Small spruce tree assets (solid obstacle for forest areas)
   spruce_tree_small: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small.png',
   spruce_tree_small_winter: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small_winter.png',
+  // Forest pond assets (6x6 multi-tile sprite for random forests, seasonal variations)
+  forest_pond_spring_summer: '/TwilightGame/assets-optimized/tiles/forest_lake/pond_forest_spring-summer.png',
+  forest_pond_autumn: '/TwilightGame/assets-optimized/tiles/forest_lake/pond_forest_autumn.png',
+  forest_pond_winter: '/TwilightGame/assets-optimized/tiles/forest_lake/pond_forest_winter.png',
   // Magical lake asset (12x12 multi-tile sprite for forest lake scene)
   // Optimized at 2048px with showcase quality (97%, compression level 3)
   magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',
