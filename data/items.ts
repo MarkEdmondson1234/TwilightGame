@@ -108,6 +108,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 15,
     buyPrice: 30,
     cropId: 'melon',
+    image: itemAssets.melon_seeds,
   },
 
   seed_chili: {
@@ -225,6 +226,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 4,
     cropId: 'cucumber',
+    image: itemAssets.cucumber_seeds,
   },
 
   seed_carrot: {

@@ -29,6 +29,8 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   seed_spinach: itemAssets.spinach_seeds,
   seed_sunflower: itemAssets.sunflower_seeds,
   seed_broccoli: itemAssets.broccoli_seeds,
+  seed_cucumber: itemAssets.cucumber_seeds,
+  seed_melon: itemAssets.melon_seeds,
 
   // Grocery items (cooking ingredients)
   butter: groceryAssets.butter,
@@ -97,25 +99,21 @@ const ITEM_ICON_MAP: Record<string, string> = {
   // Seeds (items without sprites)
   seed_corn: '🌽',
   seed_pumpkin: '🎃',
-  seed_melon: '🍉',
   seed_chili: '🌶️',
   seed_cauliflower: '🥬',
   seed_onion: '🧅',
   seed_pea: '🫛',
-  seed_cucumber: '🥒',
   seed_strawberry: '🍓',
 
   // Crops (items without sprites)
   crop_corn: '🌽',
   crop_pumpkin: '🎃',
   crop_potato: '🥔',
-  crop_melon: '🍉',
   crop_chili: '🌶️',
   crop_cauliflower: '🥬',
   crop_sunflower: '🌻',
   crop_onion: '🧅',
   crop_pea: '🫛',
-  crop_cucumber: '🥒',
   crop_carrot: '🥕',
   crop_strawberry: '🍓',
 
