@@ -3,10 +3,11 @@
  *
  * Features:
  * - Async texture loading with Assets API
- * - Automatic pixel art configuration (nearest neighbor)
+ * - Smooth linear scaling for hand-drawn artwork
  * - Batch loading for startup
  * - Texture caching to avoid reloads
  * - Memory-efficient texture reuse
+ * - Mipmaps for high-quality downscaling
  *
  * Usage:
  *   await textureManager.loadBatch(tileAssets);
@@ -20,23 +21,8 @@ class TextureManager {
   private loading = new Map<string, Promise<Texture>>();
 
   /**
-   * Determine if a texture should use smooth (linear) scaling
-   * High-res artwork (farming, NPCs) needs smooth downscaling
-   * Pixel art tiles use nearest neighbor for crisp edges
-   */
-  private shouldUseSmoothScaling(url: string | undefined): boolean {
-    if (!url) return false;
-    // Farming sprites (512px+ artwork)
-    if (url.includes('/farming/') || url.includes('farming\\')) return true;
-    // NPC sprites (high-res character artwork)
-    if (url.includes('/npcs/') || url.includes('npcs\\')) return true;
-    return false;
-  }
-
-  /**
    * Load a single texture asynchronously
-   * Automatically configures for pixel art (nearest neighbor scaling)
-   * Farming sprites use smooth scaling for better quality when downscaled
+   * All textures use linear (smooth) scaling for hand-drawn artwork
    */
   async loadTexture(key: string, url: string): Promise<Texture> {
     // Return cached texture if already loaded
@@ -51,13 +37,10 @@ class TextureManager {
 
     // Start loading
     const promise = Assets.load<Texture>(url).then(texture => {
-      const useSmooth = this.shouldUseSmoothScaling(url);
-      // Use smooth scaling for farming/NPC sprites (high-res artwork), nearest for pixel art
-      texture.source.scaleMode = useSmooth ? 'linear' : 'nearest';
-      // Enable mipmaps for smooth-scaled textures (prevents aliasing when downscaling)
-      if (useSmooth) {
-        texture.source.autoGenerateMipmaps = true;
-      }
+      // Use linear (smooth) scaling for all hand-drawn artwork
+      texture.source.scaleMode = 'linear';
+      // Enable mipmaps for high-quality downscaling
+      texture.source.autoGenerateMipmaps = true;
 
       // Cache texture
       this.textures.set(key, texture);
@@ -95,13 +78,10 @@ class TextureManager {
       Object.entries(loadedAssets as Record<string, Texture>).forEach(([key, texture]) => {
         if (texture && texture.source) {
           const url = assets[key];
-          const useSmooth = this.shouldUseSmoothScaling(url);
-          // Use smooth scaling for farming/NPC sprites (high-res artwork), nearest for pixel art
-          texture.source.scaleMode = useSmooth ? 'linear' : 'nearest';
-          // Enable mipmaps for smooth-scaled textures (prevents aliasing when downscaling)
-          if (useSmooth) {
-            texture.source.autoGenerateMipmaps = true;
-          }
+          // Use linear (smooth) scaling for all hand-drawn artwork
+          texture.source.scaleMode = 'linear';
+          // Enable mipmaps for high-quality downscaling
+          texture.source.autoGenerateMipmaps = true;
           this.textures.set(url, texture); // Cache by URL
         }
       });

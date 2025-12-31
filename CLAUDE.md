@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A peaceful top-down exploration and crafting game engine built with React, Vite, and TypeScript. Inspired by Stardew Valley, it features tile-based movement, sprite animation, collision detection, and a **multi-map system** supporting both designed and procedurally generated maps with transitions. Currently uses placeholder graphics with support for custom artwork.
+A peaceful top-down exploration and crafting game engine built with React, Vite, and TypeScript. Inspired by Stardew Valley, it features tile-based movement, sprite animation, collision detection, and a **multi-map system** supporting both designed and procedurally generated maps with transitions. All artwork is meticulously hand-drawn and rendered with smooth linear scaling to preserve artistic quality.
 
 ## Language and Localisation
 
@@ -18,6 +18,23 @@ A peaceful top-down exploration and crafting game engine built with React, Vite,
 - When writing dialogue, use proper British spelling and phrasing
 
 This applies to all user-facing text including: dialogue, item descriptions, UI labels, and documentation.
+
+## Art Style and Rendering
+
+**CRITICAL**: This game features hand-drawn artwork, NOT pixel art.
+
+- **All sprites are hand-drawn** - Every asset is meticulously created as smooth, detailed artwork
+- **Always use linear (smooth) scaling** - NEVER use nearest-neighbor or pixelated rendering
+- **No `imageRendering: 'pixelated'`** - This CSS property must NEVER be added to any elements
+- **PixiJS uses `scaleMode: 'linear'`** - All textures in TextureManager use smooth scaling with mipmaps
+- **Preserve artistic quality** - The rendering system is designed to show artwork as beautifully as it was created
+
+When adding new rendering code:
+- ✅ DO: Use linear/smooth scaling for all images
+- ✅ DO: Enable mipmaps for high-quality downscaling
+- ❌ DON'T: Use nearest-neighbor scaling (causes unwanted pixelation)
+- ❌ DON'T: Add `imageRendering: 'pixelated'` CSS properties
+- ❌ DON'T: Use `SCALE_MODES.NEAREST` in PixiJS
 
 ## Touch/iPad Support
 
@@ -418,12 +435,12 @@ graphics.fill(hexColor); // Uses palette colors
 - ✅ Batch similar sprites in same container
 - ✅ Use `zIndex` for layering (instead of multiple containers)
 - ✅ Preload all textures during initialization
-- ✅ Use `SCALE_MODES.NEAREST` for pixel art
+- ✅ Use linear scaling with mipmaps for hand-drawn artwork
 
 **DON'T:**
 - ❌ Create/destroy sprites every frame
 - ❌ Render off-screen sprites
-- ❌ Use anti-aliasing for pixel art
+- ❌ Use nearest-neighbor scaling (causes pixelation of hand-drawn art)
 - ❌ Load textures during render loop
 - ❌ Recreate containers unnecessarily
 
@@ -539,7 +556,7 @@ See `ASSETS.md` for complete asset guidelines. Key points:
 - NPC sprites: SVG files in `/public/assets/npcs/`
 - Tile sprites: `[tileName]_[variation].png` (e.g., `grass_0.png`, `rock_1.png`) in `/public/assets/tiles/`
 - Farming sprites: In `/public/assets/farming/` (e.g., `fallow_soil_1.png`, `tilled.png`)
-- All sprites use `imageRendering: 'pixelated'` for pixel art
+- All sprites use linear (smooth) scaling to preserve hand-drawn artwork quality
 - Background colors from color scheme show through transparent PNGs
 
 ### Image Optimization

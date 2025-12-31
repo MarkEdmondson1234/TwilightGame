@@ -1315,7 +1315,6 @@ const App: React.FC = () => {
                 <canvas
                     ref={canvasRef}
                     className="absolute top-0 left-0"
-                    style={{ imageRendering: 'pixelated' }}
                 />
             )}
 
@@ -1411,7 +1410,6 @@ const App: React.FC = () => {
                                 top: (playerPos.y - (PLAYER_SIZE * effectiveScale) / 2) * TILE_SIZE + (effectiveGridOffset?.y ?? 0),
                                 width: PLAYER_SIZE * effectiveScale * TILE_SIZE,
                                 height: PLAYER_SIZE * effectiveScale * TILE_SIZE,
-                                imageRendering: 'pixelated',
                                 zIndex: Z_PLAYER + Math.floor(feetY),
                             }}
                         />
