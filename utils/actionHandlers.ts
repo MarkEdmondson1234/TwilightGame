@@ -13,6 +13,7 @@ import { gameState } from '../GameState';
 import { getCrop } from '../data/crops';
 import { generateForageSeed, getCropIdFromSeed } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
+import { WATER_CAN } from '../constants';
 
 export interface ActionResult {
     handled: boolean;
@@ -140,7 +141,7 @@ export function handleFarmAction(
     playerPos: Position,
     currentTool: string,
     currentMapId: string,
-    onAnimationTrigger?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void
+    onAnimationTrigger?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear', tilePos?: Position) => void
 ): FarmActionResult {
     const position = getTileCoords(playerPos);
     const tileData = getTileData(position.x, position.y);
@@ -267,11 +268,20 @@ export function handleFarmAction(
                     messageType: 'warning',
                 };
             }
-        } else if (currentTool === 'tool_watering_can' && (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
-            // Water planted, watered, wilting, or ready crops (watering ready crops keeps them fresh)
+        } else if (currentTool === 'tool_watering_can' && (plotTileType === TileType.SOIL_TILLED || plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY)) {
+            // Water tilled soil (pre-moisten before planting) or planted/watered/wilting/ready crops
+            // Check water level first
+            if (gameState.isWaterCanEmpty()) {
+                return {
+                    handled: false,
+                    message: 'Watering can is empty! Refill at a well or water source',
+                    messageType: 'warning',
+                };
+            }
             if (farmManager.waterPlot(currentMapId, position)) {
                 console.log('[Action] Watered crop');
-                onAnimationTrigger?.('water');
+                gameState.useWater(); // Consume water
+                onAnimationTrigger?.('water', position);
                 farmActionTaken = true;
             }
         } else if (plotTileType === TileType.SOIL_READY) {
@@ -294,8 +304,8 @@ export function handleFarmAction(
                 onAnimationTrigger?.('harvest');
                 farmActionTaken = true;
             }
-        } else if (currentTool === 'hand' && plotTileType === TileType.SOIL_DEAD) {
-            // Clear dead crop
+        } else if (plotTileType === TileType.SOIL_DEAD) {
+            // Clear dead crop (works with any tool - no need to switch)
             if (farmManager.clearDeadCrop(currentMapId, position)) {
                 console.log('[Action] Cleared dead crop');
                 onAnimationTrigger?.('clear');
@@ -312,8 +322,8 @@ export function handleFarmAction(
         }
 
         // If we detected a farm tile but no action was taken, provide helpful feedback
+        // Guidance for hand/no tool selected
         if (currentTool === 'hand') {
-            // Give specific guidance based on the plot state
             if (plotTileType === TileType.SOIL_FALLOW) {
                 return {
                     handled: false,
@@ -323,13 +333,59 @@ export function handleFarmAction(
             } else if (plotTileType === TileType.SOIL_TILLED) {
                 return {
                     handled: false,
-                    message: 'Select seeds to plant',
+                    message: 'Select seeds from your inventory to plant',
                     messageType: 'info',
                 };
             } else if (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING) {
                 return {
                     handled: false,
                     message: 'Select a watering can to water this crop',
+                    messageType: 'info',
+                };
+            }
+        }
+
+        // Guidance for watering can on wrong soil states
+        if (currentTool === 'tool_watering_can') {
+            if (plotTileType === TileType.SOIL_FALLOW) {
+                return {
+                    handled: false,
+                    message: 'Till the soil first before watering',
+                    messageType: 'info',
+                };
+            }
+            // Note: SOIL_TILLED can be watered (pre-moisten before planting)
+        }
+
+        // Guidance for seeds on wrong soil states
+        if (currentTool.startsWith('seed_')) {
+            if (plotTileType === TileType.SOIL_FALLOW) {
+                return {
+                    handled: false,
+                    message: 'Till the soil with a hoe first',
+                    messageType: 'info',
+                };
+            } else if (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY) {
+                return {
+                    handled: false,
+                    message: 'This plot already has a crop growing',
+                    messageType: 'info',
+                };
+            }
+        }
+
+        // Guidance for hoe on non-fallow soil
+        if (currentTool === 'tool_hoe') {
+            if (plotTileType === TileType.SOIL_TILLED) {
+                return {
+                    handled: false,
+                    message: 'Already tilled! Select seeds to plant',
+                    messageType: 'info',
+                };
+            } else if (plotTileType === TileType.SOIL_PLANTED || plotTileType === TileType.SOIL_WATERED || plotTileType === TileType.SOIL_WILTING || plotTileType === TileType.SOIL_READY) {
+                return {
+                    handled: false,
+                    message: 'A crop is growing here',
                     messageType: 'info',
                 };
             }
@@ -475,6 +531,74 @@ export function checkWellInteraction(playerPos: Position): boolean {
 }
 
 /**
+ * Check if the player is near any water source (well, water tile, lake)
+ * Used for refilling the watering can
+ */
+export function checkWaterSource(playerPos: Position): boolean {
+    const playerTileX = Math.floor(playerPos.x);
+    const playerTileY = Math.floor(playerPos.y);
+
+    // Water source tile types
+    const waterSourceTypes = [
+        TileType.WELL,
+        TileType.WATER,
+        TileType.WATER_CENTER,
+        TileType.WATER_LEFT,
+        TileType.WATER_RIGHT,
+        TileType.WATER_TOP,
+        TileType.WATER_BOTTOM,
+        TileType.MAGICAL_LAKE,
+        TileType.SMALL_LAKE,
+    ];
+
+    // Check player's current tile and adjacent tiles (including diagonals)
+    const tilesToCheck = [
+        { x: playerTileX, y: playerTileY },
+        { x: playerTileX - 1, y: playerTileY },
+        { x: playerTileX + 1, y: playerTileY },
+        { x: playerTileX, y: playerTileY - 1 },
+        { x: playerTileX, y: playerTileY + 1 },
+        { x: playerTileX - 1, y: playerTileY - 1 },
+        { x: playerTileX + 1, y: playerTileY - 1 },
+        { x: playerTileX - 1, y: playerTileY + 1 },
+        { x: playerTileX + 1, y: playerTileY + 1 },
+    ];
+
+    for (const tile of tilesToCheck) {
+        const tileData = getTileData(tile.x, tile.y);
+        if (tileData && waterSourceTypes.includes(tileData.type)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
+ * Handle refilling the watering can from a water source
+ * @returns Result with success status and message
+ */
+export function handleRefillWaterCan(): { success: boolean; message: string } {
+    // Check if can is already full
+    if (gameState.getWaterLevel() >= WATER_CAN.MAX_CAPACITY) {
+        return {
+            success: false,
+            message: 'Watering can is already full!',
+        };
+    }
+
+    // Refill the can
+    gameState.refillWaterCan();
+    const message = 'Refilled watering can!';
+    console.log(`[Action] ${message}`);
+
+    return {
+        success: true,
+        message,
+    };
+}
+
+/**
  * Handle collecting water from the well
  * Adds water items to inventory
  */
@@ -558,7 +682,8 @@ export type InteractionType =
     | 'pickup_item'
     | 'eat_item'
     | 'taste_item'
-    | 'collect_water';
+    | 'collect_water'
+    | 'refill_water_can';
 
 export interface AvailableInteraction {
     type: InteractionType;
@@ -592,6 +717,7 @@ export interface GetInteractionsConfig {
     onForage?: (result: ForageResult) => void;
     onPlacedItemAction?: (action: PlacedItemAction) => void;
     onCollectWater?: (result: { success: boolean; message: string }) => void;
+    onRefillWaterCan?: (result: { success: boolean; message: string }) => void;
 }
 
 /**
@@ -613,6 +739,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         onForage,
         onPlacedItemAction,
         onCollectWater,
+        onRefillWaterCan,
     } = config;
 
     const interactions: AvailableInteraction[] = [];
@@ -754,6 +881,23 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         });
     }
 
+    // Check for refill watering can interaction
+    // Show when: watering can is equipped, near water source, and not full
+    if (currentTool === 'tool_watering_can' &&
+        checkWaterSource(position) &&
+        gameState.getWaterLevel() < WATER_CAN.MAX_CAPACITY) {
+        interactions.push({
+            type: 'refill_water_can',
+            label: 'Refill Watering Can',
+            icon: '💦',
+            color: '#38bdf8',
+            execute: () => {
+                const result = handleRefillWaterCan();
+                onRefillWaterCan?.(result);
+            },
+        });
+    }
+
     // Check for wild strawberry harvesting
     if (tileData && tileData.type === TileType.WILD_STRAWBERRY && currentTool === 'hand') {
         interactions.push({
@@ -858,16 +1002,18 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             }
         }
 
-        // Water crop
+        // Water soil or crop
         if (currentTool === 'tool_watering_can' && (
+            plotTileType === TileType.SOIL_TILLED ||
             plotTileType === TileType.SOIL_PLANTED ||
             plotTileType === TileType.SOIL_WATERED ||
             plotTileType === TileType.SOIL_WILTING ||
             plotTileType === TileType.SOIL_READY
         )) {
+            const isTilled = plotTileType === TileType.SOIL_TILLED;
             interactions.push({
                 type: 'farm_water',
-                label: 'Water Crop',
+                label: isTilled ? 'Water Soil' : 'Water Crop',
                 icon: '💧',
                 color: '#0ea5e9',
                 execute: () => {
@@ -891,8 +1037,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             });
         }
 
-        // Clear dead crop
-        if (currentTool === 'hand' && plotTileType === TileType.SOIL_DEAD) {
+        // Clear dead crop (works with any tool)
+        if (plotTileType === TileType.SOIL_DEAD) {
             interactions.push({
                 type: 'farm_clear',
                 label: 'Clear Dead Crop',

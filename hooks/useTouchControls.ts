@@ -29,7 +29,7 @@ export interface TouchControlsConfig {
     onSetPlayerPos: (pos: Position) => void;
     onMapTransition: (mapId: string, spawnPos: Position) => void;
     onFarmUpdate: () => void;
-    onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
+    onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear', tilePos?: Position) => void;
     onForageResult?: (result: ForageResult) => void;
     onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
 }

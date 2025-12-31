@@ -123,6 +123,11 @@ export interface GameState {
   statusEffects: {
     feelingSick: boolean;  // Prevents leaving village, acquired from eating terrible food
   };
+
+  // Watering can state
+  wateringCan: {
+    currentLevel: number;  // Current water uses remaining (0 = empty)
+  };
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -281,6 +286,12 @@ class GameStateManager {
           parsed.placedItems = [];
         }
 
+        // Migrate old save data that doesn't have watering can state
+        if (!parsed.wateringCan) {
+          console.log('[GameState] Migrating old save data - adding watering can');
+          parsed.wateringCan = { currentLevel: 10 }; // Start with full water can
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -332,6 +343,9 @@ class GameStateManager {
       },
       statusEffects: {
         feelingSick: false,
+      },
+      wateringCan: {
+        currentLevel: 10,  // Start with full water can
       },
     };
   }
@@ -753,6 +767,49 @@ class GameStateManager {
     this.notify();
   }
 
+  // === Watering Can Methods ===
+
+  /**
+   * Get current water level in watering can
+   */
+  getWaterLevel(): number {
+    return this.state.wateringCan?.currentLevel ?? 10;
+  }
+
+  /**
+   * Use water from the watering can (decrements level)
+   * Returns false if empty
+   */
+  useWater(): boolean {
+    if (!this.state.wateringCan || this.state.wateringCan.currentLevel <= 0) {
+      return false;
+    }
+    this.state.wateringCan.currentLevel -= 1;
+    console.log(`[GameState] Water used, ${this.state.wateringCan.currentLevel} remaining`);
+    this.notify();
+    return true;
+  }
+
+  /**
+   * Refill watering can to maximum capacity
+   */
+  refillWaterCan(): void {
+    if (!this.state.wateringCan) {
+      this.state.wateringCan = { currentLevel: 10 };
+    } else {
+      this.state.wateringCan.currentLevel = 10;
+    }
+    console.log('[GameState] Watering can refilled');
+    this.notify();
+  }
+
+  /**
+   * Check if watering can needs refilling
+   */
+  isWaterCanEmpty(): boolean {
+    return (this.state.wateringCan?.currentLevel ?? 0) <= 0;
+  }
+
   resetState(): void {
     this.state = {
       selectedCharacter: null,
@@ -779,6 +836,7 @@ class GameStateManager {
       placedItems: [],
       cooking: { unlockedRecipes: [], recipeProgress: {} },
       statusEffects: { feelingSick: false },
+      wateringCan: { currentLevel: 10 },
     };
     console.log('[GameState] State reset');
     this.notify();

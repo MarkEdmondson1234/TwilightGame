@@ -60,6 +60,8 @@ import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnimation';
+import WaterSparkleEffect from './components/WaterSparkleEffect';
+import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES } from './data/cutscenes';
 import { performanceMonitor } from './utils/PerformanceMonitor';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
@@ -106,6 +108,10 @@ const App: React.FC = () => {
     const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
     const [farmActionAnimation, setFarmActionAnimation] = useState<FarmActionType | null>(null); // Current farm action animation
     const [farmActionKey, setFarmActionKey] = useState(0); // Force animation retrigger for same action type
+    const [waterSparklePos, setWaterSparklePos] = useState<{ x: number; y: number } | null>(null); // Position for water sparkle effect
+    const [waterSparkleKey, setWaterSparkleKey] = useState(0); // Force sparkle retrigger
+    const [showSplashEffect, setShowSplashEffect] = useState(false); // Show splash effect when refilling water can
+    const [splashKey, setSplashKey] = useState(0); // Force splash retrigger
     const [placedItemsUpdateTrigger, setPlacedItemsUpdateTrigger] = useState(0); // Force re-render when placed items change
     const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
         const time = TimeManager.getCurrentTime();
@@ -336,14 +342,19 @@ const App: React.FC = () => {
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
         onFarmUpdate: handleFarmUpdate,
-        onFarmActionAnimation: (action) => {
-            console.log('[App] Farm action animation triggered:', action);
+        onFarmActionAnimation: (action, tilePos) => {
+            console.log('[App] Farm action animation triggered:', action, tilePos);
             setFarmActionAnimation(action);
             setFarmActionKey(prev => {
                 const newKey = prev + 1;
                 console.log('[App] Animation key updated:', prev, '->', newKey);
                 return newKey;
             });
+            // Trigger water sparkle effect when watering
+            if (action === 'water' && tilePos) {
+                setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
+                setWaterSparkleKey(prev => prev + 1);
+            }
         },
         onShowToast: showToast,
         onSetSelectedItemSlot: setSelectedItemSlot,
@@ -361,10 +372,15 @@ const App: React.FC = () => {
         onSetPlayerPos: setPlayerPos,
         onMapTransition: handleMapTransition,
         onFarmUpdate: handleFarmUpdate,
-        onFarmActionAnimation: (action) => {
-            console.log('[Touch] Farm action animation triggered:', action);
+        onFarmActionAnimation: (action, tilePos) => {
+            console.log('[Touch] Farm action animation triggered:', action, tilePos);
             setFarmActionAnimation(action);
             setFarmActionKey(prev => prev + 1);
+            // Trigger water sparkle effect when watering
+            if (action === 'water' && tilePos) {
+                setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
+                setWaterSparkleKey(prev => prev + 1);
+            }
         },
         onShowToast: showToast,
     });
@@ -460,6 +476,16 @@ const App: React.FC = () => {
                 if (result.success) {
                     handleFarmUpdate(); // Update inventory display
                     showToast(result.message, 'success');
+                }
+            },
+            onRefillWaterCan: (result) => {
+                if (result.success) {
+                    // Trigger splash effect
+                    setShowSplashEffect(true);
+                    setSplashKey(prev => prev + 1);
+                    showToast(result.message, 'success');
+                } else {
+                    showToast(result.message, 'info');
                 }
             },
         });
@@ -1478,6 +1504,28 @@ const App: React.FC = () => {
                         onComplete={handleAnimationComplete}
                     />
                 )}
+
+                {/* Water Sparkle Effect (on the watered tile) */}
+                {waterSparklePos && (
+                    <WaterSparkleEffect
+                        key={waterSparkleKey}
+                        tileX={waterSparklePos.x}
+                        tileY={waterSparklePos.y}
+                        cameraX={cameraX}
+                        cameraY={cameraY}
+                        onComplete={() => setWaterSparklePos(null)}
+                    />
+                )}
+
+                {/* Splash Effect (when refilling watering can) */}
+                {showSplashEffect && (
+                    <SplashEffect
+                        key={splashKey}
+                        screenX={playerPos.x * TILE_SIZE - cameraX}
+                        screenY={playerPos.y * TILE_SIZE - cameraY}
+                        onComplete={() => setShowSplashEffect(false)}
+                    />
+                )}
             </div>
 
             {/* Cloud shadows - subtle moving shadows on the ground for outdoor maps */}
@@ -1510,7 +1558,10 @@ const App: React.FC = () => {
             {/* Hide UI elements during dialogue */}
             {!activeNPC && (
                 <>
-                    <HUD />
+                    <HUD
+                        selectedItemId={selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.id : null}
+                        selectedItemQuantity={selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.quantity : undefined}
+                    />
 
                     {/* Bookshelf UI - Recipe book shortcuts */}
                     <Bookshelf
@@ -1675,8 +1726,13 @@ const App: React.FC = () => {
                 />
             )}
 
-            {/* Toast notifications for user feedback */}
-            <Toast messages={toastMessages} onDismiss={dismissToast} />
+            {/* Toast notifications for user feedback - positioned above player */}
+            <Toast
+                messages={toastMessages}
+                onDismiss={dismissToast}
+                playerScreenX={playerPos.x * TILE_SIZE - cameraX + TILE_SIZE / 2}
+                playerScreenY={playerPos.y * TILE_SIZE - cameraY}
+            />
         </div>
     );
 };

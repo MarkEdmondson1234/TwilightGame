@@ -87,8 +87,8 @@ describe('ColorResolver', () => {
   describe('paletteToHex()', () => {
     it('converts palette color string to hex number', () => {
       const hex = ColorResolver.paletteToHex('bg-palette-sage');
-      // sage is #87AE73 = 0x87AE73 = 8891507
-      expect(hex).toBe(0x87AE73);
+      // sage is #67785F = 0x67785F
+      expect(hex).toBe(0x67785F);
     });
 
     it('converts different palette colors correctly', () => {
@@ -115,7 +115,7 @@ describe('ColorResolver', () => {
       const result = ColorResolver.getTileColorBoth(TileType.GRASS);
 
       expect(result.paletteColor).toBe('bg-palette-sage');
-      expect(result.hexColor).toBe(0x87AE73);
+      expect(result.hexColor).toBe(0x67785F);
     });
 
     it('hex matches palette color', () => {

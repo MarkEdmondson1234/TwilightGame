@@ -412,6 +412,7 @@ After each change:
 | 2025-12-31 | Added plot validation in `registerPlot()` | Catches invalid plot data early |
 | 2025-12-31 | Removed unused `getGrowthProgress()` from crops.ts | Eliminated duplicate code |
 | 2025-12-31 | Documented wilting→ready edge case | Clear design intent for AI agents |
+| 2025-12-31 | Fixed palette/colorResolver tests | Updated hardcoded sage hex values to match current palette (#67785F) |
 
 ---
 

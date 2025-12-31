@@ -33,7 +33,7 @@ describe('palette.ts', () => {
       const palette = getPalette();
       expect(palette).toBeDefined();
       expect(palette.sage).toBeDefined();
-      expect(palette.sage.hex).toBe('#87AE73');
+      expect(palette.sage.hex).toBe('#67785F');
     });
 
     it('palette has all expected color groups', () => {
@@ -66,7 +66,7 @@ describe('palette.ts', () => {
 
   describe('getColorHex()', () => {
     it('returns correct hex for known colors', () => {
-      expect(getColorHex('sage')).toBe('#87AE73');
+      expect(getColorHex('sage')).toBe('#67785F');
       expect(getColorHex('brown')).toBe('#7D5A50');
       expect(getColorHex('navy')).toBe('#3E3F5E');
       expect(getColorHex('chocolate')).toBe('#6B4423');
@@ -144,7 +144,7 @@ describe('palette.ts', () => {
       const json = exportPalette();
       const data = JSON.parse(json);
 
-      expect(data.sage).toBe('#87AE73');
+      expect(data.sage).toBe('#67785F');
       expect(data.brown).toBe('#7D5A50');
       expect(data.navy).toBe('#3E3F5E');
     });

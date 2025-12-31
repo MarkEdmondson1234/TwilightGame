@@ -74,6 +74,16 @@ export const GROWTH_THRESHOLDS = {
   YOUNG_TO_ADULT: 0.66,     // 33-66% = young sprite, 66-100% = adult sprite
 } as const;
 
+/**
+ * WATER_CAN - Watering can capacity settings
+ *
+ * Controls how many uses the watering can has before needing refill.
+ */
+export const WATER_CAN = {
+  MAX_CAPACITY: 10,      // Maximum water uses per fill
+  USES_PER_WATER: 1,     // Water uses consumed per watering action
+} as const;
+
 // Player sprites now point to placeholder URLs. Frame 0 is idle.
 export const PLAYER_SPRITES: Record<Direction, string[]> = {
   [Direction.Down]: [

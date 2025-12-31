@@ -50,8 +50,14 @@ const DARKNESS_CONFIG: Record<string, {
       [Season.WINTER]: 0.22,     // 22% - bare trees let more light through
     },
   },
-  // Other color schemes can be added here
-  // village: no darkness (bright open area)
+  village: {
+    baseDarkness: 0.15,          // 15% day, 30% night
+    nightMultiplier: 2.0,
+  },
+  outdoor: {
+    baseDarkness: 0.15,          // 15% day, 30% night
+    nightMultiplier: 2.0,
+  },
   // indoor: no darkness (lit interiors)
   // shop: no darkness (lit shop)
 };

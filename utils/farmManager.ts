@@ -317,9 +317,10 @@ class FarmManager {
       return false;
     }
 
-    // Can water planted, watered, wilting, or ready crops
-    // (watering ready crops doesn't change state, but updates water timer)
+    // Can water tilled soil (pre-moisten), planted, watered, wilting, or ready crops
+    // (watering tilled/ready doesn't change state, but updates water timer)
     if (
+      plot.state !== FarmPlotState.TILLED &&
       plot.state !== FarmPlotState.PLANTED &&
       plot.state !== FarmPlotState.WATERED &&
       plot.state !== FarmPlotState.WILTING &&
@@ -331,8 +332,10 @@ class FarmManager {
     const gameTime = TimeManager.getCurrentTime();
     const now = Date.now();
 
-    // If crop is ready, don't change state back to watered - just update water timestamp
-    const newState = plot.state === FarmPlotState.READY ? FarmPlotState.READY : FarmPlotState.WATERED;
+    // Tilled and ready soil keep their state, planted/wilting become watered
+    const newState = (plot.state === FarmPlotState.TILLED || plot.state === FarmPlotState.READY)
+      ? plot.state
+      : FarmPlotState.WATERED;
 
     const updatedPlot: FarmPlot = {
       ...plot,
