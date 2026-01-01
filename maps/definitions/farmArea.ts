@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { createCowNPC } from '../../utils/npcFactories';
 
 /**
  * Farm Area - Dedicated farming location
@@ -65,6 +66,7 @@ export const farmArea: MapDefinition = {
   height: 26,
   grid: parseGrid(gridString),
   colorScheme: 'village',
+  hasClouds: true,
   isRandom: false,
   spawnPoint: { x: 8, y: 24 }, // On path near entrance (changed from 10 to 8 - on the P tile)
   transitions: [
@@ -83,5 +85,8 @@ export const farmArea: MapDefinition = {
       label: 'To Seed Shed',
     },
   ],
-  npcs: [], // No NPCs yet, but could add a farmer NPC later
+  npcs: [
+    // Dairy cow in the grassy area near the pond
+    createCowNPC('farm_cow', { x: 8, y: 4 }, 'Bessie'),
+  ],
 };

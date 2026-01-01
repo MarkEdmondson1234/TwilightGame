@@ -41,6 +41,7 @@ export type {
   FriendshipTier,
   NPCFriendship,
   FriendshipConfig,
+  DailyResourceConfig,
   DialogueNode,
   DialogueResponse,
   NPC,

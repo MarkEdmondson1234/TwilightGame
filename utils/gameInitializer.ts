@@ -92,9 +92,18 @@ export async function initializeGame(
 
     // If loading a random map, regenerate it with the saved seed
     const savedLocation = gameState.getPlayerLocation();
-    if (savedLocation.mapId.match(/^(forest|cave|shop)_\d+$/)) {
+    // Handle both "cave_12345" format and "RANDOM_CAVE" format
+    const randomMapMatch = savedLocation.mapId.match(/^(forest|cave|shop)_\d+$/) ||
+                           savedLocation.mapId.match(/^RANDOM_(FOREST|CAVE|SHOP)$/i);
+    if (randomMapMatch) {
+        // Extract map type from either format
+        let mapType: string;
+        if (savedLocation.mapId.startsWith('RANDOM_')) {
+            mapType = savedLocation.mapId.replace('RANDOM_', '').toLowerCase();
+        } else {
+            mapType = savedLocation.mapId.split('_')[0];
+        }
         // Regenerate the random map with the saved seed
-        const mapType = savedLocation.mapId.split('_')[0];
         const seed = savedLocation.seed || Date.now();
 
         console.log(`[App] Regenerating ${mapType} map with seed ${seed}`);

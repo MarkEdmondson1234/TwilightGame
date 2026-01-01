@@ -95,6 +95,7 @@ export const village: MapDefinition = {
   height: 30,
   grid: parseGrid(gridString),
   colorScheme: 'village',
+  hasClouds: true,
   isRandom: false,
   spawnPoint: { x: 15, y: 27 }, // On the path below the home building
   transitions: [
@@ -158,7 +159,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 15, y: 28 }, // Bottom-center of village
       tileType: TileType.GRASS,
       toMapId: 'farm_area',
-      toPosition: { x: 10, y: 24 },
+      toPosition: { x: 8, y: 24 }, // Use farm's spawnPoint, not the return transition tile
       label: 'To Farm',
     },
     {

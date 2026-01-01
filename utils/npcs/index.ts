@@ -32,3 +32,8 @@ export {
   createBunnyflyNPC,
   createMotherSeaNPC,
 } from './forestNPCs';
+
+// Farm NPCs
+export {
+  createCowNPC,
+} from './farmNPCs';

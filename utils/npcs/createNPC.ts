@@ -23,6 +23,7 @@ import {
   Position,
   AnimatedNPCStates,
   FriendshipConfig,
+  DailyResourceConfig,
   DialogueNode,
   AnimationConditions,
 } from '../../types';
@@ -77,6 +78,9 @@ export interface NPCConfig {
 
   // Friendship (optional)
   friendshipConfig?: FriendshipConfig;
+
+  // Daily resource collection (optional, e.g., milk from cow)
+  dailyResource?: DailyResourceConfig;
 
   // Additional optional properties
   dialogueSprite?: string;
@@ -161,6 +165,7 @@ export function createNPC(config: NPCConfig): NPC {
     states,
     initialState = 'idle',
     friendshipConfig,
+    dailyResource,
     // Additional optional properties
     dialogueSprite,
     dialogueExpressions,
@@ -192,6 +197,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (portraitSprite) npc.portraitSprite = portraitSprite;
   if (animatedStates) npc.animatedStates = animatedStates;
   if (friendshipConfig) npc.friendshipConfig = friendshipConfig;
+  if (dailyResource) npc.dailyResource = dailyResource;
   if (dialogueSprite) npc.dialogueSprite = dialogueSprite;
   if (dialogueExpressions) npc.dialogueExpressions = dialogueExpressions;
   if (followTarget) npc.followTarget = followTarget;

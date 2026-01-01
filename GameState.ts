@@ -128,6 +128,14 @@ export interface GameState {
   wateringCan: {
     currentLevel: number;  // Current water uses remaining (0 = empty)
   };
+
+  // Daily NPC resource collection tracking (e.g., milk from cow)
+  dailyResourceCollections: {
+    [npcId: string]: {
+      lastCollectedDay: number;  // Game day of last collection
+      collectionsToday: number;   // Number of collections made today
+    };
+  };
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -351,6 +359,7 @@ class GameStateManager {
       wateringCan: {
         currentLevel: 10,  // Start with full water can
       },
+      dailyResourceCollections: {},
     };
   }
 
@@ -841,6 +850,7 @@ class GameStateManager {
       cooking: { unlockedRecipes: [], recipeProgress: {} },
       statusEffects: { feelingSick: false },
       wateringCan: { currentLevel: 10 },
+      dailyResourceCollections: {},
     };
     console.log('[GameState] State reset');
     this.notify();
@@ -889,6 +899,65 @@ class GameStateManager {
     }
 
     return removedCount;
+  }
+
+  // === Daily Resource Collection Methods ===
+
+  /**
+   * Check if an NPC's daily resource can still be collected today
+   * @param npcId The NPC's unique ID
+   * @param maxPerDay Maximum collections allowed per day
+   * @param currentDay Current game day (from TimeManager)
+   * @returns Number of collections remaining today
+   */
+  getResourceCollectionsRemaining(npcId: string, maxPerDay: number, currentDay: number): number {
+    // Migrate old saves that don't have this field
+    if (!this.state.dailyResourceCollections) {
+      this.state.dailyResourceCollections = {};
+    }
+
+    const collection = this.state.dailyResourceCollections[npcId];
+
+    // No previous collections
+    if (!collection) {
+      return maxPerDay;
+    }
+
+    // New day - reset collections
+    if (collection.lastCollectedDay !== currentDay) {
+      return maxPerDay;
+    }
+
+    // Same day - check remaining
+    return Math.max(0, maxPerDay - collection.collectionsToday);
+  }
+
+  /**
+   * Record a resource collection from an NPC
+   * @param npcId The NPC's unique ID
+   * @param currentDay Current game day (from TimeManager)
+   */
+  recordResourceCollection(npcId: string, currentDay: number): void {
+    // Migrate old saves that don't have this field
+    if (!this.state.dailyResourceCollections) {
+      this.state.dailyResourceCollections = {};
+    }
+
+    const collection = this.state.dailyResourceCollections[npcId];
+
+    // New entry or new day
+    if (!collection || collection.lastCollectedDay !== currentDay) {
+      this.state.dailyResourceCollections[npcId] = {
+        lastCollectedDay: currentDay,
+        collectionsToday: 1,
+      };
+    } else {
+      // Same day - increment
+      collection.collectionsToday++;
+    }
+
+    this.saveState();
+    this.notify();
   }
 
   exportState(): string {

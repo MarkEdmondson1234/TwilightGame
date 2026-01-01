@@ -306,6 +306,10 @@ export const npcAssets = {
   duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
   duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',
   duck_portrait: '/TwilightGame/assets/npcs/duck_01.png',
+  // Cow assets (farm animal - gives milk)
+  cow_01: '/TwilightGame/assets/npcs/cow/cow_01.png',
+  cow_02: '/TwilightGame/assets/npcs/cow/cow_02.png',
+  cow_portrait: '/TwilightGame/assets/npcs/cow/cow_01.png',
   // Mother Sea assets (mystical lake spirit - rises from the magical lake)
   mother_sea_01: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_01.png',
   mother_sea_02: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_02.png',

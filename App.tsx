@@ -122,6 +122,7 @@ const App: React.FC = () => {
     const [radialMenuVisible, setRadialMenuVisible] = useState(false);
     const [radialMenuPosition, setRadialMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const [radialMenuOptions, setRadialMenuOptions] = useState<RadialMenuOption[]>([]);
+    const radialMenuNpcIdRef = useRef<string | null>(null); // Track which NPC the menu is showing for
 
     const isTouchDevice = useTouchDevice();
 
@@ -488,6 +489,14 @@ const App: React.FC = () => {
                     showToast(result.message, 'info');
                 }
             },
+            onCollectResource: (result) => {
+                if (result.success) {
+                    handleFarmUpdate(); // Update inventory display
+                    showToast(result.message, 'success');
+                } else {
+                    showToast(result.message, 'info');
+                }
+            },
         });
 
         console.log(`[Mouse Click] Found ${interactions.length} interactions`);
@@ -744,6 +753,136 @@ const App: React.FC = () => {
         );
         return uniqueNPCs;
     }, [currentMapId, npcUpdateTrigger]);
+
+    // Proximity-based radial menu for NPCs - show menu when entering NPC range
+    useEffect(() => {
+        // Don't show if UI overlays are active
+        if (activeNPC || isCutscenePlaying || showHelpBrowser || showCookingUI || showRecipeBook || showCharacterCreator || showInventory) {
+            return;
+        }
+
+        // Use existing npcManager method to find NPC at player position
+        const nearestNPC = npcManager.getNPCAtPosition(playerPos);
+
+        // If no NPC in range, close menu if it was showing for an NPC
+        if (!nearestNPC) {
+            if (radialMenuNpcIdRef.current) {
+                radialMenuNpcIdRef.current = null;
+                setRadialMenuVisible(false);
+            }
+            return;
+        }
+
+        // If already showing menu for this NPC, don't re-trigger
+        if (radialMenuNpcIdRef.current === nearestNPC.id) {
+            return;
+        }
+
+        // Get interactions for this NPC
+        const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+        const currentTool = selectedItem?.id || 'hand';
+
+        const interactions = getAvailableInteractions({
+            position: nearestNPC.position,
+            currentMapId: currentMapId,
+            currentTool: currentTool,
+            selectedSeed: null,
+            onMirror: () => setShowCharacterCreator(true),
+            onNPC: (npcId) => setActiveNPC(npcId),
+            onTransition: (result: TransitionResult) => {
+                if (result.success && result.mapId && result.spawnPosition) {
+                    handleMapTransition(result.mapId, result.spawnPosition);
+                    const seedMatch = result.mapId.match(/_([\d]+)$/);
+                    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+                    gameState.updatePlayerLocation(result.mapId, result.spawnPosition, seed);
+                }
+            },
+            onCooking: (locationType) => {
+                setCookingLocationType(locationType);
+                setShowCookingUI(true);
+            },
+            onFarmAction: (result: FarmActionResult) => {
+                if (result.handled) {
+                    handleFarmUpdate();
+                }
+                if (result.message) {
+                    showToast(result.message, result.messageType || 'info');
+                }
+            },
+            onFarmAnimation: (action) => {
+                setFarmActionAnimation(action);
+                setFarmActionKey(prev => prev + 1);
+            },
+            onForage: (result: ForageResult) => {
+                showToast(result.message, result.found ? 'success' : 'info');
+            },
+            onPlacedItemAction: (action: PlacedItemAction) => {
+                if (action.action === 'pickup') {
+                    registerItemSprite(action.itemId, action.imageUrl);
+                    inventoryManager.addItem(action.itemId, 1);
+                    gameState.removePlacedItem(action.placedItemId);
+                    setPlacedItemsUpdateTrigger(prev => prev + 1);
+                    showToast('Picked up item', 'success');
+                } else if (action.action === 'eat') {
+                    gameState.removePlacedItem(action.placedItemId);
+                    setPlacedItemsUpdateTrigger(prev => prev + 1);
+                    showToast('Ate the food', 'info');
+                } else if (action.action === 'taste') {
+                    showToast('Mmm, tasty!', 'info');
+                }
+            },
+            onCollectWater: (result) => {
+                if (result.success) {
+                    handleFarmUpdate();
+                    showToast(result.message, 'success');
+                }
+            },
+            onRefillWaterCan: (result) => {
+                if (result.success) {
+                    setShowSplashEffect(true);
+                    setSplashKey(prev => prev + 1);
+                    showToast(result.message, 'success');
+                } else {
+                    showToast(result.message, 'info');
+                }
+            },
+            onCollectResource: (result) => {
+                if (result.success) {
+                    handleFarmUpdate();
+                    showToast(result.message, 'success');
+                } else {
+                    showToast(result.message, 'info');
+                }
+            },
+        });
+
+        // Only show menu if there are NPC-related interactions
+        const npcInteractions = interactions.filter(i => i.type === 'npc' || i.type === 'collect_resource');
+        if (npcInteractions.length === 0) {
+            return;
+        }
+
+        // Calculate screen position for the NPC (center of viewport offset by NPC position)
+        const viewportCenterX = window.innerWidth / 2;
+        const viewportCenterY = window.innerHeight / 2;
+        const npcOffsetX = (nearestNPC.position.x - playerPos.x) * TILE_SIZE;
+        const npcOffsetY = (nearestNPC.position.y - playerPos.y) * TILE_SIZE;
+        const screenX = viewportCenterX + npcOffsetX;
+        const screenY = viewportCenterY + npcOffsetY - 50; // Offset up a bit
+
+        // Show radial menu
+        radialMenuNpcIdRef.current = nearestNPC.id;
+        const menuOptions: RadialMenuOption[] = npcInteractions.map((interaction, index) => ({
+            id: `${interaction.type}_${index}`,
+            label: interaction.label,
+            icon: interaction.icon,
+            color: interaction.color,
+            onSelect: interaction.execute,
+        }));
+        setRadialMenuOptions(menuOptions);
+        setRadialMenuPosition({ x: screenX, y: screenY });
+        setRadialMenuVisible(true);
+    }, [playerPos, activeNPC, isCutscenePlaying, showHelpBrowser, showCookingUI, showRecipeBook, showCharacterCreator, showInventory, currentMapId, selectedItemSlot, inventoryItems]);
 
     // Get player sprite info (URL and scale)
     const { playerSpriteUrl, spriteScale } = getPlayerSpriteInfo(playerSprites, direction, animationFrame);
@@ -1535,7 +1674,7 @@ const App: React.FC = () => {
             </div>
 
             {/* Cloud shadows - subtle moving shadows on the ground for outdoor maps */}
-            {['village', 'forest', 'water_area'].includes(currentMap?.colorScheme ?? '') && currentMap && (
+            {currentMap?.hasClouds && (
                 <CloudShadows
                     cameraX={cameraX}
                     cameraY={cameraY}

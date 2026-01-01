@@ -38,6 +38,14 @@ export interface FriendshipConfig {
   crisisId?: string;           // ID of their crisis event (for Special Friend)
 }
 
+// Daily resource collection from NPCs (e.g., milk from cow)
+export interface DailyResourceConfig {
+  itemId: string;              // Item to give (e.g., 'milk')
+  maxPerDay: number;           // Maximum collections per day (e.g., 2)
+  collectMessage: string;      // Message when collecting (e.g., "You collected fresh milk!")
+  emptyMessage: string;        // Message when limit reached (e.g., "The cow has no more milk today.")
+}
+
 export interface DialogueNode {
   id: string;
   text: string; // Default text (used when no seasonal variant matches)
@@ -104,6 +112,7 @@ export interface NPC {
   scale?: number; // Optional: sprite scale multiplier (default 4.0)
   followTarget?: string; // Optional: ID of NPC to follow (for companion NPCs like dogs)
   friendshipConfig?: FriendshipConfig; // Optional: friendship system configuration
+  dailyResource?: DailyResourceConfig; // Optional: daily collectible resource (e.g., milk from cow)
   noFlip?: boolean; // Optional: disable horizontal flipping entirely
   reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)

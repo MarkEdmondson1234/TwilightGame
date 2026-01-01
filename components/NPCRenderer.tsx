@@ -103,7 +103,7 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                             }}
                         />
 
-                        {/* Interaction Prompt (when in range) - Always rendered as DOM */}
+                        {/* Interaction Prompt (when in range) - Cottage-core styled */}
                         {inRange && (
                             <div
                                 className="absolute pointer-events-none"
@@ -114,8 +114,17 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({ playerPos, npcUpdateTrigger, 
                                     zIndex: 1000,
                                 }}
                             >
-                                <div className="bg-blue-400 animate-pulse px-3 py-1 rounded-full text-xs font-bold text-white shadow-lg">
-                                    [E] Talk to {npc.name}
+                                <div
+                                    className="animate-pulse px-3 py-1.5 rounded-lg text-xs shadow-lg"
+                                    style={{
+                                        backgroundColor: 'rgba(92, 74, 61, 0.95)',
+                                        border: '2px solid #8b7355',
+                                        color: '#f5efe8',
+                                        fontFamily: 'Georgia, serif',
+                                        fontWeight: 500,
+                                    }}
+                                >
+                                    {npc.dailyResource ? `🥛 ${npc.name}` : `💬 ${npc.name}`}
                                 </div>
                             </div>
                         )}

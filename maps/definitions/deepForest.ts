@@ -73,6 +73,7 @@ export const deepForest: MapDefinition = {
   height: 35,
   grid: parseGrid(gridString),
   colorScheme: 'forest',
+  hasClouds: true,
   isRandom: false,
   spawnPoint: { x: 17, y: 33 }, // On path near south entrance
   transitions: [

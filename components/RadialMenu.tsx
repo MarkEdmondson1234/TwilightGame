@@ -1,9 +1,10 @@
 /**
  * RadialMenu Component
  * Displays interaction options in a circular menu around the clicked position
+ * Cottage-core styled with hover-to-select behaviour
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 export interface RadialMenuOption {
     id: string;
@@ -23,7 +24,9 @@ interface RadialMenuProps {
 }
 
 const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) => {
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+    const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Close menu on Escape key
     useEffect(() => {
@@ -37,14 +40,51 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
-    // Calculate position for each option in a circle
-    const radius = 80; // Distance from center to each option
-    const angleStep = (2 * Math.PI) / options.length;
-    const startAngle = -Math.PI / 2; // Start at top (12 o'clock)
+    // Cleanup hover timer on unmount
+    useEffect(() => {
+        return () => {
+            if (hoverTimerRef.current) {
+                clearTimeout(hoverTimerRef.current);
+            }
+        };
+    }, []);
+
+    // Calculate position for each option in a vertical list (cottage-core feels more natural)
+    const spacing = 70; // Vertical spacing between options
+    const startY = position.y - ((options.length - 1) * spacing) / 2;
+
+    const handleOptionHover = (option: RadialMenuOption, index: number) => {
+        setHoveredIndex(index);
+
+        // Clear any existing timer
+        if (hoverTimerRef.current) {
+            clearTimeout(hoverTimerRef.current);
+        }
+
+        // Select after hovering for 700ms
+        hoverTimerRef.current = setTimeout(() => {
+            setSelectedIndex(index);
+            setTimeout(() => {
+                option.onSelect();
+                onClose();
+            }, 150);
+        }, 700);
+    };
+
+    const handleOptionLeave = () => {
+        setHoveredIndex(null);
+        if (hoverTimerRef.current) {
+            clearTimeout(hoverTimerRef.current);
+            hoverTimerRef.current = null;
+        }
+    };
 
     const handleOptionClick = (option: RadialMenuOption, index: number) => {
+        // Immediate selection on click
+        if (hoverTimerRef.current) {
+            clearTimeout(hoverTimerRef.current);
+        }
         setSelectedIndex(index);
-        // Small delay for visual feedback
         setTimeout(() => {
             option.onSelect();
             onClose();
@@ -53,7 +93,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
 
     return (
         <>
-            {/* Backdrop - click to close */}
+            {/* Invisible backdrop - click to close (no darkening) */}
             <div
                 style={{
                     position: 'fixed',
@@ -61,34 +101,16 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                    backgroundColor: 'transparent',
                     zIndex: 1000,
                 }}
                 onClick={onClose}
             />
 
-            {/* Center dot at click position */}
-            <div
-                style={{
-                    position: 'fixed',
-                    left: position.x,
-                    top: position.y,
-                    width: '8px',
-                    height: '8px',
-                    backgroundColor: '#fff',
-                    borderRadius: '50%',
-                    border: '2px solid #333',
-                    transform: 'translate(-50%, -50%)',
-                    zIndex: 1001,
-                    pointerEvents: 'none',
-                }}
-            />
-
-            {/* Options arranged in a circle */}
+            {/* Options arranged vertically with cottage-core styling */}
             {options.map((option, index) => {
-                const angle = startAngle + index * angleStep;
-                const x = position.x + radius * Math.cos(angle);
-                const y = position.y + radius * Math.sin(angle);
+                const y = startY + index * spacing;
+                const isHovered = hoveredIndex === index;
                 const isSelected = selectedIndex === index;
 
                 return (
@@ -96,70 +118,89 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
                         key={option.id}
                         style={{
                             position: 'fixed',
-                            left: x,
+                            left: position.x,
                             top: y,
                             transform: 'translate(-50%, -50%)',
                             zIndex: 1001,
                         }}
                     >
-                        {/* Connection line from center to option */}
-                        <svg
-                            style={{
-                                position: 'absolute',
-                                left: '50%',
-                                top: '50%',
-                                width: radius,
-                                height: radius,
-                                pointerEvents: 'none',
-                                transform: 'translate(-50%, -50%)',
-                            }}
-                        >
-                            <line
-                                x1={radius / 2}
-                                y1={radius / 2}
-                                x2={position.x - x + radius / 2}
-                                y2={position.y - y + radius / 2}
-                                stroke={option.color || '#888'}
-                                strokeWidth="2"
-                                opacity="0.5"
-                            />
-                        </svg>
-
-                        {/* Option button */}
+                        {/* Option button - cottage-core styled */}
                         <button
                             onClick={() => handleOptionClick(option, index)}
-                            onMouseEnter={() => setSelectedIndex(index)}
-                            onMouseLeave={() => setSelectedIndex(null)}
+                            onMouseEnter={() => handleOptionHover(option, index)}
+                            onMouseLeave={handleOptionLeave}
                             style={{
                                 position: 'relative',
                                 display: 'flex',
-                                flexDirection: 'column',
+                                flexDirection: 'row',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                gap: '4px',
-                                padding: '12px',
-                                minWidth: '80px',
-                                backgroundColor: isSelected ? (option.color || '#4a90e2') : '#fff',
-                                color: isSelected ? '#fff' : '#333',
-                                border: `2px solid ${option.color || '#4a90e2'}`,
-                                borderRadius: '8px',
+                                gap: '10px',
+                                padding: '14px 20px',
+                                minWidth: '160px',
+                                // Cottage-core warm brown palette
+                                backgroundColor: isSelected
+                                    ? '#4a6741' // Sage green when selected
+                                    : isHovered
+                                        ? '#6b5344' // Darker warm brown on hover
+                                        : '#5c4a3d', // Warm brown base
+                                color: '#f5efe8', // Cream text
+                                border: `3px solid ${isSelected ? '#7a9970' : isHovered ? '#a08060' : '#8b7355'}`,
+                                borderRadius: '12px',
                                 cursor: 'pointer',
-                                fontSize: '13px',
-                                fontFamily: 'Arial, sans-serif',
-                                fontWeight: '600',
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-                                transition: 'all 0.15s ease',
+                                fontSize: '15px',
+                                fontFamily: 'Georgia, serif',
+                                fontWeight: '500',
+                                boxShadow: isHovered
+                                    ? '0 6px 20px rgba(92, 74, 61, 0.5), inset 0 1px 0 rgba(255,255,255,0.1)'
+                                    : '0 4px 12px rgba(92, 74, 61, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
+                                transition: 'all 0.2s ease',
                                 whiteSpace: 'nowrap',
+                                // Parchment texture effect
+                                backgroundImage: isSelected
+                                    ? 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)'
+                                    : 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%, rgba(0,0,0,0.08) 100%)',
                             }}
                         >
                             {option.icon && (
-                                <span style={{ fontSize: '20px' }}>{option.icon}</span>
+                                <span style={{ fontSize: '22px' }}>{option.icon}</span>
                             )}
                             <span>{option.label}</span>
+                            {/* Hover progress indicator */}
+                            {isHovered && !isSelected && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: '4px',
+                                        left: '10%',
+                                        width: '80%',
+                                        height: '3px',
+                                        backgroundColor: 'rgba(139, 115, 85, 0.5)',
+                                        borderRadius: '2px',
+                                        overflow: 'hidden',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            height: '100%',
+                                            backgroundColor: '#c4a035',
+                                            animation: 'fillProgress 0.7s linear forwards',
+                                        }}
+                                    />
+                                </div>
+                            )}
                         </button>
                     </div>
                 );
             })}
+
+            {/* CSS animation for progress bar */}
+            <style>{`
+                @keyframes fillProgress {
+                    from { width: 0%; }
+                    to { width: 100%; }
+                }
+            `}</style>
         </>
     );
 };

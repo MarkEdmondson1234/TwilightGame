@@ -466,6 +466,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     height,
     grid: map,
     colorScheme: 'forest',
+    hasClouds: true,
     isRandom: true,
     spawnPoint: { x: spawnX, y: spawnY },
     transitions,

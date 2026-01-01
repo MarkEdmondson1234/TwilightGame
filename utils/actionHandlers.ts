@@ -683,7 +683,8 @@ export type InteractionType =
     | 'eat_item'
     | 'taste_item'
     | 'collect_water'
-    | 'refill_water_can';
+    | 'refill_water_can'
+    | 'collect_resource';
 
 export interface AvailableInteraction {
     type: InteractionType;
@@ -718,6 +719,7 @@ export interface GetInteractionsConfig {
     onPlacedItemAction?: (action: PlacedItemAction) => void;
     onCollectWater?: (result: { success: boolean; message: string }) => void;
     onRefillWaterCan?: (result: { success: boolean; message: string }) => void;
+    onCollectResource?: (result: { success: boolean; message: string; itemId?: string }) => void;
 }
 
 /**
@@ -740,6 +742,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         onPlacedItemAction,
         onCollectWater,
         onRefillWaterCan,
+        onCollectResource,
     } = config;
 
     const interactions: AvailableInteraction[] = [];
@@ -824,6 +827,43 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             data: { npcId },
             execute: () => onNPC?.(npcId),
         });
+
+        // Check for daily resource collection (e.g., milk from cow)
+        if (npc?.dailyResource && onCollectResource) {
+            const { itemId, maxPerDay, collectMessage, emptyMessage } = npc.dailyResource;
+            const currentDay = TimeManager.getCurrentTime().totalDays;
+            const remaining = gameState.getResourceCollectionsRemaining(npcId, maxPerDay, currentDay);
+
+            if (remaining > 0) {
+                interactions.push({
+                    type: 'collect_resource',
+                    label: `Collect Milk (${remaining} left)`,
+                    icon: '🥛',
+                    color: '#f5f5f5',
+                    data: { npcId, itemId },
+                    execute: () => {
+                        // Add item to inventory
+                        inventoryManager.addItem(itemId, 1);
+                        // Record the collection
+                        gameState.recordResourceCollection(npcId, currentDay);
+                        // Notify the handler
+                        onCollectResource({ success: true, message: collectMessage, itemId });
+                    },
+                });
+            } else {
+                // Show disabled option when limit reached
+                interactions.push({
+                    type: 'collect_resource',
+                    label: 'No Milk Available',
+                    icon: '🥛',
+                    color: '#9ca3af',
+                    data: { npcId, itemId },
+                    execute: () => {
+                        onCollectResource({ success: false, message: emptyMessage });
+                    },
+                });
+            }
+        }
     }
 
     // Check for transition

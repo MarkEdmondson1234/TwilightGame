@@ -73,6 +73,7 @@ export const witchHut: MapDefinition = {
   height: 30,
   grid: parseGrid(gridString),
   colorScheme: 'forest',
+  hasClouds: true,
   isRandom: false,
   spawnPoint: { x: 11, y: 28 }, // On path at south entrance
   transitions: [

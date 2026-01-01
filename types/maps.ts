@@ -114,6 +114,7 @@ export interface MapDefinition {
   spawnPoint: Position; // Default spawn position
   transitions: Transition[]; // Exit/entrance definitions
   npcs?: NPC[]; // NPCs in this map (optional)
+  hasClouds?: boolean; // Show cloud shadows (default: false, set true for outdoor areas)
 
   // Background interior system (optional)
   renderMode?: MapRenderMode;           // Default: 'tiled'

@@ -66,6 +66,7 @@ export const magicalLake: MapDefinition = {
   height: 30,
   grid: parseGrid(gridString),
   colorScheme: 'forest',
+  hasClouds: true,
   isRandom: false,
   spawnPoint: { x: 14, y: 28 }, // On path near south entrance
   transitions: [
