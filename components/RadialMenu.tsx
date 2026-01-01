@@ -163,7 +163,21 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
                             }}
                         >
                             {option.icon && (
-                                <span style={{ fontSize: '22px' }}>{option.icon}</span>
+                                <>
+                                    {(option.icon.startsWith('/') || option.icon.startsWith('http')) ? (
+                                        <img
+                                            src={option.icon}
+                                            alt={option.label}
+                                            style={{
+                                                width: '32px',
+                                                height: '32px',
+                                                objectFit: 'contain'
+                                            }}
+                                        />
+                                    ) : (
+                                        <span style={{ fontSize: '22px' }}>{option.icon}</span>
+                                    )}
+                                </>
                             )}
                             <span>{option.label}</span>
                             {/* Hover progress indicator */}

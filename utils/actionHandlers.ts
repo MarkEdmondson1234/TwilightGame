@@ -14,6 +14,7 @@ import { getCrop } from '../data/crops';
 import { generateForageSeed, getCropIdFromSeed } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { WATER_CAN } from '../constants';
+import { itemAssets } from '../assets';
 
 export interface ActionResult {
     handled: boolean;
@@ -943,7 +944,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         interactions.push({
             type: 'harvest_strawberry',
             label: 'Pick Strawberries',
-            icon: '🍓',
+            icon: itemAssets.strawberry,
             color: '#ef4444',
             execute: () => {
                 const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
@@ -974,7 +975,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             interactions.push({
                 type: 'harvest_blackberry',
                 label: 'Pick Blackberries',
-                icon: '🫐',
+                icon: itemAssets.blackberries,
                 color: '#7c3aed',
                 execute: () => {
                     const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
