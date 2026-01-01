@@ -117,7 +117,7 @@ describe('FarmManager', () => {
       farmManager.tillSoil('test_map', position);
 
       // Plant seed
-      const result = farmManager.plantSeed('test_map', position, 'radish');
+      const result = farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       expect(result.success).toBe(true);
       expect(inventoryManager.removeItem).toHaveBeenCalledWith('seed_radish', 1);
@@ -133,7 +133,7 @@ describe('FarmManager', () => {
       const position = { x: 5, y: 10 };
 
       // Try to plant without tilling
-      const result = farmManager.plantSeed('test_map', position, 'radish');
+      const result = farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       expect(result.success).toBe(false);
       expect(inventoryManager.removeItem).not.toHaveBeenCalled();
@@ -150,7 +150,7 @@ describe('FarmManager', () => {
       vi.mocked(inventoryManager.hasItem).mockReturnValue(false);
 
       // Try to plant
-      const result = farmManager.plantSeed('test_map', position, 'radish');
+      const result = farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       expect(result.success).toBe(false);
 
@@ -171,7 +171,7 @@ describe('FarmManager', () => {
 
       // Till and plant
       farmManager.tillSoil('test_map', position);
-      farmManager.plantSeed('test_map', position, 'radish');
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       // Wait a bit to ensure timestamp difference
       await new Promise(resolve => setTimeout(resolve, 10));
@@ -203,7 +203,7 @@ describe('FarmManager', () => {
 
       // Create a ready crop (manually for testing)
       farmManager.tillSoil('test_map', position);
-      farmManager.plantSeed('test_map', position, 'radish');
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       // Manually set to ready state
       const plot = farmManager.getPlot('test_map', position)!;
@@ -227,7 +227,7 @@ describe('FarmManager', () => {
 
       // Set up ready crop
       farmManager.tillSoil('test_map', position);
-      farmManager.plantSeed('test_map', position, 'radish');
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       // Manually set to ready
       const plot = farmManager.getPlot('test_map', position)!;
@@ -255,7 +255,7 @@ describe('FarmManager', () => {
 
       // Plant but don't make ready
       farmManager.tillSoil('test_map', position);
-      farmManager.plantSeed('test_map', position, 'radish');
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       // Try to harvest
       const result = farmManager.harvestCrop('test_map', position);
@@ -293,7 +293,7 @@ describe('FarmManager', () => {
 
       // Plant crop
       farmManager.tillSoil('test_map', position);
-      farmManager.plantSeed('test_map', position, 'radish');
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       // Try to clear
       const result = farmManager.clearDeadCrop('test_map', position);
@@ -341,7 +341,7 @@ describe('FarmManager', () => {
       expect(farmManager.getTileTypeForPlot(plot)).toBe(TileType.SOIL_TILLED);
 
       // Planted
-      farmManager.plantSeed('test_map', position, 'radish');
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
       plot = farmManager.getPlot('test_map', position)!;
       expect(farmManager.getTileTypeForPlot(plot)).toBe(TileType.SOIL_PLANTED);
     });

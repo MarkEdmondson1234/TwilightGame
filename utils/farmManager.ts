@@ -237,7 +237,7 @@ class FarmManager {
    * Requires player to have seeds in inventory (consumes 1 seed)
    * Enforces seasonal planting restrictions
    */
-  plantSeed(mapId: string, position: Position, cropId: string): { success: boolean; reason?: string } {
+  plantSeed(mapId: string, position: Position, cropId: string, seedItemId: string): { success: boolean; reason?: string } {
     const plot = this.getPlot(mapId, position);
     if (!plot || plot.state !== FarmPlotState.TILLED) {
       return { success: false, reason: 'Soil must be tilled first' };
@@ -257,16 +257,15 @@ class FarmManager {
       return { success: false, reason: `${crop.displayName} can only be planted in ${seasonNames}` };
     }
 
-    // Check if player has seeds
-    const seedItemId = getSeedItemId(cropId);
+    // Check if player has the specific seed item
     if (!inventoryManager.hasItem(seedItemId, 1)) {
-      console.warn(`[FarmManager] Not enough seeds for ${cropId}`);
+      console.warn(`[FarmManager] Not enough seeds: ${seedItemId} for crop ${cropId}`);
       return { success: false, reason: 'No seeds available' };
     }
 
     // Consume seed from inventory
     if (!inventoryManager.removeItem(seedItemId, 1)) {
-      console.warn(`[FarmManager] Failed to consume seed for ${cropId}`);
+      console.warn(`[FarmManager] Failed to consume seed: ${seedItemId}`);
       return { success: false, reason: 'Failed to use seed' };
     }
 

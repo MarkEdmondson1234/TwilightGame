@@ -240,7 +240,7 @@ export function handleFarmAction(
                 farmActionTaken = true;
             }
         } else if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
-            // Plant in tilled soil - currentTool is the seed ID (e.g., 'seed_radish')
+            // Plant in tilled soil - currentTool is the seed ID (e.g., 'seed_radish', 'seed_wild_strawberry')
             // Extract crop ID from seed item ID
             const cropId = getCropIdFromSeed(currentTool);
             if (!cropId) {
@@ -252,7 +252,7 @@ export function handleFarmAction(
                 };
             }
             console.log(`[Action] Attempting to plant: ${currentTool} (crop: ${cropId})`);
-            const plantResult = farmManager.plantSeed(currentMapId, position, cropId);
+            const plantResult = farmManager.plantSeed(currentMapId, position, cropId, currentTool);
             if (plantResult.success) {
                 // FarmManager consumed seed from inventory, save it
                 const inventoryData = inventoryManager.getInventoryData();
