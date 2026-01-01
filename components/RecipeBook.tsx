@@ -332,10 +332,19 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                         return (
                           <div
                             key={ing.itemId}
-                            className="bg-slate-700/30 px-3 py-2 rounded text-sm"
+                            className="bg-slate-700/30 px-3 py-2 rounded text-sm flex items-center gap-2"
                           >
-                            <span className="text-slate-200">{item?.displayName || ing.itemId}</span>
-                            <span className="text-slate-400 ml-2">× {ing.quantity}</span>
+                            {item?.image && (
+                              <img
+                                src={item.image}
+                                alt={item.displayName}
+                                className="w-8 h-8 object-contain flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <span className="text-slate-200">{item?.displayName || ing.itemId}</span>
+                              <span className="text-slate-400 ml-2">× {ing.quantity}</span>
+                            </div>
                           </div>
                         );
                       })}

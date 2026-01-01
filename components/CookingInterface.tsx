@@ -226,16 +226,26 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
                   <div className="space-y-2">
                     {recipe.ingredients.map(ing => {
                       const info = getIngredientInfo(ing.itemId, ing.quantity);
+                      const item = getItem(ing.itemId);
                       return (
                         <div
                           key={ing.itemId}
-                          className={`flex items-center justify-between px-3 py-2 rounded ${
+                          className={`flex items-center justify-between px-3 py-2 rounded gap-2 ${
                             info.hasEnough
                               ? 'bg-green-900/30 border border-green-700/50'
                               : 'bg-red-900/30 border border-red-700/50'
                           }`}
                         >
-                          <span className="text-amber-200">{info.name}</span>
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            {item?.image && (
+                              <img
+                                src={item.image}
+                                alt={item.displayName}
+                                className="w-8 h-8 object-contain flex-shrink-0"
+                              />
+                            )}
+                            <span className="text-amber-200">{info.name}</span>
+                          </div>
                           <span className={info.hasEnough ? 'text-green-400' : 'text-red-400'}>
                             {info.have}/{info.needed}
                           </span>
