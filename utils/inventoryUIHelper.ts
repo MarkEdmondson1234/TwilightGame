@@ -31,6 +31,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   seed_broccoli: itemAssets.broccoli_seeds,
   seed_cucumber: itemAssets.cucumber_seeds,
   seed_melon: itemAssets.melon_seeds,
+  seed_wild_strawberry: itemAssets.wild_seeds,
 
   // Grocery items (cooking ingredients)
   butter: groceryAssets.butter,
