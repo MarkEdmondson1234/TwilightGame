@@ -23,6 +23,7 @@ import { Position, Direction, NPC } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
 import { Z_PLAYER } from '../../zIndex';
+import { TimeManager, TimeOfDay } from '../TimeManager';
 
 export class NPCLayer extends PixiLayer {
   private npcSprites: Map<string, PIXI.Sprite> = new Map();
@@ -30,6 +31,8 @@ export class NPCLayer extends PixiLayer {
   // NPCs with zIndexOverride below Z_PLAYER are added directly to stage for proper z-sorting
   private stageSprites: Map<string, PIXI.Sprite> = new Map();
   private stageRef: PIXI.Container | null = null;
+  // Glow effects behind NPCs
+  private glowGraphics: Map<string, PIXI.Graphics> = new Map();
 
   constructor() {
     // Base z-index same as player, individual sprites have dynamic z-index for depth sorting
@@ -64,6 +67,63 @@ export class NPCLayer extends PixiLayer {
       // Determine if this NPC should be on stage (for low z-index sorting) or in container
       const needsStageZSort = npc.zIndexOverride !== undefined && npc.zIndexOverride < Z_PLAYER;
       const useStage = needsStageZSort && this.stageRef !== null;
+
+      // Render glow effect if NPC has one
+      if (npc.glow) {
+        let glowGfx = this.glowGraphics.get(npc.id);
+        if (!glowGfx) {
+          glowGfx = new PIXI.Graphics();
+          // Add glow behind sprites (lower z-index)
+          if (useStage && this.stageRef) {
+            this.stageRef.addChild(glowGfx);
+          } else {
+            this.container.addChild(glowGfx);
+          }
+          this.glowGraphics.set(npc.id, glowGfx);
+        }
+
+        // Calculate glow position and size
+        const glowX = npc.position.x * TILE_SIZE + offsetX;
+        const glowY = npc.position.y * TILE_SIZE + offsetY;
+        const glowRadius = npc.glow.radius * TILE_SIZE;
+
+        // Determine intensity based on time of day
+        const currentTime = TimeManager.getCurrentTime();
+        const isNight = currentTime.timeOfDay === TimeOfDay.NIGHT || currentTime.timeOfDay === TimeOfDay.DUSK;
+        let intensity: number;
+        if (isNight && npc.glow.nightIntensity !== undefined) {
+          intensity = npc.glow.nightIntensity;
+        } else if (!isNight && npc.glow.dayIntensity !== undefined) {
+          intensity = npc.glow.dayIntensity;
+        } else {
+          intensity = npc.glow.intensity ?? 0.6;
+        }
+
+        // Pulse effect if enabled
+        let pulseAlpha = intensity;
+        if (npc.glow.pulseSpeed) {
+          const time = Date.now();
+          const pulse = Math.sin((time / npc.glow.pulseSpeed) * Math.PI * 2);
+          pulseAlpha = intensity * (0.7 + 0.3 * pulse); // Pulse between 70% and 100%
+        }
+
+        // Draw radial gradient glow using many concentric circles for smooth graduation
+        glowGfx.clear();
+        const steps = npc.glow.steps ?? 32; // Configurable smoothness (default 32)
+        for (let i = steps; i > 0; i--) {
+          const stepRadius = (glowRadius * i) / steps;
+          // Use quadratic falloff for more natural light attenuation
+          const t = i / steps;
+          const stepAlpha = pulseAlpha * (1 - t * t) * 0.5;
+          glowGfx.circle(glowX, glowY, stepRadius);
+          glowGfx.fill({ color: npc.glow.color, alpha: stepAlpha });
+        }
+
+        // Z-index: glow appears behind NPC sprite
+        const feetY = npc.position.y + 0.3;
+        glowGfx.zIndex = (npc.zIndexOverride ?? (Z_PLAYER + Math.floor(feetY))) - 1;
+        glowGfx.visible = true;
+      }
 
       // Get or create sprite for this NPC
       let sprite = useStage ? this.stageSprites.get(npc.id) : this.npcSprites.get(npc.id);
@@ -156,6 +216,12 @@ export class NPCLayer extends PixiLayer {
         sprite.visible = false;
       }
     }
+    // Hide glow graphics for removed NPCs
+    for (const [npcId, glow] of this.glowGraphics.entries()) {
+      if (!renderedIds.has(npcId)) {
+        glow.visible = false;
+      }
+    }
   }
 
   /**
@@ -175,6 +241,12 @@ export class NPCLayer extends PixiLayer {
       sprite.destroy();
     }
     this.stageSprites.clear();
+
+    // Clear glow graphics
+    for (const glow of this.glowGraphics.values()) {
+      glow.destroy();
+    }
+    this.glowGraphics.clear();
 
     this.currentTextures.clear();
   }

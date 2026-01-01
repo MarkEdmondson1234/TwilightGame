@@ -90,6 +90,15 @@ export interface NPCConfig {
   reverseFlip?: boolean;
   zIndexOverride?: number;
   visibilityConditions?: AnimationConditions;
+  glow?: {
+    color: number;
+    radius: number;
+    intensity?: number;
+    dayIntensity?: number;
+    nightIntensity?: number;
+    pulseSpeed?: number;
+    steps?: number;
+  };
 }
 
 /**
@@ -174,6 +183,7 @@ export function createNPC(config: NPCConfig): NPC {
     reverseFlip,
     zIndexOverride,
     visibilityConditions,
+    glow,
   } = config;
 
   // Create animated states if provided
@@ -205,6 +215,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (reverseFlip !== undefined) npc.reverseFlip = reverseFlip;
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
   if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
+  if (glow) npc.glow = glow;
 
   return npc;
 }

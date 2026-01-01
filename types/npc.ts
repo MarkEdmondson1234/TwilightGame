@@ -117,6 +117,15 @@ export interface NPC {
   reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
   visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
+  glow?: { // Optional: mystical glow effect behind NPC
+    color: number;       // Hex colour (e.g., 0x88CCFF for soft blue)
+    radius: number;      // Radius in tiles
+    intensity?: number;  // Opacity 0-1 (default 0.6) - used if day/night not specified
+    dayIntensity?: number;   // Daytime intensity (overrides intensity during day)
+    nightIntensity?: number; // Nighttime intensity (overrides intensity at night)
+    pulseSpeed?: number; // Pulse animation in ms (default: no pulse)
+    steps?: number;      // Gradient smoothness (default 32, higher = smoother)
+  };
 }
 
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)

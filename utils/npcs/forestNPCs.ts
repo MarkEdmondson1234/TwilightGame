@@ -619,7 +619,7 @@ export function createBunnyflyNPC(
     direction: Direction.Down,
     sprite: npcAssets.bunnyfly_01,
     portraitSprite: npcAssets.bunnyfly_portrait,
-    scale: 2.5,
+    scale: 4.0,
     interactionRadius: 1.5,
     states: {
       roaming: {
@@ -701,6 +701,13 @@ export function createMotherSeaNPC(
     portraitSprite: npcAssets.mother_sea_portrait,
     scale: 6.0,
     interactionRadius: 3.0,
+    glow: {
+      color: 0x66CCFF,      // Soft ethereal blue
+      radius: 5,            // Large mystical aura
+      dayIntensity: 0.1,    // Very subtle during day
+      nightIntensity: 0.4,  // More visible at night
+      pulseSpeed: 3000,     // Slow, spiritual pulse (3 seconds)
+    },
     states: {
       rising: {
         sprites: [npcAssets.mother_sea_01, npcAssets.mother_sea_02],
