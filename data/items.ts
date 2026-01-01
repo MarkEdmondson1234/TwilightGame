@@ -607,6 +607,32 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.flour,
   },
 
+  whole_grain_wheat_flour: {
+    id: 'whole_grain_wheat_flour',
+    name: 'whole_grain_wheat_flour',
+    displayName: 'Stone-Milled Whole-Grain Wheat Flour',
+    category: ItemCategory.INGREDIENT,
+    description: 'Coarse stone-milled whole-grain flour. Full of flavour and nutrition.',
+    stackable: true,
+    maxUses: 5,
+    sellPrice: 4,
+    buyPrice: 4,
+    // Note: No whole_grain_wheat_flour sprite yet - add whole_grain_wheat_flour.png to grocery folder
+  },
+
+  sourdough: {
+    id: 'sourdough',
+    name: 'sourdough',
+    displayName: 'Sourdough Starter',
+    category: ItemCategory.INGREDIENT,
+    description: 'A bubbling sourdough starter. The secret to proper bread.',
+    stackable: true,
+    maxUses: 10,
+    sellPrice: 8,
+    buyPrice: 6,
+    // Note: No sourdough sprite yet - add sourdough.png to grocery folder
+  },
+
   sugar: {
     id: 'sugar',
     name: 'sugar',
