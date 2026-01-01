@@ -940,49 +940,49 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     }
 
     // Check for wild strawberry harvesting
-    if (tileData && tileData.type === TileType.WILD_STRAWBERRY && currentTool === 'hand') {
+    // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
+    if (tileData && tileData.type === TileType.WILD_STRAWBERRY) {
         interactions.push({
             type: 'harvest_strawberry',
             label: 'Pick Strawberries',
             icon: itemAssets.strawberry,
             color: '#ef4444',
             execute: () => {
-                const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+                const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
                 onFarmAction?.(farmResult);
             },
         });
     }
 
     // Check for blackberry harvesting from adjacent brambles
-    if (currentTool === 'hand') {
-        const adjacentTiles = [
-            { x: tileX - 1, y: tileY },
-            { x: tileX + 1, y: tileY },
-            { x: tileX, y: tileY - 1 },
-            { x: tileX, y: tileY + 1 },
-            { x: tileX - 1, y: tileY - 1 },
-            { x: tileX + 1, y: tileY - 1 },
-            { x: tileX - 1, y: tileY + 1 },
-            { x: tileX + 1, y: tileY + 1 },
-        ];
+    // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
+    const adjacentTiles = [
+        { x: tileX - 1, y: tileY },
+        { x: tileX + 1, y: tileY },
+        { x: tileX, y: tileY - 1 },
+        { x: tileX, y: tileY + 1 },
+        { x: tileX - 1, y: tileY - 1 },
+        { x: tileX + 1, y: tileY - 1 },
+        { x: tileX - 1, y: tileY + 1 },
+        { x: tileX + 1, y: tileY + 1 },
+    ];
 
-        const hasBrambles = adjacentTiles.some(tile => {
-            const adjacentTileData = getTileData(tile.x, tile.y);
-            return adjacentTileData && adjacentTileData.type === TileType.BRAMBLES;
+    const hasBrambles = adjacentTiles.some(tile => {
+        const adjacentTileData = getTileData(tile.x, tile.y);
+        return adjacentTileData && adjacentTileData.type === TileType.BRAMBLES;
+    });
+
+    if (hasBrambles) {
+        interactions.push({
+            type: 'harvest_blackberry',
+            label: 'Pick Blackberries',
+            icon: itemAssets.blackberries,
+            color: '#7c3aed',
+            execute: () => {
+                const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
+                onFarmAction?.(farmResult);
+            },
         });
-
-        if (hasBrambles) {
-            interactions.push({
-                type: 'harvest_blackberry',
-                label: 'Pick Blackberries',
-                icon: itemAssets.blackberries,
-                color: '#7c3aed',
-                execute: () => {
-                    const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
-                    onFarmAction?.(farmResult);
-                },
-            });
-        }
     }
 
     // Check for farming actions
