@@ -168,17 +168,19 @@ export const RECIPES: Record<string, RecipeDefinition> = {
 
   // ===== DESSERT RECIPES =====
 
-  crepes_strawberry: {
-    id: 'crepes_strawberry',
-    name: 'crepes_strawberry',
-    displayName: 'Crepes with Strawberry Jam',
+  crepes: {
+    id: 'crepes',
+    name: 'crepes',
+    displayName: 'Crepes',
     category: 'dessert',
-    description: 'Thin French pancakes with sweet strawberry jam.',
+    description: 'Crepes is the French word for pancakes, but whilst some pancakes should be thick, crepes should be paper thin! You can only achieve this if the batter is runny. To make sure they don\'t come apart, you need lots of eggs: Eggs are great for making things stick together - it\'s pretty much the glue of cooking ingredients!',
     ingredients: [
+      { itemId: 'vanilla', quantity: 1 },
+      { itemId: 'cane_sugar', quantity: 1 },
       { itemId: 'flour', quantity: 1 },
-      { itemId: 'egg', quantity: 2 },
+      { itemId: 'egg', quantity: 3 },
+      { itemId: 'butter', quantity: 1 },
       { itemId: 'milk', quantity: 1 },
-      { itemId: 'strawberry_jam', quantity: 1 },
     ],
     cookingTime: 25,
     difficulty: 2,
@@ -186,6 +188,12 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultQuantity: 3,
     friendshipValue: 25,
     unlockRequirement: 'french_toast',
+    instructions: [
+      'Scrape the vanilla seeds from the pod and mix it with the sugar. Whisk all the ingredients together in a bowl - make sure there are no lumps.',
+      'Heat up a pan and melt most of the butter in it. Slowly add it to the batter whilst whisking.',
+      'Pour a thin layer of batter in the hot pan and fry for no more than a minute, then flip the crepe over with a spatula - or, if you\'re good at that sort of thing, you might flip them in the air!',
+      'If the pan gets too cold, the batter might stick, so always keep it well heated.',
+    ],
   },
 
   marzipan_chocolates: {
@@ -224,7 +232,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_ice_cream',
     resultQuantity: 2,
     friendshipValue: 40,
-    unlockRequirement: 'crepes_strawberry',
+    unlockRequirement: 'crepes',
   },
 
   // ===== BAKING RECIPES =====

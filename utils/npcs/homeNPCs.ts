@@ -195,10 +195,10 @@ export function createMumNPC(
         id: 'learn_desserts',
         text: 'Desserts are my speciality! Let me show you something sweet.',
         responses: [
-          { text: 'Teach me crêpes!', nextId: 'learn_crepes', hiddenIfRecipeUnlocked: 'crepes_strawberry' },
+          { text: 'Teach me crêpes!', nextId: 'learn_crepes', hiddenIfRecipeUnlocked: 'crepes' },
           { text: 'What about marzipan chocolates?', nextId: 'learn_marzipan', hiddenIfRecipeUnlocked: 'marzipan_chocolates' },
-          { text: 'Ice cream sounds lovely!', nextId: 'learn_ice_cream', requiredRecipeMastered: 'crepes_strawberry', hiddenIfRecipeUnlocked: 'vanilla_ice_cream' },
-          { text: 'Ice cream sounds lovely!', nextId: 'not_ready_ice_cream', hiddenIfRecipeMastered: 'crepes_strawberry' },
+          { text: 'Ice cream sounds lovely!', nextId: 'learn_ice_cream', requiredRecipeMastered: 'crepes', hiddenIfRecipeUnlocked: 'vanilla_ice_cream' },
+          { text: 'Ice cream sounds lovely!', nextId: 'not_ready_ice_cream', hiddenIfRecipeMastered: 'crepes' },
           { text: 'Never mind.' },
         ],
       },

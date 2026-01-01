@@ -90,7 +90,7 @@ function handleRecipeTeaching(nodeId: string): void {
     const recipeNodes: Record<string, string> = {
         'learn_french_toast': 'french_toast',
         'learn_spaghetti': 'spaghetti_meat_sauce',
-        'learn_crepes': 'crepes_strawberry',
+        'learn_crepes': 'crepes',
         'learn_marzipan': 'marzipan_chocolates',
         'learn_ice_cream': 'vanilla_ice_cream',
         'learn_bread': 'bread',
