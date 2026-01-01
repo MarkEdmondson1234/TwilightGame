@@ -17,10 +17,11 @@ import { gameState } from '../GameState';
 export interface InventoryItem {
   itemId: string;
   quantity: number;
+  uses?: number;  // Current uses remaining for this item (only if item has maxUses defined)
 }
 
 class InventoryManager {
-  private items: Map<string, number> = new Map(); // itemId -> quantity
+  private items: Map<string, InventoryItem[]> = new Map(); // itemId -> array of item instances
   private tools: Set<string> = new Set(); // tool IDs owned
 
   /**
@@ -55,23 +56,34 @@ class InventoryManager {
       return false;
     }
 
-    const current = this.items.get(itemId) || 0;
-    const newAmount = current + quantity;
+    // Get or create item instances array
+    const instances = this.items.get(itemId) || [];
+
+    // Add new instances
+    for (let i = 0; i < quantity; i++) {
+      const newInstance: InventoryItem = {
+        itemId,
+        quantity: 1,
+        uses: item.maxUses, // Initialize with max uses (undefined if single-use)
+      };
+      instances.push(newInstance);
+    }
 
     // Check max stack
-    if (item.maxStack && newAmount > item.maxStack) {
+    if (item.maxStack && instances.length > item.maxStack) {
       console.warn(`[InventoryManager] Cannot exceed max stack of ${item.maxStack} for ${itemId}`);
       return false;
     }
 
-    this.items.set(itemId, newAmount);
-    console.log(`[InventoryManager] +${quantity} ${item.displayName} (total: ${newAmount})`);
+    this.items.set(itemId, instances);
+    const totalUses = instances.reduce((sum, inst) => sum + (inst.uses || 1), 0);
+    console.log(`[InventoryManager] +${quantity} ${item.displayName} (total: ${instances.length} items, ${totalUses} uses)`);
     this.saveToGameState();
     return true;
   }
 
   /**
-   * Remove an item from inventory
+   * Remove an item from inventory (consumes one use)
    */
   removeItem(itemId: string, quantity: number = 1): boolean {
     const item = getItem(itemId);
@@ -86,26 +98,53 @@ class InventoryManager {
       return false;
     }
 
-    const current = this.items.get(itemId) || 0;
-    if (current < quantity) {
-      console.warn(`[InventoryManager] Not enough ${item.displayName} (have ${current}, need ${quantity})`);
+    const instances = this.items.get(itemId) || [];
+    if (instances.length === 0) {
+      console.warn(`[InventoryManager] No ${item.displayName} in inventory`);
       return false;
     }
 
-    const newAmount = current - quantity;
-    if (newAmount === 0) {
-      this.items.delete(itemId);
-    } else {
-      this.items.set(itemId, newAmount);
+    // Process removal for each quantity requested
+    for (let i = 0; i < quantity; i++) {
+      if (instances.length === 0) {
+        console.warn(`[InventoryManager] Not enough ${item.displayName} (need ${quantity}, processed ${i})`);
+        return false;
+      }
+
+      // Get first instance
+      const instance = instances[0];
+
+      if (item.maxUses && instance.uses) {
+        // Multi-use item: decrement uses
+        instance.uses--;
+
+        if (instance.uses <= 0) {
+          // Used up, remove instance
+          instances.shift();
+          console.log(`[InventoryManager] ${item.displayName} used up (0 uses remaining)`);
+        } else {
+          console.log(`[InventoryManager] Used ${item.displayName} (${instance.uses}/${item.maxUses} uses remaining)`);
+        }
+      } else {
+        // Single-use item: remove entire instance
+        instances.shift();
+        console.log(`[InventoryManager] Consumed ${item.displayName}`);
+      }
     }
 
-    console.log(`[InventoryManager] -${quantity} ${item.displayName} (remaining: ${newAmount})`);
+    // Update or remove from map
+    if (instances.length === 0) {
+      this.items.delete(itemId);
+    } else {
+      this.items.set(itemId, instances);
+    }
+
     this.saveToGameState();
     return true;
   }
 
   /**
-   * Check if player has an item
+   * Check if player has an item (with enough uses)
    */
   hasItem(itemId: string, quantity: number = 1): boolean {
     const item = getItem(itemId);
@@ -118,13 +157,14 @@ class InventoryManager {
       return this.tools.has(itemId);
     }
 
-    // Stackable items
-    const current = this.items.get(itemId) || 0;
-    return current >= quantity;
+    // Check total available uses
+    const instances = this.items.get(itemId) || [];
+    const totalUses = instances.reduce((sum, inst) => sum + (inst.uses || 1), 0);
+    return totalUses >= quantity;
   }
 
   /**
-   * Get quantity of an item
+   * Get quantity of an item (total uses available)
    */
   getQuantity(itemId: string): number {
     const item = getItem(itemId);
@@ -137,7 +177,9 @@ class InventoryManager {
       return this.tools.has(itemId) ? 1 : 0;
     }
 
-    return this.items.get(itemId) || 0;
+    // Return total uses available
+    const instances = this.items.get(itemId) || [];
+    return instances.reduce((sum, inst) => sum + (inst.uses || 1), 0);
   }
 
   /**
@@ -146,9 +188,11 @@ class InventoryManager {
   getAllItems(): InventoryItem[] {
     const result: InventoryItem[] = [];
 
-    // Add stackable items
-    this.items.forEach((quantity, itemId) => {
-      result.push({ itemId, quantity });
+    // Add all item instances
+    this.items.forEach((instances, itemId) => {
+      instances.forEach(instance => {
+        result.push(instance);
+      });
     });
 
     // Add tools
@@ -172,10 +216,12 @@ class InventoryManager {
       return result;
     }
 
-    this.items.forEach((quantity, itemId) => {
+    this.items.forEach((instances, itemId) => {
       const item = getItem(itemId);
       if (item && item.category === category) {
-        result.push({ itemId, quantity });
+        instances.forEach(instance => {
+          result.push(instance);
+        });
       }
     });
 
@@ -219,11 +265,13 @@ class InventoryManager {
     this.items.clear();
     this.tools.clear();
 
-    // Load items
-    items.forEach(({ itemId, quantity }) => {
-      const item = getItem(itemId);
+    // Load items - group by itemId
+    items.forEach(inventoryItem => {
+      const item = getItem(inventoryItem.itemId);
       if (item && item.category !== ItemCategory.TOOL) {
-        this.items.set(itemId, quantity);
+        const instances = this.items.get(inventoryItem.itemId) || [];
+        instances.push(inventoryItem);
+        this.items.set(inventoryItem.itemId, instances);
       }
     });
 
@@ -235,18 +283,24 @@ class InventoryManager {
       }
     });
 
-    console.log(`[InventoryManager] Loaded ${this.items.size} items and ${this.tools.size} tools`);
+    console.log(`[InventoryManager] Loaded ${this.items.size} item types and ${this.tools.size} tools`);
   }
 
   /**
    * Get serializable inventory data for saving
    */
   getInventoryData(): { items: InventoryItem[]; tools: string[] } {
+    const items: InventoryItem[] = [];
+
+    // Flatten all instances
+    this.items.forEach((instances) => {
+      instances.forEach(instance => {
+        items.push(instance);
+      });
+    });
+
     return {
-      items: Array.from(this.items.entries()).map(([itemId, quantity]) => ({
-        itemId,
-        quantity,
-      })),
+      items,
       tools: Array.from(this.tools),
     };
   }
@@ -261,10 +315,15 @@ class InventoryManager {
     const seeds = this.getAllSeeds();
     if (seeds.length > 0) {
       lines.push('Seeds:');
-      seeds.forEach(({ itemId, quantity }) => {
+      const seedCounts = new Map<string, number>();
+      seeds.forEach(({ itemId, uses }) => {
+        const count = seedCounts.get(itemId) || 0;
+        seedCounts.set(itemId, count + (uses || 1));
+      });
+      seedCounts.forEach((total, itemId) => {
         const item = getItem(itemId);
         if (item) {
-          lines.push(`  ${item.displayName}: ${quantity}`);
+          lines.push(`  ${item.displayName}: ${total}`);
         }
       });
     }
@@ -273,10 +332,15 @@ class InventoryManager {
     const crops = this.getItemsByCategory(ItemCategory.CROP);
     if (crops.length > 0) {
       lines.push('Crops:');
-      crops.forEach(({ itemId, quantity }) => {
+      const cropCounts = new Map<string, number>();
+      crops.forEach(({ itemId, uses }) => {
+        const count = cropCounts.get(itemId) || 0;
+        cropCounts.set(itemId, count + (uses || 1));
+      });
+      cropCounts.forEach((total, itemId) => {
         const item = getItem(itemId);
         if (item) {
-          lines.push(`  ${item.displayName}: ${quantity}`);
+          lines.push(`  ${item.displayName}: ${total}`);
         }
       });
     }

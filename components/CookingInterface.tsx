@@ -57,28 +57,23 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
   const handleCook = () => {
     if (!recipe) return;
 
-    // Campfire has 10% higher failure rate
-    const campfireFailure = locationType === 'campfire' && Math.random() < 0.10;
+    // Always cook through CookingManager to get proper ingredient checking and error messages
+    const result = cookingManager.cook(recipe.id);
 
-    if (campfireFailure) {
-      // Cooking failed - ingredients are wasted
-      // Still consume ingredients to make failure meaningful
-      recipe.ingredients.forEach(ing => {
-        inventoryManager.removeItem(ing.itemId, ing.quantity);
-      });
-
-      const result: CookingResult = {
+    // If cooking succeeded and we're at a campfire, apply campfire failure chance
+    if (result.success && locationType === 'campfire' && Math.random() < 0.10) {
+      // Campfire caused the dish to burn (ingredients already consumed by cook())
+      const campfireResult: CookingResult = {
         success: false,
         message: `Oh no! The dish burnt on the campfire. Cooking on a campfire is tricky!`,
       };
-      setCookingResult(result);
-      setShowResult(true);
+      setCookingResult(campfireResult);
     } else {
-      // Normal cooking
-      const result = cookingManager.cook(recipe.id);
+      // Show the result from CookingManager (success, or missing ingredients error)
       setCookingResult(result);
-      setShowResult(true);
     }
+
+    setShowResult(true);
 
     // Auto-hide result after 3 seconds
     setTimeout(() => {
@@ -254,14 +249,9 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
                 <div className="pt-4">
                   <button
                     onClick={handleCook}
-                    disabled={!canCook}
-                    className={`w-full py-3 rounded-lg font-bold text-lg transition-colors ${
-                      canCook
-                        ? 'bg-green-600 hover:bg-green-500 text-white'
-                        : 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                    }`}
+                    className="w-full py-3 rounded-lg font-bold text-lg transition-colors bg-green-600 hover:bg-green-500 text-white"
                   >
-                    {canCook ? '🍳 Cook!' : 'Missing Ingredients'}
+                    🍳 Cook!
                   </button>
                 </div>
 

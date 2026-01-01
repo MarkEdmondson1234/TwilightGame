@@ -375,20 +375,10 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                   <div className="flex flex-col items-center gap-2">
                     <button
                       onClick={() => handleCook(recipe.id)}
-                      disabled={!canCook(recipe.id)}
-                      className={`px-6 py-3 rounded-lg font-bold text-lg transition-all ${
-                        canCook(recipe.id)
-                          ? 'bg-teal-600 hover:bg-teal-500 text-white shadow-lg hover:shadow-xl'
-                          : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                      }`}
+                      className="px-6 py-3 rounded-lg font-bold text-lg transition-all bg-teal-600 hover:bg-teal-500 text-white shadow-lg hover:shadow-xl"
                     >
                       🍳 Cook!
                     </button>
-                    {!canCook(recipe.id) && !hasIngredients(recipe.id) && (
-                      <p className="text-sm text-slate-400 italic">
-                        You don't have all the ingredients
-                      </p>
-                    )}
                     {canCook(recipe.id) && !hasIngredients(recipe.id) && nearbyNPCs.some(id => id.includes('mum')) && (
                       <p className="text-sm text-teal-300 italic">
                         ✨ Mum is helping you cook!

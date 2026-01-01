@@ -158,25 +158,33 @@ function getItemIcon(itemId: string): string {
 export function convertInventoryToUI(): UIInventoryItem[] {
   const allItems = inventoryManager.getAllItems();
 
-  return allItems.map(({ itemId, quantity }) => {
-    const itemDef = getItem(itemId);
+  // Group items by itemId and sum their uses
+  const itemMap = new Map<string, { totalUses: number; itemDef: any }>();
 
+  allItems.forEach(({ itemId, uses }) => {
+    const itemDef = getItem(itemId);
     if (!itemDef) {
       console.warn(`[InventoryUIHelper] Unknown item: ${itemId}`);
-      return {
-        id: itemId,
-        name: itemId,
-        icon: '❓',
-        quantity,
-        value: 0,
-      };
+      return;
     }
 
+    const existing = itemMap.get(itemId);
+    const usesToAdd = uses || 1; // Default to 1 use if not specified
+
+    if (existing) {
+      existing.totalUses += usesToAdd;
+    } else {
+      itemMap.set(itemId, { totalUses: usesToAdd, itemDef });
+    }
+  });
+
+  // Convert to UI format
+  return Array.from(itemMap.entries()).map(([itemId, { totalUses, itemDef }]) => {
     return {
       id: itemId,
       name: itemDef.displayName,
       icon: getItemIcon(itemId),
-      quantity,
+      quantity: totalUses,
       value: itemDef.sellPrice || 0,
     };
   });

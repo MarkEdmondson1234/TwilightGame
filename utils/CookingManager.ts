@@ -27,6 +27,7 @@ import {
   isCookingDomain,
   getRecipesByDomain,
 } from '../data/recipes';
+import { getItem } from '../data/items';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 
@@ -360,6 +361,29 @@ class CookingManagerClass {
   }
 
   /**
+   * Format missing ingredients into a user-friendly message
+   */
+  private formatMissingIngredientsMessage(
+    missing: Array<{ itemId: string; have: number; need: number }>,
+    recipeName: string
+  ): string {
+    if (missing.length === 0) {
+      return `You have all ingredients for ${recipeName}!`;
+    }
+
+    // Get ingredient names
+    const missingNames = missing.map(({ itemId }) => {
+      const item = getItem(itemId);
+      return item?.displayName || itemId;
+    });
+
+    // Format as simple list
+    const ingredientList = missingNames.join(', ');
+
+    return `You can't cook this, because you are missing these ingredients: ${ingredientList}`;
+  }
+
+  /**
    * Cook a recipe - consumes ingredients and produces food
    * Returns result with success/failure and any produced items
    * @param recipeId - Recipe to cook
@@ -379,8 +403,10 @@ class CookingManagerClass {
     // Check ingredients
     if (!this.hasIngredients(recipeId)) {
       const missing = this.getMissingIngredients(recipeId);
-      const missingNames = missing.map(m => m.itemId).join(', ');
-      return { success: false, message: `Missing ingredients: ${missingNames}` };
+      return {
+        success: false,
+        message: this.formatMissingIngredientsMessage(missing, recipe.displayName)
+      };
     }
 
     // Consume ingredients
