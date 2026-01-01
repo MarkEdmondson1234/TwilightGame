@@ -165,7 +165,7 @@ export function handleFarmAction(
         let seedCount = 0;
         if (gotSeeds) {
             seedCount = Math.floor(Math.random() * 2) + 1; // 1-2 seeds
-            inventoryManager.addItem('seed_strawberry', seedCount);
+            inventoryManager.addItem('seed_wild_strawberry', seedCount);
         }
 
         const inventoryData = inventoryManager.getInventoryData();
@@ -452,7 +452,7 @@ export function handleForageAction(
             let seedCount = 0;
             if (gotSeeds) {
                 seedCount = Math.floor(Math.random() * 2) + 1; // 1-2 seeds
-                inventoryManager.addItem('seed_strawberry', seedCount);
+                inventoryManager.addItem('seed_wild_strawberry', seedCount);
             }
 
             const inventoryData = inventoryManager.getInventoryData();
@@ -465,8 +465,8 @@ export function handleForageAction(
             console.log(`[Forage] ${message}`);
             return {
                 found: true,
-                seedId: gotSeeds ? 'seed_strawberry' : undefined,
-                seedName: gotSeeds ? 'Strawberry Seeds' : undefined,
+                seedId: gotSeeds ? 'seed_wild_strawberry' : undefined,
+                seedName: gotSeeds ? 'Wild Strawberry Seeds' : undefined,
                 message,
             };
         } else {

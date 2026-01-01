@@ -104,7 +104,7 @@ const ITEM_ICON_MAP: Record<string, string> = {
   seed_cauliflower: '🥬',
   seed_onion: '🧅',
   seed_pea: '🫛',
-  seed_strawberry: '🍓',
+  seed_wild_strawberry: '🍓',
 
   // Crops (items without sprites)
   crop_corn: '🌽',

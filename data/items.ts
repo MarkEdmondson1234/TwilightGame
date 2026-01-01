@@ -244,16 +244,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
   },
 
   // Forage seeds
-  seed_strawberry: {
-    id: 'seed_strawberry',
-    name: 'seed_strawberry',
-    displayName: 'Strawberry Seeds',
+  seed_wild_strawberry: {
+    id: 'seed_wild_strawberry',
+    name: 'seed_wild_strawberry',
+    displayName: 'Wild Strawberry Seeds',
     category: ItemCategory.SEED,
-    description: 'Wild strawberry seeds. Found whilst foraging.',
+    description: 'Wild strawberry seeds. Found whilst foraging in the forest.',
     rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 15,
     cropId: 'strawberry',
+    image: itemAssets.wild_seeds,
   },
 
   // ===== CROPS (harvested) =====

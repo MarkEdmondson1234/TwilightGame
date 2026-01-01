@@ -397,6 +397,7 @@ export const itemAssets = {
   broccoli_seeds: '/TwilightGame/assets-optimized/items/broccoli_seeds.png',
   cucumber_seeds: '/TwilightGame/assets-optimized/items/cucumber_seeds.png',
   melon_seeds: '/TwilightGame/assets-optimized/items/melon_seeds.png',
+  wild_seeds: '/TwilightGame/assets-optimized/items/wild_seeds.png',
   radishes: '/TwilightGame/assets-optimized/items/radishes.png',
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',
