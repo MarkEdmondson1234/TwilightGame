@@ -1,6 +1,7 @@
 import { NPC, Position, Direction, NPCBehavior } from './types';
 import { getTileData } from './utils/mapUtils';
 import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
+import { TimeManager } from './utils/TimeManager';
 
 /**
  * NPCManager - Single Source of Truth for all NPC data
@@ -10,6 +11,7 @@ import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
  * - NPC positions and states
  * - NPC behaviors and movement
  * - NPC interaction detection
+ * - NPC visibility conditions (seasonal, time of day, weather)
  *
  * Following SSoT principle from CLAUDE.md
  */
@@ -64,6 +66,36 @@ class NPCManagerClass {
   }
 
   /**
+   * Check if an NPC is visible based on its visibility conditions
+   * Checks season, time of day, and weather (when implemented)
+   */
+  isNPCVisible(npc: NPC): boolean {
+    if (!npc.visibilityConditions) {
+      return true; // No conditions means always visible
+    }
+
+    const conditions = npc.visibilityConditions;
+    const currentTime = TimeManager.getCurrentTime();
+
+    // Check season condition
+    if (conditions.season && conditions.season !== currentTime.season.toLowerCase()) {
+      return false; // Hide NPC if season doesn't match
+    }
+
+    // Check time of day condition
+    if (conditions.timeOfDay && conditions.timeOfDay !== currentTime.timeOfDay.toLowerCase()) {
+      return false; // Hide NPC if time of day doesn't match
+    }
+
+    // Weather conditions can be added here in the future
+    // if (conditions.weather && conditions.weather !== currentWeather) {
+    //   return false;
+    // }
+
+    return true; // All conditions passed
+  }
+
+  /**
    * Get all NPCs for a specific map
    */
   getNPCsForMap(mapId: string): NPC[] {
@@ -71,15 +103,17 @@ class NPCManagerClass {
   }
 
   /**
-   * Get all NPCs for the current map
+   * Get all NPCs for the current map (filtered by visibility conditions)
    */
   getCurrentMapNPCs(): NPC[] {
     if (!this.currentMapId) return [];
-    return this.getNPCsForMap(this.currentMapId);
+    const allNPCs = this.getNPCsForMap(this.currentMapId);
+    // Filter by visibility conditions (seasonal creatures, time-based NPCs, etc.)
+    return allNPCs.filter(npc => this.isNPCVisible(npc));
   }
 
   /**
-   * Get NPC by ID from current map
+   * Get NPC by ID from current map (respects visibility conditions)
    */
   getNPCById(npcId: string): NPC | null {
     const npcs = this.getCurrentMapNPCs();
@@ -87,7 +121,7 @@ class NPCManagerClass {
   }
 
   /**
-   * Check if there's an NPC at or near a position
+   * Check if there's an NPC at or near a position (respects visibility conditions)
    */
   getNPCAtPosition(position: Position, radius: number = 1.5): NPC | null {
     const npcs = this.getCurrentMapNPCs();

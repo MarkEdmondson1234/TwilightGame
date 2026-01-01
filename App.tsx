@@ -731,7 +731,9 @@ const App: React.FC = () => {
         let npcs = npcManager.getCurrentMapNPCs();
         if (backgroundImageLayerRef.current) {
             // Pass currentMapId to prevent stale NPCs from wrong maps
-            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId);
+            // Filter by visibility conditions (seasonal creatures, time-based NPCs)
+            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId)
+                .filter(npc => npcManager.isNPCVisible(npc));
             if (layerNPCs.length > 0) {
                 npcs = [...npcs, ...layerNPCs];
             }
@@ -893,7 +895,9 @@ const App: React.FC = () => {
                     foregroundSpriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
                     let npcs = npcManager.getCurrentMapNPCs();
                     // Add NPCs from unified layers (for background-image rooms using layers array)
-                    const layerNPCs = backgroundImageLayer.getLayerNPCs(currentMapId);
+                    // Filter by visibility conditions (seasonal creatures, time-based NPCs)
+                    const layerNPCs = backgroundImageLayer.getLayerNPCs(currentMapId)
+                        .filter(npc => npcManager.isNPCVisible(npc));
                     if (layerNPCs.length > 0) {
                         npcs = [...npcs, ...layerNPCs];
                     }
@@ -1184,8 +1188,10 @@ const App: React.FC = () => {
             if (npcLayerRef.current) {
                 let npcs = npcManager.getCurrentMapNPCs();
                 // Add NPCs from unified layers (for background-image rooms using layers array)
+                // Filter by visibility conditions (seasonal creatures, time-based NPCs)
                 if (backgroundImageLayerRef.current) {
-                    const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId);
+                    const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId)
+                        .filter(npc => npcManager.isNPCVisible(npc));
                     if (layerNPCs.length > 0) {
                         npcs = [...npcs, ...layerNPCs];
                     }
@@ -1230,8 +1236,10 @@ const App: React.FC = () => {
         let npcs = npcManager.getCurrentMapNPCs();
 
         // Add NPCs from unified layers (for background-image rooms using layers array)
+        // Filter by visibility conditions (seasonal creatures, time-based NPCs)
         if (backgroundImageLayerRef.current) {
-            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId);
+            const layerNPCs = backgroundImageLayerRef.current.getLayerNPCs(currentMapId)
+                .filter(npc => npcManager.isNPCVisible(npc));
             if (layerNPCs.length > 0) {
                 npcs = [...npcs, ...layerNPCs];
             }
