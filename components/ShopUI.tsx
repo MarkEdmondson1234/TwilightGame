@@ -21,8 +21,8 @@ interface ShopUIProps {
   isOpen: boolean;
   onClose: () => void;
   playerGold: number;
-  playerInventory: { itemId: string; quantity: number }[];
-  onTransaction: (newGold: number, newInventory: { itemId: string; quantity: number }[]) => void;
+  playerInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[];
+  onTransaction: (newGold: number, newInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[]) => void;
 }
 
 interface DragState {
@@ -253,7 +253,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
   /**
    * Render player inventory slot
    */
-  const renderPlayerSlot = (inventoryItem: { itemId: string; quantity: number } | null, index: number) => {
+  const renderPlayerSlot = (inventoryItem: { itemId: string; quantity: number; uses?: number; masteryLevel?: number } | null, index: number) => {
     if (!inventoryItem) {
       // Empty slot
       return (
@@ -267,7 +267,15 @@ const ShopUI: React.FC<ShopUIProps> = ({
     const itemDef = getItem(inventoryItem.itemId);
     if (!itemDef) return null;
 
-    const sellPrice = shopManager.getMaxSellQuantity(inventoryItem.itemId, playerInventory);
+    const sellPrice = shopManager.getItemSellPrice(inventoryItem.itemId, playerInventory);
+
+    // Add mastery info if applicable
+    let additionalInfo = `Sell: ${sellPrice || 0}g each`;
+    if (inventoryItem.masteryLevel !== undefined && inventoryItem.masteryLevel >= 1) {
+      const multiplier = inventoryItem.masteryLevel >= 3 ? '2.0x' :
+                         inventoryItem.masteryLevel === 2 ? '1.5x' : '1.2x';
+      additionalInfo += ` (${multiplier} mastery)`;
+    }
 
     // Tooltip content
     const tooltipContent: TooltipContent = {
@@ -275,7 +283,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
       description: itemDef.description,
       image: itemDef.image,
       quantity: inventoryItem.quantity,
-      additionalInfo: `Sell: ${sellPrice || 0}g each`,
+      additionalInfo,
     };
 
     return (
@@ -471,7 +479,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
               const price = pendingTransaction.fromShop
                 ? shopInventory.find(si => si.itemId === pendingTransaction.itemId)?.buyPrice || 0
-                : shopManager.getMaxSellQuantity(pendingTransaction.itemId, playerInventory) || 0;
+                : shopManager.getItemSellPrice(pendingTransaction.itemId, playerInventory) || 0;
 
               const total = price * selectedQuantity;
 

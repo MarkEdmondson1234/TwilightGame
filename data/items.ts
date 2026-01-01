@@ -492,7 +492,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 10,
     sellPrice: 2,
-    buyPrice: 5,
+    buyPrice: 1,  // Was 5
     image: groceryAssets.tea,
   },
 
@@ -504,7 +504,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh water from the well.',
     stackable: true,
     sellPrice: 0,
-    buyPrice: 1,
+    buyPrice: 0,  // Was 1 (water is free!)
     image: itemAssets.water,
   },
 
@@ -517,7 +517,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh milk from the village dairy.',
     stackable: true,
     sellPrice: 3,
-    buyPrice: 8,
+    buyPrice: 2,  // Was 8
     image: groceryAssets.milk,
   },
 
@@ -529,7 +529,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Rich, thick cream.',
     stackable: true,
     sellPrice: 5,
-    buyPrice: 12,
+    buyPrice: 5,  // Was 12
     // Note: No cream sprite yet - add cream.png to grocery folder
   },
 
@@ -541,7 +541,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Churned butter. Essential for baking.',
     stackable: true,
     sellPrice: 4,
-    buyPrice: 10,
+    buyPrice: 3,  // Was 10
     image: groceryAssets.butter,
   },
 
@@ -553,7 +553,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Aged village cheese.',
     stackable: true,
     sellPrice: 8,
-    buyPrice: 20,
+    buyPrice: 6,  // Was 20
     image: groceryAssets.cheese,
   },
 
@@ -565,7 +565,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Tangy cultured buttermilk. Perfect for baking.',
     stackable: true,
     sellPrice: 4,
-    buyPrice: 10,
+    buyPrice: 3,  // Was 10
     // Note: No buttermilk sprite yet - add buttermilk.png to grocery folder
   },
 
@@ -577,7 +577,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A tasty nutritious snack or ingredient.',
     stackable: true,
     sellPrice: 6,
-    buyPrice: 15,
+    buyPrice: 5,  // Was 15
     image: groceryAssets.almonds,
   },
 
@@ -589,7 +589,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A fresh egg from the village hens.',
     stackable: true,
     sellPrice: 2,
-    buyPrice: 5,
+    buyPrice: 2,  // Was 5
     image: groceryAssets.egg,
   },
 
@@ -603,7 +603,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 2,
-    buyPrice: 6,
+    buyPrice: 2,  // Was 6
     image: groceryAssets.flour,
   },
 
@@ -616,7 +616,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 3,
-    buyPrice: 8,
+    buyPrice: 2,  // Was 8
     image: groceryAssets.sugar,
   },
 
@@ -629,7 +629,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 8,
-    buyPrice: 20,
+    buyPrice: 5,  // Was 20
     // Note: No honey sprite yet - add honey.png to grocery folder
   },
 
@@ -642,7 +642,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 20,
     sellPrice: 1,
-    buyPrice: 3,
+    buyPrice: 1,  // Was 3
     image: groceryAssets.salt,
   },
 
@@ -654,7 +654,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Dried yeast for bread-making.',
     stackable: true,
     sellPrice: 2,
-    buyPrice: 5,
+    buyPrice: 2,  // Was 5
     image: groceryAssets.yeast,
   },
 
@@ -667,7 +667,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 15,
     sellPrice: 5,
-    buyPrice: 15,
+    buyPrice: 4,  // Was 15
     image: groceryAssets.olive_oil,
   },
 
@@ -680,7 +680,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 15,
     sellPrice: 4,
-    buyPrice: 12,
+    buyPrice: 3,  // Was 12
     image: groceryAssets.sunflower_oil,
   },
 
@@ -693,7 +693,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 10,
     sellPrice: 8,
-    buyPrice: 20,
+    buyPrice: 5,  // Was 20
     image: groceryAssets.vanilla_pods,
   },
 
@@ -706,7 +706,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 12,
     sellPrice: 6,
-    buyPrice: 15,
+    buyPrice: 3,  // Was 15
     image: groceryAssets.cinnamon,
   },
 
@@ -719,7 +719,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh meat from the butcher.',
     stackable: true,
     sellPrice: 15,
-    buyPrice: 35,
+    buyPrice: 15,  // Was 35
     image: groceryAssets.minced_meat,
   },
 
@@ -731,7 +731,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Ground meat for sauces and pies.',
     stackable: true,
     sellPrice: 12,
-    buyPrice: 30,
+    buyPrice: 12,  // Was 30
     image: groceryAssets.minced_meat, // Same sprite as meat (both use minced_meat.png)
   },
 
@@ -744,7 +744,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Dried pasta. Ready to cook.',
     stackable: true,
     sellPrice: 4,
-    buyPrice: 10,
+    buyPrice: 3,  // Was 10
     image: groceryAssets.dried_spaghetti,
   },
 
@@ -756,7 +756,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A loaf of crusty bread.',
     stackable: true,
     sellPrice: 5,
-    buyPrice: 12,
+    buyPrice: 5,  // Was 12
     image: groceryAssets.bread,
   },
 
@@ -768,7 +768,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Dark cooking chocolate.',
     stackable: true,
     sellPrice: 10,
-    buyPrice: 25,
+    buyPrice: 8,  // Was 25
     image: groceryAssets.chocolate_bar,
   },
 
@@ -781,7 +781,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 10,
-    buyPrice: 25,
+    buyPrice: 8,  // Was 25
     image: groceryAssets.strawberry_jam,
   },
 
@@ -848,7 +848,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 12,
     sellPrice: 3,
-    buyPrice: 7,
+    buyPrice: 2,  // Was 7
     image: groceryAssets.baking_powder,
   },
 
@@ -861,7 +861,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 10,
     sellPrice: 8,
-    buyPrice: 18,
+    buyPrice: 5,  // Was 18
     image: groceryAssets.cocoa_powder,
   },
 

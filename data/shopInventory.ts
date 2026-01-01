@@ -464,20 +464,47 @@ export function getBuyPrice(itemId: string): number | undefined {
 }
 
 /**
+ * Mastery level multipliers for cooked food sell prices
+ * Level 0 (not mastered): 1.0x
+ * Level 1 (cooked once): 1.2x
+ * Level 2 (cooked twice): 1.5x
+ * Level 3+ (mastered): 2.0x
+ */
+export const MASTERY_MULTIPLIERS: Record<number, number> = {
+  0: 1.0,   // First attempt (no mastery)
+  1: 1.2,   // Second attempt (20% bonus)
+  2: 1.5,   // Third attempt (50% bonus)
+  3: 2.0,   // Mastered (100% bonus - double price!)
+};
+
+/**
+ * Get mastery multiplier for a given mastery level
+ */
+export function getMasteryMultiplier(masteryLevel?: number): number {
+  if (masteryLevel === undefined) return 1.0;
+  // Level 3+ all get the max multiplier
+  if (masteryLevel >= 3) return MASTERY_MULTIPLIERS[3];
+  return MASTERY_MULTIPLIERS[masteryLevel] || 1.0;
+}
+
+/**
  * Get sell price for an item
  * @param itemId Item ID
+ * @param masteryLevel Optional mastery level for cooked food (affects price)
  * @returns Sell price or undefined if not in shop
  */
-export function getSellPrice(itemId: string): number | undefined {
+export function getSellPrice(itemId: string, masteryLevel?: number): number | undefined {
   const shopItem = getShopItem(itemId);
   if (shopItem) {
-    return shopItem.sellPrice;
+    const basePrice = shopItem.sellPrice;
+    return Math.floor(basePrice * getMasteryMultiplier(masteryLevel));
   }
 
   // Fallback: calculate from item's sellPrice property (for items not in shop inventory)
   const item = ITEMS[itemId];
   if (item?.sellPrice !== undefined) {
-    return item.sellPrice;
+    const basePrice = item.sellPrice;
+    return Math.floor(basePrice * getMasteryMultiplier(masteryLevel));
   }
 
   return undefined;

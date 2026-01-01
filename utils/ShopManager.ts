@@ -29,6 +29,8 @@ export interface TransactionResult {
 export interface InventoryItem {
   itemId: string;
   quantity: number;
+  uses?: number;  // Current uses remaining for this item (only if item has maxUses defined)
+  masteryLevel?: number;  // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
 }
 
 /**
@@ -186,7 +188,8 @@ export class ShopManager {
     }
 
     // Get sell price (from shop inventory or item definition)
-    const sellPrice = getSellPrice(itemId);
+    // Pass mastery level from inventory item to apply mastery bonus
+    const sellPrice = getSellPrice(itemId, inventoryItem.masteryLevel);
     if (sellPrice === undefined) {
       return {
         success: false,
@@ -197,10 +200,18 @@ export class ShopManager {
     // Calculate earnings
     const totalEarnings = sellPrice * quantity;
 
+    // Add mastery bonus info to message if applicable
+    let message = `Sold ${quantity}× ${itemDef.displayName} for ${totalEarnings}g`;
+    if (inventoryItem.masteryLevel !== undefined && inventoryItem.masteryLevel >= 1) {
+      const multiplier = inventoryItem.masteryLevel >= 3 ? '2.0x' :
+                         inventoryItem.masteryLevel === 2 ? '1.5x' : '1.2x';
+      message += ` (${multiplier} mastery bonus)`;
+    }
+
     // Transaction valid
     return {
       success: true,
-      message: `Sold ${quantity}× ${itemDef.displayName} for ${totalEarnings}g`,
+      message,
       goldChange: totalEarnings,
     };
   }
@@ -237,14 +248,40 @@ export class ShopManager {
 
     // Update inventory
     const newInventory = [...playerInventory];
-    const existingItem = newInventory.find(item => item.itemId === itemId);
+    const itemDef = getItem(itemId);
 
-    if (existingItem) {
-      // Add to existing stack
-      existingItem.quantity += quantity;
+    if (!itemDef) {
+      console.error(`[ShopManager] Item definition not found: ${itemId}`);
+      return null;
+    }
+
+    // For multi-use items, each purchase should be a separate instance
+    // For regular stackable items, we can increment the existing stack
+    if (itemDef.maxUses) {
+      // Multi-use item: Add each purchased item as a separate instance with full uses
+      for (let i = 0; i < quantity; i++) {
+        const newItem: InventoryItem = {
+          itemId,
+          quantity: 1,
+          uses: itemDef.maxUses, // Each instance starts with full uses
+        };
+        newInventory.push(newItem);
+      }
     } else {
-      // Add new item
-      newInventory.push({ itemId, quantity });
+      // Regular stackable item: Add to existing stack or create new
+      const existingItem = newInventory.find(item => item.itemId === itemId);
+
+      if (existingItem) {
+        // Add to existing stack
+        existingItem.quantity += quantity;
+      } else {
+        // Add new item
+        const newItem: InventoryItem = {
+          itemId,
+          quantity,
+        };
+        newInventory.push(newItem);
+      }
     }
 
     return {
@@ -322,6 +359,19 @@ export class ShopManager {
   public getMaxSellQuantity(itemId: string, playerInventory: InventoryItem[]): number {
     const inventoryItem = playerInventory.find(item => item.itemId === itemId);
     return inventoryItem?.quantity || 0;
+  }
+
+  /**
+   * Get sell price for an item from player inventory (includes mastery bonus)
+   * @param itemId Item to sell
+   * @param playerInventory Player's inventory
+   * @returns Sell price with mastery bonus, or undefined if not sellable
+   */
+  public getItemSellPrice(itemId: string, playerInventory: InventoryItem[]): number | undefined {
+    const inventoryItem = playerInventory.find(item => item.itemId === itemId);
+    if (!inventoryItem) return undefined;
+
+    return getSellPrice(itemId, inventoryItem.masteryLevel);
   }
 }
 

@@ -18,6 +18,7 @@ export interface InventoryItem {
   itemId: string;
   quantity: number;
   uses?: number;  // Current uses remaining for this item (only if item has maxUses defined)
+  masteryLevel?: number;  // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
 }
 
 class InventoryManager {
@@ -35,7 +36,7 @@ class InventoryManager {
   /**
    * Add an item to inventory
    */
-  addItem(itemId: string, quantity: number = 1): boolean {
+  addItem(itemId: string, quantity: number = 1, masteryLevel?: number): boolean {
     const item = getItem(itemId);
     if (!item) {
       console.warn(`[InventoryManager] Unknown item: ${itemId}`);
@@ -65,6 +66,7 @@ class InventoryManager {
         itemId,
         quantity: 1,
         uses: item.maxUses, // Initialize with max uses (undefined if single-use)
+        masteryLevel, // Track mastery level for cooked food
       };
       instances.push(newInstance);
     }
@@ -77,7 +79,8 @@ class InventoryManager {
 
     this.items.set(itemId, instances);
     const totalUses = instances.reduce((sum, inst) => sum + (inst.uses || 1), 0);
-    console.log(`[InventoryManager] +${quantity} ${item.displayName} (total: ${instances.length} items, ${totalUses} uses)`);
+    const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
+    console.log(`[InventoryManager] +${quantity} ${item.displayName}${masteryStr} (total: ${instances.length} items, ${totalUses} uses)`);
     this.saveToGameState();
     return true;
   }
