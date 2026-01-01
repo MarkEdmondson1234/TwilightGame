@@ -270,6 +270,12 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         // B key to open recipe book
         if (e.key === 'b' || e.key === 'B') {
             e.preventDefault();
+            // Check if recipe book is unlocked
+            if (!gameState.isRecipeBookUnlocked()) {
+                console.log('[Keyboard] Recipe book is locked - talk to Mum first');
+                onShowToast?.('Talk to Mum if you want to learn how to cook!', 'info');
+                return;
+            }
             handleRecipeBook(uiHandlers);
             return;
         }

@@ -89,6 +89,7 @@ export interface RecipeProgress {
 }
 
 export interface CookingState {
+  recipeBookUnlocked: boolean; // Whether player has talked to Mum to learn cooking
   unlockedRecipes: string[]; // Recipe IDs the player knows
   recipeProgress: Record<string, RecipeProgress>;
 }
@@ -555,6 +556,7 @@ class CookingManagerClass {
     });
 
     return {
+      recipeBookUnlocked: gameState.isRecipeBookUnlocked(),
       unlockedRecipes: Array.from(this.unlockedRecipes),
       recipeProgress: recipeProgressObj,
     };

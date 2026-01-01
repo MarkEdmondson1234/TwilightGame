@@ -110,6 +110,7 @@ export interface GameState {
 
   // Cooking system (managed by CookingManager)
   cooking: {
+    recipeBookUnlocked: boolean; // Whether player has talked to Mum to learn cooking
     unlockedRecipes: string[];
     recipeProgress: Record<string, {
       recipeId: string;
@@ -279,11 +280,18 @@ class GameStateManager {
         // Migrate old save data that doesn't have cooking
         if (!parsed.cooking) {
           console.log('[GameState] Migrating old save data - adding cooking');
-          parsed.cooking = { unlockedRecipes: ['tea'], recipeProgress: {} }; // Tea is always unlocked
-        } else if (!parsed.cooking.unlockedRecipes.includes('tea')) {
+          parsed.cooking = { recipeBookUnlocked: false, unlockedRecipes: ['tea'], recipeProgress: {} }; // Tea is always unlocked
+        } else {
+          // Migrate old cooking data that doesn't have recipeBookUnlocked
+          if (parsed.cooking.recipeBookUnlocked === undefined) {
+            console.log('[GameState] Migrating old save data - adding recipeBookUnlocked');
+            parsed.cooking.recipeBookUnlocked = false;
+          }
           // Ensure tea is always unlocked, even in existing saves
-          console.log('[GameState] Migrating old save data - ensuring tea is unlocked');
-          parsed.cooking.unlockedRecipes.push('tea');
+          if (!parsed.cooking.unlockedRecipes.includes('tea')) {
+            console.log('[GameState] Migrating old save data - ensuring tea is unlocked');
+            parsed.cooking.unlockedRecipes.push('tea');
+          }
         }
 
         // Migrate old save data that doesn't have status effects
@@ -350,6 +358,7 @@ class GameStateManager {
       },
       placedItems: [],
       cooking: {
+        recipeBookUnlocked: false, // Must talk to Mum to learn cooking
         unlockedRecipes: ['tea'], // Tea is always unlocked from the start
         recipeProgress: {},
       },
@@ -731,6 +740,7 @@ class GameStateManager {
   // === Cooking Methods ===
 
   saveCookingState(cooking: {
+    recipeBookUnlocked: boolean;
     unlockedRecipes: string[];
     recipeProgress: Record<string, {
       recipeId: string;
@@ -744,6 +754,7 @@ class GameStateManager {
   }
 
   loadCookingState(): {
+    recipeBookUnlocked: boolean;
     unlockedRecipes: string[];
     recipeProgress: Record<string, {
       recipeId: string;
@@ -753,6 +764,21 @@ class GameStateManager {
     }>;
   } | null {
     return this.state.cooking || null;
+  }
+
+  /**
+   * Unlock the recipe book (triggered by talking to Mum)
+   */
+  unlockRecipeBook(): void {
+    this.state.cooking.recipeBookUnlocked = true;
+    this.notify();
+  }
+
+  /**
+   * Check if recipe book is unlocked
+   */
+  isRecipeBookUnlocked(): boolean {
+    return this.state.cooking.recipeBookUnlocked;
   }
 
   // === Status Effects Methods ===
@@ -847,7 +873,7 @@ class GameStateManager {
       cutscenes: { completed: [] },
       relationships: { npcFriendships: [] },
       placedItems: [],
-      cooking: { unlockedRecipes: [], recipeProgress: {} },
+      cooking: { recipeBookUnlocked: false, unlockedRecipes: [], recipeProgress: {} },
       statusEffects: { feelingSick: false },
       wateringCan: { currentLevel: 10 },
       dailyResourceCollections: {},

@@ -50,9 +50,12 @@ export function handleInventoryToggle(handlers: Pick<UIKeyHandlers, 'showInvento
 
 /**
  * Handle B key - Open recipe book
+ * Returns message if recipe book is locked, null otherwise
  */
-export function handleRecipeBook(handlers: Pick<UIKeyHandlers, 'onSetShowRecipeBook'>): void {
+export function handleRecipeBook(handlers: Pick<UIKeyHandlers, 'onSetShowRecipeBook'>): string | null {
+  // This function will check unlock state when called from keyboard/touch controls
   handlers.onSetShowRecipeBook(true);
+  return null; // Unlock check happens in keyboard controls where we have access to gameState and toast
 }
 
 /**

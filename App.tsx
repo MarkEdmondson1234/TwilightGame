@@ -1749,7 +1749,13 @@ const App: React.FC = () => {
                             setShowCookingUI(true);
                         }
                     }}
-                    onShowRecipeBook={() => setShowRecipeBook(true)}
+                    onShowRecipeBook={() => {
+                        if (!gameState.isRecipeBookUnlocked()) {
+                            showToast('Talk to Mum if you want to learn how to cook!', 'info');
+                            return;
+                        }
+                        setShowRecipeBook(true);
+                    }}
                 />
             )}
             {activeNPC && (

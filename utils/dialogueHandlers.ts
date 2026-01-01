@@ -80,6 +80,12 @@ function handleSeedPickup(nodeId: string): void {
  * Handle recipe teaching from Mum based on dialogue node ID
  */
 function handleRecipeTeaching(nodeId: string): void {
+    // Unlock recipe book when Mum starts teaching cooking
+    if (nodeId === 'teach_cooking' && !gameState.isRecipeBookUnlocked()) {
+        gameState.unlockRecipeBook();
+        console.log('[dialogueHandlers] 📖 Recipe book unlocked! You can now access it with B key.');
+    }
+
     // Map dialogue nodes to recipe IDs
     const recipeNodes: Record<string, string> = {
         'learn_french_toast': 'french_toast',
