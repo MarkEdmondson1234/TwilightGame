@@ -421,13 +421,17 @@ class CookingManagerClass {
     const totalFailRate = Math.min(1.0, baseFailRate + campfireBonus);
     const cookingFailed = Math.random() < totalFailRate;
 
+    // Get current progress to determine mastery level
+    const currentProgress = this.recipeProgress.get(recipeId);
+    const timesCooked = currentProgress?.timesCooked || 0;
+
     // Produce food (normal or terrible)
     let resultItemId: string;
     let resultQuantity: number;
     let feelingSick = false;
 
     if (cookingFailed) {
-      // Cooking failed - produce terrible food
+      // Cooking failed - produce terrible food (no mastery level)
       resultItemId = `terrible_${recipe.resultItemId}`;
       resultQuantity = recipe.resultQuantity;
       inventoryManager.addItem(resultItemId, resultQuantity);
@@ -439,10 +443,11 @@ class CookingManagerClass {
         console.log('[CookingManager] 😷 You feel sick from the terrible food...');
       }
     } else {
-      // Cooking succeeded - produce normal food
+      // Cooking succeeded - produce normal food with mastery level
       resultItemId = recipe.resultItemId;
       resultQuantity = recipe.resultQuantity;
-      inventoryManager.addItem(resultItemId, resultQuantity);
+      // Mastery level = times cooked (will be 0 for first attempt, 1 for second, etc.)
+      inventoryManager.addItem(resultItemId, resultQuantity, timesCooked);
     }
 
     // Update progress (only on success)
