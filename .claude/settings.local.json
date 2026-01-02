@@ -73,7 +73,8 @@
       "Bash(wc:*)",
       "Bash(npx vitest:*)",
       "Skill(test-game)",
-      "Skill(test-game:*)"
+      "Skill(test-game:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": [
