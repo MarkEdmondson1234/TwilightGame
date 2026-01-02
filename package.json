@@ -26,6 +26,7 @@
     "perf:help": "node scripts/perf-test.js --help"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@pixi/react": "^8.0.3",
     "pixi.js": "^8.14.0",
     "react": "^19.2.0",

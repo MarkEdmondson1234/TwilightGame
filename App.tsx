@@ -20,6 +20,9 @@ import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
 import TouchControls from './components/TouchControls';
 import DialogueBox from './components/DialogueBox';
+import AIDialogueBox from './components/AIDialogueBox';
+import { isAIAvailable } from './services/anthropicClient';
+import { NPC_PERSONAS } from './services/dialogueService';
 import HelpBrowser from './components/HelpBrowser';
 import DevTools from './components/DevTools';
 import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
@@ -104,6 +107,7 @@ const App: React.FC = () => {
     const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
     const [currentWeather, setCurrentWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(gameState.getWeather()); // Track weather for tint overlay
     const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
+    const [dialogueMode, setDialogueMode] = useState<'static' | 'ai'>('static'); // Dialogue mode (static trees vs AI chat)
     const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
     const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
     const [farmActionAnimation, setFarmActionAnimation] = useState<FarmActionType | null>(null); // Current farm action animation
@@ -1758,12 +1762,33 @@ const App: React.FC = () => {
                     }}
                 />
             )}
-            {activeNPC && (
+            {activeNPC && dialogueMode === 'static' && (
                 <DialogueBox
                     npc={npcManager.getNPCById(activeNPC)!}
                     playerSprite={getPortraitSprite(gameState.getSelectedCharacter() || DEFAULT_CHARACTER, Direction.Down)} // High-res portrait
-                    onClose={() => setActiveNPC(null)}
+                    onClose={() => {
+                        setActiveNPC(null);
+                        setDialogueMode('static'); // Reset to static mode when closing
+                    }}
                     onNodeChange={handleDialogueAction}
+                    onSwitchToAIMode={() => {
+                        // Only switch if AI is available and NPC has AI persona
+                        const npc = npcManager.getNPCById(activeNPC);
+                        if (npc && isAIAvailable() && NPC_PERSONAS[npc.id]?.aiEnabled) {
+                            setDialogueMode('ai');
+                        }
+                    }}
+                />
+            )}
+            {activeNPC && dialogueMode === 'ai' && (
+                <AIDialogueBox
+                    npc={npcManager.getNPCById(activeNPC)!}
+                    playerSprite={getPortraitSprite(gameState.getSelectedCharacter() || DEFAULT_CHARACTER, Direction.Down)}
+                    onClose={() => {
+                        setActiveNPC(null);
+                        setDialogueMode('static');
+                    }}
+                    onSwitchToStatic={() => setDialogueMode('static')}
                 />
             )}
             {showDevTools && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Z_HELP_BROWSER, zClass } from '../zIndex';
+import { getStoredApiKey, setStoredApiKey, clearStoredApiKey, reinitializeClient, isAIAvailable } from '../services/anthropicClient';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -18,16 +19,35 @@ const DOC_FILES: DocFile[] = [
   { name: 'farming', title: '🌾 Farming Guide', path: '/TwilightGame/docs/FARMING.md' },
   { name: 'seeds', title: '🌱 Seeds Guide', path: '/TwilightGame/docs/SEEDS.md' },
   { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },
+  { name: 'ai-chat', title: '💬 AI Chat', path: '/TwilightGame/docs/AI_CHAT.md' },
   // Developer docs excluded: MAP_GUIDE, ASSETS, COORDINATE_GUIDE
 ];
 
+// Special "settings" tab identifier
+const SETTINGS_TAB = 'settings';
+
 const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
-  const [selectedDoc, setSelectedDoc] = useState<string>('getting-started');
+  const [selectedTab, setSelectedTab] = useState<string>('getting-started');
   const [content, setContent] = useState<string>('Loading...');
 
+  // API Key settings state
+  const [apiKeyInput, setApiKeyInput] = useState<string>('');
+  const [hasStoredKey, setHasStoredKey] = useState<boolean>(false);
+  const [aiEnabled, setAiEnabled] = useState<boolean>(false);
+  const [saveMessage, setSaveMessage] = useState<string>('');
+
+  // Check for stored key on mount and when settings tab is selected
   useEffect(() => {
-    // Load the selected document
-    const docFile = DOC_FILES.find(doc => doc.name === selectedDoc);
+    const storedKey = getStoredApiKey();
+    setHasStoredKey(!!storedKey);
+    setAiEnabled(isAIAvailable());
+  }, [selectedTab]);
+
+  useEffect(() => {
+    // Only load document content for doc tabs, not settings
+    if (selectedTab === SETTINGS_TAB) return;
+
+    const docFile = DOC_FILES.find(doc => doc.name === selectedTab);
     if (docFile) {
       fetch(docFile.path)
         .then(response => response.text())
@@ -37,7 +57,32 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
           setContent('# Error\n\nFailed to load documentation file.');
         });
     }
-  }, [selectedDoc]);
+  }, [selectedTab]);
+
+  const handleSaveApiKey = () => {
+    if (!apiKeyInput.trim()) {
+      setSaveMessage('Please enter an API key');
+      return;
+    }
+    if (!apiKeyInput.startsWith('sk-ant-')) {
+      setSaveMessage('API key should start with sk-ant-');
+      return;
+    }
+    setStoredApiKey(apiKeyInput.trim());
+    const success = reinitializeClient();
+    setHasStoredKey(true);
+    setAiEnabled(success);
+    setApiKeyInput('');
+    setSaveMessage(success ? 'API key saved! AI dialogue is now enabled.' : 'Key saved but failed to initialize client.');
+  };
+
+  const handleClearApiKey = () => {
+    clearStoredApiKey();
+    reinitializeClient();
+    setHasStoredKey(false);
+    setAiEnabled(false);
+    setSaveMessage('API key removed.');
+  };
 
   return (
     <div className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_HELP_BROWSER)} p-4`}>
@@ -61,9 +106,9 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
               {DOC_FILES.map(doc => (
                 <button
                   key={doc.name}
-                  onClick={() => setSelectedDoc(doc.name)}
+                  onClick={() => setSelectedTab(doc.name)}
                   className={`w-full text-left px-4 py-3 mb-2 rounded font-semibold transition-colors ${
-                    selectedDoc === doc.name
+                    selectedTab === doc.name
                       ? 'bg-amber-600 text-white'
                       : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
                   }`}
@@ -71,11 +116,123 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                   {doc.title}
                 </button>
               ))}
+
+              {/* Divider */}
+              <div className="border-t border-slate-600 my-4"></div>
+
+              {/* Settings Tab */}
+              <button
+                onClick={() => setSelectedTab(SETTINGS_TAB)}
+                className={`w-full text-left px-4 py-3 mb-2 rounded font-semibold transition-colors ${
+                  selectedTab === SETTINGS_TAB
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                {aiEnabled ? '⚙️ Settings' : '⚙️ Settings'}
+              </button>
             </div>
           </div>
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-8 bg-slate-900">
+            {selectedTab === SETTINGS_TAB ? (
+              /* Settings Panel */
+              <div className="max-w-2xl">
+                <h1 className="text-3xl font-bold text-purple-400 mb-6">Settings</h1>
+
+                {/* AI Dialogue Section */}
+                <div className="bg-slate-800 rounded-lg p-6 border-2 border-slate-700">
+                  <h2 className="text-xl font-bold text-amber-300 mb-4">AI Dialogue</h2>
+                  <p className="text-slate-300 mb-4">
+                    Enable dynamic AI-powered conversations with NPCs by providing your own Anthropic API key.
+                    Your key is stored locally in your browser and never sent to our servers.
+                  </p>
+
+                  {/* Status indicator */}
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold mb-4 ${
+                    aiEnabled
+                      ? 'bg-green-900/50 text-green-400 border border-green-700'
+                      : 'bg-slate-700 text-slate-400 border border-slate-600'
+                  }`}>
+                    {aiEnabled ? '● AI Enabled' : '○ AI Disabled'}
+                  </div>
+
+                  {hasStoredKey ? (
+                    /* Key already stored */
+                    <div className="space-y-4">
+                      <p className="text-green-400">
+                        API key is configured and stored in your browser.
+                      </p>
+                      <button
+                        onClick={handleClearApiKey}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded border-2 border-red-800 transition-colors"
+                      >
+                        Remove API Key
+                      </button>
+                    </div>
+                  ) : (
+                    /* No key stored - show input */
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-slate-300 mb-2 text-sm">
+                          Anthropic API Key
+                        </label>
+                        <input
+                          type="password"
+                          value={apiKeyInput}
+                          onChange={(e) => setApiKeyInput(e.target.value)}
+                          placeholder="sk-ant-..."
+                          className="w-full px-4 py-2 bg-slate-900 border-2 border-slate-600 rounded text-white placeholder-slate-500 focus:border-purple-500 focus:outline-none"
+                        />
+                      </div>
+                      <button
+                        onClick={handleSaveApiKey}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded border-2 border-purple-800 transition-colors"
+                      >
+                        Save API Key
+                      </button>
+                      <p className="text-slate-500 text-sm">
+                        Get your key at{' '}
+                        <a
+                          href="https://console.anthropic.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-purple-400 hover:text-purple-300 underline"
+                        >
+                          console.anthropic.com
+                        </a>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Save message */}
+                  {saveMessage && (
+                    <p className={`mt-4 text-sm ${
+                      saveMessage.includes('saved') || saveMessage.includes('enabled')
+                        ? 'text-green-400'
+                        : saveMessage.includes('removed')
+                          ? 'text-amber-400'
+                          : 'text-red-400'
+                    }`}>
+                      {saveMessage}
+                    </p>
+                  )}
+                </div>
+
+                {/* Info box */}
+                <div className="mt-6 bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                  <h3 className="text-amber-300 font-semibold mb-2">How it works</h3>
+                  <ul className="text-slate-400 text-sm space-y-1">
+                    <li>• Your API key is stored only in your browser's localStorage</li>
+                    <li>• API calls go directly from your browser to Anthropic</li>
+                    <li>• Uses Claude Haiku for fast, cost-effective responses</li>
+                    <li>• Typical cost: less than $0.01 per conversation</li>
+                  </ul>
+                </div>
+              </div>
+            ) : (
+            /* Documentation Content */
             <div className="prose prose-invert prose-amber max-w-none">
               <ReactMarkdown
                 components={{
@@ -106,6 +263,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                 {content}
               </ReactMarkdown>
             </div>
+            )}
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NPC, DialogueNode, DialogueResponse } from '../types';
-import { getDialogue } from '../services/dialogueService';
+import { getDialogue, NPC_PERSONAS } from '../services/dialogueService';
+import { isAIAvailable } from '../services/anthropicClient';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
@@ -10,6 +11,7 @@ interface DialogueBoxProps {
   playerSprite: string; // Current player sprite (idle frame)
   onClose: () => void;
   onNodeChange?: (npcId: string, nodeId: string) => void; // Callback when dialogue node changes
+  onSwitchToAIMode?: () => void; // Callback to switch to AI chat mode
 }
 
 /**
@@ -26,7 +28,10 @@ interface DialogueBoxProps {
  * - Wooden nameplate: ~13% from left, ~35% from top
  * - Grey text area: ~5% from left, ~43% from top, ~90% wide, ~35% tall
  */
-const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, onNodeChange }) => {
+const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, onNodeChange, onSwitchToAIMode }) => {
+  // Check if this NPC has AI chat available
+  const persona = NPC_PERSONAS[npc.id];
+  const canUseAI = isAIAvailable() && persona?.aiEnabled && onSwitchToAIMode;
   const [currentNodeId, setCurrentNodeId] = useState<string>('greeting');
   const [currentDialogue, setCurrentDialogue] = useState<DialogueNode | null>(null);
 
@@ -155,6 +160,12 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
   }, [npc, currentNodeId, onNodeChange]);
 
   const handleResponse = (nextId?: string) => {
+    // Special marker to switch to AI chat mode
+    if (nextId === '__AI_CHAT__' && onSwitchToAIMode) {
+      onSwitchToAIMode();
+      return;
+    }
+
     if (nextId) {
       setCurrentNodeId(nextId);
       // Notify parent about node change (for handling item pickups, etc.)
@@ -337,9 +348,33 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
                 {response.text}
               </button>
             ))}
+            {/* AI Chat option - shown for AI-enabled NPCs */}
+            {canUseAI && (
+              <button
+                onClick={() => handleResponse('__AI_CHAT__')}
+                className="bg-amber-700 bg-opacity-80 hover:bg-amber-600 active:bg-amber-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-amber-500 hover:border-amber-300"
+                style={{
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                }}
+              >
+                Chat freely...
+              </button>
+            )}
           </div>
         ) : (
-          <div className="flex justify-center">
+          <div className="flex justify-center gap-4">
+            {/* AI Chat option when no other responses */}
+            {canUseAI && (
+              <button
+                onClick={() => handleResponse('__AI_CHAT__')}
+                className="bg-amber-700 bg-opacity-80 hover:bg-amber-600 active:bg-amber-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-amber-500 hover:border-amber-300"
+                style={{
+                  fontFamily: 'Georgia, "Times New Roman", serif',
+                }}
+              >
+                Chat freely...
+              </button>
+            )}
             <button
               onClick={() => onClose()}
               className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 text-sm opacity-80 hover:opacity-100 px-4 py-2"

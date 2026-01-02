@@ -10,6 +10,7 @@ import { cookingManager } from './CookingManager';
 import { performanceMonitor } from './PerformanceMonitor';
 import { TimeManager, Season } from './TimeManager';
 import { ColorResolver } from './ColorResolver';
+import { initAnthropicClient } from '../services/anthropicClient';
 
 /**
  * Initialize the game on startup
@@ -86,6 +87,10 @@ export async function initializeGame(
     // Load cooking progress from saved state
     cookingManager.initialise();
     console.log(`[App] Initialised cooking system`);
+
+    // Initialize AI dialogue (optional - non-blocking)
+    const aiEnabled = initAnthropicClient();
+    console.log(`[App] AI dialogue: ${aiEnabled ? 'enabled' : 'disabled'}`);
 
     // Update farm states on startup (uses TimeManager internally)
     farmManager.updateAllPlots();
