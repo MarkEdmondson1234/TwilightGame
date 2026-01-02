@@ -811,6 +811,27 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     shadowHeightRatio: 0.15,
   },
   {
+    tileType: TileType.BEAR_HOUSE,
+    spriteWidth: 12,   // 12 tiles wide (square 2100x2100 image preserved, doubled size)
+    spriteHeight: 12,  // 12 tiles tall (preserves 1:1 aspect ratio, doubled size)
+    offsetX: -6,       // Center horizontally on anchor tile
+    offsetY: -6,       // Center vertically on anchor tile
+    image: tileAssets.bear_house_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
+    isForeground: true,  // Render in foreground layer (above grass tufts)
+    collisionWidth: 8,    // Most of the house is solid (doubled from 4)
+    collisionHeight: 8,   // Leave walkable area around edges (doubled from 4)
+    collisionOffsetX: -2,  // Center the collision box (doubled from -1)
+    collisionOffsetY: -2,  // Center the collision box (doubled from -1)
+    // No transforms - this is a cozy structure with detailed artwork
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Shadow for building structure
+    shadowWidthRatio: 0.3,
+    shadowHeightRatio: 0.12,
+  },
+  {
     tileType: TileType.MAGICAL_LAKE,
     spriteWidth: 12,   // 12 tiles wide (large magical lake)
     spriteHeight: 12,  // 12 tiles tall (square aspect ratio - source image is 3000x3000)

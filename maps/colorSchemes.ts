@@ -119,6 +119,33 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
     },
   },
 
+  bear_cave: {
+    name: 'bear_cave',
+    colors: {
+      grass: 'bg-palette-forest',
+      rock: 'bg-palette-forest',  // Same as grass for forest floor consistency
+      water: 'bg-palette-teal',
+      path: 'bg-palette-khaki',
+      floor: 'bg-palette-olive',
+      wall: 'bg-palette-brown',
+      carpet: 'bg-palette-sage',
+      door: 'bg-palette-chocolate',
+      special: 'bg-palette-olive',
+      furniture: 'bg-palette-rust',
+      mushroom: 'bg-palette-forest',  // Same as grass for forest
+      background: 'bg-palette-olive',
+    },
+    // Seasonal modifiers for winter snow
+    seasonalModifiers: {
+      winter: {
+        grass: 'bg-palette-snow',  // Snow white in winter
+        path: 'bg-palette-snow',   // Match grass
+        water: 'bg-palette-periwinkle',  // Frozen water tint
+      },
+    },
+    // Note: No darkness overlay - this is a cozy outdoor area, not a dark forest
+  },
+
   water_area: {
     name: 'water_area',
     colors: {

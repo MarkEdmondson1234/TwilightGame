@@ -782,6 +782,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS,  // Render grass underneath for natural ground
   },
+  [TileType.BEAR_HOUSE]: {
+    name: "Bear's House",
+    color: 'bg-palette-cave-floor',  // Cave floor color (shows through transparent parts)
+    isSolid: true,  // Most of the structure is solid (collisions defined in SPRITE_METADATA)
+    image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    baseType: TileType.GRASS,  // Render cave floor underneath for natural ground
+    seasonalImages: {
+      spring: [tileAssets.bear_house_spring_summer],   // Spring/summer share same cozy look
+      summer: [tileAssets.bear_house_spring_summer],   // Spring/summer share same cozy look
+      autumn: [tileAssets.bear_house_autumn],          // Autumn colors
+      winter: [tileAssets.bear_house_winter],          // Winter snow-covered version
+      default: [tileAssets.bear_house_spring_summer],  // Default fallback
+    }
+  },
   [TileType.CAULDRON]: {
     name: 'Cauldron',
     color: 'bg-palette-sage',  // Base grass color (blends with surroundings)

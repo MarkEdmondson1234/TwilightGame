@@ -176,6 +176,13 @@ export const village: MapDefinition = {
       toPosition: { x: 14, y: 28 },  // Spawn at south entrance of magical lake
       label: 'To Magical Lake (Debug)',
     },
+    {
+      fromPosition: { x: 4, y: 15 }, // Bear cave entrance (1 down from Magical Lake)
+      tileType: TileType.GRASS,
+      toMapId: 'bear_cave',
+      toPosition: { x: 8, y: 17 },  // Spawn on path near entrance (safe from bear house collision)
+      label: "To Bear's Cave",
+    },
   ],
   npcs: [
     // Village Elder - wise NPC near cherry tree

@@ -220,7 +220,8 @@ export class TileLayer extends PixiLayer {
     }
 
     // Check if this tile has a baseType (e.g., grass under tree)
-    if (tileData.baseType) {
+    // IMPORTANT: Check !== undefined because TileType.GRASS = 0 (falsy!)
+    if (tileData.baseType !== undefined) {
       // Render base tile first (underneath)
       this.renderBaseTile(x, y, tileData.baseType, seasonKey);
     }

@@ -167,6 +167,11 @@ export const tileAssets = {
   // Magical lake asset (12x12 multi-tile sprite for forest lake scene)
   // Optimized at 2048px with showcase quality (97%, compression level 3)
   magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',
+  // Bear house assets (seasonal variations for bear cave clearing)
+  // Use original high-res 2100x2100 sprites for sharp rendering (multi-tile structure)
+  bear_house_spring_summer: '/TwilightGame/assets/tiles/bear_cave/bear_cave_spring-summer.png',
+  bear_house_autumn: '/TwilightGame/assets/tiles/bear_cave/bear_cave_autumn.png',
+  bear_house_winter: '/TwilightGame/assets/tiles/bear_cave/bear_cave_winter.png',
 };
 
 // Farming assets - Use optimized versions for better performance
