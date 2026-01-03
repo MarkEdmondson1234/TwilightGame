@@ -128,6 +128,11 @@ export const tileAssets = {
   brambles_summer: '/TwilightGame/assets-optimized/tiles/brambles/brambles_summer.png',
   brambles_autumn: '/TwilightGame/assets-optimized/tiles/brambles/brambles_autumn.png',
   brambles_winter: '/TwilightGame/assets-optimized/tiles/brambles/brambles_winter.png',
+  // Hazel bush assets (seasonal variations - wild forageable bushes)
+  hazel_bush_spring: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_spring.png',
+  hazel_bush_summer: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_summer.png',
+  hazel_bush_autumn: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_autumn.png',
+  hazel_bush_winter: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_winter.png',
   // Wild strawberry assets (seasonal variations - forageable in forest)
   wild_strawberry_spring: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_spring.png',
   wild_strawberry_summer: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_summer.png',
@@ -228,6 +233,7 @@ export const groceryAssets = {
   egg: '/TwilightGame/assets-optimized/items/grocery/egg.png',
   flour: '/TwilightGame/assets-optimized/items/grocery/flour.png',
   gravy: '/TwilightGame/assets-optimized/items/grocery/gravy.png',
+  hazelnuts: '/TwilightGame/assets-optimized/items/grocery/hazelnuts.png',
   milk: '/TwilightGame/assets-optimized/items/grocery/milk.png',
   minced_meat: '/TwilightGame/assets-optimized/items/grocery/minced_meat.png',
   rice: '/TwilightGame/assets-optimized/items/grocery/rice.png',

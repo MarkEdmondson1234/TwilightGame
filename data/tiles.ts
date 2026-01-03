@@ -477,6 +477,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 2x2 multi-tile sprite (see SPRITE_METADATA below)
   },
+  [TileType.HAZEL_BUSH]: {
+    name: 'Hazel Bush',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - solid obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the hazel bush sprite
+    seasonalImages: {
+      spring: [tileAssets.hazel_bush_spring],
+      summer: [tileAssets.hazel_bush_summer],
+      autumn: [tileAssets.hazel_bush_autumn],
+      winter: [tileAssets.hazel_bush_winter],
+      default: [tileAssets.hazel_bush_summer],
+    },
+    // 4x4 multi-tile sprite (see SPRITE_METADATA below)
+  },
   [TileType.WILD_STRAWBERRY]: {
     name: 'Wild Strawberry',
     color: 'bg-palette-sage',  // Base grass color for blending

@@ -459,6 +459,16 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 35,
     image: itemAssets.blackberries,
   },
+  crop_hazelnut: {
+    id: 'crop_hazelnut',
+    name: 'crop_hazelnut',
+    displayName: 'Hazelnuts',
+    category: ItemCategory.CROP,
+    description: 'Fresh hazelnuts foraged from wild hazel bushes.',
+    stackable: true,
+    sellPrice: 40,
+    image: groceryAssets.hazelnuts,
+  },
 
   // ===== MATERIALS =====
   fertiliser: {

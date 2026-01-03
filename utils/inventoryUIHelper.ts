@@ -72,6 +72,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_radish: itemAssets.radishes,
   crop_tomato: groceryAssets.tomato,
   crop_blackberry: itemAssets.blackberries,
+  crop_hazelnut: groceryAssets.hazelnuts,
   crop_strawberry: itemAssets.strawberry,
   crop_spinach: groceryAssets.spinach_bundle,
   crop_salad: groceryAssets.salad_head,

@@ -86,6 +86,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
   },
   {
+    tileType: TileType.HAZEL_BUSH,
+    spriteWidth: 4,  // 4 tiles wide
+    spriteHeight: 4, // 4 tiles tall
+    offsetX: -1.5,   // Center horizontally on tile
+    offsetY: -3,     // Extends 3 tiles upward
+    image: tileAssets.hazel_bush_summer,  // Seasonal images handled by TILE_LEGEND
+    isForeground: true,
+    // Collision at the base (1x1)
+    collisionWidth: 1,
+    collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle scaling, flipping for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
+  },
+  {
     tileType: TileType.VILLAGE_FLOWERS,
     spriteWidth: 2,  // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall

@@ -162,6 +162,30 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add brambles scattered throughout forest (thorny obstacles, forageable in summer)
+  for (let i = 0; i < 8; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.BRAMBLES;
+    }
+  }
+
+  // Add hazel bushes scattered throughout forest (wild forageable, harvestable in autumn)
+  for (let i = 0; i < 6; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.HAZEL_BUSH;
+    }
+  }
+
   // Add lots of trees scattered throughout forest (solid decoration, taller than bushes)
   for (let i = 0; i < 50; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
