@@ -257,6 +257,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.wild_seeds,
   },
 
+  // Quest seeds (magical crops unlocked through quests)
+  seed_fairy_bluebell: {
+    id: 'seed_fairy_bluebell',
+    name: 'seed_fairy_bluebell',
+    displayName: 'Fairy Bluebell Seeds',
+    category: ItemCategory.SEED,
+    description: 'Magical seeds from the fairy realm. Shimmers with an otherworldly glow.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: true,
+    sellPrice: 100,
+    cropId: 'fairy_bluebell',
+    image: itemAssets.fairy_bluebell_seeds,
+  },
+
   // ===== CROPS (harvested) =====
   crop_radish: {
     id: 'crop_radish',

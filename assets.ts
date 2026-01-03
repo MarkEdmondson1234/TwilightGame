@@ -195,6 +195,9 @@ export const farmingAssets = {
   plant_spinach_adult: '/TwilightGame/assets-optimized/farming/spinach_adult.png',
   plant_broccoli_young: '/TwilightGame/assets-optimized/farming/broccoli_young.png',
   plant_broccoli_adult: '/TwilightGame/assets-optimized/farming/broccoli_adult.png',
+  plant_fairy_bluebell_seed: '/TwilightGame/assets-optimized/farming/fairy_bluebell_seed.png',
+  plant_fairy_bluebell_young: '/TwilightGame/assets-optimized/farming/fairy_bluebell_young.png',
+  plant_fairy_bluebell_adult: '/TwilightGame/assets-optimized/farming/fairy_bluebell_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 
@@ -425,6 +428,7 @@ export const itemAssets = {
   cucumber_seeds: '/TwilightGame/assets-optimized/items/cucumber_seeds.png',
   melon_seeds: '/TwilightGame/assets-optimized/items/melon_seeds.png',
   wild_seeds: '/TwilightGame/assets-optimized/items/wild_seeds.png',
+  fairy_bluebell_seeds: '/TwilightGame/assets-optimized/farming/fairy_bluebell_seed.png',
   radishes: '/TwilightGame/assets-optimized/items/radishes.png',
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',

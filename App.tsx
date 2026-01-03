@@ -47,6 +47,7 @@ import { checkCookingLocation, getAvailableInteractions, FarmActionResult, Forag
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { TimeManager } from './utils/TimeManager';
+import { fairyAttractionManager } from './utils/fairyAttractionManager';
 import { Z_PLAYER } from './zIndex';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
@@ -175,6 +176,9 @@ const App: React.FC = () => {
         setCurrentMapId(mapId);
         setPlayerPos(spawnPos);
         lastTransitionTime.current = Date.now();
+
+        // Reset fairy attraction manager when changing maps
+        fairyAttractionManager.reset();
     };
 
     // Farm update handler
@@ -546,6 +550,26 @@ const App: React.FC = () => {
         const npcsMoved = npcManager.updateNPCs(deltaTime);
         // Only trigger re-render if NPCs actually moved (not every frame)
         if (npcsMoved) {
+            setNpcUpdateTrigger(prev => prev + 1);
+        }
+
+        // Check for fairy spawns/despawns (time-based attraction system)
+        const currentNPCs = npcManager.getCurrentMapNPCs();
+
+        // Check for fairies to despawn (happens at dawn)
+        const fairyIdsToDespawn = fairyAttractionManager.getFairiesToDespawn(currentNPCs);
+        fairyIdsToDespawn.forEach(npcId => {
+            npcManager.removeDynamicNPC(npcId);
+        });
+
+        // Check for new fairies to spawn (happens at night near bluebells)
+        const newFairies = fairyAttractionManager.updateFairySpawns(currentMapId, currentNPCs);
+        newFairies.forEach(fairy => {
+            npcManager.addDynamicNPC(fairy);
+        });
+
+        // Trigger re-render if fairies spawned or despawned
+        if (fairyIdsToDespawn.length > 0 || newFairies.length > 0) {
             setNpcUpdateTrigger(prev => prev + 1);
         }
 

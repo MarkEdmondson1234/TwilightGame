@@ -505,6 +505,66 @@ class NPCManagerClass {
   }
 
   /**
+   * Add a dynamic NPC to the current map (for time-based spawning like fairies)
+   */
+  addDynamicNPC(npc: NPC): void {
+    if (!this.currentMapId) {
+      console.warn('[NPCManager] Cannot add dynamic NPC: No current map');
+      return;
+    }
+
+    const mapNPCs = this.npcsByMap.get(this.currentMapId) || [];
+
+    // Check if NPC already exists
+    if (mapNPCs.find(n => n.id === npc.id)) {
+      console.warn(`[NPCManager] NPC ${npc.id} already exists on map ${this.currentMapId}`);
+      return;
+    }
+
+    // Add to map
+    mapNPCs.push(npc);
+    this.npcsByMap.set(this.currentMapId, mapNPCs);
+
+    // Initialize state
+    if (!this.npcStates.has(npc.id)) {
+      this.npcStates.set(npc.id, {
+        npc,
+        lastMoveTime: Date.now(),
+        moveDirection: null,
+        moveDuration: 0,
+        waitDuration: 0,
+        isWaiting: true,
+        isInDialogue: false,
+      });
+    }
+
+    console.log(`[NPCManager] Added dynamic NPC ${npc.id} to map ${this.currentMapId}`);
+  }
+
+  /**
+   * Remove a dynamic NPC from the current map (for despawning)
+   */
+  removeDynamicNPC(npcId: string): void {
+    if (!this.currentMapId) {
+      console.warn('[NPCManager] Cannot remove dynamic NPC: No current map');
+      return;
+    }
+
+    const mapNPCs = this.npcsByMap.get(this.currentMapId) || [];
+    const filteredNPCs = mapNPCs.filter(n => n.id !== npcId);
+
+    if (filteredNPCs.length === mapNPCs.length) {
+      console.warn(`[NPCManager] NPC ${npcId} not found on map ${this.currentMapId}`);
+      return;
+    }
+
+    this.npcsByMap.set(this.currentMapId, filteredNPCs);
+    this.npcStates.delete(npcId);
+
+    console.log(`[NPCManager] Removed dynamic NPC ${npcId} from map ${this.currentMapId}`);
+  }
+
+  /**
    * Clear all NPCs (useful for testing/reset)
    */
   clear(): void {

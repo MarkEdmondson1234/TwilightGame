@@ -59,6 +59,9 @@ const CROP_ADULT_SIZES: Record<string, { width: number; height: number; offsetX:
   corn: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
   sunflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
 
+  // Magical crops (2 tiles) - high resolution sprites
+  fairy_bluebell: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+
   // Medium crops (1.5 tiles)
   melon: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
   broccoli: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
