@@ -1126,6 +1126,7 @@ export function createProfessorBirdimenNPC(
         responses: [
           { text: 'Tell me about the birds here.', nextId: 'bird_facts' },
           { text: 'What are you researching?', nextId: 'research' },
+          { text: 'Nice to meet you, Professor Birdiman!', nextId: 'name_correction' },
           { text: 'Nice to meet you, Professor!' },
         ],
       },
@@ -1162,6 +1163,26 @@ export function createProfessorBirdimenNPC(
       {
         id: 'help_research',
         text: '"How kind of you to offer! If you spot any unusual birds on your travels, do come and tell me about them. Particularly if you see any with peculiar markings or unfamiliar calls. Every observation helps!"',
+      },
+      {
+        id: 'name_correction',
+        text: '*The Professor\'s feathers ruffle with visible irritation.* "Birdi-MEN. BIRD-i-MEN. Not Birdiman! Honestly, you\'d think after three published volumes people would learn to read the author\'s name correctly!"',
+        responses: [
+          { text: 'Sorry, Professor Birdimen!', nextId: 'name_accepted' },
+          { text: 'Got it... Birdiman.', nextId: 'name_frustrated' },
+        ],
+      },
+      {
+        id: 'name_accepted',
+        text: '*The Professor smooths his feathers and adjusts his spectacles, composure restored.* "Quite alright, quite alright. It happens more often than you\'d think. Now then, where were we? Ah yes - the wonders of ornithology!"',
+        responses: [
+          { text: 'Tell me about the birds here.', nextId: 'bird_facts' },
+          { text: 'What are you researching?', nextId: 'research' },
+        ],
+      },
+      {
+        id: 'name_frustrated',
+        text: '*The Professor\'s eye twitches.* "I... you... BIRDIMEN! With an E! Like \'men\'! Multiple men! Not like \'man\'! It\'s a perfectly respectable family name with a distinguished etymology!" *He takes a deep breath.* "I need a moment."',
       },
     ],
     friendshipConfig: {
