@@ -1,13 +1,13 @@
-import { useCallback } from 'react';
-import { Position } from '../types';
+import { useCallback, MutableRefObject } from 'react';
+import { Position, NPC } from '../types';
 import { PLAYER_SIZE, SPRITE_METADATA } from '../constants';
 import { getTileData } from '../utils/mapUtils';
 
 /**
  * Hook for collision detection logic
- * Checks both regular tile collision and multi-tile sprite collision
+ * Checks regular tile collision, multi-tile sprite collision, and NPC collision
  */
-export function useCollisionDetection() {
+export function useCollisionDetection(npcsRef?: MutableRefObject<NPC[]>) {
     const checkCollision = useCallback((pos: Position): boolean => {
         const halfSize = PLAYER_SIZE / 2;
         const minTileX = Math.floor(pos.x - halfSize);
@@ -54,8 +54,28 @@ export function useCollisionDetection() {
                 }
             }
         }
+
+        // Check NPC collision (if NPCs ref provided)
+        if (npcsRef?.current) {
+            for (const npc of npcsRef.current) {
+                // Skip NPCs without collision radius
+                if (!npc.collisionRadius || npc.collisionRadius <= 0) continue;
+
+                // Calculate distance between player center and NPC center
+                const dx = pos.x - npc.position.x;
+                const dy = pos.y - npc.position.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Check if player overlaps with NPC collision circle
+                // Player radius (halfSize) + NPC collision radius
+                if (distance < halfSize + npc.collisionRadius) {
+                    return true;
+                }
+            }
+        }
+
         return false;
-    }, []);
+    }, [npcsRef]);
 
     return { checkCollision };
 }

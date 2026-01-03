@@ -194,10 +194,11 @@ export class SpriteLayer extends PixiLayer {
       sprite.anchor.set(0, 0); // Top-left anchor for tile alignment
 
       // Set z-index based on layer and sprite type
-      // Ground decorations (tufts, ferns) use lower z-index to render below furniture
+      // Ground decorations (tufts, ferns, rocks) use lower z-index to render below furniture
       const isGroundDecoration = metadata.tileType === TileType.TUFT ||
                                   metadata.tileType === TileType.FERN ||
-                                  metadata.tileType === TileType.TUFT_SPARSE;
+                                  metadata.tileType === TileType.TUFT_SPARSE ||
+                                  metadata.tileType === TileType.ROCK;
       if (this.isForeground) {
         sprite.zIndex = Z_SPRITE_FOREGROUND;
       } else if (isGroundDecoration) {

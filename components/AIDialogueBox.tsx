@@ -189,8 +189,11 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading || pendingSendToBed) return;
 
-    // Check if this is a farewell message (ends conversation)
-    const isFarewell = isFarewellMessage(message);
+    // Check if this is a farewell message - just close immediately, no API call needed
+    if (isFarewellMessage(message)) {
+      onClose();
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -247,9 +250,6 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
           setTimeout(() => {
             onSendToBed();
           }, 2500);
-        } else if (isFarewell) {
-          // If farewell, close dialogue after showing response
-          setTimeout(() => onClose(), 2000);
         }
       }
     } catch (err) {
@@ -265,9 +265,13 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
 
   // Detect farewell messages to auto-close
   const isFarewellMessage = (message: string): boolean => {
-    const farewellWords = ['farewell', 'goodbye', 'bye', 'leaving', 'go now', 'must go', 'should go'];
+    const farewellPhrases = [
+      'farewell', 'goodbye', 'bye', 'leaving', 'go now', 'must go', 'should go',
+      'be going', 'have to go', 'need to go', 'got to go', 'be off', 'take my leave',
+      'see you', 'until next time', 'good day', 'good night', 'later'
+    ];
     const lowerMessage = message.toLowerCase();
-    return farewellWords.some(word => lowerMessage.includes(word));
+    return farewellPhrases.some(phrase => lowerMessage.includes(phrase));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

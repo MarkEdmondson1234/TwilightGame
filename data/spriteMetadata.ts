@@ -495,6 +495,27 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetY: 0,
   },
   {
+    tileType: TileType.ROCK,
+    spriteWidth: 1,  // 1 tile wide (standard rock)
+    spriteHeight: 1, // 1 tile tall
+    offsetX: 0,      // No offset - rock centered on tile
+    offsetY: 0,
+    image: [tileAssets.rock_1, tileAssets.rock_2],  // Rock variants
+    isForeground: false,  // Render under player (ground-level)
+    enableFlip: true,  // Horizontal flip for variety
+    enableRotation: true,  // Rotation for natural placement
+    enableScale: true,  // Size variation
+    enableBrightness: true,
+    scaleRange: { min: 0.85, max: 1.15 },
+    rotationRange: { min: -5, max: 10 },
+    brightnessRange: { min: 0.95, max: 1.05 },
+    // Small collision box - rocks are more decorative, less obstructive
+    collisionWidth: 0.4,
+    collisionHeight: 0.4,
+    collisionOffsetX: 0.3,  // Center the small collision box
+    collisionOffsetY: 0.3,
+  },
+  {
     tileType: TileType.TUFT,
     spriteWidth: 2,  // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall (larger tuft patch)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, USE_SPRITE_SHADOWS } from './constants';
-import { Position, Direction, ImageRoomLayer } from './types';
+import { Position, Direction, ImageRoomLayer, NPC } from './types';
 import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { PlayerSprite } from './utils/pixi/PlayerSprite';
@@ -160,6 +160,7 @@ const App: React.FC = () => {
     const weatherLayerRef = useRef<WeatherLayer | null>(null);
     const darknessLayerRef = useRef<DarknessLayer | null>(null);
     const weatherManagerRef = useRef<WeatherManager | null>(null);
+    const npcsRef = useRef<NPC[]>([]); // Ref for NPC collision detection
     const [isPixiInitialized, setIsPixiInitialized] = useState(false);
 
     const handleCharacterCreated = (character: CharacterCustomization) => {
@@ -390,8 +391,8 @@ const App: React.FC = () => {
         onShowToast: showToast,
     });
 
-    // Setup collision detection
-    const { checkCollision } = useCollisionDetection();
+    // Setup collision detection (with NPC collision support)
+    const { checkCollision } = useCollisionDetection(npcsRef);
 
     // Setup player movement
     const { updatePlayerMovement } = usePlayerMovement({
@@ -757,6 +758,11 @@ const App: React.FC = () => {
         );
         return uniqueNPCs;
     }, [currentMapId, npcUpdateTrigger]);
+
+    // Keep NPCs ref in sync for collision detection
+    useEffect(() => {
+        npcsRef.current = allNPCs;
+    }, [allNPCs]);
 
     // Proximity-based radial menu for NPCs - show menu when entering NPC range
     useEffect(() => {

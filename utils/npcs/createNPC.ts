@@ -71,6 +71,7 @@ export interface NPCConfig {
   portraitSprite?: string;
   scale?: number;
   interactionRadius?: number;
+  collisionRadius?: number; // Collision radius in tiles (0 = no collision)
 
   // Animation states (optional)
   states?: Record<string, StateConfig>;
@@ -171,6 +172,7 @@ export function createNPC(config: NPCConfig): NPC {
     portraitSprite,
     scale = DEFAULTS.scale,
     interactionRadius = DEFAULTS.interactionRadius,
+    collisionRadius,
     states,
     initialState = 'idle',
     friendshipConfig,
@@ -216,6 +218,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
   if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
   if (glow) npc.glow = glow;
+  if (collisionRadius !== undefined) npc.collisionRadius = collisionRadius;
 
   return npc;
 }

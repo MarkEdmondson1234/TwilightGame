@@ -19,6 +19,7 @@ export function createVillageElderNPC(
     position,
     sprite: npcAssets.elderly_01,
     portraitSprite: npcAssets.elderly_portrait,
+    collisionRadius: 0.4, // NPCs have collision so player can't walk through
     states: {
       idle: {
         sprites: [npcAssets.elderly_01, npcAssets.elderly_02],
@@ -234,6 +235,7 @@ export function createOldWomanKnittingNPC(
     position,
     sprite: npcAssets.old_woman_01,
     portraitSprite: npcAssets.old_woman_portrait,
+    collisionRadius: 0.4, // NPCs have collision so player can't walk through
     states: {
       knitting: {
         sprites: [npcAssets.old_woman_01, npcAssets.old_woman_02],
@@ -378,6 +380,7 @@ export function createShopkeeperNPC(
     sprite: npcAssets.shopkeeper_fox_01,
     portraitSprite: npcAssets.shopkeeper_fox_portrait,
     scale: 3.5,
+    collisionRadius: 0.4, // NPCs have collision so player can't walk through
     states: {
       idle: {
         sprites: [npcAssets.shopkeeper_fox_01, npcAssets.shopkeeper_fox_02],
@@ -475,6 +478,8 @@ export function createVillageChildNPC(
     direction: Direction.Right,
     sprite: npcAssets.little_girl,
     portraitSprite: npcAssets.little_girl_portrait,
+    scale: 4.2, // Slightly larger than default for visibility
+    collisionRadius: 0.35, // Small collision so player can't walk through
     dialogue: [
       {
         id: 'greeting',
