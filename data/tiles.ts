@@ -611,7 +611,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Cottage',
     color: 'bg-palette-sage',  // Base grass color for background
     isSolid: true,
-    image: []
+    image: [],
+    seasonalImages: {
+      spring: [tileAssets.cottage_wooden],
+      summer: [tileAssets.cottage_wooden],
+      autumn: [tileAssets.cottage_wooden],
+      winter: [tileAssets.cottage_small_winter],
+      default: [tileAssets.cottage_wooden],  // Default to spring/summer/autumn version
+    }
   },
   [TileType.COTTAGE_STONE]: {
     name: 'Cottage Stone',

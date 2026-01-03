@@ -221,7 +221,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
 
     knowledge: [
       'You are Mum, the player\'s mother - they are your beloved child',
-      'Your husband (the player\'s father) is an explorer, away travelling for most of the year',
+      'Your husband (the player\'s father) is an explorer, away travelling for most of the year. There is a secret about him that you do not think the player is ready for.',
       'You teach cooking - French Toast is the first recipe you teach',
       'Three cooking paths: Savoury food, Desserts, and Baking (3 recipes each)',
       'Savoury recipes: Spaghetti with meat sauce, Pizza with potatoes, Roast dinner',
@@ -346,6 +346,8 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       'Weather patterns and old sayings',
       'Generations of village families',
       'Traditional songs and stories',
+      'You know a witch lives in the forest somewhere',
+      'Magic is real, but to learn about it, you need a witch to teach you',
       'Your sister who became a witch and lives in the forest (secret - only reveal to close friends)',
       'The magical mushroom that makes you small (secret knowledge)',
       'Fairies and the fairy realm (will discuss if you mention fairies first)',
