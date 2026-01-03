@@ -1,6 +1,6 @@
 import { MapDefinition, TileType } from '../types';
 import { gameState } from '../GameState';
-import { createUmbraWolfNPC, createWitchWolfNPC, createChillBearNPC, createBunnyflyNPC, createDeerNPC, createPuffleNPC, createSuffleNPC, createMushraNPC } from '../utils/npcFactories';
+import { createUmbraWolfNPC, createChillBearNPC, createBunnyflyNPC, createDeerNPC, createPuffleNPC, createSuffleNPC, createMushraNPC } from '../utils/npcFactories';
 
 /**
  * Procedural map generation functions
@@ -372,34 +372,6 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
   // NPCs array starts with the Umbra Wolf
   const npcs = [umbraWolf];
-
-  // Witch Wolf: 1 in 5 chance (20%) of spawning - rare mystical encounter
-  // Use seed-based random for deterministic spawning
-  const witchWolfChance = ((seed * 13) % 100) / 100; // Pseudo-random based on seed
-  if (witchWolfChance < 0.2) {
-    // Place witch wolf in a different location from umbra wolf
-    let witchX: number, witchY: number;
-    let attempts = 0;
-    const maxAttempts = 20;
-    do {
-      // Add attempt counter to vary position on each iteration
-      witchX = Math.floor(((seed * 7 + attempts * 5) % (width - 6)) + 3);
-      witchY = Math.floor(((seed * 11 + attempts * 9) % (height - 6)) + 3);
-      attempts++;
-    } while (
-      attempts < maxAttempts &&
-      ((Math.abs(witchX - spawnX) < 6 && Math.abs(witchY - spawnY) < 6) ||
-       (Math.abs(witchX - wolfX) < 5 && Math.abs(witchY - wolfY) < 5))
-    );
-
-    const witchWolf = createWitchWolfNPC(
-      `witch_wolf_${seed}`,
-      { x: witchX, y: witchY },
-      'Witch Wolf'
-    );
-    npcs.push(witchWolf);
-    console.log(`[Forest] 🐺✨ Rare Witch Wolf spawned at (${witchX}, ${witchY})!`);
-  }
 
   // Chill Bear: 20% chance of spawning - peaceful tea-drinking forest creature
   const chillBearChance = ((seed * 17) % 100) / 100; // Pseudo-random based on seed

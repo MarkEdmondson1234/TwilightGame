@@ -14,13 +14,29 @@ The farming system allows players to grow crops on special farm tiles. Each farm
 
 ## Controls
 
-### Tool Selection (Keys 1-4)
+### Click-Based Farming
+
+The easiest way to farm is by **clicking directly on farm tiles**. A radial menu appears with available actions:
+
+- **Click on fallow soil** → Choose "Till" to prepare the ground
+- **Click on tilled soil** → Choose "Plant" then select your seed type
+- **Click on growing crops** → Choose "Water" to speed up growth
+- **Click on ready crops** → Choose "Harvest" to collect your produce
+- **Click on dead crops** → Choose "Clear" to reset the plot
+
+The radial menu shows all available actions with icons - just click the one you want!
+
+### Keyboard Shortcuts (Optional)
+
+For keyboard players, you can also use these shortcuts:
+
+**Tool Selection (Keys 1-4):**
 - **1** - Hand (harvest ready crops, clear dead crops)
 - **2** - Hoe (till fallow soil)
 - **3** - Seeds (plant crops in tilled soil)
 - **4** - Watering Can (water plants)
 
-### Seed Selection (Keys 5-9)
+**Seed Selection (Keys 5-9):**
 When using the Seeds tool (key 3), press these keys to select which crop to plant:
 - **5** - Radish Seeds (fast - 2 min)
 - **6** - Tomato Seeds (medium - 5 min)
@@ -28,15 +44,8 @@ When using the Seeds tool (key 3), press these keys to select which crop to plan
 - **8** - Corn Seeds (premium - 15 min)
 - **9** - Pumpkin Seeds (specialty - 20 min)
 
-The HUD will show your currently selected seed and how many you have in inventory.
-
-### Farm Actions (E key)
-Stand on a farm tile and press `E` to perform an action with your current tool:
-- **Hoe + Fallow Soil** → Tills the soil (shows tilled texture)
-- **Seeds + Tilled Soil** → Plants selected seed (consumes 1 seed from inventory, shows young plant sprite)
-- **Watering Can + Planted/Watered/Wilting** → Waters the crop (shows darker wet soil)
-- **Hand + Ready Crop** → Harvests the crop (adds crops to inventory, awards gold, returns plot to tilled state)
-- **Hand + Dead Crop** → Clears dead plant (returns plot to fallow state)
+**Using Tools:**
+Stand on a farm tile and press `E` to perform an action with your current tool.
 
 ### Debug Controls
 - **F4** - Open DevTools panel with farming controls:
@@ -108,34 +117,32 @@ Farm tiles now show visual sprites and colors for each state:
 
 ## How to Farm
 
-1. **Get seeds** - Visit the seed shed in the farm area
-   - From village, go to bottom-right corner (28, 28) to enter farm area
-   - In farm area, enter the building (door at 10, 21)
-   - Talk to seed keeper NPCs to get free seeds
+1. **Get seeds** - Visit the Seed Shed in the farm area
+   - From the village, look for the path leading to the farm area
+   - Enter the Seed Shed building
+   - Talk to the seed bag NPCs to collect free seeds
 
-2. **Find farm plots** - Look for brown soil tiles (marked with `X` in map editor)
-   - Farm area has multiple plots organized in fields
-   - Connected by path network for easy access
+2. **Find farm plots** - Look for brown soil tiles in the farm area
+   - Multiple plots are organised in fields
+   - Connected by paths for easy access
 
-3. **Till the soil** - Switch to Hoe (key `2`) and press `E` on fallow soil
+3. **Till the soil** - Click on brown (fallow) soil and choose **"Till"** from the menu
 
-4. **Select seeds** - Switch to Seeds (key `3`), then press keys `5-9` to choose crop type
-   - The HUD shows your selected seed and quantity
-   - 5=Radish, 6=Tomato, 7=Salad, 8=Corn, 9=Pumpkin
+4. **Plant seeds** - Click on tilled soil and choose **"Plant"**
+   - A menu appears showing all your available seed types
+   - Click the seed you want to plant
 
-5. **Plant seeds** - Press `E` on tilled soil (consumes 1 seed from inventory)
-
-6. **Water your crops** - Switch to Watering Can (key `4`) and press `E` on planted/wilting crops
+5. **Water your crops** - Click on growing plants and choose **"Water"**
    - Water regularly! Crops grow faster when watered
    - If you don't water, crops will wilt and eventually die
 
-7. **Harvest** - Switch to Hand (key `1`) and press `E` on ready crops
-   - Crops are automatically added to inventory
+6. **Harvest** - Click on ready crops (they look mature!) and choose **"Harvest"**
+   - Crops are automatically added to your inventory
    - Gold is automatically earned
    - Plot returns to tilled state for replanting
 
-8. **Clear dead crops** - Use Hand (key `1`) and press `E` on dead crops
-   - Returns plot to fallow state
+7. **Clear dead crops** - Click on dead plants and choose **"Clear"**
+   - Returns plot to fallow state so you can start again
 
 ## Technical Architecture
 

@@ -23,15 +23,24 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
 }) => {
     return (
         <>
-            {/* Help Button - Top Right */}
+            {/* Help Button - Top Right (cottagecore styled) */}
             <div className={`absolute top-2 right-2 ${zClass(Z_HUD)}`}>
                 <button
                     onClick={onToggleHelpBrowser}
-                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full border-3 sm:border-4 font-bold text-xl sm:text-2xl transition-all pointer-events-auto shadow-lg ${
-                        showHelpBrowser
-                            ? 'bg-amber-500 border-amber-700 text-white hover:bg-amber-600 scale-110'
-                            : 'bg-black/70 border-slate-600 text-amber-400 hover:bg-black/90 hover:border-amber-500 hover:scale-105'
-                    }`}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full font-serif font-bold text-xl sm:text-2xl transition-all pointer-events-auto"
+                    style={{
+                        background: showHelpBrowser
+                            ? 'linear-gradient(to bottom, #d4a84b, #c99a3e)'
+                            : 'linear-gradient(to bottom, #f5f0e1, #e8dcc8)',
+                        border: showHelpBrowser
+                            ? '3px solid #8b6914'
+                            : '3px solid #8b7355',
+                        color: showHelpBrowser ? '#fff' : '#5a4636',
+                        boxShadow: showHelpBrowser
+                            ? '0 4px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.3)'
+                            : '0 4px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.5)',
+                        transform: showHelpBrowser ? 'scale(1.1)' : 'scale(1)',
+                    }}
                     title="Help [F1]"
                 >
                     ?

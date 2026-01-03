@@ -51,6 +51,7 @@ export interface GameTime {
   day: number;         // Day within season (1-84)
   totalDays: number;   // Total days since game start
   hour: number;        // Hour of day (0-23)
+  minute: number;      // Minute of hour (0-59)
   timeOfDay: TimeOfDay; // Dawn, Day, Dusk, or Night (varies by season)
   totalHours: number;  // Total hours since game start
   daylight: DaylightHours; // Current season's daylight hours
@@ -117,6 +118,13 @@ export class TimeManager {
     const totalHours = Math.floor(msSinceStart / msPerGameHour);
     const hour = totalHours % 24; // 0-23
 
+    // Calculate minutes within the hour
+    // Each game hour = 5 real minutes = 300,000 ms
+    // 60 game minutes per game hour
+    const msPerGameMinute = msPerGameHour / 60;
+    const msIntoCurrentHour = msSinceStart % msPerGameHour;
+    const minute = Math.floor(msIntoCurrentHour / msPerGameMinute);
+
     // Get seasonal daylight hours
     const daylight = SEASONAL_DAYLIGHT[season];
 
@@ -129,6 +137,7 @@ export class TimeManager {
       day,
       totalDays,
       hour,
+      minute,
       timeOfDay,
       totalHours,
       daylight,
@@ -203,6 +212,7 @@ export class TimeManager {
     const season = override.season !== undefined ? override.season : currentTime.season;
     const day = override.day !== undefined ? override.day : currentTime.day;
     const hour = override.hour !== undefined ? override.hour : currentTime.hour;
+    const minute = override.minute !== undefined ? override.minute : currentTime.minute;
     const year = override.year !== undefined ? override.year : currentTime.year;
 
     // Calculate derived fields
@@ -221,6 +231,7 @@ export class TimeManager {
       day,
       totalDays,
       hour,
+      minute,
       timeOfDay,
       totalHours,
       daylight,

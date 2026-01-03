@@ -137,6 +137,7 @@ interface GameTime {
   day: number;            // Day within season (1-84)
   totalDays: number;      // Total days since epoch
   hour: number;           // Hour of day (0-23)
+  minute: number;         // Minute of hour (0-59)
   timeOfDay: TimeOfDay;   // Dawn, Day, Dusk, or Night
   totalHours: number;     // Total hours since epoch
   daylight: DaylightHours; // Current season's sunrise/sunset times

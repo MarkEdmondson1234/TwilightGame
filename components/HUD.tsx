@@ -6,6 +6,7 @@ import { Z_HUD, zClass } from '../zIndex';
 import { getItem } from '../data/items';
 import { gameState } from '../GameState';
 import { WATER_CAN } from '../constants';
+import AnalogClock from './AnalogClock';
 import SundialClock from './SundialClock';
 
 interface HUDProps {
@@ -88,10 +89,10 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
                 )}
             </div>
 
-            {/* Right HUD Panel - Sundial clock and location */}
+            {/* Right HUD Panel - Clock, calendar, and location */}
             <div className={`absolute top-2 right-16 sm:right-20 ${zClass(Z_HUD)} pointer-events-none`}>
                 <div className="flex items-start gap-2">
-                    {/* Location info to the left of clock */}
+                    {/* Location info to the left of clocks */}
                     <div className="bg-black/60 px-2 py-1 rounded border border-slate-700 mt-4">
                         <p className="text-xs font-bold text-yellow-300 truncate max-w-[70px]">{mapName}</p>
                         {forestDepth > 0 && (
@@ -102,8 +103,11 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
                         )}
                     </div>
 
-                    {/* Sundial Clock */}
-                    <SundialClock currentTime={currentTime} size={80} />
+                    {/* Analog Clock (hours/minutes with rotating hands) */}
+                    <AnalogClock currentTime={currentTime} size={70} />
+
+                    {/* Sundial Calendar (date/season) */}
+                    <SundialClock currentTime={currentTime} size={70} />
                 </div>
             </div>
         </>

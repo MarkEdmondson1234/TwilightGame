@@ -7,13 +7,13 @@ interface SundialClockProps {
 }
 
 /**
- * SundialClock - A rustic cottagecore sundial displaying time
+ * SundialClock - A rustic cottagecore calendar dial displaying date and season
  *
  * Design:
  * - Warm parchment/stone background
  * - Wooden/bronze aesthetic
- * - Sun/moon orbits around the edge
- * - Season and time displayed in the center
+ * - Seasonal colour ring around the edge
+ * - Season, day, and year displayed in the center
  */
 const SundialClock: React.FC<SundialClockProps> = ({ currentTime, size = 80 }) => {
   const [showTooltip, setShowTooltip] = useState(false);
@@ -43,20 +43,15 @@ const SundialClock: React.FC<SundialClockProps> = ({ currentTime, size = 80 }) =
   };
   const seasonColour = seasonColours[currentTime.season] || '#daa520';
 
-  // Format hour for display (12-hour format)
-  const displayHour = currentTime.hour > 12
-    ? currentTime.hour - 12
-    : currentTime.hour === 0
-      ? 12
-      : currentTime.hour;
-  const amPm = currentTime.hour >= 12 ? 'pm' : 'am';
-
   // Tooltip content
   const { daylight } = currentTime;
   const formatHour = (h: number) => {
     const hr = h > 12 ? h - 12 : h === 0 ? 12 : h;
     return `${hr}${h >= 12 ? 'pm' : 'am'}`;
   };
+
+  // Days remaining in season (84 days per season)
+  const daysRemaining = 84 - currentTime.day;
 
   return (
     <div
@@ -68,7 +63,7 @@ const SundialClock: React.FC<SundialClockProps> = ({ currentTime, size = 80 }) =
       {/* Tooltip */}
       {showTooltip && (
         <div
-          className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap pointer-events-none"
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 rounded-lg text-xs whitespace-nowrap pointer-events-none"
           style={{
             background: 'linear-gradient(135deg, #f5f0e1, #e8dcc8)',
             border: '2px solid #8b7355',
@@ -79,12 +74,12 @@ const SundialClock: React.FC<SundialClockProps> = ({ currentTime, size = 80 }) =
           <div className="font-serif font-bold">{currentTime.season}, Day {currentTime.day}</div>
           <div className="font-serif">Year {currentTime.year}</div>
           <div className="mt-1 pt-1 border-t border-amber-600/30 text-[10px]">
-            <span className="text-amber-600">☀ Dawn:</span> {formatHour(daylight.dawn)}
-            <span className="mx-1">→</span>
-            <span className="text-amber-600">Dusk:</span> {formatHour(daylight.dusk)}
+            <span style={{ color: seasonColour }}>{daysRemaining} days until next season</span>
           </div>
-          <div className="text-[10px] opacity-75">
-            {currentTime.timeOfDay}
+          <div className="text-[10px] mt-1">
+            <span className="text-amber-600">Sunrise:</span> {formatHour(daylight.sunrise)}
+            <span className="mx-1">·</span>
+            <span className="text-amber-600">Sunset:</span> {formatHour(daylight.sunset)}
           </div>
         </div>
       )}
@@ -259,7 +254,18 @@ const SundialClock: React.FC<SundialClockProps> = ({ currentTime, size = 80 }) =
         className="absolute inset-0 flex flex-col items-center justify-center"
         style={{ pointerEvents: 'none' }}
       >
-        {/* Time */}
+        {/* Season */}
+        <span
+          className="font-serif font-bold leading-none"
+          style={{
+            fontSize: size * 0.15,
+            color: seasonColour,
+          }}
+        >
+          {currentTime.season}
+        </span>
+
+        {/* Day number */}
         <span
           className="font-serif font-bold leading-none"
           style={{
@@ -267,25 +273,18 @@ const SundialClock: React.FC<SundialClockProps> = ({ currentTime, size = 80 }) =
             color: '#5a4636',
           }}
         >
-          {displayHour}
-          <span
-            className="font-normal"
-            style={{ fontSize: size * 0.12, color: '#8b7355' }}
-          >
-            {amPm}
-          </span>
+          {currentTime.day}
         </span>
 
-        {/* Season and day */}
+        {/* Year */}
         <span
           className="font-serif leading-none"
           style={{
-            color: seasonColour,
-            fontSize: size * 0.11,
-            fontWeight: 500,
+            color: '#8b7355',
+            fontSize: size * 0.1,
           }}
         >
-          {currentTime.season.slice(0, 3)} {currentTime.day}
+          Yr {currentTime.year}
         </span>
       </div>
 
