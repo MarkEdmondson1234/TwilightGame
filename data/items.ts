@@ -469,6 +469,16 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 40,
     image: groceryAssets.hazelnuts,
   },
+  crop_blueberry: {
+    id: 'crop_blueberry',
+    name: 'crop_blueberry',
+    displayName: 'Blueberries',
+    category: ItemCategory.CROP,
+    description: 'Sweet wild blueberries foraged from forest bushes.',
+    stackable: true,
+    sellPrice: 30,
+    image: groceryAssets.blueberries_crop,
+  },
 
   // ===== MATERIALS =====
   fertiliser: {

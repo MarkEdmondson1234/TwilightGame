@@ -491,6 +491,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 4x4 multi-tile sprite (see SPRITE_METADATA below)
   },
+  [TileType.BLUEBERRY_BUSH]: {
+    name: 'Blueberry Bush',
+    color: 'bg-palette-sage',  // Base grass color for blending
+    isSolid: true,  // Not walkable - solid obstacle
+    baseType: TileType.GRASS,  // Render grass underneath the blueberry bush sprite
+    seasonalImages: {
+      spring: [tileAssets.blueberry_bush_spring],
+      summer: [tileAssets.blueberry_bush_summer],
+      autumn: [tileAssets.blueberry_bush_autumn],
+      winter: [tileAssets.blueberry_bush_winter],
+      default: [tileAssets.blueberry_bush_summer],
+    },
+    // 3x3 multi-tile sprite (see SPRITE_METADATA below)
+  },
   [TileType.WILD_STRAWBERRY]: {
     name: 'Wild Strawberry',
     color: 'bg-palette-sage',  // Base grass color for blending

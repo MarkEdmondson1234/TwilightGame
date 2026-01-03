@@ -263,6 +263,45 @@ export function handleFarmAction(
         }
     }
 
+    // Check for blueberry harvesting from adjacent blueberry bushes with hand tool (summer and autumn)
+    if (currentTool === 'hand') {
+        // Check adjacent tiles (including diagonals) for blueberry bushes
+        for (const tile of getSurroundingTiles(playerPos)) {
+            const adjacentTileData = getTileData(tile.x, tile.y);
+            if (adjacentTileData && adjacentTileData.type === TileType.BLUEBERRY_BUSH) {
+                const currentSeason = TimeManager.getCurrentTime().season;
+
+                if (currentSeason !== Season.SUMMER && currentSeason !== Season.AUTUMN) {
+                    console.log(`[Action] Blueberry bushes have no ripe berries (current season: ${currentSeason})`);
+                    return {
+                        handled: false,
+                        message: 'The blueberry bushes have no ripe berries yet.',
+                        messageType: 'info',
+                    };
+                }
+
+                console.log('[Action] Attempting to harvest blueberries from blueberry bush');
+
+                // Random yield: 3-6 blueberries (wild-only, cannot be planted)
+                const berryYield = Math.floor(Math.random() * 4) + 3; // 3-6
+                inventoryManager.addItem('crop_blueberry', berryYield);
+
+                const inventoryData = inventoryManager.getInventoryData();
+                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+                const message = `Picked ${berryYield} blueberries!`;
+
+                console.log(`[Action] ${message}`);
+                onAnimationTrigger?.('harvest');
+                return {
+                    handled: true,
+                    message: message,
+                    messageType: 'success',
+                };
+            }
+        }
+    }
+
     // Check if this is a farm tile or farm action (check both visual tile and plot state)
     if ((tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) ||
         (plotTileType !== undefined && plotTileType >= TileType.SOIL_FALLOW && plotTileType <= TileType.SOIL_DEAD)) {
@@ -718,6 +757,7 @@ export type InteractionType =
     | 'farm_clear'
     | 'harvest_strawberry'
     | 'harvest_blackberry'
+    | 'harvest_blueberry'
     | 'harvest_hazelnut'
     | 'forage'
     | 'pickup_item'
@@ -1038,6 +1078,26 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             label: 'Pick Hazelnuts',
             icon: groceryAssets.hazelnuts,
             color: '#92400e',
+            execute: () => {
+                const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
+                onFarmAction?.(farmResult);
+            },
+        });
+    }
+
+    // Check for blueberry harvesting from adjacent blueberry bushes
+    // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
+    const hasBlueberryBush = adjacentTiles.some(tile => {
+        const adjacentTileData = getTileData(tile.x, tile.y);
+        return adjacentTileData && adjacentTileData.type === TileType.BLUEBERRY_BUSH;
+    });
+
+    if (hasBlueberryBush) {
+        interactions.push({
+            type: 'harvest_blueberry',
+            label: 'Pick Blueberries',
+            icon: itemAssets.blackberries,  // TODO: Use dedicated blueberry sprite
+            color: '#3b82f6',
             execute: () => {
                 const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
                 onFarmAction?.(farmResult);

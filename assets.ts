@@ -133,6 +133,11 @@ export const tileAssets = {
   hazel_bush_summer: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_summer.png',
   hazel_bush_autumn: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_autumn.png',
   hazel_bush_winter: '/TwilightGame/assets-optimized/tiles/forest/hazel_bush_winter.png',
+  // Blueberry bush assets (seasonal variations - wild forageable bushes, 3x3)
+  blueberry_bush_spring: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_spring.png',
+  blueberry_bush_summer: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_summer.png',
+  blueberry_bush_autumn: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_autumn.png',
+  blueberry_bush_winter: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_winter.png',
   // Wild strawberry assets (seasonal variations - forageable in forest)
   wild_strawberry_spring: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_spring.png',
   wild_strawberry_summer: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_summer.png',
@@ -253,6 +258,7 @@ export const groceryAssets = {
   almonds: '/TwilightGame/assets-optimized/items/grocery/almonds.png',
   salad_head: '/TwilightGame/assets-optimized/items/grocery/salad_head.png',
   broccoli_head: '/TwilightGame/assets-optimized/items/grocery/broccoli_head.png',
+  blueberries_crop: '/TwilightGame/assets-optimized/items/grocery/blueberries_crop.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits

@@ -93,6 +93,7 @@ export const GRID_CODES: Record<string, TileType> = {
   'i': TileType.WILD_IRIS,   // i = Iris (wild iris flower, grows near water)
   'p': TileType.POND_FLOWERS, // p = Pond flowers (floating flowers, seasonal colors)
   'b': TileType.BRAMBLES,    // b = Brambles (thorny obstacle with seasonal colors)
+  'd': TileType.BLUEBERRY_BUSH, // d = Blueberry bush (wild forageable berry bush, 3x3, seasonal variations)
   'h': TileType.HAZEL_BUSH,  // h = Hazel bush (wild forageable bush, seasonal variations)
   's': TileType.WILD_STRAWBERRY, // s = Strawberry (wild forageable strawberry plants)
   'l': TileType.VILLAGE_FLOWERS, // l = Village flowers (decorative flowers in village, stem-like)
