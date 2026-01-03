@@ -35,6 +35,7 @@ export {
   createDeerNPC,
   createPuffleNPC,
   createSuffleNPC,
+  createProfessorBirdimenNPC,
 } from './forestNPCs';
 
 // Farm NPCs

@@ -32,6 +32,7 @@ export {
   createDeerNPC,
   createPuffleNPC,
   createSuffleNPC,
+  createProfessorBirdimenNPC,
   // Farm NPCs
   createCowNPC,
 } from './npcs';

@@ -17,6 +17,7 @@ import {
   createDeerNPC,
   createPuffleNPC,
   createSuffleNPC,
+  createProfessorBirdimenNPC,
 } from '../../utils/npcFactories';
 
 /**
@@ -101,6 +102,9 @@ const npcs = [
   // Row 6: Puffle & Suffle duo (always together!)
   createPuffleNPC('debug_puffle', { x: 6, y: 26 }, 'Puffle'),
   createSuffleNPC('debug_suffle', { x: 8, y: 26 }, 'Suffle'),
+
+  // Row 6 continued: Professor Birdimen
+  createProfessorBirdimenNPC('debug_professor_birdimen', { x: 12, y: 26 }, 'Professor Birdimen'),
 ];
 
 export const debugNPCs: MapDefinition = {

@@ -337,6 +337,10 @@ export const npcAssets = {
   suffle_01: '/TwilightGame/assets-optimized/npcs/suffle/suffle_01.png',
   suffle_02: '/TwilightGame/assets-optimized/npcs/suffle/suffle_02.png',
   suffle_portrait: '/TwilightGame/assets/npcs/suffle/suffle_01.png',
+  // Professor Birdimen assets (scholarly bird character)
+  professor_birdimen_01: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
+  professor_birdimen_02: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_02.png',
+  professor_birdimen_portrait: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
 };
 
 // Player assets (add your custom sprites here when ready)
