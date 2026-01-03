@@ -9,8 +9,19 @@ interface TouchControlsProps {
   onForagePress?: () => void;
   onShowCookingUI?: () => void;
   onShowRecipeBook?: () => void;
+  /** Use smaller controls for small screens (< 600px height) */
+  compact?: boolean;
 }
 
+/**
+ * Touch controls for mobile/tablet devices
+ *
+ * Features:
+ * - D-Pad on left for movement
+ * - Action buttons on right (E, forage, cooking, recipe book)
+ * - Compact mode for small screens (reduces D-Pad and button sizes)
+ * - Safe area insets for notched devices
+ */
 const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionPress,
   onDirectionRelease,
@@ -19,8 +30,10 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onForagePress,
   onShowCookingUI,
   onShowRecipeBook,
+  compact = false,
 }) => {
   const [showDevMenu, setShowDevMenu] = useState(false);
+
   const handleTouchStart = (direction: 'up' | 'down' | 'left' | 'right') => {
     return (e: React.TouchEvent) => {
       e.preventDefault();
@@ -45,15 +58,35 @@ const TouchControls: React.FC<TouchControlsProps> = ({
     onResetPress();
   };
 
+  // Responsive sizes based on compact mode
+  const dpadSize = compact ? 'w-32 h-32' : 'w-40 h-40 sm:w-44 sm:h-44';
+  const dpadButtonSize = compact ? 'w-10 h-10' : 'w-12 h-12 sm:w-14 sm:h-14';
+  const dpadButtonText = compact ? 'text-lg' : 'text-xl sm:text-2xl';
+  const dpadCenterSize = compact ? 'w-8 h-8' : 'w-10 h-10 sm:w-12 sm:h-12';
+
+  const actionButtonSize = compact ? 'w-10 h-10' : 'w-12 h-12 sm:w-14 sm:h-14';
+  const actionButtonText = compact ? 'text-lg' : 'text-xl sm:text-2xl';
+  const mainActionSize = compact ? 'w-16 h-16' : 'w-20 h-20 sm:w-24 sm:h-24';
+  const mainActionText = compact ? 'text-xl' : 'text-2xl sm:text-3xl';
+
   return (
-    <div className={`fixed bottom-48 sm:bottom-52 left-0 right-0 flex justify-between px-4 sm:px-6 pointer-events-auto ${zClass(Z_TOUCH_CONTROLS)}`}>
-      {/* D-Pad on the left - larger touch targets */}
-      <div className="relative w-44 h-44 sm:w-48 sm:h-48">
+    <div
+      className={`fixed left-0 right-0 flex justify-between px-4 sm:px-6 pointer-events-auto ${zClass(Z_TOUCH_CONTROLS)}`}
+      style={{
+        // Use safe area inset for notched devices
+        // Compact mode uses less bottom offset (120px vs 160px)
+        bottom: compact
+          ? 'calc(100px + env(safe-area-inset-bottom, 0px))'
+          : 'calc(140px + env(safe-area-inset-bottom, 0px))'
+      }}
+    >
+      {/* D-Pad on the left */}
+      <div className={`relative ${dpadSize}`}>
         {/* Up */}
         <button
           onTouchStart={handleTouchStart('up')}
           onTouchEnd={handleTouchEnd('up')}
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-14 h-14 sm:w-16 sm:h-16 bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-t-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg"
+          className={`absolute top-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-t-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
         >
           ▲
         </button>
@@ -62,7 +95,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('down')}
           onTouchEnd={handleTouchEnd('down')}
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-14 sm:w-16 sm:h-16 bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-b-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg"
+          className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-b-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
         >
           ▼
         </button>
@@ -71,7 +104,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('left')}
           onTouchEnd={handleTouchEnd('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-14 h-14 sm:w-16 sm:h-16 bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-l-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg"
+          className={`absolute left-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-l-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
         >
           ◄
         </button>
@@ -80,17 +113,17 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('right')}
           onTouchEnd={handleTouchEnd('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 w-14 h-14 sm:w-16 sm:h-16 bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-r-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold text-xl sm:text-2xl shadow-lg"
+          className={`absolute right-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-r-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
         >
           ►
         </button>
 
         {/* Center */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 sm:w-14 sm:h-14 bg-slate-800/70 rounded-full border-2 border-slate-600"></div>
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${dpadCenterSize} bg-slate-800/70 rounded-full border-2 border-slate-600`}></div>
       </div>
 
       {/* Action buttons on the right */}
-      <div className="flex flex-col items-end gap-3">
+      <div className={`flex flex-col items-end ${compact ? 'gap-2' : 'gap-3'}`}>
         {/* Cooking and foraging buttons row */}
         <div className="flex items-center gap-2">
           {/* Forage button */}
@@ -100,7 +133,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 e.preventDefault();
                 onForagePress();
               }}
-              className="w-12 h-12 sm:w-14 sm:h-14 bg-emerald-700/90 hover:bg-emerald-600/90 active:bg-emerald-500/90 rounded-xl border-2 border-emerald-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-lg"
+              className={`${actionButtonSize} bg-emerald-700/90 hover:bg-emerald-600/90 active:bg-emerald-500/90 rounded-xl border-2 border-emerald-500 flex items-center justify-center text-white ${actionButtonText} shadow-lg`}
               title="Forage"
             >
               🌿
@@ -114,7 +147,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 e.preventDefault();
                 onShowRecipeBook();
               }}
-              className="w-12 h-12 sm:w-14 sm:h-14 bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-xl border-2 border-teal-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-lg"
+              className={`${actionButtonSize} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-xl border-2 border-teal-500 flex items-center justify-center text-white ${actionButtonText} shadow-lg`}
               title="Recipe Book"
             >
               📖
@@ -128,7 +161,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 e.preventDefault();
                 onShowCookingUI();
               }}
-              className="w-12 h-12 sm:w-14 sm:h-14 bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-xl border-2 border-amber-500 flex items-center justify-center text-white text-xl sm:text-2xl shadow-lg"
+              className={`${actionButtonSize} bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-xl border-2 border-amber-500 flex items-center justify-center text-white ${actionButtonText} shadow-lg`}
               title="Cook"
             >
               🍳
@@ -137,14 +170,14 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         </div>
 
         {/* Action button row */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Dev Menu Toggle */}
           <button
             onTouchStart={(e) => {
               e.preventDefault();
               setShowDevMenu(!showDevMenu);
             }}
-            className="w-10 h-10 sm:w-12 sm:h-12 bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-full border-2 border-slate-500 flex items-center justify-center text-white font-bold text-sm shadow-lg"
+            className={`${compact ? 'w-8 h-8' : 'w-10 h-10 sm:w-12 sm:h-12'} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-full border-2 border-slate-500 flex items-center justify-center text-white font-bold text-sm shadow-lg`}
           >
             ⋯
           </button>
@@ -156,7 +189,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 handleResetTouch(e);
                 setShowDevMenu(false);
               }}
-              className="w-12 h-12 sm:w-14 sm:h-14 bg-orange-600/90 hover:bg-orange-500/90 active:bg-orange-400/90 rounded-full border-3 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-lg"
+              className={`${actionButtonSize} bg-orange-600/90 hover:bg-orange-500/90 active:bg-orange-400/90 rounded-full border-3 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-lg`}
             >
               R
             </button>
@@ -165,7 +198,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
           {/* Main Action button (E) - large for easy tapping */}
           <button
             onTouchStart={handleActionTouch}
-            className="w-20 h-20 sm:w-24 sm:h-24 bg-green-600/90 hover:bg-green-500/90 active:bg-green-400/90 rounded-full border-4 border-green-400 flex items-center justify-center text-white font-bold text-2xl sm:text-3xl shadow-xl"
+            className={`${mainActionSize} bg-green-600/90 hover:bg-green-500/90 active:bg-green-400/90 rounded-full border-4 border-green-400 flex items-center justify-center text-white font-bold ${mainActionText} shadow-xl`}
           >
             E
           </button>

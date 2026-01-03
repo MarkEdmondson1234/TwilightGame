@@ -1742,11 +1742,13 @@ const App: React.FC = () => {
                         showCollisionBoxes={showCollisionBoxes}
                         onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
                         onToggleInventory={() => setShowInventory(!showInventory)}
+                        isTouchDevice={isTouchDevice}
                     />
                 </>
             )}
 
-            {isTouchDevice && !activeNPC && (
+            {/* Touch controls - hidden when any modal is open */}
+            {isTouchDevice && !activeNPC && !showInventory && !showCookingUI && !showRecipeBook && !showHelpBrowser && !showShopUI && !showCharacterCreator && (
                 <TouchControls
                     onDirectionPress={touchControls.handleDirectionPress}
                     onDirectionRelease={touchControls.handleDirectionRelease}
@@ -1766,6 +1768,7 @@ const App: React.FC = () => {
                         }
                         setShowRecipeBook(true);
                     }}
+                    compact={window.innerHeight < 600}
                 />
             )}
             {activeNPC && dialogueMode === 'static' && (

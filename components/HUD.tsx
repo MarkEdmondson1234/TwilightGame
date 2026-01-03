@@ -37,7 +37,10 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
     return (
         <>
             {/* Top-left: Wallet + Equipped Item */}
-            <div className={`absolute top-2 left-2 ${zClass(Z_HUD)} pointer-events-none flex items-start gap-2`}>
+            <div
+                className={`absolute left-2 ${zClass(Z_HUD)} pointer-events-none flex items-start gap-2`}
+                style={{ top: 'calc(8px + env(safe-area-inset-top, 0px))' }}
+            >
                 {/* Floating Wallet - Gold display */}
                 <div className="relative">
                     <img
@@ -90,7 +93,10 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
             </div>
 
             {/* Right HUD Panel - Clock, calendar, and location */}
-            <div className={`absolute top-2 right-16 sm:right-20 ${zClass(Z_HUD)} pointer-events-none`}>
+            <div
+                className={`absolute right-16 sm:right-20 ${zClass(Z_HUD)} pointer-events-none`}
+                style={{ top: 'calc(8px + env(safe-area-inset-top, 0px))' }}
+            >
                 <div className="flex items-start gap-2">
                     {/* Location info to the left of clocks (cottagecore styled) */}
                     <div
