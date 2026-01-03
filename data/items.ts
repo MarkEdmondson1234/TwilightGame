@@ -565,7 +565,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 5,  // Was 12
-    // Note: No cream sprite yet - add cream.png to grocery folder
+    image: groceryAssets.cream,
   },
 
   butter: {
