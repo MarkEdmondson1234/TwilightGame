@@ -92,14 +92,30 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
             {/* Right HUD Panel - Clock, calendar, and location */}
             <div className={`absolute top-2 right-16 sm:right-20 ${zClass(Z_HUD)} pointer-events-none`}>
                 <div className="flex items-start gap-2">
-                    {/* Location info to the left of clocks */}
-                    <div className="bg-black/60 px-2 py-1 rounded border border-slate-700 mt-4">
-                        <p className="text-xs font-bold text-yellow-300 truncate max-w-[70px]">{mapName}</p>
+                    {/* Location info to the left of clocks (cottagecore styled) */}
+                    <div
+                        className="px-3 py-2 rounded-lg mt-2"
+                        style={{
+                            background: 'linear-gradient(135deg, #f5f0e1, #e8dcc8)',
+                            border: '2px solid #8b7355',
+                            boxShadow: '0 2px 6px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.5)',
+                        }}
+                    >
+                        <p
+                            className="text-xs font-serif font-bold truncate max-w-[80px]"
+                            style={{ color: '#5a4636' }}
+                        >
+                            {mapName}
+                        </p>
                         {forestDepth > 0 && (
-                            <p className="text-[10px] text-green-300">Depth: {forestDepth}</p>
+                            <p className="text-[10px] font-serif" style={{ color: '#4a7c4a' }}>
+                                Depth: {forestDepth}
+                            </p>
                         )}
                         {caveDepth > 0 && (
-                            <p className="text-[10px] text-purple-300">Depth: {caveDepth}</p>
+                            <p className="text-[10px] font-serif" style={{ color: '#6b546b' }}>
+                                Depth: {caveDepth}
+                            </p>
                         )}
                     </div>
 
