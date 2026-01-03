@@ -880,9 +880,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     image: tileAssets.bear_house_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     isForeground: true,  // Render in foreground layer (above grass tufts)
     collisionWidth: 8,    // Most of the house is solid (doubled from 4)
-    collisionHeight: 8,   // Leave walkable area around edges (doubled from 4)
-    collisionOffsetX: -2,  // Center the collision box (doubled from -1)
-    collisionOffsetY: -2,  // Center the collision box (doubled from -1)
+    collisionHeight: 6,   // Reduced from 8 to allow walkable area at bottom (bottom edge at y=11 instead of y=13)
+    collisionOffsetX: -2,  // Center the collision box horizontally (doubled from -1)
+    collisionOffsetY: -2,  // Center the collision box vertically (doubled from -1)
     // No transforms - this is a cozy structure with detailed artwork
     enableFlip: false,
     enableRotation: false,
