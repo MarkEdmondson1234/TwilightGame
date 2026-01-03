@@ -28,6 +28,10 @@ export {
   createMorganNPC,
   createBunnyflyNPC,
   createMotherSeaNPC,
+  createMushraNPC,
+  createDeerNPC,
+  createPuffleNPC,
+  createSuffleNPC,
   // Farm NPCs
   createCowNPC,
 } from './npcs';

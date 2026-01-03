@@ -184,23 +184,15 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
   }
 
   return (
-    <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}>
-      {/* Background gradient overlay */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background: 'linear-gradient(180deg, rgba(30, 30, 50, 0.85) 0%, rgba(20, 20, 35, 0.95) 100%)',
-        }}
-      />
-
+    <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden pointer-events-none`}>
       {/* Character container - positions characters behind dialogue */}
-      <div className="absolute inset-0 flex items-end justify-between pointer-events-none">
+      <div className="absolute inset-0 flex items-end justify-center pointer-events-none" style={{ gap: '2%' }}>
         {/* Player character - LEFT side (hidden on small screens) */}
         {!isSmallScreen && (
           <div
             className="relative flex-shrink-0"
             style={{
-              width: '45%',
+              width: '38%',
               height: '95%',
               marginBottom: '8%',
             }}
@@ -208,7 +200,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
             <img
               src={playerSprite}
               alt="You"
-              className="absolute bottom-0 left-0 w-full h-full object-contain object-bottom"
+              className="absolute bottom-0 right-0 w-full h-full object-contain object-bottom"
               style={{
                 imageRendering: 'auto',
                 filter: 'drop-shadow(0 0 40px rgba(100, 200, 255, 0.4))',
@@ -218,14 +210,11 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
           </div>
         )}
 
-        {/* Spacer when player hidden */}
-        {isSmallScreen && <div className="flex-1" />}
-
         {/* NPC character - RIGHT side (centered on small screens) */}
         <div
           className="relative flex-shrink-0"
           style={{
-            width: isSmallScreen ? '70%' : '45%',
+            width: isSmallScreen ? '70%' : '38%',
             height: isSmallScreen ? '70%' : '95%',
             marginBottom: isSmallScreen ? '35%' : '8%',
           }}
@@ -237,15 +226,11 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
             style={{
               imageRendering: 'auto',
               filter: 'drop-shadow(0 0 40px rgba(255, 200, 100, 0.4))',
-              right: isSmallScreen ? 'auto' : '0',
-              left: isSmallScreen ? '50%' : 'auto',
+              left: isSmallScreen ? '50%' : '0',
               transform: isSmallScreen ? 'translateX(-50%)' : 'none',
             }}
           />
         </div>
-
-        {/* Spacer when player hidden */}
-        {isSmallScreen && <div className="flex-1" />}
       </div>
 
       {/* Dialogue window container - bottom of screen */}

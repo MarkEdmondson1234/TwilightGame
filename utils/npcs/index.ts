@@ -31,6 +31,10 @@ export {
   createMorganNPC,
   createBunnyflyNPC,
   createMotherSeaNPC,
+  createMushraNPC,
+  createDeerNPC,
+  createPuffleNPC,
+  createSuffleNPC,
 } from './forestNPCs';
 
 // Farm NPCs

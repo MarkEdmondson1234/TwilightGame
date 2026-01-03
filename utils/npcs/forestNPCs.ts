@@ -779,3 +779,302 @@ export function createMotherSeaNPC(
     },
   });
 }
+
+/**
+ * Create a Mushra NPC - friendly mushroom creature
+ *
+ * Behavior:
+ * - Wanders slowly through the forest
+ * - Gentle bobbing animation
+ * - Friendly, curious dialogue
+ * - Loves talking about mushrooms, rain, and cosy dark places
+ *
+ * Uses createWanderingNPC factory.
+ *
+ * @param id Unique ID for this mushroom friend
+ * @param position Starting position
+ * @param name Optional name (defaults to "Mushra")
+ */
+export function createMushraNPC(
+  id: string,
+  position: Position,
+  name: string = 'Mushra'
+): NPC {
+  return createWanderingNPC({
+    id,
+    name,
+    position,
+    direction: Direction.Down,
+    sprite: npcAssets.mushra_01,
+    portraitSprite: npcAssets.mushra_portrait,
+    scale: 4.0,
+    interactionRadius: 1.5,
+    collisionRadius: 0.35,
+    states: {
+      roaming: {
+        sprites: [npcAssets.mushra_01, npcAssets.mushra_02],
+        animationSpeed: 600, // Gentle bobbing
+      },
+    },
+    initialState: 'roaming',
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*The little mushroom creature bounces happily when it sees you.* "Hello, friend! Isn\'t it a lovely day for a walk in the forest?"',
+        seasonalText: {
+          spring: '"Oh, spring showers! The best time for us mushrooms. Everything smells so fresh and earthy, don\'t you think?"',
+          summer: '"A bit warm for my tastes, but the shade under the big trees is absolutely perfect! Come, rest in the cool!"',
+          autumn: '"Autumn! MY time to shine! Look at all my cousins popping up everywhere. Isn\'t the forest beautiful?"',
+          winter: '"Brrr, a bit chilly! But snow makes everything look so magical. I like to catch snowflakes on my cap!"',
+        },
+        weatherText: {
+          rain: '"Oh wonderful, wonderful rain! *spins happily* This is the best weather! Everything grows so well!"',
+          snow: '"Snowflakes look like little stars falling from the sky! I try to catch them, but they melt on my cap..."',
+          fog: '"Misty days are so mysterious! I love when the forest looks all dreamy and soft."',
+        },
+        responses: [
+          { text: 'You\'re a talking mushroom!', nextId: 'mushroom_identity' },
+          { text: 'What do you do here?', nextId: 'daily_life' },
+          { text: 'You seem very cheerful!', nextId: 'cheerful' },
+        ],
+      },
+      {
+        id: 'mushroom_identity',
+        text: '"Well, technically I\'m a Mushra! We\'re distant cousins to regular mushrooms, but much more... bouncy! And talkative. Regular mushrooms are lovely but quite shy."',
+        responses: [
+          { text: 'Are there more of you?', nextId: 'mushroom_family' },
+          { text: 'That\'s fascinating!' },
+        ],
+      },
+      {
+        id: 'daily_life',
+        text: '"Oh, I wander about, chat with the forest creatures, find nice damp spots to rest in, and help decompose fallen leaves! It\'s very important work, you know. The forest needs us!"',
+        seasonalText: {
+          autumn: '"In autumn I\'m extra busy! So many leaves to help return to the earth. It\'s tiring but very satisfying work!"',
+        },
+        responses: [
+          { text: 'That does sound important.', nextId: 'ecology_chat' },
+        ],
+      },
+      {
+        id: 'cheerful',
+        text: '"Life is wonderful when you\'re a mushroom! Good soil, gentle rain, nice shady spots... what more could one ask for? Oh, and friends! Friends are the best part!"',
+        responses: [
+          { text: 'I\'d like to be your friend!', nextId: 'friendship' },
+        ],
+      },
+      {
+        id: 'mushroom_family',
+        text: '"Oh yes! We Mushras are scattered all through the forest. My cousin lives by the witch\'s hut - very mysterious, that area! And my aunt is somewhere near the lake. We pop up wherever there\'s good shade and damp soil."',
+      },
+      {
+        id: 'ecology_chat',
+        text: '"The fallen leaves become soil, the soil feeds the trees, the trees drop more leaves... it\'s a beautiful circle! I like being part of something bigger than myself."',
+      },
+      {
+        id: 'friendship',
+        text: '*The mushroom\'s cap seems to glow slightly brighter.* "Really? Oh that makes me so happy! Friends who appreciate the forest are the very best friends! Come visit me anytime - I\'m always somewhere nearby!"',
+      },
+    ],
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 0,
+    },
+  });
+}
+
+/**
+ * Create a Deer NPC that wanders through the forest
+ *
+ * Behaviour:
+ * - Wanders gently through forest areas
+ * - Skittish and shy - doesn't like to be approached too quickly
+ * - Animated walking sprites
+ *
+ * @param id Unique ID for this deer
+ * @param position Starting position
+ * @param name Optional name (defaults to "Deer")
+ */
+export function createDeerNPC(
+  id: string,
+  position: Position,
+  name: string = 'Deer'
+): NPC {
+  return createWanderingNPC({
+    id,
+    name,
+    position,
+    direction: Direction.Right,
+    sprite: npcAssets.deer_01,
+    portraitSprite: npcAssets.deer_portrait,
+    scale: 4.5, // Graceful forest creature
+    interactionRadius: 2.0, // Can interact from a bit further away
+    collisionRadius: 0.4,
+    states: {
+      roaming: {
+        sprites: [npcAssets.deer_01, npcAssets.deer_02, npcAssets.deer_03],
+        animationSpeed: 400, // Gentle walking animation
+      },
+    },
+    initialState: 'roaming',
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*The deer pauses, ears twitching. It watches you with gentle, curious eyes before continuing to graze.*',
+        seasonalText: {
+          spring: '*The deer nibbles at fresh spring grass, occasionally lifting its head to watch you. New antlers are just beginning to grow.*',
+          summer: '*The deer stands in a patch of dappled sunlight, its coat gleaming. It seems content despite the warmth.*',
+          autumn: '*The deer munches on fallen acorns, its coat thickening for winter. It regards you calmly before returning to its meal.*',
+          winter: '*The deer paws at the snow, searching for something to eat. It looks a bit thin but healthy. Its winter coat is thick and warm.*',
+        },
+        weatherText: {
+          rain: '*The deer shakes droplets from its ears. It doesn\'t seem bothered by the rain, continuing to graze peacefully.*',
+          snow: '*The deer\'s breath forms little clouds in the cold air. Snowflakes gather on its back like tiny stars.*',
+          fog: '*The deer emerges ghostlike from the mist, pausing when it notices you before gracefully continuing on its way.*',
+        },
+      },
+    ],
+    friendshipConfig: {
+      canBefriend: false, // Wild creature, can't befriend like villagers
+      startingPoints: 0,
+    },
+  });
+}
+
+/**
+ * Create a Puffle NPC - a cute forest creature that always appears with Suffle
+ *
+ * Behaviour:
+ * - Wanders gently through forest areas
+ * - Always found near its companion Suffle
+ * - Friendly and curious
+ *
+ * @param id Unique ID for this Puffle
+ * @param position Starting position
+ * @param name Optional name (defaults to "Puffle")
+ */
+export function createPuffleNPC(
+  id: string,
+  position: Position,
+  name: string = 'Puffle'
+): NPC {
+  return createWanderingNPC({
+    id,
+    name,
+    position,
+    direction: Direction.Right,
+    sprite: npcAssets.puffle_01,
+    portraitSprite: npcAssets.puffle_portrait,
+    scale: 3.5, // Small cute creature
+    interactionRadius: 1.5,
+    collisionRadius: 0.3,
+    states: {
+      roaming: {
+        sprites: [npcAssets.puffle_01, npcAssets.puffle_02],
+        animationSpeed: 500, // Gentle bouncy animation
+      },
+    },
+    initialState: 'roaming',
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*Puffle bounces excitedly when it sees you!* "Puff puff! Hello, new friend! Have you met Suffle? Suffle is my best friend in the whole forest!"',
+        seasonalText: {
+          spring: '"Puff puff! Spring is the BEST! Suffle and I found so many flowers today! We made flower crowns - want to see?"',
+          summer: '"Puff! It\'s so warm! Suffle found a nice shady spot. We like to nap there when it gets too hot!"',
+          autumn: '"Puff puff puff! The leaves are falling! Suffle and I jump in the leaf piles - it\'s so fun!"',
+          winter: '"Puff... brrr! Suffle keeps me warm. We cuddle together when it snows. It\'s very cosy!"',
+        },
+        weatherText: {
+          rain: '"Puff! Rain makes splashy puddles! Suffle doesn\'t like getting wet, but I love it!"',
+          snow: '"Puff puff! Snow! Suffle and I are making snow-puffs! Want to help?"',
+        },
+        responses: [
+          { text: 'You two are adorable!', nextId: 'adorable' },
+          { text: 'Where did you meet Suffle?', nextId: 'meet_suffle' },
+        ],
+      },
+      {
+        id: 'adorable',
+        text: '*Puffle blushes and bounces happily.* "Puff! You\'re nice! Suffle says nice people are the best people. I agree!"',
+      },
+      {
+        id: 'meet_suffle',
+        text: '"Puff puff! We\'ve ALWAYS been together! Since we were tiny little puff-puffs! Suffle is the best at finding berries, and I\'m the best at finding sunny spots!"',
+      },
+    ],
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 0,
+    },
+  });
+}
+
+/**
+ * Create a Suffle NPC - a cute forest creature that always appears with Puffle
+ *
+ * Behaviour:
+ * - Wanders gently through forest areas
+ * - Always found near its companion Puffle
+ * - Shy but sweet
+ *
+ * @param id Unique ID for this Suffle
+ * @param position Starting position
+ * @param name Optional name (defaults to "Suffle")
+ */
+export function createSuffleNPC(
+  id: string,
+  position: Position,
+  name: string = 'Suffle'
+): NPC {
+  return createWanderingNPC({
+    id,
+    name,
+    position,
+    direction: Direction.Left,
+    sprite: npcAssets.suffle_01,
+    portraitSprite: npcAssets.suffle_portrait,
+    scale: 3.5, // Small cute creature
+    interactionRadius: 1.5,
+    collisionRadius: 0.3,
+    states: {
+      roaming: {
+        sprites: [npcAssets.suffle_01, npcAssets.suffle_02],
+        animationSpeed: 550, // Slightly different rhythm than Puffle
+      },
+    },
+    initialState: 'roaming',
+    dialogue: [
+      {
+        id: 'greeting',
+        text: '*Suffle peeks at you shyly.* "Suff... hello. Puffle said you were nice. Puffle is usually right about these things."',
+        seasonalText: {
+          spring: '"Suff suff... the flowers smell so nice in spring. Puffle likes to wear them, but I prefer just sniffing them."',
+          summer: '"Suff... it\'s warm today. Puffle wanted to play, but I found a cool stream. We\'re taking turns splashing."',
+          autumn: '"Suff suff! I love autumn colours. Puffle says my favourite leaf matches my eyes. That\'s very sweet of Puffle."',
+          winter: '"Suff... I don\'t like the cold much. But snuggling with Puffle makes it better. We share warmth."',
+        },
+        weatherText: {
+          rain: '"Suff... I prefer staying dry. Puffle splashes in puddles while I watch from under a leaf."',
+          snow: '"Suff suff... snow is pretty but cold. Puffle builds snow-puffs and I help with the decorating."',
+        },
+        responses: [
+          { text: 'You seem very close with Puffle.', nextId: 'close_friends' },
+          { text: 'What do you like doing?', nextId: 'hobbies' },
+        ],
+      },
+      {
+        id: 'close_friends',
+        text: '*Suffle\'s eyes sparkle.* "Suff! Puffle is my whole world. We do everything together. I can\'t imagine the forest without Puffle bouncing around."',
+      },
+      {
+        id: 'hobbies',
+        text: '"Suff suff... I like finding the tastiest berries and the softest moss for napping. Puffle finds the best sunny spots, and I find the best snacks. We make a good team!"',
+      },
+    ],
+    friendshipConfig: {
+      canBefriend: true,
+      startingPoints: 0,
+    },
+  });
+}

@@ -109,6 +109,7 @@ export interface NPC {
   dialogue: DialogueNode[]; // Conversation tree
   interactionRadius?: number; // How close player must be (default 1.5 tiles)
   collisionRadius?: number; // Optional: collision radius in tiles (default 0 = no collision, 0.3-0.5 typical)
+  allowedDirections?: Direction[]; // Optional: restrict WANDER to specific directions (e.g., [Left, Right] for deer)
   animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations
   scale?: number; // Optional: sprite scale multiplier (default 4.0)
   followTarget?: string; // Optional: ID of NPC to follow (for companion NPCs like dogs)

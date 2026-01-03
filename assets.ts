@@ -320,6 +320,23 @@ export const npcAssets = {
   mother_sea_01: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_01.png',
   mother_sea_02: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_02.png',
   mother_sea_portrait: '/TwilightGame/assets/npcs/mother_sea/mother-sea_01.png',
+  // Mushra assets (friendly mushroom creature)
+  mushra_01: '/TwilightGame/assets-optimized/npcs/mushra/mushra_01.png',
+  mushra_02: '/TwilightGame/assets-optimized/npcs/mushra/mushra_02.png',
+  mushra_portrait: '/TwilightGame/assets/npcs/mushra/mushra_01.png',
+  // Deer assets (forest creature)
+  deer_01: '/TwilightGame/assets-optimized/npcs/deer/deer_01.png',
+  deer_02: '/TwilightGame/assets-optimized/npcs/deer/deer_02.png',
+  deer_03: '/TwilightGame/assets-optimized/npcs/deer/deer_03.png',
+  deer_portrait: '/TwilightGame/assets/npcs/deer/deer_01.png',
+  // Puffle assets (cute forest creature, always appears with Suffle)
+  puffle_01: '/TwilightGame/assets-optimized/npcs/puffle/puffle_01.png',
+  puffle_02: '/TwilightGame/assets-optimized/npcs/puffle/puffle_02.png',
+  puffle_portrait: '/TwilightGame/assets/npcs/puffle/puffle_01.png',
+  // Suffle assets (cute forest creature, always appears with Puffle)
+  suffle_01: '/TwilightGame/assets-optimized/npcs/suffle/suffle_01.png',
+  suffle_02: '/TwilightGame/assets-optimized/npcs/suffle/suffle_02.png',
+  suffle_portrait: '/TwilightGame/assets/npcs/suffle/suffle_01.png',
 };
 
 // Player assets (add your custom sprites here when ready)

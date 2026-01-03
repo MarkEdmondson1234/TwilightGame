@@ -1,6 +1,6 @@
 import { MapDefinition, TileType } from '../types';
 import { gameState } from '../GameState';
-import { createUmbraWolfNPC, createWitchWolfNPC, createChillBearNPC, createBunnyflyNPC } from '../utils/npcFactories';
+import { createUmbraWolfNPC, createWitchWolfNPC, createChillBearNPC, createBunnyflyNPC, createDeerNPC, createPuffleNPC, createSuffleNPC, createMushraNPC } from '../utils/npcFactories';
 
 /**
  * Procedural map generation functions
@@ -459,6 +459,100 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     console.log(`[Forest] 🐰🦋 ${bunnyflyCount} Bunnyfly(s) spawned!`);
   }
 
+  // Deer: 60% chance of spawning - gentle forest creatures, very common
+  const deerChance = ((seed * 47) % 100) / 100; // Pseudo-random based on seed
+  if (deerChance < 0.6) {
+    // Spawn 1-2 deer for a peaceful forest feel
+    const deerCount = Math.floor(((seed * 53) % 2)) + 1; // 1-2 deer
+    for (let i = 0; i < deerCount; i++) {
+      // Place each deer in a different location
+      let deerX: number, deerY: number;
+      let attempts = 0;
+      const maxAttempts = 20;
+      do {
+        // Add attempt counter to vary position on each iteration
+        deerX = Math.floor(((seed * (59 + i * 7) + attempts * 19) % (width - 6)) + 3);
+        deerY = Math.floor(((seed * (61 + i * 11) + attempts * 23) % (height - 6)) + 3);
+        attempts++;
+      } while (
+        attempts < maxAttempts &&
+        ((Math.abs(deerX - spawnX) < 6 && Math.abs(deerY - spawnY) < 6) ||
+         (Math.abs(deerX - wolfX) < 5 && Math.abs(deerY - wolfY) < 5))
+      );
+
+      const deer = createDeerNPC(
+        `deer_${seed}_${i}`,
+        { x: deerX, y: deerY },
+        i === 0 ? 'Deer' : `Deer ${i + 1}`
+      );
+      npcs.push(deer);
+    }
+    console.log(`[Forest] 🦌 ${deerCount} Deer spawned!`);
+  }
+
+  // Puffle & Suffle: 5% chance of spawning together - very rare cute duo, always appear as a pair
+  const puffleSuffleChance = ((seed * 67) % 100) / 100; // Pseudo-random based on seed
+  if (puffleSuffleChance < 0.05) {
+    // Find a spot for them to spawn together
+    let puffleX: number, puffleY: number;
+    let attempts = 0;
+    const maxAttempts = 20;
+    do {
+      puffleX = Math.floor(((seed * 71 + attempts * 29) % (width - 8)) + 4);
+      puffleY = Math.floor(((seed * 73 + attempts * 31) % (height - 8)) + 4);
+      attempts++;
+    } while (
+      attempts < maxAttempts &&
+      ((Math.abs(puffleX - spawnX) < 6 && Math.abs(puffleY - spawnY) < 6) ||
+       (Math.abs(puffleX - wolfX) < 5 && Math.abs(puffleY - wolfY) < 5))
+    );
+
+    // Create Puffle
+    const puffle = createPuffleNPC(
+      `puffle_${seed}`,
+      { x: puffleX, y: puffleY },
+      'Puffle'
+    );
+    npcs.push(puffle);
+
+    // Create Suffle right next to Puffle (1-2 tiles away)
+    const suffleX = puffleX + 1 + Math.floor(((seed * 79) % 2)); // 1-2 tiles to the right
+    const suffleY = puffleY + Math.floor(((seed * 83) % 3)) - 1; // -1 to +1 tiles vertically
+    const suffle = createSuffleNPC(
+      `suffle_${seed}`,
+      { x: suffleX, y: suffleY },
+      'Suffle'
+    );
+    npcs.push(suffle);
+
+    console.log(`[Forest] 💕 Rare Puffle & Suffle duo spawned at (${puffleX}, ${puffleY})!`);
+  }
+
+  // Mushra: 10% chance of spawning - rare friendly mushroom creature
+  const mushraChance = ((seed * 89) % 100) / 100; // Pseudo-random based on seed
+  if (mushraChance < 0.10) {
+    let mushraX: number, mushraY: number;
+    let attempts = 0;
+    const maxAttempts = 20;
+    do {
+      mushraX = Math.floor(((seed * 97 + attempts * 37) % (width - 6)) + 3);
+      mushraY = Math.floor(((seed * 101 + attempts * 41) % (height - 6)) + 3);
+      attempts++;
+    } while (
+      attempts < maxAttempts &&
+      ((Math.abs(mushraX - spawnX) < 6 && Math.abs(mushraY - spawnY) < 6) ||
+       (Math.abs(mushraX - wolfX) < 5 && Math.abs(mushraY - wolfY) < 5))
+    );
+
+    const mushra = createMushraNPC(
+      `mushra_${seed}`,
+      { x: mushraX, y: mushraY },
+      'Mushra'
+    );
+    npcs.push(mushra);
+    console.log(`[Forest] 🍄 Mushra spawned at (${mushraX}, ${mushraY})!`);
+  }
+
   return {
     id: `forest_${seed}`,
     name: 'Forest',
@@ -617,6 +711,33 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     console.log(`[Cave] Shop spawned at depth ${caveDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`);
   }
 
+  // NPCs array for cave creatures
+  const npcs = [];
+
+  // Mushra: 8% chance of spawning in caves - rare mushroom creature (loves dark damp places!)
+  const mushraChance = ((seed * 103) % 100) / 100; // Pseudo-random based on seed
+  if (mushraChance < 0.08) {
+    let mushraX: number, mushraY: number;
+    let attempts = 0;
+    const maxAttempts = 20;
+    do {
+      mushraX = Math.floor(((seed * 107 + attempts * 43) % (width - 6)) + 3);
+      mushraY = Math.floor(((seed * 109 + attempts * 47) % (height - 6)) + 3);
+      attempts++;
+    } while (
+      attempts < maxAttempts &&
+      (Math.abs(mushraX - spawnX) < 5 && Math.abs(mushraY - spawnY) < 5)
+    );
+
+    const mushra = createMushraNPC(
+      `mushra_cave_${seed}`,
+      { x: mushraX, y: mushraY },
+      'Mushra'
+    );
+    npcs.push(mushra);
+    console.log(`[Cave] 🍄 Mushra spawned at (${mushraX}, ${mushraY})!`);
+  }
+
   return {
     id: `cave_${seed}`,
     name: 'Cave',
@@ -627,6 +748,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     isRandom: true,
     spawnPoint: { x: spawnX, y: spawnY },
     transitions,
+    npcs,
   };
 }
 

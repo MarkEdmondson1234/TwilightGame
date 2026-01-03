@@ -13,6 +13,10 @@ import {
   createChillBearNPC,
   createStellaNPC,
   createMorganNPC,
+  createMushraNPC,
+  createDeerNPC,
+  createPuffleNPC,
+  createSuffleNPC,
 } from '../../utils/npcFactories';
 
 /**
@@ -89,6 +93,14 @@ const npcs = [
   // Row 5: Fairies (tiny)
   createStellaNPC('debug_stella', { x: 6, y: 22 }, 'Stella'),
   createMorganNPC('debug_morgan', { x: 10, y: 22 }, 'Morgan'),
+
+  // Row 5 continued: Forest creatures
+  createMushraNPC('debug_mushra', { x: 14, y: 22 }, 'Mushra'),
+  createDeerNPC('debug_deer', { x: 18, y: 22 }, 'Deer'),
+
+  // Row 6: Puffle & Suffle duo (always together!)
+  createPuffleNPC('debug_puffle', { x: 6, y: 26 }, 'Puffle'),
+  createSuffleNPC('debug_suffle', { x: 8, y: 26 }, 'Suffle'),
 ];
 
 export const debugNPCs: MapDefinition = {
