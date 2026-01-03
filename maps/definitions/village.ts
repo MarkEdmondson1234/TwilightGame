@@ -121,7 +121,7 @@ export const village: MapDefinition = {
       label: 'To House',
     },
     {
-      fromPosition: { x: 11.5, y: 12 }, // Shop building (next to fox)
+      fromPosition: { x: 11.5, y: 12.5 }, // Shop building (next to fox)
       tileType: TileType.SHOP,
       toMapId: 'shop',
       toPosition: { x: 10, y: 8 }, // Center of walkable floor in shop (19x11 grid)
