@@ -1789,6 +1789,14 @@ const App: React.FC = () => {
                         setDialogueMode('static');
                     }}
                     onSwitchToStatic={() => setDialogueMode('static')}
+                    onSendToBed={() => {
+                        // Close dialogue and send player to their bedroom
+                        setActiveNPC(null);
+                        setDialogueMode('static');
+                        // Transition to bedroom (home_upstairs) - spawn near the bed
+                        handleMapTransition('home_upstairs', { x: 5, y: 5 });
+                        showToast('Sent to bed without supper!', 'warning');
+                    }}
                 />
             )}
             {showDevTools && (

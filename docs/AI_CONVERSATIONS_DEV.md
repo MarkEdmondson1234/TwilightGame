@@ -209,7 +209,7 @@ In `App.tsx`:
 
 ## Cost Estimation
 
-Using Claude 3.5 Haiku (as of January 2025):
+Using Claude 4.5 Haiku (as of January 2025):
 - Input: $0.80 per million tokens
 - Output: $4.00 per million tokens
 

@@ -38,6 +38,9 @@ export const Z_SKY_DECORATIONS = 5;
 /** Shadow layer (shadows beneath sprites, above tiles) */
 export const Z_SHADOWS = 10;
 
+/** Ground-level decorations (grass tufts, ferns - above shadows, below furniture) */
+export const Z_GROUND_DECORATION = 25;
+
 /** Background sprites (beds, sofas - behind player) */
 export const Z_SPRITE_BACKGROUND = 50;
 

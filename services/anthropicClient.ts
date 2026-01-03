@@ -10,10 +10,48 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-const HAIKU_MODEL = 'claude-3-5-haiku-20241022';
-const MAX_TOKENS = 150; // Keep responses short
+const HAIKU_MODEL = 'claude-haiku-4-5-20251001';
+const MAX_TOKENS = 400; // Structured JSON output
 const STORAGE_KEY = 'twilight_anthropic_api_key';
+const STRUCTURED_OUTPUTS_BETA = 'structured-outputs-2025-11-13';
 
+/**
+ * NPC emotion states for expression changes during dialogue
+ */
+export type NPCEmotion =
+  | 'neutral'
+  | 'happy'
+  | 'sad'
+  | 'surprised'
+  | 'angry'
+  | 'thoughtful'
+  | 'worried'
+  | 'excited'
+  | 'embarrassed'
+  | 'loving';
+
+/**
+ * Structured AI response with moderation, emotions, and actions
+ */
+export interface StructuredAIResponse {
+  // Content moderation (0-10 scale)
+  moderationScore: number;         // 0 = perfectly fine, 10 = extremely inappropriate
+  moderationReason?: string;       // Why the score was given (for inappropriate content)
+  shouldSendToBed: boolean;        // True if player was rude enough to warrant consequences
+
+  // NPC response components
+  dialogue: string;                // The spoken text (without action markers)
+  action?: string;                 // Physical action like "stirs the cauldron"
+  emotion: NPCEmotion;             // Current emotional state for expression
+
+  // Response options for player
+  suggestions: string[];           // 2-4 suggested follow-up responses
+
+  // Error handling
+  error?: string;
+}
+
+// Legacy interface for backward compatibility
 interface AIResponse {
   text: string;                    // NPC's response
   suggestions: string[];           // 2-4 suggested player responses
@@ -162,4 +200,141 @@ IMPORTANT: Always include one option that gracefully ends the conversation (e.g.
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
+}
+
+/**
+ * JSON Schema for structured NPC response output
+ * Used with Anthropic's native structured outputs feature
+ */
+const NPC_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    moderationScore: {
+      type: 'integer',
+      description: 'Rate the PLAYER message appropriateness: 0-2 polite, 3-4 slightly rude, 5-6 noticeably rude, 7-8 very rude/inappropriate for children, 9-10 extremely inappropriate (swearing, threats)',
+    },
+    moderationReason: {
+      type: 'string',
+      description: 'Brief explanation if moderationScore >= 5, otherwise null',
+    },
+    shouldSendToBed: {
+      type: 'boolean',
+      description: 'True ONLY if moderationScore >= 7. If true, dialogue should be a brief scolding.',
+    },
+    dialogue: {
+      type: 'string',
+      description: 'ONLY your spoken words - no actions, no asterisks, no *gestures*. Just what you say out loud.',
+    },
+    action: {
+      type: 'string',
+      description: 'Optional physical gesture (displayed separately). No asterisks needed, e.g. "strokes beard thoughtfully", "stirs the cauldron". Null if no action.',
+    },
+    emotion: {
+      type: 'string',
+      enum: ['neutral', 'happy', 'sad', 'surprised', 'angry', 'thoughtful', 'worried', 'excited', 'embarrassed', 'loving'],
+      description: 'Your current emotional state for expression display',
+    },
+    suggestions: {
+      type: 'array',
+      items: { type: 'string' },
+      description: '2-4 natural follow-up responses the player might say. Always include one farewell option.',
+    },
+  },
+  required: ['moderationScore', 'shouldSendToBed', 'dialogue', 'emotion', 'suggestions'],
+  additionalProperties: false,
+} as const;
+
+/**
+ * Default fallback response when AI fails
+ */
+function getDefaultStructuredResponse(): StructuredAIResponse {
+  return {
+    moderationScore: 0,
+    shouldSendToBed: false,
+    dialogue: "Hmm? I lost my train of thought. What were we discussing?",
+    emotion: 'neutral',
+    suggestions: ["Tell me about yourself", "What do you do here?", "I must go"],
+  };
+}
+
+/**
+ * Generate AI dialogue with native structured output
+ * Uses Anthropic's structured outputs beta for guaranteed JSON schema compliance
+ */
+export async function generateStructuredResponse(
+  systemPrompt: string,
+  conversationHistory: { role: 'user' | 'assistant'; content: string }[],
+  userMessage: string
+): Promise<StructuredAIResponse> {
+  if (!client) {
+    return { ...getDefaultStructuredResponse(), error: 'AI not available' };
+  }
+
+  try {
+    const messages = [
+      ...conversationHistory,
+      { role: 'user' as const, content: userMessage },
+    ];
+
+    // Use beta API with native structured output
+    const response = await client.beta.messages.create({
+      model: HAIKU_MODEL,
+      max_tokens: MAX_TOKENS,
+      betas: [STRUCTURED_OUTPUTS_BETA],
+      system: systemPrompt,
+      messages,
+      output_format: {
+        type: 'json_schema',
+        schema: NPC_RESPONSE_SCHEMA,
+      },
+    });
+
+    const textContent = response.content.find(c => c.type === 'text');
+    const fullText = textContent?.text || '';
+
+    // Parse the guaranteed-valid JSON response
+    try {
+      const parsed = JSON.parse(fullText);
+
+      // Build response (schema guarantees structure, but we still sanitize)
+      const result: StructuredAIResponse = {
+        moderationScore: Math.max(0, Math.min(10, parsed.moderationScore ?? 0)),
+        moderationReason: parsed.moderationReason || undefined,
+        shouldSendToBed: parsed.shouldSendToBed === true,
+        dialogue: parsed.dialogue || '',
+        action: parsed.action || undefined,
+        emotion: isValidEmotion(parsed.emotion) ? parsed.emotion : 'neutral',
+        suggestions: Array.isArray(parsed.suggestions)
+          ? parsed.suggestions.slice(0, 4)
+          : [],
+      };
+
+      // Ensure at least one suggestion
+      if (result.suggestions.length === 0) {
+        result.suggestions = ["Tell me more", "I should go"];
+      }
+
+      return result;
+    } catch (parseError) {
+      console.warn('[AI] Failed to parse structured response:', parseError, fullText);
+      return getDefaultStructuredResponse();
+    }
+  } catch (error) {
+    console.error('[AI] API error:', error);
+    return {
+      ...getDefaultStructuredResponse(),
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Type guard for valid emotions
+ */
+function isValidEmotion(emotion: unknown): emotion is NPCEmotion {
+  const validEmotions: NPCEmotion[] = [
+    'neutral', 'happy', 'sad', 'surprised', 'angry',
+    'thoughtful', 'worried', 'excited', 'embarrassed', 'loving'
+  ];
+  return typeof emotion === 'string' && validEmotions.includes(emotion as NPCEmotion);
 }

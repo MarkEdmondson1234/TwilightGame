@@ -13,7 +13,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { NPC } from '../types';
 import { NPCPersona, NPC_PERSONAS, buildSystemPrompt, GameContext } from '../services/dialogueService';
-import { generateResponse } from '../services/anthropicClient';
+import { generateStructuredResponse, NPCEmotion } from '../services/anthropicClient';
 import { getHistoryForAPI, addToChatHistory, getMemoriesForPrompt } from '../services/aiChatHistory';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { Z_DIALOGUE, zClass } from '../zIndex';
@@ -25,16 +25,64 @@ interface AIDialogueBoxProps {
   playerSprite: string;
   onClose: () => void;
   onSwitchToStatic: () => void;  // Return to traditional dialogue
+  onSendToBed?: () => void;      // Called when player is rude - sends them to bedroom!
 }
+
+/**
+ * Animated thinking indicator with bouncing dots
+ */
+const ThinkingIndicator: React.FC<{ npcName: string }> = ({ npcName }) => {
+  return (
+    <div
+      style={{
+        fontFamily: 'Georgia, "Times New Roman", serif',
+        fontSize: 'clamp(0.95rem, 2.2vw, 1.2rem)',
+        color: '#d4a373',
+        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '2px',
+      }}
+    >
+      <span style={{ fontStyle: 'italic' }}>*{npcName} is thinking</span>
+      <span className="thinking-dots" style={{ display: 'inline-flex', gap: '3px', marginLeft: '2px' }}>
+        <span className="thinking-dot" style={{ animationDelay: '0ms' }}>.</span>
+        <span className="thinking-dot" style={{ animationDelay: '200ms' }}>.</span>
+        <span className="thinking-dot" style={{ animationDelay: '400ms' }}>.</span>
+      </span>
+      <span style={{ fontStyle: 'italic' }}>*</span>
+      <style>{`
+        @keyframes dotBounce {
+          0%, 60%, 100% {
+            transform: translateY(0);
+            opacity: 0.4;
+          }
+          30% {
+            transform: translateY(-4px);
+            opacity: 1;
+          }
+        }
+        .thinking-dot {
+          display: inline-block;
+          animation: dotBounce 1.2s ease-in-out infinite;
+          font-weight: bold;
+        }
+      `}</style>
+    </div>
+  );
+};
 
 const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   npc,
   playerSprite,
   onClose,
   onSwitchToStatic,
+  onSendToBed,
 }) => {
   // Current NPC message and AI-generated response options
   const [npcMessage, setNpcMessage] = useState<string>('');
+  const [npcAction, setNpcAction] = useState<string | undefined>(undefined);
+  const [npcEmotion, setNpcEmotion] = useState<NPCEmotion>('neutral');
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // Conversation history for context
@@ -46,6 +94,7 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   const [inputText, setInputText] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [pendingSendToBed, setPendingSendToBed] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const persona = NPC_PERSONAS[npc.id];
@@ -100,7 +149,7 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
         ? "Hello again! (Player is returning - you've spoken before, reference past topics naturally)"
         : "Hello! (Player has just entered the conversation for the first time)";
 
-      const response = await generateResponse(
+      const response = await generateStructuredResponse(
         systemPrompt,
         persistedHistory,
         openingMessage
@@ -108,19 +157,28 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
 
       if (response.error) {
         setNpcMessage(getFallbackGreeting(persona));
+        setNpcAction(undefined);
+        setNpcEmotion('neutral');
         setSuggestions(getDefaultSuggestions(persona));
       } else {
-        setNpcMessage(response.text);
+        setNpcMessage(response.dialogue);
+        setNpcAction(response.action);
+        setNpcEmotion(response.emotion);
         setSuggestions(response.suggestions.length > 0
           ? response.suggestions
           : getDefaultSuggestions(persona));
 
-        // Save NPC's greeting to persistent history
-        addToChatHistory(npc.id, 'assistant', response.text);
-        setHistory(prev => [...prev, { role: 'assistant', content: response.text }]);
+        // Save NPC's greeting to persistent history (combine action + dialogue for history)
+        const fullResponse = response.action
+          ? `*${response.action}* ${response.dialogue}`
+          : response.dialogue;
+        addToChatHistory(npc.id, 'assistant', fullResponse);
+        setHistory(prev => [...prev, { role: 'assistant', content: fullResponse }]);
       }
     } catch (err) {
       setNpcMessage(getFallbackGreeting(persona));
+      setNpcAction(undefined);
+      setNpcEmotion('neutral');
       setSuggestions(getDefaultSuggestions(persona));
     } finally {
       setIsLoading(false);
@@ -129,7 +187,7 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
 
   // Send a message (from suggestion click or custom input)
   const sendMessage = async (message: string) => {
-    if (!message.trim() || isLoading) return;
+    if (!message.trim() || isLoading || pendingSendToBed) return;
 
     // Check if this is a farewell message (ends conversation)
     const isFarewell = isFarewellMessage(message);
@@ -150,36 +208,55 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
         systemPrompt = `${systemPrompt}\n\n${memoriesSection}`;
       }
 
-      const response = await generateResponse(systemPrompt, history, message);
+      const response = await generateStructuredResponse(systemPrompt, history, message);
 
       if (response.error) {
         setError(response.error);
         setNpcMessage(getFallbackResponse(persona));
+        setNpcAction(undefined);
+        setNpcEmotion('neutral');
         setSuggestions(getDefaultSuggestions(persona));
       } else {
-        setNpcMessage(response.text);
+        // Set NPC response with emotion and action
+        setNpcMessage(response.dialogue);
+        setNpcAction(response.action);
+        setNpcEmotion(response.emotion);
         setSuggestions(response.suggestions.length > 0
           ? response.suggestions
           : getDefaultSuggestions(persona));
 
-        // Save NPC response to persistent history
-        addToChatHistory(npc.id, 'assistant', response.text);
+        // Save NPC response to persistent history (combine action + dialogue)
+        const fullResponse = response.action
+          ? `*${response.action}* ${response.dialogue}`
+          : response.dialogue;
+        addToChatHistory(npc.id, 'assistant', fullResponse);
 
         // Update session history
         setHistory(prev => [
           ...prev,
           { role: 'user', content: message },
-          { role: 'assistant', content: response.text },
+          { role: 'assistant', content: fullResponse },
         ]);
 
-        // If farewell, close dialogue after showing response
-        if (isFarewell) {
+        // Check if AI determined player was inappropriate - send to bed!
+        if (response.shouldSendToBed && onSendToBed) {
+          console.log(`[AI] Moderation triggered: score ${response.moderationScore}, reason: ${response.moderationReason}`);
+          setPendingSendToBed(true);
+          setSuggestions([]); // No response options when being sent to bed
+          // After showing the scolding, send them to their room
+          setTimeout(() => {
+            onSendToBed();
+          }, 2500);
+        } else if (isFarewell) {
+          // If farewell, close dialogue after showing response
           setTimeout(() => onClose(), 2000);
         }
       }
     } catch (err) {
       setError('Failed to get response');
       setNpcMessage(getFallbackResponse(persona));
+      setNpcAction(undefined);
+      setNpcEmotion('neutral');
       setSuggestions(getDefaultSuggestions(persona));
     } finally {
       setIsLoading(false);
@@ -214,8 +291,76 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
     }
   }, [showCustomInput]);
 
-  // Get the NPC sprite for dialogue
-  const npcDialogueSprite = npc.dialogueExpressions?.default || npc.dialogueSprite || npc.portraitSprite || npc.sprite;
+  // Core sprite emotions artists would create (limited set)
+  // Maps AI emotions to sprite expression names to look for
+  type SpriteEmotion = 'default' | 'happy' | 'sad' | 'angry' | 'surprised';
+
+  const emotionToSprite: Record<NPCEmotion, SpriteEmotion> = {
+    neutral: 'default',
+    happy: 'happy',
+    excited: 'happy',      // Fall back to happy
+    loving: 'happy',       // Fall back to happy
+    sad: 'sad',
+    worried: 'sad',        // Fall back to sad
+    embarrassed: 'sad',    // Fall back to sad
+    angry: 'angry',
+    surprised: 'surprised',
+    thoughtful: 'default', // Fall back to default
+  };
+
+  // Alternative sprite names for each core emotion
+  const spriteAliases: Record<SpriteEmotion, string[]> = {
+    default: ['default', 'neutral'],
+    happy: ['happy', 'smile', 'joy'],
+    sad: ['sad', 'upset'],
+    angry: ['angry', 'mad'],
+    surprised: ['surprised', 'shock'],
+  };
+
+  // Get the NPC sprite for dialogue - use emotion-based sprite if available
+  const getEmotionSprite = (): string => {
+    if (npc.dialogueExpressions) {
+      // Map AI emotion to core sprite emotion, then try aliases
+      const targetEmotion = emotionToSprite[npcEmotion];
+      const aliases = spriteAliases[targetEmotion] || [];
+
+      for (const alias of aliases) {
+        if (npc.dialogueExpressions[alias]) {
+          return npc.dialogueExpressions[alias];
+        }
+      }
+      // Fall back to default
+      if (npc.dialogueExpressions.default) {
+        return npc.dialogueExpressions.default;
+      }
+    }
+    return npc.dialogueSprite || npc.portraitSprite || npc.sprite;
+  };
+
+  const npcDialogueSprite = getEmotionSprite();
+
+  // Check if we're using a non-default emotion sprite
+  const hasEmotionSprite = (() => {
+    if (!npc.dialogueExpressions) return false;
+    const targetEmotion = emotionToSprite[npcEmotion];
+    if (targetEmotion === 'default') return false; // neutral uses default, no indicator needed
+    const aliases = spriteAliases[targetEmotion] || [];
+    return aliases.some(alias => npc.dialogueExpressions?.[alias]);
+  })();
+
+  // Text labels for emotions (used when no sprite available)
+  const emotionLabels: Record<NPCEmotion, string> = {
+    neutral: 'calm',
+    happy: 'happy',
+    sad: 'sad',
+    surprised: 'surprised',
+    angry: 'upset',
+    thoughtful: 'thoughtful',
+    worried: 'worried',
+    excited: 'excited',
+    embarrassed: 'flustered',
+    loving: 'warm',
+  };
 
   return (
     <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}>
@@ -306,7 +451,7 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
 
         {/* Content overlay */}
         <div className="absolute inset-0">
-          {/* Name area */}
+          {/* Name area with emotion indicator */}
           <div
             className="absolute flex items-center justify-center"
             style={{ top: '8%', left: '10%', width: '30%', height: '22%' }}
@@ -327,23 +472,65 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
             <span className="ml-2 text-xs text-amber-600 opacity-75">AI</span>
           </div>
 
+          {/* Emotion indicator - shown when no emotion sprite available and not neutral */}
+          {!hasEmotionSprite && npcEmotion !== 'neutral' && !isLoading && (
+            <div
+              className="absolute flex items-center px-2 py-1 rounded-full"
+              style={{
+                top: '10%',
+                right: '8%',
+                background: 'rgba(60, 45, 35, 0.85)',
+                border: '1px solid rgba(180, 140, 90, 0.5)',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+              }}
+              title={`Feeling ${emotionLabels[npcEmotion]}`}
+            >
+              <span
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '0.7rem',
+                  color: '#d4a373',
+                  fontStyle: 'italic',
+                }}
+              >
+                {emotionLabels[npcEmotion]}
+              </span>
+            </div>
+          )}
+
+          {/* Action indicator - shown near portrait when NPC performs an action */}
+          {npcAction && !isLoading && (
+            <div
+              className="absolute flex items-center px-3 py-1.5 rounded-lg"
+              style={{
+                top: '22%',
+                right: '6%',
+                maxWidth: '35%',
+                background: 'rgba(60, 45, 35, 0.85)',
+                border: '1px solid rgba(180, 140, 90, 0.5)',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: 'Georgia, serif',
+                  fontSize: '0.75rem',
+                  color: '#d4a373',
+                  fontStyle: 'italic',
+                }}
+              >
+                *{npcAction}*
+              </span>
+            </div>
+          )}
+
           {/* Main text area */}
           <div
             className="absolute overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600"
-            style={{ top: '32%', left: '6%', right: '6%', height: '55%', padding: '2% 3%' }}
+            style={{ top: '32%', left: '6%', right: '6%', height: '38%', padding: '2% 3%' }}
           >
             {isLoading ? (
-              <p
-                className="animate-pulse"
-                style={{
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                  fontSize: 'clamp(0.95rem, 2.2vw, 1.2rem)',
-                  color: '#d4a373',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                }}
-              >
-                {npc.name} is thinking...
-              </p>
+              <ThinkingIndicator npcName={npc.name} />
             ) : (
               <div
                 className="leading-relaxed ai-dialogue-content"
@@ -357,7 +544,7 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
               >
                 <ReactMarkdown
                   components={{
-                    // Render emphasis (italics) with warm amber colour for *actions*
+                    // Render emphasis (italics) with warm amber colour
                     em: ({ children }) => (
                       <em style={{ color: '#d4a373', fontStyle: 'italic' }}>{children}</em>
                     ),

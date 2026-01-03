@@ -26,7 +26,7 @@ import { selectVariant } from '../spriteVariantUtils';
 import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
-import { Z_SPRITE_FOREGROUND, Z_SPRITE_BACKGROUND } from '../../zIndex';
+import { Z_SPRITE_FOREGROUND, Z_SPRITE_BACKGROUND, Z_GROUND_DECORATION } from '../../zIndex';
 
 export class SpriteLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
@@ -193,8 +193,18 @@ export class SpriteLayer extends PixiLayer {
       sprite = new PIXI.Sprite(texture);
       sprite.anchor.set(0, 0); // Top-left anchor for tile alignment
 
-      // Set z-index based on layer
-      sprite.zIndex = this.isForeground ? Z_SPRITE_FOREGROUND : Z_SPRITE_BACKGROUND;
+      // Set z-index based on layer and sprite type
+      // Ground decorations (tufts, ferns) use lower z-index to render below furniture
+      const isGroundDecoration = metadata.tileType === TileType.TUFT ||
+                                  metadata.tileType === TileType.FERN ||
+                                  metadata.tileType === TileType.TUFT_SPARSE;
+      if (this.isForeground) {
+        sprite.zIndex = Z_SPRITE_FOREGROUND;
+      } else if (isGroundDecoration) {
+        sprite.zIndex = Z_GROUND_DECORATION;
+      } else {
+        sprite.zIndex = Z_SPRITE_BACKGROUND;
+      }
 
       this.container.addChild(sprite);
       this.sprites.set(key, sprite);
