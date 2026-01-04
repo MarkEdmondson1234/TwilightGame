@@ -40,20 +40,20 @@ export interface GameState {
   lastKnownTime?: GameTime;
 
   // Exploration depth
-  forestDepth: number;  // How deep into the forest
-  caveDepth: number;    // How deep into the cave
+  forestDepth: number; // How deep into the forest
+  caveDepth: number; // How deep into the cave
 
   // Player location (for persistence across sessions)
   player: {
     currentMapId: string;
     position: { x: number; y: number };
-    currentMapSeed?: number;  // For regenerating random maps
+    currentMapSeed?: number; // For regenerating random maps
   };
 
   // Inventory (managed by InventoryManager)
   inventory: {
-    items: { itemId: string; quantity: number }[];  // Stackable items
-    tools: string[];  // Owned tools (IDs)
+    items: { itemId: string; quantity: number }[]; // Stackable items
+    tools: string[]; // Owned tools (IDs)
   };
 
   // Farming (plots are now managed by FarmManager and persisted here)
@@ -65,7 +65,7 @@ export interface GameState {
 
   // Crafting
   crafting: {
-    unlockedRecipes: string[];  // Recipe IDs
+    unlockedRecipes: string[]; // Recipe IDs
     materials: {
       [materialId: string]: number;
     };
@@ -74,13 +74,13 @@ export interface GameState {
   // Player stats
   stats: {
     gamesPlayed: number;
-    totalPlayTime: number;  // in seconds
+    totalPlayTime: number; // in seconds
     mushroomsCollected: number;
   };
 
   // Custom color palette (for user-customized colors)
   customColors?: {
-    [colorName: string]: string;  // colorName -> hex value
+    [colorName: string]: string; // colorName -> hex value
   };
 
   // Custom color schemes (for user-modified map color schemes)
@@ -112,30 +112,39 @@ export interface GameState {
   cooking: {
     recipeBookUnlocked: boolean; // Whether player has talked to Mum to learn cooking
     unlockedRecipes: string[];
-    recipeProgress: Record<string, {
-      recipeId: string;
-      timesCooked: number;
-      isMastered: boolean;
-      unlockedAt: number;
-    }>;
+    recipeProgress: Record<
+      string,
+      {
+        recipeId: string;
+        timesCooked: number;
+        isMastered: boolean;
+        unlockedAt: number;
+      }
+    >;
   };
 
   // Status effects
   statusEffects: {
-    feelingSick: boolean;  // Prevents leaving village, acquired from eating terrible food
+    feelingSick: boolean; // Prevents leaving village, acquired from eating terrible food
   };
 
   // Watering can state
   wateringCan: {
-    currentLevel: number;  // Current water uses remaining (0 = empty)
+    currentLevel: number; // Current water uses remaining (0 = empty)
   };
 
   // Daily NPC resource collection tracking (e.g., milk from cow)
   dailyResourceCollections: {
     [npcId: string]: {
-      lastCollectedDay: number;  // Game day of last collection
-      collectionsToday: number;   // Number of collections made today
+      lastCollectedDay: number; // Game day of last collection
+      collectionsToday: number; // Number of collections made today
     };
+  };
+
+  // Forage cooldown tracking - prevents infinite seed gathering
+  // Key format: "mapId:x,y" -> timestamp of last forage
+  forageCooldowns: {
+    [tileKey: string]: number; // Timestamp when tile was last foraged
   };
 }
 
@@ -176,8 +185,23 @@ class GameStateManager {
 
         // Validate character has all required fields (in case of partial old data)
         if (parsed.selectedCharacter) {
-          const requiredFields = ['characterId', 'name', 'skin', 'hairStyle', 'hairColor', 'eyeColor', 'clothesStyle', 'clothesColor', 'shoesStyle', 'shoesColor', 'glasses', 'weapon'];
-          const hasAllFields = requiredFields.every(field => parsed.selectedCharacter[field] !== undefined);
+          const requiredFields = [
+            'characterId',
+            'name',
+            'skin',
+            'hairStyle',
+            'hairColor',
+            'eyeColor',
+            'clothesStyle',
+            'clothesColor',
+            'shoesStyle',
+            'shoesColor',
+            'glasses',
+            'weapon',
+          ];
+          const hasAllFields = requiredFields.every(
+            (field) => parsed.selectedCharacter[field] !== undefined
+          );
 
           if (!hasAllFields) {
             console.log('[GameState] Character data incomplete - resetting to force re-creation');
@@ -227,9 +251,15 @@ class GameStateManager {
         }
 
         // Ensure starter seeds and ingredients exist
-        const hasRadishSeeds = parsed.inventory.items.some((item: { itemId: string }) => item.itemId === 'seed_radish');
-        const hasTeaLeaves = parsed.inventory.items.some((item: { itemId: string }) => item.itemId === 'tea_leaves');
-        const hasWater = parsed.inventory.items.some((item: { itemId: string }) => item.itemId === 'water');
+        const hasRadishSeeds = parsed.inventory.items.some(
+          (item: { itemId: string }) => item.itemId === 'seed_radish'
+        );
+        const hasTeaLeaves = parsed.inventory.items.some(
+          (item: { itemId: string }) => item.itemId === 'tea_leaves'
+        );
+        const hasWater = parsed.inventory.items.some(
+          (item: { itemId: string }) => item.itemId === 'water'
+        );
 
         if (!hasRadishSeeds || !hasTeaLeaves || !hasWater) {
           console.log('[GameState] Migrating old save data - adding starter items');
@@ -280,7 +310,11 @@ class GameStateManager {
         // Migrate old save data that doesn't have cooking
         if (!parsed.cooking) {
           console.log('[GameState] Migrating old save data - adding cooking');
-          parsed.cooking = { recipeBookUnlocked: false, unlockedRecipes: ['tea'], recipeProgress: {} }; // Tea is always unlocked
+          parsed.cooking = {
+            recipeBookUnlocked: false,
+            unlockedRecipes: ['tea'],
+            recipeProgress: {},
+          }; // Tea is always unlocked
         } else {
           // Migrate old cooking data that doesn't have recipeBookUnlocked
           if (parsed.cooking.recipeBookUnlocked === undefined) {
@@ -310,6 +344,12 @@ class GameStateManager {
         if (!parsed.wateringCan) {
           console.log('[GameState] Migrating old save data - adding watering can');
           parsed.wateringCan = { currentLevel: 10 }; // Start with full water can
+        }
+
+        // Migrate old save data that doesn't have forage cooldowns
+        if (!parsed.forageCooldowns) {
+          console.log('[GameState] Migrating old save data - adding forage cooldowns');
+          parsed.forageCooldowns = {};
         }
 
         return parsed;
@@ -366,9 +406,10 @@ class GameStateManager {
         feelingSick: false,
       },
       wateringCan: {
-        currentLevel: 10,  // Start with full water can
+        currentLevel: 10, // Start with full water can
       },
       dailyResourceCollections: {},
+      forageCooldowns: {},
     };
   }
 
@@ -395,7 +436,7 @@ class GameStateManager {
    * Notify all listeners of state change
    */
   private notify(): void {
-    this.listeners.forEach(listener => listener(this.state));
+    this.listeners.forEach((listener) => listener(this.state));
     this.saveState();
   }
 
@@ -651,7 +692,9 @@ class GameStateManager {
   }
 
   // Weather management
-  setWeather(weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'): void {
+  setWeather(
+    weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
+  ): void {
     this.state.weather = weather;
     this.notify();
     console.log(`[GameState] Weather set to: ${weather}`);
@@ -742,12 +785,15 @@ class GameStateManager {
   saveCookingState(cooking: {
     recipeBookUnlocked: boolean;
     unlockedRecipes: string[];
-    recipeProgress: Record<string, {
-      recipeId: string;
-      timesCooked: number;
-      isMastered: boolean;
-      unlockedAt: number;
-    }>;
+    recipeProgress: Record<
+      string,
+      {
+        recipeId: string;
+        timesCooked: number;
+        isMastered: boolean;
+        unlockedAt: number;
+      }
+    >;
   }): void {
     this.state.cooking = cooking;
     this.notify();
@@ -756,12 +802,15 @@ class GameStateManager {
   loadCookingState(): {
     recipeBookUnlocked: boolean;
     unlockedRecipes: string[];
-    recipeProgress: Record<string, {
-      recipeId: string;
-      timesCooked: number;
-      isMastered: boolean;
-      unlockedAt: number;
-    }>;
+    recipeProgress: Record<
+      string,
+      {
+        recipeId: string;
+        timesCooked: number;
+        isMastered: boolean;
+        unlockedAt: number;
+      }
+    >;
   } | null {
     return this.state.cooking || null;
   }
@@ -877,6 +926,7 @@ class GameStateManager {
       statusEffects: { feelingSick: false },
       wateringCan: { currentLevel: 10 },
       dailyResourceCollections: {},
+      forageCooldowns: {},
     };
     console.log('[GameState] State reset');
     this.notify();
@@ -896,14 +946,14 @@ class GameStateManager {
    * Get all placed items for a specific map
    */
   getPlacedItems(mapId: string): PlacedItem[] {
-    return this.state.placedItems.filter(item => item.mapId === mapId);
+    return this.state.placedItems.filter((item) => item.mapId === mapId);
   }
 
   /**
    * Remove a placed item by ID
    */
   removePlacedItem(itemId: string): void {
-    this.state.placedItems = this.state.placedItems.filter(item => item.id !== itemId);
+    this.state.placedItems = this.state.placedItems.filter((item) => item.id !== itemId);
     this.notify();
   }
 
@@ -915,7 +965,9 @@ class GameStateManager {
     const initialCount = this.state.placedItems.length;
     const currentTime = Date.now();
 
-    this.state.placedItems = this.state.placedItems.filter(item => !shouldDecay(item, currentTime));
+    this.state.placedItems = this.state.placedItems.filter(
+      (item) => !shouldDecay(item, currentTime)
+    );
 
     const removedCount = initialCount - this.state.placedItems.length;
 
@@ -984,6 +1036,117 @@ class GameStateManager {
 
     this.saveState();
     this.notify();
+  }
+
+  // === Forage Cooldown Methods ===
+
+  /**
+   * Generate a unique key for a forage tile position
+   * @param mapId The map ID
+   * @param x Tile X coordinate
+   * @param y Tile Y coordinate
+   * @returns Unique tile key in format "mapId:x,y"
+   */
+  private getForageTileKey(mapId: string, x: number, y: number): string {
+    return `${mapId}:${x},${y}`;
+  }
+
+  /**
+   * Check if a tile is on forage cooldown
+   * @param mapId The map ID
+   * @param x Tile X coordinate
+   * @param y Tile Y coordinate
+   * @param cooldownMs Cooldown duration in milliseconds
+   * @returns true if tile is still on cooldown, false if ready to forage
+   */
+  isForageTileOnCooldown(mapId: string, x: number, y: number, cooldownMs: number): boolean {
+    // Migrate old saves
+    if (!this.state.forageCooldowns) {
+      this.state.forageCooldowns = {};
+    }
+
+    const key = this.getForageTileKey(mapId, x, y);
+    const lastForageTime = this.state.forageCooldowns[key];
+
+    if (!lastForageTime) {
+      return false; // Never foraged, not on cooldown
+    }
+
+    const now = Date.now();
+    return now - lastForageTime < cooldownMs;
+  }
+
+  /**
+   * Get remaining cooldown time for a tile
+   * @param mapId The map ID
+   * @param x Tile X coordinate
+   * @param y Tile Y coordinate
+   * @param cooldownMs Cooldown duration in milliseconds
+   * @returns Remaining cooldown in milliseconds (0 if ready)
+   */
+  getForageCooldownRemaining(mapId: string, x: number, y: number, cooldownMs: number): number {
+    // Migrate old saves
+    if (!this.state.forageCooldowns) {
+      this.state.forageCooldowns = {};
+    }
+
+    const key = this.getForageTileKey(mapId, x, y);
+    const lastForageTime = this.state.forageCooldowns[key];
+
+    if (!lastForageTime) {
+      return 0;
+    }
+
+    const now = Date.now();
+    const elapsed = now - lastForageTime;
+    return Math.max(0, cooldownMs - elapsed);
+  }
+
+  /**
+   * Record that a tile was foraged (starts cooldown)
+   * @param mapId The map ID
+   * @param x Tile X coordinate
+   * @param y Tile Y coordinate
+   */
+  recordForage(mapId: string, x: number, y: number): void {
+    // Migrate old saves
+    if (!this.state.forageCooldowns) {
+      this.state.forageCooldowns = {};
+    }
+
+    const key = this.getForageTileKey(mapId, x, y);
+    this.state.forageCooldowns[key] = Date.now();
+
+    this.saveState();
+    // Don't notify() here to avoid unnecessary re-renders
+  }
+
+  /**
+   * Clean up expired cooldowns to prevent state bloat
+   * Call periodically (e.g., on map transition)
+   * @param cooldownMs Cooldown duration - entries older than this are removed
+   */
+  cleanupExpiredForageCooldowns(cooldownMs: number): void {
+    if (!this.state.forageCooldowns) {
+      return;
+    }
+
+    const now = Date.now();
+    const keysToRemove: string[] = [];
+
+    for (const [key, timestamp] of Object.entries(this.state.forageCooldowns)) {
+      if (now - timestamp >= cooldownMs) {
+        keysToRemove.push(key);
+      }
+    }
+
+    if (keysToRemove.length > 0) {
+      for (const key of keysToRemove) {
+        delete this.state.forageCooldowns[key];
+      }
+      this.saveState();
+      console.log(`[GameState] Cleaned up ${keysToRemove.length} expired forage cooldowns`);
+    }
   }
 
   exportState(): string {

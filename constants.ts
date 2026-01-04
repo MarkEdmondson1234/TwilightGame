@@ -21,9 +21,9 @@ export const USE_SPRITE_SHADOWS = true;
  * All flags are automatically disabled in production builds.
  */
 export const DEBUG = {
-  FARM: import.meta.env.DEV && false,    // Farm operations (till, plant, water, harvest)
-  NPC: import.meta.env.DEV && false,     // NPC movement and interactions
-  MAP: import.meta.env.DEV && false,     // Map transitions and loading
+  FARM: import.meta.env.DEV && false, // Farm operations (till, plant, water, harvest)
+  NPC: import.meta.env.DEV && false, // NPC movement and interactions
+  MAP: import.meta.env.DEV && false, // Map transitions and loading
   COLLISION: import.meta.env.DEV && false, // Collision detection
 } as const;
 
@@ -35,29 +35,32 @@ export const DEBUG = {
  */
 export const TIMING = {
   // Player animation
-  PLAYER_FRAME_MS: 150,           // Player walk cycle frame duration
-  PLAYER_SPEED: 5.0,              // Player movement speed (tiles per second)
+  PLAYER_FRAME_MS: 150, // Player walk cycle frame duration
+  PLAYER_SPEED: 5.0, // Player movement speed (tiles per second)
 
   // NPC animation
-  NPC_FRAME_MS: 280,              // NPC animation frame duration
-  NPC_IDLE_DELAY_MS: 800,         // Delay before NPC returns to idle
-  NPC_MOVEMENT_SPEED: 1.0,        // NPC movement speed (tiles per second)
+  NPC_FRAME_MS: 280, // NPC animation frame duration
+  NPC_IDLE_DELAY_MS: 800, // Delay before NPC returns to idle
+  NPC_MOVEMENT_SPEED: 1.0, // NPC movement speed (tiles per second)
 
   // UI and interactions
-  DIALOGUE_DELAY_MS: 800,         // Delay for dialogue transitions
-  TOAST_DURATION_MS: 3000,        // How long toast messages display
-  MODAL_TRANSITION_MS: 200,       // Modal open/close animation
+  DIALOGUE_DELAY_MS: 800, // Delay for dialogue transitions
+  TOAST_DURATION_MS: 3000, // How long toast messages display
+  MODAL_TRANSITION_MS: 200, // Modal open/close animation
 
   // Game systems
-  MAP_TRANSITION_MS: 1000,        // Map transition fade duration
-  WEATHER_CHECK_MS: 3000,         // Interval for weather update checks
-  AUTOSAVE_INTERVAL_MS: 60000,    // Autosave frequency
-  TIME_POLL_INTERVAL_MS: 1000,    // Game time update poll rate
+  MAP_TRANSITION_MS: 1000, // Map transition fade duration
+  WEATHER_CHECK_MS: 3000, // Interval for weather update checks
+  AUTOSAVE_INTERVAL_MS: 60000, // Autosave frequency
+  TIME_POLL_INTERVAL_MS: 1000, // Game time update poll rate
 
   // Farming
-  WATER_ANIMATION_MS: 500,        // Watering can animation
-  HARVEST_ANIMATION_MS: 300,      // Harvest action animation
-  TILL_ANIMATION_MS: 400,         // Hoe tilling animation
+  WATER_ANIMATION_MS: 500, // Watering can animation
+  HARVEST_ANIMATION_MS: 300, // Harvest action animation
+  TILL_ANIMATION_MS: 400, // Hoe tilling animation
+
+  // Foraging
+  FORAGE_COOLDOWN_MS: 7200000, // 1 game day cooldown per tile (2 real hours)
 
   // Tile animations
   DEFAULT_TILE_ANIMATION_MS: 150, // Default animated tile frame rate
@@ -70,8 +73,8 @@ export const TIMING = {
  * Progress is 0-1 (0% to 100% of growth time).
  */
 export const GROWTH_THRESHOLDS = {
-  SEEDLING_TO_YOUNG: 0.33,  // 0-33% = seedling sprite
-  YOUNG_TO_ADULT: 0.66,     // 33-66% = young sprite, 66-100% = adult sprite
+  SEEDLING_TO_YOUNG: 0.33, // 0-33% = seedling sprite
+  YOUNG_TO_ADULT: 0.66, // 33-66% = young sprite, 66-100% = adult sprite
 } as const;
 
 /**
@@ -80,8 +83,8 @@ export const GROWTH_THRESHOLDS = {
  * Controls how many uses the watering can has before needing refill.
  */
 export const WATER_CAN = {
-  MAX_CAPACITY: 10,      // Maximum water uses per fill
-  USES_PER_WATER: 1,     // Water uses consumed per watering action
+  MAX_CAPACITY: 10, // Maximum water uses per fill
+  USES_PER_WATER: 1, // Water uses consumed per watering action
 } as const;
 
 // Player sprites now point to placeholder URLs. Frame 0 is idle.
@@ -122,38 +125,40 @@ export { TILE_LEGEND } from './data/tiles';
 
 // --- Procedural Map Generation ---
 
-const map: TileType[][] = Array.from({ length: MAP_HEIGHT }, () => Array(MAP_WIDTH).fill(TileType.GRASS));
+const map: TileType[][] = Array.from({ length: MAP_HEIGHT }, () =>
+  Array(MAP_WIDTH).fill(TileType.GRASS)
+);
 
 // 1. Set borders to ROCK
 for (let y = 0; y < MAP_HEIGHT; y++) {
-    for (let x = 0; x < MAP_WIDTH; x++) {
-        if (x === 0 || x === MAP_WIDTH - 1 || y === 0 || y === MAP_HEIGHT - 1) {
-            map[y][x] = TileType.ROCK;
-        }
+  for (let x = 0; x < MAP_WIDTH; x++) {
+    if (x === 0 || x === MAP_WIDTH - 1 || y === 0 || y === MAP_HEIGHT - 1) {
+      map[y][x] = TileType.ROCK;
     }
+  }
 }
 
 // 2. Function to generate patches
 function generatePatches(tileType: TileType, patchCount: number, minSize: number, maxSize: number) {
-    for (let i = 0; i < patchCount; i++) {
-        const patchWidth = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-        const patchHeight = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-        const startX = Math.floor(Math.random() * (MAP_WIDTH - patchWidth - 2)) + 1;
-        const startY = Math.floor(Math.random() * (MAP_HEIGHT - patchHeight - 2)) + 1;
+  for (let i = 0; i < patchCount; i++) {
+    const patchWidth = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+    const patchHeight = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
+    const startX = Math.floor(Math.random() * (MAP_WIDTH - patchWidth - 2)) + 1;
+    const startY = Math.floor(Math.random() * (MAP_HEIGHT - patchHeight - 2)) + 1;
 
-        for (let y = startY; y < startY + patchHeight; y++) {
-            for (let x = startX; x < startX + patchWidth; x++) {
-                if (map[y] && map[y][x] !== undefined && Math.random() > 0.25) { 
-                    map[y][x] = tileType;
-                }
-            }
+    for (let y = startY; y < startY + patchHeight; y++) {
+      for (let x = startX; x < startX + patchWidth; x++) {
+        if (map[y] && map[y][x] !== undefined && Math.random() > 0.25) {
+          map[y][x] = tileType;
         }
+      }
     }
+  }
 }
 
 // 3. Generate features
 generatePatches(TileType.WATER, 5, 4, 8); // 5 patches of water, size 4-8
-generatePatches(TileType.PATH, 8, 3, 6);  // 8 patches of path, size 3-6
+generatePatches(TileType.PATH, 8, 3, 6); // 8 patches of path, size 3-6
 generatePatches(TileType.ROCK, 20, 1, 3); // 20 small clusters of rock
 
 // 4. Place specific interactable objects (can overwrite generated tiles)
@@ -164,11 +169,11 @@ map[20][40] = TileType.MINE_ENTRANCE;
 export const PLAYER_SPAWN_X = 5;
 export const PLAYER_SPAWN_Y = 5;
 for (let y = PLAYER_SPAWN_Y - 1; y <= PLAYER_SPAWN_Y + 1; y++) {
-    for (let x = PLAYER_SPAWN_X - 1; x <= PLAYER_SPAWN_X + 1; x++) {
-        if (y >= 0 && y < MAP_HEIGHT && x >= 0 && x < MAP_WIDTH) {
-            map[y][x] = TileType.GRASS; // Clear spawn area
-        }
+  for (let x = PLAYER_SPAWN_X - 1; x <= PLAYER_SPAWN_X + 1; x++) {
+    if (y >= 0 && y < MAP_HEIGHT && x >= 0 && x < MAP_WIDTH) {
+      map[y][x] = TileType.GRASS; // Clear spawn area
     }
+  }
 }
 
 export const MAP_DATA: TileType[][] = map;
@@ -180,7 +185,6 @@ export { SPRITE_METADATA } from './data/spriteMetadata';
 
 // NOTE: ~840 lines of SPRITE_METADATA entries were removed from this file.
 // All sprite metadata is now in data/spriteMetadata.ts
-
 
 /**
  * TILE_ANIMATIONS - Environmental effects that appear near specific tile types
