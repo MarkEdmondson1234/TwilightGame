@@ -86,7 +86,7 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
             const dx = (vectorX / magnitude) * PLAYER_SPEED * deltaTime;
             const dy = (vectorY / magnitude) * PLAYER_SPEED * deltaTime;
 
-            let nextPos = { ...prevPos };
+            const nextPos = { ...prevPos };
 
             const tempXPos = { ...nextPos, x: nextPos.x + dx };
             if (!checkCollision(tempXPos)) {

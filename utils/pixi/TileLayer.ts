@@ -246,7 +246,7 @@ export class TileLayer extends PixiLayer {
     }
 
     // Determine which image array to use
-    let imageData = tileData.seasonalImages
+    const imageData = tileData.seasonalImages
       ? (seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default)
       : tileData.image;
 
@@ -317,7 +317,7 @@ export class TileLayer extends PixiLayer {
     );
 
     // Get crop sprite config if applicable
-    let cropConfig = isCropSprite ? { ...CROP_SPRITE_CONFIG[growthStage as CropGrowthStage] } : null;
+    const cropConfig = isCropSprite ? { ...CROP_SPRITE_CONFIG[growthStage as CropGrowthStage] } : null;
 
     // Apply per-crop size overrides for adult stage
     if (cropConfig && growthStage === CropGrowthStage.ADULT && cropType && CROP_ADULT_SIZES[cropType]) {

@@ -100,11 +100,12 @@ export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: numb
       case 'cave':
         newMap = generateRandomCave();
         break;
-      case 'shop':
+      case 'shop': {
         // Generate shop with exit back to the current map location from game state
         const playerLocation = gameState.getPlayerLocation();
         newMap = generateRandomShop(undefined, playerLocation.mapId, playerLocation.position);
         break;
+      }
       default:
         throw new Error(`Unknown random map type: ${type}`);
     }

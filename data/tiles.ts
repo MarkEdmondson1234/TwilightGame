@@ -872,5 +872,5 @@ type _AssertTileLegendExhaustive = Record<TileType, Omit<TileData, 'type'>> exte
   : { ERROR: 'TILE_LEGEND is missing TileType entries' };
 
 // Trigger the type check
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 const _tileLegendExhaustivenessCheck: _AssertTileLegendExhaustive = true;

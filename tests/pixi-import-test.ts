@@ -29,7 +29,7 @@ console.log('   ✓ React wrapper imports successful\n');
 // Test 3: Key features for pixel art
 console.log('🎮 Pixel Art Features:');
 console.log(`   - SCALE_MODES.NEAREST: ${(PIXI as any).SCALE_MODES?.NEAREST || 'nearest (string)'}`);
-console.log(`   - BaseTexture: ${typeof (PIXI as any).BaseTexture || 'Removed in v8 (use Texture.from)'}`);
+console.log(`   - BaseTexture: ${(PIXI as any).BaseTexture ? 'available' : 'Removed in v8 (use Texture.from)'}`);
 console.log(`   - Texture.from available: ${typeof PIXI.Texture.from === 'function' ? '✓' : '✗'}`);
 console.log('   ✓ Pixel art features available\n');
 

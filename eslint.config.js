@@ -70,6 +70,8 @@ export default tseslint.config(
       '*.config.js',
       '*.config.ts',
       'scripts/',
+      'validate-build.js',
+      'public/sw.js',
     ],
   }
 );

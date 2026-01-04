@@ -366,7 +366,7 @@ class NPCManagerClass {
           if (distance > 2.0) {
             // Move towards target
             const movement = this.NPC_SPEED * deltaTime * 1.2; // Slightly faster to catch up
-            let newPos = { ...npc.position };
+            const newPos = { ...npc.position };
 
             // Normalize direction and move
             const moveX = (dx / distance) * movement;
@@ -425,7 +425,7 @@ class NPCManagerClass {
           } else {
             // Continue moving in current direction
             const movement = this.NPC_SPEED * deltaTime;
-            let newPos = { ...npc.position };
+            const newPos = { ...npc.position };
 
             switch (state.moveDirection) {
               case Direction.Up:

@@ -276,7 +276,7 @@ class CutsceneManagerClass {
         // Manual triggers are activated explicitly by code
         return false;
 
-      case 'position':
+      case 'position': {
         if (!context.playerPosition || !context.currentMapId) {
           return false;
         }
@@ -288,11 +288,12 @@ class CutsceneManagerClass {
         const distance = Math.sqrt(dx * dx + dy * dy);
         const radius = trigger.radius || 1.0;
         return distance <= radius;
+      }
 
       case 'dialogue':
         return trigger.npcId === context.npcId && trigger.nodeId === context.nodeId;
 
-      case 'season_change':
+      case 'season_change': {
         const currentTime = TimeManager.getCurrentTime();
         const currentSeason = currentTime.season.toLowerCase();
         const triggerSeason = trigger.season.toLowerCase();
@@ -306,12 +307,14 @@ class CutsceneManagerClass {
           return true; // Season matches and not yet triggered
         }
         return false;
+      }
 
-      case 'time':
+      case 'time': {
         const gameTime = TimeManager.getCurrentTime();
         const hourMatch = gameTime.hour === trigger.hour;
         const dayMatch = trigger.day === undefined || gameTime.day === trigger.day;
         return hourMatch && dayMatch;
+      }
 
       case 'event':
         return trigger.eventId === context.eventId;

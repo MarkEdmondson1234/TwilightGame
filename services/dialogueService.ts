@@ -306,7 +306,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       your child to cook, starting with French Toast, then guiding them to specialise in
       savoury food, desserts, or baking. Your husband is an explorer, often away for long
       stretches. You always keep tea ingredients ready. The kitchen is warm and welcoming,
-      filled with the aroma of whatever you\'re preparing.`,
+      filled with the aroma of whatever you're preparing.`,
 
     quirks: [
       'Always asks if you\'ve eaten enough',
