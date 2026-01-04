@@ -60,27 +60,60 @@ class InventoryManager {
     // Get or create item instances array
     const instances = this.items.get(itemId) || [];
 
-    // Add new instances
-    for (let i = 0; i < quantity; i++) {
-      const newInstance: InventoryItem = {
-        itemId,
-        quantity: 1,
-        uses: item.maxUses, // Initialize with max uses (undefined if single-use)
-        masteryLevel, // Track mastery level for cooked food
-      };
-      instances.push(newInstance);
-    }
+    // For stackable items, try to stack with existing instances first
+    if (item.stackable) {
+      // Find an existing instance we can add to (if any)
+      const existingInstance = instances.find(inst =>
+        inst.masteryLevel === masteryLevel &&
+        (!item.maxStack || (inst.quantity || 1) < item.maxStack)
+      );
 
-    // Check max stack
-    if (item.maxStack && instances.length > item.maxStack) {
-      console.warn(`[InventoryManager] Cannot exceed max stack of ${item.maxStack} for ${itemId}`);
-      return false;
+      if (existingInstance) {
+        // Add to existing stack
+        const availableSpace = item.maxStack ? item.maxStack - (existingInstance.quantity || 1) : quantity;
+        const amountToAdd = Math.min(quantity, availableSpace);
+        existingInstance.quantity = (existingInstance.quantity || 1) + amountToAdd;
+        quantity -= amountToAdd; // Reduce remaining quantity to add
+
+        if (quantity === 0) {
+          // All items stacked successfully
+          this.items.set(itemId, instances);
+          const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
+          console.log(`[InventoryManager] +${amountToAdd} ${item.displayName}${masteryStr} (stacked, total: ${existingInstance.quantity})`);
+          this.saveToGameState();
+          return true;
+        }
+      }
+
+      // If we still have items to add, create new stack(s)
+      while (quantity > 0) {
+        const stackSize = item.maxStack ? Math.min(quantity, item.maxStack) : quantity;
+        const newInstance: InventoryItem = {
+          itemId,
+          quantity: stackSize,
+          uses: item.maxUses, // Initialize with max uses (undefined if single-use)
+          masteryLevel, // Track mastery level for cooked food
+        };
+        instances.push(newInstance);
+        quantity -= stackSize;
+      }
+    } else {
+      // Non-stackable items: create separate instances
+      for (let i = 0; i < quantity; i++) {
+        const newInstance: InventoryItem = {
+          itemId,
+          quantity: 1,
+          uses: item.maxUses,
+          masteryLevel,
+        };
+        instances.push(newInstance);
+      }
     }
 
     this.items.set(itemId, instances);
-    const totalUses = instances.reduce((sum, inst) => sum + (inst.uses || 1), 0);
+    const totalQuantity = instances.reduce((sum, inst) => sum + (inst.quantity || 1), 0);
     const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
-    console.log(`[InventoryManager] +${quantity} ${item.displayName}${masteryStr} (total: ${instances.length} items, ${totalUses} uses)`);
+    console.log(`[InventoryManager] Added ${item.displayName}${masteryStr} (total: ${totalQuantity})`);
     this.saveToGameState();
     return true;
   }
@@ -186,16 +219,45 @@ class InventoryManager {
   }
 
   /**
-   * Get all items in inventory
+   * Get all items in inventory (consolidated by itemId and masteryLevel)
    */
   getAllItems(): InventoryItem[] {
     const result: InventoryItem[] = [];
 
-    // Add all item instances
+    // Add all item instances - consolidate stackable items
     this.items.forEach((instances, itemId) => {
-      instances.forEach(instance => {
-        result.push(instance);
-      });
+      const item = getItem(itemId);
+      if (!item) return;
+
+      if (item.stackable) {
+        // Group stackable items by masteryLevel
+        const grouped = new Map<number | undefined, { quantity: number; uses?: number }>();
+
+        instances.forEach(instance => {
+          const key = instance.masteryLevel;
+          const existing = grouped.get(key);
+          if (existing) {
+            existing.quantity += (instance.quantity || 1);
+          } else {
+            grouped.set(key, { quantity: instance.quantity || 1, uses: instance.uses });
+          }
+        });
+
+        // Add consolidated entries
+        grouped.forEach((data, masteryLevel) => {
+          result.push({
+            itemId,
+            quantity: data.quantity,
+            uses: data.uses,
+            masteryLevel,
+          });
+        });
+      } else {
+        // Non-stackable items: keep separate
+        instances.forEach(instance => {
+          result.push(instance);
+        });
+      }
     });
 
     // Add tools
@@ -207,7 +269,7 @@ class InventoryManager {
   }
 
   /**
-   * Get items by category
+   * Get items by category (consolidated by itemId and masteryLevel)
    */
   getItemsByCategory(category: ItemCategory): InventoryItem[] {
     const result: InventoryItem[] = [];
@@ -222,9 +284,35 @@ class InventoryManager {
     this.items.forEach((instances, itemId) => {
       const item = getItem(itemId);
       if (item && item.category === category) {
-        instances.forEach(instance => {
-          result.push(instance);
-        });
+        if (item.stackable) {
+          // Group stackable items by masteryLevel
+          const grouped = new Map<number | undefined, { quantity: number; uses?: number }>();
+
+          instances.forEach(instance => {
+            const key = instance.masteryLevel;
+            const existing = grouped.get(key);
+            if (existing) {
+              existing.quantity += (instance.quantity || 1);
+            } else {
+              grouped.set(key, { quantity: instance.quantity || 1, uses: instance.uses });
+            }
+          });
+
+          // Add consolidated entries
+          grouped.forEach((data, masteryLevel) => {
+            result.push({
+              itemId,
+              quantity: data.quantity,
+              uses: data.uses,
+              masteryLevel,
+            });
+          });
+        } else {
+          // Non-stackable items: keep separate
+          instances.forEach(instance => {
+            result.push(instance);
+          });
+        }
       }
     });
 
