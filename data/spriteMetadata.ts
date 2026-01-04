@@ -19,7 +19,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally (extend 0.5 tiles left)
     offsetY: -0.5,   // Center vertically (extend 0.5 tiles up)
     image: tileAssets.rug_cottagecore,
-    isForeground: false,  // Render under player (it's a floor decoration)
     // No collision - rugs are walkable
     collisionWidth: 0,
     collisionHeight: 0,
@@ -33,7 +32,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,     // Center horizontally (extend 1 tile left)
     offsetY: -1,     // Center vertically (extend 1 tile up)
     image: tileAssets.cottage_bed,
-    isForeground: true,  // Render over player (it's furniture)
     // Disable all CSS transforms for clean furniture rendering
     enableFlip: false,
     enableRotation: false,
@@ -52,7 +50,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally on tile
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.bush_1,
-    isForeground: true,
     // Collision only at the base (1x1)
     collisionWidth: 1,
     collisionHeight: 1,
@@ -72,7 +69,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally on tile
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.brambles_summer,  // Seasonal images handled by TILE_LEGEND
-    isForeground: true,
     // Collision at the base (1x1)
     collisionWidth: 1,
     collisionHeight: 1,
@@ -92,7 +88,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally on tile
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.village_flowers_summer,  // Seasonal images handled by TILE_LEGEND
-    isForeground: true,  // Render in front of player
     // Collision: walkable (no collision)
     collisionWidth: 0,
     collisionHeight: 0,
@@ -112,7 +107,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally on tile
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.forest_fern3,
-    isForeground: false,  // Background layer (below player)
     // No collision - ferns are walkable ground cover
     collisionWidth: 0,
     collisionHeight: 0,
@@ -133,7 +127,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -2.5,   // Center horizontally on tile
     offsetY: -5,     // Extends 5 tiles upward
     image: tileAssets.birch_summer,  // Use birch tree (seasonal handled by TILE_LEGEND)
-    isForeground: true,
     // Collision only at the base (1x1)
     collisionWidth: 0.2,
     collisionHeight: 0.2,
@@ -153,7 +146,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,     // Center horizontally on tile
     offsetY: -3,     // Extends 3 tiles upward
     image: tileAssets.tree_big_1,
-    isForeground: true,
     // Collision only at the base (1x1)
     collisionWidth: 0.5,
     collisionHeight: 0.5,
@@ -173,7 +165,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -3,     // Offset to center cottage
     offsetY: -4,     // Extends upward from K tile
     image: tileAssets.cottage_wooden,
-    isForeground: true,
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -192,7 +183,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1.5,   // Center horizontally on tile
     offsetY: -3,     // Extends 3 tiles upward
     image: tileAssets.tree_cherry_autumn,  // Default image (will be overridden by seasonal logic)
-    isForeground: true,
     // Collision only at the base trunk (1x1)
     collisionWidth: 0.3,
     collisionHeight: 0.3,
@@ -217,7 +207,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: 0,
     offsetY: 0,
     image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
-    isForeground: true,
     collisionWidth: 1.0,
     collisionHeight: 1.0,
     enableRotation: true,
@@ -230,7 +219,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: 0,
     offsetY: 0,
     image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
-    isForeground: true,
     collisionWidth: 1.0,
     collisionHeight: 1.0,
     enableRotation: true,
@@ -243,7 +231,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: 0,
     offsetY: 0,
     image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
-    isForeground: true,
     collisionWidth: 1.0,
     collisionHeight: 1.0,
     enableRotation: true,
@@ -256,7 +243,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: 0,
     offsetY: 0,
     image: [tileAssets.water_left, tileAssets.water_right, tileAssets.water_top, tileAssets.water_bottom],
-    isForeground: true,
     collisionWidth: 1.0,
     collisionHeight: 1.0,
     enableRotation: true,
@@ -272,7 +258,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
       tileAssets.sofa_01,
       tileAssets.sofa_02,
     ],
-    isForeground: true,  // Render OVER player (allows walking behind)
     // Disable all CSS transforms for clean furniture rendering
     enableFlip: false,
     enableRotation: false,
@@ -291,7 +276,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: 0,      // Start at anchor tile
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.sofa_table,
-    isForeground: false,  // Render UNDER player (floor furniture)
     // Collision covers the table surface
     collisionWidth: 1.5,
     collisionHeight: 0.5,
@@ -305,7 +289,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,      // Start at anchor tile
     offsetY: -1,     // Extends 1 tile upward
     image: tileAssets.chimney,
-    isForeground: false,  // Render UNDER player (background wall decoration)
     // Disable all CSS transforms for clean furniture rendering
     enableFlip: false,
     enableRotation: false,
@@ -324,7 +307,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.8,      // Start at anchor tile
     offsetY: -2,     // Extends 2 tiles upward
     image: tileAssets.stove,
-    isForeground: true,  // Render OVER player (tall furniture)
     // Disable all CSS transforms for clean furniture rendering
     enableFlip: false,
     enableRotation: false,
@@ -343,7 +325,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1.2,     // Offset to center cottage
     offsetY: -1.5,     // Extends upward from K tile
     image: tileAssets.cottage_stone,
-    isForeground: true,
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -361,7 +342,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,     // Offset to center cottage
     offsetY: -4,     // Extends upward from K tile
     image: tileAssets.cottage_w_flowers,
-    isForeground: true,
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -379,7 +359,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,     // Offset to center shop
     offsetY: -4,     // Extends upward from anchor tile
     image: tileAssets.shop_spring,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -397,7 +376,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1.5,   // Center the sprite on the anchor tile
     offsetY: -1.5,     // Extends 3 tiles upward from anchor
     image: tileAssets.mine_entrance,
-    isForeground: false,  // Render in background layer
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -415,7 +393,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -2.5,   // Position sprite relative to anchor
     offsetY: -4,     // Extends upward from anchor
     image: tileAssets.garden_shed_spring,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -433,7 +410,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.6,      // Start at anchor tile
     offsetY: -0.7,     // Extends 1 tile upward
     image: tileAssets.well,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,  // Render over player (it's a structure)
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -451,7 +427,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,     // Center horizontally (extend 1 tile left)
     offsetY: -1,     // Center vertically (extend 1 tile up)
     image: tileAssets.cauldron_1,  // First frame (overridden by animationFrames)
-    isForeground: false,  // Render under player (so player can stand near it)
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
@@ -482,7 +457,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally
     offsetY: -0.5,   // Center vertically
     image: tileAssets.stump,
-    isForeground: false,  // Render under player (ground-level decoration)
     enableFlip: true,  // Horizontal flip for variety
     enableRotation: false,  // No rotation - roots go down into the earth!
     enableScale: true,  // Slight size variation
@@ -501,7 +475,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: 0,      // No offset - rock centered on tile
     offsetY: 0,
     image: [tileAssets.rock_1, tileAssets.rock_2],  // Rock variants
-    isForeground: false,  // Render under player (ground-level)
     enableFlip: true,  // Horizontal flip for variety
     enableRotation: true,  // Rotation for natural placement
     enableScale: true,  // Size variation
@@ -522,7 +495,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,   // Center horizontally
     offsetY: -0.5,   // Center vertically
     image: tileAssets.tuft_01,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: false,  // Render under player (ground decoration)
     enableFlip: true,  // Horizontal flip for variety
     enableRotation: true,  // Rotation for natural placement
     enableScale: true,  // Size variation
@@ -543,7 +515,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -2,     // Center horizontally on tile
     offsetY: -4,     // Extends 4 tiles upward
     image: tileAssets.fairy_oak_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision only at the base trunk (small area)
     collisionWidth: 0.5,
     collisionHeight: 0.5,
@@ -563,7 +534,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -2,     // Center horizontally on tile
     offsetY: -5,     // Extends 5 tiles upward
     image: tileAssets.oak_tree_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision only at the base trunk (small area)
     collisionWidth: 0.3,
     collisionHeight: 0.3,
@@ -586,7 +556,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,     // Center horizontally on tile
     offsetY: -7,       // Extends 7 tiles upward
     image: tileAssets.spruce_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision only at the base trunk (small area)
     collisionWidth: 0.4,
     collisionHeight: 0.3,
@@ -609,7 +578,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -3.5,       // Center horizontally on tile
     offsetY: -5.5,       // Extends 2 tiles upward
     image: tileAssets.willow_tree,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision only at the base trunk (small area)
     collisionWidth: 0.3,
     collisionHeight: 1.6,
@@ -632,7 +600,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,       // Center horizontally on tile
     offsetY: -2,       // Extends 2 tiles upward
     image: tileAssets.lilac_tree_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision at the base of the bush
     collisionWidth: 0.8,
     collisionHeight: 1,
@@ -652,7 +619,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -2,       // Center horizontally on tile
     offsetY: -4,       // Extends 4 tiles upward
     image: tileAssets.giant_mushroom,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision at the mushroom stem base
     collisionWidth: 0.8,
     collisionHeight: 0.8,
@@ -672,7 +638,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1.5,     // Center horizontally on tile
     offsetY: -3,       // Extends 3 tiles upward
     image: tileAssets.sambuca_bush_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision at the trunk/base
     collisionWidth: 0.8,
     collisionHeight: 0.8,
@@ -692,7 +657,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1.5,     // Center horizontally on tile
     offsetY: -6,       // Extends 6 tiles upward
     image: tileAssets.dead_spruce,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision only at the base trunk (small area)
     collisionWidth: 0.3,
     collisionHeight: 0.3,
@@ -712,7 +676,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,       // Center horizontally on tile
     offsetY: -2,       // Extends 2 tiles upward
     image: tileAssets.fir_tree_small,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // No collision - walkable underbrush
     collisionWidth: 0,
     collisionHeight: 0,
@@ -732,7 +695,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1.5,     // Center horizontally on tile
     offsetY: -3,       // Extends 3 tiles upward
     image: tileAssets.spruce_tree_small,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // Collision at the trunk base
     collisionWidth: 0.6,
     collisionHeight: 0.6,
@@ -755,7 +717,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -1,       // Center horizontally on tile
     offsetY: -2,       // Extends 2 tiles upward
     image: tileAssets.wild_iris_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // No collision - walkable decorative flower
     collisionWidth: 0,
     collisionHeight: 0,
@@ -775,7 +736,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -0.5,     // Center horizontally on tile
     offsetY: -1,       // Extends 1 tile upward
     image: tileAssets.pond_flowers_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,
     // No collision - walkable decorative flower
     collisionWidth: 0,
     collisionHeight: 0,
@@ -795,7 +755,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -5,       // Center horizontally on tile
     offsetY: -9,       // Extends 9 tiles upward
     image: tileAssets.fairy_oak_summer,  // Uses same seasonal images as regular fairy oak
-    isForeground: true,
     // Collision at the massive trunk base (large central area)
     collisionWidth: 2,
     collisionHeight: 2,
@@ -812,16 +771,15 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.WITCH_HUT,
-    spriteWidth: 16,   // 16 tiles wide (upscaled from 896px image for better visibility)
+    spriteWidth: 16,   // 16 tiles wide
     spriteHeight: 16,  // 16 tiles tall
     offsetX: -8,       // Center horizontally on anchor tile
     offsetY: -5,       // Positions door at anchor point
     image: tileAssets.witch_hut,
-    isForeground: true,
-    collisionWidth: 4,     // Slim to cover just the tree trunk/roof center
-    collisionHeight: 6,    // Upper portion only (roof and upper structure)
-    collisionOffsetX: -2,  // Center the collision on the building
-    collisionOffsetY: -2,  // Position at roof level
+    collisionWidth: 11,    // Wide base collision
+    collisionHeight: 1,    // Thin strip at bottom (player walks behind building)
+    collisionOffsetX: -5.5,
+    collisionOffsetY: 3,
     // No transforms - this is a unique magical structure
     enableFlip: false,
     enableRotation: false,
@@ -838,7 +796,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -6,       // Center horizontally on anchor tile
     offsetY: -6,       // Center vertically on anchor tile
     image: tileAssets.bear_house_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: true,  // Render in foreground layer (above grass tufts)
     collisionWidth: 8,    // Most of the house is solid (doubled from 4)
     collisionHeight: 8,   // Leave walkable area around edges (doubled from 4)
     collisionOffsetX: -2,  // Center the collision box (doubled from -1)
@@ -859,7 +816,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -6,       // Center horizontally on anchor tile
     offsetY: -6,       // Center vertically on anchor tile
     image: tileAssets.magical_lake,
-    isForeground: false,  // Render under player/NPCs (it's water)
     // Collision covers most of the lake (10x10 inner area, leaving 1-tile walkable shore)
     collisionWidth: 10,
     collisionHeight: 2,
@@ -878,7 +834,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -3,       // Center horizontally on anchor tile
     offsetY: -3,       // Center vertically on anchor tile
     image: tileAssets.forest_pond_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
-    isForeground: false,  // Render under player/NPCs (it's water)
     // Collision covers inner area (4x4), leaving walkable shore
     collisionWidth: 4,
     collisionHeight: 1,

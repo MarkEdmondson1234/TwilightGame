@@ -320,6 +320,26 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                         title="Collision Box"
                       />
                     )}
+
+                    {/* Depth line indicator (blue horizontal line) */}
+                    <div
+                      className="sprite-preview-depth-line"
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        height: '2px',
+                        background: '#4a90d9',
+                        top: (-selectedSprite.offsetY +
+                          (selectedSprite.depthLineOffset ??
+                            ((selectedSprite.collisionOffsetY ?? selectedSprite.offsetY) +
+                             (selectedSprite.collisionHeight ?? selectedSprite.spriteHeight)))) * TILE_SIZE,
+                        pointerEvents: 'none',
+                        zIndex: 15,
+                        boxShadow: '0 0 4px rgba(74, 144, 217, 0.8)',
+                      }}
+                      title="Depth Line (player sorts above/below here)"
+                    />
                   </div>
                 </div>
 
@@ -443,14 +463,6 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                       <label>
                         <input
                           type="checkbox"
-                          checked={selectedSprite.isForeground}
-                          onChange={(e) => handleFieldChange('isForeground', e.target.checked)}
-                        />
-                        Foreground (renders over player)
-                      </label>
-                      <label>
-                        <input
-                          type="checkbox"
                           checked={selectedSprite.enableFlip ?? true}
                           onChange={(e) => handleFieldChange('enableFlip', e.target.checked)}
                         />
@@ -519,6 +531,39 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                       </div>
                     </div>
                   )}
+
+                  {/* Depth Sorting */}
+                  <div className="sprite-form-section">
+                    <h4>Depth Sorting</h4>
+                    <p style={{ fontSize: '11px', color: '#888', margin: '0 0 10px 0' }}>
+                      The depth line determines where this sprite sorts with player/NPCs.
+                      Default: collision box bottom.
+                    </p>
+                    <div className="sprite-form-row">
+                      <label>
+                        Depth Line Y:
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="-20"
+                          max="20"
+                          value={selectedSprite.depthLineOffset ??
+                            ((selectedSprite.collisionOffsetY ?? selectedSprite.offsetY) +
+                             (selectedSprite.collisionHeight ?? selectedSprite.spriteHeight))}
+                          onChange={(e) => handleFieldChange('depthLineOffset', parseFloat(e.target.value))}
+                        />
+                      </label>
+                      {selectedSprite.depthLineOffset !== undefined && (
+                        <button
+                          className="sprite-editor-btn sprite-editor-btn-small"
+                          onClick={() => handleFieldChange('depthLineOffset', undefined as unknown as number)}
+                          title="Reset to default (collision box bottom)"
+                        >
+                          Reset
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </>
             ) : (

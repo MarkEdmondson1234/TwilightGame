@@ -41,7 +41,7 @@ export const Z_SHADOWS = 10;
 /** Ground-level decorations (grass tufts, ferns - above shadows, below furniture) */
 export const Z_GROUND_DECORATION = 25;
 
-/** Background sprites (beds, sofas - behind player) */
+/** Background sprites (beds, sofas - behind player) - DEPRECATED: use depth sorting */
 export const Z_SPRITE_BACKGROUND = 50;
 
 /**
@@ -51,13 +51,21 @@ export const Z_SPRITE_BACKGROUND = 50;
  */
 export const Z_INTERIOR_FOREGROUND = 65;
 
-/** Player character */
+/**
+ * Base z-index for all depth-sorted entities (player, NPCs, sprites)
+ * Actual z-index = Z_DEPTH_SORTED_BASE + floor(feetY * 10)
+ * This gives sub-tile precision with 10 z-levels per tile row
+ * Range: 100-599 (supports maps up to 50 tiles tall)
+ */
+export const Z_DEPTH_SORTED_BASE = 100;
+
+/** Player character - DEPRECATED: now uses Z_DEPTH_SORTED_BASE + feetY */
 export const Z_PLAYER = 100;
 
 /** Placed items (food, dropped objects - above player) */
 export const Z_PLACED_ITEMS = 150;
 
-/** Foreground sprites (trees, buildings - in front of player) */
+/** Foreground sprites (trees, buildings - in front of player) - DEPRECATED: use depth sorting */
 export const Z_SPRITE_FOREGROUND = 200;
 
 /** Foreground parallax decorations (edge trees that frame the screen) */

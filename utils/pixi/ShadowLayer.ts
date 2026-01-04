@@ -188,8 +188,8 @@ export class ShadowLayer extends PixiLayer {
     // Track rendered shadows
     const renderedKeys = new Set<string>();
 
-    // Calculate scan area with margin for large foreground sprites
-    const margin = calculateSpriteMargin(metadataCache.maxForegroundSize);
+    // Calculate scan area with margin for large sprites
+    const margin = calculateSpriteMargin(metadataCache.maxSpriteSize);
     const bounds = calculateScanBounds(visibleRange, map.width, map.height, margin);
 
     for (let y = bounds.startY; y <= bounds.endY; y++) {
@@ -197,8 +197,8 @@ export class ShadowLayer extends PixiLayer {
         const tileData = getTileData(x, y);
         if (!tileData) continue;
 
-        // Only render shadows for foreground sprites
-        const spriteMetadata = metadataCache.getForegroundMetadata(tileData.type);
+        // Only render shadows for multi-tile sprites
+        const spriteMetadata = metadataCache.getMetadata(tileData.type);
         if (!spriteMetadata) continue;
 
         const key = `${x},${y}`;

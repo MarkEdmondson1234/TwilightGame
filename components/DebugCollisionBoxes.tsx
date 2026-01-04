@@ -72,6 +72,11 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, curr
                     const collisionLeft = x + collisionOffsetX;
                     const collisionTop = y + collisionOffsetY;
 
+                    // Calculate depth line Y position (same formula as SpriteLayer)
+                    const depthLineY = spriteMetadata.depthLineOffset !== undefined
+                        ? y + spriteMetadata.depthLineOffset
+                        : y + collisionOffsetY + collisionHeight;
+
                     return (
                         <React.Fragment key={`collision-${x}-${y}`}>
                             {/* Collision Box */}
@@ -109,6 +114,23 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, curr
                                 {/* Label */}
                                 <div className="absolute top-4 left-4 text-blue-500 font-bold text-xs bg-white px-1 whitespace-nowrap">
                                     Anchor (0,0)
+                                </div>
+                            </div>
+                            {/* Depth Line - horizontal line showing where player sorts */}
+                            <div
+                                className="absolute pointer-events-none"
+                                style={{
+                                    left: collisionLeft * TILE_SIZE,
+                                    top: depthLineY * TILE_SIZE - 2,
+                                    width: collisionWidth * TILE_SIZE,
+                                    height: 4,
+                                    backgroundColor: '#4a90d9',
+                                    boxShadow: '0 0 6px rgba(74, 144, 217, 0.8)',
+                                    zIndex: 502, // Above anchor points
+                                }}
+                            >
+                                <div className="absolute -top-5 left-0 text-blue-400 font-bold text-xs bg-white/90 px-1 whitespace-nowrap">
+                                    Depth Line (Y={depthLineY.toFixed(1)})
                                 </div>
                             </div>
                         </React.Fragment>

@@ -167,8 +167,6 @@ class SpriteMetadataOverridesManager {
       lines.push(`  image: ${this.formatImagePath(metadata.image)},`);
     }
 
-    lines.push(`  isForeground: ${metadata.isForeground},`);
-
     // Optional collision fields
     if (metadata.collisionWidth !== undefined) {
       lines.push(`  collisionWidth: ${metadata.collisionWidth},`);
@@ -207,6 +205,25 @@ class SpriteMetadataOverridesManager {
     }
     if (metadata.rotationMode) {
       lines.push(`  rotationMode: '${metadata.rotationMode}',`);
+    }
+
+    // Depth sorting
+    if (metadata.depthLineOffset !== undefined) {
+      lines.push(`  depthLineOffset: ${metadata.depthLineOffset},`);
+    }
+
+    // Shadow configuration
+    if (metadata.shadowEnabled !== undefined) {
+      lines.push(`  shadowEnabled: ${metadata.shadowEnabled},`);
+    }
+    if (metadata.shadowWidthRatio !== undefined) {
+      lines.push(`  shadowWidthRatio: ${metadata.shadowWidthRatio},`);
+    }
+    if (metadata.shadowHeightRatio !== undefined) {
+      lines.push(`  shadowHeightRatio: ${metadata.shadowHeightRatio},`);
+    }
+    if (metadata.shadowOffsetY !== undefined) {
+      lines.push(`  shadowOffsetY: ${metadata.shadowOffsetY},`);
     }
 
     lines.push('},');

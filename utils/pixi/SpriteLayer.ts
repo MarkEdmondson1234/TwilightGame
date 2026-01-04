@@ -2,17 +2,17 @@
  * SpriteLayer - PixiJS-based multi-tile sprite rendering
  *
  * Handles rendering of furniture, buildings, and other multi-tile objects.
- * Supports foreground/background layering, seasonal sprites, and transforms.
+ * Uses dynamic Y-based depth sorting so sprites correctly overlap with player/NPCs.
  *
  * Features:
  * - Multi-tile sprite positioning
- * - Z-ordering (background vs foreground)
+ * - Dynamic depth sorting (Y-based z-index)
  * - Seasonal sprite variants
  * - Sprite reuse and culling
  * - Transform support (flip, rotate, scale, brightness)
  *
  * Usage:
- *   const spriteLayer = new SpriteLayer(true); // true = foreground
+ *   const spriteLayer = new SpriteLayer();
  *   app.stage.addChild(spriteLayer.getContainer());
  *   spriteLayer.renderSprites(currentMap, visibleRange, seasonKey);
  */
@@ -26,18 +26,52 @@ import { selectVariant } from '../spriteVariantUtils';
 import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
-import { Z_SPRITE_FOREGROUND, Z_SPRITE_BACKGROUND, Z_GROUND_DECORATION } from '../../zIndex';
+import { Z_DEPTH_SORTED_BASE, Z_GROUND_DECORATION } from '../../zIndex';
 
 export class SpriteLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private currentMapId: string | null = null;
-  private isForeground: boolean;
   // Animation tracking for multi-tile sprites (like cauldron)
   private animatedSprites: Map<string, { frames: string[]; speed: number }> = new Map();
+  // Shared container for depth-sorted entities (sprites, player, NPCs)
+  // When set, sprites are added here instead of this.container for cross-layer z-sorting
+  private depthContainer: PIXI.Container | null = null;
 
-  constructor(isForeground: boolean = false) {
-    super(isForeground ? Z_SPRITE_FOREGROUND : Z_SPRITE_BACKGROUND, true);
-    this.isForeground = isForeground;
+  constructor() {
+    // Use depth sorted base, with sortableChildren enabled for dynamic z-ordering
+    super(Z_DEPTH_SORTED_BASE, true);
+  }
+
+  /**
+   * Set shared depth-sorted container for cross-layer z-index sorting
+   * Sprites will be added to this container instead of the layer's own container
+   */
+  setDepthContainer(container: PIXI.Container): void {
+    this.depthContainer = container;
+  }
+
+  /**
+   * Get the target container for sprites (shared depth container or own container)
+   */
+  private getTargetContainer(): PIXI.Container {
+    return this.depthContainer ?? this.container;
+  }
+
+  /**
+   * Calculate the depth line Y position for a sprite
+   * The depth line determines where the sprite sorts relative to player/NPCs
+   * Entities with feet below this line appear in front of the sprite
+   */
+  private calculateDepthLine(anchorY: number, metadata: SpriteMetadata): number {
+    // Use explicit offset if provided
+    if (metadata.depthLineOffset !== undefined) {
+      return anchorY + metadata.depthLineOffset;
+    }
+
+    // Default: collision box bottom (where the sprite "touches the ground")
+    const collisionOffsetY = metadata.collisionOffsetY ?? metadata.offsetY;
+    const collisionHeight = metadata.collisionHeight ?? metadata.spriteHeight;
+    return anchorY + collisionOffsetY + collisionHeight;
   }
 
   /**
@@ -77,9 +111,6 @@ export class SpriteLayer extends PixiLayer {
         // Find sprite metadata for this tile type (O(1) lookup from cache)
         const spriteMetadata = metadataCache.getMetadata(tileData.type);
         if (!spriteMetadata) continue;
-
-        // Only render sprites matching this layer (foreground/background)
-        if (spriteMetadata.isForeground !== this.isForeground) continue;
 
         // Hide ferns and tufts during snowfall (creates "blanket of snow" effect)
         if (currentWeather === 'snow' && (
@@ -193,21 +224,7 @@ export class SpriteLayer extends PixiLayer {
       sprite = new PIXI.Sprite(texture);
       sprite.anchor.set(0, 0); // Top-left anchor for tile alignment
 
-      // Set z-index based on layer and sprite type
-      // Ground decorations (tufts, ferns, rocks) use lower z-index to render below furniture
-      const isGroundDecoration = metadata.tileType === TileType.TUFT ||
-                                  metadata.tileType === TileType.FERN ||
-                                  metadata.tileType === TileType.TUFT_SPARSE ||
-                                  metadata.tileType === TileType.ROCK;
-      if (this.isForeground) {
-        sprite.zIndex = Z_SPRITE_FOREGROUND;
-      } else if (isGroundDecoration) {
-        sprite.zIndex = Z_GROUND_DECORATION;
-      } else {
-        sprite.zIndex = Z_SPRITE_BACKGROUND;
-      }
-
-      this.container.addChild(sprite);
+      this.getTargetContainer().addChild(sprite);
       this.sprites.set(key, sprite);
     } else {
       // Update texture if changed
@@ -225,6 +242,21 @@ export class SpriteLayer extends PixiLayer {
     sprite.width = metadata.spriteWidth * TILE_SIZE;
     sprite.height = metadata.spriteHeight * TILE_SIZE;
 
+    // Calculate dynamic z-index based on depth line
+    // Ground decorations (tufts, ferns, rocks) stay at ground level
+    const isGroundDecoration = metadata.tileType === TileType.TUFT ||
+                                metadata.tileType === TileType.FERN ||
+                                metadata.tileType === TileType.TUFT_SPARSE ||
+                                metadata.tileType === TileType.ROCK;
+    if (isGroundDecoration) {
+      sprite.zIndex = Z_GROUND_DECORATION;
+    } else {
+      // Dynamic depth sorting: z-index based on depth line Y position
+      // Multiplied by 10 for sub-tile precision (10 z-levels per tile row)
+      const depthLineY = this.calculateDepthLine(anchorY, metadata);
+      sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(depthLineY * 10);
+    }
+
     sprite.visible = true;
   }
 
@@ -232,10 +264,16 @@ export class SpriteLayer extends PixiLayer {
    * Clear all sprites (when changing maps)
    */
   clear(): void {
-    this.sprites.forEach(sprite => sprite.destroy());
+    const container = this.getTargetContainer();
+    this.sprites.forEach(sprite => {
+      if (sprite.parent === container) {
+        container.removeChild(sprite);
+      }
+      sprite.destroy();
+    });
     this.sprites.clear();
     this.animatedSprites.clear();
-    console.log(`[SpriteLayer] Cleared all ${this.isForeground ? 'foreground' : 'background'} sprites`);
+    console.log(`[SpriteLayer] Cleared all sprites`);
   }
 
   /**

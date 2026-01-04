@@ -680,8 +680,8 @@ Multi-tile sprites (furniture, large objects) require special handling:
    - If a sprite is 1000×1000px (square), use equal dimensions like 6×6, NOT 6×5
    - Example: `cottage_small_spring.png` is square, so use `spriteWidth: 6, spriteHeight: 6` (not 6×5)
    - Stretching square images to rectangular dimensions makes them look distorted
-   - Use `isForeground: false` to avoid CSS transforms (renders in clean background layer)
    - Set collision boxes separately from visual dimensions
+   - Use `depthLineOffset` to control where player/NPCs sort relative to the sprite
 
 4. **Example Setup**:
    ```typescript
@@ -691,8 +691,8 @@ Multi-tile sprites (furniture, large objects) require special handling:
      spriteWidth: 3, spriteHeight: 2.25,  // Visual size (natural ratio)
      offsetX: 0, offsetY: -1.25,
      image: tileAssets.sofa,
-     isForeground: false,  // No CSS transforms
      collisionWidth: 3, collisionHeight: 1,  // Functional collision area
+     // depthLineOffset: optional, defaults to collision box bottom
    }
    ```
 

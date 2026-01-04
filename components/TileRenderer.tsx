@@ -90,14 +90,14 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                         imageArray = tileData.image;
                     }
 
-                    // Check if this tile has a foreground sprite (if so, don't render its own background image)
-                    const hasForegroundSprite = SPRITE_METADATA.some(s =>
-                        s.tileType === tileData.type && s.isForeground
+                    // Check if this tile has a multi-tile sprite (if so, don't render its own background image)
+                    const hasMultiTileSprite = SPRITE_METADATA.some(s =>
+                        s.tileType === tileData.type
                     );
 
                     // If this tile has a baseType (like cherry trees on grass), use base tile's visuals
                     let renderTileData = tileData;
-                    if (hasForegroundSprite && tileData.baseType !== undefined) {
+                    if (hasMultiTileSprite && tileData.baseType !== undefined) {
                         const baseTileData = getTileData(x, y, tileData.baseType);
                         if (baseTileData) {
                             renderTileData = baseTileData;
@@ -111,7 +111,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                     }
 
                     // All tiles with images use random selection now (including paths)
-                    if (imageArray && imageArray.length > 0 && (!hasForegroundSprite || tileData.baseType !== undefined)) {
+                    if (imageArray && imageArray.length > 0 && (!hasMultiTileSprite || tileData.baseType !== undefined)) {
                         const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
                         const hashValue = hash % 1;
 

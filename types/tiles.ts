@@ -48,7 +48,7 @@ export interface TileData {
     animationSpeed?: number;  // Milliseconds per frame (default: 150)
 }
 
-// Multi-tile sprite metadata for foreground rendering
+// Multi-tile sprite metadata for rendering
 export interface SpriteMetadata {
   tileType: TileType; // Which tile type triggers this sprite
   spriteWidth: number; // Width in tiles (for rendering)
@@ -56,7 +56,6 @@ export interface SpriteMetadata {
   offsetX: number; // X offset in tiles (0 = centered on tile)
   offsetY: number; // Y offset in tiles (negative = extends upward)
   image: string | string[]; // Path to sprite image, or array for random variations
-  isForeground: boolean; // If true, renders after player
   // Optional collision bounds (if different from sprite dimensions)
   collisionWidth?: number; // Width in tiles for collision (defaults to spriteWidth)
   collisionHeight?: number; // Height in tiles for collision (defaults to spriteHeight)
@@ -80,6 +79,14 @@ export interface SpriteMetadata {
   shadowWidthRatio?: number; // Shadow width as fraction of sprite width (default: 0.7)
   shadowHeightRatio?: number; // Shadow height as fraction of width (default: 0.3, use lower for tall thin sprites)
   shadowOffsetY?: number; // Extra Y offset for shadow in tiles (default: 0)
+  // Depth sorting (for Y-based sprite ordering with player/NPCs)
+  /**
+   * Y offset from anchor for depth line (in tiles)
+   * Default: calculated from collision box bottom
+   * The depth line determines where the sprite sorts relative to player/NPCs
+   * When player's feet are below this line, player appears in front of sprite
+   */
+  depthLineOffset?: number;
 }
 
 // Color scheme for a map theme

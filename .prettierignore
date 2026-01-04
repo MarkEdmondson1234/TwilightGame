@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+public/assets-optimized/
+public/assets/
+*.min.js
+*.min.css
+package-lock.json

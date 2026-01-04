@@ -21,14 +21,8 @@ class MetadataCacheImpl {
   /** Map of all sprite metadata by tile type */
   readonly spriteMetadataMap: Map<TileType, SpriteMetadata>;
 
-  /** Map of foreground-only sprite metadata */
-  readonly foregroundMetadataMap: Map<TileType, SpriteMetadata>;
-
   /** Maximum sprite dimension across all sprites (for viewport margin) */
   readonly maxSpriteSize: number;
-
-  /** Maximum sprite dimension for foreground sprites only */
-  readonly maxForegroundSize: number;
 
   constructor() {
     // Build all caches once at initialization
@@ -40,17 +34,8 @@ class MetadataCacheImpl {
       SPRITE_METADATA.map(m => [m.tileType, m])
     );
 
-    const foregroundSprites = SPRITE_METADATA.filter(m => m.isForeground);
-    this.foregroundMetadataMap = new Map(
-      foregroundSprites.map(m => [m.tileType, m])
-    );
-
     this.maxSpriteSize = SPRITE_METADATA.length > 0
       ? Math.max(...SPRITE_METADATA.map(m => Math.max(m.spriteWidth, m.spriteHeight)))
-      : 4;
-
-    this.maxForegroundSize = foregroundSprites.length > 0
-      ? Math.max(...foregroundSprites.map(m => Math.max(m.spriteWidth, m.spriteHeight)))
       : 4;
   }
 
@@ -68,14 +53,6 @@ class MetadataCacheImpl {
    */
   getMetadata(tileType: TileType): SpriteMetadata | undefined {
     return this.spriteMetadataMap.get(tileType);
-  }
-
-  /**
-   * Get foreground sprite metadata for a tile type.
-   * Returns undefined if tile type is not a foreground sprite.
-   */
-  getForegroundMetadata(tileType: TileType): SpriteMetadata | undefined {
-    return this.foregroundMetadataMap.get(tileType);
   }
 }
 

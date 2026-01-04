@@ -22,29 +22,61 @@ import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction, NPC } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
-import { Z_PLAYER } from '../../zIndex';
+import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
 import { TimeManager, TimeOfDay } from '../TimeManager';
 
 export class NPCLayer extends PixiLayer {
   private npcSprites: Map<string, PIXI.Sprite> = new Map();
   private currentTextures: Map<string, string> = new Map();
-  // NPCs with zIndexOverride below Z_PLAYER are added directly to stage for proper z-sorting
+  // NPCs with zIndexOverride below Z_DEPTH_SORTED_BASE are added directly to stage for proper z-sorting
   private stageSprites: Map<string, PIXI.Sprite> = new Map();
   private stageRef: PIXI.Container | null = null;
+  // Shared container for depth-sorted entities (sprites, player, NPCs)
+  // When set, regular NPCs are added here instead of this.container for cross-layer z-sorting
+  private depthContainer: PIXI.Container | null = null;
   // Glow effects behind NPCs
   private glowGraphics: Map<string, PIXI.Graphics> = new Map();
 
   constructor() {
-    // Base z-index same as player, individual sprites have dynamic z-index for depth sorting
-    super(Z_PLAYER, true);
+    // Base z-index for depth-sorted entities, individual sprites have dynamic z-index
+    super(Z_DEPTH_SORTED_BASE, true);
   }
 
   /**
    * Set stage reference for NPCs that need to sort with other stage elements
-   * NPCs with zIndexOverride < Z_PLAYER will be added directly to stage
+   * NPCs with zIndexOverride < Z_DEPTH_SORTED_BASE will be added directly to stage
    */
   setStage(stage: PIXI.Container): void {
     this.stageRef = stage;
+  }
+
+  /**
+   * Set shared depth-sorted container for cross-layer z-index sorting
+   * Regular NPCs will be added to this container instead of the layer's own container
+   */
+  setDepthContainer(container: PIXI.Container): void {
+    this.depthContainer = container;
+    // Move existing NPC sprites to depth container
+    for (const sprite of this.npcSprites.values()) {
+      if (sprite.parent === this.container) {
+        this.container.removeChild(sprite);
+        container.addChild(sprite);
+      }
+    }
+    // Move glow graphics to depth container
+    for (const glow of this.glowGraphics.values()) {
+      if (glow.parent === this.container) {
+        this.container.removeChild(glow);
+        container.addChild(glow);
+      }
+    }
+  }
+
+  /**
+   * Get the target container for regular NPCs (shared depth container or own container)
+   */
+  private getTargetContainer(): PIXI.Container {
+    return this.depthContainer ?? this.container;
   }
 
   /**
@@ -65,7 +97,7 @@ export class NPCLayer extends PixiLayer {
       renderedIds.add(npc.id);
 
       // Determine if this NPC should be on stage (for low z-index sorting) or in container
-      const needsStageZSort = npc.zIndexOverride !== undefined && npc.zIndexOverride < Z_PLAYER;
+      const needsStageZSort = npc.zIndexOverride !== undefined && npc.zIndexOverride < Z_DEPTH_SORTED_BASE;
       const useStage = needsStageZSort && this.stageRef !== null;
 
       // Render glow effect if NPC has one
@@ -77,7 +109,7 @@ export class NPCLayer extends PixiLayer {
           if (useStage && this.stageRef) {
             this.stageRef.addChild(glowGfx);
           } else {
-            this.container.addChild(glowGfx);
+            this.getTargetContainer().addChild(glowGfx);
           }
           this.glowGraphics.set(npc.id, glowGfx);
         }
@@ -121,7 +153,7 @@ export class NPCLayer extends PixiLayer {
 
         // Z-index: glow appears behind NPC sprite
         const feetY = npc.position.y + 0.3;
-        glowGfx.zIndex = (npc.zIndexOverride ?? (Z_PLAYER + Math.floor(feetY))) - 1;
+        glowGfx.zIndex = (npc.zIndexOverride ?? (Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10))) - 1;
         glowGfx.visible = true;
       }
 
@@ -134,7 +166,7 @@ export class NPCLayer extends PixiLayer {
           this.stageRef!.addChild(sprite);
           this.stageSprites.set(npc.id, sprite);
         } else {
-          this.container.addChild(sprite);
+          this.getTargetContainer().addChild(sprite);
           this.npcSprites.set(npc.id, sprite);
         }
       }
@@ -198,8 +230,8 @@ export class NPCLayer extends PixiLayer {
 
       // Z-index: use override if provided (for layered rooms like shop),
       // otherwise calculate based on feet Y position for proper depth sorting.
-      // Base of Z_PLAYER (100) + Y offset keeps NPCs in the 100-199 range.
-      sprite.zIndex = npc.zIndexOverride ?? (Z_PLAYER + Math.floor(feetY));
+      // Base of Z_DEPTH_SORTED_BASE + (feetY * 10) for sub-tile precision.
+      sprite.zIndex = npc.zIndexOverride ?? (Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10));
 
       // Show sprite
       sprite.visible = true;
@@ -228,7 +260,13 @@ export class NPCLayer extends PixiLayer {
    * Clear all NPC sprites (required by PixiLayer)
    */
   clear(): void {
+    const targetContainer = this.getTargetContainer();
+
+    // Clear regular NPC sprites (may be in depth container or own container)
     for (const sprite of this.npcSprites.values()) {
+      if (sprite.parent === targetContainer) {
+        targetContainer.removeChild(sprite);
+      }
       sprite.destroy();
     }
     this.npcSprites.clear();
@@ -242,8 +280,11 @@ export class NPCLayer extends PixiLayer {
     }
     this.stageSprites.clear();
 
-    // Clear glow graphics
+    // Clear glow graphics (may be in depth container or own container)
     for (const glow of this.glowGraphics.values()) {
+      if (glow.parent === targetContainer) {
+        targetContainer.removeChild(glow);
+      }
       glow.destroy();
     }
     this.glowGraphics.clear();

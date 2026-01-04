@@ -21,20 +21,47 @@ import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
-import { Z_PLAYER } from '../../zIndex';
+import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
+
+// Player feet offset from center (in tiles)
+// Used for depth sorting - entities with feet below this Y appear in front
+const PLAYER_FEET_OFFSET = 0.8;
 
 export class PlayerSprite extends PixiLayer {
   private sprite: PIXI.Sprite;
   private currentSpriteUrl: string | null = null;
+  // Shared container for depth-sorted entities (sprites, player, NPCs)
+  // When set, player sprite is added here instead of this.container for cross-layer z-sorting
+  private depthContainer: PIXI.Container | null = null;
 
   constructor() {
-    super(Z_PLAYER, true); // Above tiles, below foreground sprites
+    super(Z_DEPTH_SORTED_BASE, true); // Uses dynamic depth sorting
 
-    // Create player sprite
+    // Create player sprite (will be added to container when setDepthContainer is called)
     this.sprite = new PIXI.Sprite();
     this.sprite.anchor.set(0.5, 0.5); // Center anchor for rotation/scaling
-    this.sprite.zIndex = Z_PLAYER;
-    this.container.addChild(this.sprite);
+    this.sprite.zIndex = Z_DEPTH_SORTED_BASE; // Will be updated dynamically in update()
+    // Don't add to container here - wait for setDepthContainer or fallback in update()
+  }
+
+  /**
+   * Set shared depth-sorted container for cross-layer z-index sorting
+   * Player sprite will be added to this container instead of the layer's own container
+   */
+  setDepthContainer(container: PIXI.Container): void {
+    this.depthContainer = container;
+    // Move sprite to depth container if it's currently in this.container
+    if (this.sprite.parent === this.container) {
+      this.container.removeChild(this.sprite);
+    }
+    container.addChild(this.sprite);
+  }
+
+  /**
+   * Get the target container for the sprite (shared depth container or own container)
+   */
+  private getTargetContainer(): PIXI.Container {
+    return this.depthContainer ?? this.container;
   }
 
   /**
@@ -72,6 +99,10 @@ export class PlayerSprite extends PixiLayer {
     // Update size
     this.sprite.width = size * TILE_SIZE;
     this.sprite.height = size * TILE_SIZE;
+
+    // Update z-index for depth sorting (based on feet Y position)
+    const playerFeetY = playerPos.y + PLAYER_FEET_OFFSET;
+    this.sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(playerFeetY * 10);
 
     // Show sprite
     this.sprite.visible = true;

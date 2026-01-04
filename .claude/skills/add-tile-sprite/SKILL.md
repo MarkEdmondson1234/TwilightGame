@@ -353,7 +353,6 @@ Adding sofa variations (`sofa_01.png`, `sofa_02.png`):
        tileAssets.sofa_01,
        tileAssets.sofa_02,
      ],
-     isForeground: false,
      collisionWidth: 2.5,
      collisionHeight: 0.5,
      collisionOffsetX: 0.3,
@@ -427,7 +426,6 @@ export const tileAssets = {
   offsetX: 0,      // Start at anchor tile
   offsetY: -1,     // Extends 1 tile upward
   image: tileAssets.chimney,
-  isForeground: false,  // Render UNDER player (background wall decoration)
   // Disable all CSS transforms for clean rendering
   enableFlip: false,
   enableRotation: false,
@@ -496,7 +494,7 @@ npm run dev
 - New tile types require updates to 5 files: `types.ts`, `assets.ts`, `constants.ts` (TILE_LEGEND + SPRITE_METADATA), `gridParser.ts`, and map files
 - Grid character codes should be intuitive: `&` for chimney (looks like bricks)
 - Multi-tile sprites need `offsetY` to position correctly (negative values extend upward)
-- Always use `isForeground: false` for wall decorations (renders under player)
+- All sprites use dynamic depth sorting (z-index based on Y position)
 - Collision dimensions can differ from visual dimensions
 - Optimization is extremely effective (99.8% reduction in this case!)
 
@@ -534,7 +532,7 @@ npm run dev
 
 ### 6. Chimney/Wall Decoration Renders Wrong Layer
 **Problem:** Wall decoration appears over player instead of behind
-**Solution:** Set `isForeground: false` in SPRITE_METADATA for wall decorations
+**Solution:** Adjust `depthLineOffset` in SPRITE_METADATA to control where the sprite sorts relative to the player (lower values = renders behind)
 
 ### 7. Grid Character Not Recognized
 **Problem:** Map shows grass/default tiles instead of new sprite
@@ -579,19 +577,20 @@ Some tiles span multiple grid squares (beds, sofas, rugs, trees, etc.). These re
    - DO NOT force dimensions that distort the image
    - Example: 2732x2048 image → use 3 tiles wide × 2.25 tiles tall (preserves ~4:3 ratio)
 
-4. **Transform Configuration**:
-   - Set `isForeground: false` to render in background layer (clean rendering)
-   - Background layer avoids aggressive scale/rotate transforms for better quality
-   - Use `isForeground: true` only if the object should render over the player AND you want variation transforms
+4. **Depth Sorting**:
+   All sprites use dynamic depth sorting based on their Y position (depth line).
 
-   **Rendering Note:**
-   Multi-tile sprites are rendered by:
-   - **PixiJS** (default): `SpriteLayer.ts` (separate background/foreground layers)
-   - **DOM Fallback**: `ForegroundSprites.tsx` + `BackgroundSprites.tsx`
+   **How it works:**
+   - Sprites, player, and NPCs all share the same depth-sorted container
+   - Z-index is calculated as: `Z_DEPTH_SORTED_BASE + Math.floor(depthLineY * 10)`
+   - When player's feet are below a sprite's depth line, player appears in front
+   - When player's feet are above a sprite's depth line, player appears behind
 
-   The `isForeground` flag controls layering in both renderers:
-   - `false`: Renders under player (background objects, furniture)
-   - `true`: Renders over player (trees, tall objects)
+   **Optional `depthLineOffset`:**
+   - Controls where the depth line is relative to the sprite's anchor
+   - Default: calculated from collision box bottom
+   - Lower values = sprite renders behind player earlier
+   - Higher values = sprite renders in front of player longer
 
 5. **Collision Boxes**:
    - Set collision dimensions separately from sprite dimensions
@@ -618,7 +617,6 @@ sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href,  // Use o
   offsetX: 0,
   offsetY: -1.25,      // Extends upward from anchor
   image: tileAssets.sofa,
-  isForeground: false, // Clean rendering (no aggressive transforms)
   collisionWidth: 3,   // Functional collision area
   collisionHeight: 1,
   collisionOffsetX: 0,
@@ -652,8 +650,4 @@ const gridString = `
 - [utils/pixi/TileLayer.ts](../../../utils/pixi/TileLayer.ts) - PixiJS single-tile renderer
 - [utils/pixi/SpriteLayer.ts](../../../utils/pixi/SpriteLayer.ts) - PixiJS multi-tile sprite renderer
 - [utils/pixi/TextureManager.ts](../../../utils/pixi/TextureManager.ts) - Asset preloading and texture management
-
-### Rendering System (DOM Fallback)
-- [components/TileRenderer.tsx](../../../components/TileRenderer.tsx) - DOM single-tile renderer
-- [components/ForegroundSprites.tsx](../../../components/ForegroundSprites.tsx) - DOM foreground sprites
-- [components/BackgroundSprites.tsx](../../../components/BackgroundSprites.tsx) - DOM background sprites
+- [components/TileRenderer.tsx](../../../components/TileRenderer.tsx) - DOM single-tile renderer (fallback)

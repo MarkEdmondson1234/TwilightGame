@@ -161,7 +161,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -2.5,       // Horizontal offset from anchor point
     offsetY: -5,         // Vertical offset from anchor point
     image: tileAssets.your_building,
-    isForeground: true,  // Render in front of player (true) or behind (false)
     enableFlip: false,   // Allow horizontal flipping for variation
     enableRotation: false, // Allow rotation
     enableScale: false,  // Allow size variation
@@ -184,9 +183,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   - Negative `offsetY` makes the building extend upward from the anchor
   - Use these to center the building or position it correctly relative to the anchor
 
-- **`isForeground`**: Rendering layer
-  - `true`: Building renders in front of the player (trees, tall buildings)
-  - `false`: Building renders behind the player (low furniture, rugs)
+- **`depthLineOffset`** (optional): Controls depth sorting with player/NPCs
+  - Default: collision box bottom (player walks in front when below collision box)
+  - Adjust to control where the player appears in front vs behind the building
 
 - **`collisionWidth` / `collisionHeight`**: Functional collision area
   - Often smaller than visual size (e.g., only the base of a tall building)
@@ -358,7 +357,6 @@ Buildings use a collision system separate from their visual size. This allows ta
   offsetX: -3,
   offsetY: -4,
   image: tileAssets.cottage_wooden,
-  isForeground: true,
 
   // Collision only at the base
   collisionWidth: 3.0,   // 3 tiles wide at entrance
@@ -475,7 +473,6 @@ export enum TileType {
     autumn: tileAssets.barn_autumn,
     winter: tileAssets.barn_winter,
   }),
-  isForeground: true,
   enableFlip: false,
   enableRotation: false,
   enableScale: false,
