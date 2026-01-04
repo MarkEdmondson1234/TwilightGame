@@ -85,7 +85,8 @@ export class NPCLayer extends PixiLayer {
   async renderNPCs(
     npcs: NPC[],
     characterScale: number = 1.0,
-    gridOffset?: Position
+    gridOffset?: Position,
+    tileSize: number = TILE_SIZE // Allow override for viewport scaling
   ): Promise<void> {
     const offsetX = gridOffset?.x ?? 0;
     const offsetY = gridOffset?.y ?? 0;
@@ -97,7 +98,8 @@ export class NPCLayer extends PixiLayer {
       renderedIds.add(npc.id);
 
       // Determine if this NPC should be on stage (for low z-index sorting) or in container
-      const needsStageZSort = npc.zIndexOverride !== undefined && npc.zIndexOverride < Z_DEPTH_SORTED_BASE;
+      const needsStageZSort =
+        npc.zIndexOverride !== undefined && npc.zIndexOverride < Z_DEPTH_SORTED_BASE;
       const useStage = needsStageZSort && this.stageRef !== null;
 
       // Render glow effect if NPC has one
@@ -114,14 +116,15 @@ export class NPCLayer extends PixiLayer {
           this.glowGraphics.set(npc.id, glowGfx);
         }
 
-        // Calculate glow position and size
-        const glowX = npc.position.x * TILE_SIZE + offsetX;
-        const glowY = npc.position.y * TILE_SIZE + offsetY;
-        const glowRadius = npc.glow.radius * TILE_SIZE;
+        // Calculate glow position and size (use tileSize for viewport scaling)
+        const glowX = npc.position.x * tileSize + offsetX;
+        const glowY = npc.position.y * tileSize + offsetY;
+        const glowRadius = npc.glow.radius * tileSize;
 
         // Determine intensity based on time of day
         const currentTime = TimeManager.getCurrentTime();
-        const isNight = currentTime.timeOfDay === TimeOfDay.NIGHT || currentTime.timeOfDay === TimeOfDay.DUSK;
+        const isNight =
+          currentTime.timeOfDay === TimeOfDay.NIGHT || currentTime.timeOfDay === TimeOfDay.DUSK;
         let intensity: number;
         if (isNight && npc.glow.nightIntensity !== undefined) {
           intensity = npc.glow.nightIntensity;
@@ -153,7 +156,7 @@ export class NPCLayer extends PixiLayer {
 
         // Z-index: glow appears behind NPC sprite
         const feetY = npc.position.y + 0.3;
-        glowGfx.zIndex = (npc.zIndexOverride ?? (Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10))) - 1;
+        glowGfx.zIndex = (npc.zIndexOverride ?? Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10)) - 1;
         glowGfx.visible = true;
       }
 
@@ -189,13 +192,13 @@ export class NPCLayer extends PixiLayer {
       // NPC sprite scale (default 4.0x) * map characterScale
       const npcScale = (npc.scale || 4.0) * characterScale;
 
-      // Calculate position (center of NPC)
-      sprite.x = npc.position.x * TILE_SIZE + offsetX;
-      sprite.y = npc.position.y * TILE_SIZE + offsetY;
+      // Calculate position (center of NPC) - use tileSize for viewport scaling
+      sprite.x = npc.position.x * tileSize + offsetX;
+      sprite.y = npc.position.y * tileSize + offsetY;
 
-      // Update size
-      sprite.width = PLAYER_SIZE * npcScale * TILE_SIZE;
-      sprite.height = PLAYER_SIZE * npcScale * TILE_SIZE;
+      // Update size (use tileSize for viewport scaling)
+      sprite.width = PLAYER_SIZE * npcScale * tileSize;
+      sprite.height = PLAYER_SIZE * npcScale * tileSize;
 
       // Determine if sprite should be flipped horizontally
       // - Default: flip when facing left (sprites face right by default)
@@ -211,8 +214,10 @@ export class NPCLayer extends PixiLayer {
       }
 
       // Check for up/down directional sprite animation (flip on odd frames)
-      if ((npc.direction === Direction.Up || npc.direction === Direction.Down) &&
-          npc.animatedStates?.states[npc.animatedStates.currentState]?.directionalSprites) {
+      if (
+        (npc.direction === Direction.Up || npc.direction === Direction.Down) &&
+        npc.animatedStates?.states[npc.animatedStates.currentState]?.directionalSprites
+      ) {
         const currentFrame = npc.animatedStates.currentFrame;
         // Flip on odd frames to create 2-frame walking animation
         shouldFlip = currentFrame % 2 === 1;
@@ -231,7 +236,7 @@ export class NPCLayer extends PixiLayer {
       // Z-index: use override if provided (for layered rooms like shop),
       // otherwise calculate based on feet Y position for proper depth sorting.
       // Base of Z_DEPTH_SORTED_BASE + (feetY * 10) for sub-tile precision.
-      sprite.zIndex = npc.zIndexOverride ?? (Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10));
+      sprite.zIndex = npc.zIndexOverride ?? Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10);
 
       // Show sprite
       sprite.visible = true;

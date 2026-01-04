@@ -41,9 +41,9 @@ export type MapRenderMode = 'tiled' | 'background-image';
  * Base properties shared by all room layer types
  */
 interface BaseRoomLayer {
-  zIndex: number;             // Layer order - see zIndex.ts for constants
-  parallaxFactor?: number;    // Camera scroll multiplier (default: 1.0)
-  opacity?: number;           // 0.0 - 1.0 (default: 1.0)
+  zIndex: number; // Layer order - see zIndex.ts for constants
+  parallaxFactor?: number; // Camera scroll multiplier (default: 1.0)
+  opacity?: number; // 0.0 - 1.0 (default: 1.0)
 }
 
 /**
@@ -51,14 +51,14 @@ interface BaseRoomLayer {
  */
 export interface ImageRoomLayer extends BaseRoomLayer {
   type: 'image';
-  image: string;              // Path to image
-  offsetX?: number;           // Position offset in pixels
+  image: string; // Path to image
+  offsetX?: number; // Position offset in pixels
   offsetY?: number;
-  scale?: number;             // Scale multiplier
-  useNativeSize?: boolean;    // Use image's natural dimensions
-  width?: number;             // Override width in pixels
-  height?: number;            // Override height in pixels
-  centered?: boolean;         // Center image in viewport
+  scale?: number; // Scale multiplier
+  useNativeSize?: boolean; // Use image's natural dimensions
+  width?: number; // Override width in pixels
+  height?: number; // Override height in pixels
+  centered?: boolean; // Center image in viewport
 }
 
 /**
@@ -67,7 +67,7 @@ export interface ImageRoomLayer extends BaseRoomLayer {
  */
 export interface NPCRoomLayer extends BaseRoomLayer {
   type: 'npc';
-  npc: NPC;                   // The NPC definition (from factory function)
+  npc: NPC; // The NPC definition (from factory function)
 }
 
 /**
@@ -91,15 +91,15 @@ export type RoomLayer = ImageRoomLayer | NPCRoomLayer;
  * Creates depth by showing parallax-scrolled outside view masked by window shape
  */
 export interface WindowView {
-  x: number;                  // Window position in tiles
+  x: number; // Window position in tiles
   y: number;
-  width: number;              // Window size in tiles
+  width: number; // Window size in tiles
   height: number;
-  outsideImage?: string;      // Static image to show through window
-  outsideMapId?: string;      // Alternative: reference another map (future)
-  parallaxFactor?: number;    // How slowly the outside moves (default: 0.3 = far away)
-  tint?: number;              // Colour tint as hex (e.g., 0xAADDFF for blue sky)
-  blur?: number;              // Gaussian blur amount (0-10)
+  outsideImage?: string; // Static image to show through window
+  outsideMapId?: string; // Alternative: reference another map (future)
+  parallaxFactor?: number; // How slowly the outside moves (default: 0.3 = far away)
+  tint?: number; // Colour tint as hex (e.g., 0xAADDFF for blue sky)
+  blur?: number; // Gaussian blur amount (0-10)
 }
 
 // Map definition
@@ -117,13 +117,20 @@ export interface MapDefinition {
   hasClouds?: boolean; // Show cloud shadows (default: false, set true for outdoor areas)
 
   // Background interior system (optional)
-  renderMode?: MapRenderMode;           // Default: 'tiled'
-  layers?: RoomLayer[];                 // All layers (images + NPCs) in z-order
-  windowViews?: WindowView[];           // Windows showing outside scenes
-  sourceMapId?: string;                 // For window views: which map player came from
-  characterScale?: number;              // Scale multiplier for player/NPCs (default: 1.0)
-  gridOffset?: Position;                // Offset for grid/player/NPC rendering (pixels) - use with centered images
-  gridTileSize?: number;                // Override TILE_SIZE for this map (pixels) - useful for background-image rooms
+  renderMode?: MapRenderMode; // Default: 'tiled'
+  layers?: RoomLayer[]; // All layers (images + NPCs) in z-order
+  windowViews?: WindowView[]; // Windows showing outside scenes
+  sourceMapId?: string; // For window views: which map player came from
+  characterScale?: number; // Scale multiplier for player/NPCs (default: 1.0)
+  gridOffset?: Position; // Offset for grid/player/NPC rendering (pixels) - use with centered images
+  gridTileSize?: number; // Override TILE_SIZE for this map (pixels) - useful for background-image rooms
+
+  // Viewport-relative scaling (for background-image rooms)
+  // If set, content scales to fill the viewport while maintaining aspect ratio
+  referenceViewport?: {
+    width: number; // Viewport width the room was designed for (e.g., 1920)
+    height: number; // Viewport height the room was designed for (e.g., 1080)
+  };
 }
 
 // Simple character-based grid for child-friendly map editing

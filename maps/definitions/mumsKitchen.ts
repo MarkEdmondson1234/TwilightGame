@@ -51,11 +51,12 @@ const kitchenLayers: RoomLayer[] = [
   {
     type: 'image',
     image: '/TwilightGame/assets/rooms/home/mums_kitchen.jpeg',
-    zIndex: Z_PARALLAX_FAR,  // -100: Behind everything
+    zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
     width: 960,
     height: 540,
+    scale: 1.3, // 30% larger
     centered: true,
   },
 
@@ -63,7 +64,7 @@ const kitchenLayers: RoomLayer[] = [
   {
     type: 'npc',
     npc: mumNPC,
-    zIndex: Z_PLAYER - 1,  // 99: just behind player
+    zIndex: Z_PLAYER - 1, // 99: just behind player
   },
 
   // Player is implicitly at Z_PLAYER (100)
@@ -79,7 +80,12 @@ export const mumsKitchen: MapDefinition = {
   isRandom: false,
   spawnPoint: { x: 7, y: 6 }, // Centre of walkable area
   renderMode: 'background-image',
-  characterScale: 1.5, // Make player/NPCs larger to fit the room scale
+  characterScale: 1.8, // Make player/NPCs larger to fit the room scale (20% increase from 1.5)
+
+  // Reference viewport for responsive scaling
+  // Use a smaller reference so even laptops get slight scale-up
+  // This makes the room fill more of the screen on most devices
+  referenceViewport: { width: 1280, height: 720 },
 
   // Unified layer system - all visual elements in z-order
   layers: kitchenLayers,

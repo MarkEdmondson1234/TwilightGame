@@ -73,7 +73,8 @@ export class PlayerSprite extends PixiLayer {
     animationFrame: number,
     spriteUrl: string,
     spriteScale: number = 1,
-    gridOffset?: Position
+    gridOffset?: Position,
+    tileSize: number = TILE_SIZE // Allow override for viewport scaling
   ): Promise<void> {
     // Load texture if changed
     if (this.currentSpriteUrl !== spriteUrl) {
@@ -90,15 +91,16 @@ export class PlayerSprite extends PixiLayer {
     }
 
     // Update position (convert tile coords to pixels, add grid offset for centered rooms)
+    // Use provided tileSize for viewport-scaled rooms
     const size = PLAYER_SIZE * spriteScale;
     const offsetX = gridOffset?.x ?? 0;
     const offsetY = gridOffset?.y ?? 0;
-    this.sprite.x = playerPos.x * TILE_SIZE + offsetX;
-    this.sprite.y = playerPos.y * TILE_SIZE + offsetY;
+    this.sprite.x = playerPos.x * tileSize + offsetX;
+    this.sprite.y = playerPos.y * tileSize + offsetY;
 
-    // Update size
-    this.sprite.width = size * TILE_SIZE;
-    this.sprite.height = size * TILE_SIZE;
+    // Update size (use tileSize for viewport scaling)
+    this.sprite.width = size * tileSize;
+    this.sprite.height = size * tileSize;
 
     // Update z-index for depth sorting (based on feet Y position)
     const playerFeetY = playerPos.y + PLAYER_FEET_OFFSET;

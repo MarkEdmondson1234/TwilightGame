@@ -4,9 +4,10 @@ import { getTileData } from '../utils/mapUtils';
 import { SPRITE_METADATA, TILE_SIZE } from '../constants';
 
 interface DebugCollisionBoxesProps {
-    visible: boolean;
-    currentMap: MapDefinition;
-    gridOffset?: Position; // Offset for background-image rooms with centered layers
+  visible: boolean;
+  currentMap: MapDefinition;
+  gridOffset?: Position; // Offset for background-image rooms with centered layers
+  tileSize?: number; // Effective tile size (includes viewport scaling for background-image rooms)
 }
 
 /**
@@ -15,130 +16,138 @@ interface DebugCollisionBoxesProps {
  * - Multi-tile sprite collision boxes (red)
  * - Walkmesh grid for background-image rooms (red = solid, green = walkable)
  */
-const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({ visible, currentMap, gridOffset }) => {
-    if (!visible) return null;
+const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
+  visible,
+  currentMap,
+  gridOffset,
+  tileSize = TILE_SIZE, // Use effective tile size for viewport scaling
+}) => {
+  if (!visible) return null;
 
-    const isBackgroundImageRoom = currentMap.renderMode === 'background-image';
-    const offsetX = gridOffset?.x ?? 0;
-    const offsetY = gridOffset?.y ?? 0;
+  const isBackgroundImageRoom = currentMap.renderMode === 'background-image';
+  const offsetX = gridOffset?.x ?? 0;
+  const offsetY = gridOffset?.y ?? 0;
 
-    return (
-        <>
-            {/* Walkmesh Grid Overlay for background-image rooms */}
-            {isBackgroundImageRoom && currentMap.grid.map((row, y) =>
-                row.map((_, x) => {
-                    const tileData = getTileData(x, y);
-                    if (!tileData) return null;
+  return (
+    <>
+      {/* Walkmesh Grid Overlay for background-image rooms */}
+      {isBackgroundImageRoom &&
+        currentMap.grid.map((row, y) =>
+          row.map((_, x) => {
+            const tileData = getTileData(x, y);
+            if (!tileData) return null;
 
-                    return (
-                        <div
-                            key={`walkmesh-${x}-${y}`}
-                            className="absolute pointer-events-none border border-white/30"
-                            style={{
-                                left: x * TILE_SIZE + offsetX,
-                                top: y * TILE_SIZE + offsetY,
-                                width: TILE_SIZE,
-                                height: TILE_SIZE,
-                                zIndex: 500, // Above foreground layers (65), below modals (1000+)
-                                backgroundColor: tileData.isSolid
-                                    ? 'rgba(255, 0, 0, 0.4)'  // Red = solid/blocked
-                                    : 'rgba(0, 255, 0, 0.2)', // Green = walkable
-                            }}
-                        >
-                            {/* Show coordinates on hover-sized tiles */}
-                            <span className="text-[6px] text-white font-mono opacity-70">
-                                {x},{y}
-                            </span>
-                        </div>
-                    );
-                })
-            )}
+            return (
+              <div
+                key={`walkmesh-${x}-${y}`}
+                className="absolute pointer-events-none border border-white/30"
+                style={{
+                  left: x * tileSize + offsetX,
+                  top: y * tileSize + offsetY,
+                  width: tileSize,
+                  height: tileSize,
+                  zIndex: 500, // Above foreground layers (65), below modals (1000+)
+                  backgroundColor: tileData.isSolid
+                    ? 'rgba(255, 0, 0, 0.4)' // Red = solid/blocked
+                    : 'rgba(0, 255, 0, 0.2)', // Green = walkable
+                }}
+              >
+                {/* Show coordinates on hover-sized tiles */}
+                <span className="text-[6px] text-white font-mono opacity-70">
+                  {x},{y}
+                </span>
+              </div>
+            );
+          })
+        )}
 
-            {/* Multi-tile sprite collision boxes (for tiled rooms) */}
-            {!isBackgroundImageRoom && currentMap.grid.map((row, y) =>
-                row.map((_, x) => {
-                    const tileData = getTileData(x, y);
-                    const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);
+      {/* Multi-tile sprite collision boxes (for tiled rooms) */}
+      {!isBackgroundImageRoom &&
+        currentMap.grid.map((row, y) =>
+          row.map((_, x) => {
+            const tileData = getTileData(x, y);
+            const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData?.type);
 
-                    if (!spriteMetadata || !tileData?.isSolid) return null;
+            if (!spriteMetadata || !tileData?.isSolid) return null;
 
-                    // Use collision-specific dimensions if provided, otherwise use sprite dimensions
-                    const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
-                    const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
-                    const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
-                    const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
+            // Use collision-specific dimensions if provided, otherwise use sprite dimensions
+            const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
+            const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
+            const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
+            const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
 
-                    // Calculate collision bounds
-                    const collisionLeft = x + collisionOffsetX;
-                    const collisionTop = y + collisionOffsetY;
+            // Calculate collision bounds
+            const collisionLeft = x + collisionOffsetX;
+            const collisionTop = y + collisionOffsetY;
 
-                    // Calculate depth line Y position (same formula as SpriteLayer)
-                    const depthLineY = spriteMetadata.depthLineOffset !== undefined
-                        ? y + spriteMetadata.depthLineOffset
-                        : y + collisionOffsetY + collisionHeight;
+            // Calculate depth line Y position (same formula as SpriteLayer)
+            const depthLineY =
+              spriteMetadata.depthLineOffset !== undefined
+                ? y + spriteMetadata.depthLineOffset
+                : y + collisionOffsetY + collisionHeight;
 
-                    return (
-                        <React.Fragment key={`collision-${x}-${y}`}>
-                            {/* Collision Box */}
-                            <div
-                                className="absolute pointer-events-none border-4 border-red-500"
-                                style={{
-                                    left: collisionLeft * TILE_SIZE,
-                                    top: collisionTop * TILE_SIZE,
-                                    width: collisionWidth * TILE_SIZE,
-                                    height: collisionHeight * TILE_SIZE,
-                                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                                    zIndex: 500, // Above foreground layers (65), below modals (1000+)
-                                }}
-                            >
-                                <div className="text-red-500 font-bold text-xs bg-white px-1">
-                                    Collision Box ({x},{y})
-                                </div>
-                            </div>
-                            {/* Anchor Point Marker (0,0) - shows tile position */}
-                            <div
-                                className="absolute pointer-events-none"
-                                style={{
-                                    left: x * TILE_SIZE,
-                                    top: y * TILE_SIZE,
-                                    width: 16,
-                                    height: 16,
-                                    zIndex: 501, // Above collision boxes
-                                }}
-                            >
-                                {/* Crosshair for anchor point */}
-                                <div className="absolute w-full h-0.5 bg-blue-500 top-1/2" />
-                                <div className="absolute w-0.5 h-full bg-blue-500 left-1/2" />
-                                {/* Center dot */}
-                                <div className="absolute w-2 h-2 bg-blue-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-                                {/* Label */}
-                                <div className="absolute top-4 left-4 text-blue-500 font-bold text-xs bg-white px-1 whitespace-nowrap">
-                                    Anchor (0,0)
-                                </div>
-                            </div>
-                            {/* Depth Line - horizontal line showing where player sorts */}
-                            <div
-                                className="absolute pointer-events-none"
-                                style={{
-                                    left: collisionLeft * TILE_SIZE,
-                                    top: depthLineY * TILE_SIZE - 2,
-                                    width: collisionWidth * TILE_SIZE,
-                                    height: 4,
-                                    backgroundColor: '#4a90d9',
-                                    boxShadow: '0 0 6px rgba(74, 144, 217, 0.8)',
-                                    zIndex: 502, // Above anchor points
-                                }}
-                            >
-                                <div className="absolute -top-5 left-0 text-blue-400 font-bold text-xs bg-white/90 px-1 whitespace-nowrap">
-                                    Depth Line (Y={depthLineY.toFixed(1)})
-                                </div>
-                            </div>
-                        </React.Fragment>
-                    );
-                })
-            )}
-        </>
-    );
+            return (
+              <React.Fragment key={`collision-${x}-${y}`}>
+                {/* Collision Box */}
+                <div
+                  className="absolute pointer-events-none border-4 border-red-500"
+                  style={{
+                    left: collisionLeft * tileSize,
+                    top: collisionTop * tileSize,
+                    width: collisionWidth * tileSize,
+                    height: collisionHeight * tileSize,
+                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                    zIndex: 500, // Above foreground layers (65), below modals (1000+)
+                  }}
+                >
+                  <div className="text-red-500 font-bold text-xs bg-white px-1">
+                    Collision Box ({x},{y})
+                  </div>
+                </div>
+                {/* Anchor Point Marker (0,0) - shows tile position */}
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: x * tileSize,
+                    top: y * tileSize,
+                    width: 16,
+                    height: 16,
+                    zIndex: 501, // Above collision boxes
+                  }}
+                >
+                  {/* Crosshair for anchor point */}
+                  <div className="absolute w-full h-0.5 bg-blue-500 top-1/2" />
+                  <div className="absolute w-0.5 h-full bg-blue-500 left-1/2" />
+                  {/* Center dot */}
+                  <div className="absolute w-2 h-2 bg-blue-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                  {/* Label */}
+                  <div className="absolute top-4 left-4 text-blue-500 font-bold text-xs bg-white px-1 whitespace-nowrap">
+                    Anchor (0,0)
+                  </div>
+                </div>
+                {/* Depth Line - horizontal line showing where player sorts */}
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    left: collisionLeft * tileSize,
+                    top: depthLineY * tileSize - 2,
+                    width: collisionWidth * tileSize,
+                    height: 4,
+                    backgroundColor: '#4a90d9',
+                    boxShadow: '0 0 6px rgba(74, 144, 217, 0.8)',
+                    zIndex: 502, // Above anchor points
+                  }}
+                >
+                  <div className="absolute -top-5 left-0 text-blue-400 font-bold text-xs bg-white/90 px-1 whitespace-nowrap">
+                    Depth Line (Y={depthLineY.toFixed(1)})
+                  </div>
+                </div>
+              </React.Fragment>
+            );
+          })
+        )}
+    </>
+  );
 };
 
 export default DebugCollisionBoxes;

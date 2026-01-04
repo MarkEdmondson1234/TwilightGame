@@ -1,11 +1,7 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createShopkeeperNPC } from '../../utils/npcFactories';
-import {
-  Z_PARALLAX_FAR,
-  Z_SPRITE_BACKGROUND,
-  Z_INTERIOR_FOREGROUND,
-} from '../../zIndex';
+import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND, Z_INTERIOR_FOREGROUND } from '../../zIndex';
 
 /**
  * Shop - Village Grocery Shop Interior
@@ -61,11 +57,12 @@ const shopLayers: RoomLayer[] = [
   {
     type: 'image',
     image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_back.png',
-    zIndex: Z_PARALLAX_FAR,  // -100: Behind everything
+    zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
     width: 1200,
     height: 675,
+    scale: 1.2, // 20% larger
     centered: true,
   },
 
@@ -73,18 +70,19 @@ const shopLayers: RoomLayer[] = [
   {
     type: 'npc',
     npc: foxShopkeeper,
-    zIndex: Z_SPRITE_BACKGROUND,  // 50: Behind counter, behind player
+    zIndex: Z_SPRITE_BACKGROUND, // 50: Behind counter, behind player
   },
 
   // Layer 3: Counter foreground (in front of fox, behind player)
   {
     type: 'image',
     image: '/TwilightGame/assets/rooms/grocery_shop/grocery_shop_front.png',
-    zIndex: Z_INTERIOR_FOREGROUND,  // 65: In front of fox, behind player
+    zIndex: Z_INTERIOR_FOREGROUND, // 65: In front of fox, behind player
     parallaxFactor: 1.0,
     opacity: 1.0,
     width: 1200,
     height: 675,
+    scale: 1.2, // 20% larger (must match background)
     centered: true,
   },
 
@@ -101,7 +99,12 @@ export const shop: MapDefinition = {
   isRandom: false,
   spawnPoint: { x: 10, y: 10 }, // Start in center of walkable floor
   renderMode: 'background-image',
-  characterScale: 2.5, // Larger characters for this room
+  characterScale: 3.0, // Larger characters for this room (20% increase from 2.5)
+
+  // Reference viewport for responsive scaling
+  // Use a smaller reference so even laptops get slight scale-up
+  // This makes the room fill more of the screen on most devices
+  referenceViewport: { width: 1280, height: 720 },
 
   // Unified layer system - all visual elements in z-order
   layers: shopLayers,

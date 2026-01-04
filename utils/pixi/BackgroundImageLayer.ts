@@ -40,6 +40,15 @@ interface ViewportDimensions {
   height: number;
 }
 
+interface ScalingConfig {
+  viewportScale: number;
+  referenceWidth: number;
+  referenceHeight: number;
+  /** Current viewport dimensions (for consistent centering across components) */
+  viewportWidth: number;
+  viewportHeight: number;
+}
+
 export class BackgroundImageLayer {
   // Background container for layers behind everything
   private backgroundContainer: PIXI.Container;
@@ -52,6 +61,8 @@ export class BackgroundImageLayer {
   private stageRef: PIXI.Container | null = null;
   // NPCs extracted from unified layers (with zIndexOverride set)
   private layerNPCs: NPC[] = [];
+  // Viewport scaling configuration
+  private scalingConfig: ScalingConfig | null = null;
 
   constructor() {
     // Background container - behind all game content
@@ -74,6 +85,54 @@ export class BackgroundImageLayer {
    */
   setViewportDimensions(width: number, height: number): void {
     this.viewportDimensions = { width, height };
+  }
+
+  /**
+   * Set scaling configuration for viewport-relative rendering
+   * When set, images scale to fill the viewport while maintaining aspect ratio
+   */
+  setScalingConfig(config: ScalingConfig | null): void {
+    this.scalingConfig = config;
+    // If scaling changed and we have sprites, update their positions/sizes
+    if (config && (this.backgroundSprites.length > 0 || this.foregroundSprites.length > 0)) {
+      this.updateSpritesForScale();
+    }
+  }
+
+  /**
+   * Update all sprite positions and sizes when viewport scale changes
+   */
+  private updateSpritesForScale(): void {
+    if (!this.scalingConfig) return;
+
+    const { viewportScale, viewportWidth, viewportHeight } = this.scalingConfig;
+
+    // Update all sprites
+    const allSprites = [...this.backgroundSprites, ...this.foregroundSprites];
+    for (const layerSprite of allSprites) {
+      // Scale the dimensions
+      const scaledWidth = layerSprite.width * viewportScale;
+      const scaledHeight = layerSprite.height * viewportScale;
+      layerSprite.sprite.width = scaledWidth;
+      layerSprite.sprite.height = scaledHeight;
+
+      // Recalculate position for centered sprites
+      if (layerSprite.centered) {
+        layerSprite.sprite.x = (viewportWidth - scaledWidth) / 2;
+        layerSprite.sprite.y = (viewportHeight - scaledHeight) / 2;
+      } else {
+        // Scale offset position too
+        layerSprite.sprite.x = layerSprite.baseX * viewportScale;
+        layerSprite.sprite.y = layerSprite.baseY * viewportScale;
+      }
+    }
+  }
+
+  /**
+   * Get the current viewport scale (for external components to use)
+   */
+  getViewportScale(): number {
+    return this.scalingConfig?.viewportScale ?? 1.0;
   }
 
   /**
@@ -112,7 +171,9 @@ export class BackgroundImageLayer {
     // Process unified layers array
     if (map.layers && map.layers.length > 0) {
       await this.processUnifiedLayers(map.layers, map);
-      console.log(`[BackgroundImageLayer] Loaded unified layers for ${mapId}: ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground images, ${this.layerNPCs.length} NPCs`);
+      console.log(
+        `[BackgroundImageLayer] Loaded unified layers for ${mapId}: ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground images, ${this.layerNPCs.length} NPCs`
+      );
 
       // Register layer NPCs with npcManager so they're found by interaction handlers
       if (this.layerNPCs.length > 0) {
@@ -120,7 +181,9 @@ export class BackgroundImageLayer {
         const existingNPCs = npcManager.getNPCsForMap(mapId);
         const combinedNPCs = [...existingNPCs, ...this.layerNPCs];
         npcManager.registerNPCs(mapId, combinedNPCs);
-        console.log(`[BackgroundImageLayer] Registered ${this.layerNPCs.length} layer NPCs with npcManager`);
+        console.log(
+          `[BackgroundImageLayer] Registered ${this.layerNPCs.length} layer NPCs with npcManager`
+        );
       }
     }
   }
@@ -189,7 +252,10 @@ export class BackgroundImageLayer {
       try {
         texture = await textureManager.loadTexture(layer.image, layer.image);
       } catch (err) {
-        console.error(`[BackgroundImageLayer] Failed to load foreground texture: ${layer.image}`, err);
+        console.error(
+          `[BackgroundImageLayer] Failed to load foreground texture: ${layer.image}`,
+          err
+        );
         return null;
       }
     }
@@ -219,8 +285,14 @@ export class BackgroundImageLayer {
     }
 
     const scale = layer.scale ?? 1.0;
-    const finalWidth = targetWidth * scale;
-    const finalHeight = targetHeight * scale;
+    // Base dimensions (before viewport scaling)
+    const baseWidth = targetWidth * scale;
+    const baseHeight = targetHeight * scale;
+
+    // Apply viewport scaling if configured
+    const viewportScale = this.scalingConfig?.viewportScale ?? 1.0;
+    const finalWidth = baseWidth * viewportScale;
+    const finalHeight = baseHeight * viewportScale;
     sprite.width = finalWidth;
     sprite.height = finalHeight;
 
@@ -229,10 +301,15 @@ export class BackgroundImageLayer {
     let baseY = layer.offsetY ?? 0;
 
     if (layer.centered) {
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      baseX = (viewportWidth - finalWidth) / 2;
-      baseY = (viewportHeight - finalHeight) / 2;
+      // Use scaling config viewport dimensions for consistent centering
+      const vw = this.scalingConfig?.viewportWidth ?? window.innerWidth;
+      const vh = this.scalingConfig?.viewportHeight ?? window.innerHeight;
+      baseX = (vw - finalWidth) / 2;
+      baseY = (vh - finalHeight) / 2;
+    } else {
+      // Scale offset positions too
+      baseX *= viewportScale;
+      baseY *= viewportScale;
     }
 
     sprite.x = baseX;
@@ -243,16 +320,14 @@ export class BackgroundImageLayer {
     sprite.zIndex = layer.zIndex;
     sprite.alpha = layer.opacity ?? 1.0;
 
-    console.log(`[BackgroundImageLayer] Created foreground sprite with z-index ${sprite.zIndex}`);
-
     return {
       sprite,
       parallaxFactor: layer.parallaxFactor ?? 1.0,
-      baseX,
-      baseY,
+      baseX: layer.offsetX ?? 0, // Store original base position (before viewport scaling)
+      baseY: layer.offsetY ?? 0,
       centered: layer.centered ?? false,
-      width: finalWidth,
-      height: finalHeight,
+      width: baseWidth, // Store base width (before viewport scaling)
+      height: baseHeight, // Store base height (before viewport scaling)
     };
   }
 
@@ -262,38 +337,55 @@ export class BackgroundImageLayer {
    * Centered layers stay fixed in the viewport center
    */
   updateCamera(cameraX: number, cameraY: number): void {
-    // Use window dimensions for consistency with DOM element positioning
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // Use scaling config viewport dimensions for consistent positioning
+    const viewportWidth = this.scalingConfig?.viewportWidth ?? window.innerWidth;
+    const viewportHeight = this.scalingConfig?.viewportHeight ?? window.innerHeight;
+    const viewportScale = this.scalingConfig?.viewportScale ?? 1.0;
 
     // Update background sprites
     for (const layerSprite of this.backgroundSprites) {
+      // Apply viewport scale to dimensions
+      const scaledWidth = layerSprite.width * viewportScale;
+      const scaledHeight = layerSprite.height * viewportScale;
+
       if (layerSprite.centered) {
         // Centered layers stay fixed in viewport - recalculate center position
-        layerSprite.sprite.x = (viewportWidth - layerSprite.width) / 2;
-        layerSprite.sprite.y = (viewportHeight - layerSprite.height) / 2;
+        layerSprite.sprite.x = (viewportWidth - scaledWidth) / 2;
+        layerSprite.sprite.y = (viewportHeight - scaledHeight) / 2;
       } else {
-        // Normal parallax scrolling
+        // Normal parallax scrolling (with scaled positions)
         const offsetX = cameraX * (1 - layerSprite.parallaxFactor);
         const offsetY = cameraY * (1 - layerSprite.parallaxFactor);
-        layerSprite.sprite.x = layerSprite.baseX + offsetX - cameraX;
-        layerSprite.sprite.y = layerSprite.baseY + offsetY - cameraY;
+        layerSprite.sprite.x = layerSprite.baseX * viewportScale + offsetX - cameraX;
+        layerSprite.sprite.y = layerSprite.baseY * viewportScale + offsetY - cameraY;
       }
+
+      // Update sprite dimensions
+      layerSprite.sprite.width = scaledWidth;
+      layerSprite.sprite.height = scaledHeight;
     }
 
     // Update foreground sprites
     for (const layerSprite of this.foregroundSprites) {
+      // Apply viewport scale to dimensions
+      const scaledWidth = layerSprite.width * viewportScale;
+      const scaledHeight = layerSprite.height * viewportScale;
+
       if (layerSprite.centered) {
         // Centered layers stay fixed in viewport
-        layerSprite.sprite.x = (viewportWidth - layerSprite.width) / 2;
-        layerSprite.sprite.y = (viewportHeight - layerSprite.height) / 2;
+        layerSprite.sprite.x = (viewportWidth - scaledWidth) / 2;
+        layerSprite.sprite.y = (viewportHeight - scaledHeight) / 2;
       } else {
-        // Normal parallax scrolling
+        // Normal parallax scrolling (with scaled positions)
         const offsetX = cameraX * (1 - layerSprite.parallaxFactor);
         const offsetY = cameraY * (1 - layerSprite.parallaxFactor);
-        layerSprite.sprite.x = layerSprite.baseX + offsetX - cameraX;
-        layerSprite.sprite.y = layerSprite.baseY + offsetY - cameraY;
+        layerSprite.sprite.x = layerSprite.baseX * viewportScale + offsetX - cameraX;
+        layerSprite.sprite.y = layerSprite.baseY * viewportScale + offsetY - cameraY;
       }
+
+      // Update sprite dimensions
+      layerSprite.sprite.width = scaledWidth;
+      layerSprite.sprite.height = scaledHeight;
     }
   }
 
