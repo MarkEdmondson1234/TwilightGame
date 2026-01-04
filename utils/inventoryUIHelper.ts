@@ -32,6 +32,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   seed_cucumber: itemAssets.cucumber_seeds,
   seed_melon: itemAssets.melon_seeds,
   seed_wild_strawberry: itemAssets.wild_seeds,
+  seed_fairy_bluebell: itemAssets.fairy_bluebell_seeds,
 
   // Grocery items (cooking ingredients)
   butter: groceryAssets.butter,
@@ -71,6 +72,8 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_radish: itemAssets.radishes,
   crop_tomato: groceryAssets.tomato,
   crop_blackberry: itemAssets.blackberries,
+  crop_blueberry: groceryAssets.blueberries_crop,
+  crop_hazelnut: groceryAssets.hazelnuts,
   crop_strawberry: itemAssets.strawberry,
   crop_spinach: groceryAssets.spinach_bundle,
   crop_salad: groceryAssets.salad_head,

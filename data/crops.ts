@@ -476,6 +476,31 @@ export const CROPS: Record<string, CropDefinition> = {
     seedSource: 'forage',
   },
 
+  // ===== QUEST SEEDS (magical crops) =====
+
+  // Fairy Bluebell - Magical quest crop (decorative, not harvestable)
+  // Special mechanic: Attracts fairies at night (Stella and Morgan)
+  fairy_bluebell: {
+    id: 'fairy_bluebell',
+    name: 'fairy_bluebell',
+    displayName: 'Fairy Bluebell',
+    plantSeasons: [Season.SPRING, Season.SUMMER, Season.AUTUMN, Season.WINTER], // Magical - grows all seasons
+    growthTime: 10 * MINUTE,
+    growthTimeWatered: 7 * MINUTE,
+    waterNeededInterval: 1 * GAME_DAY,
+    wiltingGracePeriod: 0.5 * GAME_DAY,
+    deathGracePeriod: 0.5 * GAME_DAY,
+    harvestYield: 0, // Not harvestable - decorative only
+    sellPrice: 0, // Cannot be sold
+    experience: 25, // Small XP for planting
+    seedDropMin: 0, // Does not drop seeds
+    seedDropMax: 0,
+    description: 'A magical flower from the fairy realm. Blooms at night, attracting fairies with its ethereal glow.',
+    seedCost: 0, // Not sold in shop - quest only
+    rarity: CropRarity.VERY_RARE,
+    seedSource: 'forage', // Obtained through quest
+  },
+
   // ===== KEPT FROM ORIGINAL (but updated) =====
 
   // Corn - kept as shop item

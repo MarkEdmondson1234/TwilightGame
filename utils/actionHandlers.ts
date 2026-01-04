@@ -14,7 +14,7 @@ import { getCrop } from '../data/crops';
 import { generateForageSeed, getCropIdFromSeed } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { WATER_CAN } from '../constants';
-import { itemAssets } from '../assets';
+import { itemAssets, groceryAssets } from '../assets';
 
 export interface ActionResult {
     handled: boolean;
@@ -212,6 +212,84 @@ export function handleFarmAction(
                 gameState.saveInventory(inventoryData.items, inventoryData.tools);
 
                 const message = `Picked ${berryYield} blackberries!`;
+
+                console.log(`[Action] ${message}`);
+                onAnimationTrigger?.('harvest');
+                return {
+                    handled: true,
+                    message: message,
+                    messageType: 'success',
+                };
+            }
+        }
+    }
+
+    // Check for hazelnut harvesting from adjacent hazel bushes with hand tool (autumn only)
+    if (currentTool === 'hand') {
+        // Check adjacent tiles (including diagonals) for hazel bushes
+        for (const tile of getSurroundingTiles(playerPos)) {
+            const adjacentTileData = getTileData(tile.x, tile.y);
+            if (adjacentTileData && adjacentTileData.type === TileType.HAZEL_BUSH) {
+                const currentSeason = TimeManager.getCurrentTime().season;
+
+                if (currentSeason !== Season.AUTUMN) {
+                    console.log(`[Action] Hazel bushes have no ripe hazelnuts (current season: ${currentSeason})`);
+                    return {
+                        handled: false,
+                        message: 'The hazel bushes have no ripe nuts yet.',
+                        messageType: 'info',
+                    };
+                }
+
+                console.log('[Action] Attempting to harvest hazelnuts from hazel bush');
+
+                // Random yield: 4-8 hazelnuts (wild-only, cannot be planted)
+                const nutYield = Math.floor(Math.random() * 5) + 4; // 4-8
+                inventoryManager.addItem('crop_hazelnut', nutYield);
+
+                const inventoryData = inventoryManager.getInventoryData();
+                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+                const message = `Picked ${nutYield} hazelnuts!`;
+
+                console.log(`[Action] ${message}`);
+                onAnimationTrigger?.('harvest');
+                return {
+                    handled: true,
+                    message: message,
+                    messageType: 'success',
+                };
+            }
+        }
+    }
+
+    // Check for blueberry harvesting from adjacent blueberry bushes with hand tool (summer and autumn)
+    if (currentTool === 'hand') {
+        // Check adjacent tiles (including diagonals) for blueberry bushes
+        for (const tile of getSurroundingTiles(playerPos)) {
+            const adjacentTileData = getTileData(tile.x, tile.y);
+            if (adjacentTileData && adjacentTileData.type === TileType.BLUEBERRY_BUSH) {
+                const currentSeason = TimeManager.getCurrentTime().season;
+
+                if (currentSeason !== Season.SUMMER && currentSeason !== Season.AUTUMN) {
+                    console.log(`[Action] Blueberry bushes have no ripe berries (current season: ${currentSeason})`);
+                    return {
+                        handled: false,
+                        message: 'The blueberry bushes have no ripe berries yet.',
+                        messageType: 'info',
+                    };
+                }
+
+                console.log('[Action] Attempting to harvest blueberries from blueberry bush');
+
+                // Random yield: 3-6 blueberries (wild-only, cannot be planted)
+                const berryYield = Math.floor(Math.random() * 4) + 3; // 3-6
+                inventoryManager.addItem('crop_blueberry', berryYield);
+
+                const inventoryData = inventoryManager.getInventoryData();
+                gameState.saveInventory(inventoryData.items, inventoryData.tools);
+
+                const message = `Picked ${berryYield} blueberries!`;
 
                 console.log(`[Action] ${message}`);
                 onAnimationTrigger?.('harvest');
@@ -679,6 +757,8 @@ export type InteractionType =
     | 'farm_clear'
     | 'harvest_strawberry'
     | 'harvest_blackberry'
+    | 'harvest_blueberry'
+    | 'harvest_hazelnut'
     | 'forage'
     | 'pickup_item'
     | 'eat_item'
@@ -978,6 +1058,46 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             label: 'Pick Blackberries',
             icon: itemAssets.blackberries,
             color: '#7c3aed',
+            execute: () => {
+                const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
+                onFarmAction?.(farmResult);
+            },
+        });
+    }
+
+    // Check for hazelnut harvesting from adjacent hazel bushes
+    // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
+    const hasHazelBush = adjacentTiles.some(tile => {
+        const adjacentTileData = getTileData(tile.x, tile.y);
+        return adjacentTileData && adjacentTileData.type === TileType.HAZEL_BUSH;
+    });
+
+    if (hasHazelBush) {
+        interactions.push({
+            type: 'harvest_hazelnut',
+            label: 'Pick Hazelnuts',
+            icon: groceryAssets.hazelnuts,
+            color: '#92400e',
+            execute: () => {
+                const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
+                onFarmAction?.(farmResult);
+            },
+        });
+    }
+
+    // Check for blueberry harvesting from adjacent blueberry bushes
+    // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
+    const hasBlueberryBush = adjacentTiles.some(tile => {
+        const adjacentTileData = getTileData(tile.x, tile.y);
+        return adjacentTileData && adjacentTileData.type === TileType.BLUEBERRY_BUSH;
+    });
+
+    if (hasBlueberryBush) {
+        interactions.push({
+            type: 'harvest_blueberry',
+            label: 'Pick Blueberries',
+            icon: itemAssets.blackberries,  // TODO: Use dedicated blueberry sprite
+            color: '#3b82f6',
             execute: () => {
                 const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
                 onFarmAction?.(farmResult);

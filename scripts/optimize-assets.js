@@ -356,6 +356,26 @@ async function optimizeTiles() {
         .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed thorns
         .toFile(outputPath);
     }
+    // Special handling for hazel bushes - 4x4 multi-tile sprites at medium quality (512x512)
+    else if (file.includes('hazel_bush') || file.includes('hazel-bush')) {
+      await sharp(inputPath)
+        .resize(512, 512, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for foliage detail
+        .toFile(outputPath);
+    }
+    // Special handling for blueberry bushes - 3x3 multi-tile sprites at medium quality (512x512)
+    else if (file.includes('blueberry_bush') || file.includes('blueberry-bush')) {
+      await sharp(inputPath)
+        .resize(512, 512, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for foliage detail
+        .toFile(outputPath);
+    }
     // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, etc.) - keep higher resolution and quality
     else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
       await sharp(inputPath)

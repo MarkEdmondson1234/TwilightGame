@@ -257,6 +257,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.wild_seeds,
   },
 
+  // Quest seeds (magical crops unlocked through quests)
+  seed_fairy_bluebell: {
+    id: 'seed_fairy_bluebell',
+    name: 'seed_fairy_bluebell',
+    displayName: 'Fairy Bluebell Seeds',
+    category: ItemCategory.SEED,
+    description: 'Magical seeds from the fairy realm. Shimmers with an otherworldly glow.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: true,
+    sellPrice: 100,
+    cropId: 'fairy_bluebell',
+    image: itemAssets.fairy_bluebell_seeds,
+  },
+
   // ===== CROPS (harvested) =====
   crop_radish: {
     id: 'crop_radish',
@@ -445,6 +459,26 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 35,
     image: itemAssets.blackberries,
   },
+  crop_hazelnut: {
+    id: 'crop_hazelnut',
+    name: 'crop_hazelnut',
+    displayName: 'Hazelnuts',
+    category: ItemCategory.CROP,
+    description: 'Fresh hazelnuts foraged from wild hazel bushes.',
+    stackable: true,
+    sellPrice: 40,
+    image: groceryAssets.hazelnuts,
+  },
+  crop_blueberry: {
+    id: 'crop_blueberry',
+    name: 'crop_blueberry',
+    displayName: 'Blueberries',
+    category: ItemCategory.CROP,
+    description: 'Sweet wild blueberries foraged from forest bushes.',
+    stackable: true,
+    sellPrice: 30,
+    image: groceryAssets.blueberries_crop,
+  },
 
   // ===== MATERIALS =====
   fertiliser: {
@@ -531,7 +565,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 5,  // Was 12
-    // Note: No cream sprite yet - add cream.png to grocery folder
+    image: groceryAssets.cream,
   },
 
   butter: {

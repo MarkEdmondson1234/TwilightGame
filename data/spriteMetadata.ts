@@ -82,6 +82,46 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
   },
   {
+    tileType: TileType.HAZEL_BUSH,
+    spriteWidth: 4,  // 4 tiles wide
+    spriteHeight: 4, // 4 tiles tall
+    offsetX: -1.5,   // Center horizontally on tile
+    offsetY: -3,     // Extends 3 tiles upward
+    image: tileAssets.hazel_bush_summer,  // Seasonal images handled by TILE_LEGEND
+    isForeground: true,
+    // Collision at the base (1x1)
+    collisionWidth: 1,
+    collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle scaling, flipping for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
+  },
+  {
+    tileType: TileType.BLUEBERRY_BUSH,
+    spriteWidth: 3,  // 3 tiles wide
+    spriteHeight: 3, // 3 tiles tall
+    offsetX: -1,     // Center horizontally on tile
+    offsetY: -2,     // Extends 2 tiles upward
+    image: tileAssets.blueberry_bush_summer,  // Seasonal images handled by TILE_LEGEND
+    isForeground: true,
+    // Collision at the base (1x1)
+    collisionWidth: 1,
+    collisionHeight: 1,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle scaling, flipping for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },  // Slight variation: 95% to 105%
+  },
+  {
     tileType: TileType.VILLAGE_FLOWERS,
     spriteWidth: 2,  // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall
@@ -797,9 +837,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetY: -6,       // Center vertically on anchor tile
     image: tileAssets.bear_house_spring_summer,  // Default image (overridden by seasonalImages in TILE_LEGEND)
     collisionWidth: 8,    // Most of the house is solid (doubled from 4)
-    collisionHeight: 8,   // Leave walkable area around edges (doubled from 4)
-    collisionOffsetX: -2,  // Center the collision box (doubled from -1)
-    collisionOffsetY: -2,  // Center the collision box (doubled from -1)
+    collisionHeight: 6,   // Reduced from 8 to allow walkable area at bottom (bottom edge at y=11 instead of y=13)
+    collisionOffsetX: -2,  // Center the collision box horizontally (doubled from -1)
+    collisionOffsetY: -2,  // Center the collision box vertically (doubled from -1)
     // No transforms - this is a cozy structure with detailed artwork
     enableFlip: false,
     enableRotation: false,

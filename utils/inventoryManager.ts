@@ -400,6 +400,9 @@ class InventoryManager {
     this.addItem('seed_tomato', 8);
     this.addItem('seed_salad', 20);
 
+    // DEV: Testing magical crops (quest-locked in production)
+    this.addItem('seed_fairy_bluebell', 5);
+
     // Start with some harvested crops/materials
     this.addItem('crop_blackberry', 12); // Wild berries
     this.addItem('crop_radish', 5);
