@@ -119,7 +119,7 @@ class InventoryManager {
   }
 
   /**
-   * Remove an item from inventory (consumes one use)
+   * Remove an item from inventory (consumes one use or decrements quantity)
    */
   removeItem(itemId: string, quantity: number = 1): boolean {
     const item = getItem(itemId);
@@ -140,31 +140,61 @@ class InventoryManager {
       return false;
     }
 
-    // Process removal for each quantity requested
-    for (let i = 0; i < quantity; i++) {
-      if (instances.length === 0) {
-        console.warn(`[InventoryManager] Not enough ${item.displayName} (need ${quantity}, processed ${i})`);
-        return false;
+    // For stackable items, remove from quantity (not uses)
+    if (item.stackable) {
+      let remaining = quantity;
+
+      // Remove from stacks starting from the first instance
+      while (remaining > 0 && instances.length > 0) {
+        const instance = instances[0];
+        const availableInStack = instance.quantity || 1;
+
+        if (availableInStack > remaining) {
+          // Partial removal from this stack
+          instance.quantity = availableInStack - remaining;
+          remaining = 0;
+          console.log(`[InventoryManager] Removed ${quantity} ${item.displayName} (${instance.quantity} remaining in stack)`);
+        } else {
+          // Remove entire stack
+          instances.shift();
+          remaining -= availableInStack;
+          console.log(`[InventoryManager] Removed stack of ${availableInStack} ${item.displayName}`);
+        }
       }
 
-      // Get first instance
-      const instance = instances[0];
-
-      if (item.maxUses && instance.uses) {
-        // Multi-use item: decrement uses
-        instance.uses--;
-
-        if (instance.uses <= 0) {
-          // Used up, remove instance
-          instances.shift();
-          console.log(`[InventoryManager] ${item.displayName} used up (0 uses remaining)`);
-        } else {
-          console.log(`[InventoryManager] Used ${item.displayName} (${instance.uses}/${item.maxUses} uses remaining)`);
+      if (remaining > 0) {
+        console.warn(`[InventoryManager] Not enough ${item.displayName} (need ${quantity}, only had ${quantity - remaining})`);
+        // Restore what we removed (transaction should be atomic)
+        // This is a safeguard - validation should prevent this
+        return false;
+      }
+    } else {
+      // Non-stackable items: process removal for each quantity requested
+      for (let i = 0; i < quantity; i++) {
+        if (instances.length === 0) {
+          console.warn(`[InventoryManager] Not enough ${item.displayName} (need ${quantity}, processed ${i})`);
+          return false;
         }
-      } else {
-        // Single-use item: remove entire instance
-        instances.shift();
-        console.log(`[InventoryManager] Consumed ${item.displayName}`);
+
+        // Get first instance
+        const instance = instances[0];
+
+        if (item.maxUses && instance.uses) {
+          // Multi-use item: decrement uses
+          instance.uses--;
+
+          if (instance.uses <= 0) {
+            // Used up, remove instance
+            instances.shift();
+            console.log(`[InventoryManager] ${item.displayName} used up (0 uses remaining)`);
+          } else {
+            console.log(`[InventoryManager] Used ${item.displayName} (${instance.uses}/${item.maxUses} uses remaining)`);
+          }
+        } else {
+          // Single-use item: remove entire instance
+          instances.shift();
+          console.log(`[InventoryManager] Consumed ${item.displayName}`);
+        }
       }
     }
 

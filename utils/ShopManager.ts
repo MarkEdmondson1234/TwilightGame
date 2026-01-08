@@ -13,6 +13,7 @@ import {
   Season as ShopSeason
 } from '../data/shopInventory';
 import { TimeManager, Season as GameSeason } from './TimeManager';
+import { inventoryManager } from './inventoryManager';
 
 /**
  * Transaction result
@@ -218,11 +219,11 @@ export class ShopManager {
 
   /**
    * Execute buy transaction
-   * Updates player gold and inventory
+   * Updates player gold and inventory using InventoryManager
    * @param itemId Item to buy
    * @param quantity Quantity to buy
    * @param playerGold Current gold
-   * @param playerInventory Current inventory
+   * @param playerInventory Current inventory (for validation only)
    * @returns Updated gold and inventory, or null if transaction failed
    */
   public executeBuyTransaction(
@@ -246,43 +247,17 @@ export class ShopManager {
     // Update gold
     const newGold = playerGold + validation.goldChange;
 
-    // Update inventory
-    const newInventory = [...playerInventory];
-    const itemDef = getItem(itemId);
+    // Use InventoryManager to add items (handles stacking properly)
+    // No masteryLevel for purchased items (only cooked food has mastery)
+    const success = inventoryManager.addItem(itemId, quantity);
 
-    if (!itemDef) {
-      console.error(`[ShopManager] Item definition not found: ${itemId}`);
+    if (!success) {
+      console.error(`[ShopManager] Failed to add item to inventory: ${itemId}`);
       return null;
     }
 
-    // For multi-use items, each purchase should be a separate instance
-    // For regular stackable items, we can increment the existing stack
-    if (itemDef.maxUses) {
-      // Multi-use item: Add each purchased item as a separate instance with full uses
-      for (let i = 0; i < quantity; i++) {
-        const newItem: InventoryItem = {
-          itemId,
-          quantity: 1,
-          uses: itemDef.maxUses, // Each instance starts with full uses
-        };
-        newInventory.push(newItem);
-      }
-    } else {
-      // Regular stackable item: Add to existing stack or create new
-      const existingItem = newInventory.find(item => item.itemId === itemId);
-
-      if (existingItem) {
-        // Add to existing stack
-        existingItem.quantity += quantity;
-      } else {
-        // Add new item
-        const newItem: InventoryItem = {
-          itemId,
-          quantity,
-        };
-        newInventory.push(newItem);
-      }
-    }
+    // Get updated inventory from InventoryManager
+    const newInventory = inventoryManager.getAllItems();
 
     return {
       gold: newGold,
@@ -293,11 +268,11 @@ export class ShopManager {
 
   /**
    * Execute sell transaction
-   * Updates player gold and inventory
+   * Updates player gold and inventory using InventoryManager
    * @param itemId Item to sell
    * @param quantity Quantity to sell
    * @param playerGold Current gold
-   * @param playerInventory Current inventory
+   * @param playerInventory Current inventory (for validation only)
    * @returns Updated gold and inventory, or null if transaction failed
    */
   public executeSellTransaction(
@@ -316,19 +291,16 @@ export class ShopManager {
     // Update gold
     const newGold = playerGold + validation.goldChange;
 
-    // Update inventory
-    const newInventory = [...playerInventory];
-    const existingItem = newInventory.find(item => item.itemId === itemId);
+    // Use InventoryManager to remove items
+    const success = inventoryManager.removeItem(itemId, quantity);
 
-    if (existingItem) {
-      existingItem.quantity -= quantity;
-
-      // Remove item if quantity reaches 0
-      if (existingItem.quantity <= 0) {
-        const index = newInventory.indexOf(existingItem);
-        newInventory.splice(index, 1);
-      }
+    if (!success) {
+      console.error(`[ShopManager] Failed to remove item from inventory: ${itemId}`);
+      return null;
     }
+
+    // Get updated inventory from InventoryManager
+    const newInventory = inventoryManager.getAllItems();
 
     return {
       gold: newGold,
