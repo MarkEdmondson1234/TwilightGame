@@ -20,6 +20,9 @@ export interface Transition {
   toMapId: string; // Target map ID, or "RANDOM_FOREST", "RANDOM_CAVE", etc.
   toPosition: Position;
   label?: string; // Optional description like "To Village"
+  // Conditional access - transition only available if quest condition is met
+  requiresQuest?: string; // Quest ID that must be started
+  requiresQuestStage?: number; // Specific quest stage required (optional, defaults to any stage > 0)
 }
 
 // ============================================================================

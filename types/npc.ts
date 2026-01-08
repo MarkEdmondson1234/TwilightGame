@@ -72,6 +72,11 @@ export interface DialogueNode {
   // Friendship requirements for this dialogue node
   requiredFriendshipTier?: FriendshipTier;  // Only show if friendship >= tier
   requiredSpecialFriend?: boolean;           // Only show if special friend
+  // Quest requirements for this dialogue node
+  requiredQuest?: string;                    // Only show if this quest is started
+  requiredQuestStage?: number;               // Only show if quest is at this stage or higher
+  hiddenIfQuestStarted?: string;             // Hide if this quest is started
+  hiddenIfQuestCompleted?: string;           // Hide if this quest is completed
   // Expression/emotion for dialogue character sprite (e.g., 'smile', 'happy', 'thinky')
   // If set, uses dialogueExpressions[expression] from NPC, otherwise uses default dialogueSprite
   expression?: string;
@@ -91,6 +96,16 @@ export interface DialogueResponse {
   hiddenIfDomainStarted?: string;   // Hide if any recipe in this domain is unlocked
   hiddenIfDomainMastered?: string;  // Hide if this domain is fully mastered
   hiddenIfAnyDomainStarted?: boolean; // Hide if player has started any domain (not mastered yet)
+  // Quest requirements for this response option
+  requiredQuest?: string;            // Only show if this quest is started
+  requiredQuestStage?: number;       // Only show if quest is at this stage or higher
+  hiddenIfQuestStarted?: string;     // Hide if this quest is started
+  hiddenIfQuestCompleted?: string;   // Hide if this quest is completed
+  // Quest actions triggered by selecting this response
+  startsQuest?: string;              // Start this quest when selected
+  advancesQuest?: string;            // Advance this quest to next stage when selected
+  completesQuest?: string;           // Complete this quest when selected
+  setsQuestStage?: { questId: string; stage: number }; // Set specific quest stage when selected
 }
 
 export interface NPC {

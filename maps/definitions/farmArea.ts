@@ -84,6 +84,15 @@ export const farmArea: MapDefinition = {
       toPosition: { x: 5, y: 4 },
       label: 'To Seed Shed',
     },
+    {
+      fromPosition: { x: 18, y: 24 }, // Path in bottom-right corner behind seed shed
+      tileType: TileType.PATH,
+      toMapId: 'bear_cave',
+      toPosition: { x: 2, y: 18 }, // Arrive at bear cave west entrance
+      label: "Path to Bear's Cave",
+      requiresQuest: 'chill_bear_friendship', // Only accessible after meeting the bear and accepting invitation
+      requiresQuestStage: 1, // Stage 1 = invitation accepted, path revealed
+    },
   ],
   npcs: [
     // Dairy cow in the grassy area near the pond

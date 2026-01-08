@@ -146,6 +146,16 @@ export interface GameState {
   forageCooldowns: {
     [tileKey: string]: number; // Timestamp when tile was last foraged
   };
+
+  // Quest and storyline progression tracking
+  quests: {
+    [questId: string]: {
+      started: boolean;
+      completed: boolean;
+      stage: number; // Current stage of multi-stage quests
+      data: Record<string, any>; // Quest-specific data
+    };
+  };
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -352,6 +362,12 @@ class GameStateManager {
           parsed.forageCooldowns = {};
         }
 
+        // Migrate old save data that doesn't have quest tracking
+        if (!parsed.quests) {
+          console.log('[GameState] Migrating old save data - adding quest tracking');
+          parsed.quests = {};
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -410,6 +426,7 @@ class GameStateManager {
       },
       dailyResourceCollections: {},
       forageCooldowns: {},
+      quests: {},
     };
   }
 
@@ -927,6 +944,7 @@ class GameStateManager {
       wateringCan: { currentLevel: 10 },
       dailyResourceCollections: {},
       forageCooldowns: {},
+      quests: {},
     };
     console.log('[GameState] State reset');
     this.notify();
@@ -1164,6 +1182,105 @@ class GameStateManager {
       console.error('[GameState] Failed to import state:', error);
       return false;
     }
+  }
+
+  // === Quest/Storyline Methods ===
+
+  /**
+   * Start a quest
+   * @param questId Unique quest identifier
+   * @param initialData Optional initial quest data
+   */
+  startQuest(questId: string, initialData: Record<string, any> = {}): void {
+    if (!this.state.quests) {
+      this.state.quests = {};
+    }
+
+    if (!this.state.quests[questId]) {
+      this.state.quests[questId] = {
+        started: true,
+        completed: false,
+        stage: 0,
+        data: initialData,
+      };
+      console.log(`[GameState] Quest started: ${questId}`);
+      this.notify();
+    }
+  }
+
+  /**
+   * Complete a quest
+   */
+  completeQuest(questId: string): void {
+    if (!this.state.quests) {
+      this.state.quests = {};
+    }
+
+    if (this.state.quests[questId]) {
+      this.state.quests[questId].completed = true;
+      console.log(`[GameState] Quest completed: ${questId}`);
+      this.notify();
+    }
+  }
+
+  /**
+   * Set quest stage
+   */
+  setQuestStage(questId: string, stage: number): void {
+    if (!this.state.quests) {
+      this.state.quests = {};
+    }
+
+    if (this.state.quests[questId]) {
+      this.state.quests[questId].stage = stage;
+      console.log(`[GameState] Quest ${questId} stage set to ${stage}`);
+      this.notify();
+    }
+  }
+
+  /**
+   * Get quest stage
+   */
+  getQuestStage(questId: string): number {
+    if (!this.state.quests || !this.state.quests[questId]) {
+      return 0;
+    }
+    return this.state.quests[questId].stage;
+  }
+
+  /**
+   * Check if quest is started
+   */
+  isQuestStarted(questId: string): boolean {
+    return this.state.quests?.[questId]?.started ?? false;
+  }
+
+  /**
+   * Check if quest is completed
+   */
+  isQuestCompleted(questId: string): boolean {
+    return this.state.quests?.[questId]?.completed ?? false;
+  }
+
+  /**
+   * Set quest data
+   */
+  setQuestData(questId: string, key: string, value: any): void {
+    if (!this.state.quests) {
+      this.state.quests = {};
+    }
+
+    if (this.state.quests[questId]) {
+      this.state.quests[questId].data[key] = value;
+      this.notify();
+    }
+  }
+
+  /**
+   * Get quest data
+   */
+  getQuestData(questId: string, key: string): any {
+    return this.state.quests?.[questId]?.data?.[key];
   }
 }
 
