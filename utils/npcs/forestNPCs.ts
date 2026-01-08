@@ -277,11 +277,13 @@ export function createWitchWolfNPC(
  * @param id Unique ID for this bear
  * @param position Starting position
  * @param name Optional name (defaults to "Chill Bear")
+ * @param scale Optional scale (defaults to 5.0 for outdoor, use smaller values like 2.5-3.0 for indoor)
  */
 export function createChillBearNPC(
   id: string,
   position: Position,
-  name: string = 'Chill Bear'
+  name: string = 'Chill Bear',
+  scale: number = 5.0
 ): NPC {
   return createStaticNPC({
     id,
@@ -290,7 +292,7 @@ export function createChillBearNPC(
     direction: Direction.Down,
     sprite: npcAssets.chill_bear_01,
     portraitSprite: npcAssets.chill_bear_portrait,
-    scale: 5.0,
+    scale,
     interactionRadius: 2.0,
     states: {
       sipping: {

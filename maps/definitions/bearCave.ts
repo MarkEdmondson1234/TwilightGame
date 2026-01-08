@@ -66,6 +66,13 @@ export const bearCave: MapDefinition = {
       toPosition: { x: 4, y: 15 }, // Return to village (next to magical lake entrance)
       label: 'To Village',
     },
+    {
+      fromPosition: { x: 12, y: 11 }, // Bear house entrance (accessible position in front of house)
+      tileType: TileType.BEAR_HOUSE,
+      toMapId: 'bear_den',
+      toPosition: { x: 7, y: 7 }, // Inside the den (centre of walkable area)
+      label: 'Enter Bear\'s Den',
+    },
   ],
   npcs: [
     // Chill Bear - peaceful bear enjoying tea, positioned to the right of the house
