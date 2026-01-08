@@ -1,6 +1,5 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
-import { createChillBearNPC } from '../../utils/npcFactories';
 
 /**
  * Bear Cave - Outdoor cave clearing with the Chill Bear's house
@@ -41,7 +40,7 @@ LGGjGYGGGGGGGGGGGGGGGGGGtGGGGL
 LGnGeGGGGdGGPGGGGdGGGGPPPGGGtG
 tGYGtGnGdGGPGGGGGGGGGtGePbGGGL
 LtGeGGGGGGPGGGGGGGGGGGGGPGeYGL
-LGGnGGGhGPGGGGdGdGGGGhYePGGtGL
+LGGnGGGhGPGGGGGGdGGGGhYePGGtGL
 tenGeGlGGPGeGGGlGdlGGGhtPeGGtL
 LeeeGjlGPGGGGGlGlGGlGYGtPPPntL
 LetelnGGPlGGGGGGGGjGbGGnjePPPG
@@ -67,6 +66,13 @@ export const bearCave: MapDefinition = {
       label: 'To Village',
     },
     {
+      fromPosition: { x: 2, y: 18 }, // West path exit
+      tileType: TileType.PATH,
+      toMapId: 'farm_area',
+      toPosition: { x: 18, y: 24 }, // Return to farmArea behind seed shed
+      label: 'To Farm Area',
+    },
+    {
       fromPosition: { x: 12, y: 11 }, // Bear house entrance (accessible position in front of house)
       tileType: TileType.BEAR_HOUSE,
       toMapId: 'bear_den',
@@ -75,11 +81,6 @@ export const bearCave: MapDefinition = {
     },
   ],
   npcs: [
-    // Chill Bear - peaceful bear enjoying tea, positioned to the right of the house
-    createChillBearNPC(
-      'chill_bear_cave',
-      { x: 20, y: 13 }, // Right side of the cave, next to the house (moved down 5 tiles)
-      'Chill Bear'
-    ),
+    // Chill Bear is inside his den, not outside - meet him indoors!
   ],
 };

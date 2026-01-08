@@ -1,6 +1,6 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
-import { createChillBearNPC } from '../../utils/npcFactories';
+import { createChillBearAtHomeNPC } from '../../utils/npcFactories';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
 
 /**
@@ -40,7 +40,7 @@ D..............
 `;
 
 // Create Chill Bear NPC for interior (relaxing at home) with smaller scale for indoor space
-const bearNPC = createChillBearNPC('chill_bear_den', { x: 11, y: 6.5 }, 'Chill Bear', 3.5);
+const bearNPC = createChillBearAtHomeNPC('chill_bear_den', { x: 11, y: 6.5 }, 'Chill Bear', 3.5);
 
 /**
  * Unified layers array - defines all visual elements in z-order
@@ -93,7 +93,7 @@ export const bearDen: MapDefinition = {
       fromPosition: { x: 0, y: 7 }, // Door at left bottom corner (where D is in grid)
       tileType: TileType.DOOR,
       toMapId: 'bear_cave',
-      toPosition: { x: 12, y: 8 }, // Back to bear cave exterior (near house)
+      toPosition: { x: 12, y: 13 }, // Back to bear cave exterior (in front of house door)
       label: 'Outside',
     },
   ],
