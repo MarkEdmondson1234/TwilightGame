@@ -1,4 +1,4 @@
-import { MapDefinition, Position, TileType, ColorScheme } from '../types';
+import { MapDefinition, Position, TileType, ColorScheme, isTileSolid } from '../types';
 import { npcManager } from '../NPCManager';
 import { validateMapDefinition } from './gridParser';
 import { TILE_LEGEND, PLAYER_SIZE } from '../constants';
@@ -43,7 +43,9 @@ class MapManager {
     // Validate map definition to catch common issues
     const isValid = validateMapDefinition(map);
     if (!isValid) {
-      console.error(`[MapManager] ⚠️ Map '${mapId}' has validation errors (see above). Loading anyway...`);
+      console.error(
+        `[MapManager] ⚠️ Map '${mapId}' has validation errors (see above). Loading anyway...`
+      );
     }
 
     this.currentMapId = mapId;
@@ -101,7 +103,11 @@ class MapManager {
    * Check if a position is valid (not inside a wall) for a specific map
    * Uses the map's grid directly to avoid circular dependencies
    */
-  private isPositionValidForMap(map: MapDefinition, pos: Position, entitySize: number = PLAYER_SIZE): boolean {
+  private isPositionValidForMap(
+    map: MapDefinition,
+    pos: Position,
+    entitySize: number = PLAYER_SIZE
+  ): boolean {
     const halfSize = entitySize / 2;
     const minTileX = Math.floor(pos.x - halfSize);
     const maxTileX = Math.floor(pos.x + halfSize);
@@ -116,7 +122,7 @@ class MapManager {
         }
         const tileType = map.grid[y][x];
         const tileData = TILE_LEGEND[tileType];
-        if (tileData && tileData.isSolid) {
+        if (tileData && isTileSolid(tileData.collisionType)) {
           return false; // Position would collide with wall
         }
       }
@@ -127,7 +133,11 @@ class MapManager {
   /**
    * Find nearest valid position for a specific map
    */
-  private findNearestValidPositionForMap(map: MapDefinition, target: Position, searchRadius: number = 5): Position | null {
+  private findNearestValidPositionForMap(
+    map: MapDefinition,
+    target: Position,
+    searchRadius: number = 5
+  ): Position | null {
     // Check target first
     if (this.isPositionValidForMap(map, target)) {
       return target;
@@ -207,7 +217,9 @@ class MapManager {
   getTransitionAt(position: Position): { transition: any; map: MapDefinition } | null {
     if (!this.currentMap) return null;
 
-    console.log(`[MapManager] Checking transitions for player at (${position.x.toFixed(2)}, ${position.y.toFixed(2)})`);
+    console.log(
+      `[MapManager] Checking transitions for player at (${position.x.toFixed(2)}, ${position.y.toFixed(2)})`
+    );
     console.log(`[MapManager] Current map has ${this.currentMap.transitions.length} transitions:`);
 
     for (const transition of this.currentMap.transitions) {
@@ -215,7 +227,9 @@ class MapManager {
       const dx = Math.abs(position.x - transition.fromPosition.x);
       const dy = Math.abs(position.y - transition.fromPosition.y);
 
-      console.log(`  - ${transition.label} at (${transition.fromPosition.x}, ${transition.fromPosition.y}): dx=${dx.toFixed(2)}, dy=${dy.toFixed(2)}`);
+      console.log(
+        `  - ${transition.label} at (${transition.fromPosition.x}, ${transition.fromPosition.y}): dx=${dx.toFixed(2)}, dy=${dy.toFixed(2)}`
+      );
 
       // Player needs to be within 1.5 tiles of the transition center (generous range)
       if (dx < 1.5 && dy < 1.5) {

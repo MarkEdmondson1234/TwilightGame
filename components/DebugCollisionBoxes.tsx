@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapDefinition, Position } from '../types';
+import { MapDefinition, Position, isTileSolid, CollisionType } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { SPRITE_METADATA, TILE_SIZE } from '../constants';
 
@@ -47,9 +47,16 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
                   width: tileSize,
                   height: tileSize,
                   zIndex: 500, // Above foreground layers (65), below modals (1000+)
-                  backgroundColor: tileData.isSolid
-                    ? 'rgba(255, 0, 0, 0.4)' // Red = solid/blocked
-                    : 'rgba(0, 255, 0, 0.2)', // Green = walkable
+                  backgroundColor:
+                    tileData.collisionType === CollisionType.DESK
+                      ? 'rgba(168, 85, 247, 0.5)' // Purple = desk (item placement)
+                      : tileData.collisionType === CollisionType.SOLID
+                        ? 'rgba(255, 0, 0, 0.4)' // Red = solid/blocked
+                        : 'rgba(0, 255, 0, 0.2)', // Green = walkable
+                  border:
+                    tileData.collisionType === CollisionType.DESK
+                      ? '2px solid rgba(168, 85, 247, 0.8)'
+                      : undefined,
                 }}
               >
                 {/* Show coordinates on hover-sized tiles */}
@@ -68,7 +75,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
             const tileData = getTileData(x, y);
             const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData?.type);
 
-            if (!spriteMetadata || !tileData?.isSolid) return null;
+            if (!spriteMetadata || !tileData || !isTileSolid(tileData.collisionType)) return null;
 
             // Use collision-specific dimensions if provided, otherwise use sprite dimensions
             const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;

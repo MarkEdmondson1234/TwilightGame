@@ -8,9 +8,9 @@
 
 // Core types (base types used everywhere)
 // Enums are values, so use regular export
-export { TileType, Direction } from './core';
+export { TileType, Direction, CollisionType, isTileSolid } from './core';
 // Interfaces are types, so use export type
-export type { Position, PlacedItem } from './core';
+export type { Position, PlacedItem, DeskItem, DeskContents } from './core';
 
 // Tile and sprite types
 export type {
@@ -46,6 +46,9 @@ export type {
   DialogueResponse,
   NPC,
   AnimatedNPCStates,
+  NPCGiftConfig,
+  NPCFavourConfig,
+  FavourType,
 } from './npc';
 
 // Animation types

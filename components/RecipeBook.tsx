@@ -4,7 +4,7 @@ import { getItem } from '../data/items';
 import { cookingManager, CookingResult } from '../utils/CookingManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import { gameState } from '../GameState';
-import { PlacedItem } from '../types';
+import { PlacedItem, Position } from '../types';
 import { Z_RECIPE_BOOK, zClass } from '../zIndex';
 
 interface RecipeBookProps {
@@ -12,14 +12,24 @@ interface RecipeBookProps {
   onClose: () => void;
   playerPosition?: { x: number; y: number };
   currentMapId?: string;
+  cookingPosition?: Position | null; // Position of stove/campfire for placing cooked items
   nearbyNPCs?: string[]; // IDs of NPCs near the player
+  onItemPlaced?: () => void; // Callback when item is placed on cooking surface
 }
 
 /**
  * RecipeBook - Modal for viewing all recipes and discovery
  * Shows locked recipes as hints for players to discover
  */
-const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition, currentMapId, nearbyNPCs = [] }) => {
+const RecipeBook: React.FC<RecipeBookProps> = ({
+  isOpen,
+  onClose,
+  playerPosition,
+  currentMapId,
+  cookingPosition,
+  nearbyNPCs = [],
+  onItemPlaced,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
   const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
@@ -35,7 +45,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
     if (selectedCategory === 'all') {
       return allRecipes;
     }
-    return allRecipes.filter(r => r.category === selectedCategory);
+    return allRecipes.filter((r) => r.category === selectedCategory);
   }, [allRecipes, selectedCategory]);
 
   // Check if a recipe is unlocked
@@ -78,7 +88,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
 
   // Handle cooking from recipe book
   const handleCook = (recipeId: string) => {
-    const isNearMum = nearbyNPCs.some(npcId => npcId.includes('mum'));
+    const isNearMum = nearbyNPCs.some((npcId) => npcId.includes('mum'));
 
     let result: CookingResult;
 
@@ -109,24 +119,34 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
     setShowResult(true);
 
     // If cooking succeeded and we have position/map info, place the food sprite
-    if (result.success && result.foodProduced && playerPosition && currentMapId) {
+    if (result.success && result.foodProduced && currentMapId) {
       const recipe = getRecipe(recipeId);
       if (recipe?.image) {
-        // Place the food item near the player (1 tile in front)
-        const placedItem: PlacedItem = {
-          id: `food_${Date.now()}_${Math.random()}`,
-          itemId: result.foodProduced.itemId,
-          position: {
-            x: Math.round(playerPosition.x),
-            y: Math.round(playerPosition.y) - 1, // Place 1 tile above player
-          },
-          mapId: currentMapId,
-          image: recipe.image,
-          timestamp: Date.now(),
-        };
-        gameState.addPlacedItem(placedItem);
-        console.log('[RecipeBook] Placed food sprite:', placedItem);
-        console.log('[RecipeBook] All placed items after adding:', gameState.getPlacedItems(currentMapId));
+        // Remove from inventory (items appear on cooking surface instead)
+        inventoryManager.removeItem(result.foodProduced.itemId, result.foodProduced.quantity);
+
+        // Determine placement position: cooking position if available, otherwise near player
+        const placePosition = cookingPosition
+          ? { x: cookingPosition.x, y: cookingPosition.y }
+          : playerPosition
+            ? { x: Math.round(playerPosition.x), y: Math.round(playerPosition.y) - 1 }
+            : null;
+
+        if (placePosition) {
+          const placedItem: PlacedItem = {
+            id: `food_${Date.now()}_${Math.random()}`,
+            itemId: result.foodProduced.itemId,
+            position: placePosition,
+            mapId: currentMapId,
+            image: recipe.image,
+            timestamp: Date.now(),
+          };
+          gameState.addPlacedItem(placedItem);
+          console.log('[RecipeBook] Placed food on cooking surface:', placedItem);
+
+          // Notify parent to update the placed items display
+          onItemPlaced?.();
+        }
       }
     }
 
@@ -140,7 +160,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
   // Check if player has ingredients OR is near Mum (can cook Tea for free)
   const canCook = (recipeId: string) => {
     // If player is near Mum NPC, they can cook Tea for free
-    const isNearMum = nearbyNPCs.some(npcId => npcId.includes('mum'));
+    const isNearMum = nearbyNPCs.some((npcId) => npcId.includes('mum'));
     if (isNearMum && recipeId === 'tea') {
       return true;
     }
@@ -169,7 +189,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
 
   // Get category icon
   const getCategoryIcon = (category: RecipeCategory): string => {
-    const found = categories.find(c => c.id === category);
+    const found = categories.find((c) => c.id === category);
     return found?.icon || '📖';
   };
 
@@ -182,7 +202,9 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
   }
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_RECIPE_BOOK)} p-2 sm:p-4`}>
+    <div
+      className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_RECIPE_BOOK)} p-2 sm:p-4`}
+    >
       <div className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-teal-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-teal-800 px-4 py-3 border-b-2 border-teal-600 flex items-center justify-between">
@@ -199,7 +221,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
 
         {/* Category Tabs */}
         <div className="bg-slate-800/50 px-4 py-2 border-b border-slate-700 flex gap-2 overflow-x-auto">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
@@ -219,7 +241,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
           {/* Recipe List */}
           <div className="w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-slate-700 overflow-y-auto max-h-40 sm:max-h-none">
             <div className="p-2 space-y-1">
-              {displayedRecipes.map(r => {
+              {displayedRecipes.map((r) => {
                 const unlocked = isUnlocked(r.id);
                 const mastered = isMastered(r.id);
 
@@ -285,7 +307,9 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                     </div>
                     <div className="bg-slate-700/50 px-3 py-2 rounded">
                       <span className="text-slate-400">Difficulty:</span>
-                      <span className="text-yellow-300 ml-2">{difficultyStars(recipe.difficulty)}</span>
+                      <span className="text-yellow-300 ml-2">
+                        {difficultyStars(recipe.difficulty)}
+                      </span>
                     </div>
                     <div className="bg-slate-700/50 px-3 py-2 rounded">
                       <span className="text-slate-400">Time:</span>
@@ -327,7 +351,7 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                   <div>
                     <h4 className="text-teal-300 font-bold mb-2">Ingredients</h4>
                     <div className="grid grid-cols-2 gap-2">
-                      {recipe.ingredients.map(ing => {
+                      {recipe.ingredients.map((ing) => {
                         const item = getItem(ing.itemId);
                         return (
                           <div
@@ -342,7 +366,9 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                               />
                             )}
                             <div className="flex-1 min-w-0">
-                              <span className="text-slate-200">{item?.displayName || ing.itemId}</span>
+                              <span className="text-slate-200">
+                                {item?.displayName || ing.itemId}
+                              </span>
                               <span className="text-slate-400 ml-2">× {ing.quantity}</span>
                             </div>
                           </div>
@@ -376,7 +402,8 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                   <div className="bg-green-900/30 px-3 py-2 rounded border border-green-700/50">
                     <span className="text-green-400">Produces:</span>
                     <span className="text-green-200 ml-2 font-bold">
-                      {recipe.resultQuantity}× {getItem(recipe.resultItemId)?.displayName || recipe.resultItemId}
+                      {recipe.resultQuantity}×{' '}
+                      {getItem(recipe.resultItemId)?.displayName || recipe.resultItemId}
                     </span>
                   </div>
 
@@ -388,11 +415,11 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                     >
                       🍳 Cook!
                     </button>
-                    {canCook(recipe.id) && !hasIngredients(recipe.id) && nearbyNPCs.some(id => id.includes('mum')) && (
-                      <p className="text-sm text-teal-300 italic">
-                        ✨ Mum is helping you cook!
-                      </p>
-                    )}
+                    {canCook(recipe.id) &&
+                      !hasIngredients(recipe.id) &&
+                      nearbyNPCs.some((id) => id.includes('mum')) && (
+                        <p className="text-sm text-teal-300 italic">✨ Mum is helping you cook!</p>
+                      )}
                   </div>
 
                   {/* Cooking Result Message */}
@@ -415,7 +442,8 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
                   <h3 className="text-xl font-bold text-slate-400 mb-2">Recipe Locked</h3>
                   <p className="text-teal-400 italic">{getUnlockHint(recipe)}</p>
                   <div className="mt-4 text-sm text-slate-500">
-                    <span className="capitalize">{recipe.category}</span> • Difficulty: {difficultyStars(recipe.difficulty)}
+                    <span className="capitalize">{recipe.category}</span> • Difficulty:{' '}
+                    {difficultyStars(recipe.difficulty)}
                   </div>
                 </div>
               )
@@ -430,9 +458,13 @@ const RecipeBook: React.FC<RecipeBookProps> = ({ isOpen, onClose, playerPosition
         {/* Stats Footer */}
         <div className="bg-slate-800/50 px-4 py-2 border-t border-slate-700 flex justify-between items-center">
           <div className="text-xs text-slate-400">
-            <span className="text-teal-400">{cookingManager.getUnlockedRecipes().length}</span>/{allRecipes.length} recipes unlocked
+            <span className="text-teal-400">{cookingManager.getUnlockedRecipes().length}</span>/
+            {allRecipes.length} recipes unlocked
             {' • '}
-            <span className="text-yellow-400">{cookingManager.getMasteredRecipes().length}</span> mastered
+            <span className="text-yellow-400">
+              {cookingManager.getMasteredRecipes().length}
+            </span>{' '}
+            mastered
           </div>
           <p className="text-slate-500 text-xs">Press ESC to close</p>
         </div>

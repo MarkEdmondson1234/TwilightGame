@@ -3,8 +3,9 @@
  * Shared between keyboard and touch input handlers
  */
 
-import { Position, TileType } from '../types';
+import { Position, TileType, CollisionType } from '../types';
 import { getTileData, getAdjacentTiles, getTileCoords, getSurroundingTiles } from './mapUtils';
+import { deskManager } from './deskManager';
 import { mapManager, transitionToMap } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
@@ -36,6 +37,62 @@ export interface CookingLocationResult {
   found: boolean;
   locationType?: 'stove' | 'campfire';
   position?: Position;
+}
+
+export interface DeskInteractionResult {
+  found: boolean;
+  position?: Position;
+  distance?: number;
+  hasItems?: boolean;
+  hasSpace?: boolean;
+}
+
+/**
+ * Check for DESK tiles adjacent to the player
+ * Returns the closest desk with its position and state
+ */
+export function checkDeskInteraction(playerPos: Position, mapId: string): DeskInteractionResult {
+  const playerTileX = Math.floor(playerPos.x);
+  const playerTileY = Math.floor(playerPos.y);
+
+  // Check adjacent tiles (not diagonals - must be directly adjacent for desk use)
+  const adjacentTiles = [
+    { x: playerTileX, y: playerTileY - 1, dist: 1 }, // up
+    { x: playerTileX, y: playerTileY + 1, dist: 1 }, // down
+    { x: playerTileX - 1, y: playerTileY, dist: 1 }, // left
+    { x: playerTileX + 1, y: playerTileY, dist: 1 }, // right
+  ];
+
+  let closestDesk: DeskInteractionResult = { found: false };
+
+  for (const tile of adjacentTiles) {
+    const tileData = getTileData(tile.x, tile.y);
+    if (tileData && tileData.collisionType === CollisionType.DESK) {
+      const deskPos = { x: tile.x, y: tile.y };
+      const items = deskManager.getItems(mapId, deskPos);
+      const hasSpace = deskManager.hasSpace(mapId, deskPos);
+
+      // First desk found or closer desk
+      if (!closestDesk.found || (closestDesk.distance && tile.dist < closestDesk.distance)) {
+        closestDesk = {
+          found: true,
+          position: deskPos,
+          distance: tile.dist,
+          hasItems: items.length > 0,
+          hasSpace,
+        };
+      }
+    }
+  }
+
+  if (closestDesk.found) {
+    console.log(
+      `[Action] Found desk at (${closestDesk.position?.x}, ${closestDesk.position?.y}), ` +
+        `hasItems: ${closestDesk.hasItems}, hasSpace: ${closestDesk.hasSpace}`
+    );
+  }
+
+  return closestDesk;
 }
 
 /**
@@ -124,7 +181,7 @@ export function checkTransition(
       return {
         success: false,
         blocked: true,
-        message: 'This path is not yet accessible.'
+        message: 'This path is not yet accessible.',
       };
     }
   }
@@ -919,7 +976,10 @@ export type InteractionType =
   | 'taste_item'
   | 'collect_water'
   | 'refill_water_can'
-  | 'collect_resource';
+  | 'collect_resource'
+  | 'give_gift'
+  | 'desk_place'
+  | 'desk_pickup';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -939,6 +999,13 @@ export interface PlacedItemAction {
   imageUrl: string; // Sprite image URL for inventory display
 }
 
+export interface DeskAction {
+  action: 'place' | 'pickup';
+  deskPosition: Position;
+  itemId?: string;
+  slotIndex?: number;
+}
+
 export interface GetInteractionsConfig {
   position: Position;
   currentMapId: string;
@@ -946,8 +1013,9 @@ export interface GetInteractionsConfig {
   selectedSeed: string | null;
   onMirror?: () => void;
   onNPC?: (npcId: string) => void;
+  onGiveGift?: (npcId: string) => void;
   onTransition?: (result: TransitionResult) => void;
-  onCooking?: (locationType: 'stove' | 'campfire') => void;
+  onCooking?: (locationType: 'stove' | 'campfire', position?: Position) => void;
   onFarmAction?: (result: FarmActionResult) => void;
   onFarmAnimation?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
   onForage?: (result: ForageResult) => void;
@@ -955,6 +1023,7 @@ export interface GetInteractionsConfig {
   onCollectWater?: (result: { success: boolean; message: string }) => void;
   onRefillWaterCan?: (result: { success: boolean; message: string }) => void;
   onCollectResource?: (result: { success: boolean; message: string; itemId?: string }) => void;
+  onDeskAction?: (action: DeskAction) => void;
 }
 
 /**
@@ -969,6 +1038,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     selectedSeed,
     onMirror,
     onNPC,
+    onGiveGift,
     onTransition,
     onCooking,
     onFarmAction,
@@ -978,6 +1048,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     onCollectWater,
     onRefillWaterCan,
     onCollectResource,
+    onDeskAction,
   } = config;
 
   const interactions: AvailableInteraction[] = [];
@@ -1066,6 +1137,18 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       execute: () => onNPC?.(npcId),
     });
 
+    // Give Gift option (for NPCs that can be befriended)
+    if (npc?.friendshipConfig?.canBefriend && onGiveGift) {
+      interactions.push({
+        type: 'give_gift',
+        label: 'Give Gift',
+        icon: '🎁',
+        color: '#ec4899',
+        data: { npcId },
+        execute: () => onGiveGift(npcId),
+      });
+    }
+
     // Check for daily resource collection (e.g., milk from cow)
     if (npc?.dailyResource && onCollectResource) {
       const { itemId, maxPerDay, collectMessage, emptyMessage } = npc.dailyResource;
@@ -1144,8 +1227,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       label: cookingLoc.locationType === 'stove' ? 'Use Stove' : 'Use Campfire',
       icon: cookingLoc.locationType === 'stove' ? '🍳' : '🔥',
       color: '#f97316',
-      data: { locationType: cookingLoc.locationType },
-      execute: () => onCooking?.(cookingLoc.locationType!),
+      data: { locationType: cookingLoc.locationType, position: cookingLoc.position },
+      execute: () => onCooking?.(cookingLoc.locationType!, cookingLoc.position),
     });
   }
 
@@ -1404,6 +1487,49 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           const result = handleForageAction(position, currentMapId);
           onForage?.(result);
         },
+      });
+    }
+  }
+
+  // Check for desk interactions (place/pickup items)
+  const deskResult = checkDeskInteraction(position, currentMapId);
+  if (deskResult.found && deskResult.position && onDeskAction) {
+    const deskPos = deskResult.position;
+
+    // Pickup items from desk (if desk has items)
+    if (deskResult.hasItems) {
+      const items = deskManager.getItems(currentMapId, deskPos);
+      for (const item of items) {
+        interactions.push({
+          type: 'desk_pickup',
+          label: `Pick up ${item.itemId}`,
+          icon: '👋',
+          color: '#a78bfa', // Purple to match desk color
+          data: { deskPosition: deskPos, slotIndex: item.slotIndex },
+          execute: () =>
+            onDeskAction({
+              action: 'pickup',
+              deskPosition: deskPos,
+              itemId: item.itemId,
+              slotIndex: item.slotIndex,
+            }),
+        });
+      }
+    }
+
+    // Place item on desk (if desk has space and player has something to place)
+    if (deskResult.hasSpace) {
+      interactions.push({
+        type: 'desk_place',
+        label: 'Place Item on Desk',
+        icon: '📥',
+        color: '#a78bfa', // Purple to match desk color
+        data: { deskPosition: deskPos },
+        execute: () =>
+          onDeskAction({
+            action: 'place',
+            deskPosition: deskPos,
+          }),
       });
     }
   }

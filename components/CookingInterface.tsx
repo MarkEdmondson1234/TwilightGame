@@ -3,20 +3,33 @@ import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../data/re
 import { getItem } from '../data/items';
 import { cookingManager, CookingResult } from '../utils/CookingManager';
 import { inventoryManager } from '../utils/inventoryManager';
+import { gameState } from '../GameState';
+import { Position, PlacedItem } from '../types';
 import { Z_COOKING, zClass } from '../zIndex';
 
 interface CookingInterfaceProps {
   isOpen: boolean;
   onClose: () => void;
   locationType: 'stove' | 'campfire';
+  cookingPosition?: Position | null;
+  currentMapId?: string;
+  onItemPlaced?: () => void;
 }
 
 /**
  * CookingInterface - Modal overlay for the cooking system
  * Shows recipes, ingredients, and allows player to cook
  * Campfire cooking has 10% higher failure rate than stove
+ * Cooked items appear on the stove/campfire instead of in inventory
  */
-const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, locationType }) => {
+const CookingInterface: React.FC<CookingInterfaceProps> = ({
+  isOpen,
+  onClose,
+  locationType,
+  cookingPosition,
+  currentMapId,
+  onItemPlaced,
+}) => {
   const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
@@ -28,7 +41,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
     if (selectedCategory === 'all') {
       return unlocked;
     }
-    return unlocked.filter(r => r.category === selectedCategory);
+    return unlocked.filter((r) => r.category === selectedCategory);
   }, [selectedCategory]);
 
   // Get selected recipe details
@@ -61,7 +74,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
     const result = cookingManager.cook(recipe.id);
 
     // If cooking succeeded and we're at a campfire, apply campfire failure chance
-    if (result.success && locationType === 'campfire' && Math.random() < 0.10) {
+    if (result.success && locationType === 'campfire' && Math.random() < 0.1) {
       // Campfire caused the dish to burn (ingredients already consumed by cook())
       const campfireResult: CookingResult = {
         success: false,
@@ -71,6 +84,36 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
     } else {
       // Show the result from CookingManager (success, or missing ingredients error)
       setCookingResult(result);
+
+      // If cooking succeeded and we have a cooking position, place the item on the stove/campfire
+      if (
+        result.success &&
+        result.foodProduced &&
+        cookingPosition &&
+        currentMapId &&
+        recipe.image
+      ) {
+        // Remove the item from inventory (CookingManager added it, but we want it on the stove instead)
+        inventoryManager.removeItem(result.foodProduced.itemId, result.foodProduced.quantity);
+
+        // Place the cooked item at the cooking position
+        const placedItem: PlacedItem = {
+          id: `cooked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          itemId: result.foodProduced.itemId,
+          position: {
+            x: cookingPosition.x,
+            y: cookingPosition.y,
+          },
+          mapId: currentMapId,
+          image: recipe.image,
+          timestamp: Date.now(),
+        };
+        gameState.addPlacedItem(placedItem);
+        console.log('[CookingInterface] Placed food on stove:', placedItem);
+
+        // Notify parent to update the placed items display
+        onItemPlaced?.();
+      }
     }
 
     setShowResult(true);
@@ -101,7 +144,9 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
   }
 
   return (
-    <div className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_COOKING)} p-2 sm:p-4`}>
+    <div
+      className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_COOKING)} p-2 sm:p-4`}
+    >
       <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-amber-800 px-4 py-3 border-b-2 border-amber-600 flex items-center justify-between">
@@ -124,7 +169,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
 
         {/* Category Tabs */}
         <div className="bg-amber-900/50 px-4 py-2 border-b border-amber-700 flex gap-2 overflow-x-auto">
-          {categories.map(cat => (
+          {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
@@ -145,9 +190,11 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
           <div className="w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-amber-700 overflow-y-auto max-h-40 sm:max-h-none">
             <div className="p-2 space-y-1">
               {displayedRecipes.length === 0 ? (
-                <p className="text-amber-400 text-sm italic p-2">No recipes in this category yet.</p>
+                <p className="text-amber-400 text-sm italic p-2">
+                  No recipes in this category yet.
+                </p>
               ) : (
-                displayedRecipes.map(r => {
+                displayedRecipes.map((r) => {
                   const progress = cookingManager.getProgress(r.id);
                   const isMastered = progress?.isMastered;
                   const hasIngredients = cookingManager.hasIngredients(r.id);
@@ -191,7 +238,9 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
                 <div className="flex gap-4 text-sm">
                   <div className="bg-amber-800/50 px-3 py-2 rounded">
                     <span className="text-amber-400">Difficulty:</span>
-                    <span className="text-yellow-300 ml-2">{difficultyStars(recipe.difficulty)}</span>
+                    <span className="text-yellow-300 ml-2">
+                      {difficultyStars(recipe.difficulty)}
+                    </span>
                   </div>
                   <div className="bg-amber-800/50 px-3 py-2 rounded">
                     <span className="text-amber-400">Time:</span>
@@ -224,7 +273,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
                 <div>
                   <h4 className="text-amber-300 font-bold mb-2">Ingredients</h4>
                   <div className="space-y-2">
-                    {recipe.ingredients.map(ing => {
+                    {recipe.ingredients.map((ing) => {
                       const info = getIngredientInfo(ing.itemId, ing.quantity);
                       const item = getItem(ing.itemId);
                       return (

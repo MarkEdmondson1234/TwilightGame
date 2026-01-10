@@ -87,6 +87,7 @@ import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
 import { inventoryManager } from './utils/inventoryManager';
 import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
+import GiftModal, { GiftResult } from './components/GiftModal';
 
 const App: React.FC = () => {
   const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
@@ -108,10 +109,13 @@ const App: React.FC = () => {
   const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
   const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
   const [cookingLocationType, setCookingLocationType] = useState<'stove' | 'campfire' | null>(null); // Track cooking location type
+  const [cookingPosition, setCookingPosition] = useState<Position | null>(null); // Track stove/campfire position for placing cooked items
   const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
   const [showInventory, setShowInventory] = useState(false); // Toggle inventory UI
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
   const [showShopUI, setShowShopUI] = useState(false); // Toggle shop UI
+  const [showGiftModal, setShowGiftModal] = useState(false); // Toggle gift selection modal
+  const [giftTargetNpcId, setGiftTargetNpcId] = useState<string | null>(null); // NPC receiving the gift
   const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
   const [currentWeather, setCurrentWeather] = useState<
@@ -352,6 +356,7 @@ const App: React.FC = () => {
         const cookingLocation = checkCookingLocation(playerPosRef.current);
         if (cookingLocation.found) {
           setCookingLocationType(cookingLocation.locationType || null);
+          setCookingPosition(cookingLocation.position || null);
           setShowCookingUI(true);
         }
       } else {
@@ -467,6 +472,10 @@ const App: React.FC = () => {
         selectedSeed: null, // Seeds are now part of the tool system
         onMirror: () => setShowCharacterCreator(true),
         onNPC: (npcId) => setActiveNPC(npcId),
+        onGiveGift: (npcId) => {
+          setGiftTargetNpcId(npcId);
+          setShowGiftModal(true);
+        },
         onTransition: (result: TransitionResult) => {
           if (result.success && result.mapId && result.spawnPosition) {
             handleMapTransition(result.mapId, result.spawnPosition);
@@ -476,8 +485,9 @@ const App: React.FC = () => {
             gameState.updatePlayerLocation(result.mapId, result.spawnPosition, seed);
           }
         },
-        onCooking: (locationType) => {
+        onCooking: (locationType, position) => {
           setCookingLocationType(locationType);
+          setCookingPosition(position || null);
           setShowCookingUI(true);
         },
         onFarmAction: (result: FarmActionResult) => {
@@ -950,6 +960,10 @@ const App: React.FC = () => {
       selectedSeed: null,
       onMirror: () => setShowCharacterCreator(true),
       onNPC: (npcId) => setActiveNPC(npcId),
+      onGiveGift: (npcId) => {
+        setGiftTargetNpcId(npcId);
+        setShowGiftModal(true);
+      },
       onTransition: (result: TransitionResult) => {
         if (result.success && result.mapId && result.spawnPosition) {
           handleMapTransition(result.mapId, result.spawnPosition);
@@ -958,8 +972,9 @@ const App: React.FC = () => {
           gameState.updatePlayerLocation(result.mapId, result.spawnPosition, seed);
         }
       },
-      onCooking: (locationType) => {
+      onCooking: (locationType, position) => {
         setCookingLocationType(locationType);
+        setCookingPosition(position || null);
         setShowCookingUI(true);
       },
       onFarmAction: (result: FarmActionResult) => {
@@ -2013,6 +2028,7 @@ const App: React.FC = () => {
               const cookingLocation = checkCookingLocation(playerPos);
               if (cookingLocation.found) {
                 setCookingLocationType(cookingLocation.locationType || null);
+                setCookingPosition(cookingLocation.position || null);
                 setShowCookingUI(true);
               }
             }}
@@ -2106,6 +2122,25 @@ const App: React.FC = () => {
           isOpen={showCookingUI}
           onClose={() => setShowCookingUI(false)}
           locationType={cookingLocationType || 'stove'}
+          cookingPosition={cookingPosition}
+          currentMapId={currentMap.id}
+          onItemPlaced={() => {
+            setPlacedItemsUpdateTrigger((prev) => prev + 1);
+          }}
+        />
+      )}
+      {showGiftModal && giftTargetNpcId && (
+        <GiftModal
+          npcId={giftTargetNpcId}
+          onClose={() => {
+            setShowGiftModal(false);
+            setGiftTargetNpcId(null);
+          }}
+          onGiftGiven={(result: GiftResult) => {
+            showToast(result.message, result.reaction === 'disliked' ? 'warning' : 'success');
+            // Refresh inventory display
+            setInventoryItems(convertInventoryToUI());
+          }}
         />
       )}
       {showShopUI && (
@@ -2156,6 +2191,7 @@ const App: React.FC = () => {
           onClose={() => setShowRecipeBook(false)}
           playerPosition={playerPos}
           currentMapId={currentMap.id}
+          cookingPosition={cookingPosition}
           nearbyNPCs={(() => {
             // Get NPCs within 2 tiles of player
             const range = 2;
@@ -2167,6 +2203,9 @@ const App: React.FC = () => {
               })
               .map((npc) => npc.id);
           })()}
+          onItemPlaced={() => {
+            setPlacedItemsUpdateTrigger((prev) => prev + 1);
+          }}
         />
       )}
       {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}

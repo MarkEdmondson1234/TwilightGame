@@ -10,7 +10,14 @@
  * Following SSoT principle from CLAUDE.md
  */
 
-import { NPCFriendship, FriendshipTier, NPC } from '../types';
+import {
+  NPCFriendship,
+  FriendshipTier,
+  NPC,
+  NPCGiftConfig,
+  NPCFavourConfig,
+  FavourType,
+} from '../types';
 import { characterData, FriendshipData } from './CharacterData';
 import { TimeManager } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
@@ -32,6 +39,55 @@ const TIER_REWARDS: Record<
       { itemId: 'seed_salad', quantity: 3 },
     ],
     good_friend: [],
+  },
+};
+
+// NPC gift-giving configuration - what items NPCs can give to good friends
+const NPC_GIFTS: Record<string, NPCGiftConfig> = {
+  // Old Woman gives baked goods
+  old_woman: {
+    giftItems: [
+      { itemId: 'cookies', chance: 0.7, minTier: 'good_friend' },
+      { itemId: 'bread', chance: 0.3, minTier: 'good_friend' },
+    ],
+    dailyGiftLimit: 1,
+  },
+  // Bear gives forest products
+  bear: {
+    giftItems: [
+      { itemId: 'honey', chance: 0.6, minTier: 'acquaintance' },
+      { itemId: 'crop_blackberry', chance: 0.4, minTier: 'good_friend' },
+    ],
+    dailyGiftLimit: 1,
+  },
+  // Shopkeeper gives ingredients
+  shopkeeper: {
+    giftItems: [
+      { itemId: 'flour', chance: 0.5, minTier: 'good_friend' },
+      { itemId: 'sugar', chance: 0.5, minTier: 'good_friend' },
+    ],
+    dailyGiftLimit: 1,
+  },
+  // Fairy gives magical items
+  fairy: {
+    giftItems: [{ itemId: 'seed_fairy_bluebell', chance: 0.3, minTier: 'good_friend' }],
+    dailyGiftLimit: 1,
+  },
+};
+
+// NPC favour configuration - special actions NPCs can perform for good friends
+const NPC_FAVOURS: Record<string, NPCFavourConfig> = {
+  village_elder: {
+    favourType: 'water_plants',
+    minTier: 'good_friend',
+    cooldownDays: 1,
+    description: "I'll water your plants today, dear.",
+  },
+  shopkeeper: {
+    favourType: 'gift_seeds',
+    minTier: 'good_friend',
+    cooldownDays: 3,
+    description: 'Here, take some seeds - on the house!',
   },
 };
 
@@ -100,6 +156,17 @@ class FriendshipManagerClass {
     const friendship = this.friendships.get(npcId);
     if (!friendship) return 1;
     return Math.floor(friendship.points / POINTS_PER_LEVEL) + 1;
+  }
+
+  /**
+   * Get friendship hearts (0-5) for UI display
+   * Maps 0-900 points to 0-5 hearts
+   */
+  getFriendshipHearts(npcId: string): number {
+    const friendship = this.friendships.get(npcId);
+    if (!friendship) return 0;
+    // Each heart = 180 points (900 / 5 = 180)
+    return Math.min(5, Math.floor(friendship.points / 180));
   }
 
   /**
@@ -342,6 +409,96 @@ class FriendshipManagerClass {
   isSpecialFriend(npcId: string): boolean {
     const friendship = this.friendships.get(npcId);
     return friendship?.isSpecialFriend ?? false;
+  }
+
+  /**
+   * Check if an NPC has a gift to give the player
+   * NPCs with good friendship can randomly give items
+   * @returns Gift info if NPC wants to give something, null otherwise
+   */
+  checkForNPCGift(npcId: string): { itemId: string; itemName: string; message: string } | null {
+    const giftConfig = NPC_GIFTS[npcId];
+    if (!giftConfig) return null;
+
+    const tier = this.getFriendshipTier(npcId);
+
+    // Filter eligible gifts by tier
+    const eligibleGifts = giftConfig.giftItems.filter((gift) => {
+      const tierOrder: FriendshipTier[] = ['stranger', 'acquaintance', 'good_friend'];
+      return tierOrder.indexOf(tier) >= tierOrder.indexOf(gift.minTier);
+    });
+
+    if (eligibleGifts.length === 0) return null;
+
+    // Roll for each gift
+    for (const gift of eligibleGifts) {
+      if (Math.random() < gift.chance) {
+        const item = getItem(gift.itemId);
+        if (item) {
+          // Add item to player inventory
+          inventoryManager.addItem(gift.itemId, 1);
+          const inventoryData = inventoryManager.getInventoryData();
+          characterData.saveInventory(inventoryData.items, inventoryData.tools);
+
+          console.log(`[FriendshipManager] 🎁 ${npcId} gave player ${item.displayName}!`);
+
+          return {
+            itemId: gift.itemId,
+            itemName: item.displayName,
+            message: `Here, have some ${item.displayName}!`,
+          };
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Get NPC gift configuration (for UI display)
+   */
+  getNPCGiftConfig(npcId: string): NPCGiftConfig | null {
+    return NPC_GIFTS[npcId] || null;
+  }
+
+  /**
+   * Get NPC favour configuration (for UI display)
+   */
+  getNPCFavourConfig(npcId: string): NPCFavourConfig | null {
+    return NPC_FAVOURS[npcId] || null;
+  }
+
+  /**
+   * Check if an NPC can offer a favour
+   */
+  canOfferFavour(npcId: string): boolean {
+    const favourConfig = NPC_FAVOURS[npcId];
+    if (!favourConfig) return false;
+
+    const tier = this.getFriendshipTier(npcId);
+    const tierOrder: FriendshipTier[] = ['stranger', 'acquaintance', 'good_friend'];
+
+    return tierOrder.indexOf(tier) >= tierOrder.indexOf(favourConfig.minTier);
+  }
+
+  /**
+   * Perform an NPC favour (returns result for UI display)
+   * Note: The actual favour execution is handled by the caller (e.g., App.tsx)
+   * This method returns the favour details and description.
+   */
+  getFavourDetails(npcId: string): {
+    favourType: FavourType;
+    description: string;
+  } | null {
+    if (!this.canOfferFavour(npcId)) return null;
+
+    const favourConfig = NPC_FAVOURS[npcId];
+    if (!favourConfig) return null;
+
+    return {
+      favourType: favourConfig.favourType,
+      description: favourConfig.description,
+    };
   }
 
   /**

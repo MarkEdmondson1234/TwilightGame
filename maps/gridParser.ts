@@ -30,95 +30,96 @@ export function clearValidationErrors(): void {
  * Check if there are any critical validation errors
  */
 export function hasValidationErrors(): boolean {
-  return validationErrors.some(v => v.errors.length > 0);
+  return validationErrors.some((v) => v.errors.length > 0);
 }
 
 // Character code to TileType mapping for child-friendly map editing
 export const GRID_CODES: Record<string, TileType> = {
   // Outdoor
-  'G': TileType.GRASS,
-  '.': TileType.TUFT,  // . = Grass tuft (seasonal grass variation)
-  ',': TileType.TUFT_SPARSE,  // , = Sparse tuft (less visual intensity than regular tuft)
-  'R': TileType.ROCK,
-  'W': TileType.WATER_CENTER,     // W = water center (updated to use new lake tiles)
+  G: TileType.GRASS,
+  '.': TileType.TUFT, // . = Grass tuft (seasonal grass variation)
+  ',': TileType.TUFT_SPARSE, // , = Sparse tuft (less visual intensity than regular tuft)
+  R: TileType.ROCK,
+  W: TileType.WATER_CENTER, // W = water center (updated to use new lake tiles)
   // Lake tiles (directional edges for proper water rendering)
-  'w': TileType.WATER_CENTER,     // w = water center (same as W, for consistency)
-  '<': TileType.WATER_LEFT,       // < = left edge (arrow pointing left)
-  '>': TileType.WATER_RIGHT,      // > = right edge (arrow pointing right)
-  '^': TileType.WATER_TOP,        // ^ = top edge (arrow pointing up)
-  'v': TileType.WATER_BOTTOM,     // v = bottom edge (arrow pointing down)
-  'P': TileType.PATH,
+  w: TileType.WATER_CENTER, // w = water center (same as W, for consistency)
+  '<': TileType.WATER_LEFT, // < = left edge (arrow pointing left)
+  '>': TileType.WATER_RIGHT, // > = right edge (arrow pointing right)
+  '^': TileType.WATER_TOP, // ^ = top edge (arrow pointing up)
+  v: TileType.WATER_BOTTOM, // v = bottom edge (arrow pointing down)
+  P: TileType.PATH,
   // Indoor
-  'F': TileType.FLOOR,
-  'f': TileType.FLOOR_LIGHT,  // f = light floor (lowercase f)
-  'Q': TileType.FLOOR_DARK,   // Q = dark floor
-  'm': TileType.MINE_FLOOR,   // m = mine floor (rocky cave floor)
+  F: TileType.FLOOR,
+  f: TileType.FLOOR_LIGHT, // f = light floor (lowercase f)
+  Q: TileType.FLOOR_DARK, // Q = dark floor
+  m: TileType.MINE_FLOOR, // m = mine floor (rocky cave floor)
   '#': TileType.WALL,
-  '1': TileType.WOODEN_WALL_POOR,  // 1 = wooden wall (poor quality)
-  '2': TileType.WOODEN_WALL,       // 2 = wooden wall (regular)
-  '3': TileType.WOODEN_WALL_POSH,  // 3 = wooden wall (posh/fancy)
-  'C': TileType.CARPET,
-  'r': TileType.RUG,
+  '1': TileType.WOODEN_WALL_POOR, // 1 = wooden wall (poor quality)
+  '2': TileType.WOODEN_WALL, // 2 = wooden wall (regular)
+  '3': TileType.WOODEN_WALL_POSH, // 3 = wooden wall (posh/fancy)
+  C: TileType.CARPET,
+  r: TileType.RUG,
   // Transitions
-  'D': TileType.DOOR,
-  'E': TileType.EXIT_DOOR,
-  'S': TileType.SHOP_DOOR,
-  'M': TileType.MINE_ENTRANCE,
+  D: TileType.DOOR,
+  E: TileType.EXIT_DOOR,
+  S: TileType.SHOP_DOOR,
+  M: TileType.MINE_ENTRANCE,
   // Furniture
-  'T': TileType.TABLE,
-  'H': TileType.CHAIR,
-  'I': TileType.MIRROR,   // Mirror (I looks like a mirror!)
+  T: TileType.TABLE,
+  H: TileType.CHAIR,
+  I: TileType.MIRROR, // Mirror (I looks like a mirror!)
   // interior
-  'A': TileType.BED,      // A = bed (A bed to sleep in!)
-  '@': TileType.SOFA,     // @ = sofa (comfortable seating)
-  '&': TileType.CHIMNEY,  // & = chimney (brick structure)
-  '$': TileType.STOVE,    // $ = stove (vertical pipe like $ symbol)
-  'U': TileType.BUSH,        // U = bUsh (decorative)
-  'u': TileType.MUSHROOM,    // u = mUshroom (decorative forest floor)
-  'x': TileType.GIANT_MUSHROOM, // x = Giant mushroom (magical witch hut area)
-  'g': TileType.SAMBUCA_BUSH, // g = Sambuca bush (magical witch hut area)
-  'e': TileType.FERN,        // e = fErn (forest floor plant)
-  'Y': TileType.TREE,        // Y = Tree (looks like a tree top)
-  'Z': TileType.TREE_BIG,    // Z = Big tree
-  'J': TileType.CHERRY_TREE, // J = Cherry tree (seasonal)
-  'o': TileType.OAK_TREE,    // o = Oak tree (seasonal)
-  '*': TileType.FAIRY_OAK,   // * = Fairy oak (magical tree, forest only)
+  A: TileType.BED, // A = bed (A bed to sleep in!)
+  '@': TileType.SOFA, // @ = sofa (comfortable seating)
+  '&': TileType.CHIMNEY, // & = chimney (brick structure)
+  $: TileType.STOVE, // $ = stove (vertical pipe like $ symbol)
+  _: TileType.DESK, // _ = desk (flat surface for placing/picking items)
+  U: TileType.BUSH, // U = bUsh (decorative)
+  u: TileType.MUSHROOM, // u = mUshroom (decorative forest floor)
+  x: TileType.GIANT_MUSHROOM, // x = Giant mushroom (magical witch hut area)
+  g: TileType.SAMBUCA_BUSH, // g = Sambuca bush (magical witch hut area)
+  e: TileType.FERN, // e = fErn (forest floor plant)
+  Y: TileType.TREE, // Y = Tree (looks like a tree top)
+  Z: TileType.TREE_BIG, // Z = Big tree
+  J: TileType.CHERRY_TREE, // J = Cherry tree (seasonal)
+  o: TileType.OAK_TREE, // o = Oak tree (seasonal)
+  '*': TileType.FAIRY_OAK, // * = Fairy oak (magical tree, forest only)
   '!': TileType.FAIRY_OAK_GIANT, // ! = Giant Fairy Oak (enormous 10x10, deep forest only)
-  't': TileType.SPRUCE_TREE, // t = spruce Tree (evergreen conifer)
-  'j': TileType.FIR_TREE_SMALL, // j = small fir tree (walkable underbrush)
-  'n': TileType.SPRUCE_TREE_SMALL, // n = small spruce tree (solid evergreen)
-  'y': TileType.WILLOW_TREE, // y = willYw tree (graceful weeping willow)
-  'c': TileType.LILAC_TREE,  // c = lilaC tree (flowering shrub/small tree)
-  '|': TileType.TREE_STUMP,  // | = Tree stump (vertical trunk, 2x2 forest decoration)
-  'i': TileType.WILD_IRIS,   // i = Iris (wild iris flower, grows near water)
-  'p': TileType.POND_FLOWERS, // p = Pond flowers (floating flowers, seasonal colors)
-  'b': TileType.BRAMBLES,    // b = Brambles (thorny obstacle with seasonal colors)
-  'd': TileType.BLUEBERRY_BUSH, // d = Blueberry bush (wild forageable berry bush, 3x3, seasonal variations)
-  'h': TileType.HAZEL_BUSH,  // h = Hazel bush (wild forageable bush, seasonal variations)
-  's': TileType.WILD_STRAWBERRY, // s = Strawberry (wild forageable strawberry plants)
-  'l': TileType.VILLAGE_FLOWERS, // l = Village flowers (decorative flowers in village, stem-like)
+  t: TileType.SPRUCE_TREE, // t = spruce Tree (evergreen conifer)
+  j: TileType.FIR_TREE_SMALL, // j = small fir tree (walkable underbrush)
+  n: TileType.SPRUCE_TREE_SMALL, // n = small spruce tree (solid evergreen)
+  y: TileType.WILLOW_TREE, // y = willYw tree (graceful weeping willow)
+  c: TileType.LILAC_TREE, // c = lilaC tree (flowering shrub/small tree)
+  '|': TileType.TREE_STUMP, // | = Tree stump (vertical trunk, 2x2 forest decoration)
+  i: TileType.WILD_IRIS, // i = Iris (wild iris flower, grows near water)
+  p: TileType.POND_FLOWERS, // p = Pond flowers (floating flowers, seasonal colors)
+  b: TileType.BRAMBLES, // b = Brambles (thorny obstacle with seasonal colors)
+  d: TileType.BLUEBERRY_BUSH, // d = Blueberry bush (wild forageable berry bush, 3x3, seasonal variations)
+  h: TileType.HAZEL_BUSH, // h = Hazel bush (wild forageable bush, seasonal variations)
+  s: TileType.WILD_STRAWBERRY, // s = Strawberry (wild forageable strawberry plants)
+  l: TileType.VILLAGE_FLOWERS, // l = Village flowers (decorative flowers in village, stem-like)
   // Buildings (outdoor structures)
-  'L': TileType.WALL_BOUNDARY,   // L = waLl boundary (brick walls)
-  'B': TileType.BUILDING_WALL,   // B = Building wall
-  'O': TileType.BUILDING_ROOF,   // O = rOof (top of building)
-  'N': TileType.BUILDING_DOOR,   // N = eNtrance
-  'K': TileType.COTTAGE,          // K = Cottage (wooden house)
+  L: TileType.WALL_BOUNDARY, // L = waLl boundary (brick walls)
+  B: TileType.BUILDING_WALL, // B = Building wall
+  O: TileType.BUILDING_ROOF, // O = rOof (top of building)
+  N: TileType.BUILDING_DOOR, // N = eNtrance
+  K: TileType.COTTAGE, // K = Cottage (wooden house)
   // manual
-  'z': TileType.COTTAGE_FLOWERS,
-  'k': TileType.COTTAGE_STONE,
-  '%': TileType.SHOP,             // % = Shop (seasonal building)
-  '~': TileType.GARDEN_SHED,      // ~ = Garden shed (seasonal farm building)
-  'V': TileType.BUILDING_WINDOW, // V = looks like a window
+  z: TileType.COTTAGE_FLOWERS,
+  k: TileType.COTTAGE_STONE,
+  '%': TileType.SHOP, // % = Shop (seasonal building)
+  '~': TileType.GARDEN_SHED, // ~ = Garden shed (seasonal farm building)
+  V: TileType.BUILDING_WINDOW, // V = looks like a window
   // Farmland
-  'X': TileType.SOIL_FALLOW,     // X = Farm plot (fallow soil)
+  X: TileType.SOIL_FALLOW, // X = Farm plot (fallow soil)
   // Outdoor structures
-  '=': TileType.WELL,            // = = Well (horizontal lines like stone well)
-  'q': TileType.CAMPFIRE,        // q = Campfire (looks like fire/smoke)
-  '?': TileType.WITCH_HUT,       // ? = Witch hut (mysterious magical dwelling)
-  '{': TileType.BEAR_HOUSE,      // { = Bear house (cozy dwelling in cave, curly like a den)
-  '+': TileType.CAULDRON,        // + = Cauldron (bubbling witch's pot)
-  '(': TileType.MAGICAL_LAKE,    // ( = Magical lake (12x12 mystical water feature, curves like a pool)
-  ')': TileType.SMALL_LAKE,      // ) = Small lake (6x6 pond, same sprite scaled down)
+  '=': TileType.WELL, // = = Well (horizontal lines like stone well)
+  q: TileType.CAMPFIRE, // q = Campfire (looks like fire/smoke)
+  '?': TileType.WITCH_HUT, // ? = Witch hut (mysterious magical dwelling)
+  '{': TileType.BEAR_HOUSE, // { = Bear house (cozy dwelling in cave, curly like a den)
+  '+': TileType.CAULDRON, // + = Cauldron (bubbling witch's pot)
+  '(': TileType.MAGICAL_LAKE, // ( = Magical lake (12x12 mystical water feature, curves like a pool)
+  ')': TileType.SMALL_LAKE, // ) = Small lake (6x6 pond, same sprite scaled down)
 };
 
 /**
@@ -131,7 +132,10 @@ export const GRID_CODES: Record<string, TileType> = {
  * ```
  */
 export function parseGrid(gridString: string): TileType[][] {
-  const lines = gridString.trim().split('\n').map(line => line.trim());
+  const lines = gridString
+    .trim()
+    .split('\n')
+    .map((line) => line.trim());
   const grid: TileType[][] = [];
 
   for (const line of lines) {
@@ -162,9 +166,7 @@ export function gridToString(grid: TileType[][]): string {
     reverseMap[tileType] = char;
   }
 
-  return grid.map(row =>
-    row.map(tile => reverseMap[tile] || '?').join('')
-  ).join('\n');
+  return grid.map((row) => row.map((tile) => reverseMap[tile] || '?').join('')).join('\n');
 }
 
 /**
@@ -206,7 +208,9 @@ export function validateMapDefinition(map: {
   if (map.spawnPoint) {
     const { x, y } = map.spawnPoint;
     if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
-      errors.push(`Spawn point (${x}, ${y}) is out of bounds (0-${map.width - 1}, 0-${map.height - 1})`);
+      errors.push(
+        `Spawn point (${x}, ${y}) is out of bounds (0-${map.width - 1}, 0-${map.height - 1})`
+      );
     }
   }
 
@@ -240,16 +244,18 @@ export function validateMapDefinition(map: {
 
     // Also log to console for immediate feedback
     console.group(`🗺️ Map Validation: ${map.id}`);
-    console.log(`Declared: ${map.width}x${map.height}, Actual grid: ${actualWidth}x${actualHeight}`);
+    console.log(
+      `Declared: ${map.width}x${map.height}, Actual grid: ${actualWidth}x${actualHeight}`
+    );
 
     if (errors.length > 0) {
       console.error('❌ ERRORS:');
-      errors.forEach(e => console.error(`  - ${e}`));
+      errors.forEach((e) => console.error(`  - ${e}`));
     }
 
     if (warnings.length > 0) {
       console.warn('⚠️ WARNINGS:');
-      warnings.forEach(w => console.warn(`  - ${w}`));
+      warnings.forEach((w) => console.warn(`  - ${w}`));
     }
 
     console.groupEnd();

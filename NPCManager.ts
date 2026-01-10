@@ -1,4 +1,4 @@
-import { NPC, Position, Direction, NPCBehavior } from './types';
+import { NPC, Position, Direction, NPCBehavior, isTileSolid } from './types';
 import { getTileData } from './utils/mapUtils';
 import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { TimeManager } from './utils/TimeManager';
@@ -41,7 +41,7 @@ class NPCManagerClass {
     this.npcsByMap.set(mapId, npcs);
 
     // Initialize state for each NPC (only if not already initialized)
-    npcs.forEach(npc => {
+    npcs.forEach((npc) => {
       if (!this.npcStates.has(npc.id)) {
         this.npcStates.set(npc.id, {
           npc,
@@ -109,7 +109,7 @@ class NPCManagerClass {
     if (!this.currentMapId) return [];
     const allNPCs = this.getNPCsForMap(this.currentMapId);
     // Filter by visibility conditions (seasonal creatures, time-based NPCs, etc.)
-    return allNPCs.filter(npc => this.isNPCVisible(npc));
+    return allNPCs.filter((npc) => this.isNPCVisible(npc));
   }
 
   /**
@@ -117,7 +117,7 @@ class NPCManagerClass {
    */
   getNPCById(npcId: string): NPC | null {
     const npcs = this.getCurrentMapNPCs();
-    return npcs.find(npc => npc.id === npcId) || null;
+    return npcs.find((npc) => npc.id === npcId) || null;
   }
 
   /**
@@ -175,7 +175,11 @@ class NPCManagerClass {
     for (let y = minTileY; y <= maxTileY; y++) {
       for (let x = minTileX; x <= maxTileX; x++) {
         const tileData = getTileData(x, y);
-        if (tileData && tileData.isSolid && !SPRITE_METADATA.find(s => s.tileType === tileData.type)) {
+        if (
+          tileData &&
+          isTileSolid(tileData.collisionType) &&
+          !SPRITE_METADATA.find((s) => s.tileType === tileData.type)
+        ) {
           return true;
         }
       }
@@ -187,9 +191,9 @@ class NPCManagerClass {
     for (let tileY = minTileY - searchRadius; tileY <= maxTileY + searchRadius; tileY++) {
       for (let tileX = minTileX - searchRadius; tileX <= maxTileX + searchRadius; tileX++) {
         const tileData = getTileData(tileX, tileY);
-        const spriteMetadata = SPRITE_METADATA.find(s => s.tileType === tileData?.type);
+        const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData?.type);
 
-        if (spriteMetadata && tileData?.isSolid) {
+        if (spriteMetadata && tileData && isTileSolid(tileData.collisionType)) {
           // Use collision-specific dimensions if provided, otherwise use sprite dimensions
           const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
           const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
@@ -203,8 +207,12 @@ class NPCManagerClass {
           const spriteBottom = spriteTop + collisionHeight;
 
           // Check if NPC position overlaps with collision bounds
-          if (pos.x + halfSize > spriteLeft && pos.x - halfSize < spriteRight &&
-              pos.y + halfSize > spriteTop && pos.y - halfSize < spriteBottom) {
+          if (
+            pos.x + halfSize > spriteLeft &&
+            pos.x - halfSize < spriteRight &&
+            pos.y + halfSize > spriteTop &&
+            pos.y - halfSize < spriteBottom
+          ) {
             return true;
           }
         }
@@ -221,7 +229,7 @@ class NPCManagerClass {
     const npcs = this.getCurrentMapNPCs();
     let anyAnimationChanged = false;
 
-    npcs.forEach(npc => {
+    npcs.forEach((npc) => {
       if (!npc.animatedStates) return;
 
       const states = npc.animatedStates;
@@ -295,7 +303,9 @@ class NPCManagerClass {
 
     const states = npc.animatedStates;
     if (!states.states[newState]) {
-      console.warn(`[NPCManager] Invalid state transition: ${states.currentState} -> ${newState} for NPC ${npcId}`);
+      console.warn(
+        `[NPCManager] Invalid state transition: ${states.currentState} -> ${newState} for NPC ${npcId}`
+      );
       return;
     }
 
@@ -343,7 +353,7 @@ class NPCManagerClass {
       anyNPCMoved = true;
     }
 
-    npcs.forEach(npc => {
+    npcs.forEach((npc) => {
       if (npc.behavior === NPCBehavior.STATIC) return; // Static NPCs don't move
 
       const state = this.npcStates.get(npc.id);
@@ -449,7 +459,7 @@ class NPCManagerClass {
             } else {
               // Hit an obstacle, try other directions before giving up
               const allDirections = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
-              const otherDirections = allDirections.filter(d => d !== state.moveDirection);
+              const otherDirections = allDirections.filter((d) => d !== state.moveDirection);
 
               // Shuffle other directions for variety
               for (let i = otherDirections.length - 1; i > 0; i--) {
@@ -461,10 +471,18 @@ class NPCManagerClass {
               for (const dir of otherDirections) {
                 const altPos = { ...npc.position };
                 switch (dir) {
-                  case Direction.Up: altPos.y -= movement; break;
-                  case Direction.Down: altPos.y += movement; break;
-                  case Direction.Left: altPos.x -= movement; break;
-                  case Direction.Right: altPos.x += movement; break;
+                  case Direction.Up:
+                    altPos.y -= movement;
+                    break;
+                  case Direction.Down:
+                    altPos.y += movement;
+                    break;
+                  case Direction.Left:
+                    altPos.x -= movement;
+                    break;
+                  case Direction.Right:
+                    altPos.x += movement;
+                    break;
                 }
                 if (!this.checkCollision(altPos)) {
                   // Found a clear direction, switch to it
@@ -516,7 +534,7 @@ class NPCManagerClass {
     const mapNPCs = this.npcsByMap.get(this.currentMapId) || [];
 
     // Check if NPC already exists
-    if (mapNPCs.find(n => n.id === npc.id)) {
+    if (mapNPCs.find((n) => n.id === npc.id)) {
       console.warn(`[NPCManager] NPC ${npc.id} already exists on map ${this.currentMapId}`);
       return;
     }
@@ -551,7 +569,7 @@ class NPCManagerClass {
     }
 
     const mapNPCs = this.npcsByMap.get(this.currentMapId) || [];
-    const filteredNPCs = mapNPCs.filter(n => n.id !== npcId);
+    const filteredNPCs = mapNPCs.filter((n) => n.id !== npcId);
 
     if (filteredNPCs.length === mapNPCs.length) {
       console.warn(`[NPCManager] NPC ${npcId} not found on map ${this.currentMapId}`);

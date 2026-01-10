@@ -1,4 +1,4 @@
-import { Position, TileType } from '../types';
+import { Position, TileType, isTileSolid } from '../types';
 import { getTileData, getTileCoords } from './mapUtils';
 import { PLAYER_SIZE } from '../constants';
 
@@ -14,13 +14,13 @@ import { PLAYER_SIZE } from '../constants';
  * Players and NPCs should spawn on these tile types only
  */
 export const SAFE_SPAWN_TILES = new Set<TileType>([
-  TileType.PATH,          // Outdoor paths
-  TileType.CARPET,        // Indoor carpets
-  TileType.FLOOR,         // Indoor floors
-  TileType.GRASS,         // Open grass areas
-  TileType.DOOR,          // Door tiles
+  TileType.PATH, // Outdoor paths
+  TileType.CARPET, // Indoor carpets
+  TileType.FLOOR, // Indoor floors
+  TileType.GRASS, // Open grass areas
+  TileType.DOOR, // Door tiles
   TileType.BUILDING_DOOR, // Building entrance doors
-  TileType.CHAIR,         // Chairs (walkable)
+  TileType.CHAIR, // Chairs (walkable)
 ]);
 
 /**
@@ -37,7 +37,7 @@ export function isPositionValid(pos: Position, entitySize: number = PLAYER_SIZE)
   for (let y = minTileY; y <= maxTileY; y++) {
     for (let x = minTileX; x <= maxTileX; x++) {
       const tileData = getTileData(x, y);
-      if (tileData && tileData.isSolid) {
+      if (tileData && isTileSolid(tileData.collisionType)) {
         return false; // Position would collide with wall
       }
     }

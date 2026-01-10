@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { TILE_SIZE, MAP_WIDTH, MAP_HEIGHT } from '../constants';
 import { getTileData } from '../utils/mapUtils';
-import { Position, Transition } from '../types';
+import { Position, Transition, isTileSolid, CollisionType } from '../types';
 import DebugInfoPanel from './DebugInfoPanel';
 import { Z_DEBUG_TILES, Z_DEBUG_TRANSITIONS, Z_DEBUG_CLICK, zClass } from '../zIndex';
 import { mapManager } from '../maps';
@@ -53,8 +53,11 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ playerPos }) => {
               }}
               onClick={(e) => handleTileClick(x, y, e)}
             >
-              {/* Solid Tile Indicator */}
-              {tileData.isSolid && (
+              {/* Collision Type Indicator */}
+              {tileData.collisionType === CollisionType.DESK && (
+                <div className="w-full h-full bg-purple-500/40 border-2 border-purple-400 pointer-events-none" />
+              )}
+              {tileData.collisionType === CollisionType.SOLID && (
                 <div className="w-full h-full bg-red-500/30 border border-red-500/50 pointer-events-none" />
               )}
               {/* Tile Name Label */}
@@ -104,7 +107,9 @@ interface TransitionMarkersProps {
 
 const TransitionMarkers: React.FC<TransitionMarkersProps> = ({ transitions }) => {
   return (
-    <div className={`absolute top-0 left-0 w-full h-full pointer-events-none ${zClass(Z_DEBUG_TRANSITIONS)}`}>
+    <div
+      className={`absolute top-0 left-0 w-full h-full pointer-events-none ${zClass(Z_DEBUG_TRANSITIONS)}`}
+    >
       {transitions.map((transition, index) => {
         const { fromPosition, toMapId, toPosition, label } = transition;
 
@@ -130,12 +135,8 @@ const TransitionMarkers: React.FC<TransitionMarkersProps> = ({ transitions }) =>
 
             {/* Info label */}
             <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-slate-900/95 border border-cyan-400/50 text-white text-[10px] font-mono px-2 py-1 rounded whitespace-nowrap">
-              <div className="text-cyan-300 font-bold text-center">
-                {label || 'Transition'}
-              </div>
-              <div className="text-gray-300">
-                → {displayMapId}
-              </div>
+              <div className="text-cyan-300 font-bold text-center">{label || 'Transition'}</div>
+              <div className="text-gray-300">→ {displayMapId}</div>
               <div className="text-gray-400 text-[8px]">
                 spawn: ({toPosition.x}, {toPosition.y})
               </div>

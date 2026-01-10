@@ -8,6 +8,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { friendshipManager } from './FriendshipManager';
 import { cookingManager } from './CookingManager';
+import { deskManager } from './deskManager';
 import { performanceMonitor } from './PerformanceMonitor';
 import { TimeManager, Season } from './TimeManager';
 import { ColorResolver } from './ColorResolver';
@@ -91,6 +92,10 @@ export async function initializeGame(
   // Load cooking progress from saved state
   cookingManager.initialise();
   console.log(`[App] Initialised cooking system`);
+
+  // Load desk contents from saved state
+  deskManager.initialise();
+  console.log(`[App] Initialised desk system`);
 
   // Initialize AI dialogue (optional - non-blocking)
   const aiEnabled = initAnthropicClient();

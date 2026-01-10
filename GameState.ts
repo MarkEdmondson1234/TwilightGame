@@ -10,7 +10,7 @@
  * - Quest/achievement progress
  */
 
-import { FarmPlot, NPCFriendship, PlacedItem, ColorScheme } from './types';
+import { FarmPlot, NPCFriendship, PlacedItem, ColorScheme, DeskContents } from './types';
 import { GameTime } from './utils/TimeManager';
 import { shouldDecay } from './utils/itemDecayManager';
 
@@ -107,6 +107,9 @@ export interface GameState {
 
   // Placed items (food, decorations, etc. on maps)
   placedItems: PlacedItem[];
+
+  // Desk contents (items placed on desk tiles)
+  deskContents: DeskContents[];
 
   // Cooking system (managed by CookingManager)
   cooking: {
@@ -350,6 +353,12 @@ class GameStateManager {
           parsed.placedItems = [];
         }
 
+        // Migrate old save data that doesn't have desk contents
+        if (!parsed.deskContents) {
+          console.log('[GameState] Migrating old save data - adding desk contents');
+          parsed.deskContents = [];
+        }
+
         // Migrate old save data that doesn't have watering can state
         if (!parsed.wateringCan) {
           console.log('[GameState] Migrating old save data - adding watering can');
@@ -413,6 +422,7 @@ class GameStateManager {
         npcFriendships: [],
       },
       placedItems: [],
+      deskContents: [],
       cooking: {
         recipeBookUnlocked: false, // Must talk to Mum to learn cooking
         unlockedRecipes: ['tea'], // Tea is always unlocked from the start
@@ -939,6 +949,7 @@ class GameStateManager {
       cutscenes: { completed: [] },
       relationships: { npcFriendships: [] },
       placedItems: [],
+      deskContents: [],
       cooking: { recipeBookUnlocked: false, unlockedRecipes: ['tea'], recipeProgress: {} }, // Tea is always unlocked
       statusEffects: { feelingSick: false },
       wateringCan: { currentLevel: 10 },
@@ -995,6 +1006,60 @@ class GameStateManager {
     }
 
     return removedCount;
+  }
+
+  // === Desk Contents Methods ===
+
+  /**
+   * Get desk contents at a specific position
+   */
+  getDeskAt(mapId: string, x: number, y: number): DeskContents | undefined {
+    return this.state.deskContents.find(
+      (desk) => desk.mapId === mapId && desk.position.x === x && desk.position.y === y
+    );
+  }
+
+  /**
+   * Save or update desk contents at a position
+   */
+  saveDeskContents(desk: DeskContents): void {
+    const existingIndex = this.state.deskContents.findIndex(
+      (d) =>
+        d.mapId === desk.mapId &&
+        d.position.x === desk.position.x &&
+        d.position.y === desk.position.y
+    );
+
+    if (existingIndex >= 0) {
+      this.state.deskContents[existingIndex] = desk;
+    } else {
+      this.state.deskContents.push(desk);
+    }
+    this.notify();
+  }
+
+  /**
+   * Get all desk contents for a specific map
+   */
+  getDeskContentsForMap(mapId: string): DeskContents[] {
+    return this.state.deskContents.filter((desk) => desk.mapId === mapId);
+  }
+
+  /**
+   * Load all desk contents (for DeskManager initialisation)
+   */
+  loadDeskContents(): DeskContents[] {
+    return this.state.deskContents || [];
+  }
+
+  /**
+   * Remove a desk's contents (when desk is removed from map)
+   */
+  removeDeskContents(mapId: string, x: number, y: number): void {
+    this.state.deskContents = this.state.deskContents.filter(
+      (desk) => !(desk.mapId === mapId && desk.position.x === x && desk.position.y === y)
+    );
+    this.notify();
   }
 
   // === Daily Resource Collection Methods ===

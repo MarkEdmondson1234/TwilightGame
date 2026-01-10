@@ -3,14 +3,14 @@
 // FIX: Added and exported the 'runSelfTests' function to resolve the import error in App.tsx.
 // This function performs basic sanity checks as suggested by its usage context.
 import { TILE_LEGEND, MAP_DATA, MAP_WIDTH, MAP_HEIGHT } from '../constants';
-import { TileType, Direction } from '../types';
+import { TileType, Direction, isTileSolid } from '../types';
 import { mapManager } from '../maps';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { GRID_CODES, parseGrid, gridToString } from '../maps/gridParser';
 import { isPositionValid, validatePositions } from './positionValidator';
 
 export function runSelfTests(): void {
-  console.log("Running startup sanity checks...");
+  console.log('Running startup sanity checks...');
 
   // === Constants Validation ===
   validateTileLegend();
@@ -31,7 +31,7 @@ export function runSelfTests(): void {
   // === Inventory System Validation ===
   validateInventorySystem();
 
-  console.log("✓ All sanity checks complete.");
+  console.log('✓ All sanity checks complete.');
 }
 
 /**
@@ -39,8 +39,8 @@ export function runSelfTests(): void {
  * Ensures all TileType enum values have corresponding TILE_LEGEND entries
  */
 function validateTileLegend(): void {
-  const tileTypeNames = Object.keys(TileType).filter(key => isNaN(Number(key)));
-  const legendKeys = Object.keys(TILE_LEGEND).map(key => parseInt(key, 10));
+  const tileTypeNames = Object.keys(TileType).filter((key) => isNaN(Number(key)));
+  const legendKeys = Object.keys(TILE_LEGEND).map((key) => parseInt(key, 10));
 
   // Check that all enum values have TILE_LEGEND entries
   const missingInLegend: string[] = [];
@@ -60,9 +60,9 @@ function validateTileLegend(): void {
 
   // Check for extra TILE_LEGEND keys not in enum
   const validEnumValues = new Set(
-    tileTypeNames.map(name => TileType[name as keyof typeof TileType])
+    tileTypeNames.map((name) => TileType[name as keyof typeof TileType])
   );
-  const extraKeys = legendKeys.filter(key => !validEnumValues.has(key));
+  const extraKeys = legendKeys.filter((key) => !validEnumValues.has(key));
 
   if (extraKeys.length > 0) {
     console.error(
@@ -89,16 +89,24 @@ function validateTileLegend(): void {
  */
 function validateColorSchemes(): void {
   const requiredColors = [
-    'grass', 'rock', 'water', 'path', 'floor', 'wall', 'carpet',
-    'door', 'special', 'furniture', 'mushroom', 'background'
+    'grass',
+    'rock',
+    'water',
+    'path',
+    'floor',
+    'wall',
+    'carpet',
+    'door',
+    'special',
+    'furniture',
+    'mushroom',
+    'background',
   ];
 
   for (const [name, scheme] of Object.entries(COLOR_SCHEMES)) {
     for (const color of requiredColors) {
       if (!scheme.colors[color as keyof typeof scheme.colors]) {
-        console.error(
-          `[Sanity Check] Color scheme "${name}" missing required color: ${color}`
-        );
+        console.error(`[Sanity Check] Color scheme "${name}" missing required color: ${color}`);
       }
     }
   }
@@ -108,18 +116,16 @@ function validateColorSchemes(): void {
  * Validate GRID_CODES covers all TileType enum values
  */
 function validateGridCodes(): void {
-  const tileTypes = Object.keys(TileType).filter(key => isNaN(Number(key)));
+  const tileTypes = Object.keys(TileType).filter((key) => isNaN(Number(key)));
   const codedTypes = new Set(Object.values(GRID_CODES));
 
   // Note: MUSHROOM (14) might not have a grid code if it's only used procedurally
   const missingCodes = tileTypes
-    .map(name => TileType[name as keyof typeof TileType])
-    .filter(type => !codedTypes.has(type) && type !== TileType.MUSHROOM);
+    .map((name) => TileType[name as keyof typeof TileType])
+    .filter((type) => !codedTypes.has(type) && type !== TileType.MUSHROOM);
 
   if (missingCodes.length > 0) {
-    console.warn(
-      `[Sanity Check] TileTypes without GRID_CODES: ${missingCodes.join(', ')}`
-    );
+    console.warn(`[Sanity Check] TileTypes without GRID_CODES: ${missingCodes.join(', ')}`);
   }
 }
 
@@ -142,11 +148,11 @@ function validateAllMaps(): void {
 
     const inconsistentRows = map.grid
       .map((row, i) => ({ len: row.length, index: i }))
-      .filter(r => r.len !== map.width);
+      .filter((r) => r.len !== map.width);
 
     if (inconsistentRows.length > 0) {
       console.error(
-        `[Sanity Check] Map "${mapId}": rows with inconsistent width: ${inconsistentRows.map(r => r.index).join(', ')}`
+        `[Sanity Check] Map "${mapId}": rows with inconsistent width: ${inconsistentRows.map((r) => r.index).join(', ')}`
       );
     }
 
@@ -160,8 +166,10 @@ function validateAllMaps(): void {
 
     // Validate spawn point is within bounds
     if (
-      map.spawnPoint.x < 0 || map.spawnPoint.x >= map.width ||
-      map.spawnPoint.y < 0 || map.spawnPoint.y >= map.height
+      map.spawnPoint.x < 0 ||
+      map.spawnPoint.x >= map.width ||
+      map.spawnPoint.y < 0 ||
+      map.spawnPoint.y >= map.height
     ) {
       console.error(
         `[Sanity Check] Map "${mapId}": spawn point (${map.spawnPoint.x}, ${map.spawnPoint.y}) is out of bounds`
@@ -172,8 +180,10 @@ function validateAllMaps(): void {
     for (const transition of map.transitions) {
       // Check fromPosition is within bounds
       if (
-        transition.fromPosition.x < 0 || transition.fromPosition.x >= map.width ||
-        transition.fromPosition.y < 0 || transition.fromPosition.y >= map.height
+        transition.fromPosition.x < 0 ||
+        transition.fromPosition.x >= map.width ||
+        transition.fromPosition.y < 0 ||
+        transition.fromPosition.y >= map.height
       ) {
         console.error(
           `[Sanity Check] Map "${mapId}": transition at (${transition.fromPosition.x}, ${transition.fromPosition.y}) is out of bounds`
@@ -190,8 +200,10 @@ function validateAllMaps(): void {
         } else {
           // Validate toPosition is within target map bounds
           if (
-            transition.toPosition.x < 0 || transition.toPosition.x >= targetMap.width ||
-            transition.toPosition.y < 0 || transition.toPosition.y >= targetMap.height
+            transition.toPosition.x < 0 ||
+            transition.toPosition.x >= targetMap.width ||
+            transition.toPosition.y < 0 ||
+            transition.toPosition.y >= targetMap.height
           ) {
             console.error(
               `[Sanity Check] Map "${mapId}": transition to "${transition.toMapId}" has out-of-bounds spawn (${transition.toPosition.x}, ${transition.toPosition.y})`
@@ -217,20 +229,15 @@ function validateGridParser(): void {
   const reparsed = parseGrid(stringified);
 
   // Check dimensions match
-  if (parsed.length !== reparsed.length ||
-      parsed[0].length !== reparsed[0].length) {
-    console.error(
-      `[Sanity Check] Grid parser round-trip failed: dimensions don't match`
-    );
+  if (parsed.length !== reparsed.length || parsed[0].length !== reparsed[0].length) {
+    console.error(`[Sanity Check] Grid parser round-trip failed: dimensions don't match`);
   }
 
   // Check content matches
   for (let y = 0; y < parsed.length; y++) {
     for (let x = 0; x < parsed[y].length; x++) {
       if (parsed[y][x] !== reparsed[y][x]) {
-        console.error(
-          `[Sanity Check] Grid parser round-trip failed at (${x}, ${y})`
-        );
+        console.error(`[Sanity Check] Grid parser round-trip failed at (${x}, ${y})`);
       }
     }
   }
@@ -265,13 +272,16 @@ function validateSpawnPoints(): void {
         console.error(`[Sanity Check] ⚠️ Invalid transition spawn points in "${mapId}":`, invalid);
       }
       if (warnings.length > 0) {
-        console.warn(`[Sanity Check] ⚠️ Transition spawns not on safe tiles in "${mapId}":`, warnings);
+        console.warn(
+          `[Sanity Check] ⚠️ Transition spawns not on safe tiles in "${mapId}":`,
+          warnings
+        );
       }
     }
 
     // Validate NPC positions (require safe spawn tiles)
     if (map.npcs && map.npcs.length > 0) {
-      const npcTests = map.npcs.map(npc => ({
+      const npcTests = map.npcs.map((npc) => ({
         label: `NPC "${npc.name}" (${npc.position.x}, ${npc.position.y})`,
         position: npc.position,
       }));
@@ -297,13 +307,13 @@ function validateLegacyMapData(): void {
     );
   }
 
-  const inconsistentRows = MAP_DATA
-    .map((row, i) => ({ len: row.length, index: i }))
-    .filter(r => r.len !== MAP_WIDTH);
+  const inconsistentRows = MAP_DATA.map((row, i) => ({ len: row.length, index: i })).filter(
+    (r) => r.len !== MAP_WIDTH
+  );
 
   if (inconsistentRows.length > 0) {
     console.warn(
-      `[Sanity Check] MAP_DATA rows not matching MAP_WIDTH (${MAP_WIDTH}): ${inconsistentRows.map(r => r.index).join(', ')}`
+      `[Sanity Check] MAP_DATA rows not matching MAP_WIDTH (${MAP_WIDTH}): ${inconsistentRows.map((r) => r.index).join(', ')}`
     );
   }
 }
@@ -331,7 +341,7 @@ function validateFarmSystem(): void {
       );
     } else {
       // Verify farm tiles are not solid (should be walkable)
-      if (TILE_LEGEND[tileType].isSolid) {
+      if (isTileSolid(TILE_LEGEND[tileType].collisionType)) {
         console.error(
           `[Sanity Check] Farm tile ${TileType[tileType]} is marked as solid but should be walkable`
         );
@@ -357,40 +367,41 @@ function validateFarmSystem(): void {
  */
 function validateInventorySystem(): void {
   // Dynamic import to avoid circular dependencies
-  import('../data/items').then(({ ITEMS, getItem, getSeedForCrop, getCropItemId, getSeedItemId }) => {
-    import('../data/crops').then(({ CROPS }) => {
-      // Validate that all crops have corresponding seed and crop items
-      for (const cropId of Object.keys(CROPS)) {
-        const seedItem = getSeedForCrop(cropId);
-        if (!seedItem) {
-          console.error(
-            `[Sanity Check] Crop "${cropId}" has no corresponding seed item`
-          );
-        }
+  import('../data/items').then(
+    ({ ITEMS, getItem, getSeedForCrop, getCropItemId, getSeedItemId }) => {
+      import('../data/crops').then(({ CROPS }) => {
+        // Validate that all crops have corresponding seed and crop items
+        for (const cropId of Object.keys(CROPS)) {
+          const seedItem = getSeedForCrop(cropId);
+          if (!seedItem) {
+            console.error(`[Sanity Check] Crop "${cropId}" has no corresponding seed item`);
+          }
 
-        const cropItemId = getCropItemId(cropId);
-        const cropItem = getItem(cropItemId);
-        if (!cropItem) {
-          console.error(
-            `[Sanity Check] Crop "${cropId}" has no corresponding crop item (expected "${cropItemId}")`
-          );
-        }
-      }
-
-      // Validate that all seed items reference valid crops
-      for (const [itemId, item] of Object.entries(ITEMS)) {
-        if (item.category === 'seed' && item.cropId) {
-          const crop = CROPS[item.cropId];
-          if (!crop) {
+          const cropItemId = getCropItemId(cropId);
+          const cropItem = getItem(cropItemId);
+          if (!cropItem) {
             console.error(
-              `[Sanity Check] Seed item "${itemId}" references non-existent crop "${item.cropId}"`
+              `[Sanity Check] Crop "${cropId}" has no corresponding crop item (expected "${cropItemId}")`
             );
           }
         }
-      }
 
-      console.log(`[Sanity Check] Inventory system: ${Object.keys(ITEMS).length} items validated`);
-    });
-  });
+        // Validate that all seed items reference valid crops
+        for (const [itemId, item] of Object.entries(ITEMS)) {
+          if (item.category === 'seed' && item.cropId) {
+            const crop = CROPS[item.cropId];
+            if (!crop) {
+              console.error(
+                `[Sanity Check] Seed item "${itemId}" references non-existent crop "${item.cropId}"`
+              );
+            }
+          }
+        }
+
+        console.log(
+          `[Sanity Check] Inventory system: ${Object.keys(ITEMS).length} items validated`
+        );
+      });
+    }
+  );
 }
-

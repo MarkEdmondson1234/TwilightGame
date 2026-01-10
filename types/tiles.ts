@@ -9,43 +9,50 @@
  * - ColorScheme (map colour themes)
  */
 
-import { TileType } from './core';
+import { TileType, CollisionType } from './core';
 
 export interface SeasonalImageSet {
-  spring?: string[];  // Images to use in spring (higher frequency if defined)
-  summer?: string[];  // Images to use in summer
-  autumn?: string[];  // Images to use in autumn
-  winter?: string[];  // Images to use in winter
-  default: string[];  // Default images used in all seasons
+  spring?: string[]; // Images to use in spring (higher frequency if defined)
+  summer?: string[]; // Images to use in summer
+  autumn?: string[]; // Images to use in autumn
+  winter?: string[]; // Images to use in winter
+  default: string[]; // Default images used in all seasons
 }
 
 export interface TileTransformSettings {
-    enableFlip?: boolean;      // Enable horizontal flip (default: false)
-    enableRotation?: boolean;  // Enable rotation (default: false)
-    enableScale?: boolean;     // Enable size variation (default: false)
-    enableBrightness?: boolean; // Enable brightness variation (default: false)
+  enableFlip?: boolean; // Enable horizontal flip (default: false)
+  enableRotation?: boolean; // Enable rotation (default: false)
+  enableScale?: boolean; // Enable size variation (default: false)
+  enableBrightness?: boolean; // Enable brightness variation (default: false)
 
-    // Fine-tune ranges (only used if corresponding enable* is true)
-    scaleRange?: { min: number; max: number };      // Size variation range
-    rotationRange?: { min: number; max: number };   // Rotation in degrees
-    brightnessRange?: { min: number; max: number }; // Brightness multiplier
+  // Fine-tune ranges (only used if corresponding enable* is true)
+  scaleRange?: { min: number; max: number }; // Size variation range
+  rotationRange?: { min: number; max: number }; // Rotation in degrees
+  brightnessRange?: { min: number; max: number }; // Brightness multiplier
 
-    // Special rotation modes for specific tile types
-    rotationMode?: 'subtle' | 'full360' | 'flip180' | 'lake_edge_left' | 'lake_edge_right' | 'lake_edge_top' | 'lake_edge_bottom';  // Rotation behavior
+  // Special rotation modes for specific tile types
+  rotationMode?:
+    | 'subtle'
+    | 'full360'
+    | 'flip180'
+    | 'lake_edge_left'
+    | 'lake_edge_right'
+    | 'lake_edge_top'
+    | 'lake_edge_bottom'; // Rotation behavior
 }
 
 export interface TileData {
-    type: TileType;
-    name: string;
-    color: string;
-    isSolid: boolean;
-    image?: string[];  // Simple array of images (backward compatible)
-    seasonalImages?: SeasonalImageSet;  // Seasonal variations (new)
-    baseType?: TileType;  // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
-    transforms?: TileTransformSettings;  // Transform settings (optional, defaults to no transforms)
-    // Animation support (for tiles like cauldrons that cycle through frames)
-    animationFrames?: string[];  // Array of image paths to cycle through
-    animationSpeed?: number;  // Milliseconds per frame (default: 150)
+  type: TileType;
+  name: string;
+  color: string;
+  collisionType: CollisionType; // Walkability category (WALKABLE, SOLID, DESK)
+  image?: string[]; // Simple array of images (backward compatible)
+  seasonalImages?: SeasonalImageSet; // Seasonal variations (new)
+  baseType?: TileType; // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
+  transforms?: TileTransformSettings; // Transform settings (optional, defaults to no transforms)
+  // Animation support (for tiles like cauldrons that cycle through frames)
+  animationFrames?: string[]; // Array of image paths to cycle through
+  animationSpeed?: number; // Milliseconds per frame (default: 150)
 }
 
 // Multi-tile sprite metadata for rendering
@@ -70,7 +77,14 @@ export interface SpriteMetadata {
   scaleRange?: { min: number; max: number }; // Size variation range (default: 0.85-1.15 or 0.98-1.02 for trees)
   rotationRange?: { min: number; max: number }; // Rotation in degrees (default: -2 to 2)
   brightnessRange?: { min: number; max: number }; // Brightness multiplier (default: 0.95-1.05)
-  rotationMode?: 'subtle' | 'full360' | 'flip180' | 'lake_edge_left' | 'lake_edge_right' | 'lake_edge_top' | 'lake_edge_bottom'; // Special rotation modes
+  rotationMode?:
+    | 'subtle'
+    | 'full360'
+    | 'flip180'
+    | 'lake_edge_left'
+    | 'lake_edge_right'
+    | 'lake_edge_top'
+    | 'lake_edge_bottom'; // Special rotation modes
   // Optional animation support (for multi-tile sprites with animation frames)
   animationFrames?: string[]; // Array of image paths for animation frames
   animationSpeed?: number; // Milliseconds per frame (e.g., 150ms = ~6.7 FPS)

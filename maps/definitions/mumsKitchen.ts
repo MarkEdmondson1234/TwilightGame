@@ -17,6 +17,7 @@ import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
  * . = Floor (walkable)
  * # = Wall/Obstacle (solid - walls, outside image area)
  * D = Door (transition)
+ * _ = Desk (surface for placing items)
  *
  * The grid is invisible - only used for collision!
  *
@@ -34,7 +35,7 @@ const gridString = `
 ###############
 ###########.###
 ###########..##
-#####........##
+#####_.......##
 ####.........##
 ###D.........##
 ###############

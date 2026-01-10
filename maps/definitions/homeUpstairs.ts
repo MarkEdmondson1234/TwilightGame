@@ -17,6 +17,7 @@ import { parseGrid } from '../gridParser';
  * A = Bed (3x3 tiles, anchor at center)
  * @ = Sofa (3 tiles wide)
  * & = Chimney (2x2)
+ * _ = Desk (surface for placing items)
  */
 
 const gridString = `
@@ -25,7 +26,7 @@ const gridString = `
 2ffffffff2
 2ffrfffff2
 2fffffAf&2
-2ffffffff2
+2_fffffff2
 2ffffffff2
 222D222222
 `;
