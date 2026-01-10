@@ -12,13 +12,13 @@
  */
 
 import { ItemCategory, getItem, ITEMS } from '../data/items';
-import { gameState } from '../GameState';
+import { characterData } from './CharacterData';
 
 export interface InventoryItem {
   itemId: string;
   quantity: number;
-  uses?: number;  // Current uses remaining for this item (only if item has maxUses defined)
-  masteryLevel?: number;  // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
+  uses?: number; // Current uses remaining for this item (only if item has maxUses defined)
+  masteryLevel?: number; // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
 }
 
 class InventoryManager {
@@ -27,10 +27,11 @@ class InventoryManager {
 
   /**
    * Save inventory to game state (triggers UI updates)
+   * Uses CharacterData API for unified persistence
    */
   private saveToGameState(): void {
     const data = this.getInventoryData();
-    gameState.saveInventory(data.items, data.tools);
+    characterData.saveInventory(data.items, data.tools);
   }
 
   /**
@@ -63,14 +64,17 @@ class InventoryManager {
     // For stackable items, try to stack with existing instances first
     if (item.stackable) {
       // Find an existing instance we can add to (if any)
-      const existingInstance = instances.find(inst =>
-        inst.masteryLevel === masteryLevel &&
-        (!item.maxStack || (inst.quantity || 1) < item.maxStack)
+      const existingInstance = instances.find(
+        (inst) =>
+          inst.masteryLevel === masteryLevel &&
+          (!item.maxStack || (inst.quantity || 1) < item.maxStack)
       );
 
       if (existingInstance) {
         // Add to existing stack
-        const availableSpace = item.maxStack ? item.maxStack - (existingInstance.quantity || 1) : quantity;
+        const availableSpace = item.maxStack
+          ? item.maxStack - (existingInstance.quantity || 1)
+          : quantity;
         const amountToAdd = Math.min(quantity, availableSpace);
         existingInstance.quantity = (existingInstance.quantity || 1) + amountToAdd;
         quantity -= amountToAdd; // Reduce remaining quantity to add
@@ -79,7 +83,9 @@ class InventoryManager {
           // All items stacked successfully
           this.items.set(itemId, instances);
           const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
-          console.log(`[InventoryManager] +${amountToAdd} ${item.displayName}${masteryStr} (stacked, total: ${existingInstance.quantity})`);
+          console.log(
+            `[InventoryManager] +${amountToAdd} ${item.displayName}${masteryStr} (stacked, total: ${existingInstance.quantity})`
+          );
           this.saveToGameState();
           return true;
         }
@@ -113,7 +119,9 @@ class InventoryManager {
     this.items.set(itemId, instances);
     const totalQuantity = instances.reduce((sum, inst) => sum + (inst.quantity || 1), 0);
     const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
-    console.log(`[InventoryManager] Added ${item.displayName}${masteryStr} (total: ${totalQuantity})`);
+    console.log(
+      `[InventoryManager] Added ${item.displayName}${masteryStr} (total: ${totalQuantity})`
+    );
     this.saveToGameState();
     return true;
   }
@@ -143,7 +151,9 @@ class InventoryManager {
     // Process removal for each quantity requested
     for (let i = 0; i < quantity; i++) {
       if (instances.length === 0) {
-        console.warn(`[InventoryManager] Not enough ${item.displayName} (need ${quantity}, processed ${i})`);
+        console.warn(
+          `[InventoryManager] Not enough ${item.displayName} (need ${quantity}, processed ${i})`
+        );
         return false;
       }
 
@@ -159,7 +169,9 @@ class InventoryManager {
           instances.shift();
           console.log(`[InventoryManager] ${item.displayName} used up (0 uses remaining)`);
         } else {
-          console.log(`[InventoryManager] Used ${item.displayName} (${instance.uses}/${item.maxUses} uses remaining)`);
+          console.log(
+            `[InventoryManager] Used ${item.displayName} (${instance.uses}/${item.maxUses} uses remaining)`
+          );
         }
       } else {
         // Single-use item: remove entire instance
@@ -233,11 +245,11 @@ class InventoryManager {
         // Group stackable items by masteryLevel
         const grouped = new Map<number | undefined, { quantity: number; uses?: number }>();
 
-        instances.forEach(instance => {
+        instances.forEach((instance) => {
           const key = instance.masteryLevel;
           const existing = grouped.get(key);
           if (existing) {
-            existing.quantity += (instance.quantity || 1);
+            existing.quantity += instance.quantity || 1;
           } else {
             grouped.set(key, { quantity: instance.quantity || 1, uses: instance.uses });
           }
@@ -254,14 +266,14 @@ class InventoryManager {
         });
       } else {
         // Non-stackable items: keep separate
-        instances.forEach(instance => {
+        instances.forEach((instance) => {
           result.push(instance);
         });
       }
     });
 
     // Add tools
-    this.tools.forEach(toolId => {
+    this.tools.forEach((toolId) => {
       result.push({ itemId: toolId, quantity: 1 });
     });
 
@@ -275,7 +287,7 @@ class InventoryManager {
     const result: InventoryItem[] = [];
 
     if (category === ItemCategory.TOOL) {
-      this.tools.forEach(toolId => {
+      this.tools.forEach((toolId) => {
         result.push({ itemId: toolId, quantity: 1 });
       });
       return result;
@@ -288,11 +300,11 @@ class InventoryManager {
           // Group stackable items by masteryLevel
           const grouped = new Map<number | undefined, { quantity: number; uses?: number }>();
 
-          instances.forEach(instance => {
+          instances.forEach((instance) => {
             const key = instance.masteryLevel;
             const existing = grouped.get(key);
             if (existing) {
-              existing.quantity += (instance.quantity || 1);
+              existing.quantity += instance.quantity || 1;
             } else {
               grouped.set(key, { quantity: instance.quantity || 1, uses: instance.uses });
             }
@@ -309,7 +321,7 @@ class InventoryManager {
           });
         } else {
           // Non-stackable items: keep separate
-          instances.forEach(instance => {
+          instances.forEach((instance) => {
             result.push(instance);
           });
         }
@@ -357,7 +369,7 @@ class InventoryManager {
     this.tools.clear();
 
     // Load items - group by itemId
-    items.forEach(inventoryItem => {
+    items.forEach((inventoryItem) => {
       const item = getItem(inventoryItem.itemId);
       if (item && item.category !== ItemCategory.TOOL) {
         const instances = this.items.get(inventoryItem.itemId) || [];
@@ -367,14 +379,16 @@ class InventoryManager {
     });
 
     // Load tools
-    tools.forEach(toolId => {
+    tools.forEach((toolId) => {
       const item = getItem(toolId);
       if (item && item.category === ItemCategory.TOOL) {
         this.tools.add(toolId);
       }
     });
 
-    console.log(`[InventoryManager] Loaded ${this.items.size} item types and ${this.tools.size} tools`);
+    console.log(
+      `[InventoryManager] Loaded ${this.items.size} item types and ${this.tools.size} tools`
+    );
   }
 
   /**
@@ -385,7 +399,7 @@ class InventoryManager {
 
     // Flatten all instances
     this.items.forEach((instances) => {
-      instances.forEach(instance => {
+      instances.forEach((instance) => {
         items.push(instance);
       });
     });
@@ -439,7 +453,7 @@ class InventoryManager {
     // Tools
     if (this.tools.size > 0) {
       lines.push('Tools:');
-      this.tools.forEach(toolId => {
+      this.tools.forEach((toolId) => {
         const item = getItem(toolId);
         if (item) {
           lines.push(`  ${item.displayName}`);

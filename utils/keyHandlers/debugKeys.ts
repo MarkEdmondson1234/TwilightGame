@@ -11,7 +11,7 @@
  */
 
 import { farmManager } from '../farmManager';
-import { gameState } from '../../GameState';
+import { characterData } from '../CharacterData';
 import { transitionToMap } from '../../maps';
 import { Position } from '../../types';
 
@@ -28,7 +28,9 @@ export interface DebugKeyHandlers {
 /**
  * Handle F1 key - Toggle Help Browser
  */
-export function handleF1(handlers: Pick<DebugKeyHandlers, 'onSetShowHelpBrowser' | 'showHelpBrowser'>): void {
+export function handleF1(
+  handlers: Pick<DebugKeyHandlers, 'onSetShowHelpBrowser' | 'showHelpBrowser'>
+): void {
   handlers.onSetShowHelpBrowser(!handlers.showHelpBrowser);
 }
 
@@ -51,7 +53,7 @@ export function handleF4(handlers: Pick<DebugKeyHandlers, 'onSetShowDevTools'>):
  */
 export function handleF6(handlers: Pick<DebugKeyHandlers, 'onFarmUpdate'>): void {
   farmManager.debugAdvanceTime(60 * 1000);
-  gameState.saveFarmPlots(farmManager.getAllPlots());
+  characterData.saveFarmPlots(farmManager.getAllPlots());
   handlers.onFarmUpdate();
   console.log('[Debug] Advanced farm time by 1 minute');
 }
@@ -81,10 +83,7 @@ export function handleF8(handlers: Pick<DebugKeyHandlers, 'onSetShowSpriteEditor
  * Try to handle a debug key press.
  * Returns true if the key was handled, false otherwise.
  */
-export function handleDebugKey(
-  key: string,
-  handlers: DebugKeyHandlers
-): boolean {
+export function handleDebugKey(key: string, handlers: DebugKeyHandlers): boolean {
   switch (key) {
     case 'F1':
       handleF1(handlers);

@@ -117,7 +117,54 @@ This command:
   - Physics engine, renderer, and debug overlays all use `getTileData()`
   - Never access map data directly - always use MapManager
 - **Current Systems**: MapManager handles all map loading, transitions, and color schemes
-- **Future Systems**: When adding inventory, crafting, NPCs, etc., create a single authoritative manager/utility for that data
+- **Character Data**: `utils/CharacterData.ts` is the unified persistence API for all character-specific data
+
+### Character Data Persistence (CharacterData API)
+
+**IMPORTANT**: All character-related data persistence (inventory, farming, cooking, friendships) MUST go through the `characterData` API.
+
+```typescript
+import { characterData } from './utils/CharacterData';
+
+// Save inventory
+characterData.saveInventory(items, tools);
+
+// Save farm plots
+characterData.saveFarmPlots(plots);
+
+// Save friendships
+characterData.saveFriendships(friendships);
+```
+
+**Why This Exists:**
+- Prevents circular dependency bugs where managers read from GameState and write back stale data
+- Provides consistent logging for debugging persistence issues
+- Single point of control for all character data saves
+- Type-safe with proper TypeScript interfaces
+
+**DO NOT use gameState directly for saves:**
+```typescript
+// ❌ WRONG - bypasses CharacterData API
+gameState.saveInventory(items, tools);
+gameState.saveFarmPlots(plots);
+
+// ✅ CORRECT - uses CharacterData API
+characterData.saveInventory(items, tools);
+characterData.saveFarmPlots(plots);
+```
+
+**Manager Pattern:**
+Managers (CookingManager, FriendshipManager, etc.) should:
+1. Track state locally as the single source of truth
+2. Load from `characterData` once during `initialise()`
+3. Save via `characterData` when state changes
+4. Never read from GameState during save operations
+
+**Available Domains:**
+- `inventory` - Items and tools
+- `farming` - Farm plots, current tool, selected seed
+- `cooking` - Recipe book, unlocked recipes, progress
+- `friendship` - NPC friendship levels and history
 
 ### DRY Principle
 
@@ -207,6 +254,7 @@ Pure functions and game systems:
 
 - `utils/gameInitializer.ts` - Game startup (palette, maps, assets, inventory, farm plots)
 - `utils/actionHandlers.ts` - Shared action logic (mirror, NPC, transition, farming interactions)
+- `utils/CharacterData.ts` - **Unified persistence API** for all character data (inventory, farming, cooking, friendships)
 - `utils/mapUtils.ts` - Tile data access via MapManager
 - `utils/testUtils.ts` - Startup sanity checks
 - `utils/tileRenderUtils.ts` - Tile transform calculations

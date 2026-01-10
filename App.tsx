@@ -54,6 +54,8 @@ import {
 } from './utils/actionHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
+import { cookingManager } from './utils/CookingManager';
+import { characterData } from './utils/CharacterData';
 import { TimeManager } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
 import { Z_PLAYER, Z_DEPTH_SORTED_BASE } from './zIndex';
@@ -2015,7 +2017,8 @@ const App: React.FC = () => {
               }
             }}
             onShowRecipeBook={() => {
-              if (!gameState.isRecipeBookUnlocked()) {
+              // Use cookingManager as single source of truth for cooking state
+              if (!cookingManager.isRecipeBookUnlocked()) {
                 showToast('Talk to Mum if you want to learn how to cook!', 'info');
                 return;
               }
@@ -2136,8 +2139,8 @@ const App: React.FC = () => {
             inventoryManager.loadInventory(newInventory, currentTools);
             console.log('[App] Updated InventoryManager with new inventory');
 
-            // Save to GameState (InventoryManager.loadInventory doesn't auto-save)
-            gameState.saveInventory(newInventory, currentTools);
+            // Save to GameState using CharacterData API
+            characterData.saveInventory(newInventory, currentTools);
             console.log('[App] Saved inventory to GameState');
 
             // Update UI inventory display

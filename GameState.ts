@@ -922,7 +922,7 @@ class GameStateManager {
       cutscenes: { completed: [] },
       relationships: { npcFriendships: [] },
       placedItems: [],
-      cooking: { recipeBookUnlocked: false, unlockedRecipes: [], recipeProgress: {} },
+      cooking: { recipeBookUnlocked: false, unlockedRecipes: ['tea'], recipeProgress: {} }, // Tea is always unlocked
       statusEffects: { feelingSick: false },
       wateringCan: { currentLevel: 10 },
       dailyResourceCollections: {},

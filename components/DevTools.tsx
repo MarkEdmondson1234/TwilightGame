@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { gameState } from '../GameState';
+import { characterData } from '../utils/CharacterData';
 import { farmManager } from '../utils/farmManager';
 import { mapManager } from '../maps/MapManager';
 import { FarmPlotState } from '../types';
@@ -27,12 +28,13 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
       }
 
       const plots = farmManager.getPlotsForMap(currentMapId);
-      const planted = plots.filter(p =>
-        p.state === FarmPlotState.PLANTED ||
-        p.state === FarmPlotState.WATERED ||
-        p.state === FarmPlotState.WILTING
+      const planted = plots.filter(
+        (p) =>
+          p.state === FarmPlotState.PLANTED ||
+          p.state === FarmPlotState.WATERED ||
+          p.state === FarmPlotState.WILTING
       ).length;
-      const ready = plots.filter(p => p.state === FarmPlotState.READY).length;
+      const ready = plots.filter((p) => p.state === FarmPlotState.READY).length;
 
       setPlotStats({
         total: plots.length,
@@ -48,7 +50,7 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
 
   const advanceTime = (ms: number) => {
     farmManager.debugAdvanceTime(ms);
-    gameState.saveFarmPlots(farmManager.getAllPlots());
+    characterData.saveFarmPlots(farmManager.getAllPlots());
     onFarmUpdate?.();
     console.log(`[DevTools] Advanced farm time by ${ms / 1000}s`);
   };
@@ -59,9 +61,9 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
 
     // Clear all plots for current map
     const allPlots = farmManager.getAllPlots();
-    const otherMapPlots = allPlots.filter(plot => plot.mapId !== currentMapId);
+    const otherMapPlots = allPlots.filter((plot) => plot.mapId !== currentMapId);
     farmManager.loadPlots(otherMapPlots);
-    gameState.saveFarmPlots(otherMapPlots);
+    characterData.saveFarmPlots(otherMapPlots);
     onFarmUpdate?.();
     console.log(`[DevTools] Reset all farm plots for map: ${currentMapId}`);
   };
@@ -69,8 +71,12 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
   return (
     <>
       <div className="devtools-status" style={{ marginBottom: '12px' }}>
-        <p><strong>Current Map Plots:</strong> {plotStats.total}</p>
-        <p><strong>Growing:</strong> {plotStats.planted} | <strong>Ready:</strong> {plotStats.ready}</p>
+        <p>
+          <strong>Current Map Plots:</strong> {plotStats.total}
+        </p>
+        <p>
+          <strong>Growing:</strong> {plotStats.planted} | <strong>Ready:</strong> {plotStats.ready}
+        </p>
       </div>
 
       <div className="devtools-control">
@@ -140,7 +146,9 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
   const [season, setSeason] = useState<Season>(currentTime.season);
   const [day, setDay] = useState<number>(currentTime.day);
   const [hour, setHour] = useState<number>(currentTime.hour);
-  const [weather, setWeather] = useState<'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'>(currentWeather);
+  const [weather, setWeather] = useState<
+    'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
+  >(currentWeather);
   const [automaticWeather, setAutomaticWeather] = useState<boolean>(currentAutomaticWeather);
   const [driftSpeed, setDriftSpeed] = useState<number>(currentDriftSpeed);
 
@@ -171,7 +179,9 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
     TimeManager.setTimeOverride({ season, day, hour: newHour });
   };
 
-  const handleWeatherChange = (newWeather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms') => {
+  const handleWeatherChange = (
+    newWeather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
+  ) => {
     setWeather(newWeather);
     gameState.setWeather(newWeather);
   };
@@ -210,21 +220,14 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
         </div>
 
         <div className="devtools-content">
-          {hasOverride && (
-            <div className="devtools-warning">
-              ⚠️ Time Override Active
-            </div>
-          )}
+          {hasOverride && <div className="devtools-warning">⚠️ Time Override Active</div>}
 
           <div className="devtools-section">
             <h3>Time Control</h3>
 
             <div className="devtools-control">
               <label>Season</label>
-              <select
-                value={season}
-                onChange={(e) => handleSeasonChange(e.target.value as Season)}
-              >
+              <select value={season} onChange={(e) => handleSeasonChange(e.target.value as Season)}>
                 <option value={Season.SPRING}>Spring</option>
                 <option value={Season.SUMMER}>Summer</option>
                 <option value={Season.AUTUMN}>Autumn</option>
@@ -245,7 +248,9 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
             </div>
 
             <div className="devtools-control">
-              <label>Hour ({hour}:00 - {timeOfDay})</label>
+              <label>
+                Hour ({hour}:00 - {timeOfDay})
+              </label>
               <input
                 type="range"
                 min="0"
@@ -256,10 +261,7 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
               <span className="devtools-value">{hour}:00</span>
             </div>
 
-            <button
-              className="devtools-button devtools-reset"
-              onClick={handleResetToRealTime}
-            >
+            <button className="devtools-button devtools-reset" onClick={handleResetToRealTime}>
               Reset to Real Time
             </button>
           </div>
@@ -273,11 +275,13 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
                   type="checkbox"
                   checked={automaticWeather}
                   onChange={(e) => handleAutomaticWeatherToggle(e.target.checked)}
-                />
-                {' '}Automatic Weather
+                />{' '}
+                Automatic Weather
               </label>
               <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
-                {automaticWeather ? 'Weather changes automatically based on season' : 'Manual weather control'}
+                {automaticWeather
+                  ? 'Weather changes automatically based on season'
+                  : 'Manual weather control'}
               </small>
             </div>
 
@@ -328,16 +332,26 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
           <div className="devtools-section">
             <h3>Current Status</h3>
             <div className="devtools-status">
-              <p><strong>Season:</strong> {season}</p>
-              <p><strong>Day:</strong> {day} of 7</p>
-              <p><strong>Time:</strong> {hour}:00 ({timeOfDay})</p>
-              <p><strong>Weather:</strong> {weather.charAt(0).toUpperCase() + weather.slice(1)}</p>
+              <p>
+                <strong>Season:</strong> {season}
+              </p>
+              <p>
+                <strong>Day:</strong> {day} of 7
+              </p>
+              <p>
+                <strong>Time:</strong> {hour}:00 ({timeOfDay})
+              </p>
+              <p>
+                <strong>Weather:</strong> {weather.charAt(0).toUpperCase() + weather.slice(1)}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="devtools-footer">
-          <p>Press <kbd>F4</kbd> to close</p>
+          <p>
+            Press <kbd>F4</kbd> to close
+          </p>
         </div>
       </div>
     </div>

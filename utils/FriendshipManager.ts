@@ -11,7 +11,7 @@
  */
 
 import { NPCFriendship, FriendshipTier, NPC } from '../types';
-import { gameState } from '../GameState';
+import { characterData, FriendshipData } from './CharacterData';
 import { TimeManager } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getItem, ItemCategory } from '../data/items';
@@ -19,33 +19,36 @@ import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
-const TIER_REWARDS: Record<string, Record<FriendshipTier, Array<{ itemId: string; quantity: number }>>> = {
+const TIER_REWARDS: Record<
+  string,
+  Record<FriendshipTier, Array<{ itemId: string; quantity: number }>>
+> = {
   // Old Man (Jebediah) gives seeds when you become acquaintances
-  'village_elder': {
-    'stranger': [],
-    'acquaintance': [
+  village_elder: {
+    stranger: [],
+    acquaintance: [
       { itemId: 'seed_sunflower', quantity: 3 },
       { itemId: 'seed_pea', quantity: 3 },
       { itemId: 'seed_salad', quantity: 3 },
     ],
-    'good_friend': [],
+    good_friend: [],
   },
 };
 
 // Friendship constants
 const POINTS_PER_LEVEL = 100;
 const MAX_POINTS = 900; // Level 9
-const MIN_POINTS = 0;   // Level 1
+const MIN_POINTS = 0; // Level 1
 
 // Point thresholds for tiers
 const ACQUAINTANCE_THRESHOLD = 300; // Level 4+
-const GOOD_FRIEND_THRESHOLD = 600;  // Level 7+
+const GOOD_FRIEND_THRESHOLD = 600; // Level 7+
 
 // Point awards
-const DAILY_TALK_POINTS = 100;  // +1 level for daily conversation
-const GIFT_POINTS = 100;        // +1 level for giving food
-const LIKED_GIFT_POINTS = 300;  // +3 levels for giving liked food
-const QUEST_POINTS = 300;       // +3 levels for completing a quest
+const DAILY_TALK_POINTS = 100; // +1 level for daily conversation
+const GIFT_POINTS = 100; // +1 level for giving food
+const LIKED_GIFT_POINTS = 300; // +3 levels for giving liked food
+const QUEST_POINTS = 300; // +3 levels for completing a quest
 
 class FriendshipManagerClass {
   private friendships: Map<string, NPCFriendship> = new Map();
@@ -57,13 +60,15 @@ class FriendshipManagerClass {
   initialise(): void {
     if (this.initialised) return;
 
-    const saved = gameState.loadFriendships();
-    saved.forEach(friendship => {
-      this.friendships.set(friendship.npcId, friendship);
-    });
+    const saved = characterData.loadFriendships();
+    if (saved) {
+      saved.npcFriendships.forEach((friendship) => {
+        this.friendships.set(friendship.npcId, friendship);
+      });
+    }
 
     this.initialised = true;
-    console.log(`[FriendshipManager] Initialised with ${saved.length} friendships`);
+    console.log(`[FriendshipManager] Initialised with ${this.friendships.size} friendships`);
   }
 
   /**
@@ -112,7 +117,11 @@ class FriendshipManagerClass {
   /**
    * Check if player meets a friendship requirement
    */
-  meetsFriendshipRequirement(npcId: string, requiredTier?: FriendshipTier, requiresSpecialFriend?: boolean): boolean {
+  meetsFriendshipRequirement(
+    npcId: string,
+    requiredTier?: FriendshipTier,
+    requiresSpecialFriend?: boolean
+  ): boolean {
     const friendship = this.friendships.get(npcId);
 
     // Check special friend requirement
@@ -149,7 +158,9 @@ class FriendshipManagerClass {
     const newLevel = this.getFriendshipLevel(npcId);
     const newTier = this.getFriendshipTier(npcId);
 
-    console.log(`[FriendshipManager] ${npcId}: +${amount} points (${reason}). Now ${friendship.points} points, level ${newLevel}, tier: ${newTier}`);
+    console.log(
+      `[FriendshipManager] ${npcId}: +${amount} points (${reason}). Now ${friendship.points} points, level ${newLevel}, tier: ${newTier}`
+    );
 
     // Announce level up
     if (newLevel > oldLevel) {
@@ -185,7 +196,9 @@ class FriendshipManagerClass {
     // Give the rewards
     for (const reward of rewards) {
       inventoryManager.addItem(reward.itemId, reward.quantity);
-      console.log(`[FriendshipManager] 🎁 Received ${reward.quantity}x ${reward.itemId} from ${npcId}!`);
+      console.log(
+        `[FriendshipManager] 🎁 Received ${reward.quantity}x ${reward.itemId} from ${npcId}!`
+      );
     }
 
     // Track that reward was received
@@ -194,9 +207,9 @@ class FriendshipManagerClass {
     }
     friendship.rewardsReceived.push(rewardKey);
 
-    // Save inventory
+    // Save inventory using CharacterData API
     const inventoryData = inventoryManager.getInventoryData();
-    gameState.saveInventory(inventoryData.items, inventoryData.tools);
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
     console.log(`[FriendshipManager] 🎁 ${npcId} gave you a gift for becoming their ${tier}!`);
   }
@@ -225,7 +238,11 @@ class FriendshipManagerClass {
    * Give a gift to an NPC
    * Returns the points awarded and a reaction type
    */
-  giveGift(npcId: string, itemId: string, npc?: NPC): { points: number; reaction: 'loved' | 'liked' | 'neutral' | 'disliked' } {
+  giveGift(
+    npcId: string,
+    itemId: string,
+    npc?: NPC
+  ): { points: number; reaction: 'loved' | 'liked' | 'neutral' | 'disliked' } {
     const item = getItem(itemId);
     if (!item) {
       console.warn(`[FriendshipManager] Unknown item: ${itemId}`);
@@ -239,13 +256,17 @@ class FriendshipManagerClass {
 
       if (isSpecial) {
         // Special Friends are understanding and don't lose friendship
-        console.log(`[FriendshipManager] 😅 ${npcId} (Special Friend) tries your terrible food but doesn't mind`);
+        console.log(
+          `[FriendshipManager] 😅 ${npcId} (Special Friend) tries your terrible food but doesn't mind`
+        );
         return { points: 0, reaction: 'neutral' };
       } else {
         // Regular NPCs lose 1 friendship point
         const points = -1;
         this.addPoints(npcId, points, `terrible food gift: ${item.displayName}`);
-        console.log(`[FriendshipManager] 😖 ${npcId} is disgusted by your terrible food (-1 point)`);
+        console.log(
+          `[FriendshipManager] 😖 ${npcId} is disgusted by your terrible food (-1 point)`
+        );
         return { points, reaction: 'disliked' };
       }
     }
@@ -283,7 +304,7 @@ class FriendshipManagerClass {
    */
   private getFoodRecipeCategory(foodItemId: string): RecipeCategory | null {
     // Find the recipe that produces this food
-    const recipe = Object.values(RECIPES).find(r => r.resultItemId === foodItemId);
+    const recipe = Object.values(RECIPES).find((r) => r.resultItemId === foodItemId);
     return recipe?.category ?? null;
   }
 
@@ -335,7 +356,7 @@ class FriendshipManagerClass {
    */
   private save(): void {
     const friendships = this.getAllFriendships();
-    gameState.saveFriendships(friendships);
+    characterData.saveFriendships(friendships as FriendshipData['npcFriendships']);
   }
 
   /**

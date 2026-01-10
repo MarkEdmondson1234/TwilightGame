@@ -6,10 +6,11 @@
 import { Position, TileType } from '../types';
 import { getTileData, getAdjacentTiles, getTileCoords, getSurroundingTiles } from './mapUtils';
 import { mapManager, transitionToMap } from '../maps';
+import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
 import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
-import { gameState } from '../GameState';
+import { characterData } from './CharacterData';
 import { getCrop } from '../data/crops';
 import { generateForageSeed, getCropIdFromSeed } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
@@ -205,7 +206,7 @@ export function handleFarmAction(
     }
 
     const inventoryData = inventoryManager.getInventoryData();
-    gameState.saveInventory(inventoryData.items, inventoryData.tools);
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
     const message = gotSeeds
       ? `Picked ${berryYield} strawberries and found ${seedCount} seeds!`
@@ -260,7 +261,7 @@ export function handleFarmAction(
         inventoryManager.addItem('crop_blackberry', berryYield);
 
         const inventoryData = inventoryManager.getInventoryData();
-        gameState.saveInventory(inventoryData.items, inventoryData.tools);
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
         const message = `Picked ${berryYield} blackberries!`;
 
@@ -315,7 +316,7 @@ export function handleFarmAction(
         inventoryManager.addItem('crop_hazelnut', nutYield);
 
         const inventoryData = inventoryManager.getInventoryData();
-        gameState.saveInventory(inventoryData.items, inventoryData.tools);
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
         const message = `Picked ${nutYield} hazelnuts!`;
 
@@ -370,7 +371,7 @@ export function handleFarmAction(
         inventoryManager.addItem('crop_blueberry', berryYield);
 
         const inventoryData = inventoryManager.getInventoryData();
-        gameState.saveInventory(inventoryData.items, inventoryData.tools);
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
         const message = `Picked ${berryYield} blueberries!`;
 
@@ -423,7 +424,7 @@ export function handleFarmAction(
       if (plantResult.success) {
         // FarmManager consumed seed from inventory, save it
         const inventoryData = inventoryManager.getInventoryData();
-        gameState.saveInventory(inventoryData.items, inventoryData.tools);
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
         console.log(`[Action] Planted ${cropId}`);
         onAnimationTrigger?.('plant');
         farmActionTaken = true;
@@ -473,7 +474,7 @@ export function handleFarmAction(
           gameState.addGold(totalGold);
           // Save inventory to GameState
           const inventoryData = inventoryManager.getInventoryData();
-          gameState.saveInventory(inventoryData.items, inventoryData.tools);
+          characterData.saveInventory(inventoryData.items, inventoryData.tools);
           const qualityStr =
             result.quality !== 'normal'
               ? ` (${result.quality} quality, ${qualityMultiplier}x gold!)`
@@ -498,7 +499,7 @@ export function handleFarmAction(
       // Update all plots to check for state changes (e.g., planted -> ready)
       farmManager.updateAllPlots();
       // Save farm state to GameState
-      gameState.saveFarmPlots(farmManager.getAllPlots());
+      characterData.saveFarmPlots(farmManager.getAllPlots());
       return { handled: true };
     }
 
@@ -667,7 +668,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       }
 
       const inventoryData = inventoryManager.getInventoryData();
-      gameState.saveInventory(inventoryData.items, inventoryData.tools);
+      characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
       const message = gotSeeds
         ? `You picked ${berryYield} strawberries and found ${seedCount} seeds!`
@@ -698,7 +699,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   // Found a seed! Add to inventory
   inventoryManager.addItem(seed.id, 1);
   const inventoryData = inventoryManager.getInventoryData();
-  gameState.saveInventory(inventoryData.items, inventoryData.tools);
+  characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
   console.log(`[Forage] Found ${seed.displayName}!`);
   return {
@@ -820,7 +821,7 @@ export function handleCollectWater(): { success: boolean; message: string } {
 
   // Save inventory
   const inventoryData = inventoryManager.getInventoryData();
-  gameState.saveInventory(inventoryData.items, inventoryData.tools);
+  characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
   const message = `Collected ${waterAmount} water from the well!`;
   console.log(`[Action] ${message}`);

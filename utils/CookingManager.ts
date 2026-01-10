@@ -24,12 +24,12 @@ import {
   NPC_FOOD_PREFERENCES,
   CookingDomain,
   COOKING_DOMAINS,
-  isCookingDomain,
   getRecipesByDomain,
 } from '../data/recipes';
 import { getItem } from '../data/items';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
+import { characterData } from './CharacterData';
 
 // Constants
 const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
@@ -38,8 +38,8 @@ const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
 export interface CookingSkillLevel {
   level: number;
   name: string;
-  teaFailRate: number;      // Failure rate for tea specifically
-  otherFailRate: number;    // Failure rate for all other recipes
+  teaFailRate: number; // Failure rate for tea specifically
+  otherFailRate: number; // Failure rate for all other recipes
   description: string;
 }
 
@@ -47,7 +47,7 @@ export const COOKING_SKILL_LEVELS: Record<number, CookingSkillLevel> = {
   0: {
     level: 0,
     name: 'Beginner',
-    teaFailRate: 0.10,
+    teaFailRate: 0.1,
     otherFailRate: 1.0, // 100% failure (can't cook other recipes)
     description: 'You can only make tea, and even that goes wrong sometimes.',
   },
@@ -55,29 +55,30 @@ export const COOKING_SKILL_LEVELS: Record<number, CookingSkillLevel> = {
     level: 1,
     name: 'Novice',
     teaFailRate: 0.0,
-    otherFailRate: 0.30,
-    description: 'You\'ve learned your first recipe! Tea is easy now, but other dishes are still challenging.',
+    otherFailRate: 0.3,
+    description:
+      "You've learned your first recipe! Tea is easy now, but other dishes are still challenging.",
   },
   2: {
     level: 2,
     name: 'Apprentice',
     teaFailRate: 0.0,
-    otherFailRate: 0.20,
-    description: 'You\'ve mastered one cooking domain. Things are getting easier!',
+    otherFailRate: 0.2,
+    description: "You've mastered one cooking domain. Things are getting easier!",
   },
   3: {
     level: 3,
     name: 'Cook',
     teaFailRate: 0.0,
-    otherFailRate: 0.10,
-    description: 'You\'ve mastered two cooking domains. You\'re becoming quite skilled!',
+    otherFailRate: 0.1,
+    description: "You've mastered two cooking domains. You're becoming quite skilled!",
   },
   4: {
     level: 4,
     name: 'Master Chef',
     teaFailRate: 0.0,
     otherFailRate: 0.01,
-    description: 'You\'ve mastered all three cooking domains! You rarely make mistakes now.',
+    description: "You've mastered all three cooking domains! You rarely make mistakes now.",
   },
 };
 
@@ -99,13 +100,14 @@ export interface CookingResult {
   message: string;
   foodProduced?: { itemId: string; quantity: number };
   masteryAchieved?: boolean;
-  isTerrible?: boolean;      // True if cooking failed and produced terrible food
-  feelingSick?: boolean;     // True if player got sick from making terrible food
+  isTerrible?: boolean; // True if cooking failed and produced terrible food
+  feelingSick?: boolean; // True if player got sick from making terrible food
 }
 
 class CookingManagerClass {
   private unlockedRecipes: Set<string> = new Set();
   private recipeProgress: Map<string, RecipeProgress> = new Map();
+  private recipeBookUnlocked = false; // Track locally to avoid circular dependency with GameState
   private initialised = false;
 
   /**
@@ -116,17 +118,25 @@ class CookingManagerClass {
 
     const saved = gameState.loadCookingState();
     if (saved) {
+      // Load recipeBookUnlocked locally (critical: don't rely on reading from GameState later)
+      this.recipeBookUnlocked = saved.recipeBookUnlocked ?? false;
+
       // Load unlocked recipes
-      saved.unlockedRecipes.forEach(id => this.unlockedRecipes.add(id));
+      saved.unlockedRecipes.forEach((id) => this.unlockedRecipes.add(id));
 
       // Load progress
       Object.entries(saved.recipeProgress).forEach(([id, progress]) => {
         this.recipeProgress.set(id, progress);
       });
+
+      console.log(
+        `[CookingManager] Loaded state: recipeBookUnlocked=${this.recipeBookUnlocked}, ` +
+          `recipes=${saved.unlockedRecipes.length}, progress=${Object.keys(saved.recipeProgress).length}`
+      );
     }
 
     // Starter recipes are always available (MUST be added regardless of saved state)
-    Object.values(RECIPES).forEach(recipe => {
+    Object.values(RECIPES).forEach((recipe) => {
       if (recipe.category === 'starter') {
         this.unlockedRecipes.add(recipe.id);
       }
@@ -175,14 +185,14 @@ class CookingManagerClass {
     const recipeIds = new Set(this.unlockedRecipes);
 
     // ALWAYS include starter recipes (defensive programming)
-    Object.values(RECIPES).forEach(recipe => {
+    Object.values(RECIPES).forEach((recipe) => {
       if (recipe.category === 'starter') {
         recipeIds.add(recipe.id);
       }
     });
 
     return Array.from(recipeIds)
-      .map(id => getRecipe(id))
+      .map((id) => getRecipe(id))
       .filter((r): r is RecipeDefinition => r !== undefined);
   }
 
@@ -191,8 +201,8 @@ class CookingManagerClass {
    */
   getMasteredRecipes(): RecipeDefinition[] {
     return Array.from(this.recipeProgress.values())
-      .filter(p => p.isMastered)
-      .map(p => getRecipe(p.recipeId))
+      .filter((p) => p.isMastered)
+      .map((p) => getRecipe(p.recipeId))
       .filter((r): r is RecipeDefinition => r !== undefined);
   }
 
@@ -201,7 +211,7 @@ class CookingManagerClass {
    */
   getUnlockableRecipes(): RecipeDefinition[] {
     const masteredIds = this.getMasteredRecipeIds();
-    return Object.values(RECIPES).filter(recipe => {
+    return Object.values(RECIPES).filter((recipe) => {
       if (this.unlockedRecipes.has(recipe.id)) return false;
       return canUnlockRecipe(recipe.id, masteredIds);
     });
@@ -212,8 +222,8 @@ class CookingManagerClass {
    */
   getMasteredRecipeIds(): string[] {
     return Array.from(this.recipeProgress.values())
-      .filter(p => p.isMastered)
-      .map(p => p.recipeId);
+      .filter((p) => p.isMastered)
+      .map((p) => p.recipeId);
   }
 
   /**
@@ -222,7 +232,7 @@ class CookingManagerClass {
   getMasteredDomains(): CookingDomain[] {
     const masteredDomains: Set<CookingDomain> = new Set();
 
-    COOKING_DOMAINS.forEach(domain => {
+    COOKING_DOMAINS.forEach((domain) => {
       if (this.isDomainMastered(domain)) {
         masteredDomains.add(domain);
       }
@@ -245,7 +255,7 @@ class CookingManagerClass {
     const domainRecipes = getRecipesByDomain(domain);
     if (domainRecipes.length === 0) return false;
 
-    return domainRecipes.every(recipe => this.isRecipeMastered(recipe.id));
+    return domainRecipes.every((recipe) => this.isRecipeMastered(recipe.id));
   }
 
   /**
@@ -255,11 +265,11 @@ class CookingManagerClass {
     const masteredDomains = this.getMasteredDomainCount();
     const unlockedCount = this.unlockedRecipes.size;
 
-    if (masteredDomains >= 3) return 4;  // Master Chef
-    if (masteredDomains >= 2) return 3;  // Cook
-    if (masteredDomains >= 1) return 2;  // Apprentice
-    if (unlockedCount > 1) return 1;     // Novice (learned first non-tea recipe)
-    return 0;  // Beginner (only tea)
+    if (masteredDomains >= 3) return 4; // Master Chef
+    if (masteredDomains >= 2) return 3; // Cook
+    if (masteredDomains >= 1) return 2; // Apprentice
+    if (unlockedCount > 1) return 1; // Novice (learned first non-tea recipe)
+    return 0; // Beginner (only tea)
   }
 
   /**
@@ -292,7 +302,9 @@ class CookingManagerClass {
       if (recipe.unlockRequirement) {
         const prereqRecipe = getRecipe(recipe.unlockRequirement);
         const prereqName = prereqRecipe?.displayName || recipe.unlockRequirement;
-        console.warn(`[CookingManager] ⚠️ Cannot unlock "${recipe.displayName}" - must master "${prereqName}" first`);
+        console.warn(
+          `[CookingManager] ⚠️ Cannot unlock "${recipe.displayName}" - must master "${prereqName}" first`
+        );
       } else {
         console.warn(`[CookingManager] ⚠️ Prerequisites not met for: ${recipe.displayName}`);
       }
@@ -333,9 +345,7 @@ class CookingManagerClass {
     const recipe = getRecipe(recipeId);
     if (!recipe) return false;
 
-    return recipe.ingredients.every(ing =>
-      inventoryManager.hasItem(ing.itemId, ing.quantity)
-    );
+    return recipe.ingredients.every((ing) => inventoryManager.hasItem(ing.itemId, ing.quantity));
   }
 
   /**
@@ -347,7 +357,7 @@ class CookingManagerClass {
 
     const missing: Array<{ itemId: string; have: number; need: number }> = [];
 
-    recipe.ingredients.forEach(ing => {
+    recipe.ingredients.forEach((ing) => {
       const have = inventoryManager.getQuantity(ing.itemId);
       if (have < ing.quantity) {
         missing.push({
@@ -398,7 +408,10 @@ class CookingManagerClass {
 
     // Check if recipe is unlocked
     if (!this.isRecipeUnlocked(recipeId)) {
-      return { success: false, message: `You haven't learned how to make ${recipe.displayName} yet.` };
+      return {
+        success: false,
+        message: `You haven't learned how to make ${recipe.displayName} yet.`,
+      };
     }
 
     // Check ingredients
@@ -406,12 +419,12 @@ class CookingManagerClass {
       const missing = this.getMissingIngredients(recipeId);
       return {
         success: false,
-        message: this.formatMissingIngredientsMessage(missing, recipe.displayName)
+        message: this.formatMissingIngredientsMessage(missing, recipe.displayName),
       };
     }
 
     // Consume ingredients
-    recipe.ingredients.forEach(ing => {
+    recipe.ingredients.forEach((ing) => {
       inventoryManager.removeItem(ing.itemId, ing.quantity);
     });
 
@@ -438,7 +451,7 @@ class CookingManagerClass {
       inventoryManager.addItem(resultItemId, resultQuantity);
 
       // 10% chance of getting sick from terrible food
-      if (Math.random() < 0.10) {
+      if (Math.random() < 0.1) {
         feelingSick = true;
         gameState.setFeelingSick(true);
         console.log('[CookingManager] 😷 You feel sick from the terrible food...');
@@ -480,7 +493,9 @@ class CookingManagerClass {
     if (cookingFailed) {
       console.log(`[CookingManager] 💥 Cooking failed! Made terrible ${recipe.displayName}`);
     } else {
-      console.log(`[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`);
+      console.log(
+        `[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`
+      );
     }
 
     // Save inventory and cooking state
@@ -523,14 +538,14 @@ class CookingManagerClass {
    * Get recipes by category
    */
   getRecipesByCategory(category: RecipeCategory): RecipeDefinition[] {
-    return Object.values(RECIPES).filter(r => r.category === category);
+    return Object.values(RECIPES).filter((r) => r.category === category);
   }
 
   /**
    * Get unlocked recipes by category
    */
   getUnlockedRecipesByCategory(category: RecipeCategory): RecipeDefinition[] {
-    return this.getUnlockedRecipes().filter(r => r.category === category);
+    return this.getUnlockedRecipes().filter((r) => r.category === category);
   }
 
   /**
@@ -556,18 +571,46 @@ class CookingManagerClass {
     });
 
     return {
-      recipeBookUnlocked: gameState.isRecipeBookUnlocked(),
+      recipeBookUnlocked: this.recipeBookUnlocked, // Use local value, not GameState
       unlockedRecipes: Array.from(this.unlockedRecipes),
       recipeProgress: recipeProgressObj,
     };
   }
 
   /**
+   * Check if recipe book is unlocked
+   */
+  isRecipeBookUnlocked(): boolean {
+    return this.recipeBookUnlocked;
+  }
+
+  /**
+   * Unlock the recipe book (called when player talks to Mum)
+   * This is the ONLY way to unlock the recipe book - ensures single source of truth
+   */
+  unlockRecipeBook(): void {
+    if (this.recipeBookUnlocked) {
+      console.log('[CookingManager] Recipe book already unlocked');
+      return;
+    }
+
+    this.recipeBookUnlocked = true;
+    console.log('[CookingManager] 📖 Recipe book unlocked!');
+
+    // Sync to GameState (for backwards compatibility and other systems that check it)
+    gameState.unlockRecipeBook();
+
+    // Save immediately
+    this.save();
+  }
+
+  /**
    * Save cooking state to GameState
+   * Uses the unified CharacterData API for consistent persistence
    */
   private save(): void {
     const state = this.getCookingState();
-    gameState.saveCookingState(state);
+    characterData.save('cooking', state);
   }
 
   /**
@@ -575,7 +618,7 @@ class CookingManagerClass {
    */
   private saveInventory(): void {
     const inventoryData = inventoryManager.getInventoryData();
-    gameState.saveInventory(inventoryData.items, inventoryData.tools);
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
   }
 
   /**
@@ -584,10 +627,11 @@ class CookingManagerClass {
   reset(): void {
     this.unlockedRecipes.clear();
     this.recipeProgress.clear();
+    this.recipeBookUnlocked = false; // Reset recipe book unlock status
     this.initialised = false;
 
     // Re-add starter recipes
-    Object.values(RECIPES).forEach(recipe => {
+    Object.values(RECIPES).forEach((recipe) => {
       if (recipe.category === 'starter') {
         this.unlockedRecipes.add(recipe.id);
       }
@@ -620,7 +664,7 @@ class CookingManagerClass {
     if (unlocked.length > 0) {
       lines.push('');
       lines.push('Known recipes:');
-      unlocked.forEach(recipe => {
+      unlocked.forEach((recipe) => {
         const progress = this.getProgress(recipe.id);
         const masteryStr = progress?.isMastered ? ' ⭐' : '';
         const timesStr = progress ? ` (${progress.timesCooked}x)` : '';
