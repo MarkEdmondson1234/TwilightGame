@@ -699,14 +699,65 @@ function getContextualText(node: DialogueNode): string {
  * Uses the pre-written dialogue trees from NPC definition
  */
 function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null {
-  const node = npc.dialogue.find(n => n.id === currentNodeId) || npc.dialogue[0] || null;
+  // Filter dialogue nodes based on quest requirements
+  const availableNodes = npc.dialogue.filter(node => {
+    // Check quest requirements
+    if (node.requiredQuest) {
+      const questStarted = gameState.isQuestStarted(node.requiredQuest);
+      if (!questStarted) return false;
+
+      if (node.requiredQuestStage !== undefined) {
+        const questStage = gameState.getQuestStage(node.requiredQuest);
+        if (questStage < node.requiredQuestStage) return false;
+      }
+    }
+
+    // Check quest hiding conditions
+    if (node.hiddenIfQuestStarted && gameState.isQuestStarted(node.hiddenIfQuestStarted)) {
+      return false;
+    }
+
+    if (node.hiddenIfQuestCompleted && gameState.isQuestCompleted(node.hiddenIfQuestCompleted)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const node = availableNodes.find(n => n.id === currentNodeId) || availableNodes[0] || null;
 
   if (!node) return null;
 
-  // Return a new node with the contextual text
+  // Filter responses based on quest requirements
+  const filteredResponses = node.responses?.filter(response => {
+    // Check quest requirements
+    if (response.requiredQuest) {
+      const questStarted = gameState.isQuestStarted(response.requiredQuest);
+      if (!questStarted) return false;
+
+      if (response.requiredQuestStage !== undefined) {
+        const questStage = gameState.getQuestStage(response.requiredQuest);
+        if (questStage < response.requiredQuestStage) return false;
+      }
+    }
+
+    // Check quest hiding conditions
+    if (response.hiddenIfQuestStarted && gameState.isQuestStarted(response.hiddenIfQuestStarted)) {
+      return false;
+    }
+
+    if (response.hiddenIfQuestCompleted && gameState.isQuestCompleted(response.hiddenIfQuestCompleted)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Return a new node with the contextual text and filtered responses
   return {
     ...node,
     text: getContextualText(node),
+    responses: filteredResponses,
   };
 }
 

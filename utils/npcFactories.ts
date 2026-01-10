@@ -24,6 +24,7 @@ export {
   createUmbraWolfNPC,
   createWitchWolfNPC,
   createChillBearNPC,
+  createChillBearAtHomeNPC,
   createStellaNPC,
   createMorganNPC,
   createBunnyflyNPC,

@@ -5,6 +5,7 @@ import { isAIAvailable } from '../services/anthropicClient';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
+import { gameState } from '../GameState';
 
 interface DialogueBoxProps {
   npc: NPC;
@@ -159,21 +160,61 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
     loadDialogue();
   }, [npc, currentNodeId, onNodeChange]);
 
-  const handleResponse = (nextId?: string) => {
-    // Special marker to switch to AI chat mode
-    if (nextId === '__AI_CHAT__' && onSwitchToAIMode) {
-      onSwitchToAIMode();
+  const handleResponse = (response?: DialogueResponse | string) => {
+    // Handle legacy string format or special markers
+    if (typeof response === 'string') {
+      // Special marker to switch to AI chat mode
+      if (response === '__AI_CHAT__' && onSwitchToAIMode) {
+        onSwitchToAIMode();
+        return;
+      }
+
+      if (response) {
+        setCurrentNodeId(response);
+        if (onNodeChange) {
+          onNodeChange(npc.id, response);
+        }
+      } else {
+        onClose();
+      }
       return;
     }
 
-    if (nextId) {
-      setCurrentNodeId(nextId);
-      // Notify parent about node change (for handling item pickups, etc.)
+    // Handle full DialogueResponse object
+    if (!response) {
+      onClose();
+      return;
+    }
+
+    // Process quest actions
+    if (response.startsQuest) {
+      gameState.startQuest(response.startsQuest);
+      console.log(`[Dialogue] Started quest: ${response.startsQuest}`);
+    }
+
+    if (response.advancesQuest) {
+      const currentStage = gameState.getQuestStage(response.advancesQuest);
+      gameState.setQuestStage(response.advancesQuest, currentStage + 1);
+      console.log(`[Dialogue] Advanced quest: ${response.advancesQuest} to stage ${currentStage + 1}`);
+    }
+
+    if (response.completesQuest) {
+      gameState.completeQuest(response.completesQuest);
+      console.log(`[Dialogue] Completed quest: ${response.completesQuest}`);
+    }
+
+    if (response.setsQuestStage) {
+      gameState.setQuestStage(response.setsQuestStage.questId, response.setsQuestStage.stage);
+      console.log(`[Dialogue] Set quest ${response.setsQuestStage.questId} to stage ${response.setsQuestStage.stage}`);
+    }
+
+    // Navigate to next dialogue node
+    if (response.nextId) {
+      setCurrentNodeId(response.nextId);
       if (onNodeChange) {
-        onNodeChange(npc.id, nextId);
+        onNodeChange(npc.id, response.nextId);
       }
     } else {
-      // No next node, close dialogue
       onClose();
     }
   };
@@ -324,7 +365,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, o
             {filteredResponses.map((response, index) => (
               <button
                 key={index}
-                onClick={() => handleResponse(response.nextId)}
+                onClick={() => handleResponse(response)}
                 className="bg-slate-700 bg-opacity-90 hover:bg-slate-600 active:bg-slate-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-slate-500 hover:border-amber-400"
                 style={{
                   fontFamily: 'Georgia, "Times New Roman", serif',

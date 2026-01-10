@@ -28,6 +28,8 @@ export interface TransitionResult {
   mapId?: string;
   mapName?: string;
   spawnPosition?: Position;
+  blocked?: boolean; // True if transition exists but is blocked by quest requirement
+  message?: string; // Message to show player (e.g., "This path is not yet accessible")
 }
 
 export interface CookingLocationResult {
@@ -108,6 +110,25 @@ export function checkTransition(
   }
 
   const { transition } = transitionData;
+
+  // Check quest requirements for conditional transitions
+  if (transition.requiresQuest) {
+    const questStarted = gameState.isQuestStarted(transition.requiresQuest);
+    const questStage = gameState.getQuestStage(transition.requiresQuest);
+    const requiredStage = transition.requiresQuestStage ?? 1; // Default to stage 1 if not specified
+
+    if (!questStarted || questStage < requiredStage) {
+      console.log(
+        `[Action] Transition blocked: requires quest '${transition.requiresQuest}' stage ${requiredStage} (current: ${questStage})`
+      );
+      return {
+        success: false,
+        blocked: true,
+        message: 'This path is not yet accessible.'
+      };
+    }
+  }
+
   console.log(
     `[Action] Found transition at (${transition.fromPosition.x}, ${transition.fromPosition.y})`
   );

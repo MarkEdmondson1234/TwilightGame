@@ -78,11 +78,18 @@ export const deepForest: MapDefinition = {
   spawnPoint: { x: 17, y: 33 }, // On path near south entrance
   transitions: [
     {
-      fromPosition: { x: 34, y: 34 },
+      fromPosition: { x: 8, y: 29 }, // West path - exit to village
+      tileType: TileType.PATH,
+      toMapId: 'village',
+      toPosition: { x: 15, y: 25 }, // Village center
+      label: 'Back to Village',
+    },
+    {
+      fromPosition: { x: 25, y: 29 }, // East path - deeper into forest
       tileType: TileType.PATH,
       toMapId: 'RANDOM_FOREST',
-      toPosition: { x: 2, y: 15 }, // Return to random forest
-      label: 'Leave Sacred Grove',
+      toPosition: { x: 2, y: 15 }, // Random forest entrance
+      label: 'Deeper into Forest',
     },
     {
       fromPosition: { x: 7, y: 27 },
