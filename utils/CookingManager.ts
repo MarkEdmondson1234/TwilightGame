@@ -148,6 +148,17 @@ class CookingManagerClass {
       this.unlockedRecipes.add('tea');
     }
 
+    // DATA MIGRATION: If a recipe has progress but isn't unlocked, unlock it automatically
+    // This handles edge cases where save data gets partially corrupted
+    this.recipeProgress.forEach((progress, recipeId) => {
+      if (!this.unlockedRecipes.has(recipeId)) {
+        console.warn(
+          `[CookingManager] ⚠️ Recipe '${recipeId}' has progress but wasn't unlocked! Auto-unlocking it.`
+        );
+        this.unlockedRecipes.add(recipeId);
+      }
+    });
+
     this.initialised = true;
     console.log(`[CookingManager] Initialised with ${this.unlockedRecipes.size} unlocked recipes`);
     console.log(`[CookingManager] Unlocked recipes:`, Array.from(this.unlockedRecipes));
@@ -396,9 +407,9 @@ class CookingManagerClass {
 
   /**
    * Cook a recipe - consumes ingredients and produces food
-   * Returns result with success/failure and any produced items
+   * Returns result with success and any produced items
    * @param recipeId - Recipe to cook
-   * @param campfireBonus - Optional bonus failure rate when cooking at campfire (default 0)
+   * @param campfireBonus - Optional parameter (unused, kept for backwards compatibility)
    */
   cook(recipeId: string, campfireBonus = 0): CookingResult {
     const recipe = getRecipe(recipeId);
@@ -428,102 +439,63 @@ class CookingManagerClass {
       inventoryManager.removeItem(ing.itemId, ing.quantity);
     });
 
-    // Determine if cooking succeeds based on skill level
-    const skillInfo = this.getSkillInfo();
-    const isTea = recipeId === 'tea';
-    const baseFailRate = isTea ? skillInfo.teaFailRate : skillInfo.otherFailRate;
-    const totalFailRate = Math.min(1.0, baseFailRate + campfireBonus);
-    const cookingFailed = Math.random() < totalFailRate;
-
     // Get current progress to determine mastery level
     const currentProgress = this.recipeProgress.get(recipeId);
     const timesCooked = currentProgress?.timesCooked || 0;
 
-    // Produce food (normal or terrible)
-    let resultItemId: string;
-    let resultQuantity: number;
-    let feelingSick = false;
+    // Produce food with mastery level
+    const resultItemId = recipe.resultItemId;
+    const resultQuantity = recipe.resultQuantity;
+    // Mastery level = times cooked (will be 0 for first attempt, 1 for second, etc.)
+    inventoryManager.addItem(resultItemId, resultQuantity, timesCooked);
 
-    if (cookingFailed) {
-      // Cooking failed - produce terrible food (no mastery level)
-      resultItemId = `terrible_${recipe.resultItemId}`;
-      resultQuantity = recipe.resultQuantity;
-      inventoryManager.addItem(resultItemId, resultQuantity);
-
-      // 10% chance of getting sick from terrible food
-      if (Math.random() < 0.1) {
-        feelingSick = true;
-        gameState.setFeelingSick(true);
-        console.log('[CookingManager] 😷 You feel sick from the terrible food...');
-      }
-    } else {
-      // Cooking succeeded - produce normal food with mastery level
-      resultItemId = recipe.resultItemId;
-      resultQuantity = recipe.resultQuantity;
-      // Mastery level = times cooked (will be 0 for first attempt, 1 for second, etc.)
-      inventoryManager.addItem(resultItemId, resultQuantity, timesCooked);
-    }
-
-    // Update progress (only on success)
+    // Update progress
     let progress = this.recipeProgress.get(recipeId);
     let masteryAchieved = false;
 
-    if (!cookingFailed) {
-      if (!progress) {
-        progress = {
-          recipeId,
-          timesCooked: 1,
-          isMastered: false,
-          unlockedAt: 0, // TODO: Get current game day from TimeManager
-        };
-        this.recipeProgress.set(recipeId, progress);
-      } else {
-        progress.timesCooked++;
-      }
+    if (!progress) {
+      progress = {
+        recipeId,
+        timesCooked: 1,
+        isMastered: false,
+        unlockedAt: 0, // TODO: Get current game day from TimeManager
+      };
+      this.recipeProgress.set(recipeId, progress);
+    } else {
+      progress.timesCooked++;
+    }
 
-      // Check for mastery
-      if (!progress.isMastered && progress.timesCooked >= MASTERY_THRESHOLD) {
-        progress.isMastered = true;
-        masteryAchieved = true;
-        console.log(`[CookingManager] 🌟 Mastered recipe: ${recipe.displayName}!`);
-      }
+    // Check for mastery
+    if (!progress.isMastered && progress.timesCooked >= MASTERY_THRESHOLD) {
+      progress.isMastered = true;
+      masteryAchieved = true;
+      console.log(`[CookingManager] 🌟 Mastered recipe: ${recipe.displayName}!`);
     }
 
     // Log result
-    if (cookingFailed) {
-      console.log(`[CookingManager] 💥 Cooking failed! Made terrible ${recipe.displayName}`);
-    } else {
-      console.log(
-        `[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`
-      );
-    }
+    console.log(
+      `[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`
+    );
 
     // Save inventory and cooking state
     this.saveInventory();
     this.save();
 
     // Build result message
-    let message: string;
-    if (cookingFailed) {
-      message = feelingSick
-        ? `You made terrible ${recipe.displayName}... and now you feel sick.`
-        : `You made terrible ${recipe.displayName}. Better luck next time!`;
-    } else {
-      message = masteryAchieved
-        ? `Cooked ${resultQuantity}x ${recipe.displayName}! You've mastered this recipe!`
-        : `Cooked ${resultQuantity}x ${recipe.displayName}!`;
-    }
+    const message = masteryAchieved
+      ? `Cooked ${resultQuantity}x ${recipe.displayName}! You've mastered this recipe!`
+      : `Cooked ${resultQuantity}x ${recipe.displayName}!`;
 
     return {
-      success: !cookingFailed,
+      success: true,
       message,
       foodProduced: {
         itemId: resultItemId,
         quantity: resultQuantity,
       },
       masteryAchieved,
-      isTerrible: cookingFailed,
-      feelingSick,
+      isTerrible: false,
+      feelingSick: false,
     };
   }
 

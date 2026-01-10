@@ -19,7 +19,6 @@ interface CookingInterfaceProps {
 /**
  * CookingInterface - Modal overlay for the cooking system
  * Shows recipes, ingredients, and allows player to cook
- * Campfire cooking has 10% higher failure rate than stove
  * Cooked items appear on the stove/campfire instead of in inventory
  */
 const CookingInterface: React.FC<CookingInterfaceProps> = ({
@@ -70,50 +69,40 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
   const handleCook = () => {
     if (!recipe) return;
 
-    // Always cook through CookingManager to get proper ingredient checking and error messages
+    // Cook through CookingManager to get proper ingredient checking and error messages
     const result = cookingManager.cook(recipe.id);
 
-    // If cooking succeeded and we're at a campfire, apply campfire failure chance
-    if (result.success && locationType === 'campfire' && Math.random() < 0.1) {
-      // Campfire caused the dish to burn (ingredients already consumed by cook())
-      const campfireResult: CookingResult = {
-        success: false,
-        message: `Oh no! The dish burnt on the campfire. Cooking on a campfire is tricky!`,
+    // Show the result from CookingManager (success, or missing ingredients error)
+    setCookingResult(result);
+
+    // If cooking succeeded and we have a cooking position, place the item on the stove/campfire
+    if (
+      result.success &&
+      result.foodProduced &&
+      cookingPosition &&
+      currentMapId &&
+      recipe.image
+    ) {
+      // Remove the item from inventory (CookingManager added it, but we want it on the stove instead)
+      inventoryManager.removeItem(result.foodProduced.itemId, result.foodProduced.quantity);
+
+      // Place the cooked item at the cooking position
+      const placedItem: PlacedItem = {
+        id: `cooked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        itemId: result.foodProduced.itemId,
+        position: {
+          x: cookingPosition.x,
+          y: cookingPosition.y,
+        },
+        mapId: currentMapId,
+        image: recipe.image,
+        timestamp: Date.now(),
       };
-      setCookingResult(campfireResult);
-    } else {
-      // Show the result from CookingManager (success, or missing ingredients error)
-      setCookingResult(result);
+      gameState.addPlacedItem(placedItem);
+      console.log('[CookingInterface] Placed food on stove:', placedItem);
 
-      // If cooking succeeded and we have a cooking position, place the item on the stove/campfire
-      if (
-        result.success &&
-        result.foodProduced &&
-        cookingPosition &&
-        currentMapId &&
-        recipe.image
-      ) {
-        // Remove the item from inventory (CookingManager added it, but we want it on the stove instead)
-        inventoryManager.removeItem(result.foodProduced.itemId, result.foodProduced.quantity);
-
-        // Place the cooked item at the cooking position
-        const placedItem: PlacedItem = {
-          id: `cooked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          itemId: result.foodProduced.itemId,
-          position: {
-            x: cookingPosition.x,
-            y: cookingPosition.y,
-          },
-          mapId: currentMapId,
-          image: recipe.image,
-          timestamp: Date.now(),
-        };
-        gameState.addPlacedItem(placedItem);
-        console.log('[CookingInterface] Placed food on stove:', placedItem);
-
-        // Notify parent to update the placed items display
-        onItemPlaced?.();
-      }
+      // Notify parent to update the placed items display
+      onItemPlaced?.();
     }
 
     setShowResult(true);
@@ -150,15 +139,10 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
       <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="bg-amber-800 px-4 py-3 border-b-2 border-amber-600 flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-amber-200 flex items-center gap-2">
-              <span>{locationType === 'campfire' ? '🔥' : '🍳'}</span>
-              {locationType === 'campfire' ? 'Campfire Cooking' : 'Kitchen'}
-            </h2>
-            {locationType === 'campfire' && (
-              <p className="text-amber-300 text-sm mt-1">⚠️ 10% higher chance of failure!</p>
-            )}
-          </div>
+          <h2 className="text-2xl font-bold text-amber-200 flex items-center gap-2">
+            <span>{locationType === 'campfire' ? '🔥' : '🍳'}</span>
+            {locationType === 'campfire' ? 'Campfire Cooking' : 'Kitchen'}
+          </h2>
           <button
             onClick={onClose}
             className="text-amber-300 hover:text-white transition-colors text-2xl font-bold px-2"
