@@ -26,6 +26,7 @@ import {
   DailyResourceConfig,
   DialogueNode,
   AnimationConditions,
+  SeasonalLocation,
 } from '../../types';
 import { TIMING } from '../../constants';
 
@@ -91,6 +92,7 @@ export interface NPCConfig {
   reverseFlip?: boolean;
   zIndexOverride?: number;
   visibilityConditions?: AnimationConditions;
+  seasonalLocations?: SeasonalLocation;
   glow?: {
     color: number;
     radius: number;
@@ -185,6 +187,7 @@ export function createNPC(config: NPCConfig): NPC {
     reverseFlip,
     zIndexOverride,
     visibilityConditions,
+    seasonalLocations,
     glow,
   } = config;
 
@@ -217,6 +220,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (reverseFlip !== undefined) npc.reverseFlip = reverseFlip;
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
   if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
+  if (seasonalLocations) npc.seasonalLocations = seasonalLocations;
   if (glow) npc.glow = glow;
   if (collisionRadius !== undefined) npc.collisionRadius = collisionRadius;
 

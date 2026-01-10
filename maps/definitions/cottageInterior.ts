@@ -67,7 +67,7 @@ export const cottageInterior: MapDefinition = {
   isRandom: false,
   spawnPoint: { x: 0, y: 8 }, // Bottom left, second row from bottom
   renderMode: 'background-image',
-  characterScale: 1.8, // Make player larger to fit the room scale
+  characterScale: 2.2, // Make player larger to fit the room scale
 
   // Reference viewport for responsive scaling
   referenceViewport: { width: 1280, height: 720 },
@@ -85,4 +85,7 @@ export const cottageInterior: MapDefinition = {
       label: 'Outside',
     },
   ],
+
+  // NPCs - empty array allows seasonal NPCs to be added dynamically
+  npcs: [],
 };

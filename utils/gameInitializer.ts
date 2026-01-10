@@ -13,6 +13,7 @@ import { performanceMonitor } from './PerformanceMonitor';
 import { TimeManager, Season } from './TimeManager';
 import { ColorResolver } from './ColorResolver';
 import { initAnthropicClient } from '../services/anthropicClient';
+import { npcManager } from '../NPCManager';
 
 /**
  * Initialize the game on startup
@@ -103,6 +104,10 @@ export async function initializeGame(
 
   // Update farm states on startup (uses TimeManager internally)
   farmManager.updateAllPlots();
+
+  // Initialize seasonal NPC locations (must be called after all maps are registered)
+  npcManager.initializeSeasonalLocations();
+  console.log(`[App] Initialised seasonal NPC locations`);
 
   // If loading a random map, regenerate it with the saved seed
   const savedLocation = gameState.getPlayerLocation();

@@ -111,6 +111,14 @@ export interface DialogueResponse {
   setsQuestStage?: { questId: string; stage: number }; // Set specific quest stage when selected
 }
 
+// Seasonal location configuration for NPCs
+export interface SeasonalLocation {
+  spring?: { mapId: string; position: Position; direction?: Direction };
+  summer?: { mapId: string; position: Position; direction?: Direction };
+  autumn?: { mapId: string; position: Position; direction?: Direction };
+  winter?: { mapId: string; position: Position; direction?: Direction };
+}
+
 export interface NPC {
   id: string;
   name: string;
@@ -137,6 +145,7 @@ export interface NPC {
   reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
   visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
+  seasonalLocations?: SeasonalLocation; // Optional: different positions/maps per season (if not set, uses base position/current map)
   glow?: {
     // Optional: mystical glow effect behind NPC
     color: number; // Hex colour (e.g., 0x88CCFF for soft blue)

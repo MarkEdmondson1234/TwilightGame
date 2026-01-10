@@ -196,6 +196,9 @@ const App: React.FC = () => {
     setPlayerPos(spawnPos);
     lastTransitionTime.current = Date.now();
 
+    // Update NPC manager's current map
+    npcManager.setCurrentMap(mapId);
+
     // Reset fairy attraction manager when changing maps
     fairyAttractionManager.reset();
   };
@@ -616,6 +619,12 @@ const App: React.FC = () => {
       setNpcUpdateTrigger((prev) => prev + 1);
     }
 
+    // Check for season changes and update NPC locations if needed
+    const seasonChanged = npcManager.checkSeasonChange();
+    if (seasonChanged) {
+      setNpcUpdateTrigger((prev) => prev + 1);
+    }
+
     // Check for fairy spawns/despawns (time-based attraction system)
     const currentNPCs = npcManager.getCurrentMapNPCs();
 
@@ -667,6 +676,9 @@ const App: React.FC = () => {
   useEffect(() => {
     const init = async () => {
       await initializeGame(currentMapId, setIsMapInitialized);
+
+      // Set initial map in NPC manager
+      npcManager.setCurrentMap(currentMapId);
 
       // Check for validation errors after initialization
       if (hasValidationErrors()) {

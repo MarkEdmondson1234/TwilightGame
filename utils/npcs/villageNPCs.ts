@@ -217,11 +217,12 @@ export function getCatDialogue(npc: NPC): string {
  * - Static position (doesn't wander)
  * - Gentle knitting animation
  * - Warm, grandmotherly dialogue
+ * - Seasonal locations: Sits outside in spring/summer, moves indoors for autumn/winter
  *
  * Uses createStaticNPC factory.
  *
  * @param id Unique ID for this NPC
- * @param position Where to place the NPC
+ * @param position Where to place the NPC (base position for spring/summer)
  * @param name Optional name (defaults to "Old Woman")
  */
 export function createOldWomanKnittingNPC(
@@ -236,6 +237,7 @@ export function createOldWomanKnittingNPC(
     sprite: npcAssets.old_woman_01,
     portraitSprite: npcAssets.old_woman_portrait,
     collisionRadius: 0.4, // NPCs have collision so player can't walk through
+    scale: 3.5, // Larger scale to match cottage interior room scale
     states: {
       knitting: {
         sprites: [npcAssets.old_woman_01, npcAssets.old_woman_02],
@@ -243,6 +245,29 @@ export function createOldWomanKnittingNPC(
       },
     },
     initialState: 'knitting',
+    // Seasonal locations: Outside in warm months, inside for cold months
+    seasonalLocations: {
+      spring: {
+        mapId: 'village',
+        position: { x: 18, y: 27 }, // Outside on the village bench
+        direction: Direction.Down,
+      },
+      summer: {
+        mapId: 'village',
+        position: { x: 18, y: 27 }, // Same spot, enjoying the summer weather
+        direction: Direction.Down,
+      },
+      autumn: {
+        mapId: 'cottage_interior',
+        position: { x: 10, y: 6 }, // Inside the cottage, sitting in the middle area
+        direction: Direction.Down,
+      },
+      winter: {
+        mapId: 'cottage_interior',
+        position: { x: 10, y: 6 }, // Inside, staying warm and cosy
+        direction: Direction.Down,
+      },
+    },
     dialogue: [
       {
         id: 'greeting',

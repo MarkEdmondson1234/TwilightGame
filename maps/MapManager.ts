@@ -22,6 +22,15 @@ class MapManager {
     // Validate at registration time to catch issues early
     validateMapDefinition(map);
     this.maps.set(map.id, map);
+
+    // Register NPCs for this map immediately (needed for seasonal NPCs)
+    // This ensures all maps are in npcsByMap before initializeSeasonalLocations() is called
+    if (map.npcs && map.npcs.length > 0) {
+      npcManager.registerNPCs(map.id, map.npcs);
+    } else {
+      // Register empty NPC array for maps without NPCs
+      npcManager.registerNPCs(map.id, []);
+    }
   }
 
   /**
@@ -51,13 +60,7 @@ class MapManager {
     this.currentMapId = mapId;
     this.currentMap = map;
 
-    // Always update NPCManager with current map (even if no NPCs)
-    if (map.npcs && map.npcs.length > 0) {
-      npcManager.registerNPCs(mapId, map.npcs);
-    } else {
-      // Register empty NPC array for maps without NPCs
-      npcManager.registerNPCs(mapId, []);
-    }
+    // Update NPCManager's current map (NPCs are already registered in registerMap())
     npcManager.setCurrentMap(mapId);
 
     return map;

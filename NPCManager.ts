@@ -1,7 +1,7 @@
-import { NPC, Position, Direction, NPCBehavior, isTileSolid } from './types';
+import { NPC, Position, Direction, NPCBehavior, isTileSolid, SeasonalLocation } from './types';
 import { getTileData } from './utils/mapUtils';
 import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
-import { TimeManager } from './utils/TimeManager';
+import { TimeManager, Season } from './utils/TimeManager';
 
 /**
  * NPCManager - Single Source of Truth for all NPC data
@@ -12,6 +12,7 @@ import { TimeManager } from './utils/TimeManager';
  * - NPC behaviors and movement
  * - NPC interaction detection
  * - NPC visibility conditions (seasonal, time of day, weather)
+ * - Seasonal NPC locations and map transitions
  *
  * Following SSoT principle from CLAUDE.md
  */
@@ -24,12 +25,19 @@ interface NPCState {
   waitDuration: number; // How long to wait before next move (ms)
   isWaiting: boolean;
   isInDialogue: boolean; // Freeze movement when talking to player
+  baseMapId: string; // Original map where NPC was registered
+  basePosition: Position; // Original position when NPC was created
+  baseDirection: Direction; // Original direction when NPC was created
 }
 
 class NPCManagerClass {
   private npcsByMap: Map<string, NPC[]> = new Map();
   private npcStates: Map<string, NPCState> = new Map();
   private currentMapId: string | null = null;
+  private currentSeason: Season | null = null;
+
+  // Global NPC registry for NPCs with seasonal locations (can appear on multiple maps)
+  private globalNPCs: Map<string, NPC> = new Map();
 
   private readonly NPC_SPEED = 1.0; // tiles per second
   private readonly NPC_SIZE = PLAYER_SIZE; // Same size as player
@@ -42,6 +50,11 @@ class NPCManagerClass {
 
     // Initialize state for each NPC (only if not already initialized)
     npcs.forEach((npc) => {
+      // If NPC has seasonal locations, add to global registry
+      if (npc.seasonalLocations) {
+        this.globalNPCs.set(npc.id, npc);
+      }
+
       if (!this.npcStates.has(npc.id)) {
         this.npcStates.set(npc.id, {
           npc,
@@ -51,6 +64,9 @@ class NPCManagerClass {
           waitDuration: 0,
           isWaiting: true,
           isInDialogue: false,
+          baseMapId: mapId,
+          basePosition: { ...npc.position },
+          baseDirection: npc.direction,
         });
       }
     });
@@ -553,6 +569,9 @@ class NPCManagerClass {
         waitDuration: 0,
         isWaiting: true,
         isInDialogue: false,
+        baseMapId: this.currentMapId,
+        basePosition: { ...npc.position },
+        baseDirection: npc.direction,
       });
     }
 
@@ -583,12 +602,128 @@ class NPCManagerClass {
   }
 
   /**
+   * Get the current location for an NPC based on the current season
+   * Returns null if NPC should not appear this season
+   */
+  private getSeasonalLocationForNPC(npc: NPC): { mapId: string; position: Position; direction: Direction } | null {
+    if (!npc.seasonalLocations) {
+      // No seasonal locations, use base location
+      const state = this.npcStates.get(npc.id);
+      if (!state) return null;
+
+      return {
+        mapId: state.baseMapId,
+        position: state.basePosition,
+        direction: state.baseDirection,
+      };
+    }
+
+    const currentTime = TimeManager.getCurrentTime();
+    const season = currentTime.season.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
+    const seasonalData = npc.seasonalLocations[season];
+
+    if (seasonalData) {
+      return {
+        mapId: seasonalData.mapId,
+        position: seasonalData.position,
+        direction: seasonalData.direction || npc.direction,
+      };
+    }
+
+    // No data for this season, use base location
+    const state = this.npcStates.get(npc.id);
+    if (!state) return null;
+
+    return {
+      mapId: state.baseMapId,
+      position: state.basePosition,
+      direction: state.baseDirection,
+    };
+  }
+
+  /**
+   * Update NPC positions based on current season
+   * Call this when the season changes
+   */
+  updateSeasonalLocations(): void {
+    const currentTime = TimeManager.getCurrentTime();
+    const newSeason = currentTime.season;
+
+    // Only update if season actually changed
+    if (this.currentSeason === newSeason) {
+      return;
+    }
+
+    console.log(`[NPCManager] Season changed from ${this.currentSeason} to ${newSeason}, updating NPC locations`);
+    this.currentSeason = newSeason;
+
+    // Process all NPCs with seasonal locations
+    this.globalNPCs.forEach((npc) => {
+      const locationData = this.getSeasonalLocationForNPC(npc);
+      if (!locationData) return;
+
+      const { mapId, position, direction } = locationData;
+
+      // Remove NPC from all maps first
+      this.npcsByMap.forEach((mapNPCs, currentMapId) => {
+        const filtered = mapNPCs.filter((n) => n.id !== npc.id);
+        if (filtered.length !== mapNPCs.length) {
+          this.npcsByMap.set(currentMapId, filtered);
+        }
+      });
+
+      // Add NPC to the appropriate map for this season
+      const targetMapNPCs = this.npcsByMap.get(mapId) || [];
+
+      // Update NPC position and direction
+      npc.position = { ...position };
+      npc.direction = direction;
+
+      // Only add if not already in the map
+      if (!targetMapNPCs.find((n) => n.id === npc.id)) {
+        targetMapNPCs.push(npc);
+        this.npcsByMap.set(mapId, targetMapNPCs);
+      }
+
+      console.log(`[NPCManager] Moved NPC ${npc.id} to map ${mapId} at (${position.x}, ${position.y}) for ${newSeason}`);
+    });
+  }
+
+  /**
+   * Initialize seasonal locations (call this after all maps are registered)
+   */
+  initializeSeasonalLocations(): void {
+    const currentTime = TimeManager.getCurrentTime();
+    // Set currentSeason to null first to force the initial placement
+    this.currentSeason = null;
+    // Now update to the actual current season (this will trigger placement)
+    this.updateSeasonalLocations();
+    console.log(`[NPCManager] Initialized seasonal locations for ${this.currentSeason}`);
+  }
+
+  /**
+   * Check if season has changed and update NPC locations if needed
+   * Call this periodically (e.g., in the game loop)
+   * @returns true if season changed and NPCs were relocated
+   */
+  checkSeasonChange(): boolean {
+    const currentTime = TimeManager.getCurrentTime();
+    if (this.currentSeason !== currentTime.season) {
+      this.updateSeasonalLocations();
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Clear all NPCs (useful for testing/reset)
    */
   clear(): void {
     this.npcsByMap.clear();
     this.npcStates.clear();
+    this.globalNPCs.clear();
     this.currentMapId = null;
+    this.currentSeason = null;
     console.log('[NPCManager] Cleared all NPCs');
   }
 }

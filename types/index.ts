@@ -49,6 +49,7 @@ export type {
   NPCGiftConfig,
   NPCFavourConfig,
   FavourType,
+  SeasonalLocation,
 } from './npc';
 
 // Animation types
