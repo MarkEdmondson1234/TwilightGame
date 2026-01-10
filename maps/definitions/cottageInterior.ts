@@ -1,50 +1,88 @@
-import { MapDefinition, TileType } from '../../types';
+import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
+import { Z_PARALLAX_FAR } from '../../zIndex';
 
 /**
- * Cottage Interior - Cozy wooden cottage
+ * Cottage Interior - Background Image Interior
  *
- * A rustic interior with:
- * - Exit door at bottom center
- * - Bed, sofa, and rug
+ * The cosy interior of a small cottage in the village.
+ * A warm, inviting space with rustic charm.
  *
- * Grid Legend:
- * 3 = Wooden Wall (Posh)
- * F = Floor
- * C = Carpet
- * r = Rug (cottagecore decorative rug)
- * A = Bed (4x4 tiles)
- * E = Exit Door (back to village)
- * @ = Sofa (3 tiles wide, 1 tile tall)
+ * Image dimensions: 1920x1080 pixels
+ * Grid is 15x9 tiles to match standard room layout at 100% zoom.
+ *
+ * Walkmesh Grid Legend:
+ * . = Floor (walkable)
+ * # = Wall/Obstacle (solid - walls, furniture, outside image area)
+ * D = Door (transition)
+ *
+ * The grid is invisible - only used for collision!
+ *
+ * Layer ordering (back to front):
+ * 1. Background image (Z_PARALLAX_FAR = -100) - cottage interior
+ * 2. Player (Z_PLAYER = 100) - in front of background
  */
 
+// 15 columns x 9 rows - matches cottage interior furniture layout
+// Walkmesh designed to match the visible furniture and walkable floor area
 const gridString = `
-333333333333
-333333333333
-FFFFFFFFFFFF
-F@FFFFFFFAFF
-FrFFFFFFFFFF
-FTFFFFFFFFFF
-FFFFFFFFFFFF
-FFFFFFFFFFFF
+###############
+###############
+###############
+###############
+###############
+##....##.....##
+##....##.....##
+...............
+...............
 `;
+
+/**
+ * Unified layers array - defines all visual elements in z-order
+ */
+const cottageInteriorLayers: RoomLayer[] = [
+  // Layer 1: Background image (cottage interior)
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/cottage_small_interior/cottage_small_interior.png',
+    zIndex: Z_PARALLAX_FAR, // -100: Behind everything
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960, // Using half dimensions like bear den (actual image is 1920x1080)
+    height: 540,
+    scale: 1.3, // Match bear den scale
+    centered: true,
+  },
+
+  // Player is implicitly at Z_PLAYER (100)
+];
 
 export const cottageInterior: MapDefinition = {
   id: 'cottage_interior',
   name: 'Cottage',
-  width: 12,
-  height: 8,
+  width: 15,
+  height: 9,
   grid: parseGrid(gridString),
   colorScheme: 'indoor',
   isRandom: false,
-  spawnPoint: { x: 6, y: 7 }, // Start near the bottom door
+  spawnPoint: { x: 0, y: 8 }, // Bottom left, second row from bottom
+  renderMode: 'background-image',
+  characterScale: 1.8, // Make player larger to fit the room scale
+
+  // Reference viewport for responsive scaling
+  referenceViewport: { width: 1280, height: 720 },
+
+  // Unified layer system - all visual elements in z-order
+  layers: cottageInteriorLayers,
+
+  // Transitions
   transitions: [
     {
-      fromPosition: { x: 6, y: 7 }, // Exit door at bottom (row 7, within 8-row grid)
-      tileType: TileType.EXIT_DOOR,
+      fromPosition: { x: 0, y: 7 }, // Door at left side of second-bottom row
+      tileType: TileType.DOOR,
       toMapId: 'village',
-      toPosition: { x: 20, y: 24 }, // Spawn below the cottage in village
-      label: 'To Village',
+      toPosition: { x: 21, y: 25 }, // Back to village exterior (in front of cottage door)
+      label: 'Outside',
     },
   ],
 };

@@ -138,7 +138,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 21.4, y: 24 }, // Cottage entrance (K tile)
       tileType: TileType.COTTAGE,
       toMapId: 'cottage_interior',
-      toPosition: { x: 5, y: 6 },
+      toPosition: { x: 0, y: 8 }, // Bottom left near door
       label: 'To Cottage',
     },
     {
