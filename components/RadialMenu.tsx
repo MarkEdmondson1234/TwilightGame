@@ -1,7 +1,7 @@
 /**
  * RadialMenu Component
  * Displays interaction options in a circular menu around the clicked position
- * Cottage-core styled with hover-to-select behaviour
+ * Cottage-core styled with click-to-select behaviour
  */
 
 import React, { useEffect, useState, useRef } from 'react';
@@ -26,7 +26,6 @@ interface RadialMenuProps {
 const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) => {
     const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-    const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     // Close menu on Escape key
     useEffect(() => {
@@ -40,50 +39,20 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
-    // Cleanup hover timer on unmount
-    useEffect(() => {
-        return () => {
-            if (hoverTimerRef.current) {
-                clearTimeout(hoverTimerRef.current);
-            }
-        };
-    }, []);
-
     // Calculate position for each option in a vertical list (cottage-core feels more natural)
     const spacing = 70; // Vertical spacing between options
     const startY = position.y - ((options.length - 1) * spacing) / 2;
 
-    const handleOptionHover = (option: RadialMenuOption, index: number) => {
+    const handleOptionHover = (index: number) => {
         setHoveredIndex(index);
-
-        // Clear any existing timer
-        if (hoverTimerRef.current) {
-            clearTimeout(hoverTimerRef.current);
-        }
-
-        // Select after hovering for 700ms
-        hoverTimerRef.current = setTimeout(() => {
-            setSelectedIndex(index);
-            setTimeout(() => {
-                option.onSelect();
-                onClose();
-            }, 150);
-        }, 700);
     };
 
     const handleOptionLeave = () => {
         setHoveredIndex(null);
-        if (hoverTimerRef.current) {
-            clearTimeout(hoverTimerRef.current);
-            hoverTimerRef.current = null;
-        }
     };
 
     const handleOptionClick = (option: RadialMenuOption, index: number) => {
         // Immediate selection on click
-        if (hoverTimerRef.current) {
-            clearTimeout(hoverTimerRef.current);
-        }
         setSelectedIndex(index);
         setTimeout(() => {
             option.onSelect();
@@ -127,7 +96,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
                         {/* Option button - cottage-core styled */}
                         <button
                             onClick={() => handleOptionClick(option, index)}
-                            onMouseEnter={() => handleOptionHover(option, index)}
+                            onMouseEnter={() => handleOptionHover(index)}
                             onMouseLeave={handleOptionLeave}
                             style={{
                                 position: 'relative',
@@ -180,41 +149,10 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
                                 </>
                             )}
                             <span>{option.label}</span>
-                            {/* Hover progress indicator */}
-                            {isHovered && !isSelected && (
-                                <div
-                                    style={{
-                                        position: 'absolute',
-                                        bottom: '4px',
-                                        left: '10%',
-                                        width: '80%',
-                                        height: '3px',
-                                        backgroundColor: 'rgba(139, 115, 85, 0.5)',
-                                        borderRadius: '2px',
-                                        overflow: 'hidden',
-                                    }}
-                                >
-                                    <div
-                                        style={{
-                                            height: '100%',
-                                            backgroundColor: '#c4a035',
-                                            animation: 'fillProgress 0.7s linear forwards',
-                                        }}
-                                    />
-                                </div>
-                            )}
                         </button>
                     </div>
                 );
             })}
-
-            {/* CSS animation for progress bar */}
-            <style>{`
-                @keyframes fillProgress {
-                    from { width: 0%; }
-                    to { width: 100%; }
-                }
-            `}</style>
         </>
     );
 };
