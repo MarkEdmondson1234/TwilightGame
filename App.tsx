@@ -650,6 +650,14 @@ const App: React.FC = () => {
       weatherLayerRef.current.update(deltaTime);
     }
 
+    // Update sprite animations (cauldron bubbling, etc.) - runs every frame
+    if (spriteLayerRef.current) {
+      spriteLayerRef.current.updateAnimations();
+    }
+    if (tileLayerRef.current) {
+      tileLayerRef.current.updateAnimations();
+    }
+
     // Pause movement when dialogue or cutscene is active
     if (activeNPC || isCutscenePlaying) {
       animationFrameId.current = requestAnimationFrame(gameLoop);

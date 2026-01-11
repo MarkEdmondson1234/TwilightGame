@@ -34,25 +34,34 @@ import { farmingAssets } from '../../assets';
 import { selectVariant, getPositionHash } from '../spriteVariantUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
-import { Z_TILE_BASE, Z_TILE_BACKGROUND, Z_TILE_SPRITES, Z_SPRITE_BACKGROUND, Z_PLAYER } from '../../zIndex';
+import {
+  Z_TILE_BASE,
+  Z_TILE_BACKGROUND,
+  Z_TILE_SPRITES,
+  Z_SPRITE_BACKGROUND,
+  Z_PLAYER,
+} from '../../zIndex';
 
 /**
  * Crop sprite sizing configuration per growth stage
  * Crops grow from seedling (small) to adult (large multi-tile sprite)
  */
 interface CropSpriteConfig {
-  width: number;   // Width in tiles
-  height: number;  // Height in tiles
+  width: number; // Width in tiles
+  height: number; // Height in tiles
   offsetX: number; // Horizontal offset (negative = extend left)
   offsetY: number; // Vertical offset (negative = extend upward)
-  zIndex: number;  // Render layer (higher = in front)
+  zIndex: number; // Render layer (higher = in front)
 }
 
 /**
  * Per-crop adult size overrides
  * Allows specific crops to have custom sizes when fully grown
  */
-const CROP_ADULT_SIZES: Record<string, { width: number; height: number; offsetX: number; offsetY: number }> = {
+const CROP_ADULT_SIZES: Record<
+  string,
+  { width: number; height: number; offsetX: number; offsetY: number }
+> = {
   // Large crops (2 tiles)
   tomato: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
   pumpkin: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
@@ -91,15 +100,15 @@ const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
   [CropGrowthStage.YOUNG]: {
     width: 1.5,
     height: 1.5,
-    offsetX: -0.25,   // Center horizontally: -(width-1)/2
-    offsetY: -0.5,    // Extend upward from soil
+    offsetX: -0.25, // Center horizontally: -(width-1)/2
+    offsetY: -0.5, // Extend upward from soil
     zIndex: Z_SPRITE_BACKGROUND,
   },
   [CropGrowthStage.ADULT]: {
-    width: 1,         // Default size (overridden by CROP_ADULT_SIZES)
+    width: 1, // Default size (overridden by CROP_ADULT_SIZES)
     height: 1,
-    offsetX: 0,       // Center horizontally: -(width-1)/2
-    offsetY: -0.5,    // Extend half a tile upward from soil
+    offsetX: 0, // Center horizontally: -(width-1)/2
+    offsetY: -0.5, // Extend half a tile upward from soil
     zIndex: Z_PLAYER,
   },
 };
@@ -113,8 +122,11 @@ export class TileLayer extends PixiLayer {
   private colorCache: Map<string, number> = new Map();
   // Cache hex color conversions (colorClass -> hex)
   private static hexColorCache: Map<string, number> = new Map();
-  // Track animated tile positions for frame cycling
-  private animatedTiles: Map<string, { frames: string[]; speed: number }> = new Map();
+  // Track animated tile positions for sequential frame cycling
+  private animatedTiles: Map<
+    string,
+    { frames: string[]; speed: number; currentFrame: number; lastFrameTime: number }
+  > = new Map();
 
   constructor() {
     super(0, true); // Z-index 0: Base tile layer
@@ -188,11 +200,11 @@ export class TileLayer extends PixiLayer {
     }
 
     // Determine if we should hide this sprite during snowfall
-    const hideSpriteDuringSnow = currentWeather === 'snow' && (
-      tileData.type === TileType.TUFT ||
-      tileData.type === TileType.PATH ||
-      tileData.type === TileType.TUFT_SPARSE
-    );
+    const hideSpriteDuringSnow =
+      currentWeather === 'snow' &&
+      (tileData.type === TileType.TUFT ||
+        tileData.type === TileType.PATH ||
+        tileData.type === TileType.TUFT_SPARSE);
 
     // Check for farm plot override (farmUpdateTrigger forces re-evaluation)
     let growthStage: number | null = null;
@@ -208,15 +220,18 @@ export class TileLayer extends PixiLayer {
           tileData = plotTileData;
         }
         // Get growth stage for all growing crops (planted, watered, ready, wilting, dead)
-        if (plot.state === FarmPlotState.PLANTED ||
-            plot.state === FarmPlotState.WATERED ||
-            plot.state === FarmPlotState.READY ||
-            plot.state === FarmPlotState.WILTING ||
-            plot.state === FarmPlotState.DEAD) {
+        if (
+          plot.state === FarmPlotState.PLANTED ||
+          plot.state === FarmPlotState.WATERED ||
+          plot.state === FarmPlotState.READY ||
+          plot.state === FarmPlotState.WILTING ||
+          plot.state === FarmPlotState.DEAD
+        ) {
           // Dead plants render at ADULT size (they were grown before dying)
-          growthStage = plot.state === FarmPlotState.DEAD
-            ? CropGrowthStage.ADULT
-            : farmManager.getGrowthStage(plot);
+          growthStage =
+            plot.state === FarmPlotState.DEAD
+              ? CropGrowthStage.ADULT
+              : farmManager.getGrowthStage(plot);
           cropType = plot.cropType;
         }
       }
@@ -247,11 +262,13 @@ export class TileLayer extends PixiLayer {
 
     // Determine which image array to use
     const imageData = tileData.seasonalImages
-      ? (seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default)
+      ? seasonKey in tileData.seasonalImages
+        ? tileData.seasonalImages[seasonKey]
+        : tileData.seasonalImages.default
       : tileData.image;
 
     // Normalize to array (handle both single strings and arrays)
-    const imageArray = Array.isArray(imageData) ? imageData : (imageData ? [imageData] : []);
+    const imageArray = Array.isArray(imageData) ? imageData : imageData ? [imageData] : [];
 
     // Select image variant using deterministic hash
     let imageUrl: string | null = null;
@@ -259,29 +276,35 @@ export class TileLayer extends PixiLayer {
     if (imageArray.length > 0) {
       // For grass tiles, only show image on 30% of tiles (sparse grass tufts)
       // For other tiles, always show image
-      const isGrassTile = tileData.type === TileType.GRASS ||
-                          tileData.type === TileType.TREE ||
-                          tileData.type === TileType.TREE_BIG;
+      const isGrassTile =
+        tileData.type === TileType.GRASS ||
+        tileData.type === TileType.TREE ||
+        tileData.type === TileType.TREE_BIG;
       const showImage = (isGrassTile ? getPositionHash(x, y) < 0.3 : true) && !hideSpriteDuringSnow;
 
       if (showImage) {
         // Override sprite for farm plot growth stages
-        if (growthStage !== null && cropType && (
-            tileData.type === TileType.SOIL_PLANTED ||
+        if (
+          growthStage !== null &&
+          cropType &&
+          (tileData.type === TileType.SOIL_PLANTED ||
             tileData.type === TileType.SOIL_WATERED ||
             tileData.type === TileType.SOIL_READY ||
             tileData.type === TileType.SOIL_WILTING ||
-            tileData.type === TileType.SOIL_DEAD
-        )) {
+            tileData.type === TileType.SOIL_DEAD)
+        ) {
           // Dead plants use wilted_plant sprite at ADULT size
           if (tileData.type === TileType.SOIL_DEAD) {
             imageUrl = farmingAssets.wilted_plant;
-          } else if (growthStage === 0) { // SEEDLING
+          } else if (growthStage === 0) {
+            // SEEDLING
             imageUrl = farmingAssets.seedling;
-          } else if (growthStage === 1) { // YOUNG
+          } else if (growthStage === 1) {
+            // YOUNG
             // Use crop-specific young sprite if available, otherwise use generic
             imageUrl = (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
-          } else { // ADULT
+          } else {
+            // ADULT
             // Use crop-specific adult sprite if available, otherwise use generic
             imageUrl = (farmingAssets as any)[`plant_${cropType}_adult`] || farmingAssets.seedling;
           }
@@ -308,19 +331,27 @@ export class TileLayer extends PixiLayer {
     }
 
     // Check if this is a crop sprite that needs multi-tile rendering
-    const isCropSprite = growthStage !== null && cropType && (
-      tileData.type === TileType.SOIL_PLANTED ||
-      tileData.type === TileType.SOIL_WATERED ||
-      tileData.type === TileType.SOIL_READY ||
-      tileData.type === TileType.SOIL_WILTING ||
-      tileData.type === TileType.SOIL_DEAD
-    );
+    const isCropSprite =
+      growthStage !== null &&
+      cropType &&
+      (tileData.type === TileType.SOIL_PLANTED ||
+        tileData.type === TileType.SOIL_WATERED ||
+        tileData.type === TileType.SOIL_READY ||
+        tileData.type === TileType.SOIL_WILTING ||
+        tileData.type === TileType.SOIL_DEAD);
 
     // Get crop sprite config if applicable
-    const cropConfig = isCropSprite ? { ...CROP_SPRITE_CONFIG[growthStage as CropGrowthStage] } : null;
+    const cropConfig = isCropSprite
+      ? { ...CROP_SPRITE_CONFIG[growthStage as CropGrowthStage] }
+      : null;
 
     // Apply per-crop size overrides for adult stage
-    if (cropConfig && growthStage === CropGrowthStage.ADULT && cropType && CROP_ADULT_SIZES[cropType]) {
+    if (
+      cropConfig &&
+      growthStage === CropGrowthStage.ADULT &&
+      cropType &&
+      CROP_ADULT_SIZES[cropType]
+    ) {
       const override = CROP_ADULT_SIZES[cropType];
       cropConfig.width = override.width;
       cropConfig.height = override.height;
@@ -422,7 +453,12 @@ export class TileLayer extends PixiLayer {
    * Render a base tile (e.g., grass under tree)
    * Uses getTileData() for dynamic color resolution
    */
-  private renderBaseTile(x: number, y: number, baseType: number, seasonKey: 'spring' | 'summer' | 'autumn' | 'winter'): void {
+  private renderBaseTile(
+    x: number,
+    y: number,
+    baseType: number,
+    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter'
+  ): void {
     const baseKey = `${x},${y}_base`;
 
     // Use getTileData() to get dynamic color resolution (scheme/season/time)
@@ -436,7 +472,10 @@ export class TileLayer extends PixiLayer {
     let imageUrl: string | null = null;
 
     if (baseTileData.seasonalImages) {
-      const seasonalArray = seasonKey in baseTileData.seasonalImages ? baseTileData.seasonalImages[seasonKey] : baseTileData.seasonalImages.default;
+      const seasonalArray =
+        seasonKey in baseTileData.seasonalImages
+          ? baseTileData.seasonalImages[seasonKey]
+          : baseTileData.seasonalImages.default;
       if (seasonalArray && seasonalArray.length > 0) {
         imageUrl = seasonalArray[selectVariant(x, y, seasonalArray.length)];
       }
@@ -486,7 +525,13 @@ export class TileLayer extends PixiLayer {
    * Render a solid color tile (for tiles without images)
    * Uses caching to avoid expensive redraws when color hasn't changed
    */
-  private renderColorTile(x: number, y: number, colorClass: string, map: MapDefinition, customKey?: string): void {
+  private renderColorTile(
+    x: number,
+    y: number,
+    colorClass: string,
+    map: MapDefinition,
+    customKey?: string
+  ): void {
     const key = customKey || `${x},${y}`;
 
     // Convert Tailwind class to hex color (cached)
@@ -517,7 +562,8 @@ export class TileLayer extends PixiLayer {
         graphics.clear();
         graphics.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         graphics.fill(hexColor);
-        graphics.zIndex = customKey && customKey.includes('_base') ? Z_TILE_BASE : Z_TILE_BACKGROUND;
+        graphics.zIndex =
+          customKey && customKey.includes('_base') ? Z_TILE_BASE : Z_TILE_BACKGROUND;
         this.colorCache.set(key, hexColor);
       }
       graphics.visible = true;
@@ -533,18 +579,22 @@ export class TileLayer extends PixiLayer {
     const spriteKey = `${x},${y}_sprite`;
     const frames = tileData.animationFrames as string[];
     const speed = tileData.animationSpeed || TIMING.DEFAULT_TILE_ANIMATION_MS;
+    const currentTime = Date.now();
 
     // Always render background color first
     const resolvedColor = ColorResolver.getTileColor(tileData.type);
     this.renderColorTile(x, y, resolvedColor, map, `${x},${y}_color`);
 
-    // Track this animated tile
-    this.animatedTiles.set(key, { frames, speed });
+    // Get existing animation state or create new one
+    const existing = this.animatedTiles.get(key);
+    const currentFrame = existing?.currentFrame ?? 0;
+    const lastFrameTime = existing?.lastFrameTime ?? currentTime;
 
-    // Calculate current frame based on time
-    const currentTime = Date.now();
-    const frameIndex = Math.floor(currentTime / speed) % frames.length;
-    const imageUrl = frames[frameIndex];
+    // Register/update animation tracking (preserves frame state)
+    this.animatedTiles.set(key, { frames, speed, currentFrame, lastFrameTime });
+
+    // Get current frame image
+    const imageUrl = frames[currentFrame];
 
     // Get or create sprite
     let sprite = this.sprites.get(spriteKey);
@@ -608,14 +658,18 @@ export class TileLayer extends PixiLayer {
       const hex = getColorHex(colorName as any);
 
       if (!hex || hex === '#000000') {
-        console.warn(`[TileLayer] Palette color "${colorName}" not found in palette.ts, defaulting to black`);
+        console.warn(
+          `[TileLayer] Palette color "${colorName}" not found in palette.ts, defaulting to black`
+        );
         result = 0x000000;
       } else {
         result = parseInt(hex.replace('#', ''), 16);
       }
     } else {
       // If not a palette color, warn and default to black
-      console.warn(`[TileLayer] Invalid color format: "${colorClass}" - must use bg-palette-* format`);
+      console.warn(
+        `[TileLayer] Invalid color format: "${colorClass}" - must use bg-palette-* format`
+      );
       result = 0x000000;
     }
 
@@ -628,7 +682,12 @@ export class TileLayer extends PixiLayer {
    * Hide sprites outside visible range (viewport culling)
    * Significantly improves performance by not rendering off-screen tiles
    */
-  private cullSprites(visibleRange: { minX: number; maxX: number; minY: number; maxY: number }): void {
+  private cullSprites(visibleRange: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  }): void {
     this.sprites.forEach((sprite, key) => {
       // Remove all key suffixes: _base, _sprite, _color
       const baseKey = key.replace(/_base|_sprite|_color$/g, '');
@@ -644,10 +703,44 @@ export class TileLayer extends PixiLayer {
   }
 
   /**
+   * Update animated tiles (call every frame from game loop)
+   * Advances frames sequentially based on elapsed time
+   */
+  updateAnimations(): void {
+    if (this.animatedTiles.size === 0) return;
+
+    const currentTime = Date.now();
+
+    this.animatedTiles.forEach((animData, key) => {
+      const spriteKey = `${key}_sprite`;
+      const sprite = this.sprites.get(spriteKey);
+      if (!sprite || !sprite.visible || sprite instanceof PIXI.Graphics) return;
+
+      // Check if enough time has passed for next frame
+      const elapsed = currentTime - animData.lastFrameTime;
+      if (elapsed < animData.speed) return;
+
+      // Advance to next frame (sequential, wrapping around)
+      const nextFrame = (animData.currentFrame + 1) % animData.frames.length;
+
+      // Update animation state
+      animData.currentFrame = nextFrame;
+      animData.lastFrameTime = currentTime;
+
+      // Update texture
+      const imageUrl = animData.frames[nextFrame];
+      const newTexture = textureManager.getTexture(imageUrl);
+      if (newTexture && sprite.texture !== newTexture) {
+        sprite.texture = newTexture;
+      }
+    });
+  }
+
+  /**
    * Clear all sprites (when changing maps)
    */
   clear(): void {
-    this.sprites.forEach(sprite => sprite.destroy());
+    this.sprites.forEach((sprite) => sprite.destroy());
     this.sprites.clear();
     this.colorCache.clear(); // Clear color cache when map changes
     this.animatedTiles.clear(); // Clear animated tile tracking
@@ -659,7 +752,7 @@ export class TileLayer extends PixiLayer {
    */
   getSpriteCount(): { total: number; visible: number } {
     let visible = 0;
-    this.sprites.forEach(sprite => {
+    this.sprites.forEach((sprite) => {
       if (sprite.visible) visible++;
     });
     return {

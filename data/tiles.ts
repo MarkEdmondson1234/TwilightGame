@@ -834,19 +834,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     collisionType: CollisionType.SOLID, // Cannot walk through the cauldron
     image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS, // Render grass underneath
-    // Animation: Bubbling cauldron effect (9 frames) - defined in SPRITE_METADATA
-    animationFrames: [
-      tileAssets.cauldron_1,
-      tileAssets.cauldron_2,
-      tileAssets.cauldron_3,
-      tileAssets.cauldron_4,
-      tileAssets.cauldron_5,
-      tileAssets.cauldron_6,
-      tileAssets.cauldron_7,
-      tileAssets.cauldron_8,
-      tileAssets.cauldron_9,
-    ],
-    animationSpeed: 80, // 80ms per frame = 12.5 FPS bubbling effect
+    // Animation config lives in SPRITE_METADATA (single source of truth)
   },
   [TileType.TREE_STUMP]: {
     name: 'Tree Stump',
