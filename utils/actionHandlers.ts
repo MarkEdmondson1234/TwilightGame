@@ -35,7 +35,7 @@ export interface TransitionResult {
 
 export interface CookingLocationResult {
   found: boolean;
-  locationType?: 'stove' | 'campfire';
+  locationType?: 'stove' | 'campfire' | 'cauldron';
   position?: Position;
 }
 
@@ -561,7 +561,7 @@ export function handleFarmAction(
             `[Action] Harvested ${result.yield}x ${crop.displayName}${qualityStr} for ${totalGold} gold`
           );
         }
-        onAnimationTrigger?.('harvest');
+        onAnimationTrigger?.('harvest', position);
         farmActionTaken = true;
       }
     } else if (plotTileType === TileType.SOIL_DEAD) {
@@ -948,6 +948,15 @@ export function checkCookingLocation(playerPos: Position): CookingLocationResult
         position: tile,
       };
     }
+
+    if (tileData.type === TileType.CAULDRON) {
+      console.log(`[Action] Found cauldron at (${tile.x}, ${tile.y})`);
+      return {
+        found: true,
+        locationType: 'cauldron',
+        position: tile,
+      };
+    }
   }
 
   return { found: false };
@@ -961,6 +970,7 @@ export type InteractionType =
   | 'npc'
   | 'transition'
   | 'cooking'
+  | 'brewing'
   | 'farm_till'
   | 'farm_plant'
   | 'farm_water'
@@ -1016,8 +1026,12 @@ export interface GetInteractionsConfig {
   onGiveGift?: (npcId: string) => void;
   onTransition?: (result: TransitionResult) => void;
   onCooking?: (locationType: 'stove' | 'campfire', position?: Position) => void;
+  onBrewing?: (position?: Position) => void;
   onFarmAction?: (result: FarmActionResult) => void;
-  onFarmAnimation?: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear') => void;
+  onFarmAnimation?: (
+    action: 'till' | 'plant' | 'water' | 'harvest' | 'clear',
+    tilePos?: Position
+  ) => void;
   onForage?: (result: ForageResult) => void;
   onPlacedItemAction?: (action: PlacedItemAction) => void;
   onCollectWater?: (result: { success: boolean; message: string }) => void;
@@ -1041,6 +1055,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     onGiveGift,
     onTransition,
     onCooking,
+    onBrewing,
     onFarmAction,
     onFarmAnimation,
     onForage,
@@ -1219,17 +1234,31 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     });
   }
 
-  // Check for cooking location
+  // Check for cooking/brewing location
   const cookingLoc = checkCookingLocation(position);
   if (cookingLoc.found && cookingLoc.locationType) {
-    interactions.push({
-      type: 'cooking',
-      label: cookingLoc.locationType === 'stove' ? 'Use Stove' : 'Use Campfire',
-      icon: cookingLoc.locationType === 'stove' ? '🍳' : '🔥',
-      color: '#f97316',
-      data: { locationType: cookingLoc.locationType, position: cookingLoc.position },
-      execute: () => onCooking?.(cookingLoc.locationType!, cookingLoc.position),
-    });
+    if (cookingLoc.locationType === 'cauldron') {
+      // Cauldron = potion brewing
+      interactions.push({
+        type: 'brewing',
+        label: 'Brew Potion',
+        icon: '🧪',
+        color: '#8b5cf6', // Purple for magic
+        data: { locationType: cookingLoc.locationType, position: cookingLoc.position },
+        execute: () => onBrewing?.(cookingLoc.position),
+      });
+    } else {
+      // Stove/Campfire = regular cooking
+      const locType = cookingLoc.locationType as 'stove' | 'campfire';
+      interactions.push({
+        type: 'cooking',
+        label: locType === 'stove' ? 'Use Stove' : 'Use Campfire',
+        icon: locType === 'stove' ? '🍳' : '🔥',
+        color: '#f97316',
+        data: { locationType: locType, position: cookingLoc.position },
+        execute: () => onCooking?.(locType, cookingLoc.position),
+      });
+    }
   }
 
   // Check for well interaction (collect water)

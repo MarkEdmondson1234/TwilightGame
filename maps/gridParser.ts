@@ -120,6 +120,8 @@ export const GRID_CODES: Record<string, TileType> = {
   '+': TileType.CAULDRON, // + = Cauldron (bubbling witch's pot)
   '(': TileType.MAGICAL_LAKE, // ( = Magical lake (12x12 mystical water feature, curves like a pool)
   ')': TileType.SMALL_LAKE, // ) = Small lake (6x6 pond, same sprite scaled down)
+  // Utility tiles
+  '0': TileType.INVISIBLE_WALL, // 0 = Invisible wall (blocks movement, zero visibility)
 };
 
 /**

@@ -843,6 +843,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS, // Render grass underneath
   },
+
+  // Utility tiles
+  [TileType.INVISIBLE_WALL]: {
+    name: 'Invisible Wall',
+    color: 'bg-transparent', // Transparent - blends with map background
+    collisionType: CollisionType.SOLID, // Blocks player movement
+    image: [], // No visual rendering - completely invisible
+  },
 };
 
 // === COMPILE-TIME VALIDATION ===

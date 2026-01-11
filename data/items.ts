@@ -10,16 +10,18 @@ export enum ItemCategory {
   CROP = 'crop',
   TOOL = 'tool',
   MATERIAL = 'material',
-  INGREDIENT = 'ingredient',  // Cooking ingredients (shop-bought)
-  FOOD = 'food',              // Cooked food items
+  INGREDIENT = 'ingredient', // Cooking ingredients (shop-bought)
+  MAGICAL_INGREDIENT = 'magical', // Magical ingredients (foraged/witch shop)
+  FOOD = 'food', // Cooked food items
+  POTION = 'potion', // Brewed potions
   MISC = 'misc',
 }
 
 export enum ItemRarity {
-  COMMON = 'common',          // 40% drop rate
-  UNCOMMON = 'uncommon',      // 30% drop rate
-  RARE = 'rare',              // 20% drop rate
-  VERY_RARE = 'very_rare',    // 10% drop rate
+  COMMON = 'common', // 40% drop rate
+  UNCOMMON = 'uncommon', // 30% drop rate
+  RARE = 'rare', // 20% drop rate
+  VERY_RARE = 'very_rare', // 10% drop rate
 }
 
 export interface ItemDefinition {
@@ -28,14 +30,14 @@ export interface ItemDefinition {
   displayName: string;
   category: ItemCategory;
   description: string;
-  rarity?: ItemRarity;        // For seeds found via foraging
-  stackable: boolean;         // Can multiple be held in one slot
-  maxStack?: number;          // Max stack size (undefined = infinite)
-  maxUses?: number;           // How many times this item can be used (undefined = 1 use, consumed entirely)
-  sellPrice?: number;         // Gold value when sold
-  buyPrice?: number;          // Cost to purchase
-  cropId?: string;            // For seeds, which crop they grow into
-  image?: string;             // Optional sprite image URL
+  rarity?: ItemRarity; // For seeds found via foraging
+  stackable: boolean; // Can multiple be held in one slot
+  maxStack?: number; // Max stack size (undefined = infinite)
+  maxUses?: number; // How many times this item can be used (undefined = 1 use, consumed entirely)
+  sellPrice?: number; // Gold value when sold
+  buyPrice?: number; // Cost to purchase
+  cropId?: string; // For seeds, which crop they grow into
+  image?: string; // Optional sprite image URL
 }
 
 /**
@@ -527,7 +529,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 10,
     sellPrice: 2,
-    buyPrice: 1,  // Was 5
+    buyPrice: 1, // Was 5
     image: groceryAssets.tea,
   },
 
@@ -539,7 +541,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh water from the well.',
     stackable: true,
     sellPrice: 0,
-    buyPrice: 0,  // Was 1 (water is free!)
+    buyPrice: 0, // Was 1 (water is free!)
     image: itemAssets.water,
   },
 
@@ -552,7 +554,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh milk from the village dairy.',
     stackable: true,
     sellPrice: 3,
-    buyPrice: 2,  // Was 8
+    buyPrice: 2, // Was 8
     image: groceryAssets.milk,
   },
 
@@ -564,7 +566,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Rich, thick cream.',
     stackable: true,
     sellPrice: 5,
-    buyPrice: 5,  // Was 12
+    buyPrice: 5, // Was 12
     image: groceryAssets.cream,
   },
 
@@ -576,7 +578,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Churned butter. Essential for baking.',
     stackable: true,
     sellPrice: 4,
-    buyPrice: 3,  // Was 10
+    buyPrice: 3, // Was 10
     image: groceryAssets.butter,
   },
 
@@ -588,7 +590,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Aged village cheese.',
     stackable: true,
     sellPrice: 8,
-    buyPrice: 6,  // Was 20
+    buyPrice: 6, // Was 20
     image: groceryAssets.cheese,
   },
 
@@ -600,7 +602,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Tangy cultured buttermilk. Perfect for baking.',
     stackable: true,
     sellPrice: 4,
-    buyPrice: 3,  // Was 10
+    buyPrice: 3, // Was 10
     // Note: No buttermilk sprite yet - add buttermilk.png to grocery folder
   },
 
@@ -612,7 +614,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A tasty nutritious snack or ingredient.',
     stackable: true,
     sellPrice: 6,
-    buyPrice: 5,  // Was 15
+    buyPrice: 5, // Was 15
     image: groceryAssets.almonds,
   },
 
@@ -624,7 +626,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A fresh egg from the village hens.',
     stackable: true,
     sellPrice: 2,
-    buyPrice: 2,  // Was 5
+    buyPrice: 2, // Was 5
     image: groceryAssets.egg,
   },
 
@@ -638,7 +640,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 2,
-    buyPrice: 2,  // Was 6
+    buyPrice: 2, // Was 6
     image: groceryAssets.flour,
   },
 
@@ -677,7 +679,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 3,
-    buyPrice: 2,  // Was 8
+    buyPrice: 2, // Was 8
     image: groceryAssets.sugar,
   },
 
@@ -690,7 +692,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 8,
-    buyPrice: 5,  // Was 20
+    buyPrice: 5, // Was 20
     // Note: No honey sprite yet - add honey.png to grocery folder
   },
 
@@ -703,7 +705,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 20,
     sellPrice: 1,
-    buyPrice: 1,  // Was 3
+    buyPrice: 1, // Was 3
     image: groceryAssets.salt,
   },
 
@@ -715,7 +717,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Dried yeast for bread-making.',
     stackable: true,
     sellPrice: 2,
-    buyPrice: 2,  // Was 5
+    buyPrice: 2, // Was 5
     image: groceryAssets.yeast,
   },
 
@@ -728,7 +730,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 15,
     sellPrice: 5,
-    buyPrice: 4,  // Was 15
+    buyPrice: 4, // Was 15
     image: groceryAssets.olive_oil,
   },
 
@@ -741,7 +743,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 15,
     sellPrice: 4,
-    buyPrice: 3,  // Was 12
+    buyPrice: 3, // Was 12
     image: groceryAssets.sunflower_oil,
   },
 
@@ -754,7 +756,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 10,
     sellPrice: 8,
-    buyPrice: 5,  // Was 20
+    buyPrice: 5, // Was 20
     image: groceryAssets.vanilla_pods,
   },
 
@@ -767,7 +769,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 12,
     sellPrice: 6,
-    buyPrice: 3,  // Was 15
+    buyPrice: 3, // Was 15
     image: groceryAssets.cinnamon,
   },
 
@@ -780,7 +782,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh meat from the butcher.',
     stackable: true,
     sellPrice: 15,
-    buyPrice: 15,  // Was 35
+    buyPrice: 15, // Was 35
     image: groceryAssets.minced_meat,
   },
 
@@ -792,7 +794,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Ground meat for sauces and pies.',
     stackable: true,
     sellPrice: 12,
-    buyPrice: 12,  // Was 30
+    buyPrice: 12, // Was 30
     image: groceryAssets.minced_meat, // Same sprite as meat (both use minced_meat.png)
   },
 
@@ -805,7 +807,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Dried pasta. Ready to cook.',
     stackable: true,
     sellPrice: 4,
-    buyPrice: 3,  // Was 10
+    buyPrice: 3, // Was 10
     image: groceryAssets.dried_spaghetti,
   },
 
@@ -817,7 +819,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A loaf of crusty bread.',
     stackable: true,
     sellPrice: 5,
-    buyPrice: 5,  // Was 12
+    buyPrice: 5, // Was 12
     image: groceryAssets.bread,
   },
 
@@ -829,7 +831,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Dark cooking chocolate.',
     stackable: true,
     sellPrice: 10,
-    buyPrice: 8,  // Was 25
+    buyPrice: 8, // Was 25
     image: groceryAssets.chocolate_bar,
   },
 
@@ -842,7 +844,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 5,
     sellPrice: 10,
-    buyPrice: 8,  // Was 25
+    buyPrice: 8, // Was 25
     image: groceryAssets.strawberry_jam,
   },
 
@@ -909,7 +911,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 12,
     sellPrice: 3,
-    buyPrice: 2,  // Was 7
+    buyPrice: 2, // Was 7
     image: groceryAssets.baking_powder,
   },
 
@@ -922,7 +924,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 10,
     sellPrice: 8,
-    buyPrice: 5,  // Was 18
+    buyPrice: 5, // Was 18
     image: groceryAssets.cocoa_powder,
   },
 
@@ -1116,6 +1118,522 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 90,
     image: cookingAssets.chocolate_cake,
   },
+
+  // ===== MAGICAL INGREDIENTS =====
+  // Forageable - Time/Weather dependent
+  moonpetal: {
+    id: 'moonpetal',
+    name: 'moonpetal',
+    displayName: 'Moonpetal',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'A luminous flower that only blooms under moonlight. Shimmers with pale silver light.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 25,
+  },
+
+  starflower: {
+    id: 'starflower',
+    name: 'starflower',
+    displayName: 'Starflower',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'A rare night-blooming flower found near fairy circles. Twinkles like distant stars.',
+    rarity: ItemRarity.RARE,
+    stackable: true,
+    sellPrice: 50,
+  },
+
+  stormroot: {
+    id: 'stormroot',
+    name: 'stormroot',
+    displayName: 'Stormroot',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A gnarled root that only emerges during rainstorms. Crackles with static energy.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 30,
+  },
+
+  frost_crystal: {
+    id: 'frost_crystal',
+    name: 'frost_crystal',
+    displayName: 'Frost Crystal',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A crystalline formation found in winter. Never melts, even in warm hands.',
+    rarity: ItemRarity.RARE,
+    stackable: true,
+    sellPrice: 45,
+  },
+
+  sakura_petal: {
+    id: 'sakura_petal',
+    name: 'sakura_petal',
+    displayName: 'Sakura Petal',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A perfect cherry blossom petal caught during the brief sakura season.',
+    rarity: ItemRarity.RARE,
+    stackable: true,
+    sellPrice: 40,
+  },
+
+  dawn_dew: {
+    id: 'dawn_dew',
+    name: 'dawn_dew',
+    displayName: 'Dawn Dew',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'Morning dew collected at the precise moment of sunrise. Glows faintly golden.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 20,
+  },
+
+  morning_dew: {
+    id: 'morning_dew',
+    name: 'morning_dew',
+    displayName: 'Morning Dew',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'Fresh dew droplets from grass at dawn. A common but useful ingredient.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 5,
+  },
+
+  shadow_essence: {
+    id: 'shadow_essence',
+    name: 'shadow_essence',
+    displayName: 'Shadow Essence',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A wisp of pure darkness captured in a vial. Seems to absorb light around it.',
+    rarity: ItemRarity.RARE,
+    stackable: true,
+    sellPrice: 60,
+  },
+
+  earthroot: {
+    id: 'earthroot',
+    name: 'earthroot',
+    displayName: 'Earthroot',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'A sturdy root found deep in forest soil. Smells of rich earth and growing things.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 10,
+  },
+
+  ghost_lichen: {
+    id: 'ghost_lichen',
+    name: 'ghost_lichen',
+    displayName: 'Ghost Lichen',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'Pale lichen scraped from cave walls. Glows faintly in complete darkness.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 25,
+  },
+
+  mushroom: {
+    id: 'mushroom',
+    name: 'mushroom',
+    displayName: 'Forest Mushroom',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A common forest mushroom. Useful in many potions and recipes.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 8,
+  },
+
+  shrinking_violet: {
+    id: 'shrinking_violet',
+    name: 'shrinking_violet',
+    displayName: 'Shrinking Violet',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'A tiny purple flower that seems to shrink away from your gaze. Essential for size magic.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 35,
+  },
+
+  giant_mushroom_cap: {
+    id: 'giant_mushroom_cap',
+    name: 'giant_mushroom_cap',
+    displayName: 'Giant Mushroom Cap',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      "A slice from the enormous mushroom in the witch's glade. Pulses with growth magic.",
+    rarity: ItemRarity.RARE,
+    stackable: true,
+    sellPrice: 55,
+  },
+
+  // Purchaseable from Witch's Shop
+  eye_of_newt: {
+    id: 'eye_of_newt',
+    name: 'eye_of_newt',
+    displayName: 'Eye of Newt',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: "A classic potion ingredient. Despite the name, it's actually a type of herb.",
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 10,
+    buyPrice: 25,
+  },
+
+  wolfsbane: {
+    id: 'wolfsbane',
+    name: 'wolfsbane',
+    displayName: 'Wolfsbane',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      "A purple-hooded flower with protective properties. Handle with care - it's quite toxic!",
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 20,
+    buyPrice: 50,
+  },
+
+  phoenix_ash: {
+    id: 'phoenix_ash',
+    name: 'phoenix_ash',
+    displayName: 'Phoenix Ash',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'Glittering ash from a phoenix feather. Warm to the touch and never cools.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: true,
+    sellPrice: 80,
+    buyPrice: 200,
+  },
+
+  temporal_dust: {
+    id: 'temporal_dust',
+    name: 'temporal_dust',
+    displayName: 'Temporal Dust',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'Shimmering dust that exists slightly out of sync with time. Feels oddly familiar.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: true,
+    sellPrice: 200,
+    buyPrice: 500,
+  },
+
+  feather: {
+    id: 'feather',
+    name: 'feather',
+    displayName: 'Feather',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A soft feather from a village bird. Used in communication magic.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 15,
+  },
+
+  vinegar: {
+    id: 'vinegar',
+    name: 'vinegar',
+    displayName: 'Vinegar',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'Sharp-smelling vinegar. Used in both cooking and certain bitter potions.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 8,
+  },
+
+  mint: {
+    id: 'mint',
+    name: 'mint',
+    displayName: 'Fresh Mint',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'Fragrant mint leaves. Cooling to the touch and refreshing in potions.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 12,
+  },
+
+  // Quest/Gift rewards
+  hearthstone: {
+    id: 'hearthstone',
+    name: 'hearthstone',
+    displayName: 'Hearthstone',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A warm stone imbued with the essence of home. A precious gift from Mum.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: false,
+    sellPrice: 500,
+  },
+
+  golden_apple: {
+    id: 'golden_apple',
+    name: 'golden_apple',
+    displayName: 'Golden Apple',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'A shimmering apple gifted by the fairies. Said to grant exceptional quality to anything.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: true,
+    sellPrice: 300,
+  },
+
+  // ===== POTIONS =====
+  // Level 1: Novice Witch
+  potion_friendship: {
+    id: 'potion_friendship',
+    name: 'potion_friendship',
+    displayName: 'Friendship Elixir',
+    category: ItemCategory.POTION,
+    description: 'A warm, honey-coloured potion. Increases friendship with the target NPC.',
+    stackable: true,
+    sellPrice: 50,
+  },
+
+  potion_bitter_grudge: {
+    id: 'potion_bitter_grudge',
+    name: 'potion_bitter_grudge',
+    displayName: 'Bitter Grudge',
+    category: ItemCategory.POTION,
+    description: 'A sour-smelling dark potion. Decreases friendship with the target NPC.',
+    stackable: true,
+    sellPrice: 45,
+  },
+
+  potion_glamour: {
+    id: 'potion_glamour',
+    name: 'potion_glamour',
+    displayName: 'Glamour Draught',
+    category: ItemCategory.POTION,
+    description: 'A swirling, iridescent potion. Temporarily changes your appearance.',
+    stackable: true,
+    sellPrice: 55,
+  },
+
+  potion_beastward: {
+    id: 'potion_beastward',
+    name: 'potion_beastward',
+    displayName: 'Beastward Balm',
+    category: ItemCategory.POTION,
+    description: 'A musky-smelling salve. Animals will ignore you for a day.',
+    stackable: true,
+    sellPrice: 60,
+  },
+
+  potion_wakefulness: {
+    id: 'potion_wakefulness',
+    name: 'potion_wakefulness',
+    displayName: 'Wakefulness Brew',
+    category: ItemCategory.POTION,
+    description: 'A bright, fizzing potion. Eliminates tiredness and fatigue.',
+    stackable: true,
+    sellPrice: 40,
+  },
+
+  potion_revealing: {
+    id: 'potion_revealing',
+    name: 'potion_revealing',
+    displayName: 'Revealing Tonic',
+    category: ItemCategory.POTION,
+    description: "A clear potion with floating sparkles. Reveals an NPC's favourite gift.",
+    stackable: true,
+    sellPrice: 35,
+  },
+
+  potion_healing: {
+    id: 'potion_healing',
+    name: 'potion_healing',
+    displayName: 'Healing Salve',
+    category: ItemCategory.POTION,
+    description: 'A soothing green potion. Restores health and energy.',
+    stackable: true,
+    sellPrice: 45,
+  },
+
+  potion_drink_me: {
+    id: 'potion_drink_me',
+    name: 'potion_drink_me',
+    displayName: 'Drink Me',
+    category: ItemCategory.POTION,
+    description: 'A tiny bottle with a "DRINK ME" label. Shrinks you to half size!',
+    stackable: true,
+    sellPrice: 65,
+  },
+
+  potion_eat_me: {
+    id: 'potion_eat_me',
+    name: 'potion_eat_me',
+    displayName: 'Eat Me',
+    category: ItemCategory.POTION,
+    description: 'A small cake-shaped potion with an "EAT ME" label. Makes you grow to 1.5x size!',
+    stackable: true,
+    sellPrice: 65,
+  },
+
+  // Level 2: Journeyman Witch
+  potion_raincaller: {
+    id: 'potion_raincaller',
+    name: 'potion_raincaller',
+    displayName: 'Raincaller',
+    category: ItemCategory.POTION,
+    description: 'A swirling blue potion that smells of petrichor. Summons rain.',
+    stackable: true,
+    sellPrice: 80,
+  },
+
+  potion_sunburst: {
+    id: 'potion_sunburst',
+    name: 'potion_sunburst',
+    displayName: 'Sunburst',
+    category: ItemCategory.POTION,
+    description: 'A brilliant golden potion. Clears the weather and brings sunshine.',
+    stackable: true,
+    sellPrice: 85,
+  },
+
+  potion_snowglobe: {
+    id: 'potion_snowglobe',
+    name: 'potion_snowglobe',
+    displayName: 'Snowglobe',
+    category: ItemCategory.POTION,
+    description: 'A cold white potion with swirling flakes. Summons snow anywhere!',
+    stackable: true,
+    sellPrice: 90,
+  },
+
+  potion_cherry_blossom: {
+    id: 'potion_cherry_blossom',
+    name: 'potion_cherry_blossom',
+    displayName: 'Cherry Blossom Dream',
+    category: ItemCategory.POTION,
+    description: 'A delicate pink potion. Creates beautiful cherry blossom weather.',
+    stackable: true,
+    sellPrice: 95,
+  },
+
+  potion_mistweaver: {
+    id: 'potion_mistweaver',
+    name: 'potion_mistweaver',
+    displayName: 'Mistweaver',
+    category: ItemCategory.POTION,
+    description: 'A hazy grey potion. Summons thick, mysterious fog.',
+    stackable: true,
+    sellPrice: 75,
+  },
+
+  potion_verdant_surge: {
+    id: 'potion_verdant_surge',
+    name: 'potion_verdant_surge',
+    displayName: 'Verdant Surge',
+    category: ItemCategory.POTION,
+    description: 'A vibrant green potion bursting with life. Replenishes all forage bushes.',
+    stackable: true,
+    sellPrice: 120,
+  },
+
+  potion_beast_tongue: {
+    id: 'potion_beast_tongue',
+    name: 'potion_beast_tongue',
+    displayName: 'Beast Tongue',
+    category: ItemCategory.POTION,
+    description: 'A strange potion that tastes like different animals. Lets you talk to beasts!',
+    stackable: true,
+    sellPrice: 100,
+  },
+
+  // Level 3: Full Witch
+  potion_time_skip: {
+    id: 'potion_time_skip',
+    name: 'potion_time_skip',
+    displayName: 'Time Skip',
+    category: ItemCategory.POTION,
+    description:
+      'A shimmering potion that seems to exist in multiple moments at once. Advances one day.',
+    stackable: true,
+    sellPrice: 200,
+  },
+
+  potion_dawns_herald: {
+    id: 'potion_dawns_herald',
+    name: 'potion_dawns_herald',
+    displayName: "Dawn's Herald",
+    category: ItemCategory.POTION,
+    description: 'A potion the colour of sunrise. Skips time to morning.',
+    stackable: true,
+    sellPrice: 100,
+  },
+
+  potion_twilight_call: {
+    id: 'potion_twilight_call',
+    name: 'potion_twilight_call',
+    displayName: 'Twilight Call',
+    category: ItemCategory.POTION,
+    description: 'A deep purple potion. Skips time to dusk - perfect for fairy hunting.',
+    stackable: true,
+    sellPrice: 110,
+  },
+
+  potion_harvest_moon: {
+    id: 'potion_harvest_moon',
+    name: 'potion_harvest_moon',
+    displayName: 'Harvest Moon',
+    category: ItemCategory.POTION,
+    description: 'An orange potion glowing like a harvest moon. Instantly grows all crops!',
+    stackable: true,
+    sellPrice: 250,
+  },
+
+  potion_dewfall: {
+    id: 'potion_dewfall',
+    name: 'potion_dewfall',
+    displayName: 'Dewfall',
+    category: ItemCategory.POTION,
+    description: 'A refreshing blue potion. Waters all crops in the area.',
+    stackable: true,
+    sellPrice: 150,
+  },
+
+  potion_quality_blessing: {
+    id: 'potion_quality_blessing',
+    name: 'potion_quality_blessing',
+    displayName: 'Quality Blessing',
+    category: ItemCategory.POTION,
+    description: 'A sparkling golden potion. Upgrades crop quality to excellent.',
+    stackable: true,
+    sellPrice: 180,
+  },
+
+  potion_homeward: {
+    id: 'potion_homeward',
+    name: 'potion_homeward',
+    displayName: 'Homeward',
+    category: ItemCategory.POTION,
+    description: 'A warm, comforting potion. Teleports you instantly home.',
+    stackable: true,
+    sellPrice: 120,
+  },
+
+  potion_root_revival: {
+    id: 'potion_root_revival',
+    name: 'potion_root_revival',
+    displayName: 'Root Revival',
+    category: ItemCategory.POTION,
+    description: 'A vibrant green potion. Revives wilted or dead crops.',
+    stackable: true,
+    sellPrice: 160,
+  },
+
+  potion_abundant_harvest: {
+    id: 'potion_abundant_harvest',
+    name: 'potion_abundant_harvest',
+    displayName: 'Abundant Harvest',
+    category: ItemCategory.POTION,
+    description: 'A rich amber potion. Guarantees maximum seed drops on harvest.',
+    stackable: true,
+    sellPrice: 200,
+  },
 };
 
 /**
@@ -1129,7 +1647,7 @@ export function getItem(itemId: string): ItemDefinition | undefined {
  * Get all items of a specific category
  */
 export function getItemsByCategory(category: ItemCategory): ItemDefinition[] {
-  return Object.values(ITEMS).filter(item => item.category === category);
+  return Object.values(ITEMS).filter((item) => item.category === category);
 }
 
 /**
@@ -1144,7 +1662,7 @@ export function getAllSeeds(): ItemDefinition[] {
  */
 export function getSeedForCrop(cropId: string): ItemDefinition | undefined {
   return Object.values(ITEMS).find(
-    item => item.category === ItemCategory.SEED && item.cropId === cropId
+    (item) => item.category === ItemCategory.SEED && item.cropId === cropId
   );
 }
 
@@ -1179,7 +1697,7 @@ export function getCropIdFromSeed(seedItemId: string): string | null {
  * Get all items by rarity (for foraging drops)
  */
 export function getItemsByRarity(rarity: ItemRarity): ItemDefinition[] {
-  return Object.values(ITEMS).filter(item => item.rarity === rarity);
+  return Object.values(ITEMS).filter((item) => item.rarity === rarity);
 }
 
 /**
@@ -1233,7 +1751,7 @@ export function generateForageSeed(): ItemDefinition | null {
 
   // Get only seed items with this rarity
   const seeds = Object.values(ITEMS).filter(
-    item => item.category === ItemCategory.SEED && item.rarity === rarity
+    (item) => item.category === ItemCategory.SEED && item.rarity === rarity
   );
 
   if (seeds.length === 0) {

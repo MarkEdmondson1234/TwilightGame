@@ -51,6 +51,9 @@ export const Z_SPRITE_BACKGROUND = 50;
  */
 export const Z_INTERIOR_FOREGROUND = 65;
 
+/** Destination marker for click-to-move (above ground decorations, below player) */
+export const Z_DESTINATION_MARKER = 75;
+
 /**
  * Base z-index for all depth-sorted entities (player, NPCs, sprites)
  * Actual z-index = Z_DEPTH_SORTED_BASE + floor(feetY * 10)
@@ -84,6 +87,16 @@ export const Z_PARALLAX_MID = -50;
 
 /** Near parallax layer (close decorations) */
 export const Z_PARALLAX_NEAR = -10;
+
+// =============================================================================
+// MAGIC VFX EFFECTS (280-299)
+// =============================================================================
+
+/** Magic visual effects (potion effects, spell particles) */
+export const Z_VFX_EFFECTS = 280;
+
+/** Screen flash effects (lightning, teleport) - above VFX, below weather */
+export const Z_SCREEN_FLASH = 295;
 
 // =============================================================================
 // WEATHER & ATMOSPHERIC EFFECTS (300-399)
