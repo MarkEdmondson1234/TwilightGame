@@ -785,6 +785,11 @@ const App: React.FC = () => {
     return Math.max(1.0, rawScale);
   }, [currentMap?.renderMode, currentMap?.referenceViewport, viewportSize]);
 
+  // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
+  const isCompactMode = useMemo(() => {
+    return viewportSize.height < 600;
+  }, [viewportSize.height]);
+
   // Calculate effective grid offset for centered background-image rooms
   // This aligns the collision grid/player/NPCs with the centered background image
   // Now incorporates viewport scaling for responsive rendering
@@ -1995,6 +2000,7 @@ const App: React.FC = () => {
 
           {/* Bookshelf UI - Recipe book shortcuts */}
           <Bookshelf
+            isTouchDevice={isTouchDevice}
             playerPosition={playerPos}
             currentMapId={currentMap.id}
             nearbyNPCs={(() => {
@@ -2052,7 +2058,7 @@ const App: React.FC = () => {
               }
               setShowRecipeBook(true);
             }}
-            compact={window.innerHeight < 600}
+            compact={isCompactMode}
           />
         )}
       {activeNPC && dialogueMode === 'static' && (

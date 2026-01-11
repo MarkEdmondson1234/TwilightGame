@@ -77,7 +77,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         // Compact mode uses less bottom offset (120px vs 160px)
         bottom: compact
           ? 'calc(100px + env(safe-area-inset-bottom, 0px))'
-          : 'calc(140px + env(safe-area-inset-bottom, 0px))'
+          : 'calc(140px + env(safe-area-inset-bottom, 0px))',
       }}
     >
       {/* D-Pad on the left */}
@@ -86,7 +86,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('up')}
           onTouchEnd={handleTouchEnd('up')}
-          className={`absolute top-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-t-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
+          className={`absolute top-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-t-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ▲
         </button>
@@ -95,7 +95,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('down')}
           onTouchEnd={handleTouchEnd('down')}
-          className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-b-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
+          className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-b-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ▼
         </button>
@@ -104,7 +104,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('left')}
           onTouchEnd={handleTouchEnd('left')}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-l-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
+          className={`absolute left-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-l-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ◄
         </button>
@@ -113,13 +113,15 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('right')}
           onTouchEnd={handleTouchEnd('right')}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-r-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-lg`}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-r-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ►
         </button>
 
         {/* Center */}
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${dpadCenterSize} bg-slate-800/70 rounded-full border-2 border-slate-600`}></div>
+        <div
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${dpadCenterSize} bg-slate-800/70 rounded-full border-2 border-slate-600`}
+        ></div>
       </div>
 
       {/* Action buttons on the right */}
@@ -133,7 +135,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 e.preventDefault();
                 onForagePress();
               }}
-              className={`${actionButtonSize} bg-emerald-700/90 hover:bg-emerald-600/90 active:bg-emerald-500/90 rounded-xl border-2 border-emerald-500 flex items-center justify-center text-white ${actionButtonText} shadow-lg`}
+              className={`${actionButtonSize} bg-emerald-700/90 hover:bg-emerald-600/90 active:bg-emerald-500/90 rounded-xl border-2 border-emerald-500 flex items-center justify-center text-white ${actionButtonText} shadow-md`}
               title="Forage"
             >
               🌿
@@ -147,7 +149,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 e.preventDefault();
                 onShowRecipeBook();
               }}
-              className={`${actionButtonSize} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-xl border-2 border-teal-500 flex items-center justify-center text-white ${actionButtonText} shadow-lg`}
+              className={`${actionButtonSize} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-xl border-2 border-teal-500 flex items-center justify-center text-white ${actionButtonText} shadow-md`}
               title="Recipe Book"
             >
               📖
@@ -161,7 +163,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 e.preventDefault();
                 onShowCookingUI();
               }}
-              className={`${actionButtonSize} bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-xl border-2 border-amber-500 flex items-center justify-center text-white ${actionButtonText} shadow-lg`}
+              className={`${actionButtonSize} bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-xl border-2 border-amber-500 flex items-center justify-center text-white ${actionButtonText} shadow-md`}
               title="Cook"
             >
               🍳
@@ -177,7 +179,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
               e.preventDefault();
               setShowDevMenu(!showDevMenu);
             }}
-            className={`${compact ? 'w-8 h-8' : 'w-10 h-10 sm:w-12 sm:h-12'} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-full border-2 border-slate-500 flex items-center justify-center text-white font-bold text-sm shadow-lg`}
+            className={`${compact ? 'w-8 h-8' : 'w-10 h-10 sm:w-12 sm:h-12'} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-full border-2 border-slate-500 flex items-center justify-center text-white font-bold text-sm shadow-md`}
           >
             ⋯
           </button>
@@ -189,7 +191,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
                 handleResetTouch(e);
                 setShowDevMenu(false);
               }}
-              className={`${actionButtonSize} bg-orange-600/90 hover:bg-orange-500/90 active:bg-orange-400/90 rounded-full border-3 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-lg`}
+              className={`${actionButtonSize} bg-orange-600/90 hover:bg-orange-500/90 active:bg-orange-400/90 rounded-full border-3 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-md`}
             >
               R
             </button>
@@ -198,7 +200,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
           {/* Main Action button (E) - large for easy tapping */}
           <button
             onTouchStart={handleActionTouch}
-            className={`${mainActionSize} bg-green-600/90 hover:bg-green-500/90 active:bg-green-400/90 rounded-full border-4 border-green-400 flex items-center justify-center text-white font-bold ${mainActionText} shadow-xl`}
+            className={`${mainActionSize} bg-green-600/90 hover:bg-green-500/90 active:bg-green-400/90 rounded-full border-4 border-green-400 flex items-center justify-center text-white font-bold ${mainActionText} shadow-lg`}
           >
             E
           </button>
