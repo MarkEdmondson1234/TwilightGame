@@ -525,20 +525,20 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.STREAM,
-    spriteWidth: 4, // 4 tiles wide (flowing stream)
-    spriteHeight: 4, // 4 tiles tall (square aspect ratio - preserves uploaded image ratio)
-    offsetX: -1.5, // Center horizontally (extend 1.5 tiles left)
-    offsetY: -1.5, // Center vertically (extend 1.5 tiles up)
+    spriteWidth: 5, // 5 tiles wide (flowing stream)
+    spriteHeight: 5, // 5 tiles tall (square aspect ratio - preserves uploaded image ratio)
+    offsetX: -2, // Center horizontally (extend 2 tiles left)
+    offsetY: -2, // Center vertically (extend 2 tiles up)
     image: tileAssets.stream_1, // First frame (overridden by animationFrames)
     enableFlip: false, // No flip - water flows in one direction
     enableRotation: false, // No rotation - stream has directional flow
     enableScale: false, // No scale - keep animation consistent
     enableBrightness: false,
     // Collision - stream is walkable (splashing through water)
-    collisionWidth: 4,
-    collisionHeight: 4,
-    collisionOffsetX: -1.5,
-    collisionOffsetY: -1.5,
+    collisionWidth: 5,
+    collisionHeight: 5,
+    collisionOffsetX: -2,
+    collisionOffsetY: -2,
     // Animation frames (flowing water effect)
     animationFrames: [
       tileAssets.stream_1,
@@ -546,6 +546,8 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
       tileAssets.stream_3,
     ],
     animationSpeed: 200, // 200ms per frame = 5 FPS gentle flowing water
+    // Depth sorting - place depth line very high so player always appears above water
+    depthLineOffset: -10, // Player walks through/over the stream, not under it
   },
   {
     tileType: TileType.ROCK,
@@ -906,15 +908,15 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.SMALL_LAKE,
-    spriteWidth: 6, // 6 tiles wide (smaller pond)
-    spriteHeight: 6, // 6 tiles tall (square aspect ratio)
-    offsetX: -3, // Center horizontally on anchor tile
-    offsetY: -3, // Center vertically on anchor tile
+    spriteWidth: 4, // 4 tiles wide (smaller pond)
+    spriteHeight: 4, // 4 tiles tall (square aspect ratio)
+    offsetX: -2, // Center horizontally on anchor tile
+    offsetY: -2, // Center vertically on anchor tile
     image: tileAssets.forest_pond_spring_summer, // Default image (overridden by seasonalImages in TILE_LEGEND)
-    // Collision covers inner area (4x4), leaving walkable shore
-    collisionWidth: 4,
+    // Collision covers inner area (3x3), leaving walkable shore
+    collisionWidth: 3,
     collisionHeight: 1,
-    collisionOffsetX: -2,
+    collisionOffsetX: -1.5,
     collisionOffsetY: 0,
     // No transforms
     enableFlip: false,

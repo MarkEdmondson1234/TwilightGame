@@ -66,13 +66,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   generatePatches(map, TileType.PATH, 5, 2, 5, width, height, spawnZone);
 
   // Add a static lake (50% chance) - looks much better than procedural rectangular lakes
-  // SMALL_LAKE is 6x6, MAGICAL_LAKE is 12x12
+  // SMALL_LAKE is 4x4, MAGICAL_LAKE is 12x12
   const lakeChance = ((seed * 41) % 100) / 100;
   if (lakeChance < 0.5) {
     // 70% small lake, 30% large magical lake
     const isSmallLake = ((seed * 53) % 100) / 100 < 0.7;
     const lakeType = isSmallLake ? TileType.SMALL_LAKE : TileType.MAGICAL_LAKE;
-    const clearRadius = isSmallLake ? 4 : 7;  // Clear area around lake
+    const clearRadius = isSmallLake ? 3 : 7;  // Clear area around lake
 
     // Pick a corner location for the lake (away from spawn in center and exits on sides)
     const lakeCorner = ((seed * 47) % 4);  // 0=top-right, 1=bottom-right, 2=top-left, 3=bottom-left
@@ -121,9 +121,9 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     console.log(`[Forest] 🌊 ${lakeName} spawned at (${lakeX}, ${lakeY})`);
   }
 
-  // Add animated streams (30% chance) - flowing water for forest ambiance
+  // Add animated streams (50% chance) - flowing water for forest ambiance
   const streamChance = ((seed * 61) % 100) / 100;
-  if (streamChance < 0.3) {
+  if (streamChance < 0.5) {
     // Spawn 1-2 streams in the forest
     const streamCount = Math.floor(((seed * 67) % 2)) + 1; // 1-2 streams
     let streamsPlaced = 0;
@@ -149,8 +149,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
           continue; // Try again
         }
 
-        // Check if 4x4 area (stream footprint) is clear of obstacles
-        // Stream is 4x4 centered at streamX, streamY (extends 1.5 tiles in each direction)
+        // Check if 5x5 area (stream footprint) is clear of obstacles
+        // Stream is 5x5 centered at streamX, streamY (extends 2 tiles in each direction)
         let areaIsClear = true;
         for (let dy = -2; dy <= 2; dy++) {
           for (let dx = -2; dx <= 2; dx++) {
@@ -182,11 +182,11 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
       // Only place stream if we found a valid spot
       if (foundValidSpot) {
-        // Place stream anchor (STREAM is 4x4 tiles)
+        // Place stream anchor (STREAM is 5x5 tiles)
         map[streamY][streamX] = TileType.STREAM;
 
         // Clear area around the stream to ensure visibility
-        const clearRadius = 2;
+        const clearRadius = 3;
         for (let dy = -clearRadius; dy <= clearRadius; dy++) {
           for (let dx = -clearRadius; dx <= clearRadius; dx++) {
             const clearY = streamY + dy;
@@ -208,7 +208,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
 
     if (streamsPlaced > 0) {
-      console.log(`[Forest] 💧 ${streamsPlaced} stream(s) spawned (30% chance)`);
+      console.log(`[Forest] 💧 ${streamsPlaced} stream(s) spawned (50% chance)`);
     }
   }
 
