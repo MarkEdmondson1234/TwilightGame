@@ -227,6 +227,7 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 - [`docs/TIME_SYSTEM.md`](docs/TIME_SYSTEM.md) - Time/calendar system (seasons, days, years)
 - [`docs/COORDINATE_GUIDE.md`](docs/COORDINATE_GUIDE.md) - Position system reference
 - [`docs/SAVE_SYSTEM.md`](docs/SAVE_SYSTEM.md) - Save system and localStorage documentation
+- [`docs/SEASONAL_NPC_LOCATIONS.md`](docs/SEASONAL_NPC_LOCATIONS.md) - Seasonal NPC positioning and map transitions
 
 **In-Game Help Browser**: Press **F1** while playing to access all documentation in a browsable interface with markdown rendering.
 
