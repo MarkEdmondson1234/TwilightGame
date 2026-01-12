@@ -664,6 +664,34 @@ export function handleFarmAction(
         };
       }
     }
+
+    // Guidance for wrong tool on fallow soil (not hoe or hand)
+    if (
+      currentTool !== 'hand' &&
+      currentTool !== 'tool_hoe' &&
+      plotTileType === TileType.SOIL_FALLOW
+    ) {
+      return {
+        handled: false,
+        message: 'You need to select the hoe to till this soil',
+        messageType: 'info',
+      };
+    }
+
+    // Guidance for wrong tool on tilled soil (not hand, seeds, watering can, or hoe)
+    if (
+      currentTool !== 'hand' &&
+      !currentTool.startsWith('seed_') &&
+      currentTool !== 'tool_watering_can' &&
+      currentTool !== 'tool_hoe' &&
+      plotTileType === TileType.SOIL_TILLED
+    ) {
+      return {
+        handled: false,
+        message: 'Select seeds to plant here',
+        messageType: 'info',
+      };
+    }
   }
 
   return { handled: false };
@@ -1464,6 +1492,23 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         execute: () => {
           const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
           onFarmAction?.(farmResult);
+        },
+      });
+    }
+
+    // Fallback: If no specific farm interaction was added, call handleFarmAction to get guidance message
+    // This ensures mouse clicks show the same helpful messages as keyboard input
+    const farmInteractionsAdded = interactions.filter((i) => i.type.startsWith('farm_')).length;
+    if (farmInteractionsAdded === 0 && onFarmAction) {
+      // Create a guidance interaction that calls handleFarmAction
+      interactions.push({
+        type: 'farm_till', // Use generic type
+        label: 'Check Farm Action', // Won't be shown (immediately executed for single interaction)
+        icon: '❓',
+        color: '#6b7280',
+        execute: () => {
+          const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+          onFarmAction(farmResult);
         },
       });
     }
