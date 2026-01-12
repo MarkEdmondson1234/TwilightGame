@@ -1,4 +1,4 @@
-import { MapDefinition, TileType } from '../types';
+import { MapDefinition, TileType, Position } from '../types';
 import { gameState } from '../GameState';
 import { createUmbraWolfNPC, createChillBearNPC, createBunnyflyNPC, createDeerNPC, createPuffleNPC, createSuffleNPC, createMushraNPC } from '../utils/npcFactories';
 
@@ -231,7 +231,97 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Helper function to check if a position is adjacent to water (streams or lakes)
+  // NOTE: Water features are multi-tile sprites with only one anchor tile on the grid:
+  // - STREAM: 5x5 sprite (anchor at center, extends 2 tiles in all directions)
+  // - SMALL_LAKE: 4x4 sprite (anchor at center, extends 2 tiles in all directions)
+  // - MAGICAL_LAKE: 12x12 sprite (anchor at center, extends 6 tiles in all directions)
+  const isAdjacentToWater = (x: number, y: number): boolean => {
+    // Check a larger radius to account for multi-tile sprite footprints
+    // We need to check if this tile is within range of any water anchor point
+    const searchRadius = 8; // Covers magical lake (6) + 2 for adjacency
+
+    for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+      for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+        const checkY = y + dy;
+        const checkX = x + dx;
+
+        if (checkY >= 0 && checkY < height && checkX >= 0 && checkX < width) {
+          const tile = map[checkY][checkX];
+
+          if (tile === TileType.STREAM) {
+            // STREAM is 5x5, anchor at center (extends 2 tiles each way)
+            // Check if (x,y) is adjacent to the 5x5 footprint
+            const streamLeft = checkX - 2;
+            const streamRight = checkX + 2;
+            const streamTop = checkY - 2;
+            const streamBottom = checkY + 2;
+
+            // Is (x,y) adjacent (including diagonally) to the stream's footprint?
+            if (x >= streamLeft - 1 && x <= streamRight + 1 &&
+                y >= streamTop - 1 && y <= streamBottom + 1 &&
+                !(x >= streamLeft && x <= streamRight && y >= streamTop && y <= streamBottom)) {
+              return true; // Adjacent but not inside
+            }
+          } else if (tile === TileType.SMALL_LAKE) {
+            // SMALL_LAKE is 4x4, anchor at center (extends 2 tiles each way)
+            const lakeLeft = checkX - 2;
+            const lakeRight = checkX + 1;
+            const lakeTop = checkY - 2;
+            const lakeBottom = checkY + 1;
+
+            if (x >= lakeLeft - 1 && x <= lakeRight + 1 &&
+                y >= lakeTop - 1 && y <= lakeBottom + 1 &&
+                !(x >= lakeLeft && x <= lakeRight && y >= lakeTop && y <= lakeBottom)) {
+              return true;
+            }
+          } else if (tile === TileType.MAGICAL_LAKE) {
+            // MAGICAL_LAKE is 12x12, anchor at center (extends 6 tiles each way)
+            const lakeLeft = checkX - 6;
+            const lakeRight = checkX + 5;
+            const lakeTop = checkY - 6;
+            const lakeBottom = checkY + 5;
+
+            if (x >= lakeLeft - 1 && x <= lakeRight + 1 &&
+                y >= lakeTop - 1 && y <= lakeBottom + 1 &&
+                !(x >= lakeLeft && x <= lakeRight && y >= lakeTop && y <= lakeBottom)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    return false;
+  };
+
+  // Count water features on the map for debugging
+  let waterTileCount = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const tile = map[y][x];
+      if (tile === TileType.STREAM || tile === TileType.SMALL_LAKE || tile === TileType.MAGICAL_LAKE) {
+        waterTileCount++;
+      }
+    }
+  }
+
+  // Find all grass tiles adjacent to water for preferential placement
+  const waterAdjacentTiles: Position[] = [];
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      if (map[y][x] === TileType.GRASS && isAdjacentToWater(x, y)) {
+        waterAdjacentTiles.push({ x, y });
+      }
+    }
+  }
+
+  if (waterTileCount > 0) {
+    console.log(`[Forest] 💧 ${waterTileCount} water tiles found, ${waterAdjacentTiles.length} adjacent grass tiles available`);
+  }
+
   // Add ferns scattered throughout forest (walkable decoration, quite common)
+  // Random placement - general forest ground cover
   for (let i = 0; i < 45; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
     const y = Math.floor(Math.random() * (height - 2)) + 1;
@@ -239,6 +329,48 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     if (map[y][x] === TileType.GRASS) {
       map[y][x] = TileType.FERN;
     }
+  }
+
+  // Add wild irises in organic clusters near water (beautiful yellow flowering plants)
+  // Only spawn if water exists on the map
+  if (waterAdjacentTiles.length > 0) {
+    let irisesPlaced = 0;
+    const targetClusters = 4; // 4-6 clusters of irises
+    const clustersToPlace = targetClusters + Math.floor(Math.random() * 3);
+
+    for (let cluster = 0; cluster < clustersToPlace && waterAdjacentTiles.length > 0; cluster++) {
+      // Pick a random water-adjacent tile as cluster center
+      const centerIndex = Math.floor(Math.random() * waterAdjacentTiles.length);
+      const center = waterAdjacentTiles[centerIndex];
+
+      // Remove center from available tiles
+      waterAdjacentTiles.splice(centerIndex, 1);
+
+      // Place 2-5 irises in a small cluster around this point
+      const clusterSize = 2 + Math.floor(Math.random() * 4); // 2-5 irises per cluster
+      const clusterRadius = 2; // Look within 2 tiles of center
+
+      // Try to place irises near the cluster center
+      let placedInCluster = 0;
+      for (let attempt = 0; attempt < clusterSize * 3 && placedInCluster < clusterSize; attempt++) {
+        // Random offset from center
+        const offsetX = Math.floor(Math.random() * (clusterRadius * 2 + 1)) - clusterRadius;
+        const offsetY = Math.floor(Math.random() * (clusterRadius * 2 + 1)) - clusterRadius;
+        const x = center.x + offsetX;
+        const y = center.y + offsetY;
+
+        // Check bounds and if tile is grass
+        if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1 && map[y][x] === TileType.GRASS) {
+          map[y][x] = TileType.WILD_IRIS;
+          irisesPlaced++;
+          placedInCluster++;
+        }
+      }
+    }
+
+    console.log(`[Forest] 🌸 ${irisesPlaced} Wild Irises (yellow) spawned in ${clustersToPlace} organic clusters near water`);
+  } else {
+    console.log(`[Forest] No water features found - skipping iris placement`);
   }
 
   // Add lots of bushes scattered throughout forest (solid decoration)
