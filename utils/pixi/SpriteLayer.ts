@@ -32,7 +32,11 @@ export class SpriteLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private currentMapId: string | null = null;
   // Animation tracking for multi-tile sprites (like cauldron)
-  private animatedSprites: Map<string, { frames: string[]; speed: number }> = new Map();
+  // Includes current frame and last update time for sequential playback
+  private animatedSprites: Map<
+    string,
+    { frames: string[]; speed: number; currentFrame: number; lastFrameTime: number }
+  > = new Map();
   // Shared container for depth-sorted entities (sprites, player, NPCs)
   // When set, sprites are added here instead of this.container for cross-layer z-sorting
   private depthContainer: PIXI.Container | null = null;
@@ -113,10 +117,10 @@ export class SpriteLayer extends PixiLayer {
         if (!spriteMetadata) continue;
 
         // Hide ferns and tufts during snowfall (creates "blanket of snow" effect)
-        if (currentWeather === 'snow' && (
-          tileData.type === TileType.FERN ||
-          tileData.type === TileType.TUFT
-        )) {
+        if (
+          currentWeather === 'snow' &&
+          (tileData.type === TileType.FERN || tileData.type === TileType.TUFT)
+        ) {
           const key = `${x},${y}`;
           const existingSprite = this.sprites.get(key);
           if (existingSprite) {
@@ -155,15 +159,24 @@ export class SpriteLayer extends PixiLayer {
 
     // Check for animation frames first
     if (metadata.animationFrames && metadata.animationFrames.length > 0) {
-      // Track this animated sprite
       const speed = metadata.animationSpeed || 150; // Default 150ms per frame
-      this.animatedSprites.set(key, { frames: metadata.animationFrames, speed });
-
-      // Calculate current frame based on time
       const currentTime = Date.now();
-      const frameIndex = Math.floor(currentTime / speed) % metadata.animationFrames.length;
-      const imageUrl = metadata.animationFrames[frameIndex];
 
+      // Get existing animation state or create new one
+      const existing = this.animatedSprites.get(key);
+      const currentFrame = existing?.currentFrame ?? 0;
+      const lastFrameTime = existing?.lastFrameTime ?? currentTime;
+
+      // Register/update animation tracking (preserves frame state)
+      this.animatedSprites.set(key, {
+        frames: metadata.animationFrames,
+        speed,
+        currentFrame,
+        lastFrameTime,
+      });
+
+      // Render current frame
+      const imageUrl = metadata.animationFrames[currentFrame];
       this.renderSpriteWithImage(anchorX, anchorY, metadata, imageUrl);
       return;
     }
@@ -175,7 +188,10 @@ export class SpriteLayer extends PixiLayer {
     const tileData = getTileData(anchorX, anchorY);
 
     if (tileData?.seasonalImages) {
-      const seasonalArray = seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default;
+      const seasonalArray =
+        seasonKey in tileData.seasonalImages
+          ? tileData.seasonalImages[seasonKey]
+          : tileData.seasonalImages.default;
       if (seasonalArray && seasonalArray.length > 0) {
         imageUrl = seasonalArray[selectVariant(anchorX, anchorY, seasonalArray.length)];
       }
@@ -244,10 +260,11 @@ export class SpriteLayer extends PixiLayer {
 
     // Calculate dynamic z-index based on depth line
     // Ground decorations (tufts, ferns, rocks) stay at ground level
-    const isGroundDecoration = metadata.tileType === TileType.TUFT ||
-                                metadata.tileType === TileType.FERN ||
-                                metadata.tileType === TileType.TUFT_SPARSE ||
-                                metadata.tileType === TileType.ROCK;
+    const isGroundDecoration =
+      metadata.tileType === TileType.TUFT ||
+      metadata.tileType === TileType.FERN ||
+      metadata.tileType === TileType.TUFT_SPARSE ||
+      metadata.tileType === TileType.ROCK;
     if (isGroundDecoration) {
       sprite.zIndex = Z_GROUND_DECORATION;
     } else {
@@ -261,11 +278,44 @@ export class SpriteLayer extends PixiLayer {
   }
 
   /**
+   * Update animated sprites (call every frame from game loop)
+   * Advances frames sequentially based on elapsed time
+   */
+  updateAnimations(): void {
+    if (this.animatedSprites.size === 0) return;
+
+    const currentTime = Date.now();
+
+    this.animatedSprites.forEach((animData, key) => {
+      const sprite = this.sprites.get(key);
+      if (!sprite || !sprite.visible) return;
+
+      // Check if enough time has passed for next frame
+      const elapsed = currentTime - animData.lastFrameTime;
+      if (elapsed < animData.speed) return;
+
+      // Advance to next frame (sequential, wrapping around)
+      const nextFrame = (animData.currentFrame + 1) % animData.frames.length;
+
+      // Update animation state
+      animData.currentFrame = nextFrame;
+      animData.lastFrameTime = currentTime;
+
+      // Update texture
+      const imageUrl = animData.frames[nextFrame];
+      const newTexture = textureManager.getTexture(imageUrl);
+      if (newTexture && sprite.texture !== newTexture) {
+        sprite.texture = newTexture;
+      }
+    });
+  }
+
+  /**
    * Clear all sprites (when changing maps)
    */
   clear(): void {
     const container = this.getTargetContainer();
-    this.sprites.forEach(sprite => {
+    this.sprites.forEach((sprite) => {
       if (sprite.parent === container) {
         container.removeChild(sprite);
       }
@@ -281,7 +331,7 @@ export class SpriteLayer extends PixiLayer {
    */
   getSpriteCount(): { total: number; visible: number } {
     let visible = 0;
-    this.sprites.forEach(sprite => {
+    this.sprites.forEach((sprite) => {
       if (sprite.visible) visible++;
     });
     return {

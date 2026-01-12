@@ -503,7 +503,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
       tileAssets.cauldron_8,
       tileAssets.cauldron_9,
     ],
-    animationSpeed: 80, // 80ms per frame = 12.5 FPS bubbling effect
+    animationSpeed: 100, // 100ms per frame = 10 FPS gentle bubbling
   },
   {
     tileType: TileType.TREE_STUMP,

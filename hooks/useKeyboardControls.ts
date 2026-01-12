@@ -49,6 +49,7 @@ export interface KeyboardControlsConfig {
   onSetDebugOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
   onSetShowDevTools: (show: boolean | ((prev: boolean) => boolean)) => void;
   onSetShowSpriteEditor: (show: boolean | ((prev: boolean) => boolean)) => void;
+  onSetShowVFXTestPanel: (show: boolean | ((prev: boolean) => boolean)) => void;
   onSetShowHelpBrowser: (show: boolean) => void;
   onSetShowCookingUI: (show: boolean) => void;
   onSetShowRecipeBook: (show: boolean) => void;
@@ -83,6 +84,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetDebugOpen,
     onSetShowDevTools,
     onSetShowSpriteEditor,
+    onSetShowVFXTestPanel,
     onSetShowHelpBrowser,
     onSetShowCookingUI,
     onSetShowRecipeBook,
@@ -100,10 +102,22 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   // Create refs for values that need to be accessed in the event handler with latest values
   const selectedItemSlotRef = useRef(selectedItemSlot);
   const inventoryItemsRef = useRef(inventoryItems);
+  const activeNPCRef = useRef(activeNPC);
+  const showInventoryRef = useRef(showInventory);
+  const showCookingUIRef = useRef(showCookingUI);
+  const showShopUIRef = useRef(showShopUI);
+  const showRecipeBookRef = useRef(showRecipeBook);
+  const showHelpBrowserRef = useRef(showHelpBrowser);
 
   // Update refs when values change
   selectedItemSlotRef.current = selectedItemSlot;
   inventoryItemsRef.current = inventoryItems;
+  activeNPCRef.current = activeNPC;
+  showInventoryRef.current = showInventory;
+  showCookingUIRef.current = showCookingUI;
+  showShopUIRef.current = showShopUI;
+  showRecipeBookRef.current = showRecipeBook;
+  showHelpBrowserRef.current = showHelpBrowser;
 
   // Build handlers object for key handler utilities
   const uiHandlers = {
@@ -124,6 +138,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetDebugOpen,
     onSetShowDevTools,
     onSetShowSpriteEditor,
+    onSetShowVFXTestPanel,
     onFarmUpdate,
     onMapTransition,
   };
@@ -165,7 +180,15 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     }
 
     // Don't process gameplay keys if blocking UI is open
-    if (isBlockingUIOpen(activeNPC, uiHandlers)) {
+    // Use refs to get current values (avoid stale closure)
+    if (
+      isBlockingUIOpen(activeNPCRef.current, {
+        showCookingUI: showCookingUIRef.current,
+        showShopUI: showShopUIRef.current,
+        showRecipeBook: showRecipeBookRef.current,
+        showInventory: showInventoryRef.current,
+      })
+    ) {
       return;
     }
 

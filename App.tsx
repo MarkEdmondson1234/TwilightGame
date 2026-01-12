@@ -37,6 +37,8 @@ import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useTouchControls } from './hooks/useTouchControls';
 import { useCollisionDetection } from './hooks/useCollisionDetection';
 import { usePlayerMovement } from './hooks/usePlayerMovement';
+import { useClickToMove } from './hooks/useClickToMove';
+import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
 import { useViewportCulling } from './hooks/useViewportCulling';
@@ -83,11 +85,18 @@ import CookingInterface from './components/CookingInterface';
 import RecipeBook from './components/RecipeBook';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
+import { DestinationMarker } from './components/DestinationMarker';
 import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
 import { inventoryManager } from './utils/inventoryManager';
 import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
+import { usePotionEffect, hasPotionEffect, MagicEffectCallbacks } from './utils/MagicEffects';
+import { getItem, ItemCategory } from './data/items';
+import { WeatherType } from './data/weatherConfig';
+import { useVFX } from './hooks/useVFX';
+import VFXRenderer from './components/VFXRenderer';
+import VFXTestPanel from './components/VFXTestPanel';
 
 const App: React.FC = () => {
   const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
@@ -100,16 +109,20 @@ const App: React.FC = () => {
   const savedLocation = gameState.getPlayerLocation();
   const [currentMapId, setCurrentMapId] = useState<string>(savedLocation.mapId);
   const [playerPos, setPlayerPos] = useState<Position>(savedLocation.position);
+  const [playerScale, setPlayerScale] = useState<number>(1.0); // Scale for size-changing potions
   const [direction, setDirection] = useState<Direction>(Direction.Down);
   const [animationFrame, setAnimationFrame] = useState(0);
   const [isDebugOpen, setDebugOpen] = useState(false);
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
   const [showDevTools, setShowDevTools] = useState(false); // Toggle dev tools panel
   const [showSpriteEditor, setShowSpriteEditor] = useState(false); // Toggle sprite metadata editor (F8, dev only)
+  const [showVFXTestPanel, setShowVFXTestPanel] = useState(false); // Toggle VFX test panel (F10, dev only)
   const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
   const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
   const [cookingLocationType, setCookingLocationType] = useState<'stove' | 'campfire' | null>(null); // Track cooking location type
   const [cookingPosition, setCookingPosition] = useState<Position | null>(null); // Track stove/campfire position for placing cooked items
+  const [showBrewingUI, setShowBrewingUI] = useState(false); // Toggle potion brewing interface
+  const [brewingPosition, setBrewingPosition] = useState<Position | null>(null); // Track cauldron position
   const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
   const [showInventory, setShowInventory] = useState(false); // Toggle inventory UI
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
@@ -153,6 +166,17 @@ const App: React.FC = () => {
 
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
+
+  // VFX system for magic effects
+  const { activeEffects: activeVFX, triggerVFX, removeEffect: removeVFX } = useVFX(playerPos);
+
+  // Ambient VFX effects (lightning during storms, water sparkles, etc.)
+  useAmbientVFX({
+    triggerVFX,
+    playerPos,
+    currentMapId,
+    enabled: isMapInitialized && !activeNPC && !isCutscenePlaying,
+  });
 
   // Use character sprites hook for loading and managing player sprites
   const playerSprites = useCharacterSprites(characterVersion, gameState.getSelectedCharacter());
@@ -353,12 +377,14 @@ const App: React.FC = () => {
     onSetDebugOpen: setDebugOpen,
     onSetShowDevTools: setShowDevTools,
     onSetShowSpriteEditor: setShowSpriteEditor,
+    onSetShowVFXTestPanel: setShowVFXTestPanel,
     onSetShowHelpBrowser: setShowHelpBrowser,
     onSetShowCookingUI: (show) => {
       if (show) {
         const cookingLocation = checkCookingLocation(playerPosRef.current);
-        if (cookingLocation.found) {
-          setCookingLocationType(cookingLocation.locationType || null);
+        // Only open cooking UI for stove/campfire, not cauldron (which uses brewing UI)
+        if (cookingLocation.found && cookingLocation.locationType !== 'cauldron') {
+          setCookingLocationType((cookingLocation.locationType as 'stove' | 'campfire') || null);
           setCookingPosition(cookingLocation.position || null);
           setShowCookingUI(true);
         }
@@ -392,6 +418,10 @@ const App: React.FC = () => {
         setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
         setWaterSparkleKey((prev) => prev + 1);
       }
+      // Trigger harvest glow VFX when harvesting
+      if (action === 'harvest' && tilePos) {
+        triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
+      }
     },
     onShowToast: showToast,
     onSetSelectedItemSlot: setSelectedItemSlot,
@@ -418,6 +448,10 @@ const App: React.FC = () => {
         setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
         setWaterSparkleKey((prev) => prev + 1);
       }
+      // Trigger harvest glow VFX when harvesting
+      if (action === 'harvest' && tilePos) {
+        triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
+      }
     },
     onShowToast: showToast,
   });
@@ -425,8 +459,25 @@ const App: React.FC = () => {
   // Setup collision detection (with NPC collision support)
   const { checkCollision } = useCollisionDetection(npcsRef);
 
-  // Setup player movement
-  const { updatePlayerMovement } = usePlayerMovement({
+  // Setup click-to-move pathfinding
+  const {
+    isPathing,
+    destination: clickToMoveDestination,
+    targetNPC: clickToMoveTargetNPC,
+    setDestination: setClickToMoveDestination,
+    cancelPath,
+    getMovementVector,
+  } = useClickToMove({
+    playerPosRef,
+    npcsRef,
+    enabled: true,
+  });
+
+  // Get pathing vector for current frame (used by movement hook)
+  const pathingVector = getMovementVector(playerPosRef.current);
+
+  // Setup player movement (with click-to-move support)
+  const { updatePlayerMovement, isKeyboardInput } = usePlayerMovement({
     keysPressed,
     checkCollision,
     playerPosRef,
@@ -434,7 +485,54 @@ const App: React.FC = () => {
     onSetDirection: setDirection,
     onSetAnimationFrame: setAnimationFrame,
     onSetPlayerPos: setPlayerPos,
+    pathingVector,
   });
+
+  // Cancel click-to-move path when keyboard/d-pad input is detected
+  useEffect(() => {
+    if (isKeyboardInput && isPathing) {
+      cancelPath();
+    }
+  }, [isKeyboardInput, isPathing, cancelPath]);
+
+  // Cancel click-to-move path when map changes
+  useEffect(() => {
+    cancelPath();
+  }, [currentMapId, cancelPath]);
+
+  // Cancel click-to-move path when any UI overlay becomes active
+  useEffect(() => {
+    if (
+      activeNPC ||
+      isCutscenePlaying ||
+      showHelpBrowser ||
+      showCookingUI ||
+      showRecipeBook ||
+      showCharacterCreator ||
+      showInventory ||
+      showShopUI ||
+      showGiftModal ||
+      showBrewingUI ||
+      showDevTools ||
+      showVFXTestPanel
+    ) {
+      cancelPath();
+    }
+  }, [
+    activeNPC,
+    isCutscenePlaying,
+    showHelpBrowser,
+    showCookingUI,
+    showRecipeBook,
+    showCharacterCreator,
+    showInventory,
+    showShopUI,
+    showGiftModal,
+    showBrewingUI,
+    showDevTools,
+    showVFXTestPanel,
+    cancelPath,
+  ]);
 
   // Handle canvas click for interactions
   const handleCanvasClick = useCallback(
@@ -449,7 +547,12 @@ const App: React.FC = () => {
         showCookingUI ||
         showRecipeBook ||
         showCharacterCreator ||
-        showInventory
+        showInventory ||
+        showShopUI ||
+        showGiftModal ||
+        showBrewingUI ||
+        showDevTools ||
+        showVFXTestPanel
       ) {
         console.log('[Mouse Click] Ignoring click - UI overlay active');
         return;
@@ -493,6 +596,10 @@ const App: React.FC = () => {
           setCookingPosition(position || null);
           setShowCookingUI(true);
         },
+        onBrewing: (position) => {
+          setBrewingPosition(position || null);
+          setShowBrewingUI(true);
+        },
         onFarmAction: (result: FarmActionResult) => {
           if (result.handled) {
             handleFarmUpdate();
@@ -501,9 +608,13 @@ const App: React.FC = () => {
             showToast(result.message, result.messageType || 'info');
           }
         },
-        onFarmAnimation: (action) => {
+        onFarmAnimation: (action, tilePos) => {
           setFarmActionAnimation(action);
           setFarmActionKey((prev) => prev + 1);
+          // Trigger harvest glow VFX when harvesting
+          if (action === 'harvest' && tilePos) {
+            triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
+          }
         },
         onForage: (result: ForageResult) => {
           showToast(result.message, result.found ? 'success' : 'info');
@@ -557,8 +668,12 @@ const App: React.FC = () => {
 
       console.log(`[Mouse Click] Found ${interactions.length} interactions`);
 
-      // If no interactions, do nothing
+      // If no interactions, trigger click-to-move
       if (interactions.length === 0) {
+        const pathFound = setClickToMoveDestination(clickInfo.worldPos);
+        if (!pathFound) {
+          showToast("Can't reach there", 'info');
+        }
         return;
       }
 
@@ -594,12 +709,18 @@ const App: React.FC = () => {
       showRecipeBook,
       showCharacterCreator,
       showInventory,
+      showShopUI,
+      showGiftModal,
+      showBrewingUI,
+      showDevTools,
+      showVFXTestPanel,
       currentMapId,
       handleMapTransition,
       handleFarmUpdate,
       showToast,
       selectedItemSlot,
       inventoryItems,
+      setClickToMoveDestination,
     ]
   );
 
@@ -648,6 +769,14 @@ const App: React.FC = () => {
     // Update weather particles
     if (weatherLayerRef.current) {
       weatherLayerRef.current.update(deltaTime);
+    }
+
+    // Update sprite animations (cauldron bubbling, etc.) - runs every frame
+    if (spriteLayerRef.current) {
+      spriteLayerRef.current.updateAnimations();
+    }
+    if (tileLayerRef.current) {
+      tileLayerRef.current.updateAnimations();
     }
 
     // Pause movement when dialogue or cutscene is active
@@ -784,6 +913,11 @@ const App: React.FC = () => {
     // This ensures small screens still see the original design
     return Math.max(1.0, rawScale);
   }, [currentMap?.renderMode, currentMap?.referenceViewport, viewportSize]);
+
+  // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
+  const isCompactMode = useMemo(() => {
+    return viewportSize.height < 600;
+  }, [viewportSize.height]);
 
   // Calculate effective grid offset for centered background-image rooms
   // This aligns the collision grid/player/NPCs with the centered background image
@@ -929,6 +1063,77 @@ const App: React.FC = () => {
     npcsRef.current = allNPCs;
   }, [allNPCs]);
 
+  // Magic effect callbacks for potion usage
+  const magicEffectCallbacks: MagicEffectCallbacks = useMemo(
+    () => ({
+      setWeather: (weather: WeatherType) => {
+        setCurrentWeather(weather);
+        gameState.setWeather(weather);
+        // Update weather layer if initialized
+        if (weatherLayerRef.current) {
+          weatherLayerRef.current.setWeather(weather);
+        }
+      },
+      refreshTime: () => {
+        // Force time update - TimeManager is singleton, just need to trigger UI refresh
+        setNpcUpdateTrigger((prev) => prev + 1);
+      },
+      setPlayerScale: (scale: number) => {
+        setPlayerScale(scale);
+      },
+      getPlayerScale: () => playerScale,
+      teleportPlayer: (mapId: string, position: Position) => {
+        handleMapTransition(mapId, position);
+      },
+      openCharacterCreator: () => {
+        setShowCharacterCreator(true);
+      },
+      showToast: (message: string, type?: 'success' | 'info' | 'warning') => {
+        showToast(message, type || 'info');
+      },
+      refreshFarmPlots: () => {
+        setFarmUpdateTrigger((prev) => prev + 1);
+      },
+      getCurrentMapId: () => currentMapId,
+      getPlayerPosition: () => playerPos,
+      triggerVFX: (vfxType: string, position?: Position) => {
+        // Trigger visual effect at player position or specified position
+        triggerVFX(vfxType, position || playerPos);
+      },
+    }),
+    [currentMapId, playerPos, playerScale, triggerVFX]
+  );
+
+  // Handle potion usage from inventory click
+  const handlePotionUse = useCallback(
+    (itemId: string) => {
+      const item = getItem(itemId);
+      if (!item || item.category !== ItemCategory.POTION) {
+        return false;
+      }
+
+      // Check if we have this potion
+      if (inventoryManager.getQuantity(itemId) <= 0) {
+        showToast("You don't have any of those!", 'warning');
+        return false;
+      }
+
+      // Use the potion effect
+      const result = usePotionEffect(itemId, magicEffectCallbacks);
+
+      if (result.success) {
+        // Remove one potion from inventory
+        inventoryManager.removeItem(itemId, 1);
+        // Refresh inventory display
+        setInventoryItems(convertInventoryToUI());
+        return true;
+      }
+
+      return false;
+    },
+    [magicEffectCallbacks]
+  );
+
   // Proximity-based radial menu for NPCs - show menu when entering NPC range
   useEffect(() => {
     // Don't show if UI overlays are active
@@ -988,6 +1193,10 @@ const App: React.FC = () => {
         setCookingLocationType(locationType);
         setCookingPosition(position || null);
         setShowCookingUI(true);
+      },
+      onBrewing: (position) => {
+        setBrewingPosition(position || null);
+        setShowBrewingUI(true);
       },
       onFarmAction: (result: FarmActionResult) => {
         if (result.handled) {
@@ -1969,6 +2178,14 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* VFX Renderer - magic effects for potions and spells */}
+      <VFXRenderer
+        activeEffects={activeVFX}
+        cameraX={cameraX}
+        cameraY={cameraY}
+        onEffectComplete={removeVFX}
+      />
+
       {/* Weather tint overlay - applies weather visual effects over NPCs */}
       <WeatherTintOverlay weather={currentWeather} visible={shouldShowWeather(currentMapId)} />
 
@@ -1995,6 +2212,7 @@ const App: React.FC = () => {
 
           {/* Bookshelf UI - Recipe book shortcuts */}
           <Bookshelf
+            isTouchDevice={isTouchDevice}
             playerPosition={playerPos}
             currentMapId={currentMap.id}
             nearbyNPCs={(() => {
@@ -2038,8 +2256,11 @@ const App: React.FC = () => {
             onResetPress={touchControls.handleResetPress}
             onShowCookingUI={() => {
               const cookingLocation = checkCookingLocation(playerPos);
-              if (cookingLocation.found) {
-                setCookingLocationType(cookingLocation.locationType || null);
+              // Only open cooking UI for stove/campfire, not cauldron
+              if (cookingLocation.found && cookingLocation.locationType !== 'cauldron') {
+                setCookingLocationType(
+                  (cookingLocation.locationType as 'stove' | 'campfire') || null
+                );
                 setCookingPosition(cookingLocation.position || null);
                 setShowCookingUI(true);
               }
@@ -2052,7 +2273,7 @@ const App: React.FC = () => {
               }
               setShowRecipeBook(true);
             }}
-            compact={window.innerHeight < 600}
+            compact={isCompactMode}
           />
         )}
       {activeNPC && dialogueMode === 'static' && (
@@ -2116,6 +2337,14 @@ const App: React.FC = () => {
           onApply={() => setRenderVersion((v) => v + 1)} // Trigger re-render when sprite metadata changes
         />
       )}
+      {import.meta.env.DEV && showVFXTestPanel && (
+        <VFXTestPanel
+          isOpen={showVFXTestPanel}
+          onClose={() => setShowVFXTestPanel(false)}
+          onTriggerVFX={triggerVFX}
+          playerPosition={playerPos}
+        />
+      )}
       {showHelpBrowser && <HelpBrowser onClose={() => setShowHelpBrowser(false)} />}
       {showInventory && (
         <Inventory
@@ -2124,8 +2353,17 @@ const App: React.FC = () => {
           items={inventoryItems}
           selectedSlot={selectedItemSlot}
           onItemClick={(item, slotIndex) => {
-            setSelectedItemSlot(slotIndex);
-            console.log(`Selected ${item.name} in slot ${slotIndex}`);
+            // Check if this is a potion - if so, use it immediately
+            const itemDef = getItem(item.id);
+            if (itemDef && itemDef.category === ItemCategory.POTION) {
+              handlePotionUse(item.id);
+              // Close inventory after drinking potion for immersion
+              setShowInventory(false);
+            } else {
+              // For non-potions, just select the item
+              setSelectedItemSlot(slotIndex);
+              console.log(`Selected ${item.name} in slot ${slotIndex}`);
+            }
           }}
         />
       )}
@@ -2140,6 +2378,31 @@ const App: React.FC = () => {
             setPlacedItemsUpdateTrigger((prev) => prev + 1);
           }}
         />
+      )}
+      {showBrewingUI && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto"
+          onClick={() => setShowBrewingUI(false)}
+        >
+          <div
+            className="bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-purple-500 rounded-lg p-8 max-w-md text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-purple-200 mb-4">🧪 Cauldron</h2>
+            <p className="text-purple-300 mb-6">
+              The bubbling cauldron awaits your magical ingredients...
+            </p>
+            <p className="text-purple-400 text-sm mb-6">
+              Brewing potions coming soon! For now, use F9 to get test potions.
+            </p>
+            <button
+              onClick={() => setShowBrewingUI(false)}
+              className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
       {showGiftModal && giftTargetNpcId && (
         <GiftModal
@@ -2221,6 +2484,16 @@ const App: React.FC = () => {
         />
       )}
       {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}
+
+      {/* Destination marker for click-to-move */}
+      {clickToMoveDestination && (
+        <DestinationMarker
+          position={clickToMoveDestination}
+          cameraX={cameraX}
+          cameraY={cameraY}
+          isNPCTarget={clickToMoveTargetNPC !== null}
+        />
+      )}
 
       {/* Radial menu for multiple interaction options */}
       {radialMenuVisible && (
