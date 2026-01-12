@@ -121,6 +121,97 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     console.log(`[Forest] 🌊 ${lakeName} spawned at (${lakeX}, ${lakeY})`);
   }
 
+  // Add animated streams (30% chance) - flowing water for forest ambiance
+  const streamChance = ((seed * 61) % 100) / 100;
+  if (streamChance < 0.3) {
+    // Spawn 1-2 streams in the forest
+    const streamCount = Math.floor(((seed * 67) % 2)) + 1; // 1-2 streams
+    let streamsPlaced = 0;
+
+    for (let i = 0; i < streamCount; i++) {
+      // Pick a random location away from spawn and exits
+      let streamX: number, streamY: number;
+      let attempts = 0;
+      const maxAttempts = 30;
+      let foundValidSpot = false;
+
+      do {
+        // Add attempt counter to vary position on each iteration
+        streamX = Math.floor(((seed * (71 + i * 5) + attempts * 7) % (width - 10)) + 5);
+        streamY = Math.floor(((seed * (73 + i * 7) + attempts * 11) % (height - 10)) + 5);
+        attempts++;
+
+        // Check if this spot is valid (not too close to spawn/exits, and entire 4x4 area is clear)
+        const tooCloseToSpawn = Math.abs(streamX - spawnX) < 6 && Math.abs(streamY - spawnY) < 6;
+        const tooCloseToEdges = streamX < 5 || streamX > width - 6 || streamY < 5 || streamY > height - 6;
+
+        if (tooCloseToSpawn || tooCloseToEdges) {
+          continue; // Try again
+        }
+
+        // Check if 4x4 area (stream footprint) is clear of obstacles
+        // Stream is 4x4 centered at streamX, streamY (extends 1.5 tiles in each direction)
+        let areaIsClear = true;
+        for (let dy = -2; dy <= 2; dy++) {
+          for (let dx = -2; dx <= 2; dx++) {
+            const checkY = streamY + dy;
+            const checkX = streamX + dx;
+
+            // Check bounds
+            if (checkY < 1 || checkY >= height - 1 || checkX < 1 || checkX >= width - 1) {
+              areaIsClear = false;
+              break;
+            }
+
+            // Check if tile is grass or path (safe to place on)
+            const tile = map[checkY][checkX];
+            if (tile !== TileType.GRASS && tile !== TileType.PATH && tile !== TileType.ROCK) {
+              // Found a tree, lake, or other feature - this spot is not valid
+              areaIsClear = false;
+              break;
+            }
+          }
+          if (!areaIsClear) break;
+        }
+
+        if (areaIsClear) {
+          foundValidSpot = true;
+        }
+
+      } while (!foundValidSpot && attempts < maxAttempts);
+
+      // Only place stream if we found a valid spot
+      if (foundValidSpot) {
+        // Place stream anchor (STREAM is 4x4 tiles)
+        map[streamY][streamX] = TileType.STREAM;
+
+        // Clear area around the stream to ensure visibility
+        const clearRadius = 2;
+        for (let dy = -clearRadius; dy <= clearRadius; dy++) {
+          for (let dx = -clearRadius; dx <= clearRadius; dx++) {
+            const clearY = streamY + dy;
+            const clearX = streamX + dx;
+            if (clearY >= 1 && clearY < height - 1 && clearX >= 1 && clearX < width - 1) {
+              // Only clear if it's a normal terrain tile (not boundaries or other features)
+              if (map[clearY][clearX] === TileType.GRASS ||
+                  map[clearY][clearX] === TileType.PATH ||
+                  map[clearY][clearX] === TileType.ROCK) {
+                map[clearY][clearX] = TileType.GRASS;
+              }
+            }
+          }
+        }
+        // Re-place the stream anchor after clearing
+        map[streamY][streamX] = TileType.STREAM;
+        streamsPlaced++;
+      }
+    }
+
+    if (streamsPlaced > 0) {
+      console.log(`[Forest] 💧 ${streamsPlaced} stream(s) spawned (30% chance)`);
+    }
+  }
+
   // Clear spawn area AFTER generating features (9x9 grid)
   for (let y = spawnY - 4; y <= spawnY + 4; y++) {
     for (let x = spawnX - 4; x <= spawnX + 4; x++) {

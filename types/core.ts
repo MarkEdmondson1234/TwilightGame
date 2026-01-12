@@ -122,6 +122,7 @@ export enum TileType {
   BEAR_HOUSE, // Bear's cozy house inside the cave (multi-tile sprite with seasonal variations)
   CAULDRON, // Animated bubbling cauldron (witch's brewing pot)
   TREE_STUMP, // Tree stump (2x2 forest decoration)
+  STREAM, // Animated flowing stream (3-frame animation for forest levels)
   // Utility tiles
   INVISIBLE_WALL, // Blocks movement but renders as transparent (invisible boundary)
 }

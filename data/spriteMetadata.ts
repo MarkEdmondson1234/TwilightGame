@@ -524,6 +524,30 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetY: 0,
   },
   {
+    tileType: TileType.STREAM,
+    spriteWidth: 4, // 4 tiles wide (flowing stream)
+    spriteHeight: 4, // 4 tiles tall (square aspect ratio - preserves uploaded image ratio)
+    offsetX: -1.5, // Center horizontally (extend 1.5 tiles left)
+    offsetY: -1.5, // Center vertically (extend 1.5 tiles up)
+    image: tileAssets.stream_1, // First frame (overridden by animationFrames)
+    enableFlip: false, // No flip - water flows in one direction
+    enableRotation: false, // No rotation - stream has directional flow
+    enableScale: false, // No scale - keep animation consistent
+    enableBrightness: false,
+    // Collision - stream is walkable (splashing through water)
+    collisionWidth: 4,
+    collisionHeight: 4,
+    collisionOffsetX: -1.5,
+    collisionOffsetY: -1.5,
+    // Animation frames (flowing water effect)
+    animationFrames: [
+      tileAssets.stream_1,
+      tileAssets.stream_2,
+      tileAssets.stream_3,
+    ],
+    animationSpeed: 200, // 200ms per frame = 5 FPS gentle flowing water
+  },
+  {
     tileType: TileType.ROCK,
     spriteWidth: 1, // 1 tile wide (standard rock)
     spriteHeight: 1, // 1 tile tall

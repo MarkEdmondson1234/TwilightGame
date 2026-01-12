@@ -154,6 +154,10 @@ export const tileAssets = {
   cauldron_7: '/TwilightGame/assets-optimized/cauldron/cauldron_7.png',
   cauldron_8: '/TwilightGame/assets-optimized/cauldron/cauldron_8.png',
   cauldron_9: '/TwilightGame/assets-optimized/cauldron/cauldron_9.png',
+  // Stream animation frames (flowing water for forest levels)
+  stream_1: '/TwilightGame/assets/animations/stream/stream1.png',
+  stream_2: '/TwilightGame/assets/animations/stream/stream2.png',
+  stream_3: '/TwilightGame/assets/animations/stream/stream3.png',
   // Giant mushroom assets (magical mushrooms for witch hut area)
   giant_mushroom: '/TwilightGame/assets-optimized/tiles/giant_mushroom.png',
   giant_mushroom_winter: '/TwilightGame/assets-optimized/tiles/giant_mushroom_winter.png',

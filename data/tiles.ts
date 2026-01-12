@@ -843,6 +843,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS, // Render grass underneath
   },
+  [TileType.STREAM]: {
+    name: 'Stream',
+    color: 'bg-palette-sage', // Base grass color (blends with surroundings)
+    collisionType: CollisionType.WALKABLE, // Can walk through water
+    image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    baseType: TileType.GRASS, // Render grass underneath
+    // Animation config lives in SPRITE_METADATA (single source of truth)
+  },
 
   // Utility tiles
   [TileType.INVISIBLE_WALL]: {
