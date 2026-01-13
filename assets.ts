@@ -368,9 +368,11 @@ export const playerAssets = {
 };
 
 // Animation assets - Animated GIFs for environmental effects
-// Note: GIFs ARE optimized by the asset pipeline (resized to 512x512 with gifsicle)
+// Note: Most GIFs are optimized by the asset pipeline (resized to 512x512 with gifsicle)
+// Some GIFs use original size when specified (e.g., dragonfly_stream)
 export const animationAssets = {
   cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.gif',
+  dragonfly_stream: '/TwilightGame/assets/animations/dragonfly_stream.gif', // Use original size
   // Future animations:
   // rain: '/TwilightGame/assets-optimized/animations/rain.gif',
   // snow: '/TwilightGame/assets-optimized/animations/snow.gif',

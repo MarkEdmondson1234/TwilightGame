@@ -21,8 +21,12 @@ interface AnimationOverlayProps {
  *
  * Features:
  * - Only iterates visible tiles (not full grid) for performance
- * - Checks seasonal and time-of-day conditions
+ * - Checks seasonal and time-of-day conditions (supports single values or arrays)
  * - Supports radius-based placement around trigger tiles
+ * - Supports multiple instances per trigger tile (random count from range)
+ * - Supports array values for varied positioning (random offset per instance)
+ * - Supports array values for varied scale (random size per instance)
+ * - Supports random horizontal flip
  * - Viewport culling for performance
  * - Configurable opacity and scale
  */
@@ -62,67 +66,120 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
       for (const animation of layerAnimations) {
         if (animation.tileType !== tileData.type) continue;
 
-        // Check conditions
+        // Check conditions (support array values)
         if (animation.conditions) {
-          if (animation.conditions.season && animation.conditions.season !== seasonKey) {
-            continue;
+          // Check season (support both single value and array)
+          if (animation.conditions.season) {
+            const seasons = Array.isArray(animation.conditions.season)
+              ? animation.conditions.season
+              : [animation.conditions.season];
+            if (!seasons.includes(seasonKey)) {
+              continue;
+            }
           }
-          if (animation.conditions.timeOfDay && animation.conditions.timeOfDay !== timeOfDay) {
-            continue;
+          // Check time of day (support both single value and array)
+          if (animation.conditions.timeOfDay) {
+            const timesOfDay = Array.isArray(animation.conditions.timeOfDay)
+              ? animation.conditions.timeOfDay
+              : [animation.conditions.timeOfDay];
+            if (!timesOfDay.includes(timeOfDay)) {
+              continue;
+            }
           }
         }
-
-        // Create unique key based on position (to avoid rendering same animation multiple times)
-        const animKey = `${animation.id}-${x}-${y}`;
-
-        // Skip if we've already rendered this animation at this position
-        if (renderedAnimations.has(animKey)) {
-          continue;
-        }
-        renderedAnimations.add(animKey);
 
         // Calculate base position of trigger tile
         const tileX = x * TILE_SIZE;
         const tileY = y * TILE_SIZE;
 
-        // Calculate animation position based on offset
-        const scale = animation.scale || 1;
-        const gifSize = 512; // Optimized GIF size
-        const scaledSize = gifSize * scale;
+        // Determine how many instances to render for this animation
+        const instanceCount = animation.instances
+          ? (Array.isArray(animation.instances)
+              ? Math.floor(Math.random() * (animation.instances[1] - animation.instances[0] + 1)) + animation.instances[0]
+              : animation.instances)
+          : 1;
 
-        // Position includes offset from tile center, minus half the scaled GIF size to center it
-        const animX = tileX + (animation.offsetX * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
-        const animY = tileY + (animation.offsetY * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
+        // Render multiple instances with varied positions
+        for (let instance = 0; instance < instanceCount; instance++) {
+          // Unique key for each instance
+          const animKey = `${animation.id}-${x}-${y}-${instance}`;
 
-        // Check if animation is within visible bounds (accounting for scale)
-        if (
-          animX + scaledSize < visibleRange.minX * TILE_SIZE ||
-          animX - scaledSize > visibleRange.maxX * TILE_SIZE ||
-          animY + scaledSize < visibleRange.minY * TILE_SIZE ||
-          animY - scaledSize > visibleRange.maxY * TILE_SIZE
-        ) {
-          continue;
+          // Skip if we've already rendered this instance
+          if (renderedAnimations.has(animKey)) {
+            continue;
+          }
+          renderedAnimations.add(animKey);
+
+          // Create deterministic "random" values based on position (so they don't change on re-render)
+          // Simple hash function to convert position to pseudo-random number
+          const hash = (str: string) => {
+            let h = 0;
+            for (let i = 0; i < str.length; i++) {
+              h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+            }
+            return Math.abs(h);
+          };
+
+          const seed = hash(animKey);
+          const seededRandom = (index: number) => ((seed + index * 1234567) % 10000) / 10000;
+
+          // Support both scalar and array values for varied positioning (deterministic)
+          const offsetX = Array.isArray(animation.offsetX)
+            ? animation.offsetX[Math.floor(seededRandom(0) * animation.offsetX.length)]
+            : animation.offsetX;
+          const offsetY = Array.isArray(animation.offsetY)
+            ? animation.offsetY[Math.floor(seededRandom(1) * animation.offsetY.length)]
+            : animation.offsetY;
+
+          // Support array scale or default to 1 (deterministic)
+          const scale = animation.scale
+            ? (Array.isArray(animation.scale)
+                ? animation.scale[Math.floor(seededRandom(2) * animation.scale.length)]
+                : animation.scale)
+            : 1;
+
+          // Horizontal flip (deterministic, based on seeded random)
+          const shouldFlip = animation.flipHorizontal && seededRandom(3) > 0.5;
+          const flipTransform = shouldFlip ? 'scaleX(-1)' : '';
+
+          // Use animation-specific GIF size, or default to 512 for optimized GIFs
+          const gifSize = animation.gifSize || 512;
+          const scaledSize = gifSize * scale;
+
+          // Position includes offset from tile center, minus half the scaled GIF size to center it
+          const animX = tileX + (offsetX * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
+          const animY = tileY + (offsetY * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
+
+          // Check if animation is within visible bounds (accounting for scale)
+          if (
+            animX + scaledSize < visibleRange.minX * TILE_SIZE ||
+            animX - scaledSize > visibleRange.maxX * TILE_SIZE ||
+            animY + scaledSize < visibleRange.minY * TILE_SIZE ||
+            animY - scaledSize > visibleRange.maxY * TILE_SIZE
+          ) {
+            continue;
+          }
+
+          animationElements.push(
+            <img
+              key={animKey}
+              src={animation.image}
+              alt={`Animation ${animation.id}`}
+              className="absolute pointer-events-none"
+              style={{
+                left: animX,
+                top: animY,
+                width: gifSize,
+                height: gifSize,
+                transform: `scale(${scale}) ${flipTransform}`.trim(),
+                transformOrigin: 'top left',
+                opacity: animation.opacity ?? 1,
+                pointerEvents: 'none',
+                imageRendering: 'auto',
+              }}
+            />
+          );
         }
-
-        animationElements.push(
-          <img
-            key={animKey}
-            src={animation.image}
-            alt={`Animation ${animation.id}`}
-            className="absolute pointer-events-none"
-            style={{
-              left: animX,
-              top: animY,
-              width: gifSize,
-              height: gifSize,
-              transform: `scale(${scale})`,
-              transformOrigin: 'top left',
-              opacity: animation.opacity ?? 1,
-              pointerEvents: 'none',
-              imageRendering: 'auto',
-            }}
-          />
-        );
       }
     }
   }

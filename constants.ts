@@ -210,6 +210,29 @@ export const TILE_ANIMATIONS: import('./types').TileAnimation[] = [
       season: 'spring',
     },
   },
+
+  // Dragonflies flying around streams (spring & summer, daytime only)
+  // Note: Uses original GIF size (1000x1000), animation speed preserved as created
+  {
+    id: 'dragonfly_stream',
+    image: animationAssets.dragonfly_stream,
+    tileType: TileType.STREAM,
+    offsetX: [0, 1, 2, -1, -2], // Random horizontal positions around stream
+    offsetY: [-1, -2, 0, 1], // Random vertical positions (mostly above/around)
+    radius: 3, // Larger radius for scattered placement in forest area
+    instances: 1, // Temporarily set to 1 for troubleshooting
+    flipHorizontal: true, // Randomly flip dragonflies horizontally for variety
+    layer: 'foreground',
+    loop: true,
+    opacity: 1,
+    gifSize: 1000, // Original GIF dimensions (1000x1000 pixels)
+    // NO scale property - uses original GIF size at 1:1
+    conditions: {
+      season: ['spring', 'summer'], // Active in warm seasons only
+      timeOfDay: 'day', // Daytime only (quest feature - rare sighting)
+    },
+  },
+
   // Future examples:
   // {
   //   id: 'chimney_smoke',
