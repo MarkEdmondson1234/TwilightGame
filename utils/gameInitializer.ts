@@ -8,6 +8,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { friendshipManager } from './FriendshipManager';
 import { cookingManager } from './CookingManager';
+import { magicManager } from './MagicManager';
 import { deskManager } from './deskManager';
 import { performanceMonitor } from './PerformanceMonitor';
 import { TimeManager, Season } from './TimeManager';
@@ -27,6 +28,8 @@ export async function initializeGame(
   (window as any).gameState = gameState;
   (window as any).mapManager = mapManager;
   (window as any).inventoryManager = inventoryManager;
+  (window as any).cookingManager = cookingManager;
+  (window as any).magicManager = magicManager;
   (window as any).__PERF_MONITOR__ = performanceMonitor;
 
   // Dev tools for colour system testing
@@ -36,13 +39,18 @@ export async function initializeGame(
 
   // Log dev commands help
   console.log(`
-[Dev Tools] Colour system commands:
+[Dev Tools] Commands:
+  // Time & Colour
   TimeManager.setTimeOverride({ season: Season.WINTER })  // Set to winter
   TimeManager.setTimeOverride({ season: Season.SUMMER, hour: 1 })  // Summer night
   TimeManager.clearTimeOverride()  // Return to real time
   TimeManager.getCurrentTime()  // Show current game time
   ColorResolver.getTileColor(0)  // Get grass tile colour
   ColorResolver.traceTileColor(0)  // Trace colour resolution (shows all layers)
+
+  // Magic System
+  magicManager.unlockMagicBook()  // Unlock magic book
+  magicManager.getSummary()       // View magic progress
     `);
 
   initializePalette(); // Initialize color palette (must be first)
@@ -93,6 +101,10 @@ export async function initializeGame(
   // Load cooking progress from saved state
   cookingManager.initialise();
   console.log(`[App] Initialised cooking system`);
+
+  // Load magic progress from saved state
+  magicManager.initialise();
+  console.log(`[App] Initialised magic system`);
 
   // Load desk contents from saved state
   deskManager.initialise();

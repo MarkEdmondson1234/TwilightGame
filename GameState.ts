@@ -126,6 +126,22 @@ export interface GameState {
     >;
   };
 
+  // Magic system (managed by MagicManager)
+  magic?: {
+    magicBookUnlocked: boolean; // Whether player has talked to Witch to learn magic
+    currentLevel: 'novice' | 'journeyman' | 'master'; // Current apprentice level
+    unlockedRecipes: string[];
+    recipeProgress: Record<
+      string,
+      {
+        recipeId: string;
+        timesBrewed: number;
+        isMastered: boolean;
+        unlockedAt: number;
+      }
+    >;
+  };
+
   // Status effects
   statusEffects: {
     feelingSick: boolean; // Prevents leaving village, acquired from eating terrible food
@@ -855,6 +871,67 @@ class GameStateManager {
    */
   isRecipeBookUnlocked(): boolean {
     return this.state.cooking.recipeBookUnlocked;
+  }
+
+  // === Magic Methods ===
+
+  saveMagicState(magic: {
+    magicBookUnlocked: boolean;
+    currentLevel: 'novice' | 'journeyman' | 'master';
+    unlockedRecipes: string[];
+    recipeProgress: Record<
+      string,
+      {
+        recipeId: string;
+        timesBrewed: number;
+        isMastered: boolean;
+        unlockedAt: number;
+      }
+    >;
+  }): void {
+    this.state.magic = magic;
+    this.notify();
+  }
+
+  loadMagicState(): {
+    magicBookUnlocked: boolean;
+    currentLevel: 'novice' | 'journeyman' | 'master';
+    unlockedRecipes: string[];
+    recipeProgress: Record<
+      string,
+      {
+        recipeId: string;
+        timesBrewed: number;
+        isMastered: boolean;
+        unlockedAt: number;
+      }
+    >;
+  } | null {
+    return this.state.magic || null;
+  }
+
+  /**
+   * Unlock the magic book (triggered by talking to Witch)
+   */
+  unlockMagicBook(): void {
+    if (!this.state.magic) {
+      this.state.magic = {
+        magicBookUnlocked: true,
+        currentLevel: 'novice',
+        unlockedRecipes: [],
+        recipeProgress: {},
+      };
+    } else {
+      this.state.magic.magicBookUnlocked = true;
+    }
+    this.notify();
+  }
+
+  /**
+   * Check if magic book is unlocked
+   */
+  isMagicBookUnlocked(): boolean {
+    return this.state.magic?.magicBookUnlocked ?? false;
   }
 
   // === Status Effects Methods ===

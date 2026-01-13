@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import RecipeBook from './RecipeBook';
+import MagicRecipeBook from './MagicRecipeBook';
 import { uiAssets } from '../assets';
 import { Z_HUD, Z_BOOKSHELF_MODAL, zClass } from '../zIndex';
+import { magicManager } from '../utils/MagicManager';
 
 interface BookshelfProps {
   isTouchDevice?: boolean;
@@ -24,8 +26,8 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   const [isRecipeBookOpen, setIsRecipeBookOpen] = useState(false);
   const [isMagicBookOpen, setIsMagicBookOpen] = useState(false);
 
-  // Magic book is locked for now (future feature)
-  const magicBookUnlocked = false;
+  // Check if magic book is unlocked (player talked to Witch)
+  const magicBookUnlocked = magicManager.isMagicBookUnlocked();
 
   const handleRecipeBookClick = () => {
     setIsRecipeBookOpen(true);
@@ -106,28 +108,8 @@ const Bookshelf: React.FC<BookshelfProps> = ({
         nearbyNPCs={nearbyNPCs}
       />
 
-      {/* Magic Recipe Book Modal (placeholder for future feature) */}
-      {isMagicBookOpen && (
-        <div
-          className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_BOOKSHELF_MODAL)}`}
-        >
-          <div className="bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-purple-600 rounded-lg p-8 max-w-md">
-            <h2 className="text-2xl font-bold text-purple-200 mb-4 text-center">
-              ✨ Magic Recipe Book ✨
-            </h2>
-            <p className="text-purple-300 text-center mb-6">
-              This mystical tome contains recipes for magical potions and enchanted foods. Its
-              secrets will be revealed in a future update!
-            </p>
-            <button
-              onClick={() => setIsMagicBookOpen(false)}
-              className="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 px-4 rounded transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Magic Recipe Book Modal */}
+      <MagicRecipeBook isOpen={isMagicBookOpen} onClose={() => setIsMagicBookOpen(false)} />
     </>
   );
 };

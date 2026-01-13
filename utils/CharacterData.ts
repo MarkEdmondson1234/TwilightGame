@@ -76,12 +76,28 @@ export interface InventoryData {
   tools: string[];
 }
 
+export interface MagicData {
+  magicBookUnlocked: boolean;
+  currentLevel: 'novice' | 'journeyman' | 'master';
+  unlockedRecipes: string[];
+  recipeProgress: Record<
+    string,
+    {
+      recipeId: string;
+      timesBrewed: number;
+      isMastered: boolean;
+      unlockedAt: number;
+    }
+  >;
+}
+
 // Map of domain names to their data types
 export interface CharacterDataDomains {
   cooking: CookingData;
   friendship: FriendshipData;
   farming: FarmingData;
   inventory: InventoryData;
+  magic: MagicData;
 }
 
 // Type for domain names
@@ -123,6 +139,8 @@ class CharacterDataManager {
         }
         case 'inventory':
           return gameState.loadInventory() as unknown as CharacterDataDomains[T];
+        case 'magic':
+          return gameState.loadMagicState() as unknown as CharacterDataDomains[T] | null;
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
           return null;
@@ -165,6 +183,9 @@ class CharacterDataManager {
         case 'inventory':
           const invData = data as InventoryData;
           gameState.saveInventory(invData.items, invData.tools);
+          break;
+        case 'magic':
+          gameState.saveMagicState(data as MagicData);
           break;
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
@@ -210,6 +231,14 @@ class CharacterDataManager {
         return {
           itemCount: invData.items.length,
           toolCount: invData.tools.length,
+        };
+      case 'magic':
+        const magicData = data as MagicData;
+        return {
+          magicBookUnlocked: magicData.magicBookUnlocked,
+          currentLevel: magicData.currentLevel,
+          unlockedRecipesCount: magicData.unlockedRecipes.length,
+          progressCount: Object.keys(magicData.recipeProgress).length,
         };
       default:
         return { unknown: true };
