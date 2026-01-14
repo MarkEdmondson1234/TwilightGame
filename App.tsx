@@ -20,7 +20,7 @@ import { DarknessLayer } from './utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from './utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from './utils/pixi/BackgroundImageLayer';
 import { WeatherManager } from './utils/WeatherManager';
-import { shouldShowWeather } from './data/weatherConfig';
+import { isWeatherAllowedOnMap } from './data/weatherConfig';
 import { tileAssets, farmingAssets, cookingAssets, npcAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -307,6 +307,9 @@ const App: React.FC = () => {
       if (weatherLayerRef.current && state.weather !== weatherLayerRef.current.getWeather()) {
         console.log(`[App] Weather changed to: ${state.weather}`);
         weatherLayerRef.current.setWeather(state.weather);
+        // Check if new weather is allowed on current map
+        const showWeather = isWeatherAllowedOnMap(state.weather, currentMapId);
+        weatherLayerRef.current.setVisible(showWeather);
       }
       // Update React state for WeatherTintOverlay
       setCurrentWeather(state.weather);
@@ -319,14 +322,16 @@ const App: React.FC = () => {
     });
 
     return unsubscribe;
-  }, []);
+  }, [currentMapId]);
 
-  // Update weather visibility based on current map (hide weather indoors)
+  // Update weather visibility based on current map and weather type
+  // Each zone has an allowlist of weather types (e.g., caves only allow fog/mist)
   useEffect(() => {
     if (weatherLayerRef.current) {
-      const showWeather = shouldShowWeather(currentMapId);
+      const currentWeatherType = gameState.getWeather();
+      const showWeather = isWeatherAllowedOnMap(currentWeatherType, currentMapId);
       weatherLayerRef.current.setVisible(showWeather);
-      console.log(`[App] Weather visibility for map '${currentMapId}': ${showWeather}`);
+      console.log(`[App] Weather '${currentWeatherType}' on map '${currentMapId}': ${showWeather}`);
     }
   }, [currentMapId]);
 
@@ -2334,7 +2339,10 @@ const App: React.FC = () => {
       />
 
       {/* Weather tint overlay - applies weather visual effects over NPCs */}
-      <WeatherTintOverlay weather={currentWeather} visible={shouldShowWeather(currentMapId)} />
+      <WeatherTintOverlay
+        weather={currentWeather}
+        visible={isWeatherAllowedOnMap(currentWeather, currentMapId)}
+      />
 
       {/* Foreground parallax trees - decorative framing for outdoor maps */}
       {['village', 'forest', 'water_area'].includes(currentMap?.colorScheme ?? '') &&

@@ -40,40 +40,40 @@ export interface SeasonalWeatherProbabilities {
  */
 export const WEATHER_PROBABILITIES: Record<Season, SeasonalWeatherProbabilities> = {
   [Season.SPRING]: {
-    clear: 40,           // Mild, pleasant weather
-    rain: 30,            // Spring showers
-    snow: 0,             // No snow in spring
-    fog: 10,             // Morning fog
-    mist: 10,            // Light mist
-    storm: 5,            // Occasional storms
-    cherry_blossoms: 5,  // Cherry blossom season
+    clear: 40, // Mild, pleasant weather
+    rain: 30, // Spring showers
+    snow: 0, // No snow in spring
+    fog: 10, // Morning fog
+    mist: 10, // Light mist
+    storm: 5, // Occasional storms
+    cherry_blossoms: 5, // Cherry blossom season
   },
   [Season.SUMMER]: {
-    clear: 60,           // Mostly sunny
-    rain: 20,            // Summer rain
-    snow: 0,             // No snow in summer
-    fog: 5,              // Rare fog
-    mist: 5,             // Rare mist
-    storm: 10,           // Summer thunderstorms
-    cherry_blossoms: 0,  // No cherry blossoms
+    clear: 60, // Mostly sunny
+    rain: 20, // Summer rain
+    snow: 0, // No snow in summer
+    fog: 5, // Rare fog
+    mist: 5, // Rare mist
+    storm: 10, // Summer thunderstorms
+    cherry_blossoms: 0, // No cherry blossoms
   },
   [Season.AUTUMN]: {
-    clear: 30,           // Less clear weather
-    rain: 40,            // Frequent rain
-    snow: 0,             // No snow yet
-    fog: 15,             // Common fog
-    mist: 10,            // Common mist
-    storm: 5,            // Some storms
-    cherry_blossoms: 0,  // No cherry blossoms
+    clear: 30, // Less clear weather
+    rain: 40, // Frequent rain
+    snow: 0, // No snow yet
+    fog: 15, // Common fog
+    mist: 10, // Common mist
+    storm: 5, // Some storms
+    cherry_blossoms: 0, // No cherry blossoms
   },
   [Season.WINTER]: {
-    clear: 20,           // Cold and clear
-    rain: 10,            // Winter rain
-    snow: 50,            // Frequent snow
-    fog: 10,             // Winter fog
-    mist: 5,             // Less mist
-    storm: 5,            // Winter storms
-    cherry_blossoms: 0,  // No cherry blossoms
+    clear: 20, // Cold and clear
+    rain: 10, // Winter rain
+    snow: 50, // Frequent snow
+    fog: 10, // Winter fog
+    mist: 5, // Less mist
+    storm: 5, // Winter storms
+    cherry_blossoms: 0, // No cherry blossoms
   },
 };
 
@@ -81,35 +81,38 @@ export const WEATHER_PROBABILITIES: Record<Season, SeasonalWeatherProbabilities>
  * Weather zone probabilities - override seasonal probabilities for specific map types
  * These apply regardless of season
  */
-export const ZONE_WEATHER_PROBABILITIES: Record<WeatherZone, Partial<SeasonalWeatherProbabilities> | null> = {
+export const ZONE_WEATHER_PROBABILITIES: Record<
+  WeatherZone,
+  Partial<SeasonalWeatherProbabilities> | null
+> = {
   // Default zone uses seasonal probabilities (no override)
   default: null,
 
   // Forest: Heavy fog/mist, some rain, no storms
   forest: {
-    clear: 20,           // Less clear in dense forest
-    rain: 25,            // Moderate rain
-    snow: 15,            // Snow in winter (will be 0 in other seasons via seasonal base)
-    fog: 30,             // Common fog
-    mist: 25,            // Common mist
-    storm: 0,            // No storms in protected forest
+    clear: 20, // Less clear in dense forest
+    rain: 25, // Moderate rain
+    snow: 15, // Snow in winter (will be 0 in other seasons via seasonal base)
+    fog: 30, // Common fog
+    mist: 25, // Common mist
+    storm: 0, // No storms in protected forest
     cherry_blossoms: 0,
   },
 
   // Cave/Mine: Mostly mist (like dust), no rain/snow/storms
   cave: {
-    clear: 50,           // Mostly clear underground
-    rain: 0,             // No rain underground
-    snow: 0,             // No snow underground
-    fog: 0,              // No fog underground
-    mist: 50,            // Dusty/misty atmosphere
-    storm: 0,            // No storms underground
+    clear: 50, // Mostly clear underground
+    rain: 0, // No rain underground
+    snow: 0, // No snow underground
+    fog: 0, // No fog underground
+    mist: 50, // Dusty/misty atmosphere
+    storm: 0, // No storms underground
     cherry_blossoms: 0,
   },
 
   // Indoor: Always clear (no weather effects)
   indoor: {
-    clear: 100,          // Always clear indoors
+    clear: 100, // Always clear indoors
     rain: 0,
     snow: 0,
     fog: 0,
@@ -124,30 +127,38 @@ export const ZONE_WEATHER_PROBABILITIES: Record<WeatherZone, Partial<SeasonalWea
  * Add new maps here as they're created
  */
 export const MAP_WEATHER_ZONES: Record<string, WeatherZone> = {
-  // Indoor locations (houses, shops, sheds)
-  'home_interior': 'indoor',
-  'homeUpstairs': 'indoor',
-  'cottageInterior': 'indoor',
-  'house1': 'indoor',
-  'house2': 'indoor',
-  'house3': 'indoor',
-  'house4': 'indoor',
-  'shop': 'indoor',
-  'seedShed': 'indoor',
+  // Indoor locations (houses, shops, sheds, kitchens)
+  home_interior: 'indoor',
+  homeUpstairs: 'indoor',
+  cottageInterior: 'indoor',
+  house1: 'indoor',
+  house2: 'indoor',
+  house3: 'indoor',
+  house4: 'indoor',
+  shop: 'indoor',
+  seedShed: 'indoor',
+  mumsKitchen: 'indoor',
+  witchHutInterior: 'indoor',
+  bearDen: 'indoor',
+  debugNPCs: 'indoor',
 
   // Forest locations
-  'forest': 'forest',
-  'RANDOM_FOREST_*': 'forest',  // Pattern match
+  forest: 'forest',
+  deepForest: 'forest',
+  'RANDOM_FOREST_*': 'forest', // Pattern match
 
   // Cave/Mine locations
-  'cave': 'cave',
-  'mine': 'cave',
-  'RANDOM_CAVE_*': 'cave',  // Pattern match
+  cave: 'cave',
+  mine: 'cave',
+  bearCave: 'cave',
+  'RANDOM_CAVE_*': 'cave', // Pattern match
 
-  // Default outdoor (village, paths, farm area, etc.)
-  'village': 'default',
-  'path': 'default',
-  'farmArea': 'default',
+  // Default outdoor (village, paths, farm area, lakes, etc.)
+  village: 'default',
+  path: 'default',
+  farmArea: 'default',
+  magicalLake: 'default',
+  witchHut: 'default',
   // Any unmapped location defaults to 'default' zone
 };
 
@@ -177,10 +188,41 @@ export function getWeatherZone(mapId: string): WeatherZone {
 /**
  * Check if a map should show weather effects
  * Indoor maps should not display weather
+ * @deprecated Use isWeatherAllowedOnMap() for per-weather-type control
  */
 export function shouldShowWeather(mapId: string): boolean {
   const zone = getWeatherZone(mapId);
   return zone !== 'indoor';
+}
+
+/**
+ * Allowed weather types per zone
+ * If a weather type isn't in the list, it won't render on that zone
+ */
+export const ZONE_ALLOWED_WEATHER: Record<WeatherZone, WeatherType[]> = {
+  // Outdoor: All weather allowed
+  default: ['clear', 'rain', 'snow', 'fog', 'mist', 'storm', 'cherry_blossoms'],
+
+  // Forest: All weather (same as outdoor)
+  forest: ['clear', 'rain', 'snow', 'fog', 'mist', 'storm', 'cherry_blossoms'],
+
+  // Cave/Mine: Only fog/mist (dusty atmosphere)
+  cave: ['clear', 'fog', 'mist'],
+
+  // Indoor: Nothing (always clear)
+  indoor: ['clear'],
+};
+
+/**
+ * Check if a weather type is allowed in the current map
+ * @param weather The weather type to check
+ * @param mapId The map ID to check against
+ * @returns true if the weather type can be displayed on this map
+ */
+export function isWeatherAllowedOnMap(weather: WeatherType, mapId: string): boolean {
+  const zone = getWeatherZone(mapId);
+  const allowed = ZONE_ALLOWED_WEATHER[zone];
+  return allowed.includes(weather);
 }
 
 /**
@@ -193,12 +235,12 @@ export interface WeatherDuration {
 }
 
 export const WEATHER_DURATIONS: Record<WeatherType, WeatherDuration> = {
-  clear: { min: 4, max: 12 },           // Long clear periods
-  rain: { min: 2, max: 6 },             // Medium rain duration
-  snow: { min: 3, max: 8 },             // Medium-long snow duration
-  fog: { min: 1, max: 4 },              // Short fog duration
-  mist: { min: 1, max: 3 },             // Short mist duration
-  storm: { min: 1, max: 2 },            // Short storm duration
+  clear: { min: 4, max: 12 }, // Long clear periods
+  rain: { min: 2, max: 6 }, // Medium rain duration
+  snow: { min: 3, max: 8 }, // Medium-long snow duration
+  fog: { min: 1, max: 4 }, // Short fog duration
+  mist: { min: 1, max: 3 }, // Short mist duration
+  storm: { min: 1, max: 2 }, // Short storm duration
   cherry_blossoms: { min: 6, max: 12 }, // Long cherry blossom periods
 };
 
@@ -206,9 +248,9 @@ export const WEATHER_DURATIONS: Record<WeatherType, WeatherDuration> = {
  * Particle effect configuration
  */
 export interface ParticleConfig {
-  maxParticles: number;      // Maximum number of particles
-  emitRate: number;          // Particles emitted per second
-  lifespan: number;          // Particle lifespan in seconds
+  maxParticles: number; // Maximum number of particles
+  emitRate: number; // Particles emitted per second
+  lifespan: number; // Particle lifespan in seconds
   velocity: {
     x: { min: number; max: number };
     y: { min: number; max: number };
@@ -224,11 +266,11 @@ export interface ParticleConfig {
 export const PARTICLE_CONFIGS: Partial<Record<WeatherType, ParticleConfig>> = {
   rain: {
     maxParticles: 1000,
-    emitRate: 100,         // 100 raindrops/second
-    lifespan: 2,           // 2 seconds
+    emitRate: 100, // 100 raindrops/second
+    lifespan: 2, // 2 seconds
     velocity: {
-      x: { min: -20, max: 20 },   // Slight horizontal drift
-      y: { min: 400, max: 600 },  // Fast falling
+      x: { min: -20, max: 20 }, // Slight horizontal drift
+      y: { min: 400, max: 600 }, // Fast falling
     },
     gravity: { x: 0, y: 500 },
     alpha: { min: 0.4, max: 0.7 },
@@ -236,11 +278,11 @@ export const PARTICLE_CONFIGS: Partial<Record<WeatherType, ParticleConfig>> = {
   },
   snow: {
     maxParticles: 500,
-    emitRate: 30,          // 30 snowflakes/second
-    lifespan: 12,          // 12 seconds (slow fall)
+    emitRate: 30, // 30 snowflakes/second
+    lifespan: 12, // 12 seconds (slow fall)
     velocity: {
-      x: { min: -15, max: 15 },   // Gentle drift
-      y: { min: 20, max: 40 },    // Slow falling
+      x: { min: -15, max: 15 }, // Gentle drift
+      y: { min: 20, max: 40 }, // Slow falling
     },
     gravity: { x: 0, y: 30 },
     alpha: { min: 0.6, max: 0.9 },
@@ -248,11 +290,11 @@ export const PARTICLE_CONFIGS: Partial<Record<WeatherType, ParticleConfig>> = {
   },
   storm: {
     maxParticles: 1200,
-    emitRate: 150,         // 150 raindrops/second (heavier than rain)
-    lifespan: 1.5,         // 1.5 seconds
+    emitRate: 150, // 150 raindrops/second (heavier than rain)
+    lifespan: 1.5, // 1.5 seconds
     velocity: {
-      x: { min: -60, max: -20 },  // Strong horizontal wind
-      y: { min: 500, max: 700 },  // Very fast falling
+      x: { min: -60, max: -20 }, // Strong horizontal wind
+      y: { min: 500, max: 700 }, // Very fast falling
     },
     gravity: { x: 0, y: 600 },
     alpha: { min: 0.5, max: 0.8 },
@@ -260,11 +302,11 @@ export const PARTICLE_CONFIGS: Partial<Record<WeatherType, ParticleConfig>> = {
   },
   cherry_blossoms: {
     maxParticles: 300,
-    emitRate: 15,          // 15 petals/second
-    lifespan: 10,          // 10 seconds
+    emitRate: 15, // 15 petals/second
+    lifespan: 10, // 10 seconds
     velocity: {
-      x: { min: -30, max: 30 },   // Floating drift
-      y: { min: 15, max: 35 },    // Gentle fall
+      x: { min: -30, max: 30 }, // Floating drift
+      y: { min: 15, max: 35 }, // Gentle fall
     },
     gravity: { x: 0, y: 20 },
     alpha: { min: 0.7, max: 0.95 },
@@ -277,21 +319,21 @@ export const PARTICLE_CONFIGS: Partial<Record<WeatherType, ParticleConfig>> = {
  * These use fullscreen sprite overlays rather than particles
  */
 export interface FogConfig {
-  alpha: number;          // Opacity
-  scrollSpeed: number;    // Horizontal drift speed (pixels/second)
-  scale: number;          // Scale of fog texture
+  alpha: number; // Opacity
+  scrollSpeed: number; // Horizontal drift speed (pixels/second)
+  scale: number; // Scale of fog texture
 }
 
 export const FOG_CONFIGS: Partial<Record<WeatherType, FogConfig>> = {
   fog: {
-    alpha: 0.5,          // More opaque
-    scrollSpeed: 10,     // Slow drift
-    scale: 1.5,          // Slightly enlarged
+    alpha: 0.5, // More opaque
+    scrollSpeed: 10, // Slow drift
+    scale: 1.5, // Slightly enlarged
   },
   mist: {
-    alpha: 0.3,          // More transparent
-    scrollSpeed: 15,     // Slightly faster drift
-    scale: 1.8,          // More enlarged
+    alpha: 0.3, // More transparent
+    scrollSpeed: 15, // Slightly faster drift
+    scale: 1.8, // More enlarged
   },
 };
 
