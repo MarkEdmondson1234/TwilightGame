@@ -3,7 +3,7 @@
  * Defines all items that can be collected, stored, and used in the game
  */
 
-import { cookingAssets, groceryAssets, itemAssets } from '../assets';
+import { cookingAssets, groceryAssets, itemAssets, magicalAssets } from '../assets';
 
 export enum ItemCategory {
   SEED = 'seed',
@@ -38,6 +38,7 @@ export interface ItemDefinition {
   buyPrice?: number; // Cost to purchase
   cropId?: string; // For seeds, which crop they grow into
   image?: string; // Optional sprite image URL
+  forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
 }
 
 /**
@@ -1154,6 +1155,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 30,
+    image: magicalAssets.dragonfly_wings,
+    forageSuccessRate: 1.0, // 100% success rate when conditions met
   },
 
   frost_crystal: {
