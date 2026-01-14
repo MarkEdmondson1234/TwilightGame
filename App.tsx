@@ -1986,7 +1986,8 @@ const App: React.FC = () => {
       effectiveScale,
       effectiveGridOffset,
       effectiveTileSize,
-      shouldFlip // Flip sprite horizontally for fairy right-facing
+      shouldFlip, // Flip sprite horizontally for fairy right-facing
+      movementMode // Movement mode affects z-index when flying
     );
   }, [
     playerPos,
@@ -2000,6 +2001,7 @@ const App: React.FC = () => {
     currentMap?.characterScale,
     effectiveGridOffset,
     effectiveTileSize, // viewportScale changes are captured via effectiveTileSize
+    movementMode,
   ]);
 
   // Update NPC layer when NPCs change

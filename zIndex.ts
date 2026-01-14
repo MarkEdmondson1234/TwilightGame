@@ -65,6 +65,13 @@ export const Z_DEPTH_SORTED_BASE = 100;
 /** Player character - DEPRECATED: now uses Z_DEPTH_SORTED_BASE + feetY */
 export const Z_PLAYER = 100;
 
+/**
+ * Player z-index when flying (flying potion effect)
+ * Set above maximum depth-sorted entity (100 + 50*10 = 600) but below weather
+ * This ensures flying player appears above ALL buildings, trees, and NPCs
+ */
+export const Z_PLAYER_FLYING = 650;
+
 /** Placed items (food, dropped objects - above player) */
 export const Z_PLACED_ITEMS = 150;
 

@@ -21,7 +21,8 @@ import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction } from '../../types';
 import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
-import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
+import { Z_DEPTH_SORTED_BASE, Z_PLAYER_FLYING } from '../../zIndex';
+import { MovementMode } from '../tileCategories';
 
 // Player feet offset from center (in tiles)
 // Used for depth sorting - entities with feet below this Y appear in front
@@ -75,7 +76,8 @@ export class PlayerSprite extends PixiLayer {
     spriteScale: number = 1,
     gridOffset?: Position,
     tileSize: number = TILE_SIZE, // Allow override for viewport scaling
-    shouldFlip: boolean = false // Flip sprite horizontally (for fairy right-facing)
+    shouldFlip: boolean = false, // Flip sprite horizontally (for fairy right-facing)
+    movementMode: MovementMode = 'normal' // Movement mode affects z-index when flying
   ): Promise<void> {
     // Load texture if changed
     if (this.currentSpriteUrl !== spriteUrl) {
@@ -117,8 +119,13 @@ export class PlayerSprite extends PixiLayer {
     }
 
     // Update z-index for depth sorting (based on feet Y position)
-    const playerFeetY = playerPos.y + PLAYER_FEET_OFFSET;
-    this.sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(playerFeetY * 10);
+    // Flying mode uses elevated z-index to appear above all buildings/trees
+    if (movementMode === 'flying') {
+      this.sprite.zIndex = Z_PLAYER_FLYING;
+    } else {
+      const playerFeetY = playerPos.y + PLAYER_FEET_OFFSET;
+      this.sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(playerFeetY * 10);
+    }
 
     // Show sprite
     this.sprite.visible = true;
