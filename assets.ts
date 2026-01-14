@@ -271,6 +271,11 @@ export const groceryAssets = {
   blueberries_crop: '/TwilightGame/assets-optimized/items/grocery/blueberries_crop.png',
 };
 
+// Magical ingredient assets (for witch shop - sellable but not purchasable)
+export const magicalAssets = {
+  dragonfly_wings: '/TwilightGame/assets-optimized/items/magical/forageable/dragonfly_wings.png',
+};
+
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
 export const npcAssets = {
   little_girl: '/TwilightGame/assets-optimized/npcs/little_girl.png',

@@ -13,7 +13,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
 import { getCrop } from '../data/crops';
-import { generateForageSeed, getCropIdFromSeed } from '../data/items';
+import { generateForageSeed, getCropIdFromSeed, getItem } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { WATER_CAN, TIMING } from '../constants';
 import { itemAssets, groceryAssets } from '../assets';
@@ -743,6 +743,16 @@ const FORAGEABLE_TILES: TileType[] = [
 ];
 
 /**
+ * Check if dragonfly spawn conditions are met
+ * Dragonflies appear in spring/summer, daytime only
+ * Matches TILE_ANIMATIONS config for dragonfly_stream
+ */
+function areDragonfliesActive(): boolean {
+  const { season, timeOfDay } = TimeManager.getCurrentTime();
+  return (season === Season.SPRING || season === Season.SUMMER) && timeOfDay === 'Day';
+}
+
+/**
  * Handle foraging action - search for wild seeds on forageable tiles
  * Only works in forest/outdoor maps
  * Returns result with found seed info, or null if nothing found
@@ -755,11 +765,6 @@ export interface ForageResult {
 }
 
 export function handleForageAction(playerPos: Position, currentMapId: string): ForageResult {
-  // Only allow foraging in forest maps
-  if (!currentMapId.startsWith('forest')) {
-    return { found: false, message: 'You can only forage in the forest.' };
-  }
-
   const playerTileX = Math.floor(playerPos.x);
   const playerTileY = Math.floor(playerPos.y);
   const tileData = getTileData(playerTileX, playerTileY);
@@ -768,12 +773,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     return { found: false, message: 'Nothing to forage here.' };
   }
 
-  // Check if standing on a forageable tile
-  if (!FORAGEABLE_TILES.includes(tileData.type)) {
-    return { found: false, message: 'Nothing to forage here.' };
-  }
-
-  // Check cooldown - each tile has its own per-tile cooldown (1 game day)
+  // Check cooldown FIRST (applies to all foraging types)
   if (
     gameState.isForageTileOnCooldown(
       currentMapId,
@@ -785,8 +785,109 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     console.log(`[Forage] Tile (${playerTileX}, ${playerTileY}) is on cooldown`);
     return {
       found: false,
-      message: `You've already searched here. Come back tomorrow, or find another spot!`,
+      message: `You've already searched here. Come back tomorrow!`,
     };
+  }
+
+  // Stream foraging (dragonfly wings) - check if adjacent to 5x5 stream sprite area
+  // STREAM sprites are 5x5 tiles with anchor at center (offsets: -2 to +2 in both directions)
+  // We want to allow foraging from tiles adjacent to the OUTSIDE of the 5x5 area
+
+  // Search for STREAM anchors in nearby area
+  let nearStream = false;
+  const searchRadius = 4; // Need to check within 4 tiles (2 for sprite half-size + 1 for adjacency + 1 buffer)
+
+  for (let dy = -searchRadius; dy <= searchRadius; dy++) {
+    for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+      const checkX = playerTileX + dx;
+      const checkY = playerTileY + dy;
+      const checkTile = getTileData(checkX, checkY);
+
+      if (checkTile?.type === TileType.STREAM) {
+        // Found a STREAM anchor at (checkX, checkY)
+        // The 5x5 sprite extends from (checkX-2, checkY-2) to (checkX+2, checkY+2)
+        // Check if player is adjacent to (within 1 tile of) this 5x5 area
+
+        // Calculate the 5x5 stream area boundaries
+        const streamLeft = checkX - 2;
+        const streamRight = checkX + 2;
+        const streamTop = checkY - 2;
+        const streamBottom = checkY + 2;
+
+        // Check if player is adjacent to the stream area (within 1 tile of the perimeter)
+        const isAdjacentToStream =
+          playerTileX >= streamLeft - 1 && playerTileX <= streamRight + 1 &&
+          playerTileY >= streamTop - 1 && playerTileY <= streamBottom + 1 &&
+          // But NOT inside the stream itself
+          !(playerTileX >= streamLeft && playerTileX <= streamRight &&
+            playerTileY >= streamTop && playerTileY <= streamBottom);
+
+        if (isAdjacentToStream) {
+          nearStream = true;
+          break;
+        }
+      }
+    }
+    if (nearStream) break;
+  }
+
+  if (nearStream) {
+    if (!areDragonfliesActive()) {
+      return {
+        found: false,
+        message: 'Dragonflies only appear in spring and summer during the day.',
+      };
+    }
+
+    const dragonflyWings = getItem('dragonfly_wings');
+    if (!dragonflyWings) {
+      console.error('[Forage] Dragonfly wings item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (dragonfly_wings has forageSuccessRate: 1.0)
+    const successRate = dragonflyWings.forageSuccessRate ?? 0.5; // Default to 50% if not specified
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown but don't give item
+      gameState.recordForage(currentMapId, playerTileX, playerTileY);
+      return {
+        found: false,
+        message: 'You search near the stream, but find nothing.',
+      };
+    }
+
+    // Success - Random quantity: 70% chance of 1, 30% chance of 2 wings
+    const quantityFound = Math.random() < 0.7 ? 1 : 2;
+
+    // Add to inventory
+    inventoryManager.addItem('dragonfly_wings', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${dragonflyWings.displayName} near stream (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, playerTileX, playerTileY);
+
+    return {
+      found: true,
+      seedId: 'dragonfly_wings', // Reuse field for item ID
+      seedName: dragonflyWings.displayName, // Use displayName for UI
+      message: `Found ${quantityFound} ${dragonflyWings.displayName}!`,
+    };
+  }
+
+  // Forest foraging (existing logic)
+  if (!currentMapId.startsWith('forest')) {
+    return { found: false, message: 'Nothing to forage here.' };
+  }
+
+  // Check if standing on a forageable tile
+  if (!FORAGEABLE_TILES.includes(tileData.type)) {
+    return { found: false, message: 'Nothing to forage here.' };
   }
 
   // Record the forage attempt (starts cooldown for this tile)
@@ -1632,7 +1733,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     if (forageableTiles.includes(tileData.type)) {
       interactions.push({
         type: 'forage',
-        label: 'Search for Seeds',
+        label: 'Foraging',
         icon: '🔍',
         color: '#059669',
         execute: () => {
