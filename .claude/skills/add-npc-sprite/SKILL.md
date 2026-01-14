@@ -23,7 +23,7 @@ Use this skill when you need to:
 
 NPCs can use either:
 - **SVG** (recommended for scalable vector graphics)
-- **PNG** (for pixel art or raster graphics with transparency)
+- **PNG** (for hand-drawn raster graphics with transparency)
 
 ## Steps
 
@@ -48,7 +48,7 @@ For SVG files:
 ```typescript
 export const npcAssets = {
   // ... existing assets
-  [npcName]: new URL('./public/assets/npcs/[npcName].svg', import.meta.url).href,
+  [npcName]: '/TwilightGame/assets/npcs/[npcName].svg',
 };
 ```
 
@@ -56,7 +56,7 @@ For PNG files (use optimized path):
 ```typescript
 export const npcAssets = {
   // ... existing assets
-  [npcName]: new URL('./public/assets-optimized/npcs/[npcName].png', import.meta.url).href,
+  [npcName]: '/TwilightGame/assets-optimized/npcs/[npcName].png',
 };
 ```
 
@@ -103,9 +103,9 @@ Use descriptive, lowercase names with underscores:
 2. Register in assets.ts:
    ```typescript
    export const npcAssets = {
-     elder: new URL('./public/assets/npcs/elder.svg', import.meta.url).href,
-     shopkeeper: new URL('./public/assets/npcs/shopkeeper.svg', import.meta.url).href,
-     merchant: new URL('./public/assets/npcs/merchant.svg', import.meta.url).href,
+     elder: '/TwilightGame/assets/npcs/elder.svg',
+     shopkeeper: '/TwilightGame/assets/npcs/shopkeeper.svg',
+     merchant: '/TwilightGame/assets/npcs/merchant.svg',
    };
    ```
 3. No optimization needed for SVG
@@ -118,7 +118,7 @@ Use descriptive, lowercase names with underscores:
    ```typescript
    export const npcAssets = {
      // ... existing SVG assets
-     farmer: new URL('./public/assets-optimized/npcs/farmer.png', import.meta.url).href,
+     farmer: '/TwilightGame/assets-optimized/npcs/farmer.png',
    };
    ```
 3. Run: `npm run optimize-assets`
@@ -129,7 +129,7 @@ Use descriptive, lowercase names with underscores:
 - **SVG files**: Reference directly from `public/assets/npcs/`
 - **PNG files**: Reference from `public/assets-optimized/npcs/`
 - If `npcAssets` doesn't exist in assets.ts, create it following the same pattern as `tileAssets`
-- All sprites use `imageRendering: 'pixelated'` for pixel art (PNG)
+- All sprites use **linear (smooth) scaling** to preserve hand-drawn artwork quality (this game is NOT pixel art)
 - SVG sprites scale smoothly at any size
 - Ensure transparent backgrounds for proper rendering
 
@@ -139,63 +139,49 @@ Use descriptive, lowercase names with underscores:
 
 ### Step 5: Create Factory Function (Recommended)
 
-Create a reusable NPC factory function in `utils/npcFactories.ts`:
+Use the `createNPC` factory from `utils/npcs/createNPC.ts` to create NPCs:
 
 ```typescript
+import { createNPC, createStaticNPC, createWanderingNPC } from '../utils/npcs/createNPC';
+import { npcAssets } from '../assets';
+
 /**
  * Create a [NPC Type] NPC with [description]
- *
- * @param id Unique ID for this NPC
- * @param position Where to place the NPC
- * @param name Optional name (defaults to "[NPC Type]")
  */
-export function create[NpcType]NPC(
-  id: string,
-  position: Position,
-  name: string = '[NPC Type]'
-): NPC {
-  const now = Date.now();
-
-  // For animated NPCs, define animation states
-  const animatedStates: AnimatedNPCStates = {
-    currentState: 'idle',
-    lastStateChange: now,
-    lastFrameChange: now,
-    currentFrame: 0,
+export function create[NpcType]NPC(id: string, position: Position): NPC {
+  return createNPC({
+    id,
+    name: '[NPC Type]',
+    position,
+    sprite: npcAssets.npc_01,
+    portraitSprite: npcAssets.npc_portrait, // optional high-res
+    scale: 3.0, // optional (default 3.0)
+    // For animated NPCs, add states:
     states: {
       idle: {
         sprites: [npcAssets.npc_01, npcAssets.npc_02],
-        animationSpeed: 500, // ms per frame
+        // animationSpeed defaults to TIMING.NPC_FRAME_MS (280ms)
       },
     },
-  };
-
-  return {
-    id,
-    name,
-    position,
-    direction: Direction.Down,
-    behavior: NPCBehavior.STATIC, // or WANDER
-    sprite: npcAssets.npc_01,
-    portraitSprite: npcAssets.npc_portrait, // optional high-res
-    scale: 3.0, // optional size (default 4.0)
-    animatedStates, // optional for animated NPCs
+    initialState: 'idle',
     dialogue: [
       {
         id: 'greeting',
         text: 'Hello, traveller!',
         seasonalText: { // optional seasonal variations
           spring: 'Spring greetings!',
-          // ...
         },
         responses: [ // optional branching dialogue
           { text: 'Hello!', nextId: 'follow_up' },
         ],
       },
     ],
-    interactionRadius: 1.5, // optional (default 1.5)
-  };
+  });
 }
+
+// Or use convenience functions for common patterns:
+// createStaticNPC({ ... }) - NPC that stands still
+// createWanderingNPC({ ... }) - NPC that moves around
 ```
 
 ### Step 6: Use Factory in Map Definition

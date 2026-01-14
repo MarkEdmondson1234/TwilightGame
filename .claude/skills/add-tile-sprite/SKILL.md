@@ -38,16 +38,16 @@ Use this skill when you need to:
 
 When adding a **new tile type** (not just a variation), you'll need to update these files:
 
-1. **types.ts** - Add new `TileType` enum entry
+1. **types/core.ts** - Add new `TileType` enum entry
 2. **assets.ts** - Register the asset file path
-3. **constants.ts** - Add to `TILE_LEGEND` array
-4. **constants.ts** - Add to `SPRITE_METADATA` array (for multi-tile sprites)
+3. **data/tiles.ts** - Add to `TILE_LEGEND` object (keyed by TileType)
+4. **data/spriteMetadata.ts** - Add to `SPRITE_METADATA` array (for multi-tile sprites)
 5. **maps/gridParser.ts** - Add character code mapping
 6. **map definition files** - Use the new tile in maps
 
 For **variations of existing tiles**, you only need:
 1. **assets.ts** - Register the variation asset
-2. **constants.ts** - Update existing `TILE_LEGEND` or `SPRITE_METADATA` entry to use array of images
+2. **data/tiles.ts** - Update existing `TILE_LEGEND` entry to use `seasonalImages` or `image` array
 
 ---
 
@@ -71,7 +71,7 @@ Add the asset to the `tileAssets` object in `assets.ts`:
 ```typescript
 export const tileAssets = {
   // ... existing assets
-  [assetKey]: new URL('./public/assets-optimized/tiles/[fileName].png', import.meta.url).href,
+  [assetKey]: '/TwilightGame/assets-optimized/tiles/[fileName].png',
 };
 ```
 
@@ -83,11 +83,15 @@ export const tileAssets = {
 
 | Keyword | Size | Quality | Use Case |
 |---------|------|---------|----------|
-| `tree_`, `_tree`, `oak_`, `spruce_`, `willow_`, `fairy_oak` | 1024px | 97% SHOWCASE | Trees (major visuals) |
-| `iris`, `wild_iris` | 768px | RGBA | Decorative flowers (2x2) |
-| `shop`, `mine_entrance`, `garden_shed` | 1024px | 98% | Large buildings (6x6) |
+| `tree_`, `_tree`, `oak_`, `birch_`, `spruce_`, `willow_`, `fairy_oak`, `giant_mushroom` | 1024px | 97% SHOWCASE | Trees (major visuals) |
+| `iris`, `wild_iris`, `pond_flowers`, `fern` | 768px | RGBA | Decorative flowers (2x2) |
+| `shop`, `cottage`, `mine_entrance`, `garden_shed` | 1024px | 98% | Large buildings (6x6) |
 | `witch_hut` | 1024px | 98% | Witch hut building |
-| `bed`, `sofa`, `rug`, `cottage`, `table`, `stove`, `chimney` | 768px | 95% | Multi-tile furniture |
+| `magical_lake` | 2048px | 97% | Large lake (12x12 multi-tile) |
+| `bed`, `sofa`, `rug`, `table`, `stove`, `chimney` | 768px | 95% | Multi-tile furniture |
+| `tuft` | 512px | 95% | Tuft grass decoration |
+| `brambles`, `hazel_bush`, `blueberry_bush` | 512px | 95% | Bush sprites (2x2, 3x3, 4x4) |
+| `lilac_` | 768px | 97% | Lilac trees |
 | `brick` (no `wall`) | 256px crop | 85% | Brick textures |
 | `wall` | 256px | 85% | Wall tiles |
 | *(default)* | 256px | 85% | Regular tiles |
@@ -102,13 +106,13 @@ If adding multiple variations of the same tile type:
 
 1. **Add all variation assets** to `assets.ts` with numbered suffixes:
    ```typescript
-   sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href,
-   sofa_01: new URL('./public/assets/tiles/sofa_01.png', import.meta.url).href,
-   sofa_02: new URL('./public/assets/tiles/sofa_02.png', import.meta.url).href,
+   sofa: '/TwilightGame/assets-optimized/tiles/sofa.png',
+   sofa_01: '/TwilightGame/assets-optimized/tiles/sofa_01.png',
+   sofa_02: '/TwilightGame/assets-optimized/tiles/sofa_02.png',
    ```
 
 2. **Update SPRITE_METADATA or TILE_LEGEND** to use an array:
-   - For multi-tile sprites, update `SPRITE_METADATA` in `constants.ts`:
+   - For multi-tile sprites, update `SPRITE_METADATA` in `data/spriteMetadata.ts`:
      ```typescript
      {
        tileType: TileType.SOFA,
@@ -120,17 +124,15 @@ If adding multiple variations of the same tile type:
        ],
      }
      ```
-   - For single-tile sprites, update `TILE_LEGEND` in `constants.ts`:
+   - For single-tile sprites, update `TILE_LEGEND` in `data/tiles.ts`:
      ```typescript
-     {
+     [TileType.GRASS]: {
        name: 'Grass',
-       // ... other properties
-       image: [
-         tileAssets.grass_1,
-         tileAssets.grass_2,
-         tileAssets.grass_3,
-       ]
-     }
+       collisionType: CollisionType.WALKABLE,
+       seasonalImages: {
+         default: [tileAssets.grass_1, tileAssets.grass_2, tileAssets.grass_3],
+       },
+     },
      ```
 
 3. **Random selection happens automatically** - the rendering engine (PixiJS `TileLayer` or DOM `TileRenderer`) uses a deterministic hash to select variations based on tile position.
@@ -279,20 +281,22 @@ Adding a new grass variation (`grass_3.png`):
 
 2. **Register in assets.ts:**
    ```typescript
-   grass_3: new URL('./public/assets-optimized/tiles/grass_3.png', import.meta.url).href,
+   grass_3: '/TwilightGame/assets-optimized/tiles/grass_3.png',
    ```
 
-3. **Update TILE_LEGEND in constants.ts:**
+3. **Update TILE_LEGEND in data/tiles.ts:**
    ```typescript
-   {
+   [TileType.GRASS]: {
      name: 'Grass',
      color: 'bg-palette-sage',
-     isSolid: false,
-     image: [
-       tileAssets.grass_1,
-       tileAssets.grass_2,
-       tileAssets.grass_3,  // Add new variation
-     ],
+     collisionType: CollisionType.WALKABLE,
+     seasonalImages: {
+       spring: [tileAssets.grass_1, tileAssets.grass_2, tileAssets.grass_3],
+       summer: [tileAssets.grass_1, tileAssets.grass_2, tileAssets.grass_3],
+       autumn: [tileAssets.grass_1, tileAssets.grass_2],
+       winter: [tileAssets.grass_2],
+       default: [tileAssets.grass_1, tileAssets.grass_2, tileAssets.grass_3],
+     },
      transforms: {  // Optional transforms (applied by rendering engine)
        enableFlip: true,      // Horizontal flip variation
        enableScale: true,     // Size variation
@@ -337,11 +341,11 @@ Adding sofa variations (`sofa_01.png`, `sofa_02.png`):
 
 3. **Register in assets.ts (use optimized paths):**
    ```typescript
-   sofa_01: new URL('./public/assets-optimized/tiles/sofa_01.png', import.meta.url).href,
-   sofa_02: new URL('./public/assets-optimized/tiles/sofa_02.png', import.meta.url).href,
+   sofa_01: '/TwilightGame/assets-optimized/tiles/sofa_01.png',
+   sofa_02: '/TwilightGame/assets-optimized/tiles/sofa_02.png',
    ```
 
-4. **Update SPRITE_METADATA in constants.ts:**
+4. **Update SPRITE_METADATA in data/spriteMetadata.ts:**
    ```typescript
    {
      tileType: TileType.SOFA,
@@ -401,24 +405,24 @@ export enum TileType {
 // In assets.ts
 export const tileAssets = {
   // ... existing assets
-  chimney: new URL('./public/assets-optimized/tiles/chimney.png', import.meta.url).href,
+  chimney: '/TwilightGame/assets-optimized/tiles/chimney.png',
 };
 ```
 
-**Step 4: Add to TILE_LEGEND in constants.ts**
+**Step 4: Add to TILE_LEGEND in data/tiles.ts**
 ```typescript
-// In constants.ts, add after SOFA entry
-{
+// In data/tiles.ts
+[TileType.CHIMNEY]: {
   name: 'Chimney',
   color: 'bg-palette-tan',  // Base floor color (shows through transparent parts)
-  isSolid: true,  // Players cannot walk through chimneys
-  image: []  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
-}, // CHIMNEY = 35
+  collisionType: CollisionType.SOLID,  // Players cannot walk through chimneys
+  image: [],  // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+},
 ```
 
-**Step 5: Add to SPRITE_METADATA in constants.ts**
+**Step 5: Add to SPRITE_METADATA in data/spriteMetadata.ts**
 ```typescript
-// In constants.ts SPRITE_METADATA array, add chimney configuration
+// In data/spriteMetadata.ts, add chimney configuration
 {
   tileType: TileType.CHIMNEY,
   spriteWidth: 2,  // 2 tiles wide
@@ -491,7 +495,7 @@ npm run dev
 ```
 
 **Key Takeaways from Chimney Implementation:**
-- New tile types require updates to 5 files: `types.ts`, `assets.ts`, `constants.ts` (TILE_LEGEND + SPRITE_METADATA), `gridParser.ts`, and map files
+- New tile types require updates to 5 files: `types/core.ts`, `assets.ts`, `data/tiles.ts` + `data/spriteMetadata.ts`, `gridParser.ts`, and map files
 - Grid character codes should be intuitive: `&` for chimney (looks like bricks)
 - Multi-tile sprites need `offsetY` to position correctly (negative values extend upward)
 - All sprites use dynamic depth sorting (z-index based on Y position)
@@ -521,8 +525,8 @@ npm run dev
 ### 4. Player Walks Through Solid Objects
 **Problem:** Collision detection doesn't work for furniture
 **Solution:**
-- Set `isSolid: true` in TILE_LEGEND
-- Configure collision box in SPRITE_METADATA
+- Set `collisionType: CollisionType.SOLID` in TILE_LEGEND (data/tiles.ts)
+- Configure collision box in SPRITE_METADATA (data/spriteMetadata.ts)
 - Ensure `collisionWidth` and `collisionHeight` are set correctly
 - Check that `collisionOffsetX/Y` align with visual footprint
 
@@ -532,7 +536,7 @@ npm run dev
 
 ### 6. Chimney/Wall Decoration Renders Wrong Layer
 **Problem:** Wall decoration appears over player instead of behind
-**Solution:** Adjust `depthLineOffset` in SPRITE_METADATA to control where the sprite sorts relative to the player (lower values = renders behind)
+**Solution:** Adjust `depthLineOffset` in SPRITE_METADATA (data/spriteMetadata.ts) to control where the sprite sorts relative to the player (lower values = renders behind)
 
 ### 7. Grid Character Not Recognized
 **Problem:** Map shows grass/default tiles instead of new sprite
@@ -551,7 +555,7 @@ npm run dev
   - Textures (brick/wall) → center-crop + 128x128
 - Run `npm run optimize-assets` after adding new assets
 - Optimization runs automatically before `npm run build`
-- All sprites use `imageRendering: 'pixelated'` for pixel art (except large multi-tile sprites use 'auto')
+- All sprites use **linear (smooth) scaling** to preserve hand-drawn artwork quality (this game is NOT pixel art)
 - Background colors from color schemes show through transparent PNGs
 - **Variations are selected deterministically** based on tile position (same position = same variation every time)
 - **CRITICAL:** Always restart dev server after adding new assets for proper loading
@@ -568,11 +572,11 @@ Some tiles span multiple grid squares (beds, sofas, rugs, trees, etc.). These re
 
 2. **Use Original High-Res Images**: For large sprites, DO NOT use the optimized version if it causes quality issues.
    - The optimization script resizes to 64x64 for single tiles, which distorts multi-tile sprites
-   - Use original image path: `new URL('./public/assets/tiles/sofa.png', import.meta.url).href`
+   - Use original image path: `'/TwilightGame/assets/tiles/sofa.png'`
    - Add comment: `// Use original high-res`
 
 3. **Sprite Metadata Configuration**:
-   - Add entry to `SPRITE_METADATA` array in `constants.ts`
+   - Add entry to `SPRITE_METADATA` array in `data/spriteMetadata.ts`
    - Set `spriteWidth` and `spriteHeight` to match the image's natural aspect ratio
    - DO NOT force dimensions that distort the image
    - Example: 2732x2048 image → use 3 tiles wide × 2.25 tiles tall (preserves ~4:3 ratio)
@@ -607,9 +611,9 @@ Some tiles span multiple grid squares (beds, sofas, rugs, trees, etc.). These re
 
 ```typescript
 // In assets.ts
-sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href,  // Use original high-res
+sofa: '/TwilightGame/assets/tiles/sofa.png',  // Use original high-res
 
-// In constants.ts SPRITE_METADATA array
+// In data/spriteMetadata.ts SPRITE_METADATA array
 {
   tileType: TileType.SOFA,
   spriteWidth: 3,      // Match natural aspect ratio
@@ -643,11 +647,12 @@ const gridString = `
 
 ### Configuration Files
 - [assets.ts](../../../assets.ts) - Centralized asset registry
-- [constants.ts](../../../constants.ts) - Tile configuration (TILE_LEGEND, SPRITE_METADATA)
+- [data/tiles.ts](../../../data/tiles.ts) - TILE_LEGEND definitions
+- [data/spriteMetadata.ts](../../../data/spriteMetadata.ts) - SPRITE_METADATA for multi-tile sprites
 - [types.ts](../../../types.ts) - TypeScript type definitions
 
 ### Rendering System (PixiJS)
 - [utils/pixi/TileLayer.ts](../../../utils/pixi/TileLayer.ts) - PixiJS single-tile renderer
 - [utils/pixi/SpriteLayer.ts](../../../utils/pixi/SpriteLayer.ts) - PixiJS multi-tile sprite renderer
-- [utils/pixi/TextureManager.ts](../../../utils/pixi/TextureManager.ts) - Asset preloading and texture management
+- [utils/TextureManager.ts](../../../utils/TextureManager.ts) - Asset preloading and texture management
 - [components/TileRenderer.tsx](../../../components/TileRenderer.tsx) - DOM single-tile renderer (fallback)

@@ -49,6 +49,7 @@ import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
 import { useViewportCulling } from './hooks/useViewportCulling';
+import { useUIState } from './hooks/useUIState';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
@@ -115,7 +116,9 @@ import VFXRenderer from './components/VFXRenderer';
 import VFXTestPanel from './components/VFXTestPanel';
 
 const App: React.FC = () => {
-  const [showCharacterCreator, setShowCharacterCreator] = useState(false); // Disabled - character creation not yet developed
+  // Consolidated UI overlay state (inventory, cooking, shop, etc.)
+  const { ui, openUI, closeUI, toggleUI } = useUIState();
+
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [mapErrors, setMapErrors] = useState<MapValidationError[]>([]); // Map validation errors to display
   const [characterVersion, setCharacterVersion] = useState(0); // Track character changes
@@ -132,22 +135,7 @@ const App: React.FC = () => {
   const [animationFrame, setAnimationFrame] = useState(0);
   const [isDebugOpen, setDebugOpen] = useState(false);
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
-  const [showDevTools, setShowDevTools] = useState(false); // Toggle dev tools panel
-  const [showSpriteEditor, setShowSpriteEditor] = useState(false); // Toggle sprite metadata editor (F8, dev only)
-  const [showVFXTestPanel, setShowVFXTestPanel] = useState(false); // Toggle VFX test panel (F10, dev only)
-  const [showHelpBrowser, setShowHelpBrowser] = useState(false); // Toggle help browser
-  const [showCookingUI, setShowCookingUI] = useState(false); // Toggle cooking interface
-  const [cookingLocationType, setCookingLocationType] = useState<'stove' | 'campfire' | null>(null); // Track cooking location type
-  const [cookingPosition, setCookingPosition] = useState<Position | null>(null); // Track stove/campfire position for placing cooked items
-  const [showBrewingUI, setShowBrewingUI] = useState(false); // Toggle potion brewing interface
-  const [brewingPosition, setBrewingPosition] = useState<Position | null>(null); // Track cauldron position
-  const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
-  const [showMagicBook, setShowMagicBook] = useState(false); // Toggle magic recipe book
-  const [showInventory, setShowInventory] = useState(false); // Toggle inventory UI
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
-  const [showShopUI, setShowShopUI] = useState(false); // Toggle shop UI
-  const [showGiftModal, setShowGiftModal] = useState(false); // Toggle gift selection modal
-  const [giftTargetNpcId, setGiftTargetNpcId] = useState<string | null>(null); // NPC receiving the gift
   const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
   const [currentWeather, setCurrentWeather] = useState<
@@ -235,7 +223,7 @@ const App: React.FC = () => {
 
   const handleCharacterCreated = (character: CharacterCustomization) => {
     gameState.selectCharacter(character);
-    setShowCharacterCreator(false);
+    closeUI('characterCreator');
     setCharacterVersion((prev) => prev + 1); // Trigger sprite regeneration
     console.log('[App] Character created:', character);
   };
@@ -428,7 +416,7 @@ const App: React.FC = () => {
     if (activeNPC === 'shop_counter_fox') {
       // Clear the NPC dialogue and open shop UI instead
       setActiveNPC(null);
-      setShowShopUI(true);
+      openUI('shopUI');
     }
   }, [activeNPC]);
 
@@ -436,42 +424,47 @@ const App: React.FC = () => {
   useKeyboardControls({
     playerPosRef,
     activeNPC,
-    showHelpBrowser,
-    showCookingUI,
-    showRecipeBook,
-    showInventory,
-    showShopUI,
+    showHelpBrowser: ui.helpBrowser,
+    showCookingUI: ui.cookingUI,
+    showRecipeBook: ui.recipeBook,
+    showInventory: ui.inventory,
+    showShopUI: ui.shopUI,
     selectedItemSlot,
     inventoryItems,
     keysPressed,
-    onShowCharacterCreator: setShowCharacterCreator,
+    onShowCharacterCreator: () => openUI('characterCreator'),
     onSetActiveNPC: setActiveNPC,
     onSetDebugOpen: setDebugOpen,
-    onSetShowDevTools: setShowDevTools,
-    onSetShowSpriteEditor: setShowSpriteEditor,
-    onSetShowVFXTestPanel: setShowVFXTestPanel,
-    onSetShowHelpBrowser: setShowHelpBrowser,
-    onSetShowCookingUI: (show) => {
+    onSetShowDevTools: (show: boolean) => (show ? openUI('devTools') : closeUI('devTools')),
+    onSetShowSpriteEditor: (show: boolean) =>
+      show ? openUI('spriteEditor') : closeUI('spriteEditor'),
+    onSetShowVFXTestPanel: (show: boolean) =>
+      show ? openUI('vfxTestPanel') : closeUI('vfxTestPanel'),
+    onSetShowHelpBrowser: (show: boolean) =>
+      show ? openUI('helpBrowser') : closeUI('helpBrowser'),
+    onSetShowCookingUI: (show: boolean) => {
       if (show) {
         const cookingLocation = checkCookingLocation(playerPosRef.current);
         // Only open cooking UI for stove/campfire, not cauldron (which uses brewing UI)
         if (cookingLocation.found && cookingLocation.locationType !== 'cauldron') {
-          setCookingLocationType((cookingLocation.locationType as 'stove' | 'campfire') || null);
-          setCookingPosition(cookingLocation.position || null);
-          setShowCookingUI(true);
+          openUI('cookingUI', {
+            cookingLocationType:
+              (cookingLocation.locationType as 'stove' | 'campfire') || undefined,
+            cookingPosition: cookingLocation.position || undefined,
+          });
         }
       } else {
-        setShowCookingUI(false);
+        closeUI('cookingUI');
       }
     },
-    onSetShowRecipeBook: setShowRecipeBook,
-    onSetShowInventory: setShowInventory,
+    onSetShowRecipeBook: (show: boolean) => (show ? openUI('recipeBook') : closeUI('recipeBook')),
+    onSetShowInventory: (show: boolean) => (show ? openUI('inventory') : closeUI('inventory')),
     onSetShowShopUI: (show) => {
       // Only allow opening shop when inside shop map
       if (show && currentMapId === 'shop') {
-        setShowShopUI(true);
+        openUI('shopUI');
       } else {
-        setShowShopUI(false);
+        closeUI('shopUI');
       }
     },
     onSetPlayerPos: setPlayerPos,
@@ -505,8 +498,8 @@ const App: React.FC = () => {
     selectedItemSlot,
     inventoryItems,
     keysPressed,
-    onShowCharacterCreator: setShowCharacterCreator,
-    onSetShowCookingUI: setShowCookingUI,
+    onShowCharacterCreator: () => openUI('characterCreator'),
+    onSetShowCookingUI: (show: boolean) => (show ? openUI('cookingUI') : closeUI('cookingUI')),
     onSetActiveNPC: setActiveNPC,
     onSetPlayerPos: setPlayerPos,
     onMapTransition: handleMapTransition,
@@ -580,32 +573,32 @@ const App: React.FC = () => {
     if (
       activeNPC ||
       isCutscenePlaying ||
-      showHelpBrowser ||
-      showCookingUI ||
-      showRecipeBook ||
-      showCharacterCreator ||
-      showInventory ||
-      showShopUI ||
-      showGiftModal ||
-      showBrewingUI ||
-      showDevTools ||
-      showVFXTestPanel
+      ui.helpBrowser ||
+      ui.cookingUI ||
+      ui.recipeBook ||
+      ui.characterCreator ||
+      ui.inventory ||
+      ui.shopUI ||
+      ui.giftModal ||
+      ui.brewingUI ||
+      ui.devTools ||
+      ui.vfxTestPanel
     ) {
       cancelPath();
     }
   }, [
     activeNPC,
     isCutscenePlaying,
-    showHelpBrowser,
-    showCookingUI,
-    showRecipeBook,
-    showCharacterCreator,
-    showInventory,
-    showShopUI,
-    showGiftModal,
-    showBrewingUI,
-    showDevTools,
-    showVFXTestPanel,
+    ui.helpBrowser,
+    ui.cookingUI,
+    ui.recipeBook,
+    ui.characterCreator,
+    ui.inventory,
+    ui.shopUI,
+    ui.giftModal,
+    ui.brewingUI,
+    ui.devTools,
+    ui.vfxTestPanel,
     cancelPath,
   ]);
 
@@ -618,17 +611,17 @@ const App: React.FC = () => {
       if (
         activeNPC ||
         isCutscenePlaying ||
-        showHelpBrowser ||
-        showCookingUI ||
-        showRecipeBook ||
-        showMagicBook ||
-        showCharacterCreator ||
-        showInventory ||
-        showShopUI ||
-        showGiftModal ||
-        showBrewingUI ||
-        showDevTools ||
-        showVFXTestPanel
+        ui.helpBrowser ||
+        ui.cookingUI ||
+        ui.recipeBook ||
+        ui.magicBook ||
+        ui.characterCreator ||
+        ui.inventory ||
+        ui.shopUI ||
+        ui.giftModal ||
+        ui.brewingUI ||
+        ui.devTools ||
+        ui.vfxTestPanel
       ) {
         console.log('[Mouse Click] Ignoring click - UI overlay active');
         return;
@@ -652,11 +645,10 @@ const App: React.FC = () => {
         currentMapId: currentMapId,
         currentTool: currentTool,
         selectedSeed: null, // Seeds are now part of the tool system
-        onMirror: () => setShowCharacterCreator(true),
+        onMirror: () => openUI('characterCreator'),
         onNPC: (npcId) => setActiveNPC(npcId),
         onGiveGift: (npcId) => {
-          setGiftTargetNpcId(npcId);
-          setShowGiftModal(true);
+          openUI('giftModal', { giftTargetNpcId: npcId });
         },
         onTransition: (result: TransitionResult) => {
           if (result.success && result.mapId && result.spawnPosition) {
@@ -668,13 +660,13 @@ const App: React.FC = () => {
           }
         },
         onCooking: (locationType, position) => {
-          setCookingLocationType(locationType);
-          setCookingPosition(position || null);
-          setShowCookingUI(true);
+          openUI('cookingUI', {
+            cookingLocationType: locationType,
+            cookingPosition: position || undefined,
+          });
         },
         onBrewing: (position) => {
-          setBrewingPosition(position || null);
-          setShowBrewingUI(true);
+          openUI('brewingUI', { brewingPosition: position || undefined });
         },
         onFarmAction: (result: FarmActionResult) => {
           if (result.handled) {
@@ -809,16 +801,16 @@ const App: React.FC = () => {
     [
       activeNPC,
       isCutscenePlaying,
-      showHelpBrowser,
-      showCookingUI,
-      showRecipeBook,
-      showCharacterCreator,
-      showInventory,
-      showShopUI,
-      showGiftModal,
-      showBrewingUI,
-      showDevTools,
-      showVFXTestPanel,
+      ui.helpBrowser,
+      ui.cookingUI,
+      ui.recipeBook,
+      ui.characterCreator,
+      ui.inventory,
+      ui.shopUI,
+      ui.giftModal,
+      ui.brewingUI,
+      ui.devTools,
+      ui.vfxTestPanel,
       currentMapId,
       handleMapTransition,
       handleFarmUpdate,
@@ -937,8 +929,8 @@ const App: React.FC = () => {
 
   // Debug logging for DevTools state
   useEffect(() => {
-    console.log('[App] showDevTools changed to:', showDevTools);
-  }, [showDevTools]);
+    console.log('[App] ui.devTools changed to:', ui.devTools);
+  }, [ui.devTools]);
 
   // Set up game loop and farm update interval after map is initialized
   // Note: Keyboard event listeners now managed by useKeyboardControls hook
@@ -1199,7 +1191,7 @@ const App: React.FC = () => {
         handleMapTransition(mapId, position);
       },
       openCharacterCreator: () => {
-        setShowCharacterCreator(true);
+        openUI('characterCreator');
       },
       showToast: (message: string, type?: 'success' | 'info' | 'warning') => {
         showToast(message, type || 'info');
@@ -1285,11 +1277,11 @@ const App: React.FC = () => {
     if (
       activeNPC ||
       isCutscenePlaying ||
-      showHelpBrowser ||
-      showCookingUI ||
-      showRecipeBook ||
-      showCharacterCreator ||
-      showInventory
+      ui.helpBrowser ||
+      ui.cookingUI ||
+      ui.recipeBook ||
+      ui.characterCreator ||
+      ui.inventory
     ) {
       return;
     }
@@ -1320,11 +1312,10 @@ const App: React.FC = () => {
       currentMapId: currentMapId,
       currentTool: currentTool,
       selectedSeed: null,
-      onMirror: () => setShowCharacterCreator(true),
+      onMirror: () => openUI('characterCreator'),
       onNPC: (npcId) => setActiveNPC(npcId),
       onGiveGift: (npcId) => {
-        setGiftTargetNpcId(npcId);
-        setShowGiftModal(true);
+        openUI('giftModal', { giftTargetNpcId: npcId });
       },
       onTransition: (result: TransitionResult) => {
         if (result.success && result.mapId && result.spawnPosition) {
@@ -1335,13 +1326,13 @@ const App: React.FC = () => {
         }
       },
       onCooking: (locationType, position) => {
-        setCookingLocationType(locationType);
-        setCookingPosition(position || null);
-        setShowCookingUI(true);
+        openUI('cookingUI', {
+          cookingLocationType: locationType,
+          cookingPosition: position || undefined,
+        });
       },
       onBrewing: (position) => {
-        setBrewingPosition(position || null);
-        setShowBrewingUI(true);
+        openUI('brewingUI', { brewingPosition: position || undefined });
       },
       onFarmAction: (result: FarmActionResult) => {
         if (result.handled) {
@@ -1432,11 +1423,11 @@ const App: React.FC = () => {
     playerPos,
     activeNPC,
     isCutscenePlaying,
-    showHelpBrowser,
-    showCookingUI,
-    showRecipeBook,
-    showCharacterCreator,
-    showInventory,
+    ui.helpBrowser,
+    ui.cookingUI,
+    ui.recipeBook,
+    ui.characterCreator,
+    ui.inventory,
     currentMapId,
     selectedItemSlot,
     inventoryItems,
@@ -2037,7 +2028,7 @@ const App: React.FC = () => {
   ]);
 
   // Show character creator if no character selected
-  if (showCharacterCreator) {
+  if (ui.characterCreator) {
     return <CharacterCreator onComplete={handleCharacterCreated} />;
   }
 
@@ -2381,17 +2372,17 @@ const App: React.FC = () => {
                 })
                 .map((npc) => npc.id);
             })()}
-            onRecipeBookOpen={() => setShowRecipeBook(true)}
-            onMagicBookOpen={() => setShowMagicBook(true)}
+            onRecipeBookOpen={() => openUI('recipeBook')}
+            onMagicBookOpen={() => openUI('magicBook')}
           />
 
           {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
           <GameUIControls
-            showHelpBrowser={showHelpBrowser}
-            onToggleHelpBrowser={() => setShowHelpBrowser(!showHelpBrowser)}
+            showHelpBrowser={ui.helpBrowser}
+            onToggleHelpBrowser={() => toggleUI('helpBrowser')}
             showCollisionBoxes={showCollisionBoxes}
             onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
-            onToggleInventory={() => setShowInventory(!showInventory)}
+            onToggleInventory={() => toggleUI('inventory')}
             isTouchDevice={isTouchDevice}
           />
         </>
@@ -2400,12 +2391,12 @@ const App: React.FC = () => {
       {/* Touch controls - hidden when any modal is open */}
       {isTouchDevice &&
         !activeNPC &&
-        !showInventory &&
-        !showCookingUI &&
-        !showRecipeBook &&
-        !showHelpBrowser &&
-        !showShopUI &&
-        !showCharacterCreator && (
+        !ui.inventory &&
+        !ui.cookingUI &&
+        !ui.recipeBook &&
+        !ui.helpBrowser &&
+        !ui.shopUI &&
+        !ui.characterCreator && (
           <TouchControls
             onDirectionPress={touchControls.handleDirectionPress}
             onDirectionRelease={touchControls.handleDirectionRelease}
@@ -2415,11 +2406,11 @@ const App: React.FC = () => {
               const cookingLocation = checkCookingLocation(playerPos);
               // Only open cooking UI for stove/campfire, not cauldron
               if (cookingLocation.found && cookingLocation.locationType !== 'cauldron') {
-                setCookingLocationType(
-                  (cookingLocation.locationType as 'stove' | 'campfire') || null
-                );
-                setCookingPosition(cookingLocation.position || null);
-                setShowCookingUI(true);
+                openUI('cookingUI', {
+                  cookingLocationType:
+                    (cookingLocation.locationType as 'stove' | 'campfire') || undefined,
+                  cookingPosition: cookingLocation.position || undefined,
+                });
               }
             }}
             onShowRecipeBook={() => {
@@ -2428,7 +2419,7 @@ const App: React.FC = () => {
                 showToast('Talk to Mum if you want to learn how to cook!', 'info');
                 return;
               }
-              setShowRecipeBook(true);
+              openUI('recipeBook');
             }}
             compact={isCompactMode}
           />
@@ -2478,11 +2469,11 @@ const App: React.FC = () => {
           }}
         />
       )}
-      {showDevTools && (
+      {ui.devTools && (
         <DevTools
           onClose={() => {
             console.log('[App] Closing DevTools');
-            setShowDevTools(false);
+            closeUI('devTools');
           }}
           onFarmUpdate={() => {
             console.log('[App] Farm update triggered from DevTools');
@@ -2510,25 +2501,25 @@ const App: React.FC = () => {
           }}
         />
       )}
-      {import.meta.env.DEV && showSpriteEditor && (
+      {import.meta.env.DEV && ui.spriteEditor && (
         <SpriteMetadataEditor
-          onClose={() => setShowSpriteEditor(false)}
+          onClose={() => closeUI('spriteEditor')}
           onApply={() => setRenderVersion((v) => v + 1)} // Trigger re-render when sprite metadata changes
         />
       )}
-      {import.meta.env.DEV && showVFXTestPanel && (
+      {import.meta.env.DEV && ui.vfxTestPanel && (
         <VFXTestPanel
-          isOpen={showVFXTestPanel}
-          onClose={() => setShowVFXTestPanel(false)}
+          isOpen={ui.vfxTestPanel}
+          onClose={() => closeUI('vfxTestPanel')}
           onTriggerVFX={triggerVFX}
           playerPosition={playerPos}
         />
       )}
-      {showHelpBrowser && <HelpBrowser onClose={() => setShowHelpBrowser(false)} />}
-      {showInventory && (
+      {ui.helpBrowser && <HelpBrowser onClose={() => closeUI('helpBrowser')} />}
+      {ui.inventory && (
         <Inventory
-          isOpen={showInventory}
-          onClose={() => setShowInventory(false)}
+          isOpen={ui.inventory}
+          onClose={() => closeUI('inventory')}
           items={inventoryItems}
           selectedSlot={selectedItemSlot}
           onItemClick={(item, slotIndex) => {
@@ -2537,7 +2528,7 @@ const App: React.FC = () => {
             if (itemDef && itemDef.category === ItemCategory.POTION) {
               handlePotionUse(item.id);
               // Close inventory after drinking potion for immersion
-              setShowInventory(false);
+              closeUI('inventory');
             } else {
               // For non-potions, just select the item
               setSelectedItemSlot(slotIndex);
@@ -2546,22 +2537,22 @@ const App: React.FC = () => {
           }}
         />
       )}
-      {showCookingUI && (
+      {ui.cookingUI && (
         <CookingInterface
-          isOpen={showCookingUI}
-          onClose={() => setShowCookingUI(false)}
-          locationType={cookingLocationType || 'stove'}
-          cookingPosition={cookingPosition}
+          isOpen={ui.cookingUI}
+          onClose={() => closeUI('cookingUI')}
+          locationType={ui.context.cookingLocationType || 'stove'}
+          cookingPosition={ui.context.cookingPosition}
           currentMapId={currentMap.id}
           onItemPlaced={() => {
             setPlacedItemsUpdateTrigger((prev) => prev + 1);
           }}
         />
       )}
-      {showBrewingUI && (
+      {ui.brewingUI && (
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto"
-          onClick={() => setShowBrewingUI(false)}
+          onClick={() => closeUI('brewingUI')}
         >
           <div
             className="bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-purple-500 rounded-lg p-8 max-w-md text-center"
@@ -2575,7 +2566,7 @@ const App: React.FC = () => {
               Brewing potions coming soon! For now, use F9 to get test potions.
             </p>
             <button
-              onClick={() => setShowBrewingUI(false)}
+              onClick={() => closeUI('brewingUI')}
               className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
             >
               Close
@@ -2583,12 +2574,11 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-      {showGiftModal && giftTargetNpcId && (
+      {ui.giftModal && ui.context.giftTargetNpcId && (
         <GiftModal
-          npcId={giftTargetNpcId}
+          npcId={ui.context.giftTargetNpcId}
           onClose={() => {
-            setShowGiftModal(false);
-            setGiftTargetNpcId(null);
+            closeUI('giftModal');
           }}
           onGiftGiven={(result: GiftResult) => {
             showToast(result.message, result.reaction === 'disliked' ? 'warning' : 'success');
@@ -2597,10 +2587,10 @@ const App: React.FC = () => {
           }}
         />
       )}
-      {showShopUI && (
+      {ui.shopUI && (
         <ShopUI
-          isOpen={showShopUI}
-          onClose={() => setShowShopUI(false)}
+          isOpen={ui.shopUI}
+          onClose={() => closeUI('shopUI')}
           playerGold={gameState.getGold()}
           playerInventory={gameState.getState().inventory.items}
           onTransaction={(newGold, newInventory) => {
@@ -2639,14 +2629,14 @@ const App: React.FC = () => {
           }}
         />
       )}
-      {showRecipeBook && (
+      {ui.recipeBook && (
         <>
           <RecipeBook
-            isOpen={showRecipeBook}
-            onClose={() => setShowRecipeBook(false)}
+            isOpen={ui.recipeBook}
+            onClose={() => closeUI('recipeBook')}
             playerPosition={playerPos}
             currentMapId={currentMap.id}
-            cookingPosition={cookingPosition}
+            cookingPosition={ui.context.cookingPosition}
             nearbyNPCs={(() => {
               // Get NPCs within 2 tiles of player
               const range = 2;
@@ -2664,7 +2654,7 @@ const App: React.FC = () => {
           />
         </>
       )}
-      <MagicRecipeBook isOpen={showMagicBook} onClose={() => setShowMagicBook(false)} />
+      <MagicRecipeBook isOpen={ui.magicBook} onClose={() => closeUI('magicBook')} />
       {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}
 
       {/* Destination marker for click-to-move */}

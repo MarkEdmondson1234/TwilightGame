@@ -82,7 +82,7 @@ Add the asset to the `farmingAssets` object in `assets.ts`:
 ```typescript
 export const farmingAssets = {
   // ... existing assets
-  [assetKey]: new URL('./public/assets-optimized/farming/[fileName].png', import.meta.url).href,
+  [assetKey]: '/TwilightGame/assets-optimized/farming/[fileName].png',
 };
 ```
 
@@ -138,9 +138,9 @@ Use descriptive names following these patterns:
 2. Register in assets.ts:
    ```typescript
    export const farmingAssets = {
-     fallow_soil_1: new URL('./public/assets-optimized/farming/fallow_soil_1.png', import.meta.url).href,
-     fallow_soil_2: new URL('./public/assets-optimized/farming/fallow_soil_2.png', import.meta.url).href,
-     fallow_soil_3: new URL('./public/assets-optimized/farming/fallow_soil_3.png', import.meta.url).href,
+     fallow_soil_1: '/TwilightGame/assets-optimized/farming/fallow_soil_1.png',
+     fallow_soil_2: '/TwilightGame/assets-optimized/farming/fallow_soil_2.png',
+     fallow_soil_3: '/TwilightGame/assets-optimized/farming/fallow_soil_3.png',
      // ... other assets
    };
    ```
@@ -160,9 +160,9 @@ Adding tomato plant sprites:
    ```typescript
    export const farmingAssets = {
      // ... existing assets
-     plant_tomato_young: new URL('./public/assets-optimized/farming/plant_tomato_young.png', import.meta.url).href,
-     plant_tomato_adult: new URL('./public/assets-optimized/farming/plant_tomato_adult.png', import.meta.url).href,
-     plant_tomato_ready: new URL('./public/assets-optimized/farming/plant_tomato_ready.png', import.meta.url).href,
+     plant_tomato_young: '/TwilightGame/assets-optimized/farming/plant_tomato_young.png',
+     plant_tomato_adult: '/TwilightGame/assets-optimized/farming/plant_tomato_adult.png',
+     plant_tomato_ready: '/TwilightGame/assets-optimized/farming/plant_tomato_ready.png',
    };
    ```
 
@@ -190,7 +190,7 @@ Design sprites to match these color themes or create custom visuals.
 - Farming sprites should be same size as tiles (64x64 after optimization)
 - Use transparent backgrounds for plants (soil shows through)
 - Can create multiple growth stages for visual progression
-- All sprites use `imageRendering: 'pixelated'` for pixel art
+- All sprites use **linear (smooth) scaling** to preserve hand-drawn artwork quality (this game is NOT pixel art)
 - Color schemes may affect how sprites display
 
 ## Related Documentation

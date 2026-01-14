@@ -86,8 +86,8 @@ Add the animation to the `animationAssets` object in `assets.ts`:
 
 ```typescript
 export const animationAssets = {
-  cherry_spring_petals: new URL('./public/assets/animations/cherry_spring_petals.gif', import.meta.url).href,
-  rain: new URL('./public/assets/animations/rain.gif', import.meta.url).href,
+  cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.gif',
+  rain: '/TwilightGame/assets-optimized/animations/rain.gif',
   // ... your new animation
 };
 ```
@@ -102,16 +102,18 @@ export const TILE_ANIMATIONS: import('./types').TileAnimation[] = [
     id: 'unique_animation_id',
     image: animationAssets.your_animation,
     tileType: TileType.TARGET_TILE, // Which tile triggers this
-    offsetX: 0, // Position offset (in tiles) from tile center
-    offsetY: -2, // Negative = above the tile
+    offsetX: 0, // Position offset (in tiles) or array for random: [-1, 0, 1]
+    offsetY: -2, // Negative = above the tile, or array: [-2, -1.5, -1]
     radius: 3, // Show within N tiles of trigger
     layer: 'foreground', // 'background' | 'midground' | 'foreground'
     loop: true, // Whether animation loops
     opacity: 0.85, // Optional: 0-1 (default 1)
-    scale: 0.25, // IMPORTANT: See GIF Sizing section above!
+    scale: 0.25, // IMPORTANT: See GIF Sizing section! Or array: [0.2, 0.3]
+    instances: 3, // Optional: render multiple (or range: [2, 5])
+    flipHorizontal: true, // Optional: 50% chance to flip each instance
     conditions: { // Optional conditions
-      season: 'spring', // Only in spring
-      timeOfDay: 'night', // Only at night
+      season: 'spring', // Single or array: ['spring', 'summer']
+      timeOfDay: 'night', // Single or array: ['day', 'night']
     },
   },
 ];
@@ -160,16 +162,25 @@ Check that:
 ### Positioning
 
 - **`offsetX`/`offsetY`**: Position relative to trigger tile center (in tile units)
-  - `offsetX: 0.5` = half a tile to the right
+  - Single value: `offsetX: 0.5` = half a tile to the right
+  - Array for random: `offsetX: [-1, 0, 1]` = randomly picks one per instance
   - `offsetY: -2` = 2 tiles above
 - **`radius`**: How far from trigger tile to show animation (in tiles)
   - `radius: 1` = only directly on/near tile
   - `radius: 3` = within 3 tiles
 
+### Multiple Instances
+
+- **`instances`**: Render multiple copies of the animation
+  - Single number: `instances: 3` = always render 3
+  - Range array: `instances: [2, 5]` = random count between 2 and 5
+- **`flipHorizontal`**: `true` to randomly flip each instance (50% chance)
+- **`scale`**: Can be array for random size: `scale: [0.2, 0.3, 0.4]`
+
 ### Conditions
 
-- **`season`**: `'spring' | 'summer' | 'autumn' | 'winter'`
-- **`timeOfDay`**: `'day' | 'night'` (day = 6am-8pm, night = 8pm-6am)
+- **`season`**: `'spring' | 'summer' | 'autumn' | 'winter'` or array `['spring', 'summer']`
+- **`timeOfDay`**: `'day' | 'night'` or array `['day', 'night']`
 - **`weather`**: (future) `'rain' | 'snow' | 'clear'`
 
 ## Example: Cherry Blossom Petals
@@ -260,7 +271,7 @@ For full-screen effects, set a large radius or use a common tile type:
 ## Performance Considerations
 
 - Animations use viewport culling (only render visible ones)
-- GIFs are not optimized - keep file sizes small
+- GIFs ARE optimized - run `npm run optimize-assets` to resize and compress with gifsicle
 - Too many animations can impact performance
 - Use appropriate radius (larger = more instances rendered)
 

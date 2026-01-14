@@ -83,8 +83,8 @@ Add to the `playerAssets` object in `assets.ts`:
 
 ```typescript
 export const playerAssets = {
-  down_0: new URL('./public/assets-optimized/character1/down_0.png', import.meta.url).href,
-  down_1: new URL('./public/assets-optimized/character1/down_1.png', import.meta.url).href,
+  down_0: '/TwilightGame/assets-optimized/character1/down_0.png',
+  down_1: '/TwilightGame/assets-optimized/character1/down_1.png',
   // ... all 16 sprites
 };
 ```
@@ -182,7 +182,7 @@ The optimization script handles sprite sheet generation for layered characters.
 - PNG format
 
 ✅ **Best Practices:**
-- Use pixel art style for retro aesthetic
+- Use hand-drawn style (this game is NOT pixel art)
 - Keep character centered in sprite bounds
 - Design for smooth animation transitions
 - Test idle and walking animations
@@ -202,10 +202,10 @@ The optimization script handles sprite sheet generation for layered characters.
 2. Update `playerAssets` in assets.ts:
    ```typescript
    export const playerAssets = {
-     down_0: new URL('./public/assets-optimized/character1/down_0.png', import.meta.url).href,
-     down_1: new URL('./public/assets-optimized/character1/down_1.png', import.meta.url).href,
-     down_2: new URL('./public/assets-optimized/character1/down_2.png', import.meta.url).href,
-     down_3: new URL('./public/assets-optimized/character1/down_3.png', import.meta.url).href,
+     down_0: '/TwilightGame/assets-optimized/character1/down_0.png',
+     down_1: '/TwilightGame/assets-optimized/character1/down_1.png',
+     down_2: '/TwilightGame/assets-optimized/character1/down_2.png',
+     down_3: '/TwilightGame/assets-optimized/character1/down_3.png',
      // ... repeat for up, left, right
    };
    ```
@@ -225,13 +225,13 @@ The optimization script handles sprite sheet generation for layered characters.
 - **All sprites must be same size** - mixing sizes breaks layering
 - **Frame 0 is special** - it's the idle pose shown when not moving
 - **Transparency required** - solid backgrounds will hide other layers
-- Game uses `imageRendering: 'pixelated'` for pixel art rendering
+- Game uses **linear (smooth) scaling** to preserve hand-drawn artwork quality (this game is NOT pixel art)
 - Currently using placeholder sprites - system ready for custom art
 - Character animation speed controlled by `ANIMATION_SPEED_MS` constant (150ms)
 
 ## Related Documentation
 
 - [ASSETS.md](../../../docs/ASSETS.md) - Complete asset guidelines
-- [utils/characterSprites.ts](../../../src/utils/characterSprites.ts) - Character sprite system
+- [utils/characterSprites.ts](../../../utils/characterSprites.ts) - Character sprite system
 - [assets.ts](../../../assets.ts) - Centralized asset registry
-- [App.tsx](../../../src/App.tsx) - Player movement and animation logic
+- [App.tsx](../../../App.tsx) - Player movement and animation logic
