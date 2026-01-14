@@ -134,9 +134,17 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_COOKING)} p-2 sm:p-4`}
+      className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_COOKING)} p-2 sm:p-4 pointer-events-auto`}
+      onClick={onClose}
+      onMouseDown={(e) => e.stopPropagation()}
+      onMouseUp={(e) => e.stopPropagation()}
     >
-      <div className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+      <div
+        className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="bg-amber-800 px-4 py-3 border-b-2 border-amber-600 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-amber-200 flex items-center gap-2">

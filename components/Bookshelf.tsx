@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
-import RecipeBook from './RecipeBook';
-import MagicRecipeBook from './MagicRecipeBook';
+import React from 'react';
 import { uiAssets } from '../assets';
-import { Z_HUD, Z_BOOKSHELF_MODAL, zClass } from '../zIndex';
+import { Z_HUD, zClass } from '../zIndex';
 import { magicManager } from '../utils/MagicManager';
 
 interface BookshelfProps {
@@ -10,6 +8,8 @@ interface BookshelfProps {
   playerPosition?: { x: number; y: number };
   currentMapId?: string;
   nearbyNPCs?: string[];
+  onRecipeBookOpen?: () => void;
+  onMagicBookOpen?: () => void;
 }
 
 /**
@@ -22,20 +22,19 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   playerPosition,
   currentMapId,
   nearbyNPCs,
+  onRecipeBookOpen,
+  onMagicBookOpen,
 }) => {
-  const [isRecipeBookOpen, setIsRecipeBookOpen] = useState(false);
-  const [isMagicBookOpen, setIsMagicBookOpen] = useState(false);
-
   // Check if magic book is unlocked (player talked to Witch)
   const magicBookUnlocked = magicManager.isMagicBookUnlocked();
 
   const handleRecipeBookClick = () => {
-    setIsRecipeBookOpen(true);
+    onRecipeBookOpen?.();
   };
 
   const handleMagicBookClick = () => {
     if (magicBookUnlocked) {
-      setIsMagicBookOpen(true);
+      onMagicBookOpen?.();
     }
   };
 
@@ -98,18 +97,6 @@ const Bookshelf: React.FC<BookshelfProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Recipe Book Modal */}
-      <RecipeBook
-        isOpen={isRecipeBookOpen}
-        onClose={() => setIsRecipeBookOpen(false)}
-        playerPosition={playerPosition}
-        currentMapId={currentMapId}
-        nearbyNPCs={nearbyNPCs}
-      />
-
-      {/* Magic Recipe Book Modal */}
-      <MagicRecipeBook isOpen={isMagicBookOpen} onClose={() => setIsMagicBookOpen(false)} />
     </>
   );
 };

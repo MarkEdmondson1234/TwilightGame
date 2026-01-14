@@ -83,6 +83,7 @@ import ForegroundParallax from './components/ForegroundParallax';
 import CloudShadows from './components/CloudShadows';
 import CookingInterface from './components/CookingInterface';
 import RecipeBook from './components/RecipeBook';
+import MagicRecipeBook from './components/MagicRecipeBook';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
 import { DestinationMarker } from './components/DestinationMarker';
@@ -124,6 +125,7 @@ const App: React.FC = () => {
   const [showBrewingUI, setShowBrewingUI] = useState(false); // Toggle potion brewing interface
   const [brewingPosition, setBrewingPosition] = useState<Position | null>(null); // Track cauldron position
   const [showRecipeBook, setShowRecipeBook] = useState(false); // Toggle recipe book
+  const [showMagicBook, setShowMagicBook] = useState(false); // Toggle magic recipe book
   const [showInventory, setShowInventory] = useState(false); // Toggle inventory UI
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
   const [showShopUI, setShowShopUI] = useState(false); // Toggle shop UI
@@ -546,6 +548,7 @@ const App: React.FC = () => {
         showHelpBrowser ||
         showCookingUI ||
         showRecipeBook ||
+        showMagicBook ||
         showCharacterCreator ||
         showInventory ||
         showShopUI ||
@@ -2226,6 +2229,8 @@ const App: React.FC = () => {
                 })
                 .map((npc) => npc.id);
             })()}
+            onRecipeBookOpen={() => setShowRecipeBook(true)}
+            onMagicBookOpen={() => setShowMagicBook(true)}
           />
 
           {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
@@ -2461,28 +2466,31 @@ const App: React.FC = () => {
         />
       )}
       {showRecipeBook && (
-        <RecipeBook
-          isOpen={showRecipeBook}
-          onClose={() => setShowRecipeBook(false)}
-          playerPosition={playerPos}
-          currentMapId={currentMap.id}
-          cookingPosition={cookingPosition}
-          nearbyNPCs={(() => {
-            // Get NPCs within 2 tiles of player
-            const range = 2;
-            return allNPCs
-              .filter((npc) => {
-                const dx = Math.abs(npc.position.x - playerPos.x);
-                const dy = Math.abs(npc.position.y - playerPos.y);
-                return dx <= range && dy <= range;
-              })
-              .map((npc) => npc.id);
-          })()}
-          onItemPlaced={() => {
-            setPlacedItemsUpdateTrigger((prev) => prev + 1);
-          }}
-        />
+        <>
+          <RecipeBook
+            isOpen={showRecipeBook}
+            onClose={() => setShowRecipeBook(false)}
+            playerPosition={playerPos}
+            currentMapId={currentMap.id}
+            cookingPosition={cookingPosition}
+            nearbyNPCs={(() => {
+              // Get NPCs within 2 tiles of player
+              const range = 2;
+              return allNPCs
+                .filter((npc) => {
+                  const dx = Math.abs(npc.position.x - playerPos.x);
+                  const dy = Math.abs(npc.position.y - playerPos.y);
+                  return dx <= range && dy <= range;
+                })
+                .map((npc) => npc.id);
+            })()}
+            onItemPlaced={() => {
+              setPlacedItemsUpdateTrigger((prev) => prev + 1);
+            }}
+          />
+        </>
       )}
+      <MagicRecipeBook isOpen={showMagicBook} onClose={() => setShowMagicBook(false)} />
       {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}
 
       {/* Destination marker for click-to-move */}

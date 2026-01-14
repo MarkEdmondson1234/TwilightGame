@@ -130,15 +130,16 @@ const MagicRecipeBook: React.FC<MagicRecipeBookProps> = ({ isOpen, onClose }) =>
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_MAGIC_BOOK)} p-2 sm:p-4`}
+      className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_MAGIC_BOOK)} p-2 sm:p-4 pointer-events-auto`}
       onClick={onClose}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseUp={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
     >
       <div
         className="bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-purple-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="bg-purple-800 px-4 py-3 border-b-2 border-purple-600 flex items-center justify-between">
