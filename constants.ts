@@ -87,6 +87,16 @@ export const WATER_CAN = {
   USES_PER_WATER: 1, // Water uses consumed per watering action
 } as const;
 
+/**
+ * INTERACTION - Click interaction distance settings
+ *
+ * Controls when click interactions execute immediately vs walk-first.
+ */
+export const INTERACTION = {
+  /** Maximum distance (in tiles) for immediate interaction. Beyond this, player walks first. */
+  RANGE: 2.0,
+} as const;
+
 // Player sprites now point to placeholder URLs. Frame 0 is idle.
 export const PLAYER_SPRITES: Record<Direction, string[]> = {
   [Direction.Down]: [

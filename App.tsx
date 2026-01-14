@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import * as PIXI from 'pixi.js';
-import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, USE_SPRITE_SHADOWS } from './constants';
+import {
+  TILE_SIZE,
+  PLAYER_SIZE,
+  USE_PIXI_RENDERER,
+  USE_SPRITE_SHADOWS,
+  INTERACTION,
+} from './constants';
 import { Position, Direction, ImageRoomLayer, NPC } from './types';
 import { textureManager } from './utils/TextureManager';
 import { TileLayer } from './utils/pixi/TileLayer';
@@ -59,6 +65,7 @@ import { farmManager } from './utils/farmManager';
 import { cookingManager } from './utils/CookingManager';
 import { characterData } from './utils/CharacterData';
 import { TimeManager } from './utils/TimeManager';
+import { getDistance } from './utils/pathfinding';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
 import { Z_PLAYER, Z_DEPTH_SORTED_BASE } from './zIndex';
 import GameUIControls from './components/GameUIControls';
@@ -671,6 +678,15 @@ const App: React.FC = () => {
 
       console.log(`[Mouse Click] Found ${interactions.length} interactions`);
 
+      // Calculate distance from player to clicked position
+      const playerPos = playerPosRef.current;
+      const distanceToClick = getDistance(playerPos, clickInfo.worldPos);
+      const isNearby = distanceToClick <= INTERACTION.RANGE;
+
+      console.log(
+        `[Mouse Click] Distance to click: ${distanceToClick.toFixed(2)} tiles, nearby: ${isNearby}`
+      );
+
       // If no interactions, trigger click-to-move
       if (interactions.length === 0) {
         const pathFound = setClickToMoveDestination(clickInfo.worldPos);
@@ -680,29 +696,47 @@ const App: React.FC = () => {
         return;
       }
 
-      // If only one interaction, execute it immediately
-      if (interactions.length === 1) {
-        console.log('[Mouse Click] Executing single interaction:', interactions[0].label);
-        interactions[0].execute();
+      // If player is nearby, execute interaction immediately
+      if (isNearby) {
+        // If only one interaction, execute it immediately
+        if (interactions.length === 1) {
+          console.log('[Mouse Click] Executing single interaction:', interactions[0].label);
+          interactions[0].execute();
+          return;
+        }
+
+        // If multiple interactions, show radial menu
+        console.log(
+          '[Mouse Click] Showing radial menu with options:',
+          interactions.map((i) => i.label)
+        );
+        const menuOptions: RadialMenuOption[] = interactions.map((interaction, index) => ({
+          id: `${interaction.type}_${index}`,
+          label: interaction.label,
+          icon: interaction.icon,
+          color: interaction.color,
+          onSelect: interaction.execute,
+        }));
+
+        setRadialMenuOptions(menuOptions);
+        setRadialMenuPosition(clickInfo.screenPos);
+        setRadialMenuVisible(true);
         return;
       }
 
-      // If multiple interactions, show radial menu
-      console.log(
-        '[Mouse Click] Showing radial menu with options:',
-        interactions.map((i) => i.label)
-      );
-      const menuOptions: RadialMenuOption[] = interactions.map((interaction, index) => ({
-        id: `${interaction.type}_${index}`,
-        label: interaction.label,
-        icon: interaction.icon,
-        color: interaction.color,
-        onSelect: interaction.execute,
-      }));
+      // Player is far away - walk there first
+      // For single interaction, defer the action to execute on arrival
+      // For multiple interactions, just walk there (user clicks again on arrival)
+      const deferredAction = interactions.length === 1 ? interactions[0].execute : undefined;
 
-      setRadialMenuOptions(menuOptions);
-      setRadialMenuPosition(clickInfo.screenPos);
-      setRadialMenuVisible(true);
+      console.log(
+        `[Mouse Click] Walking to target first${deferredAction ? ' (will execute on arrival)' : ''}`
+      );
+
+      const pathFound = setClickToMoveDestination(clickInfo.worldPos, null, deferredAction);
+      if (!pathFound) {
+        showToast("Can't reach there", 'info');
+      }
     },
     [
       activeNPC,

@@ -24,6 +24,8 @@ export interface ClickToMoveState {
   currentWaypointIndex: number;
   destination: Position | null;
   targetNPC: NPC | null;
+  /** Callback to execute when player arrives at destination */
+  pendingInteraction: (() => void) | null;
 }
 
 export interface ClickToMoveResult {
@@ -33,9 +35,9 @@ export interface ClickToMoveResult {
   destination: Position | null;
   /** Target NPC if clicking on one */
   targetNPC: NPC | null;
-  /** Set a new destination - calculates path automatically */
-  setDestination: (worldPos: Position, targetNPC?: NPC | null) => boolean;
-  /** Cancel current path */
+  /** Set a new destination - calculates path automatically. Optional onArrival callback executes when path completes. */
+  setDestination: (worldPos: Position, targetNPC?: NPC | null, onArrival?: () => void) => boolean;
+  /** Cancel current path (also clears any pending interaction) */
   cancelPath: () => void;
   /** Get movement vector for current frame (call in game loop) */
   getMovementVector: (playerPos: Position) => { vectorX: number; vectorY: number } | null;
@@ -52,18 +54,21 @@ export function useClickToMove(config: ClickToMoveConfig): ClickToMoveResult {
     currentWaypointIndex: 0,
     destination: null,
     targetNPC: null,
+    pendingInteraction: null,
   });
 
-  // Use ref for waypoint index to avoid stale closure in getMovementVector
+  // Use refs to avoid stale closures in getMovementVector
   const waypointIndexRef = useRef(0);
   const pathRef = useRef<Position[] | null>(null);
+  const pendingInteractionRef = useRef<(() => void) | null>(null);
 
   /**
    * Set destination and calculate path
    * Returns true if path was found, false otherwise
+   * @param onArrival - Optional callback to execute when player arrives at destination
    */
   const setDestination = useCallback(
-    (worldPos: Position, targetNPC?: NPC | null): boolean => {
+    (worldPos: Position, targetNPC?: NPC | null, onArrival?: () => void): boolean => {
       if (!enabled) return false;
 
       const playerPos = playerPosRef.current;
@@ -90,16 +95,21 @@ export function useClickToMove(config: ClickToMoveConfig): ClickToMoveResult {
         // Update refs immediately for game loop
         pathRef.current = path;
         waypointIndexRef.current = 0;
+        pendingInteractionRef.current = onArrival || null;
 
         setState({
           path,
           currentWaypointIndex: 0,
           destination: path[path.length - 1], // Final destination
           targetNPC: targetNPC || null,
+          pendingInteraction: onArrival || null,
         });
         return true;
       } else if (path && path.length === 0) {
-        // Already at destination
+        // Already at destination - execute callback immediately if provided
+        if (onArrival) {
+          onArrival();
+        }
         return true;
       }
 
@@ -110,23 +120,26 @@ export function useClickToMove(config: ClickToMoveConfig): ClickToMoveResult {
   );
 
   /**
-   * Cancel current path
+   * Cancel current path (also clears any pending interaction)
    */
   const cancelPath = useCallback(() => {
     pathRef.current = null;
     waypointIndexRef.current = 0;
+    pendingInteractionRef.current = null;
 
     setState({
       path: null,
       currentWaypointIndex: 0,
       destination: null,
       targetNPC: null,
+      pendingInteraction: null,
     });
   }, []);
 
   /**
    * Get movement vector for current frame
    * Called from game loop - returns normalized direction toward current waypoint
+   * Executes pending interaction when path completes
    */
   const getMovementVector = useCallback(
     (playerPos: Position): { vectorX: number; vectorY: number } | null => {
@@ -148,8 +161,13 @@ export function useClickToMove(config: ClickToMoveConfig): ClickToMoveResult {
         const nextIndex = waypointIndex + 1;
 
         if (nextIndex >= path.length) {
-          // Reached final destination
+          // Reached final destination - capture pending interaction before clearing
+          const pendingAction = pendingInteractionRef.current;
           cancelPath();
+          // Execute pending interaction after path is cleared
+          if (pendingAction) {
+            pendingAction();
+          }
           return null;
         }
 
