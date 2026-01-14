@@ -1133,10 +1133,10 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 25,
   },
 
-  starflower: {
-    id: 'starflower',
-    name: 'starflower',
-    displayName: 'Starflower',
+  addersmeat: {
+    id: 'addersmeat',
+    name: 'addersmeat',
+    displayName: 'Addersmeat',
     category: ItemCategory.MAGICAL_INGREDIENT,
     description:
       'A rare night-blooming flower found near fairy circles. Twinkles like distant stars.',
@@ -1145,12 +1145,12 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 50,
   },
 
-  stormroot: {
-    id: 'stormroot',
-    name: 'stormroot',
-    displayName: 'Stormroot',
+  dragonfly_wings: {
+    id: 'dragonfly_wings',
+    name: 'dragonfly_wings',
+    displayName: 'Dragonfly Wings',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'A gnarled root that only emerges during rainstorms. Crackles with static energy.',
+    description: 'Delicate iridescent wings shed by dragonflies. Shimmer with an ethereal light.',
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 30,
@@ -1211,13 +1211,13 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 60,
   },
 
-  earthroot: {
-    id: 'earthroot',
-    name: 'earthroot',
-    displayName: 'Earthroot',
+  luminescent_toadstool: {
+    id: 'luminescent_toadstool',
+    name: 'luminescent_toadstool',
+    displayName: 'Luminescent Toadstool',
     category: ItemCategory.MAGICAL_INGREDIENT,
     description:
-      'A sturdy root found deep in forest soil. Smells of rich earth and growing things.',
+      'A glowing mushroom found deep in forest glades. Emits a soft, eerie light.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 10,

@@ -119,7 +119,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'tea_leaves', quantity: 1 },
       { itemId: 'sugar', quantity: 1 },
-      { itemId: 'starflower', quantity: 1 },
+      { itemId: 'addersmeat', quantity: 1 },
     ],
     brewingTime: 15,
     difficulty: 1,
@@ -155,7 +155,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'milk', quantity: 1 },
       { itemId: 'honey', quantity: 1 },
-      { itemId: 'earthroot', quantity: 1 },
+      { itemId: 'luminescent_toadstool', quantity: 1 },
     ],
     brewingTime: 20,
     difficulty: 1,
@@ -211,7 +211,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'water', quantity: 1 },
       { itemId: 'crop_blueberry', quantity: 1 },
-      { itemId: 'stormroot', quantity: 1 },
+      { itemId: 'dragonfly_wings', quantity: 1 },
     ],
     brewingTime: 30,
     difficulty: 2,
@@ -301,7 +301,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'crop_blackberry', quantity: 1 },
       { itemId: 'crop_hazelnut', quantity: 1 },
-      { itemId: 'earthroot', quantity: 1 },
+      { itemId: 'luminescent_toadstool', quantity: 1 },
       { itemId: 'potion_healing', quantity: 1 }, // Requires Healing Salve
     ],
     brewingTime: 35,
@@ -341,7 +341,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     description: 'A shimmering potion that exists in multiple moments at once.',
     ingredients: [
       { itemId: 'potion_wakefulness', quantity: 1 }, // Requires Wakefulness Brew
-      { itemId: 'starflower', quantity: 1 },
+      { itemId: 'addersmeat', quantity: 1 },
       { itemId: 'temporal_dust', quantity: 1 },
     ],
     brewingTime: 45,
@@ -416,7 +416,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'potion_raincaller', quantity: 1 }, // Requires Raincaller
       { itemId: 'morning_dew', quantity: 1 },
-      { itemId: 'earthroot', quantity: 1 },
+      { itemId: 'luminescent_toadstool', quantity: 1 },
     ],
     brewingTime: 40,
     difficulty: 2,
@@ -491,7 +491,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'potion_quality_blessing', quantity: 1 }, // Requires Quality Blessing
       { itemId: 'crop_pumpkin', quantity: 1 },
-      { itemId: 'starflower', quantity: 1 },
+      { itemId: 'addersmeat', quantity: 1 },
     ],
     brewingTime: 50,
     difficulty: 3,

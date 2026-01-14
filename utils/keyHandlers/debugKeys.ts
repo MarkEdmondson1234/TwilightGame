@@ -100,14 +100,14 @@ export function handleF9(): void {
   // Magical ingredients (5 of each)
   const magicalIngredients = [
     'moonpetal',
-    'starflower',
-    'stormroot',
+    'addersmeat',
+    'dragonfly_wings',
     'frost_crystal',
     'sakura_petal',
     'dawn_dew',
     'morning_dew',
     'shadow_essence',
-    'earthroot',
+    'luminescent_toadstool',
     'ghost_lichen',
     'mushroom',
     'shrinking_violet',
