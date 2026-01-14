@@ -554,6 +554,7 @@ const App: React.FC = () => {
     onSetAnimationFrame: setAnimationFrame,
     onSetPlayerPos: setPlayerPos,
     pathingVector,
+    animateWhenIdle: isFairyForm, // Fairy wings keep flapping even when idle
   });
 
   // Cancel click-to-move path when keyboard/d-pad input is detected

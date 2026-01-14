@@ -16,6 +16,8 @@ interface PlayerMovementConfig {
   onSetPlayerPos: (pos: Position | ((prev: Position) => Position)) => void;
   /** Optional pathing vector from click-to-move (used when no keyboard input) */
   pathingVector?: { vectorX: number; vectorY: number } | null;
+  /** If true, animate even when idle (e.g., fairy wing flapping) */
+  animateWhenIdle?: boolean;
 }
 
 interface MovementResult {
@@ -38,6 +40,7 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
     onSetAnimationFrame,
     onSetPlayerPos,
     pathingVector,
+    animateWhenIdle = false,
   } = config;
 
   const lastAnimationTime = useRef(0);
@@ -75,7 +78,16 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
       const isMoving = vectorX !== 0 || vectorY !== 0;
 
       if (!isMoving) {
-        onSetAnimationFrame(0); // Reset to idle frame (frame 0)
+        // When idle, either reset to frame 0 or keep animating (e.g., fairy wing flapping)
+        if (animateWhenIdle) {
+          // Continue animating even when idle (for fairy wing flapping)
+          if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
+            lastAnimationTime.current = now;
+            onSetAnimationFrame((prev) => (prev === 1 ? 2 : 1));
+          }
+        } else {
+          onSetAnimationFrame(0); // Reset to idle frame (frame 0)
+        }
       } else {
         // Determine direction
         let newDirection: Direction | null = null;
@@ -151,6 +163,7 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
       onSetAnimationFrame,
       onSetPlayerPos,
       pathingVector,
+      animateWhenIdle,
     ]
   );
 
