@@ -21,11 +21,8 @@
 
 import { TimeManager, TimeOfDay } from './TimeManager';
 import { mapManager } from '../maps';
-import {
-  WeatherType,
-  selectRandomWeather,
-  getRandomWeatherDuration,
-} from '../data/weatherConfig';
+import { WeatherType, selectRandomWeather, getRandomWeatherDuration } from '../data/weatherConfig';
+import { farmManager } from './farmManager';
 
 /**
  * Interface for GameState methods used by WeatherManager
@@ -104,6 +101,14 @@ export class WeatherManager {
       this.gameState.setWeather(newWeather);
     }
 
+    // Rain and storm water outdoor crops automatically
+    if (newWeather === 'rain' || newWeather === 'storm') {
+      const wateredCount = farmManager.waterAllOutdoorPlots();
+      if (wateredCount > 0) {
+        console.log(`[WeatherManager] Rain watered ${wateredCount} crops on outdoor maps`);
+      }
+    }
+
     // Schedule next weather check
     this.scheduleNextCheck(newWeather);
   }
@@ -116,11 +121,10 @@ export class WeatherManager {
     const durationHours = getRandomWeatherDuration(weather);
 
     // Convert game hours to real milliseconds
-    // From TimeManager: ~0.933 game days per real day
-    // So 1 game hour = 1/24 game day = 1/(24 * 0.933) real days
-    const gameHoursPerRealDay = 24 * 0.933;
-    const realHoursPerGameHour = 24 / gameHoursPerRealDay;
-    const durationMs = durationHours * realHoursPerGameHour * 60 * 60 * 1000;
+    // From TimeManager: 1 game day = 2 real hours, so 1 game hour = 5 real minutes
+    // 12 game days per real day × 24 game hours = 288 game hours per real day
+    const MS_PER_GAME_HOUR = (2 * 60 * 60 * 1000) / 24; // 5 real minutes = 300,000 ms
+    const durationMs = durationHours * MS_PER_GAME_HOUR;
 
     const nextCheckTime = Date.now() + durationMs;
     this.gameState.setNextWeatherCheckTime(nextCheckTime);

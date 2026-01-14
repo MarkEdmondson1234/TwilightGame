@@ -162,11 +162,19 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   const getGameContext = (): GameContext => {
     const gameTime = TimeManager.getCurrentTime();
     const weather = gameState.getWeather();
+
+    // Check for player transformations
+    let transformation: string | undefined;
+    if (gameState.isFairyForm()) {
+      transformation = 'fairy';
+    }
+
     return {
       season: gameTime.season,
       timeOfDay: gameTime.timeOfDay,
       weather,
       location: 'village',
+      transformation,
     };
   };
 

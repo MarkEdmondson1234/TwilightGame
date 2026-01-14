@@ -7,15 +7,23 @@
 
 import { CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
+import { fairyAssets } from '../assets';
 
 /**
  * Get high-res portrait sprite URL for dialogue boxes
  * Uses original assets instead of optimized sprites for better quality
+ * When in fairy form, uses the fairy sprite instead
  */
 export function getPortraitSprite(
   character: CharacterCustomization,
-  direction: Direction = Direction.Down
+  direction: Direction = Direction.Down,
+  isFairyForm: boolean = false
 ): string {
+  // When in fairy form, use the fairy sprite as portrait
+  if (isFairyForm) {
+    return fairyAssets.down_01; // Always use down-facing for portrait
+  }
+
   const characterId = character.characterId || 'character1';
   const directionName = ['up', 'down', 'left', 'right'][direction];
 

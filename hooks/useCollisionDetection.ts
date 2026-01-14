@@ -2,14 +2,29 @@ import { useCallback, MutableRefObject } from 'react';
 import { Position, NPC, isTileSolid } from '../types';
 import { PLAYER_SIZE, SPRITE_METADATA } from '../constants';
 import { getTileData } from '../utils/mapUtils';
+import { MovementMode, isTileBlockingForMode } from '../utils/tileCategories';
 
 /**
  * Hook for collision detection logic
  * Checks regular tile collision, multi-tile sprite collision, and NPC collision
+ *
+ * @param npcsRef - Reference to array of NPCs for NPC collision detection
+ * @param movementMode - Current movement mode: 'normal', 'floating', or 'flying'
+ *   - normal: Standard collision rules apply
+ *   - floating: Can pass through water and low obstacles (blocked by trees, buildings)
+ *   - flying: Can pass through everything (only map bounds apply)
  */
-export function useCollisionDetection(npcsRef?: MutableRefObject<NPC[]>) {
+export function useCollisionDetection(
+  npcsRef?: MutableRefObject<NPC[]>,
+  movementMode: MovementMode = 'normal'
+) {
   const checkCollision = useCallback(
     (pos: Position): boolean => {
+      // Flying mode bypasses ALL collision (only map bounds enforced separately)
+      if (movementMode === 'flying') {
+        return false;
+      }
+
       const halfSize = PLAYER_SIZE / 2;
       const minTileX = Math.floor(pos.x - halfSize);
       const maxTileX = Math.floor(pos.x + halfSize);
@@ -20,11 +35,14 @@ export function useCollisionDetection(npcsRef?: MutableRefObject<NPC[]>) {
       for (let y = minTileY; y <= maxTileY; y++) {
         for (let x = minTileX; x <= maxTileX; x++) {
           const tileData = getTileData(x, y);
-          if (
-            tileData &&
-            isTileSolid(tileData.collisionType) &&
-            !SPRITE_METADATA.find((s) => s.tileType === tileData.type)
-          ) {
+          if (!tileData) continue;
+
+          // Skip multi-tile sprites (handled separately below)
+          if (SPRITE_METADATA.find((s) => s.tileType === tileData.type)) continue;
+
+          // Check if this tile blocks based on movement mode
+          const isSolid = isTileSolid(tileData.collisionType);
+          if (isTileBlockingForMode(tileData.type, movementMode, isSolid)) {
             return true;
           }
         }
@@ -38,7 +56,14 @@ export function useCollisionDetection(npcsRef?: MutableRefObject<NPC[]>) {
           const tileData = getTileData(tileX, tileY);
           const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData?.type);
 
-          if (spriteMetadata && tileData && isTileSolid(tileData.collisionType)) {
+          if (spriteMetadata && tileData) {
+            const isSolid = isTileSolid(tileData.collisionType);
+
+            // Check if this sprite blocks based on movement mode
+            if (!isTileBlockingForMode(tileData.type, movementMode, isSolid)) {
+              continue; // This sprite doesn't block in current mode
+            }
+
             // Use collision-specific dimensions if provided, otherwise use sprite dimensions
             const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
             const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
@@ -65,6 +90,7 @@ export function useCollisionDetection(npcsRef?: MutableRefObject<NPC[]>) {
       }
 
       // Check NPC collision (if NPCs ref provided)
+      // Note: Floating mode still collides with NPCs, only flying bypasses
       if (npcsRef?.current) {
         for (const npc of npcsRef.current) {
           // Skip NPCs without collision radius
@@ -85,7 +111,7 @@ export function useCollisionDetection(npcsRef?: MutableRefObject<NPC[]>) {
 
       return false;
     },
-    [npcsRef]
+    [npcsRef, movementMode]
   );
 
   return { checkCollision };

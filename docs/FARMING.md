@@ -135,6 +135,7 @@ Farm tiles now show visual sprites and colors for each state:
 5. **Water your crops** - Click on growing plants and choose **"Water"**
    - Water regularly! Crops grow faster when watered
    - If you don't water, crops will wilt and eventually die
+   - **Rain helps!** When it rains or storms, all outdoor crops are watered automatically
 
 6. **Harvest** - Click on ready crops (they look mature!) and choose **"Harvest"**
    - Crops are automatically added to your inventory
@@ -262,6 +263,7 @@ newCrop: {
 
 ## Recent Improvements
 
+- ✅ **Automatic rain watering** - When it rains or storms, all outdoor crops are watered automatically (indoor crops like those in greenhouses are not affected)
 - ✅ **Multi-tile crop rendering** - Crops now grow visually from small seedlings (1x1) to young plants (1.5x2) to large adult plants (2x2.5)
 - ✅ **Crop-specific sprites** - Tomato, sunflower, strawberry, and pea have unique young/adult sprites
 - ✅ **Fertiliser support** - Apply fertiliser to improve crop quality (normal → good → excellent)

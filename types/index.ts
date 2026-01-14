@@ -23,6 +23,7 @@ export type {
 
 // Map types
 export type {
+  SizeTier,
   Transition,
   MapRenderMode,
   ImageRoomLayer,

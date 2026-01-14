@@ -331,7 +331,44 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     effectDescription: 'Allows you to talk to animals',
   },
 
+  floatation_philtre: {
+    id: 'floatation_philtre',
+    name: 'floatation_philtre',
+    displayName: 'Floatation Philtre',
+    level: 'journeyman',
+    description: 'A misty, pale blue potion that feels weightless in the bottle.',
+    ingredients: [
+      { itemId: 'feather', quantity: 1 },
+      { itemId: 'moonpetal', quantity: 1 },
+      { itemId: 'morning_dew', quantity: 1 },
+    ],
+    brewingTime: 30,
+    difficulty: 2,
+    resultItemId: 'potion_floating',
+    resultQuantity: 1,
+    effectDescription: 'Float over water and low obstacles for 2 game hours',
+  },
+
   // ===== LEVEL 3: MASTER WITCH =====
+
+  elixir_of_flight: {
+    id: 'elixir_of_flight',
+    name: 'elixir_of_flight',
+    displayName: 'Elixir of Flight',
+    level: 'master',
+    description: 'A shimmering potion that seems to defy gravity, rising in its bottle.',
+    ingredients: [
+      { itemId: 'potion_floating', quantity: 1 }, // Requires Floatation Philtre
+      { itemId: 'feather', quantity: 2 },
+      { itemId: 'phoenix_ash', quantity: 1 },
+    ],
+    brewingTime: 45,
+    difficulty: 3,
+    resultItemId: 'potion_flying',
+    resultQuantity: 1,
+    unlockRequirement: 'floatation_philtre',
+    effectDescription: 'Fly over all obstacles for 2 game hours',
+  },
 
   time_skip: {
     id: 'time_skip',

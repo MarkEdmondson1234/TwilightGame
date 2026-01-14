@@ -1216,8 +1216,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'luminescent_toadstool',
     displayName: 'Luminescent Toadstool',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description:
-      'A glowing mushroom found deep in forest glades. Emits a soft, eerie light.',
+    description: 'A glowing mushroom found deep in forest glades. Emits a soft, eerie light.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 10,
@@ -1633,6 +1632,27 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A rich amber potion. Guarantees maximum seed drops on harvest.',
     stackable: true,
     sellPrice: 200,
+  },
+
+  // Movement potions
+  potion_floating: {
+    id: 'potion_floating',
+    name: 'potion_floating',
+    displayName: 'Floatation Philtre',
+    category: ItemCategory.POTION,
+    description: 'A misty, pale blue potion. Float over water and low obstacles for 2 hours.',
+    stackable: true,
+    sellPrice: 75,
+  },
+
+  potion_flying: {
+    id: 'potion_flying',
+    name: 'potion_flying',
+    displayName: 'Elixir of Flight',
+    category: ItemCategory.POTION,
+    description: 'A shimmering potion that defies gravity. Fly over all obstacles for 2 hours.',
+    stackable: true,
+    sellPrice: 150,
   },
 };
 

@@ -12,7 +12,7 @@
  * - Higher quality = higher sell price multiplier
  */
 
-import { Season } from '../utils/TimeManager';
+import { Season, TimeManager } from '../utils/TimeManager';
 
 export enum CropRarity {
   COMMON = 'common',
@@ -22,8 +22,8 @@ export enum CropRarity {
 }
 
 export enum CropQuality {
-  NORMAL = 'normal',       // Base price (1.0x)
-  GOOD = 'good',           // 1.5x price
+  NORMAL = 'normal', // Base price (1.0x)
+  GOOD = 'good', // 1.5x price
   EXCELLENT = 'excellent', // 2.0x price
 }
 
@@ -57,28 +57,28 @@ export interface CropDefinition {
   displayName: string;
 
   // Seasonal restrictions
-  plantSeasons: Season[];      // Seasons when this crop can be planted
+  plantSeasons: Season[]; // Seasons when this crop can be planted
 
   // Growth timing (in game days, not real time - managed by TimeManager)
-  growthTime: number;          // Game days from planted to ready
-  growthTimeWatered: number;   // Game days when watered (faster)
+  growthTime: number; // Game days from planted to ready
+  growthTimeWatered: number; // Game days when watered (faster)
 
   // Water requirements (in game hours)
   waterNeededInterval: number; // Game hours before plant needs water
-  wiltingGracePeriod: number;  // Game hours before wilting after water needed
-  deathGracePeriod: number;    // Game hours before death after wilting
+  wiltingGracePeriod: number; // Game hours before wilting after water needed
+  deathGracePeriod: number; // Game hours before death after wilting
 
   // Rewards
-  harvestYield: number;        // Number of items produced
-  sellPrice: number;           // Gold per item (normal quality)
-  experience: number;          // XP for harvesting (future use)
-  seedDropMin: number;         // Minimum seeds dropped on harvest (1-3)
-  seedDropMax: number;         // Maximum seeds dropped on harvest (1-3)
+  harvestYield: number; // Number of items produced
+  sellPrice: number; // Gold per item (normal quality)
+  experience: number; // XP for harvesting (future use)
+  seedDropMin: number; // Minimum seeds dropped on harvest (1-3)
+  seedDropMax: number; // Maximum seeds dropped on harvest (1-3)
 
   // Visual/flavour
   description: string;
-  seedCost: number;            // Cost to buy seeds (0 = not sold in shop)
-  rarity: CropRarity;          // Seed rarity (for foraging drops)
+  seedCost: number; // Cost to buy seeds (0 = not sold in shop)
+  rarity: CropRarity; // Seed rarity (for foraging drops)
 
   // Seed source
   seedSource: 'shop' | 'friendship' | 'forage'; // Where seeds come from
@@ -89,11 +89,9 @@ const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-// Game time constants (based on TimeManager)
-// 2 real hours = 1 game day
-// 5 real minutes = 1 game hour
-const GAME_HOUR = 5 * MINUTE;  // 300,000 ms
-const GAME_DAY = 2 * HOUR;      // 7,200,000 ms (2 real hours)
+// Game time constants - use TimeManager as single source of truth
+const GAME_DAY = TimeManager.MS_PER_GAME_DAY; // 7,200,000 ms (2 real hours)
+const GAME_HOUR = GAME_DAY / 24; // 300,000 ms (5 real minutes)
 
 /**
  * Testing mode: When true, crops grow in real minutes (for testing)
@@ -104,8 +102,7 @@ const GAME_DAY = 2 * HOUR;      // 7,200,000 ms (2 real hours)
  *
  * In production builds, this is always false unless explicitly set.
  */
-export const TESTING_MODE = import.meta.env.DEV ||
-  import.meta.env.VITE_TESTING_MODE === 'true';
+export const TESTING_MODE = import.meta.env.DEV || import.meta.env.VITE_TESTING_MODE === 'true';
 
 /**
  * All available crops
@@ -495,7 +492,8 @@ export const CROPS: Record<string, CropDefinition> = {
     experience: 25, // Small XP for planting
     seedDropMin: 0, // Does not drop seeds
     seedDropMax: 0,
-    description: 'A magical flower from the fairy realm. Blooms at night, attracting fairies with its ethereal glow.',
+    description:
+      'A magical flower from the fairy realm. Blooms at night, attracting fairies with its ethereal glow.',
     seedCost: 0, // Not sold in shop - quest only
     rarity: CropRarity.VERY_RARE,
     seedSource: 'forage', // Obtained through quest
@@ -553,14 +551,14 @@ export function canPlantInSeason(cropId: string, season: Season): boolean {
  * Get all crops that can be planted in the given season
  */
 export function getCropsForSeason(season: Season): CropDefinition[] {
-  return Object.values(CROPS).filter(crop => crop.plantSeasons.includes(season));
+  return Object.values(CROPS).filter((crop) => crop.plantSeasons.includes(season));
 }
 
 /**
  * Get crops by their seed source
  */
 export function getCropsBySeedSource(source: 'shop' | 'friendship' | 'forage'): CropDefinition[] {
-  return Object.values(CROPS).filter(crop => crop.seedSource === source);
+  return Object.values(CROPS).filter((crop) => crop.seedSource === source);
 }
 
 /**

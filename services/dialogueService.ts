@@ -20,32 +20,33 @@ export interface NPCPersona {
   name: string;
 
   // Core personality
-  personality: string[];           // ["wise", "cautious", "formal"]
-  speakingStyle: string;           // How they talk
-  knowledge: string[];             // What they know about
+  personality: string[]; // ["wise", "cautious", "formal"]
+  speakingStyle: string; // How they talk
+  knowledge: string[]; // What they know about
 
   // Background
   occupation?: string;
   background?: string;
 
   // AI-specific fields
-  aiEnabled?: boolean;             // Can use AI dialogue
-  systemPromptOverride?: string;   // Custom system prompt (optional)
+  aiEnabled?: boolean; // Can use AI dialogue
+  systemPromptOverride?: string; // Custom system prompt (optional)
 
   // Character quirks for more natural dialogue
-  quirks?: string[];               // ["Often mentions the weather", "Sighs when remembering the past"]
-  mannerisms?: string[];           // ["strokes beard thoughtfully", "chuckles softly"]
-  topics?: {                       // Topics they love/avoid
+  quirks?: string[]; // ["Often mentions the weather", "Sighs when remembering the past"]
+  mannerisms?: string[]; // ["strokes beard thoughtfully", "chuckles softly"]
+  topics?: {
+    // Topics they love/avoid
     favourite?: string[];
     disliked?: string[];
   };
 
   // Relationship context
-  relationshipToPlayer?: string;   // "stranger", "acquaintance", "friend"
+  relationshipToPlayer?: string; // "stranger", "acquaintance", "friend"
 
   // Constraints
-  maxResponseLength?: number;      // Override default (3 sentences)
-  tabooTopics?: string[];          // Topics they refuse to discuss
+  maxResponseLength?: number; // Override default (3 sentences)
+  tabooTopics?: string[]; // Topics they refuse to discuss
 }
 
 /**
@@ -56,6 +57,7 @@ export interface GameContext {
   timeOfDay?: string;
   weather?: string;
   location?: string;
+  transformation?: string; // Current player transformation (e.g., 'fairy', 'ghost')
 }
 
 /**
@@ -100,9 +102,9 @@ export interface AIDialogueResponse {
  * Configuration for dialogue service
  */
 export const DIALOGUE_CONFIG = {
-  useAI: false,  // Toggle AI vs static dialogue (set to true when AI endpoint ready)
-  maxHistoryLength: 10,  // Keep last N messages in history
-  aiTimeout: 5000,  // Timeout for AI requests (ms)
+  useAI: false, // Toggle AI vs static dialogue (set to true when AI endpoint ready)
+  maxHistoryLength: 10, // Keep last N messages in history
+  aiTimeout: 5000, // Timeout for AI requests (ms)
 };
 
 /**
@@ -158,7 +160,13 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     ],
 
     topics: {
-      favourite: ['the cherry tree', 'village history', 'the seasons', 'young people\'s futures', 'Maria'],
+      favourite: [
+        'the cherry tree',
+        'village history',
+        'the seasons',
+        "young people's futures",
+        'Maria',
+      ],
       disliked: ['politics', 'rushing', 'the city'],
     },
 
@@ -227,8 +235,8 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       tries not to fuss too much. British English, occasionally uses "mum" expressions.`,
 
     knowledge: [
-      'You are Mum, the player\'s mother - they are your beloved child',
-      'Your husband (the player\'s father) is an explorer, away travelling for most of the year. There is a secret about him that you do not think the player is ready for.',
+      "You are Mum, the player's mother - they are your beloved child",
+      "Your husband (the player's father) is an explorer, away travelling for most of the year. There is a secret about him that you do not think the player is ready for.",
       'You teach cooking - French Toast is the first recipe you teach',
       'Three cooking paths: Savoury food, Desserts, and Baking (3 recipes each)',
       'Savoury recipes: Spaghetti with meat sauce, Pizza with potatoes, Roast dinner',
@@ -251,12 +259,12 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       the forest but trust them to be careful.`,
 
     quirks: [
-      'Always asks if you\'ve eaten enough',
+      "Always asks if you've eaten enough",
       'Offers to make tea or a snack',
       'Eager to teach new recipes when asked',
-      'Mentions what she\'s planning to cook',
+      "Mentions what she's planning to cook",
       'Gently reminds about chores or safety',
-      'Talks about missing Father when he\'s away',
+      "Talks about missing Father when he's away",
     ],
 
     mannerisms: [
@@ -267,7 +275,15 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     ],
 
     topics: {
-      favourite: ['cooking', 'teaching recipes', 'family', 'the garden', 'village news', 'her child\'s adventures', 'Father\'s travels'],
+      favourite: [
+        'cooking',
+        'teaching recipes',
+        'family',
+        'the garden',
+        'village news',
+        "her child's adventures",
+        "Father's travels",
+      ],
       disliked: ['danger', 'the forest at night', 'skipping meals', 'wasted food'],
     },
 
@@ -288,8 +304,8 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       tries not to fuss too much. British English, occasionally uses "mum" expressions.`,
 
     knowledge: [
-      'You are Mum, the player\'s mother - they are your beloved child',
-      'Your husband (the player\'s father) is an explorer, away travelling for most of the year',
+      "You are Mum, the player's mother - they are your beloved child",
+      "Your husband (the player's father) is an explorer, away travelling for most of the year",
       'You teach cooking here in the kitchen - French Toast is the first recipe',
       'Three cooking paths: Savoury food, Desserts, and Baking (3 recipes each)',
       'Savoury recipes: Spaghetti with meat sauce, Pizza with potatoes, Roast dinner',
@@ -309,9 +325,9 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       filled with the aroma of whatever you're preparing.`,
 
     quirks: [
-      'Always asks if you\'ve eaten enough',
+      "Always asks if you've eaten enough",
       'Eager to teach a recipe when asked',
-      'Mentions what\'s bubbling on the stove',
+      "Mentions what's bubbling on the stove",
       'Suggests which cooking path might suit your child',
       'Gently reminds about helping in the kitchen',
     ],
@@ -324,7 +340,14 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     ],
 
     topics: {
-      favourite: ['cooking', 'teaching recipes', 'ingredients', 'French Toast', 'family recipes', 'meals'],
+      favourite: [
+        'cooking',
+        'teaching recipes',
+        'ingredients',
+        'French Toast',
+        'family recipes',
+        'meals',
+      ],
       disliked: ['wasted food', 'rushing meals', 'eating alone'],
     },
 
@@ -375,7 +398,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       'Counts stitches mid-conversation',
       'Offers to knit something for you',
       'Compares current times to "the old days"',
-      'Remembers everyone\'s grandparents',
+      "Remembers everyone's grandparents",
       'Mentions Elias fondly - "my Elias" or "the old man"',
       'Hints at having a sister but changes the subject quickly',
     ],
@@ -389,7 +412,15 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     ],
 
     topics: {
-      favourite: ['knitting', 'village history', 'family stories', 'the seasons', 'young people', 'book club', 'Elias'],
+      favourite: [
+        'knitting',
+        'village history',
+        'family stories',
+        'the seasons',
+        'young people',
+        'book club',
+        'Elias',
+      ],
       disliked: ['loud noises', 'rushing', 'forgetting the old ways'],
     },
 
@@ -436,7 +467,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     quirks: [
       'Asks "why?" about everything',
       'Makes up stories about what she sees',
-      'Wants to show you things she\'s found',
+      "Wants to show you things she's found",
       'Mentions what her mum says all the time',
       'Gets very excited about fairies and magical creatures',
       'Talks about her secret tree house but then says "oh, I shouldn\'t have said that!"',
@@ -451,7 +482,16 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     ],
 
     topics: {
-      favourite: ['playing', 'animals', 'the forest', 'fairies', 'flowers', 'stories', 'her tree house', 'desserts'],
+      favourite: [
+        'playing',
+        'animals',
+        'the forest',
+        'fairies',
+        'flowers',
+        'stories',
+        'her tree house',
+        'desserts',
+      ],
       disliked: ['bedtime', 'being told "no"', 'boring grown-up talk'],
     },
 
@@ -514,7 +554,16 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     ],
 
     topics: {
-      favourite: ['tea', 'food', 'the forest', 'relaxation', 'good weather', 'honey', 'truffles', 'berries'],
+      favourite: [
+        'tea',
+        'food',
+        'the forest',
+        'relaxation',
+        'good weather',
+        'honey',
+        'truffles',
+        'berries',
+      ],
       disliked: ['being rushed', 'loud noises', 'coffee', 'the shop incident'],
     },
 
@@ -529,7 +578,14 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     name: 'The Witch',
     aiEnabled: true,
 
-    personality: ['mysterious', 'wise', 'patient', 'knowledgeable', 'slightly mischievous', 'lonely'],
+    personality: [
+      'mysterious',
+      'wise',
+      'patient',
+      'knowledgeable',
+      'slightly mischievous',
+      'lonely',
+    ],
     speakingStyle: `Speaks with quiet authority and mystical undertones. Uses poetic
       language and nature metaphors. Drops hints about magical knowledge. Can be playful
       but is always thoughtful. British English with archaic touches.`,
@@ -571,13 +627,21 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     mannerisms: [
       '*stirs the bubbling cauldron*',
       '*examines you with knowing eyes*',
-      '*Shadow\'s ears perk up*',
+      "*Shadow's ears perk up*",
       '*adds an ingredient to the brew*',
       '*smiles mysteriously*',
     ],
 
     topics: {
-      favourite: ['magic', 'potions', 'gardening', 'apprentices', 'the forest', 'pickled onions', 'the seasons'],
+      favourite: [
+        'magic',
+        'potions',
+        'gardening',
+        'apprentices',
+        'the forest',
+        'pickled onions',
+        'the seasons',
+      ],
       disliked: ['impatience', 'disrespect for nature', 'rushing magical work', 'the Warlock'],
     },
 
@@ -662,14 +726,35 @@ Include 2-4 response options for the player.`;
 }
 
 /**
- * Get the appropriate text for a dialogue node based on current weather, season, and time
- * Priority order: weather > seasonal > time-of-day > default
+ * Get the current player transformation (if any)
+ * Returns the transformation name (e.g., 'fairy') or null if not transformed
+ */
+function getCurrentTransformation(): string | null {
+  if (gameState.isFairyForm()) {
+    return 'fairy';
+  }
+  // Future transformations can be added here
+  return null;
+}
+
+/**
+ * Get the appropriate text for a dialogue node based on transformation, weather, season, and time
+ * Priority order: transformation > weather > seasonal > time-of-day > default
  */
 function getContextualText(node: DialogueNode): string {
   const gameTime = TimeManager.getCurrentTime();
   const currentWeather = gameState.getWeather();
+  const transformation = getCurrentTransformation();
 
-  // Check for weather-specific text first (highest priority)
+  // Check for transformation-specific text first (highest priority)
+  if (transformation && node.transformationText) {
+    const transformationKey = transformation as keyof typeof node.transformationText;
+    if (node.transformationText[transformationKey]) {
+      return node.transformationText[transformationKey]!;
+    }
+  }
+
+  // Check for weather-specific text
   if (node.weatherText && node.weatherText[currentWeather]) {
     return node.weatherText[currentWeather]!;
   }
@@ -699,8 +784,21 @@ function getContextualText(node: DialogueNode): string {
  * Uses the pre-written dialogue trees from NPC definition
  */
 function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null {
-  // Filter dialogue nodes based on quest requirements
-  const availableNodes = npc.dialogue.filter(node => {
+  const currentTransformation = getCurrentTransformation();
+
+  // Filter dialogue nodes based on quest and transformation requirements
+  const availableNodes = npc.dialogue.filter((node) => {
+    // Check transformation requirements
+    if (node.requiredTransformation && node.requiredTransformation !== currentTransformation) {
+      return false;
+    }
+    if (node.hiddenIfTransformed && node.hiddenIfTransformed === currentTransformation) {
+      return false;
+    }
+    if (node.hiddenIfAnyTransformation && currentTransformation !== null) {
+      return false;
+    }
+
     // Check quest requirements
     if (node.requiredQuest) {
       const questStarted = gameState.isQuestStarted(node.requiredQuest);
@@ -724,12 +822,26 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
     return true;
   });
 
-  const node = availableNodes.find(n => n.id === currentNodeId) || availableNodes[0] || null;
+  const node = availableNodes.find((n) => n.id === currentNodeId) || availableNodes[0] || null;
 
   if (!node) return null;
 
-  // Filter responses based on quest requirements
-  const filteredResponses = node.responses?.filter(response => {
+  // Filter responses based on quest and transformation requirements
+  const filteredResponses = node.responses?.filter((response) => {
+    // Check transformation requirements
+    if (
+      response.requiredTransformation &&
+      response.requiredTransformation !== currentTransformation
+    ) {
+      return false;
+    }
+    if (response.hiddenIfTransformed && response.hiddenIfTransformed === currentTransformation) {
+      return false;
+    }
+    if (response.hiddenIfAnyTransformation && currentTransformation !== null) {
+      return false;
+    }
+
     // Check quest requirements
     if (response.requiredQuest) {
       const questStarted = gameState.isQuestStarted(response.requiredQuest);
@@ -746,7 +858,10 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
       return false;
     }
 
-    if (response.hiddenIfQuestCompleted && gameState.isQuestCompleted(response.hiddenIfQuestCompleted)) {
+    if (
+      response.hiddenIfQuestCompleted &&
+      gameState.isQuestCompleted(response.hiddenIfQuestCompleted)
+    ) {
       return false;
     }
 
@@ -855,15 +970,17 @@ export function buildSystemPrompt(persona: NPCPersona, gameContext?: GameContext
   }
 
   // Knowledge
-  parts.push(`\n## What You Know About\n${persona.knowledge.map(k => `- ${k}`).join('\n')}`);
+  parts.push(`\n## What You Know About\n${persona.knowledge.map((k) => `- ${k}`).join('\n')}`);
 
   // Quirks and mannerisms
   if (persona.quirks?.length) {
-    parts.push(`\n## Your Quirks\n${persona.quirks.map(q => `- ${q}`).join('\n')}`);
+    parts.push(`\n## Your Quirks\n${persona.quirks.map((q) => `- ${q}`).join('\n')}`);
   }
 
   if (persona.mannerisms?.length) {
-    parts.push(`\n## Mannerisms (use sparingly)\n${persona.mannerisms.map(m => `- ${m}`).join('\n')}`);
+    parts.push(
+      `\n## Mannerisms (use sparingly)\n${persona.mannerisms.map((m) => `- ${m}`).join('\n')}`
+    );
   }
 
   // Topics
@@ -878,7 +995,9 @@ export function buildSystemPrompt(persona: NPCPersona, gameContext?: GameContext
 
   // Relationship
   if (persona.relationshipToPlayer) {
-    parts.push(`\n## Relationship with Player\nYou consider them a ${persona.relationshipToPlayer}.`);
+    parts.push(
+      `\n## Relationship with Player\nYou consider them a ${persona.relationshipToPlayer}.`
+    );
   }
 
   // Game context
@@ -888,6 +1007,12 @@ export function buildSystemPrompt(persona: NPCPersona, gameContext?: GameContext
     if (gameContext.timeOfDay) parts.push(`- Time: ${gameContext.timeOfDay}`);
     if (gameContext.weather) parts.push(`- Weather: ${gameContext.weather}`);
     if (gameContext.location) parts.push(`- Location: ${gameContext.location}`);
+    if (gameContext.transformation) {
+      parts.push(`- Player Transformation: ${gameContext.transformation}`);
+      parts.push(
+        `  (The player is currently transformed into a ${gameContext.transformation} - they look different and are very small!)`
+      );
+    }
   }
 
   // Response guidelines

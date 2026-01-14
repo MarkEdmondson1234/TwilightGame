@@ -13,6 +13,9 @@
 import { TileType, Position } from './core';
 import { NPC } from './npc';
 
+// Size tier type for transition restrictions (-3 to +3)
+export type SizeTier = -3 | -2 | -1 | 0 | 1 | 2 | 3;
+
 // Map transition/exit definition
 export interface Transition {
   fromPosition: Position;
@@ -23,6 +26,9 @@ export interface Transition {
   // Conditional access - transition only available if quest condition is met
   requiresQuest?: string; // Quest ID that must be started
   requiresQuestStage?: number; // Specific quest stage required (optional, defaults to any stage > 0)
+  // Size restrictions - player must be within tier range to use transition
+  minSizeTier?: SizeTier; // Minimum size tier required (e.g., -2 = must be at least "Very Small")
+  maxSizeTier?: SizeTier; // Maximum size tier allowed (e.g., 1 = cannot be larger than "Large")
 }
 
 // ============================================================================

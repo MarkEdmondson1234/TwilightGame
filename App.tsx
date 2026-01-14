@@ -6,6 +6,7 @@ import {
   USE_PIXI_RENDERER,
   USE_SPRITE_SHADOWS,
   INTERACTION,
+  STAMINA,
 } from './constants';
 import { Position, Direction, ImageRoomLayer, NPC } from './types';
 import { textureManager } from './utils/TextureManager';
@@ -64,6 +65,7 @@ import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { cookingManager } from './utils/CookingManager';
 import { characterData } from './utils/CharacterData';
+import { staminaManager } from './utils/StaminaManager';
 import { TimeManager } from './utils/TimeManager';
 import { getDistance } from './utils/pathfinding';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
@@ -93,13 +95,19 @@ import RecipeBook from './components/RecipeBook';
 import MagicRecipeBook from './components/MagicRecipeBook';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
+import { StaminaBar } from './components/StaminaBar';
 import { DestinationMarker } from './components/DestinationMarker';
 import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
 import { inventoryManager } from './utils/inventoryManager';
 import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
-import { usePotionEffect, hasPotionEffect, MagicEffectCallbacks } from './utils/MagicEffects';
+import {
+  usePotionEffect,
+  hasPotionEffect,
+  MagicEffectCallbacks,
+  SizeTier,
+} from './utils/MagicEffects';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -118,6 +126,8 @@ const App: React.FC = () => {
   const [currentMapId, setCurrentMapId] = useState<string>(savedLocation.mapId);
   const [playerPos, setPlayerPos] = useState<Position>(savedLocation.position);
   const [playerScale, setPlayerScale] = useState<number>(1.0); // Scale for size-changing potions
+  const [playerSizeTier, setPlayerSizeTier] = useState<SizeTier>(0); // Size tier: -3 (tiny) to +3 (giant)
+  const [isFairyForm, setIsFairyForm] = useState<boolean>(gameState.isFairyForm()); // Fairy transformation state
   const [direction, setDirection] = useState<Direction>(Direction.Down);
   const [animationFrame, setAnimationFrame] = useState(0);
   const [isDebugOpen, setDebugOpen] = useState(false);
@@ -154,6 +164,8 @@ const App: React.FC = () => {
   const [showSplashEffect, setShowSplashEffect] = useState(false); // Show splash effect when refilling water can
   const [splashKey, setSplashKey] = useState(0); // Force splash retrigger
   const [placedItemsUpdateTrigger, setPlacedItemsUpdateTrigger] = useState(0); // Force re-render when placed items change
+  const [stamina, setStamina] = useState(gameState.getStamina()); // Current stamina for UI display
+  const isMovingRef = useRef(false); // Track if player is currently moving (for stamina drain)
   const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
     const time = TimeManager.getCurrentTime();
     return time.timeOfDay === 'Day' ? 'day' : 'night';
@@ -188,7 +200,12 @@ const App: React.FC = () => {
   });
 
   // Use character sprites hook for loading and managing player sprites
-  const playerSprites = useCharacterSprites(characterVersion, gameState.getSelectedCharacter());
+  // Passes isFairyForm to use fairy transformation sprites when active
+  const playerSprites = useCharacterSprites(
+    characterVersion,
+    gameState.getSelectedCharacter(),
+    isFairyForm
+  );
 
   const keysPressed = useRef<Record<string, boolean>>({}).current;
   const animationFrameId = useRef<number | null>(null);
@@ -358,6 +375,52 @@ const App: React.FC = () => {
     return () => clearInterval(decayInterval);
   }, []);
 
+  // Check for movement effect expiration every second
+  useEffect(() => {
+    const movementEffectInterval = setInterval(() => {
+      if (gameState.isMovementEffectActive()) {
+        const remaining = gameState.getMovementEffectRemainingMs();
+        if (remaining <= 0) {
+          const effect = gameState.getMovementEffect();
+          const modeName = effect?.mode === 'floating' ? 'floating' : 'flying';
+          gameState.clearMovementEffect();
+          showToast(`Your ${modeName} effect has worn off.`, 'info');
+        }
+      }
+    }, 1000); // Check every second
+
+    return () => clearInterval(movementEffectInterval);
+  }, [showToast]);
+
+  // Initialize stamina manager
+  useEffect(() => {
+    staminaManager.initialise({
+      getStamina: () => gameState.getStamina(),
+      setStamina: (value) => {
+        gameState.setStamina(value);
+        setStamina(value);
+      },
+      drainStamina: (amount) => {
+        const exhausted = gameState.drainStamina(amount);
+        setStamina(gameState.getStamina());
+        return exhausted;
+      },
+      restoreStamina: (amount) => {
+        gameState.restoreStamina(amount);
+        setStamina(gameState.getStamina());
+      },
+      restoreStaminaFull: () => {
+        gameState.restoreStaminaFull();
+        setStamina(gameState.getStamina());
+      },
+      isExhausted: () => gameState.isExhausted(),
+      showToast,
+      teleportHome: () => {
+        handleMapTransition('home_interior', { x: 5, y: 5 });
+      },
+    });
+  }, [showToast]);
+
   // Intercept shop counter fox interaction to open shop UI instead of dialogue
   // Only the 'shop_counter_fox' NPC inside the shop triggers the shop UI
   // The village 'shopkeeper' NPC just shows normal dialogue
@@ -465,8 +528,11 @@ const App: React.FC = () => {
     onShowToast: showToast,
   });
 
-  // Setup collision detection (with NPC collision support)
-  const { checkCollision } = useCollisionDetection(npcsRef);
+  // Get movement mode for collision detection (floating/flying potions)
+  const movementMode = gameState.getMovementMode();
+
+  // Setup collision detection (with NPC collision support and movement mode)
+  const { checkCollision } = useCollisionDetection(npcsRef, movementMode);
 
   // Setup click-to-move pathfinding
   const {
@@ -643,9 +709,11 @@ const App: React.FC = () => {
           } else if (action.action === 'eat') {
             // Remove from placed items
             gameState.removePlacedItem(action.placedItemId);
+            // Restore stamina from eating
+            const restored = staminaManager.eatFood(action.itemId);
             // Trigger re-render
             setPlacedItemsUpdateTrigger((prev) => prev + 1);
-            showToast('Ate the food', 'info');
+            showToast(`Ate the food (+${restored} stamina)`, 'success');
           } else if (action.action === 'taste') {
             showToast('Mmm, tasty!', 'info');
           }
@@ -831,7 +899,11 @@ const App: React.FC = () => {
     }
 
     // Update player movement (handles input, animation, collision, and position)
-    updatePlayerMovement(deltaTime, now);
+    const movementResult = updatePlayerMovement(deltaTime, now);
+    isMovingRef.current = movementResult.isMoving;
+
+    // Update stamina (drain when walking, restore when at home)
+    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId);
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
   }, [updatePlayerMovement, activeNPC, isCutscenePlaying, currentMapId]);
@@ -1119,6 +1191,10 @@ const App: React.FC = () => {
         setPlayerScale(scale);
       },
       getPlayerScale: () => playerScale,
+      setPlayerSizeTier: (tier: SizeTier) => {
+        setPlayerSizeTier(tier);
+      },
+      getPlayerSizeTier: () => playerSizeTier,
       teleportPlayer: (mapId: string, position: Position) => {
         handleMapTransition(mapId, position);
       },
@@ -1137,8 +1213,40 @@ const App: React.FC = () => {
         // Trigger visual effect at player position or specified position
         triggerVFX(vfxType, position || playerPos);
       },
+      // Verdant Surge: Clear forage cooldowns on current map
+      clearForageCooldowns: () => {
+        return gameState.clearForageCooldownsOnMap(currentMapId);
+      },
+      // Quality Blessing: Set all crops on current map to excellent quality
+      setAllCropsQuality: (quality: 'normal' | 'good' | 'excellent') => {
+        const count = farmManager.setAllCropsQuality(currentMapId, quality);
+        // Save updated farm plots
+        characterData.saveFarmPlots(farmManager.getAllPlots());
+        return count;
+      },
+      // Abundant Harvest: Apply max seed drop blessing to all crops on current map
+      applyAbundantHarvest: () => {
+        const count = farmManager.applyAbundantHarvest(currentMapId);
+        // Save updated farm plots
+        characterData.saveFarmPlots(farmManager.getAllPlots());
+        return count;
+      },
+      // Healing Salve: Restore partial stamina
+      restoreStamina: (amount: number) => {
+        gameState.restoreStamina(amount);
+        setStamina(gameState.getStamina());
+      },
+      // Wakefulness Brew: Restore stamina to full
+      restoreStaminaFull: () => {
+        gameState.restoreStaminaFull();
+        setStamina(gameState.getStamina());
+      },
+      // Floating/Flying Potions: Set movement effect with duration
+      setMovementEffect: (mode: 'floating' | 'flying', durationMs: number) => {
+        gameState.setMovementEffect(mode, durationMs);
+      },
     }),
-    [currentMapId, playerPos, playerScale, triggerVFX]
+    [currentMapId, playerPos, playerScale, playerSizeTier, triggerVFX]
   );
 
   // Handle potion usage from inventory click
@@ -1259,8 +1367,10 @@ const App: React.FC = () => {
           showToast('Picked up item', 'success');
         } else if (action.action === 'eat') {
           gameState.removePlacedItem(action.placedItemId);
+          // Restore stamina from eating
+          const restored = staminaManager.eatFood(action.itemId);
           setPlacedItemsUpdateTrigger((prev) => prev + 1);
-          showToast('Ate the food', 'info');
+          showToast(`Ate the food (+${restored} stamina)`, 'success');
         } else if (action.action === 'taste') {
           showToast('Mmm, tasty!', 'info');
         }
@@ -1332,11 +1442,12 @@ const App: React.FC = () => {
     inventoryItems,
   ]);
 
-  // Get player sprite info (URL and scale)
-  const { playerSpriteUrl, spriteScale } = getPlayerSpriteInfo(
+  // Get player sprite info (URL and scale, plus flip for fairy form)
+  const { playerSpriteUrl, spriteScale, shouldFlip } = getPlayerSpriteInfo(
     playerSprites,
     direction,
-    animationFrame
+    animationFrame,
+    isFairyForm
   );
 
   // Initialize PixiJS renderer (if enabled) - must be after all variable declarations
@@ -1863,7 +1974,7 @@ const App: React.FC = () => {
     // NOTE: Don't include viewportScale here - it's already applied via effectiveTileSize
     // Including it here would cause double-scaling (player grows faster than NPCs on zoom)
     const mapCharacterScale = currentMap?.characterScale ?? 1.0;
-    const effectiveScale = spriteScale * mapCharacterScale;
+    const effectiveScale = spriteScale * mapCharacterScale * playerScale;
 
     // Update player position and animation (works for all map types including background-image rooms)
     // For background-image rooms, also pass effectiveTileSize for proper positioning
@@ -1874,7 +1985,8 @@ const App: React.FC = () => {
       playerSpriteUrl,
       effectiveScale,
       effectiveGridOffset,
-      effectiveTileSize
+      effectiveTileSize,
+      shouldFlip // Flip sprite horizontally for fairy right-facing
     );
   }, [
     playerPos,
@@ -1882,6 +1994,8 @@ const App: React.FC = () => {
     animationFrame,
     playerSpriteUrl,
     spriteScale,
+    playerScale,
+    shouldFlip,
     isPixiInitialized,
     currentMap?.characterScale,
     effectiveGridOffset,
@@ -2082,7 +2196,7 @@ const App: React.FC = () => {
             // Apply map's characterScale multiplier (default 1.0)
             // NOTE: viewportScale is already in effectiveTileSize, don't include it here
             const mapCharacterScale = currentMap?.characterScale ?? 1.0;
-            const effectiveScale = spriteScale * mapCharacterScale;
+            const effectiveScale = spriteScale * mapCharacterScale * playerScale;
             // Calculate feet position for z-ordering (same as NPCs)
             const feetY = playerPos.y + 0.3;
             return (
@@ -2100,6 +2214,8 @@ const App: React.FC = () => {
                   width: PLAYER_SIZE * effectiveScale * effectiveTileSize,
                   height: PLAYER_SIZE * effectiveScale * effectiveTileSize,
                   zIndex: Z_PLAYER + Math.floor(feetY),
+                  // Flip sprite horizontally for fairy right-facing (uses left sprite flipped)
+                  transform: shouldFlip ? 'scaleX(-1)' : undefined,
                 }}
               />
             );
@@ -2320,8 +2436,9 @@ const App: React.FC = () => {
           npc={npcManager.getNPCById(activeNPC)!}
           playerSprite={getPortraitSprite(
             gameState.getSelectedCharacter() || DEFAULT_CHARACTER,
-            Direction.Down
-          )} // High-res portrait
+            Direction.Down,
+            isFairyForm
+          )} // High-res portrait (uses fairy sprite when transformed)
           onClose={() => {
             setActiveNPC(null);
             setDialogueMode('static'); // Reset to static mode when closing
@@ -2341,7 +2458,8 @@ const App: React.FC = () => {
           npc={npcManager.getNPCById(activeNPC)!}
           playerSprite={getPortraitSprite(
             gameState.getSelectedCharacter() || DEFAULT_CHARACTER,
-            Direction.Down
+            Direction.Down,
+            isFairyForm
           )}
           onClose={() => {
             setActiveNPC(null);
@@ -2367,6 +2485,26 @@ const App: React.FC = () => {
           onFarmUpdate={() => {
             console.log('[App] Farm update triggered from DevTools');
             setFarmUpdateTrigger((prev: number) => prev + 1);
+          }}
+          isFairyForm={isFairyForm}
+          onFairyFormToggle={(active) => {
+            console.log(`[App] Fairy form ${active ? 'activated' : 'deactivated'}`);
+            // Update game state
+            gameState.setFairyForm(active);
+            // Update local state
+            setIsFairyForm(active);
+            // Apply/remove tiny size effect when fairy form changes
+            if (active) {
+              // Fairy form: set to tiny size (tier -3)
+              setPlayerSizeTier(-3 as SizeTier);
+              setPlayerScale(0.25); // Tiny scale
+              showToast('Transformed into a fairy! You are now Tiny.', 'info');
+            } else {
+              // Reset to normal size when fairy form ends
+              setPlayerSizeTier(0 as SizeTier);
+              setPlayerScale(1.0);
+              showToast('Returned to normal form.', 'info');
+            }
           }}
         />
       )}
@@ -2536,6 +2674,17 @@ const App: React.FC = () => {
           isNPCTarget={clickToMoveTargetNPC !== null}
         />
       )}
+
+      {/* Stamina bar above player head */}
+      <StaminaBar
+        current={stamina}
+        max={STAMINA.MAX}
+        playerX={playerPos.x}
+        playerY={playerPos.y}
+        cameraX={cameraX}
+        cameraY={cameraY}
+        lowThreshold={STAMINA.LOW_THRESHOLD}
+      />
 
       {/* Radial menu for multiple interaction options */}
       {radialMenuVisible && (

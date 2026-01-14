@@ -10,6 +10,8 @@ import './DevTools.css';
 interface DevToolsProps {
   onClose: () => void;
   onFarmUpdate?: () => void;
+  onFairyFormToggle?: (active: boolean) => void;
+  isFairyForm?: boolean;
 }
 
 /**
@@ -125,7 +127,12 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
   );
 };
 
-const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
+const DevTools: React.FC<DevToolsProps> = ({
+  onClose,
+  onFarmUpdate,
+  onFairyFormToggle,
+  isFairyForm = false,
+}) => {
   console.log('[DevTools] Component rendering');
 
   const currentTime = TimeManager.getCurrentTime();
@@ -327,6 +334,23 @@ const DevTools: React.FC<DevToolsProps> = ({ onClose, onFarmUpdate }) => {
           <div className="devtools-section">
             <h3>Farming Debug</h3>
             <FarmingDebugSection onFarmUpdate={onFarmUpdate} />
+          </div>
+
+          <div className="devtools-section">
+            <h3>Transformations</h3>
+            <div className="devtools-control">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={isFairyForm}
+                  onChange={(e) => onFairyFormToggle?.(e.target.checked)}
+                />{' '}
+                Fairy Form
+              </label>
+              <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                {isFairyForm ? 'Transformed into a fairy (tiny size)' : 'Normal human form'}
+              </small>
+            </div>
           </div>
 
           <div className="devtools-section">

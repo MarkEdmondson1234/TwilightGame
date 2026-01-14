@@ -32,28 +32,28 @@ export enum TimeOfDay {
 
 // Seasonal sunrise/sunset times (24-hour format)
 export interface DaylightHours {
-  dawn: number;      // Hour when dawn begins
-  sunrise: number;   // Hour when full day begins
-  sunset: number;    // Hour when dusk begins
-  dusk: number;      // Hour when full night begins
+  dawn: number; // Hour when dawn begins
+  sunrise: number; // Hour when full day begins
+  sunset: number; // Hour when dusk begins
+  dusk: number; // Hour when full night begins
 }
 
 export const SEASONAL_DAYLIGHT: Record<Season, DaylightHours> = {
-  [Season.SPRING]: { dawn: 5, sunrise: 6, sunset: 18, dusk: 19 },   // 12 hours daylight
-  [Season.SUMMER]: { dawn: 4, sunrise: 5, sunset: 20, dusk: 21 },   // 15 hours daylight
-  [Season.AUTUMN]: { dawn: 6, sunrise: 7, sunset: 17, dusk: 18 },   // 10 hours daylight
-  [Season.WINTER]: { dawn: 7, sunrise: 8, sunset: 16, dusk: 17 },   // 8 hours daylight
+  [Season.SPRING]: { dawn: 5, sunrise: 6, sunset: 18, dusk: 19 }, // 12 hours daylight
+  [Season.SUMMER]: { dawn: 4, sunrise: 5, sunset: 20, dusk: 21 }, // 15 hours daylight
+  [Season.AUTUMN]: { dawn: 6, sunrise: 7, sunset: 17, dusk: 18 }, // 10 hours daylight
+  [Season.WINTER]: { dawn: 7, sunrise: 8, sunset: 16, dusk: 17 }, // 8 hours daylight
 };
 
 export interface GameTime {
-  year: number;        // Years since October 17, 2025
-  season: Season;      // Current season
-  day: number;         // Day within season (1-84)
-  totalDays: number;   // Total days since game start
-  hour: number;        // Hour of day (0-23)
-  minute: number;      // Minute of hour (0-59)
+  year: number; // Years since October 17, 2025
+  season: Season; // Current season
+  day: number; // Day within season (1-84)
+  totalDays: number; // Total days since game start
+  hour: number; // Hour of day (0-23)
+  minute: number; // Minute of hour (0-59)
   timeOfDay: TimeOfDay; // Dawn, Day, Dusk, or Night (varies by season)
-  totalHours: number;  // Total hours since game start
+  totalHours: number; // Total hours since game start
   daylight: DaylightHours; // Current season's daylight hours
 }
 
@@ -65,13 +65,15 @@ export class TimeManager {
   // 1 real week = 1 game season: 168 hours / 2 hours per day = 84 game days
   private static readonly DAYS_PER_SEASON = 84;
   private static readonly SEASONS_PER_YEAR = 4;
-  private static readonly DAYS_PER_YEAR = TimeManager.DAYS_PER_SEASON * TimeManager.SEASONS_PER_YEAR; // 336 days
+  private static readonly DAYS_PER_YEAR =
+    TimeManager.DAYS_PER_SEASON * TimeManager.SEASONS_PER_YEAR; // 336 days
 
   // Real time to game time conversion
   // 2 real hours = 1 game day (1 hour day phase, 1 hour night phase)
   // 12 game days per real day
   // 5 real minutes = 1 game hour
-  private static readonly MS_PER_GAME_DAY = 2 * 60 * 60 * 1000; // 7,200,000 ms = 2 hours
+  static readonly MS_PER_GAME_DAY = 2 * 60 * 60 * 1000; // 7,200,000 ms = 2 hours
+  static readonly MS_PER_GAME_HOUR = TimeManager.MS_PER_GAME_DAY / 24; // 300,000 ms = 5 minutes
 
   private static readonly SEASON_ORDER = [
     Season.SPRING,

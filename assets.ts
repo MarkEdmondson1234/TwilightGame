@@ -14,7 +14,8 @@ export const tileAssets = {
   stump: '/TwilightGame/assets-optimized/tiles/stump.png',
   tree_cherry_spring: '/TwilightGame/assets-optimized/tiles/tree_cherry_spring.png',
   tree_cherry_summer_fruit: '/TwilightGame/assets-optimized/tiles/tree_cherry_summer_fruit.png',
-  tree_cherry_summer_no_fruit: '/TwilightGame/assets-optimized/tiles/tree_cherry_summer_no_fruit.png',
+  tree_cherry_summer_no_fruit:
+    '/TwilightGame/assets-optimized/tiles/tree_cherry_summer_no_fruit.png',
   tree_cherry_autumn: '/TwilightGame/assets-optimized/tiles/tree_cherry_autumn.png',
   tree_cherry_winter: '/TwilightGame/assets-optimized/tiles/tree_cherry_winter.png',
   bricks_1: '/TwilightGame/assets-optimized/tiles/bricks_1.png',
@@ -139,9 +140,12 @@ export const tileAssets = {
   blueberry_bush_autumn: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_autumn.png',
   blueberry_bush_winter: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_winter.png',
   // Wild strawberry assets (seasonal variations - forageable in forest)
-  wild_strawberry_spring: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_spring.png',
-  wild_strawberry_summer: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_summer.png',
-  wild_strawberry_autumn: '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_autumn.png',
+  wild_strawberry_spring:
+    '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_spring.png',
+  wild_strawberry_summer:
+    '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_summer.png',
+  wild_strawberry_autumn:
+    '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_autumn.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
   // Cauldron animation frames
@@ -174,9 +178,11 @@ export const tileAssets = {
   fir_tree_small_winter: '/TwilightGame/assets-optimized/tiles/forest/fir_tree_small_winter.png',
   // Small spruce tree assets (solid obstacle for forest areas)
   spruce_tree_small: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small.png',
-  spruce_tree_small_winter: '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small_winter.png',
+  spruce_tree_small_winter:
+    '/TwilightGame/assets-optimized/tiles/forest/spruce_tree_small_winter.png',
   // Forest pond assets (6x6 multi-tile sprite for random forests, seasonal variations)
-  forest_pond_spring_summer: '/TwilightGame/assets-optimized/tiles/forest_lake/pond_forest_spring-summer.png',
+  forest_pond_spring_summer:
+    '/TwilightGame/assets-optimized/tiles/forest_lake/pond_forest_spring-summer.png',
   forest_pond_autumn: '/TwilightGame/assets-optimized/tiles/forest_lake/pond_forest_autumn.png',
   forest_pond_winter: '/TwilightGame/assets-optimized/tiles/forest_lake/pond_forest_winter.png',
   // Magical lake asset (12x12 multi-tile sprite for forest lake scene)
@@ -359,12 +365,28 @@ export const npcAssets = {
   // Professor Birdimen assets (scholarly bird character)
   professor_birdimen_01: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
   professor_birdimen_02: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_02.png',
-  professor_birdimen_portrait: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
+  professor_birdimen_portrait:
+    '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
 };
 
 // Player assets (add your custom sprites here when ready)
 export const playerAssets = {
   // Example: down_0: '/TwilightGame/assets/player/down_0.png',
+};
+
+// Fairy transformation assets - Used when player is transformed into a fairy
+// Directional sprites with 2-frame animation per direction
+// Right-facing sprites use flipped left sprites (handled in sprite rendering)
+export const fairyAssets = {
+  // Down-facing
+  down_01: '/TwilightGame/assets/character1/fairy/down_fairy_spell01.png',
+  down_02: '/TwilightGame/assets/character1/fairy/down_fairy_spell02.png',
+  // Up-facing
+  up_01: '/TwilightGame/assets/character1/fairy/up_fairy_spell01.png',
+  up_02: '/TwilightGame/assets/character1/fairy/up_fairy_spell02.png',
+  // Left-facing (also used for right with horizontal flip)
+  left_01: '/TwilightGame/assets/character1/fairy/left_fairy_spell01.png',
+  left_02: '/TwilightGame/assets/character1/fairy/left_fairy_spell02.png',
 };
 
 // Animation assets - Animated GIFs for environmental effects

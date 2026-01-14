@@ -71,6 +71,11 @@ export interface DialogueNode {
     storm?: string;
     cherry_blossoms?: string;
   };
+  transformationText?: {
+    // Optional transformation variations (when player is transformed)
+    fairy?: string; // When player is in fairy form
+    // Future transformations: ghost, animal, etc.
+  };
   responses?: DialogueResponse[]; // For branching dialogue (no nextId = close dialogue)
   // Friendship requirements for this dialogue node
   requiredFriendshipTier?: FriendshipTier; // Only show if friendship >= tier
@@ -80,6 +85,10 @@ export interface DialogueNode {
   requiredQuestStage?: number; // Only show if quest is at this stage or higher
   hiddenIfQuestStarted?: string; // Hide if this quest is started
   hiddenIfQuestCompleted?: string; // Hide if this quest is completed
+  // Transformation requirements for this dialogue node
+  requiredTransformation?: string; // Only show if player has this transformation (e.g., 'fairy')
+  hiddenIfTransformed?: string; // Hide if player has this transformation
+  hiddenIfAnyTransformation?: boolean; // Hide if player has any active transformation
   // Expression/emotion for dialogue character sprite (e.g., 'smile', 'happy', 'thinky')
   // If set, uses dialogueExpressions[expression] from NPC, otherwise uses default dialogueSprite
   expression?: string;
@@ -109,6 +118,10 @@ export interface DialogueResponse {
   advancesQuest?: string; // Advance this quest to next stage when selected
   completesQuest?: string; // Complete this quest when selected
   setsQuestStage?: { questId: string; stage: number }; // Set specific quest stage when selected
+  // Transformation requirements for this response option
+  requiredTransformation?: string; // Only show if player has this transformation (e.g., 'fairy')
+  hiddenIfTransformed?: string; // Hide if player has this transformation
+  hiddenIfAnyTransformation?: boolean; // Hide if player has any active transformation
 }
 
 // Seasonal location configuration for NPCs

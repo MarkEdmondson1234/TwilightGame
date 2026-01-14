@@ -16,6 +16,55 @@ import { friendshipManager } from './FriendshipManager';
 import { Position, FarmPlotState } from '../types';
 
 // ============================================================================
+// Size Tier System
+// ============================================================================
+
+/**
+ * Size tiers for player scale effects.
+ * Drink Me moves DOWN one tier, Eat Me moves UP one tier.
+ * This creates a balanced system where the potions are opposites.
+ */
+export const SIZE_TIERS = [
+  { tier: -3, scale: 0.25, name: 'Tiny' },
+  { tier: -2, scale: 0.5, name: 'Very Small' },
+  { tier: -1, scale: 0.7, name: 'Small' },
+  { tier: 0, scale: 1.0, name: 'Normal' },
+  { tier: 1, scale: 1.4, name: 'Large' },
+  { tier: 2, scale: 2.0, name: 'Very Large' },
+  { tier: 3, scale: 3.0, name: 'Giant' },
+] as const;
+
+export type SizeTier = (typeof SIZE_TIERS)[number]['tier'];
+
+/**
+ * Get the tier object for a given tier number
+ */
+export function getSizeTier(tier: SizeTier) {
+  return SIZE_TIERS.find((t) => t.tier === tier) ?? SIZE_TIERS[3]; // Default to normal
+}
+
+/**
+ * Get the scale value for a tier
+ */
+export function getScaleForTier(tier: SizeTier): number {
+  return getSizeTier(tier).scale;
+}
+
+/**
+ * Get the tier name for display
+ */
+export function getTierName(tier: SizeTier): string {
+  return getSizeTier(tier).name;
+}
+
+/**
+ * Clamp tier to valid range (-3 to +3)
+ */
+export function clampTier(tier: number): SizeTier {
+  return Math.max(-3, Math.min(3, tier)) as SizeTier;
+}
+
+// ============================================================================
 // Types
 // ============================================================================
 
@@ -52,7 +101,10 @@ export type MagicEffectType =
   | 'beast_ward'
   | 'beast_tongue'
   | 'healing'
-  | 'wakefulness';
+  | 'wakefulness'
+  // Movement effects
+  | 'floating'
+  | 'flying';
 
 export interface MagicEffectResult {
   success: boolean;
@@ -76,6 +128,8 @@ export interface MagicEffectCallbacks {
   // Player state
   setPlayerScale: (scale: number) => void;
   getPlayerScale: () => number;
+  setPlayerSizeTier: (tier: SizeTier) => void;
+  getPlayerSizeTier: () => SizeTier;
   teleportPlayer: (mapId: string, position: Position) => void;
 
   // UI
@@ -91,6 +145,18 @@ export interface MagicEffectCallbacks {
 
   // VFX (optional - for spell casting animations)
   triggerVFX?: (vfxType: string, position?: Position) => void;
+
+  // Magic effect callbacks (for potion effects that modify game state)
+  clearForageCooldowns?: () => number; // For Verdant Surge
+  setAllCropsQuality?: (quality: 'normal' | 'good' | 'excellent') => number; // For Quality Blessing
+  applyAbundantHarvest?: () => number; // For Abundant Harvest
+
+  // Stamina callbacks (for Healing Salve and Wakefulness Brew)
+  restoreStamina?: (amount: number) => void; // Restore partial stamina
+  restoreStaminaFull?: () => void; // Restore stamina to full
+
+  // Movement effect callbacks (for Floating and Flying potions)
+  setMovementEffect?: (mode: 'floating' | 'flying', durationMs: number) => void;
 }
 
 // ============================================================================
@@ -110,17 +176,29 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_drink_me',
     effectType: 'shrink',
     execute: (callbacks) => {
-      const currentScale = callbacks.getPlayerScale();
-      const newScale = currentScale * 0.5;
+      const currentTier = callbacks.getPlayerSizeTier();
+      const newTier = clampTier(currentTier - 1);
+
+      if (newTier === currentTier) {
+        callbacks.showToast("You're already as small as you can get!", 'warning');
+        return {
+          success: false,
+          message: 'Already at minimum size',
+          effectType: 'shrink',
+        };
+      }
+
+      const newScale = getScaleForTier(newTier);
+      const tierName = getTierName(newTier);
+      callbacks.setPlayerSizeTier(newTier);
       callbacks.setPlayerScale(newScale);
-      callbacks.showToast('You shrink down to half size!', 'info');
+      callbacks.showToast(`You shrink down... now ${tierName}!`, 'info');
       callbacks.triggerVFX?.('shrink', callbacks.getPlayerPosition());
       return {
         success: true,
-        message: 'Shrunk to 50% size',
+        message: `Shrunk to ${tierName} (tier ${newTier})`,
         effectType: 'shrink',
         vfxType: 'shrink',
-        duration: 60000, // 1 minute
       };
     },
   },
@@ -129,17 +207,29 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_eat_me',
     effectType: 'grow',
     execute: (callbacks) => {
-      const currentScale = callbacks.getPlayerScale();
-      const newScale = currentScale * 1.5;
+      const currentTier = callbacks.getPlayerSizeTier();
+      const newTier = clampTier(currentTier + 1);
+
+      if (newTier === currentTier) {
+        callbacks.showToast("You're already as big as you can get!", 'warning');
+        return {
+          success: false,
+          message: 'Already at maximum size',
+          effectType: 'grow',
+        };
+      }
+
+      const newScale = getScaleForTier(newTier);
+      const tierName = getTierName(newTier);
+      callbacks.setPlayerSizeTier(newTier);
       callbacks.setPlayerScale(newScale);
-      callbacks.showToast('You grow to 1.5x your normal size!', 'info');
+      callbacks.showToast(`You grow larger... now ${tierName}!`, 'info');
       callbacks.triggerVFX?.('grow', callbacks.getPlayerPosition());
       return {
         success: true,
-        message: 'Grew to 150% size',
+        message: `Grew to ${tierName} (tier ${newTier})`,
         effectType: 'grow',
         vfxType: 'grow',
-        duration: 60000,
       };
     },
   },
@@ -228,12 +318,13 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_wakefulness',
     effectType: 'wakefulness',
     execute: (callbacks) => {
-      // TODO: Remove tiredness/fatigue debuff if exists
-      callbacks.showToast('You feel wide awake and full of energy!', 'success');
+      // Restore stamina to full
+      callbacks.restoreStaminaFull?.();
+      callbacks.showToast('You feel wide awake and full of energy! (Full stamina)', 'success');
       callbacks.triggerVFX?.('energy_burst', callbacks.getPlayerPosition());
       return {
         success: true,
-        message: 'Tiredness removed',
+        message: 'Full stamina restored',
         effectType: 'wakefulness',
         vfxType: 'energy_burst',
       };
@@ -268,12 +359,13 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_healing',
     effectType: 'healing',
     execute: (callbacks) => {
-      // TODO: Restore health/energy if those systems exist
-      callbacks.showToast('You feel refreshed and restored!', 'success');
+      // Restore 50 stamina (half of max)
+      callbacks.restoreStamina?.(50);
+      callbacks.showToast('You feel refreshed and restored! (+50 stamina)', 'success');
       callbacks.triggerVFX?.('heal', callbacks.getPlayerPosition());
       return {
         success: true,
-        message: 'Health and energy restored',
+        message: '+50 stamina restored',
         effectType: 'healing',
         vfxType: 'heal',
       };
@@ -366,12 +458,16 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_verdant_surge',
     effectType: 'replenish_bushes',
     execute: (callbacks) => {
-      // TODO: Reset all bush cooldowns on current map
-      callbacks.showToast('All forage bushes burst with fresh growth!', 'success');
+      const cleared = callbacks.clearForageCooldowns?.() ?? 0;
+      const message =
+        cleared > 0
+          ? `${cleared} forage bushes burst with fresh growth!`
+          : 'All forage bushes are already fresh!';
+      callbacks.showToast(message, 'success');
       callbacks.triggerVFX?.('nature_burst', callbacks.getPlayerPosition());
       return {
         success: true,
-        message: 'Bushes replenished',
+        message: `Replenished ${cleared} bushes`,
         effectType: 'replenish_bushes',
         vfxType: 'nature_burst',
       };
@@ -516,12 +612,15 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_quality_blessing',
     effectType: 'quality_boost',
     execute: (callbacks) => {
-      // TODO: Set all growing crops to excellent quality
-      callbacks.showToast('Your crops shimmer with golden light!', 'success');
+      const affected = callbacks.setAllCropsQuality?.('excellent') ?? 0;
+      const message =
+        affected > 0 ? `${affected} crops shimmer with golden light!` : 'No crops to bless!';
+      callbacks.showToast(message, affected > 0 ? 'success' : 'info');
       callbacks.triggerVFX?.('golden_sparkle', callbacks.getPlayerPosition());
+      callbacks.refreshFarmPlots();
       return {
         success: true,
-        message: 'Crop quality boosted',
+        message: `Blessed ${affected} crops with excellent quality`,
         effectType: 'quality_boost',
         vfxType: 'golden_sparkle',
       };
@@ -576,15 +675,59 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_abundant_harvest',
     effectType: 'abundant_harvest',
     execute: (callbacks) => {
-      // TODO: Set flag for max seed drops on next harvest
-      callbacks.showToast('Your next harvest will be bountiful!', 'success');
+      const affected = callbacks.applyAbundantHarvest?.() ?? 0;
+      const message =
+        affected > 0
+          ? `${affected} crops will yield maximum seeds on harvest!`
+          : 'No crops to bless!';
+      callbacks.showToast(message, affected > 0 ? 'success' : 'info');
       callbacks.triggerVFX?.('seed_burst', callbacks.getPlayerPosition());
+      callbacks.refreshFarmPlots();
       return {
         success: true,
-        message: 'Abundant harvest blessing active',
+        message: `Applied abundant harvest to ${affected} crops`,
         effectType: 'abundant_harvest',
         vfxType: 'seed_burst',
-        duration: 86400000, // Until next harvest
+      };
+    },
+  },
+
+  // ===== MOVEMENT EFFECTS =====
+
+  potion_floating: {
+    potionId: 'potion_floating',
+    effectType: 'floating',
+    execute: (callbacks) => {
+      // Duration: 2 game hours = 10 real minutes
+      const duration = 2 * TimeManager.MS_PER_GAME_HOUR;
+      callbacks.setMovementEffect?.('floating', duration);
+      callbacks.showToast('You feel light as a feather... you can float over water!', 'success');
+      callbacks.triggerVFX?.('float_aura', callbacks.getPlayerPosition());
+      return {
+        success: true,
+        message: 'Floating for 2 game hours',
+        effectType: 'floating',
+        vfxType: 'float_aura',
+        duration,
+      };
+    },
+  },
+
+  potion_flying: {
+    potionId: 'potion_flying',
+    effectType: 'flying',
+    execute: (callbacks) => {
+      // Duration: 2 game hours = 10 real minutes
+      const duration = 2 * TimeManager.MS_PER_GAME_HOUR;
+      callbacks.setMovementEffect?.('flying', duration);
+      callbacks.showToast('You rise into the air... you can fly over anything!', 'success');
+      callbacks.triggerVFX?.('flight_aura', callbacks.getPlayerPosition());
+      return {
+        success: true,
+        message: 'Flying for 2 game hours',
+        effectType: 'flying',
+        vfxType: 'flight_aura',
+        duration,
       };
     },
   },
@@ -669,6 +812,8 @@ export function getAllVFXTypes(): string[] {
     'teleport',
     'life_burst',
     'seed_burst',
+    'float_aura',
+    'flight_aura',
   ];
 }
 

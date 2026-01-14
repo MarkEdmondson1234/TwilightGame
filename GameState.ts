@@ -11,8 +11,9 @@
  */
 
 import { FarmPlot, NPCFriendship, PlacedItem, ColorScheme, DeskContents } from './types';
-import { GameTime } from './utils/TimeManager';
+import { GameTime, TimeManager } from './utils/TimeManager';
 import { shouldDecay } from './utils/itemDecayManager';
+import { STAMINA, WATERING_CAN } from './constants';
 
 export interface CharacterCustomization {
   characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
@@ -145,6 +146,10 @@ export interface GameState {
   // Status effects
   statusEffects: {
     feelingSick: boolean; // Prevents leaving village, acquired from eating terrible food
+    // Stamina system
+    stamina: number; // Current stamina (0-100)
+    maxStamina: number; // Maximum stamina (default 100)
+    lastStaminaUpdate: number; // Timestamp for calculating passive restoration
   };
 
   // Watering can state
@@ -164,6 +169,18 @@ export interface GameState {
   // Key format: "mapId:x,y" -> timestamp of last forage
   forageCooldowns: {
     [tileKey: string]: number; // Timestamp when tile was last foraged
+  };
+
+  // Movement effect (floating/flying potions)
+  movementEffect: {
+    mode: 'floating' | 'flying';
+    expiresAt: number; // Date.now() timestamp when effect ends
+  } | null;
+
+  // Transformation effects (fairy form via spell)
+  transformations: {
+    isFairyForm: boolean; // True when transformed into a fairy
+    fairyFormExpiresAt: number | null; // Timestamp when fairy form expires (null = permanent until dispelled)
   };
 
   // Quest and storyline progression tracking
@@ -310,9 +327,10 @@ class GameStateManager {
         }
 
         // Migrate old save data that doesn't have automatic weather
-        if (parsed.automaticWeather === undefined) {
-          console.log('[GameState] Migrating old save data - adding automatic weather');
-          parsed.automaticWeather = false;
+        // Also force-enable for users who had it disabled from previous defaults
+        if (parsed.automaticWeather === undefined || parsed.automaticWeather === false) {
+          console.log('[GameState] Migrating save data - enabling automatic weather');
+          parsed.automaticWeather = true;
         }
         if (!parsed.nextWeatherCheckTime) {
           parsed.nextWeatherCheckTime = 0;
@@ -360,7 +378,35 @@ class GameStateManager {
         // Migrate old save data that doesn't have status effects
         if (!parsed.statusEffects) {
           console.log('[GameState] Migrating old save data - adding status effects');
-          parsed.statusEffects = { feelingSick: false };
+          parsed.statusEffects = {
+            feelingSick: false,
+            stamina: STAMINA.MAX,
+            maxStamina: STAMINA.MAX,
+            lastStaminaUpdate: Date.now(),
+          };
+        }
+
+        // Migrate old status effects to include stamina (new session = full stamina)
+        if (parsed.statusEffects.stamina === undefined) {
+          console.log(
+            '[GameState] Migrating old save data - adding stamina (full restore on session start)'
+          );
+          parsed.statusEffects.stamina = STAMINA.MAX;
+          parsed.statusEffects.maxStamina = STAMINA.MAX;
+          parsed.statusEffects.lastStaminaUpdate = Date.now();
+        } else {
+          // Only restore stamina if player was offline for at least 1 game day (2 hours)
+          const timeSinceLastUpdate = Date.now() - (parsed.statusEffects.lastStaminaUpdate || 0);
+
+          if (timeSinceLastUpdate >= TimeManager.MS_PER_GAME_DAY) {
+            console.log(
+              '[GameState] Offline for 2+ hours - restoring stamina to full (slept well!)'
+            );
+            parsed.statusEffects.stamina = parsed.statusEffects.maxStamina || STAMINA.MAX;
+          } else {
+            console.log('[GameState] Quick session resume - stamina unchanged');
+          }
+          parsed.statusEffects.lastStaminaUpdate = Date.now();
         }
 
         // Migrate old save data that doesn't have placed items
@@ -378,13 +424,45 @@ class GameStateManager {
         // Migrate old save data that doesn't have watering can state
         if (!parsed.wateringCan) {
           console.log('[GameState] Migrating old save data - adding watering can');
-          parsed.wateringCan = { currentLevel: 10 }; // Start with full water can
+          parsed.wateringCan = { currentLevel: WATERING_CAN.CAPACITY }; // Start with full water can
         }
 
         // Migrate old save data that doesn't have forage cooldowns
         if (!parsed.forageCooldowns) {
           console.log('[GameState] Migrating old save data - adding forage cooldowns');
           parsed.forageCooldowns = {};
+        }
+
+        // Migrate old save data that doesn't have movement effect
+        if (parsed.movementEffect === undefined) {
+          console.log('[GameState] Migrating old save data - adding movement effect');
+          parsed.movementEffect = null;
+        }
+
+        // Migrate old save data that doesn't have transformations
+        if (!parsed.transformations) {
+          console.log('[GameState] Migrating old save data - adding transformations');
+          parsed.transformations = {
+            isFairyForm: false,
+            fairyFormExpiresAt: null,
+          };
+        }
+
+        // Clear expired fairy form on load
+        if (
+          parsed.transformations.isFairyForm &&
+          parsed.transformations.fairyFormExpiresAt &&
+          parsed.transformations.fairyFormExpiresAt <= Date.now()
+        ) {
+          console.log('[GameState] Clearing expired fairy form on load');
+          parsed.transformations.isFairyForm = false;
+          parsed.transformations.fairyFormExpiresAt = null;
+        }
+
+        // Clear expired movement effects on load
+        if (parsed.movementEffect && parsed.movementEffect.expiresAt <= Date.now()) {
+          console.log('[GameState] Clearing expired movement effect on load');
+          parsed.movementEffect = null;
         }
 
         // Migrate old save data that doesn't have quest tracking
@@ -428,7 +506,7 @@ class GameStateManager {
         mushroomsCollected: 0,
       },
       weather: 'clear', // Default weather
-      automaticWeather: false, // Disabled by default (user can enable in DevTools)
+      automaticWeather: true, // Enabled by default for dynamic weather
       nextWeatherCheckTime: 0, // No check scheduled initially
       weatherDriftSpeed: 1.0, // Default normal drift speed
       cutscenes: {
@@ -446,12 +524,20 @@ class GameStateManager {
       },
       statusEffects: {
         feelingSick: false,
+        stamina: STAMINA.MAX,
+        maxStamina: STAMINA.MAX,
+        lastStaminaUpdate: Date.now(),
       },
       wateringCan: {
-        currentLevel: 10, // Start with full water can
+        currentLevel: WATERING_CAN.CAPACITY, // Start with full water can
       },
       dailyResourceCollections: {},
       forageCooldowns: {},
+      movementEffect: null,
+      transformations: {
+        isFairyForm: false,
+        fairyFormExpiresAt: null,
+      },
       quests: {},
     };
   }
@@ -959,13 +1045,93 @@ class GameStateManager {
     this.notify();
   }
 
+  // === Stamina Methods ===
+
+  /**
+   * Get current stamina value
+   */
+  getStamina(): number {
+    return this.state.statusEffects.stamina;
+  }
+
+  /**
+   * Get maximum stamina value
+   */
+  getMaxStamina(): number {
+    return this.state.statusEffects.maxStamina;
+  }
+
+  /**
+   * Set stamina to a specific value (clamped to 0-max)
+   */
+  setStamina(value: number): void {
+    const max = this.state.statusEffects.maxStamina;
+    this.state.statusEffects.stamina = Math.max(0, Math.min(max, value));
+    this.state.statusEffects.lastStaminaUpdate = Date.now();
+    this.notify();
+  }
+
+  /**
+   * Drain stamina by an amount
+   * Returns true if player is now exhausted (stamina <= 0)
+   */
+  drainStamina(amount: number): boolean {
+    const newValue = this.state.statusEffects.stamina - amount;
+    this.state.statusEffects.stamina = Math.max(0, newValue);
+    this.state.statusEffects.lastStaminaUpdate = Date.now();
+    this.notify();
+    return this.state.statusEffects.stamina <= 0;
+  }
+
+  /**
+   * Restore stamina by an amount (clamped to max)
+   */
+  restoreStamina(amount: number): void {
+    const max = this.state.statusEffects.maxStamina;
+    this.state.statusEffects.stamina = Math.min(max, this.state.statusEffects.stamina + amount);
+    this.state.statusEffects.lastStaminaUpdate = Date.now();
+    this.notify();
+  }
+
+  /**
+   * Restore stamina to full
+   */
+  restoreStaminaFull(): void {
+    this.state.statusEffects.stamina = this.state.statusEffects.maxStamina;
+    this.state.statusEffects.lastStaminaUpdate = Date.now();
+    this.notify();
+  }
+
+  /**
+   * Check if player is exhausted (stamina at or below 0)
+   */
+  isExhausted(): boolean {
+    return this.state.statusEffects.stamina <= 0;
+  }
+
+  /**
+   * Check if stamina is low (below threshold, e.g., 25%)
+   */
+  isStaminaLow(threshold: number = 25): boolean {
+    const percentage =
+      (this.state.statusEffects.stamina / this.state.statusEffects.maxStamina) * 100;
+    return percentage <= threshold;
+  }
+
+  /**
+   * Get stamina as a percentage (0-100)
+   */
+  getStaminaPercentage(): number {
+    return (this.state.statusEffects.stamina / this.state.statusEffects.maxStamina) * 100;
+  }
+
   // === Watering Can Methods ===
 
   /**
    * Get current water level in watering can
    */
   getWaterLevel(): number {
-    return this.state.wateringCan?.currentLevel ?? 10;
+    return this.state.wateringCan?.currentLevel ?? WATERING_CAN.CAPACITY;
   }
 
   /**
@@ -987,9 +1153,9 @@ class GameStateManager {
    */
   refillWaterCan(): void {
     if (!this.state.wateringCan) {
-      this.state.wateringCan = { currentLevel: 10 };
+      this.state.wateringCan = { currentLevel: WATERING_CAN.CAPACITY };
     } else {
-      this.state.wateringCan.currentLevel = 10;
+      this.state.wateringCan.currentLevel = WATERING_CAN.CAPACITY;
     }
     console.log('[GameState] Watering can refilled');
     this.notify();
@@ -1000,6 +1166,145 @@ class GameStateManager {
    */
   isWaterCanEmpty(): boolean {
     return (this.state.wateringCan?.currentLevel ?? 0) <= 0;
+  }
+
+  // === Movement Effect Methods ===
+
+  /**
+   * Get current movement mode ('normal', 'floating', or 'flying')
+   * Fairy form automatically grants flying ability
+   */
+  getMovementMode(): 'normal' | 'floating' | 'flying' {
+    // Fairy form grants flying ability
+    if (this.isFairyForm()) {
+      return 'flying';
+    }
+
+    const effect = this.state.movementEffect;
+    if (!effect) return 'normal';
+    // Check if effect has expired
+    if (Date.now() >= effect.expiresAt) {
+      this.clearMovementEffect();
+      return 'normal';
+    }
+    return effect.mode;
+  }
+
+  /**
+   * Set a movement effect (floating or flying) with duration
+   */
+  setMovementEffect(mode: 'floating' | 'flying', durationMs: number): void {
+    this.state.movementEffect = {
+      mode,
+      expiresAt: Date.now() + durationMs,
+    };
+    console.log(`[GameState] Movement effect set: ${mode} for ${durationMs}ms`);
+    this.saveState();
+    this.notify();
+  }
+
+  /**
+   * Clear the current movement effect
+   */
+  clearMovementEffect(): void {
+    if (this.state.movementEffect) {
+      console.log('[GameState] Movement effect cleared');
+      this.state.movementEffect = null;
+      this.saveState();
+      this.notify();
+    }
+  }
+
+  /**
+   * Check if a movement effect is currently active
+   */
+  isMovementEffectActive(): boolean {
+    const effect = this.state.movementEffect;
+    if (!effect) return false;
+    return Date.now() < effect.expiresAt;
+  }
+
+  /**
+   * Get remaining time for movement effect in milliseconds
+   */
+  getMovementEffectRemainingMs(): number {
+    const effect = this.state.movementEffect;
+    if (!effect) return 0;
+    return Math.max(0, effect.expiresAt - Date.now());
+  }
+
+  /**
+   * Get the current movement effect data (for HUD display)
+   */
+  getMovementEffect(): { mode: 'floating' | 'flying'; expiresAt: number } | null {
+    return this.state.movementEffect;
+  }
+
+  // === Fairy Transformation Methods ===
+
+  /**
+   * Check if player is currently in fairy form
+   */
+  isFairyForm(): boolean {
+    // Check if transformation exists and is active
+    if (!this.state.transformations?.isFairyForm) {
+      return false;
+    }
+    // Check if it has expired (if it has an expiration)
+    if (
+      this.state.transformations.fairyFormExpiresAt &&
+      Date.now() >= this.state.transformations.fairyFormExpiresAt
+    ) {
+      this.clearFairyForm();
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Set fairy form transformation
+   * @param active Whether fairy form is active
+   * @param durationMs Optional duration in milliseconds (null = permanent until cleared)
+   */
+  setFairyForm(active: boolean, durationMs: number | null = null): void {
+    if (!this.state.transformations) {
+      this.state.transformations = {
+        isFairyForm: false,
+        fairyFormExpiresAt: null,
+      };
+    }
+
+    this.state.transformations.isFairyForm = active;
+    this.state.transformations.fairyFormExpiresAt =
+      active && durationMs ? Date.now() + durationMs : null;
+
+    console.log(
+      `[GameState] Fairy form ${active ? 'activated' : 'deactivated'}${durationMs ? ` for ${durationMs}ms` : ''}`
+    );
+    this.saveState();
+    this.notify();
+  }
+
+  /**
+   * Clear fairy form transformation
+   */
+  clearFairyForm(): void {
+    if (this.state.transformations?.isFairyForm) {
+      console.log('[GameState] Fairy form cleared');
+      this.state.transformations.isFairyForm = false;
+      this.state.transformations.fairyFormExpiresAt = null;
+      this.saveState();
+      this.notify();
+    }
+  }
+
+  /**
+   * Get remaining time for fairy form in milliseconds
+   */
+  getFairyFormRemainingMs(): number {
+    if (!this.state.transformations?.isFairyForm) return 0;
+    if (!this.state.transformations.fairyFormExpiresAt) return Infinity; // Permanent
+    return Math.max(0, this.state.transformations.fairyFormExpiresAt - Date.now());
   }
 
   resetState(): void {
@@ -1020,7 +1325,7 @@ class GameStateManager {
       crafting: { unlockedRecipes: [], materials: {} },
       stats: { gamesPlayed: 0, totalPlayTime: 0, mushroomsCollected: 0 },
       weather: 'clear',
-      automaticWeather: false,
+      automaticWeather: true,
       nextWeatherCheckTime: 0,
       weatherDriftSpeed: 1.0,
       cutscenes: { completed: [] },
@@ -1028,10 +1333,20 @@ class GameStateManager {
       placedItems: [],
       deskContents: [],
       cooking: { recipeBookUnlocked: false, unlockedRecipes: ['tea'], recipeProgress: {} }, // Tea is always unlocked
-      statusEffects: { feelingSick: false },
-      wateringCan: { currentLevel: 10 },
+      statusEffects: {
+        feelingSick: false,
+        stamina: STAMINA.MAX,
+        maxStamina: STAMINA.MAX,
+        lastStaminaUpdate: Date.now(),
+      },
+      wateringCan: { currentLevel: WATERING_CAN.CAPACITY },
       dailyResourceCollections: {},
       forageCooldowns: {},
+      movementEffect: null,
+      transformations: {
+        isFairyForm: false,
+        fairyFormExpiresAt: null,
+      },
       quests: {},
     };
     console.log('[GameState] State reset');
@@ -1307,6 +1622,36 @@ class GameStateManager {
       this.saveState();
       console.log(`[GameState] Cleaned up ${keysToRemove.length} expired forage cooldowns`);
     }
+  }
+
+  /**
+   * Clear all forage cooldowns on a specific map (for Verdant Surge potion)
+   * @param mapId The map ID to clear cooldowns for
+   * @returns Number of cooldowns cleared
+   */
+  clearForageCooldownsOnMap(mapId: string): number {
+    if (!this.state.forageCooldowns) {
+      return 0;
+    }
+
+    const keysToRemove: string[] = [];
+
+    for (const key of Object.keys(this.state.forageCooldowns)) {
+      // Key format is "mapId:x,y"
+      if (key.startsWith(`${mapId}:`)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    if (keysToRemove.length > 0) {
+      for (const key of keysToRemove) {
+        delete this.state.forageCooldowns[key];
+      }
+      this.saveState();
+      console.log(`[GameState] Cleared ${keysToRemove.length} forage cooldowns on map ${mapId}`);
+    }
+
+    return keysToRemove.length;
   }
 
   exportState(): string {

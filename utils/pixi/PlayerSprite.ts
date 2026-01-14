@@ -74,7 +74,8 @@ export class PlayerSprite extends PixiLayer {
     spriteUrl: string,
     spriteScale: number = 1,
     gridOffset?: Position,
-    tileSize: number = TILE_SIZE // Allow override for viewport scaling
+    tileSize: number = TILE_SIZE, // Allow override for viewport scaling
+    shouldFlip: boolean = false // Flip sprite horizontally (for fairy right-facing)
   ): Promise<void> {
     // Load texture if changed
     if (this.currentSpriteUrl !== spriteUrl) {
@@ -99,8 +100,21 @@ export class PlayerSprite extends PixiLayer {
     this.sprite.y = playerPos.y * tileSize + offsetY;
 
     // Update size (use tileSize for viewport scaling)
-    this.sprite.width = size * tileSize;
-    this.sprite.height = size * tileSize;
+    // Use scale instead of width/height to support flipping
+    const targetWidth = size * tileSize;
+    const targetHeight = size * tileSize;
+    // When sprite has a texture, calculate scale from texture dimensions
+    if (this.sprite.texture && this.sprite.texture.width > 0) {
+      const baseScaleX = targetWidth / this.sprite.texture.width;
+      const baseScaleY = targetHeight / this.sprite.texture.height;
+      // Apply horizontal flip if needed
+      this.sprite.scale.x = shouldFlip ? -baseScaleX : baseScaleX;
+      this.sprite.scale.y = baseScaleY;
+    } else {
+      // Fallback to width/height when no texture
+      this.sprite.width = targetWidth;
+      this.sprite.height = targetHeight;
+    }
 
     // Update z-index for depth sorting (based on feet Y position)
     const playerFeetY = playerPos.y + PLAYER_FEET_OFFSET;

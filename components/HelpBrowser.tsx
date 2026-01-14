@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Z_HELP_BROWSER, zClass } from '../zIndex';
-import { getStoredApiKey, setStoredApiKey, clearStoredApiKey, reinitializeClient, isAIAvailable } from '../services/anthropicClient';
+import {
+  getStoredApiKey,
+  setStoredApiKey,
+  clearStoredApiKey,
+  reinitializeClient,
+  isAIAvailable,
+} from '../services/anthropicClient';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -15,9 +21,15 @@ interface DocFile {
 
 // Player-facing documentation (not developer docs)
 const DOC_FILES: DocFile[] = [
-  { name: 'getting-started', title: '🎮 Getting Started', path: '/TwilightGame/docs/GETTING_STARTED.md' },
+  {
+    name: 'getting-started',
+    title: '🎮 Getting Started',
+    path: '/TwilightGame/docs/GETTING_STARTED.md',
+  },
+  { name: 'stamina', title: '💚 Stamina', path: '/TwilightGame/docs/STAMINA.md' },
   { name: 'farming', title: '🌾 Farming Guide', path: '/TwilightGame/docs/FARMING.md' },
   { name: 'seeds', title: '🌱 Seeds Guide', path: '/TwilightGame/docs/SEEDS.md' },
+  { name: 'magic', title: '🧪 Magic & Potions', path: '/TwilightGame/docs/MAGIC.md' },
   { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },
   { name: 'ai-chat', title: '💬 AI Chat', path: '/TwilightGame/docs/AI_CHAT.md' },
   // Developer docs excluded: MAP_GUIDE, ASSETS, COORDINATE_GUIDE
@@ -47,12 +59,12 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
     // Only load document content for doc tabs, not settings
     if (selectedTab === SETTINGS_TAB) return;
 
-    const docFile = DOC_FILES.find(doc => doc.name === selectedTab);
+    const docFile = DOC_FILES.find((doc) => doc.name === selectedTab);
     if (docFile) {
       fetch(docFile.path)
-        .then(response => response.text())
-        .then(text => setContent(text))
-        .catch(error => {
+        .then((response) => response.text())
+        .then((text) => setContent(text))
+        .catch((error) => {
           console.error('Failed to load documentation:', error);
           setContent('# Error\n\nFailed to load documentation file.');
         });
@@ -73,7 +85,11 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
     setHasStoredKey(true);
     setAiEnabled(success);
     setApiKeyInput('');
-    setSaveMessage(success ? 'API key saved! AI dialogue is now enabled.' : 'Key saved but failed to initialize client.');
+    setSaveMessage(
+      success
+        ? 'API key saved! AI dialogue is now enabled.'
+        : 'Key saved but failed to initialize client.'
+    );
   };
 
   const handleClearApiKey = () => {
@@ -99,7 +115,9 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
   };
 
   return (
-    <div className={`fixed inset-0 bg-black/70 flex items-center justify-center ${zClass(Z_HELP_BROWSER)} p-4`}>
+    <div
+      className={`fixed inset-0 bg-black/70 flex items-center justify-center ${zClass(Z_HELP_BROWSER)} p-4`}
+    >
       <div
         className="w-full max-w-6xl h-[90vh] flex flex-col rounded-lg overflow-hidden"
         style={{
@@ -143,23 +161,28 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
             }}
           >
             <div className="p-4">
-              <h2 className="text-lg font-serif font-bold mb-3" style={{ color: colours.woodDarker }}>
+              <h2
+                className="text-lg font-serif font-bold mb-3"
+                style={{ color: colours.woodDarker }}
+              >
                 Topics
               </h2>
-              {DOC_FILES.map(doc => (
+              {DOC_FILES.map((doc) => (
                 <button
                   key={doc.name}
                   onClick={() => setSelectedTab(doc.name)}
                   className="w-full text-left px-4 py-3 mb-2 rounded font-serif font-semibold transition-all"
                   style={{
-                    background: selectedTab === doc.name
-                      ? `linear-gradient(to bottom, ${colours.brass}, ${colours.brassDark})`
-                      : `linear-gradient(to bottom, ${colours.parchment}, ${colours.parchmentDark})`,
+                    background:
+                      selectedTab === doc.name
+                        ? `linear-gradient(to bottom, ${colours.brass}, ${colours.brassDark})`
+                        : `linear-gradient(to bottom, ${colours.parchment}, ${colours.parchmentDark})`,
                     color: selectedTab === doc.name ? '#fff' : colours.woodDarker,
                     border: `2px solid ${selectedTab === doc.name ? colours.brassDark : colours.wood}`,
-                    boxShadow: selectedTab === doc.name
-                      ? 'inset 0 1px 0 rgba(255,255,255,0.3)'
-                      : 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                    boxShadow:
+                      selectedTab === doc.name
+                        ? 'inset 0 1px 0 rgba(255,255,255,0.3)'
+                        : 'inset 0 1px 0 rgba(255,255,255,0.5)',
                   }}
                 >
                   {doc.title}
@@ -167,21 +190,26 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
               ))}
 
               {/* Divider */}
-              <div className="my-4" style={{ borderTop: `2px solid ${colours.wood}`, opacity: 0.5 }}></div>
+              <div
+                className="my-4"
+                style={{ borderTop: `2px solid ${colours.wood}`, opacity: 0.5 }}
+              ></div>
 
               {/* Settings Tab */}
               <button
                 onClick={() => setSelectedTab(SETTINGS_TAB)}
                 className="w-full text-left px-4 py-3 mb-2 rounded font-serif font-semibold transition-all"
                 style={{
-                  background: selectedTab === SETTINGS_TAB
-                    ? `linear-gradient(to bottom, #8b6f8b, #6b546b)`
-                    : `linear-gradient(to bottom, ${colours.parchment}, ${colours.parchmentDark})`,
+                  background:
+                    selectedTab === SETTINGS_TAB
+                      ? `linear-gradient(to bottom, #8b6f8b, #6b546b)`
+                      : `linear-gradient(to bottom, ${colours.parchment}, ${colours.parchmentDark})`,
                   color: selectedTab === SETTINGS_TAB ? '#fff' : colours.woodDarker,
                   border: `2px solid ${selectedTab === SETTINGS_TAB ? '#5a445a' : colours.wood}`,
-                  boxShadow: selectedTab === SETTINGS_TAB
-                    ? 'inset 0 1px 0 rgba(255,255,255,0.3)'
-                    : 'inset 0 1px 0 rgba(255,255,255,0.5)',
+                  boxShadow:
+                    selectedTab === SETTINGS_TAB
+                      ? 'inset 0 1px 0 rgba(255,255,255,0.3)'
+                      : 'inset 0 1px 0 rgba(255,255,255,0.5)',
                 }}
               >
                 ⚙️ Settings
@@ -190,10 +218,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
           </div>
 
           {/* Content */}
-          <div
-            className="flex-1 overflow-y-auto p-8"
-            style={{ background: colours.parchment }}
-          >
+          <div className="flex-1 overflow-y-auto p-8" style={{ background: colours.parchment }}>
             {selectedTab === SETTINGS_TAB ? (
               /* Settings Panel */
               <div className="max-w-2xl">
@@ -209,12 +234,16 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                     border: `2px solid ${colours.wood}`,
                   }}
                 >
-                  <h2 className="text-xl font-serif font-bold mb-4" style={{ color: colours.brass }}>
+                  <h2
+                    className="text-xl font-serif font-bold mb-4"
+                    style={{ color: colours.brass }}
+                  >
                     AI Dialogue
                   </h2>
                   <p className="mb-4" style={{ color: colours.textLight }}>
-                    Enable dynamic AI-powered conversations with NPCs by providing your own Anthropic API key.
-                    Your key is stored locally in your browser and never sent to our servers.
+                    Enable dynamic AI-powered conversations with NPCs by providing your own
+                    Anthropic API key. Your key is stored locally in your browser and never sent to
+                    our servers.
                   </p>
 
                   {/* Status indicator */}
@@ -251,7 +280,10 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                     /* No key stored - show input */
                     <div className="space-y-4">
                       <div>
-                        <label className="block mb-2 text-sm font-serif" style={{ color: colours.textLight }}>
+                        <label
+                          className="block mb-2 text-sm font-serif"
+                          style={{ color: colours.textLight }}
+                        >
                           Anthropic API Key
                         </label>
                         <input
@@ -295,13 +327,17 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
 
                   {/* Save message */}
                   {saveMessage && (
-                    <p className="mt-4 text-sm font-serif" style={{
-                      color: saveMessage.includes('saved') || saveMessage.includes('enabled')
-                        ? '#4a7c4a'
-                        : saveMessage.includes('removed')
-                          ? colours.brass
-                          : '#8b4444'
-                    }}>
+                    <p
+                      className="mt-4 text-sm font-serif"
+                      style={{
+                        color:
+                          saveMessage.includes('saved') || saveMessage.includes('enabled')
+                            ? '#4a7c4a'
+                            : saveMessage.includes('removed')
+                              ? colours.brass
+                              : '#8b4444',
+                      }}
+                    >
                       {saveMessage}
                     </p>
                   )}
@@ -327,111 +363,130 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                 </div>
               </div>
             ) : (
-            /* Documentation Content */
-            <div className="prose max-w-none">
-              <ReactMarkdown
-                components={{
-                  // Custom cottagecore styling for markdown elements
-                  h1: ({ node, ...props }) => (
-                    <h1
-                      className="text-4xl font-serif font-bold mb-4 pb-2"
-                      style={{ color: colours.brass, borderBottom: `2px solid ${colours.wood}` }}
-                      {...props}
-                    />
-                  ),
-                  h2: ({ node, ...props }) => (
-                    <h2
-                      className="text-3xl font-serif font-bold mt-8 mb-3"
-                      style={{ color: colours.brassDark }}
-                      {...props}
-                    />
-                  ),
-                  h3: ({ node, ...props }) => (
-                    <h3
-                      className="text-2xl font-serif font-bold mt-6 mb-2"
-                      style={{ color: colours.wood }}
-                      {...props}
-                    />
-                  ),
-                  p: ({ node, ...props }) => (
-                    <p className="mb-4 leading-relaxed" style={{ color: colours.text }} {...props} />
-                  ),
-                  ul: ({ node, ...props }) => (
-                    <ul className="list-disc list-inside mb-4 space-y-1" style={{ color: colours.text }} {...props} />
-                  ),
-                  ol: ({ node, ...props }) => (
-                    <ol className="list-decimal list-inside mb-4 space-y-1" style={{ color: colours.text }} {...props} />
-                  ),
-                  li: ({ node, ...props }) => (
-                    <li className="ml-4" style={{ color: colours.text }} {...props} />
-                  ),
-                  code: ({ node, inline, ...props }: any) =>
-                    inline ? (
-                      <code
-                        className="px-2 py-1 rounded font-mono text-sm"
-                        style={{ background: colours.parchmentDarker, color: colours.woodDarker }}
-                        {...props}
-                      />
-                    ) : (
-                      <code
-                        className="block p-4 rounded font-mono text-sm overflow-x-auto mb-4"
-                        style={{ background: colours.parchmentDark, color: colours.woodDarker }}
+              /* Documentation Content */
+              <div className="prose max-w-none">
+                <ReactMarkdown
+                  components={{
+                    // Custom cottagecore styling for markdown elements
+                    h1: ({ node, ...props }) => (
+                      <h1
+                        className="text-4xl font-serif font-bold mb-4 pb-2"
+                        style={{ color: colours.brass, borderBottom: `2px solid ${colours.wood}` }}
                         {...props}
                       />
                     ),
-                  pre: ({ node, ...props }) => (
-                    <pre
-                      className="p-4 rounded overflow-x-auto mb-4"
-                      style={{ background: colours.parchmentDark }}
-                      {...props}
-                    />
-                  ),
-                  strong: ({ node, ...props }) => (
-                    <strong className="font-bold" style={{ color: colours.woodDarker }} {...props} />
-                  ),
-                  em: ({ node, ...props }) => (
-                    <em className="italic" style={{ color: colours.wood }} {...props} />
-                  ),
-                  a: ({ node, ...props }) => (
-                    <a
-                      className="underline hover:brightness-125"
-                      style={{ color: colours.brass }}
-                      {...props}
-                    />
-                  ),
-                  blockquote: ({ node, ...props }) => (
-                    <blockquote
-                      className="pl-4 italic mb-4"
-                      style={{ borderLeft: `4px solid ${colours.brass}`, color: colours.textLight }}
-                      {...props}
-                    />
-                  ),
-                  table: ({ node, ...props }) => (
-                    <table className="w-full border-collapse mb-4" {...props} />
-                  ),
-                  th: ({ node, ...props }) => (
-                    <th
-                      className="px-4 py-2 text-left font-serif font-bold"
-                      style={{
-                        background: colours.parchmentDark,
-                        border: `1px solid ${colours.wood}`,
-                        color: colours.brass,
-                      }}
-                      {...props}
-                    />
-                  ),
-                  td: ({ node, ...props }) => (
-                    <td
-                      className="px-4 py-2"
-                      style={{ border: `1px solid ${colours.wood}`, color: colours.text }}
-                      {...props}
-                    />
-                  ),
-                }}
-              >
-                {content}
-              </ReactMarkdown>
-            </div>
+                    h2: ({ node, ...props }) => (
+                      <h2
+                        className="text-3xl font-serif font-bold mt-8 mb-3"
+                        style={{ color: colours.brassDark }}
+                        {...props}
+                      />
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h3
+                        className="text-2xl font-serif font-bold mt-6 mb-2"
+                        style={{ color: colours.wood }}
+                        {...props}
+                      />
+                    ),
+                    p: ({ node, ...props }) => (
+                      <p
+                        className="mb-4 leading-relaxed"
+                        style={{ color: colours.text }}
+                        {...props}
+                      />
+                    ),
+                    ul: ({ node, ...props }) => (
+                      <ul
+                        className="list-disc list-inside mb-4 space-y-1"
+                        style={{ color: colours.text }}
+                        {...props}
+                      />
+                    ),
+                    ol: ({ node, ...props }) => (
+                      <ol
+                        className="list-decimal list-inside mb-4 space-y-1"
+                        style={{ color: colours.text }}
+                        {...props}
+                      />
+                    ),
+                    li: ({ node, ...props }) => (
+                      <li className="ml-4" style={{ color: colours.text }} {...props} />
+                    ),
+                    code: ({ node, inline, ...props }: any) =>
+                      inline ? (
+                        <code
+                          className="px-2 py-1 rounded font-mono text-sm"
+                          style={{ background: colours.parchmentDarker, color: colours.woodDarker }}
+                          {...props}
+                        />
+                      ) : (
+                        <code
+                          className="block p-4 rounded font-mono text-sm overflow-x-auto mb-4"
+                          style={{ background: colours.parchmentDark, color: colours.woodDarker }}
+                          {...props}
+                        />
+                      ),
+                    pre: ({ node, ...props }) => (
+                      <pre
+                        className="p-4 rounded overflow-x-auto mb-4"
+                        style={{ background: colours.parchmentDark }}
+                        {...props}
+                      />
+                    ),
+                    strong: ({ node, ...props }) => (
+                      <strong
+                        className="font-bold"
+                        style={{ color: colours.woodDarker }}
+                        {...props}
+                      />
+                    ),
+                    em: ({ node, ...props }) => (
+                      <em className="italic" style={{ color: colours.wood }} {...props} />
+                    ),
+                    a: ({ node, ...props }) => (
+                      <a
+                        className="underline hover:brightness-125"
+                        style={{ color: colours.brass }}
+                        {...props}
+                      />
+                    ),
+                    blockquote: ({ node, ...props }) => (
+                      <blockquote
+                        className="pl-4 italic mb-4"
+                        style={{
+                          borderLeft: `4px solid ${colours.brass}`,
+                          color: colours.textLight,
+                        }}
+                        {...props}
+                      />
+                    ),
+                    table: ({ node, ...props }) => (
+                      <table className="w-full border-collapse mb-4" {...props} />
+                    ),
+                    th: ({ node, ...props }) => (
+                      <th
+                        className="px-4 py-2 text-left font-serif font-bold"
+                        style={{
+                          background: colours.parchmentDark,
+                          border: `1px solid ${colours.wood}`,
+                          color: colours.brass,
+                        }}
+                        {...props}
+                      />
+                    ),
+                    td: ({ node, ...props }) => (
+                      <td
+                        className="px-4 py-2"
+                        style={{ border: `1px solid ${colours.wood}`, color: colours.text }}
+                        {...props}
+                      />
+                    ),
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+              </div>
             )}
           </div>
         </div>

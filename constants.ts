@@ -1,5 +1,6 @@
 import { TileType, Direction } from './types';
 import { animationAssets } from './assets';
+import { TimeManager } from './utils/TimeManager';
 
 export const TILE_SIZE = 64;
 export const MAP_WIDTH = 50;
@@ -60,7 +61,7 @@ export const TIMING = {
   TILL_ANIMATION_MS: 400, // Hoe tilling animation
 
   // Foraging
-  FORAGE_COOLDOWN_MS: 7200000, // 1 game day cooldown per tile (2 real hours)
+  FORAGE_COOLDOWN_MS: TimeManager.MS_PER_GAME_DAY, // 1 game day cooldown per tile
 
   // Tile animations
   DEFAULT_TILE_ANIMATION_MS: 150, // Default animated tile frame rate
@@ -95,6 +96,58 @@ export const WATER_CAN = {
 export const INTERACTION = {
   /** Maximum distance (in tiles) for immediate interaction. Beyond this, player walks first. */
   RANGE: 2.0,
+} as const;
+
+/**
+ * STAMINA - Player energy system constants
+ *
+ * Controls stamina drain, restoration, and thresholds.
+ * Target: ~1 meal needed per game day (2 real hours = 7200 seconds).
+ */
+export const STAMINA = {
+  // Core values
+  MAX: 100, // Maximum stamina
+  LOW_THRESHOLD: 25, // Show warning/bar below this percentage
+
+  // Drain rates (per second)
+  WALKING_DRAIN_PER_SECOND: 0.028, // ~1 hour of continuous walking drains 100 stamina
+
+  // Activity costs (instant drain)
+  TILL_COST: 2,
+  PLANT_COST: 1,
+  WATER_COST: 1,
+  HARVEST_COST: 3,
+  FORAGE_COST: 2,
+  COOK_COST: 5,
+
+  // Restoration (home)
+  HOME_RESTORE_PER_SECOND: 0.167, // ~10 per minute, full restore in ~10 mins
+
+  // Potion restoration
+  POTION_HEALING: 50, // Healing Salve
+  POTION_WAKEFULNESS: 100, // Wakefulness Brew (full restore)
+
+  // Food restoration values
+  FOOD_RESTORATION: {
+    food_tea: 5,
+    food_bread: 15,
+    food_cookies: 10,
+    food_french_toast: 20,
+    food_crepes: 25,
+    food_spaghetti: 35,
+    food_pizza: 30,
+    food_ice_cream: 15,
+    food_marzipan_chocolates: 20,
+    food_roast_dinner: 50,
+    food_chocolate_cake: 25,
+  } as Record<string, number>,
+} as const;
+
+/**
+ * WATERING_CAN - Watering can capacity and usage
+ */
+export const WATERING_CAN = {
+  CAPACITY: 10, // Maximum water uses before needing to refill
 } as const;
 
 // Player sprites now point to placeholder URLs. Frame 0 is idle.

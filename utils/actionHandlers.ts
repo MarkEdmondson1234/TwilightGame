@@ -3,7 +3,7 @@
  * Shared between keyboard and touch input handlers
  */
 
-import { Position, TileType, CollisionType } from '../types';
+import { Position, TileType, CollisionType, SizeTier } from '../types';
 import { getTileData, getAdjacentTiles, getTileCoords, getSurroundingTiles } from './mapUtils';
 import { deskManager } from './deskManager';
 import { mapManager, transitionToMap } from '../maps';
@@ -17,6 +17,7 @@ import { generateForageSeed, getCropIdFromSeed } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { WATER_CAN, TIMING } from '../constants';
 import { itemAssets, groceryAssets } from '../assets';
+import { getTierName } from './MagicEffects';
 
 export interface ActionResult {
   handled: boolean;
@@ -154,10 +155,14 @@ export function checkNPCInteraction(playerPos: Position): string | null {
 /**
  * Check for and handle map transition
  * Returns transition result with new map info if successful
+ * @param playerPos - Current player position
+ * @param currentMapId - Current map ID
+ * @param playerSizeTier - Optional player size tier for size-restricted transitions
  */
 export function checkTransition(
   playerPos: Position,
-  currentMapId: string | null
+  currentMapId: string | null,
+  playerSizeTier: SizeTier = 0
 ): TransitionResult {
   const transitionData = mapManager.getTransitionAt(playerPos);
 
@@ -184,6 +189,36 @@ export function checkTransition(
         message: 'This path is not yet accessible.',
       };
     }
+  }
+
+  // Check size restrictions for this transition
+  // Default: doors allow Large size or smaller (Very Large/Giant can't fit through normal doors)
+  const effectiveMaxSize = transition.maxSizeTier ?? 1; // Default to Large (1)
+
+  if (transition.minSizeTier !== undefined && playerSizeTier < transition.minSizeTier) {
+    const requiredSize = getTierName(transition.minSizeTier);
+    const currentSize = getTierName(playerSizeTier);
+    console.log(
+      `[Action] Transition blocked: player too small (${currentSize}, needs at least ${requiredSize})`
+    );
+    return {
+      success: false,
+      blocked: true,
+      message: `You're too small! You need to be at least ${requiredSize} to fit through here.`,
+    };
+  }
+
+  if (playerSizeTier > effectiveMaxSize) {
+    const maxSize = getTierName(effectiveMaxSize as SizeTier);
+    const currentSize = getTierName(playerSizeTier);
+    console.log(
+      `[Action] Transition blocked: player too big (${currentSize}, max allowed ${maxSize})`
+    );
+    return {
+      success: false,
+      blocked: true,
+      message: `You're too big! You need to be ${maxSize} or smaller to fit through here.`,
+    };
   }
 
   console.log(
@@ -1049,6 +1084,7 @@ export interface GetInteractionsConfig {
   currentMapId: string;
   currentTool: string;
   selectedSeed: string | null;
+  playerSizeTier?: SizeTier; // Player's current size tier for size-restricted transitions
   onMirror?: () => void;
   onNPC?: (npcId: string) => void;
   onGiveGift?: (npcId: string) => void;
@@ -1078,6 +1114,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     currentMapId,
     currentTool,
     selectedSeed,
+    playerSizeTier = 0,
     onMirror,
     onNPC,
     onGiveGift,
@@ -1234,32 +1271,73 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   const transitionData = mapManager.getTransitionAt(position);
   if (transitionData) {
     const { transition } = transitionData;
-    interactions.push({
-      type: 'transition',
-      label: 'Go Through Door',
-      icon: '🚪',
-      color: '#34d399',
-      execute: () => {
-        try {
-          const result = transitionToMap(
-            transition.toMapId,
-            transition.toPosition,
-            currentMapId || undefined
-          );
-          const map = result.map;
-          const seedMatch = map.id.match(/_([\d]+)$/);
-          const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+
+    // Check size restrictions
+    // Default: doors allow Large size or smaller (Very Large/Giant can't fit through normal doors)
+    const effectiveMaxSize = transition.maxSizeTier ?? 1; // Default to Large (1)
+    const tooSmall =
+      transition.minSizeTier !== undefined && playerSizeTier < transition.minSizeTier;
+    const tooBig = playerSizeTier > effectiveMaxSize;
+
+    if (tooSmall) {
+      const requiredSize = getTierName(transition.minSizeTier!);
+      interactions.push({
+        type: 'transition',
+        label: `Too Small (need ${requiredSize})`,
+        icon: '🚪',
+        color: '#9ca3af', // Grey for disabled
+        execute: () => {
           onTransition?.({
-            success: true,
-            mapId: map.id,
-            mapName: map.name,
-            spawnPosition: result.spawn,
+            success: false,
+            blocked: true,
+            message: `You're too small! You need to be at least ${requiredSize} to fit through here.`,
           });
-        } catch (error) {
-          console.error(`[Action] ERROR transitioning:`, error);
-        }
-      },
-    });
+        },
+      });
+    } else if (tooBig) {
+      const maxSize = getTierName(effectiveMaxSize as SizeTier);
+      interactions.push({
+        type: 'transition',
+        label: `Too Big (max ${maxSize})`,
+        icon: '🚪',
+        color: '#9ca3af', // Grey for disabled
+        execute: () => {
+          onTransition?.({
+            success: false,
+            blocked: true,
+            message: `You're too big! You need to be ${maxSize} or smaller to fit through here.`,
+          });
+        },
+      });
+    } else {
+      // Normal transition - player is the right size
+      interactions.push({
+        type: 'transition',
+        label: 'Go Through Door',
+        icon: '🚪',
+        color: '#34d399',
+        execute: () => {
+          try {
+            const result = transitionToMap(
+              transition.toMapId,
+              transition.toPosition,
+              currentMapId || undefined
+            );
+            const map = result.map;
+            const seedMatch = map.id.match(/_([\d]+)$/);
+            const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+            onTransition?.({
+              success: true,
+              mapId: map.id,
+              mapName: map.name,
+              spawnPosition: result.spawn,
+            });
+          } catch (error) {
+            console.error(`[Action] ERROR transitioning:`, error);
+          }
+        },
+      });
+    }
   }
 
   // Check for cooking/brewing location

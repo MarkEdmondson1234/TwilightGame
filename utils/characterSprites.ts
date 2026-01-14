@@ -1,6 +1,7 @@
 import { CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
 import { generatePlaceholderSprites as generateSVGPlaceholders } from './placeholderSprites';
+import { fairyAssets } from '../assets';
 // Note: Sprite sheets disabled - using original frames for better quality
 // import { hasSpriteSheets, loadSpriteSheetAsFrames } from './spriteSheetLoader';
 
@@ -109,7 +110,7 @@ function generateCustomSprite(
   character: CharacterCustomization,
   direction: Direction,
   frame: number
-): { layers: string[], fallbackUrl: string } {
+): { layers: string[]; fallbackUrl: string } {
   const directionName = ['up', 'down', 'left', 'right'][direction];
 
   // Map character customization to character ID
@@ -117,22 +118,26 @@ function generateCustomSprite(
   const characterId = character.name.toLowerCase().replace(/\s+/g, '_');
 
   // Start with base character sprite
-  const layers = [
-    `/assets/player/${characterId}/base/${directionName}_${frame}.png`,
-  ];
+  const layers = [`/assets/player/${characterId}/base/${directionName}_${frame}.png`];
 
   // Add variation layers based on customization
   // These are optional layers that go on top of the base
   if (character.hairStyle && character.hairStyle !== 'bald') {
-    layers.push(`/assets/player/${characterId}/variations/hair_${character.hairStyle}/${directionName}_${frame}.png`);
+    layers.push(
+      `/assets/player/${characterId}/variations/hair_${character.hairStyle}/${directionName}_${frame}.png`
+    );
   }
 
   if (character.clothesStyle && character.clothesStyle !== 'default') {
-    layers.push(`/assets/player/${characterId}/variations/clothes_${character.clothesStyle}/${directionName}_${frame}.png`);
+    layers.push(
+      `/assets/player/${characterId}/variations/clothes_${character.clothesStyle}/${directionName}_${frame}.png`
+    );
   }
 
   if (character.glasses && character.glasses !== 'none') {
-    layers.push(`/assets/player/${characterId}/variations/glasses_${character.glasses}/${directionName}_${frame}.png`);
+    layers.push(
+      `/assets/player/${characterId}/variations/glasses_${character.glasses}/${directionName}_${frame}.png`
+    );
   }
 
   // Add any equipped items/accessories
@@ -154,7 +159,9 @@ function generateCustomSprite(
  * - string[] for simple single-layer sprites (current temporary implementation)
  * - string[][] for layered sprites (future: each frame can have multiple layers)
  */
-export function generateCharacterSprites(character: CharacterCustomization): Record<Direction, string[]> {
+export function generateCharacterSprites(
+  character: CharacterCustomization
+): Record<Direction, string[]> {
   try {
     // Ensure character has all required fields
     if (!character || !character.name) {
@@ -236,7 +243,7 @@ export function generateCharacterSpriteLayers(
   character: CharacterCustomization,
   direction: Direction,
   frame: number
-): { layers: string[], fallbackUrl: string } {
+): { layers: string[]; fallbackUrl: string } {
   return generateCustomSprite(character, direction, frame);
 }
 
@@ -267,3 +274,34 @@ export const DEFAULT_CHARACTER: CharacterCustomization = {
   glasses: 'none',
   weapon: 'sword',
 };
+
+/**
+ * Generate fairy transformation sprites
+ *
+ * When the player is transformed into a fairy, we use directional sprites
+ * with a 2-frame animation per direction. Right-facing uses the left sprites
+ * with a horizontal flip applied at render time.
+ */
+export function generateFairySprites(): Record<Direction, string[]> {
+  // Directional fairy sprites with 2-frame animation each
+  const downFrames = [fairyAssets.down_01, fairyAssets.down_02];
+  const upFrames = [fairyAssets.up_01, fairyAssets.up_02];
+  const leftFrames = [fairyAssets.left_01, fairyAssets.left_02];
+  // Right uses left sprites - flip is handled by shouldFlipFairySprite()
+  const rightFrames = [fairyAssets.left_01, fairyAssets.left_02];
+
+  return {
+    [Direction.Up]: upFrames,
+    [Direction.Down]: downFrames,
+    [Direction.Left]: leftFrames,
+    [Direction.Right]: rightFrames,
+  };
+}
+
+/**
+ * Check if a fairy sprite should be horizontally flipped
+ * Right-facing fairy sprites reuse the left sprites with a flip
+ */
+export function shouldFlipFairySprite(direction: Direction): boolean {
+  return direction === Direction.Right;
+}
