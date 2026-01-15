@@ -517,6 +517,36 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.9, max: 1.1 }, // Subtle size variation
     },
   },
+  // ============================================
+  // Deep Forest Plants (Sacred Grove)
+  // ============================================
+  [TileType.MOONPETAL]: {
+    name: 'Moonpetal',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - magical plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // Time-of-day conditional images: flowers open at night, closed during day
+    // Note: 3x3 multi-tile sprite (see SPRITE_METADATA)
+    timeOfDayImages: {
+      spring: {
+        day: [tileAssets.moonpetal_spring_summer_day], // Closed flowers
+        night: [tileAssets.moonpetal_spring_summer_night], // Open flowers
+      },
+      summer: {
+        day: [tileAssets.moonpetal_spring_summer_day], // Closed flowers
+        night: [tileAssets.moonpetal_spring_summer_night], // Open flowers
+      },
+      autumn: {
+        day: [tileAssets.moonpetal_autumn], // Foliage only
+        night: [tileAssets.moonpetal_autumn], // Foliage only (no night bloom)
+      },
+      winter: {
+        day: [], // Dormant - no sprite shown
+        night: [], // Dormant - no sprite shown
+      },
+    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending

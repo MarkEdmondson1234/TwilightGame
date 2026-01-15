@@ -774,15 +774,33 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Check cooldown FIRST (applies to all foraging types)
+  // For multi-tile sprites (like moonpetal 3x3), check cooldown at anchor position
+  let cooldownCheckPos = { x: playerTileX, y: playerTileY };
+
+  // Check if player is near a moonpetal anchor (for 3x3 area foraging)
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const checkX = playerTileX + dx;
+      const checkY = playerTileY + dy;
+      const checkTile = getTileData(checkX, checkY);
+
+      if (checkTile?.type === TileType.MOONPETAL) {
+        // Use anchor position for cooldown check (entire 3x3 area shares cooldown)
+        cooldownCheckPos = { x: checkX, y: checkY };
+        break;
+      }
+    }
+  }
+
   if (
     gameState.isForageTileOnCooldown(
       currentMapId,
-      playerTileX,
-      playerTileY,
+      cooldownCheckPos.x,
+      cooldownCheckPos.y,
       TIMING.FORAGE_COOLDOWN_MS
     )
   ) {
-    console.log(`[Forage] Tile (${playerTileX}, ${playerTileY}) is on cooldown`);
+    console.log(`[Forage] Tile (${cooldownCheckPos.x}, ${cooldownCheckPos.y}) is on cooldown`);
     return {
       found: false,
       message: `You've already searched here. Come back tomorrow!`,
@@ -880,8 +898,90 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     };
   }
 
+  // Moonpetal foraging (deep forest sacred grove)
+  // Check if player is within the 3x3 area of any moonpetal anchor
+  // Moonpetal is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
+  let moonpetalAnchor: { x: number; y: number } | null = null;
+
+  // Search nearby tiles for moonpetal anchor (check 1 tile in each direction for 3x3 coverage)
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const checkX = playerTileX + dx;
+      const checkY = playerTileY + dy;
+      const checkTile = getTileData(checkX, checkY);
+
+      if (checkTile?.type === TileType.MOONPETAL) {
+        moonpetalAnchor = { x: checkX, y: checkY };
+        console.log(`[Forage] Found moonpetal anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
+        break;
+      }
+    }
+    if (moonpetalAnchor) break;
+  }
+
+  if (moonpetalAnchor) {
+    const { season, timeOfDay } = TimeManager.getCurrentTime();
+
+    // Check if it's the right season (spring or summer)
+    if (season !== Season.SPRING && season !== Season.SUMMER) {
+      return {
+        found: false,
+        message: 'The moonpetal is dormant. It only blooms in spring and summer.',
+      };
+    }
+
+    // Check if it's night time (when the flower blooms)
+    if (timeOfDay !== 'Night') {
+      return {
+        found: false,
+        message: 'The moonpetal flowers are closed. They only bloom at night.',
+      };
+    }
+
+    const moonpetal = getItem('moonpetal');
+    if (!moonpetal) {
+      console.error('[Forage] Moonpetal item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (moonpetal has forageSuccessRate: 0.8)
+    const successRate = moonpetal.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position (so whole 3x3 area shares cooldown)
+      gameState.recordForage(currentMapId, moonpetalAnchor.x, moonpetalAnchor.y);
+      return {
+        found: false,
+        message: 'You search amongst the moonpetals, but find none suitable for harvesting.',
+      };
+    }
+
+    // Success - Random quantity: 60% chance of 1, 30% chance of 2, 10% chance of 3
+    const rand = Math.random();
+    const quantityFound = rand < 0.6 ? 1 : rand < 0.9 ? 2 : 3;
+
+    // Add to inventory
+    inventoryManager.addItem('moonpetal', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${moonpetal.displayName} at night in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown at ANCHOR position
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, moonpetalAnchor.x, moonpetalAnchor.y);
+
+    return {
+      found: true,
+      seedId: 'moonpetal', // Reuse field for item ID
+      seedName: moonpetal.displayName,
+      message: `Found ${quantityFound} ${moonpetal.displayName}!`,
+    };
+  }
+
   // Forest foraging (existing logic)
-  if (!currentMapId.startsWith('forest')) {
+  if (!currentMapId.startsWith('forest') && currentMapId !== 'deep_forest') {
     return { found: false, message: 'Nothing to forage here.' };
   }
 
@@ -1722,18 +1822,59 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     }
   }
 
-  // Check for forage (only in forest)
-  if (currentMapId.startsWith('forest') && tileData) {
-    const forageableTiles = [
-      TileType.FERN,
-      TileType.MUSHROOM,
-      TileType.GRASS,
-      TileType.WILD_STRAWBERRY,
-    ];
-    if (forageableTiles.includes(tileData.type)) {
+  // Check for forage interactions
+  if (tileData) {
+    let canForage = false;
+
+    // Forest/deep forest foraging (regular tiles)
+    if (currentMapId.startsWith('forest') || currentMapId === 'deep_forest') {
+      const forageableTiles = [
+        TileType.FERN,
+        TileType.MUSHROOM,
+        TileType.GRASS,
+        TileType.WILD_STRAWBERRY,
+        TileType.MOONPETAL, // Moonpetal in deep forest (night-blooming magical flower)
+      ];
+      if (forageableTiles.includes(tileData.type)) {
+        canForage = true;
+      }
+    }
+
+    // Stream foraging (dragonfly wings) - check if adjacent to stream
+    // Search for STREAM tiles within 4 tiles (5x5 sprite + adjacency)
+    const searchRadius = 4;
+    for (let dy = -searchRadius; dy <= searchRadius && !canForage; dy++) {
+      for (let dx = -searchRadius; dx <= searchRadius; dx++) {
+        const checkX = tileX + dx;
+        const checkY = tileY + dy;
+        const checkTile = getTileData(checkX, checkY);
+
+        if (checkTile?.type === TileType.STREAM) {
+          // Found a stream anchor - check if player is adjacent to the 5x5 area
+          const streamLeft = checkX - 2;
+          const streamRight = checkX + 2;
+          const streamTop = checkY - 2;
+          const streamBottom = checkY + 2;
+
+          const isAdjacentToStream =
+            tileX >= streamLeft - 1 && tileX <= streamRight + 1 &&
+            tileY >= streamTop - 1 && tileY <= streamBottom + 1 &&
+            // But NOT inside the stream itself
+            !(tileX >= streamLeft && tileX <= streamRight &&
+              tileY >= streamTop && tileY <= streamBottom);
+
+          if (isAdjacentToStream) {
+            canForage = true;
+            break;
+          }
+        }
+      }
+    }
+
+    if (canForage) {
       interactions.push({
         type: 'forage',
-        label: 'Foraging',
+        label: 'Forage',
         icon: '🔍',
         color: '#059669',
         execute: () => {

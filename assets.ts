@@ -146,6 +146,14 @@ export const tileAssets = {
     '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_summer.png',
   wild_strawberry_autumn:
     '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_autumn.png',
+  // Deep Forest plants (sacred grove exclusives)
+  moonpetal_spring_summer_day:
+    '/TwilightGame/assets-optimized/tiles/deep_forest/moonpetal_spring_summer_day.png',
+  moonpetal_spring_summer_night:
+    '/TwilightGame/assets-optimized/tiles/deep_forest/moonpetal_spring_summer_night.png',
+  moonpetal_autumn: '/TwilightGame/assets-optimized/tiles/deep_forest/moonpetal_autumn.png',
+  tree_mushrooms_spring_summer_autumn:
+    '/TwilightGame/assets-optimized/tiles/deep_forest/tree_mushrooms_spring-summer-autumn.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
   // Cauldron animation frames
@@ -274,6 +282,7 @@ export const groceryAssets = {
 // Magical ingredient assets (for witch shop - sellable but not purchasable)
 export const magicalAssets = {
   dragonfly_wings: '/TwilightGame/assets-optimized/items/magical/forageable/dragonfly_wings.png',
+  moonpetal_flower: '/TwilightGame/assets-optimized/items/magical/forageable/moonpetal_flower.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits

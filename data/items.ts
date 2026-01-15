@@ -1132,6 +1132,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 25,
+    image: magicalAssets.moonpetal_flower,
+    forageSuccessRate: 0.8, // 80% success rate when conditions are met (blooming at night)
   },
 
   addersmeat: {
