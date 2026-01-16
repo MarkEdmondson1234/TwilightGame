@@ -180,6 +180,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 10,
     cropId: 'sunflower',
+    image: itemAssets.sunflower_seeds,
   },
 
   seed_salad: {
@@ -694,7 +695,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     maxUses: 5,
     sellPrice: 8,
     buyPrice: 5, // Was 20
-    // Note: No honey sprite yet - add honey.png to grocery folder
+    image: groceryAssets.honey,
   },
 
   salt: {
