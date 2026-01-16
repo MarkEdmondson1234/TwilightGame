@@ -6,7 +6,7 @@
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
-import { itemAssets, groceryAssets, cookingAssets } from '../assets';
+import { itemAssets, groceryAssets, cookingAssets, magicalAssets } from '../assets';
 
 /**
  * Item sprite mapping - maps item IDs to sprite URLs
@@ -85,6 +85,11 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   food_roast_dinner: cookingAssets.roast_dinner,
   food_cookies: cookingAssets.cookies,
   food_chocolate_cake: cookingAssets.chocolate_cake,
+
+  // Magical Ingredients (forageable)
+  moonpetal: magicalAssets.moonpetal_flower,
+  addersmeat: magicalAssets.addersmeat_flower,
+  dragonfly_wings: magicalAssets.dragonfly_wings,
 };
 
 /**
