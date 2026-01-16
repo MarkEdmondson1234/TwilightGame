@@ -779,14 +779,18 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   let cooldownCheckPos = { x: playerTileX, y: playerTileY };
   let skipEarlyCooldownCheck = false;
 
-  // Check if player is near a moonpetal, addersmeat, or bee hive anchor (for 3x3 area foraging)
+  // Check if player is near a moonpetal, addersmeat, luminescent toadstool, or bee hive anchor (for 3x3 area foraging)
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       const checkX = playerTileX + dx;
       const checkY = playerTileY + dy;
       const checkTile = getTileData(checkX, checkY);
 
-      if (checkTile?.type === TileType.MOONPETAL || checkTile?.type === TileType.ADDERSMEAT) {
+      if (
+        checkTile?.type === TileType.MOONPETAL ||
+        checkTile?.type === TileType.ADDERSMEAT ||
+        checkTile?.type === TileType.LUMINESCENT_TOADSTOOL
+      ) {
         // Use anchor position for cooldown check (entire 3x3 area shares cooldown)
         cooldownCheckPos = { x: checkX, y: checkY };
         break;
@@ -1068,6 +1072,71 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'addersmeat', // Reuse field for item ID
       seedName: addersmeat.displayName,
       message: `Found ${quantityFound} ${addersmeat.displayName}!`,
+    };
+  }
+
+  // Luminescent toadstool foraging (mushroom forest exclusive)
+  // Check if player is within the 3x3 area of any toadstool anchor
+  // Luminescent toadstool is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
+  // Unlike moonpetal/addersmeat, these can be foraged any time of day and any season
+  let toadstoolAnchor: { x: number; y: number } | null = null;
+
+  // Search nearby tiles for luminescent toadstool anchor (check 1 tile in each direction for 3x3 coverage)
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const checkX = playerTileX + dx;
+      const checkY = playerTileY + dy;
+      const checkTile = getTileData(checkX, checkY);
+
+      if (checkTile?.type === TileType.LUMINESCENT_TOADSTOOL) {
+        toadstoolAnchor = { x: checkX, y: checkY };
+        console.log(`[Forage] Found luminescent toadstool anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
+        break;
+      }
+    }
+    if (toadstoolAnchor) break;
+  }
+
+  if (toadstoolAnchor) {
+    const toadstool = getItem('luminescent_toadstool');
+    if (!toadstool) {
+      console.error('[Forage] Luminescent toadstool item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (luminescent_toadstool has forageSuccessRate: 0.75)
+    const successRate = toadstool.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position (so whole 3x3 area shares cooldown)
+      gameState.recordForage(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y);
+      return {
+        found: false,
+        message: 'You search amongst the glowing toadstools, but find none suitable for harvesting.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const rand = Math.random();
+    const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
+
+    // Add to inventory
+    inventoryManager.addItem('luminescent_toadstool', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${toadstool.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown at ANCHOR position
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y);
+
+    return {
+      found: true,
+      seedId: 'luminescent_toadstool', // Reuse field for item ID
+      seedName: toadstool.displayName,
+      message: `Found ${quantityFound} ${toadstool.displayName}!`,
     };
   }
 
@@ -2060,6 +2129,21 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         const checkTile = getTileData(checkX, checkY);
 
         if (checkTile?.type === TileType.BEE_HIVE) {
+          canForage = true;
+          break;
+        }
+      }
+    }
+
+    // Luminescent toadstool foraging - check if within 3x3 toadstool area
+    // Search for LUMINESCENT_TOADSTOOL tiles within 1 tile (3x3 sprite coverage)
+    for (let dy = -1; dy <= 1 && !canForage; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const checkX = tileX + dx;
+        const checkY = tileY + dy;
+        const checkTile = getTileData(checkX, checkY);
+
+        if (checkTile?.type === TileType.LUMINESCENT_TOADSTOOL) {
           canForage = true;
           break;
         }

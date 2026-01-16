@@ -179,6 +179,28 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 }, // Slight variation: 95% to 105%
   },
+  // ============================================
+  // Mushroom Forest Plants
+  // ============================================
+  {
+    tileType: TileType.LUMINESCENT_TOADSTOOL,
+    spriteWidth: 3, // 3 tiles wide
+    spriteHeight: 3, // 3 tiles tall (square image)
+    offsetX: -1, // Center horizontally on tile (extend 1 tile left)
+    offsetY: -2, // Extends 2 tiles upward
+    image: tileAssets.luminescent_toadstool,
+    // Collision: walkable (no collision) - decorative glowing mushrooms
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
+  },
   {
     tileType: TileType.FERN,
     spriteWidth: 2, // 2 tiles wide

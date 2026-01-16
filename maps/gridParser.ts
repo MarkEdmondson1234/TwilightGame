@@ -91,6 +91,7 @@ export const GRID_CODES: Record<string, TileType> = {
   y: TileType.WILLOW_TREE, // y = willYw tree (graceful weeping willow)
   c: TileType.LILAC_TREE, // c = lilaC tree (flowering shrub/small tree)
   '4': TileType.TREE_MUSHROOMS, // 4 = Dead tree with mushrooms (old gnarled tree, deep forest)
+  '6': TileType.DEAD_SPRUCE, // 6 = Dead spruce/fir tree (barren dead tree, mushroom forest)
   '|': TileType.TREE_STUMP, // | = Tree stump (vertical trunk, 2x2 forest decoration)
   i: TileType.WILD_IRIS, // i = Iris (wild iris flower, grows near water)
   p: TileType.POND_FLOWERS, // p = Pond flowers (floating flowers, seasonal colors)
@@ -102,6 +103,8 @@ export const GRID_CODES: Record<string, TileType> = {
   // Deep Forest plants
   a: TileType.MOONPETAL, // a = Moonpetal (night-blooming magical flower, deep forest only)
   "'": TileType.ADDERSMEAT, // ' = Addersmeat (night-blooming flower, moon magic, deep forest only)
+  // Mushroom Forest plants
+  '7': TileType.LUMINESCENT_TOADSTOOL, // 7 = Luminescent toadstool (glowing cyan mushrooms, mushroom forest only)
   // Buildings (outdoor structures)
   L: TileType.WALL_BOUNDARY, // L = waLl boundary (brick walls)
   B: TileType.BUILDING_WALL, // B = Building wall

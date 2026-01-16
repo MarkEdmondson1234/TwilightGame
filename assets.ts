@@ -162,6 +162,9 @@ export const tileAssets = {
     '/TwilightGame/assets-optimized/tiles/deep_forest/tree_mushrooms_spring-summer-autumn.png',
   tree_mushrooms_winter:
     '/TwilightGame/assets-optimized/tiles/deep_forest/tree_mushrooms_winter.png',
+  // Mushroom Forest plants (mushroom forest exclusives)
+  luminescent_toadstool:
+    '/TwilightGame/assets-optimized/tiles/mushroomMap/luminecent_toadstool.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
   // Cauldron animation frames
@@ -295,6 +298,8 @@ export const magicalAssets = {
   dragonfly_wings: '/TwilightGame/assets-optimized/items/magical/forageable/dragonfly_wings.png',
   moonpetal_flower: '/TwilightGame/assets-optimized/items/magical/forageable/moonpetal_flower.png',
   addersmeat_flower: '/TwilightGame/assets-optimized/items/magical/forageable/addersmeat_flower.png',
+  luminescent_toadstool:
+    '/TwilightGame/assets-optimized/items/magical/forageable/luminescent_toadstool_ingredient.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits

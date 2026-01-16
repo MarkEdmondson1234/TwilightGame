@@ -575,6 +575,18 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 3x3 multi-tile sprite (see SPRITE_METADATA)
   },
+  // ============================================
+  // Mushroom Forest Plants
+  // ============================================
+  [TileType.LUMINESCENT_TOADSTOOL]: {
+    name: 'Luminescent Toadstool',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - decorative plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // No seasonality - glowing toadstools look the same year-round
+    image: [tileAssets.luminescent_toadstool],
+    // 3x3 multi-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending

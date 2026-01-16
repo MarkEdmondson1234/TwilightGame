@@ -19,6 +19,7 @@ import { mumsKitchen } from './definitions/mumsKitchen';
 import { magicalLake } from './definitions/magicalLake';
 import { bearCave } from './definitions/bearCave';
 import { bearDen } from './definitions/bearDen';
+import { mushroomMap } from './definitions/mushroomMap';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
 import { gameState } from '../GameState';
 
@@ -52,6 +53,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(magicalLake);
   mapManager.registerMap(bearCave);
   mapManager.registerMap(bearDen);
+  mapManager.registerMap(mushroomMap);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs

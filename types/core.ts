@@ -128,6 +128,8 @@ export enum TileType {
   // Deep Forest plants (sacred grove exclusives)
   MOONPETAL, // Night-blooming magical flower (opens at night, dormant in winter)
   ADDERSMEAT, // Night-blooming magical flower (moon magic, dormant in winter)
+  // Mushroom Forest plants (mushroom forest exclusives)
+  LUMINESCENT_TOADSTOOL, // Glowing cyan toadstools (3x3, mushroom forest only)
   // Utility tiles
   INVISIBLE_WALL, // Blocks movement but renders as transparent (invisible boundary)
 }

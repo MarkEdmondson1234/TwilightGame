@@ -91,6 +91,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   moonpetal: magicalAssets.moonpetal_flower,
   addersmeat: magicalAssets.addersmeat_flower,
   dragonfly_wings: magicalAssets.dragonfly_wings,
+  luminescent_toadstool: magicalAssets.luminescent_toadstool,
 };
 
 /**

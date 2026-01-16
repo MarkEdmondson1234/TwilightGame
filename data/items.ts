@@ -1152,6 +1152,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     forageSuccessRate: 0.7, // 70% success rate when conditions are met (blooming at night)
   },
 
+  luminescent_toadstool: {
+    id: 'luminescent_toadstool',
+    name: 'luminescent_toadstool',
+    displayName: 'Luminescent Toadstool',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'A cluster of softly glowing cyan mushrooms found only in the darkest parts of the forest. Their light never fades.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 35,
+    image: magicalAssets.luminescent_toadstool,
+    forageSuccessRate: 0.75, // 75% success rate - no time/season restrictions
+  },
+
   dragonfly_wings: {
     id: 'dragonfly_wings',
     name: 'dragonfly_wings',
@@ -1218,17 +1232,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 60,
-  },
-
-  luminescent_toadstool: {
-    id: 'luminescent_toadstool',
-    name: 'luminescent_toadstool',
-    displayName: 'Luminescent Toadstool',
-    category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'A glowing mushroom found deep in forest glades. Emits a soft, eerie light.',
-    rarity: ItemRarity.COMMON,
-    stackable: true,
-    sellPrice: 10,
   },
 
   ghost_lichen: {
