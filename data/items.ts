@@ -1142,10 +1142,12 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Addersmeat',
     category: ItemCategory.MAGICAL_INGREDIENT,
     description:
-      'A rare night-blooming flower found near fairy circles. Twinkles like distant stars.',
+      'A rare night-blooming flower that derives its magic from the moon. Twinkles like distant stars.',
     rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 50,
+    image: magicalAssets.addersmeat_flower,
+    forageSuccessRate: 0.7, // 70% success rate when conditions are met (blooming at night)
   },
 
   dragonfly_wings: {

@@ -90,6 +90,7 @@ export enum TileType {
   DEAD_SPRUCE, // Dead spruce tree (appears in forest, barren tree with winter variation)
   FIR_TREE_SMALL, // Small fir tree (walkable underbrush decoration, seasonal variations)
   SPRUCE_TREE_SMALL, // Small spruce tree (solid obstacle, seasonal variations)
+  TREE_MUSHROOMS, // Dead tree with mushrooms (appears in deep forest, seasonal variations)
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,
   BUILDING_WALL,
@@ -123,6 +124,9 @@ export enum TileType {
   CAULDRON, // Animated bubbling cauldron (witch's brewing pot)
   TREE_STUMP, // Tree stump (2x2 forest decoration)
   STREAM, // Animated flowing stream (3-frame animation for forest levels)
+  // Deep Forest plants (sacred grove exclusives)
+  MOONPETAL, // Night-blooming magical flower (opens at night, dormant in winter)
+  ADDERSMEAT, // Night-blooming magical flower (moon magic, dormant in winter)
   // Utility tiles
   INVISIBLE_WALL, // Blocks movement but renders as transparent (invisible boundary)
 }

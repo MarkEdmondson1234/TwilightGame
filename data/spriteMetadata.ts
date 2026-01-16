@@ -138,6 +138,47 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 }, // Slight variation
   },
+  // ============================================
+  // Deep Forest Plants (Sacred Grove)
+  // ============================================
+  {
+    tileType: TileType.MOONPETAL,
+    spriteWidth: 3, // 3 tiles wide
+    spriteHeight: 3, // 3 tiles tall
+    offsetX: -1, // Center horizontally on tile (extend 1 tile left)
+    offsetY: -2, // Extends 2 tiles upward
+    image: tileAssets.moonpetal_spring_summer_day, // Default image (time-of-day handled by TileLayer)
+    // Collision: walkable (no collision) - magical plant
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 }, // Slight variation: 95% to 105%
+  },
+  {
+    tileType: TileType.ADDERSMEAT,
+    spriteWidth: 3, // 3 tiles wide
+    spriteHeight: 3, // 3 tiles tall
+    offsetX: -1, // Center horizontally on tile (extend 1 tile left)
+    offsetY: -2, // Extends 2 tiles upward
+    image: tileAssets.addersmeat_spring_summer_day, // Default image (time-of-day handled by TileLayer)
+    // Collision: walkable (no collision) - magical plant
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 }, // Slight variation: 95% to 105%
+  },
   {
     tileType: TileType.FERN,
     spriteWidth: 2, // 2 tiles wide
@@ -790,6 +831,28 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // Narrow shadow for small conical tree
     shadowWidthRatio: 0.3,
     shadowHeightRatio: 0.15,
+  },
+  {
+    tileType: TileType.TREE_MUSHROOMS,
+    spriteWidth: 5, // 5 tiles wide (square aspect ratio preserved)
+    spriteHeight: 5, // 5 tiles tall (old dead tree with mushrooms)
+    offsetX: -2, // Center horizontally on tile
+    offsetY: -4, // Extends 4 tiles upward
+    image: tileAssets.tree_mushrooms_spring_summer_autumn, // Default image (overridden by seasonalImages in TILE_LEGEND)
+    // Collision only at the base trunk (small area)
+    collisionWidth: 0.4,
+    collisionHeight: 0.4,
+    collisionOffsetX: 0.3,
+    collisionOffsetY: 0.3,
+    // Transform controls: variation for natural dead tree look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.85, max: 1.15 }, // More size variation for organic feel
+    // Narrow shadow for dead tree trunk
+    shadowWidthRatio: 0.4,
+    shadowHeightRatio: 0.2,
   },
   {
     tileType: TileType.WILD_IRIS,

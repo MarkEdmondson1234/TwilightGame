@@ -73,9 +73,13 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.BLUEBERRY_BUSH]: 'grass',
   [TileType.WILD_STRAWBERRY]: 'grass',
   [TileType.VILLAGE_FLOWERS]: 'grass',
+  // Deep Forest plants
+  [TileType.MOONPETAL]: 'grass',
+  [TileType.ADDERSMEAT]: 'grass',
   [TileType.GIANT_MUSHROOM]: 'grass',
   [TileType.SAMBUCA_BUSH]: 'grass',
   [TileType.DEAD_SPRUCE]: 'grass',
+  [TileType.TREE_MUSHROOMS]: 'grass',
   [TileType.FIR_TREE_SMALL]: 'grass',
   [TileType.SPRUCE_TREE_SMALL]: 'grass',
   [TileType.FERN]: 'grass',

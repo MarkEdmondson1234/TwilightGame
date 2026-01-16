@@ -774,17 +774,17 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Check cooldown FIRST (applies to all foraging types)
-  // For multi-tile sprites (like moonpetal 3x3), check cooldown at anchor position
+  // For multi-tile sprites (like moonpetal/addersmeat 3x3), check cooldown at anchor position
   let cooldownCheckPos = { x: playerTileX, y: playerTileY };
 
-  // Check if player is near a moonpetal anchor (for 3x3 area foraging)
+  // Check if player is near a moonpetal or addersmeat anchor (for 3x3 area foraging)
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       const checkX = playerTileX + dx;
       const checkY = playerTileY + dy;
       const checkTile = getTileData(checkX, checkY);
 
-      if (checkTile?.type === TileType.MOONPETAL) {
+      if (checkTile?.type === TileType.MOONPETAL || checkTile?.type === TileType.ADDERSMEAT) {
         // Use anchor position for cooldown check (entire 3x3 area shares cooldown)
         cooldownCheckPos = { x: checkX, y: checkY };
         break;
@@ -977,6 +977,89 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'moonpetal', // Reuse field for item ID
       seedName: moonpetal.displayName,
       message: `Found ${quantityFound} ${moonpetal.displayName}!`,
+    };
+  }
+
+  // Addersmeat foraging (deep forest sacred grove)
+  // Check if player is within the 3x3 area of any addersmeat anchor
+  // Addersmeat is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
+  // Night-blooming flower that derives its magic from the moon
+  let addersmeatAnchor: { x: number; y: number } | null = null;
+
+  // Search nearby tiles for addersmeat anchor (check 1 tile in each direction for 3x3 coverage)
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const checkX = playerTileX + dx;
+      const checkY = playerTileY + dy;
+      const checkTile = getTileData(checkX, checkY);
+
+      if (checkTile?.type === TileType.ADDERSMEAT) {
+        addersmeatAnchor = { x: checkX, y: checkY };
+        console.log(`[Forage] Found addersmeat anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
+        break;
+      }
+    }
+    if (addersmeatAnchor) break;
+  }
+
+  if (addersmeatAnchor) {
+    const { season, timeOfDay } = TimeManager.getCurrentTime();
+
+    // Check if it's the right season (spring or summer)
+    if (season !== Season.SPRING && season !== Season.SUMMER) {
+      return {
+        found: false,
+        message: 'The addersmeat is dormant underground. It only emerges in spring and summer.',
+      };
+    }
+
+    // Check if it's night time (when the flower blooms and can be foraged)
+    if (timeOfDay !== 'Night') {
+      return {
+        found: false,
+        message: 'The addersmeat flowers are closed. They only bloom under the moonlight.',
+      };
+    }
+
+    const addersmeat = getItem('addersmeat');
+    if (!addersmeat) {
+      console.error('[Forage] Addersmeat item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (addersmeat has forageSuccessRate: 0.7)
+    const successRate = addersmeat.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position (so whole 3x3 area shares cooldown)
+      gameState.recordForage(currentMapId, addersmeatAnchor.x, addersmeatAnchor.y);
+      return {
+        found: false,
+        message: 'You search amongst the addersmeat, but find none suitable for harvesting.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const rand = Math.random();
+    const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
+
+    // Add to inventory
+    inventoryManager.addItem('addersmeat', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${addersmeat.displayName} at night in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown at ANCHOR position
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, addersmeatAnchor.x, addersmeatAnchor.y);
+
+    return {
+      found: true,
+      seedId: 'addersmeat', // Reuse field for item ID
+      seedName: addersmeat.displayName,
+      message: `Found ${quantityFound} ${addersmeat.displayName}!`,
     };
   }
 

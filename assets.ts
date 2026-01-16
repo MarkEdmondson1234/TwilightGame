@@ -152,8 +152,16 @@ export const tileAssets = {
   moonpetal_spring_summer_night:
     '/TwilightGame/assets-optimized/tiles/deep_forest/moonpetal_spring_summer_night.png',
   moonpetal_autumn: '/TwilightGame/assets-optimized/tiles/deep_forest/moonpetal_autumn.png',
+  // Addersmeat (night-blooming magical flower, dormant in winter)
+  addersmeat_spring_summer_day:
+    '/TwilightGame/assets-optimized/tiles/deep_forest/addersmeat_spring-summer_day.png',
+  addersmeat_spring_summer_night:
+    '/TwilightGame/assets-optimized/tiles/deep_forest/addersmeat_spring-summer_night.png',
+  addersmeat_autumn: '/TwilightGame/assets-optimized/tiles/deep_forest/addersmeat_autumn.png',
   tree_mushrooms_spring_summer_autumn:
     '/TwilightGame/assets-optimized/tiles/deep_forest/tree_mushrooms_spring-summer-autumn.png',
+  tree_mushrooms_winter:
+    '/TwilightGame/assets-optimized/tiles/deep_forest/tree_mushrooms_winter.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
   // Cauldron animation frames
@@ -283,6 +291,7 @@ export const groceryAssets = {
 export const magicalAssets = {
   dragonfly_wings: '/TwilightGame/assets-optimized/items/magical/forageable/dragonfly_wings.png',
   moonpetal_flower: '/TwilightGame/assets-optimized/items/magical/forageable/moonpetal_flower.png',
+  addersmeat_flower: '/TwilightGame/assets-optimized/items/magical/forageable/addersmeat_flower.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits

@@ -547,6 +547,34 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 2x2 multi-tile sprite (see SPRITE_METADATA)
   },
+  [TileType.ADDERSMEAT]: {
+    name: 'Addersmeat',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - magical plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // Time-of-day conditional images: flowers open at night, closed during day
+    // Note: 3x3 multi-tile sprite (see SPRITE_METADATA)
+    // Night-blooming flower that derives magic from the moon
+    timeOfDayImages: {
+      spring: {
+        day: [tileAssets.addersmeat_spring_summer_day], // Closed flowers
+        night: [tileAssets.addersmeat_spring_summer_night], // Open flowers (glowing)
+      },
+      summer: {
+        day: [tileAssets.addersmeat_spring_summer_day], // Closed flowers
+        night: [tileAssets.addersmeat_spring_summer_night], // Open flowers (glowing)
+      },
+      autumn: {
+        day: [tileAssets.addersmeat_autumn], // Foliage only
+        night: [tileAssets.addersmeat_autumn], // Foliage only (no night bloom)
+      },
+      winter: {
+        day: [], // Dormant - underground, no sprite shown
+        night: [], // Dormant - underground, no sprite shown
+      },
+    },
+    // 3x3 multi-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending
@@ -625,6 +653,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       autumn: [tileAssets.spruce_tree_small],
       winter: [tileAssets.spruce_tree_small_winter],
       default: [tileAssets.spruce_tree_small],
+    },
+  },
+  [TileType.TREE_MUSHROOMS]: {
+    name: 'Dead Tree with Mushrooms',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.SOLID, // Not walkable - tree obstacle
+    baseType: TileType.GRASS, // Render grass underneath the tree sprite
+    image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    seasonalImages: {
+      spring: [tileAssets.tree_mushrooms_spring_summer_autumn],
+      summer: [tileAssets.tree_mushrooms_spring_summer_autumn],
+      autumn: [tileAssets.tree_mushrooms_spring_summer_autumn],
+      winter: [tileAssets.tree_mushrooms_winter],
+      default: [tileAssets.tree_mushrooms_spring_summer_autumn],
     },
   },
 
