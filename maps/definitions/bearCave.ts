@@ -18,6 +18,7 @@ import { parseGrid } from '../gridParser';
  * L = Wall boundary (rocky cave walls)
  * P = Path (well-worn dirt path)
  * { = Bear house (12x12 cozy dwelling structure - SINGLE ANCHOR POINT)
+ * } = Bee hive (3x3 wooden hive structure - SINGLE ANCHOR POINT)
  * t = Spruce tree (evergreen conifer)
  * b = Brambles (thorny bushes)
  * s = Wild strawberry (forageable plants)
@@ -27,7 +28,7 @@ import { parseGrid } from '../gridParser';
 const gridString = `
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLG
 LGGGGGGGtGGGGGGGGGGGGGGGGGGGGG
-LGGYGGhGGGGGGGdGGGYGGhGeGGGGGG
+LGGYGGhGGGGG}Gd}GGYGGhG}GGGGGG
 LGGGGenGGdGGGGGGGGbGGYGGtGGYGL
 LGGtGGGGGGGGGdGGGGtGGeGYjGeGGL
 LGGGGtGGGhGGGGGGGGGtGGtGGGbGGL

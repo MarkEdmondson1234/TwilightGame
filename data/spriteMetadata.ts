@@ -952,6 +952,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     shadowHeightRatio: 0.12,
   },
   {
+    tileType: TileType.BEE_HIVE,
+    spriteWidth: 3, // 3 tiles wide (square image)
+    spriteHeight: 3, // 3 tiles tall (preserves 1:1 aspect ratio)
+    offsetX: -1, // Center horizontally on anchor tile
+    offsetY: -2, // Position so base is at anchor
+    image: tileAssets.bee_hive,
+    collisionWidth: 2, // Collision box for the hive structure
+    collisionHeight: 1, // Thin collision at base
+    collisionOffsetX: -0.5, // Center collision box
+    collisionOffsetY: 0, // At anchor level
+    // No transforms - unique structure
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Shadow for structure
+    shadowWidthRatio: 0.5,
+    shadowHeightRatio: 0.2,
+  },
+  {
     tileType: TileType.MAGICAL_LAKE,
     spriteWidth: 12, // 12 tiles wide (large magical lake)
     spriteHeight: 12, // 12 tiles tall (square aspect ratio - source image is 3000x3000)

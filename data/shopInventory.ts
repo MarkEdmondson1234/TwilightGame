@@ -215,12 +215,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     sellPrice: 3,
     stock: 'unlimited',
   },
-  {
-    itemId: 'honey',
-    buyPrice: 5,
-    sellPrice: 8,
-    stock: 'unlimited',
-  },
+  // Honey removed from shop - only available by foraging from bee hives
   {
     itemId: 'salt',
     buyPrice: 3,

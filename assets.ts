@@ -209,6 +209,8 @@ export const tileAssets = {
   bear_house_spring_summer: '/TwilightGame/assets/tiles/bear_cave/bear_cave_spring-summer.png',
   bear_house_autumn: '/TwilightGame/assets/tiles/bear_cave/bear_cave_autumn.png',
   bear_house_winter: '/TwilightGame/assets/tiles/bear_cave/bear_cave_winter.png',
+  // Bee hive asset (no seasonality, appears in bear cave area)
+  bee_hive: '/TwilightGame/assets-optimized/tiles/bear_cave/bee_hive.png',
 };
 
 // Farming assets - Use optimized versions for better performance

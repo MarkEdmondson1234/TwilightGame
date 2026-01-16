@@ -690,12 +690,13 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'honey',
     displayName: 'Honey',
     category: ItemCategory.INGREDIENT,
-    description: 'Golden honey from local bees. Sweet and sticky.',
+    description: 'Golden honey foraged from wild bee hives. Sweet and sticky.',
     stackable: true,
     maxUses: 5,
     sellPrice: 8,
-    buyPrice: 5, // Was 20
+    // No buyPrice - only available by foraging from bee hives
     image: groceryAssets.honey,
+    forageSuccessRate: 0.85, // 85% success rate when foraging from bee hives
   },
 
   salt: {

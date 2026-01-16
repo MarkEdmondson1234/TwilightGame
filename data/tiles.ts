@@ -900,6 +900,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.bear_house_spring_summer], // Default fallback
     },
   },
+  [TileType.BEE_HIVE]: {
+    name: 'Bee Hive',
+    color: 'bg-palette-sage', // Grass background colour (shows through transparent parts)
+    collisionType: CollisionType.SOLID, // Cannot walk through the hive
+    image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    baseType: TileType.GRASS, // Render grass underneath
+  },
   [TileType.CAULDRON]: {
     name: 'Cauldron',
     color: 'bg-palette-sage', // Base grass color (blends with surroundings)
