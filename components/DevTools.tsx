@@ -5,6 +5,7 @@ import { characterData } from '../utils/CharacterData';
 import { farmManager } from '../utils/farmManager';
 import { mapManager } from '../maps/MapManager';
 import { FarmPlotState } from '../types';
+import { audioManager, SoundCategory, AudioEffects } from '../utils/AudioManager';
 import './DevTools.css';
 
 interface DevToolsProps {
@@ -13,6 +14,411 @@ interface DevToolsProps {
   onFairyFormToggle?: (active: boolean) => void;
   isFairyForm?: boolean;
 }
+
+/**
+ * Audio Debug Section - volume controls and audio testing
+ */
+const AudioDebugSection: React.FC = () => {
+  const [audioStats, setAudioStats] = useState({
+    loaded: 0,
+    loading: 0,
+    active: 0,
+    musicPlaying: false,
+  });
+  const [volumes, setVolumes] = useState({
+    master: audioManager.getVolume('master'),
+    music: audioManager.getVolume('music'),
+    ambient: audioManager.getVolume('ambient'),
+    sfx: audioManager.getVolume('sfx'),
+    ui: audioManager.getVolume('ui'),
+  });
+  const [muted, setMuted] = useState(audioManager.isMuted());
+
+  // Update stats periodically
+  useEffect(() => {
+    const updateStats = () => {
+      setAudioStats(audioManager.getStats());
+      setMuted(audioManager.isMuted());
+    };
+    updateStats();
+    const interval = setInterval(updateStats, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleVolumeChange = (category: SoundCategory, value: number) => {
+    audioManager.setVolume(category, value);
+    setVolumes((prev) => ({ ...prev, [category]: value }));
+  };
+
+  const handleMuteToggle = () => {
+    const newMuted = audioManager.toggleMute();
+    setMuted(newMuted);
+  };
+
+  const testSound = (key: string) => {
+    if (audioManager.hasSound(key)) {
+      audioManager.playSfx(key);
+    } else {
+      console.log(`[DevTools] Sound "${key}" not loaded yet`);
+    }
+  };
+
+  return (
+    <>
+      <div className="devtools-status" style={{ marginBottom: '12px' }}>
+        <p>
+          <strong>Sounds Loaded:</strong> {audioStats.loaded} | <strong>Active:</strong>{' '}
+          {audioStats.active}
+        </p>
+        <p>
+          <strong>Music:</strong> {audioStats.musicPlaying ? 'Playing' : 'Stopped'}
+        </p>
+      </div>
+
+      <div className="devtools-control">
+        <label>
+          <input type="checkbox" checked={muted} onChange={handleMuteToggle} /> Mute All Audio
+        </label>
+      </div>
+
+      <div className="devtools-control">
+        <label>Master Volume ({Math.round(volumes.master * 100)}%)</label>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={volumes.master}
+          onChange={(e) => handleVolumeChange('master', parseFloat(e.target.value))}
+          disabled={muted}
+        />
+      </div>
+
+      <div className="devtools-control">
+        <label>Music ({Math.round(volumes.music * 100)}%)</label>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={volumes.music}
+          onChange={(e) => handleVolumeChange('music', parseFloat(e.target.value))}
+          disabled={muted}
+        />
+      </div>
+
+      <div className="devtools-control">
+        <label>Ambient ({Math.round(volumes.ambient * 100)}%)</label>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={volumes.ambient}
+          onChange={(e) => handleVolumeChange('ambient', parseFloat(e.target.value))}
+          disabled={muted}
+        />
+      </div>
+
+      <div className="devtools-control">
+        <label>Sound Effects ({Math.round(volumes.sfx * 100)}%)</label>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={volumes.sfx}
+          onChange={(e) => handleVolumeChange('sfx', parseFloat(e.target.value))}
+          disabled={muted}
+        />
+      </div>
+
+      <div className="devtools-control">
+        <label>UI Sounds ({Math.round(volumes.ui * 100)}%)</label>
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.05"
+          value={volumes.ui}
+          onChange={(e) => handleVolumeChange('ui', parseFloat(e.target.value))}
+          disabled={muted}
+        />
+      </div>
+
+      <div className="devtools-control" style={{ marginTop: '12px' }}>
+        <label>Test Sounds</label>
+        <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+          <button
+            className="devtools-button"
+            onClick={() => testSound('sfx_till')}
+            title="Test till sound"
+          >
+            Till
+          </button>
+          <button
+            className="devtools-button"
+            onClick={() => testSound('sfx_hoe')}
+            title="Test hoe sound"
+          >
+            Hoe
+          </button>
+          <button
+            className="devtools-button"
+            onClick={() => testSound('sfx_door_open')}
+            title="Test door sound"
+          >
+            Door
+          </button>
+          <button
+            className="devtools-button"
+            onClick={() => testSound('sfx_magic_transition')}
+            title="Test magic sound"
+          >
+            Magic
+          </button>
+        </div>
+        <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+          Add audio files to /public/assets/audio/ to enable sounds
+        </small>
+      </div>
+    </>
+  );
+};
+
+/**
+ * Audio Effects Section - filters, reverb, and presets
+ */
+const AudioEffectsSection: React.FC = () => {
+  const [effects, setEffects] = useState<AudioEffects>(audioManager.getEffects());
+  const [codeSnippet, setCodeSnippet] = useState('');
+
+  // Update local state from audioManager
+  const syncEffects = () => {
+    setEffects(audioManager.getEffects());
+    setCodeSnippet(audioManager.getEffectCodeSnippet());
+  };
+
+  // Low-pass filter controls
+  const handleLowPassToggle = () => {
+    audioManager.setLowPassFilter(!effects.lowPassEnabled);
+    syncEffects();
+  };
+
+  const handleLowPassFreq = (value: number) => {
+    audioManager.setLowPassFilter(effects.lowPassEnabled, value);
+    syncEffects();
+  };
+
+  const handleLowPassQ = (value: number) => {
+    audioManager.setLowPassFilter(effects.lowPassEnabled, undefined, value);
+    syncEffects();
+  };
+
+  // High-pass filter controls
+  const handleHighPassToggle = () => {
+    audioManager.setHighPassFilter(!effects.highPassEnabled);
+    syncEffects();
+  };
+
+  const handleHighPassFreq = (value: number) => {
+    audioManager.setHighPassFilter(effects.highPassEnabled, value);
+    syncEffects();
+  };
+
+  // Reverb controls
+  const handleReverbToggle = () => {
+    audioManager.setReverb(!effects.reverbEnabled);
+    syncEffects();
+  };
+
+  const handleReverbMix = (value: number) => {
+    audioManager.setReverb(effects.reverbEnabled, value);
+    syncEffects();
+  };
+
+  const handleReverbDelay = (value: number) => {
+    audioManager.setReverb(effects.reverbEnabled, undefined, value);
+    syncEffects();
+  };
+
+  const handleReverbDecay = (value: number) => {
+    audioManager.setReverb(effects.reverbEnabled, undefined, undefined, value);
+    syncEffects();
+  };
+
+  // Presets
+  const handlePreset = (
+    preset: 'none' | 'underwater' | 'cave' | 'indoor' | 'distant' | 'dream'
+  ) => {
+    audioManager.applyEffectPreset(preset);
+    syncEffects();
+  };
+
+  // Copy code snippet
+  const copyCodeSnippet = () => {
+    navigator.clipboard.writeText(codeSnippet);
+  };
+
+  return (
+    <>
+      {/* Presets */}
+      <div className="devtools-control">
+        <label>Effect Presets</label>
+        <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
+          <button className="devtools-button" onClick={() => handlePreset('none')}>
+            None
+          </button>
+          <button className="devtools-button" onClick={() => handlePreset('underwater')}>
+            Underwater
+          </button>
+          <button className="devtools-button" onClick={() => handlePreset('cave')}>
+            Cave
+          </button>
+          <button className="devtools-button" onClick={() => handlePreset('indoor')}>
+            Indoor
+          </button>
+          <button className="devtools-button" onClick={() => handlePreset('distant')}>
+            Distant
+          </button>
+          <button className="devtools-button" onClick={() => handlePreset('dream')}>
+            Dream
+          </button>
+        </div>
+      </div>
+
+      {/* Low-pass Filter */}
+      <div className="devtools-control" style={{ marginTop: '12px' }}>
+        <label>
+          <input type="checkbox" checked={effects.lowPassEnabled} onChange={handleLowPassToggle} />{' '}
+          Low-Pass Filter (Muffle)
+        </label>
+      </div>
+      {effects.lowPassEnabled && (
+        <>
+          <div className="devtools-control">
+            <label>Frequency: {effects.lowPassFrequency} Hz</label>
+            <input
+              type="range"
+              min="100"
+              max="10000"
+              step="100"
+              value={effects.lowPassFrequency}
+              onChange={(e) => handleLowPassFreq(parseFloat(e.target.value))}
+            />
+          </div>
+          <div className="devtools-control">
+            <label>Resonance (Q): {effects.lowPassQ.toFixed(1)}</label>
+            <input
+              type="range"
+              min="0.1"
+              max="10"
+              step="0.1"
+              value={effects.lowPassQ}
+              onChange={(e) => handleLowPassQ(parseFloat(e.target.value))}
+            />
+          </div>
+        </>
+      )}
+
+      {/* High-pass Filter */}
+      <div className="devtools-control" style={{ marginTop: '8px' }}>
+        <label>
+          <input
+            type="checkbox"
+            checked={effects.highPassEnabled}
+            onChange={handleHighPassToggle}
+          />{' '}
+          High-Pass Filter (Tinny)
+        </label>
+      </div>
+      {effects.highPassEnabled && (
+        <div className="devtools-control">
+          <label>Frequency: {effects.highPassFrequency} Hz</label>
+          <input
+            type="range"
+            min="20"
+            max="2000"
+            step="10"
+            value={effects.highPassFrequency}
+            onChange={(e) => handleHighPassFreq(parseFloat(e.target.value))}
+          />
+        </div>
+      )}
+
+      {/* Reverb */}
+      <div className="devtools-control" style={{ marginTop: '8px' }}>
+        <label>
+          <input type="checkbox" checked={effects.reverbEnabled} onChange={handleReverbToggle} />{' '}
+          Reverb (Echo)
+        </label>
+      </div>
+      {effects.reverbEnabled && (
+        <>
+          <div className="devtools-control">
+            <label>Mix: {Math.round(effects.reverbMix * 100)}%</label>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={effects.reverbMix}
+              onChange={(e) => handleReverbMix(parseFloat(e.target.value))}
+            />
+          </div>
+          <div className="devtools-control">
+            <label>Delay: {effects.reverbDelay.toFixed(2)}s</label>
+            <input
+              type="range"
+              min="0.01"
+              max="0.8"
+              step="0.01"
+              value={effects.reverbDelay}
+              onChange={(e) => handleReverbDelay(parseFloat(e.target.value))}
+            />
+          </div>
+          <div className="devtools-control">
+            <label>Decay: {Math.round(effects.reverbDecay * 100)}%</label>
+            <input
+              type="range"
+              min="0"
+              max="0.9"
+              step="0.05"
+              value={effects.reverbDecay}
+              onChange={(e) => handleReverbDecay(parseFloat(e.target.value))}
+            />
+          </div>
+        </>
+      )}
+
+      {/* Code Snippet */}
+      <div className="devtools-control" style={{ marginTop: '12px' }}>
+        <label>Copy to Code</label>
+        <pre
+          style={{
+            background: '#1a1a2e',
+            padding: '8px',
+            borderRadius: '4px',
+            fontSize: '11px',
+            overflow: 'auto',
+            maxHeight: '80px',
+            marginTop: '4px',
+          }}
+        >
+          {codeSnippet || '// No effects active'}
+        </pre>
+        <button
+          className="devtools-button"
+          onClick={copyCodeSnippet}
+          style={{ marginTop: '4px' }}
+          title="Copy code to clipboard"
+        >
+          Copy Code
+        </button>
+      </div>
+    </>
+  );
+};
 
 /**
  * Farming Debug Section - controls for accelerating and testing crop growth
@@ -329,6 +735,16 @@ const DevTools: React.FC<DevToolsProps> = ({
                 Controls particle and fog drift speed (0.1x = slow, 5x = fast)
               </small>
             </div>
+          </div>
+
+          <div className="devtools-section">
+            <h3>Audio Control</h3>
+            <AudioDebugSection />
+          </div>
+
+          <div className="devtools-section">
+            <h3>Audio Effects</h3>
+            <AudioEffectsSection />
           </div>
 
           <div className="devtools-section">

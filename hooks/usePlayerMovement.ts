@@ -18,6 +18,10 @@ interface PlayerMovementConfig {
   pathingVector?: { vectorX: number; vectorY: number } | null;
   /** If true, animate even when idle (e.g., fairy wing flapping) */
   animateWhenIdle?: boolean;
+  /** Optional callback triggered when a footstep sound should play */
+  onFootstep?: (position: Position) => void;
+  /** Footstep interval in milliseconds (default: 280ms - matches NPC animation timing) */
+  footstepIntervalMs?: number;
 }
 
 interface MovementResult {
@@ -30,6 +34,8 @@ interface MovementResult {
  * Hook for player movement logic
  * Handles input processing, animation, collision detection, and position updates
  */
+const DEFAULT_FOOTSTEP_INTERVAL_MS = 280; // Matches NPC animation timing
+
 export function usePlayerMovement(config: PlayerMovementConfig) {
   const {
     keysPressed,
@@ -41,9 +47,12 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
     onSetPlayerPos,
     pathingVector,
     animateWhenIdle = false,
+    onFootstep,
+    footstepIntervalMs = DEFAULT_FOOTSTEP_INTERVAL_MS,
   } = config;
 
   const lastAnimationTime = useRef(0);
+  const lastFootstepTime = useRef(0);
 
   const updatePlayerMovement = useCallback(
     (deltaTime: number, now: number): MovementResult => {
@@ -152,6 +161,12 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
         return nextPos;
       });
 
+      // Trigger footstep sound at intervals while moving
+      if (isMoving && onFootstep && now - lastFootstepTime.current > footstepIntervalMs) {
+        lastFootstepTime.current = now;
+        onFootstep(playerPosRef.current);
+      }
+
       return { isMoving, isKeyboardInput };
     },
     [
@@ -164,6 +179,8 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
       onSetPlayerPos,
       pathingVector,
       animateWhenIdle,
+      onFootstep,
+      footstepIntervalMs,
     ]
   );
 

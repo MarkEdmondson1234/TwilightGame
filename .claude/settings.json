@@ -10,7 +10,6 @@
       "Bash(npx vitest:*)",
       "Bash(make:*)",
       "Bash(node:*)",
-
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git status:*)",
@@ -27,9 +26,7 @@
       "Bash(git mv:*)",
       "Bash(git rm:*)",
       "Bash(git revert:*)",
-
       "Bash(gh:*)",
-
       "Bash(ls:*)",
       "Bash(cat:*)",
       "Bash(head:*)",
@@ -51,7 +48,6 @@
       "Bash(pkill:*)",
       "Bash(lsof:*)",
       "Bash(timeout:*)",
-
       "Skill(profile-game)",
       "Skill(add-tile-sprite)",
       "Skill(add-npc-sprite)",
@@ -61,7 +57,9 @@
       "Skill(add-animation)",
       "Skill(add-pixi-component)",
       "Skill(test-game)",
-      "Skill(skill-builder)"
+      "Skill(skill-builder)",
+      "Bash(.claude/skills/add-audio/scripts/:*)",
+      "Skill(add-audio)"
     ],
     "deny": [],
     "ask": [

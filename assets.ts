@@ -507,3 +507,79 @@ export const itemAssets = {
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',
 };
+
+// Audio assets - Sound effects, music, and ambient sounds
+// Note: Add audio files to /public/assets/audio/ and they will be auto-served
+// Recommended format: OGG (best compression) or MP3 (wide compatibility)
+import { AudioAssetConfig } from './utils/AudioManager';
+
+export const audioAssets: Record<string, AudioAssetConfig> = {
+  // === Sound Effects - Farming ===
+  sfx_till: {
+    url: '/TwilightGame/assets/audio/sfx/farming/digging.m4a',
+    category: 'sfx',
+  },
+  sfx_hoe: {
+    url: '/TwilightGame/assets/audio/sfx/farming/hoeing.m4a',
+    category: 'sfx',
+  },
+
+  // === Sound Effects - Transitions ===
+  sfx_door_open: {
+    url: '/TwilightGame/assets/audio/sfx/transitions/door_opening.m4a',
+    category: 'sfx',
+  },
+
+  // === Sound Effects - Magic ===
+  sfx_magic_transition: {
+    url: '/TwilightGame/assets/audio/sfx/magic/mixkit-magic-transition-sweep-presentation-2638.m4a',
+    category: 'sfx',
+  },
+
+  // === Sound Effects - NPCs ===
+  sfx_ducks_quack: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/ducks-quack-362421.mp3',
+    category: 'sfx',
+  },
+
+  // === Music - Map Themes ===
+  // Each map can have its own background music with crossfade transitions
+  music_village: {
+    url: '/TwilightGame/assets/audio/music/twilight-village.m4a',
+    category: 'music',
+    loop: true,
+  },
+  music_forest: {
+    url: '/TwilightGame/assets/audio/music/twilight-forest.m4a',
+    category: 'music',
+    loop: true,
+  },
+
+  // === Ambient - Environmental Sounds ===
+  // Looping background ambiance for atmosphere
+  ambient_rain_light: {
+    url: '/TwilightGame/assets/audio/ambient/mixkit-light-rain-loop-2393.m4a',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_rain_thunder: {
+    url: '/TwilightGame/assets/audio/ambient/mixkit-rain-and-thunder-storm-2390.m4a',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_thunderstorm: {
+    url: '/TwilightGame/assets/audio/ambient/mixkit-thunderstorm-and-rain-loop-2402.m4a',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_blizzard: {
+    url: '/TwilightGame/assets/audio/ambient/mixkit-blizzard-cold-winds-1153.m4a',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_birds: {
+    url: '/TwilightGame/assets/audio/ambient/mixkit-little-birds-singing-in-the-trees-17.m4a',
+    category: 'ambient',
+    loop: true,
+  },
+};

@@ -15,6 +15,8 @@ import { TimeManager, Season } from './TimeManager';
 import { ColorResolver } from './ColorResolver';
 import { initAnthropicClient } from '../services/anthropicClient';
 import { npcManager } from '../NPCManager';
+import { audioManager } from './AudioManager';
+import { audioAssets } from '../assets';
 
 /**
  * Initialize the game on startup
@@ -31,6 +33,7 @@ export async function initializeGame(
   (window as any).cookingManager = cookingManager;
   (window as any).magicManager = magicManager;
   (window as any).__PERF_MONITOR__ = performanceMonitor;
+  (window as any).audioManager = audioManager;
 
   // Dev tools for colour system testing
   (window as any).TimeManager = TimeManager;
@@ -51,6 +54,13 @@ export async function initializeGame(
   // Magic System
   magicManager.unlockMagicBook()  // Unlock magic book
   magicManager.getSummary()       // View magic progress
+
+  // Audio System
+  audioManager.getStats()         // View audio stats (loaded, playing)
+  audioManager.playSfx('sfx_till')  // Play a sound effect
+  audioManager.playMusic('music_village_day')  // Play background music
+  audioManager.setVolume('master', 0.5)  // Set volume (0.0 - 1.0)
+  audioManager.toggleMute()       // Toggle mute
     `);
 
   initializePalette(); // Initialize color palette (must be first)
@@ -66,6 +76,17 @@ export async function initializeGame(
       console.log('[App] All assets preloaded successfully');
     },
   });
+
+  // Initialize audio system (non-blocking - sounds load in background)
+  // Note: Audio context will be resumed on first user interaction (mobile Safari requirement)
+  audioManager.initialise().then(() => {
+    // Load audio assets in background - won't block game start
+    audioManager.loadBatch(audioAssets).catch((err) => {
+      // Audio loading failures are non-fatal - game works without sounds
+      console.warn('[AudioManager] Some audio assets failed to load:', err);
+    });
+  });
+  console.log('[App] Audio system initialised');
 
   // Load inventory from saved state using CharacterData API
   const savedInventory = characterData.loadInventory();
