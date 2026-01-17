@@ -27,6 +27,7 @@ import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE, Z_GROUND_DECORATION } from '../../zIndex';
+import { TimeManager, TimeOfDay } from '../TimeManager';
 
 export class SpriteLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
@@ -40,6 +41,8 @@ export class SpriteLayer extends PixiLayer {
   // Shared container for depth-sorted entities (sprites, player, NPCs)
   // When set, sprites are added here instead of this.container for cross-layer z-sorting
   private depthContainer: PIXI.Container | null = null;
+  // Glow effects behind sprites (for magical/luminescent tiles)
+  private glowGraphics: Map<string, PIXI.Graphics> = new Map();
 
   constructor() {
     // Use depth sorted base, with sortableChildren enabled for dynamic z-ordering
@@ -86,6 +89,7 @@ export class SpriteLayer extends PixiLayer {
     mapId: string,
     visibleRange: { minX: number; maxX: number; minY: number; maxY: number },
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
+    timeOfDay: 'day' | 'night',
     currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
   ): void {
     // Clear all sprites if map changed
@@ -134,7 +138,7 @@ export class SpriteLayer extends PixiLayer {
         if (renderedKeys.has(key)) continue;
         renderedKeys.add(key);
 
-        this.renderSprite(x, y, spriteMetadata, seasonKey);
+        this.renderSprite(x, y, spriteMetadata, seasonKey, timeOfDay);
       }
     }
 
@@ -142,6 +146,13 @@ export class SpriteLayer extends PixiLayer {
     this.sprites.forEach((sprite, key) => {
       if (!renderedKeys.has(key)) {
         sprite.visible = false;
+      }
+    });
+
+    // Hide glows for sprites not rendered this frame
+    this.glowGraphics.forEach((glow, key) => {
+      if (!renderedKeys.has(key)) {
+        glow.visible = false;
       }
     });
   }
@@ -153,7 +164,8 @@ export class SpriteLayer extends PixiLayer {
     anchorX: number,
     anchorY: number,
     metadata: SpriteMetadata,
-    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter'
+    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
+    timeOfDay: 'day' | 'night'
   ): void {
     const key = `${anchorX},${anchorY}`;
 
@@ -181,13 +193,22 @@ export class SpriteLayer extends PixiLayer {
       return;
     }
 
-    // Determine which image to use (seasonal or regular)
+    // Determine which image to use (time-of-day > seasonal > regular)
     let imageUrl: string | null = null;
 
-    // Get tile data for seasonal image lookup
+    // Get tile data for seasonal/time-of-day image lookup
     const tileData = getTileData(anchorX, anchorY);
 
-    if (tileData?.seasonalImages) {
+    // Check for time-of-day conditional images first (e.g., moonpetal)
+    if (tileData?.timeOfDayImages && seasonKey in tileData.timeOfDayImages) {
+      const timeOfDaySet = tileData.timeOfDayImages[seasonKey];
+      const timeOfDayArray = timeOfDaySet[timeOfDay];
+      if (timeOfDayArray && timeOfDayArray.length > 0) {
+        imageUrl = timeOfDayArray[selectVariant(anchorX, anchorY, timeOfDayArray.length)];
+      }
+    }
+    // Fall back to seasonal images
+    else if (tileData?.seasonalImages) {
       const seasonalArray =
         seasonKey in tileData.seasonalImages
           ? tileData.seasonalImages[seasonKey]
@@ -212,6 +233,70 @@ export class SpriteLayer extends PixiLayer {
     if (!imageUrl) return;
 
     this.renderSpriteWithImage(anchorX, anchorY, metadata, imageUrl);
+  }
+
+  /**
+   * Render glow effect for a sprite if it has glow configuration
+   */
+  private renderGlow(
+    anchorX: number,
+    anchorY: number,
+    metadata: SpriteMetadata,
+    spriteZIndex: number
+  ): void {
+    if (!metadata.glow) return;
+
+    const key = `${anchorX},${anchorY}`;
+
+    // Get or create glow graphics
+    let glowGfx = this.glowGraphics.get(key);
+    if (!glowGfx) {
+      glowGfx = new PIXI.Graphics();
+      this.getTargetContainer().addChild(glowGfx);
+      this.glowGraphics.set(key, glowGfx);
+    }
+
+    // Calculate glow position (centre of the sprite)
+    const spriteCentreX = (anchorX + metadata.offsetX + metadata.spriteWidth / 2) * TILE_SIZE;
+    const spriteCentreY = (anchorY + metadata.offsetY + metadata.spriteHeight / 2) * TILE_SIZE;
+    const glowRadius = metadata.glow.radius * TILE_SIZE;
+
+    // Determine intensity based on time of day
+    const currentTime = TimeManager.getCurrentTime();
+    const isNight =
+      currentTime.timeOfDay === TimeOfDay.NIGHT || currentTime.timeOfDay === TimeOfDay.DUSK;
+    let intensity: number;
+    if (isNight && metadata.glow.nightIntensity !== undefined) {
+      intensity = metadata.glow.nightIntensity;
+    } else if (!isNight && metadata.glow.dayIntensity !== undefined) {
+      intensity = metadata.glow.dayIntensity;
+    } else {
+      intensity = metadata.glow.intensity ?? 0.6;
+    }
+
+    // Pulse effect if enabled
+    let pulseAlpha = intensity;
+    if (metadata.glow.pulseSpeed) {
+      const time = Date.now();
+      const pulse = Math.sin((time / metadata.glow.pulseSpeed) * Math.PI * 2);
+      pulseAlpha = intensity * (0.7 + 0.3 * pulse); // Pulse between 70% and 100%
+    }
+
+    // Draw radial gradient glow using many concentric circles for smooth graduation
+    glowGfx.clear();
+    const steps = metadata.glow.steps ?? 32; // Configurable smoothness (default 32)
+    for (let i = steps; i > 0; i--) {
+      const stepRadius = (glowRadius * i) / steps;
+      // Use quadratic falloff for more natural light attenuation
+      const t = i / steps;
+      const stepAlpha = pulseAlpha * (1 - t * t) * 0.5;
+      glowGfx.circle(spriteCentreX, spriteCentreY, stepRadius);
+      glowGfx.fill({ color: metadata.glow.color, alpha: stepAlpha });
+    }
+
+    // Z-index: glow appears behind sprite
+    glowGfx.zIndex = spriteZIndex - 1;
+    glowGfx.visible = true;
   }
 
   /**
@@ -265,13 +350,20 @@ export class SpriteLayer extends PixiLayer {
       metadata.tileType === TileType.FERN ||
       metadata.tileType === TileType.TUFT_SPARSE ||
       metadata.tileType === TileType.ROCK;
+    let spriteZIndex: number;
     if (isGroundDecoration) {
-      sprite.zIndex = Z_GROUND_DECORATION;
+      spriteZIndex = Z_GROUND_DECORATION;
     } else {
       // Dynamic depth sorting: z-index based on depth line Y position
       // Multiplied by 10 for sub-tile precision (10 z-levels per tile row)
       const depthLineY = this.calculateDepthLine(anchorY, metadata);
-      sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(depthLineY * 10);
+      spriteZIndex = Z_DEPTH_SORTED_BASE + Math.floor(depthLineY * 10);
+    }
+    sprite.zIndex = spriteZIndex;
+
+    // Render glow effect if sprite has one (e.g., luminescent toadstool)
+    if (metadata.glow) {
+      this.renderGlow(anchorX, anchorY, metadata, spriteZIndex);
     }
 
     sprite.visible = true;
@@ -323,7 +415,17 @@ export class SpriteLayer extends PixiLayer {
     });
     this.sprites.clear();
     this.animatedSprites.clear();
-    console.log(`[SpriteLayer] Cleared all sprites`);
+
+    // Clear glow graphics
+    this.glowGraphics.forEach((glow) => {
+      if (glow.parent === container) {
+        container.removeChild(glow);
+      }
+      glow.destroy();
+    });
+    this.glowGraphics.clear();
+
+    console.log(`[SpriteLayer] Cleared all sprites and glows`);
   }
 
   /**

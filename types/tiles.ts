@@ -19,6 +19,11 @@ export interface SeasonalImageSet {
   default: string[]; // Default images used in all seasons
 }
 
+export interface TimeOfDayImageSet {
+  day: string[]; // Images to use during daytime
+  night: string[]; // Images to use at night
+}
+
 export interface TileTransformSettings {
   enableFlip?: boolean; // Enable horizontal flip (default: false)
   enableRotation?: boolean; // Enable rotation (default: false)
@@ -48,6 +53,7 @@ export interface TileData {
   collisionType: CollisionType; // Walkability category (WALKABLE, SOLID, DESK)
   image?: string[]; // Simple array of images (backward compatible)
   seasonalImages?: SeasonalImageSet; // Seasonal variations (new)
+  timeOfDayImages?: Record<'spring' | 'summer' | 'autumn' | 'winter', TimeOfDayImageSet>; // Time-of-day variations per season
   baseType?: TileType; // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
   transforms?: TileTransformSettings; // Transform settings (optional, defaults to no transforms)
   // Animation support (for tiles like cauldrons that cycle through frames)
@@ -101,6 +107,19 @@ export interface SpriteMetadata {
    * When player's feet are below this line, player appears in front of sprite
    */
   depthLineOffset?: number;
+  /**
+   * Optional glow effect for mystical/magical sprites (e.g., luminescent toadstool)
+   * Creates a soft radial glow behind the sprite
+   */
+  glow?: {
+    color: number; // Hex colour (e.g., 0x66FFFF for cyan)
+    radius: number; // Radius in tiles
+    intensity?: number; // Base opacity 0-1 (default 0.6)
+    dayIntensity?: number; // Daytime intensity (overrides intensity during day)
+    nightIntensity?: number; // Nighttime intensity (overrides intensity at night)
+    pulseSpeed?: number; // Pulse animation in ms (default: no pulse)
+    steps?: number; // Gradient smoothness (default 32)
+  };
 }
 
 // Color scheme for a map theme

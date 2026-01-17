@@ -200,6 +200,13 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: true,
     enableBrightness: false,
     scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
+    // Luminescent glow effect - soft cyan aura like Mother Sea
+    glow: {
+      color: 0x66ffff, // Soft cyan (matches toadstool colour)
+      radius: 2.5, // Subtle glow radius in tiles
+      dayIntensity: 0.08, // Very subtle during day
+      nightIntensity: 0.12, // Softly visible at night
+    },
   },
   {
     tileType: TileType.FERN,
