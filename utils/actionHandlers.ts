@@ -2150,6 +2150,21 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
+    // Moonpetal foraging - check if within 3x3 moonpetal area (works on any map)
+    // Search for MOONPETAL tiles within 1 tile (3x3 sprite coverage)
+    for (let dy = -1; dy <= 1 && !canForage; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const checkX = tileX + dx;
+        const checkY = tileY + dy;
+        const checkTile = getTileData(checkX, checkY);
+
+        if (checkTile?.type === TileType.MOONPETAL) {
+          canForage = true;
+          break;
+        }
+      }
+    }
+
     if (canForage) {
       interactions.push({
         type: 'forage',
