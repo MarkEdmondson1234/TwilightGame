@@ -1,27 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import * as PIXI from 'pixi.js';
-import {
-  TILE_SIZE,
-  PLAYER_SIZE,
-  USE_PIXI_RENDERER,
-  USE_SPRITE_SHADOWS,
-  INTERACTION,
-  STAMINA,
-} from './constants';
+import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, INTERACTION, STAMINA } from './constants';
 import { Position, Direction, ImageRoomLayer, NPC } from './types';
-import { textureManager } from './utils/TextureManager';
-import { TileLayer } from './utils/pixi/TileLayer';
-import { PlayerSprite } from './utils/pixi/PlayerSprite';
-import { SpriteLayer } from './utils/pixi/SpriteLayer';
-import { NPCLayer } from './utils/pixi/NPCLayer';
-import { ShadowLayer } from './utils/pixi/ShadowLayer';
-import { WeatherLayer } from './utils/pixi/WeatherLayer';
-import { DarknessLayer } from './utils/pixi/DarknessLayer';
-import { PlacedItemsLayer } from './utils/pixi/PlacedItemsLayer';
-import { BackgroundImageLayer } from './utils/pixi/BackgroundImageLayer';
-import { WeatherManager } from './utils/WeatherManager';
+import { usePixiRenderer } from './hooks/usePixiRenderer';
 import { isWeatherAllowedOnMap } from './data/weatherConfig';
-import { tileAssets, farmingAssets, cookingAssets, npcAssets } from './assets';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -203,24 +184,9 @@ const App: React.FC = () => {
   const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
   const lastDirectionRef = useRef<Direction>(direction); // Track direction changes
 
-  // PixiJS refs
+  // Canvas ref for PixiJS (passed to usePixiRenderer)
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const pixiAppRef = useRef<PIXI.Application | null>(null);
-  const tileLayerRef = useRef<TileLayer | null>(null);
-  const backgroundImageLayerRef = useRef<BackgroundImageLayer | null>(null);
-  const spriteLayerRef = useRef<SpriteLayer | null>(null);
-  const playerSpriteRef = useRef<PlayerSprite | null>(null);
-  const npcLayerRef = useRef<NPCLayer | null>(null);
-  const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
-  const shadowLayerRef = useRef<ShadowLayer | null>(null);
-  const weatherLayerRef = useRef<WeatherLayer | null>(null);
-  const darknessLayerRef = useRef<DarknessLayer | null>(null);
-  const weatherManagerRef = useRef<WeatherManager | null>(null);
-  // Shared container for all depth-sorted entities (sprites, player, NPCs)
-  // Enables z-index sorting across different entity types
-  const depthSortedContainerRef = useRef<PIXI.Container | null>(null);
   const npcsRef = useRef<NPC[]>([]); // Ref for NPC collision detection
-  const [isPixiInitialized, setIsPixiInitialized] = useState(false);
 
   const handleCharacterCreated = (character: CharacterCustomization) => {
     gameState.selectCharacter(character);
@@ -1006,18 +972,8 @@ const App: React.FC = () => {
       setNpcUpdateTrigger((prev) => prev + 1);
     }
 
-    // Update weather particles
-    if (weatherLayerRef.current) {
-      weatherLayerRef.current.update(deltaTime);
-    }
-
-    // Update sprite animations (cauldron bubbling, etc.) - runs every frame
-    if (spriteLayerRef.current) {
-      spriteLayerRef.current.updateAnimations();
-    }
-    if (tileLayerRef.current) {
-      tileLayerRef.current.updateAnimations();
-    }
+    // Update PixiJS animations (weather particles, sprite animations, tile animations)
+    updateAnimations(deltaTime);
 
     // Pause movement when dialogue or cutscene is active
     if (activeNPC || isCutscenePlaying) {
@@ -1282,30 +1238,6 @@ const App: React.FC = () => {
     }),
     [visibleTileMinX, visibleTileMaxX, visibleTileMinY, visibleTileMaxY]
   );
-
-  // Combined NPCs: npcManager NPCs + layer NPCs (for background-image rooms)
-  // Used for interactions, indicators, and rendering
-  const allNPCs = useMemo(() => {
-    let npcs = npcManager.getCurrentMapNPCs();
-    if (backgroundImageLayerRef.current) {
-      // Pass currentMapId to prevent stale NPCs from wrong maps
-      // Filter by visibility conditions (seasonal creatures, time-based NPCs)
-      const layerNPCs = backgroundImageLayerRef.current
-        .getLayerNPCs(currentMapId)
-        .filter((npc) => npcManager.isNPCVisible(npc));
-      if (layerNPCs.length > 0) {
-        npcs = [...npcs, ...layerNPCs];
-      }
-    }
-    // Deduplicate NPCs by ID (layer NPCs take precedence over map NPCs)
-    const uniqueNPCs = Array.from(new Map(npcs.map((npc) => [npc.id, npc])).values());
-    return uniqueNPCs;
-  }, [currentMapId, npcUpdateTrigger]);
-
-  // Keep NPCs ref in sync for collision detection
-  useEffect(() => {
-    npcsRef.current = allNPCs;
-  }, [allNPCs]);
 
   // Magic effect callbacks for potion usage
   const magicEffectCallbacks: MagicEffectCallbacks = useMemo(
@@ -1600,588 +1532,62 @@ const App: React.FC = () => {
     isFairyForm
   );
 
-  // Initialize PixiJS renderer (if enabled) - must be after all variable declarations
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !canvasRef.current || !isMapInitialized) return;
-
-    const initPixi = async () => {
-      console.log('[App] Initializing PixiJS renderer...');
-      const startTime = performance.now();
-
-      try {
-        // Get dynamic background color from color scheme
-        const { ColorResolver } = await import('./utils/ColorResolver');
-        const colorScheme = mapManager.getCurrentColorScheme();
-        const bgColorClass = colorScheme?.colors.background || 'bg-palette-moss';
-        const backgroundColor = ColorResolver.paletteToHex(bgColorClass);
-
-        // Create PixiJS Application
-        const app = new PIXI.Application();
-        await app.init({
-          canvas: canvasRef.current!,
-          width: window.innerWidth,
-          height: window.innerHeight,
-          backgroundColor,
-          antialias: true, // Enable for smoother high-res artwork (NPCs)
-          resolution: window.devicePixelRatio || 1, // Native resolution for crisp rendering
-          autoDensity: true, // Auto-adjust canvas CSS size
-        });
-
-        pixiAppRef.current = app;
-
-        // Enable z-index sorting on stage for proper layer ordering
-        app.stage.sortableChildren = true;
-
-        // Preload all tile, farming, cooking, and NPC textures
-        console.log('[App] Preloading textures...');
-        await textureManager.loadBatch({
-          ...tileAssets,
-          ...farmingAssets,
-          ...cookingAssets,
-          ...npcAssets,
-        });
-        // Re-export textureManager after loading to ensure window has the populated instance
-        (window as any).textureManager = textureManager;
-        console.log(
-          '[App] TextureManager exported to window with',
-          textureManager.getStats().loaded,
-          'textures'
-        );
-
-        // Create background image layer (for background-image render mode rooms)
-        const backgroundImageLayer = new BackgroundImageLayer();
-        backgroundImageLayerRef.current = backgroundImageLayer;
-        // Set viewport dimensions using canvas size (not window size) for browser zoom handling
-        backgroundImageLayer.setViewportDimensions(
-          canvasRef.current?.clientWidth ?? window.innerWidth,
-          canvasRef.current?.clientHeight ?? window.innerHeight
-        );
-        // Set stage reference so foreground sprites can be added directly for proper z-index sorting
-        backgroundImageLayer.setStage(app.stage);
-        app.stage.addChild(backgroundImageLayer.getContainer());
-
-        // Create tile layer
-        const tileLayer = new TileLayer();
-        tileLayerRef.current = tileLayer;
-        app.stage.addChild(tileLayer.getContainer());
-
-        // Create shared depth-sorted container for sprites, player, and NPCs
-        // This enables cross-layer z-index sorting so player can walk behind/in front of sprites
-        const depthSortedContainer = new PIXI.Container();
-        depthSortedContainer.sortableChildren = true;
-        depthSortedContainer.zIndex = Z_DEPTH_SORTED_BASE;
-        depthSortedContainerRef.current = depthSortedContainer;
-        app.stage.addChild(depthSortedContainer);
-
-        // Create sprite layer (all multi-tile sprites with dynamic depth sorting)
-        const spriteLayer = new SpriteLayer();
-        spriteLayerRef.current = spriteLayer;
-        spriteLayer.setDepthContainer(depthSortedContainer);
-        app.stage.addChild(spriteLayer.getContainer()); // Empty container for camera updates
-
-        // Create player sprite
-        const playerSprite = new PlayerSprite();
-        playerSpriteRef.current = playerSprite;
-        playerSprite.setDepthContainer(depthSortedContainer);
-        app.stage.addChild(playerSprite.getContainer()); // Empty container for camera updates
-
-        // Create NPC layer (NPCs with dynamic z-index for depth sorting)
-        const npcLayer = new NPCLayer();
-        npcLayerRef.current = npcLayer;
-        // Set stage reference so NPCs with low zIndexOverride can sort with other stage elements
-        npcLayer.setStage(app.stage);
-        npcLayer.setDepthContainer(depthSortedContainer);
-        app.stage.addChild(npcLayer.getContainer()); // Empty container for camera updates
-
-        // Note: Foreground image layers (like shop counter) are added directly to stage
-        // by BackgroundImageLayer.loadLayers() with their individual z-indices for proper sorting
-
-        // Create placed items layer (food items, dropped objects - above player)
-        const placedItemsLayer = new PlacedItemsLayer();
-        placedItemsLayerRef.current = placedItemsLayer;
-        app.stage.addChild(placedItemsLayer.getContainer());
-
-        // Create shadow layer (shadows beneath foreground sprites like trees)
-        if (USE_SPRITE_SHADOWS) {
-          const shadowLayer = new ShadowLayer();
-          shadowLayerRef.current = shadowLayer;
-          app.stage.addChild(shadowLayer.getContainer());
-        }
-
-        // Create weather layer (particle effects above everything)
-        console.log('='.repeat(60));
-        console.log('[App] 🌦️ INITIALIZING WEATHER LAYER');
-        console.log('='.repeat(60));
-        try {
-          const weatherLayer = new WeatherLayer(window.innerWidth, window.innerHeight);
-          weatherLayerRef.current = weatherLayer;
-          console.log('[App] ✓ WeatherLayer instance created, loading textures...');
-          await weatherLayer.loadTextures();
-          console.log('[App] ✓ Textures loaded, adding to stage...');
-          app.stage.addChild(weatherLayer.getContainer());
-          console.log('[App] ✓ Weather layer container added to stage');
-
-          // Set initial weather
-          const currentWeather = gameState.getWeather();
-          weatherLayer.setWeather(currentWeather);
-          console.log(`[App] Initial weather set to: ${currentWeather}`);
-
-          // Initialize weather manager
-          const weatherManager = new WeatherManager(gameState);
-          weatherManagerRef.current = weatherManager;
-          weatherManager.initialize();
-        } catch (error) {
-          console.error('[App] Failed to initialize weather layer:', error);
-          console.log('[App] Continuing without weather effects...');
-        }
-
-        // Initialize darkness layer (global darkness for caves/forests)
-        const darknessLayer = new DarknessLayer();
-        darknessLayerRef.current = darknessLayer;
-        app.stage.addChild(darknessLayer.getContainer());
-        console.log('[App] ✓ Darkness layer initialized');
-
-        // Initial render
-        const currentMap = mapManager.getCurrentMap();
-        if (currentMap) {
-          // Load background and foreground image layers (for background-image render mode)
-          // skipForeground: false means PixiJS renders ALL layers (no DOM hybrid)
-          if (currentMap.renderMode === 'background-image') {
-            await backgroundImageLayer.loadLayers(currentMap, currentMapId, false);
-          }
-          tileLayer.renderTiles(
-            currentMap,
-            currentMapId,
-            visibleRange,
-            seasonKey,
-            farmUpdateTrigger,
-            timeOfDayState
-          );
-          spriteLayer.renderSprites(
-            currentMap,
-            currentMapId,
-            visibleRange,
-            seasonKey,
-            timeOfDayState
-          );
-          const placedItems = gameState.getPlacedItems(currentMapId);
-          placedItemsLayer.renderItems(placedItems, visibleRange);
-          if (shadowLayerRef.current) {
-            const { hour, season } = TimeManager.getCurrentTime();
-            shadowLayerRef.current.renderShadows(
-              currentMap,
-              currentMapId,
-              visibleRange,
-              hour,
-              season,
-              currentWeather
-            );
-          }
-          let npcs = npcManager.getCurrentMapNPCs();
-          // Add NPCs from unified layers (for background-image rooms using layers array)
-          // Filter by visibility conditions (seasonal creatures, time-based NPCs)
-          const layerNPCs = backgroundImageLayer
-            .getLayerNPCs(currentMapId)
-            .filter((npc) => npcManager.isNPCVisible(npc));
-          if (layerNPCs.length > 0) {
-            npcs = [...npcs, ...layerNPCs];
-          }
-          npcLayer.renderNPCs(npcs, currentMap.characterScale ?? 1.0, undefined);
-          backgroundImageLayer.updateCamera(cameraX, cameraY);
-          tileLayer.updateCamera(cameraX, cameraY);
-          // Update shared depth-sorted container (contains sprites, player, NPCs)
-          depthSortedContainer.x = -cameraX;
-          depthSortedContainer.y = -cameraY;
-          placedItemsLayer.updateCamera(cameraX, cameraY);
-          if (shadowLayerRef.current) {
-            shadowLayerRef.current.updateCamera(cameraX, cameraY);
-          }
-        }
-
-        const endTime = performance.now();
-        console.log(`[App] ✓ PixiJS initialized in ${(endTime - startTime).toFixed(0)}ms`);
-        setIsPixiInitialized(true);
-      } catch (error) {
-        console.error('[App] Failed to initialize PixiJS:', error);
-      }
-    };
-
-    initPixi();
-
-    return () => {
-      // Cleanup PixiJS on unmount
-      if (pixiAppRef.current) {
-        console.log('[App] Destroying PixiJS application');
-        pixiAppRef.current.destroy(true);
-        pixiAppRef.current = null;
-      }
-      if (tileLayerRef.current) {
-        tileLayerRef.current.clear();
-        tileLayerRef.current = null;
-      }
-      if (backgroundImageLayerRef.current) {
-        backgroundImageLayerRef.current.clear();
-        backgroundImageLayerRef.current = null;
-      }
-      if (spriteLayerRef.current) {
-        spriteLayerRef.current.clear();
-        spriteLayerRef.current = null;
-      }
-      if (playerSpriteRef.current) {
-        playerSpriteRef.current.destroy();
-        playerSpriteRef.current = null;
-      }
-      if (npcLayerRef.current) {
-        npcLayerRef.current.clear();
-        npcLayerRef.current = null;
-      }
-      if (shadowLayerRef.current) {
-        shadowLayerRef.current.clear();
-        shadowLayerRef.current = null;
-      }
-      if (weatherLayerRef.current) {
-        weatherLayerRef.current.destroy();
-        weatherLayerRef.current = null;
-      }
-    };
-  }, [isMapInitialized]); // Only initialize once when map is ready
-
-  // Handle window resize (browser zoom, window resize) - update PixiJS canvas size
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !isPixiInitialized || !pixiAppRef.current) return;
-
-    const handleResize = () => {
-      const app = pixiAppRef.current;
-      if (!app) return;
-
-      // Resize the PixiJS renderer to match the new window size
-      app.renderer.resize(window.innerWidth, window.innerHeight);
-
-      // Update background image layer viewport dimensions
-      if (backgroundImageLayerRef.current && canvasRef.current) {
-        backgroundImageLayerRef.current.setViewportDimensions(
-          canvasRef.current.clientWidth ?? window.innerWidth,
-          canvasRef.current.clientHeight ?? window.innerHeight
-        );
-      }
-
-      console.log(`[App] Resized PixiJS renderer to ${window.innerWidth}x${window.innerHeight}`);
-    };
-
-    // Handle resize events (includes browser zoom)
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [isPixiInitialized]);
-
-  // Handle background image layers when map changes (separate from rendering to avoid clearing on every viewport change)
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !isPixiInitialized || !backgroundImageLayerRef.current) return;
-
-    const currentMap = mapManager.getCurrentMap();
-    if (!currentMap) return;
-
-    if (currentMap.renderMode === 'background-image') {
-      // Set viewport scaling config before loading layers
-      const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
-      backgroundImageLayerRef.current.setScalingConfig({
-        viewportScale,
-        referenceWidth: refViewport.width,
-        referenceHeight: refViewport.height,
-        viewportWidth: viewportSize.width,
-        viewportHeight: viewportSize.height,
-      });
-
-      // Async load - use IIFE to handle in useEffect
-      (async () => {
-        await backgroundImageLayerRef.current?.loadLayers(currentMap, currentMapId, false);
-      })();
-    } else {
-      // Clear background layers and reset scaling when switching to tiled map
-      backgroundImageLayerRef.current.setScalingConfig(null);
-      backgroundImageLayerRef.current.clear();
-    }
-  }, [currentMapId, isPixiInitialized, viewportScale, viewportSize]); // Re-run when map, scale, or viewport changes
-
-  // Update PixiJS tiles when map/viewport/season changes (NOT on every camera move)
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
-
-    const currentMap = mapManager.getCurrentMap();
-    if (currentMap) {
-      // Update PixiJS background color for current map
-      if (pixiAppRef.current) {
-        const colorScheme = mapManager.getCurrentColorScheme();
-        const bgColorClass = colorScheme?.colors.background || 'bg-palette-moss';
-        const backgroundColor = ColorResolver.paletteToHex(bgColorClass);
-        pixiAppRef.current.renderer.background.color = backgroundColor;
-      }
-
-      // Load background and foreground image layers (for background-image render mode)
-      // Note: Loading/clearing is handled by a separate useEffect that only runs on map change
-      // This avoids clearing on every visibleRange change
-
-      // Render all layers (only when viewport or map data changes)
-      tileLayerRef.current.renderTiles(
-        currentMap,
-        currentMapId,
-        visibleRange,
-        seasonKey,
-        farmUpdateTrigger,
-        timeOfDayState,
-        currentWeather
-      );
-
-      if (spriteLayerRef.current) {
-        spriteLayerRef.current.renderSprites(
-          currentMap,
-          currentMapId,
-          visibleRange,
-          seasonKey,
-          timeOfDayState,
-          currentWeather
-        );
-      }
-
-      if (placedItemsLayerRef.current) {
-        const placedItems = gameState.getPlacedItems(currentMapId);
-        placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
-      }
-
-      // Render shadows for foreground sprites (trees, buildings)
-      if (shadowLayerRef.current) {
-        const { hour, season } = TimeManager.getCurrentTime();
-        shadowLayerRef.current.renderShadows(
-          currentMap,
-          currentMapId,
-          visibleRange,
-          hour,
-          season,
-          currentWeather
-        );
-      }
-
-      // Update darkness layer (global darkness for caves/forests)
-      if (darknessLayerRef.current) {
-        const { season, timeOfDay: tod } = TimeManager.getCurrentTime();
-        darknessLayerRef.current.update(
-          currentMap.colorScheme,
-          season,
-          tod,
-          window.innerWidth,
-          window.innerHeight
-        );
-      }
-
-      // Log sprite count for debugging (only occasionally)
-      const stats = tileLayerRef.current.getSpriteCount();
-      if (stats.total > 0 && stats.total % 100 === 0) {
-        console.log(`[TileLayer] Sprites: ${stats.visible}/${stats.total} visible`);
-      }
-    }
-  }, [
-    currentMapId,
-    visibleRange,
-    seasonKey,
-    timeOfDay,
+  // PixiJS renderer hook - manages all PixiJS rendering layers
+  const {
     isPixiInitialized,
-    farmUpdateTrigger,
-    placedItemsUpdateTrigger,
-  ]);
-
-  // Update PixiJS camera position (lightweight, runs every frame)
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !isPixiInitialized) return;
-
-    const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
-
-    // Update viewport dimensions (use canvas size for browser zoom handling)
-    if (backgroundImageLayerRef.current && canvasRef.current) {
-      backgroundImageLayerRef.current.setViewportDimensions(
-        canvasRef.current.clientWidth ?? window.innerWidth,
-        canvasRef.current.clientHeight ?? window.innerHeight
-      );
-    }
-
-    // Camera updates are cheap - just moving container positions
-    // For background-image rooms: background stays fixed (centered), other layers also stay fixed
-    // For tiled rooms: all layers scroll with camera
-    if (backgroundImageLayerRef.current) {
-      backgroundImageLayerRef.current.updateCamera(cameraX, cameraY);
-    }
-    if (isBackgroundImageRoom) {
-      // For background-image rooms, reset container positions to (0, 0)
-      // Player/NPCs are positioned via gridOffset to align with centered background
-      // Update shared depth-sorted container (contains sprites, player, NPCs)
-      if (depthSortedContainerRef.current) {
-        depthSortedContainerRef.current.x = 0;
-        depthSortedContainerRef.current.y = 0;
-      }
-      // Other layers are hidden in background-image rooms, but reset them too
-      if (tileLayerRef.current) {
-        tileLayerRef.current.updateCamera(0, 0);
-      }
-      if (placedItemsLayerRef.current) {
-        placedItemsLayerRef.current.updateCamera(0, 0);
-      }
-      if (shadowLayerRef.current) {
-        shadowLayerRef.current.updateCamera(0, 0);
-      }
-    } else {
-      // For tiled rooms, apply camera transform normally
-      if (tileLayerRef.current) {
-        tileLayerRef.current.updateCamera(cameraX, cameraY);
-      }
-      // Update shared depth-sorted container (contains sprites, player, NPCs)
-      if (depthSortedContainerRef.current) {
-        depthSortedContainerRef.current.x = -cameraX;
-        depthSortedContainerRef.current.y = -cameraY;
-      }
-      if (placedItemsLayerRef.current) {
-        placedItemsLayerRef.current.updateCamera(cameraX, cameraY);
-      }
-      if (shadowLayerRef.current) {
-        shadowLayerRef.current.updateCamera(cameraX, cameraY);
-      }
-    }
-  }, [cameraX, cameraY, isPixiInitialized, currentMap?.renderMode]);
-
-  // Re-render PixiJS layers when NPC positions change or render version bumps
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !isPixiInitialized || !tileLayerRef.current) return;
-
-    const currentMap = mapManager.getCurrentMap();
-    if (currentMap) {
-      // Re-render all tiles
-      tileLayerRef.current.renderTiles(
-        currentMap,
-        currentMapId,
-        visibleRange,
-        seasonKey,
-        farmUpdateTrigger,
-        timeOfDayState,
-        currentWeather
-      );
-
-      // Update background sprite layer
-      if (spriteLayerRef.current) {
-        spriteLayerRef.current.renderSprites(
-          currentMap,
-          currentMapId,
-          visibleRange,
-          seasonKey,
-          timeOfDayState,
-          currentWeather
-        );
-      }
-
-      // Update placed items layer
-      if (placedItemsLayerRef.current) {
-        const placedItems = gameState.getPlacedItems(currentMapId);
-        placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
-      }
-
-      // Update shadow layer
-      if (shadowLayerRef.current) {
-        const { hour, season } = TimeManager.getCurrentTime();
-        shadowLayerRef.current.renderShadows(
-          currentMap,
-          currentMapId,
-          visibleRange,
-          hour,
-          season,
-          currentWeather
-        );
-      }
-
-      // Update NPC layer
-      if (npcLayerRef.current) {
-        let npcs = npcManager.getCurrentMapNPCs();
-        // Add NPCs from unified layers (for background-image rooms using layers array)
-        // Filter by visibility conditions (seasonal creatures, time-based NPCs)
-        if (backgroundImageLayerRef.current) {
-          const layerNPCs = backgroundImageLayerRef.current
-            .getLayerNPCs(currentMapId)
-            .filter((npc) => npcManager.isNPCVisible(npc));
-          if (layerNPCs.length > 0) {
-            npcs = [...npcs, ...layerNPCs];
-          }
-        }
-        npcLayerRef.current.renderNPCs(
-          npcs,
-          currentMap.characterScale ?? 1.0,
-          effectiveGridOffset,
-          effectiveTileSize
-        );
-      }
-
-      // Update darkness layer (global darkness for caves/forests)
-      if (darknessLayerRef.current) {
-        const { season, timeOfDay: tod } = TimeManager.getCurrentTime();
-        darknessLayerRef.current.update(
-          currentMap.colorScheme,
-          season,
-          tod,
-          window.innerWidth,
-          window.innerHeight
-        );
-      }
-    }
-  }, [renderVersion, isPixiInitialized, npcUpdateTrigger, currentMapId]);
-
-  // Update player sprite when player state changes
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !isPixiInitialized || !playerSpriteRef.current) return;
-
-    // Ensure player sprite is visible
-    playerSpriteRef.current.setVisible(true);
-
-    // Apply map's characterScale multiplier (default 1.0)
-    // NOTE: Don't include viewportScale here - it's already applied via effectiveTileSize
-    // Including it here would cause double-scaling (player grows faster than NPCs on zoom)
-    const mapCharacterScale = currentMap?.characterScale ?? 1.0;
-    const effectiveScale = spriteScale * mapCharacterScale * playerScale;
-
-    // Update player position and animation (works for all map types including background-image rooms)
-    // For background-image rooms, also pass effectiveTileSize for proper positioning
-    playerSpriteRef.current.update(
-      playerPos,
+    pixiAppRef,
+    npcLayerRef,
+    backgroundImageLayerRef,
+    weatherManagerRef,
+    weatherLayerRef,
+    updateAnimations,
+  } = usePixiRenderer({
+    enabled: USE_PIXI_RENDERER,
+    canvasRef,
+    mapConfig: {
+      isMapInitialized,
+      currentMapId,
+      currentMap,
+      currentWeather,
+    },
+    viewport: {
+      cameraX,
+      cameraY,
+      visibleRange,
+      viewportScale,
+      viewportSize,
+      effectiveGridOffset: effectiveGridOffset ?? { x: 0, y: 0 },
+      effectiveTileSize,
+    },
+    player: {
+      pos: playerPos,
       direction,
       animationFrame,
-      playerSpriteUrl,
-      effectiveScale,
-      effectiveGridOffset,
-      effectiveTileSize,
-      shouldFlip, // Flip sprite horizontally for fairy right-facing
-      movementMode // Movement mode affects z-index when flying
-    );
-  }, [
-    playerPos,
-    direction,
-    animationFrame,
-    playerSpriteUrl,
-    spriteScale,
-    playerScale,
-    shouldFlip,
-    isPixiInitialized,
-    currentMap?.characterScale,
-    effectiveGridOffset,
-    effectiveTileSize, // viewportScale changes are captured via effectiveTileSize
-    movementMode,
-  ]);
+      spriteUrl: playerSpriteUrl,
+      spriteScale,
+      playerScale,
+      shouldFlip,
+      movementMode,
+    },
+    timing: {
+      seasonKey,
+      timeOfDay,
+    },
+    triggers: {
+      farmUpdateTrigger,
+      placedItemsUpdateTrigger,
+      renderVersion,
+      npcUpdateTrigger,
+    },
+  });
 
-  // Update NPC layer when NPCs change
-  useEffect(() => {
-    if (!USE_PIXI_RENDERER || !isPixiInitialized || !npcLayerRef.current) return;
-
-    // Get current NPCs from manager
+  // Combined NPCs: npcManager NPCs + layer NPCs (for background-image rooms)
+  // Used for interactions, indicators, and rendering
+  const allNPCs = useMemo(() => {
     let npcs = npcManager.getCurrentMapNPCs();
-
-    // Add NPCs from unified layers (for background-image rooms using layers array)
-    // Filter by visibility conditions (seasonal creatures, time-based NPCs)
     if (backgroundImageLayerRef.current) {
+      // Pass currentMapId to prevent stale NPCs from wrong maps
+      // Filter by visibility conditions (seasonal creatures, time-based NPCs)
       const layerNPCs = backgroundImageLayerRef.current
         .getLayerNPCs(currentMapId)
         .filter((npc) => npcManager.isNPCVisible(npc));
@@ -2189,20 +1595,35 @@ const App: React.FC = () => {
         npcs = [...npcs, ...layerNPCs];
       }
     }
+    // Deduplicate NPCs by ID (layer NPCs take precedence over map NPCs)
+    const uniqueNPCs = Array.from(new Map(npcs.map((npc) => [npc.id, npc])).values());
+    return uniqueNPCs;
+  }, [currentMapId, npcUpdateTrigger, backgroundImageLayerRef]);
 
-    // Apply map's characterScale multiplier (default 1.0)
-    const mapCharacterScale = currentMap?.characterScale ?? 1.0;
+  // Keep NPCs ref in sync for collision detection
+  useEffect(() => {
+    npcsRef.current = allNPCs;
+  }, [allNPCs]);
 
-    // Render NPCs in PixiJS (works for all map types including background-image rooms)
-    npcLayerRef.current.renderNPCs(npcs, mapCharacterScale, effectiveGridOffset, effectiveTileSize);
-  }, [
-    npcUpdateTrigger,
-    isPixiInitialized,
-    currentMap?.characterScale,
-    effectiveGridOffset,
-    effectiveTileSize,
-    currentMapId,
-  ]);
+  // PixiJS effects have been moved to usePixiRenderer hook
+
+  // Subscribe to weather state changes (update weatherLayerRef from hook)
+  useEffect(() => {
+    if (weatherLayerRef.current && currentWeather !== weatherLayerRef.current.getWeather()) {
+      console.log(`[App] Weather changed to: ${currentWeather}`);
+      weatherLayerRef.current.setWeather(currentWeather);
+    }
+  }, [currentWeather]);
+
+  // Check for weather updates periodically
+  useEffect(() => {
+    if (weatherManagerRef.current) {
+      const interval = setInterval(() => {
+        weatherManagerRef.current?.checkWeatherUpdate();
+      }, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [isPixiInitialized]);
 
   // Show character creator if no character selected
   if (ui.characterCreator) {
