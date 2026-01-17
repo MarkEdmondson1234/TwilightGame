@@ -440,7 +440,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.TREE;
     }
   }
@@ -452,7 +452,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.TREE_BIG;
     }
   }
@@ -485,7 +485,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.CHERRY_TREE;
     }
   }
@@ -497,7 +497,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.OAK_TREE;
     }
   }
@@ -511,7 +511,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.SPRUCE_TREE;
     }
   }
@@ -523,7 +523,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.DEAD_SPRUCE;
     }
   }
