@@ -14,7 +14,7 @@ concurrency:
 jobs:
   performance:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20  # Increased for multi-map and device-throttled tests
 
     steps:
       - name: Checkout code
@@ -48,7 +48,8 @@ jobs:
       - name: Run performance tests
         id: perf
         run: |
-          # Run test on village map with movement scenario
+          # Run test on village map with movement scenario (baseline)
+          echo "## Testing village map (baseline)..."
           npm run perf:ci || true
 
           # Compare against baseline if it exists
@@ -58,6 +59,25 @@ jobs:
           else
             echo "baseline_exists=false" >> $GITHUB_OUTPUT
           fi
+
+      - name: Run multi-map tests
+        run: |
+          echo "## Testing bear_cave map..."
+          node scripts/perf-test.js --map bear_cave --scenario explore --duration 10000 --github --save perf-bear.json || true
+
+          echo "## Testing witch_hut map..."
+          node scripts/perf-test.js --map witch_hut --scenario explore --duration 10000 --github --save perf-witch.json || true
+
+      - name: Run device-throttled tests (simulated old iPad)
+        run: |
+          echo "## Testing village on simulated iPad Air 2 (4x CPU throttle)..."
+          node scripts/perf-test.js --device ipad --map village --scenario movement --duration 10000 --github --save perf-ipad-village.json || true
+
+          echo "## Testing bear_cave on simulated iPad 4th Gen (6x CPU throttle)..."
+          node scripts/perf-test.js --device ipad-old --map bear_cave --scenario explore --duration 10000 --github --save perf-ipad-bear.json || true
+
+          echo "## Testing witch_hut on simulated iPad 4th Gen (6x CPU throttle)..."
+          node scripts/perf-test.js --device ipad-old --map witch_hut --scenario explore --duration 10000 --github --save perf-ipad-witch.json || true
 
       - name: Generate performance report
         id: report
@@ -103,7 +123,12 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: perf-results
-          path: perf-results.json
+          path: |
+            perf-results.json
+            perf-bear.json
+            perf-witch.json
+            perf-ipad-*.json
+            perf-screenshot.png
           retention-days: 30
 
       - name: Update baseline on main

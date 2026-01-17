@@ -45,6 +45,64 @@ const CONFIG = {
   headed: hasArg('headed'),
   verbose: hasArg('verbose'),
   github: hasArg('github'), // GitHub Actions output mode
+  device: getArg('device'), // Device profile: 'ipad', 'ipad-mini', 'android-budget'
+  cpuThrottle: parseInt(getArg('cpu') || '1', 10), // CPU throttle factor (1 = no throttle, 4 = 4x slower)
+};
+
+// Device profiles for simulating older/slower devices
+const DEVICE_PROFILES = {
+  'ipad': {
+    name: 'iPad Air 2 / iPad Mini 4 (2014-2015)',
+    viewport: {
+      width: 1024,  // CSS pixels (2048 physical / 2 DPR)
+      height: 768,
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+      isLandscape: true,
+    },
+    cpuThrottle: 4, // A8X chip ~4x slower than modern chips
+    userAgent: 'Mozilla/5.0 (iPad; CPU OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 Mobile/15E148 Safari/604.1',
+  },
+  'ipad-mini': {
+    name: 'iPad Mini 4 (2015)',
+    viewport: {
+      width: 1024,
+      height: 768,
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+      isLandscape: true,
+    },
+    cpuThrottle: 4, // A8 chip
+    userAgent: 'Mozilla/5.0 (iPad; CPU OS 12_5_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.2 Mobile/15E148 Safari/604.1',
+  },
+  'ipad-old': {
+    name: 'iPad 4th Gen (2012) - Very Slow',
+    viewport: {
+      width: 1024,
+      height: 768,
+      deviceScaleFactor: 2,
+      isMobile: true,
+      hasTouch: true,
+      isLandscape: true,
+    },
+    cpuThrottle: 6, // A6X chip - very old
+    userAgent: 'Mozilla/5.0 (iPad; CPU OS 10_3_4 like Mac OS X) AppleWebKit/603.3.8 (KHTML, like Gecko) Version/10.0 Mobile/14G61 Safari/602.1',
+  },
+  'android-budget': {
+    name: 'Budget Android Tablet (2020)',
+    viewport: {
+      width: 1280,
+      height: 800,
+      deviceScaleFactor: 1.5,
+      isMobile: true,
+      hasTouch: true,
+      isLandscape: true,
+    },
+    cpuThrottle: 4, // Budget MediaTek/Snapdragon
+    userAgent: 'Mozilla/5.0 (Linux; Android 10; SM-T510) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Safari/537.36',
+  },
 };
 
 // Check if running in GitHub Actions
@@ -138,10 +196,90 @@ async function waitForGame(page) {
   );
   log('  Performance monitor ready', 'dim');
 
+  // Wait for all textures to finish loading
+  await waitForTexturesLoaded(page);
+
   // Wait a bit for the game loop to start
   await new Promise(r => setTimeout(r, 1000));
 
   log('Game initialised!', 'green');
+}
+
+async function waitForTexturesLoaded(page, timeoutMs = 60000) {
+  log('  Waiting for textures to load...', 'dim');
+  const startTime = Date.now();
+  let lastLoadedCount = 0;
+  let stableCount = 0;
+  const MIN_TEXTURES = 50; // Expect at least 50 textures for a fully loaded game
+
+  // Poll for textures to finish loading
+  // Consider "loaded" when: no pending loads AND loaded count is stable AND count > MIN_TEXTURES
+  while (Date.now() - startTime < timeoutMs) {
+    const stats = await page.evaluate(() => {
+      if (typeof window.textureManager !== 'undefined' && window.textureManager.getStats) {
+        return window.textureManager.getStats();
+      }
+      return { loaded: 0, loading: 0 };
+    });
+
+    const elapsed = Math.round((Date.now() - startTime) / 1000);
+
+    // Check if loading is complete (no pending AND count is stable AND count >= MIN_TEXTURES)
+    if (stats.loading === 0 && stats.loaded >= MIN_TEXTURES) {
+      if (stats.loaded === lastLoadedCount) {
+        stableCount++;
+        if (stableCount >= 3) { // Stable for 1.5 seconds (3 x 500ms checks)
+          log(`  ✓ All textures loaded (${stats.loaded} textures) in ${elapsed}s`, 'dim');
+          return;
+        }
+      } else {
+        stableCount = 0;
+      }
+      lastLoadedCount = stats.loaded;
+    } else if (stats.loading > 0) {
+      // Actively loading
+      stableCount = 0;
+      lastLoadedCount = stats.loaded;
+      // Log progress every 2 seconds
+      if (elapsed > 0 && elapsed % 2 === 0) {
+        log(`    Loading: ${stats.loading} pending, ${stats.loaded} loaded... (${elapsed}s)`, 'dim');
+      }
+    } else if (stats.loaded > 0 && stats.loaded < MIN_TEXTURES) {
+      // Some textures loaded but not enough yet - more may be coming
+      stableCount = 0;
+      lastLoadedCount = stats.loaded;
+      if (elapsed > 0 && elapsed % 3 === 0) {
+        log(`    Partial: ${stats.loaded}/${MIN_TEXTURES} textures (${elapsed}s)`, 'dim');
+      }
+    } else if (stats.loaded === 0) {
+      // Still waiting for texture loading to start (React useEffect hasn't run yet)
+      stableCount = 0;
+      if (elapsed > 0 && elapsed % 5 === 0) {
+        log(`    Waiting for React to initialise textures... (${elapsed}s)`, 'dim');
+      }
+    }
+
+    await new Promise(r => setTimeout(r, 500));
+  }
+
+  // Timeout - check final stats
+  const finalStats = await page.evaluate(() => {
+    if (typeof window.textureManager !== 'undefined') {
+      return window.textureManager.getStats();
+    }
+    return { loaded: 0, loading: 0 };
+  });
+
+  if (finalStats.loading > 0) {
+    log(`  ⚠ Texture loading timeout (${finalStats.loading} still pending, ${finalStats.loaded} loaded)`, 'yellow');
+  } else if (finalStats.loaded === 0) {
+    log(`  ✗ FAIL: No textures loaded after ${timeoutMs / 1000}s - this indicates a loading issue!`, 'red');
+    throw new Error('Texture loading failed - textureManager reports 0 textures');
+  } else if (finalStats.loaded < MIN_TEXTURES) {
+    log(`  ⚠ Only ${finalStats.loaded} textures loaded (expected ${MIN_TEXTURES}+)`, 'yellow');
+  } else {
+    log(`  ✓ Textures loaded (${finalStats.loaded} total)`, 'dim');
+  }
 }
 
 async function skipCharacterCreation(page) {
@@ -236,7 +374,9 @@ async function navigateToMap(page, mapId) {
 
   if (result.success) {
     log(`  Loaded map: ${result.mapId} (${result.mapSize})`, 'dim');
-    await new Promise((r) => setTimeout(r, 1000));
+    // Wait for new map's textures to load
+    await waitForTexturesLoaded(page, 15000);
+    await new Promise((r) => setTimeout(r, 500));
   } else {
     log(`  Could not navigate to ${mapId}: ${result.error}`, 'yellow');
   }
@@ -607,6 +747,14 @@ async function main() {
     log('  --compare FILE       Compare results against baseline JSON', 'dim');
     log('  --headed             Show browser window', 'dim');
     log('  --verbose            Show detailed output', 'dim');
+    log('\nDevice Throttling:', 'yellow');
+    log('  --device NAME        Emulate device (ipad, ipad-mini, ipad-old, android-budget)', 'dim');
+    log('  --cpu N              CPU throttle factor (1=none, 4=4x slower, 6=6x slower)', 'dim');
+    log('\nDevice Profiles:', 'yellow');
+    log('  ipad               iPad Air 2 / iPad Mini 4 (4x CPU throttle)', 'dim');
+    log('  ipad-mini          iPad Mini 4 (4x CPU throttle)', 'dim');
+    log('  ipad-old           iPad 4th Gen 2012 (6x CPU throttle) - very slow', 'dim');
+    log('  android-budget     Budget Android Tablet (4x CPU throttle)', 'dim');
     log('\nScenarios:', 'yellow');
     log('  idle               Just let the game run (default)', 'dim');
     log('  movement           Move in all 4 directions', 'dim');
@@ -621,6 +769,9 @@ async function main() {
     log('  npm run perf -- --scenario stress --headed', 'dim');
     log('  npm run perf:baseline                     # Save baseline', 'dim');
     log('  npm run perf:compare                      # Compare to baseline', 'dim');
+    log('  npm run perf:ipad                         # Test on old iPad (throttled)', 'dim');
+    log('  npm run perf:ipad -- --headed             # Watch throttled test', 'dim');
+    log('  npm run perf -- --cpu 4 --scenario stress # Custom throttle', 'dim');
     log('');
     process.exit(0);
   }
@@ -630,6 +781,16 @@ async function main() {
   log(`Warmup: ${CONFIG.warmupMs / 1000}s | Duration: ${CONFIG.durationMs / 1000}s`, 'dim');
   log(`Scenario: ${CONFIG.scenario}${CONFIG.map ? ` on map: ${CONFIG.map}` : ''}`, 'dim');
   log(`Mode: ${CONFIG.headed ? 'Headed (visible)' : 'Headless'}`, 'dim');
+
+  // Device throttling info
+  const deviceProfile = CONFIG.device ? DEVICE_PROFILES[CONFIG.device] : null;
+  if (deviceProfile) {
+    log(`Device: ${deviceProfile.name}`, 'yellow');
+    log(`  CPU Throttle: ${deviceProfile.cpuThrottle}x slowdown`, 'dim');
+    log(`  Viewport: ${deviceProfile.viewport.width}x${deviceProfile.viewport.height} @ ${deviceProfile.viewport.deviceScaleFactor}x DPR`, 'dim');
+  } else if (CONFIG.cpuThrottle > 1) {
+    log(`CPU Throttle: ${CONFIG.cpuThrottle}x slowdown`, 'yellow');
+  }
   log('');
 
   let browser;
@@ -643,16 +804,49 @@ async function main() {
         '--disable-gpu-vsync', // Disable vsync for consistent measurements
         '--disable-frame-rate-limit', // Remove frame rate cap
         '--enable-webgl', // Enable WebGL for PixiJS
-        '--use-gl=swiftshader', // Software rendering for headless WebGL
-        '--disable-software-rasterizer',
+        '--use-gl=angle', // Use ANGLE for WebGL (works better with PixiJS)
+        '--use-angle=swiftshader', // Software rendering backend for ANGLE
         '--no-sandbox', // Required for some CI environments
+        '--disable-dev-shm-usage', // Fixes memory issues in Docker/CI
       ],
     });
 
     const page = await browser.newPage();
 
-    // Set viewport to typical game size
-    await page.setViewport({ width: 1280, height: 720 });
+    // Listen for page errors
+    page.on('pageerror', err => {
+      log(`  PAGE ERROR: ${err.message}`, 'red');
+    });
+
+    // In verbose mode, log browser console messages
+    if (CONFIG.verbose) {
+      page.on('console', msg => {
+        const text = msg.text();
+        if (text.includes('TextureManager') || text.includes('PixiJS')) {
+          log(`  BROWSER: ${text}`, 'dim');
+        }
+      });
+    }
+
+    // Get device profile if specified
+    const profile = CONFIG.device ? DEVICE_PROFILES[CONFIG.device] : null;
+
+    // Set viewport - use device profile or default game size
+    if (profile) {
+      await page.setViewport(profile.viewport);
+      await page.setUserAgent(profile.userAgent);
+      log(`  Applied ${profile.name} viewport and user agent`, 'dim');
+    } else {
+      await page.setViewport({ width: 1280, height: 720 });
+    }
+
+    // Apply CPU throttling via Chrome DevTools Protocol
+    const cpuThrottleFactor = profile?.cpuThrottle || CONFIG.cpuThrottle;
+    if (cpuThrottleFactor > 1) {
+      const client = await page.createCDPSession();
+      await client.send('Emulation.setCPUThrottlingRate', { rate: cpuThrottleFactor });
+      log(`  Applied ${cpuThrottleFactor}x CPU throttling`, 'dim');
+    }
 
     // Enable performance metrics
     await page.setCacheEnabled(false);
@@ -664,7 +858,8 @@ async function main() {
     // Navigate to game
     log(`Navigating to ${CONFIG.url}...`, 'dim');
     try {
-      await page.goto(CONFIG.url, { waitUntil: 'networkidle2', timeout: 30000 });
+      // Use 'load' instead of 'networkidle2' since PixiJS texture loading keeps connections open
+      await page.goto(CONFIG.url, { waitUntil: 'load', timeout: 60000 });
     } catch (error) {
       log(`\nError: Could not connect to ${CONFIG.url}`, 'red');
       log('Make sure the dev server is running: npm run dev\n', 'yellow');
@@ -700,6 +895,11 @@ async function main() {
       await page.keyboard.up('KeyW');
       await page.keyboard.up('KeyD');
     }
+
+    // Take screenshot at end of test (overwrites previous)
+    const screenshotPath = resolve(process.cwd(), 'perf-screenshot.png');
+    await page.screenshot({ path: screenshotPath, fullPage: false });
+    log(`Screenshot saved: ${screenshotPath}`, 'dim');
 
     // Analyse results
     const results = analyseResults(samples);

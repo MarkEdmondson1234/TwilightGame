@@ -64,6 +64,7 @@ import {
 } from './utils/actionHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
+import { audioManager } from './utils/AudioManager';
 import { cookingManager } from './utils/CookingManager';
 import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
@@ -333,6 +334,101 @@ const App: React.FC = () => {
       weatherLayerRef.current.setVisible(showWeather);
       console.log(`[App] Weather '${currentWeatherType}' on map '${currentMapId}': ${showWeather}`);
     }
+  }, [currentMapId]);
+
+  // Weather ambient audio - play/stop sounds based on weather and map
+  useEffect(() => {
+    const isOutdoors = isWeatherAllowedOnMap(currentWeather, currentMapId);
+
+    // Map weather types to audio keys
+    const weatherAudioMap: Record<string, string | null> = {
+      rain: 'ambient_rain_light',
+      storm: 'ambient_thunderstorm',
+      snow: 'ambient_blizzard',
+      clear: null, // No ambient for clear weather (could add birds later)
+      fog: null,
+      mist: null,
+      cherry_blossoms: null,
+    };
+
+    // Stop all weather ambient sounds first
+    audioManager.stopAmbient('ambient_rain_light', 1000);
+    audioManager.stopAmbient('ambient_rain_thunder', 1000);
+    audioManager.stopAmbient('ambient_thunderstorm', 1000);
+    audioManager.stopAmbient('ambient_blizzard', 1000);
+    audioManager.stopAmbient('ambient_birds', 1000);
+
+    // Play new weather ambient if outdoors and audio exists
+    if (isOutdoors) {
+      const audioKey = weatherAudioMap[currentWeather];
+      if (audioKey && audioManager.hasSound(audioKey)) {
+        // Small delay to allow fade out to complete
+        setTimeout(() => {
+          audioManager.playAmbient(audioKey);
+        }, 500);
+      }
+    }
+  }, [currentWeather, currentMapId]);
+
+  // Ambient music system - plays music randomly with fade in/out
+  useEffect(() => {
+    // Track if music is currently playing
+    let isMusicPlaying = false;
+    let musicTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // Get appropriate music track for current map
+    const getMusicForMap = (mapId: string): string | null => {
+      if (mapId.includes('forest') || mapId.includes('deep_forest')) {
+        return 'music_forest';
+      }
+      if (mapId.includes('village') || mapId.includes('home') || mapId.includes('mum')) {
+        return 'music_village';
+      }
+      // Default to village music for other areas
+      return 'music_village';
+    };
+
+    // Random interval between music plays (2-5 minutes)
+    const getRandomInterval = () => Math.floor(Math.random() * 180000) + 120000;
+
+    // Random duration for music play (30-90 seconds)
+    const getRandomDuration = () => Math.floor(Math.random() * 60000) + 30000;
+
+    const playRandomMusic = () => {
+      if (isMusicPlaying) return;
+
+      const musicKey = getMusicForMap(currentMapId);
+      if (!musicKey || !audioManager.hasSound(musicKey)) {
+        // Schedule next attempt
+        musicTimeout = setTimeout(playRandomMusic, getRandomInterval());
+        return;
+      }
+
+      // Play music with fade in
+      isMusicPlaying = true;
+      audioManager.playMusic(musicKey, { fadeIn: 3000 });
+
+      // Schedule fade out
+      const duration = getRandomDuration();
+      musicTimeout = setTimeout(() => {
+        audioManager.stopMusic(3000); // 3 second fade out
+        isMusicPlaying = false;
+
+        // Schedule next music play
+        musicTimeout = setTimeout(playRandomMusic, getRandomInterval());
+      }, duration);
+    };
+
+    // Start first music after a short delay (10-30 seconds)
+    const initialDelay = Math.floor(Math.random() * 20000) + 10000;
+    musicTimeout = setTimeout(playRandomMusic, initialDelay);
+
+    return () => {
+      if (musicTimeout) {
+        clearTimeout(musicTimeout);
+      }
+      audioManager.stopMusic(1000);
+    };
   }, [currentMapId]);
 
   // Poll for time-of-day changes and weather updates (check every 10 seconds)
@@ -652,12 +748,20 @@ const App: React.FC = () => {
         currentTool: currentTool,
         selectedSeed: null, // Seeds are now part of the tool system
         onMirror: () => openUI('characterCreator'),
-        onNPC: (npcId) => setActiveNPC(npcId),
+        onNPC: (npcId) => {
+          // Play duck quacking if interacting with a duck
+          if (npcId.toLowerCase().includes('duck')) {
+            audioManager.playSfx('sfx_ducks_quack');
+          }
+          setActiveNPC(npcId);
+        },
         onGiveGift: (npcId) => {
           openUI('giftModal', { giftTargetNpcId: npcId });
         },
         onTransition: (result: TransitionResult) => {
           if (result.success && result.mapId && result.spawnPosition) {
+            // Play door/transition sound
+            audioManager.playSfx('sfx_door_opening');
             handleMapTransition(result.mapId, result.spawnPosition);
             // Save player location when transitioning
             const seedMatch = result.mapId.match(/_([\d]+)$/);
@@ -685,8 +789,13 @@ const App: React.FC = () => {
         onFarmAnimation: (action, tilePos) => {
           setFarmActionAnimation(action);
           setFarmActionKey((prev) => prev + 1);
-          // Trigger harvest glow VFX when harvesting
-          if (action === 'harvest' && tilePos) {
+          // Play farming sound effects
+          if (action === 'till') {
+            audioManager.playSfx('sfx_hoeing');
+          } else if (action === 'water') {
+            audioManager.playSfx('sfx_digging'); // Use digging for water splash until we have water sound
+          } else if (action === 'harvest' && tilePos) {
+            // Trigger harvest glow VFX when harvesting
             triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
           }
         },
@@ -1265,6 +1374,8 @@ const App: React.FC = () => {
       const result = usePotionEffect(itemId, magicEffectCallbacks);
 
       if (result.success) {
+        // Play magic sound effect
+        audioManager.playSfx('sfx_magic_transition');
         // Remove one potion from inventory
         inventoryManager.removeItem(itemId, 1);
         // Refresh inventory display
@@ -1319,12 +1430,20 @@ const App: React.FC = () => {
       currentTool: currentTool,
       selectedSeed: null,
       onMirror: () => openUI('characterCreator'),
-      onNPC: (npcId) => setActiveNPC(npcId),
+      onNPC: (npcId) => {
+        // Play duck quacking if interacting with a duck
+        if (npcId.toLowerCase().includes('duck')) {
+          audioManager.playSfx('sfx_ducks_quack');
+        }
+        setActiveNPC(npcId);
+      },
       onGiveGift: (npcId) => {
         openUI('giftModal', { giftTargetNpcId: npcId });
       },
       onTransition: (result: TransitionResult) => {
         if (result.success && result.mapId && result.spawnPosition) {
+          // Play door/transition sound
+          audioManager.playSfx('sfx_door_opening');
           handleMapTransition(result.mapId, result.spawnPosition);
           const seedMatch = result.mapId.match(/_([\d]+)$/);
           const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
@@ -1351,6 +1470,12 @@ const App: React.FC = () => {
       onFarmAnimation: (action) => {
         setFarmActionAnimation(action);
         setFarmActionKey((prev) => prev + 1);
+        // Play farming sound effects
+        if (action === 'till') {
+          audioManager.playSfx('sfx_hoeing');
+        } else if (action === 'water') {
+          audioManager.playSfx('sfx_digging');
+        }
       },
       onForage: (result: ForageResult) => {
         showToast(result.message, result.found ? 'success' : 'info');
@@ -1487,6 +1612,13 @@ const App: React.FC = () => {
           ...cookingAssets,
           ...npcAssets,
         });
+        // Re-export textureManager after loading to ensure window has the populated instance
+        (window as any).textureManager = textureManager;
+        console.log(
+          '[App] TextureManager exported to window with',
+          textureManager.getStats().loaded,
+          'textures'
+        );
 
         // Create background image layer (for background-image render mode rooms)
         const backgroundImageLayer = new BackgroundImageLayer();
@@ -1597,7 +1729,13 @@ const App: React.FC = () => {
             farmUpdateTrigger,
             timeOfDayState
           );
-          spriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, timeOfDayState);
+          spriteLayer.renderSprites(
+            currentMap,
+            currentMapId,
+            visibleRange,
+            seasonKey,
+            timeOfDayState
+          );
           const placedItems = gameState.getPlacedItems(currentMapId);
           placedItemsLayer.renderItems(placedItems, visibleRange);
           if (shadowLayerRef.current) {

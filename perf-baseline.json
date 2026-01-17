@@ -1,0 +1,40 @@
+{
+  "timestamp": "2026-01-17T15:43:41.058Z",
+  "duration": 15000,
+  "scenario": "movement",
+  "sampleCount": 26,
+  "fps": {
+    "avg": 10,
+    "min": 6.2,
+    "max": 35.1
+  },
+  "frameTime": {
+    "avg": 121.03,
+    "min": 28.52,
+    "max": 160.53,
+    "p95": 159.13
+  },
+  "jank": {
+    "maxFrameTime": 228.7,
+    "p95MaxFrameTime": 228.7
+  },
+  "memory": {
+    "avgMB": 71.3,
+    "maxMB": 90.7,
+    "growthMB": 13.9
+  },
+  "finalMetrics": {
+    "fps": 6.4,
+    "avgFrameTime": 156.5,
+    "minFrameTime": 126.5,
+    "maxFrameTime": 218.1,
+    "frameTimeVariance": 22.21,
+    "heapUsed": 94370430,
+    "heapTotal": 133108098,
+    "spriteCount": 0,
+    "domNodeCount": 202,
+    "timestamp": 49151.199999999255,
+    "uptime": 15.03039999999851,
+    "frameCount": 114
+  }
+}
