@@ -14,6 +14,7 @@ import { FarmPlot, NPCFriendship, PlacedItem, ColorScheme, DeskContents } from '
 import { GameTime, TimeManager } from './utils/TimeManager';
 import { shouldDecay } from './utils/itemDecayManager';
 import { STAMINA, WATERING_CAN } from './constants';
+import { eventBus, GameEvent } from './utils/EventBus';
 
 export interface CharacterCustomization {
   characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
@@ -1361,6 +1362,7 @@ class GameStateManager {
   addPlacedItem(item: PlacedItem): void {
     this.state.placedItems.push(item);
     this.notify();
+    eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: item.mapId, action: 'add' });
   }
 
   /**
@@ -1374,8 +1376,13 @@ class GameStateManager {
    * Remove a placed item by ID
    */
   removePlacedItem(itemId: string): void {
-    this.state.placedItems = this.state.placedItems.filter((item) => item.id !== itemId);
+    // Find the item first to get its mapId for the event
+    const item = this.state.placedItems.find((i) => i.id === itemId);
+    this.state.placedItems = this.state.placedItems.filter((i) => i.id !== itemId);
     this.notify();
+    if (item) {
+      eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: item.mapId, action: 'remove' });
+    }
   }
 
   /**
@@ -1395,6 +1402,8 @@ class GameStateManager {
     if (removedCount > 0) {
       this.notify();
       console.log(`[GameState] Removed ${removedCount} decayed item(s)`);
+      // Emit generic update event (items could be from any map)
+      eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: '*', action: 'remove' });
     }
 
     return removedCount;

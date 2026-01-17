@@ -2,6 +2,7 @@ import { NPC, Position, Direction, NPCBehavior, isTileSolid, SeasonalLocation } 
 import { getTileData } from './utils/mapUtils';
 import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { TimeManager, Season } from './utils/TimeManager';
+import { eventBus, GameEvent } from './utils/EventBus';
 
 /**
  * NPCManager - Single Source of Truth for all NPC data
@@ -525,6 +526,11 @@ class NPCManagerClass {
       // TODO: Implement PATROL behavior
     });
 
+    // Emit event if any NPC moved
+    if (anyNPCMoved) {
+      eventBus.emit(GameEvent.NPC_MOVED, { npcId: 'multiple' });
+    }
+
     return anyNPCMoved;
   }
 
@@ -576,6 +582,7 @@ class NPCManagerClass {
     }
 
     console.log(`[NPCManager] Added dynamic NPC ${npc.id} to map ${this.currentMapId}`);
+    eventBus.emit(GameEvent.NPC_SPAWNED, { npcId: npc.id, mapId: this.currentMapId });
   }
 
   /**
@@ -599,13 +606,16 @@ class NPCManagerClass {
     this.npcStates.delete(npcId);
 
     console.log(`[NPCManager] Removed dynamic NPC ${npcId} from map ${this.currentMapId}`);
+    eventBus.emit(GameEvent.NPC_DESPAWNED, { npcId, mapId: this.currentMapId });
   }
 
   /**
    * Get the current location for an NPC based on the current season
    * Returns null if NPC should not appear this season
    */
-  private getSeasonalLocationForNPC(npc: NPC): { mapId: string; position: Position; direction: Direction } | null {
+  private getSeasonalLocationForNPC(
+    npc: NPC
+  ): { mapId: string; position: Position; direction: Direction } | null {
     if (!npc.seasonalLocations) {
       // No seasonal locations, use base location
       const state = this.npcStates.get(npc.id);
@@ -654,7 +664,9 @@ class NPCManagerClass {
       return;
     }
 
-    console.log(`[NPCManager] Season changed from ${this.currentSeason} to ${newSeason}, updating NPC locations`);
+    console.log(
+      `[NPCManager] Season changed from ${this.currentSeason} to ${newSeason}, updating NPC locations`
+    );
     this.currentSeason = newSeason;
 
     // Process all NPCs with seasonal locations
@@ -685,7 +697,9 @@ class NPCManagerClass {
         this.npcsByMap.set(mapId, targetMapNPCs);
       }
 
-      console.log(`[NPCManager] Moved NPC ${npc.id} to map ${mapId} at (${position.x}, ${position.y}) for ${newSeason}`);
+      console.log(
+        `[NPCManager] Moved NPC ${npc.id} to map ${mapId} at (${position.x}, ${position.y}) for ${newSeason}`
+      );
     });
   }
 

@@ -31,6 +31,8 @@ import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSp
 import { useCamera } from './hooks/useCamera';
 import { useViewportCulling } from './hooks/useViewportCulling';
 import { useUIState } from './hooks/useUIState';
+import { useGameEvents } from './hooks/useGameEvents';
+import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
@@ -125,15 +127,16 @@ const App: React.FC = () => {
   >(gameState.getWeather()); // Track weather for tint overlay
   const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
   const [dialogueMode, setDialogueMode] = useState<'static' | 'ai'>('static'); // Dialogue mode (static trees vs AI chat)
-  const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0); // Force re-render when NPCs move
-  const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0); // Force re-render when farm plots change
+
+  // Event-driven triggers for re-rendering (managed by EventBus subscriptions)
+  const { farmUpdateTrigger, npcUpdateTrigger, placedItemsUpdateTrigger } = useGameEvents();
+
   const [farmActionAnimation, setFarmActionAnimation] = useState<FarmActionType | null>(null); // Current farm action animation
   const [farmActionKey, setFarmActionKey] = useState(0); // Force animation retrigger for same action type
   const [waterSparklePos, setWaterSparklePos] = useState<{ x: number; y: number } | null>(null); // Position for water sparkle effect
   const [waterSparkleKey, setWaterSparkleKey] = useState(0); // Force sparkle retrigger
   const [showSplashEffect, setShowSplashEffect] = useState(false); // Show splash effect when refilling water can
   const [splashKey, setSplashKey] = useState(0); // Force splash retrigger
-  const [placedItemsUpdateTrigger, setPlacedItemsUpdateTrigger] = useState(0); // Force re-render when placed items change
   const [stamina, setStamina] = useState(gameState.getStamina()); // Current stamina for UI display
   const isMovingRef = useRef(false); // Track if player is currently moving (for stamina drain)
   const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
@@ -208,10 +211,11 @@ const App: React.FC = () => {
     fairyAttractionManager.reset();
   };
 
-  // Farm update handler
-  const handleFarmUpdate = () => {
-    setFarmUpdateTrigger((prev: number) => prev + 1);
-  };
+  // Farm update handler - no-op since EventBus handles this now
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  const handleFarmUpdate = useCallback(() => {
+    // Events are now emitted by FarmManager via EventBus
+  }, []);
 
   // Farm animation completion handler
   const handleAnimationComplete = useCallback(() => {
@@ -281,8 +285,7 @@ const App: React.FC = () => {
       // Update React state for WeatherTintOverlay
       setCurrentWeather(state.weather);
 
-      // Trigger re-render when placed items change
-      setPlacedItemsUpdateTrigger((prev) => prev + 1);
+      // Note: placed items re-render now handled by EventBus (PLACED_ITEMS_CHANGED)
 
       // Update inventory UI when inventory changes
       setInventoryItems(convertInventoryToUI());
@@ -451,7 +454,7 @@ const App: React.FC = () => {
       const removedCount = gameState.removeDecayedItems();
       if (removedCount > 0) {
         console.log(`[App] Removed ${removedCount} decayed item(s)`);
-        setPlacedItemsUpdateTrigger((prev) => prev + 1); // Force re-render
+        // Re-render now handled by EventBus (PLACED_ITEMS_CHANGED)
       }
     }, 10000); // Check every 10 seconds
 
@@ -802,18 +805,14 @@ const App: React.FC = () => {
             registerItemSprite(action.itemId, action.imageUrl);
             // Add item to inventory
             inventoryManager.addItem(action.itemId, 1);
-            // Remove from placed items
+            // Remove from placed items (emits PLACED_ITEMS_CHANGED event)
             gameState.removePlacedItem(action.placedItemId);
-            // Trigger re-render
-            setPlacedItemsUpdateTrigger((prev) => prev + 1);
             showToast('Picked up item', 'success');
           } else if (action.action === 'eat') {
-            // Remove from placed items
+            // Remove from placed items (emits PLACED_ITEMS_CHANGED event)
             gameState.removePlacedItem(action.placedItemId);
             // Restore stamina from eating
             const restored = staminaManager.eatFood(action.itemId);
-            // Trigger re-render
-            setPlacedItemsUpdateTrigger((prev) => prev + 1);
             showToast(`Ate the food (+${restored} stamina)`, 'success');
           } else if (action.action === 'taste') {
             showToast('Mmm, tasty!', 'info');
@@ -940,37 +939,29 @@ const App: React.FC = () => {
     lastFrameTime.current = now;
 
     // Update NPCs (they continue moving even when dialogue is open)
-    const npcsMoved = npcManager.updateNPCs(deltaTime);
-    // Only trigger re-render if NPCs actually moved (not every frame)
-    if (npcsMoved) {
-      setNpcUpdateTrigger((prev) => prev + 1);
-    }
+    // NPC movement triggers NPC_MOVED event via EventBus
+    npcManager.updateNPCs(deltaTime);
 
     // Check for season changes and update NPC locations if needed
-    const seasonChanged = npcManager.checkSeasonChange();
-    if (seasonChanged) {
-      setNpcUpdateTrigger((prev) => prev + 1);
-    }
+    // Season changes trigger NPC_MOVED event via EventBus
+    npcManager.checkSeasonChange();
 
     // Check for fairy spawns/despawns (time-based attraction system)
     const currentNPCs = npcManager.getCurrentMapNPCs();
 
     // Check for fairies to despawn (happens at dawn)
+    // removeDynamicNPC emits NPC_DESPAWNED event
     const fairyIdsToDespawn = fairyAttractionManager.getFairiesToDespawn(currentNPCs);
     fairyIdsToDespawn.forEach((npcId) => {
       npcManager.removeDynamicNPC(npcId);
     });
 
     // Check for new fairies to spawn (happens at night near bluebells)
+    // addDynamicNPC emits NPC_SPAWNED event
     const newFairies = fairyAttractionManager.updateFairySpawns(currentMapId, currentNPCs);
     newFairies.forEach((fairy) => {
       npcManager.addDynamicNPC(fairy);
     });
-
-    // Trigger re-render if fairies spawned or despawned
-    if (fairyIdsToDespawn.length > 0 || newFairies.length > 0) {
-      setNpcUpdateTrigger((prev) => prev + 1);
-    }
 
     // Update PixiJS animations (weather particles, sprite animations, tile animations)
     updateAnimations(deltaTime);
@@ -1039,9 +1030,9 @@ const App: React.FC = () => {
     animationFrameId.current = requestAnimationFrame(gameLoop);
 
     // Update farm plots every 2 seconds to check for crop growth and visual updates
+    // FarmManager emits FARM_PLOT_CHANGED events which trigger re-renders via useGameEvents
     const farmUpdateInterval = setInterval(() => {
       farmManager.updateAllPlots();
-      setFarmUpdateTrigger((prev: number) => prev + 1); // Force re-render for growth stages
     }, 2000); // Check every 2 seconds for smoother visual updates
 
     return () => {
@@ -1252,7 +1243,12 @@ const App: React.FC = () => {
       },
       refreshTime: () => {
         // Force time update - TimeManager is singleton, just need to trigger UI refresh
-        setNpcUpdateTrigger((prev) => prev + 1);
+        // EventBus handles re-renders via TIME_CHANGED events
+        const time = TimeManager.getCurrentTime();
+        eventBus.emit(GameEvent.TIME_CHANGED, {
+          hour: time.hour,
+          timeOfDay: time.hour >= 6 && time.hour < 20 ? 'day' : 'night',
+        });
       },
       setPlayerScale: (scale: number) => {
         setPlayerScale(scale);
@@ -1272,7 +1268,8 @@ const App: React.FC = () => {
         showToast(message, type || 'info');
       },
       refreshFarmPlots: () => {
-        setFarmUpdateTrigger((prev) => prev + 1);
+        // EventBus handles re-renders via FARM_PLOT_CHANGED events
+        eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
       },
       getCurrentMapId: () => currentMapId,
       getPlayerPosition: () => playerPos,
@@ -1445,13 +1442,13 @@ const App: React.FC = () => {
           registerItemSprite(action.itemId, action.imageUrl);
           inventoryManager.addItem(action.itemId, 1);
           gameState.removePlacedItem(action.placedItemId);
-          setPlacedItemsUpdateTrigger((prev) => prev + 1);
+          // GameState emits PLACED_ITEMS_CHANGED event
           showToast('Picked up item', 'success');
         } else if (action.action === 'eat') {
           gameState.removePlacedItem(action.placedItemId);
           // Restore stamina from eating
           const restored = staminaManager.eatFood(action.itemId);
-          setPlacedItemsUpdateTrigger((prev) => prev + 1);
+          // GameState emits PLACED_ITEMS_CHANGED event
           showToast(`Ate the food (+${restored} stamina)`, 'success');
         } else if (action.action === 'taste') {
           showToast('Mmm, tasty!', 'info');
@@ -2078,7 +2075,8 @@ const App: React.FC = () => {
           }}
           onFarmUpdate={() => {
             console.log('[App] Farm update triggered from DevTools');
-            setFarmUpdateTrigger((prev: number) => prev + 1);
+            // EventBus handles re-renders via FARM_PLOT_CHANGED events
+            eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
           }}
           isFairyForm={isFairyForm}
           onFairyFormToggle={(active) => {
@@ -2146,7 +2144,7 @@ const App: React.FC = () => {
           cookingPosition={ui.context.cookingPosition}
           currentMapId={currentMap.id}
           onItemPlaced={() => {
-            setPlacedItemsUpdateTrigger((prev) => prev + 1);
+            // GameState emits PLACED_ITEMS_CHANGED event when items are placed
           }}
         />
       )}
@@ -2250,7 +2248,7 @@ const App: React.FC = () => {
                 .map((npc) => npc.id);
             })()}
             onItemPlaced={() => {
-              setPlacedItemsUpdateTrigger((prev) => prev + 1);
+              // GameState emits PLACED_ITEMS_CHANGED event when items are placed
             }}
           />
         </>

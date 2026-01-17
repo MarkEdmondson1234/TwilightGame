@@ -16,6 +16,7 @@ import { getSeedItemId, getCropItemId } from '../data/items';
 import { getTileCoords } from './mapUtils';
 import { GROWTH_THRESHOLDS, DEBUG } from '../constants';
 import { getWeatherZone } from '../data/weatherConfig';
+import { eventBus, GameEvent } from './EventBus';
 
 class FarmManager {
   private plots: Map<string, FarmPlot> = new Map(); // key: "mapId:x:y"
@@ -105,8 +106,12 @@ class FarmManager {
       }
     }
 
-    if (updated.length > 0 && DEBUG.FARM) {
-      console.log(`[FarmManager] Updated ${updated.length} plots`);
+    if (updated.length > 0) {
+      if (DEBUG.FARM) {
+        console.log(`[FarmManager] Updated ${updated.length} plots`);
+      }
+      // Emit a single event for all crop growth updates
+      eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
     }
   }
 
@@ -251,6 +256,7 @@ class FarmManager {
 
     this.registerPlot(plot);
     if (DEBUG.FARM) console.log(`[FarmManager] Tilled soil at ${position.x},${position.y}`);
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: tile, action: 'till' });
     return true;
   }
 
@@ -324,6 +330,7 @@ class FarmManager {
       console.log(
         `[FarmManager] Planted ${cropId} at ${position.x},${position.y} in ${gameTime.season} (used 1 seed)`
       );
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'plant' });
     return { success: true };
   }
 
@@ -385,6 +392,7 @@ class FarmManager {
 
     this.registerPlot(updatedPlot);
     if (DEBUG.FARM) console.log(`[FarmManager] Watered crop at ${position.x},${position.y}`);
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'water' });
     return true;
   }
 
@@ -555,6 +563,7 @@ class FarmManager {
 
     this.registerPlot(updatedPlot);
     if (DEBUG.FARM) console.log(`[FarmManager] Cleared dead crop at ${position.x},${position.y}`);
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'clear' });
     return true;
   }
 
