@@ -165,6 +165,11 @@ export const tileAssets = {
   // Mushroom Forest plants (mushroom forest exclusives)
   luminescent_toadstool:
     '/TwilightGame/assets-optimized/tiles/mushroomMap/luminecent_toadstool.png',
+  // Mushroom house assets (animated 6x6 building with subtle animation)
+  mushroom_house_01: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom_house01.png',
+  mushroom_house_02: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom_house02.png',
+  // Branch (walkable ground decoration)
+  branch: '/TwilightGame/assets-optimized/tiles/mushroomMap/branch.png',
   // Common forageable plants
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',
   // Witch hut asset

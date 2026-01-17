@@ -130,6 +130,8 @@ export enum TileType {
   ADDERSMEAT, // Night-blooming magical flower (moon magic, dormant in winter)
   // Mushroom Forest plants (mushroom forest exclusives)
   LUMINESCENT_TOADSTOOL, // Glowing cyan toadstools (3x3, mushroom forest only)
+  MUSHROOM_HOUSE, // Animated mushroom house (6x6, mushroom forest building)
+  BRANCH, // Fallen branch (walkable ground decoration)
   // Common forageable plants (appear on multiple maps)
   MUSTARD_FLOWER, // Yellow mustard flower (3x3, blooms spring/summer, dormant autumn/winter)
   // Utility tiles

@@ -231,6 +231,30 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     },
   },
   {
+    tileType: TileType.MUSHROOM_HOUSE,
+    spriteWidth: 8, // 8 tiles wide (square image)
+    spriteHeight: 8, // 8 tiles tall (square image preserves aspect ratio)
+    offsetX: -3.5, // Center horizontally on tile
+    offsetY: -6.5, // Extends upward from anchor (door at bottom)
+    image: tileAssets.mushroom_house_01, // Default image (overridden by animationFrames)
+    // No transforms - this is a unique building structure
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision at the base of the house (player cannot walk through)
+    collisionWidth: 2.8,
+    collisionHeight: 2,
+    collisionOffsetX: -1,
+    collisionOffsetY: -2.5,
+    // Animation frames (subtle house animation - chimney smoke, lights, etc.)
+    animationFrames: [
+      tileAssets.mushroom_house_01,
+      tileAssets.mushroom_house_02,
+    ],
+    animationSpeed: 500, // 500ms per frame = slow subtle animation
+  },
+  {
     tileType: TileType.FERN,
     spriteWidth: 2, // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall

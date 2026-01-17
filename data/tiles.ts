@@ -587,6 +587,30 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [tileAssets.luminescent_toadstool],
     // 3x3 multi-tile sprite (see SPRITE_METADATA)
   },
+  [TileType.MUSHROOM_HOUSE]: {
+    name: 'Mushroom House',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.SOLID, // Building - cannot walk through
+    baseType: TileType.GRASS, // Render grass underneath
+    image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    // 6x6 animated multi-tile sprite (see SPRITE_METADATA)
+  },
+  [TileType.BRANCH]: {
+    name: 'Branch',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - ground decoration
+    baseType: TileType.GRASS, // Render grass underneath
+    image: [tileAssets.branch],
+    transforms: {
+      enableFlip: true, // Horizontal flipping for variety
+      enableRotation: true, // Rotation for natural placement
+      enableScale: true, // Size variation
+      enableBrightness: true, // Slight brightness variation
+      scaleRange: { min: 0.85, max: 1.15 },
+      rotationRange: { min: -15, max: 15 },
+      brightnessRange: { min: 0.95, max: 1.05 },
+    },
+  },
   // ============================================
   // Common Forageable Plants (Multiple Maps)
   // ============================================
