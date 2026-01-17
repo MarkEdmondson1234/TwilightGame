@@ -8,6 +8,7 @@ import {
   reinitializeClient,
   isAIAvailable,
 } from '../services/anthropicClient';
+import { audioManager } from '../utils/AudioManager';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -48,12 +49,22 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
   const [aiEnabled, setAiEnabled] = useState<boolean>(false);
   const [saveMessage, setSaveMessage] = useState<string>('');
 
+  // Audio settings state
+  const [musicEnabled, setMusicEnabled] = useState<boolean>(!audioManager.isMuted());
+
   // Check for stored key on mount and when settings tab is selected
   useEffect(() => {
     const storedKey = getStoredApiKey();
     setHasStoredKey(!!storedKey);
     setAiEnabled(isAIAvailable());
+    // Sync music state when settings tab is opened
+    setMusicEnabled(!audioManager.isMuted());
   }, [selectedTab]);
+
+  const handleMusicToggle = () => {
+    const newMuted = audioManager.toggleMute();
+    setMusicEnabled(!newMuted);
+  };
 
   useEffect(() => {
     // Only load document content for doc tabs, not settings
@@ -225,6 +236,54 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                 <h1 className="text-3xl font-serif font-bold mb-6" style={{ color: '#6b546b' }}>
                   Settings
                 </h1>
+
+                {/* Music Section */}
+                <div
+                  className="rounded-lg p-6 mb-6"
+                  style={{
+                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                    border: `2px solid ${colours.wood}`,
+                  }}
+                >
+                  <h2
+                    className="text-xl font-serif font-bold mb-4"
+                    style={{ color: colours.brass }}
+                  >
+                    Music & Sound
+                  </h2>
+                  <p className="mb-4" style={{ color: colours.textLight }}>
+                    Toggle music and sound effects on or off. This setting is saved automatically.
+                  </p>
+
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={handleMusicToggle}
+                      className="px-6 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
+                      style={{
+                        background: musicEnabled
+                          ? 'linear-gradient(to bottom, #4a7c4a, #3d663d)'
+                          : 'linear-gradient(to bottom, #a85454, #8b4444)',
+                        color: '#ffeedd',
+                        border: `2px solid ${musicEnabled ? '#2d4d2d' : '#6b3434'}`,
+                      }}
+                    >
+                      <span className="text-xl">{musicEnabled ? '🔊' : '🔇'}</span>
+                      {musicEnabled ? 'Music On' : 'Music Off'}
+                    </button>
+                    <span
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-serif font-semibold"
+                      style={{
+                        background: musicEnabled
+                          ? 'rgba(76, 130, 76, 0.2)'
+                          : 'rgba(168, 84, 84, 0.2)',
+                        color: musicEnabled ? '#4a7c4a' : '#8b4444',
+                        border: `1px solid ${musicEnabled ? '#4a7c4a' : '#8b4444'}`,
+                      }}
+                    >
+                      {musicEnabled ? '● Sound Enabled' : '○ Sound Muted'}
+                    </span>
+                  </div>
+                </div>
 
                 {/* AI Dialogue Section */}
                 <div
