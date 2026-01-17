@@ -251,17 +251,17 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
           if (tile === TileType.STREAM) {
             // STREAM is 5x5, anchor at center (extends 2 tiles each way)
-            // Check if (x,y) is adjacent to the 5x5 footprint
+            // Check if (x,y) is within buffer zone of the 5x5 footprint
             const streamLeft = checkX - 2;
             const streamRight = checkX + 2;
             const streamTop = checkY - 2;
             const streamBottom = checkY + 2;
 
-            // Is (x,y) adjacent (including diagonally) to the stream's footprint?
-            if (x >= streamLeft - 1 && x <= streamRight + 1 &&
-                y >= streamTop - 1 && y <= streamBottom + 1 &&
-                !(x >= streamLeft && x <= streamRight && y >= streamTop && y <= streamBottom)) {
-              return true; // Adjacent but not inside
+            // Is (x,y) within 4 tiles of the stream's footprint? (larger buffer for tree canopies - oak trees are 5 tiles wide)
+            const buffer = 4;
+            if (x >= streamLeft - buffer && x <= streamRight + buffer &&
+                y >= streamTop - buffer && y <= streamBottom + buffer) {
+              return true; // Within buffer zone OR inside stream
             }
           } else if (tile === TileType.SMALL_LAKE) {
             // SMALL_LAKE is 4x4, anchor at center (extends 2 tiles each way)
@@ -404,7 +404,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.HAZEL_BUSH;
     }
   }
@@ -416,7 +416,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Only place on grass tiles, avoid spawn zone
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
       map[y][x] = TileType.BLUEBERRY_BUSH;
     }
   }
@@ -437,7 +437,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   for (let i = 0; i < 50; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
     const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
+    // Only place on grass tiles, avoid spawn zone and water features
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
     if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {

@@ -42,8 +42,9 @@ When adding a **new tile type** (not just a variation), you'll need to update th
 2. **assets.ts** - Register the asset file path
 3. **data/tiles.ts** - Add to `TILE_LEGEND` object (keyed by TileType)
 4. **data/spriteMetadata.ts** - Add to `SPRITE_METADATA` array (for multi-tile sprites)
-5. **maps/gridParser.ts** - Add character code mapping
-6. **map definition files** - Use the new tile in maps
+5. **utils/ColorResolver.ts** - Add to `TILE_TYPE_TO_COLOR_KEY` mapping (e.g., `[TileType.MY_TILE]: 'grass'`)
+6. **maps/gridParser.ts** - Add character code mapping
+7. **map definition files** - Use the new tile in maps
 
 For **variations of existing tiles**, you only need:
 1. **assets.ts** - Register the variation asset
