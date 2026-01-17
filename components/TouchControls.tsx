@@ -4,7 +4,8 @@ import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
 interface TouchControlsProps {
   onDirectionPress: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onDirectionRelease: (direction: 'up' | 'down' | 'left' | 'right') => void;
-  onActionPress: () => void;
+  /** @deprecated No longer used - all interactions via direct tap on game world */
+  onActionPress?: () => void;
   onResetPress: () => void;
   onForagePress?: () => void;
   onShowCookingUI?: () => void;
@@ -18,14 +19,17 @@ interface TouchControlsProps {
  *
  * Features:
  * - D-Pad on left for movement
- * - Action buttons on right (E, forage, cooking, recipe book)
+ * - Specialty buttons on right (forage, cooking, recipe book)
  * - Compact mode for small screens (reduces D-Pad and button sizes)
  * - Safe area insets for notched devices
+ *
+ * Note: All game interactions (NPCs, transitions, farming, etc.) are handled
+ * via direct tap on the game world with click-to-interact system.
  */
 const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionPress,
   onDirectionRelease,
-  onActionPress,
+  // onActionPress is deprecated - all interactions via direct tap
   onResetPress,
   onForagePress,
   onShowCookingUI,
@@ -48,11 +52,6 @@ const TouchControls: React.FC<TouchControlsProps> = ({
     };
   };
 
-  const handleActionTouch = (e: React.TouchEvent) => {
-    e.preventDefault();
-    onActionPress();
-  };
-
   const handleResetTouch = (e: React.TouchEvent) => {
     e.preventDefault();
     onResetPress();
@@ -66,12 +65,10 @@ const TouchControls: React.FC<TouchControlsProps> = ({
 
   const actionButtonSize = compact ? 'w-10 h-10' : 'w-12 h-12 sm:w-14 sm:h-14';
   const actionButtonText = compact ? 'text-lg' : 'text-xl sm:text-2xl';
-  const mainActionSize = compact ? 'w-16 h-16' : 'w-20 h-20 sm:w-24 sm:h-24';
-  const mainActionText = compact ? 'text-xl' : 'text-2xl sm:text-3xl';
 
   return (
     <div
-      className={`fixed left-0 right-0 flex justify-between px-4 sm:px-6 pointer-events-auto ${zClass(Z_TOUCH_CONTROLS)}`}
+      className={`touch-controls fixed left-0 right-0 flex justify-between px-4 sm:px-6 pointer-events-auto ${zClass(Z_TOUCH_CONTROLS)}`}
       style={{
         // Use safe area inset for notched devices
         // Compact mode uses less bottom offset (120px vs 160px)
@@ -196,14 +193,6 @@ const TouchControls: React.FC<TouchControlsProps> = ({
               R
             </button>
           )}
-
-          {/* Main Action button (E) - large for easy tapping */}
-          <button
-            onTouchStart={handleActionTouch}
-            className={`${mainActionSize} bg-green-600/90 hover:bg-green-500/90 active:bg-green-400/90 rounded-full border-4 border-green-400 flex items-center justify-center text-white font-bold ${mainActionText} shadow-lg`}
-          >
-            E
-          </button>
         </div>
       </div>
     </div>

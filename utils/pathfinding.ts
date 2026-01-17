@@ -73,7 +73,8 @@ export function isTileWalkableForPath(x: number, y: number, npcs?: NPC[]): boole
   const halfSize = 0.4; // Approximate player half-size for tile-level check
 
   // Search nearby tiles for sprites that might extend into this tile
-  const searchRadius = 10;
+  // Reduced from 10 to 4 for performance - covers all realistic sprite collision boxes
+  const searchRadius = 4;
   for (let ty = y - searchRadius; ty <= y + searchRadius; ty++) {
     for (let tx = x - searchRadius; tx <= x + searchRadius; tx++) {
       const nearbyTileData = getTileData(tx, ty);
