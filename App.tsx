@@ -24,8 +24,7 @@ import { useTouchDevice } from './hooks/useTouchDevice';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useTouchControls } from './hooks/useTouchControls';
 import { useCollisionDetection } from './hooks/useCollisionDetection';
-import { usePlayerMovement } from './hooks/usePlayerMovement';
-import { useClickToMove } from './hooks/useClickToMove';
+import { useMovementController } from './hooks/useMovementController';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
@@ -111,12 +110,6 @@ const App: React.FC = () => {
   // Load player location from saved state
   const savedLocation = gameState.getPlayerLocation();
   const [currentMapId, setCurrentMapId] = useState<string>(savedLocation.mapId);
-  const [playerPos, setPlayerPos] = useState<Position>(savedLocation.position);
-  const [playerScale, setPlayerScale] = useState<number>(1.0); // Scale for size-changing potions
-  const [playerSizeTier, setPlayerSizeTier] = useState<SizeTier>(0); // Size tier: -3 (tiny) to +3 (giant)
-  const [isFairyForm, setIsFairyForm] = useState<boolean>(gameState.isFairyForm()); // Fairy transformation state
-  const [direction, setDirection] = useState<Direction>(Direction.Down);
-  const [animationFrame, setAnimationFrame] = useState(0);
   const [isDebugOpen, setDebugOpen] = useState(false);
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
@@ -138,7 +131,6 @@ const App: React.FC = () => {
   const [showSplashEffect, setShowSplashEffect] = useState(false); // Show splash effect when refilling water can
   const [splashKey, setSplashKey] = useState(0); // Force splash retrigger
   const [stamina, setStamina] = useState(gameState.getStamina()); // Current stamina for UI display
-  const isMovingRef = useRef(false); // Track if player is currently moving (for stamina drain)
   const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
     const time = TimeManager.getCurrentTime();
     return time.timeOfDay === 'Day' ? 'day' : 'night';
@@ -161,7 +153,67 @@ const App: React.FC = () => {
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
 
-  // VFX system for magic effects
+  const keysPressed = useRef<Record<string, boolean>>({}).current;
+  const animationFrameId = useRef<number | null>(null);
+  const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
+  const lastTransitionTime = useRef<number>(0);
+
+  // Canvas ref for PixiJS (passed to usePixiRenderer)
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const npcsRef = useRef<NPC[]>([]); // Ref for NPC collision detection
+
+  // Get movement mode for collision detection (floating/flying potions)
+  const movementMode = gameState.getMovementMode();
+
+  // Setup collision detection (with NPC collision support and movement mode)
+  const { checkCollision } = useCollisionDetection(npcsRef, movementMode);
+
+  // Compute if any UI overlay is active (for path cancellation)
+  const isUIActive =
+    ui.helpBrowser ||
+    ui.cookingUI ||
+    ui.recipeBook ||
+    ui.characterCreator ||
+    ui.inventory ||
+    ui.shopUI ||
+    ui.giftModal ||
+    ui.brewingUI ||
+    ui.devTools ||
+    ui.vfxTestPanel;
+
+  // Movement controller - owns player position, direction, animation, pathfinding
+  const {
+    playerPos,
+    direction,
+    animationFrame,
+    playerScale,
+    playerSizeTier,
+    isFairyForm,
+    isPathing,
+    clickToMoveDestination,
+    clickToMoveTargetNPC,
+    playerPosRef,
+    isMovingRef,
+    updateMovement,
+    setDestination: setClickToMoveDestination,
+    cancelPath,
+    setPlayerPos,
+    setDirection,
+    setPlayerScale,
+    setPlayerSizeTier,
+    setFairyForm,
+    teleportPlayer,
+  } = useMovementController({
+    currentMapId,
+    checkCollision,
+    keysPressed,
+    npcsRef,
+    isUIActive,
+    isCutscenePlaying,
+    activeNPC,
+  });
+
+  // VFX system for magic effects (must be after movement controller for playerPos)
   const { activeEffects: activeVFX, triggerVFX, removeEffect: removeVFX } = useVFX(playerPos);
 
   // Ambient VFX effects (lightning during storms, water sparkles, etc.)
@@ -179,17 +231,6 @@ const App: React.FC = () => {
     gameState.getSelectedCharacter(),
     isFairyForm
   );
-
-  const keysPressed = useRef<Record<string, boolean>>({}).current;
-  const animationFrameId = useRef<number | null>(null);
-  const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
-  const lastTransitionTime = useRef<number>(0);
-  const playerPosRef = useRef<Position>(playerPos); // Keep ref in sync with state
-  const lastDirectionRef = useRef<Direction>(direction); // Track direction changes
-
-  // Canvas ref for PixiJS (passed to usePixiRenderer)
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const npcsRef = useRef<NPC[]>([]); // Ref for NPC collision detection
 
   const handleCharacterCreated = (character: CharacterCustomization) => {
     gameState.selectCharacter(character);
@@ -619,88 +660,6 @@ const App: React.FC = () => {
     onShowToast: showToast,
   });
 
-  // Get movement mode for collision detection (floating/flying potions)
-  const movementMode = gameState.getMovementMode();
-
-  // Setup collision detection (with NPC collision support and movement mode)
-  const { checkCollision } = useCollisionDetection(npcsRef, movementMode);
-
-  // Setup click-to-move pathfinding
-  const {
-    isPathing,
-    destination: clickToMoveDestination,
-    targetNPC: clickToMoveTargetNPC,
-    setDestination: setClickToMoveDestination,
-    cancelPath,
-    getMovementVector,
-  } = useClickToMove({
-    playerPosRef,
-    npcsRef,
-    enabled: true,
-  });
-
-  // Get pathing vector for current frame (used by movement hook)
-  const pathingVector = getMovementVector(playerPosRef.current);
-
-  // Setup player movement (with click-to-move support)
-  const { updatePlayerMovement, isKeyboardInput } = usePlayerMovement({
-    keysPressed,
-    checkCollision,
-    playerPosRef,
-    lastDirectionRef,
-    onSetDirection: setDirection,
-    onSetAnimationFrame: setAnimationFrame,
-    onSetPlayerPos: setPlayerPos,
-    pathingVector,
-    animateWhenIdle: isFairyForm, // Fairy wings keep flapping even when idle
-  });
-
-  // Cancel click-to-move path when keyboard/d-pad input is detected
-  useEffect(() => {
-    if (isKeyboardInput && isPathing) {
-      cancelPath();
-    }
-  }, [isKeyboardInput, isPathing, cancelPath]);
-
-  // Cancel click-to-move path when map changes
-  useEffect(() => {
-    cancelPath();
-  }, [currentMapId, cancelPath]);
-
-  // Cancel click-to-move path when any UI overlay becomes active
-  useEffect(() => {
-    if (
-      activeNPC ||
-      isCutscenePlaying ||
-      ui.helpBrowser ||
-      ui.cookingUI ||
-      ui.recipeBook ||
-      ui.characterCreator ||
-      ui.inventory ||
-      ui.shopUI ||
-      ui.giftModal ||
-      ui.brewingUI ||
-      ui.devTools ||
-      ui.vfxTestPanel
-    ) {
-      cancelPath();
-    }
-  }, [
-    activeNPC,
-    isCutscenePlaying,
-    ui.helpBrowser,
-    ui.cookingUI,
-    ui.recipeBook,
-    ui.characterCreator,
-    ui.inventory,
-    ui.shopUI,
-    ui.giftModal,
-    ui.brewingUI,
-    ui.devTools,
-    ui.vfxTestPanel,
-    cancelPath,
-  ]);
-
   // Handle canvas click for interactions
   const handleCanvasClick = useCallback(
     (clickInfo: MouseClickInfo) => {
@@ -981,14 +940,14 @@ const App: React.FC = () => {
     }
 
     // Update player movement (handles input, animation, collision, and position)
-    const movementResult = updatePlayerMovement(deltaTime, now);
+    const movementResult = updateMovement(deltaTime, now);
     isMovingRef.current = movementResult.isMoving;
 
     // Update stamina (drain when walking, restore when at home)
     staminaManager.update(deltaTime, movementResult.isMoving, currentMapId);
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
-  }, [updatePlayerMovement, activeNPC, isCutscenePlaying, currentMapId]);
+  }, [updateMovement, activeNPC, isCutscenePlaying, currentMapId]);
 
   // Disabled automatic transitions - now using action key (E or Enter)
 
@@ -2084,7 +2043,7 @@ const App: React.FC = () => {
             // Update game state
             gameState.setFairyForm(active);
             // Update local state
-            setIsFairyForm(active);
+            setFairyForm(active);
             // Apply/remove tiny size effect when fairy form changes
             if (active) {
               // Fairy form: set to tiny size (tier -3)
