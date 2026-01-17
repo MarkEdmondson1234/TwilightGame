@@ -619,7 +619,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     tileType: TileType.STREAM,
     spriteWidth: 5, // 5 tiles wide (flowing stream)
     spriteHeight: 5, // 5 tiles tall (square aspect ratio - preserves uploaded image ratio)
-    offsetX: -2, // Center horizontally (extend 2 tiles left)
+    offsetX: -4, // Center horizontally (extend 2 tiles left)
     offsetY: -2, // Center vertically (extend 2 tiles up)
     image: tileAssets.stream_1, // First frame (overridden by animationFrames)
     enableFlip: false, // No flip - water flows in one direction
@@ -627,7 +627,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false, // No scale - keep animation consistent
     enableBrightness: false,
     // Collision - stream is walkable (splashing through water)
-    collisionWidth: 5,
+    collisionWidth: 2,
     collisionHeight: 5,
     collisionOffsetX: -2,
     collisionOffsetY: -2,
