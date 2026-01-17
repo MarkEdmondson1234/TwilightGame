@@ -789,7 +789,8 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       if (
         checkTile?.type === TileType.MOONPETAL ||
         checkTile?.type === TileType.ADDERSMEAT ||
-        checkTile?.type === TileType.LUMINESCENT_TOADSTOOL
+        checkTile?.type === TileType.LUMINESCENT_TOADSTOOL ||
+        checkTile?.type === TileType.MUSTARD_FLOWER
       ) {
         // Use anchor position for cooldown check (entire 3x3 area shares cooldown)
         cooldownCheckPos = { x: checkX, y: checkY };
@@ -1226,6 +1227,95 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'honey', // Reuse field for item ID
       seedName: honey.displayName,
       message: `Found ${quantityFound} ${honey.displayName}!`,
+    };
+  }
+
+  // Mustard flower foraging (Eye of Newt) - only in spring/summer
+  // Check if player is within the 3x3 area of any mustard flower anchor
+  // Mustard flower is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
+  let mustardFlowerAnchor: { x: number; y: number } | null = null;
+
+  // Search nearby tiles for mustard flower anchor (check 1 tile in each direction for 3x3 coverage)
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const checkX = playerTileX + dx;
+      const checkY = playerTileY + dy;
+      const checkTile = getTileData(checkX, checkY);
+
+      if (checkTile?.type === TileType.MUSTARD_FLOWER) {
+        mustardFlowerAnchor = { x: checkX, y: checkY };
+        console.log(`[Forage] Found mustard flower anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
+        break;
+      }
+    }
+    if (mustardFlowerAnchor) break;
+  }
+
+  if (mustardFlowerAnchor) {
+    const { season } = TimeManager.getCurrentTime();
+
+    // Check if it's the right season (spring/summer - mustard flowers are dormant in autumn/winter)
+    if (season === Season.AUTUMN || season === Season.WINTER) {
+      return {
+        found: false,
+        message: 'The mustard flowers are dormant. Come back in spring or summer!',
+      };
+    }
+
+    // Check cooldown at anchor position (entire 3x3 area shares cooldown)
+    if (
+      gameState.isForageTileOnCooldown(
+        currentMapId,
+        mustardFlowerAnchor.x,
+        mustardFlowerAnchor.y,
+        TIMING.FORAGE_COOLDOWN_MS
+      )
+    ) {
+      return {
+        found: false,
+        message: `You've already searched this mustard flower. Come back tomorrow!`,
+      };
+    }
+
+    const eyeOfNewt = getItem('eye_of_newt');
+    if (!eyeOfNewt) {
+      console.error('[Forage] Eye of Newt item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (eye_of_newt has forageSuccessRate: 0.8)
+    const successRate = eyeOfNewt.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position (so whole 3x3 area shares cooldown)
+      gameState.recordForage(currentMapId, mustardFlowerAnchor.x, mustardFlowerAnchor.y);
+      return {
+        found: false,
+        message: 'You search the mustard flowers, but find no seeds ready for harvesting.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const rand = Math.random();
+    const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
+
+    // Add to inventory
+    inventoryManager.addItem('eye_of_newt', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${eyeOfNewt.displayName} from mustard flower in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown at ANCHOR position
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, mustardFlowerAnchor.x, mustardFlowerAnchor.y);
+
+    return {
+      found: true,
+      seedId: 'eye_of_newt', // Reuse field for item ID
+      seedName: eyeOfNewt.displayName,
+      message: `Found ${quantityFound} ${eyeOfNewt.displayName}!`,
     };
   }
 
@@ -2159,6 +2249,21 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         const checkTile = getTileData(checkX, checkY);
 
         if (checkTile?.type === TileType.MOONPETAL) {
+          canForage = true;
+          break;
+        }
+      }
+    }
+
+    // Mustard flower foraging - check if within 3x3 mustard flower area (works on any map)
+    // Search for MUSTARD_FLOWER tiles within 1 tile (3x3 sprite coverage)
+    for (let dy = -1; dy <= 1 && !canForage; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const checkX = tileX + dx;
+        const checkY = tileY + dy;
+        const checkTile = getTileData(checkX, checkY);
+
+        if (checkTile?.type === TileType.MUSTARD_FLOWER) {
           canForage = true;
           break;
         }

@@ -78,6 +78,8 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.ADDERSMEAT]: 'grass',
   // Mushroom Forest plants
   [TileType.LUMINESCENT_TOADSTOOL]: 'grass',
+  // Common forageable plants
+  [TileType.MUSTARD_FLOWER]: 'grass',
   [TileType.GIANT_MUSHROOM]: 'grass',
   [TileType.SAMBUCA_BUSH]: 'grass',
   [TileType.DEAD_SPRUCE]: 'grass',

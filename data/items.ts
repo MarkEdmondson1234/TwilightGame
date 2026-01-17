@@ -1280,17 +1280,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 55,
   },
 
-  // Purchaseable from Witch's Shop
+  // Purchaseable from Witch's Shop OR foraged from Mustard Flowers
   eye_of_newt: {
     id: 'eye_of_newt',
     name: 'eye_of_newt',
     displayName: 'Eye of Newt',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: "A classic potion ingredient. Despite the name, it's actually a type of herb.",
+    description:
+      "A classic potion ingredient. Despite the ominous name, it's actually mustard seeds - foraged from wild mustard flowers.",
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 10,
     buyPrice: 25,
+    image: magicalAssets.eye_of_newt,
+    forageSuccessRate: 0.8, // 80% success rate when foraging from mustard flowers
   },
 
   wolfsbane: {

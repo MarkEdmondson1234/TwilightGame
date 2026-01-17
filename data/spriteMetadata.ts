@@ -180,6 +180,28 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.95, max: 1.05 }, // Slight variation: 95% to 105%
   },
   // ============================================
+  // Common Forageable Plants (Multiple Maps)
+  // ============================================
+  {
+    tileType: TileType.MUSTARD_FLOWER,
+    spriteWidth: 3, // 3 tiles wide
+    spriteHeight: 3, // 3 tiles tall (square image)
+    offsetX: -1, // Center horizontally on tile (extend 1 tile left)
+    offsetY: -2, // Extends 2 tiles upward
+    image: tileAssets.mustard_flower,
+    // Collision: walkable (no collision) - forageable plant
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
+  },
+  // ============================================
   // Mushroom Forest Plants
   // ============================================
   {

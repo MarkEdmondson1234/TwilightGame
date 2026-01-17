@@ -587,6 +587,24 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [tileAssets.luminescent_toadstool],
     // 3x3 multi-tile sprite (see SPRITE_METADATA)
   },
+  // ============================================
+  // Common Forageable Plants (Multiple Maps)
+  // ============================================
+  [TileType.MUSTARD_FLOWER]: {
+    name: 'Mustard Flower',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - forageable plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // Blooms spring/summer, dormant autumn/winter (yields Eye of Newt)
+    seasonalImages: {
+      spring: [tileAssets.mustard_flower],
+      summer: [tileAssets.mustard_flower],
+      autumn: [], // Dormant - no sprite shown
+      winter: [], // Dormant - no sprite shown
+      default: [tileAssets.mustard_flower],
+    },
+    // 3x3 multi-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending
