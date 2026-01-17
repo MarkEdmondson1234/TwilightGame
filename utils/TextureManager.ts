@@ -36,23 +36,25 @@ class TextureManager {
     }
 
     // Start loading
-    const promise = Assets.load<Texture>(url).then(texture => {
-      // Use linear (smooth) scaling for all hand-drawn artwork
-      texture.source.scaleMode = 'linear';
-      // Enable mipmaps for high-quality downscaling
-      texture.source.autoGenerateMipmaps = true;
+    const promise = Assets.load<Texture>(url)
+      .then((texture) => {
+        // Use linear (smooth) scaling for all hand-drawn artwork
+        texture.source.scaleMode = 'linear';
+        // Enable mipmaps for high-quality downscaling
+        texture.source.autoGenerateMipmaps = true;
 
-      // Cache texture
-      this.textures.set(key, texture);
-      this.loading.delete(key);
+        // Cache texture
+        this.textures.set(key, texture);
+        this.loading.delete(key);
 
-      // console.log(`[TextureManager] Loaded: ${key}`); // Disabled - too verbose
-      return texture;
-    }).catch(error => {
-      console.error(`[TextureManager] Failed to load ${key}:`, error);
-      this.loading.delete(key);
-      throw error;
-    });
+        // console.log(`[TextureManager] Loaded: ${key}`); // Disabled - too verbose
+        return texture;
+      })
+      .catch((error) => {
+        console.error(`[TextureManager] Failed to load ${key}:`, error);
+        this.loading.delete(key);
+        throw error;
+      });
 
     this.loading.set(key, promise);
     return promise;
@@ -88,7 +90,9 @@ class TextureManager {
 
       const endTime = performance.now();
       const loadTime = (endTime - startTime).toFixed(0);
-      console.log(`[TextureManager] ✓ Loaded ${Object.keys(assets).length} textures in ${loadTime}ms`);
+      console.log(
+        `[TextureManager] ✓ Loaded ${Object.keys(assets).length} textures in ${loadTime}ms`
+      );
     } catch (error) {
       console.error('[TextureManager] Failed to load batch:', error);
       throw error;
@@ -121,11 +125,26 @@ class TextureManager {
   }
 
   /**
+   * Check if any textures are still loading
+   */
+  isLoading(): boolean {
+    return this.loading.size > 0;
+  }
+
+  /**
+   * Wait for all pending textures to finish loading
+   */
+  async waitForAllLoaded(): Promise<void> {
+    if (this.loading.size === 0) return;
+    await Promise.all(this.loading.values());
+  }
+
+  /**
    * Clear all cached textures
    * WARNING: Only use for testing/hot-reload
    */
   clear(): void {
-    this.textures.forEach(texture => {
+    this.textures.forEach((texture) => {
       // Don't destroy the texture itself (may be in use)
       // Just clear our cache
     });
@@ -139,9 +158,7 @@ class TextureManager {
    * Useful for lazy loading map-specific assets
    */
   async preload(urls: string[]): Promise<void> {
-    const promises = urls.map((url, index) =>
-      this.loadTexture(`preload_${index}`, url)
-    );
+    const promises = urls.map((url, index) => this.loadTexture(`preload_${index}`, url));
     await Promise.all(promises);
   }
 }

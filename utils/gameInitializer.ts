@@ -16,6 +16,7 @@ import { ColorResolver } from './ColorResolver';
 import { initAnthropicClient } from '../services/anthropicClient';
 import { npcManager } from '../NPCManager';
 import { audioManager } from './AudioManager';
+import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
 
 /**
@@ -34,6 +35,7 @@ export async function initializeGame(
   (window as any).magicManager = magicManager;
   (window as any).__PERF_MONITOR__ = performanceMonitor;
   (window as any).audioManager = audioManager;
+  (window as any).textureManager = textureManager;
 
   // Dev tools for colour system testing
   (window as any).TimeManager = TimeManager;
