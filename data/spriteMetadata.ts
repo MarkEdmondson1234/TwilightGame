@@ -184,10 +184,10 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   // ============================================
   {
     tileType: TileType.MUSTARD_FLOWER,
-    spriteWidth: 3, // 3 tiles wide
-    spriteHeight: 3, // 3 tiles tall (square image)
-    offsetX: -1, // Center horizontally on tile (extend 1 tile left)
-    offsetY: -2, // Extends 2 tiles upward
+    spriteWidth: 1, // 1 tile wide (small wildflower)
+    spriteHeight: 1, // 1 tile tall (square image)
+    offsetX: 0, // No offset needed for 1x1
+    offsetY: 0, // No offset needed for 1x1
     image: tileAssets.mustard_flower,
     // Collision: walkable (no collision) - forageable plant
     collisionWidth: 0,

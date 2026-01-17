@@ -1231,11 +1231,11 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Mustard flower foraging (Eye of Newt) - only in spring/summer
-  // Check if player is within the 3x3 area of any mustard flower anchor
-  // Mustard flower is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
+  // Check if player is on or adjacent to a mustard flower tile
+  // Mustard flower is a 1x1 sprite
   let mustardFlowerAnchor: { x: number; y: number } | null = null;
 
-  // Search nearby tiles for mustard flower anchor (check 1 tile in each direction for 3x3 coverage)
+  // Search nearby tiles for mustard flower (player tile + adjacent tiles)
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       const checkX = playerTileX + dx;
@@ -1262,7 +1262,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       };
     }
 
-    // Check cooldown at anchor position (entire 3x3 area shares cooldown)
+    // Check cooldown at tile position
     if (
       gameState.isForageTileOnCooldown(
         currentMapId,
