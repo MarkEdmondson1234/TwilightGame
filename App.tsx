@@ -370,6 +370,34 @@ const App: React.FC = () => {
     }
   }, [currentWeather, currentMapId]);
 
+  // Forest ambient birds - plays looping bird sounds in procedurally generated forests
+  // Birds stop singing during rain, storms, or blizzards
+  useEffect(() => {
+    // Check if this is a procedurally generated forest map
+    // These have IDs like "forest_1234567890" (with seed suffix)
+    const isProceduralForest = /^forest_\d+$/.test(currentMapId);
+
+    // Weather conditions that silence the birds
+    const badWeatherForBirds = ['rain', 'storm', 'snow'].includes(currentWeather);
+
+    if (isProceduralForest && !badWeatherForBirds) {
+      // Play bird sounds with a small delay for smooth transition
+      if (audioManager.hasSound('ambient_birds')) {
+        setTimeout(() => {
+          audioManager.playAmbient('ambient_birds');
+        }, 500);
+      }
+    } else {
+      // Stop bird sounds when leaving procedural forest or during bad weather
+      audioManager.stopAmbient('ambient_birds', 1000);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      audioManager.stopAmbient('ambient_birds', 500);
+    };
+  }, [currentMapId, currentWeather]);
+
   // Ambient music system - plays music randomly with fade in/out
   useEffect(() => {
     // Track if music is currently playing
