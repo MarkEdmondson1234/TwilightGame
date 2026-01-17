@@ -1594,9 +1594,10 @@ const App: React.FC = () => {
             currentMapId,
             visibleRange,
             seasonKey,
-            farmUpdateTrigger
+            farmUpdateTrigger,
+            timeOfDayState
           );
-          spriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey);
+          spriteLayer.renderSprites(currentMap, currentMapId, visibleRange, seasonKey, timeOfDayState);
           const placedItems = gameState.getPlacedItems(currentMapId);
           placedItemsLayer.renderItems(placedItems, visibleRange);
           if (shadowLayerRef.current) {
@@ -1763,6 +1764,7 @@ const App: React.FC = () => {
         visibleRange,
         seasonKey,
         farmUpdateTrigger,
+        timeOfDayState,
         currentWeather
       );
 
@@ -1772,6 +1774,7 @@ const App: React.FC = () => {
           currentMapId,
           visibleRange,
           seasonKey,
+          timeOfDayState,
           currentWeather
         );
       }
@@ -1892,6 +1895,7 @@ const App: React.FC = () => {
         visibleRange,
         seasonKey,
         farmUpdateTrigger,
+        timeOfDayState,
         currentWeather
       );
 
@@ -1902,6 +1906,7 @@ const App: React.FC = () => {
           currentMapId,
           visibleRange,
           seasonKey,
+          timeOfDayState,
           currentWeather
         );
       }

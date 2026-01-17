@@ -142,6 +142,7 @@ export class TileLayer extends PixiLayer {
     visibleRange: { minX: number; maxX: number; minY: number; maxY: number },
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
     farmUpdateTrigger: number,
+    timeOfDay: 'day' | 'night',
     currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
   ): void {
     // Store farmUpdateTrigger for use in renderTile
@@ -172,7 +173,7 @@ export class TileLayer extends PixiLayer {
     // Render visible tiles
     for (let y = visibleRange.minY; y <= visibleRange.maxY; y++) {
       for (let x = visibleRange.minX; x <= visibleRange.maxX; x++) {
-        this.renderTile(x, y, seasonKey, map, mapId, currentWeather);
+        this.renderTile(x, y, seasonKey, timeOfDay, map, mapId, currentWeather);
       }
     }
   }
@@ -185,6 +186,7 @@ export class TileLayer extends PixiLayer {
     x: number,
     y: number,
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
+    timeOfDay: 'day' | 'night',
     map: MapDefinition,
     mapId: string,
     currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
@@ -261,11 +263,22 @@ export class TileLayer extends PixiLayer {
     }
 
     // Determine which image array to use
-    const imageData = tileData.seasonalImages
-      ? seasonKey in tileData.seasonalImages
+    // Priority: timeOfDayImages > seasonalImages > image
+    let imageData: string[] | string | undefined;
+
+    if (tileData.timeOfDayImages && seasonKey in tileData.timeOfDayImages) {
+      // Time-of-day conditional images (e.g., moonpetal opens at night)
+      const timeOfDaySet = tileData.timeOfDayImages[seasonKey];
+      imageData = timeOfDaySet[timeOfDay];
+    } else if (tileData.seasonalImages) {
+      // Seasonal images (standard case)
+      imageData = seasonKey in tileData.seasonalImages
         ? tileData.seasonalImages[seasonKey]
-        : tileData.seasonalImages.default
-      : tileData.image;
+        : tileData.seasonalImages.default;
+    } else {
+      // Fallback to simple image array
+      imageData = tileData.image;
+    }
 
     // Normalize to array (handle both single strings and arrays)
     const imageArray = Array.isArray(imageData) ? imageData : imageData ? [imageData] : [];
