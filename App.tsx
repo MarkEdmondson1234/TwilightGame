@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, INTERACTION, STAMINA } from './constants';
+import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, STAMINA } from './constants';
 import { Position, Direction, ImageRoomLayer, NPC } from './types';
 import { usePixiRenderer } from './hooks/usePixiRenderer';
-import { isWeatherAllowedOnMap } from './data/weatherConfig';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
@@ -18,13 +17,14 @@ import Bookshelf from './components/Bookshelf';
 import { initializeGame } from './utils/gameInitializer';
 import { mapManager } from './maps';
 import { getValidationErrors, hasValidationErrors, MapValidationError } from './maps/gridParser';
-import { ColorResolver } from './utils/ColorResolver';
 import { gameState, CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
 import { useKeyboardControls } from './hooks/useKeyboardControls';
 import { useTouchControls } from './hooks/useTouchControls';
 import { useCollisionDetection } from './hooks/useCollisionDetection';
 import { useMovementController } from './hooks/useMovementController';
+import { useInteractionController } from './hooks/useInteractionController';
+import { useEnvironmentController } from './hooks/useEnvironmentController';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
@@ -36,14 +36,7 @@ import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useV
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
-import {
-  checkCookingLocation,
-  getAvailableInteractions,
-  FarmActionResult,
-  ForageResult,
-  TransitionResult,
-  PlacedItemAction,
-} from './utils/actionHandlers';
+import { checkCookingLocation } from './utils/actionHandlers';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { audioManager } from './utils/AudioManager';
@@ -51,9 +44,8 @@ import { cookingManager } from './utils/CookingManager';
 import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
 import { TimeManager } from './utils/TimeManager';
-import { getDistance } from './utils/pathfinding';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
-import { Z_PLAYER, Z_DEPTH_SORTED_BASE } from './zIndex';
+import { Z_PLAYER } from './zIndex';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
@@ -66,7 +58,7 @@ import Inventory, { InventoryItem } from './components/Inventory';
 import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
-import FarmActionAnimation, { FarmActionType } from './components/FarmActionAnimation';
+import FarmActionAnimation from './components/FarmActionAnimation';
 import WaterSparkleEffect from './components/WaterSparkleEffect';
 import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES } from './data/cutscenes';
@@ -78,20 +70,15 @@ import CookingInterface from './components/CookingInterface';
 import RecipeBook from './components/RecipeBook';
 import MagicRecipeBook from './components/MagicRecipeBook';
 import Toast, { useToast } from './components/Toast';
-import RadialMenu, { RadialMenuOption } from './components/RadialMenu';
+import RadialMenu from './components/RadialMenu';
 import { StaminaBar } from './components/StaminaBar';
 import { DestinationMarker } from './components/DestinationMarker';
-import { useMouseControls, MouseClickInfo } from './hooks/useMouseControls';
+import { useMouseControls } from './hooks/useMouseControls';
 import { inventoryManager } from './utils/inventoryManager';
-import { convertInventoryToUI, registerItemSprite } from './utils/inventoryUIHelper';
+import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
-import {
-  usePotionEffect,
-  hasPotionEffect,
-  MagicEffectCallbacks,
-  SizeTier,
-} from './utils/MagicEffects';
+import { usePotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -115,35 +102,20 @@ const App: React.FC = () => {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
   const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
-  const [currentWeather, setCurrentWeather] = useState<
-    'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
-  >(gameState.getWeather()); // Track weather for tint overlay
-  const [activeNPC, setActiveNPC] = useState<string | null>(null); // NPC ID for dialogue
-  const [dialogueMode, setDialogueMode] = useState<'static' | 'ai'>('static'); // Dialogue mode (static trees vs AI chat)
+
+  // Shared state for NPC interactions (used by both MovementController and InteractionController)
+  const [activeNPC, setActiveNPC] = useState<string | null>(null);
+  const [dialogueMode, setDialogueMode] = useState<'static' | 'ai'>('static');
 
   // Event-driven triggers for re-rendering (managed by EventBus subscriptions)
   const { farmUpdateTrigger, npcUpdateTrigger, placedItemsUpdateTrigger } = useGameEvents();
 
-  const [farmActionAnimation, setFarmActionAnimation] = useState<FarmActionType | null>(null); // Current farm action animation
-  const [farmActionKey, setFarmActionKey] = useState(0); // Force animation retrigger for same action type
-  const [waterSparklePos, setWaterSparklePos] = useState<{ x: number; y: number } | null>(null); // Position for water sparkle effect
-  const [waterSparkleKey, setWaterSparkleKey] = useState(0); // Force sparkle retrigger
-  const [showSplashEffect, setShowSplashEffect] = useState(false); // Show splash effect when refilling water can
-  const [splashKey, setSplashKey] = useState(0); // Force splash retrigger
-  const [stamina, setStamina] = useState(gameState.getStamina()); // Current stamina for UI display
-  const [timeOfDayState, setTimeOfDayState] = useState<'day' | 'night'>(() => {
+  // Environment state (passed to EnvironmentController, kept here due to usePixiRenderer dependency)
+  const [currentWeather, setCurrentWeather] = useState<WeatherType>(gameState.getWeather());
+  const [timeOfDay, setTimeOfDay] = useState<'day' | 'night'>(() => {
     const time = TimeManager.getCurrentTime();
     return time.timeOfDay === 'Day' ? 'day' : 'night';
-  }); // Track time-of-day for reactivity (from TimeManager)
-
-  // Radial menu state
-  const [radialMenuVisible, setRadialMenuVisible] = useState(false);
-  const [radialMenuPosition, setRadialMenuPosition] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
   });
-  const [radialMenuOptions, setRadialMenuOptions] = useState<RadialMenuOption[]>([]);
-  const radialMenuNpcIdRef = useRef<string | null>(null); // Track which NPC the menu is showing for
 
   const isTouchDevice = useTouchDevice();
 
@@ -216,6 +188,49 @@ const App: React.FC = () => {
   // VFX system for magic effects (must be after movement controller for playerPos)
   const { activeEffects: activeVFX, triggerVFX, removeEffect: removeVFX } = useVFX(playerPos);
 
+  // Interaction controller - owns radial menu, farm animations, canvas click handling
+  const {
+    radialMenuVisible,
+    radialMenuPosition,
+    radialMenuOptions,
+    setRadialMenuVisible,
+    farmActionAnimation,
+    farmActionKey,
+    waterSparklePos,
+    waterSparkleKey,
+    showSplashEffect,
+    splashKey,
+    handleCanvasClick,
+    handleFarmActionAnimation,
+    handleAnimationComplete,
+    clearWaterSparkle,
+    hideSplashEffect,
+  } = useInteractionController({
+    playerPos,
+    playerPosRef,
+    currentMapId,
+    selectedItemSlot,
+    inventoryItems,
+    uiState: { ui, openUI, closeUI, toggleUI, closeAllUI: () => {}, isAnyUIOpen: () => false },
+    isCutscenePlaying,
+    activeNPC,
+    setActiveNPC,
+    dialogueMode,
+    setDialogueMode,
+    npcsRef,
+    onMapTransition: (mapId, pos) => {
+      setCurrentMapId(mapId);
+      setPlayerPos(pos);
+      lastTransitionTime.current = Date.now();
+      npcManager.setCurrentMap(mapId);
+      fairyAttractionManager.reset();
+    },
+    onShowToast: showToast,
+    triggerVFX,
+    setDestination: setClickToMoveDestination,
+    onFarmUpdate: () => {}, // EventBus handles this now
+  });
+
   // Ambient VFX effects (lightning during storms, water sparkles, etc.)
   useAmbientVFX({
     triggerVFX,
@@ -256,12 +271,6 @@ const App: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   const handleFarmUpdate = useCallback(() => {
     // Events are now emitted by FarmManager via EventBus
-  }, []);
-
-  // Farm animation completion handler
-  const handleAnimationComplete = useCallback(() => {
-    console.log('[App] Animation complete callback called');
-    setFarmActionAnimation(null);
   }, []);
 
   // Cutscene completion handler
@@ -313,234 +322,19 @@ const App: React.FC = () => {
     return unsubscribe;
   }, []);
 
-  // Subscribe to weather state changes (for manual weather changes via DevTools)
+  // Subscribe to EventBus for inventory updates (only triggers when inventory actually changes)
   useEffect(() => {
-    const unsubscribe = gameState.subscribe((state) => {
-      if (weatherLayerRef.current && state.weather !== weatherLayerRef.current.getWeather()) {
-        console.log(`[App] Weather changed to: ${state.weather}`);
-        weatherLayerRef.current.setWeather(state.weather);
-        // Check if new weather is allowed on current map
-        const showWeather = isWeatherAllowedOnMap(state.weather, currentMapId);
-        weatherLayerRef.current.setVisible(showWeather);
-      }
-      // Update React state for WeatherTintOverlay
-      setCurrentWeather(state.weather);
-
-      // Note: placed items re-render now handled by EventBus (PLACED_ITEMS_CHANGED)
-
-      // Update inventory UI when inventory changes
+    return eventBus.on(GameEvent.INVENTORY_CHANGED, () => {
       setInventoryItems(convertInventoryToUI());
     });
-
-    return unsubscribe;
-  }, [currentMapId]);
-
-  // Update weather visibility based on current map and weather type
-  // Each zone has an allowlist of weather types (e.g., caves only allow fog/mist)
-  useEffect(() => {
-    if (weatherLayerRef.current) {
-      const currentWeatherType = gameState.getWeather();
-      const showWeather = isWeatherAllowedOnMap(currentWeatherType, currentMapId);
-      weatherLayerRef.current.setVisible(showWeather);
-      console.log(`[App] Weather '${currentWeatherType}' on map '${currentMapId}': ${showWeather}`);
-    }
-  }, [currentMapId]);
-
-  // Weather ambient audio - play/stop sounds based on weather and map
-  useEffect(() => {
-    const isOutdoors = isWeatherAllowedOnMap(currentWeather, currentMapId);
-
-    // Map weather types to audio keys
-    const weatherAudioMap: Record<string, string | null> = {
-      rain: 'ambient_rain_light',
-      storm: 'ambient_thunderstorm',
-      snow: 'ambient_blizzard',
-      clear: null, // No ambient for clear weather (could add birds later)
-      fog: null,
-      mist: null,
-      cherry_blossoms: null,
-    };
-
-    // Stop all weather ambient sounds first
-    audioManager.stopAmbient('ambient_rain_light', 1000);
-    audioManager.stopAmbient('ambient_rain_thunder', 1000);
-    audioManager.stopAmbient('ambient_thunderstorm', 1000);
-    audioManager.stopAmbient('ambient_blizzard', 1000);
-    audioManager.stopAmbient('ambient_birds', 1000);
-
-    // Play new weather ambient if outdoors and audio exists
-    if (isOutdoors) {
-      const audioKey = weatherAudioMap[currentWeather];
-      if (audioKey && audioManager.hasSound(audioKey)) {
-        // Small delay to allow fade out to complete
-        setTimeout(() => {
-          audioManager.playAmbient(audioKey);
-        }, 500);
-      }
-    }
-  }, [currentWeather, currentMapId]);
-
-  // Forest ambient birds - plays looping bird sounds in procedurally generated forests
-  // Birds stop singing during rain, storms, or blizzards
-  useEffect(() => {
-    // Check if this is a procedurally generated forest map
-    // These have IDs like "forest_1234567890" (with seed suffix)
-    const isProceduralForest = /^forest_\d+$/.test(currentMapId);
-
-    // Weather conditions that silence the birds
-    const badWeatherForBirds = ['rain', 'storm', 'snow'].includes(currentWeather);
-
-    if (isProceduralForest && !badWeatherForBirds) {
-      // Play bird sounds with a small delay for smooth transition
-      if (audioManager.hasSound('ambient_birds')) {
-        setTimeout(() => {
-          audioManager.playAmbient('ambient_birds');
-        }, 500);
-      }
-    } else {
-      // Stop bird sounds when leaving procedural forest or during bad weather
-      audioManager.stopAmbient('ambient_birds', 1000);
-    }
-
-    // Cleanup on unmount
-    return () => {
-      audioManager.stopAmbient('ambient_birds', 500);
-    };
-  }, [currentMapId, currentWeather]);
-
-  // Ambient music system - plays music randomly with fade in/out
-  useEffect(() => {
-    // Track if music is currently playing
-    let isMusicPlaying = false;
-    let musicTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    // Get appropriate music track for current map
-    const getMusicForMap = (mapId: string): string | null => {
-      if (mapId.includes('forest') || mapId.includes('deep_forest')) {
-        return 'music_forest';
-      }
-      if (mapId.includes('village') || mapId.includes('home') || mapId.includes('mum')) {
-        return 'music_village';
-      }
-      // Default to village music for other areas
-      return 'music_village';
-    };
-
-    // Random interval between music plays (2-5 minutes)
-    const getRandomInterval = () => Math.floor(Math.random() * 180000) + 120000;
-
-    // Random duration for music play (30-90 seconds)
-    const getRandomDuration = () => Math.floor(Math.random() * 60000) + 30000;
-
-    const playRandomMusic = () => {
-      if (isMusicPlaying) return;
-
-      const musicKey = getMusicForMap(currentMapId);
-      if (!musicKey || !audioManager.hasSound(musicKey)) {
-        // Schedule next attempt
-        musicTimeout = setTimeout(playRandomMusic, getRandomInterval());
-        return;
-      }
-
-      // Play music with fade in
-      isMusicPlaying = true;
-      audioManager.playMusic(musicKey, { fadeIn: 3000 });
-
-      // Schedule fade out
-      const duration = getRandomDuration();
-      musicTimeout = setTimeout(() => {
-        audioManager.stopMusic(3000); // 3 second fade out
-        isMusicPlaying = false;
-
-        // Schedule next music play
-        musicTimeout = setTimeout(playRandomMusic, getRandomInterval());
-      }, duration);
-    };
-
-    // Start first music after a short delay (10-30 seconds)
-    const initialDelay = Math.floor(Math.random() * 20000) + 10000;
-    musicTimeout = setTimeout(playRandomMusic, initialDelay);
-
-    return () => {
-      if (musicTimeout) {
-        clearTimeout(musicTimeout);
-      }
-      audioManager.stopMusic(1000);
-    };
-  }, [currentMapId]);
-
-  // Poll for time-of-day changes and weather updates (check every 10 seconds)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const time = TimeManager.getCurrentTime();
-      const newTimeOfDay: 'day' | 'night' = time.timeOfDay === 'Day' ? 'day' : 'night';
-
-      if (newTimeOfDay !== timeOfDayState) {
-        console.log(`[App] Time of day changed: ${timeOfDayState} → ${newTimeOfDay}`);
-        setTimeOfDayState(newTimeOfDay);
-      }
-
-      // Check for automatic weather updates
-      if (weatherManagerRef.current) {
-        weatherManagerRef.current.checkWeatherUpdate();
-      }
-    }, 10000); // Check every 10 seconds
-
-    return () => clearInterval(interval);
-  }, [timeOfDayState]);
-
-  // Check for decayed placed items every 10 seconds
-  useEffect(() => {
-    const decayInterval = setInterval(() => {
-      const removedCount = gameState.removeDecayedItems();
-      if (removedCount > 0) {
-        console.log(`[App] Removed ${removedCount} decayed item(s)`);
-        // Re-render now handled by EventBus (PLACED_ITEMS_CHANGED)
-      }
-    }, 10000); // Check every 10 seconds
-
-    return () => clearInterval(decayInterval);
   }, []);
 
-  // Check for movement effect expiration every second
-  useEffect(() => {
-    const movementEffectInterval = setInterval(() => {
-      if (gameState.isMovementEffectActive()) {
-        const remaining = gameState.getMovementEffectRemainingMs();
-        if (remaining <= 0) {
-          const effect = gameState.getMovementEffect();
-          const modeName = effect?.mode === 'floating' ? 'floating' : 'flying';
-          gameState.clearMovementEffect();
-          showToast(`Your ${modeName} effect has worn off.`, 'info');
-        }
-      }
-    }, 1000); // Check every second
+  // Weather visibility, ambient audio, forest birds, ambient music, time polling,
+  // item decay, and movement effect expiration are now handled by EnvironmentController
 
-    return () => clearInterval(movementEffectInterval);
-  }, [showToast]);
-
-  // Initialize stamina manager
+  // Initialize stamina manager (stamina state now managed via gameState + EventBus)
   useEffect(() => {
     staminaManager.initialise({
-      getStamina: () => gameState.getStamina(),
-      setStamina: (value) => {
-        gameState.setStamina(value);
-        setStamina(value);
-      },
-      drainStamina: (amount) => {
-        const exhausted = gameState.drainStamina(amount);
-        setStamina(gameState.getStamina());
-        return exhausted;
-      },
-      restoreStamina: (amount) => {
-        gameState.restoreStamina(amount);
-        setStamina(gameState.getStamina());
-      },
-      restoreStaminaFull: () => {
-        gameState.restoreStaminaFull();
-        setStamina(gameState.getStamina());
-      },
-      isExhausted: () => gameState.isExhausted(),
       showToast,
       teleportHome: () => {
         handleMapTransition('home_interior', { x: 5, y: 5 });
@@ -609,24 +403,7 @@ const App: React.FC = () => {
     onSetPlayerPos: setPlayerPos,
     onMapTransition: handleMapTransition,
     onFarmUpdate: handleFarmUpdate,
-    onFarmActionAnimation: (action, tilePos) => {
-      console.log('[App] Farm action animation triggered:', action, tilePos);
-      setFarmActionAnimation(action);
-      setFarmActionKey((prev) => {
-        const newKey = prev + 1;
-        console.log('[App] Animation key updated:', prev, '->', newKey);
-        return newKey;
-      });
-      // Trigger water sparkle effect when watering
-      if (action === 'water' && tilePos) {
-        setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
-        setWaterSparkleKey((prev) => prev + 1);
-      }
-      // Trigger harvest glow VFX when harvesting
-      if (action === 'harvest' && tilePos) {
-        triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
-      }
-    },
+    onFarmActionAnimation: handleFarmActionAnimation,
     onShowToast: showToast,
     onSetSelectedItemSlot: setSelectedItemSlot,
   });
@@ -643,250 +420,9 @@ const App: React.FC = () => {
     onSetPlayerPos: setPlayerPos,
     onMapTransition: handleMapTransition,
     onFarmUpdate: handleFarmUpdate,
-    onFarmActionAnimation: (action, tilePos) => {
-      console.log('[Touch] Farm action animation triggered:', action, tilePos);
-      setFarmActionAnimation(action);
-      setFarmActionKey((prev) => prev + 1);
-      // Trigger water sparkle effect when watering
-      if (action === 'water' && tilePos) {
-        setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
-        setWaterSparkleKey((prev) => prev + 1);
-      }
-      // Trigger harvest glow VFX when harvesting
-      if (action === 'harvest' && tilePos) {
-        triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
-      }
-    },
+    onFarmActionAnimation: handleFarmActionAnimation,
     onShowToast: showToast,
   });
-
-  // Handle canvas click for interactions
-  const handleCanvasClick = useCallback(
-    (clickInfo: MouseClickInfo) => {
-      console.log('[Mouse Click] Checking interactions at:', clickInfo.tilePos);
-
-      // Don't process clicks during dialogue, cutscenes, or UI overlays (including inventory)
-      if (
-        activeNPC ||
-        isCutscenePlaying ||
-        ui.helpBrowser ||
-        ui.cookingUI ||
-        ui.recipeBook ||
-        ui.magicBook ||
-        ui.characterCreator ||
-        ui.inventory ||
-        ui.shopUI ||
-        ui.giftModal ||
-        ui.brewingUI ||
-        ui.devTools ||
-        ui.vfxTestPanel
-      ) {
-        console.log('[Mouse Click] Ignoring click - UI overlay active');
-        return;
-      }
-
-      // Get all available interactions at the clicked position
-      // Get selected item from inventory (if any)
-      const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
-      const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
-
-      console.log(
-        '[Mouse Click] Using tool from inventory:',
-        currentTool,
-        '(slot:',
-        selectedItemSlot,
-        ')'
-      );
-
-      const interactions = getAvailableInteractions({
-        position: clickInfo.worldPos,
-        currentMapId: currentMapId,
-        currentTool: currentTool,
-        selectedSeed: null, // Seeds are now part of the tool system
-        onMirror: () => openUI('characterCreator'),
-        onNPC: (npcId) => {
-          // Play duck quacking if interacting with a duck
-          if (npcId.toLowerCase().includes('duck')) {
-            audioManager.playSfx('sfx_ducks_quack');
-          }
-          setActiveNPC(npcId);
-        },
-        onGiveGift: (npcId) => {
-          openUI('giftModal', { giftTargetNpcId: npcId });
-        },
-        onTransition: (result: TransitionResult) => {
-          if (result.success && result.mapId && result.spawnPosition) {
-            // Play door/transition sound
-            audioManager.playSfx('sfx_door_opening');
-            handleMapTransition(result.mapId, result.spawnPosition);
-            // Save player location when transitioning
-            const seedMatch = result.mapId.match(/_([\d]+)$/);
-            const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
-            gameState.updatePlayerLocation(result.mapId, result.spawnPosition, seed);
-          }
-        },
-        onCooking: (locationType, position) => {
-          openUI('cookingUI', {
-            cookingLocationType: locationType,
-            cookingPosition: position || undefined,
-          });
-        },
-        onBrewing: (position) => {
-          openUI('brewingUI', { brewingPosition: position || undefined });
-        },
-        onFarmAction: (result: FarmActionResult) => {
-          if (result.handled) {
-            handleFarmUpdate();
-          }
-          if (result.message) {
-            showToast(result.message, result.messageType || 'info');
-          }
-        },
-        onFarmAnimation: (action, tilePos) => {
-          setFarmActionAnimation(action);
-          setFarmActionKey((prev) => prev + 1);
-          // Play farming sound effects
-          if (action === 'till') {
-            audioManager.playSfx('sfx_hoeing');
-          } else if (action === 'water') {
-            audioManager.playSfx('sfx_digging'); // Use digging for water splash until we have water sound
-          } else if (action === 'harvest' && tilePos) {
-            // Trigger harvest glow VFX when harvesting
-            triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
-          }
-        },
-        onForage: (result: ForageResult) => {
-          showToast(result.message, result.found ? 'success' : 'info');
-        },
-        onPlacedItemAction: (action: PlacedItemAction) => {
-          if (action.action === 'pickup') {
-            // Register the sprite image for this item in inventory
-            registerItemSprite(action.itemId, action.imageUrl);
-            // Add item to inventory
-            inventoryManager.addItem(action.itemId, 1);
-            // Remove from placed items (emits PLACED_ITEMS_CHANGED event)
-            gameState.removePlacedItem(action.placedItemId);
-            showToast('Picked up item', 'success');
-          } else if (action.action === 'eat') {
-            // Remove from placed items (emits PLACED_ITEMS_CHANGED event)
-            gameState.removePlacedItem(action.placedItemId);
-            // Restore stamina from eating
-            const restored = staminaManager.eatFood(action.itemId);
-            showToast(`Ate the food (+${restored} stamina)`, 'success');
-          } else if (action.action === 'taste') {
-            showToast('Mmm, tasty!', 'info');
-          }
-        },
-        onCollectWater: (result) => {
-          if (result.success) {
-            handleFarmUpdate(); // Update inventory display
-            showToast(result.message, 'success');
-          }
-        },
-        onRefillWaterCan: (result) => {
-          if (result.success) {
-            // Trigger splash effect
-            setShowSplashEffect(true);
-            setSplashKey((prev) => prev + 1);
-            showToast(result.message, 'success');
-          } else {
-            showToast(result.message, 'info');
-          }
-        },
-        onCollectResource: (result) => {
-          if (result.success) {
-            handleFarmUpdate(); // Update inventory display
-            showToast(result.message, 'success');
-          } else {
-            showToast(result.message, 'info');
-          }
-        },
-      });
-
-      console.log(`[Mouse Click] Found ${interactions.length} interactions`);
-
-      // Calculate distance from player to clicked position
-      const playerPos = playerPosRef.current;
-      const distanceToClick = getDistance(playerPos, clickInfo.worldPos);
-      const isNearby = distanceToClick <= INTERACTION.RANGE;
-
-      console.log(
-        `[Mouse Click] Distance to click: ${distanceToClick.toFixed(2)} tiles, nearby: ${isNearby}`
-      );
-
-      // If no interactions, trigger click-to-move
-      if (interactions.length === 0) {
-        const pathFound = setClickToMoveDestination(clickInfo.worldPos);
-        if (!pathFound) {
-          showToast("Can't reach there", 'info');
-        }
-        return;
-      }
-
-      // If player is nearby, execute interaction immediately
-      if (isNearby) {
-        // If only one interaction, execute it immediately
-        if (interactions.length === 1) {
-          console.log('[Mouse Click] Executing single interaction:', interactions[0].label);
-          interactions[0].execute();
-          return;
-        }
-
-        // If multiple interactions, show radial menu
-        console.log(
-          '[Mouse Click] Showing radial menu with options:',
-          interactions.map((i) => i.label)
-        );
-        const menuOptions: RadialMenuOption[] = interactions.map((interaction, index) => ({
-          id: `${interaction.type}_${index}`,
-          label: interaction.label,
-          icon: interaction.icon,
-          color: interaction.color,
-          onSelect: interaction.execute,
-        }));
-
-        setRadialMenuOptions(menuOptions);
-        setRadialMenuPosition(clickInfo.screenPos);
-        setRadialMenuVisible(true);
-        return;
-      }
-
-      // Player is far away - walk there first
-      // For single interaction, defer the action to execute on arrival
-      // For multiple interactions, just walk there (user clicks again on arrival)
-      const deferredAction = interactions.length === 1 ? interactions[0].execute : undefined;
-
-      console.log(
-        `[Mouse Click] Walking to target first${deferredAction ? ' (will execute on arrival)' : ''}`
-      );
-
-      const pathFound = setClickToMoveDestination(clickInfo.worldPos, null, deferredAction);
-      if (!pathFound) {
-        showToast("Can't reach there", 'info');
-      }
-    },
-    [
-      activeNPC,
-      isCutscenePlaying,
-      ui.helpBrowser,
-      ui.cookingUI,
-      ui.recipeBook,
-      ui.characterCreator,
-      ui.inventory,
-      ui.shopUI,
-      ui.giftModal,
-      ui.brewingUI,
-      ui.devTools,
-      ui.vfxTestPanel,
-      currentMapId,
-      handleMapTransition,
-      handleFarmUpdate,
-      showToast,
-      selectedItemSlot,
-      inventoryItems,
-      setClickToMoveDestination,
-    ]
-  );
 
   const gameLoop = useCallback(() => {
     // Track frame-to-frame timing for performance metrics
@@ -1162,7 +698,7 @@ const App: React.FC = () => {
   const currentTime = TimeManager.getCurrentTime();
   const currentSeason = currentTime.season;
   const seasonKey = currentSeason.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter';
-  const timeOfDay = timeOfDayState; // Use state for reactivity
+  // timeOfDay comes from state directly (for reactivity)
 
   // Use viewport culling hook for performance optimization
   const {
@@ -1254,15 +790,13 @@ const App: React.FC = () => {
         characterData.saveFarmPlots(farmManager.getAllPlots());
         return count;
       },
-      // Healing Salve: Restore partial stamina
+      // Healing Salve: Restore partial stamina (uses staminaManager for EventBus)
       restoreStamina: (amount: number) => {
-        gameState.restoreStamina(amount);
-        setStamina(gameState.getStamina());
+        staminaManager.restoreFromPotion(amount);
       },
-      // Wakefulness Brew: Restore stamina to full
+      // Wakefulness Brew: Restore stamina to full (uses staminaManager for EventBus)
       restoreStaminaFull: () => {
-        gameState.restoreStaminaFull();
-        setStamina(gameState.getStamina());
+        staminaManager.restoreFromPotion(STAMINA.MAX);
       },
       // Floating/Flying Potions: Set movement effect with duration
       setMovementEffect: (mode: 'floating' | 'flying', durationMs: number) => {
@@ -1292,10 +826,8 @@ const App: React.FC = () => {
       if (result.success) {
         // Play magic sound effect
         audioManager.playSfx('sfx_magic_transition');
-        // Remove one potion from inventory
+        // Remove one potion from inventory (triggers EventBus INVENTORY_CHANGED)
         inventoryManager.removeItem(itemId, 1);
-        // Refresh inventory display
-        setInventoryItems(convertInventoryToUI());
         return true;
       }
 
@@ -1303,182 +835,6 @@ const App: React.FC = () => {
     },
     [magicEffectCallbacks]
   );
-
-  // Proximity-based radial menu for NPCs - show menu when entering NPC range
-  useEffect(() => {
-    // Don't show if UI overlays are active
-    if (
-      activeNPC ||
-      isCutscenePlaying ||
-      ui.helpBrowser ||
-      ui.cookingUI ||
-      ui.recipeBook ||
-      ui.characterCreator ||
-      ui.inventory
-    ) {
-      return;
-    }
-
-    // Use existing npcManager method to find NPC at player position
-    const nearestNPC = npcManager.getNPCAtPosition(playerPos);
-
-    // If no NPC in range, close menu if it was showing for an NPC
-    if (!nearestNPC) {
-      if (radialMenuNpcIdRef.current) {
-        radialMenuNpcIdRef.current = null;
-        setRadialMenuVisible(false);
-      }
-      return;
-    }
-
-    // If already showing menu for this NPC, don't re-trigger
-    if (radialMenuNpcIdRef.current === nearestNPC.id) {
-      return;
-    }
-
-    // Get interactions for this NPC
-    const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
-    const currentTool = selectedItem?.id || 'hand';
-
-    const interactions = getAvailableInteractions({
-      position: nearestNPC.position,
-      currentMapId: currentMapId,
-      currentTool: currentTool,
-      selectedSeed: null,
-      onMirror: () => openUI('characterCreator'),
-      onNPC: (npcId) => {
-        // Play duck quacking if interacting with a duck
-        if (npcId.toLowerCase().includes('duck')) {
-          audioManager.playSfx('sfx_ducks_quack');
-        }
-        setActiveNPC(npcId);
-      },
-      onGiveGift: (npcId) => {
-        openUI('giftModal', { giftTargetNpcId: npcId });
-      },
-      onTransition: (result: TransitionResult) => {
-        if (result.success && result.mapId && result.spawnPosition) {
-          // Play door/transition sound
-          audioManager.playSfx('sfx_door_opening');
-          handleMapTransition(result.mapId, result.spawnPosition);
-          const seedMatch = result.mapId.match(/_([\d]+)$/);
-          const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
-          gameState.updatePlayerLocation(result.mapId, result.spawnPosition, seed);
-        }
-      },
-      onCooking: (locationType, position) => {
-        openUI('cookingUI', {
-          cookingLocationType: locationType,
-          cookingPosition: position || undefined,
-        });
-      },
-      onBrewing: (position) => {
-        openUI('brewingUI', { brewingPosition: position || undefined });
-      },
-      onFarmAction: (result: FarmActionResult) => {
-        if (result.handled) {
-          handleFarmUpdate();
-        }
-        if (result.message) {
-          showToast(result.message, result.messageType || 'info');
-        }
-      },
-      onFarmAnimation: (action) => {
-        setFarmActionAnimation(action);
-        setFarmActionKey((prev) => prev + 1);
-        // Play farming sound effects
-        if (action === 'till') {
-          audioManager.playSfx('sfx_hoeing');
-        } else if (action === 'water') {
-          audioManager.playSfx('sfx_digging');
-        }
-      },
-      onForage: (result: ForageResult) => {
-        showToast(result.message, result.found ? 'success' : 'info');
-      },
-      onPlacedItemAction: (action: PlacedItemAction) => {
-        if (action.action === 'pickup') {
-          registerItemSprite(action.itemId, action.imageUrl);
-          inventoryManager.addItem(action.itemId, 1);
-          gameState.removePlacedItem(action.placedItemId);
-          // GameState emits PLACED_ITEMS_CHANGED event
-          showToast('Picked up item', 'success');
-        } else if (action.action === 'eat') {
-          gameState.removePlacedItem(action.placedItemId);
-          // Restore stamina from eating
-          const restored = staminaManager.eatFood(action.itemId);
-          // GameState emits PLACED_ITEMS_CHANGED event
-          showToast(`Ate the food (+${restored} stamina)`, 'success');
-        } else if (action.action === 'taste') {
-          showToast('Mmm, tasty!', 'info');
-        }
-      },
-      onCollectWater: (result) => {
-        if (result.success) {
-          handleFarmUpdate();
-          showToast(result.message, 'success');
-        }
-      },
-      onRefillWaterCan: (result) => {
-        if (result.success) {
-          setShowSplashEffect(true);
-          setSplashKey((prev) => prev + 1);
-          showToast(result.message, 'success');
-        } else {
-          showToast(result.message, 'info');
-        }
-      },
-      onCollectResource: (result) => {
-        if (result.success) {
-          handleFarmUpdate();
-          showToast(result.message, 'success');
-        } else {
-          showToast(result.message, 'info');
-        }
-      },
-    });
-
-    // Only show menu if there are NPC-related interactions
-    const npcInteractions = interactions.filter(
-      (i) => i.type === 'npc' || i.type === 'collect_resource'
-    );
-    if (npcInteractions.length === 0) {
-      return;
-    }
-
-    // Calculate screen position for the NPC (center of viewport offset by NPC position)
-    const viewportCenterX = window.innerWidth / 2;
-    const viewportCenterY = window.innerHeight / 2;
-    const npcOffsetX = (nearestNPC.position.x - playerPos.x) * TILE_SIZE;
-    const npcOffsetY = (nearestNPC.position.y - playerPos.y) * TILE_SIZE;
-    const screenX = viewportCenterX + npcOffsetX;
-    const screenY = viewportCenterY + npcOffsetY - 50; // Offset up a bit
-
-    // Show radial menu
-    radialMenuNpcIdRef.current = nearestNPC.id;
-    const menuOptions: RadialMenuOption[] = npcInteractions.map((interaction, index) => ({
-      id: `${interaction.type}_${index}`,
-      label: interaction.label,
-      icon: interaction.icon,
-      color: interaction.color,
-      onSelect: interaction.execute,
-    }));
-    setRadialMenuOptions(menuOptions);
-    setRadialMenuPosition({ x: screenX, y: screenY });
-    setRadialMenuVisible(true);
-  }, [
-    playerPos,
-    activeNPC,
-    isCutscenePlaying,
-    ui.helpBrowser,
-    ui.cookingUI,
-    ui.recipeBook,
-    ui.characterCreator,
-    ui.inventory,
-    currentMapId,
-    selectedItemSlot,
-    inventoryItems,
-  ]);
 
   // Get player sprite info (URL and scale, plus flip for fairy form)
   const { playerSpriteUrl, spriteScale, shouldFlip } = getPlayerSpriteInfo(
@@ -1563,23 +919,22 @@ const App: React.FC = () => {
 
   // PixiJS effects have been moved to usePixiRenderer hook
 
-  // Subscribe to weather state changes (update weatherLayerRef from hook)
-  useEffect(() => {
-    if (weatherLayerRef.current && currentWeather !== weatherLayerRef.current.getWeather()) {
-      console.log(`[App] Weather changed to: ${currentWeather}`);
-      weatherLayerRef.current.setWeather(currentWeather);
-    }
-  }, [currentWeather]);
-
-  // Check for weather updates periodically
-  useEffect(() => {
-    if (weatherManagerRef.current) {
-      const interval = setInterval(() => {
-        weatherManagerRef.current?.checkWeatherUpdate();
-      }, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [isPixiInitialized]);
+  // Environment controller - manages weather, time, ambient audio, item decay
+  // setWeather and forceTimeUpdate available for DevTools/magic effects if needed
+  const {
+    setWeather: _setWeather,
+    isWeatherVisible,
+    forceTimeUpdate: _forceTimeUpdate,
+  } = useEnvironmentController({
+    currentMapId,
+    currentWeather,
+    setCurrentWeather,
+    timeOfDay,
+    setTimeOfDay,
+    weatherManagerRef,
+    weatherLayerRef,
+    onShowToast: showToast,
+  });
 
   // Show character creator if no character selected
   if (ui.characterCreator) {
@@ -1852,7 +1207,7 @@ const App: React.FC = () => {
             tileY={waterSparklePos.y}
             cameraX={cameraX}
             cameraY={cameraY}
-            onComplete={() => setWaterSparklePos(null)}
+            onComplete={clearWaterSparkle}
           />
         )}
 
@@ -1862,7 +1217,7 @@ const App: React.FC = () => {
             key={splashKey}
             screenX={playerPos.x * TILE_SIZE - cameraX}
             screenY={playerPos.y * TILE_SIZE - cameraY}
-            onComplete={() => setShowSplashEffect(false)}
+            onComplete={hideSplashEffect}
           />
         )}
       </div>
@@ -1887,10 +1242,7 @@ const App: React.FC = () => {
       />
 
       {/* Weather tint overlay - applies weather visual effects over NPCs */}
-      <WeatherTintOverlay
-        weather={currentWeather}
-        visible={isWeatherAllowedOnMap(currentWeather, currentMapId)}
-      />
+      <WeatherTintOverlay weather={currentWeather} visible={isWeatherVisible} />
 
       {/* Foreground parallax trees - decorative framing for outdoor maps */}
       {['village', 'forest', 'water_area'].includes(currentMap?.colorScheme ?? '') &&
@@ -2145,9 +1497,8 @@ const App: React.FC = () => {
             closeUI('giftModal');
           }}
           onGiftGiven={(result: GiftResult) => {
+            // GiftModal uses inventoryManager.removeItem() which triggers EventBus INVENTORY_CHANGED
             showToast(result.message, result.reaction === 'disliked' ? 'warning' : 'success');
-            // Refresh inventory display
-            setInventoryItems(convertInventoryToUI());
           }}
         />
       )}
@@ -2177,7 +1528,7 @@ const App: React.FC = () => {
               console.log('[App] Spent gold:', Math.abs(goldDifference));
             }
 
-            // Update InventoryManager with new inventory (CRITICAL: Must sync InventoryManager)
+            // Update InventoryManager with new inventory (triggers EventBus INVENTORY_CHANGED)
             const currentTools = gameState.getState().inventory.tools;
             inventoryManager.loadInventory(newInventory, currentTools);
             console.log('[App] Updated InventoryManager with new inventory');
@@ -2185,11 +1536,6 @@ const App: React.FC = () => {
             // Save to GameState using CharacterData API
             characterData.saveInventory(newInventory, currentTools);
             console.log('[App] Saved inventory to GameState');
-
-            // Update UI inventory display
-            const uiInventory = convertInventoryToUI();
-            setInventoryItems(uiInventory);
-            console.log('[App] Updated UI inventory:', uiInventory.length);
           }}
         />
       )}
@@ -2231,10 +1577,8 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Stamina bar above player head */}
+      {/* Stamina bar above player head (subscribes to EventBus for stamina changes) */}
       <StaminaBar
-        current={stamina}
-        max={STAMINA.MAX}
         playerX={playerPos.x}
         playerY={playerPos.y}
         cameraX={cameraX}

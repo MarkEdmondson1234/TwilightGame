@@ -8,14 +8,16 @@
  * Visibility:
  * - Always visible when stamina is low (under 25%)
  * - Visible on hover when stamina is above threshold
+ *
+ * Subscribes to EventBus STAMINA_CHANGED events for reactivity.
  */
 
-import { useState } from 'react';
-import { TILE_SIZE } from '../constants';
+import { useState, useEffect } from 'react';
+import { TILE_SIZE, STAMINA } from '../constants';
+import { gameState } from '../GameState';
+import { eventBus, GameEvent } from '../utils/EventBus';
 
 interface StaminaBarProps {
-  current: number;
-  max: number;
   playerX: number; // Player world X position (in tiles)
   playerY: number; // Player world Y position (in tiles)
   cameraX: number; // Camera X offset (in pixels)
@@ -24,8 +26,6 @@ interface StaminaBarProps {
 }
 
 export function StaminaBar({
-  current,
-  max,
   playerX,
   playerY,
   cameraX,
@@ -33,6 +33,15 @@ export function StaminaBar({
   lowThreshold = 25,
 }: StaminaBarProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [current, setCurrent] = useState(() => gameState.getStamina());
+  const max = STAMINA.MAX;
+
+  // Subscribe to stamina changes via EventBus
+  useEffect(() => {
+    return eventBus.on(GameEvent.STAMINA_CHANGED, (payload) => {
+      setCurrent(payload.value);
+    });
+  }, []);
 
   const percentage = max > 0 ? (current / max) * 100 : 0;
   const isLow = percentage <= lowThreshold;

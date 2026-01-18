@@ -39,6 +39,9 @@ export enum GameEvent {
   PLACED_ITEMS_CHANGED = 'items:placed_changed',
   INVENTORY_CHANGED = 'items:inventory_changed',
 
+  // Player status events
+  STAMINA_CHANGED = 'player:stamina_changed',
+
   // Environment events
   WEATHER_CHANGED = 'env:weather_changed',
   TIME_CHANGED = 'env:time_changed',
@@ -79,6 +82,10 @@ export interface EventPayloads {
   [GameEvent.INVENTORY_CHANGED]: {
     action: 'add' | 'remove' | 'update';
     itemId?: string;
+  };
+  [GameEvent.STAMINA_CHANGED]: {
+    value: number;
+    maxValue: number;
   };
   [GameEvent.WEATHER_CHANGED]: {
     weather: string;

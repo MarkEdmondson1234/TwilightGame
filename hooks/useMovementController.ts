@@ -41,6 +41,9 @@ export interface UseMovementControllerProps {
 
   /** Whether an NPC dialogue is active (cancels pathfinding) */
   activeNPC: string | null;
+
+  /** Whether radial menu is visible (cancels pathfinding) */
+  radialMenuVisible?: boolean;
 }
 
 // ============================================================================
@@ -104,6 +107,7 @@ export function useMovementController(
     isUIActive,
     isCutscenePlaying,
     activeNPC,
+    radialMenuVisible = false,
   } = props;
 
   // -------------------------------------------------------------------------
@@ -201,11 +205,20 @@ export function useMovementController(
   }, [currentMapId, cancelPath]);
 
   // Cancel click-to-move path when any UI overlay becomes active
+  // Note: activeNPC and radialMenuVisible handled by parent component
+  // to avoid circular dependency with InteractionController
   useEffect(() => {
-    if (activeNPC || isCutscenePlaying || isUIActive) {
+    if (isCutscenePlaying || isUIActive) {
       cancelPath();
     }
-  }, [activeNPC, isCutscenePlaying, isUIActive, cancelPath]);
+  }, [isCutscenePlaying, isUIActive, cancelPath]);
+
+  // Cancel path when activeNPC or radialMenuVisible changes
+  useEffect(() => {
+    if (activeNPC || radialMenuVisible) {
+      cancelPath();
+    }
+  }, [activeNPC, radialMenuVisible, cancelPath]);
 
   // -------------------------------------------------------------------------
   // Action Helpers

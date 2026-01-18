@@ -13,16 +13,16 @@
  */
 
 import { STAMINA } from '../constants';
+import { gameState } from '../GameState';
+import { eventBus, GameEvent } from './EventBus';
 
 export type ActivityType = 'till' | 'plant' | 'water' | 'harvest' | 'forage' | 'cook';
 
+/**
+ * Callbacks required by StaminaManager
+ * Note: Stamina state is now managed via gameState + EventBus
+ */
 export interface StaminaCallbacks {
-  getStamina: () => number;
-  setStamina: (value: number) => void;
-  drainStamina: (amount: number) => boolean;
-  restoreStamina: (amount: number) => void;
-  restoreStaminaFull: () => void;
-  isExhausted: () => boolean;
   showToast: (message: string, type: 'info' | 'success' | 'warning' | 'error') => void;
   teleportHome: () => void;
 }
@@ -43,6 +43,46 @@ class StaminaManagerClass {
   }
 
   /**
+   * Emit stamina changed event via EventBus
+   */
+  private emitStaminaChanged(): void {
+    const current = gameState.getStamina();
+    eventBus.emit(GameEvent.STAMINA_CHANGED, {
+      value: current,
+      maxValue: STAMINA.MAX,
+    });
+  }
+
+  /**
+   * Drain stamina by amount, returns true if exhausted
+   */
+  private drainStamina(amount: number): boolean {
+    const current = gameState.getStamina();
+    const newValue = Math.max(0, current - amount);
+    gameState.setStamina(newValue);
+    this.emitStaminaChanged();
+    return newValue <= 0;
+  }
+
+  /**
+   * Restore stamina by amount
+   */
+  private restoreStamina(amount: number): void {
+    const current = gameState.getStamina();
+    const newValue = Math.min(STAMINA.MAX, current + amount);
+    gameState.setStamina(newValue);
+    this.emitStaminaChanged();
+  }
+
+  /**
+   * Restore stamina to full
+   */
+  private restoreStaminaFull(): void {
+    gameState.setStamina(STAMINA.MAX);
+    this.emitStaminaChanged();
+  }
+
+  /**
    * Update stamina based on player state
    * Call this from the game loop each frame
    *
@@ -56,15 +96,15 @@ class StaminaManagerClass {
       return false;
     }
 
-    const currentStamina = this.callbacks.getStamina();
+    const currentStamina = gameState.getStamina();
 
     // Home restoration (slow passive restore while at home)
     if (mapId === 'home_interior') {
       const restoreAmount = STAMINA.HOME_RESTORE_PER_SECOND * deltaTime;
       if (currentStamina < STAMINA.MAX) {
-        this.callbacks.restoreStamina(restoreAmount);
+        this.restoreStamina(restoreAmount);
         // Reset warning when stamina recovers above threshold
-        if (this.callbacks.getStamina() > STAMINA.LOW_THRESHOLD) {
+        if (gameState.getStamina() > STAMINA.LOW_THRESHOLD) {
           this.hasShownLowWarning = false;
         }
       }
@@ -74,7 +114,7 @@ class StaminaManagerClass {
     // Walking drain (only when moving)
     if (isWalking) {
       const drainAmount = STAMINA.WALKING_DRAIN_PER_SECOND * deltaTime;
-      const exhausted = this.callbacks.drainStamina(drainAmount);
+      const exhausted = this.drainStamina(drainAmount);
 
       // Check for low stamina warning
       this.checkLowStaminaWarning();
@@ -98,7 +138,7 @@ class StaminaManagerClass {
     }
 
     const cost = this.getActivityCost(activity);
-    const currentStamina = this.callbacks.getStamina();
+    const currentStamina = gameState.getStamina();
 
     // Allow activity if we have any stamina (will exhaust after)
     if (currentStamina <= 0) {
@@ -106,7 +146,7 @@ class StaminaManagerClass {
       return false;
     }
 
-    const exhausted = this.callbacks.drainStamina(cost);
+    const exhausted = this.drainStamina(cost);
     this.checkLowStaminaWarning();
 
     if (exhausted) {
@@ -121,15 +161,15 @@ class StaminaManagerClass {
    * @returns the amount of stamina restored
    */
   eatFood(foodId: string): number {
-    if (!this.callbacks || !this.isInitialised) {
+    if (!this.isInitialised) {
       return 0;
     }
 
     const restoration = STAMINA.FOOD_RESTORATION[foodId] ?? 10; // Default 10 if unknown food
-    this.callbacks.restoreStamina(restoration);
+    this.restoreStamina(restoration);
 
     // Reset warning if stamina recovers
-    if (this.callbacks.getStamina() > STAMINA.LOW_THRESHOLD) {
+    if (gameState.getStamina() > STAMINA.LOW_THRESHOLD) {
       this.hasShownLowWarning = false;
     }
 
@@ -140,18 +180,18 @@ class StaminaManagerClass {
    * Restore stamina from a potion effect
    */
   restoreFromPotion(amount: number): void {
-    if (!this.callbacks || !this.isInitialised) {
+    if (!this.isInitialised) {
       return;
     }
 
     if (amount >= STAMINA.MAX) {
-      this.callbacks.restoreStaminaFull();
+      this.restoreStaminaFull();
     } else {
-      this.callbacks.restoreStamina(amount);
+      this.restoreStamina(amount);
     }
 
     // Reset warning if stamina recovers
-    if (this.callbacks.getStamina() > STAMINA.LOW_THRESHOLD) {
+    if (gameState.getStamina() > STAMINA.LOW_THRESHOLD) {
       this.hasShownLowWarning = false;
     }
   }
@@ -186,7 +226,7 @@ class StaminaManagerClass {
       return;
     }
 
-    const currentStamina = this.callbacks.getStamina();
+    const currentStamina = gameState.getStamina();
     if (currentStamina <= STAMINA.LOW_THRESHOLD && currentStamina > 0) {
       this.callbacks.showToast("You're feeling tired... find something to eat!", 'warning');
       this.hasShownLowWarning = true;
@@ -203,7 +243,7 @@ class StaminaManagerClass {
 
     this.callbacks.showToast('You collapsed from exhaustion...', 'warning');
     this.callbacks.teleportHome();
-    this.callbacks.restoreStaminaFull();
+    this.restoreStaminaFull();
     this.hasShownLowWarning = false;
   }
 

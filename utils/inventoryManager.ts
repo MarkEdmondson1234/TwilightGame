@@ -13,6 +13,7 @@
 
 import { ItemCategory, getItem, ITEMS } from '../data/items';
 import { characterData } from './CharacterData';
+import { eventBus, GameEvent } from './EventBus';
 
 export interface InventoryItem {
   itemId: string;
@@ -26,12 +27,14 @@ class InventoryManager {
   private tools: Set<string> = new Set(); // tool IDs owned
 
   /**
-   * Save inventory to game state (triggers UI updates)
+   * Save inventory to game state and emit EventBus event for UI updates
    * Uses CharacterData API for unified persistence
    */
   private saveToGameState(): void {
     const data = this.getInventoryData();
     characterData.saveInventory(data.items, data.tools);
+    // Emit event for UI components to update
+    eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
   }
 
   /**
@@ -425,6 +428,8 @@ class InventoryManager {
     console.log(
       `[InventoryManager] Loaded ${this.items.size} item types and ${this.tools.size} tools`
     );
+    // Emit event for UI components to update
+    eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
   }
 
   /**

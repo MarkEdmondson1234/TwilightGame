@@ -26,7 +26,7 @@ export const DEBUG = {
   NPC: import.meta.env.DEV && false, // NPC movement and interactions
   MAP: import.meta.env.DEV && false, // Map transitions and loading
   COLLISION: import.meta.env.DEV && false, // Collision detection
-  EVENTS: import.meta.env.DEV && false, // EventBus event logging
+  EVENTS: import.meta.env.DEV, // EventBus event logging (enabled in dev only)
 } as const;
 
 /**

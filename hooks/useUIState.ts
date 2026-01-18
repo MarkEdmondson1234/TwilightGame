@@ -68,6 +68,18 @@ export interface OpenUIOptions {
   giftTargetNpcId?: string;
 }
 
+/**
+ * Return type for useUIState hook.
+ */
+export interface UseUIStateReturn {
+  ui: UIState;
+  openUI: (name: UIOverlayName, options?: OpenUIOptions) => void;
+  closeUI: (name: UIOverlayName) => void;
+  toggleUI: (name: UIOverlayName) => void;
+  closeAllUI: () => void;
+  isAnyUIOpen: () => boolean;
+}
+
 const initialContext: UIContext = {
   cookingLocationType: null,
   cookingPosition: null,
