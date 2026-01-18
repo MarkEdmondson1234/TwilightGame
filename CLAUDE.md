@@ -235,8 +235,8 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 
 ### Core Files
 
-- `App.tsx` - Main component: rendering, camera system, game loop orchestration (771 lines)
-- `constants.ts` - Game constants (`TILE_SIZE`, `PLAYER_SIZE`), tile legend with all tile types
+- `App.tsx` - Main component: rendering, camera system, game loop orchestration (~1,600 lines)
+- `constants.ts` - Game constants (`TILE_SIZE`, `PLAYER_SIZE`), tile legend with all tile types, DEBUG flags
 - `types.ts` - TypeScript types including `TileType`, `Position`, `Direction`, `MapDefinition`, `Transition`, `ColorScheme`
 
 ### Hooks (`hooks/`)
@@ -250,6 +250,11 @@ Custom React hooks for game systems:
 - `hooks/usePlayerMovement.ts` - Player movement logic (input processing, animation, position updates)
 - `hooks/useTouchDevice.ts` - Touch device detection
 
+**Domain Controllers** (consolidate related state and effects):
+- `hooks/useMovementController.ts` - Player position, direction, animation, pathfinding, size effects
+- `hooks/useInteractionController.ts` - NPC dialogue, radial menu, farm actions, canvas clicks
+- `hooks/useEnvironmentController.ts` - Weather, time of day, ambient audio, item decay, movement effects
+
 ### Utilities (`utils/`)
 
 Pure functions and game systems:
@@ -257,10 +262,13 @@ Pure functions and game systems:
 - `utils/gameInitializer.ts` - Game startup (palette, maps, assets, inventory, farm plots)
 - `utils/actionHandlers.ts` - Shared action logic (mirror, NPC, transition, farming interactions)
 - `utils/CharacterData.ts` - **Unified persistence API** for all character data (inventory, farming, cooking, friendships)
+- `utils/EventBus.ts` - **Type-safe pub/sub event system** for decoupling managers from React components
 - `utils/mapUtils.ts` - Tile data access via MapManager
 - `utils/testUtils.ts` - Startup sanity checks
 - `utils/tileRenderUtils.ts` - Tile transform calculations
 - `utils/farmManager.ts` - Farm plot management
+- `utils/StaminaManager.ts` - Stamina drain/restore with EventBus integration
+- `utils/inventoryManager.ts` - Inventory management with EventBus integration
 - `utils/characterSprites.ts` - Character sprite generation
 - `utils/TimeManager.ts` - In-game time/calendar system
 
@@ -347,6 +355,114 @@ Pure functions and game systems:
 - Clamped to current map boundaries (varies per map)
 - Viewport culling: Only renders visible tiles for performance
 
+## EventBus System (`utils/EventBus.ts`)
+
+**Type-safe pub/sub event system** that decouples managers from React components. Managers emit events when state changes, React components subscribe to update.
+
+### Why EventBus?
+
+- **Decoupling**: Managers don't need React callbacks passed in
+- **Performance**: Components only re-render when relevant events fire (vs. polling or full state subscriptions)
+- **Type Safety**: Each event has a typed payload via `EventPayloads` interface
+- **Debug Mode**: Enable `DEBUG.EVENTS` in `constants.ts` to see all events in console (dev only)
+
+### Available Events
+
+| Event | Payload | Emitted By | Subscribers |
+|-------|---------|------------|-------------|
+| `STAMINA_CHANGED` | `{ value, maxValue }` | StaminaManager | StaminaBar |
+| `INVENTORY_CHANGED` | `{ action }` | inventoryManager | App.tsx |
+| `FARM_PLOT_CHANGED` | `{ position?, action? }` | farmManager | useGameEvents |
+| `NPC_MOVED` | `{ npcId, position? }` | npcManager | useGameEvents |
+| `NPC_SPAWNED` / `NPC_DESPAWNED` | `{ npcId, mapId }` | npcManager | useGameEvents |
+| `PLACED_ITEMS_CHANGED` | `{ mapId, action? }` | gameState | useGameEvents |
+| `WEATHER_CHANGED` | `{ weather, mapId }` | weatherManager | EnvironmentController |
+| `TIME_CHANGED` | `{ hour, timeOfDay }` | TimeManager | EnvironmentController |
+
+### Usage Examples
+
+**Emitting events (in managers):**
+```typescript
+import { eventBus, GameEvent } from './EventBus';
+
+// After changing stamina
+eventBus.emit(GameEvent.STAMINA_CHANGED, {
+  value: newStamina,
+  maxValue: STAMINA.MAX,
+});
+
+// After inventory update
+eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
+```
+
+**Subscribing to events (in React components/hooks):**
+```typescript
+import { eventBus, GameEvent } from '../utils/EventBus';
+
+useEffect(() => {
+  // Returns unsubscribe function - use as cleanup
+  return eventBus.on(GameEvent.STAMINA_CHANGED, (payload) => {
+    setCurrent(payload.value);
+  });
+}, []);
+```
+
+### Adding New Events
+
+1. **Add event type** to `GameEvent` enum in `utils/EventBus.ts`:
+```typescript
+export enum GameEvent {
+  // ... existing events
+  MY_NEW_EVENT = 'category:event_name',
+}
+```
+
+2. **Define payload type** in `EventPayloads` interface:
+```typescript
+export interface EventPayloads {
+  // ... existing payloads
+  [GameEvent.MY_NEW_EVENT]: {
+    someField: string;
+    anotherField: number;
+  };
+}
+```
+
+3. **Emit from manager** when state changes:
+```typescript
+eventBus.emit(GameEvent.MY_NEW_EVENT, { someField: 'value', anotherField: 42 });
+```
+
+4. **Subscribe in components** that need to react:
+```typescript
+useEffect(() => {
+  return eventBus.on(GameEvent.MY_NEW_EVENT, (payload) => {
+    // Handle the event
+  });
+}, []);
+```
+
+### Debug Mode
+
+Enable EventBus logging in development:
+```typescript
+// In constants.ts DEBUG object
+EVENTS: import.meta.env.DEV,  // Logs all events to console in dev
+```
+
+Console output when enabled:
+```
+[EventBus] player:stamina_changed { value: 98.5, maxValue: 100 }
+[EventBus] items:inventory_changed { action: 'update' }
+```
+
+### Best Practices
+
+- **Emit after state change** - Always emit events AFTER updating the underlying state
+- **Use specific events** - Don't use a generic "state changed" event; use specific events like `STAMINA_CHANGED`
+- **Clean up subscriptions** - Return the unsubscribe function from `useEffect` to prevent memory leaks
+- **Keep payloads minimal** - Include only what subscribers need; they can read full state from gameState
+
 ## PixiJS Rendering System
 
 **Status**: Active (Feature-flagged with `USE_PIXI_RENDERER` in `constants.ts`)
@@ -422,7 +538,7 @@ The PixiJS implementation uses a **class-based layer system** with three primary
 **Texture Management:**
 - All images loaded as `PIXI.Texture` via `TextureManager`
 - Textures cached and reused (no recreation on re-render)
-- `SCALE_MODES.NEAREST` for pixel-perfect rendering (no anti-aliasing)
+- `scaleMode: 'linear'` with mipmaps for smooth hand-drawn artwork (NOT nearest-neighbor)
 - Textures preloaded during game initialization
 
 **Layer System:**
@@ -581,7 +697,7 @@ Once PixiJS is fully adopted, these features become possible:
 **Common Issues:**
 - **Black screen**: Check texture loading errors in console
 - **Low FPS**: Check sprite count and viewport culling
-- **Blurry sprites**: Ensure `SCALE_MODES.NEAREST` is set
+- **Pixelated sprites**: Ensure `scaleMode: 'linear'` is set (NOT nearest-neighbor for hand-drawn art)
 - **Z-ordering issues**: Verify `zIndex` values and `sortableChildren = true`
 
 ## Creating New Maps
@@ -789,6 +905,20 @@ Multi-tile sprites (furniture, large objects) require special handling:
    - If a render section is >100 lines, extract to component
    - Pass props for data, keep parent clean
    - Use React.memo for performance
+
+6. **Use Domain Controllers for Related State/Effects**
+   - Group related state, refs, and effects into a single hook
+   - `useMovementController` - player position, direction, animation, pathfinding
+   - `useInteractionController` - NPC dialogue, radial menu, farm actions
+   - `useEnvironmentController` - weather, time, ambient audio, item decay
+   - Controllers take config props, return state and actions
+   - Example: Moved 9 weather/time/audio effects from App.tsx to EnvironmentController
+
+7. **Use EventBus for Manager-to-Component Communication**
+   - Managers emit events via EventBus instead of using callbacks
+   - Components subscribe and read from gameState when events fire
+   - Eliminates callback prop drilling and inefficient state subscriptions
+   - Example: StaminaManager emits `STAMINA_CHANGED`, StaminaBar subscribes
 
 **Refactoring Checklist:**
 - [ ] Run `npx tsc --noEmit` before and after
@@ -1089,7 +1219,7 @@ Run tests with: `npx vitest run tests/myUtils.test.ts`
 Claude Code has access to Chrome DevTools via MCP (Model Context Protocol) tools for browser-based testing:
 
 **Available Testing Capabilities:**
-- Open the game at `http://localhost:3000` using `mcp__chrome-devtools__new_page`
+- Open the game at `http://localhost:4000/TwilightGame/` using `mcp__chrome-devtools__new_page`
 - Take snapshots of page content and screenshots using `take_snapshot` and `take_screenshot`
 - Simulate user interactions (clicks, keyboard input, form filling)
 - Inspect console messages and network requests
