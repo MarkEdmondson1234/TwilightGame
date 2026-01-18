@@ -106,6 +106,16 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   potion_glamour: potionAssets.glamour_draught,
   potion_beastward: potionAssets.beastward_balm,
   potion_wakefulness: potionAssets.wakefulness_brew,
+  potion_revealing: potionAssets.revealing_tonic,
+  potion_raincaller: potionAssets.raincaller,
+  potion_sunburst: potionAssets.sunburst,
+  potion_snowglobe: potionAssets.snowglobe,
+  potion_cherry_blossom: potionAssets.cherry_blossom,
+  potion_mistweaver: potionAssets.mistweaver,
+  potion_verdant_surge: potionAssets.verdant_surge,
+  potion_healing: potionAssets.healing_salve,
+  potion_drink_me: potionAssets.drink_me,
+  potion_eat_me: potionAssets.eat_me,
 };
 
 /**

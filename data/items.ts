@@ -1465,6 +1465,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: "A clear potion with floating sparkles. Reveals an NPC's favourite gift.",
     stackable: true,
     sellPrice: 35,
+    image: potionAssets.revealing_tonic,
   },
 
   potion_healing: {
@@ -1475,6 +1476,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A soothing green potion. Restores health and energy.',
     stackable: true,
     sellPrice: 45,
+    image: potionAssets.healing_salve,
   },
 
   potion_drink_me: {
@@ -1485,6 +1487,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A tiny bottle with a "DRINK ME" label. Shrinks you to half size!',
     stackable: true,
     sellPrice: 65,
+    image: potionAssets.drink_me,
   },
 
   potion_eat_me: {
@@ -1495,6 +1498,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A small cake-shaped potion with an "EAT ME" label. Makes you grow to 1.5x size!',
     stackable: true,
     sellPrice: 65,
+    image: potionAssets.eat_me,
   },
 
   // Level 2: Journeyman Witch
@@ -1506,6 +1510,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A swirling blue potion that smells of petrichor. Summons rain.',
     stackable: true,
     sellPrice: 80,
+    image: potionAssets.raincaller,
   },
 
   potion_sunburst: {
@@ -1516,6 +1521,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A brilliant golden potion. Clears the weather and brings sunshine.',
     stackable: true,
     sellPrice: 85,
+    image: potionAssets.sunburst,
   },
 
   potion_snowglobe: {
@@ -1526,6 +1532,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A cold white potion with swirling flakes. Summons snow anywhere!',
     stackable: true,
     sellPrice: 90,
+    image: potionAssets.snowglobe,
   },
 
   potion_cherry_blossom: {
@@ -1536,6 +1543,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A delicate pink potion. Creates beautiful cherry blossom weather.',
     stackable: true,
     sellPrice: 95,
+    image: potionAssets.cherry_blossom,
   },
 
   potion_mistweaver: {
@@ -1546,6 +1554,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A hazy grey potion. Summons thick, mysterious fog.',
     stackable: true,
     sellPrice: 75,
+    image: potionAssets.mistweaver,
   },
 
   potion_verdant_surge: {
@@ -1556,6 +1565,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A vibrant green potion bursting with life. Replenishes all forage bushes.',
     stackable: true,
     sellPrice: 120,
+    image: potionAssets.verdant_surge,
   },
 
   potion_beast_tongue: {

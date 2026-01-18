@@ -320,6 +320,16 @@ export const potionAssets = {
   glamour_draught: '/TwilightGame/assets-optimized/items/magical/potions/glamour_draught.png',
   beastward_balm: '/TwilightGame/assets-optimized/items/magical/potions/beastward_balm.png',
   wakefulness_brew: '/TwilightGame/assets-optimized/items/magical/potions/wakefulness_brew.png',
+  revealing_tonic: '/TwilightGame/assets-optimized/items/magical/potions/revealing_tonic.png',
+  raincaller: '/TwilightGame/assets-optimized/items/magical/potions/raincaller.png',
+  sunburst: '/TwilightGame/assets-optimized/items/magical/potions/sunburst.png',
+  snowglobe: '/TwilightGame/assets-optimized/items/magical/potions/snowglobe.png',
+  cherry_blossom: '/TwilightGame/assets-optimized/items/magical/potions/cherry_blossom.png',
+  mistweaver: '/TwilightGame/assets-optimized/items/magical/potions/mistweaver.png',
+  verdant_surge: '/TwilightGame/assets-optimized/items/magical/potions/verdant_surge.png',
+  healing_salve: '/TwilightGame/assets-optimized/items/magical/potions/healing_salve.png',
+  drink_me: '/TwilightGame/assets-optimized/items/magical/potions/drink_me.png',
+  eat_me: '/TwilightGame/assets-optimized/items/magical/potions/eat_me.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits

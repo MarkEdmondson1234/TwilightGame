@@ -256,6 +256,23 @@ const MagicRecipeBook: React.FC<MagicRecipeBookProps> = ({ isOpen, onClose }) =>
                   <p className="text-purple-400 text-sm mt-1">{recipe.description}</p>
                 </div>
 
+                {/* Result Potion Image */}
+                {(() => {
+                  const resultItem = getItem(recipe.resultItemId);
+                  if (resultItem?.image) {
+                    return (
+                      <div className="flex justify-center">
+                        <img
+                          src={resultItem.image}
+                          alt={recipe.displayName}
+                          className="rounded-lg border-2 border-purple-600/50 max-w-xs w-full object-contain"
+                        />
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
                 {/* Effect Description */}
                 <div className="bg-purple-800/30 px-3 py-2 rounded text-sm">
                   <span className="text-purple-400 font-bold">Effect:</span>
