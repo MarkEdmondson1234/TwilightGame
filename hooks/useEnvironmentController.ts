@@ -235,8 +235,8 @@ export function useEnvironmentController(
       return 'music_village';
     };
 
-    // Random interval between music plays (2-5 minutes)
-    const getRandomInterval = () => Math.floor(Math.random() * 180000) + 120000;
+    // Random interval between music plays (8-20 minutes)
+    const getRandomInterval = () => Math.floor(Math.random() * 720000) + 480000;
 
     // Random duration for music play (30-90 seconds)
     const getRandomDuration = () => Math.floor(Math.random() * 60000) + 30000;
@@ -266,8 +266,8 @@ export function useEnvironmentController(
       }, duration);
     };
 
-    // Start first music after a short delay (10-30 seconds)
-    const initialDelay = Math.floor(Math.random() * 20000) + 10000;
+    // Start first music after a longer delay (2-5 minutes)
+    const initialDelay = Math.floor(Math.random() * 180000) + 120000;
     musicTimeout = setTimeout(playRandomMusic, initialDelay);
 
     return () => {

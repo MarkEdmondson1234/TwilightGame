@@ -1053,15 +1053,24 @@ data/            - Game data (crops, items, NPCs)
 When working with tile positions, **always use these utilities** instead of inline `Math.floor()`:
 
 ```typescript
-import { getTileCoords, getAdjacentTiles, getSurroundingTiles, isSameTile, getTileDistance, getTilesInRadius } from './mapUtils';
+import { getTileCoords, getAdjacentTiles, getSurroundingTiles, isSameTile, getTileDistance, getTilesInRadius, findTileTypeNearby, hasTileTypeNearby } from './mapUtils';
 
 // ✅ CORRECT - Use utilities
 const tile = getTileCoords(playerPos);
 const nearby = getAdjacentTiles(playerPos);
 
+// ✅ CORRECT - Check for tile types nearby (replaces manual 3x3 loops)
+if (hasTileTypeNearby(tileX, tileY, TileType.BEE_HIVE)) { canForage = true; }
+const result = findTileTypeNearby(tileX, tileY, [TileType.MOONPETAL, TileType.ADDERSMEAT]);
+
 // ❌ WRONG - Don't use inline Math.floor
 const tileX = Math.floor(playerPos.x);
 const tileY = Math.floor(playerPos.y);
+
+// ❌ WRONG - Don't write manual 3x3 loops
+for (let dy = -1; dy <= 1; dy++) {
+  for (let dx = -1; dx <= 1; dx++) { /* ... */ }
+}
 ```
 
 | Function | Purpose |
@@ -1072,6 +1081,8 @@ const tileY = Math.floor(playerPos.y);
 | `isSameTile(pos1, pos2)` | Check if two positions are on same tile |
 | `getTileDistance(pos1, pos2)` | Manhattan distance between tiles |
 | `getTilesInRadius(pos, radius)` | Get all tiles in square radius |
+| `findTileTypeNearby(x, y, types, radius)` | Find tile type(s) nearby, returns position if found |
+| `hasTileTypeNearby(x, y, types, radius)` | Check if tile type(s) exist nearby (boolean) |
 
 ### NPC Factory (`utils/npcs/createNPC.ts`)
 

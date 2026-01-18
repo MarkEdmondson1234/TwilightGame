@@ -4,7 +4,14 @@
  */
 
 import { Position, TileType, CollisionType, SizeTier } from '../types';
-import { getTileData, getAdjacentTiles, getTileCoords, getSurroundingTiles } from './mapUtils';
+import {
+  getTileData,
+  getAdjacentTiles,
+  getTileCoords,
+  getSurroundingTiles,
+  findTileTypeNearby,
+  hasTileTypeNearby,
+} from './mapUtils';
 import { deskManager } from './deskManager';
 import { mapManager, transitionToMap } from '../maps';
 import { gameState } from '../GameState';
@@ -779,29 +786,20 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   let cooldownCheckPos = { x: playerTileX, y: playerTileY };
   let skipEarlyCooldownCheck = false;
 
-  // Check if player is near a moonpetal, addersmeat, luminescent toadstool, or bee hive anchor (for 3x3 area foraging)
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const checkX = playerTileX + dx;
-      const checkY = playerTileY + dy;
-      const checkTile = getTileData(checkX, checkY);
+  // Check if player is near a forageable multi-tile sprite anchor (for 3x3 area foraging)
+  const forageableResult = findTileTypeNearby(playerTileX, playerTileY, [
+    TileType.MOONPETAL,
+    TileType.ADDERSMEAT,
+    TileType.LUMINESCENT_TOADSTOOL,
+    TileType.MUSTARD_FLOWER,
+  ]);
+  if (forageableResult.found && forageableResult.position) {
+    cooldownCheckPos = forageableResult.position;
+  }
 
-      if (
-        checkTile?.type === TileType.MOONPETAL ||
-        checkTile?.type === TileType.ADDERSMEAT ||
-        checkTile?.type === TileType.LUMINESCENT_TOADSTOOL ||
-        checkTile?.type === TileType.MUSTARD_FLOWER
-      ) {
-        // Use anchor position for cooldown check (entire 3x3 area shares cooldown)
-        cooldownCheckPos = { x: checkX, y: checkY };
-        break;
-      }
-      // BEE_HIVE handles its own cooldown with a custom message, so skip early check
-      if (checkTile?.type === TileType.BEE_HIVE) {
-        skipEarlyCooldownCheck = true;
-        break;
-      }
-    }
+  // BEE_HIVE handles its own cooldown with a custom message, so skip early check
+  if (hasTileTypeNearby(playerTileX, playerTileY, TileType.BEE_HIVE)) {
+    skipEarlyCooldownCheck = true;
   }
 
   if (
@@ -847,11 +845,17 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
         // Check if player is adjacent to the stream area (within 1 tile of the perimeter)
         const isAdjacentToStream =
-          playerTileX >= streamLeft - 1 && playerTileX <= streamRight + 1 &&
-          playerTileY >= streamTop - 1 && playerTileY <= streamBottom + 1 &&
+          playerTileX >= streamLeft - 1 &&
+          playerTileX <= streamRight + 1 &&
+          playerTileY >= streamTop - 1 &&
+          playerTileY <= streamBottom + 1 &&
           // But NOT inside the stream itself
-          !(playerTileX >= streamLeft && playerTileX <= streamRight &&
-            playerTileY >= streamTop && playerTileY <= streamBottom);
+          !(
+            playerTileX >= streamLeft &&
+            playerTileX <= streamRight &&
+            playerTileY >= streamTop &&
+            playerTileY <= streamBottom
+          );
 
         if (isAdjacentToStream) {
           nearStream = true;
@@ -913,26 +917,13 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
   // Moonpetal foraging (deep forest sacred grove)
   // Check if player is within the 3x3 area of any moonpetal anchor
-  // Moonpetal is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
-  let moonpetalAnchor: { x: number; y: number } | null = null;
-
-  // Search nearby tiles for moonpetal anchor (check 1 tile in each direction for 3x3 coverage)
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const checkX = playerTileX + dx;
-      const checkY = playerTileY + dy;
-      const checkTile = getTileData(checkX, checkY);
-
-      if (checkTile?.type === TileType.MOONPETAL) {
-        moonpetalAnchor = { x: checkX, y: checkY };
-        console.log(`[Forage] Found moonpetal anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
-        break;
-      }
-    }
-    if (moonpetalAnchor) break;
-  }
+  const moonpetalResult = findTileTypeNearby(playerTileX, playerTileY, TileType.MOONPETAL);
+  const moonpetalAnchor = moonpetalResult.found ? moonpetalResult.position : null;
 
   if (moonpetalAnchor) {
+    console.log(
+      `[Forage] Found moonpetal anchor at (${moonpetalAnchor.x}, ${moonpetalAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season, timeOfDay } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring or summer)
@@ -994,28 +985,14 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Addersmeat foraging (deep forest sacred grove)
-  // Check if player is within the 3x3 area of any addersmeat anchor
-  // Addersmeat is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
   // Night-blooming flower that derives its magic from the moon
-  let addersmeatAnchor: { x: number; y: number } | null = null;
-
-  // Search nearby tiles for addersmeat anchor (check 1 tile in each direction for 3x3 coverage)
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const checkX = playerTileX + dx;
-      const checkY = playerTileY + dy;
-      const checkTile = getTileData(checkX, checkY);
-
-      if (checkTile?.type === TileType.ADDERSMEAT) {
-        addersmeatAnchor = { x: checkX, y: checkY };
-        console.log(`[Forage] Found addersmeat anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
-        break;
-      }
-    }
-    if (addersmeatAnchor) break;
-  }
+  const addersmeatResult = findTileTypeNearby(playerTileX, playerTileY, TileType.ADDERSMEAT);
+  const addersmeatAnchor = addersmeatResult.found ? addersmeatResult.position : null;
 
   if (addersmeatAnchor) {
+    console.log(
+      `[Forage] Found addersmeat anchor at (${addersmeatAnchor.x}, ${addersmeatAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season, timeOfDay } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring or summer)
@@ -1077,28 +1054,18 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Luminescent toadstool foraging (mushroom forest exclusive)
-  // Check if player is within the 3x3 area of any toadstool anchor
-  // Luminescent toadstool is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
   // Unlike moonpetal/addersmeat, these can be foraged any time of day and any season
-  let toadstoolAnchor: { x: number; y: number } | null = null;
-
-  // Search nearby tiles for luminescent toadstool anchor (check 1 tile in each direction for 3x3 coverage)
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const checkX = playerTileX + dx;
-      const checkY = playerTileY + dy;
-      const checkTile = getTileData(checkX, checkY);
-
-      if (checkTile?.type === TileType.LUMINESCENT_TOADSTOOL) {
-        toadstoolAnchor = { x: checkX, y: checkY };
-        console.log(`[Forage] Found luminescent toadstool anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
-        break;
-      }
-    }
-    if (toadstoolAnchor) break;
-  }
+  const toadstoolResult = findTileTypeNearby(
+    playerTileX,
+    playerTileY,
+    TileType.LUMINESCENT_TOADSTOOL
+  );
+  const toadstoolAnchor = toadstoolResult.found ? toadstoolResult.position : null;
 
   if (toadstoolAnchor) {
+    console.log(
+      `[Forage] Found luminescent toadstool anchor at (${toadstoolAnchor.x}, ${toadstoolAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const toadstool = getItem('luminescent_toadstool');
     if (!toadstool) {
       console.error('[Forage] Luminescent toadstool item not found!');
@@ -1114,7 +1081,8 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       gameState.recordForage(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y);
       return {
         found: false,
-        message: 'You search amongst the glowing toadstools, but find none suitable for harvesting.',
+        message:
+          'You search amongst the glowing toadstools, but find none suitable for harvesting.',
       };
     }
 
@@ -1142,27 +1110,13 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Bee hive foraging (honey) - available in spring, summer, and autumn
-  // Check if player is within the 3x3 area of any bee hive anchor
-  // Bee hive is a 3x3 sprite with anchor at center (extends 1 tile in all directions)
-  let beeHiveAnchor: { x: number; y: number } | null = null;
-
-  // Search nearby tiles for bee hive anchor (check 1 tile in each direction for 3x3 coverage)
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const checkX = playerTileX + dx;
-      const checkY = playerTileY + dy;
-      const checkTile = getTileData(checkX, checkY);
-
-      if (checkTile?.type === TileType.BEE_HIVE) {
-        beeHiveAnchor = { x: checkX, y: checkY };
-        console.log(`[Forage] Found bee hive anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
-        break;
-      }
-    }
-    if (beeHiveAnchor) break;
-  }
+  const beeHiveResult = findTileTypeNearby(playerTileX, playerTileY, TileType.BEE_HIVE);
+  const beeHiveAnchor = beeHiveResult.found ? beeHiveResult.position : null;
 
   if (beeHiveAnchor) {
+    console.log(
+      `[Forage] Found bee hive anchor at (${beeHiveAnchor.x}, ${beeHiveAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring, summer, or autumn - bees are dormant in winter)
@@ -1231,27 +1185,13 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Mustard flower foraging (Eye of Newt) - only in spring/summer
-  // Check if player is on or adjacent to a mustard flower tile
-  // Mustard flower is a 1x1 sprite
-  let mustardFlowerAnchor: { x: number; y: number } | null = null;
-
-  // Search nearby tiles for mustard flower (player tile + adjacent tiles)
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
-      const checkX = playerTileX + dx;
-      const checkY = playerTileY + dy;
-      const checkTile = getTileData(checkX, checkY);
-
-      if (checkTile?.type === TileType.MUSTARD_FLOWER) {
-        mustardFlowerAnchor = { x: checkX, y: checkY };
-        console.log(`[Forage] Found mustard flower anchor at (${checkX}, ${checkY}), player at (${playerTileX}, ${playerTileY})`);
-        break;
-      }
-    }
-    if (mustardFlowerAnchor) break;
-  }
+  const mustardFlowerResult = findTileTypeNearby(playerTileX, playerTileY, TileType.MUSTARD_FLOWER);
+  const mustardFlowerAnchor = mustardFlowerResult.found ? mustardFlowerResult.position : null;
 
   if (mustardFlowerAnchor) {
+    console.log(
+      `[Forage] Found mustard flower anchor at (${mustardFlowerAnchor.x}, ${mustardFlowerAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring/summer - mustard flowers are dormant in autumn/winter)
@@ -2196,11 +2136,17 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           const streamBottom = checkY + 2;
 
           const isAdjacentToStream =
-            tileX >= streamLeft - 1 && tileX <= streamRight + 1 &&
-            tileY >= streamTop - 1 && tileY <= streamBottom + 1 &&
+            tileX >= streamLeft - 1 &&
+            tileX <= streamRight + 1 &&
+            tileY >= streamTop - 1 &&
+            tileY <= streamBottom + 1 &&
             // But NOT inside the stream itself
-            !(tileX >= streamLeft && tileX <= streamRight &&
-              tileY >= streamTop && tileY <= streamBottom);
+            !(
+              tileX >= streamLeft &&
+              tileX <= streamRight &&
+              tileY >= streamTop &&
+              tileY <= streamBottom
+            );
 
           if (isAdjacentToStream) {
             canForage = true;
@@ -2210,64 +2156,14 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Bee hive foraging (honey) - check if within 3x3 bee hive area
-    // Search for BEE_HIVE tiles within 1 tile (3x3 sprite coverage)
-    for (let dy = -1; dy <= 1 && !canForage; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const checkX = tileX + dx;
-        const checkY = tileY + dy;
-        const checkTile = getTileData(checkX, checkY);
-
-        if (checkTile?.type === TileType.BEE_HIVE) {
-          canForage = true;
-          break;
-        }
-      }
-    }
-
-    // Luminescent toadstool foraging - check if within 3x3 toadstool area
-    // Search for LUMINESCENT_TOADSTOOL tiles within 1 tile (3x3 sprite coverage)
-    for (let dy = -1; dy <= 1 && !canForage; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const checkX = tileX + dx;
-        const checkY = tileY + dy;
-        const checkTile = getTileData(checkX, checkY);
-
-        if (checkTile?.type === TileType.LUMINESCENT_TOADSTOOL) {
-          canForage = true;
-          break;
-        }
-      }
-    }
-
-    // Moonpetal foraging - check if within 3x3 moonpetal area (works on any map)
-    // Search for MOONPETAL tiles within 1 tile (3x3 sprite coverage)
-    for (let dy = -1; dy <= 1 && !canForage; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const checkX = tileX + dx;
-        const checkY = tileY + dy;
-        const checkTile = getTileData(checkX, checkY);
-
-        if (checkTile?.type === TileType.MOONPETAL) {
-          canForage = true;
-          break;
-        }
-      }
-    }
-
-    // Mustard flower foraging - check if within 3x3 mustard flower area (works on any map)
-    // Search for MUSTARD_FLOWER tiles within 1 tile (3x3 sprite coverage)
-    for (let dy = -1; dy <= 1 && !canForage; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const checkX = tileX + dx;
-        const checkY = tileY + dy;
-        const checkTile = getTileData(checkX, checkY);
-
-        if (checkTile?.type === TileType.MUSTARD_FLOWER) {
-          canForage = true;
-          break;
-        }
-      }
+    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, mustard flower)
+    if (!canForage) {
+      canForage = hasTileTypeNearby(tileX, tileY, [
+        TileType.BEE_HIVE,
+        TileType.LUMINESCENT_TOADSTOOL,
+        TileType.MOONPETAL,
+        TileType.MUSTARD_FLOWER,
+      ]);
     }
 
     if (canForage) {

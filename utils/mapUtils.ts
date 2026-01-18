@@ -48,8 +48,7 @@ export function getTilesInRadius(center: Position, radius: number): Position[] {
  * Check if two positions are on the same tile
  */
 export function isSameTile(pos1: Position, pos2: Position): boolean {
-  return Math.floor(pos1.x) === Math.floor(pos2.x) &&
-         Math.floor(pos1.y) === Math.floor(pos2.y);
+  return Math.floor(pos1.x) === Math.floor(pos2.x) && Math.floor(pos1.y) === Math.floor(pos2.y);
 }
 
 /**
@@ -68,15 +67,87 @@ export function getTileDistance(pos1: Position, pos2: Position): number {
 export function getSurroundingTiles(pos: Position): Position[] {
   const tile = getTileCoords(pos);
   return [
-    { x: tile.x - 1, y: tile.y },     // left
-    { x: tile.x + 1, y: tile.y },     // right
-    { x: tile.x, y: tile.y - 1 },     // up
-    { x: tile.x, y: tile.y + 1 },     // down
+    { x: tile.x - 1, y: tile.y }, // left
+    { x: tile.x + 1, y: tile.y }, // right
+    { x: tile.x, y: tile.y - 1 }, // up
+    { x: tile.x, y: tile.y + 1 }, // down
     { x: tile.x - 1, y: tile.y - 1 }, // top-left
     { x: tile.x + 1, y: tile.y - 1 }, // top-right
     { x: tile.x - 1, y: tile.y + 1 }, // bottom-left
     { x: tile.x + 1, y: tile.y + 1 }, // bottom-right
   ];
+}
+
+/**
+ * Result of finding a tile type nearby
+ */
+export interface TileTypeSearchResult {
+  found: boolean;
+  position?: Position;
+  tileType?: TileType;
+}
+
+/**
+ * Check if any tile of specified type(s) exists within radius of position
+ * Use this instead of manual 3x3 loops for checking nearby tile types.
+ *
+ * @param centerX - Center X tile coordinate
+ * @param centerY - Center Y tile coordinate
+ * @param tileTypes - Single tile type or array of tile types to search for
+ * @param radius - Search radius (default 1 = 3x3 area)
+ * @returns Object with found status, and position/type if found
+ *
+ * @example
+ * // Check for single tile type in 3x3 area
+ * const result = findTileTypeNearby(playerX, playerY, TileType.BEE_HIVE);
+ * if (result.found) { ... }
+ *
+ * @example
+ * // Check for multiple tile types
+ * const result = findTileTypeNearby(x, y, [TileType.MOONPETAL, TileType.ADDERSMEAT]);
+ * if (result.found) { cooldownPos = result.position; }
+ */
+export function findTileTypeNearby(
+  centerX: number,
+  centerY: number,
+  tileTypes: TileType | TileType[],
+  radius: number = 1
+): TileTypeSearchResult {
+  const types = Array.isArray(tileTypes) ? tileTypes : [tileTypes];
+
+  for (let dy = -radius; dy <= radius; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      const checkX = centerX + dx;
+      const checkY = centerY + dy;
+      const checkTile = getTileData(checkX, checkY);
+
+      if (checkTile && types.includes(checkTile.type)) {
+        return {
+          found: true,
+          position: { x: checkX, y: checkY },
+          tileType: checkTile.type,
+        };
+      }
+    }
+  }
+
+  return { found: false };
+}
+
+/**
+ * Check if any tile of specified type(s) exists within radius (boolean only)
+ * Simpler version when you don't need the position.
+ *
+ * @example
+ * if (hasTileTypeNearby(x, y, TileType.BEE_HIVE)) { canForage = true; }
+ */
+export function hasTileTypeNearby(
+  centerX: number,
+  centerY: number,
+  tileTypes: TileType | TileType[],
+  radius: number = 1
+): boolean {
+  return findTileTypeNearby(centerX, centerY, tileTypes, radius).found;
 }
 
 /**
@@ -103,8 +174,13 @@ const TUFT_RATIO = 0.25;
  * @param tileY - Y coordinate
  * @param overrideTileType - Optional tile type to use instead of reading from map (for farm plots)
  */
-export function getTileData(tileX: number, tileY: number, overrideTileType?: TileType): (Omit<TileData, 'type'> & {type: TileType}) | null {
-  let tileType = overrideTileType !== undefined ? overrideTileType : mapManager.getTileAt(tileX, tileY);
+export function getTileData(
+  tileX: number,
+  tileY: number,
+  overrideTileType?: TileType
+): (Omit<TileData, 'type'> & { type: TileType }) | null {
+  let tileType =
+    overrideTileType !== undefined ? overrideTileType : mapManager.getTileAt(tileX, tileY);
 
   if (tileType === null) {
     return null; // Out of bounds
