@@ -43,7 +43,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     name: 'friendship_elixir',
     displayName: 'Friendship Elixir',
     level: 'novice',
-    description: 'A warm, honey-coloured potion that increases affection.',
+    description: 'A warm, rose-pink potion that increases affection.',
     ingredients: [
       { itemId: 'honey', quantity: 1 },
       { itemId: 'milk', quantity: 1 },
@@ -61,7 +61,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     name: 'bitter_grudge',
     displayName: 'Bitter Grudge',
     level: 'novice',
-    description: 'A sour, dark potion that breeds resentment.',
+    description: 'A murky, dark green potion that breeds resentment.',
     ingredients: [
       { itemId: 'crop_onion', quantity: 1 },
       { itemId: 'crop_chili', quantity: 1 },
@@ -79,7 +79,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     name: 'glamour_draught',
     displayName: 'Glamour Draught',
     level: 'novice',
-    description: 'A swirling, iridescent potion for changing appearance.',
+    description: 'A swirling, vibrant purple potion for changing appearance.',
     ingredients: [
       { itemId: 'crop_blackberry', quantity: 1 },
       { itemId: 'cream', quantity: 1 },
@@ -97,7 +97,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     name: 'beastward_balm',
     displayName: 'Beastward Balm',
     level: 'novice',
-    description: 'A musky salve that makes animals ignore you.',
+    description: 'A rich, amber-golden balm that makes animals ignore you.',
     ingredients: [
       { itemId: 'thyme', quantity: 1 },
       { itemId: 'honey', quantity: 1 },
@@ -115,7 +115,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     name: 'wakefulness_brew',
     displayName: 'Wakefulness Brew',
     level: 'novice',
-    description: 'A bright, fizzing potion that banishes tiredness.',
+    description: 'A bright, fizzing cyan potion that banishes tiredness.',
     ingredients: [
       { itemId: 'tea_leaves', quantity: 1 },
       { itemId: 'sugar', quantity: 1 },
