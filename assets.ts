@@ -310,6 +310,16 @@ export const magicalAssets = {
   eye_of_newt: '/TwilightGame/assets-optimized/items/magical/forageable/eye_of_newt.png',
 };
 
+// Potion assets - Brewed magical potions (results from brewing recipes)
+// These are produced via the MagicManager brewing system, similar to how food is produced via cooking
+export const potionAssets = {
+  friendship_elixir: '/TwilightGame/assets-optimized/items/magical/potions/friendship_elixir.png',
+  bitter_grudge: '/TwilightGame/assets-optimized/items/magical/potions/bitter_grudge.png',
+  glamour_draught: '/TwilightGame/assets-optimized/items/magical/potions/glamour_draught.png',
+  beastward_balm: '/TwilightGame/assets-optimized/items/magical/potions/beastward_balm.png',
+  wakefulness_brew: '/TwilightGame/assets-optimized/items/magical/potions/wakefulness_brew.png',
+};
+
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
 export const npcAssets = {
   little_girl: '/TwilightGame/assets-optimized/npcs/little_girl.png',

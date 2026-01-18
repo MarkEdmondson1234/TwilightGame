@@ -3,7 +3,13 @@
  * Defines all items that can be collected, stored, and used in the game
  */
 
-import { cookingAssets, groceryAssets, itemAssets, magicalAssets } from '../assets';
+import {
+  cookingAssets,
+  groceryAssets,
+  itemAssets,
+  magicalAssets,
+  potionAssets,
+} from '../assets';
 
 export enum ItemCategory {
   SEED = 'seed',
@@ -1404,6 +1410,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A warm, honey-coloured potion. Increases friendship with the target NPC.',
     stackable: true,
     sellPrice: 50,
+    image: potionAssets.friendship_elixir,
   },
 
   potion_bitter_grudge: {
@@ -1414,6 +1421,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A sour-smelling dark potion. Decreases friendship with the target NPC.',
     stackable: true,
     sellPrice: 45,
+    image: potionAssets.bitter_grudge,
   },
 
   potion_glamour: {
@@ -1424,6 +1432,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A swirling, iridescent potion. Temporarily changes your appearance.',
     stackable: true,
     sellPrice: 55,
+    image: potionAssets.glamour_draught,
   },
 
   potion_beastward: {
@@ -1434,6 +1443,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A musky-smelling salve. Animals will ignore you for a day.',
     stackable: true,
     sellPrice: 60,
+    image: potionAssets.beastward_balm,
   },
 
   potion_wakefulness: {
@@ -1444,6 +1454,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A bright, fizzing potion. Eliminates tiredness and fatigue.',
     stackable: true,
     sellPrice: 40,
+    image: potionAssets.wakefulness_brew,
   },
 
   potion_revealing: {

@@ -1,11 +1,11 @@
 ---
 name: Add Inventory Sprite
-description: Add inventory item sprites (grocery items, tools, seeds) to the game. Handles asset registration, optimization, and UI mapping following the three-location pattern. (project)
+description: Add inventory item sprites (grocery items, tools, seeds, potions) to the game. Handles asset registration, optimization, and UI mapping following the three-location pattern. (project)
 ---
 
 # Add Inventory Sprite
 
-Add new sprites for inventory items (grocery items, tools, seeds, resources) to TwilightGame. This skill handles the complete workflow: file placement, asset registration, TypeScript integration, UI mapping, and optimization.
+Add new sprites for inventory items (grocery items, tools, seeds, resources, potions) to TwilightGame. This skill handles the complete workflow: file placement, asset registration, TypeScript integration, UI mapping, and optimization.
 
 ## Quick Start
 
@@ -60,6 +60,8 @@ Invoke this skill when:
 - User reports sprites showing as emojis instead of images (missing ITEM_SPRITE_MAP entry)
 - User adds a crop that should also be purchasable at the shop (like spinach or salad)
 - User adds cooked food sprites (recipes that produce food items)
+- User adds potion sprites (brewed items from MagicManager)
+- User mentions "potion sprite", "magical item", "brewing result"
 
 **Trigger phrases:**
 - "Add [item] sprite to inventory"
@@ -69,6 +71,8 @@ Invoke this skill when:
 - "Why is [item] showing as emoji?"
 - "Make this crop buyable at the shop like spinach"
 - "Add sprite for [cooked food]"
+- "Add potion sprite"
+- "Set up potion assets"
 
 ## Workflow
 
@@ -81,6 +85,8 @@ Invoke this skill when:
 - **Seeds**: `/public/assets/items/seeds/`
 - **Resources** (crafting materials): `/public/assets/items/resources/`
 - **Cooked food** (finished recipes): `/public/assets/cooking/`
+- **Magical ingredients** (forageable): `/public/assets/items/magical/forageable/`
+- **Potions** (brewed results): `/public/assets/items/magical/potions/`
 
 **If user hasn't uploaded yet**, recommend the appropriate subfolder based on item category.
 
@@ -108,6 +114,15 @@ export const groceryAssets = {
 export const itemAssets = {
   // ...existing tools
   new_tool: '/TwilightGame/assets-optimized/items/tools/new_tool.png',
+};
+```
+
+**For potions:**
+```typescript
+// In assets.ts
+export const potionAssets = {
+  // ...existing potions
+  new_potion: '/TwilightGame/assets-optimized/items/magical/potions/new_potion.png',
 };
 ```
 
@@ -279,7 +294,81 @@ if (result.success && result.foodProduced && playerPosition && currentMapId) {
 3. `utils/inventoryUIHelper.ts` - ITEM_SPRITE_MAP (for inventory rendering)
 4. `data/recipes.ts` - recipe definition (for spawning sprite after cooking)
 
-### 4c. Special Case: Crops That Are Also Shop Items
+### 4c. Special Case: Magical Potions (Brewed Items)
+
+Magical potions are brewed via the `MagicManager` system (similar to how food is cooked via `CookingManager`). They follow the standard three-location pattern but use dedicated asset collections.
+
+**File location:** `/public/assets/items/magical/potions/`
+
+**Example: Adding friendship_elixir sprite**
+
+1. **Upload sprite**: `/public/assets/items/magical/potions/friendship_elixir.png`
+
+2. **Register in `assets.ts`** (in `potionAssets` object):
+   ```typescript
+   // Potion assets - Brewed magical potions (results from brewing recipes)
+   export const potionAssets = {
+     // ...existing potions
+     friendship_elixir: '/TwilightGame/assets-optimized/items/magical/potions/friendship_elixir.png',
+   };
+   ```
+
+3. **Link in `data/items.ts`** (the potion item):
+   ```typescript
+   import { potionAssets } from '../assets';
+
+   potion_friendship: {
+     id: 'potion_friendship',
+     name: 'potion_friendship',
+     displayName: 'Friendship Elixir',
+     category: ItemCategory.POTION,
+     description: 'A warm, honey-coloured potion. Increases friendship with the target NPC.',
+     stackable: true,
+     sellPrice: 50,
+     image: potionAssets.friendship_elixir,  // ← Link sprite
+   },
+   ```
+
+4. **Map in `utils/inventoryUIHelper.ts`** (ITEM_SPRITE_MAP):
+   ```typescript
+   import { potionAssets } from '../assets';
+
+   const ITEM_SPRITE_MAP: Record<string, string> = {
+     // Potions (brewed via MagicManager)
+     potion_friendship: potionAssets.friendship_elixir,
+     potion_bitter_grudge: potionAssets.bitter_grudge,
+     potion_glamour: potionAssets.glamour_draught,
+     potion_beastward: potionAssets.beastward_balm,
+     potion_wakefulness: potionAssets.wakefulness_brew,
+   };
+   ```
+
+5. **Run optimization**:
+   ```bash
+   npm run optimize-assets
+   ```
+
+**Key differences from cooked food:**
+- Potions use `potionAssets` (not `cookingAssets`)
+- Potions are stored in `/items/magical/potions/` (not `/cooking/`)
+- Potions use `ItemCategory.POTION` (not `ItemCategory.FOOD`)
+- Potions are brewed via `MagicManager.brew()` (not `CookingManager.cook()`)
+- Potion recipes are in `data/potionRecipes.ts` (not `data/recipes.ts`)
+- Potions currently cannot be sold in shops (future: witch shop)
+
+**Three locations for potions:**
+1. `assets.ts` - potionAssets object
+2. `data/items.ts` - potion_* item definition (for inventory display)
+3. `utils/inventoryUIHelper.ts` - ITEM_SPRITE_MAP (for inventory rendering)
+
+**Existing potion sprites:**
+- `friendship_elixir.png` → `potion_friendship`
+- `bitter_grudge.png` → `potion_bitter_grudge`
+- `glamour_draught.png` → `potion_glamour`
+- `beastward_balm.png` → `potion_beastward`
+- `wakefulness_brew.png` → `potion_wakefulness`
+
+### 4d. Special Case: Crops That Are Also Shop Items
 
 Some crops can be both **harvested from farming** AND **purchased at the shop** (like spinach or salad). These require additional setup beyond the standard three-location pattern.
 

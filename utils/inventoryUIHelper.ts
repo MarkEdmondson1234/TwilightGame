@@ -6,7 +6,13 @@
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
-import { itemAssets, groceryAssets, cookingAssets, magicalAssets } from '../assets';
+import {
+  itemAssets,
+  groceryAssets,
+  cookingAssets,
+  magicalAssets,
+  potionAssets,
+} from '../assets';
 
 /**
  * Item sprite mapping - maps item IDs to sprite URLs
@@ -93,6 +99,13 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   dragonfly_wings: magicalAssets.dragonfly_wings,
   luminescent_toadstool: magicalAssets.luminescent_toadstool,
   eye_of_newt: magicalAssets.eye_of_newt,
+
+  // Potions (brewed via MagicManager)
+  potion_friendship: potionAssets.friendship_elixir,
+  potion_bitter_grudge: potionAssets.bitter_grudge,
+  potion_glamour: potionAssets.glamour_draught,
+  potion_beastward: potionAssets.beastward_balm,
+  potion_wakefulness: potionAssets.wakefulness_brew,
 };
 
 /**
