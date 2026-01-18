@@ -201,6 +201,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
   },
+  {
+    tileType: TileType.MUSHROOM_CLUSTER,
+    spriteWidth: 2, // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall (square image)
+    offsetX: -0.5, // Center horizontally on tile
+    offsetY: -1, // Extends 1 tile upward
+    image: tileAssets.mushroom_cluster,
+    // Collision: walkable (no collision) - decorative ground cover
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: true,
+    scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
+    brightnessRange: { min: 0.95, max: 1.05 }, // Subtle brightness variation
+  },
   // ============================================
   // Mushroom Forest Plants
   // ============================================

@@ -231,6 +231,87 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add mushroom cluster pair with transition to mushroom forest (30% chance)
+  // Two 2x2 mushroom clusters with a path tile between them leading to the mushroom forest
+  const mushroomClusterChance = ((seed * 113) % 100) / 100;
+  let mushroomTransitionX = 0;
+  let mushroomTransitionY = 0;
+  let hasMushroomTransition = false;
+
+  if (mushroomClusterChance < 0.3) {
+    // Find a suitable location for the mushroom pair (away from spawn, exits, and edges)
+    let attempts = 0;
+    const maxAttempts = 30;
+    let foundValidSpot = false;
+
+    while (!foundValidSpot && attempts < maxAttempts) {
+      // Need a 5-tile wide horizontal area: [cluster][transition][cluster]
+      // Each cluster is 2x2, transition is 1 tile, total width = 5 tiles
+      const x = Math.floor(((seed * (127 + attempts * 11)) % (width - 10)) + 4);
+      const y = Math.floor(((seed * (131 + attempts * 13)) % (height - 8)) + 4);
+      attempts++;
+
+      // Check if too close to spawn
+      const tooCloseToSpawn = Math.abs(x - spawnX) < 6 && Math.abs(y - spawnY) < 6;
+      // Check if too close to edges (need room for 5-tile wide structure)
+      const tooCloseToEdges = x < 4 || x > width - 7 || y < 4 || y > height - 5;
+      // Check if too close to exits
+      const tooCloseToExits = x < 6 || x > width - 6;
+
+      if (tooCloseToSpawn || tooCloseToEdges || tooCloseToExits) {
+        continue;
+      }
+
+      // Check if 5x3 area is clear (for two 2x2 clusters with 1-tile gap)
+      let areaIsClear = true;
+      for (let dy = -1; dy <= 2; dy++) {
+        for (let dx = -1; dx <= 5; dx++) {
+          const checkY = y + dy;
+          const checkX = x + dx;
+          if (checkY < 1 || checkY >= height - 1 || checkX < 1 || checkX >= width - 1) {
+            areaIsClear = false;
+            break;
+          }
+          const tile = map[checkY][checkX];
+          if (tile !== TileType.GRASS && tile !== TileType.TUFT && tile !== TileType.PATH) {
+            areaIsClear = false;
+            break;
+          }
+        }
+        if (!areaIsClear) break;
+      }
+
+      if (areaIsClear) {
+        foundValidSpot = true;
+
+        // Clear the area for the mushroom clusters
+        for (let dy = 0; dy <= 2; dy++) {
+          for (let dx = 0; dx <= 4; dx++) {
+            const clearY = y + dy;
+            const clearX = x + dx;
+            if (clearY >= 1 && clearY < height - 1 && clearX >= 1 && clearX < width - 1) {
+              map[clearY][clearX] = TileType.GRASS;
+            }
+          }
+        }
+
+        // Place left mushroom cluster (2x2 sprite anchor)
+        map[y + 1][x] = TileType.MUSHROOM_CLUSTER;
+
+        // Place transition path tile in the middle (between the two clusters)
+        mushroomTransitionX = x + 2;
+        mushroomTransitionY = y + 1;
+        map[mushroomTransitionY][mushroomTransitionX] = TileType.PATH;
+
+        // Place right mushroom cluster (2x2 sprite anchor)
+        map[y + 1][x + 4] = TileType.MUSHROOM_CLUSTER;
+
+        hasMushroomTransition = true;
+        console.log(`[Forest] 🍄🍄 Mushroom cluster pair with transition spawned at (${x}, ${y})!`);
+      }
+    }
+  }
+
   // Helper function to check if a position is adjacent to water (streams or lakes)
   // NOTE: Water features are multi-tile sprites with only one anchor tile on the grid:
   // - STREAM: 5x5 sprite (anchor at center, extends 2 tiles in all directions)
@@ -599,6 +680,17 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       label: deeperForestLabel,
     },
   ];
+
+  // Add mushroom forest transition if mushroom cluster pair was placed
+  if (hasMushroomTransition) {
+    transitions.push({
+      fromPosition: { x: mushroomTransitionX, y: mushroomTransitionY },
+      tileType: TileType.PATH,
+      toMapId: 'mushroom_forest',
+      toPosition: { x: 15, y: 17 }, // Mushroom forest spawn point
+      label: 'Follow the Mushrooms',
+    });
+  }
 
   // Shop spawn chance increases with depth: 1% at depth 1, +2% per level (max 25%)
   const forestDepth = gameState.getForestDepth();

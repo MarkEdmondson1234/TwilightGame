@@ -356,6 +356,17 @@ async function optimizeTiles() {
         .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed thorns
         .toFile(outputPath);
     }
+    // Special handling for mushroom cluster (mushroomMap/mushroom.png) - 2x2 multi-tile sprite at medium quality (512x512)
+    // Note: This is different from the small 1x1 mushrooms.png (decorative ground cover)
+    else if (inputPath.includes('mushroomMap') && file === 'mushroom.png') {
+      await sharp(inputPath)
+        .resize(512, 512, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for detailed mushrooms
+        .toFile(outputPath);
+    }
     // Special handling for hazel bushes - 4x4 multi-tile sprites at medium quality (512x512)
     else if (file.includes('hazel_bush') || file.includes('hazel-bush')) {
       await sharp(inputPath)

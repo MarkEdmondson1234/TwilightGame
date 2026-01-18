@@ -611,6 +611,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       brightnessRange: { min: 0.95, max: 1.05 },
     },
   },
+  [TileType.MUSHROOM_CLUSTER]: {
+    name: 'Mushroom Cluster',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - decorative ground cover
+    baseType: TileType.GRASS, // Render grass underneath
+    image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    // 2x2 multi-tile sprite (see SPRITE_METADATA)
+  },
   // ============================================
   // Common Forageable Plants (Multiple Maps)
   // ============================================

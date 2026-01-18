@@ -170,6 +170,8 @@ export const tileAssets = {
   mushroom_house_02: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom_house02.png',
   // Branch (walkable ground decoration)
   branch: '/TwilightGame/assets-optimized/tiles/mushroomMap/branch.png',
+  // Mushroom cluster (2x2 decorative mushrooms for mushroom forest and procedural forests)
+  mushroom_cluster: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom.png',
   // Common forageable plants
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',
   // Witch hut asset
