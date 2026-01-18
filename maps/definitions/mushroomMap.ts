@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { createMushraNPC } from '../../utils/npcFactories';
 
 /**
  * Mushroom Forest - A damp, shady area filled with fungi
@@ -82,6 +83,7 @@ export const mushroomMap: MapDefinition = {
     },
   ],
   npcs: [
-    // Could add forest spirits or mushroom creatures here later
+    // Mushra - friendly mushroom girl who lives in the mushroom house
+    createMushraNPC('mushra', { x: 23, y: 6 }, 'Mushra'),
   ],
 };

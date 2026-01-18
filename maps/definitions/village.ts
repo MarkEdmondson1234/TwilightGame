@@ -183,13 +183,6 @@ export const village: MapDefinition = {
       toPosition: { x: 8, y: 17 },  // Spawn on path near entrance (safe from bear house collision)
       label: "To Bear's Cave",
     },
-    {
-      fromPosition: { x: 4, y: 16 }, // Mushroom forest entrance (1 down from Bear's Cave)
-      tileType: TileType.GRASS,
-      toMapId: 'mushroom_forest',
-      toPosition: { x: 15, y: 17 },  // Spawn on path near south entrance
-      label: 'To Mushroom Forest',
-    },
   ],
   npcs: [
     // Village Elder - wise NPC near cherry tree
