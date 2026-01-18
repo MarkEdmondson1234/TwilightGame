@@ -43,7 +43,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     name: 'friendship_elixir',
     displayName: 'Friendship Elixir',
     level: 'novice',
-    description: 'A warm, rose-pink potion that increases affection.',
+    description: 'A warm, rose-pink potion that increases affection when given to someone.',
     ingredients: [
       { itemId: 'honey', quantity: 1 },
       { itemId: 'milk', quantity: 1 },
@@ -53,7 +53,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     difficulty: 1,
     resultItemId: 'potion_friendship',
     resultQuantity: 1,
-    effectDescription: '+50 friendship with target NPC',
+    effectDescription: 'Give to an NPC for +300 friendship',
   },
 
   bitter_grudge: {
@@ -61,7 +61,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     name: 'bitter_grudge',
     displayName: 'Bitter Grudge',
     level: 'novice',
-    description: 'A murky, dark green potion that breeds resentment.',
+    description: 'A murky, dark green potion that breeds resentment when given to someone.',
     ingredients: [
       { itemId: 'crop_onion', quantity: 1 },
       { itemId: 'crop_chili', quantity: 1 },
@@ -71,7 +71,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     difficulty: 1,
     resultItemId: 'potion_bitter_grudge',
     resultQuantity: 1,
-    effectDescription: '-50 friendship with target NPC',
+    effectDescription: 'Give to an NPC for -300 friendship',
   },
 
   glamour_draught: {

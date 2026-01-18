@@ -41,6 +41,9 @@ const GIFTABLE_CATEGORIES = [
   ItemCategory.MISC,
 ];
 
+// Potions that can be given to NPCs (not drunk by player)
+const GIFTABLE_POTIONS = ['potion_friendship', 'potion_bitter_grudge'];
+
 // Get display name for recipe category
 const CATEGORY_DISPLAY_NAMES: Record<RecipeCategory, string> = {
   savoury: 'savoury dishes',
@@ -73,7 +76,11 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
       .filter((item) => {
         const itemDef = getItem(item.itemId);
         if (!itemDef) return false;
-        return GIFTABLE_CATEGORIES.includes(itemDef.category);
+        // Allow standard giftable categories OR specific giftable potions
+        return (
+          GIFTABLE_CATEGORIES.includes(itemDef.category) ||
+          GIFTABLE_POTIONS.includes(item.itemId)
+        );
       })
       .map((item) => {
         const itemDef = getItem(item.itemId)!;

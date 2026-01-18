@@ -1407,7 +1407,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'potion_friendship',
     displayName: 'Friendship Elixir',
     category: ItemCategory.POTION,
-    description: 'A warm, rose-pink potion that shimmers gently. Increases friendship with the target NPC.',
+    description: 'A warm, rose-pink potion that shimmers gently. Give this to someone you want to befriend.',
     stackable: true,
     sellPrice: 50,
     image: potionAssets.friendship_elixir,

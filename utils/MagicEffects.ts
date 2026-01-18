@@ -234,26 +234,22 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     },
   },
 
+  // NOTE: Friendship/Grudge potions are now GIVEN to NPCs via GiftModal,
+  // not drunk by the player. The effect is handled in FriendshipManager.giveGift().
+  // These entries are kept for backwards compatibility but won't be called
+  // during normal gameplay - clicking these potions in inventory shows a toast
+  // directing the player to give them to NPCs instead.
+
   potion_friendship: {
     potionId: 'potion_friendship',
     effectType: 'friendship_boost',
-    execute: (callbacks, targetNpcId) => {
-      if (!targetNpcId) {
-        callbacks.showToast('Select an NPC to use this on!', 'warning');
-        return {
-          success: false,
-          message: 'No target NPC selected',
-          effectType: 'friendship_boost',
-        };
-      }
-      friendshipManager.addPoints(targetNpcId, 50, 'friendship potion');
-      callbacks.showToast(`Friendship with ${targetNpcId} increased!`, 'success');
-      callbacks.triggerVFX?.('hearts', callbacks.getPlayerPosition());
+    execute: (callbacks) => {
+      // This potion should be given to an NPC, not drunk by the player
+      callbacks.showToast('Give this to the person you want to befriend.', 'info');
       return {
-        success: true,
-        message: `+50 friendship with ${targetNpcId}`,
+        success: false,
+        message: 'This potion should be given to an NPC',
         effectType: 'friendship_boost',
-        vfxType: 'hearts',
       };
     },
   },
@@ -261,23 +257,13 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
   potion_bitter_grudge: {
     potionId: 'potion_bitter_grudge',
     effectType: 'friendship_reduce',
-    execute: (callbacks, targetNpcId) => {
-      if (!targetNpcId) {
-        callbacks.showToast('Select an NPC to use this on!', 'warning');
-        return {
-          success: false,
-          message: 'No target NPC selected',
-          effectType: 'friendship_reduce',
-        };
-      }
-      friendshipManager.addPoints(targetNpcId, -50, 'bitter grudge potion');
-      callbacks.showToast(`Friendship with ${targetNpcId} decreased...`, 'warning');
-      callbacks.triggerVFX?.('dark_aura', callbacks.getPlayerPosition());
+    execute: (callbacks) => {
+      // This potion should be given to an NPC, not drunk by the player
+      callbacks.showToast('Give this to someone to reduce your friendship.', 'info');
       return {
-        success: true,
-        message: `-50 friendship with ${targetNpcId}`,
+        success: false,
+        message: 'This potion should be given to an NPC',
         effectType: 'friendship_reduce',
-        vfxType: 'dark_aura',
       };
     },
   },

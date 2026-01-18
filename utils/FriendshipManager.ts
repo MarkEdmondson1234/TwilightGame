@@ -316,6 +316,22 @@ class FriendshipManagerClass {
       return { points: 0, reaction: 'neutral' };
     }
 
+    // Check if this is a friendship potion (given to NPC, not drunk by player)
+    if (itemId === 'potion_friendship') {
+      const points = 300;
+      this.addPoints(npcId, points, 'friendship elixir');
+      console.log(`[FriendshipManager] 💖 ${npcId} drinks the Friendship Elixir! (+${points})`);
+      return { points, reaction: 'loved' };
+    }
+
+    // Check if this is a bitter grudge potion (given to NPC)
+    if (itemId === 'potion_bitter_grudge') {
+      const points = -300;
+      this.addPoints(npcId, points, 'bitter grudge potion');
+      console.log(`[FriendshipManager] 💔 ${npcId} drinks the Bitter Grudge... (${points})`);
+      return { points, reaction: 'disliked' };
+    }
+
     // Check if this is terrible food (starts with "terrible_")
     const isTerrible = itemId.startsWith('terrible_');
     if (isTerrible) {

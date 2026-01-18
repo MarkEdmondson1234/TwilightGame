@@ -2081,12 +2081,18 @@ const App: React.FC = () => {
           items={inventoryItems}
           selectedSlot={selectedItemSlot}
           onItemClick={(item, slotIndex) => {
-            // Check if this is a potion - if so, use it immediately
             const itemDef = getItem(item.id);
             if (itemDef && itemDef.category === ItemCategory.POTION) {
-              handlePotionUse(item.id);
-              // Close inventory after drinking potion for immersion
-              closeUI('inventory');
+              // Friendship/Grudge potions are given to NPCs, not drunk
+              if (item.id === 'potion_friendship' || item.id === 'potion_bitter_grudge') {
+                showToast('Give this to the person you want to befriend.', 'info');
+                closeUI('inventory');
+              } else {
+                // Other potions are used directly
+                handlePotionUse(item.id);
+                // Close inventory after drinking potion for immersion
+                closeUI('inventory');
+              }
             } else {
               // For non-potions, just select the item
               setSelectedItemSlot(slotIndex);
