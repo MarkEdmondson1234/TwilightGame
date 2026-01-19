@@ -197,4 +197,22 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       },
     },
   },
+
+  mushroom_forest: {
+    name: 'mushroom_forest',
+    colors: {
+      grass: 'bg-palette-shadow',  // Very dark forest floor
+      rock: 'bg-palette-shadow',   // Same as grass for consistency
+      water: 'bg-palette-teal',    // Dark, murky pond water
+      path: 'bg-palette-chocolate', // Muddy forest path
+      floor: 'bg-palette-shadow',
+      wall: 'bg-palette-black',    // Impenetrable forest boundary
+      carpet: 'bg-palette-forest',
+      door: 'bg-palette-chocolate',
+      special: 'bg-palette-violet',
+      furniture: 'bg-palette-charcoal',
+      mushroom: 'bg-palette-shadow', // Same as grass
+      background: 'bg-palette-black',
+    },
+  },
 };

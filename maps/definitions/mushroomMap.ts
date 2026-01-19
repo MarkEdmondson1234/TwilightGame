@@ -62,7 +62,7 @@ export const mushroomMap: MapDefinition = {
   width: 30,
   height: 20,
   grid: parseGrid(gridString),
-  colorScheme: 'forest', // Dark forest colour scheme suits the damp, shady atmosphere
+  colorScheme: 'mushroom_forest', // Very dark forest floor with shadow colour
   hasClouds: true, // Outdoor area
   isRandom: false,
   spawnPoint: { x: 15, y: 17 }, // On path near south entrance
