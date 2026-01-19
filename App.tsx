@@ -67,8 +67,7 @@ import WeatherTintOverlay from './components/WeatherTintOverlay';
 import ForegroundParallax from './components/ForegroundParallax';
 import CloudShadows from './components/CloudShadows';
 import CookingInterface from './components/CookingInterface';
-import RecipeBook from './components/RecipeBook';
-import MagicRecipeBook from './components/MagicRecipeBook';
+import { CottageBook } from './components/book';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu from './components/RadialMenu';
 import { StaminaBar } from './components/StaminaBar';
@@ -1543,31 +1542,32 @@ const App: React.FC = () => {
         />
       )}
       {ui.recipeBook && (
-        <>
-          <RecipeBook
-            isOpen={ui.recipeBook}
-            onClose={() => closeUI('recipeBook')}
-            playerPosition={playerPos}
-            currentMapId={currentMap.id}
-            cookingPosition={ui.context.cookingPosition}
-            nearbyNPCs={(() => {
-              // Get NPCs within 2 tiles of player
-              const range = 2;
-              return allNPCs
-                .filter((npc) => {
-                  const dx = Math.abs(npc.position.x - playerPos.x);
-                  const dy = Math.abs(npc.position.y - playerPos.y);
-                  return dx <= range && dy <= range;
-                })
-                .map((npc) => npc.id);
-            })()}
-            onItemPlaced={() => {
-              // GameState emits PLACED_ITEMS_CHANGED event when items are placed
-            }}
-          />
-        </>
+        <CottageBook
+          isOpen={ui.recipeBook}
+          onClose={() => closeUI('recipeBook')}
+          theme="cooking"
+          playerPosition={playerPos}
+          currentMapId={currentMap.id}
+          cookingPosition={ui.context.cookingPosition}
+          nearbyNPCs={(() => {
+            // Get NPCs within 2 tiles of player
+            const range = 2;
+            return allNPCs
+              .filter((npc) => {
+                const dx = Math.abs(npc.position.x - playerPos.x);
+                const dy = Math.abs(npc.position.y - playerPos.y);
+                return dx <= range && dy <= range;
+              })
+              .map((npc) => npc.id);
+          })()}
+          onItemPlaced={() => {
+            // GameState emits PLACED_ITEMS_CHANGED event when items are placed
+          }}
+        />
       )}
-      <MagicRecipeBook isOpen={ui.magicBook} onClose={() => closeUI('magicBook')} />
+      {ui.magicBook && (
+        <CottageBook isOpen={ui.magicBook} onClose={() => closeUI('magicBook')} theme="magic" />
+      )}
       {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}
 
       {/* Destination marker for click-to-move */}

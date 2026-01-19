@@ -306,7 +306,8 @@ export const groceryAssets = {
 export const magicalAssets = {
   dragonfly_wings: '/TwilightGame/assets-optimized/items/magical/forageable/dragonfly_wings.png',
   moonpetal_flower: '/TwilightGame/assets-optimized/items/magical/forageable/moonpetal_flower.png',
-  addersmeat_flower: '/TwilightGame/assets-optimized/items/magical/forageable/addersmeat_flower.png',
+  addersmeat_flower:
+    '/TwilightGame/assets-optimized/items/magical/forageable/addersmeat_flower.png',
   luminescent_toadstool:
     '/TwilightGame/assets-optimized/items/magical/forageable/luminescent_toadstool_ingredient.png',
   eye_of_newt: '/TwilightGame/assets-optimized/items/magical/forageable/eye_of_newt.png',
@@ -477,6 +478,8 @@ export const uiAssets = {
   book_magic: '/TwilightGame/assets-optimized/ui/book_magic.png',
   wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
   satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
+  // Open book UI - cottagecore book background for recipe/magic menus
+  openbook_ui: '/TwilightGame/assets/ui/openbook_ui.png',
 };
 
 // Dialogue UI assets - Animated dialogue window frames
