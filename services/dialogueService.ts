@@ -11,6 +11,10 @@
 import { DialogueNode, NPC } from '../types';
 import { TimeManager, Season, TimeOfDay } from '../utils/TimeManager';
 import { gameState } from '../GameState';
+import {
+  GiftReaction,
+  getGiftReactionDialogue,
+} from '../data/giftReactions';
 
 /**
  * Enhanced NPC Persona for AI dialogue
@@ -780,10 +784,31 @@ function getContextualText(node: DialogueNode): string {
 }
 
 /**
+ * Create a dynamic dialogue node for gift reactions
+ * These nodes are generated on-the-fly based on the NPC's reaction to a gift
+ */
+function createGiftReactionNode(npcId: string, reaction: GiftReaction): DialogueNode {
+  const reactionDialogue = getGiftReactionDialogue(npcId, reaction);
+
+  return {
+    id: `gift_${reaction}`,
+    text: reactionDialogue.text,
+    expression: reactionDialogue.expression,
+    responses: [], // No responses - player clicks to close
+  };
+}
+
+/**
  * Get static fallback dialogue
  * Uses the pre-written dialogue trees from NPC definition
  */
 function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null {
+  // Check if this is a gift reaction node (prefixed with 'gift_')
+  if (currentNodeId.startsWith('gift_')) {
+    const reaction = currentNodeId.replace('gift_', '') as GiftReaction;
+    return createGiftReactionNode(npc.id, reaction);
+  }
+
   const currentTransformation = getCurrentTransformation();
 
   // Filter dialogue nodes based on quest and transformation requirements

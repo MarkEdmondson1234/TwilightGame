@@ -13,6 +13,7 @@ interface DialogueBoxProps {
   onClose: () => void;
   onNodeChange?: (npcId: string, nodeId: string) => void; // Callback when dialogue node changes
   onSwitchToAIMode?: () => void; // Callback to switch to AI chat mode
+  initialNodeId?: string; // Starting dialogue node (defaults to 'greeting')
 }
 
 /**
@@ -29,12 +30,24 @@ interface DialogueBoxProps {
  * - Wooden nameplate: ~13% from left, ~35% from top
  * - Grey text area: ~5% from left, ~43% from top, ~90% wide, ~35% tall
  */
-const DialogueBox: React.FC<DialogueBoxProps> = ({ npc, playerSprite, onClose, onNodeChange, onSwitchToAIMode }) => {
+const DialogueBox: React.FC<DialogueBoxProps> = ({
+  npc,
+  playerSprite,
+  onClose,
+  onNodeChange,
+  onSwitchToAIMode,
+  initialNodeId = 'greeting',
+}) => {
   // Check if this NPC has AI chat available
   const persona = NPC_PERSONAS[npc.id];
   const canUseAI = isAIAvailable() && persona?.aiEnabled && onSwitchToAIMode;
-  const [currentNodeId, setCurrentNodeId] = useState<string>('greeting');
+  const [currentNodeId, setCurrentNodeId] = useState<string>(initialNodeId);
   const [currentDialogue, setCurrentDialogue] = useState<DialogueNode | null>(null);
+
+  // Reset to initialNodeId when NPC or initialNodeId changes
+  useEffect(() => {
+    setCurrentNodeId(initialNodeId);
+  }, [npc.id, initialNodeId]);
 
   // Animate the dialogue window frame
   const { currentFrame } = useDialogueAnimation(150, true);
