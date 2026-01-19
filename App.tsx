@@ -45,7 +45,7 @@ import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
 import { TimeManager } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
-import { Z_PLAYER } from './zIndex';
+import { Z_PLAYER, Z_TILE_BACKGROUND, zClass } from './zIndex';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
@@ -1017,7 +1017,10 @@ const App: React.FC = () => {
       style={{ backgroundColor: '#5A7247' }}
     >
       {/* PixiJS Renderer (WebGL - High Performance) */}
-      {USE_PIXI_RENDERER && <canvas ref={canvasRef} className="absolute top-0 left-0" />}
+      {/* Z_TILE_BACKGROUND ensures canvas stays below foreground parallax (z-250) and weather overlays */}
+      {USE_PIXI_RENDERER && (
+        <canvas ref={canvasRef} className={`absolute top-0 left-0 ${zClass(Z_TILE_BACKGROUND)}`} />
+      )}
 
       {/* DOM Tile Renderer (Only when PixiJS is disabled) */}
       {!USE_PIXI_RENDERER && (

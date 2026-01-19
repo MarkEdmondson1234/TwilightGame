@@ -20,7 +20,7 @@ import { TILE_SIZE } from '../constants';
 interface ForegroundParallaxProps {
   cameraX: number;
   cameraY: number;
-  mapWidth: number;  // Map width in tiles
+  mapWidth: number; // Map width in tiles
   mapHeight: number; // Map height in tiles
   enabled?: boolean;
 }
@@ -50,35 +50,53 @@ function getSeasonalTree(treeType: TreeType): string {
   switch (treeType) {
     case 'oak':
       switch (season) {
-        case 'spring': return tileAssets.oak_tree_spring;
-        case 'summer': return tileAssets.oak_tree_summer;
-        case 'autumn': return tileAssets.oak_tree_autumn;
-        case 'winter': return tileAssets.oak_tree_winter;
-        default: return tileAssets.oak_tree_spring;
+        case 'spring':
+          return tileAssets.oak_tree_spring;
+        case 'summer':
+          return tileAssets.oak_tree_summer;
+        case 'autumn':
+          return tileAssets.oak_tree_autumn;
+        case 'winter':
+          return tileAssets.oak_tree_winter;
+        default:
+          return tileAssets.oak_tree_spring;
       }
     case 'cherry':
       switch (season) {
-        case 'spring': return tileAssets.tree_cherry_spring;
-        case 'summer': return tileAssets.tree_cherry_summer_no_fruit;
-        case 'autumn': return tileAssets.tree_cherry_autumn;
-        case 'winter': return tileAssets.tree_cherry_winter;
-        default: return tileAssets.tree_cherry_spring;
+        case 'spring':
+          return tileAssets.tree_cherry_spring;
+        case 'summer':
+          return tileAssets.tree_cherry_summer_no_fruit;
+        case 'autumn':
+          return tileAssets.tree_cherry_autumn;
+        case 'winter':
+          return tileAssets.tree_cherry_winter;
+        default:
+          return tileAssets.tree_cherry_spring;
       }
     case 'spruce':
       return season === 'winter' ? tileAssets.spruce_tree_winter : tileAssets.spruce_tree;
     case 'willow':
       switch (season) {
-        case 'autumn': return tileAssets.willow_tree_autumn;
-        case 'winter': return tileAssets.willow_tree_winter;
-        default: return tileAssets.willow_tree;
+        case 'autumn':
+          return tileAssets.willow_tree_autumn;
+        case 'winter':
+          return tileAssets.willow_tree_winter;
+        default:
+          return tileAssets.willow_tree;
       }
     case 'lilac':
       switch (season) {
-        case 'spring': return tileAssets.lilac_tree_spring;
-        case 'summer': return tileAssets.lilac_tree_summer;
-        case 'autumn': return tileAssets.lilac_tree_autumn;
-        case 'winter': return tileAssets.lilac_tree_winter;
-        default: return tileAssets.lilac_tree_spring;
+        case 'spring':
+          return tileAssets.lilac_tree_spring;
+        case 'summer':
+          return tileAssets.lilac_tree_summer;
+        case 'autumn':
+          return tileAssets.lilac_tree_autumn;
+        case 'winter':
+          return tileAssets.lilac_tree_winter;
+        default:
+          return tileAssets.lilac_tree_spring;
       }
     default:
       return tileAssets.oak_tree_spring;
@@ -203,7 +221,7 @@ const ForegroundParallax: React.FC<ForegroundParallaxProps> = ({
     <div
       className={`fixed inset-0 pointer-events-none overflow-hidden ${zClass(Z_FOREGROUND_PARALLAX)}`}
     >
-      {TREE_CONFIGS.map(tree => {
+      {TREE_CONFIGS.map((tree) => {
         // Calculate tree's horizontal position on screen
         // Base position from percentage + parallax offset
         const parallaxX = -cameraX * tree.parallaxSpeed;
@@ -221,7 +239,8 @@ const ForegroundParallax: React.FC<ForegroundParallaxProps> = ({
           treeOpacity = 0; // Invisible when very close
         } else if (distanceFromPlayer < FADE_DISTANCE) {
           // Linear fade
-          treeOpacity = (distanceFromPlayer - FULL_FADE_DISTANCE) / (FADE_DISTANCE - FULL_FADE_DISTANCE);
+          treeOpacity =
+            (distanceFromPlayer - FULL_FADE_DISTANCE) / (FADE_DISTANCE - FULL_FADE_DISTANCE);
         }
 
         // Calculate vertical position - trees are fixed in world space
@@ -241,7 +260,6 @@ const ForegroundParallax: React.FC<ForegroundParallaxProps> = ({
               transform: `translateX(-50%) translateX(${parallaxX}px) scale(${tree.scale})`,
               opacity: treeOpacity,
               transition: 'opacity 0.2s ease-out',
-              imageRendering: 'pixelated',
               width: 'auto',
               height: '800px', // Fixed height for tree image
               transformOrigin: 'top center',
