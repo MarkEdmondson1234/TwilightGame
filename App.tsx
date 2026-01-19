@@ -107,6 +107,12 @@ const App: React.FC = () => {
   const [activeNPC, setActiveNPC] = useState<string | null>(null);
   const [dialogueMode, setDialogueMode] = useState<'static' | 'ai'>('static');
 
+  // Gift reaction dialogue context - set when gift is given, cleared when dialogue closes
+  const [giftReactionContext, setGiftReactionContext] = useState<{
+    npcId: string;
+    reaction: 'loved' | 'liked' | 'neutral' | 'disliked';
+  } | null>(null);
+
   // Event-driven triggers for re-rendering (managed by EventBus subscriptions)
   const { farmUpdateTrigger, npcUpdateTrigger, placedItemsUpdateTrigger } = useGameEvents();
 
@@ -1345,6 +1351,10 @@ const App: React.FC = () => {
             isFairyForm
           )} // High-res portrait (uses fairy sprite when transformed)
           onClose={() => {
+            // Clear gift reaction context when dialogue closes
+            if (giftReactionContext) {
+              setGiftReactionContext(null);
+            }
             setActiveNPC(null);
             setDialogueMode('static'); // Reset to static mode when closing
           }}
@@ -1356,6 +1366,12 @@ const App: React.FC = () => {
               setDialogueMode('ai');
             }
           }}
+          // Pass initial node for gift reactions, otherwise use default 'greeting'
+          initialNodeId={
+            giftReactionContext && giftReactionContext.npcId === activeNPC
+              ? `gift_${giftReactionContext.reaction}`
+              : 'greeting'
+          }
         />
       )}
       {activeNPC && dialogueMode === 'ai' && (
@@ -1500,8 +1516,17 @@ const App: React.FC = () => {
             closeUI('giftModal');
           }}
           onGiftGiven={(result: GiftResult) => {
-            // GiftModal uses inventoryManager.removeItem() which triggers EventBus INVENTORY_CHANGED
-            showToast(result.message, result.reaction === 'disliked' ? 'warning' : 'success');
+            // Close the gift modal first
+            closeUI('giftModal');
+
+            // Set up gift reaction dialogue context
+            setGiftReactionContext({
+              npcId: ui.context.giftTargetNpcId!,
+              reaction: result.reaction,
+            });
+
+            // Open dialogue with the NPC showing their reaction
+            setActiveNPC(ui.context.giftTargetNpcId!);
           }}
         />
       )}

@@ -184,7 +184,7 @@ export function createCatNPC(
       { id: 'cat_standing', text: 'The cat stands up and stretches, clearly annoyed by your persistence.' },
     ],
     friendshipConfig: {
-      canBefriend: false,
+      canBefriend: true,
       startingPoints: 0,
     },
   });

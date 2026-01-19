@@ -23,6 +23,7 @@ import { TimeManager } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getItem, ItemCategory } from '../data/items';
 import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
+import { getGiftReaction, GiftReaction } from '../data/giftReactions';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -304,12 +305,14 @@ class FriendshipManagerClass {
   /**
    * Give a gift to an NPC
    * Returns the points awarded and a reaction type
+   *
+   * Uses NPC_GIFT_PREFERENCES from giftReactions.ts for item-specific preferences.
    */
   giveGift(
     npcId: string,
     itemId: string,
     npc?: NPC
-  ): { points: number; reaction: 'loved' | 'liked' | 'neutral' | 'disliked' } {
+  ): { points: number; reaction: GiftReaction } {
     const item = getItem(itemId);
     if (!item) {
       console.warn(`[FriendshipManager] Unknown item: ${itemId}`);
@@ -354,32 +357,37 @@ class FriendshipManagerClass {
       }
     }
 
-    // Check if this is a food item
-    if (item.category === ItemCategory.FOOD) {
-      // Find which recipe produces this food to get its category
-      const recipeCategory = this.getFoodRecipeCategory(itemId);
-      if (recipeCategory) {
-        const isLoved = this.doesNpcLoveCategory(npcId, recipeCategory);
+    // Use the new gift reaction system from giftReactions.ts
+    // This checks NPC-specific item preferences (loves, dislikes, category preferences)
+    const reaction = getGiftReaction(npcId, itemId);
 
-        if (isLoved) {
-          const points = LIKED_GIFT_POINTS;
-          this.addPoints(npcId, points, `loved food gift: ${item.displayName}`);
-          console.log(`[FriendshipManager] 💕 ${npcId} loves ${item.displayName}!`);
-          return { points, reaction: 'loved' };
-        }
-      }
-
-      // Food but not loved category
-      const points = GIFT_POINTS;
-      this.addPoints(npcId, points, `food gift: ${item.displayName}`);
-      console.log(`[FriendshipManager] 😊 ${npcId} appreciates ${item.displayName}`);
-      return { points, reaction: 'liked' };
+    // Award points based on reaction
+    let points: number;
+    switch (reaction) {
+      case 'loved':
+        points = LIKED_GIFT_POINTS; // +300 points
+        this.addPoints(npcId, points, `loved gift: ${item.displayName}`);
+        console.log(`[FriendshipManager] 💕 ${npcId} loves ${item.displayName}! (+${points})`);
+        break;
+      case 'liked':
+        points = GIFT_POINTS; // +100 points
+        this.addPoints(npcId, points, `liked gift: ${item.displayName}`);
+        console.log(`[FriendshipManager] 😊 ${npcId} likes ${item.displayName}. (+${points})`);
+        break;
+      case 'disliked':
+        points = -100; // -100 points for disliked items
+        this.addPoints(npcId, points, `disliked gift: ${item.displayName}`);
+        console.log(`[FriendshipManager] 😟 ${npcId} dislikes ${item.displayName}. (${points})`);
+        break;
+      case 'neutral':
+      default:
+        points = GIFT_POINTS; // +100 points
+        this.addPoints(npcId, points, `gift: ${item.displayName}`);
+        console.log(`[FriendshipManager] 🙂 ${npcId} accepts ${item.displayName}. (+${points})`);
+        break;
     }
 
-    // Non-food gifts
-    const points = GIFT_POINTS;
-    this.addPoints(npcId, points, `gift: ${item.displayName}`);
-    return { points, reaction: 'neutral' };
+    return { points, reaction };
   }
 
   /**
