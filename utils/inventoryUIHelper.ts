@@ -118,6 +118,12 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   potion_healing: potionAssets.healing_salve,
   potion_drink_me: potionAssets.drink_me,
   potion_eat_me: potionAssets.eat_me,
+  // Level 3: Full Witch potions
+  potion_time_skip: potionAssets.time_skip,
+  potion_dawns_herald: potionAssets.dawns_herald,
+  potion_harvest_moon: potionAssets.harvest_moon,
+  potion_quality_blessing: potionAssets.quality_blessing,
+  potion_homeward: potionAssets.homeward,
 };
 
 /**

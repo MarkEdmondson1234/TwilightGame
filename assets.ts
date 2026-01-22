@@ -335,6 +335,12 @@ export const potionAssets = {
   healing_salve: '/TwilightGame/assets-optimized/items/magical/potions/healing_salve.png',
   drink_me: '/TwilightGame/assets-optimized/items/magical/potions/drink_me.png',
   eat_me: '/TwilightGame/assets-optimized/items/magical/potions/eat_me.png',
+  // Level 3: Full Witch potions
+  dawns_herald: '/TwilightGame/assets-optimized/items/magical/potions/dawns_herald.png',
+  harvest_moon: '/TwilightGame/assets-optimized/items/magical/potions/harvest_moon.png',
+  homeward: '/TwilightGame/assets-optimized/items/magical/potions/homeward.png',
+  quality_blessing: '/TwilightGame/assets-optimized/items/magical/potions/quality_blessing.png',
+  time_skip: '/TwilightGame/assets-optimized/items/magical/potions/time_skip.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits

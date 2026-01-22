@@ -1590,6 +1590,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
       'A shimmering potion that seems to exist in multiple moments at once. Advances one day.',
     stackable: true,
     sellPrice: 200,
+    image: potionAssets.time_skip,
   },
 
   potion_dawns_herald: {
@@ -1600,6 +1601,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A potion the colour of sunrise. Skips time to morning.',
     stackable: true,
     sellPrice: 100,
+    image: potionAssets.dawns_herald,
   },
 
   potion_twilight_call: {
@@ -1620,6 +1622,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'An orange potion glowing like a harvest moon. Instantly grows all crops!',
     stackable: true,
     sellPrice: 250,
+    image: potionAssets.harvest_moon,
   },
 
   potion_dewfall: {
@@ -1640,6 +1643,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A sparkling golden potion. Upgrades crop quality to excellent.',
     stackable: true,
     sellPrice: 180,
+    image: potionAssets.quality_blessing,
   },
 
   potion_homeward: {
@@ -1650,6 +1654,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A warm, comforting potion. Teleports you instantly home.',
     stackable: true,
     sellPrice: 120,
+    image: potionAssets.homeward,
   },
 
   potion_root_revival: {
