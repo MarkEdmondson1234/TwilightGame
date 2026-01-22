@@ -770,10 +770,10 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [],
     seasonalImages: {
       spring: [tileAssets.cottage_wooden],
-      summer: [tileAssets.cottage_wooden],
-      autumn: [tileAssets.cottage_wooden],
+      summer: [tileAssets.cottage_small_summer],
+      autumn: [tileAssets.cottage_small_autumn],
       winter: [tileAssets.cottage_small_winter],
-      default: [tileAssets.cottage_wooden], // Default to spring/summer/autumn version
+      default: [tileAssets.cottage_wooden], // Default to spring version
     },
   },
   [TileType.COTTAGE_STONE]: {
