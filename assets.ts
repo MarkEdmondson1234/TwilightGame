@@ -250,6 +250,10 @@ export const farmingAssets = {
   plant_fairy_bluebell_seed: '/TwilightGame/assets-optimized/farming/fairy_bluebell_seed.png',
   plant_fairy_bluebell_young: '/TwilightGame/assets-optimized/farming/fairy_bluebell_young.png',
   plant_fairy_bluebell_adult: '/TwilightGame/assets-optimized/farming/fairy_bluebell_adult.png',
+  plant_onion_young: '/TwilightGame/assets-optimized/farming/onion_young.png',
+  plant_onion_adult: '/TwilightGame/assets-optimized/farming/onion_adult.png',
+  plant_pumpkin_young: '/TwilightGame/assets-optimized/farming/pumpkin_young.png',
+  plant_pumpkin_adult: '/TwilightGame/assets-optimized/farming/pumpkin_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 
