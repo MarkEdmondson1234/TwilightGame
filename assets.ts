@@ -300,6 +300,8 @@ export const groceryAssets = {
   salad_head: '/TwilightGame/assets-optimized/items/grocery/salad_head.png',
   broccoli_head: '/TwilightGame/assets-optimized/items/grocery/broccoli_head.png',
   blueberries_crop: '/TwilightGame/assets-optimized/items/grocery/blueberries_crop.png',
+  onion_bunch: '/TwilightGame/assets-optimized/items/grocery/onion_bunch.png',
+  onion_sets: '/TwilightGame/assets-optimized/items/grocery/onion_sets.png',
 };
 
 // Magical ingredient assets (for witch shop - sellable but not purchasable)

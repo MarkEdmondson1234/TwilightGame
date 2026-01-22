@@ -213,6 +213,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     cropId: 'onion',
+    image: groceryAssets.onion_sets,
   },
 
   seed_pea: {
@@ -416,6 +417,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A pungent onion. Makes you cry!',
     stackable: true,
     sellPrice: 20,
+    image: groceryAssets.onion_bunch,
   },
 
   crop_pea: {
