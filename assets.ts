@@ -247,6 +247,8 @@ export const farmingAssets = {
   plant_spinach_adult: '/TwilightGame/assets-optimized/farming/spinach_adult.png',
   plant_broccoli_young: '/TwilightGame/assets-optimized/farming/broccoli_young.png',
   plant_broccoli_adult: '/TwilightGame/assets-optimized/farming/broccoli_adult.png',
+  plant_pumpkin_young: '/TwilightGame/assets-optimized/farming/pumpkin_young.png',
+  plant_pumpkin_adult: '/TwilightGame/assets-optimized/farming/pumpkin_adult.png',
   plant_fairy_bluebell_seed: '/TwilightGame/assets-optimized/farming/fairy_bluebell_seed.png',
   plant_fairy_bluebell_young: '/TwilightGame/assets-optimized/farming/fairy_bluebell_young.png',
   plant_fairy_bluebell_adult: '/TwilightGame/assets-optimized/farming/fairy_bluebell_adult.png',
