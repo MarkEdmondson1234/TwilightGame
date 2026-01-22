@@ -104,6 +104,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 25,
     buyPrice: 50,
     cropId: 'pumpkin',
+    image: groceryAssets.pumpkin_seeds,
   },
 
   // New shop seeds
@@ -323,6 +324,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A giant orange pumpkin.',
     stackable: true,
     sellPrice: 150,
+    image: groceryAssets.pumpkin,
   },
 
   // New harvested crops
