@@ -256,7 +256,7 @@ for (let dy = -1; dy <= 1; dy++) {
 
     if (checkTile?.type === TileType.LUMINESCENT_TOADSTOOL) {
       toadstoolAnchor = { x: checkX, y: checkY };
-      console.log(`[Forage] Found luminescent toadstool anchor at (${checkX}, ${checkY})`);
+      console.log('[Forage] Found luminescent toadstool anchor at (' + checkX + ', ' + checkY + ')');
       break;
     }
   }
@@ -295,7 +295,7 @@ if (toadstoolAnchor) {
   const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
 
   inventoryManager.addItem('luminescent_toadstool', quantityFound);
-  console.log(`[Forage] Found ${quantityFound} ${toadstool.displayName}`);
+  console.log('[Forage] Found ' + quantityFound + ' ' + toadstool.displayName);
 
   const inventoryData = inventoryManager.getInventoryData();
   characterData.saveInventory(inventoryData.items, inventoryData.tools);
@@ -305,7 +305,7 @@ if (toadstoolAnchor) {
     found: true,
     seedId: 'luminescent_toadstool',
     seedName: toadstool.displayName,
-    message: `Found ${quantityFound} ${toadstool.displayName}!`,
+    message: 'Found ' + quantityFound + ' ' + toadstool.displayName + '!',
   };
 }
 ```

@@ -786,10 +786,11 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   let cooldownCheckPos = { x: playerTileX, y: playerTileY };
   let skipEarlyCooldownCheck = false;
 
-  // Check if player is near a forageable multi-tile sprite anchor (for 3x3 area foraging)
+  // Check if player is near a forageable multi-tile sprite anchor (for 2x2 and 3x3 area foraging)
   const forageableResult = findTileTypeNearby(playerTileX, playerTileY, [
     TileType.MOONPETAL,
     TileType.ADDERSMEAT,
+    TileType.WOLFSBANE,
     TileType.LUMINESCENT_TOADSTOOL,
     TileType.MUSTARD_FLOWER,
   ]);
@@ -1050,6 +1051,58 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'addersmeat', // Reuse field for item ID
       seedName: addersmeat.displayName,
       message: `Found ${quantityFound} ${addersmeat.displayName}!`,
+    };
+  }
+
+  // Wolfsbane foraging (2x2 forageable plant)
+  // No time-of-day or seasonal restrictions - can be foraged anytime
+  const wolfsbaneResult = findTileTypeNearby(playerTileX, playerTileY, TileType.WOLFSBANE);
+  const wolfsbaneAnchor = wolfsbaneResult.found ? wolfsbaneResult.position : null;
+
+  if (wolfsbaneAnchor) {
+    console.log(
+      `[Forage] Found wolfsbane anchor at (${wolfsbaneAnchor.x}, ${wolfsbaneAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
+
+    const wolfsbane = getItem('wolfsbane');
+    if (!wolfsbane) {
+      console.error('[Forage] Wolfsbane item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (wolfsbane has forageSuccessRate: 0.7)
+    const successRate = wolfsbane.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position (so whole 2x2 area shares cooldown)
+      gameState.recordForage(currentMapId, wolfsbaneAnchor.x, wolfsbaneAnchor.y);
+      return {
+        found: false,
+        message: 'You search the wolfsbane, but find none suitable for harvesting.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const rand = Math.random();
+    const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
+
+    // Add to inventory
+    inventoryManager.addItem('wolfsbane', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${wolfsbane.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown at ANCHOR position
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, wolfsbaneAnchor.x, wolfsbaneAnchor.y);
+
+    return {
+      found: true,
+      seedId: 'wolfsbane', // Reuse field for item ID
+      seedName: wolfsbane.displayName,
+      message: `Found ${quantityFound} ${wolfsbane.displayName}!`,
     };
   }
 
@@ -2156,12 +2209,14 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, mustard flower)
+    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower)
     if (!canForage) {
       canForage = hasTileTypeNearby(tileX, tileY, [
         TileType.BEE_HIVE,
         TileType.LUMINESCENT_TOADSTOOL,
         TileType.MOONPETAL,
+        TileType.ADDERSMEAT,
+        TileType.WOLFSBANE,
         TileType.MUSTARD_FLOWER,
       ]);
     }

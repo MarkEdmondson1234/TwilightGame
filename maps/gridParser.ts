@@ -103,6 +103,7 @@ export const GRID_CODES: Record<string, TileType> = {
   // Deep Forest plants
   a: TileType.MOONPETAL, // a = Moonpetal (night-blooming magical flower, deep forest only)
   "'": TileType.ADDERSMEAT, // ' = Addersmeat (night-blooming flower, moon magic, deep forest only)
+  '5': TileType.WOLFSBANE, // 5 = Wolfsbane (purple-hooded protective flower, 2x2 forageable plant)
   // Mushroom Forest plants
   '7': TileType.LUMINESCENT_TOADSTOOL, // 7 = Luminescent toadstool (glowing cyan mushrooms, mushroom forest only)
   '9': TileType.MUSHROOM_HOUSE, // 9 = Mushroom house (6x6 animated building, mushroom forest only)

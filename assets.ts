@@ -160,6 +160,8 @@ export const tileAssets = {
   addersmeat_spring_summer_night:
     '/TwilightGame/assets-optimized/tiles/deep_forest/addersmeat_spring-summer_night.png',
   addersmeat_autumn: '/TwilightGame/assets-optimized/tiles/deep_forest/addersmeat_autumn.png',
+  // Wolfsbane (2x2 forageable magical plant)
+  wolfsbane: '/TwilightGame/assets-optimized/tiles/wolfsbane.png',
   tree_mushrooms_spring_summer_autumn:
     '/TwilightGame/assets-optimized/tiles/deep_forest/tree_mushrooms_spring-summer-autumn.png',
   tree_mushrooms_winter:
@@ -320,6 +322,8 @@ export const magicalAssets = {
   luminescent_toadstool:
     '/TwilightGame/assets-optimized/items/magical/forageable/luminescent_toadstool_ingredient.png',
   eye_of_newt: '/TwilightGame/assets-optimized/items/magical/forageable/eye_of_newt.png',
+  wolfsbane_ingredient:
+    '/TwilightGame/assets-optimized/items/magical/forageable/wolfsbane_ingredient.png',
 };
 
 // Potion assets - Brewed magical potions (results from brewing recipes)

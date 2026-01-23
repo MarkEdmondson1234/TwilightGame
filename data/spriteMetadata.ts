@@ -179,6 +179,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 }, // Slight variation: 95% to 105%
   },
+  {
+    tileType: TileType.WOLFSBANE,
+    spriteWidth: 2, // 2 tiles wide
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: 0, // No horizontal offset (2x2 centered on anchor)
+    offsetY: -1, // Extends 1 tile upward from anchor
+    image: tileAssets.wolfsbane,
+    // Collision: walkable (no collision) - forageable plant
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 }, // Slight variation: 95% to 105%
+  },
   // ============================================
   // Common Forageable Plants (Multiple Maps)
   // ============================================

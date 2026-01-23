@@ -1341,6 +1341,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 20,
     buyPrice: 50,
+    image: magicalAssets.wolfsbane_ingredient,
+    forageSuccessRate: 0.7, // 70% success rate when foraging
   },
 
   phoenix_ash: {

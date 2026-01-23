@@ -575,6 +575,15 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 3x3 multi-tile sprite (see SPRITE_METADATA)
   },
+  [TileType.WOLFSBANE]: {
+    name: 'Wolfsbane',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - forageable plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // No time-of-day variation or seasonality for wolfsbane
+    image: [tileAssets.wolfsbane],
+    // 2x2 multi-tile sprite (see SPRITE_METADATA)
+  },
   // ============================================
   // Mushroom Forest Plants
   // ============================================
