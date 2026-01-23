@@ -93,6 +93,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   // Cooked Food
   food_tea: cookingAssets.cup_of_tea,
   food_french_toast: cookingAssets.french_toast,
+  food_pickled_onions: cookingAssets.pickled_onion,
   food_roast_dinner: cookingAssets.roast_dinner,
   food_cookies: cookingAssets.cookies,
   food_chocolate_cake: cookingAssets.chocolate_cake,
@@ -168,6 +169,7 @@ const ITEM_ICON_MAP: Record<string, string> = {
   // Cooked Food
   food_tea: '☕',
   food_french_toast: '🍞',
+  food_pickled_onions: '🧅',
   food_spaghetti: '🍝',
   food_pizza: '🍕',
   food_roast_dinner: '🍗',

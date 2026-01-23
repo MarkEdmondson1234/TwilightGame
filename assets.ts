@@ -252,8 +252,6 @@ export const farmingAssets = {
   plant_fairy_bluebell_adult: '/TwilightGame/assets-optimized/farming/fairy_bluebell_adult.png',
   plant_onion_young: '/TwilightGame/assets-optimized/farming/onion_young.png',
   plant_onion_adult: '/TwilightGame/assets-optimized/farming/onion_adult.png',
-  plant_pumpkin_young: '/TwilightGame/assets-optimized/farming/pumpkin_young.png',
-  plant_pumpkin_adult: '/TwilightGame/assets-optimized/farming/pumpkin_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
 };
 
@@ -263,6 +261,7 @@ export const cookingAssets = {
   cookies: '/TwilightGame/assets-optimized/cooking/cookies.png',
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png',
+  pickled_onion: '/TwilightGame/assets-optimized/cooking/pickled_onion.png',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
 };
 

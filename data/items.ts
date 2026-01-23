@@ -786,6 +786,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.cinnamon,
   },
 
+  pepper: {
+    id: 'pepper',
+    name: 'pepper',
+    displayName: 'Black Pepper',
+    category: ItemCategory.INGREDIENT,
+    description: 'Freshly ground black peppercorns. Adds a nice kick to dishes.',
+    stackable: true,
+    maxUses: 15,
+    sellPrice: 4,
+    buyPrice: 2,
+    // Note: No pepper sprite yet - add pepper.png to grocery folder
+  },
+
   // Proteins
   meat: {
     id: 'meat',
@@ -1026,6 +1039,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     image: cookingAssets.cup_of_tea,
+  },
+
+  food_pickled_onions: {
+    id: 'food_pickled_onions',
+    name: 'food_pickled_onions',
+    displayName: 'Pickled Onions',
+    category: ItemCategory.FOOD,
+    description: 'Sharp, tangy pickled onions. Perfect in sandwiches!',
+    stackable: true,
+    sellPrice: 15,
+    image: cookingAssets.pickled_onion,
   },
 
   food_french_toast: {

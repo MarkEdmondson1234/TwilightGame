@@ -72,6 +72,33 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     image: cookingAssets.cup_of_tea,
   },
 
+  pickled_onions: {
+    id: 'pickled_onions',
+    name: 'pickled_onions',
+    displayName: 'Pickled Onions',
+    category: 'starter',
+    description: 'Sharp, tangy pickled onions. The Witch\'s favourite sandwich ingredient!',
+    ingredients: [
+      { itemId: 'crop_onion', quantity: 4 },
+      { itemId: 'vinegar', quantity: 1 },
+      { itemId: 'water', quantity: 1 },
+      { itemId: 'sugar', quantity: 1 },
+      { itemId: 'pepper', quantity: 1 },
+    ],
+    cookingTime: 15,
+    difficulty: 1,
+    resultItemId: 'food_pickled_onions',
+    resultQuantity: 1,
+    friendshipValue: 10,
+    teacherNpc: 'witch',
+    image: cookingAssets.pickled_onion,
+    instructions: [
+      'Cut the onions into thin rings and put them in a clean glass jar.',
+      'Bring vinegar, water and sugar to the boil, and together with the pepper, pour it over the onions.',
+      'Store in a cool place.',
+    ],
+  },
+
   // ===== TUTORIAL RECIPES (Mother teaches) =====
 
   french_toast: {
