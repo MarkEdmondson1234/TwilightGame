@@ -105,6 +105,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   luminescent_toadstool: magicalAssets.luminescent_toadstool,
   eye_of_newt: magicalAssets.eye_of_newt,
   wolfsbane: magicalAssets.wolfsbane_ingredient,
+  shrinking_violet: magicalAssets.shrinking_violet_ingredient, // Item ID → Asset key
 
   // Potions (brewed via MagicManager)
   potion_friendship: potionAssets.friendship_elixir,

@@ -1321,6 +1321,85 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     };
   }
 
+  // Shrinking violet foraging - only in spring
+  const shrinkingVioletResult = findTileTypeNearby(
+    playerTileX,
+    playerTileY,
+    TileType.SHRINKING_VIOLET
+  );
+  const shrinkingVioletAnchor = shrinkingVioletResult.found ? shrinkingVioletResult.position : null;
+
+  if (shrinkingVioletAnchor) {
+    console.log(
+      `[Forage] Found shrinking violet anchor at (${shrinkingVioletAnchor.x}, ${shrinkingVioletAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
+    const { season } = TimeManager.getCurrentTime();
+
+    // Check if it's spring (only blooms in spring)
+    if (season !== Season.SPRING) {
+      return {
+        found: false,
+        message: 'The shrinking violets only bloom in spring. Come back next year!',
+      };
+    }
+
+    // Check cooldown at tile position
+    if (
+      gameState.isForageTileOnCooldown(
+        currentMapId,
+        shrinkingVioletAnchor.x,
+        shrinkingVioletAnchor.y,
+        TIMING.FORAGE_COOLDOWN_MS
+      )
+    ) {
+      return {
+        found: false,
+        message: `You've already searched this shrinking violet. Come back tomorrow!`,
+      };
+    }
+
+    const shrinkingViolet = getItem('shrinking_violet');
+    if (!shrinkingViolet) {
+      console.error('[Forage] Shrinking Violet item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (shrinking_violet has forageSuccessRate: 0.7)
+    const successRate = shrinkingViolet.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position
+      gameState.recordForage(currentMapId, shrinkingVioletAnchor.x, shrinkingVioletAnchor.y);
+      return {
+        found: false,
+        message: 'You search the shrinking violets, but find none ready for harvesting.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const rand = Math.random();
+    const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
+
+    // Add to inventory
+    inventoryManager.addItem('shrinking_violet', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${shrinkingViolet.displayName} from shrinking violet in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown at ANCHOR position
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, shrinkingVioletAnchor.x, shrinkingVioletAnchor.y);
+
+    return {
+      found: true,
+      seedId: 'shrinking_violet', // Reuse field for item ID
+      seedName: shrinkingViolet.displayName,
+      message: `Found ${quantityFound} ${shrinkingViolet.displayName}!`,
+    };
+  }
+
   // Forest foraging (existing logic)
   if (!currentMapId.startsWith('forest') && currentMapId !== 'deep_forest') {
     return { found: false, message: 'Nothing to forage here.' };
@@ -2218,7 +2297,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower)
+    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet)
     if (!canForage) {
       canForage = hasTileTypeNearby(tileX, tileY, [
         TileType.BEE_HIVE,
@@ -2227,6 +2306,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         TileType.ADDERSMEAT,
         TileType.WOLFSBANE,
         TileType.MUSTARD_FLOWER,
+        TileType.SHRINKING_VIOLET,
       ]);
     }
 

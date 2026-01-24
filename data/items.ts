@@ -1300,6 +1300,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 35,
+    buyPrice: 75, // Purchase price from witch shop (higher than sell)
+    image: magicalAssets.shrinking_violet_ingredient, // Sprite reference
+    forageSuccessRate: 0.7, // 70% success rate when foraging
   },
 
   giant_mushroom_cap: {

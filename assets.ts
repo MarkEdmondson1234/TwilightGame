@@ -178,6 +178,7 @@ export const tileAssets = {
   mushroom_cluster: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom.png',
   // Common forageable plants
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',
+  shrinking_violet: '/TwilightGame/assets-optimized/tiles/forest/shrinking_violet.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
   // Cauldron animation frames
@@ -324,6 +325,8 @@ export const magicalAssets = {
   eye_of_newt: '/TwilightGame/assets-optimized/items/magical/forageable/eye_of_newt.png',
   wolfsbane_ingredient:
     '/TwilightGame/assets-optimized/items/magical/forageable/wolfsbane_ingredient.png',
+  shrinking_violet_ingredient:
+    '/TwilightGame/assets-optimized/items/magical/forageable/shrinking_violet_ingredient.png',
 };
 
 // Potion assets - Brewed magical potions (results from brewing recipes)

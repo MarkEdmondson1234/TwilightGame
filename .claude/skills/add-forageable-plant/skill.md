@@ -9,6 +9,8 @@ Add new forageable plants (like moonpetal, addersmeat, or luminescent toadstool)
 
 ## Quick Start
 
+**CRITICAL FIRST STEP:** Run `npm run optimize-assets` BEFORE coding to optimize uploaded sprites.
+
 **The Eight-Location Pattern (CRITICAL):**
 
 Every forageable plant requires setup in **eight locations**:
@@ -22,8 +24,10 @@ Every forageable plant requires setup in **eight locations**:
 7. **`data/items.ts`** - Add foraged item definition with `forageSuccessRate`
 8. **`utils/inventoryUIHelper.ts`** - Map sprite for inventory UI (CRITICAL)
 
-**Plus foraging logic in:**
-9. **`utils/actionHandlers.ts`** - Add to cooldown check, foraging handler, and interaction detection
+**Plus foraging logic in `utils/actionHandlers.ts` (CRITICAL - 3 locations):**
+9a. **Add to forageable tiles list** in `getAvailableInteractions()` - Makes radial menu appear
+9b. **Add foraging handler** - Handles the actual foraging logic
+9c. **Add to cooldown check** - Prevents re-foraging same day
 
 ## When to Use This Skill
 
@@ -221,26 +225,45 @@ luminescent_toadstool: magicalAssets.luminescent_toadstool, // ← Add this!
 
 **Without this step, the item shows as an emoji in inventory!**
 
-### Phase 10: Add Foraging Logic
+### Phase 10: Run Asset Optimization (CRITICAL - DO THIS FIRST)
+
+```bash
+npm run optimize-assets
+```
+
+This optimizes:
+- Tile sprites → `/public/assets-optimized/tiles/`
+- Inventory sprites → `/public/assets-optimized/items/magical/forageable/`
+
+**Always run BEFORE adding code references to these assets!**
+
+### Phase 11: Add Foraging Logic
 
 **File:** `utils/actionHandlers.ts`
 
-**10a. Add to cooldown check (around line 782):**
+**CRITICAL:** Three locations must be updated in this file:
 
-Find the multi-tile cooldown check loop and add your tile type:
+**11a. Add to forageable tiles list in `getAvailableInteractions()` (around line 2302):**
+
+Find the `hasTileTypeNearby()` check and add your tile type:
 
 ```typescript
-if (
-  checkTile?.type === TileType.MOONPETAL ||
-  checkTile?.type === TileType.ADDERSMEAT ||
-  checkTile?.type === TileType.LUMINESCENT_TOADSTOOL // ← Add this!
-) {
-  cooldownCheckPos = { x: checkX, y: checkY };
-  break;
+// Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower)
+if (!canForage) {
+  canForage = hasTileTypeNearby(tileX, tileY, [
+    TileType.BEE_HIVE,
+    TileType.LUMINESCENT_TOADSTOOL, // ← Add your tile here!
+    TileType.MOONPETAL,
+    TileType.ADDERSMEAT,
+    TileType.WOLFSBANE,
+    TileType.MUSTARD_FLOWER,
+  ]);
 }
 ```
 
-**10b. Add foraging handler (after addersmeat handler, before bee hive):**
+**WITHOUT THIS STEP, THE RADIAL MENU WON'T APPEAR!** This is the most common bug.
+
+**11b. Add foraging handler (in `handleForageAction`, after addersmeat, before bee hive):**
 
 ```typescript
 // Luminescent toadstool foraging (mushroom forest exclusive)
@@ -310,33 +333,20 @@ if (toadstoolAnchor) {
 }
 ```
 
-**10c. Add interaction detection (in `getAvailableInteractions`, around line 2138):**
+**11c. Add to cooldown check (around line 782):**
+
+Find the multi-tile cooldown check loop and add your tile type:
 
 ```typescript
-// Luminescent toadstool foraging - check if within 3x3 area
-for (let dy = -1; dy <= 1 && !canForage; dy++) {
-  for (let dx = -1; dx <= 1; dx++) {
-    const checkX = tileX + dx;
-    const checkY = tileY + dy;
-    const checkTile = getTileData(checkX, checkY);
-
-    if (checkTile?.type === TileType.LUMINESCENT_TOADSTOOL) {
-      canForage = true;
-      break;
-    }
-  }
+if (
+  checkTile?.type === TileType.MOONPETAL ||
+  checkTile?.type === TileType.ADDERSMEAT ||
+  checkTile?.type === TileType.LUMINESCENT_TOADSTOOL // ← Add this!
+) {
+  cooldownCheckPos = { x: checkX, y: checkY };
+  break;
 }
 ```
-
-### Phase 11: Run Optimization
-
-```bash
-npm run optimize-assets
-```
-
-This optimizes:
-- Tile sprites → `/public/assets-optimized/tiles/`
-- Inventory sprites → `/public/assets-optimized/items/magical/forageable/`
 
 ### Phase 12: Validate
 
@@ -346,7 +356,28 @@ npx tsc --noEmit
 
 Fix any TypeScript errors before testing.
 
-### Phase 13: Test in Game
+### Phase 13: Add to Procedural Generation (Optional)
+
+**File:** `maps/procedural.ts`
+
+If the plant should appear in procedurally generated maps, add spawn logic:
+
+```typescript
+// Add luminescent toadstools to mushroom forest
+for (let i = 0; i < 8; i++) {
+  const x = Math.floor(Math.random() * (width - 2)) + 1;
+  const y = Math.floor(Math.random() * (height - 2)) + 1;
+  const dx = Math.abs(x - spawnX);
+  const dy = Math.abs(y - spawnY);
+  if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+    map[y][x] = TileType.LUMINESCENT_TOADSTOOL;
+  }
+}
+```
+
+Adjust the loop count (`8`) based on desired rarity.
+
+### Phase 14: Test in Game
 
 1. **Place the plant on a map** using the grid code (e.g., `7`)
 2. **Walk to the plant** and click to see "Forage" option
@@ -400,12 +431,22 @@ if (timeOfDay !== 'Night') {
 **Cause:** Missing `ITEM_SPRITE_MAP` entry in `inventoryUIHelper.ts`
 **Fix:** Add `your_item: magicalAssets.your_item` to the map
 
-### Issue: Can't forage the plant
-**Cause:** Missing interaction detection or foraging handler
-**Fix:** Check all three locations in `actionHandlers.ts`:
-1. Cooldown check (line ~782)
-2. Foraging handler (line ~1074+)
-3. Interaction detection in `getAvailableInteractions` (line ~2138)
+### Issue: Can't forage the plant / No radial menu appears
+**Cause:** Missing from forageable tiles list in `getAvailableInteractions()`
+**Fix:** THIS IS THE #1 BUG! Add tile type to the `hasTileTypeNearby()` array around line 2302:
+```typescript
+canForage = hasTileTypeNearby(tileX, tileY, [
+  TileType.BEE_HIVE,
+  TileType.YOUR_PLANT, // ← Add here!
+  TileType.MOONPETAL,
+  // ...
+]);
+```
+
+Also check all three locations in `actionHandlers.ts`:
+1. **Forageable tiles list** in `getAvailableInteractions()` (line ~2302) - MOST CRITICAL
+2. **Foraging handler** in `handleForageAction()` (line ~1074+)
+3. **Cooldown check** (line ~782)
 
 ### Issue: TypeScript error "Type 'string' not assignable to 'string[]'"
 **Cause:** `image` property in tiles.ts must be an array
@@ -417,17 +458,20 @@ if (timeOfDay !== 'Night') {
 
 ## Files Modified Summary
 
-| File | Purpose |
-|------|---------|
-| `types/core.ts` | TileType enum |
-| `maps/gridParser.ts` | Grid character code |
-| `assets.ts` | Tile + inventory sprite paths |
-| `data/tiles.ts` | TILE_LEGEND rendering config |
-| `data/spriteMetadata.ts` | Multi-tile sprite size/offset |
-| `utils/ColorResolver.ts` | Background colour mapping |
-| `data/items.ts` | Foraged item definition |
-| `utils/inventoryUIHelper.ts` | Inventory sprite mapping |
-| `utils/actionHandlers.ts` | Foraging logic (3 locations) |
+| File | Purpose | Line # |
+|------|---------|--------|
+| `types/core.ts` | TileType enum | ~138 |
+| `maps/gridParser.ts` | Grid character code | ~113 |
+| `assets.ts` | Tile + inventory sprite paths | ~180, ~327 |
+| `data/tiles.ts` | TILE_LEGEND rendering config | ~655 |
+| `data/spriteMetadata.ts` | Multi-tile sprite size/offset | ~223 |
+| `utils/ColorResolver.ts` | Background colour mapping | ~87 |
+| `data/items.ts` | Foraged item definition | ~1332 |
+| `utils/inventoryUIHelper.ts` | Inventory sprite mapping | ~107 |
+| `utils/actionHandlers.ts` | **Forageable tiles list** (CRITICAL) | **~2302** |
+| `utils/actionHandlers.ts` | Foraging handler | ~1323 |
+| `utils/actionHandlers.ts` | Cooldown check | ~782 |
+| `maps/procedural.ts` | (Optional) Procedural spawning | ~516 |
 
 ## Example Plants for Reference
 
@@ -440,6 +484,7 @@ if (timeOfDay !== 'Night') {
 
 ## Checklist
 
+- [ ] **0. Run `npm run optimize-assets` FIRST** - Optimize uploaded sprites
 - [ ] 1. Add TileType enum in `types/core.ts`
 - [ ] 2. Add grid code in `maps/gridParser.ts`
 - [ ] 3. Add tile sprite in `assets.ts` (tileAssets)
@@ -449,9 +494,9 @@ if (timeOfDay !== 'Night') {
 - [ ] 7. Add ColorResolver mapping in `utils/ColorResolver.ts`
 - [ ] 8. Add item definition in `data/items.ts` (with forageSuccessRate)
 - [ ] 9. Add inventory UI mapping in `utils/inventoryUIHelper.ts`
-- [ ] 10a. Add to cooldown check in `actionHandlers.ts`
-- [ ] 10b. Add foraging handler in `actionHandlers.ts`
-- [ ] 10c. Add interaction detection in `actionHandlers.ts`
-- [ ] 11. Run `npm run optimize-assets`
-- [ ] 12. Run `npx tsc --noEmit`
+- [ ] **10a. Add to forageable tiles list in `getAvailableInteractions()` - CRITICAL!**
+- [ ] 10b. Add foraging handler in `handleForageAction()`
+- [ ] 10c. Add to cooldown check in `handleForageAction()`
+- [ ] 11. (Optional) Add to procedural generation in `maps/procedural.ts`
+- [ ] 12. Run `npx tsc --noEmit` to validate
 - [ ] 13. Test in game (place on map, forage, check inventory)

@@ -136,6 +136,7 @@ export enum TileType {
   MUSHROOM_CLUSTER, // Decorative 2x2 mushroom cluster (appears in mushroom forest and procedural forests)
   // Common forageable plants (appear on multiple maps)
   MUSTARD_FLOWER, // Yellow mustard flower (3x3, blooms spring/summer, dormant autumn/winter)
+  SHRINKING_VIOLET, // Purple shrinking violet (1x1, blooms spring only)
   // Utility tiles
   INVISIBLE_WALL, // Blocks movement but renders as transparent (invisible boundary)
 }

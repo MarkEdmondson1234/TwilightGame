@@ -652,6 +652,21 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 3x3 multi-tile sprite (see SPRITE_METADATA)
   },
+  [TileType.SHRINKING_VIOLET]: {
+    name: 'Shrinking Violet',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - forageable plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // Blooms spring only, dormant other seasons (yields Shrinking Violet ingredient)
+    seasonalImages: {
+      spring: [tileAssets.shrinking_violet],
+      summer: [], // Dormant - no sprite shown
+      autumn: [], // Dormant - no sprite shown
+      winter: [], // Dormant - no sprite shown
+      default: [], // Hidden by default (spring-exclusive)
+    },
+    // 1x1 single-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending

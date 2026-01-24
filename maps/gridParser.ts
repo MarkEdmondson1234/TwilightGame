@@ -111,6 +111,7 @@ export const GRID_CODES: Record<string, TileType> = {
   '¤': TileType.MUSHROOM_CLUSTER, // ¤ = Mushroom cluster (2x2 decorative mushrooms, mushroom forest and procedural forests)
   // Common forageable plants
   '8': TileType.MUSTARD_FLOWER, // 8 = Mustard flower (common yellow flower, blooms spring/summer)
+  '±': TileType.SHRINKING_VIOLET, // ± = Shrinking violet (purple spring flower)
   // Buildings (outdoor structures)
   L: TileType.WALL_BOUNDARY, // L = waLl boundary (brick walls)
   B: TileType.BUILDING_WALL, // B = Building wall
