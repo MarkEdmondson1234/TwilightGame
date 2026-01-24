@@ -1055,7 +1055,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Wolfsbane foraging (2x2 forageable plant)
-  // No time-of-day or seasonal restrictions - can be foraged anytime
+  // Seasonal restriction: dormant in winter
   const wolfsbaneResult = findTileTypeNearby(playerTileX, playerTileY, TileType.WOLFSBANE);
   const wolfsbaneAnchor = wolfsbaneResult.found ? wolfsbaneResult.position : null;
 
@@ -1063,6 +1063,15 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     console.log(
       `[Forage] Found wolfsbane anchor at (${wolfsbaneAnchor.x}, ${wolfsbaneAnchor.y}), player at (${playerTileX}, ${playerTileY})`
     );
+    const { season } = TimeManager.getCurrentTime();
+
+    // Check if it's winter (wolfsbane is dormant underground)
+    if (season === Season.WINTER) {
+      return {
+        found: false,
+        message: 'The wolfsbane is dormant underground. It only emerges in spring, summer, and autumn.',
+      };
+    }
 
     const wolfsbane = getItem('wolfsbane');
     if (!wolfsbane) {

@@ -580,8 +580,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage', // Base grass color for blending
     collisionType: CollisionType.WALKABLE, // Walkable - forageable plant
     baseType: TileType.GRASS, // Render grass underneath
-    // No time-of-day variation or seasonality for wolfsbane
-    image: [tileAssets.wolfsbane],
+    // Seasonal variation: visible spring/summer/autumn, dormant in winter
+    seasonalImages: {
+      spring: [tileAssets.wolfsbane],
+      summer: [tileAssets.wolfsbane],
+      autumn: [tileAssets.wolfsbane],
+      winter: [], // Dormant - underground, no sprite shown
+      default: [tileAssets.wolfsbane],
+    },
     // 2x2 multi-tile sprite (see SPRITE_METADATA)
   },
   // ============================================
