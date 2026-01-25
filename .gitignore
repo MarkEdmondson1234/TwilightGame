@@ -26,3 +26,6 @@ dist-ssr
 *.sln
 *.sw?
 perf-screenshot.png
+perf-*.json
+perf-report.md
+regression-detected
