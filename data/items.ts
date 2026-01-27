@@ -795,8 +795,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxUses: 15,
     sellPrice: 4,
-    buyPrice: 2,
-    // Note: No pepper sprite yet - add pepper.png to grocery folder
+    buyPrice: 8,
+    image: groceryAssets.pepper,
   },
 
   // Proteins
@@ -1395,6 +1395,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 3,
     buyPrice: 8,
+    image: groceryAssets.vinegar,
   },
 
   mint: {

@@ -76,6 +76,8 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   strawberry_jam: groceryAssets.strawberry_jam,
   cheese: groceryAssets.cheese,
   almonds: groceryAssets.almonds,
+  pepper: groceryAssets.pepper,
+  vinegar: groceryAssets.vinegar,
 
   // Crops
   crop_radish: itemAssets.radishes,

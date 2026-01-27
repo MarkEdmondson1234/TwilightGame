@@ -312,6 +312,12 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     sellPrice: 6,
     stock: 'unlimited',
   },
+  {
+    itemId: 'pepper',
+    buyPrice: 8,
+    sellPrice: 4,
+    stock: 'unlimited',
+  },
 
   // Baking ingredients
   {
@@ -348,6 +354,12 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
   },
   {
     itemId: 'gravy',
+    buyPrice: 8,
+    sellPrice: 3,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'vinegar',
     buyPrice: 8,
     sellPrice: 3,
     stock: 'unlimited',
