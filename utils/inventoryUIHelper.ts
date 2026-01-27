@@ -41,6 +41,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   seed_fairy_bluebell: itemAssets.fairy_bluebell_seeds,
   seed_onion: groceryAssets.onion_sets,
   seed_pumpkin: groceryAssets.pumpkin_seeds,
+  seed_chili: groceryAssets.chili_seeds,
 
   // Grocery items (cooking ingredients)
   butter: groceryAssets.butter,
@@ -91,6 +92,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_broccoli: groceryAssets.broccoli_head,
   crop_onion: groceryAssets.onion_bunch,
   crop_pumpkin: groceryAssets.pumpkin,
+  crop_chili: groceryAssets.chili_crop,
 
   // Cooked Food
   food_tea: cookingAssets.cup_of_tea,
@@ -149,7 +151,6 @@ export function registerItemSprite(itemId: string, imageUrl: string): void {
 const ITEM_ICON_MAP: Record<string, string> = {
   // Seeds (items without sprites)
   seed_corn: '🌽',
-  seed_chili: '🌶️',
   seed_cauliflower: '🥬',
   seed_pea: '🫛',
   seed_wild_strawberry: '🍓',
@@ -157,7 +158,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
   // Crops (items without sprites)
   crop_corn: '🌽',
   crop_potato: '🥔',
-  crop_chili: '🌶️',
   crop_cauliflower: '🥬',
   crop_sunflower: '🌻',
   crop_pea: '🫛',
