@@ -49,6 +49,11 @@ You start at home with your Mum. Here's what to explore:
 - **Calendar** - Shows season, day, and year
 - **Location** - Current map name
 
+**Bottom Center:**
+- **Quick Slot Bar** - Shows your first 9 inventory items
+- Click slots to select items, or use number keys 1-9
+- Selected slot has a yellow border
+
 **Bottom Right:**
 - **Inventory** - Click the satchel to open your inventory
 - **Collision** - Developer toggle (ignore this)
@@ -83,11 +88,41 @@ Hover over the clock or calendar for more details!
 
 ### Your Inventory
 
-Click the **satchel** (bottom right) to open your inventory:
+Click the **satchel** (bottom right) or press **I** to open your inventory:
 
 - **Seeds** - Different crop types to plant
 - **Crops** - Harvested produce to sell
 - **Tools** - Hoe, Watering Can, etc.
+
+#### Quick Slots (1-9 Keys)
+
+The first 9 items in your inventory are **quick slots** - you can press number keys **1-9** to instantly select them.
+
+**Quick Slot Bar** (always visible at bottom center):
+- Shows your first 9 inventory items
+- Click any slot to select/equip that item
+- Selected slot has a yellow border
+- Each slot shows the slot number (1-9)
+
+#### Organizing Your Inventory
+
+You can rearrange your entire inventory to customize which items appear in quick slots:
+
+**Desktop:**
+- Open inventory (I key)
+- **Drag and drop** items to reorder them
+- Drag any item to any slot to swap positions
+
+**Touch/iPad:**
+- Open inventory (I button)
+- **Tap first item** - amber glow appears (selected for swap)
+- **Tap second item** - items swap positions
+- Tap same item again to deselect
+
+**Tips:**
+- Put your most-used items in the first 9 slots for quick access
+- Use number keys 1-9 to switch between tools and seeds quickly
+- Reorganize anytime - changes save automatically
 
 ## Meeting the Villagers
 
@@ -115,6 +150,8 @@ To enable AI chat:
 | WASD / Arrows | Move |
 | E / Enter | Interact |
 | F | Forage |
+| I | Open Inventory |
+| 1-9 | Select Quick Slots |
 | F1 | Help Browser |
 | F3 | Debug Overlay |
 | ESC | Close menus |

@@ -94,13 +94,15 @@ export async function initializeGame(
   const savedInventory = characterData.loadInventory();
   const items = savedInventory?.items || [];
   const tools = savedInventory?.tools || [];
+  const slotOrder = savedInventory?.slotOrder;
   console.log('[gameInitializer] Loading inventory from saved state:', {
     items,
     tools,
+    slotOrder: slotOrder?.length ?? 0,
   });
 
   if (items.length > 0 || tools.length > 0) {
-    inventoryManager.loadInventory(items, tools);
+    inventoryManager.loadInventory(items, tools, slotOrder);
     console.log(`[gameInitializer] Loaded inventory: ${items.length} items, ${tools.length} tools`);
   } else {
     // First time: initialize with starter items

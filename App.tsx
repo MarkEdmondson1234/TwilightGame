@@ -55,6 +55,7 @@ import TileRenderer from './components/TileRenderer';
 import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
 import Inventory, { InventoryItem } from './components/Inventory';
+import QuickSlotBar from './components/QuickSlotBar';
 import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
@@ -841,6 +842,12 @@ const App: React.FC = () => {
     [magicEffectCallbacks]
   );
 
+  // Handle inventory reorder (drag-drop)
+  const handleInventoryReorder = useCallback((fromIndex: number, toIndex: number) => {
+    inventoryManager.swapInventoryItems(fromIndex, toIndex);
+    // EventBus will trigger inventory update automatically
+  }, []);
+
   // Get player sprite info (URL and scale, plus flip for fairy form)
   const { playerSpriteUrl, spriteScale, shouldFlip } = getPlayerSpriteInfo(
     playerSprites,
@@ -1273,6 +1280,13 @@ const App: React.FC = () => {
             }
           />
 
+          {/* Quick Slot Bar - Always visible at bottom center */}
+          <QuickSlotBar
+            items={inventoryItems.slice(0, 9)}
+            selectedSlot={selectedItemSlot}
+            onSlotClick={setSelectedItemSlot}
+          />
+
           {/* Bookshelf UI - Recipe book shortcuts */}
           <Bookshelf
             isTouchDevice={isTouchDevice}
@@ -1449,6 +1463,7 @@ const App: React.FC = () => {
           isOpen={ui.inventory}
           onClose={() => closeUI('inventory')}
           items={inventoryItems}
+          onReorder={handleInventoryReorder}
           selectedSlot={selectedItemSlot}
           onItemClick={(item, slotIndex) => {
             const itemDef = getItem(item.id);
@@ -1556,12 +1571,15 @@ const App: React.FC = () => {
             }
 
             // Update InventoryManager with new inventory (triggers EventBus INVENTORY_CHANGED)
+            // Preserve current slot order for items that remain after shop transaction
             const currentTools = gameState.getState().inventory.tools;
-            inventoryManager.loadInventory(newInventory, currentTools);
+            const currentSlotOrder = inventoryManager.getSlotOrder();
+            inventoryManager.loadInventory(newInventory, currentTools, currentSlotOrder);
             console.log('[App] Updated InventoryManager with new inventory');
 
             // Save to GameState using CharacterData API
-            characterData.saveInventory(newInventory, currentTools);
+            const updatedSlotOrder = inventoryManager.getSlotOrder();
+            characterData.saveInventory(newInventory, currentTools, updatedSlotOrder);
             console.log('[App] Saved inventory to GameState');
           }}
         />

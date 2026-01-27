@@ -74,6 +74,7 @@ export interface FarmingData {
 export interface InventoryData {
   items: Array<{ itemId: string; quantity: number }>;
   tools: string[];
+  slotOrder?: string[]; // Optional for backwards compatibility with old saves
 }
 
 export interface MagicData {
@@ -283,8 +284,12 @@ class CharacterDataManager {
    * Save inventory (convenience method)
    * Use this instead of gameState.saveInventory() directly
    */
-  saveInventory(items: Array<{ itemId: string; quantity: number }>, tools: string[]): boolean {
-    return this.save('inventory', { items, tools });
+  saveInventory(
+    items: Array<{ itemId: string; quantity: number }>,
+    tools: string[],
+    slotOrder?: string[]
+  ): boolean {
+    return this.save('inventory', { items, tools, slotOrder });
   }
 
   /**

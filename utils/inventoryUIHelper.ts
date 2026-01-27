@@ -199,9 +199,11 @@ function getItemIcon(itemId: string): string {
 
 /**
  * Convert inventory data from InventoryManager to UI format
+ * Uses slotOrder to maintain user-defined item arrangement
  */
 export function convertInventoryToUI(): UIInventoryItem[] {
   const allItems = inventoryManager.getAllItems();
+  const slotOrder = inventoryManager.getSlotOrder();
 
   // Group items by itemId and sum their uses
   const itemMap = new Map<string, { totalUses: number; itemDef: any }>();
@@ -223,16 +225,38 @@ export function convertInventoryToUI(): UIInventoryItem[] {
     }
   });
 
-  // Convert to UI format
-  return Array.from(itemMap.entries()).map(([itemId, { totalUses, itemDef }]) => {
-    return {
-      id: itemId,
-      name: itemDef.displayName,
-      icon: getItemIcon(itemId),
-      quantity: totalUses,
-      value: itemDef.sellPrice || 0,
-    };
-  });
+  // Convert to UI format using slotOrder for display order
+  // This preserves user-defined item arrangement from drag-drop
+  const result: UIInventoryItem[] = [];
+
+  for (const itemId of slotOrder) {
+    const itemData = itemMap.get(itemId);
+    if (itemData) {
+      result.push({
+        id: itemId,
+        name: itemData.itemDef.displayName,
+        icon: getItemIcon(itemId),
+        quantity: itemData.totalUses,
+        value: itemData.itemDef.sellPrice || 0,
+      });
+    }
+  }
+
+  // Add any items not in slotOrder (shouldn't happen, but safety net)
+  for (const [itemId, { totalUses, itemDef }] of itemMap.entries()) {
+    if (!slotOrder.includes(itemId)) {
+      console.warn(`[InventoryUIHelper] Item ${itemId} not in slotOrder, appending`);
+      result.push({
+        id: itemId,
+        name: itemDef.displayName,
+        icon: getItemIcon(itemId),
+        quantity: totalUses,
+        value: itemDef.sellPrice || 0,
+      });
+    }
+  }
+
+  return result;
 }
 
 /**

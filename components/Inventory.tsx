@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { getItem } from '../data/items';
 import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
+import { useTouchDevice } from '../hooks/useTouchDevice';
 
 export interface InventoryItem {
   id: string;
@@ -16,6 +17,7 @@ interface InventoryProps {
   onClose: () => void;
   items: InventoryItem[];
   onItemClick?: (item: InventoryItem, slotIndex: number) => void;
+  onReorder?: (fromIndex: number, toIndex: number) => void; // NEW: Callback when items reordered
   selectedSlot?: number | null; // Currently selected slot index
   maxSlots?: number;
   title?: string;
@@ -33,10 +35,23 @@ const Inventory: React.FC<InventoryProps> = ({
   onClose,
   items,
   onItemClick,
+  onReorder,
   selectedSlot = null,
   maxSlots, // Optional prop - if provided, limits capacity; otherwise unlimited
   title = 'Inventory',
 }) => {
+  // Drag-drop state for desktop
+  const [dragState, setDragState] = useState<{
+    fromIndex: number;
+    itemId: string;
+  } | null>(null);
+
+  // Touch swap state for mobile/iPad
+  const [swapSelectedIndex, setSwapSelectedIndex] = useState<number | null>(null);
+
+  // Detect touch device
+  const isTouchDevice = useTouchDevice();
+
   if (!isOpen) return null;
 
   // Calculate dynamic slot count for unlimited inventory
@@ -65,9 +80,59 @@ const Inventory: React.FC<InventoryProps> = ({
   });
 
   const handleSlotClick = (item: InventoryItem | null, index: number) => {
+    // Original click handler (for item selection/use)
     if (item && onItemClick) {
       onItemClick(item, index);
     }
+
+    // Touch swap logic (only on touch devices)
+    if (!isTouchDevice) return;
+
+    if (swapSelectedIndex === null) {
+      // First tap: select for swap (only if slot has item)
+      if (item) {
+        setSwapSelectedIndex(index);
+      }
+    } else if (swapSelectedIndex === index) {
+      // Same slot: deselect
+      setSwapSelectedIndex(null);
+    } else {
+      // Different slot: swap
+      onReorder?.(swapSelectedIndex, index);
+      setSwapSelectedIndex(null);
+    }
+  };
+
+  // Desktop drag-drop handlers
+  const handleDragStart = (e: React.DragEvent, index: number, item: InventoryItem | null) => {
+    if (!item) return; // Can't drag empty slots
+    setDragState({ fromIndex: index, itemId: item.id });
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (!dragState) return;
+
+    const fromIndex = dragState.fromIndex;
+    if (fromIndex === targetIndex) {
+      setDragState(null);
+      return; // No-op if dropped on same slot
+    }
+
+    // Notify parent to reorder inventory
+    onReorder?.(fromIndex, targetIndex);
+    setDragState(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragState(null); // Clean up if drag cancelled
   };
 
   return (
@@ -97,6 +162,8 @@ const Inventory: React.FC<InventoryProps> = ({
               const isQuickSlot = index < 9;
               const isEmpty = item === null;
               const isSelected = selectedSlot === index;
+              const isDragging = dragState?.fromIndex === index;
+              const isSwapSelected = swapSelectedIndex === index;
 
               // Get full item definition for tooltip
               const itemDef = item ? getItem(item.id) : null;
@@ -111,19 +178,26 @@ const Inventory: React.FC<InventoryProps> = ({
               const slotButton = (
                 <button
                   key={index}
+                  draggable={!isEmpty && !isTouchDevice} // Only draggable on desktop if slot has item
+                  onDragStart={(e) => handleDragStart(e, index, item)}
+                  onDragOver={handleDragOver}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
                   onClick={() => handleSlotClick(item, index)}
                   className={`
                     relative w-full aspect-square rounded-lg transition-all
-                    ${isSelected
+                    ${isDragging ? 'opacity-50 cursor-grabbing' : ''}
+                    ${isSwapSelected ? 'border-4 border-amber-400 shadow-lg shadow-amber-500/50' : ''}
+                    ${dragState && !isDragging ? 'border-green-500 border-dashed' : ''}
+                    ${isSelected && !isSwapSelected
                       ? 'border-4 border-yellow-400 bg-yellow-900/60 shadow-lg shadow-yellow-500/50'
-                      : `border-2 ${isQuickSlot
+                      : `border-2 ${isQuickSlot && !isSwapSelected
                         ? 'bg-purple-900/40 border-purple-500 hover:bg-purple-800/60'
-                        : 'bg-amber-950/40 border-amber-700 hover:bg-amber-900/60'
+                        : !isSwapSelected ? 'bg-amber-950/40 border-amber-700 hover:bg-amber-900/60' : ''
                       }`
                     }
-                    ${isEmpty ? 'cursor-default' : 'cursor-pointer'}
+                    ${isEmpty ? 'cursor-default' : isDragging ? '' : 'cursor-pointer'}
                   `}
-                  disabled={isEmpty}
                 >
                   {/* Item Icon */}
                   {item && (
@@ -181,6 +255,13 @@ const Inventory: React.FC<InventoryProps> = ({
           <p className="text-xs text-amber-400 mt-1">
             First 9 slots are quick slots (1-9 keys)
           </p>
+          {onReorder && (
+            <p className="text-xs text-amber-400 mt-1">
+              {isTouchDevice
+                ? 'Tap two items to swap positions'
+                : 'Drag items to reorder'}
+            </p>
+          )}
         </div>
       </div>
     </div>

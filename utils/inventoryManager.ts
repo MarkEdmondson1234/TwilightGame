@@ -25,6 +25,7 @@ export interface InventoryItem {
 class InventoryManager {
   private items: Map<string, InventoryItem[]> = new Map(); // itemId -> array of item instances
   private tools: Set<string> = new Set(); // tool IDs owned
+  private slotOrder: string[] = []; // Tracks visual order of itemIds for UI display
 
   /**
    * Save inventory to game state and emit EventBus event for UI updates
@@ -32,7 +33,7 @@ class InventoryManager {
    */
   private saveToGameState(): void {
     const data = this.getInventoryData();
-    characterData.saveInventory(data.items, data.tools);
+    characterData.saveInventory(data.items, data.tools, data.slotOrder);
     // Emit event for UI components to update
     eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
   }
@@ -49,7 +50,12 @@ class InventoryManager {
 
     // Tools are tracked separately (owned/not owned)
     if (item.category === ItemCategory.TOOL) {
+      const isNew = !this.tools.has(itemId);
       this.tools.add(itemId);
+      // Add to slot order if this is a new item type
+      if (isNew && !this.slotOrder.includes(itemId)) {
+        this.slotOrder.push(itemId);
+      }
       console.log(`[InventoryManager] Acquired tool: ${item.displayName}`);
       this.saveToGameState();
       return true;
@@ -119,7 +125,15 @@ class InventoryManager {
       }
     }
 
+    // Check if this is a new item type
+    const isNewItemType = !this.items.has(itemId);
     this.items.set(itemId, instances);
+
+    // Add to slot order if this is a new item type
+    if (isNewItemType && !this.slotOrder.includes(itemId)) {
+      this.slotOrder.push(itemId);
+    }
+
     const totalQuantity = instances.reduce((sum, inst) => sum + (inst.quantity || 1), 0);
     const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
     console.log(
@@ -222,6 +236,11 @@ class InventoryManager {
     // Update or remove from map
     if (instances.length === 0) {
       this.items.delete(itemId);
+      // Remove from slot order when item type is completely gone
+      const slotIndex = this.slotOrder.indexOf(itemId);
+      if (slotIndex !== -1) {
+        this.slotOrder.splice(slotIndex, 1);
+      }
     } else {
       this.items.set(itemId, instances);
     }
@@ -392,6 +411,35 @@ class InventoryManager {
   }
 
   /**
+   * Swap two items in inventory (for drag-drop reordering)
+   * Swaps positions in the slotOrder array which controls UI display order
+   * @param fromIndex - Source slot index (UI position)
+   * @param toIndex - Target slot index (UI position)
+   */
+  swapInventoryItems(fromIndex: number, toIndex: number): void {
+    // Validate indices against slotOrder (UI display order)
+    if (fromIndex < 0 || fromIndex >= this.slotOrder.length || toIndex < 0 || toIndex >= this.slotOrder.length) {
+      console.warn('[InventoryManager] Swap failed: invalid indices', { fromIndex, toIndex, slotOrderLength: this.slotOrder.length });
+      return;
+    }
+
+    // Swap positions in slotOrder
+    const temp = this.slotOrder[fromIndex];
+    this.slotOrder[fromIndex] = this.slotOrder[toIndex];
+    this.slotOrder[toIndex] = temp;
+
+    this.saveToGameState();
+  }
+
+  /**
+   * Get the slot order for UI display
+   * Returns array of itemIds in the order they should be displayed
+   */
+  getSlotOrder(): string[] {
+    return [...this.slotOrder];
+  }
+
+  /**
    * Clear all inventory (for debugging/reset)
    */
   clear(): void {
@@ -403,9 +451,10 @@ class InventoryManager {
   /**
    * Load inventory from saved data
    */
-  loadInventory(items: InventoryItem[], tools: string[]): void {
+  loadInventory(items: InventoryItem[], tools: string[], slotOrder?: string[]): void {
     this.items.clear();
     this.tools.clear();
+    this.slotOrder = [];
 
     // Load items - group by itemId
     items.forEach((inventoryItem) => {
@@ -425,8 +474,30 @@ class InventoryManager {
       }
     });
 
+    // Load slot order if provided, otherwise rebuild from items and tools
+    if (slotOrder && slotOrder.length > 0) {
+      // Filter out any itemIds that no longer exist in inventory
+      this.slotOrder = slotOrder.filter(
+        (itemId) => this.items.has(itemId) || this.tools.has(itemId)
+      );
+      // Add any new items not in slotOrder
+      for (const itemId of this.items.keys()) {
+        if (!this.slotOrder.includes(itemId)) {
+          this.slotOrder.push(itemId);
+        }
+      }
+      for (const toolId of this.tools) {
+        if (!this.slotOrder.includes(toolId)) {
+          this.slotOrder.push(toolId);
+        }
+      }
+    } else {
+      // No saved order - build from current items and tools
+      this.slotOrder = [...this.items.keys(), ...this.tools];
+    }
+
     console.log(
-      `[InventoryManager] Loaded ${this.items.size} item types and ${this.tools.size} tools`
+      `[InventoryManager] Loaded ${this.items.size} item types and ${this.tools.size} tools, slotOrder: ${this.slotOrder.length} items`
     );
     // Emit event for UI components to update
     eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
@@ -435,7 +506,7 @@ class InventoryManager {
   /**
    * Get serializable inventory data for saving
    */
-  getInventoryData(): { items: InventoryItem[]; tools: string[] } {
+  getInventoryData(): { items: InventoryItem[]; tools: string[]; slotOrder: string[] } {
     const items: InventoryItem[] = [];
 
     // Flatten all instances
@@ -448,6 +519,7 @@ class InventoryManager {
     return {
       items,
       tools: Array.from(this.tools),
+      slotOrder: [...this.slotOrder],
     };
   }
 
