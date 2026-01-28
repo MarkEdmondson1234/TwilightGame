@@ -272,7 +272,7 @@ export function useInteractionController(
       },
       onTransition: (result: TransitionResult) => {
         if (result.success && result.mapId && result.spawnPosition) {
-          if (result.tileType === TileType.DOOR) {
+          if (result.hasDoor) {
             audioManager.playSfx('sfx_door_open');
           }
           onMapTransition(result.mapId, result.spawnPosition);

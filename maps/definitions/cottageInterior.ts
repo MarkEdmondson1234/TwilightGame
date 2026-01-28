@@ -83,6 +83,7 @@ export const cottageInterior: MapDefinition = {
       toMapId: 'village',
       toPosition: { x: 21, y: 25 }, // Back to village exterior (in front of cottage door)
       label: 'Outside',
+      hasDoor: true,
     },
   ],
 

@@ -7,6 +7,7 @@ import { MutableRefObject } from 'react';
 import { Position } from '../types';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
+import { audioManager } from '../utils/AudioManager';
 import {
     checkMirrorInteraction,
     checkStoveInteraction,
@@ -113,6 +114,9 @@ export function useTouchControls(config: TouchControlsConfig) {
         const transitionResult = checkTransition(playerPosRef.current, currentMapId);
 
         if (transitionResult.success && transitionResult.mapId && transitionResult.spawnPosition) {
+            if (transitionResult.hasDoor) {
+                audioManager.playSfx('sfx_door_open');
+            }
             onMapTransition(transitionResult.mapId, transitionResult.spawnPosition);
 
             // Save player location when transitioning maps

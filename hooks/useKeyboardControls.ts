@@ -7,6 +7,7 @@ import { useEffect, useRef, MutableRefObject } from 'react';
 import { Position } from '../types';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
+import { audioManager } from '../utils/AudioManager';
 import { cookingManager } from '../utils/CookingManager';
 import {
   checkMirrorInteraction,
@@ -270,6 +271,9 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       // Check for transition
       const transitionResult = checkTransition(playerPosRef.current, currentMapId);
       if (transitionResult.success && transitionResult.mapId && transitionResult.spawnPosition) {
+        if (transitionResult.hasDoor) {
+          audioManager.playSfx('sfx_door_open');
+        }
         onMapTransition(transitionResult.mapId, transitionResult.spawnPosition);
 
         // Save player location when transitioning maps

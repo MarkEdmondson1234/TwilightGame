@@ -29,6 +29,8 @@ export interface Transition {
   // Size restrictions - player must be within tier range to use transition
   minSizeTier?: SizeTier; // Minimum size tier required (e.g., -2 = must be at least "Very Small")
   maxSizeTier?: SizeTier; // Maximum size tier allowed (e.g., 1 = cannot be larger than "Large")
+  // Audio hint - plays door sound when transitioning (for building entries/exits)
+  hasDoor?: boolean;
 }
 
 // ============================================================================

@@ -41,6 +41,7 @@ export const witchHutInterior: MapDefinition = {
       toMapId: 'witch_hut',
       toPosition: { x: 15, y: 19 }, // Just south of the door outside
       label: 'Exit Witch Hut',
+      hasDoor: true,
     },
   ],
   npcs: [

@@ -79,6 +79,7 @@ export const bearCave: MapDefinition = {
       toMapId: 'bear_den',
       toPosition: { x: 7, y: 7 }, // Inside the den (centre of walkable area)
       label: 'Enter Bear\'s Den',
+      hasDoor: true,
     },
   ],
   npcs: [

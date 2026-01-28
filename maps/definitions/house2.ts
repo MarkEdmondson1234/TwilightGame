@@ -38,6 +38,7 @@ export const house2: MapDefinition = {
       toMapId: 'village',
       toPosition: { x: 18, y: 6 }, // Spawn 2 tiles below the door
       label: 'To Village',
+      hasDoor: true,
     },
   ],
 };

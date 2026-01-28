@@ -95,6 +95,7 @@ export const bearDen: MapDefinition = {
       toMapId: 'bear_cave',
       toPosition: { x: 12, y: 13 }, // Back to bear cave exterior (in front of house door)
       label: 'Outside',
+      hasDoor: true,
     },
   ],
 

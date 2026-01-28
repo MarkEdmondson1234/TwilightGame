@@ -53,6 +53,7 @@ export const homeInterior: MapDefinition = {
       toMapId: 'village',
       toPosition: { x: 9, y: 30 }, // Spawn below the home building in village
       label: 'To Village',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 3, y: 7 }, // Stairs up at bottom
@@ -60,6 +61,7 @@ export const homeInterior: MapDefinition = {
       toMapId: 'home_upstairs',
       toPosition: { x: 3, y: 6 }, // Spawn upstairs
       label: 'Upstairs',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 9, y: 3 }, // Near chimney on right side - leads to kitchen

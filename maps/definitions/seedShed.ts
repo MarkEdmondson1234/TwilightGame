@@ -40,6 +40,7 @@ export const seedShed: MapDefinition = {
       toMapId: 'farm_area',
       toPosition: { x: 8, y: 22 }, // Exit to farm area, on grass south of building
       label: 'Exit to Farm',
+      hasDoor: true,
     },
   ],
   npcs: [

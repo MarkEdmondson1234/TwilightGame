@@ -99,6 +99,7 @@ export const mumsKitchen: MapDefinition = {
       toMapId: 'home_interior',
       toPosition: { x: 5, y: 5 }, // Back to home interior
       label: 'To Hallway',
+      hasDoor: true,
     },
   ],
 

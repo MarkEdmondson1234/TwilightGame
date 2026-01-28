@@ -117,6 +117,7 @@ export const shop: MapDefinition = {
       toMapId: 'village',
       toPosition: { x: 12, y: 14 }, // Back to village
       label: 'Exit Shop',
+      hasDoor: true,
     },
   ],
 

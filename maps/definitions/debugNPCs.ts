@@ -122,6 +122,7 @@ export const debugNPCs: MapDefinition = {
       tileType: TileType.DOOR,
       toMapId: 'village',
       toPosition: { x: 15, y: 15 }, // Center of village
+      hasDoor: true,
     },
   ],
   npcs,

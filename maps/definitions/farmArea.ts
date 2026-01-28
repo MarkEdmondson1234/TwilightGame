@@ -83,6 +83,7 @@ export const farmArea: MapDefinition = {
       toMapId: 'seed_shed',
       toPosition: { x: 5, y: 4 },
       label: 'To Seed Shed',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 18, y: 24 }, // Path in bottom-right corner behind seed shed

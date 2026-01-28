@@ -47,6 +47,7 @@ export const homeUpstairs: MapDefinition = {
       toMapId: 'home_interior',
       toPosition: { x: 3, y: 6 }, // Back to downstairs
       label: 'Downstairs',
+      hasDoor: true,
     },
   ],
 };

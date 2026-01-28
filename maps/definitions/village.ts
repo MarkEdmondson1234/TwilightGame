@@ -105,6 +105,7 @@ export const village: MapDefinition = {
       toMapId: 'home_interior',
       toPosition: { x: 5, y: 6 },
       label: 'To Home',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 6.5, y: 4.2 }, // North-west house
@@ -112,6 +113,7 @@ export const village: MapDefinition = {
       toMapId: 'house1',
       toPosition: { x: 3, y: 4 },
       label: 'To House',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 17.2, y: 5 }, // North-east house
@@ -119,6 +121,7 @@ export const village: MapDefinition = {
       toMapId: 'house2',
       toPosition: { x: 3, y: 4 },
       label: 'To House',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 11.5, y: 12.5 }, // Shop building (next to fox)
@@ -126,6 +129,7 @@ export const village: MapDefinition = {
       toMapId: 'shop',
       toPosition: { x: 10, y: 8 }, // Center of walkable floor in shop (19x11 grid)
       label: 'To Shop',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 3.3, y: 21 }, // South-west house (moved down 1 tile for better accessibility)
@@ -133,6 +137,7 @@ export const village: MapDefinition = {
       toMapId: 'house3',
       toPosition: { x: 3, y: 4 },
       label: 'To House',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 21.4, y: 24 }, // Cottage entrance (K tile)
@@ -140,6 +145,7 @@ export const village: MapDefinition = {
       toMapId: 'cottage_interior',
       toPosition: { x: 0, y: 8 }, // Bottom left near door
       label: 'To Cottage',
+      hasDoor: true,
     },
     {
       fromPosition: { x: 21, y: 10.5 }, // Mine entrance (M tile)

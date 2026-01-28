@@ -38,6 +38,7 @@ export interface TransitionResult {
   mapName?: string;
   spawnPosition?: Position;
   tileType?: TileType; // Tile type of the transition (e.g., DOOR, PATH)
+  hasDoor?: boolean; // Whether this transition involves a door (plays door sound)
   blocked?: boolean; // True if transition exists but is blocked by quest requirement
   message?: string; // Message to show player (e.g., "This path is not yet accessible")
 }
@@ -255,6 +256,7 @@ export function checkTransition(
       mapName: map.name,
       spawnPosition: spawn,
       tileType: transition.tileType,
+      hasDoor: transition.hasDoor,
     };
   } catch (error) {
     console.error(`[Action] ERROR transitioning to ${transition.toMapId}:`, error);
@@ -1954,6 +1956,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
               mapId: map.id,
               mapName: map.name,
               spawnPosition: result.spawn,
+              hasDoor: transition.hasDoor,
             });
           } catch (error) {
             console.error(`[Action] ERROR transitioning:`, error);
