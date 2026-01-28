@@ -89,6 +89,9 @@ export interface DialogueNode {
   requiredTransformation?: string; // Only show if player has this transformation (e.g., 'fairy')
   hiddenIfTransformed?: string; // Hide if player has this transformation
   hiddenIfAnyTransformation?: boolean; // Hide if player has any active transformation
+  // Potion effect requirements for this dialogue node (e.g., 'beast_tongue' for animal speech)
+  requiredPotionEffect?: string; // Only show if player has this potion effect active
+  hiddenWithPotionEffect?: string; // Hide if player has this potion effect active
   // Expression/emotion for dialogue character sprite (e.g., 'smile', 'happy', 'thinky')
   // If set, uses dialogueExpressions[expression] from NPC, otherwise uses default dialogueSprite
   expression?: string;

@@ -811,7 +811,7 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
 
   const currentTransformation = getCurrentTransformation();
 
-  // Filter dialogue nodes based on quest and transformation requirements
+  // Filter dialogue nodes based on quest, transformation, and potion effect requirements
   const availableNodes = npc.dialogue.filter((node) => {
     // Check transformation requirements
     if (node.requiredTransformation && node.requiredTransformation !== currentTransformation) {
@@ -822,6 +822,18 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
     }
     if (node.hiddenIfAnyTransformation && currentTransformation !== null) {
       return false;
+    }
+
+    // Check potion effect requirements (e.g., beast_tongue for animal speech)
+    if (node.requiredPotionEffect) {
+      if (!gameState.hasActivePotionEffect(node.requiredPotionEffect)) {
+        return false;
+      }
+    }
+    if (node.hiddenWithPotionEffect) {
+      if (gameState.hasActivePotionEffect(node.hiddenWithPotionEffect)) {
+        return false;
+      }
     }
 
     // Check quest requirements

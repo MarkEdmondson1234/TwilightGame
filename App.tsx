@@ -78,6 +78,7 @@ import { inventoryManager } from './utils/inventoryManager';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
+import GlamourModal from './components/GlamourModal';
 import { usePotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
@@ -155,6 +156,7 @@ const App: React.FC = () => {
     ui.inventory ||
     ui.shopUI ||
     ui.giftModal ||
+    ui.glamourModal ||
     ui.brewingUI ||
     ui.devTools ||
     ui.vfxTestPanel;
@@ -807,6 +809,18 @@ const App: React.FC = () => {
       // Floating/Flying Potions: Set movement effect with duration
       setMovementEffect: (mode: 'floating' | 'flying', durationMs: number) => {
         gameState.setMovementEffect(mode, durationMs);
+      },
+      // Active potion effect tracking (for Beast Tongue, Beastward, etc.)
+      setActivePotionEffect: (effectType: string, durationMs: number) => {
+        gameState.setActivePotionEffect(effectType, durationMs);
+      },
+      hasActivePotionEffect: (effectType: string) => {
+        return gameState.hasActivePotionEffect(effectType);
+      },
+      // Glamour Draught: Open NPC selection modal for disguise
+      openGlamourModal: () => {
+        // TODO: Will be implemented when GlamourModal component is created
+        openUI('glamourModal');
       },
     }),
     [currentMapId, playerPos, playerScale, playerSizeTier, triggerVFX]
@@ -1541,6 +1555,27 @@ const App: React.FC = () => {
 
             // Open dialogue with the NPC showing their reaction
             setActiveNPC(ui.context.giftTargetNpcId!);
+          }}
+        />
+      )}
+      {ui.glamourModal && (
+        <GlamourModal
+          onClose={() => {
+            closeUI('glamourModal');
+          }}
+          onDisguiseSelected={(npcId: string, npcName: string) => {
+            // Close the modal
+            closeUI('glamourModal');
+
+            // Consume the glamour potion
+            inventoryManager.removeItem('potion_glamour', 1);
+
+            // Play magic sound and show toast
+            audioManager.playSfx('sfx_magic_transition');
+            showToast(`You now appear as ${npcName}!`, 'success');
+
+            // Trigger sparkle VFX
+            triggerVFX('sparkle', playerPos);
           }}
         />
       )}

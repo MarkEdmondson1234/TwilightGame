@@ -193,6 +193,23 @@ export interface GameState {
       data: Record<string, any>; // Quest-specific data
     };
   };
+
+  // Active potion effects (for timed effects like Beast Tongue)
+  // Key is effect type (e.g., 'beast_tongue'), value contains timing info
+  activePotionEffects: {
+    [effectType: string]: {
+      startTime: number; // When effect was activated (Date.now())
+      expiresAt: number; // When effect expires (Date.now() + duration)
+    };
+  };
+
+  // Player disguise (for Glamour Draught potion)
+  playerDisguise: {
+    npcId: string; // ID of NPC being disguised as
+    npcName: string; // Display name of NPC
+    sprite: string; // Sprite path to use for player
+    expiresAt: number; // When disguise expires (Date.now() + duration)
+  } | null;
 }
 
 // FarmPlot is now defined in types.ts to avoid circular dependencies
@@ -472,6 +489,33 @@ class GameStateManager {
           parsed.quests = {};
         }
 
+        // Migrate old save data that doesn't have active potion effects
+        if (!parsed.activePotionEffects) {
+          console.log('[GameState] Migrating old save data - adding active potion effects');
+          parsed.activePotionEffects = {};
+        }
+
+        // Clear expired potion effects on load
+        const now = Date.now();
+        for (const effectType of Object.keys(parsed.activePotionEffects)) {
+          if (parsed.activePotionEffects[effectType].expiresAt <= now) {
+            console.log(`[GameState] Clearing expired potion effect: ${effectType}`);
+            delete parsed.activePotionEffects[effectType];
+          }
+        }
+
+        // Migrate old save data that doesn't have player disguise
+        if (parsed.playerDisguise === undefined) {
+          console.log('[GameState] Migrating old save data - adding player disguise');
+          parsed.playerDisguise = null;
+        }
+
+        // Clear expired disguise on load
+        if (parsed.playerDisguise && parsed.playerDisguise.expiresAt <= now) {
+          console.log('[GameState] Clearing expired player disguise on load');
+          parsed.playerDisguise = null;
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -540,6 +584,8 @@ class GameStateManager {
         fairyFormExpiresAt: null,
       },
       quests: {},
+      activePotionEffects: {},
+      playerDisguise: null,
     };
   }
 
@@ -1349,6 +1395,8 @@ class GameStateManager {
         fairyFormExpiresAt: null,
       },
       quests: {},
+      activePotionEffects: {},
+      playerDisguise: null,
     };
     console.log('[GameState] State reset');
     this.notify();
@@ -1777,6 +1825,206 @@ class GameStateManager {
    */
   getQuestData(questId: string, key: string): any {
     return this.state.quests?.[questId]?.data?.[key];
+  }
+
+  // === Active Potion Effects Methods ===
+
+  /**
+   * Set an active potion effect with duration
+   * @param effectType The effect type (e.g., 'beast_tongue', 'beastward')
+   * @param durationMs Duration in milliseconds
+   */
+  setActivePotionEffect(effectType: string, durationMs: number): void {
+    if (!this.state.activePotionEffects) {
+      this.state.activePotionEffects = {};
+    }
+
+    const now = Date.now();
+    this.state.activePotionEffects[effectType] = {
+      startTime: now,
+      expiresAt: now + durationMs,
+    };
+
+    console.log(`[GameState] Potion effect activated: ${effectType} for ${durationMs}ms`);
+    this.saveState();
+    this.notify();
+  }
+
+  /**
+   * Check if a potion effect is currently active
+   * @param effectType The effect type to check
+   * @returns true if effect is active and not expired
+   */
+  hasActivePotionEffect(effectType: string): boolean {
+    if (!this.state.activePotionEffects) {
+      return false;
+    }
+
+    const effect = this.state.activePotionEffects[effectType];
+    if (!effect) {
+      return false;
+    }
+
+    // Check if expired
+    if (Date.now() >= effect.expiresAt) {
+      this.clearActivePotionEffect(effectType);
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Clear an active potion effect
+   * @param effectType The effect type to clear
+   */
+  clearActivePotionEffect(effectType: string): void {
+    if (!this.state.activePotionEffects) {
+      return;
+    }
+
+    if (this.state.activePotionEffects[effectType]) {
+      delete this.state.activePotionEffects[effectType];
+      console.log(`[GameState] Potion effect cleared: ${effectType}`);
+      this.saveState();
+      this.notify();
+    }
+  }
+
+  /**
+   * Get remaining time for a potion effect in milliseconds
+   * @param effectType The effect type to check
+   * @returns Remaining time in ms (0 if not active or expired)
+   */
+  getPotionEffectRemainingMs(effectType: string): number {
+    if (!this.state.activePotionEffects) {
+      return 0;
+    }
+
+    const effect = this.state.activePotionEffects[effectType];
+    if (!effect) {
+      return 0;
+    }
+
+    return Math.max(0, effect.expiresAt - Date.now());
+  }
+
+  /**
+   * Get all currently active potion effect types
+   * @returns Array of active effect type strings
+   */
+  getActivePotionEffects(): string[] {
+    if (!this.state.activePotionEffects) {
+      return [];
+    }
+
+    const now = Date.now();
+    const activeEffects: string[] = [];
+
+    for (const [effectType, effect] of Object.entries(this.state.activePotionEffects)) {
+      if (effect.expiresAt > now) {
+        activeEffects.push(effectType);
+      }
+    }
+
+    return activeEffects;
+  }
+
+  /**
+   * Clean up expired potion effects
+   * Called periodically to prevent stale data
+   */
+  cleanupExpiredPotionEffects(): void {
+    if (!this.state.activePotionEffects) {
+      return;
+    }
+
+    const now = Date.now();
+    const expiredEffects: string[] = [];
+
+    for (const [effectType, effect] of Object.entries(this.state.activePotionEffects)) {
+      if (effect.expiresAt <= now) {
+        expiredEffects.push(effectType);
+      }
+    }
+
+    if (expiredEffects.length > 0) {
+      for (const effectType of expiredEffects) {
+        delete this.state.activePotionEffects[effectType];
+      }
+      console.log(`[GameState] Cleaned up ${expiredEffects.length} expired potion effect(s)`);
+      this.saveState();
+      this.notify();
+    }
+  }
+
+  // === Player Disguise Methods (Glamour Draught) ===
+
+  /**
+   * Set player disguise (from Glamour Draught potion)
+   * @param npcId ID of the NPC to disguise as
+   * @param npcName Display name of the NPC
+   * @param sprite Sprite path for the NPC
+   * @param durationMs How long the disguise lasts
+   */
+  setPlayerDisguise(npcId: string, npcName: string, sprite: string, durationMs: number): void {
+    this.state.playerDisguise = {
+      npcId,
+      npcName,
+      sprite,
+      expiresAt: Date.now() + durationMs,
+    };
+
+    console.log(`[GameState] Player disguised as ${npcName} for ${durationMs}ms`);
+    this.saveState();
+    this.notify();
+  }
+
+  /**
+   * Get current player disguise (if active)
+   * @returns Disguise info or null if not disguised/expired
+   */
+  getPlayerDisguise(): { npcId: string; npcName: string; sprite: string; expiresAt: number } | null {
+    if (!this.state.playerDisguise) {
+      return null;
+    }
+
+    // Check if expired
+    if (Date.now() >= this.state.playerDisguise.expiresAt) {
+      this.clearPlayerDisguise();
+      return null;
+    }
+
+    return this.state.playerDisguise;
+  }
+
+  /**
+   * Clear player disguise
+   */
+  clearPlayerDisguise(): void {
+    if (this.state.playerDisguise) {
+      console.log('[GameState] Player disguise cleared');
+      this.state.playerDisguise = null;
+      this.saveState();
+      this.notify();
+    }
+  }
+
+  /**
+   * Check if player is currently disguised
+   */
+  isPlayerDisguised(): boolean {
+    return this.getPlayerDisguise() !== null;
+  }
+
+  /**
+   * Get remaining time for player disguise in milliseconds
+   */
+  getDisguiseRemainingMs(): number {
+    if (!this.state.playerDisguise) {
+      return 0;
+    }
+    return Math.max(0, this.state.playerDisguise.expiresAt - Date.now());
   }
 }
 

@@ -75,9 +75,11 @@ export function createUmbraWolfNPC(
       },
     },
     dialogue: [
+      // Normal dialogue (without Beast Tongue potion)
       {
         id: 'greeting',
         text: '*The wolf regards you with intelligent, glowing eyes. It seems neither hostile nor friendly - merely curious.*',
+        hiddenWithPotionEffect: 'beast_tongue',
         seasonalText: {
           spring: '*The wolf\'s dark fur glistens in the spring light. It tilts its head, watching you with ancient wisdom.*',
           summer: '*The wolf pants softly in the summer heat, its shadowy form seeming to shimmer at the edges.*',
@@ -96,12 +98,66 @@ export function createUmbraWolfNPC(
       {
         id: 'approach',
         text: '*The wolf sniffs the air around your hand. For a moment, you feel a strange connection - as if the creature knows your heart. Then it turns and pads silently into the shadows.*',
+        hiddenWithPotionEffect: 'beast_tongue',
         seasonalText: {
           spring: '*The wolf\'s nose twitches, catching the scent of spring blooms on your skin. It seems... almost pleased.*',
           summer: '*The wolf\'s tongue lolls briefly in what might be a canine smile. The forest spirits favour the brave.*',
           autumn: '*The wolf huffs softly, its warm breath carrying the scent of fallen leaves and ancient earth.*',
           winter: '*The wolf presses its cold nose to your palm, then vanishes into the swirling snow like a dream.*',
         },
+      },
+      // Beast Tongue dialogue (only visible with potion active)
+      {
+        id: 'beast_greeting',
+        text: '*low growl* You dare speak to me, human? Leave my forest.',
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'Why do you hate humans?', nextId: 'beast_hatred' },
+          { text: 'I mean no harm', nextId: 'beast_peaceful' },
+          { text: "I've heard you like the witch", nextId: 'beast_witch' },
+        ],
+      },
+      {
+        id: 'beast_hatred',
+        text: 'Where your village stands, there once grew ancient oak trees. A beautiful grove, sacred and old. Then humans came with their axes and their greed. You destroy everything you touch.',
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "I'm sorry for what happened", nextId: 'beast_apology' },
+          { text: 'Not all humans are the same', nextId: 'beast_peaceful' },
+        ],
+      },
+      {
+        id: 'beast_peaceful',
+        text: 'Humans always say that. Then they take and take and take. Why must you always own things? The forest belongs to no one - it simply IS.',
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "I've heard you like the witch", nextId: 'beast_witch' },
+          { text: '*nod respectfully and leave*' },
+        ],
+      },
+      {
+        id: 'beast_witch',
+        text: "*ears perk up* The witch... she is different. She lives in harmony with nature. She is always good to me. Though... *pauses* I sometimes wonder if she used her magic on me. But I cannot bring myself to mind.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'What do you mean, used magic on you?', nextId: 'beast_magic_suspicion' },
+          { text: "She sounds like a good friend", nextId: 'beast_witch_friend' },
+        ],
+      },
+      {
+        id: 'beast_magic_suspicion',
+        text: "*eyes narrow* There is a gentleness in me when I think of her that I do not feel for any other creature. Perhaps it is magic. Perhaps it is something else. Either way... I do not wish it to change.",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_witch_friend',
+        text: 'Friend? *snorts* Wolves do not have friends. But... if we did... yes. She would be one. Now leave me. I have said too much to a human.',
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_apology',
+        text: "*stares at you for a long moment* Words mean nothing. Actions speak. If you wish to prove yourself different, show the forest respect. Plant trees. Leave the wild places wild. Then... perhaps... we may speak again.",
+        requiredPotionEffect: 'beast_tongue',
       },
     ],
     friendshipConfig: {
@@ -863,9 +919,11 @@ export function createBunnyflyNPC(
     },
     initialState: 'roaming',
     dialogue: [
+      // Normal dialogue (without Beast Tongue potion)
       {
         id: 'greeting',
         text: '*The bunnyfly hovers near you, its tiny wings fluttering softly. It seems curious but shy.*',
+        hiddenWithPotionEffect: 'beast_tongue',
         seasonalText: {
           spring: '*The bunnyfly circles around the spring flowers, its pastel wings catching the sunlight. It twitches its little nose at you.*',
           summer: '*The bunnyfly flits between sunbeams, leaving a trail of sparkles. It seems especially playful in the warm weather.*',
@@ -891,12 +949,81 @@ export function createBunnyflyNPC(
       {
         id: 'approach',
         text: '*The bunnyfly lands on your outstretched hand for just a moment. Its fur is impossibly soft. Then, with a gentle flutter, it takes flight again, circling you once before drifting deeper into the forest.*',
+        hiddenWithPotionEffect: 'beast_tongue',
         seasonalText: {
           spring: '*The bunnyfly lands briefly on your hand, leaving behind the faint scent of spring blossoms. A gift from the forest!*',
           summer: '*The tiny creature\'s warmth is like a sunbeam on your palm. It seems to smile before fluttering away.*',
           autumn: '*The bunnyfly\'s wings dust your hand with shimmering autumn-coloured powder. How lovely!*',
           winter: '*Despite the cold, the bunnyfly radiates gentle warmth. A small comfort in the winter forest.*',
         },
+      },
+      // Beast Tongue dialogue (only visible with potion active)
+      {
+        id: 'beast_greeting',
+        text: '*flutter flutter* Oh! A human who speaks our language! How rare and wonderful!',
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'What do you like to do?', nextId: 'beast_activities' },
+          { text: 'Where do you live?', nextId: 'beast_habitat' },
+          { text: 'Tell me a secret', nextId: 'beast_secret' },
+        ],
+      },
+      {
+        id: 'beast_activities',
+        text: "We love berry bushes most of all! In winter, we keep secret stashes of dried berries and nuts in hollow tree trunks and little earthen dens. The deep forest is best - the magic there is ancient and full of life.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'Where do you live?', nextId: 'beast_habitat' },
+          { text: 'That sounds lovely', nextId: 'beast_thanks' },
+        ],
+      },
+      {
+        id: 'beast_habitat',
+        text: "Bunniflies only live where the air is clean and clear. We couldn't bear to live near a smoking chimney! The fairies sometimes ride us as mounts, which tickles but we don't mind.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'Fairies ride you?', nextId: 'beast_fairies' },
+          { text: 'Tell me a secret', nextId: 'beast_secret' },
+        ],
+      },
+      {
+        id: 'beast_fairies',
+        text: "*giggles* Oh yes! They're ever so light. We flutter through the forest together, and they tell us stories of the old magic. It's quite fun, really!",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      // Secret dialogue - requires Good Friends tier
+      {
+        id: 'beast_secret',
+        text: "*whispers excitedly* Sometimes... we visit the bird people. They live in the upper stratosphere! They're terribly clever, though a bit stuck up about it.",
+        requiredPotionEffect: 'beast_tongue',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'Bird people? How do I meet them?', nextId: 'beast_secret_entrance' },
+          { text: "That's amazing!", nextId: 'beast_secret_confirm' },
+        ],
+      },
+      {
+        id: 'beast_secret_entrance',
+        text: "*looks around nervously, then whispers* There's a secret entrance to their world, you know. In the ancient ruins. But don't tell anyone I told you!",
+        requiredPotionEffect: 'beast_tongue',
+        requiredFriendshipTier: 'good_friend',
+      },
+      {
+        id: 'beast_secret_confirm',
+        text: "*nods happily* It is! The view from up there... you can see the whole world spread out below like a patchwork quilt. Someday, if we're very good friends, perhaps I could show you!",
+        requiredPotionEffect: 'beast_tongue',
+        requiredFriendshipTier: 'good_friend',
+      },
+      // Default when not Good Friends
+      {
+        id: 'beast_secret_not_ready',
+        text: "*flutter flutter* Oh, I know many wonderful secrets! But... we only share those with our very best friends. Perhaps when we know each other better?",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_thanks',
+        text: "*happy flutter* You're very kind! The forest needs more friends like you. Come visit us again!",
+        requiredPotionEffect: 'beast_tongue',
       },
     ],
     friendshipConfig: {

@@ -17,7 +17,8 @@ export type UIOverlayName =
   | 'spriteEditor'
   | 'vfxTestPanel'
   | 'shopUI'
-  | 'giftModal';
+  | 'giftModal'
+  | 'glamourModal';
 
 /**
  * Context data associated with specific UI overlays.
@@ -50,6 +51,7 @@ export interface UIState {
   vfxTestPanel: boolean;
   shopUI: boolean;
   giftModal: boolean;
+  glamourModal: boolean;
   // Context data
   context: UIContext;
 }
@@ -100,6 +102,7 @@ const initialState: UIState = {
   vfxTestPanel: false,
   shopUI: false,
   giftModal: false,
+  glamourModal: false,
   context: { ...initialContext },
 };
 

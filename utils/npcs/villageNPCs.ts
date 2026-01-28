@@ -179,9 +179,95 @@ export function createCatNPC(
     },
     initialState: 'sleeping',
     dialogue: [
-      { id: 'cat_sleeping', text: '*purr* *purr* The cat is sleeping peacefully.' },
-      { id: 'cat_angry', text: 'Mrrrow! The cat glares at you with narrowed eyes.' },
-      { id: 'cat_standing', text: 'The cat stands up and stretches, clearly annoyed by your persistence.' },
+      // Normal dialogue (without Beast Tongue potion)
+      {
+        id: 'cat_sleeping',
+        text: '*purr* *purr* The cat is sleeping peacefully.',
+        hiddenWithPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'cat_angry',
+        text: 'Mrrrow! The cat glares at you with narrowed eyes.',
+        hiddenWithPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'cat_standing',
+        text: 'The cat stands up and stretches, clearly annoyed by your persistence.',
+        hiddenWithPotionEffect: 'beast_tongue',
+      },
+      // Beast Tongue dialogue (only visible with potion active)
+      {
+        id: 'beast_greeting',
+        text: "Hmph. So you've learned to understand us. Most humans are terribly slow.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'You seem comfortable here', nextId: 'beast_comfort' },
+          { text: 'Do you go into the forest?', nextId: 'beast_forest' },
+          { text: 'Is there something you want to tell me?', nextId: 'beast_secret' },
+        ],
+      },
+      {
+        id: 'beast_comfort',
+        text: "The old lady understands me. She feeds me well, and it's nice to snuggle up next to her by the fire. I do wish people would stop trying to pet me without asking permission first.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "I'll remember to ask first", nextId: 'beast_approval' },
+          { text: 'Do you go into the forest?', nextId: 'beast_forest' },
+        ],
+      },
+      {
+        id: 'beast_forest',
+        text: "I hunt in the forest sometimes. I'm friends with the fairies there. The Umbra Wolf doesn't scare me - I can always climb a tree and sit there hissing and spitting from a safe distance.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "You're friends with fairies?", nextId: 'beast_fairies' },
+          { text: "You're not afraid of the wolf?", nextId: 'beast_wolf' },
+        ],
+      },
+      {
+        id: 'beast_fairies',
+        text: "Of course. Cats and fairies have always been close. We can see things humans cannot. The fairies respect that.",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_wolf',
+        text: "Why would I be? He's big and grumpy, but he can't climb trees. I just watch him from above and flick my tail at him. It annoys him terribly.",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_approval',
+        text: "*narrows eyes approvingly* Perhaps you're not as hopeless as most humans. You may pet me. Once.",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      // Secret dialogue - requires Good Friends tier
+      {
+        id: 'beast_secret',
+        text: "It's rather strange that no-one ever speaks of your father, don't you think? He left to be an explorer, but... I wonder if your mum is hiding something.",
+        requiredPotionEffect: 'beast_tongue',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'What do you mean?', nextId: 'beast_secret_continued' },
+          { text: "I'd rather not talk about that", nextId: 'beast_secret_decline' },
+        ],
+      },
+      {
+        id: 'beast_secret_continued',
+        text: "I could see it, you know. Something hanging over your father like a shadow. A curse, perhaps. I don't know what kind, but... maybe that's why he really left.",
+        requiredPotionEffect: 'beast_tongue',
+        requiredFriendshipTier: 'good_friend',
+      },
+      {
+        id: 'beast_secret_decline',
+        text: "*flicks ear* As you wish. But remember - cats see more than we let on. When you're ready to know, ask again.",
+        requiredPotionEffect: 'beast_tongue',
+        requiredFriendshipTier: 'good_friend',
+      },
+      // Default secret response when not Good Friends
+      {
+        id: 'beast_secret_not_ready',
+        text: "*studies you carefully* There are things I know... but you're not ready to hear them yet. Perhaps when we know each other better.",
+        requiredPotionEffect: 'beast_tongue',
+      },
     ],
     friendshipConfig: {
       canBefriend: true,
@@ -368,8 +454,70 @@ export function createDogNPC(
     },
     initialState: 'wagging',
     dialogue: [
-      { id: 'greeting', text: '*Woof! Woof!* The dog wags its tail excitedly.' },
-      { id: 'happy', text: '*The dog jumps around playfully, then runs back to its friend.*' },
+      // Normal dialogue (without Beast Tongue potion)
+      {
+        id: 'greeting',
+        text: '*Woof! Woof!* The dog wags its tail excitedly.',
+        hiddenWithPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'happy',
+        text: '*The dog jumps around playfully, then runs back to its friend.*',
+        hiddenWithPotionEffect: 'beast_tongue',
+      },
+      // Beast Tongue dialogue (only visible with potion active)
+      {
+        id: 'beast_greeting',
+        text: 'Oh hello! *tail wags* You can understand me now! This is wonderful!',
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'Tell me about yourself', nextId: 'beast_about_self' },
+          { text: 'What do you think of the village?', nextId: 'beast_village' },
+          { text: 'Any advice for me?', nextId: 'beast_advice' },
+        ],
+      },
+      {
+        id: 'beast_about_self',
+        text: "I love Celia - she's my best friend! I hope she'll rub my belly later, or maybe scratch my ear. Do you think you could ask her?",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'I might mention it to her', nextId: 'beast_thanks' },
+          { text: 'What else do you like?', nextId: 'beast_likes' },
+        ],
+      },
+      {
+        id: 'beast_village',
+        text: "The village is full of interesting scents! But I wish there were more squirrels. I love hunting squirrels! They're so fast and fluffy.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "I'll keep an eye out for squirrels", nextId: 'beast_thanks' },
+          { text: 'Any advice for me?', nextId: 'beast_advice' },
+        ],
+      },
+      {
+        id: 'beast_advice',
+        text: "Never go into the forest. There's a big scary wolf there - the Umbra Wolf. *whimpers* And the mines... don't go in there either. It's not safe!",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'Thanks for the warning', nextId: 'beast_thanks' },
+          { text: 'Why are you afraid of the wolf?', nextId: 'beast_wolf_fear' },
+        ],
+      },
+      {
+        id: 'beast_wolf_fear',
+        text: "He's enormous! And his eyes... they glow in the dark. I can smell him from the village sometimes. He smells like shadows and old trees. Very scary.",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_likes',
+        text: "I like belly rubs, ear scratches, chasing things, napping in sunny spots, and treats! Oh, and playing fetch. Do you have a stick?",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_thanks',
+        text: "*tail wags happily* You're nice! Come back and talk to me again sometime!",
+        requiredPotionEffect: 'beast_tongue',
+      },
     ],
     followTarget: targetNPCId,
     friendshipConfig: {
@@ -628,9 +776,11 @@ export function createDuckNPC(
     },
     initialState: 'roaming',
     dialogue: [
+      // Normal dialogue (without Beast Tongue potion)
       {
         id: 'greeting',
         text: '*Quack! Quack!* The duck waddles closer, looking at you with bright, curious eyes.',
+        hiddenWithPotionEffect: 'beast_tongue',
         seasonalText: {
           spring: '*Quack quack!* The duck seems especially happy in the spring sunshine, splashing playfully in the pond.',
           summer: '*Quack...* The duck looks a bit warm. Perhaps it will return when the weather cools.',
@@ -656,6 +806,59 @@ export function createDuckNPC(
       {
         id: 'feeding',
         text: '*Quack quack quack!* The duck eagerly gobbles up the breadcrumbs, then waddles around your feet hoping for more. What a friendly little creature!',
+        hiddenWithPotionEffect: 'beast_tongue',
+      },
+      // Beast Tongue dialogue (only visible with potion active)
+      {
+        id: 'beast_greeting',
+        text: 'Quack! Oh, you understand us! How wonderful! I am Mama Duck, and these are my ducklings.',
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'How are the ducklings?', nextId: 'beast_ducklings' },
+          { text: 'Are you staying for winter?', nextId: 'beast_winter' },
+          { text: 'I might be able to help with housing', nextId: 'beast_housing_quest' },
+        ],
+      },
+      {
+        id: 'beast_ducklings',
+        text: "They're good children, but they never walk in line! They need to eat lots of earthworms and duckweed so they're ready for the flight to the coast in autumn.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "I'll look for some duckweed", nextId: 'beast_thanks' },
+          { text: 'Are you staying for winter?', nextId: 'beast_winter' },
+        ],
+      },
+      {
+        id: 'beast_winter',
+        text: "We usually fly to the coast, but... I do love this village. If only someone could convince that nice old man - the Elder - to build us a proper duck coop. Then we could stay!",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'I know the Elder!', nextId: 'beast_elder_hope' },
+          { text: "Why can't you build your own?", nextId: 'beast_no_thumbs' },
+        ],
+      },
+      {
+        id: 'beast_elder_hope',
+        text: "*eyes brighten* Really? Do you think you could ask him? If we had somewhere warm and safe, and someone to feed us, I'd happily give you our eggs!",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_no_thumbs',
+        text: "*looks at wings* Have you seen these? No thumbs! Very good for flying, not so good for carpentry.",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      // Quest dialogue - requires Good Friends with Elder
+      {
+        id: 'beast_housing_quest',
+        text: "You know the Elder well? Oh, wonderful! Do you think... could you ask him to build us a little house? If we had somewhere warm and safe, and someone to feed us, I'd happily give you our eggs!",
+        requiredPotionEffect: 'beast_tongue',
+        requiredFriendshipTier: 'good_friend', // This checks friendship with THIS NPC, but dialogue implies Elder
+        // TODO: Need a way to check friendship with a different NPC (Elder)
+      },
+      {
+        id: 'beast_thanks',
+        text: "*happy quacking* You're very kind! The ducklings and I appreciate your help. Quack!",
+        requiredPotionEffect: 'beast_tongue',
       },
     ],
     interactionRadius: 1.5,

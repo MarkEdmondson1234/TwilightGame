@@ -45,9 +45,49 @@ export function createCowNPC(
     },
     initialState: 'grazing',
     dialogue: [
+      // Normal dialogue (without Beast Tongue potion)
       {
         id: 'greeting',
         text: '*Moooo* The cow looks at you contentedly whilst chewing grass.',
+        hiddenWithPotionEffect: 'beast_tongue',
+      },
+      // Beast Tongue dialogue (only visible with potion active)
+      {
+        id: 'beast_greeting',
+        text: '*content moo* Oh hello there, dear. How lovely that we can chat!',
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: 'Are you happy here?', nextId: 'beast_happiness' },
+          { text: 'Where did you come from?', nextId: 'beast_origin' },
+        ],
+      },
+      {
+        id: 'beast_happiness',
+        text: "Very happy, yes. The old man looks after me so well, and the grass here is fresh and full of juicy clover. I couldn't ask for more.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "That's wonderful to hear", nextId: 'beast_content' },
+          { text: 'Where did you come from?', nextId: 'beast_origin' },
+        ],
+      },
+      {
+        id: 'beast_origin',
+        text: "I used to live at a dairy farm. It wasn't nice at all - so crowded, and they didn't care about us. But now I'm here, and every day I'm grateful for this peaceful life.",
+        requiredPotionEffect: 'beast_tongue',
+        responses: [
+          { text: "I'm glad you found a good home", nextId: 'beast_content' },
+          { text: 'What do you like about it here?', nextId: 'beast_likes' },
+        ],
+      },
+      {
+        id: 'beast_likes',
+        text: "The morning dew on the grass, the gentle breeze, the old man's kind hands when he milks me, and the way the sunlight falls just so in the late afternoon. Simple pleasures, but they mean everything.",
+        requiredPotionEffect: 'beast_tongue',
+      },
+      {
+        id: 'beast_content',
+        text: "*swishes tail contentedly* You're very kind to visit. The other animals don't often stop to chat. Come back anytime - I do enjoy a good conversation.",
+        requiredPotionEffect: 'beast_tongue',
       },
     ],
     dailyResource: {

@@ -321,7 +321,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'potion_beastward', quantity: 1 }, // Requires Beastward Balm
       { itemId: 'honey', quantity: 1 },
-      { itemId: 'feather', quantity: 1 },
+      { itemId: 'dragonfly_wings', quantity: 1 },
     ],
     brewingTime: 35,
     difficulty: 2,

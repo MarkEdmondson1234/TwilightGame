@@ -98,6 +98,7 @@ export type MagicEffectType =
   // Player effects
   | 'teleport_home'
   | 'open_character_creator'
+  | 'glamour_disguise'
   | 'beast_ward'
   | 'beast_tongue'
   | 'healing'
@@ -157,6 +158,13 @@ export interface MagicEffectCallbacks {
 
   // Movement effect callbacks (for Floating and Flying potions)
   setMovementEffect?: (mode: 'floating' | 'flying', durationMs: number) => void;
+
+  // Active potion effect tracking (for Beast Tongue, Beastward, etc.)
+  setActivePotionEffect?: (effectType: string, durationMs: number) => void;
+  hasActivePotionEffect?: (effectType: string) => boolean;
+
+  // Glamour Draught - opens NPC selection modal
+  openGlamourModal?: () => void;
 }
 
 // ============================================================================
@@ -270,15 +278,15 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
 
   potion_glamour: {
     potionId: 'potion_glamour',
-    effectType: 'open_character_creator',
+    effectType: 'glamour_disguise',
     execute: (callbacks) => {
-      callbacks.openCharacterCreator();
-      callbacks.triggerVFX?.('sparkle', callbacks.getPlayerPosition());
+      // Open the glamour modal for NPC selection
+      // Potion is NOT consumed here - it will be consumed when user selects an NPC
+      callbacks.openGlamourModal?.();
       return {
-        success: true,
-        message: 'Opening character creator...',
-        effectType: 'open_character_creator',
-        vfxType: 'sparkle',
+        success: false, // Don't consume yet - modal handles consumption
+        message: 'Select who to disguise as...',
+        effectType: 'glamour_disguise',
       };
     },
   },
@@ -287,7 +295,9 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_beastward',
     effectType: 'beast_ward',
     execute: (callbacks) => {
-      // TODO: Set a flag that makes animals ignore player
+      // 1 game day = 2 real hours = 7,200,000 ms
+      const duration = 7200000;
+      callbacks.setActivePotionEffect?.('beast_ward', duration);
       callbacks.showToast('Animals will ignore you for a day.', 'success');
       callbacks.triggerVFX?.('shield', callbacks.getPlayerPosition());
       return {
@@ -295,7 +305,7 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
         message: 'Animals will ignore you',
         effectType: 'beast_ward',
         vfxType: 'shield',
-        duration: 86400000, // 1 game day
+        duration,
       };
     },
   },
@@ -321,22 +331,14 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_revealing',
     effectType: 'reveal_gift_preference',
     execute: (callbacks, targetNpcId) => {
-      if (!targetNpcId) {
-        callbacks.showToast('Select an NPC to reveal their preferences!', 'warning');
-        return {
-          success: false,
-          message: 'No target NPC selected',
-          effectType: 'reveal_gift_preference',
-        };
-      }
-      // TODO: Show NPC's favourite gift in UI
-      callbacks.showToast(`${targetNpcId}'s favourite gift revealed!`, 'success');
-      callbacks.triggerVFX?.('reveal', callbacks.getPlayerPosition());
+      // The Revealing Tonic shows gift preferences - use while talking to an NPC
+      callbacks.showToast('Talk to a villager to learn their favourite gifts!', 'info');
+      // Don't consume the potion - user needs to give it to an NPC or use it in dialogue
+      // TODO: Implement proper NPC targeting for this potion
       return {
-        success: true,
-        message: `Revealed ${targetNpcId}'s preferences`,
+        success: false,
+        message: 'Use while talking to an NPC',
         effectType: 'reveal_gift_preference',
-        vfxType: 'reveal',
       };
     },
   },
@@ -464,7 +466,8 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_beast_tongue',
     effectType: 'beast_tongue',
     execute: (callbacks) => {
-      // TODO: Enable special animal dialogue
+      const duration = 300000; // 5 minutes real time
+      callbacks.setActivePotionEffect?.('beast_tongue', duration);
       callbacks.showToast('You can now understand the speech of beasts!', 'success');
       callbacks.triggerVFX?.('aura_glow', callbacks.getPlayerPosition());
       return {
@@ -472,7 +475,7 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
         message: 'Beast tongue activated',
         effectType: 'beast_tongue',
         vfxType: 'aura_glow',
-        duration: 300000, // 5 minutes
+        duration,
       };
     },
   },
