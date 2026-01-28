@@ -562,10 +562,10 @@ export function handleFarmAction(
       (plotTileType === TileType.SOIL_TILLED ||
         plotTileType === TileType.SOIL_PLANTED ||
         plotTileType === TileType.SOIL_WATERED ||
-        plotTileType === TileType.SOIL_WILTING ||
-        plotTileType === TileType.SOIL_READY)
+        plotTileType === TileType.SOIL_WILTING)
     ) {
-      // Water tilled soil (pre-moisten before planting) or planted/watered/wilting/ready crops
+      // Water tilled soil (pre-moisten before planting) or planted/watered/wilting crops
+      // Note: SOIL_READY is excluded - ready crops should be harvested, not watered
       // Check water level first
       if (gameState.isWaterCanEmpty()) {
         return {
@@ -2174,14 +2174,13 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Water soil or crop
+    // Water soil or crop (not READY crops - those should be harvested)
     if (
       currentTool === 'tool_watering_can' &&
       (plotTileType === TileType.SOIL_TILLED ||
         plotTileType === TileType.SOIL_PLANTED ||
         plotTileType === TileType.SOIL_WATERED ||
-        plotTileType === TileType.SOIL_WILTING ||
-        plotTileType === TileType.SOIL_READY)
+        plotTileType === TileType.SOIL_WILTING)
     ) {
       const isTilled = plotTileType === TileType.SOIL_TILLED;
       interactions.push({

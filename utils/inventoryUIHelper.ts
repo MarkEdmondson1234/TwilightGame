@@ -207,10 +207,10 @@ export function convertInventoryToUI(): UIInventoryItem[] {
   const allItems = inventoryManager.getAllItems();
   const slotOrder = inventoryManager.getSlotOrder();
 
-  // Group items by itemId and sum their uses
-  const itemMap = new Map<string, { totalUses: number; itemDef: any }>();
+  // Group items by itemId and sum their quantities
+  const itemMap = new Map<string, { totalQuantity: number; itemDef: any }>();
 
-  allItems.forEach(({ itemId, uses }) => {
+  allItems.forEach(({ itemId, quantity }) => {
     const itemDef = getItem(itemId);
     if (!itemDef) {
       console.warn(`[InventoryUIHelper] Unknown item: ${itemId}`);
@@ -218,12 +218,12 @@ export function convertInventoryToUI(): UIInventoryItem[] {
     }
 
     const existing = itemMap.get(itemId);
-    const usesToAdd = uses || 1; // Default to 1 use if not specified
+    const quantityToAdd = quantity || 1; // Default to 1 if not specified
 
     if (existing) {
-      existing.totalUses += usesToAdd;
+      existing.totalQuantity += quantityToAdd;
     } else {
-      itemMap.set(itemId, { totalUses: usesToAdd, itemDef });
+      itemMap.set(itemId, { totalQuantity: quantityToAdd, itemDef });
     }
   });
 
@@ -238,21 +238,21 @@ export function convertInventoryToUI(): UIInventoryItem[] {
         id: itemId,
         name: itemData.itemDef.displayName,
         icon: getItemIcon(itemId),
-        quantity: itemData.totalUses,
+        quantity: itemData.totalQuantity,
         value: itemData.itemDef.sellPrice || 0,
       });
     }
   }
 
   // Add any items not in slotOrder (shouldn't happen, but safety net)
-  for (const [itemId, { totalUses, itemDef }] of itemMap.entries()) {
+  for (const [itemId, { totalQuantity, itemDef }] of itemMap.entries()) {
     if (!slotOrder.includes(itemId)) {
       console.warn(`[InventoryUIHelper] Item ${itemId} not in slotOrder, appending`);
       result.push({
         id: itemId,
         name: itemDef.displayName,
         icon: getItemIcon(itemId),
-        quantity: totalUses,
+        quantity: totalQuantity,
         value: itemDef.sellPrice || 0,
       });
     }
