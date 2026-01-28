@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../data/recipes';
 import { getItem } from '../data/items';
 import { cookingManager, CookingResult } from '../utils/CookingManager';
+import { audioManager } from '../utils/AudioManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import { gameState } from '../GameState';
 import { Position, PlacedItem } from '../types';
@@ -68,6 +69,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
   // Handle cooking
   const handleCook = () => {
     if (!recipe) return;
+    audioManager.playSfx('sfx_frying');
 
     // Cook through CookingManager to get proper ingredient checking and error messages
     const result = cookingManager.cook(recipe.id);

@@ -574,17 +574,23 @@ import { AudioAssetConfig } from './utils/AudioManager';
 export const audioAssets: Record<string, AudioAssetConfig> = {
   // === Sound Effects - Farming ===
   sfx_till: {
-    url: '/TwilightGame/assets/audio/sfx/farming/digging.m4a',
+    url: '/TwilightGame/assets/audio/sfx/farming/digging.mp3',
     category: 'sfx',
   },
   sfx_hoe: {
-    url: '/TwilightGame/assets/audio/sfx/farming/hoeing.m4a',
+    url: '/TwilightGame/assets/audio/sfx/farming/hoeing.mp3',
+    category: 'sfx',
+  },
+
+  // === Sound Effects - Cooking ===
+  sfx_frying: {
+    url: '/TwilightGame/assets/audio/sfx/cooking/frying.mp3',
     category: 'sfx',
   },
 
   // === Sound Effects - Transitions ===
   sfx_door_open: {
-    url: '/TwilightGame/assets/audio/sfx/transitions/door_opening.m4a',
+    url: '/TwilightGame/assets/audio/sfx/transitions/door_opening.mp3',
     category: 'sfx',
   },
 
@@ -597,6 +603,18 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
   // === Sound Effects - NPCs ===
   sfx_ducks_quack: {
     url: '/TwilightGame/assets/audio/sfx/npcs/ducks-quack-362421.mp3',
+    category: 'sfx',
+  },
+  sfx_meow_01: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/meow01.mp3',
+    category: 'sfx',
+  },
+  sfx_meow_02: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/meow02.mp3',
+    category: 'sfx',
+  },
+  sfx_meow_03: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/meow03.mp3',
     category: 'sfx',
   },
 
@@ -637,6 +655,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
   },
   ambient_birds: {
     url: '/TwilightGame/assets/audio/ambient/mixkit-little-birds-singing-in-the-trees-17.m4a',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_running_stream: {
+    url: '/TwilightGame/assets/audio/ambient/running_stream.mp3',
     category: 'ambient',
     loop: true,
   },

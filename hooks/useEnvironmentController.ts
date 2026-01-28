@@ -16,6 +16,8 @@ import { gameState } from '../GameState';
 import { TimeManager } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import { isWeatherAllowedOnMap, WeatherType } from '../data/weatherConfig';
+import { mapManager } from '../maps/MapManager';
+import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
 import type { WeatherLayer } from '../utils/pixi/WeatherLayer';
 
@@ -176,6 +178,7 @@ export function useEnvironmentController(
     audioManager.stopAmbient('ambient_thunderstorm', 1000);
     audioManager.stopAmbient('ambient_blizzard', 1000);
     audioManager.stopAmbient('ambient_birds', 1000);
+    audioManager.stopAmbient('ambient_running_stream', 1000);
 
     // Play new weather ambient if outdoors and audio exists
     if (isOutdoors) {
@@ -211,6 +214,33 @@ export function useEnvironmentController(
 
     return () => {
       audioManager.stopAmbient('ambient_birds', 500);
+    };
+  }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
+  // Stream / Water Ambient
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    // Check if the current map has stream or water features
+    const currentMap = mapManager.getCurrentMap();
+    const hasStream =
+      currentMapId === 'magical_lake' ||
+      (currentMap?.grid?.some((row) => row.includes(TileType.STREAM)) ?? false);
+
+    // Weather conditions that drown out stream sounds
+    const badWeatherForStream = ['storm'].includes(currentWeather);
+
+    if (hasStream && !badWeatherForStream) {
+      if (audioManager.hasSound('ambient_running_stream')) {
+        audioManager.playAmbient('ambient_running_stream');
+      }
+    } else {
+      audioManager.stopAmbient('ambient_running_stream', 1000);
+    }
+
+    return () => {
+      audioManager.stopAmbient('ambient_running_stream', 500);
     };
   }, [currentMapId, currentWeather]);
 

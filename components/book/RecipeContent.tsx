@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../../data/recipes';
 import { getItem } from '../../data/items';
 import { cookingManager, CookingResult } from '../../utils/CookingManager';
+import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { gameState } from '../../GameState';
 import { PlacedItem, Position } from '../../types';
@@ -106,6 +107,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   // Handle cooking
   const handleCook = useCallback(
     (recipeId: string) => {
+      audioManager.playSfx('sfx_frying');
       const isNearMum = nearbyNPCs.some((npcId) => npcId.includes('mum'));
 
       let result: CookingResult;

@@ -11,7 +11,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
-import { Position, NPC } from '../types';
+import { Position, NPC, TileType } from '../types';
 import { TILE_SIZE, INTERACTION } from '../constants';
 import { MouseClickInfo } from './useMouseControls';
 import { RadialMenuOption } from '../components/RadialMenu';
@@ -216,9 +216,8 @@ export function useInteractionController(
 
       // Play farming sound effects
       if (action === 'till') {
-        audioManager.playSfx('sfx_hoeing');
+        audioManager.playSfx('sfx_till');
       } else if (action === 'water') {
-        audioManager.playSfx('sfx_digging');
         // Trigger water sparkle effect
         if (tilePos) {
           setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
@@ -261,6 +260,11 @@ export function useInteractionController(
         if (npcId.toLowerCase().includes('duck')) {
           audioManager.playSfx('sfx_ducks_quack');
         }
+        // Play random meow if interacting with a cat
+        if (npcId.toLowerCase().includes('cat')) {
+          const meowIndex = Math.floor(Math.random() * 3) + 1;
+          audioManager.playSfx(`sfx_meow_0${meowIndex}`);
+        }
         setActiveNPC(npcId);
       },
       onGiveGift: (npcId: string) => {
@@ -268,7 +272,9 @@ export function useInteractionController(
       },
       onTransition: (result: TransitionResult) => {
         if (result.success && result.mapId && result.spawnPosition) {
-          audioManager.playSfx('sfx_door_opening');
+          if (result.tileType === TileType.DOOR) {
+            audioManager.playSfx('sfx_door_open');
+          }
           onMapTransition(result.mapId, result.spawnPosition);
           const seedMatch = result.mapId.match(/_([\d]+)$/);
           const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;

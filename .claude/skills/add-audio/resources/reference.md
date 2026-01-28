@@ -54,30 +54,35 @@ audioManager.toggleMute();
 
 ## Currently Wired Up Sounds
 
-| Event | Sound Key | Location in App.tsx |
-|-------|-----------|---------------------|
-| Rain weather | `ambient_rain_light` | useEffect on currentWeather |
-| Storm weather | `ambient_thunderstorm` | useEffect on currentWeather |
-| Snow weather | `ambient_blizzard` | useEffect on currentWeather |
-| Tilling soil | `sfx_hoeing` | onFarmAnimation callback |
-| Watering crops | `sfx_digging` | onFarmAnimation callback |
-| Door transitions | `sfx_door_opening` | onTransition callback |
-| Talking to ducks | `sfx_ducks_quack` | onNPC callback |
-| Magic potions | `sfx_magic_transition` | usePotion handler |
-| Background music | `music_village`/`music_forest` | useEffect with timers |
+| Event | Sound Key | Wired In |
+|-------|-----------|----------|
+| Rain weather | `ambient_rain_light` | useEnvironmentController (useEffect on currentWeather) |
+| Storm weather | `ambient_thunderstorm` | useEnvironmentController (useEffect on currentWeather) |
+| Snow weather | `ambient_blizzard` | useEnvironmentController (useEffect on currentWeather) |
+| Forest birds | `ambient_birds` | useEnvironmentController (useEffect on currentMapId) |
+| Running stream | `ambient_running_stream` | useEnvironmentController (useEffect on currentMapId) |
+| Tilling soil | `sfx_till` | useInteractionController (onFarmAnimation callback) |
+| Door transitions | `sfx_door_open` | useInteractionController (onTransition callback, DOOR tiles only) |
+| Talking to ducks | `sfx_ducks_quack` | useInteractionController (onNPC callback) |
+| Interacting with cat | `sfx_meow_01`/`02`/`03` | useInteractionController (onNPC callback, random) |
+| Cooking | `sfx_frying` | RecipeContent.tsx / CookingInterface.tsx (handleCook) |
+| Magic potions | `sfx_magic_transition` | App.tsx (usePotion handler) |
+| Background music | `music_village`/`music_forest` | useEnvironmentController (useEffect with timers) |
 
 ## Key Integration Patterns
 
-### Weather → useEffect on state
-### Farming → onFarmAnimation callback
-### Transitions → onTransition callback
-### NPCs → onNPC callback
-### Magic → After effect success
+### Weather/Ambient → useEffect in useEnvironmentController
+### Farming → onFarmAnimation callback in useInteractionController
+### Transitions → onTransition callback in useInteractionController
+### NPCs → onNPC callback in useInteractionController
+### Cooking → handleCook in cooking components (direct audioManager import)
+### Magic → After effect success in App.tsx
 
 ## Troubleshooting
 
 **Sound not playing?** Check:
 1. Registered in `assets.ts`
 2. File exists in `/public/assets/audio/`
-3. **Wired up in App.tsx** (most common issue!)
-4. `audioManager.hasSound(key)` returns true
+3. **Wired up** — trigger code exists in the relevant hook/component (most common issue!)
+4. **Key matches** — the key used in `playSfx()` matches the key in `assets.ts`
+5. `audioManager.hasSound(key)` returns true
