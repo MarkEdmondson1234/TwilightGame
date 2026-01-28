@@ -250,7 +250,7 @@ class InventoryManager {
   }
 
   /**
-   * Check if player has an item (with enough uses)
+   * Check if player has an item (with enough quantity)
    */
   hasItem(itemId: string, quantity: number = 1): boolean {
     const item = getItem(itemId);
@@ -263,14 +263,14 @@ class InventoryManager {
       return this.tools.has(itemId);
     }
 
-    // Check total available uses
+    // Check total quantity available
     const instances = this.items.get(itemId) || [];
-    const totalUses = instances.reduce((sum, inst) => sum + (inst.uses || 1), 0);
-    return totalUses >= quantity;
+    const totalQuantity = instances.reduce((sum, inst) => sum + (inst.quantity || 1), 0);
+    return totalQuantity >= quantity;
   }
 
   /**
-   * Get quantity of an item (total uses available)
+   * Get quantity of an item (total quantity available)
    */
   getQuantity(itemId: string): number {
     const item = getItem(itemId);
@@ -283,9 +283,9 @@ class InventoryManager {
       return this.tools.has(itemId) ? 1 : 0;
     }
 
-    // Return total uses available
+    // Return total quantity available
     const instances = this.items.get(itemId) || [];
-    return instances.reduce((sum, inst) => sum + (inst.uses || 1), 0);
+    return instances.reduce((sum, inst) => sum + (inst.quantity || 1), 0);
   }
 
   /**
