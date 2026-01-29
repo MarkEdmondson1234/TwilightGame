@@ -217,6 +217,8 @@ export function useInteractionController(
       // Play farming sound effects
       if (action === 'till') {
         audioManager.playSfx('sfx_till');
+      } else if (action === 'plant') {
+        audioManager.playSfx('sfx_hoe');
       } else if (action === 'water') {
         // Play watering sound effect
         audioManager.playSfx('sfx_watering');
