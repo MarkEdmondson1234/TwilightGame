@@ -586,6 +586,10 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/farming/watering.mp3',
     category: 'sfx',
   },
+  sfx_harvest: {
+    url: '/TwilightGame/assets/audio/sfx/farming/harvest.mp3',
+    category: 'sfx',
+  },
 
   // === Sound Effects - Cooking ===
   sfx_frying: {

@@ -227,9 +227,13 @@ export function useInteractionController(
           setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
           setWaterSparkleKey((prev) => prev + 1);
         }
-      } else if (action === 'harvest' && tilePos) {
+      } else if (action === 'harvest') {
+        // Play harvest sound effect
+        audioManager.playSfx('sfx_harvest');
         // Trigger harvest glow VFX
-        triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
+        if (tilePos) {
+          triggerVFX('harvest_glow', { x: tilePos.x + 0.5, y: tilePos.y + 0.5 });
+        }
       }
     },
     [triggerVFX]
