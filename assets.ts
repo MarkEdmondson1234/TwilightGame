@@ -618,6 +618,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/npcs/meow03.mp3',
     category: 'sfx',
   },
+  // Dog barks (extensible for more bark variations)
+  sfx_bark_01: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/bark01.mp3',
+    category: 'sfx',
+  },
 
   // === Music - Map Themes ===
   // Each map can have its own background music with crossfade transitions

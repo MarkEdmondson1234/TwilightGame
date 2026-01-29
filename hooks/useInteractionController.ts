@@ -265,6 +265,11 @@ export function useInteractionController(
           const meowIndex = Math.floor(Math.random() * 3) + 1;
           audioManager.playSfx(`sfx_meow_0${meowIndex}`);
         }
+        // Play random bark if interacting with a dog
+        if (npcId.toLowerCase().includes('dog')) {
+          const barkIndex = Math.floor(Math.random() * 1) + 1; // Currently 1 bark, extensible
+          audioManager.playSfx(`sfx_bark_0${barkIndex}`);
+        }
         setActiveNPC(npcId);
       },
       onGiveGift: (npcId: string) => {
