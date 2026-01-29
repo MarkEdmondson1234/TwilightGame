@@ -60,17 +60,21 @@ export function createVillageElderNPC(
       },
       {
         id: 'tree_admiration',
-        text: 'Aye, this cherry tree hath stood here longer than I have lived. A comfort in changing times.',
+        text: 'Aye, my Althea and I planted this cherry tree together when we were young and newly wed. A symbol of our love, it was. Still is.',
         seasonalText: {
-          spring: 'Indeed! Each spring I am blessed to witness the blossoms anew. They remind me that beauty returns, even after the harshest winter.',
-          summer: 'Aye! The fruit is sweetest when shared with friends. In my youth, we children would climb these very branches.',
-          autumn: 'Thou hast a keen eye, traveller. These autumn leaves fall like nature\'s own farewell, painting the ground in fire. I have watched this display for nigh on seventy years, and still it moves my heart.',
-          winter: 'True, true. Bare branches against the snow... there is a stark beauty in it. The tree rests, gathering strength for spring.',
+          spring: 'Indeed! Each spring I am blessed to witness the blossoms anew. Althea and I planted this tree together, you know. Fifty years of springs we\'ve watched it bloom.',
+          summer: 'Aye! The fruit is sweetest when shared with friends. Althea makes the most wonderful cherry preserves from this very tree.',
+          autumn: 'Thou hast a keen eye, traveller. These autumn leaves fall like nature\'s own farewell. My Althea says I spend too much time here, but she understands.',
+          winter: 'True, true. Bare branches against the snow... there is a stark beauty in it. Althea knits me warm scarves so I may sit here even in winter.',
         },
         responses: [
           {
             text: 'How long have you lived here?',
             nextId: 'elder_history',
+          },
+          {
+            text: 'Tell me about Althea.',
+            nextId: 'wife_althea',
           },
           {
             text: 'I should be going.',
@@ -119,6 +123,40 @@ export function createVillageElderNPC(
       {
         id: 'village_constants',
         text: 'The cherry tree blooms. The seasons turn. Neighbours help neighbours. These truths endure, traveller.',
+      },
+      {
+        id: 'wife_althea',
+        text: '*His eyes soften.* My Althea... we have been married for over fifty years now. I courted her for the longest time before she agreed, you know. She gave up much to be with me. *He smiles warmly.* She makes the most wonderful things with her knitting. You should visit her sometime.',
+        responses: [
+          {
+            text: 'Fifty years is remarkable.',
+            nextId: 'long_marriage',
+          },
+          {
+            text: 'I\'ll be sure to visit her.',
+          },
+        ],
+      },
+      {
+        id: 'long_marriage',
+        text: 'Aye, we\'ve weathered many storms together, she and I. I used to be a gardener, you know - still tend the communal kitchen gardens when these old bones allow. Althea teases that I spend more time with the vegetables than with her!',
+        responses: [
+          {
+            text: 'You tend the village gardens?',
+            nextId: 'gardening_tips',
+          },
+          {
+            text: 'That\'s sweet.',
+          },
+        ],
+      },
+      {
+        id: 'gardening_tips',
+        text: 'Indeed! Though I could use some help these days. If thou art interested in growing things, I have some advice: spring is best for most crops, but put thy onion sets down in autumn - they\'ll be ready come summer. And if thou needest seeds, the forest sometimes hides them, but mind the wild creatures!',
+        seasonalText: {
+          autumn: 'Autumn is the time for onion sets, young one! Plant them now, and come summer, thou\'lt have fine bulbs. The shop should have some in stock.',
+          spring: 'Spring! The perfect time to plant most things. Visit the shop for seeds, or search the forest - nature provides for those who look carefully.',
+        },
       },
     ],
     friendshipConfig: {
@@ -357,9 +395,9 @@ export function createOldWomanKnittingNPC(
     dialogue: [
       {
         id: 'greeting',
-        text: 'Oh hello, dearie! Come sit with me a while. These old hands are always knitting.',
+        text: 'Oh hello, dearie! I\'m Althea. Come sit with me a while. These old hands are always knitting.',
         seasonalText: {
-          spring: 'Good day, love! I\'m knitting a new spring shawl. The flowers are blooming beautifully this year, aren\'t they?',
+          spring: 'Good day, love! I\'m Althea. I\'m knitting a new spring shawl. The flowers are blooming beautifully this year, aren\'t they?',
           summer: 'Afternoon, dearie! Even in this heat, I keep knitting. It soothes the soul, you know.',
           autumn: 'Hello, dear one! I\'m making warm scarves for winter. Would you like me to knit you one?',
           winter: 'Come in from the cold, pet! Nothing better than knitting by a warm fire on a winter\'s day.',
@@ -372,6 +410,10 @@ export function createOldWomanKnittingNPC(
           {
             text: 'How long have you lived here?',
             nextId: 'village_history',
+          },
+          {
+            text: 'Tell me about your husband.',
+            nextId: 'husband_elias',
           },
           {
             text: 'Take care!',
@@ -405,7 +447,56 @@ export function createOldWomanKnittingNPC(
       },
       {
         id: 'memories',
-        text: 'Indeed! Every corner, every tree... I remember when the elder was just a young lad. And now he sits by that cherry tree pretending to be wise!',
+        text: 'Indeed! Every corner, every tree... I remember when Elias was just a young lad courting me. He was terribly persistent! And now he sits by that cherry tree we planted together, pretending to be wise.',
+        responses: [
+          {
+            text: 'You planted the cherry tree together?',
+            nextId: 'cherry_tree_story',
+          },
+          {
+            text: 'That\'s lovely.',
+          },
+        ],
+      },
+      {
+        id: 'husband_elias',
+        text: 'My Elias? We\'ve been married over fifty years now, dear heart. He courted me for the longest time before I said yes. *She chuckles softly.* I gave up a lot to be with him, but I\'ve never regretted it.',
+        responses: [
+          {
+            text: 'What did you give up?',
+            nextId: 'sister_hint',
+          },
+          {
+            text: 'Fifty years! That\'s wonderful.',
+          },
+        ],
+      },
+      {
+        id: 'cherry_tree_story',
+        text: 'Oh yes! When we were young and newly wed, Elias and I planted that cherry tree together. A symbol of our love, he said. Sentimental old fool. *Her eyes twinkle.* But every spring when it blooms, I remember that day.',
+      },
+      {
+        id: 'sister_hint',
+        text: '*She pauses, her needles stilling for a moment.* I had a sister once. We were very close, but... she chose a different path. Lives in the forest now, far from the village. We rarely see each other anymore.',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          {
+            text: 'A sister in the forest?',
+            nextId: 'sister_juniper',
+          },
+          {
+            text: 'I\'m sorry to hear that.',
+          },
+        ],
+      },
+      {
+        id: 'sister_juniper',
+        text: '*She lowers her voice.* Her name is Juniper. She became a witch, you see. Very powerful, they say. I miss her terribly, but she chose magic over... well, over everything else. Perhaps you\'ll meet her someday, if you venture deep into the forest.',
+        requiredFriendshipTier: 'good_friend',
+      },
+      {
+        id: 'wolfsbane_warning',
+        text: 'Oh, do be careful around those purple flowers by my house, dearie! That\'s wolfsbane. Pretty to look at, but terribly poisonous. I grow it for... well, for protection. The forest has its dangers, you know.',
       },
     ],
     friendshipConfig: {

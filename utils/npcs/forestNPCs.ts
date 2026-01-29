@@ -229,7 +229,7 @@ export function createWitchWolfNPC(
       },
       {
         id: 'introduction',
-        text: '"I am the Witch of the Woods, keeper of old magic and tender of this sacred glade. I have lived here for... well, longer than most can remember. My companion here is Shadow." *The wolf\'s ears perk up at the name.*',
+        text: '"My name is Juniper, though most simply call me the Witch of the Woods. I am the keeper of old magic and tender of this sacred glade. My companion here is Shadow - an umbra wolf, one of the last of his kind." *The wolf\'s ears perk up at the name.*',
         seasonalText: {
           spring: '"I\'ve watched spring return to this forest for centuries. Each year brings new blossoms, new life, new possibilities."',
           summer: '"Summer is when my garden is most abundant. I grow plants with magical properties - and a few vegetables for my sandwiches, of course."',
@@ -302,14 +302,58 @@ export function createWitchWolfNPC(
       {
         id: 'magic_talk',
         text: '"Magic is all around us - in the growth of a seed, the turn of the seasons, the pull of the moon on the tides. I simply... help it along. Guide it. Shape it to purpose. It\'s not about power, it\'s about harmony."',
+        responses: [
+          { text: 'Tell me about magical ingredients.', nextId: 'magical_ingredients' },
+          { text: 'Are there other magical beings?', nextId: 'magical_beings' },
+          { text: 'Fascinating.' },
+        ],
       },
       {
         id: 'glade_life',
         text: '"Peaceful, mostly. I have my garden, my brewing, Shadow for company. The forest provides what I need. Sometimes travellers find their way here, which makes for pleasant conversation." *She smiles.* "It can be lonely, I admit. Perhaps that\'s why I\'m considering an apprentice."',
         responses: [
           { text: 'I could be that apprentice.', nextId: 'apprentice' },
+          { text: 'Do you have any family?', nextId: 'witch_family' },
           { text: 'It sounds lovely here.' },
         ],
+      },
+      {
+        id: 'magical_ingredients',
+        text: '*She chuckles.* "Ah, the old names can be confusing. \'Eye of Newt\' for example - it\'s just mustard seeds. Mundane ingredients, magical results. The real power is in the Moonpetal - it only grows in ancient places and flowers at night. Very rare, very potent."',
+        responses: [
+          { text: 'Where can I find Moonpetal?', nextId: 'moonpetal_location' },
+          { text: 'Good to know about the mustard!' },
+        ],
+      },
+      {
+        id: 'moonpetal_location',
+        text: '"Look for ancient places - old ruins, fairy circles, standing stones. The flowers bloom only at night, so you\'ll need to venture out when most folk are abed. They glow faintly silver... quite beautiful, actually."',
+      },
+      {
+        id: 'magical_beings',
+        text: '"Oh yes, the forest is full of them. The fairies, for one - there\'s a whole realm just beside our own. And their queen..." *She pauses.* "People say Celestia is dead, but the truth is more complicated. She is reborn every spring, you see. Death and rebirth, the eternal cycle."',
+        responses: [
+          { text: 'The fairy queen is reborn?', nextId: 'fairy_queen' },
+          { text: 'A realm beside our own?' },
+        ],
+      },
+      {
+        id: 'fairy_queen',
+        text: '"Celestia, Queen of the Fae. She dies each winter when the last leaf falls, and is reborn when the first flower blooms. It is the way of fairy magic - tied to the seasons, to nature itself. Perhaps someday you will meet her."',
+      },
+      {
+        id: 'witch_family',
+        text: '*Her expression shifts, becoming guarded.* "I have a sister in the village. Althea. She chose a different life - married Elias, settled down. We... don\'t speak much anymore." *She stirs the cauldron absently.* "She chose love over magic. I chose magic over... everything else."',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'Do you miss her?', nextId: 'miss_sister' },
+          { text: 'I\'m sorry.' },
+        ],
+      },
+      {
+        id: 'miss_sister',
+        text: '*She\'s quiet for a long moment.* "Every day. But some choices, once made, cannot be unmade. I am a tenth-generation witch - this was always my path. Althea understood that, even if it hurt her." *Shadow nuzzles her hand.* "At least I have Shadow."',
+        requiredFriendshipTier: 'good_friend',
       },
     ],
     friendshipConfig: {

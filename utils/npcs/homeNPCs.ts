@@ -68,6 +68,7 @@ export function createMumNPC(
           { text: 'What are you working on?', nextId: 'home_tasks' },
           { text: 'Tell me about the village.', nextId: 'village_chat' },
           { text: 'Can you teach me to cook?', nextId: 'teach_cooking' },
+          { text: 'Tell me about yourself, Mum.', nextId: 'about_mum' },
           { text: 'I should get going.' },
         ],
       },
@@ -224,6 +225,65 @@ export function createMumNPC(
       { id: 'not_ready_chocolate_cake', text: 'Chocolate cake is quite advanced, dear. Master the chocolate cookies recipe first - once you\'ve got the hang of basic baking, then we can tackle the cake. Practice makes perfect!', expression: 'default', responses: [] },
       { id: 'not_ready_ice_cream', text: 'Ice cream is tricky, love. Show me you\'ve mastered crêpes first, then I\'ll teach you the secrets of making perfect ice cream.', expression: 'default', responses: [] },
       { id: 'not_ready_roast_dinner', text: 'A roast dinner is quite a challenge! Master the spaghetti recipe first, dear, then we\'ll work our way up to a proper Sunday roast.', expression: 'default', responses: [] },
+
+      // Personal story dialogues
+      {
+        id: 'about_mum',
+        text: '*She smiles warmly.* About me? Well, my name is Ava, though you\'ve always just called me Mum. Is there something specific you\'d like to know, love?',
+        expression: 'smile',
+        responses: [
+          { text: 'What was your life like before the village?', nextId: 'past_life' },
+          { text: 'Tell me about Dad.', nextId: 'about_dad' },
+          { text: 'What do you like to do for fun?', nextId: 'mum_hobbies' },
+          { text: 'Just curious!' },
+        ],
+      },
+      {
+        id: 'past_life',
+        text: '*She pauses, a wistful look in her eyes.* When I was a little girl, I lived in a big house far from here. My parents had lots of money, but... they weren\'t happy. When I grew up, I moved to the city and became a chef. I was successful, but it was stressful.',
+        expression: 'default',
+        responses: [
+          { text: 'What happened then?', nextId: 'moved_to_village' },
+          { text: 'A chef! That explains your cooking skills.' },
+        ],
+      },
+      {
+        id: 'moved_to_village',
+        text: 'One day, I realised my life was disappearing like sand sifting through my fingers. So I sold my flat, quit my job, and moved here. Best decision I ever made. *Her face lights up.* This is where I met your father, Theo.',
+        expression: 'happy',
+        responses: [
+          { text: 'Tell me more about Dad.', nextId: 'about_dad' },
+          { text: 'I\'m glad you\'re happy here.' },
+        ],
+      },
+      {
+        id: 'about_dad',
+        text: '*Her expression becomes tender but tinged with sadness.* Your father, Theo... he\'s an explorer, always off discovering new places. He\'s away travelling for most of the year. I miss him terribly, but I understand his adventurous spirit.',
+        expression: 'default',
+        responses: [
+          { text: 'When will he come back?', nextId: 'dad_return' },
+          { text: 'I miss him too.' },
+        ],
+      },
+      {
+        id: 'dad_return',
+        text: '*She looks away for a moment.* I... I\'m not sure, love. Theo has his reasons for staying away. Perhaps when you\'re older, I can explain more. For now, just know that he loves you very much.',
+        expression: 'default',
+      },
+      {
+        id: 'mum_hobbies',
+        text: '*Her eyes light up.* Oh, I love reading! Especially fantasy books - the ones with dragons and magic and brave heroes. There\'s something wonderful about escaping into another world for a while. I\'ve got quite a collection upstairs!',
+        expression: 'happy',
+        responses: [
+          { text: 'Any favourites?', nextId: 'favourite_books' },
+          { text: 'That\'s lovely, Mum.' },
+        ],
+      },
+      {
+        id: 'favourite_books',
+        text: 'Oh, I couldn\'t possibly choose just one! I love stories about ordinary people who discover they can do extraordinary things. *She chuckles.* Maybe that\'s why I like living here. This village has a certain... magic to it, don\'t you think?',
+        expression: 'smile',
+      },
     ],
     friendshipConfig: {
       canBefriend: true,
