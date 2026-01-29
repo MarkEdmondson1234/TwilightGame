@@ -32,6 +32,12 @@ import { registerItemSprite } from '../utils/inventoryUIHelper';
 import { getDistance } from '../utils/pathfinding';
 import { InventoryItem } from '../components/Inventory';
 import type { UseUIStateReturn } from './useUIState';
+import {
+  canCleanCobwebs,
+  checkCobwebClick,
+  cleanCobweb,
+  calculateOverlayBounds,
+} from '../utils/cobwebInteractions';
 
 // ============================================================================
 // Configuration Interface
@@ -380,6 +386,51 @@ export function useInteractionController(
         selectedItemSlot,
         ')'
       );
+
+      // === Cobweb Cleaning Special Handler ===
+      // Check for cobweb clicks in Althea's cottage during the chores quest
+      if (canCleanCobwebs(currentMapId, currentTool)) {
+        // Calculate overlay bounds based on viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        // Approximate viewport scale (the BackgroundImageLayer calculates this more precisely)
+        const referenceWidth = 1280;
+        const referenceHeight = 720;
+        const scaleX = viewportWidth / referenceWidth;
+        const scaleY = viewportHeight / referenceHeight;
+        const viewportScale = Math.min(scaleX, scaleY);
+
+        const overlayBounds = calculateOverlayBounds(viewportWidth, viewportHeight, viewportScale);
+
+        // Check if click hit a cobweb
+        const cobwebResult = checkCobwebClick(
+          clickInfo.screenPos.x,
+          clickInfo.screenPos.y,
+          overlayBounds.left,
+          overlayBounds.top,
+          overlayBounds.width,
+          overlayBounds.height
+        );
+
+        if (cobwebResult.hit) {
+          console.log('[InteractionController] Cobweb clicked:', cobwebResult);
+
+          if (cobwebResult.alreadyCleaned) {
+            onShowToast('This cobweb has already been cleaned.', 'info');
+          } else {
+            // Clean the cobweb
+            const cleanResult = cleanCobweb(cobwebResult.cobwebIndex);
+            if (cleanResult.success) {
+              onShowToast(cleanResult.message, 'success');
+              // Play a cleaning sound effect (if available)
+              // audioManager.playSFX('sfx_clean');
+            } else {
+              onShowToast(cleanResult.message, 'info');
+            }
+          }
+          return; // Don't process other interactions when cleaning cobwebs
+        }
+      }
 
       const callbacks = buildInteractionCallbacks();
 

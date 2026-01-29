@@ -45,6 +45,12 @@ export enum GameEvent {
   // Environment events
   WEATHER_CHANGED = 'env:weather_changed',
   TIME_CHANGED = 'env:time_changed',
+
+  // Quest events
+  QUEST_STARTED = 'quest:started',
+  QUEST_STAGE_CHANGED = 'quest:stage_changed',
+  QUEST_COMPLETED = 'quest:completed',
+  QUEST_DATA_CHANGED = 'quest:data_changed',
 }
 
 // ============================================================================
@@ -94,6 +100,22 @@ export interface EventPayloads {
   [GameEvent.TIME_CHANGED]: {
     hour: number;
     timeOfDay: 'day' | 'night';
+  };
+  [GameEvent.QUEST_STARTED]: {
+    questId: string;
+  };
+  [GameEvent.QUEST_STAGE_CHANGED]: {
+    questId: string;
+    stage: number;
+    previousStage: number;
+  };
+  [GameEvent.QUEST_COMPLETED]: {
+    questId: string;
+  };
+  [GameEvent.QUEST_DATA_CHANGED]: {
+    questId: string;
+    key: string;
+    value: unknown;
   };
 }
 

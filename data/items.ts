@@ -531,6 +531,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.watering_can,
   },
 
+  tool_feather_duster: {
+    id: 'tool_feather_duster',
+    name: 'tool_feather_duster',
+    displayName: 'Feather Duster',
+    category: ItemCategory.TOOL,
+    description: 'A fluffy feather duster for cleaning cobwebs. Given by Althea.',
+    stackable: false,
+    // No buyPrice - quest reward item, not purchasable
+    image: itemAssets.feather_duster,
+  },
+
   // ===== COOKING INGREDIENTS (shop-bought) =====
 
   // Basic ingredients (Mother stocks these)

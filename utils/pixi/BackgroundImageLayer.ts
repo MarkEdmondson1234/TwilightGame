@@ -21,9 +21,10 @@
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { textureManager } from '../TextureManager';
-import { MapDefinition, RoomLayer, ImageRoomLayer, NPC } from '../../types';
+import { MapDefinition, RoomLayer, ImageRoomLayer, NPC, LayerCondition } from '../../types';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
 import { npcManager } from '../../NPCManager';
+import { gameState } from '../../GameState';
 
 interface LayerSprite {
   sprite: PIXI.Sprite;
@@ -189,8 +190,38 @@ export class BackgroundImageLayer {
   }
 
   /**
+   * Check if a layer's condition is met (returns true if layer should be shown)
+   * A layer without a condition is always shown
+   */
+  private checkLayerCondition(condition: LayerCondition | undefined): boolean {
+    if (!condition) {
+      return true; // No condition = always show
+    }
+
+    if (condition.type === 'quest') {
+      const isStarted = gameState.isQuestStarted(condition.questId);
+      const isCompleted = gameState.isQuestCompleted(condition.questId);
+      const isActive = isStarted && !isCompleted;
+
+      switch (condition.showWhen) {
+        case 'active':
+          return isActive;
+        case 'not_started':
+          return !isStarted;
+        case 'completed':
+          return isCompleted;
+        default:
+          return true;
+      }
+    }
+
+    return true; // Unknown condition type = show by default
+  }
+
+  /**
    * Process unified layers array - handles both images and NPCs
    * All elements are added directly to stage with their z-index for proper sorting
+   * Layers with conditions are only added if the condition is met
    */
   private async processUnifiedLayers(layers: RoomLayer[], map: MapDefinition): Promise<void> {
     if (!this.stageRef) {
@@ -199,6 +230,11 @@ export class BackgroundImageLayer {
     }
 
     for (const layer of layers) {
+      // Check condition before processing layer
+      if (!this.checkLayerCondition(layer.condition)) {
+        continue; // Skip layers whose condition is not met
+      }
+
       if (layer.type === 'image') {
         // Image layer - add directly to stage for proper z-index sorting
         const layerSprite = await this.createImageLayerSprite(layer, map);

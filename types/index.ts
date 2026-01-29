@@ -26,6 +26,7 @@ export type {
   SizeTier,
   Transition,
   MapRenderMode,
+  LayerCondition,
   ImageRoomLayer,
   NPCRoomLayer,
   RoomLayer,

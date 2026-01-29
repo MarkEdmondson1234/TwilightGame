@@ -498,6 +498,66 @@ export function createOldWomanKnittingNPC(
         id: 'wolfsbane_warning',
         text: 'Oh, do be careful around those purple flowers by my house, dearie! That\'s wolfsbane. Pretty to look at, but terribly poisonous. I grow it for... well, for protection. The forest has its dangers, you know.',
       },
+      // ===== ALTHEA'S CHORES QUEST =====
+      // Available after the player reaches good_friend tier and has heard about Juniper
+      {
+        id: 'chores_offer',
+        text: '*She looks at you thoughtfully.* You know, dearie, my old cottage could use some tidying. And I do so miss a proper cup of tea and some home-baked biscuits. If you helped me out, I might just remember the way to Juniper\'s place...',
+        requiredFriendshipTier: 'good_friend',
+        hiddenIfQuestStarted: 'althea_chores',
+        responses: [
+          {
+            text: 'I\'d be happy to help!',
+            nextId: 'chores_accept',
+          },
+          {
+            text: 'Maybe another time.',
+          },
+        ],
+      },
+      {
+        id: 'chores_accept',
+        text: 'Oh, wonderful! *She beams.* Here\'s what I need: a nice hot cup of tea, some freshly baked biscuits - shop-bought won\'t do, mind you - and could you clean the cobwebs in my cottage? Here, take my old feather duster. My hands aren\'t as steady as they used to be.',
+        // Note: The feather duster is granted via dialogue action handler when quest starts
+        responses: [
+          {
+            text: 'I\'ll get started right away!',
+            startsQuest: 'althea_chores',
+            setsQuestStage: { questId: 'althea_chores', stage: 1 },
+          },
+        ],
+      },
+      // Progress check dialogue - shows while quest is active
+      {
+        id: 'chores_progress',
+        text: 'How are you getting on with those little tasks, dear? Remember: a cup of tea, some home-baked biscuits, and cleaning those cobwebs in my cottage.',
+        requiredQuest: 'althea_chores',
+        hiddenIfQuestCompleted: 'althea_chores',
+        responses: [
+          {
+            text: 'I\'m still working on it.',
+          },
+        ],
+      },
+      // Completion dialogue - appears when all chores are done (checked via quest data)
+      {
+        id: 'chores_complete',
+        text: '*She sets down her knitting with a warm smile.* You\'ve been such a help, dearie! The cottage is sparkling, and I feel so much better. As promised, I\'ll tell you how to find my sister.',
+        requiredQuest: 'althea_chores',
+        hiddenIfQuestCompleted: 'althea_chores',
+        // This node requires special handling to check if all chores are done
+        responses: [
+          {
+            text: 'Where can I find Juniper?',
+            nextId: 'witch_location_reveal',
+            completesQuest: 'althea_chores',
+          },
+        ],
+      },
+      {
+        id: 'witch_location_reveal',
+        text: '*She leans in conspiratorially.* Deep in the forest, past the mushroom grove, there\'s a path that seems to disappear into the mist. Follow it anyway - it\'ll lead you to Juniper\'s glade. She can be... prickly, but she has a good heart underneath it all. Tell her Althea sends her love.',
+      },
     ],
     friendshipConfig: {
       canBefriend: true,

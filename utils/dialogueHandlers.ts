@@ -38,6 +38,11 @@ export function handleDialogueAction(npcId: string, nodeId: string): void {
   if (npcId.includes('mum')) {
     handleRecipeTeaching(nodeId);
   }
+
+  // Handle Althea's chores quest - grant feather duster when accepting
+  if (npcId.includes('althea')) {
+    handleAltheaQuestItems(nodeId);
+  }
 }
 
 /**
@@ -73,6 +78,24 @@ function handleSeedPickup(nodeId: string): void {
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools);
     console.log(`[dialogueHandlers] Added ${action.quantity}x ${action.itemId} to inventory`);
+  }
+}
+
+/**
+ * Handle Althea's chores quest items
+ * Grants the feather duster when the player accepts the quest
+ */
+function handleAltheaQuestItems(nodeId: string): void {
+  // Grant feather duster when accepting chores quest
+  if (nodeId === 'chores_accept') {
+    // Check if player already has the feather duster to avoid duplicates
+    const hasFeatherDuster = inventoryManager.hasItem('tool_feather_duster');
+    if (!hasFeatherDuster) {
+      inventoryManager.addItem('tool_feather_duster', 1);
+      const inventoryData = inventoryManager.getInventoryData();
+      characterData.saveInventory(inventoryData.items, inventoryData.tools);
+      console.log('[dialogueHandlers] 🪶 Althea gave you the feather duster!');
+    }
   }
 }
 

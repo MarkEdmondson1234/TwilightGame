@@ -1,6 +1,7 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
-import { Z_PARALLAX_FAR } from '../../zIndex';
+import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND } from '../../zIndex';
+import { QUEST_ID as ALTHEA_CHORES_QUEST } from '../../data/quests/altheaChores';
 
 /**
  * Cottage Interior - Background Image Interior
@@ -52,6 +53,26 @@ const cottageInteriorLayers: RoomLayer[] = [
     height: 540,
     scale: 1.3, // Match bear den scale
     centered: true,
+  },
+
+  // Layer 2: Cobweb overlay (only visible during Althea's chores quest)
+  // Shows 5 cobwebs that the player must clean with the feather duster
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/cottage_small_interior/cobweb_overlay.png',
+    zIndex: Z_SPRITE_BACKGROUND, // 50: Behind player but in front of background
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,
+    height: 540,
+    scale: 1.3,
+    centered: true,
+    // Only show when quest is active (started but not completed)
+    condition: {
+      type: 'quest',
+      questId: ALTHEA_CHORES_QUEST,
+      showWhen: 'active',
+    },
   },
 
   // Player is implicitly at Z_PLAYER (100)

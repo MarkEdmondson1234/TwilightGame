@@ -49,12 +49,24 @@ export type MapRenderMode = 'tiled' | 'background-image';
 // ============================================================================
 
 /**
+ * Condition for showing/hiding a room layer based on quest state
+ */
+export interface LayerCondition {
+  type: 'quest';
+  questId: string;
+  /** When to show the layer: 'active' (started but not completed), 'not_started', or 'completed' */
+  showWhen: 'active' | 'not_started' | 'completed';
+}
+
+/**
  * Base properties shared by all room layer types
  */
 interface BaseRoomLayer {
   zIndex: number; // Layer order - see zIndex.ts for constants
   parallaxFactor?: number; // Camera scroll multiplier (default: 1.0)
   opacity?: number; // 0.0 - 1.0 (default: 1.0)
+  /** Optional condition - layer only renders when condition is met */
+  condition?: LayerCondition;
 }
 
 /**

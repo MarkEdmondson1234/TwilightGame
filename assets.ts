@@ -565,6 +565,8 @@ export const itemAssets = {
   radishes: '/TwilightGame/assets-optimized/items/radishes.png',
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',
+  // Tools - Quest and special items
+  feather_duster: '/TwilightGame/assets-optimized/items/feather_duster.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds

@@ -22,6 +22,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   // Tools
   tool_hoe: itemAssets.hoe,
   tool_watering_can: itemAssets.watering_can,
+  tool_feather_duster: itemAssets.feather_duster,
 
   // Ingredients
   water: itemAssets.water,
