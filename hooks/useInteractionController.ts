@@ -218,6 +218,8 @@ export function useInteractionController(
       if (action === 'till') {
         audioManager.playSfx('sfx_till');
       } else if (action === 'water') {
+        // Play watering sound effect
+        audioManager.playSfx('sfx_watering');
         // Trigger water sparkle effect
         if (tilePos) {
           setWaterSparklePos({ x: tilePos.x, y: tilePos.y });
