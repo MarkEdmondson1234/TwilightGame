@@ -1410,6 +1410,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 12,
+    image: groceryAssets.mint,
   },
 
   // Quest/Gift rewards
