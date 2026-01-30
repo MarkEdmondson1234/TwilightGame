@@ -62,13 +62,13 @@ export const NPC_GIFT_PREFERENCES: Record<string, NPCGiftPreferences> = {
     lovesHomeCookedFood: true,
   },
 
-  // Old Woman - loves sweets, dislikes spinach
+  // Old Woman (Althea) - loves sweets, dislikes spinach
   old_woman: {
     loves: ['food_cookies', 'food_chocolate_cake'],
     dislikes: ['crop_spinach'],
   },
 
-  // Village Elder (Old Man) - loves roast dinner
+  // Village Elder (Old Man Elias) - loves roast dinner
   village_elder: {
     loves: ['food_roast_dinner'],
     dislikes: [],

@@ -105,7 +105,9 @@ export type MagicEffectType =
   | 'wakefulness'
   // Movement effects
   | 'floating'
-  | 'flying';
+  | 'flying'
+  // Transformation effects
+  | 'fairy_form';
 
 export interface MagicEffectResult {
   success: boolean;
@@ -165,6 +167,9 @@ export interface MagicEffectCallbacks {
 
   // Glamour Draught - opens NPC selection modal
   openGlamourModal?: () => void;
+
+  // Fairy Form transformation (shrinks player to fairy size)
+  setFairyForm?: (active: boolean, durationMs?: number) => void;
 }
 
 // ============================================================================
@@ -716,6 +721,28 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
         message: 'Flying for 2 game hours',
         effectType: 'flying',
         vfxType: 'flight_aura',
+        duration,
+      };
+    },
+  },
+
+  // ===== QUEST POTIONS =====
+  // These are received as gifts from NPCs, not brewed
+
+  potion_fairy_form: {
+    potionId: 'potion_fairy_form',
+    effectType: 'fairy_form',
+    execute: (callbacks) => {
+      // Duration: 1 hour real-time (plenty of time to visit the fairy queen)
+      const duration = 60 * 60 * 1000;
+      callbacks.setFairyForm?.(true, duration);
+      callbacks.showToast('You shrink down to fairy size! Time to visit the Fairy Queen.', 'success');
+      callbacks.triggerVFX?.('shrink', callbacks.getPlayerPosition());
+      return {
+        success: true,
+        message: 'Transformed into fairy form for 1 hour',
+        effectType: 'fairy_form',
+        vfxType: 'shrink',
         duration,
       };
     },

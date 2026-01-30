@@ -1,105 +1,118 @@
 # Quest: The Fairy Queen's Court
 
-A multi-part questline involving fairies, becoming small, and visiting the fairy realm.
+A friendship-based questline where you befriend fairies and earn the privilege of visiting their queen.
 
-## Part 1: The Old Man's Task
+## Overview
 
-The Old Man asks you to go into the woods and obtain 3 different wild plants.
+Plant fairy bluebells to attract fairies at night. Build friendship with Morgan or Stella, and they'll gift you a Fairy Form Potion that allows you to shrink down and visit the Fairy Queen inside the ancient oak.
 
-**Required Plants**:
-| Plant | Season Available |
-|-------|-----------------|
-| Blueberries | Summer, Autumn |
-| Hazelnut | Autumn only |
-| Elderflowers | Spring only |
+## Quest Flow
 
-**Note**: This quest takes at least 2 seasons to complete due to seasonal availability.
+### Part 1: Growing Fairy Bluebells
 
-**Reward**: A special seed for Fairy Bluebells.
+**Prerequisites**: Obtain fairy bluebell seeds (from the Old Man's task or other sources)
 
-## Part 2: The Fairy Bluebells
+**Steps**:
+1. Plant fairy bluebell seeds in tilled soil
+2. Water and tend the plants until they mature
+3. Wait for night time (22:00-06:00)
 
-**Growing**:
-- Plant the Fairy Bluebell seed
-- Flowers in summer
-- Attracts fairies at night
+**Result**: Fairies are attracted to mature fairy bluebells at night
 
-**Meeting Morgan**:
-- A little fairy called Morgan appears
-- She tells you stories of the fairy queen's magical realm
+### Part 2: Meeting the Fairies
 
-**Building Friendship**:
-- Talk to Morgan every night for a week
-- Reward: Fairy dust (makes plants grow up and have produce in a day)
+**Location**: Near your mature fairy bluebells, at night
 
-## Part 3: Seeking the Fairy Queen
+**Who Appears**:
+- **Morgan** - A cheeky, slightly rude fairy who warms up over time
+- **Stella** - A kind, gentle fairy who's warm from the start
 
-When you run out of fairy dust and talk to Morgan again:
+**First Meeting**:
+- The fairy comments on your bluebells
+- Quest begins: "The Fairy Queen's Court"
+- They hint at the Fairy Queen in the ancient oak
 
-**Morgan's Suggestion**:
-- Visit the fairy queen
-- Ask her to teach you to be a fairy
+### Part 3: Building Friendship
 
-**Requirements to Visit**:
-- Make yourself small
-- Have wings
+**How to Build Friendship**:
+- Talk to the fairies each night they appear (daily talk bonus)
+- Give them gifts they like
+- Reach **Good Friends** tier (600+ friendship points)
 
-## Part 4: Getting Wings
+**Fairy Preferences**:
+- Morgan likes: Shiny objects, rare flowers
+- Stella likes: Sweet foods, gentle flowers
 
-**Source**: The Small Girl (Celia)
+### Part 4: Receiving the Potion
 
-If you ask her about wings, she says:
-- There are dragonflies down by the stream in the forest
-- You need a net to catch them
+**Trigger**: Reach Good Friends (600+ points) with Morgan or Stella
 
-**Getting a Net**:
-- **Option 1**: Buy from the shop
-- **Option 2**: Build one yourself:
-  - Make netting from rushes
-  - Get branches from a tree with a saw
+**Reward**: **Fairy Form Potion**
+- Either fairy can give you the potion (first to Good Friends)
+- The potion is a gift, not crafted
+- If you lose or use the potion, you can ask your fairy friend for another
 
-## Part 5: Becoming Small
+**Potion Details**:
+- Consumable (single use)
+- Double-click in inventory to use
+- Transforms you into tiny fairy form for 1 hour (real time)
+- Re-requestable from the fairy via dialogue
 
-**Source**: The Old Woman (Althea)
+### Part 5: Visiting the Fairy Queen
 
-**Prerequisites**: You must tell her about the fairies first.
-
-**Information**:
-- There is a magical mushroom that makes you small
-- It only grows at levels deeper than level 4 in the mine
-- There are goblins in there too
-
-## Part 6: Visiting the Fairy Queen
-
-**Location**: The hollow tree in the forest
+**Location**: The Giant Fairy Oak in the Deep Forest
 
 **Requirements**:
-- Can only enter by night
-- Must be small
-- Must have wings
+- Must be in fairy form (use the potion)
+- Can only enter the oak at night
 
-**Inside**:
-- The Fairy Queen is having a ball (cutscene)
-- You can ask for an audience with her
+**Inside the Oak**:
+- The Fairy Queen holds court
+- You can request an audience with her
 
-**Reward**:
+**Rewards**:
 - She grants you the title of Honorary Fairy
-- She gives you another quest (the recipe for fairy dust)
+- Opens the path to further magical quests
 
-## Related Quest: The Recipe for Magic
+## Character Personalities
 
-See [quest_witch_apprentice.md](quest_witch_apprentice.md) for continuation.
+### Morgan
+- **Personality**: Cheeky, playful, slightly rude
+- **First impression**: Dismissive, teasing
+- **Warms up**: Sarcastic affection, backhanded compliments
+- **Example dialogue**: "Oh, it's you again. Did you bring me something shiny, or are you just here to gawk?"
 
-## Implementation Notes
+### Stella
+- **Personality**: Kind, gentle, nurturing, encouraging
+- **First impression**: Warm and welcoming
+- **Stays consistent**: Always supportive and friendly
+- **Example dialogue**: "Oh, what lovely fairy bluebells you've grown! They shine so beautifully in the moonlight."
 
-- Need seasonal plant spawning in forest
-- Need fairy sprite and Morgan character
-- Need night-time fairy appearance mechanic
-- Need fairy dust item and effect
-- Need dragonfly catching minigame
-- Need net crafting/buying
-- Need shrinking mushroom item
-- Need mine with 4+ levels and goblins
-- Need hollow tree location
-- Need fairy ball cutscene
-- Need Honorary Fairy status tracking
+## Technical Implementation
+
+### Files Modified
+- `data/quests/fairyQueenQuest.ts` - Quest tracking and stages
+- `utils/FriendshipManager.ts` - Tier rewards for fairies
+- `utils/npcs/forestNPCs.ts` - Fairy dialogue with quest integration
+- `utils/dialogueHandlers.ts` - Quest action handlers
+- `utils/MagicEffects.ts` - Fairy form potion effect
+- `data/items.ts` - Potion item definition
+
+### Quest Stages
+| Stage | ID | Description |
+|-------|-----|-------------|
+| NOT_STARTED | 0 | Quest not begun |
+| MET_FAIRY | 1 | First talked to Morgan or Stella |
+| RECEIVED_POTION | 2 | Reached Good Friends, got the potion |
+| VISITED_QUEEN | 3 | Entered the fairy oak and met the queen |
+| COMPLETED | 4 | Quest complete |
+
+### Key Systems Used
+- **Fairy Attraction Manager**: Spawns fairies near mature fairy bluebells at night
+- **Friendship System**: Track relationship with fairies, tier rewards at Good Friends
+- **Quest System**: Stage tracking, conditional dialogue
+- **Potion System**: Double-click use, fairy form transformation
+
+## Related Quests
+
+- [quest_witch_apprentice.md](quest_witch_apprentice.md) - Follow-up quest from the Fairy Queen

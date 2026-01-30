@@ -24,6 +24,7 @@ import { inventoryManager } from './inventoryManager';
 import { getItem, ItemCategory } from '../data/items';
 import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 import { getGiftReaction, GiftReaction } from '../data/giftReactions';
+import { markPotionReceived as markFairyQuestPotionReceived } from '../data/quests/fairyQueenQuest';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -40,6 +41,20 @@ const TIER_REWARDS: Record<
       { itemId: 'seed_salad', quantity: 3 },
     ],
     good_friend: [],
+  },
+
+  // Morgan (fairy attracted to bluebells) gives Fairy Form Potion at good_friend
+  'fairy_attracted_morgan_0': {
+    stranger: [],
+    acquaintance: [],
+    good_friend: [{ itemId: 'potion_fairy_form', quantity: 1 }],
+  },
+
+  // Stella (fairy attracted to bluebells) gives Fairy Form Potion at good_friend
+  'fairy_attracted_stella_0': {
+    stranger: [],
+    acquaintance: [],
+    good_friend: [{ itemId: 'potion_fairy_form', quantity: 1 }],
   },
 };
 
@@ -267,6 +282,11 @@ class FriendshipManagerClass {
       console.log(
         `[FriendshipManager] 🎁 Received ${reward.quantity}x ${reward.itemId} from ${npcId}!`
       );
+
+      // Special handling for Fairy Form Potion - update quest progress
+      if (reward.itemId === 'potion_fairy_form') {
+        markFairyQuestPotionReceived();
+      }
     }
 
     // Track that reward was received

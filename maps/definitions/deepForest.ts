@@ -1,13 +1,16 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
-import { createStellaNPC, createBunnyflyNPC } from '../../utils/npcFactories';
+import { createBunnyflyNPC } from '../../utils/npcFactories';
 
 /**
  * Deep Forest - Sacred grove of the Giant Fairy Oak
  *
  * A mystical clearing deep within the forest where the ancient
- * Fairy Oak stands. Home to Stella, the fairy guardian, and
+ * Fairy Oak stands. Home to the Fairy Queen (inside the tree) and
  * Celestia's flower bugs (glowing spirits represented by mushrooms).
+ *
+ * Note: Morgan and Stella fairies no longer spawn here permanently.
+ * They appear via the fairy attraction manager near mature fairy bluebells.
  *
  * This area is only accessible 20% of the time when going
  * deeper into the forest - making it a rare and special discovery.
@@ -103,12 +106,9 @@ export const deepForest: MapDefinition = {
     },
   ],
   npcs: [
-    // Stella - fairy guardian of the grove, positioned near the giant fairy oak
-    createStellaNPC(
-      'stella_deep_forest',
-      { x: 19, y: 19 }, // Just to the right of the fairy oak anchor
-      'Stella'
-    ),
+    // Note: Stella no longer spawns here permanently - she appears via
+    // the fairy attraction manager near mature fairy bluebells at night
+
     // Bunnyflies - magical creatures that flutter around the sacred grove
     createBunnyflyNPC(
       'bunnyfly_deep_forest_1',

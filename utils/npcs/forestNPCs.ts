@@ -719,13 +719,13 @@ export function createChillBearAtHomeNPC(
 }
 
 /**
- * Create Stella NPC - the fairy guardian of the deep forest
+ * Create Stella NPC - a kind, nurturing fairy
  *
  * Behaviour:
- * - Stationary (sits near the fairy oak)
+ * - Appears near mature fairy bluebells at night (via fairyAttractionManager)
  * - Gentle glowing animation
- * - Mystical, wise dialogue about the forest and nature
- * - Always present in the deep forest clearing
+ * - Kind, warm, nurturing personality
+ * - Guides player toward visiting the Fairy Queen
  *
  * Uses createStaticNPC factory.
  *
@@ -754,93 +754,95 @@ export function createStellaNPC(
       },
     },
     dialogue: [
+      // First meeting - before quest starts
       {
         id: 'greeting',
-        text: '*A gentle light emanates from the small fairy. Her voice is like wind chimes.* "Welcome, traveller. Few find their way to this sacred place."',
-        seasonalText: {
-          spring: '*The fairy\'s wings shimmer with spring colours.* "Ah, the season of awakening! The forest stirs with new life. Can you feel it, traveller?"',
-          summer: '*Warm golden light surrounds the fairy.* "Summer\'s embrace reaches even here, to the heart of the deep forest. Welcome, sun-touched one."',
-          autumn: '*The fairy\'s glow takes on amber hues.* "The leaves whisper their farewells. Autumn teaches us that endings can be beautiful too."',
-          winter: '*A soft silver light surrounds the fairy.* "Even in winter\'s stillness, the forest dreams. I tend those dreams, traveller."',
-        },
+        text: '*A gentle light emanates from the small fairy. Her voice is soft and kind.* "Oh! What lovely fairy bluebells you\'ve grown, dear one. It\'s been so long since a human tended these flowers."',
+        hiddenIfQuestStarted: 'fairy_queen',
         responses: [
-          { text: 'Who are you?', nextId: 'introduction' },
-          { text: 'Tell me about this tree.', nextId: 'fairy_oak_lore' },
-          { text: 'What are those glowing bugs?', nextId: 'flower_bugs' },
+          { text: 'Thank you! Who are you?', nextId: 'first_meeting' },
+          { text: 'I didn\'t know fairies were real!', nextId: 'first_meeting' },
+        ],
+      },
+      {
+        id: 'first_meeting',
+        text: '"I am Stella. These bluebells are very special to us fairies - they call to us, you see. Only someone with a kind heart could grow them so beautifully."',
+        responses: [
+          { text: 'Tell me more about fairies.', nextId: 'about_fairies' },
+          { text: 'I\'m glad you came.' },
+        ],
+      },
+      {
+        id: 'about_fairies',
+        text: '"We fairies tend to the wild places - the flowers, the creatures, the magic that still lingers in the world. Deep in the forest, there is an ancient oak where our Queen holds court. Perhaps... perhaps one day you might visit her."',
+        responses: [
+          { text: 'I\'d love to meet her!', nextId: 'queen_interest' },
+          { text: 'That sounds wonderful.' },
+        ],
+      },
+      {
+        id: 'queen_interest',
+        text: '"You would need to become fairy-sized to enter the oak, dear one. But don\'t worry - if we become good friends, I may be able to help you with that." *She smiles warmly.*',
+      },
+      // After quest started, before receiving potion
+      {
+        id: 'greeting_quest_active',
+        text: '*Stella hovers near the bluebells, her glow soft and welcoming.* "Hello again, dear friend. The bluebells are happy to see you. As am I."',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 1,
+        responses: [
+          { text: 'How are you tonight?', nextId: 'stella_wellbeing' },
+          { text: 'Tell me about the Fairy Queen.', nextId: 'queen_lore' },
           { text: 'I should go.' },
         ],
       },
       {
-        id: 'introduction',
-        text: '"I am Stella, keeper of the fairy oak and guardian of these woods. For centuries I have watched over this place, where the veil between worlds grows thin."',
-        seasonalText: {
-          spring: '"In spring, I help the forest remember how to bloom. Every petal, every new leaf - they all carry a piece of old magic."',
-          summer: '"Summer is when I rest the least. So much life to nurture, so many creatures to guide. But I would not have it any other way."',
-          autumn: '"Autumn is my time of reflection. As the leaves fall, I gather their memories and weave them into dreams for winter."',
-          winter: '"In winter, I sing to the sleeping trees. They do not hear, but it comforts me to know they are not truly alone."',
-        },
+        id: 'stella_wellbeing',
+        text: '"I am well, thank you for asking. The nights have been peaceful, and your bluebells bring such joy. It\'s lovely to have a human friend who cares for the old ways."',
+      },
+      {
+        id: 'queen_lore',
+        text: '"Our Queen is ancient and wise. She lives within the great oak in the deep forest - a tree older than memory. When you are ready, and we are true friends, I can give you the means to visit her."',
+      },
+      // After receiving potion (Good Friends)
+      {
+        id: 'greeting_has_potion',
+        text: '*Stella\'s glow brightens with joy.* "You have the Fairy Form Potion! How wonderful! Now you can visit the Queen whenever you wish. Just drink the potion and make your way to the ancient oak in the deep forest."',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 2,
         responses: [
-          { text: 'Why is this place special?', nextId: 'sacred_grove' },
-          { text: 'Thank you for sharing.' },
+          { text: 'How do I find the oak?', nextId: 'oak_directions' },
+          { text: 'Thank you for everything, Stella.' },
         ],
       },
       {
-        id: 'fairy_oak_lore',
-        text: '"The Fairy Oak is older than memory itself. Its roots drink from underground rivers that flow from the world\'s beginning. Its branches touch the sky where stars are born."',
-        seasonalText: {
-          spring: '"In spring, the oak weeps with joy - those are the silver droplets you see on its bark. Each one holds a wish from someone long ago."',
-          summer: '"See how its leaves catch the sun? In summer, the tree stores sunlight in its heartwood. That light feeds the forest through the dark months."',
-          autumn: '"When its leaves turn gold, the tree is preparing its gift - magic stored for a thousand summers, released slowly into the earth."',
-          winter: '"Even without leaves, the oak dreams. I can hear it sometimes - memories of forests that covered the world before humans came."',
-        },
-        responses: [
-          { text: 'Can the tree grant wishes?', nextId: 'tree_wishes' },
-          { text: 'That\'s incredible.' },
-        ],
+        id: 'oak_directions',
+        text: '"Follow the paths deeper into the forest until you find the sacred grove. You\'ll know the oak when you see it - it\'s enormous, covered in glowing mushrooms. When you\'re tiny, you\'ll see a door at its base."',
       },
+      // Re-request potion dialogue
       {
-        id: 'tree_wishes',
-        text: '"The tree does not grant wishes in the way you might hope. But if you plant a seed at its roots with a pure heart, the forest will remember your kindness. And the forest has ways of repaying its friends."',
-      },
-      {
-        id: 'flower_bugs',
-        text: '"Ah, Celestia\'s children! They are not bugs, but tiny spirits of light. They tend the flowers that grow in the oak\'s shadow - flowers that bloom with starlight."',
-        seasonalText: {
-          spring: '"In spring, the flower spirits are most active. They dance from bloom to bloom, carrying pollen made of moonbeams."',
-          summer: '"Summer nights are their favourite. They gather at the oak\'s roots and tell stories in a language of light."',
-          autumn: '"As the flowers fade, the spirits grow quiet. But they do not leave - they sleep within the seeds, waiting for spring."',
-          winter: '"In winter, look closely at the snowflakes. Sometimes the spirits ride them down from the clouds, just to visit."',
-        },
-        responses: [
-          { text: 'Who is Celestia?', nextId: 'celestia_lore' },
-          { text: 'They\'re beautiful.' },
-        ],
-      },
-      {
-        id: 'celestia_lore',
-        text: '"Celestia was the first fairy of this forest, long before even I was born. She planted the fairy oak from a seed of pure starlight. When her time ended, she became the stars themselves - and her children, the flower spirits, remain to honour her memory."',
-        responses: [{ text: 'A beautiful story.' }],
-      },
-      {
-        id: 'sacred_grove',
-        text: '"This grove is where the old magic still flows freely. The trees remember songs from before language. The stones hold secrets of the earth\'s youth. And sometimes, if you listen carefully, you can hear the whispers of those who came before."',
+        id: 'potion_request',
+        text: '"Do you need another Fairy Form Potion, dear one? Of course, here you are. Please take care of it this time." *She produces a shimmering vial.*',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 2,
+        requiredFriendshipTier: 'good_friend',
       },
     ],
     friendshipConfig: {
       canBefriend: true,
       startingPoints: 0,
-      crisisId: 'fairy_oak_blight',
     },
   });
 }
 
 /**
- * Create Morgan NPC - a playful fairy companion
+ * Create Morgan NPC - a cheeky, mischievous fairy
  *
  * Behaviour:
- * - Stationary with gentle animation
- * - Cheerful, curious personality
- * - Interested in the player's adventures
+ * - Appears near mature fairy bluebells at night (via fairyAttractionManager)
+ * - Playful, bouncy animation
+ * - Cheeky, slightly rude personality - warms up with friendship
+ * - Can help player visit the Fairy Queen
  *
  * Uses createStaticNPC factory.
  *
@@ -869,55 +871,95 @@ export function createMorganNPC(
       },
     },
     dialogue: [
+      // First meeting - before quest starts
       {
         id: 'greeting',
-        text: '*The fairy zips around excitedly, leaving trails of sparkles.* "Oh! A visitor! Hello, hello! I\'m Morgan! What brings you to the forest today?"',
-        seasonalText: {
-          spring: '*Morgan bounces between blooming flowers.* "Spring is the BEST! Everything is waking up! Have you seen the butterflies? They\'re my friends!"',
-          summer: '*The fairy fans herself with a tiny leaf.* "Phew! It\'s warm today! But I love it! The fireflies come out at night - you should stay and watch!"',
-          autumn: '*Morgan catches a falling leaf and rides it down.* "Wheee! I love leaf-surfing! Autumn is so colourful! Like a rainbow fell on the trees!"',
-          winter: '*The fairy shivers but grins.* "Brrr! Cold but beautiful! I make snow angels - want to see? They\'re very tiny ones!"',
-        },
+        text: '*A tiny fairy buzzes around your head, leaving sparkly trails.* "Oh! A human actually grew fairy bluebells? Hmph. I thought your kind had forgotten all about us."',
+        hiddenIfQuestStarted: 'fairy_queen',
         responses: [
-          { text: 'Nice to meet you, Morgan!', nextId: 'friendly' },
-          { text: 'Do you live here?', nextId: 'home' },
-          { text: 'You seem very energetic!', nextId: 'energetic' },
-          { text: 'I should get going.' },
+          { text: 'I wanted to meet a real fairy!', nextId: 'first_meeting' },
+          { text: 'That\'s a bit rude...', nextId: 'first_meeting_rude' },
         ],
       },
       {
-        id: 'friendly',
-        text: '"Nice to meet YOU! I always love making new friends! The forest can be lonely sometimes, even with all the animals. But Stella says I talk too much to ever be truly alone!" *giggles*',
+        id: 'first_meeting',
+        text: '"Well, congratulations, you found one. I\'m Morgan." *She does a little bow that seems more mocking than polite.* "Your bluebells are... acceptable, I suppose. Not terrible."',
         responses: [
-          { text: 'Who is Stella?', nextId: 'about_stella' },
-          { text: 'You don\'t talk too much!' },
+          { text: 'Thank you?', nextId: 'morgan_warming' },
+          { text: 'Just acceptable?', nextId: 'morgan_critique' },
         ],
       },
       {
-        id: 'home',
-        text: '"I live all over the forest! But I like to stay near the flowers best. They\'re so pretty and they smell nice! Sometimes I sleep in a tulip - it\'s like a tiny bed!"',
-        seasonalText: {
-          spring: '"In spring there are SO many flower beds to choose from! Tulips, daffodils, bluebells... I try a different one each night!"',
-          summer: '"Summer flowers are the biggest! I can stretch out in a sunflower and watch the stars. It\'s the best!"',
-          autumn: '"When the flowers go to sleep, I find cosy spots in the mushroom caps. They\'re a bit damp but very cosy!"',
-          winter: '"In winter I curl up in hollow trees with the dormice. They\'re very warm and cuddly - don\'t tell them I said that!"',
-        },
+        id: 'first_meeting_rude',
+        text: '"Rude? ME? I\'m the most charming fairy in this whole forest! Well, the second most charming. Stella\'s unbearably nice." *She rolls her eyes.* "I\'m Morgan, by the way."',
+        responses: [
+          { text: 'Nice to meet you, Morgan.', nextId: 'morgan_warming' },
+          { text: 'Who\'s Stella?', nextId: 'about_stella' },
+        ],
       },
       {
-        id: 'energetic',
-        text: '"Stella says I have \'more energy than a spring storm\'! I just love flying and exploring and meeting people and collecting pretty things and..." *takes a breath* "...and everything!"',
-        responses: [
-          { text: 'What do you collect?', nextId: 'collecting' },
-          { text: 'That sounds exhausting!' },
-        ],
+        id: 'morgan_warming',
+        text: '"Hmm. You\'re persistent. I like that." *She lands on a bluebell and crosses her arms.* "Fine, you can keep talking to me. Not like I have anything better to do tonight."',
+      },
+      {
+        id: 'morgan_critique',
+        text: '"Well, they\'re not GREAT. But they\'re not wilted mush either, so you\'ve got that going for you." *She grins mischievously.* "I\'ve seen worse. Much, much worse."',
       },
       {
         id: 'about_stella',
-        text: '"Stella is the wisest fairy in the whole forest! She\'s been here for AGES - like, hundreds of years! She looks after the big tree and teaches me about magic. She\'s like my big sister!"',
+        text: '"Stella\'s the other fairy around here. She\'s all \'wisdom\' this and \'kindness\' that. Honestly, she makes me look bad." *Morgan sticks out her tongue.* "She\'s alright though. I guess."',
+      },
+      // After quest started, before receiving potion
+      {
+        id: 'greeting_quest_active',
+        text: '*Morgan swoops down from a bluebell.* "Oh, it\'s you again. What, did you miss me? I know I\'m irresistible."',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 1,
+        responses: [
+          { text: 'Actually, yes.', nextId: 'morgan_flattered' },
+          { text: 'Tell me about the Fairy Queen.', nextId: 'queen_info' },
+          { text: 'Got anything for me?', nextId: 'morgan_gift_tease' },
+          { text: 'I should go.' },
+        ],
       },
       {
-        id: 'collecting',
-        text: '"Oh, all sorts! Shiny pebbles, pretty feathers, dewdrops - did you know you can carry dewdrops if you\'re very careful? I have a whole collection! And seeds - I plant them everywhere so more flowers grow!"',
+        id: 'morgan_flattered',
+        text: '"Ha! Well, at least you have good taste." *She preens her wings.* "I suppose you\'re growing on me too. Like moss. But nicer-smelling moss."',
+      },
+      {
+        id: 'queen_info',
+        text: '"The Queen? She lives in this MASSIVE tree deep in the forest. Very fancy, very intimidating. You\'d need to shrink down to fairy size to get in." *She smirks.* "Maybe if you\'re REALLY nice to me, I could help with that."',
+      },
+      {
+        id: 'morgan_gift_tease',
+        text: '"Greedy, are we? I don\'t just hand out fairy magic to anyone, you know. But... keep being nice to me and we\'ll see." *She winks.*',
+      },
+      // After receiving potion (Good Friends)
+      {
+        id: 'greeting_has_potion',
+        text: '*Morgan does a loop-the-loop.* "You\'ve got the potion! Don\'t look so surprised - I do occasionally do nice things. Very occasionally. Now go bother the Queen instead of me!"',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 2,
+        responses: [
+          { text: 'Where exactly is the ancient oak?', nextId: 'oak_location' },
+          { text: 'Thanks, Morgan. Really.', nextId: 'morgan_touched' },
+        ],
+      },
+      {
+        id: 'oak_location',
+        text: '"In the deep forest, obviously. Keep going until you find the biggest tree you\'ve ever seen. Can\'t miss it. Well, YOU might miss it, but a normal person couldn\'t."',
+      },
+      {
+        id: 'morgan_touched',
+        text: '"Yeah, yeah, don\'t get all sappy on me." *She turns away but you catch a small smile.* "...You\'re welcome, I suppose."',
+      },
+      // Re-request potion dialogue
+      {
+        id: 'potion_request',
+        text: '"Lost the potion already? Typical human." *She sighs dramatically.* "Fine, here\'s another one. TRY not to drop this one in a puddle or whatever you did with the last one."',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 2,
+        requiredFriendshipTier: 'good_friend',
       },
     ],
     friendshipConfig: {

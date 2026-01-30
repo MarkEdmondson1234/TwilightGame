@@ -4,6 +4,7 @@ import { cutsceneManager } from './CutsceneManager';
 import { friendshipManager } from './FriendshipManager';
 import { npcManager } from '../NPCManager';
 import { cookingManager } from './CookingManager';
+import { startFairyQueenQuest } from '../data/quests/fairyQueenQuest';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -42,6 +43,11 @@ export function handleDialogueAction(npcId: string, nodeId: string): void {
   // Handle Althea's chores quest - grant feather duster when accepting
   if (npcId.includes('althea')) {
     handleAltheaQuestItems(nodeId);
+  }
+
+  // Handle fairy quest actions (Morgan and Stella attracted to fairy bluebells)
+  if (npcId.startsWith('fairy_attracted_')) {
+    handleFairyQuestActions(npcId, nodeId);
   }
 }
 
@@ -131,6 +137,35 @@ function handleRecipeTeaching(nodeId: string): void {
       console.log(`[dialogueHandlers] ✅ Mum taught you how to make: ${recipeId}`);
     } else {
       console.log(`[dialogueHandlers] ❌ Failed to unlock recipe: ${recipeId}`);
+    }
+  }
+}
+
+/**
+ * Handle fairy quest actions (Morgan and Stella attracted to fairy bluebells)
+ * - Starts quest on first meeting
+ * - Gives replacement potion if player doesn't have one and is Good Friends
+ */
+function handleFairyQuestActions(npcId: string, nodeId: string): void {
+  // Determine which fairy from the NPC ID
+  const fairyName: 'morgan' | 'stella' = npcId.includes('morgan') ? 'morgan' : 'stella';
+
+  // Start quest on first meeting with either fairy
+  if (nodeId === 'first_meeting') {
+    startFairyQueenQuest(fairyName);
+    console.log(`[dialogueHandlers] 🧚 Started Fairy Queen quest - met ${fairyName}!`);
+  }
+
+  // Give replacement potion when player requests one (Good Friends only)
+  if (nodeId === 'potion_request') {
+    const hasPotion = inventoryManager.hasItem('potion_fairy_form');
+    if (!hasPotion) {
+      inventoryManager.addItem('potion_fairy_form', 1);
+      const inventoryData = inventoryManager.getInventoryData();
+      characterData.saveInventory(inventoryData.items, inventoryData.tools);
+      console.log(`[dialogueHandlers] 🧪 ${npcId} gave you another Fairy Form Potion!`);
+    } else {
+      console.log(`[dialogueHandlers] Player already has Fairy Form Potion`);
     }
   }
 }

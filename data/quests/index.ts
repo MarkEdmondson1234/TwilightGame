@@ -4,3 +4,6 @@
 
 // Althea's Chores (Part 1 of Witch's Apprentice questline)
 export * from './altheaChores';
+
+// Fairy Queen Quest (befriend fairies, visit the queen)
+export * from './fairyQueenQuest';
