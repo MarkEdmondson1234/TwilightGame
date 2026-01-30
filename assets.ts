@@ -512,6 +512,7 @@ export const uiAssets = {
   bookshelf_base: '/TwilightGame/assets-optimized/ui/bookshelf_base.png',
   book_recipes: '/TwilightGame/assets-optimized/ui/book_recipes.png',
   book_magic: '/TwilightGame/assets-optimized/ui/book_magic.png',
+  book_journal: '/TwilightGame/assets-optimized/ui/book_journal.png',
   wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
   satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
   // Open book UI - cottagecore book background for recipe/magic menus

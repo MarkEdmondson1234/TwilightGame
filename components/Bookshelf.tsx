@@ -10,12 +10,14 @@ interface BookshelfProps {
   nearbyNPCs?: string[];
   onRecipeBookOpen?: () => void;
   onMagicBookOpen?: () => void;
+  onJournalOpen?: () => void;
 }
 
 /**
  * Book UI component with clickable books for recipe books
  * - Recipe Book (left): Opens regular recipe book
- * - Magic Recipe Book (right): Opens magic recipe book (future feature, currently locked)
+ * - Magic Recipe Book (middle): Opens magic recipe book (unlocked after meeting the Witch)
+ * - Journal (right): Opens quest journal
  */
 const Bookshelf: React.FC<BookshelfProps> = ({
   isTouchDevice,
@@ -24,6 +26,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   nearbyNPCs,
   onRecipeBookOpen,
   onMagicBookOpen,
+  onJournalOpen,
 }) => {
   // Check if magic book is unlocked (player talked to Witch)
   const magicBookUnlocked = magicManager.isMagicBookUnlocked();
@@ -36,6 +39,10 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     if (magicBookUnlocked) {
       onMagicBookOpen?.();
     }
+  };
+
+  const handleJournalClick = () => {
+    onJournalOpen?.();
   };
 
   return (
@@ -94,6 +101,24 @@ const Bookshelf: React.FC<BookshelfProps> = ({
                 <span className="text-8xl drop-shadow-md">🔒</span>
               </div>
             )}
+          </button>
+
+          {/* Journal (rightmost book) - always accessible */}
+          <button
+            onClick={handleJournalClick}
+            className="relative transition-transform focus:outline-none rounded -ml-[5px] block hover:scale-110 active:scale-95 focus:ring-2 focus:ring-green-400 cursor-pointer"
+            title="Journal"
+          >
+            <img
+              src={uiAssets.book_journal}
+              alt="Journal"
+              className="drop-shadow-2xl block"
+              style={{
+                imageRendering: 'auto',
+                width: '70px',
+                height: '400px',
+              }}
+            />
           </button>
         </div>
       </div>

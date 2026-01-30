@@ -1319,6 +1319,7 @@ const App: React.FC = () => {
             })()}
             onRecipeBookOpen={() => openUI('recipeBook')}
             onMagicBookOpen={() => openUI('magicBook')}
+            onJournalOpen={() => showToast('Journal coming soon!', 'info')}
           />
 
           {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
