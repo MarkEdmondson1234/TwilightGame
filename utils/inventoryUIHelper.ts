@@ -95,6 +95,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_onion: groceryAssets.onion_bunch,
   crop_pumpkin: groceryAssets.pumpkin,
   crop_chili: groceryAssets.chili_crop,
+  crop_carrot: groceryAssets.carrot_bunch,
 
   // Cooked Food
   food_tea: cookingAssets.cup_of_tea,
@@ -103,6 +104,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   food_roast_dinner: cookingAssets.roast_dinner,
   food_cookies: cookingAssets.cookies,
   food_chocolate_cake: cookingAssets.chocolate_cake,
+  food_spaghetti: cookingAssets.spaghetti_dish,
 
   // Magical Ingredients (forageable)
   moonpetal: magicalAssets.moonpetal_flower,
@@ -135,6 +137,9 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   potion_harvest_moon: potionAssets.harvest_moon,
   potion_quality_blessing: potionAssets.quality_blessing,
   potion_homeward: potionAssets.homeward,
+
+  // Quest potions (received as gifts, not brewed)
+  potion_fairy_form: potionAssets.fairy_form_potion,
 };
 
 /**
@@ -163,7 +168,6 @@ const ITEM_ICON_MAP: Record<string, string> = {
   crop_cauliflower: '🥬',
   crop_sunflower: '🌻',
   crop_pea: '🫛',
-  crop_carrot: '🥕',
   crop_strawberry: '🍓',
 
   // Materials

@@ -452,6 +452,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A crunchy orange carrot.',
     stackable: true,
     sellPrice: 15,
+    image: groceryAssets.carrot_bunch,
   },
 
   crop_strawberry: {
@@ -1742,6 +1743,22 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A shimmering potion that defies gravity. Fly over all obstacles for 2 hours.',
     stackable: true,
     sellPrice: 150,
+  },
+
+  // ===== QUEST POTIONS =====
+  // These are received as gifts from NPCs, not brewed
+
+  potion_fairy_form: {
+    id: 'potion_fairy_form',
+    name: 'potion_fairy_form',
+    displayName: 'Fairy Form Potion',
+    category: ItemCategory.POTION,
+    description:
+      'A shimmering vial of fairy magic. Drinking this transforms you into a tiny fairy, allowing you to visit the Fairy Queen inside the ancient oak.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: true,
+    // No buyPrice - quest item only
+    image: potionAssets.fairy_form_potion,
   },
 };
 

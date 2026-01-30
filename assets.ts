@@ -268,6 +268,7 @@ export const cookingAssets = {
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png',
   pickled_onion: '/TwilightGame/assets-optimized/cooking/pickled_onion.png',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
+  spaghetti_dish: '/TwilightGame/assets-optimized/cooking/spaghetti_dish.png',
 };
 
 // Grocery assets - Cooking ingredients (raw items from shop)
@@ -279,6 +280,7 @@ export const groceryAssets = {
   butter: '/TwilightGame/assets-optimized/items/grocery/butter.png',
   canned_tomato: '/TwilightGame/assets-optimized/items/grocery/canned_tomato.png',
   canned_tuna: '/TwilightGame/assets-optimized/items/grocery/canned_tuna.png',
+  carrot_bunch: '/TwilightGame/assets-optimized/items/grocery/carrot_bunch.png',
   chocolate_bar: '/TwilightGame/assets-optimized/items/grocery/chocolate_bar.png',
   chili_crop: '/TwilightGame/assets-optimized/items/grocery/chili_crop.png',
   chili_seeds: '/TwilightGame/assets-optimized/items/grocery/chili_seeds.png',
@@ -360,6 +362,9 @@ export const potionAssets = {
   homeward: '/TwilightGame/assets-optimized/items/magical/potions/homeward.png',
   quality_blessing: '/TwilightGame/assets-optimized/items/magical/potions/quality_blessing.png',
   time_skip: '/TwilightGame/assets-optimized/items/magical/potions/time_skip.png',
+  // Quest potions (received as gifts, not brewed)
+  fairy_form_potion:
+    '/TwilightGame/assets-optimized/items/magical/quest/fairy_form_potion.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits

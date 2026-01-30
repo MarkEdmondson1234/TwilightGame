@@ -419,6 +419,13 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     availableSeasons: ['spring', 'summer'],
   },
   {
+    itemId: 'crop_carrot',
+    buyPrice: 35,
+    sellPrice: 15,  // Matches crop sellPrice (shop buys at 100% instead of 60%)
+    stock: 'unlimited',
+    availableSeasons: ['spring', 'autumn'],
+  },
+  {
     itemId: 'strawberry_jam',
     buyPrice: 25,
     sellPrice: 10,
