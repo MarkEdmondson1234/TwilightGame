@@ -141,9 +141,6 @@ export function useEnvironmentController(
     const currentWeatherType = gameState.getWeather();
     const showWeather = isWeatherAllowedOnMap(currentWeatherType, currentMapId);
     weatherLayerRef.current.setVisible(showWeather);
-    console.log(
-      `[EnvironmentController] Weather '${currentWeatherType}' on map '${currentMapId}': ${showWeather}`
-    );
   }, [currentMapId, weatherLayerRef]);
 
   // -------------------------------------------------------------------------

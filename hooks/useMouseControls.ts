@@ -6,6 +6,7 @@
 import { useEffect, MutableRefObject } from 'react';
 import { Position } from '../types';
 import { TILE_SIZE } from '../constants';
+import { Z_HUD } from '../zIndex';
 
 export interface MouseClickInfo {
   /** World position in tile coordinates */
@@ -55,6 +56,31 @@ function isTouchControlElement(element: EventTarget | null): boolean {
   return false;
 }
 
+/**
+ * Check if the clicked element is a UI overlay (above game world)
+ * Uses z-index to determine if element is HUD/modal level
+ */
+function isUIElement(element: EventTarget | null): boolean {
+  if (!element || !(element instanceof HTMLElement)) return false;
+
+  // First check existing class-based detection
+  if (isTouchControlElement(element)) return true;
+
+  // Check z-index of clicked element and its ancestors
+  let el: HTMLElement | null = element;
+  while (el) {
+    const style = window.getComputedStyle(el);
+    const zIndex = parseInt(style.zIndex, 10);
+    // Z_HUD is 1000 - anything at or above this is UI
+    if (!isNaN(zIndex) && zIndex >= Z_HUD) {
+      return true;
+    }
+    el = el.parentElement;
+  }
+
+  return false;
+}
+
 export function useMouseControls(config: MouseControlsConfig) {
   const { containerRef, cameraX, cameraY, onCanvasClick, enabled } = config;
 
@@ -94,6 +120,11 @@ export function useMouseControls(config: MouseControlsConfig) {
     const handleClick = (e: MouseEvent) => {
       if (!enabled) return;
 
+      // Check if click is on a UI element (HUD, modal, etc.)
+      if (isUIElement(e.target)) {
+        return;
+      }
+
       const rect = container.getBoundingClientRect();
       const screenX = e.clientX - rect.left;
       const screenY = e.clientY - rect.top;
@@ -106,8 +137,8 @@ export function useMouseControls(config: MouseControlsConfig) {
      * Handle touch end (for touch devices - enables click-to-move on iPad)
      */
     const handleTouchEnd = (e: TouchEvent) => {
-      // Ignore touches on UI control elements
-      if (isTouchControlElement(e.target)) {
+      // Ignore touches on UI elements (HUD, modal, etc.)
+      if (isUIElement(e.target)) {
         return;
       }
 

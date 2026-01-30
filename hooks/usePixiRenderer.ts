@@ -287,9 +287,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           await weatherLayer.loadTextures();
           app.stage.addChild(weatherLayer.getContainer());
 
-          // Set initial weather
+          // Set initial weather and visibility
           const initialWeather = gameState.getWeather();
           weatherLayer.setWeather(initialWeather);
+
+          // Set initial visibility based on current map
+          const initialMapId = mapManager.getCurrentMapId() || 'village';
+          const showWeather = shouldShowWeather(initialMapId);
+          weatherLayer.setVisible(showWeather);
 
           // Initialize weather manager
           const weatherManager = new WeatherManager(gameState);
@@ -473,11 +478,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   // EFFECT: Update weather visibility on map change
   // =========================================================================
   useEffect(() => {
+    // Skip if PixiJS not initialized yet
+    if (!isPixiInitialized) return;
+
     if (weatherLayerRef.current) {
       const showWeather = shouldShowWeather(currentMapId);
       weatherLayerRef.current.setVisible(showWeather);
     }
-  }, [currentMapId]);
+  }, [currentMapId, isPixiInitialized]);
 
   // =========================================================================
   // EFFECT: Tile/Sprite Rendering (map/viewport/season changes)

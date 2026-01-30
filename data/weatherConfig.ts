@@ -12,6 +12,7 @@
  */
 
 import { Season } from '../utils/TimeManager';
+import { mapManager } from '../maps';
 
 export type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
 
@@ -123,55 +124,46 @@ export const ZONE_WEATHER_PROBABILITIES: Record<
 };
 
 /**
- * Map each map ID to a weather zone
- * Add new maps here as they're created
+ * Weather zone patterns for procedural maps
+ *
+ * NOTE: Regular maps use the hasClouds field in their MapDefinition as the
+ * single source of truth. This mapping is only used for pattern matching
+ * procedural maps that aren't registered in mapManager.
  */
 export const MAP_WEATHER_ZONES: Record<string, WeatherZone> = {
-  // Indoor locations (houses, shops, sheds, kitchens)
-  home_interior: 'indoor',
-  homeUpstairs: 'indoor',
-  cottageInterior: 'indoor',
-  house1: 'indoor',
-  house2: 'indoor',
-  house3: 'indoor',
-  house4: 'indoor',
-  shop: 'indoor',
-  seedShed: 'indoor',
-  mumsKitchen: 'indoor',
-  witchHutInterior: 'indoor',
-  bearDen: 'indoor',
-  debugNPCs: 'indoor',
-
-  // Forest locations
-  forest: 'forest',
-  deepForest: 'forest',
-  'RANDOM_FOREST_*': 'forest', // Pattern match
-
-  // Cave/Mine locations
-  cave: 'cave',
-  mine: 'cave',
-  bearCave: 'cave',
-  'RANDOM_CAVE_*': 'cave', // Pattern match
-
-  // Default outdoor (village, paths, farm area, lakes, etc.)
-  village: 'default',
-  path: 'default',
-  farmArea: 'default',
-  magicalLake: 'default',
-  witchHut: 'default',
-  // Any unmapped location defaults to 'default' zone
+  // Pattern matches for procedural maps
+  'RANDOM_FOREST_*': 'forest',
+  'RANDOM_CAVE_*': 'cave',
 };
 
 /**
  * Get weather zone for a map ID
+ * Uses the map definition's hasClouds field as the single source of truth:
+ * - hasClouds: true = outdoor (show weather)
+ * - hasClouds: false/undefined = indoor (no weather)
  */
 export function getWeatherZone(mapId: string): WeatherZone {
-  // Direct match
-  if (MAP_WEATHER_ZONES[mapId]) {
-    return MAP_WEATHER_ZONES[mapId];
+  // Check map definition first (single source of truth)
+  const mapDef = mapManager.getMap(mapId);
+
+  if (mapDef) {
+    // If hasClouds is not set or false, it's indoor
+    if (!mapDef.hasClouds) {
+      return 'indoor';
+    }
+    // Check colorScheme for cave weather zone
+    if (mapDef.colorScheme === 'cave') {
+      return 'cave';
+    }
+    // Check colorScheme for forest weather zone
+    if (mapDef.colorScheme === 'forest' || mapDef.colorScheme === 'mushroom_forest') {
+      return 'forest';
+    }
+    // Default outdoor weather
+    return 'default';
   }
 
-  // Pattern match (e.g., RANDOM_FOREST_123 matches RANDOM_FOREST_*)
+  // Fallback: Pattern match for procedural maps (RANDOM_FOREST_*, RANDOM_CAVE_*)
   for (const [pattern, zone] of Object.entries(MAP_WEATHER_ZONES)) {
     if (pattern.endsWith('*')) {
       const prefix = pattern.slice(0, -1);
