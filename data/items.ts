@@ -3,13 +3,7 @@
  * Defines all items that can be collected, stored, and used in the game
  */
 
-import {
-  cookingAssets,
-  groceryAssets,
-  itemAssets,
-  magicalAssets,
-  potionAssets,
-} from '../assets';
+import { cookingAssets, groceryAssets, itemAssets, magicalAssets, potionAssets } from '../assets';
 
 export enum ItemCategory {
   SEED = 'seed',
@@ -1470,7 +1464,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'potion_friendship',
     displayName: 'Friendship Elixir',
     category: ItemCategory.POTION,
-    description: 'A warm, rose-pink potion that shimmers gently. Give this to someone you want to befriend.',
+    description:
+      'A warm, rose-pink potion that shimmers gently. Give this to someone you want to befriend.',
     stackable: true,
     sellPrice: 50,
     image: potionAssets.friendship_elixir,
@@ -1481,7 +1476,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'potion_bitter_grudge',
     displayName: 'Bitter Grudge',
     category: ItemCategory.POTION,
-    description: 'A murky, dark green potion with a sour smell. Decreases friendship with the target NPC.',
+    description:
+      'A murky, dark green potion with a sour smell. Decreases friendship with the target NPC.',
     stackable: true,
     sellPrice: 45,
     image: potionAssets.bitter_grudge,
@@ -1492,7 +1488,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'potion_glamour',
     displayName: 'Glamour Draught',
     category: ItemCategory.POTION,
-    description: 'A swirling, vibrant purple potion with iridescent sparkles. Temporarily changes your appearance.',
+    description:
+      'A swirling, vibrant purple potion with iridescent sparkles. Temporarily changes your appearance.',
     stackable: true,
     sellPrice: 55,
     image: potionAssets.glamour_draught,
@@ -1514,7 +1511,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'potion_wakefulness',
     displayName: 'Wakefulness Brew',
     category: ItemCategory.POTION,
-    description: 'A bright, fizzing cyan potion with tiny bubbles. Eliminates tiredness and fatigue.',
+    description:
+      'A bright, fizzing cyan potion with tiny bubbles. Eliminates tiredness and fatigue.',
     stackable: true,
     sellPrice: 40,
     image: potionAssets.wakefulness_brew,
@@ -1871,8 +1869,8 @@ export function generateForageItem(): ItemDefinition | null {
  * Returns null if the forage attempt finds nothing (50% chance)
  */
 export function generateForageSeed(): ItemDefinition | null {
-  // 50% chance to find nothing
-  if (Math.random() < 0.5) {
+  // 75% chance to find nothing (25% success rate)
+  if (Math.random() < 0.75) {
     return null;
   }
 

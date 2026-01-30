@@ -1073,7 +1073,8 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     if (season === Season.WINTER) {
       return {
         found: false,
-        message: 'The wolfsbane is dormant underground. It only emerges in spring, summer, and autumn.',
+        message:
+          'The wolfsbane is dormant underground. It only emerges in spring, summer, and autumn.',
       };
     }
 
@@ -1451,6 +1452,32 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       console.log('[Forage] Strawberry plant had no ripe berries');
       return { found: false, message: 'This strawberry plant has no ripe berries yet.' };
     }
+  }
+
+  // Mushroom foraging - gives mushroom items, not seeds
+  if (tileData.type === TileType.MUSHROOM) {
+    // 40% chance to find nothing
+    if (Math.random() < 0.4) {
+      console.log('[Forage] Searched mushrooms but found nothing');
+      gameState.recordForage(currentMapId, playerTileX, playerTileY);
+      return { found: false, message: 'You searched but found nothing this time.' };
+    }
+
+    // Found mushrooms! 1-2 quantity
+    const quantity = Math.random() < 0.7 ? 1 : 2;
+    inventoryManager.addItem('mushroom', quantity);
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, playerTileX, playerTileY);
+
+    const message = quantity === 1 ? 'You found a mushroom!' : `You found ${quantity} mushrooms!`;
+    console.log(`[Forage] ${message}`);
+    return {
+      found: true,
+      seedId: 'mushroom',
+      seedName: 'Mushroom',
+      message,
+    };
   }
 
   // Regular foraging for other tiles - uses rarity-weighted random drops
@@ -2254,8 +2281,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     if (currentMapId.startsWith('forest') || currentMapId === 'deep_forest') {
       const forageableTiles = [
         TileType.FERN,
-        TileType.MUSHROOM,
         TileType.GRASS,
+        TileType.MUSHROOM, // Mushrooms give mushroom items, not seeds
         TileType.WILD_STRAWBERRY,
         TileType.MOONPETAL, // Moonpetal in deep forest (night-blooming magical flower)
       ];
