@@ -66,6 +66,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   chocolate: groceryAssets.chocolate_bar,
   basil: groceryAssets.basil,
   thyme: groceryAssets.thyme,
+  rosemary: groceryAssets.rosemary,
   allspice: groceryAssets.allspice,
   curry_powder: groceryAssets.curry,
   baking_powder: groceryAssets.baking_powder,
@@ -96,6 +97,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   crop_pumpkin: groceryAssets.pumpkin,
   crop_chili: groceryAssets.chili_crop,
   crop_carrot: groceryAssets.carrot_bunch,
+  crop_potato: groceryAssets.sack_of_potatoes,
 
   // Cooked Food
   food_tea: cookingAssets.cup_of_tea,
@@ -105,6 +107,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   food_cookies: cookingAssets.cookies,
   food_chocolate_cake: cookingAssets.chocolate_cake,
   food_spaghetti: cookingAssets.spaghetti_dish,
+  food_pizza: cookingAssets.potato_pizza,
 
   // Magical Ingredients (forageable)
   moonpetal: magicalAssets.moonpetal_flower,

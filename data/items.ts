@@ -337,6 +337,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A hearty potato. Perfect for roasting.',
     stackable: true,
     sellPrice: 20,
+    image: groceryAssets.sack_of_potatoes,
   },
 
   crop_melon: {
@@ -913,6 +914,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 3,
     buyPrice: 8,
     image: groceryAssets.thyme,
+  },
+
+  rosemary: {
+    id: 'rosemary',
+    name: 'rosemary',
+    displayName: 'Rosemary',
+    category: ItemCategory.INGREDIENT,
+    description: 'Fresh rosemary sprigs. Fragrant and perfect for roasts and pizza.',
+    stackable: true,
+    maxUses: 6,
+    sellPrice: 4,
+    buyPrice: 10,
+    image: groceryAssets.rosemary,
   },
 
   allspice: {

@@ -10,7 +10,7 @@ import { cookingAssets } from '../assets';
  * - dessert: Dessert category (3 recipes)
  * - baking: Baking category (3 recipes)
  *
- * NPC Preferences (from design doc):
+ * NPC Preferences (from design doc - this section needs updating):
  * - Shopkeeper: savoury
  * - Small Girl: dessert
  * - Fairy: dessert
@@ -156,14 +156,18 @@ export const RECIPES: Record<string, RecipeDefinition> = {
   potato_pizza: {
     id: 'potato_pizza',
     name: 'potato_pizza',
-    displayName: 'Pizza with Potatoes',
+    displayName: 'Potato Pizza',
     category: 'savoury',
-    description: 'A rustic pizza topped with sliced potatoes.',
+    description:
+      "The trick to a good pizza isn't the topping—it's the crust! Start the dough a day ahead: dissolve yeast in cold water, add flour and salt, knead well, then add olive oil. Let it rest overnight. Slice potatoes paper-thin, toss with oil, top the shaped dough with potato slices and rosemary, and bake in a very hot oven. Eat right away!",
     ingredients: [
-      { itemId: 'flour', quantity: 2 },
-      { itemId: 'crop_potato', quantity: 2 },
-      { itemId: 'cheese', quantity: 1 },
+      { itemId: 'water', quantity: 2 },
+      { itemId: 'yeast', quantity: 1 },
+      { itemId: 'flour', quantity: 1 },
+      { itemId: 'salt', quantity: 1 },
       { itemId: 'olive_oil', quantity: 1 },
+      { itemId: 'crop_potato', quantity: 2 },
+      { itemId: 'rosemary', quantity: 1 },
     ],
     cookingTime: 35,
     difficulty: 2,
@@ -171,6 +175,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultQuantity: 1,
     friendshipValue: 30,
     unlockRequirement: 'french_toast',
+    image: cookingAssets.potato_pizza,
   },
 
   roast_dinner: {

@@ -267,6 +267,7 @@ export const cookingAssets = {
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png',
   pickled_onion: '/TwilightGame/assets-optimized/cooking/pickled_onion.png',
+  potato_pizza: '/TwilightGame/assets-optimized/cooking/potato_pizza.png',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
   spaghetti_dish: '/TwilightGame/assets-optimized/cooking/spaghetti_dish.png',
 };
@@ -297,6 +298,7 @@ export const groceryAssets = {
   milk: '/TwilightGame/assets-optimized/items/grocery/milk.png',
   minced_meat: '/TwilightGame/assets-optimized/items/grocery/minced_meat.png',
   rice: '/TwilightGame/assets-optimized/items/grocery/rice.png',
+  rosemary: '/TwilightGame/assets-optimized/items/grocery/rosemary.png',
   sack_of_potatoes: '/TwilightGame/assets-optimized/items/grocery/sack_of_potatoes.png',
   salt: '/TwilightGame/assets-optimized/items/grocery/salt.png',
   sugar: '/TwilightGame/assets-optimized/items/grocery/sugar.png',
