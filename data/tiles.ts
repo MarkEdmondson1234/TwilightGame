@@ -380,7 +380,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage', // Base grass color for blending
     collisionType: CollisionType.SOLID,
     baseType: TileType.GRASS, // Render grass underneath the fairy oak sprite
-    image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
+    seasonalImages: {
+      spring: [tileAssets.fairy_oak_spring],
+      summer: [tileAssets.fairy_oak_summer],
+      autumn: [tileAssets.fairy_oak_autumn],
+      winter: [tileAssets.fairy_oak_winter],
+      default: [tileAssets.fairy_oak_summer],
+    },
   },
   [TileType.SPRUCE_TREE]: {
     name: 'Spruce Tree',
