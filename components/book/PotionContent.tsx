@@ -12,6 +12,7 @@ import { BookThemeConfig, bookStyles, getThemeStyles } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
+import LevelUpCelebration from '../LevelUpCelebration';
 
 interface PotionContentProps {
   theme: BookThemeConfig;
@@ -27,6 +28,7 @@ interface PotionContentProps {
 const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
   const [brewingResult, setBrewingResult] = useState<BrewingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
+  const [levelUpLevel, setLevelUpLevel] = useState<PotionLevel | null>(null);
 
   const styles = getThemeStyles(theme);
 
@@ -97,11 +99,21 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
     setBrewingResult(result);
     setShowResult(true);
 
+    // Show level-up celebration if player advanced
+    if (result.levelUp && result.newLevel) {
+      setLevelUpLevel(result.newLevel);
+    }
+
     const duration = result.levelUp ? 5000 : 3000;
     setTimeout(() => {
       setShowResult(false);
       setBrewingResult(null);
     }, duration);
+  }, []);
+
+  // Handle dismissing the level-up celebration
+  const handleDismissLevelUp = useCallback(() => {
+    setLevelUpLevel(null);
   }, []);
 
   // Get selected potion details
@@ -397,6 +409,11 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
         onPrevPage={pagination.prevPage}
         onNextPage={pagination.nextPage}
       />
+
+      {/* Level-up celebration overlay */}
+      {levelUpLevel && (
+        <LevelUpCelebration newLevel={levelUpLevel} onDismiss={handleDismissLevelUp} />
+      )}
     </div>
   );
 };
