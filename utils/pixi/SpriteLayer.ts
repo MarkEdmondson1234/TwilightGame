@@ -209,12 +209,17 @@ export class SpriteLayer extends PixiLayer {
     }
     // Fall back to seasonal images
     else if (tileData?.seasonalImages) {
-      const seasonalArray =
-        seasonKey in tileData.seasonalImages
-          ? tileData.seasonalImages[seasonKey]
-          : tileData.seasonalImages.default;
+      // Check if this season has an explicit entry (even if empty)
+      const hasExplicitSeason = seasonKey in tileData.seasonalImages;
+      const seasonalArray = hasExplicitSeason
+        ? tileData.seasonalImages[seasonKey]
+        : tileData.seasonalImages.default;
+
       if (seasonalArray && seasonalArray.length > 0) {
         imageUrl = seasonalArray[selectVariant(anchorX, anchorY, seasonalArray.length)];
+      } else if (hasExplicitSeason && seasonalArray?.length === 0) {
+        // Explicitly dormant for this season - don't render
+        return;
       }
     }
 
