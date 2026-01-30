@@ -103,7 +103,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             )}
           </button>
 
-          {/* Journal (rightmost book) - always accessible */}
+          {/* Journal (rightmost book) - always accessible - 281×1000 natural ratio */}
           <button
             onClick={handleJournalClick}
             className="relative transition-transform focus:outline-none rounded -ml-[5px] block hover:scale-110 active:scale-95 focus:ring-2 focus:ring-green-400 cursor-pointer"
@@ -115,7 +115,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
               className="drop-shadow-2xl block"
               style={{
                 imageRendering: 'auto',
-                width: '70px',
+                width: '112px',
                 height: '400px',
               }}
             />
