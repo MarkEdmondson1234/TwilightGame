@@ -7,3 +7,9 @@ export * from './altheaChores';
 
 // Fairy Queen Quest (befriend fairies, visit the queen)
 export * from './fairyQueenQuest';
+
+// Gardening Quest (help Elias tend the communal garden)
+export * from './gardeningQuest';
+
+// Fairy Bluebells Quest (collect items for Elias at Good Friends tier)
+export * from './fairyBluebellsQuest';

@@ -14,6 +14,11 @@ import {
 } from '../../types';
 import { npcAssets } from '../../assets';
 import { createWanderingNPC, createNPC, createStaticNPC } from './createNPC';
+import {
+  GARDENING_QUEST_ID,
+  GARDENING_QUEST_STAGES,
+} from '../../data/quests/gardeningQuest';
+import { FAIRY_BLUEBELLS_QUEST_ID } from '../../data/quests/fairyBluebellsQuest';
 
 export function createVillageElderNPC(
   id: string,
@@ -65,6 +70,27 @@ export function createVillageElderNPC(
           {
             text: 'Tell me about the village.',
             nextId: 'village_tales',
+          },
+          // Garden quest offer - only shows if quest not started and not offered
+          {
+            text: 'Is there anything I can help you with?',
+            nextId: 'garden_offer',
+            hiddenIfQuestStarted: GARDENING_QUEST_ID,
+          },
+          // Garden help option - shows when quest was offered but declined
+          {
+            text: 'Want me to help with the kitchen garden?',
+            nextId: 'garden_accept',
+            requiredQuest: GARDENING_QUEST_ID,
+            requiredQuestStage: GARDENING_QUEST_STAGES.OFFERED,
+          },
+          // Show task check when quest is active
+          {
+            text: "How's the gardening going?",
+            nextId: 'garden_task_check',
+            requiredQuest: GARDENING_QUEST_ID,
+            requiredQuestStage: GARDENING_QUEST_STAGES.ACTIVE,
+            hiddenIfQuestCompleted: GARDENING_QUEST_ID,
           },
           {
             text: 'Farewell, elder.',
@@ -176,6 +202,164 @@ export function createVillageElderNPC(
           spring:
             'Spring! The perfect time to plant most things. Visit the shop for seeds, or search the forest - nature provides for those who look carefully.',
         },
+      },
+      // ===== GARDENING QUEST =====
+      // Initial offer - appears when player asks if they can help
+      {
+        id: 'garden_offer',
+        text: "Ah, young one. These old bones grow weary, and I can no longer tend the communal garden as I once did. The vegetables need planting, the soil needs tending... Would thou like to help an old man? I could teach thee what I know.",
+        hiddenIfQuestStarted: GARDENING_QUEST_ID,
+        responses: [
+          {
+            text: "Yes, I'd love to help!",
+            nextId: 'garden_accept',
+          },
+          {
+            text: 'Not right now, thank you.',
+            nextId: 'garden_decline',
+          },
+        ],
+      },
+      {
+        id: 'garden_decline',
+        text: "No matter, young one. The offer stands whenever thou art ready. The garden shall wait - 'tis patient, like me.",
+        // Note: Handler will set quest to OFFERED stage so the option appears in greeting
+      },
+      {
+        id: 'garden_accept',
+        text: "*His eyes light up.* Wonderful! 'Tis heartening to see the young folk take interest in the old ways.",
+        seasonalText: {
+          spring: "*His eyes light up.* Wonderful! 'Tis heartening to see the young folk take interest in the old ways. Spring is the perfect time to begin - let me give thee thy first task.",
+          summer: "*His eyes light up.* Wonderful! 'Tis heartening to see the young folk take interest in the old ways. Summer is a fine season for growing - let me give thee a task.",
+          autumn: "*His eyes light up.* Wonderful! 'Tis heartening to see the young folk take interest in the old ways. Autumn has its own work to be done.",
+          winter: "*His eyes light up, then soften with regret.* Wonderful! But alas... 'tis winter now. The ground is frozen solid, and no seeds will take root until the thaw. Come see me when spring returns, young one. In the meantime, perhaps make friends with the other villagers? Learn to cook from thy mum? Winter is a time for hearth and home.",
+        },
+        responses: [
+          {
+            text: "What should I do?",
+            nextId: 'garden_seasonal_task',
+            startsQuest: GARDENING_QUEST_ID,
+          },
+        ],
+      },
+      // Seasonal task assignment - shows appropriate message based on season
+      {
+        id: 'garden_seasonal_task',
+        text: "Now then, let me give thee thy first task...",
+        seasonalText: {
+          spring: "Here, take these seeds - tomatoes, peas, and sunflowers. Plant them in tilled soil and remember to water them each day, or they'll wilt. When thou hast grown something, bring it to show me.",
+          summer: "Take these seeds - carrots, corn, and chillies. They love the warm weather. Plant them well, water them daily, and bring me something from thy harvest.",
+          autumn: "Here are some onion sets - plant these. But I have another task for thee as well. I would dearly love some honey. There's a bear who lives in the forest... perhaps he'll share some with thee, or show thee where he keeps his hives. But do be careful - there are wild creatures about.",
+          winter: "Alas, there is naught to do until spring. The ground sleeps beneath the frost. But when the thaw comes, seek me out - I shall have seeds and tasks aplenty for thee then. For now, enjoy the quiet season.",
+        },
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // Spring task
+      {
+        id: 'garden_spring_task',
+        text: "Spring is here! 'Tis the perfect time for planting. Here, take these seeds - tomatoes, peas, and sunflowers. Plant them in tilled soil and remember to water them each day, or they'll wilt. When thou hast grown something, bring it to show me.",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // Summer task
+      {
+        id: 'garden_summer_task',
+        text: "Summer! A fine season for growing. Take these seeds - carrots, corn, and chillies. They love the warm weather. Plant them well, water them daily, and bring me something from thy harvest.",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // Autumn task - special with honey request
+      {
+        id: 'garden_autumn_task',
+        text: "Autumn brings the time for onion sets. Here, plant these. But I have another task for thee - I would dearly love some honey. There's a bear who lives in the forest... perhaps he'll share some with thee, or show thee where he keeps his hives. But do be careful - there are wild creatures about.",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // Winter - no task available
+      {
+        id: 'garden_winter_wait',
+        text: "The ground sleeps beneath the frost now, young one. Come see me when spring returns, and we shall plant anew. In the meantime, perhaps visit the other villagers? Make friends, learn to cook from thy mum... winter is a time for hearth and home.",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // Task check - when player talks during active quest
+      // Also handles assigning new seasonal tasks when season changes
+      {
+        id: 'garden_task_check',
+        text: "Ah, the garden! Let me think on what needs doing...",
+        requiredQuest: GARDENING_QUEST_ID,
+        hiddenIfQuestCompleted: GARDENING_QUEST_ID,
+        seasonalText: {
+          spring: "Ah, springtime! Tomatoes, peas, and sunflowers are what we need. Plant them in tilled soil and water them daily, or they'll wilt. When thou hast grown something, gift it to me!",
+          summer: "Summer is upon us! Carrots, corn, and chillies thrive in this warm weather. Plant them, water them daily, and bring me something from thy harvest.",
+          autumn: "Autumn! 'Tis time for onion sets. And I would dearly love some honey - seek out the bear in the forest. He's a friendly sort, despite his size.",
+          winter: "The ground sleeps beneath the frost now, young one. There is naught to do until spring. Enjoy the quiet season, and come see me when the thaw comes.",
+        },
+        responses: [
+          {
+            text: 'Any advice?',
+            nextId: 'garden_tip_random',
+          },
+          {
+            text: "I'll keep working on it.",
+          },
+        ],
+      },
+      // Random tip during task
+      {
+        id: 'garden_tip_random',
+        text: "Hmm, let me think... Have you made friends with the other villagers? They're good folk. Your mum is a wonderful cook - perhaps she could teach thee a thing or two? Old Bessie the cow gives the sweetest milk. The woods are full of treasures if thou knowest where to look. And if thou seekest Mushra the mushroom sage, just follow the huge toadstools...",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // Task completion
+      {
+        id: 'garden_task_complete',
+        text: "*He examines what you've brought with a warm smile.* Well done, young one! This is fine work. Thou hast a gift for growing things, I can tell. Keep tending the garden, and visit me again when the season turns.",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // All seasonal tasks complete
+      {
+        id: 'garden_quest_complete',
+        text: "*His eyes grow misty.* Thou hast helped an old man more than thou knowest, young one. Spring, summer, autumn... thou hast tended the garden through all the seasons. The village is richer for thy efforts. Thank thee, from the bottom of my heart.",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // ===== FAIRY BLUEBELLS QUEST =====
+      // Offered when player reaches Good Friends tier with Elias
+      {
+        id: 'fairy_bluebells_offer',
+        text: "*He looks at you with deep trust.* My dear friend, I must confess something. I am frightened of the forest these days... but I so wish to give my Althea a bouquet of her favourite flower - the Shrinking Violet. And I'd like to send a gift to my old friend the bear - some hazelnuts and blueberries would make him so happy. If thou couldst gather these things for me, I would give thee the most precious thing I own: a fairy bluebell seed. They say if thou growest it and watchest carefully... it might attract the fae folk.",
+        requiredFriendshipTier: 'good_friend',
+        hiddenIfQuestStarted: FAIRY_BLUEBELLS_QUEST_ID,
+        responses: [
+          {
+            text: "I'll find them for you.",
+            nextId: 'fairy_bluebells_accept',
+          },
+          {
+            text: 'That sounds like quite an adventure!',
+            nextId: 'fairy_bluebells_accept',
+          },
+        ],
+      },
+      {
+        id: 'fairy_bluebells_accept',
+        text: "*His face lights up.* Thou art a true friend! To remind thee: one Shrinking Violet for Althea's bouquet, and some hazelnuts and blueberries for the bear. The violet grows in various places throughout the land. Hazelnuts fall from hazel bushes in autumn, and blueberries ripen in summer and autumn. Gift them to me when thou hast found them all.",
+        // Note: Handler will start the quest
+      },
+      // Progress check
+      {
+        id: 'fairy_bluebells_check',
+        text: "How goes the search, friend? Remember - I need a Shrinking Violet for Althea, and hazelnuts and blueberries for the bear. Gift them to me as thou findest them.",
+        requiredQuest: FAIRY_BLUEBELLS_QUEST_ID,
+        hiddenIfQuestCompleted: FAIRY_BLUEBELLS_QUEST_ID,
+      },
+      // Item received
+      {
+        id: 'fairy_bluebells_item_received',
+        text: "*He accepts your gift gratefully.* Thank thee, friend! This brings me one step closer to my heart's desire.",
+        requiredQuest: FAIRY_BLUEBELLS_QUEST_ID,
+      },
+      // Quest complete
+      {
+        id: 'fairy_bluebells_complete',
+        text: "*Tears well in his eyes.* Thou hast done it! Althea will be so happy with the violets, and the bear will feast well. As promised, here is my most treasured possession - a fairy bluebell seed. Plant it with care, and watch it closely at night. The old tales say... but I shall let thee discover that for thyself. Thank thee, dear friend. Truly.",
+        requiredQuest: FAIRY_BLUEBELLS_QUEST_ID,
       },
     ],
     friendshipConfig: {
