@@ -174,18 +174,85 @@ export interface StatsSaveData {
 }
 
 // ============================================
+// Shared Data Types (Multi-player features)
+// ============================================
+
+/**
+ * Conversation summary shared between players
+ * Stored at: shared/conversations/{npcId}/summaries/{summaryId}
+ */
+export interface SharedConversationSummary {
+  npcId: string;
+  npcName: string;
+  topic: string; // e.g., "recipes", "village history", "farming tips"
+  summary: string; // Brief summary of what was discussed
+  contributorId: string; // Anonymous user ID (hashed)
+  contributorName: string; // Display name or "A villager"
+  timestamp: Timestamp;
+  season: string;
+  gameDay: number;
+  sentiment: 'positive' | 'neutral' | 'curious' | 'helpful';
+}
+
+/**
+ * World event shared between players
+ * Stored at: shared/events/{eventId}
+ */
+export interface SharedWorldEvent {
+  eventType: SharedEventType;
+  title: string;
+  description: string;
+  contributorId: string; // Anonymous user ID (hashed)
+  contributorName: string; // Display name or "A traveller"
+  timestamp: Timestamp;
+  location?: {
+    mapId: string;
+    mapName: string;
+  };
+  metadata?: Record<string, unknown>; // Event-specific data
+}
+
+export type SharedEventType =
+  | 'discovery' // Found rare item, new area, etc.
+  | 'achievement' // Milestone reached
+  | 'seasonal' // Seasonal event participation
+  | 'community' // Community goal progress
+  | 'mystery'; // Mysterious happenings
+
+/**
+ * Sync metadata for hybrid save system
+ * Stored at: users/{userId}/syncMeta
+ */
+export interface SyncMetadata {
+  lastLocalSave: number; // Timestamp of last localStorage save
+  lastCloudSync: number; // Timestamp of last Firestore sync
+  lastCloudSave: Timestamp; // Server timestamp of last cloud save
+  deviceId: string; // Identifies which device last synced
+  version: string; // Game version
+}
+
+// ============================================
 // Firestore Path Helpers
 // ============================================
 
 export const FIRESTORE_PATHS = {
   // User profile is stored as the user document itself (2 segments: users/{userId})
   userProfile: (userId: string) => `users/${userId}`,
+  // Sync metadata for hybrid save system
+  syncMeta: (userId: string) => `users/${userId}/meta/sync`,
   // Saves are a subcollection under the user (4 segments: users/{userId}/saves/{slotId})
   userSaves: (userId: string) => `users/${userId}/saves`,
   saveSlot: (userId: string, slotId: string) => `users/${userId}/saves/${slotId}`,
   // Save data documents are in a subcollection under each save slot
   saveData: (userId: string, slotId: string, docType: string) =>
     `users/${userId}/saves/${slotId}/data/${docType}`,
+
+  // Shared data paths (multi-player features)
+  sharedConversations: (npcId: string) => `shared/conversations/${npcId}/summaries`,
+  sharedConversationDoc: (npcId: string, summaryId: string) =>
+    `shared/conversations/${npcId}/summaries/${summaryId}`,
+  sharedEvents: () => `shared/events`,
+  sharedEventDoc: (eventId: string) => `shared/events/${eventId}`,
 } as const;
 
 // Document types for save data

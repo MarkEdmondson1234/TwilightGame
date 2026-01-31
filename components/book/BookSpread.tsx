@@ -49,7 +49,7 @@ function BookSpread<ChapterId extends string>({
       {/* Book image - this determines the actual size */}
       <div className="relative max-w-full max-h-full">
         <img
-          src={bookStyles.backgroundImage}
+          src={theme.backgroundImage}
           alt="Open book"
           className="max-w-full max-h-full object-contain"
           draggable={false}
@@ -77,7 +77,7 @@ function BookSpread<ChapterId extends string>({
                     onClick={() => !isLocked && onChapterSelect(chapter.id)}
                     disabled={isLocked}
                     className={`
-                      flex items-center gap-1.5 px-2 py-1.5 rounded-r-md
+                      flex items-center gap-1 px-2 py-1 rounded-r-md
                       transition-all duration-200 font-medium shadow-md
                       ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:pl-3'}
                       ${isActive ? 'pl-3' : ''}
@@ -86,13 +86,12 @@ function BookSpread<ChapterId extends string>({
                       backgroundColor: isActive ? theme.ribbonColour : `${theme.ribbonColour}cc`,
                       color: '#fff',
                       fontFamily: bookStyles.fontFamily.body,
-                      fontSize: '11px',
-                      lineHeight: '1.3',
-                      minWidth: '90px',
+                      fontSize: '10px',
+                      lineHeight: '1.2',
+                      minWidth: '80px',
                     }}
                     title={isLocked ? 'Locked - master previous recipes to unlock' : chapter.label}
                   >
-                    <span>{chapter.icon}</span>
                     <span className="truncate">{chapter.label}</span>
                     {isLocked && <span className="text-[9px] ml-1">🔒</span>}
                   </button>
@@ -111,7 +110,7 @@ function BookSpread<ChapterId extends string>({
             {rightPageContent}
           </BookPage>
 
-          {/* Previous page arrow - bottom left of left page */}
+          {/* Previous page arrow - left side of book, vertically centered */}
           {onPrevPage && (
             <button
               onClick={onPrevPage}
@@ -120,13 +119,15 @@ function BookSpread<ChapterId extends string>({
                 absolute w-10 h-10 rounded-full
                 flex items-center justify-center
                 transition-all duration-200
-                ${canGoPrev ? 'hover:scale-110 hover:bg-black/10 cursor-pointer' : 'opacity-20 cursor-not-allowed'}
+                ${canGoPrev ? 'hover:scale-110 hover:bg-white/20 cursor-pointer' : 'opacity-20 cursor-not-allowed'}
               `}
               style={{
-                left: '20%',
-                bottom: '6%',
-                color: theme.textSecondary,
-                fontSize: '20px',
+                left: '4%',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: theme.textPrimary,
+                fontSize: '24px',
+                backgroundColor: 'rgba(255,255,255,0.5)',
               }}
               title="Previous page"
             >
@@ -134,7 +135,7 @@ function BookSpread<ChapterId extends string>({
             </button>
           )}
 
-          {/* Next page arrow - bottom right of right page */}
+          {/* Next page arrow - right side of book, vertically centered */}
           {onNextPage && (
             <button
               onClick={onNextPage}
@@ -143,13 +144,15 @@ function BookSpread<ChapterId extends string>({
                 absolute w-10 h-10 rounded-full
                 flex items-center justify-center
                 transition-all duration-200
-                ${canGoNext ? 'hover:scale-110 hover:bg-black/10 cursor-pointer' : 'opacity-20 cursor-not-allowed'}
+                ${canGoNext ? 'hover:scale-110 hover:bg-white/20 cursor-pointer' : 'opacity-20 cursor-not-allowed'}
               `}
               style={{
-                right: '16%',
-                bottom: '6%',
-                color: theme.textSecondary,
-                fontSize: '20px',
+                right: '4%',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: theme.textPrimary,
+                fontSize: '24px',
+                backgroundColor: 'rgba(255,255,255,0.5)',
               }}
               title="Next page"
             >

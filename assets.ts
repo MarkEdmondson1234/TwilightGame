@@ -366,8 +366,7 @@ export const potionAssets = {
   quality_blessing: '/TwilightGame/assets-optimized/items/magical/potions/quality_blessing.png',
   time_skip: '/TwilightGame/assets-optimized/items/magical/potions/time_skip.png',
   // Quest potions (received as gifts, not brewed)
-  fairy_form_potion:
-    '/TwilightGame/assets-optimized/items/magical/quest/fairy_form_potion.png',
+  fairy_form_potion: '/TwilightGame/assets-optimized/items/magical/quest/fairy_form_potion.png',
 };
 
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
@@ -523,8 +522,9 @@ export const uiAssets = {
   book_journal: '/TwilightGame/assets-optimized/ui/book_journal.png',
   wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
   satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
-  // Open book UI - cottagecore book background for recipe/magic menus
+  // Open book UI - cottagecore book backgrounds for recipe/magic menus
   openbook_ui: '/TwilightGame/assets/ui/openbook_ui.png',
+  magicbook_ui: '/TwilightGame/assets/ui/magicbook_ui.PNG',
 };
 
 // Dialogue UI assets - Animated dialogue window frames

@@ -6,6 +6,7 @@ import { farmManager } from '../utils/farmManager';
 import { mapManager } from '../maps/MapManager';
 import { FarmPlotState } from '../types';
 import { audioManager, SoundCategory, AudioEffects } from '../utils/AudioManager';
+import { magicManager } from '../utils/MagicManager';
 import './DevTools.css';
 
 interface DevToolsProps {
@@ -421,6 +422,70 @@ const AudioEffectsSection: React.FC = () => {
 };
 
 /**
+ * Magic Debug Section - controls for magic system testing
+ */
+const MagicDebugSection: React.FC = () => {
+  const [magicBookUnlocked, setMagicBookUnlocked] = useState(magicManager.isMagicBookUnlocked());
+  const [currentLevel, setCurrentLevel] = useState(magicManager.getCurrentLevel());
+
+  // Update state periodically
+  useEffect(() => {
+    const updateStats = () => {
+      setMagicBookUnlocked(magicManager.isMagicBookUnlocked());
+      setCurrentLevel(magicManager.getCurrentLevel());
+    };
+    updateStats();
+    const interval = setInterval(updateStats, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleUnlockMagicBook = () => {
+    magicManager.unlockMagicBook();
+    setMagicBookUnlocked(true);
+    setCurrentLevel(magicManager.getCurrentLevel());
+    console.log('[DevTools] Magic book unlocked!');
+  };
+
+  return (
+    <>
+      <div className="devtools-status" style={{ marginBottom: '12px' }}>
+        <p>
+          <strong>Magic Book:</strong> {magicBookUnlocked ? '✨ Unlocked' : '🔒 Locked'}
+        </p>
+        {magicBookUnlocked && (
+          <p>
+            <strong>Level:</strong> {currentLevel.charAt(0).toUpperCase() + currentLevel.slice(1)}
+          </p>
+        )}
+      </div>
+
+      {!magicBookUnlocked && (
+        <div className="devtools-control">
+          <button
+            className="devtools-button"
+            onClick={handleUnlockMagicBook}
+            title="Unlock the magic book and novice recipes"
+          >
+            ✨ Unlock Magic Book
+          </button>
+          <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+            Unlocks the magic book and all novice potion recipes
+          </small>
+        </div>
+      )}
+
+      {magicBookUnlocked && (
+        <div className="devtools-control">
+          <small style={{ opacity: 0.7 }}>
+            Magic book is unlocked. Press M to open it in-game.
+          </small>
+        </div>
+      )}
+    </>
+  );
+};
+
+/**
  * Farming Debug Section - controls for accelerating and testing crop growth
  */
 const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUpdate }) => {
@@ -750,6 +815,11 @@ const DevTools: React.FC<DevToolsProps> = ({
           <div className="devtools-section">
             <h3>Farming Debug</h3>
             <FarmingDebugSection onFarmUpdate={onFarmUpdate} />
+          </div>
+
+          <div className="devtools-section">
+            <h3>Magic</h3>
+            <MagicDebugSection />
           </div>
 
           <div className="devtools-section">

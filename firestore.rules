@@ -4,41 +4,72 @@ rules_version = '2';
 // Deploy with: firebase deploy --only firestore:rules
 //
 // Data Structure:
-// - users/{userId}                           - User profile (displayName, email, settings)
-// - users/{userId}/saves/{slotId}            - Save slot with metadata
-// - users/{userId}/saves/{slotId}/data/{doc} - Save data documents
+// - users/{userId}                              - User profile
+// - users/{userId}/meta/sync                    - Sync metadata
+// - users/{userId}/saves/{slotId}               - Save slot with metadata
+// - users/{userId}/saves/{slotId}/data/{doc}    - Save data documents
+// - shared/conversations/{npcId}/summaries/{id} - Shared conversation summaries
+// - shared/events/{eventId}                     - Shared world events
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ============================================
-    // User Documents
+    // User Documents (Private)
     // ============================================
     match /users/{userId} {
-      // User profile document - contains displayName, email, settings
+      // User profile document
       allow read: if isOwner(userId);
       allow create: if isOwner(userId) && isValidUserProfile();
       allow update: if isOwner(userId) && isValidUserProfileUpdate();
       allow delete: if false; // Users cannot delete their own profile
 
-      // ============================================
-      // Save Slots Collection
-      // ============================================
+      // Sync metadata subcollection
+      match /meta/{metaDoc} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Save slots collection
       match /saves/{slotId} {
-        // Save slot document - contains metadata (characterName, lastSaved, etc.)
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && isValidSaveMetadata();
         allow update: if isOwner(userId) && isValidSaveMetadata();
         allow delete: if isOwner(userId);
 
-        // ============================================
-        // Save Data Documents
-        // ============================================
+        // Save data documents
         match /data/{docType} {
           allow read: if isOwner(userId);
           allow write: if isOwner(userId) && isValidSaveDataType(docType);
         }
       }
+    }
+
+    // ============================================
+    // Shared Data (Public Read, Authenticated Write)
+    // ============================================
+
+    // Shared conversations - what players discussed with NPCs
+    match /shared/conversations/{npcId}/summaries/{summaryId} {
+      // Anyone can read conversation summaries
+      allow read: if true;
+
+      // Only authenticated users can write, with validation
+      allow create: if isAuthenticated() && isValidConversationSummary();
+
+      // No updates or deletes (immutable)
+      allow update, delete: if false;
+    }
+
+    // Shared world events - discoveries, achievements, etc.
+    match /shared/events/{eventId} {
+      // Anyone can read events
+      allow read: if true;
+
+      // Only authenticated users can write, with validation
+      allow create: if isAuthenticated() && isValidWorldEvent();
+
+      // No updates or deletes (immutable)
+      allow update, delete: if false;
     }
 
     // ============================================
@@ -48,6 +79,11 @@ service cloud.firestore {
     // Check if the requesting user owns this data
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
     }
 
     // Validate user profile structure
@@ -61,14 +97,12 @@ service cloud.firestore {
     // Validate user profile update (allow partial updates)
     function isValidUserProfileUpdate() {
       let data = request.resource.data;
-      // If displayName is present, validate it
       return (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 50));
     }
 
     // Validate save slot metadata
     function isValidSaveMetadata() {
       let data = request.resource.data;
-      // Required fields for save metadata
       return data.keys().hasAll(['characterName', 'version']) &&
              data.characterName is string &&
              data.characterName.size() <= 50 &&
@@ -88,6 +122,32 @@ service cloud.firestore {
         'world',
         'stats'
       ];
+    }
+
+    // Validate conversation summary
+    function isValidConversationSummary() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['npcId', 'npcName', 'topic', 'summary', 'contributorId']) &&
+             data.npcId is string &&
+             data.npcName is string &&
+             data.npcName.size() <= 50 &&
+             data.topic is string &&
+             data.topic.size() <= 100 &&
+             data.summary is string &&
+             data.summary.size() <= 500 &&
+             data.contributorId is string;
+    }
+
+    // Validate world event
+    function isValidWorldEvent() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['eventType', 'title', 'description', 'contributorId']) &&
+             data.eventType in ['discovery', 'achievement', 'seasonal', 'community', 'mystery'] &&
+             data.title is string &&
+             data.title.size() <= 100 &&
+             data.description is string &&
+             data.description.size() <= 500 &&
+             data.contributorId is string;
     }
 
     // ============================================

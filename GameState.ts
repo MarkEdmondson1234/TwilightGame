@@ -1984,7 +1984,12 @@ class GameStateManager {
    * Get current player disguise (if active)
    * @returns Disguise info or null if not disguised/expired
    */
-  getPlayerDisguise(): { npcId: string; npcName: string; sprite: string; expiresAt: number } | null {
+  getPlayerDisguise(): {
+    npcId: string;
+    npcName: string;
+    sprite: string;
+    expiresAt: number;
+  } | null {
     if (!this.state.playerDisguise) {
       return null;
     }
@@ -2025,6 +2030,50 @@ class GameStateManager {
       return 0;
     }
     return Math.max(0, this.state.playerDisguise.expiresAt - Date.now());
+  }
+
+  // === Cloud Sync Methods ===
+
+  /**
+   * Get the full game state for cloud saving
+   * Returns a copy of the state with current time info
+   */
+  getFullState(): GameState {
+    // Update lastKnownTime before returning
+    const currentTime = TimeManager.getCurrentTime();
+    return {
+      ...this.state,
+      lastKnownTime: currentTime,
+    };
+  }
+
+  /**
+   * Load state from cloud save
+   * Replaces the current state with cloud data
+   */
+  loadFromCloud(cloudState: GameState): void {
+    console.log('[GameState] Loading state from cloud');
+
+    // Merge cloud state with any migration defaults
+    this.state = {
+      ...this.state,
+      ...cloudState,
+      // Ensure required nested objects exist
+      inventory: cloudState.inventory || this.state.inventory,
+      farming: cloudState.farming || this.state.farming,
+      crafting: cloudState.crafting || this.state.crafting,
+      stats: cloudState.stats || this.state.stats,
+      relationships: cloudState.relationships || this.state.relationships,
+      cooking: cloudState.cooking || this.state.cooking,
+      statusEffects: cloudState.statusEffects || this.state.statusEffects,
+      cutscenes: cloudState.cutscenes || this.state.cutscenes,
+    };
+
+    // Save to localStorage immediately
+    this.saveState();
+    this.notify();
+
+    console.log('[GameState] Cloud state loaded and saved to localStorage');
   }
 }
 

@@ -106,9 +106,7 @@ const CottageBook: React.FC<CottageBookProps> = ({
             fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
           }}
         >
-          <span className="text-lg font-bold">
-            {themeConfig.headerIcon} {themeConfig.name}
-          </span>
+          <span className="text-lg font-bold">{themeConfig.name}</span>
         </div>
 
         {/* Book content */}

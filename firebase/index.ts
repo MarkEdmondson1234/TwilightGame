@@ -9,6 +9,8 @@
  *   initializeFirebase,
  *   authService,
  *   cloudSaveService,
+ *   syncManager,
+ *   sharedDataService,
  *   isFirebaseConfigured,
  * } from './firebase';
  * ```
@@ -31,6 +33,13 @@ export type { AuthState } from './authService';
 // Cloud Saves
 export { cloudSaveService } from './cloudSaveService';
 
+// Sync Manager (Hybrid Save System)
+export { syncManager } from './syncManager';
+export type { SyncStatus, SyncState } from './syncManager';
+
+// Shared Data (Multi-player Features)
+export { sharedDataService } from './sharedDataService';
+
 // Types
 export type {
   UserProfile,
@@ -46,6 +55,10 @@ export type {
   QuestsSaveData,
   WorldSaveData,
   StatsSaveData,
+  SyncMetadata,
+  SharedConversationSummary,
+  SharedWorldEvent,
+  SharedEventType,
   SaveDataDocType,
 } from './types';
 

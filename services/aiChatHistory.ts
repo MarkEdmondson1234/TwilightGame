@@ -20,9 +20,9 @@ const CORE_PREFIX = 'ai_core_';
 
 const MAX_MESSAGES_PER_NPC = 50;
 const MAX_MEMORIES_PER_NPC = 100;
-const MAX_CORE_MEMORIES = 100;      // Plenty of room for deep relationship history
-const PRUNE_BATCH_SIZE = 20;        // Extract memories from this many messages
-const CONSOLIDATE_BATCH_SIZE = 30;  // Consolidate this many memories into core
+const MAX_CORE_MEMORIES = 100; // Plenty of room for deep relationship history
+const PRUNE_BATCH_SIZE = 20; // Extract memories from this many messages
+const CONSOLIDATE_BATCH_SIZE = 30; // Consolidate this many memories into core
 
 // ============================================
 // Types
@@ -35,36 +35,36 @@ export interface ChatMessage {
 }
 
 export interface Memory {
-  id: string;                      // Unique ID for this memory
-  content: string;                 // The memory itself (e.g., "Player's name is Luna")
-  category: MemoryCategory;        // Type of memory
+  id: string; // Unique ID for this memory
+  content: string; // The memory itself (e.g., "Player's name is Luna")
+  category: MemoryCategory; // Type of memory
   importance: 'low' | 'medium' | 'high';
-  createdAt: number;               // When this memory was created
-  sourceDay?: number;              // In-game day when this happened
+  createdAt: number; // When this memory was created
+  sourceDay?: number; // In-game day when this happened
 }
 
 export interface CoreMemory {
   id: string;
-  content: string;                 // Consolidated, relationship-defining memory
-  theme: CoreMemoryTheme;          // What this memory represents
+  content: string; // Consolidated, relationship-defining memory
+  theme: CoreMemoryTheme; // What this memory represents
   createdAt: number;
-  consolidatedFrom: string[];      // IDs of memories this was created from
+  consolidatedFrom: string[]; // IDs of memories this was created from
 }
 
 export type CoreMemoryTheme =
-  | 'identity'         // Who the player is (name, personality)
-  | 'bond'             // Key relationship moments
-  | 'trust'            // Times player proved trustworthy
-  | 'shared_history'   // Important events together
-  | 'player_values';   // What matters to the player
+  | 'identity' // Who the player is (name, personality)
+  | 'bond' // Key relationship moments
+  | 'trust' // Times player proved trustworthy
+  | 'shared_history' // Important events together
+  | 'player_values'; // What matters to the player
 
 export type MemoryCategory =
-  | 'player_info'      // Player's name, preferences, background
-  | 'shared_event'     // Things that happened together
-  | 'player_interest'  // Topics player showed interest in
-  | 'gift_received'    // Gifts player gave to NPC
-  | 'quest_related'    // Quest progress, requests made
-  | 'relationship'     // Friendship milestones, emotional moments
+  | 'player_info' // Player's name, preferences, background
+  | 'shared_event' // Things that happened together
+  | 'player_interest' // Topics player showed interest in
+  | 'gift_received' // Gifts player gave to NPC
+  | 'quest_related' // Quest progress, requests made
+  | 'relationship' // Friendship milestones, emotional moments
   | 'world_knowledge'; // Things player told NPC about the world
 
 // ============================================
@@ -89,11 +89,16 @@ export function getChatHistory(npcId: string): ChatMessage[] {
 /**
  * Save a message to conversation history
  * When pruning old messages, extracts memories first
+ * @param npcId - The NPC's ID
+ * @param role - Whether this is a user or assistant message
+ * @param content - The message content
+ * @param playerName - The player's actual name (used when extracting memories)
  */
 export async function addToChatHistory(
   npcId: string,
   role: 'user' | 'assistant',
-  content: string
+  content: string,
+  playerName?: string
 ): Promise<void> {
   try {
     const history = getChatHistory(npcId);
@@ -107,7 +112,7 @@ export async function addToChatHistory(
     // If over limit, extract memories from oldest messages before pruning
     if (history.length > MAX_MESSAGES_PER_NPC) {
       const messagesToPrune = history.slice(0, PRUNE_BATCH_SIZE);
-      await extractMemoriesFromMessages(npcId, messagesToPrune);
+      await extractMemoriesFromMessages(npcId, messagesToPrune, playerName);
 
       // Now prune
       const pruned = history.slice(-MAX_MESSAGES_PER_NPC);
@@ -130,9 +135,7 @@ export function getHistoryForAPI(
   maxMessages: number = 10
 ): { role: 'user' | 'assistant'; content: string }[] {
   const history = getChatHistory(npcId);
-  return history
-    .slice(-maxMessages)
-    .map(({ role, content }) => ({ role, content }));
+  return history.slice(-maxMessages).map(({ role, content }) => ({ role, content }));
 }
 
 // ============================================
@@ -220,8 +223,8 @@ async function consolidateToCore(npcId: string, memories: Memory[]): Promise<voi
   const coreMemories = getCoreMemories(npcId);
 
   // Format memories for consolidation
-  const memoryList = memories.map(m => `- ${m.content}`).join('\n');
-  const existingCore = coreMemories.map(c => `- ${c.content}`).join('\n');
+  const memoryList = memories.map((m) => `- ${m.content}`).join('\n');
+  const existingCore = coreMemories.map((c) => `- ${c.content}`).join('\n');
 
   const consolidationPrompt = `You are consolidating memories about a player into core relationship memories.
 
@@ -258,15 +261,15 @@ Only create memories that capture something NEW and significant. If these memori
     }
 
     const themeMap: Record<string, CoreMemoryTheme> = {
-      'IDENTITY': 'identity',
-      'BOND': 'bond',
-      'TRUST': 'trust',
-      'HISTORY': 'shared_history',
-      'VALUES': 'player_values',
+      IDENTITY: 'identity',
+      BOND: 'bond',
+      TRUST: 'trust',
+      HISTORY: 'shared_history',
+      VALUES: 'player_values',
     };
 
-    const memoryIds = memories.map(m => m.id);
-    const lines = response.text.split('\n').filter(l => l.trim());
+    const memoryIds = memories.map((m) => m.id);
+    const lines = response.text.split('\n').filter((l) => l.trim());
 
     for (const line of lines) {
       const match = line.match(/^\[(\w+)\]\s*(.+)$/);
@@ -292,7 +295,9 @@ Only create memories that capture something NEW and significant. If these memori
 
     const key = `${CORE_PREFIX}${npcId}`;
     localStorage.setItem(key, JSON.stringify(coreMemories));
-    console.log(`[aiChatHistory] Consolidated memories into ${coreMemories.length} core memories for ${npcId}`);
+    console.log(
+      `[aiChatHistory] Consolidated memories into ${coreMemories.length} core memories for ${npcId}`
+    );
   } catch (error) {
     console.warn(`[aiChatHistory] Core consolidation failed:`, error);
   }
@@ -301,14 +306,17 @@ Only create memories that capture something NEW and significant. If these memori
 /**
  * Format all memories for inclusion in system prompt
  * Priority: Core memories first, then long-term memories
+ * @param npcId - The NPC's ID
+ * @param playerName - The player's actual name (optional, defaults to "this player")
  */
-export function getMemoriesForPrompt(npcId: string): string {
+export function getMemoriesForPrompt(npcId: string, playerName?: string): string {
   const coreMemories = getCoreMemories(npcId);
   const memories = getMemories(npcId);
 
   if (coreMemories.length === 0 && memories.length === 0) return '';
 
-  const lines: string[] = ['## What You Remember About This Player'];
+  const displayName = playerName || 'this player';
+  const lines: string[] = [`## What You Remember About ${displayName}`];
 
   // Core memories first (highest priority)
   if (coreMemories.length > 0) {
@@ -351,16 +359,22 @@ export function getMemoriesForPrompt(npcId: string): string {
 /**
  * Extract memories from messages being pruned
  * Uses AI to identify important information worth remembering
+ * @param npcId - The NPC's ID
+ * @param messages - Messages to extract memories from
+ * @param playerName - The player's actual name (optional, defaults to "the player")
  */
 async function extractMemoriesFromMessages(
   npcId: string,
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  playerName?: string
 ): Promise<void> {
   if (messages.length === 0) return;
 
-  // Format messages for analysis
+  const displayName = playerName || 'the player';
+
+  // Format messages for analysis (use actual player name)
   const conversationText = messages
-    .map(m => `${m.role === 'user' ? 'Player' : 'NPC'}: ${m.content}`)
+    .map((m) => `${m.role === 'user' ? displayName : 'NPC'}: ${m.content}`)
     .join('\n');
 
   const extractionPrompt = `Analyse this conversation excerpt and extract key facts worth remembering long-term.
@@ -397,16 +411,16 @@ Only include truly memorable facts. If nothing significant, respond with: [NONE]
 
     // Parse extracted memories
     const categoryMap: Record<string, MemoryCategory> = {
-      'INFO': 'player_info',
-      'EVENT': 'shared_event',
-      'INTEREST': 'player_interest',
-      'GIFT': 'gift_received',
-      'QUEST': 'quest_related',
-      'RELATIONSHIP': 'relationship',
-      'WORLD': 'world_knowledge',
+      INFO: 'player_info',
+      EVENT: 'shared_event',
+      INTEREST: 'player_interest',
+      GIFT: 'gift_received',
+      QUEST: 'quest_related',
+      RELATIONSHIP: 'relationship',
+      WORLD: 'world_knowledge',
     };
 
-    const lines = response.text.split('\n').filter(l => l.trim());
+    const lines = response.text.split('\n').filter((l) => l.trim());
     for (const line of lines) {
       const match = line.match(/^\[(\w+)\]\s*(.+)$/);
       if (match) {
@@ -447,7 +461,12 @@ export function clearAllNPCData(npcId: string): void {
 /**
  * Get storage size for all AI chat data
  */
-export function getAIStorageSize(): { chat: number; memories: number; core: number; total: number } {
+export function getAIStorageSize(): {
+  chat: number;
+  memories: number;
+  core: number;
+  total: number;
+} {
   let chat = 0;
   let memories = 0;
   let core = 0;

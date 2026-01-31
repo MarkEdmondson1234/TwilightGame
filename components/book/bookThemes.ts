@@ -14,6 +14,8 @@ export type BookTheme = 'cooking' | 'magic';
  */
 export interface BookThemeConfig {
   name: string;
+  // Background image for this book
+  backgroundImage: string;
   // Accent colours (from palette.ts)
   accentPrimary: string; // Main accent colour
   accentSecondary: string; // Secondary accent
@@ -58,6 +60,7 @@ const baseColours = {
  */
 export const cookingTheme: BookThemeConfig = {
   name: 'Recipe Book',
+  backgroundImage: uiAssets.openbook_ui,
   // Warm earth tones
   accentPrimary: '#D4A373', // tan
   accentSecondary: '#8B4513', // rust
@@ -83,6 +86,7 @@ export const cookingTheme: BookThemeConfig = {
  */
 export const magicTheme: BookThemeConfig = {
   name: 'Magic Recipe Book',
+  backgroundImage: uiAssets.magicbook_ui,
   // Mystical purples
   accentPrimary: '#6B5B95', // iris
   accentSecondary: '#5C3D5C', // plum
@@ -124,27 +128,25 @@ export function getBookTheme(theme: BookTheme): BookThemeConfig {
  * The book image has visible binding on left/right edges and a center spine.
  */
 export const bookStyles = {
-  // Background image
-  backgroundImage: uiAssets.openbook_ui,
   // Page area positions (percentages relative to the book image 1920x1080)
-  // Calibrated to match openbook_ui.png page boundaries
+  // Calibrated to fit within both book backgrounds (avoiding corner decorations)
   page: {
-    // Left page boundaries (binding ~14%, spine ~49%)
+    // Left page boundaries (shifted right to fit magic book)
     left: {
-      left: '18%',
-      right: '52%', // ends at 48% from left
-      top: '10%',
-      bottom: '6%',
+      left: '25%',
+      right: '48%',
+      top: '14%',
+      bottom: '10%',
     },
-    // Right page boundaries (spine ~52%, binding ~82%)
+    // Right page boundaries (shifted left to fit magic book)
     right: {
-      left: '53%', // starts after center spine
-      right: '18%', // ends at 82% from left (more margin)
-      top: '10%',
-      bottom: '6%',
+      left: '51%',
+      right: '23%',
+      top: '14%',
+      bottom: '10%',
     },
     // Inner padding within each page
-    padding: '3%',
+    padding: '1%',
   },
   // Typography
   fontFamily: {

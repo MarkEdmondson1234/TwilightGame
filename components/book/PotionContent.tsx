@@ -136,14 +136,14 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
   const leftPageContent = (
     <div className="h-full flex flex-col">
       <h2
-        className="text-xl font-bold mb-2 pb-2 border-b"
+        className="text-lg font-bold mb-2 pb-1 border-b"
         style={{
           fontFamily: bookStyles.fontFamily.heading,
           color: theme.textPrimary,
           borderColor: theme.accentPrimary,
         }}
       >
-        {pagination.currentChapter?.icon} {pagination.currentChapter?.label}
+        {pagination.currentChapter?.label}
       </h2>
 
       {/* Level progress bar (for non-all chapters) */}
