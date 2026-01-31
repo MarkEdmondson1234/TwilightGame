@@ -443,7 +443,8 @@ const App: React.FC = () => {
 
     // Update NPCs (they continue moving even when dialogue is open)
     // NPC movement triggers NPC_MOVED event via EventBus
-    npcManager.updateNPCs(deltaTime);
+    // Pass player position for proximity-triggered state changes (e.g., possum playing dead)
+    npcManager.updateNPCs(deltaTime, playerPosRef.current);
 
     // Check for season changes and update NPC locations if needed
     // Season changes trigger NPC_MOVED event via EventBus

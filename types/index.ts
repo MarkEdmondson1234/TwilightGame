@@ -48,6 +48,7 @@ export type {
   DialogueResponse,
   NPC,
   AnimatedNPCStates,
+  ProximityTrigger,
   NPCGiftConfig,
   NPCFavourConfig,
   FavourType,

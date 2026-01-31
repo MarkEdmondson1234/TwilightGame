@@ -22,6 +22,7 @@ import {
   Direction,
   Position,
   AnimatedNPCStates,
+  ProximityTrigger,
   FriendshipConfig,
   DailyResourceConfig,
   DialogueNode,
@@ -53,6 +54,8 @@ export interface StateConfig {
     left?: string[];
     right?: string[];
   };
+  /** Proximity-triggered state change (e.g., possum plays dead when player approaches) */
+  proximityTrigger?: ProximityTrigger;
 }
 
 /**
@@ -134,6 +137,7 @@ function createAnimatedStates(
       nextState: config.nextState,
       transitionsTo: config.transitionsTo,
       directionalSprites: config.directionalSprites,
+      proximityTrigger: config.proximityTrigger,
     };
   }
 

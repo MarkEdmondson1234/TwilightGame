@@ -466,6 +466,13 @@ export const npcAssets = {
   professor_birdimen_02: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_02.png',
   professor_birdimen_portrait:
     '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
+  // Possum assets (forest creature - plays dead when approached)
+  possum_walking_01: '/TwilightGame/assets/npcs/possum/possum_walking01.png',
+  possum_walking_02: '/TwilightGame/assets/npcs/possum/possum_walking02.png',
+  possum_walking_03: '/TwilightGame/assets/npcs/possum/possum_walking03.png',
+  possum_sitting: '/TwilightGame/assets/npcs/possum/possum_sitting.png',
+  possum_dead: '/TwilightGame/assets/npcs/possum/possum_dead.png',
+  possum_portrait: '/TwilightGame/assets/npcs/possum/possum_sitting.png',
 };
 
 // Player assets (add your custom sprites here when ready)

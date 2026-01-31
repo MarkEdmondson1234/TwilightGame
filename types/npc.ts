@@ -194,6 +194,15 @@ export interface NPCFavourConfig {
   description: string; // Message when offering the favour
 }
 
+// Proximity trigger configuration for NPCs that react to player distance
+export interface ProximityTrigger {
+  radius: number; // Distance in tiles that triggers state change
+  triggerState: string; // State to transition to when player is within radius
+  recoveryRadius?: number; // Distance player must be to recover (default: radius + 1.5)
+  recoveryState?: string; // State to return to when player leaves (default: previous state)
+  recoveryDelay?: number; // Delay in ms before recovering (default: 0)
+}
+
 // Animated NPC state machine (for NPCs like the cat with multiple behavioral states)
 export interface AnimatedNPCStates {
   currentState: string; // Current state name (e.g., 'sleeping', 'angry', 'standing')
@@ -214,9 +223,15 @@ export interface AnimatedNPCStates {
         left?: string[]; // Sprites for facing left (side view, will be flipped)
         right?: string[]; // Sprites for facing right (side view)
       };
+      // Optional: proximity-triggered state change (e.g., possum plays dead when player approaches)
+      proximityTrigger?: ProximityTrigger;
     };
   };
   lastStateChange: number; // Timestamp of last state change
   lastFrameChange: number; // Timestamp of last animation frame change
   currentFrame: number; // Current animation frame index
+  // Track previous state for proximity recovery
+  previousState?: string;
+  // Track when player left the proximity zone for recovery delay
+  recoveryStartTime?: number;
 }

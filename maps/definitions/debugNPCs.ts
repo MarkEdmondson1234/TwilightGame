@@ -18,6 +18,7 @@ import {
   createPuffleNPC,
   createSuffleNPC,
   createProfessorBirdimenNPC,
+  createPossumNPC,
 } from '../../utils/npcFactories';
 
 /**
@@ -105,6 +106,9 @@ const npcs = [
 
   // Row 6 continued: Professor Birdimen
   createProfessorBirdimenNPC('debug_professor_birdimen', { x: 12, y: 26 }, 'Professor Birdimen'),
+
+  // Row 6 continued: Possum (plays dead when approached!)
+  createPossumNPC('debug_possum', { x: 18, y: 26 }, 'Possum'),
 ];
 
 export const debugNPCs: MapDefinition = {

@@ -29,6 +29,9 @@ interface NPCState {
   baseMapId: string; // Original map where NPC was registered
   basePosition: Position; // Original position when NPC was created
   baseDirection: Direction; // Original direction when NPC was created
+  // Proximity trigger tracking
+  previousState?: string; // State before proximity trigger (for recovery)
+  proximityRecoveryStartTime?: number; // Timestamp when player left proximity zone
 }
 
 class NPCManagerClass {
@@ -355,11 +358,83 @@ class NPCManagerClass {
   }
 
   /**
-   * Update NPC movement and behavior
-   * Call this in the game loop with deltaTime (seconds)
-   * Returns true if any NPC moved or animation changed (needs re-render)
+   * Check proximity triggers for all NPCs
+   * Triggers state changes when player enters/leaves proximity zones
+   * (e.g., possum plays dead when player approaches)
    */
-  updateNPCs(deltaTime: number): boolean {
+  private checkProximityTriggers(playerPos: Position): boolean {
+    const currentTime = Date.now();
+    const npcs = this.getCurrentMapNPCs();
+    let anyStateChanged = false;
+
+    for (const npc of npcs) {
+      if (!npc.animatedStates) continue;
+
+      const npcState = this.npcStates.get(npc.id);
+      if (!npcState) continue;
+
+      // Calculate distance to player
+      const dx = npc.position.x - playerPos.x;
+      const dy = npc.position.y - playerPos.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // Check each state for proximity triggers
+      for (const [stateName, state] of Object.entries(npc.animatedStates.states)) {
+        if (!state.proximityTrigger) continue;
+
+        const trigger = state.proximityTrigger;
+        const currentStateName = npc.animatedStates.currentState;
+
+        // If we're in a state WITH a trigger and player is within radius -> trigger
+        if (currentStateName === stateName && distance <= trigger.radius) {
+          // Store previous state for recovery
+          npcState.previousState = currentStateName;
+          npcState.proximityRecoveryStartTime = undefined; // Reset recovery timer
+          this.transitionNPCState(npc.id, trigger.triggerState);
+          anyStateChanged = true;
+          break; // Only process one trigger per NPC per frame
+        }
+
+        // If we're in the TRIGGERED state and player has moved away -> recover
+        if (currentStateName === trigger.triggerState) {
+          const recoveryRadius = trigger.recoveryRadius ?? trigger.radius + 1.5;
+
+          if (distance > recoveryRadius) {
+            const recoveryDelay = trigger.recoveryDelay ?? 0;
+
+            // Start recovery timer if not started
+            if (npcState.proximityRecoveryStartTime === undefined) {
+              npcState.proximityRecoveryStartTime = currentTime;
+            }
+
+            // Check if delay has passed
+            if (currentTime - npcState.proximityRecoveryStartTime >= recoveryDelay) {
+              const recoveryState = trigger.recoveryState ?? npcState.previousState ?? 'roaming';
+              this.transitionNPCState(npc.id, recoveryState);
+              npcState.proximityRecoveryStartTime = undefined;
+              anyStateChanged = true;
+            }
+          } else {
+            // Player came back within radius, reset recovery timer
+            npcState.proximityRecoveryStartTime = undefined;
+          }
+          break; // Only process one trigger per NPC per frame
+        }
+      }
+    }
+
+    return anyStateChanged;
+  }
+
+  /**
+   * Update NPC movement and behavior
+   * Call this in the game loop with deltaTime (seconds) and optional player position
+   * Returns true if any NPC moved or animation changed (needs re-render)
+   *
+   * @param deltaTime Time since last frame in seconds
+   * @param playerPos Optional player position for proximity triggers
+   */
+  updateNPCs(deltaTime: number, playerPos?: Position): boolean {
     const currentTime = Date.now();
     const npcs = this.getCurrentMapNPCs();
     let anyNPCMoved = false;
@@ -368,6 +443,14 @@ class NPCManagerClass {
     const animationChanged = this.updateAnimatedStates(currentTime);
     if (animationChanged) {
       anyNPCMoved = true;
+    }
+
+    // Check proximity triggers if player position provided
+    if (playerPos) {
+      const proximityChanged = this.checkProximityTriggers(playerPos);
+      if (proximityChanged) {
+        anyNPCMoved = true;
+      }
     }
 
     npcs.forEach((npc) => {

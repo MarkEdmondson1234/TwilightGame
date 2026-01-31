@@ -1,6 +1,6 @@
 import { MapDefinition, TileType, Position } from '../types';
 import { gameState } from '../GameState';
-import { createUmbraWolfNPC, createChillBearNPC, createBunnyflyNPC, createDeerNPC, createPuffleNPC, createSuffleNPC, createMushraNPC } from '../utils/npcFactories';
+import { createUmbraWolfNPC, createChillBearNPC, createBunnyflyNPC, createDeerNPC, createPuffleNPC, createSuffleNPC, createMushraNPC, createPossumNPC } from '../utils/npcFactories';
 
 /**
  * Procedural map generation functions
@@ -836,6 +836,31 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       npcs.push(deer);
     }
     console.log(`[Forest] 🦌 ${deerCount} Deer spawned!`);
+  }
+
+  // Possum: 15% chance of spawning - shy creature that plays dead when approached
+  const possumChance = ((seed * 127) % 100) / 100; // Pseudo-random based on seed
+  if (possumChance < 0.15) {
+    let possumX: number, possumY: number;
+    let attempts = 0;
+    const maxAttempts = 20;
+    do {
+      possumX = Math.floor(((seed * 131 + attempts * 53) % (width - 6)) + 3);
+      possumY = Math.floor(((seed * 137 + attempts * 59) % (height - 6)) + 3);
+      attempts++;
+    } while (
+      attempts < maxAttempts &&
+      ((Math.abs(possumX - spawnX) < 5 && Math.abs(possumY - spawnY) < 5) ||
+       (Math.abs(possumX - wolfX) < 4 && Math.abs(possumY - wolfY) < 4))
+    );
+
+    const possum = createPossumNPC(
+      `possum_${seed}`,
+      { x: possumX, y: possumY },
+      'Possum'
+    );
+    npcs.push(possum);
+    console.log(`[Forest] 🐿️ Possum spawned at (${possumX}, ${possumY})!`);
   }
 
   // Puffle & Suffle: 5% chance of spawning together - very rare cute duo, always appear as a pair
