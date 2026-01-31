@@ -6,206 +6,39 @@
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
-import {
-  itemAssets,
-  groceryAssets,
-  cookingAssets,
-  magicalAssets,
-  potionAssets,
-} from '../assets';
 
 /**
- * Item sprite mapping - maps item IDs to sprite URLs
- * Falls back to emoji icons for items without sprites
+ * Runtime sprite registry for dynamically registered items
+ * Used when picking up placed items to preserve their sprite image
  */
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  // Tools
-  tool_hoe: itemAssets.hoe,
-  tool_watering_can: itemAssets.watering_can,
-  tool_feather_duster: itemAssets.feather_duster,
-
-  // Ingredients
-  water: itemAssets.water,
-  tea_leaves: groceryAssets.tea,
-
-  // Seeds
-  seed_carrot: itemAssets.carrot_seeds,
-  seed_radish: itemAssets.radish_seeds,
-  seed_tomato: itemAssets.tomato_seeds,
-  seed_salad: itemAssets.salad_seeds,
-  seed_spinach: itemAssets.spinach_seeds,
-  seed_sunflower: itemAssets.sunflower_seeds,
-  seed_broccoli: itemAssets.broccoli_seeds,
-  seed_cucumber: itemAssets.cucumber_seeds,
-  seed_melon: itemAssets.melon_seeds,
-  seed_wild_strawberry: itemAssets.wild_seeds,
-  seed_fairy_bluebell: itemAssets.fairy_bluebell_seeds,
-  seed_onion: groceryAssets.onion_sets,
-  seed_pumpkin: groceryAssets.pumpkin_seeds,
-  seed_chili: groceryAssets.chili_seeds,
-
-  // Grocery items (cooking ingredients)
-  butter: groceryAssets.butter,
-  cream: groceryAssets.cream,
-  egg: groceryAssets.egg,
-  flour: groceryAssets.flour,
-  gravy: groceryAssets.gravy,
-  honey: groceryAssets.honey,
-  milk: groceryAssets.milk,
-  potatoes: groceryAssets.sack_of_potatoes,
-  salt: groceryAssets.salt,
-  sugar: groceryAssets.sugar,
-  tuna: groceryAssets.canned_tuna,
-  yeast: groceryAssets.yeast,
-  vanilla: groceryAssets.vanilla_pods,
-  cinnamon: groceryAssets.cinnamon,
-  meat: groceryAssets.meat,
-  minced_meat: groceryAssets.minced_meat,
-  pasta: groceryAssets.dried_spaghetti,
-  bread: groceryAssets.bread,
-  chocolate: groceryAssets.chocolate_bar,
-  basil: groceryAssets.basil,
-  thyme: groceryAssets.thyme,
-  rosemary: groceryAssets.rosemary,
-  allspice: groceryAssets.allspice,
-  curry_powder: groceryAssets.curry,
-  baking_powder: groceryAssets.baking_powder,
-  cocoa_powder: groceryAssets.cocoa_powder,
-  rice: groceryAssets.rice,
-  tomato_tin: groceryAssets.canned_tomato,
-  tomato_fresh: groceryAssets.tomato,
-  olive_oil: groceryAssets.olive_oil,
-  sunflower_oil: groceryAssets.sunflower_oil,
-  strawberry_jam: groceryAssets.strawberry_jam,
-  cheese: groceryAssets.cheese,
-  almonds: groceryAssets.almonds,
-  pepper: groceryAssets.pepper,
-  vinegar: groceryAssets.vinegar,
-  mint: groceryAssets.mint,
-
-  // Crops
-  crop_radish: itemAssets.radishes,
-  crop_tomato: groceryAssets.tomato,
-  crop_blackberry: itemAssets.blackberries,
-  crop_blueberry: groceryAssets.blueberries_crop,
-  crop_hazelnut: groceryAssets.hazelnuts,
-  crop_strawberry: itemAssets.strawberry,
-  crop_spinach: groceryAssets.spinach_bundle,
-  crop_salad: groceryAssets.salad_head,
-  crop_broccoli: groceryAssets.broccoli_head,
-  crop_onion: groceryAssets.onion_bunch,
-  crop_pumpkin: groceryAssets.pumpkin,
-  crop_chili: groceryAssets.chili_crop,
-  crop_carrot: groceryAssets.carrot_bunch,
-  crop_potato: groceryAssets.sack_of_potatoes,
-
-  // Cooked Food
-  food_tea: cookingAssets.cup_of_tea,
-  food_french_toast: cookingAssets.french_toast,
-  food_pickled_onions: cookingAssets.pickled_onion,
-  food_roast_dinner: cookingAssets.roast_dinner,
-  food_cookies: cookingAssets.cookies,
-  food_chocolate_cake: cookingAssets.chocolate_cake,
-  food_spaghetti: cookingAssets.spaghetti_dish,
-  food_pizza: cookingAssets.potato_pizza,
-
-  // Magical Ingredients (forageable)
-  moonpetal: magicalAssets.moonpetal_flower,
-  addersmeat: magicalAssets.addersmeat_flower,
-  dragonfly_wings: magicalAssets.dragonfly_wings,
-  luminescent_toadstool: magicalAssets.luminescent_toadstool,
-  eye_of_newt: magicalAssets.eye_of_newt,
-  wolfsbane: magicalAssets.wolfsbane_ingredient,
-  shrinking_violet: magicalAssets.shrinking_violet_ingredient, // Item ID → Asset key
-
-  // Potions (brewed via MagicManager)
-  potion_friendship: potionAssets.friendship_elixir,
-  potion_bitter_grudge: potionAssets.bitter_grudge,
-  potion_glamour: potionAssets.glamour_draught,
-  potion_beastward: potionAssets.beastward_balm,
-  potion_wakefulness: potionAssets.wakefulness_brew,
-  potion_revealing: potionAssets.revealing_tonic,
-  potion_raincaller: potionAssets.raincaller,
-  potion_sunburst: potionAssets.sunburst,
-  potion_snowglobe: potionAssets.snowglobe,
-  potion_cherry_blossom: potionAssets.cherry_blossom,
-  potion_mistweaver: potionAssets.mistweaver,
-  potion_verdant_surge: potionAssets.verdant_surge,
-  potion_healing: potionAssets.healing_salve,
-  potion_drink_me: potionAssets.drink_me,
-  potion_eat_me: potionAssets.eat_me,
-  // Level 3: Full Witch potions
-  potion_time_skip: potionAssets.time_skip,
-  potion_dawns_herald: potionAssets.dawns_herald,
-  potion_harvest_moon: potionAssets.harvest_moon,
-  potion_quality_blessing: potionAssets.quality_blessing,
-  potion_homeward: potionAssets.homeward,
-
-  // Quest potions (received as gifts, not brewed)
-  potion_fairy_form: potionAssets.fairy_form_potion,
-};
+const runtimeSpriteRegistry: Record<string, string> = {};
 
 /**
  * Register a custom sprite for an item ID
  * Used when picking up placed items to preserve their sprite image
  */
 export function registerItemSprite(itemId: string, imageUrl: string): void {
-  ITEM_SPRITE_MAP[itemId] = imageUrl;
+  runtimeSpriteRegistry[itemId] = imageUrl;
   console.log(`[InventoryUIHelper] Registered sprite for ${itemId}: ${imageUrl}`);
 }
 
 /**
- * Item emoji fallback - maps item IDs to emoji icons
- * Used for items that don't have sprite assets yet
- */
-const ITEM_ICON_MAP: Record<string, string> = {
-  // Seeds (items without sprites)
-  seed_corn: '🌽',
-  seed_cauliflower: '🥬',
-  seed_pea: '🫛',
-  seed_wild_strawberry: '🍓',
-
-  // Crops (items without sprites)
-  crop_corn: '🌽',
-  crop_potato: '🥔',
-  crop_cauliflower: '🥬',
-  crop_sunflower: '🌻',
-  crop_pea: '🫛',
-  crop_strawberry: '🍓',
-
-  // Materials
-  fertiliser: '💩',
-
-  // Ingredients (items without sprites)
-  tea_leaves: '🍵',
-
-  // Cooked Food
-  food_tea: '☕',
-  food_french_toast: '🍞',
-  food_pickled_onions: '🧅',
-  food_spaghetti: '🍝',
-  food_pizza: '🍕',
-  food_roast_dinner: '🍗',
-  food_crepes: '🥞',
-  food_marzipan_chocolates: '🍫',
-  food_ice_cream: '🍨',
-  food_bread: '🍞',
-  food_cookies: '🍪',
-  food_chocolate_cake: '🎂',
-};
-
-/**
  * Get icon for an item
- * Returns sprite URL if available, otherwise returns emoji fallback
+ * Priority: runtime registry → item.image → item.icon → default emoji
  */
 function getItemIcon(itemId: string): string {
-  // Check for sprite first
-  if (ITEM_SPRITE_MAP[itemId]) {
-    return ITEM_SPRITE_MAP[itemId];
+  // Check runtime registry first (for dynamically registered sprites)
+  if (runtimeSpriteRegistry[itemId]) {
+    return runtimeSpriteRegistry[itemId];
   }
 
-  // Fall back to emoji
-  return ITEM_ICON_MAP[itemId] || '📦';
+  // Use item definition as single source of truth
+  const item = getItem(itemId);
+  if (item) {
+    return item.image || item.icon || '📦';
+  }
+
+  return '📦';
 }
 
 /**

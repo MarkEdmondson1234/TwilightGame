@@ -12,12 +12,12 @@ export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
  * Extends base item with shop-specific data
  */
 export interface ShopItem {
-  itemId: string;                  // References ITEMS record key
-  buyPrice: number;                // Price player pays to buy from shop
-  sellPrice: number;               // Price player receives when selling to shop (typically 60% of buy price)
-  stock: 'unlimited' | number;     // 'unlimited' or specific quantity available
-  availableSeasons?: Season[];     // If set, only available in these seasons (undefined = always available)
-  requiresFlag?: string;           // Optional: game flag required to unlock this item
+  itemId: string; // References ITEMS record key
+  buyPrice: number; // Price player pays to buy from shop
+  sellPrice: number; // Price player receives when selling to shop (typically 60% of buy price)
+  stock: 'unlimited' | number; // 'unlimited' or specific quantity available
+  availableSeasons?: Season[]; // If set, only available in these seasons (undefined = always available)
+  requiresFlag?: string; // Optional: game flag required to unlock this item
 }
 
 /**
@@ -38,7 +38,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
   {
     itemId: 'seed_radish',
     buyPrice: 5,
-    sellPrice: 2,  // Matches existing item definition
+    sellPrice: 2, // Matches existing item definition
     stock: 'unlimited',
   },
 
@@ -399,7 +399,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
   {
     itemId: 'crop_blackberry',
     buyPrice: 50,
-    sellPrice: 35,  // Better sell price than normal (shop buys at 70% instead of 60%)
+    sellPrice: 35, // Better sell price than normal (shop buys at 70% instead of 60%)
     stock: 'unlimited',
     availableSeasons: ['autumn'],
   },
@@ -413,21 +413,21 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
   {
     itemId: 'crop_salad',
     buyPrice: 35,
-    sellPrice: 15,  // Matches crop sellPrice (shop buys at 100% instead of 60%)
+    sellPrice: 15, // Matches crop sellPrice (shop buys at 100% instead of 60%)
     stock: 'unlimited',
     availableSeasons: ['spring', 'summer'],
   },
   {
     itemId: 'crop_spinach',
     buyPrice: 30,
-    sellPrice: 12,  // Matches crop sellPrice (shop buys at 100% instead of 60%)
+    sellPrice: 12, // Matches crop sellPrice (shop buys at 100% instead of 60%)
     stock: 'unlimited',
     availableSeasons: ['spring', 'summer'],
   },
   {
     itemId: 'crop_carrot',
     buyPrice: 35,
-    sellPrice: 15,  // Matches crop sellPrice (shop buys at 100% instead of 60%)
+    sellPrice: 15, // Matches crop sellPrice (shop buys at 100% instead of 60%)
     stock: 'unlimited',
     availableSeasons: ['spring', 'autumn'],
   },
@@ -439,7 +439,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     availableSeasons: ['spring', 'summer', 'autumn'],
   },
   {
-    itemId: 'tomato_fresh',
+    itemId: 'crop_tomato',
     buyPrice: 12,
     sellPrice: 5,
     stock: 'unlimited',
@@ -453,7 +453,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
  * @returns Array of shop items available this season
  */
 export function getSeasonalInventory(season: Season): ShopItem[] {
-  return GENERAL_STORE_INVENTORY.filter(item => {
+  return GENERAL_STORE_INVENTORY.filter((item) => {
     // If no season restriction, always available
     if (!item.availableSeasons) {
       return true;
@@ -469,7 +469,7 @@ export function getSeasonalInventory(season: Season): ShopItem[] {
  * @returns ShopItem or undefined if not found
  */
 export function getShopItem(itemId: string): ShopItem | undefined {
-  return GENERAL_STORE_INVENTORY.find(item => item.itemId === itemId);
+  return GENERAL_STORE_INVENTORY.find((item) => item.itemId === itemId);
 }
 
 /**
@@ -503,10 +503,10 @@ export function getBuyPrice(itemId: string): number | undefined {
  * Level 3+ (mastered): 2.0x
  */
 export const MASTERY_MULTIPLIERS: Record<number, number> = {
-  0: 1.0,   // First attempt (no mastery)
-  1: 1.2,   // Second attempt (20% bonus)
-  2: 1.5,   // Third attempt (50% bonus)
-  3: 2.0,   // Mastered (100% bonus - double price!)
+  0: 1.0, // First attempt (no mastery)
+  1: 1.2, // Second attempt (20% bonus)
+  2: 1.5, // Third attempt (50% bonus)
+  3: 2.0, // Mastered (100% bonus - double price!)
 };
 
 /**

@@ -1,6 +1,15 @@
 import { MapDefinition, TileType, Position } from '../types';
 import { gameState } from '../GameState';
-import { createUmbraWolfNPC, createChillBearNPC, createBunnyflyNPC, createDeerNPC, createPuffleNPC, createSuffleNPC, createMushraNPC, createPossumNPC } from '../utils/npcFactories';
+import {
+  createUmbraWolfNPC,
+  createChillBearNPC,
+  createBunnyflyNPC,
+  createDeerNPC,
+  createPuffleNPC,
+  createSuffleNPC,
+  createMushraNPC,
+  createPossumNPC,
+} from '../utils/npcFactories';
 
 /**
  * Procedural map generation functions
@@ -62,7 +71,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
   // Generate forest features, excluding spawn area
-  generatePatches(map, TileType.ROCK, 5, 1, 3, width, height, spawnZone);  // Reduced rocks (was 15)
+  generatePatches(map, TileType.ROCK, 5, 1, 3, width, height, spawnZone); // Reduced rocks (was 15)
   generatePatches(map, TileType.PATH, 5, 2, 5, width, height, spawnZone);
 
   // Add a static lake (50% chance) - looks much better than procedural rectangular lakes
@@ -72,28 +81,42 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // 70% small lake, 30% large magical lake
     const isSmallLake = ((seed * 53) % 100) / 100 < 0.7;
     const lakeType = isSmallLake ? TileType.SMALL_LAKE : TileType.MAGICAL_LAKE;
-    const clearRadius = isSmallLake ? 3 : 7;  // Clear area around lake
+    const clearRadius = isSmallLake ? 3 : 7; // Clear area around lake
 
     // Pick a corner location for the lake (away from spawn in center and exits on sides)
-    const lakeCorner = ((seed * 47) % 4);  // 0=top-right, 1=bottom-right, 2=top-left, 3=bottom-left
+    const lakeCorner = (seed * 47) % 4; // 0=top-right, 1=bottom-right, 2=top-left, 3=bottom-left
     let lakeX: number, lakeY: number;
 
     // Small lakes can go anywhere, large lakes need corner placement
     if (isSmallLake) {
       // Small lake: more flexible positioning
-      const margin = 5;  // Keep away from edges
+      const margin = 5; // Keep away from edges
       switch (lakeCorner) {
-        case 0: lakeX = width - margin - 3; lakeY = margin + 3; break;      // top-right
-        case 1: lakeX = width - margin - 3; lakeY = height - margin - 3; break; // bottom-right
-        case 2: lakeX = margin + 8; lakeY = margin + 3; break;              // top-left (avoid exit)
-        default: lakeX = margin + 8; lakeY = height - margin - 3; break;   // bottom-left
+        case 0:
+          lakeX = width - margin - 3;
+          lakeY = margin + 3;
+          break; // top-right
+        case 1:
+          lakeX = width - margin - 3;
+          lakeY = height - margin - 3;
+          break; // bottom-right
+        case 2:
+          lakeX = margin + 8;
+          lakeY = margin + 3;
+          break; // top-left (avoid exit)
+        default:
+          lakeX = margin + 8;
+          lakeY = height - margin - 3;
+          break; // bottom-left
       }
     } else {
       // Large lake: only top-right or bottom-right corners (avoid exits on sides)
       if (lakeCorner % 2 === 0) {
-        lakeX = width - 10; lakeY = 8;           // top-right
+        lakeX = width - 10;
+        lakeY = 8; // top-right
       } else {
-        lakeX = width - 10; lakeY = height - 8;  // bottom-right
+        lakeX = width - 10;
+        lakeY = height - 8; // bottom-right
       }
     }
 
@@ -107,9 +130,11 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
         const clearX = lakeX + dx;
         if (clearY >= 1 && clearY < height - 1 && clearX >= 1 && clearX < width - 1) {
           // Only clear if it's a normal terrain tile (not boundaries)
-          if (map[clearY][clearX] === TileType.GRASS ||
-              map[clearY][clearX] === TileType.ROCK ||
-              map[clearY][clearX] === TileType.PATH) {
+          if (
+            map[clearY][clearX] === TileType.GRASS ||
+            map[clearY][clearX] === TileType.ROCK ||
+            map[clearY][clearX] === TileType.PATH
+          ) {
             map[clearY][clearX] = TileType.GRASS;
           }
         }
@@ -125,7 +150,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const streamChance = ((seed * 61) % 100) / 100;
   if (streamChance < 0.5) {
     // Spawn 1-2 streams in the forest
-    const streamCount = Math.floor(((seed * 67) % 2)) + 1; // 1-2 streams
+    const streamCount = Math.floor((seed * 67) % 2) + 1; // 1-2 streams
     let streamsPlaced = 0;
 
     for (let i = 0; i < streamCount; i++) {
@@ -143,7 +168,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
         // Check if this spot is valid (not too close to spawn/exits, and entire 4x4 area is clear)
         const tooCloseToSpawn = Math.abs(streamX - spawnX) < 6 && Math.abs(streamY - spawnY) < 6;
-        const tooCloseToEdges = streamX < 5 || streamX > width - 6 || streamY < 5 || streamY > height - 6;
+        const tooCloseToEdges =
+          streamX < 5 || streamX > width - 6 || streamY < 5 || streamY > height - 6;
 
         if (tooCloseToSpawn || tooCloseToEdges) {
           continue; // Try again
@@ -177,7 +203,6 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
         if (areaIsClear) {
           foundValidSpot = true;
         }
-
       } while (!foundValidSpot && attempts < maxAttempts);
 
       // Only place stream if we found a valid spot
@@ -193,9 +218,11 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
             const clearX = streamX + dx;
             if (clearY >= 1 && clearY < height - 1 && clearX >= 1 && clearX < width - 1) {
               // Only clear if it's a normal terrain tile (not boundaries or other features)
-              if (map[clearY][clearX] === TileType.GRASS ||
-                  map[clearY][clearX] === TileType.PATH ||
-                  map[clearY][clearX] === TileType.ROCK) {
+              if (
+                map[clearY][clearX] === TileType.GRASS ||
+                map[clearY][clearX] === TileType.PATH ||
+                map[clearY][clearX] === TileType.ROCK
+              ) {
                 map[clearY][clearX] = TileType.GRASS;
               }
             }
@@ -340,8 +367,12 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
             // Is (x,y) within 4 tiles of the stream's footprint? (larger buffer for tree canopies - oak trees are 5 tiles wide)
             const buffer = 4;
-            if (x >= streamLeft - buffer && x <= streamRight + buffer &&
-                y >= streamTop - buffer && y <= streamBottom + buffer) {
+            if (
+              x >= streamLeft - buffer &&
+              x <= streamRight + buffer &&
+              y >= streamTop - buffer &&
+              y <= streamBottom + buffer
+            ) {
               return true; // Within buffer zone OR inside stream
             }
           } else if (tile === TileType.SMALL_LAKE) {
@@ -351,9 +382,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
             const lakeTop = checkY - 2;
             const lakeBottom = checkY + 1;
 
-            if (x >= lakeLeft - 1 && x <= lakeRight + 1 &&
-                y >= lakeTop - 1 && y <= lakeBottom + 1 &&
-                !(x >= lakeLeft && x <= lakeRight && y >= lakeTop && y <= lakeBottom)) {
+            if (
+              x >= lakeLeft - 1 &&
+              x <= lakeRight + 1 &&
+              y >= lakeTop - 1 &&
+              y <= lakeBottom + 1 &&
+              !(x >= lakeLeft && x <= lakeRight && y >= lakeTop && y <= lakeBottom)
+            ) {
               return true;
             }
           } else if (tile === TileType.MAGICAL_LAKE) {
@@ -363,9 +398,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
             const lakeTop = checkY - 6;
             const lakeBottom = checkY + 5;
 
-            if (x >= lakeLeft - 1 && x <= lakeRight + 1 &&
-                y >= lakeTop - 1 && y <= lakeBottom + 1 &&
-                !(x >= lakeLeft && x <= lakeRight && y >= lakeTop && y <= lakeBottom)) {
+            if (
+              x >= lakeLeft - 1 &&
+              x <= lakeRight + 1 &&
+              y >= lakeTop - 1 &&
+              y <= lakeBottom + 1 &&
+              !(x >= lakeLeft && x <= lakeRight && y >= lakeTop && y <= lakeBottom)
+            ) {
               return true;
             }
           }
@@ -381,7 +420,11 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const tile = map[y][x];
-      if (tile === TileType.STREAM || tile === TileType.SMALL_LAKE || tile === TileType.MAGICAL_LAKE) {
+      if (
+        tile === TileType.STREAM ||
+        tile === TileType.SMALL_LAKE ||
+        tile === TileType.MAGICAL_LAKE
+      ) {
         waterTileCount++;
       }
     }
@@ -398,7 +441,9 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   }
 
   if (waterTileCount > 0) {
-    console.log(`[Forest] 💧 ${waterTileCount} water tiles found, ${waterAdjacentTiles.length} adjacent grass tiles available`);
+    console.log(
+      `[Forest] 💧 ${waterTileCount} water tiles found, ${waterAdjacentTiles.length} adjacent grass tiles available`
+    );
   }
 
   // Add ferns scattered throughout forest (walkable decoration, quite common)
@@ -449,7 +494,9 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       }
     }
 
-    console.log(`[Forest] 🌸 ${irisesPlaced} Wild Irises (yellow) spawned in ${clustersToPlace} organic clusters near water`);
+    console.log(
+      `[Forest] 🌸 ${irisesPlaced} Wild Irises (yellow) spawned in ${clustersToPlace} organic clusters near water`
+    );
   } else {
     console.log(`[Forest] No water features found - skipping iris placement`);
   }
@@ -561,11 +608,16 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       const dy = Math.abs(y - spawnY);
 
       // Check if 2x2 area is clear and away from spawn
-      if (dx > 5 && dy > 5 &&
-          map[y][x] === TileType.GRASS &&
-          map[y][x+1] === TileType.GRASS &&
-          map[y+1] && map[y+1][x] === TileType.GRASS &&
-          map[y+1] && map[y+1][x+1] === TileType.GRASS) {
+      if (
+        dx > 5 &&
+        dy > 5 &&
+        map[y][x] === TileType.GRASS &&
+        map[y][x + 1] === TileType.GRASS &&
+        map[y + 1] &&
+        map[y + 1][x] === TileType.GRASS &&
+        map[y + 1] &&
+        map[y + 1][x + 1] === TileType.GRASS
+      ) {
         map[y][x] = TileType.WELL;
         break;
       }
@@ -671,10 +723,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   // 20% chance to discover the sacred Deep Forest grove instead of another random forest
   const deepForestChance = ((seed * 29) % 100) / 100; // Pseudo-random based on seed
   const deeperForestDestination = deepForestChance < 0.2 ? 'deep_forest' : 'RANDOM_FOREST';
-  const deeperForestLabel = deepForestChance < 0.2 ? 'A Strange Light Ahead...' : 'Deeper into Forest';
+  const deeperForestLabel =
+    deepForestChance < 0.2 ? 'A Strange Light Ahead...' : 'Deeper into Forest';
 
   if (deepForestChance < 0.2) {
-    console.log(`[Forest] ✨ Rare path to the Sacred Grove discovered! (chance was ${(deepForestChance * 100).toFixed(1)}%)`);
+    console.log(
+      `[Forest] ✨ Rare path to the Sacred Grove discovered! (chance was ${(deepForestChance * 100).toFixed(1)}%)`
+    );
   }
 
   const transitions = [
@@ -689,7 +744,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       fromPosition: { x: width - 2, y: spawnY },
       tileType: TileType.PATH,
       toMapId: deeperForestDestination,
-      toPosition: deeperForestDestination === 'deep_forest' ? { x: 17, y: 33 } : { x: 2, y: spawnY },
+      toPosition:
+        deeperForestDestination === 'deep_forest' ? { x: 17, y: 33 } : { x: 2, y: spawnY },
       label: deeperForestLabel,
     },
   ];
@@ -729,25 +785,38 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       toPosition: { x: 6, y: 7 },
       label: 'To Shop',
     });
-    console.log(`[Forest] Shop spawned at depth ${forestDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`);
+    console.log(
+      `[Forest] Shop spawned at depth ${forestDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`
+    );
   }
 
-  // Add Umbra Wolf NPC that roams the forest
-  // Place wolf in a random location away from spawn point
-  let wolfX, wolfY;
-  do {
-    wolfX = Math.floor(Math.random() * (width - 4)) + 2;
-    wolfY = Math.floor(Math.random() * (height - 4)) + 2;
-  } while (Math.abs(wolfX - spawnX) < 8 && Math.abs(wolfY - spawnY) < 8);
+  // NPCs array for this forest
+  const npcs: ReturnType<typeof createUmbraWolfNPC>[] = [];
 
-  const umbraWolf = createUmbraWolfNPC(
-    `umbra_wolf_${seed}`,
-    { x: wolfX, y: wolfY },
-    'Umbra Wolf'
-  );
+  // Umbra Wolf: 15% chance of spawning - rare and mysterious forest guardian
+  const wolfChance = ((seed * 13) % 100) / 100; // Pseudo-random based on seed
+  let wolfX: number | null = null;
+  let wolfY: number | null = null;
 
-  // NPCs array starts with the Umbra Wolf
-  const npcs = [umbraWolf];
+  if (wolfChance < 0.15) {
+    // Place wolf in a random location away from spawn point
+    let tempWolfX: number, tempWolfY: number;
+    do {
+      tempWolfX = Math.floor(Math.random() * (width - 4)) + 2;
+      tempWolfY = Math.floor(Math.random() * (height - 4)) + 2;
+    } while (Math.abs(tempWolfX - spawnX) < 8 && Math.abs(tempWolfY - spawnY) < 8);
+
+    wolfX = tempWolfX;
+    wolfY = tempWolfY;
+
+    const umbraWolf = createUmbraWolfNPC(
+      `umbra_wolf_${seed}`,
+      { x: wolfX, y: wolfY },
+      'Umbra Wolf'
+    );
+    npcs.push(umbraWolf);
+    console.log(`[Forest] 🐺 Umbra Wolf spawned at (${wolfX}, ${wolfY})!`);
+  }
 
   // Chill Bear: 20% chance of spawning - peaceful tea-drinking forest creature
   const chillBearChance = ((seed * 17) % 100) / 100; // Pseudo-random based on seed
@@ -764,7 +833,10 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     } while (
       attempts < maxAttempts &&
       ((Math.abs(bearX - spawnX) < 6 && Math.abs(bearY - spawnY) < 6) ||
-       (Math.abs(bearX - wolfX) < 5 && Math.abs(bearY - wolfY) < 5))
+        (wolfX !== null &&
+          wolfY !== null &&
+          Math.abs(bearX - wolfX) < 5 &&
+          Math.abs(bearY - wolfY) < 5))
     );
 
     const chillBear = createChillBearNPC(
@@ -780,7 +852,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const bunnyflyChance = ((seed * 31) % 100) / 100; // Pseudo-random based on seed
   if (bunnyflyChance < 0.8) {
     // Spawn 1-3 bunnflies for a flutter effect
-    const bunnyflyCount = Math.floor(((seed * 37) % 3)) + 1; // 1-3 bunnflies
+    const bunnyflyCount = Math.floor((seed * 37) % 3) + 1; // 1-3 bunnflies
     for (let i = 0; i < bunnyflyCount; i++) {
       // Place each bunnyfly in a different location
       let bunnyflyX: number, bunnyflyY: number;
@@ -794,7 +866,10 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       } while (
         attempts < maxAttempts &&
         ((Math.abs(bunnyflyX - spawnX) < 6 && Math.abs(bunnyflyY - spawnY) < 6) ||
-         (Math.abs(bunnyflyX - wolfX) < 4 && Math.abs(bunnyflyY - wolfY) < 4))
+          (wolfX !== null &&
+            wolfY !== null &&
+            Math.abs(bunnyflyX - wolfX) < 4 &&
+            Math.abs(bunnyflyY - wolfY) < 4))
       );
 
       const bunnyfly = createBunnyflyNPC(
@@ -811,7 +886,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const deerChance = ((seed * 47) % 100) / 100; // Pseudo-random based on seed
   if (deerChance < 0.6) {
     // Spawn 1-2 deer for a peaceful forest feel
-    const deerCount = Math.floor(((seed * 53) % 2)) + 1; // 1-2 deer
+    const deerCount = Math.floor((seed * 53) % 2) + 1; // 1-2 deer
     for (let i = 0; i < deerCount; i++) {
       // Place each deer in a different location
       let deerX: number, deerY: number;
@@ -825,7 +900,10 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       } while (
         attempts < maxAttempts &&
         ((Math.abs(deerX - spawnX) < 6 && Math.abs(deerY - spawnY) < 6) ||
-         (Math.abs(deerX - wolfX) < 5 && Math.abs(deerY - wolfY) < 5))
+          (wolfX !== null &&
+            wolfY !== null &&
+            Math.abs(deerX - wolfX) < 5 &&
+            Math.abs(deerY - wolfY) < 5))
       );
 
       const deer = createDeerNPC(
@@ -851,14 +929,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     } while (
       attempts < maxAttempts &&
       ((Math.abs(possumX - spawnX) < 5 && Math.abs(possumY - spawnY) < 5) ||
-       (Math.abs(possumX - wolfX) < 4 && Math.abs(possumY - wolfY) < 4))
+        (wolfX !== null &&
+          wolfY !== null &&
+          Math.abs(possumX - wolfX) < 4 &&
+          Math.abs(possumY - wolfY) < 4))
     );
 
-    const possum = createPossumNPC(
-      `possum_${seed}`,
-      { x: possumX, y: possumY },
-      'Possum'
-    );
+    const possum = createPossumNPC(`possum_${seed}`, { x: possumX, y: possumY }, 'Possum');
     npcs.push(possum);
     console.log(`[Forest] 🐿️ Possum spawned at (${possumX}, ${possumY})!`);
   }
@@ -877,25 +954,20 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     } while (
       attempts < maxAttempts &&
       ((Math.abs(puffleX - spawnX) < 6 && Math.abs(puffleY - spawnY) < 6) ||
-       (Math.abs(puffleX - wolfX) < 5 && Math.abs(puffleY - wolfY) < 5))
+        (wolfX !== null &&
+          wolfY !== null &&
+          Math.abs(puffleX - wolfX) < 5 &&
+          Math.abs(puffleY - wolfY) < 5))
     );
 
     // Create Puffle
-    const puffle = createPuffleNPC(
-      `puffle_${seed}`,
-      { x: puffleX, y: puffleY },
-      'Puffle'
-    );
+    const puffle = createPuffleNPC(`puffle_${seed}`, { x: puffleX, y: puffleY }, 'Puffle');
     npcs.push(puffle);
 
     // Create Suffle right next to Puffle (1-2 tiles away)
-    const suffleX = puffleX + 1 + Math.floor(((seed * 79) % 2)); // 1-2 tiles to the right
-    const suffleY = puffleY + Math.floor(((seed * 83) % 3)) - 1; // -1 to +1 tiles vertically
-    const suffle = createSuffleNPC(
-      `suffle_${seed}`,
-      { x: suffleX, y: suffleY },
-      'Suffle'
-    );
+    const suffleX = puffleX + 1 + Math.floor((seed * 79) % 2); // 1-2 tiles to the right
+    const suffleY = puffleY + Math.floor((seed * 83) % 3) - 1; // -1 to +1 tiles vertically
+    const suffle = createSuffleNPC(`suffle_${seed}`, { x: suffleX, y: suffleY }, 'Suffle');
     npcs.push(suffle);
 
     console.log(`[Forest] 💕 Rare Puffle & Suffle duo spawned at (${puffleX}, ${puffleY})!`);
@@ -903,7 +975,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
   // Mushra: 10% chance of spawning - rare friendly mushroom creature
   const mushraChance = ((seed * 89) % 100) / 100; // Pseudo-random based on seed
-  if (mushraChance < 0.10) {
+  if (mushraChance < 0.1) {
     let mushraX: number, mushraY: number;
     let attempts = 0;
     const maxAttempts = 20;
@@ -914,14 +986,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     } while (
       attempts < maxAttempts &&
       ((Math.abs(mushraX - spawnX) < 6 && Math.abs(mushraY - spawnY) < 6) ||
-       (Math.abs(mushraX - wolfX) < 5 && Math.abs(mushraY - wolfY) < 5))
+        (wolfX !== null &&
+          wolfY !== null &&
+          Math.abs(mushraX - wolfX) < 5 &&
+          Math.abs(mushraY - wolfY) < 5))
     );
 
-    const mushra = createMushraNPC(
-      `mushra_${seed}`,
-      { x: mushraX, y: mushraY },
-      'Mushra'
-    );
+    const mushra = createMushraNPC(`mushra_${seed}`, { x: mushraX, y: mushraY }, 'Mushra');
     npcs.push(mushra);
     console.log(`[Forest] 🍄 Mushra spawned at (${mushraX}, ${mushraY})!`);
   }
@@ -945,7 +1016,9 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const width = 35;
   const height = 25;
   // Use neutral FLOOR_DARK as base, then scatter MINE_FLOOR for texture
-  const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.FLOOR_DARK));
+  const map: TileType[][] = Array.from({ length: height }, () =>
+    Array(width).fill(TileType.FLOOR_DARK)
+  );
 
   // Set borders to walls
   for (let y = 0; y < height; y++) {
@@ -964,7 +1037,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   // Add scattered MINE_FLOOR tiles for texture (~10% of floor)
   for (let y = 1; y < height - 1; y++) {
     for (let x = 1; x < width - 1; x++) {
-      if (map[y][x] === TileType.FLOOR_DARK && Math.random() < 0.10) {
+      if (map[y][x] === TileType.FLOOR_DARK && Math.random() < 0.1) {
         map[y][x] = TileType.MINE_FLOOR;
       }
     }
@@ -997,7 +1070,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   // Add rare well spawn in cave (5% chance - rarer than forest)
   if (Math.random() < 0.05) {
     // Find a suitable 2x2 floor area away from spawn zone
-    const isFloor = (tile: TileType) => tile === TileType.FLOOR_DARK || tile === TileType.MINE_FLOOR;
+    const isFloor = (tile: TileType) =>
+      tile === TileType.FLOOR_DARK || tile === TileType.MINE_FLOOR;
     for (let attempt = 0; attempt < 20; attempt++) {
       const x = Math.floor(Math.random() * (width - 4)) + 2;
       const y = Math.floor(Math.random() * (height - 4)) + 2;
@@ -1005,11 +1079,16 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       const dy = Math.abs(y - spawnY);
 
       // Check if 2x2 area is clear and away from spawn
-      if (dx > 5 && dy > 5 &&
-          isFloor(map[y][x]) &&
-          isFloor(map[y][x+1]) &&
-          map[y+1] && isFloor(map[y+1][x]) &&
-          map[y+1] && isFloor(map[y+1][x+1])) {
+      if (
+        dx > 5 &&
+        dy > 5 &&
+        isFloor(map[y][x]) &&
+        isFloor(map[y][x + 1]) &&
+        map[y + 1] &&
+        isFloor(map[y + 1][x]) &&
+        map[y + 1] &&
+        isFloor(map[y + 1][x + 1])
+      ) {
         map[y][x] = TileType.WELL;
         break;
       }
@@ -1081,7 +1160,9 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       toPosition: { x: 6, y: 7 },
       label: 'To Shop',
     });
-    console.log(`[Cave] Shop spawned at depth ${caveDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`);
+    console.log(
+      `[Cave] Shop spawned at depth ${caveDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`
+    );
   }
 
   // NPCs array for cave creatures
@@ -1099,14 +1180,11 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       attempts++;
     } while (
       attempts < maxAttempts &&
-      (Math.abs(mushraX - spawnX) < 5 && Math.abs(mushraY - spawnY) < 5)
+      Math.abs(mushraX - spawnX) < 5 &&
+      Math.abs(mushraY - spawnY) < 5
     );
 
-    const mushra = createMushraNPC(
-      `mushra_cave_${seed}`,
-      { x: mushraX, y: mushraY },
-      'Mushra'
-    );
+    const mushra = createMushraNPC(`mushra_cave_${seed}`, { x: mushraX, y: mushraY }, 'Mushra');
     npcs.push(mushra);
     console.log(`[Cave] 🍄 Mushra spawned at (${mushraX}, ${mushraY})!`);
   }
@@ -1125,7 +1203,11 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   };
 }
 
-export function generateRandomShop(seed: number = Date.now(), returnToMapId?: string, returnToPosition?: { x: number; y: number }): MapDefinition {
+export function generateRandomShop(
+  seed: number = Date.now(),
+  returnToMapId?: string,
+  returnToPosition?: { x: number; y: number }
+): MapDefinition {
   const width = 12;
   const height = 10;
   const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.FLOOR));

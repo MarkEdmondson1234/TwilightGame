@@ -817,10 +817,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     )
   ) {
     console.log(`[Forage] Tile (${cooldownCheckPos.x}, ${cooldownCheckPos.y}) is on cooldown`);
-    return {
-      found: false,
-      message: `You've already searched here. Come back tomorrow!`,
-    };
+    return { found: false, message: '' };
   }
 
   // Stream foraging (dragonfly wings) - check if adjacent to 5x5 stream sprite area
@@ -1456,27 +1453,25 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
   // Mushroom foraging - gives mushroom items, not seeds
   if (tileData.type === TileType.MUSHROOM) {
-    // 40% chance to find nothing
-    if (Math.random() < 0.4) {
+    // 70% chance to find nothing (silent failure)
+    if (Math.random() < 0.7) {
       console.log('[Forage] Searched mushrooms but found nothing');
       gameState.recordForage(currentMapId, playerTileX, playerTileY);
-      return { found: false, message: 'You searched but found nothing this time.' };
+      return { found: false, message: '' };
     }
 
-    // Found mushrooms! 1-2 quantity
-    const quantity = Math.random() < 0.7 ? 1 : 2;
-    inventoryManager.addItem('mushroom', quantity);
+    // Found mushrooms!
+    inventoryManager.addItem('mushroom', 1);
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools);
     gameState.recordForage(currentMapId, playerTileX, playerTileY);
 
-    const message = quantity === 1 ? 'You found a mushroom!' : `You found ${quantity} mushrooms!`;
-    console.log(`[Forage] ${message}`);
+    console.log('[Forage] Found a mushroom');
     return {
       found: true,
       seedId: 'mushroom',
       seedName: 'Mushroom',
-      message,
+      message: 'Found a mushroom!',
     };
   }
 
@@ -1484,9 +1479,9 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const seed = generateForageSeed();
 
   if (!seed) {
-    // 50% chance to find nothing (built into generateForageSeed)
+    // Silent failure - no message
     console.log('[Forage] Searched but found nothing');
-    return { found: false, message: 'You searched but found nothing this time.' };
+    return { found: false, message: '' };
   }
 
   // Found a seed! Add to inventory
@@ -1494,12 +1489,12 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const inventoryData = inventoryManager.getInventoryData();
   characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
-  console.log(`[Forage] Found ${seed.displayName}!`);
+  console.log(`[Forage] Found ${seed.displayName}`);
   return {
     found: true,
     seedId: seed.id,
     seedName: seed.displayName,
-    message: `You found ${seed.displayName}!`,
+    message: `Found ${seed.displayName}!`,
   };
 }
 

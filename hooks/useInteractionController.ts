@@ -319,7 +319,9 @@ export function useInteractionController(
       },
       onFarmAnimation: handleFarmActionAnimation,
       onForage: (result: ForageResult) => {
-        onShowToast(result.message, result.found ? 'success' : 'info');
+        if (result.message) {
+          onShowToast(result.message, result.found ? 'success' : 'info');
+        }
       },
       onPlacedItemAction: (action: PlacedItemAction) => {
         if (action.action === 'pickup') {

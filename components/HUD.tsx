@@ -89,12 +89,18 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
         {/* Equipped Item Display - only show when item is selected */}
         {selectedItemDef && (
           <div className="bg-black/60 p-2 rounded-lg border border-slate-700 flex items-center gap-2 self-center">
-            <img
-              src={selectedItemDef.image}
-              alt={selectedItemDef.displayName}
-              className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
-              style={{ imageRendering: 'pixelated' }}
-            />
+            {selectedItemDef.image ? (
+              <img
+                src={selectedItemDef.image}
+                alt={selectedItemDef.displayName}
+                className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                style={{ imageRendering: 'pixelated' }}
+              />
+            ) : (
+              <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-2xl sm:text-3xl">
+                {selectedItemDef.icon || '📦'}
+              </span>
+            )}
             <div className="flex flex-col">
               <span
                 className="text-xs sm:text-sm font-bold text-white truncate max-w-[80px]"

@@ -38,6 +38,7 @@ export interface ItemDefinition {
   buyPrice?: number; // Cost to purchase
   cropId?: string; // For seeds, which crop they grow into
   image?: string; // Optional sprite image URL
+  icon?: string; // Emoji fallback when no image available
   forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
 }
 
@@ -85,6 +86,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 12,
     buyPrice: 25,
     cropId: 'corn',
+    icon: '🌽',
   },
 
   seed_pumpkin: {
@@ -169,6 +171,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 12,
     buyPrice: 25,
     cropId: 'cauliflower',
+    icon: '🥬',
   },
 
   // Friendship seeds (from Old Man - no buy price)
@@ -222,6 +225,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 3,
     cropId: 'pea',
+    icon: '🫛',
   },
 
   seed_cucumber: {
@@ -298,6 +302,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A juicy red tomato.',
     stackable: true,
     sellPrice: 25,
+    buyPrice: 12,
     image: groceryAssets.tomato,
   },
 
@@ -309,6 +314,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Sweet yellow corn.',
     stackable: true,
     sellPrice: 40,
+    icon: '🌽',
   },
 
   crop_pumpkin: {
@@ -331,6 +337,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A hearty potato. Perfect for roasting.',
     stackable: true,
     sellPrice: 20,
+    buyPrice: 10,
     image: groceryAssets.sack_of_potatoes,
   },
 
@@ -385,6 +392,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Creamy white cauliflower.',
     stackable: true,
     sellPrice: 45,
+    icon: '🥬',
   },
 
   crop_sunflower: {
@@ -395,6 +403,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A bright, cheerful sunflower.',
     stackable: true,
     sellPrice: 50,
+    icon: '🌻',
   },
 
   crop_salad: {
@@ -427,6 +436,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Sweet little peas in a pod.',
     stackable: true,
     sellPrice: 8,
+    icon: '🫛',
   },
 
   crop_cucumber: {
@@ -502,6 +512,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 15,
+    icon: '💩',
   },
 
   // ===== TOOLS =====
@@ -1001,18 +1012,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.canned_tomato,
   },
 
-  tomato_fresh: {
-    id: 'tomato_fresh',
-    name: 'tomato_fresh',
-    displayName: 'Fresh Tomato',
-    category: ItemCategory.INGREDIENT,
-    description: 'A ripe, fresh tomato from the shop.',
-    stackable: true,
-    sellPrice: 5,
-    buyPrice: 12,
-    image: groceryAssets.tomato,
-  },
-
   tuna: {
     id: 'tuna',
     name: 'tuna',
@@ -1036,18 +1035,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 3,
     buyPrice: 8,
     image: groceryAssets.gravy,
-  },
-
-  potatoes: {
-    id: 'potatoes',
-    name: 'potatoes',
-    displayName: 'Potatoes',
-    category: ItemCategory.INGREDIENT,
-    description: 'A sack of fresh potatoes from the shop.',
-    stackable: true,
-    sellPrice: 4,
-    buyPrice: 10,
-    image: groceryAssets.sack_of_potatoes,
   },
 
   // ===== COOKED FOOD =====
@@ -1310,6 +1297,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 8,
+    icon: '🍄',
   },
 
   shrinking_violet: {
@@ -1869,8 +1857,8 @@ export function generateForageItem(): ItemDefinition | null {
  * Returns null if the forage attempt finds nothing (50% chance)
  */
 export function generateForageSeed(): ItemDefinition | null {
-  // 75% chance to find nothing (25% success rate)
-  if (Math.random() < 0.75) {
+  // 90% chance to find nothing (10% success rate)
+  if (Math.random() < 0.9) {
     return null;
   }
 
