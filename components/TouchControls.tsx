@@ -10,6 +10,10 @@ interface TouchControlsProps {
   onForagePress?: () => void;
   onShowCookingUI?: () => void;
   onShowRecipeBook?: () => void;
+  /** Toggle debug overlay (F3 equivalent) */
+  onDebugToggle?: () => void;
+  /** Current state of debug overlay */
+  isDebugOpen?: boolean;
   /** Use smaller controls for small screens (< 600px height) */
   compact?: boolean;
 }
@@ -34,6 +38,8 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onForagePress,
   onShowCookingUI,
   onShowRecipeBook,
+  onDebugToggle,
+  isDebugOpen = false,
   compact = false,
 }) => {
   const [showDevMenu, setShowDevMenu] = useState(false);
@@ -181,17 +187,38 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             ⋯
           </button>
 
-          {/* Reset button (R) - Only visible when dev menu open */}
+          {/* Dev menu buttons - Only visible when dev menu open */}
           {showDevMenu && (
-            <button
-              onTouchStart={(e) => {
-                handleResetTouch(e);
-                setShowDevMenu(false);
-              }}
-              className={`${actionButtonSize} bg-orange-600/90 hover:bg-orange-500/90 active:bg-orange-400/90 rounded-full border-3 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-md`}
-            >
-              R
-            </button>
+            <>
+              {/* Debug overlay toggle (F3 equivalent) */}
+              {onDebugToggle && (
+                <button
+                  onTouchStart={(e) => {
+                    e.preventDefault();
+                    onDebugToggle();
+                  }}
+                  className={`${actionButtonSize} ${
+                    isDebugOpen
+                      ? 'bg-green-600/90 hover:bg-green-500/90 active:bg-green-400/90 border-green-400'
+                      : 'bg-blue-600/90 hover:bg-blue-500/90 active:bg-blue-400/90 border-blue-400'
+                  } rounded-full border-2 flex items-center justify-center text-white font-bold text-xs shadow-md`}
+                  title="Toggle Debug (F3)"
+                >
+                  F3
+                </button>
+              )}
+
+              {/* Reset button (R) */}
+              <button
+                onTouchStart={(e) => {
+                  handleResetTouch(e);
+                  setShowDevMenu(false);
+                }}
+                className={`${actionButtonSize} bg-orange-600/90 hover:bg-orange-500/90 active:bg-orange-400/90 rounded-full border-2 border-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-md`}
+              >
+                R
+              </button>
+            </>
           )}
         </div>
       </div>

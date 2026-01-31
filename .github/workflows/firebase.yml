@@ -1,0 +1,50 @@
+name: Deploy Firebase Rules
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'firestore.rules'
+      - 'firestore.indexes.json'
+      - 'firebase.json'
+      - '.github/workflows/firebase.yml'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  deploy-firestore-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy Firestore Rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          # Write service account credentials to file
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+
+          # Deploy Firestore rules
+          firebase deploy --only firestore:rules --project twiightgame
+
+          # Clean up
+          rm /tmp/sa.json
+
+      - name: Deployment Summary
+        run: |
+          echo "## Firebase Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Firestore Rules**: Deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project**: twiightgame" >> $GITHUB_STEP_SUMMARY

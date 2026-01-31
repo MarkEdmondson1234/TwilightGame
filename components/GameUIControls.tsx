@@ -90,20 +90,20 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
             className="drop-shadow-2xl block transition-all duration-200"
             style={{
               imageRendering: 'auto',
-              // Responsive sizing (33% default, full on hover/tap):
-              // - Touch: 53px default (33% of 160), 160px expanded
+              // Responsive sizing:
+              // - Touch: 96px default (larger tap target for iPad), 160px expanded
               // - Desktop: 85px default (33% of 256), 256px expanded
               width: isTouchDevice
                 ? satchelExpanded
                   ? '160px'
-                  : '53px'
+                  : '96px'
                 : satchelExpanded
                   ? '256px'
                   : '85px',
               height: isTouchDevice
                 ? satchelExpanded
                   ? '160px'
-                  : '53px'
+                  : '96px'
                 : satchelExpanded
                   ? '256px'
                   : '85px',

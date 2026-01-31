@@ -160,7 +160,8 @@ export function useMouseControls(config: MouseControlsConfig) {
     }
 
     // Touch always enabled for click-to-move on iPad
-    container.addEventListener('touchend', handleTouchEnd);
+    // Use passive: true to avoid blocking scroll/touch for 100-300ms on iOS
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
 
     return () => {
       container.removeEventListener('click', handleClick);

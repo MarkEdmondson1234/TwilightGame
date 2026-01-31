@@ -1,6 +1,8 @@
 import React from 'react';
-import { MapDefinition, Position } from '../types';
+import { MapDefinition, Position, Transition } from '../types';
 import { TILE_SIZE } from '../constants';
+import { Z_ACTION_PROMPTS } from '../zIndex';
+import { getTransitionIcon, COTTAGE_COLOURS, COTTAGE_FONTS } from '../utils/transitionIcons';
 
 interface TransitionIndicatorsProps {
   currentMap: MapDefinition;
@@ -10,9 +12,151 @@ interface TransitionIndicatorsProps {
   tileSize?: number; // Effective tile size (includes viewport scaling for background-image rooms)
 }
 
+// Distance thresholds
+const ICON_VISIBLE_DISTANCE = 3.5; // Icon visible from further away
+const TOOLTIP_DISTANCE = 1.5; // Tooltip only when very close
+
+/**
+ * Floating icon that bobs gently above a transition tile
+ */
+const FloatingIcon: React.FC<{
+  icon: string;
+  colour: string;
+  screenX: number;
+  screenY: number;
+  isClose: boolean;
+}> = ({ icon, colour, screenX, screenY, isClose }) => (
+  <div
+    className="absolute pointer-events-none animate-float-gentle"
+    style={{
+      left: screenX,
+      top: screenY - 20,
+      zIndex: Z_ACTION_PROMPTS,
+    }}
+  >
+    <div
+      className={isClose ? 'animate-pulse-glow' : ''}
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: '50%',
+        backgroundColor: colour,
+        border: `2px solid ${COTTAGE_COLOURS.warmBrownBorder}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '18px',
+        boxShadow: '0 4px 12px rgba(92, 74, 61, 0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
+      }}
+    >
+      {icon}
+    </div>
+  </div>
+);
+
+/**
+ * Parchment-style tooltip showing destination name and [E] key hint
+ */
+const ParchmentTooltip: React.FC<{
+  icon: string;
+  label: string;
+  screenX: number;
+  screenY: number;
+}> = ({ icon, label, screenX, screenY }) => (
+  <div
+    className="absolute pointer-events-none animate-tooltip-appear"
+    style={{
+      left: screenX,
+      top: screenY - 65,
+      transform: 'translate(-50%, -100%)',
+      zIndex: Z_ACTION_PROMPTS + 1,
+    }}
+  >
+    <div
+      style={{
+        // Parchment background with subtle gradient
+        background: `linear-gradient(135deg, ${COTTAGE_COLOURS.parchmentLight} 0%, ${COTTAGE_COLOURS.parchmentDark} 100%)`,
+        // Wooden border effect
+        border: `3px solid ${COTTAGE_COLOURS.warmBrownBorder}`,
+        borderRadius: 12,
+        padding: '10px 16px',
+        // Text styling
+        fontFamily: COTTAGE_FONTS.body,
+        fontSize: 14,
+        fontWeight: 500,
+        color: COTTAGE_COLOURS.darkBrownText,
+        // Shadow for depth
+        boxShadow: `
+          0 4px 12px rgba(92, 74, 61, 0.4),
+          inset 0 1px 0 rgba(255,255,255,0.3),
+          inset 0 -1px 0 rgba(0,0,0,0.05)
+        `,
+        // Layout
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span style={{ fontSize: 18 }}>{icon}</span>
+      <span>{label}</span>
+      <span
+        style={{
+          marginLeft: 4,
+          padding: '2px 8px',
+          backgroundColor: COTTAGE_COLOURS.sageGreen,
+          color: COTTAGE_COLOURS.creamText,
+          borderRadius: 4,
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: '0.5px',
+        }}
+      >
+        E
+      </span>
+    </div>
+    {/* Triangle pointer */}
+    <div
+      style={{
+        position: 'absolute',
+        left: '50%',
+        bottom: -8,
+        transform: 'translateX(-50%)',
+        width: 0,
+        height: 0,
+        borderLeft: '8px solid transparent',
+        borderRight: '8px solid transparent',
+        borderTop: `8px solid ${COTTAGE_COLOURS.warmBrownBorder}`,
+      }}
+    />
+  </div>
+);
+
+/**
+ * Gets the display label for a transition
+ */
+function getTransitionLabel(transition: Transition): string {
+  // Use explicit label if provided
+  if (transition.label) {
+    return transition.label;
+  }
+
+  // Format the map ID nicely
+  const mapId = transition.toMapId;
+
+  // Handle random maps
+  if (mapId.startsWith('RANDOM_')) {
+    const type = mapId.replace('RANDOM_', '').toLowerCase();
+    return `Explore ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+  }
+
+  // Convert snake_case to Title Case
+  return mapId.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 /**
  * Visual indicators for map transitions
- * Shows interactive prompts when player is near transition tiles
+ * Shows cottage-core styled floating icons and parchment tooltips when player is nearby
  */
 const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
   currentMap,
@@ -23,54 +167,43 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
 }) => {
   const offsetX = gridOffset?.x ?? 0;
   const offsetY = gridOffset?.y ?? 0;
+
   return (
     <>
       {currentMap.transitions.map((transition, idx) => {
-        // Check if player is within 2 tiles
+        // Calculate distance to transition
         const dx = Math.abs(playerPos.x - transition.fromPosition.x);
         const dy = Math.abs(playerPos.y - transition.fromPosition.y);
         const distance = Math.sqrt(dx * dx + dy * dy);
-        const isNearby = distance <= 2;
-        const isVeryClose = dx < 1.5 && dy < 1.5;
 
-        // Only show transition indicators when player is within 2 tiles
-        if (!isNearby) return null;
+        // Only show when player is within icon visible distance
+        if (distance > ICON_VISIBLE_DISTANCE) return null;
+
+        const isVeryClose = distance <= TOOLTIP_DISTANCE;
+
+        // Get themed icon and colour
+        const { icon, colour } = getTransitionIcon(transition);
+        const label = getTransitionLabel(transition);
+
+        // Calculate screen position (centre of tile)
+        const screenX = (transition.fromPosition.x + 0.5) * tileSize + offsetX;
+        const screenY = transition.fromPosition.y * tileSize + offsetY;
 
         return (
           <React.Fragment key={`transition-${idx}`}>
-            {/* Visual marker on the transition tile */}
-            <div
-              className={`absolute pointer-events-none border-4 ${
-                isVeryClose
-                  ? 'border-green-400 bg-green-400/30'
-                  : 'border-yellow-400 bg-yellow-400/20'
-              }`}
-              style={{
-                left: transition.fromPosition.x * tileSize + offsetX,
-                top: transition.fromPosition.y * tileSize + offsetY,
-                width: tileSize,
-                height: tileSize,
-                zIndex: 500, // Above foreground layers (65) but below UI (1000)
-              }}
+            {/* Floating icon above the tile */}
+            <FloatingIcon
+              icon={icon}
+              colour={colour}
+              screenX={screenX}
+              screenY={screenY}
+              isClose={isVeryClose}
             />
-            {/* Label above the tile */}
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                left: (transition.fromPosition.x + 0.5) * tileSize + offsetX,
-                top: (transition.fromPosition.y - 0.5) * tileSize + offsetY,
-                transform: 'translate(-50%, -50%)',
-                zIndex: 500, // Above foreground layers (65) but below UI (1000)
-              }}
-            >
-              <div
-                className={`${
-                  isVeryClose ? 'bg-green-400 animate-pulse' : 'bg-yellow-400'
-                } px-3 py-1 rounded-full text-xs font-bold text-black whitespace-nowrap shadow-lg`}
-              >
-                [E] {transition.label || transition.toMapId}
-              </div>
-            </div>
+
+            {/* Parchment tooltip when very close */}
+            {isVeryClose && (
+              <ParchmentTooltip icon={icon} label={label} screenX={screenX} screenY={screenY} />
+            )}
           </React.Fragment>
         );
       })}

@@ -24,6 +24,7 @@ import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
 import { TimeManager, TimeOfDay } from '../TimeManager';
+import { getCachedPerformanceSettings } from '../performanceTier';
 
 export class NPCLayer extends PixiLayer {
   private npcSprites: Map<string, PIXI.Sprite> = new Map();
@@ -102,8 +103,9 @@ export class NPCLayer extends PixiLayer {
         npc.zIndexOverride !== undefined && npc.zIndexOverride < Z_DEPTH_SORTED_BASE;
       const useStage = needsStageZSort && this.stageRef !== null;
 
-      // Render glow effect if NPC has one
-      if (npc.glow) {
+      // Render glow effect if NPC has one (and glows are enabled)
+      const perfSettings = getCachedPerformanceSettings();
+      if (npc.glow && perfSettings.enableGlows) {
         let glowGfx = this.glowGraphics.get(npc.id);
         if (!glowGfx) {
           glowGfx = new PIXI.Graphics();
@@ -142,9 +144,11 @@ export class NPCLayer extends PixiLayer {
           pulseAlpha = intensity * (0.7 + 0.3 * pulse); // Pulse between 70% and 100%
         }
 
-        // Draw radial gradient glow using many concentric circles for smooth graduation
+        // Draw radial gradient glow using concentric circles
+        // Use performance tier's glow steps (capped by NPC's config if specified)
         glowGfx.clear();
-        const steps = npc.glow.steps ?? 32; // Configurable smoothness (default 32)
+        const npcSteps = npc.glow.steps ?? 32;
+        const steps = Math.min(npcSteps, perfSettings.glowSteps);
         for (let i = steps; i > 0; i--) {
           const stepRadius = (glowRadius * i) / steps;
           // Use quadratic falloff for more natural light attenuation
@@ -158,6 +162,12 @@ export class NPCLayer extends PixiLayer {
         const feetY = npc.position.y + 0.3;
         glowGfx.zIndex = (npc.zIndexOverride ?? Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10)) - 1;
         glowGfx.visible = true;
+      } else if (npc.glow && !perfSettings.enableGlows) {
+        // Hide glow on low-power devices
+        const glowGfx = this.glowGraphics.get(npc.id);
+        if (glowGfx) {
+          glowGfx.visible = false;
+        }
       }
 
       // Get or create sprite for this NPC

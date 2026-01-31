@@ -36,15 +36,15 @@ export interface RecipeDefinition {
   category: RecipeCategory;
   description: string;
   ingredients: RecipeIngredient[];
-  cookingTime: number;       // Seconds to cook (for minigame timing)
-  difficulty: 1 | 2 | 3;     // 1 = easy, 2 = medium, 3 = hard
-  resultItemId: string;      // The cooked food item ID
-  resultQuantity: number;    // How many items produced
-  friendshipValue: number;   // How much friendship when gifted
+  cookingTime: number; // Seconds to cook (for minigame timing)
+  difficulty: 1 | 2 | 3; // 1 = easy, 2 = medium, 3 = hard
+  resultItemId: string; // The cooked food item ID
+  resultQuantity: number; // How many items produced
+  friendshipValue: number; // How much friendship when gifted
   unlockRequirement?: string; // Recipe ID that must be mastered first
-  teacherNpc?: string;       // NPC ID who teaches this recipe
-  image?: string;            // Optional image URL for the recipe
-  instructions?: string[];   // Optional step-by-step cooking instructions
+  teacherNpc?: string; // NPC ID who teaches this recipe
+  image?: string; // Optional image URL for the recipe
+  instructions?: string[]; // Optional step-by-step cooking instructions
 }
 
 /**
@@ -77,7 +77,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     name: 'pickled_onions',
     displayName: 'Pickled Onions',
     category: 'starter',
-    description: 'Sharp, tangy pickled onions. The Witch\'s favourite sandwich ingredient!',
+    description: "Sharp, tangy pickled onions. The Witch's favourite sandwich ingredient!",
     ingredients: [
       { itemId: 'crop_onion', quantity: 4 },
       { itemId: 'vinegar', quantity: 1 },
@@ -106,7 +106,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     name: 'french_toast',
     displayName: 'French Toast',
     category: 'tutorial',
-    description: 'Sweet eggy bread. Mother\'s first cooking lesson.',
+    description: "Sweet eggy bread. Mother's first cooking lesson.",
     ingredients: [
       { itemId: 'bread', quantity: 1 },
       { itemId: 'egg', quantity: 1 },
@@ -125,8 +125,8 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     image: cookingAssets.french_toast,
     instructions: [
       'Put egg, milk, cinnamon, sugar and salt in a shallow, but wide bowl, and stir.',
-      'Put a frying pan on the stove and make sure it\'s quite hot.',
-      'Dip the slice of toast in your mixture so it\'s wet, but not soggy. Add the butter to the pan, and fry the bread on both sides for 3 minutes each or until it looks nice and golden.',
+      "Put a frying pan on the stove and make sure it's quite hot.",
+      "Dip the slice of toast in your mixture so it's wet, but not soggy. Add the butter to the pan, and fry the bread on both sides for 3 minutes each or until it looks nice and golden.",
       'Serve it on a plate. Yummy!',
     ],
   },
@@ -205,10 +205,11 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     name: 'crepes',
     displayName: 'Crepes',
     category: 'dessert',
-    description: 'Crepes is the French word for pancakes, but whilst some pancakes should be thick, crepes should be paper thin! You can only achieve this if the batter is runny. To make sure they don\'t come apart, you need lots of eggs: Eggs are great for making things stick together - it\'s pretty much the glue of cooking ingredients!',
+    description:
+      "Crepes is the French word for pancakes, but whilst some pancakes should be thick, crepes should be paper thin! You can only achieve this if the batter is runny. To make sure they don't come apart, you need lots of eggs: Eggs are great for making things stick together - it's pretty much the glue of cooking ingredients!",
     ingredients: [
       { itemId: 'vanilla', quantity: 1 },
-      { itemId: 'cane_sugar', quantity: 1 },
+      { itemId: 'sugar', quantity: 1 },
       { itemId: 'flour', quantity: 1 },
       { itemId: 'egg', quantity: 3 },
       { itemId: 'butter', quantity: 1 },
@@ -223,7 +224,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     instructions: [
       'Scrape the vanilla seeds from the pod and mix it with the sugar. Whisk all the ingredients together in a bowl - make sure there are no lumps.',
       'Heat up a pan and melt most of the butter in it. Slowly add it to the batter whilst whisking.',
-      'Pour a thin layer of batter in the hot pan and fry for no more than a minute, then flip the crepe over with a spatula - or, if you\'re good at that sort of thing, you might flip them in the air!',
+      "Pour a thin layer of batter in the hot pan and fry for no more than a minute, then flip the crepe over with a spatula - or, if you're good at that sort of thing, you might flip them in the air!",
       'If the pan gets too cold, the batter might stick, so always keep it well heated.',
     ],
   },
@@ -283,7 +284,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
       { itemId: 'whole_grain_wheat_flour', quantity: 1 },
       { itemId: 'flour', quantity: 1 },
     ],
-    cookingTime: 120,  // 2 minutes to represent 2 days
+    cookingTime: 120, // 2 minutes to represent 2 days
     difficulty: 3,
     resultItemId: 'food_bread',
     resultQuantity: 1,
@@ -323,8 +324,8 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     unlockRequirement: 'french_toast',
     instructions: [
       'Whisk sugar and butter until it becomes light and fluffy. Add the egg and whisk again.',
-      'In another bowl, mix flour, vanilla, baking powder and salt, then add it to the sugar mix by pouring it through a finely meshed sieve - that\'s how you avoid clumps. Stir it thoroughly, then add the chocolate chips.',
-      'Shape the dough into balls, and press them onto a baking tray covered with baking paper. Try not to eat too much of the dough! It\'s even better as cookies!',
+      "In another bowl, mix flour, vanilla, baking powder and salt, then add it to the sugar mix by pouring it through a finely meshed sieve - that's how you avoid clumps. Stir it thoroughly, then add the chocolate chips.",
+      "Shape the dough into balls, and press them onto a baking tray covered with baking paper. Try not to eat too much of the dough! It's even better as cookies!",
       'Bake in the oven at 175 degrees for 14 minutes until they begin to turn crisp, but are still slightly mushy in the middle. Allow to cool before eating.',
     ],
   },
@@ -373,7 +374,7 @@ export const NPC_FOOD_PREFERENCES: Record<string, RecipeCategory[]> = {
   shopkeeper: ['savoury'],
   small_girl: ['dessert'],
   fairy: ['dessert'],
-  village_elder: ['baking'],  // Old Man
+  village_elder: ['baking'], // Old Man
   old_woman: ['baking'],
 };
 
@@ -388,7 +389,7 @@ export function getRecipe(recipeId: string): RecipeDefinition | undefined {
  * Get all recipes in a category
  */
 export function getRecipesByCategory(category: RecipeCategory): RecipeDefinition[] {
-  return Object.values(RECIPES).filter(recipe => recipe.category === category);
+  return Object.values(RECIPES).filter((recipe) => recipe.category === category);
 }
 
 /**
@@ -398,9 +399,7 @@ export function getLovedRecipesForNpc(npcId: string): RecipeDefinition[] {
   const preferences = NPC_FOOD_PREFERENCES[npcId];
   if (!preferences) return [];
 
-  return Object.values(RECIPES).filter(recipe =>
-    preferences.includes(recipe.category)
-  );
+  return Object.values(RECIPES).filter((recipe) => preferences.includes(recipe.category));
 }
 
 /**
@@ -443,5 +442,5 @@ export function isCookingDomain(category: RecipeCategory): category is CookingDo
  * Get all recipes in a specific cooking domain
  */
 export function getRecipesByDomain(domain: CookingDomain): RecipeDefinition[] {
-  return Object.values(RECIPES).filter(recipe => recipe.category === domain);
+  return Object.values(RECIPES).filter((recipe) => recipe.category === domain);
 }

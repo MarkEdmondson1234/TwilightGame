@@ -1,7 +1,7 @@
 # Makefile for TwilightGame
 # Provides convenient shortcuts for common development tasks
 
-.PHONY: help install dev build preview optimize-assets typecheck clean test-game reload
+.PHONY: help install dev build preview optimize-assets typecheck clean test-game reload firebase-login firebase-deploy firebase-rules
 
 # Default target - show help
 help:
@@ -17,6 +17,11 @@ help:
 	@echo "  make clean           Remove build artifacts"
 	@echo "  make reload          Restart dev server (fixes HMR cascade hangs)"
 	@echo "  make test-game       Launch game tester agent in Chrome"
+	@echo ""
+	@echo "Firebase Commands"
+	@echo "-----------------"
+	@echo "  make firebase-login  Login to Firebase CLI"
+	@echo "  make firebase-deploy Deploy Firestore rules"
 	@echo ""
 
 # Install dependencies
@@ -60,3 +65,19 @@ test-game:
 	@echo "NOTE: Ensure dev server is running (make dev)"
 	@echo "Opening http://localhost:4000"
 	@open http://localhost:4000 || xdg-open http://localhost:4000 || echo "Please open http://localhost:4000 in your browser"
+
+# ============================================
+# Firebase Commands
+# ============================================
+
+# Login to Firebase CLI
+firebase-login:
+	npx firebase-tools login
+	npx firebase-tools use twiightgame
+
+# Deploy Firestore rules to Firebase
+firebase-deploy:
+	npx firebase-tools deploy --only firestore:rules --project twiightgame
+
+# Alias for firebase-deploy
+firebase-rules: firebase-deploy

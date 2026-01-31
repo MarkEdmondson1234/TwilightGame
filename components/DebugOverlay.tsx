@@ -1,10 +1,19 @@
 import React, { useState, useCallback } from 'react';
-import { TILE_SIZE, MAP_WIDTH, MAP_HEIGHT } from '../constants';
+import { TILE_SIZE, MAP_WIDTH, MAP_HEIGHT, DEBUG } from '../constants';
 import { getTileData } from '../utils/mapUtils';
-import { Position, Transition, isTileSolid, CollisionType } from '../types';
+import {
+  Position,
+  Transition,
+  isTileSolid,
+  CollisionType,
+  FarmPlotState,
+  CropGrowthStage,
+} from '../types';
 import DebugInfoPanel from './DebugInfoPanel';
 import { Z_DEBUG_TILES, Z_DEBUG_TRANSITIONS, Z_DEBUG_CLICK, zClass } from '../zIndex';
 import { mapManager } from '../maps';
+import { farmManager } from '../utils/farmManager';
+import { CROP_ADULT_SIZES, CROP_SPRITE_CONFIG } from '../utils/pixi/TileLayer';
 
 interface DebugOverlayProps {
   playerPos: Position;
@@ -72,6 +81,9 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ playerPos }) => {
       {/* Transition Markers */}
       <TransitionMarkers transitions={transitions} />
 
+      {/* Farm Plot Debug Overlay */}
+      {DEBUG.FARM_OVERLAY && <FarmDebugOverlay mapId={mapManager.getCurrentMapId() || ''} />}
+
       {/* Clicked Tile Highlight */}
       {clickedTile && (
         <div
@@ -96,6 +108,104 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ playerPos }) => {
         clickedTile={clickedTile}
         onClearClick={handleClearClick}
       />
+    </div>
+  );
+};
+
+// Farm plot debug overlay component
+interface FarmDebugOverlayProps {
+  mapId: string;
+}
+
+const FarmDebugOverlay: React.FC<FarmDebugOverlayProps> = ({ mapId }) => {
+  const plots = farmManager.getPlotsForMap(mapId);
+
+  if (plots.length === 0) return null;
+
+  // State colour mapping for visual differentiation
+  const stateColours: Record<FarmPlotState, string> = {
+    [FarmPlotState.FALLOW]: 'border-yellow-600/50',
+    [FarmPlotState.TILLED]: 'border-amber-500/50',
+    [FarmPlotState.PLANTED]: 'border-green-500/50',
+    [FarmPlotState.WATERED]: 'border-blue-500/50',
+    [FarmPlotState.READY]: 'border-emerald-400/70',
+    [FarmPlotState.WILTING]: 'border-orange-500/70',
+    [FarmPlotState.DEAD]: 'border-red-500/70',
+  };
+
+  const growthStageNames = ['SEEDLING', 'YOUNG', 'ADULT'];
+
+  return (
+    <div
+      className={`absolute top-0 left-0 w-full h-full pointer-events-none ${zClass(Z_DEBUG_TILES + 1)}`}
+    >
+      {plots.map((plot) => {
+        const growthStage = farmManager.getGrowthStage(plot);
+        const cropAdultConfig = plot.cropType ? CROP_ADULT_SIZES[plot.cropType] : null;
+
+        // Get config for current growth stage
+        const stageConfig = CROP_SPRITE_CONFIG[growthStage];
+
+        // Use adult-specific config if at ADULT stage and crop has override
+        const config =
+          growthStage === CropGrowthStage.ADULT && cropAdultConfig ? cropAdultConfig : stageConfig;
+
+        // Calculate sprite bounds
+        const spriteX = (plot.position.x + (config?.offsetX || 0)) * TILE_SIZE;
+        const spriteY = (plot.position.y + (config?.offsetY || 0)) * TILE_SIZE;
+        const spriteW = (config?.width || 1) * TILE_SIZE;
+        const spriteH = (config?.height || 1) * TILE_SIZE;
+
+        // Check if this is a growing crop (has sprite beyond soil)
+        const hasCropSprite =
+          plot.cropType &&
+          plot.state !== FarmPlotState.FALLOW &&
+          plot.state !== FarmPlotState.TILLED;
+
+        return (
+          <div key={`farm-${plot.position.x}-${plot.position.y}`}>
+            {/* Soil tile marker (always at plot position) */}
+            <div
+              className={`absolute border-2 border-dashed ${stateColours[plot.state]}`}
+              style={{
+                left: plot.position.x * TILE_SIZE,
+                top: plot.position.y * TILE_SIZE,
+                width: TILE_SIZE,
+                height: TILE_SIZE,
+              }}
+            >
+              <span className="text-[8px] font-mono text-white bg-black/60 px-1 rounded-sm">
+                {FarmPlotState[plot.state]}
+              </span>
+            </div>
+
+            {/* Sprite bounds (only for growing crops) */}
+            {hasCropSprite && (
+              <div
+                className="absolute border-2 border-solid border-purple-400/70 bg-purple-500/10"
+                style={{
+                  left: spriteX,
+                  top: spriteY,
+                  width: spriteW,
+                  height: spriteH,
+                }}
+              >
+                {/* Info label */}
+                <div className="absolute -top-14 left-0 bg-slate-900/90 text-[9px] font-mono text-white px-2 py-1 rounded whitespace-nowrap">
+                  <div className="text-purple-300 font-bold">{plot.cropType}</div>
+                  <div className="text-gray-300">
+                    Stage: {growthStageNames[growthStage]} | Size: {config?.width || 1}x
+                    {config?.height || 1}
+                  </div>
+                  <div className="text-gray-400">
+                    Offset: ({config?.offsetX || 0}, {config?.offsetY || 0})
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };

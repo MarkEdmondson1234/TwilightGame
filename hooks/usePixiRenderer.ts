@@ -38,6 +38,7 @@ import { TimeManager } from '../utils/TimeManager';
 import { DEFAULT_REFERENCE_VIEWPORT } from './useViewportScale';
 import type { Season } from '../data/shopInventory';
 import { MovementMode } from '../utils/tileCategories';
+import { getCachedPerformanceSettings } from '../utils/performanceTier';
 
 // Weather type
 type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -200,15 +201,21 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         const bgColorClass = colorScheme?.colors.background || 'bg-palette-moss';
         const backgroundColor = ColorResolver.paletteToHex(bgColorClass);
 
-        // Create PixiJS Application
+        // Get performance settings for this device
+        const perfSettings = getCachedPerformanceSettings();
+        console.log(
+          `[usePixiRenderer] Using ${perfSettings.tier} tier: resolution=${perfSettings.resolution}, antialias=${perfSettings.antialias}`
+        );
+
+        // Create PixiJS Application with device-adaptive settings
         const app = new PIXI.Application();
         await app.init({
           canvas: canvasRef.current!,
           width: window.innerWidth,
           height: window.innerHeight,
           backgroundColor,
-          antialias: true,
-          resolution: window.devicePixelRatio || 1,
+          antialias: perfSettings.antialias,
+          resolution: perfSettings.resolution,
           autoDensity: true,
         });
 

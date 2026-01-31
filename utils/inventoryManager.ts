@@ -418,8 +418,17 @@ class InventoryManager {
    */
   swapInventoryItems(fromIndex: number, toIndex: number): void {
     // Validate indices against slotOrder (UI display order)
-    if (fromIndex < 0 || fromIndex >= this.slotOrder.length || toIndex < 0 || toIndex >= this.slotOrder.length) {
-      console.warn('[InventoryManager] Swap failed: invalid indices', { fromIndex, toIndex, slotOrderLength: this.slotOrder.length });
+    if (
+      fromIndex < 0 ||
+      fromIndex >= this.slotOrder.length ||
+      toIndex < 0 ||
+      toIndex >= this.slotOrder.length
+    ) {
+      console.warn('[InventoryManager] Swap failed: invalid indices', {
+        fromIndex,
+        toIndex,
+        slotOrderLength: this.slotOrder.length,
+      });
       return;
     }
 
@@ -654,7 +663,7 @@ class InventoryManager {
     this.addItem('cocoa_powder', 1);
     this.addItem('rice', 1);
     this.addItem('tomato_tin', 1);
-    this.addItem('tomato_fresh', 1);
+    this.addItem('crop_tomato', 1);
   }
 }
 

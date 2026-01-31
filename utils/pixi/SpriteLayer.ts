@@ -28,6 +28,7 @@ import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE, Z_GROUND_DECORATION } from '../../zIndex';
 import { TimeManager, TimeOfDay } from '../TimeManager';
+import { getCachedPerformanceSettings } from '../performanceTier';
 
 export class SpriteLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
@@ -287,9 +288,20 @@ export class SpriteLayer extends PixiLayer {
       pulseAlpha = intensity * (0.7 + 0.3 * pulse); // Pulse between 70% and 100%
     }
 
-    // Draw radial gradient glow using many concentric circles for smooth graduation
+    // Get performance settings for glow quality
+    const perfSettings = getCachedPerformanceSettings();
+
+    // Skip glow rendering entirely on low-power devices
+    if (!perfSettings.enableGlows) {
+      glowGfx.visible = false;
+      return;
+    }
+
+    // Draw radial gradient glow using concentric circles
+    // Use performance tier's glow steps (capped by metadata if specified)
     glowGfx.clear();
-    const steps = metadata.glow.steps ?? 32; // Configurable smoothness (default 32)
+    const metadataSteps = metadata.glow.steps ?? 32;
+    const steps = Math.min(metadataSteps, perfSettings.glowSteps); // Cap to device capability
     for (let i = steps; i > 0; i--) {
       const stepRadius = (glowRadius * i) / steps;
       // Use quadratic falloff for more natural light attenuation

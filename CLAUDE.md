@@ -118,6 +118,32 @@ This command:
   - Never access map data directly - always use MapManager
 - **Current Systems**: MapManager handles all map loading, transitions, and color schemes
 - **Character Data**: `utils/CharacterData.ts` is the unified persistence API for all character-specific data
+- **Items**: `data/items.ts` defines ALL items - crops, ingredients, tools, food, potions
+
+### Item and Recipe SSoT
+
+**CRITICAL**: Each item must have exactly ONE definition. Never create duplicate items with different IDs.
+
+**Common SSoT Violations to Avoid:**
+- ❌ Creating `potatoes` (INGREDIENT) when `crop_potato` (CROP) already exists
+- ❌ Creating `tomato_fresh` (INGREDIENT) when `crop_tomato` (CROP) already exists
+- ❌ Using `cane_sugar` in recipes when the item is defined as `sugar`
+
+**When Adding Items to Recipes or Shops:**
+1. Check if the item already exists in `data/items.ts`
+2. Use the EXACT `id` from the existing definition
+3. If a crop needs to be purchasable, add `buyPrice` to the crop - don't create a duplicate INGREDIENT
+
+**When Adding New Items:**
+1. Check `data/items.ts` for similar items first
+2. Use consistent naming: `crop_*` for crops, `seed_*` for seeds, `food_*` for cooked food
+3. Ensure the `id`, `name`, and object key all match exactly
+
+**Automated Tests**: Run `npx vitest run tests/itemSSoT.test.ts` to catch:
+- Recipe ingredients that don't exist in ITEMS
+- Shop items that don't exist in ITEMS
+- Duplicate displayNames (potential duplicates)
+- Crops used in recipes but missing `buyPrice` when sold in shop
 
 ### Character Data Persistence (CharacterData API)
 

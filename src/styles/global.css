@@ -88,3 +88,53 @@
 .player-inventory-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 158, 11, 0.9); /* amber-500/90 */
 }
+
+/* ============================================================================
+   Cottage-Core Transition Indicator Animations
+   ============================================================================ */
+
+/* Gentle floating animation for transition icons */
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0) translateX(-50%);
+  }
+  50% {
+    transform: translateY(-6px) translateX(-50%);
+  }
+}
+
+.animate-float-gentle {
+  animation: float-gentle 2.5s ease-in-out infinite;
+}
+
+/* Pulsing glow for when player is very close */
+@keyframes pulse-glow {
+  0%, 100% {
+    filter: brightness(1);
+    box-shadow: 0 4px 12px rgba(92, 74, 61, 0.3);
+  }
+  50% {
+    filter: brightness(1.1);
+    box-shadow: 0 6px 20px rgba(92, 74, 61, 0.5);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Tooltip fade-in animation */
+@keyframes tooltip-appear {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+
+.animate-tooltip-appear {
+  animation: tooltip-appear 200ms ease-out forwards;
+}

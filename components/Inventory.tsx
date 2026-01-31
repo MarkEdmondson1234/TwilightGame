@@ -135,21 +135,31 @@ const Inventory: React.FC<InventoryProps> = ({
     setDragState(null); // Clean up if drag cancelled
   };
 
+  // Use fewer columns on touch devices for larger tap targets
+  const gridCols = isTouchDevice ? 'grid-cols-5' : 'grid-cols-9';
+  const slotGap = isTouchDevice ? 'gap-3' : 'gap-2';
+
   return (
     <div
       className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_INVENTORY_MODAL)} pointer-events-auto`}
       onClick={onClose}
     >
       <div
-        className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] flex flex-col"
+        className={`bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg max-h-[90vh] flex flex-col ${
+          isTouchDevice ? 'p-4 w-[95vw] max-w-none' : 'p-6 max-w-2xl w-full'
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold text-amber-200">{title}</h2>
+          <h2 className={`font-bold text-amber-200 ${isTouchDevice ? 'text-xl' : 'text-2xl'}`}>
+            {title}
+          </h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 bg-red-600 hover:bg-red-500 text-white font-bold rounded-full transition-colors"
+            className={`bg-red-600 hover:bg-red-500 text-white font-bold rounded-full transition-colors ${
+              isTouchDevice ? 'w-10 h-10 text-xl' : 'w-8 h-8'
+            }`}
           >
             ×
           </button>
@@ -157,7 +167,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
         {/* Inventory Grid - Scrollable */}
         <div className="overflow-y-scroll flex-1 pr-2 max-h-[500px] inventory-scrollbar">
-          <div className="grid grid-cols-9 gap-2">
+          <div className={`grid ${gridCols} ${slotGap}`}>
             {slots.map((item, index) => {
               const isQuickSlot = index < 9;
               const isEmpty = item === null;
@@ -167,13 +177,16 @@ const Inventory: React.FC<InventoryProps> = ({
 
               // Get full item definition for tooltip
               const itemDef = item ? getItem(item.id) : null;
-              const tooltipContent: TooltipContent | null = item && itemDef ? {
-                name: item.name,
-                description: itemDef.description,
-                image: item.icon,
-                quantity: item.quantity,
-                additionalInfo: isSelected ? '[SELECTED]' : undefined,
-              } : null;
+              const tooltipContent: TooltipContent | null =
+                item && itemDef
+                  ? {
+                      name: item.name,
+                      description: itemDef.description,
+                      image: item.icon,
+                      quantity: item.quantity,
+                      additionalInfo: isSelected ? '[SELECTED]' : undefined,
+                    }
+                  : null;
 
               const slotButton = (
                 <button
@@ -189,12 +202,16 @@ const Inventory: React.FC<InventoryProps> = ({
                     ${isDragging ? 'opacity-50 cursor-grabbing' : ''}
                     ${isSwapSelected ? 'border-4 border-amber-400 shadow-lg shadow-amber-500/50' : ''}
                     ${dragState && !isDragging ? 'border-green-500 border-dashed' : ''}
-                    ${isSelected && !isSwapSelected
-                      ? 'border-4 border-yellow-400 bg-yellow-900/60 shadow-lg shadow-yellow-500/50'
-                      : `border-2 ${isQuickSlot && !isSwapSelected
-                        ? 'bg-purple-900/40 border-purple-500 hover:bg-purple-800/60'
-                        : !isSwapSelected ? 'bg-amber-950/40 border-amber-700 hover:bg-amber-900/60' : ''
-                      }`
+                    ${
+                      isSelected && !isSwapSelected
+                        ? 'border-4 border-yellow-400 bg-yellow-900/60 shadow-lg shadow-yellow-500/50'
+                        : `border-2 ${
+                            isQuickSlot && !isSwapSelected
+                              ? 'bg-purple-900/40 border-purple-500 hover:bg-purple-800/60'
+                              : !isSwapSelected
+                                ? 'bg-amber-950/40 border-amber-700 hover:bg-amber-900/60'
+                                : ''
+                          }`
                     }
                     ${isEmpty ? 'cursor-default' : isDragging ? '' : 'cursor-pointer'}
                   `}
@@ -249,17 +266,12 @@ const Inventory: React.FC<InventoryProps> = ({
           <p>
             {maxSlots !== undefined
               ? `Slots: ${items.length} / ${maxSlots}`
-              : `Items: ${items.length}${items.length > 0 ? ' (unlimited capacity)' : ''}`
-            }
+              : `Items: ${items.length}${items.length > 0 ? ' (unlimited capacity)' : ''}`}
           </p>
-          <p className="text-xs text-amber-400 mt-1">
-            First 9 slots are quick slots (1-9 keys)
-          </p>
+          <p className="text-xs text-amber-400 mt-1">First 9 slots are quick slots (1-9 keys)</p>
           {onReorder && (
             <p className="text-xs text-amber-400 mt-1">
-              {isTouchDevice
-                ? 'Tap two items to swap positions'
-                : 'Drag items to reorder'}
+              {isTouchDevice ? 'Tap two items to swap positions' : 'Drag items to reorder'}
             </p>
           )}
         </div>

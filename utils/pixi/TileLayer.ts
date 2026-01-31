@@ -46,7 +46,7 @@ import {
  * Crop sprite sizing configuration per growth stage
  * Crops grow from seedling (small) to adult (large multi-tile sprite)
  */
-interface CropSpriteConfig {
+export interface CropSpriteConfig {
   width: number; // Width in tiles
   height: number; // Height in tiles
   offsetX: number; // Horizontal offset (negative = extend left)
@@ -57,39 +57,44 @@ interface CropSpriteConfig {
 /**
  * Per-crop adult size overrides
  * Allows specific crops to have custom sizes when fully grown
+ *
+ * Offset guide:
+ * - offsetY = 0: Sprite bottom aligns with soil tile bottom (plant sits on soil)
+ * - offsetY = -1: Sprite extends 1 tile ABOVE soil (for 2x2 tall crops)
+ * - offsetY = -0.5: Sprite extends half tile above soil (for 1.5x1.5 medium crops)
  */
-const CROP_ADULT_SIZES: Record<
+export const CROP_ADULT_SIZES: Record<
   string,
   { width: number; height: number; offsetX: number; offsetY: number }
 > = {
-  // Large crops (2 tiles)
+  // Large crops (2x2 tiles) - extend 1 tile up from soil
   tomato: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
-  pumpkin: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
-  corn: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
-  sunflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -2 },
+  pumpkin: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+  corn: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+  sunflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
 
-  // Magical crops (2 tiles) - high resolution sprites
+  // Magical crops (2x2 tiles) - high resolution sprites
   fairy_bluebell: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
 
-  // Medium crops (1.5 tiles)
-  melon: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
-  broccoli: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
-  cauliflower: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -1 },
+  // Medium crops (1.5x1.5 tiles) - extend half tile up from soil
+  melon: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -0.5 },
+  broccoli: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -0.5 },
+  cauliflower: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -0.5 },
 
-  // Small/leafy crops (1 tile) - default, but listed for clarity
-  spinach: { width: 1, height: 1, offsetX: 0, offsetY: 1 },
-  salad: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  radish: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  carrot: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  onion: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  pea: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  potato: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  cucumber: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  chili: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
-  strawberry: { width: 1, height: 1, offsetX: 0, offsetY: -0.5 },
+  // Small/leafy crops (1x1 tile) - centred on soil tile
+  spinach: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  salad: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  radish: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  carrot: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  onion: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  pea: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  potato: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  cucumber: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  chili: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  strawberry: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
 };
 
-const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
+export const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
   [CropGrowthStage.SEEDLING]: {
     width: 1,
     height: 1,
@@ -272,9 +277,10 @@ export class TileLayer extends PixiLayer {
       imageData = timeOfDaySet[timeOfDay];
     } else if (tileData.seasonalImages) {
       // Seasonal images (standard case)
-      imageData = seasonKey in tileData.seasonalImages
-        ? tileData.seasonalImages[seasonKey]
-        : tileData.seasonalImages.default;
+      imageData =
+        seasonKey in tileData.seasonalImages
+          ? tileData.seasonalImages[seasonKey]
+          : tileData.seasonalImages.default;
     } else {
       // Fallback to simple image array
       imageData = tileData.image;

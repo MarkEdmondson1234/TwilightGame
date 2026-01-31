@@ -41,6 +41,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
     "@pixi/react": "^8.0.3",
+    "firebase": "^12.8.0",
     "pixi.js": "^8.14.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

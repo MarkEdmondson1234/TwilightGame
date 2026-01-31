@@ -23,6 +23,7 @@ export const USE_SPRITE_SHADOWS = true;
  */
 export const DEBUG = {
   FARM: import.meta.env.DEV && false, // Farm operations (till, plant, water, harvest)
+  FARM_OVERLAY: import.meta.env.DEV && false, // Visual farm debug overlay (F3) - shows crop sprite bounds and offsets
   NPC: import.meta.env.DEV && false, // NPC movement and interactions
   MAP: import.meta.env.DEV && false, // Map transitions and loading
   COLLISION: import.meta.env.DEV && false, // Collision detection

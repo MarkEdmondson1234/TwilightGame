@@ -1368,6 +1368,8 @@ const App: React.FC = () => {
               }
               openUI('recipeBook');
             }}
+            onDebugToggle={() => setDebugOpen((prev) => !prev)}
+            isDebugOpen={isDebugOpen}
             compact={isCompactMode}
           />
         )}

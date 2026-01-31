@@ -39,7 +39,8 @@ export function useAudio(options: UseAudioOptions = {}) {
     };
 
     document.addEventListener('click', handleInteraction);
-    document.addEventListener('touchstart', handleInteraction);
+    // Use passive: true to avoid blocking touch for 100-300ms on iOS
+    document.addEventListener('touchstart', handleInteraction, { passive: true });
     document.addEventListener('keydown', handleInteraction);
 
     return () => {
