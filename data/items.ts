@@ -818,7 +818,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 15,
     buyPrice: 15, // Was 35
-    image: groceryAssets.minced_meat,
+    image: groceryAssets.meat,
   },
 
   minced_meat: {

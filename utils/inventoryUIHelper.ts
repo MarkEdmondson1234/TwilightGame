@@ -59,7 +59,7 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
   yeast: groceryAssets.yeast,
   vanilla: groceryAssets.vanilla_pods,
   cinnamon: groceryAssets.cinnamon,
-  meat: groceryAssets.minced_meat,
+  meat: groceryAssets.meat,
   minced_meat: groceryAssets.minced_meat,
   pasta: groceryAssets.dried_spaghetti,
   bread: groceryAssets.bread,

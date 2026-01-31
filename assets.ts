@@ -295,6 +295,7 @@ export const groceryAssets = {
   gravy: '/TwilightGame/assets-optimized/items/grocery/gravy.png',
   hazelnuts: '/TwilightGame/assets-optimized/items/grocery/hazelnuts.png',
   honey: '/TwilightGame/assets-optimized/items/grocery/honey.png',
+  meat: '/TwilightGame/assets-optimized/items/grocery/meat.png',
   milk: '/TwilightGame/assets-optimized/items/grocery/milk.png',
   minced_meat: '/TwilightGame/assets-optimized/items/grocery/minced_meat.png',
   rice: '/TwilightGame/assets-optimized/items/grocery/rice.png',
