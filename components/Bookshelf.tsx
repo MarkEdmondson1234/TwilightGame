@@ -67,10 +67,10 @@ const Bookshelf: React.FC<BookshelfProps> = ({
 
   return (
     <>
-      {/* Books Container - Responsive scaling */}
+      {/* Books Container - no container scaling since individual books handle their own scale */}
       {/* On touch devices, position above touch controls (which are ~140-200px from bottom) */}
       <div
-        className={`fixed left-2 sm:left-4 ${zClass(Z_HUD)} scale-50 sm:scale-75 md:scale-100 origin-bottom-left`}
+        className={`fixed left-2 sm:left-4 ${zClass(Z_HUD)} origin-bottom-left`}
         style={{
           bottom: isTouchDevice ? 'calc(240px + env(safe-area-inset-bottom, 0px))' : '8px',
         }}
