@@ -5,6 +5,16 @@ import { friendshipManager } from './FriendshipManager';
 import { npcManager } from '../NPCManager';
 import { cookingManager } from './CookingManager';
 import { startFairyQueenQuest } from '../data/quests/fairyQueenQuest';
+import {
+  setQuestOffered,
+  startGardeningQuest,
+  assignSeasonTask,
+  getAvailableSeasonTask,
+  isWinter,
+  isGardeningQuestActive,
+  getCurrentSeasonTask,
+} from '../data/quests/gardeningQuest';
+import { startFairyBluebellsQuest } from '../data/quests/fairyBluebellsQuest';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -48,6 +58,11 @@ export function handleDialogueAction(npcId: string, nodeId: string): void {
   // Handle fairy quest actions (Morgan and Stella attracted to fairy bluebells)
   if (npcId.startsWith('fairy_attracted_')) {
     handleFairyQuestActions(npcId, nodeId);
+  }
+
+  // Handle Elias's gardening quest and fairy bluebells quest
+  if (npcId === 'village_elder') {
+    handleEliasQuestActions(nodeId);
   }
 }
 
@@ -167,5 +182,96 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
     } else {
       console.log(`[dialogueHandlers] Player already has Fairy Form Potion`);
     }
+  }
+}
+
+/**
+ * Handle Elias's quest actions
+ * - Gardening quest: decline, accept, seasonal tasks
+ * - Fairy Bluebells quest: accept
+ */
+function handleEliasQuestActions(nodeId: string): void {
+  // Player declined the garden offer - mark as offered for future "Help with garden?" option
+  if (nodeId === 'garden_decline') {
+    setQuestOffered();
+    console.log('[dialogueHandlers] 🌱 Player declined garden quest - offer will appear in future visits');
+  }
+
+  // Player accepted the garden quest
+  if (nodeId === 'garden_accept') {
+    startGardeningQuest();
+    console.log('[dialogueHandlers] 🌱 Gardening quest started!');
+  }
+
+  // Route to seasonal task and give seeds
+  if (nodeId === 'garden_seasonal_task') {
+    const availableTask = getAvailableSeasonTask();
+
+    if (availableTask) {
+      const seeds = assignSeasonTask(availableTask);
+      if (seeds) {
+        // Grant seeds to player
+        for (const seed of seeds) {
+          inventoryManager.addItem(seed.itemId, seed.quantity);
+        }
+        const inventoryData = inventoryManager.getInventoryData();
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
+
+        console.log(`[dialogueHandlers] 🌱 Elias gave seeds for ${availableTask} task:`,
+          seeds.map(s => `${s.quantity}x ${s.itemId}`).join(', ')
+        );
+      }
+    } else if (isWinter()) {
+      console.log('[dialogueHandlers] 🌱 Winter - no tasks available');
+    }
+  }
+
+  // Handle individual seasonal task nodes (for when dialogue routes directly)
+  if (nodeId === 'garden_spring_task' || nodeId === 'garden_summer_task' || nodeId === 'garden_autumn_task') {
+    const season = nodeId.replace('garden_', '').replace('_task', '') as 'spring' | 'summer' | 'autumn';
+
+    // Only assign and give seeds if we don't already have a task active
+    if (!getCurrentSeasonTask()) {
+      const seeds = assignSeasonTask(season);
+      if (seeds) {
+        for (const seed of seeds) {
+          inventoryManager.addItem(seed.itemId, seed.quantity);
+        }
+        const inventoryData = inventoryManager.getInventoryData();
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
+
+        console.log(`[dialogueHandlers] 🌱 Elias gave seeds for ${season} task:`,
+          seeds.map(s => `${s.quantity}x ${s.itemId}`).join(', ')
+        );
+      }
+    }
+  }
+
+  // Handle task check - if quest is active but no current task, assign one for the current season
+  // This handles the case where player accepted in winter and is now checking in a different season
+  if (nodeId === 'garden_task_check') {
+    if (isGardeningQuestActive() && !getCurrentSeasonTask()) {
+      const availableTask = getAvailableSeasonTask();
+      if (availableTask) {
+        const seeds = assignSeasonTask(availableTask);
+        if (seeds) {
+          for (const seed of seeds) {
+            inventoryManager.addItem(seed.itemId, seed.quantity);
+          }
+          const inventoryData = inventoryManager.getInventoryData();
+          characterData.saveInventory(inventoryData.items, inventoryData.tools);
+
+          console.log(`[dialogueHandlers] 🌱 Elias gave seeds for new ${availableTask} task:`,
+            seeds.map(s => `${s.quantity}x ${s.itemId}`).join(', ')
+          );
+        }
+      }
+    }
+  }
+
+  // Player accepted the Fairy Bluebells quest
+  if (nodeId === 'fairy_bluebells_accept') {
+    startFairyBluebellsQuest();
+    console.log('[dialogueHandlers] 🔔 Fairy Bluebells quest started!');
   }
 }

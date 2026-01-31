@@ -25,6 +25,18 @@ import { getItem, ItemCategory } from '../data/items';
 import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 import { getGiftReaction, GiftReaction } from '../data/giftReactions';
 import { markPotionReceived as markFairyQuestPotionReceived } from '../data/quests/fairyQueenQuest';
+import {
+  isGardeningQuestActive,
+  getCurrentSeasonTask,
+  markSeasonCompleted,
+} from '../data/quests/gardeningQuest';
+import {
+  isFairyBluebellsActive,
+  getQuestItemType,
+  markItemDelivered,
+  checkFairyBluebellsCompletion,
+  QUEST_REWARD as FAIRY_BLUEBELLS_REWARD,
+} from '../data/quests/fairyBluebellsQuest';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -332,11 +344,20 @@ class FriendshipManagerClass {
     npcId: string,
     itemId: string,
     npc?: NPC
-  ): { points: number; reaction: GiftReaction } {
+  ): { points: number; reaction: GiftReaction; questCompleted?: boolean; dialogueNodeId?: string } {
     const item = getItem(itemId);
     if (!item) {
       console.warn(`[FriendshipManager] Unknown item: ${itemId}`);
       return { points: 0, reaction: 'neutral' };
+    }
+
+    // ===== ELIAS QUEST HANDLING =====
+    // Check for gardening quest and fairy bluebells quest items when gifting to Elias
+    if (npcId === 'village_elder') {
+      const questResult = this.handleEliasQuestGift(itemId);
+      if (questResult) {
+        return questResult;
+      }
     }
 
     // Check if this is a friendship potion (given to NPC, not drunk by player)
@@ -426,6 +447,75 @@ class FriendshipManagerClass {
     const preferences = NPC_FOOD_PREFERENCES[npcId];
     if (!preferences) return false;
     return preferences.includes(category);
+  }
+
+  /**
+   * Handle quest-specific gifts for Elias (village elder)
+   * - Gardening quest: Accept crops to complete seasonal tasks
+   * - Fairy Bluebells quest: Accept shrinking violet, hazelnuts, blueberries
+   *
+   * @returns Gift result if quest item was accepted, null if not a quest item
+   */
+  private handleEliasQuestGift(
+    itemId: string
+  ): { points: number; reaction: GiftReaction; questCompleted?: boolean; dialogueNodeId?: string } | null {
+    // Check for gardening quest items
+    if (isGardeningQuestActive()) {
+      const task = getCurrentSeasonTask();
+
+      // Spring/Summer task: Accept any crop
+      if ((task === 'spring' || task === 'summer') && itemId.startsWith('crop_')) {
+        markSeasonCompleted(task);
+        const points = 100;
+        this.addPoints('village_elder', points, `gardening quest: ${task} crop delivered`);
+        console.log(`[FriendshipManager] 🌱 Elias accepts your ${task} harvest! (+${points})`);
+        return { points, reaction: 'loved', dialogueNodeId: 'garden_task_complete' };
+      }
+
+      // Autumn task: Accept honey
+      if (task === 'autumn' && itemId === 'honey') {
+        markSeasonCompleted('autumn');
+        const points = 100;
+        this.addPoints('village_elder', points, 'gardening quest: autumn honey delivered');
+        console.log(`[FriendshipManager] 🍯 Elias is delighted with the honey! (+${points})`);
+        return { points, reaction: 'loved', dialogueNodeId: 'garden_task_complete' };
+      }
+    }
+
+    // Check for Fairy Bluebells quest items
+    if (isFairyBluebellsActive()) {
+      const questItemType = getQuestItemType(itemId);
+
+      if (questItemType) {
+        const wasNew = markItemDelivered(questItemType);
+
+        if (wasNew) {
+          const questJustCompleted = checkFairyBluebellsCompletion();
+
+          if (questJustCompleted) {
+            // Quest complete! Give the fairy bluebell seed reward
+            inventoryManager.addItem(FAIRY_BLUEBELLS_REWARD.itemId, FAIRY_BLUEBELLS_REWARD.quantity);
+            const inventoryData = inventoryManager.getInventoryData();
+            characterData.saveInventory(inventoryData.items, inventoryData.tools);
+
+            const points = 150;
+            this.addPoints('village_elder', points, 'fairy bluebells quest completed');
+            console.log(`[FriendshipManager] 🔔 Fairy Bluebells quest complete! Received fairy bluebell seed! (+${points})`);
+            return { points, reaction: 'loved', questCompleted: true, dialogueNodeId: 'fairy_bluebells_complete' };
+          } else {
+            console.log(`[FriendshipManager] 🔔 Elias accepts your ${questItemType} for the Fairy Bluebells quest!`);
+            return { points: 0, reaction: 'loved', dialogueNodeId: 'fairy_bluebells_item_received' };
+          }
+        } else {
+          // Already delivered this item
+          console.log(`[FriendshipManager] Elias already received ${questItemType}`);
+          // Fall through to normal gift handling
+        }
+      }
+    }
+
+    // Not a quest item, return null to use normal gift handling
+    return null;
   }
 
   /**
