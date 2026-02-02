@@ -39,6 +39,14 @@ jobs:
         run: npx tsc --noEmit
 
       - name: Build
+        env:
+          # Firebase client config (public - embedded in browser JS)
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: twiightgame.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: twiightgame
+          VITE_FIREBASE_STORAGE_BUCKET: twiightgame.appspot.com
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
         run: npm run build
 
       - name: Setup Pages
