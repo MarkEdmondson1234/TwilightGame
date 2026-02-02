@@ -34,29 +34,46 @@ let db: Firestore | null = null;
 let initialized = false;
 
 /**
- * Check if Firebase is configured (has required env vars)
+ * Check if Firebase is explicitly disabled via environment variable
+ * Set VITE_FIREBASE_ENABLED=false to disable Firebase entirely
+ */
+export function isFirebaseDisabled(): boolean {
+  return import.meta.env.VITE_FIREBASE_ENABLED === 'false';
+}
+
+/**
+ * Check if Firebase is configured (has required env vars and is not disabled)
  */
 export function isFirebaseConfigured(): boolean {
+  if (isFirebaseDisabled()) {
+    return false;
+  }
   return !!(import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID);
 }
 
 /**
  * Initialize Firebase services
  * Call this once at app startup
+ * Returns null if Firebase is disabled or not configured
  */
 export async function initializeFirebase(): Promise<{
   app: FirebaseApp;
   auth: Auth;
   db: Firestore;
-}> {
+} | null> {
   if (initialized && app && auth && db) {
     return { app, auth, db };
+  }
+
+  if (isFirebaseDisabled()) {
+    console.log('[Firebase] Disabled via VITE_FIREBASE_ENABLED=false');
+    return null;
   }
 
   if (!isFirebaseConfigured()) {
     console.warn('[Firebase] Not configured - cloud saves disabled');
     console.warn('[Firebase] Set VITE_FIREBASE_* env vars in .env.local');
-    throw new Error('Firebase not configured');
+    return null;
   }
 
   try {

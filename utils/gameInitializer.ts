@@ -70,14 +70,19 @@ export async function initializeGame(
   runSelfTests(); // Run sanity checks on startup
   initializeMaps(); // Initialize all maps and color schemes
 
-  // Initialize Firebase, auth service, and sync manager (non-blocking)
-  const firebaseInitialized = initializeFirebase();
-  if (firebaseInitialized) {
-    authService.initialize();
-    syncManager.initialize();
-    console.log('[App] Firebase, auth, and sync manager initialized');
-  } else {
-    console.log('[App] Firebase not configured - cloud saves disabled');
+  // Initialize Firebase, auth service, and sync manager
+  try {
+    const firebaseResult = await initializeFirebase();
+    if (firebaseResult) {
+      authService.initialize();
+      syncManager.initialize();
+      console.log('[App] Firebase, auth, and sync manager initialized');
+    } else {
+      console.log('[App] Firebase not configured or disabled - cloud saves disabled');
+    }
+  } catch (error) {
+    console.warn('[App] Firebase initialization failed:', error);
+    console.log('[App] Continuing without cloud saves');
   }
 
   // Preload all assets early to prevent lag on first use

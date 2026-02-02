@@ -20,6 +20,7 @@
 export {
   initializeFirebase,
   isFirebaseConfigured,
+  isFirebaseDisabled,
   isFirebaseInitialized,
   getFirebaseAuth,
   getFirebaseDb,
