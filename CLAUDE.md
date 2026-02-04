@@ -6,6 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A peaceful top-down exploration and crafting game engine built with React, Vite, and TypeScript. Inspired by Stardew Valley, it features tile-based movement, sprite animation, collision detection, and a **multi-map system** supporting both designed and procedurally generated maps with transitions. All artwork is meticulously hand-drawn and rendered with smooth linear scaling to preserve artistic quality.
 
+## Local-Only Changes (DO NOT COMMIT)
+
+**IMPORTANT**: The following changes exist locally but should NOT be pushed to the remote repository:
+
+- **Firebase removal** - The `firebase/` directory, related config files, and tests are deleted locally
+- **package.json** - Firebase dependency removed locally
+- **.env.example** - Firebase config removed locally
+
+These files remain in the remote repo in case cloud saves are needed in the future. When committing, ensure these deletions are NOT staged.
+
 ## Language and Localisation
 
 **IMPORTANT**: This game uses **British English** exclusively.
