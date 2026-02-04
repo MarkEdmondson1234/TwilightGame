@@ -570,7 +570,7 @@ export function useInteractionController(
 
     // Only show menu if there are NPC-related interactions
     const npcInteractions = interactions.filter(
-      (i) => i.type === 'npc' || i.type === 'collect_resource'
+      (i) => i.type === 'npc' || i.type === 'give_gift' || i.type === 'collect_resource'
     );
     if (npcInteractions.length === 0) {
       return;
