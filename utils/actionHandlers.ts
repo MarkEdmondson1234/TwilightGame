@@ -797,6 +797,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     TileType.WOLFSBANE,
     TileType.LUMINESCENT_TOADSTOOL,
     TileType.MUSTARD_FLOWER,
+    TileType.FROST_FLOWER,
   ]);
   if (forageableResult.found && forageableResult.position) {
     cooldownCheckPos = forageableResult.position;
@@ -1399,6 +1400,81 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'shrinking_violet', // Reuse field for item ID
       seedName: shrinkingViolet.displayName,
       message: `Found ${quantityFound} ${shrinkingViolet.displayName}!`,
+    };
+  }
+
+  // Frost flower foraging - weather-conditional (only during snowfall)
+  const frostFlowerResult = findTileTypeNearby(playerTileX, playerTileY, TileType.FROST_FLOWER);
+  const frostFlowerAnchor = frostFlowerResult.found ? frostFlowerResult.position : null;
+
+  if (frostFlowerAnchor) {
+    console.log(
+      `[Forage] Found frost flower anchor at (${frostFlowerAnchor.x}, ${frostFlowerAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
+
+    // Check if it's snowing (frost flowers only appear during snowfall)
+    const currentWeather = gameState.getWeather();
+    if (currentWeather !== 'snow') {
+      return {
+        found: false,
+        message: 'Frost flowers only appear during snowfall. Wait for the snow to fall!',
+      };
+    }
+
+    // Check cooldown at tile position
+    if (
+      gameState.isForageTileOnCooldown(
+        currentMapId,
+        frostFlowerAnchor.x,
+        frostFlowerAnchor.y,
+        TIMING.FORAGE_COOLDOWN_MS
+      )
+    ) {
+      return {
+        found: false,
+        message: `You've already harvested this frost flower. Come back tomorrow!`,
+      };
+    }
+
+    const frostFlower = getItem('frost_flower');
+    if (!frostFlower) {
+      console.error('[Forage] Frost Flower item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (frost_flower has forageSuccessRate: 0.7)
+    const successRate = frostFlower.forageSuccessRate ?? 0.7;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position
+      gameState.recordForage(currentMapId, frostFlowerAnchor.x, frostFlowerAnchor.y);
+      return {
+        found: false,
+        message: 'You search the frost flowers, but find none ready for harvesting.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const rand = Math.random();
+    const quantityFound = rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
+
+    // Add to inventory
+    inventoryManager.addItem('frost_flower', quantityFound);
+    console.log(
+      `[Forage] Found ${quantityFound} ${frostFlower.displayName} during snowfall (${(successRate * 100).toFixed(0)}% success rate)`
+    );
+
+    // Save and set cooldown at ANCHOR position
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    gameState.recordForage(currentMapId, frostFlowerAnchor.x, frostFlowerAnchor.y);
+
+    return {
+      found: true,
+      seedId: 'frost_flower', // Reuse field for item ID
+      seedName: frostFlower.displayName,
+      message: `Found ${quantityFound} ${frostFlower.displayName}!`,
     };
   }
 
@@ -2323,7 +2399,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet)
+    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet, frost flower)
     if (!canForage) {
       canForage = hasTileTypeNearby(tileX, tileY, [
         TileType.BEE_HIVE,
@@ -2333,6 +2409,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         TileType.WOLFSBANE,
         TileType.MUSTARD_FLOWER,
         TileType.SHRINKING_VIOLET,
+        TileType.FROST_FLOWER,
       ]);
     }
 

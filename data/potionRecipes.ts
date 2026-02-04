@@ -247,7 +247,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     ingredients: [
       { itemId: 'milk', quantity: 1 },
       { itemId: 'mint', quantity: 1 },
-      { itemId: 'frost_crystal', quantity: 1 },
+      { itemId: 'frost_flower', quantity: 1 },
     ],
     brewingTime: 30,
     difficulty: 2,

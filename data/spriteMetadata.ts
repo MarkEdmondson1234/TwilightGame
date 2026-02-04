@@ -240,6 +240,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
   },
   {
+    tileType: TileType.FROST_FLOWER,
+    spriteWidth: 1, // 1 tile wide (small magical flower)
+    spriteHeight: 1, // 1 tile tall (square image)
+    offsetX: 0, // No offset needed for 1x1
+    offsetY: 0, // No offset needed for 1x1
+    image: tileAssets.frost_flower_bloom,
+    // Collision: walkable (no collision) - forageable plant
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
+  },
+  {
     tileType: TileType.MUSHROOM_CLUSTER,
     spriteWidth: 2, // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall (square image)

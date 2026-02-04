@@ -673,6 +673,18 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 1x1 single-tile sprite (see SPRITE_METADATA)
   },
+  [TileType.FROST_FLOWER]: {
+    name: 'Frost Flower',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - forageable plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // Weather-conditional: only visible during snowfall
+    weatherImages: {
+      snow: [tileAssets.frost_flower_bloom],
+      default: [], // Invisible when not snowing (dormant under the earth)
+    },
+    // 1x1 single-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending

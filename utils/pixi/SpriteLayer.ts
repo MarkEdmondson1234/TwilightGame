@@ -139,7 +139,7 @@ export class SpriteLayer extends PixiLayer {
         if (renderedKeys.has(key)) continue;
         renderedKeys.add(key);
 
-        this.renderSprite(x, y, spriteMetadata, seasonKey, timeOfDay);
+        this.renderSprite(x, y, spriteMetadata, seasonKey, timeOfDay, currentWeather);
       }
     }
 
@@ -166,7 +166,8 @@ export class SpriteLayer extends PixiLayer {
     anchorY: number,
     metadata: SpriteMetadata,
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
-    timeOfDay: 'day' | 'night'
+    timeOfDay: 'day' | 'night',
+    currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
   ): void {
     const key = `${anchorX},${anchorY}`;
 
@@ -206,6 +207,24 @@ export class SpriteLayer extends PixiLayer {
       const timeOfDayArray = timeOfDaySet[timeOfDay];
       if (timeOfDayArray && timeOfDayArray.length > 0) {
         imageUrl = timeOfDayArray[selectVariant(anchorX, anchorY, timeOfDayArray.length)];
+      }
+    }
+    // Check for weather-conditional images (e.g., frost flower only visible when snowing)
+    else if (tileData?.weatherImages) {
+      const weatherKey = currentWeather || 'clear';
+      const weatherArray =
+        tileData.weatherImages[weatherKey as keyof typeof tileData.weatherImages] ??
+        tileData.weatherImages.default;
+
+      if (weatherArray && weatherArray.length > 0) {
+        imageUrl = weatherArray[selectVariant(anchorX, anchorY, weatherArray.length)];
+      } else {
+        // Weather conditions not met - don't render (sprite is invisible)
+        const existingSprite = this.sprites.get(key);
+        if (existingSprite) {
+          existingSprite.visible = false;
+        }
+        return;
       }
     }
     // Fall back to seasonal images

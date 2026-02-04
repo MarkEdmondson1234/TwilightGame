@@ -1223,15 +1223,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     forageSuccessRate: 1.0, // 100% success rate when conditions met
   },
 
-  frost_crystal: {
-    id: 'frost_crystal',
-    name: 'frost_crystal',
-    displayName: 'Frost Crystal',
+  frost_flower: {
+    id: 'frost_flower',
+    name: 'frost_flower',
+    displayName: 'Frost Flower',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'A crystalline formation found in winter. Never melts, even in warm hands.',
+    description:
+      'A delicate flower that blooms only during snowfall. Its petals are cold to the touch and never wilt.',
     rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 45,
+    image: magicalAssets.frost_flower,
+    forageSuccessRate: 0.7, // 70% success rate when conditions met (snowing)
   },
 
   sakura_petal: {

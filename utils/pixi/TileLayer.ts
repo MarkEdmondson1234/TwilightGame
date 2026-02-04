@@ -268,13 +268,19 @@ export class TileLayer extends PixiLayer {
     }
 
     // Determine which image array to use
-    // Priority: timeOfDayImages > seasonalImages > image
+    // Priority: timeOfDayImages > weatherImages > seasonalImages > image
     let imageData: string[] | string | undefined;
 
     if (tileData.timeOfDayImages && seasonKey in tileData.timeOfDayImages) {
       // Time-of-day conditional images (e.g., moonpetal opens at night)
       const timeOfDaySet = tileData.timeOfDayImages[seasonKey];
       imageData = timeOfDaySet[timeOfDay];
+    } else if (tileData.weatherImages) {
+      // Weather-conditional images (e.g., frost flower only visible when snowing)
+      const weatherKey = currentWeather || 'clear';
+      imageData =
+        tileData.weatherImages[weatherKey as keyof typeof tileData.weatherImages] ??
+        tileData.weatherImages.default;
     } else if (tileData.seasonalImages) {
       // Seasonal images (standard case)
       imageData =

@@ -24,6 +24,15 @@ export interface TimeOfDayImageSet {
   night: string[]; // Images to use at night
 }
 
+export interface WeatherImageSet {
+  snow?: string[]; // Images to show when snowing
+  rain?: string[]; // Images to show when raining
+  storm?: string[]; // Images to show during storms
+  fog?: string[]; // Images to show in fog
+  clear?: string[]; // Images to show in clear weather
+  default?: string[]; // Fallback images (empty array = invisible)
+}
+
 export interface TileTransformSettings {
   enableFlip?: boolean; // Enable horizontal flip (default: false)
   enableRotation?: boolean; // Enable rotation (default: false)
@@ -54,6 +63,7 @@ export interface TileData {
   image?: string[]; // Simple array of images (backward compatible)
   seasonalImages?: SeasonalImageSet; // Seasonal variations (new)
   timeOfDayImages?: Record<'spring' | 'summer' | 'autumn' | 'winter', TimeOfDayImageSet>; // Time-of-day variations per season
+  weatherImages?: WeatherImageSet; // Weather-conditional images (e.g., frost flower only visible when snowing)
   baseType?: TileType; // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
   transforms?: TileTransformSettings; // Transform settings (optional, defaults to no transforms)
   // Animation support (for tiles like cauldrons that cycle through frames)

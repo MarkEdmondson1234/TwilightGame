@@ -9,7 +9,6 @@ import {
   isAIAvailable,
 } from '../services/anthropicClient';
 import { audioManager } from '../utils/AudioManager';
-import { authService, type AuthState } from '../firebase/index';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -34,7 +33,6 @@ const DOC_FILES: DocFile[] = [
   { name: 'magic', title: '🧪 Magic & Potions', path: '/TwilightGame/docs/MAGIC.md' },
   { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },
   { name: 'ai-chat', title: '💬 AI Chat', path: '/TwilightGame/docs/AI_CHAT.md' },
-  { name: 'cloud-saves', title: '☁️ Cloud Saves', path: '/TwilightGame/docs/CLOUD_SAVES.md' },
   // Developer docs excluded: MAP_GUIDE, ASSETS, COORDINATE_GUIDE
 ];
 
@@ -54,14 +52,6 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
   // Audio settings state
   const [musicEnabled, setMusicEnabled] = useState<boolean>(!audioManager.isMuted());
 
-  // Account settings state
-  const [authState, setAuthState] = useState<AuthState | null>(null);
-  const [authLoading, setAuthLoading] = useState<boolean>(false);
-  const [authError, setAuthError] = useState<string>('');
-  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
-  const [emailInput, setEmailInput] = useState<string>('');
-  const [passwordInput, setPasswordInput] = useState<string>('');
-
   // Check for stored key on mount and when settings tab is selected
   useEffect(() => {
     const storedKey = getStoredApiKey();
@@ -70,14 +60,6 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
     // Sync music state when settings tab is opened
     setMusicEnabled(!audioManager.isMuted());
   }, [selectedTab]);
-
-  // Subscribe to auth state changes
-  useEffect(() => {
-    return authService.onAuthStateChange((state) => {
-      setAuthState(state);
-      setAuthLoading(false);
-    });
-  }, []);
 
   const handleMusicToggle = () => {
     const newMuted = audioManager.toggleMute();
@@ -127,89 +109,6 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
     setHasStoredKey(false);
     setAiEnabled(false);
     setSaveMessage('API key removed.');
-  };
-
-  // Auth handlers
-  const handleSignIn = async () => {
-    if (!emailInput.trim() || !passwordInput.trim()) {
-      setAuthError('Please enter email and password');
-      return;
-    }
-    setAuthLoading(true);
-    setAuthError('');
-    try {
-      await authService.signIn(emailInput.trim(), passwordInput.trim());
-      setEmailInput('');
-      setPasswordInput('');
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Sign in failed';
-      setAuthError(message);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleSignUp = async () => {
-    if (!emailInput.trim() || !passwordInput.trim()) {
-      setAuthError('Please enter email and password');
-      return;
-    }
-    if (passwordInput.length < 6) {
-      setAuthError('Password must be at least 6 characters');
-      return;
-    }
-    setAuthLoading(true);
-    setAuthError('');
-    try {
-      const displayName = emailInput.split('@')[0];
-      await authService.signUp(emailInput.trim(), passwordInput.trim(), displayName);
-      setEmailInput('');
-      setPasswordInput('');
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Sign up failed';
-      setAuthError(message);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    setAuthLoading(true);
-    setAuthError('');
-    try {
-      await authService.signInWithGoogle();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Google sign in failed';
-      setAuthError(message);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handlePlayAsGuest = async () => {
-    setAuthLoading(true);
-    setAuthError('');
-    try {
-      await authService.signInAnonymously();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Guest sign in failed';
-      setAuthError(message);
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    setAuthLoading(true);
-    setAuthError('');
-    try {
-      await authService.signOut();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Sign out failed';
-      setAuthError(message);
-    } finally {
-      setAuthLoading(false);
-    }
   };
 
   // Cottagecore colour palette
@@ -384,225 +283,6 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                       {musicEnabled ? '● Sound Enabled' : '○ Sound Muted'}
                     </span>
                   </div>
-                </div>
-
-                {/* Account Section */}
-                <div
-                  className="rounded-lg p-6 mb-6"
-                  style={{
-                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
-                    border: `2px solid ${colours.wood}`,
-                  }}
-                >
-                  <h2
-                    className="text-xl font-serif font-bold mb-4"
-                    style={{ color: colours.brass }}
-                  >
-                    ☁️ Account & Cloud Saves
-                  </h2>
-                  <p className="mb-4" style={{ color: colours.textLight }}>
-                    Sign in to sync your game progress across devices. Your saves are securely
-                    stored in the cloud.
-                  </p>
-
-                  {authState?.user ? (
-                    /* Signed in state */
-                    <div className="space-y-4">
-                      <div
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-serif font-semibold"
-                        style={{
-                          background: 'rgba(76, 130, 76, 0.2)',
-                          color: '#4a7c4a',
-                          border: '1px solid #4a7c4a',
-                        }}
-                      >
-                        ● Signed in{authState.user.isAnonymous ? ' as Guest' : ''}
-                      </div>
-
-                      {!authState.user.isAnonymous && (
-                        <p style={{ color: colours.text }}>
-                          <strong>Email:</strong> {authState.user.email}
-                        </p>
-                      )}
-
-                      {authState.user.isAnonymous && (
-                        <p className="text-sm" style={{ color: colours.textLight }}>
-                          Playing as guest. Create an account to keep your saves safe!
-                        </p>
-                      )}
-
-                      <button
-                        onClick={handleSignOut}
-                        disabled={authLoading}
-                        className="px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110 disabled:opacity-50"
-                        style={{
-                          background: 'linear-gradient(to bottom, #a85454, #8b4444)',
-                          color: '#ffeedd',
-                          border: '2px solid #6b3434',
-                        }}
-                      >
-                        {authLoading ? 'Signing out...' : 'Sign Out'}
-                      </button>
-                    </div>
-                  ) : (
-                    /* Not signed in state */
-                    <div className="space-y-4">
-                      <div
-                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-serif font-semibold mb-2"
-                        style={{
-                          background: colours.parchmentDarker,
-                          color: colours.textLight,
-                          border: `1px solid ${colours.wood}`,
-                        }}
-                      >
-                        ○ Not signed in
-                      </div>
-
-                      {/* Toggle between Sign In and Sign Up */}
-                      <div className="flex gap-2 mb-4">
-                        <button
-                          onClick={() => setAuthMode('signin')}
-                          className="px-4 py-2 font-serif font-semibold rounded transition-all"
-                          style={{
-                            background:
-                              authMode === 'signin'
-                                ? `linear-gradient(to bottom, ${colours.brass}, ${colours.brassDark})`
-                                : 'transparent',
-                            color: authMode === 'signin' ? '#fff' : colours.textLight,
-                            border: `2px solid ${authMode === 'signin' ? colours.brassDark : colours.wood}`,
-                          }}
-                        >
-                          Sign In
-                        </button>
-                        <button
-                          onClick={() => setAuthMode('signup')}
-                          className="px-4 py-2 font-serif font-semibold rounded transition-all"
-                          style={{
-                            background:
-                              authMode === 'signup'
-                                ? `linear-gradient(to bottom, ${colours.brass}, ${colours.brassDark})`
-                                : 'transparent',
-                            color: authMode === 'signup' ? '#fff' : colours.textLight,
-                            border: `2px solid ${authMode === 'signup' ? colours.brassDark : colours.wood}`,
-                          }}
-                        >
-                          Sign Up
-                        </button>
-                      </div>
-
-                      {/* Email/Password form */}
-                      <div className="space-y-3">
-                        <div>
-                          <label
-                            className="block mb-1 text-sm font-serif"
-                            style={{ color: colours.textLight }}
-                          >
-                            Email
-                          </label>
-                          <input
-                            type="email"
-                            value={emailInput}
-                            onChange={(e) => setEmailInput(e.target.value)}
-                            placeholder="your@email.com"
-                            className="w-full px-4 py-2 rounded focus:outline-none"
-                            style={{
-                              background: colours.parchment,
-                              border: `2px solid ${colours.wood}`,
-                              color: colours.text,
-                            }}
-                          />
-                        </div>
-                        <div>
-                          <label
-                            className="block mb-1 text-sm font-serif"
-                            style={{ color: colours.textLight }}
-                          >
-                            Password
-                          </label>
-                          <input
-                            type="password"
-                            value={passwordInput}
-                            onChange={(e) => setPasswordInput(e.target.value)}
-                            placeholder={
-                              authMode === 'signup' ? 'At least 6 characters' : '••••••••'
-                            }
-                            className="w-full px-4 py-2 rounded focus:outline-none"
-                            style={{
-                              background: colours.parchment,
-                              border: `2px solid ${colours.wood}`,
-                              color: colours.text,
-                            }}
-                          />
-                        </div>
-                        <button
-                          onClick={authMode === 'signin' ? handleSignIn : handleSignUp}
-                          disabled={authLoading}
-                          className="w-full px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110 disabled:opacity-50"
-                          style={{
-                            background: 'linear-gradient(to bottom, #4a7c4a, #3d663d)',
-                            color: '#ffeedd',
-                            border: '2px solid #2d4d2d',
-                          }}
-                        >
-                          {authLoading
-                            ? 'Please wait...'
-                            : authMode === 'signin'
-                              ? 'Sign In'
-                              : 'Create Account'}
-                        </button>
-                      </div>
-
-                      {/* Divider */}
-                      <div className="flex items-center gap-4 my-4">
-                        <div
-                          className="flex-1"
-                          style={{ borderTop: `1px solid ${colours.wood}` }}
-                        />
-                        <span className="text-sm font-serif" style={{ color: colours.textLight }}>
-                          or
-                        </span>
-                        <div
-                          className="flex-1"
-                          style={{ borderTop: `1px solid ${colours.wood}` }}
-                        />
-                      </div>
-
-                      {/* Alternative sign-in methods */}
-                      <div className="flex flex-col gap-2">
-                        <button
-                          onClick={handleGoogleSignIn}
-                          disabled={authLoading}
-                          className="w-full px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
-                          style={{
-                            background: 'linear-gradient(to bottom, #fff, #f5f5f5)',
-                            color: '#333',
-                            border: '2px solid #ddd',
-                          }}
-                        >
-                          <span>🔵</span> Sign in with Google
-                        </button>
-                        <button
-                          onClick={handlePlayAsGuest}
-                          disabled={authLoading}
-                          className="w-full px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110 disabled:opacity-50"
-                          style={{
-                            background: `linear-gradient(to bottom, ${colours.parchment}, ${colours.parchmentDark})`,
-                            color: colours.textLight,
-                            border: `2px solid ${colours.wood}`,
-                          }}
-                        >
-                          Play as Guest
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Error message */}
-                  {authError && (
-                    <p className="mt-4 text-sm font-serif" style={{ color: '#8b4444' }}>
-                      {authError}
-                    </p>
-                  )}
                 </div>
 
                 {/* AI Dialogue Section */}
