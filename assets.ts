@@ -473,7 +473,7 @@ export const npcAssets = {
   possum_walking_03: '/TwilightGame/assets/npcs/possum/possum_walking03.png',
   possum_sitting: '/TwilightGame/assets/npcs/possum/possum_sitting.png',
   possum_dead: '/TwilightGame/assets/npcs/possum/possum_dead.png',
-  possum_portrait: '/TwilightGame/assets/npcs/possum/possum_sitting.png',
+  possum_portrait: '/TwilightGame/assets/npcs/possum/possum_dead.png',
 };
 
 // Player assets (add your custom sprites here when ready)
