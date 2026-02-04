@@ -304,7 +304,7 @@ export function createVillageElderNPC(
       // Random tip during task
       {
         id: 'garden_tip_random',
-        text: "Hmm, let me think... Have you made friends with the other villagers? They're good folk. Your mum is a wonderful cook - perhaps she could teach thee a thing or two? Old Bessie the cow gives the sweetest milk. The woods are full of treasures if thou knowest where to look. And if thou seekest Mushra the mushroom sage, just follow the huge toadstools...",
+        text: "Hmm, let me think... Have you made friends with the other villagers? They're good folk. Your mum is a wonderful cook - perhaps she could teach thee a thing or two? Old Bessie the cow gives the sweetest milk. The woods are full of treasures if thou knowest where to look. And if thou seekest Mushra the artist, just follow the huge toadstools to her mushroom house...",
         requiredQuest: GARDENING_QUEST_ID,
       },
       // Task completion

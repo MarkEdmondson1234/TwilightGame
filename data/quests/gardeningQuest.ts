@@ -74,7 +74,7 @@ export const ELIAS_TIPS = [
   'Your mum is a wonderful cook. Perhaps she could teach you a thing or two?',
   'Old Bessie the cow gives the sweetest milk. Have you tried milking her?',
   'The woods are full of treasures if you know where to look. Try foraging!',
-  'If you seek Mushra the mushroom sage, just follow the huge toadstools.',
+  'If you seek Mushra the artist, follow the giant toadstools to her mushroom house. She knows more about fungi than anyone!',
 ];
 
 // ============================================================================

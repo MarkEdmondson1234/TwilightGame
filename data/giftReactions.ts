@@ -114,13 +114,15 @@ export const NPC_GIFT_PREFERENCES: Record<string, NPCGiftPreferences> = {
     ],
   },
 
-  // Mushra - loves mushrooms, books, flowers, home cooked food; dislikes broccoli
+  // Mushra - artist who loves mushrooms, flowers to paint, fairy items; dislikes broccoli
   mushra: {
     loves: [
       'mushroom',
       'luminescent_toadstool',
       'giant_mushroom_cap',
       'crop_sunflower',
+      'seed_fairy_bluebell',
+      'shrinking_violet',
     ],
     dislikes: ['crop_broccoli'],
     lovesHomeCookedFood: true,
@@ -348,19 +350,19 @@ export const NPC_GIFT_REACTIONS: Record<
 
   mushra: {
     loved: {
-      text: '*eyes light up* Ohhh, how wonderful! This speaks to my very soul. Thank you, friend!',
+      text: '*Her face lights up with genuine joy.* "Oh, this is lovely! You have such a good eye. Thank you so much!"',
       expression: 'happy',
     },
     liked: {
-      text: 'How kind of you! I appreciate your thoughtfulness.',
+      text: '"How thoughtful of you! I really appreciate it." *She smiles warmly.*',
       expression: 'smile',
     },
     neutral: {
-      text: 'Thank you for the gift. Every kindness is noted.',
+      text: '"Thank you for thinking of me." *She accepts the gift politely.*',
       expression: 'default',
     },
     disliked: {
-      text: '*wrinkles nose* Broccoli? I... appreciate the gesture, but we mushroom folk have certain... preferences.',
+      text: '*She wrinkles her nose slightly.* "That\'s... kind of you. I\'ll find a use for it, I\'m sure."',
       expression: 'thinky',
     },
   },
