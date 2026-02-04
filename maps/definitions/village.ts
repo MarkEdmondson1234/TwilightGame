@@ -70,7 +70,7 @@ JG,G,,,PG,,G,,PG,l,,lMGR,RG,Re
 LoG,Gc,GPe%G,,PG,G,,GPR,,,eGGL
 oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
 LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
-tG,,G,,,G,,PG,l,,lG,l,,UGG,,UG
+tG,,G,,,G,.PG,l,,lG,l,,UGG,,UG
 LPPPPPPPPPPPP,,,G8,,,eG,,G,,eG
 oG,G,,,G,,,PG,cG,,Gl,lG,,l,GeY
 UoG,cG,,UGPPGGG,G,,Ge=i,G,,G,t
@@ -188,6 +188,13 @@ export const village: MapDefinition = {
       toMapId: 'bear_cave',
       toPosition: { x: 8, y: 17 },  // Spawn on path near entrance (safe from bear house collision)
       label: "To Bear's Cave",
+    },
+    {
+      fromPosition: { x: 26, y: 1 }, // North-east corner to ruins
+      tileType: TileType.GRASS,
+      toMapId: 'ruins',
+      toPosition: { x: 14, y: 16 },  // Spawn at ruins spawn point
+      label: 'To Ancient Ruins',
     },
   ],
   npcs: [

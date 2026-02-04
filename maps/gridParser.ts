@@ -112,6 +112,7 @@ export const GRID_CODES: Record<string, TileType> = {
   // Common forageable plants
   '8': TileType.MUSTARD_FLOWER, // 8 = Mustard flower (common yellow flower, blooms spring/summer)
   '±': TileType.SHRINKING_VIOLET, // ± = Shrinking violet (purple spring flower)
+  // Note: FROST_FLOWER uses map-specific codes (! in ruins.ts) to avoid conflict with FAIRY_OAK_GIANT
   // Buildings (outdoor structures)
   L: TileType.WALL_BOUNDARY, // L = waLl boundary (brick walls)
   B: TileType.BUILDING_WALL, // B = Building wall
@@ -141,6 +142,8 @@ export const GRID_CODES: Record<string, TileType> = {
 
 /**
  * Converts a multi-line string grid into a 2D TileType array
+ * @param gridString - The character grid representing the map
+ * @param customCodes - Optional map-specific codes that override global GRID_CODES
  * Example:
  * ```
  * ####
@@ -148,7 +151,13 @@ export const GRID_CODES: Record<string, TileType> = {
  * ####
  * ```
  */
-export function parseGrid(gridString: string): TileType[][] {
+export function parseGrid(
+  gridString: string,
+  customCodes?: Record<string, TileType>
+): TileType[][] {
+  // Merge custom codes with global codes (custom takes precedence)
+  const codes = customCodes ? { ...GRID_CODES, ...customCodes } : GRID_CODES;
+
   const lines = gridString
     .trim()
     .split('\n')
@@ -158,7 +167,7 @@ export function parseGrid(gridString: string): TileType[][] {
   for (const line of lines) {
     const row: TileType[] = [];
     for (const char of line) {
-      const tileType = GRID_CODES[char];
+      const tileType = codes[char];
       if (tileType !== undefined) {
         row.push(tileType);
       } else {
