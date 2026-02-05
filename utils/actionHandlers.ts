@@ -649,7 +649,7 @@ export function handleFarmAction(
       ) {
         return {
           handled: false,
-          message: 'Select a watering can to water this crop',
+          message: 'Plant not ready for harvesting yet',
           messageType: 'info',
         };
       }

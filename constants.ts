@@ -77,7 +77,9 @@ export const TIMING = {
  */
 export const GROWTH_THRESHOLDS = {
   SEEDLING_TO_YOUNG: 0.33, // 0-33% = seedling sprite
-  YOUNG_TO_ADULT: 0.66, // 33-66% = young sprite, 66-100% = adult sprite
+  YOUNG_TO_ADULT: 0.95, // 33-95% = young sprite, 95-100% = adult (mature) sprite
+  // NOTE: Adult sprite now appears close to harvest time to avoid confusion
+  // where plants look mature but aren't harvestable yet
 } as const;
 
 /**
