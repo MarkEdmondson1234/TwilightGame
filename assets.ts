@@ -180,6 +180,11 @@ export const tileAssets = {
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',
   shrinking_violet: '/TwilightGame/assets-optimized/tiles/forest/shrinking_violet.png',
   frost_flower_bloom: '/TwilightGame/assets-optimized/tiles/ruins/frost_flower_bloom.png',
+  // Ruins entrance assets (seasonal variations - 8x8 multi-tile sprite)
+  ruins_entrance_spring_summer:
+    '/TwilightGame/assets-optimized/tiles/ruins/ruins_entrance_spring-summer.png',
+  ruins_entrance_autumn: '/TwilightGame/assets-optimized/tiles/ruins/ruins_entrance_autumn.png',
+  ruins_entrance_winter: '/TwilightGame/assets-optimized/tiles/ruins/ruins_entrance_winter.png',
   // Witch hut asset
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
   // Cauldron animation frames

@@ -296,8 +296,8 @@ async function optimizeTiles() {
         .png({ palette: false, quality: WITCH_HUT_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
         .toFile(outputPath);
     }
-    // Special handling for large multi-tile sprites (shop, cottage, mine entrance, garden shed, mushroom house) - extra large size with very high quality (minimal compression)
-    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed') || file.includes('mushroom_house')) {
+    // Special handling for large multi-tile sprites (shop, cottage, mine entrance, garden shed, mushroom house, ruins entrance) - extra large size with very high quality (minimal compression)
+    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed') || file.includes('mushroom_house') || file.includes('ruins_entrance')) {
       await sharp(inputPath)
         .resize(SHOP_SIZE, SHOP_SIZE, {
           fit: 'contain',

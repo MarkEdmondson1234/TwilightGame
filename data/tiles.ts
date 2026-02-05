@@ -862,6 +862,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.garden_shed_spring], // Default to spring
     },
   },
+  [TileType.RUINS_ENTRANCE]: {
+    name: 'Ruins Entrance',
+    color: 'bg-palette-sage', // Base grass color for background
+    collisionType: CollisionType.SOLID,
+    image: [],
+    baseType: TileType.GRASS, // Render grass underneath for natural ground
+    seasonalImages: {
+      spring: [tileAssets.ruins_entrance_spring_summer], // Spring/summer share same sprite
+      summer: [tileAssets.ruins_entrance_spring_summer], // Spring/summer share same sprite
+      autumn: [tileAssets.ruins_entrance_autumn],
+      winter: [tileAssets.ruins_entrance_winter],
+      default: [tileAssets.ruins_entrance_spring_summer], // Default fallback
+    },
+  },
 
   // Farmland tiles
   [TileType.SOIL_FALLOW]: {

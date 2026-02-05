@@ -102,6 +102,7 @@ export enum TileType {
   COTTAGE_FLOWERS,
   SHOP,
   GARDEN_SHED,
+  RUINS_ENTRANCE, // Ancient ruins entrance (8x8 multi-tile, seasonal)
   // Farmland tiles
   SOIL_FALLOW,
   SOIL_TILLED,

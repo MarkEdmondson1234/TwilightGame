@@ -26,34 +26,36 @@ import { parseGrid } from '../gridParser';
  * j = Small fir tree
  * n = Small spruce tree
  * l = Village flowers
+ * § = Ruins entrance (8x8 seasonal ancient archway)
  */
 
 // Ruins-specific grid codes (override globals where needed)
 const RUINS_CODES: Record<string, TileType> = {
   '!': TileType.FROST_FLOWER, // Frost flower (weather-conditional)
+  '§': TileType.RUINS_ENTRANCE, // Ruins entrance (8x8 seasonal structure)
 };
 
 // 30x20 outdoor ruins area with frost flowers and natural forest decorations
 const gridString = `
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
 LGGGGGGGtGGGGGGGGGGGGGGGGGGGGL
-LGGYGGhGGGGG!GGGGGYGGhGGGGGGGL
-LGGGGenGGdGGGGGGGbGGYGGtGGYGGL
-LGGtGGGGGGGGGdGGGGtGGeGYjGeGGL
-LGGGGtGGGhGGGGGGGGGtGGtGGGbGGL
-LtGnGGYGGGG!GGGGGGGGGGGGYGtGGL
-LGGYGGGtGGGGGGGGGGGGGGGtGGtGGL
-LGGGGGGGGGGGGGGGGGGGGGGG!GtGGL
-LGGeGGGGGGGGGGGGGGGGGGGGGGGGtL
-LYGGjGGGGGGGGGGGGnGGYGGGGYGGGL
-LGGjGYGGGGGGGGGGGGGGGGGGtGGGGL
-LGnGeGGGGdGGPGGGGdGGGGPPPGGGtL
-tGYGtGnGdGGPGGGGGGGGGtGePbGGGL
-LtGeGGGGGGPGGGGGGGGGGGGGPGeYGL
-LGGnGGGhGPGGGGGGdGGGGhYePGGtGL
-tenGeGlGGPGeGGGlGdlGGGhtPeGGtL
-LeeeGjlGPGGGGGlGlGGlGYGtPPPntL
-LetelnGGPlGGGGGGGGjGbGGnjePPPD
+LGGYGGhGGGGG!GGlGGYGG!GGGGGGGL
+LGGGGenGG!GGGG!GGeGGYGGtGGYGGL
+LGGtGGGGGlG!G!GGGGtGGeGejGeGGL
+LGGGGtG!G!GlGG!GlGGtGGtGGGbGGL
+LtGnGG!GGGG!GGGGlGGGlGGGYGtGGL
+LGGYGGGtGlGG!GeGGlGGGGGtGGtGGL
+LGGGGGGGGG!G!GlGlG!GGlGG!GtGGL
+LGGeGGGGGGlGlGGG!GGGG!!!GGGGtL
+LYGG!GGG!GG!lG!lGGGG!G!GGYGGGL
+LGGjGYGGG!lG!GlGGlGGGGGGtGGGGL
+LGnGeGG!G!GGlGeG!!GG§GGeGGGGtL
+tGYGtGnG!G!PGGG!GGPPG!GeGeGGGL
+LtGeGGGG!GPGG!l!lG!P!!GGeGeGGL
+LGGnG!GyGPGG!l!l!!G!PP!eGeGtGL
+tenGeGlGGPGeG!GlG!lG!Pe!GeGGtL
+LeeeGjlGPG!GGGlGlGGlP!PteGentL
+LetelnGGPlGGGGGGGGeGePGejeGGGG
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
 `;
 
@@ -69,7 +71,7 @@ export const ruins: MapDefinition = {
   spawnPoint: { x: 14, y: 16 },
   transitions: [
     {
-      fromPosition: { x: 29, y: 18 },
+      fromPosition: { x: 21, y: 18 },
       tileType: TileType.DOOR,
       toMapId: 'village',
       toPosition: { x: 26, y: 1 },

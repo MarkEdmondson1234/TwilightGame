@@ -106,6 +106,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.BEE_HIVE]: 'grass',  // Bee hive sits on grass
   [TileType.CAULDRON]: 'grass',  // Cauldron sits on grass
   [TileType.WELL]: 'grass',  // Well sits on grass background
+  [TileType.RUINS_ENTRANCE]: 'grass',  // Ruins entrance sits on grass background
 };
 
 export class ColorResolver {

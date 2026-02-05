@@ -1159,4 +1159,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
   },
+  {
+    tileType: TileType.RUINS_ENTRANCE,
+    spriteWidth: 10, // 10 tiles wide (square image preserves aspect ratio)
+    spriteHeight: 10, // 10 tiles tall (square image preserves aspect ratio)
+    offsetX: -4.5, // Center horizontally on anchor tile
+    offsetY: -8.5, // Position doorway/entrance at anchor, structure extends upward
+    image: tileAssets.ruins_entrance_spring_summer, // Default image (overridden by seasonalImages in TILE_LEGEND)
+    // No transforms - unique architectural structure
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision at the base of the ruins (most is solid except walkable entrance area)
+    collisionWidth: 8,
+    collisionHeight: 2,
+    collisionOffsetX: -3.5,
+    collisionOffsetY: -4,
+    // Shadow for building structure
+    shadowWidthRatio: 0.4,
+    shadowHeightRatio: 0.15,
+  },
 ];
