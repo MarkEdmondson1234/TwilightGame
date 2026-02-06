@@ -112,6 +112,7 @@ const App: React.FC = () => {
   const [giftReactionContext, setGiftReactionContext] = useState<{
     npcId: string;
     reaction: 'loved' | 'liked' | 'neutral' | 'disliked';
+    dialogueNodeId?: string;
   } | null>(null);
 
   // Event-driven triggers for re-rendering (managed by EventBus subscriptions)
@@ -1397,10 +1398,10 @@ const App: React.FC = () => {
               setDialogueMode('ai');
             }
           }}
-          // Pass initial node for gift reactions, otherwise use default 'greeting'
+          // Pass initial node for gift reactions (quest-specific or generic), otherwise use default 'greeting'
           initialNodeId={
             giftReactionContext && giftReactionContext.npcId === activeNPC
-              ? `gift_${giftReactionContext.reaction}`
+              ? giftReactionContext.dialogueNodeId || `gift_${giftReactionContext.reaction}`
               : 'greeting'
           }
         />
@@ -1555,6 +1556,7 @@ const App: React.FC = () => {
             setGiftReactionContext({
               npcId: ui.context.giftTargetNpcId!,
               reaction: result.reaction,
+              dialogueNodeId: result.dialogueNodeId,
             });
 
             // Open dialogue with the NPC showing their reaction

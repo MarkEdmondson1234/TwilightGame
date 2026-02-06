@@ -13,6 +13,7 @@ import {
   isWinter,
   isGardeningQuestActive,
   getCurrentSeasonTask,
+  markSeasonCompleted,
 } from '../data/quests/gardeningQuest';
 import { startFairyBluebellsQuest } from '../data/quests/fairyBluebellsQuest';
 
@@ -24,7 +25,7 @@ import { startFairyBluebellsQuest } from '../data/quests/fairyBluebellsQuest';
  * - Dialogue-triggered cutscenes
  * - Recipe teaching from Mum
  */
-export function handleDialogueAction(npcId: string, nodeId: string): void {
+export function handleDialogueAction(npcId: string, nodeId: string): string | void {
   // Award friendship points when dialogue starts (greeting node)
   if (nodeId === 'greeting') {
     handleFriendshipTalk(npcId);
@@ -62,7 +63,8 @@ export function handleDialogueAction(npcId: string, nodeId: string): void {
 
   // Handle Elias's gardening quest and fairy bluebells quest
   if (npcId === 'village_elder') {
-    handleEliasQuestActions(nodeId);
+    const redirect = handleEliasQuestActions(nodeId);
+    if (redirect) return redirect;
   }
 }
 
@@ -190,7 +192,14 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
  * - Gardening quest: decline, accept, seasonal tasks
  * - Fairy Bluebells quest: accept
  */
-function handleEliasQuestActions(nodeId: string): void {
+function handleEliasQuestActions(nodeId: string): string | void {
+  console.log(`[dialogueHandlers] 🔍 Elias quest handler: nodeId=${nodeId}, questActive=${isGardeningQuestActive()}, currentTask=${getCurrentSeasonTask()}`);
+
+  // Auto-redirect to quest check when greeting Elias with an active quest
+  if (nodeId === 'greeting' && isGardeningQuestActive()) {
+    return 'garden_task_check';
+  }
+
   // Player declined the garden offer - mark as offered for future "Help with garden?" option
   if (nodeId === 'garden_decline') {
     setQuestOffered();
@@ -266,6 +275,50 @@ function handleEliasQuestActions(nodeId: string): void {
           );
         }
       }
+    }
+  }
+
+  // Player wants to deliver a crop via dialogue
+  if (nodeId === 'garden_deliver_crop') {
+    if (isGardeningQuestActive()) {
+      // Use current task if set, otherwise check the current season directly
+      const task = getCurrentSeasonTask() || getAvailableSeasonTask();
+
+      if (task === 'spring' || task === 'summer') {
+        // Look for any crop in inventory
+        const inventoryData = inventoryManager.getInventoryData();
+        const cropItem = inventoryData.items.find(item => item.itemId.startsWith('crop_') && item.quantity > 0);
+
+        if (cropItem) {
+          inventoryManager.removeItem(cropItem.itemId, 1);
+          const invData = inventoryManager.getInventoryData();
+          characterData.saveInventory(invData.items, invData.tools);
+          markSeasonCompleted(task);
+          friendshipManager.addPoints('village_elder', 100, `gardening quest: ${task} crop delivered via dialogue`);
+          console.log(`[dialogueHandlers] 🌱 Elias accepts your ${cropItem.itemId} for ${task} task!`);
+          return 'garden_task_complete';
+        }
+      }
+
+      if (task === 'autumn') {
+        // Look for honey in inventory
+        const inventoryData = inventoryManager.getInventoryData();
+        const honeyItem = inventoryData.items.find(item => item.itemId === 'honey' && item.quantity > 0);
+
+        if (honeyItem) {
+          inventoryManager.removeItem('honey', 1);
+          const invData = inventoryManager.getInventoryData();
+          characterData.saveInventory(invData.items, invData.tools);
+          markSeasonCompleted('autumn');
+          friendshipManager.addPoints('village_elder', 100, 'gardening quest: autumn honey delivered via dialogue');
+          console.log('[dialogueHandlers] 🍯 Elias accepts your honey for autumn task!');
+          return 'garden_task_complete';
+        }
+      }
+
+      // Player doesn't have the right items
+      console.log('[dialogueHandlers] 🌱 Player has no matching crops/honey to deliver');
+      return 'garden_no_crop';
     }
   }
 

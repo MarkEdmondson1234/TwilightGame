@@ -11,7 +11,7 @@ interface DialogueBoxProps {
   npc: NPC;
   playerSprite: string; // Current player sprite (idle frame)
   onClose: () => void;
-  onNodeChange?: (npcId: string, nodeId: string) => void; // Callback when dialogue node changes
+  onNodeChange?: (npcId: string, nodeId: string) => string | void; // Callback when dialogue node changes (returns redirect nodeId if needed)
   onSwitchToAIMode?: () => void; // Callback to switch to AI chat mode
   initialNodeId?: string; // Starting dialogue node (defaults to 'greeting')
 }
@@ -166,8 +166,15 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
       setCurrentDialogue(dialogue);
 
       // Notify parent when dialogue starts (greeting node) for friendship tracking
+      // Also handles auto-redirects (e.g. Elias jumps to quest check when quest is active)
       if (currentNodeId === 'greeting' && onNodeChange) {
-        onNodeChange(npc.id, currentNodeId);
+        const redirect = onNodeChange(npc.id, currentNodeId);
+        if (redirect) {
+          // Also fire the handler for the redirect target (e.g. to assign seasonal tasks)
+          onNodeChange(npc.id, redirect);
+          setCurrentNodeId(redirect);
+          return;
+        }
       }
     };
     loadDialogue();
@@ -183,10 +190,12 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
       }
 
       if (response) {
-        setCurrentNodeId(response);
+        let targetNode = response;
         if (onNodeChange) {
-          onNodeChange(npc.id, response);
+          const redirect = onNodeChange(npc.id, response);
+          if (redirect) targetNode = redirect;
         }
+        setCurrentNodeId(targetNode);
       } else {
         onClose();
       }
@@ -223,10 +232,12 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
 
     // Navigate to next dialogue node
     if (response.nextId) {
-      setCurrentNodeId(response.nextId);
+      let targetNode = response.nextId;
       if (onNodeChange) {
-        onNodeChange(npc.id, response.nextId);
+        const redirect = onNodeChange(npc.id, response.nextId);
+        if (redirect) targetNode = redirect;
       }
+      setCurrentNodeId(targetNode);
     } else {
       onClose();
     }

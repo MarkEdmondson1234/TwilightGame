@@ -77,12 +77,13 @@ export function createVillageElderNPC(
             nextId: 'garden_offer',
             hiddenIfQuestStarted: GARDENING_QUEST_ID,
           },
-          // Garden help option - shows when quest was offered but declined
+          // Garden help option - shows ONLY when quest was offered but declined (not when active)
           {
             text: 'Want me to help with the kitchen garden?',
             nextId: 'garden_accept',
             requiredQuest: GARDENING_QUEST_ID,
             requiredQuestStage: GARDENING_QUEST_STAGES.OFFERED,
+            maxQuestStage: GARDENING_QUEST_STAGES.OFFERED,
           },
           // Show task check when quest is active
           {
@@ -282,16 +283,20 @@ export function createVillageElderNPC(
       // Also handles assigning new seasonal tasks when season changes
       {
         id: 'garden_task_check',
-        text: "Ah, the garden! Let me think on what needs doing...",
+        text: "Ah, young one! How is the gardening going? I hope thou art tending those plants well. Hast thou anything to show me?",
         requiredQuest: GARDENING_QUEST_ID,
         hiddenIfQuestCompleted: GARDENING_QUEST_ID,
         seasonalText: {
-          spring: "Ah, springtime! Tomatoes, peas, and sunflowers are what we need. Plant them in tilled soil and water them daily, or they'll wilt. When thou hast grown something, gift it to me!",
-          summer: "Summer is upon us! Carrots, corn, and chillies thrive in this warm weather. Plant them, water them daily, and bring me something from thy harvest.",
-          autumn: "Autumn! 'Tis time for onion sets. And I would dearly love some honey - seek out the bear in the forest. He's a friendly sort, despite his size.",
-          winter: "The ground sleeps beneath the frost now, young one. There is naught to do until spring. Enjoy the quiet season, and come see me when the thaw comes.",
+          spring: "Ah, young one! How is thy garden faring? The spring sunshine should be helping those seedlings along nicely. Hast thou anything to show me?",
+          summer: "Ah, there thou art! The warm weather treating thy crops well? Hast thou something to show me?",
+          autumn: "Ah, good to see thee! How goes the autumn work? Remember, I would dearly love some honey from the bear. Hast thou found any?",
+          winter: "Ah, young one. The ground sleeps beneath the frost now. There is naught to do until spring. Enjoy the quiet season, and come see me when the thaw comes.",
         },
         responses: [
+          {
+            text: 'I have something for you!',
+            nextId: 'garden_deliver_crop',
+          },
           {
             text: 'Any advice?',
             nextId: 'garden_tip_random',
@@ -307,11 +312,32 @@ export function createVillageElderNPC(
         text: "Hmm, let me think... Have you made friends with the other villagers? They're good folk. Your mum is a wonderful cook - perhaps she could teach thee a thing or two? Old Bessie the cow gives the sweetest milk. The woods are full of treasures if thou knowest where to look. And if thou seekest Mushra the artist, just follow the huge toadstools to her mushroom house...",
         requiredQuest: GARDENING_QUEST_ID,
       },
+      // Deliver crop via dialogue
+      {
+        id: 'garden_deliver_crop',
+        text: "Let me see what thou hast brought...",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
+      // No crop in inventory
+      {
+        id: 'garden_no_crop',
+        text: "Hmm, it seems thou hast not yet got anything to show me. Keep at it — the garden rewards patience!",
+        requiredQuest: GARDENING_QUEST_ID,
+      },
       // Task completion
       {
         id: 'garden_task_complete',
-        text: "*He examines what you've brought with a warm smile.* Well done, young one! This is fine work. Thou hast a gift for growing things, I can tell. Keep tending the garden, and visit me again when the season turns.",
+        text: "*He examines what you've brought with a warm smile.* Well done, young one! This is fine work. Thou hast a gift for growing things, I can tell.",
         requiredQuest: GARDENING_QUEST_ID,
+        responses: [
+          {
+            text: 'What should I do next?',
+            nextId: 'garden_seasonal_task',
+          },
+          {
+            text: 'Thank you, Elias.',
+          },
+        ],
       },
       // All seasonal tasks complete
       {

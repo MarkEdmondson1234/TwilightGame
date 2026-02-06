@@ -28,6 +28,7 @@ import { markPotionReceived as markFairyQuestPotionReceived } from '../data/ques
 import {
   isGardeningQuestActive,
   getCurrentSeasonTask,
+  getAvailableSeasonTask,
   markSeasonCompleted,
 } from '../data/quests/gardeningQuest';
 import {
@@ -460,8 +461,10 @@ class FriendshipManagerClass {
     itemId: string
   ): { points: number; reaction: GiftReaction; questCompleted?: boolean; dialogueNodeId?: string } | null {
     // Check for gardening quest items
+    console.log(`[FriendshipManager] 🔍 Quest gift check: itemId=${itemId}, questActive=${isGardeningQuestActive()}, currentTask=${getCurrentSeasonTask()}`);
     if (isGardeningQuestActive()) {
-      const task = getCurrentSeasonTask();
+      // Use current task if set, otherwise check the current season directly
+      const task = getCurrentSeasonTask() || getAvailableSeasonTask();
 
       // Spring/Summer task: Accept any crop
       if ((task === 'spring' || task === 'summer') && itemId.startsWith('crop_')) {

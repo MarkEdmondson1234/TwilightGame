@@ -210,10 +210,11 @@ export function assignSeasonTask(
   // Set current task
   gameState.setQuestData(GARDENING_QUEST_ID, 'currentSeasonTask', season);
 
-  // Mark seeds as received for this season
+  // Only give seeds once per season
   const seedsReceived =
     (gameState.getQuestData(GARDENING_QUEST_ID, 'seedsReceived') as string[]) || [];
-  if (!seedsReceived.includes(season)) {
+  const alreadyReceivedSeeds = seedsReceived.includes(season);
+  if (!alreadyReceivedSeeds) {
     seedsReceived.push(season);
     gameState.setQuestData(GARDENING_QUEST_ID, 'seedsReceived', seedsReceived);
   }
@@ -224,8 +225,8 @@ export function assignSeasonTask(
     value: season,
   });
 
-  console.log(`[GardeningQuest] Assigned ${season} task`);
-  return SEASONAL_SEEDS[season];
+  console.log(`[GardeningQuest] Assigned ${season} task (seeds ${alreadyReceivedSeeds ? 'already received' : 'given'})`);
+  return alreadyReceivedSeeds ? null : SEASONAL_SEEDS[season];
 }
 
 /**

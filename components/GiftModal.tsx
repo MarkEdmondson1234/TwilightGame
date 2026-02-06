@@ -24,6 +24,7 @@ export interface GiftResult {
   points: number;
   reaction: 'loved' | 'liked' | 'neutral' | 'disliked';
   message: string;
+  dialogueNodeId?: string;
 }
 
 interface GiftModalProps {
@@ -148,6 +149,7 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
       points: result.points,
       reaction: result.reaction,
       message,
+      dialogueNodeId: result.dialogueNodeId,
     });
 
     onClose();
