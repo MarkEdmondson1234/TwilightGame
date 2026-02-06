@@ -215,6 +215,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.onion_sets,
   },
 
+  seed_potato: {
+    id: 'seed_potato',
+    name: 'seed_potato',
+    displayName: 'Seed Potatoes',
+    category: ItemCategory.SEED,
+    description: 'Sprouted potato tubers ready for planting. Pop them in the ground in spring!',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 2,
+    cropId: 'potato',
+    image: groceryAssets.seed_potatoes,
+  },
+
   seed_pea: {
     id: 'seed_pea',
     name: 'seed_pea',
@@ -1112,6 +1125,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Thin French pancakes with strawberry jam.',
     stackable: true,
     sellPrice: 35,
+    image: cookingAssets.crepes,
   },
 
   food_marzipan_chocolates: {

@@ -270,6 +270,7 @@ export const farmingAssets = {
 export const cookingAssets = {
   chocolate_cake: '/TwilightGame/assets-optimized/cooking/chocolate_cake.png',
   cookies: '/TwilightGame/assets-optimized/cooking/cookies.png',
+  crepes: '/TwilightGame/assets-optimized/cooking/crepes.png',
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png',
   pickled_onion: '/TwilightGame/assets-optimized/cooking/pickled_onion.png',
@@ -325,6 +326,7 @@ export const groceryAssets = {
   blueberries_crop: '/TwilightGame/assets-optimized/items/grocery/blueberries_crop.png',
   onion_bunch: '/TwilightGame/assets-optimized/items/grocery/onion_bunch.png',
   onion_sets: '/TwilightGame/assets-optimized/items/grocery/onion_sets.png',
+  seed_potatoes: '/TwilightGame/assets-optimized/items/grocery/seed_potatoes.png',
   pumpkin: '/TwilightGame/assets-optimized/items/grocery/pumpkin.png',
   pumpkin_seeds: '/TwilightGame/assets-optimized/items/grocery/pumpkin_seeds.png',
   pepper: '/TwilightGame/assets-optimized/items/grocery/pepper.png',

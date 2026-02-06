@@ -104,6 +104,13 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
 
   // Spring specialty
   {
+    itemId: 'seed_potato',
+    buyPrice: 5,
+    sellPrice: 2,
+    stock: 'unlimited',
+    availableSeasons: ['spring'],
+  },
+  {
     itemId: 'seed_pea',
     buyPrice: 8,
     sellPrice: 3,
