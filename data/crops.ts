@@ -82,6 +82,12 @@ export interface CropDefinition {
 
   // Seed source
   seedSource: 'shop' | 'friendship' | 'forage'; // Where seeds come from
+
+  // Dual-harvest: crop offers two harvest modes via radial menu (e.g. pick flowers vs harvest seeds)
+  dualHarvest?: {
+    flowerOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number };
+    seedOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number };
+  };
 }
 
 // Time constants (for readability)
@@ -315,6 +321,10 @@ export const CROPS: Record<string, CropDefinition> = {
     seedCost: 0,
     rarity: CropRarity.UNCOMMON,
     seedSource: 'friendship',
+    dualHarvest: {
+      flowerOption: { label: 'Pick Flowers', icon: '🌻', color: '#eab308', cropYield: 1, seedYield: 0 },
+      seedOption: { label: 'Harvest Seeds', icon: '🌰', color: '#92400e', cropYield: 0, seedYield: 6 },
+    },
   },
 
   // Tomatoes - Spring planting (moved from shop to friendship)

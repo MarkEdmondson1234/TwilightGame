@@ -585,6 +585,16 @@ export function handleFarmAction(
         farmActionTaken = true;
       }
     } else if (plotTileType === TileType.SOIL_READY) {
+      // Check for dual-harvest crops (e.g. sunflower) - require click interaction for choice
+      const readyPlot = farmManager.getPlot(currentMapId, position);
+      const readyCrop = readyPlot?.cropType ? getCrop(readyPlot.cropType) : null;
+      if (readyCrop?.dualHarvest) {
+        return {
+          handled: false,
+          message: 'Click the crop to choose how to harvest',
+          messageType: 'info',
+        };
+      }
       // Harvest ready crop (works with any tool - no need to switch to hand)
       const result = farmManager.harvestCrop(currentMapId, position);
       if (result) {
@@ -1761,6 +1771,8 @@ export type InteractionType =
   | 'farm_plant'
   | 'farm_water'
   | 'farm_harvest'
+  | 'farm_harvest_flowers'
+  | 'farm_harvest_seeds'
   | 'farm_clear'
   | 'harvest_strawberry'
   | 'harvest_blackberry'
@@ -2300,16 +2312,81 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
 
     // Harvest crop
     if (plotTileType === TileType.SOIL_READY) {
-      interactions.push({
-        type: 'farm_harvest',
-        label: 'Harvest Crop',
-        icon: '🌾',
-        color: '#eab308',
-        execute: () => {
-          const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
-          onFarmAction?.(farmResult);
-        },
-      });
+      const readyPlot = farmManager.getPlot(currentMapId, tilePos);
+      const readyCrop = readyPlot?.cropType ? getCrop(readyPlot.cropType) : null;
+
+      if (readyCrop?.dualHarvest) {
+        // Dual-harvest crop: show two options in radial menu
+        const dh = readyCrop.dualHarvest;
+
+        interactions.push({
+          type: 'farm_harvest_flowers',
+          label: dh.flowerOption.label,
+          icon: dh.flowerOption.icon,
+          color: dh.flowerOption.color,
+          execute: () => {
+            const result = farmManager.harvestCropWithMode(currentMapId, position, 'flowers');
+            if (result) {
+              const crop = getCrop(result.cropId);
+              if (crop) {
+                const qualityMultiplier =
+                  result.quality === 'excellent' ? 2.0 : result.quality === 'good' ? 1.5 : 1.0;
+                const totalGold = Math.floor(crop.sellPrice * result.yield * qualityMultiplier);
+                gameState.addGold(totalGold);
+                const inventoryData = inventoryManager.getInventoryData();
+                characterData.saveInventory(inventoryData.items, inventoryData.tools);
+                const qualityStr =
+                  result.quality !== 'normal'
+                    ? ` (${result.quality} quality, ${qualityMultiplier}x gold!)`
+                    : '';
+                console.log(
+                  `[Action] Picked ${result.yield}x ${crop.displayName}${qualityStr} for ${totalGold} gold`
+                );
+              }
+              onFarmAnimation?.('harvest', position);
+              farmManager.updateAllPlots();
+              characterData.saveFarmPlots(farmManager.getAllPlots());
+              onFarmAction?.({ handled: true });
+            }
+          },
+        });
+
+        interactions.push({
+          type: 'farm_harvest_seeds',
+          label: dh.seedOption.label,
+          icon: dh.seedOption.icon,
+          color: dh.seedOption.color,
+          execute: () => {
+            const result = farmManager.harvestCropWithMode(currentMapId, position, 'seeds');
+            if (result) {
+              const crop = getCrop(result.cropId);
+              if (crop) {
+                console.log(
+                  `[Action] Harvested ${result.seedsDropped}x ${crop.displayName} Seeds`
+                );
+              }
+              const inventoryData = inventoryManager.getInventoryData();
+              characterData.saveInventory(inventoryData.items, inventoryData.tools);
+              onFarmAnimation?.('harvest', position);
+              farmManager.updateAllPlots();
+              characterData.saveFarmPlots(farmManager.getAllPlots());
+              onFarmAction?.({ handled: true });
+            }
+          },
+        });
+      } else {
+        // Normal single-harvest crop
+        interactions.push({
+          type: 'farm_harvest',
+          label: 'Harvest Crop',
+          icon: '🌾',
+          color: '#eab308',
+          execute: () => {
+            const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+            onFarmAction?.(farmResult);
+          },
+        });
+      }
     }
 
     // Clear dead crop (works with any tool)

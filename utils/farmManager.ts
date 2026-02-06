@@ -534,6 +534,93 @@ class FarmManager {
   }
 
   /**
+   * Harvest a dual-harvest crop in a specific mode (flowers or seeds).
+   * Used for crops like sunflowers that offer a choice between picking flowers or harvesting seeds.
+   */
+  harvestCropWithMode(
+    mapId: string,
+    position: Position,
+    mode: 'flowers' | 'seeds'
+  ): {
+    cropId: string;
+    yield: number;
+    seedsDropped: number;
+    quality: 'normal' | 'good' | 'excellent';
+  } | null {
+    const plot = this.getPlot(mapId, position);
+    if (!plot || plot.state !== FarmPlotState.READY || !plot.cropType) {
+      return null;
+    }
+
+    const crop = getCrop(plot.cropType);
+    if (!crop || !crop.dualHarvest) {
+      return null;
+    }
+
+    const quality = plot.quality;
+    const dh = crop.dualHarvest;
+
+    let cropYield = 0;
+    let seedsDropped = 0;
+
+    if (mode === 'flowers') {
+      cropYield = dh.flowerOption.cropYield;
+      seedsDropped = dh.flowerOption.seedYield;
+    } else {
+      cropYield = dh.seedOption.cropYield;
+      // Respect abundantHarvest potion: give max seeds if active
+      seedsDropped = plot.abundantHarvest
+        ? Math.max(dh.seedOption.seedYield, crop.seedDropMax)
+        : dh.seedOption.seedYield;
+    }
+
+    // Add items to inventory
+    if (cropYield > 0) {
+      const cropItemId = getCropItemId(plot.cropType);
+      inventoryManager.addItem(cropItemId, cropYield);
+    }
+    if (seedsDropped > 0) {
+      const seedItemId = getSeedItemId(plot.cropType);
+      inventoryManager.addItem(seedItemId, seedsDropped);
+    }
+
+    // Reset plot to fallow
+    const gameTime = TimeManager.getCurrentTime();
+    const now = Date.now();
+    const updatedPlot: FarmPlot = {
+      ...plot,
+      state: FarmPlotState.FALLOW,
+      cropType: null,
+      plantedAtDay: null,
+      plantedAtHour: null,
+      lastWateredDay: null,
+      lastWateredHour: null,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
+      plantedAtTimestamp: null,
+      lastWateredTimestamp: null,
+      stateChangedAtTimestamp: now,
+      quality: 'normal',
+      fertiliserApplied: false,
+    };
+
+    this.registerPlot(updatedPlot);
+    if (DEBUG.FARM) {
+      const qualityStr = quality !== 'normal' ? ` (${quality} quality)` : '';
+      console.log(
+        `[FarmManager] Dual-harvest (${mode}): ${cropYield}x ${crop.displayName} + ${seedsDropped}x seeds${qualityStr} at ${position.x},${position.y}`
+      );
+    }
+
+    return {
+      cropId: plot.cropType,
+      yield: cropYield,
+      seedsDropped,
+      quality,
+    };
+  }
+
+  /**
    * Clear a dead crop (returns plot to fallow state)
    */
   clearDeadCrop(mapId: string, position: Position): boolean {
