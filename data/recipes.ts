@@ -221,6 +221,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultQuantity: 3,
     friendshipValue: 25,
     unlockRequirement: 'french_toast',
+    image: cookingAssets.crepes,
     instructions: [
       'Scrape the vanilla seeds from the pod and mix it with the sugar. Whisk all the ingredients together in a bowl - make sure there are no lumps.',
       'Heat up a pan and melt most of the butter in it. Slowly add it to the batter whilst whisking.',
