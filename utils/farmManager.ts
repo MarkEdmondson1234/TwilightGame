@@ -524,6 +524,8 @@ class FarmManager {
         `[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr} + ${seedsDropped}x seeds at ${position.x},${position.y}`
       );
     }
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
+    eventBus.emit(GameEvent.FARM_CROP_HARVESTED, { mapId, cropId: plot.cropType, position: plot.position });
 
     return {
       cropId: plot.cropType,
@@ -611,6 +613,8 @@ class FarmManager {
         `[FarmManager] Dual-harvest (${mode}): ${cropYield}x ${crop.displayName} + ${seedsDropped}x seeds${qualityStr} at ${position.x},${position.y}`
       );
     }
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
+    eventBus.emit(GameEvent.FARM_CROP_HARVESTED, { mapId, cropId: plot.cropType, position: plot.position });
 
     return {
       cropId: plot.cropType,

@@ -158,6 +158,10 @@ export async function initializeGame(
   // Update farm states on startup (uses TimeManager internally)
   farmManager.updateAllPlots();
 
+  // Initialise witch garden quest tracking (listens for harvests on witch_hut)
+  const { initWitchGardenTracking } = await import('../data/quests/witchGardenQuest');
+  initWitchGardenTracking();
+
   // Initialize seasonal NPC locations (must be called after all maps are registered)
   npcManager.initializeSeasonalLocations();
   console.log(`[App] Initialised seasonal NPC locations`);

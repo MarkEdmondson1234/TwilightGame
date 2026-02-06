@@ -13,3 +13,6 @@ export * from './gardeningQuest';
 
 // Fairy Bluebells Quest (collect items for Elias at Good Friends tier)
 export * from './fairyBluebellsQuest';
+
+// Witch Garden Quest (Part 2 of Witch's Apprentice - grow crops in witch's garden)
+export * from './witchGardenQuest';

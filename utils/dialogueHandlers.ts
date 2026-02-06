@@ -16,6 +16,12 @@ import {
   markSeasonCompleted,
 } from '../data/quests/gardeningQuest';
 import { startFairyBluebellsQuest } from '../data/quests/fairyBluebellsQuest';
+import {
+  startWitchGardenQuest,
+  getGardenCropsGrown,
+  getWitchGardenStage,
+  WITCH_GARDEN_STAGES,
+} from '../data/quests/witchGardenQuest';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -64,6 +70,12 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   // Handle Elias's gardening quest and fairy bluebells quest
   if (npcId === 'village_elder') {
     const redirect = handleEliasQuestActions(nodeId);
+    if (redirect) return redirect;
+  }
+
+  // Handle witch garden quest
+  if (npcId === 'witch') {
+    const redirect = handleWitchQuestActions(nodeId);
     if (redirect) return redirect;
   }
 }
@@ -119,6 +131,39 @@ function handleAltheaQuestItems(nodeId: string): void {
       characterData.saveInventory(inventoryData.items, inventoryData.tools);
       console.log('[dialogueHandlers] 🪶 Althea gave you the feather duster!');
     }
+  }
+}
+
+/**
+ * Handle witch garden quest actions
+ * - Starts quest when player accepts the garden challenge
+ * - Redirects greeting to garden progress when quest is active
+ */
+function handleWitchQuestActions(nodeId: string): string | void {
+  // Start the quest when accepting via dialogue
+  if (nodeId === 'apprentice_accepted') {
+    startWitchGardenQuest();
+    return;
+  }
+
+  // When the quest is active, the witch proactively comments on garden progress
+  // instead of showing her normal greeting
+  if (nodeId === 'greeting') {
+    const stage = getWitchGardenStage();
+
+    // No quest yet — show normal greeting
+    if (stage === WITCH_GARDEN_STAGES.NOT_STARTED) return;
+
+    // Garden phase complete — show congratulations
+    if (stage >= WITCH_GARDEN_STAGES.GARDEN_COMPLETE) {
+      return 'garden_complete';
+    }
+
+    // Quest active — show progress based on unique crops harvested
+    const cropsGrown = getGardenCropsGrown().length;
+    if (cropsGrown >= 2) return 'garden_progress_2';
+    if (cropsGrown >= 1) return 'garden_progress_1';
+    return 'garden_progress_0';
   }
 }
 
@@ -193,8 +238,6 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
  * - Fairy Bluebells quest: accept
  */
 function handleEliasQuestActions(nodeId: string): string | void {
-  console.log(`[dialogueHandlers] 🔍 Elias quest handler: nodeId=${nodeId}, questActive=${isGardeningQuestActive()}, currentTask=${getCurrentSeasonTask()}`);
-
   // Auto-redirect to quest check when greeting Elias with an active quest
   if (nodeId === 'greeting' && isGardeningQuestActive()) {
     return 'garden_task_check';

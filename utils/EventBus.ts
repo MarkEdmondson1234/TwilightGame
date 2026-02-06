@@ -29,6 +29,7 @@ export enum GameEvent {
   // Farm events
   FARM_PLOT_CHANGED = 'farm:plot_changed',
   FARM_CROP_GREW = 'farm:crop_grew',
+  FARM_CROP_HARVESTED = 'farm:crop_harvested',
 
   // NPC events
   NPC_MOVED = 'npc:moved',
@@ -68,6 +69,11 @@ export interface EventPayloads {
   [GameEvent.FARM_CROP_GREW]: {
     position: Position;
     stage: number;
+  };
+  [GameEvent.FARM_CROP_HARVESTED]: {
+    mapId: string;
+    cropId: string;
+    position: Position;
   };
   [GameEvent.NPC_MOVED]: {
     npcId: string;

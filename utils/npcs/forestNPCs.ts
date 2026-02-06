@@ -223,7 +223,7 @@ export function createWitchWolfNPC(
         responses: [
           { text: 'Who are you?', nextId: 'introduction' },
           { text: 'What are you brewing?', nextId: 'cauldron' },
-          { text: 'Could you teach me magic?', nextId: 'apprentice' },
+          { text: 'Could you teach me magic?', nextId: 'apprentice', hiddenIfQuestStarted: 'witch_garden' },
           { text: 'Just passing through.' },
         ],
       },
@@ -256,9 +256,11 @@ export function createWitchWolfNPC(
           { text: 'Fascinating!' },
         ],
       },
+      // --- Pre-quest apprentice dialogue (hidden once quest starts) ---
       {
         id: 'apprentice',
         text: '*The witch pauses, studying you carefully.* "An apprentice? I haven\'t taken one in... years. Decades, perhaps. The last one didn\'t have the patience for it." *She stirs her cauldron thoughtfully.* "Magic isn\'t learned from books alone, you understand. It requires dedication. Hard work."',
+        hiddenIfQuestStarted: 'witch_garden',
         responses: [
           { text: 'I\'m willing to work hard.', nextId: 'apprentice_interest' },
           { text: 'What would it involve?', nextId: 'apprentice_details' },
@@ -267,7 +269,8 @@ export function createWitchWolfNPC(
       },
       {
         id: 'apprentice_interest',
-        text: '"Mmm, you say that now." *She smiles slightly.* "Tell you what - if you\'re serious about learning, prove yourself first. I need a proper kitchen garden. Grow me at least three different crops. Show me you can nurture living things. Then we\'ll talk about magic."',
+        text: '"Mmm, you say that now." *She smiles slightly.* "Tell you what - if you\'re serious about learning, prove yourself first. I need a proper kitchen garden. Grow me at least three different crops in those beds outside. Show me you can nurture living things. Then we\'ll talk about magic."',
+        hiddenIfQuestStarted: 'witch_garden',
         seasonalText: {
           spring: '"Spring is the perfect time to start a garden. Plant well, tend carefully, and show me what you can grow."',
           summer: '"Summer growing is straightforward - water regularly, mind the weeds. If you can manage that, perhaps you have potential."',
@@ -275,13 +278,14 @@ export function createWitchWolfNPC(
           winter: '"Winter is challenging for growing, but there are ways. Prove you can work with nature, not against it."',
         },
         responses: [
-          { text: 'I\'ll do it!', nextId: 'apprentice_accepted' },
+          { text: 'I\'ll do it!', nextId: 'apprentice_accepted', startsQuest: 'witch_garden' },
           { text: 'What else do you need?', nextId: 'pickled_onions' },
         ],
       },
       {
         id: 'apprentice_details',
         text: '"Magic is about understanding the world - the plants, the seasons, the way energy flows through all living things. You\'d learn to brew potions, to coax magic from herbs, to read the patterns in nature. Eventually, if you proved worthy, I might teach you to cast proper spells."',
+        hiddenIfQuestStarted: 'witch_garden',
         responses: [
           { text: 'That sounds wonderful!', nextId: 'apprentice_interest' },
           { text: 'I need to think about it.' },
@@ -289,15 +293,76 @@ export function createWitchWolfNPC(
       },
       {
         id: 'apprentice_accepted',
-        text: '"Good! I look forward to seeing what you can grow. Shadow here will keep an eye on your progress." *The wolf huffs, as if amused.* "When you\'ve established your garden, come back and we\'ll begin your lessons."',
+        text: '"Good! I look forward to seeing what you can grow. The garden beds are just outside — Shadow here will keep an eye on your progress." *The wolf huffs, as if amused.* "When you\'ve established your garden, come back and we\'ll begin your lessons."',
+        hiddenIfQuestStarted: 'witch_garden',
       },
       {
         id: 'pickled_onions',
         text: '*The witch\'s eyes light up.* "Ah! Well, if you really want to impress me... I do love pickled onions in my sandwiches. Sharp, tangy, perfect. If you can make a proper batch, I\'ll know you\'re serious about learning the craft."',
+        hiddenIfQuestStarted: 'witch_garden',
         responses: [
-          { text: 'I\'ll bring you some!', nextId: 'apprentice_accepted' },
+          { text: 'I\'ll bring you some!', nextId: 'apprentice_accepted', startsQuest: 'witch_garden' },
           { text: 'Noted!' },
         ],
+      },
+      // --- Garden progress dialogue (visible while quest active, garden incomplete) ---
+      {
+        id: 'garden_progress_0',
+        text: '"You haven\'t started planting yet, dear. My garden has lovely soil — put it to good use! The beds are just outside, near the fairy ring." *She gestures towards the garden plots.* "Three different crops, remember. Show me some variety."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 1,
+        hiddenIfQuestCompleted: 'witch_garden',
+        responses: [
+          { text: 'I\'ll get planting!', maxQuestStage: 1 },
+          { text: 'What should I grow?', nextId: 'garden_advice' },
+        ],
+      },
+      {
+        id: 'garden_progress_1',
+        text: '"I see you\'ve grown one crop in my garden. That\'s a fine start, but I need to see more variety." *She stirs her cauldron thoughtfully.* "Two more different types, and you\'ll have proven yourself."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 1,
+        hiddenIfQuestCompleted: 'witch_garden',
+        responses: [
+          { text: 'I\'ll grow something different next!', maxQuestStage: 1 },
+          { text: 'Any suggestions?', nextId: 'garden_advice' },
+        ],
+      },
+      {
+        id: 'garden_progress_2',
+        text: '"Two different crops! You\'re nearly there." *The witch nods approvingly.* "Just one more type to prove your dedication. I can see you have a gift for nurturing things."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 1,
+        hiddenIfQuestCompleted: 'witch_garden',
+        responses: [
+          { text: 'Almost there!', maxQuestStage: 1 },
+        ],
+      },
+      {
+        id: 'garden_advice',
+        text: '"Grow whatever suits the season, dear. Tomatoes and peas in spring, carrots and corn in summer, onions in autumn. The important thing is variety — show me you understand that different plants need different care."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 1,
+        hiddenIfQuestCompleted: 'witch_garden',
+      },
+      // --- Garden complete dialogue (visible when 3+ unique crops harvested) ---
+      {
+        id: 'garden_complete',
+        text: '*The witch examines the garden beds with genuine admiration.* "Three different crops, all grown by your own hand. Well done, truly." *She turns to you, a warm smile on her face.* "You\'ve shown patience, care, and dedication. Perhaps you do have what it takes to learn the old ways."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 2,
+        hiddenIfQuestCompleted: 'witch_garden',
+        responses: [
+          { text: 'Does this mean you\'ll teach me?', nextId: 'garden_complete_accept' },
+          { text: 'Thank you, Juniper.' },
+        ],
+      },
+      {
+        id: 'garden_complete_accept',
+        text: '"It means you\'ve earned the right to try." *She reaches into her robes and pulls out a small, leather-bound book.* "Your first lessons begin now. But don\'t think the garden work is over — a good witch always tends her plants." *Shadow wags his tail approvingly.*',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 2,
+        hiddenIfQuestCompleted: 'witch_garden',
       },
       {
         id: 'magic_talk',
