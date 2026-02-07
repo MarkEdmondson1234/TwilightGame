@@ -26,7 +26,7 @@ export const CHARACTER_SPRITE_CONFIGS: Record<string, CharacterSpriteConfig> = {
     frameCounts: { up: 3, down: 3, left: 4, right: 4 },
   },
   character2: {
-    frameCounts: { up: 2, down: 2, left: 3, right: 3 },
+    frameCounts: { up: 2, down: 2, left: 4, right: 4 },
     directionScales: { left: 0.9, right: 0.9 },
   },
 };

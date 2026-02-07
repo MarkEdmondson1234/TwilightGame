@@ -87,7 +87,7 @@ const CHARACTER_SPRITE_CONFIGS: Record<string, CharacterSpriteConfig> = {
     frameCounts: { up: 3, down: 3, left: 4, right: 4 },
   },
   character2: {
-    frameCounts: { up: 2, down: 2, left: 3, right: 3 },
+    frameCounts: { up: 2, down: 2, left: 4, right: 4 },
   },
 };
 
@@ -258,9 +258,9 @@ describe('Sprite Frame Generation', () => {
   });
 
   describe('character2', () => {
-    it('should generate 3 frames for left direction', () => {
+    it('should generate 4 frames for left direction', () => {
       const frames = buildFramePaths('character2', 'left');
-      expect(frames).toHaveLength(3);
+      expect(frames).toHaveLength(4);
     });
 
     it('should generate 2 frames for up direction', () => {
