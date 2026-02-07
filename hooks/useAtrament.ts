@@ -8,6 +8,11 @@
 import { useEffect, useRef, useCallback, useState, type RefObject } from 'react';
 import Atrament, { type AtramentStroke, type AtramentMode } from 'atrament';
 
+/** A recorded stroke extended with the brush opacity that was active when drawn */
+export interface ExtendedStroke extends AtramentStroke {
+  opacity: number;
+}
+
 export interface UseAtramentConfig {
   /** Ref to the <canvas> element */
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -21,6 +26,8 @@ export interface UseAtramentConfig {
   weight: number;
   /** Current drawing mode */
   mode: 'draw' | 'erase';
+  /** Brush opacity 0-1 (default 1) */
+  opacity?: number;
 }
 
 export interface UseAtramentReturn {
@@ -38,11 +45,13 @@ export interface UseAtramentReturn {
 
 /**
  * Replay a recorded stroke onto an Atrament instance.
- * Temporarily sets the stroke's properties, draws each segment,
- * then restores the previous properties.
+ * Temporarily sets the stroke's properties (including per-stroke opacity),
+ * draws each segment, then restores the previous properties.
  */
-function replayStroke(atr: Atrament, stroke: AtramentStroke): void {
+function replayStroke(atr: Atrament, stroke: ExtendedStroke): void {
   if (stroke.segments.length === 0) return;
+
+  const ctx = atr.canvas.getContext('2d');
 
   // Save current properties
   const prevColor = atr.color;
@@ -50,13 +59,15 @@ function replayStroke(atr: Atrament, stroke: AtramentStroke): void {
   const prevMode = atr.mode;
   const prevSmoothing = atr.smoothing;
   const prevAdaptive = atr.adaptiveStroke;
+  const prevAlpha = ctx?.globalAlpha ?? 1;
 
-  // Apply stroke properties
+  // Apply stroke properties (including per-stroke opacity)
   atr.color = stroke.color;
   atr.weight = stroke.weight;
   atr.mode = stroke.mode as AtramentMode;
   atr.smoothing = stroke.smoothing;
   atr.adaptiveStroke = stroke.adaptiveStroke;
+  if (ctx) ctx.globalAlpha = stroke.opacity;
 
   const first = stroke.segments[0];
   atr.beginStroke(first.point.x, first.point.y);
@@ -76,15 +87,20 @@ function replayStroke(atr: Atrament, stroke: AtramentStroke): void {
   atr.mode = prevMode;
   atr.smoothing = prevSmoothing;
   atr.adaptiveStroke = prevAdaptive;
+  if (ctx) ctx.globalAlpha = prevAlpha;
 }
 
 export function useAtrament(config: UseAtramentConfig): UseAtramentReturn {
-  const { canvasRef, width, height, colour, weight, mode } = config;
+  const { canvasRef, width, height, colour, weight, mode, opacity = 1 } = config;
 
   const atrRef = useRef<Atrament | null>(null);
-  const strokesRef = useRef<AtramentStroke[]>([]);
+  const strokesRef = useRef<ExtendedStroke[]>([]);
+  const opacityRef = useRef(opacity);
   const [isReady, setIsReady] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+
+  // Keep opacity ref in sync so the strokerecorded callback always reads the latest value
+  opacityRef.current = opacity;
 
   // Initialise Atrament when canvas is available
   useEffect(() => {
@@ -103,9 +119,10 @@ export function useAtrament(config: UseAtramentConfig): UseAtramentReturn {
 
     atr.recordStrokes = true;
 
-    // Record strokes for undo
+    // Record strokes for undo — tag each with the current brush opacity
     atr.addEventListener('strokerecorded', ({ stroke }) => {
-      strokesRef.current.push(stroke);
+      const extended: ExtendedStroke = { ...stroke, opacity: opacityRef.current };
+      strokesRef.current.push(extended);
       setIsDirty(true);
     });
 
@@ -136,6 +153,14 @@ export function useAtrament(config: UseAtramentConfig): UseAtramentReturn {
     if (atrRef.current) atrRef.current.mode = mode;
   }, [mode]);
 
+  // Sync brush opacity via globalAlpha on the canvas context
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (ctx) ctx.globalAlpha = opacity;
+  }, [opacity, canvasRef]);
+
   const clear = useCallback(() => {
     if (!atrRef.current) return;
     atrRef.current.clear();
@@ -154,10 +179,14 @@ export function useAtrament(config: UseAtramentConfig): UseAtramentReturn {
     atr.recordStrokes = false;
     atr.clear();
 
-    // Replay all remaining strokes
+    // Replay all remaining strokes (each restores its own opacity)
     for (const stroke of strokesRef.current) {
       replayStroke(atr, stroke);
     }
+
+    // Restore current brush opacity after replay
+    const ctx = atr.canvas.getContext('2d');
+    if (ctx) ctx.globalAlpha = opacityRef.current;
 
     atr.recordStrokes = true;
     setIsDirty(strokesRef.current.length > 0);

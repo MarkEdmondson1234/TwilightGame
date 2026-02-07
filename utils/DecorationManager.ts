@@ -30,6 +30,7 @@ import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
 import { deletePaintingImage, loadPaintingImage } from './paintingImageService';
+import { PLAYER_SIZE } from '../constants';
 
 // ===== Types =====
 
@@ -48,6 +49,8 @@ export interface PaintingData {
   createdAt: number;
   /** Whether this is an uploaded image (vs procedural) */
   isUploaded: boolean;
+  /** Tile-based scale chosen by the player (defaults to 1.5 × PLAYER_SIZE) */
+  scale?: number;
 }
 
 export interface DecorationState {
@@ -83,7 +86,11 @@ class DecorationManagerClass {
     const saved = gameState.loadDecorationState();
     if (saved) {
       saved.craftedPaints.forEach((id) => this.craftedPaints.add(id));
-      saved.paintings.forEach((p) => this.paintings.set(p.id, p));
+      saved.paintings.forEach((p) => {
+        // Backward compat: paintings created before scale was added default to 1.5× character
+        if (p.scale == null) p.scale = 1.5 * PLAYER_SIZE;
+        this.paintings.set(p.id, p);
+      });
       this.hasEasel = saved.hasEasel ?? false;
 
       console.log(
@@ -104,14 +111,15 @@ class DecorationManagerClass {
   /**
    * Restore painting image URLs from localStorage/Firestore.
    * Paintings saved before Phase 4 may have stale blob: URLs.
+   * Also hydrates placed items that have a paintingId but no customImage.
    */
   private async hydratePaintingImages(): Promise<void> {
     let hydrated = 0;
+
+    // 1. Hydrate PaintingData entries
     for (const painting of this.paintings.values()) {
-      // Skip if already a data URL (persisted correctly)
       if (painting.imageUrl.startsWith('data:')) continue;
 
-      // Try to load from persistent storage
       const dataUrl = await loadPaintingImage(painting.id);
       if (dataUrl) {
         painting.imageUrl = dataUrl;
@@ -122,6 +130,37 @@ class DecorationManagerClass {
     if (hydrated > 0) {
       this.save();
       console.log(`[DecorationManager] Hydrated ${hydrated} painting image(s)`);
+    }
+
+    // 2. Hydrate placed items that have a paintingId but missing/stale customImage
+    const allPlaced = gameState.getState().placedItems;
+    let placedHydrated = 0;
+    for (const item of allPlaced) {
+      if (!item.paintingId) continue;
+      if (item.customImage?.startsWith('data:')) continue;
+
+      const painting = this.paintings.get(item.paintingId);
+      if (painting?.imageUrl.startsWith('data:')) {
+        item.customImage = painting.imageUrl;
+        // Also ensure frame style is set
+        if (!item.frameStyle && painting.paintIds.length > 0) {
+          const { getFrameStyle } = await import('./frameStyles');
+          const frame = getFrameStyle(painting.paintIds);
+          item.frameStyle = {
+            colour: frame.colour,
+            secondaryColour: frame.secondaryColour,
+            borderWidth: frame.borderWidth,
+            pattern: frame.pattern,
+          };
+        }
+        placedHydrated++;
+      }
+    }
+
+    if (placedHydrated > 0) {
+      // Trigger re-render and save by emitting event
+      eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: '', action: 'update' });
+      console.log(`[DecorationManager] Hydrated ${placedHydrated} placed painting(s)`);
     }
   }
 
@@ -258,6 +297,8 @@ class DecorationManagerClass {
     storageKey: string;
     paintIds: string[];
     isUploaded: boolean;
+    /** Character-relative scale (0.25–2.0). Converted to tile scale internally. */
+    scale?: number;
   }): CraftResult & { paintingId?: string } {
     // Check canvas
     if (!inventoryManager.hasItem('blank_canvas', 1)) {
@@ -297,6 +338,7 @@ class DecorationManagerClass {
       colours: params.paintIds.map((id) => colourMap[id] ?? '#888888'),
       createdAt: Date.now(),
       isUploaded: params.isUploaded,
+      scale: (params.scale ?? 1.5) * PLAYER_SIZE,
     };
 
     this.paintings.set(painting.id, painting);
@@ -347,6 +389,14 @@ class DecorationManagerClass {
    */
   getAllPaintings(): PaintingData[] {
     return Array.from(this.paintings.values());
+  }
+
+  /**
+   * Get the next painting that hasn't been placed on the map yet.
+   * @param placedPaintingIds Set of painting IDs already placed as PlacedItems
+   */
+  getNextUnplacedPainting(placedPaintingIds: Set<string>): PaintingData | undefined {
+    return Array.from(this.paintings.values()).find((p) => !placedPaintingIds.has(p.id));
   }
 
   /**

@@ -2,13 +2,14 @@
  * DecorationCraftingUI - Modal overlay for the decoration crafting system
  *
  * Tabs:
- * - Paintings: upload image, select frame paints, craft framed painting
  * - Flower Arrangements: select vase + flowers, craft arrangement
  * - Potted Plants: select pot + crop, craft potted plant
  * - Craft Paints: craft paint pots from forageables + honey/water
+ *
+ * Note: Painting creation is handled by PaintingEaselUI (the painting easel).
  */
 
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { getItem } from '../data/items';
 import {
   PAINT_RECIPES,
@@ -17,53 +18,23 @@ import {
   POTTED_PLANT_RECIPES,
   DecorationRecipe,
 } from '../data/decorationRecipes';
-import { decorationManager, CraftResult } from '../utils/DecorationManager';
+import { decorationManager } from '../utils/DecorationManager';
 import { inventoryManager } from '../utils/inventoryManager';
-import { ColourPaletteDisplay } from './ColourPaletteDisplay';
-import { getFrameStyle, getFrameCSS } from '../utils/frameStyles';
-import {
-  validateImageFile,
-  processImageForStorage,
-  savePaintingImage,
-} from '../utils/paintingImageService';
 import { Z_MODAL, zClass } from '../zIndex';
 
-type CraftingTab = 'paintings' | 'arrangements' | 'plants' | 'paints';
+type CraftingTab = 'arrangements' | 'plants' | 'paints';
 
 interface DecorationCraftingUIProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Callback when image upload is needed (Phase 4) */
-  onUploadImage?: () => Promise<{ url: string; storageKey: string } | null>;
 }
 
-const DecorationCraftingUI: React.FC<DecorationCraftingUIProps> = ({
-  isOpen,
-  onClose,
-  onUploadImage,
-}) => {
-  const [activeTab, setActiveTab] = useState<CraftingTab>('paintings');
-  const [selectedPaints, setSelectedPaints] = useState<string[]>([]);
-  const [paintingName, setPaintingName] = useState('');
-  const [uploadedImage, setUploadedImage] = useState<{
-    url: string;
-    storageKey: string;
-  } | null>(null);
+const DecorationCraftingUI: React.FC<DecorationCraftingUIProps> = ({ isOpen, onClose }) => {
+  const [activeTab, setActiveTab] = useState<CraftingTab>('arrangements');
   const [resultMessage, setResultMessage] = useState<string | null>(null);
   const [, setForceUpdate] = useState(0);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const forceRerender = useCallback(() => setForceUpdate((n) => n + 1), []);
-
-  const allPaintColours = useMemo(() => decorationManager.getAllPaintColours(), []);
-
-  const handleTogglePaint = useCallback((paintId: string) => {
-    setSelectedPaints((prev) => {
-      if (prev.includes(paintId)) return prev.filter((id) => id !== paintId);
-      if (prev.length >= 2) return prev;
-      return [...prev, paintId];
-    });
-  }, []);
 
   const handleCraftPaint = useCallback(
     (recipeId: string) => {
@@ -92,89 +63,9 @@ const DecorationCraftingUI: React.FC<DecorationCraftingUIProps> = ({
     [forceRerender]
   );
 
-  const handleUploadClick = useCallback(async () => {
-    if (onUploadImage) {
-      const result = await onUploadImage();
-      if (result) {
-        setUploadedImage(result);
-      }
-    } else {
-      // Fallback: use file input directly (Phase 4 will provide proper handler)
-      fileInputRef.current?.click();
-    }
-  }, [onUploadImage]);
-
-  const handleFileSelected = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Reset the input immediately
-    if (fileInputRef.current) fileInputRef.current.value = '';
-
-    // Validate file type and size
-    const validation = validateImageFile(file);
-    if (!validation.valid) {
-      setResultMessage(validation.error ?? 'Invalid image.');
-      setTimeout(() => setResultMessage(null), 3000);
-      return;
-    }
-
-    // Resize and compress to base64 data URL
-    try {
-      setResultMessage('Processing image...');
-      const dataUrl = await processImageForStorage(file);
-      setUploadedImage({ url: dataUrl, storageKey: '' });
-      setResultMessage(null);
-    } catch (err) {
-      setResultMessage('Failed to process image. Please try another.');
-      setTimeout(() => setResultMessage(null), 3000);
-    }
-  }, []);
-
-  const handleCreatePainting = useCallback(async () => {
-    if (!uploadedImage) {
-      setResultMessage('Upload a picture first.');
-      setTimeout(() => setResultMessage(null), 3000);
-      return;
-    }
-    if (!paintingName.trim()) {
-      setResultMessage('Give your painting a name.');
-      setTimeout(() => setResultMessage(null), 3000);
-      return;
-    }
-
-    const result = decorationManager.createPainting({
-      name: paintingName.trim(),
-      imageUrl: uploadedImage.url,
-      storageKey: '', // Will be set to paintingId by manager
-      paintIds: selectedPaints,
-      isUploaded: true,
-    });
-
-    if (result.success && result.paintingId) {
-      // Persist image to localStorage + Firestore
-      await savePaintingImage(result.paintingId, uploadedImage.url, paintingName.trim());
-    }
-
-    setResultMessage(result.message);
-    if (result.success) {
-      setUploadedImage(null);
-      setPaintingName('');
-      setSelectedPaints([]);
-      forceRerender();
-    }
-    setTimeout(() => setResultMessage(null), 3000);
-  }, [uploadedImage, paintingName, selectedPaints, forceRerender]);
-
   if (!isOpen) return null;
 
-  const frameStyle = getFrameStyle(selectedPaints);
-  const frameCSS = getFrameCSS(frameStyle);
-  const hasCanvas = inventoryManager.hasItem('blank_canvas', 1);
-  const hasPaintsSelected = selectedPaints.every((id) => inventoryManager.hasItem(id, 1));
-
   const tabs: { id: CraftingTab; label: string; icon: string }[] = [
-    { id: 'paintings', label: 'Paintings', icon: '🖼️' },
     { id: 'arrangements', label: 'Flowers', icon: '💐' },
     { id: 'plants', label: 'Plants', icon: '🪴' },
     { id: 'paints', label: 'Craft Paints', icon: '🎨' },
@@ -272,163 +163,6 @@ const DecorationCraftingUI: React.FC<DecorationCraftingUIProps> = ({
         )}
 
         {/* Tab Content */}
-        {activeTab === 'paintings' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Image upload area */}
-            <div
-              style={{
-                display: 'flex',
-                gap: '16px',
-                alignItems: 'flex-start',
-              }}
-            >
-              {/* Preview */}
-              <div
-                style={{
-                  width: '150px',
-                  height: '150px',
-                  background: '#1a1408',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  overflow: 'hidden',
-                  ...frameCSS,
-                }}
-              >
-                {uploadedImage ? (
-                  <img
-                    src={uploadedImage.url}
-                    alt="Painting preview"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                    }}
-                  />
-                ) : (
-                  <span
-                    style={{ color: '#555', fontSize: '12px', textAlign: 'center', padding: '8px' }}
-                  >
-                    Upload a picture to preview
-                  </span>
-                )}
-              </div>
-
-              {/* Controls */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                <button
-                  onClick={handleUploadClick}
-                  style={{
-                    padding: '10px',
-                    background: '#4a6a3a',
-                    border: '2px solid #6a8a5a',
-                    borderRadius: '8px',
-                    color: '#e8d5b7',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                  }}
-                >
-                  📷 Upload Picture
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  onChange={handleFileSelected}
-                  style={{ display: 'none' }}
-                />
-
-                <input
-                  type="text"
-                  placeholder="Name your painting..."
-                  value={paintingName}
-                  onChange={(e) => setPaintingName(e.target.value.slice(0, 30))}
-                  maxLength={30}
-                  style={{
-                    padding: '8px',
-                    background: '#1a1408',
-                    border: '1px solid #5a4a3a',
-                    borderRadius: '6px',
-                    color: '#e8d5b7',
-                    fontSize: '14px',
-                  }}
-                />
-
-                <div style={{ fontSize: '12px', color: '#888' }}>
-                  Frame style: {frameStyle.displayName}
-                </div>
-              </div>
-            </div>
-
-            {/* Colour palette */}
-            <ColourPaletteDisplay
-              colours={allPaintColours}
-              selectedPaints={selectedPaints}
-              onTogglePaint={handleTogglePaint}
-              maxSelection={2}
-            />
-
-            {/* Cost & craft button */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '12px',
-                background: '#1a1408',
-                borderRadius: '8px',
-              }}
-            >
-              <div style={{ fontSize: '13px' }}>
-                <div style={{ color: hasCanvas ? '#8a8' : '#a66' }}>
-                  {hasCanvas ? '✓' : '✗'} Blank Canvas
-                </div>
-                {selectedPaints.map((id) => {
-                  const has = inventoryManager.hasItem(id, 1);
-                  const item = getItem(id);
-                  return (
-                    <div key={id} style={{ color: has ? '#8a8' : '#a66' }}>
-                      {has ? '✓' : '✗'} {item?.displayName ?? id}
-                    </div>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={handleCreatePainting}
-                disabled={
-                  !uploadedImage ||
-                  !paintingName.trim() ||
-                  !hasCanvas ||
-                  !hasPaintsSelected ||
-                  selectedPaints.length === 0
-                }
-                style={{
-                  padding: '12px 20px',
-                  background: '#4a6a3a',
-                  border: '2px solid #6a8a5a',
-                  borderRadius: '8px',
-                  color: '#e8d5b7',
-                  cursor: 'pointer',
-                  fontSize: '15px',
-                  opacity:
-                    !uploadedImage ||
-                    !paintingName.trim() ||
-                    !hasCanvas ||
-                    !hasPaintsSelected ||
-                    selectedPaints.length === 0
-                      ? 0.5
-                      : 1,
-                }}
-              >
-                🎨 Create Painting
-              </button>
-            </div>
-          </div>
-        )}
-
         {activeTab === 'arrangements' && (
           <RecipeList
             recipes={Object.values(FLOWER_ARRANGEMENT_RECIPES)}

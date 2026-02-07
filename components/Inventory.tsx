@@ -220,11 +220,14 @@ const Inventory: React.FC<InventoryProps> = ({
                   {item && (
                     <>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        {item.icon.startsWith('/') || item.icon.startsWith('http') ? (
+                        {item.icon.startsWith('/') ||
+                        item.icon.startsWith('http') ||
+                        item.icon.startsWith('data:') ? (
                           <img
                             src={item.icon}
                             alt={item.name}
-                            className="w-12 h-12 object-contain pixelated"
+                            className="w-12 h-12 object-contain"
+                            style={{ imageRendering: 'auto' }}
                           />
                         ) : (
                           <span className="text-3xl">{item.icon}</span>

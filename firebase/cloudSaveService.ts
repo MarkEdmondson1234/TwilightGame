@@ -36,6 +36,7 @@ import {
   QuestsSaveData,
   WorldSaveData,
   StatsSaveData,
+  DecorationSaveData,
   FIRESTORE_PATHS,
   SAVE_DATA_DOCS,
 } from './types';
@@ -214,6 +215,12 @@ class CloudSaveService {
     };
     batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'stats')), statsData);
 
+    // Save decoration state (if exists)
+    if (state.decoration) {
+      const decorationData: DecorationSaveData = state.decoration;
+      batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'decoration')), decorationData);
+    }
+
     // Commit all writes atomically
     await batch.commit();
     console.log(`[CloudSave] Saved to slot ${slotId} successfully`);
@@ -241,6 +248,7 @@ class CloudSaveService {
       questsDoc,
       worldDoc,
       statsDoc,
+      decorationDoc,
     ] = await Promise.all([
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'character'))),
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'inventory'))),
@@ -251,6 +259,7 @@ class CloudSaveService {
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'quests'))),
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'world'))),
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'stats'))),
+      getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'decoration'))),
     ]);
 
     // Extract data with defaults
@@ -263,6 +272,9 @@ class CloudSaveService {
     const quests = questsDoc.data() as QuestsSaveData | undefined;
     const world = worldDoc.data() as WorldSaveData | undefined;
     const stats = statsDoc.data() as StatsSaveData | undefined;
+    const decorationData = decorationDoc.exists()
+      ? (decorationDoc.data() as DecorationSaveData)
+      : undefined;
 
     // Reconstruct GameState with defaults for missing data
     const gameState: GameState = {
@@ -321,6 +333,7 @@ class CloudSaveService {
       quests: quests || {},
       activePotionEffects: stats?.activePotionEffects || {},
       playerDisguise: stats?.playerDisguise || null,
+      decoration: decorationData || undefined,
     };
 
     console.log(`[CloudSave] Loaded from slot ${slotId} successfully`);

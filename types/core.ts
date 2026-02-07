@@ -174,6 +174,7 @@ export interface PlacedItem {
     borderWidth: number;
     pattern: 'solid' | 'gradient' | 'double' | 'filigree' | 'frosted';
   };
+  customScale?: number; // Per-instance tile scale (overrides itemDef.placedScale)
 }
 
 // Item placed on a desk surface

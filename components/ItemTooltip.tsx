@@ -24,11 +24,7 @@ interface ItemTooltipProps {
  * Wraps a component and shows a tooltip on hover
  * Tooltip appears near the cursor with item image and details
  */
-const ItemTooltip: React.FC<ItemTooltipProps> = ({
-  content,
-  children,
-  delay = 300,
-}) => {
+const ItemTooltip: React.FC<ItemTooltipProps> = ({ content, children, delay = 300 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -122,7 +118,10 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({
                 <img
                   src={content.image}
                   alt={content.name}
-                  className="w-32 h-32 object-contain pixelated"
+                  className="w-32 h-32 object-contain"
+                  style={{
+                    imageRendering: content.image.startsWith('data:') ? 'auto' : 'pixelated',
+                  }}
                 />
               </div>
             )}

@@ -1177,6 +1177,7 @@ const App: React.FC = () => {
             items={gameState.getPlacedItems(currentMap.id)}
             cameraX={cameraX}
             cameraY={cameraY}
+            characterScale={currentMap.characterScale ?? 1.0}
           />
         )}
 

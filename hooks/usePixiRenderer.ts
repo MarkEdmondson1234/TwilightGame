@@ -275,9 +275,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         npcLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(npcLayer.getContainer());
 
-        // Create placed items layer
+        // Create placed items layer (depth-sorted with player/NPCs)
         const placedItemsLayer = new PlacedItemsLayer();
         placedItemsLayerRef.current = placedItemsLayer;
+        placedItemsLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(placedItemsLayer.getContainer());
 
         // Create shadow layer (conditional)
@@ -345,7 +346,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           );
 
           const placedItems = gameState.getPlacedItems(currentMapId);
-          placedItemsLayer.renderItems(placedItems, visibleRange);
+          placedItemsLayer.renderItems(placedItems, visibleRange, initialMap.characterScale ?? 1.0);
 
           if (shadowLayerRef.current) {
             const { hour, season } = TimeManager.getCurrentTime();
@@ -374,7 +375,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           tileLayer.updateCamera(cameraX, cameraY);
           depthSortedContainer.x = -cameraX;
           depthSortedContainer.y = -cameraY;
-          placedItemsLayer.updateCamera(cameraX, cameraY);
+          // placedItemsLayer camera handled by depthSortedContainer
           if (shadowLayerRef.current) {
             shadowLayerRef.current.updateCamera(cameraX, cameraY);
           }
@@ -538,7 +539,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // Render placed items
     if (placedItemsLayerRef.current) {
       const placedItems = gameState.getPlacedItems(currentMapId);
-      placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
+      placedItemsLayerRef.current.renderItems(placedItems, visibleRange, map.characterScale ?? 1.0);
     }
 
     // Render shadows
@@ -607,9 +608,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       if (tileLayerRef.current) {
         tileLayerRef.current.updateCamera(0, 0);
       }
-      if (placedItemsLayerRef.current) {
-        placedItemsLayerRef.current.updateCamera(0, 0);
-      }
+      // placedItemsLayer camera handled by depthSortedContainer
       if (shadowLayerRef.current) {
         shadowLayerRef.current.updateCamera(0, 0);
       }
@@ -622,9 +621,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         depthSortedContainerRef.current.x = -cameraX;
         depthSortedContainerRef.current.y = -cameraY;
       }
-      if (placedItemsLayerRef.current) {
-        placedItemsLayerRef.current.updateCamera(cameraX, cameraY);
-      }
+      // placedItemsLayer camera handled by depthSortedContainer
       if (shadowLayerRef.current) {
         shadowLayerRef.current.updateCamera(cameraX, cameraY);
       }
@@ -666,7 +663,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // Re-render placed items
     if (placedItemsLayerRef.current) {
       const placedItems = gameState.getPlacedItems(currentMapId);
-      placedItemsLayerRef.current.renderItems(placedItems, visibleRange);
+      placedItemsLayerRef.current.renderItems(placedItems, visibleRange, map.characterScale ?? 1.0);
     }
 
     // Re-render shadows

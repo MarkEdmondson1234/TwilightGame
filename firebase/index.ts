@@ -59,6 +59,7 @@ export type {
   QuestsSaveData,
   WorldSaveData,
   StatsSaveData,
+  DecorationSaveData,
   SyncMetadata,
   SharedConversationSummary,
   SharedWorldEvent,

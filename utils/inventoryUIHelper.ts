@@ -6,6 +6,8 @@
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
+import { decorationManager } from './DecorationManager';
+import { gameState } from '../GameState';
 
 /**
  * Runtime sprite registry for dynamically registered items
@@ -42,6 +44,19 @@ function getItemIcon(itemId: string): string {
 }
 
 /**
+ * Get unplaced paintings (paintings in inventory, not on the map).
+ * Compares DecorationManager paintings against placed items with paintingId.
+ */
+function getUnplacedPaintings() {
+  const allPaintings = decorationManager.getAllPaintings();
+  const placedItems = gameState.getState().placedItems;
+  const placedPaintingIds = new Set(
+    placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!)
+  );
+  return allPaintings.filter((p) => !placedPaintingIds.has(p.id));
+}
+
+/**
  * Convert inventory data from InventoryManager to UI format
  * Uses slotOrder to maintain user-defined item arrangement
  */
@@ -75,21 +90,51 @@ export function convertInventoryToUI(): UIInventoryItem[] {
 
   for (const itemId of slotOrder) {
     const itemData = itemMap.get(itemId);
-    if (itemData) {
-      result.push({
-        id: itemId,
-        name: itemData.itemDef.displayName,
-        icon: getItemIcon(itemId),
-        quantity: itemData.totalQuantity,
-        value: itemData.itemDef.sellPrice || 0,
-      });
+    if (!itemData) continue;
+
+    // Paintings: expand into individual slots with unique thumbnails
+    if (itemId === 'framed_painting') {
+      const unplaced = getUnplacedPaintings();
+      for (const painting of unplaced) {
+        result.push({
+          id: 'framed_painting',
+          name: painting.name,
+          icon: painting.imageUrl || getItemIcon(itemId),
+          quantity: 1,
+          value: itemData.itemDef.sellPrice || 0,
+        });
+      }
+      continue;
     }
+
+    result.push({
+      id: itemId,
+      name: itemData.itemDef.displayName,
+      icon: getItemIcon(itemId),
+      quantity: itemData.totalQuantity,
+      value: itemData.itemDef.sellPrice || 0,
+    });
   }
 
   // Add any items not in slotOrder (shouldn't happen, but safety net)
   for (const [itemId, { totalQuantity, itemDef }] of itemMap.entries()) {
     if (!slotOrder.includes(itemId)) {
       console.warn(`[InventoryUIHelper] Item ${itemId} not in slotOrder, appending`);
+
+      if (itemId === 'framed_painting') {
+        const unplaced = getUnplacedPaintings();
+        for (const painting of unplaced) {
+          result.push({
+            id: 'framed_painting',
+            name: painting.name,
+            icon: painting.imageUrl || getItemIcon(itemId),
+            quantity: 1,
+            value: itemDef.sellPrice || 0,
+          });
+        }
+        continue;
+      }
+
       result.push({
         id: itemId,
         name: itemDef.displayName,

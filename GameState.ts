@@ -1090,6 +1090,7 @@ class GameStateManager {
       colours: string[];
       createdAt: number;
       isUploaded: boolean;
+      scale?: number;
     }>;
     hasEasel: boolean;
   } | null {

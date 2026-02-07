@@ -25,6 +25,8 @@ import { WATER_CAN, TIMING, DEBUG } from '../constants';
 import { itemAssets, groceryAssets } from '../assets';
 import { getTierName } from './MagicEffects';
 import { ForageResult, handleForageAction } from './forageHandlers';
+import { decorationManager } from './DecorationManager';
+import { getFrameStyle } from './frameStyles';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -1027,7 +1029,20 @@ export interface GetInteractionsConfig {
   onRefillWaterCan?: (result: { success: boolean; message: string }) => void;
   onCollectResource?: (result: { success: boolean; message: string; itemId?: string }) => void;
   onDeskAction?: (action: DeskAction) => void;
-  onPlaceDecoration?: (result: { itemId: string; position: Position; image: string }) => void;
+  onPlaceDecoration?: (result: {
+    itemId: string;
+    position: Position;
+    image: string;
+    paintingId?: string;
+    customImage?: string;
+    frameStyle?: {
+      colour: string;
+      secondaryColour?: string;
+      borderWidth: number;
+      pattern: 'solid' | 'gradient' | 'double' | 'filigree' | 'frosted';
+    };
+    customScale?: number;
+  }) => void;
   onOpenDecorationWorkshop?: () => void;
   onOpenPaintingEasel?: () => void;
 }
@@ -1096,7 +1111,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     if (itemAtPosition.itemId === 'easel' && config.onOpenDecorationWorkshop) {
       interactions.push({
         type: 'open_workshop',
-        label: 'Paint',
+        label: 'Craft Workshop',
         icon: '🎨',
         color: '#8b5cf6',
         data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
@@ -1792,18 +1807,50 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           (item) => Math.floor(item.position.x) === tileX && Math.floor(item.position.y) === tileY
         );
         if (!existingItem) {
-          interactions.push({
-            type: 'place_decoration',
-            label: `Place ${itemDef.displayName}`,
-            icon: '🏠',
-            color: '#8b5cf6',
-            execute: () =>
-              onPlaceDecoration({
-                itemId: itemDef.id,
-                position: tilePos,
-                image: itemDef.image || '',
-              }),
-          });
+          // For paintings, look up the actual painting data (custom image + frame)
+          if (itemDef.id === 'framed_painting') {
+            const placedPaintingIds = new Set(
+              placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!)
+            );
+            const painting = decorationManager.getNextUnplacedPainting(placedPaintingIds);
+            if (painting) {
+              const frame = getFrameStyle(painting.paintIds);
+              interactions.push({
+                type: 'place_decoration',
+                label: `Place "${painting.name}"`,
+                icon: '🖼️',
+                color: '#8b5cf6',
+                execute: () =>
+                  onPlaceDecoration({
+                    itemId: itemDef.id,
+                    position: tilePos,
+                    image: itemDef.image || '',
+                    paintingId: painting.id,
+                    customImage: painting.imageUrl,
+                    frameStyle: {
+                      colour: frame.colour,
+                      secondaryColour: frame.secondaryColour,
+                      borderWidth: frame.borderWidth,
+                      pattern: frame.pattern,
+                    },
+                    customScale: painting.scale,
+                  }),
+              });
+            }
+          } else {
+            interactions.push({
+              type: 'place_decoration',
+              label: `Place ${itemDef.displayName}`,
+              icon: '🏠',
+              color: '#8b5cf6',
+              execute: () =>
+                onPlaceDecoration({
+                  itemId: itemDef.id,
+                  position: tilePos,
+                  image: itemDef.image || '',
+                }),
+            });
+          }
         }
       }
     }

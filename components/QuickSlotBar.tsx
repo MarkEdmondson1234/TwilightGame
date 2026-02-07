@@ -47,9 +47,10 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({ items, selectedSlot, onSlot
               className={`
                 relative rounded-lg transition-all
                 w-12 h-12 md:w-12 md:h-12 sm:w-10 sm:h-10
-                ${isSelected
-                  ? 'border-4 border-yellow-400 bg-yellow-900/60 shadow-lg shadow-yellow-500/50'
-                  : `border-2 bg-purple-900/40 border-purple-500 hover:bg-purple-800/60`
+                ${
+                  isSelected
+                    ? 'border-4 border-yellow-400 bg-yellow-900/60 shadow-lg shadow-yellow-500/50'
+                    : `border-2 bg-purple-900/40 border-purple-500 hover:bg-purple-800/60`
                 }
                 ${isEmpty ? 'opacity-50 cursor-default' : 'cursor-pointer'}
               `}
@@ -59,11 +60,14 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({ items, selectedSlot, onSlot
               {item && (
                 <>
                   <div className="absolute inset-0 flex items-center justify-center">
-                    {item.icon.startsWith('/') || item.icon.startsWith('http') ? (
+                    {item.icon.startsWith('/') ||
+                    item.icon.startsWith('http') ||
+                    item.icon.startsWith('data:') ? (
                       <img
                         src={item.icon}
                         alt={item.name}
-                        className="w-8 h-8 object-contain pixelated"
+                        className="w-8 h-8 object-contain"
+                        style={{ imageRendering: 'auto' }}
                       />
                     ) : (
                       <span className="text-2xl">{item.icon}</span>

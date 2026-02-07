@@ -173,6 +173,21 @@ export interface StatsSaveData {
   mushroomsCollected: number;
 }
 
+export interface DecorationSaveData {
+  craftedPaints: string[];
+  paintings: Array<{
+    id: string;
+    name: string;
+    imageUrl: string;
+    storageKey: string;
+    paintIds: string[];
+    colours: string[];
+    createdAt: number;
+    isUploaded: boolean;
+  }>;
+  hasEasel: boolean;
+}
+
 // ============================================
 // Shared Data Types (Multi-player features)
 // ============================================
@@ -265,7 +280,8 @@ export type SaveDataDocType =
   | 'friendships'
   | 'quests'
   | 'world'
-  | 'stats';
+  | 'stats'
+  | 'decoration';
 
 export const SAVE_DATA_DOCS: SaveDataDocType[] = [
   'character',
@@ -277,4 +293,5 @@ export const SAVE_DATA_DOCS: SaveDataDocType[] = [
   'quests',
   'world',
   'stats',
+  'decoration',
 ];

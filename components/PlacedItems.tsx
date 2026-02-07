@@ -9,6 +9,7 @@ interface PlacedItemsProps {
   items: PlacedItem[];
   cameraX: number;
   cameraY: number;
+  characterScale?: number;
 }
 
 /**
@@ -16,14 +17,20 @@ interface PlacedItemsProps {
  * Items blink/fade when approaching decay time (last 30 seconds)
  * Supports custom painting images with decorative frames
  */
-const PlacedItems: React.FC<PlacedItemsProps> = ({ items, cameraX, cameraY }) => {
+const PlacedItems: React.FC<PlacedItemsProps> = ({
+  items,
+  cameraX,
+  cameraY,
+  characterScale = 1.0,
+}) => {
   console.log('[PlacedItems] Rendering placed items:', items.length, items);
 
   return (
     <>
       {items.map((item) => {
         const itemDef = getItem(item.itemId);
-        const scale = itemDef?.placedScale ?? 1;
+        const baseScale = item.customScale ?? itemDef?.placedScale ?? 1;
+        const scale = baseScale * characterScale;
         const itemSize = TILE_SIZE * scale;
         const offset = (TILE_SIZE * (scale - 1)) / 2;
         const screenX = item.position.x * TILE_SIZE - cameraX - offset;
@@ -32,6 +39,7 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({ items, cameraX, cameraY }) =>
         const decayProgress = getDecayProgress(item);
         const imageSrc = item.customImage || item.image;
         const hasFrame = !!item.frameStyle;
+        const emojiIcon = !imageSrc && itemDef?.icon ? itemDef.icon : null;
 
         return (
           <div
@@ -53,19 +61,35 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({ items, cameraX, cameraY }) =>
                 : {}),
             }}
           >
-            <img
-              src={imageSrc}
-              alt={item.itemId}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                // Blinking animation for items about to decay (1 second cycle)
-                animation: showWarning ? 'blink 1s infinite' : 'none',
-                // Fade out based on decay progress
-                opacity: showWarning ? 0.6 : 1.0,
-              }}
-            />
+            {emojiIcon ? (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: `${itemSize * 0.6}px`,
+                  lineHeight: 1,
+                  opacity: showWarning ? 0.6 : 1.0,
+                  animation: showWarning ? 'blink 1s infinite' : 'none',
+                }}
+              >
+                {emojiIcon}
+              </div>
+            ) : (
+              <img
+                src={imageSrc}
+                alt={item.itemId}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'contain',
+                  animation: showWarning ? 'blink 1s infinite' : 'none',
+                  opacity: showWarning ? 0.6 : 1.0,
+                }}
+              />
+            )}
           </div>
         );
       })}

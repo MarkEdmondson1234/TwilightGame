@@ -368,7 +368,20 @@ export function useInteractionController(
       onOpenPaintingEasel: () => {
         openUI('paintingEasel');
       },
-      onPlaceDecoration: (result: { itemId: string; position: Position; image: string }) => {
+      onPlaceDecoration: (result: {
+        itemId: string;
+        position: Position;
+        image: string;
+        paintingId?: string;
+        customImage?: string;
+        frameStyle?: {
+          colour: string;
+          secondaryColour?: string;
+          borderWidth: number;
+          pattern: 'solid' | 'gradient' | 'double' | 'filigree' | 'frosted';
+        };
+        customScale?: number;
+      }) => {
         inventoryManager.removeItem(result.itemId, 1);
         gameState.addPlacedItem({
           id: `decoration_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -378,6 +391,14 @@ export function useInteractionController(
           image: result.image,
           timestamp: Date.now(),
           permanent: true,
+          // Painting-specific fields
+          ...(result.paintingId && {
+            paintingId: result.paintingId,
+            customImage: result.customImage,
+            frameStyle: result.frameStyle,
+          }),
+          // Per-instance scale (from painting size selection)
+          ...(result.customScale != null && { customScale: result.customScale }),
         });
         eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: currentMapId, action: 'add' });
         const itemDef = getItem(result.itemId);
