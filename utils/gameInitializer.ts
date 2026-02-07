@@ -69,6 +69,10 @@ export async function initializeGame(
   runSelfTests(); // Run sanity checks on startup
   initializeMaps(); // Initialize all maps and color schemes
 
+  // Initialize Firebase (safe — works without firebase package installed)
+  const { safeInitializeFirebase } = await import('../firebase/safe');
+  await safeInitializeFirebase();
+
   // Preload all assets early to prevent lag on first use
   await preloadAllAssets({
     onProgress: (loaded, total) => {

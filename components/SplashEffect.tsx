@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { TILE_SIZE } from '../constants';
+import { Z_PLACED_ITEMS } from '../zIndex';
 
 interface SplashEffectProps {
   /** Player screen X position */
@@ -14,11 +15,7 @@ interface SplashEffectProps {
  * Water splash effect that appears when refilling the watering can
  * Shows expanding water rings and droplets around the player
  */
-const SplashEffect: React.FC<SplashEffectProps> = ({
-  screenX,
-  screenY,
-  onComplete,
-}) => {
+const SplashEffect: React.FC<SplashEffectProps> = ({ screenX, screenY, onComplete }) => {
   // Animation duration in ms
   const DURATION = 500;
 
@@ -51,7 +48,7 @@ const SplashEffect: React.FC<SplashEffectProps> = ({
         left: centerX,
         top: centerY,
         pointerEvents: 'none',
-        zIndex: 150,
+        zIndex: Z_PLACED_ITEMS,
       }}
     >
       {/* Expanding ring */}

@@ -16,6 +16,7 @@ import { useState, useEffect } from 'react';
 import { TILE_SIZE, STAMINA } from '../constants';
 import { gameState } from '../GameState';
 import { eventBus, GameEvent } from '../utils/EventBus';
+import { Z_HUD } from '../zIndex';
 
 interface StaminaBarProps {
   playerX: number; // Player world X position (in tiles)
@@ -61,7 +62,7 @@ export function StaminaBar({
     width: 80, // 64 + 16 padding
     height: 24, // 8 + 16 padding
     cursor: 'pointer',
-    zIndex: 160, // Above player, below weather
+    zIndex: Z_HUD, // Above player, below weather
   };
 
   const containerStyle: React.CSSProperties = {
@@ -77,7 +78,7 @@ export function StaminaBar({
     transition: 'opacity 0.2s ease',
     opacity: shouldShow ? 1 : 0,
     pointerEvents: 'none', // Let hover area handle events
-    zIndex: 160,
+    zIndex: Z_HUD,
   };
 
   const fillStyle: React.CSSProperties = {

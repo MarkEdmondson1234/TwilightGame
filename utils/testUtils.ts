@@ -377,12 +377,16 @@ function validateInventorySystem(): void {
             console.error(`[Sanity Check] Crop "${cropId}" has no corresponding seed item`);
           }
 
-          const cropItemId = getCropItemId(cropId);
-          const cropItem = getItem(cropItemId);
-          if (!cropItem) {
-            console.error(
-              `[Sanity Check] Crop "${cropId}" has no corresponding crop item (expected "${cropItemId}")`
-            );
+          // Skip crop item check for decorative crops (harvestYield: 0)
+          const cropDef = CROPS[cropId];
+          if (cropDef.harvestYield > 0) {
+            const cropItemId = getCropItemId(cropId);
+            const cropItem = getItem(cropItemId);
+            if (!cropItem) {
+              console.error(
+                `[Sanity Check] Crop "${cropId}" has no corresponding crop item (expected "${cropItemId}")`
+              );
+            }
           }
         }
 

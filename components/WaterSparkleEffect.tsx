@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { TILE_SIZE } from '../constants';
+import { Z_PLACED_ITEMS } from '../zIndex';
 
 interface WaterSparkleEffectProps {
   /** Tile X position (in tile units) */
@@ -58,7 +59,7 @@ const WaterSparkleEffect: React.FC<WaterSparkleEffectProps> = ({
         left: screenX,
         top: screenY,
         pointerEvents: 'none',
-        zIndex: 150, // Above tiles, below player
+        zIndex: Z_PLACED_ITEMS, // Above tiles, below player
       }}
     >
       {sparkles.map((sparkle, index) => (

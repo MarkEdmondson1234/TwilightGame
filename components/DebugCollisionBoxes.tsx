@@ -2,6 +2,7 @@ import React from 'react';
 import { MapDefinition, Position, isTileSolid, CollisionType } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { SPRITE_METADATA, TILE_SIZE } from '../constants';
+import { Z_DEBUG_TILES } from '../zIndex';
 
 interface DebugCollisionBoxesProps {
   visible: boolean;
@@ -46,7 +47,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
                   top: y * tileSize + offsetY,
                   width: tileSize,
                   height: tileSize,
-                  zIndex: 500, // Above foreground layers (65), below modals (1000+)
+                  zIndex: Z_DEBUG_TILES, // Above foreground layers (65), below modals (1000+)
                   backgroundColor:
                     tileData.collisionType === CollisionType.DESK
                       ? 'rgba(168, 85, 247, 0.5)' // Purple = desk (item placement)
@@ -104,7 +105,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
                     width: collisionWidth * tileSize,
                     height: collisionHeight * tileSize,
                     backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                    zIndex: 500, // Above foreground layers (65), below modals (1000+)
+                    zIndex: Z_DEBUG_TILES, // Above foreground layers (65), below modals (1000+)
                   }}
                 >
                   <div className="text-red-500 font-bold text-xs bg-white px-1">
@@ -119,7 +120,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
                     top: y * tileSize,
                     width: 16,
                     height: 16,
-                    zIndex: 501, // Above collision boxes
+                    zIndex: Z_DEBUG_TILES + 1, // Above collision boxes
                   }}
                 >
                   {/* Crosshair for anchor point */}
@@ -142,7 +143,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
                     height: 4,
                     backgroundColor: '#4a90d9',
                     boxShadow: '0 0 6px rgba(74, 144, 217, 0.8)',
-                    zIndex: 502, // Above anchor points
+                    zIndex: Z_DEBUG_TILES + 2, // Above anchor points
                   }}
                 >
                   <div className="absolute -top-5 left-0 text-blue-400 font-bold text-xs bg-white/90 px-1 whitespace-nowrap">

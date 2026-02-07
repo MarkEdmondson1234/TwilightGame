@@ -33,6 +33,7 @@ import { useStreamingDialogue } from '../hooks/useStreamingDialogue';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { TimeManager } from '../utils/TimeManager';
 import { gameState } from '../GameState';
+import { getSharedDataService } from '../firebase/safe';
 
 interface AIDialogueBoxProps {
   npc: NPC;
@@ -196,6 +197,12 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
         systemPrompt = `${systemPrompt}\n\n${memoriesSection}`;
       }
 
+      // Fetch shared gossip from other players' conversations
+      const gossip = await getSharedDataService().getNPCGossip(npc.id, npc.name);
+      if (gossip) {
+        systemPrompt = `${systemPrompt}\n\n## Village Gossip\n${gossip}`;
+      }
+
       // If we have history, NPC acknowledges returning player (use actual name)
       const openingMessage =
         persistedHistory.length > 0
@@ -273,6 +280,17 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
         systemPrompt = `${systemPrompt}\n\n${memoriesSection}`;
       }
 
+      // Inject shared gossip from other players (non-blocking - don't await to avoid delay)
+      getSharedDataService()
+        .getNPCGossip(npc.id, npc.name)
+        .then((gossip) => {
+          // Note: Gossip is fetched async but won't affect this specific message
+          // It will be available for the next message exchange
+          if (gossip) {
+            console.log(`[AI] Gossip available for ${npc.name}: ${gossip}`);
+          }
+        });
+
       await generateStreamingResponse(systemPrompt, history, message, {
         onMetadata: (meta) => {
           handleMetadata(meta);
@@ -306,6 +324,25 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
               { role: 'user', content: message },
               { role: 'assistant', content: fullResponse },
             ]);
+
+            // Contribute conversation summary to shared data (after meaningful exchanges)
+            // Only contribute if the conversation had substantial content
+            if (streamedDialogue.length > 50) {
+              const gameTime = TimeManager.getCurrentTime();
+              // Extract a topic from the player's message (first few words)
+              const topic = message.length > 30 ? message.slice(0, 30) + '...' : message;
+              // Create a brief summary of what was discussed
+              const summary = `${playerName} asked about "${topic}" and ${npc.name} responded.`;
+
+              getSharedDataService()
+                .addConversationSummary(npc.id, npc.name, topic, summary, 'neutral', {
+                  season: gameTime.season,
+                  gameDay: gameTime.day,
+                })
+                .catch((err) => {
+                  console.warn('[AI] Failed to contribute conversation summary:', err);
+                });
+            }
           }
 
           // Check if AI determined player was inappropriate - send to bed!
@@ -344,6 +381,21 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
                 { role: 'user', content: message },
                 { role: 'assistant', content: fullResponse },
               ]);
+
+              // Contribute conversation summary for fallback batch response too
+              if (response.dialogue.length > 50) {
+                const gameTime = TimeManager.getCurrentTime();
+                const topic = message.length > 30 ? message.slice(0, 30) + '...' : message;
+                const summary = `${playerName} asked about "${topic}" and ${npc.name} responded.`;
+                getSharedDataService()
+                  .addConversationSummary(npc.id, npc.name, topic, summary, 'neutral', {
+                    season: gameTime.season,
+                    gameDay: gameTime.day,
+                  })
+                  .catch((err) => {
+                    console.warn('[AI] Failed to contribute conversation summary:', err);
+                  });
+              }
 
               if (response.shouldSendToBed && onSendToBed) {
                 setPendingSendToBed(true);

@@ -2,6 +2,7 @@ import React from 'react';
 import { PlacedItem } from '../types';
 import { TILE_SIZE } from '../constants';
 import { shouldShowDecayWarning, getDecayProgress } from '../utils/itemDecayManager';
+import { Z_PLACED_ITEMS } from '../zIndex';
 
 interface PlacedItemsProps {
   items: PlacedItem[];
@@ -34,7 +35,7 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({ items, cameraX, cameraY }) =>
               width: `${TILE_SIZE}px`,
               height: `${TILE_SIZE}px`,
               pointerEvents: 'none',
-              zIndex: 150, // Between player (100) and foreground sprites (200)
+              zIndex: Z_PLACED_ITEMS, // Between player (100) and foreground sprites (200)
             }}
           >
             <img

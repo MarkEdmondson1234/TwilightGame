@@ -28,6 +28,9 @@ export const DEBUG = {
   MAP: import.meta.env.DEV && false, // Map transitions and loading
   COLLISION: import.meta.env.DEV && false, // Collision detection
   EVENTS: import.meta.env.DEV, // EventBus event logging (enabled in dev only)
+  FRIENDSHIP: import.meta.env.DEV && false, // Friendship level changes and gift reactions
+  QUEST: import.meta.env.DEV && false, // Quest progression and dialogue actions
+  FORAGE: import.meta.env.DEV && false, // Foraging actions and loot rolls
 } as const;
 
 /**

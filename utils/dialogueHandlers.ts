@@ -4,6 +4,7 @@ import { cutsceneManager } from './CutsceneManager';
 import { friendshipManager } from './FriendshipManager';
 import { npcManager } from '../NPCManager';
 import { cookingManager } from './CookingManager';
+import { DEBUG } from '../constants';
 import { startFairyQueenQuest } from '../data/quests/fairyQueenQuest';
 import {
   setQuestOffered,
@@ -45,7 +46,8 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   });
 
   if (triggeredCutscene) {
-    console.log(`[dialogueHandlers] Triggered cutscene from dialogue: ${triggeredCutscene}`);
+    if (DEBUG.QUEST)
+      console.log(`[dialogueHandlers] Triggered cutscene from dialogue: ${triggeredCutscene}`);
   }
 
   // Handle seed pickup from seed shed NPCs
@@ -113,7 +115,8 @@ function handleSeedPickup(nodeId: string): void {
     inventoryManager.addItem(action.itemId, action.quantity);
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools);
-    console.log(`[dialogueHandlers] Added ${action.quantity}x ${action.itemId} to inventory`);
+    if (DEBUG.QUEST)
+      console.log(`[dialogueHandlers] Added ${action.quantity}x ${action.itemId} to inventory`);
   }
 }
 
@@ -130,7 +133,7 @@ function handleAltheaQuestItems(nodeId: string): void {
       inventoryManager.addItem('tool_feather_duster', 1);
       const inventoryData = inventoryManager.getInventoryData();
       characterData.saveInventory(inventoryData.items, inventoryData.tools);
-      console.log('[dialogueHandlers] 🪶 Althea gave you the feather duster!');
+      if (DEBUG.QUEST) console.log('[dialogueHandlers] 🪶 Althea gave you the feather duster!');
     }
   }
 }
@@ -151,7 +154,7 @@ function handleWitchQuestActions(nodeId: string): string | void {
   if (nodeId === 'garden_complete_accept') {
     cookingManager.unlockRecipe('pickled_onions');
     startPickledOnionsPhase();
-    console.log('[dialogueHandlers] Witch taught pickled onions recipe');
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] Witch taught pickled onions recipe');
     return;
   }
 
@@ -192,7 +195,8 @@ function handleRecipeTeaching(nodeId: string): void {
   // Use cookingManager as the single source of truth for cooking state
   if (nodeId === 'teach_cooking' && !cookingManager.isRecipeBookUnlocked()) {
     cookingManager.unlockRecipeBook();
-    console.log('[dialogueHandlers] 📖 Recipe book unlocked! You can now access it with B key.');
+    if (DEBUG.QUEST)
+      console.log('[dialogueHandlers] 📖 Recipe book unlocked! You can now access it with B key.');
   }
 
   // Map dialogue nodes to recipe IDs
@@ -213,9 +217,9 @@ function handleRecipeTeaching(nodeId: string): void {
   if (recipeId) {
     const result = cookingManager.unlockRecipe(recipeId);
     if (result) {
-      console.log(`[dialogueHandlers] ✅ Mum taught you how to make: ${recipeId}`);
+      if (DEBUG.QUEST) console.log(`[dialogueHandlers] ✅ Mum taught you how to make: ${recipeId}`);
     } else {
-      console.log(`[dialogueHandlers] ❌ Failed to unlock recipe: ${recipeId}`);
+      if (DEBUG.QUEST) console.log(`[dialogueHandlers] ❌ Failed to unlock recipe: ${recipeId}`);
     }
   }
 }
@@ -232,7 +236,8 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
   // Start quest on first meeting with either fairy
   if (nodeId === 'first_meeting') {
     startFairyQueenQuest(fairyName);
-    console.log(`[dialogueHandlers] 🧚 Started Fairy Queen quest - met ${fairyName}!`);
+    if (DEBUG.QUEST)
+      console.log(`[dialogueHandlers] 🧚 Started Fairy Queen quest - met ${fairyName}!`);
   }
 
   // Give replacement potion when player requests one (Good Friends only)
@@ -242,9 +247,10 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
       inventoryManager.addItem('potion_fairy_form', 1);
       const inventoryData = inventoryManager.getInventoryData();
       characterData.saveInventory(inventoryData.items, inventoryData.tools);
-      console.log(`[dialogueHandlers] 🧪 ${npcId} gave you another Fairy Form Potion!`);
+      if (DEBUG.QUEST)
+        console.log(`[dialogueHandlers] 🧪 ${npcId} gave you another Fairy Form Potion!`);
     } else {
-      console.log(`[dialogueHandlers] Player already has Fairy Form Potion`);
+      if (DEBUG.QUEST) console.log(`[dialogueHandlers] Player already has Fairy Form Potion`);
     }
   }
 }
@@ -263,13 +269,16 @@ function handleEliasQuestActions(nodeId: string): string | void {
   // Player declined the garden offer - mark as offered for future "Help with garden?" option
   if (nodeId === 'garden_decline') {
     setQuestOffered();
-    console.log('[dialogueHandlers] 🌱 Player declined garden quest - offer will appear in future visits');
+    if (DEBUG.QUEST)
+      console.log(
+        '[dialogueHandlers] 🌱 Player declined garden quest - offer will appear in future visits'
+      );
   }
 
   // Player accepted the garden quest
   if (nodeId === 'garden_accept') {
     startGardeningQuest();
-    console.log('[dialogueHandlers] 🌱 Gardening quest started!');
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 🌱 Gardening quest started!');
   }
 
   // Route to seasonal task and give seeds
@@ -286,18 +295,27 @@ function handleEliasQuestActions(nodeId: string): string | void {
         const inventoryData = inventoryManager.getInventoryData();
         characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
-        console.log(`[dialogueHandlers] 🌱 Elias gave seeds for ${availableTask} task:`,
-          seeds.map(s => `${s.quantity}x ${s.itemId}`).join(', ')
-        );
+        if (DEBUG.QUEST)
+          console.log(
+            `[dialogueHandlers] 🌱 Elias gave seeds for ${availableTask} task:`,
+            seeds.map((s) => `${s.quantity}x ${s.itemId}`).join(', ')
+          );
       }
     } else if (isWinter()) {
-      console.log('[dialogueHandlers] 🌱 Winter - no tasks available');
+      if (DEBUG.QUEST) console.log('[dialogueHandlers] 🌱 Winter - no tasks available');
     }
   }
 
   // Handle individual seasonal task nodes (for when dialogue routes directly)
-  if (nodeId === 'garden_spring_task' || nodeId === 'garden_summer_task' || nodeId === 'garden_autumn_task') {
-    const season = nodeId.replace('garden_', '').replace('_task', '') as 'spring' | 'summer' | 'autumn';
+  if (
+    nodeId === 'garden_spring_task' ||
+    nodeId === 'garden_summer_task' ||
+    nodeId === 'garden_autumn_task'
+  ) {
+    const season = nodeId.replace('garden_', '').replace('_task', '') as
+      | 'spring'
+      | 'summer'
+      | 'autumn';
 
     // Only assign and give seeds if we don't already have a task active
     if (!getCurrentSeasonTask()) {
@@ -309,9 +327,11 @@ function handleEliasQuestActions(nodeId: string): string | void {
         const inventoryData = inventoryManager.getInventoryData();
         characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
-        console.log(`[dialogueHandlers] 🌱 Elias gave seeds for ${season} task:`,
-          seeds.map(s => `${s.quantity}x ${s.itemId}`).join(', ')
-        );
+        if (DEBUG.QUEST)
+          console.log(
+            `[dialogueHandlers] 🌱 Elias gave seeds for ${season} task:`,
+            seeds.map((s) => `${s.quantity}x ${s.itemId}`).join(', ')
+          );
       }
     }
   }
@@ -330,9 +350,11 @@ function handleEliasQuestActions(nodeId: string): string | void {
           const inventoryData = inventoryManager.getInventoryData();
           characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
-          console.log(`[dialogueHandlers] 🌱 Elias gave seeds for new ${availableTask} task:`,
-            seeds.map(s => `${s.quantity}x ${s.itemId}`).join(', ')
-          );
+          if (DEBUG.QUEST)
+            console.log(
+              `[dialogueHandlers] 🌱 Elias gave seeds for new ${availableTask} task:`,
+              seeds.map((s) => `${s.quantity}x ${s.itemId}`).join(', ')
+            );
         }
       }
     }
@@ -347,15 +369,24 @@ function handleEliasQuestActions(nodeId: string): string | void {
       if (task === 'spring' || task === 'summer') {
         // Look for any crop in inventory
         const inventoryData = inventoryManager.getInventoryData();
-        const cropItem = inventoryData.items.find(item => item.itemId.startsWith('crop_') && item.quantity > 0);
+        const cropItem = inventoryData.items.find(
+          (item) => item.itemId.startsWith('crop_') && item.quantity > 0
+        );
 
         if (cropItem) {
           inventoryManager.removeItem(cropItem.itemId, 1);
           const invData = inventoryManager.getInventoryData();
           characterData.saveInventory(invData.items, invData.tools);
           markSeasonCompleted(task);
-          friendshipManager.addPoints('village_elder', 100, `gardening quest: ${task} crop delivered via dialogue`);
-          console.log(`[dialogueHandlers] 🌱 Elias accepts your ${cropItem.itemId} for ${task} task!`);
+          friendshipManager.addPoints(
+            'village_elder',
+            100,
+            `gardening quest: ${task} crop delivered via dialogue`
+          );
+          if (DEBUG.QUEST)
+            console.log(
+              `[dialogueHandlers] 🌱 Elias accepts your ${cropItem.itemId} for ${task} task!`
+            );
           return 'garden_task_complete';
         }
       }
@@ -363,21 +394,29 @@ function handleEliasQuestActions(nodeId: string): string | void {
       if (task === 'autumn') {
         // Look for honey in inventory
         const inventoryData = inventoryManager.getInventoryData();
-        const honeyItem = inventoryData.items.find(item => item.itemId === 'honey' && item.quantity > 0);
+        const honeyItem = inventoryData.items.find(
+          (item) => item.itemId === 'honey' && item.quantity > 0
+        );
 
         if (honeyItem) {
           inventoryManager.removeItem('honey', 1);
           const invData = inventoryManager.getInventoryData();
           characterData.saveInventory(invData.items, invData.tools);
           markSeasonCompleted('autumn');
-          friendshipManager.addPoints('village_elder', 100, 'gardening quest: autumn honey delivered via dialogue');
-          console.log('[dialogueHandlers] 🍯 Elias accepts your honey for autumn task!');
+          friendshipManager.addPoints(
+            'village_elder',
+            100,
+            'gardening quest: autumn honey delivered via dialogue'
+          );
+          if (DEBUG.QUEST)
+            console.log('[dialogueHandlers] 🍯 Elias accepts your honey for autumn task!');
           return 'garden_task_complete';
         }
       }
 
       // Player doesn't have the right items
-      console.log('[dialogueHandlers] 🌱 Player has no matching crops/honey to deliver');
+      if (DEBUG.QUEST)
+        console.log('[dialogueHandlers] 🌱 Player has no matching crops/honey to deliver');
       return 'garden_no_crop';
     }
   }
@@ -385,6 +424,6 @@ function handleEliasQuestActions(nodeId: string): string | void {
   // Player accepted the Fairy Bluebells quest
   if (nodeId === 'fairy_bluebells_accept') {
     startFairyBluebellsQuest();
-    console.log('[dialogueHandlers] 🔔 Fairy Bluebells quest started!');
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 🔔 Fairy Bluebells quest started!');
   }
 }

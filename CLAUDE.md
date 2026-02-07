@@ -6,15 +6,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A peaceful top-down exploration and crafting game engine built with React, Vite, and TypeScript. Inspired by Stardew Valley, it features tile-based movement, sprite animation, collision detection, and a **multi-map system** supporting both designed and procedurally generated maps with transitions. All artwork is meticulously hand-drawn and rendered with smooth linear scaling to preserve artistic quality.
 
-## Local-Only Changes (DO NOT COMMIT)
+## Firebase Cloud Saves
 
-**IMPORTANT**: The following changes exist locally but should NOT be pushed to the remote repository:
+Firebase provides cloud saves via Firestore and cross-player features (NPC gossip sharing).
 
-- **Firebase removal** - The `firebase/` directory, related config files, and tests are deleted locally
-- **package.json** - Firebase dependency removed locally
-- **.env.example** - Firebase config removed locally
+**Status:** Infrastructure fully present, UI active. Gracefully disabled when `firebase` package or env vars are missing.
 
-These files remain in the remote repo in case cloud saves are needed in the future. When committing, ensure these deletions are NOT staged.
+**Key files:**
+- `firebase/safe.ts` — **Safe wrapper** (import from here, not `firebase/index`) — stubs when package missing
+- `firebase/config.ts` — Firebase init, checks `VITE_FIREBASE_*` env vars
+- `firebase/authService.ts` — Email/password and Google auth
+- `firebase/cloudSaveService.ts` — Save/load game state to Firestore
+- `firebase/sharedDataService.ts` — Cross-player NPC gossip sharing
+- `firebase/syncManager.ts` — Local↔Cloud save synchronisation
+- `components/HelpBrowser.tsx` — Account & Cloud Saves UI (F1 → Settings)
+- `components/AIDialogueBox.tsx` — Gossip injection into NPC conversations
+
+**Setup:** Copy `.env.example` to `.env.local` and fill in Firebase credentials. Use the `setup-firebase` skill for guided setup.
+
+**Without Firebase:** The game works fully offline. Firebase features silently disable when the package or env vars are missing.
+
+**IMPORTANT — Safe imports:** Components must import from `firebase/safe` (not `firebase/index`) to avoid crashing when the `firebase` npm package is not installed:
+```typescript
+// ✅ CORRECT — safe, works without firebase installed
+import { getAuthService, type AuthState } from '../firebase/safe';
+import { getSharedDataService } from '../firebase/safe';
+const auth = getAuthService();
+const shared = getSharedDataService();
+
+// ❌ WRONG — crashes if firebase package is not installed
+import { authService } from '../firebase/index';
+import { sharedDataService } from '../firebase/sharedDataService';
+```
 
 ## Language and Localisation
 

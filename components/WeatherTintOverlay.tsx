@@ -1,4 +1,5 @@
 import React from 'react';
+import { Z_SPRITE_BACKGROUND } from '../zIndex';
 
 interface WeatherTintOverlayProps {
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -26,7 +27,7 @@ const WeatherTintOverlay: React.FC<WeatherTintOverlayProps> = ({ weather, visibl
       right: 0,
       bottom: 0,
       pointerEvents: 'none',
-      zIndex: 50, // Above game world, below HUD (HUD is z-index 100+)
+      zIndex: Z_SPRITE_BACKGROUND, // Above game world, below HUD (HUD is z-index 100+)
     };
 
     switch (weather) {

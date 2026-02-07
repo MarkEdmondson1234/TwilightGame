@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Z_FARM_ACTIONS } from '../zIndex';
 
 export type FarmActionType = 'till' | 'plant' | 'water' | 'harvest' | 'clear';
 
@@ -21,7 +22,13 @@ const FarmActionAnimation: React.FC<FarmActionAnimationProps> = ({
 }) => {
   // Call onComplete after animation finishes (1s)
   useEffect(() => {
-    console.log('[FarmActionAnimation] Mounted with action:', action, 'at position:', playerX, playerY);
+    console.log(
+      '[FarmActionAnimation] Mounted with action:',
+      action,
+      'at position:',
+      playerX,
+      playerY
+    );
     const timer = setTimeout(() => {
       console.log('[FarmActionAnimation] Animation complete, calling onComplete');
       onComplete();
@@ -63,7 +70,7 @@ const FarmActionAnimation: React.FC<FarmActionAnimationProps> = ({
         top: playerY - 40, // Start 40px above player
         fontSize: '32px',
         pointerEvents: 'none',
-        zIndex: 1000,
+        zIndex: Z_FARM_ACTIONS,
         animation: 'farmActionFloat 1s ease-out forwards',
         textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
       }}
