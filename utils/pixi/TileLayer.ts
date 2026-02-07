@@ -40,7 +40,12 @@ import {
   Z_TILE_SPRITES,
   Z_SPRITE_BACKGROUND,
   Z_PLAYER,
+  Z_DEPTH_SORTED_BASE,
 } from '../../zIndex';
+
+/** Check if a tile type is any farm soil variant (fallow through dead) */
+const isSoilTile = (type: TileType): boolean =>
+  type >= TileType.SOIL_FALLOW && type <= TileType.SOIL_DEAD;
 
 /**
  * Crop sprite sizing configuration per growth stage
@@ -241,6 +246,18 @@ export class TileLayer extends PixiLayer {
               : farmManager.getGrowthStage(plot);
           cropType = plot.cropType;
         }
+      }
+    }
+
+    // Render farm fence overlay at bottom edge of farm plot sections
+    if (isSoilTile(tileData.type)) {
+      const tileBelow = getTileData(x, y + 1);
+      if (!tileBelow || !isSoilTile(tileBelow.type)) {
+        this.renderFarmFence(x, y);
+      } else {
+        // Hide fence sprite if this is no longer a section edge
+        const fenceSprite = this.sprites.get(`${x},${y}_fence`);
+        if (fenceSprite) fenceSprite.visible = false;
       }
     }
 
@@ -663,6 +680,41 @@ export class TileLayer extends PixiLayer {
   }
 
   /**
+   * Render a farm fence overlay at the bottom edge of a farm plot section.
+   * Called when a soil tile has a non-soil tile below it (section boundary).
+   * Fence renders ON TOP of crops so plants appear to grow behind the fence.
+   */
+  private renderFarmFence(x: number, y: number): void {
+    const fenceKey = `${x},${y}_fence`;
+    let sprite = this.sprites.get(fenceKey);
+
+    const imageUrl = farmingAssets.farm_fence;
+    const texture = textureManager.getTexture(imageUrl);
+    if (!texture) return;
+
+    if (!sprite || sprite instanceof PIXI.Graphics) {
+      if (sprite instanceof PIXI.Graphics) {
+        this.container.removeChild(sprite);
+        this.sprites.delete(fenceKey);
+      }
+
+      sprite = new PIXI.Sprite(texture);
+      sprite.x = x * TILE_SIZE;
+      sprite.y = y * TILE_SIZE + TILE_SIZE * 0.05;
+      sprite.width = TILE_SIZE;
+      sprite.height = TILE_SIZE;
+      // Depth-sort as if feet are at bottom of tile — renders in front of crops above
+      sprite.zIndex = Z_DEPTH_SORTED_BASE + (y + 1) * 10;
+
+      this.container.addChild(sprite);
+      this.sprites.set(fenceKey, sprite);
+    } else if (sprite instanceof PIXI.Sprite) {
+      sprite.visible = true;
+      sprite.zIndex = Z_DEPTH_SORTED_BASE + (y + 1) * 10;
+    }
+  }
+
+  /**
    * Convert palette color class to hex color
    * Only supports palette colors: 'bg-palette-sage' → '#87AE73'
    * Results are cached for performance
@@ -715,7 +767,7 @@ export class TileLayer extends PixiLayer {
   }): void {
     this.sprites.forEach((sprite, key) => {
       // Remove all key suffixes: _base, _sprite, _color
-      const baseKey = key.replace(/_base|_sprite|_color$/g, '');
+      const baseKey = key.replace(/_base|_sprite|_color|_fence$/g, '');
       const coords = baseKey.split(',').map(Number);
       const [x, y] = coords;
       const visible =

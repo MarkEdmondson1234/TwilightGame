@@ -264,6 +264,7 @@ export const farmingAssets = {
   plant_onion_young: '/TwilightGame/assets-optimized/farming/onion_young.png',
   plant_onion_adult: '/TwilightGame/assets-optimized/farming/onion_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
+  farm_fence: '/TwilightGame/assets-optimized/farming/farm_fence.png',
 };
 
 // Cooking assets - Prepared food items (cooked dishes)
