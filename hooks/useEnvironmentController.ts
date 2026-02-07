@@ -13,7 +13,7 @@
 
 import { useEffect, useCallback, MutableRefObject } from 'react';
 import { gameState } from '../GameState';
-import { TimeManager } from '../utils/TimeManager';
+import { TimeManager, Season } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
 import { isWeatherAllowedOnMap, WeatherType } from '../data/weatherConfig';
 import { mapManager } from '../maps/MapManager';
@@ -250,12 +250,17 @@ export function useEnvironmentController(
     let isMusicPlaying = false;
     let musicTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    // Get appropriate music track for current map
+    // Get appropriate music track for current map (with seasonal variants)
     const getMusicForMap = (mapId: string): string | null => {
       if (mapId.includes('forest') || mapId.includes('deep_forest')) {
         return 'music_forest';
       }
+      // Village/home areas — use autumn variant when in season
       if (mapId.includes('village') || mapId.includes('home') || mapId.includes('mum')) {
+        const { season } = TimeManager.getCurrentTime();
+        if (season === Season.AUTUMN && audioManager.hasSound('music_village_autumn')) {
+          return 'music_village_autumn';
+        }
         return 'music_village';
       }
       // Default to village music for other areas
@@ -278,14 +283,14 @@ export function useEnvironmentController(
         return;
       }
 
-      // Play music with fade in
+      // Play music with gentle fade in
       isMusicPlaying = true;
-      audioManager.playMusic(musicKey, { fadeIn: 3000 });
+      audioManager.playMusic(musicKey, { fadeIn: 8000 });
 
       // Schedule fade out
       const duration = getRandomDuration();
       musicTimeout = setTimeout(() => {
-        audioManager.stopMusic(3000); // 3 second fade out
+        audioManager.stopMusic(8000); // 8 second fade out
         isMusicPlaying = false;
 
         // Schedule next music play

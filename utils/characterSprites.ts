@@ -2,211 +2,91 @@ import { CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
 import { generatePlaceholderSprites as generateSVGPlaceholders } from './placeholderSprites';
 import { fairyAssets } from '../assets';
-// Note: Sprite sheets disabled - using original frames for better quality
-// import { hasSpriteSheets, loadSpriteSheetAsFrames } from './spriteSheetLoader';
 
 /**
  * Character Sprite System
  *
- * This system generates player sprites based on character customization.
- * Currently uses SVG-based visual placeholders, but designed to support layered sprite assets.
- *
- * Future Enhancement:
- * When custom sprites are added to /assets/player/, this system will composite
- * multiple sprite layers (base, skin, hair, clothes, etc.) to create the final sprite.
+ * Generates player sprite URLs based on character selection (boy/girl).
+ * Each character has directional sprites with per-character frame counts.
  */
-
-// Color mapping for placeholder sprites
-const SKIN_COLOR_MAP: Record<string, string> = {
-  pale: 'fef3c7',
-  light: 'fde68a',
-  medium: 'fcd34d',
-  tan: 'f59e0b',
-  dark: 'b45309',
-  deep: '78350f',
-};
-
-const HAIR_COLOR_MAP: Record<string, string> = {
-  black: '1f2937',
-  brown: '92400e',
-  blonde: 'fde047',
-  red: 'dc2626',
-  gray: '9ca3af',
-  white: 'f3f4f6',
-  blue: '3b82f6',
-  green: '22c55e',
-  purple: 'a855f7',
-};
-
-const CLOTHES_COLOR_MAP: Record<string, string> = {
-  red: 'dc2626',
-  blue: '2563eb',
-  green: '16a34a',
-  yellow: 'eab308',
-  purple: '9333ea',
-  orange: 'ea580c',
-  pink: 'ec4899',
-  black: '1f2937',
-  white: 'f3f4f6',
-};
-
-const SHOES_COLOR_MAP: Record<string, string> = {
-  brown: '92400e',
-  black: '1f2937',
-  white: 'f3f4f6',
-  red: 'dc2626',
-  blue: '2563eb',
-};
-
-const EYE_COLOR_MAP: Record<string, string> = {
-  brown: '92400e',
-  blue: '3b82f6',
-  green: '16a34a',
-  hazel: 'd97706',
-  gray: '6b7280',
-};
 
 /**
- * Generate a placeholder sprite URL for a character
- *
- * This creates a placehold.co URL with the character's primary colors.
- * When ready for custom sprites, replace this with generateCustomSprite().
+ * Per-character sprite frame configuration.
+ * Maps direction → number of walk frames (frame 0 is always idle).
+ * Blink frames (left_3, right_3) are excluded from the walk cycle.
  */
-function generatePlaceholderSprite(
-  character: CharacterCustomization,
-  direction: Direction,
-  frame: number
-): string {
-  // Use clothes color as background, skin color as foreground
-  const bgColor = CLOTHES_COLOR_MAP[character.clothesColor] || '2563eb';
-  const fgColor = SKIN_COLOR_MAP[character.skin] || 'fcd34d';
-
-  // Direction symbols
-  const dirSymbol = ['↑', '↓', '←', '→'][direction];
-
-  // Add initial for hair color (unless bald)
-  const hairInitial = character.hairStyle === 'bald' ? '' : character.hairColor[0].toUpperCase();
-
-  return `https://placehold.co/32x32/${bgColor}/${fgColor}?text=${character.name[0]}${dirSymbol}${frame}${hairInitial}`;
+interface CharacterSpriteConfig {
+  frameCounts: Record<string, number>;
+  /** Per-direction scale multipliers (applied on top of base sprite scale). Defaults to 1.0. */
+  directionScales?: Partial<Record<string, number>>;
 }
 
+export const CHARACTER_SPRITE_CONFIGS: Record<string, CharacterSpriteConfig> = {
+  character1: {
+    frameCounts: { up: 3, down: 3, left: 3, right: 3 },
+  },
+  character2: {
+    frameCounts: { up: 2, down: 2, left: 3, right: 3 },
+    directionScales: { left: 0.9, right: 0.9 },
+  },
+};
+
 /**
- * Generate custom sprite layers for a character
- *
- * Layers system for compositing sprites:
- * - Base character sprite (e.g., /assets/player/character1/default/{direction}_{frame}.png)
- * - Optional variation layers on top (hats, clothes, accessories)
- *
- * Structure:
- * /assets/player/{characterId}/base/{direction}_{frame}.png - Base character
- * /assets/player/{characterId}/variations/{variationName}/{direction}_{frame}.png - Layered variations
- *
- * Example:
- * /assets/player/character1/base/down_0.png
- * /assets/player/character1/variations/winter_hat/down_0.png
- * /assets/player/character1/variations/winter_coat/down_0.png
+ * Get the sprite config for a character, falling back to character1 defaults.
  */
-function generateCustomSprite(
-  character: CharacterCustomization,
-  direction: Direction,
-  frame: number
-): { layers: string[]; fallbackUrl: string } {
-  const directionName = ['up', 'down', 'left', 'right'][direction];
+export function getSpriteConfig(characterId: string): CharacterSpriteConfig {
+  return CHARACTER_SPRITE_CONFIGS[characterId] || CHARACTER_SPRITE_CONFIGS.character1;
+}
 
-  // Map character customization to character ID
-  // For now, use character name as ID (can be more sophisticated later)
-  const characterId = character.name.toLowerCase().replace(/\s+/g, '_');
+const DIRECTION_KEYS: Record<Direction, string> = {
+  [Direction.Up]: 'up',
+  [Direction.Down]: 'down',
+  [Direction.Left]: 'left',
+  [Direction.Right]: 'right',
+};
 
-  // Start with base character sprite
-  const layers = [`/assets/player/${characterId}/base/${directionName}_${frame}.png`];
-
-  // Add variation layers based on customization
-  // These are optional layers that go on top of the base
-  if (character.hairStyle && character.hairStyle !== 'bald') {
-    layers.push(
-      `/assets/player/${characterId}/variations/hair_${character.hairStyle}/${directionName}_${frame}.png`
-    );
-  }
-
-  if (character.clothesStyle && character.clothesStyle !== 'default') {
-    layers.push(
-      `/assets/player/${characterId}/variations/clothes_${character.clothesStyle}/${directionName}_${frame}.png`
-    );
-  }
-
-  if (character.glasses && character.glasses !== 'none') {
-    layers.push(
-      `/assets/player/${characterId}/variations/glasses_${character.glasses}/${directionName}_${frame}.png`
-    );
-  }
-
-  // Add any equipped items/accessories
-  // Future: iterate through character.equipment array
-
-  // Fallback to placeholder
-  const fallbackUrl = generatePlaceholderSprite(character, direction, frame);
-
-  return { layers, fallbackUrl };
+/**
+ * Get per-direction scale multiplier for a character (defaults to 1.0).
+ */
+export function getDirectionScale(characterId: string, direction: Direction): number {
+  const config = getSpriteConfig(characterId);
+  return config.directionScales?.[DIRECTION_KEYS[direction]] ?? 1.0;
 }
 
 /**
  * Generate all sprite URLs for a character (all directions and frames)
  *
- * Returns a Record<Direction, string[] | string[][]> matching the PLAYER_SPRITES structure.
- * Each direction has 4 frames (0 = idle, 1-3 = walking animation)
- *
- * Returns:
- * - string[] for simple single-layer sprites (current temporary implementation)
- * - string[][] for layered sprites (future: each frame can have multiple layers)
+ * Returns a Record<Direction, string[]> where each direction has frames:
+ * - Frame 0 = idle/standing pose
+ * - Frame 1+ = walking animation
  */
 export function generateCharacterSprites(
   character: CharacterCustomization
 ): Record<Direction, string[]> {
   try {
-    // Ensure character has all required fields
     if (!character || !character.name) {
       console.warn('[CharacterSprites] Invalid character data, using default');
       return generateSVGPlaceholders(DEFAULT_CHARACTER);
     }
 
-    // Use custom sprites if available
     if (hasCustomSprites()) {
-      // Use characterId from character customization, fallback to 'character1'
       const characterId = character.characterId || 'character1';
-
-      // Assets in /public/ are served from root with base path
       const basePath = `/TwilightGame/assets/${characterId}/base`;
+      const config = getSpriteConfig(characterId);
 
-      // Fallback sprite for directions without custom sprites yet
-      const fallbackSprite = `${basePath}/down_0.png`;
+      const buildFrames = (dir: string): string[] => {
+        const count = config.frameCounts[dir] || 3;
+        return Array.from({ length: count }, (_, i) => `${basePath}/${dir}_${i}.png`);
+      };
 
       return {
-        [Direction.Up]: [
-          `${basePath}/up_0.png`, // Idle/standing pose
-          `${basePath}/up_1.png`, // Walk frame 1
-          `${basePath}/up_2.png`, // Walk frame 2
-        ],
-        [Direction.Down]: [
-          `${basePath}/down_0.png`, // Idle/standing pose
-          `${basePath}/down_1.png`, // Walk frame 1
-          `${basePath}/down_2.png`, // Walk frame 2
-        ],
-        [Direction.Left]: [
-          `${basePath}/left_0.png`, // Idle/standing pose
-          `${basePath}/left_1.png`, // Walk frame 1
-          `${basePath}/left_2.png`, // Walk frame 2
-          // left_3.png (blink frame) excluded from walk cycle
-        ],
-        [Direction.Right]: [
-          `${basePath}/right_0.png`, // Idle/standing pose
-          `${basePath}/right_1.png`, // Walk frame 1
-          `${basePath}/right_2.png`, // Walk frame 2
-          // right_3.png (blink frame) excluded from walk cycle
-        ],
+        [Direction.Up]: buildFrames('up'),
+        [Direction.Down]: buildFrames('down'),
+        [Direction.Left]: buildFrames('left'),
+        [Direction.Right]: buildFrames('right'),
       };
     }
 
-    // Fallback to SVG placeholders
     return generateSVGPlaceholders(character);
   } catch (error) {
     console.error('[CharacterSprites] Error generating sprites:', error);
@@ -215,43 +95,18 @@ export function generateCharacterSprites(
 }
 
 /**
- * Generate character sprites using full-resolution original frames
- *
- * Uses the original 2064x2064 character frames for maximum quality.
- * The async version is kept for API compatibility but now just returns
- * the same high-res frames as the sync version.
- *
- * Note: Sprite sheets were previously used but canvas extraction reduced quality.
- * Direct original frames provide the best visual quality for the main character.
+ * Async version kept for API compatibility.
+ * Returns the same result as the sync version.
  */
 export async function generateCharacterSpritesAsync(
   character: CharacterCustomization
 ): Promise<Record<Direction, string[]>> {
-  // Use original full-resolution frames for best quality
-  // (Sprite sheets caused quality loss from canvas extraction)
-  console.log('[CharacterSprites] Using full-resolution original frames');
   return generateCharacterSprites(character);
 }
 
 /**
- * Generate sprite layers for custom rendering (future use)
- *
- * When transitioning to custom sprites, use this to get all layer paths.
- * The game can then render these as stacked elements with proper z-ordering.
- */
-export function generateCharacterSpriteLayers(
-  character: CharacterCustomization,
-  direction: Direction,
-  frame: number
-): { layers: string[]; fallbackUrl: string } {
-  return generateCustomSprite(character, direction, frame);
-}
-
-/**
- * Check if custom sprite assets exist
- *
- * Helper function to detect if custom sprites are available.
- * Returns true now that we have custom artwork in /assets/player/
+ * Check if custom sprite assets exist.
+ * Returns true now that we have custom artwork in /assets/character{1,2}/
  */
 export function hasCustomSprites(): boolean {
   return true;
@@ -283,7 +138,6 @@ export const DEFAULT_CHARACTER: CharacterCustomization = {
  * with a horizontal flip applied at render time.
  */
 export function generateFairySprites(): Record<Direction, string[]> {
-  // Directional fairy sprites with 2-frame animation each
   const downFrames = [fairyAssets.down_01, fairyAssets.down_02];
   const upFrames = [fairyAssets.up_01, fairyAssets.up_02];
   const leftFrames = [fairyAssets.left_01, fairyAssets.left_02];

@@ -94,7 +94,7 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
                 src={selectedItemDef.image}
                 alt={selectedItemDef.displayName}
                 className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
-                style={{ imageRendering: 'pixelated' }}
+                style={{ imageRendering: 'auto' }}
               />
             ) : (
               <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-2xl sm:text-3xl">

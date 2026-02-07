@@ -5,6 +5,8 @@
  * performance when sprites first appear on screen.
  */
 
+import { getSpriteConfig } from './characterSprites';
+
 interface PreloadOptions {
   onProgress?: (loaded: number, total: number) => void;
   onComplete?: () => void;
@@ -69,16 +71,20 @@ export async function preloadImages(urls: string[], options?: PreloadOptions): P
 
 /**
  * Generate all sprite URLs for a character (all directions and frames)
+ * Uses per-character sprite configs to only generate valid URLs.
  */
 function getCharacterSpriteUrls(characterId: string = 'character1'): string[] {
   const basePath = `/TwilightGame/assets/${characterId}/base`;
-  const directions = ['up', 'down', 'left', 'right'];
+  const config = getSpriteConfig(characterId);
   const urls: string[] = [];
 
-  for (const dir of directions) {
-    // Each direction has frames 0-2 (some have frame 3 for blink)
-    for (let frame = 0; frame <= 3; frame++) {
+  for (const [dir, frameCount] of Object.entries(config.frameCounts) as [string, number][]) {
+    for (let frame = 0; frame < frameCount; frame++) {
       urls.push(`${basePath}/${dir}_${frame}.png`);
+    }
+    // Also include blink frame for left/right
+    if (dir === 'left' || dir === 'right') {
+      urls.push(`${basePath}/${dir}_${frameCount}.png`);
     }
   }
 
@@ -93,15 +99,17 @@ function getTileSpriteUrls(): string[] {
   // For now, we'll list the known tile assets that are commonly used
   const basePath = '/TwilightGame/assets/tiles';
   const knownTiles = [
-    'grass_1.png', 'grass_2.png',
-    'rock_1.png', 'rock_2.png',
+    'grass_1.png',
+    'grass_2.png',
+    'rock_1.png',
+    'rock_2.png',
     'bush_1.png',
     'door_1.png',
     'mushrooms.png',
     'bricks_1.jpeg',
   ];
 
-  return knownTiles.map(file => `${basePath}/${file}`);
+  return knownTiles.map((file) => `${basePath}/${file}`);
 }
 
 /**
@@ -110,11 +118,7 @@ function getTileSpriteUrls(): string[] {
 function getNPCSpriteUrls(): string[] {
   const basePath = '/TwilightGame/assets/npcs';
   // List known NPCs here - this could be made dynamic later
-  return [
-    `${basePath}/elder.svg`,
-    `${basePath}/merchant.svg`,
-    `${basePath}/child.svg`,
-  ];
+  return [`${basePath}/elder.svg`, `${basePath}/merchant.svg`, `${basePath}/child.svg`];
 }
 
 /**

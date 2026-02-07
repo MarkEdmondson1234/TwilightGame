@@ -594,7 +594,8 @@ export const itemAssets = {
   // Tools - Quest and special items
   feather_duster: '/TwilightGame/assets-optimized/items/feather_duster.png',
   // Decorations
-  sunflower_bouquet: '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',
+  sunflower_bouquet:
+    '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds
@@ -666,6 +667,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
   // Each map can have its own background music with crossfade transitions
   music_village: {
     url: '/TwilightGame/assets/audio/music/twilight-village.m4a',
+    category: 'music',
+    loop: true,
+  },
+  music_village_autumn: {
+    url: '/TwilightGame/assets/audio/music/village-autumn.m4a',
     category: 'music',
     loop: true,
   },

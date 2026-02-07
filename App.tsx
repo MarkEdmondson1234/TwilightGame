@@ -869,7 +869,8 @@ const App: React.FC = () => {
     playerSprites,
     direction,
     animationFrame,
-    isFairyForm
+    isFairyForm,
+    gameState.getSelectedCharacter()?.characterId
   );
 
   // PixiJS renderer hook - manages all PixiJS rendering layers
@@ -964,8 +965,9 @@ const App: React.FC = () => {
     onShowToast: showToast,
   });
 
-  // Show character creator if no character selected
-  if (ui.characterCreator) {
+  // Show character creator as full-screen replacement only on first launch (before map loads)
+  // When opened mid-game (via settings), it renders as an overlay further below
+  if (ui.characterCreator && !isMapInitialized) {
     return <CharacterCreator onComplete={handleCharacterCreated} />;
   }
 
@@ -1476,7 +1478,12 @@ const App: React.FC = () => {
           playerPosition={playerPos}
         />
       )}
-      {ui.helpBrowser && <HelpBrowser onClose={() => closeUI('helpBrowser')} />}
+      {ui.helpBrowser && (
+        <HelpBrowser
+          onClose={() => closeUI('helpBrowser')}
+          onOpenCharacterSelect={() => openUI('characterCreator')}
+        />
+      )}
       {ui.inventory && (
         <Inventory
           isOpen={ui.inventory}
@@ -1689,6 +1696,9 @@ const App: React.FC = () => {
         playerScreenX={playerPos.x * TILE_SIZE - cameraX + TILE_SIZE / 2}
         playerScreenY={playerPos.y * TILE_SIZE - cameraY}
       />
+
+      {/* Character creator overlay (mid-game, via settings button) */}
+      {ui.characterCreator && <CharacterCreator onComplete={handleCharacterCreated} />}
     </div>
   );
 };

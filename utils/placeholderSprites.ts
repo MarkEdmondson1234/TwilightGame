@@ -74,17 +74,18 @@ function generateSVGSprite(
   const eyeColor = EYE_COLORS[character.eyeColor] || EYE_COLORS.brown;
 
   // Calculate animation offset for walk cycle
-  const walkOffset = frame === 0 ? 0 : (frame % 2 === 1 ? 1 : -1);
+  const walkOffset = frame === 0 ? 0 : frame % 2 === 1 ? 1 : -1;
 
   // Hair style variations
   const hairPath = getHairPath(character.hairStyle, direction);
 
   // Glasses
-  const glassesElement = character.glasses !== 'none'
-    ? `<rect x="6" y="10" width="4" height="3" fill="none" stroke="#333" stroke-width="0.5"/>
+  const glassesElement =
+    character.glasses !== 'none'
+      ? `<rect x="6" y="10" width="4" height="3" fill="none" stroke="#333" stroke-width="0.5"/>
        <rect x="14" y="10" width="4" height="3" fill="none" stroke="#333" stroke-width="0.5"/>
        <line x1="10" y1="11.5" x2="14" y2="11.5" stroke="#333" stroke-width="0.5"/>`
-    : '';
+      : '';
 
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
@@ -100,10 +101,11 @@ function generateSVGSprite(
       <rect x="6" y="12" width="12" height="6" fill="${clothesColor}" rx="2"/>
 
       <!-- Arms -->
-      ${direction === Direction.Up
-        ? `<rect x="4" y="13" width="2" height="5" fill="${skinColor}" rx="1"/>
+      ${
+        direction === Direction.Up
+          ? `<rect x="4" y="13" width="2" height="5" fill="${skinColor}" rx="1"/>
            <rect x="18" y="13" width="2" height="5" fill="${skinColor}" rx="1"/>`
-        : `<rect x="4" y="13" width="2" height="5" fill="${skinColor}" rx="1" transform="rotate(${walkOffset * 10} 5 13)"/>
+          : `<rect x="4" y="13" width="2" height="5" fill="${skinColor}" rx="1" transform="rotate(${walkOffset * 10} 5 13)"/>
            <rect x="18" y="13" width="2" height="5" fill="${skinColor}" rx="1" transform="rotate(${-walkOffset * 10} 19 13)"/>`
       }
 
@@ -114,14 +116,17 @@ function generateSVGSprite(
       ${hairPath ? `<path d="${hairPath}" fill="${hairColor}"/>` : ''}
 
       <!-- Face based on direction -->
-      ${direction === Direction.Down || direction === Direction.Left || direction === Direction.Right
-        ? `<!-- Eyes -->
+      ${
+        direction === Direction.Down ||
+        direction === Direction.Left ||
+        direction === Direction.Right
+          ? `<!-- Eyes -->
            <circle cx="9" cy="8" r="1" fill="${eyeColor}"/>
            <circle cx="15" cy="8" r="1" fill="${eyeColor}"/>
            ${glassesElement}
            <!-- Smile -->
            <path d="M 9 10 Q 12 11 15 10" stroke="#333" stroke-width="0.5" fill="none"/>`
-        : `<!-- Eyes (back view, just dots) -->
+          : `<!-- Eyes (back view, just dots) -->
            <circle cx="9" cy="7" r="0.5" fill="#333"/>
            <circle cx="15" cy="7" r="0.5" fill="#333"/>`
       }
@@ -132,9 +137,7 @@ function generateSVGSprite(
   `;
 
   // Convert SVG to data URL
-  const encoded = encodeURIComponent(svg)
-    .replace(/'/g, '%27')
-    .replace(/"/g, '%22');
+  const encoded = encodeURIComponent(svg).replace(/'/g, '%27').replace(/"/g, '%22');
 
   return `data:image/svg+xml,${encoded}`;
 }
@@ -182,7 +185,9 @@ function getWeaponIcon(weapon: string, direction: Direction): string {
 /**
  * Generate all 4 frames for a direction
  */
-export function generatePlaceholderSprites(character: CharacterCustomization): Record<Direction, string[]> {
+export function generatePlaceholderSprites(
+  character: CharacterCustomization
+): Record<Direction, string[]> {
   const sprites: Record<Direction, string[]> = {
     [Direction.Up]: [],
     [Direction.Down]: [],
@@ -198,93 +203,3 @@ export function generatePlaceholderSprites(character: CharacterCustomization): R
 
   return sprites;
 }
-
-/**
- * Character presets for quick selection
- */
-export const CHARACTER_PRESETS: CharacterCustomization[] = [
-  {
-    characterId: 'character1',
-    name: 'Hero',
-    skin: 'light',
-    hairStyle: 'short',
-    hairColor: 'brown',
-    eyeColor: 'blue',
-    clothesStyle: 'shirt',
-    clothesColor: 'blue',
-    shoesStyle: 'boots',
-    shoesColor: 'brown',
-    glasses: 'none',
-    weapon: 'sword',
-  },
-  {
-    characterId: 'character1',
-    name: 'Mage',
-    skin: 'pale',
-    hairStyle: 'long',
-    hairColor: 'purple',
-    eyeColor: 'hazel',
-    clothesStyle: 'tunic',
-    clothesColor: 'purple',
-    shoesStyle: 'shoes',
-    shoesColor: 'black',
-    glasses: 'round',
-    weapon: 'staff',
-  },
-  {
-    characterId: 'character1',
-    name: 'Ranger',
-    skin: 'tan',
-    hairStyle: 'short',
-    hairColor: 'red',
-    eyeColor: 'green',
-    clothesStyle: 'vest',
-    clothesColor: 'green',
-    shoesStyle: 'boots',
-    shoesColor: 'brown',
-    glasses: 'none',
-    weapon: 'bow',
-  },
-  {
-    characterId: 'character1',
-    name: 'Warrior',
-    skin: 'dark',
-    hairStyle: 'bald',
-    hairColor: 'black',
-    eyeColor: 'brown',
-    clothesStyle: 'tunic',
-    clothesColor: 'red',
-    shoesStyle: 'boots',
-    shoesColor: 'black',
-    glasses: 'none',
-    weapon: 'axe',
-  },
-  {
-    characterId: 'character1',
-    name: 'Scholar',
-    skin: 'medium',
-    hairStyle: 'curly',
-    hairColor: 'black',
-    eyeColor: 'brown',
-    clothesStyle: 'vest',
-    clothesColor: 'yellow',
-    shoesStyle: 'shoes',
-    shoesColor: 'brown',
-    glasses: 'square',
-    weapon: 'staff',
-  },
-  {
-    characterId: 'character1',
-    name: 'Rogue',
-    skin: 'pale',
-    hairStyle: 'spiky',
-    hairColor: 'blonde',
-    eyeColor: 'gray',
-    clothesStyle: 'hoodie',
-    clothesColor: 'black',
-    shoesStyle: 'sneakers',
-    shoesColor: 'black',
-    glasses: 'sunglasses',
-    weapon: 'sword',
-  },
-];

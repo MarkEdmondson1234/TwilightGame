@@ -13,6 +13,7 @@ import { getAuthService, type AuthState } from '../firebase/safe';
 
 interface HelpBrowserProps {
   onClose: () => void;
+  onOpenCharacterSelect?: () => void;
 }
 
 interface DocFile {
@@ -41,7 +42,7 @@ const DOC_FILES: DocFile[] = [
 // Special "settings" tab identifier
 const SETTINGS_TAB = 'settings';
 
-const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
+const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelect }) => {
   const [selectedTab, setSelectedTab] = useState<string>('getting-started');
   const [content, setContent] = useState<string>('Loading...');
 
@@ -337,6 +338,40 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose }) => {
                 <h1 className="text-3xl font-serif font-bold mb-6" style={{ color: '#6b546b' }}>
                   Settings
                 </h1>
+
+                {/* Character Section */}
+                <div
+                  className="rounded-lg p-6 mb-6"
+                  style={{
+                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                    border: `2px solid ${colours.wood}`,
+                  }}
+                >
+                  <h2
+                    className="text-xl font-serif font-bold mb-4"
+                    style={{ color: colours.brass }}
+                  >
+                    Character
+                  </h2>
+                  <p className="mb-4" style={{ color: colours.textLight }}>
+                    Change your character or update your name.
+                  </p>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenCharacterSelect?.();
+                    }}
+                    className="px-6 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
+                    style={{
+                      background: 'linear-gradient(to bottom, #4a7c7c, #3d6666)',
+                      color: '#ffeedd',
+                      border: '2px solid #2d4d4d',
+                    }}
+                  >
+                    <span className="text-xl">👤</span>
+                    Change Character
+                  </button>
+                </div>
 
                 {/* Music Section */}
                 <div

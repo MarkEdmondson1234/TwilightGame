@@ -5,6 +5,7 @@ import {
   generateCharacterSpritesAsync,
   generateFairySprites,
   shouldFlipFairySprite,
+  getDirectionScale,
   DEFAULT_CHARACTER,
 } from '../utils/characterSprites';
 import { Direction } from '../types';
@@ -62,7 +63,8 @@ export function getPlayerSpriteInfo(
   playerSprites: Record<Direction, string[]>,
   direction: Direction,
   animationFrame: number,
-  isFairyForm: boolean = false
+  isFairyForm: boolean = false,
+  characterId: string = 'character1'
 ) {
   const playerFrames = playerSprites[direction];
   const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
@@ -70,7 +72,10 @@ export function getPlayerSpriteInfo(
   // Scale up custom character sprites (they're higher resolution than placeholders)
   const isCustomSprite =
     playerSpriteUrl.includes('/assets/character') || playerSpriteUrl.startsWith('data:image');
-  const spriteScale = isCustomSprite ? 3.0 : 1.0; // 3.0x for optimized sprites
+  const baseScale = isCustomSprite ? 3.0 : 1.0; // 3.0x for optimized sprites
+  // Apply per-character direction scale (e.g. character2 left/right are 10% smaller)
+  const dirScale = getDirectionScale(characterId, direction);
+  const spriteScale = baseScale * dirScale;
 
   // Check if sprite should be horizontally flipped (fairy right-facing uses left sprites flipped)
   const shouldFlip = isFairyForm && shouldFlipFairySprite(direction);
