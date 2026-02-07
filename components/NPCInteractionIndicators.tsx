@@ -3,6 +3,7 @@ import { NPC, Position } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
 import { getNPCIcon, COTTAGE_COLOURS, COTTAGE_FONTS } from '../utils/transitionIcons';
+import GameIcon from './GameIcon';
 
 interface NPCInteractionIndicatorsProps {
   npcs: NPC[];
@@ -47,11 +48,10 @@ const FloatingIcon: React.FC<{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: '18px',
         boxShadow: '0 4px 12px rgba(92, 74, 61, 0.3), inset 0 1px 0 rgba(255,255,255,0.15)',
       }}
     >
-      {icon}
+      <GameIcon icon={icon} size={18} />
     </div>
   </div>
 );
@@ -100,7 +100,7 @@ const ParchmentTooltip: React.FC<{
         whiteSpace: 'nowrap',
       }}
     >
-      <span style={{ fontSize: 18 }}>{icon}</span>
+      <GameIcon icon={icon} size={18} />
       <span>{label}</span>
       <span
         style={{

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Z_FARM_ACTIONS } from '../zIndex';
+import GameIcon from './GameIcon';
 
 export type FarmActionType = 'till' | 'plant' | 'water' | 'harvest' | 'clear';
 
@@ -68,14 +69,13 @@ const FarmActionAnimation: React.FC<FarmActionAnimationProps> = ({
         position: 'absolute',
         left: playerX,
         top: playerY - 40, // Start 40px above player
-        fontSize: '32px',
         pointerEvents: 'none',
         zIndex: Z_FARM_ACTIONS,
         animation: 'farmActionFloat 1s ease-out forwards',
-        textShadow: '2px 2px 4px rgba(0, 0, 0, 0.5)',
+        filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5))',
       }}
     >
-      {icon}
+      <GameIcon icon={icon} size={32} />
     </div>
   );
 };

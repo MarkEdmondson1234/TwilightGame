@@ -71,6 +71,7 @@ const CUTSCENE_WIDTH = 1920; // Cutscene images: 1920x1080 (16:9 aspect ratio)
 const CUTSCENE_HEIGHT = 1080;
 const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
 const ITEM_SIZE = 256; // Resize item sprites to 256x256 (inventory icons, tool sprites)
+const ICON_SIZE = 256; // Resize hand-drawn icons to 256x256 (UI icons replacing emojis, displayed at 16-64px)
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -135,7 +136,8 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'witchhut'),
     path.join(OPTIMIZED_DIR, 'cooking'),
     path.join(OPTIMIZED_DIR, 'cauldron'),
-    path.join(OPTIMIZED_DIR, 'ui')
+    path.join(OPTIMIZED_DIR, 'ui'),
+    path.join(OPTIMIZED_DIR, 'icons')
   ];
 
   dirs.forEach(dir => {
@@ -978,6 +980,58 @@ async function optimizeItems() {
   console.log(`\n  Optimized ${optimized} item sprite(s)\n`);
 }
 
+// Optimize hand-drawn icons (emoji replacements)
+async function optimizeIcons() {
+  console.log('🎯 Optimizing hand-drawn icons...');
+
+  const iconsDir = path.join(ASSETS_DIR, 'icons');
+  if (!fs.existsSync(iconsDir)) {
+    console.log('⚠️  No icons found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(iconsDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // Calculate relative path to preserve directory structure (e.g., actions/hand.png)
+    const relativePath = path.relative(iconsDir, inputPath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'icons', relativePath.replace(/\.jpeg$/i, '.png')));
+
+    // Ensure output subdirectory exists
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    // Delete output file if it exists (handles case-sensitivity issues on Windows)
+    deleteIfExists(outputPath);
+
+    await sharp(inputPath)
+      .resize(ICON_SIZE, ICON_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    // Show relative path for files in subdirectories
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} icon(s)\n`);
+}
+
 /**
  * Validate and fix any 8-bit colormap PNGs
  * PixiJS v8 cannot decode 8-bit colormap PNGs - they must be RGBA format
@@ -1048,6 +1102,7 @@ async function main() {
     await optimizeCauldron();
     await optimizeUI();
     await optimizeItems();
+    await optimizeIcons();
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

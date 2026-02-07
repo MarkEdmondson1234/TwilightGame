@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Z_RADIAL_MENU } from '../zIndex';
+import GameIcon from './GameIcon';
 
 export interface RadialMenuOption {
   id: string;
@@ -133,21 +134,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
               }}
             >
               {option.icon && (
-                <>
-                  {option.icon.startsWith('/') || option.icon.startsWith('http') ? (
-                    <img
-                      src={option.icon}
-                      alt={option.label}
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        objectFit: 'contain',
-                      }}
-                    />
-                  ) : (
-                    <span style={{ fontSize: '22px' }}>{option.icon}</span>
-                  )}
-                </>
+                <GameIcon icon={option.icon} size={32} alt={option.label} />
               )}
               <span>{option.label}</span>
             </button>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Z_TOAST, zClass } from '../zIndex';
 import { TILE_SIZE } from '../constants';
+import GameIcon from './GameIcon';
 
 export interface ToastMessage {
   id: number;
@@ -97,7 +98,7 @@ const Toast: React.FC<ToastProps> = ({ messages, onDismiss, playerScreenX, playe
             boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
           }}
         >
-          <span className="mr-2">{getIcon(msg.type)}</span>
+          <GameIcon icon={getIcon(msg.type)} size={16} className="mr-2" style={{ display: 'inline-block', verticalAlign: 'middle' }} />
           <span className="text-sm font-medium italic">{msg.message}</span>
         </div>
       ))}
