@@ -13,9 +13,9 @@ export interface DrawingColour {
 
 /** Always available — represent basic art supplies */
 export const BASE_DRAWING_COLOURS: DrawingColour[] = [
-  { id: 'charcoal', colour: '#1a1a1a', displayName: 'Charcoal' },
-  { id: 'chalk', colour: '#f5f0e8', displayName: 'Chalk' },
-  { id: 'earth', colour: '#6b4423', displayName: 'Earth Brown' },
+  { id: 'charcoal', colour: '#1A1A1A', displayName: 'Charcoal' },
+  { id: 'chalk', colour: '#EFE9E1', displayName: 'Chalk' },
+  { id: 'earth', colour: '#6B4423', displayName: 'Earth Brown' },
 ];
 
 /**

@@ -47,7 +47,7 @@ export function getFrameStyle(paintIds: string[]): FrameStyle {
 
   if (paintIds.length === 0) {
     return {
-      colour: '#8B7355',
+      colour: '#8C7A6B',
       borderWidth: 4,
       pattern: 'solid',
       displayName: 'Plain Wood',
@@ -55,7 +55,7 @@ export function getFrameStyle(paintIds: string[]): FrameStyle {
   }
 
   const primaryId = paintIds[0];
-  const primaryColour = colourMap[primaryId] ?? '#8B7355';
+  const primaryColour = colourMap[primaryId] ?? '#8C7A6B';
 
   // Check for special frame from rare paints
   const special = SPECIAL_FRAMES[primaryId];
@@ -71,7 +71,7 @@ export function getFrameStyle(paintIds: string[]): FrameStyle {
 
   // Two paints → gradient frame
   if (paintIds.length >= 2) {
-    const secondaryColour = colourMap[paintIds[1]] ?? '#8B7355';
+    const secondaryColour = colourMap[paintIds[1]] ?? '#8C7A6B';
     return {
       colour: primaryColour,
       secondaryColour,
@@ -125,7 +125,7 @@ export function getFrameCSS(style: FrameStyle): React.CSSProperties {
       return {
         ...base,
         border: `${style.borderWidth}px solid ${style.colour}`,
-        boxShadow: `inset 0 0 6px rgba(176, 224, 230, 0.5), 0 0 4px rgba(176, 224, 230, 0.3)`,
+        boxShadow: `inset 0 0 6px rgba(168, 216, 234, 0.5), 0 0 4px rgba(168, 216, 234, 0.3)`,
       };
     default:
       return {

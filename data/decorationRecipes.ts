@@ -45,7 +45,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_teal',
     resultQuantity: 1,
-    colour: '#00CED1',
+    colour: '#1F4B5F',
     hint: 'Forage luminescent toadstools in the forest.',
   },
 
@@ -60,7 +60,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_yellow',
     resultQuantity: 1,
-    colour: '#DAA520',
+    colour: '#D4B85B',
     hint: 'Forage eye of newt from wild mustard flowers.',
   },
 
@@ -75,7 +75,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_violet',
     resultQuantity: 1,
-    colour: '#8A2BE2',
+    colour: '#6B1D5C',
     hint: 'Forage shrinking violets in the forest.',
   },
 
@@ -90,7 +90,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_silver',
     resultQuantity: 1,
-    colour: '#C0C0C0',
+    colour: '#C5C6D0',
     hint: 'Forage moonpetals at night during spring or summer.',
   },
 
@@ -105,7 +105,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_blue',
     resultQuantity: 1,
-    colour: '#1E3A8A',
+    colour: '#3E3F5E',
     hint: 'Forage addersmeat at night during spring or summer.',
   },
 
@@ -120,7 +120,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_purple',
     resultQuantity: 1,
-    colour: '#4B0082',
+    colour: '#5C3D5C',
     hint: 'Forage wolfsbane in the forest.',
   },
 
@@ -135,7 +135,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_gold',
     resultQuantity: 1,
-    colour: '#FFD700',
+    colour: '#E6A847',
     hint: 'Gather phoenix ash from smouldering embers.',
   },
 
@@ -150,7 +150,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_ice',
     resultQuantity: 1,
-    colour: '#B0E0E6',
+    colour: '#A8D8EA',
     hint: 'Forage frost flowers during winter snowfall.',
   },
 
@@ -165,7 +165,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_red',
     resultQuantity: 1,
-    colour: '#DC143C',
+    colour: '#E05D6F',
     hint: 'Grow strawberries in spring or summer.',
   },
 
@@ -180,7 +180,7 @@ export const PAINT_RECIPES: Record<string, DecorationRecipe> = {
     ],
     resultItemId: 'paint_green',
     resultQuantity: 1,
-    colour: '#228B22',
+    colour: '#5A7247',
     hint: 'Grow spinach in spring or summer.',
   },
 };

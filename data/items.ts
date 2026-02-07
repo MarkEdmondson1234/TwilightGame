@@ -1978,8 +1978,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
     category: ItemCategory.DECORATION,
     description: 'A sturdy wooden easel for painting. Place it in your home to start creating art!',
     stackable: false,
+    image: itemAssets.easel,
     icon: '🎨',
-    placedScale: 1.5,
+    placedScale: 2.0,
   },
 
   // ===== CRAFTED DECORATIONS =====

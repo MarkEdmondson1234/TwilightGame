@@ -3,7 +3,7 @@ import { PlacedItem } from '../types';
 import { TILE_SIZE } from '../constants';
 import { shouldShowDecayWarning, getDecayProgress } from '../utils/itemDecayManager';
 import { getItem } from '../data/items';
-import { Z_PLACED_ITEMS } from '../zIndex';
+import { Z_PLAYER } from '../zIndex';
 
 interface PlacedItemsProps {
   items: PlacedItem[];
@@ -35,6 +35,9 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({
         const offset = (TILE_SIZE * (scale - 1)) / 2;
         const screenX = item.position.x * TILE_SIZE - cameraX - offset;
         const screenY = item.position.y * TILE_SIZE - cameraY - offset;
+        // Depth sort: bottom of item determines z-index (same system as player/NPCs)
+        const feetY = item.position.y + scale;
+        const depthZ = Z_PLAYER + Math.floor(feetY);
         const showWarning = shouldShowDecayWarning(item);
         const decayProgress = getDecayProgress(item);
         const imageSrc = item.customImage || item.image;
@@ -51,7 +54,7 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({
               width: `${itemSize}px`,
               height: `${itemSize}px`,
               pointerEvents: 'none',
-              zIndex: Z_PLACED_ITEMS,
+              zIndex: depthZ,
               // Frame border for paintings
               ...(hasFrame
                 ? {

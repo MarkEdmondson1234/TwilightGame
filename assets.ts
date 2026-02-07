@@ -596,6 +596,7 @@ export const itemAssets = {
   // Decorations
   sunflower_bouquet:
     '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',
+  easel: '/TwilightGame/assets-optimized/items/crafting/easel.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds
