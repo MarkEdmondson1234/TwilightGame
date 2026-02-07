@@ -82,10 +82,6 @@ function getCharacterSpriteUrls(characterId: string = 'character1'): string[] {
     for (let frame = 0; frame < frameCount; frame++) {
       urls.push(`${basePath}/${dir}_${frame}.png`);
     }
-    // Also include blink frame for left/right
-    if (dir === 'left' || dir === 'right') {
-      urls.push(`${basePath}/${dir}_${frameCount}.png`);
-    }
   }
 
   return urls;
