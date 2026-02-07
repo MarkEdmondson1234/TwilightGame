@@ -6,4 +6,5 @@ export const iconAssets = {
   // Actions
   hand: '/TwilightGame/assets-optimized/icons/actions/hand.png',
   leaf: '/TwilightGame/assets-optimized/icons/actions/leaf.png',
+  gift: '/TwilightGame/assets-optimized/icons/actions/gift.png',
 };

@@ -12,6 +12,7 @@ import { iconAssets } from '../iconAssets';
 const EMOJI_TO_ICON: Record<string, string> = {
   '👋': iconAssets.hand,
   '🌿': iconAssets.leaf,
+  '🎁': iconAssets.gift,
 };
 
 /**

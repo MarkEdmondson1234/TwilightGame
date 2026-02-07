@@ -15,6 +15,7 @@ import { npcManager } from '../NPCManager';
 import { getItem, ItemCategory } from '../data/items';
 import { NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
+import GameIcon from './GameIcon';
 import { Z_MODAL, zClass } from '../zIndex';
 
 export interface GiftResult {
@@ -176,7 +177,7 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="text-3xl">🎁</span>
+                <GameIcon icon="🎁" size={36} alt="Gift" />
               )}
             </div>
             <div>
@@ -301,7 +302,7 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
               }
             `}
           >
-            Give Gift 🎁
+            Give Gift <GameIcon icon="🎁" size={20} alt="Gift" className="inline-block align-middle ml-1" />
           </button>
         </div>
       </div>
