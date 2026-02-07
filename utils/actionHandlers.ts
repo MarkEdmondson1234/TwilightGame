@@ -975,7 +975,9 @@ export type InteractionType =
   | 'give_gift'
   | 'desk_place'
   | 'desk_pickup'
-  | 'place_decoration';
+  | 'place_decoration'
+  | 'open_workshop'
+  | 'open_painting_easel';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -1026,6 +1028,8 @@ export interface GetInteractionsConfig {
   onCollectResource?: (result: { success: boolean; message: string; itemId?: string }) => void;
   onDeskAction?: (action: DeskAction) => void;
   onPlaceDecoration?: (result: { itemId: string; position: Position; image: string }) => void;
+  onOpenDecorationWorkshop?: () => void;
+  onOpenPaintingEasel?: () => void;
 }
 
 /**
@@ -1087,6 +1091,30 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           imageUrl: itemAtPosition.image,
         }),
     });
+
+    // Easel interaction: open decoration workshop
+    if (itemAtPosition.itemId === 'easel' && config.onOpenDecorationWorkshop) {
+      interactions.push({
+        type: 'open_workshop',
+        label: 'Paint',
+        icon: '🎨',
+        color: '#8b5cf6',
+        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+        execute: () => config.onOpenDecorationWorkshop!(),
+      });
+    }
+
+    // Easel interaction: open freehand drawing easel
+    if (itemAtPosition.itemId === 'easel' && config.onOpenPaintingEasel) {
+      interactions.push({
+        type: 'open_painting_easel',
+        label: 'Draw',
+        icon: '✏️',
+        color: '#d97706',
+        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+        execute: () => config.onOpenPaintingEasel!(),
+      });
+    }
 
     // Eat and Taste options only for non-decoration items (food)
     if (!isDecoration) {

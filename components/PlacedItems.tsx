@@ -2,6 +2,7 @@ import React from 'react';
 import { PlacedItem } from '../types';
 import { TILE_SIZE } from '../constants';
 import { shouldShowDecayWarning, getDecayProgress } from '../utils/itemDecayManager';
+import { getItem } from '../data/items';
 import { Z_PLACED_ITEMS } from '../zIndex';
 
 interface PlacedItemsProps {
@@ -13,6 +14,7 @@ interface PlacedItemsProps {
 /**
  * PlacedItems - Renders food items and other placed objects on the map
  * Items blink/fade when approaching decay time (last 30 seconds)
+ * Supports custom painting images with decorative frames
  */
 const PlacedItems: React.FC<PlacedItemsProps> = ({ items, cameraX, cameraY }) => {
   console.log('[PlacedItems] Rendering placed items:', items.length, items);
@@ -20,10 +22,16 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({ items, cameraX, cameraY }) =>
   return (
     <>
       {items.map((item) => {
-        const screenX = item.position.x * TILE_SIZE - cameraX;
-        const screenY = item.position.y * TILE_SIZE - cameraY;
+        const itemDef = getItem(item.itemId);
+        const scale = itemDef?.placedScale ?? 1;
+        const itemSize = TILE_SIZE * scale;
+        const offset = (TILE_SIZE * (scale - 1)) / 2;
+        const screenX = item.position.x * TILE_SIZE - cameraX - offset;
+        const screenY = item.position.y * TILE_SIZE - cameraY - offset;
         const showWarning = shouldShowDecayWarning(item);
         const decayProgress = getDecayProgress(item);
+        const imageSrc = item.customImage || item.image;
+        const hasFrame = !!item.frameStyle;
 
         return (
           <div
@@ -32,20 +40,26 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({ items, cameraX, cameraY }) =>
               position: 'absolute',
               left: `${screenX}px`,
               top: `${screenY}px`,
-              width: `${TILE_SIZE}px`,
-              height: `${TILE_SIZE}px`,
+              width: `${itemSize}px`,
+              height: `${itemSize}px`,
               pointerEvents: 'none',
-              zIndex: Z_PLACED_ITEMS, // Between player (100) and foreground sprites (200)
+              zIndex: Z_PLACED_ITEMS,
+              // Frame border for paintings
+              ...(hasFrame
+                ? {
+                    border: `${item.frameStyle!.borderWidth}px solid ${item.frameStyle!.colour}`,
+                    boxSizing: 'border-box' as const,
+                  }
+                : {}),
             }}
           >
             <img
-              src={item.image}
+              src={imageSrc}
               alt={item.itemId}
               style={{
                 width: '100%',
                 height: '100%',
                 objectFit: 'contain',
-                imageRendering: 'pixelated',
                 // Blinking animation for items about to decay (1 second cycle)
                 animation: showWarning ? 'blink 1s infinite' : 'none',
                 // Fade out based on decay progress

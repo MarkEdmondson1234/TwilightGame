@@ -164,6 +164,16 @@ export interface PlacedItem {
   image: string; // Image URL
   timestamp: number; // When it was placed
   permanent?: boolean; // If true, item never decays (decorations)
+  // Custom painting fields (for player-uploaded paintings)
+  paintingId?: string; // Links to PaintingData in DecorationManager
+  customImage?: string; // Custom image URL (uploaded painting)
+  frameStyle?: {
+    // Frame border style from paint colours
+    colour: string;
+    secondaryColour?: string;
+    borderWidth: number;
+    pattern: 'solid' | 'gradient' | 'double' | 'filigree' | 'frosted';
+  };
 }
 
 // Item placed on a desk surface

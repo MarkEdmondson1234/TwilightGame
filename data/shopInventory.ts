@@ -452,6 +452,32 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
     availableSeasons: ['summer', 'autumn'],
   },
+
+  // ===== DECORATION CRAFTING MATERIALS =====
+  {
+    itemId: 'linen',
+    buyPrice: 15,
+    sellPrice: 5,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'wooden_frame',
+    buyPrice: 20,
+    sellPrice: 8,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'ceramic_vase',
+    buyPrice: 25,
+    sellPrice: 10,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'plant_pot',
+    buyPrice: 15,
+    sellPrice: 5,
+    stock: 'unlimited',
+  },
 ];
 
 /**

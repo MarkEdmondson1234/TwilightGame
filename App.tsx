@@ -68,6 +68,8 @@ import WeatherTintOverlay from './components/WeatherTintOverlay';
 import ForegroundParallax from './components/ForegroundParallax';
 import CloudShadows from './components/CloudShadows';
 import CookingInterface from './components/CookingInterface';
+import DecorationCraftingUI from './components/DecorationCraftingUI';
+import PaintingEaselUI from './components/PaintingEaselUI';
 import { CottageBook } from './components/book';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu from './components/RadialMenu';
@@ -159,6 +161,8 @@ const App: React.FC = () => {
     ui.giftModal ||
     ui.glamourModal ||
     ui.brewingUI ||
+    ui.decorationWorkshop ||
+    ui.paintingEasel ||
     ui.devTools ||
     ui.vfxTestPanel;
 
@@ -1462,6 +1466,14 @@ const App: React.FC = () => {
               showToast('Returned to normal form.', 'info');
             }
           }}
+          onOpenPaintingEasel={() => {
+            closeUI('devTools');
+            openUI('paintingEasel');
+          }}
+          onOpenDecorationWorkshop={() => {
+            closeUI('devTools');
+            openUI('decorationWorkshop');
+          }}
         />
       )}
       {import.meta.env.DEV && ui.spriteEditor && (
@@ -1523,6 +1535,15 @@ const App: React.FC = () => {
             // GameState emits PLACED_ITEMS_CHANGED event when items are placed
           }}
         />
+      )}
+      {ui.decorationWorkshop && (
+        <DecorationCraftingUI
+          isOpen={ui.decorationWorkshop}
+          onClose={() => closeUI('decorationWorkshop')}
+        />
+      )}
+      {ui.paintingEasel && (
+        <PaintingEaselUI isOpen={ui.paintingEasel} onClose={() => closeUI('paintingEasel')} />
       )}
       {ui.brewingUI && (
         <div

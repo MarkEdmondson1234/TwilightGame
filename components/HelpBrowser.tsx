@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Z_HELP_BROWSER, zClass } from '../zIndex';
 import {
   getStoredApiKey,
@@ -32,6 +33,7 @@ const DOC_FILES: DocFile[] = [
   { name: 'stamina', title: '💚 Stamina', path: '/TwilightGame/docs/STAMINA.md' },
   { name: 'farming', title: '🌾 Farming Guide', path: '/TwilightGame/docs/FARMING.md' },
   { name: 'seeds', title: '🌱 Seeds Guide', path: '/TwilightGame/docs/SEEDS.md' },
+  { name: 'decorations', title: '🎨 Decorations', path: '/TwilightGame/docs/DECORATIONS.md' },
   { name: 'magic', title: '🧪 Magic & Potions', path: '/TwilightGame/docs/MAGIC.md' },
   { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },
   { name: 'ai-chat', title: '💬 AI Chat', path: '/TwilightGame/docs/AI_CHAT.md' },
@@ -780,6 +782,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
               /* Documentation Content */
               <div className="prose max-w-none">
                 <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
                   components={{
                     // Custom cottagecore styling for markdown elements
                     h1: ({ node, ...props }) => (

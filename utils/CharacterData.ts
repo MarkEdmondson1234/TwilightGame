@@ -92,6 +92,21 @@ export interface MagicData {
   >;
 }
 
+export interface DecorationData {
+  craftedPaints: string[];
+  paintings: Array<{
+    id: string;
+    name: string;
+    imageUrl: string;
+    storageKey: string;
+    paintIds: string[];
+    colours: string[];
+    createdAt: number;
+    isUploaded: boolean;
+  }>;
+  hasEasel: boolean;
+}
+
 // Map of domain names to their data types
 export interface CharacterDataDomains {
   cooking: CookingData;
@@ -99,6 +114,7 @@ export interface CharacterDataDomains {
   farming: FarmingData;
   inventory: InventoryData;
   magic: MagicData;
+  decoration: DecorationData;
 }
 
 // Type for domain names
@@ -142,6 +158,8 @@ class CharacterDataManager {
           return gameState.loadInventory() as unknown as CharacterDataDomains[T];
         case 'magic':
           return gameState.loadMagicState() as unknown as CharacterDataDomains[T] | null;
+        case 'decoration':
+          return gameState.loadDecorationState() as unknown as CharacterDataDomains[T] | null;
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
           return null;
@@ -187,6 +205,9 @@ class CharacterDataManager {
           break;
         case 'magic':
           gameState.saveMagicState(data as MagicData);
+          break;
+        case 'decoration':
+          gameState.saveDecorationState(data as DecorationData);
           break;
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
@@ -240,6 +261,13 @@ class CharacterDataManager {
           currentLevel: magicData.currentLevel,
           unlockedRecipesCount: magicData.unlockedRecipes.length,
           progressCount: Object.keys(magicData.recipeProgress).length,
+        };
+      case 'decoration':
+        const decoData = data as DecorationData;
+        return {
+          craftedPaintsCount: decoData.craftedPaints.length,
+          paintingsCount: decoData.paintings.length,
+          hasEasel: decoData.hasEasel,
         };
       default:
         return { unknown: true };

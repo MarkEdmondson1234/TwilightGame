@@ -41,6 +41,9 @@ export type { SyncStatus, SyncState } from './syncManager';
 // Shared Data (Multi-player Features)
 export { sharedDataService } from './sharedDataService';
 
+// Painting Storage
+export { paintingStorageService } from './paintingStorage';
+
 // Types
 export type {
   UserProfile,

@@ -362,6 +362,12 @@ export function useInteractionController(
           onShowToast(result.message, 'info');
         }
       },
+      onOpenDecorationWorkshop: () => {
+        openUI('decorationWorkshop');
+      },
+      onOpenPaintingEasel: () => {
+        openUI('paintingEasel');
+      },
       onPlaceDecoration: (result: { itemId: string; position: Position; image: string }) => {
         inventoryManager.removeItem(result.itemId, 1);
         gameState.addPlacedItem({

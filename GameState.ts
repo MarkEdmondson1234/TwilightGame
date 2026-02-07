@@ -144,6 +144,22 @@ export interface GameState {
     >;
   };
 
+  // Decoration crafting system (managed by DecorationManager)
+  decoration?: {
+    craftedPaints: string[];
+    paintings: Array<{
+      id: string;
+      name: string;
+      imageUrl: string;
+      storageKey: string;
+      paintIds: string[];
+      colours: string[];
+      createdAt: number;
+      isUploaded: boolean;
+    }>;
+    hasEasel: boolean;
+  };
+
   // Status effects
   statusEffects: {
     feelingSick: boolean; // Prevents leaving village, acquired from eating terrible food
@@ -1041,6 +1057,43 @@ class GameStateManager {
     >;
   } | null {
     return this.state.magic || null;
+  }
+
+  // === Decoration Methods ===
+
+  saveDecorationState(decoration: {
+    craftedPaints: string[];
+    paintings: Array<{
+      id: string;
+      name: string;
+      imageUrl: string;
+      storageKey: string;
+      paintIds: string[];
+      colours: string[];
+      createdAt: number;
+      isUploaded: boolean;
+    }>;
+    hasEasel: boolean;
+  }): void {
+    this.state.decoration = decoration;
+    this.notify();
+  }
+
+  loadDecorationState(): {
+    craftedPaints: string[];
+    paintings: Array<{
+      id: string;
+      name: string;
+      imageUrl: string;
+      storageKey: string;
+      paintIds: string[];
+      colours: string[];
+      createdAt: number;
+      isUploaded: boolean;
+    }>;
+    hasEasel: boolean;
+  } | null {
+    return this.state.decoration || null;
   }
 
   /**

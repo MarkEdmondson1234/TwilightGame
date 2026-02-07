@@ -52,6 +52,11 @@ export enum GameEvent {
   QUEST_STAGE_CHANGED = 'quest:stage_changed',
   QUEST_COMPLETED = 'quest:completed',
   QUEST_DATA_CHANGED = 'quest:data_changed',
+
+  // Decoration crafting events
+  DECORATION_CRAFTED = 'decoration:crafted',
+  PAINTING_CREATED = 'decoration:painting_created',
+  PAINTING_DELETED = 'decoration:painting_deleted',
 }
 
 // ============================================================================
@@ -122,6 +127,17 @@ export interface EventPayloads {
     questId: string;
     key: string;
     value: unknown;
+  };
+  [GameEvent.DECORATION_CRAFTED]: {
+    recipeId: string;
+    resultItemId: string;
+    category: string;
+  };
+  [GameEvent.PAINTING_CREATED]: {
+    paintingId: string;
+  };
+  [GameEvent.PAINTING_DELETED]: {
+    paintingId: string;
   };
 }
 

@@ -48,6 +48,14 @@ const stubSyncManager = {
   initialize: () => {},
 };
 
+/** Stub paintingStorageService when Firebase is not available */
+const stubPaintingStorage = {
+  saveImage: async () => false as boolean,
+  loadImage: async () => null as string | null,
+  deleteImage: async () => {},
+  loadAllImages: async () => new Map<string, string>(),
+};
+
 /** Stub initializeFirebase when Firebase is not available */
 const stubInitializeFirebase = async () => null;
 
@@ -106,6 +114,13 @@ export async function safeInitializeFirebase() {
     console.log('[App] Firebase initialization failed - continuing without cloud saves');
     return null;
   }
+}
+
+/**
+ * Get paintingStorageService (real or stub).
+ */
+export function getPaintingStorageService() {
+  return firebaseModule?.paintingStorageService ?? stubPaintingStorage;
 }
 
 /**

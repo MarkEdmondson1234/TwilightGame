@@ -71,10 +71,21 @@ export class PlacedItemsLayer extends PixiLayer {
       let sprite = this.sprites.get(key);
 
       if (!sprite) {
-        // Create new sprite
-        const texture = textureManager.getTexture(item.image);
+        // Determine texture source: custom painting image or standard item image
+        const imageUrl = item.customImage || item.image;
+        const texture = textureManager.getTexture(imageUrl);
+
+        // For custom images (paintings), try async loading if not cached
+        if (!texture && item.customImage) {
+          // Start async load — sprite will appear on next render cycle
+          textureManager.loadTexture(key, item.customImage).catch((err) => {
+            console.warn(`[PlacedItemsLayer] Failed to load custom image: ${err}`);
+          });
+          continue;
+        }
+
         if (!texture) {
-          console.warn(`[PlacedItemsLayer] Texture not found for: ${item.image}`);
+          console.warn(`[PlacedItemsLayer] Texture not found for: ${imageUrl}`);
           continue;
         }
 

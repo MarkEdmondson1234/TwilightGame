@@ -44,6 +44,7 @@ import {
   deliverPickledOnions,
 } from '../data/quests/witchGardenQuest';
 import { magicManager } from './MagicManager';
+import { decorationManager } from './DecorationManager';
 import { DEBUG } from '../constants';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
@@ -75,6 +76,13 @@ const TIER_REWARDS: Record<
     stranger: [],
     acquaintance: [],
     good_friend: [{ itemId: 'potion_fairy_form', quantity: 1 }],
+  },
+
+  // Mushra (forest artist) gives an easel when you become acquaintances
+  mushra: {
+    stranger: [],
+    acquaintance: [{ itemId: 'easel', quantity: 1 }],
+    good_friend: [],
   },
 };
 
@@ -311,6 +319,11 @@ class FriendshipManagerClass {
       // Special handling for Fairy Form Potion - update quest progress
       if (reward.itemId === 'potion_fairy_form') {
         markFairyQuestPotionReceived();
+      }
+
+      // Special handling for Easel - track in DecorationManager
+      if (reward.itemId === 'easel') {
+        decorationManager.grantEasel();
       }
     }
 

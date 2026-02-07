@@ -7,6 +7,9 @@ import { mapManager } from '../maps/MapManager';
 import { FarmPlotState } from '../types';
 import { audioManager, SoundCategory, AudioEffects } from '../utils/AudioManager';
 import { magicManager } from '../utils/MagicManager';
+import { inventoryManager } from '../utils/inventoryManager';
+import { decorationManager } from '../utils/DecorationManager';
+import { getLocalPaintingCount, LOCAL_PAINTING_LIMIT } from '../utils/paintingImageService';
 import './DevTools.css';
 
 interface DevToolsProps {
@@ -14,6 +17,8 @@ interface DevToolsProps {
   onFarmUpdate?: () => void;
   onFairyFormToggle?: (active: boolean) => void;
   isFairyForm?: boolean;
+  onOpenPaintingEasel?: () => void;
+  onOpenDecorationWorkshop?: () => void;
 }
 
 /**
@@ -598,11 +603,120 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
   );
 };
 
+/**
+ * Painting Debug Section - shortcuts for testing the painting/drawing system
+ */
+const PaintingDebugSection: React.FC<{
+  onOpenPaintingEasel?: () => void;
+  onOpenDecorationWorkshop?: () => void;
+}> = ({ onOpenPaintingEasel, onOpenDecorationWorkshop }) => {
+  const [status, setStatus] = useState('');
+
+  const updateStatus = () => {
+    const paintings = decorationManager.getAllPaintings();
+    const localCount = getLocalPaintingCount();
+    const hasEasel = decorationManager.getHasEasel();
+    const hasCanvas = inventoryManager.hasItem('blank_canvas', 1);
+    const unlocked = decorationManager.getUnlockedColours();
+    setStatus(
+      `Easel: ${hasEasel ? 'yes' : 'no'} | Canvas: ${hasCanvas ? 'yes' : 'no'} | ` +
+        `Paints unlocked: ${unlocked.length} | Paintings: ${paintings.length} (${localCount}/${LOCAL_PAINTING_LIMIT} stored)`
+    );
+  };
+
+  useEffect(() => {
+    updateStatus();
+  }, []);
+
+  const giveArtSupplies = () => {
+    // Grant easel
+    if (!decorationManager.getHasEasel()) {
+      decorationManager.grantEasel();
+      inventoryManager.addItem('easel', 1);
+    }
+
+    // Grant blank canvases
+    inventoryManager.addItem('blank_canvas', 5);
+
+    // Grant a selection of paints (and mark them as crafted)
+    const paintIds = [
+      'paint_teal',
+      'paint_yellow',
+      'paint_violet',
+      'paint_blue',
+      'paint_red',
+      'paint_green',
+    ];
+    for (const id of paintIds) {
+      inventoryManager.addItem(id, 2);
+    }
+
+    // Mark paints as crafted so colours unlock in the palette
+    // Dev tools: directly update the manager's internal Set + persist
+    const mgr = decorationManager as unknown as { craftedPaints: Set<string> };
+    for (const id of paintIds) {
+      mgr.craftedPaints.add(id);
+    }
+    characterData.save('decoration', decorationManager.getDecorationState());
+
+    // Save inventory
+    const inv = inventoryManager.getInventoryData();
+    characterData.saveInventory(inv.items, inv.tools);
+
+    updateStatus();
+    console.log('[DevTools] Granted art supplies: easel, 5 canvases, 6 paint types (x2 each)');
+  };
+
+  return (
+    <>
+      <div className="devtools-status" style={{ marginBottom: '12px' }}>
+        <p style={{ fontSize: '11px', lineHeight: 1.5 }}>{status || 'Loading...'}</p>
+      </div>
+
+      <div className="devtools-control">
+        <label>Quick Actions</label>
+        <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+          <button
+            className="devtools-button"
+            onClick={giveArtSupplies}
+            title="Add easel, canvases, and paints to inventory"
+          >
+            🎨 Give Art Supplies
+          </button>
+          {onOpenPaintingEasel && (
+            <button
+              className="devtools-button"
+              onClick={onOpenPaintingEasel}
+              title="Open the freehand drawing easel"
+            >
+              ✏️ Open Drawing Easel
+            </button>
+          )}
+          {onOpenDecorationWorkshop && (
+            <button
+              className="devtools-button"
+              onClick={onOpenDecorationWorkshop}
+              title="Open the decoration workshop (upload images, craft frames)"
+            >
+              🖼️ Open Workshop
+            </button>
+          )}
+        </div>
+        <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+          &quot;Give Art Supplies&quot; adds: easel, 5 blank canvases, 6 paint types (2 each)
+        </small>
+      </div>
+    </>
+  );
+};
+
 const DevTools: React.FC<DevToolsProps> = ({
   onClose,
   onFarmUpdate,
   onFairyFormToggle,
   isFairyForm = false,
+  onOpenPaintingEasel,
+  onOpenDecorationWorkshop,
 }) => {
   console.log('[DevTools] Component rendering');
 
@@ -815,6 +929,14 @@ const DevTools: React.FC<DevToolsProps> = ({
           <div className="devtools-section">
             <h3>Farming Debug</h3>
             <FarmingDebugSection onFarmUpdate={onFarmUpdate} />
+          </div>
+
+          <div className="devtools-section">
+            <h3>Painting</h3>
+            <PaintingDebugSection
+              onOpenPaintingEasel={onOpenPaintingEasel}
+              onOpenDecorationWorkshop={onOpenDecorationWorkshop}
+            />
           </div>
 
           <div className="devtools-section">

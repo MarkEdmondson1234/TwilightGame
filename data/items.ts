@@ -1795,6 +1795,302 @@ export const ITEMS: Record<string, ItemDefinition> = {
     icon: '🌻',
     placedScale: 6,
   },
+
+  // ===== DECORATION CRAFTING MATERIALS =====
+
+  linen: {
+    id: 'linen',
+    name: 'linen',
+    displayName: 'Linen',
+    category: ItemCategory.MATERIAL,
+    description: 'A piece of woven linen cloth. Used for crafting canvases.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 15,
+    icon: '🧵',
+  },
+
+  wooden_frame: {
+    id: 'wooden_frame',
+    name: 'wooden_frame',
+    displayName: 'Wooden Frame',
+    category: ItemCategory.MATERIAL,
+    description: 'A simple wooden frame. Stretch a canvas over it or display a painting.',
+    stackable: true,
+    sellPrice: 8,
+    buyPrice: 20,
+    icon: '🪵',
+  },
+
+  blank_canvas: {
+    id: 'blank_canvas',
+    name: 'blank_canvas',
+    displayName: 'Blank Canvas',
+    category: ItemCategory.MATERIAL,
+    description: 'A stretched canvas ready for painting. Craft from linen and a wooden frame.',
+    stackable: true,
+    sellPrice: 15,
+    icon: '🖼️',
+  },
+
+  ceramic_vase: {
+    id: 'ceramic_vase',
+    name: 'ceramic_vase',
+    displayName: 'Ceramic Vase',
+    category: ItemCategory.MATERIAL,
+    description: 'A lovely handmade ceramic vase. Perfect for flower arrangements.',
+    stackable: true,
+    sellPrice: 10,
+    buyPrice: 25,
+    icon: '🏺',
+  },
+
+  plant_pot: {
+    id: 'plant_pot',
+    name: 'plant_pot',
+    displayName: 'Plant Pot',
+    category: ItemCategory.MATERIAL,
+    description: 'A terracotta plant pot. Pop a crop in and brighten up the windowsill.',
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 15,
+    icon: '🪴',
+  },
+
+  // ===== PAINT POTS =====
+
+  paint_teal: {
+    id: 'paint_teal',
+    name: 'paint_teal',
+    displayName: 'Teal Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A vibrant teal paint made from luminescent toadstools.',
+    stackable: true,
+    sellPrice: 12,
+    icon: '🎨',
+  },
+
+  paint_yellow: {
+    id: 'paint_yellow',
+    name: 'paint_yellow',
+    displayName: 'Mustard Yellow Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A warm mustard yellow paint ground from eye of newt seeds.',
+    stackable: true,
+    sellPrice: 12,
+    icon: '🎨',
+  },
+
+  paint_violet: {
+    id: 'paint_violet',
+    name: 'paint_violet',
+    displayName: 'Violet Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A delicate violet paint made from shrinking violets.',
+    stackable: true,
+    sellPrice: 12,
+    icon: '🎨',
+  },
+
+  paint_silver: {
+    id: 'paint_silver',
+    name: 'paint_silver',
+    displayName: 'Moonlit Silver Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A shimmering silver paint that glows faintly. Made from moonpetals.',
+    stackable: true,
+    sellPrice: 20,
+    icon: '🎨',
+  },
+
+  paint_blue: {
+    id: 'paint_blue',
+    name: 'paint_blue',
+    displayName: 'Deep Blue Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A rich blue paint that shimmers like starlight. Made from addersmeat.',
+    stackable: true,
+    sellPrice: 20,
+    icon: '🎨',
+  },
+
+  paint_purple: {
+    id: 'paint_purple',
+    name: 'paint_purple',
+    displayName: 'Dark Purple Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A deep, mysterious purple paint from wolfsbane.',
+    stackable: true,
+    sellPrice: 15,
+    icon: '🎨',
+  },
+
+  paint_gold: {
+    id: 'paint_gold',
+    name: 'paint_gold',
+    displayName: 'Gilded Gold Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A warm, golden paint from phoenix ash. Feels faintly warm to the touch.',
+    stackable: true,
+    sellPrice: 25,
+    icon: '🎨',
+  },
+
+  paint_ice: {
+    id: 'paint_ice',
+    name: 'paint_ice',
+    displayName: 'Frost Blue Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A crystalline ice blue paint from winter frost flowers.',
+    stackable: true,
+    sellPrice: 25,
+    icon: '🎨',
+  },
+
+  paint_red: {
+    id: 'paint_red',
+    name: 'paint_red',
+    displayName: 'Strawberry Red Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A bright red paint made from crushed strawberries.',
+    stackable: true,
+    sellPrice: 12,
+    icon: '🎨',
+  },
+
+  paint_green: {
+    id: 'paint_green',
+    name: 'paint_green',
+    displayName: 'Spinach Green Paint',
+    category: ItemCategory.MATERIAL,
+    description: 'A rich earthy green paint made from fresh spinach.',
+    stackable: true,
+    sellPrice: 12,
+    icon: '🎨',
+  },
+
+  // ===== EASEL =====
+
+  easel: {
+    id: 'easel',
+    name: 'easel',
+    displayName: 'Easel',
+    category: ItemCategory.DECORATION,
+    description: 'A sturdy wooden easel for painting. Place it in your home to start creating art!',
+    stackable: false,
+    icon: '🎨',
+    placedScale: 1.5,
+  },
+
+  // ===== CRAFTED DECORATIONS =====
+
+  framed_painting: {
+    id: 'framed_painting',
+    name: 'framed_painting',
+    displayName: 'Framed Painting',
+    category: ItemCategory.DECORATION,
+    description: 'A beautiful framed painting. Each one is unique!',
+    stackable: false,
+    sellPrice: 50,
+    icon: '🖼️',
+    placedScale: 1.5,
+  },
+
+  decoration_arrangement_moonpetal: {
+    id: 'decoration_arrangement_moonpetal',
+    name: 'decoration_arrangement_moonpetal',
+    displayName: 'Moonpetal Arrangement',
+    category: ItemCategory.DECORATION,
+    description: 'A delicate vase of softly glowing moonpetals.',
+    stackable: false,
+    sellPrice: 40,
+    icon: '🌸',
+    placedScale: 1.2,
+  },
+
+  decoration_arrangement_violet: {
+    id: 'decoration_arrangement_violet',
+    name: 'decoration_arrangement_violet',
+    displayName: 'Violet Posy',
+    category: ItemCategory.DECORATION,
+    description: 'A sweet arrangement of shrinking violets in a ceramic vase.',
+    stackable: false,
+    sellPrice: 30,
+    icon: '💜',
+    placedScale: 1.2,
+  },
+
+  decoration_arrangement_frost: {
+    id: 'decoration_arrangement_frost',
+    name: 'decoration_arrangement_frost',
+    displayName: 'Winter Frost Display',
+    category: ItemCategory.DECORATION,
+    description: 'Frost flowers preserved in a vase. They never quite melt.',
+    stackable: false,
+    sellPrice: 50,
+    icon: '❄️',
+    placedScale: 1.2,
+  },
+
+  decoration_arrangement_mixed: {
+    id: 'decoration_arrangement_mixed',
+    name: 'decoration_arrangement_mixed',
+    displayName: 'Mixed Wildflower Bouquet',
+    category: ItemCategory.DECORATION,
+    description: 'A cheerful mix of wildflowers from the forest.',
+    stackable: false,
+    sellPrice: 45,
+    icon: '💐',
+    placedScale: 1.2,
+  },
+
+  decoration_arrangement_sunflower: {
+    id: 'decoration_arrangement_sunflower',
+    name: 'decoration_arrangement_sunflower',
+    displayName: 'Sunflower Vase',
+    category: ItemCategory.DECORATION,
+    description: 'Bright sunflowers standing tall in a ceramic vase.',
+    stackable: false,
+    sellPrice: 35,
+    icon: '🌻',
+    placedScale: 1.2,
+  },
+
+  decoration_potted_strawberry: {
+    id: 'decoration_potted_strawberry',
+    name: 'decoration_potted_strawberry',
+    displayName: 'Potted Strawberry',
+    category: ItemCategory.DECORATION,
+    description: 'A sweet little strawberry plant in a terracotta pot.',
+    stackable: false,
+    sellPrice: 25,
+    icon: '🍓',
+    placedScale: 1.0,
+  },
+
+  decoration_potted_herbs: {
+    id: 'decoration_potted_herbs',
+    name: 'decoration_potted_herbs',
+    displayName: 'Potted Herbs',
+    category: ItemCategory.DECORATION,
+    description: 'A fragrant pot of fresh herbs for the kitchen windowsill.',
+    stackable: false,
+    sellPrice: 20,
+    icon: '🌿',
+    placedScale: 1.0,
+  },
+
+  decoration_potted_sunflower: {
+    id: 'decoration_potted_sunflower',
+    name: 'decoration_potted_sunflower',
+    displayName: 'Potted Sunflower',
+    category: ItemCategory.DECORATION,
+    description: 'A cheerful sunflower growing in a terracotta pot.',
+    stackable: false,
+    sellPrice: 20,
+    icon: '🌻',
+    placedScale: 1.0,
+  },
 };
 
 /**

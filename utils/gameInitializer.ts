@@ -9,6 +9,8 @@ import { inventoryManager } from './inventoryManager';
 import { friendshipManager } from './FriendshipManager';
 import { cookingManager } from './CookingManager';
 import { magicManager } from './MagicManager';
+import { decorationManager } from './DecorationManager';
+import { syncPaintingsFromCloud } from './paintingImageService';
 import { deskManager } from './deskManager';
 import { performanceMonitor } from './PerformanceMonitor';
 import { TimeManager, Season } from './TimeManager';
@@ -134,6 +136,12 @@ export async function initializeGame(
   // Load magic progress from saved state
   magicManager.initialise();
   console.log(`[App] Initialised magic system`);
+
+  // Load decoration crafting progress from saved state
+  decorationManager.initialise();
+  // Sync painting images from cloud in background (non-blocking)
+  syncPaintingsFromCloud().catch(() => {});
+  console.log(`[App] Initialised decoration system`);
 
   // Load desk contents from saved state
   deskManager.initialise();

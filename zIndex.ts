@@ -189,6 +189,9 @@ export const Z_MAGIC_BOOK = 2045;
 /** Recipe book */
 export const Z_RECIPE_BOOK = 2050;
 
+/** Painting easel (freehand drawing) */
+export const Z_PAINTING_EASEL = 2055;
+
 /** Bookshelf modal */
 export const Z_BOOKSHELF_MODAL = 2060;
 
