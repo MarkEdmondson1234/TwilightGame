@@ -5,6 +5,9 @@
  * crop types in her kitchen garden to prove their dedication before
  * accepting them as an apprentice.
  *
+ * After the garden is complete, she teaches the pickled onions recipe
+ * and asks the player to make a batch — basic chemistry before potions.
+ *
  * The 6 garden plots are on the witch_hut map.
  * Progress is tracked by listening for FARM_CROP_HARVESTED events.
  */
@@ -24,7 +27,8 @@ export const WITCH_GARDEN_STAGES = {
   NOT_STARTED: 0,
   ACTIVE: 1,
   GARDEN_COMPLETE: 2,
-  COMPLETED: 3,
+  PICKLED_ONIONS: 3,
+  COMPLETED: 4,
 } as const;
 
 export type WitchGardenStage =
@@ -37,10 +41,13 @@ export type WitchGardenStage =
 export interface WitchGardenQuestData {
   /** Unique crop type IDs that have been harvested from the witch's garden */
   gardenCropsGrown: string[];
+  /** Whether the pickled onions have been delivered to the witch */
+  pickledOnionsDelivered: boolean;
 }
 
 const WITCH_GARDEN_DEFAULT_DATA: WitchGardenQuestData = {
   gardenCropsGrown: [],
+  pickledOnionsDelivered: false,
 };
 
 // ============================================================================
@@ -166,6 +173,49 @@ export function completeGardenPhase(): void {
   });
 
   console.log('[WitchGardenQuest] Garden phase complete! Player grew 3 different crops.');
+}
+
+/**
+ * Start the pickled onions phase (witch teaches recipe, player must cook and deliver)
+ */
+export function startPickledOnionsPhase(): void {
+  if (getWitchGardenStage() >= WITCH_GARDEN_STAGES.PICKLED_ONIONS) {
+    return;
+  }
+
+  const previousStage = getWitchGardenStage();
+  gameState.setQuestStage(WITCH_GARDEN_QUEST_ID, WITCH_GARDEN_STAGES.PICKLED_ONIONS);
+  eventBus.emit(GameEvent.QUEST_STAGE_CHANGED, {
+    questId: WITCH_GARDEN_QUEST_ID,
+    stage: WITCH_GARDEN_STAGES.PICKLED_ONIONS,
+    previousStage,
+  });
+
+  console.log('[WitchGardenQuest] Pickled onions phase started - cook and deliver to witch');
+}
+
+/**
+ * Record that pickled onions have been delivered, completing the quest
+ */
+export function deliverPickledOnions(): void {
+  if (getWitchGardenStage() !== WITCH_GARDEN_STAGES.PICKLED_ONIONS) {
+    return;
+  }
+
+  gameState.setQuestData(WITCH_GARDEN_QUEST_ID, 'pickledOnionsDelivered', true);
+
+  const previousStage = getWitchGardenStage();
+  gameState.setQuestStage(WITCH_GARDEN_QUEST_ID, WITCH_GARDEN_STAGES.COMPLETED);
+  gameState.completeQuest(WITCH_GARDEN_QUEST_ID);
+
+  eventBus.emit(GameEvent.QUEST_STAGE_CHANGED, {
+    questId: WITCH_GARDEN_QUEST_ID,
+    stage: WITCH_GARDEN_STAGES.COMPLETED,
+    previousStage,
+  });
+  eventBus.emit(GameEvent.QUEST_COMPLETED, { questId: WITCH_GARDEN_QUEST_ID });
+
+  console.log('[WitchGardenQuest] Pickled onions delivered! Quest complete.');
 }
 
 // ============================================================================

@@ -38,6 +38,12 @@ import {
   checkFairyBluebellsCompletion,
   QUEST_REWARD as FAIRY_BLUEBELLS_REWARD,
 } from '../data/quests/fairyBluebellsQuest';
+import {
+  getWitchGardenStage,
+  WITCH_GARDEN_STAGES,
+  deliverPickledOnions,
+} from '../data/quests/witchGardenQuest';
+import { magicManager } from './MagicManager';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -352,6 +358,15 @@ class FriendshipManagerClass {
       return { points: 0, reaction: 'neutral' };
     }
 
+    // ===== WITCH QUEST HANDLING =====
+    // Accept pickled onions delivery during the witch garden quest
+    if (npcId === 'witch') {
+      const questResult = this.handleWitchQuestGift(itemId);
+      if (questResult) {
+        return questResult;
+      }
+    }
+
     // ===== ELIAS QUEST HANDLING =====
     // Check for gardening quest and fairy bluebells quest items when gifting to Elias
     if (npcId === 'village_elder') {
@@ -451,6 +466,33 @@ class FriendshipManagerClass {
   }
 
   /**
+   * Handle quest-specific gifts for the Witch (Juniper)
+   * - Pickled onions delivery during witch garden quest
+   *
+   * @returns Gift result if quest item was accepted, null if not a quest item
+   */
+  private handleWitchQuestGift(
+    itemId: string
+  ): { points: number; reaction: GiftReaction; questCompleted?: boolean; dialogueNodeId?: string } | null {
+    // Only handle during pickled onions phase
+    if (getWitchGardenStage() !== WITCH_GARDEN_STAGES.PICKLED_ONIONS) {
+      return null;
+    }
+
+    // Accept pickled onions
+    if (itemId === 'food_pickled_onions') {
+      deliverPickledOnions();
+      magicManager.unlockMagicBook();
+      const points = 300;
+      this.addPoints('witch', points, 'witch garden quest: pickled onions delivered');
+      console.log(`[FriendshipManager] Witch accepts your pickled onions! (+${points})`);
+      return { points, reaction: 'loved', questCompleted: true, dialogueNodeId: 'pickled_onions_delivered' };
+    }
+
+    return null;
+  }
+
+  /**
    * Handle quest-specific gifts for Elias (village elder)
    * - Gardening quest: Accept crops to complete seasonal tasks
    * - Fairy Bluebells quest: Accept shrinking violet, hazelnuts, blueberries
@@ -461,7 +503,6 @@ class FriendshipManagerClass {
     itemId: string
   ): { points: number; reaction: GiftReaction; questCompleted?: boolean; dialogueNodeId?: string } | null {
     // Check for gardening quest items
-    console.log(`[FriendshipManager] 🔍 Quest gift check: itemId=${itemId}, questActive=${isGardeningQuestActive()}, currentTask=${getCurrentSeasonTask()}`);
     if (isGardeningQuestActive()) {
       // Use current task if set, otherwise check the current season directly
       const task = getCurrentSeasonTask() || getAvailableSeasonTask();

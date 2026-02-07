@@ -76,7 +76,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     id: 'pickled_onions',
     name: 'pickled_onions',
     displayName: 'Pickled Onions',
-    category: 'starter',
+    category: 'tutorial',
     description: "Sharp, tangy pickled onions. The Witch's favourite sandwich ingredient!",
     ingredients: [
       { itemId: 'crop_onion', quantity: 4 },

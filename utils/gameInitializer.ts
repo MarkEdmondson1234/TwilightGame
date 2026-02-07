@@ -18,7 +18,6 @@ import { npcManager } from '../NPCManager';
 import { audioManager } from './AudioManager';
 import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
-import { initializeFirebase, authService, syncManager } from '../firebase/index';
 
 /**
  * Initialize the game on startup
@@ -69,21 +68,6 @@ export async function initializeGame(
   initializePalette(); // Initialize color palette (must be first)
   runSelfTests(); // Run sanity checks on startup
   initializeMaps(); // Initialize all maps and color schemes
-
-  // Initialize Firebase, auth service, and sync manager
-  try {
-    const firebaseResult = await initializeFirebase();
-    if (firebaseResult) {
-      authService.initialize();
-      syncManager.initialize();
-      console.log('[App] Firebase, auth, and sync manager initialized');
-    } else {
-      console.log('[App] Firebase not configured or disabled - cloud saves disabled');
-    }
-  } catch (error) {
-    console.warn('[App] Firebase initialization failed:', error);
-    console.log('[App] Continuing without cloud saves');
-  }
 
   // Preload all assets early to prevent lag on first use
   await preloadAllAssets({

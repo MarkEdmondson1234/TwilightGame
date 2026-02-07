@@ -351,7 +351,7 @@ export function createWitchWolfNPC(
         text: '*The witch examines the garden beds with genuine admiration.* "Three different crops, all grown by your own hand. Well done, truly." *She turns to you, a warm smile on her face.* "You\'ve shown patience, care, and dedication. Perhaps you do have what it takes to learn the old ways."',
         requiredQuest: 'witch_garden',
         requiredQuestStage: 2,
-        hiddenIfQuestCompleted: 'witch_garden',
+        // Stage gating handled by dialogueHandlers redirect
         responses: [
           { text: 'Does this mean you\'ll teach me?', nextId: 'garden_complete_accept' },
           { text: 'Thank you, Juniper.' },
@@ -359,10 +359,57 @@ export function createWitchWolfNPC(
       },
       {
         id: 'garden_complete_accept',
-        text: '"It means you\'ve earned the right to try." *She reaches into her robes and pulls out a small, leather-bound book.* "Your first lessons begin now. But don\'t think the garden work is over — a good witch always tends her plants." *Shadow wags his tail approvingly.*',
+        text: '"Nearly." *She holds up a finger.* "You\'ve proven you can grow things. Now I need to know you can handle basic chemistry — measuring, timing, understanding how ingredients react." *She pulls a scrap of parchment from her apron and scribbles something down.* "Pickling is the foundation of potion-making. The same principles apply: acid, heat, patience. Make me a jar of pickled onions, and then we\'ll talk about real magic."',
         requiredQuest: 'witch_garden',
         requiredQuestStage: 2,
-        hiddenIfQuestCompleted: 'witch_garden',
+        // Stage gating handled by dialogueHandlers redirect
+      },
+      // --- Pickled onions phase (stage 3 — waiting for delivery) ---
+      {
+        id: 'pickled_onions_waiting',
+        text: '"Have you made those pickled onions yet?" *The witch glances at you expectantly.* "Remember — onions, vinegar, water, sugar, and pepper. It\'s all in the recipe I gave you. Bring me a jar when you\'re done."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 3,
+        // Stage gating handled by dialogueHandlers redirect
+        responses: [
+          { text: 'I\'m working on it!' },
+          { text: 'Where do I find the ingredients?', nextId: 'pickled_onions_ingredients' },
+        ],
+      },
+      {
+        id: 'pickled_onions_ingredients',
+        text: '"Grow onions in the garden — they do well in autumn but will grow in any season. Vinegar, sugar, and pepper you can buy from the shop. Water from any well." *She smiles.* "It\'s simpler than it sounds, dear. Just follow the recipe."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 3,
+        // Stage gating handled by dialogueHandlers redirect
+      },
+      // --- Quest complete dialogue (pickled onions delivered → novice apprentice) ---
+      {
+        id: 'pickled_onions_delivered',
+        text: '*The witch opens the jar and inhales deeply.* "Mmm, perfect. Sharp, tangy, just how I like them." *She sets the jar down carefully and fixes you with a steady gaze.* "You measured, you timed, you let the chemistry do its work. That\'s exactly what potion-making requires."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 4,
+        responses: [
+          { text: 'Does this mean...?', nextId: 'novice_declaration' },
+        ],
+      },
+      {
+        id: 'novice_declaration',
+        text: '*She nods solemnly, then breaks into a rare smile.* "It does. From this day forward, you are my novice apprentice." *She reaches into her robes and pulls out a small, leather-bound book. The cover shimmers faintly in the light.* "This is your spellbook. It contains the first potions you\'ll need to learn — simple brews, but the foundation of everything that follows."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 4,
+        responses: [
+          { text: 'I won\'t let you down!', nextId: 'spellbook_explanation' },
+        ],
+      },
+      {
+        id: 'spellbook_explanation',
+        text: '"Study each recipe carefully. Brew every novice potion at least once — that\'s how you prove you\'ve truly understood the craft." *She taps the book\'s cover.* "Once you\'ve mastered all the novice potions, you\'ll have earned the rank of journeyman. Then the real magic begins." *Her eyes glint.* "Now off you go, apprentice. You\'ve got potions to brew."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 4,
+        responses: [
+          { text: 'Thank you, Juniper!' },
+        ],
       },
       {
         id: 'magic_talk',
@@ -422,7 +469,7 @@ export function createWitchWolfNPC(
       },
     ],
     friendshipConfig: {
-      canBefriend: false,
+      canBefriend: true,
       startingPoints: 0,
     },
   });

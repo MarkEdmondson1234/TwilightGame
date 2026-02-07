@@ -18,6 +18,7 @@ import {
 import { startFairyBluebellsQuest } from '../data/quests/fairyBluebellsQuest';
 import {
   startWitchGardenQuest,
+  startPickledOnionsPhase,
   getGardenCropsGrown,
   getWitchGardenStage,
   WITCH_GARDEN_STAGES,
@@ -146,7 +147,15 @@ function handleWitchQuestActions(nodeId: string): string | void {
     return;
   }
 
-  // When the quest is active, the witch proactively comments on garden progress
+  // Teach pickled onions recipe and start that phase
+  if (nodeId === 'garden_complete_accept') {
+    cookingManager.unlockRecipe('pickled_onions');
+    startPickledOnionsPhase();
+    console.log('[dialogueHandlers] Witch taught pickled onions recipe');
+    return;
+  }
+
+  // When the quest is active, the witch proactively comments on progress
   // instead of showing her normal greeting
   if (nodeId === 'greeting') {
     const stage = getWitchGardenStage();
@@ -154,8 +163,16 @@ function handleWitchQuestActions(nodeId: string): string | void {
     // No quest yet — show normal greeting
     if (stage === WITCH_GARDEN_STAGES.NOT_STARTED) return;
 
+    // Quest complete — show normal greeting (quest is done)
+    if (stage >= WITCH_GARDEN_STAGES.COMPLETED) return;
+
+    // Pickled onions phase — remind player
+    if (stage === WITCH_GARDEN_STAGES.PICKLED_ONIONS) {
+      return 'pickled_onions_waiting';
+    }
+
     // Garden phase complete — show congratulations
-    if (stage >= WITCH_GARDEN_STAGES.GARDEN_COMPLETE) {
+    if (stage === WITCH_GARDEN_STAGES.GARDEN_COMPLETE) {
       return 'garden_complete';
     }
 
