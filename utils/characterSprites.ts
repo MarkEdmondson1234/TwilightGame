@@ -12,8 +12,8 @@ import { fairyAssets } from '../assets';
 
 /**
  * Per-character sprite frame configuration.
- * Maps direction → number of walk frames (frame 0 is always idle).
- * Blink frames (left_3, right_3) are excluded from the walk cycle.
+ * Maps direction → number of frames available for that direction.
+ * Walk cycle ping-pongs through all frames: 0 → 1 → 2 → 3 → 2 → 1 → 0 → …
  */
 interface CharacterSpriteConfig {
   frameCounts: Record<string, number>;
@@ -23,7 +23,7 @@ interface CharacterSpriteConfig {
 
 export const CHARACTER_SPRITE_CONFIGS: Record<string, CharacterSpriteConfig> = {
   character1: {
-    frameCounts: { up: 3, down: 3, left: 3, right: 3 },
+    frameCounts: { up: 3, down: 3, left: 4, right: 4 },
   },
   character2: {
     frameCounts: { up: 2, down: 2, left: 3, right: 3 },

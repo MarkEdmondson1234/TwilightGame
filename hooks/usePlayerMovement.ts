@@ -6,6 +6,14 @@ import { mapManager } from '../maps';
 const PLAYER_SPEED = 5.0; // tiles per second (frame-rate independent)
 const ANIMATION_SPEED_MS = 150; // time between animation frames
 
+/** Map Direction enum to the string keys used in frameCounts config */
+const DIRECTION_KEYS: Record<Direction, string> = {
+  [Direction.Up]: 'up',
+  [Direction.Down]: 'down',
+  [Direction.Left]: 'left',
+  [Direction.Right]: 'right',
+};
+
 interface PlayerMovementConfig {
   keysPressed: Record<string, boolean>;
   checkCollision: (pos: Position) => boolean;
@@ -22,6 +30,8 @@ interface PlayerMovementConfig {
   onFootstep?: (position: Position) => void;
   /** Footstep interval in milliseconds (default: 280ms - matches NPC animation timing) */
   footstepIntervalMs?: number;
+  /** Per-direction frame counts for walk animation (default: 3 for all directions) */
+  walkFrameCounts?: Partial<Record<string, number>>;
 }
 
 interface MovementResult {
@@ -49,10 +59,12 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
     animateWhenIdle = false,
     onFootstep,
     footstepIntervalMs = DEFAULT_FOOTSTEP_INTERVAL_MS,
+    walkFrameCounts,
   } = config;
 
   const lastAnimationTime = useRef(0);
   const lastFootstepTime = useRef(0);
+  const walkDirectionRef = useRef(1); // 1 = ascending frames, -1 = descending
 
   const updatePlayerMovement = useCallback(
     (deltaTime: number, now: number): MovementResult => {
@@ -96,6 +108,7 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
           }
         } else {
           onSetAnimationFrame(0); // Reset to idle frame (frame 0)
+          walkDirectionRef.current = 1; // Reset ping-pong for next walk
         }
       } else {
         // Determine direction
@@ -111,14 +124,22 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
           lastDirectionRef.current = newDirection;
         }
 
-        // Animate based on time - cycle through walking frames only
+        // Animate based on time — ping-pong walk cycle: 0 → 1 → 2 → 3 → 2 → 1 → 0 → …
         if (now - lastAnimationTime.current > ANIMATION_SPEED_MS) {
           lastAnimationTime.current = now;
+          const dirKey = DIRECTION_KEYS[lastDirectionRef.current];
+          const maxFrame = (walkFrameCounts?.[dirKey] ?? 3) - 1;
           onSetAnimationFrame((prev) => {
-            // Immediately start walk animation if coming from idle (frame 0)
-            // Then cycle between frames 1 and 2 for smooth walk animation
-            if (prev === 0) return 1;
-            return prev === 1 ? 2 : 1;
+            const next = prev + walkDirectionRef.current;
+            if (next > maxFrame) {
+              walkDirectionRef.current = -1;
+              return maxFrame - 1;
+            }
+            if (next < 0) {
+              walkDirectionRef.current = 1;
+              return 1;
+            }
+            return next;
           });
         }
       }
@@ -181,6 +202,7 @@ export function usePlayerMovement(config: PlayerMovementConfig) {
       animateWhenIdle,
       onFootstep,
       footstepIntervalMs,
+      walkFrameCounts,
     ]
   );
 

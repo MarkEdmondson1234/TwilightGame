@@ -10,6 +10,7 @@
 import { useState, useRef, useEffect, useCallback, MutableRefObject } from 'react';
 import { Position, Direction, NPC } from '../types';
 import { gameState } from '../GameState';
+import { getSpriteConfig } from '../utils/characterSprites';
 import { usePlayerMovement } from './usePlayerMovement';
 import { useClickToMove } from './useClickToMove';
 
@@ -166,6 +167,9 @@ export function useMovementController(
   // Player Movement
   // -------------------------------------------------------------------------
 
+  const characterId = gameState.getSelectedCharacter()?.characterId ?? 'character1';
+  const walkFrameCounts = getSpriteConfig(characterId).frameCounts;
+
   const { updatePlayerMovement, isKeyboardInput } = usePlayerMovement({
     keysPressed,
     checkCollision,
@@ -176,6 +180,7 @@ export function useMovementController(
     onSetPlayerPos: setPlayerPos,
     pathingVector,
     animateWhenIdle: isFairyForm, // Fairy wings keep flapping even when idle
+    walkFrameCounts,
   });
 
   // Wrapper for game loop
