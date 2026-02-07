@@ -20,7 +20,7 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
 import { getCrop } from '../data/crops';
-import { generateForageSeed, getCropIdFromSeed, getItem } from '../data/items';
+import { generateForageSeed, getCropIdFromSeed, getItem, ItemCategory } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { WATER_CAN, TIMING } from '../constants';
 import { itemAssets, groceryAssets } from '../assets';
@@ -1787,7 +1787,8 @@ export type InteractionType =
   | 'collect_resource'
   | 'give_gift'
   | 'desk_place'
-  | 'desk_pickup';
+  | 'desk_pickup'
+  | 'place_decoration';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -1837,6 +1838,7 @@ export interface GetInteractionsConfig {
   onRefillWaterCan?: (result: { success: boolean; message: string }) => void;
   onCollectResource?: (result: { success: boolean; message: string; itemId?: string }) => void;
   onDeskAction?: (action: DeskAction) => void;
+  onPlaceDecoration?: (result: { itemId: string; position: Position; image: string }) => void;
 }
 
 /**
@@ -1864,6 +1866,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     onRefillWaterCan,
     onCollectResource,
     onDeskAction,
+    onPlaceDecoration,
   } = config;
 
   const interactions: AvailableInteraction[] = [];
@@ -1879,7 +1882,10 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   );
 
   if (itemAtPosition && onPlacedItemAction) {
-    // Pick up option
+    const placedItemDef = getItem(itemAtPosition.itemId);
+    const isDecoration = placedItemDef?.category === ItemCategory.DECORATION;
+
+    // Pick up option (always available)
     interactions.push({
       type: 'pickup_item',
       label: 'Pick Up',
@@ -1895,37 +1901,40 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         }),
     });
 
-    // Eat option
-    interactions.push({
-      type: 'eat_item',
-      label: 'Eat',
-      icon: '🍽️',
-      color: '#f59e0b',
-      data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
-      execute: () =>
-        onPlacedItemAction({
-          action: 'eat',
-          itemId: itemAtPosition.itemId,
-          placedItemId: itemAtPosition.id,
-          imageUrl: itemAtPosition.image,
-        }),
-    });
+    // Eat and Taste options only for non-decoration items (food)
+    if (!isDecoration) {
+      // Eat option
+      interactions.push({
+        type: 'eat_item',
+        label: 'Eat',
+        icon: '🍽️',
+        color: '#f59e0b',
+        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+        execute: () =>
+          onPlacedItemAction({
+            action: 'eat',
+            itemId: itemAtPosition.itemId,
+            placedItemId: itemAtPosition.id,
+            imageUrl: itemAtPosition.image,
+          }),
+      });
 
-    // Taste option
-    interactions.push({
-      type: 'taste_item',
-      label: 'Taste',
-      icon: '👅',
-      color: '#ec4899',
-      data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
-      execute: () =>
-        onPlacedItemAction({
-          action: 'taste',
-          itemId: itemAtPosition.itemId,
-          placedItemId: itemAtPosition.id,
-          imageUrl: itemAtPosition.image,
-        }),
-    });
+      // Taste option
+      interactions.push({
+        type: 'taste_item',
+        label: 'Taste',
+        icon: '👅',
+        color: '#ec4899',
+        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+        execute: () =>
+          onPlacedItemAction({
+            action: 'taste',
+            itemId: itemAtPosition.itemId,
+            placedItemId: itemAtPosition.id,
+            imageUrl: itemAtPosition.image,
+          }),
+      });
+    }
   }
 
   // Check for mirror interaction
@@ -2544,6 +2553,37 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             deskPosition: deskPos,
           }),
       });
+    }
+  }
+
+  // Check for decoration placement (player holding a decoration item, clicking walkable tile on indoor map)
+  if (onPlaceDecoration && tileData) {
+    const currentMap = mapManager.getCurrentMap();
+    const isIndoorMap = currentMap?.colorScheme === 'indoor' || currentMap?.colorScheme === 'shop';
+    const isWalkable = tileData.collisionType === CollisionType.WALKABLE;
+
+    if (isIndoorMap && isWalkable) {
+      const itemDef = getItem(currentTool);
+      if (itemDef && itemDef.category === ItemCategory.DECORATION) {
+        // Check no existing placed item at this tile
+        const existingItem = placedItems.find(
+          (item) => Math.floor(item.position.x) === tileX && Math.floor(item.position.y) === tileY
+        );
+        if (!existingItem) {
+          interactions.push({
+            type: 'place_decoration',
+            label: `Place ${itemDef.displayName}`,
+            icon: '🏠',
+            color: '#8b5cf6',
+            execute: () =>
+              onPlaceDecoration({
+                itemId: itemDef.id,
+                position: tilePos,
+                image: itemDef.image || '',
+              }),
+          });
+        }
+      }
     }
   }
 

@@ -20,6 +20,7 @@
 import * as PIXI from 'pixi.js';
 import { TILE_SIZE } from '../../constants';
 import { PlacedItem } from '../../types';
+import { getItem } from '../../data/items';
 import { textureManager } from '../TextureManager';
 import { shouldShowDecayWarning } from '../itemDecayManager';
 import { PixiLayer } from './PixiLayer';
@@ -78,13 +79,17 @@ export class PlacedItemsLayer extends PixiLayer {
         }
 
         sprite = new PIXI.Sprite(texture);
-        sprite.width = TILE_SIZE;
-        sprite.height = TILE_SIZE;
+
+        // Use item's placedScale for custom sizing (defaults to 1 tile)
+        const itemDef = getItem(item.itemId);
+        const scale = itemDef?.placedScale ?? 1;
+        sprite.width = TILE_SIZE * scale;
+        sprite.height = TILE_SIZE * scale;
         sprite.zIndex = Z_PLACED_ITEMS;
 
-        // Use nearest neighbor scaling for pixel-perfect rendering
+        // Use linear (smooth) scaling for hand-drawn artwork
         if (texture.source) {
-          texture.source.scaleMode = 'nearest';
+          texture.source.scaleMode = 'linear';
         }
 
         this.sprites.set(key, sprite);
@@ -92,9 +97,12 @@ export class PlacedItemsLayer extends PixiLayer {
         this.blinkState.set(key, false);
       }
 
-      // Update sprite position and visibility
-      sprite.x = item.position.x * TILE_SIZE;
-      sprite.y = item.position.y * TILE_SIZE;
+      // Update sprite position and visibility (centered on tile when scaled up)
+      const itemDef = getItem(item.itemId);
+      const scale = itemDef?.placedScale ?? 1;
+      const offset = (TILE_SIZE * (scale - 1)) / 2;
+      sprite.x = item.position.x * TILE_SIZE - offset;
+      sprite.y = item.position.y * TILE_SIZE - offset;
       sprite.visible = inRange;
 
       // Apply decay warning visual effect (blinking)

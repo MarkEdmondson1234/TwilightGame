@@ -163,6 +163,7 @@ export interface PlacedItem {
   mapId: string; // Which map it's on
   image: string; // Image URL
   timestamp: number; // When it was placed
+  permanent?: boolean; // If true, item never decays (decorations)
 }
 
 // Item placed on a desk surface

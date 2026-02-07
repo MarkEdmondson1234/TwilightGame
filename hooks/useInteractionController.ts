@@ -26,6 +26,8 @@ import {
 import { npcManager } from '../NPCManager';
 import { audioManager } from '../utils/AudioManager';
 import { gameState } from '../GameState';
+import { eventBus, GameEvent } from '../utils/EventBus';
+import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
 import { staminaManager } from '../utils/StaminaManager';
 import { registerItemSprite } from '../utils/inventoryUIHelper';
@@ -360,8 +362,23 @@ export function useInteractionController(
           onShowToast(result.message, 'info');
         }
       },
+      onPlaceDecoration: (result: { itemId: string; position: Position; image: string }) => {
+        inventoryManager.removeItem(result.itemId, 1);
+        gameState.addPlacedItem({
+          id: `decoration_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          itemId: result.itemId,
+          position: result.position,
+          mapId: currentMapId,
+          image: result.image,
+          timestamp: Date.now(),
+          permanent: true,
+        });
+        eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: currentMapId, action: 'add' });
+        const itemDef = getItem(result.itemId);
+        onShowToast(`Placed ${itemDef?.displayName || 'decoration'}`, 'success');
+      },
     };
-  }, [openUI, onMapTransition, onFarmUpdate, onShowToast, handleFarmActionAnimation]);
+  }, [openUI, onMapTransition, onFarmUpdate, onShowToast, handleFarmActionAnimation, currentMapId]);
 
   // -------------------------------------------------------------------------
   // Canvas Click Handler

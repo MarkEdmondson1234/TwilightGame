@@ -30,7 +30,7 @@ import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
-import { tileAssets, farmingAssets, cookingAssets, npcAssets } from '../assets';
+import { tileAssets, farmingAssets, cookingAssets, npcAssets, itemAssets } from '../assets';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
@@ -231,6 +231,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           ...farmingAssets,
           ...cookingAssets,
           ...npcAssets,
+          ...itemAssets,
         });
 
         // Create background image layer

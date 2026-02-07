@@ -14,6 +14,7 @@ export enum ItemCategory {
   MAGICAL_INGREDIENT = 'magical', // Magical ingredients (foraged/witch shop)
   FOOD = 'food', // Cooked food items
   POTION = 'potion', // Brewed potions
+  DECORATION = 'decoration', // Placeable decorations for home/maps
   MISC = 'misc',
 }
 
@@ -40,6 +41,7 @@ export interface ItemDefinition {
   image?: string; // Optional sprite image URL
   icon?: string; // Emoji fallback when no image available
   forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
+  placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
 }
 
 /**
@@ -1777,6 +1779,21 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     // No buyPrice - quest item only
     image: potionAssets.fairy_form_potion,
+  },
+
+  // ===== DECORATIONS =====
+
+  decoration_sunflower_bouquet: {
+    id: 'decoration_sunflower_bouquet',
+    name: 'decoration_sunflower_bouquet',
+    displayName: 'Sunflower Bouquet',
+    category: ItemCategory.DECORATION,
+    description: 'A cheerful bouquet of sunflowers. Brightens up any room!',
+    stackable: true,
+    sellPrice: 30,
+    image: itemAssets.sunflower_bouquet,
+    icon: '🌻',
+    placedScale: 6,
   },
 };
 

@@ -578,7 +578,10 @@ class FarmManager {
 
     // Add items to inventory
     if (cropYield > 0) {
-      const cropItemId = getCropItemId(plot.cropType);
+      // Use flowerItemId if specified (e.g. decoration_sunflower_bouquet), otherwise default crop item
+      const cropItemId = mode === 'flowers' && dh.flowerOption.flowerItemId
+        ? dh.flowerOption.flowerItemId
+        : getCropItemId(plot.cropType);
       inventoryManager.addItem(cropItemId, cropYield);
     }
     if (seedsDropped > 0) {

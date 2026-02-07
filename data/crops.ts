@@ -85,7 +85,7 @@ export interface CropDefinition {
 
   // Dual-harvest: crop offers two harvest modes via radial menu (e.g. pick flowers vs harvest seeds)
   dualHarvest?: {
-    flowerOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number };
+    flowerOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number; flowerItemId?: string };
     seedOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number };
   };
 }
@@ -322,7 +322,7 @@ export const CROPS: Record<string, CropDefinition> = {
     rarity: CropRarity.UNCOMMON,
     seedSource: 'friendship',
     dualHarvest: {
-      flowerOption: { label: 'Pick Flowers', icon: '🌻', color: '#eab308', cropYield: 1, seedYield: 0 },
+      flowerOption: { label: 'Pick Flowers', icon: '🌻', color: '#eab308', cropYield: 1, seedYield: 0, flowerItemId: 'decoration_sunflower_bouquet' },
       seedOption: { label: 'Harvest Seeds', icon: '🌰', color: '#92400e', cropYield: 0, seedYield: 6 },
     },
   },

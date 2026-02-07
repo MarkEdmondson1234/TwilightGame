@@ -592,6 +592,8 @@ export const itemAssets = {
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',
   // Tools - Quest and special items
   feather_duster: '/TwilightGame/assets-optimized/items/feather_duster.png',
+  // Decorations
+  sunflower_bouquet: '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds

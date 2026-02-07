@@ -18,6 +18,7 @@ const WARNING_TIME_MS = 10 * 1000; // Start warning 10 seconds before decay
  * @returns true if item should be removed
  */
 export function shouldDecay(item: PlacedItem, currentTime: number = Date.now()): boolean {
+  if (item.permanent) return false;
   const age = currentTime - item.timestamp;
   return age >= DECAY_TIME_MS;
 }
@@ -29,6 +30,7 @@ export function shouldDecay(item: PlacedItem, currentTime: number = Date.now()):
  * @returns true if item should show warning visual
  */
 export function shouldShowDecayWarning(item: PlacedItem, currentTime: number = Date.now()): boolean {
+  if (item.permanent) return false;
   const age = currentTime - item.timestamp;
   return age >= (DECAY_TIME_MS - WARNING_TIME_MS) && age < DECAY_TIME_MS;
 }
