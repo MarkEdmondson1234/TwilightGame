@@ -56,6 +56,7 @@ export interface GameState {
   inventory: {
     items: { itemId: string; quantity: number }[]; // Stackable items
     tools: string[]; // Owned tools (IDs)
+    slotOrder?: string[]; // Persistent slot ordering
   };
 
   // Farming (plots are now managed by FarmManager and persisted here)
@@ -751,16 +752,18 @@ class GameStateManager {
   // === Inventory Methods ===
   // Note: Inventory is managed by InventoryManager, these methods just persist to GameState
 
-  saveInventory(items: { itemId: string; quantity: number }[], tools: string[]): void {
+  saveInventory(items: { itemId: string; quantity: number }[], tools: string[], slotOrder?: string[]): void {
     this.state.inventory.items = items;
     this.state.inventory.tools = tools;
+    this.state.inventory.slotOrder = slotOrder;
     this.notify();
   }
 
-  loadInventory(): { items: { itemId: string; quantity: number }[]; tools: string[] } {
+  loadInventory(): { items: { itemId: string; quantity: number }[]; tools: string[]; slotOrder?: string[] } {
     return {
       items: this.state.inventory.items || [],
       tools: this.state.inventory.tools || [],
+      slotOrder: this.state.inventory.slotOrder,
     };
   }
 
