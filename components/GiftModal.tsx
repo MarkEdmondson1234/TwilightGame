@@ -34,17 +34,10 @@ interface GiftModalProps {
   onGiftGiven: (result: GiftResult) => void;
 }
 
-// Categories of items that can be gifted
-const GIFTABLE_CATEGORIES = [
-  ItemCategory.CROP,
-  ItemCategory.FOOD,
-  ItemCategory.INGREDIENT,
-  ItemCategory.MATERIAL,
-  ItemCategory.MISC,
+// Categories of items that cannot be gifted (tools only)
+const NON_GIFTABLE_CATEGORIES = [
+  ItemCategory.TOOL,
 ];
-
-// Potions that can be given to NPCs (not drunk by player)
-const GIFTABLE_POTIONS = ['potion_friendship', 'potion_bitter_grudge'];
 
 // Get display name for recipe category
 const CATEGORY_DISPLAY_NAMES: Record<RecipeCategory, string> = {
@@ -78,11 +71,8 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
       .filter((item) => {
         const itemDef = getItem(item.itemId);
         if (!itemDef) return false;
-        // Allow standard giftable categories OR specific giftable potions
-        return (
-          GIFTABLE_CATEGORIES.includes(itemDef.category) ||
-          GIFTABLE_POTIONS.includes(item.itemId)
-        );
+        // Show all items except non-giftable categories (tools)
+        return !NON_GIFTABLE_CATEGORIES.includes(itemDef.category);
       })
       .map((item) => {
         const itemDef = getItem(item.itemId)!;
@@ -206,7 +196,7 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
         </div>
 
         {/* Item Grid */}
-        <div className="flex-1 overflow-y-auto pr-2 inventory-scrollbar">
+        <div className="flex-1 min-h-0 max-h-[50vh] overflow-y-auto pr-2 gift-scrollbar">
           {giftableItems.length === 0 ? (
             <div className="text-center text-pink-300 py-8">
               <p className="text-lg mb-2">No items to give</p>
