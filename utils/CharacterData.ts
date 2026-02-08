@@ -201,7 +201,7 @@ class CharacterDataManager {
           break;
         case 'inventory':
           const invData = data as InventoryData;
-          gameState.saveInventory(invData.items, invData.tools);
+          gameState.saveInventory(invData.items, invData.tools, invData.slotOrder);
           break;
         case 'magic':
           gameState.saveMagicState(data as MagicData);

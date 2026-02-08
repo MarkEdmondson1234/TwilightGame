@@ -50,13 +50,13 @@ UXXXPXXXXXPXXXXXGGGo
 UXXXPXXXXXPXXXXXeGGL
 tXXXPXXXXXPXXXXXGGGU
 LPPPPPPPPPPPPPPPPGGL
-LGGGGGGPGGGGGGGGGoGL
-tGG=GGGPGGGGGGGGGeGo
-LGGGGGGPGGGGG~GGGGGL
-oGGGGGGPGGGGGGGGGeGt
-LGGGGGGPPPPPPGGGUUGU
-oGeoGGGPGGGGGGGGeGGL
-LUotoUUtUtUUtUUUUUtL
+LGGGlGGPGGGGGGGGGoGL
+tGG=GGGPGGGGGGGGGeGG
+LGGGGGGPGGGGG~GGlGGL
+oGGGGGGPGGGlGGGGGeGt
+LGGGGGGPPPPPPGGGeeGU
+oGeGGGGPGGGGGGGGeGGL
+LUGtGUUtUGUUGUUUUUGL
 `;
 
 export const farmArea: MapDefinition = {
@@ -86,7 +86,7 @@ export const farmArea: MapDefinition = {
       hasDoor: true,
     },
     {
-      fromPosition: { x: 18, y: 24 }, // Path in bottom-right corner behind seed shed
+      fromPosition: { x: 18, y: 21 }, // Path in bottom-right area
       tileType: TileType.PATH,
       toMapId: 'bear_cave',
       toPosition: { x: 8, y: 18 }, // Arrive on path leading to bear's door

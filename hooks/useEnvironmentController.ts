@@ -176,6 +176,7 @@ export function useEnvironmentController(
     audioManager.stopAmbient('ambient_blizzard', 1000);
     audioManager.stopAmbient('ambient_birds', 1000);
     audioManager.stopAmbient('ambient_running_stream', 1000);
+    audioManager.stopAmbient('ambient_countryside_summer', 1000);
 
     // Play new weather ambient if outdoors and audio exists
     if (isOutdoors) {
@@ -238,6 +239,28 @@ export function useEnvironmentController(
 
     return () => {
       audioManager.stopAmbient('ambient_running_stream', 500);
+    };
+  }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
+  // Village Countryside Ambience (Summer, Clear Weather)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isVillage = currentMapId === 'village';
+    const { season } = TimeManager.getCurrentTime();
+    const isSummerClear = season === Season.SUMMER && currentWeather === 'clear';
+
+    if (isVillage && isSummerClear) {
+      if (audioManager.hasSound('ambient_countryside_summer')) {
+        audioManager.playAmbient('ambient_countryside_summer');
+      }
+    } else {
+      audioManager.stopAmbient('ambient_countryside_summer', 1000);
+    }
+
+    return () => {
+      audioManager.stopAmbient('ambient_countryside_summer', 500);
     };
   }, [currentMapId, currentWeather]);
 

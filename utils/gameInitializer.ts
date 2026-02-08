@@ -115,7 +115,7 @@ export async function initializeGame(
     console.log('[gameInitializer] No saved inventory found, initializing starter items');
     inventoryManager.initializeStarterItems();
     const inventoryData = inventoryManager.getInventoryData();
-    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    characterData.saveInventory(inventoryData.items, inventoryData.tools, inventoryData.slotOrder);
     console.log('[gameInitializer] Initialized starter inventory');
   }
 

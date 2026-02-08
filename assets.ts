@@ -263,6 +263,8 @@ export const farmingAssets = {
   plant_fairy_bluebell_adult: '/TwilightGame/assets-optimized/farming/fairy_bluebell_adult.png',
   plant_onion_young: '/TwilightGame/assets-optimized/farming/onion_young.png',
   plant_onion_adult: '/TwilightGame/assets-optimized/farming/onion_adult.png',
+  plant_pumpkin_young: '/TwilightGame/assets-optimized/farming/pumpkin_young.png',
+  plant_pumpkin_adult: '/TwilightGame/assets-optimized/farming/pumpkin_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
   farm_fence: '/TwilightGame/assets-optimized/farming/farm_fence.png',
 };
@@ -711,6 +713,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
   },
   ambient_running_stream: {
     url: '/TwilightGame/assets/audio/ambient/running_stream.mp3',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_countryside_summer: {
+    url: '/TwilightGame/assets/audio/ambient/alex_jauk-countryside-ambience-207588.mp3',
     category: 'ambient',
     loop: true,
   },

@@ -89,6 +89,27 @@
   background: rgba(245, 158, 11, 0.9); /* amber-500/90 */
 }
 
+/* Custom scrollbar for gift modal (pink theme) */
+.gift-scrollbar::-webkit-scrollbar {
+  width: 12px;
+}
+
+.gift-scrollbar::-webkit-scrollbar-track {
+  background: rgba(131, 24, 67, 0.4); /* pink-900/40 */
+  border-radius: 6px;
+  margin: 4px 0;
+}
+
+.gift-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(219, 39, 119, 0.8); /* pink-600/80 */
+  border-radius: 6px;
+  border: 2px solid rgba(131, 24, 67, 0.4);
+}
+
+.gift-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(236, 72, 153, 0.9); /* pink-400/90 */
+}
+
 /* ============================================================================
    Cottage-Core Transition Indicator Animations
    ============================================================================ */
