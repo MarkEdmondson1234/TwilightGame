@@ -1096,6 +1096,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Pasta with a rich, hearty meat sauce.',
     stackable: true,
     sellPrice: 45,
+    image: cookingAssets.spaghetti_dish,
   },
 
   food_pizza: {
@@ -1106,6 +1107,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Rustic pizza with golden potato slices.',
     stackable: true,
     sellPrice: 50,
+    image: cookingAssets.potato_pizza,
   },
 
   food_roast_dinner: {
