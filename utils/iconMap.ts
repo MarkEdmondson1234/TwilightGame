@@ -13,6 +13,9 @@ const EMOJI_TO_ICON: Record<string, string> = {
   '👋': iconAssets.hand,
   '🌿': iconAssets.leaf,
   '🎁': iconAssets.gift,
+  '✨': iconAssets.magic,
+  '💬': iconAssets.speech_bubble,
+  '💕': iconAssets.friendship,
 };
 
 /**

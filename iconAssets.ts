@@ -7,4 +7,7 @@ export const iconAssets = {
   hand: '/TwilightGame/assets-optimized/icons/actions/hand.png',
   leaf: '/TwilightGame/assets-optimized/icons/actions/leaf.png',
   gift: '/TwilightGame/assets-optimized/icons/actions/gift.png',
+  magic: '/TwilightGame/assets-optimized/icons/actions/magic.png',
+  speech_bubble: '/TwilightGame/assets-optimized/icons/actions/speech_bubble.png',
+  friendship: '/TwilightGame/assets-optimized/icons/actions/friendship.png',
 };
