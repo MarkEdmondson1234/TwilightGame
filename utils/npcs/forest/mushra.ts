@@ -94,6 +94,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
             text: 'Tell me more mushroom facts!',
             nextId: 'mushroom_facts',
           },
+          { text: 'What about fly agaric?', nextId: 'fly_agaric' },
           { text: 'You really love them.' },
         ],
       },
@@ -102,7 +103,16 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         text: '"The largest living organism on Earth is a honey fungus in America - it\'s over two thousand years old and covers nearly ten square kilometres!" *She leans in excitedly.* "And that\'s just what we can see above ground. Below, the mycelium networks connect entire forests..."',
         responses: [
           { text: 'What are mycelium networks?', nextId: 'mushroom_network' },
+          { text: 'What about fly agaric?', nextId: 'fly_agaric' },
           { text: "That's incredible!" },
+        ],
+      },
+      {
+        id: 'fly_agaric',
+        text: '"Fly agaric! Amanita muscaria — the classic red cap with white spots. I just can\'t resist their cute polka dots!" *She clasps her hands together.* "They\'re terribly toxic, of course, but absolutely gorgeous. I\'ve painted dozens of them. There\'s something almost fairy-tale about them, isn\'t there?"',
+        responses: [
+          { text: 'Have you ever tried to find one?', nextId: 'have_you_seen_fairies' },
+          { text: 'They are rather magical-looking.' },
         ],
       },
       {
