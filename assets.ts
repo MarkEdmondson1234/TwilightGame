@@ -716,4 +716,9 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'ambient',
     loop: true,
   },
+  ambient_countryside_summer: {
+    url: '/TwilightGame/assets/audio/ambient/alex_jauk-countryside-ambience-207588.mp3',
+    category: 'ambient',
+    loop: true,
+  },
 };
