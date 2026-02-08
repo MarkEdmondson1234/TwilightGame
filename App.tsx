@@ -342,6 +342,14 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Subscribe to friendship tier rewards — show toast when NPC gives items
+  useEffect(() => {
+    return eventBus.on(GameEvent.FRIENDSHIP_REWARD, (payload) => {
+      const itemNames = payload.items.map((i) => i.displayName).join(', ');
+      showToast(`${payload.npcName} gave you: ${itemNames}!`, 'success');
+    });
+  }, [showToast]);
+
   // Weather visibility, ambient audio, forest birds, ambient music, time polling,
   // item decay, and movement effect expiration are now handled by EnvironmentController
 

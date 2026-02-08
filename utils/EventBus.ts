@@ -53,6 +53,9 @@ export enum GameEvent {
   QUEST_COMPLETED = 'quest:completed',
   QUEST_DATA_CHANGED = 'quest:data_changed',
 
+  // Friendship events
+  FRIENDSHIP_REWARD = 'friendship:reward',
+
   // Decoration crafting events
   DECORATION_CRAFTED = 'decoration:crafted',
   PAINTING_CREATED = 'decoration:painting_created',
@@ -127,6 +130,12 @@ export interface EventPayloads {
     questId: string;
     key: string;
     value: unknown;
+  };
+  [GameEvent.FRIENDSHIP_REWARD]: {
+    npcId: string;
+    npcName: string;
+    tier: string;
+    items: Array<{ itemId: string; displayName: string; quantity: number }>;
   };
   [GameEvent.DECORATION_CRAFTED]: {
     recipeId: string;

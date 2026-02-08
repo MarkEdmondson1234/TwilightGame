@@ -64,6 +64,11 @@ export function createMushraNPC(id: string, position: Position, name: string = '
           { text: 'Who are you?', nextId: 'who_are_you' },
           { text: 'What do you do here?', nextId: 'what_do_you_do' },
           { text: 'Tell me about mushrooms.', nextId: 'about_mushrooms' },
+          {
+            text: 'Could you teach me to paint?',
+            nextId: 'offer_easel',
+            hiddenIfHasEasel: true,
+          },
         ],
       },
       {
@@ -150,6 +155,17 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         id: 'loneliness',
         text: '*She looks at you thoughtfully.* "I won\'t pretend the solitude isn\'t hard sometimes. There are days when I wish I had someone to share a cup of tea with, someone who appreciates the little things." *She smiles warmly.* "That\'s why I value friends like you. You understand."',
         requiredFriendshipTier: 'good_friend',
+      },
+      {
+        id: 'offer_easel',
+        text: '"You want to learn to paint?" *Her face lights up.* "Oh, that\'s wonderful! I have a spare easel in my studio — here, take it. You can set it up anywhere indoors and start creating. I\'ll teach you everything I know!"',
+        responses: [
+          {
+            text: 'Thank you, Mushra!',
+            givesItems: [{ itemId: 'easel', quantity: 1 }],
+            grantsEasel: true,
+          },
+        ],
       },
     ],
     friendshipConfig: {

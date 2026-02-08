@@ -126,6 +126,11 @@ export interface DialogueResponse {
   requiredTransformation?: string; // Only show if player has this transformation (e.g., 'fairy')
   hiddenIfTransformed?: string; // Hide if player has this transformation
   hiddenIfAnyTransformation?: boolean; // Hide if player has any active transformation
+  // Decoration system requirements
+  hiddenIfHasEasel?: boolean; // Hide if player already has the easel
+  // Item-giving actions triggered by selecting this response
+  givesItems?: Array<{ itemId: string; quantity: number }>; // Give items to player when selected
+  grantsEasel?: boolean; // Grant easel via DecorationManager when selected
 }
 
 // Seasonal location configuration for NPCs

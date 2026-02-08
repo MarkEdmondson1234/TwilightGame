@@ -5,6 +5,9 @@ import { isAIAvailable } from '../services/anthropicClient';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
+import { decorationManager } from '../utils/DecorationManager';
+import { inventoryManager } from '../utils/inventoryManager';
+import { getItem } from '../data/items';
 import { gameState } from '../GameState';
 
 interface DialogueBoxProps {
@@ -73,7 +76,9 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
       if (expressionSprite) return expressionSprite;
     }
     // Fall back to default dialogue sprite hierarchy
-    return npc.dialogueExpressions?.default || npc.dialogueSprite || npc.portraitSprite || npc.sprite;
+    return (
+      npc.dialogueExpressions?.default || npc.dialogueSprite || npc.portraitSprite || npc.sprite
+    );
   };
 
   const npcDialogueSprite = getNpcSprite();
@@ -82,7 +87,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
   const filterResponses = (responses: DialogueResponse[] | undefined): DialogueResponse[] => {
     if (!responses) return [];
 
-    return responses.filter(response => {
+    return responses.filter((response) => {
       // Check if recipe needs to be unlocked
       if (response.requiredRecipeUnlocked) {
         if (!cookingManager.isRecipeUnlocked(response.requiredRecipeUnlocked)) {
@@ -120,8 +125,10 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
 
       // Check if domain needs to be started (at least one recipe unlocked)
       if (response.requiredDomainStarted) {
-        const domainRecipes = cookingManager.getRecipesByCategory(response.requiredDomainStarted as any);
-        const anyUnlocked = domainRecipes.some(r => cookingManager.isRecipeUnlocked(r.id));
+        const domainRecipes = cookingManager.getRecipesByCategory(
+          response.requiredDomainStarted as any
+        );
+        const anyUnlocked = domainRecipes.some((r) => cookingManager.isRecipeUnlocked(r.id));
         if (!anyUnlocked) {
           return false;
         }
@@ -129,8 +136,10 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
 
       // Check if should be hidden when domain is started (any recipe unlocked)
       if (response.hiddenIfDomainStarted) {
-        const domainRecipes = cookingManager.getRecipesByCategory(response.hiddenIfDomainStarted as any);
-        const anyUnlocked = domainRecipes.some(r => cookingManager.isRecipeUnlocked(r.id));
+        const domainRecipes = cookingManager.getRecipesByCategory(
+          response.hiddenIfDomainStarted as any
+        );
+        const anyUnlocked = domainRecipes.some((r) => cookingManager.isRecipeUnlocked(r.id));
         if (anyUnlocked) {
           return false;
         }
@@ -147,10 +156,17 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
       if (response.hiddenIfAnyDomainStarted) {
         const masteredCount = cookingManager.getMasteredDomainCount();
         const unlockedRecipes = cookingManager.getUnlockedRecipes();
-        const hasStartedDomain = unlockedRecipes.some(r =>
-          r.category === 'savoury' || r.category === 'dessert' || r.category === 'baking'
+        const hasStartedDomain = unlockedRecipes.some(
+          (r) => r.category === 'savoury' || r.category === 'dessert' || r.category === 'baking'
         );
         if (hasStartedDomain && masteredCount < 3) {
+          return false;
+        }
+      }
+
+      // Check if should be hidden when player has the easel
+      if (response.hiddenIfHasEasel) {
+        if (decorationManager.getHasEasel()) {
           return false;
         }
       }
@@ -217,7 +233,9 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
     if (response.advancesQuest) {
       const currentStage = gameState.getQuestStage(response.advancesQuest);
       gameState.setQuestStage(response.advancesQuest, currentStage + 1);
-      console.log(`[Dialogue] Advanced quest: ${response.advancesQuest} to stage ${currentStage + 1}`);
+      console.log(
+        `[Dialogue] Advanced quest: ${response.advancesQuest} to stage ${currentStage + 1}`
+      );
     }
 
     if (response.completesQuest) {
@@ -227,7 +245,26 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
 
     if (response.setsQuestStage) {
       gameState.setQuestStage(response.setsQuestStage.questId, response.setsQuestStage.stage);
-      console.log(`[Dialogue] Set quest ${response.setsQuestStage.questId} to stage ${response.setsQuestStage.stage}`);
+      console.log(
+        `[Dialogue] Set quest ${response.setsQuestStage.questId} to stage ${response.setsQuestStage.stage}`
+      );
+    }
+
+    // Process item-giving actions
+    if (response.givesItems) {
+      for (const gift of response.givesItems) {
+        inventoryManager.addItem(gift.itemId, gift.quantity);
+        const itemDef = getItem(gift.itemId);
+        console.log(
+          `[Dialogue] Gave player: ${itemDef?.displayName ?? gift.itemId} x${gift.quantity}`
+        );
+      }
+    }
+
+    // Grant easel via DecorationManager
+    if (response.grantsEasel) {
+      decorationManager.grantEasel();
+      console.log('[Dialogue] Granted easel to player');
     }
 
     // Navigate to next dialogue node
@@ -251,7 +288,10 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
   return (
     <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden pointer-events-none`}>
       {/* Character container - positions characters behind dialogue */}
-      <div className="absolute inset-0 flex items-end justify-center pointer-events-none" style={{ gap: '2%' }}>
+      <div
+        className="absolute inset-0 flex items-end justify-center pointer-events-none"
+        style={{ gap: '2%' }}
+      >
         {/* Player character - LEFT side (hidden on small screens) */}
         {!isSmallScreen && (
           <div
@@ -385,55 +425,55 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
         {(() => {
           const filteredResponses = filterResponses(currentDialogue.responses);
           return filteredResponses.length > 0 ? (
-          <div className="flex flex-wrap gap-2 justify-center">
-            {filteredResponses.map((response, index) => (
+            <div className="flex flex-wrap gap-2 justify-center">
+              {filteredResponses.map((response, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleResponse(response)}
+                  className="bg-slate-700 bg-opacity-90 hover:bg-slate-600 active:bg-slate-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-slate-500 hover:border-amber-400"
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                  }}
+                >
+                  {response.text}
+                </button>
+              ))}
+              {/* AI Chat option - shown for AI-enabled NPCs */}
+              {canUseAI && (
+                <button
+                  onClick={() => handleResponse('__AI_CHAT__')}
+                  className="bg-amber-700 bg-opacity-80 hover:bg-amber-600 active:bg-amber-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-amber-500 hover:border-amber-300"
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                  }}
+                >
+                  Chat freely...
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex justify-center gap-4">
+              {/* AI Chat option when no other responses */}
+              {canUseAI && (
+                <button
+                  onClick={() => handleResponse('__AI_CHAT__')}
+                  className="bg-amber-700 bg-opacity-80 hover:bg-amber-600 active:bg-amber-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-amber-500 hover:border-amber-300"
+                  style={{
+                    fontFamily: 'Georgia, "Times New Roman", serif',
+                  }}
+                >
+                  Chat freely...
+                </button>
+              )}
               <button
-                key={index}
-                onClick={() => handleResponse(response)}
-                className="bg-slate-700 bg-opacity-90 hover:bg-slate-600 active:bg-slate-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-slate-500 hover:border-amber-400"
-                style={{
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                }}
+                onClick={() => onClose()}
+                className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 text-sm opacity-80 hover:opacity-100 px-4 py-2"
               >
-                {response.text}
+                <span>Click to continue</span>
+                <span className="animate-bounce">▼</span>
               </button>
-            ))}
-            {/* AI Chat option - shown for AI-enabled NPCs */}
-            {canUseAI && (
-              <button
-                onClick={() => handleResponse('__AI_CHAT__')}
-                className="bg-amber-700 bg-opacity-80 hover:bg-amber-600 active:bg-amber-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-amber-500 hover:border-amber-300"
-                style={{
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                }}
-              >
-                Chat freely...
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="flex justify-center gap-4">
-            {/* AI Chat option when no other responses */}
-            {canUseAI && (
-              <button
-                onClick={() => handleResponse('__AI_CHAT__')}
-                className="bg-amber-700 bg-opacity-80 hover:bg-amber-600 active:bg-amber-500 text-gray-100 px-4 py-2 text-sm transition-all rounded-lg border border-amber-500 hover:border-amber-300"
-                style={{
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                }}
-              >
-                Chat freely...
-              </button>
-            )}
-            <button
-              onClick={() => onClose()}
-              className="text-gray-300 hover:text-white transition-colors flex items-center gap-2 text-sm opacity-80 hover:opacity-100 px-4 py-2"
-            >
-              <span>Click to continue</span>
-              <span className="animate-bounce">▼</span>
-            </button>
-          </div>
-        );
+            </div>
+          );
         })()}
       </div>
 
@@ -447,7 +487,6 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
         }}
         style={{ zIndex: -1 }}
       />
-
     </div>
   );
 };

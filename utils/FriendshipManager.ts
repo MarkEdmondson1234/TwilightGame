@@ -19,6 +19,7 @@ import {
   FavourType,
 } from '../types';
 import { characterData, FriendshipData } from './CharacterData';
+import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getItem, ItemCategory } from '../data/items';
@@ -336,6 +337,19 @@ class FriendshipManagerClass {
     // Save inventory using CharacterData API
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools);
+
+    // Notify UI so a toast can be shown
+    const npcName = npcId.charAt(0).toUpperCase() + npcId.slice(1).replace(/_/g, ' ');
+    eventBus.emit(GameEvent.FRIENDSHIP_REWARD, {
+      npcId,
+      npcName,
+      tier,
+      items: rewards.map((r) => ({
+        itemId: r.itemId,
+        displayName: getItem(r.itemId)?.displayName ?? r.itemId,
+        quantity: r.quantity,
+      })),
+    });
 
     if (DEBUG.FRIENDSHIP)
       console.log(`[FriendshipManager] 🎁 ${npcId} gave you a gift for becoming their ${tier}!`);
