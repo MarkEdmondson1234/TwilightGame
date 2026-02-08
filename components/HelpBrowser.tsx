@@ -36,6 +36,7 @@ const DOC_FILES: DocFile[] = [
   { name: 'decorations', title: '🎨 Decorations', path: '/TwilightGame/docs/DECORATIONS.md' },
   { name: 'magic', title: '🧪 Magic & Potions', path: '/TwilightGame/docs/MAGIC.md' },
   { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },
+  { name: 'events', title: '🌍 World Events', path: '/TwilightGame/docs/EVENTS.md' },
   { name: 'ai-chat', title: '💬 AI Chat', path: '/TwilightGame/docs/AI_CHAT.md' },
   { name: 'cloud-saves', title: '☁️ Cloud Saves', path: '/TwilightGame/docs/CLOUD_SAVES.md' },
   // Developer docs excluded: MAP_GUIDE, ASSETS, COORDINATE_GUIDE

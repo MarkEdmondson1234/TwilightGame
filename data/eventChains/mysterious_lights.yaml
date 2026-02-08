@@ -1,0 +1,98 @@
+# Mysterious Lights in the Forest
+# A branching mystery chain where villagers react to strange lights
+# and the player chooses how to investigate.
+
+id: mysterious_lights
+title: Strange Lights in the Forest
+description: Mysterious lights have been spotted deep in the woods at night.
+type: mystery
+
+trigger:
+  type: tile
+  mapId: deep_forest
+  tileX: 17
+  tileY: 32
+  radius: 2.5
+
+stages:
+  - id: rumours
+    text: Villagers begin whispering about strange lights flickering between the trees after dark.
+    event:
+      title: Strange lights reported
+      description: spotted flickering lights between the ancient trees at dusk
+      contributor: A nervous villager
+    dialogue:
+      village_elder:
+        text: "There've been strange lights in the forest lately. Folk are getting nervous. Do be careful if you wander out there."
+        expression: thinky
+      mushra:
+        text: "The mushrooms have been glowing brighter than usual... something stirs in the deep woods."
+    choices:
+      - text: "I'll investigate the forest tonight"
+        next: brave_path
+        event:
+          title: A brave soul ventures forth
+          description: set out to investigate the mysterious forest lights
+          contributor: A brave traveller
+      - text: "Let's wait and see what happens"
+        next: cautious_path
+      - text: "We should ask the witch about this"
+        next: witch_path
+        requires:
+          questCompleted: witch_garden_quest
+
+  - id: brave_path
+    text: You venture deep into the forest at dusk and discover ancient fairy circles glowing with a gentle light.
+    event:
+      title: Fairy circles discovered
+      description: found ancient fairy circles glowing softly in the moonlight
+      contributor: A courageous explorer
+      location:
+        mapId: deep_forest
+        mapName: Deep Forest
+    dialogue:
+      village_elder:
+        text: "You found fairy circles? That's remarkable! The old tales speak of them bringing good fortune."
+        expression: smile
+    next: resolution
+
+  - id: cautious_path
+    text: Over the next few days, the lights grow dimmer. One morning you find a ring of unusual wildflowers where the lights were brightest.
+    event:
+      title: Lights fade from the forest
+      description: noticed the mysterious lights growing dimmer each night
+      contributor: A patient observer
+    dialogue:
+      village_elder:
+        text: "The lights are fading, you say? Perhaps they've moved on. Nature has her own rhythms."
+    waitDays: 2
+    next: resolution
+
+  - id: witch_path
+    text: The witch listens carefully and nods knowingly. "Every century the fairy lights return," she explains. "It means the forest is healthy."
+    event:
+      title: Ancient mystery explained
+      description: learned the truth about the forest lights from the village witch
+      contributor: A curious apprentice
+    dialogue:
+      witch:
+        text: "Ah, the fairy lights return! Every century they come to bless the woods. You're lucky to witness it."
+        expression: smile
+      village_elder:
+        text: "The witch explained the lights? Well, that's a relief. Ancient magic, she says."
+    next: resolution
+
+  - id: resolution
+    text: The mystery is resolved, and the forest feels more magical than before. A sense of wonder lingers.
+    event:
+      title: Forest mystery concluded
+      description: The mysterious lights have been explained, and peace returns to the woods
+      contributor: The village community
+    dialogue:
+      village_elder:
+        text: "Whatever those lights were, I'm glad the forest feels at peace again. Thank you for looking into it."
+        expression: smile
+    rewards:
+      - item: moonpetal
+        quantity: 3
+    end: true

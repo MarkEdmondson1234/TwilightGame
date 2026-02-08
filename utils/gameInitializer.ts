@@ -75,6 +75,15 @@ export async function initializeGame(
   const { safeInitializeFirebase } = await import('../firebase/safe');
   await safeInitializeFirebase();
 
+  // Initialize GlobalEventManager (fetches shared events from Firebase, caches them)
+  const { globalEventManager } = await import('./GlobalEventManager');
+  await globalEventManager.initialise();
+
+  // Initialize EventChainManager (loads YAML event chains, restores progress)
+  const { eventChainManager } = await import('./EventChainManager');
+  eventChainManager.initialise();
+  console.log(`[App] Initialised event chain system`);
+
   // Preload all assets early to prevent lag on first use
   await preloadAllAssets({
     onProgress: (loaded, total) => {

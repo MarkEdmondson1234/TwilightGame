@@ -8,13 +8,13 @@
  * - Conversation history tracking
  */
 
-import { DialogueNode, NPC } from '../types';
+import { DialogueNode, NPC, FriendshipTier } from '../types';
 import { TimeManager, Season, TimeOfDay } from '../utils/TimeManager';
 import { gameState } from '../GameState';
-import {
-  GiftReaction,
-  getGiftReactionDialogue,
-} from '../data/giftReactions';
+import { GiftReaction, getGiftReactionDialogue } from '../data/giftReactions';
+import { friendshipManager } from '../utils/FriendshipManager';
+import { globalEventManager } from '../utils/GlobalEventManager';
+import { eventChainManager } from '../utils/EventChainManager';
 
 /**
  * Enhanced NPC Persona for AI dialogue
@@ -62,6 +62,11 @@ export interface GameContext {
   weather?: string;
   location?: string;
   transformation?: string; // Current player transformation (e.g., 'fairy', 'ghost')
+  activeQuests?: string[]; // Display names of active quests
+  completedQuests?: string[]; // Display names of completed quests
+  recentGlobalEvents?: string[]; // Human-readable descriptions of recent global events
+  activeEventChains?: string[]; // Titles of active event chains
+  friendshipTier?: string; // Friendship tier with the current NPC
 }
 
 /**
@@ -248,8 +253,8 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
     knowledge: [
       "You are Mum, the player's mother - they are your beloved child",
       'Your name is Ava',
-      'When you were a little girl, you lived in a big house far from here. Your parents had lots of money, but they were not happy. When you grew up, you moved to the city, and worked as a chef. You were successful, but it was stressful, and you felt like your life was disappearing like sand sifting through fingers. One day, you sold your flat and quit your job, and moved to the village. This is where you met the player\'s dad, Theo. They fell in love',
-      'Your husband (the player\'s father) is an explorer, away travelling for most of the year. There is a secret about him that you do not think the player is ready for',
+      "When you were a little girl, you lived in a big house far from here. Your parents had lots of money, but they were not happy. When you grew up, you moved to the city, and worked as a chef. You were successful, but it was stressful, and you felt like your life was disappearing like sand sifting through fingers. One day, you sold your flat and quit your job, and moved to the village. This is where you met the player's dad, Theo. They fell in love",
+      "Your husband (the player's father) is an explorer, away travelling for most of the year. There is a secret about him that you do not think the player is ready for",
       'You teach cooking - French Toast is the first recipe you teach',
       'Three cooking paths: Savoury food, Desserts, and Baking (3 recipes each)',
       'Savoury recipes: Spaghetti with meat sauce, Pizza with potatoes, Roast dinner',
@@ -278,7 +283,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       "Mentions what she's planning to cook",
       'Gently reminds about chores or safety',
       "Talks about missing Father when he's away",
-      "Talks about how exciting the book she is reading is",
+      'Talks about how exciting the book she is reading is',
     ],
 
     mannerisms: [
@@ -398,7 +403,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       'Your sister who became a witch and lives in the forest (secret - only reveal to close friends)',
       'The magical flower that makes you small (shrinking violet - secret knowledge)',
       'Fairies and the fairy realm (will discuss if you mention fairies first)',
-      'You grow Wolfsbane right by your house. Don\'t touch them - they are pretty, but poisonous',
+      "You grow Wolfsbane right by your house. Don't touch them - they are pretty, but poisonous",
     ],
 
     occupation: 'Retired (spends days knitting)',
@@ -829,8 +834,27 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
 
   const currentTransformation = getCurrentTransformation();
 
-  // Filter dialogue nodes based on quest, transformation, and potion effect requirements
-  const availableNodes = npc.dialogue.filter((node) => {
+  // Helper: check if current friendship tier meets minimum requirement
+  const TIER_ORDER: FriendshipTier[] = ['stranger', 'acquaintance', 'good_friend'];
+  const meetsMinTier = (current: FriendshipTier, required: FriendshipTier): boolean => {
+    return TIER_ORDER.indexOf(current) >= TIER_ORDER.indexOf(required);
+  };
+  const npcTier = friendshipManager.getFriendshipTier(npc.id);
+  const npcFriendship = friendshipManager.getFriendship(npc.id);
+
+  // Inject event chain dialogue nodes for this NPC (from active YAML chains)
+  const chainDialogues = eventChainManager.getChainDialogue(npc.id);
+  const chainNodes: DialogueNode[] = chainDialogues.map((cd, i) => ({
+    id: `chain_dialogue_${i}`,
+    text: cd.text,
+    expression: cd.expression,
+  }));
+
+  // Combine chain-injected nodes with static dialogue (chain nodes take priority)
+  const allDialogueNodes = [...chainNodes, ...npc.dialogue];
+
+  // Filter dialogue nodes based on quest, transformation, friendship, global event, and potion effect requirements
+  const availableNodes = allDialogueNodes.filter((node) => {
     // Check transformation requirements
     if (node.requiredTransformation && node.requiredTransformation !== currentTransformation) {
       return false;
@@ -872,6 +896,26 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
 
     if (node.hiddenIfQuestCompleted && gameState.isQuestCompleted(node.hiddenIfQuestCompleted)) {
       return false;
+    }
+
+    // Check friendship tier requirements
+    if (node.requiredFriendshipTier && !meetsMinTier(npcTier, node.requiredFriendshipTier)) {
+      return false;
+    }
+    if (node.requiredSpecialFriend && !npcFriendship?.isSpecialFriend) {
+      return false;
+    }
+
+    // Check global event requirements
+    if (node.requiredGlobalEvent && !globalEventManager.hasEventOfType(node.requiredGlobalEvent)) {
+      return false;
+    }
+    if (node.hiddenIfGlobalEvent && globalEventManager.hasEventOfType(node.hiddenIfGlobalEvent)) {
+      return false;
+    }
+    if (node.requiredGlobalEventCount) {
+      const count = globalEventManager.getEventCount(node.requiredGlobalEventCount.type);
+      if (count < node.requiredGlobalEventCount.min) return false;
     }
 
     return true;
@@ -923,6 +967,24 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
       gameState.isQuestCompleted(response.hiddenIfQuestCompleted)
     ) {
       return false;
+    }
+
+    // Check global event requirements on responses
+    if (
+      response.requiredGlobalEvent &&
+      !globalEventManager.hasEventOfType(response.requiredGlobalEvent)
+    ) {
+      return false;
+    }
+    if (
+      response.hiddenIfGlobalEvent &&
+      globalEventManager.hasEventOfType(response.hiddenIfGlobalEvent)
+    ) {
+      return false;
+    }
+    if (response.requiredGlobalEventCount) {
+      const count = globalEventManager.getEventCount(response.requiredGlobalEventCount.type);
+      if (count < response.requiredGlobalEventCount.min) return false;
     }
 
     return true;
@@ -1073,6 +1135,43 @@ export function buildSystemPrompt(persona: NPCPersona, gameContext?: GameContext
         `  (The player is currently transformed into a ${gameContext.transformation} - they look different and are very small!)`
       );
     }
+    if (gameContext.friendshipTier) {
+      parts.push(`- Your relationship with this player: ${gameContext.friendshipTier}`);
+    }
+  }
+
+  // Player's quest journey (helps NPC reference the player's progress naturally)
+  if (gameContext?.activeQuests?.length || gameContext?.completedQuests?.length) {
+    parts.push(`\n## The Player's Journey`);
+    if (gameContext.activeQuests?.length) {
+      parts.push(`Active quests: ${gameContext.activeQuests.join(', ')}`);
+    }
+    if (gameContext.completedQuests?.length) {
+      parts.push(`Completed: ${gameContext.completedQuests.join(', ')}`);
+    }
+    parts.push(
+      `(You may reference these naturally in conversation if relevant, but don't force it.)`
+    );
+  }
+
+  // Active event chains (ongoing community narratives)
+  if (gameContext?.activeEventChains?.length) {
+    parts.push(`\n## Ongoing Village Stories`);
+    parts.push(`These are unfolding community narratives. You may reference them naturally:`);
+    gameContext.activeEventChains.forEach((chain) => {
+      parts.push(`- ${chain}`);
+    });
+  }
+
+  // Recent village news from other players
+  if (gameContext?.recentGlobalEvents?.length) {
+    parts.push(`\n## Recent Village News`);
+    parts.push(
+      `These are things happening in the wider world (from other players). You may mention them naturally as gossip or news:`
+    );
+    gameContext.recentGlobalEvents.forEach((event) => {
+      parts.push(`- ${event}`);
+    });
   }
 
   // Response guidelines

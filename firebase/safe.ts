@@ -41,6 +41,11 @@ const stubAuthService = {
 const stubSharedDataService = {
   getNPCGossip: async () => null,
   addConversationSummary: async () => {},
+  getWorldEvents: async () => [] as any[],
+  addWorldEvent: async () => false,
+  getRecentDiscoveries: async () => [] as string[],
+  getConversationSummaries: async () => [] as any[],
+  getRemainingContributions: () => 0,
 };
 
 /** Stub syncManager when Firebase is not available */

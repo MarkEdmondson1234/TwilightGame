@@ -34,6 +34,9 @@ import { Z_DIALOGUE, zClass } from '../zIndex';
 import { TimeManager } from '../utils/TimeManager';
 import { gameState } from '../GameState';
 import { getSharedDataService } from '../firebase/safe';
+import { friendshipManager } from '../utils/FriendshipManager';
+import { globalEventManager } from '../utils/GlobalEventManager';
+import { eventChainManager } from '../utils/EventChainManager';
 
 interface AIDialogueBoxProps {
   npc: NPC;
@@ -173,12 +176,45 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
       transformation = 'fairy';
     }
 
+    // Gather quest state for AI context
+    const quests = gameState.getFullState().quests || {};
+    const activeQuests: string[] = [];
+    const completedQuests: string[] = [];
+    for (const [questId, quest] of Object.entries(quests)) {
+      const displayName = questId.replace(/_/g, ' ');
+      if (quest.completed) {
+        completedQuests.push(displayName);
+      } else if (quest.started) {
+        activeQuests.push(displayName);
+      }
+    }
+
+    // Gather recent global events
+    const recentGlobalEvents = globalEventManager.getRecentDescriptions(5);
+
+    // Get friendship tier with this NPC
+    const friendshipTier = friendshipManager.getFriendshipTier(npc.id);
+
+    // Gather active event chain titles
+    const activeEventChains = eventChainManager
+      .getActiveChains()
+      .map((p) => {
+        const chain = eventChainManager.getChain(p.chainId);
+        return chain?.definition.title;
+      })
+      .filter((t): t is string => !!t);
+
     return {
       season: gameTime.season,
       timeOfDay: gameTime.timeOfDay,
       weather,
       location: 'village',
       transformation,
+      activeQuests: activeQuests.length > 0 ? activeQuests : undefined,
+      completedQuests: completedQuests.length > 0 ? completedQuests : undefined,
+      recentGlobalEvents: recentGlobalEvents.length > 0 ? recentGlobalEvents : undefined,
+      activeEventChains: activeEventChains.length > 0 ? activeEventChains : undefined,
+      friendshipTier: friendshipTier !== 'stranger' ? friendshipTier : undefined,
     };
   };
 

@@ -1,0 +1,103 @@
+# Autumn Harvest Festival
+# A community chain where villagers come together
+# to celebrate the harvest with player-driven decisions.
+
+id: autumn_harvest_festival
+title: Autumn Harvest Festival
+description: The village prepares for its annual harvest celebration.
+type: community
+
+trigger:
+  type: seasonal
+  season: autumn
+
+stages:
+  - id: preparations
+    text: The village elder announces plans for the annual harvest festival. Everyone pitches in!
+    event:
+      title: Harvest festival announced
+      description: heard the village elder announce this year's harvest celebration
+      contributor: An excited villager
+    dialogue:
+      village_elder:
+        text: "It's time for the harvest festival! We need someone to help with the preparations. What do you think we should focus on?"
+        expression: smile
+      mum:
+        text: "The harvest festival! I've been planning recipes all week. It's going to be lovely."
+    choices:
+      - text: "Let's have a cooking competition"
+        next: cooking_contest
+        event:
+          title: Cooking contest proposed
+          description: suggested a cooking competition for the harvest festival
+          contributor: A keen cook
+      - text: "How about decorating the village?"
+        next: decoration_drive
+        event:
+          title: Decoration drive begins
+          description: proposed decorating the village for the harvest festival
+          contributor: A creative soul
+      - text: "We should share our best harvest produce"
+        next: produce_fair
+        event:
+          title: Produce fair organised
+          description: suggested a produce fair to showcase the season's harvest
+          contributor: A proud farmer
+
+  - id: cooking_contest
+    text: The village buzzes with excitement as everyone prepares their best dishes. The aroma of baking fills the air.
+    event:
+      title: Cooking contest underway
+      description: watched villagers compete with their finest autumn recipes
+      contributor: A hungry spectator
+    dialogue:
+      mum:
+        text: "My pumpkin soup is going to win this year, I'm sure of it! Have you tasted anything good?"
+        expression: smile
+      village_elder:
+        text: "The cooking smells absolutely divine. This was a wonderful idea."
+    waitDays: 1
+    next: celebration
+
+  - id: decoration_drive
+    text: Villagers string up lanterns and weave garlands of autumn leaves. The village has never looked cosier.
+    event:
+      title: Village beautifully decorated
+      description: helped adorn the village with autumn lanterns and leaf garlands
+      contributor: A talented decorator
+    dialogue:
+      village_elder:
+        text: "The village looks absolutely magical with all these decorations. Well done!"
+        expression: smile
+    waitDays: 1
+    next: celebration
+
+  - id: produce_fair
+    text: Farmers proudly display their finest pumpkins, apples, and root vegetables. The variety is impressive.
+    event:
+      title: Produce fair showcases harvest
+      description: admired the finest crops at the village produce fair
+      contributor: An impressed visitor
+    dialogue:
+      village_elder:
+        text: "Look at this wonderful harvest! The soil has been generous this year."
+        expression: smile
+    waitDays: 1
+    next: celebration
+
+  - id: celebration
+    text: The whole village gathers for the festival. Laughter and music fill the autumn air as everyone celebrates together.
+    event:
+      title: Harvest festival celebrated
+      description: joined the village in a joyful autumn harvest celebration
+      contributor: The village community
+    dialogue:
+      village_elder:
+        text: "What a wonderful festival! Thank you for making it special. Here's a little something for your help."
+        expression: smile
+      mum:
+        text: "That was the best harvest festival in years! I'm so proud of our little village."
+    rewards:
+      - item: crop_pumpkin
+        quantity: 5
+    end: true

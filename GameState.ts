@@ -752,14 +752,22 @@ class GameStateManager {
   // === Inventory Methods ===
   // Note: Inventory is managed by InventoryManager, these methods just persist to GameState
 
-  saveInventory(items: { itemId: string; quantity: number }[], tools: string[], slotOrder?: string[]): void {
+  saveInventory(
+    items: { itemId: string; quantity: number }[],
+    tools: string[],
+    slotOrder?: string[]
+  ): void {
     this.state.inventory.items = items;
     this.state.inventory.tools = tools;
     this.state.inventory.slotOrder = slotOrder;
     this.notify();
   }
 
-  loadInventory(): { items: { itemId: string; quantity: number }[]; tools: string[]; slotOrder?: string[] } {
+  loadInventory(): {
+    items: { itemId: string; quantity: number }[];
+    tools: string[];
+    slotOrder?: string[];
+  } {
     return {
       items: this.state.inventory.items || [],
       tools: this.state.inventory.tools || [],
@@ -1806,6 +1814,7 @@ class GameStateManager {
       };
       console.log(`[GameState] Quest started: ${questId}`);
       this.notify();
+      eventBus.emit(GameEvent.QUEST_STARTED, { questId });
     }
   }
 
@@ -1821,6 +1830,7 @@ class GameStateManager {
       this.state.quests[questId].completed = true;
       console.log(`[GameState] Quest completed: ${questId}`);
       this.notify();
+      eventBus.emit(GameEvent.QUEST_COMPLETED, { questId });
     }
   }
 
@@ -1833,9 +1843,11 @@ class GameStateManager {
     }
 
     if (this.state.quests[questId]) {
+      const previousStage = this.state.quests[questId].stage;
       this.state.quests[questId].stage = stage;
       console.log(`[GameState] Quest ${questId} stage set to ${stage}`);
       this.notify();
+      eventBus.emit(GameEvent.QUEST_STAGE_CHANGED, { questId, stage, previousStage });
     }
   }
 
@@ -1874,6 +1886,7 @@ class GameStateManager {
     if (this.state.quests[questId]) {
       this.state.quests[questId].data[key] = value;
       this.notify();
+      eventBus.emit(GameEvent.QUEST_DATA_CHANGED, { questId, key, value });
     }
   }
 

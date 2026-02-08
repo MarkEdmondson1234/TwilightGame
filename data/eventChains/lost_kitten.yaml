@@ -1,0 +1,118 @@
+# The Lost Kitten
+# A heartwarming discovery chain where a stray kitten
+# is found and the player helps decide its fate.
+
+id: lost_kitten
+title: The Lost Kitten
+description: A tiny kitten has been spotted near the village, mewing softly.
+type: discovery
+
+trigger:
+  type: tile
+  mapId: village
+  tileX: 21
+  tileY: 18
+  radius: 2
+
+stages:
+  - id: found
+    text: A tiny ginger kitten is spotted near the village well, mewing softly and looking lost.
+    event:
+      title: Lost kitten spotted
+      description: noticed a tiny ginger kitten mewing near the village well
+      contributor: A kind-hearted villager
+    dialogue:
+      village_elder:
+        text: "Have you seen that little kitten by the well? Poor wee thing looks lost. Someone ought to help."
+        expression: thinky
+      mum:
+        text: "Oh, that poor little kitten! It must be hungry. Someone should look after it."
+    choices:
+      - text: "I'll take the kitten home"
+        next: adopt
+        event:
+          title: Kitten finds a home
+          description: decided to take the lost kitten home
+          contributor: A compassionate traveller
+      - text: "Let's ask if anyone's lost a cat"
+        next: search_owner
+        event:
+          title: Search for kitten's owner
+          description: started asking around the village about the lost kitten
+          contributor: A thoughtful neighbour
+      - text: "The witch might know where it came from"
+        next: ask_witch
+        requires:
+          questCompleted: witch_garden_quest
+
+  - id: adopt
+    text: You scoop up the tiny kitten. It purrs contentedly in your arms, finally safe and warm.
+    event:
+      title: Kitten adopted
+      description: gave the lost kitten a warm, loving home
+      contributor: A new cat parent
+    dialogue:
+      mum:
+        text: "You've taken in the kitten? How lovely! Make sure it gets plenty of milk."
+        expression: smile
+      village_elder:
+        text: "That kitten's landed on its paws with you! Every home needs a good mouser."
+        expression: smile
+    next: happy_ending
+
+  - id: search_owner
+    text: You ask around the village but nobody has lost a cat. The kitten seems to have appeared from nowhere.
+    event:
+      title: Kitten's origin a mystery
+      description: asked around but nobody claimed the mysterious little kitten
+      contributor: A persistent searcher
+    dialogue:
+      village_elder:
+        text: "Nobody's lost a cat, you say? How peculiar. Perhaps it wandered from far away."
+    choices:
+      - text: "I'll look after it then"
+        next: adopt
+      - text: "Maybe it's a forest cat — it should stay free"
+        next: village_cat
+
+  - id: ask_witch
+    text: The witch peers at the kitten with interest. "A ginger cat at the well? That's a sign of good luck, that is."
+    event:
+      title: Witch reads the kitten's fortune
+      description: learned from the witch that ginger cats bring good luck
+      contributor: A superstitious visitor
+    dialogue:
+      witch:
+        text: "This kitten chose your village for a reason. Ginger cats are drawn to places full of kindness."
+        expression: smile
+    choices:
+      - text: "I'll give it a home"
+        next: adopt
+      - text: "Let it stay as the village cat"
+        next: village_cat
+
+  - id: village_cat
+    text: The kitten settles into village life, sunning itself on doorsteps and chasing butterflies. It belongs to everyone.
+    event:
+      title: Village gains a cat
+      description: watched the little kitten become the village's beloved communal cat
+      contributor: The village community
+    dialogue:
+      village_elder:
+        text: "That little cat's made itself right at home! It visits everyone, but I think it likes my doorstep best."
+        expression: smile
+      mum:
+        text: "The village cat came by again this morning. I saved it a bit of milk."
+    next: happy_ending
+
+  - id: happy_ending
+    text: Whether at home or roaming the village, the kitten thrives. Its cheerful presence brings smiles to everyone.
+    event:
+      title: Kitten brings joy to village
+      description: The lost kitten has brought warmth and happiness to the whole community
+      contributor: A smiling villager
+    dialogue:
+      village_elder:
+        text: "That kitten was the best thing to happen to this village in a long while."
+        expression: smile
+    end: true

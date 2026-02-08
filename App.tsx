@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, STAMINA } from './constants';
+import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, STAMINA, TIMING } from './constants';
 import { Position, Direction, ImageRoomLayer, NPC } from './types';
 import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
@@ -25,6 +25,8 @@ import { useCollisionDetection } from './hooks/useCollisionDetection';
 import { useMovementController } from './hooks/useMovementController';
 import { useInteractionController } from './hooks/useInteractionController';
 import { useEnvironmentController } from './hooks/useEnvironmentController';
+import { useEventChainUI } from './hooks/useEventChainUI';
+import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
@@ -138,6 +140,7 @@ const App: React.FC = () => {
   const keysPressed = useRef<Record<string, boolean>>({}).current;
   const animationFrameId = useRef<number | null>(null);
   const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
+  const lastChainCheckTime = useRef<number>(0); // Throttle for event chain proximity checks
   const lastTransitionTime = useRef<number>(0);
 
   // Canvas ref for PixiJS (passed to usePixiRenderer)
@@ -251,6 +254,10 @@ const App: React.FC = () => {
     currentMapId,
     enabled: isMapInitialized && !activeNPC && !isCutscenePlaying,
   });
+
+  // Event chain UI - manages popup state and proximity checking for tile-triggered chains
+  const { activeChainPopup, checkChainProximity, handleChainChoice, dismissChainPopup } =
+    useEventChainUI();
 
   // Use character sprites hook for loading and managing player sprites
   // Passes isFairyForm to use fairy transformation sprites when active
@@ -483,10 +490,16 @@ const App: React.FC = () => {
     // Update PixiJS animations (weather particles, sprite animations, tile animations)
     updateAnimations(deltaTime);
 
-    // Pause movement when dialogue or cutscene is active
-    if (activeNPC || isCutscenePlaying) {
+    // Pause movement when dialogue, cutscene, or event chain popup is active
+    if (activeNPC || isCutscenePlaying || activeChainPopup) {
       animationFrameId.current = requestAnimationFrame(gameLoop);
       return;
+    }
+
+    // Check event chain tile triggers and objectives (throttled)
+    if (now - lastChainCheckTime.current >= TIMING.EVENT_CHAIN_CHECK_MS) {
+      lastChainCheckTime.current = now;
+      checkChainProximity(currentMapId, playerPosRef.current.x, playerPosRef.current.y);
     }
 
     // Check for position-based cutscene triggers (only when not in dialogue/cutscene)
@@ -505,7 +518,14 @@ const App: React.FC = () => {
     staminaManager.update(deltaTime, movementResult.isMoving, currentMapId);
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
-  }, [updateMovement, activeNPC, isCutscenePlaying, currentMapId]);
+  }, [
+    updateMovement,
+    activeNPC,
+    isCutscenePlaying,
+    activeChainPopup,
+    checkChainProximity,
+    currentMapId,
+  ]);
 
   // Disabled automatic transitions - now using action key (E or Enter)
 
@@ -1442,6 +1462,15 @@ const App: React.FC = () => {
             handleMapTransition('home_upstairs', { x: 5, y: 5 });
             showToast('Sent to bed without supper!', 'warning');
           }}
+        />
+      )}
+      {activeChainPopup && !activeNPC && (
+        <EventChainPopup
+          chainId={activeChainPopup.chainId}
+          stageText={activeChainPopup.stageText}
+          choices={activeChainPopup.choices}
+          onChoice={handleChainChoice}
+          onDismiss={dismissChainPopup}
         />
       )}
       {ui.devTools && (

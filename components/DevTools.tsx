@@ -10,6 +10,16 @@ import { magicManager } from '../utils/MagicManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import { decorationManager } from '../utils/DecorationManager';
 import { getLocalPaintingCount, LOCAL_PAINTING_LIMIT } from '../utils/paintingImageService';
+import { globalEventManager } from '../utils/GlobalEventManager';
+import { eventChainManager } from '../utils/EventChainManager';
+import {
+  EXAMPLE_GLOBAL_EVENTS,
+  getRandomExampleEvent,
+  getRandomExampleEventByType,
+  type ExampleGlobalEvent,
+} from '../data/exampleGlobalEvents';
+import type { SharedEventType } from '../firebase/types';
+import { isFirebaseLoaded } from '../firebase/safe';
 import './DevTools.css';
 
 interface DevToolsProps {
@@ -710,6 +720,390 @@ const PaintingDebugSection: React.FC<{
   );
 };
 
+/**
+ * Event Chains Debug Section - test YAML-based event chains
+ */
+const EventChainsDebugSection: React.FC = () => {
+  const [, forceUpdate] = useState(0);
+  const refresh = () => forceUpdate((n) => n + 1);
+
+  const allChains = eventChainManager.getAllChains();
+  const activeChains = eventChainManager.getActiveChains();
+  const completedChains = eventChainManager.getCompletedChains();
+
+  const handleStart = async (chainId: string) => {
+    await eventChainManager.startChain(chainId);
+    refresh();
+  };
+
+  const handleChoice = async (chainId: string, index: number) => {
+    await eventChainManager.makeChoice(chainId, index);
+    refresh();
+  };
+
+  const handleAdvance = async (chainId: string) => {
+    const chain = eventChainManager.getChain(chainId);
+    const progress = eventChainManager.getProgress(chainId);
+    if (!chain || !progress) return;
+    const stage = chain.stageMap.get(progress.currentStageId);
+    if (stage?.next) {
+      await eventChainManager.advanceToStage(chainId, stage.next);
+      refresh();
+    }
+  };
+
+  const handleReset = (chainId: string) => {
+    eventChainManager.resetChain(chainId);
+    refresh();
+  };
+
+  return (
+    <>
+      <div style={{ fontSize: '11px', opacity: 0.7, marginBottom: '8px' }}>
+        {allChains.length} chain(s) loaded | {activeChains.length} active | {completedChains.length}{' '}
+        completed
+      </div>
+
+      {allChains.map((chain) => {
+        const progress = eventChainManager.getProgress(chain.id);
+        const isActive = progress && !progress.completed;
+        const isCompleted = progress?.completed;
+        const currentStage = isActive
+          ? eventChainManager.getChain(chain.id)?.stageMap.get(progress!.currentStageId)
+          : null;
+        const choices = isActive ? eventChainManager.getAvailableChoices(chain.id) : [];
+
+        return (
+          <div
+            key={chain.id}
+            style={{
+              border: '1px solid rgba(255,255,255,0.2)',
+              borderRadius: '4px',
+              padding: '8px',
+              marginBottom: '8px',
+              background: isCompleted
+                ? 'rgba(0,180,0,0.1)'
+                : isActive
+                  ? 'rgba(0,120,255,0.1)'
+                  : 'transparent',
+            }}
+          >
+            <div style={{ fontWeight: 'bold', fontSize: '12px' }}>
+              {isCompleted ? '\u2713 ' : isActive ? '\u25B6 ' : ''}
+              {chain.title}
+            </div>
+            <div style={{ fontSize: '10px', opacity: 0.7 }}>
+              {chain.type} | {chain.stages.length} stages | trigger: {chain.trigger.type}
+            </div>
+
+            {isActive && currentStage && (
+              <div
+                style={{
+                  marginTop: '6px',
+                  padding: '6px',
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: '3px',
+                  fontSize: '11px',
+                }}
+              >
+                <div style={{ fontWeight: 'bold' }}>Stage: {currentStage.id}</div>
+                <div style={{ opacity: 0.8, marginTop: '2px' }}>{currentStage.text}</div>
+
+                {choices.length > 0 && (
+                  <div style={{ marginTop: '6px' }}>
+                    <div style={{ fontSize: '10px', opacity: 0.7 }}>Choices:</div>
+                    {choices.map((choice, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleChoice(chain.id, i)}
+                        style={{
+                          display: 'block',
+                          marginTop: '3px',
+                          fontSize: '10px',
+                          padding: '3px 8px',
+                          cursor: 'pointer',
+                          background: 'rgba(0,120,255,0.3)',
+                          border: '1px solid rgba(0,120,255,0.5)',
+                          borderRadius: '3px',
+                          color: 'inherit',
+                          width: '100%',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {choice.text}
+                        {choice.requires && (
+                          <span style={{ opacity: 0.5 }}> (has requirements)</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!choices.length && currentStage.next && (
+                  <button
+                    onClick={() => handleAdvance(chain.id)}
+                    style={{
+                      marginTop: '6px',
+                      fontSize: '10px',
+                      padding: '3px 8px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Advance to: {currentStage.next}
+                    {currentStage.waitDays ? ` (waits ${currentStage.waitDays} days)` : ''}
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div style={{ marginTop: '6px', display: 'flex', gap: '4px' }}>
+              {!progress && (
+                <button
+                  onClick={() => handleStart(chain.id)}
+                  style={{ fontSize: '10px', padding: '2px 8px', cursor: 'pointer' }}
+                >
+                  Start
+                </button>
+              )}
+              {progress && (
+                <button
+                  onClick={() => handleReset(chain.id)}
+                  style={{ fontSize: '10px', padding: '2px 8px', cursor: 'pointer' }}
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+
+      {allChains.length === 0 && (
+        <div style={{ opacity: 0.5, fontStyle: 'italic' }}>
+          No YAML event chains found in data/eventChains/
+        </div>
+      )}
+    </>
+  );
+};
+
+/**
+ * Global Events Debug Section - test and trigger global events
+ */
+const GlobalEventsDebugSection: React.FC = () => {
+  const [cachedEvents, setCachedEvents] = useState(globalEventManager.getEvents());
+  const [publishing, setPublishing] = useState(false);
+  const [lastAction, setLastAction] = useState('');
+  const [selectedType, setSelectedType] = useState<SharedEventType>('discovery');
+
+  const refreshEvents = async () => {
+    await globalEventManager.forceRefresh();
+    setCachedEvents(globalEventManager.getEvents());
+    setLastAction('Refreshed events from Firebase');
+  };
+
+  const publishRandomEvent = async () => {
+    setPublishing(true);
+    const example = getRandomExampleEvent();
+    const result = await globalEventManager.publishEvent(
+      example.eventType,
+      example.title,
+      example.description,
+      example.location,
+      example.metadata
+    );
+    setCachedEvents(globalEventManager.getEvents());
+    setLastAction(
+      result
+        ? `Published: "${example.title}" (${example.eventType})`
+        : 'Failed to publish (offline?)'
+    );
+    setPublishing(false);
+  };
+
+  const publishTypedEvent = async (type: SharedEventType) => {
+    setPublishing(true);
+    const example = getRandomExampleEventByType(type);
+    const result = await globalEventManager.publishEvent(
+      example.eventType,
+      example.title,
+      example.description,
+      example.location,
+      example.metadata
+    );
+    setCachedEvents(globalEventManager.getEvents());
+    setLastAction(
+      result ? `Published: "${example.title}" (${type})` : 'Failed to publish (offline?)'
+    );
+    setPublishing(false);
+  };
+
+  const previewEvent = (event: ExampleGlobalEvent) => {
+    setLastAction(
+      `Preview: [${event.eventType}] "${event.title}" — ${event.contributorName} ${event.description}`
+    );
+  };
+
+  const firebaseStatus = isFirebaseLoaded();
+
+  // Event type counts
+  const typeCounts: Record<string, number> = {};
+  for (const e of cachedEvents) {
+    typeCounts[e.eventType] = (typeCounts[e.eventType] || 0) + 1;
+  }
+
+  return (
+    <>
+      {/* Status */}
+      <div className="devtools-status" style={{ marginBottom: '12px' }}>
+        <p>
+          <strong>Firebase:</strong> {firebaseStatus ? 'Connected' : 'Offline (stubs)'}
+        </p>
+        <p>
+          <strong>Cached Events:</strong> {cachedEvents.length}
+        </p>
+        {Object.entries(typeCounts).length > 0 && (
+          <p style={{ fontSize: '11px', opacity: 0.8 }}>
+            {Object.entries(typeCounts)
+              .map(([type, count]) => `${type}: ${count}`)
+              .join(' | ')}
+          </p>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <div className="devtools-control">
+        <label>Quick Actions</label>
+        <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+          <button
+            className="devtools-button"
+            onClick={refreshEvents}
+            title="Re-fetch events from Firebase"
+          >
+            Refresh
+          </button>
+          <button
+            className="devtools-button"
+            onClick={publishRandomEvent}
+            disabled={publishing}
+            title="Publish a random cosy example event"
+          >
+            {publishing ? 'Publishing...' : 'Random Event'}
+          </button>
+        </div>
+      </div>
+
+      {/* Publish by Type */}
+      <div className="devtools-control" style={{ marginTop: '12px' }}>
+        <label>Publish by Type</label>
+        <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
+          {(
+            ['discovery', 'achievement', 'seasonal', 'community', 'mystery'] as SharedEventType[]
+          ).map((type) => (
+            <button
+              key={type}
+              className="devtools-button"
+              onClick={() => publishTypedEvent(type)}
+              disabled={publishing}
+              title={`Publish a random ${type} event`}
+              style={{ fontSize: '11px' }}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Example Events Browser */}
+      <div className="devtools-control" style={{ marginTop: '12px' }}>
+        <label>Browse Examples ({EXAMPLE_GLOBAL_EVENTS.length} templates)</label>
+        <div style={{ display: 'flex', gap: '4px', marginTop: '4px', alignItems: 'center' }}>
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value as SharedEventType)}
+            style={{ flex: 1 }}
+          >
+            <option value="discovery">Discovery</option>
+            <option value="achievement">Achievement</option>
+            <option value="seasonal">Seasonal</option>
+            <option value="community">Community</option>
+            <option value="mystery">Mystery</option>
+          </select>
+        </div>
+        <div
+          style={{
+            marginTop: '8px',
+            maxHeight: '120px',
+            overflow: 'auto',
+            background: '#1a1a2e',
+            borderRadius: '4px',
+            padding: '4px',
+          }}
+        >
+          {EXAMPLE_GLOBAL_EVENTS.filter((e) => e.eventType === selectedType).map((event, i) => (
+            <div
+              key={i}
+              onClick={() => previewEvent(event)}
+              style={{
+                padding: '4px 6px',
+                fontSize: '11px',
+                cursor: 'pointer',
+                borderBottom: '1px solid #2a2a4e',
+                lineHeight: 1.4,
+              }}
+              title="Click to preview"
+            >
+              <strong>{event.title}</strong>
+              <br />
+              <span style={{ opacity: 0.7 }}>
+                {event.contributorName} {event.description}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Cached Events */}
+      {cachedEvents.length > 0 && (
+        <div className="devtools-control" style={{ marginTop: '12px' }}>
+          <label>Recent Live Events</label>
+          <div
+            style={{
+              maxHeight: '100px',
+              overflow: 'auto',
+              background: '#1a1a2e',
+              borderRadius: '4px',
+              padding: '4px',
+            }}
+          >
+            {cachedEvents.slice(0, 10).map((event, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: '3px 6px',
+                  fontSize: '11px',
+                  borderBottom: '1px solid #2a2a4e',
+                  lineHeight: 1.3,
+                }}
+              >
+                <span style={{ opacity: 0.5 }}>[{event.eventType}]</span>{' '}
+                {event.contributorName || 'A traveller'} {event.description}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Last Action */}
+      {lastAction && (
+        <div style={{ marginTop: '8px', fontSize: '11px', opacity: 0.7, fontStyle: 'italic' }}>
+          {lastAction}
+        </div>
+      )}
+    </>
+  );
+};
+
 const DevTools: React.FC<DevToolsProps> = ({
   onClose,
   onFarmUpdate,
@@ -942,6 +1336,16 @@ const DevTools: React.FC<DevToolsProps> = ({
           <div className="devtools-section">
             <h3>Magic</h3>
             <MagicDebugSection />
+          </div>
+
+          <div className="devtools-section">
+            <h3>Global Events</h3>
+            <GlobalEventsDebugSection />
+          </div>
+
+          <div className="devtools-section">
+            <h3>Event Chains (YAML)</h3>
+            <EventChainsDebugSection />
           </div>
 
           <div className="devtools-section">

@@ -11,6 +11,7 @@ import { characterData } from './CharacterData';
 import { generateForageSeed, getItem } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { DEBUG, TIMING } from '../constants';
+import { globalEventManager } from './GlobalEventManager';
 
 /**
  * Forageable tile types - tiles where players can search for wild seeds
@@ -38,11 +39,47 @@ function rollForageQuantity(): number {
   return rand < 0.5 ? 1 : rand < 0.85 ? 2 : 3;
 }
 
+/** Rare forageable items that trigger a global discovery event when found */
+const RARE_FORAGE_ITEMS = new Set([
+  'moonpetal',
+  'addersmeat',
+  'wolfsbane',
+  'luminescent_toadstool',
+  'shrinking_violet',
+  'frost_flower',
+  'fly_agaric',
+  'fairy_bluebell',
+]);
+
 /** Save inventory and record forage cooldown at the given position */
-function saveForageResult(currentMapId: string, anchorX: number, anchorY: number): void {
+function saveForageResult(
+  currentMapId: string,
+  anchorX: number,
+  anchorY: number,
+  itemId?: string
+): void {
   const inventoryData = inventoryManager.getInventoryData();
   characterData.saveInventory(inventoryData.items, inventoryData.tools);
   gameState.recordForage(currentMapId, anchorX, anchorY);
+
+  // Publish discovery event for rare items
+  if (itemId && RARE_FORAGE_ITEMS.has(itemId)) {
+    const item = getItem(itemId);
+    const displayName = item?.displayName || itemId;
+    globalEventManager
+      .publishEvent(
+        'discovery',
+        `Rare find: ${displayName}`,
+        `discovered ${displayName} in the wild`,
+        {
+          mapId: currentMapId,
+          mapName: currentMapId.replace(/_/g, ' '),
+        }
+      )
+      .catch(() => {
+        // Silently ignore - publishing is best-effort
+      });
+  }
 }
 
 export interface ForageResult {
@@ -259,7 +296,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       );
 
     // Save and set cooldown at ANCHOR position
-    saveForageResult(currentMapId, moonpetalAnchor.x, moonpetalAnchor.y);
+    saveForageResult(currentMapId, moonpetalAnchor.x, moonpetalAnchor.y, 'moonpetal');
 
     return {
       found: true,
@@ -327,7 +364,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       );
 
     // Save and set cooldown at ANCHOR position
-    saveForageResult(currentMapId, addersmeatAnchor.x, addersmeatAnchor.y);
+    saveForageResult(currentMapId, addersmeatAnchor.x, addersmeatAnchor.y, 'addersmeat');
 
     return {
       found: true,
@@ -388,7 +425,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       );
 
     // Save and set cooldown at ANCHOR position
-    saveForageResult(currentMapId, wolfsbaneAnchor.x, wolfsbaneAnchor.y);
+    saveForageResult(currentMapId, wolfsbaneAnchor.x, wolfsbaneAnchor.y, 'wolfsbane');
 
     return {
       found: true,
@@ -443,7 +480,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       );
 
     // Save and set cooldown at ANCHOR position
-    saveForageResult(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y);
+    saveForageResult(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y, 'luminescent_toadstool');
 
     return {
       found: true,
@@ -669,7 +706,12 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       );
 
     // Save and set cooldown at ANCHOR position
-    saveForageResult(currentMapId, shrinkingVioletAnchor.x, shrinkingVioletAnchor.y);
+    saveForageResult(
+      currentMapId,
+      shrinkingVioletAnchor.x,
+      shrinkingVioletAnchor.y,
+      'shrinking_violet'
+    );
 
     return {
       found: true,
@@ -743,7 +785,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       );
 
     // Save and set cooldown at ANCHOR position
-    saveForageResult(currentMapId, frostFlowerAnchor.x, frostFlowerAnchor.y);
+    saveForageResult(currentMapId, frostFlowerAnchor.x, frostFlowerAnchor.y, 'frost_flower');
 
     return {
       found: true,

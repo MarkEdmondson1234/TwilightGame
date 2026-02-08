@@ -70,6 +70,9 @@ export const TIMING = {
 
   // Tile animations
   DEFAULT_TILE_ANIMATION_MS: 150, // Default animated tile frame rate
+
+  // Event chains
+  EVENT_CHAIN_CHECK_MS: 500, // Proximity check throttle for tile triggers/objectives
 } as const;
 
 /**

@@ -60,6 +60,14 @@ export enum GameEvent {
   DECORATION_CRAFTED = 'decoration:crafted',
   PAINTING_CREATED = 'decoration:painting_created',
   PAINTING_DELETED = 'decoration:painting_deleted',
+
+  // Global events (shared between all players via Firebase)
+  GLOBAL_EVENTS_UPDATED = 'global:events_updated',
+
+  // Event chain events (YAML-based branching narratives)
+  EVENT_CHAIN_UPDATED = 'chain:updated',
+  EVENT_CHAIN_CHOICE_REQUIRED = 'chain:choice_required',
+  EVENT_CHAIN_OBJECTIVE_REACHED = 'chain:objective_reached',
 }
 
 // ============================================================================
@@ -147,6 +155,25 @@ export interface EventPayloads {
   };
   [GameEvent.PAINTING_DELETED]: {
     paintingId: string;
+  };
+  [GameEvent.GLOBAL_EVENTS_UPDATED]: {
+    eventCount: number;
+    types: string[];
+  };
+  [GameEvent.EVENT_CHAIN_UPDATED]: {
+    chainId: string;
+    stageId: string;
+    action: 'started' | 'advanced' | 'completed' | 'reset';
+  };
+  [GameEvent.EVENT_CHAIN_CHOICE_REQUIRED]: {
+    chainId: string;
+    stageId: string;
+    stageText: string;
+    choices: Array<{ text: string; next: string }>;
+  };
+  [GameEvent.EVENT_CHAIN_OBJECTIVE_REACHED]: {
+    chainId: string;
+    stageId: string;
   };
 }
 

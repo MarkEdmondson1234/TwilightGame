@@ -11,6 +11,7 @@
 
 import { Position, Direction } from './core';
 import { AnimationConditions } from './animation';
+import type { SharedEventType } from '../firebase/types';
 
 // NPC (Non-Player Character) system
 export enum NPCBehavior {
@@ -92,6 +93,14 @@ export interface DialogueNode {
   // Potion effect requirements for this dialogue node (e.g., 'beast_tongue' for animal speech)
   requiredPotionEffect?: string; // Only show if player has this potion effect active
   hiddenWithPotionEffect?: string; // Hide if player has this potion effect active
+  // Global event conditions (shared events from all players via Firebase)
+  requiredGlobalEvent?: SharedEventType; // Only show if any event of this type exists
+  hiddenIfGlobalEvent?: SharedEventType; // Hide if any event of this type exists
+  requiredGlobalEventCount?: {
+    // Only show if enough events of a type exist
+    type: SharedEventType;
+    min: number;
+  };
   // Expression/emotion for dialogue character sprite (e.g., 'smile', 'happy', 'thinky')
   // If set, uses dialogueExpressions[expression] from NPC, otherwise uses default dialogueSprite
   expression?: string;
@@ -126,6 +135,14 @@ export interface DialogueResponse {
   requiredTransformation?: string; // Only show if player has this transformation (e.g., 'fairy')
   hiddenIfTransformed?: string; // Hide if player has this transformation
   hiddenIfAnyTransformation?: boolean; // Hide if player has any active transformation
+  // Global event conditions (shared events from all players via Firebase)
+  requiredGlobalEvent?: SharedEventType; // Only show if any event of this type exists
+  hiddenIfGlobalEvent?: SharedEventType; // Hide if any event of this type exists
+  requiredGlobalEventCount?: {
+    // Only show if enough events of a type exist
+    type: SharedEventType;
+    min: number;
+  };
   // Decoration system requirements
   hiddenIfHasEasel?: boolean; // Hide if player already has the easel
   // Item-giving actions triggered by selecting this response
