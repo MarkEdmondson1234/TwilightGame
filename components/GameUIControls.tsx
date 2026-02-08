@@ -63,9 +63,9 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
       <div
         className={`absolute right-2 ${zClass(Z_HUD)} transition-all duration-200`}
         style={{
-          // On touch devices, position above touch controls (which start at bottom-48 = 192px)
+          // On touch devices, position above touch controls (which sit at ~60px from bottom)
           // Add safe area inset for notched devices
-          bottom: isTouchDevice ? 'calc(220px + env(safe-area-inset-bottom, 0px))' : '64px',
+          bottom: isTouchDevice ? 'calc(140px + env(safe-area-inset-bottom, 0px))' : '64px',
         }}
       >
         <button

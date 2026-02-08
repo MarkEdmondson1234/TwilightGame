@@ -1383,29 +1383,8 @@ const App: React.FC = () => {
           <TouchControls
             onDirectionPress={touchControls.handleDirectionPress}
             onDirectionRelease={touchControls.handleDirectionRelease}
-            onActionPress={touchControls.handleActionPress}
             onResetPress={touchControls.handleResetPress}
-            onShowCookingUI={() => {
-              const cookingLocation = checkCookingLocation(playerPos);
-              // Only open cooking UI for stove/campfire, not cauldron
-              if (cookingLocation.found && cookingLocation.locationType !== 'cauldron') {
-                openUI('cookingUI', {
-                  cookingLocationType:
-                    (cookingLocation.locationType as 'stove' | 'campfire') || undefined,
-                  cookingPosition: cookingLocation.position || undefined,
-                });
-              }
-            }}
-            onShowRecipeBook={() => {
-              // Use cookingManager as single source of truth for cooking state
-              if (!cookingManager.isRecipeBookUnlocked()) {
-                showToast('Talk to Mum if you want to learn how to cook!', 'info');
-                return;
-              }
-              openUI('recipeBook');
-            }}
-            onDebugToggle={() => setDebugOpen((prev) => !prev)}
-            isDebugOpen={isDebugOpen}
+            onForagePress={touchControls.handleForagePress}
             compact={isCompactMode}
           />
         )}

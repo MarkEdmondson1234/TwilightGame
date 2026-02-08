@@ -391,8 +391,31 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
     initPixi();
 
+    // Handle WebGL context loss (common on iPad Safari under memory pressure).
+    // Without this, context loss silently breaks rendering → blank page → Safari auto-reloads.
+    const canvas = canvasRef.current;
+    const handleContextLost = (e: Event) => {
+      e.preventDefault(); // Allow context restoration
+      console.warn('[usePixiRenderer] WebGL context lost — waiting for restoration');
+    };
+    const handleContextRestored = () => {
+      console.log('[usePixiRenderer] WebGL context restored — reinitializing');
+      // Force full re-initialization by destroying and re-creating
+      setIsPixiInitialized(false);
+      if (pixiAppRef.current) {
+        pixiAppRef.current.destroy(true);
+        pixiAppRef.current = null;
+      }
+      // The effect will re-run because isPixiInitialized changed
+      setTimeout(() => initPixi(), 100);
+    };
+    canvas?.addEventListener('webglcontextlost', handleContextLost);
+    canvas?.addEventListener('webglcontextrestored', handleContextRestored);
+
     // Cleanup
     return () => {
+      canvas?.removeEventListener('webglcontextlost', handleContextLost);
+      canvas?.removeEventListener('webglcontextrestored', handleContextRestored);
       if (pixiAppRef.current) {
         console.log('[usePixiRenderer] Destroying PixiJS application');
         pixiAppRef.current.destroy(true);

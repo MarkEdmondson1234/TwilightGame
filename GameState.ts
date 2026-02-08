@@ -607,9 +607,26 @@ class GameStateManager {
   }
 
   /**
-   * Save state to localStorage
+   * Save state to localStorage (throttled to avoid overwhelming iPad Safari).
+   * Saves at most once per second, with a flush on page unload.
    */
+  private saveTimer: ReturnType<typeof setTimeout> | null = null;
+  private savePending = false;
+
   private saveState(): void {
+    this.savePending = true;
+    if (this.saveTimer) return; // Already scheduled
+
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = null;
+      if (this.savePending) {
+        this.flushSave();
+      }
+    }, 1000);
+  }
+
+  flushSave(): void {
+    this.savePending = false;
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
     } catch (error) {
@@ -2149,3 +2166,10 @@ class GameStateManager {
 
 // Singleton instance
 export const gameState = new GameStateManager();
+
+// Flush any pending save on page unload (pagehide is more reliable on iPad Safari)
+if (typeof window !== 'undefined') {
+  window.addEventListener('pagehide', () => {
+    gameState.flushSave();
+  });
+}
