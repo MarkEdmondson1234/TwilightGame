@@ -334,12 +334,28 @@ export function createVillageElderNPC(
         responses: [
           {
             text: 'What should I do next?',
-            nextId: 'garden_seasonal_task',
+            nextId: 'garden_wait_next_season',
           },
           {
             text: 'Thank you, Elias.',
           },
         ],
+      },
+      // Season task done - come back next season
+      {
+        id: 'garden_wait_next_season',
+        text: "Thou hast done well this season, young one. There is no more I can teach thee until the seasons turn. In the meantime, why not visit the shop for more seeds? Try growing different things - experimentation is the heart of gardening!",
+        seasonalText: {
+          spring:
+            "Thou hast done well this spring! Come see me when summer arrives - I shall have new seeds and a fresh task for thee. Until then, why not buy some seeds from the shop and try growing things on thine own? Gardening takes patience, young one.",
+          summer:
+            "A fine summer's work! When autumn comes, I shall have another task for thee. Until then, visit the shop for more seeds and do some experimenting. A true gardener never stops learning!",
+          autumn:
+            "Splendid autumn work! The garden rests in winter, but come spring I shall have something new for thee. Why not buy seeds from the shop and try thy hand at different crops? Patience is a gardener's greatest virtue.",
+          winter:
+            'The ground sleeps beneath the frost now, young one. Come see me when spring returns. In the meantime, perhaps visit the other villagers?',
+        },
+        requiredQuest: GARDENING_QUEST_ID,
       },
       // All seasonal tasks complete
       {

@@ -338,6 +338,7 @@ function handleEliasQuestActions(nodeId: string): string | void {
 
   // Handle task check - if quest is active but no current task, assign one for the current season
   // This handles the case where player accepted in winter and is now checking in a different season
+  // If the current season's task is already done, redirect to "wait for next season" message
   if (nodeId === 'garden_task_check') {
     if (isGardeningQuestActive() && !getCurrentSeasonTask()) {
       const availableTask = getAvailableSeasonTask();
@@ -356,6 +357,12 @@ function handleEliasQuestActions(nodeId: string): string | void {
               seeds.map((s) => `${s.quantity}x ${s.itemId}`).join(', ')
             );
         }
+      } else if (isWinter()) {
+        // Winter - no tasks available
+        return 'garden_winter_wait';
+      } else {
+        // Season's task already done - tell player to come back next season
+        return 'garden_wait_next_season';
       }
     }
   }
