@@ -4,6 +4,8 @@
  */
 
 import { ITEMS } from './items';
+import { CROPS } from './crops';
+import { Season as CropSeason } from '../utils/TimeManager';
 
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
@@ -42,111 +44,21 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
 
-  // Spring/Summer seeds
-  {
-    itemId: 'seed_tomato',
-    buyPrice: 15,
-    sellPrice: 7,
-    stock: 'unlimited',
-    availableSeasons: ['spring', 'summer'],
-  },
-  {
-    itemId: 'seed_melon',
-    buyPrice: 30,
-    sellPrice: 15,
-    stock: 'unlimited',
-    availableSeasons: ['spring', 'summer'],
-  },
-  {
-    itemId: 'seed_spinach',
-    buyPrice: 8,
-    sellPrice: 4,
-    stock: 'unlimited',
-    availableSeasons: ['spring', 'summer'],
-  },
-  {
-    itemId: 'seed_cucumber',
-    buyPrice: 10,
-    sellPrice: 4,
-    stock: 'unlimited',
-    availableSeasons: ['spring', 'summer'],
-  },
-
-  // Autumn/Winter seeds
-  {
-    itemId: 'seed_pumpkin',
-    buyPrice: 50,
-    sellPrice: 25,
-    stock: 'unlimited',
-    availableSeasons: ['autumn'],
-  },
-  {
-    itemId: 'seed_onion',
-    buyPrice: 12,
-    sellPrice: 5,
-    stock: 'unlimited',
-    availableSeasons: ['autumn', 'winter'],
-  },
-  {
-    itemId: 'seed_broccoli',
-    buyPrice: 20,
-    sellPrice: 10,
-    stock: 'unlimited',
-    availableSeasons: ['autumn', 'winter'],
-  },
-  {
-    itemId: 'seed_cauliflower',
-    buyPrice: 25,
-    sellPrice: 12,
-    stock: 'unlimited',
-    availableSeasons: ['autumn', 'winter'],
-  },
-
-  // Spring specialty
-  {
-    itemId: 'seed_potato',
-    buyPrice: 5,
-    sellPrice: 2,
-    stock: 'unlimited',
-    availableSeasons: ['spring'],
-  },
-  {
-    itemId: 'seed_pea',
-    buyPrice: 8,
-    sellPrice: 3,
-    stock: 'unlimited',
-    availableSeasons: ['spring'],
-  },
-  {
-    itemId: 'seed_salad',
-    buyPrice: 7,
-    sellPrice: 3,
-    stock: 'unlimited',
-    availableSeasons: ['spring', 'summer'],
-  },
-  {
-    itemId: 'seed_carrot',
-    buyPrice: 8,
-    sellPrice: 3,
-    stock: 'unlimited',
-    availableSeasons: ['spring', 'autumn'],
-  },
-
-  // Summer specialty
-  {
-    itemId: 'seed_corn',
-    buyPrice: 25,
-    sellPrice: 12,
-    stock: 'unlimited',
-    availableSeasons: ['summer'],
-  },
-  {
-    itemId: 'seed_chili',
-    buyPrice: 15,
-    sellPrice: 7,
-    stock: 'unlimited',
-    availableSeasons: ['summer'],
-  },
+  // Seeds — availableSeasons auto-derived from crops.ts plantSeasons (SSoT)
+  { itemId: 'seed_tomato', buyPrice: 15, sellPrice: 7, stock: 'unlimited' },
+  { itemId: 'seed_melon', buyPrice: 30, sellPrice: 15, stock: 'unlimited' },
+  { itemId: 'seed_spinach', buyPrice: 8, sellPrice: 4, stock: 'unlimited' },
+  { itemId: 'seed_cucumber', buyPrice: 10, sellPrice: 4, stock: 'unlimited' },
+  { itemId: 'seed_pumpkin', buyPrice: 50, sellPrice: 25, stock: 'unlimited' },
+  { itemId: 'seed_onion', buyPrice: 12, sellPrice: 5, stock: 'unlimited' },
+  { itemId: 'seed_broccoli', buyPrice: 20, sellPrice: 10, stock: 'unlimited' },
+  { itemId: 'seed_cauliflower', buyPrice: 25, sellPrice: 12, stock: 'unlimited' },
+  { itemId: 'seed_potato', buyPrice: 5, sellPrice: 2, stock: 'unlimited' },
+  { itemId: 'seed_pea', buyPrice: 8, sellPrice: 3, stock: 'unlimited' },
+  { itemId: 'seed_salad', buyPrice: 7, sellPrice: 3, stock: 'unlimited' },
+  { itemId: 'seed_carrot', buyPrice: 8, sellPrice: 3, stock: 'unlimited' },
+  { itemId: 'seed_corn', buyPrice: 25, sellPrice: 12, stock: 'unlimited' },
+  { itemId: 'seed_chili', buyPrice: 15, sellPrice: 7, stock: 'unlimited' },
 
   // ===== TOOLS =====
   {
@@ -481,18 +393,38 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
 ];
 
 /**
+ * Get the effective available seasons for a shop item.
+ * For seeds, this is auto-derived from the crop's plantSeasons (SSoT).
+ * For other items, uses the hardcoded availableSeasons if set.
+ */
+function getEffectiveSeasons(item: ShopItem): Season[] | undefined {
+  // Auto-derive seasons for seeds from crops.ts
+  if (item.itemId.startsWith('seed_')) {
+    const cropId = item.itemId.replace('seed_', '');
+    const crop = CROPS[cropId];
+    if (crop) {
+      return crop.plantSeasons.map(
+        (s: CropSeason) => s.toLowerCase() as Season,
+      );
+    }
+  }
+  return item.availableSeasons;
+}
+
+/**
  * Get shop inventory filtered by current season
  * @param season Current game season
  * @returns Array of shop items available this season
  */
 export function getSeasonalInventory(season: Season): ShopItem[] {
   return GENERAL_STORE_INVENTORY.filter((item) => {
+    const seasons = getEffectiveSeasons(item);
     // If no season restriction, always available
-    if (!item.availableSeasons) {
+    if (!seasons) {
       return true;
     }
     // Otherwise, check if current season is in available list
-    return item.availableSeasons.includes(season);
+    return seasons.includes(season);
   });
 }
 
@@ -515,8 +447,9 @@ export function isItemAvailable(itemId: string, season: Season): boolean {
   const shopItem = getShopItem(itemId);
   if (!shopItem) return false;
 
-  if (!shopItem.availableSeasons) return true;
-  return shopItem.availableSeasons.includes(season);
+  const seasons = getEffectiveSeasons(shopItem);
+  if (!seasons) return true;
+  return seasons.includes(season);
 }
 
 /**
