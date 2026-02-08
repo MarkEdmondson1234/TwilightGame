@@ -1980,7 +1980,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: false,
     image: itemAssets.easel,
     icon: '🎨',
-    placedScale: 2.0,
+    placedScale: 3.0,
   },
 
   // ===== CRAFTED DECORATIONS =====
