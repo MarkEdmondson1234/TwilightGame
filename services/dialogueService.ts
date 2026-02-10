@@ -969,6 +969,11 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
       return false;
     }
 
+    // Check friendship tier requirements on responses
+    if (response.requiredFriendshipTier && !meetsMinTier(npcTier, response.requiredFriendshipTier)) {
+      return false;
+    }
+
     // Check global event requirements on responses
     if (
       response.requiredGlobalEvent &&

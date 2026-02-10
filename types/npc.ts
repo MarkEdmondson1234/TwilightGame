@@ -143,6 +143,8 @@ export interface DialogueResponse {
     type: SharedEventType;
     min: number;
   };
+  // Friendship requirements for this response option
+  requiredFriendshipTier?: FriendshipTier; // Only show if friendship >= tier
   // Decoration system requirements
   hiddenIfHasEasel?: boolean; // Hide if player already has the easel
   // Item-giving actions triggered by selecting this response

@@ -42,6 +42,38 @@ export function createMushraNPC(id: string, position: Position, name: string = '
     },
     initialState: 'roaming',
     dialogue: [
+      // Good Friends greeting - takes priority over stranger greeting when unlocked
+      {
+        id: 'greeting',
+        text: '*Mushra looks up from her sketchbook and beams.* "Oh, I was just thinking of you! I wanted to show you my sketch book — I have some new drawings."',
+        requiredFriendshipTier: 'good_friend',
+        seasonalText: {
+          spring:
+            '*She waves you over eagerly.* "I\'ve been painting the spring blossoms all morning — come and see! I saved you a spot next to me."',
+          summer:
+            '*She pats the grass beside her.* "Perfect timing! I just found the most wonderful mushroom and I wanted to show someone who\'d appreciate it."',
+          autumn:
+            '*Her eyes sparkle.* "You\'re here! I\'ve been dying to show you — the autumn colours this year are extraordinary. I\'ve filled half a sketchbook already."',
+          winter:
+            '*She pulls her scarf tighter and smiles warmly.* "I\'m so glad you came! It\'s a bit chilly, but the frost patterns on the mushrooms are gorgeous today."',
+        },
+        weatherText: {
+          rain: '*She\'s sheltering under a large mushroom cap, and waves you over.* "Come and sit with me! The rain sounds so lovely from under here."',
+          snow: '*She brushes snow off a log and gestures for you to sit.* "I was hoping you\'d visit! The snow makes everything so peaceful."',
+          fog: '*She appears through the mist with a warm smile.* "There you are! I always feel like we\'re in our own little world when it\'s foggy like this."',
+        },
+        responses: [
+          { text: 'I\'d love to see them!', nextId: 'sketchbook' },
+          { text: 'How have you been?', nextId: 'good_friend_chat' },
+          { text: 'Tell me about mushrooms.', nextId: 'about_mushrooms' },
+          {
+            text: 'Could you teach me to paint?',
+            nextId: 'offer_easel',
+            hiddenIfHasEasel: true,
+          },
+        ],
+      },
+      // Stranger/Acquaintance greeting - used before reaching Good Friends
       {
         id: 'greeting',
         text: '*A young woman with paint-stained fingers looks up from her sketchbook.* "Oh! Hello there. Sorry, I was just sketching that patch of light through the trees. It changes so quickly, you have to capture it while you can."',
@@ -165,6 +197,90 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         id: 'loneliness',
         text: '*She looks at you thoughtfully.* "I won\'t pretend the solitude isn\'t hard sometimes. There are days when I wish I had someone to share a cup of tea with, someone who appreciates the little things." *She smiles warmly.* "That\'s why I value friends like you. You understand."',
         requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'I\'m glad we\'re friends too.', nextId: 'one_good_friend' },
+          { text: 'You\'re never alone with me around.' },
+        ],
+      },
+      // Good Friends hub node - deeper personal conversation topics
+      {
+        id: 'good_friend_chat',
+        text: '"Hi, there! I was hoping to see you. Would you keep me company for a bit? I love living in the forest, but sometimes I get a bit lonely."',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'Of course! I\'ll stay a while.', nextId: 'best_of_both_worlds' },
+          { text: 'Do you ever get lonely out here?', nextId: 'keep_company' },
+          { text: 'What do you miss about the city?', nextId: 'cinema' },
+          { text: 'How\'s your family?', nextId: 'family_visit' },
+        ],
+      },
+      {
+        id: 'sketchbook',
+        text: '*She flips through pages of delicate watercolours — mushrooms, trees, and tiny fairy portraits.* "I\'ve been experimenting with new techniques. What do you think?"',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'They\'re beautiful!', nextId: 'comfortable_silence' },
+          { text: 'I love the fairy ones.' },
+        ],
+      },
+      {
+        id: 'keep_company',
+        text: '"When I\'m in a crowd, I often get overwhelmed. So, on the whole, it\'s easier to live in the forest. I love it here. Mind you, it can get a bit lonely." *She smiles.* "I\'m so glad that you\'re my friend! That way, I get the best of both worlds."',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'That makes me happy too.', nextId: 'one_good_friend' },
+          { text: 'Don\'t you miss having neighbours?', nextId: 'loneliness' },
+        ],
+      },
+      {
+        id: 'best_of_both_worlds',
+        text: '"I think it\'s important to have people who care for you. I don\'t need a lot of friends — just one good one, really." *She looks at you warmly.*',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'I feel the same way.', nextId: 'comfortable_silence' },
+          { text: 'You\'re a wonderful friend, Mushra.' },
+        ],
+      },
+      {
+        id: 'one_good_friend',
+        text: '"I don\'t want to hurt people. I know they think I\'m strange, but sometimes, I just don\'t feel like talking much. I like just hanging out in silence." *She pauses.* "Like this. This is nice."',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'I like the quiet too.', nextId: 'being_herself' },
+          { text: 'You\'re not strange at all.' },
+        ],
+      },
+      {
+        id: 'family_visit',
+        text: '"The last time I saw my family, they were a bit much. Sometimes, they are a too intense. I am the oldest, and all my young cousins want me to play with them." *She laughs quietly.* "This one time, I actually hid in the attic."',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'That sounds exhausting.', nextId: 'comfortable_silence' },
+          { text: 'Do you see them often?' },
+        ],
+      },
+      {
+        id: 'comfortable_silence',
+        text: '"I used to get so exhausted trying to pretend I was like everyone else. Now I\'m just me." *She shrugs.* "If they think I\'m weird, that\'s up to them."',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'I think you\'re brilliant.', nextId: 'being_herself' },
+          { text: 'Being yourself is the bravest thing.' },
+        ],
+      },
+      {
+        id: 'being_herself',
+        text: '*She smiles quietly.* "Thank you for understanding. Most people don\'t. But you... you just let me be me. That means more than you know."',
+        requiredFriendshipTier: 'good_friend',
+      },
+      {
+        id: 'cinema',
+        text: '"One thing I miss about living in a city is that I don\'t get to go to the cinema. I love films — don\'t you? My favourite films are about friendship and family — and fairies." *Her eyes light up.* "Oh, and I wish there were more films about mushrooms."',
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'Films about mushrooms?', nextId: 'city_life' },
+          { text: 'That would be amazing!' },
+        ],
       },
       {
         id: 'offer_easel',
