@@ -15,6 +15,7 @@ import { GameTime, TimeManager } from './utils/TimeManager';
 import { shouldDecay } from './utils/itemDecayManager';
 import { STAMINA, WATERING_CAN } from './constants';
 import { eventBus, GameEvent } from './utils/EventBus';
+import { eventChainManager } from './utils/EventChainManager';
 
 export interface CharacterCustomization {
   characterId: string; // Maps to folder name in /public/assets/ (e.g., 'character1', 'character2')
@@ -1811,13 +1812,32 @@ class GameStateManager {
   }
 
   // === Quest/Storyline Methods ===
+  //
+  // These methods delegate to EventChainManager for chains defined in YAML,
+  // falling back to legacy localStorage quest storage for non-chain quests.
+  // This preserves backward compatibility with NPC dialogue trees that use
+  // requiredQuest, requiredQuestStage, hiddenIfQuestStarted, etc.
+
+  /** Access the event chain manager singleton */
+  private getChainManager() {
+    return eventChainManager;
+  }
 
   /**
-   * Start a quest
-   * @param questId Unique quest identifier
-   * @param initialData Optional initial quest data
+   * Start a quest (delegates to EventChainManager if chain exists)
    */
   startQuest(questId: string, initialData: Record<string, any> = {}): void {
+    const chainMgr = this.getChainManager();
+
+    // If this is a YAML event chain, start it via EventChainManager
+    if (chainMgr.hasChain(questId)) {
+      if (!chainMgr.isChainStarted(questId)) {
+        chainMgr.startChain(questId, initialData);
+      }
+      return;
+    }
+
+    // Legacy fallback
     if (!this.state.quests) {
       this.state.quests = {};
     }
@@ -1836,9 +1856,27 @@ class GameStateManager {
   }
 
   /**
-   * Complete a quest
+   * Complete a quest (delegates to EventChainManager if chain exists)
    */
   completeQuest(questId: string): void {
+    const chainMgr = this.getChainManager();
+
+    if (chainMgr.hasChain(questId)) {
+      // Chains complete via advanceToStage to an end stage
+      // This is a compatibility fallback for code that calls completeQuest directly
+      const progress = chainMgr.getProgress(questId);
+      if (progress && !progress.completed) {
+        // Find an end stage and advance to it
+        const chain = chainMgr.getChain(questId);
+        const endStage = chain?.definition.stages.find((s) => s.end);
+        if (endStage) {
+          chainMgr.advanceToStage(questId, endStage.id);
+        }
+      }
+      return;
+    }
+
+    // Legacy fallback
     if (!this.state.quests) {
       this.state.quests = {};
     }
@@ -1852,9 +1890,24 @@ class GameStateManager {
   }
 
   /**
-   * Set quest stage
+   * Set quest stage (delegates to EventChainManager if chain exists)
    */
   setQuestStage(questId: string, stage: number): void {
+    const chainMgr = this.getChainManager();
+
+    if (chainMgr.hasChain(questId)) {
+      // Find the stage with matching stageNumber and advance to it
+      const chain = chainMgr.getChain(questId);
+      if (chain) {
+        const targetStage = chain.definition.stages.find((s) => s.stageNumber === stage);
+        if (targetStage) {
+          chainMgr.advanceToStage(questId, targetStage.id);
+        }
+      }
+      return;
+    }
+
+    // Legacy fallback
     if (!this.state.quests) {
       this.state.quests = {};
     }
@@ -1869,9 +1922,16 @@ class GameStateManager {
   }
 
   /**
-   * Get quest stage
+   * Get quest stage (delegates to EventChainManager if chain exists)
    */
   getQuestStage(questId: string): number {
+    const chainMgr = this.getChainManager();
+
+    if (chainMgr.hasChain(questId)) {
+      return chainMgr.getStageNumber(questId);
+    }
+
+    // Legacy fallback
     if (!this.state.quests || !this.state.quests[questId]) {
       return 0;
     }
@@ -1879,23 +1939,43 @@ class GameStateManager {
   }
 
   /**
-   * Check if quest is started
+   * Check if quest is started (delegates to EventChainManager if chain exists)
    */
   isQuestStarted(questId: string): boolean {
+    const chainMgr = this.getChainManager();
+
+    if (chainMgr.hasChain(questId)) {
+      return chainMgr.isChainStarted(questId);
+    }
+
     return this.state.quests?.[questId]?.started ?? false;
   }
 
   /**
-   * Check if quest is completed
+   * Check if quest is completed (delegates to EventChainManager if chain exists)
    */
   isQuestCompleted(questId: string): boolean {
+    const chainMgr = this.getChainManager();
+
+    if (chainMgr.hasChain(questId)) {
+      return chainMgr.isChainCompleted(questId);
+    }
+
     return this.state.quests?.[questId]?.completed ?? false;
   }
 
   /**
-   * Set quest data
+   * Set quest data (delegates to EventChainManager metadata if chain exists)
    */
   setQuestData(questId: string, key: string, value: any): void {
+    const chainMgr = this.getChainManager();
+
+    if (chainMgr.hasChain(questId)) {
+      chainMgr.setMetadata(questId, key, value);
+      return;
+    }
+
+    // Legacy fallback
     if (!this.state.quests) {
       this.state.quests = {};
     }
@@ -1908,9 +1988,15 @@ class GameStateManager {
   }
 
   /**
-   * Get quest data
+   * Get quest data (delegates to EventChainManager metadata if chain exists)
    */
   getQuestData(questId: string, key: string): any {
+    const chainMgr = this.getChainManager();
+
+    if (chainMgr.hasChain(questId)) {
+      return chainMgr.getMetadata(questId, key);
+    }
+
     return this.state.quests?.[questId]?.data?.[key];
   }
 

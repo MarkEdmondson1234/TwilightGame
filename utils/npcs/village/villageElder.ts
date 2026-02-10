@@ -7,8 +7,8 @@
 import { NPC, Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
-import { GARDENING_QUEST_ID, GARDENING_QUEST_STAGES } from '../../../data/quests/gardeningQuest';
-import { FAIRY_BLUEBELLS_QUEST_ID } from '../../../data/quests/fairyBluebellsQuest';
+import { GARDENING_QUEST_ID, GARDENING_QUEST_STAGES } from '../../../data/questHandlers/gardeningQuestHandler';
+import { FAIRY_BLUEBELLS_QUEST_ID } from '../../../data/questHandlers/fairyBluebellsHandler';
 
 export function createVillageElderNPC(
   id: string,

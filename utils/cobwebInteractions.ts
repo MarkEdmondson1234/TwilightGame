@@ -15,7 +15,7 @@ import {
   markCobwebCleaned,
   isAltheaChoresActive,
   QUEST_ID,
-} from '../data/quests/altheaChores';
+} from '../data/questHandlers/altheaChoresHandler';
 import { gameState } from '../GameState';
 
 /**

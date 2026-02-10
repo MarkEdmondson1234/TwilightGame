@@ -1,7 +1,7 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND } from '../../zIndex';
-import { QUEST_ID as ALTHEA_CHORES_QUEST } from '../../data/quests/altheaChores';
+import { QUEST_ID as ALTHEA_CHORES_QUEST } from '../../data/questHandlers/altheaChoresHandler';
 
 /**
  * Cottage Interior - Background Image Interior

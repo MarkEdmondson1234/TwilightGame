@@ -5,7 +5,7 @@ import { friendshipManager } from './FriendshipManager';
 import { npcManager } from '../NPCManager';
 import { cookingManager } from './CookingManager';
 import { DEBUG } from '../constants';
-import { startFairyQueenQuest } from '../data/quests/fairyQueenQuest';
+import { startFairyQueenQuest } from '../data/questHandlers/fairyQueenHandler';
 import {
   setQuestOffered,
   startGardeningQuest,
@@ -15,15 +15,15 @@ import {
   isGardeningQuestActive,
   getCurrentSeasonTask,
   markSeasonCompleted,
-} from '../data/quests/gardeningQuest';
-import { startFairyBluebellsQuest } from '../data/quests/fairyBluebellsQuest';
+} from '../data/questHandlers/gardeningQuestHandler';
+import { startFairyBluebellsQuest } from '../data/questHandlers/fairyBluebellsHandler';
 import {
   startWitchGardenQuest,
   startPickledOnionsPhase,
   getGardenCropsGrown,
   getWitchGardenStage,
   WITCH_GARDEN_STAGES,
-} from '../data/quests/witchGardenQuest';
+} from '../data/questHandlers/witchGardenHandler';
 
 /**
  * Handle dialogue node changes and trigger associated actions

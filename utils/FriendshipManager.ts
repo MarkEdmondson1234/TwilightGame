@@ -25,25 +25,25 @@ import { inventoryManager } from './inventoryManager';
 import { getItem, ItemCategory } from '../data/items';
 import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 import { getGiftReaction, GiftReaction } from '../data/giftReactions';
-import { markPotionReceived as markFairyQuestPotionReceived } from '../data/quests/fairyQueenQuest';
+import { markPotionReceived as markFairyQuestPotionReceived } from '../data/questHandlers/fairyQueenHandler';
 import {
   isGardeningQuestActive,
   getCurrentSeasonTask,
   getAvailableSeasonTask,
   markSeasonCompleted,
-} from '../data/quests/gardeningQuest';
+} from '../data/questHandlers/gardeningQuestHandler';
 import {
   isFairyBluebellsActive,
   getQuestItemType,
   markItemDelivered,
   checkFairyBluebellsCompletion,
   QUEST_REWARD as FAIRY_BLUEBELLS_REWARD,
-} from '../data/quests/fairyBluebellsQuest';
+} from '../data/questHandlers/fairyBluebellsHandler';
 import {
   getWitchGardenStage,
   WITCH_GARDEN_STAGES,
   deliverPickledOnions,
-} from '../data/quests/witchGardenQuest';
+} from '../data/questHandlers/witchGardenHandler';
 import { magicManager } from './MagicManager';
 import { decorationManager } from './DecorationManager';
 import { DEBUG } from '../constants';

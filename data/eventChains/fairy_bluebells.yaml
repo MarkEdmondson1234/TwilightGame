@@ -1,0 +1,48 @@
+# Fairy Bluebells Quest - Collect items for Elias
+#
+# Triggered when the player reaches Good Friends status with Elias
+# AND has completed or started the gardening quest.
+#
+# Elias is too scared to enter the forest, but he wants to:
+# 1. Give Althea a bouquet of Shrinking Violet (her favourite)
+# 2. Gift the bear some hazelnuts and blueberries
+#
+# Item delivery tracking is handled by the TypeScript handler in
+# data/questHandlers/fairyBluebellsHandler.ts
+
+id: fairy_bluebells
+title: Fairy Bluebells
+description: Collect a Shrinking Violet, hazelnut, and blueberry for Elias to give as gifts.
+type: community
+
+trigger:
+  type: manual  # Started via Elias's dialogue when Good Friends
+
+stages:
+  - id: active
+    stageNumber: 1
+    text: >
+      Elias wants you to collect three items from the forest:
+      a Shrinking Violet for Althea, and a hazelnut and blueberry for the bear.
+    dialogue:
+      village_elder:
+        text: "Have you found those items yet? I do hope Althea likes the flowers."
+        expression: thinky
+
+  - id: complete
+    stageNumber: 2
+    text: >
+      All items delivered! Elias is overjoyed and gives you a very
+      special reward - a fairy bluebell seed.
+    rewards:
+      - item: seed_fairy_bluebell
+        quantity: 1
+    event:
+      title: Fairy bluebell seed earned
+      description: collected forest gifts for Elias and received a legendary fairy bluebell seed
+      contributor: A generous forager
+    dialogue:
+      village_elder:
+        text: "Thank you! Here's something special - a fairy bluebell seed. Very rare indeed!"
+        expression: smile
+    end: true

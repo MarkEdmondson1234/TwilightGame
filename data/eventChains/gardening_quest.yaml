@@ -1,0 +1,54 @@
+# Gardening Quest - Help Elias tend the communal garden
+#
+# The village elder asks the player to help with seasonal gardening tasks:
+# - Spring: Plant spring seeds (tomato, pea, sunflower), bring back a crop
+# - Summer: Plant summer seeds (carrot, corn, chili), bring back a crop
+# - Autumn: Plant onion sets, bring back honey from the bear
+# - Winter: Wait for spring
+#
+# Seasonal logic, seed distribution, and crop delivery are handled by
+# the TypeScript handler in data/questHandlers/gardeningQuestHandler.ts
+
+id: gardening_quest
+title: Help Elias with the Garden
+description: Assist the village elder with seasonal gardening tasks across spring, summer, and autumn.
+type: community
+
+trigger:
+  type: manual  # Offered/started via Elias's dialogue tree
+
+stages:
+  - id: offered
+    stageNumber: 1
+    text: >
+      Elias has offered to teach you about the communal garden, but
+      you declined for now. You can always come back and accept later.
+    dialogue:
+      village_elder:
+        text: "Changed your mind about helping with the garden? The offer still stands!"
+        expression: smile
+
+  - id: active
+    stageNumber: 2
+    text: >
+      Help Elias with seasonal gardening tasks. Each season has
+      different seeds to plant and items to deliver back.
+    dialogue:
+      village_elder:
+        text: "How's the garden coming along? Remember, each season has its own needs!"
+        expression: thinky
+
+  - id: complete
+    stageNumber: 3
+    text: >
+      All seasonal tasks completed! Elias is grateful for your help
+      tending the communal garden through the seasons.
+    event:
+      title: Village garden thrives
+      description: helped tend the village garden through every season
+      contributor: A dedicated gardener
+    dialogue:
+      village_elder:
+        text: "You've been a tremendous help through all the seasons. Thank you!"
+        expression: smile
+    end: true

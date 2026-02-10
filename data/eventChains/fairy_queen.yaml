@@ -1,0 +1,62 @@
+# Fairy Queen Quest - Visit the Fairy Queen in the ancient oak
+#
+# Players befriend Morgan and/or Stella by growing fairy bluebells
+# and talking to the fairies at night. When reaching Good Friends
+# status, they receive the Fairy Form Potion and can visit the
+# Fairy Queen inside the Giant Fairy Oak.
+#
+# Fairy meeting, potion management, and oak visit tracking are
+# handled by the TypeScript handler in data/questHandlers/fairyQueenHandler.ts
+
+id: fairy_queen
+title: Visit the Fairy Queen
+description: Befriend the fairies and earn the privilege of visiting the Fairy Queen in the ancient oak.
+type: discovery
+
+trigger:
+  type: manual  # Started when first meeting Morgan or Stella
+
+stages:
+  - id: met_fairy
+    stageNumber: 1
+    text: >
+      You've met a fairy attracted to your fairy bluebells!
+      Build your friendship to learn their secrets.
+    dialogue:
+      village_elder:
+        text: "Fairies, you say? My grandmother used to tell stories about them. Be kind to them!"
+        expression: thinky
+
+  - id: received_potion
+    stageNumber: 2
+    text: >
+      Your fairy friend trusts you enough to share a secret -
+      the Fairy Form Potion! Use it to visit the Fairy Queen.
+    rewards:
+      - item: potion_fairy_form
+        quantity: 1
+    event:
+      title: Fairy Form Potion received
+      description: earned the trust of a fairy and received the magical Fairy Form Potion
+      contributor: A true friend of fairies
+
+  - id: visited_queen
+    stageNumber: 3
+    text: >
+      You've visited the Fairy Queen inside the ancient oak!
+      A magical and wondrous experience.
+    event:
+      title: Audience with the Fairy Queen
+      description: visited the Fairy Queen inside the Giant Fairy Oak
+      contributor: An honorary fairy
+
+  - id: complete
+    stageNumber: 4
+    text: >
+      Quest complete! You've experienced the magic of the fairy realm
+      and earned the title of Honorary Fairy.
+    event:
+      title: Honorary Fairy
+      description: completed the fairy quest and was named an honorary fairy
+      contributor: A fairy friend
+    end: true

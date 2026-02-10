@@ -1,0 +1,69 @@
+# Witch Garden Quest - Part 2 of The Witch's Apprentice questline
+#
+# The witch (Juniper) asks the player to grow at least 3 different
+# crop types in her kitchen garden to prove their dedication before
+# accepting them as an apprentice.
+#
+# After the garden is complete, she teaches the pickled onions recipe
+# and asks the player to make a batch - basic chemistry before potions.
+#
+# Harvest tracking is handled by the TypeScript handler in
+# data/questHandlers/witchGardenHandler.ts
+
+id: witch_garden
+title: "The Witch's Garden"
+description: Grow 3 different crops in the witch's garden to prove dedication, then make pickled onions.
+type: achievement
+
+trigger:
+  type: manual  # Started via witch's dialogue tree
+
+stages:
+  - id: active
+    stageNumber: 1
+    text: >
+      Grow at least 3 different crop types in the witch's garden
+      on the witch_hut map. The witch wants to see variety.
+    dialogue:
+      witch:
+        text: "How's the garden coming along? I'll know you're serious when I see variety growing."
+        expression: thinky
+
+  - id: garden_complete
+    stageNumber: 2
+    text: >
+      The garden blooms with diversity! The witch is impressed by your
+      dedication and offers to teach you basic chemistry.
+    event:
+      title: Witch's garden flourishes
+      description: grew three different crops in the witch's garden
+      contributor: An aspiring apprentice
+    dialogue:
+      witch:
+        text: "Wonderful! You've proven your dedication. Now, let's move on to basic chemistry..."
+        expression: smile
+
+  - id: pickled_onions
+    stageNumber: 3
+    text: >
+      The witch has taught you the pickled onions recipe. Cook a batch
+      and bring it back to prove you can follow instructions precisely.
+    dialogue:
+      witch:
+        text: "Have you made those pickled onions yet? Chemistry before magic, my dear."
+        expression: thinky
+
+  - id: complete
+    stageNumber: 4
+    text: >
+      Quest complete! The witch accepts you as her apprentice.
+      A new chapter of magical learning begins.
+    event:
+      title: Witch takes an apprentice
+      description: was accepted as the witch's apprentice after proving their dedication
+      contributor: A new apprentice
+    dialogue:
+      witch:
+        text: "Excellent work! You're ready to begin learning real magic."
+        expression: smile
+    end: true

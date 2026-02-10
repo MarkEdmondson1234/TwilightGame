@@ -49,6 +49,8 @@ export interface ChainTrigger {
 export interface ChainStage {
   id: string;
   text: string;
+  /** Explicit numeric stage number for backward compatibility with dialogue trees */
+  stageNumber?: number;
   /** Optional global event published when entering this stage */
   event?: ChainEvent;
   /** Optional NPC dialogue injected during this stage */
@@ -129,6 +131,8 @@ export interface EventChainProgress {
   stageEnteredDay: number;
   choicesMade: Record<string, string>;
   completed: boolean;
+  /** Quest-specific data stored by TypeScript handlers (cobwebs cleaned, crops grown, etc.) */
+  metadata?: Record<string, unknown>;
 }
 
 /** Parsed and validated chain ready for use */

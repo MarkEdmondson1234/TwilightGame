@@ -209,8 +209,8 @@ describe('Example Events', () => {
 describe('Quest System - Display Names', () => {
   it('all quest IDs should map to display names in GlobalEventManager', async () => {
     // Import the quest IDs
-    const gardeningQuest = await import('../data/quests/gardeningQuest');
-    const witchGardenQuest = await import('../data/quests/witchGardenQuest');
+    const gardeningQuest = await import('../data/questHandlers/gardeningQuestHandler');
+    const witchGardenQuest = await import('../data/questHandlers/witchGardenHandler');
 
     // These should be defined (verifies quest files export IDs)
     expect(gardeningQuest.GARDENING_QUEST_ID).toBeDefined();

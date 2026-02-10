@@ -3,7 +3,14 @@
  *
  * Loads YAML event chains, tracks player progress through them,
  * publishes global events at each stage, and injects dialogue into NPCs.
- * Chain progress is saved to GameState and synced via Firebase.
+ * Chain progress is saved to localStorage and synced via Firebase.
+ *
+ * Extended features:
+ * - TypeScript handler execution on stage entry
+ * - Reward distribution (items added to inventory)
+ * - Requirement checking on choices (quest state, items, friendship)
+ * - Metadata storage for quest-specific data
+ * - Backward-compatible quest events (QUEST_STARTED, QUEST_COMPLETED, etc.)
  */
 
 import type {
@@ -13,11 +20,15 @@ import type {
   ChainStage,
   ChainChoice,
   ChainDialogue,
+  ChainRequirement,
 } from './eventChainTypes';
 import { loadAllEventChains } from './eventChainLoader';
 import { globalEventManager } from './GlobalEventManager';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager, Season } from './TimeManager';
+import { handlerRegistry } from './EventChainHandlers';
+import { inventoryManager } from './inventoryManager';
+import { characterData } from './CharacterData';
 
 // ============================================
 // Constants
@@ -89,10 +100,15 @@ class EventChainManager {
     return [...this.progress.values()].filter((p) => p.completed);
   }
 
-  /** Check if a chain is active */
+  /** Check if a chain is active (started but not completed) */
   isChainActive(chainId: string): boolean {
     const p = this.progress.get(chainId);
     return !!p && !p.completed;
+  }
+
+  /** Check if a chain has been started (active or completed) */
+  isChainStarted(chainId: string): boolean {
+    return this.progress.has(chainId);
   }
 
   /** Check if a chain is completed */
@@ -100,12 +116,61 @@ class EventChainManager {
     return this.progress.get(chainId)?.completed === true;
   }
 
+  /** Check if a chain ID is registered (has a YAML definition) */
+  hasChain(chainId: string): boolean {
+    return this.chainMap.has(chainId);
+  }
+
+  // ============================================
+  // Metadata (Quest-Specific Data)
+  // ============================================
+
+  /** Set a metadata value on a chain's progress */
+  setMetadata(chainId: string, key: string, value: unknown): void {
+    const progress = this.progress.get(chainId);
+    if (!progress) return;
+
+    if (!progress.metadata) {
+      progress.metadata = {};
+    }
+    progress.metadata[key] = value;
+    this.saveProgress();
+
+    // Emit compatibility event for old quest data subscribers
+    eventBus.emit(GameEvent.QUEST_DATA_CHANGED, { questId: chainId, key, value });
+  }
+
+  /** Get a metadata value from a chain's progress */
+  getMetadata(chainId: string, key: string): unknown {
+    return this.progress.get(chainId)?.metadata?.[key];
+  }
+
+  /** Get the numeric stage number for the current stage (for backward compatibility) */
+  getStageNumber(chainId: string): number {
+    const progress = this.progress.get(chainId);
+    if (!progress) return 0;
+
+    const chain = this.chainMap.get(chainId);
+    if (!chain) return 0;
+
+    const stage = chain.stageMap.get(progress.currentStageId);
+    if (!stage) return 0;
+
+    // Use explicit stageNumber if defined, otherwise use 1-indexed position
+    if (stage.stageNumber !== undefined) {
+      return stage.stageNumber;
+    }
+
+    const index = chain.definition.stages.findIndex((s) => s.id === progress.currentStageId);
+    return index >= 0 ? index + 1 : 0;
+  }
+
   // ============================================
   // Chain Lifecycle
   // ============================================
 
   /** Start a new event chain */
-  async startChain(chainId: string): Promise<boolean> {
+  async startChain(chainId: string, initialMetadata?: Record<string, unknown>): Promise<boolean> {
     const chain = this.chainMap.get(chainId);
     if (!chain) {
       console.warn(`${LOG_PREFIX} Unknown chain: ${chainId}`);
@@ -132,6 +197,7 @@ class EventChainManager {
       stageEnteredDay: gameDay,
       choicesMade: {},
       completed: false,
+      metadata: initialMetadata,
     };
 
     this.progress.set(chainId, progress);
@@ -140,11 +206,28 @@ class EventChainManager {
     // Publish the first stage's global event
     await this.publishStageEvent(chain, firstStage);
 
-    // Emit EventBus notification
+    // Distribute rewards for the first stage
+    this.distributeRewards(chainId, firstStage);
+
+    // Execute registered handler for first stage
+    await handlerRegistry.execute(chainId, firstStage.id, { chainManager: this });
+
+    // Emit EventBus notifications
     eventBus.emit(GameEvent.EVENT_CHAIN_UPDATED, {
       chainId,
       stageId: firstStage.id,
       action: 'started',
+    });
+
+    // Emit backward-compatible quest event
+    eventBus.emit(GameEvent.QUEST_STARTED, { questId: chainId });
+
+    // Emit stage change event with numeric stage
+    const stageNum = this.getStageNumber(chainId);
+    eventBus.emit(GameEvent.QUEST_STAGE_CHANGED, {
+      questId: chainId,
+      stage: stageNum,
+      previousStage: 0,
     });
 
     // If the first stage has choices, prompt the player
@@ -166,7 +249,9 @@ class EventChainManager {
       return false;
     }
 
-    const choice = currentStage.choices[choiceIndex];
+    // Filter by requirements first, then index into available choices
+    const availableChoices = this.filterChoices(currentStage.choices);
+    const choice = availableChoices[choiceIndex];
     if (!choice) {
       console.warn(`${LOG_PREFIX} Invalid choice index: ${choiceIndex}`);
       return false;
@@ -201,11 +286,18 @@ class EventChainManager {
       return false;
     }
 
+    const previousStageNum = this.getStageNumber(chainId);
     progress.currentStageId = stageId;
     progress.stageEnteredDay = this.getCurrentGameDay();
 
     // Publish the stage's global event
     await this.publishStageEvent(chain, nextStage);
+
+    // Distribute rewards for the new stage
+    this.distributeRewards(chainId, nextStage);
+
+    // Execute registered handler for this stage
+    await handlerRegistry.execute(chainId, stageId, { chainManager: this });
 
     // Check if this stage ends the chain
     if (nextStage.end) {
@@ -215,6 +307,10 @@ class EventChainManager {
         stageId,
         action: 'completed',
       });
+
+      // Emit backward-compatible quest completed event
+      eventBus.emit(GameEvent.QUEST_COMPLETED, { questId: chainId });
+
       console.log(`${LOG_PREFIX} Chain completed: ${chain.definition.title}`);
     } else {
       eventBus.emit(GameEvent.EVENT_CHAIN_UPDATED, {
@@ -226,6 +322,14 @@ class EventChainManager {
       // If the new stage has choices, prompt the player
       this.emitChoiceIfNeeded(chain, nextStage);
     }
+
+    // Emit backward-compatible quest stage change event
+    const newStageNum = this.getStageNumber(chainId);
+    eventBus.emit(GameEvent.QUEST_STAGE_CHANGED, {
+      questId: chainId,
+      stage: newStageNum,
+      previousStage: previousStageNum,
+    });
 
     this.saveProgress();
     return true;
@@ -277,10 +381,10 @@ class EventChainManager {
   getChainDialogue(npcId: string): ChainDialogue[] {
     const dialogues: ChainDialogue[] = [];
 
-    for (const [chainId, progress] of this.progress) {
+    for (const [, progress] of this.progress) {
       if (progress.completed) continue;
 
-      const chain = this.chainMap.get(chainId);
+      const chain = this.chainMap.get(progress.chainId);
       if (!chain) continue;
 
       const stage = chain.stageMap.get(progress.currentStageId);
@@ -295,14 +399,16 @@ class EventChainManager {
     return dialogues;
   }
 
-  /** Get available choices for a chain at its current stage */
+  /** Get available choices for a chain at its current stage (filtered by requirements) */
   getAvailableChoices(chainId: string): ChainChoice[] {
     const chain = this.chainMap.get(chainId);
     const progress = this.progress.get(chainId);
     if (!chain || !progress || progress.completed) return [];
 
     const stage = chain.stageMap.get(progress.currentStageId);
-    return stage?.choices || [];
+    if (!stage?.choices) return [];
+
+    return this.filterChoices(stage.choices);
   }
 
   /** Get rewards for the current stage (if any) */
@@ -373,10 +479,66 @@ class EventChainManager {
   }
 
   // ============================================
+  // Reward Distribution
+  // ============================================
+
+  /** Distribute rewards for a stage (add items to inventory) */
+  private distributeRewards(chainId: string, stage: ChainStage): void {
+    if (!stage.rewards || stage.rewards.length === 0) return;
+
+    for (const reward of stage.rewards) {
+      inventoryManager.addItem(reward.item, reward.quantity);
+      console.log(`${LOG_PREFIX} Rewarded ${reward.quantity}x ${reward.item} (chain: ${chainId})`);
+    }
+
+    // Save inventory after adding rewards
+    const invData = inventoryManager.getInventoryData();
+    characterData.saveInventory(invData.items, invData.tools);
+
+    eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add' });
+  }
+
+  // ============================================
+  // Requirement Checking
+  // ============================================
+
+  /** Filter choices by their requirements */
+  private filterChoices(choices: ChainChoice[]): ChainChoice[] {
+    return choices.filter((choice) => this.meetsRequirements(choice.requires));
+  }
+
+  /** Check if a set of requirements is met */
+  private meetsRequirements(requires?: ChainRequirement): boolean {
+    if (!requires) return true;
+
+    // Check if a quest/chain is started
+    if (requires.quest) {
+      if (!this.isChainStarted(requires.quest)) return false;
+    }
+
+    // Check if a quest/chain is completed
+    if (requires.questCompleted) {
+      if (!this.isChainCompleted(requires.questCompleted)) return false;
+    }
+
+    // Check if player has an item
+    if (requires.item) {
+      if (!inventoryManager.hasItem(requires.item)) return false;
+    }
+
+    // Friendship tier checking is deferred — requires importing FriendshipManager
+    // which would create circular dependencies. Friendship-gated choices should
+    // use the dialogue tree's built-in requiredFriendshipTier instead.
+
+    return true;
+  }
+
+  // ============================================
   // Persistence
   // ============================================
 
-  private saveProgress(): void {
+  /** Save all chain progress to localStorage */
+  saveProgress(): void {
     try {
       const data: Record<string, EventChainProgress> = {};
       for (const [id, p] of this.progress) {
@@ -414,11 +576,15 @@ class EventChainManager {
   private emitChoiceIfNeeded(chain: LoadedEventChain, stage: ChainStage): void {
     if (!stage.choices || stage.choices.length === 0) return;
 
+    // Filter choices by requirements before emitting
+    const available = this.filterChoices(stage.choices);
+    if (available.length === 0) return;
+
     eventBus.emit(GameEvent.EVENT_CHAIN_CHOICE_REQUIRED, {
       chainId: chain.definition.id,
       stageId: stage.id,
       stageText: stage.text,
-      choices: stage.choices.map((c) => ({ text: c.text, next: c.next })),
+      choices: available.map((c) => ({ text: c.text, next: c.next })),
     });
   }
 
@@ -456,3 +622,4 @@ class EventChainManager {
 // ============================================
 
 export const eventChainManager = new EventChainManager();
+export type { EventChainManager };

@@ -1,0 +1,44 @@
+# Althea's Chores - Part 1 of The Witch's Apprentice questline
+#
+# Before Althea will reveal the witch's location, the player must:
+# 1. Brew her a nice, hot cup of tea
+# 2. Make her some cookies (shop-bought won't do)
+# 3. Clean her house by removing all 5 spider webs
+#
+# Complex logic (cobweb mini-game, item delivery, feather duster)
+# is handled by the TypeScript handler in data/questHandlers/altheaChoresHandler.ts
+
+id: althea_chores
+title: "Althea's Chores"
+description: Help Althea with tea, cookies, and cleaning cobwebs before she reveals the witch's location.
+type: achievement
+
+trigger:
+  type: manual  # Started via Althea's dialogue tree
+
+stages:
+  - id: active
+    stageNumber: 1
+    text: >
+      Althea wants three things before she'll help: a cup of tea, some
+      homemade cookies, and all the cobwebs cleaned from her cottage.
+    dialogue:
+      althea:
+        text: "How are those chores coming along, dear? Don't forget the tea and cookies!"
+        expression: thinky
+      mum:
+        text: "Althea's got you helping out? That's very kind of you. She does love a nice cuppa."
+        expression: smile
+
+  - id: complete
+    stageNumber: 2
+    text: All chores done! Althea is delighted and ready to share her secret.
+    event:
+      title: "Althea's chores completed"
+      description: finished all of Althea's chores and earned her trust
+      contributor: A helpful neighbour
+    dialogue:
+      althea:
+        text: "You've been such a dear! Now then, about that witch I mentioned..."
+        expression: smile
+    end: true
