@@ -136,7 +136,12 @@ const App: React.FC = () => {
   const gameContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
-  const { zoom } = usePinchZoom();
+  // Background-image rooms (interiors) can only zoom in, not out
+  const zoomMinForMap = useMemo(() => {
+    const map = mapManager.getMap(currentMapId);
+    return map?.renderMode === 'background-image' ? 1.0 : 0.5;
+  }, [currentMapId]);
+  const { zoom, resetZoom } = usePinchZoom({ minZoom: zoomMinForMap });
 
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
@@ -244,6 +249,7 @@ const App: React.FC = () => {
       lastTransitionTime.current = Date.now();
       npcManager.setCurrentMap(mapId);
       fairyAttractionManager.reset();
+      resetZoom();
     },
     onShowToast: showToast,
     triggerVFX,
@@ -289,6 +295,9 @@ const App: React.FC = () => {
 
     // Reset fairy attraction manager when changing maps
     fairyAttractionManager.reset();
+
+    // Reset zoom on map transition (new map may have different zoom limits)
+    resetZoom();
   };
 
   // Farm update handler - no-op since EventBus handles this now
@@ -1129,7 +1138,7 @@ const App: React.FC = () => {
           height: currentMap?.renderMode === 'background-image' ? '100%' : mapHeight * TILE_SIZE,
           transform:
             currentMap?.renderMode === 'background-image'
-              ? 'none' // No camera transform for background-image rooms (image is fixed/centered)
+              ? `scale(${zoom})` // Zoom only (no camera scroll) for background-image rooms
               : `scale(${zoom}) translate(${-cameraX}px, ${-cameraY}px)`,
           transformOrigin: '0 0',
           pointerEvents: 'none', // Allow clicks to pass through to canvas

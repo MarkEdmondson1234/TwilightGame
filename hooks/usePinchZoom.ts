@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-/** Zoom limits */
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 2.0;
+/** Default zoom limits */
+const DEFAULT_MIN_ZOOM = 0.5;
+const DEFAULT_MAX_ZOOM = 2.0;
 const DEFAULT_ZOOM = 1.0;
 
 /** Mouse wheel zoom sensitivity (smaller = slower) */
@@ -14,12 +14,16 @@ const DOUBLE_TAP_MS = 300;
 interface UsePinchZoomConfig {
   /** Whether zoom is enabled */
   enabled?: boolean;
+  /** Minimum zoom level (default 0.5) */
+  minZoom?: number;
+  /** Maximum zoom level (default 2.0) */
+  maxZoom?: number;
 }
 
 interface UsePinchZoomResult {
-  /** Current zoom level (0.5–2.0, default 1.0) */
+  /** Current zoom level */
   zoom: number;
-  /** Reset zoom to default */
+  /** Reset zoom to 1.0 */
   resetZoom: () => void;
 }
 
@@ -27,8 +31,15 @@ interface UsePinchZoomResult {
  * Hook for pinch-to-zoom (touch) and mouse wheel zoom (desktop).
  * Double-tap resets zoom to 1.0.
  * Attaches listeners to window (game fills entire screen).
+ *
+ * Zoom limits can change dynamically (e.g. per-map).
+ * When limits tighten, the current zoom is clamped automatically.
  */
-export function usePinchZoom({ enabled = true }: UsePinchZoomConfig = {}): UsePinchZoomResult {
+export function usePinchZoom({
+  enabled = true,
+  minZoom = DEFAULT_MIN_ZOOM,
+  maxZoom = DEFAULT_MAX_ZOOM,
+}: UsePinchZoomConfig = {}): UsePinchZoomResult {
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
 
   // Track pinch state via refs (don't need re-renders)
@@ -38,17 +49,26 @@ export function usePinchZoom({ enabled = true }: UsePinchZoomConfig = {}): UsePi
   // Track double-tap
   const lastTapTime = useRef(0);
 
-  // Keep zoom ref in sync for use in touch handlers
+  // Keep current values in refs for event handlers
   const zoomRef = useRef(zoom);
   zoomRef.current = zoom;
+  const minZoomRef = useRef(minZoom);
+  minZoomRef.current = minZoom;
+  const maxZoomRef = useRef(maxZoom);
+  maxZoomRef.current = maxZoom;
 
   const resetZoom = useCallback(() => {
     setZoom(DEFAULT_ZOOM);
   }, []);
 
   const clampZoom = useCallback((value: number) => {
-    return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value));
+    return Math.min(maxZoomRef.current, Math.max(minZoomRef.current, value));
   }, []);
+
+  // Clamp zoom when limits change (e.g. entering a room that disallows zoom-out)
+  useEffect(() => {
+    setZoom((prev) => Math.min(maxZoom, Math.max(minZoom, prev)));
+  }, [minZoom, maxZoom]);
 
   // --- Touch: pinch-to-zoom + double-tap reset ---
   useEffect(() => {
