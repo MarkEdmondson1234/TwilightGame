@@ -286,6 +286,10 @@ export function useInteractionController(
           const barkIndex = Math.floor(Math.random() * 1) + 1; // Currently 1 bark, extensible
           audioManager.playSfx(`sfx_bark_0${barkIndex}`);
         }
+        // Play moo if interacting with the cow
+        if (npcId.toLowerCase().includes('cow')) {
+          audioManager.playSfx('sfx_bessie');
+        }
         setActiveNPC(npcId);
       },
       onGiveGift: (npcId: string) => {
