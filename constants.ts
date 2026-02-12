@@ -306,6 +306,27 @@ export const TILE_ANIMATIONS: import('./types').TileAnimation[] = [
     },
   },
 
+  // Bees buzzing around bee hives (spring & summer only)
+  // Note: Uses original GIF size (1000x1000), animation speed preserved as created
+  {
+    id: 'bees_hive',
+    image: animationAssets.bees,
+    tileType: TileType.BEE_HIVE,
+    offsetX: [0, 1, -1], // Random horizontal positions around hive
+    offsetY: [-1, -2, 0], // Random vertical positions (mostly above/around)
+    radius: 2, // Smaller radius than streams (3x3 hive vs 5x5 stream)
+    instances: 1,
+    flipHorizontal: true, // Randomly flip for variety
+    layer: 'foreground',
+    loop: true,
+    opacity: 1,
+    gifSize: 1000, // Original GIF dimensions (1000x1000 pixels)
+    scale: 0.25, // ~250px (3.9 tiles) - fits nicely around 3x3 hive
+    conditions: {
+      season: ['spring', 'summer'], // Active in warm seasons only
+    },
+  },
+
   // Future examples:
   // {
   //   id: 'chimney_smoke',

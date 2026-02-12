@@ -517,6 +517,7 @@ export const fairyAssets = {
 export const animationAssets = {
   cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.gif',
   dragonfly_stream: '/TwilightGame/assets/animations/dragonfly_stream.gif', // Use original size
+  bees: '/TwilightGame/assets/animations/bees.gif', // Use original size
   // Future animations:
   // rain: '/TwilightGame/assets-optimized/animations/rain.gif',
   // snow: '/TwilightGame/assets-optimized/animations/snow.gif',
