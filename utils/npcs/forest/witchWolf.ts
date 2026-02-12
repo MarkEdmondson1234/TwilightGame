@@ -124,13 +124,13 @@ export function createWitchWolfNPC(
       },
       {
         id: 'apprentice_interest',
-        text: '"Mmm, you say that now." *She smiles slightly.* "Tell you what - if you\'re serious about learning, prove yourself first. I need a proper kitchen garden. Grow me at least three different crops in those beds outside. Show me you can nurture living things. Then we\'ll talk about magic."',
+        text: '"Mmm, you say that now." *She smiles slightly.* "Tell you what - if you\'re serious about learning, prove yourself first. I need a proper kitchen garden — right here, in MY garden. Grow me at least three different crops in those beds outside my hut. Not your own garden back home — mine. Show me you can nurture living things. Then we\'ll talk about magic."',
         hiddenIfQuestStarted: 'witch_garden',
         seasonalText: {
           spring:
-            '"Spring is the perfect time to start a garden. Plant well, tend carefully, and show me what you can grow."',
+            '"Spring is the perfect time to start a garden. Use the beds right outside my hut — plant well, tend carefully, and show me what you can grow."',
           summer:
-            '"Summer growing is straightforward - water regularly, mind the weeds. If you can manage that, perhaps you have potential."',
+            '"Summer growing is straightforward - water my garden beds regularly, mind the weeds. If you can manage that, perhaps you have potential."',
           autumn:
             '"Autumn planting requires knowledge - what thrives in cooler weather? Show me you understand the seasons."',
           winter:
@@ -152,7 +152,7 @@ export function createWitchWolfNPC(
       },
       {
         id: 'apprentice_accepted',
-        text: '"Good! I look forward to seeing what you can grow. The garden beds are just outside — Shadow here will keep an eye on your progress." *The wolf huffs, as if amused.* "When you\'ve established your garden, come back and we\'ll begin your lessons."',
+        text: '"Good! I look forward to seeing what you can grow. The garden beds are just outside my hut — Shadow here will keep an eye on your progress." *The wolf huffs, as if amused.* "Remember, it must be MY garden, not yours. When you\'ve established it, come back and we\'ll begin your lessons."',
         hiddenIfQuestStarted: 'witch_garden',
       },
       {
@@ -171,7 +171,7 @@ export function createWitchWolfNPC(
       // --- Garden progress dialogue (visible while quest active, garden incomplete) ---
       {
         id: 'garden_progress_0',
-        text: '"You haven\'t started planting yet, dear. My garden has lovely soil — put it to good use! The beds are just outside, near the fairy ring." *She gestures towards the garden plots.* "Three different crops, remember. Show me some variety."',
+        text: '"You haven\'t started planting yet, dear. My kitchen garden has lovely soil — the beds right outside my hut, not your garden back home!" *She gestures towards the garden plots.* "Three different crops in MY garden, remember. Show me some variety."',
         requiredQuest: 'witch_garden',
         requiredQuestStage: 1,
         hiddenIfQuestCompleted: 'witch_garden',
@@ -182,7 +182,7 @@ export function createWitchWolfNPC(
       },
       {
         id: 'garden_progress_1',
-        text: '"I see you\'ve grown one crop in my garden. That\'s a fine start, but I need to see more variety." *She stirs her cauldron thoughtfully.* "Two more different types, and you\'ll have proven yourself."',
+        text: '"I see you\'ve grown one crop in my kitchen garden. That\'s a fine start, but I need to see more variety here." *She stirs her cauldron thoughtfully.* "Two more different types in my garden, and you\'ll have proven yourself."',
         requiredQuest: 'witch_garden',
         requiredQuestStage: 1,
         hiddenIfQuestCompleted: 'witch_garden',
@@ -193,7 +193,7 @@ export function createWitchWolfNPC(
       },
       {
         id: 'garden_progress_2',
-        text: '"Two different crops! You\'re nearly there." *The witch nods approvingly.* "Just one more type to prove your dedication. I can see you have a gift for nurturing things."',
+        text: '"Two different crops in my kitchen garden! You\'re nearly there." *The witch nods approvingly.* "Just one more type here and you\'ll have proven your dedication. I can see you have a gift for nurturing things."',
         requiredQuest: 'witch_garden',
         requiredQuestStage: 1,
         hiddenIfQuestCompleted: 'witch_garden',
@@ -209,7 +209,7 @@ export function createWitchWolfNPC(
       // --- Garden complete dialogue (visible when 3+ unique crops harvested) ---
       {
         id: 'garden_complete',
-        text: '*The witch examines the garden beds with genuine admiration.* "Three different crops, all grown by your own hand. Well done, truly." *She turns to you, a warm smile on her face.* "You\'ve shown patience, care, and dedication. Perhaps you do have what it takes to learn the old ways."',
+        text: '*The witch examines her kitchen garden beds with genuine admiration.* "Three different crops, all grown by your own hand in my garden. Well done, truly." *She turns to you, a warm smile on her face.* "You\'ve shown patience, care, and dedication. Perhaps you do have what it takes to learn the old ways."',
         requiredQuest: 'witch_garden',
         requiredQuestStage: 2,
         // Stage gating handled by dialogueHandlers redirect
