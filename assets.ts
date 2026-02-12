@@ -265,6 +265,10 @@ export const farmingAssets = {
   plant_onion_adult: '/TwilightGame/assets-optimized/farming/onion_adult.png',
   plant_pumpkin_young: '/TwilightGame/assets-optimized/farming/pumpkin_young.png',
   plant_pumpkin_adult: '/TwilightGame/assets-optimized/farming/pumpkin_adult.png',
+  plant_carrot_young: '/TwilightGame/assets-optimized/farming/carrot_young.png',
+  plant_carrot_adult: '/TwilightGame/assets-optimized/farming/carrot_adult.png',
+  plant_potato_young: '/TwilightGame/assets-optimized/farming/potato_young.png',
+  plant_potato_adult: '/TwilightGame/assets-optimized/farming/potato_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
   farm_fence: '/TwilightGame/assets-optimized/farming/farm_fence.png',
 };
