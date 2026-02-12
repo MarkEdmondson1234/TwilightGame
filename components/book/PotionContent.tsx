@@ -7,6 +7,7 @@ import {
 } from '../../data/potionRecipes';
 import { getItem } from '../../data/items';
 import { magicManager, BrewingResult } from '../../utils/MagicManager';
+import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { BookThemeConfig, bookStyles, getThemeStyles } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
@@ -95,6 +96,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
 
   // Handle brewing
   const handleBrew = useCallback((recipeId: string) => {
+    audioManager.playSfx('sfx_potion_making');
     const result = magicManager.brew(recipeId);
     setBrewingResult(result);
     setShowResult(true);

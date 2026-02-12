@@ -648,6 +648,10 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/magic/mixkit-magic-transition-sweep-presentation-2638.m4a',
     category: 'sfx',
   },
+  sfx_potion_making: {
+    url: '/TwilightGame/assets/audio/sfx/magic/potion_making.mp3',
+    category: 'sfx',
+  },
 
   // === Sound Effects - NPCs ===
   sfx_ducks_quack: {
