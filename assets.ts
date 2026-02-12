@@ -357,6 +357,7 @@ export const magicalAssets = {
   frost_flower: '/TwilightGame/assets-optimized/items/magical/forageable/frost_flower.png',
   ghost_lichen: '/TwilightGame/assets-optimized/items/magical/forageable/ghost_lichen.png',
   sakura_petal: '/TwilightGame/assets-optimized/items/magical/forageable/sakura_petals.png',
+  phoenix_ash: '/TwilightGame/assets-optimized/items/magical/shop/phoenix_ash.png',
 };
 
 // Potion assets - Brewed magical potions (results from brewing recipes)

@@ -1394,6 +1394,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 80,
     buyPrice: 200,
+    image: magicalAssets.phoenix_ash,
   },
 
   temporal_dust: {
