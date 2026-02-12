@@ -6,6 +6,7 @@ import { Z_HUD, zClass } from '../zIndex';
 import { getItem } from '../data/items';
 import { gameState } from '../GameState';
 import { WATER_CAN } from '../constants';
+import { resolveIcon, isImageIcon } from '../utils/iconMap';
 import AnalogClock from './AnalogClock';
 import SundialClock from './SundialClock';
 
@@ -96,11 +97,21 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
                 className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                 style={{ imageRendering: 'auto' }}
               />
-            ) : (
-              <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-2xl sm:text-3xl">
-                {selectedItemDef.icon || '📦'}
-              </span>
-            )}
+            ) : (() => {
+              const resolved = resolveIcon(selectedItemDef.icon || '📦');
+              return isImageIcon(resolved) ? (
+                <img
+                  src={resolved}
+                  alt={selectedItemDef.displayName}
+                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                  style={{ imageRendering: 'auto' }}
+                />
+              ) : (
+                <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-2xl sm:text-3xl">
+                  {resolved}
+                </span>
+              );
+            })()}
             <div className="flex flex-col">
               <span
                 className="text-xs sm:text-sm font-bold text-white truncate max-w-[80px]"

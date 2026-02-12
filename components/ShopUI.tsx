@@ -16,6 +16,7 @@ import { ShopItem } from '../data/shopInventory';
 import { getItem, ItemDefinition } from '../data/items';
 import { TimeManager } from '../utils/TimeManager';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
+import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 
 interface ShopUIProps {
   isOpen: boolean;
@@ -237,7 +238,11 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 className="max-w-full max-h-full object-contain pixelated"
               />
             ) : (
-              <span className="text-3xl">📦</span>
+              <img
+                src={FALLBACK_ITEM_ICON}
+                alt="Unknown item"
+                className="max-w-full max-h-full object-contain"
+              />
             )}
           </div>
 
@@ -303,7 +308,11 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 className="max-w-full max-h-full object-contain pixelated"
               />
             ) : (
-              <span className="text-3xl">📦</span>
+              <img
+                src={FALLBACK_ITEM_ICON}
+                alt="Unknown item"
+                className="max-w-full max-h-full object-contain"
+              />
             )}
           </div>
 

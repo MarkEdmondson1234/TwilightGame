@@ -17,6 +17,7 @@ import { NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import GameIcon from './GameIcon';
 import { Z_MODAL, zClass } from '../zIndex';
+import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 
 export interface GiftResult {
   success: boolean;
@@ -79,7 +80,7 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
         return {
           id: item.itemId,
           name: itemDef.displayName,
-          icon: itemDef.image || '📦',
+          icon: itemDef.image || FALLBACK_ITEM_ICON,
           quantity: item.quantity,
           category: itemDef.category,
           description: itemDef.description,

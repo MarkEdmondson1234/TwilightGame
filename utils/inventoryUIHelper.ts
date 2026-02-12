@@ -8,6 +8,7 @@ import { inventoryManager } from './inventoryManager';
 import { getItem } from '../data/items';
 import { decorationManager } from './DecorationManager';
 import { gameState } from '../GameState';
+import { FALLBACK_ITEM_ICON } from './iconMap';
 
 /**
  * Runtime sprite registry for dynamically registered items
@@ -37,10 +38,10 @@ function getItemIcon(itemId: string): string {
   // Use item definition as single source of truth
   const item = getItem(itemId);
   if (item) {
-    return item.image || item.icon || '📦';
+    return item.image || item.icon || FALLBACK_ITEM_ICON;
   }
 
-  return '📦';
+  return FALLBACK_ITEM_ICON;
 }
 
 /**

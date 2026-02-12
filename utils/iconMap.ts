@@ -16,6 +16,7 @@ const EMOJI_TO_ICON: Record<string, string> = {
   '✨': iconAssets.magic,
   '💬': iconAssets.speech_bubble,
   '💕': iconAssets.friendship,
+  '📦': iconAssets.brown_parcel,
 };
 
 /**
@@ -30,6 +31,9 @@ export function resolveIcon(icon: string): string {
  * Check if a string is an image URL (starts with / or http).
  * Used to determine whether to render as <img> or as text.
  */
+/** Fallback image for items missing a sprite */
+export const FALLBACK_ITEM_ICON = iconAssets.brown_parcel;
+
 export function isImageIcon(icon: string): boolean {
   return icon.startsWith('/') || icon.startsWith('http');
 }
