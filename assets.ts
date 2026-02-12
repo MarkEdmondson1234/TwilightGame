@@ -644,6 +644,10 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/transitions/door_opening.mp3',
     category: 'sfx',
   },
+  sfx_cash_register: {
+    url: '/TwilightGame/assets/audio/sfx/transitions/cash_register.mp3',
+    category: 'sfx',
+  },
 
   // === Sound Effects - Magic ===
   sfx_magic_transition: {

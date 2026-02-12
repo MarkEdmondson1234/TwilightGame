@@ -10,13 +10,14 @@
 
 import { Z_SHOP, Z_SHOP_CONFIRM, zClass } from '../zIndex';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { shopManager } from '../utils/ShopManager';
 import { ShopItem } from '../data/shopInventory';
 import { getItem, ItemDefinition } from '../data/items';
 import { TimeManager } from '../utils/TimeManager';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
+import { audioManager } from '../utils/AudioManager';
 
 interface ShopUIProps {
   isOpen: boolean;
@@ -51,6 +52,11 @@ const ShopUI: React.FC<ShopUIProps> = ({
   } | null>(null);
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  const handleClose = useCallback(() => {
+    audioManager.playSfx('sfx_cash_register');
+    onClose();
+  }, [onClose]);
+
   // Load shop inventory (filtered by season)
   useEffect(() => {
     if (isOpen) {
@@ -63,13 +69,13 @@ const ShopUI: React.FC<ShopUIProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
-        onClose();
+        handleClose();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleClose]);
 
   // Auto-hide feedback after 3 seconds
   useEffect(() => {
@@ -349,7 +355,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
       {/* Main Shop UI */}
       <div
         className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_SHOP)} pointer-events-auto`}
-        onClick={onClose}
+        onClick={handleClose}
       >
         <div
           className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col"
@@ -370,7 +376,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
               </div>
               {/* Close Button */}
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="w-10 h-10 bg-red-600 hover:bg-red-500 text-white text-2xl font-bold rounded-full transition-colors"
               >
                 ×
