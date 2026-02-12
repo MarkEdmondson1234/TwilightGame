@@ -50,6 +50,7 @@ const RARE_FORAGE_ITEMS = new Set([
   'fly_agaric',
   'fairy_bluebell',
   'ghost_lichen',
+  'sakura_petal',
 ]);
 
 /** Save inventory and record forage cooldown at the given position */
@@ -542,6 +543,70 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'ghost_lichen', // Reuse field for item ID
       seedName: ghostLichen.displayName,
       message: `Found ${quantityFound} ${ghostLichen.displayName}!`,
+    };
+  }
+
+  // Cherry tree foraging (sakura petals) - available in spring only
+  const cherryTreeResult = findTileTypeNearby(
+    playerTileX,
+    playerTileY,
+    TileType.CHERRY_TREE
+  );
+  const cherryTreeAnchor = cherryTreeResult.found ? cherryTreeResult.position : null;
+
+  if (cherryTreeAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found cherry tree anchor at (${cherryTreeAnchor.x}, ${cherryTreeAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+
+    // Seasonal check - only available in spring
+    const { season } = TimeManager.getCurrentTime();
+    if (season !== Season.SPRING) {
+      return {
+        found: false,
+        message: 'The cherry tree has no blossoms to collect petals from right now.',
+      };
+    }
+
+    const sakuraPetal = getItem('sakura_petal');
+    if (!sakuraPetal) {
+      console.error('[Forage] Sakura petal item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (sakura_petal has forageSuccessRate: 0.75)
+    const successRate = sakuraPetal.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position
+      gameState.recordForage(currentMapId, cherryTreeAnchor.x, cherryTreeAnchor.y);
+      return {
+        found: false,
+        message:
+          'You reach for the falling petals, but they slip through your fingers.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const quantityFound = rollForageQuantity();
+
+    // Add to inventory
+    inventoryManager.addItem('sakura_petal', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} ${sakuraPetal.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    // Save and set cooldown at ANCHOR position
+    saveForageResult(currentMapId, cherryTreeAnchor.x, cherryTreeAnchor.y, 'sakura_petal');
+
+    return {
+      found: true,
+      seedId: 'sakura_petal',
+      seedName: sakuraPetal.displayName,
+      message: `Found ${quantityFound} ${sakuraPetal.displayName}!`,
     };
   }
 

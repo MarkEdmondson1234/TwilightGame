@@ -1264,6 +1264,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 40,
+    image: magicalAssets.sakura_petal,
+    forageSuccessRate: 0.75,
   },
 
   dawn_dew: {
