@@ -157,7 +157,7 @@ export function useMovementController(
   } = useClickToMove({
     playerPosRef,
     npcsRef,
-    enabled: true,
+    enabled: false,
   });
 
   // Get pathing vector for current frame (used by movement hook)

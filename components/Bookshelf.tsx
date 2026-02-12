@@ -68,12 +68,12 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   return (
     <>
       {/* Books Container - no container scaling since individual books handle their own scale */}
-      {/* On touch devices, position above touch controls (D-Pad extends to ~300px from bottom) */}
+      {/* On touch devices, position at top-left to avoid overlapping D-pad controls */}
       <div
-        className={`fixed left-2 sm:left-4 ${zClass(Z_HUD)} origin-bottom-left`}
-        style={{
-          bottom: isTouchDevice ? 'calc(320px + env(safe-area-inset-bottom, 0px))' : '8px',
-        }}
+        className={`fixed left-2 sm:left-4 ${zClass(Z_HUD)} ${isTouchDevice ? 'origin-top-left' : 'origin-bottom-left'}`}
+        style={
+          isTouchDevice ? { top: 'calc(80px + env(safe-area-inset-top, 0px))' } : { bottom: '8px' }
+        }
       >
         {/* Books - arranged like a bookshelf with magic book in front */}
         <div className="flex gap-0 items-end">

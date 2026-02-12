@@ -69,6 +69,8 @@ export interface UsePixiRendererProps {
     viewportScale: number;
     viewportSize: { width: number; height: number };
     effectiveGridOffset: { x: number; y: number };
+    /** User zoom level (default 1.0) */
+    zoom?: number;
     effectiveTileSize: number;
   };
 
@@ -158,6 +160,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     viewportSize,
     effectiveGridOffset,
     effectiveTileSize,
+    zoom = 1.0,
   } = viewport;
   const {
     pos: playerPos,
@@ -607,6 +610,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   useEffect(() => {
     if (!enabled || !isPixiInitialized) return;
 
+    // Apply user zoom to the entire stage
+    if (pixiAppRef.current) {
+      pixiAppRef.current.stage.scale.set(zoom);
+    }
+
     const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
 
     // Update viewport dimensions
@@ -649,7 +657,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         shadowLayerRef.current.updateCamera(cameraX, cameraY);
       }
     }
-  }, [enabled, cameraX, cameraY, isPixiInitialized, currentMap?.renderMode, canvasRef]);
+  }, [enabled, cameraX, cameraY, zoom, isPixiInitialized, currentMap?.renderMode, canvasRef]);
 
   // =========================================================================
   // EFFECT: NPC/Render Version Update (full re-render)

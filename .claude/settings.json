@@ -59,7 +59,10 @@
       "Skill(test-game)",
       "Skill(skill-builder)",
       "Bash(.claude/skills/add-audio/scripts/:*)",
-      "Skill(add-audio)"
+      "Skill(add-audio)",
+      "mcp__chrome-devtools__emulate",
+      "Read(//var/folders/kv/nxj052r50g7813x2blwc74jw0000gn/T/chrome-devtools-mcp-YW5Q8B/**)",
+      "Read(//private/var/folders/kv/nxj052r50g7813x2blwc74jw0000gn/T/chrome-devtools-mcp-YW5Q8B/**)"
     ],
     "deny": [],
     "ask": [

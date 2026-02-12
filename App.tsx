@@ -30,6 +30,7 @@ import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
+import { usePinchZoom } from './hooks/usePinchZoom';
 import { useViewportCulling } from './hooks/useViewportCulling';
 import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
@@ -133,6 +134,9 @@ const App: React.FC = () => {
 
   // Game container ref for click detection
   const gameContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
+  const { zoom } = usePinchZoom();
 
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
@@ -719,6 +723,7 @@ const App: React.FC = () => {
     playerPos,
     mapWidth,
     mapHeight,
+    zoom,
   });
 
   // Debug: Log touch device status
@@ -754,6 +759,7 @@ const App: React.FC = () => {
     mapWidth,
     mapHeight,
     margin: 1,
+    zoom,
   });
 
   // Create visible range object for rendering (memoized to prevent unnecessary re-renders)
@@ -931,6 +937,7 @@ const App: React.FC = () => {
       viewportSize,
       effectiveGridOffset: effectiveGridOffset ?? { x: 0, y: 0 },
       effectiveTileSize,
+      zoom,
     },
     player: {
       pos: playerPos,
@@ -1091,7 +1098,8 @@ const App: React.FC = () => {
           style={{
             width: mapWidth * TILE_SIZE,
             height: mapHeight * TILE_SIZE,
-            transform: `translate(${-cameraX}px, ${-cameraY}px)`,
+            transform: `scale(${zoom}) translate(${-cameraX}px, ${-cameraY}px)`,
+            transformOrigin: '0 0',
           }}
         >
           {/* Render Map Tiles */}
@@ -1122,7 +1130,8 @@ const App: React.FC = () => {
           transform:
             currentMap?.renderMode === 'background-image'
               ? 'none' // No camera transform for background-image rooms (image is fixed/centered)
-              : `translate(${-cameraX}px, ${-cameraY}px)`,
+              : `scale(${zoom}) translate(${-cameraX}px, ${-cameraY}px)`,
+          transformOrigin: '0 0',
           pointerEvents: 'none', // Allow clicks to pass through to canvas
         }}
       >
@@ -1384,7 +1393,6 @@ const App: React.FC = () => {
             onDirectionPress={touchControls.handleDirectionPress}
             onDirectionRelease={touchControls.handleDirectionRelease}
             onResetPress={touchControls.handleResetPress}
-            onForagePress={touchControls.handleForagePress}
             compact={isCompactMode}
           />
         )}

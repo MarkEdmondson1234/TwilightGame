@@ -488,68 +488,37 @@ export function useInteractionController(
         ...callbacks,
       });
 
-      console.log(`[InteractionController] Found ${interactions.length} interactions`);
+      // No interactions at this position — ignore click
+      if (interactions.length === 0) {
+        return;
+      }
 
-      // Calculate distance from player to clicked position
+      // Only interact if player is nearby (no walk-to-interact)
       const currentPlayerPos = playerPosRef.current;
       const distanceToClick = getDistance(currentPlayerPos, clickInfo.worldPos);
       const isNearby = distanceToClick <= INTERACTION.RANGE;
 
-      console.log(
-        `[InteractionController] Distance: ${distanceToClick.toFixed(2)} tiles, nearby: ${isNearby}`
-      );
-
-      // If no interactions, trigger click-to-move
-      if (interactions.length === 0) {
-        const pathFound = setDestination(clickInfo.worldPos);
-        if (!pathFound) {
-          onShowToast("Can't reach there", 'info');
-        }
+      if (!isNearby) {
         return;
       }
 
-      // If player is nearby, execute interaction immediately
-      if (isNearby) {
-        // If only one interaction, execute it immediately
-        if (interactions.length === 1) {
-          console.log(
-            '[InteractionController] Executing single interaction:',
-            interactions[0].label
-          );
-          interactions[0].execute();
-          return;
-        }
-
-        // If multiple interactions, show radial menu
-        console.log(
-          '[InteractionController] Showing radial menu:',
-          interactions.map((i) => i.label)
-        );
-        const menuOptions: RadialMenuOption[] = interactions.map((interaction, index) => ({
-          id: `${interaction.type}_${index}`,
-          label: interaction.label,
-          icon: interaction.icon,
-          color: interaction.color,
-          onSelect: interaction.execute,
-        }));
-
-        setRadialMenuOptions(menuOptions);
-        setRadialMenuPosition(clickInfo.screenPos);
-        setRadialMenuVisible(true);
+      if (interactions.length === 1) {
+        interactions[0].execute();
         return;
       }
 
-      // Player is far away - walk there first
-      const deferredAction = interactions.length === 1 ? interactions[0].execute : undefined;
+      // Multiple interactions — show radial menu
+      const menuOptions: RadialMenuOption[] = interactions.map((interaction, index) => ({
+        id: `${interaction.type}_${index}`,
+        label: interaction.label,
+        icon: interaction.icon,
+        color: interaction.color,
+        onSelect: interaction.execute,
+      }));
 
-      console.log(
-        `[InteractionController] Walking to target first${deferredAction ? ' (will execute on arrival)' : ''}`
-      );
-
-      const pathFound = setDestination(clickInfo.worldPos, null, deferredAction);
-      if (!pathFound) {
-        onShowToast("Can't reach there", 'info');
-      }
+      setRadialMenuOptions(menuOptions);
+      setRadialMenuPosition(clickInfo.screenPos);
+      setRadialMenuVisible(true);
     },
     [
       isUIBlocking,
@@ -558,7 +527,6 @@ export function useInteractionController(
       currentMapId,
       playerPosRef,
       buildInteractionCallbacks,
-      setDestination,
       onShowToast,
     ]
   );

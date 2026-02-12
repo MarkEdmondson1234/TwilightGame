@@ -5,7 +5,6 @@ interface TouchControlsProps {
   onDirectionPress: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onDirectionRelease: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onResetPress: () => void;
-  onForagePress?: () => void;
   /** Use smaller controls for small screens (< 600px height) */
   compact?: boolean;
 }
@@ -15,7 +14,6 @@ interface TouchControlsProps {
  *
  * Features:
  * - D-Pad on left for movement
- * - Forage button on right (contextual, only when callback provided)
  * - Reset button on right (small, for getting unstuck)
  * - Compact mode for small screens (reduces D-Pad and button sizes)
  * - Safe area insets for notched devices
@@ -27,7 +25,6 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionPress,
   onDirectionRelease,
   onResetPress,
-  onForagePress,
   compact = false,
 }) => {
   const handleTouchStart = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -108,20 +105,6 @@ const TouchControls: React.FC<TouchControlsProps> = ({
 
       {/* Action buttons on the right */}
       <div className={`flex flex-col items-end ${compact ? 'gap-2' : 'gap-3'}`}>
-        {/* Forage button - only shown when callback provided */}
-        {onForagePress && (
-          <button
-            onTouchStart={(e) => {
-              e.preventDefault();
-              onForagePress();
-            }}
-            className={`${actionButtonSize} bg-emerald-700/90 hover:bg-emerald-600/90 active:bg-emerald-500/90 rounded-xl border-2 border-emerald-500 flex items-center justify-center text-white ${actionButtonText} shadow-md`}
-            title="Forage"
-          >
-            🌿
-          </button>
-        )}
-
         {/* Reset button - small, for getting unstuck */}
         <button
           onTouchStart={(e) => {
