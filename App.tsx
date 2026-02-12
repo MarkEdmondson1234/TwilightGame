@@ -746,6 +746,7 @@ const App: React.FC = () => {
     containerRef: gameContainerRef,
     cameraX: cameraX,
     cameraY: cameraY,
+    zoom: zoom,
     onCanvasClick: handleCanvasClick,
     enabled: !isTouchDevice, // Disable mouse controls on touch devices
   });

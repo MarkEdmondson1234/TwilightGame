@@ -23,6 +23,8 @@ export interface MouseControlsConfig {
   /** Current camera position (in pixels) */
   cameraX: number;
   cameraY: number;
+  /** Current zoom level (CSS scale factor) */
+  zoom: number;
   /** Callback when canvas is clicked */
   onCanvasClick: (clickInfo: MouseClickInfo) => void;
   /** Whether to enable mouse controls (touch always enabled for click-to-move) */
@@ -82,7 +84,7 @@ function isUIElement(element: EventTarget | null): boolean {
 }
 
 export function useMouseControls(config: MouseControlsConfig) {
-  const { containerRef, cameraX, cameraY, onCanvasClick, enabled } = config;
+  const { containerRef, cameraX, cameraY, zoom, onCanvasClick, enabled } = config;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -100,8 +102,10 @@ export function useMouseControls(config: MouseControlsConfig) {
       clientY: number
     ): MouseClickInfo => {
       // Convert screen coordinates to world coordinates (in pixels)
-      const worldPixelX = screenX + cameraX;
-      const worldPixelY = screenY + cameraY;
+      // Screen coords come from getBoundingClientRect which returns CSS-transformed
+      // dimensions, so we must divide by zoom to get unscaled game-world pixels
+      const worldPixelX = (screenX / zoom) + cameraX;
+      const worldPixelY = (screenY / zoom) + cameraY;
 
       // Convert to tile coordinates
       const worldTileX = worldPixelX / TILE_SIZE;
@@ -167,5 +171,5 @@ export function useMouseControls(config: MouseControlsConfig) {
       container.removeEventListener('click', handleClick);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [containerRef, cameraX, cameraY, onCanvasClick, enabled]);
+  }, [containerRef, cameraX, cameraY, zoom, onCanvasClick, enabled]);
 }
