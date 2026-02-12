@@ -615,6 +615,15 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       pixiAppRef.current.stage.scale.set(zoom);
     }
 
+    // Counteract stage zoom for viewport-relative layers (weather, darkness)
+    // These layers should always cover the full viewport regardless of zoom
+    if (weatherLayerRef.current) {
+      weatherLayerRef.current.getContainer().scale.set(1 / zoom);
+    }
+    if (darknessLayerRef.current) {
+      darknessLayerRef.current.getContainer().scale.set(1 / zoom);
+    }
+
     const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
 
     // Update viewport dimensions
