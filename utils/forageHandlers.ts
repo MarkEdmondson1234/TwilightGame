@@ -49,6 +49,7 @@ const RARE_FORAGE_ITEMS = new Set([
   'frost_flower',
   'fly_agaric',
   'fairy_bluebell',
+  'ghost_lichen',
 ]);
 
 /** Save inventory and record forage cooldown at the given position */
@@ -487,6 +488,60 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'luminescent_toadstool', // Reuse field for item ID
       seedName: toadstool.displayName,
       message: `Found ${quantityFound} ${toadstool.displayName}!`,
+    };
+  }
+
+  // Dead spruce foraging (ghost lichen) - available year-round, any time of day
+  const deadSpruceResult = findTileTypeNearby(
+    playerTileX,
+    playerTileY,
+    TileType.DEAD_SPRUCE
+  );
+  const deadSpruceAnchor = deadSpruceResult.found ? deadSpruceResult.position : null;
+
+  if (deadSpruceAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found dead spruce anchor at (${deadSpruceAnchor.x}, ${deadSpruceAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+    const ghostLichen = getItem('ghost_lichen');
+    if (!ghostLichen) {
+      console.error('[Forage] Ghost lichen item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (ghost_lichen has forageSuccessRate: 0.65)
+    const successRate = ghostLichen.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position
+      gameState.recordForage(currentMapId, deadSpruceAnchor.x, deadSpruceAnchor.y);
+      return {
+        found: false,
+        message:
+          'You scrape at the dead spruce bark, but find no lichen worth collecting.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const quantityFound = rollForageQuantity();
+
+    // Add to inventory
+    inventoryManager.addItem('ghost_lichen', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} ${ghostLichen.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    // Save and set cooldown at ANCHOR position
+    saveForageResult(currentMapId, deadSpruceAnchor.x, deadSpruceAnchor.y, 'ghost_lichen');
+
+    return {
+      found: true,
+      seedId: 'ghost_lichen', // Reuse field for item ID
+      seedName: ghostLichen.displayName,
+      message: `Found ${quantityFound} ${ghostLichen.displayName}!`,
     };
   }
 

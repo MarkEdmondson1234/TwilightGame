@@ -1304,10 +1304,12 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'ghost_lichen',
     displayName: 'Ghost Lichen',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'Pale lichen scraped from cave walls. Glows faintly in complete darkness.',
+    description: 'Pale lichen scraped from dead spruce bark. Glows faintly in complete darkness.',
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 25,
+    image: magicalAssets.ghost_lichen,
+    forageSuccessRate: 0.65, // 65% success rate - no time/season restrictions
   },
 
   mushroom: {

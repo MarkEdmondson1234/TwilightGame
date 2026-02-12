@@ -1722,7 +1722,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet, frost flower)
+    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet, frost flower, dead spruce)
     if (!canForage) {
       canForage = hasTileTypeNearby(tileX, tileY, [
         TileType.BEE_HIVE,
@@ -1733,6 +1733,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         TileType.MUSTARD_FLOWER,
         TileType.SHRINKING_VIOLET,
         TileType.FROST_FLOWER,
+        TileType.DEAD_SPRUCE,
       ]);
     }
 
