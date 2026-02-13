@@ -35,9 +35,10 @@ You start at home with your Mum. Here's what to explore:
 
 1. **Your House** - Chat with Mum, she has advice for new players
 2. **The Village** - A friendly community with shops and neighbours
-3. **The Farm Area** - Till soil, plant seeds, and grow crops
-4. **The Forest** - Explore deeper to find secrets and forage items
-5. **The Cave** - Discover what lies beneath...
+3. **The Farm Area** - Till soil, plant seeds, and grow crops (shared with other players!)
+4. **Personal Garden** - Your private farming space (east side of the village)
+5. **The Forest** - Explore deeper to find secrets and forage items
+6. **The Cave** - Discover what lies beneath...
 
 ### The HUD (Heads-Up Display)
 
@@ -151,6 +152,8 @@ To enable AI chat:
 | E / Enter | Interact |
 | F | Forage |
 | I | Open Inventory |
+| J | Open Journal |
+| B | Open Recipe Book |
 | 1-9 | Select Quick Slots |
 | F1 | Help Browser |
 | F3 | Debug Overlay |
@@ -165,13 +168,25 @@ To enable AI chat:
 5. **Save your gold** - You'll need it for seeds and upgrades
 6. **Hover over things** - Tooltips give useful information
 
+## Your Journal
+
+Press **J** to open your **Journal** at any time. It has three sections:
+
+- **Active Quests** — Current quest chains with progress
+- **History** — Completed quests and key choices you made
+- **Conversations** — Summaries of your AI chats with NPCs
+
+You can also open the journal from the bookshelf in the cottage.
+
 ## Need More Help?
 
 Press **F1** anytime to open the Help Browser:
 
 - **Farming Guide** - Detailed farming mechanics
 - **Seeds Guide** - Where to find seeds
+- **Journal** - Quest tracking and NPC conversation logs
 - **Time & Seasons** - How the calendar works
 - **AI Chat** - Setting up AI conversations
+- **Cloud Saves** - Save your progress across devices
 
 Enjoy your time in Twilight Village!

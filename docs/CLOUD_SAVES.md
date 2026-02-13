@@ -98,11 +98,33 @@ The game works offline! Your progress saves locally and syncs to the cloud when 
 - **No tracking** - We don't track your gameplay or sell your data
 - **Delete anytime** - You can delete your account and all data from Settings
 
+## What Gets Saved to the Cloud?
+
+When you sync, almost everything is saved:
+
+- **Character** — Name, appearance, position
+- **Inventory** — All your items and tools
+- **Farming** — Personal farm plots (Personal Garden and any private maps)
+- **Cooking** — Unlocked recipes and cooking progress
+- **Friendships** — NPC friendship levels and history
+- **Quests** — Active and completed quest chains
+- **NPC Conversations** — AI chat history, memories, and core memories (so NPCs remember you across devices!)
+- **World state** — Weather, placed items, forage cooldowns
+- **Stats** — Gold, stamina, potion effects, play time
+- **Decorations** — Paintings and crafted items
+
+### Shared Farming (Not in Personal Saves)
+
+Farm plots in the **Village** and **Farm Area** are **globally shared** between all players. These plots are stored separately in the cloud and update in real time — they are not part of your personal save slots.
+
+Your **Personal Garden** plots are saved in your personal cloud save as normal.
+
 ## Tips
 
 1. **Sign in before playing** to ensure your progress syncs
 2. **Check the cloud icon** in Settings to see your sync status
 3. **Use Google sign-in** for the easiest experience
 4. **Create an account early** so you don't lose guest progress
+5. **NPC memories sync too** — Sign in on a new device and NPCs will still remember your conversations
 
 Enjoy your adventure across all your devices!

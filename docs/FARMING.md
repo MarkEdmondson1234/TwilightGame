@@ -115,6 +115,31 @@ Farm tiles now show visual sprites and colors for each state:
 - Sell price: 150 gold
 - Requires patience and care!
 
+## Shared Farming & Personal Garden
+
+Farm plots work differently depending on which map you're on:
+
+### Shared Farms (Village & Farm Area)
+
+Farm plots in the **Village** and **Farm Area** are **shared between all players**. When you're signed in:
+
+- **Plant a crop** in the village and other players see it grow in real time
+- **Water someone else's crop** — everyone can tend any plot
+- **Harvests are shared** — anyone can pick a ready crop
+- A small name badge shows who planted each crop
+
+Shared farm plots are stored in the cloud, not in your personal save. This means they persist even if you clear your browser — but they also aren't included in your personal save slots.
+
+**Without an account:** Shared maps still work as normal local farms. Your changes just won't be visible to other players.
+
+### Personal Garden
+
+The **Personal Garden** is your own private farming space. Find it via the path on the east side of the village.
+
+- **Only you** can see and tend your plots here
+- Saved in your personal cloud save (if signed in)
+- Perfect for growing crops without anyone else harvesting them!
+
 ## How to Farm
 
 1. **Get seeds** - Visit the Seed Shed in the farm area
@@ -122,7 +147,7 @@ Farm tiles now show visual sprites and colors for each state:
    - Enter the Seed Shed building
    - Talk to the seed bag NPCs to collect free seeds
 
-2. **Find farm plots** - Look for brown soil tiles in the farm area
+2. **Find farm plots** - Look for brown soil tiles in the farm area, village, or personal garden
    - Multiple plots are organised in fields
    - Connected by paths for easy access
 
@@ -263,6 +288,8 @@ newCrop: {
 
 ## Recent Improvements
 
+- ✅ **Shared farming** - Village and Farm Area plots are now shared between all signed-in players in real time
+- ✅ **Personal Garden** - A new private farming map accessible from the village's east side
 - ✅ **Automatic rain watering** - When it rains or storms, all outdoor crops are watered automatically (indoor crops like those in greenhouses are not affected)
 - ✅ **Multi-tile crop rendering** - Crops now grow visually from small seedlings (1x1) to young plants (1.5x2) to large adult plants (2x2.5)
 - ✅ **Crop-specific sprites** - Tomato, sunflower, strawberry, and pea have unique young/adult sprites
@@ -280,3 +307,4 @@ Potential additions:
 - Scarecrows to protect crops from crows
 - Companion planting bonuses
 - More crop-specific sprites (salad, corn, pumpkin, etc.)
+- Planted-by name badges visible on shared farm plots

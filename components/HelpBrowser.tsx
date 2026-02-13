@@ -33,6 +33,7 @@ const DOC_FILES: DocFile[] = [
   { name: 'stamina', title: '💚 Stamina', path: '/TwilightGame/docs/STAMINA.md' },
   { name: 'farming', title: '🌾 Farming Guide', path: '/TwilightGame/docs/FARMING.md' },
   { name: 'seeds', title: '🌱 Seeds Guide', path: '/TwilightGame/docs/SEEDS.md' },
+  { name: 'journal', title: '📖 Journal', path: '/TwilightGame/docs/JOURNAL.md' },
   { name: 'decorations', title: '🎨 Decorations', path: '/TwilightGame/docs/DECORATIONS.md' },
   { name: 'magic', title: '🧪 Magic & Potions', path: '/TwilightGame/docs/MAGIC.md' },
   { name: 'time', title: '⏰ Time & Seasons', path: '/TwilightGame/docs/TIME_SYSTEM.md' },

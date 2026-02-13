@@ -82,6 +82,16 @@ Each NPC remembers your past conversations! They'll recall:
 
 Memories persist across play sessions, so returning players get a warmer, more personalised greeting.
 
+### Cloud-Synced Conversations
+If you're signed in with an account, NPC conversations are **saved to the cloud** along with your game data. This means:
+
+- **Switch devices** and NPCs still remember you
+- **Core memories** are preserved — the defining moments in your relationship carry over
+- **Chat history** merges intelligently — no duplicate messages, no lost conversations
+- Works alongside local saves — your conversations are always backed up
+
+To review what NPCs remember, press **J** to open your **Journal** and check the **Conversations** tab.
+
 ### Three-Tier Memory System
 - **Recent conversations** - The last 50 messages with each NPC
 - **Long-term memories** - Important facts extracted from older conversations
