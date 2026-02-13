@@ -630,6 +630,8 @@ class GameStateManager {
     this.savePending = false;
     try {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
+      localStorage.setItem('twilight_last_save', Date.now().toString());
+      eventBus.emit(GameEvent.LOCAL_SAVE_FLUSHED, { timestamp: Date.now() });
     } catch (error) {
       console.error('[GameState] Failed to save state:', error);
     }

@@ -83,6 +83,20 @@ class SyncManager {
       }
     });
 
+    // Mark pending changes whenever local state is saved
+    eventBus.on(GameEvent.LOCAL_SAVE_FLUSHED, () => {
+      this.markPendingChanges();
+    });
+
+    // Best-effort cloud save when page is hidden (tab switch, close, navigate away)
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden' && this.state.pendingChanges) {
+          this.attemptExitSave();
+        }
+      });
+    }
+
     console.log('[SyncManager] Initialized');
   }
 
@@ -148,6 +162,7 @@ class SyncManager {
     }
 
     this.updateState({ status: 'syncing' });
+    eventBus.emit(GameEvent.CLOUD_SYNC_STARTED, {});
 
     try {
       const state = gameState.getFullState();
@@ -163,6 +178,7 @@ class SyncManager {
         error: null,
       });
 
+      eventBus.emit(GameEvent.CLOUD_SYNC_COMPLETED, { success: true });
       console.log('[SyncManager] Uploaded to cloud successfully');
     } catch (error) {
       console.error('[SyncManager] Upload failed:', error);
@@ -170,6 +186,7 @@ class SyncManager {
         status: 'error',
         error: error instanceof Error ? error.message : 'Upload failed',
       });
+      eventBus.emit(GameEvent.CLOUD_SYNC_COMPLETED, { success: false });
       throw error;
     }
   }
@@ -224,6 +241,32 @@ class SyncManager {
     }
 
     await this.uploadToCloud();
+  }
+
+  /**
+   * Sync before sign-out. Call BEFORE authService.signOut() so auth token is still valid.
+   */
+  async syncBeforeSignOut(): Promise<void> {
+    if (!authService.isAuthenticated() || !this.state.pendingChanges) return;
+    try {
+      await this.uploadToCloud();
+      console.log('[SyncManager] Final sync before sign-out completed');
+    } catch (error) {
+      console.warn('[SyncManager] Final sync before sign-out failed:', error);
+    }
+  }
+
+  /**
+   * Best-effort save on page exit (visibilitychange → hidden).
+   * Fire-and-forget — may not complete if page is closed immediately.
+   */
+  private attemptExitSave(): void {
+    if (!authService.isAuthenticated() || !this.state.pendingChanges) return;
+
+    console.log('[SyncManager] Attempting exit save...');
+    this.uploadToCloud().catch((error) => {
+      console.warn('[SyncManager] Exit save failed (expected if page closed):', error);
+    });
   }
 
   /**

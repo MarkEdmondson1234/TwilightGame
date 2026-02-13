@@ -68,6 +68,11 @@ export enum GameEvent {
   EVENT_CHAIN_UPDATED = 'chain:updated',
   EVENT_CHAIN_CHOICE_REQUIRED = 'chain:choice_required',
   EVENT_CHAIN_OBJECTIVE_REACHED = 'chain:objective_reached',
+
+  // Save events
+  LOCAL_SAVE_FLUSHED = 'save:local_flushed',
+  CLOUD_SYNC_STARTED = 'save:cloud_sync_started',
+  CLOUD_SYNC_COMPLETED = 'save:cloud_sync_completed',
 }
 
 // ============================================================================
@@ -174,6 +179,13 @@ export interface EventPayloads {
   [GameEvent.EVENT_CHAIN_OBJECTIVE_REACHED]: {
     chainId: string;
     stageId: string;
+  };
+  [GameEvent.LOCAL_SAVE_FLUSHED]: {
+    timestamp: number;
+  };
+  [GameEvent.CLOUD_SYNC_STARTED]: Record<string, never>;
+  [GameEvent.CLOUD_SYNC_COMPLETED]: {
+    success: boolean;
   };
 }
 

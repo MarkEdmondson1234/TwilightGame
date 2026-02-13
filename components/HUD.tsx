@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { mapManager } from '../maps';
 import { useGameState } from '../hooks/useGameState';
 import { TimeManager, GameTime } from '../utils/TimeManager';
+import { eventBus, GameEvent } from '../utils/EventBus';
 import { Z_HUD, zClass } from '../zIndex';
 import { getItem } from '../data/items';
 import { gameState } from '../GameState';
@@ -35,6 +36,29 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
   const [currentTime, setCurrentTime] = useState<GameTime>(TimeManager.getCurrentTime());
   const [movementEffect, setMovementEffect] = useState(gameState.getMovementEffect());
   const [movementTimeRemaining, setMovementTimeRemaining] = useState(0);
+  const [cloudSyncGlow, setCloudSyncGlow] = useState(false);
+  const glowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Listen for cloud sync events to show magic pulse on clock
+  useEffect(() => {
+    const unsubStart = eventBus.on(GameEvent.CLOUD_SYNC_STARTED, () => {
+      setCloudSyncGlow(true);
+      // Clear any existing timer
+      if (glowTimerRef.current) clearTimeout(glowTimerRef.current);
+    });
+    const unsubEnd = eventBus.on(GameEvent.CLOUD_SYNC_COMPLETED, () => {
+      // Keep the glow for a moment after completion, then fade
+      glowTimerRef.current = setTimeout(() => {
+        setCloudSyncGlow(false);
+        glowTimerRef.current = null;
+      }, 1500);
+    });
+    return () => {
+      unsubStart();
+      unsubEnd();
+      if (glowTimerRef.current) clearTimeout(glowTimerRef.current);
+    };
+  }, []);
 
   // Update time every second
   useEffect(() => {
@@ -97,21 +121,23 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
                 className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                 style={{ imageRendering: 'auto' }}
               />
-            ) : (() => {
-              const resolved = resolveIcon(selectedItemDef.icon || '📦');
-              return isImageIcon(resolved) ? (
-                <img
-                  src={resolved}
-                  alt={selectedItemDef.displayName}
-                  className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
-                  style={{ imageRendering: 'auto' }}
-                />
-              ) : (
-                <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-2xl sm:text-3xl">
-                  {resolved}
-                </span>
-              );
-            })()}
+            ) : (
+              (() => {
+                const resolved = resolveIcon(selectedItemDef.icon || '📦');
+                return isImageIcon(resolved) ? (
+                  <img
+                    src={resolved}
+                    alt={selectedItemDef.displayName}
+                    className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
+                    style={{ imageRendering: 'auto' }}
+                  />
+                ) : (
+                  <span className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center text-2xl sm:text-3xl">
+                    {resolved}
+                  </span>
+                );
+              })()
+            )}
             <div className="flex flex-col">
               <span
                 className="text-xs sm:text-sm font-bold text-white truncate max-w-[80px]"
@@ -201,7 +227,19 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
           </div>
 
           {/* Analog Clock (hours/minutes with rotating hands) */}
-          <AnalogClock currentTime={currentTime} size={70} />
+          <div
+            className="relative rounded-full"
+            style={
+              cloudSyncGlow
+                ? {
+                    animation: 'cloudSyncPulse 1.2s ease-in-out infinite',
+                    filter: 'drop-shadow(0 0 6px rgba(147, 130, 220, 0.8))',
+                  }
+                : undefined
+            }
+          >
+            <AnalogClock currentTime={currentTime} size={70} />
+          </div>
 
           {/* Sundial Calendar (date/season) */}
           <SundialClock currentTime={currentTime} size={70} />

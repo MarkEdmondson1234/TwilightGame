@@ -137,11 +137,28 @@ const App: React.FC = () => {
 
   // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
   // Background-image rooms (interiors) can only zoom in, not out
+  // Disable zoom when UI overlays are open so scroll/pinch works in menus
+  const isAnyOverlayOpen =
+    ui.helpBrowser ||
+    ui.cookingUI ||
+    ui.recipeBook ||
+    ui.characterCreator ||
+    ui.inventory ||
+    ui.shopUI ||
+    ui.giftModal ||
+    ui.glamourModal ||
+    ui.brewingUI ||
+    ui.magicBook ||
+    ui.journal ||
+    ui.decorationWorkshop ||
+    ui.paintingEasel ||
+    ui.devTools ||
+    ui.vfxTestPanel;
   const zoomMinForMap = useMemo(() => {
     const map = mapManager.getMap(currentMapId);
     return map?.renderMode === 'background-image' ? 1.0 : 0.5;
   }, [currentMapId]);
-  const { zoom, resetZoom } = usePinchZoom({ minZoom: zoomMinForMap });
+  const { zoom, resetZoom } = usePinchZoom({ minZoom: zoomMinForMap, enabled: !isAnyOverlayOpen });
 
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
@@ -162,21 +179,8 @@ const App: React.FC = () => {
   // Setup collision detection (with NPC collision support and movement mode)
   const { checkCollision } = useCollisionDetection(npcsRef, movementMode);
 
-  // Compute if any UI overlay is active (for path cancellation)
-  const isUIActive =
-    ui.helpBrowser ||
-    ui.cookingUI ||
-    ui.recipeBook ||
-    ui.characterCreator ||
-    ui.inventory ||
-    ui.shopUI ||
-    ui.giftModal ||
-    ui.glamourModal ||
-    ui.brewingUI ||
-    ui.decorationWorkshop ||
-    ui.paintingEasel ||
-    ui.devTools ||
-    ui.vfxTestPanel;
+  // Reuse the overlay flag for path cancellation, etc.
+  const isUIActive = isAnyOverlayOpen;
 
   // Movement controller - owns player position, direction, animation, pathfinding
   const {

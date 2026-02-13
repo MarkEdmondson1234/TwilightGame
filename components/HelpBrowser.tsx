@@ -10,7 +10,7 @@ import {
   isAIAvailable,
 } from '../services/anthropicClient';
 import { audioManager } from '../utils/AudioManager';
-import { getAuthService, type AuthState } from '../firebase/safe';
+import { getAuthService, getSyncManager, type AuthState, type SyncState } from '../firebase/safe';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -65,6 +65,8 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   const [emailInput, setEmailInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
+  const [syncState, setSyncState] = useState<SyncState | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
 
   // Check for stored key on mount and when settings tab is selected
   useEffect(() => {
@@ -80,6 +82,13 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     return getAuthService().onAuthStateChange((state) => {
       setAuthState(state);
       setAuthLoading(false);
+    });
+  }, []);
+
+  // Subscribe to sync state changes
+  useEffect(() => {
+    return getSyncManager().onStateChange((state) => {
+      setSyncState(state);
     });
   }, []);
 
@@ -203,10 +212,24 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     }
   };
 
+  const handleSaveNow = async () => {
+    setSyncLoading(true);
+    setAuthError('');
+    try {
+      await getSyncManager().syncNow();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Cloud save failed';
+      setAuthError(message);
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+
   const handleSignOut = async () => {
     setAuthLoading(true);
     setAuthError('');
     try {
+      await getSyncManager().syncBeforeSignOut();
       await getAuthService().signOut();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Sign out failed';
@@ -467,6 +490,54 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                         <p className="text-sm" style={{ color: colours.textLight }}>
                           Playing as guest. Create an account to keep your saves safe!
                         </p>
+                      )}
+
+                      {/* Cloud Sync Status */}
+                      {syncState && syncState.status !== 'offline' && (
+                        <div
+                          className="rounded p-3 space-y-2"
+                          style={{
+                            background: 'rgba(139, 115, 85, 0.1)',
+                            border: `1px solid ${colours.wood}`,
+                          }}
+                        >
+                          <div
+                            className="flex items-center gap-2 text-sm font-serif"
+                            style={{ color: colours.textLight }}
+                          >
+                            <span>
+                              {syncState.status === 'syncing'
+                                ? '⟳ Syncing...'
+                                : syncState.status === 'error'
+                                  ? '⚠ Sync error'
+                                  : syncState.pendingChanges
+                                    ? '● Unsaved changes'
+                                    : '✓ Saved to cloud'}
+                            </span>
+                            {syncState.lastSyncTime && (
+                              <span style={{ color: colours.wood }}>
+                                · Last sync: {new Date(syncState.lastSyncTime).toLocaleTimeString()}
+                              </span>
+                            )}
+                          </div>
+                          {syncState.error && (
+                            <p className="text-sm" style={{ color: '#8b4444' }}>
+                              {syncState.error}
+                            </p>
+                          )}
+                          <button
+                            onClick={handleSaveNow}
+                            disabled={syncLoading || syncState.status === 'syncing'}
+                            className="px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110 disabled:opacity-50"
+                            style={{
+                              background: 'linear-gradient(to bottom, #4a7c8b, #3d6673)',
+                              color: '#ffeedd',
+                              border: '2px solid #2d4d5a',
+                            }}
+                          >
+                            {syncLoading ? 'Saving...' : '☁️ Save to Cloud Now'}
+                          </button>
+                        </div>
                       )}
 
                       <button

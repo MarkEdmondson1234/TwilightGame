@@ -5,13 +5,16 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-// Mock TimeManager Season enum used by crops.ts
+// Mock TimeManager — crops.ts uses both Season enum and TimeManager.MS_PER_GAME_DAY
 vi.mock('../utils/TimeManager', () => ({
   Season: {
     SPRING: 'Spring',
     SUMMER: 'Summer',
     AUTUMN: 'Autumn',
     WINTER: 'Winter',
+  },
+  TimeManager: {
+    MS_PER_GAME_DAY: 2 * 60 * 60 * 1000, // 7,200,000 ms (2 real hours)
   },
 }));
 
@@ -44,8 +47,13 @@ describe('Crop Growth System', () => {
       });
     });
 
-    it('should have positive yields and prices', () => {
+    it('should have positive yields and prices (except decorative crops)', () => {
       Object.entries(CROPS).forEach(([id, crop]) => {
+        // Decorative crops (e.g. fairy_bluebell) intentionally have 0 yield/price
+        if (crop.harvestYield === 0) {
+          expect(crop.sellPrice).toBe(0);
+          return;
+        }
         expect(crop.harvestYield).toBeGreaterThan(0);
         expect(crop.sellPrice).toBeGreaterThan(0);
         // Only shop crops have positive seedCost; friendship/forage seeds are free
@@ -129,7 +137,7 @@ describe('Crop Growth System', () => {
       ];
 
       // Just verify the enum values exist
-      states.forEach(state => {
+      states.forEach((state) => {
         expect(FarmPlotState[state]).toBeDefined();
       });
     });
@@ -141,8 +149,11 @@ describe('Crop Growth System', () => {
   });
 
   describe('Crop ROI (Return on Investment)', () => {
-    it('all crops should be profitable', () => {
+    it('all harvestable crops should be profitable', () => {
       Object.entries(CROPS).forEach(([id, crop]) => {
+        // Skip decorative crops (e.g. fairy_bluebell) — not harvestable
+        if (crop.harvestYield === 0) return;
+
         const revenue = crop.sellPrice * crop.harvestYield;
         const cost = crop.seedCost;
         const profit = revenue - cost;
@@ -166,8 +177,8 @@ describe('Crop Growth System', () => {
       const radish = CROPS.radish;
       const pumpkin = CROPS.pumpkin;
 
-      const radishProfit = (radish.sellPrice * radish.harvestYield) - radish.seedCost;
-      const pumpkinProfit = (pumpkin.sellPrice * pumpkin.harvestYield) - pumpkin.seedCost;
+      const radishProfit = radish.sellPrice * radish.harvestYield - radish.seedCost;
+      const pumpkinProfit = pumpkin.sellPrice * pumpkin.harvestYield - pumpkin.seedCost;
 
       expect(pumpkinProfit).toBeGreaterThan(radishProfit);
     });

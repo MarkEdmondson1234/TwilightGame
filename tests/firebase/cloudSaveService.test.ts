@@ -83,13 +83,14 @@ describe('CloudSaveService Data Structures', () => {
         'quests',
         'world',
         'stats',
+        'decoration',
       ];
 
       expect(SAVE_DATA_DOCS).toEqual(expectedDocs);
     });
 
-    it('should have exactly 9 document types', () => {
-      expect(SAVE_DATA_DOCS.length).toBe(9);
+    it('should have exactly 10 document types', () => {
+      expect(SAVE_DATA_DOCS.length).toBe(10);
     });
   });
 });
@@ -295,6 +296,7 @@ describe('GameState Mapping', () => {
         'stats.totalPlayTime',
         'stats.mushroomsCollected',
       ],
+      decoration: ['decoration.craftedPaints', 'decoration.paintings', 'decoration.hasEasel'],
     };
 
     // Verify all document types are mapped

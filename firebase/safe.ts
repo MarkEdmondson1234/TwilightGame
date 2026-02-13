@@ -48,9 +48,32 @@ const stubSharedDataService = {
   getRemainingContributions: () => 0,
 };
 
+/** SyncState type for UI components */
+export type SyncStatus = 'idle' | 'syncing' | 'error' | 'offline';
+export interface SyncState {
+  status: SyncStatus;
+  lastSyncTime: number | null;
+  pendingChanges: boolean;
+  error: string | null;
+}
+
 /** Stub syncManager when Firebase is not available */
 const stubSyncManager = {
   initialize: () => {},
+  syncNow: async () => {},
+  syncBeforeSignOut: async () => {},
+  getState: (): SyncState => ({
+    status: 'offline',
+    lastSyncTime: null,
+    pendingChanges: false,
+    error: null,
+  }),
+  onStateChange: (cb: (state: SyncState) => void) => {
+    cb({ status: 'offline', lastSyncTime: null, pendingChanges: false, error: null });
+    return () => {};
+  },
+  markPendingChanges: () => {},
+  destroy: () => {},
 };
 
 /** Stub paintingStorageService when Firebase is not available */
@@ -126,6 +149,13 @@ export async function safeInitializeFirebase() {
  */
 export function getPaintingStorageService() {
   return firebaseModule?.paintingStorageService ?? stubPaintingStorage;
+}
+
+/**
+ * Get syncManager (real or stub).
+ */
+export function getSyncManager() {
+  return firebaseModule?.syncManager ?? stubSyncManager;
 }
 
 /**

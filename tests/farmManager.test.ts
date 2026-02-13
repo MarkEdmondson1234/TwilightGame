@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock constants - use importOriginal to get real values, only override what's needed
 vi.mock('../constants', async (importOriginal) => {
-  const actual = await importOriginal() as Record<string, unknown>;
+  const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     // Override import.meta.env dependent values
@@ -174,7 +174,7 @@ describe('FarmManager', () => {
       farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
 
       // Wait a bit to ensure timestamp difference
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Water the crop
       const result = farmManager.waterPlot('test_map', position);
@@ -186,16 +186,20 @@ describe('FarmManager', () => {
       expect(updatedPlot?.lastWateredTimestamp).toBeGreaterThan(0);
     });
 
-    it('should not water tilled soil', () => {
+    it('should allow watering tilled soil (pre-moisten)', () => {
       const position = { x: 5, y: 10 };
 
       // Till only
       farmManager.tillSoil('test_map', position);
 
-      // Try to water
+      // Water tilled soil — valid since pre-moistening was added
       const result = farmManager.waterPlot('test_map', position);
 
-      expect(result).toBe(false);
+      expect(result).toBe(true);
+
+      // State should remain TILLED (not change to WATERED)
+      const plot = farmManager.getPlot('test_map', position);
+      expect(plot?.state).toBe(FarmPlotState.TILLED);
     });
 
     it('should be able to water ready crops to keep them healthy', () => {
@@ -272,11 +276,13 @@ describe('FarmManager', () => {
       // Create dead crop
       farmManager.tillSoil('test_map', position);
       const plot = farmManager.getPlot('test_map', position)!;
-      farmManager.loadPlots([{
-        ...plot,
-        state: FarmPlotState.DEAD,
-        cropType: 'radish',
-      }]);
+      farmManager.loadPlots([
+        {
+          ...plot,
+          state: FarmPlotState.DEAD,
+          cropType: 'radish',
+        },
+      ]);
 
       // Clear
       const result = farmManager.clearDeadCrop('test_map', position);
@@ -315,23 +321,25 @@ describe('FarmManager', () => {
       const position = { x: 5, y: 10 };
 
       // Fallow
-      farmManager.loadPlots([{
-        mapId: 'test_map',
-        position,
-        state: FarmPlotState.FALLOW,
-        cropType: null,
-        plantedAtDay: null,
-        plantedAtHour: null,
-        lastWateredDay: null,
-        lastWateredHour: null,
-        stateChangedAtDay: 1,
-        stateChangedAtHour: 12,
-        plantedAtTimestamp: null,
-        lastWateredTimestamp: null,
-        stateChangedAtTimestamp: Date.now(),
-        quality: 'normal',
-        fertiliserApplied: false,
-      }]);
+      farmManager.loadPlots([
+        {
+          mapId: 'test_map',
+          position,
+          state: FarmPlotState.FALLOW,
+          cropType: null,
+          plantedAtDay: null,
+          plantedAtHour: null,
+          lastWateredDay: null,
+          lastWateredHour: null,
+          stateChangedAtDay: 1,
+          stateChangedAtHour: 12,
+          plantedAtTimestamp: null,
+          lastWateredTimestamp: null,
+          stateChangedAtTimestamp: Date.now(),
+          quality: 'normal',
+          fertiliserApplied: false,
+        },
+      ]);
       let plot = farmManager.getPlot('test_map', position)!;
       expect(farmManager.getTileTypeForPlot(plot)).toBe(TileType.SOIL_FALLOW);
 
