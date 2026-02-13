@@ -68,6 +68,7 @@ export type {
   SharedWorldEvent,
   SharedEventType,
   SaveDataDocType,
+  DiaryEntryDoc,
 } from './types';
 
 export { FIRESTORE_PATHS, SAVE_DATA_DOCS } from './types';

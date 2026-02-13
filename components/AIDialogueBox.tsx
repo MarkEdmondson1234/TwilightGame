@@ -34,6 +34,7 @@ import { Z_DIALOGUE, zClass } from '../zIndex';
 import { TimeManager } from '../utils/TimeManager';
 import { gameState } from '../GameState';
 import { getSharedDataService } from '../firebase/safe';
+import { recordConversation } from '../services/diaryService';
 import { friendshipManager } from '../utils/FriendshipManager';
 import { globalEventManager } from '../utils/GlobalEventManager';
 import { eventChainManager } from '../utils/EventChainManager';
@@ -395,6 +396,13 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
                 .catch((err) => {
                   console.warn('[AI] Failed to contribute conversation summary:', err);
                 });
+
+              // Record to diary (AI summary or transcript, localStorage + Firestore)
+              recordConversation(npc.id, npc.name, playerName, message, streamedDialogue).catch(
+                (err) => {
+                  console.warn('[AI] Failed to record diary entry:', err);
+                }
+              );
             }
           }
 
@@ -459,6 +467,13 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
                   .catch((err) => {
                     console.warn('[AI] Failed to contribute conversation summary:', err);
                   });
+
+                // Record to diary (fallback batch response)
+                recordConversation(npc.id, npc.name, playerName, message, response.dialogue).catch(
+                  (err) => {
+                    console.warn('[AI] Failed to record diary entry:', err);
+                  }
+                );
               }
 
               if (response.shouldSendToBed && onSendToBed) {

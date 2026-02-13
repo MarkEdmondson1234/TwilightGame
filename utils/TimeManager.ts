@@ -147,6 +147,34 @@ export class TimeManager {
   }
 
   /**
+   * Get game time for a given real-world timestamp (e.g. from saved chat history)
+   */
+  static getTimeForTimestamp(timestamp: number): GameTime {
+    const msSinceStart = timestamp - TimeManager.GAME_START_DATE;
+    if (msSinceStart < 0) {
+      // Before game start — return year 0 day 1
+      return TimeManager.getCurrentTime();
+    }
+
+    const totalDays = Math.floor(msSinceStart / TimeManager.MS_PER_GAME_DAY);
+    const year = Math.floor(totalDays / TimeManager.DAYS_PER_YEAR);
+    const dayInYear = totalDays % TimeManager.DAYS_PER_YEAR;
+    const seasonIndex = Math.floor(dayInYear / TimeManager.DAYS_PER_SEASON);
+    const season = TimeManager.SEASON_ORDER[seasonIndex];
+    const day = (dayInYear % TimeManager.DAYS_PER_SEASON) + 1;
+    const msPerGameHour = TimeManager.MS_PER_GAME_DAY / 24;
+    const totalHours = Math.floor(msSinceStart / msPerGameHour);
+    const hour = totalHours % 24;
+    const msPerGameMinute = msPerGameHour / 60;
+    const msIntoCurrentHour = msSinceStart % msPerGameHour;
+    const minute = Math.floor(msIntoCurrentHour / msPerGameMinute);
+    const daylight = SEASONAL_DAYLIGHT[season];
+    const timeOfDay = TimeManager.getTimeOfDayForHour(hour, daylight);
+
+    return { year, season, day, totalDays, hour, minute, timeOfDay, totalHours, daylight };
+  }
+
+  /**
    * Determine time of day based on hour and seasonal daylight hours
    */
   private static getTimeOfDayForHour(hour: number, daylight: DaylightHours): TimeOfDay {

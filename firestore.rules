@@ -35,6 +35,11 @@ service cloud.firestore {
         allow read, write: if isOwner(userId);
       }
 
+      // Diary entries subcollection (conversation summaries)
+      match /diary/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
+
       // Save slots collection
       match /saves/{slotId} {
         allow read: if isOwner(userId);

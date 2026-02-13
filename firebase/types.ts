@@ -211,6 +211,29 @@ export interface ConversationsSaveData {
 }
 
 // ============================================
+// Diary Entries (Player's conversation journal)
+// ============================================
+
+/**
+ * A diary entry summarising conversations with an NPC for a single game day.
+ * Stored at: users/{userId}/diary/{npcId}_{totalDays}
+ */
+export interface DiaryEntryDoc {
+  npcId: string;
+  npcName: string;
+  totalDays: number; // Game day (for grouping — one entry per NPC per day)
+  season: string;
+  day: number;
+  year: number;
+  summary: string; // AI-generated diary summary, or raw transcript fallback
+  isAISummary: boolean; // Whether summary was AI-generated or raw transcript
+  exchanges: number; // How many conversation exchanges contributed
+  rawExchanges: string; // Concatenated raw text for re-summarising on update
+  createdAt: number; // Real-world timestamp
+  updatedAt: number; // Real-world timestamp
+}
+
+// ============================================
 // Shared Data Types (Multi-player features)
 // ============================================
 
@@ -283,6 +306,10 @@ export const FIRESTORE_PATHS = {
   // Save data documents are in a subcollection under each save slot
   saveData: (userId: string, slotId: string, docType: string) =>
     `users/${userId}/saves/${slotId}/data/${docType}`,
+
+  // Diary entries: users/{userId}/diary (3 segments = collection ref)
+  userDiary: (userId: string) => `users/${userId}/diary`,
+  diaryEntry: (userId: string, entryId: string) => `users/${userId}/diary/${entryId}`,
 
   // Shared data paths (multi-player features)
   // Conversations: conversations/{npcId}/summaries (3 segments = collection ref)

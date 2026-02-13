@@ -1,11 +1,15 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import { eventChainManager } from '../../utils/EventChainManager';
-import { getChatHistory, getMemories, getCoreMemories } from '../../services/aiChatHistory';
+import {
+  getDiaryEntriesForNPC,
+  getDiaryEntries,
+  syncDiaryFromFirestore,
+} from '../../services/diaryService';
+import type { DiaryEntry } from '../../services/diaryService';
 import type { EventChainProgress } from '../../utils/eventChainTypes';
-import type { CoreMemory } from '../../services/aiChatHistory';
 
 interface JournalContentProps {
   theme: BookThemeConfig;
@@ -28,8 +32,7 @@ interface JournalEntry {
   // NPC-specific
   npcId?: string;
   portrait?: string;
-  coreMemories?: CoreMemory[];
-  recentMessages?: string[];
+  diaryEntries?: DiaryEntry[];
 }
 
 const JOURNAL_CHAPTERS: BookChapter<JournalChapterId>[] = [
@@ -39,10 +42,11 @@ const JOURNAL_CHAPTERS: BookChapter<JournalChapterId>[] = [
 ];
 
 /**
- * Get all NPC IDs that have any AI conversation data in localStorage
+ * Get all NPC IDs that have any conversation data (chat history, memories, or diary entries)
  */
 function getNPCIdsWithConversations(): string[] {
   const npcIds = new Set<string>();
+  // From chat history / memory system
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
     if (!key) continue;
@@ -53,6 +57,10 @@ function getNPCIdsWithConversations(): string[] {
     } else if (key.startsWith('ai_memory_')) {
       npcIds.add(key.slice('ai_memory_'.length));
     }
+  }
+  // From diary entries
+  for (const entry of getDiaryEntries()) {
+    npcIds.add(entry.npcId);
   }
   return [...npcIds];
 }
@@ -76,7 +84,11 @@ function formatNPCName(npcId: string): string {
  * - Conversations: NPC AI conversation summaries
  */
 const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
+  // Counter to force diary data refresh after Firestore sync
+  const [diaryRefreshKey, setDiaryRefreshKey] = useState(0);
+
   // Build journal entries for each chapter
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entriesByChapter = useMemo(() => {
     // Active quests
     const activeQuests: JournalEntry[] = eventChainManager.getActiveChains().map((progress) => {
@@ -126,28 +138,21 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
     const npcIds = getNPCIdsWithConversations();
     const conversations: JournalEntry[] = npcIds
       .map((npcId) => {
-        const chatHistory = getChatHistory(npcId);
-        const coreMemories = getCoreMemories(npcId);
+        const diaryEntries = getDiaryEntriesForNPC(npcId);
 
-        // Skip NPCs with no meaningful data
-        if (chatHistory.length === 0 && coreMemories.length === 0) return null;
+        // Skip NPCs with no diary entries
+        if (diaryEntries.length === 0) return null;
 
-        // Get last few assistant messages as excerpts
-        const recentMessages = chatHistory
-          .filter((msg) => msg.role === 'assistant')
-          .slice(-3)
-          .map((msg) =>
-            msg.content.length > 120 ? msg.content.slice(0, 120) + '...' : msg.content
-          );
+        // Total exchanges across all diary entries
+        const totalExchanges = diaryEntries.reduce((sum, e) => sum + e.exchanges, 0);
 
         return {
           id: `npc_${npcId}`,
           type: 'npc' as const,
-          title: formatNPCName(npcId),
-          subtitle: `${chatHistory.length} messages exchanged`,
+          title: diaryEntries[0].npcName,
+          subtitle: `${totalExchanges} exchange${totalExchanges !== 1 ? 's' : ''} over ${diaryEntries.length} day${diaryEntries.length !== 1 ? 's' : ''}`,
           npcId,
-          coreMemories,
-          recentMessages,
+          diaryEntries,
         };
       })
       .filter((entry) => entry !== null) as JournalEntry[];
@@ -157,9 +162,23 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
       completed: completedQuests,
       conversations,
     };
-  }, []);
+  }, [diaryRefreshKey]);
 
   const pagination = useBookPagination(JOURNAL_CHAPTERS, entriesByChapter, 6);
+
+  // Sync diary from Firestore when conversations chapter is selected
+  useEffect(() => {
+    if (pagination.currentChapterId !== 'conversations') return;
+
+    syncDiaryFromFirestore()
+      .then(() => {
+        // Refresh diary data after sync merges new entries
+        setDiaryRefreshKey((k) => k + 1);
+      })
+      .catch(() => {
+        // Silently ignore — localStorage data still shown
+      });
+  }, [pagination.currentChapterId]);
 
   const selectedEntry = pagination.selectedItem;
 
@@ -393,89 +412,105 @@ const QuestDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }>
 // Conversation Detail Sub-component
 // ============================================================================
 
+/**
+ * Format a diary entry's game date (e.g. "Summer 14, Year 4")
+ * Uses the stored game time fields directly (no timestamp conversion needed)
+ */
+function formatDiaryGameDate(entry: DiaryEntry): string {
+  return `${entry.season} ${entry.day}, Year ${entry.year}`;
+}
+
 const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }> = ({
   entry,
   theme,
-}) => (
-  <div className="h-full flex flex-col">
-    {/* NPC header */}
-    <h3
-      className="text-2xl font-bold mb-1"
-      style={{ fontFamily: theme.fontHeading, color: theme.textPrimary }}
-    >
-      {entry.title}
-    </h3>
-    {entry.subtitle && (
-      <p className="text-lg mb-3" style={{ color: theme.textMuted }}>
-        {entry.subtitle}
-      </p>
-    )}
+}) => {
+  const hasDiary = entry.diaryEntries && entry.diaryEntries.length > 0;
 
-    {/* Core memories */}
-    {entry.coreMemories && entry.coreMemories.length > 0 && (
-      <div className="mb-3">
-        <h4
-          className="text-lg font-bold mb-1 pb-1 border-b"
-          style={{ color: theme.accentPrimary, borderColor: `${theme.accentPrimary}40` }}
-        >
-          Key Memories
-        </h4>
-        <div className="space-y-1">
-          {entry.coreMemories.slice(0, 6).map((mem) => (
-            <div
-              key={mem.id}
-              className="text-lg px-2 py-1.5 rounded"
-              style={{ backgroundColor: `${theme.accentPrimary}10`, color: theme.textSecondary }}
-            >
-              {mem.content}
-            </div>
-          ))}
-          {entry.coreMemories.length > 6 && (
-            <p className="text-lg italic" style={{ color: theme.textMuted }}>
-              ...and {entry.coreMemories.length - 6} more memories
-            </p>
-          )}
-        </div>
-      </div>
-    )}
-
-    {/* Recent conversation excerpts */}
-    {entry.recentMessages && entry.recentMessages.length > 0 && (
-      <div className="flex-1 min-h-0">
-        <h4
-          className="text-lg font-bold mb-1 pb-1 border-b"
-          style={{ color: theme.accentPrimary, borderColor: `${theme.accentPrimary}40` }}
-        >
-          Recent Words
-        </h4>
-        <div className="space-y-2">
-          {entry.recentMessages.map((msg, i) => (
-            <div
-              key={i}
-              className="text-lg p-2 rounded italic"
-              style={{
-                backgroundColor: `${theme.accentSecondary}08`,
-                color: theme.textSecondary,
-                borderLeft: `2px solid ${theme.accentSecondary}40`,
-              }}
-            >
-              &ldquo;{msg}&rdquo;
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Empty state for no memories */}
-    {(!entry.coreMemories || entry.coreMemories.length === 0) &&
-      (!entry.recentMessages || entry.recentMessages.length === 0) && (
-        <div className="flex-1 flex items-center justify-center">
-          <p className="italic text-lg" style={{ color: theme.textMuted }}>
-            No memories recorded yet
-          </p>
-        </div>
+  return (
+    <div className="h-full flex flex-col">
+      {/* NPC header */}
+      <h3
+        className="text-2xl font-bold mb-1"
+        style={{ fontFamily: theme.fontHeading, color: theme.textPrimary }}
+      >
+        {entry.title}
+      </h3>
+      {entry.subtitle && (
+        <p className="text-lg mb-2" style={{ color: theme.textMuted }}>
+          {entry.subtitle}
+        </p>
       )}
-  </div>
-);
+
+      {/* Scrollable content area */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+        {/* Diary entries - one per day, newest first */}
+        {hasDiary && (
+          <div>
+            <h4
+              className="text-lg font-bold mb-1 pb-1 border-b"
+              style={{ color: theme.accentPrimary, borderColor: `${theme.accentPrimary}40` }}
+            >
+              Diary
+            </h4>
+            <div className="space-y-2">
+              {[...entry.diaryEntries!]
+                .sort((a, b) => b.totalDays - a.totalDays)
+                .map((de, i) => (
+                  <div
+                    key={i}
+                    className="text-lg p-2 rounded"
+                    style={{
+                      backgroundColor: `${theme.accentPrimary}08`,
+                      borderLeft: `2px solid ${theme.accentPrimary}30`,
+                    }}
+                  >
+                    <div
+                      className="mb-1 flex items-center gap-2"
+                      style={{ color: theme.textMuted, fontSize: '0.7em' }}
+                    >
+                      <span>{formatDiaryGameDate(de)}</span>
+                      {de.isAISummary && (
+                        <span
+                          style={{
+                            color: theme.accentSecondary,
+                            fontStyle: 'italic',
+                            opacity: 0.7,
+                          }}
+                        >
+                          AI diary
+                        </span>
+                      )}
+                      {de.exchanges > 1 && (
+                        <span style={{ opacity: 0.6 }}>({de.exchanges} exchanges)</span>
+                      )}
+                    </div>
+                    <div
+                      className={de.isAISummary ? 'italic' : ''}
+                      style={{
+                        color: theme.textSecondary,
+                        whiteSpace: 'pre-line',
+                        lineHeight: '1.5',
+                      }}
+                    >
+                      {de.summary}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!hasDiary && (
+          <div className="flex-1 flex items-center justify-center py-8">
+            <p className="italic text-lg" style={{ color: theme.textMuted }}>
+              No memories recorded yet
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default JournalContent;

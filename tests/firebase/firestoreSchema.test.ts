@@ -64,6 +64,11 @@ describe('Firestore path segment counts', () => {
       const p = FIRESTORE_PATHS.sharedEvents();
       expect(isOdd(segmentCount(p))).toBe(true);
     });
+
+    it('userDiary path', () => {
+      const p = FIRESTORE_PATHS.userDiary('uid');
+      expect(isOdd(segmentCount(p))).toBe(true);
+    });
   });
 
   describe('document references (must have EVEN segment count)', () => {
@@ -96,6 +101,11 @@ describe('Firestore path segment counts', () => {
       const p = FIRESTORE_PATHS.sharedEventDoc('event123');
       expect(isOdd(segmentCount(p))).toBe(false);
     });
+
+    it('diaryEntry path', () => {
+      const p = FIRESTORE_PATHS.diaryEntry('uid', 'mum_45');
+      expect(isOdd(segmentCount(p))).toBe(false);
+    });
   });
 
   it('no path should contain empty segments (double slashes)', () => {
@@ -109,6 +119,8 @@ describe('Firestore path segment counts', () => {
       FIRESTORE_PATHS.sharedConversationDoc('mum', 'doc1'),
       FIRESTORE_PATHS.sharedEvents(),
       FIRESTORE_PATHS.sharedEventDoc('evt1'),
+      FIRESTORE_PATHS.userDiary('uid'),
+      FIRESTORE_PATHS.diaryEntry('uid', 'mum_45'),
     ];
 
     allPaths.forEach((p) => {

@@ -3,6 +3,7 @@ import { NPC, DialogueNode, DialogueResponse } from '../types';
 import { getDialogue, NPC_PERSONAS } from '../services/dialogueService';
 import { isAIAvailable } from '../services/anthropicClient';
 import { addToChatHistory } from '../services/aiChatHistory';
+import { recordScriptedConversation } from '../services/diaryService';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
@@ -237,6 +238,18 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
 
     // Save player's chosen response to chat history
     addToChatHistory(npc.id, 'user', response.text);
+
+    // Record scripted dialogue exchange to diary
+    if (currentDialogue?.text) {
+      const playerName = gameState.getSelectedCharacter()?.name || 'Traveller';
+      recordScriptedConversation(
+        npc.id,
+        npc.name,
+        playerName,
+        response.text,
+        currentDialogue.text
+      ).catch(() => {});
+    }
 
     // Process quest actions
     if (response.startsQuest) {

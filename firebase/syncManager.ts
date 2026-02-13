@@ -18,6 +18,7 @@ import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firest
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { cloudSaveService } from './cloudSaveService';
+import { syncDiaryFromFirestore } from '../services/diaryService';
 import { gameState } from '../GameState';
 import { FIRESTORE_PATHS, SyncMetadata } from './types';
 import { eventBus, GameEvent } from '../utils/EventBus';
@@ -135,6 +136,11 @@ class SyncManager {
         console.log('[SyncManager] Saves are in sync');
       }
 
+      // Sync diary entries from Firestore (non-blocking)
+      syncDiaryFromFirestore().catch((err) => {
+        console.warn('[SyncManager] Diary sync failed:', err);
+      });
+
       this.updateState({
         status: 'idle',
         lastSyncTime: Date.now(),
@@ -221,6 +227,11 @@ class SyncManager {
       // Notify game that state was updated
       eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
 
+      // Also sync diary entries (non-blocking)
+      syncDiaryFromFirestore().catch((err) => {
+        console.warn('[SyncManager] Diary sync during download failed:', err);
+      });
+
       console.log('[SyncManager] Downloaded from cloud successfully');
     } catch (error) {
       console.error('[SyncManager] Download failed:', error);
@@ -233,7 +244,7 @@ class SyncManager {
   }
 
   /**
-   * Manual sync - force upload current state to cloud
+   * Manual sync - force upload current state to cloud + pull diary entries
    */
   async syncNow(): Promise<void> {
     if (!authService.isAuthenticated()) {
@@ -241,6 +252,11 @@ class SyncManager {
     }
 
     await this.uploadToCloud();
+
+    // Also pull diary entries from other devices (non-blocking)
+    syncDiaryFromFirestore().catch((err) => {
+      console.warn('[SyncManager] Diary sync failed:', err);
+    });
   }
 
   /**
@@ -301,7 +317,10 @@ class SyncManager {
     if (this.syncInterval) return;
 
     this.syncInterval = setInterval(async () => {
-      if (this.state.pendingChanges && authService.isAuthenticated()) {
+      if (!authService.isAuthenticated()) return;
+
+      // Upload game state if there are pending changes
+      if (this.state.pendingChanges) {
         console.log('[SyncManager] Periodic sync triggered');
         try {
           await this.uploadToCloud();
@@ -309,6 +328,11 @@ class SyncManager {
           console.error('[SyncManager] Periodic sync failed:', error);
         }
       }
+
+      // Always pull diary entries (may have entries from other devices)
+      syncDiaryFromFirestore().catch((err) => {
+        console.warn('[SyncManager] Periodic diary sync failed:', err);
+      });
     }, SYNC_INTERVAL_MS);
 
     console.log('[SyncManager] Periodic sync started (every 5 minutes)');
