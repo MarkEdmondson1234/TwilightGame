@@ -174,6 +174,15 @@ export async function initializeGame(
 
   // If loading a random map, regenerate it with the saved seed
   const savedLocation = gameState.getPlayerLocation();
+
+  // Migration: home_interior was removed — redirect to mums_kitchen
+  if (savedLocation.mapId === 'home_interior') {
+    savedLocation.mapId = 'mums_kitchen';
+    savedLocation.position = { x: 7, y: 6 };
+    gameState.updatePlayerLocation(savedLocation.mapId, savedLocation.position);
+    console.log('[App] Migrated save from home_interior → mums_kitchen');
+  }
+
   // Handle both "cave_12345" format and "RANDOM_CAVE" format
   const randomMapMatch =
     savedLocation.mapId.match(/^(forest|cave|shop)_\d+$/) ||

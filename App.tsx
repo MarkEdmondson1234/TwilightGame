@@ -382,7 +382,7 @@ const App: React.FC = () => {
     staminaManager.initialise({
       showToast,
       teleportHome: () => {
-        handleMapTransition('home_interior', { x: 5, y: 5 });
+        handleMapTransition('mums_kitchen', { x: 7, y: 6 });
       },
     });
   }, [showToast]);

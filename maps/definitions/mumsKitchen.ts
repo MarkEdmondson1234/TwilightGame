@@ -96,9 +96,17 @@ export const mumsKitchen: MapDefinition = {
     {
       fromPosition: { x: 4, y: 8 }, // Door at left side (where D is in grid)
       tileType: TileType.DOOR,
-      toMapId: 'home_interior',
-      toPosition: { x: 5, y: 5 }, // Back to home interior
-      label: 'To Hallway',
+      toMapId: 'village',
+      toPosition: { x: 9, y: 30 }, // Spawn below the home building in village
+      label: 'To Village',
+      hasDoor: true,
+    },
+    {
+      fromPosition: { x: 11, y: 3 }, // Base of stairs (right side of kitchen)
+      tileType: TileType.DOOR,
+      toMapId: 'home_upstairs',
+      toPosition: { x: 3, y: 6 }, // Spawn near stairs in upstairs map
+      label: 'Upstairs',
       hasDoor: true,
     },
   ],
