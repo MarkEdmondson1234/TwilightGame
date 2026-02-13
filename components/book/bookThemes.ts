@@ -112,7 +112,7 @@ export const magicTheme: BookThemeConfig = {
   headerIcon: '✨',
   actionIcon: '🧪',
   // Typography
-  fontHeading: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+  fontHeading: '"UnifrakturCook", "Palatino Linotype", "Book Antiqua", Palatino, serif',
   fontBody: 'Georgia, "Times New Roman", serif',
 };
 
