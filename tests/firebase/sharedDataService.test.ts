@@ -105,40 +105,39 @@ describe('SharedWorldEvent', () => {
 });
 
 describe('Firestore Paths for Shared Data', () => {
-  it('sharedConversations should have correct structure', () => {
+  it('sharedConversations should have correct structure (odd segments for collection)', () => {
     const path = FIRESTORE_PATHS.sharedConversations('mum');
-    expect(path).toBe('shared/conversations/mum/summaries');
+    expect(path).toBe('conversations/mum/summaries');
 
     const segments = path.split('/');
-    expect(segments.length).toBe(4);
-    expect(segments[0]).toBe('shared');
-    expect(segments[1]).toBe('conversations');
-    expect(segments[2]).toBe('mum');
-    expect(segments[3]).toBe('summaries');
+    expect(segments.length).toBe(3); // Odd = valid collection ref
+    expect(segments[0]).toBe('conversations');
+    expect(segments[1]).toBe('mum');
+    expect(segments[2]).toBe('summaries');
   });
 
-  it('sharedConversationDoc should have correct structure', () => {
+  it('sharedConversationDoc should have correct structure (even segments for doc)', () => {
     const path = FIRESTORE_PATHS.sharedConversationDoc('mum', 'summary123');
-    expect(path).toBe('shared/conversations/mum/summaries/summary123');
+    expect(path).toBe('conversations/mum/summaries/summary123');
 
     const segments = path.split('/');
-    expect(segments.length).toBe(5);
+    expect(segments.length).toBe(4); // Even = valid doc ref
   });
 
-  it('sharedEvents should have correct structure', () => {
+  it('sharedEvents should have correct structure (odd segments for collection)', () => {
     const path = FIRESTORE_PATHS.sharedEvents();
-    expect(path).toBe('shared/events');
+    expect(path).toBe('sharedEvents');
 
     const segments = path.split('/');
-    expect(segments.length).toBe(2);
+    expect(segments.length).toBe(1); // Odd = valid collection ref
   });
 
-  it('sharedEventDoc should have correct structure', () => {
+  it('sharedEventDoc should have correct structure (even segments for doc)', () => {
     const path = FIRESTORE_PATHS.sharedEventDoc('event123');
-    expect(path).toBe('shared/events/event123');
+    expect(path).toBe('sharedEvents/event123');
 
     const segments = path.split('/');
-    expect(segments.length).toBe(3);
+    expect(segments.length).toBe(2); // Even = valid doc ref
   });
 });
 

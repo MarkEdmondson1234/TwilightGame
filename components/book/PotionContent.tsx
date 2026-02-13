@@ -9,7 +9,7 @@ import { getItem } from '../../data/items';
 import { magicManager, BrewingResult } from '../../utils/MagicManager';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
-import { BookThemeConfig, bookStyles, getThemeStyles } from './bookThemes';
+import { BookThemeConfig, getThemeStyles } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
@@ -138,9 +138,9 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
   const leftPageContent = (
     <div className="h-full flex flex-col">
       <h2
-        className="text-lg font-bold mb-2 pb-1 border-b"
+        className="text-xl font-bold mb-2 pb-1 border-b"
         style={{
-          fontFamily: bookStyles.fontFamily.heading,
+          fontFamily: theme.fontHeading,
           color: theme.textPrimary,
           borderColor: theme.accentPrimary,
         }}
@@ -151,7 +151,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
       {/* Level progress bar (for non-all chapters) */}
       {pagination.currentChapterId !== 'all' && (
         <div className="mb-3">
-          <div className="flex items-center justify-between text-xs mb-1">
+          <div className="flex items-center justify-between text-sm mb-1">
             <span style={{ color: theme.textSecondary }}>
               {getLevelTitle(currentLevel)} Progress
             </span>
@@ -170,7 +170,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
             />
           </div>
           {levelProgress.percentage === 100 && currentLevel !== 'master' && (
-            <p className="text-xs mt-1 italic" style={{ color: theme.masteredColour }}>
+            <p className="text-sm mt-1 italic" style={{ color: theme.masteredColour }}>
               ★ Ready to advance!
             </p>
           )}
@@ -197,19 +197,19 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
                 borderLeft: isSelected
                   ? `3px solid ${theme.accentPrimary}`
                   : '3px solid transparent',
-                fontFamily: bookStyles.fontFamily.body,
+                fontFamily: theme.fontBody,
               }}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium" style={{ color: theme.textPrimary }}>
                   {potion.displayName}
                 </span>
-                <span className="text-sm flex items-center gap-1">
+                <span className="text-base flex items-center gap-1">
                   {isMastered && <span style={{ color: theme.masteredColour }}>★</span>}
                   {hasIngredients && <span style={{ color: theme.successColour }}>✓</span>}
                 </span>
               </div>
-              <div className="text-xs capitalize" style={{ color: theme.textMuted }}>
+              <div className="text-sm capitalize" style={{ color: theme.textMuted }}>
                 {potion.level}
               </div>
             </button>
@@ -236,13 +236,13 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
           <h3
             className="text-xl font-bold"
             style={{
-              fontFamily: bookStyles.fontFamily.heading,
+              fontFamily: theme.fontHeading,
               color: theme.textPrimary,
             }}
           >
             {selectedPotion.displayName}
           </h3>
-          <p className="text-sm" style={{ color: theme.textSecondary }}>
+          <p className="text-base" style={{ color: theme.textSecondary }}>
             {selectedPotion.description}
           </p>
 
@@ -271,7 +271,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
 
           {/* Effect description */}
           <div
-            className="text-sm p-2 rounded"
+            className="text-base p-2 rounded"
             style={{ backgroundColor: `${theme.accentPrimary}15` }}
           >
             <span className="font-bold" style={{ color: theme.textSecondary }}>
@@ -282,7 +282,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
 
           {/* Stats row */}
           <div
-            className="flex flex-wrap gap-2 text-xs py-2 border-y"
+            className="flex flex-wrap gap-2 text-sm py-2 border-y"
             style={{ borderColor: theme.accentPrimary }}
           >
             <span style={{ color: theme.textSecondary }}>
@@ -304,7 +304,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
             const progress = magicManager.getProgress(selectedPotion.id);
             if (progress) {
               return (
-                <div className="text-sm">
+                <div className="text-base">
                   <span style={{ color: theme.textSecondary }}>Brewed: </span>
                   <span style={{ color: theme.textPrimary }}>{progress.timesBrewed} times</span>
                   {progress.isMastered && (
@@ -390,7 +390,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
           className="absolute -top-5 left-1/2 ml-36 px-5 py-1.5 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 z-20"
           style={{
             backgroundColor: theme.buttonColour,
-            fontFamily: bookStyles.fontFamily.body,
+            fontFamily: theme.fontBody,
           }}
         >
           {theme.actionIcon} Brew!

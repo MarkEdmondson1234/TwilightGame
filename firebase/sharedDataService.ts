@@ -11,7 +11,9 @@
 
 import {
   doc,
+  deleteDoc,
   collection,
+  collectionGroup,
   addDoc,
   getDocs,
   query,
@@ -36,7 +38,7 @@ import {
 
 const MAX_SUMMARIES_PER_NPC = 50; // Max summaries to fetch per NPC
 const MAX_EVENTS = 100; // Max events to fetch
-const MAX_CONTRIBUTIONS_PER_DAY = 10; // Rate limit per user
+const MAX_CONTRIBUTIONS_PER_MINUTE = 10; // Rate limit per user
 
 // Hash user ID for privacy (one-way, consistent)
 function hashUserId(userId: string): string {
@@ -108,7 +110,12 @@ class SharedDataService {
       return false;
     }
 
-    if (!isFirebaseInitialized() || !authService.isAuthenticated()) {
+    if (!isFirebaseInitialized()) {
+      console.log('[SharedData] Skipping conversation summary: Firebase not initialised');
+      return false;
+    }
+    if (!authService.isAuthenticated()) {
+      console.log('[SharedData] Skipping conversation summary: not authenticated');
       return false;
     }
 
@@ -116,6 +123,8 @@ class SharedDataService {
       const userId = authService.getUserId()!;
       const user = authService.getUser();
       const db = getFirebaseDb();
+
+      console.log(`[SharedData] Writing conversation summary for ${npcName}: "${topic}"`);
 
       const summaryData: Omit<SharedConversationSummary, 'timestamp'> & {
         timestamp: ReturnType<typeof serverTimestamp>;
@@ -211,18 +220,16 @@ class SharedDataService {
       const user = authService.getUser();
       const db = getFirebaseDb();
 
-      const eventData: Omit<SharedWorldEvent, 'timestamp'> & {
-        timestamp: ReturnType<typeof serverTimestamp>;
-      } = {
+      const eventData: Record<string, unknown> = {
         eventType,
         title,
         description,
         contributorId: hashUserId(userId),
         contributorName: user?.displayName || 'A traveller',
         timestamp: serverTimestamp(),
-        location,
-        metadata,
       };
+      if (location !== undefined) eventData.location = location;
+      if (metadata !== undefined) eventData.metadata = metadata;
 
       const eventsRef = collection(db, FIRESTORE_PATHS.sharedEvents());
       await addDoc(eventsRef, eventData);
@@ -276,15 +283,15 @@ class SharedDataService {
 
   private canContribute(): boolean {
     const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
+    const minuteMs = 60 * 1000;
 
-    // Reset counter if it's a new day
-    if (now - this.lastContributionReset > dayMs) {
+    // Reset counter every minute
+    if (now - this.lastContributionReset > minuteMs) {
       this.contributionCount = 0;
       this.lastContributionReset = now;
     }
 
-    return this.contributionCount < MAX_CONTRIBUTIONS_PER_DAY;
+    return this.contributionCount < MAX_CONTRIBUTIONS_PER_MINUTE;
   }
 
   private recordContribution(): void {
@@ -292,17 +299,133 @@ class SharedDataService {
   }
 
   /**
-   * Get remaining contributions for today
+   * Get remaining contributions this minute
    */
   getRemainingContributions(): number {
     const now = Date.now();
-    const dayMs = 24 * 60 * 60 * 1000;
+    const minuteMs = 60 * 1000;
 
-    if (now - this.lastContributionReset > dayMs) {
-      return MAX_CONTRIBUTIONS_PER_DAY;
+    if (now - this.lastContributionReset > minuteMs) {
+      return MAX_CONTRIBUTIONS_PER_MINUTE;
     }
 
-    return Math.max(0, MAX_CONTRIBUTIONS_PER_DAY - this.contributionCount);
+    return Math.max(0, MAX_CONTRIBUTIONS_PER_MINUTE - this.contributionCount);
+  }
+
+  // ============================================
+  // Admin / Moderation Methods
+  // ============================================
+
+  /**
+   * Get ALL conversation summaries across all NPCs (admin browser).
+   * Uses collectionGroup to query across all NPC subcollections.
+   */
+  async getAllConversationSummaries(
+    maxResults: number = 100
+  ): Promise<(SharedConversationSummary & { docId: string })[]> {
+    if (!isFirebaseInitialized()) {
+      return [];
+    }
+
+    try {
+      const db = getFirebaseDb();
+      const summariesGroup = collectionGroup(db, 'summaries');
+      const q = query(summariesGroup, orderBy('timestamp', 'desc'), limit(maxResults));
+      const snapshot = await getDocs(q);
+      const summaries: (SharedConversationSummary & { docId: string })[] = [];
+
+      snapshot.forEach((docSnap) => {
+        summaries.push({
+          ...(docSnap.data() as SharedConversationSummary),
+          docId: docSnap.id,
+        });
+      });
+
+      console.log(`[SharedData] Admin: fetched ${summaries.length} conversation summaries`);
+      return summaries;
+    } catch (error) {
+      console.error('[SharedData] Failed to get all conversation summaries:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get world events with Firestore document IDs (for admin moderation).
+   */
+  async getWorldEventsWithIds(
+    eventType?: SharedEventType,
+    maxResults: number = 50
+  ): Promise<(SharedWorldEvent & { docId: string })[]> {
+    if (!isFirebaseInitialized()) {
+      return [];
+    }
+
+    try {
+      const db = getFirebaseDb();
+      const eventsRef = collection(db, FIRESTORE_PATHS.sharedEvents());
+
+      let q;
+      if (eventType) {
+        q = query(
+          eventsRef,
+          where('eventType', '==', eventType),
+          orderBy('timestamp', 'desc'),
+          limit(maxResults)
+        );
+      } else {
+        q = query(eventsRef, orderBy('timestamp', 'desc'), limit(maxResults));
+      }
+
+      const snapshot = await getDocs(q);
+      const events: (SharedWorldEvent & { docId: string })[] = [];
+
+      snapshot.forEach((docSnap) => {
+        events.push({
+          ...(docSnap.data() as SharedWorldEvent),
+          docId: docSnap.id,
+        });
+      });
+
+      console.log(`[SharedData] Admin: fetched ${events.length} world events`);
+      return events;
+    } catch (error) {
+      console.error('[SharedData] Failed to get world events with IDs:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete a conversation summary (admin moderation).
+   */
+  async deleteConversationSummary(npcId: string, summaryDocId: string): Promise<boolean> {
+    if (!isFirebaseInitialized()) return false;
+
+    try {
+      const db = getFirebaseDb();
+      await deleteDoc(doc(db, FIRESTORE_PATHS.sharedConversationDoc(npcId, summaryDocId)));
+      console.log(`[SharedData] Deleted conversation summary ${summaryDocId} for ${npcId}`);
+      return true;
+    } catch (error) {
+      console.error('[SharedData] Failed to delete conversation summary:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Delete a world event (admin moderation).
+   */
+  async deleteWorldEvent(eventDocId: string): Promise<boolean> {
+    if (!isFirebaseInitialized()) return false;
+
+    try {
+      const db = getFirebaseDb();
+      await deleteDoc(doc(db, FIRESTORE_PATHS.sharedEventDoc(eventDocId)));
+      console.log(`[SharedData] Deleted world event ${eventDocId}`);
+      return true;
+    } catch (error) {
+      console.error('[SharedData] Failed to delete world event:', error);
+      return false;
+    }
   }
 }
 

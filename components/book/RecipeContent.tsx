@@ -6,7 +6,7 @@ import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { gameState } from '../../GameState';
 import { PlacedItem, Position } from '../../types';
-import { BookThemeConfig, bookStyles, getThemeStyles } from './bookThemes';
+import { BookThemeConfig, getThemeStyles } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
@@ -178,9 +178,9 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   const leftPageContent = (
     <div className="h-full flex flex-col">
       <h2
-        className="text-lg font-bold mb-2 pb-1 border-b"
+        className="text-xl font-bold mb-2 pb-1 border-b"
         style={{
-          fontFamily: bookStyles.fontFamily.heading,
+          fontFamily: theme.fontHeading,
           color: theme.textPrimary,
           borderColor: theme.accentPrimary,
         }}
@@ -207,17 +207,17 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                 borderLeft: isSelected
                   ? `3px solid ${theme.accentPrimary}`
                   : '3px solid transparent',
-                fontFamily: bookStyles.fontFamily.body,
+                fontFamily: theme.fontBody,
               }}
             >
               <div className="flex items-center justify-between">
                 <span
-                  className={`font-medium ${!unlocked ? 'italic' : ''}`}
+                  className={`font-medium text-base ${!unlocked ? 'italic' : ''}`}
                   style={{ color: unlocked ? theme.textPrimary : theme.lockedColour }}
                 >
                   {unlocked ? recipe.displayName : '???'}
                 </span>
-                <span className="text-sm">
+                <span className="text-base">
                   {mastered && <span style={{ color: theme.masteredColour }}>★</span>}
                   {unlocked && !mastered && <span style={{ color: theme.successColour }}>✓</span>}
                   {!unlocked && <span style={{ color: theme.lockedColour }}>🔒</span>}
@@ -236,7 +236,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 
       {/* Stats */}
       <div
-        className="mt-3 pt-2 border-t text-xs"
+        className="mt-3 pt-2 border-t text-sm"
         style={{ borderColor: theme.accentPrimary, color: theme.textMuted }}
       >
         <span style={{ color: theme.accentPrimary }}>
@@ -261,15 +261,15 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
             <div className="flex-shrink-0 space-y-1">
               {/* Recipe header */}
               <h3
-                className="text-lg font-bold"
+                className="text-xl font-bold"
                 style={{
-                  fontFamily: bookStyles.fontFamily.heading,
+                  fontFamily: theme.fontHeading,
                   color: theme.textPrimary,
                 }}
               >
                 {selectedRecipe.displayName}
               </h3>
-              <p className="text-xs" style={{ color: theme.textSecondary }}>
+              <p className="text-sm" style={{ color: theme.textSecondary }}>
                 {selectedRecipe.description}
               </p>
 
@@ -292,7 +292,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 
               {/* Stats row */}
               <div
-                className="flex flex-wrap gap-2 text-xs py-1 border-y"
+                className="flex flex-wrap gap-2 text-sm py-1 border-y"
                 style={{ borderColor: theme.accentPrimary }}
               >
                 <span style={{ color: theme.textSecondary }}>
@@ -321,7 +321,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 
             {/* Scrollable ingredients section */}
             <div className="flex-1 min-h-0 overflow-y-auto mt-1">
-              <h4 className="font-bold mb-1 text-sm" style={{ color: theme.textPrimary }}>
+              <h4 className="font-bold mb-1 text-base" style={{ color: theme.textPrimary }}>
                 Ingredients
               </h4>
               <div className="grid grid-cols-2 gap-1">
@@ -330,7 +330,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                   return (
                     <div
                       key={ing.itemId}
-                      className="flex items-center gap-1 text-xs p-1.5 rounded"
+                      className="flex items-center gap-1 text-sm p-1.5 rounded"
                       style={{ backgroundColor: `${theme.accentPrimary}10` }}
                     >
                       {item?.image && (
@@ -356,7 +356,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
               {/* Result message */}
               {showResult && cookingResult && (
                 <div
-                  className="p-2 rounded-lg text-center font-bold border mt-2 text-sm"
+                  className="p-2 rounded-lg text-center font-bold border mt-2 text-base"
                   style={cookingResult.success ? styles.success : styles.error}
                 >
                   {cookingResult.message}
@@ -368,7 +368,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                 !cookingManager.hasIngredients(selectedRecipe.id) &&
                 nearbyNPCs.some((id) => id.includes('mum')) && (
                   <p
-                    className="text-center text-xs italic mt-1"
+                    className="text-center text-sm italic mt-1"
                     style={{ color: theme.accentPrimary }}
                   >
                     ✨ Mum is helping you cook!
@@ -380,13 +380,13 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
           // Locked recipe view
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div className="text-5xl mb-4">🔒</div>
-            <h3 className="text-lg font-bold mb-2" style={{ color: theme.textMuted }}>
+            <h3 className="text-xl font-bold mb-2" style={{ color: theme.textMuted }}>
               Recipe Locked
             </h3>
             <p className="italic" style={{ color: theme.accentPrimary }}>
               {getUnlockHint(selectedRecipe)}
             </p>
-            <p className="mt-4 text-sm" style={{ color: theme.textMuted }}>
+            <p className="mt-4 text-base" style={{ color: theme.textMuted }}>
               {selectedRecipe.category} • Difficulty: {difficultyStars(selectedRecipe.difficulty)}
             </p>
           </div>
@@ -410,7 +410,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
           className="absolute -top-5 left-1/2 ml-32 px-5 py-1.5 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 z-20"
           style={{
             backgroundColor: theme.buttonColour,
-            fontFamily: bookStyles.fontFamily.body,
+            fontFamily: theme.fontBody,
           }}
         >
           {theme.actionIcon} Cook!

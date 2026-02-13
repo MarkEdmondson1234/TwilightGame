@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { BookThemeConfig, bookStyles } from './bookThemes';
+import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import { eventChainManager } from '../../utils/EventChainManager';
@@ -167,9 +167,9 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
   const leftPageContent = (
     <div className="h-full flex flex-col">
       <h2
-        className="text-lg font-bold mb-2 pb-1 border-b"
+        className="text-2xl font-bold mb-2 pb-1 border-b"
         style={{
-          fontFamily: bookStyles.fontFamily.heading,
+          fontFamily: theme.fontHeading,
           color: theme.textPrimary,
           borderColor: theme.accentPrimary,
         }}
@@ -194,15 +194,15 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
                 borderLeft: isSelected
                   ? `3px solid ${theme.accentPrimary}`
                   : '3px solid transparent',
-                fontFamily: bookStyles.fontFamily.body,
+                fontFamily: theme.fontBody,
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="font-medium text-sm" style={{ color: theme.textPrimary }}>
+                <span className="font-medium text-lg" style={{ color: theme.textPrimary }}>
                   {entry.type === 'npc' ? '💬 ' : ''}
                   {entry.title}
                 </span>
-                <span className="text-xs">
+                <span className="text-lg">
                   {entry.type === 'quest' && entry.progressPercent === 100 && (
                     <span style={{ color: theme.masteredColour }}>✓</span>
                   )}
@@ -212,7 +212,7 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
                 </span>
               </div>
               {entry.subtitle && (
-                <p className="text-xs mt-0.5 truncate" style={{ color: theme.textMuted }}>
+                <p className="text-lg mt-0.5 truncate" style={{ color: theme.textMuted }}>
                   {entry.subtitle}
                 </p>
               )}
@@ -233,7 +233,7 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
 
       {/* Stats */}
       <div
-        className="mt-3 pt-2 border-t text-xs"
+        className="mt-3 pt-2 border-t text-lg"
         style={{ borderColor: theme.accentPrimary, color: theme.textMuted }}
       >
         {pagination.currentChapterId === 'conversations' ? (
@@ -303,13 +303,13 @@ const QuestDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }>
   <div className="h-full flex flex-col">
     {/* Header */}
     <h3
-      className="text-lg font-bold mb-1"
-      style={{ fontFamily: bookStyles.fontFamily.heading, color: theme.textPrimary }}
+      className="text-2xl font-bold mb-1"
+      style={{ fontFamily: theme.fontHeading, color: theme.textPrimary }}
     >
       {entry.title}
     </h3>
     {entry.subtitle && (
-      <p className="text-xs mb-2" style={{ color: theme.textSecondary }}>
+      <p className="text-lg mb-2" style={{ color: theme.textSecondary }}>
         {entry.subtitle}
       </p>
     )}
@@ -317,7 +317,7 @@ const QuestDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }>
     {/* Progress bar */}
     {entry.progressPercent !== undefined && (
       <div className="mb-3">
-        <div className="flex justify-between text-xs mb-1">
+        <div className="flex justify-between text-lg mb-1">
           <span style={{ color: theme.textMuted }}>Progress</span>
           <span
             style={{
@@ -346,7 +346,7 @@ const QuestDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }>
     {/* Current stage text */}
     {entry.stageText && (
       <div
-        className="p-2 rounded mb-3 text-sm italic"
+        className="p-2 rounded mb-3 text-lg italic"
         style={{
           backgroundColor: `${theme.accentPrimary}10`,
           color: theme.textSecondary,
@@ -360,14 +360,14 @@ const QuestDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }>
     {/* Choices made (completed quests) */}
     {entry.choicesSummary && entry.choicesSummary.length > 0 && (
       <div className="mt-2">
-        <h4 className="text-sm font-bold mb-1" style={{ color: theme.textPrimary }}>
+        <h4 className="text-lg font-bold mb-1" style={{ color: theme.textPrimary }}>
           Choices Made
         </h4>
         <div className="space-y-1">
           {entry.choicesSummary.map((choice, i) => (
             <div
               key={i}
-              className="text-xs px-2 py-1 rounded"
+              className="text-lg px-2 py-1 rounded"
               style={{ backgroundColor: `${theme.accentPrimary}10`, color: theme.textSecondary }}
             >
               &bull; {choice}
@@ -380,7 +380,7 @@ const QuestDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeConfig }>
     {/* Started day */}
     {entry.progress && (
       <div
-        className="mt-auto pt-2 border-t text-xs"
+        className="mt-auto pt-2 border-t text-lg"
         style={{ borderColor: `${theme.accentPrimary}40`, color: theme.textMuted }}
       >
         Started on day {entry.progress.startedDay}
@@ -400,13 +400,13 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
   <div className="h-full flex flex-col">
     {/* NPC header */}
     <h3
-      className="text-lg font-bold mb-1"
-      style={{ fontFamily: bookStyles.fontFamily.heading, color: theme.textPrimary }}
+      className="text-2xl font-bold mb-1"
+      style={{ fontFamily: theme.fontHeading, color: theme.textPrimary }}
     >
       {entry.title}
     </h3>
     {entry.subtitle && (
-      <p className="text-xs mb-3" style={{ color: theme.textMuted }}>
+      <p className="text-lg mb-3" style={{ color: theme.textMuted }}>
         {entry.subtitle}
       </p>
     )}
@@ -415,7 +415,7 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
     {entry.coreMemories && entry.coreMemories.length > 0 && (
       <div className="mb-3">
         <h4
-          className="text-sm font-bold mb-1 pb-1 border-b"
+          className="text-lg font-bold mb-1 pb-1 border-b"
           style={{ color: theme.accentPrimary, borderColor: `${theme.accentPrimary}40` }}
         >
           Key Memories
@@ -424,14 +424,14 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
           {entry.coreMemories.slice(0, 6).map((mem) => (
             <div
               key={mem.id}
-              className="text-xs px-2 py-1.5 rounded"
+              className="text-lg px-2 py-1.5 rounded"
               style={{ backgroundColor: `${theme.accentPrimary}10`, color: theme.textSecondary }}
             >
               {mem.content}
             </div>
           ))}
           {entry.coreMemories.length > 6 && (
-            <p className="text-xs italic" style={{ color: theme.textMuted }}>
+            <p className="text-lg italic" style={{ color: theme.textMuted }}>
               ...and {entry.coreMemories.length - 6} more memories
             </p>
           )}
@@ -443,7 +443,7 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
     {entry.recentMessages && entry.recentMessages.length > 0 && (
       <div className="flex-1 min-h-0">
         <h4
-          className="text-sm font-bold mb-1 pb-1 border-b"
+          className="text-lg font-bold mb-1 pb-1 border-b"
           style={{ color: theme.accentPrimary, borderColor: `${theme.accentPrimary}40` }}
         >
           Recent Words
@@ -452,7 +452,7 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
           {entry.recentMessages.map((msg, i) => (
             <div
               key={i}
-              className="text-xs p-2 rounded italic"
+              className="text-lg p-2 rounded italic"
               style={{
                 backgroundColor: `${theme.accentSecondary}08`,
                 color: theme.textSecondary,
@@ -470,7 +470,7 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
     {(!entry.coreMemories || entry.coreMemories.length === 0) &&
       (!entry.recentMessages || entry.recentMessages.length === 0) && (
         <div className="flex-1 flex items-center justify-center">
-          <p className="italic text-sm" style={{ color: theme.textMuted }}>
+          <p className="italic text-lg" style={{ color: theme.textMuted }}>
             No memories recorded yet
           </p>
         </div>

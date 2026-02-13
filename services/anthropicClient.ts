@@ -402,10 +402,10 @@ You MUST format your response EXACTLY like this:
 [META:emotion=EMOTION,action=ACTION_OR_NONE,moderation=SCORE]
 Your spoken dialogue here. Just what you say out loud - no asterisks, no action descriptions.
 [SUGGESTIONS]
-First suggestion
-Second suggestion
-Third suggestion
-Fourth suggestion (farewell option)
+What the player could say next
+Another thing the player could ask or say
+A third player response option
+A farewell from the player (e.g., "I should get going")
 [/SUGGESTIONS]
 
 Rules:
@@ -413,7 +413,8 @@ Rules:
 - ACTION_OR_NONE: physical action without asterisks (e.g., "stirs cauldron", "strokes beard") or "none" if no action
 - SCORE: 0-10 moderation score for the PLAYER's message (0=polite, 5+=rude, 7+=send to bed)
 - Dialogue must NOT contain [META or [SUGGESTIONS markers
-- Include 2-4 suggestions, always with one farewell option last`;
+- Include 2-4 suggestions, always with one farewell option last
+- Suggestions are ALWAYS from the PLAYER's perspective — things the player could say or ask next, NOT things you (the NPC) would say`;
 
   const messages = [...conversationHistory, { role: 'user' as const, content: userMessage }];
 

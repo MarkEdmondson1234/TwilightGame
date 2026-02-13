@@ -8,8 +8,9 @@ rules_version = '2';
 // - users/{userId}/meta/sync                    - Sync metadata
 // - users/{userId}/saves/{slotId}               - Save slot with metadata
 // - users/{userId}/saves/{slotId}/data/{doc}    - Save data documents
-// - shared/conversations/{npcId}/summaries/{id} - Shared conversation summaries
-// - shared/events/{eventId}                     - Shared world events
+// - users/{userId}/paintings/{paintingId}        - Painting image data
+// - conversations/{npcId}/summaries/{id}         - Shared conversation summaries
+// - sharedEvents/{eventId}                      - Shared world events
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -26,6 +27,11 @@ service cloud.firestore {
 
       // Sync metadata subcollection
       match /meta/{metaDoc} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // Paintings subcollection (base64 image data)
+      match /paintings/{paintingId} {
         allow read, write: if isOwner(userId);
       }
 
@@ -49,27 +55,31 @@ service cloud.firestore {
     // ============================================
 
     // Shared conversations - what players discussed with NPCs
-    match /shared/conversations/{npcId}/summaries/{summaryId} {
+    // Path: conversations/{npcId}/summaries/{summaryId}
+    match /conversations/{npcId}/summaries/{summaryId} {
       // Anyone can read conversation summaries
       allow read: if true;
 
       // Only authenticated users can write, with validation
       allow create: if isAuthenticated() && isValidConversationSummary();
 
-      // No updates or deletes (immutable)
-      allow update, delete: if false;
+      // Immutable (no updates), admins can delete for moderation
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     // Shared world events - discoveries, achievements, etc.
-    match /shared/events/{eventId} {
+    // Path: sharedEvents/{eventId}
+    match /sharedEvents/{eventId} {
       // Anyone can read events
       allow read: if true;
 
       // Only authenticated users can write, with validation
       allow create: if isAuthenticated() && isValidWorldEvent();
 
-      // No updates or deletes (immutable)
-      allow update, delete: if false;
+      // Immutable (no updates), admins can delete for moderation
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     // ============================================
@@ -84,6 +94,16 @@ service cloud.firestore {
     // Check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
+    }
+
+    // Check if user is an admin (email whitelist)
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email != null &&
+             request.auth.token.email in [
+               'me@markedmondson.me',
+               'sanneharder@gmail.com'
+             ];
     }
 
     // Validate user profile structure
@@ -120,7 +140,9 @@ service cloud.firestore {
         'friendships',
         'quests',
         'world',
-        'stats'
+        'stats',
+        'decoration',
+        'conversations'
       ];
     }
 
@@ -134,7 +156,7 @@ service cloud.firestore {
              data.topic is string &&
              data.topic.size() <= 100 &&
              data.summary is string &&
-             data.summary.size() <= 500 &&
+             data.summary.size() <= 1000 &&
              data.contributorId is string;
     }
 

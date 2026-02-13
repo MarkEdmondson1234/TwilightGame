@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NPC, DialogueNode, DialogueResponse } from '../types';
 import { getDialogue, NPC_PERSONAS } from '../services/dialogueService';
 import { isAIAvailable } from '../services/anthropicClient';
+import { addToChatHistory } from '../services/aiChatHistory';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
@@ -47,9 +48,13 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
   const [currentNodeId, setCurrentNodeId] = useState<string>(initialNodeId);
   const [currentDialogue, setCurrentDialogue] = useState<DialogueNode | null>(null);
 
+  // Track last saved node to avoid duplicate history entries
+  const lastSavedNodeRef = useRef<string>('');
+
   // Reset to initialNodeId when NPC or initialNodeId changes
   useEffect(() => {
     setCurrentNodeId(initialNodeId);
+    lastSavedNodeRef.current = '';
   }, [npc.id, initialNodeId]);
 
   // Animate the dialogue window frame
@@ -181,6 +186,12 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
       const dialogue = await getDialogue(npc, currentNodeId);
       setCurrentDialogue(dialogue);
 
+      // Save NPC's scripted dialogue to chat history (so AI mode remembers it)
+      if (dialogue?.text && currentNodeId !== lastSavedNodeRef.current) {
+        lastSavedNodeRef.current = currentNodeId;
+        addToChatHistory(npc.id, 'assistant', `[${currentNodeId}] ${dialogue.text}`);
+      }
+
       // Notify parent when dialogue starts (greeting node) for friendship tracking
       // Also handles auto-redirects (e.g. Elias jumps to quest check when quest is active)
       if (currentNodeId === 'greeting' && onNodeChange) {
@@ -223,6 +234,9 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
       onClose();
       return;
     }
+
+    // Save player's chosen response to chat history
+    addToChatHistory(npc.id, 'user', response.text);
 
     // Process quest actions
     if (response.startsQuest) {

@@ -105,10 +105,10 @@ const CottageBook: React.FC<CottageBookProps> = ({
           style={{
             backgroundColor: themeConfig.ribbonColour,
             color: '#fff',
-            fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+            fontFamily: themeConfig.fontHeading,
           }}
         >
-          <span className="text-lg font-bold">{themeConfig.name}</span>
+          <span className="text-2xl font-bold">{themeConfig.name}</span>
         </div>
 
         {/* Book content */}

@@ -31,6 +31,7 @@ import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
 import { usePinchZoom } from './hooks/usePinchZoom';
+import { useBrowserZoomLock } from './hooks/useBrowserZoomLock';
 import { useViewportCulling } from './hooks/useViewportCulling';
 import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
@@ -139,6 +140,7 @@ const App: React.FC = () => {
   // Background-image rooms (interiors) can only zoom in, not out
   // Disable zoom when UI overlays are open so scroll/pinch works in menus
   const isAnyOverlayOpen =
+    !!activeNPC ||
     ui.helpBrowser ||
     ui.cookingUI ||
     ui.recipeBook ||
@@ -158,6 +160,9 @@ const App: React.FC = () => {
     const map = mapManager.getMap(currentMapId);
     return map?.renderMode === 'background-image' ? 1.0 : 0.5;
   }, [currentMapId]);
+  // Always prevent browser-level zoom changes (Ctrl+scroll, Ctrl+/-/0)
+  // Runs independently of game zoom — never disabled, even when overlays are open
+  useBrowserZoomLock();
   const { zoom, resetZoom } = usePinchZoom({ minZoom: zoomMinForMap, enabled: !isAnyOverlayOpen });
 
   // Toast notifications for user feedback
@@ -1029,7 +1034,7 @@ const App: React.FC = () => {
   // Show validation errors screen if there are map errors
   if (mapErrors.length > 0) {
     return (
-      <div className="bg-red-900 text-white w-screen h-screen overflow-auto p-8 font-mono">
+      <div className="bg-red-900 text-white w-full h-full overflow-auto p-8 font-mono">
         <h1 className="text-3xl font-bold mb-4">⚠️ Map Validation Errors</h1>
         <p className="text-lg mb-6 text-red-200">
           The game cannot start until these errors are fixed. Check the map definition files.
@@ -1089,7 +1094,7 @@ const App: React.FC = () => {
 
   if (!isMapInitialized || !currentMap) {
     return (
-      <div className="bg-gray-900 text-white w-screen h-screen flex items-center justify-center">
+      <div className="bg-gray-900 text-white w-full h-full flex items-center justify-center">
         Loading map...
       </div>
     );
@@ -1098,7 +1103,7 @@ const App: React.FC = () => {
   return (
     <div
       ref={gameContainerRef}
-      className="text-white w-screen h-screen overflow-hidden font-sans relative select-none"
+      className="text-white w-full h-full overflow-hidden font-sans relative select-none"
       style={{ backgroundColor: '#5A7247' }}
     >
       {/* PixiJS Renderer (WebGL - High Performance) */}

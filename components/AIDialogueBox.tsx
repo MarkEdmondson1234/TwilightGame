@@ -135,6 +135,9 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   const [pendingSendToBed, setPendingSendToBed] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const autoScrollRef = useRef<number | null>(null);
+  const userScrolledRef = useRef(false);
   const persona = NPC_PERSONAS[npc.id];
 
   // Get player's actual name from character customisation
@@ -363,18 +366,32 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
 
             // Contribute conversation summary to shared data (after meaningful exchanges)
             // Only contribute if the conversation had substantial content
+            console.log(
+              `[AI] Stream complete: dialogue length=${streamedDialogue.length}, will contribute=${streamedDialogue.length > 50}`
+            );
             if (streamedDialogue.length > 50) {
               const gameTime = TimeManager.getCurrentTime();
-              // Extract a topic from the player's message (first few words)
-              const topic = message.length > 30 ? message.slice(0, 30) + '...' : message;
-              // Create a brief summary of what was discussed
-              const summary = `${playerName} asked about "${topic}" and ${npc.name} responded.`;
+              // Topic: player's message (up to 90 chars, rules allow 100)
+              const topic = message.length > 90 ? message.slice(0, 87) + '...' : message;
+              // Summary: include NPC's actual response snippet (rules allow 1000 chars)
+              const responseSnippet =
+                streamedDialogue.length > 300
+                  ? streamedDialogue.slice(0, 297) + '...'
+                  : streamedDialogue;
+              const summary = `${playerName}: "${topic}" — ${npc.name}: "${responseSnippet}"`;
 
               getSharedDataService()
-                .addConversationSummary(npc.id, npc.name, topic, summary, 'neutral', {
-                  season: gameTime.season,
-                  gameDay: gameTime.day,
-                })
+                .addConversationSummary(
+                  npc.id,
+                  npc.name,
+                  topic,
+                  summary.slice(0, 1000),
+                  'neutral',
+                  {
+                    season: gameTime.season,
+                    gameDay: gameTime.day,
+                  }
+                )
                 .catch((err) => {
                   console.warn('[AI] Failed to contribute conversation summary:', err);
                 });
@@ -421,13 +438,24 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
               // Contribute conversation summary for fallback batch response too
               if (response.dialogue.length > 50) {
                 const gameTime = TimeManager.getCurrentTime();
-                const topic = message.length > 30 ? message.slice(0, 30) + '...' : message;
-                const summary = `${playerName} asked about "${topic}" and ${npc.name} responded.`;
+                const topic = message.length > 90 ? message.slice(0, 87) + '...' : message;
+                const responseSnippet =
+                  response.dialogue.length > 300
+                    ? response.dialogue.slice(0, 297) + '...'
+                    : response.dialogue;
+                const summary = `${playerName}: "${topic}" — ${npc.name}: "${responseSnippet}"`;
                 getSharedDataService()
-                  .addConversationSummary(npc.id, npc.name, topic, summary, 'neutral', {
-                    season: gameTime.season,
-                    gameDay: gameTime.day,
-                  })
+                  .addConversationSummary(
+                    npc.id,
+                    npc.name,
+                    topic,
+                    summary.slice(0, 1000),
+                    'neutral',
+                    {
+                      season: gameTime.season,
+                      gameDay: gameTime.day,
+                    }
+                  )
                   .catch((err) => {
                     console.warn('[AI] Failed to contribute conversation summary:', err);
                   });
@@ -503,6 +531,62 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
       inputRef.current?.focus();
     }
   }, [showCustomInput]);
+
+  // Gentle auto-scroll when text overflows — pauses if user scrolls manually
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    // Reset user-scroll flag when new message arrives
+    userScrolledRef.current = false;
+    el.scrollTop = 0;
+
+    // Cancel any running auto-scroll
+    if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
+
+    // Wait a moment for content to render, then start scrolling if needed
+    const startDelay = setTimeout(() => {
+      const scrollable = el.scrollHeight - el.clientHeight;
+      if (scrollable <= 2) return; // Nothing to scroll
+
+      const SPEED = 0.35; // px per frame (~21px/sec at 60fps)
+      let lastTime = 0;
+
+      const step = (time: number) => {
+        if (userScrolledRef.current) return;
+        if (!lastTime) lastTime = time;
+        const dt = time - lastTime;
+        lastTime = time;
+
+        el.scrollTop += SPEED * (dt / 16.67); // Normalise to ~60fps
+
+        if (el.scrollTop < el.scrollHeight - el.clientHeight) {
+          autoScrollRef.current = requestAnimationFrame(step);
+        }
+      };
+
+      autoScrollRef.current = requestAnimationFrame(step);
+    }, 800); // Brief pause before scrolling begins
+
+    // Detect manual scroll to pause auto-scroll
+    const handleUserScroll = () => {
+      userScrolledRef.current = true;
+      if (autoScrollRef.current) {
+        cancelAnimationFrame(autoScrollRef.current);
+        autoScrollRef.current = null;
+      }
+    };
+
+    el.addEventListener('wheel', handleUserScroll, { passive: true });
+    el.addEventListener('touchmove', handleUserScroll, { passive: true });
+
+    return () => {
+      clearTimeout(startDelay);
+      if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
+      el.removeEventListener('wheel', handleUserScroll);
+      el.removeEventListener('touchmove', handleUserScroll);
+    };
+  }, [displayMessage, streamState.isStreaming]);
 
   // Core sprite emotions artists would create (limited set)
   // Maps AI emotions to sprite expression names to look for
@@ -740,6 +824,7 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
 
           {/* Main text area */}
           <div
+            ref={scrollRef}
             className="absolute overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600"
             style={{ top: '32%', left: '6%', right: '6%', height: '38%', padding: '2% 3%' }}
           >

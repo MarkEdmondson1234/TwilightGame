@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookThemeConfig, bookStyles } from './bookThemes';
+import { BookThemeConfig } from './bookThemes';
 import BookPage from './BookPage';
 import { BookChapter } from '../../hooks/useBookPagination';
 
@@ -77,7 +77,7 @@ function BookSpread<ChapterId extends string>({
                     onClick={() => !isLocked && onChapterSelect(chapter.id)}
                     disabled={isLocked}
                     className={`
-                      flex items-center gap-1 px-2 py-1 rounded-r-md
+                      flex items-center gap-2 px-4 py-2 rounded-r-md
                       transition-all duration-200 font-medium shadow-md
                       ${isLocked ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:pl-3'}
                       ${isActive ? 'pl-3' : ''}
@@ -85,10 +85,10 @@ function BookSpread<ChapterId extends string>({
                     style={{
                       backgroundColor: isActive ? theme.ribbonColour : `${theme.ribbonColour}cc`,
                       color: '#fff',
-                      fontFamily: bookStyles.fontFamily.body,
-                      fontSize: '10px',
-                      lineHeight: '1.2',
-                      minWidth: '80px',
+                      fontFamily: theme.fontHeading,
+                      fontSize: '15px',
+                      lineHeight: '1.3',
+                      minWidth: '100px',
                     }}
                     title={isLocked ? 'Locked - master previous recipes to unlock' : chapter.label}
                   >

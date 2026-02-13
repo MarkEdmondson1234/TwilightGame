@@ -71,8 +71,8 @@ describe('Firebase Types - SharedWorldEvent', () => {
     // SharedEventType is a union type, but we can verify the FIRESTORE_PATHS exist
     const { FIRESTORE_PATHS, SAVE_DATA_DOCS } = await import('../firebase/types');
 
-    expect(FIRESTORE_PATHS.sharedEvents()).toBe('shared/events');
-    expect(FIRESTORE_PATHS.sharedEventDoc('abc123')).toBe('shared/events/abc123');
+    expect(FIRESTORE_PATHS.sharedEvents()).toBe('sharedEvents');
+    expect(FIRESTORE_PATHS.sharedEventDoc('abc123')).toBe('sharedEvents/abc123');
     expect(SAVE_DATA_DOCS).toContain('quests');
   });
 

@@ -216,7 +216,7 @@ export interface ConversationsSaveData {
 
 /**
  * Conversation summary shared between players
- * Stored at: shared/conversations/{npcId}/summaries/{summaryId}
+ * Stored at: conversations/{npcId}/summaries/{summaryId}
  */
 export interface SharedConversationSummary {
   npcId: string;
@@ -233,7 +233,7 @@ export interface SharedConversationSummary {
 
 /**
  * World event shared between players
- * Stored at: shared/events/{eventId}
+ * Stored at: sharedEvents/{eventId}
  */
 export interface SharedWorldEvent {
   eventType: SharedEventType;
@@ -285,11 +285,13 @@ export const FIRESTORE_PATHS = {
     `users/${userId}/saves/${slotId}/data/${docType}`,
 
   // Shared data paths (multi-player features)
-  sharedConversations: (npcId: string) => `shared/conversations/${npcId}/summaries`,
+  // Conversations: conversations/{npcId}/summaries (3 segments = collection ref)
+  sharedConversations: (npcId: string) => `conversations/${npcId}/summaries`,
   sharedConversationDoc: (npcId: string, summaryId: string) =>
-    `shared/conversations/${npcId}/summaries/${summaryId}`,
-  sharedEvents: () => `shared/events`,
-  sharedEventDoc: (eventId: string) => `shared/events/${eventId}`,
+    `conversations/${npcId}/summaries/${summaryId}`,
+  // Events: sharedEvents (1 segment = collection ref)
+  sharedEvents: () => `sharedEvents`,
+  sharedEventDoc: (eventId: string) => `sharedEvents/${eventId}`,
 } as const;
 
 // Document types for save data

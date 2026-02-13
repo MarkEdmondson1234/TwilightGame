@@ -35,20 +35,29 @@ const BookPage: React.FC<BookPageProps> = ({
         top: pageConfig.top,
         bottom: pageConfig.bottom,
         padding: bookStyles.page.padding,
-        fontFamily: bookStyles.fontFamily.body,
+        fontFamily: theme.fontBody,
         color: theme.textPrimary,
       }}
     >
-      {/* Page content - scrollable within the page bounds */}
-      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">{children}</div>
+      {/* Page content - scrollable within the page bounds, with subtle background for readability */}
+      <div
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-sm"
+        style={{
+          backgroundColor: 'rgba(245, 238, 228, 0.45)',
+          padding: '4%',
+          textShadow: '0 0 6px rgba(245, 238, 228, 0.8)',
+        }}
+      >
+        {children}
+      </div>
 
       {/* Page number (optional) - fixed at bottom */}
       {pageNumber !== undefined && totalPages !== undefined && (
         <div
-          className="text-center text-xs mt-1 select-none flex-shrink-0"
+          className="text-center text-base mt-1 select-none flex-shrink-0"
           style={{
             color: theme.textMuted,
-            fontFamily: bookStyles.fontFamily.body,
+            fontFamily: theme.fontBody,
             fontStyle: 'italic',
           }}
         >

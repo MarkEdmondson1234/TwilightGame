@@ -34,6 +34,9 @@ export interface BookThemeConfig {
   // Decorative
   headerIcon: string; // Icon for chapter headers
   actionIcon: string; // Icon for action button
+  // Typography (per-theme fonts)
+  fontHeading: string;
+  fontBody: string;
 }
 
 /**
@@ -79,6 +82,9 @@ export const cookingTheme: BookThemeConfig = {
   // Icons
   headerIcon: '🍳',
   actionIcon: '🍳',
+  // Typography
+  fontHeading: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+  fontBody: 'Georgia, "Times New Roman", serif',
 };
 
 /**
@@ -105,6 +111,9 @@ export const magicTheme: BookThemeConfig = {
   // Icons
   headerIcon: '✨',
   actionIcon: '🧪',
+  // Typography
+  fontHeading: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+  fontBody: 'Georgia, "Times New Roman", serif',
 };
 
 /**
@@ -131,6 +140,9 @@ export const journalTheme: BookThemeConfig = {
   // Icons
   headerIcon: '📖',
   actionIcon: '🗺️',
+  // Typography
+  fontHeading: '"Oooh Baby", "Palatino Linotype", "Book Antiqua", Palatino, cursive',
+  fontBody: '"Oooh Baby", Georgia, "Times New Roman", cursive',
 };
 
 /**
@@ -161,8 +173,8 @@ export const bookStyles = {
   page: {
     // Left page boundaries (shifted right to fit magic book)
     left: {
-      left: '25%',
-      right: '48%',
+      left: '22%',
+      right: '51%',
       top: '14%',
       bottom: '10%',
     },
@@ -178,8 +190,8 @@ export const bookStyles = {
   },
   // Typography
   fontFamily: {
-    heading: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
-    body: 'Georgia, "Times New Roman", serif',
+    heading: '"Oooh Baby", "Palatino Linotype", "Book Antiqua", Palatino, cursive',
+    body: '"Oooh Baby", Georgia, "Times New Roman", cursive',
   },
   // Animation
   pageTurnDuration: 400, // ms

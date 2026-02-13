@@ -46,6 +46,11 @@ const stubSharedDataService = {
   getRecentDiscoveries: async () => [] as string[],
   getConversationSummaries: async () => [] as any[],
   getRemainingContributions: () => 0,
+  // Admin methods
+  getAllConversationSummaries: async () => [] as any[],
+  getWorldEventsWithIds: async () => [] as any[],
+  deleteConversationSummary: async () => false,
+  deleteWorldEvent: async () => false,
 };
 
 /** SyncState type for UI components */
@@ -95,6 +100,18 @@ const stubCommunityGardenService = {
   getRemotePlots: () => new Map<string, unknown>(),
   isActive: () => false,
   destroy: () => {},
+};
+
+/** Stub cloudSaveService when Firebase is not available */
+const stubCloudSaveService = {
+  getSaveSlots: async () => [] as any[],
+  getSaveMetadata: async () => null,
+  saveGame: async () => {},
+  loadGame: async () => null,
+  deleteSave: async () => {},
+  saveExists: async () => false,
+  getNextAvailableSlot: async () => null as string | null,
+  migrateLocalSave: async () => {},
 };
 
 /** Stub initializeFirebase when Firebase is not available */
@@ -162,6 +179,13 @@ export async function safeInitializeFirebase() {
  */
 export function getPaintingStorageService() {
   return firebaseModule?.paintingStorageService ?? stubPaintingStorage;
+}
+
+/**
+ * Get cloudSaveService (real or stub).
+ */
+export function getCloudSaveService() {
+  return firebaseModule?.cloudSaveService ?? stubCloudSaveService;
 }
 
 /**

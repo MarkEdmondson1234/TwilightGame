@@ -51,6 +51,22 @@ import { getAllConversationData, restoreConversationData } from '../services/aiC
 const GAME_VERSION = '1.0.0';
 const MAX_SAVE_SLOTS = 3;
 
+/**
+ * Recursively replace `undefined` values with `null` in an object.
+ * Firestore rejects `undefined` but accepts `null`.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function stripUndefined<T>(obj: T): T {
+  if (obj === undefined) return null as unknown as T;
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(stripUndefined) as unknown as T;
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    result[key] = stripUndefined(value);
+  }
+  return result as T;
+}
+
 // ============================================
 // CloudSaveService Class
 // ============================================
@@ -151,7 +167,10 @@ class CloudSaveService {
       currentMapId: state.player.currentMapId,
       currentMapSeed: state.player.currentMapSeed,
     };
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'character')), characterData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'character')),
+      stripUndefined(characterData)
+    );
 
     // Save inventory
     const inventoryData: InventorySaveData = {
@@ -159,7 +178,10 @@ class CloudSaveService {
       tools: state.inventory.tools,
       slotOrder: state.inventory.slotOrder,
     };
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'inventory')), inventoryData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'inventory')),
+      stripUndefined(inventoryData)
+    );
 
     // Save farming (exclude shared/global plots — those are in Firestore shared collection)
     const personalPlots = state.farming.plots.filter(
@@ -170,27 +192,42 @@ class CloudSaveService {
       currentTool: state.farming.currentTool,
       selectedSeed: state.farming.selectedSeed,
     };
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'farming')), farmingData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'farming')),
+      stripUndefined(farmingData)
+    );
 
     // Save cooking
     const cookingData: CookingSaveData = state.cooking;
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'cooking')), cookingData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'cooking')),
+      stripUndefined(cookingData)
+    );
 
     // Save magic (if exists)
     if (state.magic) {
       const magicData: MagicSaveData = state.magic;
-      batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'magic')), magicData);
+      batch.set(
+        doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'magic')),
+        stripUndefined(magicData)
+      );
     }
 
     // Save friendships
     const friendshipsData: FriendshipsSaveData = {
       npcFriendships: state.relationships.npcFriendships,
     };
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'friendships')), friendshipsData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'friendships')),
+      stripUndefined(friendshipsData)
+    );
 
     // Save quests
     const questsData: QuestsSaveData = state.quests;
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'quests')), questsData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'quests')),
+      stripUndefined(questsData)
+    );
 
     // Save world state
     const worldData: WorldSaveData = {
@@ -202,7 +239,10 @@ class CloudSaveService {
       forageCooldowns: state.forageCooldowns,
       cutscenes: state.cutscenes,
     };
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'world')), worldData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'world')),
+      stripUndefined(worldData)
+    );
 
     // Save stats
     const statsData: StatsSaveData = {
@@ -220,12 +260,18 @@ class CloudSaveService {
       totalPlayTime: state.stats.totalPlayTime,
       mushroomsCollected: state.stats.mushroomsCollected,
     };
-    batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'stats')), statsData);
+    batch.set(
+      doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'stats')),
+      stripUndefined(statsData)
+    );
 
     // Save decoration state (if exists)
     if (state.decoration) {
       const decorationData: DecorationSaveData = state.decoration;
-      batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'decoration')), decorationData);
+      batch.set(
+        doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'decoration')),
+        stripUndefined(decorationData)
+      );
     }
 
     // Save NPC conversation data (from localStorage, not GameState)
@@ -236,7 +282,7 @@ class CloudSaveService {
       };
       batch.set(
         doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'conversations')),
-        conversationsSaveData
+        stripUndefined(conversationsSaveData)
       );
     }
 

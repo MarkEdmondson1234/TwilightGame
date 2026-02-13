@@ -20,6 +20,7 @@ import {
 } from '../data/exampleGlobalEvents';
 import type { SharedEventType } from '../firebase/types';
 import { isFirebaseLoaded } from '../firebase/safe';
+import DevToolsDatabase from './DevToolsDatabase';
 import './DevTools.css';
 
 interface DevToolsProps {
@@ -1112,22 +1113,13 @@ const DevTools: React.FC<DevToolsProps> = ({
   onOpenPaintingEasel,
   onOpenDecorationWorkshop,
 }) => {
-  console.log('[DevTools] Component rendering');
+  const [activeTab, setActiveTab] = useState<'tools' | 'database'>('tools');
 
   const currentTime = TimeManager.getCurrentTime();
-  console.log('[DevTools] Current time:', currentTime);
-
   const hasOverride = TimeManager.hasTimeOverride();
-  console.log('[DevTools] Has override:', hasOverride);
-
   const currentWeather = gameState.getWeather() || 'clear';
-  console.log('[DevTools] Current weather:', currentWeather);
-
   const currentAutomaticWeather = gameState.getAutomaticWeather();
-  console.log('[DevTools] Automatic weather:', currentAutomaticWeather);
-
   const currentDriftSpeed = gameState.getWeatherDriftSpeed();
-  console.log('[DevTools] Drift speed:', currentDriftSpeed);
 
   const [season, setSeason] = useState<Season>(currentTime.season);
   const [day, setDay] = useState<number>(currentTime.day);
@@ -1205,183 +1197,207 @@ const DevTools: React.FC<DevToolsProps> = ({
           </button>
         </div>
 
+        <div className="devtools-tabs">
+          <button
+            className={`devtools-tab ${activeTab === 'tools' ? 'devtools-tab-active' : ''}`}
+            onClick={() => setActiveTab('tools')}
+          >
+            Tools
+          </button>
+          <button
+            className={`devtools-tab ${activeTab === 'database' ? 'devtools-tab-active' : ''}`}
+            onClick={() => setActiveTab('database')}
+          >
+            Database
+          </button>
+        </div>
+
         <div className="devtools-content">
-          {hasOverride && <div className="devtools-warning">⚠️ Time Override Active</div>}
+          {activeTab === 'database' ? (
+            <DevToolsDatabase />
+          ) : (
+            <>
+              {hasOverride && <div className="devtools-warning">⚠️ Time Override Active</div>}
 
-          <div className="devtools-section">
-            <h3>Time Control</h3>
+              <div className="devtools-section">
+                <h3>Time Control</h3>
 
-            <div className="devtools-control">
-              <label>Season</label>
-              <select value={season} onChange={(e) => handleSeasonChange(e.target.value as Season)}>
-                <option value={Season.SPRING}>Spring</option>
-                <option value={Season.SUMMER}>Summer</option>
-                <option value={Season.AUTUMN}>Autumn</option>
-                <option value={Season.WINTER}>Winter</option>
-              </select>
-            </div>
+                <div className="devtools-control">
+                  <label>Season</label>
+                  <select
+                    value={season}
+                    onChange={(e) => handleSeasonChange(e.target.value as Season)}
+                  >
+                    <option value={Season.SPRING}>Spring</option>
+                    <option value={Season.SUMMER}>Summer</option>
+                    <option value={Season.AUTUMN}>Autumn</option>
+                    <option value={Season.WINTER}>Winter</option>
+                  </select>
+                </div>
 
-            <div className="devtools-control">
-              <label>Day ({day} of 7)</label>
-              <input
-                type="range"
-                min="1"
-                max="7"
-                value={day}
-                onChange={(e) => handleDayChange(parseInt(e.target.value))}
-              />
-              <span className="devtools-value">{day}</span>
-            </div>
+                <div className="devtools-control">
+                  <label>Day ({day} of 7)</label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="7"
+                    value={day}
+                    onChange={(e) => handleDayChange(parseInt(e.target.value))}
+                  />
+                  <span className="devtools-value">{day}</span>
+                </div>
 
-            <div className="devtools-control">
-              <label>
-                Hour ({hour}:00 - {timeOfDay})
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="23"
-                value={hour}
-                onChange={(e) => handleHourChange(parseInt(e.target.value))}
-              />
-              <span className="devtools-value">{hour}:00</span>
-            </div>
+                <div className="devtools-control">
+                  <label>
+                    Hour ({hour}:00 - {timeOfDay})
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="23"
+                    value={hour}
+                    onChange={(e) => handleHourChange(parseInt(e.target.value))}
+                  />
+                  <span className="devtools-value">{hour}:00</span>
+                </div>
 
-            <button className="devtools-button devtools-reset" onClick={handleResetToRealTime}>
-              Reset to Real Time
-            </button>
-          </div>
+                <button className="devtools-button devtools-reset" onClick={handleResetToRealTime}>
+                  Reset to Real Time
+                </button>
+              </div>
 
-          <div className="devtools-section">
-            <h3>Weather Control</h3>
+              <div className="devtools-section">
+                <h3>Weather Control</h3>
 
-            <div className="devtools-control">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={automaticWeather}
-                  onChange={(e) => handleAutomaticWeatherToggle(e.target.checked)}
-                />{' '}
-                Automatic Weather
-              </label>
-              <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
-                {automaticWeather
-                  ? 'Weather changes automatically based on season'
-                  : 'Manual weather control'}
-              </small>
-            </div>
+                <div className="devtools-control">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={automaticWeather}
+                      onChange={(e) => handleAutomaticWeatherToggle(e.target.checked)}
+                    />{' '}
+                    Automatic Weather
+                  </label>
+                  <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                    {automaticWeather
+                      ? 'Weather changes automatically based on season'
+                      : 'Manual weather control'}
+                  </small>
+                </div>
 
-            <div className="devtools-control">
-              <label>Current Weather</label>
-              <select
-                value={weather}
-                onChange={(e) => handleWeatherChange(e.target.value as any)}
-                disabled={automaticWeather}
-              >
-                <option value="clear">Clear</option>
-                <option value="rain">Rain</option>
-                <option value="snow">Snow</option>
-                <option value="fog">Fog</option>
-                <option value="mist">Mist</option>
-                <option value="storm">Storm</option>
-                <option value="cherry_blossoms">Cherry Blossoms</option>
-              </select>
-              {automaticWeather && (
-                <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
-                  Disable automatic weather to manually change
-                </small>
-              )}
-            </div>
+                <div className="devtools-control">
+                  <label>Current Weather</label>
+                  <select
+                    value={weather}
+                    onChange={(e) => handleWeatherChange(e.target.value as any)}
+                    disabled={automaticWeather}
+                  >
+                    <option value="clear">Clear</option>
+                    <option value="rain">Rain</option>
+                    <option value="snow">Snow</option>
+                    <option value="fog">Fog</option>
+                    <option value="mist">Mist</option>
+                    <option value="storm">Storm</option>
+                    <option value="cherry_blossoms">Cherry Blossoms</option>
+                  </select>
+                  {automaticWeather && (
+                    <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                      Disable automatic weather to manually change
+                    </small>
+                  )}
+                </div>
 
-            <div className="devtools-control">
-              <label>Drift Speed ({driftSpeed.toFixed(1)}x)</label>
-              <input
-                type="range"
-                min="0.1"
-                max="5.0"
-                step="0.1"
-                value={driftSpeed}
-                onChange={(e) => handleDriftSpeedChange(parseFloat(e.target.value))}
-              />
-              <span className="devtools-value">{driftSpeed.toFixed(1)}x</span>
-              <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
-                Controls particle and fog drift speed (0.1x = slow, 5x = fast)
-              </small>
-            </div>
-          </div>
+                <div className="devtools-control">
+                  <label>Drift Speed ({driftSpeed.toFixed(1)}x)</label>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="5.0"
+                    step="0.1"
+                    value={driftSpeed}
+                    onChange={(e) => handleDriftSpeedChange(parseFloat(e.target.value))}
+                  />
+                  <span className="devtools-value">{driftSpeed.toFixed(1)}x</span>
+                  <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                    Controls particle and fog drift speed (0.1x = slow, 5x = fast)
+                  </small>
+                </div>
+              </div>
 
-          <div className="devtools-section">
-            <h3>Audio Control</h3>
-            <AudioDebugSection />
-          </div>
+              <div className="devtools-section">
+                <h3>Audio Control</h3>
+                <AudioDebugSection />
+              </div>
 
-          <div className="devtools-section">
-            <h3>Audio Effects</h3>
-            <AudioEffectsSection />
-          </div>
+              <div className="devtools-section">
+                <h3>Audio Effects</h3>
+                <AudioEffectsSection />
+              </div>
 
-          <div className="devtools-section">
-            <h3>Farming Debug</h3>
-            <FarmingDebugSection onFarmUpdate={onFarmUpdate} />
-          </div>
+              <div className="devtools-section">
+                <h3>Farming Debug</h3>
+                <FarmingDebugSection onFarmUpdate={onFarmUpdate} />
+              </div>
 
-          <div className="devtools-section">
-            <h3>Painting</h3>
-            <PaintingDebugSection
-              onOpenPaintingEasel={onOpenPaintingEasel}
-              onOpenDecorationWorkshop={onOpenDecorationWorkshop}
-            />
-          </div>
+              <div className="devtools-section">
+                <h3>Painting</h3>
+                <PaintingDebugSection
+                  onOpenPaintingEasel={onOpenPaintingEasel}
+                  onOpenDecorationWorkshop={onOpenDecorationWorkshop}
+                />
+              </div>
 
-          <div className="devtools-section">
-            <h3>Magic</h3>
-            <MagicDebugSection />
-          </div>
+              <div className="devtools-section">
+                <h3>Magic</h3>
+                <MagicDebugSection />
+              </div>
 
-          <div className="devtools-section">
-            <h3>Global Events</h3>
-            <GlobalEventsDebugSection />
-          </div>
+              <div className="devtools-section">
+                <h3>Global Events</h3>
+                <GlobalEventsDebugSection />
+              </div>
 
-          <div className="devtools-section">
-            <h3>Event Chains (YAML)</h3>
-            <EventChainsDebugSection />
-          </div>
+              <div className="devtools-section">
+                <h3>Event Chains (YAML)</h3>
+                <EventChainsDebugSection />
+              </div>
 
-          <div className="devtools-section">
-            <h3>Transformations</h3>
-            <div className="devtools-control">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={isFairyForm}
-                  onChange={(e) => onFairyFormToggle?.(e.target.checked)}
-                />{' '}
-                Fairy Form
-              </label>
-              <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
-                {isFairyForm ? 'Transformed into a fairy (tiny size)' : 'Normal human form'}
-              </small>
-            </div>
-          </div>
+              <div className="devtools-section">
+                <h3>Transformations</h3>
+                <div className="devtools-control">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={isFairyForm}
+                      onChange={(e) => onFairyFormToggle?.(e.target.checked)}
+                    />{' '}
+                    Fairy Form
+                  </label>
+                  <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                    {isFairyForm ? 'Transformed into a fairy (tiny size)' : 'Normal human form'}
+                  </small>
+                </div>
+              </div>
 
-          <div className="devtools-section">
-            <h3>Current Status</h3>
-            <div className="devtools-status">
-              <p>
-                <strong>Season:</strong> {season}
-              </p>
-              <p>
-                <strong>Day:</strong> {day} of 7
-              </p>
-              <p>
-                <strong>Time:</strong> {hour}:00 ({timeOfDay})
-              </p>
-              <p>
-                <strong>Weather:</strong> {weather.charAt(0).toUpperCase() + weather.slice(1)}
-              </p>
-            </div>
-          </div>
+              <div className="devtools-section">
+                <h3>Current Status</h3>
+                <div className="devtools-status">
+                  <p>
+                    <strong>Season:</strong> {season}
+                  </p>
+                  <p>
+                    <strong>Day:</strong> {day} of 7
+                  </p>
+                  <p>
+                    <strong>Time:</strong> {hour}:00 ({timeOfDay})
+                  </p>
+                  <p>
+                    <strong>Weather:</strong> {weather.charAt(0).toUpperCase() + weather.slice(1)}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="devtools-footer">
