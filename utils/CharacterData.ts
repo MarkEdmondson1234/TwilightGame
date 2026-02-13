@@ -317,6 +317,13 @@ class CharacterDataManager {
     tools: string[],
     slotOrder?: string[]
   ): boolean {
+    // Preserve existing slotOrder when callers don't pass one,
+    // so that the many call sites that only save items/tools
+    // don't accidentally wipe the persisted slot ordering.
+    if (slotOrder === undefined) {
+      const existing = this.load('inventory') as InventoryData | null;
+      slotOrder = existing?.slotOrder;
+    }
     return this.save('inventory', { items, tools, slotOrder });
   }
 
