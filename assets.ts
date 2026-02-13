@@ -356,6 +356,8 @@ export const magicalAssets = {
     '/TwilightGame/assets-optimized/items/magical/forageable/shrinking_violet_ingredient.png',
   frost_flower: '/TwilightGame/assets-optimized/items/magical/forageable/frost_flower.png',
   ghost_lichen: '/TwilightGame/assets-optimized/items/magical/forageable/ghost_lichen.png',
+  giant_mushroom_cap:
+    '/TwilightGame/assets-optimized/items/magical/forageable/giant_mushroom_cap.png',
   sakura_petal: '/TwilightGame/assets-optimized/items/magical/forageable/sakura_petals.png',
   phoenix_ash: '/TwilightGame/assets-optimized/items/magical/shop/phoenix_ash.png',
 };

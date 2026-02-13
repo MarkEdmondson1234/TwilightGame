@@ -1351,6 +1351,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 55,
+    image: magicalAssets.giant_mushroom_cap,
+    forageSuccessRate: 0.55, // 55% success rate when foraging from giant mushrooms
   },
 
   // Purchaseable from Witch's Shop OR foraged from Mustard Flowers

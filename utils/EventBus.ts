@@ -69,6 +69,9 @@ export enum GameEvent {
   EVENT_CHAIN_CHOICE_REQUIRED = 'chain:choice_required',
   EVENT_CHAIN_OBJECTIVE_REACHED = 'chain:objective_reached',
 
+  // Magic events
+  MAGIC_LEVEL_UP = 'magic:level_up',
+
   // Save events
   LOCAL_SAVE_FLUSHED = 'save:local_flushed',
   CLOUD_SYNC_STARTED = 'save:cloud_sync_started',
@@ -179,6 +182,10 @@ export interface EventPayloads {
   [GameEvent.EVENT_CHAIN_OBJECTIVE_REACHED]: {
     chainId: string;
     stageId: string;
+  };
+  [GameEvent.MAGIC_LEVEL_UP]: {
+    previousLevel: 'novice' | 'journeyman' | 'master';
+    newLevel: 'novice' | 'journeyman' | 'master';
   };
   [GameEvent.LOCAL_SAVE_FLUSHED]: {
     timestamp: number;

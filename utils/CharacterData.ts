@@ -90,6 +90,7 @@ export interface MagicData {
       unlockedAt: number;
     }
   >;
+  witchCongratsReceived?: boolean;
 }
 
 export interface DecorationData {
