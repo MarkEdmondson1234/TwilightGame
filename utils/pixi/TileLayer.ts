@@ -429,7 +429,12 @@ export class TileLayer extends PixiLayer {
         sprite.y = (y + cropConfig.offsetY) * TILE_SIZE;
         sprite.width = cropConfig.width * TILE_SIZE;
         sprite.height = cropConfig.height * TILE_SIZE;
-        sprite.zIndex = cropConfig.zIndex;
+        // Depth-sort crops by Y position (like player/NPCs)
+        // Seedlings stay flat; taller crops use soil bottom as "feet"
+        sprite.zIndex =
+          growthStage === CropGrowthStage.SEEDLING
+            ? Z_TILE_SPRITES
+            : Z_DEPTH_SORTED_BASE + Math.floor((y + 1) * 10);
       } else {
         // Standard single-tile rendering
         sprite.x = x * TILE_SIZE;
@@ -455,7 +460,10 @@ export class TileLayer extends PixiLayer {
         sprite.y = (y + cropConfig.offsetY) * TILE_SIZE;
         sprite.width = cropConfig.width * TILE_SIZE;
         sprite.height = cropConfig.height * TILE_SIZE;
-        sprite.zIndex = cropConfig.zIndex;
+        sprite.zIndex =
+          growthStage === CropGrowthStage.SEEDLING
+            ? Z_TILE_SPRITES
+            : Z_DEPTH_SORTED_BASE + Math.floor((y + 1) * 10);
         sprite.anchor.set(0, 0);
         // Don't reset scale - width/height already set the correct scale internally
       } else {
