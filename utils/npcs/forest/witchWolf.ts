@@ -266,6 +266,26 @@ export function createWitchWolfNPC(
         requiredQuestStage: 4,
         responses: [{ text: 'Thank you, Juniper!' }],
       },
+      // --- Post-novice mastery congratulations (journeyman unlocked) ---
+      {
+        id: 'journeyman_congrats',
+        text: '*Juniper looks up from her cauldron, her eyes widening with pride.* "You\'ve done it! Every novice potion, brewed to perfection." *She claps her hands together.* "I must say, I\'m impressed. Not many have the patience to master them all."',
+        responses: [
+          { text: 'What happens now?', nextId: 'journeyman_declaration' },
+        ],
+      },
+      {
+        id: 'journeyman_declaration',
+        text: '*She straightens up, her expression turning formal.* "By the ancient traditions of the craft, I hereby declare you a Journeyman of the Brewing Arts." *She taps your spellbook, and new pages shimmer into existence.* "Your spellbook has been updated with journeyman-level potions. These are more complex — they require rarer ingredients and greater precision."',
+        responses: [
+          { text: "I won't let you down!", nextId: 'journeyman_advice' },
+          { text: 'Thank you, Juniper!' },
+        ],
+      },
+      {
+        id: 'journeyman_advice',
+        text: '"The journeyman potions draw on the deeper magic of the forest. You\'ll need ingredients like Moonpetal and Adder\'s Meat — things that grow in wild, ancient places." *She smiles warmly.* "But I have faith in you, apprentice. Now off you go — there\'s much to learn."',
+      },
       {
         id: 'magic_talk',
         text: '"Magic is all around us - in the growth of a seed, the turn of the seasons, the pull of the moon on the tides. I simply... help it along. Guide it. Shape it to purpose. It\'s not about power, it\'s about harmony."',

@@ -32,6 +32,7 @@ import { getItem } from '../data/items';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
+import { eventBus, GameEvent } from './EventBus';
 
 // Constants
 const MASTERY_THRESHOLD = 1; // Brew a potion once to master it (for level progression)
@@ -48,6 +49,7 @@ export interface MagicState {
   currentLevel: PotionLevel; // novice, journeyman, or master
   unlockedRecipes: string[]; // Recipe IDs the player knows
   recipeProgress: Record<string, PotionRecipeProgress>;
+  witchCongratsReceived?: boolean; // Whether witch has acknowledged level-up (optional for old saves)
 }
 
 export interface BrewingResult {
@@ -64,6 +66,7 @@ class MagicManagerClass {
   private recipeProgress: Map<string, PotionRecipeProgress> = new Map();
   private magicBookUnlocked = false; // Track locally to avoid circular dependency with GameState
   private currentLevel: PotionLevel = 'novice';
+  private witchCongratsReceived = false; // Whether witch has acknowledged the latest level-up
   private initialised = false;
 
   /**
@@ -77,6 +80,7 @@ class MagicManagerClass {
       // Load magicBookUnlocked locally (critical: don't rely on reading from GameState later)
       this.magicBookUnlocked = saved.magicBookUnlocked ?? false;
       this.currentLevel = saved.currentLevel ?? 'novice';
+      this.witchCongratsReceived = saved.witchCongratsReceived ?? false;
 
       // Load unlocked recipes
       saved.unlockedRecipes.forEach((id) => this.unlockedRecipes.add(id));
@@ -220,7 +224,9 @@ class MagicManagerClass {
     }
 
     // Level up!
+    const previousLevel = this.currentLevel;
     this.currentLevel = nextLevel;
+    this.witchCongratsReceived = false; // Reset so witch can congratulate on new level
     console.log(`[MagicManager] 🌟 Level up! You are now a ${nextLevel} witch!`);
 
     // Unlock all recipes in the new level
@@ -232,6 +238,9 @@ class MagicManagerClass {
     console.log(
       `[MagicManager] 📖 Unlocked ${newLevelRecipes.length} ${nextLevel} recipes!`
     );
+
+    // Emit event for other systems (toast, UI refresh)
+    eventBus.emit(GameEvent.MAGIC_LEVEL_UP, { previousLevel, newLevel: nextLevel });
 
     return { levelUp: true, newLevel: nextLevel };
   }
@@ -428,7 +437,23 @@ class MagicManagerClass {
       currentLevel: this.currentLevel,
       unlockedRecipes: Array.from(this.unlockedRecipes),
       recipeProgress: recipeProgressObj,
+      witchCongratsReceived: this.witchCongratsReceived,
     };
+  }
+
+  /**
+   * Check if the witch has acknowledged the player's latest level-up
+   */
+  hasReceivedWitchCongrats(): boolean {
+    return this.witchCongratsReceived;
+  }
+
+  /**
+   * Mark the witch's level-up congratulations as received
+   */
+  setWitchCongratsReceived(): void {
+    this.witchCongratsReceived = true;
+    this.save();
   }
 
   /**
@@ -492,6 +517,7 @@ class MagicManagerClass {
     this.recipeProgress.clear();
     this.magicBookUnlocked = false; // Reset magic book unlock status
     this.currentLevel = 'novice';
+    this.witchCongratsReceived = false;
     this.initialised = false;
 
     console.log('[MagicManager] Reset magic progress');

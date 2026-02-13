@@ -24,6 +24,7 @@ import {
   getWitchGardenStage,
   WITCH_GARDEN_STAGES,
 } from '../data/questHandlers/witchGardenHandler';
+import { magicManager } from './MagicManager';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -144,6 +145,12 @@ function handleAltheaQuestItems(nodeId: string): void {
  * - Redirects greeting to garden progress when quest is active
  */
 function handleWitchQuestActions(nodeId: string): string | void {
+  // Mark journeyman congratulations as received when player sees it
+  if (nodeId === 'journeyman_congrats') {
+    magicManager.setWitchCongratsReceived();
+    return;
+  }
+
   // Start the quest when accepting via dialogue
   if (nodeId === 'apprentice_accepted') {
     startWitchGardenQuest();
@@ -166,8 +173,16 @@ function handleWitchQuestActions(nodeId: string): string | void {
     // No quest yet — show normal greeting
     if (stage === WITCH_GARDEN_STAGES.NOT_STARTED) return;
 
-    // Quest complete — show normal greeting (quest is done)
-    if (stage >= WITCH_GARDEN_STAGES.COMPLETED) return;
+    // Quest complete — check if witch needs to congratulate level-up
+    if (stage >= WITCH_GARDEN_STAGES.COMPLETED) {
+      if (
+        magicManager.getCurrentLevel() !== 'novice' &&
+        !magicManager.hasReceivedWitchCongrats()
+      ) {
+        return 'journeyman_congrats';
+      }
+      return; // Normal greeting
+    }
 
     // Pickled onions phase — remind player
     if (stage === WITCH_GARDEN_STAGES.PICKLED_ONIONS) {

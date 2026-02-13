@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   PotionRecipeDefinition,
   PotionLevel,
@@ -7,6 +7,7 @@ import {
 } from '../../data/potionRecipes';
 import { getItem } from '../../data/items';
 import { magicManager, BrewingResult } from '../../utils/MagicManager';
+import { eventBus, GameEvent } from '../../utils/EventBus';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { BookThemeConfig, getThemeStyles } from './bookThemes';
@@ -30,6 +31,14 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
   const [brewingResult, setBrewingResult] = useState<BrewingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [levelUpLevel, setLevelUpLevel] = useState<PotionLevel | null>(null);
+  const [magicUpdateTrigger, setMagicUpdateTrigger] = useState(0);
+
+  // Re-evaluate chapters and recipes when magic level changes
+  useEffect(() => {
+    return eventBus.on(GameEvent.MAGIC_LEVEL_UP, () => {
+      setMagicUpdateTrigger((prev) => prev + 1);
+    });
+  }, []);
 
   const styles = getThemeStyles(theme);
 
@@ -55,11 +64,11 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
         locked: !magicManager.isLevelUnlocked('master'),
       },
     ],
-    []
+    [magicUpdateTrigger]
   );
 
-  // Get all unlocked recipes
-  const unlockedRecipes = useMemo(() => magicManager.getUnlockedRecipes(), []);
+  // Get all unlocked recipes (re-evaluate when level changes to include new recipes)
+  const unlockedRecipes = useMemo(() => magicManager.getUnlockedRecipes(), [magicUpdateTrigger]);
 
   // Group recipes by level
   const recipesByLevel = useMemo(() => {
@@ -100,6 +109,9 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
     const result = magicManager.brew(recipeId);
     setBrewingResult(result);
     setShowResult(true);
+
+    // Refresh mastery progress display after each brew
+    setMagicUpdateTrigger((prev) => prev + 1);
 
     // Show level-up celebration if player advanced
     if (result.levelUp && result.newLevel) {

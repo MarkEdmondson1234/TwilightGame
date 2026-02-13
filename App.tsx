@@ -379,6 +379,17 @@ const App: React.FC = () => {
     });
   }, [showToast]);
 
+  // Subscribe to magic level-up — direct player to see the witch
+  useEffect(() => {
+    return eventBus.on(GameEvent.MAGIC_LEVEL_UP, (payload) => {
+      if (payload.newLevel === 'journeyman') {
+        showToast("You've mastered all novice potions! Go see Juniper!", 'success');
+      } else if (payload.newLevel === 'master') {
+        showToast("You've mastered all journeyman potions! Go see Juniper!", 'success');
+      }
+    });
+  }, [showToast]);
+
   // Weather visibility, ambient audio, forest birds, ambient music, time polling,
   // item decay, and movement effect expiration are now handled by EnvironmentController
 

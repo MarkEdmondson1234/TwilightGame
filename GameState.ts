@@ -1068,6 +1068,7 @@ class GameStateManager {
         unlockedAt: number;
       }
     >;
+    witchCongratsReceived?: boolean;
   }): void {
     this.state.magic = magic;
     this.notify();
@@ -1086,6 +1087,7 @@ class GameStateManager {
         unlockedAt: number;
       }
     >;
+    witchCongratsReceived?: boolean;
   } | null {
     return this.state.magic || null;
   }
