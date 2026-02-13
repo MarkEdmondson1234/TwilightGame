@@ -625,7 +625,7 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_homeward',
     effectType: 'teleport_home',
     execute: (callbacks) => {
-      callbacks.teleportPlayer('home_interior', { x: 5, y: 5 });
+      callbacks.teleportPlayer('mums_kitchen', { x: 7, y: 6 });
       callbacks.showToast('You are whisked away home...', 'info');
       callbacks.triggerVFX?.('teleport', callbacks.getPlayerPosition());
       return {

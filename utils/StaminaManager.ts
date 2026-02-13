@@ -99,7 +99,7 @@ class StaminaManagerClass {
     const currentStamina = gameState.getStamina();
 
     // Home restoration (slow passive restore while at home)
-    if (mapId === 'home_interior') {
+    if (mapId === 'mums_kitchen' || mapId === 'home_upstairs') {
       const restoreAmount = STAMINA.HOME_RESTORE_PER_SECOND * deltaTime;
       if (currentStamina < STAMINA.MAX) {
         this.restoreStamina(restoreAmount);

@@ -102,8 +102,8 @@ export const village: MapDefinition = {
     {
       fromPosition: { x: 8.2, y: 27 }, // Home building door (N tile) - lowered to be level with farm plots
       tileType: TileType.BUILDING_DOOR,
-      toMapId: 'home_interior',
-      toPosition: { x: 5, y: 6 },
+      toMapId: 'mums_kitchen',
+      toPosition: { x: 7, y: 6 },
       label: 'To Home',
       hasDoor: true,
     },

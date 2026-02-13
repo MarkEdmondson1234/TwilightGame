@@ -25,8 +25,8 @@ export const introCutscene: CutsceneDefinition = {
 
   onComplete: {
     action: 'transition',
-    mapId: 'home_interior',
-    position: { x: 5, y: 5 },
+    mapId: 'mums_kitchen',
+    position: { x: 7, y: 6 },
   },
 
   scenes: [
