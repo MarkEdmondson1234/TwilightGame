@@ -7,7 +7,7 @@
 
 import { uiAssets } from '../../assets';
 
-export type BookTheme = 'cooking' | 'magic';
+export type BookTheme = 'cooking' | 'magic' | 'journal';
 
 /**
  * Theme configuration for the cottage book UI
@@ -108,6 +108,32 @@ export const magicTheme: BookThemeConfig = {
 };
 
 /**
+ * Journal theme - warm greens and parchment
+ */
+export const journalTheme: BookThemeConfig = {
+  name: 'Quest Journal',
+  backgroundImage: uiAssets.openbook_ui,
+  // Earthy greens and warm parchment
+  accentPrimary: '#5C6B3D', // olive
+  accentSecondary: '#3D5C3D', // forest green
+  ribbonColour: '#4A6741', // sage
+  buttonColour: '#5C6B3D', // olive
+  buttonHoverColour: '#7A8F5D', // lighter olive on hover
+  // Text (same browns for consistency)
+  textPrimary: baseColours.textDark,
+  textSecondary: baseColours.textMedium,
+  textMuted: baseColours.textLight,
+  // Status
+  lockedColour: baseColours.locked,
+  masteredColour: baseColours.gold,
+  successColour: baseColours.success,
+  errorColour: baseColours.error,
+  // Icons
+  headerIcon: '📖',
+  actionIcon: '🗺️',
+};
+
+/**
  * Get theme configuration by name
  */
 export function getBookTheme(theme: BookTheme): BookThemeConfig {
@@ -116,6 +142,8 @@ export function getBookTheme(theme: BookTheme): BookThemeConfig {
       return cookingTheme;
     case 'magic':
       return magicTheme;
+    case 'journal':
+      return journalTheme;
     default:
       return cookingTheme;
   }

@@ -84,13 +84,14 @@ describe('CloudSaveService Data Structures', () => {
         'world',
         'stats',
         'decoration',
+        'conversations',
       ];
 
       expect(SAVE_DATA_DOCS).toEqual(expectedDocs);
     });
 
-    it('should have exactly 10 document types', () => {
-      expect(SAVE_DATA_DOCS.length).toBe(10);
+    it('should have exactly 11 document types', () => {
+      expect(SAVE_DATA_DOCS.length).toBe(11);
     });
   });
 });
@@ -256,6 +257,45 @@ describe('Firestore Path Consistency', () => {
   });
 });
 
+describe('Shared Farm Plot Filtering', () => {
+  // Mirrors SHARED_FARM_MAP_IDS from constants.ts — these are the maps
+  // where farm plots are globally shared via Firestore (not saved per-player).
+  const SHARED_FARM_MAP_IDS = new Set(['village', 'farm_area']);
+
+  it('should identify village and farm_area as shared maps', () => {
+    expect(SHARED_FARM_MAP_IDS.has('village')).toBe(true);
+    expect(SHARED_FARM_MAP_IDS.has('farm_area')).toBe(true);
+    expect(SHARED_FARM_MAP_IDS.has('personal_garden')).toBe(false);
+    expect(SHARED_FARM_MAP_IDS.has('home_interior')).toBe(false);
+  });
+
+  it('should filter shared plots from personal saves', () => {
+    const allPlots = [
+      { mapId: 'village', position: { x: 5, y: 5 }, state: 1 },
+      { mapId: 'farm_area', position: { x: 3, y: 3 }, state: 2 },
+      { mapId: 'personal_garden', position: { x: 1, y: 1 }, state: 1 },
+      { mapId: 'home_interior', position: { x: 2, y: 2 }, state: 0 },
+    ];
+
+    // Replicates the filtering logic from cloudSaveService.saveGame()
+    const personalPlots = allPlots.filter((plot) => !SHARED_FARM_MAP_IDS.has(plot.mapId));
+
+    expect(personalPlots.length).toBe(2);
+    expect(personalPlots.map((p) => p.mapId)).toEqual(['personal_garden', 'home_interior']);
+  });
+
+  it('should preserve all plots when none are on shared maps', () => {
+    const allPlots = [
+      { mapId: 'personal_garden', position: { x: 1, y: 1 }, state: 1 },
+      { mapId: 'personal_garden', position: { x: 2, y: 2 }, state: 2 },
+    ];
+
+    const personalPlots = allPlots.filter((plot) => !SHARED_FARM_MAP_IDS.has(plot.mapId));
+
+    expect(personalPlots.length).toBe(2);
+  });
+});
+
 describe('GameState Mapping', () => {
   it('should map GameState fields to correct save documents', () => {
     // Document which GameState fields go to which save document
@@ -297,6 +337,11 @@ describe('GameState Mapping', () => {
         'stats.mushroomsCollected',
       ],
       decoration: ['decoration.craftedPaints', 'decoration.paintings', 'decoration.hasEasel'],
+      conversations: [
+        'npcConversations.chatHistory',
+        'npcConversations.memories',
+        'npcConversations.coreMemories',
+      ],
     };
 
     // Verify all document types are mapped

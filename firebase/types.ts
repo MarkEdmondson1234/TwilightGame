@@ -188,6 +188,28 @@ export interface DecorationSaveData {
   hasEasel: boolean;
 }
 
+export interface ConversationsSaveData {
+  npcConversations: Record<
+    string,
+    {
+      chatHistory: Array<{ role: string; content: string; timestamp: number }>;
+      memories: Array<{
+        id: string;
+        content: string;
+        category: string;
+        importance: string;
+        createdAt: number;
+      }>;
+      coreMemories: Array<{
+        id: string;
+        content: string;
+        theme: string;
+        createdAt: number;
+      }>;
+    }
+  >;
+}
+
 // ============================================
 // Shared Data Types (Multi-player features)
 // ============================================
@@ -281,7 +303,8 @@ export type SaveDataDocType =
   | 'quests'
   | 'world'
   | 'stats'
-  | 'decoration';
+  | 'decoration'
+  | 'conversations';
 
 export const SAVE_DATA_DOCS: SaveDataDocType[] = [
   'character',
@@ -294,4 +317,5 @@ export const SAVE_DATA_DOCS: SaveDataDocType[] = [
   'world',
   'stats',
   'decoration',
+  'conversations',
 ];

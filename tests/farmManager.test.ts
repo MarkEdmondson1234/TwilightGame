@@ -405,4 +405,121 @@ describe('FarmManager', () => {
       expect(loadedPlot?.state).toBe(FarmPlotState.TILLED);
     });
   });
+
+  describe('Shared farming', () => {
+    const makePlot = (
+      mapId: string,
+      x: number,
+      y: number,
+      state = FarmPlotState.TILLED
+    ): FarmPlot => ({
+      mapId,
+      position: { x, y },
+      state,
+      cropType: state === FarmPlotState.TILLED ? null : 'radish',
+      plantedAtDay: null,
+      plantedAtHour: null,
+      lastWateredDay: null,
+      lastWateredHour: null,
+      stateChangedAtDay: 1,
+      stateChangedAtHour: 12,
+      plantedAtTimestamp: state === FarmPlotState.TILLED ? null : Date.now(),
+      lastWateredTimestamp: null,
+      stateChangedAtTimestamp: Date.now(),
+      quality: 'normal',
+      fertiliserApplied: false,
+    });
+
+    describe('isSharedFarmMap', () => {
+      it('should return true for village', () => {
+        expect(farmManager.isSharedFarmMap('village')).toBe(true);
+      });
+
+      it('should return true for farm_area', () => {
+        expect(farmManager.isSharedFarmMap('farm_area')).toBe(true);
+      });
+
+      it('should return false for personal_garden', () => {
+        expect(farmManager.isSharedFarmMap('personal_garden')).toBe(false);
+      });
+
+      it('should return false for arbitrary maps', () => {
+        expect(farmManager.isSharedFarmMap('test_map')).toBe(false);
+        expect(farmManager.isSharedFarmMap('home_interior')).toBe(false);
+      });
+    });
+
+    describe('getPersonalPlots', () => {
+      it('should exclude plots on shared maps', () => {
+        farmManager.loadPlots([
+          makePlot('village', 5, 5),
+          makePlot('farm_area', 3, 3),
+          makePlot('personal_garden', 1, 1),
+          makePlot('test_map', 2, 2),
+        ]);
+
+        const personal = farmManager.getPersonalPlots();
+        expect(personal.length).toBe(2);
+        expect(personal.every((p) => !['village', 'farm_area'].includes(p.mapId))).toBe(true);
+      });
+
+      it('should return empty when all plots are on shared maps', () => {
+        farmManager.loadPlots([makePlot('village', 5, 5), makePlot('farm_area', 3, 3)]);
+
+        expect(farmManager.getPersonalPlots().length).toBe(0);
+      });
+
+      it('should return all plots when none are on shared maps', () => {
+        farmManager.loadPlots([makePlot('personal_garden', 1, 1), makePlot('test_map', 2, 2)]);
+
+        expect(farmManager.getPersonalPlots().length).toBe(2);
+      });
+    });
+
+    describe('applySharedUpdate', () => {
+      it('should apply remote plot state to local plots', () => {
+        const remotePlot = makePlot('village', 5, 5, FarmPlotState.PLANTED);
+        farmManager.applySharedUpdate('village', remotePlot);
+
+        const plot = farmManager.getPlot('village', { x: 5, y: 5 });
+        expect(plot).toBeDefined();
+        expect(plot?.state).toBe(FarmPlotState.PLANTED);
+        expect(plot?.cropType).toBe('radish');
+      });
+
+      it('should overwrite existing plot with remote state', () => {
+        // Start with a tilled plot
+        farmManager.loadPlots([makePlot('village', 5, 5, FarmPlotState.TILLED)]);
+
+        // Remote says it's now planted
+        const remotePlot = makePlot('village', 5, 5, FarmPlotState.PLANTED);
+        farmManager.applySharedUpdate('village', remotePlot);
+
+        const plot = farmManager.getPlot('village', { x: 5, y: 5 });
+        expect(plot?.state).toBe(FarmPlotState.PLANTED);
+      });
+    });
+
+    describe('removeSharedPlot', () => {
+      it('should reset existing plot to fallow', () => {
+        farmManager.loadPlots([makePlot('village', 5, 5, FarmPlotState.PLANTED)]);
+
+        farmManager.removeSharedPlot('village', 5, 5);
+
+        const plot = farmManager.getPlot('village', { x: 5, y: 5 });
+        expect(plot?.state).toBe(FarmPlotState.FALLOW);
+        expect(plot?.cropType).toBeNull();
+        expect(plot?.plantedAtTimestamp).toBeNull();
+        expect(plot?.lastWateredTimestamp).toBeNull();
+      });
+
+      it('should do nothing for non-existent plots', () => {
+        // Should not throw
+        farmManager.removeSharedPlot('village', 99, 99);
+
+        const plot = farmManager.getPlot('village', { x: 99, y: 99 });
+        expect(plot).toBeUndefined();
+      });
+    });
+  });
 });

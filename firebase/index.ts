@@ -44,6 +44,9 @@ export { sharedDataService } from './sharedDataService';
 // Painting Storage
 export { paintingStorageService } from './paintingStorage';
 
+// Community Garden (Shared Farming)
+export { communityGardenService } from './communityGardenService';
+
 // Types
 export type {
   UserProfile,

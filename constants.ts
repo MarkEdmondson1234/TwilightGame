@@ -7,6 +7,9 @@ export const MAP_WIDTH = 50;
 export const MAP_HEIGHT = 30;
 export const PLAYER_SIZE = 0.8; // fraction of a tile
 
+/** Map IDs where farm plots are globally shared (all players, Firestore-backed) */
+export const SHARED_FARM_MAP_IDS = new Set(['village', 'farm_area']);
+
 // PixiJS Feature Flag - Set to true to use WebGL rendering (10-100x faster)
 // Set to false to use DOM rendering (fallback for compatibility)
 export const USE_PIXI_RENDERER = true; // Enabled for testing

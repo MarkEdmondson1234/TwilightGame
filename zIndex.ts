@@ -186,6 +186,9 @@ export const Z_COOKING = 2040;
 /** Magic Recipe Book */
 export const Z_MAGIC_BOOK = 2045;
 
+/** Quest journal */
+export const Z_JOURNAL = 2048;
+
 /** Recipe book */
 export const Z_RECIPE_BOOK = 2050;
 

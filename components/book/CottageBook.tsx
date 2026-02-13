@@ -1,9 +1,10 @@
 import React, { useEffect, useCallback } from 'react';
 import { Position } from '../../types';
-import { Z_RECIPE_BOOK, Z_MAGIC_BOOK, zClass } from '../../zIndex';
+import { Z_RECIPE_BOOK, Z_MAGIC_BOOK, Z_JOURNAL, zClass } from '../../zIndex';
 import { BookTheme, getBookTheme } from './bookThemes';
 import RecipeContent from './RecipeContent';
 import PotionContent from './PotionContent';
+import JournalContent from './JournalContent';
 
 interface CottageBookProps {
   isOpen: boolean;
@@ -38,7 +39,8 @@ const CottageBook: React.FC<CottageBookProps> = ({
   onItemPlaced,
 }) => {
   const themeConfig = getBookTheme(theme);
-  const zIndex = theme === 'cooking' ? Z_RECIPE_BOOK : Z_MAGIC_BOOK;
+  const zIndex =
+    theme === 'cooking' ? Z_RECIPE_BOOK : theme === 'journal' ? Z_JOURNAL : Z_MAGIC_BOOK;
 
   // Handle ESC key to close
   useEffect(() => {
@@ -120,6 +122,8 @@ const CottageBook: React.FC<CottageBookProps> = ({
               nearbyNPCs={nearbyNPCs}
               onItemPlaced={onItemPlaced}
             />
+          ) : theme === 'journal' ? (
+            <JournalContent theme={themeConfig} />
           ) : (
             <PotionContent theme={themeConfig} />
           )}

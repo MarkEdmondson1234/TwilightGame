@@ -24,6 +24,7 @@ import {
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { GameState } from '../GameState';
+import { SHARED_FARM_MAP_IDS } from '../constants';
 import {
   SaveSlot,
   SaveMetadata,
@@ -37,9 +38,11 @@ import {
   WorldSaveData,
   StatsSaveData,
   DecorationSaveData,
+  ConversationsSaveData,
   FIRESTORE_PATHS,
   SAVE_DATA_DOCS,
 } from './types';
+import { getAllConversationData, restoreConversationData } from '../services/aiChatHistory';
 
 // ============================================
 // Constants
@@ -154,12 +157,16 @@ class CloudSaveService {
     const inventoryData: InventorySaveData = {
       items: state.inventory.items,
       tools: state.inventory.tools,
+      slotOrder: state.inventory.slotOrder,
     };
     batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'inventory')), inventoryData);
 
-    // Save farming
+    // Save farming (exclude shared/global plots — those are in Firestore shared collection)
+    const personalPlots = state.farming.plots.filter(
+      (plot) => !SHARED_FARM_MAP_IDS.has(plot.mapId)
+    );
     const farmingData: FarmingSaveData = {
-      plots: state.farming.plots,
+      plots: personalPlots,
       currentTool: state.farming.currentTool,
       selectedSeed: state.farming.selectedSeed,
     };
@@ -221,6 +228,18 @@ class CloudSaveService {
       batch.set(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'decoration')), decorationData);
     }
 
+    // Save NPC conversation data (from localStorage, not GameState)
+    const conversationData = getAllConversationData();
+    if (Object.keys(conversationData).length > 0) {
+      const conversationsSaveData: ConversationsSaveData = {
+        npcConversations: conversationData,
+      };
+      batch.set(
+        doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'conversations')),
+        conversationsSaveData
+      );
+    }
+
     // Commit all writes atomically
     await batch.commit();
     console.log(`[CloudSave] Saved to slot ${slotId} successfully`);
@@ -249,6 +268,7 @@ class CloudSaveService {
       worldDoc,
       statsDoc,
       decorationDoc,
+      conversationsDoc,
     ] = await Promise.all([
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'character'))),
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'inventory'))),
@@ -260,6 +280,7 @@ class CloudSaveService {
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'world'))),
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'stats'))),
       getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'decoration'))),
+      getDoc(doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'conversations'))),
     ]);
 
     // Extract data with defaults
@@ -276,6 +297,14 @@ class CloudSaveService {
       ? (decorationDoc.data() as DecorationSaveData)
       : undefined;
 
+    // Restore NPC conversations to localStorage (merge with existing)
+    if (conversationsDoc.exists()) {
+      const conversationsData = conversationsDoc.data() as ConversationsSaveData;
+      if (conversationsData.npcConversations) {
+        restoreConversationData(conversationsData.npcConversations);
+      }
+    }
+
     // Reconstruct GameState with defaults for missing data
     const gameState: GameState = {
       selectedCharacter: character?.customization || null,
@@ -290,6 +319,7 @@ class CloudSaveService {
       inventory: {
         items: inventory?.items || [],
         tools: inventory?.tools || [],
+        slotOrder: inventory?.slotOrder,
       },
       farming: {
         plots: farming?.plots || [],

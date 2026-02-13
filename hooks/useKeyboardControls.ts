@@ -24,6 +24,7 @@ import {
   handleEscape,
   handleInventoryToggle,
   handleRecipeBook,
+  handleJournal,
   handleActionCloseUI,
   isBlockingUIOpen,
 } from '../utils/keyHandlers';
@@ -34,6 +35,7 @@ export interface KeyboardControlsConfig {
   showHelpBrowser: boolean;
   showCookingUI: boolean;
   showRecipeBook: boolean;
+  showJournal: boolean;
   showInventory: boolean;
   showShopUI: boolean;
   selectedItemSlot: number | null;
@@ -54,6 +56,7 @@ export interface KeyboardControlsConfig {
   onSetShowHelpBrowser: (show: boolean) => void;
   onSetShowCookingUI: (show: boolean) => void;
   onSetShowRecipeBook: (show: boolean) => void;
+  onSetShowJournal: (show: boolean) => void;
   onSetShowInventory: (show: boolean) => void;
   onSetShowShopUI: (show: boolean) => void;
   onSetPlayerPos: (pos: Position) => void;
@@ -75,6 +78,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showHelpBrowser,
     showCookingUI,
     showRecipeBook,
+    showJournal,
     showInventory,
     showShopUI,
     selectedItemSlot,
@@ -89,6 +93,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetShowHelpBrowser,
     onSetShowCookingUI,
     onSetShowRecipeBook,
+    onSetShowJournal,
     onSetShowInventory,
     onSetShowShopUI,
     onSetPlayerPos,
@@ -108,6 +113,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   const showCookingUIRef = useRef(showCookingUI);
   const showShopUIRef = useRef(showShopUI);
   const showRecipeBookRef = useRef(showRecipeBook);
+  const showJournalRef = useRef(showJournal);
   const showHelpBrowserRef = useRef(showHelpBrowser);
 
   // Update refs when values change
@@ -118,6 +124,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   showCookingUIRef.current = showCookingUI;
   showShopUIRef.current = showShopUI;
   showRecipeBookRef.current = showRecipeBook;
+  showJournalRef.current = showJournal;
   showHelpBrowserRef.current = showHelpBrowser;
 
   // Build handlers object for key handler utilities
@@ -125,11 +132,13 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showHelpBrowser,
     showCookingUI,
     showRecipeBook,
+    showJournal,
     showInventory,
     showShopUI,
     onSetShowHelpBrowser,
     onSetShowCookingUI,
     onSetShowRecipeBook,
+    onSetShowJournal,
     onSetShowInventory,
     onSetShowShopUI,
   };
@@ -187,6 +196,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         showCookingUI: showCookingUIRef.current,
         showShopUI: showShopUIRef.current,
         showRecipeBook: showRecipeBookRef.current,
+        showJournal: showJournalRef.current,
         showInventory: showInventoryRef.current,
       })
     ) {
@@ -330,6 +340,13 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         return;
       }
       handleRecipeBook(uiHandlers);
+      return;
+    }
+
+    // J key to open journal
+    if (e.key === 'j' || e.key === 'J') {
+      e.preventDefault();
+      handleJournal(uiHandlers);
       return;
     }
   }).current;

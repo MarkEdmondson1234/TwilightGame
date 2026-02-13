@@ -21,6 +21,7 @@ import { bearCave } from './definitions/bearCave';
 import { bearDen } from './definitions/bearDen';
 import { mushroomMap } from './definitions/mushroomMap';
 import { ruins } from './definitions/ruins';
+import { personalGarden } from './definitions/personalGarden';
 import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
 import { gameState } from '../GameState';
 
@@ -30,7 +31,7 @@ import { gameState } from '../GameState';
  */
 export function initializeMaps(): void {
   // Register all color schemes
-  Object.values(COLOR_SCHEMES).forEach(scheme => {
+  Object.values(COLOR_SCHEMES).forEach((scheme) => {
     mapManager.registerColorScheme(scheme);
   });
 
@@ -56,6 +57,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(bearDen);
   mapManager.registerMap(mushroomMap);
   mapManager.registerMap(ruins);
+  mapManager.registerMap(personalGarden);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs
@@ -68,7 +70,11 @@ export function initializeMaps(): void {
  * Handle transition to a map, generating random maps as needed
  * Also updates game state for depth tracking
  */
-export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: number }, fromMapId?: string) {
+export function transitionToMap(
+  mapId: string,
+  spawnPoint?: { x: number; y: number },
+  fromMapId?: string
+) {
   // Track depth changes
   if (mapId.startsWith('RANDOM_')) {
     const type = mapId.replace('RANDOM_', '').toLowerCase();

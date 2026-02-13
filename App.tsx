@@ -405,6 +405,7 @@ const App: React.FC = () => {
     showHelpBrowser: ui.helpBrowser,
     showCookingUI: ui.cookingUI,
     showRecipeBook: ui.recipeBook,
+    showJournal: ui.journal,
     showInventory: ui.inventory,
     showShopUI: ui.shopUI,
     selectedItemSlot,
@@ -436,6 +437,7 @@ const App: React.FC = () => {
       }
     },
     onSetShowRecipeBook: (show: boolean) => (show ? openUI('recipeBook') : closeUI('recipeBook')),
+    onSetShowJournal: (show: boolean) => (show ? openUI('journal') : closeUI('journal')),
     onSetShowInventory: (show: boolean) => (show ? openUI('inventory') : closeUI('inventory')),
     onSetShowShopUI: (show) => {
       // Only allow opening shop when inside shop map
@@ -1379,7 +1381,7 @@ const App: React.FC = () => {
             })()}
             onRecipeBookOpen={() => openUI('recipeBook')}
             onMagicBookOpen={() => openUI('magicBook')}
-            onJournalOpen={() => showToast('Journal coming soon!', 'info')}
+            onJournalOpen={() => openUI('journal')}
           />
 
           {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
@@ -1400,6 +1402,7 @@ const App: React.FC = () => {
         !ui.inventory &&
         !ui.cookingUI &&
         !ui.recipeBook &&
+        !ui.journal &&
         !ui.helpBrowser &&
         !ui.shopUI &&
         !ui.characterCreator && (
@@ -1718,6 +1721,9 @@ const App: React.FC = () => {
       )}
       {ui.magicBook && (
         <CottageBook isOpen={ui.magicBook} onClose={() => closeUI('magicBook')} theme="magic" />
+      )}
+      {ui.journal && (
+        <CottageBook isOpen={ui.journal} onClose={() => closeUI('journal')} theme="journal" />
       )}
       {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}
 

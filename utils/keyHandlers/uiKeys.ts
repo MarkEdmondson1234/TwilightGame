@@ -12,11 +12,13 @@ export interface UIKeyHandlers {
   showHelpBrowser: boolean;
   showCookingUI: boolean;
   showRecipeBook: boolean;
+  showJournal: boolean;
   showInventory: boolean;
   showShopUI: boolean;
   onSetShowHelpBrowser: (show: boolean) => void;
   onSetShowCookingUI: (show: boolean) => void;
   onSetShowRecipeBook: (show: boolean) => void;
+  onSetShowJournal: (show: boolean) => void;
   onSetShowInventory: (show: boolean) => void;
   onSetShowShopUI: (show: boolean) => void;
 }
@@ -38,13 +40,28 @@ export function handleEscape(handlers: UIKeyHandlers): boolean {
     handlers.onSetShowRecipeBook(false);
     return true;
   }
+  if (handlers.showJournal) {
+    handlers.onSetShowJournal(false);
+    return true;
+  }
   return false;
+}
+
+/**
+ * Handle J key - Toggle journal
+ */
+export function handleJournal(
+  handlers: Pick<UIKeyHandlers, 'showJournal' | 'onSetShowJournal'>
+): void {
+  handlers.onSetShowJournal(!handlers.showJournal);
 }
 
 /**
  * Handle I key - Toggle inventory
  */
-export function handleInventoryToggle(handlers: Pick<UIKeyHandlers, 'showInventory' | 'onSetShowInventory'>): void {
+export function handleInventoryToggle(
+  handlers: Pick<UIKeyHandlers, 'showInventory' | 'onSetShowInventory'>
+): void {
   handlers.onSetShowInventory(!handlers.showInventory);
 }
 
@@ -52,7 +69,9 @@ export function handleInventoryToggle(handlers: Pick<UIKeyHandlers, 'showInvento
  * Handle B key - Open recipe book
  * Returns message if recipe book is locked, null otherwise
  */
-export function handleRecipeBook(handlers: Pick<UIKeyHandlers, 'onSetShowRecipeBook'>): string | null {
+export function handleRecipeBook(
+  handlers: Pick<UIKeyHandlers, 'onSetShowRecipeBook'>
+): string | null {
   // This function will check unlock state when called from keyboard/touch controls
   handlers.onSetShowRecipeBook(true);
   return null; // Unlock check happens in keyboard controls where we have access to gameState and toast
@@ -75,6 +94,10 @@ export function handleActionCloseUI(handlers: UIKeyHandlers): boolean {
     handlers.onSetShowRecipeBook(false);
     return true;
   }
+  if (handlers.showJournal) {
+    handlers.onSetShowJournal(false);
+    return true;
+  }
   if (handlers.showInventory) {
     handlers.onSetShowInventory(false);
     return true;
@@ -88,7 +111,17 @@ export function handleActionCloseUI(handlers: UIKeyHandlers): boolean {
  */
 export function isBlockingUIOpen(
   activeNPC: string | null,
-  handlers: Pick<UIKeyHandlers, 'showCookingUI' | 'showShopUI' | 'showRecipeBook' | 'showInventory'>
+  handlers: Pick<
+    UIKeyHandlers,
+    'showCookingUI' | 'showShopUI' | 'showRecipeBook' | 'showJournal' | 'showInventory'
+  >
 ): boolean {
-  return !!(activeNPC || handlers.showCookingUI || handlers.showShopUI || handlers.showRecipeBook || handlers.showInventory);
+  return !!(
+    activeNPC ||
+    handlers.showCookingUI ||
+    handlers.showShopUI ||
+    handlers.showRecipeBook ||
+    handlers.showJournal ||
+    handlers.showInventory
+  );
 }

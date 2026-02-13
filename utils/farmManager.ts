@@ -14,7 +14,7 @@ import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
 import { getTileCoords } from './mapUtils';
-import { GROWTH_THRESHOLDS, DEBUG } from '../constants';
+import { GROWTH_THRESHOLDS, DEBUG, SHARED_FARM_MAP_IDS } from '../constants';
 import { getWeatherZone } from '../data/weatherConfig';
 import { eventBus, GameEvent } from './EventBus';
 
@@ -257,6 +257,7 @@ class FarmManager {
     this.registerPlot(plot);
     if (DEBUG.FARM) console.log(`[FarmManager] Tilled soil at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: tile, action: 'till' });
+    this.syncSharedPlot(mapId, position);
     return true;
   }
 
@@ -331,6 +332,7 @@ class FarmManager {
         `[FarmManager] Planted ${cropId} at ${position.x},${position.y} in ${gameTime.season} (used 1 seed)`
       );
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'plant' });
+    this.syncSharedPlot(mapId, position);
     return { success: true };
   }
 
@@ -393,6 +395,7 @@ class FarmManager {
     this.registerPlot(updatedPlot);
     if (DEBUG.FARM) console.log(`[FarmManager] Watered crop at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'water' });
+    this.syncSharedPlot(mapId, position);
     return true;
   }
 
@@ -525,7 +528,12 @@ class FarmManager {
       );
     }
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
-    eventBus.emit(GameEvent.FARM_CROP_HARVESTED, { mapId, cropId: plot.cropType, position: plot.position });
+    eventBus.emit(GameEvent.FARM_CROP_HARVESTED, {
+      mapId,
+      cropId: plot.cropType,
+      position: plot.position,
+    });
+    this.syncSharedPlot(mapId, position);
 
     return {
       cropId: plot.cropType,
@@ -579,9 +587,10 @@ class FarmManager {
     // Add items to inventory
     if (cropYield > 0) {
       // Use flowerItemId if specified (e.g. decoration_sunflower_bouquet), otherwise default crop item
-      const cropItemId = mode === 'flowers' && dh.flowerOption.flowerItemId
-        ? dh.flowerOption.flowerItemId
-        : getCropItemId(plot.cropType);
+      const cropItemId =
+        mode === 'flowers' && dh.flowerOption.flowerItemId
+          ? dh.flowerOption.flowerItemId
+          : getCropItemId(plot.cropType);
       inventoryManager.addItem(cropItemId, cropYield);
     }
     if (seedsDropped > 0) {
@@ -617,7 +626,12 @@ class FarmManager {
       );
     }
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
-    eventBus.emit(GameEvent.FARM_CROP_HARVESTED, { mapId, cropId: plot.cropType, position: plot.position });
+    eventBus.emit(GameEvent.FARM_CROP_HARVESTED, {
+      mapId,
+      cropId: plot.cropType,
+      position: plot.position,
+    });
+    this.syncSharedPlot(mapId, position);
 
     return {
       cropId: plot.cropType,
@@ -658,6 +672,7 @@ class FarmManager {
     this.registerPlot(updatedPlot);
     if (DEBUG.FARM) console.log(`[FarmManager] Cleared dead crop at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'clear' });
+    this.syncSharedPlot(mapId, position);
     return true;
   }
 
@@ -894,6 +909,85 @@ class FarmManager {
     }
 
     return wateredCount;
+  }
+
+  // ============================================
+  // Shared Farm Plot Sync (Village + Farm Area)
+  // ============================================
+
+  /**
+   * Sync a shared farm plot to Firestore after a local action.
+   * No-op if the plot's map is not in SHARED_FARM_MAP_IDS or Firebase is unavailable.
+   */
+  private syncSharedPlot(mapId: string, position: Position): void {
+    if (!SHARED_FARM_MAP_IDS.has(mapId)) return;
+
+    const plot = this.getPlot(mapId, position);
+    if (!plot) return;
+
+    // Lazy-load the safe wrapper to avoid hard dependency on Firebase
+    import('../firebase/safe')
+      .then(({ getCommunityGardenService }) => {
+        const service = getCommunityGardenService();
+        const tile = getTileCoords(position);
+        const plotId = `${mapId}:${tile.x}:${tile.y}`;
+
+        if (plot.state === FarmPlotState.FALLOW) {
+          service.clearPlot(plotId);
+        } else {
+          service.writePlot(plotId, plot);
+        }
+      })
+      .catch(() => {
+        // Firebase not available — local-only mode
+      });
+  }
+
+  /**
+   * Check if a map uses shared (global) farming.
+   */
+  isSharedFarmMap(mapId: string): boolean {
+    return SHARED_FARM_MAP_IDS.has(mapId);
+  }
+
+  /**
+   * Apply remote shared plot state to local plots.
+   * Called when onSnapshot delivers updates from other players.
+   */
+  applySharedUpdate(mapId: string, remotePlot: FarmPlot): void {
+    const key = `${mapId}:${remotePlot.position.x}:${remotePlot.position.y}`;
+    this.plots.set(key, remotePlot);
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {
+      position: remotePlot.position,
+      action: 'water', // Generic action to trigger re-render
+    });
+  }
+
+  /**
+   * Remove a shared plot (remote player cleared/harvested it).
+   */
+  removeSharedPlot(mapId: string, x: number, y: number): void {
+    const key = `${mapId}:${x}:${y}`;
+    const existing = this.plots.get(key);
+    if (existing) {
+      existing.state = FarmPlotState.FALLOW;
+      existing.cropType = null;
+      existing.plantedAtTimestamp = null;
+      existing.lastWateredTimestamp = null;
+      existing.stateChangedAtTimestamp = Date.now();
+      eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {
+        position: { x, y },
+        action: 'clear',
+      });
+    }
+  }
+
+  /**
+   * Get only personal (non-shared) plots for saving to cloud.
+   * Excludes plots on maps in SHARED_FARM_MAP_IDS.
+   */
+  getPersonalPlots(): FarmPlot[] {
+    return Array.from(this.plots.values()).filter((plot) => !SHARED_FARM_MAP_IDS.has(plot.mapId));
   }
 
   /**

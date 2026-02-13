@@ -461,6 +461,120 @@ export function clearAllNPCData(npcId: string): void {
 /**
  * Get storage size for all AI chat data
  */
+/**
+ * Export all conversation data for cloud save.
+ * Returns all NPC conversations keyed by NPC ID.
+ */
+export function getAllConversationData(): Record<
+  string,
+  {
+    chatHistory: ChatMessage[];
+    memories: Memory[];
+    coreMemories: CoreMemory[];
+  }
+> {
+  const result: Record<
+    string,
+    {
+      chatHistory: ChatMessage[];
+      memories: Memory[];
+      coreMemories: CoreMemory[];
+    }
+  > = {};
+
+  // Scan localStorage for all NPC IDs with conversation data
+  const npcIds = new Set<string>();
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (!key) continue;
+    if (key.startsWith(CHAT_PREFIX)) npcIds.add(key.slice(CHAT_PREFIX.length));
+    else if (key.startsWith(MEMORY_PREFIX)) npcIds.add(key.slice(MEMORY_PREFIX.length));
+    else if (key.startsWith(CORE_PREFIX)) npcIds.add(key.slice(CORE_PREFIX.length));
+  }
+
+  for (const npcId of npcIds) {
+    const chatHistory = getChatHistory(npcId);
+    const memories = getMemories(npcId);
+    const coreMemories = getCoreMemories(npcId);
+
+    // Only include NPCs with actual data
+    if (chatHistory.length > 0 || memories.length > 0 || coreMemories.length > 0) {
+      result[npcId] = { chatHistory, memories, coreMemories };
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Restore conversation data from cloud save.
+ * Merges cloud data with existing local data (union, dedup by timestamp/content).
+ */
+export function restoreConversationData(
+  data: Record<
+    string,
+    {
+      chatHistory?: Array<{ role: string; content: string; timestamp: number }>;
+      memories?: Array<{
+        id: string;
+        content: string;
+        category: string;
+        importance: string;
+        createdAt: number;
+      }>;
+      coreMemories?: Array<{ id: string; content: string; theme: string; createdAt: number }>;
+    }
+  >
+): void {
+  for (const [npcId, npcData] of Object.entries(data)) {
+    // Merge chat history: union by timestamp, sort chronologically, cap at max
+    if (npcData.chatHistory && npcData.chatHistory.length > 0) {
+      const local = getChatHistory(npcId);
+      const localTimestamps = new Set(local.map((m) => m.timestamp));
+      const newMessages = (npcData.chatHistory as ChatMessage[]).filter(
+        (m) => !localTimestamps.has(m.timestamp)
+      );
+      if (newMessages.length > 0) {
+        const merged = [...local, ...newMessages]
+          .sort((a, b) => a.timestamp - b.timestamp)
+          .slice(-MAX_MESSAGES_PER_NPC);
+        localStorage.setItem(`${CHAT_PREFIX}${npcId}`, JSON.stringify(merged));
+      }
+    }
+
+    // Merge memories: union by content text, cap at max
+    if (npcData.memories && npcData.memories.length > 0) {
+      const local = getMemories(npcId);
+      const localContents = new Set(local.map((m) => m.content));
+      const newMemories = (npcData.memories as Memory[]).filter(
+        (m) => !localContents.has(m.content)
+      );
+      if (newMemories.length > 0) {
+        const merged = [...local, ...newMemories].slice(-MAX_MEMORIES_PER_NPC);
+        localStorage.setItem(`${MEMORY_PREFIX}${npcId}`, JSON.stringify(merged));
+      }
+    }
+
+    // Merge core memories: union by content text (append-only)
+    if (npcData.coreMemories && npcData.coreMemories.length > 0) {
+      const local = getCoreMemories(npcId);
+      const localContents = new Set(local.map((m) => m.content));
+      const newCore = (npcData.coreMemories as CoreMemory[]).filter(
+        (m) => !localContents.has(m.content)
+      );
+      if (newCore.length > 0) {
+        const merged = [...local, ...newCore].slice(-MAX_CORE_MEMORIES);
+        localStorage.setItem(`${CORE_PREFIX}${npcId}`, JSON.stringify(merged));
+      }
+    }
+  }
+
+  console.log(`[aiChatHistory] Restored conversation data for ${Object.keys(data).length} NPC(s)`);
+}
+
+/**
+ * Get storage size for all AI chat data
+ */
 export function getAIStorageSize(): {
   chat: number;
   memories: number;

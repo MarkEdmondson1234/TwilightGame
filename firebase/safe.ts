@@ -84,6 +84,19 @@ const stubPaintingStorage = {
   loadAllImages: async () => new Map<string, string>(),
 };
 
+/** Stub communityGardenService when Firebase is not available */
+const stubCommunityGardenService = {
+  startListening: () => {},
+  stopListening: () => {},
+  onPlotsChanged: (_cb: (plots: Map<string, unknown>) => void) => () => {},
+  writePlot: async () => false as boolean,
+  clearPlot: async () => false as boolean,
+  getPlotId: (mapId: string, x: number, y: number) => `${mapId}:${x}:${y}`,
+  getRemotePlots: () => new Map<string, unknown>(),
+  isActive: () => false,
+  destroy: () => {},
+};
+
 /** Stub initializeFirebase when Firebase is not available */
 const stubInitializeFirebase = async () => null;
 
@@ -156,6 +169,13 @@ export function getPaintingStorageService() {
  */
 export function getSyncManager() {
   return firebaseModule?.syncManager ?? stubSyncManager;
+}
+
+/**
+ * Get communityGardenService (real or stub).
+ */
+export function getCommunityGardenService() {
+  return firebaseModule?.communityGardenService ?? stubCommunityGardenService;
 }
 
 /**
