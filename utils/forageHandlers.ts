@@ -50,6 +50,7 @@ const RARE_FORAGE_ITEMS = new Set([
   'fly_agaric',
   'fairy_bluebell',
   'ghost_lichen',
+  'giant_mushroom_cap',
   'sakura_petal',
 ]);
 
@@ -543,6 +544,71 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'ghost_lichen', // Reuse field for item ID
       seedName: ghostLichen.displayName,
       message: `Found ${quantityFound} ${ghostLichen.displayName}!`,
+    };
+  }
+
+  // Giant mushroom foraging (giant mushroom cap) - available year-round, any time of day
+  const giantMushroomResult = findTileTypeNearby(
+    playerTileX,
+    playerTileY,
+    TileType.GIANT_MUSHROOM
+  );
+  const giantMushroomAnchor = giantMushroomResult.found
+    ? giantMushroomResult.position
+    : null;
+
+  if (giantMushroomAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found giant mushroom anchor at (${giantMushroomAnchor.x}, ${giantMushroomAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+    const giantMushroomCap = getItem('giant_mushroom_cap');
+    if (!giantMushroomCap) {
+      console.error('[Forage] Giant mushroom cap item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (giant_mushroom_cap has forageSuccessRate: 0.55)
+    const successRate = giantMushroomCap.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position
+      gameState.recordForage(
+        currentMapId,
+        giantMushroomAnchor.x,
+        giantMushroomAnchor.y
+      );
+      return {
+        found: false,
+        message:
+          "You search the giant mushroom, but can't find a piece worth taking.",
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const quantityFound = rollForageQuantity();
+
+    // Add to inventory
+    inventoryManager.addItem('giant_mushroom_cap', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} ${giantMushroomCap.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    // Save and set cooldown at ANCHOR position
+    saveForageResult(
+      currentMapId,
+      giantMushroomAnchor.x,
+      giantMushroomAnchor.y,
+      'giant_mushroom_cap'
+    );
+
+    return {
+      found: true,
+      seedId: 'giant_mushroom_cap',
+      seedName: giantMushroomCap.displayName,
+      message: `Found ${quantityFound} ${giantMushroomCap.displayName}!`,
     };
   }
 
