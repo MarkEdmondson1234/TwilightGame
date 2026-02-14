@@ -1138,12 +1138,7 @@ const App: React.FC = () => {
           <TileRenderer
             currentMap={currentMap}
             currentMapId={currentMapId}
-            visibleRange={{
-              minX: visibleTileMinX,
-              maxX: visibleTileMaxX,
-              minY: visibleTileMinY,
-              maxY: visibleTileMaxY,
-            }}
+            visibleRange={visibleRange}
             seasonKey={seasonKey}
             farmUpdateTrigger={farmUpdateTrigger}
             renderVersion={renderVersion}
@@ -1170,12 +1165,7 @@ const App: React.FC = () => {
         {/* Render Background Animations (behind everything) */}
         <AnimationOverlay
           currentMap={currentMap}
-          visibleRange={{
-            minX: visibleTileMinX,
-            maxX: visibleTileMaxX,
-            minY: visibleTileMinY,
-            maxY: visibleTileMaxY,
-          }}
+          visibleRange={visibleRange}
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="background"
@@ -1187,12 +1177,7 @@ const App: React.FC = () => {
         {/* Render Midground Animations (behind player and NPCs) */}
         <AnimationOverlay
           currentMap={currentMap}
-          visibleRange={{
-            minX: visibleTileMinX,
-            maxX: visibleTileMaxX,
-            minY: visibleTileMinY,
-            maxY: visibleTileMaxY,
-          }}
+          visibleRange={visibleRange}
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="midground"
@@ -1253,12 +1238,7 @@ const App: React.FC = () => {
         {/* Render Foreground Animations (above everything - falling petals, etc.) */}
         <AnimationOverlay
           currentMap={currentMap}
-          visibleRange={{
-            minX: visibleTileMinX,
-            maxX: visibleTileMaxX,
-            minY: visibleTileMinY,
-            maxY: visibleTileMaxY,
-          }}
+          visibleRange={visibleRange}
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="foreground"

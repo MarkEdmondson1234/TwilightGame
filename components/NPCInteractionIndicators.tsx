@@ -195,4 +195,19 @@ const NPCInteractionIndicators: React.FC<NPCInteractionIndicatorsProps> = ({
   );
 };
 
-export default NPCInteractionIndicators;
+// Skip re-render when player has moved less than 0.5 tiles —
+// NPC indicator visibility only changes at interaction radii of 1.5+ tiles
+const POS_THRESHOLD = 0.5;
+
+export default React.memo(NPCInteractionIndicators, (prev, next) => {
+  if (prev.npcs !== next.npcs) return false;
+  if (prev.tileSize !== next.tileSize) return false;
+  if (prev.gridOffset !== next.gridOffset) return false;
+  if (
+    Math.abs(prev.playerPos.x - next.playerPos.x) >= POS_THRESHOLD ||
+    Math.abs(prev.playerPos.y - next.playerPos.y) >= POS_THRESHOLD
+  ) {
+    return false;
+  }
+  return true;
+});

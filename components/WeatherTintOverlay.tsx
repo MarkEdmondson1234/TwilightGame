@@ -69,4 +69,4 @@ const WeatherTintOverlay: React.FC<WeatherTintOverlayProps> = ({ weather, visibl
   return <div style={getOverlayStyle()} />;
 };
 
-export default WeatherTintOverlay;
+export default React.memo(WeatherTintOverlay);

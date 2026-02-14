@@ -38,7 +38,7 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
   layer,
 }) => {
   // Filter animations for this layer
-  const layerAnimations = TILE_ANIMATIONS.filter(anim => anim.layer === layer);
+  const layerAnimations = TILE_ANIMATIONS.filter((anim) => anim.layer === layer);
 
   // Early exit if no animations for this layer
   if (layerAnimations.length === 0) {
@@ -94,9 +94,10 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
 
         // Determine how many instances to render for this animation
         const instanceCount = animation.instances
-          ? (Array.isArray(animation.instances)
-              ? Math.floor(Math.random() * (animation.instances[1] - animation.instances[0] + 1)) + animation.instances[0]
-              : animation.instances)
+          ? Array.isArray(animation.instances)
+            ? Math.floor(Math.random() * (animation.instances[1] - animation.instances[0] + 1)) +
+              animation.instances[0]
+            : animation.instances
           : 1;
 
         // Render multiple instances with varied positions
@@ -115,7 +116,7 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
           const hash = (str: string) => {
             let h = 0;
             for (let i = 0; i < str.length; i++) {
-              h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+              h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
             }
             return Math.abs(h);
           };
@@ -133,9 +134,9 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
 
           // Support array scale or default to 1 (deterministic)
           const scale = animation.scale
-            ? (Array.isArray(animation.scale)
-                ? animation.scale[Math.floor(seededRandom(2) * animation.scale.length)]
-                : animation.scale)
+            ? Array.isArray(animation.scale)
+              ? animation.scale[Math.floor(seededRandom(2) * animation.scale.length)]
+              : animation.scale
             : 1;
 
           // Horizontal flip (deterministic, based on seeded random)
@@ -147,8 +148,8 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
           const scaledSize = gifSize * scale;
 
           // Position includes offset from tile center, minus half the scaled GIF size to center it
-          const animX = tileX + (offsetX * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
-          const animY = tileY + (offsetY * TILE_SIZE) + (TILE_SIZE / 2) - (scaledSize / 2);
+          const animX = tileX + offsetX * TILE_SIZE + TILE_SIZE / 2 - scaledSize / 2;
+          const animY = tileY + offsetY * TILE_SIZE + TILE_SIZE / 2 - scaledSize / 2;
 
           // Check if animation is within visible bounds (accounting for scale)
           if (
@@ -187,4 +188,4 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
   return <>{animationElements}</>;
 };
 
-export default AnimationOverlay;
+export default React.memo(AnimationOverlay);

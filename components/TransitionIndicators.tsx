@@ -211,4 +211,20 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
   );
 };
 
-export default TransitionIndicators;
+// Skip re-render when player has moved less than 0.5 tiles —
+// indicator visibility only changes at interaction radii of 1.5+ tiles
+const POS_THRESHOLD = 0.5;
+
+export default React.memo(TransitionIndicators, (prev, next) => {
+  if (prev.currentMap !== next.currentMap) return false;
+  if (prev.lastTransitionTime !== next.lastTransitionTime) return false;
+  if (prev.tileSize !== next.tileSize) return false;
+  if (prev.gridOffset !== next.gridOffset) return false;
+  if (
+    Math.abs(prev.playerPos.x - next.playerPos.x) >= POS_THRESHOLD ||
+    Math.abs(prev.playerPos.y - next.playerPos.y) >= POS_THRESHOLD
+  ) {
+    return false;
+  }
+  return true;
+});

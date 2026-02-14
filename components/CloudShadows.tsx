@@ -143,7 +143,7 @@ function generateShadows(
     const baseSpeedY = baseSpeedX * (0.2 + random() * 0.3);
 
     // Randomize opacity (0.08-0.18)
-    const baseOpacity = 0.08 + random() * 0.10;
+    const baseOpacity = 0.08 + random() * 0.1;
 
     // Random border radius from presets
     const borderRadius = BORDER_RADIUS_PRESETS[Math.floor(random() * BORDER_RADIUS_PRESETS.length)];
@@ -199,7 +199,7 @@ const CloudShadows: React.FC<CloudShadowsProps> = ({
     const animate = (currentTime: number) => {
       const delta = (currentTime - lastTime) / 1000;
       lastTime = currentTime;
-      setTime(t => t + delta);
+      setTime((t) => t + delta);
       animationFrame = requestAnimationFrame(animate);
     };
 
@@ -218,7 +218,7 @@ const CloudShadows: React.FC<CloudShadowsProps> = ({
     <div
       className={`fixed inset-0 pointer-events-none overflow-hidden ${zClass(Z_SPRITE_BACKGROUND)}`}
     >
-      {shadows.map(shadow => {
+      {shadows.map((shadow) => {
         // Apply seasonal speed modifier
         const speedX = shadow.baseSpeedX * speedMult;
         const speedY = shadow.baseSpeedY * speedMult;
@@ -230,8 +230,8 @@ const CloudShadows: React.FC<CloudShadowsProps> = ({
         // Wrap position to stay within extended map bounds
         const wrapWidth = mapWidthPx + shadow.width * 2;
         const wrapHeight = mapHeightPx + shadow.height * 2;
-        const worldX = ((totalX % wrapWidth) + wrapWidth) % wrapWidth - shadow.width;
-        const worldY = ((totalY % wrapHeight) + wrapHeight) % wrapHeight - shadow.height;
+        const worldX = (((totalX % wrapWidth) + wrapWidth) % wrapWidth) - shadow.width;
+        const worldY = (((totalY % wrapHeight) + wrapHeight) % wrapHeight) - shadow.height;
 
         // Convert to screen space
         const screenX = worldX - cameraX;
@@ -262,4 +262,18 @@ const CloudShadows: React.FC<CloudShadowsProps> = ({
   );
 };
 
-export default CloudShadows;
+// Cloud shadows are large, slow-moving — skip re-render for small camera movements
+const CAMERA_THRESHOLD = 48;
+
+export default React.memo(CloudShadows, (prev, next) => {
+  if (prev.weather !== next.weather) return false;
+  if (prev.enabled !== next.enabled) return false;
+  if (prev.mapWidth !== next.mapWidth || prev.mapHeight !== next.mapHeight) return false;
+  if (
+    Math.abs(prev.cameraX - next.cameraX) >= CAMERA_THRESHOLD ||
+    Math.abs(prev.cameraY - next.cameraY) >= CAMERA_THRESHOLD
+  ) {
+    return false;
+  }
+  return true;
+});
