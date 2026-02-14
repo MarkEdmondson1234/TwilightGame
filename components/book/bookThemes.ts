@@ -181,7 +181,7 @@ export const bookStyles = {
     // Right page boundaries (shifted left to fit magic book)
     right: {
       left: '51%',
-      right: '23%',
+      right: '18%',
       top: '14%',
       bottom: '10%',
     },

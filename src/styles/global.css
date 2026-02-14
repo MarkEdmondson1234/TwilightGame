@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* Ensure html > body > #root chain fills the viewport exactly.
  * Uses percentage-based sizing instead of viewport units (100vw includes
  * scrollbar gutter on Windows Chrome, causing right-side element clipping). */

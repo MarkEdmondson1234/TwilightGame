@@ -458,7 +458,7 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
                 .map((de, i) => (
                   <div
                     key={i}
-                    className="text-lg p-2 rounded"
+                    className="text-xl p-2 rounded"
                     style={{
                       backgroundColor: `${theme.accentPrimary}08`,
                       borderLeft: `2px solid ${theme.accentPrimary}30`,
@@ -466,7 +466,7 @@ const ConversationDetailPage: React.FC<{ entry: JournalEntry; theme: BookThemeCo
                   >
                     <div
                       className="mb-1 flex items-center gap-2"
-                      style={{ color: theme.textMuted, fontSize: '0.7em' }}
+                      style={{ color: theme.textMuted, fontSize: '0.75em' }}
                     >
                       <span>{formatDiaryGameDate(de)}</span>
                       {de.isAISummary && (
