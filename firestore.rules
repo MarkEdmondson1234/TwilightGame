@@ -11,6 +11,7 @@ rules_version = '2';
 // - users/{userId}/paintings/{paintingId}        - Painting image data
 // - conversations/{npcId}/summaries/{id}         - Shared conversation summaries
 // - sharedEvents/{eventId}                      - Shared world events
+// - shared/farming/plots/{plotId}               - Shared farm plots (village + farm_area)
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -71,6 +72,19 @@ service cloud.firestore {
       // Immutable (no updates), admins can delete for moderation
       allow update: if false;
       allow delete: if isAdmin();
+    }
+
+    // Shared farm plots - collaborative farming on village + farm_area maps
+    // Path: shared/farming/plots/{plotId}
+    match /shared/farming/plots/{plotId} {
+      // Any authenticated user can read shared plots
+      allow read: if isAuthenticated();
+
+      // Create/update require valid plot data
+      allow create, update: if isAuthenticated() && isValidSharedPlot();
+
+      // Delete only requires authentication (no request.resource.data on delete)
+      allow delete: if isAuthenticated();
     }
 
     // Shared world events - discoveries, achievements, etc.
@@ -163,6 +177,17 @@ service cloud.firestore {
              data.summary is string &&
              data.summary.size() <= 1000 &&
              data.contributorId is string;
+    }
+
+    // Validate shared farm plot
+    function isValidSharedPlot() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['mapId', 'x', 'y', 'state', 'stateChangedAtTimestamp']) &&
+             data.mapId is string &&
+             data.mapId in ['village', 'farm_area'] &&
+             data.x is int &&
+             data.y is int &&
+             data.state is int;
     }
 
     // Validate world event

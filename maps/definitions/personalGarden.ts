@@ -42,9 +42,9 @@ oG,,XXXXXXXXX,,L
 LG,,XXXXXXXXX,GL
 UGe,XXXXXXXXX,eU
 LG,,XXXXXXXXX,,L
-LG,,XXXXXXXXX,Go
+)G,,XXXXXXXXX,Go
 LPPPPPPPPPPPPPPL
-LG,,G,,),,G,,GeL
+LG,,G,,,,,G,,GeL
 tG,G,,G,,G,,G,GL
 LG,,G,,G,,G,,G,L
 oGe,G,,G,,G,,GeL
@@ -69,7 +69,7 @@ export const personalGarden: MapDefinition = {
       fromPosition: { x: 8, y: 24 },
       tileType: TileType.PATH,
       toMapId: 'village',
-      toPosition: { x: 29, y: 12 }, // East side of village
+      toPosition: { x: 28, y: 6 }, // East side of village
       label: 'Back to Village',
     },
   ],

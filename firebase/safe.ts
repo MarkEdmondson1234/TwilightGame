@@ -96,6 +96,7 @@ const stubCommunityGardenService = {
   onPlotsChanged: (_cb: (plots: Map<string, unknown>) => void) => () => {},
   writePlot: async () => false as boolean,
   clearPlot: async () => false as boolean,
+  docToFarmPlot: (_doc: unknown) => null as any,
   getPlotId: (mapId: string, x: number, y: number) => `${mapId}:${x}:${y}`,
   getRemotePlots: () => new Map<string, unknown>(),
   isActive: () => false,

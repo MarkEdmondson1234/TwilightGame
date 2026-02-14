@@ -153,9 +153,9 @@ class SharedFarmService {
         plantedAtTimestamp: plot.plantedAtTimestamp,
         lastWateredTimestamp: plot.lastWateredTimestamp,
         stateChangedAtTimestamp: plot.stateChangedAtTimestamp,
-        quality: plot.quality,
-        fertiliserApplied: plot.fertiliserApplied,
-        abundantHarvest: plot.abundantHarvest,
+        quality: plot.quality ?? 'normal',
+        fertiliserApplied: plot.fertiliserApplied ?? false,
+        abundantHarvest: plot.abundantHarvest ?? false,
         updatedAt: serverTimestamp(),
       };
 

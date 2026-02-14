@@ -18,8 +18,16 @@ import { GROWTH_THRESHOLDS, DEBUG, SHARED_FARM_MAP_IDS } from '../constants';
 import { getWeatherZone } from '../data/weatherConfig';
 import { eventBus, GameEvent } from './EventBus';
 
+/** Interval for batch-flushing dirty shared plots to Firestore */
+const SHARED_SYNC_INTERVAL_MS = 10_000;
+
 class FarmManager {
   private plots: Map<string, FarmPlot> = new Map(); // key: "mapId:x:y"
+
+  // Shared farm batch sync state
+  private dirtySharedPlots: Set<string> = new Set(); // plot keys that need Firestore write
+  private flushInterval: ReturnType<typeof setInterval> | null = null;
+  private sharedListenerUnsub: (() => void) | null = null;
 
   /**
    * Generate a unique key for a plot position
@@ -916,31 +924,135 @@ class FarmManager {
   // ============================================
 
   /**
-   * Sync a shared farm plot to Firestore after a local action.
-   * No-op if the plot's map is not in SHARED_FARM_MAP_IDS or Firebase is unavailable.
+   * Mark a shared farm plot as dirty for the next batch flush.
+   * No-op if the plot's map is not in SHARED_FARM_MAP_IDS.
    */
   private syncSharedPlot(mapId: string, position: Position): void {
     if (!SHARED_FARM_MAP_IDS.has(mapId)) return;
+    const key = this.getPlotKey(mapId, position);
+    this.dirtySharedPlots.add(key);
+    if (DEBUG.FARM) console.log(`[SharedFarm] Marked dirty: ${key}`);
+  }
 
-    const plot = this.getPlot(mapId, position);
-    if (!plot) return;
+  /**
+   * Start periodic batch sync for shared farm plots.
+   * Call when entering a shared map (village, farm_area).
+   * - Starts a 10s interval to flush dirty plots to Firestore
+   * - Begins listening for remote changes from other players
+   */
+  async startSharedSync(): Promise<void> {
+    if (this.flushInterval) return; // Already running
 
-    // Lazy-load the safe wrapper to avoid hard dependency on Firebase
-    import('../firebase/safe')
-      .then(({ getCommunityGardenService }) => {
-        const service = getCommunityGardenService();
-        const tile = getTileCoords(position);
-        const plotId = `${mapId}:${tile.x}:${tile.y}`;
+    // Start the flush interval
+    this.flushInterval = setInterval(() => this.flushDirtyPlots(), SHARED_SYNC_INTERVAL_MS);
+    console.log(`[SharedFarm] Started batch sync (${SHARED_SYNC_INTERVAL_MS / 1000}s interval)`);
 
-        if (plot.state === FarmPlotState.FALLOW) {
-          service.clearPlot(plotId);
-        } else {
-          service.writePlot(plotId, plot);
+    // Start real-time listener for remote changes
+    try {
+      const { getCommunityGardenService } = await import('../firebase/safe');
+      const service = getCommunityGardenService();
+      service.startListening();
+
+      this.sharedListenerUnsub = service.onPlotsChanged((remotePlots) => {
+        let applied = 0;
+        for (const [plotId, doc] of remotePlots) {
+          const farmPlot = service.docToFarmPlot(doc as any);
+          if (!farmPlot) continue;
+
+          // Don't overwrite plots we just changed locally (they're in our dirty set)
+          if (this.dirtySharedPlots.has(plotId)) continue;
+
+          this.plots.set(plotId, farmPlot);
+          applied++;
         }
-      })
-      .catch(() => {
-        // Firebase not available — local-only mode
+
+        // Check for locally-known shared plots that were removed remotely
+        for (const [key, plot] of this.plots) {
+          if (!SHARED_FARM_MAP_IDS.has(plot.mapId)) continue;
+          if (plot.state === FarmPlotState.FALLOW) continue;
+          if (!remotePlots.has(key) && !this.dirtySharedPlots.has(key)) {
+            plot.state = FarmPlotState.FALLOW;
+            plot.cropType = null;
+            plot.plantedAtTimestamp = null;
+            plot.lastWateredTimestamp = null;
+            plot.stateChangedAtTimestamp = Date.now();
+            applied++;
+          }
+        }
+
+        if (applied > 0) {
+          console.log(`[SharedFarm] Applied ${applied} remote updates from other players`);
+          eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { action: 'water' });
+        }
       });
+    } catch {
+      console.log('[SharedFarm] Firebase not available — local-only mode');
+    }
+  }
+
+  /**
+   * Stop periodic batch sync. Flushes remaining dirty plots before stopping.
+   * Call when leaving shared maps.
+   */
+  async stopSharedSync(): Promise<void> {
+    if (!this.flushInterval) return; // Not running
+
+    // Flush any remaining dirty plots
+    await this.flushDirtyPlots();
+
+    // Stop the interval
+    clearInterval(this.flushInterval);
+    this.flushInterval = null;
+
+    // Stop the real-time listener
+    if (this.sharedListenerUnsub) {
+      this.sharedListenerUnsub();
+      this.sharedListenerUnsub = null;
+    }
+
+    try {
+      const { getCommunityGardenService } = await import('../firebase/safe');
+      getCommunityGardenService().stopListening();
+    } catch {
+      // Firebase not available
+    }
+
+    console.log('[SharedFarm] Stopped batch sync');
+  }
+
+  /**
+   * Flush all dirty shared plots to Firestore in a batch.
+   */
+  private async flushDirtyPlots(): Promise<void> {
+    if (this.dirtySharedPlots.size === 0) return;
+
+    try {
+      const { getCommunityGardenService } = await import('../firebase/safe');
+      const service = getCommunityGardenService();
+
+      const toFlush = new Set(this.dirtySharedPlots);
+      this.dirtySharedPlots.clear();
+
+      let written = 0;
+      let cleared = 0;
+      for (const plotKey of toFlush) {
+        const plot = this.plots.get(plotKey);
+        if (!plot || plot.state === FarmPlotState.FALLOW) {
+          await service.clearPlot(plotKey);
+          cleared++;
+        } else {
+          const ok = await service.writePlot(plotKey, plot);
+          if (ok) written++;
+          else console.warn(`[SharedFarm] Failed to write plot ${plotKey}`);
+        }
+      }
+
+      if (written > 0 || cleared > 0) {
+        console.log(`[SharedFarm] Flushed ${written} writes, ${cleared} clears to Firestore`);
+      }
+    } catch {
+      console.log('[SharedFarm] Flush failed — Firebase not available');
+    }
   }
 
   /**

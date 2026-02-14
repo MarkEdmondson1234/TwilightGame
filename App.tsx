@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { TILE_SIZE, PLAYER_SIZE, USE_PIXI_RENDERER, STAMINA, TIMING } from './constants';
+import {
+  TILE_SIZE,
+  PLAYER_SIZE,
+  USE_PIXI_RENDERER,
+  STAMINA,
+  TIMING,
+  SHARED_FARM_MAP_IDS,
+} from './constants';
 import { Position, Direction, ImageRoomLayer, NPC } from './types';
 import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
@@ -289,6 +296,7 @@ const App: React.FC = () => {
 
   // Map transition handler
   const handleMapTransition = (mapId: string, spawnPos: Position) => {
+    const oldMapId = currentMapId;
     setCurrentMapId(mapId);
     setPlayerPos(spawnPos);
     lastTransitionTime.current = Date.now();
@@ -301,6 +309,15 @@ const App: React.FC = () => {
 
     // Reset zoom on map transition (new map may have different zoom limits)
     resetZoom();
+
+    // Shared farm sync: start/stop when entering/leaving shared maps
+    const wasShared = SHARED_FARM_MAP_IDS.has(oldMapId);
+    const isShared = SHARED_FARM_MAP_IDS.has(mapId);
+    if (isShared && !wasShared) {
+      farmManager.startSharedSync();
+    } else if (wasShared && !isShared) {
+      farmManager.stopSharedSync();
+    }
   };
 
   // Farm update handler - no-op since EventBus handles this now
@@ -601,11 +618,17 @@ const App: React.FC = () => {
       farmManager.updateAllPlots();
     }, 2000); // Check every 2 seconds for smoother visual updates
 
+    // Start shared farm sync if already on a shared map (e.g. game loaded from save on village)
+    if (SHARED_FARM_MAP_IDS.has(currentMapId)) {
+      farmManager.startSharedSync();
+    }
+
     return () => {
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
       clearInterval(farmUpdateInterval);
+      farmManager.stopSharedSync(); // Flush and stop shared farm sync on unmount
     };
   }, [isMapInitialized, gameLoop]);
 
