@@ -185,8 +185,11 @@ export const tileAssets = {
     '/TwilightGame/assets-optimized/tiles/ruins/ruins_entrance_spring-summer.png',
   ruins_entrance_autumn: '/TwilightGame/assets-optimized/tiles/ruins/ruins_entrance_autumn.png',
   ruins_entrance_winter: '/TwilightGame/assets-optimized/tiles/ruins/ruins_entrance_winter.png',
-  // Witch hut asset
+  // Witch hut assets (seasonal variants)
   witch_hut: '/TwilightGame/assets-optimized/witchhut/witch_hut.png',
+  witch_hut_spring_summer: '/TwilightGame/assets-optimized/witchhut/witch_hut_spring-summer.png',
+  witch_hut_autumn: '/TwilightGame/assets-optimized/witchhut/witch_hut_autumn.png',
+  witch_hut_winter: '/TwilightGame/assets-optimized/witchhut/witch_hut_winter.png',
   // Cauldron animation frames
   cauldron_1: '/TwilightGame/assets-optimized/cauldron/cauldron_1.png',
   cauldron_2: '/TwilightGame/assets-optimized/cauldron/cauldron_2.png',

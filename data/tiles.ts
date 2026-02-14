@@ -1009,6 +1009,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     collisionType: CollisionType.SOLID, // Most of the structure is solid (collisions defined in SPRITE_METADATA)
     image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
     baseType: TileType.GRASS, // Render grass underneath for natural ground
+    seasonalImages: {
+      spring: [tileAssets.witch_hut_spring_summer], // Spring/summer share same sprite
+      summer: [tileAssets.witch_hut_spring_summer], // Spring/summer share same sprite
+      autumn: [tileAssets.witch_hut_autumn], // Autumn colours
+      winter: [tileAssets.witch_hut_winter], // Winter snow-covered version
+      default: [tileAssets.witch_hut_spring_summer], // Default fallback
+    },
   },
   [TileType.BEAR_HOUSE]: {
     name: "Bear's House",
