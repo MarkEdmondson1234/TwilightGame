@@ -2,7 +2,8 @@
  * AIDialogueBox - Chat interface for AI-powered NPC conversations
  *
  * Features:
- * - NPC response displayed like static dialogue
+ * - Scrollable chat history within the dialogue frame
+ * - NPC responses stream in real-time into chat bubbles
  * - AI-generated response OPTIONS (click to select, like static dialogue)
  * - Text input for custom questions (optional)
  * - Return to static dialogue option
@@ -10,7 +11,6 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { NPC } from '../types';
 import {
   NPCPersona,
@@ -30,6 +30,7 @@ import {
 } from '../services/aiChatHistory';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { useStreamingDialogue } from '../hooks/useStreamingDialogue';
+import { useChatHistory } from '../hooks/useChatHistory';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { TimeManager } from '../utils/TimeManager';
 import { gameState } from '../GameState';
@@ -38,14 +39,17 @@ import { recordConversation } from '../services/diaryService';
 import { friendshipManager } from '../utils/FriendshipManager';
 import { globalEventManager } from '../utils/GlobalEventManager';
 import { eventChainManager } from '../utils/EventChainManager';
+import ChatBubble from './ChatBubble';
 
 interface AIDialogueBoxProps {
   npc: NPC;
   playerSprite: string;
   onClose: () => void;
-  onSwitchToStatic: () => void; // Return to traditional dialogue
-  onSendToBed?: () => void; // Called when player is rude - sends them to bedroom!
+  onSwitchToStatic: () => void;
+  onSendToBed?: () => void;
 }
+
+const FONT_FAMILY = '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
 
 /**
  * Animated thinking indicator with bouncing dots
@@ -55,7 +59,7 @@ const ThinkingIndicator: React.FC<{ npcName: string }> = ({ npcName }) => {
     <div
       style={{
         fontFamily: 'Georgia, "Times New Roman", serif',
-        fontSize: 'clamp(0.95rem, 2.2vw, 1.2rem)',
+        fontSize: 'clamp(0.75rem, 1.8vw, 0.95rem)',
         color: '#d4a373',
         textShadow: '0 1px 2px rgba(0,0,0,0.5)',
         display: 'flex',
@@ -118,13 +122,24 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
     handleError,
   } = useStreamingDialogue();
 
-  // Current NPC message and AI-generated response options (for initial greeting)
-  const [npcMessage, setNpcMessage] = useState<string>('');
-  const [npcAction, setNpcAction] = useState<string | undefined>(undefined);
-  const [npcEmotion, setNpcEmotion] = useState<NPCEmotion>('neutral');
+  // Chat history hook for message bubbles
+  const {
+    chatMessages,
+    scrollRef,
+    handleScroll,
+    scrollToBottom,
+    loadHistory,
+    addAssistantMessage,
+    addPlayerMessage,
+    startStreamingMessage,
+    updateStreamingMessage,
+    finaliseStreamingMessage,
+    replaceStreamingWithFallback,
+  } = useChatHistory();
+
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // Conversation history for context
+  // Conversation history for API context (separate from display messages)
   const [history, setHistory] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
 
   // UI state
@@ -135,19 +150,14 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const [pendingSendToBed, setPendingSendToBed] = useState(false);
 
+  // Current emotion for portrait sprite
+  const [currentEmotion, setCurrentEmotion] = useState<NPCEmotion>('neutral');
+
   const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const autoScrollRef = useRef<number | null>(null);
-  const userScrolledRef = useRef(false);
   const persona = NPC_PERSONAS[npc.id];
 
-  // Get player's actual name from character customisation
   const playerName = gameState.getSelectedCharacter()?.name || 'Traveller';
 
-  // Determine which message/emotion/action to display (streaming or batch)
-  const displayMessage = streamState.dialogueText || npcMessage;
-  const displayEmotion = streamState.dialogueText ? streamState.emotion : npcEmotion;
-  const displayAction = streamState.dialogueText ? streamState.action : npcAction;
   const displaySuggestions = streamState.showSuggestions ? streamState.suggestions : suggestions;
   const isActivelyLoading = isLoading || (streamState.isStreaming && !streamState.dialogueText);
 
@@ -166,21 +176,41 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
 
   // Load persisted history and generate greeting on mount
   useEffect(() => {
+    loadHistory(npc.id);
     loadInitialGreeting();
   }, []);
+
+  // Sync streaming state into chat bubbles
+  useEffect(() => {
+    if (streamState.isStreaming && streamState.dialogueText) {
+      updateStreamingMessage(streamState.dialogueText, streamState.emotion, streamState.action);
+      setCurrentEmotion(streamState.emotion);
+    }
+  }, [
+    streamState.dialogueText,
+    streamState.emotion,
+    streamState.action,
+    streamState.isStreaming,
+    updateStreamingMessage,
+  ]);
+
+  // Auto-scroll when streaming text updates
+  useEffect(() => {
+    if (streamState.isStreaming && streamState.dialogueText) {
+      scrollToBottom();
+    }
+  }, [streamState.dialogueText, streamState.isStreaming, scrollToBottom]);
 
   // Get current game context for the prompt
   const getGameContext = (): GameContext => {
     const gameTime = TimeManager.getCurrentTime();
     const weather = gameState.getWeather();
 
-    // Check for player transformations
     let transformation: string | undefined;
     if (gameState.isFairyForm()) {
       transformation = 'fairy';
     }
 
-    // Gather quest state for AI context
     const quests = gameState.getFullState().quests || {};
     const activeQuests: string[] = [];
     const completedQuests: string[] = [];
@@ -193,13 +223,8 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
       }
     }
 
-    // Gather recent global events
     const recentGlobalEvents = globalEventManager.getRecentDescriptions(5);
-
-    // Get friendship tier with this NPC
     const friendshipTier = friendshipManager.getFriendshipTier(npc.id);
-
-    // Gather active event chain titles
     const activeEventChains = eventChainManager
       .getActiveChains()
       .map((p) => {
@@ -225,25 +250,21 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   const loadInitialGreeting = async () => {
     setIsLoading(true);
 
-    // Load persisted conversation history from localStorage
     const persistedHistory = getHistoryForAPI(npc.id, 10);
     setHistory(persistedHistory);
 
     try {
-      // Build system prompt with memories (using player's actual name)
       const memoriesSection = getMemoriesForPrompt(npc.id, playerName);
       let systemPrompt = buildSystemPrompt(persona, getGameContext());
       if (memoriesSection) {
         systemPrompt = `${systemPrompt}\n\n${memoriesSection}`;
       }
 
-      // Fetch shared gossip from other players' conversations
       const gossip = await getSharedDataService().getNPCGossip(npc.id, npc.name);
       if (gossip) {
         systemPrompt = `${systemPrompt}\n\n## Village Gossip\n${gossip}`;
       }
 
-      // If we have history, NPC acknowledges returning player (use actual name)
       const openingMessage =
         persistedHistory.length > 0
           ? `Hello again! (${playerName} is returning - you've spoken before, reference past topics naturally)`
@@ -256,76 +277,64 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
       );
 
       if (response.error) {
-        setNpcMessage(getFallbackGreeting(persona));
-        setNpcAction(undefined);
-        setNpcEmotion('neutral');
+        addAssistantMessage(getFallbackGreeting(persona));
         setSuggestions(getDefaultSuggestions(persona));
       } else {
-        setNpcMessage(response.dialogue);
-        setNpcAction(response.action);
-        setNpcEmotion(response.emotion);
+        addAssistantMessage(response.dialogue, response.emotion, response.action);
+        setCurrentEmotion(response.emotion);
         setSuggestions(
           response.suggestions.length > 0 ? response.suggestions : getDefaultSuggestions(persona)
         );
 
-        // Save NPC's greeting to persistent history (combine action + dialogue for history)
         const fullResponse = response.action
           ? `*${response.action}* ${response.dialogue}`
           : response.dialogue;
         addToChatHistory(npc.id, 'assistant', fullResponse, playerName);
         setHistory((prev) => [...prev, { role: 'assistant', content: fullResponse }]);
       }
-    } catch (err) {
-      setNpcMessage(getFallbackGreeting(persona));
-      setNpcAction(undefined);
-      setNpcEmotion('neutral');
+    } catch {
+      addAssistantMessage(getFallbackGreeting(persona));
       setSuggestions(getDefaultSuggestions(persona));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Send a message (from suggestion click or custom input) - uses streaming for fast response
+  // Send a message (from suggestion click or custom input)
   const sendMessage = async (message: string) => {
     if (!message.trim() || isLoading || streamState.isStreaming || pendingSendToBed) return;
 
-    // Check if this is a farewell message - just close immediately, no API call needed
     if (isFarewellMessage(message)) {
       onClose();
       return;
     }
 
-    // Clear previous batch state, start streaming
-    setNpcMessage('');
+    addPlayerMessage(message);
     setSuggestions([]);
     setError(null);
     setShowCustomInput(false);
     setInputText('');
-    startStreaming();
 
-    // Save player message to persistent history (with player name for memory extraction)
+    startStreaming();
+    startStreamingMessage();
+
     addToChatHistory(npc.id, 'user', message, playerName);
 
-    // Track metadata for saving to history after stream completes
     let streamedAction: string | undefined;
     let streamedDialogue = '';
     let shouldSendToBedAfter = false;
     let moderationScore = 0;
 
     try {
-      // Build system prompt with memories (using player's actual name)
       const memoriesSection = getMemoriesForPrompt(npc.id, playerName);
       let systemPrompt = buildSystemPrompt(persona, getGameContext());
       if (memoriesSection) {
         systemPrompt = `${systemPrompt}\n\n${memoriesSection}`;
       }
 
-      // Inject shared gossip from other players (non-blocking - don't await to avoid delay)
       getSharedDataService()
         .getNPCGossip(npc.id, npc.name)
         .then((gossip) => {
-          // Note: Gossip is fetched async but won't affect this specific message
-          // It will be available for the next message exchange
           if (gossip) {
             console.log(`[AI] Gossip available for ${npc.name}: ${gossip}`);
           }
@@ -343,7 +352,6 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
           streamedDialogue = fullText;
         },
         onSuggestions: (sug) => {
-          // Only show suggestions if not being sent to bed
           if (!shouldSendToBedAfter) {
             handleSuggestions(sug.length > 0 ? sug : getDefaultSuggestions(persona));
           }
@@ -351,66 +359,30 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
         onComplete: () => {
           handleComplete();
 
-          // Save NPC response to persistent history (with player name)
+          finaliseStreamingMessage(streamedDialogue, undefined, streamedAction);
+          if (streamedAction) {
+            setCurrentEmotion(streamState.emotion);
+          }
+
           const fullResponse = streamedAction
             ? `*${streamedAction}* ${streamedDialogue}`
             : streamedDialogue;
           if (fullResponse) {
             addToChatHistory(npc.id, 'assistant', fullResponse, playerName);
-
-            // Update session history
             setHistory((prev) => [
               ...prev,
               { role: 'user', content: message },
               { role: 'assistant', content: fullResponse },
             ]);
 
-            // Contribute conversation summary to shared data (after meaningful exchanges)
-            // Only contribute if the conversation had substantial content
-            console.log(
-              `[AI] Stream complete: dialogue length=${streamedDialogue.length}, will contribute=${streamedDialogue.length > 50}`
-            );
             if (streamedDialogue.length > 50) {
-              const gameTime = TimeManager.getCurrentTime();
-              // Topic: player's message (up to 90 chars, rules allow 100)
-              const topic = message.length > 90 ? message.slice(0, 87) + '...' : message;
-              // Summary: include NPC's actual response snippet (rules allow 1000 chars)
-              const responseSnippet =
-                streamedDialogue.length > 300
-                  ? streamedDialogue.slice(0, 297) + '...'
-                  : streamedDialogue;
-              const summary = `${playerName}: "${topic}" — ${npc.name}: "${responseSnippet}"`;
-
-              getSharedDataService()
-                .addConversationSummary(
-                  npc.id,
-                  npc.name,
-                  topic,
-                  summary.slice(0, 1000),
-                  'neutral',
-                  {
-                    season: gameTime.season,
-                    gameDay: gameTime.day,
-                  }
-                )
-                .catch((err) => {
-                  console.warn('[AI] Failed to contribute conversation summary:', err);
-                });
-
-              // Record to diary (AI summary or transcript, localStorage + Firestore)
-              recordConversation(npc.id, npc.name, playerName, message, streamedDialogue).catch(
-                (err) => {
-                  console.warn('[AI] Failed to record diary entry:', err);
-                }
-              );
+              contributeConversationSummary(message, streamedDialogue);
             }
           }
 
-          // Check if AI determined player was inappropriate - send to bed!
           if (shouldSendToBedAfter && onSendToBed) {
             console.log(`[AI] Moderation triggered: score ${moderationScore}`);
             setPendingSendToBed(true);
-            // After showing the scolding, send them to their room
             setTimeout(() => {
               onSendToBed();
             }, 2500);
@@ -420,13 +392,11 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
           console.warn('[AI] Streaming failed, falling back to batch:', err);
           handleError(err);
 
-          // Fallback to non-streaming batch response
           try {
             const response = await generateStructuredResponse(systemPrompt, history, message);
             if (!response.error) {
-              setNpcMessage(response.dialogue);
-              setNpcAction(response.action);
-              setNpcEmotion(response.emotion);
+              replaceStreamingWithFallback(response.dialogue, response.emotion, response.action);
+              setCurrentEmotion(response.emotion);
               setSuggestions(
                 response.suggestions.length > 0
                   ? response.suggestions
@@ -443,37 +413,8 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
                 { role: 'assistant', content: fullResponse },
               ]);
 
-              // Contribute conversation summary for fallback batch response too
               if (response.dialogue.length > 50) {
-                const gameTime = TimeManager.getCurrentTime();
-                const topic = message.length > 90 ? message.slice(0, 87) + '...' : message;
-                const responseSnippet =
-                  response.dialogue.length > 300
-                    ? response.dialogue.slice(0, 297) + '...'
-                    : response.dialogue;
-                const summary = `${playerName}: "${topic}" — ${npc.name}: "${responseSnippet}"`;
-                getSharedDataService()
-                  .addConversationSummary(
-                    npc.id,
-                    npc.name,
-                    topic,
-                    summary.slice(0, 1000),
-                    'neutral',
-                    {
-                      season: gameTime.season,
-                      gameDay: gameTime.day,
-                    }
-                  )
-                  .catch((err) => {
-                    console.warn('[AI] Failed to contribute conversation summary:', err);
-                  });
-
-                // Record to diary (fallback batch response)
-                recordConversation(npc.id, npc.name, playerName, message, response.dialogue).catch(
-                  (err) => {
-                    console.warn('[AI] Failed to record diary entry:', err);
-                  }
-                );
+                contributeConversationSummary(message, response.dialogue);
               }
 
               if (response.shouldSendToBed && onSendToBed) {
@@ -483,24 +424,45 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
               }
             } else {
               setError(response.error);
-              setNpcMessage(getFallbackResponse(persona));
+              replaceStreamingWithFallback(getFallbackResponse(persona));
               setSuggestions(getDefaultSuggestions(persona));
             }
           } catch {
             setError('Failed to get response');
-            setNpcMessage(getFallbackResponse(persona));
+            replaceStreamingWithFallback(getFallbackResponse(persona));
             setSuggestions(getDefaultSuggestions(persona));
           }
         },
       });
-    } catch (err) {
+    } catch {
       setError('Failed to get response');
-      setNpcMessage(getFallbackResponse(persona));
+      replaceStreamingWithFallback(getFallbackResponse(persona));
       setSuggestions(getDefaultSuggestions(persona));
     }
   };
 
-  // Detect farewell messages to auto-close
+  /** Contribute conversation summary to shared data + diary */
+  const contributeConversationSummary = (playerMessage: string, npcResponse: string) => {
+    const gameTime = TimeManager.getCurrentTime();
+    const topic = playerMessage.length > 90 ? playerMessage.slice(0, 87) + '...' : playerMessage;
+    const responseSnippet =
+      npcResponse.length > 300 ? npcResponse.slice(0, 297) + '...' : npcResponse;
+    const summary = `${playerName}: "${topic}" — ${npc.name}: "${responseSnippet}"`;
+
+    getSharedDataService()
+      .addConversationSummary(npc.id, npc.name, topic, summary.slice(0, 1000), 'neutral', {
+        season: gameTime.season,
+        gameDay: gameTime.day,
+      })
+      .catch((err) => {
+        console.warn('[AI] Failed to contribute conversation summary:', err);
+      });
+
+    recordConversation(npc.id, npc.name, playerName, playerMessage, npcResponse).catch((err) => {
+      console.warn('[AI] Failed to record diary entry:', err);
+    });
+  };
+
   const isFarewellMessage = (message: string): boolean => {
     const farewellPhrases = [
       'farewell',
@@ -547,80 +509,22 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
     }
   }, [showCustomInput]);
 
-  // Gentle auto-scroll when text overflows — pauses if user scrolls manually
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    // Reset user-scroll flag when new message arrives
-    userScrolledRef.current = false;
-    el.scrollTop = 0;
-
-    // Cancel any running auto-scroll
-    if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
-
-    // Wait a moment for content to render, then start scrolling if needed
-    const startDelay = setTimeout(() => {
-      const scrollable = el.scrollHeight - el.clientHeight;
-      if (scrollable <= 2) return; // Nothing to scroll
-
-      const SPEED = 0.35; // px per frame (~21px/sec at 60fps)
-      let lastTime = 0;
-
-      const step = (time: number) => {
-        if (userScrolledRef.current) return;
-        if (!lastTime) lastTime = time;
-        const dt = time - lastTime;
-        lastTime = time;
-
-        el.scrollTop += SPEED * (dt / 16.67); // Normalise to ~60fps
-
-        if (el.scrollTop < el.scrollHeight - el.clientHeight) {
-          autoScrollRef.current = requestAnimationFrame(step);
-        }
-      };
-
-      autoScrollRef.current = requestAnimationFrame(step);
-    }, 800); // Brief pause before scrolling begins
-
-    // Detect manual scroll to pause auto-scroll
-    const handleUserScroll = () => {
-      userScrolledRef.current = true;
-      if (autoScrollRef.current) {
-        cancelAnimationFrame(autoScrollRef.current);
-        autoScrollRef.current = null;
-      }
-    };
-
-    el.addEventListener('wheel', handleUserScroll, { passive: true });
-    el.addEventListener('touchmove', handleUserScroll, { passive: true });
-
-    return () => {
-      clearTimeout(startDelay);
-      if (autoScrollRef.current) cancelAnimationFrame(autoScrollRef.current);
-      el.removeEventListener('wheel', handleUserScroll);
-      el.removeEventListener('touchmove', handleUserScroll);
-    };
-  }, [displayMessage, streamState.isStreaming]);
-
-  // Core sprite emotions artists would create (limited set)
-  // Maps AI emotions to sprite expression names to look for
+  // Emotion sprite logic for NPC portrait
   type SpriteEmotion = 'default' | 'happy' | 'sad' | 'angry' | 'surprised';
 
   const emotionToSprite: Record<NPCEmotion, SpriteEmotion> = {
     neutral: 'default',
     happy: 'happy',
-    excited: 'happy', // Fall back to happy
-    loving: 'happy', // Fall back to happy
+    excited: 'happy',
+    loving: 'happy',
     sad: 'sad',
-    worried: 'sad', // Fall back to sad
-    embarrassed: 'sad', // Fall back to sad
+    worried: 'sad',
+    embarrassed: 'sad',
     angry: 'angry',
     surprised: 'surprised',
-    thoughtful: 'default', // Fall back to default
+    thoughtful: 'default',
   };
 
-  // Alternative sprite names for each core emotion
   const spriteAliases: Record<SpriteEmotion, string[]> = {
     default: ['default', 'neutral'],
     happy: ['happy', 'smile', 'joy'],
@@ -629,19 +533,15 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
     surprised: ['surprised', 'shock'],
   };
 
-  // Get the NPC sprite for dialogue - use emotion-based sprite if available
   const getEmotionSprite = (): string => {
     if (npc.dialogueExpressions) {
-      // Map AI emotion to core sprite emotion, then try aliases (use displayEmotion for streaming)
-      const targetEmotion = emotionToSprite[displayEmotion];
+      const targetEmotion = emotionToSprite[currentEmotion];
       const aliases = spriteAliases[targetEmotion] || [];
-
       for (const alias of aliases) {
         if (npc.dialogueExpressions[alias]) {
           return npc.dialogueExpressions[alias];
         }
       }
-      // Fall back to default
       if (npc.dialogueExpressions.default) {
         return npc.dialogueExpressions.default;
       }
@@ -650,29 +550,6 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
   };
 
   const npcDialogueSprite = getEmotionSprite();
-
-  // Check if we're using a non-default emotion sprite
-  const hasEmotionSprite = (() => {
-    if (!npc.dialogueExpressions) return false;
-    const targetEmotion = emotionToSprite[displayEmotion];
-    if (targetEmotion === 'default') return false; // neutral uses default, no indicator needed
-    const aliases = spriteAliases[targetEmotion] || [];
-    return aliases.some((alias) => npc.dialogueExpressions?.[alias]);
-  })();
-
-  // Text labels for emotions (used when no sprite available)
-  const emotionLabels: Record<NPCEmotion, string> = {
-    neutral: 'calm',
-    happy: 'happy',
-    sad: 'sad',
-    surprised: 'surprised',
-    angry: 'upset',
-    thoughtful: 'thoughtful',
-    worried: 'worried',
-    excited: 'excited',
-    embarrassed: 'flustered',
-    loving: 'warm',
-  };
 
   return (
     <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}>
@@ -745,8 +622,8 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
         className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto overflow-hidden"
         style={{
           width: 'min(95vw, 950px)',
-          height: 'min(45vh, 320px)',
-          bottom: '80px',
+          height: 'min(58vh, 460px)',
+          bottom: '16px',
         }}
       >
         {/* Animated dialogue frame background */}
@@ -758,16 +635,16 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
             imageRendering: 'auto',
             width: '100%',
             height: 'auto',
-            bottom: '-55%',
+            bottom: '-40%',
           }}
         />
 
-        {/* Content overlay */}
-        <div className="absolute inset-0">
-          {/* Name area with emotion indicator */}
+        {/* Content overlay - flex column so controls stay inside frame */}
+        <div className="absolute inset-0 flex flex-col">
+          {/* Name area with AI indicator */}
           <div
-            className="absolute flex items-center justify-center"
-            style={{ top: '8%', left: '10%', width: '30%', height: '22%' }}
+            className="flex items-center flex-shrink-0"
+            style={{ paddingTop: '6%', paddingLeft: '10%', paddingBottom: '1%' }}
           >
             <span
               style={{
@@ -785,251 +662,169 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
             <span className="ml-2 text-xs text-amber-600 opacity-75">AI</span>
           </div>
 
-          {/* Emotion indicator - shown when no emotion sprite available and not neutral */}
-          {!hasEmotionSprite && displayEmotion !== 'neutral' && !isActivelyLoading && (
-            <div
-              className="absolute flex items-center px-2 py-1 rounded-full"
-              style={{
-                top: '10%',
-                right: '8%',
-                background: 'rgba(60, 45, 35, 0.85)',
-                border: '1px solid rgba(180, 140, 90, 0.5)',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-              }}
-              title={`Feeling ${emotionLabels[displayEmotion]}`}
-            >
-              <span
-                style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: '0.7rem',
-                  color: '#d4a373',
-                  fontStyle: 'italic',
-                }}
-              >
-                {emotionLabels[displayEmotion]}
-              </span>
-            </div>
-          )}
-
-          {/* Action indicator - shown near portrait when NPC performs an action */}
-          {displayAction && !isActivelyLoading && (
-            <div
-              className="absolute flex items-center px-3 py-1.5 rounded-lg"
-              style={{
-                top: '22%',
-                right: '6%',
-                maxWidth: '35%',
-                background: 'rgba(60, 45, 35, 0.85)',
-                border: '1px solid rgba(180, 140, 90, 0.5)',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: 'Georgia, serif',
-                  fontSize: '0.75rem',
-                  color: '#d4a373',
-                  fontStyle: 'italic',
-                }}
-              >
-                *{displayAction}*
-              </span>
-            </div>
-          )}
-
-          {/* Main text area */}
+          {/* Scrollable chat history */}
           <div
             ref={scrollRef}
-            className="absolute overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600"
-            style={{ top: '32%', left: '6%', right: '6%', height: '38%', padding: '2% 3%' }}
+            className="flex-1 min-h-0 overflow-y-auto chat-scrollbar"
+            onScroll={handleScroll}
+            style={{
+              paddingLeft: '6%',
+              paddingRight: '6%',
+              WebkitOverflowScrolling: 'touch',
+            }}
           >
-            {isActivelyLoading ? (
-              <ThinkingIndicator npcName={npc.name} />
-            ) : (
-              <div
-                className="leading-relaxed ai-dialogue-content"
-                style={{
-                  fontFamily: 'Georgia, "Times New Roman", serif',
-                  fontSize: 'clamp(0.95rem, 2.2vw, 1.2rem)',
-                  color: '#e8e8e8',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                  lineHeight: '1.6',
-                }}
-              >
-                <ReactMarkdown
-                  components={{
-                    // Render emphasis (italics) with warm amber colour
-                    em: ({ children }) => (
-                      <em style={{ color: '#d4a373', fontStyle: 'italic' }}>{children}</em>
-                    ),
-                    // Render strong (bold) with slightly brighter colour
-                    strong: ({ children }) => (
-                      <strong style={{ color: '#f5deb3', fontWeight: 'bold' }}>{children}</strong>
-                    ),
-                    // Paragraphs without extra margin
-                    p: ({ children }) => <span>{children}</span>,
+            {chatMessages.map((msg) => (
+              <ChatBubble
+                key={msg.id}
+                role={msg.role}
+                content={msg.content}
+                action={msg.action}
+                emotion={msg.emotion}
+                isStreaming={msg.isStreaming}
+                npcName={msg.role === 'assistant' ? npc.name : undefined}
+                playerName={msg.role === 'user' ? playerName : undefined}
+              />
+            ))}
+            {isActivelyLoading && <ThinkingIndicator npcName={npc.name} />}
+          </div>
+
+          {/* Response controls - inside the frame */}
+          <div className="flex-shrink-0" style={{ padding: '6px 6% 8px' }}>
+            {/* Suggestion buttons */}
+            {!showCustomInput &&
+              !isLoading &&
+              !streamState.isStreaming &&
+              displaySuggestions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 justify-center mb-1.5">
+                  {displaySuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => sendMessage(suggestion)}
+                      className="px-3 py-1 text-xs transition-all duration-200 ease-out transform hover:scale-105 active:scale-95"
+                      style={{
+                        fontFamily: FONT_FAMILY,
+                        background:
+                          'linear-gradient(180deg, rgba(139, 90, 43, 0.85) 0%, rgba(101, 67, 33, 0.95) 100%)',
+                        color: '#faebd7',
+                        border: '1.5px solid rgba(210, 160, 90, 0.7)',
+                        borderRadius: '6px',
+                        boxShadow:
+                          '0 1px 4px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
+                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background =
+                          'linear-gradient(180deg, rgba(160, 110, 55, 0.9) 0%, rgba(120, 80, 40, 0.95) 100%)';
+                        e.currentTarget.style.borderColor = 'rgba(230, 180, 100, 0.9)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background =
+                          'linear-gradient(180deg, rgba(139, 90, 43, 0.85) 0%, rgba(101, 67, 33, 0.95) 100%)';
+                        e.currentTarget.style.borderColor = 'rgba(210, 160, 90, 0.7)';
+                      }}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+            {/* Custom input option */}
+            {showCustomInput ? (
+              <div className="flex gap-2 justify-center">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Speak your mind..."
+                  className="flex-1 max-w-md px-3 py-1.5 text-sm focus:outline-none"
+                  style={{
+                    fontFamily: FONT_FAMILY,
+                    background: 'rgba(45, 35, 25, 0.9)',
+                    color: '#faebd7',
+                    border: '1.5px solid rgba(180, 130, 70, 0.6)',
+                    borderRadius: '6px',
+                    boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3)',
+                  }}
+                  disabled={isLoading || streamState.isStreaming}
+                />
+                <button
+                  onClick={() => sendMessage(inputText)}
+                  disabled={isLoading || streamState.isStreaming || !inputText.trim()}
+                  className="px-3 py-1.5 text-sm transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:transform-none"
+                  style={{
+                    fontFamily: FONT_FAMILY,
+                    background:
+                      'linear-gradient(180deg, rgba(76, 120, 76, 0.9) 0%, rgba(50, 90, 50, 0.95) 100%)',
+                    color: '#e8f5e8',
+                    border: '1.5px solid rgba(140, 180, 120, 0.7)',
+                    borderRadius: '6px',
+                    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.3)',
                   }}
                 >
-                  {displayMessage}
-                </ReactMarkdown>
-                {/* Typing cursor while streaming */}
-                {streamState.isStreaming && streamState.dialogueText && (
-                  <span
-                    className="animate-pulse"
-                    style={{
-                      color: '#d4a373',
-                      marginLeft: '2px',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    |
-                  </span>
-                )}
+                  Send
+                </button>
+                <button
+                  onClick={() => setShowCustomInput(false)}
+                  className="px-3 py-1.5 text-sm transition-all duration-200 transform hover:scale-105 active:scale-95"
+                  style={{
+                    fontFamily: FONT_FAMILY,
+                    background:
+                      'linear-gradient(180deg, rgba(80, 70, 60, 0.85) 0%, rgba(60, 50, 40, 0.95) 100%)',
+                    color: '#d4c4b4',
+                    border: '1.5px solid rgba(140, 120, 100, 0.6)',
+                    borderRadius: '6px',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-3 justify-center items-center">
+                <button
+                  onClick={() => setShowCustomInput(true)}
+                  className="text-xs px-3 py-1 transition-all duration-200 transform hover:scale-105"
+                  style={{
+                    fontFamily: FONT_FAMILY,
+                    background: 'rgba(60, 50, 40, 0.7)',
+                    color: '#d4a373',
+                    border: '1px solid rgba(180, 140, 90, 0.5)',
+                    borderRadius: '6px',
+                  }}
+                  disabled={isLoading || streamState.isStreaming}
+                >
+                  Ask something else...
+                </button>
+                <button
+                  onClick={onSwitchToStatic}
+                  className="text-xs transition-colors duration-200"
+                  style={{
+                    fontFamily: FONT_FAMILY,
+                    color: 'rgba(180, 160, 140, 0.8)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#d4a373')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180, 160, 140, 0.8)')}
+                >
+                  ← Return to conversation
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-xs transition-colors duration-200"
+                  style={{
+                    fontFamily: FONT_FAMILY,
+                    color: 'rgba(180, 160, 140, 0.8)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#d4a373')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180, 160, 140, 0.8)')}
+                >
+                  Farewell
+                </button>
               </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Response options - similar styling to static dialogue */}
-      <div
-        className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto"
-        style={{ bottom: '12px', width: 'min(90vw, 900px)' }}
-      >
-        {/* AI-generated response suggestions - cottage-core styled */}
-        {/* Only show suggestions when not streaming AND we have suggestions to show */}
-        {!showCustomInput &&
-          !isLoading &&
-          !streamState.isStreaming &&
-          displaySuggestions.length > 0 && (
-            <div className="flex flex-wrap gap-2 justify-center mb-2">
-              {displaySuggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => sendMessage(suggestion)}
-                  className="px-4 py-2 text-sm transition-all duration-200 ease-out transform hover:scale-105 active:scale-95"
-                  style={{
-                    fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-                    background:
-                      'linear-gradient(180deg, rgba(139, 90, 43, 0.85) 0%, rgba(101, 67, 33, 0.95) 100%)',
-                    color: '#faebd7',
-                    border: '2px solid rgba(210, 160, 90, 0.7)',
-                    borderRadius: '8px',
-                    boxShadow:
-                      '0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)',
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background =
-                      'linear-gradient(180deg, rgba(160, 110, 55, 0.9) 0%, rgba(120, 80, 40, 0.95) 100%)';
-                    e.currentTarget.style.borderColor = 'rgba(230, 180, 100, 0.9)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background =
-                      'linear-gradient(180deg, rgba(139, 90, 43, 0.85) 0%, rgba(101, 67, 33, 0.95) 100%)';
-                    e.currentTarget.style.borderColor = 'rgba(210, 160, 90, 0.7)';
-                  }}
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-          )}
-
-        {/* Custom input option - cottage-core styled */}
-        {showCustomInput ? (
-          <div className="flex gap-2 justify-center mb-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Speak your mind..."
-              className="flex-1 max-w-md px-4 py-2 focus:outline-none"
-              style={{
-                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-                background: 'rgba(45, 35, 25, 0.9)',
-                color: '#faebd7',
-                border: '2px solid rgba(180, 130, 70, 0.6)',
-                borderRadius: '8px',
-                boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.3)',
-              }}
-              disabled={isLoading || streamState.isStreaming}
-            />
-            <button
-              onClick={() => sendMessage(inputText)}
-              disabled={isLoading || streamState.isStreaming || !inputText.trim()}
-              className="px-4 py-2 transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:transform-none"
-              style={{
-                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-                background:
-                  'linear-gradient(180deg, rgba(76, 120, 76, 0.9) 0%, rgba(50, 90, 50, 0.95) 100%)',
-                color: '#e8f5e8',
-                border: '2px solid rgba(140, 180, 120, 0.7)',
-                borderRadius: '8px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-              }}
-            >
-              Send
-            </button>
-            <button
-              onClick={() => setShowCustomInput(false)}
-              className="px-4 py-2 transition-all duration-200 transform hover:scale-105 active:scale-95"
-              style={{
-                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-                background:
-                  'linear-gradient(180deg, rgba(80, 70, 60, 0.85) 0%, rgba(60, 50, 40, 0.95) 100%)',
-                color: '#d4c4b4',
-                border: '2px solid rgba(140, 120, 100, 0.6)',
-                borderRadius: '8px',
-              }}
-            >
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className="flex gap-4 justify-center items-center">
-            <button
-              onClick={() => setShowCustomInput(true)}
-              className="text-sm px-4 py-1.5 transition-all duration-200 transform hover:scale-105"
-              style={{
-                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-                background: 'rgba(60, 50, 40, 0.7)',
-                color: '#d4a373',
-                border: '1px solid rgba(180, 140, 90, 0.5)',
-                borderRadius: '6px',
-              }}
-              disabled={isLoading || streamState.isStreaming}
-            >
-              Ask something else...
-            </button>
-            <button
-              onClick={onSwitchToStatic}
-              className="text-sm transition-colors duration-200"
-              style={{
-                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-                color: 'rgba(180, 160, 140, 0.8)',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#d4a373')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180, 160, 140, 0.8)')}
-            >
-              ← Return to conversation
-            </button>
-            <button
-              onClick={onClose}
-              className="text-sm transition-colors duration-200"
-              style={{
-                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif',
-                color: 'rgba(180, 160, 140, 0.8)',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = '#d4a373')}
-              onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180, 160, 140, 0.8)')}
-            >
-              Farewell
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Error toast */}
@@ -1044,7 +839,6 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
         className="absolute inset-0 sm:hidden"
         onClick={() => {
           if (showCustomInput) return;
-          // Only close on tap if there are no active suggestions
           if (suggestions.length === 0 && !isLoading) {
             onClose();
           }

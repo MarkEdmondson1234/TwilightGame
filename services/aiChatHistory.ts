@@ -103,6 +103,10 @@ export async function addToChatHistory(
   try {
     const history = getChatHistory(npcId);
 
+    // Skip if last message has identical role + content (avoids duplicate greetings)
+    const last = history[history.length - 1];
+    if (last && last.role === role && last.content === content) return;
+
     history.push({
       role,
       content,

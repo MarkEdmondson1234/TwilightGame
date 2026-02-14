@@ -76,12 +76,6 @@ export interface UseInteractionControllerProps {
   /** Setter for activeNPC - passed from App.tsx */
   setActiveNPC: (npcId: string | null) => void;
 
-  /** Dialogue mode - passed from App.tsx for shared state */
-  dialogueMode: 'static' | 'ai';
-
-  /** Setter for dialogueMode - passed from App.tsx */
-  setDialogueMode: (mode: 'static' | 'ai') => void;
-
   // === Callbacks from App.tsx ===
 
   /** Callback to transition to a new map */
@@ -106,10 +100,7 @@ export interface UseInteractionControllerProps {
 
 export interface UseInteractionControllerReturn {
   // === NPC Interaction State (passed through from props) ===
-  // Note: activeNPC and dialogueMode are passed as props from App.tsx
-  // Setters are returned for updating them
   setActiveNPC: (npcId: string | null) => void;
-  setDialogueMode: (mode: 'static' | 'ai') => void;
 
   // === Radial Menu State ===
   radialMenuVisible: boolean;
@@ -159,8 +150,6 @@ export function useInteractionController(
     isCutscenePlaying,
     activeNPC,
     setActiveNPC,
-    dialogueMode,
-    setDialogueMode,
     onMapTransition,
     onShowToast,
     triggerVFX,
@@ -634,7 +623,6 @@ export function useInteractionController(
   return {
     // NPC state setters (state is passed as props)
     setActiveNPC,
-    setDialogueMode,
 
     // Radial menu
     radialMenuVisible,

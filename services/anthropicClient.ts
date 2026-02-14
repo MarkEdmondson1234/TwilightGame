@@ -156,11 +156,11 @@ export async function generateResponse(
 ## Response Format
 After your in-character response, include 2-4 suggested player responses on new lines prefixed with ">" like this:
 > Ask about the weather
-> Tell me more about that
-> I should go now
+> Tell me more
+> I should go
 
-These suggestions should be natural follow-up questions or responses the player might want to say.
-IMPORTANT: Always include one option that gracefully ends the conversation (e.g., "Farewell", "I should be going", "Thank you, goodbye").`;
+These suggestions should be SHORT (max 6 words each) natural follow-up responses the player might say.
+IMPORTANT: Keep suggestions brief and punchy. Always include one farewell option (e.g., "Farewell", "I must go").`;
 
     const response = await client.messages.create({
       model: HAIKU_MODEL,
@@ -250,7 +250,7 @@ const NPC_RESPONSE_SCHEMA = {
       type: 'array',
       items: { type: 'string' },
       description:
-        '2-4 natural follow-up responses the player might say. Always include one farewell option.',
+        '2-4 SHORT (max 6 words each) follow-up responses the player might say. Always include one farewell option.',
     },
   },
   required: ['moderationScore', 'shouldSendToBed', 'dialogue', 'emotion', 'suggestions'],
@@ -402,10 +402,10 @@ You MUST format your response EXACTLY like this:
 [META:emotion=EMOTION,action=ACTION_OR_NONE,moderation=SCORE]
 Your spoken dialogue here. Just what you say out loud - no asterisks, no action descriptions.
 [SUGGESTIONS]
-What the player could say next
-Another thing the player could ask or say
-A third player response option
-A farewell from the player (e.g., "I should get going")
+Tell me more
+What about the festival?
+Any advice for me?
+I must go
 [/SUGGESTIONS]
 
 Rules:
@@ -414,6 +414,7 @@ Rules:
 - SCORE: 0-10 moderation score for the PLAYER's message (0=polite, 5+=rude, 7+=send to bed)
 - Dialogue must NOT contain [META or [SUGGESTIONS markers
 - Include 2-4 suggestions, always with one farewell option last
+- Suggestions must be SHORT — max 6 words each (e.g., "Tell me more", "What about the festival?", "I must go")
 - Suggestions are ALWAYS from the PLAYER's perspective — things the player could say or ask next, NOT things you (the NPC) would say`;
 
   const messages = [...conversationHistory, { role: 'user' as const, content: userMessage }];

@@ -6,10 +6,7 @@ import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
 import TouchControls from './components/TouchControls';
-import DialogueBox from './components/DialogueBox';
-import AIDialogueBox from './components/AIDialogueBox';
-import { isAIAvailable } from './services/anthropicClient';
-import { NPC_PERSONAS } from './services/dialogueService';
+import UnifiedDialogueBox from './components/dialogue/UnifiedDialogueBox';
 import HelpBrowser from './components/HelpBrowser';
 import DevTools from './components/DevTools';
 import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
@@ -112,7 +109,6 @@ const App: React.FC = () => {
 
   // Shared state for NPC interactions (used by both MovementController and InteractionController)
   const [activeNPC, setActiveNPC] = useState<string | null>(null);
-  const [dialogueMode, setDialogueMode] = useState<'static' | 'ai'>('static');
 
   // Gift reaction dialogue context - set when gift is given, cleared when dialogue closes
   const [giftReactionContext, setGiftReactionContext] = useState<{
@@ -249,8 +245,6 @@ const App: React.FC = () => {
     isCutscenePlaying,
     activeNPC,
     setActiveNPC,
-    dialogueMode,
-    setDialogueMode,
     npcsRef,
     onMapTransition: (mapId, pos) => {
       setCurrentMapId(mapId);
@@ -1409,40 +1403,8 @@ const App: React.FC = () => {
             compact={isCompactMode}
           />
         )}
-      {activeNPC && dialogueMode === 'static' && (
-        <DialogueBox
-          npc={npcManager.getNPCById(activeNPC)!}
-          playerSprite={getPortraitSprite(
-            gameState.getSelectedCharacter() || DEFAULT_CHARACTER,
-            Direction.Down,
-            isFairyForm
-          )} // High-res portrait (uses fairy sprite when transformed)
-          onClose={() => {
-            // Clear gift reaction context when dialogue closes
-            if (giftReactionContext) {
-              setGiftReactionContext(null);
-            }
-            setActiveNPC(null);
-            setDialogueMode('static'); // Reset to static mode when closing
-          }}
-          onNodeChange={handleDialogueAction}
-          onSwitchToAIMode={() => {
-            // Only switch if AI is available and NPC has AI persona
-            const npc = npcManager.getNPCById(activeNPC);
-            if (npc && isAIAvailable() && NPC_PERSONAS[npc.id]?.aiEnabled) {
-              setDialogueMode('ai');
-            }
-          }}
-          // Pass initial node for gift reactions (quest-specific or generic), otherwise use default 'greeting'
-          initialNodeId={
-            giftReactionContext && giftReactionContext.npcId === activeNPC
-              ? giftReactionContext.dialogueNodeId || `gift_${giftReactionContext.reaction}`
-              : 'greeting'
-          }
-        />
-      )}
-      {activeNPC && dialogueMode === 'ai' && (
-        <AIDialogueBox
+      {activeNPC && (
+        <UnifiedDialogueBox
           npc={npcManager.getNPCById(activeNPC)!}
           playerSprite={getPortraitSprite(
             gameState.getSelectedCharacter() || DEFAULT_CHARACTER,
@@ -1450,18 +1412,20 @@ const App: React.FC = () => {
             isFairyForm
           )}
           onClose={() => {
+            if (giftReactionContext) setGiftReactionContext(null);
             setActiveNPC(null);
-            setDialogueMode('static');
           }}
-          onSwitchToStatic={() => setDialogueMode('static')}
+          onNodeChange={handleDialogueAction}
           onSendToBed={() => {
-            // Close dialogue and send player to their bedroom
             setActiveNPC(null);
-            setDialogueMode('static');
-            // Transition to bedroom (home_upstairs) - spawn near the bed
             handleMapTransition('home_upstairs', { x: 5, y: 5 });
             showToast('Sent to bed without supper!', 'warning');
           }}
+          initialNodeId={
+            giftReactionContext && giftReactionContext.npcId === activeNPC
+              ? giftReactionContext.dialogueNodeId || `gift_${giftReactionContext.reaction}`
+              : 'greeting'
+          }
         />
       )}
       {activeChainPopup && !activeNPC && (

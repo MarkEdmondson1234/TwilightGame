@@ -123,6 +123,26 @@ html, body, #root {
   background: rgba(236, 72, 153, 0.9); /* pink-400/90 */
 }
 
+/* Custom scrollbar for AI chat dialogue (warm brown cottage-core theme) */
+.chat-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-track {
+  background: rgba(60, 50, 40, 0.3);
+  border-radius: 3px;
+  margin: 4px 0;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(180, 140, 90, 0.5);
+  border-radius: 3px;
+}
+
+.chat-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(210, 160, 100, 0.7);
+}
+
 /* ============================================================================
    Cottage-Core Transition Indicator Animations
    ============================================================================ */
