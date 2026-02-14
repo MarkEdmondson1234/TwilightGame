@@ -1417,11 +1417,12 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'feather',
     displayName: 'Feather',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'A soft feather from a village bird. Used in communication magic.',
+    description: 'A soft, delicate feather shed by a sparrow. Light as air, yet holds a spark of magic.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 5,
-    buyPrice: 15,
+    image: magicalAssets.feather,
+    forageSuccessRate: 0.85,
   },
 
   vinegar: {

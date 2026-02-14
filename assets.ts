@@ -362,6 +362,7 @@ export const magicalAssets = {
   giant_mushroom_cap:
     '/TwilightGame/assets-optimized/items/magical/forageable/giant_mushroom_cap.png',
   sakura_petal: '/TwilightGame/assets-optimized/items/magical/forageable/sakura_petals.png',
+  feather: '/TwilightGame/assets-optimized/items/magical/forageable/feather.png',
   phoenix_ash: '/TwilightGame/assets-optimized/items/magical/shop/phoenix_ash.png',
 };
 

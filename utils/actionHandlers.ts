@@ -1739,6 +1739,21 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       ]);
     }
 
+    // Check for nearby sparrow NPCs (forageable feathers)
+    if (!canForage) {
+      const npcs = npcManager.getCurrentMapNPCs();
+      for (const npc of npcs) {
+        if (npc.id.startsWith('sparrow_')) {
+          const dx = Math.abs(npc.position.x - tileX);
+          const dy = Math.abs(npc.position.y - tileY);
+          if (dx <= 3 && dy <= 3) {
+            canForage = true;
+            break;
+          }
+        }
+      }
+    }
+
     if (canForage) {
       interactions.push({
         type: 'forage',

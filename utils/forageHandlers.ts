@@ -12,6 +12,7 @@ import { generateForageSeed, getItem } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { DEBUG, TIMING } from '../constants';
 import { globalEventManager } from './GlobalEventManager';
+import { npcManager } from '../NPCManager';
 
 /**
  * Forageable tile types - tiles where players can search for wild seeds
@@ -33,6 +34,26 @@ function areDragonfliesActive(): boolean {
   return (season === Season.SPRING || season === Season.SUMMER) && timeOfDay === 'Day';
 }
 
+/**
+ * Find a sparrow NPC within foraging range of the player
+ * Returns the sparrow's tile position if found, null otherwise
+ */
+function findNearbySparrow(
+  playerTileX: number,
+  playerTileY: number
+): { x: number; y: number } | null {
+  const npcs = npcManager.getCurrentMapNPCs();
+  for (const npc of npcs) {
+    if (!npc.id.startsWith('sparrow_')) continue;
+    const dx = Math.abs(npc.position.x - playerTileX);
+    const dy = Math.abs(npc.position.y - playerTileY);
+    if (dx <= 3 && dy <= 3) {
+      return { x: Math.floor(npc.position.x), y: Math.floor(npc.position.y) };
+    }
+  }
+  return null;
+}
+
 /** Standard forage quantity roll: 50% chance of 1, 35% chance of 2, 15% chance of 3 */
 function rollForageQuantity(): number {
   const rand = Math.random();
@@ -52,6 +73,7 @@ const RARE_FORAGE_ITEMS = new Set([
   'ghost_lichen',
   'giant_mushroom_cap',
   'sakura_petal',
+  'feather',
 ]);
 
 /** Save inventory and record forage cooldown at the given position */
@@ -237,6 +259,71 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'dragonfly_wings', // Reuse field for item ID
       seedName: dragonflyWings.displayName, // Use displayName for UI
       message: `Found ${quantityFound} ${dragonflyWings.displayName}!`,
+    };
+  }
+
+  // Sparrow feather foraging (near sparrow NPCs in forest areas)
+  const nearbySparrow = findNearbySparrow(playerTileX, playerTileY);
+
+  if (nearbySparrow) {
+    if (!areDragonfliesActive()) {
+      // Same conditions as dragonflies: spring/summer, daytime
+      return {
+        found: false,
+        message: 'Sparrows only shed feathers in spring and summer during the day.',
+      };
+    }
+
+    // Check if sparrow is on the ground (sitting or landing) — feathers fall when they land
+    const npcs = npcManager.getCurrentMapNPCs();
+    const sparrow = npcs.find(
+      (npc) =>
+        npc.id.startsWith('sparrow_') &&
+        Math.abs(npc.position.x - playerTileX) <= 3 &&
+        Math.abs(npc.position.y - playerTileY) <= 3
+    );
+    if (sparrow?.animatedStates?.currentState) {
+      const state = sparrow.animatedStates.currentState;
+      if (state !== 'sitting' && state !== 'landing') {
+        return {
+          found: false,
+          message: 'The sparrow is flying about. Wait for it to land before searching for feathers.',
+        };
+      }
+    }
+
+    const featherItem = getItem('feather');
+    if (!featherItem) {
+      console.error('[Forage] Feather item not found in items.ts!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    const successRate = featherItem.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      gameState.recordForage(currentMapId, nearbySparrow.x, nearbySparrow.y);
+      return {
+        found: false,
+        message: 'You search near the sparrow, but find no feathers this time.',
+      };
+    }
+
+    const quantityFound = Math.random() < 0.7 ? 1 : 2;
+
+    inventoryManager.addItem('feather', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} Feather(s) near sparrow (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    saveForageResult(currentMapId, nearbySparrow.x, nearbySparrow.y, 'feather');
+
+    return {
+      found: true,
+      seedId: 'feather',
+      seedName: featherItem.displayName,
+      message: `Found ${quantityFound} ${featherItem.displayName}${quantityFound > 1 ? 's' : ''}!`,
     };
   }
 
