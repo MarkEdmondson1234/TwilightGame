@@ -10,6 +10,9 @@ export const iconAssets = {
   magic: '/TwilightGame/assets-optimized/icons/actions/magic.png',
   speech_bubble: '/TwilightGame/assets-optimized/icons/actions/speech_bubble.png',
   friendship: '/TwilightGame/assets-optimized/icons/actions/friendship.png',
+  // Navigation
+  door: '/TwilightGame/assets-optimized/icons/ui/door.png',
+  garden: '/TwilightGame/assets-optimized/icons/ui/garden.png',
   // Fallback
   brown_parcel: '/TwilightGame/assets-optimized/items/brown_parcel.png',
 };

@@ -17,6 +17,8 @@ const EMOJI_TO_ICON: Record<string, string> = {
   '💬': iconAssets.speech_bubble,
   '💕': iconAssets.friendship,
   '📦': iconAssets.brown_parcel,
+  '🚪': iconAssets.door,
+  '🌾': iconAssets.garden,
 };
 
 /**

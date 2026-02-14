@@ -87,7 +87,7 @@ export function getTransitionIcon(transition: Transition): TransitionIconConfig 
     return { icon: '🏡', colour: '#8b7355' };
   }
   if (mapId.includes('farm')) {
-    return { icon: '🌾', colour: '#5C6B3D' }; // Olive for farm
+    return { icon: '🌾', colour: '#8b7355' }; // Brown for farm
   }
   if (mapId.includes('witch') || mapId.includes('magical') || mapId.includes('mushroom')) {
     return { icon: '✨', colour: '#6B5B95' }; // Purple for magical
