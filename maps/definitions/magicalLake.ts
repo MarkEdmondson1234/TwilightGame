@@ -1,6 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
-import { createMotherSeaNPC, createBunnyflyNPC } from '../../utils/npcFactories';
+import { createMotherSeaNPC, createBunnyflyNPC, createSparrowNPC } from '../../utils/npcFactories';
 
 /**
  * Magical Lake - Sacred waters of Mother Sea
@@ -107,6 +107,12 @@ export const magicalLake: MapDefinition = {
       'bunnyfly_lake_3',
       { x: 14, y: 6 }, // North of the lake
       'Bunnyfly'
+    ),
+    // Sparrow - small bird near the lakeside
+    createSparrowNPC(
+      'sparrow_lake_1',
+      { x: 10, y: 8 },
+      'Sparrow'
     ),
   ],
 };

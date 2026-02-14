@@ -1,6 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
-import { createBunnyflyNPC } from '../../utils/npcFactories';
+import { createBunnyflyNPC, createSparrowNPC } from '../../utils/npcFactories';
 
 /**
  * Deep Forest - Sacred grove of the Giant Fairy Oak
@@ -124,6 +124,12 @@ export const deepForest: MapDefinition = {
       'bunnyfly_deep_forest_3',
       { x: 17, y: 10 }, // North of the fairy oak
       'Bunnyfly'
+    ),
+    // Sparrow - small bird hopping and flying around the grove
+    createSparrowNPC(
+      'sparrow_deep_forest_1',
+      { x: 20, y: 12 },
+      'Sparrow'
     ),
   ],
 };

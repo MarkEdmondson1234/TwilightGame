@@ -9,6 +9,7 @@ import {
   createSuffleNPC,
   createMushraNPC,
   createPossumNPC,
+  createSparrowNPC,
 } from '../utils/npcFactories';
 
 /**
@@ -880,6 +881,33 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       npcs.push(bunnyfly);
     }
     console.log(`[Forest] 🐰🦋 ${bunnyflyCount} Bunnyfly(s) spawned!`);
+  }
+
+  // Sparrow: 70% chance of spawning - common small forest bird
+  const sparrowChance = ((seed * 61) % 100) / 100;
+  if (sparrowChance < 0.7) {
+    const sparrowCount = Math.floor((seed * 67) % 2) + 1; // 1-2 sparrows
+    for (let i = 0; i < sparrowCount; i++) {
+      let sparrowX: number, sparrowY: number;
+      let attempts = 0;
+      const maxAttempts = 20;
+      do {
+        sparrowX = Math.floor(((seed * (71 + i * 3) + attempts * 23) % (width - 6)) + 3);
+        sparrowY = Math.floor(((seed * (73 + i * 5) + attempts * 29) % (height - 6)) + 3);
+        attempts++;
+      } while (
+        attempts < maxAttempts &&
+        (Math.abs(sparrowX - spawnX) < 6 && Math.abs(sparrowY - spawnY) < 6)
+      );
+
+      const sparrow = createSparrowNPC(
+        `sparrow_${seed}_${i}`,
+        { x: sparrowX, y: sparrowY },
+        i === 0 ? 'Sparrow' : `Sparrow ${i + 1}`
+      );
+      npcs.push(sparrow);
+    }
+    console.log(`[Forest] 🐦 ${sparrowCount} Sparrow(s) spawned!`);
   }
 
   // Deer: 60% chance of spawning - gentle forest creatures, very common

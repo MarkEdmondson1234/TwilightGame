@@ -455,6 +455,16 @@ export const npcAssets = {
   bunnyfly_01: '/TwilightGame/assets/npcs/bunnyfly_01.png',
   bunnyfly_02: '/TwilightGame/assets/npcs/bunnyfly_02.png',
   bunnyfly_portrait: '/TwilightGame/assets/npcs/bunnyfly_01.png',
+  // Sparrow assets (forest bird - animated takeoff/landing/flight)
+  // Using originals for maximum quality - small creatures need crisp detail
+  sparrow_sitting: '/TwilightGame/assets/npcs/sparrow/sparrow_sitting.png',
+  sparrow_takeoff_01: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff01.png',
+  sparrow_takeoff_02: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff02.png',
+  sparrow_takeoff_03: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff03.png',
+  sparrow_takeoff_04: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff04.png',
+  sparrow_flight_wings_up: '/TwilightGame/assets/npcs/sparrow/sparrow_flight_wings_up.png',
+  sparrow_flight_wings_down: '/TwilightGame/assets/npcs/sparrow/sparrow_flight_wings_down.png',
+  sparrow_portrait: '/TwilightGame/assets/npcs/sparrow/sparrow_sitting.png',
   // Duck assets (pond creature)
   duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
   duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',
