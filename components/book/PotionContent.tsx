@@ -15,6 +15,8 @@ import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
 import LevelUpCelebration from '../LevelUpCelebration';
+import { renderEncyclopaediaPages } from './EncyclopaediaContent';
+import { EncyclopaediaEntry, ENCYCLOPAEDIA_ENTRIES } from '../../data/ingredientEncyclopaedia';
 
 interface PotionContentProps {
   theme: BookThemeConfig;
@@ -47,7 +49,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
   const levelProgress = magicManager.getLevelMasteryProgress();
 
   // Potion levels as chapters
-  const potionChapters: BookChapter<PotionLevel | 'all'>[] = useMemo(
+  const potionChapters: BookChapter<PotionLevel | 'all' | 'encyclopaedia'>[] = useMemo(
     () => [
       { id: 'all', label: 'All Potions', icon: '📚' },
       { id: 'novice', label: 'Novice', icon: '🧪', locked: false },
@@ -63,6 +65,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
         icon: '🌟',
         locked: !magicManager.isLevelUnlocked('master'),
       },
+      { id: 'encyclopaedia', label: 'Encyclopaedia', icon: '🌿', locked: false },
     ],
     [magicUpdateTrigger]
   );
@@ -70,13 +73,14 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
   // Get all unlocked recipes (re-evaluate when level changes to include new recipes)
   const unlockedRecipes = useMemo(() => magicManager.getUnlockedRecipes(), [magicUpdateTrigger]);
 
-  // Group recipes by level
+  // Group recipes by level (plus encyclopaedia entries)
   const recipesByLevel = useMemo(() => {
-    const byLevel: Record<PotionLevel | 'all', PotionRecipeDefinition[]> = {
+    const byLevel: Record<PotionLevel | 'all' | 'encyclopaedia', (PotionRecipeDefinition | EncyclopaediaEntry)[]> = {
       all: unlockedRecipes,
       novice: [],
       journeyman: [],
       master: [],
+      encyclopaedia: ENCYCLOPAEDIA_ENTRIES,
     };
     unlockedRecipes.forEach((recipe) => {
       if (byLevel[recipe.level]) {
@@ -130,8 +134,12 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
     setLevelUpLevel(null);
   }, []);
 
-  // Get selected potion details
-  const selectedPotion = pagination.selectedItem;
+  // Encyclopaedia mode check
+  const isEncyclopaedia = pagination.currentChapterId === 'encyclopaedia';
+
+  // Get selected potion details (only when not in encyclopaedia mode)
+  const selectedPotion = !isEncyclopaedia ? pagination.selectedItem as PotionRecipeDefinition | null : null;
+  const selectedEntry = isEncyclopaedia ? pagination.selectedItem as EncyclopaediaEntry | null : null;
 
   // Check if we can brew
   const canBrew = selectedPotion ? magicManager.hasIngredients(selectedPotion.id) : false;
@@ -160,8 +168,8 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
         {pagination.currentChapter?.label}
       </h2>
 
-      {/* Level progress bar (for non-all chapters) */}
-      {pagination.currentChapterId !== 'all' && (
+      {/* Level progress bar (for potion level chapters only) */}
+      {pagination.currentChapterId !== 'all' && !isEncyclopaedia && (
         <div className="mb-3">
           <div className="flex items-center justify-between text-sm mb-1">
             <span style={{ color: theme.textSecondary }}>
@@ -190,43 +198,87 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
       )}
 
       <div className="flex-1 space-y-1 overflow-y-auto">
-        {pagination.currentPageItems.map((potion, index) => {
-          const progress = magicManager.getProgress(potion.id);
-          const isMastered = progress?.isMastered;
-          const hasIngredients = magicManager.hasIngredients(potion.id);
-          const isSelected = pagination.selectedItemIndex === index;
+        {isEncyclopaedia
+          ? /* Encyclopaedia ingredient list */
+            pagination.currentPageItems.map((item, index) => {
+              const entry = item as EncyclopaediaEntry;
+              const ingredientItem = getItem(entry.itemId);
+              const isSelected = pagination.selectedItemIndex === index;
 
-          return (
-            <button
-              key={potion.id}
-              onClick={() => pagination.selectItem(index)}
-              className={`
-                w-full text-left px-3 py-2 rounded transition-all duration-150
-                ${isSelected ? 'shadow-md' : 'hover:bg-black/5'}
-              `}
-              style={{
-                backgroundColor: isSelected ? `${theme.accentPrimary}30` : 'transparent',
-                borderLeft: isSelected
-                  ? `3px solid ${theme.accentPrimary}`
-                  : '3px solid transparent',
-                fontFamily: theme.fontBody,
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-medium" style={{ color: theme.textPrimary }}>
-                  {potion.displayName}
-                </span>
-                <span className="text-base flex items-center gap-1">
-                  {isMastered && <span style={{ color: theme.masteredColour }}>★</span>}
-                  {hasIngredients && <span style={{ color: theme.successColour }}>✓</span>}
-                </span>
-              </div>
-              <div className="text-sm capitalize" style={{ color: theme.textMuted }}>
-                {potion.level}
-              </div>
-            </button>
-          );
-        })}
+              return (
+                <button
+                  key={entry.itemId}
+                  onClick={() => pagination.selectItem(index)}
+                  className={`
+                    w-full text-left px-3 py-2 rounded transition-all duration-150
+                    ${isSelected ? 'shadow-md' : 'hover:bg-black/5'}
+                  `}
+                  style={{
+                    backgroundColor: isSelected ? `${theme.accentPrimary}30` : 'transparent',
+                    borderLeft: isSelected
+                      ? `3px solid ${theme.accentPrimary}`
+                      : '3px solid transparent',
+                    fontFamily: theme.fontBody,
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    {ingredientItem?.image && (
+                      <img
+                        src={ingredientItem.image}
+                        alt={ingredientItem.displayName}
+                        className="w-6 h-6 object-contain"
+                      />
+                    )}
+                    <span className="font-medium" style={{ color: theme.textPrimary }}>
+                      {ingredientItem?.displayName ?? entry.itemId}
+                    </span>
+                  </div>
+                  <div className="text-sm italic" style={{ color: theme.textMuted }}>
+                    {entry.latinName}
+                  </div>
+                </button>
+              );
+            })
+          : /* Potion recipe list */
+            pagination.currentPageItems.map((item, index) => {
+              const potion = item as PotionRecipeDefinition;
+              const progress = magicManager.getProgress(potion.id);
+              const isMastered = progress?.isMastered;
+              const hasIngredients = magicManager.hasIngredients(potion.id);
+              const isSelected = pagination.selectedItemIndex === index;
+
+              return (
+                <button
+                  key={potion.id}
+                  onClick={() => pagination.selectItem(index)}
+                  className={`
+                    w-full text-left px-3 py-2 rounded transition-all duration-150
+                    ${isSelected ? 'shadow-md' : 'hover:bg-black/5'}
+                  `}
+                  style={{
+                    backgroundColor: isSelected ? `${theme.accentPrimary}30` : 'transparent',
+                    borderLeft: isSelected
+                      ? `3px solid ${theme.accentPrimary}`
+                      : '3px solid transparent',
+                    fontFamily: theme.fontBody,
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium" style={{ color: theme.textPrimary }}>
+                      {potion.displayName}
+                    </span>
+                    <span className="text-base flex items-center gap-1">
+                      {isMastered && <span style={{ color: theme.masteredColour }}>★</span>}
+                      {hasIngredients && <span style={{ color: theme.successColour }}>✓</span>}
+                    </span>
+                  </div>
+                  <div className="text-sm capitalize" style={{ color: theme.textMuted }}>
+                    {potion.level}
+                  </div>
+                </button>
+              );
+            })
+        }
 
         {pagination.currentPageItems.length === 0 && (
           <p className="text-center py-8 italic" style={{ color: theme.textMuted }}>
@@ -239,8 +291,15 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
     </div>
   );
 
-  // Right page: Potion details
-  const rightPageContent = (
+  // Encyclopaedia pages (override both left and right when entry selected)
+  const encyclopaediaPages = isEncyclopaedia
+    ? renderEncyclopaediaPages(theme, selectedEntry)
+    : null;
+
+  // Right page: Potion details (or encyclopaedia right page)
+  const rightPageContent = isEncyclopaedia ? (
+    encyclopaediaPages!.rightPage
+  ) : (
     <div className="h-full flex flex-col overflow-y-auto">
       {selectedPotion ? (
         <div className="space-y-2">
@@ -411,7 +470,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
 
       <BookSpread
         theme={theme}
-        leftPageContent={leftPageContent}
+        leftPageContent={isEncyclopaedia && selectedEntry ? encyclopaediaPages!.leftPage : leftPageContent}
         rightPageContent={rightPageContent}
         leftPageNumber={pagination.currentPageIndex + 1}
         totalPages={pagination.totalPages}
