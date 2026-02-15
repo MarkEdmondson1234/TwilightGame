@@ -8,6 +8,7 @@ import { gameState } from '../../GameState';
 import { PlacedItem, Position } from '../../types';
 import { BookThemeConfig, getThemeStyles } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
+import GameIcon from '../GameIcon';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
 
@@ -220,7 +221,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                 <span className="text-base">
                   {mastered && <span style={{ color: theme.masteredColour }}>★</span>}
                   {unlocked && !mastered && <span style={{ color: theme.successColour }}>✓</span>}
-                  {!unlocked && <span style={{ color: theme.lockedColour }}>🔒</span>}
+                  {!unlocked && <GameIcon icon="🔒" size={16} />}
                 </span>
               </div>
             </button>
@@ -379,7 +380,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         ) : (
           // Locked recipe view
           <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="text-5xl mb-4">🔒</div>
+            <div className="mb-4"><GameIcon icon="🔒" size={56} /></div>
             <h3 className="text-xl font-bold mb-2" style={{ color: theme.textMuted }}>
               Recipe Locked
             </h3>

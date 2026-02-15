@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import GameIcon from './GameIcon';
 
 interface PaintColourInfo {
   paintId: string;
@@ -83,10 +84,9 @@ export const ColourPaletteDisplay: React.FC<ColourPaletteDisplayProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontSize: '16px',
                   }}
                 >
-                  🔒
+                  <GameIcon icon="🔒" size={16} />
                 </span>
               )}
             </button>

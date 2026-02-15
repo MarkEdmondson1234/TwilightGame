@@ -2,6 +2,7 @@ import React from 'react';
 import { BookThemeConfig } from './bookThemes';
 import BookPage from './BookPage';
 import { BookChapter } from '../../hooks/useBookPagination';
+import GameIcon from '../GameIcon';
 
 interface BookSpreadProps<ChapterId extends string> {
   theme: BookThemeConfig;
@@ -93,7 +94,7 @@ function BookSpread<ChapterId extends string>({
                     title={isLocked ? 'Locked - master previous recipes to unlock' : chapter.label}
                   >
                     <span className="truncate">{chapter.label}</span>
-                    {isLocked && <span className="text-[9px] ml-1">🔒</span>}
+                    {isLocked && <GameIcon icon="🔒" size={12} className="ml-1 inline-block" />}
                   </button>
                 );
               })}

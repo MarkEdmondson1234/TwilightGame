@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { uiAssets } from '../assets';
 import { Z_HUD, zClass } from '../zIndex';
 import { magicManager } from '../utils/MagicManager';
+import GameIcon from './GameIcon';
 
 interface BookshelfProps {
   isTouchDevice?: boolean;
@@ -110,7 +111,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             />
             {!magicBookUnlocked && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-8xl drop-shadow-md">🔒</span>
+                <GameIcon icon="🔒" size={96} className="drop-shadow-md" />
               </div>
             )}
           </button>
