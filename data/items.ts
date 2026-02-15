@@ -1148,6 +1148,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Vanilla Ice Cream',
     category: ItemCategory.FOOD,
     description: 'Creamy homemade vanilla ice cream.',
+    image: cookingAssets.ice_cream,
     stackable: true,
     sellPrice: 55,
   },
