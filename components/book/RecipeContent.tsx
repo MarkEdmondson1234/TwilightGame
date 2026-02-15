@@ -354,6 +354,22 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                 })}
               </div>
 
+              {/* Instructions (if available) */}
+              {selectedRecipe.instructions && selectedRecipe.instructions.length > 0 && (
+                <div className="mt-2">
+                  <h4 className="font-bold mb-1 text-base" style={{ color: theme.textPrimary }}>
+                    Instructions
+                  </h4>
+                  <ol className="list-decimal list-inside space-y-1 text-sm pl-1">
+                    {selectedRecipe.instructions.map((step, index) => (
+                      <li key={index} className="leading-relaxed" style={{ color: theme.textSecondary }}>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               {/* Result message */}
               {showResult && cookingResult && (
                 <div
