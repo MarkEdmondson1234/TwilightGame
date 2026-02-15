@@ -136,6 +136,7 @@ export enum TileType {
   BRANCH, // Fallen branch (walkable ground decoration)
   MUSHROOM_CLUSTER, // Decorative 2x2 mushroom cluster (appears in mushroom forest and procedural forests)
   // Common forageable plants (appear on multiple maps)
+  FOREST_MUSHROOM, // Red-capped forest mushrooms (2x2, autumn only, dormant other seasons)
   MUSTARD_FLOWER, // Yellow mustard flower (3x3, blooms spring/summer, dormant autumn/winter)
   SHRINKING_VIOLET, // Purple shrinking violet (1x1, blooms spring only)
   FROST_FLOWER, // Magical frost flower (1x1, only visible when snowing)

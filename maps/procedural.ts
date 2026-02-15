@@ -562,6 +562,19 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add forest mushrooms scattered throughout forest (forageable, autumn-only)
+  // Spawn ~6 instances (seasonal exclusivity makes them moderately rare)
+  for (let i = 0; i < 6; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    // Only place on grass tiles, avoid spawn zone
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.FOREST_MUSHROOM;
+    }
+  }
+
   // Add shrinking violets scattered throughout forest (forageable, spring-only)
   // Only spawn ~5 instances (rarer than mustard flowers due to seasonal exclusivity)
   for (let i = 0; i < 5; i++) {

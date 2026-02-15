@@ -140,6 +140,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     TileType.ADDERSMEAT,
     TileType.WOLFSBANE,
     TileType.LUMINESCENT_TOADSTOOL,
+    TileType.FOREST_MUSHROOM,
     TileType.MUSTARD_FLOWER,
     TileType.FROST_FLOWER,
   ]);
@@ -577,6 +578,69 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'luminescent_toadstool', // Reuse field for item ID
       seedName: toadstool.displayName,
       message: `Found ${quantityFound} ${toadstool.displayName}!`,
+    };
+  }
+
+  // Forest mushroom foraging (procedural forest, autumn only)
+  const forestMushroomResult = findTileTypeNearby(
+    playerTileX,
+    playerTileY,
+    TileType.FOREST_MUSHROOM
+  );
+  const forestMushroomAnchor = forestMushroomResult.found ? forestMushroomResult.position : null;
+
+  if (forestMushroomAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found forest mushroom anchor at (${forestMushroomAnchor.x}, ${forestMushroomAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+
+    // Check if it's the right season (autumn only - dormant other seasons)
+    const { season } = TimeManager.getCurrentTime();
+    if (season !== Season.AUTUMN) {
+      return {
+        found: false,
+        message: 'These mushrooms only appear in autumn. Come back then!',
+      };
+    }
+
+    const forestMushroom = getItem('forest_mushroom');
+    if (!forestMushroom) {
+      console.error('[Forage] Forest mushroom item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    // Use per-item success rate (forest_mushroom has forageSuccessRate: 0.75)
+    const successRate = forestMushroom.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      // Failure - set cooldown at ANCHOR position (so whole 2x2 area shares cooldown)
+      gameState.recordForage(currentMapId, forestMushroomAnchor.x, forestMushroomAnchor.y);
+      return {
+        found: false,
+        message: 'You search through the mushrooms, but none of them are quite right for picking.',
+      };
+    }
+
+    // Success - Random quantity: 50% chance of 1, 35% chance of 2, 15% chance of 3
+    const quantityFound = rollForageQuantity();
+
+    // Add to inventory
+    inventoryManager.addItem('forest_mushroom', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} ${forestMushroom.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    // Save and set cooldown at ANCHOR position
+    saveForageResult(currentMapId, forestMushroomAnchor.x, forestMushroomAnchor.y, 'forest_mushroom');
+
+    return {
+      found: true,
+      seedId: 'forest_mushroom',
+      seedName: forestMushroom.displayName,
+      message: `Found ${quantityFound} ${forestMushroom.displayName}!`,
     };
   }
 

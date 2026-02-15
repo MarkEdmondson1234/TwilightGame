@@ -1412,6 +1412,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     buyPrice: 500,
   },
 
+  forest_mushroom: {
+    id: 'forest_mushroom',
+    name: 'forest_mushroom',
+    displayName: 'Forest Mushroom',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description:
+      'A cluster of red-capped toadstools with white spots. They only appear in the forest during autumn, and are prized for their magical properties.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 25,
+    image: magicalAssets.forest_mushroom,
+    forageSuccessRate: 0.75, // 75% success rate when foraging
+  },
+
   feather: {
     id: 'feather',
     name: 'feather',

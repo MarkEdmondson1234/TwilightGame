@@ -643,6 +643,21 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   // ============================================
   // Common Forageable Plants (Multiple Maps)
   // ============================================
+  [TileType.FOREST_MUSHROOM]: {
+    name: 'Forest Mushroom',
+    color: 'bg-palette-sage', // Base grass color for blending
+    collisionType: CollisionType.WALKABLE, // Walkable - forageable plant
+    baseType: TileType.GRASS, // Render grass underneath
+    // Only appears in autumn, dormant other seasons
+    seasonalImages: {
+      spring: [], // Dormant - no sprite shown
+      summer: [], // Dormant - no sprite shown
+      autumn: [tileAssets.forest_mushrooms],
+      winter: [], // Dormant - no sprite shown
+      default: [],
+    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.MUSTARD_FLOWER]: {
     name: 'Mustard Flower',
     color: 'bg-palette-sage', // Base grass color for blending

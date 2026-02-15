@@ -84,6 +84,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.BRANCH]: 'grass',  // Branch sits on grass background
   [TileType.MUSHROOM_CLUSTER]: 'grass',  // Mushroom cluster sits on grass background
   // Common forageable plants
+  [TileType.FOREST_MUSHROOM]: 'grass',
   [TileType.MUSTARD_FLOWER]: 'grass',
   [TileType.SHRINKING_VIOLET]: 'grass', // Shrinking violet sits on grass background
   [TileType.FROST_FLOWER]: 'grass', // Frost flower sits on grass background (weather-conditional)

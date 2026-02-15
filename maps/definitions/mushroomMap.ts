@@ -29,6 +29,7 @@ import { createMushraNPC } from '../../utils/npcFactories';
  * e = Fern (2x2 forest floor plant)
  * i = Wild iris (3x3 waterside flower)
  * a = Moonpetal (3x3 night-blooming flower)
+ * m = Forest mushroom (2x2 forageable, autumn only)
  * u = Mushroom (small walkable mushroom)
  */
 
@@ -37,18 +38,18 @@ const gridString = `
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
 LGGGGGGGGiGGGGGGGGGGGGGGGGGGGL
 LGGeGGGGGGGG)GGuGGGGG4GGeGGGGL
-LGGGeGGe4GGGGGG7eeGGGeGGGGGGGL
+LGGGeGGe4GGGGmG7eeGGGeGGGGGGGL
 LGGGGuGGeGGGiGGeGGG7GGGGGuG7GL
 LGGyGGGGGGGGGGGGGGeGG7PGGGuGGL
 LGGGGGGGGaGGGGGGaGGGGPuGG9G¤uL
 L6GeGGGGGGG7GGGGG-GPPGGaGGeGGL
 LGG7GGGGGGuGGeeGuGPPGGGeeGeutL
-LGeGGGGGaGGGGxGGGPPaGeeGG7eGGL
+LGeGGmGGaGGGGxGGGPPaGeeGG7eGGL
 L7GGGGyGGG4GGeGPPGeGeeGGeGe7GL
 LGGGuGiGGGGGuG4GPGGuGGeGGxGeGL
 LGxGuGGiGGaGGGuuaPeGeGG4iGGeeL
 LGGGeGGG)GGGGuGGGGPeGxGGGieGtL
-LGeGGGGGGGGGGGG7eGGPPeiG)GuGGL
+LGeGGGGGGGGGGmG7eGGPPeiG)GuGGL
 LtGGyGGGGGGyGGGeGGGP7GGeiG4uGL
 LGG6GGGi¤iuGueGuGPGee¤GeGtGuGL
 LGGGeGGPPPPPPPPPPPPPPPPPGGe6uL
@@ -61,7 +62,9 @@ export const mushroomMap: MapDefinition = {
   name: 'Mushroom Forest',
   width: 30,
   height: 20,
-  grid: parseGrid(gridString),
+  grid: parseGrid(gridString, {
+    m: TileType.FOREST_MUSHROOM, // m = Forest mushroom (2x2, autumn-only forageable)
+  }),
   colorScheme: 'mushroom_forest', // Very dark forest floor with shadow colour
   hasClouds: true, // Outdoor area
   isRandom: false,

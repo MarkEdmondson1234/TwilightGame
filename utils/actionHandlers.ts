@@ -1727,6 +1727,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       canForage = hasTileTypeNearby(tileX, tileY, [
         TileType.BEE_HIVE,
         TileType.LUMINESCENT_TOADSTOOL,
+        TileType.FOREST_MUSHROOM,
         TileType.MOONPETAL,
         TileType.ADDERSMEAT,
         TileType.WOLFSBANE,

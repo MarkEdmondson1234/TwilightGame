@@ -177,6 +177,7 @@ export const tileAssets = {
   // Mushroom cluster (2x2 decorative mushrooms for mushroom forest and procedural forests)
   mushroom_cluster: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom.png',
   // Common forageable plants
+  forest_mushrooms: '/TwilightGame/assets-optimized/tiles/forest/forest_mushrooms.png',
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',
   shrinking_violet: '/TwilightGame/assets-optimized/tiles/forest/shrinking_violet.png',
   frost_flower_bloom: '/TwilightGame/assets-optimized/tiles/ruins/frost_flower_bloom.png',
@@ -363,6 +364,8 @@ export const magicalAssets = {
     '/TwilightGame/assets-optimized/items/magical/forageable/giant_mushroom_cap.png',
   sakura_petal: '/TwilightGame/assets-optimized/items/magical/forageable/sakura_petals.png',
   feather: '/TwilightGame/assets-optimized/items/magical/forageable/feather.png',
+  forest_mushroom:
+    '/TwilightGame/assets-optimized/items/magical/forageable/forest_mushroom_ingredient.png',
   phoenix_ash: '/TwilightGame/assets-optimized/items/magical/shop/phoenix_ash.png',
 };
 

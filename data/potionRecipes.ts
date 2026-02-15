@@ -282,7 +282,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     description: 'A hazy grey potion that seems to swirl on its own.',
     ingredients: [
       { itemId: 'water', quantity: 1 },
-      { itemId: 'mushroom', quantity: 1 },
+      { itemId: 'forest_mushroom', quantity: 1 },
       { itemId: 'ghost_lichen', quantity: 1 },
     ],
     brewingTime: 25,

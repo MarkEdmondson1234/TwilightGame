@@ -202,6 +202,26 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   // Common Forageable Plants (Multiple Maps)
   // ============================================
   {
+    tileType: TileType.FOREST_MUSHROOM,
+    spriteWidth: 1, // 1 tile wide (single tile)
+    spriteHeight: 1, // 1 tile tall (square image)
+    offsetX: 0, // No offset needed for 1x1
+    offsetY: 0, // No offset needed for 1x1
+    image: tileAssets.forest_mushrooms,
+    // Collision: walkable (no collision) - forageable plant
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: subtle flipping and scaling for variety
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: true,
+    scaleRange: { min: 0.9, max: 1.1 },
+    brightnessRange: { min: 0.95, max: 1.05 },
+  },
+  {
     tileType: TileType.MUSTARD_FLOWER,
     spriteWidth: 1, // 1 tile wide (small wildflower)
     spriteHeight: 1, // 1 tile tall (square image)
