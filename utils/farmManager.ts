@@ -21,11 +21,15 @@ import { eventBus, GameEvent } from './EventBus';
 /** Interval for batch-flushing dirty shared plots to Firestore */
 const SHARED_SYNC_INTERVAL_MS = 10_000;
 
+/** How long to ignore Firestore echoes of our own writes (ms) */
+const FLUSH_GRACE_PERIOD_MS = 15_000;
+
 class FarmManager {
   private plots: Map<string, FarmPlot> = new Map(); // key: "mapId:x:y"
 
   // Shared farm batch sync state
   private dirtySharedPlots: Set<string> = new Set(); // plot keys that need Firestore write
+  private recentlyFlushed: Map<string, number> = new Map(); // plot key → flush timestamp
   private flushInterval: ReturnType<typeof setInterval> | null = null;
   private sharedListenerUnsub: (() => void) | null = null;
 
@@ -954,13 +958,23 @@ class FarmManager {
       service.startListening();
 
       this.sharedListenerUnsub = service.onPlotsChanged((remotePlots) => {
+        const now = Date.now();
+
+        // Clean up expired entries from recentlyFlushed
+        for (const [key, ts] of this.recentlyFlushed) {
+          if (now - ts > FLUSH_GRACE_PERIOD_MS) this.recentlyFlushed.delete(key);
+        }
+
         let applied = 0;
         for (const [plotId, doc] of remotePlots) {
           const farmPlot = service.docToFarmPlot(doc as any);
           if (!farmPlot) continue;
 
-          // Don't overwrite plots we just changed locally (they're in our dirty set)
+          // Skip plots we're about to flush (still dirty)
           if (this.dirtySharedPlots.has(plotId)) continue;
+
+          // Skip echoes of our own recent writes (grace period)
+          if (this.recentlyFlushed.has(plotId)) continue;
 
           this.plots.set(plotId, farmPlot);
           applied++;
@@ -970,7 +984,11 @@ class FarmManager {
         for (const [key, plot] of this.plots) {
           if (!SHARED_FARM_MAP_IDS.has(plot.mapId)) continue;
           if (plot.state === FarmPlotState.FALLOW) continue;
-          if (!remotePlots.has(key) && !this.dirtySharedPlots.has(key)) {
+          if (
+            !remotePlots.has(key) &&
+            !this.dirtySharedPlots.has(key) &&
+            !this.recentlyFlushed.has(key)
+          ) {
             plot.state = FarmPlotState.FALLOW;
             plot.cropType = null;
             plot.plantedAtTimestamp = null;
@@ -1030,11 +1048,12 @@ class FarmManager {
       const { getCommunityGardenService } = await import('../firebase/safe');
       const service = getCommunityGardenService();
 
+      // Snapshot the dirty set but DON'T clear yet — keeps protection active during async writes
       const toFlush = new Set(this.dirtySharedPlots);
-      this.dirtySharedPlots.clear();
 
       let written = 0;
       let cleared = 0;
+      const now = Date.now();
       for (const plotKey of toFlush) {
         const plot = this.plots.get(plotKey);
         if (!plot || plot.state === FarmPlotState.FALLOW) {
@@ -1045,6 +1064,13 @@ class FarmManager {
           if (ok) written++;
           else console.warn(`[SharedFarm] Failed to write plot ${plotKey}`);
         }
+        // Track as recently flushed so we ignore Firestore echoes
+        this.recentlyFlushed.set(plotKey, now);
+      }
+
+      // NOW clear only the keys we actually flushed (new dirty entries added during writes are preserved)
+      for (const plotKey of toFlush) {
+        this.dirtySharedPlots.delete(plotKey);
       }
 
       if (written > 0 || cleared > 0) {
