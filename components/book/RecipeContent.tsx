@@ -11,6 +11,7 @@ import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import GameIcon from '../GameIcon';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
+import CookingResultPopup from '../CookingResultPopup';
 
 interface RecipeContentProps {
   theme: BookThemeConfig;
@@ -158,10 +159,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         }
       }
 
-      setTimeout(() => {
-        setShowResult(false);
-        setCookingResult(null);
-      }, 3000);
+      // Popup handles its own auto-dismiss via CookingResultPopup
     },
     [nearbyNPCs, currentMapId, cookingPosition, playerPosition, onItemPlaced]
   );
@@ -362,7 +360,11 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                   </h4>
                   <ol className="list-decimal list-inside space-y-1 text-sm pl-1">
                     {selectedRecipe.instructions.map((step, index) => (
-                      <li key={index} className="leading-relaxed" style={{ color: theme.textSecondary }}>
+                      <li
+                        key={index}
+                        className="leading-relaxed"
+                        style={{ color: theme.textSecondary }}
+                      >
                         {step}
                       </li>
                     ))}
@@ -370,15 +372,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
                 </div>
               )}
 
-              {/* Result message */}
-              {showResult && cookingResult && (
-                <div
-                  className="p-2 rounded-lg text-center font-bold border mt-2 text-base"
-                  style={cookingResult.success ? styles.success : styles.error}
-                >
-                  {cookingResult.message}
-                </div>
-              )}
+              {/* Result message - now shown as popup overlay */}
 
               {/* Mum helper hint */}
               {canCook(selectedRecipe.id) &&
@@ -396,7 +390,9 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         ) : (
           // Locked recipe view
           <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="mb-4"><GameIcon icon="🔒" size={56} /></div>
+            <div className="mb-4">
+              <GameIcon icon="🔒" size={56} />
+            </div>
             <h3 className="text-xl font-bold mb-2" style={{ color: theme.textMuted }}>
               Recipe Locked
             </h3>
@@ -448,6 +444,19 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
         onPrevPage={pagination.prevPage}
         onNextPage={pagination.nextPage}
       />
+
+      {/* Cooking result popup overlay */}
+      {showResult && cookingResult && (
+        <CookingResultPopup
+          result={cookingResult}
+          recipeId={selectedRecipe?.id}
+          theme={theme}
+          onDismiss={() => {
+            setShowResult(false);
+            setCookingResult(null);
+          }}
+        />
+      )}
     </div>
   );
 };

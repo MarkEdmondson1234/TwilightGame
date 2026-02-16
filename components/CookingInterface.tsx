@@ -7,6 +7,7 @@ import { inventoryManager } from '../utils/inventoryManager';
 import { gameState } from '../GameState';
 import { Position, PlacedItem } from '../types';
 import { Z_COOKING, zClass } from '../zIndex';
+import CookingResultPopup from './CookingResultPopup';
 
 interface CookingInterfaceProps {
   isOpen: boolean;
@@ -78,13 +79,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
     setCookingResult(result);
 
     // If cooking succeeded and we have a cooking position, place the item on the stove/campfire
-    if (
-      result.success &&
-      result.foodProduced &&
-      cookingPosition &&
-      currentMapId &&
-      recipe.image
-    ) {
+    if (result.success && result.foodProduced && cookingPosition && currentMapId && recipe.image) {
       // Remove the item from inventory (CookingManager added it, but we want it on the stove instead)
       inventoryManager.removeItem(result.foodProduced.itemId, result.foodProduced.quantity);
 
@@ -108,12 +103,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
     }
 
     setShowResult(true);
-
-    // Auto-hide result after 3 seconds
-    setTimeout(() => {
-      setShowResult(false);
-      setCookingResult(null);
-    }, 3000);
+    // Popup handles its own auto-dismiss via CookingResultPopup
   };
 
   // Category filter buttons
@@ -142,7 +132,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
       onMouseUp={(e) => e.stopPropagation()}
     >
       <div
-        className="bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
+        className="relative bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
@@ -308,19 +298,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
                   </button>
                 </div>
 
-                {/* Result Message */}
-                {showResult && cookingResult && (
-                  <div
-                    className={`p-4 rounded-lg text-center font-bold ${
-                      cookingResult.success
-                        ? 'bg-green-800/50 text-green-200 border border-green-600'
-                        : 'bg-red-800/50 text-red-200 border border-red-600'
-                    }`}
-                  >
-                    {cookingResult.success ? '✨ ' : '❌ '}
-                    {cookingResult.message}
-                  </div>
-                )}
+                {/* Result message - now shown as popup overlay */}
               </div>
             ) : (
               <div className="h-full flex items-center justify-center">
@@ -336,6 +314,18 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
             Press ESC or E to close • Cook recipes 3 times to master them
           </p>
         </div>
+
+        {/* Cooking result popup overlay */}
+        {showResult && cookingResult && (
+          <CookingResultPopup
+            result={cookingResult}
+            recipeId={selectedRecipe ?? undefined}
+            onDismiss={() => {
+              setShowResult(false);
+              setCookingResult(null);
+            }}
+          />
+        )}
       </div>
     </div>
   );
