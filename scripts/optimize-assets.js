@@ -329,7 +329,7 @@ async function optimizeTiles() {
         .toFile(outputPath);
     }
     // Special handling for decorative flowers (iris, pond flowers, ferns, etc.) - multi-tile sprites need higher resolution
-    else if (file.includes('iris') || inputPath.includes('wild_iris') || file.includes('pond_flowers') || file.includes('fern')) {
+    else if (file.includes('iris') || inputPath.includes('wild_iris') || file.includes('pond_flowers') || file.includes('fern') || file.includes('meadow_grass')) {
       await sharp(inputPath)
         .resize(FLOWER_SIZE, FLOWER_SIZE, {
           fit: 'contain',

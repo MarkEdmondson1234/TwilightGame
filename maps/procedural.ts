@@ -458,6 +458,15 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Add meadow grass scattered throughout forest (walkable seasonal ground cover)
+  for (let i = 0; i < 8; i++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    if (map[y][x] === TileType.GRASS) {
+      map[y][x] = TileType.MEADOW_GRASS;
+    }
+  }
+
   // Add wild irises in organic clusters near water (beautiful yellow flowering plants)
   // Only spawn if water exists on the map
   if (waterAdjacentTiles.length > 0) {

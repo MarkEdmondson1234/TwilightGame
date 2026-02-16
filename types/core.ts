@@ -68,6 +68,7 @@ export enum TileType {
   // Decorative (walkable)
   MUSHROOM,
   FERN,
+  MEADOW_GRASS, // Meadow grass (seasonal walkable ground cover, single-tile)
   BUSH,
   TREE,
   TREE_BIG,

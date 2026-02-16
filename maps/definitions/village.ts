@@ -57,17 +57,17 @@ import {
 
 const gridString = `
 oLULYoLtULoLtULUUULLUoLLGULJLG
+oLULYoLtULoLtULUUULLUoLLGULJLG
 LoG,G,GeGG,,l,oG,G,,G,eeGGGLGG
 tG,G,,G,,,XXX,G,kXXXXXGG,yGGeG
 LG,,c,,,G,XXX,c,,XXXXXGeGeGeGG
 oGol,G,GKGGP,l,,sG,,l,G,Gl,lGG
-Ytl,G,,PPPPPPPPPPPGG,G,,,G,,GG
-oG,,l,,P,l,,,G,PG,,G,G,,,,cGGG
-LG,,G,,P,,Gl,G,PG,G,,G,eUGlGLG
-tG,G,,,P,G,,,G,PG,,G,,,,RGRGeG
+Ytl,G,,PPPPPPPPPPPGG,GG,,,,cGG
+LG,,G,,P,,Gl,G,PG,G,,,,eUGlGLG
+tG,G,,,P,G,,,G,PG,,G,:,,RGRGeG
 Lc,,G,,PG,G,,,PG,,G,,l,,,,,GLG
-JG,G,,,PG,,G,,PG,l,,lMGR,RG,Re
-LoG,Gc,GPe%G,,PG,G,,GPR,,,eGGL
+JG,G,,,PG,,G,,PG,l,,lMGR:RG,Re
+LoG,Gc,GPe%G,,PG,:,,GPR,,,eGGL
 oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
 LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
 tG,,G,,,G,.PG,l,,lG,l,,UGG,,UG
@@ -93,7 +93,9 @@ export const village: MapDefinition = {
   name: 'Village',
   width: 30,
   height: 30,
-  grid: parseGrid(gridString),
+  grid: parseGrid(gridString, {
+    ':': TileType.MEADOW_GRASS, // : = Meadow grass (seasonal ground cover)
+  }),
   colorScheme: 'village',
   hasClouds: true,
   isRandom: false,

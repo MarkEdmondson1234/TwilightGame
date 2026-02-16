@@ -1046,6 +1046,25 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.85, max: 1.15 }, // Size variation for natural look
   },
   {
+    tileType: TileType.MEADOW_GRASS,
+    spriteWidth: 2, // 2 tiles wide (seasonal ground cover patch)
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: -0.5, // Centre horizontally on tile
+    offsetY: -1, // Extends 1 tile upward
+    image: tileAssets.meadow_grass_summer, // Default image (overridden by seasonalImages in TILE_LEGEND)
+    // No collision - walkable decorative ground cover
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    // Transform controls: variety for natural meadow look
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.85, max: 1.15 },
+  },
+  {
     tileType: TileType.POND_FLOWERS,
     spriteWidth: 2, // 2 tiles wide (floating pond flowers)
     spriteHeight: 2, // 2 tiles tall

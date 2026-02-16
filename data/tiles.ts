@@ -295,6 +295,24 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.GRASS, // Render grass underneath (uses map's color scheme)
     // Multi-tile sprite (2x2) - image and transforms defined in SPRITE_METADATA
   },
+  [TileType.MEADOW_GRASS]: {
+    name: 'Meadow Grass',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.WALKABLE,
+    baseType: TileType.GRASS,
+    seasonalImages: {
+      spring: [tileAssets.meadow_grass_spring],
+      summer: [tileAssets.meadow_grass_summer],
+      autumn: [tileAssets.meadow_grass_autumn],
+      winter: [tileAssets.meadow_grass_winter],
+      default: [tileAssets.meadow_grass_summer],
+    },
+    transforms: {
+      enableFlip: true,
+      enableScale: true,
+      scaleRange: { min: 0.90, max: 1.10 },
+    },
+  },
   [TileType.BUSH]: {
     name: 'Hawthorn Bush',
     color: 'bg-palette-sage', // Base grass color for blending

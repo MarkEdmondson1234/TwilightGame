@@ -144,6 +144,11 @@ export const tileAssets = {
   blueberry_bush_summer: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_summer.png',
   blueberry_bush_autumn: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_autumn.png',
   blueberry_bush_winter: '/TwilightGame/assets-optimized/tiles/forest/blueberry_bush_winter.png',
+  // Meadow grass assets (seasonal ground cover)
+  meadow_grass_spring: '/TwilightGame/assets-optimized/tiles/forest/meadow_grass_spring.png',
+  meadow_grass_summer: '/TwilightGame/assets-optimized/tiles/forest/meadow_grass_summer.png',
+  meadow_grass_autumn: '/TwilightGame/assets-optimized/tiles/forest/meadow_grass_autumn.png',
+  meadow_grass_winter: '/TwilightGame/assets-optimized/tiles/forest/meadow_grass_winter.png',
   // Wild strawberry assets (seasonal variations - forageable in forest)
   wild_strawberry_spring:
     '/TwilightGame/assets-optimized/tiles/wild_strawberry/wild_strawberry_spring.png',
