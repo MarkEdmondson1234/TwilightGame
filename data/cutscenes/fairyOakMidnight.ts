@@ -340,8 +340,8 @@ export const fairyOakMidnightCutscene: CutsceneDefinition = {
         {
           characterId: 'queen_celestia',
           spriteUrl: npcAssets.celestia,
-          position: { x: 50, y: 42 },
-          scale: 1.2,
+          position: { x: 50, y: 44 },
+          scale: 1.3,
         },
       ],
       weatherEffect: {
@@ -368,8 +368,8 @@ export const fairyOakMidnightCutscene: CutsceneDefinition = {
         {
           characterId: 'queen_celestia',
           spriteUrl: npcAssets.celestia,
-          position: { x: 50, y: 42 },
-          scale: 1.25,
+          position: { x: 50, y: 43 },
+          scale: 1.45,
         },
       ],
       weatherEffect: {
@@ -404,8 +404,8 @@ export const fairyOakMidnightCutscene: CutsceneDefinition = {
         {
           characterId: 'queen_celestia',
           spriteUrl: npcAssets.celestia,
-          position: { x: 50, y: 41 },
-          scale: 1.3,
+          position: { x: 50, y: 42 },
+          scale: 1.6,
         },
       ],
       weatherEffect: {
