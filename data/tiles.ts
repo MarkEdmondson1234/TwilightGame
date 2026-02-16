@@ -897,13 +897,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Fallow Soil',
     color: 'bg-palette-brown', // Distinct medium brown - clearly different from grass
     collisionType: CollisionType.WALKABLE,
-    image: [farmingAssets.fallow_soil_1, farmingAssets.fallow_soil_2],
-    transforms: {
-      enableFlip: true,
-      enableRotation: true,
-      enableBrightness: true,
-      rotationMode: 'flip180', // Only 0 or 180 degrees (horizontal flip only)
-    },
+    image: [farmingAssets.fallow],
   },
   [TileType.SOIL_TILLED]: {
     name: 'Tilled Soil',
