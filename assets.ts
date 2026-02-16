@@ -92,6 +92,9 @@ export const tileAssets = {
   fairy_oak_summer: '/TwilightGame/assets-optimized/tiles/fairy_oak_summer.png',
   fairy_oak_autumn: '/TwilightGame/assets-optimized/tiles/fairy_oak_autumn.png',
   fairy_oak_winter: '/TwilightGame/assets-optimized/tiles/fairy_oak_winter.png',
+  // Celestia's flower bud (animated, 2 frames)
+  celestia_flower_bud_01: '/TwilightGame/assets-optimized/tiles/forest/celestia_flower_bud_01.png',
+  celestia_flower_bud_02: '/TwilightGame/assets-optimized/tiles/forest/celestia_flower_bud_02.png',
   // Birch tree assets (seasonal variations)
   birch_spring: '/TwilightGame/assets-optimized/tiles/birch_spring.png',
   birch_summer: '/TwilightGame/assets-optimized/tiles/birch_summer.png',
@@ -511,6 +514,9 @@ export const npcAssets = {
   possum_sitting: '/TwilightGame/assets/npcs/possum/possum_sitting.png',
   possum_dead: '/TwilightGame/assets/npcs/possum/possum_dead.png',
   possum_portrait: '/TwilightGame/assets/npcs/possum/possum_dead.png',
+  // Queen Celestia assets (fairy queen of the deep forest)
+  celestia: '/TwilightGame/assets/npcs/celestia/celistia.png',
+  celestia_portrait: '/TwilightGame/assets/npcs/celestia/celistia.png',
 };
 
 // Player assets (add your custom sprites here when ready)

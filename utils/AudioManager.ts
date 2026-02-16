@@ -448,7 +448,10 @@ class AudioManager {
   /**
    * Play music with optional crossfade
    */
-  playMusic(key: string, options: { fadeIn?: number; crossfade?: boolean } = {}): void {
+  playMusic(
+    key: string,
+    options: { fadeIn?: number; crossfade?: boolean; loop?: boolean } = {}
+  ): void {
     if (!this.context || !this.sounds.has(key) || this.settings.muted) return;
 
     const sound = this.sounds.get(key)!;
@@ -463,7 +466,7 @@ class AudioManager {
     // Create new music track
     const source = this.context.createBufferSource();
     source.buffer = sound.buffer;
-    source.loop = true;
+    source.loop = options.loop !== false; // Default true, pass false for one-shot
 
     const gainNode = this.context.createGain();
     gainNode.gain.value = 0; // Start silent for fade in
@@ -524,6 +527,13 @@ class AudioManager {
   }
 
   /**
+   * Get the ID of the currently playing music track, or null
+   */
+  getCurrentMusic(): string | null {
+    return this.currentMusic?.id ?? null;
+  }
+
+  /**
    * Stop current music
    */
   stopMusic(fadeOutMs: number = 1000): void {
@@ -548,7 +558,7 @@ class AudioManager {
   /**
    * Play ambient sound (looping background)
    */
-  playAmbient(key: string): string | null {
+  playAmbient(key: string, options?: { volume?: number }): string | null {
     if (!this.context || !this.sounds.has(key) || this.settings.muted) return null;
 
     // Check if this ambient is already playing
@@ -562,7 +572,7 @@ class AudioManager {
     source.loop = true;
 
     const gainNode = this.context.createGain();
-    gainNode.gain.value = sound.baseVolume;
+    gainNode.gain.value = options?.volume ?? sound.baseVolume;
 
     const ambientGain = this.categoryGains.get('ambient');
     if (ambientGain) {

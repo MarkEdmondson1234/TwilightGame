@@ -85,6 +85,9 @@ export interface OpenUIOptions {
   miniGameTriggerData?: MiniGameTriggerData;
 }
 
+/** Book overlay names — mutually exclusive (opening one closes the others) */
+const BOOK_OVERLAYS: UIOverlayName[] = ['recipeBook', 'magicBook', 'journal'];
+
 /**
  * Return type for useUIState hook.
  */
@@ -95,6 +98,7 @@ export interface UseUIStateReturn {
   toggleUI: (name: UIOverlayName) => void;
   closeAllUI: () => void;
   isAnyUIOpen: () => boolean;
+  isAnyBookOpen: boolean;
 }
 
 const initialContext: UIContext = {
@@ -157,6 +161,13 @@ export function useUIState() {
   const openUI = useCallback((name: UIOverlayName, options?: OpenUIOptions) => {
     setState((prev) => {
       const newState = { ...prev, [name]: true };
+
+      // Books are mutually exclusive — close the others
+      if (BOOK_OVERLAYS.includes(name)) {
+        for (const book of BOOK_OVERLAYS) {
+          if (book !== name) newState[book] = false;
+        }
+      }
 
       // Set context data if provided
       if (options) {
@@ -292,6 +303,8 @@ export function useUIState() {
     );
   }, [state]);
 
+  const isAnyBookOpen = state.recipeBook || state.magicBook || state.journal;
+
   return {
     ui: state,
     openUI,
@@ -299,5 +312,6 @@ export function useUIState() {
     toggleUI,
     closeAllUI,
     isAnyUIOpen,
+    isAnyBookOpen,
   };
 }

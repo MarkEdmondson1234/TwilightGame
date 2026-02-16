@@ -84,7 +84,7 @@ const CottageBook: React.FC<CottageBookProps> = ({
     >
       {/* Book container - image inside determines actual size */}
       <div
-        className="relative max-w-[90vw] max-h-[85vh]"
+        className="relative max-w-[95vw] max-h-[95vh]"
         onClick={handleContentClick}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}

@@ -9,11 +9,7 @@
  * - Player position save/restore
  */
 
-import {
-  CutsceneDefinition,
-  CutsceneTrigger,
-  Position,
-} from '../types';
+import { CutsceneDefinition, CutsceneTrigger, Position } from '../types';
 import { TimeManager } from './TimeManager';
 import { gameState } from '../GameState';
 
@@ -121,14 +117,38 @@ class CutsceneManagerClass {
   }
 
   /**
+   * Force-start a cutscene, bypassing requirements and playOnce checks.
+   * Used by DevTools for testing.
+   */
+  forceStartCutscene(cutsceneId: string): boolean {
+    const cutscene = this.getCutscene(cutsceneId);
+    if (!cutscene) {
+      console.error(`[CutsceneManager] Cutscene not found: ${cutsceneId}`);
+      return false;
+    }
+
+    console.log(`[CutsceneManager] Force-starting cutscene: ${cutscene.name}`);
+
+    this.state = {
+      ...this.state,
+      isPlaying: true,
+      currentCutscene: cutscene,
+      currentSceneIndex: 0,
+      savedPosition: undefined,
+    };
+
+    this.notifyListeners();
+    return true;
+  }
+
+  /**
    * Advance to next scene or end cutscene
    */
   advanceScene(nextSceneIndex?: number): void {
     if (!this.state.currentCutscene) return;
 
-    const targetIndex = nextSceneIndex !== undefined
-      ? nextSceneIndex
-      : this.state.currentSceneIndex + 1;
+    const targetIndex =
+      nextSceneIndex !== undefined ? nextSceneIndex : this.state.currentSceneIndex + 1;
 
     // Check if we've reached the end
     if (targetIndex >= this.state.currentCutscene.scenes.length) {
@@ -226,7 +246,8 @@ class CutsceneManagerClass {
       return true;
     }
 
-    const { minGold, requiredItems, completedCutscenes, flags } = cutscene.requirements;
+    const { minGold, requiredItems, completedCutscenes, flags, isFairyForm, timeRange } =
+      cutscene.requirements;
 
     // Check gold
     if (minGold !== undefined && gameState.getGold() < minGold) {
@@ -253,6 +274,19 @@ class CutsceneManagerClass {
     if (flags && flags.length > 0) {
       // TODO: Implement flag check when flag system is ready
       console.warn('[CutsceneManager] Flag requirements not yet implemented');
+    }
+
+    // Check fairy form
+    if (isFairyForm && !gameState.isFairyForm()) {
+      return false;
+    }
+
+    // Check time range (inclusive fromHour, exclusive toHour)
+    if (timeRange) {
+      const currentHour = TimeManager.getCurrentTime().hour;
+      if (currentHour < timeRange.fromHour || currentHour >= timeRange.toHour) {
+        return false;
+      }
     }
 
     return true;
@@ -350,9 +384,10 @@ class CutsceneManagerClass {
       // Check if trigger conditions are met
       if (this.checkTrigger(cutscene.trigger, context)) {
         // Start the cutscene
-        const savedPosition = context.playerPosition && context.currentMapId
-          ? { mapId: context.currentMapId, position: context.playerPosition }
-          : undefined;
+        const savedPosition =
+          context.playerPosition && context.currentMapId
+            ? { mapId: context.currentMapId, position: context.playerPosition }
+            : undefined;
 
         if (this.startCutscene(cutscene.id, savedPosition)) {
           return cutscene.id;

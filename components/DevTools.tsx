@@ -24,6 +24,8 @@ import { getAllMiniGames } from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
 import type { MiniGameTriggerData } from '../minigames/types';
 import DevToolsDatabase from './DevToolsDatabase';
+import { cutsceneManager } from '../utils/CutsceneManager';
+import { ALL_CUTSCENES } from '../data/cutscenes';
 import './DevTools.css';
 
 interface DevToolsProps {
@@ -1195,7 +1197,9 @@ const DevTools: React.FC<DevToolsProps> = ({
   isFairyForm = false,
   onOpenMiniGame,
 }) => {
-  const [activeTab, setActiveTab] = useState<'tools' | 'database'>('tools');
+  const [activeTab, setActiveTab] = useState<
+    'world' | 'audio' | 'gameplay' | 'events' | 'database' | 'cutscenes'
+  >('world');
 
   const currentTime = TimeManager.getCurrentTime();
   const hasOverride = TimeManager.hasTimeOverride();
@@ -1281,10 +1285,28 @@ const DevTools: React.FC<DevToolsProps> = ({
 
         <div className="devtools-tabs">
           <button
-            className={`devtools-tab ${activeTab === 'tools' ? 'devtools-tab-active' : ''}`}
-            onClick={() => setActiveTab('tools')}
+            className={`devtools-tab ${activeTab === 'world' ? 'devtools-tab-active' : ''}`}
+            onClick={() => setActiveTab('world')}
           >
-            Tools
+            World
+          </button>
+          <button
+            className={`devtools-tab ${activeTab === 'audio' ? 'devtools-tab-active' : ''}`}
+            onClick={() => setActiveTab('audio')}
+          >
+            Audio
+          </button>
+          <button
+            className={`devtools-tab ${activeTab === 'gameplay' ? 'devtools-tab-active' : ''}`}
+            onClick={() => setActiveTab('gameplay')}
+          >
+            Gameplay
+          </button>
+          <button
+            className={`devtools-tab ${activeTab === 'events' ? 'devtools-tab-active' : ''}`}
+            onClick={() => setActiveTab('events')}
+          >
+            Events
           </button>
           <button
             className={`devtools-tab ${activeTab === 'database' ? 'devtools-tab-active' : ''}`}
@@ -1292,12 +1314,18 @@ const DevTools: React.FC<DevToolsProps> = ({
           >
             Database
           </button>
+          <button
+            className={`devtools-tab ${activeTab === 'cutscenes' ? 'devtools-tab-active' : ''}`}
+            onClick={() => setActiveTab('cutscenes')}
+          >
+            Cutscenes
+          </button>
         </div>
 
         <div className="devtools-content">
-          {activeTab === 'database' ? (
-            <DevToolsDatabase />
-          ) : (
+          {activeTab === 'database' && <DevToolsDatabase />}
+
+          {activeTab === 'world' && (
             <>
               {hasOverride && <div className="devtools-warning">⚠️ Time Override Active</div>}
 
@@ -1407,7 +1435,29 @@ const DevTools: React.FC<DevToolsProps> = ({
               </div>
 
               <div className="devtools-section">
-                <h3>Audio Control</h3>
+                <h3>Current Status</h3>
+                <div className="devtools-status">
+                  <p>
+                    <strong>Season:</strong> {season}
+                  </p>
+                  <p>
+                    <strong>Day:</strong> {day} of 7
+                  </p>
+                  <p>
+                    <strong>Time:</strong> {hour}:00 ({timeOfDay})
+                  </p>
+                  <p>
+                    <strong>Weather:</strong> {weather.charAt(0).toUpperCase() + weather.slice(1)}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'audio' && (
+            <>
+              <div className="devtools-section">
+                <h3>Volume Control</h3>
                 <AudioDebugSection />
               </div>
 
@@ -1415,7 +1465,11 @@ const DevTools: React.FC<DevToolsProps> = ({
                 <h3>Audio Effects</h3>
                 <AudioEffectsSection />
               </div>
+            </>
+          )}
 
+          {activeTab === 'gameplay' && (
+            <>
               <div className="devtools-section">
                 <h3>Farming Debug</h3>
                 <FarmingDebugSection onFarmUpdate={onFarmUpdate} />
@@ -1429,16 +1483,6 @@ const DevTools: React.FC<DevToolsProps> = ({
               <div className="devtools-section">
                 <h3>Magic</h3>
                 <MagicDebugSection />
-              </div>
-
-              <div className="devtools-section">
-                <h3>Global Events</h3>
-                <GlobalEventsDebugSection />
-              </div>
-
-              <div className="devtools-section">
-                <h3>Event Chains (YAML)</h3>
-                <EventChainsDebugSection />
               </div>
 
               <div className="devtools-section">
@@ -1457,22 +1501,63 @@ const DevTools: React.FC<DevToolsProps> = ({
                   </small>
                 </div>
               </div>
+            </>
+          )}
+
+          {activeTab === 'events' && (
+            <>
+              <div className="devtools-section">
+                <h3>Global Events</h3>
+                <GlobalEventsDebugSection />
+              </div>
 
               <div className="devtools-section">
-                <h3>Current Status</h3>
-                <div className="devtools-status">
-                  <p>
-                    <strong>Season:</strong> {season}
-                  </p>
-                  <p>
-                    <strong>Day:</strong> {day} of 7
-                  </p>
-                  <p>
-                    <strong>Time:</strong> {hour}:00 ({timeOfDay})
-                  </p>
-                  <p>
-                    <strong>Weather:</strong> {weather.charAt(0).toUpperCase() + weather.slice(1)}
-                  </p>
+                <h3>Event Chains (YAML)</h3>
+                <EventChainsDebugSection />
+              </div>
+            </>
+          )}
+
+          {activeTab === 'cutscenes' && (
+            <>
+              <div className="devtools-section">
+                <h3>Registered Cutscenes ({ALL_CUTSCENES.length})</h3>
+                <small style={{ display: 'block', marginBottom: '8px', opacity: 0.7 }}>
+                  Force-plays cutscenes bypassing requirements and playOnce checks. Closes DevTools
+                  automatically.
+                </small>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {ALL_CUTSCENES.map((cutscene) => (
+                    <div
+                      key={cutscene.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '6px 8px',
+                        background: 'rgba(255,255,255,0.05)',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <div style={{ flex: 1 }}>
+                        <strong>{cutscene.name}</strong>
+                        <small style={{ display: 'block', opacity: 0.6, marginTop: '2px' }}>
+                          {cutscene.id} &middot; {cutscene.trigger.type} &middot;{' '}
+                          {cutscene.scenes.length} scenes
+                          {cutscene.playOnce ? ' &middot; play-once' : ''}
+                        </small>
+                      </div>
+                      <button
+                        className="devtools-button"
+                        onClick={() => {
+                          cutsceneManager.forceStartCutscene(cutscene.id);
+                          onClose();
+                        }}
+                      >
+                        Play
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </>

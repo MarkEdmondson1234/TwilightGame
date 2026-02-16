@@ -99,7 +99,7 @@ import VFXTestPanel from './components/VFXTestPanel';
 
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
-  const { ui, openUI, closeUI, toggleUI } = useUIState();
+  const { ui, openUI, closeUI, toggleUI, isAnyBookOpen } = useUIState();
 
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [mapErrors, setMapErrors] = useState<MapValidationError[]>([]); // Map validation errors to display
@@ -250,7 +250,15 @@ const App: React.FC = () => {
     currentMapId,
     selectedItemSlot,
     inventoryItems,
-    uiState: { ui, openUI, closeUI, toggleUI, closeAllUI: () => {}, isAnyUIOpen: () => false },
+    uiState: {
+      ui,
+      openUI,
+      closeUI,
+      toggleUI,
+      closeAllUI: () => {},
+      isAnyUIOpen: () => false,
+      isAnyBookOpen,
+    },
     isCutscenePlaying,
     activeNPC,
     setActiveNPC,
@@ -1372,8 +1380,8 @@ const App: React.FC = () => {
           />
         )}
 
-      {/* Hide UI elements during dialogue */}
-      {!activeNPC && (
+      {/* Hide UI elements during dialogue or when a book is open */}
+      {!activeNPC && !isAnyBookOpen && (
         <>
           <HUD
             selectedItemId={selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.id : null}
@@ -1388,38 +1396,42 @@ const App: React.FC = () => {
             selectedSlot={selectedItemSlot}
             onSlotClick={setSelectedItemSlot}
           />
-
-          {/* Bookshelf UI - Recipe book shortcuts */}
-          <Bookshelf
-            isTouchDevice={isTouchDevice}
-            playerPosition={playerPos}
-            currentMapId={currentMap.id}
-            nearbyNPCs={(() => {
-              // Get NPCs within 2 tiles of player
-              const range = 2;
-              return allNPCs
-                .filter((npc) => {
-                  const dx = Math.abs(npc.position.x - playerPos.x);
-                  const dy = Math.abs(npc.position.y - playerPos.y);
-                  return dx <= range && dy <= range;
-                })
-                .map((npc) => npc.id);
-            })()}
-            onRecipeBookOpen={() => openUI('recipeBook')}
-            onMagicBookOpen={() => openUI('magicBook')}
-            onJournalOpen={() => openUI('journal')}
-          />
-
-          {/* Game UI Controls (Help, Collision, Color Editor, Inventory) */}
-          <GameUIControls
-            showHelpBrowser={ui.helpBrowser}
-            onToggleHelpBrowser={() => toggleUI('helpBrowser')}
-            showCollisionBoxes={showCollisionBoxes}
-            onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
-            onToggleInventory={() => toggleUI('inventory')}
-            isTouchDevice={isTouchDevice}
-          />
         </>
+      )}
+
+      {/* Bookshelf - visible during books so player can switch between them */}
+      {!activeNPC && (
+        <Bookshelf
+          isTouchDevice={isTouchDevice}
+          playerPosition={playerPos}
+          currentMapId={currentMap.id}
+          nearbyNPCs={(() => {
+            // Get NPCs within 2 tiles of player
+            const range = 2;
+            return allNPCs
+              .filter((npc) => {
+                const dx = Math.abs(npc.position.x - playerPos.x);
+                const dy = Math.abs(npc.position.y - playerPos.y);
+                return dx <= range && dy <= range;
+              })
+              .map((npc) => npc.id);
+          })()}
+          onRecipeBookOpen={() => openUI('recipeBook')}
+          onMagicBookOpen={() => openUI('magicBook')}
+          onJournalOpen={() => openUI('journal')}
+        />
+      )}
+
+      {/* Game UI Controls - hidden during dialogue and when books are open */}
+      {!activeNPC && !isAnyBookOpen && (
+        <GameUIControls
+          showHelpBrowser={ui.helpBrowser}
+          onToggleHelpBrowser={() => toggleUI('helpBrowser')}
+          showCollisionBoxes={showCollisionBoxes}
+          onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
+          onToggleInventory={() => toggleUI('inventory')}
+          isTouchDevice={isTouchDevice}
+        />
       )}
 
       {/* Touch controls - hidden when any modal is open */}

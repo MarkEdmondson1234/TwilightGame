@@ -9,7 +9,7 @@
  * - Dialogue advancement (E key, Enter, click)
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   CutsceneScene,
   CutsceneBackgroundLayer,
@@ -23,16 +23,22 @@ import { TimeManager } from '../utils/TimeManager';
 import { npcManager } from '../NPCManager';
 import { gameState } from '../GameState';
 import { getPortraitSprite } from '../utils/portraitSprites';
+import { audioManager } from '../utils/AudioManager';
 import { Z_CUTSCENE, zClass } from '../zIndex';
 
 interface CutscenePlayerProps {
-  onComplete: (action: { action: string; mapId?: string; position?: { x: number; y: number } }) => void;
+  onComplete: (action: {
+    action: string;
+    mapId?: string;
+    position?: { x: number; y: number };
+  }) => void;
 }
 
 const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   const [currentScene, setCurrentScene] = useState<CutsceneScene | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDialogue, setShowDialogue] = useState(false);
+  const previousMusicRef = useRef<string | null>(null);
 
   // Load current scene from manager
   useEffect(() => {
@@ -45,6 +51,49 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  // Audio: play music/ambient on cutscene start, stop on unmount
+  useEffect(() => {
+    const state = cutsceneManager.getState();
+    const cutscene = state.currentCutscene;
+    if (!cutscene?.audio) return;
+
+    const fadeIn = cutscene.audio.fadeInMs ?? 2000;
+    const fadeOut = cutscene.audio.fadeOutMs ?? 2000;
+
+    // Save current music so we can restore it later
+    previousMusicRef.current = audioManager.getCurrentMusic();
+
+    if (cutscene.audio.music) {
+      audioManager.playMusic(cutscene.audio.music, { fadeIn, loop: true });
+    }
+    if (cutscene.audio.ambient) {
+      audioManager.playAmbient(cutscene.audio.ambient, {
+        volume: cutscene.audio.ambientVolume,
+      });
+    }
+
+    return () => {
+      // Stop cutscene audio when it ends
+      if (cutscene.audio?.music) {
+        audioManager.stopMusic(fadeOut);
+      }
+      if (cutscene.audio?.ambient) {
+        audioManager.stopAmbient(cutscene.audio.ambient, fadeOut);
+      }
+      // Restore previous music if there was one
+      if (previousMusicRef.current) {
+        audioManager.playMusic(previousMusicRef.current, { fadeIn: fadeOut, crossfade: true });
+      }
+    };
+  }, []);
+
+  // Play per-scene sound effects
+  useEffect(() => {
+    if (currentScene?.soundEffect) {
+      audioManager.playSfx(currentScene.soundEffect);
+    }
+  }, [currentScene?.id]);
 
   // Subscribe to cutscene manager state changes
   useEffect(() => {
@@ -84,30 +133,33 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   }, []);
 
   // Handle dialogue choice selection
-  const handleChoice = useCallback((choiceIndex: number) => {
-    if (!currentScene?.dialogue?.choices) return;
+  const handleChoice = useCallback(
+    (choiceIndex: number) => {
+      if (!currentScene?.dialogue?.choices) return;
 
-    const choice = currentScene.dialogue.choices[choiceIndex];
+      const choice = currentScene.dialogue.choices[choiceIndex];
 
-    if (choice.action === 'end') {
-      const result = cutsceneManager.endCutscene();
-      if (result) {
-        onComplete(result);
+      if (choice.action === 'end') {
+        const result = cutsceneManager.endCutscene();
+        if (result) {
+          onComplete(result);
+        }
+        return;
       }
-      return;
-    }
 
-    if (choice.triggerCutscene) {
-      // Trigger a different cutscene
-      const state = cutsceneManager.getState();
-      cutsceneManager.endCutscene();
-      cutsceneManager.startCutscene(choice.triggerCutscene, state.savedPosition);
-      return;
-    }
+      if (choice.triggerCutscene) {
+        // Trigger a different cutscene
+        const state = cutsceneManager.getState();
+        cutsceneManager.endCutscene();
+        cutsceneManager.startCutscene(choice.triggerCutscene, state.savedPosition);
+        return;
+      }
 
-    // Advance to specified scene or next scene
-    handleAdvance(choice.nextSceneIndex);
-  }, [currentScene, handleAdvance, onComplete]);
+      // Advance to specified scene or next scene
+      handleAdvance(choice.nextSceneIndex);
+    },
+    [currentScene, handleAdvance, onComplete]
+  );
 
   // Keyboard controls
   useEffect(() => {
@@ -162,7 +214,13 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   }
 
   return (
-    <div className={`fixed inset-0 ${zClass(Z_CUTSCENE)} bg-black overflow-hidden`}>
+    <div
+      className={`fixed inset-0 ${zClass(Z_CUTSCENE)} overflow-hidden`}
+      style={{
+        background: currentScene.backgroundCss || '#000',
+        transition: 'background 1s ease-in-out',
+      }}
+    >
       {/* Background Layers */}
       <div className="absolute inset-0">
         {currentScene.backgroundLayers
@@ -176,9 +234,9 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
           ))}
       </div>
 
-      {/* Character Sprites */}
+      {/* Character Sprites — z-index 10 to sit above background layers */}
       {currentScene.characters && (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0" style={{ zIndex: 10 }}>
           {currentScene.characters.map((character, index) => (
             <CharacterSprite
               key={`${currentScene.id}-char-${index}`}
@@ -233,17 +291,25 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
     return () => clearTimeout(timer);
   }, []);
 
-  const getPanOffset = (direction: 'left' | 'right' | 'top' | 'bottom' | 'center', zoom: number = 1.0): { x: number; y: number } => {
+  const getPanOffset = (
+    direction: 'left' | 'right' | 'top' | 'bottom' | 'center',
+    zoom: number = 1.0
+  ): { x: number; y: number } => {
     // Pan amount scales with zoom (more zoom = more visible pan)
     const panAmount = (zoom - 1.0) * 50; // Pan by 50% of the extra zoom area
 
     switch (direction) {
-      case 'left': return { x: panAmount, y: 0 };
-      case 'right': return { x: -panAmount, y: 0 };
-      case 'top': return { x: 0, y: panAmount };
-      case 'bottom': return { x: 0, y: -panAmount };
+      case 'left':
+        return { x: panAmount, y: 0 };
+      case 'right':
+        return { x: -panAmount, y: 0 };
+      case 'top':
+        return { x: 0, y: panAmount };
+      case 'bottom':
+        return { x: 0, y: -panAmount };
       case 'center':
-      default: return { x: 0, y: 0 };
+      default:
+        return { x: 0, y: 0 };
     }
   };
 
@@ -299,7 +365,7 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
       style={{
         backgroundImage: `url(/TwilightGame/assets-optimized/cutscenes/${layer.image})`,
         zIndex: layer.zIndex,
-        opacity: isTransitioning ? 0 : (layer.opacity || 1),
+        opacity: isTransitioning ? 0 : layer.opacity || 1,
         transform: getTransform(isAnimating),
         transition: getTransition(),
       }}
@@ -318,10 +384,16 @@ interface CharacterSpriteProps {
 
 const CharacterSprite: React.FC<CharacterSpriteProps> = ({ character, isTransitioning }) => {
   const [spriteUrl, setSpriteUrl] = useState<string>('');
-  const [isEntering, setIsEntering] = useState(true);
+  const [isEntering, setIsEntering] = useState(
+    !!character.entrance && character.entrance.type !== 'none'
+  );
 
-  // Load sprite URL
+  // Load sprite URL (single sprite or first frame of animation)
   useEffect(() => {
+    if (character.spriteUrls && character.spriteUrls.length > 0) {
+      setSpriteUrl(character.spriteUrls[0]);
+      return;
+    }
     if (character.spriteUrl) {
       setSpriteUrl(character.spriteUrl);
       return;
@@ -329,10 +401,8 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({ character, isTransiti
 
     // Load from NPC or player
     if (character.characterId === 'player') {
-      // Get player's portrait sprite
       const selectedChar = gameState.getSelectedCharacter();
       if (selectedChar) {
-        // Use portrait sprite helper (Direction.Down = 1)
         const portraitUrl = getPortraitSprite(selectedChar, 1);
         setSpriteUrl(portraitUrl);
       }
@@ -344,17 +414,32 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({ character, isTransiti
     }
   }, [character]);
 
-  // Handle entrance animation
+  // Sprite animation: cycle through spriteUrls
   useEffect(() => {
-    if (character.entrance?.type === 'none') {
+    if (!character.spriteUrls || character.spriteUrls.length <= 1) return;
+
+    let frameIndex = 0;
+    const speed = character.spriteAnimationSpeed || 800;
+    const interval = setInterval(() => {
+      frameIndex = (frameIndex + 1) % character.spriteUrls!.length;
+      setSpriteUrl(character.spriteUrls![frameIndex]);
+    }, speed);
+
+    return () => clearInterval(interval);
+  }, [character.spriteUrls, character.spriteAnimationSpeed]);
+
+  // Handle entrance animation — trigger transition after a brief delay so
+  // the browser renders the initial (hidden) state first
+  useEffect(() => {
+    if (!character.entrance || character.entrance.type === 'none') {
       setIsEntering(false);
       return;
     }
-
-    const duration = character.entrance?.duration || 500;
-    const timer = setTimeout(() => setIsEntering(false), duration);
+    const timer = setTimeout(() => setIsEntering(false), 50);
     return () => clearTimeout(timer);
   }, [character]);
+
+  const entranceDuration = character.entrance?.duration || 500;
 
   const getEntranceStyle = (): React.CSSProperties => {
     if (!character.entrance || character.entrance.type === 'none' || !isEntering) {
@@ -382,12 +467,13 @@ const CharacterSprite: React.FC<CharacterSpriteProps> = ({ character, isTransiti
 
   return (
     <div
-      className="absolute transition-all duration-500"
+      className="absolute"
       style={{
         left: `${character.position.x}%`,
         top: `${character.position.y}%`,
         transform: `translate(-50%, -50%) scale(${character.scale || 1.0}) scaleX(${character.flipHorizontal ? -1 : 1})`,
-        opacity: isTransitioning ? 0 : (character.opacity || 1),
+        opacity: isTransitioning ? 0 : (character.opacity ?? 1),
+        transition: `all ${entranceDuration}ms ease-in-out`,
         ...getEntranceStyle(),
       }}
     >
@@ -454,9 +540,7 @@ const DialogueDisplay: React.FC<DialogueDisplayProps> = ({ dialogue, onAdvance, 
 
         {/* Dialogue Text */}
         <div className="px-6 py-4">
-          <p className="text-gray-100 text-lg leading-relaxed font-serif">
-            "{dialogueText}"
-          </p>
+          <p className="text-gray-100 text-lg leading-relaxed font-serif">"{dialogueText}"</p>
         </div>
 
         {/* Choices or Continue */}
@@ -502,10 +586,13 @@ interface WeatherEffectOverlayProps {
 const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isTransitioning }) => {
   const getParticleCount = (): number => {
     switch (effect.intensity) {
-      case 'light': return 30;
-      case 'heavy': return 100;
+      case 'light':
+        return 30;
+      case 'heavy':
+        return 100;
       case 'medium':
-      default: return 60;
+      default:
+        return 60;
     }
   };
 
@@ -523,7 +610,8 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           particleStyle: {
             width: '2px',
             height: '20px',
-            background: 'linear-gradient(to bottom, rgba(174,194,224,0) 0%, rgba(174,194,224,0.8) 100%)',
+            background:
+              'linear-gradient(to bottom, rgba(174,194,224,0) 0%, rgba(174,194,224,0.8) 100%)',
             borderRadius: '0 0 2px 2px',
           },
         };
@@ -534,7 +622,8 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           particleStyle: {
             width: '8px',
             height: '8px',
-            background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 100%)',
+            background:
+              'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.3) 100%)',
             borderRadius: '50%',
             boxShadow: '0 0 4px rgba(255,255,255,0.5)',
           },
@@ -546,7 +635,8 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           particleStyle: {
             width: '12px',
             height: '12px',
-            background: 'radial-gradient(ellipse at 30% 30%, rgba(255,192,203,0.9) 0%, rgba(255,182,193,0.7) 50%, rgba(255,105,180,0.4) 100%)',
+            background:
+              'radial-gradient(ellipse at 30% 30%, rgba(255,192,203,0.9) 0%, rgba(255,182,193,0.7) 50%, rgba(255,105,180,0.4) 100%)',
             borderRadius: '50% 0 50% 50%',
           },
         };
@@ -557,7 +647,8 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           particleStyle: {
             width: '14px',
             height: '10px',
-            background: 'linear-gradient(135deg, rgba(210,105,30,0.9) 0%, rgba(139,69,19,0.8) 50%, rgba(184,134,11,0.7) 100%)',
+            background:
+              'linear-gradient(135deg, rgba(210,105,30,0.9) 0%, rgba(139,69,19,0.8) 50%, rgba(184,134,11,0.7) 100%)',
             borderRadius: '50% 0',
           },
         };
@@ -568,7 +659,8 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           particleStyle: {
             width: '200px',
             height: '100px',
-            background: 'radial-gradient(ellipse, rgba(200,200,200,0.3) 0%, rgba(200,200,200,0) 70%)',
+            background:
+              'radial-gradient(ellipse, rgba(200,200,200,0.3) 0%, rgba(200,200,200,0) 70%)',
             borderRadius: '50%',
           },
         };
@@ -579,7 +671,8 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           particleStyle: {
             width: '150px',
             height: '80px',
-            background: 'radial-gradient(ellipse, rgba(220,220,220,0.2) 0%, rgba(220,220,220,0) 70%)',
+            background:
+              'radial-gradient(ellipse, rgba(220,220,220,0.2) 0%, rgba(220,220,220,0) 70%)',
             borderRadius: '50%',
           },
         };
@@ -590,7 +683,8 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           particleStyle: {
             width: '6px',
             height: '6px',
-            background: 'radial-gradient(circle, rgba(255,255,150,1) 0%, rgba(255,200,50,0.6) 50%, rgba(255,150,0,0) 100%)',
+            background:
+              'radial-gradient(circle, rgba(255,255,150,1) 0%, rgba(255,200,50,0.6) 50%, rgba(255,150,0,0) 100%)',
             borderRadius: '50%',
             boxShadow: '0 0 8px rgba(255,255,100,0.8), 0 0 16px rgba(255,200,50,0.4)',
           },
@@ -670,9 +764,10 @@ const WeatherEffectOverlay: React.FC<WeatherEffectOverlayProps> = ({ effect, isT
           style={{
             ...particleStyle,
             left: particle.left,
-            top: effect.type === 'fog' || effect.type === 'mist' || effect.type === 'fireflies'
-              ? `${Math.random() * 80}%`
-              : '-20px',
+            top:
+              effect.type === 'fog' || effect.type === 'mist' || effect.type === 'fireflies'
+                ? `${Math.random() * 80}%`
+                : '-20px',
             animationDelay: particle.animationDelay,
             animationDuration: particle.animationDuration,
           }}

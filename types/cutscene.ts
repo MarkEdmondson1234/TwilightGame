@@ -57,6 +57,8 @@ export interface CutsceneBackgroundLayer {
 export interface CutsceneCharacter {
   characterId: string; // 'player', NPC ID, or special character ID
   spriteUrl?: string; // Optional: override sprite URL (defaults to character's sprite)
+  spriteUrls?: string[]; // Multiple sprites to cycle through (animated character)
+  spriteAnimationSpeed?: number; // Milliseconds between animation frames (default 800)
   position: {
     x: number; // Horizontal position (0-100, percentage of screen width)
     y: number; // Vertical position (0-100, percentage of screen height)
@@ -125,10 +127,12 @@ export interface CutsceneWeatherEffect {
  */
 export interface CutsceneScene {
   id: string; // Unique identifier for this scene
+  backgroundCss?: string; // Optional CSS background value (gradient, colour) — overrides default black
   backgroundLayers: CutsceneBackgroundLayer[]; // Layered background images
   characters?: CutsceneCharacter[]; // Characters positioned in scene
   dialogue?: CutsceneDialogue; // Dialogue for this scene
   weatherEffect?: CutsceneWeatherEffect; // Optional weather/particle overlay
+  soundEffect?: string; // Audio asset ID to play when this scene starts
   duration?: number; // Optional: auto-advance after X milliseconds (overrides dialogue advance)
   // Scene transition
   transitionOut?: {
@@ -171,11 +175,21 @@ export interface CutsceneDefinition {
   canSkip?: boolean; // Allow player to skip (default true)
   canReplay?: boolean; // Allow replay from menu (default false)
   playOnce?: boolean; // Only play once per save (default false)
+  // Audio
+  audio?: {
+    music?: string; // Music track ID to play during cutscene
+    ambient?: string; // Ambient sound ID to play during cutscene
+    ambientVolume?: number; // Ambient volume override (0-1, default uses asset base volume)
+    fadeInMs?: number; // Fade in duration in milliseconds (default 2000)
+    fadeOutMs?: number; // Fade out duration in milliseconds (default 2000)
+  };
   // Conditions
   requirements?: {
     minGold?: number; // Minimum gold required
     requiredItems?: string[]; // Items player must have
     completedCutscenes?: string[]; // Cutscenes that must be completed first
     flags?: string[]; // Custom game flags
+    isFairyForm?: boolean; // Player must be in fairy form
+    timeRange?: { fromHour: number; toHour: number }; // Hour range (inclusive from, exclusive to)
   };
 }
