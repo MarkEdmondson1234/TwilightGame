@@ -362,6 +362,49 @@ export class TileLayer extends PixiLayer {
     const resolvedColor = ColorResolver.getTileColor(tileData.type);
     this.renderColorTile(x, y, resolvedColor, map, `${x},${y}_color`);
 
+    // Render soil texture under crop sprites (tilled for dry, tilled_wet for watered)
+    const soilKey = `${x},${y}_soil`;
+    const needsSoilBg = growthStage !== null && cropType;
+    const soilImageUrl = needsSoilBg
+      ? (tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_READY)
+        ? farmingAssets.tilled_wet
+        : farmingAssets.tilled
+      : null;
+
+    if (soilImageUrl) {
+      const soilTexture = textureManager.getTexture(soilImageUrl);
+      if (soilTexture) {
+        let soilSprite = this.sprites.get(soilKey);
+        if (!soilSprite || soilSprite instanceof PIXI.Graphics) {
+          if (soilSprite instanceof PIXI.Graphics) {
+            this.container.removeChild(soilSprite);
+            this.sprites.delete(soilKey);
+          }
+          soilSprite = new PIXI.Sprite(soilTexture);
+          soilSprite.x = x * TILE_SIZE;
+          soilSprite.y = y * TILE_SIZE;
+          soilSprite.width = TILE_SIZE;
+          soilSprite.height = TILE_SIZE;
+          soilSprite.zIndex = Z_TILE_BACKGROUND;
+          this.container.addChild(soilSprite);
+          this.sprites.set(soilKey, soilSprite);
+        } else if (soilSprite instanceof PIXI.Sprite) {
+          soilSprite.visible = true;
+          // Update texture if soil state changed (e.g. planted → watered)
+          const newTexture = textureManager.getTexture(soilImageUrl);
+          if (newTexture && soilSprite.texture !== newTexture) {
+            soilSprite.texture = newTexture;
+          }
+        }
+      }
+    } else {
+      // Hide soil sprite when not on a crop tile
+      const existingSoil = this.sprites.get(soilKey);
+      if (existingSoil) {
+        existingSoil.visible = false;
+      }
+    }
+
     if (!imageUrl) {
       // No sprite image to render, but hide existing sprite if present
       const spriteKey = `${x},${y}_sprite`;

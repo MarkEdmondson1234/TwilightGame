@@ -920,12 +920,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Watered Soil',
     color: 'bg-palette-espresso', // Very dark brown for wet soil
     collisionType: CollisionType.WALKABLE,
-    image: [farmingAssets.seedling], // Fallback image (overridden by growth stage in TileRenderer)
-    transforms: {
-      enableScale: true,
-      enableFlip: false, // Disabled - prevents sprites from shifting to adjacent tiles
-      scaleRange: { min: 1.3, max: 1.5 }, // Scale 130-150% for overlap effect
-    },
+    image: [farmingAssets.tilled_wet],
   },
   [TileType.SOIL_READY]: {
     name: 'Ready Crop',

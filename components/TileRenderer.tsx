@@ -171,6 +171,21 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                                 height: TILE_SIZE,
                             }}
                         >
+                            {growthStage !== null && cropType && (
+                                <img
+                                    src={(tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_READY)
+                                        ? farmingAssets.tilled_wet
+                                        : farmingAssets.tilled}
+                                    alt="Soil"
+                                    className="absolute"
+                                    style={{
+                                        left: 0,
+                                        top: 0,
+                                        width: TILE_SIZE,
+                                        height: TILE_SIZE,
+                                    }}
+                                />
+                            )}
                             {selectedImage && (
                                 <img
                                     src={selectedImage}
