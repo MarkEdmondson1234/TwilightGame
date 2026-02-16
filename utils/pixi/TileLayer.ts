@@ -249,15 +249,24 @@ export class TileLayer extends PixiLayer {
       }
     }
 
-    // Render farm fence overlay at bottom edge of farm plot sections
+    // Render farm fence overlays at edges of farm plot sections
     if (isSoilTile(tileData.type)) {
+      // Bottom fence: soil tile with non-soil below
       const tileBelow = getTileData(x, y + 1);
       if (!tileBelow || !isSoilTile(tileBelow.type)) {
         this.renderFarmFence(x, y);
       } else {
-        // Hide fence sprite if this is no longer a section edge
         const fenceSprite = this.sprites.get(`${x},${y}_fence`);
         if (fenceSprite) fenceSprite.visible = false;
+      }
+
+      // Top fence: soil tile with non-soil above
+      const tileAbove = getTileData(x, y - 1);
+      if (!tileAbove || !isSoilTile(tileAbove.type)) {
+        this.renderFarmFenceTop(x, y);
+      } else {
+        const fenceTopSprite = this.sprites.get(`${x},${y}_fence_top`);
+        if (fenceTopSprite) fenceTopSprite.visible = false;
       }
     }
 
@@ -762,6 +771,42 @@ export class TileLayer extends PixiLayer {
     } else if (sprite instanceof PIXI.Sprite) {
       sprite.visible = true;
       sprite.zIndex = Z_DEPTH_SORTED_BASE + (y + 1) * 10;
+    }
+  }
+
+  /**
+   * Render a farm fence overlay at the top edge of a farm plot section.
+   * Called when a soil tile has a non-soil tile above it (section boundary).
+   * Fence overlaps the top of the dirt plot by ~20px so crops render in front.
+   */
+  private renderFarmFenceTop(x: number, y: number): void {
+    const fenceKey = `${x},${y}_fence_top`;
+    let sprite = this.sprites.get(fenceKey);
+
+    const imageUrl = farmingAssets.farm_fence;
+    const texture = textureManager.getTexture(imageUrl);
+    if (!texture) return;
+
+    if (!sprite || sprite instanceof PIXI.Graphics) {
+      if (sprite instanceof PIXI.Graphics) {
+        this.container.removeChild(sprite);
+        this.sprites.delete(fenceKey);
+      }
+
+      sprite = new PIXI.Sprite(texture);
+      sprite.x = x * TILE_SIZE;
+      // Position so the fence overlaps the top of the soil tile by ~5px
+      sprite.y = y * TILE_SIZE - TILE_SIZE + 5;
+      sprite.width = TILE_SIZE;
+      sprite.height = TILE_SIZE;
+      // Depth-sort behind the first row of crops
+      sprite.zIndex = Z_DEPTH_SORTED_BASE + y * 10;
+
+      this.container.addChild(sprite);
+      this.sprites.set(fenceKey, sprite);
+    } else if (sprite instanceof PIXI.Sprite) {
+      sprite.visible = true;
+      sprite.zIndex = Z_DEPTH_SORTED_BASE + y * 10;
     }
   }
 
