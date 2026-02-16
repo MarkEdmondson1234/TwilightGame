@@ -349,7 +349,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           );
 
           const placedItems = gameState.getPlacedItems(currentMapId);
-          placedItemsLayer.renderItems(placedItems, visibleRange, initialMap.characterScale ?? 1.0);
+          placedItemsLayer.renderItems(
+            placedItems,
+            visibleRange,
+            initialMap.characterScale ?? 1.0,
+            effectiveTileSize,
+            effectiveGridOffset
+          );
 
           if (shadowLayerRef.current) {
             const { hour, season } = TimeManager.getCurrentTime();
@@ -565,7 +571,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // Render placed items
     if (placedItemsLayerRef.current) {
       const placedItems = gameState.getPlacedItems(currentMapId);
-      placedItemsLayerRef.current.renderItems(placedItems, visibleRange, map.characterScale ?? 1.0);
+      placedItemsLayerRef.current.renderItems(
+        placedItems,
+        visibleRange,
+        map.characterScale ?? 1.0,
+        effectiveTileSize,
+        effectiveGridOffset
+      );
     }
 
     // Render shadows
@@ -703,7 +715,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // Re-render placed items
     if (placedItemsLayerRef.current) {
       const placedItems = gameState.getPlacedItems(currentMapId);
-      placedItemsLayerRef.current.renderItems(placedItems, visibleRange, map.characterScale ?? 1.0);
+      placedItemsLayerRef.current.renderItems(
+        placedItems,
+        visibleRange,
+        map.characterScale ?? 1.0,
+        effectiveTileSize,
+        effectiveGridOffset
+      );
     }
 
     // Re-render shadows

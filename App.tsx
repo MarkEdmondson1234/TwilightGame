@@ -790,6 +790,9 @@ const App: React.FC = () => {
     zoom: zoom,
     onCanvasClick: handleCanvasClick,
     enabled: !isTouchDevice, // Disable mouse controls on touch devices
+    effectiveTileSize:
+      currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined,
+    gridOffset: currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined,
   });
 
   // Performance optimization: Cache season and time lookups (don't call TimeManager for every tile/animation)
@@ -1251,6 +1254,8 @@ const App: React.FC = () => {
             cameraX={cameraX}
             cameraY={cameraY}
             characterScale={currentMap.characterScale ?? 1.0}
+            tileSize={effectiveTileSize}
+            gridOffset={effectiveGridOffset}
           />
         )}
 
@@ -1292,7 +1297,13 @@ const App: React.FC = () => {
           tileSize={effectiveTileSize}
         />
 
-        {isDebugOpen && <DebugOverlay playerPos={playerPos} />}
+        {isDebugOpen && (
+          <DebugOverlay
+            playerPos={playerPos}
+            gridOffset={effectiveGridOffset}
+            tileSize={effectiveTileSize}
+          />
+        )}
 
         {/* Farm Action Animation (icon above player) */}
         {farmActionAnimation && (

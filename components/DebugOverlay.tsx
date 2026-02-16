@@ -17,9 +17,17 @@ import { CROP_ADULT_SIZES, CROP_SPRITE_CONFIG } from '../utils/pixi/TileLayer';
 
 interface DebugOverlayProps {
   playerPos: Position;
+  gridOffset?: { x: number; y: number };
+  tileSize?: number;
 }
 
-const DebugOverlay: React.FC<DebugOverlayProps> = ({ playerPos }) => {
+const DebugOverlay: React.FC<DebugOverlayProps> = ({
+  playerPos,
+  gridOffset,
+  tileSize = TILE_SIZE,
+}) => {
+  const gox = gridOffset?.x ?? 0;
+  const goy = gridOffset?.y ?? 0;
   // Track clicked tile for coordinate display
   const [clickedTile, setClickedTile] = useState<Position | null>(null);
 
@@ -54,10 +62,10 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ playerPos }) => {
               key={`${x}-${y}`}
               className="absolute flex items-center justify-center cursor-pointer hover:bg-white/20"
               style={{
-                left: x * TILE_SIZE,
-                top: y * TILE_SIZE,
-                width: TILE_SIZE,
-                height: TILE_SIZE,
+                left: x * tileSize + gox,
+                top: y * tileSize + goy,
+                width: tileSize,
+                height: tileSize,
                 pointerEvents: 'auto',
               }}
               onClick={(e) => handleTileClick(x, y, e)}
@@ -79,20 +87,32 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ playerPos }) => {
       )}
 
       {/* Transition Markers */}
-      <TransitionMarkers transitions={transitions} />
+      <TransitionMarkers
+        transitions={transitions}
+        tileSize={tileSize}
+        gridOffsetX={gox}
+        gridOffsetY={goy}
+      />
 
       {/* Farm Plot Debug Overlay */}
-      {DEBUG.FARM_OVERLAY && <FarmDebugOverlay mapId={mapManager.getCurrentMapId() || ''} />}
+      {DEBUG.FARM_OVERLAY && (
+        <FarmDebugOverlay
+          mapId={mapManager.getCurrentMapId() || ''}
+          tileSize={tileSize}
+          gridOffsetX={gox}
+          gridOffsetY={goy}
+        />
+      )}
 
       {/* Clicked Tile Highlight */}
       {clickedTile && (
         <div
           className={`absolute pointer-events-none ${zClass(Z_DEBUG_CLICK)}`}
           style={{
-            left: clickedTile.x * TILE_SIZE,
-            top: clickedTile.y * TILE_SIZE,
-            width: TILE_SIZE,
-            height: TILE_SIZE,
+            left: clickedTile.x * tileSize + gox,
+            top: clickedTile.y * tileSize + goy,
+            width: tileSize,
+            height: tileSize,
           }}
         >
           <div className="w-full h-full border-4 border-yellow-400 bg-yellow-400/30 animate-pulse" />
@@ -115,9 +135,17 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({ playerPos }) => {
 // Farm plot debug overlay component
 interface FarmDebugOverlayProps {
   mapId: string;
+  tileSize: number;
+  gridOffsetX: number;
+  gridOffsetY: number;
 }
 
-const FarmDebugOverlay: React.FC<FarmDebugOverlayProps> = ({ mapId }) => {
+const FarmDebugOverlay: React.FC<FarmDebugOverlayProps> = ({
+  mapId,
+  tileSize,
+  gridOffsetX,
+  gridOffsetY,
+}) => {
   const plots = farmManager.getPlotsForMap(mapId);
 
   if (plots.length === 0) return null;
@@ -151,10 +179,10 @@ const FarmDebugOverlay: React.FC<FarmDebugOverlayProps> = ({ mapId }) => {
           growthStage === CropGrowthStage.ADULT && cropAdultConfig ? cropAdultConfig : stageConfig;
 
         // Calculate sprite bounds
-        const spriteX = (plot.position.x + (config?.offsetX || 0)) * TILE_SIZE;
-        const spriteY = (plot.position.y + (config?.offsetY || 0)) * TILE_SIZE;
-        const spriteW = (config?.width || 1) * TILE_SIZE;
-        const spriteH = (config?.height || 1) * TILE_SIZE;
+        const spriteX = (plot.position.x + (config?.offsetX || 0)) * tileSize + gridOffsetX;
+        const spriteY = (plot.position.y + (config?.offsetY || 0)) * tileSize + gridOffsetY;
+        const spriteW = (config?.width || 1) * tileSize;
+        const spriteH = (config?.height || 1) * tileSize;
 
         // Check if this is a growing crop (has sprite beyond soil)
         const hasCropSprite =
@@ -168,10 +196,10 @@ const FarmDebugOverlay: React.FC<FarmDebugOverlayProps> = ({ mapId }) => {
             <div
               className={`absolute border-2 border-dashed ${stateColours[plot.state]}`}
               style={{
-                left: plot.position.x * TILE_SIZE,
-                top: plot.position.y * TILE_SIZE,
-                width: TILE_SIZE,
-                height: TILE_SIZE,
+                left: plot.position.x * tileSize + gridOffsetX,
+                top: plot.position.y * tileSize + gridOffsetY,
+                width: tileSize,
+                height: tileSize,
               }}
             >
               <span className="text-[8px] font-mono text-white bg-black/60 px-1 rounded-sm">
@@ -213,9 +241,17 @@ const FarmDebugOverlay: React.FC<FarmDebugOverlayProps> = ({ mapId }) => {
 // Transition markers component
 interface TransitionMarkersProps {
   transitions: Transition[];
+  tileSize: number;
+  gridOffsetX: number;
+  gridOffsetY: number;
 }
 
-const TransitionMarkers: React.FC<TransitionMarkersProps> = ({ transitions }) => {
+const TransitionMarkers: React.FC<TransitionMarkersProps> = ({
+  transitions,
+  tileSize,
+  gridOffsetX,
+  gridOffsetY,
+}) => {
   return (
     <div
       className={`absolute top-0 left-0 w-full h-full pointer-events-none ${zClass(Z_DEBUG_TRANSITIONS)}`}
@@ -232,10 +268,10 @@ const TransitionMarkers: React.FC<TransitionMarkersProps> = ({ transitions }) =>
             key={`transition-${index}`}
             className="absolute"
             style={{
-              left: fromPosition.x * TILE_SIZE,
-              top: fromPosition.y * TILE_SIZE,
-              width: TILE_SIZE,
-              height: TILE_SIZE,
+              left: fromPosition.x * tileSize + gridOffsetX,
+              top: fromPosition.y * tileSize + gridOffsetY,
+              width: tileSize,
+              height: tileSize,
             }}
           >
             {/* Transition marker */}

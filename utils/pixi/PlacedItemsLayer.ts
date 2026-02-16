@@ -57,8 +57,12 @@ export class PlacedItemsLayer extends PixiLayer {
   renderItems(
     items: PlacedItem[],
     visibleRange: { minX: number; maxX: number; minY: number; maxY: number },
-    characterScale: number = 1.0
+    characterScale: number = 1.0,
+    tileSize: number = TILE_SIZE,
+    gridOffset?: { x: number; y: number }
   ): void {
+    const offsetX = gridOffset?.x ?? 0;
+    const offsetY = gridOffset?.y ?? 0;
     const renderedKeys = new Set<string>();
     const currentTime = Date.now();
     const target = this.getTargetContainer();
@@ -130,8 +134,8 @@ export class PlacedItemsLayer extends PixiLayer {
 
           sprite = new PIXI.Sprite(PIXI.Texture.from(canvas));
           const fbScale = (item.customScale ?? itemDefFb.placedScale ?? 1) * characterScale;
-          sprite.width = TILE_SIZE * fbScale;
-          sprite.height = TILE_SIZE * fbScale;
+          sprite.width = tileSize * fbScale;
+          sprite.height = tileSize * fbScale;
           this.sprites.set(key, sprite);
           target.addChild(sprite);
           this.blinkState.set(key, false);
@@ -141,8 +145,8 @@ export class PlacedItemsLayer extends PixiLayer {
           // Use per-instance customScale if set, otherwise item definition's placedScale
           const itemDefForScale = getItem(item.itemId);
           const scale = (item.customScale ?? itemDefForScale?.placedScale ?? 1) * characterScale;
-          sprite.width = TILE_SIZE * scale;
-          sprite.height = TILE_SIZE * scale;
+          sprite.width = tileSize * scale;
+          sprite.height = tileSize * scale;
 
           // Use linear (smooth) scaling for hand-drawn artwork
           if (texture.source) {
@@ -158,11 +162,11 @@ export class PlacedItemsLayer extends PixiLayer {
       // Update sprite position and visibility (centered on tile when scaled up)
       const itemDef = getItem(item.itemId);
       const effectiveScale = (item.customScale ?? itemDef?.placedScale ?? 1) * characterScale;
-      const offset = (TILE_SIZE * (effectiveScale - 1)) / 2;
-      sprite.x = item.position.x * TILE_SIZE - offset;
-      sprite.y = item.position.y * TILE_SIZE - offset;
-      sprite.width = TILE_SIZE * effectiveScale;
-      sprite.height = TILE_SIZE * effectiveScale;
+      const offset = (tileSize * (effectiveScale - 1)) / 2;
+      sprite.x = item.position.x * tileSize - offset + offsetX;
+      sprite.y = item.position.y * tileSize - offset + offsetY;
+      sprite.width = tileSize * effectiveScale;
+      sprite.height = tileSize * effectiveScale;
       sprite.visible = inRange;
 
       // Depth sort: z-index based on bottom edge of item (like "feet" position)

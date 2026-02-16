@@ -41,6 +41,7 @@ import {
   cleanCobweb,
   calculateOverlayBounds,
 } from '../utils/cobwebInteractions';
+import { mapManager } from '../maps';
 
 // ============================================================================
 // Configuration Interface
@@ -494,12 +495,17 @@ export function useInteractionController(
       }
 
       // Only interact if player is nearby (no walk-to-interact)
-      const currentPlayerPos = playerPosRef.current;
-      const distanceToClick = getDistance(currentPlayerPos, clickInfo.worldPos);
-      const isNearby = distanceToClick <= INTERACTION.RANGE;
+      // Exception: background-image rooms are small single-screen rooms where
+      // everything is visible — allow clicking anywhere (mini-game style)
+      const isBackgroundImageRoom = mapManager.getCurrentMap()?.renderMode === 'background-image';
+      if (!isBackgroundImageRoom) {
+        const currentPlayerPos = playerPosRef.current;
+        const distanceToClick = getDistance(currentPlayerPos, clickInfo.worldPos);
+        const isNearby = distanceToClick <= INTERACTION.RANGE;
 
-      if (!isNearby) {
-        return;
+        if (!isNearby) {
+          return;
+        }
       }
 
       if (interactions.length === 1) {

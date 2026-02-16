@@ -10,6 +10,8 @@ interface PlacedItemsProps {
   cameraX: number;
   cameraY: number;
   characterScale?: number;
+  tileSize?: number;
+  gridOffset?: { x: number; y: number };
 }
 
 /**
@@ -22,7 +24,11 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({
   cameraX,
   cameraY,
   characterScale = 1.0,
+  tileSize = TILE_SIZE,
+  gridOffset,
 }) => {
+  const gox = gridOffset?.x ?? 0;
+  const goy = gridOffset?.y ?? 0;
   console.log('[PlacedItems] Rendering placed items:', items.length, items);
 
   return (
@@ -31,10 +37,10 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({
         const itemDef = getItem(item.itemId);
         const baseScale = item.customScale ?? itemDef?.placedScale ?? 1;
         const scale = baseScale * characterScale;
-        const itemSize = TILE_SIZE * scale;
-        const offset = (TILE_SIZE * (scale - 1)) / 2;
-        const screenX = item.position.x * TILE_SIZE - cameraX - offset;
-        const screenY = item.position.y * TILE_SIZE - cameraY - offset;
+        const itemSize = tileSize * scale;
+        const offset = (tileSize * (scale - 1)) / 2;
+        const screenX = item.position.x * tileSize - cameraX - offset + gox;
+        const screenY = item.position.y * tileSize - cameraY - offset + goy;
         // Depth sort: bottom of item determines z-index (same system as player/NPCs)
         const feetY = item.position.y + scale;
         const depthZ = Z_PLAYER + Math.floor(feetY);

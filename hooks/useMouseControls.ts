@@ -29,6 +29,10 @@ export interface MouseControlsConfig {
   onCanvasClick: (clickInfo: MouseClickInfo) => void;
   /** Whether to enable mouse controls (touch always enabled for click-to-move) */
   enabled: boolean;
+  /** Effective tile size for background-image rooms (includes viewport + layer scale) */
+  effectiveTileSize?: number;
+  /** Grid offset for background-image rooms (centers grid on viewport) */
+  gridOffset?: { x: number; y: number };
 }
 
 /**
@@ -84,7 +88,16 @@ function isUIElement(element: EventTarget | null): boolean {
 }
 
 export function useMouseControls(config: MouseControlsConfig) {
-  const { containerRef, cameraX, cameraY, zoom, onCanvasClick, enabled } = config;
+  const {
+    containerRef,
+    cameraX,
+    cameraY,
+    zoom,
+    onCanvasClick,
+    enabled,
+    effectiveTileSize,
+    gridOffset,
+  } = config;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -101,15 +114,21 @@ export function useMouseControls(config: MouseControlsConfig) {
       clientX: number,
       clientY: number
     ): MouseClickInfo => {
-      // Convert screen coordinates to world coordinates (in pixels)
-      // Screen coords come from getBoundingClientRect which returns CSS-transformed
-      // dimensions, so we must divide by zoom to get unscaled game-world pixels
-      const worldPixelX = (screenX / zoom) + cameraX;
-      const worldPixelY = (screenY / zoom) + cameraY;
+      let worldTileX: number;
+      let worldTileY: number;
 
-      // Convert to tile coordinates
-      const worldTileX = worldPixelX / TILE_SIZE;
-      const worldTileY = worldPixelY / TILE_SIZE;
+      if (gridOffset && effectiveTileSize) {
+        // Background-image rooms: grid rendered at effectiveTileSize with gridOffset centering
+        // Screen → unzoomed pixels → subtract grid offset → divide by effective tile size
+        worldTileX = (screenX / zoom - gridOffset.x) / effectiveTileSize;
+        worldTileY = (screenY / zoom - gridOffset.y) / effectiveTileSize;
+      } else {
+        // Normal tiled rooms: camera scrolling, standard TILE_SIZE
+        const worldPixelX = screenX / zoom + cameraX;
+        const worldPixelY = screenY / zoom + cameraY;
+        worldTileX = worldPixelX / TILE_SIZE;
+        worldTileY = worldPixelY / TILE_SIZE;
+      }
 
       return {
         worldPos: { x: worldTileX, y: worldTileY },
@@ -171,5 +190,5 @@ export function useMouseControls(config: MouseControlsConfig) {
       container.removeEventListener('click', handleClick);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [containerRef, cameraX, cameraY, zoom, onCanvasClick, enabled]);
+  }, [containerRef, cameraX, cameraY, zoom, onCanvasClick, enabled, effectiveTileSize, gridOffset]);
 }
