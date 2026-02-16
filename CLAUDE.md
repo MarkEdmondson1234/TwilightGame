@@ -1302,6 +1302,7 @@ Run tests with: `npx vitest run tests/myUtils.test.ts`
 | **add-grocery-item** | "add ingredient", "grocery item", "cooking ingredient", "shop item" | Add grocery items as ingredients and shop inventory |
 | **add-animation** | "add animation", "particle effect", "weather effect" | Add GIF animations to tiles/weather |
 | **add-pixi-component** | "PixiJS", "WebGL", "particle system", "shader" | Add PixiJS rendering components |
+| **add-minigame** | "create mini-game", "add mini-game", "new activity" | Create self-contained mini-games (2 files + 1 registry line) |
 
 ### When to Use Skills
 

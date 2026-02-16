@@ -195,8 +195,11 @@ export const Z_RECIPE_BOOK = 2050;
 /** Painting easel (freehand drawing) */
 export const Z_PAINTING_EASEL = 2055;
 
+/** Mini-game overlays (standard backdrop) */
+export const Z_MINI_GAME = 2060;
+
 /** Bookshelf modal */
-export const Z_BOOKSHELF_MODAL = 2060;
+export const Z_BOOKSHELF_MODAL = 2065;
 
 /** Shop UI */
 export const Z_SHOP = 2070;

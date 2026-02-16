@@ -20,6 +20,9 @@ import {
 } from '../data/exampleGlobalEvents';
 import type { SharedEventType } from '../firebase/types';
 import { isFirebaseLoaded } from '../firebase/safe';
+import { getAllMiniGames } from '../minigames/registry';
+import { miniGameManager } from '../minigames/MiniGameManager';
+import type { MiniGameTriggerData } from '../minigames/types';
 import DevToolsDatabase from './DevToolsDatabase';
 import './DevTools.css';
 
@@ -28,8 +31,7 @@ interface DevToolsProps {
   onFarmUpdate?: () => void;
   onFairyFormToggle?: (active: boolean) => void;
   isFairyForm?: boolean;
-  onOpenPaintingEasel?: () => void;
-  onOpenDecorationWorkshop?: () => void;
+  onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
 }
 
 /**
@@ -615,113 +617,6 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
 };
 
 /**
- * Painting Debug Section - shortcuts for testing the painting/drawing system
- */
-const PaintingDebugSection: React.FC<{
-  onOpenPaintingEasel?: () => void;
-  onOpenDecorationWorkshop?: () => void;
-}> = ({ onOpenPaintingEasel, onOpenDecorationWorkshop }) => {
-  const [status, setStatus] = useState('');
-
-  const updateStatus = () => {
-    const paintings = decorationManager.getAllPaintings();
-    const localCount = getLocalPaintingCount();
-    const hasEasel = decorationManager.getHasEasel();
-    const hasCanvas = inventoryManager.hasItem('blank_canvas', 1);
-    const unlocked = decorationManager.getUnlockedColours();
-    setStatus(
-      `Easel: ${hasEasel ? 'yes' : 'no'} | Canvas: ${hasCanvas ? 'yes' : 'no'} | ` +
-        `Paints unlocked: ${unlocked.length} | Paintings: ${paintings.length} (${localCount}/${LOCAL_PAINTING_LIMIT} stored)`
-    );
-  };
-
-  useEffect(() => {
-    updateStatus();
-  }, []);
-
-  const giveArtSupplies = () => {
-    // Grant easel
-    if (!decorationManager.getHasEasel()) {
-      decorationManager.grantEasel();
-      inventoryManager.addItem('easel', 1);
-    }
-
-    // Grant blank canvases
-    inventoryManager.addItem('blank_canvas', 5);
-
-    // Grant a selection of paints (and mark them as crafted)
-    const paintIds = [
-      'paint_teal',
-      'paint_yellow',
-      'paint_violet',
-      'paint_blue',
-      'paint_red',
-      'paint_green',
-    ];
-    for (const id of paintIds) {
-      inventoryManager.addItem(id, 2);
-    }
-
-    // Mark paints as crafted so colours unlock in the palette
-    // Dev tools: directly update the manager's internal Set + persist
-    const mgr = decorationManager as unknown as { craftedPaints: Set<string> };
-    for (const id of paintIds) {
-      mgr.craftedPaints.add(id);
-    }
-    characterData.save('decoration', decorationManager.getDecorationState());
-
-    // Save inventory
-    const inv = inventoryManager.getInventoryData();
-    characterData.saveInventory(inv.items, inv.tools);
-
-    updateStatus();
-    console.log('[DevTools] Granted art supplies: easel, 5 canvases, 6 paint types (x2 each)');
-  };
-
-  return (
-    <>
-      <div className="devtools-status" style={{ marginBottom: '12px' }}>
-        <p style={{ fontSize: '11px', lineHeight: 1.5 }}>{status || 'Loading...'}</p>
-      </div>
-
-      <div className="devtools-control">
-        <label>Quick Actions</label>
-        <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
-          <button
-            className="devtools-button"
-            onClick={giveArtSupplies}
-            title="Add easel, canvases, and paints to inventory"
-          >
-            🎨 Give Art Supplies
-          </button>
-          {onOpenPaintingEasel && (
-            <button
-              className="devtools-button"
-              onClick={onOpenPaintingEasel}
-              title="Open the freehand drawing easel"
-            >
-              ✏️ Open Drawing Easel
-            </button>
-          )}
-          {onOpenDecorationWorkshop && (
-            <button
-              className="devtools-button"
-              onClick={onOpenDecorationWorkshop}
-              title="Open the decoration workshop (upload images, craft frames)"
-            >
-              🖼️ Open Workshop
-            </button>
-          )}
-        </div>
-        <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
-          &quot;Give Art Supplies&quot; adds: easel, 5 blank canvases, 6 paint types (2 each)
-        </small>
-      </div>
-    </>
-  );
-};
-
-/**
  * Event Chains Debug Section - test YAML-based event chains
  */
 const EventChainsDebugSection: React.FC = () => {
@@ -1105,13 +1000,200 @@ const GlobalEventsDebugSection: React.FC = () => {
   );
 };
 
+/**
+ * Mini-Games Debug Section — browse all registered mini-games, launch them,
+ * and provide per-game dev helpers (e.g. art supplies for painting games).
+ */
+const MiniGamesDebugSection: React.FC<{
+  onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
+}> = ({ onOpenMiniGame }) => {
+  const allGames = getAllMiniGames();
+  const [artStatus, setArtStatus] = useState('');
+
+  const updateArtStatus = () => {
+    const paintings = decorationManager.getAllPaintings();
+    const localCount = getLocalPaintingCount();
+    const hasEasel = decorationManager.getHasEasel();
+    const hasCanvas = inventoryManager.hasItem('blank_canvas', 1);
+    const unlocked = decorationManager.getUnlockedColours();
+    setArtStatus(
+      `Easel: ${hasEasel ? 'yes' : 'no'} | Canvas: ${hasCanvas ? 'yes' : 'no'} | ` +
+        `Paints: ${unlocked.length} | Paintings: ${paintings.length} (${localCount}/${LOCAL_PAINTING_LIMIT} local)`
+    );
+  };
+
+  useEffect(() => {
+    updateArtStatus();
+  }, []);
+
+  const giveArtSupplies = () => {
+    if (!decorationManager.getHasEasel()) {
+      decorationManager.grantEasel();
+      inventoryManager.addItem('easel', 1);
+    }
+    inventoryManager.addItem('blank_canvas', 5);
+    const paintIds = [
+      'paint_teal',
+      'paint_yellow',
+      'paint_violet',
+      'paint_blue',
+      'paint_red',
+      'paint_green',
+    ];
+    for (const id of paintIds) {
+      inventoryManager.addItem(id, 2);
+    }
+    const mgr = decorationManager as unknown as { craftedPaints: Set<string> };
+    for (const id of paintIds) {
+      mgr.craftedPaints.add(id);
+    }
+    characterData.save('decoration', decorationManager.getDecorationState());
+    const inv = inventoryManager.getInventoryData();
+    characterData.saveInventory(inv.items, inv.tools);
+    updateArtStatus();
+    console.log('[DevTools] Granted art supplies: easel, 5 canvases, 6 paint types (x2 each)');
+  };
+
+  // IDs that get the art supplies helper
+  const artGameIds = new Set(['decoration-crafting', 'painting-easel']);
+
+  return (
+    <>
+      <div style={{ fontSize: '11px', opacity: 0.7, marginBottom: '8px' }}>
+        {allGames.length} mini-game{allGames.length !== 1 ? 's' : ''} registered
+      </div>
+
+      {allGames.map((game) => {
+        const check = miniGameManager.checkRequirements(game.id);
+        const triggerLabel = game.triggers.placedItemId
+          ? `placed: ${game.triggers.placedItemId}`
+          : game.triggers.npcId
+            ? `npc: ${game.triggers.npcId}`
+            : game.triggers.inventoryItemId
+              ? `item: ${game.triggers.inventoryItemId}`
+              : 'manual';
+
+        return (
+          <div
+            key={game.id}
+            style={{
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '6px',
+              padding: '8px 10px',
+              marginBottom: '8px',
+              background: 'rgba(255,255,255,0.03)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '18px' }}>{game.icon}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 'bold', fontSize: '12px' }}>{game.displayName}</div>
+                <div style={{ fontSize: '10px', opacity: 0.6 }}>
+                  {game.id} &middot; {triggerLabel}
+                </div>
+              </div>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 10,
+                  height: 10,
+                  borderRadius: '50%',
+                  background: game.colour,
+                  flexShrink: 0,
+                }}
+                title={game.colour}
+              />
+            </div>
+
+            <div style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px' }}>
+              {game.description}
+            </div>
+
+            {/* Requirements & availability */}
+            <div style={{ fontSize: '10px', opacity: 0.6, marginTop: '4px' }}>
+              {game.requirements && game.requirements.length > 0 && (
+                <span>
+                  Requires:{' '}
+                  {game.requirements
+                    .map((r) => `${r.quantity}x ${r.itemId} (${r.consumeOn})`)
+                    .join(', ')}
+                  {' · '}
+                </span>
+              )}
+              {game.availability?.seasons && (
+                <span>Seasons: {game.availability.seasons.join(', ')} · </span>
+              )}
+              {game.availability?.timeOfDay && <span>Time: {game.availability.timeOfDay} · </span>}
+              {game.customBackdrop ? 'Custom backdrop' : 'Standard backdrop'}
+            </div>
+
+            {/* Launch button */}
+            {onOpenMiniGame && (
+              <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                <button
+                  className="devtools-button"
+                  onClick={() =>
+                    onOpenMiniGame(game.id, {
+                      triggerType: 'direct',
+                    })
+                  }
+                  style={{ fontSize: '11px' }}
+                  title={
+                    check.canPlay
+                      ? `Launch ${game.displayName}`
+                      : `Cannot launch: ${'reason' in check ? check.reason : 'unknown'}`
+                  }
+                >
+                  Launch
+                </button>
+                {!check.canPlay && 'reason' in check && (
+                  <span style={{ fontSize: '10px', color: '#f87171' }}>{check.reason}</span>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {allGames.length === 0 && (
+        <div style={{ opacity: 0.5, fontStyle: 'italic' }}>
+          No mini-games registered in minigames/registry.ts
+        </div>
+      )}
+
+      {/* Art supplies helper — shown when art mini-games are registered */}
+      {allGames.some((g) => artGameIds.has(g.id)) && (
+        <div
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            paddingTop: '10px',
+            marginTop: '4px',
+          }}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 'bold', marginBottom: '4px' }}>
+            Art Supplies Helper
+          </div>
+          <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '6px' }}>{artStatus}</div>
+          <button
+            className="devtools-button"
+            onClick={giveArtSupplies}
+            style={{ fontSize: '11px' }}
+            title="Add easel, 5 canvases, and 6 paint types (x2 each)"
+          >
+            Give Art Supplies
+          </button>
+        </div>
+      )}
+    </>
+  );
+};
+
 const DevTools: React.FC<DevToolsProps> = ({
   onClose,
   onFarmUpdate,
   onFairyFormToggle,
   isFairyForm = false,
-  onOpenPaintingEasel,
-  onOpenDecorationWorkshop,
+  onOpenMiniGame,
 }) => {
   const [activeTab, setActiveTab] = useState<'tools' | 'database'>('tools');
 
@@ -1340,11 +1422,8 @@ const DevTools: React.FC<DevToolsProps> = ({
               </div>
 
               <div className="devtools-section">
-                <h3>Painting</h3>
-                <PaintingDebugSection
-                  onOpenPaintingEasel={onOpenPaintingEasel}
-                  onOpenDecorationWorkshop={onOpenDecorationWorkshop}
-                />
+                <h3>Mini-Games</h3>
+                <MiniGamesDebugSection onOpenMiniGame={onOpenMiniGame} />
               </div>
 
               <div className="devtools-section">

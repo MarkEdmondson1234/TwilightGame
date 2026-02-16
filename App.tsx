@@ -78,6 +78,7 @@ import CloudShadows from './components/CloudShadows';
 import CookingInterface from './components/CookingInterface';
 import DecorationCraftingUI from './components/DecorationCraftingUI';
 import PaintingEaselUI from './components/PaintingEaselUI';
+import MiniGameHost from './components/MiniGameHost';
 import { CottageBook } from './components/book';
 import Toast, { useToast } from './components/Toast';
 import RadialMenu from './components/RadialMenu';
@@ -157,6 +158,7 @@ const App: React.FC = () => {
     ui.journal ||
     ui.decorationWorkshop ||
     ui.paintingEasel ||
+    ui.miniGame ||
     ui.devTools ||
     ui.vfxTestPanel;
   const zoomMinForMap = useMemo(() => {
@@ -1491,13 +1493,12 @@ const App: React.FC = () => {
               showToast('Returned to normal form.', 'info');
             }
           }}
-          onOpenPaintingEasel={() => {
+          onOpenMiniGame={(miniGameId, triggerData) => {
             closeUI('devTools');
-            openUI('paintingEasel');
-          }}
-          onOpenDecorationWorkshop={() => {
-            closeUI('devTools');
-            openUI('decorationWorkshop');
+            openUI('miniGame', {
+              activeMiniGameId: miniGameId,
+              miniGameTriggerData: triggerData,
+            });
           }}
         />
       )}
@@ -1569,6 +1570,16 @@ const App: React.FC = () => {
       )}
       {ui.paintingEasel && (
         <PaintingEaselUI isOpen={ui.paintingEasel} onClose={() => closeUI('paintingEasel')} />
+      )}
+      {ui.miniGame && ui.context.activeMiniGameId && (
+        <MiniGameHost
+          activeMiniGameId={ui.context.activeMiniGameId}
+          triggerData={ui.context.miniGameTriggerData}
+          playerPosition={playerPos}
+          currentMapId={currentMap?.id ?? 'unknown'}
+          onClose={() => closeUI('miniGame')}
+          showToast={showToast}
+        />
       )}
       {ui.brewingUI && (
         <div

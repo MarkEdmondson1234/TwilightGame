@@ -31,6 +31,7 @@ import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
 import { staminaManager } from '../utils/StaminaManager';
 import { registerItemSprite } from '../utils/inventoryUIHelper';
+import type { MiniGameTriggerData } from '../minigames/types';
 import { getDistance } from '../utils/pathfinding';
 import { InventoryItem } from '../components/Inventory';
 import type { UseUIStateReturn } from './useUIState';
@@ -361,6 +362,12 @@ export function useInteractionController(
       onOpenPaintingEasel: () => {
         openUI('paintingEasel');
       },
+      onOpenMiniGame: (miniGameId: string, triggerData: MiniGameTriggerData) => {
+        openUI('miniGame', {
+          activeMiniGameId: miniGameId,
+          miniGameTriggerData: triggerData,
+        });
+      },
       onPlaceDecoration: (result: {
         itemId: string;
         position: Position;
@@ -575,7 +582,11 @@ export function useInteractionController(
 
     // Only show menu if there are NPC-related interactions
     const npcInteractions = interactions.filter(
-      (i) => i.type === 'npc' || i.type === 'give_gift' || i.type === 'collect_resource'
+      (i) =>
+        i.type === 'npc' ||
+        i.type === 'give_gift' ||
+        i.type === 'collect_resource' ||
+        i.type === 'open_mini_game'
     );
     if (npcInteractions.length === 0) {
       return;

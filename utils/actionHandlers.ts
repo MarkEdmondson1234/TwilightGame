@@ -27,6 +27,9 @@ import { getTierName } from './MagicEffects';
 import { ForageResult, handleForageAction } from './forageHandlers';
 import { decorationManager } from './DecorationManager';
 import { getFrameStyle } from './frameStyles';
+import { getMiniGamesForPlacedItem, getMiniGamesForNPC } from '../minigames/registry';
+import { miniGameManager } from '../minigames/MiniGameManager';
+import type { MiniGameTriggerData } from '../minigames/types';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -979,7 +982,8 @@ export type InteractionType =
   | 'desk_pickup'
   | 'place_decoration'
   | 'open_workshop'
-  | 'open_painting_easel';
+  | 'open_painting_easel'
+  | 'open_mini_game';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -1045,6 +1049,8 @@ export interface GetInteractionsConfig {
   }) => void;
   onOpenDecorationWorkshop?: () => void;
   onOpenPaintingEasel?: () => void;
+  /** Open a mini-game by ID with trigger data */
+  onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
 }
 
 /**
@@ -1107,28 +1113,62 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         }),
     });
 
-    // Easel interaction: open decoration workshop
-    if (itemAtPosition.itemId === 'easel' && config.onOpenDecorationWorkshop) {
-      interactions.push({
-        type: 'open_workshop',
-        label: 'Craft Workshop',
-        icon: '🎨',
-        color: '#8b5cf6',
-        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
-        execute: () => config.onOpenDecorationWorkshop!(),
-      });
+    // Mini-game interactions for placed items (registry-based)
+    if (config.onOpenMiniGame) {
+      const miniGames = getMiniGamesForPlacedItem(itemAtPosition.itemId);
+      for (const mg of miniGames) {
+        const check = miniGameManager.checkRequirements(mg.id);
+        if (check.canPlay) {
+          interactions.push({
+            type: 'open_mini_game',
+            label: mg.displayName,
+            icon: mg.icon,
+            color: mg.colour,
+            data: { miniGameId: mg.id, placedItemId: itemAtPosition.id },
+            execute: () => {
+              miniGameManager.consumeStartRequirements(mg.id);
+              config.onOpenMiniGame!(mg.id, {
+                triggerType: 'placedItem',
+                position: tilePos,
+                itemId: itemAtPosition.itemId,
+              });
+            },
+          });
+        }
+      }
     }
 
-    // Easel interaction: open freehand drawing easel
+    // Legacy easel callbacks (kept for backward compatibility, remove when fully migrated)
+    if (itemAtPosition.itemId === 'easel' && config.onOpenDecorationWorkshop) {
+      // Only add legacy callback if no mini-game was registered for this
+      const hasMiniGame = getMiniGamesForPlacedItem('easel').some(
+        (mg) => mg.id === 'decoration-crafting'
+      );
+      if (!hasMiniGame) {
+        interactions.push({
+          type: 'open_workshop',
+          label: 'Craft Workshop',
+          icon: '🎨',
+          color: '#8b5cf6',
+          data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+          execute: () => config.onOpenDecorationWorkshop!(),
+        });
+      }
+    }
     if (itemAtPosition.itemId === 'easel' && config.onOpenPaintingEasel) {
-      interactions.push({
-        type: 'open_painting_easel',
-        label: 'Draw',
-        icon: '✏️',
-        color: '#d97706',
-        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
-        execute: () => config.onOpenPaintingEasel!(),
-      });
+      const hasMiniGame = getMiniGamesForPlacedItem('easel').some(
+        (mg) => mg.id === 'painting-easel'
+      );
+      if (!hasMiniGame) {
+        interactions.push({
+          type: 'open_painting_easel',
+          label: 'Draw',
+          icon: '✏️',
+          color: '#d97706',
+          data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+          execute: () => config.onOpenPaintingEasel!(),
+        });
+      }
     }
 
     // Eat and Taste options only for non-decoration items (food)
@@ -1237,6 +1277,31 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
             onCollectResource({ success: false, message: emptyMessage });
           },
         });
+      }
+    }
+
+    // NPC-triggered mini-games (registry-based)
+    if (config.onOpenMiniGame) {
+      const npcMiniGames = getMiniGamesForNPC(npcId);
+      for (const mg of npcMiniGames) {
+        const check = miniGameManager.checkRequirements(mg.id);
+        if (check.canPlay) {
+          interactions.push({
+            type: 'open_mini_game',
+            label: mg.displayName,
+            icon: mg.icon,
+            color: mg.colour,
+            data: { miniGameId: mg.id, npcId },
+            execute: () => {
+              miniGameManager.consumeStartRequirements(mg.id);
+              config.onOpenMiniGame!(mg.id, {
+                triggerType: 'npc',
+                position,
+                npcId,
+              });
+            },
+          });
+        }
       }
     }
   }

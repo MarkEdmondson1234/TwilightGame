@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Position } from '../types';
+import type { MiniGameTriggerData } from '../minigames/types';
 
 /**
  * Names of all UI overlays that can be opened/closed.
@@ -21,7 +22,8 @@ export type UIOverlayName =
   | 'glamourModal'
   | 'journal'
   | 'decorationWorkshop'
-  | 'paintingEasel';
+  | 'paintingEasel'
+  | 'miniGame';
 
 /**
  * Context data associated with specific UI overlays.
@@ -35,6 +37,9 @@ export interface UIContext {
   brewingPosition: Position | null;
   // Gift modal context
   giftTargetNpcId: string | null;
+  // Mini-game context
+  activeMiniGameId: string | null;
+  miniGameTriggerData: MiniGameTriggerData | null;
 }
 
 /**
@@ -58,6 +63,7 @@ export interface UIState {
   journal: boolean;
   decorationWorkshop: boolean;
   paintingEasel: boolean;
+  miniGame: boolean;
   // Context data
   context: UIContext;
 }
@@ -74,6 +80,9 @@ export interface OpenUIOptions {
   brewingPosition?: Position;
   // For gift modal
   giftTargetNpcId?: string;
+  // For mini-game
+  activeMiniGameId?: string;
+  miniGameTriggerData?: MiniGameTriggerData;
 }
 
 /**
@@ -93,6 +102,8 @@ const initialContext: UIContext = {
   cookingPosition: null,
   brewingPosition: null,
   giftTargetNpcId: null,
+  activeMiniGameId: null,
+  miniGameTriggerData: null,
 };
 
 const initialState: UIState = {
@@ -112,6 +123,7 @@ const initialState: UIState = {
   journal: false,
   decorationWorkshop: false,
   paintingEasel: false,
+  miniGame: false,
   context: { ...initialContext },
 };
 
@@ -161,6 +173,12 @@ export function useUIState() {
         if (options.giftTargetNpcId !== undefined) {
           newState.context.giftTargetNpcId = options.giftTargetNpcId;
         }
+        if (options.activeMiniGameId !== undefined) {
+          newState.context.activeMiniGameId = options.activeMiniGameId;
+        }
+        if (options.miniGameTriggerData !== undefined) {
+          newState.context.miniGameTriggerData = options.miniGameTriggerData;
+        }
       }
 
       return newState;
@@ -190,6 +208,12 @@ export function useUIState() {
         newState.context = {
           ...prev.context,
           giftTargetNpcId: null,
+        };
+      } else if (name === 'miniGame') {
+        newState.context = {
+          ...prev.context,
+          activeMiniGameId: null,
+          miniGameTriggerData: null,
         };
       }
 
@@ -221,6 +245,12 @@ export function useUIState() {
           newState.context = {
             ...prev.context,
             giftTargetNpcId: null,
+          };
+        } else if (name === 'miniGame') {
+          newState.context = {
+            ...prev.context,
+            activeMiniGameId: null,
+            miniGameTriggerData: null,
           };
         }
         return newState;
@@ -257,7 +287,8 @@ export function useUIState() {
       state.shopUI ||
       state.giftModal ||
       state.journal ||
-      state.paintingEasel
+      state.paintingEasel ||
+      state.miniGame
     );
   }, [state]);
 
