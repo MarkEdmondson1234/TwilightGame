@@ -1,24 +1,43 @@
 /**
- * CookingResultPopup - Cottagecore-styled popup for cooking results
+ * CookingResultPopup - Cottagecore-styled popup for cooking/brewing results
  *
- * Overlays on top of the cooking book/interface to show success or failure
- * messages prominently, with a warm handmade aesthetic. Shows Mum's portrait
- * as the icon and an ingredient checklist on failure so the player can see
- * at a glance what they still need.
+ * Overlays on top of the cooking book or magic book to show success or failure
+ * messages prominently, with a warm handmade aesthetic. Shows an NPC portrait
+ * as the medallion icon and an ingredient checklist on failure so the player
+ * can see at a glance what they still need.
+ *
+ * Used by: RecipeContent (cooking), PotionContent (magic), CookingInterface (stove)
  */
 
 import React, { useEffect, useState } from 'react';
-import { CookingResult } from '../utils/CookingManager';
-import { getRecipe } from '../data/recipes';
 import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
 import { npcAssets } from '../assets';
 import { BookThemeConfig } from './book/bookThemes';
 
+/** Minimal result shape shared by CookingResult and BrewingResult */
+interface PopupResult {
+  success: boolean;
+  message: string;
+  masteryAchieved?: boolean;
+  isTerrible?: boolean;
+  feelingSick?: boolean;
+}
+
+/** Ingredient entry for the checklist (itemId + quantity needed) */
+interface IngredientEntry {
+  itemId: string;
+  quantity: number;
+}
+
 interface CookingResultPopupProps {
-  result: CookingResult;
-  /** Recipe ID — used to show ingredient checklist on failure */
-  recipeId?: string;
+  result: PopupResult;
+  /** Ingredients list — renders a have/need checklist on failure */
+  ingredients?: IngredientEntry[];
+  /** NPC portrait image URL (defaults to Mum) */
+  portraitSrc?: string;
+  /** Portrait zoom config: scale and vertical focal point (defaults tuned for Mum) */
+  portraitZoom?: { scale: number; originY: string };
   /** Book theme for consistent styling (optional — uses defaults for CookingInterface) */
   theme?: BookThemeConfig;
   /** Called when the popup is dismissed */
@@ -29,7 +48,9 @@ interface CookingResultPopupProps {
 
 const CookingResultPopup: React.FC<CookingResultPopupProps> = ({
   result,
-  recipeId,
+  ingredients,
+  portraitSrc = npcAssets.mum_portrait,
+  portraitZoom = { scale: 3, originY: '33%' },
   theme,
   onDismiss,
   autoDismissMs = 4000,
@@ -75,10 +96,9 @@ const CookingResultPopup: React.FC<CookingResultPopupProps> = ({
   const fontHeading = theme?.fontHeading || '"Palatino Linotype", "Book Antiqua", Palatino, serif';
   const fontBody = theme?.fontBody || 'Georgia, "Times New Roman", serif';
 
-  // Build ingredient checklist when we have a recipeId
-  const recipe = recipeId ? getRecipe(recipeId) : null;
-  const ingredientChecklist = recipe
-    ? recipe.ingredients.map((ing) => {
+  // Build ingredient checklist
+  const ingredientChecklist = ingredients
+    ? ingredients.map((ing) => {
         const item = getItem(ing.itemId);
         const have = inventoryManager.getQuantity(ing.itemId);
         return {
@@ -95,7 +115,7 @@ const CookingResultPopup: React.FC<CookingResultPopupProps> = ({
   const title = result.success
     ? result.masteryAchieved
       ? 'Recipe Mastered!'
-      : 'Cooking Success!'
+      : 'Success!'
     : 'Oh Dear...';
 
   return (
@@ -125,7 +145,7 @@ const CookingResultPopup: React.FC<CookingResultPopupProps> = ({
           handleClick();
         }}
       >
-        {/* Mum portrait medallion */}
+        {/* Portrait medallion */}
         <div className="flex justify-center -mb-3" style={{ zIndex: 2, position: 'relative' }}>
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg overflow-hidden"
@@ -136,10 +156,13 @@ const CookingResultPopup: React.FC<CookingResultPopupProps> = ({
             }}
           >
             <img
-              src={npcAssets.mum_portrait}
-              alt="Mum"
+              src={portraitSrc}
+              alt="NPC"
               className="w-full h-full object-cover"
-              style={{ transform: 'scale(3)', transformOrigin: '50% 33%' }}
+              style={{
+                transform: `scale(${portraitZoom.scale})`,
+                transformOrigin: `50% ${portraitZoom.originY}`,
+              }}
             />
           </div>
         </div>
@@ -201,7 +224,7 @@ const CookingResultPopup: React.FC<CookingResultPopupProps> = ({
             </p>
           )}
 
-          {/* Ingredient checklist (shown on failure when recipeId is provided) */}
+          {/* Ingredient checklist (shown on failure when ingredients are provided) */}
           {!result.success && ingredientChecklist.length > 0 && (
             <div className="mb-3 space-y-1.5 text-left">
               {ingredientChecklist.map((ing) => (

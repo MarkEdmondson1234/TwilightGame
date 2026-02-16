@@ -17,6 +17,8 @@ import ImageZoomPopover from './ImageZoomPopover';
 import LevelUpCelebration from '../LevelUpCelebration';
 import { renderEncyclopaediaPages } from './EncyclopaediaContent';
 import { EncyclopaediaEntry, ENCYCLOPAEDIA_ENTRIES } from '../../data/ingredientEncyclopaedia';
+import { npcAssets } from '../../assets';
+import CookingResultPopup from '../CookingResultPopup';
 
 interface PotionContentProps {
   theme: BookThemeConfig;
@@ -75,7 +77,10 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
 
   // Group recipes by level (plus encyclopaedia entries)
   const recipesByLevel = useMemo(() => {
-    const byLevel: Record<PotionLevel | 'all' | 'encyclopaedia', (PotionRecipeDefinition | EncyclopaediaEntry)[]> = {
+    const byLevel: Record<
+      PotionLevel | 'all' | 'encyclopaedia',
+      (PotionRecipeDefinition | EncyclopaediaEntry)[]
+    > = {
       all: unlockedRecipes,
       novice: [],
       journeyman: [],
@@ -122,11 +127,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
       setLevelUpLevel(result.newLevel);
     }
 
-    const duration = result.levelUp ? 5000 : 3000;
-    setTimeout(() => {
-      setShowResult(false);
-      setBrewingResult(null);
-    }, duration);
+    // Popup handles its own auto-dismiss via CookingResultPopup
   }, []);
 
   // Handle dismissing the level-up celebration
@@ -138,8 +139,12 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
   const isEncyclopaedia = pagination.currentChapterId === 'encyclopaedia';
 
   // Get selected potion details (only when not in encyclopaedia mode)
-  const selectedPotion = !isEncyclopaedia ? pagination.selectedItem as PotionRecipeDefinition | null : null;
-  const selectedEntry = isEncyclopaedia ? pagination.selectedItem as EncyclopaediaEntry | null : null;
+  const selectedPotion = !isEncyclopaedia
+    ? (pagination.selectedItem as PotionRecipeDefinition | null)
+    : null;
+  const selectedEntry = isEncyclopaedia
+    ? (pagination.selectedItem as EncyclopaediaEntry | null)
+    : null;
 
   // Check if we can brew
   const canBrew = selectedPotion ? magicManager.hasIngredients(selectedPotion.id) : false;
@@ -277,8 +282,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
                   </div>
                 </button>
               );
-            })
-        }
+            })}
 
         {pagination.currentPageItems.length === 0 && (
           <p className="text-center py-8 italic" style={{ color: theme.textMuted }}>
@@ -431,16 +435,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
             </div>
           </div>
 
-          {/* Result message */}
-          {showResult && brewingResult && (
-            <div
-              className="p-3 rounded-lg text-center font-bold border"
-              style={brewingResult.success ? styles.success : styles.error}
-            >
-              {brewingResult.success ? '✨ ' : '❌ '}
-              {brewingResult.message}
-            </div>
-          )}
+          {/* Result message - now shown as popup overlay */}
         </div>
       ) : (
         <div className="h-full flex items-center justify-center">
@@ -470,7 +465,9 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
 
       <BookSpread
         theme={theme}
-        leftPageContent={isEncyclopaedia && selectedEntry ? encyclopaediaPages!.leftPage : leftPageContent}
+        leftPageContent={
+          isEncyclopaedia && selectedEntry ? encyclopaediaPages!.leftPage : leftPageContent
+        }
         rightPageContent={rightPageContent}
         leftPageNumber={pagination.currentPageIndex + 1}
         totalPages={pagination.totalPages}
@@ -482,6 +479,22 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
         onPrevPage={pagination.prevPage}
         onNextPage={pagination.nextPage}
       />
+
+      {/* Brewing result popup overlay */}
+      {showResult && brewingResult && (
+        <CookingResultPopup
+          result={brewingResult}
+          ingredients={selectedPotion?.ingredients}
+          portraitSrc={npcAssets.witch_wolf_portrait}
+          portraitZoom={{ scale: 2.2, originY: '25%' }}
+          theme={theme}
+          autoDismissMs={brewingResult.levelUp ? 5000 : 4000}
+          onDismiss={() => {
+            setShowResult(false);
+            setBrewingResult(null);
+          }}
+        />
+      )}
 
       {/* Level-up celebration overlay */}
       {levelUpLevel && (

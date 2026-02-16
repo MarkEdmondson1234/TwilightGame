@@ -319,7 +319,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
         {showResult && cookingResult && (
           <CookingResultPopup
             result={cookingResult}
-            recipeId={selectedRecipe ?? undefined}
+            ingredients={recipe?.ingredients}
             onDismiss={() => {
               setShowResult(false);
               setCookingResult(null);

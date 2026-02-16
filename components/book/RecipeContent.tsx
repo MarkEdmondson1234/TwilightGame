@@ -449,7 +449,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
       {showResult && cookingResult && (
         <CookingResultPopup
           result={cookingResult}
-          recipeId={selectedRecipe?.id}
+          ingredients={selectedRecipe?.ingredients}
           theme={theme}
           onDismiss={() => {
             setShowResult(false);
