@@ -243,7 +243,7 @@ export const tileAssets = {
 // Farming assets - Use optimized versions for better performance
 export const farmingAssets = {
   fallow: '/TwilightGame/assets-optimized/farming/fallow01.png',
-  tilled: '/TwilightGame/assets-optimized/farming/tilled.png',
+  tilled: '/TwilightGame/assets-optimized/farming/tilled01.png',
   seedling: '/TwilightGame/assets-optimized/farming/seedling.png',
   plant_pea_young: '/TwilightGame/assets-optimized/farming/plant_pea_young.png',
   plant_pea_adult: '/TwilightGame/assets-optimized/farming/plant_pea_adult.png',
