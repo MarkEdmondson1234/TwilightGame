@@ -907,6 +907,12 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
     if (node.requiredFriendshipTier && !meetsMinTier(npcTier, node.requiredFriendshipTier)) {
       return false;
     }
+    if (
+      node.maxFriendshipTier &&
+      TIER_ORDER.indexOf(npcTier) > TIER_ORDER.indexOf(node.maxFriendshipTier)
+    ) {
+      return false;
+    }
     if (node.requiredSpecialFriend && !npcFriendship?.isSpecialFriend) {
       return false;
     }

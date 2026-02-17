@@ -80,6 +80,7 @@ export interface DialogueNode {
   responses?: DialogueResponse[]; // For branching dialogue (no nextId = close dialogue)
   // Friendship requirements for this dialogue node
   requiredFriendshipTier?: FriendshipTier; // Only show if friendship >= tier
+  maxFriendshipTier?: FriendshipTier; // Only show if friendship <= tier (hide when tier exceeded)
   requiredSpecialFriend?: boolean; // Only show if special friend
   // Quest requirements for this dialogue node
   requiredQuest?: string; // Only show if this quest is started

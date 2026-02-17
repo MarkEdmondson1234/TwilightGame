@@ -339,6 +339,7 @@ const App: React.FC = () => {
   // Cutscene completion handler
   const handleCutsceneComplete = (action: {
     action: string;
+    cutsceneId?: string;
     mapId?: string;
     position?: { x: number; y: number };
   }) => {
@@ -350,6 +351,17 @@ const App: React.FC = () => {
     } else if (action.action === 'return') {
       // Stay where we are (already at saved position)
       console.log('[App] Returning to saved position');
+    }
+
+    // Handle fairy queen cutscene completions
+    if (action.cutsceneId === 'fairy_oak_midnight') {
+      // First meeting with Queen Celestia — advance fairy_queen quest
+      const { onFirstMeetingComplete } = require('./data/questHandlers/fairyQueenHandler');
+      onFirstMeetingComplete();
+    } else if (action.cutsceneId === 'fairy_oak_midnight_return') {
+      // Return visit — grant fairy form potion
+      const { grantFairyFormPotion } = require('./data/questHandlers/fairyQueenHandler');
+      grantFairyFormPotion();
     }
 
     setIsCutscenePlaying(false);

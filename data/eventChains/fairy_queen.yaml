@@ -5,6 +5,11 @@
 # status, they receive the Fairy Form Potion and can visit the
 # Fairy Queen inside the Giant Fairy Oak.
 #
+# After the midnight cutscene, Celestia tells the player she cannot
+# grant magic abilities (they're human), but directs them to Althea
+# to ask about her sister. She also promises fairy form potions on
+# future midnight visits.
+#
 # Fairy meeting, potion management, and oak visit tracking are
 # handled by the TypeScript handler in data/questHandlers/fairyQueenHandler.ts
 
@@ -43,12 +48,19 @@ stages:
   - id: visited_queen
     stageNumber: 3
     text: >
-      You've visited the Fairy Queen inside the ancient oak!
-      A magical and wondrous experience.
+      You've met Queen Celestia beneath the ancient oak at midnight.
+      She has named you an honorary fairy, but cannot grant you magic —
+      you are human, after all. She suggests you speak to the old woman
+      in the village about her sister. Visit Celestia again at midnight
+      for a fairy form potion.
     event:
       title: Audience with the Fairy Queen
-      description: visited the Fairy Queen inside the Giant Fairy Oak
+      description: met Queen Celestia and was named an honorary fairy
       contributor: An honorary fairy
+    dialogue:
+      althea:
+        text: "*She glances up from her knitting with a curious look.* You seem different today, dearie. Like you've seen something magical."
+        expression: thinky
 
   - id: complete
     stageNumber: 4

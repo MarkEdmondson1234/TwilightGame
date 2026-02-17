@@ -57,7 +57,7 @@ import {
 
 const gridString = `
 oLULYoLtULoLtULUUULLUoLLGULJLG
-oLULYoLtULoLtULUUULLUoLLGULJLG
+oe,eJlL,,L:lel:,,,,,loLL,l:l:G
 LoG,G,GeGG,,l,oG,G,,G,eeGGGLGG
 tG,G,,G,,,XXX,G,kXXXXXGG,yGGeG
 LG,,c,,,G,XXX,c,,XXXXXGeGeGeGG

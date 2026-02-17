@@ -179,6 +179,35 @@ export function createOldWomanKnittingNPC(
         id: 'wolfsbane_warning',
         text: "Oh, do be careful around those purple flowers by my house, dearie! That's wolfsbane. Pretty to look at, but terribly poisonous. I grow it for... well, for protection. The forest has its dangers, you know.",
       },
+      // ===== CELESTIA'S REFERRAL (Fairy Queen Quest) =====
+      // When Celestia has directed the player to ask Althea about her sister,
+      // but Althea doesn't trust the player enough yet
+      {
+        id: 'celestia_sent_me_blocked',
+        text: "*She pauses her knitting and gives you a careful look.* A sister? I... I'm not sure I know you well enough to talk about that, dearie. Perhaps when we've spent a bit more time together.",
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 3,
+        maxFriendshipTier: 'acquaintance',
+        hiddenIfQuestStarted: 'althea_chores',
+      },
+      // When the player has both Celestia's referral AND good friendship
+      {
+        id: 'celestia_sent_me',
+        text: "*Her needles still.* You've spoken with Celestia? ...My, my. *She sets down her knitting.* I haven't heard that name in a very long time. So she told you about my sister, did she?",
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 3,
+        requiredFriendshipTier: 'good_friend',
+        hiddenIfQuestStarted: 'althea_chores',
+        responses: [
+          {
+            text: 'She said your sister might be able to help me learn magic.',
+            nextId: 'chores_offer',
+          },
+          {
+            text: 'Maybe another time.',
+          },
+        ],
+      },
       // ===== ALTHEA'S CHORES QUEST =====
       // Available after the player reaches good_friend tier and has heard about Juniper
       {

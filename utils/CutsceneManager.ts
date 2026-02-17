@@ -169,12 +169,18 @@ class CutsceneManagerClass {
   /**
    * End the current cutscene
    */
-  endCutscene(): { action: string; mapId?: string; position?: Position } | null {
+  endCutscene(): {
+    action: string;
+    cutsceneId?: string;
+    mapId?: string;
+    position?: Position;
+  } | null {
     if (!this.state.currentCutscene) {
       return null;
     }
 
     const cutscene = this.state.currentCutscene;
+    const cutsceneId = cutscene.id;
     console.log(`[CutsceneManager] Ending cutscene: ${cutscene.name}`);
 
     // Mark as completed
@@ -201,22 +207,24 @@ class CutsceneManagerClass {
       case 'return':
         return {
           action: 'return',
+          cutsceneId,
           mapId: savedPosition?.mapId,
           position: savedPosition?.position,
         };
       case 'transition':
         return {
           action: 'transition',
+          cutsceneId,
           mapId: completionAction.mapId,
           position: completionAction.position,
         };
       case 'trigger_cutscene':
         // Start next cutscene
         this.startCutscene(completionAction.cutsceneId, savedPosition);
-        return { action: 'trigger_cutscene' };
+        return { action: 'trigger_cutscene', cutsceneId };
       case 'none':
       default:
-        return { action: 'none' };
+        return { action: 'none', cutsceneId };
     }
   }
 

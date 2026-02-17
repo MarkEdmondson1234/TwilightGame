@@ -418,8 +418,188 @@ export const fairyOakMidnightCutscene: CutsceneDefinition = {
         text: 'Remember this, traveller. The forest watches over those who watch over it. When you have need of us — tend to the wild places, and the oak shall answer.',
       },
       transitionOut: {
+        type: 'crossfade',
+        duration: 800,
+      },
+    },
+
+    // ── Scene 11: Player choice — ask about magic ──────────────────────
+    {
+      id: 'player_asks_magic',
+      backgroundCss: MIDNIGHT_GRADIENT_BRIGHT,
+      backgroundLayers: [fairyOak(0.5)],
+      characters: [
+        {
+          characterId: 'queen_celestia',
+          spriteUrl: npcAssets.celestia,
+          position: { x: 50, y: 42 },
+          scale: 1.6,
+        },
+      ],
+      weatherEffect: {
+        type: 'fireflies',
+        intensity: 'medium',
+        opacity: 0.8,
+      },
+      dialogue: {
+        text: 'Queen Celestia regards you with ancient, knowing eyes. The fireflies swirl gently between you.',
+        choices: [
+          {
+            text: 'Can you help me learn magic?',
+            nextSceneIndex: 11, // → celestia_no_magic (next scene)
+          },
+          {
+            text: 'Thank you for your wisdom, Your Majesty.',
+            nextSceneIndex: 13, // → skip to honorary_fairy scene
+          },
+        ],
+      },
+      transitionOut: {
+        type: 'crossfade',
+        duration: 600,
+      },
+    },
+
+    // ── Scene 12: Celestia cannot grant magic ──────────────────────────
+    {
+      id: 'celestia_no_magic',
+      backgroundCss: MIDNIGHT_GRADIENT_BRIGHT,
+      backgroundLayers: [fairyOak(0.55)],
+      characters: [
+        {
+          characterId: 'queen_celestia',
+          spriteUrl: npcAssets.celestia,
+          position: { x: 50, y: 42 },
+          scale: 1.6,
+        },
+      ],
+      weatherEffect: {
+        type: 'fireflies',
+        intensity: 'light',
+        opacity: 0.7,
+      },
+      dialogue: {
+        speaker: 'Queen Celestia',
+        text: '*She smiles, and there is sadness in it.* Alas, little one. I shall gladly name you an honorary fairy — but I cannot give you magic. You are human, and fairy magic does not take root in human hands.',
+      },
+      transitionOut: {
+        type: 'crossfade',
+        duration: 600,
+      },
+    },
+
+    // ── Scene 13: But there is someone who can ─────────────────────────
+    {
+      id: 'celestia_althea_hint',
+      backgroundCss: MIDNIGHT_GRADIENT_BRIGHT,
+      backgroundLayers: [
+        fairyOak(0.5, {
+          type: 'zoom',
+          duration: 10000,
+          zoomFrom: 1.0,
+          zoomTo: 1.05,
+          easing: 'ease-in-out',
+        }),
+      ],
+      characters: [
+        {
+          characterId: 'queen_celestia',
+          spriteUrl: npcAssets.celestia,
+          position: { x: 50, y: 42 },
+          scale: 1.6,
+        },
+      ],
+      weatherEffect: {
+        type: 'mist',
+        intensity: 'light',
+        opacity: 0.4,
+      },
+      dialogue: {
+        speaker: 'Queen Celestia',
+        text: 'But there is someone who can help you. In your village, there is an old woman who knits by the cherry tree. Ask her about her sister. If she trusts you enough... she might tell you what you need to know.',
+      },
+      transitionOut: {
+        type: 'crossfade',
+        duration: 600,
+      },
+    },
+
+    // ── Scene 14: Honorary fairy and potion promise ────────────────────
+    {
+      id: 'honorary_fairy',
+      backgroundCss: MIDNIGHT_GRADIENT_BRIGHT,
+      backgroundLayers: [fairyOak(0.6)],
+      characters: [
+        {
+          characterId: 'queen_celestia',
+          spriteUrl: npcAssets.celestia,
+          position: { x: 50, y: 43 },
+          scale: 1.5,
+        },
+      ],
+      weatherEffect: {
+        type: 'fireflies',
+        intensity: 'heavy',
+        opacity: 0.9,
+      },
+      dialogue: {
+        speaker: 'Queen Celestia',
+        text: 'From this night forth, you are one of us — an honorary fairy of the ancient oak. And whenever the midnight hour finds you here beneath my branches, I shall have a fairy form potion waiting for you. You need only ask.',
+      },
+      transitionOut: {
+        type: 'crossfade',
+        duration: 800,
+      },
+    },
+
+    // ── Scene 15: Farewell — Celestia returns to the bud ───────────────
+    {
+      id: 'celestia_farewell',
+      backgroundCss: MIDNIGHT_GRADIENT,
+      backgroundLayers: [
+        fairyOak(0.3, {
+          type: 'zoom',
+          duration: 8000,
+          zoomFrom: 1.05,
+          zoomTo: 1.0,
+          easing: 'ease-out',
+        }),
+      ],
+      characters: [
+        {
+          characterId: 'queen_celestia',
+          spriteUrl: npcAssets.celestia,
+          position: { x: 50, y: 45 },
+          scale: 1.3,
+          exit: {
+            type: 'fade',
+            duration: 2500,
+          },
+        },
+        {
+          characterId: 'celestia_bud_returning',
+          spriteUrls: [tileAssets.celestia_flower_bud_01, tileAssets.celestia_flower_bud_02],
+          spriteAnimationSpeed: 1500,
+          position: { x: 50, y: 55 },
+          scale: 1.3,
+          entrance: {
+            type: 'fade',
+            duration: 2000,
+          },
+        },
+      ],
+      weatherEffect: {
+        type: 'fireflies',
+        intensity: 'light',
+        opacity: 0.6,
+      },
+      dialogue: {
+        speaker: 'Queen Celestia',
+        text: 'Go well, little fairy. The oak remembers all who shelter beneath it.',
+      },
+      transitionOut: {
         type: 'fade',
-        duration: 1500,
+        duration: 2000,
       },
     },
   ],

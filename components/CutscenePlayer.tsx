@@ -29,6 +29,7 @@ import { Z_CUTSCENE, zClass } from '../zIndex';
 interface CutscenePlayerProps {
   onComplete: (action: {
     action: string;
+    cutsceneId?: string;
     mapId?: string;
     position?: { x: number; y: number };
   }) => void;

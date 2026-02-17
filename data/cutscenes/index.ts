@@ -10,6 +10,7 @@ import { introCutscene } from './intro';
 import { springCutscene, summerCutscene, autumnCutscene, winterCutscene } from './seasonChange';
 import { elderMemoryCutscene } from './elderMemory';
 import { fairyOakMidnightCutscene } from './fairyOakMidnight';
+import { fairyOakMidnightReturnCutscene } from './fairyOakMidnightReturn';
 
 /**
  * All registered cutscenes
@@ -23,6 +24,7 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   winterCutscene,
   elderMemoryCutscene,
   fairyOakMidnightCutscene,
+  fairyOakMidnightReturnCutscene,
 ];
 
 /**

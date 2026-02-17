@@ -6,6 +6,9 @@
  */
 
 import { eventChainManager } from '../../utils/EventChainManager';
+import { inventoryManager } from '../../utils/inventoryManager';
+import { characterData } from '../../utils/CharacterData';
+import { eventBus, GameEvent } from '../../utils/EventBus';
 import { DEBUG } from '../../constants';
 
 // ============================================================================
@@ -34,6 +37,8 @@ const DEFAULT_METADATA = {
   potionReceived: false,
   potionUsed: false,
   visitedFairyOak: false,
+  metQueen: false,
+  potionGiftCount: 0,
 };
 
 // ============================================================================
@@ -125,4 +130,41 @@ export function hasPotionBeenUsed(): boolean {
 
 export function hasVisitedFairyOak(): boolean {
   return eventChainManager.getMetadata(FAIRY_QUEEN_QUEST_ID, 'visitedFairyOak') === true;
+}
+
+export function hasMetQueen(): boolean {
+  return eventChainManager.getMetadata(FAIRY_QUEEN_QUEST_ID, 'metQueen') === true;
+}
+
+/**
+ * Called when the initial fairy_oak_midnight cutscene completes.
+ * Marks the queen as met and advances the quest to visited_queen stage.
+ */
+export function onFirstMeetingComplete(): void {
+  if (!isFairyQueenQuestActive()) return;
+
+  eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'metQueen', true);
+  eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'visitedFairyOak', true);
+  eventChainManager.advanceToStage(FAIRY_QUEEN_QUEST_ID, 'visited_queen');
+  if (DEBUG.QUEST) console.log('[FairyQueen] Met Queen Celestia — advanced to visited_queen');
+}
+
+/**
+ * Called when the fairy_oak_midnight_return cutscene completes
+ * and the player chose to ask for a potion.
+ * Grants one fairy form potion to the player's inventory.
+ */
+export function grantFairyFormPotion(): void {
+  inventoryManager.addItem('potion_fairy_form', 1);
+  const invData = inventoryManager.getInventoryData();
+  characterData.saveInventory(invData.items, invData.tools);
+  eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add', itemId: 'potion_fairy_form' });
+
+  // Track gift count in metadata (works even if quest is completed)
+  const currentCount =
+    (eventChainManager.getMetadata(FAIRY_QUEEN_QUEST_ID, 'potionGiftCount') as number) || 0;
+  eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'potionGiftCount', currentCount + 1);
+
+  if (DEBUG.QUEST)
+    console.log(`[FairyQueen] Granted fairy form potion (gift #${currentCount + 1})`);
 }
