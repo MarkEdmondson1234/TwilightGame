@@ -168,6 +168,7 @@ class AudioManager {
 
   // Ambient sounds tracking
   private activeAmbients: Map<string, string> = new Map(); // key -> activeSound id
+  private ambientCrossfadeTimers: Map<string, ReturnType<typeof setTimeout>> = new Map(); // key -> crossfade timer
 
   // Settings
   private settings: AudioSettings = {
@@ -556,7 +557,9 @@ class AudioManager {
   }
 
   /**
-   * Play ambient sound (looping background)
+   * Play ambient sound with crossfade looping.
+   * Instead of native loop (which causes audible jumps), we schedule
+   * the next copy to fade in before the current one ends.
    */
   playAmbient(key: string, options?: { volume?: number }): string | null {
     if (!this.context || !this.sounds.has(key) || this.settings.muted) return null;
@@ -566,13 +569,36 @@ class AudioManager {
       return this.activeAmbients.get(key)!;
     }
 
+    const volume = options?.volume ?? this.sounds.get(key)!.baseVolume;
+    const id = this.startAmbientCopy(key, volume, true);
+    if (id) {
+      console.log(`[AudioManager] Playing ambient: ${key}`);
+    }
+    return id;
+  }
+
+  /**
+   * Start a single copy of an ambient sound and schedule the next crossfade.
+   * @param fadeIn - whether to fade in this copy (true for loop restarts, true for first play for consistency)
+   */
+  private startAmbientCopy(key: string, volume: number, fadeIn: boolean): string | null {
+    if (!this.context || !this.sounds.has(key)) return null;
+
     const sound = this.sounds.get(key)!;
     const source = this.context.createBufferSource();
     source.buffer = sound.buffer;
-    source.loop = true;
+    // No source.loop — we handle looping manually via crossfade
 
     const gainNode = this.context.createGain();
-    gainNode.gain.value = options?.volume ?? sound.baseVolume;
+    const crossfadeDuration = 3; // seconds of crossfade overlap
+
+    if (fadeIn) {
+      // Start silent, fade in over crossfadeDuration
+      gainNode.gain.setValueAtTime(0, this.context.currentTime);
+      gainNode.gain.linearRampToValueAtTime(volume, this.context.currentTime + crossfadeDuration);
+    } else {
+      gainNode.gain.value = volume;
+    }
 
     const ambientGain = this.categoryGains.get('ambient');
     if (ambientGain) {
@@ -594,11 +620,48 @@ class AudioManager {
 
     source.onended = () => {
       this.activeSounds.delete(id);
-      this.activeAmbients.delete(key);
+      // Only clear the ambient tracking if this is still the active copy
+      if (this.activeAmbients.get(key) === id) {
+        this.activeAmbients.delete(key);
+      }
     };
 
     source.start();
-    console.log(`[AudioManager] Playing ambient: ${key}`);
+
+    // Schedule crossfade: start next copy before this one ends
+    const bufferDuration = sound.buffer.duration;
+    if (bufferDuration > crossfadeDuration * 2) {
+      const timeUntilCrossfade = (bufferDuration - crossfadeDuration) * 1000; // ms
+
+      const timer = setTimeout(() => {
+        this.ambientCrossfadeTimers.delete(key);
+
+        // Only continue if this ambient is still supposed to be playing
+        if (this.activeAmbients.get(key) !== id) return;
+
+        // Fade out the current copy
+        if (this.context) {
+          gainNode.gain.linearRampToValueAtTime(0, this.context.currentTime + crossfadeDuration);
+          setTimeout(() => {
+            try {
+              source.stop();
+            } catch {
+              /* already stopped */
+            }
+            this.activeSounds.delete(id);
+          }, crossfadeDuration * 1000);
+        }
+
+        // Start the next copy with fade-in
+        this.startAmbientCopy(key, volume, true);
+      }, timeUntilCrossfade);
+
+      this.ambientCrossfadeTimers.set(key, timer);
+    } else {
+      // Buffer too short for crossfade — fall back to native loop
+      source.loop = true;
+    }
+
     return id;
   }
 
@@ -606,6 +669,13 @@ class AudioManager {
    * Stop a specific ambient sound by key
    */
   stopAmbient(key: string, fadeOutMs: number = 1000): void {
+    // Cancel any pending crossfade timer
+    const timer = this.ambientCrossfadeTimers.get(key);
+    if (timer) {
+      clearTimeout(timer);
+      this.ambientCrossfadeTimers.delete(key);
+    }
+
     const id = this.activeAmbients.get(key);
     if (id) {
       this.stopSound(id, fadeOutMs);
@@ -617,7 +687,13 @@ class AudioManager {
    * Stop all ambient sounds
    */
   stopAllAmbients(fadeOutMs: number = 1000): void {
-    for (const [key, id] of this.activeAmbients) {
+    // Cancel all pending crossfade timers
+    for (const [, timer] of this.ambientCrossfadeTimers) {
+      clearTimeout(timer);
+    }
+    this.ambientCrossfadeTimers.clear();
+
+    for (const [, id] of this.activeAmbients) {
       this.stopSound(id, fadeOutMs);
     }
     this.activeAmbients.clear();
