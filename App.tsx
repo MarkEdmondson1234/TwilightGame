@@ -99,7 +99,7 @@ import VFXTestPanel from './components/VFXTestPanel';
 
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
-  const { ui, openUI, closeUI, toggleUI, isAnyBookOpen } = useUIState();
+  const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen } = useUIState();
 
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [mapErrors, setMapErrors] = useState<MapValidationError[]>([]); // Map validation errors to display
@@ -255,7 +255,7 @@ const App: React.FC = () => {
       openUI,
       closeUI,
       toggleUI,
-      closeAllUI: () => {},
+      closeAllUI,
       isAnyUIOpen: () => false,
       isAnyBookOpen,
     },
@@ -368,6 +368,13 @@ const App: React.FC = () => {
     // Subscribe to cutscene state changes
     const unsubscribe = cutsceneManager.subscribe((state) => {
       setIsCutscenePlaying(state.isPlaying);
+
+      // Close all UI overlays and dismiss dialogue when cutscene starts
+      if (state.isPlaying) {
+        closeAllUI();
+        setActiveNPC(null);
+        setRadialMenuVisible(false);
+      }
 
       // Sync completed cutscenes to game state
       if (state.completedCutscenes.length > 0) {
@@ -1380,8 +1387,8 @@ const App: React.FC = () => {
           />
         )}
 
-      {/* Hide UI elements during dialogue, books, or minigames */}
-      {!activeNPC && !isAnyBookOpen && !ui.miniGame && (
+      {/* Hide UI elements during dialogue, books, minigames, or cutscenes */}
+      {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <>
           <HUD
             selectedItemId={selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.id : null}
@@ -1399,8 +1406,8 @@ const App: React.FC = () => {
         </>
       )}
 
-      {/* Bookshelf - visible during books so player can switch between them, hidden during minigames */}
-      {!activeNPC && !ui.miniGame && (
+      {/* Bookshelf - visible during books so player can switch between them, hidden during minigames/cutscenes */}
+      {!activeNPC && !ui.miniGame && !isCutscenePlaying && (
         <Bookshelf
           isTouchDevice={isTouchDevice}
           playerPosition={playerPos}
@@ -1422,8 +1429,8 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Game UI Controls - hidden during dialogue, books, or minigames */}
-      {!activeNPC && !isAnyBookOpen && !ui.miniGame && (
+      {/* Game UI Controls - hidden during dialogue, books, minigames, or cutscenes */}
+      {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <GameUIControls
           showHelpBrowser={ui.helpBrowser}
           onToggleHelpBrowser={() => toggleUI('helpBrowser')}
@@ -1434,9 +1441,10 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Touch controls - hidden when any modal is open */}
+      {/* Touch controls - hidden when any modal is open or cutscene playing */}
       {isTouchDevice &&
         !activeNPC &&
+        !isCutscenePlaying &&
         !ui.inventory &&
         !ui.cookingUI &&
         !ui.recipeBook &&
@@ -1452,7 +1460,7 @@ const App: React.FC = () => {
             compact={isCompactMode}
           />
         )}
-      {activeNPC && (
+      {activeNPC && !isCutscenePlaying && (
         <UnifiedDialogueBox
           npc={npcManager.getNPCById(activeNPC)!}
           playerSprite={getPortraitSprite(
@@ -1477,7 +1485,7 @@ const App: React.FC = () => {
           }
         />
       )}
-      {activeChainPopup && !activeNPC && (
+      {activeChainPopup && !activeNPC && !isCutscenePlaying && (
         <EventChainPopup
           chainId={activeChainPopup.chainId}
           stageText={activeChainPopup.stageText}
@@ -1746,7 +1754,7 @@ const App: React.FC = () => {
       {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}
 
       {/* Destination marker for click-to-move */}
-      {clickToMoveDestination && (
+      {clickToMoveDestination && !isCutscenePlaying && (
         <DestinationMarker
           position={clickToMoveDestination}
           cameraX={cameraX}
@@ -1756,16 +1764,18 @@ const App: React.FC = () => {
       )}
 
       {/* Stamina bar above player head (subscribes to EventBus for stamina changes) */}
-      <StaminaBar
-        playerX={playerPos.x}
-        playerY={playerPos.y}
-        cameraX={cameraX}
-        cameraY={cameraY}
-        lowThreshold={STAMINA.LOW_THRESHOLD}
-      />
+      {!isCutscenePlaying && (
+        <StaminaBar
+          playerX={playerPos.x}
+          playerY={playerPos.y}
+          cameraX={cameraX}
+          cameraY={cameraY}
+          lowThreshold={STAMINA.LOW_THRESHOLD}
+        />
+      )}
 
       {/* Radial menu for multiple interaction options */}
-      {radialMenuVisible && (
+      {radialMenuVisible && !isCutscenePlaying && (
         <RadialMenu
           position={radialMenuPosition}
           options={radialMenuOptions}
@@ -1774,12 +1784,14 @@ const App: React.FC = () => {
       )}
 
       {/* Toast notifications for user feedback - positioned above player */}
-      <Toast
-        messages={toastMessages}
-        onDismiss={dismissToast}
-        playerScreenX={playerPos.x * TILE_SIZE - cameraX + TILE_SIZE / 2}
-        playerScreenY={playerPos.y * TILE_SIZE - cameraY}
-      />
+      {!isCutscenePlaying && (
+        <Toast
+          messages={toastMessages}
+          onDismiss={dismissToast}
+          playerScreenX={playerPos.x * TILE_SIZE - cameraX + TILE_SIZE / 2}
+          playerScreenY={playerPos.y * TILE_SIZE - cameraY}
+        />
+      )}
 
       {/* Character creator overlay (mid-game, via settings button) */}
       {ui.characterCreator && <CharacterCreator onComplete={handleCharacterCreated} />}

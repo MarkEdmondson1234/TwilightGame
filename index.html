@@ -13,6 +13,51 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Oooh+Baby&family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
     <!-- Color palette now defined in palette.ts and applied at runtime -->
+    <!-- Mobile debug tools (remove when done debugging) -->
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+      var vConsole = new window.VConsole();
+      // Persistent crash logger — survives tab kills
+      (function() {
+        var KEY = '__debug_log';
+        var MAX = 200;
+        // Show previous session's logs if we crashed
+        var prev = localStorage.getItem(KEY);
+        if (prev) {
+          console.warn('[CrashLog] Previous session logs (before crash):');
+          JSON.parse(prev).forEach(function(l) { console.log('[CrashLog]', l); });
+          localStorage.removeItem(KEY);
+        }
+        var buf = [];
+        function save() {
+          try { localStorage.setItem(KEY, JSON.stringify(buf.slice(-MAX))); } catch(e) {}
+        }
+        var origLog = console.log, origWarn = console.warn, origErr = console.error;
+        console.log = function() {
+          buf.push('[LOG] ' + Array.prototype.join.call(arguments, ' '));
+          save();
+          origLog.apply(console, arguments);
+        };
+        console.warn = function() {
+          buf.push('[WARN] ' + Array.prototype.join.call(arguments, ' '));
+          save();
+          origWarn.apply(console, arguments);
+        };
+        console.error = function() {
+          buf.push('[ERR] ' + Array.prototype.join.call(arguments, ' '));
+          save();
+          origErr.apply(console, arguments);
+        };
+        window.addEventListener('error', function(e) {
+          buf.push('[UNCAUGHT] ' + e.message + ' at ' + e.filename + ':' + e.lineno);
+          save();
+        });
+        window.addEventListener('unhandledrejection', function(e) {
+          buf.push('[UNHANDLED] ' + (e.reason && e.reason.message || e.reason));
+          save();
+        });
+      })();
+    </script>
   </head>
   <body class="bg-gray-900 text-white overflow-hidden">
     <div id="root"></div>
