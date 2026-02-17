@@ -29,7 +29,7 @@ import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
-import { deletePaintingImage, loadPaintingImage } from './paintingImageService';
+import { deletePaintingImage, loadPaintingImage, savePaintingImage } from './paintingImageService';
 import { PLAYER_SIZE } from '../constants';
 
 // ===== Types =====
@@ -51,6 +51,8 @@ export interface PaintingData {
   isUploaded: boolean;
   /** Tile-based scale chosen by the player (defaults to 1.5 × PLAYER_SIZE) */
   scale?: number;
+  /** Linked inventory item ID (e.g. 'decoration_wreath_fine'). Paintings default to 'framed_painting'. */
+  linkedItemId?: string;
 }
 
 export interface DecorationState {
@@ -357,6 +359,64 @@ class DecorationManagerClass {
       produced: { itemId: 'framed_painting', quantity: 1 },
       paintingId: painting.id,
     };
+  }
+
+  /**
+   * Register a custom decoration image (e.g. wreath, sculpture).
+   * Unlike createPainting, this does NOT consume materials or add items to inventory.
+   * The caller is responsible for inventory management.
+   */
+  registerCustomDecoration(params: {
+    imageUrl: string;
+    name: string;
+    linkedItemId: string;
+    scale?: number;
+  }): string {
+    const decorationId = `custom_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const entry: PaintingData = {
+      id: decorationId,
+      name: params.name,
+      imageUrl: params.imageUrl,
+      storageKey: decorationId,
+      paintIds: [],
+      colours: [],
+      createdAt: Date.now(),
+      isUploaded: false,
+      scale: (params.scale ?? 1.2) * PLAYER_SIZE,
+      linkedItemId: params.linkedItemId,
+    };
+
+    this.paintings.set(entry.id, entry);
+    this.save();
+
+    // Persist image
+    savePaintingImage(decorationId, params.imageUrl, params.name).catch((e) => {
+      console.warn('[DecorationManager] Failed to save custom decoration image:', e);
+    });
+
+    console.log(
+      `[DecorationManager] Registered custom decoration "${params.name}" (${decorationId}) → ${params.linkedItemId}`
+    );
+    return decorationId;
+  }
+
+  /**
+   * Get all custom decorations linked to a specific item ID.
+   */
+  getDecorationsForItem(itemId: string): PaintingData[] {
+    return Array.from(this.paintings.values()).filter((p) => p.linkedItemId === itemId);
+  }
+
+  /**
+   * Get the next unplaced custom decoration for a given item ID.
+   */
+  getNextUnplacedDecoration(
+    itemId: string,
+    placedPaintingIds: Set<string>
+  ): PaintingData | undefined {
+    return Array.from(this.paintings.values()).find(
+      (p) => p.linkedItemId === itemId && !placedPaintingIds.has(p.id)
+    );
   }
 
   /**

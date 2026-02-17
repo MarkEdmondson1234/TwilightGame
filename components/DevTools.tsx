@@ -10,6 +10,7 @@ import { magicManager } from '../utils/MagicManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import { decorationManager } from '../utils/DecorationManager';
 import { getLocalPaintingCount, LOCAL_PAINTING_LIMIT } from '../utils/paintingImageService';
+import { handleF9 } from '../utils/keyHandlers/debugKeys';
 import { globalEventManager } from '../utils/GlobalEventManager';
 import { eventChainManager } from '../utils/EventChainManager';
 import {
@@ -1058,6 +1059,28 @@ const MiniGamesDebugSection: React.FC<{
 
   // IDs that get the art supplies helper
   const artGameIds = new Set(['decoration-crafting', 'painting-easel']);
+  const wreathGameIds = new Set(['wreath-making']);
+
+  const giveWreathFlowers = () => {
+    const flowers = [
+      'moonpetal',
+      'addersmeat',
+      'frost_flower',
+      'sakura_petal',
+      'shrinking_violet',
+      'wolfsbane',
+      'crop_sunflower',
+      'crop_strawberry',
+      'crop_blackberry',
+      'crop_blueberry',
+    ];
+    for (const id of flowers) {
+      inventoryManager.addItem(id, 3);
+    }
+    const inv = inventoryManager.getInventoryData();
+    characterData.saveInventory(inv.items, inv.tools);
+    console.log('[DevTools] Gave 3x each wreath flower (10 types)');
+  };
 
   return (
     <>
@@ -1183,6 +1206,32 @@ const MiniGamesDebugSection: React.FC<{
             title="Add easel, 5 canvases, and 6 paint types (x2 each)"
           >
             Give Art Supplies
+          </button>
+        </div>
+      )}
+
+      {/* Wreath supplies helper — shown when wreath mini-game is registered */}
+      {allGames.some((g) => wreathGameIds.has(g.id)) && (
+        <div
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            paddingTop: '10px',
+            marginTop: '4px',
+          }}
+        >
+          <div style={{ fontSize: '11px', fontWeight: 'bold', marginBottom: '4px' }}>
+            Wreath Supplies Helper
+          </div>
+          <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '6px' }}>
+            Adds 3x each of 10 wreath flower types
+          </div>
+          <button
+            className="devtools-button"
+            onClick={giveWreathFlowers}
+            style={{ fontSize: '11px' }}
+            title="Add 3x each of moonpetal, addersmeat, frost flower, sakura, violet, wolfsbane, sunflower, strawberry, blackberry, blueberry"
+          >
+            Give Wreath Flowers
           </button>
         </div>
       )}
@@ -1498,6 +1547,40 @@ const DevTools: React.FC<DevToolsProps> = ({
                   </label>
                   <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
                     {isFairyForm ? 'Transformed into a fairy (tiny size)' : 'Normal human form'}
+                  </small>
+                </div>
+              </div>
+
+              <div className="devtools-section">
+                <h3>Inventory Debug</h3>
+                <div className="devtools-control">
+                  <label>Give Test Items</label>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '4px', flexWrap: 'wrap' }}>
+                    <button
+                      className="devtools-button"
+                      onClick={() => {
+                        handleF9();
+                        console.log(
+                          '[DevTools] Gave magical ingredients, cooking items, crops, and potions'
+                        );
+                      }}
+                      title="5x each: magical ingredients, cooking items, crops, and sample potions"
+                    >
+                      Give All Debug Items
+                    </button>
+                    <button
+                      className="devtools-button"
+                      onClick={() => {
+                        gameState.addGold(500);
+                        console.log('[DevTools] Added 500 gold');
+                      }}
+                      title="Add 500 gold"
+                    >
+                      +500 Gold
+                    </button>
+                  </div>
+                  <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+                    Also available: Press F9 for debug items
                   </small>
                 </div>
               </div>

@@ -1922,18 +1922,44 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
               });
             }
           } else {
-            interactions.push({
-              type: 'place_decoration',
-              label: `Place ${itemDef.displayName}`,
-              icon: '🏠',
-              color: '#8b5cf6',
-              execute: () =>
-                onPlaceDecoration({
-                  itemId: itemDef.id,
-                  position: tilePos,
-                  image: itemDef.image || '',
-                }),
-            });
+            // For custom-image decorations (wreaths, etc.), look up the image
+            const placedDecoIds = new Set(
+              placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!)
+            );
+            const customDeco = decorationManager.getNextUnplacedDecoration(
+              itemDef.id,
+              placedDecoIds
+            );
+            if (customDeco) {
+              interactions.push({
+                type: 'place_decoration',
+                label: `Place "${customDeco.name}"`,
+                icon: '🌿',
+                color: '#8b5cf6',
+                execute: () =>
+                  onPlaceDecoration({
+                    itemId: itemDef.id,
+                    position: tilePos,
+                    image: itemDef.image || '',
+                    paintingId: customDeco.id,
+                    customImage: customDeco.imageUrl,
+                    customScale: customDeco.scale,
+                  }),
+              });
+            } else {
+              interactions.push({
+                type: 'place_decoration',
+                label: `Place ${itemDef.displayName}`,
+                icon: '🏠',
+                color: '#8b5cf6',
+                execute: () =>
+                  onPlaceDecoration({
+                    itemId: itemDef.id,
+                    position: tilePos,
+                    image: itemDef.image || '',
+                  }),
+              });
+            }
           }
         }
       }

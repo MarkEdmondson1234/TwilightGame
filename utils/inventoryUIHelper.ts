@@ -54,7 +54,44 @@ function getUnplacedPaintings() {
   const placedPaintingIds = new Set(
     placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!)
   );
-  return allPaintings.filter((p) => !placedPaintingIds.has(p.id));
+  // Only return actual paintings (no linkedItemId), not custom decorations
+  return allPaintings.filter((p) => !p.linkedItemId && !placedPaintingIds.has(p.id));
+}
+
+/** Item IDs that have per-instance custom images (like wreaths). */
+const CUSTOM_IMAGE_ITEMS = new Set([
+  'decoration_wreath_rustic',
+  'decoration_wreath_fine',
+  'decoration_wreath_magnificent',
+]);
+
+function getUnplacedCustomDecorations(itemId: string) {
+  const all = decorationManager.getDecorationsForItem(itemId);
+  const placedItems = gameState.getState().placedItems;
+  const placedIds = new Set(placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!));
+  return all.filter((d) => !placedIds.has(d.id));
+}
+
+/**
+ * Expand a custom-image decoration item into individual inventory slots.
+ * Returns the expanded items, or null if this item doesn't need expansion.
+ */
+function expandCustomDecorationItem(
+  itemId: string,
+  itemDef: { sellPrice?: number; displayName?: string }
+): UIInventoryItem[] | null {
+  if (!CUSTOM_IMAGE_ITEMS.has(itemId)) return null;
+
+  const unplaced = getUnplacedCustomDecorations(itemId);
+  if (unplaced.length === 0) return null;
+
+  return unplaced.map((dec) => ({
+    id: itemId,
+    name: dec.name,
+    icon: dec.imageUrl || getItemIcon(itemId),
+    quantity: 1,
+    value: itemDef.sellPrice || 0,
+  }));
 }
 
 /**
@@ -108,6 +145,13 @@ export function convertInventoryToUI(): UIInventoryItem[] {
       continue;
     }
 
+    // Custom-image decorations (wreaths, etc.): expand like paintings
+    const expanded = expandCustomDecorationItem(itemId, itemData.itemDef);
+    if (expanded) {
+      result.push(...expanded);
+      continue;
+    }
+
     result.push({
       id: itemId,
       name: itemData.itemDef.displayName,
@@ -133,6 +177,12 @@ export function convertInventoryToUI(): UIInventoryItem[] {
             value: itemDef.sellPrice || 0,
           });
         }
+        continue;
+      }
+
+      const expanded = expandCustomDecorationItem(itemId, itemDef);
+      if (expanded) {
+        result.push(...expanded);
         continue;
       }
 

@@ -1380,8 +1380,8 @@ const App: React.FC = () => {
           />
         )}
 
-      {/* Hide UI elements during dialogue or when a book is open */}
-      {!activeNPC && !isAnyBookOpen && (
+      {/* Hide UI elements during dialogue, books, or minigames */}
+      {!activeNPC && !isAnyBookOpen && !ui.miniGame && (
         <>
           <HUD
             selectedItemId={selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.id : null}
@@ -1399,8 +1399,8 @@ const App: React.FC = () => {
         </>
       )}
 
-      {/* Bookshelf - visible during books so player can switch between them */}
-      {!activeNPC && (
+      {/* Bookshelf - visible during books so player can switch between them, hidden during minigames */}
+      {!activeNPC && !ui.miniGame && (
         <Bookshelf
           isTouchDevice={isTouchDevice}
           playerPosition={playerPos}
@@ -1422,8 +1422,8 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Game UI Controls - hidden during dialogue and when books are open */}
-      {!activeNPC && !isAnyBookOpen && (
+      {/* Game UI Controls - hidden during dialogue, books, or minigames */}
+      {!activeNPC && !isAnyBookOpen && !ui.miniGame && (
         <GameUIControls
           showHelpBrowser={ui.helpBrowser}
           onToggleHelpBrowser={() => toggleUI('helpBrowser')}
@@ -1443,7 +1443,8 @@ const App: React.FC = () => {
         !ui.journal &&
         !ui.helpBrowser &&
         !ui.shopUI &&
-        !ui.characterCreator && (
+        !ui.characterCreator &&
+        !ui.miniGame && (
           <TouchControls
             onDirectionPress={touchControls.handleDirectionPress}
             onDirectionRelease={touchControls.handleDirectionRelease}

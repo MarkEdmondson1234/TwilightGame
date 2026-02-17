@@ -3,7 +3,14 @@
  * Defines all items that can be collected, stored, and used in the game
  */
 
-import { cookingAssets, groceryAssets, itemAssets, magicalAssets, potionAssets } from '../assets';
+import {
+  cookingAssets,
+  farmingAssets,
+  groceryAssets,
+  itemAssets,
+  magicalAssets,
+  potionAssets,
+} from '../assets';
 
 export enum ItemCategory {
   SEED = 'seed',
@@ -418,6 +425,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A bright, cheerful sunflower.',
     stackable: true,
     sellPrice: 50,
+    image: farmingAssets.plant_sunflower_adult,
     icon: '🌻',
   },
 
@@ -1432,7 +1440,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'feather',
     displayName: 'Feather',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'A soft, delicate feather shed by a sparrow. Light as air, yet holds a spark of magic.',
+    description:
+      'A soft, delicate feather shed by a sparrow. Light as air, yet holds a spark of magic.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 5,
@@ -2116,6 +2125,44 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 20,
     icon: '🌻',
     placedScale: 1.0,
+  },
+
+  // ===== WREATHS =====
+
+  decoration_wreath_rustic: {
+    id: 'decoration_wreath_rustic',
+    name: 'decoration_wreath_rustic',
+    displayName: 'Rustic Wreath',
+    category: ItemCategory.DECORATION,
+    description: 'A charming wreath of foraged flowers, handcrafted with care.',
+    stackable: false,
+    sellPrice: 25,
+    icon: '🌿',
+    placedScale: 1.2,
+  },
+
+  decoration_wreath_fine: {
+    id: 'decoration_wreath_fine',
+    name: 'decoration_wreath_fine',
+    displayName: 'Fine Wreath',
+    category: ItemCategory.DECORATION,
+    description: 'A beautiful wreath woven with a lovely variety of flowers.',
+    stackable: false,
+    sellPrice: 50,
+    icon: '🌿',
+    placedScale: 1.2,
+  },
+
+  decoration_wreath_magnificent: {
+    id: 'decoration_wreath_magnificent',
+    name: 'decoration_wreath_magnificent',
+    displayName: 'Magnificent Wreath',
+    category: ItemCategory.DECORATION,
+    description: 'A breathtaking wreath bursting with a dazzling array of flowers.',
+    stackable: false,
+    sellPrice: 100,
+    icon: '🌿',
+    placedScale: 1.2,
   },
 };
 

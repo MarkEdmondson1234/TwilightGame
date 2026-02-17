@@ -15,6 +15,7 @@ import type { MiniGameDefinition } from './types';
 import { decorationCraftingDefinition } from './decoration-crafting/definition';
 import { paintingEaselDefinition } from './painting-easel/definition';
 import { pumpkinCarvingDefinition } from './pumpkin-carving/definition';
+import { wreathMakingDefinition } from './wreath-making/definition';
 
 /**
  * All registered mini-games.
@@ -23,6 +24,7 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
   decorationCraftingDefinition,
   paintingEaselDefinition,
   pumpkinCarvingDefinition,
+  wreathMakingDefinition,
 ];
 
 // =============================================================================
