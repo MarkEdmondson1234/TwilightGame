@@ -11,7 +11,7 @@
  * - Indoor: No weather effects
  */
 
-import { Season } from '../utils/TimeManager';
+import { Season, TimeManager } from '../utils/TimeManager';
 import { mapManager } from '../maps';
 
 export type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -329,33 +329,47 @@ export const FOG_CONFIGS: Partial<Record<WeatherType, FogConfig>> = {
   },
 };
 
+// ============================================
+// Deterministic Global Weather
+// ============================================
+// All players compute the same weather because TimeManager gives everyone
+// the same game time (deterministic from fixed epoch Oct 17 2025).
+// Weather is divided into fixed "time slots" keyed by a seeded PRNG.
+
+/** Fixed global seed for weather generation. Changing this changes all weather history. */
+const WEATHER_SEED = 0x54574c54; // "TWLT" — Twilight
+
+/** Duration of each weather slot in game hours (~20 real minutes per slot, 6 per game day) */
+export const WEATHER_SLOT_HOURS = 4;
+
 /**
- * Helper function to select random weather based on seasonal and zone probabilities
- * @param season Current season
- * @param mapId Optional map ID to determine weather zone (uses default zone if not provided)
+ * mulberry32 — Simple seeded 32-bit PRNG.
+ * Returns a function that produces deterministic pseudo-random numbers in [0, 1).
+ * Same seed always produces the same sequence.
  */
-export function selectRandomWeather(season: Season, mapId?: string): WeatherType {
-  // Start with seasonal probabilities
-  let probabilities = { ...WEATHER_PROBABILITIES[season] };
+function mulberry32(seed: number): () => number {
+  return () => {
+    seed |= 0;
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-  // Apply zone-specific overrides if map ID is provided
-  if (mapId) {
-    const zone = getWeatherZone(mapId);
-    const zoneOverrides = ZONE_WEATHER_PROBABILITIES[zone];
+/**
+ * Get the deterministic weather for a specific time slot.
+ * All players calling this with the same slotIndex + season get the same result.
+ */
+export function getWeatherForSlot(slotIndex: number, season: Season): WeatherType {
+  // XOR with Knuth multiplicative hash to scatter adjacent indices into distant seed space
+  const slotSeed = WEATHER_SEED ^ Math.imul(slotIndex, 0x9e3779b9);
+  const rng = mulberry32(slotSeed);
 
-    if (zoneOverrides) {
-      // Merge zone probabilities (zone overrides season)
-      probabilities = { ...probabilities, ...zoneOverrides } as SeasonalWeatherProbabilities;
-      console.log(`[WeatherConfig] Using ${zone} zone weather for map ${mapId}`);
-    }
-  }
+  const probabilities = WEATHER_PROBABILITIES[season];
+  const total = Object.values(probabilities).reduce((sum, p) => sum + p, 0);
 
-  const total = Object.values(probabilities).reduce((sum, prob) => sum + prob, 0);
-
-  // Generate random number between 0 and total
-  let random = Math.random() * total;
-
-  // Select weather type based on probability ranges
+  let random = rng() * total;
   for (const [weather, probability] of Object.entries(probabilities)) {
     random -= probability;
     if (random <= 0) {
@@ -363,12 +377,65 @@ export function selectRandomWeather(season: Season, mapId?: string): WeatherType
     }
   }
 
-  // Fallback to clear (should never reach here)
   return 'clear';
 }
 
 /**
- * Helper function to get random duration for weather type
+ * Get the current global weather based on the current game time slot.
+ * Returns the same weather for all players at the same real-world moment.
+ */
+export function getCurrentGlobalWeather(): WeatherType {
+  const time = TimeManager.getCurrentTime();
+  const slotIndex = Math.floor(time.totalHours / WEATHER_SLOT_HOURS);
+  return getWeatherForSlot(slotIndex, time.season);
+}
+
+/**
+ * Get the effective weather for a specific map, given the global weather.
+ * Indoor/cave maps may override to clear; outdoor maps use the global weather.
+ */
+export function getEffectiveWeather(globalWeather: WeatherType, mapId: string): WeatherType {
+  if (!isWeatherAllowedOnMap(globalWeather, mapId)) {
+    return 'clear';
+  }
+  return globalWeather;
+}
+
+// ============================================
+// Legacy (deprecated) — kept for reference
+// ============================================
+
+/**
+ * @deprecated Use getCurrentGlobalWeather() + getEffectiveWeather() instead.
+ * Non-deterministic: uses Math.random(), so different players get different weather.
+ */
+export function selectRandomWeather(season: Season, mapId?: string): WeatherType {
+  let probabilities = { ...WEATHER_PROBABILITIES[season] };
+
+  if (mapId) {
+    const zone = getWeatherZone(mapId);
+    const zoneOverrides = ZONE_WEATHER_PROBABILITIES[zone];
+
+    if (zoneOverrides) {
+      probabilities = { ...probabilities, ...zoneOverrides } as SeasonalWeatherProbabilities;
+    }
+  }
+
+  const total = Object.values(probabilities).reduce((sum, prob) => sum + prob, 0);
+  let random = Math.random() * total;
+
+  for (const [weather, probability] of Object.entries(probabilities)) {
+    random -= probability;
+    if (random <= 0) {
+      return weather as WeatherType;
+    }
+  }
+
+  return 'clear';
+}
+
+/**
+ * @deprecated Weather slots have fixed duration (WEATHER_SLOT_HOURS). No random duration needed.
  */
 export function getRandomWeatherDuration(weather: WeatherType): number {
   const duration = WEATHER_DURATIONS[weather];

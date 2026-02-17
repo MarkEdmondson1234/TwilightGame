@@ -15,7 +15,12 @@ import { useEffect, useCallback, MutableRefObject } from 'react';
 import { gameState } from '../GameState';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
-import { isWeatherAllowedOnMap, WeatherType } from '../data/weatherConfig';
+import {
+  isWeatherAllowedOnMap,
+  WeatherType,
+  getCurrentGlobalWeather,
+  getEffectiveWeather,
+} from '../data/weatherConfig';
 import { mapManager } from '../maps/MapManager';
 import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
@@ -136,12 +141,20 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    if (!weatherLayerRef.current) return;
+    // Re-derive effective weather for the new map (e.g., outdoor rain → indoor clear)
+    const globalWeather = getCurrentGlobalWeather();
+    const effectiveWeather = getEffectiveWeather(globalWeather, currentMapId);
+    const storedWeather = gameState.getWeather();
 
-    const currentWeatherType = gameState.getWeather();
-    const showWeather = isWeatherAllowedOnMap(currentWeatherType, currentMapId);
-    weatherLayerRef.current.setVisible(showWeather);
-  }, [currentMapId, weatherLayerRef]);
+    if (effectiveWeather !== storedWeather) {
+      setWeather(effectiveWeather);
+    }
+
+    if (weatherLayerRef.current) {
+      const showWeather = isWeatherAllowedOnMap(effectiveWeather, currentMapId);
+      weatherLayerRef.current.setVisible(showWeather);
+    }
+  }, [currentMapId, weatherLayerRef, setWeather]);
 
   // -------------------------------------------------------------------------
   // Weather Layer Sync

@@ -1,28 +1,35 @@
 /**
- * WeatherManager - Automatic weather system
+ * WeatherManager - Deterministic global weather system
  *
- * Manages automatic weather changes based on time of day and season.
- * Integrates with TimeManager for time-based triggers and GameState
- * for weather persistence.
+ * Weather is globally consistent across all players because it's derived
+ * deterministically from the game clock (TimeManager). No network sync needed.
+ *
+ * Time is divided into fixed "weather slots" (WEATHER_SLOT_HOURS game hours each).
+ * Each slot's weather is computed from a seeded PRNG keyed to the slot index + season.
+ * Zone filtering (indoor=clear, cave=clear/mist) is applied on top.
  *
  * Features:
- * - Automatic weather changes at day/night transitions
+ * - Deterministic: all players see the same weather at the same time
  * - Seasonal weather probabilities
- * - Random weather duration
+ * - Zone-aware (indoor/cave filtering)
  * - Manual override support (DevTools)
- * - Persistence across sessions
  *
  * Usage:
  *   const weatherManager = new WeatherManager(gameState);
- *   weatherManager.setAutomaticMode(true);
- *   // In game loop or time check:
+ *   // In game loop or time check (every ~10s):
  *   weatherManager.checkWeatherUpdate();
  */
 
-import { TimeManager, TimeOfDay } from './TimeManager';
+import { TimeManager } from './TimeManager';
 import { mapManager } from '../maps';
-import { WeatherType, selectRandomWeather, getRandomWeatherDuration } from '../data/weatherConfig';
+import {
+  WeatherType,
+  WEATHER_SLOT_HOURS,
+  getWeatherForSlot,
+  getEffectiveWeather,
+} from '../data/weatherConfig';
 import { farmManager } from './farmManager';
+import { characterData } from './CharacterData';
 
 /**
  * Interface for GameState methods used by WeatherManager
@@ -30,15 +37,13 @@ import { farmManager } from './farmManager';
  */
 export interface IWeatherGameState {
   getAutomaticWeather(): boolean;
-  getNextWeatherCheckTime(): number;
   getWeather(): WeatherType;
   setWeather(weather: WeatherType): void;
-  setNextWeatherCheckTime(time: number): void;
 }
 
 export class WeatherManager {
   private gameState: IWeatherGameState;
-  private lastTimeOfDay: TimeOfDay | null = null;
+  private lastSlotIndex: number = -1;
   private manualOverride: boolean = false;
 
   constructor(gameState: IWeatherGameState) {
@@ -46,109 +51,66 @@ export class WeatherManager {
   }
 
   /**
-   * Check if weather should be updated
-   * Call this regularly (e.g., in game loop or time poll interval)
+   * Check if weather should be updated.
+   * Call this regularly (e.g., every 10 seconds from useEnvironmentController).
+   * Computes the current weather slot and updates gameState if the slot changed.
    */
   checkWeatherUpdate(): void {
-    // Skip if automatic mode is disabled
-    if (!this.gameState.getAutomaticWeather()) {
+    if (!this.gameState.getAutomaticWeather() || this.manualOverride) {
       return;
     }
 
-    // Skip if manual override is active
-    if (this.manualOverride) {
+    const time = TimeManager.getCurrentTime();
+    const slotIndex = Math.floor(time.totalHours / WEATHER_SLOT_HOURS);
+
+    // Only update when the slot changes
+    if (slotIndex === this.lastSlotIndex) {
       return;
     }
+    this.lastSlotIndex = slotIndex;
 
-    const currentTime = TimeManager.getCurrentTime();
-    const now = Date.now();
-
-    // Check if it's time for a weather change
-    const nextCheckTime = this.gameState.getNextWeatherCheckTime();
-
-    if (now >= nextCheckTime) {
-      this.updateWeather();
-    }
-
-    // Also update on day/night transitions (backup check)
-    if (this.lastTimeOfDay !== null && this.lastTimeOfDay !== currentTime.timeOfDay) {
-      // Day/night changed, possibly trigger weather change
-      // 50% chance to change weather on transition
-      if (Math.random() < 0.5) {
-        this.updateWeather();
-      }
-    }
-
-    this.lastTimeOfDay = currentTime.timeOfDay;
-  }
-
-  /**
-   * Update weather based on current season and map zone
-   */
-  private updateWeather(): void {
-    const currentTime = TimeManager.getCurrentTime();
-    const currentWeather = this.gameState.getWeather();
+    const globalWeather = getWeatherForSlot(slotIndex, time.season);
     const currentMapId = mapManager.getCurrentMapId();
+    const effectiveWeather = getEffectiveWeather(globalWeather, currentMapId);
+    const currentWeather = this.gameState.getWeather();
 
-    // Select new weather based on season and map zone probabilities
-    const newWeather = selectRandomWeather(currentTime.season, currentMapId);
-
-    // Only change if different (avoid redundant updates)
-    if (newWeather !== currentWeather) {
+    if (effectiveWeather !== currentWeather) {
       console.log(
-        `[WeatherManager] Changing weather to ${newWeather} (season: ${currentTime.season}, map: ${currentMapId})`
+        `[WeatherManager] Slot ${slotIndex}: ${effectiveWeather} (season: ${time.season}, map: ${currentMapId})`
       );
-      this.gameState.setWeather(newWeather);
+      this.gameState.setWeather(effectiveWeather);
     }
 
-    // Rain and storm water outdoor crops automatically
-    if (newWeather === 'rain' || newWeather === 'storm') {
+    // Rain and storm water outdoor crops automatically (use global weather, not effective)
+    if (globalWeather === 'rain' || globalWeather === 'storm') {
       const wateredCount = farmManager.waterAllOutdoorPlots();
       if (wateredCount > 0) {
         console.log(`[WeatherManager] Rain watered ${wateredCount} crops on outdoor maps`);
+        characterData.saveFarmPlots(farmManager.getAllPlots());
       }
     }
-
-    // Schedule next weather check
-    this.scheduleNextCheck(newWeather);
   }
 
   /**
-   * Schedule the next weather check based on weather duration
-   */
-  private scheduleNextCheck(weather: WeatherType): void {
-    // Get random duration for this weather type (in game hours)
-    const durationHours = getRandomWeatherDuration(weather);
-
-    // Convert game hours to real milliseconds
-    // From TimeManager: 1 game day = 2 real hours, so 1 game hour = 5 real minutes
-    // 12 game days per real day × 24 game hours = 288 game hours per real day
-    const MS_PER_GAME_HOUR = (2 * 60 * 60 * 1000) / 24; // 5 real minutes = 300,000 ms
-    const durationMs = durationHours * MS_PER_GAME_HOUR;
-
-    const nextCheckTime = Date.now() + durationMs;
-    this.gameState.setNextWeatherCheckTime(nextCheckTime);
-
-    const durationMinutes = Math.round(durationMs / 60000);
-    console.log(
-      `[WeatherManager] Next weather check in ${durationMinutes} real minutes (${durationHours} game hours)`
-    );
-  }
-
-  /**
-   * Force an immediate weather update (ignores schedule)
+   * Force re-evaluation of weather for the current slot.
+   * Useful after map transitions to get zone-correct weather immediately.
    */
   forceWeatherUpdate(): void {
-    console.log('[WeatherManager] Forcing weather update');
-    this.updateWeather();
+    // Reset lastSlotIndex so the next checkWeatherUpdate() will re-evaluate
+    this.lastSlotIndex = -1;
+    this.checkWeatherUpdate();
   }
 
   /**
-   * Set manual override mode
-   * When true, automatic weather changes are disabled until unset
+   * Set manual override mode.
+   * When true, automatic weather changes are disabled until unset.
    */
   setManualOverride(enabled: boolean): void {
     this.manualOverride = enabled;
+    if (!enabled) {
+      // Re-evaluate weather immediately when override is cleared
+      this.lastSlotIndex = -1;
+    }
     console.log(`[WeatherManager] Manual override: ${enabled}`);
   }
 
@@ -160,60 +122,53 @@ export class WeatherManager {
   }
 
   /**
-   * Initialize weather system
-   * Call this on game start to setup initial weather
+   * Initialise weather system.
+   * Sets the initial weather based on the current time slot.
    */
   initialize(): void {
     const automaticMode = this.gameState.getAutomaticWeather();
-    const nextCheckTime = this.gameState.getNextWeatherCheckTime();
-    const now = Date.now();
 
-    console.log('[WeatherManager] Initializing...');
+    console.log('[WeatherManager] Initialising (deterministic slot-based)...');
     console.log(`  Automatic mode: ${automaticMode}`);
-    console.log(`  Current weather: ${this.gameState.getWeather()}`);
 
-    // If automatic mode is enabled and no check time is scheduled, schedule one now
-    if (automaticMode && (!nextCheckTime || nextCheckTime <= now)) {
-      console.log('[WeatherManager] Scheduling initial weather check');
-      this.updateWeather();
+    if (automaticMode) {
+      // Force initial evaluation
+      this.forceWeatherUpdate();
     }
 
-    // Initialize time of day tracking
-    this.lastTimeOfDay = TimeManager.getCurrentTime().timeOfDay;
+    console.log(`  Weather: ${this.gameState.getWeather()}`);
   }
 
   /**
-   * Get time until next weather check (in milliseconds)
-   * Returns 0 if check is due or automatic mode is disabled
+   * Get the current weather slot index (for debug display)
    */
-  getTimeUntilNextCheck(): number {
-    if (!this.gameState.getAutomaticWeather()) {
-      return 0;
-    }
-
-    const nextCheckTime = this.gameState.getNextWeatherCheckTime();
-    const now = Date.now();
-
-    return Math.max(0, nextCheckTime - now);
+  getCurrentSlotIndex(): number {
+    const time = TimeManager.getCurrentTime();
+    return Math.floor(time.totalHours / WEATHER_SLOT_HOURS);
   }
 
   /**
-   * Get formatted time until next check (for display)
+   * Get time until next slot boundary in milliseconds (for debug display)
    */
-  getTimeUntilNextCheckFormatted(): string {
-    const ms = this.getTimeUntilNextCheck();
+  getTimeUntilNextSlot(): number {
+    const time = TimeManager.getCurrentTime();
+    const msPerGameHour = TimeManager.MS_PER_GAME_DAY / 24;
+    const hoursIntoSlot = time.totalHours % WEATHER_SLOT_HOURS;
+    const hoursRemaining = WEATHER_SLOT_HOURS - hoursIntoSlot;
+    return Math.round(hoursRemaining * msPerGameHour);
+  }
 
-    if (ms === 0) {
-      return 'N/A';
-    }
-
+  /**
+   * Get formatted time until next slot boundary (for debug display)
+   */
+  getTimeUntilNextSlotFormatted(): string {
+    const ms = this.getTimeUntilNextSlot();
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
 
     if (minutes > 0) {
       return `${minutes}m ${seconds}s`;
-    } else {
-      return `${seconds}s`;
     }
+    return `${seconds}s`;
   }
 }
