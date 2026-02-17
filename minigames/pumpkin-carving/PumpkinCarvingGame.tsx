@@ -26,8 +26,8 @@ const CANVAS_H = 400;
 const PUMPKIN = {
   cx: CANVAS_W / 2,
   cy: CANVAS_H / 2,
-  rx: 170,
-  ry: 180,
+  rx: 140,
+  ry: 170,
 };
 
 const KNIFE_SIZES = [
