@@ -5,7 +5,7 @@ import { friendshipManager } from './FriendshipManager';
 import { npcManager } from '../NPCManager';
 import { cookingManager } from './CookingManager';
 import { DEBUG } from '../constants';
-import { startFairyQueenQuest } from '../data/questHandlers/fairyQueenHandler';
+import { startFairyQueenQuest, markPotionReceived } from '../data/questHandlers/fairyQueenHandler';
 import {
   setQuestOffered,
   startGardeningQuest,
@@ -253,6 +253,16 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
     startFairyQueenQuest(fairyName);
     if (DEBUG.QUEST)
       console.log(`[dialogueHandlers] 🧚 Started Fairy Queen quest - met ${fairyName}!`);
+  }
+
+  // Fairy gives Fairy Form Potion when reaching Good Friends
+  if (nodeId === 'potion_accept') {
+    inventoryManager.addItem('potion_fairy_form', 1);
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    markPotionReceived();
+    if (DEBUG.QUEST)
+      console.log(`[dialogueHandlers] 🧚 ${fairyName} gave Fairy Form Potion!`);
   }
 
   // Give replacement potion when player requests one (Good Friends only)

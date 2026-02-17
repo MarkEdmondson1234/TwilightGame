@@ -25,7 +25,6 @@ import { inventoryManager } from './inventoryManager';
 import { getItem, ItemCategory } from '../data/items';
 import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 import { getGiftReaction, GiftReaction } from '../data/giftReactions';
-import { markPotionReceived as markFairyQuestPotionReceived } from '../data/questHandlers/fairyQueenHandler';
 import {
   isGardeningQuestActive,
   getCurrentSeasonTask,
@@ -65,18 +64,18 @@ const TIER_REWARDS: Record<
     good_friend: [],
   },
 
-  // Morgan (fairy attracted to bluebells) gives Fairy Form Potion at good_friend
+  // Morgan (fairy attracted to bluebells) — potion now given via dialogue
   fairy_attracted_morgan_0: {
     stranger: [],
     acquaintance: [],
-    good_friend: [{ itemId: 'potion_fairy_form', quantity: 1 }],
+    good_friend: [],
   },
 
-  // Stella (fairy attracted to bluebells) gives Fairy Form Potion at good_friend
+  // Stella (fairy attracted to bluebells) — potion now given via dialogue
   fairy_attracted_stella_0: {
     stranger: [],
     acquaintance: [],
-    good_friend: [{ itemId: 'potion_fairy_form', quantity: 1 }],
+    good_friend: [],
   },
 
   // Mushra (forest artist) gives an easel when you become acquaintances
@@ -316,11 +315,6 @@ class FriendshipManagerClass {
         console.log(
           `[FriendshipManager] 🎁 Received ${reward.quantity}x ${reward.itemId} from ${npcId}!`
         );
-
-      // Special handling for Fairy Form Potion - update quest progress
-      if (reward.itemId === 'potion_fairy_form') {
-        markFairyQuestPotionReceived();
-      }
 
       // Special handling for Easel - track in DecorationManager
       if (reward.itemId === 'easel') {

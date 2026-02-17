@@ -68,30 +68,48 @@ export function createStellaNPC(id: string, position: Position, name: string = '
         id: 'queen_interest',
         text: '"You would need to become fairy-sized to enter the oak, dear one. But don\'t worry - if we become good friends, I may be able to help you with that." *She smiles warmly.*',
       },
-      // After quest started, before receiving potion
+      // After quest started, before Good Friends — building friendship
       {
         id: 'greeting_quest_active',
-        text: '*Stella hovers near the bluebells, her glow soft and welcoming.* "Hello again, dear friend. The bluebells are happy to see you. As am I."',
+        text: '*Stella hovers near the bluebells, her glow soft and welcoming.* "Hello again, dear one. The bluebells sing so sweetly when you\'re near. I do enjoy our little visits."',
         requiredQuest: 'fairy_queen',
         requiredQuestStage: 1,
+        maxQuestStage: 1,
         responses: [
-          { text: 'How are you tonight?', nextId: 'stella_wellbeing' },
-          { text: 'Tell me about the Fairy Queen.', nextId: 'queen_lore' },
+          { text: 'Tell me about fairy life.', nextId: 'stella_life' },
+          { text: 'Tell me about the Fairy Queen.', nextId: 'queen_hint' },
           { text: 'I should go.' },
         ],
       },
       {
-        id: 'stella_wellbeing',
-        text: '"I am well, thank you for asking. The nights have been peaceful, and your bluebells bring such joy. It\'s lovely to have a human friend who cares for the old ways."',
+        id: 'stella_life',
+        text: '"We fairies live long lives, but they can be lonely ones. Humans rush about so — it\'s rare to find one who stops to tend flowers and talk to wee folk like me. I\'m glad you do."',
       },
       {
-        id: 'queen_lore',
-        text: '"Our Queen is ancient and wise. She lives within the great oak in the deep forest - a tree older than memory. When you are ready, and we are true friends, I can give you the means to visit her."',
+        id: 'queen_hint',
+        text: '"Our Queen, Celestia, is very dear to me. She watches over all the fairy folk. I should love for you to meet her someday... but such things require a deep trust. We shall see." *She smiles gently.*',
       },
-      // After receiving potion (Good Friends)
+      // Good Friends — offer the Fairy Form Potion
+      {
+        id: 'potion_offer',
+        text: '*Stella\'s glow brightens to a warm golden hue, and her eyes glisten.* "Dear one... I must tell you something. You have been so kind to me — so gentle and patient. I consider you a true friend now, and that means I can share something very special."',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 1,
+        maxQuestStage: 1,
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'What is it?', nextId: 'potion_accept' },
+          { text: 'I feel the same way, Stella.', nextId: 'potion_accept' },
+        ],
+      },
+      {
+        id: 'potion_accept',
+        text: '*She produces a tiny, shimmering vial from within a bluebell.* "This is a Fairy Form Potion. Drink it and you will become one of us — for a little while, at least." *She holds your hand gently.* "There is someone I dearly wish you to meet. Our Queen, Celestia, resides within the great oak in the deep forest. But she only receives visitors in the quiet hours — betwixt midnight and one o\'clock, when the world is still and the old magic is strongest. Go to the oak in fairy form at that hour, and she will appear to you."',
+      },
+      // After receiving potion (stage 2+)
       {
         id: 'greeting_has_potion',
-        text: '*Stella\'s glow brightens with joy.* "You have the Fairy Form Potion! How wonderful! Now you can visit the Queen whenever you wish. Just drink the potion and make your way to the ancient oak in the deep forest."',
+        text: '*Stella\'s glow brightens with joy.* "How wonderful to see you, dear friend! Have you visited the Queen yet? Remember — the ancient oak in the deep forest, in fairy form, betwixt midnight and one o\'clock."',
         requiredQuest: 'fairy_queen',
         requiredQuestStage: 2,
         responses: [
@@ -101,7 +119,7 @@ export function createStellaNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'oak_directions',
-        text: "\"Follow the paths deeper into the forest until you find the sacred grove. You'll know the oak when you see it - it's enormous, covered in glowing mushrooms. When you're tiny, you'll see a door at its base.\"",
+        text: '"Follow the paths deeper into the forest until you find the sacred grove. You\'ll know the oak when you see it — it\'s enormous, covered in glowing mushrooms. Go there in fairy form at the midnight hour, and the Queen will receive you."',
       },
       // Re-request potion dialogue
       {

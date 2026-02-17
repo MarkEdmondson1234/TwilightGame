@@ -84,6 +84,7 @@ export interface DialogueNode {
   // Quest requirements for this dialogue node
   requiredQuest?: string; // Only show if this quest is started
   requiredQuestStage?: number; // Only show if quest is at this stage or higher
+  maxQuestStage?: number; // Only show if quest is at this stage or lower
   hiddenIfQuestStarted?: string; // Hide if this quest is started
   hiddenIfQuestCompleted?: string; // Hide if this quest is completed
   // Transformation requirements for this dialogue node

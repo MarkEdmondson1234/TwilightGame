@@ -76,35 +76,48 @@ export function createMorganNPC(id: string, position: Position, name: string = '
         id: 'about_stella',
         text: "\"Stella's the other fairy around here. She's all 'wisdom' this and 'kindness' that. Honestly, she makes me look bad.\" *Morgan sticks out her tongue.* \"She's alright though. I guess.\"",
       },
-      // After quest started, before receiving potion
+      // After quest started, before Good Friends — building friendship
       {
         id: 'greeting_quest_active',
-        text: '*Morgan swoops down from a bluebell.* "Oh, it\'s you again. What, did you miss me? I know I\'m irresistible."',
+        text: '*Morgan swoops down from a bluebell.* "Oh, it\'s you again. What, did you miss me? Course you did. Everyone does." *She lands with a flourish.*',
         requiredQuest: 'fairy_queen',
         requiredQuestStage: 1,
+        maxQuestStage: 1,
         responses: [
-          { text: 'Actually, yes.', nextId: 'morgan_flattered' },
-          { text: 'Tell me about the Fairy Queen.', nextId: 'queen_info' },
-          { text: 'Got anything for me?', nextId: 'morgan_gift_tease' },
+          { text: 'Actually, yes.', nextId: 'morgan_banter' },
+          { text: 'Tell me about the Fairy Queen.', nextId: 'queen_tease' },
           { text: 'I should go.' },
         ],
       },
       {
-        id: 'morgan_flattered',
-        text: '"Ha! Well, at least you have good taste." *She preens her wings.* "I suppose you\'re growing on me too. Like moss. But nicer-smelling moss."',
+        id: 'morgan_banter',
+        text: '"You know, most humans would\'ve got bored by now. Or scared off. But you keep coming back." *She pretends to examine her nails.* "I suppose that\'s... not awful."',
       },
       {
-        id: 'queen_info',
-        text: '"The Queen? She lives in this MASSIVE tree deep in the forest. Very fancy, very intimidating. You\'d need to shrink down to fairy size to get in." *She smirks.* "Maybe if you\'re REALLY nice to me, I could help with that."',
+        id: 'queen_tease',
+        text: '"The Queen? Ha! You think you can just waltz up and meet fairy royalty? There\'s a whole thing — potions, secret hours, the works." *She grins.* "But I\'m not telling you yet. You haven\'t earned it."',
+      },
+      // Good Friends — offer the Fairy Form Potion
+      {
+        id: 'potion_offer',
+        text: '*Morgan lands on a bluebell stem, fidgeting with her wings — which is very unlike her.* "So... ugh, this is awkward. Look, I don\'t do this for just anyone, alright? But you\'ve been... not terrible. Actually, you\'ve been quite good. Don\'t let it go to your head."',
+        requiredQuest: 'fairy_queen',
+        requiredQuestStage: 1,
+        maxQuestStage: 1,
+        requiredFriendshipTier: 'good_friend',
+        responses: [
+          { text: 'Are you being... nice?', nextId: 'potion_accept' },
+          { text: "I won't tell anyone.", nextId: 'potion_accept' },
+        ],
       },
       {
-        id: 'morgan_gift_tease',
-        text: '"Greedy, are we? I don\'t just hand out fairy magic to anyone, you know. But... keep being nice to me and we\'ll see." *She winks.*',
+        id: 'potion_accept',
+        text: '*She shoves a glowing vial into your hands.* "Here. Fairy Form Potion. Drink it and you\'ll shrink down to our size. Try not to scream." *She crosses her arms.* "Now, if you\'ve got any nerve at all, there\'s someone you should meet. Queen Celestia — yes, THE Fairy Queen — lives inside the enormous oak in the deep forest. But here\'s the catch..." *She grins.* "She only shows herself between midnight and one in the morning. Spooky hour. Very dramatic. She\'d get on well with you, actually. Just be in fairy form when you get there, and don\'t be late."',
       },
-      // After receiving potion (Good Friends)
+      // After receiving potion (stage 2+)
       {
         id: 'greeting_has_potion',
-        text: '*Morgan does a loop-the-loop.* "You\'ve got the potion! Don\'t look so surprised - I do occasionally do nice things. Very occasionally. Now go bother the Queen instead of me!"',
+        text: '*Morgan does a loop-the-loop.* "You\'ve got the potion! What are you still doing here? Go find the big oak in the deep forest — midnight to one, fairy form, you know the drill. Shoo!"',
         requiredQuest: 'fairy_queen',
         requiredQuestStage: 2,
         responses: [
@@ -114,7 +127,7 @@ export function createMorganNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'oak_location',
-        text: "\"In the deep forest, obviously. Keep going until you find the biggest tree you've ever seen. Can't miss it. Well, YOU might miss it, but a normal person couldn't.\"",
+        text: '"In the deep forest, obviously. Keep going until you find the biggest tree you\'ve ever seen. Can\'t miss it. Well, YOU might miss it, but a normal person couldn\'t. Remember — midnight. Don\'t go at some sensible hour like a boring person."',
       },
       {
         id: 'morgan_touched',

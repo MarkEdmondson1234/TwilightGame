@@ -887,6 +887,11 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
         const questStage = gameState.getQuestStage(node.requiredQuest);
         if (questStage < node.requiredQuestStage) return false;
       }
+
+      if (node.maxQuestStage !== undefined) {
+        const questStage = gameState.getQuestStage(node.requiredQuest);
+        if (questStage > node.maxQuestStage) return false;
+      }
     }
 
     // Check quest hiding conditions
