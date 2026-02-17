@@ -49,6 +49,14 @@ const DRAG_THRESHOLD = 4;
 /** How far flowers can be dragged from their slot anchor (px). */
 const MAX_DRAG_OFFSET = 80;
 
+/** Default crop zoom (1 = full image, no crop). */
+const DEFAULT_CROP_ZOOM = 1;
+/** Max crop zoom (higher = more zoomed in / tighter crop). */
+const MAX_CROP_ZOOM = 3.0;
+const CROP_ZOOM_STEP = 0.2;
+/** Max crop pan offset (px, relative to image centre). */
+const MAX_CROP_PAN = 60;
+
 /** Gallery preview image size. */
 const GALLERY_PREVIEW_SIZE = 200;
 
@@ -108,6 +116,26 @@ interface SlotData {
   offsetY: number;
   /** Scale multiplier for the flower image. */
   scale: number;
+  /** Crop: horizontal pan within image (px from centre). */
+  cropX: number;
+  /** Crop: vertical pan within image (px from centre). */
+  cropY: number;
+  /** Crop zoom (1 = full image, >1 = zoomed in / cropped tighter). */
+  cropZoom: number;
+}
+
+/** Create a new SlotData with defaults. */
+function makeSlot(itemId: string, overrides?: Partial<SlotData>): SlotData {
+  return {
+    itemId,
+    offsetX: 0,
+    offsetY: 0,
+    scale: DEFAULT_SCALE,
+    cropX: 0,
+    cropY: 0,
+    cropZoom: DEFAULT_CROP_ZOOM,
+    ...overrides,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -286,8 +314,24 @@ async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
       const cx = (anchor.x + slot.offsetX) * scale;
       const cy = (anchor.y + slot.offsetY) * scale;
       const size = flowerSize * scale;
-
-      ctx.drawImage(img, cx - size / 2, cy - size / 2, size, size);
+      if (slot.cropZoom > 1) {
+        // Draw with circular clip — mirrors the CSS transform approach:
+        // scale(cropZoom) translate(cropX, cropY) from image centre
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
+        ctx.clip();
+        // The CSS does: transform-origin center, scale then translate.
+        // In canvas: move origin to centre, apply scale, then translate.
+        const cropScale = slot.cropZoom;
+        const drawSize = size * cropScale;
+        const drawX = cx - drawSize / 2 + slot.cropX * cropScale * scale;
+        const drawY = cy - drawSize / 2 + slot.cropY * cropScale * scale;
+        ctx.drawImage(img, drawX, drawY, drawSize, drawSize);
+        ctx.restore();
+      } else {
+        ctx.drawImage(img, cx - size / 2, cy - size / 2, size, size);
+      }
     } catch {
       // Skip flowers that fail to load
     }
@@ -329,6 +373,8 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const [galleryFlower, setGalleryFlower] = useState<string | null>(null);
   /** Item ID being dragged from the gallery. */
   const [galleryDragItem, setGalleryDragItem] = useState<string | null>(null);
+  /** Whether the user is in crop mode for the currently editing slot. */
+  const [isCropping, setIsCropping] = useState(false);
 
   // Refs
   const wreathRef = useRef<HTMLDivElement>(null);
@@ -394,6 +440,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const handleSelectFlower = useCallback((itemId: string) => {
     setSelectedFlower((prev) => (prev === itemId ? null : itemId));
     setEditingSlot(null);
+    setIsCropping(false);
     setGalleryFlower(itemId);
   }, []);
 
@@ -404,16 +451,12 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       const avail = availableFlowers.find((f) => f.itemId === selectedFlower);
       if (!avail || avail.available <= 0) return;
       const newSlots = [...wreathSlots];
-      newSlots[index] = {
-        itemId: selectedFlower,
-        offsetX: 0,
-        offsetY: 0,
-        scale: DEFAULT_SCALE,
-      };
+      newSlots[index] = makeSlot(selectedFlower);
       setWreathSlots(newSlots);
       setEditingSlot(index);
       setGalleryFlower(selectedFlower);
       setSelectedFlower(null);
+      setIsCropping(false);
     },
     [wreathSlots, selectedFlower, availableFlowers]
   );
@@ -425,12 +468,13 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         wasDragRef.current = false;
         return;
       }
+      if (editingSlot !== index) setIsCropping(false);
       setEditingSlot(index);
       setSelectedFlower(null);
       const slot = wreathSlots[index];
       if (slot) setGalleryFlower(slot.itemId);
     },
-    [wreathSlots]
+    [wreathSlots, editingSlot]
   );
 
   // Zoom controls
@@ -455,7 +499,35 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     newSlots[editingSlot] = null;
     setWreathSlots(newSlots);
     setEditingSlot(null);
+    setIsCropping(false);
   }, [editingSlot, wreathSlots]);
+
+  // Crop zoom control
+  const handleCropZoom = useCallback(
+    (delta: number) => {
+      if (editingSlot === null) return;
+      setWreathSlots((prev) => {
+        const newSlots = [...prev];
+        const slot = newSlots[editingSlot];
+        if (!slot) return prev;
+        const newCZ = Math.max(DEFAULT_CROP_ZOOM, Math.min(MAX_CROP_ZOOM, slot.cropZoom + delta));
+        newSlots[editingSlot] = { ...slot, cropZoom: newCZ };
+        return newSlots;
+      });
+    },
+    [editingSlot]
+  );
+
+  const handleResetCrop = useCallback(() => {
+    if (editingSlot === null) return;
+    setWreathSlots((prev) => {
+      const newSlots = [...prev];
+      const slot = newSlots[editingSlot];
+      if (!slot) return prev;
+      newSlots[editingSlot] = { ...slot, cropX: 0, cropY: 0, cropZoom: DEFAULT_CROP_ZOOM };
+      return newSlots;
+    });
+  }, [editingSlot]);
 
   // =========================================================================
   // Drag handlers — repositioning flowers on the wreath
@@ -472,15 +544,15 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         slotIndex: index,
         startX: pos.x,
         startY: pos.y,
-        startOffsetX: slot.offsetX,
-        startOffsetY: slot.offsetY,
+        startOffsetX: isCropping ? slot.cropX : slot.offsetX,
+        startOffsetY: isCropping ? slot.cropY : slot.offsetY,
         didDrag: false,
       };
       wasDragRef.current = false;
       setEditingSlot(index);
       setSelectedFlower(null);
     },
-    [wreathSlots]
+    [wreathSlots, isCropping]
   );
 
   // =========================================================================
@@ -540,18 +612,31 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         }
       }
 
-      const newOffsetX = Math.max(-MAX_DRAG_OFFSET, Math.min(MAX_DRAG_OFFSET, startOffsetX + dx));
-      const newOffsetY = Math.max(-MAX_DRAG_OFFSET, Math.min(MAX_DRAG_OFFSET, startOffsetY + dy));
-
-      setWreathSlots((prev) => {
-        const newSlots = [...prev];
-        const slot = newSlots[slotIndex];
-        if (!slot) return prev;
-        newSlots[slotIndex] = { ...slot, offsetX: newOffsetX, offsetY: newOffsetY };
-        return newSlots;
-      });
+      if (isCropping) {
+        // Pan the crop window within the image
+        const newCX = Math.max(-MAX_CROP_PAN, Math.min(MAX_CROP_PAN, startOffsetX + dx));
+        const newCY = Math.max(-MAX_CROP_PAN, Math.min(MAX_CROP_PAN, startOffsetY + dy));
+        setWreathSlots((prev) => {
+          const newSlots = [...prev];
+          const slot = newSlots[slotIndex];
+          if (!slot) return prev;
+          newSlots[slotIndex] = { ...slot, cropX: newCX, cropY: newCY };
+          return newSlots;
+        });
+      } else {
+        // Move the flower on the wreath
+        const newOffsetX = Math.max(-MAX_DRAG_OFFSET, Math.min(MAX_DRAG_OFFSET, startOffsetX + dx));
+        const newOffsetY = Math.max(-MAX_DRAG_OFFSET, Math.min(MAX_DRAG_OFFSET, startOffsetY + dy));
+        setWreathSlots((prev) => {
+          const newSlots = [...prev];
+          const slot = newSlots[slotIndex];
+          if (!slot) return prev;
+          newSlots[slotIndex] = { ...slot, offsetX: newOffsetX, offsetY: newOffsetY };
+          return newSlots;
+        });
+      }
     },
-    [galleryDragItem]
+    [galleryDragItem, isCropping]
   );
 
   const handleAnyEnd = useCallback(
@@ -581,12 +666,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
           if (bestSlot >= 0 && bestDist < WREATH_RADIUS * 1.5) {
             setWreathSlots((prev) => {
               const newSlots = [...prev];
-              newSlots[bestSlot] = {
-                itemId: galleryDragItem,
-                offsetX: 0,
-                offsetY: 0,
-                scale: DEFAULT_SCALE,
-              };
+              newSlots[bestSlot] = makeSlot(galleryDragItem);
               return newSlots;
             });
             setEditingSlot(bestSlot);
@@ -845,13 +925,25 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              minHeight: GALLERY_PREVIEW_SIZE + 60,
+              height: GALLERY_PREVIEW_SIZE + 110,
+              overflow: 'hidden',
             }}
           >
             {previewFlowerId && previewItem ? (
               <>
-                <GalleryPreview itemId={previewFlowerId} size={GALLERY_PREVIEW_SIZE} />
-                <div style={{ marginTop: 10, textAlign: 'center' }}>
+                <div
+                  style={{
+                    width: GALLERY_PREVIEW_SIZE,
+                    height: GALLERY_PREVIEW_SIZE,
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <GalleryPreview itemId={previewFlowerId} size={GALLERY_PREVIEW_SIZE} />
+                </div>
+                <div style={{ marginTop: 10, textAlign: 'center', overflow: 'hidden' }}>
                   <div
                     style={{
                       fontSize: 16,
@@ -869,6 +961,8 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                         marginTop: 4,
                         fontStyle: 'italic',
                         lineHeight: 1.4,
+                        maxHeight: 34,
+                        overflow: 'hidden',
                       }}
                     >
                       {previewItem.description}
@@ -1016,25 +1110,48 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
               const imageUrl = getFlowerImage(slot.itemId);
               const item = getItem(slot.itemId);
 
+              const isCropped = slot.cropZoom > 1;
+              const showCropBorder = isEditing && isCropping;
+
               return (
                 <div
                   key={`flower-${i}`}
                   onClick={() => handleFlowerClick(i)}
                   onMouseDown={(e) => handleDragStart(e, i)}
                   onTouchStart={(e) => handleDragStart(e, i)}
+                  onWheel={(e) => {
+                    if (!isEditing) return;
+                    e.preventDefault();
+                    const delta = e.deltaY < 0 ? CROP_ZOOM_STEP : -CROP_ZOOM_STEP;
+                    if (isCropping) {
+                      handleCropZoom(delta);
+                    } else {
+                      handleZoom(delta > 0 ? -SCALE_STEP : SCALE_STEP);
+                    }
+                  }}
                   style={{
                     position: 'absolute',
                     left: cx - flowerSize / 2,
                     top: cy - flowerSize / 2,
                     width: flowerSize,
                     height: flowerSize,
-                    cursor: 'grab',
+                    cursor: isCropping && isEditing ? 'move' : 'grab',
                     zIndex: isEditing ? 10 : 3,
                     filter: isEditing ? 'drop-shadow(0 0 8px rgba(255,255,255,0.5))' : undefined,
                     touchAction: 'none',
                     transition: isEditing ? 'filter 0.15s ease' : undefined,
+                    // Circular clip when cropped or actively cropping
+                    borderRadius: isCropped || showCropBorder ? '50%' : undefined,
+                    overflow: isCropped || showCropBorder ? 'hidden' : undefined,
+                    // Dashed border when actively cropping
+                    outline: showCropBorder ? '2px dashed rgba(255,255,255,0.6)' : undefined,
+                    outlineOffset: showCropBorder ? -1 : undefined,
                   }}
-                  title={`${item?.displayName ?? slot.itemId} — drag to move`}
+                  title={
+                    isCropping && isEditing
+                      ? 'Drag to pan, scroll to crop'
+                      : `${item?.displayName ?? slot.itemId} — drag to move, scroll to resize`
+                  }
                 >
                   {imageUrl ? (
                     <img
@@ -1045,6 +1162,11 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                         height: '100%',
                         objectFit: 'contain',
                         pointerEvents: 'none',
+                        transformOrigin: 'center center',
+                        transform:
+                          isCropped || showCropBorder
+                            ? `scale(${slot.cropZoom}) translate(${slot.cropX}px, ${slot.cropY}px)`
+                            : undefined,
                       }}
                       draggable={false}
                     />
@@ -1074,54 +1196,146 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             <div
               style={{
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                padding: '8px 12px',
-                background: '#2a3a22',
-                borderRadius: 8,
-                border: '1px solid #3a5a2a',
+                gap: 6,
                 width: '100%',
-                maxWidth: 320,
+                maxWidth: 340,
               }}
             >
-              <FlowerThumb itemId={editingSlotData.itemId} size={24} />
-              <span style={{ fontSize: 11, color: '#8a9a7a', minWidth: 0 }}>
-                {getItem(editingSlotData.itemId)?.displayName}
-              </span>
-              <span style={{ fontSize: 11, color: '#6a7a5a' }}>Size:</span>
-              <button onClick={() => handleZoom(-SCALE_STEP)} style={ZOOM_BTN} title="Smaller">
-                −
-              </button>
+              {/* Main toolbar row */}
               <div
                 style={{
-                  width: 36,
-                  textAlign: 'center',
-                  fontSize: 11,
-                  color: '#8a9a7a',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  padding: '8px 12px',
+                  background: '#2a3a22',
+                  borderRadius: 8,
+                  border: '1px solid #3a5a2a',
+                  width: '100%',
                 }}
               >
-                {Math.round(editingSlotData.scale * 100)}%
+                <FlowerThumb itemId={editingSlotData.itemId} size={24} />
+                <span style={{ fontSize: 11, color: '#8a9a7a', minWidth: 0 }}>
+                  {getItem(editingSlotData.itemId)?.displayName}
+                </span>
+                {!isCropping && (
+                  <>
+                    <span style={{ fontSize: 11, color: '#6a7a5a' }}>Size:</span>
+                    <button
+                      onClick={() => handleZoom(-SCALE_STEP)}
+                      style={ZOOM_BTN}
+                      title="Smaller"
+                    >
+                      −
+                    </button>
+                    <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
+                      {Math.round(editingSlotData.scale * 100)}%
+                    </div>
+                    <button onClick={() => handleZoom(SCALE_STEP)} style={ZOOM_BTN} title="Bigger">
+                      +
+                    </button>
+                  </>
+                )}
+                {isCropping && (
+                  <>
+                    <span style={{ fontSize: 11, color: '#6a7a5a' }}>Crop:</span>
+                    <button
+                      onClick={() => handleCropZoom(-CROP_ZOOM_STEP)}
+                      style={ZOOM_BTN}
+                      title="Less crop"
+                    >
+                      −
+                    </button>
+                    <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
+                      {Math.round(editingSlotData.cropZoom * 100)}%
+                    </div>
+                    <button
+                      onClick={() => handleCropZoom(CROP_ZOOM_STEP)}
+                      style={ZOOM_BTN}
+                      title="More crop"
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={handleResetCrop}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        border: '1px solid #5a7a4a',
+                        background: '#2a3a22',
+                        color: '#8a9a7a',
+                        cursor: 'pointer',
+                        fontSize: 10,
+                      }}
+                      title="Reset crop"
+                    >
+                      Reset
+                    </button>
+                  </>
+                )}
               </div>
-              <button onClick={() => handleZoom(SCALE_STEP)} style={ZOOM_BTN} title="Bigger">
-                +
-              </button>
-              <button
-                onClick={handleRemoveFromSlot}
+
+              {/* Second row: crop toggle + remove */}
+              <div
                 style={{
-                  marginLeft: 4,
-                  padding: '3px 10px',
-                  borderRadius: 6,
-                  border: '1px solid #6a3a3a',
-                  background: '#3a2222',
-                  color: '#e8a0a0',
-                  cursor: 'pointer',
-                  fontSize: 11,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
                 }}
-                title="Remove this flower"
               >
-                Remove
-              </button>
+                <button
+                  onClick={() => {
+                    if (!isCropping && editingSlot !== null) {
+                      // Entering crop mode — auto-zoom to 1.4 if currently uncropped
+                      setWreathSlots((prev) => {
+                        const newSlots = [...prev];
+                        const slot = newSlots[editingSlot];
+                        if (slot && slot.cropZoom <= 1) {
+                          newSlots[editingSlot] = { ...slot, cropZoom: 1.4 };
+                        }
+                        return newSlots;
+                      });
+                    }
+                    setIsCropping((prev) => !prev);
+                  }}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 6,
+                    border: isCropping ? '1px solid #c4b5fd' : '1px solid #5a7a4a',
+                    background: isCropping ? '#3a3a52' : '#2a3a22',
+                    color: isCropping ? '#c4b5fd' : '#8a9a7a',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                  }}
+                  title={isCropping ? 'Exit crop mode' : 'Crop the flower image into a circle'}
+                >
+                  {isCropping ? '✂ Done cropping' : '✂ Crop'}
+                </button>
+                {isCropping && (
+                  <span style={{ fontSize: 10, color: '#6a7a5a', fontStyle: 'italic' }}>
+                    Drag to pan, scroll to zoom
+                  </span>
+                )}
+                <button
+                  onClick={handleRemoveFromSlot}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 6,
+                    border: '1px solid #6a3a3a',
+                    background: '#3a2222',
+                    color: '#e8a0a0',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                  }}
+                  title="Remove this flower"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
           )}
 
