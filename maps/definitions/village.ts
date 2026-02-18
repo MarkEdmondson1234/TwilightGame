@@ -53,6 +53,8 @@ import {
  * y = Willow Tree (graceful weeping willow)
  * i = Wild Iris (flowering plant near water)
  * = = Well (stone well, 2x2 sprite with winter variation)
+ * ; = Pink Rosebush (2x2, local code, dormant in winter)
+ * " = Red Rosebush (2x2, local code, dormant in winter)
  */
 
 const gridString = `
@@ -61,9 +63,9 @@ oe,eJlL,,L:lel:,,,,,loLL,l:l:G
 LoG,G,GeGG,,l,oG,G,,G,eeGGGLGG
 tG,G,,G,,,XXX,G,kXXXXXGG,yGGeG
 LG,,c,,,G,XXX,c,,XXXXXGeGeGeGG
-oGol,G,GKGGP,l,,sG,,l,G,Gl,lGG
-Ytl,G,,PPPPPPPPPPPGG,GG,,,,cGG
-LG,,G,,P,,Gl,G,PG,G,,,,eUGlGLG
+oGol,;,GKGGP,l,,sG,;,,G,Gl,lGG
+Ytl,,,,PPPPPPPPPPPGl,GG,,,,cGG
+LG,,G,,P,,Gl,G,PG,G",,,eUGlGLG
 tG,G,,,P,G,,,G,PG,,G,:,,RGRGeG
 Lc,,G,,PG,G,,,PG,,G,,l,,,,,GLG
 JG,G,,,PG,,G,,PG,l,,lMGR:RG,Re
@@ -72,20 +74,20 @@ oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
 LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
 tG,,G,,,G,.PG,l,,lG,l,,UGG,,UG
 LPPPPPPPPPPPP,,,G8,,,eG,,G,,eG
-oG,G,,,G,,,PG,cG,,Gl,lG,,l,GeY
+oG,G,l,G,,,PG,cG,,Gl,lG,,l,GeY
 UoG,cG,,UGPPGGG,G,,Ge=i,G,,G,t
 LG,G,GXXGGPG,,G,,G,i,,i,,l,GLG
 oGzG,,XXGGPG,G,,G,,,,G,,,G,,oG
 LG,G,GXXG,PG,,G,,eG,G,,G,,,GLG
-tG,,G,,G,,,PG,G,,GJG,G,,5G,,Ge
+tG,,;",G,,,PG,G,,GJG,G,,5G,,Ge
 oG,G,,,8,,,PG,,G,,5,,,,,,l,GGU
-UG,,G,l,c,,PG,G,,c5,,GK,5,,,eU
+UG,,G,l,c,,PG,G,,c"",GK,5,,,eU
 tG,G,,,kG,,PPPPPPPPG,G,,,,c,UJ
-LG,,G,,,,G,,G,lP,,l,,,,,G,e,GL
-JG,G,J,G,,U,G,,P,,GXXXXXG,5eGt
+LG,,G,;,,G,,G,lP,,l,,,,,G,e,GL
+JG,G,J,G,,;;G,,P,,GXXXXXG,5eGt
 LG,,XXXG,,G,G,,PG,GXXXXXeG,,GU
-oGoc,,GG,G,,JG,P,,G,G,,l,U,,,,
-tLoLG,l,,lGLULG,,L,L,LUoLL,,o,
+oGoc,,;;,G,,,G,P,,G,G,,l,U,,,,
+tLoGG,l,,lGL,´GLG,,L,L,LUoLL,,
 `;
 
 export const village: MapDefinition = {
@@ -95,6 +97,8 @@ export const village: MapDefinition = {
   height: 30,
   grid: parseGrid(gridString, {
     ':': TileType.MEADOW_GRASS, // : = Meadow grass (seasonal ground cover)
+    ';': TileType.ROSEBUSH_PINK, // ; = Pink rosebush (village only, 2x2)
+    '"': TileType.ROSEBUSH_RED, // " = Red rosebush (village only, 2x2)
   }),
   colorScheme: 'village',
   hasClouds: true,

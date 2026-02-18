@@ -125,6 +125,9 @@ export const tileAssets = {
   village_flowers_summer: '/TwilightGame/assets-optimized/tiles/village/flowers_village_summer.png',
   village_flowers_autumn: '/TwilightGame/assets-optimized/tiles/village/flowers_village_autumn.png',
   village_flowers_winter: '/TwilightGame/assets-optimized/tiles/village/flowers_village_winter.png',
+  // Pink rosebush (2x2, village only, same sprite spring/summer/autumn, dormant in winter)
+  rosebush_pink: '/TwilightGame/assets-optimized/tiles/village/rosebush_pink.png',
+  rosebush_red: '/TwilightGame/assets-optimized/tiles/village/rosebush_red.png',
   // Pond flowers assets (seasonal variations - spring/summer use same sprite)
   pond_flowers_spring_summer: '/TwilightGame/assets-optimized/tiles/pond_flowers_spring_summer.png',
   pond_flowers_autumn: '/TwilightGame/assets-optimized/tiles/pond_flowers_autumn.png',

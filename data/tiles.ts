@@ -733,6 +733,34 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 2x2 multi-tile sprite (see SPRITE_METADATA below)
   },
+  [TileType.ROSEBUSH_PINK]: {
+    name: 'Pink Rosebush',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.WALKABLE,
+    baseType: TileType.GRASS,
+    seasonalImages: {
+      spring: [tileAssets.rosebush_pink],
+      summer: [tileAssets.rosebush_pink],
+      autumn: [tileAssets.rosebush_pink],
+      winter: [], // Dormant in winter
+      default: [tileAssets.rosebush_pink],
+    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA)
+  },
+  [TileType.ROSEBUSH_RED]: {
+    name: 'Red Rosebush',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.WALKABLE,
+    baseType: TileType.GRASS,
+    seasonalImages: {
+      spring: [tileAssets.rosebush_red],
+      summer: [tileAssets.rosebush_red],
+      autumn: [tileAssets.rosebush_red],
+      winter: [], // Dormant in winter
+      default: [tileAssets.rosebush_red],
+    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.GIANT_MUSHROOM]: {
     name: 'Giant Mushroom',
     color: 'bg-palette-sage', // Base grass color for blending

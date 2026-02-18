@@ -86,6 +86,8 @@ export enum TileType {
   BLUEBERRY_BUSH, // Wild blueberry bushes (forageable in forest, seasonal variations, solid obstacle, 3x3)
   WILD_STRAWBERRY, // Wild strawberry plants (forageable in forest, seasonal variations)
   VILLAGE_FLOWERS, // Village decorative flowers (seasonal variations, appears in village)
+  ROSEBUSH_PINK, // Pink rosebush (2x2, village only, dormant in winter)
+  ROSEBUSH_RED, // Red rosebush (2x2, village only, dormant in winter)
   GIANT_MUSHROOM, // Giant magical mushroom (appears on witch hut map, tree-like)
   SAMBUCA_BUSH, // Sambuca bush (appears on witch hut map, seasonal variations)
   DEAD_SPRUCE, // Dead spruce tree (appears in forest, barren tree with winter variation)

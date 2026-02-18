@@ -138,6 +138,42 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     scaleRange: { min: 0.95, max: 1.05 }, // Slight variation
   },
+  {
+    tileType: TileType.ROSEBUSH_PINK,
+    spriteWidth: 2,
+    spriteHeight: 2,
+    offsetX: -0.5,
+    offsetY: -1,
+    image: tileAssets.rosebush_pink,
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },
+    depthLineOffset: 1, // Depth line at base so bush renders in front of player
+  },
+  {
+    tileType: TileType.ROSEBUSH_RED,
+    spriteWidth: 2,
+    spriteHeight: 2,
+    offsetX: -0.5,
+    offsetY: -1,
+    image: tileAssets.rosebush_red,
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },
+    depthLineOffset: 1,
+  },
   // ============================================
   // Deep Forest Plants (Sacred Grove)
   // ============================================

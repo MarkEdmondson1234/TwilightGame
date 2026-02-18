@@ -74,6 +74,8 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.BLUEBERRY_BUSH]: 'grass',
   [TileType.WILD_STRAWBERRY]: 'grass',
   [TileType.VILLAGE_FLOWERS]: 'grass',
+  [TileType.ROSEBUSH_PINK]: 'grass',
+  [TileType.ROSEBUSH_RED]: 'grass',
   // Deep Forest plants
   [TileType.MOONPETAL]: 'grass',
   [TileType.ADDERSMEAT]: 'grass',
