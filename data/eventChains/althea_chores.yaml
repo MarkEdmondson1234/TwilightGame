@@ -30,15 +30,19 @@ stages:
         text: "Althea's got you helping out? That's very kind of you. She does love a nice cuppa."
         expression: smile
 
-  - id: complete
+  - id: chores_done
     stageNumber: 2
-    text: All chores done! Althea is delighted and ready to share her secret.
+    text: All chores finished. Return to Althea to hear her story.
+    dialogue:
+      althea:
+        text: "You've done everything I asked! Come and sit with me, dearie — I have a story to tell you."
+        expression: smile
+
+  - id: complete
+    stageNumber: 3
+    text: Althea revealed the way to Juniper's hidden grove in the ruins.
     event:
       title: "Althea's chores completed"
       description: finished all of Althea's chores and earned her trust
       contributor: A helpful neighbour
-    dialogue:
-      althea:
-        text: "You've been such a dear! Now then, about that witch I mentioned..."
-        expression: smile
     end: true

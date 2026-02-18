@@ -172,7 +172,7 @@ export function createOldWomanKnittingNPC(
       },
       {
         id: 'sister_juniper',
-        text: "*She lowers her voice.* Her name is Juniper. She became a witch, you see. Very powerful, they say. I miss her terribly, but she chose magic over... well, over everything else. Perhaps you'll meet her someday, if you venture deep into the forest.",
+        text: "*She lowers her voice.* Her name is Juniper. She became a witch, you see. Very powerful, they say. I miss her terribly, but she chose magic over... well, over everything else. Well. But you probably don't believe in that sort of thing.",
         requiredFriendshipTier: 'good_friend',
       },
       {
@@ -237,36 +237,97 @@ export function createOldWomanKnittingNPC(
           },
         ],
       },
-      // Progress check dialogue - shows while quest is active
+      // Progress check dialogue - only while chores are still being done (stage 1)
       {
         id: 'chores_progress',
         text: 'How are you getting on with those little tasks, dear? Remember: a cup of tea, some home-baked biscuits, and cleaning those cobwebs in my cottage.',
         requiredQuest: 'althea_chores',
-        hiddenIfQuestCompleted: 'althea_chores',
+        requiredQuestStage: 1,
+        maxQuestStage: 1,
         responses: [
           {
             text: "I'm still working on it.",
           },
         ],
       },
-      // Completion dialogue - appears when all chores are done (checked via quest data)
+      // ===== LORE REVEAL CHAIN (after all chores done, stage 2 = chores_done) =====
       {
-        id: 'chores_complete',
-        text: "*She sets down her knitting with a warm smile.* You've been such a help, dearie! The cottage is sparkling, and I feel so much better. As promised, I'll tell you how to find my sister.",
+        id: 'chores_complete_intro',
+        text: "*She sets down her knitting with a warm, surprised smile.* You've done everything, dearie! The cottage is sparkling, the tea was lovely, and those biscuits... well, they reminded me of ones I used to bake with my sister, long ago.",
         requiredQuest: 'althea_chores',
+        requiredQuestStage: 2,
         hiddenIfQuestCompleted: 'althea_chores',
-        // This node requires special handling to check if all chores are done
         responses: [
           {
-            text: 'Where can I find Juniper?',
-            nextId: 'witch_location_reveal',
-            completesQuest: 'althea_chores',
+            text: 'Your sister? You mentioned her before.',
+            nextId: 'lore_twins',
+          },
+          {
+            text: "I'm glad I could help.",
+            nextId: 'lore_twins',
           },
         ],
       },
       {
-        id: 'witch_location_reveal',
-        text: "*She leans in conspiratorially.* Deep in the forest, past the mushroom grove, there's a path that seems to disappear into the mist. Follow it anyway - it'll lead you to Juniper's glade. She can be... prickly, but she has a good heart underneath it all. Tell her Althea sends her love.",
+        id: 'lore_twins',
+        text: "*She gazes into the distance, her hands still.* Juniper and I... we're identical twins, you know. Born under the same harvest moon. Our mother was a witch, and her mother before her \u2014 a long line stretching back further than anyone can remember. We are the guardians of the balance between nature, magic, and the human world.",
+        responses: [
+          {
+            text: 'A long line of witches?',
+            nextId: 'lore_witchcraft',
+          },
+        ],
+      },
+      {
+        id: 'lore_witchcraft',
+        text: "*She nods slowly.* Witches live a very long time, dear, but there's a price. You must dedicate yourself entirely to the Task \u2014 protecting the old ways, tending the wild places, keeping the balance. Juniper and I did everything together as girls. We were inseparable. Two halves of the same whole, Mum used to say.",
+        responses: [
+          {
+            text: 'What changed?',
+            nextId: 'lore_elias',
+          },
+        ],
+      },
+      {
+        id: 'lore_elias',
+        text: "*A soft, bittersweet smile crosses her face.* Elias. I met him at the spring fair one year \u2014 a tall, clumsy lad who couldn't stop tripping over his own feet. *She chuckles.* Though we were very young, I fell in love \u2014 and love changes everything. To be with him, I had to give up witchcraft. Give up the long years, the power, the Task. Juniper begged me not to. She said I was abandoning our birthright, our duty.",
+        responses: [
+          {
+            text: 'And she never forgave you?',
+            nextId: 'lore_forgiveness',
+          },
+        ],
+      },
+      {
+        id: 'lore_forgiveness',
+        text: "*Her eyes glisten.* She withdrew into the forest. Built herself a hidden place deep in the woods where no one goes. We've barely spoken in fifty years. I aged as mortals do, whilst she... she'll look much as she did the day I left. *She dabs her eyes.* I don't regret choosing Elias \u2014 I'd do that again in a heartbeat. But it pains me that Juniper has never forgiven me. Especially now, in my old age... I would do much to see my sister again.",
+        responses: [
+          {
+            text: 'Perhaps I could carry a message to her.',
+            nextId: 'lore_ruins_reveal',
+          },
+          {
+            text: 'I would like to meet her.',
+            nextId: 'lore_ruins_reveal',
+          },
+        ],
+      },
+      {
+        id: 'lore_ruins_reveal',
+        text: "*She reaches out and squeezes your hand.* You're a kind soul \u2014 a good friend. I think Juniper will like you. The way to her hidden grove... it's through the old ruins, just north of the village. There's an ancient meadow there \u2014 most folk walk right past it, but if you know to look for it, you'll find the path through. *She pauses.* Tell her... tell her Althea sends her love. And that I think of her every single day.",
+        responses: [
+          {
+            text: "I'll find her. I promise.",
+            completesQuest: 'althea_chores',
+          },
+        ],
+      },
+      // Post-quest dialogue (shows after quest is fully completed)
+      {
+        id: 'post_chores_reminder',
+        text: "*She looks at you with hopeful eyes.* Have you found Juniper yet, dearie? Remember \u2014 through the old ruins, north of the village. Look for the ancient meadow. And please... give her my love.",
+        requiredQuest: 'althea_chores',
+        requiredQuestStage: 3,
       },
     ],
     friendshipConfig: {

@@ -77,6 +77,15 @@ export const ruins: MapDefinition = {
       toPosition: { x: 26, y: 1 },
       label: 'To Village',
     },
+    {
+      fromPosition: { x: 13, y: 3 },
+      tileType: TileType.GRASS,
+      toMapId: 'witch_hut',
+      toPosition: { x: 11, y: 28 },
+      label: "To Juniper's Grove",
+      requiresQuest: 'althea_chores',
+      requiresQuestStage: 3,
+    },
   ],
   npcs: [],
 };

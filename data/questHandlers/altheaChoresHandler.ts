@@ -126,9 +126,15 @@ export function markCookiesDelivered(): void {
 export function checkQuestCompletion(): boolean {
   if (!isAltheaChoresActive()) return false;
 
+  // Don't re-advance if already at chores_done (awaiting lore reveal dialogue)
+  const progress = eventChainManager.getProgress(QUEST_ID);
+  if (progress && progress.currentStageId === 'chores_done') return false;
+
   if (areAllCobwebsCleaned() && isTeaDelivered() && areCookiesDelivered()) {
-    eventChainManager.advanceToStage(QUEST_ID, 'complete');
-    if (DEBUG.QUEST) console.log('[AltheaChores] All chores completed! Quest finished.');
+    // Advance to intermediate stage, NOT the end stage.
+    // The dialogue with Althea will complete the quest after the lore reveal.
+    eventChainManager.advanceToStage(QUEST_ID, 'chores_done');
+    if (DEBUG.QUEST) console.log('[AltheaChores] All chores done — awaiting lore reveal.');
     return true;
   }
   return false;
