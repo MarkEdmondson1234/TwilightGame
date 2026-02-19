@@ -291,6 +291,12 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
               : 'No potions in this chapter yet'}
           </p>
         )}
+
+        {pagination.canGoNext && (
+          <p className="text-center pt-2 text-xs italic" style={{ color: theme.textMuted }}>
+            More entries on next page →
+          </p>
+        )}
       </div>
     </div>
   );

@@ -197,7 +197,8 @@ export function createMumNPC(
         text: 'Desserts are my speciality! Let me show you something sweet.',
         responses: [
           { text: 'Teach me crêpes!', nextId: 'learn_crepes', hiddenIfRecipeUnlocked: 'crepes' },
-          { text: 'What about marzipan chocolates?', nextId: 'learn_marzipan', hiddenIfRecipeUnlocked: 'marzipan_chocolates' },
+          { text: 'What about marzipan chocolates?', nextId: 'learn_marzipan', requiredRecipeMastered: 'french_toast', hiddenIfRecipeUnlocked: 'marzipan_chocolates' },
+          { text: 'What about marzipan chocolates?', nextId: 'not_ready_marzipan', hiddenIfRecipeMastered: 'french_toast' },
           { text: 'Ice cream sounds lovely!', nextId: 'learn_ice_cream', requiredRecipeMastered: 'crepes', hiddenIfRecipeUnlocked: 'vanilla_ice_cream' },
           { text: 'Ice cream sounds lovely!', nextId: 'not_ready_ice_cream', hiddenIfRecipeMastered: 'crepes' },
           { text: 'Never mind.' },
@@ -224,6 +225,7 @@ export function createMumNPC(
       // Not ready dialogues for recipes with prerequisites
       { id: 'not_ready_chocolate_cake', text: 'Chocolate cake is quite advanced, dear. Master the chocolate cookies recipe first - once you\'ve got the hang of basic baking, then we can tackle the cake. Practice makes perfect!', expression: 'default', responses: [] },
       { id: 'not_ready_ice_cream', text: 'Ice cream is tricky, love. Show me you\'ve mastered crêpes first, then I\'ll teach you the secrets of making perfect ice cream.', expression: 'default', responses: [] },
+      { id: 'not_ready_marzipan', text: 'Marzipan chocolates are a little fiddly, love. Make sure you\'ve really got the hang of French Toast first - once you\'ve mastered that, I\'ll show you how to make them.', expression: 'default', responses: [] },
       { id: 'not_ready_roast_dinner', text: 'A roast dinner is quite a challenge! Master the spaghetti recipe first, dear, then we\'ll work our way up to a proper Sunday roast.', expression: 'default', responses: [] },
 
       // Personal story dialogues
