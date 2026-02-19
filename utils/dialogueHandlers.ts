@@ -287,7 +287,35 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
  */
 function handleEliasQuestActions(nodeId: string): string | void {
   // Auto-redirect to quest check when greeting Elias with an active quest
+  // We compute the final destination here rather than returning 'garden_task_check' and
+  // relying on a second redirect, because UnifiedDialogueBox ignores the return value of
+  // the second onNodeChange call (so garden_task_check's own redirects are swallowed).
   if (nodeId === 'greeting' && isGardeningQuestActive()) {
+    // If no current task, try to assign one for the current season
+    if (!getCurrentSeasonTask()) {
+      const availableTask = getAvailableSeasonTask();
+      if (availableTask) {
+        // Assign the seasonal task and give seeds if this is the first time
+        const seeds = assignSeasonTask(availableTask);
+        if (seeds) {
+          for (const seed of seeds) {
+            inventoryManager.addItem(seed.itemId, seed.quantity);
+          }
+          const inventoryData = inventoryManager.getInventoryData();
+          characterData.saveInventory(inventoryData.items, inventoryData.tools);
+          if (DEBUG.QUEST)
+            console.log(
+              `[dialogueHandlers] 🌱 Elias gave seeds for new ${availableTask} task:`,
+              seeds.map((s) => `${s.quantity}x ${s.itemId}`).join(', ')
+            );
+        }
+      } else if (isWinter()) {
+        return 'garden_winter_wait';
+      } else {
+        // Current season's task is already completed — wait for next season
+        return 'garden_wait_next_season';
+      }
+    }
     return 'garden_task_check';
   }
 
