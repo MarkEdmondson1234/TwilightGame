@@ -139,6 +139,8 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     TileType.MOONPETAL,
     TileType.ADDERSMEAT,
     TileType.WOLFSBANE,
+    TileType.ROSEBUSH_PINK,
+    TileType.ROSEBUSH_RED,
     TileType.LUMINESCENT_TOADSTOOL,
     TileType.FOREST_MUSHROOM,
     TileType.MUSTARD_FLOWER,
@@ -523,6 +525,112 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'wolfsbane', // Reuse field for item ID
       seedName: wolfsbane.displayName,
       message: `Found ${quantityFound} ${wolfsbane.displayName}!`,
+    };
+  }
+
+  // Pink rosebush foraging (village only, spring/summer/autumn)
+  const rosebushResult = findTileTypeNearby(playerTileX, playerTileY, TileType.ROSEBUSH_PINK);
+  const rosebushAnchor = rosebushResult.found ? rosebushResult.position : null;
+
+  if (rosebushAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found rosebush anchor at (${rosebushAnchor.x}, ${rosebushAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+
+    const { season } = TimeManager.getCurrentTime();
+
+    if (season === Season.WINTER) {
+      return {
+        found: false,
+        message: 'The rosebush is bare in winter. Come back when it blooms.',
+      };
+    }
+
+    const roseCrop = getItem('rose_crop');
+    if (!roseCrop) {
+      console.error('[Forage] rose_crop item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    const successRate = roseCrop.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      gameState.recordForage(currentMapId, rosebushAnchor.x, rosebushAnchor.y);
+      return {
+        found: false,
+        message: 'You search the rosebush carefully, but the blooms are not ready for picking.',
+      };
+    }
+
+    const quantityFound = rollForageQuantity();
+    inventoryManager.addItem('rose_crop', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} ${roseCrop.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    saveForageResult(currentMapId, rosebushAnchor.x, rosebushAnchor.y, 'rose_crop');
+
+    return {
+      found: true,
+      seedId: 'rose_crop',
+      seedName: roseCrop.displayName,
+      message: `Found ${quantityFound} ${roseCrop.displayName}!`,
+    };
+  }
+
+  // Red rosebush foraging (village only, spring/summer/autumn)
+  const redRosebushResult = findTileTypeNearby(playerTileX, playerTileY, TileType.ROSEBUSH_RED);
+  const redRosebushAnchor = redRosebushResult.found ? redRosebushResult.position : null;
+
+  if (redRosebushAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found red rosebush anchor at (${redRosebushAnchor.x}, ${redRosebushAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+
+    const { season } = TimeManager.getCurrentTime();
+
+    if (season === Season.WINTER) {
+      return {
+        found: false,
+        message: 'The rosebush is bare in winter. Come back when it blooms.',
+      };
+    }
+
+    const roseRedCrop = getItem('rose_red_crop');
+    if (!roseRedCrop) {
+      console.error('[Forage] rose_red_crop item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    const successRate = roseRedCrop.forageSuccessRate ?? 0.5;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      gameState.recordForage(currentMapId, redRosebushAnchor.x, redRosebushAnchor.y);
+      return {
+        found: false,
+        message: 'You search the rosebush carefully, but the blooms are not ready for picking.',
+      };
+    }
+
+    const quantityFound = rollForageQuantity();
+    inventoryManager.addItem('rose_red_crop', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} ${roseRedCrop.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    saveForageResult(currentMapId, redRosebushAnchor.x, redRosebushAnchor.y, 'rose_red_crop');
+
+    return {
+      found: true,
+      seedId: 'rose_red_crop',
+      seedName: roseRedCrop.displayName,
+      message: `Found ${quantityFound} ${roseRedCrop.displayName}!`,
     };
   }
 

@@ -1796,6 +1796,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         TileType.MOONPETAL,
         TileType.ADDERSMEAT,
         TileType.WOLFSBANE,
+        TileType.ROSEBUSH_PINK,
+        TileType.ROSEBUSH_RED,
         TileType.MUSTARD_FLOWER,
         TileType.SHRINKING_VIOLET,
         TileType.FROST_FLOWER,

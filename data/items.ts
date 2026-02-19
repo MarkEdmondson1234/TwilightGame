@@ -1395,6 +1395,32 @@ export const ITEMS: Record<string, ItemDefinition> = {
     forageSuccessRate: 0.7, // 70% success rate when foraging
   },
 
+  rose_crop: {
+    id: 'rose_crop',
+    name: 'rose_crop',
+    displayName: 'Rose',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A freshly cut rose from a village garden. Its petals are soft and fragrant.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 8,
+    image: magicalAssets.rose_crop,
+    forageSuccessRate: 0.85, // 85% success rate when foraging
+  },
+
+  rose_red_crop: {
+    id: 'rose_red_crop',
+    name: 'rose_red_crop',
+    displayName: 'Red Rose',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A vivid red rose cut from a village garden. Its colour is rich and deep.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 8,
+    image: magicalAssets.rose_red_crop,
+    forageSuccessRate: 0.85,
+  },
+
   phoenix_ash: {
     id: 'phoenix_ash',
     name: 'phoenix_ash',

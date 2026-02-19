@@ -742,7 +742,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       spring: [tileAssets.rosebush_pink],
       summer: [tileAssets.rosebush_pink],
       autumn: [tileAssets.rosebush_pink],
-      winter: [], // Dormant in winter
+      winter: [tileAssets.rosebush_winter],
       default: [tileAssets.rosebush_pink],
     },
     // 2x2 multi-tile sprite (see SPRITE_METADATA)
@@ -756,7 +756,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       spring: [tileAssets.rosebush_red],
       summer: [tileAssets.rosebush_red],
       autumn: [tileAssets.rosebush_red],
-      winter: [], // Dormant in winter
+      winter: [tileAssets.rosebush_winter],
       default: [tileAssets.rosebush_red],
     },
     // 2x2 multi-tile sprite (see SPRITE_METADATA)
