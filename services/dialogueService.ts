@@ -140,14 +140,31 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       'You saved the cow in the communal garden from a dairy farm',
       'You used to be a gardener, and you still look after the communal kitchen gardens, but you could use some help',
       'Old legends and folk tales',
-      'Seasons and farming wisdom',
-      'Spring is the best season for growing most things, except onion sets. Put those down in the autumn',
-      'If you need more seeds, you can sometimes find them in the forest, but look out for the wild animals',
+      // Farming - seeds and seasons
+      'Spring is the best season for planting most crops. The shop sells: tomatoes, peas, potatoes, radishes, spinach, broccoli, cauliflower, cucumbers, corn, chillies, melons, pumpkins, and sunflowers in spring',
+      'In summer you can still plant: chillies, spinach, salad greens, carrots, corn, and radishes',
+      'Autumn is the time for onion sets, and onion sets alone - plant them now and harvest in summer',
+      'Nothing can be planted in winter - the ground is frozen solid',
+      'Radishes are the best crop for beginners - they grow quickly and teach the basics',
+      'Pumpkins take the longest to grow but are the most valuable at harvest',
+      'Water your crops every day or they will wilt. Use fertiliser to improve quality - better quality fetches a better price',
+      'You can only buy seeds at the shop that are in season',
+      // Foraging - berries
+      'Wild strawberries only ripen in summer - look along sunny forest edges and in clearings. The plants are visible in spring and autumn but bear no fruit then',
+      'Blackberries grow on brambles and ripen in summer only',
+      'Blueberries ripen on the bushes at the forest edges in summer and continue into autumn',
+      'Hazelnuts fall from hazel bushes in autumn - look beneath the hazel trees in the deep forest',
+      // Foraging - other
+      'Forest mushrooms appear in autumn in the deep forest - look in the shaded, damp spots near the trees',
+      'Honey comes from bee hives deep in the forest. The bear knows where every hive is - find the bear\'s territory and you\'ll find honey nearby',
+      'Rosebushes in the village gardens bloom year-round - both pink and red varieties',
+      'Yellow mustard flowers appear in the meadows in spring and summer',
+      'Feathers can be found near the trees where sparrows roost - keep an eye on the ground',
+      // Other village knowledge
       'Your wife is Althea - you have been married for over 50 years and love her dearly',
       'Althea spends her days knitting - she makes the most wonderful things',
       'Celia (the little girl) - a sweet child, lives with just her mother',
       'The Shopkeeper - runs the village shop, always has the latest gossip',
-      'You can only buy things in the shop that are in season, so you might want to stock up',
       'The forest and its dangers',
     ],
 
@@ -182,13 +199,15 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
         'the seasons',
         "young people's futures",
         'Althea',
+        'foraging and what grows where',
+        'farming and the kitchen garden',
       ],
       disliked: ['politics', 'rushing', 'the city'],
     },
 
     relationshipToPlayer: 'stranger',
     maxResponseLength: 3,
-    tabooTopics: ['violence', 'modern technology'],
+    tabooTopics: ['violence', 'modern technology', 'magic potions', 'potion ingredients', 'alchemy', 'spells', 'enchantments'],
   },
 
   shopkeeper_fox: {
