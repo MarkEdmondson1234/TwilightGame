@@ -7,7 +7,6 @@ import {
   createDeerNPC,
   createPuffleNPC,
   createSuffleNPC,
-  createMushraNPC,
   createPossumNPC,
   createSparrowNPC,
 } from '../utils/npcFactories';
@@ -1023,30 +1022,6 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     console.log(`[Forest] 💕 Rare Puffle & Suffle duo spawned at (${puffleX}, ${puffleY})!`);
   }
 
-  // Mushra: 10% chance of spawning - rare friendly mushroom creature
-  const mushraChance = ((seed * 89) % 100) / 100; // Pseudo-random based on seed
-  if (mushraChance < 0.1) {
-    let mushraX: number, mushraY: number;
-    let attempts = 0;
-    const maxAttempts = 20;
-    do {
-      mushraX = Math.floor(((seed * 97 + attempts * 37) % (width - 6)) + 3);
-      mushraY = Math.floor(((seed * 101 + attempts * 41) % (height - 6)) + 3);
-      attempts++;
-    } while (
-      attempts < maxAttempts &&
-      ((Math.abs(mushraX - spawnX) < 6 && Math.abs(mushraY - spawnY) < 6) ||
-        (wolfX !== null &&
-          wolfY !== null &&
-          Math.abs(mushraX - wolfX) < 5 &&
-          Math.abs(mushraY - wolfY) < 5))
-    );
-
-    const mushra = createMushraNPC(`mushra_${seed}`, { x: mushraX, y: mushraY }, 'Mushra');
-    npcs.push(mushra);
-    console.log(`[Forest] 🍄 Mushra spawned at (${mushraX}, ${mushraY})!`);
-  }
-
   return {
     id: `forest_${seed}`,
     name: 'Forest',
@@ -1217,27 +1192,6 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
 
   // NPCs array for cave creatures
   const npcs = [];
-
-  // Mushra: 8% chance of spawning in caves - rare mushroom creature (loves dark damp places!)
-  const mushraChance = ((seed * 103) % 100) / 100; // Pseudo-random based on seed
-  if (mushraChance < 0.08) {
-    let mushraX: number, mushraY: number;
-    let attempts = 0;
-    const maxAttempts = 20;
-    do {
-      mushraX = Math.floor(((seed * 107 + attempts * 43) % (width - 6)) + 3);
-      mushraY = Math.floor(((seed * 109 + attempts * 47) % (height - 6)) + 3);
-      attempts++;
-    } while (
-      attempts < maxAttempts &&
-      Math.abs(mushraX - spawnX) < 5 &&
-      Math.abs(mushraY - spawnY) < 5
-    );
-
-    const mushra = createMushraNPC(`mushra_cave_${seed}`, { x: mushraX, y: mushraY }, 'Mushra');
-    npcs.push(mushra);
-    console.log(`[Cave] 🍄 Mushra spawned at (${mushraX}, ${mushraY})!`);
-  }
 
   return {
     id: `cave_${seed}`,
