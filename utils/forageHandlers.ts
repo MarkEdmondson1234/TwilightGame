@@ -1250,6 +1250,19 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     return { found: false, message: 'Nothing to forage here.' };
   }
 
+  // Wild strawberries only fruit in summer - check before recording forage so cooldown isn't wasted
+  if (tileData.type === TileType.WILD_STRAWBERRY) {
+    const currentSeason = TimeManager.getCurrentTime().season;
+    if (currentSeason !== Season.SUMMER) {
+      const message =
+        currentSeason === Season.SPRING
+          ? 'The wild strawberry plants are not ripe yet — they fruit in summer.'
+          : 'The wild strawberry season has already passed for this year.';
+      if (DEBUG.FORAGE) console.log(`[Forage] Wild strawberries out of season (${currentSeason})`);
+      return { found: false, message };
+    }
+  }
+
   // Record the forage attempt (starts cooldown for this tile)
   gameState.recordForage(currentMapId, playerTileX, playerTileY);
 

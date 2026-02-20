@@ -84,6 +84,10 @@ export function createVillageElderNPC(
             hiddenIfQuestCompleted: GARDENING_QUEST_ID,
           },
           {
+            text: 'Dost thou have any wisdom about foraging or farming?',
+            nextId: 'elias_knowledge_hub',
+          },
+          {
             text: 'Farewell, elder.',
           },
         ],
@@ -404,6 +408,99 @@ export function createVillageElderNPC(
         id: 'fairy_bluebells_complete',
         text: '*Tears well in his eyes.* Thou hast done it! Althea will be so happy with the violets, and the bear will feast well. As promised, here is my most treasured possession - a fairy bluebell seed. Plant it with care, and watch it closely at night. The old tales say... but I shall let thee discover that for thyself. Thank thee, dear friend. Truly.',
         requiredQuest: FAIRY_BLUEBELLS_QUEST_ID,
+      },
+
+      // ===== ENCYCLOPEDIC KNOWLEDGE =====
+      {
+        id: 'elias_knowledge_hub',
+        text: "*He straightens up with evident pleasure.* Thou hast come to the right elder! I have spent seventy years watching these lands — the seasons, the forest, the soil. Ask me anything about what grows and where.",
+        responses: [
+          { text: 'Tell me about foraging.', nextId: 'elias_foraging_hub' },
+          { text: 'Which seeds should I plant this season?', nextId: 'elias_seeds_seasonal' },
+          { text: 'Any general farming advice?', nextId: 'elias_farming_advice' },
+          { text: 'Farewell, elder.' },
+        ],
+      },
+      {
+        id: 'elias_foraging_hub',
+        text: "The land provides generously for those who know where and when to look. Each season brings its own gifts — thou needst only learn the patterns.",
+        responses: [
+          { text: 'Where can I find berries?', nextId: 'elias_berries' },
+          { text: 'Are there mushrooms to find?', nextId: 'elias_mushrooms' },
+          { text: 'How do I find honey?', nextId: 'elias_honey' },
+          { text: 'What else is worth foraging?', nextId: 'elias_other_forage' },
+          { text: "That's everything, thank you." },
+        ],
+      },
+      {
+        id: 'elias_berries',
+        text: "Berries each have their season — learn when, and thou shalt rarely go without.",
+        seasonalText: {
+          spring: "The strawberry plants are just greening up in spring, but they will not fruit until summer. Be patient! The blueberry bushes are also waking up, but the berries won't be ripe until summer either. Spring is a time for waiting — and planning.",
+          summer: "Ah, now is the time! Wild strawberries ripen in summer — look along sunny forest edges. Blackberries appear on the brambles too, and the blueberry bushes begin to fruit. Summer is the finest season for a forager.",
+          autumn: "The strawberries and blackberries are spent now, but autumn brings blueberries from the forest bushes — and the hazel trees drop their nuts. Look beneath the hazel branches for hazelnuts on the ground.",
+          winter: "All the berries are long past now. But when summer comes again, thou'lt know exactly where to look!",
+        },
+        responses: [
+          { text: 'What else can I forage?', nextId: 'elias_foraging_hub' },
+          { text: 'Thank you, elder.' },
+        ],
+      },
+      {
+        id: 'elias_mushrooms',
+        text: "Mushrooms prefer the cool and damp. They are patient creatures — thou must be patient too.",
+        seasonalText: {
+          spring: "Mushrooms are scarce in spring. A few may linger in shaded spots, but 'tis not the season for them.",
+          summer: "Summer is too warm and dry for most mushrooms. Thou mightst find the odd one in deep shade, but do not go out of thy way.",
+          autumn: "Now is the time! Head into the deep forest and keep thy eyes on the shaded ground — forest mushrooms spring up in the cooler, damper air of autumn. Look near the trees.",
+          winter: "The mushrooms are gone until next autumn. But the deep forest still holds its own beauty, even in winter.",
+        },
+        responses: [
+          { text: 'What else can I forage?', nextId: 'elias_foraging_hub' },
+          { text: 'Thank you, elder.' },
+        ],
+      },
+      {
+        id: 'elias_honey',
+        text: "The bees keep their hives in the forest, deep amongst the trees. Follow the sound of buzzing and thou shalt find them. The bear knows where every hive is — he has been visiting them for years! If thou canst find the bear's territory, thou'lt find honey nearby.",
+        seasonalText: {
+          winter: "The bees cluster tightly in winter, but the hives remain. A brave forager might still try, though the bees are less willing to share when the cold sets in.",
+        },
+        responses: [
+          { text: 'What else can I forage?', nextId: 'elias_foraging_hub' },
+          { text: 'Thank you, elder.' },
+        ],
+      },
+      {
+        id: 'elias_other_forage',
+        text: "The village gardens have rosebushes — both pink and red — that bloom freely all through the year. In spring and summer, yellow mustard flowers appear in the meadows. And feathers! Keep an eye on the ground near the trees, where the sparrows roost. Many small things are worth picking up, if thou hast the patience to look.",
+        responses: [
+          { text: 'Tell me more about foraging.', nextId: 'elias_foraging_hub' },
+          { text: 'Thank you, elder.' },
+        ],
+      },
+      {
+        id: 'elias_seeds_seasonal',
+        text: "Every season has its planting. Miss the right moment and thou'lt wait a whole year to try again.",
+        seasonalText: {
+          spring: "Spring is the busy season! The shop sells nearly everything now: tomatoes, peas, potatoes, radishes, spinach, broccoli, cauliflower, cucumbers, corn, chillies, melons, pumpkins, and sunflowers. Start with radishes if thou art new to it — they grow quickly and teach the basics well.",
+          summer: "Summer is still good for planting! The shop has chillies, spinach, salad greens, carrots, corn, and radishes available. Melons and pumpkins planted in spring should be coming along nicely — keep watering them!",
+          autumn: "Autumn is for onion sets, and onion sets alone! They are special — plant them now, let them sleep through winter, and they shall reward thee come summer. The shop keeps them in stock only this season, so do not delay.",
+          winter: "'Tis a time for rest, not planting — the ground is frozen solid. Use the quiet months to plan what thou wouldst like to grow come spring. Radishes and peas are always a fine beginning for a new gardener.",
+        },
+        responses: [
+          { text: 'Any other farming advice?', nextId: 'elias_farming_advice' },
+          { text: 'Tell me about foraging instead.', nextId: 'elias_foraging_hub' },
+          { text: "That's very helpful, thank you." },
+        ],
+      },
+      {
+        id: 'elias_farming_advice',
+        text: "Three things I have learned from a lifetime in the garden: water thy crops regularly, or they wilt and die. Use fertiliser if thou hast it — it improves the quality, and a fine vegetable fetches a finer price at market. And patience, young one. The pumpkin is slow, but at harvest time there is nothing more satisfying.",
+        responses: [
+          { text: 'Which seeds should I plant this season?', nextId: 'elias_seeds_seasonal' },
+          { text: 'Thank you, Elias.' },
+        ],
       },
     ],
     friendshipConfig: {
