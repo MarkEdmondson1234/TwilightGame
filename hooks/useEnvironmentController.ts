@@ -22,6 +22,7 @@ import {
   getEffectiveWeather,
 } from '../data/weatherConfig';
 import { mapManager } from '../maps/MapManager';
+import { npcManager } from '../NPCManager';
 import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
 import type { WeatherLayer } from '../utils/pixi/WeatherLayer';
@@ -227,6 +228,30 @@ export function useEnvironmentController(
       audioManager.stopAmbient('ambient_birds', 500);
     };
   }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
+  // Umbra Wolf Entry Howl
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isForest =
+      currentMapId.startsWith('forest_') || currentMapId.startsWith('deep_forest_');
+    if (!isForest) return;
+
+    // Check if the umbra wolf spawned in this particular forest
+    const npcs = npcManager.getCurrentMapNPCs();
+    const hasWolf = npcs.some((npc) => npc.id.startsWith('umbra_wolf'));
+    if (!hasWolf) return;
+
+    // Delay for dramatic effect — lets the player settle in before the howl
+    const timer = setTimeout(() => {
+      if (audioManager.hasSound('sfx_umbra_wolf')) {
+        audioManager.playSfx('sfx_umbra_wolf');
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [currentMapId]);
 
   // -------------------------------------------------------------------------
   // Stream / Water Ambient

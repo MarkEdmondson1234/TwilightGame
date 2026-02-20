@@ -721,6 +721,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/npcs/bark01.mp3',
     category: 'sfx',
   },
+  // Umbra Wolf howl
+  sfx_umbra_wolf: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/umbra_wolf.mp3',
+    category: 'sfx',
+  },
   // Cow moo
   sfx_bessie: {
     url: '/TwilightGame/assets/audio/sfx/npcs/bessie.mp3',
