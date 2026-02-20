@@ -1146,6 +1146,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Marzipan Chocolates',
     category: ItemCategory.FOOD,
     description: 'Handmade chocolates with sweet marzipan.',
+    image: cookingAssets.marzipan_chocolates,
     stackable: true,
     sellPrice: 60,
   },

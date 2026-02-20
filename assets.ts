@@ -285,6 +285,8 @@ export const farmingAssets = {
   plant_carrot_adult: '/TwilightGame/assets-optimized/farming/carrot_adult.png',
   plant_potato_young: '/TwilightGame/assets-optimized/farming/potato_young.png',
   plant_potato_adult: '/TwilightGame/assets-optimized/farming/potato_adult.png',
+  plant_radish_young: '/TwilightGame/assets-optimized/farming/radishes_young.png',
+  plant_radish_adult: '/TwilightGame/assets-optimized/farming/radishes_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
   farm_fence: '/TwilightGame/assets-optimized/farming/farm_fence.png',
 };
@@ -297,6 +299,7 @@ export const cookingAssets = {
   cup_of_tea: '/TwilightGame/assets-optimized/cooking/cup_of_tea.png',
   french_toast: '/TwilightGame/assets-optimized/cooking/french_toast.png',
   ice_cream: '/TwilightGame/assets-optimized/cooking/ice_cream.png',
+  marzipan_chocolates: '/TwilightGame/assets-optimized/cooking/marzipan_chocolates.png',
   pickled_onion: '/TwilightGame/assets-optimized/cooking/pickled_onion.png',
   potato_pizza: '/TwilightGame/assets-optimized/cooking/potato_pizza.png',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
