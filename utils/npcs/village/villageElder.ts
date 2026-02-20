@@ -308,6 +308,10 @@ export function createVillageElderNPC(
             nextId: 'garden_tip_random',
           },
           {
+            text: 'Dost thou have any wisdom about foraging or farming?',
+            nextId: 'elias_knowledge_hub',
+          },
+          {
             text: "I'll keep working on it.",
           },
         ],
@@ -360,6 +364,15 @@ export function createVillageElderNPC(
             'The ground sleeps beneath the frost now, young one. Come see me when spring returns. In the meantime, perhaps visit the other villagers?',
         },
         requiredQuest: GARDENING_QUEST_ID,
+        responses: [
+          {
+            text: 'Dost thou have any wisdom about foraging or farming?',
+            nextId: 'elias_knowledge_hub',
+          },
+          {
+            text: 'Thank you, Elias.',
+          },
+        ],
       },
       // All seasonal tasks complete
       {
