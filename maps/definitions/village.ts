@@ -34,7 +34,7 @@ import {
  * D = Door (back to home)
  * S = Shop Door
  * s = TileType.COTTAGE_STONE,
- * k = TileType.COTTAGE_FLOWERS,
+ * k = TileType.COTTAGE_STONE,
  * % = TileType.SHOP (seasonal shop building)
  * M = Mine Entrance
  * B = Building Wall
@@ -42,6 +42,7 @@ import {
  * N = Building Door (eNtrance)
  * V = Building Window
  * K = Cottage (4x4 wooden house)
+ * H = Player Home (15x15 seasonal building, entrance to Mum's kitchen)
  * X = Farm plot (fallow soil)
  * U = Bush (decorative foliage)
  * e = Fern (forest floor plant)
@@ -66,26 +67,26 @@ LG,,c,,,G,XXX,c,,XXXXXGeGeGeGG
 oGol,;,GKGGP,l,,sG,;,,G,Gl,lGG
 Ytl,,,,PPPPPPPPPPPGl,GG,,,,cGG
 LG,,G,,P,,Gl,G,PG,G",,,eUGlGLG
-tG,G,,,P,G,,,G,PG,,G,:,,RGRGeG
+tG,G,,,P,G,,,G,PG,,G,:,,eG,GeG
 Lc,,G,,PG,G,,,PG,,G,,l,,,,,GLG
-JG,G,,,PG,,G,,PG,l,,lMGR:RG,Re
+JG,G,,,PG,,G,,PG,l,,lMGR:RG,,e
 LoG,Gc,GPe%G,,PG,:,,GPR,,,eGGL
 oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
 LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
 tG,,G,,,G,.PG,l,,lG,l,,UGG,,UG
 LPPPPPPPPPPPP,,,G8,,,eG,,G,,eG
 oG,G,l,G,,,PG,cG,,Gl,lG,,l,GeY
-UoG,cG,,UGPPGGG,G,,Ge=i,G,,G,t
-LG,G,GXXGGPG,,G,,G,i,,i,,l,GLG
-oGzG,,XXGGPG,G,,G,,,,G,,,G,,oG
-LG,G,GXXG,PG,,G,,eG,G,,G,,,GLG
-tG,,;",G,,,PG,G,,GJG,G,,5G,,Ge
-oG,G,,,8,,,PG,,G,,5,,,,,,l,GGU
-UG,,G,l,c,,PG,G,,c"",GK,5,,,eU
-tG,G,,,kG,,PPPPPPPPG,G,,,,c,UJ
-LG,,G,;,,G,,G,lP,,l,,,,,G,e,GL
-JG,G,J,G,,;;G,,P,,GXXXXXG,5eGt
-LG,,XXXG,,G,G,,PG,GXXXXXeG,,GU
+UoG,cG,,PPPPGGG,G,,Ge=i,G,,G,t
+LG,G,GGGGGPG,,G,,G,i,,i,,l,GLG
+oGGG,,GGGGPG,G,,G,,,,G,,,G,,oG
+LG,G,GGGG,PG,,G,,eG,G,,G,,,GLG
+,G,,;",G,,,PG,,,,GJG,G,,5G,,Ge
+oG,G,,,8,H,PG;,G,,5,,,,,,l,GGU
+UG,cGl,,,PPPG,G,,c"",GK,5,,,eU
+GG,G,XXXX,,PPPPPPPPG,G,,,,c,UJ
+LG,,GXXXXG,,G,lP,,l,,,,,G,e,GL
+JG,GGXXXX,;;G,,P,,GXXXXXG,5eGt
+LG,,,G,G,,G,G,,PG,GXXXXXeG,,GU
 oGoc,,;;,G,,,G,P,,G,G,,l,U,,,,
 tLoGG,l,,lGL,´GLG,,L,L,LUoLL,,
 `;
@@ -99,6 +100,7 @@ export const village: MapDefinition = {
     ':': TileType.MEADOW_GRASS, // : = Meadow grass (seasonal ground cover)
     ';': TileType.ROSEBUSH_PINK, // ; = Pink rosebush (village only, 2x2)
     '"': TileType.ROSEBUSH_RED, // " = Red rosebush (village only, 2x2)
+    'H': TileType.PLAYER_HOME, // H = Player home (15x15 seasonal building)
   }),
   colorScheme: 'village',
   hasClouds: true,
@@ -106,8 +108,8 @@ export const village: MapDefinition = {
   spawnPoint: { x: 15, y: 27 }, // On the path below the home building
   transitions: [
     {
-      fromPosition: { x: 8.2, y: 27 }, // Home building door (N tile) - lowered to be level with farm plots
-      tileType: TileType.BUILDING_DOOR,
+      fromPosition: { x: 9.5, y: 21 }, // Player home door (bottom of 13x13 sprite, anchor H at y=22)
+      tileType: TileType.PLAYER_HOME,
       toMapId: 'mums_kitchen',
       toPosition: { x: 7, y: 6 },
       label: 'To Home',
@@ -135,14 +137,6 @@ export const village: MapDefinition = {
       toMapId: 'shop',
       toPosition: { x: 10, y: 8 }, // Center of walkable floor in shop (19x11 grid)
       label: 'To Shop',
-      hasDoor: true,
-    },
-    {
-      fromPosition: { x: 3.3, y: 21 }, // South-west house (moved down 1 tile for better accessibility)
-      tileType: TileType.BUILDING_DOOR,
-      toMapId: 'house3',
-      toPosition: { x: 3, y: 4 },
-      label: 'To House',
       hasDoor: true,
     },
     {

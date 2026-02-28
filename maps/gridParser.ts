@@ -120,7 +120,6 @@ export const GRID_CODES: Record<string, TileType> = {
   N: TileType.BUILDING_DOOR, // N = eNtrance
   K: TileType.COTTAGE, // K = Cottage (wooden house)
   // manual
-  z: TileType.COTTAGE_FLOWERS,
   k: TileType.COTTAGE_STONE,
   '%': TileType.SHOP, // % = Shop (seasonal building)
   '~': TileType.GARDEN_SHED, // ~ = Garden shed (seasonal farm building)

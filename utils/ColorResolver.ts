@@ -100,8 +100,8 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MEADOW_GRASS]: 'grass',
   [TileType.TREE_STUMP]: 'grass',
   [TileType.COTTAGE]: 'grass',
-  [TileType.COTTAGE_FLOWERS]: 'grass',
   [TileType.COTTAGE_STONE]: 'grass',
+  [TileType.PLAYER_HOME]: 'grass',
   [TileType.BUILDING_ROOF]: 'grass',  // Blend with map's grass colour (decorative buildings)
   [TileType.BUILDING_WINDOW]: 'grass',  // Blend with map's grass colour (decorative buildings)
   [TileType.MIRROR]: 'special',

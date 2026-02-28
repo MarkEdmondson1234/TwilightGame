@@ -891,11 +891,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     collisionType: CollisionType.SOLID,
     image: [],
   },
-  [TileType.COTTAGE_FLOWERS]: {
-    name: 'Cottage Flowers',
-    color: 'bg-palette-sage', // Base grass color for background
+  [TileType.PLAYER_HOME]: {
+    name: 'Player Home',
+    color: 'bg-palette-sage',
     collisionType: CollisionType.SOLID,
+    baseType: TileType.GRASS,
     image: [],
+    seasonalImages: {
+      spring: [tileAssets.home_spring],
+      summer: [tileAssets.home_summer],
+      autumn: [tileAssets.home_autumn],
+      winter: [tileAssets.home_winter],
+      default: [tileAssets.home_spring],
+    },
   },
   [TileType.SHOP]: {
     name: 'Shop',

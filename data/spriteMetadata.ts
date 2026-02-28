@@ -446,6 +446,23 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.98, max: 1.02 },
   },
   {
+    tileType: TileType.PLAYER_HOME,
+    spriteWidth: 13, // 13 tiles wide (large seasonal home)
+    spriteHeight: 13, // 13 tiles tall
+    offsetX: -6, // Centre horizontally: sprite spans x=anchor-6 to x=anchor+7
+    offsetY: -12, // Anchor at door (bottom): sprite spans y=anchor-12 to y=anchor+1
+    image: tileAssets.home_spring,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Block the main building body; leave bottom open for the door area
+    collisionWidth: 11,
+    collisionHeight: 5,
+    collisionOffsetX: -5,
+    collisionOffsetY: -6, // Upper portion of sprite (walls, windows, roof)
+  },
+  {
     tileType: TileType.COTTAGE,
     spriteWidth: 6, // 6 tiles wide (actual cottage width)
     spriteHeight: 6, // 5 tiles tall (actual cottage height)
@@ -638,23 +655,6 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 3.8,
     collisionOffsetX: 0,
     collisionOffsetY: 0, // Just the bottom 2 rows (player can walk behind roof/chimney)
-  },
-  {
-    tileType: TileType.COTTAGE_FLOWERS,
-    spriteWidth: 6, // 6 tiles wide (actual cottage width)
-    spriteHeight: 6, // 5 tiles tall (actual cottage height)
-    offsetX: -1, // Offset to center cottage
-    offsetY: -4, // Extends upward from K tile
-    image: tileAssets.cottage_w_flowers,
-    enableFlip: false,
-    enableRotation: false,
-    enableScale: false,
-    enableBrightness: false,
-    // Collision at the front wall (full width, but only bottom 2 rows)
-    collisionWidth: 3.6,
-    collisionHeight: 3.4,
-    collisionOffsetX: 0,
-    collisionOffsetY: -1.4, // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
   {
     tileType: TileType.SHOP,

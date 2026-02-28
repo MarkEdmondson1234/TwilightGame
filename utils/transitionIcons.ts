@@ -52,7 +52,6 @@ export function getTransitionIcon(transition: Transition): TransitionIconConfig 
 
     case TileType.COTTAGE:
     case TileType.COTTAGE_STONE:
-    case TileType.COTTAGE_FLOWERS:
       return { icon: '🏠', colour: '#C47849' }; // Terracotta for cottages
 
     case TileType.CHIMNEY:

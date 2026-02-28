@@ -102,7 +102,7 @@ export enum TileType {
   BUILDING_WINDOW,
   COTTAGE,
   COTTAGE_STONE,
-  COTTAGE_FLOWERS,
+  PLAYER_HOME, // Player's own home (15x15 seasonal building, leads to Mum's kitchen)
   SHOP,
   GARDEN_SHED,
   RUINS_ENTRANCE, // Ancient ruins entrance (8x8 multi-tile, seasonal)

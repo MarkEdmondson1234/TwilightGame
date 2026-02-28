@@ -61,6 +61,7 @@ const TREE_SIZE = 1024; // Extra large for trees (major visual elements, worth t
 const SHOP_SIZE = 1024; // Extra large for shop buildings (6x6 tiles with lots of detail)
 const WITCH_HUT_SIZE = 1024; // Witch hut at 1024px for best quality (major landmark)
 const LAKE_SIZE = 2048; // Extra large for magical lake (12x12 multi-tile sprite needs high resolution)
+const HOME_SIZE = 1000; // Player home - 15x15 tiles, capped at source resolution (1000x1000px)
 const COMPRESSION_QUALITY = 85; // PNG compression quality
 const HIGH_QUALITY = 95; // Higher quality for detailed furniture
 const SHOWCASE_QUALITY = 97; // Very high quality for showcase assets (trees, NPCs)
@@ -306,6 +307,16 @@ async function optimizeTiles() {
           background: { r: 0, g: 0, b: 0, alpha: 0 }
         })
         .png({ palette: false, quality: SHOP_QUALITY, compressionLevel: 3 }) // Very high quality, minimal compression
+        .toFile(outputPath);
+    }
+    // Special handling for player home - 15x15 tiles, capped at source resolution to avoid blurring
+    else if (file.includes('home_')) {
+      await sharp(inputPath)
+        .resize(HOME_SIZE, HOME_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ palette: false, quality: SHOP_QUALITY, compressionLevel: 2 }) // Near-lossless: minimal compression to preserve detail
         .toFile(outputPath);
     }
     // Special handling for magical lake - 12x12 multi-tile sprite needs very high resolution
