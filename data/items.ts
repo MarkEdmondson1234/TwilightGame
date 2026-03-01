@@ -371,6 +371,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A sweet, refreshing melon.',
     stackable: true,
     sellPrice: 80,
+    image: groceryAssets.melon_crop,
   },
 
   crop_chili: {

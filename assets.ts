@@ -296,6 +296,8 @@ export const farmingAssets = {
   plant_radish_adult: '/TwilightGame/assets-optimized/farming/radishes_adult.png',
   plant_corn_young: '/TwilightGame/assets-optimized/farming/plant_corn_young.png',
   plant_corn_adult: '/TwilightGame/assets-optimized/farming/plant_corn_adult.png',
+  plant_melon_young: '/TwilightGame/assets-optimized/farming/melon_young.png',
+  plant_melon_adult: '/TwilightGame/assets-optimized/farming/melon_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
   farm_fence: '/TwilightGame/assets-optimized/farming/farm_fence.png',
 };
@@ -340,6 +342,7 @@ export const groceryAssets = {
   hazelnuts: '/TwilightGame/assets-optimized/items/grocery/hazelnuts.png',
   honey: '/TwilightGame/assets-optimized/items/grocery/honey.png',
   meat: '/TwilightGame/assets-optimized/items/grocery/meat.png',
+  melon_crop: '/TwilightGame/assets-optimized/items/grocery/melon_crop.png',
   milk: '/TwilightGame/assets-optimized/items/grocery/milk.png',
   minced_meat: '/TwilightGame/assets-optimized/items/grocery/minced_meat.png',
   rice: '/TwilightGame/assets-optimized/items/grocery/rice.png',
