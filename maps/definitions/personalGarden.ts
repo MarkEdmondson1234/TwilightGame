@@ -20,7 +20,7 @@ import { parseGrid } from '../gridParser';
  * Y = Tree (large decorative tree)
  * o = Oak Tree
  * t = Spruce Tree
- * J = Cherry Tree
+ * J = Sakura Tree
  * ) = Small Lake (6x6 pond sprite)
  * , = Village Green (decorative ground cover)
  */

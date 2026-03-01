@@ -17,7 +17,7 @@ import { createWitchWolfNPC } from '../../utils/npcFactories';
  * G = Grass
  * Y = Tree (regular tree)
  * o = Oak Tree (seasonal)
- * J = Cherry Tree (seasonal blossoms)
+ * J = Sakura Tree (seasonal blossoms)
  * t = Spruce Tree (evergreen)
  * y = Willow Tree (graceful weeping willow)
  * e = Fern (forest floor plant)

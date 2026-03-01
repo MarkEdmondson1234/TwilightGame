@@ -350,21 +350,17 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     collisionType: CollisionType.SOLID,
     image: [tileAssets.grass_1, tileAssets.grass_2], // Use grass images as background so it matches surrounding grass
   },
-  [TileType.CHERRY_TREE]: {
-    name: 'Cherry Tree',
+  [TileType.SAKURA_TREE]: {
+    name: 'Sakura Tree',
     color: 'bg-palette-sage', // Base grass color for blending
     collisionType: CollisionType.SOLID,
-    baseType: TileType.GRASS, // Render grass underneath the cherry tree sprite
+    baseType: TileType.GRASS, // Render grass underneath the sakura tree sprite
     seasonalImages: {
-      spring: [tileAssets.tree_cherry_spring],
-      summer: [
-        tileAssets.tree_cherry_summer_fruit,
-        tileAssets.tree_cherry_summer_fruit, // Cherry trees with fruit 66%
-        tileAssets.tree_cherry_summer_no_fruit, // Cherry trees without fruit 33%
-      ],
-      autumn: [tileAssets.tree_cherry_autumn],
-      winter: [tileAssets.tree_cherry_winter],
-      default: [tileAssets.tree_cherry_summer_no_fruit],
+      spring: [tileAssets.sakura_tree_spring],
+      summer: [tileAssets.sakura_tree_summer],
+      autumn: [tileAssets.sakura_tree_autumn],
+      winter: [tileAssets.sakura_tree_winter],
+      default: [tileAssets.sakura_tree_summer],
     },
   },
   [TileType.OAK_TREE]: {

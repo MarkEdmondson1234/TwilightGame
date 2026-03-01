@@ -1803,7 +1803,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         TileType.FROST_FLOWER,
         TileType.DEAD_SPRUCE,
         TileType.GIANT_MUSHROOM,
-        TileType.CHERRY_TREE,
+        TileType.SAKURA_TREE,
       ]);
     }
 

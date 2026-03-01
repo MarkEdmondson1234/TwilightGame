@@ -481,12 +481,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
 
   {
-    tileType: TileType.CHERRY_TREE,
+    tileType: TileType.SAKURA_TREE,
     spriteWidth: 4, // 4 tiles wide (larger than regular tree)
     spriteHeight: 4, // 4 tiles tall
     offsetX: -1.5, // Center horizontally on tile
     offsetY: -3, // Extends 3 tiles upward
-    image: tileAssets.tree_cherry_autumn, // Default image (will be overridden by seasonal logic)
+    image: tileAssets.sakura_tree_autumn, // Default image (will be overridden by seasonal logic)
     // Collision only at the base trunk (1x1)
     collisionWidth: 0.3,
     collisionHeight: 0.3,

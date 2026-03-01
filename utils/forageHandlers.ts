@@ -875,7 +875,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const cherryTreeResult = findTileTypeNearby(
     playerTileX,
     playerTileY,
-    TileType.CHERRY_TREE
+    TileType.SAKURA_TREE
   );
   const cherryTreeAnchor = cherryTreeResult.found ? cherryTreeResult.position : null;
 

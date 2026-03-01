@@ -48,7 +48,7 @@ import {
  * e = Fern (forest floor plant)
  * Y = Tree (large decorative tree)
  * Z = Big Tree (extra large tree)
- * J = Cherry Tree (seasonal tree with blossoms/fruit)
+ * J = Sakura Tree (seasonal)
  * o = Oak Tree (seasonal oak tree)
  * t = Spruce Tree (evergreen conifer)
  * y = Willow Tree (graceful weeping willow)

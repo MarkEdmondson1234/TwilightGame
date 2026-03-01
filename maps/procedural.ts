@@ -654,7 +654,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
     if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.CHERRY_TREE;
+      map[y][x] = TileType.SAKURA_TREE;
     }
   }
 

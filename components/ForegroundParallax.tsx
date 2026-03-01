@@ -64,15 +64,15 @@ function getSeasonalTree(treeType: TreeType): string {
     case 'cherry':
       switch (season) {
         case 'spring':
-          return tileAssets.tree_cherry_spring;
+          return tileAssets.sakura_tree_spring;
         case 'summer':
-          return tileAssets.tree_cherry_summer_no_fruit;
+          return tileAssets.sakura_tree_summer;
         case 'autumn':
-          return tileAssets.tree_cherry_autumn;
+          return tileAssets.sakura_tree_autumn;
         case 'winter':
-          return tileAssets.tree_cherry_winter;
+          return tileAssets.sakura_tree_winter;
         default:
-          return tileAssets.tree_cherry_spring;
+          return tileAssets.sakura_tree_spring;
       }
     case 'spruce':
       return season === 'winter' ? tileAssets.spruce_tree_winter : tileAssets.spruce_tree;

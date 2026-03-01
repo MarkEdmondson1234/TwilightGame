@@ -157,7 +157,7 @@ describe('ColorResolver', () => {
 
       // Trees should blend with grass
       expect(mapping[TileType.TREE]).toBe('grass');
-      expect(mapping[TileType.CHERRY_TREE]).toBe('grass');
+      expect(mapping[TileType.SAKURA_TREE]).toBe('grass');
       expect(mapping[TileType.OAK_TREE]).toBe('grass');
 
       // Other decorative elements

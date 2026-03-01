@@ -274,7 +274,7 @@ export const TILE_ANIMATIONS: import('./types').TileAnimation[] = [
   {
     id: 'cherry_petals_spring',
     image: animationAssets.cherry_spring_petals,
-    tileType: TileType.CHERRY_TREE,
+    tileType: TileType.SAKURA_TREE,
     offsetX: -0.75, // Moved left from tree center
     offsetY: -1.5, // Just above the tree canopy
     radius: 1, // Only right at the tree

@@ -72,7 +72,7 @@ export enum TileType {
   BUSH,
   TREE,
   TREE_BIG,
-  CHERRY_TREE,
+  SAKURA_TREE,
   OAK_TREE,
   FAIRY_OAK,
   FAIRY_OAK_GIANT, // Enormous 10x10 fairy oak for the deep forest
