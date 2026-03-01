@@ -5,7 +5,7 @@ description: Add grocery items (cooking ingredients) to the game. Use when user 
 
 # Add Grocery Item
 
-Add grocery items (cooking ingredients) to the game as purchasable shop items and usable recipe ingredients. Handles sprite registration, item definition, shop inventory, and UI mapping.
+Add grocery items (cooking ingredients) to the game as purchasable shop items and usable recipe ingredients. Handles sprite registration, item definition, and shop inventory.
 
 ## Quick Start
 
@@ -17,10 +17,9 @@ Add grocery items (cooking ingredients) to the game as purchasable shop items an
 # 2. Register sprite in assets.ts
 # 3. Create item definition in data/items.ts
 # 4. Add to shop inventory in data/shopInventory.ts
-# 5. Map sprite in utils/inventoryUIHelper.ts
-# 6. Run npm run optimize-assets (CRITICAL - sprite won't work without this!)
-# 7. Verify optimized file exists
-# 8. Run TypeScript check
+# 5. Run npm run optimize-assets (CRITICAL - sprite won't work without this!)
+# 6. Verify optimized file exists
+# 7. Run TypeScript check
 ```
 
 ## When to Use This Skill
@@ -78,6 +77,8 @@ almonds: {
 },
 ```
 
+**The `image` field is all that's needed for the sprite to display** — `inventoryUIHelper.ts` reads `item.image` directly from the item definition. No separate UI mapping step required.
+
 **Pricing guidelines:**
 - Basic ingredients (flour, salt): 5-10g buy, 2-4g sell
 - Common ingredients (butter, eggs): 10-15g buy, 4-6g sell
@@ -101,22 +102,7 @@ almonds: {
 - Use 'unlimited' for common ingredients
 - Place in appropriate section (dairy, pantry, spices, etc.)
 
-### 5. Map Sprite in utils/inventoryUIHelper.ts
-
-**Add to ITEM_SPRITE_MAP:**
-```typescript
-const ITEM_SPRITE_MAP: Record<string, string> = {
-  // ... existing items
-  almonds: groceryAssets.almonds,
-};
-```
-
-**Critical:**
-- This is what makes the sprite actually display
-- Without this, item shows fallback emoji (📦)
-- Do NOT add emoji fallback if sprite exists
-
-### 6. Optimize Assets
+### 5. Optimize Assets
 
 **CRITICAL - Run optimization script:**
 ```bash
@@ -140,7 +126,7 @@ ls -la public/assets-optimized/items/grocery/[item_name].png
 - Game references /assets-optimized/, not /assets/
 - Missing optimized file = broken image in game
 
-### 7. Verify with TypeScript
+### 6. Verify with TypeScript
 
 **Run type check:**
 ```bash
@@ -152,7 +138,7 @@ npx tsc --noEmit
 - Typo in item ID
 - Missing comma in object
 
-### 8. Test in Game (Optional)
+### 7. Test in Game (Optional)
 
 **Add item via console:**
 ```javascript
@@ -178,19 +164,19 @@ See [`resources/complete_guide.md`](resources/complete_guide.md) for:
 This skill loads information progressively:
 
 1. **Always loaded**: This SKILL.md file (workflow steps)
-2. **Execute as needed**: npm run optimize-assets (during step 6)
+2. **Execute as needed**: npm run optimize-assets (during step 5)
 3. **Load on demand**: `resources/complete_guide.md` (detailed reference)
 
 ## Notes
 
-**Four files must be updated:**
+**Three files must be updated:**
 1. `assets.ts` - Sprite path registration
-2. `data/items.ts` - Item definition
+2. `data/items.ts` - Item definition (the `image` field handles UI display automatically)
 3. `data/shopInventory.ts` - Shop stock (optional but recommended)
-4. `utils/inventoryUIHelper.ts` - UI sprite mapping (CRITICAL)
+
+**`utils/inventoryUIHelper.ts` does NOT need updating** — it reads `item.image` directly from the item definition via `getItem()`. There is no ITEM_SPRITE_MAP to maintain.
 
 **Common mistakes to avoid:**
-- Forgetting to add to ITEM_SPRITE_MAP (step 5)
 - Price mismatch between items.ts and shopInventory.ts
 - Using /assets/ instead of /assets-optimized/ path
 - **Not running optimize-assets** - sprite won't display without this!
