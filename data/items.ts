@@ -702,19 +702,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.flour,
   },
 
-  whole_grain_wheat_flour: {
-    id: 'whole_grain_wheat_flour',
-    name: 'whole_grain_wheat_flour',
-    displayName: 'Stone-Milled Whole-Grain Wheat Flour',
-    category: ItemCategory.INGREDIENT,
-    description: 'Coarse stone-milled whole-grain flour. Full of flavour and nutrition.',
-    stackable: true,
-    maxUses: 5,
-    sellPrice: 4,
-    buyPrice: 4,
-    // Note: No whole_grain_wheat_flour sprite yet - add whole_grain_wheat_flour.png to grocery folder
-  },
-
   whole_grain_wheat: {
     id: 'whole_grain_wheat',
     name: 'whole_grain_wheat',

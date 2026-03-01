@@ -294,7 +294,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
       { itemId: 'yeast', quantity: 1 },
       { itemId: 'salt', quantity: 1 },
       { itemId: 'whole_grain_wheat', quantity: 1 },
-      { itemId: 'whole_grain_wheat_flour', quantity: 1 },
       { itemId: 'flour', quantity: 1 },
     ],
     cookingTime: 120, // 2 minutes to represent 2 days
