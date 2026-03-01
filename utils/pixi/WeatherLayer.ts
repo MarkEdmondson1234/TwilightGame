@@ -63,9 +63,11 @@ export class WeatherLayer {
     this.viewportWidth = viewportWidth;
     this.viewportHeight = viewportHeight;
 
-    // Main container
+    // Main container - must have a high z-index on the stage so weather
+    // renders above all game world elements (tiles, sprites, buildings)
     this.container = new PIXI.Container();
     this.container.sortableChildren = true;
+    this.container.zIndex = Z_WEATHER_PARTICLES;
 
     // Particle container (for rain, snow, etc.)
     this.particleContainer = new PIXI.Container();
