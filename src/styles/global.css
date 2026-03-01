@@ -11,6 +11,17 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* Fairy form fading flicker — plays in the last 30 seconds before transformation expires */
+@keyframes fairy-flicker {
+  0%, 100% { opacity: 1; }
+  30% { opacity: 0.25; }
+  60% { opacity: 0.85; }
+}
+
+.animate-fairy-flicker {
+  animation: fairy-flicker 0.5s ease-in-out infinite;
+}
+
 /* Farm action animation - float up and fade out */
 @keyframes farmActionFloat {
   0% {

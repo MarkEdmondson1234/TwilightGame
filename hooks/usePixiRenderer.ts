@@ -84,6 +84,7 @@ export interface UsePixiRendererProps {
     playerScale: number;
     shouldFlip: boolean;
     movementMode: MovementMode;
+    isFairyFormFading?: boolean;
   };
 
   /** Timing state */
@@ -171,6 +172,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     playerScale,
     shouldFlip,
     movementMode,
+    isFairyFormFading = false,
   } = player;
   const { seasonKey, timeOfDay } = timing;
   const { farmUpdateTrigger, placedItemsUpdateTrigger, renderVersion, npcUpdateTrigger } = triggers;
@@ -186,6 +188,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     if (tileLayerRef.current) {
       tileLayerRef.current.updateAnimations();
     }
+    // Tick player flicker (no-op when not flickering)
+    playerSpriteRef.current?.tickFlicker(deltaTime);
   }, []);
 
   // =========================================================================
@@ -782,6 +786,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   ]);
 
   // =========================================================================
+  // EFFECT: Player Sprite Flicker (fairy form fading)
+  // =========================================================================
+  useEffect(() => {
+    if (!enabled || !isPixiInitialized || !playerSpriteRef.current) return;
+    playerSpriteRef.current.setFlickering(isFairyFormFading);
+  }, [enabled, isPixiInitialized, isFairyFormFading]);
+
   // EFFECT: Player Sprite Update
   // =========================================================================
   useEffect(() => {

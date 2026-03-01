@@ -178,6 +178,7 @@ const App: React.FC = () => {
   const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
   const lastChainCheckTime = useRef<number>(0); // Throttle for event chain proximity checks
   const lastTransitionTime = useRef<number>(0);
+  const fairyFormTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]); // Timers for fairy form warnings/expiry
 
   // Canvas ref for PixiJS (passed to usePixiRenderer)
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -223,6 +224,9 @@ const App: React.FC = () => {
     isCutscenePlaying,
     activeNPC,
   });
+
+  // Fairy form fading state — true in the last 30s to trigger sprite flicker
+  const [isFairyFormFading, setIsFairyFormFading] = useState(false);
 
   // VFX system for magic effects (must be after movement controller for playerPos)
   const { activeEffects: activeVFX, triggerVFX, removeEffect: removeVFX } = useVFX(playerPos);
@@ -943,6 +947,48 @@ const App: React.FC = () => {
         // TODO: Will be implemented when GlamourModal component is created
         openUI('glamourModal');
       },
+      // Fairy Form Potion: shrink player to fairy size for a duration
+      setFairyForm: (active: boolean, durationMs?: number) => {
+        // Clear any pending fairy form timers (handles early deactivation via DevTools etc.)
+        fairyFormTimersRef.current.forEach(clearTimeout);
+        fairyFormTimersRef.current = [];
+
+        gameState.setFairyForm(active, durationMs ?? null);
+        setFairyForm(active);
+        setIsFairyFormFading(false);
+
+        if (active) {
+          setPlayerSizeTier(-3 as SizeTier);
+          setPlayerScale(0.25);
+
+          if (durationMs) {
+            // 10 minutes remaining warning
+            fairyFormTimersRef.current.push(setTimeout(() => {
+              showToast('Your fairy form will fade in 10 minutes.', 'info');
+            }, durationMs - 10 * 60 * 1000));
+            // 1 minute remaining warning
+            fairyFormTimersRef.current.push(setTimeout(() => {
+              showToast('Your fairy form is fading fast — only a minute left!', 'warning');
+            }, durationMs - 60 * 1000));
+            // Start flicker at 30 seconds remaining
+            fairyFormTimersRef.current.push(setTimeout(() => {
+              setIsFairyFormFading(true);
+            }, durationMs - 30 * 1000));
+            // Auto-revert at expiry
+            fairyFormTimersRef.current.push(setTimeout(() => {
+              gameState.setFairyForm(false);
+              setFairyForm(false);
+              setIsFairyFormFading(false);
+              setPlayerSizeTier(0 as SizeTier);
+              setPlayerScale(1.0);
+              showToast('Your fairy form has worn off.', 'info');
+            }, durationMs));
+          }
+        } else {
+          setPlayerSizeTier(0 as SizeTier);
+          setPlayerScale(1.0);
+        }
+      },
     }),
     [currentMapId, playerPos, playerScale, playerSizeTier, triggerVFX]
   );
@@ -1029,6 +1075,7 @@ const App: React.FC = () => {
       playerScale,
       shouldFlip,
       movementMode,
+      isFairyFormFading,
     },
     timing: {
       seasonKey,
@@ -1245,7 +1292,7 @@ const App: React.FC = () => {
               <img
                 src={playerSpriteUrl}
                 alt="Player"
-                className="absolute"
+                className={`absolute${isFairyFormFading ? ' animate-fairy-flicker' : ''}`}
                 style={{
                   left:
                     (playerPos.x - (PLAYER_SIZE * effectiveScale) / 2) * effectiveTileSize +

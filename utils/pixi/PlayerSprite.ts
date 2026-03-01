@@ -34,6 +34,9 @@ export class PlayerSprite extends PixiLayer {
   // Shared container for depth-sorted entities (sprites, player, NPCs)
   // When set, player sprite is added here instead of this.container for cross-layer z-sorting
   private depthContainer: PIXI.Container | null = null;
+  // Flicker state for fairy form fading (last 30s of transformation)
+  private isFlickering = false;
+  private flickerPhase = 0;
 
   constructor() {
     super(Z_DEPTH_SORTED_BASE, true); // Uses dynamic depth sorting
@@ -129,6 +132,30 @@ export class PlayerSprite extends PixiLayer {
 
     // Show sprite
     this.sprite.visible = true;
+  }
+
+  /**
+   * Enable or disable the fairy-form-fading flicker effect.
+   * Resets alpha to fully opaque when disabled.
+   */
+  setFlickering(enabled: boolean): void {
+    this.isFlickering = enabled;
+    if (!enabled) {
+      this.sprite.alpha = 1;
+      this.flickerPhase = 0;
+    }
+  }
+
+  /**
+   * Advance the flicker animation by deltaTime seconds.
+   * Called every frame from the game loop (no-op when not flickering).
+   */
+  tickFlicker(deltaTime: number): void {
+    if (!this.isFlickering) return;
+    // ~2.5 cycles per second — fast enough to feel unstable, slow enough to read
+    this.flickerPhase += deltaTime * Math.PI * 5;
+    // Alpha oscillates between 0.2 and 1.0
+    this.sprite.alpha = 0.6 + 0.4 * Math.sin(this.flickerPhase);
   }
 
   /**
