@@ -1169,6 +1169,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A warm loaf of homemade bread.',
     stackable: true,
     sellPrice: 25,
+    image: groceryAssets.bread,
   },
 
   food_cookies: {
@@ -1903,6 +1904,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 10,
     buyPrice: 25,
     icon: '🏺',
+    image: groceryAssets.vase,
   },
 
   plant_pot: {
