@@ -237,6 +237,15 @@ function handleRecipeTeaching(nodeId: string): void {
       if (DEBUG.QUEST) console.log(`[dialogueHandlers] ❌ Failed to unlock recipe: ${recipeId}`);
     }
   }
+
+  // Mum gifts her sourdough starter when teaching bread (one-time; node hidden after recipe unlock)
+  if (nodeId === 'learn_bread') {
+    inventoryManager.addItem('sourdough', 1);
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    if (DEBUG.QUEST)
+      console.log('[dialogueHandlers] 🍞 Mum gave you her Sourdough Starter!');
+  }
 }
 
 /**

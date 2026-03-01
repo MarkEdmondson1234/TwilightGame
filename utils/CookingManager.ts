@@ -434,9 +434,11 @@ class CookingManagerClass {
       };
     }
 
-    // Consume ingredients
+    // Consume ingredients (skip persistent items like sourdough starter)
     recipe.ingredients.forEach((ing) => {
-      inventoryManager.removeItem(ing.itemId, ing.quantity);
+      if (!getItem(ing.itemId)?.persistent) {
+        inventoryManager.removeItem(ing.itemId, ing.quantity);
+      }
     });
 
     // Get current progress to determine mastery level

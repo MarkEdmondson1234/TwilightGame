@@ -218,7 +218,7 @@ export function createMumNPC(
       { id: 'learn_crepes', text: 'Crêpes with strawberry jam - delightful! They\'re thin and delicate. I\'ll write down the recipe for you.', responses: [] },
       { id: 'learn_marzipan', text: 'Marzipan chocolates are a bit tricky, but so rewarding! You\'ll need almonds, sugar, and good dark chocolate. Here\'s the recipe.', responses: [] },
       { id: 'learn_ice_cream', text: 'Homemade vanilla ice cream - nothing beats it! You\'ll need cream, sugar, vanilla, and patience. I\'ll add it to your book.', expression: 'smile', responses: [] },
-      { id: 'learn_bread', text: 'Bread is the foundation of cooking! Flour, water, yeast, salt - simple ingredients, but the technique matters. I\'ll teach you.', responses: [] },
+      { id: 'learn_bread', text: 'Bread is the foundation of cooking! The secret is a good sourdough starter - here, take some of mine. Keep it fed and it\'ll last you forever. I\'ll write down the recipe for you.', responses: [] },
       { id: 'learn_biscuits', text: 'Chocolate cookies are perfect with a cup of tea! Butter, flour, cocoa powder, and chocolate chips - they bake up lovely and rich. Here\'s the recipe.', responses: [] },
       { id: 'learn_chocolate_cake', text: 'Chocolate cake! Everyone\'s favourite. Rich, moist, and absolutely delicious. I\'ll show you how to make it.', responses: [] },
 

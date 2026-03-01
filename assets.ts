@@ -341,6 +341,7 @@ export const groceryAssets = {
   egg: '/TwilightGame/assets-optimized/items/grocery/egg.png',
   flour: '/TwilightGame/assets-optimized/items/grocery/flour.png',
   gravy: '/TwilightGame/assets-optimized/items/grocery/gravy.png',
+  whole_grain_wheat: '/TwilightGame/assets-optimized/items/grocery/whole_grain_wheat.png',
   hazelnuts: '/TwilightGame/assets-optimized/items/grocery/hazelnuts.png',
   honey: '/TwilightGame/assets-optimized/items/grocery/honey.png',
   meat: '/TwilightGame/assets-optimized/items/grocery/meat.png',
@@ -656,6 +657,8 @@ export const itemAssets = {
   radishes: '/TwilightGame/assets-optimized/items/radishes.png',
   blackberries: '/TwilightGame/assets-optimized/items/blackberries.png',
   strawberry: '/TwilightGame/assets-optimized/items/strawberry.png',
+  // Special handmade items
+  sourdough_starter: '/TwilightGame/assets-optimized/items/sourdough_starter.png',
   // Tools - Quest and special items
   feather_duster: '/TwilightGame/assets-optimized/items/feather_duster.png',
   // Decorations

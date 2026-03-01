@@ -293,6 +293,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
       { itemId: 'sourdough', quantity: 1 },
       { itemId: 'yeast', quantity: 1 },
       { itemId: 'salt', quantity: 1 },
+      { itemId: 'whole_grain_wheat', quantity: 1 },
       { itemId: 'whole_grain_wheat_flour', quantity: 1 },
       { itemId: 'flour', quantity: 1 },
     ],

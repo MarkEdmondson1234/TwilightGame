@@ -129,6 +129,12 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
+    itemId: 'whole_grain_wheat',
+    buyPrice: 5,
+    sellPrice: 3,
+    stock: 'unlimited',
+  },
+  {
     itemId: 'sugar',
     buyPrice: 8,
     sellPrice: 3,

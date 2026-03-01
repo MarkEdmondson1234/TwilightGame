@@ -49,6 +49,7 @@ export interface ItemDefinition {
   icon?: string; // Emoji fallback when no image available
   forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
   placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
+  persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
 }
 
 /**
@@ -714,17 +715,27 @@ export const ITEMS: Record<string, ItemDefinition> = {
     // Note: No whole_grain_wheat_flour sprite yet - add whole_grain_wheat_flour.png to grocery folder
   },
 
+  whole_grain_wheat: {
+    id: 'whole_grain_wheat',
+    name: 'whole_grain_wheat',
+    displayName: 'Whole Grain Wheat',
+    category: ItemCategory.INGREDIENT,
+    description: 'Hearty whole grain wheat. Adds a nutty depth to homemade bread.',
+    stackable: true,
+    sellPrice: 3,
+    buyPrice: 5,
+    image: groceryAssets.whole_grain_wheat,
+  },
+
   sourdough: {
     id: 'sourdough',
     name: 'sourdough',
     displayName: 'Sourdough Starter',
     category: ItemCategory.INGREDIENT,
-    description: 'A bubbling sourdough starter. The secret to proper bread.',
-    stackable: true,
-    maxUses: 10,
-    sellPrice: 8,
-    buyPrice: 6,
-    // Note: No sourdough sprite yet - add sourdough.png to grocery folder
+    description: 'A bubbling sourdough starter. The secret to proper bread. Keep it fed and it will last forever.',
+    stackable: false,
+    persistent: true,
+    image: itemAssets.sourdough_starter,
   },
 
   sugar: {
