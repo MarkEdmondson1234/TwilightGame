@@ -348,7 +348,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Big Tree',
     color: 'bg-palette-sage', // Base grass color for blending
     collisionType: CollisionType.SOLID,
-    image: [tileAssets.grass_1, tileAssets.grass_2], // Use grass images as background so it matches surrounding grass
+    baseType: TileType.GRASS, // Render grass underneath the birch tree sprite
+    seasonalImages: {
+      spring: [tileAssets.birch_spring],
+      summer: [tileAssets.birch_summer],
+      autumn: [tileAssets.birch_autumn],
+      winter: [tileAssets.birch_winter],
+      default: [tileAssets.birch_summer],
+    },
   },
   [TileType.SAKURA_TREE]: {
     name: 'Sakura Tree',

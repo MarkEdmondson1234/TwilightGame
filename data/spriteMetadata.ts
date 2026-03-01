@@ -49,7 +49,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     spriteHeight: 2, // 2 tiles tall
     offsetX: -0.5, // Center horizontally on tile
     offsetY: -1, // Extends 1 tile upward
-    image: tileAssets.bush_1,
+    image: tileAssets.hawthorn_summer, // Seasonal images handled by TILE_LEGEND
     // Collision only at the base (1x1)
     collisionWidth: 1,
     collisionHeight: 1,
@@ -428,16 +428,16 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.TREE_BIG,
-    spriteWidth: 3, // 3 tiles wide
-    spriteHeight: 4, // 4 tiles tall
-    offsetX: -1, // Center horizontally on tile
-    offsetY: -3, // Extends 3 tiles upward
-    image: tileAssets.tree_big_1,
+    spriteWidth: 6, // 6 tiles wide (matches birch 1:1 aspect ratio)
+    spriteHeight: 6, // 6 tiles tall
+    offsetX: -2.5, // Center horizontally on tile
+    offsetY: -5, // Extends 5 tiles upward
+    image: tileAssets.birch_summer, // Use birch tree (seasonal handled by TILE_LEGEND)
     // Collision only at the base (1x1)
-    collisionWidth: 0.5,
-    collisionHeight: 0.5,
-    collisionOffsetX: 0.5,
-    collisionOffsetY: 0,
+    collisionWidth: 0.2,
+    collisionHeight: 0.2,
+    collisionOffsetX: 0.3,
+    collisionOffsetY: 1,
     // Transform controls: subtle scaling only, no rotation/brightness for trees
     enableFlip: true,
     enableRotation: false,
