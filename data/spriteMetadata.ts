@@ -479,6 +479,22 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetX: -1.7,
     collisionOffsetY: -1.2, // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
+  {
+    tileType: TileType.OLD_COTTAGE,
+    spriteWidth: 6,
+    spriteHeight: 6,
+    offsetX: -3,
+    offsetY: -4,
+    image: tileAssets.old_cottage,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 4.0,
+    collisionHeight: 2.5,
+    collisionOffsetX: -1.7,
+    collisionOffsetY: -1.2,
+  },
 
   {
     tileType: TileType.SAKURA_TREE,

@@ -894,6 +894,19 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       default: [tileAssets.cottage_medium_spring],
     },
   },
+  [TileType.OLD_COTTAGE]: {
+    name: 'Old Cottage',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.SOLID,
+    image: [],
+    seasonalImages: {
+      spring: [tileAssets.old_cottage],
+      summer: [tileAssets.old_cottage],
+      autumn: [tileAssets.old_cottage],
+      winter: [tileAssets.old_cottage_winter],
+      default: [tileAssets.old_cottage],
+    },
+  },
   [TileType.PLAYER_HOME]: {
     name: 'Player Home',
     color: 'bg-palette-sage',

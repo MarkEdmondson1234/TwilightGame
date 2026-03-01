@@ -36,6 +36,8 @@ export const tileAssets = {
   cottage_medium_summer: '/TwilightGame/assets-optimized/tiles/cottage_medium_summer.png',
   cottage_medium_autumn: '/TwilightGame/assets-optimized/tiles/cottage_medium_autumn.png',
   cottage_medium_winter: '/TwilightGame/assets-optimized/tiles/cottage_medium_winter.png',
+  old_cottage: '/TwilightGame/assets-optimized/tiles/old_cottage.png',
+  old_cottage_winter: '/TwilightGame/assets-optimized/tiles/old_cottage_winter.png',
 
   home_spring: '/TwilightGame/assets-optimized/tiles/home_spring.png',
   home_summer: '/TwilightGame/assets-optimized/tiles/home_summer.png',

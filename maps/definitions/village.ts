@@ -42,6 +42,7 @@ import {
  * N = Building Door (eNtrance)
  * V = Building Window
  * K = Cottage (4x4 wooden house)
+ * A = Old Cottage (weathered cottage, spring/summer/autumn + winter variant)
  * H = Player Home (15x15 seasonal building, entrance to Mum's kitchen)
  * X = Farm plot (fallow soil)
  * U = Bush (decorative foliage)
@@ -64,7 +65,7 @@ oe,eJlL,,L:lel:,,,,,loLL,l:l:G
 LoG,G,GeGG,,l,oG,G,,l:eeGGGLGG
 tG,G,,G,,,XXX,G,G,,,MlGG,yGGeG
 LG,,c,,,G,XXX,c,,,e,P,GeGeGeGG
-oGol,;,GKGGP,l,,sG,;P,G,Gl,lGG
+oGol,;,GAGGP,l,,sG,;P,G,Gl,lGG
 Ytl,,,,PPPPPPPPPPPPPPGG,,,,cGG
 LG,,G,,P,,Gl,G,,G,G",,,e,GlGLG
 tG,G,,,P,G,,,G,,J,,G,,,,eG,GeG
@@ -101,6 +102,7 @@ export const village: MapDefinition = {
     ';': TileType.ROSEBUSH_PINK, // ; = Pink rosebush (village only, 2x2)
     '"': TileType.ROSEBUSH_RED, // " = Red rosebush (village only, 2x2)
     'H': TileType.PLAYER_HOME, // H = Player home (15x15 seasonal building)
+    'A': TileType.OLD_COTTAGE, // A = Old Cottage (village only, weathered cottage)
   }),
   colorScheme: 'village',
   hasClouds: true,
