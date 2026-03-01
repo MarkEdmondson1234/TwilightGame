@@ -268,6 +268,24 @@ export class TileLayer extends PixiLayer {
         const fenceTopSprite = this.sprites.get(`${x},${y}_fence_top`);
         if (fenceTopSprite) fenceTopSprite.visible = false;
       }
+
+      // Left fence: soil tile with non-soil to the left
+      const tileLeft = getTileData(x - 1, y);
+      if (!tileLeft || !isSoilTile(tileLeft.type)) {
+        this.renderFarmFenceSide(x, y, 'left');
+      } else {
+        const s = this.sprites.get(`${x},${y}_fence_left`);
+        if (s) s.visible = false;
+      }
+
+      // Right fence: soil tile with non-soil to the right
+      const tileRight = getTileData(x + 1, y);
+      if (!tileRight || !isSoilTile(tileRight.type)) {
+        this.renderFarmFenceSide(x, y, 'right');
+      } else {
+        const s = this.sprites.get(`${x},${y}_fence_right`);
+        if (s) s.visible = false;
+      }
     }
 
     // Check if this tile has a baseType (e.g., grass under tree)
@@ -807,6 +825,54 @@ export class TileLayer extends PixiLayer {
     } else if (sprite instanceof PIXI.Sprite) {
       sprite.visible = true;
       sprite.zIndex = Z_DEPTH_SORTED_BASE + y * 10;
+    }
+  }
+
+  /**
+   * Render a farm fence side post at the left or right edge of a farm plot section.
+   * The sprite is centred on the tile boundary; the right variant is a horizontal flip.
+   */
+  private renderFarmFenceSide(x: number, y: number, side: 'left' | 'right'): void {
+    const fenceKey = `${x},${y}_fence_${side}`;
+    let sprite = this.sprites.get(fenceKey);
+
+    const imageUrl = farmingAssets.farm_fence_side;
+    const texture = textureManager.getTexture(imageUrl);
+    if (!texture) return;
+
+    if (!sprite || sprite instanceof PIXI.Graphics) {
+      if (sprite instanceof PIXI.Graphics) {
+        this.container.removeChild(sprite);
+        this.sprites.delete(fenceKey);
+      }
+
+      sprite = new PIXI.Sprite(texture);
+      sprite.width = TILE_SIZE;
+      // Extend 5px beyond each end of the tile so the post reaches the fence rails
+      sprite.height = TILE_SIZE + 10;
+
+      if (side === 'left') {
+        // Centre the post on the left edge of this tile
+        // (sprite extends TILE_SIZE/2 into the non-soil tile on the left)
+        sprite.x = x * TILE_SIZE - TILE_SIZE / 2;
+        sprite.y = y * TILE_SIZE - 5;
+      } else {
+        // Flip horizontally, then centre on the right edge.
+        // After negating scale.x, PixiJS draws from sprite.x leftward by TILE_SIZE,
+        // so sprite.x = right edge + TILE_SIZE/2 puts the post centre on the boundary.
+        sprite.scale.x = -sprite.scale.x;
+        sprite.x = (x + 1) * TILE_SIZE + TILE_SIZE / 2;
+        sprite.y = y * TILE_SIZE - 5;
+      }
+
+      // Depth-sort at the bottom of the tile (same as bottom fence)
+      sprite.zIndex = Z_DEPTH_SORTED_BASE + (y + 1) * 10;
+
+      this.container.addChild(sprite);
+      this.sprites.set(fenceKey, sprite);
+    } else if (sprite instanceof PIXI.Sprite) {
+      sprite.visible = true;
+      sprite.zIndex = Z_DEPTH_SORTED_BASE + (y + 1) * 10;
     }
   }
 

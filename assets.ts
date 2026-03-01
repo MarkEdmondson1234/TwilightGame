@@ -300,6 +300,7 @@ export const farmingAssets = {
   plant_melon_adult: '/TwilightGame/assets-optimized/farming/melon_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
   farm_fence: '/TwilightGame/assets-optimized/farming/farm_fence.png',
+  farm_fence_side: '/TwilightGame/assets-optimized/farming/farm_fence_side.png',
 };
 
 // Cooking assets - Prepared food items (cooked dishes)
