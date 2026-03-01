@@ -192,7 +192,7 @@ export const village: MapDefinition = {
       label: 'To Ancient Ruins',
     },
     {
-      fromPosition: { x: 29, y: 6 }, // South West side path exit to personal garden
+      fromPosition: { x: 5, y: 22 }, // South West side path exit to personal garden
       tileType: TileType.PATH,
       toMapId: 'personal_garden',
       toPosition: { x: 2, y: 22 }, // Spawn at garden entrance
