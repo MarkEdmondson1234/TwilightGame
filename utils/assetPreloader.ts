@@ -96,7 +96,6 @@ function getTileSpriteUrls(): string[] {
   const basePath = '/TwilightGame/assets/tiles';
   const knownTiles = [
     'grass_1.png',
-    'grass_2.png',
     'rock_1.png',
     'rock_2.png',
     'bush_1.png',

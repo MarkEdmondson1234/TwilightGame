@@ -15,11 +15,11 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage', // Base color, overridden by map color scheme
     collisionType: CollisionType.WALKABLE,
     seasonalImages: {
-      spring: [tileAssets.grass_1, tileAssets.grass_2],
-      summer: [tileAssets.grass_1, tileAssets.grass_2],
-      autumn: [tileAssets.grass_1, tileAssets.grass_2],
-      winter: [tileAssets.grass_2], // Hide grass_1 in winter (only show grass_2)
-      default: [tileAssets.grass_1, tileAssets.grass_2],
+      spring: [tileAssets.grass_1, tileAssets.tuft_sparse],
+      summer: [tileAssets.grass_1, tileAssets.tuft_sparse],
+      autumn: [tileAssets.grass_1, tileAssets.tuft_sparse],
+      winter: [tileAssets.tuft_sparse], // Hide grass_1 in winter (only show sparse tuft)
+      default: [tileAssets.grass_1, tileAssets.tuft_sparse],
     },
     transforms: {
       enableFlip: true, // Horizontal flipping for variety

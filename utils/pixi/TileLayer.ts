@@ -214,7 +214,8 @@ export class TileLayer extends PixiLayer {
     // Determine if we should hide this sprite during snowfall
     const hideSpriteDuringSnow =
       currentWeather === 'snow' &&
-      (tileData.type === TileType.TUFT ||
+      (tileData.type === TileType.GRASS ||
+        tileData.type === TileType.TUFT ||
         tileData.type === TileType.PATH ||
         tileData.type === TileType.TUFT_SPARSE);
 

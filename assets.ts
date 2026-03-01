@@ -4,7 +4,6 @@
 // Tile assets - Use optimized versions for better performance
 export const tileAssets = {
   grass_1: '/TwilightGame/assets-optimized/tiles/grass_1.png',
-  grass_2: '/TwilightGame/assets-optimized/tiles/grass_2.png',
   rock_1: '/TwilightGame/assets-optimized/tiles/rock_1.png',
   rock_2: '/TwilightGame/assets-optimized/tiles/rock_2.png',
   door_1: '/TwilightGame/assets-optimized/tiles/door_1.png',
