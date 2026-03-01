@@ -641,20 +641,20 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.COTTAGE_STONE,
-    spriteWidth: 6, // 6 tiles wide (actual cottage width)
-    spriteHeight: 6, // 5 tiles tall (actual cottage height)
-    offsetX: -1.2, // Offset to center cottage
-    offsetY: -1.5, // Extends upward from K tile
-    image: tileAssets.cottage_stone,
+    spriteWidth: 9,  // 9×9 tile footprint (square image)
+    spriteHeight: 9,
+    offsetX: -4.5,   // centres sprite horizontally on anchor tile
+    offsetY: -7.5,   // sprite extends mostly upward; bottom 1.5 tiles below anchor
+    image: tileAssets.cottage_medium_spring, // seasonal rendering overrides at runtime
     enableFlip: false,
     enableRotation: false,
     enableScale: false,
     enableBrightness: false,
-    // Collision at the front wall (full width, but only bottom 2 rows)
-    collisionWidth: 3.2,
-    collisionHeight: 3.8,
-    collisionOffsetX: 0,
-    collisionOffsetY: 0, // Just the bottom 2 rows (player can walk behind roof/chimney)
+    // Collision covers most of the base; tune after map placement
+    collisionWidth: 7.0,
+    collisionHeight: 2.5,
+    collisionOffsetX: -3.0,
+    collisionOffsetY: -1.2,
   },
   {
     tileType: TileType.SHOP,

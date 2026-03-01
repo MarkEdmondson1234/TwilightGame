@@ -882,10 +882,17 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
   },
   [TileType.COTTAGE_STONE]: {
-    name: 'Cottage Stone',
-    color: 'bg-palette-sage', // Base grass color for background
+    name: 'Cottage Medium',
+    color: 'bg-palette-sage',
     collisionType: CollisionType.SOLID,
     image: [],
+    seasonalImages: {
+      spring: [tileAssets.cottage_medium_spring],
+      summer: [tileAssets.cottage_medium_summer],
+      autumn: [tileAssets.cottage_medium_autumn],
+      winter: [tileAssets.cottage_medium_winter],
+      default: [tileAssets.cottage_medium_spring],
+    },
   },
   [TileType.PLAYER_HOME]: {
     name: 'Player Home',

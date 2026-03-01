@@ -136,5 +136,13 @@ export function createVillageChildNPC(
       likedFoodTypes: ['dessert'],
       crisisId: 'mother_illness',
     },
+    // Little Girl lives in the cottage medium building (house2 interior)
+    // She plays outside in spring/summer and stays home in the colder months
+    seasonalLocations: {
+      spring: { mapId: 'village', position: { x: 18, y: 8 }, direction: Direction.Down },
+      summer: { mapId: 'village', position: { x: 18, y: 8 }, direction: Direction.Down },
+      autumn: { mapId: 'house2', position: { x: 3, y: 4 }, direction: Direction.Down },
+      winter: { mapId: 'house2', position: { x: 3, y: 4 }, direction: Direction.Down },
+    },
   });
 }

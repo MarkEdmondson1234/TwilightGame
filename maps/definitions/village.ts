@@ -61,28 +61,28 @@ import {
 const gridString = `
 oLULYoLtULoLtULUUULLUoLLGULJLG
 oe,eJlL,,L:lel:,,,,,loLL,l:l:G
-LoG,G,GeGG,,l,oG,G,,G,eeGGGLGG
-tG,G,,G,,,XXX,G,kXXXXXGG,yGGeG
-LG,,c,,,G,XXX,c,,XXXXXGeGeGeGG
-oGol,;,GKGGP,l,,sG,;,,G,Gl,lGG
-Ytl,,,,PPPPPPPPPPPGl,GG,,,,cGG
-LG,,G,,P,,Gl,G,PG,G",,,eUGlGLG
-tG,G,,,P,G,,,G,PG,,G,:,,eG,GeG
+LoG,G,GeGG,,l,oG,G,,l:eeGGGLGG
+tG,G,,G,,,XXX,G,G,,,MlGG,yGGeG
+LG,,c,,,G,XXX,c,,,e,P,GeGeGeGG
+oGol,;,GKGGP,l,,sG,;P,G,Gl,lGG
+Ytl,,,,PPPPPPPPPPPPPPGG,,,,cGG
+LG,,G,,P,,Gl,G,,G,G",,,e,GlGLG
+tG,G,,,P,G,,,G,,J,,G,,,,eG,GeG
 Lc,,G,,PG,G,,,PG,,G,,l,,,,,GLG
-JG,G,,,PG,,G,,PG,l,,lMGR:RG,,e
+JG,G,,,PG,,G,,PG,l,,lGGR,RG,,e
 LoG,Gc,GPe%G,,PG,:,,GPR,,,eGGL
 oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
-LG,G,,,PPPPPPPPPPPPPPPPPPPPGte
-tG,,G,,,G,.PG,l,,lG,l,,UGG,,UG
-LPPPPPPPPPPPP,,,G8,,,eG,,G,,eG
+LG,G,,,PPPPPPPPPPPPP,,,,k,,Gte
+tG,,G,,,G,.PG,l,,lGPPPPPP;;,eG
+LPPPPPPPPPPPP,,,G8,,,,G,,G,,,G
 oG,G,l,G,,,PG,cG,,Gl,lG,,l,GeY
 UoG,cG,,PPPPGGG,G,,Ge=i,G,,G,t
 LG,G,GGGGGPG,,G,,G,i,,i,,l,GLG
 oGGG,,GGGGPG,G,,G,,,,G,,,G,,oG
-LG,G,GGGG,PG,,G,,eG,G,,G,,,GLG
-,G,,;",G,,,PG,,,,GJG,G,,5G,,Ge
-oG,G,,,8,H,PG;,G,,5,,,,,,l,GGU
-UG,cGl,,,PPPG,G,,c"",GK,5,,,eU
+LG,G,GGGGPPG,,G,,eG,G,,G,,,GLG
+,G,,;",G,PPPG,,,,GJG,G,,5G,,Ge
+oG,G,,,8,HPPG;,G,,5,,,,,,l,GGU
+UG,cGl,,,G,PG,G,,c"",GK,5,,,eU
 GG,G,XXXX,,PPPPPPPPG,G,,,,c,UJ
 LG,,GXXXXG,,G,lP,,l,,,,,G,e,GL
 JG,GGXXXX,;;G,,P,,GXXXXXG,5eGt
@@ -124,11 +124,11 @@ export const village: MapDefinition = {
       hasDoor: true,
     },
     {
-      fromPosition: { x: 17.2, y: 5 }, // North-east house
-      tileType: TileType.BUILDING_DOOR,
+      fromPosition: { x: 23.5, y: 13 }, // Cottage medium (Little Girl's house)
+      tileType: TileType.COTTAGE_STONE,
       toMapId: 'house2',
       toPosition: { x: 3, y: 4 },
-      label: 'To House',
+      label: "To Little Girl's House",
       hasDoor: true,
     },
     {
@@ -148,7 +148,7 @@ export const village: MapDefinition = {
       hasDoor: true,
     },
     {
-      fromPosition: { x: 21, y: 10.5 }, // Mine entrance (M tile)
+      fromPosition: { x: 20, y: 3 }, // Mine entrance (M tile)
       tileType: TileType.MINE_ENTRANCE,
       toMapId: 'RANDOM_CAVE',
       toPosition: { x: 17, y: 12 }, // Spawn in center of cave (safe zone)
