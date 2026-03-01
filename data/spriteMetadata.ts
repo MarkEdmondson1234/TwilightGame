@@ -658,9 +658,9 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   {
     tileType: TileType.COTTAGE_STONE,
     spriteWidth: 9,  // 9×9 tile footprint (square image)
-    spriteHeight: 9,
+    spriteHeight: 8,
     offsetX: -4.5,   // centres sprite horizontally on anchor tile
-    offsetY: -7.5,   // sprite extends mostly upward; bottom 1.5 tiles below anchor
+    offsetY: -6.5,   // sprite extends mostly upward; bottom 1.5 tiles below anchor
     image: tileAssets.cottage_medium_spring, // seasonal rendering overrides at runtime
     enableFlip: false,
     enableRotation: false,
@@ -670,7 +670,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionWidth: 7.0,
     collisionHeight: 2.5,
     collisionOffsetX: -3.0,
-    collisionOffsetY: -1.2,
+    collisionOffsetY: -2,
   },
   {
     tileType: TileType.SHOP,
