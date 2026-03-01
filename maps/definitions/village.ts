@@ -185,7 +185,7 @@ export const village: MapDefinition = {
       label: "To Bear's Cave",
     },
     {
-      fromPosition: { x: 26, y: 1 }, // North-east corner to ruins
+      fromPosition: { x: 18, y: 1 }, // North side entrance to ruins
       tileType: TileType.GRASS,
       toMapId: 'ruins',
       toPosition: { x: 14, y: 16 }, // Spawn at ruins spawn point
