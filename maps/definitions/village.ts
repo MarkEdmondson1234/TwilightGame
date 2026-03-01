@@ -113,7 +113,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 9.5, y: 21 }, // Player home door (bottom of 13x13 sprite, anchor H at y=22)
       tileType: TileType.PLAYER_HOME,
       toMapId: 'mums_kitchen',
-      toPosition: { x: 7, y: 6 },
+      toPosition: { x: 10, y: 22 },
       label: 'To Home',
       hasDoor: true,
     },
@@ -185,7 +185,7 @@ export const village: MapDefinition = {
       label: "To Bear's Cave",
     },
     {
-      fromPosition: { x: 18, y: 1 }, // North side entrance to ruins
+      fromPosition: { x: 18, y: 1 }, // North side to ruins
       tileType: TileType.GRASS,
       toMapId: 'ruins',
       toPosition: { x: 14, y: 16 }, // Spawn at ruins spawn point
