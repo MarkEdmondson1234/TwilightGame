@@ -928,6 +928,48 @@ class FarmManager {
   // ============================================
 
   /**
+   * Purge local plots at positions that are no longer SOIL_FALLOW in the map definition.
+   * Marks orphaned plots dirty so they get cleared from Firestore on the next flush.
+   * Called at sync start to clean up stale data after map edits.
+   */
+  private purgeOrphanedSharedPlots(mapId: string): void {
+    const mapDef = mapManager.getMap(mapId);
+    if (!mapDef) return;
+
+    let purgedCount = 0;
+    const now = Date.now();
+    for (const [key, plot] of this.plots) {
+      if (plot.mapId !== mapId) continue;
+      if (plot.state === FarmPlotState.FALLOW) continue;
+
+      const tileX = Math.floor(plot.position.x);
+      const tileY = Math.floor(plot.position.y);
+      const baseTile = mapDef.grid[tileY]?.[tileX];
+
+      if (baseTile !== TileType.SOIL_FALLOW) {
+        // Position is no longer a farm tile — reset locally and queue Firestore deletion
+        const fallenPlot: FarmPlot = {
+          ...plot,
+          state: FarmPlotState.FALLOW,
+          cropType: null,
+          plantedAtTimestamp: null,
+          lastWateredTimestamp: null,
+          stateChangedAtTimestamp: now,
+        };
+        this.plots.set(key, fallenPlot);
+        this.dirtySharedPlots.add(key);
+        purgedCount++;
+        if (DEBUG.FARM) console.log(`[SharedFarm] Orphaned local plot queued for deletion: ${key}`);
+      }
+    }
+
+    if (purgedCount > 0) {
+      console.log(`[SharedFarm] Purged ${purgedCount} orphaned local plots from ${mapId}`);
+      eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
+    }
+  }
+
+  /**
    * Mark a shared farm plot as dirty for the next batch flush.
    * No-op if the plot's map is not in SHARED_FARM_MAP_IDS.
    */
@@ -946,6 +988,12 @@ class FarmManager {
    */
   async startSharedSync(): Promise<void> {
     if (this.flushInterval) return; // Already running
+
+    // Purge any locally-loaded plots at positions that are no longer farm tiles
+    // (handles stale data from locally-saved state after map edits)
+    for (const sharedMapId of SHARED_FARM_MAP_IDS) {
+      this.purgeOrphanedSharedPlots(sharedMapId);
+    }
 
     // Start the flush interval
     this.flushInterval = setInterval(() => this.flushDirtyPlots(), SHARED_SYNC_INTERVAL_MS);
@@ -966,9 +1014,25 @@ class FarmManager {
         }
 
         let applied = 0;
+        let purged = 0;
         for (const [plotId, doc] of remotePlots) {
           const farmPlot = service.docToFarmPlot(doc as any);
           if (!farmPlot) continue;
+
+          // Validate that this position is still a valid farm tile in the map definition.
+          // If the map was edited to remove farm tiles here, delete the stale Firestore record.
+          const mapDef = mapManager.getMap(farmPlot.mapId);
+          if (mapDef) {
+            const tileX = Math.floor(farmPlot.position.x);
+            const tileY = Math.floor(farmPlot.position.y);
+            const baseTile = mapDef.grid[tileY]?.[tileX];
+            if (baseTile !== TileType.SOIL_FALLOW) {
+              this.dirtySharedPlots.add(plotId);
+              purged++;
+              if (DEBUG.FARM) console.log(`[SharedFarm] Rejecting orphaned remote plot: ${plotId}`);
+              continue;
+            }
+          }
 
           // Skip plots we're about to flush (still dirty)
           if (this.dirtySharedPlots.has(plotId)) continue;
@@ -978,6 +1042,10 @@ class FarmManager {
 
           this.plots.set(plotId, farmPlot);
           applied++;
+        }
+
+        if (purged > 0) {
+          console.log(`[SharedFarm] Rejected ${purged} orphaned remote plots — queued for Firestore deletion`);
         }
 
         // Check for locally-known shared plots that were removed remotely
