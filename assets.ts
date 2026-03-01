@@ -135,6 +135,7 @@ export const tileAssets = {
   // Rosebush sprites (2x2, village only)
   rosebush_pink: '/TwilightGame/assets-optimized/tiles/village/rosebush_pink.png',
   rosebush_red: '/TwilightGame/assets-optimized/tiles/village/rosebush_red.png',
+  rosebush_autumn: '/TwilightGame/assets-optimized/tiles/village/rosebush_autumn.png',
   rosebush_winter: '/TwilightGame/assets-optimized/tiles/village/rosebush_winter.png',
   // Pond flowers assets (seasonal variations - spring/summer use same sprite)
   pond_flowers_spring_summer: '/TwilightGame/assets-optimized/tiles/pond_flowers_spring_summer.png',

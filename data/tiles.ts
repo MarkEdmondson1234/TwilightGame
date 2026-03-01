@@ -737,7 +737,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     seasonalImages: {
       spring: [tileAssets.rosebush_pink],
       summer: [tileAssets.rosebush_pink],
-      autumn: [tileAssets.rosebush_pink],
+      autumn: [tileAssets.rosebush_autumn],
       winter: [tileAssets.rosebush_winter],
       default: [tileAssets.rosebush_pink],
     },
@@ -751,7 +751,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     seasonalImages: {
       spring: [tileAssets.rosebush_red],
       summer: [tileAssets.rosebush_red],
-      autumn: [tileAssets.rosebush_red],
+      autumn: [tileAssets.rosebush_autumn],
       winter: [tileAssets.rosebush_winter],
       default: [tileAssets.rosebush_red],
     },
