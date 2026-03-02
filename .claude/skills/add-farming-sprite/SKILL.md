@@ -5,21 +5,15 @@ description: Add farming-related sprites (crops, soil states, plants) to the gam
 
 # Add Farming Sprite
 
-This skill helps you add farming-related sprites to the TwilightGame project, including soil states, plant growth stages, and crop graphics.
+This skill helps you add farming-related sprites to the TwilightGame project, including soil states, plant growth stages, and harvested crop item images.
 
 ## When to Use
 
 Use this skill when you need to:
 - Add sprites for soil states (fallow, tilled, watered)
-- Add plant growth stages (young, adult, ready to harvest)
-- Add new crop types with their growth stages
-- Update farming visuals
-
-## Prerequisites
-
-- Farming sprite file ready (PNG format, square dimensions like 32x32 or 64x64)
-- Know what the sprite represents (soil state, plant stage, crop type)
-- Understand which farm state or crop this sprite is for
+- Add plant growth stage sprites (young, adult) for a crop
+- Add a harvested crop item image (shown in inventory)
+- Add a new crop type end-to-end
 
 ## Rendering Architecture Note
 
@@ -30,174 +24,276 @@ Use this skill when you need to:
 - **Rendering**: Farm plot sprites are automatically rendered by the tile system
   - **PixiJS** (default): `TileLayer.ts` handles all tile rendering including farm plots
   - **DOM Fallback**: `TileRenderer.tsx` with farm plot override logic
-- **You don't need PixiJS knowledge** - just register your assets as documented below
+- **You don't need PixiJS knowledge** — just register your assets as documented below
 
-The rendering engine automatically selects the appropriate sprite based on farm plot state, crop type, growth stage, and current season
+The rendering engine automatically selects the appropriate sprite based on farm plot state, crop type, growth stage, and current season.
+
+---
+
+## Three Sprite Types
+
+A crop typically has **three distinct sprites**, each living in a different location:
+
+| Sprite | File location | Registered in | Used by |
+|--------|--------------|---------------|---------|
+| Plant growth stages (`plant_[crop]_young/adult`) | `/public/assets/farming/` | `farmingAssets` in `assets.ts` | Farm plot renderer |
+| Harvested crop item image | `/public/assets/items/grocery/` | `groceryAssets` in `assets.ts` | Inventory / item UI |
+| Seed item image (optional) | `/public/assets/items/` | `itemAssets` in `assets.ts` | Inventory / item UI |
+
+These are **separate concerns** — forgetting the crop item image means the inventory will show no icon for the harvested vegetable.
+
+---
 
 ## Farming Sprite Categories
 
 ### Soil States
-- `fallow_soil_[variation]` - Untilled brown soil (can have variations)
-- `tilled` - Dark brown tilled soil ready for planting
-- `watered` - Tilled soil that's been watered (optional visual)
+- `fallow_soil_[variation]` — Untilled brown soil (can have variations)
+- `tilled` — Dark brown tilled soil ready for planting
+- `watered` — Tilled soil that has been watered (optional visual)
 
-### Plant States (Generic)
-- Planted (dark green) - Seeds just planted
-- Watered (green) - Recently watered plant
-- Wilting (yellow) - Needs water
-- Dead (gray) - Died from lack of water
+### Plant Growth Stages (per crop)
+Each crop has two in-field sprites:
+- `plant_[cropName]_young` — Early growth (33–95% of growth time)
+- `plant_[cropName]_adult` — Mature / ready to harvest (95–100%)
 
-### Crop-Specific Sprites
-Each crop can have multiple growth stages:
-- `plant_[cropName]_young` - Early growth stage
-- `plant_[cropName]_adult` - Mid growth stage
-- `plant_[cropName]_ready` - Ready to harvest
+The generic `seedling` sprite covers the earliest stage (0–33%) for all crops.
 
-Current crop types:
-- Pea (example: `plant_pea_young.png`, `plant_pea_adult.png`)
-- Radish (2 minutes to grow)
-- Tomato (5 minutes to grow)
-- Salad (10 minutes to grow)
-- Corn (15 minutes to grow)
-- Pumpkin (20 minutes to grow)
+### Current Crops
 
-## Steps
+| Crop | Growth time | Seed source |
+|------|------------|-------------|
+| radish | 2 min | shop |
+| spinach | 4 min | shop |
+| tomato | 5 min | friendship |
+| pea | 6 min | friendship |
+| carrot | 6 min | friendship |
+| cucumber | 7 min | friendship |
+| potato | 8 min | shop |
+| sunflower | 8 min | friendship |
+| strawberry | 8 min | forage |
+| chili | 10 min | shop |
+| broccoli | 10 min | shop |
+| salad | 10 min | shop |
+| onion | 10 min | friendship |
+| fairy_bluebell | 10 min | forage (quest) |
+| melon | 12 min | shop |
+| cauliflower | 12 min | shop |
+| corn | 15 min | shop |
+| pumpkin | 20 min | shop |
 
-### 1. Place the Asset File
+---
 
-Place farming sprites in `/public/assets/farming/`:
-- Format: `[category]_[name]_[stage/variation].png`
-- Examples:
-  - `fallow_soil_1.png`, `fallow_soil_2.png` (variations)
-  - `tilled.png`
-  - `plant_pea_young.png`, `plant_pea_adult.png`
-  - `plant_tomato_ready.png`
-- **Important**: Sprites must be square (32x32, 64x64, etc.)
-- Use transparent backgrounds for plants (soil shows through)
+## Steps: Adding Plant Growth Sprites Only
 
-### 2. Register in assets.ts
+Use this when the crop already exists in code and you are only supplying new artwork.
 
-Add the asset to the `farmingAssets` object in `assets.ts`:
+### 1. Place the asset files
+
+```
+/public/assets/farming/plant_[crop]_young.png
+/public/assets/farming/plant_[crop]_adult.png
+```
+
+### 2. Register in `farmingAssets` (`assets.ts`)
 
 ```typescript
 export const farmingAssets = {
   // ... existing assets
-  [assetKey]: '/TwilightGame/assets-optimized/farming/[fileName].png',
+  plant_[crop]_young: '/TwilightGame/assets-optimized/farming/plant_[crop]_young.png',
+  plant_[crop]_adult: '/TwilightGame/assets-optimized/farming/plant_[crop]_adult.png',
 };
 ```
 
-**Note**: Always reference the optimized path (`assets-optimized`) in assets.ts.
-
-### 3. Run Asset Optimization
-
-After adding the file, run the optimization script:
+### 3. Run asset optimisation
 
 ```bash
 npm run optimize-assets
 ```
 
-This will:
-- Resize to standard tile size (64x64 pixels)
-- Optimize compression
-- Place optimized version in `/public/assets-optimized/farming/`
+Farming plant sprites are resized to **768px** and compressed at 95% quality into `/public/assets-optimized/farming/`.
 
-### 4. Update Farming System (If Adding New Crop)
+### 4. Verify
 
-If adding a new crop type, you'll also need to update the farming system code:
-- Add crop definition to farming constants
-- Map growth stages to sprite keys
-- See `docs/FARMING.md` for farming system details
+- Optimised files exist at `/public/assets-optimized/farming/plant_[crop]_young.png` and `plant_[crop]_adult.png`
+- No TypeScript errors: `npx tsc --noEmit`
+
+---
+
+## Steps: Adding a Harvested Crop Item Image
+
+Use this when the crop item in inventory needs its own icon.
+
+### 1. Place the asset file
+
+```
+/public/assets/items/grocery/[crop]_crop.png
+```
+
+### 2. Register in `groceryAssets` (`assets.ts`)
+
+```typescript
+export const groceryAssets = {
+  // ... existing assets (keep alphabetical)
+  [crop]_crop: '/TwilightGame/assets-optimized/items/grocery/[crop]_crop.png',
+};
+```
+
+### 3. Link it to the crop item in `data/items.ts`
+
+Find the `crop_[crop]` entry and add the `image` property:
+
+```typescript
+crop_[crop]: {
+  id: 'crop_[crop]',
+  // ...
+  image: groceryAssets.[crop]_crop,
+},
+```
+
+### 4. Run asset optimisation
+
+```bash
+npm run optimize-assets
+```
 
 ### 5. Verify
 
-Check that:
-- Original file exists at `/public/assets/farming/[fileName].png`
-- Optimized file created at `/public/assets-optimized/farming/[fileName].png`
-- Asset properly registered in `farmingAssets` object
+- Optimised file exists at `/public/assets-optimized/items/grocery/[crop]_crop.png`
 - No TypeScript errors: `npx tsc --noEmit`
 
-## Asset Key Naming Convention
+---
 
-Use descriptive names following these patterns:
+## Steps: Adding a Completely New Crop
 
-**Soil states:**
-- `fallow_soil_1`, `fallow_soil_2` (variations)
-- `tilled`
-- `watered_soil`
+Use this when you are adding a brand-new crop that does not yet exist in code.
 
-**Plant growth stages:**
-- `plant_[crop]_young`
-- `plant_[crop]_adult`
-- `plant_[crop]_ready`
-- `plant_[crop]_wilting`
-- `plant_[crop]_dead`
+### 1. Place all asset files
 
-## Example: Adding Soil Variation
+```
+/public/assets/farming/plant_[crop]_young.png
+/public/assets/farming/plant_[crop]_adult.png
+/public/assets/items/grocery/[crop]_crop.png
+```
 
-1. Place file: `/public/assets/farming/fallow_soil_3.png`
-2. Register in assets.ts:
-   ```typescript
-   export const farmingAssets = {
-     fallow_soil_1: '/TwilightGame/assets-optimized/farming/fallow_soil_1.png',
-     fallow_soil_2: '/TwilightGame/assets-optimized/farming/fallow_soil_2.png',
-     fallow_soil_3: '/TwilightGame/assets-optimized/farming/fallow_soil_3.png',
-     // ... other assets
-   };
-   ```
-3. Run: `npm run optimize-assets`
-4. Verify optimization created the file
+### 2. Register farming sprites in `farmingAssets` (`assets.ts`)
 
-## Example: Adding New Crop Sprites
+```typescript
+plant_[crop]_young: '/TwilightGame/assets-optimized/farming/plant_[crop]_young.png',
+plant_[crop]_adult: '/TwilightGame/assets-optimized/farming/plant_[crop]_adult.png',
+```
 
-Adding tomato plant sprites:
+### 3. Register crop item image in `groceryAssets` (`assets.ts`)
 
-1. Create three files:
-   - `/public/assets/farming/plant_tomato_young.png`
-   - `/public/assets/farming/plant_tomato_adult.png`
-   - `/public/assets/farming/plant_tomato_ready.png`
+```typescript
+[crop]_crop: '/TwilightGame/assets-optimized/items/grocery/[crop]_crop.png',
+```
 
-2. Register all in assets.ts:
-   ```typescript
-   export const farmingAssets = {
-     // ... existing assets
-     plant_tomato_young: '/TwilightGame/assets-optimized/farming/plant_tomato_young.png',
-     plant_tomato_adult: '/TwilightGame/assets-optimized/farming/plant_tomato_adult.png',
-     plant_tomato_ready: '/TwilightGame/assets-optimized/farming/plant_tomato_ready.png',
-   };
-   ```
+### 4. Define the crop in `data/crops.ts`
 
-3. Run: `npm run optimize-assets`
+Copy an existing entry of similar rarity and adjust the values:
 
-4. Update farming system to use tomato sprites (see farming system code)
+```typescript
+[crop]: {
+  id: '[crop]',
+  name: '[crop]',
+  displayName: 'My Crop',
+  plantSeasons: [Season.SPRING],
+  growthTime: 7 * MINUTE,
+  growthTimeWatered: 5 * MINUTE,
+  waterNeededInterval: 1 * GAME_DAY,
+  wiltingGracePeriod: 0.5 * GAME_DAY,
+  deathGracePeriod: 0.5 * GAME_DAY,
+  harvestYield: 2,
+  sellPrice: 18,
+  experience: 12,
+  seedDropMin: 1,
+  seedDropMax: 3,
+  description: 'Description here.',
+  seedCost: 0,          // 0 = not sold in shop
+  rarity: CropRarity.COMMON,
+  seedSource: 'friendship', // 'shop' | 'friendship' | 'forage'
+},
+```
 
-## Farm States Visual Reference
+### 5. Add seed and crop items in `data/items.ts`
 
-The farming system has these visual states:
-- **Fallow** (brown) - Untilled ground
-- **Tilled** (dark brown) - Ready for planting
-- **Planted** (dark green) - Seeds growing
-- **Watered** (green) - Recently watered
-- **Ready** (bright green) - Ready to harvest!
-- **Wilting** (yellow) - Needs water
-- **Dead** (gray) - Plant died
+**Seed item:**
+```typescript
+seed_[crop]: {
+  id: 'seed_[crop]',
+  name: 'seed_[crop]',
+  displayName: 'My Crop Seeds',
+  category: ItemCategory.SEED,
+  description: 'Seeds for my crop.',
+  rarity: ItemRarity.COMMON,
+  stackable: true,
+  sellPrice: 4,
+  cropId: '[crop]',
+  image: itemAssets.[crop]_seeds, // if a seed PNG exists, otherwise omit
+},
+```
 
-Design sprites to match these color themes or create custom visuals.
+**Crop item:**
+```typescript
+crop_[crop]: {
+  id: 'crop_[crop]',
+  name: 'crop_[crop]',
+  displayName: 'My Crop',
+  category: ItemCategory.CROP,
+  description: 'A fresh my crop.',
+  stackable: true,
+  sellPrice: 18,
+  image: groceryAssets.[crop]_crop,
+},
+```
+
+### 6. Run asset optimisation
+
+```bash
+npm run optimize-assets
+```
+
+### 7. Verify
+
+- All three optimised files exist
+- No TypeScript errors: `npx tsc --noEmit`
+- Test in-game: plant the crop and confirm the young → adult sprite transition, then harvest and check the inventory icon
+
+---
+
+## Asset Naming Convention
+
+```
+# Farming (in-field) sprites
+plant_[crop]_young.png
+plant_[crop]_adult.png
+
+# Inventory item sprites
+[crop]_crop.png        → groceryAssets
+[crop]_seeds.png       → itemAssets
+```
+
+## Optimisation Sizes
+
+| Asset type | Output size | Quality |
+|-----------|-------------|---------|
+| Farming plant sprites | 768px | 95% |
+| Grocery / crop item sprites | 512px | 95% |
 
 ## Important Notes
 
-- **Always use optimized paths** in assets.ts (points to `assets-optimized/`)
-- **Always place originals** in `public/assets/farming/` directory
-- Farming sprites should be same size as tiles (64x64 after optimization)
-- Use transparent backgrounds for plants (soil shows through)
-- Can create multiple growth stages for visual progression
-- All sprites use **linear (smooth) scaling** to preserve hand-drawn artwork quality (this game is NOT pixel art)
-- Color schemes may affect how sprites display
+- **Always use optimised paths** in `assets.ts` (pointing to `assets-optimized/`)
+- **Always place originals** in the appropriate `/public/assets/` subdirectory
+- Use transparent backgrounds for plant sprites (soil shows through underneath)
+- All sprites use **linear (smooth) scaling** — this game is NOT pixel art
 
 ## Related Documentation
 
-- [FARMING.md](../../../docs/FARMING.md) - Complete farming system guide
-- [ASSETS.md](../../../docs/ASSETS.md) - General asset guidelines
-- [assets.ts](../../../assets.ts) - Centralized asset registry
+- [FARMING.md](../../../docs/FARMING.md) — Complete farming system guide
+- [ASSETS.md](../../../docs/ASSETS.md) — General asset guidelines
+- [assets.ts](../../../assets.ts) — Centralised asset registry
+- [data/crops.ts](../../../data/crops.ts) — Crop definitions (growth time, seasons, yield)
+- [data/items.ts](../../../data/items.ts) — Item definitions (seed and crop items)
 - **Rendering:**
-  - [utils/pixi/TileLayer.ts](../../../utils/pixi/TileLayer.ts) - PixiJS tile renderer (includes farm plots)
-  - [components/TileRenderer.tsx](../../../components/TileRenderer.tsx) - DOM fallback renderer
+  - [utils/pixi/TileLayer.ts](../../../utils/pixi/TileLayer.ts) — PixiJS tile renderer (includes farm plots)
+  - [components/TileRenderer.tsx](../../../components/TileRenderer.tsx) — DOM fallback renderer
