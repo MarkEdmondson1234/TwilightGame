@@ -294,7 +294,7 @@ export class TileLayer extends PixiLayer {
     // IMPORTANT: Check !== undefined because TileType.GRASS = 0 (falsy!)
     if (tileData.baseType !== undefined) {
       // Render base tile first (underneath)
-      this.renderBaseTile(x, y, tileData.baseType, seasonKey);
+      this.renderBaseTile(x, y, tileData.baseType, seasonKey, tileData.baseVisible ?? false);
     }
 
     // Check if this tile has a multi-tile sprite definition
@@ -579,9 +579,10 @@ export class TileLayer extends PixiLayer {
     x: number,
     y: number,
     baseType: number,
-    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter'
+    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
+    baseVisible: boolean = false
   ): void {
-    const baseKey = `${x},${y}_base`;
+    const baseKey = baseVisible ? `${x},${y}_base_visible` : `${x},${y}_base`;
 
     // Use getTileData() to get dynamic color resolution (scheme/season/time)
     const baseTileData = getTileData(x, y, baseType);
@@ -634,7 +635,7 @@ export class TileLayer extends PixiLayer {
       baseSprite.y = y * TILE_SIZE;
       baseSprite.width = TILE_SIZE;
       baseSprite.height = TILE_SIZE;
-      baseSprite.zIndex = Z_TILE_BASE_SPRITE;
+      baseSprite.zIndex = baseVisible ? Z_TILE_BASE_SPRITE : Z_TILE_BASE;
 
       this.container.addChild(baseSprite);
       this.sprites.set(baseKey, baseSprite);
@@ -685,7 +686,11 @@ export class TileLayer extends PixiLayer {
         graphics.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         graphics.fill(hexColor);
         graphics.zIndex =
-          customKey && customKey.includes('_base') ? Z_TILE_BASE_SPRITE : Z_TILE_BACKGROUND;
+          customKey && customKey.includes('_base_visible')
+            ? Z_TILE_BASE_SPRITE
+            : customKey && customKey.includes('_base')
+              ? Z_TILE_BASE
+              : Z_TILE_BACKGROUND;
         this.colorCache.set(key, hexColor);
       }
       graphics.visible = true;

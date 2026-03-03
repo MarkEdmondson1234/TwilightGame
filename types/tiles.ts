@@ -65,6 +65,7 @@ export interface TileData {
   timeOfDayImages?: Record<'spring' | 'summer' | 'autumn' | 'winter', TimeOfDayImageSet>; // Time-of-day variations per season
   weatherImages?: WeatherImageSet; // Weather-conditional images (e.g., frost flower only visible when snowing)
   baseType?: TileType; // If set, render this tile type underneath (e.g., GRASS under CHERRY_TREE)
+  baseVisible?: boolean; // If true, base sprite renders at z=0.5 (visible through transparency); default false keeps it at z=-1 for colour-matching only
   transforms?: TileTransformSettings; // Transform settings (optional, defaults to no transforms)
   // Animation support (for tiles like cauldrons that cycle through frames)
   animationFrames?: string[]; // Array of image paths to cycle through

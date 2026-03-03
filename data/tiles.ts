@@ -194,6 +194,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-gray',
     collisionType: CollisionType.SOLID,
     baseType: TileType.MINE_FLOOR,
+    baseVisible: true,
     image: [tileAssets.rock_1, tileAssets.rock_2],
     transforms: {
       enableFlip: true,
@@ -209,6 +210,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-gray',
     collisionType: CollisionType.WALKABLE,
     baseType: TileType.MINE_FLOOR,
+    baseVisible: true,
     image: [tileAssets.forest_mushrooms],
     transforms: {
       enableFlip: true,
