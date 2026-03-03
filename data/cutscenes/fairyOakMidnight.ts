@@ -45,7 +45,7 @@ const MIDNIGHT_GRADIENT_BRIGHT =
 
 // Reusable background layer preset for the fairy oak
 const fairyOak = (opacity: number, animation?: LayerAnimation) => ({
-  image: '../tiles/fairy_oak_summer.png',
+  image: tileAssets.fairy_oak_summer,
   zIndex: 1,
   opacity,
   animation: animation ?? { type: 'static' as const, duration: 0 },

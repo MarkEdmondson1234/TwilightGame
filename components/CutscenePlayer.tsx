@@ -364,7 +364,7 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
     <div
       className="absolute inset-0 bg-cover bg-center"
       style={{
-        backgroundImage: `url(/TwilightGame/assets-optimized/cutscenes/${layer.image})`,
+        backgroundImage: `url(${layer.image.startsWith('/') ? layer.image : `/TwilightGame/assets-optimized/cutscenes/${layer.image}`})`,
         zIndex: layer.zIndex,
         opacity: isTransitioning ? 0 : layer.opacity || 1,
         transform: getTransform(isAnimating),

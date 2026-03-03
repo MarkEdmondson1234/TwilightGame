@@ -58,7 +58,7 @@ export const fairyOakMidnightReturnCutscene: CutsceneDefinition = {
       backgroundCss: MIDNIGHT_GRADIENT,
       backgroundLayers: [
         {
-          image: '../tiles/fairy_oak_summer.png',
+          image: tileAssets.fairy_oak_summer,
           zIndex: 1,
           opacity: 0.3,
           animation: { type: 'static' as const, duration: 0 },
@@ -93,7 +93,7 @@ export const fairyOakMidnightReturnCutscene: CutsceneDefinition = {
       backgroundCss: MIDNIGHT_GRADIENT_BRIGHT,
       backgroundLayers: [
         {
-          image: '../tiles/fairy_oak_summer.png',
+          image: tileAssets.fairy_oak_summer,
           zIndex: 1,
           opacity: 0.5,
           animation: { type: 'static' as const, duration: 0 },
@@ -133,7 +133,7 @@ export const fairyOakMidnightReturnCutscene: CutsceneDefinition = {
       soundEffect: 'sfx_magic_transition',
       backgroundLayers: [
         {
-          image: '../tiles/fairy_oak_summer.png',
+          image: tileAssets.fairy_oak_summer,
           zIndex: 1,
           opacity: 0.55,
           animation: { type: 'static' as const, duration: 0 },
@@ -168,7 +168,7 @@ export const fairyOakMidnightReturnCutscene: CutsceneDefinition = {
       backgroundCss: MIDNIGHT_GRADIENT,
       backgroundLayers: [
         {
-          image: '../tiles/fairy_oak_summer.png',
+          image: tileAssets.fairy_oak_summer,
           zIndex: 1,
           opacity: 0.35,
           animation: { type: 'static' as const, duration: 0 },
