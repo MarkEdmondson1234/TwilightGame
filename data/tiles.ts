@@ -189,6 +189,35 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     collisionType: CollisionType.WALKABLE,
     image: [tileAssets.mine_floor],
   },
+  [TileType.CAVE_ROCK]: {
+    name: 'Cave Rock',
+    color: 'bg-palette-gray',
+    collisionType: CollisionType.SOLID,
+    baseType: TileType.MINE_FLOOR,
+    image: [tileAssets.rock_1, tileAssets.rock_2],
+    transforms: {
+      enableFlip: true,
+      enableScale: true,
+      enableRotation: true,
+      enableBrightness: true,
+      scaleRange: { min: 0.85, max: 1.15 },
+      rotationRange: { min: -5, max: 10 },
+    },
+  },
+  [TileType.CAVE_MUSHROOM]: {
+    name: 'Cave Mushroom',
+    color: 'bg-palette-gray',
+    collisionType: CollisionType.WALKABLE,
+    baseType: TileType.MINE_FLOOR,
+    image: [tileAssets.forest_mushrooms],
+    transforms: {
+      enableFlip: true,
+      enableScale: true,
+      enableRotation: false,
+      enableBrightness: true,
+      scaleRange: { min: 0.85, max: 1.15 },
+    },
+  },
   [TileType.WALL]: {
     name: 'Wall',
     color: 'bg-palette-brown', // Base wall color

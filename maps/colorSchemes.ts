@@ -104,7 +104,7 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
   cave: {
     name: 'cave',
     colors: {
-      grass: 'bg-palette-charcoal',
+      grass: 'bg-palette-gray',
       rock: 'bg-palette-gray',
       water: 'bg-palette-teal',
       path: 'bg-palette-taupe',

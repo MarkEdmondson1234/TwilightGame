@@ -29,6 +29,9 @@ export const Z_TILE_BASE = -1;
 /** Base tile layer (grass, floor, water) */
 export const Z_TILE_BACKGROUND = 0;
 
+/** Base tile sprite layer (e.g., mine_floor under cave rock/mushroom — above flat color, below tile sprite) */
+export const Z_TILE_BASE_SPRITE = 0.5;
+
 /** Tile sprites (stepping stones, furniture) */
 export const Z_TILE_SPRITES = 1;
 

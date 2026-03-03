@@ -1040,9 +1040,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const width = 35;
   const height = 25;
-  // Use neutral FLOOR_DARK as base, then scatter MINE_FLOOR for texture
   const map: TileType[][] = Array.from({ length: height }, () =>
-    Array(width).fill(TileType.FLOOR_DARK)
+    Array(width).fill(TileType.MINE_FLOOR)
   );
 
   // Set borders to walls
@@ -1059,36 +1058,28 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const spawnY = Math.floor(height / 2);
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
-  // Add scattered MINE_FLOOR tiles for texture (~10% of floor)
-  for (let y = 1; y < height - 1; y++) {
-    for (let x = 1; x < width - 1; x++) {
-      if (map[y][x] === TileType.FLOOR_DARK && Math.random() < 0.1) {
-        map[y][x] = TileType.MINE_FLOOR;
-      }
-    }
-  }
-
   // Generate cave features, excluding spawn area
   generatePatches(map, TileType.WALL, 20, 1, 3, width, height, spawnZone);
   generatePatches(map, TileType.WATER, 2, 2, 4, width, height, spawnZone);
-  generatePatches(map, TileType.ROCK, 10, 1, 2, width, height, spawnZone);
+  generatePatches(map, TileType.CAVE_ROCK, 10, 1, 2, width, height, spawnZone);
 
   // Clear spawn area AFTER generating features (9x9 grid)
   for (let y = spawnY - 4; y <= spawnY + 4; y++) {
     for (let x = spawnX - 4; x <= spawnX + 4; x++) {
       if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
-        map[y][x] = TileType.FLOOR_DARK;
+        map[y][x] = TileType.MINE_FLOOR;
       }
     }
   }
 
-  // Add mushrooms scattered throughout cave (walkable decoration)
-  for (let i = 0; i < 30; i++) {
+  // Add cave mushrooms (red-capped, year-round, away from spawn)
+  for (let i = 0; i < 6; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;
     const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on floor tiles (FLOOR_DARK or MINE_FLOOR)
-    if (map[y][x] === TileType.FLOOR_DARK || map[y][x] === TileType.MINE_FLOOR) {
-      map[y][x] = TileType.MUSHROOM;
+    const dx = Math.abs(x - spawnX);
+    const dy = Math.abs(y - spawnY);
+    if (map[y][x] === TileType.MINE_FLOOR && (dx > 4 || dy > 4)) {
+      map[y][x] = TileType.CAVE_MUSHROOM;
     }
   }
 

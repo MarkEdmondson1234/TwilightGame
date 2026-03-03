@@ -36,6 +36,7 @@ import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
 import {
   Z_TILE_BASE,
+  Z_TILE_BASE_SPRITE,
   Z_TILE_BACKGROUND,
   Z_TILE_SPRITES,
   Z_SPRITE_BACKGROUND,
@@ -633,7 +634,7 @@ export class TileLayer extends PixiLayer {
       baseSprite.y = y * TILE_SIZE;
       baseSprite.width = TILE_SIZE;
       baseSprite.height = TILE_SIZE;
-      baseSprite.zIndex = Z_TILE_BASE;
+      baseSprite.zIndex = Z_TILE_BASE_SPRITE;
 
       this.container.addChild(baseSprite);
       this.sprites.set(baseKey, baseSprite);
@@ -684,7 +685,7 @@ export class TileLayer extends PixiLayer {
         graphics.rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
         graphics.fill(hexColor);
         graphics.zIndex =
-          customKey && customKey.includes('_base') ? Z_TILE_BASE : Z_TILE_BACKGROUND;
+          customKey && customKey.includes('_base') ? Z_TILE_BASE_SPRITE : Z_TILE_BACKGROUND;
         this.colorCache.set(key, hexColor);
       }
       graphics.visible = true;
