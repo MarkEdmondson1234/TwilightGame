@@ -1100,6 +1100,29 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Scatter wall torches using a jittered grid — one per cell, prevents clumping
+  // Use a coarser grid than stone columns so torches are well-spaced
+  const torchGridCols = 4;
+  const torchGridRows = 3;
+  const torchCellW = Math.floor((width - 2) / torchGridCols);
+  const torchCellH = Math.floor((height - 2) / torchGridRows);
+  for (let row = 0; row < torchGridRows; row++) {
+    for (let col = 0; col < torchGridCols; col++) {
+      if (Math.random() > 0.55) continue; // ~55% fill — some cells always stay dark
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const x = 1 + col * torchCellW + Math.floor(Math.random() * torchCellW);
+        const y = 1 + row * torchCellH + Math.floor(Math.random() * torchCellH);
+        if (x >= width - 1 || y >= height - 1) continue;
+        const dx = Math.abs(x - spawnX);
+        const dy = Math.abs(y - spawnY);
+        if (map[y][x] === TileType.MINE_FLOOR && (dx > 5 || dy > 5)) {
+          map[y][x] = TileType.WALL_TORCH;
+          break;
+        }
+      }
+    }
+  }
+
   // Add cave mushrooms (red-capped, year-round, away from spawn)
   for (let i = 0; i < 6; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;

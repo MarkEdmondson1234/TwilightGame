@@ -55,6 +55,7 @@ export enum TileType {
   STONE_COLUMN_SM, // Stone column (small, 2x2 tiles) - cave floor decoration
   STONE_COLUMN_MD, // Stone column (medium, 5x5 tiles) - cave floor decoration
   STONE_COLUMN_LG, // Stone column (large, 8x8 tiles) - cave floor decoration
+  WALL_TORCH, // Wall-mounted torch - cave light source (2-frame animated)
   WALL,
   WOODEN_WALL_POOR,
   WOODEN_WALL,

@@ -247,6 +247,15 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     image: [tileAssets.stone_column],
     transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
   },
+  [TileType.WALL_TORCH]: {
+    name: 'Wall Torch',
+    color: 'bg-palette-gray',
+    collisionType: CollisionType.SOLID,
+    baseType: TileType.MINE_FLOOR,
+    baseVisible: true,
+    image: [tileAssets.torch01, tileAssets.torch02], // 2-frame flicker animation
+    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+  },
   [TileType.WALL]: {
     name: 'Wall',
     color: 'bg-palette-brown', // Base wall color

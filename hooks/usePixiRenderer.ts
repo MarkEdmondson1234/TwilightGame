@@ -13,7 +13,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
-import { Position, Direction, MapDefinition } from '../types';
+import { Position, Direction, MapDefinition, TileType } from '../types';
 import { USE_SPRITE_SHADOWS } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
@@ -148,6 +148,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
   const weatherLayerRef = useRef<WeatherLayer | null>(null);
   const darknessLayerRef = useRef<DarknessLayer | null>(null);
+  const torchPositionsRef = useRef<Position[]>([]);
   const weatherManagerRef = useRef<WeatherManager | null>(null);
   const depthSortedContainerRef = useRef<PIXI.Container | null>(null);
 
@@ -530,6 +531,22 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       const showWeather = shouldShowWeather(currentMapId);
       weatherLayerRef.current.setVisible(showWeather);
     }
+
+    // Scan new map for torch tiles so the lighting layer knows where to put light sources
+    const map = mapManager.getCurrentMap();
+    if (map?.grid) {
+      const torches: Position[] = [];
+      for (let y = 0; y < map.grid.length; y++) {
+        for (let x = 0; x < map.grid[y].length; x++) {
+          if (map.grid[y][x] === TileType.WALL_TORCH) {
+            torches.push({ x, y });
+          }
+        }
+      }
+      torchPositionsRef.current = torches;
+    } else {
+      torchPositionsRef.current = [];
+    }
   }, [currentMapId, isPixiInitialized]);
 
   // =========================================================================
@@ -638,6 +655,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     }
     if (darknessLayerRef.current) {
       darknessLayerRef.current.getContainer().scale.set(1 / zoom);
+      // Update torch light positions every frame to stay aligned with camera
+      if (torchPositionsRef.current.length > 0) {
+        darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY);
+      }
     }
 
     const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
