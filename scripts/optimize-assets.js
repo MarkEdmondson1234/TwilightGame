@@ -400,6 +400,16 @@ async function optimizeTiles() {
         .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for foliage detail
         .toFile(outputPath);
     }
+    // Special handling for stone columns - up to 8x8 multi-tile cave decoration, needs 1024px
+    else if (file.includes('stone_column')) {
+      await sharp(inputPath)
+        .resize(TREE_SIZE, TREE_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 })
+        .toFile(outputPath);
+    }
     // Special handling for large furniture (beds, sofas, rugs, tables, stoves, chimneys, etc.) - keep higher resolution and quality
     else if (file.includes('bed') || file.includes('sofa') || file.includes('rug') || file.includes('table') || file.includes('stove') || file.includes('chimney')) {
       await sharp(inputPath)

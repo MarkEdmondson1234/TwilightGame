@@ -1072,6 +1072,35 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Scatter stone columns evenly using a jittered grid — one per cell, position random within cell
+  const columnTypes = [TileType.STONE_COLUMN_SM, TileType.STONE_COLUMN_MD, TileType.STONE_COLUMN_LG];
+  const gridCols = 5;
+  const gridRows = 5;
+  const cellW = Math.floor((width - 2) / gridCols);
+  const cellH = Math.floor((height - 2) / gridRows);
+  for (let row = 0; row < gridRows; row++) {
+    for (let col = 0; col < gridCols; col++) {
+      if (Math.random() > 0.8) continue; // ~20% chance to leave a cell empty for variety
+      // Avoid large columns in edge cells where they'd visually clip into border walls
+      const isEdgeCell = row === 0 || row === gridRows - 1 || col === 0 || col === gridCols - 1;
+      const eligible = isEdgeCell
+        ? [TileType.STONE_COLUMN_SM, TileType.STONE_COLUMN_MD]
+        : columnTypes;
+      const colType = eligible[Math.floor(Math.random() * eligible.length)];
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const x = 1 + col * cellW + Math.floor(Math.random() * cellW);
+        const y = 1 + row * cellH + Math.floor(Math.random() * cellH);
+        if (x >= width - 1 || y >= height - 1) continue;
+        const dx = Math.abs(x - spawnX);
+        const dy = Math.abs(y - spawnY);
+        if (map[y][x] === TileType.MINE_FLOOR && (dx > 5 || dy > 5)) {
+          map[y][x] = colType;
+          break;
+        }
+      }
+    }
+  }
+
   // Add cave mushrooms (red-capped, year-round, away from spawn)
   for (let i = 0; i < 6; i++) {
     const x = Math.floor(Math.random() * (width - 2)) + 1;

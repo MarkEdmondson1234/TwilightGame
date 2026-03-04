@@ -815,6 +815,57 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     depthLineOffset: -10, // Player walks through/over the stream, not under it
   },
   {
+    tileType: TileType.STONE_COLUMN_SM,
+    spriteWidth: 2, // 2 tiles wide (small cave floor decoration)
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.stone_column,
+    enableFlip: true, // Horizontal flip for variety
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision covers most of the sprite area (stone is solid)
+    collisionWidth: 1,
+    collisionHeight: 1.6,
+    collisionOffsetX: 0.2,
+    collisionOffsetY: 0.2,
+  },
+  {
+    tileType: TileType.STONE_COLUMN_MD,
+    spriteWidth: 5, // 5 tiles wide (medium cave floor decoration)
+    spriteHeight: 5, // 5 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.stone_column,
+    enableFlip: true, // Horizontal flip for variety
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision covers most of the sprite area (stone is solid)
+    collisionWidth: 2,
+    collisionHeight: 4,
+    collisionOffsetX: 2,
+    collisionOffsetY: 0.5,
+  },
+  {
+    tileType: TileType.STONE_COLUMN_LG,
+    spriteWidth: 8, // 8 tiles wide (large cave floor decoration)
+    spriteHeight: 8, // 8 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.stone_column,
+    enableFlip: true, // Horizontal flip for variety
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision covers most of the sprite area (stone is solid)
+    collisionWidth: 3,
+    collisionHeight: 5,
+    collisionOffsetX: 3,
+    collisionOffsetY: 0.5,
+  },
+  {
     tileType: TileType.ROCK,
     spriteWidth: 1, // 1 tile wide (standard rock)
     spriteHeight: 1, // 1 tile tall

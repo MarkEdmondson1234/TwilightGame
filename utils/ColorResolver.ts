@@ -54,6 +54,9 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MINE_FLOOR]: 'floor',
   [TileType.CAVE_ROCK]: 'grass',
   [TileType.CAVE_MUSHROOM]: 'grass',
+  [TileType.STONE_COLUMN_SM]: 'grass',  // bg-palette-gray in cave colour scheme (mine floor colour)
+  [TileType.STONE_COLUMN_MD]: 'grass',
+  [TileType.STONE_COLUMN_LG]: 'grass',
   [TileType.MINE_ENTRANCE]: 'special',
   [TileType.TABLE]: 'furniture',
   [TileType.CHAIR]: 'furniture',

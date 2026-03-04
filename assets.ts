@@ -63,6 +63,7 @@ export const tileAssets = {
   stove: '/TwilightGame/assets-optimized/tiles/stove.png',
   mine_entrance: '/TwilightGame/assets-optimized/tiles/mine_entrance.png',
   mine_floor: '/TwilightGame/assets-optimized/tiles/mine_floor.png',
+  stone_column: '/TwilightGame/assets-optimized/tiles/stone_column.png',
   // Lake tiles (directional edges for proper water rendering)
   water_center: '/TwilightGame/assets-optimized/tiles/lake/water_middle.png',
   water_left: '/TwilightGame/assets-optimized/tiles/lake/water_left.png',
