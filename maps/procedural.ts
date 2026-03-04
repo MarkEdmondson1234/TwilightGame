@@ -1059,7 +1059,6 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
   // Generate cave features, excluding spawn area
-  generatePatches(map, TileType.WALL, 20, 1, 3, width, height, spawnZone);
   generatePatches(map, TileType.WATER, 2, 2, 4, width, height, spawnZone);
   generatePatches(map, TileType.CAVE_ROCK, 10, 1, 2, width, height, spawnZone);
 

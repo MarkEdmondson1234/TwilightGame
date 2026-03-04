@@ -843,7 +843,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision covers most of the sprite area (stone is solid)
-    collisionWidth: 2,
+    collisionWidth: 1.5,
     collisionHeight: 4,
     collisionOffsetX: 2,
     collisionOffsetY: 0.5,
@@ -860,10 +860,10 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision covers most of the sprite area (stone is solid)
-    collisionWidth: 3,
+    collisionWidth: 2,
     collisionHeight: 5,
     collisionOffsetX: 3,
-    collisionOffsetY: 0.5,
+    collisionOffsetY: 2,
   },
   {
     tileType: TileType.ROCK,
