@@ -91,6 +91,7 @@ export interface NPCConfig {
   dialogueSprite?: string;
   dialogueExpressions?: Record<string, string>;
   followTarget?: string;
+  canFly?: boolean;
   noFlip?: boolean;
   reverseFlip?: boolean;
   zIndexOverride?: number;
@@ -187,6 +188,7 @@ export function createNPC(config: NPCConfig): NPC {
     dialogueSprite,
     dialogueExpressions,
     followTarget,
+    canFly,
     noFlip,
     reverseFlip,
     zIndexOverride,
@@ -196,9 +198,7 @@ export function createNPC(config: NPCConfig): NPC {
   } = config;
 
   // Create animated states if provided
-  const animatedStates = states
-    ? createAnimatedStates(states, initialState)
-    : undefined;
+  const animatedStates = states ? createAnimatedStates(states, initialState) : undefined;
 
   const npc: NPC = {
     id,
@@ -220,6 +220,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (dialogueSprite) npc.dialogueSprite = dialogueSprite;
   if (dialogueExpressions) npc.dialogueExpressions = dialogueExpressions;
   if (followTarget) npc.followTarget = followTarget;
+  if (canFly) npc.canFly = canFly;
   if (noFlip !== undefined) npc.noFlip = noFlip;
   if (reverseFlip !== undefined) npc.reverseFlip = reverseFlip;
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;

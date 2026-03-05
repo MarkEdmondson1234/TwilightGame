@@ -184,12 +184,22 @@ class NPCManagerClass {
    * Check if position would collide with solid tiles or multi-tile sprites
    * Uses the same collision detection logic as the player (from useCollisionDetection.ts)
    */
-  private checkCollision(pos: Position): boolean {
+  private checkCollision(pos: Position, canFly: boolean = false): boolean {
     const halfSize = this.NPC_SIZE / 2;
     const minTileX = Math.floor(pos.x - halfSize);
     const maxTileX = Math.floor(pos.x + halfSize);
     const minTileY = Math.floor(pos.y - halfSize);
     const maxTileY = Math.floor(pos.y + halfSize);
+
+    // Flying NPCs bypass tile/sprite collision but must stay within map bounds
+    if (canFly) {
+      for (let y = minTileY; y <= maxTileY; y++) {
+        for (let x = minTileX; x <= maxTileX; x++) {
+          if (getTileData(x, y) === null) return true; // Out of bounds
+        }
+      }
+      return false;
+    }
 
     // First check regular tile collision
     for (let y = minTileY; y <= maxTileY; y++) {
@@ -492,8 +502,8 @@ class NPCManagerClass {
               npc.direction = dy > 0 ? Direction.Down : Direction.Up;
             }
 
-            // Check collision before moving
-            if (!this.checkCollision(newPos)) {
+            // Check collision before moving (flying NPCs bypass obstacles)
+            if (!this.checkCollision(newPos, npc.canFly)) {
               npc.position = newPos;
               anyNPCMoved = true;
             }
@@ -552,8 +562,8 @@ class NPCManagerClass {
                 break;
             }
 
-            // Check collision before moving
-            if (!this.checkCollision(newPos)) {
+            // Check collision before moving (flying NPCs bypass obstacles)
+            if (!this.checkCollision(newPos, npc.canFly)) {
               npc.position = newPos;
               anyNPCMoved = true; // NPC actually moved
             } else {
@@ -584,7 +594,7 @@ class NPCManagerClass {
                     altPos.x += movement;
                     break;
                 }
-                if (!this.checkCollision(altPos)) {
+                if (!this.checkCollision(altPos, npc.canFly)) {
                   // Found a clear direction, switch to it
                   state.moveDirection = dir;
                   npc.direction = dir;

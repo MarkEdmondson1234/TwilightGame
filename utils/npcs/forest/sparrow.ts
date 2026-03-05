@@ -23,11 +23,7 @@ import { Z_SPRITE_FOREGROUND } from '../../../zIndex';
  * @param position Starting position
  * @param name Optional name (defaults to "Sparrow")
  */
-export function createSparrowNPC(
-  id: string,
-  position: Position,
-  name: string = 'Sparrow'
-): NPC {
+export function createSparrowNPC(id: string, position: Position, name: string = 'Sparrow'): NPC {
   return createWanderingNPC({
     id,
     name,
@@ -38,6 +34,7 @@ export function createSparrowNPC(
     scale: 1.5,
     interactionRadius: 1.0,
     zIndexOverride: Z_SPRITE_FOREGROUND + 10, // Render above trees — bird flies at canopy level
+    canFly: true, // Bypass obstacle collision when moving (sits → takeoff → flies over trees → lands)
     initialState: 'sitting',
     states: {
       sitting: {
@@ -58,10 +55,7 @@ export function createSparrowNPC(
         nextState: 'roaming',
       },
       roaming: {
-        sprites: [
-          npcAssets.sparrow_flight_wings_up,
-          npcAssets.sparrow_flight_wings_down,
-        ],
+        sprites: [npcAssets.sparrow_flight_wings_up, npcAssets.sparrow_flight_wings_down],
         animationSpeed: 400,
         duration: 4000,
         nextState: 'landing',
@@ -94,10 +88,7 @@ export function createSparrowNPC(
           winter:
             '*The sparrow huddles on a low branch, feathers fluffed against the cold. It watches you with bright, hopeful eyes.*',
         },
-        responses: [
-          { text: 'Offer some crumbs.' , nextId: 'approach' },
-          { text: 'Leave it be.' },
-        ],
+        responses: [{ text: 'Offer some crumbs.', nextId: 'approach' }, { text: 'Leave it be.' }],
       },
       {
         id: 'approach',

@@ -182,6 +182,7 @@ export interface NPC {
   animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations
   scale?: number; // Optional: sprite scale multiplier (default 4.0)
   followTarget?: string; // Optional: ID of NPC to follow (for companion NPCs like dogs)
+  canFly?: boolean; // Optional: flying NPCs bypass tile/sprite collision (still respect map bounds)
   friendshipConfig?: FriendshipConfig; // Optional: friendship system configuration
   dailyResource?: DailyResourceConfig; // Optional: daily collectible resource (e.g., milk from cow)
   noFlip?: boolean; // Optional: disable horizontal flipping entirely

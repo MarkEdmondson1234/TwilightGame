@@ -5,6 +5,7 @@
 import { NPC, Direction, Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createWanderingNPC } from '../createNPC';
+import { Z_SPRITE_FOREGROUND } from '../../../zIndex';
 
 /**
  * Create a Bunnyfly NPC (butterfly-bunny hybrid forest creature)
@@ -30,6 +31,8 @@ export function createBunnyflyNPC(id: string, position: Position, name: string =
     portraitSprite: npcAssets.bunnyfly_portrait,
     scale: 4.0,
     interactionRadius: 1.5,
+    zIndexOverride: Z_SPRITE_FOREGROUND + 10, // Render above trees — bunnyfly flutters at canopy level
+    canFly: true, // Bypass obstacle collision (always fluttering)
     states: {
       roaming: {
         sprites: [npcAssets.bunnyfly_01, npcAssets.bunnyfly_02],
