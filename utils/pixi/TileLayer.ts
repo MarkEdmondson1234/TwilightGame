@@ -93,7 +93,7 @@ export const CROP_ADULT_SIZES: Record<
   radish: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   carrot: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   onion: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
-  pea: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
+  pea: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
   potato: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   cucumber: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   chili: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
