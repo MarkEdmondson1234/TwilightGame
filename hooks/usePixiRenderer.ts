@@ -655,10 +655,6 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     }
     if (darknessLayerRef.current) {
       darknessLayerRef.current.getContainer().scale.set(1 / zoom);
-      // Update torch light positions every frame to stay aligned with camera
-      if (torchPositionsRef.current.length > 0) {
-        darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY);
-      }
     }
 
     const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';

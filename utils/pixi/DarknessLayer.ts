@@ -84,8 +84,6 @@ export const DEFAULT_DARKNESS_COLOR = 0x241E3B;
 
 // Torch light settings
 const TORCH_LIGHT_RADIUS = TILE_SIZE * 3.5;   // ~3.5 tiles radius
-const TORCH_WARM_ALPHA = 0.18;                  // Warm amber overlay opacity
-const TORCH_WARM_COLOR = 0xFF8C00;             // Dark orange / amber
 const TORCH_FLICKER_INTERVAL_MS = 420;          // Match sprite frame rate
 const TORCH_FLICKER_DELTA = 0.06;              // ±6% radius variation on flicker
 
@@ -95,8 +93,6 @@ export class DarknessLayer {
 
   // Light source support
   private lightEraser: PIXI.Graphics | null = null;
-  private warmGlowContainer: PIXI.Container | null = null;
-  private warmGlowGraphics: PIXI.Graphics | null = null;
 
   private torchScreenPositions: { x: number; y: number }[] = [];
   private flickerOn: boolean = false;
@@ -117,7 +113,7 @@ export class DarknessLayer {
 
     // isRenderGroup creates an isolated compositing context — required for blendMode='erase'
     // to punch holes in the darkness rect rather than blend with the stage below.
-    this.container = new PIXI.Container({ isRenderGroup: true });
+    this.container = new PIXI.Container();
     this.container.zIndex = Z_WEATHER_TINT;
 
     this.overlay = new PIXI.Graphics();
@@ -287,14 +283,6 @@ export class DarknessLayer {
       this.lightEraser.destroy();
       this.lightEraser = null;
     }
-    if (this.warmGlowGraphics) {
-      this.warmGlowGraphics.destroy();
-      this.warmGlowGraphics = null;
-    }
-    if (this.warmGlowContainer) {
-      this.warmGlowContainer.destroy();
-      this.warmGlowContainer = null;
-    }
     this.container.destroy();
   }
 
@@ -327,25 +315,6 @@ export class DarknessLayer {
       (this.lightEraser as PIXI.Graphics).blendMode = 'erase';
       this.container.addChild(this.lightEraser);
     }
-
-    // Warm glow sits in a separate container ABOVE the darkness container
-    // It uses 'add' blend mode to tint lit areas amber without blocking game art
-    if (!this.warmGlowContainer) {
-      this.warmGlowContainer = new PIXI.Container();
-      this.warmGlowContainer.zIndex = Z_WEATHER_TINT + 1;
-      // Attach to parent stage — we store a reference after first attachment
-      // by piggybacking on the darkness container's parent
-    }
-    if (!this.warmGlowGraphics) {
-      this.warmGlowGraphics = new PIXI.Graphics();
-      (this.warmGlowGraphics as PIXI.Graphics).blendMode = 'add';
-      this.warmGlowContainer.addChild(this.warmGlowGraphics);
-    }
-
-    // Ensure warm glow is on the stage (attach lazily on first use)
-    if (this.warmGlowContainer.parent == null && this.container.parent != null) {
-      this.container.parent.addChild(this.warmGlowContainer);
-    }
   }
 
   private _redrawLights(): void {
@@ -360,19 +329,6 @@ export class DarknessLayer {
     for (const pos of this.torchScreenPositions) {
       this._drawRadialErase(this.lightEraser, pos.x, pos.y, TORCH_LIGHT_RADIUS * flickerScale);
     }
-
-    // Redraw warm glow
-    if (this.warmGlowGraphics) {
-      this.warmGlowGraphics.clear();
-      for (const pos of this.torchScreenPositions) {
-        this._drawWarmGlow(this.warmGlowGraphics, pos.x, pos.y, TORCH_LIGHT_RADIUS * flickerScale);
-      }
-
-      // Keep warm glow layer in sync with stage zoom (same as darkness container)
-      if (this.warmGlowContainer && this.container.scale) {
-        this.warmGlowContainer.scale.copyFrom(this.container.scale);
-      }
-    }
   }
 
   /**
@@ -386,20 +342,6 @@ export class DarknessLayer {
       const alpha = i / steps; // Centre = 1 (full erase), edge = 1/steps (almost none)
       g.circle(cx, cy, r);
       g.fill({ color: 0xffffff, alpha });
-    }
-  }
-
-  /**
-   * Draw a soft warm amber glow around a torch using concentric circles.
-   * Renders with additive blend to tint the lit area without obscuring game art.
-   */
-  private _drawWarmGlow(g: PIXI.Graphics, cx: number, cy: number, radius: number): void {
-    const steps = 6;
-    for (let i = steps; i >= 1; i--) {
-      const r = radius * 0.7 * (i / steps); // Inner glow, smaller than the erase zone
-      const alpha = (TORCH_WARM_ALPHA * (i / steps)) * 0.5;
-      g.circle(cx, cy, r);
-      g.fill({ color: TORCH_WARM_COLOR, alpha });
     }
   }
 
@@ -426,9 +368,6 @@ export class DarknessLayer {
 
     if (this.lightEraser) {
       this.lightEraser.clear();
-    }
-    if (this.warmGlowGraphics) {
-      this.warmGlowGraphics.clear();
     }
   }
 }
