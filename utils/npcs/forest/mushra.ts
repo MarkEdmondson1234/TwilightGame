@@ -58,12 +58,12 @@ export function createMushraNPC(id: string, position: Position, name: string = '
             '*She pulls her scarf tighter and smiles warmly.* "I\'m so glad you came! It\'s a bit chilly, but the frost patterns on the mushrooms are gorgeous today."',
         },
         weatherText: {
-          rain: '*She\'s sheltering under a large mushroom cap, and waves you over.* "Come and sit with me! The rain sounds so lovely from under here."',
-          snow: '*She brushes snow off a log and gestures for you to sit.* "I was hoping you\'d visit! The snow makes everything so peaceful."',
-          fog: '*She appears through the mist with a warm smile.* "There you are! I always feel like we\'re in our own little world when it\'s foggy like this."',
+          rain: '*Mushra\'s sheltering under a large mushroom cap, and waves you over.* "Come and sit with me! The rain sounds so lovely from under here."',
+          snow: '*Mushra brushes snow off a log and gestures for you to sit.* "I was hoping you\'d visit! The snow makes everything so peaceful."',
+          fog: '*Mushra appears through the mist with a warm smile.* "There you are! I always feel like we\'re in our own little world when it\'s foggy like this."',
         },
         responses: [
-          { text: 'I\'d love to see them!', nextId: 'sketchbook' },
+          { text: 'Did you make any new sketches?', nextId: 'sketchbook' },
           { text: 'How have you been?', nextId: 'good_friend_chat' },
           { text: 'Tell me about mushrooms.', nextId: 'about_mushrooms' },
           {
@@ -105,7 +105,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'who_are_you',
-        text: '"I\'m Mushra. I used to live in the city, but..." *She shrugs.* "Too many people. Too much noise. I couldn\'t hear myself think, let alone paint. So I moved out here, built my home into one of the giant mushrooms. Best decision I ever made."',
+        text: '"I\'m Mushra. I used to live in the village, but..." *She shrugs.* "I didn\'t fit in. Too many people with too many opinions, and too much to say about what to do, and who to be. To be creative, I need solitude. To be alone. So I moved out here, built my home into one of the giant mushrooms. Best decision I ever made."',
         responses: [
           { text: 'You live in a mushroom?', nextId: 'mushroom_house' },
           { text: 'That sounds peaceful.' },
@@ -120,7 +120,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         },
         responses: [
           { text: 'Tell me about the mushrooms.', nextId: 'mushroom_facts' },
-          { text: 'What else do you paint?', nextId: 'fairy_paintings' },
+          { text: 'You like to paint fairies?', nextId: 'fairy_paintings' },
         ],
       },
       {
@@ -148,7 +148,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         id: 'fly_agaric',
         text: '"Fly agaric! Amanita muscaria — the classic red cap with white spots. I just can\'t resist their cute polka dots!" *She clasps her hands together.* "They\'re terribly toxic, of course, but absolutely gorgeous. I\'ve painted dozens of them. There\'s something almost fairy-tale about them, isn\'t there?"',
         responses: [
-          { text: 'Have you ever tried to find one?', nextId: 'have_you_seen_fairies' },
+          { text: 'Have you ever tried to find a fairy?', nextId: 'have_you_seen_fairies' },
           { text: 'They are rather magical-looking.' },
         ],
       },
@@ -185,7 +185,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'city_life',
-        text: '*She\'s quiet for a moment.* "The city was... overwhelming. Everyone rushing about, parties every weekend, people wanting to go out all the time. I know most young people enjoy that sort of thing, but I just wanted peace and quiet." *She gestures at the forest.* "This is where I belong."',
+        text: '*She\'s quiet for a moment.* "I used to study art in the city. But it was... overwhelming. Everyone rushing about, parties every weekend, people wanting to go out all the time. I know most young people enjoy that sort of thing, but I just wanted peace and quiet." *She gestures at the forest.* "This is where I belong."',
         requiredFriendshipTier: 'good_friend',
       },
       {
