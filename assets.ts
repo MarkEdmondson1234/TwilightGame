@@ -64,6 +64,10 @@ export const tileAssets = {
   mine_entrance: '/TwilightGame/assets-optimized/tiles/mine_entrance.png',
   mine_floor: '/TwilightGame/assets-optimized/tiles/mine_floor.png',
   stone_column: '/TwilightGame/assets-optimized/tiles/stone_column.png',
+  torch01: '/TwilightGame/assets-optimized/tiles/torch01.png',
+  torch02: '/TwilightGame/assets-optimized/tiles/torch02.png',
+  cave_lake: '/TwilightGame/assets-optimized/tiles/cave_lake.png',
+  mine_crystal: '/TwilightGame/assets-optimized/tiles/mine_crystal.png',
   // Lake tiles (directional edges for proper water rendering)
   water_center: '/TwilightGame/assets-optimized/tiles/lake/water_middle.png',
   water_left: '/TwilightGame/assets-optimized/tiles/lake/water_left.png',
@@ -767,6 +771,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_cave: {
+    url: '/TwilightGame/assets/audio/music/crystals_singing.mp3',
+    category: 'music',
+    loop: true,
+  },
 
   // === Ambient - Environmental Sounds ===
   // Looping background ambiance for atmosphere
@@ -804,5 +813,15 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/ambient/alex_jauk-countryside-ambience-207588.mp3',
     category: 'ambient',
     loop: true,
+  },
+  ambient_cave_wind: {
+    url: '/TwilightGame/assets/audio/ambient/cave_wind_ambience.mp3',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_cave_dripping_water: {
+    url: '/TwilightGame/assets/audio/ambient/cave_dripping_water.mp3',
+    category: 'ambient',
+    loop: false,
   },
 };

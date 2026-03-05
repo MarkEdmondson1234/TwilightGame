@@ -55,6 +55,13 @@ export enum TileType {
   STONE_COLUMN_SM, // Stone column (small, 2x2 tiles) - cave floor decoration
   STONE_COLUMN_MD, // Stone column (medium, 5x5 tiles) - cave floor decoration
   STONE_COLUMN_LG, // Stone column (large, 8x8 tiles) - cave floor decoration
+  WALL_TORCH, // Wall-mounted torch - cave light source (2-frame animated)
+  CAVE_LAKE_SM, // Cave lake (small, 2x2 tiles) - mine water feature
+  CAVE_LAKE_MD, // Cave lake (medium, 5x5 tiles) - mine water feature
+  CAVE_LAKE_LG, // Cave lake (large, 8x8 tiles) - mine water feature
+  MINE_CRYSTAL_SM, // Mine crystal (small, 2x2 tiles) - cave gem decoration
+  MINE_CRYSTAL_MD, // Mine crystal (medium, 4x4 tiles) - cave gem decoration
+  MINE_CRYSTAL_LG, // Mine crystal (large, 6x6 tiles) - cave gem decoration
   WALL,
   WOODEN_WALL_POOR,
   WOODEN_WALL,

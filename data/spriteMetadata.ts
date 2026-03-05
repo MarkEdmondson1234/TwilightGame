@@ -866,6 +866,102 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetY: 2,
   },
   {
+    tileType: TileType.CAVE_LAKE_SM,
+    spriteWidth: 2, // 2 tiles wide (small cave water feature)
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.cave_lake,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 1.5,
+    collisionHeight: 1.5,
+    collisionOffsetX: 0.2,
+    collisionOffsetY: 0.2,
+  },
+  {
+    tileType: TileType.CAVE_LAKE_MD,
+    spriteWidth: 5, // 5 tiles wide (medium cave water feature)
+    spriteHeight: 5, // 5 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.cave_lake,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 3.5,
+    collisionHeight: 3.5,
+    collisionOffsetX: 0.7,
+    collisionOffsetY: 0.7,
+  },
+  {
+    tileType: TileType.CAVE_LAKE_LG,
+    spriteWidth: 8, // 8 tiles wide (large cave water feature)
+    spriteHeight: 8, // 8 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.cave_lake,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 6,
+    collisionHeight: 6,
+    collisionOffsetX: 1,
+    collisionOffsetY: 1,
+  },
+  {
+    tileType: TileType.MINE_CRYSTAL_SM,
+    spriteWidth: 2, // 2 tiles wide (small crystal cluster)
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.mine_crystal,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 1,
+    collisionHeight: 1.5,
+    collisionOffsetX: 0.3,
+    collisionOffsetY: 0.3,
+  },
+  {
+    tileType: TileType.MINE_CRYSTAL_MD,
+    spriteWidth: 4, // 4 tiles wide (medium crystal cluster)
+    spriteHeight: 4, // 4 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.mine_crystal,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 1.5,
+    collisionHeight: 3,
+    collisionOffsetX: 1.2,
+    collisionOffsetY: 0.5,
+  },
+  {
+    tileType: TileType.MINE_CRYSTAL_LG,
+    spriteWidth: 6, // 6 tiles wide (large crystal cluster)
+    spriteHeight: 6, // 6 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.mine_crystal,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 2,
+    collisionHeight: 4,
+    collisionOffsetX: 2,
+    collisionOffsetY: 1,
+  },
+  {
     tileType: TileType.ROCK,
     spriteWidth: 1, // 1 tile wide (standard rock)
     spriteHeight: 1, // 1 tile tall

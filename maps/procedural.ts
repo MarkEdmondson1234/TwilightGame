@@ -1059,7 +1059,6 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
   // Generate cave features, excluding spawn area
-  generatePatches(map, TileType.WATER, 2, 2, 4, width, height, spawnZone);
   generatePatches(map, TileType.CAVE_ROCK, 10, 1, 2, width, height, spawnZone);
 
   // Clear spawn area AFTER generating features (9x9 grid)
@@ -1070,6 +1069,57 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       }
     }
   }
+
+  // Sprite size table — used by the footprint tracker below
+  const CAVE_SPRITE_SIZES: Partial<Record<TileType, { w: number; h: number }>> = {
+    [TileType.STONE_COLUMN_SM]: { w: 2, h: 2 },
+    [TileType.STONE_COLUMN_MD]: { w: 5, h: 5 },
+    [TileType.STONE_COLUMN_LG]: { w: 8, h: 8 },
+    [TileType.CAVE_LAKE_SM]:    { w: 2, h: 2 },
+    [TileType.CAVE_LAKE_MD]:    { w: 5, h: 5 },
+    [TileType.CAVE_LAKE_LG]:    { w: 8, h: 8 },
+    [TileType.MINE_CRYSTAL_SM]: { w: 2, h: 2 },
+    [TileType.MINE_CRYSTAL_MD]: { w: 4, h: 4 },
+    [TileType.MINE_CRYSTAL_LG]: { w: 6, h: 6 },
+  };
+
+  // Shared blocked-tiles set — prevents any two large sprites from overlapping.
+  // After a sprite is placed we mark its W×H footprint plus a 1-tile buffer.
+  // All three scatter passes (columns, lakes, crystals) share this set.
+  const blockedTiles = new Set<string>();
+
+  const isFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        if (blockedTiles.has(`${x + dx},${y + dy}`)) return false;
+      }
+    }
+    return true;
+  };
+
+  const markFootprint = (x: number, y: number, w: number, h: number): void => {
+    for (let dy = -1; dy <= h; dy++) {
+      for (let dx = -1; dx <= w; dx++) {
+        blockedTiles.add(`${x + dx},${y + dy}`);
+      }
+    }
+  };
+
+  // Checks whether a sprite footprint (anchor x,y plus w×h tiles) would overlap the
+  // spawn clear zone or either exit transition corridor.  Used by the lake and crystal
+  // scatter passes, which have their own blocked-tile sets and therefore no longer rely
+  // on column footprints to implicitly protect these areas.
+  const exitY = Math.floor(height / 2); // same as spawnY
+  const footprintOverlapsProtectedArea = (x: number, y: number, w: number, h: number): boolean => {
+    const x2 = x + w - 1;
+    const y2 = y + h - 1;
+    // Spawn clear zone: spawnX±4, spawnY±4 (plus 1-tile buffer)
+    if (x <= spawnX + 5 && x2 >= spawnX - 5 && y <= spawnY + 5 && y2 >= spawnY - 5) return true;
+    // Exit corridors run left (x=1–3) and right (x=width-4 to width-2), centred on exitY
+    const inExitYBand = y2 >= exitY - 3 && y <= exitY + 3;
+    if (inExitYBand && (x <= 3 || x2 >= width - 4)) return true;
+    return false;
+  };
 
   // Scatter stone columns evenly using a jittered grid — one per cell, position random within cell
   const columnTypes = [TileType.STONE_COLUMN_SM, TileType.STONE_COLUMN_MD, TileType.STONE_COLUMN_LG];
@@ -1092,8 +1142,143 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
         if (x >= width - 1 || y >= height - 1) continue;
         const dx = Math.abs(x - spawnX);
         const dy = Math.abs(y - spawnY);
-        if (map[y][x] === TileType.MINE_FLOOR && (dx > 5 || dy > 5)) {
+        const colSize = CAVE_SPRITE_SIZES[colType];
+        if (
+          map[y][x] === TileType.MINE_FLOOR &&
+          (dx > 5 || dy > 5) &&
+          colSize &&
+          isFootprintClear(x, y, colSize.w, colSize.h)
+        ) {
           map[y][x] = colType;
+          markFootprint(x, y, colSize.w, colSize.h);
+          break;
+        }
+      }
+    }
+  }
+
+  // Scatter cave lakes using a coarse jittered grid — lakes use their own blocked set so
+  // stone column placements don't crowd out the medium and large sizes.
+  const lakeTypes = [TileType.CAVE_LAKE_SM, TileType.CAVE_LAKE_MD, TileType.CAVE_LAKE_LG];
+  const lakeGridCols = 4;
+  const lakeGridRows = 4;
+  const lakeCellW = Math.floor((width - 2) / lakeGridCols);
+  const lakeCellH = Math.floor((height - 2) / lakeGridRows);
+  const lakeBlockedTiles = new Set<string>(); // Independent set — not shared with columns
+  const isLakeFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        if (lakeBlockedTiles.has(`${x + dx},${y + dy}`)) return false;
+      }
+    }
+    return true;
+  };
+  const markLakeFootprint = (x: number, y: number, w: number, h: number): void => {
+    for (let dy = -1; dy <= h; dy++) {
+      for (let dx = -1; dx <= w; dx++) {
+        lakeBlockedTiles.add(`${x + dx},${y + dy}`);
+      }
+    }
+  };
+  const maxLakes = 1 + Math.floor(Math.random() * 3); // 1–3 lakes per map
+  let lakesPlaced = 0;
+  for (let row = 0; row < lakeGridRows; row++) {
+    for (let col = 0; col < lakeGridCols; col++) {
+      if (lakesPlaced >= maxLakes) break;
+      if (Math.random() > 0.35) continue; // ~35% fill — lakes are sparse
+      const isEdgeCell = row === 0 || row === lakeGridRows - 1 || col === 0 || col === lakeGridCols - 1;
+      const eligible = isEdgeCell
+        ? [TileType.CAVE_LAKE_SM, TileType.CAVE_LAKE_MD]
+        : lakeTypes;
+      const lakeType = eligible[Math.floor(Math.random() * eligible.length)];
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const x = 1 + col * lakeCellW + Math.floor(Math.random() * lakeCellW);
+        const y = 1 + row * lakeCellH + Math.floor(Math.random() * lakeCellH);
+        if (x >= width - 1 || y >= height - 1) continue;
+        const lakeSize = CAVE_SPRITE_SIZES[lakeType];
+        if (
+          map[y][x] === TileType.MINE_FLOOR &&
+          lakeSize &&
+          !footprintOverlapsProtectedArea(x, y, lakeSize.w, lakeSize.h) &&
+          isLakeFootprintClear(x, y, lakeSize.w, lakeSize.h)
+        ) {
+          map[y][x] = lakeType;
+          markLakeFootprint(x, y, lakeSize.w, lakeSize.h);
+          lakesPlaced++;
+          break;
+        }
+      }
+    }
+    if (lakesPlaced >= maxLakes) break;
+  }
+
+  // Scatter mine crystals using a jittered grid — crystals use their own blocked set so
+  // stone column placements don't crowd out the medium and large sizes.
+  const crystalTypes = [TileType.MINE_CRYSTAL_SM, TileType.MINE_CRYSTAL_MD, TileType.MINE_CRYSTAL_LG];
+  const crystalGridCols = 5;
+  const crystalGridRows = 4;
+  const crystalCellW = Math.floor((width - 2) / crystalGridCols);
+  const crystalCellH = Math.floor((height - 2) / crystalGridRows);
+  const crystalBlockedTiles = new Set<string>(); // Independent set — not shared with columns/lakes
+  const isCrystalFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        if (crystalBlockedTiles.has(`${x + dx},${y + dy}`)) return false;
+      }
+    }
+    return true;
+  };
+  const markCrystalFootprint = (x: number, y: number, w: number, h: number): void => {
+    for (let dy = -1; dy <= h; dy++) {
+      for (let dx = -1; dx <= w; dx++) {
+        crystalBlockedTiles.add(`${x + dx},${y + dy}`);
+      }
+    }
+  };
+  for (let row = 0; row < crystalGridRows; row++) {
+    for (let col = 0; col < crystalGridCols; col++) {
+      if (Math.random() > 0.6) continue; // ~60% fill
+      const isEdgeCell = row === 0 || row === crystalGridRows - 1 || col === 0 || col === crystalGridCols - 1;
+      const eligible = isEdgeCell
+        ? [TileType.MINE_CRYSTAL_SM, TileType.MINE_CRYSTAL_MD]
+        : crystalTypes;
+      const crystalType = eligible[Math.floor(Math.random() * eligible.length)];
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const x = 1 + col * crystalCellW + Math.floor(Math.random() * crystalCellW);
+        const y = 1 + row * crystalCellH + Math.floor(Math.random() * crystalCellH);
+        if (x >= width - 1 || y >= height - 1) continue;
+        const crystalSize = CAVE_SPRITE_SIZES[crystalType];
+        if (
+          map[y][x] === TileType.MINE_FLOOR &&
+          crystalSize &&
+          !footprintOverlapsProtectedArea(x, y, crystalSize.w, crystalSize.h) &&
+          isCrystalFootprintClear(x, y, crystalSize.w, crystalSize.h)
+        ) {
+          map[y][x] = crystalType;
+          markCrystalFootprint(x, y, crystalSize.w, crystalSize.h);
+          break;
+        }
+      }
+    }
+  }
+
+  // Scatter wall torches using a jittered grid — one per cell, prevents clumping
+  // Use a coarser grid than stone columns so torches are well-spaced
+  const torchGridCols = 4;
+  const torchGridRows = 3;
+  const torchCellW = Math.floor((width - 2) / torchGridCols);
+  const torchCellH = Math.floor((height - 2) / torchGridRows);
+  for (let row = 0; row < torchGridRows; row++) {
+    for (let col = 0; col < torchGridCols; col++) {
+      if (Math.random() > 0.55) continue; // ~55% fill — some cells always stay dark
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const x = 1 + col * torchCellW + Math.floor(Math.random() * torchCellW);
+        const y = 1 + row * torchCellH + Math.floor(Math.random() * torchCellH);
+        if (x >= width - 1 || y >= height - 1) continue;
+        const dx = Math.abs(x - spawnX);
+        const dy = Math.abs(y - spawnY);
+        if (map[y][x] === TileType.MINE_FLOOR && (dx > 5 || dy > 5)) {
+          map[y][x] = TileType.WALL_TORCH;
           break;
         }
       }
@@ -1139,15 +1324,14 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     }
   }
 
-  // Place mine entrance (exit) on left side
-  const exitY = Math.floor(height / 2);
+  // Place mine entrance (exit) on left side (exitY already defined above)
   map[exitY][1] = TileType.MINE_ENTRANCE;
 
   // Clear area around mine entrance too
   for (let y = exitY - 1; y <= exitY + 1; y++) {
     for (let x = 1; x <= 3; x++) {
       if (y >= 1 && y < height - 1) {
-        map[y][x] = TileType.FLOOR_DARK;
+        map[y][x] = TileType.MINE_FLOOR;
       }
     }
   }
@@ -1157,7 +1341,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   for (let y = exitY - 1; y <= exitY + 1; y++) {
     for (let x = width - 3; x <= width - 2; x++) {
       if (y >= 1 && y < height - 1 && x >= 1 && x < width - 1) {
-        map[y][x] = TileType.FLOOR_DARK;
+        map[y][x] = TileType.MINE_FLOOR;
       }
     }
   }

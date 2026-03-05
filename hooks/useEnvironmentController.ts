@@ -191,6 +191,8 @@ export function useEnvironmentController(
     audioManager.stopAmbient('ambient_birds', 1000);
     audioManager.stopAmbient('ambient_running_stream', 1000);
     audioManager.stopAmbient('ambient_countryside_summer', 1000);
+    audioManager.stopAmbient('ambient_cave_wind', 1000);
+    audioManager.stopAmbient('ambient_cave_dripping_water', 1000);
 
     // Play new weather ambient if outdoors and audio exists
     if (isOutdoors) {
@@ -228,6 +230,67 @@ export function useEnvironmentController(
       audioManager.stopAmbient('ambient_birds', 500);
     };
   }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
+  // Cave / Mine Wind Ambience
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isProceduralCave =
+      currentMapId.startsWith('RANDOM_CAVE') || currentMapId.startsWith('cave_');
+
+    if (isProceduralCave) {
+      if (audioManager.hasSound('ambient_cave_wind')) {
+        audioManager.playAmbient('ambient_cave_wind');
+      }
+    } else {
+      audioManager.stopAmbient('ambient_cave_wind', 1000);
+    }
+
+    return () => {
+      audioManager.stopAmbient('ambient_cave_wind', 500);
+    };
+  }, [currentMapId]);
+
+  // -------------------------------------------------------------------------
+  // Cave Dripping Water (intermittent)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isProceduralCave =
+      currentMapId.startsWith('RANDOM_CAVE') || currentMapId.startsWith('cave_');
+
+    if (!isProceduralCave) return;
+
+    let dripTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // Play for 8–20 seconds, then wait 15–45 seconds before the next burst
+    const getPlayDuration = () => Math.floor(Math.random() * 12000) + 8000;
+    const getGapDuration = () => Math.floor(Math.random() * 30000) + 15000;
+
+    const scheduleDrip = () => {
+      dripTimeout = setTimeout(() => {
+        if (!audioManager.hasSound('ambient_cave_dripping_water')) {
+          dripTimeout = setTimeout(scheduleDrip, getGapDuration());
+          return;
+        }
+
+        audioManager.playAmbient('ambient_cave_dripping_water');
+
+        dripTimeout = setTimeout(() => {
+          audioManager.stopAmbient('ambient_cave_dripping_water', 2000);
+          dripTimeout = setTimeout(scheduleDrip, getGapDuration());
+        }, getPlayDuration());
+      }, getGapDuration());
+    };
+
+    scheduleDrip();
+
+    return () => {
+      if (dripTimeout) clearTimeout(dripTimeout);
+      audioManager.stopAmbient('ambient_cave_dripping_water', 500);
+    };
+  }, [currentMapId]);
 
   // -------------------------------------------------------------------------
   // Umbra Wolf Entry Howl
@@ -313,6 +376,9 @@ export function useEnvironmentController(
 
     // Get appropriate music track for current map (with seasonal variants)
     const getMusicForMap = (mapId: string): string | null => {
+      if (mapId.startsWith('RANDOM_CAVE') || mapId.startsWith('cave_')) {
+        return 'music_cave';
+      }
       if (mapId.includes('forest') || mapId.includes('deep_forest')) {
         return 'music_forest';
       }
