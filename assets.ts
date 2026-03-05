@@ -771,6 +771,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_cave: {
+    url: '/TwilightGame/assets/audio/music/crystals_singing.mp3',
+    category: 'music',
+    loop: true,
+  },
 
   // === Ambient - Environmental Sounds ===
   // Looping background ambiance for atmosphere
@@ -808,5 +813,15 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/ambient/alex_jauk-countryside-ambience-207588.mp3',
     category: 'ambient',
     loop: true,
+  },
+  ambient_cave_wind: {
+    url: '/TwilightGame/assets/audio/ambient/cave_wind_ambience.mp3',
+    category: 'ambient',
+    loop: true,
+  },
+  ambient_cave_dripping_water: {
+    url: '/TwilightGame/assets/audio/ambient/cave_dripping_water.mp3',
+    category: 'ambient',
+    loop: false,
   },
 };
