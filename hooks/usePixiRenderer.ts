@@ -13,8 +13,8 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
-import { Position, Direction, MapDefinition, TileType } from '../types';
-import { USE_SPRITE_SHADOWS } from '../constants';
+import { Position, Direction, MapDefinition, TileType, TileData } from '../types';
+import { USE_SPRITE_SHADOWS, TILE_LEGEND } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
 import { textureManager } from '../utils/TextureManager';
@@ -25,7 +25,7 @@ import { SpriteLayer } from '../utils/pixi/SpriteLayer';
 import { NPCLayer } from '../utils/pixi/NPCLayer';
 import { ShadowLayer } from '../utils/pixi/ShadowLayer';
 import { WeatherLayer } from '../utils/pixi/WeatherLayer';
-import { DarknessLayer } from '../utils/pixi/DarknessLayer';
+import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
 import { WeatherManager } from '../utils/WeatherManager';
@@ -34,7 +34,7 @@ import { tileAssets, farmingAssets, cookingAssets, npcAssets, itemAssets } from 
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
-import { TimeManager } from '../utils/TimeManager';
+import { TimeManager, TimeOfDay } from '../utils/TimeManager';
 import { DEFAULT_REFERENCE_VIEWPORT } from './useViewportScale';
 import type { Season } from '../data/shopInventory';
 import { MovementMode } from '../utils/tileCategories';
@@ -148,7 +148,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
   const weatherLayerRef = useRef<WeatherLayer | null>(null);
   const darknessLayerRef = useRef<DarknessLayer | null>(null);
-  const torchPositionsRef = useRef<Position[]>([]);
+  const torchPositionsRef = useRef<LightSource[]>([]);
   const weatherManagerRef = useRef<WeatherManager | null>(null);
   const depthSortedContainerRef = useRef<PIXI.Container | null>(null);
 
@@ -321,10 +321,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           console.error('[usePixiRenderer] Failed to initialize weather layer:', error);
         }
 
-        // Create darkness layer
+        // Create darkness layer (+ warm glow container above it)
         const darknessLayer = new DarknessLayer();
         darknessLayerRef.current = darknessLayer;
         app.stage.addChild(darknessLayer.getContainer());
+        const glowContainer = darknessLayer.getGlowContainer();
+        if (glowContainer) {
+          app.stage.addChild(glowContainer);
+        }
 
         // Initial render
         const initialMap = mapManager.getCurrentMap();
@@ -532,22 +536,36 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       weatherLayerRef.current.setVisible(showWeather);
     }
 
-    // Scan new map for torch tiles so the lighting layer knows where to put light sources
+    // Scan map for light-emitting tiles (torches, lamps, etc.)
+    // Uses lightSource property from TILE_LEGEND — any tile with lightSource is a light
     const map = mapManager.getCurrentMap();
     if (map?.grid) {
-      const torches: Position[] = [];
+      const { timeOfDay: tod } = TimeManager.getCurrentTime();
+      const isNightTime = tod === TimeOfDay.DUSK || tod === TimeOfDay.NIGHT;
+      const lights: LightSource[] = [];
       for (let y = 0; y < map.grid.length; y++) {
         for (let x = 0; x < map.grid[y].length; x++) {
-          if (map.grid[y][x] === TileType.WALL_TORCH) {
-            torches.push({ x, y });
+          const tileType = map.grid[y][x];
+          const tileDef = TILE_LEGEND[tileType] as TileData | undefined;
+          if (!tileDef?.lightSource) continue;
+          const activeTime = tileDef.lightSource.activeTime ?? 'always';
+          if (activeTime === 'always' || (activeTime === 'night' && isNightTime)) {
+            lights.push({
+              x,
+              y,
+              radius: tileDef.lightSource.radius,
+              color: tileDef.lightSource.color,
+              intensity: tileDef.lightSource.intensity,
+              flickerAmount: tileDef.lightSource.flickerAmount,
+            });
           }
         }
       }
-      torchPositionsRef.current = torches;
+      torchPositionsRef.current = lights;
     } else {
       torchPositionsRef.current = [];
     }
-  }, [currentMapId, isPixiInitialized]);
+  }, [currentMapId, isPixiInitialized, timeOfDay]);
 
   // =========================================================================
   // EFFECT: Tile/Sprite Rendering (map/viewport/season changes)
@@ -655,6 +673,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     }
     if (darknessLayerRef.current) {
       darknessLayerRef.current.getContainer().scale.set(1 / zoom);
+      const glow = darknessLayerRef.current.getGlowContainer();
+      if (glow) glow.scale.set(1 / zoom);
     }
 
     const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
@@ -698,6 +718,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       if (shadowLayerRef.current) {
         shadowLayerRef.current.updateCamera(cameraX, cameraY);
       }
+    }
+
+    // Update torch lights in darkness layer (must track camera every frame)
+    if (darknessLayerRef.current) {
+      darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY);
     }
   }, [enabled, cameraX, cameraY, zoom, isPixiInitialized, currentMap?.renderMode, canvasRef]);
 

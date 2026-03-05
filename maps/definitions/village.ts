@@ -66,7 +66,7 @@ LoG,G,GeGG,,l,oG,G,,l:eeGGGLGG
 tG,G,,G,,,XXX,G,G,,,MlGG,yGGeG
 LG,,c,,,G,XXX,c,,,e,P,GeGeGeGG
 oGol,;,GAGGP,l,,sG,;P,G,Gl,lGG
-Ytl,,,,,,GGPPPPPPPPPPGG,,,,cGG
+Ytl,,,,,,G¬PPPPPPPPPP¬G,,,,cGG
 LG,,G,,,PPPP,G,,G,G",,,e,GlGLG
 tG,G,,,,PG,,,G,,J,,G,,,,eG,GeG
 Lc,,GJ,,P,G,,,PG,,G,,l,,,,,GLG
@@ -75,7 +75,7 @@ LJG,Gc,GPe%G,,PG,:,,GPR,,,eGGL
 oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
 LG,G,,,PPPPPPPPPPPPP,,,,k,,Gte
 tG,,G,,,G,.PG,l,,lGPPPPPP;;,eG
-LPPPPPPPPPPPP,,,G8,,,,G,,G,,,G
+LPPPPPPPPPPPP,,,¬8,,,,G,,G,,,G
 oG,G,l,G,,,PG,cG,,Gl,lG,,l,GeY
 UoG,cG,,PPPPGGG,G,,Ge=i,G,,G,t
 LG,G,GGGGGPG,,G,,G,i,,i,,l,GLG
@@ -84,8 +84,8 @@ LG,G,GGGGPPG,,G,,eG,G,,G,,,GLG
 ,G,,;",G,PPPG,,,,GJG,G,,5G,,Ge
 oG,G,,,8,HPPG;,G,,5,,,,,,l,GGU
 UG,cGXXXXXXPG,G,,c"",GK,5,,,eU
-GG,G,XXXXXXPPPPPPPPG,G,,,,c,UJ
-LG,,GXXXXXX,G,lP,,l,,,,,G,e,GL
+GG,G,XXXXXXPPPPPPP¬G,G,,,,c,UJ
+LG,,GXXXXXX,G,lP,,G,,,,,G,e,GL
 JG,GG,,G,,;;G,,P,,GXXXXXG,5eGt
 LG,,,G,G,,G,G,,PG,GXXXXXeG,,GU
 oGoc,,;;,G,,,G,P,,G,G,,l,U,,,,
@@ -101,8 +101,9 @@ export const village: MapDefinition = {
     ':': TileType.MEADOW_GRASS, // : = Meadow grass (seasonal ground cover)
     ';': TileType.ROSEBUSH_PINK, // ; = Pink rosebush (village only, 2x2)
     '"': TileType.ROSEBUSH_RED, // " = Red rosebush (village only, 2x2)
-    'H': TileType.PLAYER_HOME, // H = Player home (15x15 seasonal building)
-    'A': TileType.OLD_COTTAGE, // A = Old Cottage (village only, weathered cottage)
+    H: TileType.PLAYER_HOME, // H = Player home (15x15 seasonal building)
+    A: TileType.OLD_COTTAGE, // A = Old Cottage (village only, weathered cottage)
+    '¬': TileType.GARDEN_LAMP, // ¬ = Garden lamp (lights up at dusk/night)
   }),
   colorScheme: 'village',
   hasClouds: true,

@@ -918,7 +918,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
         attempts++;
       } while (
         attempts < maxAttempts &&
-        (Math.abs(sparrowX - spawnX) < 6 && Math.abs(sparrowY - spawnY) < 6)
+        Math.abs(sparrowX - spawnX) < 6 &&
+        Math.abs(sparrowY - spawnY) < 6
       );
 
       const sparrow = createSparrowNPC(
@@ -1075,9 +1076,9 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     [TileType.STONE_COLUMN_SM]: { w: 2, h: 2 },
     [TileType.STONE_COLUMN_MD]: { w: 5, h: 5 },
     [TileType.STONE_COLUMN_LG]: { w: 8, h: 8 },
-    [TileType.CAVE_LAKE_SM]:    { w: 2, h: 2 },
-    [TileType.CAVE_LAKE_MD]:    { w: 5, h: 5 },
-    [TileType.CAVE_LAKE_LG]:    { w: 8, h: 8 },
+    [TileType.CAVE_LAKE_SM]: { w: 2, h: 2 },
+    [TileType.CAVE_LAKE_MD]: { w: 5, h: 5 },
+    [TileType.CAVE_LAKE_LG]: { w: 8, h: 8 },
     [TileType.MINE_CRYSTAL_SM]: { w: 2, h: 2 },
     [TileType.MINE_CRYSTAL_MD]: { w: 4, h: 4 },
     [TileType.MINE_CRYSTAL_LG]: { w: 6, h: 6 },
@@ -1122,7 +1123,11 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   };
 
   // Scatter stone columns evenly using a jittered grid — one per cell, position random within cell
-  const columnTypes = [TileType.STONE_COLUMN_SM, TileType.STONE_COLUMN_MD, TileType.STONE_COLUMN_LG];
+  const columnTypes = [
+    TileType.STONE_COLUMN_SM,
+    TileType.STONE_COLUMN_MD,
+    TileType.STONE_COLUMN_LG,
+  ];
   const gridCols = 5;
   const gridRows = 5;
   const cellW = Math.floor((width - 2) / gridCols);
@@ -1186,10 +1191,9 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     for (let col = 0; col < lakeGridCols; col++) {
       if (lakesPlaced >= maxLakes) break;
       if (Math.random() > 0.35) continue; // ~35% fill — lakes are sparse
-      const isEdgeCell = row === 0 || row === lakeGridRows - 1 || col === 0 || col === lakeGridCols - 1;
-      const eligible = isEdgeCell
-        ? [TileType.CAVE_LAKE_SM, TileType.CAVE_LAKE_MD]
-        : lakeTypes;
+      const isEdgeCell =
+        row === 0 || row === lakeGridRows - 1 || col === 0 || col === lakeGridCols - 1;
+      const eligible = isEdgeCell ? [TileType.CAVE_LAKE_SM, TileType.CAVE_LAKE_MD] : lakeTypes;
       const lakeType = eligible[Math.floor(Math.random() * eligible.length)];
       for (let attempt = 0; attempt < 15; attempt++) {
         const x = 1 + col * lakeCellW + Math.floor(Math.random() * lakeCellW);
@@ -1214,7 +1218,11 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
 
   // Scatter mine crystals using a jittered grid — crystals use their own blocked set so
   // stone column placements don't crowd out the medium and large sizes.
-  const crystalTypes = [TileType.MINE_CRYSTAL_SM, TileType.MINE_CRYSTAL_MD, TileType.MINE_CRYSTAL_LG];
+  const crystalTypes = [
+    TileType.MINE_CRYSTAL_SM,
+    TileType.MINE_CRYSTAL_MD,
+    TileType.MINE_CRYSTAL_LG,
+  ];
   const crystalGridCols = 5;
   const crystalGridRows = 4;
   const crystalCellW = Math.floor((width - 2) / crystalGridCols);
@@ -1238,7 +1246,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   for (let row = 0; row < crystalGridRows; row++) {
     for (let col = 0; col < crystalGridCols; col++) {
       if (Math.random() > 0.6) continue; // ~60% fill
-      const isEdgeCell = row === 0 || row === crystalGridRows - 1 || col === 0 || col === crystalGridCols - 1;
+      const isEdgeCell =
+        row === 0 || row === crystalGridRows - 1 || col === 0 || col === crystalGridCols - 1;
       const eligible = isEdgeCell
         ? [TileType.MINE_CRYSTAL_SM, TileType.MINE_CRYSTAL_MD]
         : crystalTypes;
@@ -1277,7 +1286,12 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
         if (x >= width - 1 || y >= height - 1) continue;
         const dx = Math.abs(x - spawnX);
         const dy = Math.abs(y - spawnY);
-        if (map[y][x] === TileType.MINE_FLOOR && (dx > 5 || dy > 5)) {
+        if (
+          map[y][x] === TileType.MINE_FLOOR &&
+          !lakeBlockedTiles.has(`${x},${y}`) &&
+          !crystalBlockedTiles.has(`${x},${y}`) &&
+          (dx > 5 || dy > 5)
+        ) {
           map[y][x] = TileType.WALL_TORCH;
           break;
         }

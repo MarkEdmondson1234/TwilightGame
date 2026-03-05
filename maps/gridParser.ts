@@ -136,6 +136,8 @@ export const GRID_CODES: Record<string, TileType> = {
   '(': TileType.MAGICAL_LAKE, // ( = Magical lake (12x12 mystical water feature, curves like a pool)
   ')': TileType.SMALL_LAKE, // ) = Small lake (6x6 pond, same sprite scaled down)
   '§': TileType.RUINS_ENTRANCE, // § = Ruins entrance (8x8 ancient archway, seasonal)
+  // Lighting
+  '¬': TileType.GARDEN_LAMP, // ¬ = Garden lamp post (lights up at dusk/night)
   // Utility tiles
   '0': TileType.INVISIBLE_WALL, // 0 = Invisible wall (blocks movement, zero visibility)
 };

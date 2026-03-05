@@ -26,24 +26,24 @@ type TimeKey = 'day' | 'night';
  */
 const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.GRASS]: 'grass',
-  [TileType.TUFT]: 'grass',  // Tuft grass uses same background as regular grass
-  [TileType.TUFT_SPARSE]: 'grass',  // Sparse tuft variant uses same background as grass
-  [TileType.ROCK]: 'grass',  // Rocks sit on grass background
+  [TileType.TUFT]: 'grass', // Tuft grass uses same background as regular grass
+  [TileType.TUFT_SPARSE]: 'grass', // Sparse tuft variant uses same background as grass
+  [TileType.ROCK]: 'grass', // Rocks sit on grass background
   [TileType.WATER]: 'water',
   [TileType.WATER_CENTER]: 'water',
-  [TileType.WATER_LEFT]: 'grass',  // Edge tiles use grass background for natural shoreline
-  [TileType.WATER_RIGHT]: 'grass',  // Edge tiles use grass background for natural shoreline
-  [TileType.WATER_TOP]: 'grass',  // Edge tiles use grass background for natural shoreline
-  [TileType.WATER_BOTTOM]: 'grass',  // Edge tiles use grass background for natural shoreline
-  [TileType.MAGICAL_LAKE]: 'grass',  // Magical lake uses grass background for shoreline
-  [TileType.SMALL_LAKE]: 'grass',   // Small lake uses grass background for shoreline
-  [TileType.STREAM]: 'grass',       // Stream uses grass background for natural shoreline
-  [TileType.PATH]: 'grass',  // Use grass color so stepping stones blend naturally
+  [TileType.WATER_LEFT]: 'grass', // Edge tiles use grass background for natural shoreline
+  [TileType.WATER_RIGHT]: 'grass', // Edge tiles use grass background for natural shoreline
+  [TileType.WATER_TOP]: 'grass', // Edge tiles use grass background for natural shoreline
+  [TileType.WATER_BOTTOM]: 'grass', // Edge tiles use grass background for natural shoreline
+  [TileType.MAGICAL_LAKE]: 'grass', // Magical lake uses grass background for shoreline
+  [TileType.SMALL_LAKE]: 'grass', // Small lake uses grass background for shoreline
+  [TileType.STREAM]: 'grass', // Stream uses grass background for natural shoreline
+  [TileType.PATH]: 'grass', // Use grass color so stepping stones blend naturally
   [TileType.FLOOR]: 'floor',
   [TileType.FLOOR_LIGHT]: 'floor',
   [TileType.FLOOR_DARK]: 'floor',
   [TileType.WALL]: 'wall',
-  [TileType.WALL_BOUNDARY]: 'grass',  // Blend with map's grass colour (e.g., sage in village)
+  [TileType.WALL_BOUNDARY]: 'grass', // Blend with map's grass colour (e.g., sage in village)
   [TileType.BUILDING_WALL]: 'wall',
   [TileType.CARPET]: 'carpet',
   [TileType.RUG]: 'carpet',
@@ -54,7 +54,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MINE_FLOOR]: 'floor',
   [TileType.CAVE_ROCK]: 'grass',
   [TileType.CAVE_MUSHROOM]: 'grass',
-  [TileType.STONE_COLUMN_SM]: 'grass',  // bg-palette-gray in cave colour scheme (mine floor colour)
+  [TileType.STONE_COLUMN_SM]: 'grass', // bg-palette-gray in cave colour scheme (mine floor colour)
   [TileType.STONE_COLUMN_MD]: 'grass',
   [TileType.STONE_COLUMN_LG]: 'grass',
   [TileType.WALL_TORCH]: 'grass',
@@ -67,7 +67,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MINE_ENTRANCE]: 'special',
   [TileType.TABLE]: 'furniture',
   [TileType.CHAIR]: 'furniture',
-  [TileType.MUSHROOM]: 'grass',  // Regular mushrooms sit on grass background
+  [TileType.MUSHROOM]: 'grass', // Regular mushrooms sit on grass background
   // Farm tiles removed - they should use base colors from TILE_LEGEND, not color scheme overrides
   // This allows farm tiles to always show as brown/chocolate regardless of map theme
   [TileType.BUSH]: 'grass',
@@ -95,9 +95,9 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.WOLFSBANE]: 'grass',
   // Mushroom Forest plants
   [TileType.LUMINESCENT_TOADSTOOL]: 'grass',
-  [TileType.MUSHROOM_HOUSE]: 'grass',  // Mushroom house sits on grass
-  [TileType.BRANCH]: 'grass',  // Branch sits on grass background
-  [TileType.MUSHROOM_CLUSTER]: 'grass',  // Mushroom cluster sits on grass background
+  [TileType.MUSHROOM_HOUSE]: 'grass', // Mushroom house sits on grass
+  [TileType.BRANCH]: 'grass', // Branch sits on grass background
+  [TileType.MUSHROOM_CLUSTER]: 'grass', // Mushroom cluster sits on grass background
   // Common forageable plants
   [TileType.FOREST_MUSHROOM]: 'grass',
   [TileType.MUSTARD_FLOWER]: 'grass',
@@ -107,6 +107,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.SAMBUCA_BUSH]: 'grass',
   [TileType.DEAD_SPRUCE]: 'grass',
   [TileType.TREE_MUSHROOMS]: 'grass',
+  [TileType.GARDEN_LAMP]: 'grass',
   [TileType.FIR_TREE_SMALL]: 'grass',
   [TileType.SPRUCE_TREE_SMALL]: 'grass',
   [TileType.FERN]: 'grass',
@@ -116,15 +117,15 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.COTTAGE_STONE]: 'grass',
   [TileType.OLD_COTTAGE]: 'grass',
   [TileType.PLAYER_HOME]: 'grass',
-  [TileType.BUILDING_ROOF]: 'grass',  // Blend with map's grass colour (decorative buildings)
-  [TileType.BUILDING_WINDOW]: 'grass',  // Blend with map's grass colour (decorative buildings)
+  [TileType.BUILDING_ROOF]: 'grass', // Blend with map's grass colour (decorative buildings)
+  [TileType.BUILDING_WINDOW]: 'grass', // Blend with map's grass colour (decorative buildings)
   [TileType.MIRROR]: 'special',
-  [TileType.WITCH_HUT]: 'grass',  // Witch hut sits on grass
-  [TileType.BEAR_HOUSE]: 'grass',  // Bear house sits on grass
-  [TileType.BEE_HIVE]: 'grass',  // Bee hive sits on grass
-  [TileType.CAULDRON]: 'grass',  // Cauldron sits on grass
-  [TileType.WELL]: 'grass',  // Well sits on grass background
-  [TileType.RUINS_ENTRANCE]: 'grass',  // Ruins entrance sits on grass background
+  [TileType.WITCH_HUT]: 'grass', // Witch hut sits on grass
+  [TileType.BEAR_HOUSE]: 'grass', // Bear house sits on grass
+  [TileType.BEE_HIVE]: 'grass', // Bee hive sits on grass
+  [TileType.CAULDRON]: 'grass', // Cauldron sits on grass
+  [TileType.WELL]: 'grass', // Well sits on grass background
+  [TileType.RUINS_ENTRANCE]: 'grass', // Ruins entrance sits on grass background
 };
 
 export class ColorResolver {
@@ -250,10 +251,10 @@ export class ColorResolver {
    * Color source types for tracing
    */
   public static readonly ColorSource = {
-    BASE: 'base',           // From TILE_LEGEND
-    SCHEME: 'scheme',       // From map's color scheme
-    TIME: 'time',           // From time-of-day modifier
-    SEASONAL: 'seasonal',   // From seasonal modifier
+    BASE: 'base', // From TILE_LEGEND
+    SCHEME: 'scheme', // From map's color scheme
+    TIME: 'time', // From time-of-day modifier
+    SEASONAL: 'seasonal', // From seasonal modifier
   } as const;
 
   /**
@@ -295,7 +296,11 @@ export class ColorResolver {
     // 3. Scheme color
     const schemeColor = colorScheme.colors[colorKey];
     if (schemeColor) {
-      trace.push({ layer: `Scheme (${colorScheme.name}.${colorKey})`, color: schemeColor, applied: true });
+      trace.push({
+        layer: `Scheme (${colorScheme.name}.${colorKey})`,
+        color: schemeColor,
+        applied: true,
+      });
       finalColor = schemeColor;
       source = 'scheme';
     } else {
@@ -319,7 +324,11 @@ export class ColorResolver {
     const seasonKey = season.toLowerCase() as SeasonKey;
     const seasonalOverride = colorScheme.seasonalModifiers?.[seasonKey]?.[colorKey];
     if (seasonalOverride) {
-      trace.push({ layer: `Season (${seasonKey}.${colorKey})`, color: seasonalOverride, applied: true });
+      trace.push({
+        layer: `Season (${seasonKey}.${colorKey})`,
+        color: seasonalOverride,
+        applied: true,
+      });
       finalColor = seasonalOverride;
       source = 'seasonal';
     } else {

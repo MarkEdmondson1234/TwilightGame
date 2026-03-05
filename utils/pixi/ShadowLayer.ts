@@ -31,33 +31,42 @@ import { Z_SHADOWS } from '../../zIndex';
 // Shadow configuration
 const SHADOW_CONFIG = {
   // Base shadow properties
-  baseAlpha: 0.25,          // Base shadow opacity
-  color: 0x112115,          // Shadow color (dark green)
-  blur: 8,                  // Shadow blur amount
+  baseAlpha: 0.25, // Base shadow opacity
+  color: 0x112115, // Shadow color (dark green)
+  blur: 8, // Shadow blur amount
 
   // Shadow size relative to sprite
-  widthRatio: 0.7,          // Shadow width as fraction of sprite width
-  heightRatio: 0.3,         // Shadow height (ellipse) as fraction of sprite width
+  widthRatio: 0.7, // Shadow width as fraction of sprite width
+  heightRatio: 0.3, // Shadow height (ellipse) as fraction of sprite width
 
   // Time-based shadow stretch
-  maxStretch: 2.5,          // Maximum shadow length multiplier at sunrise/sunset
-  minStretch: 0.5,          // Minimum shadow length at noon
+  maxStretch: 2.5, // Maximum shadow length multiplier at sunrise/sunset
+  minStretch: 0.5, // Minimum shadow length at noon
 
   // Offset limits (in tiles)
-  maxOffsetX: 1.5,          // Maximum horizontal shadow offset
-  maxOffsetY: 0.8,          // Maximum vertical shadow offset (always some southward)
+  maxOffsetX: 1.5, // Maximum horizontal shadow offset
+  maxOffsetY: 0.8, // Maximum vertical shadow offset (always some southward)
 };
 
 // Seasonal opacity modifiers
 const SEASON_MODIFIERS: Record<string, number> = {
-  [Season.SUMMER]: 1.2,     // Bright sun = darker shadows
-  [Season.SPRING]: 1.0,     // Normal
-  [Season.AUTUMN]: 0.8,     // Weaker sun
-  [Season.WINTER]: 0.4,     // Weak sun, often overcast
+  [Season.SUMMER]: 1.2, // Bright sun = darker shadows
+  [Season.SPRING]: 1.0, // Normal
+  [Season.AUTUMN]: 0.8, // Weaker sun
+  [Season.WINTER]: 0.4, // Weak sun, often overcast
 };
 
 // Weather that blocks shadows
 const SHADOW_BLOCKING_WEATHER = ['rain', 'snow', 'fog', 'mist', 'storm'];
+
+// Cave ambient occlusion — static shadow directly beneath sprites, no sun movement
+const CAVE_SHADOW_PARAMS = {
+  offsetX: 0,
+  offsetY: SHADOW_CONFIG.maxOffsetY * 0.3,
+  stretch: SHADOW_CONFIG.minStretch * 1.2,
+  alpha: SHADOW_CONFIG.baseAlpha * 0.6, // Subtler than outdoor shadows
+};
+const CAVE_SHADOW_COLOR = 0x0a0a14; // Dark blue-black (matches cave palette)
 
 export class ShadowLayer extends PixiLayer {
   private shadows: Map<string, PIXI.Graphics> = new Map();
@@ -76,7 +85,10 @@ export class ShadowLayer extends PixiLayer {
    * - Sunset: Sun sets in West → Long shadows pointing East
    * - Night: No shadows (or very faint ambient occlusion)
    */
-  private calculateShadowParams(hour: number, daylight: DaylightHours): {
+  private calculateShadowParams(
+    hour: number,
+    daylight: DaylightHours
+  ): {
     offsetX: number;
     offsetY: number;
     stretch: number;
@@ -130,7 +142,8 @@ export class ShadowLayer extends PixiLayer {
     const offsetY = SHADOW_CONFIG.maxOffsetY * (0.3 + 0.7 * (1 - noonProximity));
 
     // Stretch: longest at sunrise/sunset, shortest at noon
-    const stretch = SHADOW_CONFIG.minStretch +
+    const stretch =
+      SHADOW_CONFIG.minStretch +
       (SHADOW_CONFIG.maxStretch - SHADOW_CONFIG.minStretch) * (1 - noonProximity);
 
     return {
@@ -169,15 +182,23 @@ export class ShadowLayer extends PixiLayer {
       return;
     }
 
-    // Get seasonal daylight hours
-    const daylight = SEASONAL_DAYLIGHT[season as Season] ?? SEASONAL_DAYLIGHT[Season.SPRING];
+    // Cave maps use static ambient occlusion; outdoor maps use sun-based shadows
+    const isCave = map.colorScheme === 'cave';
+    let shadowParams: { offsetX: number; offsetY: number; stretch: number; alpha: number };
+    let finalAlpha: number;
+    const shadowColor = isCave ? CAVE_SHADOW_COLOR : SHADOW_CONFIG.color;
 
-    // Calculate shadow parameters for current hour and season
-    const shadowParams = this.calculateShadowParams(hour, daylight);
-
-    // Apply seasonal modifier
-    const seasonMod = SEASON_MODIFIERS[season] ?? 1.0;
-    const finalAlpha = shadowParams.alpha * seasonMod;
+    if (isCave) {
+      // Static ambient occlusion — no sun movement, fixed subtle shadow
+      shadowParams = CAVE_SHADOW_PARAMS;
+      finalAlpha = shadowParams.alpha;
+    } else {
+      // Sun-based shadows
+      const daylight = SEASONAL_DAYLIGHT[season as Season] ?? SEASONAL_DAYLIGHT[Season.SPRING];
+      shadowParams = this.calculateShadowParams(hour, daylight);
+      const seasonMod = SEASON_MODIFIERS[season] ?? 1.0;
+      finalAlpha = shadowParams.alpha * seasonMod;
+    }
 
     // If shadows are essentially invisible, skip rendering
     if (finalAlpha < 0.02) {
@@ -205,7 +226,7 @@ export class ShadowLayer extends PixiLayer {
         if (renderedKeys.has(key)) continue;
         renderedKeys.add(key);
 
-        this.renderShadow(x, y, spriteMetadata, shadowParams, finalAlpha);
+        this.renderShadow(x, y, spriteMetadata, shadowParams, finalAlpha, shadowColor);
       }
     }
 
@@ -225,7 +246,8 @@ export class ShadowLayer extends PixiLayer {
     anchorY: number,
     metadata: SpriteMetadata,
     params: { offsetX: number; offsetY: number; stretch: number; alpha: number },
-    finalAlpha: number
+    finalAlpha: number,
+    color: number = SHADOW_CONFIG.color
   ): void {
     // Check if shadow is disabled for this sprite
     if (metadata.shadowEnabled === false) {
@@ -259,7 +281,8 @@ export class ShadowLayer extends PixiLayer {
 
     // Calculate shadow position (at base of sprite)
     const spriteBaseX = (anchorX + metadata.offsetX + metadata.spriteWidth / 2) * TILE_SIZE;
-    const spriteBaseY = (anchorY + metadata.offsetY + metadata.spriteHeight + extraOffsetY) * TILE_SIZE;
+    const spriteBaseY =
+      (anchorY + metadata.offsetY + metadata.spriteHeight + extraOffsetY) * TILE_SIZE;
 
     // Apply time-based offset
     const shadowX = spriteBaseX + params.offsetX * TILE_SIZE;
@@ -267,7 +290,7 @@ export class ShadowLayer extends PixiLayer {
 
     // Draw elliptical shadow
     shadow.ellipse(0, 0, shadowWidth / 2, shadowHeight / 2);
-    shadow.fill({ color: SHADOW_CONFIG.color, alpha: finalAlpha });
+    shadow.fill({ color, alpha: finalAlpha });
 
     // Position shadow
     shadow.x = shadowX;
@@ -275,10 +298,12 @@ export class ShadowLayer extends PixiLayer {
 
     // Apply blur filter if not already applied
     if (!shadow.filters || shadow.filters.length === 0) {
-      shadow.filters = [new PIXI.BlurFilter({
-        strength: SHADOW_CONFIG.blur,
-        quality: 2,
-      })];
+      shadow.filters = [
+        new PIXI.BlurFilter({
+          strength: SHADOW_CONFIG.blur,
+          quality: 2,
+        }),
+      ];
     }
 
     shadow.visible = true;
@@ -288,7 +313,7 @@ export class ShadowLayer extends PixiLayer {
    * Hide all shadows (for weather/night)
    */
   private hideAllShadows(): void {
-    this.shadows.forEach(shadow => {
+    this.shadows.forEach((shadow) => {
       shadow.visible = false;
     });
   }
@@ -297,7 +322,7 @@ export class ShadowLayer extends PixiLayer {
    * Clear all shadows (when changing maps)
    */
   clear(): void {
-    this.shadows.forEach(shadow => shadow.destroy());
+    this.shadows.forEach((shadow) => shadow.destroy());
     this.shadows.clear();
     console.log('[ShadowLayer] Cleared all shadows');
   }
@@ -307,7 +332,7 @@ export class ShadowLayer extends PixiLayer {
    */
   getShadowCount(): { total: number; visible: number } {
     let visible = 0;
-    this.shadows.forEach(shadow => {
+    this.shadows.forEach((shadow) => {
       if (shadow.visible) visible++;
     });
     return { total: this.shadows.size, visible };

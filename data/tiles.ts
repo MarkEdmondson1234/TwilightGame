@@ -227,7 +227,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.stone_column],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.STONE_COLUMN_MD]: {
     name: 'Stone Column (Medium)',
@@ -236,7 +241,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.stone_column],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.STONE_COLUMN_LG]: {
     name: 'Stone Column (Large)',
@@ -245,7 +255,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.stone_column],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.WALL_TORCH]: {
     name: 'Wall Torch',
@@ -255,7 +270,13 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseVisible: true,
     animationFrames: [tileAssets.torch01, tileAssets.torch02],
     animationSpeed: 420, // ~2.4 FPS flicker
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
+    lightSource: { activeTime: 'always' },
   },
   [TileType.CAVE_LAKE_SM]: {
     name: 'Cave Lake (Small)',
@@ -264,7 +285,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.cave_lake],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.CAVE_LAKE_MD]: {
     name: 'Cave Lake (Medium)',
@@ -273,7 +299,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.cave_lake],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.CAVE_LAKE_LG]: {
     name: 'Cave Lake (Large)',
@@ -282,7 +313,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.cave_lake],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.MINE_CRYSTAL_SM]: {
     name: 'Mine Crystal (Small)',
@@ -291,7 +327,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.mine_crystal],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.MINE_CRYSTAL_MD]: {
     name: 'Mine Crystal (Medium)',
@@ -300,7 +341,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.mine_crystal],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.MINE_CRYSTAL_LG]: {
     name: 'Mine Crystal (Large)',
@@ -309,7 +355,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     image: [tileAssets.mine_crystal],
-    transforms: { enableFlip: true, enableScale: false, enableRotation: false, enableBrightness: false },
+    transforms: {
+      enableFlip: true,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
   },
   [TileType.WALL]: {
     name: 'Wall',
@@ -432,7 +483,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     transforms: {
       enableFlip: true,
       enableScale: true,
-      scaleRange: { min: 0.90, max: 1.10 },
+      scaleRange: { min: 0.9, max: 1.1 },
     },
   },
   [TileType.BUSH]: {
@@ -964,6 +1015,33 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       winter: [tileAssets.tree_mushrooms_winter],
       default: [tileAssets.tree_mushrooms_spring_summer_autumn],
     },
+  },
+
+  [TileType.GARDEN_LAMP]: {
+    name: 'Garden Lamp',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.WALKABLE,
+    baseType: TileType.GRASS,
+    baseVisible: true,
+    timeOfDayImages: {
+      spring: {
+        day: [tileAssets.garden_lamp_off],
+        night: [tileAssets.garden_lamp_on],
+      },
+      summer: {
+        day: [tileAssets.garden_lamp_off],
+        night: [tileAssets.garden_lamp_on],
+      },
+      autumn: {
+        day: [tileAssets.garden_lamp_off],
+        night: [tileAssets.garden_lamp_on],
+      },
+      winter: {
+        day: [tileAssets.garden_lamp_off],
+        night: [tileAssets.garden_lamp_on],
+      },
+    },
+    lightSource: { activeTime: 'night' },
   },
 
   // Building tiles

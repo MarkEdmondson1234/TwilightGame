@@ -70,6 +70,14 @@ export interface TileData {
   // Animation support (for tiles like cauldrons that cycle through frames)
   animationFrames?: string[]; // Array of image paths to cycle through
   animationSpeed?: number; // Milliseconds per frame (default: 150)
+  // Light source support (DarknessLayer punches light holes at these tiles)
+  lightSource?: {
+    radius?: number; // Light radius in pixels (default: TILE_SIZE * 3.5)
+    color?: number; // Glow tint hex (default: 0xFFA54F amber)
+    intensity?: number; // Base brightness 0-1 (default: 1.0)
+    flickerAmount?: number; // Flicker intensity 0-1 (default: 0.15)
+    activeTime?: 'always' | 'night'; // When light is active (default: 'always')
+  };
 }
 
 // Multi-tile sprite metadata for rendering

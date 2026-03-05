@@ -72,16 +72,22 @@ LGGGGGGGGGGGGGGGGGGGGGGGGGGGGL
 LLLLLLLLLLLLLLLLLLLLLLLLLLLLLL
 `;
 
+// Helper: strip seasonalLocations so debug NPCs stay on the debug map
+function pinToDebugMap<T extends { seasonalLocations?: unknown }>(npc: T): T {
+  delete npc.seasonalLocations;
+  return npc;
+}
+
 // Create all NPCs positioned in a grid pattern
 const npcs = [
   // Row 1: Small animals
   createCatNPC('debug_cat', { x: 6, y: 6 }, 'Cat'),
   createDogNPC('debug_dog', { x: 10, y: 6 }, 'Dog'),
 
-  // Row 2: Village folk
+  // Row 2: Village folk (pinned — factory bakes in seasonalLocations that would relocate them)
   createVillageElderNPC('debug_elder', { x: 6, y: 10 }, 'Village Elder'),
-  createOldWomanKnittingNPC('debug_old_woman', { x: 10, y: 10 }, 'Granny'),
-  createVillageChildNPC('debug_child', { x: 14, y: 10 }, 'Little Girl'),
+  pinToDebugMap(createOldWomanKnittingNPC('debug_old_woman', { x: 10, y: 10 }, 'Granny')),
+  pinToDebugMap(createVillageChildNPC('debug_child', { x: 14, y: 10 }, 'Little Girl')),
   createMumNPC('debug_mum', { x: 18, y: 10 }, 'Mum'),
 
   // Row 3: Shopkeeper

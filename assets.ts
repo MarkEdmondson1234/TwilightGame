@@ -68,6 +68,9 @@ export const tileAssets = {
   torch02: '/TwilightGame/assets-optimized/tiles/torch02.png',
   cave_lake: '/TwilightGame/assets-optimized/tiles/cave_lake.png',
   mine_crystal: '/TwilightGame/assets-optimized/tiles/mine_crystal.png',
+  // Garden lamp — reusing torch sprites as placeholder until dedicated art is created
+  garden_lamp_off: '/TwilightGame/assets-optimized/tiles/torch01.png',
+  garden_lamp_on: '/TwilightGame/assets-optimized/tiles/torch02.png',
   // Lake tiles (directional edges for proper water rendering)
   water_center: '/TwilightGame/assets-optimized/tiles/lake/water_middle.png',
   water_left: '/TwilightGame/assets-optimized/tiles/lake/water_left.png',
