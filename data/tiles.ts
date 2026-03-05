@@ -250,7 +250,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   [TileType.WALL_TORCH]: {
     name: 'Wall Torch',
     color: 'bg-palette-gray',
-    collisionType: CollisionType.SOLID,
+    collisionType: CollisionType.WALKABLE,
     baseType: TileType.MINE_FLOOR,
     baseVisible: true,
     animationFrames: [tileAssets.torch01, tileAssets.torch02],
