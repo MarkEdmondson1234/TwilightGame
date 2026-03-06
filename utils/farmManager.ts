@@ -897,8 +897,11 @@ class FarmManager {
         plot.state === FarmPlotState.WATERED ||
         plot.state === FarmPlotState.WILTING
       ) {
-        // Wilting crops recover to watered state
-        const newState = plot.state === FarmPlotState.WILTING ? FarmPlotState.WATERED : plot.state;
+        // Planted and wilting crops transition to watered state
+        const newState =
+          plot.state === FarmPlotState.PLANTED || plot.state === FarmPlotState.WILTING
+            ? FarmPlotState.WATERED
+            : plot.state;
 
         const updatedPlot: FarmPlot = {
           ...plot,
