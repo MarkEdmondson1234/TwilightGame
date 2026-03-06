@@ -25,6 +25,7 @@ export const fairyOakMidnightReturnCutscene: CutsceneDefinition = {
   canSkip: true,
   canReplay: false,
   playOnce: false, // Repeatable — player can get potions each visit
+  cooldownMs: 60_000, // 60 seconds real-time before it can trigger again (prevents re-triggering when returned to same spot)
 
   trigger: {
     type: 'position',

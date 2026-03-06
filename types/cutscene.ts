@@ -175,6 +175,7 @@ export interface CutsceneDefinition {
   canSkip?: boolean; // Allow player to skip (default true)
   canReplay?: boolean; // Allow replay from menu (default false)
   playOnce?: boolean; // Only play once per save (default false)
+  cooldownMs?: number; // Minimum real-time milliseconds between plays (for repeatable cutscenes)
   // Audio
   audio?: {
     music?: string; // Music track ID to play during cutscene

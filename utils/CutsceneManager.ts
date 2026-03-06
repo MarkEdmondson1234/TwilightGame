@@ -18,6 +18,7 @@ export interface CutsceneState {
   currentCutscene: CutsceneDefinition | null;
   currentSceneIndex: number;
   completedCutscenes: string[]; // IDs of cutscenes that have been viewed
+  lastPlayedAt: Record<string, number>; // cutsceneId → Date.now() when last played
   // Saved player position for return
   savedPosition?: {
     mapId: string;
@@ -33,6 +34,7 @@ class CutsceneManagerClass {
     currentCutscene: null,
     currentSceneIndex: 0,
     completedCutscenes: [],
+    lastPlayedAt: {},
   };
 
   private cutsceneRegistry: Map<string, CutsceneDefinition> = new Map();
@@ -183,10 +185,11 @@ class CutsceneManagerClass {
     const cutsceneId = cutscene.id;
     console.log(`[CutsceneManager] Ending cutscene: ${cutscene.name}`);
 
-    // Mark as completed
+    // Mark as completed and record play time (for cooldown checks)
     if (!this.state.completedCutscenes.includes(cutscene.id)) {
       this.state.completedCutscenes.push(cutscene.id);
     }
+    this.state.lastPlayedAt = { ...this.state.lastPlayedAt, [cutscene.id]: Date.now() };
 
     const completionAction = cutscene.onComplete;
     const savedPosition = this.state.savedPosition;
@@ -389,6 +392,14 @@ class CutsceneManagerClass {
         continue;
       }
 
+      // Skip if still within cooldown window (for repeatable cutscenes)
+      if (cutscene.cooldownMs !== undefined) {
+        const lastPlayed = this.state.lastPlayedAt[cutscene.id];
+        if (lastPlayed !== undefined && Date.now() - lastPlayed < cutscene.cooldownMs) {
+          continue;
+        }
+      }
+
       // Check if trigger conditions are met
       if (this.checkTrigger(cutscene.trigger, context)) {
         // Start the cutscene
@@ -493,6 +504,7 @@ class CutsceneManagerClass {
       currentCutscene: null,
       currentSceneIndex: 0,
       completedCutscenes: [],
+      lastPlayedAt: {},
     };
     this.notifyListeners();
   }
