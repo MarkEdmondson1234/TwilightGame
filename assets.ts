@@ -382,6 +382,7 @@ export const groceryAssets = {
   vinegar: '/TwilightGame/assets-optimized/items/grocery/vinegar.png',
   mint: '/TwilightGame/assets-optimized/items/grocery/mint.png',
   vase: '/TwilightGame/assets-optimized/items/grocery/vase.png',
+  pea_seeds: '/TwilightGame/assets-optimized/items/grocery/pea_seeds.png',
 };
 
 // Magical ingredient assets (for witch shop - sellable but not purchasable)

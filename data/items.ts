@@ -248,7 +248,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 3,
     cropId: 'pea',
-    icon: '🫛',
+    image: groceryAssets.pea_seeds,
   },
 
   seed_cucumber: {
