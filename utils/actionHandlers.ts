@@ -1527,8 +1527,26 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   }
 
   // Check for farming actions
-  const plot = farmManager.getPlot(currentMapId, tilePos);
-  const plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
+  // Search the clicked tile first; if no growing crop found, check adjacent tiles.
+  // This handles tall crop sprites (e.g. peas, corn) whose visuals extend one tile
+  // above the soil tile — clicking the upper portion maps to the tile above the plot.
+  let farmTilePos = tilePos;
+  let plot = farmManager.getPlot(currentMapId, tilePos);
+  let plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
+
+  if (!plot || plotTileType === TileType.SOIL_FALLOW) {
+    for (const offset of [{ x: 0, y: 1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: -1 }]) {
+      const np = { x: tileX + offset.x, y: tileY + offset.y };
+      const nearbyPlot = farmManager.getPlot(currentMapId, np);
+      const nearbyType = nearbyPlot ? farmManager.getTileTypeForPlot(nearbyPlot) : undefined;
+      if (nearbyType !== undefined && nearbyType !== TileType.SOIL_FALLOW) {
+        farmTilePos = np;
+        plot = nearbyPlot;
+        plotTileType = nearbyType;
+        break;
+      }
+    }
+  }
 
   if (
     plotTileType !== undefined &&
@@ -1543,7 +1561,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: '🔨',
         color: '#92400e',
         execute: () => {
-          const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
           onFarmAction?.(farmResult);
         },
       });
@@ -1582,7 +1600,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           color: '#16a34a',
           execute: () => {
             const farmResult = handleFarmAction(
-              position,
+              farmTilePos,
               currentTool,
               currentMapId,
               onFarmAnimation
@@ -1608,7 +1626,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: '💧',
         color: '#0ea5e9',
         execute: () => {
-          const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
           onFarmAction?.(farmResult);
         },
       });
@@ -1616,7 +1634,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
 
     // Harvest crop
     if (plotTileType === TileType.SOIL_READY) {
-      const readyPlot = farmManager.getPlot(currentMapId, tilePos);
+      const readyPlot = farmManager.getPlot(currentMapId, farmTilePos);
       const readyCrop = readyPlot?.cropType ? getCrop(readyPlot.cropType) : null;
 
       if (readyCrop?.dualHarvest) {
@@ -1627,7 +1645,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         const completeDualHarvest = () => {
           const inventoryData = inventoryManager.getInventoryData();
           characterData.saveInventory(inventoryData.items, inventoryData.tools);
-          onFarmAnimation?.('harvest', position);
+          onFarmAnimation?.('harvest', farmTilePos);
           farmManager.updateAllPlots();
           characterData.saveFarmPlots(farmManager.getAllPlots());
           onFarmAction?.({ handled: true });
@@ -1639,7 +1657,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           icon: dh.flowerOption.icon,
           color: dh.flowerOption.color,
           execute: () => {
-            const result = farmManager.harvestCropWithMode(currentMapId, position, 'flowers');
+            const result = farmManager.harvestCropWithMode(currentMapId, farmTilePos, 'flowers');
             if (result) {
               const crop = getCrop(result.cropId);
               if (crop) {
@@ -1667,7 +1685,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           icon: dh.seedOption.icon,
           color: dh.seedOption.color,
           execute: () => {
-            const result = farmManager.harvestCropWithMode(currentMapId, position, 'seeds');
+            const result = farmManager.harvestCropWithMode(currentMapId, farmTilePos, 'seeds');
             if (result) {
               const crop = getCrop(result.cropId);
               if (crop) {
@@ -1689,7 +1707,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           color: '#eab308',
           execute: () => {
             const farmResult = handleFarmAction(
-              position,
+              farmTilePos,
               currentTool,
               currentMapId,
               onFarmAnimation
@@ -1708,7 +1726,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: '🗑️',
         color: '#6b7280',
         execute: () => {
-          const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
           onFarmAction?.(farmResult);
         },
       });
@@ -1725,7 +1743,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: '❓',
         color: '#6b7280',
         execute: () => {
-          const farmResult = handleFarmAction(position, currentTool, currentMapId, onFarmAnimation);
+          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
           onFarmAction(farmResult);
         },
       });
