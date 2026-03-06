@@ -479,6 +479,11 @@ export const npcAssets = {
   umbrawolf_walk4: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf4.png',
   umbrawolf_walk5: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf5.png',
   umbrawolf_walk6: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf6.png',
+  // Goblin (mine creature - spawns every 5th cave level)
+  goblin_idle: '/TwilightGame/assets-optimized/npcs/mine/goblin_idle.png',
+  goblin_walk1: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk1.png',
+  goblin_walk2: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk2.png',
+  goblin_portrait: '/TwilightGame/assets/npcs/mine/goblin01.gif',
   // Witch Wolf assets (rare forest creature with blinking animation)
   witch_wolf_01: '/TwilightGame/assets/npcs/witch/witch_wolf_01.png',
   witch_wolf_02: '/TwilightGame/assets/npcs/witch/witch_wolf_02.png',

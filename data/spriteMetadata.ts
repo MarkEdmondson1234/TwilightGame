@@ -826,8 +826,8 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableScale: false,
     enableBrightness: false,
     // Collision covers most of the sprite area (stone is solid)
-    collisionWidth: 1,
-    collisionHeight: 1.6,
+    collisionWidth: 0.5,
+    collisionHeight: 1,
     collisionOffsetX: 0.2,
     collisionOffsetY: 0.2,
   },
@@ -844,7 +844,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     // Collision covers most of the sprite area (stone is solid)
     collisionWidth: 1.5,
-    collisionHeight: 4,
+    collisionHeight: 2,
     collisionOffsetX: 2,
     collisionOffsetY: 0.5,
   },
@@ -861,7 +861,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     enableBrightness: false,
     // Collision covers most of the sprite area (stone is solid)
     collisionWidth: 2,
-    collisionHeight: 5,
+    collisionHeight: 2,
     collisionOffsetX: 3,
     collisionOffsetY: 2,
   },

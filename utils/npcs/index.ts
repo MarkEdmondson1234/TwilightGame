@@ -45,3 +45,8 @@ export {
 export {
   createCowNPC,
 } from './farmNPCs';
+
+// Mine NPCs
+export {
+  createGoblinNPC,
+} from './mineNPCs';

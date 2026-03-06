@@ -38,4 +38,6 @@ export {
   createSparrowNPC,
   // Farm NPCs
   createCowNPC,
+  // Mine NPCs
+  createGoblinNPC,
 } from './npcs';

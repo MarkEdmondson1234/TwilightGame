@@ -9,6 +9,7 @@ import {
   createSuffleNPC,
   createPossumNPC,
   createSparrowNPC,
+  createGoblinNPC,
 } from '../utils/npcFactories';
 
 /**
@@ -1409,6 +1410,20 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
 
   // NPCs array for cave creatures
   const npcs = [];
+
+  // Spawn a goblin every 5th cave level (depths 5, 10, 15, …)
+  if (caveDepth > 0 && caveDepth % 5 === 0) {
+    let goblinX: number, goblinY: number;
+    do {
+      goblinX = Math.floor(Math.random() * (width - 4)) + 2;
+      goblinY = Math.floor(Math.random() * (height - 4)) + 2;
+    } while (
+      map[goblinY][goblinX] !== TileType.MINE_FLOOR ||
+      (Math.abs(goblinX - spawnX) < 8 && Math.abs(goblinY - spawnY) < 8)
+    );
+    npcs.push(createGoblinNPC(`goblin_depth_${caveDepth}_${seed}`, { x: goblinX, y: goblinY }));
+    console.log(`[Cave] ⚔️ Goblin spawned at depth ${caveDepth} (${goblinX}, ${goblinY})`);
+  }
 
   return {
     id: `cave_${seed}`,
