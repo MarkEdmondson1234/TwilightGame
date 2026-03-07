@@ -409,7 +409,9 @@ function getEffectiveSeasons(item: ShopItem): Season[] | undefined {
     const cropId = item.itemId.replace('seed_', '');
     const crop = CROPS[cropId];
     if (crop) {
-      return crop.plantSeasons;
+      return crop.plantSeasons.map(
+        (s: CropSeason) => s.toLowerCase() as Season,
+      );
     }
   }
   return item.availableSeasons;
