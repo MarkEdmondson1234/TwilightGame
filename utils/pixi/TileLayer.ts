@@ -73,30 +73,30 @@ export const CROP_ADULT_SIZES: Record<
   string,
   { width: number; height: number; offsetX: number; offsetY: number }
 > = {
-  // Large crops (2x2 tiles) - extend 1 tile up from soil
-  tomato: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+  // Large crops (2.5x2.5 tiles) - spill over neighbouring tiles for a lush, abundant look
+  tomato: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
+  corn: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
+  sunflower: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
+  pea: { width: 3, height: 3, offsetX: -1, offsetY: -2 },
+  cucumber: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
+
+  // Magical crops (2.5x2.5 tiles) - high resolution sprites
+  fairy_bluebell: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
+
+  // Medium crops (2x2 tiles) - extend 1 tile up from soil
   pumpkin: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
-  corn: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
-  sunflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+  melon: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+  broccoli: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+  cauliflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
+  chili: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
 
-  // Magical crops (2x2 tiles) - high resolution sprites
-  fairy_bluebell: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
-
-  // Medium crops (1.5x1.5 tiles) - extend half tile up from soil
-  melon: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -0.5 },
-  broccoli: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -0.5 },
-  cauliflower: { width: 1.5, height: 1.5, offsetX: -0.25, offsetY: -0.5 },
-
-  // Small/leafy crops (1x1 tile) - centred on soil tile
+  // Small crops (1x1 tile) - centred on soil tile
   spinach: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   salad: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   radish: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   carrot: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   onion: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
-  pea: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
   potato: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
-  cucumber: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
-  chili: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   strawberry: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
 };
 
