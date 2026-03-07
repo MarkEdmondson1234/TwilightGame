@@ -131,6 +131,7 @@ function createDirectories() {
     path.join(OPTIMIZED_DIR, 'character1'),
     path.join(OPTIMIZED_DIR, 'tiles'),
     path.join(OPTIMIZED_DIR, 'farming'),
+    path.join(OPTIMIZED_DIR, 'herbs'),
     path.join(OPTIMIZED_DIR, 'npcs'),
     path.join(OPTIMIZED_DIR, 'animations'),
     path.join(OPTIMIZED_DIR, 'cutscenes'),
@@ -542,6 +543,53 @@ async function optimizeFarming() {
   }
 
   console.log(`\n  Optimized ${optimized} farming sprites\n`);
+}
+
+// Optimize herb sprites (seeds, plant, harvested crop)
+async function optimizeHerbs() {
+  console.log('🌿 Optimizing herb sprites...');
+
+  const herbsDir = path.join(ASSETS_DIR, 'herbs');
+  if (!fs.existsSync(herbsDir)) {
+    console.log('⚠️  No herb sprites found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(herbsDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    const relativePath = path.relative(herbsDir, inputPath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'herbs', relativePath.replace(/\.jpeg$/i, '.png')));
+
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+    deleteIfExists(outputPath);
+
+    // Herb sprites — same size/quality as farming plant sprites
+    await sharp(inputPath)
+      .resize(FARMING_PLANT_SIZE, FARMING_PLANT_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 5 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} herb sprites\n`);
 }
 
 // Optimize NPC sprites
@@ -1125,6 +1173,7 @@ async function main() {
     await generateCharacterSpriteSheets();
     await optimizeTiles();
     await optimizeFarming();
+    await optimizeHerbs();
     await optimizeNPCs();
     await optimizeAnimations();
     await optimizeCutscenes();

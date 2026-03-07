@@ -57,6 +57,8 @@ class FarmManager {
       FarmPlotState.WATERED,
       FarmPlotState.WILTING,
       FarmPlotState.READY,
+      FarmPlotState.HERB_COOLDOWN,
+      FarmPlotState.HERB_DORMANT,
     ];
     if (growingStates.includes(plot.state) && plot.plantedAtTimestamp === null) {
       console.warn('[FarmManager] Invalid plot: growing state without plantedAtTimestamp', plot);
@@ -140,6 +142,60 @@ class FarmManager {
     // States that don't auto-transition
     if (plot.state === FarmPlotState.FALLOW || plot.state === FarmPlotState.TILLED) {
       return plot;
+    }
+
+    // Herb dormancy/cooldown transitions (handled before crop data lookup)
+    if (
+      plot.state === FarmPlotState.HERB_COOLDOWN ||
+      plot.state === FarmPlotState.HERB_DORMANT ||
+      plot.state === FarmPlotState.READY
+    ) {
+      const herbCrop = plot.cropType ? getCrop(plot.cropType) : null;
+      if (herbCrop?.isHerb) {
+        const isWinter = TimeManager.getCurrentTime().season === Season.WINTER;
+
+        // READY herb → dormant when winter begins
+        if (plot.state === FarmPlotState.READY && isWinter) {
+          return {
+            ...plot,
+            state: FarmPlotState.HERB_DORMANT,
+            stateChangedAtDay: currentDay,
+            stateChangedAtHour: currentHour,
+            stateChangedAtTimestamp: now,
+          };
+        }
+
+        // HERB_DORMANT → READY when winter ends
+        if (plot.state === FarmPlotState.HERB_DORMANT && !isWinter) {
+          return {
+            ...plot,
+            state: FarmPlotState.READY,
+            stateChangedAtDay: currentDay,
+            stateChangedAtHour: currentHour,
+            stateChangedAtTimestamp: now,
+          };
+        }
+
+        // HERB_COOLDOWN → READY (or DORMANT if winter) when cooldown expires
+        if (plot.state === FarmPlotState.HERB_COOLDOWN) {
+          const cooldownMs = (herbCrop.harvestCooldownDays ?? 1) * TimeManager.MS_PER_GAME_DAY;
+          if (plot.harvestedAtTimestamp != null && now - plot.harvestedAtTimestamp >= cooldownMs) {
+            return {
+              ...plot,
+              state: isWinter ? FarmPlotState.HERB_DORMANT : FarmPlotState.READY,
+              stateChangedAtDay: currentDay,
+              stateChangedAtHour: currentHour,
+              stateChangedAtTimestamp: now,
+            };
+          }
+          return plot;
+        }
+
+        // READY non-winter herb: no further transitions needed
+        if (plot.state === FarmPlotState.READY) {
+          return plot;
+        }
+      }
     }
 
     // States that need crop data
@@ -509,34 +565,52 @@ class FarmManager {
     const seedsDropped = plot.abundantHarvest
       ? crop.seedDropMax
       : Math.floor(Math.random() * (crop.seedDropMax - crop.seedDropMin + 1)) + crop.seedDropMin;
-    const seedItemId = getSeedItemId(plot.cropType);
-    inventoryManager.addItem(seedItemId, seedsDropped);
+    if (seedsDropped > 0) {
+      const seedItemId = getSeedItemId(plot.cropType);
+      inventoryManager.addItem(seedItemId, seedsDropped);
+    }
 
     const gameTime = TimeManager.getCurrentTime();
     const now = Date.now();
-    // Reset plot to fallow state after harvest (needs tilling again)
-    const updatedPlot: FarmPlot = {
-      ...plot,
-      state: FarmPlotState.FALLOW,
-      cropType: null,
-      plantedAtDay: null,
-      plantedAtHour: null,
-      lastWateredDay: null,
-      lastWateredHour: null,
-      stateChangedAtDay: gameTime.totalDays,
-      stateChangedAtHour: gameTime.hour,
-      plantedAtTimestamp: null,
-      lastWateredTimestamp: null,
-      stateChangedAtTimestamp: now,
-      quality: 'normal', // Reset quality
-      fertiliserApplied: false, // Reset fertiliser
-    };
+
+    let updatedPlot: FarmPlot;
+    if (crop.isHerb) {
+      // Herbs persist after harvest — enter cooldown, plot stays occupied
+      updatedPlot = {
+        ...plot,
+        state: FarmPlotState.HERB_COOLDOWN,
+        stateChangedAtDay: gameTime.totalDays,
+        stateChangedAtHour: gameTime.hour,
+        stateChangedAtTimestamp: now,
+        harvestedAtTimestamp: now,
+      };
+    } else {
+      // Normal crops reset to fallow
+      updatedPlot = {
+        ...plot,
+        state: FarmPlotState.FALLOW,
+        cropType: null,
+        plantedAtDay: null,
+        plantedAtHour: null,
+        lastWateredDay: null,
+        lastWateredHour: null,
+        stateChangedAtDay: gameTime.totalDays,
+        stateChangedAtHour: gameTime.hour,
+        plantedAtTimestamp: null,
+        lastWateredTimestamp: null,
+        stateChangedAtTimestamp: now,
+        quality: 'normal', // Reset quality
+        fertiliserApplied: false, // Reset fertiliser
+      };
+    }
 
     this.registerPlot(updatedPlot);
     if (DEBUG.FARM) {
       const qualityStr = quality !== 'normal' ? ` (${quality} quality)` : '';
+      const seedsInfo = seedsDropped > 0 ? ` + ${seedsDropped}x seeds` : '';
+      const herbInfo = crop.isHerb ? ' (herb — plot persists, in cooldown)' : '';
       console.log(
-        `[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr} + ${seedsDropped}x seeds at ${position.x},${position.y}`
+        `[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr}${seedsInfo}${herbInfo} at ${position.x},${position.y}`
       );
     }
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
@@ -553,6 +627,53 @@ class FarmManager {
       seedsDropped,
       quality,
     };
+  }
+
+  /**
+   * Remove a herb plot, clearing it back to fallow.
+   * Available for READY, HERB_COOLDOWN, and HERB_DORMANT states.
+   */
+  removeHerb(mapId: string, position: Position): boolean {
+    const plot = this.getPlot(mapId, position);
+    if (
+      !plot ||
+      (plot.state !== FarmPlotState.READY &&
+        plot.state !== FarmPlotState.HERB_COOLDOWN &&
+        plot.state !== FarmPlotState.HERB_DORMANT)
+    ) {
+      return false;
+    }
+
+    const crop = plot.cropType ? getCrop(plot.cropType) : null;
+    if (!crop?.isHerb) {
+      return false;
+    }
+
+    const gameTime = TimeManager.getCurrentTime();
+    const now = Date.now();
+    const updatedPlot: FarmPlot = {
+      ...plot,
+      state: FarmPlotState.FALLOW,
+      cropType: null,
+      plantedAtDay: null,
+      plantedAtHour: null,
+      lastWateredDay: null,
+      lastWateredHour: null,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
+      plantedAtTimestamp: null,
+      lastWateredTimestamp: null,
+      stateChangedAtTimestamp: now,
+      harvestedAtTimestamp: null,
+      quality: 'normal',
+      fertiliserApplied: false,
+    };
+
+    this.registerPlot(updatedPlot);
+    if (DEBUG.FARM) console.log(`[FarmManager] Removed herb at ${position.x},${position.y}`);
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'clear' });
+    this.syncSharedPlot(mapId, position);
+    return true;
   }
 
   /**
@@ -707,6 +828,9 @@ class FarmManager {
         return TileType.SOIL_WILTING;
       case FarmPlotState.DEAD:
         return TileType.SOIL_DEAD;
+      case FarmPlotState.HERB_COOLDOWN:
+      case FarmPlotState.HERB_DORMANT:
+        return TileType.SOIL_PLANTED; // Show plant on soil; sprite overridden by growth stage
       default:
         return TileType.SOIL_FALLOW;
     }
@@ -728,11 +852,13 @@ class FarmManager {
       return CropGrowthStage.SEEDLING;
     }
 
-    // If ready, wilting, or dead - show as adult
+    // If ready, wilting, dead, or herb post-harvest — show as adult
     if (
       plot.state === FarmPlotState.READY ||
       plot.state === FarmPlotState.WILTING ||
-      plot.state === FarmPlotState.DEAD
+      plot.state === FarmPlotState.DEAD ||
+      plot.state === FarmPlotState.HERB_COOLDOWN ||
+      plot.state === FarmPlotState.HERB_DORMANT
     ) {
       return CropGrowthStage.ADULT;
     }
@@ -753,6 +879,11 @@ class FarmManager {
 
     // Calculate growth progress (0 to 1)
     const progress = Math.min(1, elapsed / totalGrowthTime);
+
+    // Herbs skip the young stage — go directly from seedling to adult
+    if (crop.isHerb && progress >= GROWTH_THRESHOLDS.SEEDLING_TO_YOUNG) {
+      return CropGrowthStage.ADULT;
+    }
 
     // Return stage based on progress thresholds
     if (progress < GROWTH_THRESHOLDS.SEEDLING_TO_YOUNG) {

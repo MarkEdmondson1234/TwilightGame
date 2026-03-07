@@ -88,6 +88,10 @@ export interface CropDefinition {
     flowerOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number; flowerItemId?: string };
     seedOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number };
   };
+
+  // Herb behaviour: plot persists after harvest, re-grows after cooldown, skips young stage
+  isHerb?: boolean;
+  harvestCooldownDays?: number; // Game days before re-harvest (default 1)
 }
 
 // Time constants (for readability)
@@ -510,6 +514,33 @@ export const CROPS: Record<string, CropDefinition> = {
   },
 
   // ===== KEPT FROM ORIGINAL (but updated) =====
+
+  // ===== HERBS =====
+  // Herbs persist after harvest (HERB_COOLDOWN → READY), skip the young growth stage,
+  // and go dormant in winter (HERB_DORMANT). Seeds are sold in the shop seasonally.
+
+  thyme: {
+    id: 'thyme',
+    name: 'thyme',
+    displayName: 'Thyme',
+    plantSeasons: [Season.SPRING, Season.SUMMER],
+    growthTime: 2 * GAME_DAY,
+    growthTimeWatered: 1.5 * GAME_DAY,
+    waterNeededInterval: 1 * GAME_DAY,
+    wiltingGracePeriod: 0.5 * GAME_DAY,
+    deathGracePeriod: 0.5 * GAME_DAY,
+    harvestYield: 2,
+    sellPrice: 12,
+    experience: 8,
+    seedDropMin: 0,
+    seedDropMax: 0, // Herbs don't drop seeds on harvest
+    description: 'A fragrant herb that regrows after harvesting. Goes dormant in winter.',
+    seedCost: 8,
+    rarity: CropRarity.UNCOMMON,
+    seedSource: 'shop',
+    isHerb: true,
+    harvestCooldownDays: 1,
+  },
 
   // Corn - kept as shop item
   corn: {

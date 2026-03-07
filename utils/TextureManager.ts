@@ -62,40 +62,39 @@ class TextureManager {
 
   /**
    * Batch load multiple textures
-   * Returns when all textures are loaded
+   * Loads each texture individually so a single corrupted file cannot crash the game.
    */
   async loadBatch(assets: Record<string, string>): Promise<void> {
-    console.log(`[TextureManager] Loading ${Object.keys(assets).length} textures...`);
+    const entries = Object.entries(assets);
+    console.log(`[TextureManager] Loading ${entries.length} textures...`);
     const startTime = performance.now();
 
-    // Create bundle for efficient loading
-    const bundleName = `bundle_${Date.now()}`;
-    Assets.addBundle(bundleName, assets);
-
-    try {
-      // Load entire bundle
-      const loadedAssets = await Assets.loadBundle(bundleName);
-
-      // Configure and cache each texture
-      Object.entries(loadedAssets as Record<string, Texture>).forEach(([key, texture]) => {
-        if (texture && texture.source) {
-          const url = assets[key];
-          // Use linear (smooth) scaling for all hand-drawn artwork
+    const results = await Promise.allSettled(
+      entries.map(([, url]) =>
+        Assets.load<Texture>(url).then((texture) => {
           texture.source.scaleMode = 'linear';
-          // Enable mipmaps for high-quality downscaling
           texture.source.autoGenerateMipmaps = true;
-          this.textures.set(url, texture); // Cache by URL
+          this.textures.set(url, texture);
+          return url;
+        })
+      )
+    );
+
+    const failed = results.filter((r) => r.status === 'rejected');
+    const loaded = results.length - failed.length;
+    const loadTime = (performance.now() - startTime).toFixed(0);
+
+    if (failed.length > 0) {
+      console.warn(
+        `[TextureManager] ${loaded}/${entries.length} textures loaded in ${loadTime}ms — ${failed.length} failed (game continues with fallback sprites)`
+      );
+      results.forEach((r, i) => {
+        if (r.status === 'rejected') {
+          console.warn(`[TextureManager] Failed: ${entries[i]?.[1]}`, r.reason);
         }
       });
-
-      const endTime = performance.now();
-      const loadTime = (endTime - startTime).toFixed(0);
-      console.log(
-        `[TextureManager] ✓ Loaded ${Object.keys(assets).length} textures in ${loadTime}ms`
-      );
-    } catch (error) {
-      console.error('[TextureManager] Failed to load batch:', error);
-      throw error;
+    } else {
+      console.log(`[TextureManager] ✓ Loaded ${loaded} textures in ${loadTime}ms`);
     }
   }
 

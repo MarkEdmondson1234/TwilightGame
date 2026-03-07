@@ -223,6 +223,7 @@ export class TileLayer extends PixiLayer {
     // Check for farm plot override (farmUpdateTrigger forces re-evaluation)
     let growthStage: number | null = null;
     let cropType: string | null = null;
+    let isHerbDormant = false;
     if (mapId && this.farmUpdateTrigger >= 0) {
       const plot = farmManager.getPlot(mapId, { x, y });
       if (plot) {
@@ -234,12 +235,15 @@ export class TileLayer extends PixiLayer {
           tileData = plotTileData;
         }
         // Get growth stage for all growing crops (planted, watered, ready, wilting, dead)
+        // Also include herb post-harvest states (HERB_COOLDOWN, HERB_DORMANT) — they show the adult sprite
         if (
           plot.state === FarmPlotState.PLANTED ||
           plot.state === FarmPlotState.WATERED ||
           plot.state === FarmPlotState.READY ||
           plot.state === FarmPlotState.WILTING ||
-          plot.state === FarmPlotState.DEAD
+          plot.state === FarmPlotState.DEAD ||
+          plot.state === FarmPlotState.HERB_COOLDOWN ||
+          plot.state === FarmPlotState.HERB_DORMANT
         ) {
           // Dead plants render at ADULT size (they were grown before dying)
           growthStage =
@@ -247,6 +251,7 @@ export class TileLayer extends PixiLayer {
               ? CropGrowthStage.ADULT
               : farmManager.getGrowthStage(plot);
           cropType = plot.cropType;
+          isHerbDormant = plot.state === FarmPlotState.HERB_DORMANT;
         }
       }
     }
@@ -548,6 +553,17 @@ export class TileLayer extends PixiLayer {
         sprite.y = y * TILE_SIZE;
       }
       sprite.visible = true;
+    }
+
+    // Apply herb dormancy visual (desaturated, dimmed)
+    if (sprite instanceof PIXI.Sprite) {
+      if (isHerbDormant) {
+        sprite.tint = 0x8898aa; // Cool grey-blue tint for dormancy
+        sprite.alpha = 0.75;
+      } else {
+        sprite.tint = 0xffffff; // Reset tint
+        sprite.alpha = 1.0;
+      }
     }
 
     // Apply transforms (flip, rotation, scale, brightness)
