@@ -159,6 +159,8 @@ const FarmDebugOverlay: React.FC<FarmDebugOverlayProps> = ({
     [FarmPlotState.READY]: 'border-emerald-400/70',
     [FarmPlotState.WILTING]: 'border-orange-500/70',
     [FarmPlotState.DEAD]: 'border-red-500/70',
+    [FarmPlotState.HERB_COOLDOWN]: 'border-lime-400/50',
+    [FarmPlotState.HERB_DORMANT]: 'border-blue-300/50',
   };
 
   const growthStageNames = ['SEEDLING', 'YOUNG', 'ADULT'];

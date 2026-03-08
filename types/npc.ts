@@ -88,6 +88,7 @@ export interface DialogueNode {
   maxQuestStage?: number; // Only show if quest is at this stage or lower
   hiddenIfQuestStarted?: string; // Hide if this quest is started
   hiddenIfQuestCompleted?: string; // Hide if this quest is completed
+  hiddenIfQuestAtMinStage?: { questId: string; stage: number }; // Hide if quest is at stage >= value
   // Transformation requirements for this dialogue node
   requiredTransformation?: string; // Only show if player has this transformation (e.g., 'fairy')
   hiddenIfTransformed?: string; // Hide if player has this transformation
@@ -128,6 +129,7 @@ export interface DialogueResponse {
   maxQuestStage?: number; // Only show if quest is at this stage or lower
   hiddenIfQuestStarted?: string; // Hide if this quest is started
   hiddenIfQuestCompleted?: string; // Hide if this quest is completed
+  hiddenIfQuestAtMinStage?: { questId: string; stage: number }; // Hide if quest is at stage >= value
   // Quest actions triggered by selecting this response
   startsQuest?: string; // Start this quest when selected
   advancesQuest?: string; // Advance this quest to next stage when selected
@@ -147,6 +149,7 @@ export interface DialogueResponse {
   };
   // Friendship requirements for this response option
   requiredFriendshipTier?: FriendshipTier; // Only show if friendship >= tier
+  maxFriendshipTier?: FriendshipTier; // Only show if friendship <= tier (hide when tier exceeded)
   // Decoration system requirements
   hiddenIfHasEasel?: boolean; // Hide if player already has the easel
   // Item-giving actions triggered by selecting this response

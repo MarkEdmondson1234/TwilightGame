@@ -3,7 +3,7 @@
  * Shared between keyboard and touch input handlers
  */
 
-import { Position, TileType, CollisionType, SizeTier } from '../types';
+import { Position, TileType, CollisionType, SizeTier, FarmPlotState } from '../types';
 import {
   getTileData,
   getAdjacentTiles,
@@ -590,6 +590,21 @@ export function handleFarmAction(
         plotTileType === TileType.SOIL_WATERED ||
         plotTileType === TileType.SOIL_WILTING)
     ) {
+      // Skip herb cooldown/dormant — herbs don't need watering after harvest
+      const waterPlot = farmManager.getPlot(currentMapId, position);
+      if (
+        waterPlot?.state === FarmPlotState.HERB_COOLDOWN ||
+        waterPlot?.state === FarmPlotState.HERB_DORMANT
+      ) {
+        return {
+          handled: false,
+          message:
+            waterPlot.state === FarmPlotState.HERB_DORMANT
+              ? 'This herb is dormant in winter. It will be ready again in spring.'
+              : 'This herb is resting. It will be ready to harvest soon.',
+          messageType: 'info',
+        };
+      }
       // Water tilled soil (pre-moisten before planting) or planted/watered/wilting crops
       // Note: SOIL_READY is excluded - ready crops should be harvested, not watered
       // Check water level first
@@ -607,13 +622,15 @@ export function handleFarmAction(
         farmActionTaken = true;
       }
     } else if (plotTileType === TileType.SOIL_READY) {
-      // Check for dual-harvest crops (e.g. sunflower) - require click interaction for choice
+      // Check for herbs and dual-harvest crops — require click interaction for choice
       const readyPlot = farmManager.getPlot(currentMapId, position);
       const readyCrop = readyPlot?.cropType ? getCrop(readyPlot.cropType) : null;
-      if (readyCrop?.dualHarvest) {
+      if (readyCrop?.isHerb || readyCrop?.dualHarvest) {
         return {
           handled: false,
-          message: 'Click the crop to choose how to harvest',
+          message: readyCrop.isHerb
+            ? 'Click the herb to harvest or remove it'
+            : 'Click the crop to choose how to harvest',
           messageType: 'info',
         };
       }
@@ -965,6 +982,8 @@ export type InteractionType =
   | 'farm_harvest'
   | 'farm_harvest_flowers'
   | 'farm_harvest_seeds'
+  | 'farm_harvest_herb'
+  | 'farm_remove_herb'
   | 'farm_clear'
   | 'harvest_strawberry'
   | 'harvest_blackberry'
@@ -1611,7 +1630,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Water soil or crop (not READY crops - those should be harvested)
+    // Water soil or crop (not READY crops - those should be harvested; not herb states)
     if (
       currentTool === 'tool_watering_can' &&
       (plotTileType === TileType.SOIL_TILLED ||
@@ -1619,17 +1638,25 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         plotTileType === TileType.SOIL_WATERED ||
         plotTileType === TileType.SOIL_WILTING)
     ) {
-      const isTilled = plotTileType === TileType.SOIL_TILLED;
-      interactions.push({
-        type: 'farm_water',
-        label: isTilled ? 'Water Soil' : 'Water Crop',
-        icon: '💧',
-        color: '#0ea5e9',
-        execute: () => {
-          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
-          onFarmAction?.(farmResult);
-        },
-      });
+      const waterCheckPlot = farmManager.getPlot(currentMapId, farmTilePos);
+      if (
+        waterCheckPlot?.state === FarmPlotState.HERB_COOLDOWN ||
+        waterCheckPlot?.state === FarmPlotState.HERB_DORMANT
+      ) {
+        // Skip water option for herbs not in growing state
+      } else {
+        const isTilled = plotTileType === TileType.SOIL_TILLED;
+        interactions.push({
+          type: 'farm_water',
+          label: isTilled ? 'Water Soil' : 'Water Crop',
+          icon: '💧',
+          color: '#0ea5e9',
+          execute: () => {
+            const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
+            onFarmAction?.(farmResult);
+          },
+        });
+      }
     }
 
     // Harvest crop
@@ -1637,7 +1664,47 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       const readyPlot = farmManager.getPlot(currentMapId, farmTilePos);
       const readyCrop = readyPlot?.cropType ? getCrop(readyPlot.cropType) : null;
 
-      if (readyCrop?.dualHarvest) {
+      if (readyCrop?.isHerb) {
+        // Herb: show Harvest and Remove options
+        const completeHerbHarvest = () => {
+          const inventoryData = inventoryManager.getInventoryData();
+          characterData.saveInventory(inventoryData.items, inventoryData.tools);
+          onFarmAnimation?.('harvest', farmTilePos);
+          farmManager.updateAllPlots();
+          characterData.saveFarmPlots(farmManager.getAllPlots());
+          onFarmAction?.({ handled: true });
+        };
+
+        interactions.push({
+          type: 'farm_harvest_herb',
+          label: `Harvest ${readyCrop.displayName}`,
+          icon: '✂️',
+          color: '#65a30d',
+          execute: () => {
+            const result = farmManager.harvestCrop(currentMapId, farmTilePos);
+            if (result) {
+              const qualityMultiplier =
+                result.quality === 'excellent' ? 2.0 : result.quality === 'good' ? 1.5 : 1.0;
+              const totalGold = Math.floor(readyCrop.sellPrice * result.yield * qualityMultiplier);
+              gameState.addGold(totalGold);
+              completeHerbHarvest();
+            }
+          },
+        });
+
+        interactions.push({
+          type: 'farm_remove_herb',
+          label: 'Remove Herb',
+          icon: '🗑️',
+          color: '#6b7280',
+          execute: () => {
+            farmManager.removeHerb(currentMapId, farmTilePos);
+            farmManager.updateAllPlots();
+            characterData.saveFarmPlots(farmManager.getAllPlots());
+            onFarmAction?.({ handled: true });
+          },
+        });
+      } else if (readyCrop?.dualHarvest) {
         // Dual-harvest crop: show two options in radial menu
         const dh = readyCrop.dualHarvest;
 
@@ -1728,6 +1795,44 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         execute: () => {
           const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
           onFarmAction?.(farmResult);
+        },
+      });
+    }
+
+    // Herb cooldown or dormant: show status info + Remove option
+    const herbStatePlot = farmManager.getPlot(currentMapId, farmTilePos);
+    if (
+      herbStatePlot?.state === FarmPlotState.HERB_COOLDOWN ||
+      herbStatePlot?.state === FarmPlotState.HERB_DORMANT
+    ) {
+      const isDormant = herbStatePlot.state === FarmPlotState.HERB_DORMANT;
+
+      interactions.push({
+        type: 'farm_harvest_herb', // Reuse type for info display
+        label: isDormant ? 'Dormant until spring' : 'Resting...',
+        icon: isDormant ? '❄️' : '⏳',
+        color: isDormant ? '#93c5fd' : '#94a3b8',
+        execute: () => {
+          onFarmAction?.({
+            handled: true,
+            message: isDormant
+              ? 'This herb is dormant for winter. It will be ready to harvest again in spring.'
+              : 'This herb is resting after the last harvest. It will be ready again soon.',
+            messageType: 'info',
+          });
+        },
+      });
+
+      interactions.push({
+        type: 'farm_remove_herb',
+        label: 'Remove Herb',
+        icon: '🗑️',
+        color: '#6b7280',
+        execute: () => {
+          farmManager.removeHerb(currentMapId, farmTilePos);
+          farmManager.updateAllPlots();
+          characterData.saveFarmPlots(farmManager.getAllPlots());
+          onFarmAction?.({ handled: true });
         },
       });
     }

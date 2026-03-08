@@ -18,6 +18,8 @@ export enum FarmPlotState {
   READY, // Crop ready to harvest
   WILTING, // Needs water soon
   DEAD, // Plant died from lack of water
+  HERB_COOLDOWN, // Herb harvested, resting before re-harvest
+  HERB_DORMANT, // Herb alive but dormant during winter (cannot harvest)
 }
 
 export enum CropGrowthStage {
@@ -46,4 +48,6 @@ export interface FarmPlot {
   fertiliserApplied: boolean; // Whether fertiliser was used
   // Magic effects
   abundantHarvest?: boolean; // Guarantees max seed drops (from potion)
+  // Herb cooldown tracking
+  harvestedAtTimestamp?: number | null; // Real time when herb was last harvested (for cooldown)
 }

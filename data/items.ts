@@ -7,6 +7,7 @@ import {
   cookingAssets,
   farmingAssets,
   groceryAssets,
+  herbAssets,
   itemAssets,
   magicalAssets,
   potionAssets,
@@ -291,6 +292,21 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.wild_seeds,
   },
 
+  // Herb seeds — sold in the shop seasonally (spring/summer)
+  seed_thyme: {
+    id: 'seed_thyme',
+    name: 'seed_thyme',
+    displayName: 'Thyme Seeds',
+    category: ItemCategory.SEED,
+    description: 'Seeds for growing your own thyme. The plant regrows after each harvest.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 8,
+    cropId: 'thyme',
+    image: herbAssets.thyme_seeds,
+  },
+
   // Quest seeds (magical crops unlocked through quests)
   seed_fairy_bluebell: {
     id: 'seed_fairy_bluebell',
@@ -461,7 +477,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'Sweet little peas in a pod.',
     stackable: true,
     sellPrice: 8,
-    icon: '🫛',
+    image: groceryAssets.pea_crop,
   },
 
   crop_cucumber: {
@@ -527,6 +543,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 30,
     image: groceryAssets.blueberries_crop,
+  },
+
+  // ===== HERBS (harvested garden crops) =====
+  // Note: "thyme" (id) already exists as a shop-bought dried ingredient.
+  // crop_thyme is the fresh version, harvested from a planted herb in the garden.
+  crop_thyme: {
+    id: 'crop_thyme',
+    name: 'crop_thyme',
+    displayName: 'Fresh Thyme',
+    category: ItemCategory.CROP,
+    description: 'Freshly harvested thyme from the garden. More fragrant than the dried variety.',
+    stackable: true,
+    sellPrice: 12,
+    image: herbAssets.thyme_crop,
   },
 
   // ===== MATERIALS =====

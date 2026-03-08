@@ -53,6 +53,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                     // Override tile appearance if there's an active farm plot here
                     let growthStage: number | null = null;
                     let cropType: string | null = null;
+                    let isHerbDormant = false;
                     if (currentMapId && farmUpdateTrigger >= 0) { // Include farmUpdateTrigger to force re-evaluation
                         const plot = farmManager.getPlot(currentMapId, { x, y });
                         if (plot) {
@@ -64,12 +65,16 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                                 tileData = plotTileData;
                             }
                             // Get growth stage for all growing crops (planted, watered, ready, wilting)
+                            // Also include herb post-harvest states (HERB_COOLDOWN, HERB_DORMANT) — they show the adult sprite
                             if (plot.state === FarmPlotState.PLANTED ||
                                 plot.state === FarmPlotState.WATERED ||
                                 plot.state === FarmPlotState.READY ||
-                                plot.state === FarmPlotState.WILTING) {
+                                plot.state === FarmPlotState.WILTING ||
+                                plot.state === FarmPlotState.HERB_COOLDOWN ||
+                                plot.state === FarmPlotState.HERB_DORMANT) {
                                 growthStage = farmManager.getGrowthStage(plot);
                                 cropType = plot.cropType;
+                                isHerbDormant = plot.state === FarmPlotState.HERB_DORMANT;
                             }
                         }
                     }
@@ -198,8 +203,11 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                                         height: TILE_SIZE,
                                         imageRendering: 'pixelated',
                                         transform: transform,
-                                        filter: filter,
+                                        filter: isHerbDormant
+                                            ? `${filter !== 'none' ? filter + ' ' : ''}saturate(0.3) brightness(0.7)`
+                                            : filter,
                                         transformOrigin: 'center center',
+                                        opacity: isHerbDormant ? 0.75 : undefined,
                                     }}
                                 />
                             )}

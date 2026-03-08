@@ -81,17 +81,39 @@ export function createOldWomanKnittingNPC(
             "Come in from the cold, pet! Nothing better than knitting by a warm fire on a winter's day.",
         },
         responses: [
+          // Regular smalltalk — hidden once Celestia has sent you (focus on the important thing)
           {
             text: 'What are you knitting?',
             nextId: 'knitting_project',
+            hiddenIfQuestAtMinStage: { questId: 'fairy_queen', stage: 3 },
           },
           {
             text: 'How long have you lived here?',
             nextId: 'village_history',
+            hiddenIfQuestAtMinStage: { questId: 'fairy_queen', stage: 3 },
           },
           {
             text: 'Tell me about your husband.',
             nextId: 'husband_elias',
+            hiddenIfQuestAtMinStage: { questId: 'fairy_queen', stage: 3 },
+          },
+          // Celestia's referral — shown once fairy_queen reaches stage 3, until quest starts
+          {
+            text: 'Celestia told me about your sister.',
+            nextId: 'celestia_sent_me_blocked',
+            requiredQuest: 'fairy_queen',
+            requiredQuestStage: 3,
+            maxFriendshipTier: 'acquaintance',
+            hiddenIfQuestStarted: 'althea_chores',
+          },
+          // Good_friend version takes priority — hides the blocked one via requiredFriendshipTier
+          {
+            text: 'Celestia told me about your sister.',
+            nextId: 'celestia_sent_me',
+            requiredQuest: 'fairy_queen',
+            requiredQuestStage: 3,
+            requiredFriendshipTier: 'good_friend',
+            hiddenIfQuestStarted: 'althea_chores',
           },
           {
             text: 'Take care!',
@@ -145,12 +167,22 @@ export function createOldWomanKnittingNPC(
         responses: [
           {
             text: 'What did you give up?',
+            nextId: 'sister_hint_blocked',
+            maxFriendshipTier: 'acquaintance',
+          },
+          {
+            text: 'What did you give up?',
             nextId: 'sister_hint',
+            requiredFriendshipTier: 'good_friend',
           },
           {
             text: "Fifty years! That's wonderful.",
           },
         ],
+      },
+      {
+        id: 'sister_hint_blocked',
+        text: "*Her needles pause for just a moment.* Oh, it doesn't matter, dearie. Old stories. *She gives you a gentle smile and changes the subject.* Perhaps when we know each other a little better.",
       },
       {
         id: 'cherry_tree_story',
