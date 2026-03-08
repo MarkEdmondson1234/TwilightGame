@@ -325,6 +325,11 @@ const App: React.FC = () => {
     // Reset zoom on map transition (new map may have different zoom limits)
     resetZoom();
 
+    // Play Mr. Fox greeting when entering the shop
+    if (mapId.includes('shop')) {
+      setTimeout(() => audioManager.playSfx('sfx_mr_fox'), 800);
+    }
+
     // Shared farm sync: start/stop when entering/leaving shared maps
     const wasShared = SHARED_FARM_MAP_IDS.has(oldMapId);
     const isShared = SHARED_FARM_MAP_IDS.has(mapId);
