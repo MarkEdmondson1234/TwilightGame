@@ -61,6 +61,7 @@ export const TIMING = {
   // Game systems
   MAP_TRANSITION_MS: 1000, // Map transition fade duration
   WEATHER_CHECK_MS: 3000, // Interval for weather update checks
+  WEATHER_TRANSITION_S: 3, // Weather/darkness fade duration in seconds
   AUTOSAVE_INTERVAL_MS: 60000, // Autosave frequency
   TIME_POLL_INTERVAL_MS: 1000, // Game time update poll rate
 

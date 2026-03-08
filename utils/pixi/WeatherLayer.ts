@@ -6,10 +6,10 @@
  *
  * Features:
  * - Particle systems with physics simulation
- * - Fog/mist overlays with scrolling animation
+ * - Fog/mist overlays with scrolling animation and feathered edges
+ * - Smooth crossfade transitions between weather states
  * - Efficient viewport-based particle culling
  * - GPU-accelerated rendering
- * - Smooth weather transitions
  *
  * Usage:
  *   const weatherLayer = new WeatherLayer(viewportWidth, viewportHeight);
@@ -20,7 +20,7 @@
  */
 
 import * as PIXI from 'pixi.js';
-import { TILE_SIZE } from '../../constants';
+import { TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { particleAssets } from '../../assets';
 import { gameState } from '../../GameState';
@@ -32,12 +32,53 @@ import {
 } from '../../data/weatherConfig';
 import { Z_WEATHER_PARTICLES, Z_WEATHER_TINT } from '../../zIndex';
 
+// Edge feathering for fog/mist — how many pixels at each edge fade to transparent
+const FOG_EDGE_FEATHER = 120;
+
 interface Particle {
   sprite: PIXI.Sprite;
   velocityX: number;
   velocityY: number;
   life: number;
   maxLife: number;
+}
+
+/**
+ * Create an alpha mask texture with feathered edges.
+ * Fully opaque in the centre, fading to transparent at all four edges.
+ * Per-pixel alpha = product of horizontal and vertical distance-to-edge factors,
+ * so corners fade correctly without double-darkening.
+ */
+function createFogEdgeMask(width: number, height: number, feather: number): PIXI.Texture {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
+
+  const imageData = ctx.createImageData(width, height);
+  const data = imageData.data;
+
+  for (let y = 0; y < height; y++) {
+    let fy = 1;
+    if (y < feather) fy = y / feather;
+    else if (y > height - feather) fy = (height - y) / feather;
+
+    for (let x = 0; x < width; x++) {
+      let fx = 1;
+      if (x < feather) fx = x / feather;
+      else if (x > width - feather) fx = (width - x) / feather;
+
+      const alpha = Math.floor(fx * fy * 255);
+      const idx = (y * width + x) * 4;
+      data[idx] = 255;
+      data[idx + 1] = 255;
+      data[idx + 2] = 255;
+      data[idx + 3] = alpha;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return PIXI.Texture.from(canvas);
 }
 
 export class WeatherLayer {
@@ -50,6 +91,8 @@ export class WeatherLayer {
   private particlePool: PIXI.Sprite[] = [];
 
   private fogSprite: PIXI.TilingSprite | null = null;
+  private fogMaskSprite: PIXI.Sprite | null = null;
+  private fogMaskTexture: PIXI.Texture | null = null;
 
   private viewportWidth: number;
   private viewportHeight: number;
@@ -58,6 +101,12 @@ export class WeatherLayer {
   private fogTextures: Map<WeatherType, PIXI.Texture> = new Map();
 
   private timeSinceLastEmit: number = 0;
+
+  // Transition state machine for smooth crossfades
+  private transitionState: 'idle' | 'fading_out' | 'fading_in' = 'idle';
+  private transitionProgress = 0;
+  private pendingWeather: WeatherType = 'clear';
+  private emitRateMultiplier = 1.0;
 
   constructor(viewportWidth: number, viewportHeight: number) {
     this.viewportWidth = viewportWidth;
@@ -90,18 +139,12 @@ export class WeatherLayer {
       // Load particle textures using proper asset URLs (includes base path)
       console.log('[WeatherLayer] Requesting rain texture from textureManager...');
       console.log('[WeatherLayer] Rain asset URL:', particleAssets.rain);
-      const rainTexture = await textureManager.loadTexture(
-        'rain_particle',
-        particleAssets.rain
-      );
+      const rainTexture = await textureManager.loadTexture('rain_particle', particleAssets.rain);
       console.log('[WeatherLayer] Rain texture result:', rainTexture ? 'SUCCESS' : 'NULL');
 
       console.log('[WeatherLayer] Requesting snow texture from textureManager...');
       console.log('[WeatherLayer] Snow asset URL:', particleAssets.snow);
-      const snowTexture = await textureManager.loadTexture(
-        'snow_particle',
-        particleAssets.snow
-      );
+      const snowTexture = await textureManager.loadTexture('snow_particle', particleAssets.snow);
       console.log('[WeatherLayer] Snow texture result:', snowTexture ? 'SUCCESS' : 'NULL');
 
       if (rainTexture) {
@@ -123,18 +166,12 @@ export class WeatherLayer {
       // Load fog textures using proper asset URLs (includes base path)
       console.log('[WeatherLayer] Requesting fog texture...');
       console.log('[WeatherLayer] Fog asset URL:', particleAssets.fog);
-      const fogTexture = await textureManager.loadTexture(
-        'fog_overlay',
-        particleAssets.fog
-      );
+      const fogTexture = await textureManager.loadTexture('fog_overlay', particleAssets.fog);
       console.log('[WeatherLayer] Fog texture result:', fogTexture ? 'SUCCESS' : 'NULL');
 
       console.log('[WeatherLayer] Requesting mist texture...');
       console.log('[WeatherLayer] Mist asset URL:', particleAssets.mist);
-      const mistTexture = await textureManager.loadTexture(
-        'mist_overlay',
-        particleAssets.mist
-      );
+      const mistTexture = await textureManager.loadTexture('mist_overlay', particleAssets.mist);
       console.log('[WeatherLayer] Mist texture result:', mistTexture ? 'SUCCESS' : 'NULL');
 
       if (fogTexture) {
@@ -151,7 +188,8 @@ export class WeatherLayer {
         console.error('[WeatherLayer] ✗ Failed to load mist texture');
       }
 
-      console.log('[WeatherLayer] Texture loading complete. Available textures:',
+      console.log(
+        '[WeatherLayer] Texture loading complete. Available textures:',
         Array.from(this.particleTextures.keys()),
         'fog textures:',
         Array.from(this.fogTextures.keys())
@@ -162,31 +200,50 @@ export class WeatherLayer {
   }
 
   /**
-   * Set current weather and update effects
+   * Set current weather with smooth crossfade transition
    */
   setWeather(weather: WeatherType): void {
     if (this.currentWeather === weather) {
-      console.log(`[WeatherLayer] Weather already set to ${weather}, skipping`);
       return;
     }
 
-    console.log(`[WeatherLayer] Changing weather from ${this.currentWeather} to ${weather}`);
-    this.currentWeather = weather;
+    console.log(`[WeatherLayer] Transitioning weather from ${this.currentWeather} to ${weather}`);
 
-    // Clear existing effects
+    // If already transitioning, complete immediately and start fresh
+    if (this.transitionState !== 'idle') {
+      this._completeTransition();
+    }
+
+    // From clear: skip fade-out, just fade in the new weather
+    if (this.currentWeather === 'clear') {
+      this.currentWeather = weather;
+      if (weather === 'fog' || weather === 'mist') {
+        this.setupFog(weather);
+        if (this.fogSprite) this.fogSprite.alpha = 0;
+      } else {
+        this.setupParticles(weather);
+        this.emitRateMultiplier = 0;
+      }
+      this.transitionState = 'fading_in';
+      this.transitionProgress = 0;
+      return;
+    }
+
+    // To clear or to another weather type: fade out first
+    this.pendingWeather = weather;
+    this.transitionState = 'fading_out';
+    this.transitionProgress = 0;
+  }
+
+  /**
+   * Immediately complete any in-progress transition
+   */
+  private _completeTransition(): void {
     this.clearParticles();
     this.clearFog();
-
-    // Setup new effects
-    if (weather === 'fog' || weather === 'mist') {
-      console.log(`[WeatherLayer] Setting up ${weather} overlay`);
-      this.setupFog(weather);
-    } else if (weather !== 'clear') {
-      console.log(`[WeatherLayer] Setting up ${weather} particles`);
-      this.setupParticles(weather);
-    } else {
-      console.log(`[WeatherLayer] Clearing all weather effects (clear weather)`);
-    }
+    this.emitRateMultiplier = 1.0;
+    this.transitionState = 'idle';
+    this.transitionProgress = 0;
   }
 
   /**
@@ -202,7 +259,10 @@ export class WeatherLayer {
     // Pre-create particle pool for performance
     const texture = this.particleTextures.get(weather);
     if (!texture) {
-      console.error(`[WeatherLayer] No texture loaded for weather: ${weather}. Available textures:`, Array.from(this.particleTextures.keys()));
+      console.error(
+        `[WeatherLayer] No texture loaded for weather: ${weather}. Available textures:`,
+        Array.from(this.particleTextures.keys())
+      );
       console.error('[WeatherLayer] Skipping particle setup. Weather effects will not be visible.');
       return;
     }
@@ -216,8 +276,9 @@ export class WeatherLayer {
       this.particleContainer.addChild(sprite);
     }
 
-    console.log(`[WeatherLayer] ✓ Created particle pool: ${config.maxParticles} sprites for ${weather}`);
-    console.log(`[WeatherLayer] Particle container has ${this.particleContainer.children.length} children`);
+    console.log(
+      `[WeatherLayer] ✓ Created particle pool: ${config.maxParticles} sprites for ${weather}`
+    );
   }
 
   /**
@@ -243,14 +304,49 @@ export class WeatherLayer {
 
     this.fogContainer.addChild(this.fogSprite);
 
+    // Apply feathered edge mask to prevent sharp rectangular cutoff
+    this._applyFogMask();
+
     console.log(`[WeatherLayer] Setup fog overlay for ${weather} using TilingSprite`);
+  }
+
+  /**
+   * Create and apply an alpha mask with feathered edges to the fog sprite.
+   * Prevents the hard rectangular boundary that's visible at viewport edges.
+   */
+  private _applyFogMask(): void {
+    if (!this.fogSprite) return;
+
+    // Clean up old mask
+    if (this.fogMaskTexture) {
+      this.fogMaskTexture.destroy(true);
+      this.fogMaskTexture = null;
+    }
+    if (this.fogMaskSprite) {
+      this.fogMaskSprite.destroy();
+      this.fogMaskSprite = null;
+    }
+
+    this.fogMaskTexture = createFogEdgeMask(
+      this.viewportWidth,
+      this.viewportHeight,
+      FOG_EDGE_FEATHER
+    );
+    this.fogMaskSprite = new PIXI.Sprite(this.fogMaskTexture);
+    this.fogSprite.mask = this.fogMaskSprite;
+    this.fogContainer.addChild(this.fogMaskSprite);
   }
 
   /**
    * Update weather effects (called each frame)
    */
   update(deltaTime: number): void {
-    if (this.currentWeather === 'clear') return;
+    // Drive the transition state machine
+    if (this.transitionState !== 'idle') {
+      this._updateTransition(deltaTime);
+    }
+
+    if (this.currentWeather === 'clear' && this.transitionState === 'idle') return;
 
     // Update particles
     if (this.currentWeather !== 'fog' && this.currentWeather !== 'mist') {
@@ -264,6 +360,71 @@ export class WeatherLayer {
   }
 
   /**
+   * Advance the crossfade transition state machine.
+   * Fading out: reduce emit rate / fog alpha toward 0, then switch to new weather.
+   * Fading in: ramp emit rate / fog alpha from 0 to full.
+   */
+  private _updateTransition(deltaTime: number): void {
+    this.transitionProgress += deltaTime / TIMING.WEATHER_TRANSITION_S;
+
+    if (this.transitionState === 'fading_out') {
+      const fadeOut = Math.max(0, 1 - this.transitionProgress);
+      this.emitRateMultiplier = fadeOut;
+
+      // Fade fog alpha
+      if (this.fogSprite) {
+        const config = FOG_CONFIGS[this.currentWeather];
+        if (config) {
+          this.fogSprite.alpha = config.alpha * fadeOut;
+        }
+      }
+
+      if (this.transitionProgress >= 1) {
+        // Fade-out complete — clear old effects and begin fade-in
+        this.clearParticles();
+        this.clearFog();
+        this.currentWeather = this.pendingWeather;
+
+        if (this.pendingWeather === 'clear') {
+          // Done — no fade-in needed
+          this.transitionState = 'idle';
+          this.transitionProgress = 0;
+          this.emitRateMultiplier = 1.0;
+        } else {
+          // Set up new effects and begin fade-in
+          if (this.pendingWeather === 'fog' || this.pendingWeather === 'mist') {
+            this.setupFog(this.pendingWeather);
+            if (this.fogSprite) this.fogSprite.alpha = 0;
+          } else {
+            this.setupParticles(this.pendingWeather);
+            this.emitRateMultiplier = 0;
+          }
+          this.transitionState = 'fading_in';
+          this.transitionProgress = 0;
+        }
+      }
+    } else if (this.transitionState === 'fading_in') {
+      const fadeIn = Math.min(1, this.transitionProgress);
+      this.emitRateMultiplier = fadeIn;
+
+      // Fade fog alpha
+      if (this.fogSprite) {
+        const config = FOG_CONFIGS[this.currentWeather];
+        if (config) {
+          this.fogSprite.alpha = config.alpha * fadeIn;
+        }
+      }
+
+      if (this.transitionProgress >= 1) {
+        // Fade-in complete
+        this.transitionState = 'idle';
+        this.transitionProgress = 0;
+        this.emitRateMultiplier = 1.0;
+      }
+    }
+  }
+
+  /**
    * Update particle systems
    */
   private updateParticles(deltaTime: number): void {
@@ -273,20 +434,22 @@ export class WeatherLayer {
     // Get drift speed multiplier from game state
     const driftSpeed = gameState.getWeatherDriftSpeed();
 
-    // Emit new particles
+    // Emit new particles (scaled by transition multiplier)
     this.timeSinceLastEmit += deltaTime;
-    const emitInterval = 1 / config.emitRate;
+    const effectiveEmitRate = config.emitRate * this.emitRateMultiplier;
 
-    let emittedCount = 0;
-    while (this.timeSinceLastEmit >= emitInterval && this.particles.length < config.maxParticles) {
-      this.emitParticle(config);
-      this.timeSinceLastEmit -= emitInterval;
-      emittedCount++;
-    }
-
-    // Log particle count periodically (every 60 frames)
-    if (Math.random() < 0.016) { // ~1% chance per frame = ~1 per second at 60fps
-      console.log(`[WeatherLayer] Active particles: ${this.particles.length}/${config.maxParticles} (emitted ${emittedCount} this frame)`);
+    if (effectiveEmitRate > 0) {
+      const emitInterval = 1 / effectiveEmitRate;
+      while (
+        this.timeSinceLastEmit >= emitInterval &&
+        this.particles.length < config.maxParticles
+      ) {
+        this.emitParticle(config);
+        this.timeSinceLastEmit -= emitInterval;
+      }
+    } else {
+      // Not emitting — reset accumulator so we don't burst when rate resumes
+      this.timeSinceLastEmit = 0;
     }
 
     // Update existing particles
@@ -298,7 +461,7 @@ export class WeatherLayer {
 
       // Remove dead particles
       if (particle.life <= 0) {
-        this.removeParticle(i, 'lifetime expired');
+        this.removeParticle(i);
         continue;
       }
 
@@ -311,7 +474,8 @@ export class WeatherLayer {
 
       // Fade out near end of life
       const lifeRatio = particle.life / particle.maxLife;
-      particle.sprite.alpha = Math.min(1, lifeRatio * 2) *
+      particle.sprite.alpha =
+        Math.min(1, lifeRatio * 2) *
         (config.alpha.min + (config.alpha.max - config.alpha.min) * Math.random());
 
       // Cull particles outside viewport
@@ -320,7 +484,7 @@ export class WeatherLayer {
         particle.sprite.x > this.viewportWidth + 100 ||
         particle.sprite.y > this.viewportHeight + 100
       ) {
-        this.removeParticle(i, 'outside viewport bounds');
+        this.removeParticle(i);
       }
     }
   }
@@ -335,13 +499,14 @@ export class WeatherLayer {
     if (!sprite) {
       const texture = this.particleTextures.get(this.currentWeather);
       if (!texture) {
-        console.error(`[WeatherLayer] Cannot emit particle - no texture for ${this.currentWeather}`);
+        console.error(
+          `[WeatherLayer] Cannot emit particle - no texture for ${this.currentWeather}`
+        );
         return;
       }
       sprite = new PIXI.Sprite(texture);
       sprite.anchor.set(0.5);
       this.particleContainer.addChild(sprite);
-      console.log('[WeatherLayer] Created new sprite (pool was empty)');
     }
 
     // Random position at top of viewport (or slightly above)
@@ -349,8 +514,10 @@ export class WeatherLayer {
     const y = -50 + Math.random() * -100; // Start above viewport
 
     // Random velocity
-    const velocityX = config.velocity.x.min + Math.random() * (config.velocity.x.max - config.velocity.x.min);
-    const velocityY = config.velocity.y.min + Math.random() * (config.velocity.y.max - config.velocity.y.min);
+    const velocityX =
+      config.velocity.x.min + Math.random() * (config.velocity.x.max - config.velocity.x.min);
+    const velocityY =
+      config.velocity.y.min + Math.random() * (config.velocity.y.max - config.velocity.y.min);
 
     // Random scale
     const scale = config.scale.min + Math.random() * (config.scale.max - config.scale.min);
@@ -372,24 +539,13 @@ export class WeatherLayer {
     };
 
     this.particles.push(particle);
-
-    // Log first few particles for debugging
-    if (this.particles.length <= 5) {
-      console.log(`[WeatherLayer] Emitted particle #${this.particles.length}: pos=(${x.toFixed(0)},${y.toFixed(0)}), vel=(${velocityX.toFixed(0)},${velocityY.toFixed(0)}), life=${config.lifespan}s, visible=${sprite.visible}`);
-    }
   }
 
   /**
    * Remove particle and return sprite to pool
    */
-  private removeParticle(index: number, reason?: string): void {
+  private removeParticle(index: number): void {
     const particle = this.particles[index];
-
-    // Log first few removals for debugging
-    if (this.particles.length <= 10) {
-      console.log(`[WeatherLayer] Removing particle #${index}: reason=${reason || 'unknown'}, pos=(${particle.sprite.x.toFixed(0)},${particle.sprite.y.toFixed(0)}), life=${particle.life.toFixed(2)}s`);
-    }
-
     particle.sprite.visible = false;
     this.particlePool.push(particle.sprite);
     this.particles.splice(index, 1);
@@ -439,12 +595,21 @@ export class WeatherLayer {
   }
 
   /**
-   * Clear fog overlay
+   * Clear fog overlay and its edge mask
    */
   private clearFog(): void {
     if (this.fogSprite) {
+      this.fogSprite.mask = null;
       this.fogSprite.destroy();
       this.fogSprite = null;
+    }
+    if (this.fogMaskSprite) {
+      this.fogMaskSprite.destroy();
+      this.fogMaskSprite = null;
+    }
+    if (this.fogMaskTexture) {
+      this.fogMaskTexture.destroy(true);
+      this.fogMaskTexture = null;
     }
     this.fogContainer.removeChildren();
   }
@@ -456,10 +621,15 @@ export class WeatherLayer {
     this.viewportWidth = width;
     this.viewportHeight = height;
 
-    // Recreate fog if active
+    // Recreate fog if active (mask will be regenerated via setupFog)
     if (this.currentWeather === 'fog' || this.currentWeather === 'mist') {
+      const currentAlpha = this.fogSprite?.alpha ?? 1;
       this.clearFog();
-      this.setupFog(this.currentWeather);
+      this.setupFog(this.currentWeather as 'fog' | 'mist');
+      // Preserve transition alpha if mid-transition
+      if (this.fogSprite && this.transitionState !== 'idle') {
+        this.fogSprite.alpha = currentAlpha;
+      }
     }
   }
 

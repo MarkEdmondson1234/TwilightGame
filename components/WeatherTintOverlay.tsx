@@ -1,5 +1,6 @@
 import React from 'react';
 import { Z_SPRITE_BACKGROUND } from '../zIndex';
+import { TIMING } from '../constants';
 
 interface WeatherTintOverlayProps {
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -12,14 +13,15 @@ interface WeatherTintOverlayProps {
  * Since NPCs are rendered as DOM elements above the PixiJS canvas,
  * this overlay ensures they're visually affected by weather.
  * Renders above NPCs but below the HUD.
+ *
+ * Always renders the div (with opacity 0 for clear weather) so that
+ * CSS transitions can animate smoothly when weather changes.
  */
 const WeatherTintOverlay: React.FC<WeatherTintOverlayProps> = ({ weather, visible }) => {
-  if (!visible || weather === 'clear' || weather === 'cherry_blossoms') {
-    return null;
-  }
+  const isClear = !visible || weather === 'clear' || weather === 'cherry_blossoms';
 
-  // Weather-specific visual effects
   const getOverlayStyle = (): React.CSSProperties => {
+    const transitionDuration = `${TIMING.WEATHER_TRANSITION_S}s`;
     const baseStyle: React.CSSProperties = {
       position: 'fixed',
       top: 0,
@@ -27,8 +29,12 @@ const WeatherTintOverlay: React.FC<WeatherTintOverlayProps> = ({ weather, visibl
       right: 0,
       bottom: 0,
       pointerEvents: 'none',
-      zIndex: Z_SPRITE_BACKGROUND, // Above game world, below HUD (HUD is z-index 100+)
+      zIndex: Z_SPRITE_BACKGROUND,
+      transition: `background-color ${transitionDuration} ease-in-out, opacity ${transitionDuration} ease-in-out`,
+      opacity: isClear ? 0 : 1,
     };
+
+    if (isClear) return baseStyle;
 
     switch (weather) {
       case 'fog':

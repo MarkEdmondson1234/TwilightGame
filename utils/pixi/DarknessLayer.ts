@@ -78,6 +78,10 @@ const DARKNESS_CONFIG: Record<
 const MAX_DARKNESS = 0.7;
 export const DEFAULT_DARKNESS_COLOR = 0x241e3b;
 
+// Darkness transition — linear lerp per 50ms tick
+// Step size chosen so a typical Day→Night transition (~0.25 change) takes ~3 seconds
+const DARKNESS_LERP_STEP = 0.004;
+
 // Torch light settings
 const TORCH_LIGHT_RADIUS = TILE_SIZE * 3.5;
 
@@ -174,6 +178,8 @@ export class DarknessLayer {
 
   // State tracking
   private currentDarkness = 0;
+  private targetDarkness = 0;
+  private transitionTimer: ReturnType<typeof setInterval> | null = null;
   private viewportWidth = 0;
   private viewportHeight = 0;
   private lastColorScheme = '';
@@ -233,17 +239,22 @@ export class DarknessLayer {
     const schemeChanged = colorScheme !== this.lastColorScheme;
     const timeChanged = timeOfDay !== this.lastTimeOfDay;
 
-    if (darkness === this.currentDarkness && !sizeChanged && !schemeChanged && !timeChanged) {
+    if (darkness === this.targetDarkness && !sizeChanged && !schemeChanged && !timeChanged) {
       return;
     }
 
-    if (schemeChanged || timeChanged || Math.abs(darkness - this.currentDarkness) > 0.01) {
+    if (schemeChanged || timeChanged || Math.abs(darkness - this.targetDarkness) > 0.01) {
       console.log(
         `[DarknessLayer] scheme=${colorScheme} season=${season} tod=${timeOfDay} darkness=${(darkness * 100).toFixed(0)}%`
       );
     }
 
-    this.currentDarkness = darkness;
+    this.targetDarkness = darkness;
+
+    // Ensure continuous lerp updates when flicker timer isn't running (no lights on screen)
+    if (this.targetDarkness !== this.currentDarkness && !this.flickerTimer) {
+      this._startTransitionTicker();
+    }
     this.viewportWidth = viewportWidth;
     this.viewportHeight = viewportHeight;
     this.lastColorScheme = colorScheme;
@@ -287,6 +298,8 @@ export class DarknessLayer {
   hide(): void {
     this.darknessSprite.visible = false;
     this.currentDarkness = 0;
+    this.targetDarkness = 0;
+    this._stopTransitionTicker();
     this._clearLights();
   }
 
@@ -310,6 +323,7 @@ export class DarknessLayer {
 
   destroy(): void {
     this._stopFlicker();
+    this._stopTransitionTicker();
     this.darknessSprite.destroy();
     if (this.darknessTexture) {
       this.darknessTexture.destroy(true);
@@ -387,6 +401,16 @@ export class DarknessLayer {
   // ─── Private: Canvas2D compositing ──────────────────────────────────────────
 
   private _compositeDarkness(): void {
+    // Lerp currentDarkness toward target for smooth time-of-day transitions
+    if (this.currentDarkness !== this.targetDarkness) {
+      const diff = this.targetDarkness - this.currentDarkness;
+      if (Math.abs(diff) < 0.001) {
+        this.currentDarkness = this.targetDarkness;
+      } else {
+        this.currentDarkness += Math.sign(diff) * Math.min(Math.abs(diff), DARKNESS_LERP_STEP);
+      }
+    }
+
     if (this.currentDarkness <= 0) {
       this.darknessSprite.visible = false;
       return;
@@ -514,6 +538,28 @@ export class DarknessLayer {
       this.flickerTimer = null;
     }
     this.flickerTime = 0;
+  }
+
+  /**
+   * Transition ticker — drives darkness lerp when the flicker timer isn't running
+   * (i.e. when there are no torch lights on screen). Stops automatically once
+   * the transition completes.
+   */
+  private _startTransitionTicker(): void {
+    if (this.transitionTimer) return;
+    this.transitionTimer = setInterval(() => {
+      this._compositeDarkness();
+      if (this.currentDarkness === this.targetDarkness) {
+        this._stopTransitionTicker();
+      }
+    }, FLICKER_TICK_MS);
+  }
+
+  private _stopTransitionTicker(): void {
+    if (this.transitionTimer !== null) {
+      clearInterval(this.transitionTimer);
+      this.transitionTimer = null;
+    }
   }
 
   // ─── Private: Cleanup ───────────────────────────────────────────────────────
