@@ -90,6 +90,9 @@ export const CROP_ADULT_SIZES: Record<
   cauliflower: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
   chili: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },
 
+  // Herbs (1.2x1.2 tile) - slightly oversized for a lush look
+  thyme: { width: 1.2, height: 1.2, offsetX: -0.1, offsetY: -0.125 },
+
   // Small crops (1x1 tile) - centred on soil tile
   spinach: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
   salad: { width: 1, height: 1, offsetX: 0, offsetY: 0 },
