@@ -278,9 +278,46 @@ export function createOldWomanKnittingNPC(
         maxQuestStage: 1,
         responses: [
           {
+            text: "I've brought you some tea.",
+            nextId: 'chores_deliver_tea',
+          },
+          {
+            text: "I've baked some biscuits for you.",
+            nextId: 'chores_deliver_cookies',
+          },
+          {
             text: "I'm still working on it.",
           },
         ],
+      },
+      // Delivery pass-through nodes — handler redirects away from these immediately
+      { id: 'chores_deliver_tea', text: '' },
+      { id: 'chores_deliver_cookies', text: '' },
+      // Tea outcomes
+      {
+        id: 'chores_tea_accepted',
+        text: "*She wraps her hands around the warm cup and sighs contentedly.* Oh, just what I needed, dearie. A proper cup of tea. Thank you.",
+      },
+      {
+        id: 'chores_no_tea',
+        text: "*She peers at your hands hopefully, then shakes her head.* No tea yet, dear? Never mind — whenever you're ready.",
+      },
+      {
+        id: 'chores_tea_done',
+        text: "*She gives a warm smile.* You already brought me a lovely cup, dear. I'm still enjoying it!",
+      },
+      // Cookie outcomes
+      {
+        id: 'chores_cookies_accepted',
+        text: "*Her eyes light up.* Home-baked biscuits! Oh, how wonderful — I can tell straightaway, shop-bought never smells like this. You're a treasure.",
+      },
+      {
+        id: 'chores_no_cookies',
+        text: "*She sniffs the air hopefully.* No biscuits yet, pet? Take your time — I know baking takes effort.",
+      },
+      {
+        id: 'chores_cookies_done',
+        text: "*She pats the plate beside her.* You've already brought biscuits, love. They were delicious — thank you!",
       },
       // ===== LORE REVEAL CHAIN (after all chores done, stage 2 = chores_done) =====
       {

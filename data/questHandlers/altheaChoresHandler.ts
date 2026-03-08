@@ -64,6 +64,11 @@ export function isAltheaChoresActive(): boolean {
   return eventChainManager.isChainActive(QUEST_ID);
 }
 
+export function isAltheaChoresDone(): boolean {
+  const progress = eventChainManager.getProgress(QUEST_ID);
+  return progress?.currentStageId === 'chores_done';
+}
+
 export function startAltheaChores(): void {
   if (!eventChainManager.isChainStarted(QUEST_ID)) {
     eventChainManager.startChain(QUEST_ID, DEFAULT_METADATA);

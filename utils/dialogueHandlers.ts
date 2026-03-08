@@ -25,6 +25,15 @@ import {
   WITCH_GARDEN_STAGES,
 } from '../data/questHandlers/witchGardenHandler';
 import { magicManager } from './MagicManager';
+import {
+  isAltheaChoresActive,
+  isAltheaChoresDone,
+  isTeaDelivered,
+  areCookiesDelivered,
+  markTeaDelivered,
+  markCookiesDelivered,
+  QUEST_ITEMS,
+} from '../data/questHandlers/altheaChoresHandler';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -61,9 +70,10 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
     handleRecipeTeaching(nodeId);
   }
 
-  // Handle Althea's chores quest - grant feather duster when accepting
+  // Handle Althea's chores quest
   if (npcId.includes('althea')) {
-    handleAltheaQuestItems(nodeId);
+    const redirect = handleAltheaQuestItems(nodeId);
+    if (redirect) return redirect;
   }
 
   // Handle fairy quest actions (Morgan and Stella attracted to fairy bluebells)
@@ -122,20 +132,53 @@ function handleSeedPickup(nodeId: string): void {
 }
 
 /**
- * Handle Althea's chores quest items
- * Grants the feather duster when the player accepts the quest
+ * Handle Althea's chores quest dialogue redirects and item delivery
  */
-function handleAltheaQuestItems(nodeId: string): void {
-  // Grant feather duster when accepting chores quest
+function handleAltheaQuestItems(nodeId: string): string | void {
+  // Auto-redirect greeting based on quest stage (mirrors Elias pattern)
+  if (nodeId === 'greeting') {
+    if (isAltheaChoresDone()) return 'chores_complete_intro';
+    if (isAltheaChoresActive()) return 'chores_progress';
+    return;
+  }
+
+  // Grant feather duster when accepting quest
   if (nodeId === 'chores_accept') {
-    // Check if player already has the feather duster to avoid duplicates
-    const hasFeatherDuster = inventoryManager.hasItem('tool_feather_duster');
-    if (!hasFeatherDuster) {
+    if (!inventoryManager.hasItem('tool_feather_duster')) {
       inventoryManager.addItem('tool_feather_duster', 1);
-      const inventoryData = inventoryManager.getInventoryData();
-      characterData.saveInventory(inventoryData.items, inventoryData.tools);
+      const inv = inventoryManager.getInventoryData();
+      characterData.saveInventory(inv.items, inv.tools);
       if (DEBUG.QUEST) console.log('[dialogueHandlers] 🪶 Althea gave you the feather duster!');
     }
+    return;
+  }
+
+  // Deliver tea
+  if (nodeId === 'chores_deliver_tea') {
+    if (isTeaDelivered()) return 'chores_tea_done';
+    if (inventoryManager.hasItem(QUEST_ITEMS.TEA)) {
+      inventoryManager.removeItem(QUEST_ITEMS.TEA, 1);
+      const inv = inventoryManager.getInventoryData();
+      characterData.saveInventory(inv.items, inv.tools);
+      markTeaDelivered();
+      if (DEBUG.QUEST) console.log('[dialogueHandlers] 🍵 Tea delivered to Althea!');
+      return 'chores_tea_accepted';
+    }
+    return 'chores_no_tea';
+  }
+
+  // Deliver cookies
+  if (nodeId === 'chores_deliver_cookies') {
+    if (areCookiesDelivered()) return 'chores_cookies_done';
+    if (inventoryManager.hasItem(QUEST_ITEMS.COOKIES)) {
+      inventoryManager.removeItem(QUEST_ITEMS.COOKIES, 1);
+      const inv = inventoryManager.getInventoryData();
+      characterData.saveInventory(inv.items, inv.tools);
+      markCookiesDelivered();
+      if (DEBUG.QUEST) console.log('[dialogueHandlers] 🍪 Cookies delivered to Althea!');
+      return 'chores_cookies_accepted';
+    }
+    return 'chores_no_cookies';
   }
 }
 
