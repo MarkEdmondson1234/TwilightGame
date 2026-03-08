@@ -34,6 +34,7 @@ export const DEBUG = {
   FRIENDSHIP: import.meta.env.DEV && false, // Friendship level changes and gift reactions
   QUEST: import.meta.env.DEV && false, // Quest progression and dialogue actions
   FORAGE: import.meta.env.DEV && false, // Foraging actions and loot rolls
+  CLICK: import.meta.env.DEV && false, // Click targeting and interaction detection
 } as const;
 
 /**

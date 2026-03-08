@@ -12,7 +12,7 @@
 
 import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
 import { Position, NPC, TileType } from '../types';
-import { TILE_SIZE, INTERACTION } from '../constants';
+import { TILE_SIZE, INTERACTION, DEBUG } from '../constants';
 import { MouseClickInfo } from './useMouseControls';
 import { RadialMenuOption } from '../components/RadialMenu';
 import { FarmActionType } from '../components/FarmActionAnimation';
@@ -414,25 +414,23 @@ export function useInteractionController(
 
   const handleCanvasClick = useCallback(
     (clickInfo: MouseClickInfo) => {
-      console.log('[InteractionController] Click at:', clickInfo.tilePos);
+      if (DEBUG.CLICK) {
+        console.log(
+          `[Click] Screen: (${clickInfo.screenPos.x}, ${clickInfo.screenPos.y})`,
+          `World: (${clickInfo.worldPos.x.toFixed(2)}, ${clickInfo.worldPos.y.toFixed(2)})`,
+          `Tile: (${clickInfo.tilePos.x}, ${clickInfo.tilePos.y})`
+        );
+      }
 
       // Don't process clicks during dialogue, cutscenes, or UI overlays
       if (isUIBlocking) {
-        console.log('[InteractionController] Ignoring click - UI overlay active');
+        if (DEBUG.CLICK) console.log('[Click] Ignoring - UI overlay active');
         return;
       }
 
       // Get selected item from inventory (if any)
       const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
       const currentTool = selectedItem?.id || 'hand';
-
-      console.log(
-        '[InteractionController] Using tool:',
-        currentTool,
-        '(slot:',
-        selectedItemSlot,
-        ')'
-      );
 
       // === Cobweb Cleaning Special Handler ===
       // Check for cobweb clicks in Althea's cottage during the chores quest
@@ -489,6 +487,13 @@ export function useInteractionController(
         ...callbacks,
       });
 
+      if (DEBUG.CLICK) {
+        console.log(
+          `[Click] Tool: ${currentTool}, Interactions: ${interactions.length}`,
+          interactions.map((i) => i.type)
+        );
+      }
+
       // No interactions at this position — ignore click
       if (interactions.length === 0) {
         return;
@@ -504,6 +509,7 @@ export function useInteractionController(
         const isNearby = distanceToClick <= INTERACTION.RANGE;
 
         if (!isNearby) {
+          onShowToast('Too far away!', 'info');
           return;
         }
       }

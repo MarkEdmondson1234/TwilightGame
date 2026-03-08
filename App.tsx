@@ -85,6 +85,7 @@ import RadialMenu from './components/RadialMenu';
 import { StaminaBar } from './components/StaminaBar';
 import { DestinationMarker } from './components/DestinationMarker';
 import { useMouseControls } from './hooks/useMouseControls';
+import { useMouseHover } from './hooks/useMouseHover';
 import { inventoryManager } from './utils/inventoryManager';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
@@ -963,26 +964,43 @@ const App: React.FC = () => {
 
           if (durationMs) {
             // 10 minutes remaining warning
-            fairyFormTimersRef.current.push(setTimeout(() => {
-              showToast('Your fairy form will fade in 10 minutes.', 'info');
-            }, durationMs - 10 * 60 * 1000));
+            fairyFormTimersRef.current.push(
+              setTimeout(
+                () => {
+                  showToast('Your fairy form will fade in 10 minutes.', 'info');
+                },
+                durationMs - 10 * 60 * 1000
+              )
+            );
             // 1 minute remaining warning
-            fairyFormTimersRef.current.push(setTimeout(() => {
-              showToast('Your fairy form is fading fast — only a minute left!', 'warning');
-            }, durationMs - 60 * 1000));
+            fairyFormTimersRef.current.push(
+              setTimeout(
+                () => {
+                  showToast('Your fairy form is fading fast — only a minute left!', 'warning');
+                },
+                durationMs - 60 * 1000
+              )
+            );
             // Start flicker at 30 seconds remaining
-            fairyFormTimersRef.current.push(setTimeout(() => {
-              setIsFairyFormFading(true);
-            }, durationMs - 30 * 1000));
+            fairyFormTimersRef.current.push(
+              setTimeout(
+                () => {
+                  setIsFairyFormFading(true);
+                },
+                durationMs - 30 * 1000
+              )
+            );
             // Auto-revert at expiry
-            fairyFormTimersRef.current.push(setTimeout(() => {
-              gameState.setFairyForm(false);
-              setFairyForm(false);
-              setIsFairyFormFading(false);
-              setPlayerSizeTier(0 as SizeTier);
-              setPlayerScale(1.0);
-              showToast('Your fairy form has worn off.', 'info');
-            }, durationMs));
+            fairyFormTimersRef.current.push(
+              setTimeout(() => {
+                gameState.setFairyForm(false);
+                setFairyForm(false);
+                setIsFairyFormFading(false);
+                setPlayerSizeTier(0 as SizeTier);
+                setPlayerScale(1.0);
+                showToast('Your fairy form has worn off.', 'info');
+              }, durationMs)
+            );
           }
         } else {
           setPlayerSizeTier(0 as SizeTier);
@@ -1046,6 +1064,7 @@ const App: React.FC = () => {
     backgroundImageLayerRef,
     weatherManagerRef,
     weatherLayerRef,
+    highlightLayerRef,
     updateAnimations,
   } = usePixiRenderer({
     enabled: USE_PIXI_RENDERER,
@@ -1114,6 +1133,22 @@ const App: React.FC = () => {
   }, [allNPCs]);
 
   // PixiJS effects have been moved to usePixiRenderer hook
+
+  // Setup tile hover highlight (shows which tile mouse is over)
+  // Must be after usePixiRenderer so highlightLayerRef is available
+  useMouseHover({
+    containerRef: gameContainerRef,
+    cameraX,
+    cameraY,
+    zoom,
+    currentMapId,
+    isTouchDevice,
+    highlightLayer: highlightLayerRef.current,
+    playerPosRef,
+    effectiveTileSize:
+      currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined,
+    gridOffset: currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined,
+  });
 
   // Environment controller - manages weather, time, ambient audio, item decay
   // setWeather and forceTimeUpdate available for DevTools/magic effects if needed

@@ -28,6 +28,7 @@ import { WeatherLayer } from '../utils/pixi/WeatherLayer';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
+import { HighlightLayer } from '../utils/pixi/HighlightLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
 import { tileAssets, farmingAssets, cookingAssets, npcAssets, itemAssets } from '../assets';
@@ -124,6 +125,9 @@ export interface UsePixiRendererReturn {
   /** Weather layer ref (for weather updates) */
   weatherLayerRef: React.RefObject<WeatherLayer | null>;
 
+  /** Highlight layer ref (for tile hover highlight) */
+  highlightLayerRef: React.RefObject<HighlightLayer | null>;
+
   /** Update animations (called from game loop) */
   updateAnimations: (deltaTime: number) => void;
 }
@@ -146,6 +150,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const npcLayerRef = useRef<NPCLayer | null>(null);
   const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
+  const highlightLayerRef = useRef<HighlightLayer | null>(null);
   const weatherLayerRef = useRef<WeatherLayer | null>(null);
   const darknessLayerRef = useRef<DarknessLayer | null>(null);
   const torchPositionsRef = useRef<LightSource[]>([]);
@@ -295,6 +300,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           shadowLayerRef.current = shadowLayer;
           app.stage.addChild(shadowLayer.getContainer());
         }
+
+        // Create tile hover highlight layer
+        const highlightLayer = new HighlightLayer();
+        highlightLayerRef.current = highlightLayer;
+        app.stage.addChild(highlightLayer.getContainer());
 
         // Create weather layer
         console.log('[usePixiRenderer] Initializing weather layer...');
@@ -462,6 +472,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       if (shadowLayerRef.current) {
         shadowLayerRef.current.clear();
         shadowLayerRef.current = null;
+      }
+      if (highlightLayerRef.current) {
+        highlightLayerRef.current.destroy();
+        highlightLayerRef.current = null;
       }
       if (weatherLayerRef.current) {
         weatherLayerRef.current.destroy();
@@ -705,6 +719,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       if (shadowLayerRef.current) {
         shadowLayerRef.current.updateCamera(0, 0);
       }
+      if (highlightLayerRef.current) {
+        highlightLayerRef.current.updateCamera(0, 0);
+      }
     } else {
       // For tiled rooms, apply camera transform
       if (tileLayerRef.current) {
@@ -717,6 +734,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       // placedItemsLayer camera handled by depthSortedContainer
       if (shadowLayerRef.current) {
         shadowLayerRef.current.updateCamera(cameraX, cameraY);
+      }
+      if (highlightLayerRef.current) {
+        highlightLayerRef.current.updateCamera(cameraX, cameraY);
       }
     }
 
@@ -916,6 +936,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     backgroundImageLayerRef,
     weatherManagerRef,
     weatherLayerRef,
+    highlightLayerRef,
     updateAnimations,
   };
 }

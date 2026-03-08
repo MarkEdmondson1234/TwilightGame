@@ -1,12 +1,15 @@
 /**
  * Mouse Controls Hook
  * Handles mouse click and touch interactions for click-to-move and click-to-interact
+ *
+ * Uses refs for frequently-changing values (camera, zoom) to avoid
+ * recreating event listeners on every frame during movement.
  */
 
-import { useEffect, MutableRefObject } from 'react';
+import { useEffect, useRef, useState, MutableRefObject } from 'react';
 import { Position } from '../types';
-import { TILE_SIZE } from '../constants';
 import { Z_HUD } from '../zIndex';
+import { screenToTile } from '../utils/screenToTile';
 
 export interface MouseClickInfo {
   /** World position in tile coordinates */
@@ -99,6 +102,32 @@ export function useMouseControls(config: MouseControlsConfig) {
     gridOffset,
   } = config;
 
+  // Store frequently-changing values in refs to avoid re-creating listeners
+  // every frame. Event handlers read from refs at call time.
+  const cameraXRef = useRef(cameraX);
+  const cameraYRef = useRef(cameraY);
+  const zoomRef = useRef(zoom);
+  const effectiveTileSizeRef = useRef(effectiveTileSize);
+  const gridOffsetRef = useRef(gridOffset);
+  const onCanvasClickRef = useRef(onCanvasClick);
+
+  // Track when the container DOM element becomes available.
+  // On first render the game shows "Loading map..." so the container div
+  // doesn't exist yet. This state flips to true once the ref is populated,
+  // causing the useEffect to re-run and attach event listeners.
+  const [containerReady, setContainerReady] = useState(!!containerRef.current);
+  if (!containerReady && containerRef.current) {
+    setContainerReady(true);
+  }
+
+  // Update refs on every render (cheap assignment, no effect re-run)
+  cameraXRef.current = cameraX;
+  cameraYRef.current = cameraY;
+  zoomRef.current = zoom;
+  effectiveTileSizeRef.current = effectiveTileSize;
+  gridOffsetRef.current = gridOffset;
+  onCanvasClickRef.current = onCanvasClick;
+
   useEffect(() => {
     const container = containerRef.current;
     if (!container) {
@@ -106,7 +135,7 @@ export function useMouseControls(config: MouseControlsConfig) {
     }
 
     /**
-     * Convert screen coordinates to click info
+     * Convert screen coordinates to click info using refs for latest values
      */
     const createClickInfo = (
       screenX: number,
@@ -114,26 +143,20 @@ export function useMouseControls(config: MouseControlsConfig) {
       clientX: number,
       clientY: number
     ): MouseClickInfo => {
-      let worldTileX: number;
-      let worldTileY: number;
-
-      if (gridOffset && effectiveTileSize) {
-        // Background-image rooms: grid rendered at effectiveTileSize with gridOffset centering
-        // Screen → unzoomed pixels → subtract grid offset → divide by effective tile size
-        worldTileX = (screenX / zoom - gridOffset.x) / effectiveTileSize;
-        worldTileY = (screenY / zoom - gridOffset.y) / effectiveTileSize;
-      } else {
-        // Normal tiled rooms: camera scrolling, standard TILE_SIZE
-        const worldPixelX = screenX / zoom + cameraX;
-        const worldPixelY = screenY / zoom + cameraY;
-        worldTileX = worldPixelX / TILE_SIZE;
-        worldTileY = worldPixelY / TILE_SIZE;
-      }
+      const result = screenToTile(
+        screenX,
+        screenY,
+        zoomRef.current,
+        cameraXRef.current,
+        cameraYRef.current,
+        gridOffsetRef.current,
+        effectiveTileSizeRef.current
+      );
 
       return {
-        worldPos: { x: worldTileX, y: worldTileY },
+        worldPos: { x: result.worldX, y: result.worldY },
         screenPos: { x: clientX, y: clientY },
-        tilePos: { x: Math.floor(worldTileX), y: Math.floor(worldTileY) },
+        tilePos: { x: result.tileX, y: result.tileY },
       };
     };
 
@@ -153,7 +176,7 @@ export function useMouseControls(config: MouseControlsConfig) {
       const screenY = e.clientY - rect.top;
 
       const clickInfo = createClickInfo(screenX, screenY, e.clientX, e.clientY);
-      onCanvasClick(clickInfo);
+      onCanvasClickRef.current(clickInfo);
     };
 
     /**
@@ -174,7 +197,7 @@ export function useMouseControls(config: MouseControlsConfig) {
       const screenY = touch.clientY - rect.top;
 
       const clickInfo = createClickInfo(screenX, screenY, touch.clientX, touch.clientY);
-      onCanvasClick(clickInfo);
+      onCanvasClickRef.current(clickInfo);
     };
 
     // Mouse click only when enabled (non-touch devices)
@@ -190,5 +213,7 @@ export function useMouseControls(config: MouseControlsConfig) {
       container.removeEventListener('click', handleClick);
       container.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [containerRef, cameraX, cameraY, zoom, onCanvasClick, enabled, effectiveTileSize, gridOffset]);
+    // Only depend on stable values — camera/zoom/callbacks read from refs
+    // containerReady triggers re-run when the game container mounts after loading
+  }, [containerRef, enabled, containerReady]);
 }

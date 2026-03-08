@@ -57,6 +57,9 @@ export const Z_INTERIOR_FOREGROUND = 65;
 /** Destination marker for click-to-move (above ground decorations, below player) */
 export const Z_DESTINATION_MARKER = 75;
 
+/** Tile hover highlight for click-to-interact (above destination marker, below player) */
+export const Z_TILE_HIGHLIGHT = 80;
+
 /**
  * Base z-index for all depth-sorted entities (player, NPCs, sprites)
  * Actual z-index = Z_DEPTH_SORTED_BASE + floor(feetY * 10)

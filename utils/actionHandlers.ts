@@ -1553,8 +1553,20 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   let plot = farmManager.getPlot(currentMapId, tilePos);
   let plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
 
-  if (!plot || plotTileType === TileType.SOIL_FALLOW) {
-    for (const offset of [{ x: 0, y: 1 }, { x: 1, y: 0 }, { x: -1, y: 0 }, { x: 0, y: -1 }]) {
+  if (!plot && tileData?.type !== TileType.SOIL_FALLOW) {
+    // No plot and not fallow soil at clicked tile — check adjacent tiles
+    // for tall crop sprites (e.g. peas, corn) whose visuals extend above the soil tile.
+    // We do NOT search adjacents when the clicked tile is fallow — that's a valid till target.
+    for (const offset of [
+      { x: 0, y: 1 },
+      { x: 1, y: 0 },
+      { x: -1, y: 0 },
+      { x: 0, y: -1 },
+      { x: -1, y: 1 },
+      { x: 1, y: 1 },
+      { x: -1, y: -1 },
+      { x: 1, y: -1 },
+    ]) {
       const np = { x: tileX + offset.x, y: tileY + offset.y };
       const nearbyPlot = farmManager.getPlot(currentMapId, np);
       const nearbyType = nearbyPlot ? farmManager.getTileTypeForPlot(nearbyPlot) : undefined;
@@ -1580,7 +1592,12 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: '🔨',
         color: '#92400e',
         execute: () => {
-          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
+          const farmResult = handleFarmAction(
+            farmTilePos,
+            currentTool,
+            currentMapId,
+            onFarmAnimation
+          );
           onFarmAction?.(farmResult);
         },
       });
@@ -1652,7 +1669,12 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           icon: '💧',
           color: '#0ea5e9',
           execute: () => {
-            const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
+            const farmResult = handleFarmAction(
+              farmTilePos,
+              currentTool,
+              currentMapId,
+              onFarmAnimation
+            );
             onFarmAction?.(farmResult);
           },
         });
@@ -1793,7 +1815,12 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: '🗑️',
         color: '#6b7280',
         execute: () => {
-          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
+          const farmResult = handleFarmAction(
+            farmTilePos,
+            currentTool,
+            currentMapId,
+            onFarmAnimation
+          );
           onFarmAction?.(farmResult);
         },
       });
@@ -1848,7 +1875,12 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: '❓',
         color: '#6b7280',
         execute: () => {
-          const farmResult = handleFarmAction(farmTilePos, currentTool, currentMapId, onFarmAnimation);
+          const farmResult = handleFarmAction(
+            farmTilePos,
+            currentTool,
+            currentMapId,
+            onFarmAnimation
+          );
           onFarmAction(farmResult);
         },
       });
@@ -1911,23 +1943,29 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     }
 
     // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet, frost flower, dead spruce)
+    // Use radius=2 (5x5 search) so clicks anywhere on large multi-tile sprites register
     if (!canForage) {
-      canForage = hasTileTypeNearby(tileX, tileY, [
-        TileType.BEE_HIVE,
-        TileType.LUMINESCENT_TOADSTOOL,
-        TileType.FOREST_MUSHROOM,
-        TileType.MOONPETAL,
-        TileType.ADDERSMEAT,
-        TileType.WOLFSBANE,
-        TileType.ROSEBUSH_PINK,
-        TileType.ROSEBUSH_RED,
-        TileType.MUSTARD_FLOWER,
-        TileType.SHRINKING_VIOLET,
-        TileType.FROST_FLOWER,
-        TileType.DEAD_SPRUCE,
-        TileType.GIANT_MUSHROOM,
-        TileType.SAKURA_TREE,
-      ]);
+      canForage = hasTileTypeNearby(
+        tileX,
+        tileY,
+        [
+          TileType.BEE_HIVE,
+          TileType.LUMINESCENT_TOADSTOOL,
+          TileType.FOREST_MUSHROOM,
+          TileType.MOONPETAL,
+          TileType.ADDERSMEAT,
+          TileType.WOLFSBANE,
+          TileType.ROSEBUSH_PINK,
+          TileType.ROSEBUSH_RED,
+          TileType.MUSTARD_FLOWER,
+          TileType.SHRINKING_VIOLET,
+          TileType.FROST_FLOWER,
+          TileType.DEAD_SPRUCE,
+          TileType.GIANT_MUSHROOM,
+          TileType.SAKURA_TREE,
+        ],
+        2
+      );
     }
 
     // Check for nearby sparrow NPCs (forageable feathers)
