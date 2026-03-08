@@ -36,7 +36,7 @@ export function createBunnyflyNPC(id: string, position: Position, name: string =
     states: {
       roaming: {
         sprites: [npcAssets.bunnyfly_01, npcAssets.bunnyfly_02],
-        animationSpeed: 400,
+        animationSpeed: 180, // Quick fluttering wings
       },
     },
     initialState: 'roaming',
