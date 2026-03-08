@@ -28,6 +28,7 @@ import {
   DialogueNode,
   AnimationConditions,
   SeasonalLocation,
+  EntryAnimation,
 } from '../../types';
 import { TIMING } from '../../constants';
 
@@ -56,6 +57,8 @@ export interface StateConfig {
   };
   /** Proximity-triggered state change (e.g., possum plays dead when player approaches) */
   proximityTrigger?: ProximityTrigger;
+  /** Override NPC scale while in this state (e.g., smaller during walk animation) */
+  scale?: number;
 }
 
 /**
@@ -97,6 +100,7 @@ export interface NPCConfig {
   zIndexOverride?: number;
   visibilityConditions?: AnimationConditions;
   seasonalLocations?: SeasonalLocation;
+  entryAnimation?: EntryAnimation;
   glow?: {
     color: number;
     radius: number;
@@ -139,6 +143,7 @@ function createAnimatedStates(
       transitionsTo: config.transitionsTo,
       directionalSprites: config.directionalSprites,
       proximityTrigger: config.proximityTrigger,
+      scale: config.scale,
     };
   }
 
@@ -194,6 +199,7 @@ export function createNPC(config: NPCConfig): NPC {
     zIndexOverride,
     visibilityConditions,
     seasonalLocations,
+    entryAnimation,
     glow,
   } = config;
 
@@ -226,6 +232,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
   if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
   if (seasonalLocations) npc.seasonalLocations = seasonalLocations;
+  if (entryAnimation) npc.entryAnimation = entryAnimation;
   if (glow) npc.glow = glow;
   if (collisionRadius !== undefined) npc.collisionRadius = collisionRadius;
 

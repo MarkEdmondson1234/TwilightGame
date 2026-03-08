@@ -21,7 +21,8 @@ const WeatherTintOverlay: React.FC<WeatherTintOverlayProps> = ({ weather, visibl
   const isClear = !visible || weather === 'clear' || weather === 'cherry_blossoms';
 
   const getOverlayStyle = (): React.CSSProperties => {
-    const transitionDuration = `${TIMING.WEATHER_TRANSITION_S}s`;
+    // When weather is not visible (indoor/cave), skip the fade transition entirely
+    const transitionDuration = isClear ? '0s' : `${TIMING.WEATHER_TRANSITION_S}s`;
     const baseStyle: React.CSSProperties = {
       position: 'fixed',
       top: 0,

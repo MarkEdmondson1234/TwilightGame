@@ -73,11 +73,37 @@ export class HighlightLayer extends PixiLayer {
   private currentCategory: HighlightCategory = 'none';
   private currentTooFar = false;
 
+  // Grid mode: for background-image rooms where tiles are scaled and offset
+  private tileSize = TILE_SIZE;
+  private gridOffsetX = 0;
+  private gridOffsetY = 0;
+
   constructor() {
     super(Z_TILE_HIGHLIGHT, false); // No child sorting needed — single graphic
     this.highlight = new PIXI.Graphics();
     this.highlight.visible = false;
     this.container.addChild(this.highlight);
+  }
+
+  /**
+   * Set grid mode for background-image rooms where tiles are scaled and centred.
+   * The highlight will render at (tileX * tileSize + offsetX, tileY * tileSize + offsetY).
+   */
+  setGridMode(tileSize: number, offsetX: number, offsetY: number): void {
+    this.tileSize = tileSize;
+    this.gridOffsetX = offsetX;
+    this.gridOffsetY = offsetY;
+    // Force redraw on next update
+    this.currentTileX = -999;
+  }
+
+  /** Reset to standard tiled room mode (TILE_SIZE, no offset). */
+  resetGridMode(): void {
+    if (this.tileSize === TILE_SIZE && this.gridOffsetX === 0 && this.gridOffsetY === 0) return;
+    this.tileSize = TILE_SIZE;
+    this.gridOffsetX = 0;
+    this.gridOffsetY = 0;
+    this.currentTileX = -999;
   }
 
   /**
@@ -103,9 +129,10 @@ export class HighlightLayer extends PixiLayer {
 
     const fillColor = FILL_COLORS[category];
     const strokeAlpha = tooFar ? 0.15 : STROKE_ALPHA[category];
+    const ts = this.tileSize;
 
-    const x = tileX * TILE_SIZE;
-    const y = tileY * TILE_SIZE;
+    const x = tileX * ts + this.gridOffsetX;
+    const y = tileY * ts + this.gridOffsetY;
 
     this.highlight.clear();
 
@@ -113,8 +140,8 @@ export class HighlightLayer extends PixiLayer {
     this.highlight.roundRect(
       x + BORDER_WIDTH / 2,
       y + BORDER_WIDTH / 2,
-      TILE_SIZE - BORDER_WIDTH,
-      TILE_SIZE - BORDER_WIDTH,
+      ts - BORDER_WIDTH,
+      ts - BORDER_WIDTH,
       CORNER_RADIUS
     );
     this.highlight.stroke({ width: BORDER_WIDTH, color: fillColor, alpha: strokeAlpha });
@@ -125,8 +152,8 @@ export class HighlightLayer extends PixiLayer {
       this.highlight.roundRect(
         x + BORDER_WIDTH,
         y + BORDER_WIDTH,
-        TILE_SIZE - BORDER_WIDTH * 2,
-        TILE_SIZE - BORDER_WIDTH * 2,
+        ts - BORDER_WIDTH * 2,
+        ts - BORDER_WIDTH * 2,
         CORNER_RADIUS
       );
       this.highlight.fill({ color: fillColor, alpha: fillAlpha });

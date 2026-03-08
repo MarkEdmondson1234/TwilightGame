@@ -52,6 +52,7 @@ export const TIMING = {
   NPC_FRAME_MS: 280, // NPC animation frame duration
   NPC_IDLE_DELAY_MS: 800, // Delay before NPC returns to idle
   NPC_MOVEMENT_SPEED: 1.0, // NPC movement speed (tiles per second)
+  NPC_ENTRY_WALK_SPEED: 0.9, // NPC entry walk-in speed (tiles per second)
 
   // UI and interactions
   DIALOGUE_DELAY_MS: 800, // Delay for dialogue transitions

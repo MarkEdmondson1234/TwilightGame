@@ -5,6 +5,7 @@ import { isAIAvailable } from '../services/anthropicClient';
 import { addToChatHistory } from '../services/aiChatHistory';
 import { recordScriptedConversation } from '../services/diaryService';
 import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
+import { useTypewriter } from '../hooks/useTypewriter';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
 import { decorationManager } from '../utils/DecorationManager';
@@ -88,6 +89,13 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
   };
 
   const npcDialogueSprite = getNpcSprite();
+
+  // Typewriter effect — stream text character by character
+  const {
+    displayText,
+    isComplete: typewriterDone,
+    skip: skipTypewriter,
+  } = useTypewriter(currentDialogue?.text ?? '');
 
   // Filter responses based on cooking conditions
   const filterResponses = (responses: DialogueResponse[] | undefined): DialogueResponse[] => {
@@ -415,6 +423,7 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
           </div>
 
           {/* Main text area - positioned in grey box with scroll */}
+          {/* Click to skip typewriter when still typing */}
           <div
             className="absolute overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600"
             style={{
@@ -423,7 +432,9 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
               right: '6%',
               height: '55%',
               padding: '2% 3%',
+              cursor: typewriterDone ? 'default' : 'pointer',
             }}
+            onClick={!typewriterDone ? skipTypewriter : undefined}
           >
             <p
               className="leading-relaxed"
@@ -435,18 +446,25 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
                 lineHeight: '1.6',
               }}
             >
-              {currentDialogue.text}
+              {displayText}
+              {!typewriterDone && (
+                <span className="animate-pulse" style={{ opacity: 0.6 }}>
+                  ▌
+                </span>
+              )}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Response buttons - at very bottom */}
+      {/* Response buttons - at very bottom (hidden until typewriter finishes) */}
       <div
-        className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto"
+        className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto transition-opacity duration-300"
         style={{
           bottom: '12px',
           width: 'min(90vw, 900px)',
+          opacity: typewriterDone ? 1 : 0,
+          pointerEvents: typewriterDone ? 'auto' : 'none',
         }}
       >
         {(() => {

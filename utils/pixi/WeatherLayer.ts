@@ -200,14 +200,31 @@ export class WeatherLayer {
   }
 
   /**
-   * Set current weather with smooth crossfade transition
+   * Set current weather with smooth crossfade transition.
+   * Pass immediate=true to skip the fade (e.g. entering an indoor map).
    */
-  setWeather(weather: WeatherType): void {
+  setWeather(weather: WeatherType, immediate = false): void {
     if (this.currentWeather === weather) {
       return;
     }
 
-    console.log(`[WeatherLayer] Transitioning weather from ${this.currentWeather} to ${weather}`);
+    console.log(
+      `[WeatherLayer] Transitioning weather from ${this.currentWeather} to ${weather}${immediate ? ' (immediate)' : ''}`
+    );
+
+    // Instant switch — no fade (used when entering indoor/cave maps)
+    if (immediate) {
+      this._completeTransition();
+      this.currentWeather = weather;
+      if (weather !== 'clear') {
+        if (weather === 'fog' || weather === 'mist') {
+          this.setupFog(weather);
+        } else {
+          this.setupParticles(weather);
+        }
+      }
+      return;
+    }
 
     // If already transitioning, complete immediately and start fresh
     if (this.transitionState !== 'idle') {

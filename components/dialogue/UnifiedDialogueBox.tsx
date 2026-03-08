@@ -97,6 +97,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
 
   // Shared state
   const [currentEmotion, setCurrentEmotion] = useState<NPCEmotion>('neutral');
+  const [typewriterDone, setTypewriterDone] = useState(false);
 
   // Hooks
   const {
@@ -151,7 +152,8 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
           setCurrentEmotion('neutral'); // Reset — scripted uses expression not emotion
         }
 
-        chatHistory.addAssistantMessage(dialogue.text);
+        setTypewriterDone(false);
+        chatHistory.addAssistantMessage(dialogue.text, undefined, undefined, true);
         addToChatHistory(npc.id, 'assistant', `[${currentNodeId}] ${dialogue.text}`);
       }
 
@@ -592,16 +594,25 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         npcName={npc.name}
         playerName={playerName}
         isLoading={isActivelyLoading}
+        onTypewriterDone={() => setTypewriterDone(true)}
       />
 
-      {/* Controls: scripted or AI */}
+      {/* Controls: scripted or AI (hidden until typewriter finishes) */}
       {mode === 'scripted' && currentDialogue ? (
-        <ScriptedControls
-          dialogue={currentDialogue}
-          canUseAI={!!canUseAI}
-          onResponse={handleScriptedResponse}
-          onClose={onClose}
-        />
+        <div
+          className="transition-opacity duration-300"
+          style={{
+            opacity: typewriterDone ? 1 : 0,
+            pointerEvents: typewriterDone ? 'auto' : 'none',
+          }}
+        >
+          <ScriptedControls
+            dialogue={currentDialogue}
+            canUseAI={!!canUseAI}
+            onResponse={handleScriptedResponse}
+            onClose={onClose}
+          />
+        </div>
       ) : mode === 'ai' ? (
         <AIControls
           suggestions={displaySuggestions}

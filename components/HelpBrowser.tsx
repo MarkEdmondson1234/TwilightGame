@@ -57,7 +57,8 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
   const [saveMessage, setSaveMessage] = useState<string>('');
 
   // Audio settings state
-  const [musicEnabled, setMusicEnabled] = useState<boolean>(!audioManager.isMuted());
+  const [musicEnabled, setMusicEnabled] = useState<boolean>(!audioManager.isMusicMuted());
+  const [sfxEnabled, setSfxEnabled] = useState<boolean>(!audioManager.isSfxMuted());
 
   // Account settings state
   const [authState, setAuthState] = useState<AuthState | null>(null);
@@ -74,8 +75,9 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     const storedKey = getStoredApiKey();
     setHasStoredKey(!!storedKey);
     setAiEnabled(isAIAvailable());
-    // Sync music state when settings tab is opened
-    setMusicEnabled(!audioManager.isMuted());
+    // Sync audio state when settings tab is opened
+    setMusicEnabled(!audioManager.isMusicMuted());
+    setSfxEnabled(!audioManager.isSfxMuted());
   }, [selectedTab]);
 
   // Subscribe to auth state changes
@@ -94,8 +96,15 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
   }, []);
 
   const handleMusicToggle = () => {
-    const newMuted = audioManager.toggleMute();
+    const newMuted = !musicEnabled;
+    audioManager.setMusicMuted(newMuted);
     setMusicEnabled(!newMuted);
+  };
+
+  const handleSfxToggle = () => {
+    const newMuted = !sfxEnabled;
+    audioManager.setSfxMuted(newMuted);
+    setSfxEnabled(!newMuted);
   };
 
   useEffect(() => {
@@ -418,10 +427,10 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                     Toggle music and sound effects on or off. This setting is saved automatically.
                   </p>
 
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-wrap items-center gap-3">
                     <button
                       onClick={handleMusicToggle}
-                      className="px-6 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
+                      className="px-5 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
                       style={{
                         background: musicEnabled
                           ? 'linear-gradient(to bottom, #4a7c4a, #3d663d)'
@@ -430,21 +439,23 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                         border: `2px solid ${musicEnabled ? '#2d4d2d' : '#6b3434'}`,
                       }}
                     >
-                      <span className="text-xl">{musicEnabled ? '🔊' : '🔇'}</span>
+                      <span className="text-xl">{musicEnabled ? '🎵' : '🔇'}</span>
                       {musicEnabled ? 'Music On' : 'Music Off'}
                     </button>
-                    <span
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-serif font-semibold"
+                    <button
+                      onClick={handleSfxToggle}
+                      className="px-5 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
                       style={{
-                        background: musicEnabled
-                          ? 'rgba(76, 130, 76, 0.2)'
-                          : 'rgba(168, 84, 84, 0.2)',
-                        color: musicEnabled ? '#4a7c4a' : '#8b4444',
-                        border: `1px solid ${musicEnabled ? '#4a7c4a' : '#8b4444'}`,
+                        background: sfxEnabled
+                          ? 'linear-gradient(to bottom, #4a7c4a, #3d663d)'
+                          : 'linear-gradient(to bottom, #a85454, #8b4444)',
+                        color: '#ffeedd',
+                        border: `2px solid ${sfxEnabled ? '#2d4d2d' : '#6b3434'}`,
                       }}
                     >
-                      {musicEnabled ? '● Sound Enabled' : '○ Sound Muted'}
-                    </span>
+                      <span className="text-xl">{sfxEnabled ? '🔊' : '🔇'}</span>
+                      {sfxEnabled ? 'Effects On' : 'Effects Off'}
+                    </button>
                   </div>
                 </div>
 

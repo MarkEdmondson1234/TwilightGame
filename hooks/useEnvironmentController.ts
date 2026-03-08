@@ -95,13 +95,13 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   const setWeather = useCallback(
-    (weather: WeatherType) => {
+    (weather: WeatherType, immediate = false) => {
       setCurrentWeather(weather);
       gameState.setWeather(weather);
 
       // Update PixiJS weather layer
       if (weatherLayerRef.current) {
-        weatherLayerRef.current.setWeather(weather);
+        weatherLayerRef.current.setWeather(weather, immediate);
       }
     },
     [setCurrentWeather, weatherLayerRef]
@@ -147,13 +147,16 @@ export function useEnvironmentController(
     const effectiveWeather = getEffectiveWeather(globalWeather, currentMapId);
     const storedWeather = gameState.getWeather();
 
+    // Skip fade when entering a map that doesn't support weather (shops, mines, interiors)
+    const mapAllowsWeather = isWeatherAllowedOnMap(globalWeather, currentMapId);
+    const skipFade = !mapAllowsWeather;
+
     if (effectiveWeather !== storedWeather) {
-      setWeather(effectiveWeather);
+      setWeather(effectiveWeather, skipFade);
     }
 
     if (weatherLayerRef.current) {
-      const showWeather = isWeatherAllowedOnMap(effectiveWeather, currentMapId);
-      weatherLayerRef.current.setVisible(showWeather);
+      weatherLayerRef.current.setVisible(mapAllowsWeather);
     }
   }, [currentMapId, weatherLayerRef, setWeather]);
 
@@ -297,8 +300,7 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    const isForest =
-      currentMapId.startsWith('forest_') || currentMapId.startsWith('deep_forest_');
+    const isForest = currentMapId.startsWith('forest_') || currentMapId.startsWith('deep_forest_');
     if (!isForest) return;
 
     // Check if the umbra wolf spawned in this particular forest

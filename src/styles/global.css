@@ -11,6 +11,18 @@ html, body, #root {
   overflow: hidden;
 }
 
+/* Custom hand-drawn cursor */
+* {
+  cursor: url('/assets/icons/ui/mouse_32.png') 4 2, auto;
+}
+
+/* Preserve pointer cursor for interactive elements */
+button, a, [role="button"], select, label[for],
+input[type="checkbox"], input[type="radio"],
+.cursor-pointer {
+  cursor: url('/assets/icons/ui/mouse_32.png') 4 2, pointer;
+}
+
 /* Fairy form fading flicker — plays in the last 30 seconds before transformation expires */
 @keyframes fairy-flicker {
   0%, 100% { opacity: 1; }

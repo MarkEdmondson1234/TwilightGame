@@ -3,6 +3,7 @@ import { getTileData } from './utils/mapUtils';
 import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
 import { TimeManager, Season } from './utils/TimeManager';
 import { eventBus, GameEvent } from './utils/EventBus';
+import { audioManager } from './utils/AudioManager';
 
 /**
  * NPCManager - Single Source of Truth for all NPC data
@@ -29,6 +30,7 @@ interface NPCState {
   baseMapId: string; // Original map where NPC was registered
   basePosition: Position; // Original position when NPC was created
   baseDirection: Direction; // Original direction when NPC was created
+  baseScale?: number; // Original scale for restoring after state-based scale override
   // Proximity trigger tracking
   previousState?: string; // State before proximity trigger (for recovery)
   proximityRecoveryStartTime?: number; // Timestamp when player left proximity zone
@@ -71,11 +73,23 @@ class NPCManagerClass {
           baseMapId: mapId,
           basePosition: { ...npc.position },
           baseDirection: npc.direction,
+          baseScale: npc.scale,
         });
+      } else {
+        // Update baseScale on re-registration (e.g., shop fox has different scale than village fox)
+        const state = this.npcStates.get(npc.id)!;
+        state.baseScale = npc.scale;
       }
     });
 
     console.log(`[NPCManager] Registered ${npcs.length} NPCs for map: ${mapId}`);
+
+    // Reset entry animations for NPCs being registered on the current map
+    // This handles background-image maps where NPCs are registered via loadLayers()
+    // after setCurrentMap() has already been called
+    if (mapId === this.currentMapId) {
+      this.resetEntryAnimations(npcs);
+    }
   }
 
   /**
@@ -83,6 +97,46 @@ class NPCManagerClass {
    */
   setCurrentMap(mapId: string): void {
     this.currentMapId = mapId;
+
+    // Reset entry animations for NPCs already registered on this map
+    const npcs = this.getNPCsForMap(mapId);
+    if (npcs.length > 0) {
+      this.resetEntryAnimations(npcs);
+    }
+  }
+
+  /**
+   * Reset entry animations for NPCs that have walk-in behaviour
+   * Moves NPCs to their start position and transitions to walk state
+   */
+  private resetEntryAnimations(npcs: NPC[]): void {
+    for (const npc of npcs) {
+      if (!npc.entryAnimation) continue;
+
+      const entry = npc.entryAnimation;
+
+      // Move NPC to start position
+      npc.position = { ...entry.startPosition };
+
+      // Set walk direction
+      if (entry.walkDirection !== undefined) {
+        npc.direction = entry.walkDirection;
+      }
+
+      // Transition to walk state
+      if (npc.animatedStates && npc.animatedStates.states[entry.walkState]) {
+        this.transitionNPCState(npc.id, entry.walkState);
+      }
+
+      // Play entry sound effect (e.g., fox humming)
+      if (entry.sound && audioManager.hasSound(entry.sound)) {
+        audioManager.playSfx(entry.sound);
+      }
+
+      console.log(
+        `[NPCManager] Entry animation: ${npc.id} starts at (${entry.startPosition.x}, ${entry.startPosition.y})`
+      );
+    }
   }
 
   /**
@@ -147,6 +201,11 @@ class NPCManagerClass {
     const npcs = this.getCurrentMapNPCs();
 
     for (const npc of npcs) {
+      // Skip NPCs performing entry walk-in animation
+      if (npc.entryAnimation && npc.animatedStates?.currentState === npc.entryAnimation.walkState) {
+        continue;
+      }
+
       const dx = Math.abs(npc.position.x - position.x);
       const dy = Math.abs(npc.position.y - position.y);
       const distance = Math.sqrt(dx * dx + dy * dy);
@@ -284,6 +343,16 @@ class NPCManagerClass {
           case Direction.Right:
             if (dirSprites.right && dirSprites.right.length > 0) spriteArray = dirSprites.right;
             break;
+        }
+      }
+
+      // Apply per-state scale override (e.g., smaller during walk animation)
+      const npcState = this.npcStates.get(npc.id);
+      if (npcState?.baseScale !== undefined) {
+        const targetScale = currentState.scale ?? npcState.baseScale;
+        if (npc.scale !== targetScale) {
+          npc.scale = targetScale;
+          anyAnimationChanged = true;
         }
       }
 
@@ -464,6 +533,33 @@ class NPCManagerClass {
     }
 
     npcs.forEach((npc) => {
+      // Process entry animations (walk-in) regardless of behavior type
+      if (npc.entryAnimation) {
+        const entry = npc.entryAnimation;
+        const currentState = npc.animatedStates?.currentState;
+
+        // Only move during the walk state
+        if (currentState === entry.walkState) {
+          const speed = entry.speed ?? this.NPC_SPEED;
+          const movement = speed * deltaTime;
+
+          const dx = entry.targetPosition.x - npc.position.x;
+          const dy = entry.targetPosition.y - npc.position.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance <= movement) {
+            // Arrived at target - snap to position and transition to idle
+            npc.position = { ...entry.targetPosition };
+            this.transitionNPCState(npc.id, entry.idleState);
+          } else {
+            // Move towards target
+            npc.position.x += (dx / distance) * movement;
+            npc.position.y += (dy / distance) * movement;
+          }
+          anyNPCMoved = true;
+        }
+      }
+
       if (npc.behavior === NPCBehavior.STATIC) return; // Static NPCs don't move
 
       const state = this.npcStates.get(npc.id);

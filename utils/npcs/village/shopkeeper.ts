@@ -4,8 +4,9 @@
  * The village shopkeeper who sells seeds and supplies.
  */
 
-import { NPC, Position } from '../../../types';
+import { NPC, Position, EntryAnimation } from '../../../types';
 import { npcAssets } from '../../../assets';
+import { TIMING } from '../../../constants';
 import { createStaticNPC } from '../createNPC';
 
 /**
@@ -15,17 +16,20 @@ import { createStaticNPC } from '../createNPC';
  * - Static position (stays near shop)
  * - Friendly, attentive animation
  * - Seasonal and time-of-day dialogue about shop wares and village gossip
+ * - Optional entry animation (walk-in from left when entering shop)
  *
  * Uses createStaticNPC factory.
  *
  * @param id Unique ID for this shopkeeper
  * @param position Where to place the NPC
  * @param name Optional name (defaults to "Shopkeeper")
+ * @param entryAnimation Optional entry walk-in animation config
  */
 export function createShopkeeperNPC(
   id: string,
   position: Position,
-  name: string = 'Shopkeeper'
+  name: string = 'Shopkeeper',
+  entryAnimation?: EntryAnimation
 ): NPC {
   return createStaticNPC({
     id,
@@ -40,7 +44,19 @@ export function createShopkeeperNPC(
         sprites: [npcAssets.shopkeeper_fox_01, npcAssets.shopkeeper_fox_02],
         animationSpeed: 500, // Friendly, attentive animation
       },
+      walking: {
+        sprites: [
+          npcAssets.shopkeeper_fox_walk_01,
+          npcAssets.shopkeeper_fox_walk_02,
+          npcAssets.shopkeeper_fox_walk_03,
+          npcAssets.shopkeeper_fox_walk_04,
+        ],
+        animationSpeed: 220, // Relaxed walk cycle animation
+        scale: 2.4, // Smaller scale during walk animation
+      },
     },
+    initialState: entryAnimation ? 'walking' : 'idle',
+    entryAnimation,
     dialogue: [
       {
         id: 'greeting',

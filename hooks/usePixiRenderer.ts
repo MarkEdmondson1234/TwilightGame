@@ -721,6 +721,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       }
       if (highlightLayerRef.current) {
         highlightLayerRef.current.updateCamera(0, 0);
+        highlightLayerRef.current.setGridMode(
+          effectiveTileSize,
+          effectiveGridOffset.x,
+          effectiveGridOffset.y
+        );
       }
     } else {
       // For tiled rooms, apply camera transform
@@ -737,6 +742,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       }
       if (highlightLayerRef.current) {
         highlightLayerRef.current.updateCamera(cameraX, cameraY);
+        highlightLayerRef.current.resetGridMode();
       }
     }
 
@@ -744,7 +750,17 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     if (darknessLayerRef.current) {
       darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY);
     }
-  }, [enabled, cameraX, cameraY, zoom, isPixiInitialized, currentMap?.renderMode, canvasRef]);
+  }, [
+    enabled,
+    cameraX,
+    cameraY,
+    zoom,
+    isPixiInitialized,
+    currentMap?.renderMode,
+    canvasRef,
+    effectiveGridOffset,
+    effectiveTileSize,
+  ]);
 
   // =========================================================================
   // EFFECT: NPC/Render Version Update (full re-render)
