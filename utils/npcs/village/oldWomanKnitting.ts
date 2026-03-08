@@ -201,7 +201,58 @@ export function createOldWomanKnittingNPC(
         responses: [
           {
             text: 'She said your sister might be able to help me learn magic.',
-            nextId: 'chores_offer',
+            nextId: 'sister_estrangement',
+          },
+          {
+            text: 'Maybe another time.',
+          },
+        ],
+      },
+      {
+        id: 'sister_estrangement',
+        text: "*A long silence. Her needles go still, and for a moment she seems very far away.* My sister. *She says it quietly, almost to herself.* If Celestia thought to send you here... that surprises me more than I can say. That fairy doesn't give her trust lightly. *She looks up at you, her eyes unreadable.* My sister and I don't speak any more, dearie. We haven't spoken for a very long time.",
+        responses: [
+          {
+            text: "I'm sorry — I didn't mean to cause you pain.",
+            nextId: 'althea_considers',
+          },
+          {
+            text: 'Is there no way to reach her?',
+            nextId: 'althea_considers',
+          },
+        ],
+      },
+      {
+        id: 'althea_considers',
+        text: "*She shakes her head gently.* Oh, it's not your fault, love. It's an old story — and not one I find easy to tell. *A small, tired smile crosses her face.* What I can say is that Juniper is still out there. Still very much herself. Her knowledge hasn't dimmed, not one bit. But she can be... difficult. Stubborn as a winter frost. She doesn't open her door to just anyone.",
+        responses: [
+          {
+            text: 'Do you think she might open it to me?',
+            nextId: 'althea_weighs_you',
+          },
+        ],
+      },
+      {
+        id: 'althea_weighs_you',
+        text: "*She studies you for a long moment, head tilted, as though reading something in your face.* You know... I think she just might. There's something about you I can't quite put my finger on. *She glances down at her knitting.* Let me have a little think about it, hmm? I don't want to rush this. It's been a long time since I've had any reason to reach out to Juniper, and I'd like to do it right.",
+        responses: [
+          {
+            text: 'Of course. Take all the time you need.',
+            nextId: 'chores_soft_intro',
+          },
+        ],
+      },
+      {
+        id: 'chores_soft_intro',
+        text: "*She smiles, warm and a little relieved.* You're a patient soul — I do like that. You know, I always think better when my hands are busy and the cottage is comfortable around me. There are one or two small things that have been getting away from me lately — nothing grand at all. A proper cup of tea would be lovely. Some home-baked biscuits, if you felt so inclined — the ones from the shop are never quite right. And those cobwebs in the cottage have been bothering me something awful. *Her eyes twinkle gently.* No rush whatsoever, dearie. But if you felt like helping an old woman out while I have my think... well, it would mean a great deal.",
+        responses: [
+          {
+            text: "I'd be happy to help.",
+            nextId: 'chores_accept',
+          },
+          {
+            text: "I'll see to it straight away.",
+            nextId: 'chores_accept',
           },
           {
             text: 'Maybe another time.',
@@ -227,7 +278,7 @@ export function createOldWomanKnittingNPC(
       },
       {
         id: 'chores_accept',
-        text: "Oh, wonderful! *She beams.* Here's what I need: a nice hot cup of tea, some freshly baked biscuits - shop-bought won't do, mind you - and could you clean the cobwebs in my cottage? Here, take my old feather duster. My hands aren't as steady as they used to be.",
+        text: "*She beams, pressing her old feather duster into your hands.* Oh, how kind you are! Here — take this for the cobwebs. My hands aren't as steady as they used to be, so I'll leave those to you. A cup of tea, some home-baked biscuits, and the cobwebs seen to — that's all I need. *She settles back into her chair, already looking more at ease.* Take your time, dearie. I shall be right here having my think.",
         // Note: The feather duster is granted via dialogue action handler when quest starts
         responses: [
           {
@@ -240,7 +291,7 @@ export function createOldWomanKnittingNPC(
       // Progress check dialogue - only while chores are still being done (stage 1)
       {
         id: 'chores_progress',
-        text: 'How are you getting on with those little tasks, dear? Remember: a cup of tea, some home-baked biscuits, and cleaning those cobwebs in my cottage.',
+        text: "*She looks up from her knitting with a soft smile.* How are you getting on, dear? A cup of tea, some home-baked biscuits, and those cobwebs in the cottage — no rush at all. I'm still here having my think.",
         requiredQuest: 'althea_chores',
         requiredQuestStage: 1,
         maxQuestStage: 1,
