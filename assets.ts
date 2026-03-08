@@ -68,9 +68,11 @@ export const tileAssets = {
   torch02: '/TwilightGame/assets-optimized/tiles/torch02.png',
   cave_lake: '/TwilightGame/assets-optimized/tiles/cave_lake.png',
   mine_crystal: '/TwilightGame/assets-optimized/tiles/mine_crystal.png',
-  // Garden lamp — reusing torch sprites as placeholder until dedicated art is created
-  garden_lamp_off: '/TwilightGame/assets-optimized/tiles/torch01.png',
-  garden_lamp_on: '/TwilightGame/assets-optimized/tiles/torch02.png',
+  // Garden lamp post — seasonal day/night variants
+  garden_lamp_day: '/TwilightGame/assets-optimized/lights/lamp_post_day.png',
+  garden_lamp_night: '/TwilightGame/assets-optimized/lights/lamp_post_night.png',
+  garden_lamp_day_winter: '/TwilightGame/assets-optimized/lights/lamp_post_day_winter.png',
+  garden_lamp_night_winter: '/TwilightGame/assets-optimized/lights/lamp_post_night_winter.png',
   // Lake tiles (directional edges for proper water rendering)
   water_center: '/TwilightGame/assets-optimized/tiles/lake/water_middle.png',
   water_left: '/TwilightGame/assets-optimized/tiles/lake/water_left.png',
@@ -778,8 +780,13 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/npcs/bessie.mp3',
     category: 'sfx',
   },
-  // Fox shopkeeper humming
-  sfx_fox_humming: {
+  // Mum
+  sfx_mum: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/mum.mp3',
+    category: 'sfx',
+  },
+  // Mr. Fox shopkeeper
+  sfx_mr_fox: {
     url: '/TwilightGame/assets/audio/sfx/npcs/mr_fox.mp3',
     category: 'sfx',
   },

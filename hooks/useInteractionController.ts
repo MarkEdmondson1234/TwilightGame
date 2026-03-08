@@ -281,6 +281,10 @@ export function useInteractionController(
         if (npcId.toLowerCase().includes('cow')) {
           audioManager.playSfx('sfx_bessie');
         }
+        // Play sound if interacting with Mum
+        if (npcId.toLowerCase().includes('mum')) {
+          audioManager.playSfx('sfx_mum');
+        }
         setActiveNPC(npcId);
       },
       onGiveGift: (npcId: string) => {
