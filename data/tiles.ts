@@ -1022,26 +1022,25 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-sage',
     collisionType: CollisionType.WALKABLE,
     baseType: TileType.GRASS,
-    baseVisible: true,
     timeOfDayImages: {
       spring: {
-        day: [tileAssets.garden_lamp_off],
-        night: [tileAssets.garden_lamp_on],
+        day: [tileAssets.garden_lamp_day],
+        night: [tileAssets.garden_lamp_night],
       },
       summer: {
-        day: [tileAssets.garden_lamp_off],
-        night: [tileAssets.garden_lamp_on],
+        day: [tileAssets.garden_lamp_day],
+        night: [tileAssets.garden_lamp_night],
       },
       autumn: {
-        day: [tileAssets.garden_lamp_off],
-        night: [tileAssets.garden_lamp_on],
+        day: [tileAssets.garden_lamp_day],
+        night: [tileAssets.garden_lamp_night],
       },
       winter: {
-        day: [tileAssets.garden_lamp_off],
-        night: [tileAssets.garden_lamp_on],
+        day: [tileAssets.garden_lamp_day_winter],
+        night: [tileAssets.garden_lamp_night_winter],
       },
     },
-    lightSource: { activeTime: 'night' },
+    lightSource: { activeTime: 'night', offsetY: -1.875 },
   },
 
   // Building tiles

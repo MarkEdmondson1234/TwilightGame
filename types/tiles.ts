@@ -77,6 +77,7 @@ export interface TileData {
     intensity?: number; // Base brightness 0-1 (default: 1.0)
     flickerAmount?: number; // Flicker intensity 0-1 (default: 0.15)
     activeTime?: 'always' | 'night'; // When light is active (default: 'always')
+    offsetY?: number; // Vertical offset in tile units for glow origin (negative = up, for tall sprites)
   };
 }
 

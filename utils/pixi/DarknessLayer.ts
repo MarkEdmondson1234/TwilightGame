@@ -32,6 +32,7 @@ export interface LightSource {
   color?: number; // Glow tint hex (default: GLOW_COLOR)
   intensity?: number; // Base brightness 0-1 (default: 1.0)
   flickerAmount?: number; // Flicker intensity 0-1 (default: FLICKER_INTENSITY_RANGE)
+  offsetY?: number; // Vertical offset in tile units for glow origin (negative = up, for tall sprites)
 }
 
 // Darkness multipliers for each time of day
@@ -176,6 +177,9 @@ export class DarknessLayer {
   // Torch positions in screen space (updated every camera frame)
   private torchScreenPositions: { x: number; y: number }[] = [];
 
+  // Current zoom level — needed to scale radius alongside position
+  private currentZoom = 1;
+
   // State tracking
   private currentDarkness = 0;
   private targetDarkness = 0;
@@ -268,14 +272,19 @@ export class DarknessLayer {
     this._compositeDarkness();
   }
 
-  updateLights(lightSources: LightSource[], cameraX: number, cameraY: number): void {
+  updateLights(lightSources: LightSource[], cameraX: number, cameraY: number, zoom = 1): void {
     const hasLightSources = lightSources.length > 0;
     const hadLights = this.hasLights;
     this.hasLights = hasLightSources;
+    this.currentZoom = zoom;
 
+    // Convert tile world coordinates to screen-pixel coordinates.
+    // The DarknessLayer container has scale 1/zoom to counteract the stage zoom,
+    // so its local coordinates ARE screen pixels. We must apply zoom here so
+    // the glow tracks the zoomed sprite position rather than the unzoomed one.
     this.torchScreenPositions = lightSources.map((ls) => ({
-      x: ls.x * TILE_SIZE + TILE_SIZE / 2 - cameraX,
-      y: ls.y * TILE_SIZE + TILE_SIZE / 2 - cameraY,
+      x: (ls.x * TILE_SIZE + TILE_SIZE / 2 - cameraX) * zoom,
+      y: (ls.y * TILE_SIZE + TILE_SIZE / 2 + (ls.offsetY ?? 0) * TILE_SIZE - cameraY) * zoom,
     }));
 
     // Ensure we have flicker state for each light (with per-light config)
@@ -436,9 +445,9 @@ export class DarknessLayer {
         const f = this.torchFlickers[i];
         if (!f) continue;
 
-        const radius = f.baseRadius * f.radiusScale;
-        const cx = pos.x + CANVAS_MARGIN + f.jitterX;
-        const cy = pos.y + CANVAS_MARGIN + f.jitterY;
+        const radius = f.baseRadius * f.radiusScale * this.currentZoom;
+        const cx = pos.x + CANVAS_MARGIN + f.jitterX * this.currentZoom;
+        const cy = pos.y + CANVAS_MARGIN + f.jitterY * this.currentZoom;
 
         // Intensity affects the centre alpha of the gradient
         const centreAlpha = Math.min(f.intensity * f.baseIntensity, 1.0);
@@ -505,9 +514,9 @@ export class DarknessLayer {
       const f = this.torchFlickers[i];
 
       const lightRadius = f?.baseRadius ?? TORCH_LIGHT_RADIUS;
-      const diameter = lightRadius * 2 * (f?.radiusScale ?? 1.0);
-      s.x = pos.x + (f?.jitterX ?? 0);
-      s.y = pos.y + (f?.jitterY ?? 0);
+      const diameter = lightRadius * 2 * (f?.radiusScale ?? 1.0) * this.currentZoom;
+      s.x = pos.x + (f?.jitterX ?? 0) * this.currentZoom;
+      s.y = pos.y + (f?.jitterY ?? 0) * this.currentZoom;
       s.width = diameter;
       s.height = diameter;
       s.tint = f?.glowColor ?? GLOW_COLOR;

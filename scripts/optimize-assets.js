@@ -1166,6 +1166,56 @@ async function validateAndFixColormapPNGs() {
   }
 }
 
+const LAMP_SIZE = 1024; // Lamp posts at 1024x1024 — prominent decorative objects
+
+// Optimize light sprites (lamp posts, lanterns)
+async function optimizeLights() {
+  console.log('💡 Optimizing light sprites...');
+
+  const lightsDir = path.join(ASSETS_DIR, 'lights');
+  if (!fs.existsSync(lightsDir)) {
+    console.log('⚠️  No light sprites found, skipping...');
+    return;
+  }
+
+  const allFiles = getAllFiles(lightsDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.png$/i)) continue;
+
+    const relativePath = path.relative(lightsDir, inputPath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'lights', relativePath));
+
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+
+    deleteIfExists(outputPath);
+
+    await sharp(inputPath)
+      .resize(LAMP_SIZE, LAMP_SIZE, {
+        fit: 'contain',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimised ${optimized} light sprites\n`);
+}
+
 // Main execution
 async function main() {
   try {
@@ -1183,6 +1233,7 @@ async function main() {
     await optimizeUI();
     await optimizeItems();
     await optimizeIcons();
+    await optimizeLights();
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

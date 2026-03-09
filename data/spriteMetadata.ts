@@ -1418,4 +1418,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     shadowWidthRatio: 0.4,
     shadowHeightRatio: 0.15,
   },
+  {
+    // Garden lamp post — 1000×1000 square image, preserved at 3×3 tile ratio
+    // Base sits at anchor tile ground level; post extends upward
+    // Actual sprite is selected via timeOfDayImages (day/night + winter variants)
+    tileType: TileType.GARDEN_LAMP,
+    spriteWidth: 3,
+    spriteHeight: 3,
+    offsetX: -1,     // Centre horizontally on anchor tile
+    offsetY: -2.625, // Extend upward — base aligns with ground at anchor
+    image: tileAssets.garden_lamp_day, // Fallback only; timeOfDayImages takes priority
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Walkable — consistent with current behaviour (player can pass the post)
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+  },
 ];

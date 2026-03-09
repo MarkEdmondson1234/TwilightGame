@@ -571,6 +571,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
               color: tileDef.lightSource.color,
               intensity: tileDef.lightSource.intensity,
               flickerAmount: tileDef.lightSource.flickerAmount,
+              offsetY: tileDef.lightSource.offsetY,
             });
           }
         }
@@ -742,7 +743,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
     // Update torch lights in darkness layer (must track camera every frame)
     if (darknessLayerRef.current) {
-      darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY);
+      darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY, zoom);
     }
   }, [enabled, cameraX, cameraY, zoom, isPixiInitialized, currentMap?.renderMode, canvasRef]);
 
