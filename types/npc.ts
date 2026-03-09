@@ -165,6 +165,24 @@ export interface SeasonalLocation {
   winter?: { mapId: string; position: Position; direction?: Direction };
 }
 
+/** Entry animation configuration for NPCs that walk to their position when entering a map */
+export interface EntryAnimation {
+  /** Starting position when the player enters the map */
+  startPosition: Position;
+  /** Final destination position */
+  targetPosition: Position;
+  /** Name of the animated state to use during walk (must exist in animatedStates.states) */
+  walkState: string;
+  /** Name of the animated state to switch to on arrival (must exist in animatedStates.states) */
+  idleState: string;
+  /** Walk speed in tiles per second (default: NPC_SPEED) */
+  speed?: number;
+  /** Direction to face while walking (default: Direction.Right) */
+  walkDirection?: Direction;
+  /** Sound effect key to play when entry animation starts (e.g., 'sfx_fox_humming') */
+  sound?: string;
+}
+
 export interface NPC {
   id: string;
   name: string;
@@ -193,6 +211,7 @@ export interface NPC {
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
   visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
   seasonalLocations?: SeasonalLocation; // Optional: different positions/maps per season (if not set, uses base position/current map)
+  entryAnimation?: EntryAnimation; // Optional: walk-in animation when player enters the map
   glow?: {
     // Optional: mystical glow effect behind NPC
     color: number; // Hex colour (e.g., 0x88CCFF for soft blue)
@@ -256,6 +275,8 @@ export interface AnimatedNPCStates {
       };
       // Optional: proximity-triggered state change (e.g., possum plays dead when player approaches)
       proximityTrigger?: ProximityTrigger;
+      // Optional: override NPC scale while in this state (e.g., smaller during walk animation)
+      scale?: number;
     };
   };
   lastStateChange: number; // Timestamp of last state change

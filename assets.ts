@@ -468,9 +468,15 @@ export const npcAssets = {
   old_woman_01: '/TwilightGame/assets-optimized/npcs/old_woman_knitting_01.png',
   old_woman_02: '/TwilightGame/assets-optimized/npcs/old_woman_knitting_02.png',
   old_woman_portrait: '/TwilightGame/assets/npcs/old_woman_knitting_02.png',
-  shopkeeper_fox_01: '/TwilightGame/assets-optimized/npcs/shop_keeper_fox_01.png',
-  shopkeeper_fox_02: '/TwilightGame/assets-optimized/npcs/shop_keeper_fox_02.png',
-  shopkeeper_fox_portrait: '/TwilightGame/assets/npcs/shop_keeper_fox_01.png',
+  // Fox shopkeeper (fox_shopkeeper/ subfolder)
+  shopkeeper_fox_01: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
+  shopkeeper_fox_02: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_02.png',
+  shopkeeper_fox_portrait: '/TwilightGame/assets/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
+  // Walk animation frames (4-frame cycle)
+  shopkeeper_fox_walk_01: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_01.png',
+  shopkeeper_fox_walk_02: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_02.png',
+  shopkeeper_fox_walk_03: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_03.png',
+  shopkeeper_fox_walk_04: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_04.png',
   dog_01: '/TwilightGame/assets-optimized/npcs/dog_01.png',
   dog_02: '/TwilightGame/assets-optimized/npcs/dog_02.png',
   dog_portrait: '/TwilightGame/assets/npcs/dog_01.png',

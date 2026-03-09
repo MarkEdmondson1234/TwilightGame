@@ -62,7 +62,8 @@
       "Skill(add-audio)",
       "mcp__chrome-devtools__emulate",
       "Read(//var/folders/kv/nxj052r50g7813x2blwc74jw0000gn/T/chrome-devtools-mcp-YW5Q8B/**)",
-      "Read(//private/var/folders/kv/nxj052r50g7813x2blwc74jw0000gn/T/chrome-devtools-mcp-YW5Q8B/**)"
+      "Read(//private/var/folders/kv/nxj052r50g7813x2blwc74jw0000gn/T/chrome-devtools-mcp-YW5Q8B/**)",
+      "Bash(sips -g pixelWidth -g pixelHeight /Users/mark/dev/TwilightGame/public/assets/icons/ui/mouse_32.png)"
     ],
     "deny": [],
     "ask": [

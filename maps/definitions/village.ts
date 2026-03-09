@@ -1,4 +1,4 @@
-import { MapDefinition, TileType } from '../../types';
+import { MapDefinition, TileType, Direction } from '../../types';
 import { parseGrid } from '../gridParser';
 import {
   createCatNPC,
@@ -9,6 +9,7 @@ import {
   createVillageChildNPC,
   createDuckNPC,
 } from '../../utils/npcFactories';
+import { TIMING } from '../../constants';
 
 // Note: All NPCs now use factory functions from npcFactories.ts
 // This keeps the map file clean and makes NPCs reusable across maps
@@ -204,7 +205,15 @@ export const village: MapDefinition = {
     // Village Elder - wise NPC near cherry tree
     createVillageElderNPC('village_elder', { x: 15, y: 22 }),
     // Shopkeeper - fox merchant near shop entrance
-    createShopkeeperNPC('shopkeeper', { x: 8, y: 12 }),
+    // Walks out from behind the shop building to greet visitors
+    createShopkeeperNPC('shopkeeper', { x: 8, y: 12 }, 'Shopkeeper', {
+      startPosition: { x: 12, y: 12 },
+      targetPosition: { x: 8, y: 12 },
+      walkState: 'walking',
+      idleState: 'idle',
+      speed: TIMING.NPC_ENTRY_WALK_SPEED,
+      walkDirection: Direction.Left,
+    }),
     // Village Child - wandering little girl (moved to open area near path)
     createVillageChildNPC('child', { x: 12, y: 8 }),
     // Add cat NPC using factory function - positioned left of old woman

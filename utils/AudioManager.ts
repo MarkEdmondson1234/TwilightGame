@@ -33,6 +33,8 @@ export interface AudioSettings {
   sfxVolume: number; // 0.0 - 1.0
   uiVolume: number; // 0.0 - 1.0
   muted: boolean;
+  musicMuted: boolean; // Mutes music + ambient categories
+  sfxMuted: boolean; // Mutes sfx + ui categories
 }
 
 // Audio effects interface for real-time manipulation
@@ -178,6 +180,8 @@ class AudioManager {
     sfxVolume: 0.8,
     uiVolume: 0.7,
     muted: false,
+    musicMuted: false,
+    sfxMuted: false,
   };
 
   // Effects settings
@@ -823,6 +827,28 @@ class AudioManager {
     return this.settings.muted;
   }
 
+  setMusicMuted(muted: boolean): void {
+    this.settings.musicMuted = muted;
+    this.applySettings();
+    this.saveSettings();
+    console.log(`[AudioManager] Music ${muted ? 'muted' : 'unmuted'}`);
+  }
+
+  isMusicMuted(): boolean {
+    return this.settings.musicMuted;
+  }
+
+  setSfxMuted(muted: boolean): void {
+    this.settings.sfxMuted = muted;
+    this.applySettings();
+    this.saveSettings();
+    console.log(`[AudioManager] SFX ${muted ? 'muted' : 'unmuted'}`);
+  }
+
+  isSfxMuted(): boolean {
+    return this.settings.sfxMuted;
+  }
+
   // === Audio Effects Control ===
 
   /**
@@ -1022,7 +1048,15 @@ class AudioManager {
     }
     for (const [category, gain] of this.categoryGains) {
       const key = `${category}Volume` as keyof AudioSettings;
-      gain.gain.value = this.settings[key] as number;
+      const baseVolume = this.settings[key] as number;
+
+      // Apply per-group mute: music+ambient or sfx+ui
+      const isMusicCategory = category === 'music' || category === 'ambient';
+      const isSfxCategory = category === 'sfx' || category === 'ui';
+      const groupMuted =
+        (isMusicCategory && this.settings.musicMuted) || (isSfxCategory && this.settings.sfxMuted);
+
+      gain.gain.value = groupMuted ? 0 : baseVolume;
     }
   }
 

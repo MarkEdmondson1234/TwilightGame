@@ -20,6 +20,7 @@ interface DialogueChatHistoryProps {
   npcName: string;
   playerName: string;
   isLoading: boolean;
+  onTypewriterDone?: () => void;
 }
 
 /** Animated thinking indicator with bouncing dots */
@@ -81,7 +82,8 @@ const MessageList: React.FC<{
   playerName: string;
   isLoading: boolean;
   showTimestamps?: boolean;
-}> = ({ messages, npcName, playerName, isLoading, showTimestamps }) => {
+  onTypewriterDone?: () => void;
+}> = ({ messages, npcName, playerName, isLoading, showTimestamps, onTypewriterDone }) => {
   let lastTimestamp = '';
 
   return (
@@ -116,6 +118,8 @@ const MessageList: React.FC<{
               action={msg.action}
               emotion={msg.emotion}
               isStreaming={msg.isStreaming}
+              typewriter={msg.typewriter}
+              onTypewriterDone={msg.typewriter ? onTypewriterDone : undefined}
               npcName={msg.role === 'assistant' ? npcName : undefined}
               playerName={msg.role === 'user' ? playerName : undefined}
             />
@@ -134,6 +138,7 @@ const DialogueChatHistory: React.FC<DialogueChatHistoryProps> = ({
   npcName,
   playerName,
   isLoading,
+  onTypewriterDone,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const expandedScrollRef = useRef<HTMLDivElement>(null);
@@ -187,6 +192,7 @@ const DialogueChatHistory: React.FC<DialogueChatHistoryProps> = ({
               npcName={npcName}
               playerName={playerName}
               isLoading={isLoading}
+              onTypewriterDone={onTypewriterDone}
             />
           </div>
         </div>

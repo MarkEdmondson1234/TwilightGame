@@ -5,9 +5,10 @@
  * Player messages: right-aligned, muted green
  */
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { NPCEmotion } from '../services/anthropicClient';
+import { useTypewriter } from '../hooks/useTypewriter';
 
 export interface ChatBubbleProps {
   role: 'user' | 'assistant';
@@ -15,6 +16,8 @@ export interface ChatBubbleProps {
   action?: string;
   emotion?: NPCEmotion;
   isStreaming?: boolean;
+  typewriter?: boolean;
+  onTypewriterDone?: () => void;
   npcName?: string;
   playerName?: string;
 }
@@ -52,6 +55,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   action,
   emotion,
   isStreaming,
+  typewriter,
+  onTypewriterDone,
   npcName,
   playerName,
 }) => {
@@ -60,7 +65,31 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   // For NPC messages, parse action from content if not provided separately
   const parsed = isNPC && !action ? parseAssistantContent(content) : null;
   const displayAction = action || parsed?.action;
-  const displayContent = parsed ? parsed.dialogue : content;
+  const rawContent = parsed ? parsed.dialogue : content;
+
+  // Typewriter effect for scripted NPC messages
+  const {
+    displayText: typewriterText,
+    isComplete: typewriterDone,
+    skip: skipTypewriter,
+  } = useTypewriter(typewriter ? rawContent : '');
+
+  // Auto-scroll to keep up with typewriter text
+  const endRef = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (typewriter && !typewriterDone && endRef.current) {
+      endRef.current.scrollIntoView({ block: 'nearest' });
+    }
+  }, [typewriter, typewriterDone, typewriterText]);
+
+  // Notify parent when typewriter finishes
+  useEffect(() => {
+    if (typewriter && typewriterDone && onTypewriterDone) {
+      onTypewriterDone();
+    }
+  }, [typewriter, typewriterDone, onTypewriterDone]);
+
+  const displayContent = typewriter ? typewriterText : rawContent;
 
   const emotionLabel =
     emotion && emotion !== 'neutral'
@@ -145,11 +174,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
               color: '#e8e8e8',
               textShadow: '0 1px 2px rgba(0,0,0,0.3)',
               lineHeight: '1.55',
+              cursor: typewriter && !typewriterDone ? 'pointer' : undefined,
             }}
+            onClick={typewriter && !typewriterDone ? skipTypewriter : undefined}
           >
             <ReactMarkdown components={markdownComponents}>{displayContent}</ReactMarkdown>
-            {isStreaming && (
+            {(isStreaming || (typewriter && !typewriterDone)) && (
               <span
+                ref={endRef}
                 className="animate-pulse"
                 style={{ color: '#d4a373', marginLeft: '2px', fontWeight: 'bold' }}
               >
@@ -204,4 +236,4 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   );
 };
 
-export default React.memo(ChatBubble);
+export default ChatBubble;

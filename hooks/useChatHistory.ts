@@ -17,6 +17,7 @@ export interface DisplayMessage {
   emotion?: NPCEmotion;
   action?: string;
   isStreaming?: boolean;
+  typewriter?: boolean;
   timestamp?: number;
 }
 
@@ -67,14 +68,26 @@ export function useChatHistory() {
 
   /** Add a complete NPC message bubble (skips if last message has identical content) */
   const addAssistantMessage = useCallback(
-    (content: string, emotion?: NPCEmotion, action?: string) => {
+    (content: string, emotion?: NPCEmotion, action?: string, typewriter?: boolean) => {
       isUserScrolledUpRef.current = false;
       setChatMessages((prev) => {
         const last = prev[prev.length - 1];
         if (last && last.role === 'assistant' && last.content === content) return prev;
+        // Clear typewriter flag from all previous messages
+        const cleared = typewriter
+          ? prev.map((msg) => (msg.typewriter ? { ...msg, typewriter: false } : msg))
+          : prev;
         return [
-          ...prev,
-          { id: makeId(), role: 'assistant', content, emotion, action, timestamp: Date.now() },
+          ...cleared,
+          {
+            id: makeId(),
+            role: 'assistant',
+            content,
+            emotion,
+            action,
+            typewriter,
+            timestamp: Date.now(),
+          },
         ];
       });
     },

@@ -1,7 +1,8 @@
-import { MapDefinition, TileType, RoomLayer } from '../../types';
+import { MapDefinition, TileType, RoomLayer, Direction } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createShopkeeperNPC } from '../../utils/npcFactories';
 import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND, Z_INTERIOR_FOREGROUND } from '../../zIndex';
+import { TIMING } from '../../constants';
 
 /**
  * Shop - Village Grocery Shop Interior
@@ -42,9 +43,19 @@ const gridString = `
 ###################
 `;
 
-// Create the fox NPC (will have zIndexOverride set from layer)
+// Create the fox NPC with walk-in entry animation
+// Fox walks from left to behind counter when player enters the shop
 const foxShopkeeper = {
-  ...createShopkeeperNPC('shop_counter_fox', { x: 9, y: 6 }, 'Fox'),
+  ...createShopkeeperNPC('shop_counter_fox', { x: 9, y: 6 }, 'Fox', {
+    startPosition: { x: 3, y: 6 },
+    targetPosition: { x: 9, y: 6 },
+    walkState: 'walking',
+    idleState: 'idle',
+    speed: TIMING.NPC_ENTRY_WALK_SPEED,
+    walkDirection: Direction.Right,
+    sound: 'sfx_fox_humming',
+  }),
+  scale: 3.6, // Behind-counter fox
   interactionRadius: 4, // Larger radius to reach from in front of counter
 };
 

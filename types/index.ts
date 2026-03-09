@@ -53,6 +53,7 @@ export type {
   NPCFavourConfig,
   FavourType,
   SeasonalLocation,
+  EntryAnimation,
 } from './npc';
 
 // Animation types
