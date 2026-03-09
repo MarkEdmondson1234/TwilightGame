@@ -160,6 +160,26 @@ export const STAMINA = {
 } as const;
 
 /**
+ * COMBAT - Cottagecore encounter system timing and costs
+ */
+export const COMBAT = {
+  // Phase durations (ms)
+  STANDOFF_MS: 800,
+  TELEGRAPH_MS: 2500, // per-antagonist via telegraphDurationMs; harder enemies use lower values
+  REVEAL_MS: 800,
+  RESULT_MS: 1200,
+
+  // Stamina costs
+  GOBLIN_LOSS_COST: 15,
+  WOLF_LOSS_COST: 20,
+  FLEE_COST: 5,
+
+  // Hits to defeat
+  GOBLIN_HITS: 3,
+  WOLF_HITS: 4,
+} as const;
+
+/**
  * WATERING_CAN - Watering can capacity and usage
  */
 export const WATERING_CAN = {

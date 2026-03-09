@@ -234,6 +234,14 @@ class StaminaManagerClass {
   }
 
   /**
+   * Trigger exhaustion from external code (e.g. combat defeat).
+   * Shows toast, teleports home, restores stamina.
+   */
+  triggerExhaustion(): void {
+    this.handleExhaustion();
+  }
+
+  /**
    * Handle player exhaustion (teleport home)
    */
   private handleExhaustion(): void {

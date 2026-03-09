@@ -16,6 +16,7 @@ import { decorationCraftingDefinition } from './decoration-crafting/definition';
 import { paintingEaselDefinition } from './painting-easel/definition';
 import { pumpkinCarvingDefinition } from './pumpkin-carving/definition';
 import { wreathMakingDefinition } from './wreath-making/definition';
+import { goblinCombatDefinition, umbraWolfCombatDefinition } from './combat-encounter/definition';
 
 /**
  * All registered mini-games.
@@ -25,6 +26,8 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
   paintingEaselDefinition,
   pumpkinCarvingDefinition,
   wreathMakingDefinition,
+  goblinCombatDefinition,
+  umbraWolfCombatDefinition,
 ];
 
 // =============================================================================
@@ -34,12 +37,14 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
 const byId = new Map<string, MiniGameDefinition>();
 const byPlacedItem = new Map<string, MiniGameDefinition[]>();
 const byNpc = new Map<string, MiniGameDefinition[]>();
+const byNpcName = new Map<string, MiniGameDefinition[]>();
 const byInventoryItem = new Map<string, MiniGameDefinition[]>();
 
 function buildIndices(): void {
   byId.clear();
   byPlacedItem.clear();
   byNpc.clear();
+  byNpcName.clear();
   byInventoryItem.clear();
 
   for (const def of MINI_GAME_DEFINITIONS) {
@@ -54,6 +59,11 @@ function buildIndices(): void {
       const list = byNpc.get(def.triggers.npcId) ?? [];
       list.push(def);
       byNpc.set(def.triggers.npcId, list);
+    }
+    if (def.triggers.npcNameMatch) {
+      const list = byNpcName.get(def.triggers.npcNameMatch) ?? [];
+      list.push(def);
+      byNpcName.set(def.triggers.npcNameMatch, list);
     }
     if (def.triggers.inventoryItemId) {
       const list = byInventoryItem.get(def.triggers.inventoryItemId) ?? [];
@@ -79,9 +89,14 @@ export function getMiniGamesForPlacedItem(itemId: string): MiniGameDefinition[] 
   return byPlacedItem.get(itemId) ?? [];
 }
 
-/** Get all mini-games triggered by an NPC. */
+/** Get all mini-games triggered by an NPC (by exact ID). */
 export function getMiniGamesForNPC(npcId: string): MiniGameDefinition[] {
   return byNpc.get(npcId) ?? [];
+}
+
+/** Get all mini-games triggered by NPC name match (for dynamic NPC IDs). */
+export function getMiniGamesForNPCName(npcName: string): MiniGameDefinition[] {
+  return byNpcName.get(npcName) ?? [];
 }
 
 /** Get all mini-games triggered by an inventory item. */

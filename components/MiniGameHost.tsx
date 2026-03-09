@@ -23,6 +23,8 @@ import { friendshipManager } from '../utils/FriendshipManager';
 import { audioManager } from '../utils/AudioManager';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import type { EventPayloads } from '../utils/EventBus';
+import { STAMINA } from '../constants';
+import { staminaManager } from '../utils/StaminaManager';
 import { TimeManager } from '../utils/TimeManager';
 import type { Position } from '../types/core';
 import { Z_MINI_GAME, zClass } from '../zIndex';
@@ -76,6 +78,20 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
       addFriendshipPoints: (npcId: string, points: number) =>
         friendshipManager.addPoints(npcId, points, 'mini-game'),
       getFriendshipLevel: (npcId: string) => friendshipManager.getFriendshipLevel(npcId),
+      getStamina: () => gameState.getStamina(),
+      drainStamina: (amount: number) => {
+        const current = gameState.getStamina();
+        const newValue = Math.max(0, current - amount);
+        gameState.setStamina(newValue);
+        eventBus.emit(GameEvent.STAMINA_CHANGED, {
+          value: newValue,
+          maxValue: STAMINA.MAX,
+        });
+        return newValue <= 0;
+      },
+      triggerExhaustion: () => {
+        staminaManager.triggerExhaustion();
+      },
       playSfx: (sfxId: string) => {
         audioManager.playSfx(sfxId);
       },
@@ -101,7 +117,13 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
       gameState: gameStateSnapshot,
       actions,
       storage,
-      triggerData: triggerData ?? { triggerType: 'direct' },
+      triggerData: {
+        ...(triggerData ?? { triggerType: 'direct' }),
+        extra: {
+          ...(triggerData?.extra ?? {}),
+          gameId: activeMiniGameId,
+        },
+      },
     }),
     [gameStateSnapshot, actions, storage, triggerData]
   );

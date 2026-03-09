@@ -23,6 +23,8 @@ export interface MiniGameTrigger {
   placedItemId?: string;
   /** Triggered by talking to a specific NPC */
   npcId?: string;
+  /** Triggered by talking to any NPC whose name matches (for dynamic NPC IDs) */
+  npcNameMatch?: string;
   /** Triggered by using an inventory item */
   inventoryItemId?: string;
   /** Triggered by a quest reaching a certain stage */
@@ -145,6 +147,15 @@ export interface MiniGameActions {
 
   /** Get friendship level with an NPC */
   getFriendshipLevel: (npcId: string) => number;
+
+  /** Get current stamina value */
+  getStamina: () => number;
+
+  /** Drain stamina by amount. Returns true if player is now exhausted (stamina <= 0). */
+  drainStamina: (amount: number) => boolean;
+
+  /** Trigger exhaustion: teleport home, restore stamina, show toast */
+  triggerExhaustion: () => void;
 
   /** Play a sound effect */
   playSfx: (sfxId: string) => void;
