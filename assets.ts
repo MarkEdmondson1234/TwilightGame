@@ -325,6 +325,7 @@ export const herbAssets = {
   lavender_seeds: '/TwilightGame/assets-optimized/herbs/lavender_seeds.png',
   lavender_plant: '/TwilightGame/assets-optimized/herbs/lavender_bush.png',
   lavender_crop: '/TwilightGame/assets-optimized/herbs/lavender_bunch.png',
+  lavender_sprig: '/TwilightGame/assets-optimized/herbs/lavender_sprig.png',
 };
 
 // Cooking assets - Prepared food items (cooked dishes)

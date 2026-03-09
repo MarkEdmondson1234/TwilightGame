@@ -23,7 +23,7 @@ import React, { useState, useCallback, useMemo, useRef } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import { getItem } from '../../data/items';
 import { decorationManager } from '../../utils/DecorationManager';
-import { tileAssets } from '../../assets';
+import { tileAssets, herbAssets } from '../../assets';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -81,6 +81,7 @@ const WREATH_MATERIALS = [
   'vanilla',
   'dragonfly_wings',
   'ghost_lichen',
+  'crop_lavender',
 ] as const;
 
 /** Visual colour associated with each flower for the slot border. */
@@ -103,6 +104,7 @@ const FLOWER_COLOURS: Record<string, string> = {
   vanilla: '#d4b896',
   dragonfly_wings: '#22d3ee',
   ghost_lichen: '#94a3b8',
+  crop_lavender: '#b19cd9',
 };
 
 /** Shared style for the round zoom/size buttons. */
@@ -159,7 +161,13 @@ function makeSlot(itemId: string, overrides?: Partial<SlotData>): SlotData {
 // Flower image helpers
 // ---------------------------------------------------------------------------
 
+/** Per-item image overrides for the wreath mini-game (used when the default item image doesn't suit the small slot). */
+const WREATH_IMAGE_OVERRIDES: Record<string, string> = {
+  crop_lavender: herbAssets.lavender_sprig,
+};
+
 function getFlowerImage(itemId: string): string | null {
+  if (WREATH_IMAGE_OVERRIDES[itemId]) return WREATH_IMAGE_OVERRIDES[itemId];
   const item = getItem(itemId);
   return (item?.image as string) ?? null;
 }
