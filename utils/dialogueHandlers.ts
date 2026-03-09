@@ -220,8 +220,11 @@ function handleWitchQuestActions(nodeId: string): string | void {
   if (nodeId === 'greeting') {
     const stage = getWitchGardenStage();
 
-    // No quest yet — show normal greeting
-    if (stage === WITCH_GARDEN_STAGES.NOT_STARTED) return;
+    // No quest yet — first visit shows a more guarded greeting
+    if (stage === WITCH_GARDEN_STAGES.NOT_STARTED) {
+      if (friendshipManager.getFriendshipTier('witch') === 'stranger') return 'first_greeting';
+      return;
+    }
 
     // Quest complete — check if witch needs to congratulate level-up
     if (stage >= WITCH_GARDEN_STAGES.COMPLETED) {

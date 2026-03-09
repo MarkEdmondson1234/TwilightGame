@@ -50,27 +50,48 @@ export function createWitchWolfNPC(
     },
     initialState: 'watching',
     dialogue: [
+      // --- First visit (stranger tier, no quest) ---
       {
-        id: 'greeting',
-        text: '*A woman stands beside the bubbling cauldron, her wolf companion at her side. She looks up with knowing eyes.* "Ah, a visitor to my humble glade. Welcome, traveller. I am the Witch of the Woods."',
+        id: 'first_greeting',
+        text: '*A woman stands beside a bubbling cauldron, a great dark wolf at her side. She looks up, neither startled nor particularly welcoming — merely watchful.* "You\'ve wandered far from the path, traveller. I am the Witch of the Woods. What is it you want?"',
         seasonalText: {
           spring:
-            '*The witch stirs her cauldron, spring flowers floating on its surface.* "Spring brings new life, new magic. The forest awakens, and with it, old knowledge stirs. What brings you to my dwelling?"',
+            '*The glade is bright with new blossom, and the air smells of wild garlic and wet earth. The witch looks up from her work, eyes calm.* "Eostre\'s time. The hare runs, the egg cracks open, the world remembers it was young." *She holds your gaze steadily.* "You\'ve found your way to my glade. I am the Witch of the Woods. What is it you\'re after, traveller?"',
           summer:
-            '*The witch wipes her brow, though the heat doesn\'t seem to trouble her.* "Summer\'s warmth makes my herbs grow strong. Even now, my garden flourishes. How may I help you, traveller?"',
+            '*The solstice sun falls long and golden through the trees. The witch squints up at you from beside her cauldron, unhurried.* "Litha. The sun at the height of her power, the longest day." *A pause.* "Most folk celebrate somewhere bright and crowded. And yet here you are." *Her wolf watches you calmly.* "I am the Witch of the Woods. What brings you to my corner of the forest?"',
           autumn:
-            '*The witch gathers fallen leaves, adding them to her cauldron.* "Autumn teaches us that endings are beginnings in disguise. The forest prepares for rest, but magic never sleeps. What do you seek?"',
+            '*Dead leaves drift past the cauldron, copper and rust. The witch is still, as if listening to something just beyond the wind.* "Samhain draws close. The veil thins — those who know how to look can almost see through it." *She turns her gaze to you, unhurried.* "A good season to seek out a witch, I suppose. I am Juniper. What is it you want?"',
           winter:
-            '*Snow dusts the witch\'s dark robes, but she seems unbothered by the cold.* "Winter is the season of contemplation. The earth rests, dreams, remembers. Tell me, what brings you out in such weather?"',
+            '*Snow lies quiet in the glade. The witch tends her fire with steady hands, seemingly unbothered by the cold.* "Yule. The longest night, and then — slowly, stubbornly — the light returns." *She glances at you with mild curiosity.* "You\'ve come a long way in the cold, traveller. I am the Witch of the Woods. What is it you\'re after?"',
         },
         responses: [
           { text: 'Who are you?', nextId: 'introduction' },
+          { text: 'Althea sends her regards.', nextId: 'althea_greeting' },
+          { text: 'Just passing through.' },
+        ],
+      },
+      // --- Return visits (acquaintance+, no quest) ---
+      {
+        id: 'greeting',
+        text: '*She glances up as you approach, recognising you.* "Back again." *It is not unfriendly — merely matter-of-fact. Shadow raises his head briefly, then settles.* "What brings you to my glade this time?"',
+        seasonalText: {
+          spring:
+            '*She is elbow-deep in something fragrant — elderflower, perhaps, or woodruff. She nods as you approach.* "The spring is generous this year. My garden is coming in well." *A brief, measured look.* "What is it you need?"',
+          summer:
+            '*The glade hums with bees. She is drying bundles of herbs in the long solstice light, barely looking up.* "Summer suits this place. Everything grows as it should." *She ties off a bundle and gives you her attention.* "Well. What is it?"',
+          autumn:
+            '*The cauldron is busy — something rich and dark, with a smell of mushrooms and old bark. She stirs it with practised calm.* "Good time of year for brewing. The harvest gives generously." *She looks at you over her shoulder.* "What brings you back?"',
+          winter:
+            '*The fire is high, and the wolf is curled close to it. She looks up from a battered tome, unhurried.* "Brave of you, coming out in this." *A faint trace of warmth, perhaps.* "Sit for a moment if you need to warm up. What is it you wanted?"',
+        },
+        responses: [
           { text: 'What are you brewing?', nextId: 'cauldron' },
           {
             text: 'Could you teach me magic?',
             nextId: 'apprentice',
             hiddenIfQuestStarted: 'witch_garden',
           },
+          { text: 'Althea sends her regards.', nextId: 'althea_greeting' },
           { text: 'Just passing through.' },
         ],
       },
@@ -287,6 +308,21 @@ export function createWitchWolfNPC(
         text: '"The journeyman potions draw on the deeper magic of the forest. You\'ll need ingredients like Moonpetal and Adder\'s Meat — things that grow in wild, ancient places." *She smiles warmly.* "But I have faith in you, apprentice. Now off you go — there\'s much to learn."',
       },
       {
+        id: 'althea_greeting',
+        text: '*Something in her expression shifts — just for a moment, a stillness passes over her face before she smooths it away.* "Did she." *It is not quite a question. She turns back to her cauldron and stirs slowly.* "That is... kind of her. Pass along my regards in return." *A pause.* "I hope she is well."',
+        responses: [
+          { text: 'She seemed well. She speaks fondly of you.', nextId: 'althea_greeting_fondly' },
+          { text: "I won't pry." },
+        ],
+      },
+      {
+        id: 'althea_greeting_fondly',
+        text: '*She is quiet for a moment longer than is comfortable.* "I am glad." *She sets the ladle down carefully.* "Forgive me — I do not speak of this easily, particularly to someone I\'ve only just met. Althea and I... we made different choices, a long time ago. I miss her. That part is simple." *Her jaw tightens slightly.* "The rest of it is not."',
+        responses: [
+          { text: 'I understand. I\'ll leave it there.' },
+        ],
+      },
+      {
         id: 'magic_talk',
         text: '"Magic is all around us - in the growth of a seed, the turn of the seasons, the pull of the moon on the tides. I simply... help it along. Guide it. Shape it to purpose. It\'s not about power, it\'s about harmony."',
         responses: [
@@ -330,7 +366,7 @@ export function createWitchWolfNPC(
       },
       {
         id: 'witch_family',
-        text: '*Her expression shifts, becoming guarded.* "I have a sister in the village. Althea. She chose a different life - married Elias, settled down. We... don\'t speak much anymore." *She stirs the cauldron absently.* "She chose love over magic. I chose magic over... everything else."',
+        text: '*Her expression shifts, becoming guarded.* "As you know, I have a sister in the village. Althea. She chose a different life - married Elias, settled down. We... don\'t speak much anymore." *She stirs the cauldron absently.* "She chose love over magic. I chose magic over... everything else."',
         requiredFriendshipTier: 'good_friend',
         responses: [{ text: 'Do you miss her?', nextId: 'miss_sister' }, { text: "I'm sorry." }],
       },
