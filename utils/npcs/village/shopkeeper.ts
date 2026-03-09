@@ -96,6 +96,18 @@ export function createShopkeeperNPC(
             nextId: 'shop_gossip',
           },
           {
+            text: 'Why do you stand outside all day?',
+            nextId: 'standing_outside',
+          },
+          {
+            text: "If you're a fox, why do you own a shop?",
+            nextId: 'fox_evolution',
+          },
+          {
+            text: "What's in season right now?",
+            nextId: 'seasonal_wares',
+          },
+          {
             text: 'Just browsing, thanks.',
           },
         ],
@@ -116,16 +128,75 @@ export function createShopkeeperNPC(
       },
       {
         id: 'shop_gossip',
-        text: 'Ah yes! A merchant from the east spoke of strange lights in the cave. Most peculiar indeed...',
+        text: "*leans against the doorframe with evident pleasure* Oh, there is always something worth knowing in a village this size. I make it my business to pay attention — one of the many advantages of standing outside all day. Any particular thread you'd like me to pull on?",
+        responses: [
+          {
+            text: 'Anything about my mum?',
+            nextId: 'gossip_mum',
+          },
+          {
+            text: 'What do you know about my father?',
+            nextId: 'gossip_father',
+          },
+          {
+            text: 'Any history about this village?',
+            nextId: 'gossip_village',
+          },
+          {
+            text: 'Anything about Althea?',
+            nextId: 'gossip_althea',
+          },
+          {
+            text: 'Never mind.',
+          },
+        ],
+      },
+      {
+        id: 'gossip_mum',
+        text: "*straightens up with genuine admiration* Your mother's cooking. Now there is a subject worth discussing. I have eaten in a great many places, and I do not say this lightly: the woman is extraordinarily talented. The things she does with a simple stock are frankly unfair to the rest of us. What I cannot fathom — and I have turned this over many times — is why she would leave a thriving restaurant to come here. A village. With one shop. *pauses* Not that there is anything wrong with one shop. But she clearly had something very successful, and she gave it up. I have never quite dared to ask her directly. Perhaps you know more than I do.",
+      },
+      {
+        id: 'gossip_father',
+        text: "*raises an eyebrow with considerable interest* Your father! Yes, actually — I was going to mention this. I receive the newspaper, you know, even out here — it takes a few days but it does arrive. And just recently there was a piece about an excavation in Egypt. Quite a significant find, apparently. And there, in the third paragraph, was a name I recognised. *taps nose* I won't say more than that — it wasn't an enormous article, and the details were rather vague — but it was there. He has quite a reputation in certain circles, it seems. I had no idea. You must be proud.",
+      },
+      {
+        id: 'gossip_village',
+        text: "*lowers voice slightly, glancing around* Now this one is interesting. There are those who say — and I have heard this from more than one source — that this village is not the first to have stood on this land. That there was an older settlement here before, much older, and that at some point it simply... stopped. What happened to it, nobody seems to know. Or if they do know, they aren't saying. *straightens* I find it rather curious. The ground here has an odd quality to it sometimes. Whether that means anything, I really couldn't say. But I thought you ought to know.",
+      },
+      {
+        id: 'gossip_althea',
+        text: "*pauses, choosing words carefully* I will tell you one thing: Althea has a sister. Whether she has mentioned this to you, I do not know. It is not a topic she raises willingly, and I would strongly advise you to pick your moment carefully if you intend to bring it up. Catch her in the wrong mood and you will know about it. Catch her in the right one, though, and... well. I suspect there is quite a story there. I don't know the details myself — she is not exactly forthcoming — but the few things I have gathered suggest it is complicated. *tilts head* More than that, I really cannot say.",
+      },
+      {
+        id: 'standing_outside',
+        text: "*gazes around with quiet satisfaction* Ah, you've noticed my post. One observes a great deal from here, you know. The village has a rhythm to it — the baker who always arrives late on Tuesdays, the sparrows that squabble over the same rooftop every single morning. And the seasons! One feels the change in the air before any calendar announces it. I watch the colours shift in the trees, I listen to what people are carrying home from market, I catch the odd scrap of gossip drifting past on the breeze. And the clouds! People never look up nearly enough. This morning I spotted one shaped remarkably like a hedgehog carrying an umbrella.",
         seasonalText: {
           spring:
-            'A farmer mentioned the fields are blooming earlier than usual this year. The cherry blossoms came overnight! Quite magical, really.',
+            "*takes a slow, contented breath* Spring is when it's finest, I think. Everything waking up at once — the birds, the blossoms, the mud. I watch the villagers come out of their winter shells, blinking like newborns. Very gratifying. And the cloud formations this time of year are exceptional.",
           summer:
-            'Travellers say the forest is thick with berries this summer. But they also warn of increased wildlife activity. Be careful out there!',
+            "*fans himself slightly* The summer light is extraordinary out here. Long evenings, golden hour lasting for ever. I watch the swallows practising their aerobatics over the square. One in particular is showing off terribly. I've named him Gerald.",
           autumn:
-            'The elder cannot stop talking about the autumn colours this year. He spends all day beneath that cherry tree! Sweet old fellow.',
+            "*tilts head thoughtfully* Autumn is the finest season for listening. Everyone's in a hurry, everyone has something to say. The harvest gossip alone is worth standing out here for. And the colours — *gestures vaguely at the trees* — well. Even a fox can appreciate that.",
           winter:
-            'Merchants are avoiding the mountain passes - too much snow already. We might not see traders until spring. Best stock up now!',
+            "*tucks paws together* One must admit winter is somewhat less comfortable. But there is something peaceful about watching snow settle on the square. Very few clouds worth studying, mind you — they all look the same in winter. Grey. Featureless. A disappointment.",
+        },
+      },
+      {
+        id: 'fox_evolution',
+        text: "*blinks slowly, as if the question is both obvious and mildly exhausting* You might as well ask why, if *you're* a primate, you aren't currently swinging between trees. It is a simple matter of evolution. E-vo-lu-tion. Certain species — myself, the bear, the elves — have quite clearly developed considerably larger brains over time. Larger brains led to speech. Speech led to commerce. Commerce led, naturally, to shops. This is not to say it couldn't have gone differently, of course. One can easily imagine a parallel universe where quite other creatures made the leap — a world where, say, elves have rounded ears and walk about on four legs, while foxes... well. *smooths lapel* We turned out rather well, I think.",
+      },
+      {
+        id: 'seasonal_wares',
+        text: 'Good question. My pantry staples are available year-round — flour, sugar, salt, oils, spices, dairy — the foundations of any decent kitchen. But fresh produce? That changes with the seasons. Ask me again and I can tell you what is particularly worth buying right now.',
+        seasonalText: {
+          spring:
+            "*counts on a paw* Spring is a fine time to stock up. Fresh strawberries and strawberry jam are in, as are salad leaves and spinach — lovely young growth. Carrot seeds are ready for planting, and if you want strawberry plants, now is precisely the moment. The pantry staples are of course always here whenever you need them.",
+          summer:
+            '*leans forward slightly* Summer is generous. Strawberries are still coming in beautifully, and the tomatoes are just beginning — I have fresh tomatoes and tomato seeds for those who want to grow their own. Salad and spinach remain excellent. Strawberry jam, naturally. And everything in the pantry, as always — flour, sugar, spices, the lot.',
+          autumn:
+            "*raises a finger* Autumn is when the blackberries arrive — only available now, so do not dawdle. Tomatoes are still going, and carrots come back into stock this season as well. Strawberry jam holds on through autumn too. The fresh greens — salad, spinach — are gone for the year, I am afraid. Stock up on pantry essentials now before the winter merchants thin out.",
+          winter:
+            "*folds paws* I won't mislead you — fresh seasonal produce is done for the year. Winter is a pantry season. But I am very well stocked: flour, sugar, salt, yeast, oils, all your dairy, spices, herbs, rice, pasta. Everything you need to cook through the cold months. The seeds and fresh crops will return in spring. Until then, it is casserole weather.",
         },
       },
     ],
