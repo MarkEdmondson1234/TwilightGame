@@ -70,8 +70,8 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
     handleRecipeTeaching(nodeId);
   }
 
-  // Handle Althea's chores quest
-  if (npcId.includes('althea')) {
+  // Handle Althea's chores quest (NPC id is 'old_woman_knitting', not 'althea')
+  if (npcId.includes('old_woman')) {
     const redirect = handleAltheaQuestItems(nodeId);
     if (redirect) return redirect;
   }

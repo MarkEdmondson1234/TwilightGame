@@ -292,22 +292,6 @@ export function createOldWomanKnittingNPC(
         ],
       },
       // ===== ALTHEA'S CHORES QUEST =====
-      // Available after the player reaches good_friend tier and has heard about Juniper
-      {
-        id: 'chores_offer',
-        text: "*She looks at you thoughtfully.* You know, dearie, my old cottage could use some tidying. And I do so miss a proper cup of tea and some home-baked biscuits. If you helped me out, I might just remember the way to Juniper's place...",
-        requiredFriendshipTier: 'good_friend',
-        hiddenIfQuestStarted: 'althea_chores',
-        responses: [
-          {
-            text: "I'd be happy to help!",
-            nextId: 'chores_accept',
-          },
-          {
-            text: 'Maybe another time.',
-          },
-        ],
-      },
       {
         id: 'chores_accept',
         text: "*She beams, pressing her old feather duster into your hands.* Oh, how kind you are! Here — take this for the cobwebs. My hands aren't as steady as they used to be, so I'll leave those to you. A cup of tea, some home-baked biscuits, and the cobwebs seen to — that's all I need. *She settles back into her chair, already looking more at ease.* Take your time, dearie. I shall be right here having my think.",
