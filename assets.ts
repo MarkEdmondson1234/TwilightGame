@@ -73,7 +73,7 @@ export const tileAssets = {
   garden_lamp_night: '/TwilightGame/assets-optimized/lights/lamp_post_night.png',
   garden_lamp_day_winter: '/TwilightGame/assets-optimized/lights/lamp_post_day_winter.png',
   garden_lamp_night_winter: '/TwilightGame/assets-optimized/lights/lamp_post_night_winter.png',
-  wreath_base: '/TwilightGame/assets/lights/wreath_base.png',
+  wreath_base: '/TwilightGame/assets/items/wreath_base.png',
   // Lake tiles (directional edges for proper water rendering)
   water_center: '/TwilightGame/assets-optimized/tiles/lake/water_middle.png',
   water_left: '/TwilightGame/assets-optimized/tiles/lake/water_left.png',
