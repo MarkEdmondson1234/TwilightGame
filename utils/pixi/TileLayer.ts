@@ -78,7 +78,7 @@ export const CROP_ADULT_SIZES: Record<
   corn: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
   sunflower: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
   pea: { width: 3, height: 3, offsetX: -1, offsetY: -2 },
-  cucumber: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
+  cucumber: { width: 3, height: 3, offsetX: -1, offsetY: -2 },
 
   // Magical crops (2.5x2.5 tiles) - high resolution sprites
   fairy_bluebell: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },

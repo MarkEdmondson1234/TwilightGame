@@ -307,6 +307,8 @@ export const farmingAssets = {
   plant_corn_adult: '/TwilightGame/assets-optimized/farming/plant_corn_adult.png',
   plant_melon_young: '/TwilightGame/assets-optimized/farming/melon_young.png',
   plant_melon_adult: '/TwilightGame/assets-optimized/farming/melon_adult.png',
+  plant_cucumber_young: '/TwilightGame/assets-optimized/farming/plant_cucumber_young.png',
+  plant_cucumber_adult: '/TwilightGame/assets-optimized/farming/plant_cucumber_adult.png',
   wilted_plant: '/TwilightGame/assets-optimized/farming/wilted_plant.png',
   farm_fence: '/TwilightGame/assets-optimized/farming/farm_fence.png',
   farm_fence_side: '/TwilightGame/assets-optimized/farming/farm_fence_side.png',
