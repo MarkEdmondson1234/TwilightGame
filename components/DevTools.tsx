@@ -1073,13 +1073,21 @@ const MiniGamesDebugSection: React.FC<{
       'crop_strawberry',
       'crop_blackberry',
       'crop_blueberry',
+      'rose_red_crop',
+      'rose_crop',
+      'feather',
+      'crop_chili',
+      'crop_onion',
+      'vanilla',
+      'dragonfly_wings',
+      'ghost_lichen',
     ];
     for (const id of flowers) {
       inventoryManager.addItem(id, 3);
     }
     const inv = inventoryManager.getInventoryData();
     characterData.saveInventory(inv.items, inv.tools);
-    console.log('[DevTools] Gave 3x each wreath flower (10 types)');
+    console.log('[DevTools] Gave 3x each wreath flower (18 types)');
   };
 
   return (
@@ -1223,13 +1231,13 @@ const MiniGamesDebugSection: React.FC<{
             Wreath Supplies Helper
           </div>
           <div style={{ fontSize: '10px', opacity: 0.7, marginBottom: '6px' }}>
-            Adds 3x each of 10 wreath flower types
+            Adds 3x each of 18 wreath flower types
           </div>
           <button
             className="devtools-button"
             onClick={giveWreathFlowers}
             style={{ fontSize: '11px' }}
-            title="Add 3x each of moonpetal, addersmeat, frost flower, sakura, violet, wolfsbane, sunflower, strawberry, blackberry, blueberry"
+            title="Add 3x each of moonpetal, addersmeat, frost flower, sakura, violet, wolfsbane, sunflower, strawberry, blackberry, blueberry, red rose, rose, feather, chili, onion, vanilla, dragonfly wings, ghost lichen"
           >
             Give Wreath Flowers
           </button>
