@@ -340,6 +340,7 @@ export const cookingAssets = {
   potato_pizza: '/TwilightGame/assets-optimized/cooking/potato_pizza.png',
   roast_dinner: '/TwilightGame/assets-optimized/cooking/roast_dinner.png',
   spaghetti_dish: '/TwilightGame/assets-optimized/cooking/spaghetti_dish.png',
+  cucumber_sandwich: '/TwilightGame/assets-optimized/cooking/cucumber_sandwich.png',
 };
 
 // Grocery assets - Cooking ingredients (raw items from shop)

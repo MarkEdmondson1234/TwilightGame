@@ -372,6 +372,32 @@ export const RECIPES: Record<string, RecipeDefinition> = {
       'Spread the chocolate over the cake and let it set before serving.',
     ],
   },
+
+  cucumber_sandwich: {
+    id: 'cucumber_sandwich',
+    name: 'cucumber_sandwich',
+    displayName: 'Cucumber Sandwich',
+    category: 'savoury',
+    description:
+      "There is nothing quite like a cucumber sandwich! Although the ingredients are simple, it is fit for royalty, and it goes perfectly with afternoon tea as well as in the picnic basket.",
+    ingredients: [
+      { itemId: 'crop_cucumber', quantity: 1 },
+      { itemId: 'butter', quantity: 1 },
+      { itemId: 'bread', quantity: 1 },
+      { itemId: 'salt', quantity: 1 },
+      { itemId: 'pepper', quantity: 1 },
+    ],
+    cookingTime: 10,
+    difficulty: 1,
+    resultItemId: 'food_cucumber_sandwich',
+    resultQuantity: 1,
+    friendshipValue: 15,
+    image: cookingAssets.cucumber_sandwich,
+    instructions: [
+      'Slice the cucumber into really thin slices, then put them in a sieve, and sprinkle lightly with salt. This draws the water out, so the sandwich doesn\'t get soggy. After 20 minutes, pad them dry with a kitchen towel.',
+      'Slice the bread and cut off the crusts. Give each slice a generous layer of fresh butter, and arrange the cucumber slices on top. Add some pepper, then another slice of bread, and cut it into finger-sized squares.',
+    ],
+  },
 };
 
 /**

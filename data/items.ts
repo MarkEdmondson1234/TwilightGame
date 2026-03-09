@@ -1250,6 +1250,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: cookingAssets.chocolate_cake,
   },
 
+  food_cucumber_sandwich: {
+    id: 'food_cucumber_sandwich',
+    name: 'food_cucumber_sandwich',
+    displayName: 'Cucumber Sandwich',
+    category: ItemCategory.FOOD,
+    description: 'Delicate cucumber finger sandwiches — fit for royalty and perfect with afternoon tea.',
+    stackable: true,
+    sellPrice: 15,
+    image: cookingAssets.cucumber_sandwich,
+  },
+
   // ===== MAGICAL INGREDIENTS =====
   // Forageable - Time/Weather dependent
   moonpetal: {
