@@ -1,7 +1,6 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR, Z_SPRITE_BACKGROUND } from '../../zIndex';
-import { QUEST_ID as ALTHEA_CHORES_QUEST } from '../../data/questHandlers/altheaChoresHandler';
 
 /**
  * Cottage Interior - Background Image Interior
@@ -55,25 +54,27 @@ const cottageInteriorLayers: RoomLayer[] = [
     centered: true,
   },
 
-  // Layer 2: Cobweb overlay (only visible during Althea's chores quest)
-  // Shows 5 cobwebs that the player must clean with the feather duster
-  {
-    type: 'image',
-    image: '/TwilightGame/assets/rooms/cottage_small_interior/cobweb_overlay.png',
-    zIndex: Z_SPRITE_BACKGROUND, // 50: Behind player but in front of background
-    parallaxFactor: 1.0,
-    opacity: 1.0,
-    width: 960,
-    height: 540,
-    scale: 1.3,
-    centered: true,
-    // Only show when quest is active (started but not completed)
-    condition: {
-      type: 'quest',
-      questId: ALTHEA_CHORES_QUEST,
-      showWhen: 'active',
-    },
-  },
+  // Layers 2–6: Individual cobweb overlays (one per cobweb, always visible until cleaned)
+  // Each PNG is full-room size (960×540) with only one cobweb drawn on it.
+  // Place images in: public/assets/rooms/cottage_small_interior/cobwebs/
+  ...[0, 1, 2, 3, 4].map(
+    (id): RoomLayer => ({
+      type: 'image',
+      image: `/TwilightGame/assets/rooms/cottage_small_interior/cobweb_overlay${id + 1}.png`,
+      zIndex: Z_SPRITE_BACKGROUND, // 50: Behind player but in front of background
+      parallaxFactor: 1.0,
+      opacity: 1.0,
+      width: 960,
+      height: 540,
+      scale: 1.3,
+      centered: true,
+      condition: {
+        type: 'cobweb',
+        cobwebId: id,
+        showWhen: 'not_cleaned',
+      },
+    })
+  ),
 
   // Player is implicitly at Z_PLAYER (100)
 ];

@@ -32,7 +32,6 @@ import { getFrameStyle } from './frameStyles';
 import {
   getMiniGamesForPlacedItem,
   getMiniGamesForNPC,
-  getMiniGamesForNPCName,
 } from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
 import type { MiniGameTriggerData } from '../minigames/types';
@@ -1356,9 +1355,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     // NPC-triggered mini-games (registry-based) — check by exact ID and by name match
     if (config.onOpenMiniGame) {
       const byId = getMiniGamesForNPC(npcId);
-      const byName = npc ? getMiniGamesForNPCName(npc.name) : [];
       const seen = new Set<string>();
-      const npcMiniGames = [...byId, ...byName].filter((mg) => {
+      const npcMiniGames = [...byId].filter((mg) => {
         if (seen.has(mg.id)) return false;
         seen.add(mg.id);
         return true;
