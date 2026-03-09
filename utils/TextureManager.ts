@@ -64,10 +64,14 @@ class TextureManager {
    * Batch load multiple textures
    * Loads each texture individually so a single corrupted file cannot crash the game.
    */
-  async loadBatch(assets: Record<string, string>): Promise<void> {
+  async loadBatch(
+    assets: Record<string, string>,
+    onProgress?: (loaded: number, total: number) => void
+  ): Promise<void> {
     const entries = Object.entries(assets);
     console.log(`[TextureManager] Loading ${entries.length} textures...`);
     const startTime = performance.now();
+    let loadedCount = 0;
 
     const results = await Promise.allSettled(
       entries.map(([, url]) =>
@@ -75,6 +79,8 @@ class TextureManager {
           texture.source.scaleMode = 'linear';
           texture.source.autoGenerateMipmaps = true;
           this.textures.set(url, texture);
+          loadedCount++;
+          onProgress?.(loadedCount, entries.length);
           return url;
         })
       )

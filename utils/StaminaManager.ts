@@ -7,7 +7,8 @@
  * - Exhaustion detection and handling
  *
  * Design:
- * - No idle drain (only drains when walking or performing activities)
+ * - Drains when walking or performing activities (farming, foraging, cooking)
+ * - Past bedtime (21:30), drains passively even when standing still
  * - Being at home slowly restores stamina
  * - Full stamina restore on new session (handled in GameState loadState)
  */
@@ -15,6 +16,7 @@
 import { STAMINA } from '../constants';
 import { gameState } from '../GameState';
 import { eventBus, GameEvent } from './EventBus';
+import { TimeManager } from './TimeManager';
 
 export type ActivityType = 'till' | 'plant' | 'water' | 'harvest' | 'forage' | 'cook';
 
@@ -111,7 +113,21 @@ class StaminaManagerClass {
       return false; // Can't exhaust while at home
     }
 
-    // Walking drain (only when moving)
+    // Late-night passive drain (after bedtime, even when standing still)
+    const currentHour = TimeManager.getCurrentTime().hour;
+    const isPastBedtime = currentHour >= STAMINA.BEDTIME_HOUR || currentHour < 5;
+
+    if (isPastBedtime) {
+      const lateNightDrain = STAMINA.LATE_NIGHT_DRAIN_PER_SECOND * deltaTime;
+      const exhausted = this.drainStamina(lateNightDrain);
+      this.checkLowStaminaWarning();
+      if (exhausted) {
+        this.handleExhaustion();
+        return true;
+      }
+    }
+
+    // Walking drain (only when moving, stacks with late-night drain)
     if (isWalking) {
       const drainAmount = STAMINA.WALKING_DRAIN_PER_SECOND * deltaTime;
       const exhausted = this.drainStamina(drainAmount);

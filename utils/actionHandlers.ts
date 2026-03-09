@@ -22,6 +22,7 @@ import { getCrop } from '../data/crops';
 import { getCropIdFromSeed, getItem, ItemCategory } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { WATER_CAN, TIMING, DEBUG } from '../constants';
+import { staminaManager } from './StaminaManager';
 import { itemAssets, groceryAssets } from '../assets';
 import { getTierName } from './MagicEffects';
 import { ForageResult, handleForageAction } from './forageHandlers';
@@ -335,6 +336,11 @@ export function handleFarmAction(
 
     if (DEBUG.FARM) console.log('[Action] Attempting to harvest wild strawberries');
 
+    // Costs stamina
+    if (!staminaManager.performActivity('harvest')) {
+      return { handled: false };
+    }
+
     // Record the harvest (starts cooldown for this plant)
     gameState.recordForage(currentMapId, position.x, position.y);
 
@@ -399,6 +405,11 @@ export function handleFarmAction(
 
         if (DEBUG.FARM) console.log('[Action] Attempting to harvest blackberries from brambles');
 
+        // Costs stamina
+        if (!staminaManager.performActivity('harvest')) {
+          return { handled: false };
+        }
+
         // Record the harvest (starts cooldown for this bush)
         gameState.recordForage(currentMapId, tile.x, tile.y);
 
@@ -454,6 +465,11 @@ export function handleFarmAction(
         }
 
         if (DEBUG.FARM) console.log('[Action] Attempting to harvest hazelnuts from hazel bush');
+
+        // Costs stamina
+        if (!staminaManager.performActivity('harvest')) {
+          return { handled: false };
+        }
 
         // Record the harvest (starts cooldown for this bush)
         gameState.recordForage(currentMapId, tile.x, tile.y);
@@ -512,6 +528,11 @@ export function handleFarmAction(
         if (DEBUG.FARM)
           console.log('[Action] Attempting to harvest blueberries from blueberry bush');
 
+        // Costs stamina
+        if (!staminaManager.performActivity('harvest')) {
+          return { handled: false };
+        }
+
         // Record the harvest (starts cooldown for this bush)
         gameState.recordForage(currentMapId, tile.x, tile.y);
 
@@ -550,7 +571,10 @@ export function handleFarmAction(
     let farmActionTaken = false;
 
     if (currentTool === 'tool_hoe' && plotTileType === TileType.SOIL_FALLOW) {
-      // Till fallow soil
+      // Till fallow soil — costs stamina
+      if (!staminaManager.performActivity('till')) {
+        return { handled: false };
+      }
       if (DEBUG.FARM)
         console.log(`[Action] Attempting to till soil at (${position.x}, ${position.y})`);
       if (farmManager.tillSoil(currentMapId, position)) {
@@ -559,7 +583,11 @@ export function handleFarmAction(
         farmActionTaken = true;
       }
     } else if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
-      // Plant in tilled soil - currentTool is the seed ID (e.g., 'seed_radish', 'seed_wild_strawberry')
+      // Plant in tilled soil — costs stamina
+      if (!staminaManager.performActivity('plant')) {
+        return { handled: false };
+      }
+      // currentTool is the seed ID (e.g., 'seed_radish', 'seed_wild_strawberry')
       // Extract crop ID from seed item ID
       const cropId = getCropIdFromSeed(currentTool);
       if (!cropId) {
@@ -612,6 +640,10 @@ export function handleFarmAction(
       }
       // Water tilled soil (pre-moisten before planting) or planted/watered/wilting crops
       // Note: SOIL_READY is excluded - ready crops should be harvested, not watered
+      // Costs stamina
+      if (!staminaManager.performActivity('water')) {
+        return { handled: false };
+      }
       // Check water level first
       if (gameState.isWaterCanEmpty()) {
         return {
@@ -639,7 +671,10 @@ export function handleFarmAction(
           messageType: 'info',
         };
       }
-      // Harvest ready crop (works with any tool - no need to switch to hand)
+      // Harvest ready crop (works with any tool - no need to switch to hand) — costs stamina
+      if (!staminaManager.performActivity('harvest')) {
+        return { handled: false };
+      }
       const result = farmManager.harvestCrop(currentMapId, position);
       if (result) {
         const crop = getCrop(result.cropId);

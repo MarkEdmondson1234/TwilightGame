@@ -101,6 +101,9 @@ export interface UsePixiRendererProps {
     renderVersion: number;
     npcUpdateTrigger: number;
   };
+
+  /** Optional callback for texture loading progress (used by loading screen) */
+  onTextureProgress?: (loaded: number, total: number) => void;
 }
 
 /**
@@ -136,7 +139,8 @@ export interface UsePixiRendererReturn {
  * Hook that manages all PixiJS rendering
  */
 export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererReturn {
-  const { enabled, canvasRef, mapConfig, viewport, player, timing, triggers } = props;
+  const { enabled, canvasRef, mapConfig, viewport, player, timing, triggers, onTextureProgress } =
+    props;
 
   // State
   const [isPixiInitialized, setIsPixiInitialized] = useState(false);
@@ -239,13 +243,16 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
         // Preload all textures
         console.log('[usePixiRenderer] Preloading textures...');
-        await textureManager.loadBatch({
-          ...tileAssets,
-          ...farmingAssets,
-          ...cookingAssets,
-          ...npcAssets,
-          ...itemAssets,
-        });
+        await textureManager.loadBatch(
+          {
+            ...tileAssets,
+            ...farmingAssets,
+            ...cookingAssets,
+            ...npcAssets,
+            ...itemAssets,
+          },
+          onTextureProgress
+        );
 
         // Create background image layer
         const backgroundImageLayer = new BackgroundImageLayer();

@@ -215,6 +215,14 @@ export interface NPC {
   visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
   seasonalLocations?: SeasonalLocation; // Optional: different positions/maps per season (if not set, uses base position/current map)
   entryAnimation?: EntryAnimation; // Optional: walk-in animation when player enters the map
+  hostileConfig?: {
+    // Optional: hostile NPC pursuit & auto-combat
+    detectionRadius: number; // tiles — NPC starts pursuing player
+    contactRadius: number; // tiles — combat mini-game triggers
+    pursuitSpeed: number; // speed multiplier (1.0 = normal NPC speed)
+    combatMiniGameId: string; // mini-game ID to launch on contact
+    combatCooldownMs: number; // ms after combat before NPC can pursue again
+  };
   glow?: {
     // Optional: mystical glow effect behind NPC
     color: number; // Hex colour (e.g., 0x88CCFF for soft blue)

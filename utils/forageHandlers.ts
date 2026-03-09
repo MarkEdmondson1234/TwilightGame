@@ -13,6 +13,7 @@ import { TimeManager, Season } from './TimeManager';
 import { DEBUG, TIMING } from '../constants';
 import { globalEventManager } from './GlobalEventManager';
 import { npcManager } from '../NPCManager';
+import { staminaManager } from './StaminaManager';
 
 /**
  * Forageable tile types - tiles where players can search for wild seeds
@@ -120,6 +121,11 @@ export interface ForageResult {
  * Returns result with found seed info, or null if nothing found
  */
 export function handleForageAction(playerPos: Position, currentMapId: string): ForageResult {
+  // Foraging costs stamina
+  if (!staminaManager.performActivity('forage')) {
+    return { found: false, message: '' };
+  }
+
   const playerTileX = Math.floor(playerPos.x);
   const playerTileY = Math.floor(playerPos.y);
   const tileData = getTileData(playerTileX, playerTileY);
@@ -290,7 +296,8 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       if (state !== 'sitting' && state !== 'landing') {
         return {
           found: false,
-          message: 'The sparrow is flying about. Wait for it to land before searching for feathers.',
+          message:
+            'The sparrow is flying about. Wait for it to land before searching for feathers.',
         };
       }
     }
@@ -742,7 +749,12 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       );
 
     // Save and set cooldown at ANCHOR position
-    saveForageResult(currentMapId, forestMushroomAnchor.x, forestMushroomAnchor.y, 'forest_mushroom');
+    saveForageResult(
+      currentMapId,
+      forestMushroomAnchor.x,
+      forestMushroomAnchor.y,
+      'forest_mushroom'
+    );
 
     return {
       found: true,
@@ -753,11 +765,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Dead spruce foraging (ghost lichen) - available year-round, any time of day
-  const deadSpruceResult = findTileTypeNearby(
-    playerTileX,
-    playerTileY,
-    TileType.DEAD_SPRUCE
-  );
+  const deadSpruceResult = findTileTypeNearby(playerTileX, playerTileY, TileType.DEAD_SPRUCE);
   const deadSpruceAnchor = deadSpruceResult.found ? deadSpruceResult.position : null;
 
   if (deadSpruceAnchor) {
@@ -780,8 +788,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       gameState.recordForage(currentMapId, deadSpruceAnchor.x, deadSpruceAnchor.y);
       return {
         found: false,
-        message:
-          'You scrape at the dead spruce bark, but find no lichen worth collecting.',
+        message: 'You scrape at the dead spruce bark, but find no lichen worth collecting.',
       };
     }
 
@@ -807,14 +814,8 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Giant mushroom foraging (giant mushroom cap) - available year-round, any time of day
-  const giantMushroomResult = findTileTypeNearby(
-    playerTileX,
-    playerTileY,
-    TileType.GIANT_MUSHROOM
-  );
-  const giantMushroomAnchor = giantMushroomResult.found
-    ? giantMushroomResult.position
-    : null;
+  const giantMushroomResult = findTileTypeNearby(playerTileX, playerTileY, TileType.GIANT_MUSHROOM);
+  const giantMushroomAnchor = giantMushroomResult.found ? giantMushroomResult.position : null;
 
   if (giantMushroomAnchor) {
     if (DEBUG.FORAGE)
@@ -833,15 +834,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     if (!succeeded) {
       // Failure - set cooldown at ANCHOR position
-      gameState.recordForage(
-        currentMapId,
-        giantMushroomAnchor.x,
-        giantMushroomAnchor.y
-      );
+      gameState.recordForage(currentMapId, giantMushroomAnchor.x, giantMushroomAnchor.y);
       return {
         found: false,
-        message:
-          "You search the giant mushroom, but can't find a piece worth taking.",
+        message: "You search the giant mushroom, but can't find a piece worth taking.",
       };
     }
 
@@ -872,11 +868,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   }
 
   // Cherry tree foraging (sakura petals) - available in spring only
-  const cherryTreeResult = findTileTypeNearby(
-    playerTileX,
-    playerTileY,
-    TileType.SAKURA_TREE
-  );
+  const cherryTreeResult = findTileTypeNearby(playerTileX, playerTileY, TileType.SAKURA_TREE);
   const cherryTreeAnchor = cherryTreeResult.found ? cherryTreeResult.position : null;
 
   if (cherryTreeAnchor) {
@@ -909,8 +901,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       gameState.recordForage(currentMapId, cherryTreeAnchor.x, cherryTreeAnchor.y);
       return {
         found: false,
-        message:
-          'You reach for the falling petals, but they slip through your fingers.',
+        message: 'You reach for the falling petals, but they slip through your fingers.',
       };
     }
 

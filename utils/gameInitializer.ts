@@ -22,13 +22,11 @@ import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
 
 /**
- * Initialize the game on startup
- * This should be called once when the app mounts
+ * Fast synchronous core initialisation (~100ms)
+ * Sets up palette, maps, self-tests, and debug objects.
+ * Call this first so TimeManager and cutscene system are available immediately.
  */
-export async function initializeGame(
-  currentMapId: string,
-  onMapInitialized: (initialized: boolean) => void
-): Promise<void> {
+export function initializeGameCore(): void {
   // Expose game objects to window for testing/debugging
   (window as any).gameState = gameState;
   (window as any).mapManager = mapManager;
@@ -70,7 +68,21 @@ export async function initializeGame(
   initializePalette(); // Initialize color palette (must be first)
   runSelfTests(); // Run sanity checks on startup
   initializeMaps(); // Initialize all maps and color schemes
+}
 
+interface AssetLoadOptions {
+  onProgress?: (loaded: number, total: number) => void;
+}
+
+/**
+ * Slow async asset loading and manager initialisation
+ * Loads all assets, initialises Firebase, managers, inventory, etc.
+ */
+export async function initializeGameAssets(
+  currentMapId: string,
+  onMapInitialized: (initialized: boolean) => void,
+  options?: AssetLoadOptions
+): Promise<void> {
   // Initialize Firebase (safe — works without firebase package installed)
   const { safeInitializeFirebase } = await import('../firebase/safe');
   await safeInitializeFirebase();
@@ -88,6 +100,7 @@ export async function initializeGame(
   await preloadAllAssets({
     onProgress: (loaded, total) => {
       console.log(`[App] Asset preload progress: ${loaded}/${total}`);
+      options?.onProgress?.(loaded, total);
     },
     onComplete: () => {
       console.log('[App] All assets preloaded successfully');
@@ -223,4 +236,16 @@ export async function initializeGame(
     mapManager.loadMap(currentMapId);
     onMapInitialized(true);
   }
+}
+
+/**
+ * Convenience wrapper — runs both core and asset init sequentially.
+ * Used when loading-screen cutscene is not needed.
+ */
+export async function initializeGame(
+  currentMapId: string,
+  onMapInitialized: (initialized: boolean) => void
+): Promise<void> {
+  initializeGameCore();
+  await initializeGameAssets(currentMapId, onMapInitialized);
 }

@@ -36,6 +36,9 @@ export enum GameEvent {
   NPC_SPAWNED = 'npc:spawned',
   NPC_DESPAWNED = 'npc:despawned',
 
+  // Combat events
+  COMBAT_INITIATED = 'combat:initiated',
+
   // Item events
   PLACED_ITEMS_CHANGED = 'items:placed_changed',
   INVENTORY_CHANGED = 'items:inventory_changed',
@@ -110,6 +113,12 @@ export interface EventPayloads {
   [GameEvent.NPC_DESPAWNED]: {
     npcId: string;
     mapId: string;
+  };
+  [GameEvent.COMBAT_INITIATED]: {
+    npcId: string;
+    npcName: string;
+    npcSprite: string;
+    miniGameId: string;
   };
   [GameEvent.PLACED_ITEMS_CHANGED]: {
     mapId: string;

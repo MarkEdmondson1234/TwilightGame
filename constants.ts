@@ -126,12 +126,14 @@ export const STAMINA = {
   LOW_THRESHOLD: 25, // Show warning/bar below this percentage
 
   // Drain rates (per second)
-  WALKING_DRAIN_PER_SECOND: 0.028, // ~1 hour of continuous walking drains 100 stamina
+  WALKING_DRAIN_PER_SECOND: 0.08, // ~20 min of continuous walking drains 100 stamina
+  LATE_NIGHT_DRAIN_PER_SECOND: 0.12, // Passive drain after bedtime (21:30), even when standing still
+  BEDTIME_HOUR: 21, // Hour after which late-night drain kicks in (21:30 = 9:30 PM)
 
   // Activity costs (instant drain)
-  TILL_COST: 2,
+  TILL_COST: 3,
   PLANT_COST: 1,
-  WATER_COST: 1,
+  WATER_COST: 2,
   HARVEST_COST: 3,
   FORAGE_COST: 2,
   COOK_COST: 5,

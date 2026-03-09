@@ -18,7 +18,7 @@ import HelpBrowser from './components/HelpBrowser';
 import DevTools from './components/DevTools';
 import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
 import Bookshelf from './components/Bookshelf';
-import { initializeGame } from './utils/gameInitializer';
+import { initializeGameCore, initializeGameAssets } from './utils/gameInitializer';
 import { mapManager } from './maps';
 import { getValidationErrors, hasValidationErrors, MapValidationError } from './maps/gridParser';
 import { gameState, CharacterCustomization } from './GameState';
@@ -106,6 +106,11 @@ const App: React.FC = () => {
   const [mapErrors, setMapErrors] = useState<MapValidationError[]>([]); // Map validation errors to display
   const [characterVersion, setCharacterVersion] = useState(0); // Track character changes
   const [isCutscenePlaying, setIsCutscenePlaying] = useState(false); // Track cutscene state
+
+  // Loading-screen cutscene state
+  const [isLoadingCutscene, setIsLoadingCutscene] = useState(false); // Overall loading-cutscene mode
+  const loadingCutsceneDoneRef = useRef(false); // Cutscene animation has ended
+  const [loadingProgress, setLoadingProgress] = useState(0); // 0-1 combined loading progress
 
   // Load player location from saved state
   const savedLocation = gameState.getPlayerLocation();
@@ -377,18 +382,28 @@ const App: React.FC = () => {
     setIsCutscenePlaying(false);
   };
 
-  // Initialize cutscene system
+  // Loading-screen cutscene completion handler (no quest logic, just end loading mode)
+  const handleLoadingCutsceneComplete = useCallback(
+    (_action: {
+      action: string;
+      cutsceneId?: string;
+      mapId?: string;
+      position?: { x: number; y: number };
+    }) => {
+      console.log('[App] Loading cutscene animation finished');
+      loadingCutsceneDoneRef.current = true;
+      setIsCutscenePlaying(false);
+      // isLoadingCutscene stays true until PixiJS is also ready — checked in effect below
+    },
+    []
+  );
+
+  // Subscribe to cutscene state changes (registration moved to init effect)
   useEffect(() => {
-    // Register all cutscenes
-    cutsceneManager.registerCutscenes(ALL_CUTSCENES);
-
-    // Load completed cutscenes from saved state
-    const completedCutscenes = gameState.getCompletedCutscenes();
-    const lastSeasonTriggered = gameState.getLastSeasonTriggered();
-    cutsceneManager.loadState(completedCutscenes, lastSeasonTriggered);
-
-    // Subscribe to cutscene state changes
     const unsubscribe = cutsceneManager.subscribe((state) => {
+      // Don't let gameplay cutscene subscriber interfere with loading cutscene
+      if (isLoadingCutscene) return;
+
       setIsCutscenePlaying(state.isPlaying);
 
       // Close all UI overlays and dismiss dialogue when cutscene starts
@@ -412,7 +427,7 @@ const App: React.FC = () => {
     });
 
     return unsubscribe;
-  }, []);
+  }, [isLoadingCutscene]);
 
   // Subscribe to EventBus for inventory updates (only triggers when inventory actually changes)
   useEffect(() => {
@@ -452,6 +467,27 @@ const App: React.FC = () => {
       },
     });
   }, [showToast]);
+
+  // Track hostile NPC that initiated combat (for post-combat cleanup)
+  const combatNpcIdRef = useRef<string | null>(null);
+
+  // Subscribe to hostile NPC combat initiation
+  useEffect(() => {
+    return eventBus.on(GameEvent.COMBAT_INITIATED, (payload) => {
+      combatNpcIdRef.current = payload.npcId;
+      openUI('miniGame', {
+        activeMiniGameId: payload.miniGameId,
+        miniGameTriggerData: {
+          triggerType: 'npc' as const,
+          npcId: payload.npcId,
+          extra: {
+            npcName: payload.npcName,
+            npcSprite: payload.npcSprite,
+          },
+        },
+      });
+    });
+  }, [openUI]);
 
   // Intercept shop counter fox interaction to open shop UI instead of dialogue
   // Only the 'shop_counter_fox' NPC inside the shop triggers the shop UI
@@ -615,9 +651,46 @@ const App: React.FC = () => {
   // Disabled automatic transitions - now using action key (E or Enter)
 
   // Initialize game on startup (only once)
+  // Phase 1: Fast core init → start loading cutscene
+  // Phase 2: Slow asset loading runs in parallel with cutscene
   useEffect(() => {
-    const init = async () => {
-      await initializeGame(currentMapId, setIsMapInitialized);
+    // Phase 1: Fast synchronous core init (~100ms)
+    try {
+      initializeGameCore();
+    } catch (err) {
+      console.error('[App] Core init failed:', err);
+    }
+
+    // Register cutscenes immediately (was previously a separate useEffect)
+    cutsceneManager.registerCutscenes(ALL_CUTSCENES);
+    const completedCutscenes = gameState.getCompletedCutscenes();
+    const lastSeasonTriggered = gameState.getLastSeasonTriggered();
+    cutsceneManager.loadState(completedCutscenes, lastSeasonTriggered);
+
+    // Start current season's cutscene as loading screen
+    const currentSeason = TimeManager.getCurrentTime().season.toLowerCase();
+    const seasonCutsceneId = `season_change_${currentSeason}`;
+    const playerLocation = gameState.getPlayerLocation();
+    const started = cutsceneManager.startCutscene(seasonCutsceneId, {
+      mapId: playerLocation.mapId,
+      position: playerLocation.position,
+    });
+
+    if (started) {
+      console.log(`[App] Loading cutscene started: ${seasonCutsceneId}`);
+      setIsLoadingCutscene(true);
+      setIsCutscenePlaying(true);
+      loadingCutsceneDoneRef.current = false;
+    }
+
+    // Phase 2: Slow async asset loading (runs in parallel with cutscene)
+    const initAssets = async () => {
+      await initializeGameAssets(currentMapId, setIsMapInitialized, {
+        onProgress: (loaded, total) => {
+          // Asset preload is ~half the total loading (other half is PixiJS textures)
+          setLoadingProgress(total > 0 ? (loaded / total) * 0.5 : 0);
+        },
+      });
 
       // Set initial map in NPC manager
       npcManager.setCurrentMap(currentMapId);
@@ -627,16 +700,15 @@ const App: React.FC = () => {
         const errors = getValidationErrors();
         setMapErrors(errors);
         console.error('[App] Map validation errors detected - game will not load until fixed');
-        return; // Don't continue initialization if there are errors
+        return;
       }
 
       // Load inventory AFTER game initialization completes
-      // This ensures inventory is loaded before we try to display it
       setInventoryItems(convertInventoryToUI());
       console.log('[App] Inventory loaded after game initialization');
     };
 
-    init();
+    initAssets();
   }, []); // Only run once on mount
 
   // Debug logging for DevTools state
@@ -1111,7 +1183,14 @@ const App: React.FC = () => {
       renderVersion,
       npcUpdateTrigger,
     },
+    onTextureProgress: useCallback((loaded: number, total: number) => {
+      // Texture loading is the second half of progress (0.5 - 1.0)
+      setLoadingProgress(total > 0 ? 0.5 + (loaded / total) * 0.5 : 0.5);
+    }, []),
   });
+
+  // Game is fully ready when: loading mode active + cutscene animation done + PixiJS textures loaded
+  const isGameReady = isLoadingCutscene && !isCutscenePlaying && isPixiInitialized;
 
   // Combined NPCs: npcManager NPCs + layer NPCs (for background-image rooms)
   // Used for interactions, indicators, and rendering
@@ -1239,7 +1318,35 @@ const App: React.FC = () => {
     );
   }
 
+  // Loading screen: show cutscene if active, otherwise simple text
   if (!isMapInitialized || !currentMap) {
+    if (isLoadingCutscene && isCutscenePlaying) {
+      // Season cutscene plays as the loading screen
+      return (
+        <div className="bg-black w-full h-full relative">
+          <CutscenePlayer onComplete={handleLoadingCutsceneComplete} />
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10 z-[200]">
+            <div
+              className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress * 100}%` }}
+            />
+          </div>
+        </div>
+      );
+    }
+    if (isLoadingCutscene && !isCutscenePlaying) {
+      // Cutscene finished but map/assets still loading — show progress bar on black
+      return (
+        <div className="bg-black text-white/50 w-full h-full flex flex-col items-center justify-center">
+          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress * 100}%` }}
+            />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="bg-gray-900 text-white w-full h-full flex items-center justify-center">
         Loading map...
@@ -1709,7 +1816,21 @@ const App: React.FC = () => {
           triggerData={ui.context.miniGameTriggerData}
           playerPosition={playerPos}
           currentMapId={currentMap?.id ?? 'unknown'}
-          onClose={() => closeUI('miniGame')}
+          onClose={(result) => {
+            closeUI('miniGame');
+            // Post-combat cleanup for hostile NPCs
+            if (combatNpcIdRef.current) {
+              const npcId = combatNpcIdRef.current;
+              combatNpcIdRef.current = null;
+              if (result?.success) {
+                // Victory: despawn the hostile NPC
+                npcManager.removeDynamicNPC(npcId);
+              } else {
+                // Defeat/fled: unfreeze so it can resume after cooldown
+                npcManager.unfreezeNPC(npcId);
+              }
+            }
+          }}
           showToast={showToast}
         />
       )}
@@ -1851,7 +1972,47 @@ const App: React.FC = () => {
       {ui.journal && (
         <CottageBook isOpen={ui.journal} onClose={() => closeUI('journal')} theme="journal" />
       )}
-      {isCutscenePlaying && <CutscenePlayer onComplete={handleCutsceneComplete} />}
+      {/* Loading cutscene overlay (game content renders underneath for PixiJS to init) */}
+      {isLoadingCutscene && isCutscenePlaying && (
+        <>
+          <CutscenePlayer onComplete={handleLoadingCutsceneComplete} />
+          <div className="fixed bottom-0 left-0 right-0 h-1 bg-white/10 z-[200]">
+            <div
+              className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress * 100}%` }}
+            />
+          </div>
+        </>
+      )}
+      {/* Loading cutscene done — show "Enter Game" button or progress bar */}
+      {isLoadingCutscene && !isCutscenePlaying && (
+        <div className="fixed inset-0 bg-black z-[150] flex flex-col items-center justify-center gap-6">
+          {isGameReady ? (
+            <button
+              onClick={() => {
+                console.log('[App] Player entered the game');
+                setIsLoadingCutscene(false);
+              }}
+              className="px-8 py-3 text-lg text-amber-100 bg-amber-800/60 border border-amber-600/50 rounded-lg
+                hover:bg-amber-700/70 hover:border-amber-500/60 transition-all duration-300
+                animate-pulse hover:animate-none cursor-pointer"
+            >
+              Enter Game
+            </button>
+          ) : (
+            <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
+                style={{ width: `${loadingProgress * 100}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+      {/* Normal gameplay cutscenes (not loading screen) */}
+      {!isLoadingCutscene && isCutscenePlaying && (
+        <CutscenePlayer onComplete={handleCutsceneComplete} />
+      )}
 
       {/* Destination marker for click-to-move */}
       {clickToMoveDestination && !isCutscenePlaying && (

@@ -96,11 +96,16 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     }
   }, [currentScene?.id]);
 
+  // Track cutscene ID for natural ending detection
+  const cutsceneIdRef = useRef<string | undefined>(cutsceneManager.getState().currentCutscene?.id);
+
   // Subscribe to cutscene manager state changes
   useEffect(() => {
     const unsubscribe = cutsceneManager.subscribe((state) => {
       if (!state.isPlaying) {
-        // Cutscene ended
+        // Cutscene ended naturally (auto-advanced past last scene)
+        // endCutscene() clears currentCutscene before notifying, so use saved ref
+        onComplete({ action: 'return', cutsceneId: cutsceneIdRef.current });
         return;
       }
 
@@ -112,7 +117,7 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     });
 
     return unsubscribe;
-  }, [currentScene]);
+  }, [currentScene, onComplete]);
 
   // Handle scene transitions
   const handleSceneTransition = (newScene: CutsceneScene) => {

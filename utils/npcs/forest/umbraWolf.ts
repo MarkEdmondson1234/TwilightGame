@@ -35,6 +35,13 @@ export function createUmbraWolfNPC(
     scale: 5.0,
     interactionRadius: 2.0,
     initialState: 'standing',
+    hostileConfig: {
+      detectionRadius: 6,
+      contactRadius: 1.2,
+      pursuitSpeed: 1.5,
+      combatMiniGameId: 'combat-encounter-wolf',
+      combatCooldownMs: 3000,
+    },
     states: {
       roaming: {
         sprites: [
@@ -70,6 +77,17 @@ export function createUmbraWolfNPC(
         animationSpeed: 1500,
         duration: 5000,
         nextState: 'roaming',
+      },
+      pursuing: {
+        sprites: [
+          npcAssets.umbrawolf_walk1,
+          npcAssets.umbrawolf_walk2,
+          npcAssets.umbrawolf_walk3,
+          npcAssets.umbrawolf_walk4,
+          npcAssets.umbrawolf_walk5,
+          npcAssets.umbrawolf_walk6,
+        ],
+        animationSpeed: 150,
       },
     },
     dialogue: [

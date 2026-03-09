@@ -18,11 +18,7 @@ import { createWanderingNPC } from '../createNPC';
  * @param position Starting position
  * @param name Optional name (defaults to 'Goblin')
  */
-export function createGoblinNPC(
-  id: string,
-  position: Position,
-  name: string = 'Goblin'
-): NPC {
+export function createGoblinNPC(id: string, position: Position, name: string = 'Goblin'): NPC {
   return createWanderingNPC({
     id,
     name,
@@ -34,6 +30,13 @@ export function createGoblinNPC(
     interactionRadius: 2.0,
     noFlip: true,
     initialState: 'standing',
+    hostileConfig: {
+      detectionRadius: 5,
+      contactRadius: 1.2,
+      pursuitSpeed: 1.3,
+      combatMiniGameId: 'combat-encounter-goblin',
+      combatCooldownMs: 3000,
+    },
     states: {
       roaming: {
         sprites: [npcAssets.goblin_walk1, npcAssets.goblin_walk2],
@@ -46,6 +49,10 @@ export function createGoblinNPC(
         animationSpeed: 1000,
         duration: 8000,
         nextState: 'roaming',
+      },
+      pursuing: {
+        sprites: [npcAssets.goblin_walk1, npcAssets.goblin_walk2],
+        animationSpeed: 150,
       },
     },
     dialogue: [

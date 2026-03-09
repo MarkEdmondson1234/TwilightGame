@@ -38,8 +38,8 @@ interface MiniGameHostProps {
   playerPosition: Position;
   /** Current map ID */
   currentMapId: string;
-  /** Close callback (calls closeUI('miniGame')) */
-  onClose: () => void;
+  /** Close callback (calls closeUI('miniGame')), optionally receives result */
+  onClose: (result?: MiniGameResult) => void;
   /** Toast notification callback */
   showToast: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
 }
@@ -140,7 +140,7 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
         showToast(result.message, result.messageType ?? (result.success ? 'success' : 'info'));
       }
 
-      onClose();
+      onClose(result);
     },
     [activeMiniGameId, onClose, showToast]
   );
@@ -151,7 +151,7 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
 
   // Custom backdrop: component handles its own full-screen positioning
   if (definition.customBackdrop) {
-    return <Component context={context} onClose={onClose} onComplete={handleComplete} />;
+    return <Component context={context} onClose={() => onClose()} onComplete={handleComplete} />;
   }
 
   // Standard backdrop: dark overlay with centred container
@@ -167,10 +167,10 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
         pointerEvents: 'auto',
       }}
-      onClick={onClose}
+      onClick={() => onClose()}
     >
       <div style={{ maxWidth: '90vw', maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
-        <Component context={context} onClose={onClose} onComplete={handleComplete} />
+        <Component context={context} onClose={() => onClose()} onComplete={handleComplete} />
       </div>
     </div>
   );

@@ -101,6 +101,13 @@ export interface NPCConfig {
   visibilityConditions?: AnimationConditions;
   seasonalLocations?: SeasonalLocation;
   entryAnimation?: EntryAnimation;
+  hostileConfig?: {
+    detectionRadius: number;
+    contactRadius: number;
+    pursuitSpeed: number;
+    combatMiniGameId: string;
+    combatCooldownMs: number;
+  };
   glow?: {
     color: number;
     radius: number;
@@ -200,6 +207,7 @@ export function createNPC(config: NPCConfig): NPC {
     visibilityConditions,
     seasonalLocations,
     entryAnimation,
+    hostileConfig,
     glow,
   } = config;
 
@@ -233,6 +241,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
   if (seasonalLocations) npc.seasonalLocations = seasonalLocations;
   if (entryAnimation) npc.entryAnimation = entryAnimation;
+  if (hostileConfig) npc.hostileConfig = hostileConfig;
   if (glow) npc.glow = glow;
   if (collisionRadius !== undefined) npc.collisionRadius = collisionRadius;
 

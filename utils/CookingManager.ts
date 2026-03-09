@@ -30,6 +30,7 @@ import { getItem } from '../data/items';
 import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
+import { staminaManager } from './StaminaManager';
 
 // Constants
 const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
@@ -422,6 +423,11 @@ class CookingManagerClass {
    * @param campfireBonus - Optional parameter (unused, kept for backwards compatibility)
    */
   cook(recipeId: string, campfireBonus = 0): CookingResult {
+    // Cooking costs stamina
+    if (!staminaManager.performActivity('cook')) {
+      return { success: false, message: "You're too tired to cook right now." };
+    }
+
     const recipe = getRecipe(recipeId);
     if (!recipe) {
       return { success: false, message: 'Unknown recipe.' };

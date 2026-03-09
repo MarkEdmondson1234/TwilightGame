@@ -34,6 +34,9 @@ interface NPCState {
   // Proximity trigger tracking
   previousState?: string; // State before proximity trigger (for recovery)
   proximityRecoveryStartTime?: number; // Timestamp when player left proximity zone
+  // Hostile NPC pursuit tracking
+  lastCombatTime?: number; // Timestamp of last combat trigger (for cooldown)
+  isPursuing?: boolean; // Currently in pursuit mode
 }
 
 class NPCManagerClass {
@@ -192,6 +195,14 @@ class NPCManagerClass {
   getNPCById(npcId: string): NPC | null {
     const npcs = this.getCurrentMapNPCs();
     return npcs.find((npc) => npc.id === npcId) || null;
+  }
+
+  /** Unfreeze a hostile NPC after combat ends (allows pursuit to resume after cooldown). */
+  unfreezeNPC(npcId: string): void {
+    const state = this.npcStates.get(npcId);
+    if (state) {
+      state.isInDialogue = false;
+    }
   }
 
   /**
@@ -567,6 +578,71 @@ class NPCManagerClass {
 
       // Don't move if NPC is in dialogue
       if (state.isInDialogue) return;
+
+      // HOSTILE PURSUIT — chase player and trigger combat on contact
+      if (npc.hostileConfig && playerPos) {
+        const hc = npc.hostileConfig;
+        const dx = playerPos.x - npc.position.x;
+        const dy = playerPos.y - npc.position.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Check cooldown
+        const cooldownElapsed =
+          !state.lastCombatTime || currentTime - state.lastCombatTime >= hc.combatCooldownMs;
+
+        if (distance <= hc.detectionRadius && cooldownElapsed) {
+          // Switch to pursuing state if not already
+          if (!state.isPursuing) {
+            state.isPursuing = true;
+            if (npc.animatedStates && npc.animatedStates.states['pursuing']) {
+              this.transitionNPCState(npc.id, 'pursuing');
+            }
+          }
+
+          // Contact — trigger combat
+          if (distance <= hc.contactRadius) {
+            state.lastCombatTime = currentTime;
+            state.isPursuing = false;
+            state.isInDialogue = true; // Freeze during combat
+            const portrait = npc.portraitSprite || npc.dialogueSprite || npc.sprite;
+            eventBus.emit(GameEvent.COMBAT_INITIATED, {
+              npcId: npc.id,
+              npcName: npc.name,
+              npcSprite: portrait,
+              miniGameId: hc.combatMiniGameId,
+            });
+            return; // Skip all other movement
+          }
+
+          // Move toward player
+          const movement = this.NPC_SPEED * hc.pursuitSpeed * deltaTime;
+          const newPos = { ...npc.position };
+          newPos.x += (dx / distance) * movement;
+          newPos.y += (dy / distance) * movement;
+
+          // Update facing direction
+          if (Math.abs(dx) > Math.abs(dy)) {
+            npc.direction = dx > 0 ? Direction.Right : Direction.Left;
+          } else {
+            npc.direction = dy > 0 ? Direction.Down : Direction.Up;
+          }
+
+          if (!this.checkCollision(newPos, npc.canFly)) {
+            npc.position = newPos;
+            anyNPCMoved = true;
+          }
+          return; // Skip normal wander/follow
+        } else if (state.isPursuing) {
+          // Player left detection range — return to normal wandering
+          state.isPursuing = false;
+          if (npc.animatedStates) {
+            // Return to first non-pursuing state
+            const fallbackState =
+              Object.keys(npc.animatedStates.states).find((s) => s !== 'pursuing') ?? 'standing';
+            this.transitionNPCState(npc.id, fallbackState);
+          }
+        }
+      }
 
       const timeSinceLastMove = currentTime - state.lastMoveTime;
 
