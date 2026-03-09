@@ -13,7 +13,8 @@ import { Z_SHOP, Z_SHOP_CONFIRM, zClass } from '../zIndex';
 import React, { useState, useEffect, useCallback } from 'react';
 import { shopManager } from '../utils/ShopManager';
 import { ShopItem } from '../data/shopInventory';
-import { getItem, ItemDefinition } from '../data/items';
+import { getItem, ItemDefinition, ItemCategory } from '../data/items';
+import { magicManager } from '../utils/MagicManager';
 import { TimeManager } from '../utils/TimeManager';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
@@ -43,6 +44,10 @@ const ShopUI: React.FC<ShopUIProps> = ({
 }) => {
   const [shopInventory, setShopInventory] = useState<ShopItem[]>([]);
   const [dragState, setDragState] = useState<DragState | null>(null);
+
+  type ShopFilter = 'all' | 'ingredients' | 'farming' | 'seeds' | 'materials' | 'magical';
+  const [shopFilter, setShopFilter] = useState<ShopFilter>('all');
+  const [playerFilter, setPlayerFilter] = useState<ShopFilter>('all');
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
   const [showQuantitySlider, setShowQuantitySlider] = useState<boolean>(false);
   const [pendingTransaction, setPendingTransaction] = useState<{
@@ -333,18 +338,53 @@ const ShopUI: React.FC<ShopUIProps> = ({
     );
   };
 
+  // Filter data
+  const isMagicUnlocked = magicManager.isMagicBookUnlocked();
+
+  const SHOP_FILTER_CATEGORIES: Record<ShopFilter, ItemCategory[]> = {
+    all:         [],
+    ingredients: [ItemCategory.INGREDIENT, ItemCategory.FOOD, ItemCategory.CROP],
+    farming:     [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
+    seeds:       [ItemCategory.SEED],
+    materials:   [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
+    magical:     [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
+  };
+
+  const shopFilterTabs: { id: ShopFilter; label: string }[] = [
+    { id: 'all',         label: 'All' },
+    { id: 'ingredients', label: 'Ingredients' },
+    { id: 'farming',     label: 'Farming' },
+    { id: 'seeds',       label: 'Seeds' },
+    { id: 'materials',   label: 'Materials' },
+    ...(isMagicUnlocked ? [{ id: 'magical' as ShopFilter, label: 'Magical' }] : []),
+  ];
+
+  const filteredShopInventory = shopFilter === 'all'
+    ? shopInventory
+    : shopInventory.filter((shopItem) => {
+        const cat = getItem(shopItem.itemId)?.category;
+        return cat !== undefined && SHOP_FILTER_CATEGORIES[shopFilter].includes(cat);
+      });
+
+  const filteredPlayerInventory = playerFilter === 'all'
+    ? playerInventory
+    : playerInventory.filter((item) => {
+        const cat = getItem(item.itemId)?.category;
+        return cat !== undefined && SHOP_FILTER_CATEGORIES[playerFilter].includes(cat);
+      });
+
   // Create slots for player inventory (dynamic unlimited capacity)
   const COLS = 6;
   const MIN_ROWS = 6; // Minimum 6 rows for shop display
   const BUFFER_ROWS = 1; // Show one extra empty row after last item
 
-  const usedSlots = playerInventory.length;
+  const usedSlots = filteredPlayerInventory.length;
   const requiredRows = Math.ceil(usedSlots / COLS) + BUFFER_ROWS;
   const totalRows = Math.max(MIN_ROWS, requiredRows);
   const displaySlots = totalRows * COLS;
 
   const playerSlots: ({ itemId: string; quantity: number } | null)[] = Array(displaySlots).fill(null);
-  playerInventory.forEach((item, index) => {
+  filteredPlayerInventory.forEach((item, index) => {
     if (index < displaySlots) {
       playerSlots[index] = item;
     }
@@ -408,20 +448,52 @@ const ShopUI: React.FC<ShopUIProps> = ({
           <div className="flex-1 grid grid-cols-2 gap-6 overflow-hidden">
             {/* Shop Inventory (Left) */}
             <div className="flex flex-col">
-              <h3 className="text-xl font-bold text-emerald-300 mb-3">Shop Stock</h3>
+              <h3 className="text-xl font-bold text-emerald-300 mb-2">Shop Stock</h3>
+              {/* Shop Category Filter */}
+              <div className="flex flex-wrap gap-1 mb-2">
+                {shopFilterTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setShopFilter(tab.id)}
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors ${
+                      shopFilter === tab.id
+                        ? 'bg-emerald-500 text-emerald-950'
+                        : 'bg-emerald-900/50 text-emerald-300 border border-emerald-700 hover:bg-emerald-800/60'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
               <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] shop-scrollbar">
                 <div className="grid grid-cols-6 gap-2">
-                  {shopInventory.map(shopItem => renderShopSlot(shopItem))}
+                  {filteredShopInventory.map(shopItem => renderShopSlot(shopItem))}
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-400">
-                Click to buy • {shopInventory.length} items available
+                Click to buy • {filteredShopInventory.length}{shopFilter !== 'all' ? ` / ${shopInventory.length}` : ''} items available
               </div>
             </div>
 
             {/* Player Inventory (Right) */}
             <div className="flex flex-col">
-              <h3 className="text-xl font-bold text-amber-300 mb-3">Your Inventory</h3>
+              <h3 className="text-xl font-bold text-amber-300 mb-2">Your Inventory</h3>
+              {/* Player Inventory Category Filter */}
+              <div className="flex flex-wrap gap-1 mb-2">
+                {shopFilterTabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setPlayerFilter(tab.id)}
+                    className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors ${
+                      playerFilter === tab.id
+                        ? 'bg-amber-500 text-amber-950'
+                        : 'bg-amber-900/50 text-amber-300 border border-amber-700 hover:bg-amber-800/60'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
               <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] player-inventory-scrollbar">
                 <div className="grid grid-cols-6 gap-2">
                   {playerSlots.map((item, index) => renderPlayerSlot(item, index))}

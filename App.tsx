@@ -1660,6 +1660,7 @@ const App: React.FC = () => {
           items={inventoryItems}
           onReorder={handleInventoryReorder}
           selectedSlot={selectedItemSlot}
+          isMagicUnlocked={gameState.isMagicBookUnlocked()}
           onItemClick={(item, slotIndex) => {
             const itemDef = getItem(item.id);
             if (itemDef && itemDef.category === ItemCategory.POTION) {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
-import { getItem } from '../data/items';
+import { getItem, ItemCategory } from '../data/items';
 import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';
 
@@ -21,6 +21,7 @@ interface InventoryProps {
   selectedSlot?: number | null; // Currently selected slot index
   maxSlots?: number;
   title?: string;
+  isMagicUnlocked?: boolean;
 }
 
 /**
@@ -39,7 +40,11 @@ const Inventory: React.FC<InventoryProps> = ({
   selectedSlot = null,
   maxSlots, // Optional prop - if provided, limits capacity; otherwise unlimited
   title = 'Inventory',
+  isMagicUnlocked = false,
 }) => {
+  type InventoryFilter = 'all' | 'ingredients' | 'farming' | 'seeds' | 'materials' | 'magical';
+  const [activeFilter, setActiveFilter] = useState<InventoryFilter>('all');
+
   // Drag-drop state for desktop
   const [dragState, setDragState] = useState<{
     fromIndex: number;
@@ -59,22 +64,56 @@ const Inventory: React.FC<InventoryProps> = ({
   const MIN_ROWS = 4; // Always show at least 4 rows (36 slots) for quick slots + buffer
   const BUFFER_ROWS = 1; // Show one extra empty row after last item
 
+  // Keep total count for footer display (unfiltered)
   let displaySlots: number;
   if (maxSlots !== undefined) {
-    // Limited inventory mode (e.g., for trading UI)
     displaySlots = maxSlots;
   } else {
-    // Unlimited inventory mode - grow dynamically
     const usedSlots = items.length;
     const requiredRows = Math.ceil(usedSlots / COLS) + BUFFER_ROWS;
-    const totalRows = Math.max(MIN_ROWS, requiredRows);
-    displaySlots = totalRows * COLS;
+    displaySlots = Math.max(MIN_ROWS, requiredRows) * COLS;
+  }
+
+  const FILTER_CATEGORIES: Record<InventoryFilter, ItemCategory[]> = {
+    all:         [],
+    ingredients: [ItemCategory.INGREDIENT, ItemCategory.FOOD, ItemCategory.CROP],
+    farming:     [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
+    seeds:       [ItemCategory.SEED],
+    materials:   [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
+    magical:     [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
+  };
+
+  const filterTabs: { id: InventoryFilter; label: string }[] = [
+    { id: 'all',         label: 'All' },
+    { id: 'ingredients', label: 'Ingredients' },
+    { id: 'farming',     label: 'Farming' },
+    { id: 'seeds',       label: 'Seeds' },
+    { id: 'materials',   label: 'Materials' },
+    ...(isMagicUnlocked ? [{ id: 'magical' as InventoryFilter, label: 'Magical' }] : []),
+  ];
+
+  // Apply category filter
+  const filteredItems = activeFilter === 'all'
+    ? items
+    : items.filter((item) => {
+        const cat = getItem(item.id)?.category;
+        return cat !== undefined && FILTER_CATEGORIES[activeFilter].includes(cat);
+      });
+
+  // Recalculate slot count for filtered view
+  let filteredDisplaySlots: number;
+  if (maxSlots !== undefined) {
+    filteredDisplaySlots = maxSlots;
+  } else {
+    const usedSlots = filteredItems.length;
+    const requiredRows = Math.ceil(usedSlots / COLS) + BUFFER_ROWS;
+    filteredDisplaySlots = Math.max(MIN_ROWS, requiredRows) * COLS;
   }
 
   // Create array of slots (empty or with items)
-  const slots: (InventoryItem | null)[] = Array(displaySlots).fill(null);
-  items.forEach((item, index) => {
-    if (index < displaySlots) {
+  const slots: (InventoryItem | null)[] = Array(filteredDisplaySlots).fill(null);
+  filteredItems.forEach((item, index) => {
+    if (index < filteredDisplaySlots) {
       slots[index] = item;
     }
   });
@@ -163,6 +202,23 @@ const Inventory: React.FC<InventoryProps> = ({
           >
             ×
           </button>
+        </div>
+
+        {/* Category Filter Bar */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {filterTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveFilter(tab.id)}
+              className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${
+                activeFilter === tab.id
+                  ? 'bg-amber-500 text-amber-950'
+                  : 'bg-amber-900/60 text-amber-300 border border-amber-700 hover:bg-amber-800/80'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         {/* Inventory Grid - Scrollable */}
