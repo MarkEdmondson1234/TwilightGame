@@ -66,6 +66,11 @@ export function createWitchWolfNPC(
         },
         responses: [
           { text: 'Who are you?', nextId: 'introduction' },
+          {
+            text: 'Could you teach me magic?',
+            nextId: 'apprentice',
+            hiddenIfQuestStarted: 'witch_garden',
+          },
           { text: 'Althea sends her regards.', nextId: 'althea_greeting' },
           { text: 'Just passing through.' },
         ],
