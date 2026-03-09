@@ -1,7 +1,8 @@
 import React from 'react';
 import { MapDefinition, Position, isTileSolid, CollisionType } from '../types';
 import { getTileData } from '../utils/mapUtils';
-import { SPRITE_METADATA, TILE_SIZE } from '../constants';
+import { TILE_SIZE } from '../constants';
+import { metadataCache } from '../utils/MetadataCache';
 import { Z_DEBUG_TILES } from '../zIndex';
 
 interface DebugCollisionBoxesProps {
@@ -74,7 +75,7 @@ const DebugCollisionBoxes: React.FC<DebugCollisionBoxesProps> = ({
         currentMap.grid.map((row, y) =>
           row.map((_, x) => {
             const tileData = getTileData(x, y);
-            const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData?.type);
+            const spriteMetadata = tileData ? metadataCache.getMetadata(tileData.type) : undefined;
 
             if (!spriteMetadata || !tileData || !isTileSolid(tileData.collisionType)) return null;
 

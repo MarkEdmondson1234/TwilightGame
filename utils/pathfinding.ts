@@ -6,7 +6,8 @@
  */
 
 import { Position, NPC, isTileSolid } from '../types';
-import { SPRITE_METADATA, PLAYER_SIZE } from '../constants';
+import { PLAYER_SIZE } from '../constants';
+import { metadataCache } from './MetadataCache';
 import { getTileData, getTileCoords } from './mapUtils';
 import { mapManager } from '../maps';
 
@@ -62,7 +63,7 @@ export function isTileWalkableForPath(x: number, y: number, npcs?: NPC[]): boole
   if (!tileData) return false;
 
   // Check if tile itself is solid (but skip tiles that have sprite metadata - we check those separately)
-  const hasSpriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData.type);
+  const hasSpriteMetadata = metadataCache.isMultiTileSprite(tileData.type);
   if (!hasSpriteMetadata && isTileSolid(tileData.collisionType)) {
     return false;
   }
@@ -80,7 +81,7 @@ export function isTileWalkableForPath(x: number, y: number, npcs?: NPC[]): boole
       const nearbyTileData = getTileData(tx, ty);
       if (!nearbyTileData) continue;
 
-      const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === nearbyTileData.type);
+      const spriteMetadata = metadataCache.getMetadata(nearbyTileData.type);
       if (!spriteMetadata) continue;
       if (!isTileSolid(nearbyTileData.collisionType)) continue;
 

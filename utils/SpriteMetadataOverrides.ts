@@ -13,6 +13,7 @@
 
 import { TileType, SpriteMetadata } from '../types';
 import { SPRITE_METADATA } from '../constants';
+import { metadataCache } from './MetadataCache';
 
 type OverrideListener = () => void;
 
@@ -24,7 +25,7 @@ class SpriteMetadataOverridesManager {
    * Get sprite metadata with any overrides applied
    */
   getMetadata(tileType: TileType): SpriteMetadata | undefined {
-    const base = SPRITE_METADATA.find(s => s.tileType === tileType);
+    const base = metadataCache.getMetadata(tileType);
     if (!base) return undefined;
 
     const override = this.overrides.get(tileType);
@@ -37,7 +38,7 @@ class SpriteMetadataOverridesManager {
    * Get all sprite metadata entries with overrides applied
    */
   getAllMetadata(): SpriteMetadata[] {
-    return SPRITE_METADATA.map(base => {
+    return SPRITE_METADATA.map((base) => {
       const override = this.overrides.get(base.tileType);
       return override ? { ...base, ...override } : base;
     });
@@ -108,7 +109,7 @@ class SpriteMetadataOverridesManager {
    * Notify all listeners of changes
    */
   private notifyListeners(): void {
-    this.listeners.forEach(listener => listener());
+    this.listeners.forEach((listener) => listener());
   }
 
   /**
@@ -158,7 +159,7 @@ class SpriteMetadataOverridesManager {
         lines.push(`  image: ${this.formatImagePath(metadata.image[0])},`);
       } else {
         lines.push(`  image: [`);
-        metadata.image.forEach(img => {
+        metadata.image.forEach((img) => {
           lines.push(`    ${this.formatImagePath(img)},`);
         });
         lines.push(`  ],`);
@@ -195,13 +196,19 @@ class SpriteMetadataOverridesManager {
       lines.push(`  enableBrightness: ${metadata.enableBrightness},`);
     }
     if (metadata.scaleRange) {
-      lines.push(`  scaleRange: { min: ${metadata.scaleRange.min}, max: ${metadata.scaleRange.max} },`);
+      lines.push(
+        `  scaleRange: { min: ${metadata.scaleRange.min}, max: ${metadata.scaleRange.max} },`
+      );
     }
     if (metadata.rotationRange) {
-      lines.push(`  rotationRange: { min: ${metadata.rotationRange.min}, max: ${metadata.rotationRange.max} },`);
+      lines.push(
+        `  rotationRange: { min: ${metadata.rotationRange.min}, max: ${metadata.rotationRange.max} },`
+      );
     }
     if (metadata.brightnessRange) {
-      lines.push(`  brightnessRange: { min: ${metadata.brightnessRange.min}, max: ${metadata.brightnessRange.max} },`);
+      lines.push(
+        `  brightnessRange: { min: ${metadata.brightnessRange.min}, max: ${metadata.brightnessRange.max} },`
+      );
     }
     if (metadata.rotationMode) {
       lines.push(`  rotationMode: '${metadata.rotationMode}',`);

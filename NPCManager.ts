@@ -1,6 +1,7 @@
 import { NPC, Position, Direction, NPCBehavior, isTileSolid, SeasonalLocation } from './types';
 import { getTileData } from './utils/mapUtils';
-import { PLAYER_SIZE, SPRITE_METADATA } from './constants';
+import { PLAYER_SIZE } from './constants';
+import { metadataCache } from './utils/MetadataCache';
 import { TimeManager, Season } from './utils/TimeManager';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { audioManager } from './utils/AudioManager';
@@ -278,7 +279,7 @@ class NPCManagerClass {
         if (
           tileData &&
           isTileSolid(tileData.collisionType) &&
-          !SPRITE_METADATA.find((s) => s.tileType === tileData.type)
+          !metadataCache.isMultiTileSprite(tileData.type)
         ) {
           return true;
         }
@@ -291,7 +292,7 @@ class NPCManagerClass {
     for (let tileY = minTileY - searchRadius; tileY <= maxTileY + searchRadius; tileY++) {
       for (let tileX = minTileX - searchRadius; tileX <= maxTileX + searchRadius; tileX++) {
         const tileData = getTileData(tileX, tileY);
-        const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData?.type);
+        const spriteMetadata = tileData ? metadataCache.getMetadata(tileData.type) : undefined;
 
         if (spriteMetadata && tileData && isTileSolid(tileData.collisionType)) {
           // Use collision-specific dimensions if provided, otherwise use sprite dimensions

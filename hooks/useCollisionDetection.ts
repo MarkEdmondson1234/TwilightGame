@@ -1,8 +1,9 @@
 import { useCallback, MutableRefObject } from 'react';
 import { Position, NPC, isTileSolid } from '../types';
-import { PLAYER_SIZE, SPRITE_METADATA } from '../constants';
+import { PLAYER_SIZE } from '../constants';
 import { getTileData } from '../utils/mapUtils';
 import { MovementMode, isTileBlockingForMode } from '../utils/tileCategories';
+import { metadataCache } from '../utils/MetadataCache';
 
 /**
  * Hook for collision detection logic
@@ -38,7 +39,7 @@ export function useCollisionDetection(
           if (!tileData) continue;
 
           // Skip multi-tile sprites (handled separately below)
-          if (SPRITE_METADATA.find((s) => s.tileType === tileData.type)) continue;
+          if (metadataCache.isMultiTileSprite(tileData.type)) continue;
 
           // Check if this tile blocks based on movement mode
           const isSolid = isTileSolid(tileData.collisionType);
@@ -54,7 +55,7 @@ export function useCollisionDetection(
       for (let tileY = minTileY - searchRadius; tileY <= maxTileY + searchRadius; tileY++) {
         for (let tileX = minTileX - searchRadius; tileX <= maxTileX + searchRadius; tileX++) {
           const tileData = getTileData(tileX, tileY);
-          const spriteMetadata = SPRITE_METADATA.find((s) => s.tileType === tileData?.type);
+          const spriteMetadata = tileData ? metadataCache.getMetadata(tileData.type) : undefined;
 
           if (spriteMetadata && tileData) {
             const isSolid = isTileSolid(tileData.collisionType);

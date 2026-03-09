@@ -590,7 +590,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   }, [currentMapId, isPixiInitialized, timeOfDay]);
 
   // =========================================================================
-  // EFFECT: Tile/Sprite Rendering (map/viewport/season changes)
+  // EFFECT: Tile/Sprite/Shadow/Darkness Rendering
+  // Unified effect for all non-NPC layer rendering. NPC rendering is handled
+  // separately in the NPC Layer Update effect below.
   // =========================================================================
   useEffect(() => {
     if (!enabled || !isPixiInitialized || !tileLayerRef.current) return;
@@ -641,26 +643,27 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       );
     }
 
+    // Get time once for shadows and darkness
+    const currentTime = TimeManager.getCurrentTime();
+
     // Render shadows
     if (shadowLayerRef.current) {
-      const { hour, season } = TimeManager.getCurrentTime();
       shadowLayerRef.current.renderShadows(
         map,
         currentMapId,
         visibleRange,
-        hour,
-        season,
+        currentTime.hour,
+        currentTime.season,
         currentWeather
       );
     }
 
     // Update darkness layer
     if (darknessLayerRef.current) {
-      const { season, timeOfDay: tod } = TimeManager.getCurrentTime();
       darknessLayerRef.current.update(
         map.colorScheme,
-        season,
-        tod,
+        currentTime.season,
+        currentTime.timeOfDay,
         window.innerWidth,
         window.innerHeight
       );
@@ -675,6 +678,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     farmUpdateTrigger,
     placedItemsUpdateTrigger,
     currentWeather,
+    renderVersion,
+    effectiveGridOffset,
+    effectiveTileSize,
   ]);
 
   // =========================================================================
@@ -766,107 +772,6 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     isPixiInitialized,
     currentMap?.renderMode,
     canvasRef,
-    effectiveGridOffset,
-    effectiveTileSize,
-  ]);
-
-  // =========================================================================
-  // EFFECT: NPC/Render Version Update (full re-render)
-  // =========================================================================
-  useEffect(() => {
-    if (!enabled || !isPixiInitialized || !tileLayerRef.current) return;
-
-    const map = mapManager.getCurrentMap();
-    if (!map) return;
-
-    // Re-render tiles
-    tileLayerRef.current.renderTiles(
-      map,
-      currentMapId,
-      visibleRange,
-      seasonKey,
-      farmUpdateTrigger,
-      timeOfDay,
-      currentWeather
-    );
-
-    // Re-render sprites
-    if (spriteLayerRef.current) {
-      spriteLayerRef.current.renderSprites(
-        map,
-        currentMapId,
-        visibleRange,
-        seasonKey,
-        timeOfDay,
-        currentWeather
-      );
-    }
-
-    // Re-render placed items
-    if (placedItemsLayerRef.current) {
-      const placedItems = gameState.getPlacedItems(currentMapId);
-      placedItemsLayerRef.current.renderItems(
-        placedItems,
-        visibleRange,
-        map.characterScale ?? 1.0,
-        effectiveTileSize,
-        effectiveGridOffset
-      );
-    }
-
-    // Re-render shadows
-    if (shadowLayerRef.current) {
-      const { hour, season } = TimeManager.getCurrentTime();
-      shadowLayerRef.current.renderShadows(
-        map,
-        currentMapId,
-        visibleRange,
-        hour,
-        season,
-        currentWeather
-      );
-    }
-
-    // Re-render NPCs
-    if (npcLayerRef.current) {
-      let npcs = npcManager.getCurrentMapNPCs();
-      if (backgroundImageLayerRef.current) {
-        const layerNPCs = backgroundImageLayerRef.current
-          .getLayerNPCs(currentMapId)
-          .filter((npc) => npcManager.isNPCVisible(npc));
-        if (layerNPCs.length > 0) {
-          npcs = [...npcs, ...layerNPCs];
-        }
-      }
-      npcLayerRef.current.renderNPCs(
-        npcs,
-        map.characterScale ?? 1.0,
-        effectiveGridOffset,
-        effectiveTileSize
-      );
-    }
-
-    // Update darkness layer
-    if (darknessLayerRef.current) {
-      const { season, timeOfDay: tod } = TimeManager.getCurrentTime();
-      darknessLayerRef.current.update(
-        map.colorScheme,
-        season,
-        tod,
-        window.innerWidth,
-        window.innerHeight
-      );
-    }
-  }, [
-    enabled,
-    renderVersion,
-    isPixiInitialized,
-    npcUpdateTrigger,
-    currentMapId,
-    visibleRange,
-    seasonKey,
-    farmUpdateTrigger,
-    currentWeather,
     effectiveGridOffset,
     effectiveTileSize,
   ]);
