@@ -135,10 +135,17 @@ function handleSeedPickup(nodeId: string): void {
  * Handle Althea's chores quest dialogue redirects and item delivery
  */
 function handleAltheaQuestItems(nodeId: string): string | void {
-  // Auto-redirect greeting based on quest stage (mirrors Elias pattern)
+  // Auto-redirect greeting based on quest stage and delivery state
   if (nodeId === 'greeting') {
     if (isAltheaChoresDone()) return 'chores_complete_intro';
-    if (isAltheaChoresActive()) return 'chores_progress';
+    if (isAltheaChoresActive()) {
+      const teaDone = isTeaDelivered();
+      const cookiesDone = areCookiesDelivered();
+      if (teaDone && cookiesDone) return 'chores_progress_items_done';
+      if (teaDone) return 'chores_progress_need_cookies';
+      if (cookiesDone) return 'chores_progress_need_tea';
+      return 'chores_progress';
+    }
     return;
   }
 

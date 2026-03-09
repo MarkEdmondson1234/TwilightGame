@@ -304,13 +304,12 @@ export function createOldWomanKnittingNPC(
           },
         ],
       },
-      // Progress check dialogue - only while chores are still being done (stage 1)
+      // Progress check dialogue — four variants depending on what's been delivered.
+      // The greeting handler redirects to the correct one based on delivery state.
+      // Neither tea nor cookies delivered yet
       {
         id: 'chores_progress',
         text: "*She looks up from her knitting with a soft smile.* How are you getting on, dear? A cup of tea, some home-baked biscuits, and those cobwebs in the cottage — no rush at all. I'm still here having my think.",
-        requiredQuest: 'althea_chores',
-        requiredQuestStage: 1,
-        maxQuestStage: 1,
         responses: [
           {
             text: "I've brought you some tea.",
@@ -322,6 +321,44 @@ export function createOldWomanKnittingNPC(
           },
           {
             text: "I'm still working on it.",
+          },
+        ],
+      },
+      // Tea done — only cookies remain
+      {
+        id: 'chores_progress_need_cookies',
+        text: "*She looks up with a contented smile, the empty teacup beside her.* That tea was just lovely, dearie. Are those biscuits coming along? And the cobwebs of course — no rush.",
+        responses: [
+          {
+            text: "I've baked some biscuits for you.",
+            nextId: 'chores_deliver_cookies',
+          },
+          {
+            text: "Not quite yet — I'm still working on it.",
+          },
+        ],
+      },
+      // Cookies done — only tea remains
+      {
+        id: 'chores_progress_need_tea',
+        text: "*She pats the plate of biscuits beside her.* Oh, those biscuits were absolutely wonderful! You're a real baker, you are. Now, a nice hot cup of tea to go with them would be heavenly. And the cobwebs, of course.",
+        responses: [
+          {
+            text: "I've brought you some tea.",
+            nextId: 'chores_deliver_tea',
+          },
+          {
+            text: "Almost there — just a bit longer.",
+          },
+        ],
+      },
+      // Both items delivered — only cobwebs remain
+      {
+        id: 'chores_progress_items_done',
+        text: "*She sits with her tea and biscuits, looking very comfortable indeed.* You've been so kind already, dearie. The tea, the biscuits — wonderful. Just those cobwebs in the cottage left to see to, and I'll have my think all done.",
+        responses: [
+          {
+            text: "I'll get them sorted.",
           },
         ],
       },
