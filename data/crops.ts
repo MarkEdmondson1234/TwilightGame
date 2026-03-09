@@ -542,6 +542,29 @@ export const CROPS: Record<string, CropDefinition> = {
     harvestCooldownDays: 1,
   },
 
+  lavender: {
+    id: 'lavender',
+    name: 'lavender',
+    displayName: 'Lavender',
+    plantSeasons: [Season.SPRING, Season.SUMMER],
+    growthTime: 2 * MINUTE,
+    growthTimeWatered: 1.5 * MINUTE,
+    waterNeededInterval: 1 * GAME_DAY,
+    wiltingGracePeriod: 0.5 * GAME_DAY,
+    deathGracePeriod: 0.5 * GAME_DAY,
+    harvestYield: 2,
+    sellPrice: 14,
+    experience: 9,
+    seedDropMin: 0,
+    seedDropMax: 0, // Herbs don't drop seeds on harvest
+    description: 'A fragrant herb that regrows after harvesting. Goes dormant in winter.',
+    seedCost: 10,
+    rarity: CropRarity.UNCOMMON,
+    seedSource: 'shop',
+    isHerb: true,
+    harvestCooldownDays: 1,
+  },
+
   // Corn - kept as shop item
   corn: {
     id: 'corn',

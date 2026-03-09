@@ -307,6 +307,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: herbAssets.thyme_seeds,
   },
 
+  seed_lavender: {
+    id: 'seed_lavender',
+    name: 'seed_lavender',
+    displayName: 'Lavender Seeds',
+    category: ItemCategory.SEED,
+    description: 'Seeds for growing lavender. The plant regrows after each harvest.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 5,
+    buyPrice: 10,
+    cropId: 'lavender',
+    image: herbAssets.lavender_seeds,
+  },
+
   // Quest seeds (magical crops unlocked through quests)
   seed_fairy_bluebell: {
     id: 'seed_fairy_bluebell',
@@ -557,6 +571,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 12,
     image: herbAssets.thyme_crop,
+  },
+
+  crop_lavender: {
+    id: 'crop_lavender',
+    name: 'crop_lavender',
+    displayName: 'Fresh Lavender',
+    category: ItemCategory.CROP,
+    description: 'Freshly harvested lavender sprigs. Lovely and fragrant.',
+    stackable: true,
+    sellPrice: 14,
+    image: herbAssets.lavender_crop,
   },
 
   // ===== MATERIALS =====

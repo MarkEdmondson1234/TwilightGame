@@ -92,6 +92,7 @@ export const CROP_ADULT_SIZES: Record<
 
   // Herbs (1.2x1.2 tile) - slightly oversized for a lush look
   thyme: { width: 1.2, height: 1.2, offsetX: -0.1, offsetY: -0.125 },
+  lavender: { width: 1.8, height: 1.8, offsetX: -0.4, offsetY: -0.650 },
 
   // Small crops (1x1 tile) - centred on soil tile
   spinach: { width: 1, height: 1, offsetX: 0, offsetY: 0 },

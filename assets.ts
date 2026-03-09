@@ -312,6 +312,7 @@ export const farmingAssets = {
   farm_fence_side: '/TwilightGame/assets-optimized/farming/farm_fence_side.png',
   // Herbs — adult sprites used on the tile (shared key pattern: plant_<cropId>_adult)
   plant_thyme_adult: '/TwilightGame/assets-optimized/herbs/plant_thyme.png',
+  plant_lavender_adult: '/TwilightGame/assets-optimized/herbs/lavender_bush.png',
 };
 
 // Herb assets — inventory sprites for herb seeds and harvested crops
@@ -319,6 +320,9 @@ export const herbAssets = {
   thyme_seeds: '/TwilightGame/assets-optimized/herbs/thyme_seeds.png',
   thyme_plant: '/TwilightGame/assets-optimized/herbs/plant_thyme.png',
   thyme_crop: '/TwilightGame/assets-optimized/herbs/thyme_bunch.png',
+  lavender_seeds: '/TwilightGame/assets-optimized/herbs/lavender_seeds.png',
+  lavender_plant: '/TwilightGame/assets-optimized/herbs/lavender_bush.png',
+  lavender_crop: '/TwilightGame/assets-optimized/herbs/lavender_bunch.png',
 };
 
 // Cooking assets - Prepared food items (cooked dishes)
