@@ -72,6 +72,9 @@ export enum GameEvent {
   EVENT_CHAIN_CHOICE_REQUIRED = 'chain:choice_required',
   EVENT_CHAIN_OBJECTIVE_REACHED = 'chain:objective_reached',
 
+  // Cobweb events
+  COBWEB_CLEANED = 'cobweb:cleaned',
+
   // Magic events
   MAGIC_LEVEL_UP = 'magic:level_up',
 
@@ -191,6 +194,9 @@ export interface EventPayloads {
   [GameEvent.EVENT_CHAIN_OBJECTIVE_REACHED]: {
     chainId: string;
     stageId: string;
+  };
+  [GameEvent.COBWEB_CLEANED]: {
+    cobwebId: number;
   };
   [GameEvent.MAGIC_LEVEL_UP]: {
     previousLevel: 'novice' | 'journeyman' | 'master';

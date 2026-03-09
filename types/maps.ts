@@ -51,12 +51,25 @@ export type MapRenderMode = 'tiled' | 'background-image';
 /**
  * Condition for showing/hiding a room layer based on quest state
  */
-export interface LayerCondition {
+export interface QuestLayerCondition {
   type: 'quest';
   questId: string;
   /** When to show the layer: 'active' (started but not completed), 'not_started', or 'completed' */
   showWhen: 'active' | 'not_started' | 'completed';
 }
+
+/**
+ * Condition for showing/hiding a room layer based on individual cobweb cleaned state
+ * The layer is visible when the cobweb has NOT been cleaned yet
+ */
+export interface CobwebLayerCondition {
+  type: 'cobweb';
+  cobwebId: number; // 0–4
+  showWhen: 'not_cleaned';
+}
+
+/** Union of all supported layer condition types */
+export type LayerCondition = QuestLayerCondition | CobwebLayerCondition;
 
 /**
  * Base properties shared by all room layer types

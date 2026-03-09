@@ -39,11 +39,11 @@ export interface CobwebPosition {
 }
 
 export const COBWEB_POSITIONS: CobwebPosition[] = [
-  { id: 0, relativeX: 0.08, relativeY: 0.12, radius: 0.07, description: 'Top-left corner (large cobweb)' },
-  { id: 1, relativeX: 0.92, relativeY: 0.08, radius: 0.06, description: 'Top-right corner' },
-  { id: 2, relativeX: 0.04, relativeY: 0.52, radius: 0.05, description: 'Bottom-left wall' },
-  { id: 3, relativeX: 0.52, relativeY: 0.22, radius: 0.04, description: 'Centre ceiling (small spider)' },
-  { id: 4, relativeX: 0.46, relativeY: 0.78, radius: 0.06, description: 'Bottom-centre floor' },
+  { id: 0, relativeX: 0.93, relativeY: 0.11, radius: 0.07, description: 'Top-right corner (small web)' },
+  { id: 1, relativeX: 0.05, relativeY: 0.15, radius: 0.10, description: 'Top-left corner (large web with spider)' },
+  { id: 2, relativeX: 0.47, relativeY: 0.18, radius: 0.04, description: 'Centre ceiling (tiny hanging spider)' },
+  { id: 3, relativeX: 0.51, relativeY: 0.87, radius: 0.06, description: 'Centre-bottom floor (faint web)' },
+  { id: 4, relativeX: 0.03, relativeY: 0.62, radius: 0.05, description: 'Left wall mid-height' },
 ];
 
 // ============================================================================
@@ -103,6 +103,8 @@ export function markCobwebCleaned(cobwebId: number): boolean {
   if (DEBUG.QUEST) {
     console.log(`[AltheaChores] Cobweb ${cobwebId} cleaned (${getCobwebsRemaining()} remaining)`);
   }
+
+  eventBus.emit(GameEvent.COBWEB_CLEANED, { cobwebId });
 
   checkQuestCompletion();
   return true;

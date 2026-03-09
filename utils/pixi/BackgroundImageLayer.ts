@@ -25,6 +25,8 @@ import { MapDefinition, RoomLayer, ImageRoomLayer, NPC, LayerCondition } from '.
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
 import { npcManager } from '../../NPCManager';
 import { gameState } from '../../GameState';
+import { eventBus, GameEvent } from '../EventBus';
+import { getCobwebsCleaned } from '../../data/questHandlers/altheaChoresHandler';
 
 interface LayerSprite {
   sprite: PIXI.Sprite;
@@ -64,12 +66,23 @@ export class BackgroundImageLayer {
   private layerNPCs: NPC[] = [];
   // Viewport scaling configuration
   private scalingConfig: ScalingConfig | null = null;
+  // Individual cobweb sprites tracked for dynamic show/hide on clean
+  private cobwebLayerEntries: Array<{ sprite: PIXI.Sprite; cobwebId: number }> = [];
 
   constructor() {
     // Background container - behind all game content
     this.backgroundContainer = new PIXI.Container();
     this.backgroundContainer.sortableChildren = true;
     this.backgroundContainer.zIndex = Z_PARALLAX_FAR; // -100
+
+    // Hide individual cobweb sprites when a cobweb is cleaned mid-room
+    eventBus.on(GameEvent.COBWEB_CLEANED, ({ cobwebId }) => {
+      for (const entry of this.cobwebLayerEntries) {
+        if (entry.cobwebId === cobwebId) {
+          entry.sprite.visible = false;
+        }
+      }
+    });
   }
 
   /**
@@ -215,6 +228,11 @@ export class BackgroundImageLayer {
       }
     }
 
+    if (condition.type === 'cobweb') {
+      const cleaned = getCobwebsCleaned();
+      return !cleaned[condition.cobwebId]; // show when NOT cleaned
+    }
+
     return true; // Unknown condition type = show by default
   }
 
@@ -230,15 +248,25 @@ export class BackgroundImageLayer {
     }
 
     for (const layer of layers) {
-      // Check condition before processing layer
-      if (!this.checkLayerCondition(layer.condition)) {
-        continue; // Skip layers whose condition is not met
+      const isCobwebLayer = layer.condition?.type === 'cobweb';
+
+      // For quest conditions: skip the layer entirely if condition not met.
+      // For cobweb conditions: always create the sprite so it can be hidden dynamically.
+      if (!isCobwebLayer && !this.checkLayerCondition(layer.condition)) {
+        continue;
       }
 
       if (layer.type === 'image') {
         // Image layer - add directly to stage for proper z-index sorting
         const layerSprite = await this.createImageLayerSprite(layer, map);
         if (layerSprite) {
+          // Cobweb layers: set initial visibility and register for live toggling
+          if (isCobwebLayer && layer.condition?.type === 'cobweb') {
+            const cobwebId = layer.condition.cobwebId;
+            layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
+            this.cobwebLayerEntries.push({ sprite: layerSprite.sprite, cobwebId });
+          }
+
           // Categorize by z-index for reference (background vs foreground)
           if (layer.zIndex < Z_PLAYER) {
             this.backgroundSprites.push(layerSprite);
@@ -464,6 +492,9 @@ export class BackgroundImageLayer {
 
     // Clear layer NPCs
     this.layerNPCs = [];
+
+    // Clear cobweb sprite tracking (sprites already destroyed above)
+    this.cobwebLayerEntries = [];
 
     this.currentMapId = null;
   }
