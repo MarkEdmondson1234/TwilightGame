@@ -23,6 +23,7 @@ import React, { useState, useCallback, useMemo, useRef } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import { getItem } from '../../data/items';
 import { decorationManager } from '../../utils/DecorationManager';
+import { tileAssets } from '../../assets';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -72,6 +73,14 @@ const WREATH_MATERIALS = [
   'crop_strawberry',
   'crop_blackberry',
   'crop_blueberry',
+  'rose_red_crop',
+  'rose_crop',
+  'feather',
+  'crop_chili',
+  'crop_onion',
+  'vanilla',
+  'dragonfly_wings',
+  'ghost_lichen',
 ] as const;
 
 /** Visual colour associated with each flower for the slot border. */
@@ -86,6 +95,14 @@ const FLOWER_COLOURS: Record<string, string> = {
   crop_strawberry: '#f43f5e',
   crop_blackberry: '#7c3aed',
   crop_blueberry: '#3b82f6',
+  rose_red_crop: '#ef4444',
+  rose_crop: '#f9a8d4',
+  feather: '#e2e8f0',
+  crop_chili: '#dc2626',
+  crop_onion: '#d97706',
+  vanilla: '#d4b896',
+  dragonfly_wings: '#22d3ee',
+  ghost_lichen: '#94a3b8',
 };
 
 /** Shared style for the round zoom/size buttons. */
@@ -282,13 +299,6 @@ async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
   // Scale factor from wreath-area coords → capture canvas
   const scale = CAPTURE_SIZE / (WREATH_CENTRE * 2);
 
-  // Draw the wreath ring
-  ctx.beginPath();
-  ctx.arc(WREATH_CENTRE * scale, WREATH_CENTRE * scale, WREATH_RADIUS * scale, 0, Math.PI * 2);
-  ctx.lineWidth = 14 * scale;
-  ctx.strokeStyle = '#3a5a2a';
-  ctx.stroke();
-
   // Load all flower images first
   const loadImage = (src: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -298,6 +308,19 @@ async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
       img.onerror = reject;
       img.src = src;
     });
+
+  // Draw the wreath base sprite
+  try {
+    const baseImg = await loadImage(tileAssets.wreath_base);
+    ctx.drawImage(baseImg, 0, 0, CAPTURE_SIZE, CAPTURE_SIZE);
+  } catch {
+    // Fallback: draw a plain ring if the sprite fails to load
+    ctx.beginPath();
+    ctx.arc(WREATH_CENTRE * scale, WREATH_CENTRE * scale, WREATH_RADIUS * scale, 0, Math.PI * 2);
+    ctx.lineWidth = 14 * scale;
+    ctx.strokeStyle = '#3a5a2a';
+    ctx.stroke();
+  }
 
   // Draw each placed flower
   for (let i = 0; i < SLOT_COUNT; i++) {
@@ -1010,16 +1033,17 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             }}
           >
             {/* Decorative wreath ring */}
-            <div
+            <img
+              src={tileAssets.wreath_base}
+              alt=""
+              draggable={false}
               style={{
                 position: 'absolute',
-                left: WREATH_CENTRE - WREATH_RADIUS - 10,
-                top: WREATH_CENTRE - WREATH_RADIUS - 10,
-                width: (WREATH_RADIUS + 10) * 2,
-                height: (WREATH_RADIUS + 10) * 2,
-                borderRadius: '50%',
-                border: '14px solid #3a5a2a',
-                boxShadow: 'inset 0 0 20px rgba(0,0,0,0.3), 0 0 10px rgba(0,0,0,0.2)',
+                left: 0,
+                top: 0,
+                width: WREATH_CENTRE * 2,
+                height: WREATH_CENTRE * 2,
+                pointerEvents: 'none',
                 zIndex: 0,
               }}
             />
