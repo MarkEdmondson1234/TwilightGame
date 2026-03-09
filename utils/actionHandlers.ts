@@ -28,7 +28,11 @@ import { ForageResult, handleForageAction } from './forageHandlers';
 import { decorationManager } from './DecorationManager';
 import { cookingManager, CookingResult } from './CookingManager';
 import { getFrameStyle } from './frameStyles';
-import { getMiniGamesForPlacedItem, getMiniGamesForNPC } from '../minigames/registry';
+import {
+  getMiniGamesForPlacedItem,
+  getMiniGamesForNPC,
+  getMiniGamesForNPCName,
+} from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
 import type { MiniGameTriggerData } from '../minigames/types';
 
@@ -1314,9 +1318,16 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // NPC-triggered mini-games (registry-based)
+    // NPC-triggered mini-games (registry-based) — check by exact ID and by name match
     if (config.onOpenMiniGame) {
-      const npcMiniGames = getMiniGamesForNPC(npcId);
+      const byId = getMiniGamesForNPC(npcId);
+      const byName = npc ? getMiniGamesForNPCName(npc.name) : [];
+      const seen = new Set<string>();
+      const npcMiniGames = [...byId, ...byName].filter((mg) => {
+        if (seen.has(mg.id)) return false;
+        seen.add(mg.id);
+        return true;
+      });
       for (const mg of npcMiniGames) {
         const check = miniGameManager.checkRequirements(mg.id);
         if (check.canPlay) {
@@ -1332,6 +1343,10 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
                 triggerType: 'npc',
                 position,
                 npcId,
+                extra: {
+                  npcName: npc?.name,
+                  npcSprite: npc?.portraitSprite || npc?.dialogueSprite || npc?.sprite,
+                },
               });
             },
           });
@@ -1340,8 +1355,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     }
   }
 
-  // Check for transition
-  const transitionData = mapManager.getTransitionAt(position);
+  // Check for transition (tight tolerance for click — must click on the door tile)
+  const transitionData = mapManager.getTransitionAt(position, 0.9);
   if (transitionData) {
     const { transition } = transitionData;
 
@@ -1985,7 +2000,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     }
 
     // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet, frost flower, dead spruce)
-    // Use radius=2 (5x5 search) so clicks anywhere on large multi-tile sprites register
+    // Use radius=1 (3x3 search) — covers 3x3 sprites with centred anchors; larger sprites need clicking near the base
     if (!canForage) {
       canForage = hasTileTypeNearby(
         tileX,
@@ -2006,7 +2021,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           TileType.GIANT_MUSHROOM,
           TileType.SAKURA_TREE,
         ],
-        2
+        1
       );
     }
 
@@ -2017,7 +2032,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         if (npc.id.startsWith('sparrow_')) {
           const dx = Math.abs(npc.position.x - tileX);
           const dy = Math.abs(npc.position.y - tileY);
-          if (dx <= 3 && dy <= 3) {
+          if (dx <= 1 && dy <= 1) {
             canForage = true;
             break;
           }
