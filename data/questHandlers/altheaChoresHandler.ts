@@ -20,8 +20,8 @@ import { DEBUG } from '../../constants';
 export const QUEST_ID = 'althea_chores';
 
 export const QUEST_ITEMS = {
-  TEA: 'tea',
-  COOKIES: 'cookies',
+  TEA: 'food_tea',
+  COOKIES: 'food_cookies',
 } as const;
 
 export const TOTAL_COBWEBS = 5;

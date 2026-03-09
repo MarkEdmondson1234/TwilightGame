@@ -43,6 +43,14 @@ import {
   WITCH_GARDEN_STAGES,
   deliverPickledOnions,
 } from '../data/questHandlers/witchGardenHandler';
+import {
+  isAltheaChoresActive,
+  isTeaDelivered,
+  areCookiesDelivered,
+  markTeaDelivered,
+  markCookiesDelivered,
+  QUEST_ITEMS as ALTHEA_QUEST_ITEMS,
+} from '../data/questHandlers/altheaChoresHandler';
 import { magicManager } from './MagicManager';
 import { decorationManager } from './DecorationManager';
 import { DEBUG } from '../constants';
@@ -386,6 +394,15 @@ class FriendshipManagerClass {
       return { points: 0, reaction: 'neutral' };
     }
 
+    // ===== ALTHEA CHORES QUEST HANDLING =====
+    // Accept tea/cookies delivery during the althea_chores quest
+    if (npcId === 'old_woman_knitting') {
+      const questResult = this.handleAltheaQuestGift(itemId);
+      if (questResult) {
+        return questResult;
+      }
+    }
+
     // ===== WITCH QUEST HANDLING =====
     // Accept pickled onions delivery during the witch garden quest
     if (npcId === 'witch') {
@@ -532,6 +549,38 @@ class FriendshipManagerClass {
         questCompleted: true,
         dialogueNodeId: 'pickled_onions_delivered',
       };
+    }
+
+    return null;
+  }
+
+  /**
+   * Handle quest-specific gifts for Althea (old_woman_knitting)
+   * - Althea chores quest: Accept tea and cookies as chore deliveries
+   *
+   * @returns Gift result if quest item was accepted, null if not a quest item
+   */
+  private handleAltheaQuestGift(itemId: string): {
+    points: number;
+    reaction: GiftReaction;
+    dialogueNodeId?: string;
+  } | null {
+    if (!isAltheaChoresActive()) return null;
+
+    if (itemId === ALTHEA_QUEST_ITEMS.TEA && !isTeaDelivered()) {
+      markTeaDelivered();
+      const points = 100;
+      this.addPoints('old_woman_knitting', points, 'althea chores: tea delivered');
+      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Althea receives tea! (+${points})');
+      return { points, reaction: 'loved', dialogueNodeId: 'chores_tea_accepted' };
+    }
+
+    if (itemId === ALTHEA_QUEST_ITEMS.COOKIES && !areCookiesDelivered()) {
+      markCookiesDelivered();
+      const points = 100;
+      this.addPoints('old_woman_knitting', points, 'althea chores: cookies delivered');
+      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Althea receives cookies! (+${points})');
+      return { points, reaction: 'loved', dialogueNodeId: 'chores_cookies_accepted' };
     }
 
     return null;
