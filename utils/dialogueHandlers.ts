@@ -257,9 +257,14 @@ function handleRecipeTeaching(nodeId: string): void {
       console.log('[dialogueHandlers] 📖 Recipe book unlocked! You can now access it with B key.');
   }
 
+  // Mark fireplace tutorial complete when Mum gives the fireplace intro
+  if (nodeId === 'fireplace_intro') {
+    cookingManager.setFireplaceTutorialComplete();
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 🔥 Fireplace tutorial complete!');
+  }
+
   // Map dialogue nodes to recipe IDs
   const recipeNodes: Record<string, string> = {
-    learn_french_toast: 'french_toast',
     learn_spaghetti: 'spaghetti_meat_sauce',
     learn_crepes: 'crepes',
     learn_marzipan: 'marzipan_chocolates',

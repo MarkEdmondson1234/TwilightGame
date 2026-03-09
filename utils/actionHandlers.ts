@@ -26,6 +26,7 @@ import { itemAssets, groceryAssets } from '../assets';
 import { getTierName } from './MagicEffects';
 import { ForageResult, handleForageAction } from './forageHandlers';
 import { decorationManager } from './DecorationManager';
+import { cookingManager, CookingResult } from './CookingManager';
 import { getFrameStyle } from './frameStyles';
 import { getMiniGamesForPlacedItem, getMiniGamesForNPC } from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
@@ -968,6 +969,18 @@ export function checkCookingLocation(playerPos: Position): CookingLocationResult
 }
 
 /**
+ * Handle the fireplace tea interaction in Mum's kitchen.
+ * Marks the fireplace tutorial as complete on first use, then cooks tea directly
+ * (no cooking UI — tea is made immediately if ingredients are available).
+ */
+export function handleFireplaceTea(): CookingResult {
+  // Mark tutorial as seen on first interaction with the fireplace
+  cookingManager.setFireplaceTutorialComplete();
+
+  return cookingManager.cook('tea');
+}
+
+/**
  * Available interaction types
  */
 export type InteractionType =
@@ -1002,7 +1015,8 @@ export type InteractionType =
   | 'place_decoration'
   | 'open_workshop'
   | 'open_painting_easel'
-  | 'open_mini_game';
+  | 'open_mini_game'
+  | 'fireplace_tea';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -1040,6 +1054,7 @@ export interface GetInteractionsConfig {
   onGiveGift?: (npcId: string) => void;
   onTransition?: (result: TransitionResult) => void;
   onCooking?: (locationType: 'stove' | 'campfire', position?: Position) => void;
+  onFireplaceTea?: (result: CookingResult) => void;
   onBrewing?: (position?: Position) => void;
   onFarmAction?: (result: FarmActionResult) => void;
   onFarmAnimation?: (
@@ -1422,6 +1437,33 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         color: '#f97316',
         data: { locationType: locType, position: cookingLoc.position },
         execute: () => onCooking?.(locType, cookingLoc.position),
+      });
+    }
+  }
+
+  // Mum's kitchen fireplace — position-based tea interaction (no tile type needed)
+  if (currentMapId === 'mums_kitchen') {
+    const fireplacePos = { x: 4, y: 5 };
+    const playerTileX = Math.floor(position.x);
+    const playerTileY = Math.floor(position.y);
+    const isAdjacentToFireplace = [
+      { x: playerTileX, y: playerTileY },
+      { x: playerTileX - 1, y: playerTileY },
+      { x: playerTileX + 1, y: playerTileY },
+      { x: playerTileX, y: playerTileY - 1 },
+      { x: playerTileX, y: playerTileY + 1 },
+    ].some((t) => t.x === fireplacePos.x && t.y === fireplacePos.y);
+
+    if (isAdjacentToFireplace) {
+      interactions.push({
+        type: 'fireplace_tea',
+        label: 'Make Tea',
+        icon: '☕',
+        color: '#92400e',
+        execute: () => {
+          const result = handleFireplaceTea();
+          config.onFireplaceTea?.(result);
+        },
       });
     }
   }

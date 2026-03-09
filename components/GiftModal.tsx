@@ -45,8 +45,8 @@ const CATEGORY_DISPLAY_NAMES: Record<RecipeCategory, string> = {
   savoury: 'savoury dishes',
   dessert: 'sweet treats',
   baking: 'baked goods',
-  starter: 'starter dishes',
-  tutorial: 'simple recipes',
+  starter: 'tea',
+  miscellaneous: 'special recipes',
 };
 
 const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) => {

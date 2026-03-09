@@ -1024,6 +1024,7 @@ class GameStateManager {
 
   loadCookingState(): {
     recipeBookUnlocked: boolean;
+    fireplaceTutorialComplete?: boolean;
     unlockedRecipes: string[];
     recipeProgress: Record<
       string,

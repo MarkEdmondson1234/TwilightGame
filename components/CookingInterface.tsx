@@ -106,13 +106,13 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
     // Popup handles its own auto-dismiss via CookingResultPopup
   };
 
-  // Category filter buttons
+  // Category filter buttons (tea is fireplace-only and never shown here)
   const categories: Array<{ id: RecipeCategory | 'all'; label: string; icon: string }> = [
     { id: 'all', label: 'All', icon: '📚' },
-    { id: 'starter', label: 'Basic', icon: '🍵' },
     { id: 'savoury', label: 'Savoury', icon: '🍝' },
-    { id: 'dessert', label: 'Dessert', icon: '🍰' },
+    { id: 'dessert', label: 'Desserts', icon: '🍰' },
     { id: 'baking', label: 'Baking', icon: '🍞' },
+    { id: 'miscellaneous', label: 'Miscellaneous', icon: '🫙' },
   ];
 
   // Difficulty display

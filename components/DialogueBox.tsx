@@ -178,6 +178,18 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
         }
       }
 
+      // Check fireplace tutorial state
+      if (response.hiddenIfFireplaceTutorialComplete) {
+        if (cookingManager.isFireplaceTutorialComplete()) {
+          return false;
+        }
+      }
+      if (response.requiredFireplaceTutorialComplete) {
+        if (!cookingManager.isFireplaceTutorialComplete()) {
+          return false;
+        }
+      }
+
       // Check if should be hidden when player has the easel
       if (response.hiddenIfHasEasel) {
         if (decorationManager.getHasEasel()) {

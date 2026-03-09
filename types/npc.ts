@@ -150,6 +150,9 @@ export interface DialogueResponse {
   // Friendship requirements for this response option
   requiredFriendshipTier?: FriendshipTier; // Only show if friendship >= tier
   maxFriendshipTier?: FriendshipTier; // Only show if friendship <= tier (hide when tier exceeded)
+  // Fireplace tutorial requirements
+  hiddenIfFireplaceTutorialComplete?: boolean; // Hide once player has used the fireplace for the first time
+  requiredFireplaceTutorialComplete?: boolean; // Only show after player has used the fireplace
   // Decoration system requirements
   hiddenIfHasEasel?: boolean; // Hide if player already has the easel
   // Item-giving actions triggered by selecting this response

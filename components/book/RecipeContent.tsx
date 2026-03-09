@@ -22,14 +22,13 @@ interface RecipeContentProps {
   onItemPlaced?: () => void;
 }
 
-// Recipe categories as chapters
+// Recipe categories as chapters (tea is fireplace-only, not shown as its own chapter)
 const RECIPE_CHAPTERS: BookChapter<RecipeCategory | 'all'>[] = [
   { id: 'all', label: 'All Recipes', icon: '📚' },
-  { id: 'starter', label: 'Basics', icon: '🍵' },
-  { id: 'tutorial', label: 'Tutorial', icon: '👩‍🍳' },
   { id: 'savoury', label: 'Savoury', icon: '🍝' },
   { id: 'dessert', label: 'Desserts', icon: '🍰' },
   { id: 'baking', label: 'Baking', icon: '🍞' },
+  { id: 'miscellaneous', label: 'Miscellaneous', icon: '🫙' },
 ];
 
 /**
@@ -59,10 +58,10 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
     const byCategory: Record<RecipeCategory | 'all', RecipeDefinition[]> = {
       all: allRecipes,
       starter: [],
-      tutorial: [],
       savoury: [],
       dessert: [],
       baking: [],
+      miscellaneous: [],
     };
     allRecipes.forEach((recipe) => {
       if (byCategory[recipe.category]) {

@@ -91,6 +91,7 @@ export interface RecipeProgress {
 
 export interface CookingState {
   recipeBookUnlocked: boolean; // Whether player has talked to Mum to learn cooking
+  fireplaceTutorialComplete: boolean; // Whether player has opened the fireplace in Mum's kitchen
   unlockedRecipes: string[]; // Recipe IDs the player knows
   recipeProgress: Record<string, RecipeProgress>;
 }
@@ -108,6 +109,7 @@ class CookingManagerClass {
   private unlockedRecipes: Set<string> = new Set();
   private recipeProgress: Map<string, RecipeProgress> = new Map();
   private recipeBookUnlocked = false; // Track locally to avoid circular dependency with GameState
+  private fireplaceTutorialComplete = false;
   private initialised = false;
 
   /**
@@ -120,6 +122,7 @@ class CookingManagerClass {
     if (saved) {
       // Load recipeBookUnlocked locally (critical: don't rely on reading from GameState later)
       this.recipeBookUnlocked = saved.recipeBookUnlocked ?? false;
+      this.fireplaceTutorialComplete = saved.fireplaceTutorialComplete ?? false;
 
       // Load unlocked recipes
       saved.unlockedRecipes.forEach((id) => this.unlockedRecipes.add(id));
@@ -192,15 +195,22 @@ class CookingManagerClass {
    * Get all unlocked recipes
    */
   getUnlockedRecipes(): RecipeDefinition[] {
-    // Create a set to ensure uniqueness
-    const recipeIds = new Set(this.unlockedRecipes);
+    // Create a set to ensure uniqueness, excluding starter recipes (tea is fireplace-only)
+    const recipeIds = new Set(
+      Array.from(this.unlockedRecipes).filter((id) => {
+        const recipe = getRecipe(id);
+        return recipe && recipe.category !== 'starter';
+      })
+    );
 
-    // ALWAYS include starter recipes (defensive programming)
-    Object.values(RECIPES).forEach((recipe) => {
-      if (recipe.category === 'starter') {
-        recipeIds.add(recipe.id);
-      }
-    });
+    // When Mum's cooking course is complete, also include courseRequired recipes
+    if (this.isCookingCourseComplete()) {
+      Object.values(RECIPES).forEach((recipe) => {
+        if (recipe.courseRequired) {
+          recipeIds.add(recipe.id);
+        }
+      });
+    }
 
     return Array.from(recipeIds)
       .map((id) => getRecipe(id))
@@ -546,6 +556,7 @@ class CookingManagerClass {
 
     return {
       recipeBookUnlocked: this.recipeBookUnlocked, // Use local value, not GameState
+      fireplaceTutorialComplete: this.fireplaceTutorialComplete,
       unlockedRecipes: Array.from(this.unlockedRecipes),
       recipeProgress: recipeProgressObj,
     };
@@ -556,6 +567,31 @@ class CookingManagerClass {
    */
   isRecipeBookUnlocked(): boolean {
     return this.recipeBookUnlocked;
+  }
+
+  /**
+   * Check if the fireplace tutorial has been completed (player has opened fireplace once)
+   */
+  isFireplaceTutorialComplete(): boolean {
+    return this.fireplaceTutorialComplete;
+  }
+
+  /**
+   * Mark the fireplace tutorial as complete (called when player first uses the fireplace)
+   */
+  setFireplaceTutorialComplete(): void {
+    if (this.fireplaceTutorialComplete) return;
+    this.fireplaceTutorialComplete = true;
+    console.log('[CookingManager] 🔥 Fireplace tutorial complete!');
+    this.save();
+  }
+
+  /**
+   * Check if Mum's full cooking course is complete (all 3 domains mastered)
+   * When true, post-course recipes (courseRequired: true) become available
+   */
+  isCookingCourseComplete(): boolean {
+    return COOKING_DOMAINS.every((domain) => this.isDomainMastered(domain));
   }
 
   /**
@@ -601,7 +637,8 @@ class CookingManagerClass {
   reset(): void {
     this.unlockedRecipes.clear();
     this.recipeProgress.clear();
-    this.recipeBookUnlocked = false; // Reset recipe book unlock status
+    this.recipeBookUnlocked = false;
+    this.fireplaceTutorialComplete = false;
     this.initialised = false;
 
     // Re-add starter recipes

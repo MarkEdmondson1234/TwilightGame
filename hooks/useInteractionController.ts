@@ -307,6 +307,9 @@ export function useInteractionController(
           cookingPosition: position || undefined,
         });
       },
+      onFireplaceTea: (result) => {
+        onShowToast(result.message, result.success ? 'success' : 'info');
+      },
       onBrewing: (position: Position | null) => {
         openUI('brewingUI', { brewingPosition: position || undefined });
       },

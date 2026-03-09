@@ -4,11 +4,11 @@ import { cookingAssets } from '../assets';
  * Recipe definitions for the cooking system
  *
  * Cooking Categories:
- * - starter: Basic recipes available from the start (Tea)
- * - tutorial: Mother teaches these (French Toast)
- * - savoury: Savoury food category (3 recipes)
- * - dessert: Dessert category (3 recipes)
- * - baking: Baking category (3 recipes)
+ * - starter: Tea, always available — made at the fireplace in Mum's kitchen (not shown in cookbook)
+ * - savoury: Savoury food category (3 recipes) — taught by Mum
+ * - dessert: Dessert category (4 recipes: 3 taught by Mum + French Toast after course)
+ * - baking: Baking category (3 recipes) — taught by Mum
+ * - miscellaneous: Special recipes given by other NPCs (e.g. Pickled Onions from Juniper)
  *
  * NPC Preferences (from design doc - this section needs updating):
  * - Shopkeeper: savoury
@@ -18,7 +18,7 @@ import { cookingAssets } from '../assets';
  * - Old Woman: baking
  */
 
-export type RecipeCategory = 'starter' | 'tutorial' | 'savoury' | 'dessert' | 'baking';
+export type RecipeCategory = 'starter' | 'savoury' | 'dessert' | 'baking' | 'miscellaneous';
 
 // Cooking domains for skill progression (excludes starter/tutorial)
 export type CookingDomain = 'savoury' | 'dessert' | 'baking';
@@ -42,6 +42,7 @@ export interface RecipeDefinition {
   resultQuantity: number; // How many items produced
   friendshipValue: number; // How much friendship when gifted
   unlockRequirement?: string; // Recipe ID that must be mastered first
+  courseRequired?: boolean; // Only unlocks after completing Mum's full cooking course (all 3 domains mastered)
   teacherNpc?: string; // NPC ID who teaches this recipe
   image?: string; // Optional image URL for the recipe
   instructions?: string[]; // Optional step-by-step cooking instructions
@@ -76,7 +77,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     id: 'pickled_onions',
     name: 'pickled_onions',
     displayName: 'Pickled Onions',
-    category: 'tutorial',
+    category: 'miscellaneous',
     description: "Sharp, tangy pickled onions. The Witch's favourite sandwich ingredient!",
     ingredients: [
       { itemId: 'crop_onion', quantity: 4 },
@@ -99,14 +100,15 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     ],
   },
 
-  // ===== TUTORIAL RECIPES (Mother teaches) =====
+  // ===== POST-COURSE DESSERTS (unlock after completing all 3 domains) =====
 
   french_toast: {
     id: 'french_toast',
     name: 'french_toast',
     displayName: 'French Toast',
-    category: 'tutorial',
-    description: "Sweet eggy bread. Mother's first cooking lesson.",
+    category: 'dessert',
+    courseRequired: true,
+    description: "Sweet eggy bread — a treat once you know your way around the kitchen.",
     ingredients: [
       { itemId: 'bread', quantity: 1 },
       { itemId: 'egg', quantity: 1 },
@@ -121,7 +123,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_french_toast',
     resultQuantity: 1,
     friendshipValue: 15,
-    teacherNpc: 'mother',
     image: cookingAssets.french_toast,
     instructions: [
       'Put egg, milk, cinnamon, sugar and salt in a shallow, but wide bowl, and stir.',
@@ -150,7 +151,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_spaghetti',
     resultQuantity: 2,
     friendshipValue: 25,
-    unlockRequirement: 'french_toast',
   },
 
   potato_pizza: {
@@ -174,7 +174,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_pizza',
     resultQuantity: 1,
     friendshipValue: 30,
-    unlockRequirement: 'french_toast',
     image: cookingAssets.potato_pizza,
   },
 
@@ -220,7 +219,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_crepes',
     resultQuantity: 3,
     friendshipValue: 25,
-    unlockRequirement: 'french_toast',
     image: cookingAssets.crepes,
     instructions: [
       'Scrape the vanilla seeds from the pod and mix it with the sugar. Whisk all the ingredients together in a bowl - make sure there are no lumps.',
@@ -246,7 +244,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_marzipan_chocolates',
     resultQuantity: 4,
     friendshipValue: 35,
-    unlockRequirement: 'french_toast',
   },
 
   vanilla_ice_cream: {
@@ -301,7 +298,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_bread',
     resultQuantity: 1,
     friendshipValue: 30,
-    unlockRequirement: 'french_toast',
     instructions: [
       'On the first day, stir together the water, the sourdough and the yeast in a bowl. You might want to hold back on some of the water, because the flour can hold more or less moisture.',
       'Add whole-grain wheat flour and wheat flour, and make sure to knead it thoroughly - at least for 15 minutes! This will help you build good strength in your arms, if you do it right!',
@@ -333,7 +329,6 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_cookies',
     resultQuantity: 6,
     friendshipValue: 15,
-    unlockRequirement: 'french_toast',
     instructions: [
       'Whisk sugar and butter until it becomes light and fluffy. Add the egg and whisk again.',
       "In another bowl, mix flour, vanilla, baking powder and salt, then add it to the sugar mix by pouring it through a finely meshed sieve - that's how you avoid clumps. Stir it thoroughly, then add the chocolate chips.",
@@ -423,6 +418,9 @@ export function canUnlockRecipe(recipeId: string, masteredRecipes: string[]): bo
 
   // Starter recipes are always available
   if (recipe.category === 'starter') return true;
+
+  // courseRequired recipes are handled separately by CookingManager.isCookingCourseComplete()
+  if (recipe.courseRequired) return false;
 
   // Check if prerequisite is mastered
   if (recipe.unlockRequirement) {

@@ -111,13 +111,13 @@ export function createMumNPC(
         text: 'Oh, I\'d love to teach you! Cooking is such a wonderful skill. Let me show you some of my favourite recipes.',
         expression: 'happy',
         responses: [
-          // First time - learn French Toast
-          { text: 'I\'d like to learn French Toast.', nextId: 'learn_french_toast', hiddenIfRecipeUnlocked: 'french_toast' },
+          // Fireplace intro — shown until player has opened the fireplace for the first time
+          { text: 'That sounds wonderful! Where do I start?', nextId: 'fireplace_intro', hiddenIfFireplaceTutorialComplete: true },
 
-          // After mastering French Toast - choose a domain (only shown if no domain started)
-          { text: 'Can you teach me some savoury dishes?', nextId: 'choose_savoury', requiredRecipeMastered: 'french_toast', hiddenIfAnyDomainStarted: true },
-          { text: 'I want to learn about desserts.', nextId: 'choose_dessert', requiredRecipeMastered: 'french_toast', hiddenIfAnyDomainStarted: true },
-          { text: 'Tell me about baking.', nextId: 'choose_baking', requiredRecipeMastered: 'french_toast', hiddenIfAnyDomainStarted: true },
+          // After fireplace tutorial — choose a domain (only shown if no domain started yet)
+          { text: 'Can you teach me some savoury dishes?', nextId: 'choose_savoury', requiredFireplaceTutorialComplete: true, hiddenIfAnyDomainStarted: true },
+          { text: 'I want to learn about desserts.', nextId: 'choose_dessert', requiredFireplaceTutorialComplete: true, hiddenIfAnyDomainStarted: true },
+          { text: 'Tell me about baking.', nextId: 'choose_baking', requiredFireplaceTutorialComplete: true, hiddenIfAnyDomainStarted: true },
 
           // Continue with current domain (shown if domain started but not mastered)
           { text: 'Continue with savoury cooking.', nextId: 'learn_savoury', requiredDomainStarted: 'savoury', hiddenIfDomainMastered: 'savoury' },
@@ -132,18 +132,14 @@ export function createMumNPC(
           { text: 'Teach me about baking.', nextId: 'choose_baking', hiddenIfDomainStarted: 'baking', requiredDomainMastered: 'savoury' },
           { text: 'Teach me about baking.', nextId: 'choose_baking', hiddenIfDomainStarted: 'baking', requiredDomainMastered: 'dessert' },
 
-          // Progress check
-          { text: 'Show me what you\'ve taught me already.', nextId: 'not_ready', hiddenIfRecipeMastered: 'french_toast', requiredRecipeUnlocked: 'french_toast' },
           { text: 'Maybe later.' },
         ],
       },
       {
-        id: 'not_ready',
-        text: 'Show me you\'ve mastered cooking French Toast, and I\'ll show you more recipes. Practice makes perfect, love!',
-        expression: 'default',
-        responses: [
-          { text: 'I understand.' },
-        ],
+        id: 'fireplace_intro',
+        text: 'You can make tea right here in this kitchen, using the fireplace! *She points to the crackling fire.* Click on it and give it a try — the ingredients are on the shelf. Tea warms the soul, and it\'s the perfect place to start.',
+        expression: 'happy',
+        responses: [],
       },
       {
         id: 'choose_savoury',
@@ -173,12 +169,6 @@ export function createMumNPC(
         ],
       },
       {
-        id: 'learn_french_toast',
-        text: 'Ah, French Toast! That\'s the perfect recipe to start with. It\'s simple but delicious. You\'ll need bread, eggs, milk, and a bit of sugar. I\'ll write it down for you.',
-        expression: 'smile',
-        responses: [],
-      },
-      {
         id: 'learn_savoury',
         text: 'Savoury dishes are hearty and satisfying. What would you like to learn?',
         responses: [
@@ -197,8 +187,7 @@ export function createMumNPC(
         text: 'Desserts are my speciality! Let me show you something sweet.',
         responses: [
           { text: 'Teach me crêpes!', nextId: 'learn_crepes', hiddenIfRecipeUnlocked: 'crepes' },
-          { text: 'What about marzipan chocolates?', nextId: 'learn_marzipan', requiredRecipeMastered: 'french_toast', hiddenIfRecipeUnlocked: 'marzipan_chocolates' },
-          { text: 'What about marzipan chocolates?', nextId: 'not_ready_marzipan', hiddenIfRecipeMastered: 'french_toast' },
+          { text: 'What about marzipan chocolates?', nextId: 'learn_marzipan', hiddenIfRecipeUnlocked: 'marzipan_chocolates' },
           { text: 'Ice cream sounds lovely!', nextId: 'learn_ice_cream', requiredRecipeMastered: 'crepes', hiddenIfRecipeUnlocked: 'vanilla_ice_cream' },
           { text: 'Ice cream sounds lovely!', nextId: 'not_ready_ice_cream', hiddenIfRecipeMastered: 'crepes' },
           { text: 'Never mind.' },
@@ -225,7 +214,6 @@ export function createMumNPC(
       // Not ready dialogues for recipes with prerequisites
       { id: 'not_ready_chocolate_cake', text: 'Chocolate cake is quite advanced, dear. Master the chocolate cookies recipe first - once you\'ve got the hang of basic baking, then we can tackle the cake. Practice makes perfect!', expression: 'default', responses: [] },
       { id: 'not_ready_ice_cream', text: 'Ice cream is tricky, love. Show me you\'ve mastered crêpes first, then I\'ll teach you the secrets of making perfect ice cream.', expression: 'default', responses: [] },
-      { id: 'not_ready_marzipan', text: 'Marzipan chocolates are a little fiddly, love. Make sure you\'ve really got the hang of French Toast first - once you\'ve mastered that, I\'ll show you how to make them.', expression: 'default', responses: [] },
       { id: 'not_ready_roast_dinner', text: 'A roast dinner is quite a challenge! Master the spaghetti recipe first, dear, then we\'ll work our way up to a proper Sunday roast.', expression: 'default', responses: [] },
 
       // Personal story dialogues

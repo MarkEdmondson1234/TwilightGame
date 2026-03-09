@@ -1383,9 +1383,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
   mushroom: {
     id: 'mushroom',
     name: 'mushroom',
-    displayName: 'Forest Mushroom',
+    displayName: 'Mushroom',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'A common forest mushroom. Useful in many potions and recipes.',
+    description: 'A common mushroom. Useful in many potions and recipes.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 8,
