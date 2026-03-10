@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Z_FARM_ACTIONS } from '../zIndex';
 import GameIcon from './GameIcon';
+import { iconAssets } from '../iconAssets';
 
 export type FarmActionType = 'till' | 'plant' | 'water' | 'harvest' | 'clear';
 
@@ -60,7 +61,7 @@ const FarmActionAnimation: React.FC<FarmActionAnimationProps> = ({
     }
   };
 
-  const icon = getIcon(action);
+  const icon = action !== 'water' ? getIcon(action) : null;
 
   return (
     <div
@@ -75,7 +76,11 @@ const FarmActionAnimation: React.FC<FarmActionAnimationProps> = ({
         filter: 'drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5))',
       }}
     >
-      <GameIcon icon={icon} size={32} />
+      {action === 'water' ? (
+        <img src={iconAssets.watering} width={48} height={48} alt="" />
+      ) : (
+        <GameIcon icon={icon!} size={32} />
+      )}
     </div>
   );
 };

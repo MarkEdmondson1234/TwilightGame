@@ -10,6 +10,7 @@ export const iconAssets = {
   magic: '/TwilightGame/assets-optimized/icons/actions/magic.png',
   speech_bubble: '/TwilightGame/assets-optimized/icons/actions/speech_bubble.png',
   friendship: '/TwilightGame/assets-optimized/icons/actions/friendship.png',
+  watering: '/TwilightGame/assets-optimized/icons/actions/watering.png',
   // Status
   lock: '/TwilightGame/assets-optimized/icons/ui/lock.png',
   // Navigation

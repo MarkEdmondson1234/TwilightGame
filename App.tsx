@@ -69,7 +69,6 @@ import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import FarmActionAnimation from './components/FarmActionAnimation';
-import WaterSparkleEffect from './components/WaterSparkleEffect';
 import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES } from './data/cutscenes';
 import { performanceMonitor } from './utils/PerformanceMonitor';
@@ -1559,17 +1558,6 @@ const App: React.FC = () => {
           />
         )}
 
-        {/* Water Sparkle Effect (on the watered tile) */}
-        {waterSparklePos && (
-          <WaterSparkleEffect
-            key={waterSparkleKey}
-            tileX={waterSparklePos.x}
-            tileY={waterSparklePos.y}
-            cameraX={cameraX}
-            cameraY={cameraY}
-            onComplete={clearWaterSparkle}
-          />
-        )}
 
         {/* Splash Effect (when refilling watering can) */}
         {showSplashEffect && (
