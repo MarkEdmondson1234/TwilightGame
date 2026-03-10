@@ -288,6 +288,17 @@ const CombatEncounterInner: React.FC<
     []
   );
 
+  const currentEnemySprite = useMemo(() => {
+    const { phase, telegraphedMove, actualMove } = state;
+    if (phase === 'telegraph' && telegraphedMove) {
+      return config.actionSprites?.[telegraphedMove] ?? npcSprite;
+    }
+    if ((phase === 'reveal' || phase === 'result') && actualMove) {
+      return config.actionSprites?.[actualMove] ?? npcSprite;
+    }
+    return npcSprite;
+  }, [state.phase, state.telegraphedMove, state.actualMove, config, npcSprite]);
+
   const [showItemPicker, setShowItemPicker] = useState(false);
   const [stamina, setStamina] = useState(context.actions.getStamina());
   const [introReady, setIntroReady] = useState(false);
@@ -441,9 +452,9 @@ const CombatEncounterInner: React.FC<
           className="relative flex-shrink-0"
           style={{ width: '35%', height: '80%', marginBottom: '10%' }}
         >
-          {npcSprite && (
+          {currentEnemySprite && (
             <img
-              src={npcSprite}
+              src={currentEnemySprite}
               alt={npcName}
               className="absolute bottom-0 right-0 w-full h-full object-contain object-bottom"
               style={{

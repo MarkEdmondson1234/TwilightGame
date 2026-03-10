@@ -95,6 +95,11 @@ export const UMBRA_WOLF_CONFIG: CombatantConfig = {
   feintRate: 0.15,
   telegraphDurationMs: COMBAT.TELEGRAPH_MS,
   portraitSprite: npcAssets.umbrawolf_portrait,
+  actionSprites: {
+    strike: npcAssets.umbrawolf_attacking,
+    block: npcAssets.umbrawolf_attacking_block,
+    dodge: npcAssets.umbrawolf_attacking_duck,
+  },
 
   telegraphText: {
     strike: [

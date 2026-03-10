@@ -507,6 +507,10 @@ export const npcAssets = {
   umbrawolf_walk4: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf4.png',
   umbrawolf_walk5: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf5.png',
   umbrawolf_walk6: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf6.png',
+  // Combat action sprites (used in fight UI)
+  umbrawolf_attacking: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking.png',
+  umbrawolf_attacking_block: '/TwilightGame/assets/npcs/umbra_wolf/umbrawolf_attacking_block.png',
+  umbrawolf_attacking_duck: '/TwilightGame/assets/npcs/umbra_wolf/umbrawolf_attacking_duck.png',
   // Goblin (mine creature - spawns every 5th cave level)
   goblin_idle: '/TwilightGame/assets-optimized/npcs/mine/goblin_idle.png',
   goblin_walk1: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk1.png',
