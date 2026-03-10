@@ -158,6 +158,8 @@ export const STAMINA = {
     food_marzipan_chocolates: 20,
     food_roast_dinner: 50,
     food_chocolate_cake: 25,
+    food_pickled_onions: 8,
+    food_cucumber_sandwich: 15,
   } as Record<string, number>,
 } as const;
 

@@ -16,7 +16,7 @@ interface InventoryProps {
   isOpen: boolean;
   onClose: () => void;
   items: InventoryItem[];
-  onItemClick?: (item: InventoryItem, slotIndex: number) => void;
+  onItemClick?: (item: InventoryItem, slotIndex: number, event: React.MouseEvent) => void;
   onReorder?: (fromIndex: number, toIndex: number) => void; // NEW: Callback when items reordered
   selectedSlot?: number | null; // Currently selected slot index
   maxSlots?: number;
@@ -118,10 +118,10 @@ const Inventory: React.FC<InventoryProps> = ({
     }
   });
 
-  const handleSlotClick = (item: InventoryItem | null, index: number) => {
+  const handleSlotClick = (item: InventoryItem | null, index: number, event: React.MouseEvent) => {
     // Original click handler (for item selection/use)
     if (item && onItemClick) {
-      onItemClick(item, index);
+      onItemClick(item, index, event);
     }
 
     // Touch swap logic (only on touch devices)
@@ -252,7 +252,7 @@ const Inventory: React.FC<InventoryProps> = ({
                   onDragOver={handleDragOver}
                   onDrop={(e) => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
-                  onClick={() => handleSlotClick(item, index)}
+                  onClick={(e) => handleSlotClick(item, index, e)}
                   className={`
                     relative w-full aspect-square rounded-lg transition-all
                     ${isDragging ? 'opacity-50 cursor-grabbing' : ''}

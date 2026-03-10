@@ -177,6 +177,9 @@ export const Z_MODAL = 2000;
 /** Inventory modal */
 export const Z_INVENTORY_MODAL = 2000;
 
+/** Radial menu rendered inside the inventory modal (must be above Z_INVENTORY_MODAL) */
+export const Z_INVENTORY_RADIAL_MENU = 2005;
+
 /** Dialogue boxes */
 export const Z_DIALOGUE = 2010;
 

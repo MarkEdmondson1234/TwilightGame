@@ -53,7 +53,8 @@ import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
 import { TimeManager } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
-import { Z_PLAYER, Z_TILE_BACKGROUND, zClass } from './zIndex';
+import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, zClass } from './zIndex';
+import { iconAssets } from './iconAssets';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
@@ -119,6 +120,11 @@ const App: React.FC = () => {
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
   const [selectedItemSlot, setSelectedItemSlot] = useState<number | null>(null); // Currently selected inventory slot
+  const [inventoryRadialMenu, setInventoryRadialMenu] = useState<{
+    position: { x: number; y: number };
+    item: InventoryItem;
+    slotIndex: number;
+  } | null>(null);
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
 
   // Shared state for NPC interactions (used by both MovementController and InteractionController)
@@ -1118,6 +1124,21 @@ const App: React.FC = () => {
     [magicEffectCallbacks]
   );
 
+  // Handle eating food directly from inventory
+  const handleFoodEat = useCallback(
+    (item: InventoryItem) => {
+      if (inventoryManager.getQuantity(item.id) <= 0) {
+        showToast("You don't have any of those!", 'warning');
+        return;
+      }
+      const restored = staminaManager.eatFood(item.id);
+      inventoryManager.removeItem(item.id, 1);
+      showToast(`Ate ${item.name}. Restored ${Math.round(restored)} stamina.`, 'success');
+      closeUI('inventory');
+    },
+    [showToast, closeUI]
+  );
+
   // Handle inventory reorder (drag-drop)
   const handleInventoryReorder = useCallback((fromIndex: number, toIndex: number) => {
     inventoryManager.swapInventoryItems(fromIndex, toIndex);
@@ -1768,7 +1789,7 @@ const App: React.FC = () => {
           onReorder={handleInventoryReorder}
           selectedSlot={selectedItemSlot}
           isMagicUnlocked={gameState.isMagicBookUnlocked()}
-          onItemClick={(item, slotIndex) => {
+          onItemClick={(item, slotIndex, event) => {
             const itemDef = getItem(item.id);
             if (itemDef && itemDef.category === ItemCategory.POTION) {
               // Friendship/Grudge potions are given to NPCs, not drunk
@@ -1781,10 +1802,16 @@ const App: React.FC = () => {
                 // Close inventory after drinking potion for immersion
                 closeUI('inventory');
               }
+            } else if (itemDef && itemDef.category === ItemCategory.FOOD) {
+              // Food items show a radial menu: Select, Place, or Eat
+              setInventoryRadialMenu({
+                position: { x: event.clientX, y: event.clientY },
+                item,
+                slotIndex,
+              });
             } else {
-              // For non-potions, just select the item
+              // For non-potions, non-food: just select the item
               setSelectedItemSlot(slotIndex);
-              console.log(`Selected ${item.name} in slot ${slotIndex}`);
             }
           }}
         />
@@ -2041,6 +2068,48 @@ const App: React.FC = () => {
           position={radialMenuPosition}
           options={radialMenuOptions}
           onClose={() => setRadialMenuVisible(false)}
+        />
+      )}
+
+      {/* Radial menu for food items clicked in inventory */}
+      {inventoryRadialMenu && (
+        <RadialMenu
+          position={inventoryRadialMenu.position}
+          zIndex={Z_INVENTORY_RADIAL_MENU}
+          options={[
+            {
+              id: 'select',
+              label: 'Select',
+              icon: iconAssets.hand,
+              color: '#6b7280',
+              onSelect: () => {
+                setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                setInventoryRadialMenu(null);
+              },
+            },
+            {
+              id: 'place',
+              label: 'Place',
+              icon: '🌍',
+              color: '#3b82f6',
+              onSelect: () => {
+                setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                closeUI('inventory');
+                setInventoryRadialMenu(null);
+              },
+            },
+            {
+              id: 'eat',
+              label: 'Eat',
+              icon: '🍽️',
+              color: '#f59e0b',
+              onSelect: () => {
+                handleFoodEat(inventoryRadialMenu.item);
+                setInventoryRadialMenu(null);
+              },
+            },
+          ]}
+          onClose={() => setInventoryRadialMenu(null)}
         />
       )}
 

@@ -23,9 +23,11 @@ interface RadialMenuProps {
   options: RadialMenuOption[];
   /** Callback when menu is closed without selection */
   onClose: () => void;
+  /** Override default z-index (use when rendering inside a modal) */
+  zIndex?: number;
 }
 
-const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) => {
+const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose, zIndex: zIndexOverride }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
@@ -73,7 +75,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
           right: 0,
           bottom: 0,
           backgroundColor: 'transparent',
-          zIndex: Z_RADIAL_MENU,
+          zIndex: zIndexOverride ?? Z_RADIAL_MENU,
         }}
         onClick={onClose}
       />
@@ -92,7 +94,7 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose }) =
               left: position.x,
               top: y,
               transform: 'translate(-50%, -50%)',
-              zIndex: Z_RADIAL_MENU + 1,
+              zIndex: (zIndexOverride ?? Z_RADIAL_MENU) + 1,
             }}
           >
             {/* Option button - cottage-core styled */}
