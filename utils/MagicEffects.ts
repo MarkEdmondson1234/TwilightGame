@@ -10,6 +10,7 @@
  */
 
 import { WeatherType } from '../data/weatherConfig';
+import { mapManager } from '../maps';
 import { TimeManager, TimeOfDay } from './TimeManager';
 import { farmManager } from './farmManager';
 import { friendshipManager } from './FriendshipManager';
@@ -625,7 +626,8 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_homeward',
     effectType: 'teleport_home',
     execute: (callbacks) => {
-      callbacks.teleportPlayer('mums_kitchen', { x: 7, y: 6 });
+      const homeSpawn = mapManager.getMap('mums_kitchen')?.spawnPoint ?? { x: 8, y: 6 };
+      callbacks.teleportPlayer('mums_kitchen', homeSpawn);
       callbacks.showToast('You are whisked away home...', 'info');
       callbacks.triggerVFX?.('teleport', callbacks.getPlayerPosition());
       return {

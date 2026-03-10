@@ -469,7 +469,8 @@ const App: React.FC = () => {
     staminaManager.initialise({
       showToast,
       teleportHome: () => {
-        handleMapTransition('mums_kitchen', { x: 7, y: 6 });
+        const spawnPoint = mapManager.getMap('mums_kitchen')?.spawnPoint ?? { x: 8, y: 6 };
+        handleMapTransition('mums_kitchen', spawnPoint);
       },
     });
   }, [showToast]);

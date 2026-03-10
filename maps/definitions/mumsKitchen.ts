@@ -79,7 +79,7 @@ export const mumsKitchen: MapDefinition = {
   grid: parseGrid(gridString),
   colorScheme: 'indoor',
   isRandom: false,
-  spawnPoint: { x: 7, y: 6 }, // Centre of walkable area
+  spawnPoint: { x: 8, y: 6 }, // Safe walkable spawn (verified via F3)
   renderMode: 'background-image',
   characterScale: 1.8, // Make player/NPCs larger to fit the room scale (20% increase from 1.5)
 
