@@ -41,4 +41,5 @@ export {
   // Mine NPCs
   createGoblinNPC,
   createKingLavaFrogNPC,
+  createLavaFrogWorkerNPC,
 } from './npcs';

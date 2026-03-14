@@ -126,9 +126,7 @@ export function transitionToMap(
         break;
       }
       case 'lava': {
-        // Generate lava level with exit back to the current map location
-        const playerLocation = gameState.getPlayerLocation();
-        newMap = generateLavaMap(undefined, playerLocation.mapId, playerLocation.position);
+        newMap = generateLavaMap();
         break;
       }
       default:

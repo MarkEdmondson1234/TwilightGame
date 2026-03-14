@@ -225,8 +225,7 @@ export async function initializeGameAssets(
       const playerLoc = gameState.getPlayerLocation();
       newMap = generateRandomShop(seed, playerLoc.mapId, playerLoc.position);
     } else if (mapType === 'lava') {
-      const playerLoc = gameState.getPlayerLocation();
-      newMap = generateLavaMap(seed, playerLoc.mapId, playerLoc.position);
+      newMap = generateLavaMap(seed);
     }
 
     if (newMap) {

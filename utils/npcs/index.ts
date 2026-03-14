@@ -50,4 +50,5 @@ export {
 export {
   createGoblinNPC,
   createKingLavaFrogNPC,
+  createLavaFrogWorkerNPC,
 } from './mineNPCs';

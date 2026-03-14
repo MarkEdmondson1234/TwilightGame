@@ -10,6 +10,7 @@ import {
   createPossumNPC,
   createSparrowNPC,
   createGoblinNPC,
+  createLavaFrogWorkerNPC,
 } from '../utils/npcFactories';
 
 /**
@@ -1534,9 +1535,7 @@ export function generateRandomShop(
  * @param returnToPosition - Where the player spawns in the cave on exit
  */
 export function generateLavaMap(
-  seed: number = Date.now(),
-  returnToMapId: string = 'village',
-  returnToPosition: Position = { x: 15, y: 15 }
+  seed: number = Date.now()
 ): MapDefinition {
   const width = 30;
   const height = 30;
@@ -1598,6 +1597,25 @@ export function generateLavaMap(
 
   console.log(`[Lava] Generated lava level at depth ${lavaDepth} (seed ${seed})`);
 
+  // Spawn 1–3 wandering lava frog workers per level
+  const lavaWorkerNames = ['Molten', 'Scoria', 'Pumice', 'Cinder', 'Basalt', 'Igneous', 'Flint'];
+  const workerCount = Math.floor(rand() * 3) + 1;
+  const npcs = [];
+  for (let i = 0; i < workerCount; i++) {
+    const nameIndex = Math.floor(rand() * lavaWorkerNames.length);
+    let wx = spawnX;
+    let wy = spawnY;
+    let attempts = 0;
+    do {
+      wx = Math.floor(rand() * (width - 6)) + 3;
+      wy = Math.floor(rand() * (height - 4)) + 2;
+      attempts++;
+    } while (attempts < 20 && Math.abs(wx - spawnX) < 5 && Math.abs(wy - spawnY) < 5);
+    npcs.push(
+      createLavaFrogWorkerNPC(`lava_frog_worker_${seed}_${i}`, { x: wx, y: wy }, lavaWorkerNames[nameIndex])
+    );
+  }
+
   return {
     id: `lava_${seed}`,
     name: 'Lava Cavern',
@@ -1611,9 +1629,9 @@ export function generateLavaMap(
       {
         fromPosition: { x: 1, y: exitY },
         tileType: TileType.MINE_ENTRANCE,
-        toMapId: returnToMapId,
-        toPosition: returnToPosition,
-        label: 'Exit Lava Cavern',
+        toMapId: 'RANDOM_CAVE',
+        toPosition: { x: width - 3, y: exitY },
+        label: 'Back to the Mines',
       },
       {
         fromPosition: { x: width - 2, y: exitY },
@@ -1623,6 +1641,6 @@ export function generateLavaMap(
         label: deeperLavaLabel,
       },
     ],
-    npcs: [],
+    npcs,
   };
 }

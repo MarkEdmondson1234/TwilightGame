@@ -519,6 +519,9 @@ export const npcAssets = {
   king_lava_frog_01: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
   king_lava_frog_02: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog02.png',
   king_lava_frog_portrait: '/TwilightGame/assets/npcs/king_lava_frog/king_lava_frog01.png',
+  // Lava Frog Workers (wander the procedural lava levels)
+  lava_frog_worker_01: '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker01.png',
+  lava_frog_worker_02: '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker02.png',
   // Goblin (mine creature - spawns every 5th cave level)
   goblin_idle: '/TwilightGame/assets-optimized/npcs/mine/goblin_idle.png',
   goblin_walk1: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk1.png',
