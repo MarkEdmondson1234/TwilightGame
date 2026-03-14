@@ -3,7 +3,7 @@
  */
 
 import { NPC, Direction, Position } from '../../../types';
-import { npcAssets } from '../../../assets';
+import { npcAssets, dialogueSpriteAssets } from '../../../assets';
 import { createWanderingNPC } from '../createNPC';
 
 /**
@@ -31,6 +31,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
     direction: Direction.Down,
     sprite: npcAssets.mushra_01,
     portraitSprite: npcAssets.mushra_portrait,
+    dialogueExpressions: dialogueSpriteAssets.mushra,
     scale: 4.0,
     interactionRadius: 1.5,
     collisionRadius: 0.35,
@@ -45,6 +46,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       // Good Friends greeting - takes priority over stranger greeting when unlocked
       {
         id: 'greeting',
+        expression: 'smile',
         text: '*Mushra looks up from her sketchbook and beams.* "Oh, I was just thinking of you! I wanted to show you my sketch book — I have some new drawings."',
         requiredFriendshipTier: 'good_friend',
         seasonalText: {
@@ -113,6 +115,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'what_do_you_do',
+        expression: 'smile',
         text: '"I paint, mostly. Nature studies, botanical illustrations... I spend hours just observing. The way light filters through the canopy, how the woods are absolutely brimming with life if you know where to look." *She smiles.* "And mushrooms, of course. I\'m rather obsessed with mushrooms."',
         seasonalText: {
           autumn:
@@ -125,6 +128,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'about_mushrooms',
+        expression: 'smile',
         text: '"Oh, I could talk about mushrooms all day! They\'re fascinating - both scientifically and aesthetically. The shapes, the colours, the way they just appear overnight like magic..." *Her eyes light up.* "Did you know fungi are more closely related to animals than plants?"',
         responses: [
           {
@@ -137,6 +141,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'mushroom_facts',
+        expression: 'smile',
         text: '"The largest living organism on Earth is a honey fungus in America - it\'s over two thousand years old and covers nearly ten square kilometres!" *She leans in excitedly.* "And that\'s just what we can see above ground. Below, the mycelium networks connect entire forests..."',
         responses: [
           { text: 'What are mycelium networks?', nextId: 'mushroom_network' },
@@ -146,6 +151,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'fly_agaric',
+        expression: 'smile',
         text: '"Fly agaric! Amanita muscaria — the classic red cap with white spots. I just can\'t resist their cute polka dots!" *She clasps her hands together.* "They\'re terribly toxic, of course, but absolutely gorgeous. I\'ve painted dozens of them. There\'s something almost fairy-tale about them, isn\'t there?"',
         responses: [
           { text: 'Have you ever tried to find a fairy?', nextId: 'have_you_seen_fairies' },
@@ -154,10 +160,12 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'mushroom_network',
+        expression: 'smile',
         text: '"Trees communicate through fungi! The mycelium creates this underground web - some call it the \'wood wide web.\' Mother trees share nutrients with their seedlings through it. The whole forest is connected, like one enormous organism." *She sighs happily.* "Isn\'t that beautiful?"',
       },
       {
         id: 'mushroom_house',
+        expression: 'smile',
         text: '"It\'s rather special! The shop\'s on the ground floor - I sell art prints, postcards, little sketchbooks... even some mushroom-themed dresses I designed. And a cookbook!" *She laughs.* "The studio\'s upstairs, where all the magic happens. You should stop by sometime."',
         seasonalText: {
           autumn:
@@ -190,11 +198,13 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'personal_dreams',
+        expression: 'smile',
         text: '"If I met a real fairy?" *Her face lights up.* "I\'d ask if I could paint them, of course! Can you imagine? A portrait of the fairy queen herself, done from life... I\'d frame it right in the centre of my studio." *She sighs.* "Silly dream, perhaps. But dreams are what keep us going."',
         requiredFriendshipTier: 'acquaintance',
       },
       {
         id: 'loneliness',
+        expression: 'smile',
         text: '*She looks at you thoughtfully.* "I won\'t pretend the solitude isn\'t hard sometimes. There are days when I wish I had someone to share a cup of tea with, someone who appreciates the little things." *She smiles warmly.* "That\'s why I value friends like you. You understand."',
         requiredFriendshipTier: 'good_friend',
         responses: [
@@ -205,6 +215,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       // Good Friends hub node - deeper personal conversation topics
       {
         id: 'good_friend_chat',
+        expression: 'smile',
         text: '"Hi, there! I was hoping to see you. Would you keep me company for a bit? I love living in the forest, but sometimes I get a bit lonely."',
         requiredFriendshipTier: 'good_friend',
         responses: [
@@ -216,6 +227,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'sketchbook',
+        expression: 'smile',
         text: '*She flips through pages of delicate watercolours — mushrooms, trees, and tiny fairy portraits.* "I\'ve been experimenting with new techniques. What do you think?"',
         requiredFriendshipTier: 'good_friend',
         responses: [
@@ -225,6 +237,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'keep_company',
+        expression: 'smile',
         text: '"When I\'m in a crowd, I often get overwhelmed. So, on the whole, it\'s easier to live in the forest. I love it here. Mind you, it can get a bit lonely." *She smiles.* "I\'m so glad that you\'re my friend! That way, I get the best of both worlds."',
         requiredFriendshipTier: 'good_friend',
         responses: [
@@ -234,6 +247,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'best_of_both_worlds',
+        expression: 'smile',
         text: '"I think it\'s important to have people who care for you. I don\'t need a lot of friends — just one good one, really." *She looks at you warmly.*',
         requiredFriendshipTier: 'good_friend',
         responses: [
@@ -270,11 +284,13 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'being_herself',
+        expression: 'smile',
         text: '*She smiles quietly.* "Thank you for understanding. Most people don\'t. But you... you just let me be me. That means more than you know."',
         requiredFriendshipTier: 'good_friend',
       },
       {
         id: 'cinema',
+        expression: 'smile',
         text: '"One thing I miss about living in a city is that I don\'t get to go to the cinema. I love films — don\'t you? My favourite films are about friendship and family — and fairies." *Her eyes light up.* "Oh, and I wish there were more films about mushrooms."',
         requiredFriendshipTier: 'good_friend',
         responses: [
@@ -284,6 +300,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       },
       {
         id: 'offer_easel',
+        expression: 'smile',
         text: '"You want to learn to paint?" *Her face lights up.* "Oh, that\'s wonderful! I have a spare easel in my studio — here, take it. You can set it up anywhere indoors and start creating. I\'ll teach you everything I know!"',
         responses: [
           {

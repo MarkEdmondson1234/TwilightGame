@@ -689,6 +689,11 @@ export const dialogueSpriteAssets = {
     happy: '/TwilightGame/assets/npcs/mum/dialogue/mum_happy.png',
     smile: '/TwilightGame/assets/npcs/mum/dialogue/mum_smile.png',
   },
+  // Mushra dialogue expressions (default, smile)
+  mushra: {
+    default: '/TwilightGame/assets/npcs/mushra/dialogue/mushra_default.png',
+    smile: '/TwilightGame/assets/npcs/mushra/dialogue/mushra_smile.png',
+  },
   // Add more NPCs as artwork becomes available
   // shopkeeper: { default: '...', happy: '...', etc. },
 };
