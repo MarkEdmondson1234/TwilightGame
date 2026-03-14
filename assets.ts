@@ -602,6 +602,10 @@ export const npcAssets = {
   // Queen Celestia assets (fairy queen of the deep forest)
   celestia: '/TwilightGame/assets/npcs/celestia/celistia.png',
   celestia_portrait: '/TwilightGame/assets/npcs/celestia/celistia.png',
+  // Davead the Flamingo (mushroom forest expat)
+  davead_01: '/TwilightGame/assets-optimized/npcs/flamingo/davead_the_flamingo01.png',
+  davead_02: '/TwilightGame/assets-optimized/npcs/flamingo/davead_the_flamingo02.png',
+  davead_portrait: '/TwilightGame/assets/npcs/flamingo/davead_the_flamingo01.png',
 };
 
 // Player assets (add your custom sprites here when ready)

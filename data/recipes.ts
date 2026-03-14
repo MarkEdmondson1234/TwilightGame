@@ -100,6 +100,34 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     ],
   },
 
+  lava_cake: {
+    id: 'lava_cake',
+    name: 'lava_cake',
+    displayName: 'Lava Cake',
+    category: 'miscellaneous',
+    description: "A French flamingo's secret family recipe. Freeze the batter, then bake it — the chocolate spills like lava when you bite in.",
+    ingredients: [
+      { itemId: 'butter', quantity: 1 },
+      { itemId: 'chocolate', quantity: 1 },
+      { itemId: 'egg', quantity: 3 },
+      { itemId: 'sugar', quantity: 1 },
+      { itemId: 'flour', quantity: 1 },
+    ],
+    cookingTime: 30,
+    difficulty: 3,
+    resultItemId: 'food_lava_cake',
+    resultQuantity: 1,
+    friendshipValue: 40,
+    teacherNpc: 'davead',
+    instructions: [
+      'Melt the butter in a casserole at low heat. Take the casserole off the heat and add the diced chocolate. Stir until the chocolate is dissolved.',
+      'Whip the sugar and eggs until frothy — the sugar should be dissolved. Carefully stir in the chocolate and butter mixture.',
+      'Grease the cake tin with butter and pour in the mixture.',
+      'Put the batter in the freezer for at least 3 hours. Then take it directly from the freezer and bake in the oven at 180 degrees for about 16 minutes.',
+      'When biting into the cake, chocolate will spill from it like lava.',
+    ],
+  },
+
   // ===== POST-COURSE DESSERTS (unlock after completing all 3 domains) =====
 
   french_toast: {

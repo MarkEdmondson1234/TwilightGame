@@ -215,6 +215,13 @@ export const NPC_GIFT_PREFERENCES: Record<string, NPCGiftPreferences> = {
       'crop_cauliflower',
     ],
   },
+
+  // Davead the Flamingo - loves cucumber and salmon, home-cooked food
+  davead: {
+    loves: ['food_cucumber_salmon_sandwich', 'food_cucumber_sandwich', 'crop_cucumber'],
+    dislikes: [],
+    lovesHomeCookedFood: true,
+  },
 };
 
 // ============================================================================
@@ -613,6 +620,21 @@ export const NPC_GIFT_REACTIONS: Record<
     disliked: {
       text: '*The deer recoils, eyes wide with alarm at the scent of meat. It backs away nervously, hooves clicking on the ground.*',
       expression: 'thinky',
+    },
+  },
+
+  davead: {
+    loved: {
+      text: '"Ooh là là! Mon Dieu, zis is exactly what I needed. You are most kind, dude. Très généreux."',
+    },
+    liked: {
+      text: '"Ah, merci! Zis is quite lovely. You \'ave good taste, yo."',
+    },
+    neutral: {
+      text: '"Merci. I shall... find a use for zis."',
+    },
+    disliked: {
+      text: '"Mmm. Non. Zis is not really my zing, you know? But ze thought — c\'est gentil, dude."',
     },
   },
 };

@@ -33,6 +33,7 @@ export {
   createBunnyflyNPC,
   createMotherSeaNPC,
   createMushraNPC,
+  createDaveadNPC,
   createDeerNPC,
   createPuffleNPC,
   createSuffleNPC,

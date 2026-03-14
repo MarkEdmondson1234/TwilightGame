@@ -1275,6 +1275,16 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: cookingAssets.cucumber_sandwich,
   },
 
+  food_lava_cake: {
+    id: 'food_lava_cake',
+    name: 'food_lava_cake',
+    displayName: 'Lava Cake',
+    category: ItemCategory.FOOD,
+    description: "A decadent chocolate cake with a molten centre. When you bite in, the chocolate spills like lava. A flamingo's family secret.",
+    stackable: true,
+    sellPrice: 40,
+  },
+
   // ===== MAGICAL INGREDIENTS =====
   // Forageable - Time/Weather dependent
   moonpetal: {

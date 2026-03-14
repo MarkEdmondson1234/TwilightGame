@@ -1,0 +1,38 @@
+# Davead's Secret Recipe
+#
+# Davead the Flamingo will share his family lava cake recipe in exchange
+# for a cucumber and salmon sandwich.
+#
+# Quest flow:
+# 1. Player reaches the "lava_cake_deal" dialogue node and accepts → quest starts
+# 2. Player brings a cucumber and salmon sandwich → quest completes
+# 3. On 'complete' stage: handler removes sandwich from inventory, unlocks lava_cake recipe
+#
+# Handler: data/questHandlers/daveadLavaCakeHandler.ts
+
+id: davead_lava_cake
+title: "Davead's Secret Recipe"
+description: Bring Davead the Flamingo a cucumber and salmon sandwich to earn his family lava cake recipe.
+type: achievement
+
+trigger:
+  type: manual  # Started via Davead's dialogue tree (lava_cake_deal node)
+
+stages:
+  - id: active
+    stageNumber: 1
+    text: >
+      Davead will share his family lava cake recipe if you bring him
+      a cucumber and salmon sandwich. He was very specific about the freshness.
+    dialogue:
+      davead:
+        text: "Yo, 'ave you got zat sandwich yet? Ze cucumber, ze salmon — bring it to me, dude. Zen we talk lava cake."
+
+  - id: complete
+    stageNumber: 2
+    text: Davead shared his secret lava cake recipe. The lava cake is now in your recipe book.
+    event:
+      title: "Davead's recipe obtained"
+      description: earned Davead's trust with a cucumber and salmon sandwich
+      contributor: A flamingo of refined taste
+    end: true
