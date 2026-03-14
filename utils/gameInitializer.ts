@@ -198,8 +198,8 @@ export async function initializeGameAssets(
 
   // Handle both "cave_12345" format and "RANDOM_CAVE" format
   const randomMapMatch =
-    savedLocation.mapId.match(/^(forest|cave|shop)_\d+$/) ||
-    savedLocation.mapId.match(/^RANDOM_(FOREST|CAVE|SHOP)$/i);
+    savedLocation.mapId.match(/^(forest|cave|shop|lava)_\d+$/) ||
+    savedLocation.mapId.match(/^RANDOM_(FOREST|CAVE|SHOP|LAVA)$/i);
   if (randomMapMatch) {
     // Extract map type from either format
     let mapType: string;
@@ -214,7 +214,7 @@ export async function initializeGameAssets(
     console.log(`[App] Regenerating ${mapType} map with seed ${seed}`);
 
     // Import and call the appropriate generator
-    const { generateRandomForest, generateRandomCave, generateRandomShop } =
+    const { generateRandomForest, generateRandomCave, generateRandomShop, generateLavaMap } =
       await import('../maps/procedural');
     let newMap;
     if (mapType === 'forest') {
@@ -224,6 +224,9 @@ export async function initializeGameAssets(
     } else if (mapType === 'shop') {
       const playerLoc = gameState.getPlayerLocation();
       newMap = generateRandomShop(seed, playerLoc.mapId, playerLoc.position);
+    } else if (mapType === 'lava') {
+      const playerLoc = gameState.getPlayerLocation();
+      newMap = generateLavaMap(seed, playerLoc.mapId, playerLoc.position);
     }
 
     if (newMap) {

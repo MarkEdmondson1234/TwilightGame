@@ -12,6 +12,7 @@ import { farmArea } from './definitions/farmArea';
 import { seedShed } from './definitions/seedShed';
 import { debugNPCs } from './definitions/debugNPCs';
 import { deepForest } from './definitions/deepForest';
+import { kingLavaFrogLair } from './definitions/kingLavaFrogLair';
 import { witchHut } from './definitions/witchHut';
 import { witchHutInterior } from './definitions/witchHutInterior';
 import { mumsKitchen } from './definitions/mumsKitchen';
@@ -47,6 +48,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(seedShed);
   mapManager.registerMap(debugNPCs);
   mapManager.registerMap(deepForest);
+  mapManager.registerMap(kingLavaFrogLair);
   mapManager.registerMap(witchHut);
   mapManager.registerMap(witchHutInterior);
   mapManager.registerMap(mumsKitchen);

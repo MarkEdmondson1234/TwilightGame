@@ -515,6 +515,10 @@ export const npcAssets = {
   umbrawolf_attacking: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking.png',
   umbrawolf_attacking_block: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking_block.png',
   umbrawolf_attacking_duck: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking_duck.png',
+  // King Lava Frog (boss of the lava caverns)
+  king_lava_frog_01: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
+  king_lava_frog_02: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog02.png',
+  king_lava_frog_portrait: '/TwilightGame/assets/npcs/king_lava_frog/king_lava_frog01.png',
   // Goblin (mine creature - spawns every 5th cave level)
   goblin_idle: '/TwilightGame/assets-optimized/npcs/mine/goblin_idle.png',
   goblin_walk1: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk1.png',

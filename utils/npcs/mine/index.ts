@@ -3,3 +3,4 @@
  */
 
 export { createGoblinNPC } from './goblin';
+export { createKingLavaFrogNPC } from './kingLavaFrog';
