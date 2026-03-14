@@ -21,7 +21,7 @@ import { bearDen } from './definitions/bearDen';
 import { mushroomMap } from './definitions/mushroomMap';
 import { ruins } from './definitions/ruins';
 import { personalGarden } from './definitions/personalGarden';
-import { generateRandomForest, generateRandomCave, generateRandomShop } from './procedural';
+import { generateRandomForest, generateRandomCave, generateRandomShop, generateLavaMap } from './procedural';
 import { gameState } from '../GameState';
 
 /**
@@ -77,16 +77,19 @@ export function transitionToMap(
   if (mapId.startsWith('RANDOM_')) {
     const type = mapId.replace('RANDOM_', '').toLowerCase();
 
-    // Going deeper into forest/cave
+    // Going deeper into forest/cave/lava
     if (type === 'forest') {
       gameState.enterForest();
     } else if (type === 'cave') {
       gameState.enterCave();
+    } else if (type === 'lava') {
+      gameState.enterLava();
     }
   } else if (mapId === 'village') {
     // Coming back to village - reset all depth counters
     const currentForestDepth = gameState.getForestDepth();
     const currentCaveDepth = gameState.getCaveDepth();
+    const currentLavaDepth = gameState.getLavaDepth();
 
     if (currentForestDepth > 0) {
       console.log(`[GameState] Exited forest completely (was at depth ${currentForestDepth})`);
@@ -95,6 +98,10 @@ export function transitionToMap(
     if (currentCaveDepth > 0) {
       console.log(`[GameState] Exited cave completely (was at depth ${currentCaveDepth})`);
       gameState.resetCaveDepth();
+    }
+    if (currentLavaDepth > 0) {
+      console.log(`[GameState] Exited lava completely (was at depth ${currentLavaDepth})`);
+      gameState.resetLavaDepth();
     }
   }
 
@@ -114,6 +121,12 @@ export function transitionToMap(
         // Generate shop with exit back to the current map location from game state
         const playerLocation = gameState.getPlayerLocation();
         newMap = generateRandomShop(undefined, playerLocation.mapId, playerLocation.position);
+        break;
+      }
+      case 'lava': {
+        // Generate lava level with exit back to the current map location
+        const playerLocation = gameState.getPlayerLocation();
+        newMap = generateLavaMap(undefined, playerLocation.mapId, playerLocation.position);
         break;
       }
       default:

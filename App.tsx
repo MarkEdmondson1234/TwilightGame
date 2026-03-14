@@ -7,7 +7,7 @@ import {
   TIMING,
   SHARED_FARM_MAP_IDS,
 } from './constants';
-import { Position, Direction, ImageRoomLayer, NPC } from './types';
+import { Position, Direction, ImageRoomLayer, NPC, TileType } from './types';
 import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -97,6 +97,36 @@ import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
 import VFXRenderer from './components/VFXRenderer';
 import VFXTestPanel from './components/VFXTestPanel';
+
+/**
+ * Find the nearest clear MINE_FLOOR tile to an origin position.
+ * Used to place the lava entrance adjacent to a defeated goblin.
+ * Searches outward in a spiral, skipping non-floor and existing transition tiles.
+ */
+function findClearTileNear(
+  origin: { x: number; y: number },
+  mapId: string
+): { x: number; y: number } | null {
+  const map = mapManager.getMap(mapId);
+  if (!map) return null;
+  const usedPositions = new Set(
+    map.transitions.map((t) => `${t.fromPosition.x},${t.fromPosition.y}`)
+  );
+  for (let radius = 0; radius <= 4; radius++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue; // perimeter only
+        const x = origin.x + dx;
+        const y = origin.y + dy;
+        if (y < 1 || y >= map.grid.length - 1 || x < 1 || x >= map.grid[0].length - 1) continue;
+        if (map.grid[y][x] === TileType.MINE_FLOOR && !usedPositions.has(`${x},${y}`)) {
+          return { x, y };
+        }
+      }
+    }
+  }
+  return null;
+}
 
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
@@ -1839,6 +1869,32 @@ const App: React.FC = () => {
               const npcId = combatNpcIdRef.current;
               combatNpcIdRef.current = null;
               if (result?.success) {
+                // Goblin victory: reveal a lava entrance near where the goblin stood
+                if (npcId.startsWith('goblin_depth_')) {
+                  const goblin = npcManager.getNPCById(npcId); // read position BEFORE removal
+                  if (goblin) {
+                    const goblinPos = {
+                      x: Math.floor(goblin.position.x),
+                      y: Math.floor(goblin.position.y),
+                    };
+                    const currentMapId = mapManager.getCurrentMapId();
+                    if (currentMapId && !gameState.getLavaEntrance(currentMapId)) {
+                      const entrancePos = findClearTileNear(goblinPos, currentMapId);
+                      if (entrancePos) {
+                        mapManager.setTile(entrancePos.x, entrancePos.y, TileType.MINE_ENTRANCE);
+                        mapManager.addTransition({
+                          fromPosition: entrancePos,
+                          tileType: TileType.MINE_ENTRANCE,
+                          toMapId: 'RANDOM_LAVA',
+                          toPosition: { x: 3, y: 15 },
+                          label: 'Enter Lava Levels',
+                        });
+                        gameState.revealLavaEntrance(currentMapId, entrancePos);
+                        showToast('A passage to the lava caverns has been revealed!', 'info');
+                      }
+                    }
+                  }
+                }
                 // Victory: despawn the hostile NPC
                 npcManager.removeDynamicNPC(npcId);
               } else {

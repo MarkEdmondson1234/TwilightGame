@@ -50,6 +50,7 @@ export enum TileType {
   FLOOR_LIGHT,
   FLOOR_DARK,
   MINE_FLOOR,
+  LAVA_FLOOR, // Walkable lava tile — floor of procedural lava levels
   CAVE_ROCK,
   CAVE_MUSHROOM,
   STONE_COLUMN_SM, // Stone column (small, 2x2 tiles) - cave floor decoration

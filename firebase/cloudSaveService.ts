@@ -249,6 +249,8 @@ class CloudSaveService {
       gold: state.gold,
       forestDepth: state.forestDepth,
       caveDepth: state.caveDepth,
+      lavaDepth: state.lavaDepth,
+      revealedLavaEntrances: state.revealedLavaEntrances,
       statusEffects: state.statusEffects,
       wateringCan: state.wateringCan,
       movementEffect: state.movementEffect,
@@ -357,6 +359,8 @@ class CloudSaveService {
       gold: stats?.gold || 0,
       forestDepth: stats?.forestDepth || 0,
       caveDepth: stats?.caveDepth || 0,
+      lavaDepth: stats?.lavaDepth || 0,
+      revealedLavaEntrances: stats?.revealedLavaEntrances || {},
       player: {
         currentMapId: character?.currentMapId || 'village',
         position: character?.position || { x: 15, y: 25 },

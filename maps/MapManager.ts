@@ -1,4 +1,4 @@
-import { MapDefinition, Position, TileType, ColorScheme, isTileSolid } from '../types';
+import { MapDefinition, Position, TileType, ColorScheme, isTileSolid, Transition } from '../types';
 import { npcManager } from '../NPCManager';
 import { validateMapDefinition } from './gridParser';
 import { TILE_LEGEND, PLAYER_SIZE } from '../constants';
@@ -276,6 +276,30 @@ class MapManager {
    */
   getAllMapIds(): string[] {
     return Array.from(this.maps.keys());
+  }
+
+  /**
+   * Set a tile in the current map's grid at runtime.
+   * Used for gameplay-driven tile reveals (e.g., goblin-guarded lava entrances).
+   * Mutations take effect immediately for both rendering and collision detection.
+   */
+  setTile(x: number, y: number, tileType: TileType): boolean {
+    if (!this.currentMap) return false;
+    const tx = Math.floor(x);
+    const ty = Math.floor(y);
+    if (ty < 0 || ty >= this.currentMap.grid.length) return false;
+    if (tx < 0 || tx >= this.currentMap.grid[0].length) return false;
+    this.currentMap.grid[ty][tx] = tileType;
+    return true;
+  }
+
+  /**
+   * Append a transition to the current map's transitions array at runtime.
+   * Use alongside setTile() to make a newly placed tile interactive.
+   */
+  addTransition(transition: Transition): void {
+    if (!this.currentMap) return;
+    this.currentMap.transitions.push(transition);
   }
 }
 

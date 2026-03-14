@@ -52,6 +52,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.SHOP_DOOR]: 'door',
   [TileType.BUILDING_DOOR]: 'door',
   [TileType.MINE_FLOOR]: 'floor',
+  [TileType.LAVA_FLOOR]: 'floor', // Background from lava colour scheme's 'floor' key
   [TileType.CAVE_ROCK]: 'grass',
   [TileType.CAVE_MUSHROOM]: 'grass',
   [TileType.STONE_COLUMN_SM]: 'grass', // bg-palette-gray in cave colour scheme (mine floor colour)

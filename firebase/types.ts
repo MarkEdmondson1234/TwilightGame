@@ -131,6 +131,8 @@ export interface StatsSaveData {
   gold: number;
   forestDepth: number;
   caveDepth: number;
+  lavaDepth?: number;
+  revealedLavaEntrances?: Record<string, { x: number; y: number }>;
   statusEffects: {
     feelingSick: boolean;
     stamina: number;

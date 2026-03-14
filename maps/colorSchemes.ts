@@ -215,4 +215,22 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       background: 'bg-palette-black',
     },
   },
+
+  lava: {
+    name: 'lava',
+    colors: {
+      grass: 'bg-palette-maroon',    // Not used (no grass in lava levels)
+      rock: 'bg-palette-charcoal',   // Dark rock walls
+      water: 'bg-palette-orange',    // Lava pools (reuse water colour slot)
+      path: 'bg-palette-maroon',     // Rubble paths
+      floor: 'bg-palette-maroon',    // Lava floor base colour
+      wall: 'bg-palette-black',      // Solid cave walls
+      carpet: 'bg-palette-rust',     // Unused
+      door: 'bg-palette-orange',     // Entrances glow orange
+      special: 'bg-palette-orange',  // Special highlights
+      furniture: 'bg-palette-charcoal', // Unused
+      mushroom: 'bg-palette-maroon', // Unused
+      background: 'bg-palette-black', // Outer void
+    },
+  },
 };

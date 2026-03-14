@@ -63,6 +63,7 @@ export const tileAssets = {
   stove: '/TwilightGame/assets-optimized/tiles/stove.png',
   mine_entrance: '/TwilightGame/assets-optimized/tiles/mine_entrance.png',
   mine_floor: '/TwilightGame/assets-optimized/tiles/mine_floor.png',
+  lava_floor_tileable: '/TwilightGame/assets-optimized/tiles/lava_floor_tileable.png',
   stone_column: '/TwilightGame/assets-optimized/tiles/stone_column.png',
   torch01: '/TwilightGame/assets-optimized/tiles/torch01.png',
   torch02: '/TwilightGame/assets-optimized/tiles/torch02.png',

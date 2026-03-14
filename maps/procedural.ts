@@ -1425,6 +1425,31 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     console.log(`[Cave] ⚔️ Goblin spawned at depth ${caveDepth} (${goblinX}, ${goblinY})`);
   }
 
+  // Restore any goblin-revealed lava entrance for this map (persisted across sessions)
+  const savedEntrance = gameState.getLavaEntrance(`cave_${seed}`);
+  if (savedEntrance) {
+    const { x: ex, y: ey } = savedEntrance;
+    // Clear 3×3 area around the entrance so the sprite is fully visible
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = ex + dx;
+        const ny = ey + dy;
+        if (ny >= 1 && ny < height - 1 && nx >= 1 && nx < width - 1) {
+          map[ny][nx] = TileType.MINE_FLOOR;
+        }
+      }
+    }
+    map[ey][ex] = TileType.MINE_ENTRANCE;
+    transitions.push({
+      fromPosition: { x: ex, y: ey },
+      tileType: TileType.MINE_ENTRANCE,
+      toMapId: 'RANDOM_LAVA',
+      toPosition: { x: 3, y: Math.floor(height / 2) },
+      label: 'Enter Lava Levels',
+    });
+    console.log(`[Cave] Restored lava entrance at (${ex}, ${ey}) for cave_${seed}`);
+  }
+
   return {
     id: `cave_${seed}`,
     name: 'Cave',
@@ -1498,5 +1523,94 @@ export function generateRandomShop(
         label: 'Exit Shop',
       },
     ],
+  };
+}
+
+/**
+ * Generate a procedural lava level.
+ * Accessed by defeating the goblin guard in a cave level.
+ * @param seed - Random seed for deterministic generation
+ * @param returnToMapId - The cave map to return to when exiting left
+ * @param returnToPosition - Where the player spawns in the cave on exit
+ */
+export function generateLavaMap(
+  seed: number = Date.now(),
+  returnToMapId: string = 'village',
+  returnToPosition: Position = { x: 15, y: 15 }
+): MapDefinition {
+  const width = 30;
+  const height = 30;
+  const lavaDepth = gameState.getLavaDepth();
+
+  // Seed the RNG
+  let rng = seed;
+  const rand = () => {
+    rng = (rng * 1664525 + 1013904223) & 0xffffffff;
+    return (rng >>> 0) / 0xffffffff;
+  };
+
+  // Fill interior with lava floor, borders with cave rock
+  const map: TileType[][] = Array.from({ length: height }, (_, y) =>
+    Array.from({ length: width }, (_, x) =>
+      x === 0 || x === width - 1 || y === 0 || y === height - 1
+        ? TileType.CAVE_ROCK
+        : TileType.LAVA_FLOOR
+    )
+  );
+
+  // Spawn point: left side, vertically centred (matching cave exit position)
+  const spawnX = 3;
+  const spawnY = Math.floor(height / 2);
+  const exitY = spawnY;
+
+  // Left mine entrance (exit back to the cave this was reached from)
+  map[exitY][1] = TileType.MINE_ENTRANCE;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = 1; dx <= 3; dx++) {
+      const ny = exitY + dy;
+      if (ny >= 1 && ny < height - 1) map[ny][dx] = TileType.LAVA_FLOOR;
+    }
+  }
+  map[exitY][1] = TileType.MINE_ENTRANCE;
+
+  // Right mine entrance (go deeper into the lava levels)
+  map[exitY][width - 2] = TileType.MINE_ENTRANCE;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = width - 3; dx <= width - 2; dx++) {
+      const ny = exitY + dy;
+      if (ny >= 1 && ny < height - 1 && dx >= 1 && dx < width - 1)
+        map[ny][dx] = TileType.LAVA_FLOOR;
+    }
+  }
+  map[exitY][width - 2] = TileType.MINE_ENTRANCE;
+
+  console.log(`[Lava] Generated lava level at depth ${lavaDepth} (seed ${seed})`);
+
+  return {
+    id: `lava_${seed}`,
+    name: 'Lava Cavern',
+    width,
+    height,
+    grid: map,
+    colorScheme: 'lava',
+    isRandom: true,
+    spawnPoint: { x: spawnX, y: spawnY },
+    transitions: [
+      {
+        fromPosition: { x: 1, y: exitY },
+        tileType: TileType.MINE_ENTRANCE,
+        toMapId: returnToMapId,
+        toPosition: returnToPosition,
+        label: 'Exit Lava Cavern',
+      },
+      {
+        fromPosition: { x: width - 2, y: exitY },
+        tileType: TileType.MINE_ENTRANCE,
+        toMapId: 'RANDOM_LAVA',
+        toPosition: { x: 3, y: exitY },
+        label: 'Deeper into Lava',
+      },
+    ],
+    npcs: [],
   };
 }

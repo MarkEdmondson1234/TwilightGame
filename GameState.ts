@@ -45,6 +45,8 @@ export interface GameState {
   // Exploration depth
   forestDepth: number; // How deep into the forest
   caveDepth: number; // How deep into the cave
+  lavaDepth: number; // How deep into the lava levels
+  revealedLavaEntrances: Record<string, { x: number; y: number }>; // caveMapId → tile position
 
   // Player location (for persistence across sessions)
   player: {
@@ -534,6 +536,14 @@ class GameStateManager {
           parsed.playerDisguise = null;
         }
 
+        // Migrate old save data that doesn't have lava level tracking
+        if (parsed.lavaDepth === undefined) {
+          parsed.lavaDepth = 0;
+        }
+        if (!parsed.revealedLavaEntrances) {
+          parsed.revealedLavaEntrances = {};
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -546,6 +556,8 @@ class GameStateManager {
       gold: 0,
       forestDepth: 0,
       caveDepth: 0,
+      lavaDepth: 0,
+      revealedLavaEntrances: {},
       player: {
         currentMapId: 'village',
         position: { x: 15, y: 25 },
@@ -740,6 +752,41 @@ class GameStateManager {
   resetCaveDepth(): void {
     this.state.caveDepth = 0;
     this.notify();
+  }
+
+  enterLava(): void {
+    this.state.lavaDepth += 1;
+    console.log(`[GameState] Entered lava depth ${this.state.lavaDepth}`);
+    this.notify();
+  }
+
+  exitLava(): void {
+    if (this.state.lavaDepth > 0) {
+      this.state.lavaDepth -= 1;
+      console.log(`[GameState] Exited lava, now at depth ${this.state.lavaDepth}`);
+      this.notify();
+    }
+  }
+
+  getLavaDepth(): number {
+    return this.state.lavaDepth;
+  }
+
+  resetLavaDepth(): void {
+    this.state.lavaDepth = 0;
+    this.notify();
+  }
+
+  revealLavaEntrance(caveMapId: string, position: { x: number; y: number }): void {
+    this.state.revealedLavaEntrances[caveMapId] = position;
+    console.log(
+      `[GameState] Revealed lava entrance on ${caveMapId} at (${position.x}, ${position.y})`
+    );
+    this.notify();
+  }
+
+  getLavaEntrance(caveMapId: string): { x: number; y: number } | null {
+    return this.state.revealedLavaEntrances[caveMapId] ?? null;
   }
 
   // === Player Location Methods ===
@@ -1448,6 +1495,8 @@ class GameStateManager {
       gold: 0,
       forestDepth: 0,
       caveDepth: 0,
+      lavaDepth: 0,
+      revealedLavaEntrances: {},
       player: {
         currentMapId: 'village',
         position: { x: 15, y: 25 },
