@@ -315,6 +315,7 @@ export const farmingAssets = {
   // Herbs — adult sprites used on the tile (shared key pattern: plant_<cropId>_adult)
   plant_thyme_adult: '/TwilightGame/assets-optimized/herbs/plant_thyme.png',
   plant_lavender_adult: '/TwilightGame/assets-optimized/herbs/lavender_bush.png',
+  plant_mint_adult: '/TwilightGame/assets-optimized/herbs/mint_bush.png',
 };
 
 // Herb assets — inventory sprites for herb seeds and harvested crops
@@ -326,6 +327,9 @@ export const herbAssets = {
   lavender_plant: '/TwilightGame/assets-optimized/herbs/lavender_bush.png',
   lavender_crop: '/TwilightGame/assets-optimized/herbs/lavender_bunch.png',
   lavender_sprig: '/TwilightGame/assets-optimized/herbs/lavender_sprig.png',
+  mint_seeds: '/TwilightGame/assets-optimized/herbs/mint_seeds.png',
+  mint_plant: '/TwilightGame/assets-optimized/herbs/mint_bush.png',
+  mint_crop: '/TwilightGame/assets-optimized/herbs/mint_bunch.png',
 };
 
 // Cooking assets - Prepared food items (cooked dishes)
@@ -400,7 +404,6 @@ export const groceryAssets = {
   pumpkin_seeds: '/TwilightGame/assets-optimized/items/grocery/pumpkin_seeds.png',
   pepper: '/TwilightGame/assets-optimized/items/grocery/pepper.png',
   vinegar: '/TwilightGame/assets-optimized/items/grocery/vinegar.png',
-  mint: '/TwilightGame/assets-optimized/items/grocery/mint.png',
   vase: '/TwilightGame/assets-optimized/items/grocery/vase.png',
   pea_seeds: '/TwilightGame/assets-optimized/items/grocery/pea_seeds.png',
   pea_crop: '/TwilightGame/assets-optimized/items/grocery/pea_crop.png',

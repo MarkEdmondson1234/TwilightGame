@@ -542,6 +542,29 @@ export const CROPS: Record<string, CropDefinition> = {
     harvestCooldownDays: 1,
   },
 
+  mint: {
+    id: 'mint',
+    name: 'mint',
+    displayName: 'Mint',
+    plantSeasons: [Season.SPRING, Season.SUMMER],
+    growthTime: 2 * MINUTE,
+    growthTimeWatered: 1.5 * MINUTE,
+    waterNeededInterval: 1 * GAME_DAY,
+    wiltingGracePeriod: 0.5 * GAME_DAY,
+    deathGracePeriod: 0.5 * GAME_DAY,
+    harvestYield: 2,
+    sellPrice: 5,
+    experience: 6,
+    seedDropMin: 0,
+    seedDropMax: 0, // Herbs don't drop seeds on harvest
+    description: 'Fragrant mint that regrows after harvesting. Goes dormant in winter.',
+    seedCost: 10,
+    rarity: CropRarity.COMMON,
+    seedSource: 'shop',
+    isHerb: true,
+    harvestCooldownDays: 1,
+  },
+
   lavender: {
     id: 'lavender',
     name: 'lavender',

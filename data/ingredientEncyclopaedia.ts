@@ -132,8 +132,8 @@ const ENCYCLOPAEDIA_DATA: Record<string, EncyclopaediaEntry> = {
     itemId: 'mint',
     latinName: 'Mentha magica',
     type: 'Herb',
-    canBeFound: 'The village shop stocks bunches of fresh mint year-round.',
-    seasonsAvailable: 'Year-round (shop)',
+    canBeFound: 'Grow your own mint by planting mint seeds in your garden. Seeds are available from the village shop in spring and summer.',
+    seasonsAvailable: 'Spring, Summer (plant); harvest year-round once established',
     lore: 'Every cottage garden worth its salt grows a patch of mint, and with good reason — few herbs are so versatile in both kitchen and cauldron. The cooling sensation of mint is not merely a flavour but a genuine magical property: it calms overheated brews, prevents scorching, and soothes ingredients that resist combination. Experienced brewers say that adding mint to a troubled potion is like pouring cool water on a quarrel. It grows with such enthusiasm that the real challenge is stopping it from taking over entirely.',
   },
 

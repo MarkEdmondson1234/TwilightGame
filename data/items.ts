@@ -321,6 +321,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: herbAssets.lavender_seeds,
   },
 
+  seed_mint: {
+    id: 'seed_mint',
+    name: 'seed_mint',
+    displayName: 'Mint Seeds',
+    category: ItemCategory.SEED,
+    description: 'Seeds for growing your own mint. The plant regrows after each harvest.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 10,
+    cropId: 'mint',
+    image: herbAssets.mint_seeds,
+  },
+
   // Quest seeds (magical crops unlocked through quests)
   seed_fairy_bluebell: {
     id: 'seed_fairy_bluebell',
@@ -1560,13 +1574,12 @@ export const ITEMS: Record<string, ItemDefinition> = {
     id: 'mint',
     name: 'mint',
     displayName: 'Fresh Mint',
-    category: ItemCategory.MAGICAL_INGREDIENT,
+    category: ItemCategory.CROP,
     description: 'Fragrant mint leaves. Cooling to the touch and refreshing in potions.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 5,
-    buyPrice: 12,
-    image: groceryAssets.mint,
+    image: herbAssets.mint_crop,
   },
 
   // Quest/Gift rewards

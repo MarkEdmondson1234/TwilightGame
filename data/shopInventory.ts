@@ -62,6 +62,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
   // Herb seeds — seasonal availability auto-derived from crops.ts plantSeasons (spring/summer)
   { itemId: 'seed_thyme', buyPrice: 8, sellPrice: 4, stock: 'unlimited' },
   { itemId: 'seed_lavender', buyPrice: 10, sellPrice: 5, stock: 'unlimited' },
+  { itemId: 'seed_mint', buyPrice: 10, sellPrice: 4, stock: 'unlimited' },
 
   // ===== TOOLS =====
   {
@@ -296,12 +297,6 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     itemId: 'vinegar',
     buyPrice: 8,
     sellPrice: 3,
-    stock: 'unlimited',
-  },
-  {
-    itemId: 'mint',
-    buyPrice: 12,
-    sellPrice: 5,
     stock: 'unlimited',
   },
   {
