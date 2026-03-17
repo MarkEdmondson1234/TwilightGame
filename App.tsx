@@ -45,6 +45,7 @@ import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
 import { checkCookingLocation } from './utils/actionHandlers';
+import { findTileTypeNearby } from './utils/mapUtils';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { audioManager } from './utils/AudioManager';
@@ -671,8 +672,30 @@ const App: React.FC = () => {
     const movementResult = updateMovement(deltaTime, now);
     isMovingRef.current = movementResult.isMoving;
 
-    // Update stamina (drain when walking, restore when at home)
-    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId);
+    // Check if player is standing within a lava lake's sprite footprint
+    const _ptx = Math.floor(playerPosRef.current.x);
+    const _pty = Math.floor(playerPosRef.current.y);
+    const isOnLavaLake = (() => {
+      const smR = findTileTypeNearby(_ptx, _pty, TileType.LAVA_LAKE_SM, 2);
+      if (smR.found && smR.position) {
+        const a = smR.position;
+        if (_ptx >= a.x && _ptx < a.x + 2 && _pty >= a.y && _pty < a.y + 2) return true;
+      }
+      const mdR = findTileTypeNearby(_ptx, _pty, TileType.LAVA_LAKE_MD, 5);
+      if (mdR.found && mdR.position) {
+        const a = mdR.position;
+        if (_ptx >= a.x && _ptx < a.x + 5 && _pty >= a.y && _pty < a.y + 5) return true;
+      }
+      const lgR = findTileTypeNearby(_ptx, _pty, TileType.LAVA_LAKE_LG, 8);
+      if (lgR.found && lgR.position) {
+        const a = lgR.position;
+        if (_ptx >= a.x && _ptx < a.x + 8 && _pty >= a.y && _pty < a.y + 8) return true;
+      }
+      return false;
+    })();
+
+    // Update stamina (drain when walking, restore when at home, drain on lava lake)
+    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId, isOnLavaLake);
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
   }, [

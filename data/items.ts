@@ -1524,6 +1524,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 80,
     buyPrice: 200,
     image: magicalAssets.phoenix_ash,
+    forageSuccessRate: 0.6, // 60% chance when foraging lava lakes
   },
 
   temporal_dust: {

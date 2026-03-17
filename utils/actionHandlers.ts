@@ -2058,6 +2058,15 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       );
     }
 
+    // Check for lava lake foraging (phoenix ash) — use radius 4 to cover large lakes
+    if (!canForage) {
+      canForage = hasTileTypeNearby(tileX, tileY, [
+        TileType.LAVA_LAKE_SM,
+        TileType.LAVA_LAKE_MD,
+        TileType.LAVA_LAKE_LG,
+      ], 4);
+    }
+
     // Check for nearby sparrow NPCs (forageable feathers)
     if (!canForage) {
       const npcs = npcManager.getCurrentMapNPCs();

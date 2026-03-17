@@ -401,8 +401,8 @@ async function optimizeTiles() {
         .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 }) // Higher quality for foliage detail
         .toFile(outputPath);
     }
-    // Special handling for cave lakes and mine crystals - up to 8x8 multi-tile cave decorations
-    else if (file.includes('cave_lake') || file.includes('mine_crystal')) {
+    // Special handling for cave/lava lakes and mine crystals - up to 8x8 multi-tile decorations
+    else if (file.includes('cave_lake') || file.includes('lava_lake') || file.includes('mine_crystal')) {
       await sharp(inputPath)
         .resize(TREE_SIZE, TREE_SIZE, {
           fit: 'contain',

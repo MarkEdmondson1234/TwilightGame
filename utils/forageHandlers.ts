@@ -75,6 +75,7 @@ const RARE_FORAGE_ITEMS = new Set([
   'giant_mushroom_cap',
   'sakura_petal',
   'feather',
+  'phoenix_ash',
 ]);
 
 /** Save inventory and record forage cooldown at the given position */
@@ -471,6 +472,62 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'addersmeat', // Reuse field for item ID
       seedName: addersmeat.displayName,
       message: `Found ${quantityFound} ${addersmeat.displayName}!`,
+    };
+  }
+
+  // Phoenix Ash foraging (lava lakes in lava caverns)
+  // Player must be standing within the lake's visual footprint to forage
+  const findLavaLakeAnchor = (): { x: number; y: number; type: TileType } | null => {
+    const checks: [TileType, number, number][] = [
+      [TileType.LAVA_LAKE_SM, 2, 1],
+      [TileType.LAVA_LAKE_MD, 5, 4],
+      [TileType.LAVA_LAKE_LG, 8, 8],
+    ];
+    for (const [type, size, radius] of checks) {
+      const r = findTileTypeNearby(playerTileX, playerTileY, type, radius);
+      if (r.found && r.position) {
+        const a = r.position;
+        if (
+          playerTileX >= a.x && playerTileX < a.x + size &&
+          playerTileY >= a.y && playerTileY < a.y + size
+        ) {
+          return { x: a.x, y: a.y, type };
+        }
+      }
+    }
+    return null;
+  };
+  const lavaLakeAnchor = findLavaLakeAnchor();
+
+  if (lavaLakeAnchor) {
+    const phoenixAsh = getItem('phoenix_ash');
+    if (!phoenixAsh) {
+      console.error('[Forage] Phoenix ash item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    const successRate = phoenixAsh.forageSuccessRate ?? 0.6;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      gameState.recordForage(currentMapId, lavaLakeAnchor.x, lavaLakeAnchor.y);
+      return {
+        found: false,
+        message: 'You sift through the smouldering ash, but find nothing of value.',
+      };
+    }
+
+    const quantity = Math.random() < 0.7 ? 1 : 2;
+    inventoryManager.addItem('phoenix_ash', quantity);
+    if (DEBUG.FORAGE)
+      console.log(`[Forage] Found ${quantity} ${phoenixAsh.displayName} in lava lake`);
+
+    saveForageResult(currentMapId, lavaLakeAnchor.x, lavaLakeAnchor.y, 'phoenix_ash');
+    return {
+      found: true,
+      seedId: 'phoenix_ash',
+      seedName: phoenixAsh.displayName,
+      message: `Found ${quantity} ${phoenixAsh.displayName}!`,
     };
   }
 

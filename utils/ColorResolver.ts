@@ -62,6 +62,9 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.CAVE_LAKE_SM]: 'grass',
   [TileType.CAVE_LAKE_MD]: 'grass',
   [TileType.CAVE_LAKE_LG]: 'grass',
+  [TileType.LAVA_LAKE_SM]: 'floor', // Lava colour scheme 'floor' key = orange/red lava floor
+  [TileType.LAVA_LAKE_MD]: 'floor',
+  [TileType.LAVA_LAKE_LG]: 'floor',
   [TileType.MINE_CRYSTAL_SM]: 'grass',
   [TileType.MINE_CRYSTAL_MD]: 'grass',
   [TileType.MINE_CRYSTAL_LG]: 'grass',

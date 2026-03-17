@@ -866,6 +866,57 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetY: 2,
   },
   {
+    tileType: TileType.LAVA_LAKE_SM,
+    spriteWidth: 2, // 2 tiles wide (small lava lake)
+    spriteHeight: 2, // 2 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.lava_lake_01,
+    animationFrames: [tileAssets.lava_lake_01, tileAssets.lava_lake_02],
+    animationSpeed: 400, // ~2.5 FPS slow flame flicker
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 0, // fully walkable - stamina drain handled in game loop
+    collisionHeight: 0,
+    depthLineOffset: -10, // player renders above lake
+  },
+  {
+    tileType: TileType.LAVA_LAKE_MD,
+    spriteWidth: 5, // 5 tiles wide (medium lava lake)
+    spriteHeight: 5, // 5 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.lava_lake_01,
+    animationFrames: [tileAssets.lava_lake_01, tileAssets.lava_lake_02],
+    animationSpeed: 400,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 0,
+    collisionHeight: 0,
+    depthLineOffset: -10,
+  },
+  {
+    tileType: TileType.LAVA_LAKE_LG,
+    spriteWidth: 8, // 8 tiles wide (large lava lake)
+    spriteHeight: 8, // 8 tiles tall
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.lava_lake_01,
+    animationFrames: [tileAssets.lava_lake_01, tileAssets.lava_lake_02],
+    animationSpeed: 400,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    collisionWidth: 0,
+    collisionHeight: 0,
+    depthLineOffset: -10,
+  },
+  {
     tileType: TileType.CAVE_LAKE_SM,
     spriteWidth: 2, // 2 tiles wide (small cave water feature)
     spriteHeight: 2, // 2 tiles tall

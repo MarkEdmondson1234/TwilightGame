@@ -1616,6 +1616,79 @@ export function generateLavaMap(
     );
   }
 
+  // Scatter lava lakes using a jittered grid — same pattern as cave lakes in generateRandomCave
+  const LAVA_SPRITE_SIZES: Partial<Record<TileType, { w: number; h: number }>> = {
+    [TileType.LAVA_LAKE_SM]: { w: 2, h: 2 },
+    [TileType.LAVA_LAKE_MD]: { w: 5, h: 5 },
+    [TileType.LAVA_LAKE_LG]: { w: 8, h: 8 },
+  };
+
+  const lavaLakeBlocked = new Set<string>();
+  const isLavaLakeFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
+    for (let dy = 0; dy < h; dy++) {
+      for (let dx = 0; dx < w; dx++) {
+        if (lavaLakeBlocked.has(`${x + dx},${y + dy}`)) return false;
+      }
+    }
+    return true;
+  };
+  const markLavaLakeFootprint = (x: number, y: number, w: number, h: number): void => {
+    for (let dy = -1; dy <= h; dy++) {
+      for (let dx = -1; dx <= w; dx++) {
+        lavaLakeBlocked.add(`${x + dx},${y + dy}`);
+      }
+    }
+  };
+  const lavaLakeOverlapsProtected = (x: number, y: number, w: number, h: number): boolean => {
+    const x2 = x + w - 1;
+    const y2 = y + h - 1;
+    // Protect 7×7 around spawn (spawnX=3, spawnY=height/2)
+    if (x <= spawnX + 4 && x2 >= spawnX - 4 && y <= spawnY + 4 && y2 >= spawnY - 4) return true;
+    // Protect exit corridors (left x≤4, right x≥width-5, within ±3 of exitY)
+    const inExitBand = y2 >= exitY - 3 && y <= exitY + 3;
+    if (inExitBand && (x <= 4 || x2 >= width - 5)) return true;
+    return false;
+  };
+
+  const lavaLakeTypes = [TileType.LAVA_LAKE_SM, TileType.LAVA_LAKE_MD, TileType.LAVA_LAKE_LG];
+  const lavaLakeGridCols = 4;
+  const lavaLakeGridRows = 4;
+  const lavaLakeCellW = Math.floor((width - 2) / lavaLakeGridCols);
+  const lavaLakeCellH = Math.floor((height - 2) / lavaLakeGridRows);
+  const maxLavaLakes = 1 + Math.floor(rand() * 3); // 1–3 lakes per level
+  let lavaLakesPlaced = 0;
+
+  for (let row = 0; row < lavaLakeGridRows; row++) {
+    for (let col = 0; col < lavaLakeGridCols; col++) {
+      if (lavaLakesPlaced >= maxLavaLakes) break;
+      if (rand() > 0.3) continue; // ~30% fill — lakes are sparse
+      const isEdgeCell =
+        row === 0 || row === lavaLakeGridRows - 1 || col === 0 || col === lavaLakeGridCols - 1;
+      const eligible = isEdgeCell
+        ? [TileType.LAVA_LAKE_SM, TileType.LAVA_LAKE_MD]
+        : lavaLakeTypes;
+      const lakeType = eligible[Math.floor(rand() * eligible.length)];
+      for (let attempt = 0; attempt < 15; attempt++) {
+        const x = 1 + col * lavaLakeCellW + Math.floor(rand() * lavaLakeCellW);
+        const y = 1 + row * lavaLakeCellH + Math.floor(rand() * lavaLakeCellH);
+        if (x >= width - 1 || y >= height - 1) continue;
+        const lakeSize = LAVA_SPRITE_SIZES[lakeType];
+        if (
+          map[y][x] === TileType.LAVA_FLOOR &&
+          lakeSize &&
+          !lavaLakeOverlapsProtected(x, y, lakeSize.w, lakeSize.h) &&
+          isLavaLakeFootprintClear(x, y, lakeSize.w, lakeSize.h)
+        ) {
+          map[y][x] = lakeType;
+          markLavaLakeFootprint(x, y, lakeSize.w, lakeSize.h);
+          lavaLakesPlaced++;
+          break;
+        }
+      }
+    }
+    if (lavaLakesPlaced >= maxLavaLakes) break;
+  }
+
   return {
     id: `lava_${seed}`,
     name: 'Lava Cavern',

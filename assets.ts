@@ -69,6 +69,8 @@ export const tileAssets = {
   torch02: '/TwilightGame/assets-optimized/tiles/torch02.png',
   cave_lake: '/TwilightGame/assets-optimized/tiles/cave_lake.png',
   mine_crystal: '/TwilightGame/assets-optimized/tiles/mine_crystal.png',
+  lava_lake_01: '/TwilightGame/assets-optimized/tiles/lava_lake01.png',
+  lava_lake_02: '/TwilightGame/assets-optimized/tiles/lava_lake02.png',
   // Garden lamp post — seasonal day/night variants
   garden_lamp_day: '/TwilightGame/assets-optimized/lights/lamp_post_day.png',
   garden_lamp_night: '/TwilightGame/assets-optimized/lights/lamp_post_night.png',

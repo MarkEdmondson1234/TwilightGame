@@ -60,6 +60,9 @@ export enum TileType {
   CAVE_LAKE_SM, // Cave lake (small, 2x2 tiles) - mine water feature
   CAVE_LAKE_MD, // Cave lake (medium, 5x5 tiles) - mine water feature
   CAVE_LAKE_LG, // Cave lake (large, 8x8 tiles) - mine water feature
+  LAVA_LAKE_SM, // Lava lake (small, 2x2 tiles) - lava level decoration
+  LAVA_LAKE_MD, // Lava lake (medium, 5x5 tiles) - lava level decoration
+  LAVA_LAKE_LG, // Lava lake (large, 8x8 tiles) - lava level decoration
   MINE_CRYSTAL_SM, // Mine crystal (small, 2x2 tiles) - cave gem decoration
   MINE_CRYSTAL_MD, // Mine crystal (medium, 4x4 tiles) - cave gem decoration
   MINE_CRYSTAL_LG, // Mine crystal (large, 6x6 tiles) - cave gem decoration

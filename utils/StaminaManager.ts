@@ -93,7 +93,7 @@ class StaminaManagerClass {
    * @param mapId - Current map ID (for home restoration)
    * @returns true if player became exhausted this frame
    */
-  update(deltaTime: number, isWalking: boolean, mapId: string): boolean {
+  update(deltaTime: number, isWalking: boolean, mapId: string, isOnLavaTile = false): boolean {
     if (!this.callbacks || !this.isInitialised) {
       return false;
     }
@@ -111,6 +111,17 @@ class StaminaManagerClass {
         }
       }
       return false; // Can't exhaust while at home
+    }
+
+    // Lava lake hazard drain (whenever standing on a lava lake, regardless of other state)
+    if (isOnLavaTile) {
+      const lavaDrain = STAMINA.LAVA_LAKE_DRAIN_PER_SECOND * deltaTime;
+      const exhausted = this.drainStamina(lavaDrain);
+      this.checkLowStaminaWarning();
+      if (exhausted) {
+        this.handleExhaustion();
+        return true;
+      }
     }
 
     // Late-night passive drain (after bedtime, even when standing still)

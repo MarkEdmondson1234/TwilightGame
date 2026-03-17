@@ -128,6 +128,7 @@ export const STAMINA = {
   // Drain rates (per second)
   WALKING_DRAIN_PER_SECOND: 0.08, // ~20 min of continuous walking drains 100 stamina
   LATE_NIGHT_DRAIN_PER_SECOND: 0.12, // Passive drain after bedtime (21:30), even when standing still
+  LAVA_LAKE_DRAIN_PER_SECOND: 10, // Hazard drain while standing on a lava lake
   BEDTIME_HOUR: 21, // Hour after which late-night drain kicks in (21:30 = 9:30 PM)
 
   // Activity costs (instant drain)
