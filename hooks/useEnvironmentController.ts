@@ -194,6 +194,7 @@ export function useEnvironmentController(
     audioManager.stopAmbient('ambient_birds', 1000);
     audioManager.stopAmbient('ambient_running_stream', 1000);
     audioManager.stopAmbient('ambient_countryside_summer', 1000);
+    audioManager.stopAmbient('ambient_countryside_autumn', 1000);
     audioManager.stopAmbient('ambient_cave_wind', 1000);
     audioManager.stopAmbient('ambient_cave_dripping_water', 1000);
     audioManager.stopAmbient('ambient_lava', 1000);
@@ -386,6 +387,60 @@ export function useEnvironmentController(
 
     return () => {
       audioManager.stopAmbient('ambient_countryside_summer', 500);
+    };
+  }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
+  // Village Countryside Ambience (Autumn)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isVillage = currentMapId === 'village';
+    const { season } = TimeManager.getCurrentTime();
+    const isAutumn = season === Season.AUTUMN;
+
+    if (isVillage && isAutumn) {
+      if (audioManager.hasSound('ambient_countryside_autumn')) {
+        audioManager.playAmbient('ambient_countryside_autumn');
+      }
+    } else {
+      audioManager.stopAmbient('ambient_countryside_autumn', 1000);
+    }
+
+    return () => {
+      audioManager.stopAmbient('ambient_countryside_autumn', 500);
+    };
+  }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
+  // Autumn Crow Calls (intermittent)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isVillage = currentMapId === 'village';
+    const { season } = TimeManager.getCurrentTime();
+    const isAutumn = season === Season.AUTUMN;
+
+    if (!isVillage || !isAutumn) return;
+
+    let crowTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // Single crow caw, then wait 20–60 seconds before the next
+    const getGapDuration = () => Math.floor(Math.random() * 40000) + 20000;
+
+    const scheduleCrow = () => {
+      crowTimeout = setTimeout(() => {
+        if (audioManager.hasSound('sfx_crow')) {
+          audioManager.playSfx('sfx_crow');
+        }
+        crowTimeout = setTimeout(scheduleCrow, getGapDuration());
+      }, getGapDuration());
+    };
+
+    scheduleCrow();
+
+    return () => {
+      if (crowTimeout) clearTimeout(crowTimeout);
     };
   }, [currentMapId, currentWeather]);
 

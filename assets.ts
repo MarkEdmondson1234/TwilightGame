@@ -896,6 +896,15 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'ambient',
     loop: true,
   },
+  ambient_countryside_autumn: {
+    url: '/TwilightGame/assets/audio/ambient/autumn_ambience.mp3',
+    category: 'ambient',
+    loop: true,
+  },
+  sfx_crow: {
+    url: '/TwilightGame/assets/audio/ambient/crow.mp3',
+    category: 'sfx',
+  },
   ambient_cave_dripping_water: {
     url: '/TwilightGame/assets/audio/ambient/cave_dripping_water.mp3',
     category: 'ambient',
