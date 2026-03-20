@@ -891,6 +891,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'ambient',
     loop: true,
   },
+  ambient_lava: {
+    url: '/TwilightGame/assets/audio/ambient/lava_ambience.mp3',
+    category: 'ambient',
+    loop: true,
+  },
   ambient_cave_dripping_water: {
     url: '/TwilightGame/assets/audio/ambient/cave_dripping_water.mp3',
     category: 'ambient',

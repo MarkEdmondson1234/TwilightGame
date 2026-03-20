@@ -196,6 +196,7 @@ export function useEnvironmentController(
     audioManager.stopAmbient('ambient_countryside_summer', 1000);
     audioManager.stopAmbient('ambient_cave_wind', 1000);
     audioManager.stopAmbient('ambient_cave_dripping_water', 1000);
+    audioManager.stopAmbient('ambient_lava', 1000);
 
     // Play new weather ambient if outdoors and audio exists
     if (isOutdoors) {
@@ -252,6 +253,27 @@ export function useEnvironmentController(
 
     return () => {
       audioManager.stopAmbient('ambient_cave_wind', 500);
+    };
+  }, [currentMapId]);
+
+  // -------------------------------------------------------------------------
+  // Lava Level Ambience
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isLavaLevel =
+      currentMapId.startsWith('lava_') || currentMapId === 'king_lava_frog_lair';
+
+    if (isLavaLevel) {
+      if (audioManager.hasSound('ambient_lava')) {
+        audioManager.playAmbient('ambient_lava');
+      }
+    } else {
+      audioManager.stopAmbient('ambient_lava', 1000);
+    }
+
+    return () => {
+      audioManager.stopAmbient('ambient_lava', 500);
     };
   }, [currentMapId]);
 
