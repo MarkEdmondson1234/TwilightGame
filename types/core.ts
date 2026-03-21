@@ -110,6 +110,8 @@ export enum TileType {
   FIR_TREE_SMALL, // Small fir tree (walkable underbrush decoration, seasonal variations)
   SPRUCE_TREE_SMALL, // Small spruce tree (solid obstacle, seasonal variations)
   TREE_MUSHROOMS, // Dead tree with mushrooms (appears in deep forest, seasonal variations)
+  // Orchard fruit trees (perennial, harvestable once per year)
+  APPLE_TREE, // Apple tree (orchard only — prune in winter, mulch in spring for abundant autumn harvest)
   GARDEN_LAMP, // Garden lamp post — lights up at dusk/night with warm glow
   // Building tiles (outdoor structures)
   WALL_BOUNDARY,

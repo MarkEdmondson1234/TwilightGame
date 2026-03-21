@@ -9,6 +9,7 @@ import { house3 } from './definitions/house3';
 import { house4 } from './definitions/house4';
 import { cottageInterior } from './definitions/cottageInterior';
 import { farmArea } from './definitions/farmArea';
+import { orchard } from './definitions/orchard';
 import { seedShed } from './definitions/seedShed';
 import { debugNPCs } from './definitions/debugNPCs';
 import { deepForest } from './definitions/deepForest';
@@ -45,6 +46,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(house4);
   mapManager.registerMap(cottageInterior);
   mapManager.registerMap(farmArea);
+  mapManager.registerMap(orchard);
   mapManager.registerMap(seedShed);
   mapManager.registerMap(debugNPCs);
   mapManager.registerMap(deepForest);

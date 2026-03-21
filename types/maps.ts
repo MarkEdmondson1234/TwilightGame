@@ -151,6 +151,7 @@ export interface MapDefinition {
   transitions: Transition[]; // Exit/entrance definitions
   npcs?: NPC[]; // NPCs in this map (optional)
   hasClouds?: boolean; // Show cloud shadows (default: false, set true for outdoor areas)
+  borderTileType?: TileType; // Tile rendered outside map bounds (e.g. OAK_TREE for a forest clearing)
 
   // Background interior system (optional)
   renderMode?: MapRenderMode; // Default: 'tiled'

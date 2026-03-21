@@ -6,7 +6,8 @@
  */
 
 import { TileType, TileData, CollisionType } from '../types';
-import { tileAssets, farmingAssets } from '../assets';
+import { tileAssets, farmingAssets, orchardAssets } from '../assets';
+import { resolveAppleTreeImage } from '../utils/fruitTreeRegistry';
 
 export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   // Outdoor tiles
@@ -1069,6 +1070,18 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       winter: [tileAssets.tree_mushrooms_winter],
       default: [tileAssets.tree_mushrooms_spring_summer_autumn],
     },
+  },
+
+  // ── Orchard fruit trees ──────────────────────────────────────────────────────
+  [TileType.APPLE_TREE]: {
+    name: 'Apple Tree',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.SOLID,
+    baseType: TileType.GRASS,
+    image: [], // No static image — getImage resolves sprite based on season & care state
+    // Dynamic image hook: FruitTreeManager picks the correct sprite per tree instance
+    getImage: (mapId, x, y, season, _timeOfDay) =>
+      resolveAppleTreeImage(mapId, x, y, season as 'spring' | 'summer' | 'autumn' | 'winter'),
   },
 
   [TileType.GARDEN_LAMP]: {

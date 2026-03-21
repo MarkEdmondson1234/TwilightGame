@@ -86,6 +86,9 @@ export enum GameEvent {
   // Photography events
   PHOTO_TAKEN = 'camera:photo_taken',
   PHOTO_SENT_TO_ALBUM = 'camera:photo_sent_to_album',
+
+  // Fruit tree events
+  FRUIT_TREE_CHANGED = 'fruitTree:changed',
 }
 
 // ============================================================================
@@ -220,6 +223,12 @@ export interface EventPayloads {
   [GameEvent.PHOTO_SENT_TO_ALBUM]: {
     photo: Photo;
     albumSize: number;
+  };
+  [GameEvent.FRUIT_TREE_CHANGED]: {
+    mapId: string;
+    x: number;
+    y: number;
+    action: 'pruned' | 'mulched' | 'harvested';
   };
 }
 

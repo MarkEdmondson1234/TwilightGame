@@ -10,6 +10,7 @@ import {
   getTileCoords,
   getSurroundingTiles,
   hasTileTypeNearby,
+  findTileTypeNearby,
 } from './mapUtils';
 import { deskManager } from './deskManager';
 import { mapManager, transitionToMap } from '../maps';
@@ -35,6 +36,7 @@ import {
 } from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
 import type { MiniGameTriggerData } from '../minigames/types';
+import { fruitTreeManager } from './fruitTreeManager';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -1041,6 +1043,9 @@ export type InteractionType =
   | 'harvest_blueberry'
   | 'harvest_hazelnut'
   | 'forage'
+  | 'prune_tree'
+  | 'mulch_tree'
+  | 'harvest_fruit_tree'
   | 'pickup_item'
   | 'eat_item'
   | 'taste_item'
@@ -1633,6 +1638,57 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         onFarmAction?.(farmResult);
       },
     });
+  }
+
+  // Check for fruit tree interactions (prune / mulch / harvest)
+  const nearAppleTree = findTileTypeNearby(tileX, tileY, [TileType.APPLE_TREE], 1);
+  if (nearAppleTree.found && nearAppleTree.position) {
+    const { x: tx, y: ty } = nearAppleTree.position;
+    const currentSeason = TimeManager.getCurrentTime().season;
+
+    if (currentSeason === Season.WINTER && !fruitTreeManager.isPruned(currentMapId, tx, ty)) {
+      interactions.push({
+        type: 'prune_tree',
+        label: 'Prune Tree',
+        icon: '✂️',
+        color: '#6B7280',
+        execute: () => {
+          fruitTreeManager.pruneTree(currentMapId, tx, ty);
+        },
+      });
+    }
+
+    if (currentSeason === Season.SPRING && !fruitTreeManager.isMulched(currentMapId, tx, ty)) {
+      interactions.push({
+        type: 'mulch_tree',
+        label: 'Mulch Tree',
+        icon: '🌱',
+        color: '#78350F',
+        execute: () => {
+          fruitTreeManager.mulchTree(currentMapId, tx, ty);
+        },
+      });
+    }
+
+    if (currentSeason === Season.AUTUMN && !fruitTreeManager.isHarvested(currentMapId, tx, ty)) {
+      interactions.push({
+        type: 'harvest_fruit_tree',
+        label: 'Harvest Apples',
+        icon: '🍎',
+        color: '#DC2626',
+        execute: () => {
+          const wasAbundant = fruitTreeManager.isAbundant(currentMapId, tx, ty);
+          const result = fruitTreeManager.harvestTree(currentMapId, tx, ty);
+          if (result.success) {
+            const hint = wasAbundant ? '' : ' (Prune in winter and mulch in spring for a fuller crop next year.)';
+            onFarmAction?.({
+              handled: true,
+              message: `Harvested ${result.quantity} apple${result.quantity !== 1 ? 's' : ''}!${hint}`,
+            });
+          }
+        },
+      });
+    }
   }
 
   // Check for farming actions

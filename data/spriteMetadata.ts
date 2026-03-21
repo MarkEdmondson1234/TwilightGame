@@ -9,7 +9,7 @@
  */
 
 import { TileType, SpriteMetadata } from '../types';
-import { tileAssets } from '../assets';
+import { tileAssets, orchardAssets } from '../assets';
 
 export const SPRITE_METADATA: SpriteMetadata[] = [
   {
@@ -1275,6 +1275,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // Narrow shadow for dead tree trunk
     shadowWidthRatio: 0.4,
     shadowHeightRatio: 0.2,
+  },
+  // ── Orchard fruit trees ────────────────────────────────────────────────────
+  {
+    tileType: TileType.APPLE_TREE,
+    spriteWidth: 6,   // 6 tiles wide — square (1:1 aspect ratio preserved)
+    spriteHeight: 6,  // 6 tiles tall
+    offsetX: -2.5,    // Center horizontally on anchor tile
+    offsetY: -5,      // Extends 5 tiles upward from anchor (trunk base)
+    image: orchardAssets.apple_tree_summer, // Fallback; getImage() in TileData overrides this
+    // Small collision box centered on the anchor tile (trunk base)
+    collisionWidth: 0.5,
+    collisionHeight: 0.5,
+    collisionOffsetX: 0.25,
+    collisionOffsetY: 0.25,
+    // Slight scale variation for a natural orchard feel
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.95, max: 1.05 },
   },
   {
     tileType: TileType.WILD_IRIS,

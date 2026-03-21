@@ -516,14 +516,16 @@ async function optimizeFarming() {
     // Delete output file if it exists (handles case-sensitivity issues on Windows)
     deleteIfExists(outputPath);
 
+    // Orchard fruit trees — tree-scale quality (add new fruit tree keywords here)
+    const isOrchardTree = file.includes('apple_tree') || file.includes('pear_tree');
     // Plant sprites (seedling, plant_*, wilted, crop stages) - use larger size for visibility
     // Reduced compression level to 5 for better quality (user feedback: less compression needed)
     // Soil sprites (fallow, tilled) - use regular tile size
     const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted') ||
                           file.includes('_young') || file.includes('_adult');
-    const targetSize = isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
-    const targetQuality = isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
-    const targetCompression = isPlantSprite ? 5 : 9;
+    const targetSize = isOrchardTree ? TREE_SIZE : isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
+    const targetQuality = isOrchardTree ? SHOWCASE_QUALITY : isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
+    const targetCompression = isOrchardTree ? 4 : isPlantSprite ? 5 : 9;
 
     await sharp(inputPath)
       .resize(targetSize, targetSize, {

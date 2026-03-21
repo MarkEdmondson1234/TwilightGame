@@ -31,7 +31,7 @@ import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
 import { HighlightLayer } from '../utils/pixi/HighlightLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
-import { tileAssets, farmingAssets, cookingAssets, npcAssets, itemAssets } from '../assets';
+import { tileAssets, farmingAssets, cookingAssets, npcAssets, itemAssets, orchardAssets } from '../assets';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
@@ -250,6 +250,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           {
             ...tileAssets,
             ...farmingAssets,
+            ...orchardAssets,
             ...cookingAssets,
             ...npcAssets,
             ...itemAssets,

@@ -70,6 +70,14 @@ export interface TileData {
   // Animation support (for tiles like cauldrons that cycle through frames)
   animationFrames?: string[]; // Array of image paths to cycle through
   animationSpeed?: number; // Milliseconds per frame (default: 150)
+  // Dynamic image resolver — takes priority over seasonalImages for state-dependent tiles (e.g. fruit trees)
+  getImage?: (
+    mapId: string,
+    x: number,
+    y: number,
+    season: 'spring' | 'summer' | 'autumn' | 'winter',
+    timeOfDay: 'day' | 'night'
+  ) => string | null;
   // Light source support (DarknessLayer punches light holes at these tiles)
   lightSource?: {
     radius?: number; // Light radius in pixels (default: TILE_SIZE * 3.5)

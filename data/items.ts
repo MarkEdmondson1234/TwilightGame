@@ -574,6 +574,20 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.blueberries_crop,
   },
 
+  // ===== ORCHARD FRUIT (harvested from fruit trees) =====
+  apple: {
+    id: 'apple',
+    name: 'apple',
+    displayName: 'Apple',
+    category: ItemCategory.CROP,
+    description: 'A crisp apple from the orchard. Best eaten fresh or used in baking.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    maxStack: 20,
+    sellPrice: 12,
+    // image: placeholder — sprite to be provided later
+  },
+
   // ===== HERBS (harvested garden crops) =====
   // Note: "thyme" (id) already exists as a shop-bought dried ingredient.
   // crop_thyme is the fresh version, harvested from a planted herb in the garden.

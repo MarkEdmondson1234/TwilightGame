@@ -265,7 +265,7 @@ class MapManager {
       tileX < 0 ||
       tileX >= this.currentMap.grid[0].length
     ) {
-      return null; // Out of bounds
+      return this.currentMap.borderTileType ?? null;
     }
 
     return this.currentMap.grid[tileY][tileX];

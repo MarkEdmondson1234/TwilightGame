@@ -139,7 +139,7 @@ export class SpriteLayer extends PixiLayer {
         if (renderedKeys.has(key)) continue;
         renderedKeys.add(key);
 
-        this.renderSprite(x, y, spriteMetadata, seasonKey, timeOfDay, currentWeather);
+        this.renderSprite(x, y, spriteMetadata, seasonKey, timeOfDay, currentWeather, mapId);
       }
     }
 
@@ -167,7 +167,8 @@ export class SpriteLayer extends PixiLayer {
     metadata: SpriteMetadata,
     seasonKey: 'spring' | 'summer' | 'autumn' | 'winter',
     timeOfDay: 'day' | 'night',
-    currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
+    currentWeather?: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms',
+    mapId?: string
   ): void {
     const key = `${anchorX},${anchorY}`;
 
@@ -195,14 +196,28 @@ export class SpriteLayer extends PixiLayer {
       return;
     }
 
-    // Determine which image to use (time-of-day > seasonal > regular)
+    // Determine which image to use (dynamic > time-of-day > seasonal > regular)
     let imageUrl: string | null = null;
 
     // Get tile data for seasonal/time-of-day image lookup
     const tileData = getTileData(anchorX, anchorY);
 
-    // Check for time-of-day conditional images first (e.g., moonpetal)
-    if (tileData?.timeOfDayImages && seasonKey in tileData.timeOfDayImages) {
+    // Check for dynamic state-dependent image resolver first (e.g., fruit trees)
+    if (tileData?.getImage) {
+      const resolvedId = mapId ?? this.currentMapId ?? '';
+      const dynamicUrl = tileData.getImage(resolvedId, anchorX, anchorY, seasonKey, timeOfDay);
+      if (dynamicUrl) {
+        imageUrl = dynamicUrl;
+      } else {
+        // null/empty means don't render (e.g., tile is invisible this season)
+        const existingSprite = this.sprites.get(key);
+        if (existingSprite) existingSprite.visible = false;
+        return;
+      }
+    }
+
+    // Check for time-of-day conditional images (e.g., moonpetal) — only if getImage didn't resolve
+    if (!imageUrl && tileData?.timeOfDayImages && seasonKey in tileData.timeOfDayImages) {
       const timeOfDaySet = tileData.timeOfDayImages[seasonKey];
       const timeOfDayArray = timeOfDaySet[timeOfDay];
       if (timeOfDayArray && timeOfDayArray.length > 0) {

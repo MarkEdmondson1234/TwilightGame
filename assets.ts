@@ -321,6 +321,16 @@ export const farmingAssets = {
   plant_mint_adult: '/TwilightGame/assets-optimized/herbs/mint_bush.png',
 };
 
+// Orchard assets — fruit tree sprites (seasonal + state-based)
+export const orchardAssets = {
+  apple_tree_spring: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_spring.png',
+  apple_tree_summer: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_summer.png',
+  apple_tree_autumn_sparse: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_autumn_sparse.png',
+  apple_tree_autumn_abundant: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_autumn_abundant.png',
+  apple_tree_after_harvest: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_after_harvest.png',
+  apple_tree_winter: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_winter.png',
+};
+
 // Herb assets — inventory sprites for herb seeds and harvested crops
 export const herbAssets = {
   thyme_seeds: '/TwilightGame/assets-optimized/herbs/thyme_seeds.png',

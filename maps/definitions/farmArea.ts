@@ -31,7 +31,7 @@ import { createCowNPC } from '../../utils/npcFactories';
  */
 
 const gridString = `
-ULLGGGGGGLoZLLoLLoLL
+ULLGGGGGPLoZLLoLLoLL
 LGGGGGGGGGoGGoGGGePU
 UtGGGGGGGGGGGGGGUGPU
 LGeGG)GGGGGGGGGGGGPL
@@ -72,6 +72,13 @@ export const farmArea: MapDefinition = {
   isRandom: false,
   spawnPoint: { x: 8, y: 24 }, // On path near entrance (changed from 10 to 8 - on the P tile)
   transitions: [
+    {
+      fromPosition: { x: 8, y: 0 },
+      tileType: TileType.PATH,
+      toMapId: 'orchard',
+      toPosition: { x: 8, y: 17 },
+      label: 'To Orchard',
+    },
     {
       fromPosition: { x: 10, y: 24 },
       tileType: TileType.PATH,

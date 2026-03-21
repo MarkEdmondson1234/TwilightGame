@@ -97,6 +97,11 @@ export async function initializeGameAssets(
   eventChainManager.initialise();
   console.log(`[App] Initialised event chain system`);
 
+  // Initialize FruitTreeManager (loads saved tree states, subscribes to season changes)
+  const { fruitTreeManager } = await import('./fruitTreeManager');
+  fruitTreeManager.initialise();
+  console.log('[App] Initialised fruit tree system');
+
   // Preload all assets early to prevent lag on first use
   await preloadAllAssets({
     onProgress: (loaded, total) => {
