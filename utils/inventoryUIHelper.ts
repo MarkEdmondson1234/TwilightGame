@@ -5,7 +5,7 @@
 
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
-import { getItem } from '../data/items';
+import { getItem, ItemCategory } from '../data/items';
 import { decorationManager } from './DecorationManager';
 import { gameState } from '../GameState';
 import { FALLBACK_ITEM_ICON } from './iconMap';
@@ -130,6 +130,22 @@ export function convertInventoryToUI(): UIInventoryItem[] {
     const itemData = itemMap.get(itemId);
     if (!itemData) continue;
 
+    // Photos (KEEPSAKE): expand into individual slots with unique thumbnails
+    if (itemData.itemDef.category === ItemCategory.KEEPSAKE) {
+      const photos = inventoryManager.getPhotos();
+      for (const photo of photos) {
+        result.push({
+          id: itemId,
+          name: photo.photoName,
+          icon: photo.dataUrl,
+          quantity: 1,
+          value: 0,
+          photoData: photo,
+        });
+      }
+      continue;
+    }
+
     // Paintings: expand into individual slots with unique thumbnails
     if (itemId === 'framed_painting') {
       const unplaced = getUnplacedPaintings();
@@ -165,6 +181,21 @@ export function convertInventoryToUI(): UIInventoryItem[] {
   for (const [itemId, { totalQuantity, itemDef }] of itemMap.entries()) {
     if (!slotOrder.includes(itemId)) {
       console.warn(`[InventoryUIHelper] Item ${itemId} not in slotOrder, appending`);
+
+      if (itemDef.category === ItemCategory.KEEPSAKE) {
+        const photos = inventoryManager.getPhotos();
+        for (const photo of photos) {
+          result.push({
+            id: itemId,
+            name: photo.photoName,
+            icon: photo.dataUrl,
+            quantity: 1,
+            value: 0,
+            photoData: photo,
+          });
+        }
+        continue;
+      }
 
       if (itemId === 'framed_painting') {
         const unplaced = getUnplacedPaintings();

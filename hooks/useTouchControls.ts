@@ -33,6 +33,7 @@ export interface TouchControlsConfig {
     onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear', tilePos?: Position) => void;
     onForageResult?: (result: ForageResult) => void;
     onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
+    onTakePhoto?: () => void;
 }
 
 export function useTouchControls(config: TouchControlsConfig) {
@@ -50,6 +51,7 @@ export function useTouchControls(config: TouchControlsConfig) {
         onFarmActionAnimation,
         onForageResult,
         onShowToast,
+        onTakePhoto,
     } = config;
 
     const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -144,11 +146,16 @@ export function useTouchControls(config: TouchControlsConfig) {
         }
     };
 
+    const handlePhotoPress = () => {
+        onTakePhoto?.();
+    };
+
     return {
         handleDirectionPress,
         handleDirectionRelease,
         handleActionPress,
         handleResetPress,
         handleForagePress,
+        handlePhotoPress,
     };
 }

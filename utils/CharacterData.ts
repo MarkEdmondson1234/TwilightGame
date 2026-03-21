@@ -44,7 +44,7 @@
  */
 
 import { gameState } from '../GameState';
-import { FarmPlot, NPCFriendship } from '../types';
+import { FarmPlot, NPCFriendship, Photo } from '../types';
 
 // Type definitions for each data domain
 export interface CookingData {
@@ -108,6 +108,10 @@ export interface DecorationData {
   hasEasel: boolean;
 }
 
+export interface PhotographyData {
+  albumPhotos: Photo[];
+}
+
 // Map of domain names to their data types
 export interface CharacterDataDomains {
   cooking: CookingData;
@@ -116,6 +120,7 @@ export interface CharacterDataDomains {
   inventory: InventoryData;
   magic: MagicData;
   decoration: DecorationData;
+  photography: PhotographyData;
 }
 
 // Type for domain names
@@ -161,6 +166,12 @@ class CharacterDataManager {
           return gameState.loadMagicState() as unknown as CharacterDataDomains[T] | null;
         case 'decoration':
           return gameState.loadDecorationState() as unknown as CharacterDataDomains[T] | null;
+        case 'photography': {
+          const saved = gameState.loadPhotographyState();
+          return saved
+            ? (saved as unknown as CharacterDataDomains[T])
+            : ({ albumPhotos: [] } as unknown as CharacterDataDomains[T]);
+        }
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
           return null;
@@ -209,6 +220,9 @@ class CharacterDataManager {
           break;
         case 'decoration':
           gameState.saveDecorationState(data as DecorationData);
+          break;
+        case 'photography':
+          gameState.savePhotographyState(data as PhotographyData);
           break;
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
@@ -269,6 +283,11 @@ class CharacterDataManager {
           craftedPaintsCount: decoData.craftedPaints.length,
           paintingsCount: decoData.paintings.length,
           hasEasel: decoData.hasEasel,
+        };
+      case 'photography':
+        const photoData = data as PhotographyData;
+        return {
+          albumPhotosCount: photoData.albumPhotos.length,
         };
       default:
         return { unknown: true };
@@ -367,6 +386,22 @@ class CharacterDataManager {
    */
   loadFriendships(): FriendshipData | null {
     return this.load('friendship');
+  }
+
+  /**
+   * Save album photos (convenience method)
+   * Persists photos that have been sent to the album (not in-inventory photos).
+   */
+  savePhotos(albumPhotos: Photo[]): boolean {
+    return this.save('photography', { albumPhotos });
+  }
+
+  /**
+   * Load album photos (convenience method)
+   */
+  loadPhotos(): Photo[] {
+    const data = this.load('photography');
+    return data?.albumPhotos ?? [];
   }
 }
 

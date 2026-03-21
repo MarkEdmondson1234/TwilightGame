@@ -128,6 +128,9 @@ export const Z_WEATHER_PARTICLES = 350;
 /** Radial menu for interactions */
 export const Z_RADIAL_MENU = 400;
 
+/** Camera viewfinder overlay (above weather effects, below HUD) */
+export const Z_CAMERA_OVERLAY = 450;
+
 /** Action prompts (E to interact) */
 export const Z_ACTION_PROMPTS = 410;
 
@@ -200,6 +203,9 @@ export const Z_JOURNAL = 2048;
 
 /** Recipe book */
 export const Z_RECIPE_BOOK = 2050;
+
+/** Photo album */
+export const Z_PHOTO_ALBUM = 2052;
 
 /** Painting easel (freehand drawing) */
 export const Z_PAINTING_EASEL = 2055;

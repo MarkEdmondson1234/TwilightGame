@@ -24,6 +24,7 @@ export enum ItemCategory {
   POTION = 'potion', // Brewed potions
   DECORATION = 'decoration', // Placeable decorations for home/maps
   MISC = 'misc',
+  KEEPSAKE = 'keepsake', // Unique collectibles (photos, mementos) — not stackable, not tradeable
 }
 
 export enum ItemRarity {
@@ -643,6 +644,31 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: false,
     // No buyPrice - quest reward item, not purchasable
     image: itemAssets.feather_duster,
+  },
+
+  // TODO: replace emoji placeholder with hand-drawn sprite asset when delivered
+  // TODO: add to Mushra's shop when implemented
+  camera: {
+    id: 'camera',
+    name: 'camera',
+    displayName: 'Camera',
+    category: ItemCategory.TOOL,
+    description: 'A hand-wound film camera. Takes 24 exposures per roll.',
+    stackable: false,
+    buyPrice: 180,
+    icon: '📷',
+  },
+
+  // ===== KEEPSAKES =====
+  photo: {
+    id: 'photo',
+    name: 'photo',
+    displayName: 'Photo',
+    category: ItemCategory.KEEPSAKE,
+    description: 'A photograph taken with your camera.',
+    stackable: false,
+    // Not buyable or sellable — a personal keepsake
+    icon: '🖼️',
   },
 
   // ===== COOKING INGREDIENTS (shop-bought) =====

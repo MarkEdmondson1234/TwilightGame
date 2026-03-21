@@ -164,6 +164,17 @@ export interface GameState {
     hasEasel: boolean;
   };
 
+  // Photography system (managed by PhotoAlbumManager)
+  photography?: {
+    albumPhotos: Array<{
+      id: string;
+      dataUrl: string;
+      photoName: string;
+      exposureNumber: number;
+      takenAt: number;
+    }>;
+  };
+
   // Status effects
   statusEffects: {
     feelingSick: boolean; // Prevents leaving village, acquired from eating terrible food
@@ -1176,6 +1187,33 @@ class GameStateManager {
     hasEasel: boolean;
   } | null {
     return this.state.decoration || null;
+  }
+
+  // === Photography Methods ===
+
+  savePhotographyState(photography: {
+    albumPhotos: Array<{
+      id: string;
+      dataUrl: string;
+      photoName: string;
+      exposureNumber: number;
+      takenAt: number;
+    }>;
+  }): void {
+    this.state.photography = photography;
+    this.notify();
+  }
+
+  loadPhotographyState(): {
+    albumPhotos: Array<{
+      id: string;
+      dataUrl: string;
+      photoName: string;
+      exposureNumber: number;
+      takenAt: number;
+    }>;
+  } | null {
+    return this.state.photography || null;
   }
 
   /**

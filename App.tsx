@@ -52,6 +52,7 @@ import { audioManager } from './utils/AudioManager';
 import { cookingManager } from './utils/CookingManager';
 import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
+import { photoAlbumManager } from './utils/photoAlbumManager';
 import { TimeManager } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
 import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, zClass } from './zIndex';
@@ -82,12 +83,17 @@ import PaintingEaselUI from './components/PaintingEaselUI';
 import MiniGameHost from './components/MiniGameHost';
 import { CottageBook } from './components/book';
 import Toast, { useToast } from './components/Toast';
+import CameraOverlay from './components/CameraOverlay';
+import PhotoViewer from './components/PhotoViewer';
 import RadialMenu from './components/RadialMenu';
 import { StaminaBar } from './components/StaminaBar';
 import { DestinationMarker } from './components/DestinationMarker';
 import { useMouseControls } from './hooks/useMouseControls';
 import { useMouseHover } from './hooks/useMouseHover';
 import { inventoryManager } from './utils/inventoryManager';
+import { captureGameViewport } from './utils/cameraCapture';
+import { CAMERA } from './constants';
+import type { Photo } from './types';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
@@ -156,6 +162,11 @@ const App: React.FC = () => {
     slotIndex: number;
   } | null>(null);
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
+
+  // Camera: track photo count to pass to CameraOverlay
+  const [photoCount, setPhotoCount] = useState(() => inventoryManager.getPhotos().length);
+  // Photo currently open in the full-screen viewer (from inventory double-click)
+  const [viewingPhoto, setViewingPhoto] = useState<Photo | null>(null);
 
   // Shared state for NPC interactions (used by both MovementController and InteractionController)
   const [activeNPC, setActiveNPC] = useState<string | null>(null);
@@ -469,6 +480,7 @@ const App: React.FC = () => {
   useEffect(() => {
     return eventBus.on(GameEvent.INVENTORY_CHANGED, () => {
       setInventoryItems(convertInventoryToUI());
+      setPhotoCount(inventoryManager.getPhotos().length);
     });
   }, []);
 
@@ -594,6 +606,51 @@ const App: React.FC = () => {
     onSetSelectedItemSlot: setSelectedItemSlot,
   });
 
+  /**
+   * Capture the current game viewport and store the photo in inventory.
+   * Defined here (before useTouchControls) so it can be passed as a stable callback.
+   */
+  const handleTakePhoto = useCallback(async () => {
+    if (!canvasRef.current) {
+      console.warn('[App] Cannot take photo — canvas not available');
+      return;
+    }
+
+    // Play shutter sound immediately — before the async capture so it fires in sync with the flash
+    audioManager.playSfx('sfx_camera_shutter');
+
+    try {
+      const dataUrl = await captureGameViewport(canvasRef.current);
+      const currentCount = inventoryManager.getPhotos().length;
+      const exposureNumber = currentCount + 1;
+
+      const photo: Photo = {
+        id: `photo_${Date.now()}`,
+        dataUrl,
+        photoName: `Photo #${exposureNumber}`,
+        exposureNumber,
+        takenAt: Date.now(),
+      };
+
+      const added = inventoryManager.addPhoto(photo);
+      if (!added) {
+        showToast('No exposures left — send some photos to your album first.', 'warning');
+        return;
+      }
+
+      const remaining = CAMERA.MAX_EXPOSURES - (currentCount + 1);
+      showToast(
+        `Photo taken! ${remaining} exposure${remaining !== 1 ? 's' : ''} remaining.`,
+        'success'
+      );
+
+      eventBus.emit(GameEvent.PHOTO_TAKEN, { photo, exposuresRemaining: remaining });
+    } catch (err) {
+      console.error('[App] Photo capture failed:', err);
+      showToast('Could not take photo. Please try again.', 'error');
+    }
+  }, [showToast]);
+
   // Setup touch controls
   const touchControls = useTouchControls({
     playerPosRef,
@@ -608,6 +665,7 @@ const App: React.FC = () => {
     onFarmUpdate: handleFarmUpdate,
     onFarmActionAnimation: handleFarmActionAnimation,
     onShowToast: showToast,
+    onTakePhoto: handleTakePhoto,
   });
 
   const gameLoop = useCallback(() => {
@@ -1695,6 +1753,7 @@ const App: React.FC = () => {
           onRecipeBookOpen={() => openUI('recipeBook')}
           onMagicBookOpen={() => openUI('magicBook')}
           onJournalOpen={() => openUI('journal')}
+          onPhotoAlbumOpen={() => openUI('photoAlbum')}
         />
       )}
 
@@ -1727,6 +1786,11 @@ const App: React.FC = () => {
             onDirectionRelease={touchControls.handleDirectionRelease}
             onResetPress={touchControls.handleResetPress}
             compact={isCompactMode}
+            onPhotoPress={
+              selectedItemSlot !== null && inventoryItems[selectedItemSlot]?.id === 'camera' && !ui.inventory
+                ? touchControls.handlePhotoPress
+                : undefined
+            }
           />
         )}
       {activeNPC && !isCutscenePlaying && (
@@ -1831,6 +1895,8 @@ const App: React.FC = () => {
           onReorder={handleInventoryReorder}
           selectedSlot={selectedItemSlot}
           isMagicUnlocked={gameState.isMagicBookUnlocked()}
+          photoCount={photoCount}
+          onPhotoDoubleClick={(photo) => setViewingPhoto(photo)}
           onItemClick={(item, slotIndex, event) => {
             const itemDef = getItem(item.id);
             if (itemDef && itemDef.category === ItemCategory.POTION) {
@@ -2067,6 +2133,37 @@ const App: React.FC = () => {
       {ui.journal && (
         <CottageBook isOpen={ui.journal} onClose={() => closeUI('journal')} theme="journal" />
       )}
+      {ui.photoAlbum && (
+        <CottageBook isOpen={ui.photoAlbum} onClose={() => closeUI('photoAlbum')} theme="photoAlbum" />
+      )}
+      {/* Photo viewer — opens when double-clicking a photo in inventory */}
+      {viewingPhoto && (
+        <PhotoViewer
+          photo={viewingPhoto}
+          onClose={() => setViewingPhoto(null)}
+          onRename={(newName) => {
+            inventoryManager.updatePhotoName(viewingPhoto.id, newName);
+            setViewingPhoto((prev) => prev ? { ...prev, photoName: newName } : prev);
+          }}
+          onSendToAlbum={() => {
+            photoAlbumManager.addToAlbum(viewingPhoto);
+            inventoryManager.removePhotoById(viewingPhoto.id);
+            setViewingPhoto(null);
+            showToast('Photo sent to album!', 'success');
+          }}
+        />
+      )}
+      {/* Camera viewfinder overlay — visible when camera is equipped and inventory is closed */}
+      <CameraOverlay
+        isOpen={
+          selectedItemSlot !== null &&
+          inventoryItems[selectedItemSlot]?.id === 'camera' &&
+          !ui.inventory &&
+          !activeNPC
+        }
+        onTakePhoto={handleTakePhoto}
+        photoCount={photoCount}
+      />
       {/* Loading cutscene overlay (game content renders underneath for PixiJS to init) */}
       {isLoadingCutscene && isCutscenePlaying && (
         <>

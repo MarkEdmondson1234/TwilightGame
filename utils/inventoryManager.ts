@@ -14,12 +14,15 @@
 import { ItemCategory, getItem, ITEMS } from '../data/items';
 import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
+import { CAMERA } from '../constants';
+import type { Photo } from '../types';
 
 export interface InventoryItem {
   itemId: string;
   quantity: number;
   uses?: number; // Current uses remaining for this item (only if item has maxUses defined)
   masteryLevel?: number; // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
+  photoData?: Photo; // For KEEPSAKE photo items — links to the captured image and metadata
 }
 
 class InventoryManager {
@@ -598,6 +601,100 @@ class InventoryManager {
     this.tools.clear();
     console.log('[InventoryManager] Cleared all inventory');
     this.saveToGameState();
+  }
+
+  // ============================================================
+  // Photography helpers
+  // ============================================================
+
+  /**
+   * Add a photo to inventory.
+   * Each photo is stored as a non-stackable KEEPSAKE instance with photoData attached.
+   * Returns false if the 24-exposure cap has been reached.
+   */
+  addPhoto(photo: Photo): boolean {
+    const currentCount = this.getPhotos().length;
+    if (currentCount >= CAMERA.MAX_EXPOSURES) {
+      console.warn(
+        `[InventoryManager] Cannot add photo — exposure cap (${CAMERA.MAX_EXPOSURES}) reached`
+      );
+      return false;
+    }
+
+    const instances = this.items.get('photo') || [];
+    const newInstance: InventoryItem = {
+      itemId: 'photo',
+      quantity: 1,
+      photoData: photo,
+    };
+    instances.push(newInstance);
+
+    const isNewItemType = !this.items.has('photo');
+    this.items.set('photo', instances);
+
+    if (isNewItemType && !this.slotOrder.includes('photo')) {
+      this.slotOrder.push('photo');
+    }
+
+    console.log(
+      `[InventoryManager] Added photo "${photo.photoName}" (${currentCount + 1}/${CAMERA.MAX_EXPOSURES} exposures used)`
+    );
+    this.saveToGameState();
+    return true;
+  }
+
+  /**
+   * Get all photos currently in inventory (not yet sent to album).
+   */
+  getPhotos(): Photo[] {
+    const instances = this.items.get('photo') || [];
+    return instances
+      .filter((inst) => inst.photoData !== undefined)
+      .map((inst) => inst.photoData as Photo);
+  }
+
+  /**
+   * Remove a specific photo from inventory by its photo ID.
+   * Used when sending a photo to the album.
+   */
+  removePhotoById(photoId: string): boolean {
+    const instances = this.items.get('photo') || [];
+    const index = instances.findIndex((inst) => inst.photoData?.id === photoId);
+
+    if (index === -1) {
+      console.warn(`[InventoryManager] Photo not found in inventory: ${photoId}`);
+      return false;
+    }
+
+    instances.splice(index, 1);
+
+    if (instances.length === 0) {
+      this.items.delete('photo');
+      const slotIndex = this.slotOrder.indexOf('photo');
+      if (slotIndex !== -1) {
+        this.slotOrder.splice(slotIndex, 1);
+      }
+    } else {
+      this.items.set('photo', instances);
+    }
+
+    console.log(`[InventoryManager] Removed photo ${photoId} from inventory`);
+    this.saveToGameState();
+    return true;
+  }
+
+  /**
+   * Update the display name of a photo that is still in inventory.
+   */
+  updatePhotoName(photoId: string, newName: string): void {
+    const instances = this.items.get('photo') || [];
+    const instance = instances.find((inst) => inst.photoData?.id === photoId);
+
+    if (instance?.photoData) {
+      instance.photoData = { ...instance.photoData, photoName: newName };
+      this.items.set('photo', instances);
+      this.saveToGameState();
+    }
   }
 
   /**

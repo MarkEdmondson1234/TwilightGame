@@ -16,7 +16,7 @@
  *   }, []);
  */
 
-import type { Position } from '../types';
+import type { Position, Photo } from '../types';
 
 // ============================================================================
 // Event Types
@@ -82,6 +82,10 @@ export enum GameEvent {
   LOCAL_SAVE_FLUSHED = 'save:local_flushed',
   CLOUD_SYNC_STARTED = 'save:cloud_sync_started',
   CLOUD_SYNC_COMPLETED = 'save:cloud_sync_completed',
+
+  // Photography events
+  PHOTO_TAKEN = 'camera:photo_taken',
+  PHOTO_SENT_TO_ALBUM = 'camera:photo_sent_to_album',
 }
 
 // ============================================================================
@@ -208,6 +212,14 @@ export interface EventPayloads {
   [GameEvent.CLOUD_SYNC_STARTED]: Record<string, never>;
   [GameEvent.CLOUD_SYNC_COMPLETED]: {
     success: boolean;
+  };
+  [GameEvent.PHOTO_TAKEN]: {
+    photo: Photo;
+    exposuresRemaining: number;
+  };
+  [GameEvent.PHOTO_SENT_TO_ALBUM]: {
+    photo: Photo;
+    albumSize: number;
   };
 }
 

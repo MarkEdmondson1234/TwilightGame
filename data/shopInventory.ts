@@ -388,6 +388,13 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     sellPrice: 10,
     stock: 'unlimited',
   },
+  // TODO: move to Mushra's shop when implemented
+  {
+    itemId: 'camera',
+    buyPrice: 180,
+    sellPrice: 0,
+    stock: 'unlimited',
+  },
   {
     itemId: 'plant_pot',
     buyPrice: 15,

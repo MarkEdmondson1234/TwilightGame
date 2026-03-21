@@ -234,6 +234,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           antialias: perfSettings.antialias,
           resolution: perfSettings.resolution,
           autoDensity: true,
+          // Required for canvas.toDataURL() to work — WebGL clears the framebuffer
+          // after each frame by default, producing a blank image on capture.
+          preserveDrawingBuffer: true,
         });
 
         pixiAppRef.current = app;

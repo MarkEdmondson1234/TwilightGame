@@ -23,7 +23,8 @@ export type UIOverlayName =
   | 'journal'
   | 'decorationWorkshop'
   | 'paintingEasel'
-  | 'miniGame';
+  | 'miniGame'
+  | 'photoAlbum';
 
 /**
  * Context data associated with specific UI overlays.
@@ -64,6 +65,7 @@ export interface UIState {
   decorationWorkshop: boolean;
   paintingEasel: boolean;
   miniGame: boolean;
+  photoAlbum: boolean;
   // Context data
   context: UIContext;
 }
@@ -86,7 +88,7 @@ export interface OpenUIOptions {
 }
 
 /** Book overlay names — mutually exclusive (opening one closes the others) */
-const BOOK_OVERLAYS: UIOverlayName[] = ['recipeBook', 'magicBook', 'journal'];
+const BOOK_OVERLAYS: UIOverlayName[] = ['recipeBook', 'magicBook', 'journal', 'photoAlbum'];
 
 /**
  * Return type for useUIState hook.
@@ -128,6 +130,7 @@ const initialState: UIState = {
   decorationWorkshop: false,
   paintingEasel: false,
   miniGame: false,
+  photoAlbum: false,
   context: { ...initialContext },
 };
 
@@ -303,7 +306,7 @@ export function useUIState() {
     );
   }, [state]);
 
-  const isAnyBookOpen = state.recipeBook || state.magicBook || state.journal;
+  const isAnyBookOpen = state.recipeBook || state.magicBook || state.journal || state.photoAlbum;
 
   return {
     ui: state,

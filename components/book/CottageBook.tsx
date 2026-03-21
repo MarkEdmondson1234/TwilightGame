@@ -1,10 +1,11 @@
 import React, { useEffect, useCallback } from 'react';
 import { Position } from '../../types';
-import { Z_RECIPE_BOOK, Z_MAGIC_BOOK, Z_JOURNAL, zClass } from '../../zIndex';
+import { Z_RECIPE_BOOK, Z_MAGIC_BOOK, Z_JOURNAL, Z_PHOTO_ALBUM, zClass } from '../../zIndex';
 import { BookTheme, getBookTheme } from './bookThemes';
 import RecipeContent from './RecipeContent';
 import PotionContent from './PotionContent';
 import JournalContent from './JournalContent';
+import PhotoAlbumContent from './PhotoAlbumContent';
 
 interface CottageBookProps {
   isOpen: boolean;
@@ -40,7 +41,13 @@ const CottageBook: React.FC<CottageBookProps> = ({
 }) => {
   const themeConfig = getBookTheme(theme);
   const zIndex =
-    theme === 'cooking' ? Z_RECIPE_BOOK : theme === 'journal' ? Z_JOURNAL : Z_MAGIC_BOOK;
+    theme === 'cooking'
+      ? Z_RECIPE_BOOK
+      : theme === 'journal'
+        ? Z_JOURNAL
+        : theme === 'photoAlbum'
+          ? Z_PHOTO_ALBUM
+          : Z_MAGIC_BOOK;
 
   // Handle ESC key to close
   useEffect(() => {
@@ -124,6 +131,8 @@ const CottageBook: React.FC<CottageBookProps> = ({
             />
           ) : theme === 'journal' ? (
             <JournalContent theme={themeConfig} />
+          ) : theme === 'photoAlbum' ? (
+            <PhotoAlbumContent theme={themeConfig} />
           ) : (
             <PotionContent theme={themeConfig} />
           )}

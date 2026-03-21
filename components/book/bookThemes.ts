@@ -7,7 +7,7 @@
 
 import { uiAssets } from '../../assets';
 
-export type BookTheme = 'cooking' | 'magic' | 'journal';
+export type BookTheme = 'cooking' | 'magic' | 'journal' | 'photoAlbum';
 
 /**
  * Theme configuration for the cottage book UI
@@ -146,6 +146,35 @@ export const journalTheme: BookThemeConfig = {
 };
 
 /**
+ * Photo album theme - warm sepia tones
+ */
+export const photoAlbumTheme: BookThemeConfig = {
+  name: 'Photo Album',
+  backgroundImage: uiAssets.openbook_ui,
+  // Warm sepia/teal
+  accentPrimary: '#7D5A50', // medium brown
+  accentSecondary: '#4A7C7C', // teal
+  ribbonColour: '#4A7C7C', // teal
+  buttonColour: '#4A7C7C', // teal
+  buttonHoverColour: '#5C9696', // lighter teal on hover
+  // Text
+  textPrimary: baseColours.textDark,
+  textSecondary: baseColours.textMedium,
+  textMuted: baseColours.textLight,
+  // Status
+  lockedColour: baseColours.locked,
+  masteredColour: baseColours.gold,
+  successColour: baseColours.success,
+  errorColour: baseColours.error,
+  // Icons
+  headerIcon: '📷',
+  actionIcon: '📸',
+  // Typography
+  fontHeading: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+  fontBody: 'Georgia, "Times New Roman", serif',
+};
+
+/**
  * Get theme configuration by name
  */
 export function getBookTheme(theme: BookTheme): BookThemeConfig {
@@ -156,6 +185,8 @@ export function getBookTheme(theme: BookTheme): BookThemeConfig {
       return magicTheme;
     case 'journal':
       return journalTheme;
+    case 'photoAlbum':
+      return photoAlbumTheme;
     default:
       return cookingTheme;
   }

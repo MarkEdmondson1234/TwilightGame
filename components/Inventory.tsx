@@ -3,6 +3,8 @@ import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { getItem, ItemCategory } from '../data/items';
 import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';
+import type { Photo } from '../types';
+import { CAMERA } from '../constants';
 
 export interface InventoryItem {
   id: string;
@@ -10,6 +12,8 @@ export interface InventoryItem {
   icon: string;
   quantity: number;
   value?: number; // Gold value for trading
+  /** For KEEPSAKE photo items — the captured image and metadata */
+  photoData?: Photo;
 }
 
 interface InventoryProps {
@@ -17,11 +21,14 @@ interface InventoryProps {
   onClose: () => void;
   items: InventoryItem[];
   onItemClick?: (item: InventoryItem, slotIndex: number, event: React.MouseEvent) => void;
-  onReorder?: (fromIndex: number, toIndex: number) => void; // NEW: Callback when items reordered
+  onReorder?: (fromIndex: number, toIndex: number) => void;
+  onPhotoDoubleClick?: (photo: Photo) => void;
   selectedSlot?: number | null; // Currently selected slot index
   maxSlots?: number;
   title?: string;
   isMagicUnlocked?: boolean;
+  /** Total photos in inventory — used to show exposure badge on camera */
+  photoCount?: number;
 }
 
 /**
@@ -37,12 +44,14 @@ const Inventory: React.FC<InventoryProps> = ({
   items,
   onItemClick,
   onReorder,
+  onPhotoDoubleClick,
   selectedSlot = null,
   maxSlots, // Optional prop - if provided, limits capacity; otherwise unlimited
   title = 'Inventory',
   isMagicUnlocked = false,
+  photoCount = 0,
 }) => {
-  type InventoryFilter = 'all' | 'ingredients' | 'farming' | 'seeds' | 'materials' | 'magical';
+  type InventoryFilter = 'all' | 'ingredients' | 'farming' | 'seeds' | 'materials' | 'magical' | 'photos';
   const [activeFilter, setActiveFilter] = useState<InventoryFilter>('all');
 
   // Drag-drop state for desktop
@@ -81,6 +90,7 @@ const Inventory: React.FC<InventoryProps> = ({
     seeds:       [ItemCategory.SEED],
     materials:   [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
     magical:     [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
+    photos:      [ItemCategory.KEEPSAKE],
   };
 
   const filterTabs: { id: InventoryFilter; label: string }[] = [
@@ -90,6 +100,7 @@ const Inventory: React.FC<InventoryProps> = ({
     { id: 'seeds',       label: 'Seeds' },
     { id: 'materials',   label: 'Materials' },
     ...(isMagicUnlocked ? [{ id: 'magical' as InventoryFilter, label: 'Magical' }] : []),
+    { id: 'photos', label: `Photos${photoCount > 0 ? ` (${photoCount})` : ''}` },
   ];
 
   // Apply category filter
@@ -119,6 +130,12 @@ const Inventory: React.FC<InventoryProps> = ({
   });
 
   const handleSlotClick = (item: InventoryItem | null, index: number, event: React.MouseEvent) => {
+    // Double-click on photo opens the viewer
+    if (event.detail === 2 && item?.photoData && onPhotoDoubleClick) {
+      onPhotoDoubleClick(item.photoData);
+      return;
+    }
+
     // Original click handler (for item selection/use)
     if (item && onItemClick) {
       onItemClick(item, index, event);
@@ -223,6 +240,13 @@ const Inventory: React.FC<InventoryProps> = ({
 
         {/* Inventory Grid - Scrollable */}
         <div className="overflow-y-scroll flex-1 pr-2 max-h-[500px] inventory-scrollbar">
+          {/* Empty state for photos filter */}
+          {activeFilter === 'photos' && filteredItems.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-10 text-amber-500 text-sm gap-2">
+              <span className="text-4xl">📷</span>
+              <p className="text-center">No photos yet.<br />Equip your camera and take some!</p>
+            </div>
+          )}
           <div className={`grid ${gridCols} ${slotGap}`}>
             {slots.map((item, index) => {
               const isQuickSlot = index < 9;
@@ -296,6 +320,13 @@ const Inventory: React.FC<InventoryProps> = ({
                           {item.quantity}
                         </div>
                       )}
+
+                      {/* Exposure counter badge on camera */}
+                      {item.id === 'camera' && (
+                        <div className={`absolute bottom-0 right-0 text-white text-xs font-bold px-1 py-0.5 rounded-tl-lg rounded-br-lg min-w-[28px] text-center ${photoCount >= CAMERA.MAX_EXPOSURES ? 'bg-red-700/90' : 'bg-teal-700/90'}`}>
+                          {photoCount}/{CAMERA.MAX_EXPOSURES}
+                        </div>
+                      )}
                     </>
                   )}
 
@@ -332,6 +363,9 @@ const Inventory: React.FC<InventoryProps> = ({
             <p className="text-xs text-amber-400 mt-1">
               {isTouchDevice ? 'Tap two items to swap positions' : 'Drag items to reorder'}
             </p>
+          )}
+          {activeFilter === 'photos' && filteredItems.length > 0 && !isTouchDevice && (
+            <p className="text-xs text-amber-400 mt-1">Double-click a photo to view it</p>
           )}
         </div>
       </div>

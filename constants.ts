@@ -408,3 +408,26 @@ export const WEATHER_ANIMATIONS: import('./types').WeatherAnimation[] = [
   //   scale: 1.2,
   // },
 ];
+
+/**
+ * CAMERA - Photography feature constants
+ *
+ * Controls the camera item behaviour: exposure limits, capture settings,
+ * animation timings, and album pagination.
+ */
+export const CAMERA = {
+  /** Maximum photos allowed in inventory at once (one roll of film) */
+  MAX_EXPOSURES: 24,
+  /** Maximum width (px) for compressed photo storage */
+  CAPTURE_WIDTH: 400,
+  /** JPEG quality for stored photos (0–1). Targets ~15–30 KB per photo */
+  JPEG_QUALITY: 0.5,
+  /** Camera flash fade-in duration (ms) */
+  FLASH_IN_MS: 80,
+  /** Camera flash fade-out duration (ms) */
+  FLASH_OUT_MS: 200,
+  /** Viewfinder bracket blink gap (ms) */
+  BRACKET_BLINK_MS: 300,
+  /** Photos displayed per page in the album */
+  ALBUM_PHOTOS_PER_PAGE: 5,
+} as const;

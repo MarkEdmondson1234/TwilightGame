@@ -71,6 +71,9 @@ export { FarmPlotState, CropGrowthStage } from './farm';
 // Types and interfaces
 export type { FarmPlot } from './farm';
 
+// Photography types
+export type { Photo } from './photography';
+
 // Cutscene types
 export type {
   CutsceneLayerAnimation,

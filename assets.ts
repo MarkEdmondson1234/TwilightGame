@@ -763,6 +763,12 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'sfx',
   },
 
+  // === Sound Effects - Camera ===
+  sfx_camera_shutter: {
+    url: '/TwilightGame/assets/audio/sfx/shuttersound.mp3',
+    category: 'sfx',
+  },
+
   // === Sound Effects - Transitions ===
   sfx_door_open: {
     url: '/TwilightGame/assets/audio/sfx/transitions/door_opening.mp3',

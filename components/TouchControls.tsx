@@ -5,6 +5,8 @@ interface TouchControlsProps {
   onDirectionPress: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onDirectionRelease: (direction: 'up' | 'down' | 'left' | 'right') => void;
   onResetPress: () => void;
+  /** Called when the photo button is pressed (only rendered when provided) */
+  onPhotoPress?: () => void;
   /** Use smaller controls for small screens (< 600px height) */
   compact?: boolean;
 }
@@ -25,6 +27,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionPress,
   onDirectionRelease,
   onResetPress,
+  onPhotoPress,
   compact = false,
 }) => {
   const handleTouchStart = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -105,6 +108,19 @@ const TouchControls: React.FC<TouchControlsProps> = ({
 
       {/* Action buttons on the right */}
       <div className={`flex flex-col items-end ${compact ? 'gap-2' : 'gap-3'}`}>
+        {/* Camera shutter button — only shown when camera is equipped */}
+        {onPhotoPress && (
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              onPhotoPress();
+            }}
+            className={`${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-full border-2 border-teal-400/70 flex items-center justify-center text-white text-2xl shadow-md`}
+            title="Take Photo"
+          >
+            📷
+          </button>
+        )}
         {/* Reset button - small, for getting unstuck */}
         <button
           onTouchStart={(e) => {

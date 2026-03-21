@@ -10,6 +10,7 @@ import { friendshipManager } from './FriendshipManager';
 import { cookingManager } from './CookingManager';
 import { magicManager } from './MagicManager';
 import { decorationManager } from './DecorationManager';
+import { photoAlbumManager } from './photoAlbumManager';
 import { syncPaintingsFromCloud } from './paintingImageService';
 import { deskManager } from './deskManager';
 import { performanceMonitor } from './PerformanceMonitor';
@@ -164,6 +165,10 @@ export async function initializeGameAssets(
   // Sync painting images from cloud in background (non-blocking)
   syncPaintingsFromCloud().catch(() => {});
   console.log(`[App] Initialised decoration system`);
+
+  // Load photo album from saved state
+  photoAlbumManager.initialise();
+  console.log(`[App] Initialised photography system`);
 
   // Load desk contents from saved state
   deskManager.initialise();

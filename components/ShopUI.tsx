@@ -248,6 +248,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 alt={itemDef.displayName}
                 className="max-w-full max-h-full object-contain pixelated"
               />
+            ) : itemDef.icon ? (
+              <span className="text-3xl">{itemDef.icon}</span>
             ) : (
               <img
                 src={FALLBACK_ITEM_ICON}
