@@ -7,6 +7,8 @@ interface PhotoViewerProps {
   onClose: () => void;
   /** If provided, a "Send to Album" button is shown (for inventory photos). */
   onSendToAlbum?: () => void;
+  /** If provided, a "Delete" button is shown (for inventory photos). */
+  onDelete?: () => void;
   /** Called when the user edits the photo name. */
   onRename: (newName: string) => void;
 }
@@ -21,6 +23,7 @@ const PhotoViewer: React.FC<PhotoViewerProps> = ({
   photo,
   onClose,
   onSendToAlbum,
+  onDelete,
   onRename,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -90,6 +93,14 @@ const PhotoViewer: React.FC<PhotoViewerProps> = ({
               className="bg-teal-700 hover:bg-teal-600 active:bg-teal-800 text-white font-semibold px-4 py-2 rounded transition-colors min-h-[44px]"
             >
               Send to Album
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              className="bg-red-800 hover:bg-red-700 active:bg-red-900 text-white font-semibold px-4 py-2 rounded transition-colors min-h-[44px]"
+            >
+              Delete
             </button>
           )}
           <button

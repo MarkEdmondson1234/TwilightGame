@@ -2151,6 +2151,11 @@ const App: React.FC = () => {
             setViewingPhoto(null);
             showToast('Photo sent to album!', 'success');
           }}
+          onDelete={() => {
+            inventoryManager.removePhotoById(viewingPhoto.id);
+            setViewingPhoto(null);
+            showToast('Photo deleted.', 'info');
+          }}
         />
       )}
       {/* Camera viewfinder overlay — visible when camera is equipped and inventory is closed */}
