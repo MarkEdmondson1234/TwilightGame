@@ -259,7 +259,8 @@ export function createWitchWolfNPC(
         requiredQuestStage: 3,
         // Stage gating handled by dialogueHandlers redirect
         responses: [
-          { text: "I'm working on it!" },
+          { text: 'Here are your pickled onions!', nextId: 'pickled_onions_deliver' },
+          { text: "I'm working on it." },
           { text: 'Where do I find the ingredients?', nextId: 'pickled_onions_ingredients' },
         ],
       },
@@ -269,6 +270,14 @@ export function createWitchWolfNPC(
         requiredQuest: 'witch_garden',
         requiredQuestStage: 3,
         // Stage gating handled by dialogueHandlers redirect
+      },
+      // Delivery pass-through node — handler redirects away immediately
+      { id: 'pickled_onions_deliver', text: '' },
+      {
+        id: 'pickled_onions_not_ready',
+        text: '*The witch peers at your hands.* "No jar yet, dear. Take your time — precision matters more than speed." *She gestures towards the cauldron.* "You have the recipe. When you\'re ready, bring me a proper batch."',
+        requiredQuest: 'witch_garden',
+        requiredQuestStage: 3,
       },
       // --- Quest complete dialogue (pickled onions delivered → novice apprentice) ---
       {

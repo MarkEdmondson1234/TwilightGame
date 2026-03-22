@@ -20,6 +20,7 @@ import { startFairyBluebellsQuest } from '../data/questHandlers/fairyBluebellsHa
 import {
   startWitchGardenQuest,
   startPickledOnionsPhase,
+  deliverPickledOnions,
   getGardenCropsGrown,
   getWitchGardenStage,
   WITCH_GARDEN_STAGES,
@@ -213,6 +214,20 @@ function handleWitchQuestActions(nodeId: string): string | void {
     startPickledOnionsPhase();
     if (DEBUG.QUEST) console.log('[dialogueHandlers] Witch taught pickled onions recipe');
     return;
+  }
+
+  // Deliver pickled onions
+  if (nodeId === 'pickled_onions_deliver') {
+    if (inventoryManager.hasItem('food_pickled_onions')) {
+      inventoryManager.removeItem('food_pickled_onions', 1);
+      const inv = inventoryManager.getInventoryData();
+      characterData.saveInventory(inv.items, inv.tools);
+      deliverPickledOnions();
+      magicManager.unlockMagicBook();
+      if (DEBUG.QUEST) console.log('[dialogueHandlers] 🧅 Pickled onions delivered to the witch!');
+      return 'pickled_onions_delivered';
+    }
+    return 'pickled_onions_not_ready';
   }
 
   // When the quest is active, the witch proactively comments on progress
