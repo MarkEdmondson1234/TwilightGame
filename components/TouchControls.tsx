@@ -1,5 +1,6 @@
 import React from 'react';
 import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
+import { itemAssets } from '../assets';
 
 interface TouchControlsProps {
   onDirectionPress: (direction: 'up' | 'down' | 'left' | 'right') => void;
@@ -118,7 +119,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             className={`${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-full border-2 border-teal-400/70 flex items-center justify-center text-white text-2xl shadow-md`}
             title="Take Photo"
           >
-            📷
+            <img src={itemAssets.camera} alt="Take Photo" className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} object-contain`} />
           </button>
         )}
         {/* Reset button - small, for getting unstuck */}

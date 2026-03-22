@@ -737,6 +737,7 @@ export const itemAssets = {
   sourdough_starter: '/TwilightGame/assets-optimized/items/sourdough_starter.png',
   // Tools - Quest and special items
   feather_duster: '/TwilightGame/assets-optimized/items/feather_duster.png',
+  camera: '/TwilightGame/assets-optimized/items/grocery/camera.png',
   // Decorations
   sunflower_bouquet:
     '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',

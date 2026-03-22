@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { CAMERA } from '../constants';
 import { Z_CAMERA_OVERLAY, zStyle } from '../zIndex';
+import { itemAssets } from '../assets';
 
 interface CameraOverlayProps {
   /** Whether to show the overlay (camera equipped + inventory closed) */
@@ -154,7 +155,8 @@ const CameraOverlay: React.FC<CameraOverlayProps> = ({ isOpen, onTakePhoto, phot
           `}
           style={{ backdropFilter: 'blur(4px)', minHeight: '48px' }}
         >
-          📷 {isRollFull ? 'Roll Full' : 'Take Photo'}
+          <img src={itemAssets.camera} alt="" className="w-5 h-5 object-contain" />
+          {isRollFull ? 'Roll Full' : 'Take Photo'}
         </button>
         {!isRollFull && (
           <span className="text-white/70 text-xs"

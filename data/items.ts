@@ -660,7 +660,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.feather_duster,
   },
 
-  // TODO: replace emoji placeholder with hand-drawn sprite asset when delivered
   // TODO: add to Mushra's shop when implemented
   camera: {
     id: 'camera',
@@ -670,7 +669,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A hand-wound film camera. Takes 24 exposures per roll.',
     stackable: false,
     buyPrice: 180,
-    icon: '📷',
+    image: itemAssets.camera,
   },
 
   // ===== KEEPSAKES =====
