@@ -1910,8 +1910,8 @@ const App: React.FC = () => {
                 // Close inventory after drinking potion for immersion
                 closeUI('inventory');
               }
-            } else if (itemDef && itemDef.category === ItemCategory.FOOD) {
-              // Food items show a radial menu: Select, Place, or Eat
+            } else if (itemDef && (itemDef.category === ItemCategory.FOOD || itemDef.edible)) {
+              // Food items and edible crops show a radial menu: Select, Place, or Eat
               setInventoryRadialMenu({
                 position: { x: event.clientX, y: event.clientY },
                 item,

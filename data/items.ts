@@ -10,6 +10,7 @@ import {
   herbAssets,
   itemAssets,
   magicalAssets,
+  orchardAssets,
   potionAssets,
 } from '../assets';
 
@@ -52,6 +53,7 @@ export interface ItemDefinition {
   forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
   placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
   persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
+  edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)
 }
 
 /**
@@ -585,7 +587,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxStack: 20,
     sellPrice: 12,
-    // image: placeholder — sprite to be provided later
+    edible: true,
+    image: orchardAssets.apple_crop,
   },
 
   // ===== HERBS (harvested garden crops) =====

@@ -329,6 +329,7 @@ export const orchardAssets = {
   apple_tree_autumn_abundant: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_autumn_abundant.png',
   apple_tree_after_harvest: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_after_harvest.png',
   apple_tree_winter: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_winter.png',
+  apple_crop: '/TwilightGame/assets-optimized/farming/orchard/apple_crop.png',
 };
 
 // Herb assets — inventory sprites for herb seeds and harvested crops
