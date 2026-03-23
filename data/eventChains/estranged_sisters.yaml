@@ -1,0 +1,61 @@
+# Estranged Sisters - Part 3 of The Witch's Apprentice questline
+#
+# After completing Althea's Chores and meeting Juniper, the player can
+# broker a reconciliation between the two estranged twin sisters.
+#
+# The player must:
+# 1. Tell Althea they have met Juniper (she gives them a letter to deliver)
+# 2. Deliver Althea's letter to Juniper
+# 3. Bring Juniper a photograph of Althea
+# 4. Arrange for Althea to meet Juniper at the old ruins
+#
+# All complex logic is handled by the TypeScript handler in
+# data/questHandlers/estrangedSistersHandler.ts
+
+id: estranged_sisters
+title: Estranged Sisters
+description: Help broker a reunion between Althea and her sister Juniper, who have not spoken in fifty years.
+type: achievement
+
+trigger:
+  type: manual  # Started via Althea's dialogue tree (after althea_chores completes)
+
+stages:
+  - id: letter_given
+    stageNumber: 1
+    text: >
+      Althea has given you a letter to deliver to her sister Juniper.
+      Find Juniper in her grove beyond the old ruins.
+    dialogue:
+      althea:
+        text: "Have you managed to deliver my letter to Juniper yet, dear?"
+        expression: thinky
+
+  - id: photo_needed
+    stageNumber: 2
+    text: >
+      Juniper read the letter. She would like to see a photograph of Althea
+      before she agrees to a meeting. Take a photo and bring it to her.
+    dialogue:
+      althea:
+        text: "Any news of Juniper? I do hope she was kind to you."
+        expression: thinky
+
+  - id: photo_delivered
+    stageNumber: 3
+    text: >
+      Juniper has agreed to meet Althea at the old ruins. Return to Althea
+      with the good news and offer to help her get there.
+    dialogue:
+      althea:
+        text: "What did Juniper say? Will she come?"
+        expression: smile
+
+  - id: complete
+    stageNumber: 4
+    text: The sisters have been reunited at the old ruins. Fifty years of silence, finally broken.
+    event:
+      title: "Estranged sisters reunited"
+      description: reunited two sisters who had not spoken in fifty years
+      contributor: A caring neighbour
+    end: true

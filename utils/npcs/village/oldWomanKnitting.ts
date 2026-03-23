@@ -116,6 +116,12 @@ export function createOldWomanKnittingNPC(
             hiddenIfQuestStarted: 'althea_chores',
           },
           {
+            text: 'How are things with Juniper?',
+            nextId: 'ask_about_sister_althea',
+            requiredQuest: 'estranged_sisters',
+            requiredQuestStage: 4,
+          },
+          {
             text: 'Take care!',
           },
         ],
@@ -463,12 +469,123 @@ export function createOldWomanKnittingNPC(
           },
         ],
       },
-      // Post-quest dialogue (shows after quest is fully completed)
+      // Post-quest dialogue — shown when althea_chores is complete but estranged_sisters not yet started
       {
         id: 'post_chores_reminder',
-        text: "*She looks at you with hopeful eyes.* Have you found Juniper yet, dearie? Remember \u2014 through the old ruins, north of the village. Look for the ancient meadow. And please... give her my love.",
+        text: "*She looks at you with hopeful eyes.* Have you found Juniper yet, dearie? Remember \u2014 through the old ruins, just north of the village. Look for the ancient meadow. And please... give her my love.",
         requiredQuest: 'althea_chores',
         requiredQuestStage: 3,
+        hiddenIfQuestStarted: 'estranged_sisters',
+        responses: [
+          {
+            text: "I have, actually \u2014 I've met her in the grove.",
+            nextId: 'sisters_met_juniper',
+            hiddenIfQuestStarted: 'estranged_sisters',
+          },
+          {
+            text: "Not yet \u2014 I'll find her soon.",
+          },
+        ],
+      },
+
+      // ===== ESTRANGED SISTERS QUEST =====
+
+      {
+        id: 'sisters_met_juniper',
+        text: "*Her face lights up, needles stilling completely.* You've found her? Oh, my dear, I can't tell you what that means to me. *She reaches into her knitting bag with trembling hands and produces a folded letter, sealed with a pressed violet.* I've been writing this for a very long time, waiting for someone I could trust with it. Would you take it to her?",
+        hiddenIfQuestStarted: 'estranged_sisters',
+        responses: [
+          {
+            text: "Of course \u2014 I'd be honoured to deliver it.",
+            nextId: 'sisters_letter_farewell',
+            givesItems: [{ itemId: 'key_letter_from_althea', quantity: 1 }],
+            startsQuest: 'estranged_sisters',
+            setsQuestStage: { questId: 'estranged_sisters', stage: 1 },
+          },
+          {
+            text: "Maybe another time.",
+          },
+        ],
+      },
+      {
+        id: 'sisters_letter_farewell',
+        text: "*She presses your hand warmly.* Tell her... tell her I think about her every single day. And that I am glad she found someone worth trusting with her glade. *She settles back with a watery smile.* Off you go, then, love. And thank you.",
+      },
+
+      // Greeting redirect targets — shown based on quest stage (via handleAltheaQuestItems)
+      {
+        id: 'sisters_awaiting_delivery',
+        text: "*She looks up with hopeful eyes, her knitting stilled.* Have you been able to get the letter to Juniper yet, dear? No rush \u2014 I just... well. You know.",
+        requiredQuest: 'estranged_sisters',
+        requiredQuestStage: 1,
+        maxQuestStage: 1,
+        responses: [
+          {
+            text: "Not yet \u2014 I'll go to her soon.",
+          },
+        ],
+      },
+      {
+        id: 'sisters_awaiting_photo',
+        text: "*She tilts her head curiously, eyes bright.* And how is Juniper? Has she... said anything about the letter?",
+        requiredQuest: 'estranged_sisters',
+        requiredQuestStage: 2,
+        maxQuestStage: 2,
+        responses: [
+          {
+            text: "She read it. She's asked for a photograph of you.",
+            nextId: 'sisters_photo_explanation',
+          },
+          {
+            text: "She received it. I'm working on the next part.",
+          },
+        ],
+      },
+      {
+        id: 'sisters_photo_explanation',
+        text: "*A long pause. Then a shaky breath.* She wants a photograph of me. *She laughs softly, a little tearfully.* Of course she does. Fifty years, and she still won't admit she misses me. *Her eyes shine.* You'll need a camera, dearie. The shop in the village stocks them. Do get me a good one \u2014 I want her to see I'm doing all right.",
+      },
+      {
+        id: 'sisters_awaiting_meeting',
+        text: "*She looks up, searching your face immediately, her knitting quite forgotten.* What did Juniper say? Will she come?",
+        requiredQuest: 'estranged_sisters',
+        requiredQuestStage: 3,
+        maxQuestStage: 3,
+        responses: [
+          {
+            text: "She's agreed to meet you at the old ruins.",
+            nextId: 'sisters_juniper_agrees',
+          },
+          {
+            text: "I'm still working on it.",
+          },
+        ],
+      },
+      {
+        id: 'sisters_juniper_agrees',
+        text: "*She goes very still. Then her hands start to shake \u2014 not from age, but from feeling.* She'll... she'll really come? *She dabs her eyes hastily.* Oh. Oh, goodness. I'll need to... *She looks up at you, eyes bright.* I can't manage the walk on my own, dear heart. These old legs aren't what they used to be. Would you... would you help me get there?",
+        responses: [
+          {
+            text: "Of course. I'll help you, Althea.",
+            nextId: 'sisters_help_confirm',
+          },
+          {
+            text: "I'm not quite ready yet \u2014 give me a moment.",
+          },
+        ],
+      },
+      {
+        id: 'sisters_help_confirm',
+        text: "*She grips your hand with surprising strength and rises slowly from her chair.* Then let us go, before I lose my nerve. *She takes a breath, squaring her shoulders.* I haven't seen her face in fifty years. I am terrified. *A small, fierce smile.* But I am ready.",
+        // Note: the dialogue handler intercepts this node to trigger the cutscene and complete the quest
+      },
+
+      // Post-quest dialogue (shows after sisters have been reunited)
+      {
+        id: 'ask_about_sister_althea',
+        text: "*She's smiling more than you've ever seen her smile before. There's a lightness about her that wasn't there before \u2014 as though she has set down a weight she has been carrying for a very long time.* You know, she sent a little note yesterday. Just a few lines \u2014 nothing much. The elderflower in her garden, the weather, how Shadow is getting on. *She presses the note to her heart.* I didn't know a few lines could mean so much. Thank you, dearie. From the very bottom of this old heart.",
+        requiredQuest: 'estranged_sisters',
+        requiredQuestStage: 4,
       },
     ],
     friendshipConfig: {

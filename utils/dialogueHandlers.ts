@@ -28,6 +28,7 @@ import {
 import { magicManager } from './MagicManager';
 import {
   isAltheaChoresActive,
+  isAltheaChoresCompleted,
   isAltheaChoresDone,
   isTeaDelivered,
   areCookiesDelivered,
@@ -35,6 +36,15 @@ import {
   markCookiesDelivered,
   QUEST_ITEMS,
 } from '../data/questHandlers/altheaChoresHandler';
+import {
+  isEstrangedSistersActive,
+  isEstrangedSistersCompleted,
+  getEstrangedSistersStage,
+  deliverLetterToJuniper,
+  deliverPhotoToJuniper,
+  completeEstrangedSistersQuest,
+  QUEST_STAGES as SISTERS_STAGES,
+} from '../data/questHandlers/estrangedSistersHandler';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -138,6 +148,7 @@ function handleSeedPickup(nodeId: string): void {
 function handleAltheaQuestItems(nodeId: string): string | void {
   // Auto-redirect greeting based on quest stage and delivery state
   if (nodeId === 'greeting') {
+    // Chores quest redirects take priority
     if (isAltheaChoresDone()) return 'chores_complete_intro';
     if (isAltheaChoresActive()) {
       const teaDone = isTeaDelivered();
@@ -147,6 +158,22 @@ function handleAltheaQuestItems(nodeId: string): string | void {
       if (cookiesDone) return 'chores_progress_need_tea';
       return 'chores_progress';
     }
+    // Estranged sisters quest redirects (after chores are complete)
+    const sistersStage = getEstrangedSistersStage();
+    if (sistersStage === SISTERS_STAGES.LETTER_GIVEN) return 'sisters_awaiting_delivery';
+    if (sistersStage === SISTERS_STAGES.PHOTO_NEEDED) return 'sisters_awaiting_photo';
+    if (sistersStage === SISTERS_STAGES.PHOTO_DELIVERED) return 'sisters_awaiting_meeting';
+    // Althea's chores complete but estranged sisters not yet started — show the post-chores prompt
+    if (isAltheaChoresCompleted() && !isEstrangedSistersActive() && !isEstrangedSistersCompleted()) {
+      return 'post_chores_reminder';
+    }
+    return;
+  }
+
+  // Estranged sisters: player agrees to help Althea to the ruins — complete quest and trigger cutscene
+  if (nodeId === 'sisters_help_confirm') {
+    completeEstrangedSistersQuest();
+    cutsceneManager.startCutscene('estranged_sisters_reunion');
     return;
   }
 
@@ -230,9 +257,23 @@ function handleWitchQuestActions(nodeId: string): string | void {
     return 'pickled_onions_not_ready';
   }
 
+  // Estranged sisters: deliver letter to Juniper via dialogue
+  if (nodeId === 'sisters_letter_offer') {
+    return deliverLetterToJuniper();
+  }
+
+  // Estranged sisters: deliver photo to Juniper via dialogue
+  if (nodeId === 'sisters_photo_offer') {
+    return deliverPhotoToJuniper();
+  }
+
   // When the quest is active, the witch proactively comments on progress
   // instead of showing her normal greeting
   if (nodeId === 'greeting') {
+    // Estranged sisters: if awaiting photo, show reminder greeting
+    const sistersStage = getEstrangedSistersStage();
+    if (sistersStage === SISTERS_STAGES.PHOTO_NEEDED) return 'sisters_awaiting_photo_reminder';
+
     const stage = getWitchGardenStage();
 
     // No quest yet — first visit shows a more guarded greeting

@@ -12,6 +12,7 @@ import './daveadLavaCakeHandler';
 // gardeningQuestHandler has no stage handlers (logic is pull-based via dialogue)
 // fairyBluebellsHandler has no stage handlers (item delivery is pull-based)
 // fairyQueenHandler has no stage handlers (fairy meetings are pull-based)
+// estrangedSistersHandler has no stage handlers (all logic is pull-based)
 
 // Re-export everything for convenience
 export * from './altheaChoresHandler';
@@ -20,3 +21,11 @@ export * from './daveadLavaCakeHandler';
 export * from './gardeningQuestHandler';
 export * from './fairyBluebellsHandler';
 export * from './fairyQueenHandler';
+export {
+  isEstrangedSistersActive,
+  isEstrangedSistersCompleted,
+  getEstrangedSistersStage,
+  deliverLetterToJuniper,
+  deliverPhotoToJuniper,
+  completeEstrangedSistersQuest,
+} from './estrangedSistersHandler';

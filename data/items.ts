@@ -687,6 +687,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
     icon: '🖼️',
   },
 
+  key_letter_from_althea: {
+    id: 'key_letter_from_althea',
+    name: 'key_letter_from_althea',
+    displayName: "Althea's Letter",
+    category: ItemCategory.KEEPSAKE,
+    description: "A handwritten letter from Althea to her sister Juniper, sealed with a pressed violet. It feels important.",
+    stackable: false,
+    // Not buyable or sellable — a quest keepsake
+    icon: '📝',
+  },
+
   // ===== COOKING INGREDIENTS (shop-bought) =====
 
   // Basic ingredients (Mother stocks these)

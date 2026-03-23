@@ -54,6 +54,13 @@ import {
 import { magicManager } from './MagicManager';
 import { decorationManager } from './DecorationManager';
 import { DEBUG } from '../constants';
+import {
+  getEstrangedSistersStage,
+  deliverLetterToJuniper,
+  deliverPhotoToJuniper,
+  QUEST_STAGES as SISTERS_STAGES,
+  QUEST_ITEMS as SISTERS_ITEMS,
+} from '../data/questHandlers/estrangedSistersHandler';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -530,6 +537,21 @@ class FriendshipManagerClass {
     questCompleted?: boolean;
     dialogueNodeId?: string;
   } | null {
+    // ===== ESTRANGED SISTERS: Accept letter from Althea =====
+    if (itemId === SISTERS_ITEMS.LETTER && getEstrangedSistersStage() === SISTERS_STAGES.LETTER_GIVEN) {
+      const nodeId = deliverLetterToJuniper();
+      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Witch receives Althea\'s letter via gift.');
+      return { points: 0, reaction: 'neutral', dialogueNodeId: nodeId };
+    }
+
+    // ===== ESTRANGED SISTERS: Accept photograph of Althea =====
+    if (itemId === SISTERS_ITEMS.PHOTO && getEstrangedSistersStage() === SISTERS_STAGES.PHOTO_NEEDED) {
+      const nodeId = deliverPhotoToJuniper();
+      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Witch receives photograph via gift.');
+      return { points: 0, reaction: 'neutral', dialogueNodeId: nodeId };
+    }
+
+    // ===== WITCH GARDEN: Accept pickled onions =====
     // Only handle during pickled onions phase
     if (getWitchGardenStage() !== WITCH_GARDEN_STAGES.PICKLED_ONIONS) {
       return null;

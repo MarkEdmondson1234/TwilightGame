@@ -72,6 +72,26 @@ export function createWitchWolfNPC(
             hiddenIfQuestStarted: 'witch_garden',
           },
           { text: 'Althea sends her regards.', nextId: 'althea_greeting' },
+          {
+            text: 'I have a letter for you \u2014 from Althea.',
+            nextId: 'sisters_letter_offer',
+            requiredQuest: 'estranged_sisters',
+            requiredQuestStage: 1,
+            maxQuestStage: 1,
+          },
+          {
+            text: 'I have a photograph of Althea.',
+            nextId: 'sisters_photo_offer',
+            requiredQuest: 'estranged_sisters',
+            requiredQuestStage: 2,
+            maxQuestStage: 2,
+          },
+          {
+            text: 'How are things with Althea?',
+            nextId: 'ask_about_sister_juniper',
+            requiredQuest: 'estranged_sisters',
+            requiredQuestStage: 4,
+          },
           { text: 'Just passing through.' },
         ],
       },
@@ -97,6 +117,26 @@ export function createWitchWolfNPC(
             hiddenIfQuestStarted: 'witch_garden',
           },
           { text: 'Althea sends her regards.', nextId: 'althea_greeting' },
+          {
+            text: 'I have a letter for you \u2014 from Althea.',
+            nextId: 'sisters_letter_offer',
+            requiredQuest: 'estranged_sisters',
+            requiredQuestStage: 1,
+            maxQuestStage: 1,
+          },
+          {
+            text: 'I have a photograph of Althea.',
+            nextId: 'sisters_photo_offer',
+            requiredQuest: 'estranged_sisters',
+            requiredQuestStage: 2,
+            maxQuestStage: 2,
+          },
+          {
+            text: 'How are things with Althea?',
+            nextId: 'ask_about_sister_juniper',
+            requiredQuest: 'estranged_sisters',
+            requiredQuestStage: 4,
+          },
           { text: 'Just passing through.' },
         ],
       },
@@ -388,6 +428,109 @@ export function createWitchWolfNPC(
         id: 'miss_sister',
         text: '*She\'s quiet for a long moment.* "Every day. But some choices, once made, cannot be unmade. I am a tenth-generation witch - this was always my path. Althea understood that, even if it hurt her." *Shadow nuzzles her hand.* "At least I have Shadow."',
         requiredFriendshipTier: 'good_friend',
+      },
+
+      // ===== ESTRANGED SISTERS QUEST =====
+
+      {
+        id: 'sisters_letter_offer',
+        text: '*Something shifts in her expression \u2014 a stillness, as though she has gone somewhere else for just a moment.* "A letter." *She reaches out slowly and takes it, turning it over in her hands. She recognises the handwriting immediately.* "She pressed a violet in the seal." *A very quiet voice.* "She always did that, when we were girls."',
+        // Handler intercepts this node to remove the letter from inventory and advance stage
+        responses: [
+          {
+            text: "I'll give you some time to read it in peace.",
+            nextId: 'sisters_letter_read',
+          },
+        ],
+      },
+      {
+        id: 'sisters_letter_no_letter',
+        text: '*She raises an eyebrow.* "You mentioned a letter \u2014 but you do not seem to have it with you." *A cool pause.* "Bring it when you have it."',
+      },
+      {
+        id: 'sisters_letter_read',
+        text: '*She breaks the seal and reads. You watch her face: neutral at first, then something that might be surprise, then \u2014 very briefly \u2014 something that might be grief. She folds the letter carefully.* "Althea says she misses me. That she has thought of me every day." *She is quiet for a long moment.*',
+        responses: [
+          {
+            text: 'She thinks of you every single day.',
+            nextId: 'sisters_letter_melted',
+          },
+        ],
+      },
+      {
+        id: 'sisters_letter_melted',
+        text: '*She exhales slowly.* "I know. I know she does. And I think of her too, though I have told myself otherwise for a very long time." *She glances at you sideways.* "She sounds... smaller than I remember. Older." *A pause.* "I suppose fifty years will do that to a person." *She turns to her cauldron.* "I do not wish to be cruel. I am simply... not certain I am ready."',
+        responses: [
+          {
+            text: 'What if I brought you a photograph of her?',
+            nextId: 'sisters_photo_request',
+          },
+          {
+            text: 'I understand. Take all the time you need.',
+          },
+        ],
+      },
+      {
+        id: 'sisters_photo_request',
+        text: '*She turns back, and for just a second you see it \u2014 the longing she has been keeping carefully out of sight.* "A photograph." *She considers, then nods once, as though making a decision.* "...Yes. I admit \u2014 I am curious to see what fifty years has done to her. Without the craft to sustain her, she will have aged as mortals do." *A breath.* "I am worried, if I am to be quite honest. I would like to see that she is well. A photograph. Yes. Will you bring me one? You will need a camera \u2014 there is one sold in the village."',
+        // This sets the quest stage via setsQuestStage on the "I'll bring one" response
+        responses: [
+          {
+            text: "I'll bring you a photograph of her.",
+            setsQuestStage: { questId: 'estranged_sisters', stage: 2 },
+          },
+        ],
+      },
+
+      {
+        id: 'sisters_photo_offer',
+        text: '*Her eyes settle on the photograph with an expression you cannot quite read. She takes it from you very carefully, as though it might tear.*',
+        // Handler intercepts this node to remove the photo from inventory and advance stage
+        responses: [
+          {
+            text: 'She wanted you to have it.',
+            nextId: 'sisters_photo_seen',
+          },
+        ],
+      },
+      {
+        id: 'sisters_photo_no_photo',
+        text: '*She looks at your hands with quiet patience.* "You mentioned a photograph. I do not see one." *A brief pause.* "Bring it when you have it. Take a photograph near the village \u2014 I will know her anywhere."',
+      },
+      {
+        id: 'sisters_photo_seen',
+        text: '*She studies the photograph for a long, long moment. Then, very quietly, she turns away. When she turns back, her eyes are wet.* "She looks like Mum." *Her voice is barely a whisper.* "I did not think..." *She steadies herself.* "I will come. I will meet her at the ruins. I cannot promise it will be easy. But I will come." *She looks at you directly.* "Tell Althea \u2014 tell her I will be there."',
+        responses: [
+          {
+            text: "I'll tell her straight away.",
+          },
+        ],
+      },
+
+      // Shown as greeting redirect when quest is at photo_needed stage (via dialogueHandlers)
+      {
+        id: 'sisters_awaiting_photo_reminder',
+        text: '*She glances up as you approach, a question in her eyes.* "The photograph. Have you been able to take one yet?"',
+        requiredQuest: 'estranged_sisters',
+        requiredQuestStage: 2,
+        maxQuestStage: 2,
+        responses: [
+          {
+            text: 'I have a photograph of Althea.',
+            nextId: 'sisters_photo_offer',
+          },
+          {
+            text: "Not yet \u2014 soon.",
+          },
+        ],
+      },
+
+      // Post-quest dialogue (shows after sisters have been reunited)
+      {
+        id: 'ask_about_sister_juniper',
+        text: '*There is a softness to her that was not there before \u2014 something settled, like a wound that has finally begun to heal.* "She wrote to me. Three pages, front and back, about nothing important at all \u2014 the village gossip, the garden, the elderflower she is growing this year." *A small, private smile.* "It was everything. Thank you, traveller. You did something I could not do for myself."',
+        requiredQuest: 'estranged_sisters',
+        requiredQuestStage: 4,
       },
     ],
     friendshipConfig: {
