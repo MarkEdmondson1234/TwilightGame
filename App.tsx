@@ -322,7 +322,7 @@ const App: React.FC = () => {
     npcsRef,
     onMapTransition: (mapId, pos) => {
       setCurrentMapId(mapId);
-      setPlayerPos(pos);
+      teleportPlayer(pos);
       lastTransitionTime.current = Date.now();
       npcManager.setCurrentMap(mapId);
       fairyAttractionManager.reset();
@@ -365,7 +365,7 @@ const App: React.FC = () => {
   const handleMapTransition = (mapId: string, spawnPos: Position) => {
     const oldMapId = currentMapId;
     setCurrentMapId(mapId);
-    setPlayerPos(spawnPos);
+    teleportPlayer(spawnPos);
     lastTransitionTime.current = Date.now();
 
     // Update NPC manager's current map
