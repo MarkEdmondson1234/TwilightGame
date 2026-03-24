@@ -923,6 +923,14 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/ambient/crow.mp3',
     category: 'sfx',
   },
+  sfx_owl: {
+    url: '/TwilightGame/assets/audio/ambient/owl.mp3',
+    category: 'sfx',
+  },
+  sfx_geese_flyby: {
+    url: '/TwilightGame/assets/audio/ambient/geese_flyby.mp3',
+    category: 'sfx',
+  },
   ambient_cave_dripping_water: {
     url: '/TwilightGame/assets/audio/ambient/cave_dripping_water.mp3',
     category: 'ambient',

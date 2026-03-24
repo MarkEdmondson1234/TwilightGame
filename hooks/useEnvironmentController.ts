@@ -445,6 +445,71 @@ export function useEnvironmentController(
   }, [currentMapId, currentWeather]);
 
   // -------------------------------------------------------------------------
+  // Autumn Owl Calls (intermittent)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isVillage = currentMapId === 'village';
+    const { season } = TimeManager.getCurrentTime();
+    const isAutumn = season === Season.AUTUMN;
+    const isNight = timeOfDay === 'night';
+
+    if (!isVillage || !isAutumn || !isNight) return;
+
+    let owlTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // Owls call less frequently than crows — 40–90 seconds between calls
+    const getGapDuration = () => Math.floor(Math.random() * 50000) + 40000;
+
+    const scheduleOwl = () => {
+      owlTimeout = setTimeout(() => {
+        if (audioManager.hasSound('sfx_owl')) {
+          audioManager.playSfx('sfx_owl');
+        }
+        owlTimeout = setTimeout(scheduleOwl, getGapDuration());
+      }, getGapDuration());
+    };
+
+    scheduleOwl();
+
+    return () => {
+      if (owlTimeout) clearTimeout(owlTimeout);
+    };
+  }, [currentMapId, currentWeather, timeOfDay]);
+
+  // -------------------------------------------------------------------------
+  // Autumn Geese Flyby (intermittent)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isVillage = currentMapId === 'village';
+    const { season } = TimeManager.getCurrentTime();
+    const isAutumn = season === Season.AUTUMN;
+
+    if (!isVillage || !isAutumn) return;
+
+    let geeseTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // Geese migrate in autumn — occasional flyby every 60–120 seconds
+    const getGapDuration = () => Math.floor(Math.random() * 60000) + 60000;
+
+    const scheduleGeese = () => {
+      geeseTimeout = setTimeout(() => {
+        if (audioManager.hasSound('sfx_geese_flyby')) {
+          audioManager.playSfx('sfx_geese_flyby');
+        }
+        geeseTimeout = setTimeout(scheduleGeese, getGapDuration());
+      }, getGapDuration());
+    };
+
+    scheduleGeese();
+
+    return () => {
+      if (geeseTimeout) clearTimeout(geeseTimeout);
+    };
+  }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
   // Ambient Music System
   // -------------------------------------------------------------------------
 
