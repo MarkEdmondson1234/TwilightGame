@@ -1368,7 +1368,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       fromPosition: { x: 1, y: exitY },
       tileType: TileType.MINE_ENTRANCE,
       toMapId: 'village',
-      toPosition: { x: 15, y: 15 }, // Center of main path - guaranteed safe
+      toPosition: { x: 20, y: 4 },
       label: 'Exit Cave',
     },
     {

@@ -97,7 +97,7 @@ export const mumsKitchen: MapDefinition = {
       fromPosition: { x: 4, y: 8 }, // Door at left side (where D is in grid)
       tileType: TileType.DOOR,
       toMapId: 'village',
-      toPosition: { x: 9, y: 30 }, // Spawn below the home building in village
+      toPosition: { x: 9.21, y: 30 }, // Spawn below the home building in village
       label: 'To Village',
       hasDoor: true,
     },
