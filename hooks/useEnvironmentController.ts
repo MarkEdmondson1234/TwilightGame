@@ -198,6 +198,7 @@ export function useEnvironmentController(
     audioManager.stopAmbient('ambient_cave_wind', 1000);
     audioManager.stopAmbient('ambient_cave_dripping_water', 1000);
     audioManager.stopAmbient('ambient_lava', 1000);
+    audioManager.stopAmbient('ambient_forest_spring', 1000);
 
     // Play new weather ambient if outdoors and audio exists
     if (isOutdoors) {
@@ -317,6 +318,49 @@ export function useEnvironmentController(
       audioManager.stopAmbient('ambient_cave_dripping_water', 500);
     };
   }, [currentMapId]);
+
+  // -------------------------------------------------------------------------
+  // Spring Forest Ambience (intermittent)
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isProceduralForest =
+      currentMapId.startsWith('RANDOM_FOREST_') || currentMapId.startsWith('deep_forest_');
+    const { season } = TimeManager.getCurrentTime();
+    const isSpring = season === Season.SPRING;
+    const badWeather = ['rain', 'storm', 'snow'].includes(currentWeather);
+
+    if (!isProceduralForest || !isSpring || badWeather) return;
+
+    let forestTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // Play for 20–50 seconds, then wait 90–240 seconds before the next burst
+    const getPlayDuration = () => Math.floor(Math.random() * 30000) + 20000;
+    const getGapDuration = () => Math.floor(Math.random() * 150000) + 90000;
+
+    const scheduleForest = () => {
+      forestTimeout = setTimeout(() => {
+        if (!audioManager.hasSound('ambient_forest_spring')) {
+          forestTimeout = setTimeout(scheduleForest, getGapDuration());
+          return;
+        }
+
+        audioManager.playAmbient('ambient_forest_spring');
+
+        forestTimeout = setTimeout(() => {
+          audioManager.stopAmbient('ambient_forest_spring', 3000);
+          forestTimeout = setTimeout(scheduleForest, getGapDuration());
+        }, getPlayDuration());
+      }, getGapDuration());
+    };
+
+    scheduleForest();
+
+    return () => {
+      if (forestTimeout) clearTimeout(forestTimeout);
+      audioManager.stopAmbient('ambient_forest_spring', 500);
+    };
+  }, [currentMapId, currentWeather]);
 
   // -------------------------------------------------------------------------
   // Umbra Wolf Entry Howl
