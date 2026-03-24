@@ -72,7 +72,7 @@ import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import FarmActionAnimation from './components/FarmActionAnimation';
 import SplashEffect from './components/SplashEffect';
-import { ALL_CUTSCENES } from './data/cutscenes';
+import { ALL_CUTSCENES, getCutsceneById } from './data/cutscenes';
 import { performanceMonitor } from './utils/PerformanceMonitor';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
 import ForegroundParallax from './components/ForegroundParallax';
@@ -364,6 +364,9 @@ const App: React.FC = () => {
   // Map transition handler
   const handleMapTransition = (mapId: string, spawnPos: Position) => {
     const oldMapId = currentMapId;
+    // Load the new map in MapManager so collision, tile data, and getTransitionAt() all
+    // reflect the target map immediately (before React batches the state update).
+    mapManager.loadMap(mapId);
     setCurrentMapId(mapId);
     teleportPlayer(spawnPos);
     lastTransitionTime.current = Date.now();
@@ -405,14 +408,19 @@ const App: React.FC = () => {
     mapId?: string;
     position?: { x: number; y: number };
   }) => {
-    console.log('[App] Cutscene completed with action:', action);
+    // Resolve the real completion action — if the subscriber fell back to { action: 'return' }
+    // (because endCutscene() clears currentCutscene before notifying), look up the cutscene
+    // definition to find what it actually wanted to do.
+    let resolvedAction = action;
+    if (action.action === 'return' && action.cutsceneId) {
+      const cutscene = getCutsceneById(action.cutsceneId);
+      if (cutscene && cutscene.onComplete.action !== 'return') {
+        resolvedAction = { ...(cutscene.onComplete as typeof action), cutsceneId: action.cutsceneId };
+      }
+    }
 
-    if (action.action === 'transition' && action.mapId && action.position) {
-      // Transition to new map
-      handleMapTransition(action.mapId, action.position);
-    } else if (action.action === 'return') {
-      // Stay where we are (already at saved position)
-      console.log('[App] Returning to saved position');
+    if (resolvedAction.action === 'transition' && resolvedAction.mapId && resolvedAction.position) {
+      handleMapTransition(resolvedAction.mapId, resolvedAction.position);
     }
 
     // Handle fairy queen cutscene completions
@@ -512,7 +520,13 @@ const App: React.FC = () => {
       showToast,
       teleportHome: () => {
         const spawnPoint = mapManager.getMap('mums_kitchen')?.spawnPoint ?? { x: 8, y: 6 };
-        handleMapTransition('mums_kitchen', spawnPoint);
+        // Try to play the exhaustion cutscene first; it transitions to mums_kitchen on completion
+        const cutsceneStarted = cutsceneManager.startCutscene('exhaustion');
+        if (!cutsceneStarted) {
+          // Fallback: cutscene unavailable (cooldown, already playing) — teleport directly
+          handleMapTransition('mums_kitchen', spawnPoint);
+        }
+        return cutsceneStarted;
       },
     });
   }, [showToast]);

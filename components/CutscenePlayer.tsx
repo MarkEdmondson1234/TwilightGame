@@ -40,15 +40,33 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showDialogue, setShowDialogue] = useState(false);
   const previousMusicRef = useRef<string | null>(null);
+  // Save completion action at mount — endCutscene() clears it before notifying subscribers
+  const completionActionRef = useRef<{
+    action: string;
+    mapId?: string;
+    position?: { x: number; y: number };
+    cutsceneId?: string;
+  } | null>(null);
+  // Guard against onComplete being called twice (subscriber + ESC keyboard handler)
+  const onCompleteCalledRef = useRef(false);
 
   // Load current scene from manager
   useEffect(() => {
+    const state = cutsceneManager.getState();
+    const cutscene = state.currentCutscene;
+    if (cutscene) {
+      // Capture completion action now — it will be cleared when endCutscene() fires
+      const onComplete = cutscene.onComplete as { action: string; mapId?: string; position?: { x: number; y: number } };
+      completionActionRef.current = { ...onComplete, cutsceneId: cutscene.id };
+    }
+
     const scene = cutsceneManager.getCurrentScene();
     if (scene) {
       setCurrentScene(scene);
       setShowDialogue(false);
-      // Show dialogue after a brief delay for scene to settle
-      const timer = setTimeout(() => setShowDialogue(true), 300);
+      // Letterbox-reveal scenes need longer delay so bars finish opening before dialogue appears
+      const delay = scene.letterboxReveal ? 1500 : 300;
+      const timer = setTimeout(() => setShowDialogue(true), delay);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -103,9 +121,13 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   useEffect(() => {
     const unsubscribe = cutsceneManager.subscribe((state) => {
       if (!state.isPlaying) {
-        // Cutscene ended naturally (auto-advanced past last scene)
-        // endCutscene() clears currentCutscene before notifying, so use saved ref
-        onComplete({ action: 'return', cutsceneId: cutsceneIdRef.current });
+        // Cutscene ended — use the saved completion action (endCutscene clears currentCutscene
+        // before notifying, so we can't read it from state here)
+        if (!onCompleteCalledRef.current) {
+          onCompleteCalledRef.current = true;
+          const action = completionActionRef.current ?? { action: 'return', cutsceneId: cutsceneIdRef.current };
+          onComplete(action);
+        }
         return;
       }
 
@@ -129,7 +151,8 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     setTimeout(() => {
       setCurrentScene(newScene);
       setIsTransitioning(false);
-      setTimeout(() => setShowDialogue(true), 300);
+      const delay = newScene.letterboxReveal ? 1500 : 300;
+      setTimeout(() => setShowDialogue(true), delay);
     }, transitionDuration);
   };
 
@@ -146,10 +169,8 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
       const choice = currentScene.dialogue.choices[choiceIndex];
 
       if (choice.action === 'end') {
-        const result = cutsceneManager.endCutscene();
-        if (result) {
-          onComplete(result);
-        }
+        // Subscriber handles onComplete via completionActionRef
+        cutsceneManager.endCutscene();
         return;
       }
 
@@ -171,13 +192,10 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        // Skip cutscene
+        // Skip cutscene — endCutscene() fires the subscriber which calls onComplete
         const skipped = cutsceneManager.skipCutscene();
         if (skipped) {
-          const result = cutsceneManager.endCutscene();
-          if (result) {
-            onComplete(result);
-          }
+          cutsceneManager.endCutscene();
         }
       } else if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
         // Advance dialogue/scene
@@ -240,6 +258,14 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
           ))}
       </div>
 
+      {/* Letterbox Bars — eyes closing (letterboxClose) or opening (letterboxReveal) */}
+      {currentScene.letterboxClose && (
+        <LetterboxBars key={`${currentScene.id}-close`} mode="close" onClosed={handleAdvance} />
+      )}
+      {currentScene.letterboxReveal && (
+        <LetterboxBars key={`${currentScene.id}-open`} mode="open" />
+      )}
+
       {/* Character Sprites — z-index 10 to sit above background layers */}
       {currentScene.characters && (
         <div className="absolute inset-0" style={{ zIndex: 10 }}>
@@ -275,6 +301,57 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
         Press ESC to skip
       </div>
     </div>
+  );
+};
+
+/**
+ * LetterboxBars Component
+ * Two black bars that animate like eyelids:
+ * - mode='close': bars animate from 0% → 50% height (eyes shutting), then calls onClosed
+ * - mode='open':  bars animate from 50% → 0% height (eyes opening to reveal scene)
+ */
+interface LetterboxBarsProps {
+  mode: 'close' | 'open';
+  onClosed?: () => void;
+}
+
+const LetterboxBars: React.FC<LetterboxBarsProps> = ({ mode, onClosed }) => {
+  const [active, setActive] = useState(false);
+
+  // Trigger animation after first render so the browser paints the initial state first
+  useEffect(() => {
+    const timer = setTimeout(() => setActive(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // For close mode: notify parent when bars finish closing so scene can auto-advance
+  useEffect(() => {
+    if (mode === 'close' && active && onClosed) {
+      const timer = setTimeout(onClosed, 1250); // slightly after 1.2s transition
+      return () => clearTimeout(timer);
+    }
+  }, [mode, active, onClosed]);
+
+  const height =
+    mode === 'close'
+      ? active ? '50%' : '0%'  // close: 0% → 50%
+      : active ? '0%' : '50%'; // open:  50% → 0%
+
+  const barStyle: React.CSSProperties = {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    backgroundColor: '#000',
+    height,
+    transition: 'height 1.2s ease-in-out',
+    zIndex: 20,
+  };
+
+  return (
+    <>
+      <div style={{ ...barStyle, top: 0 }} />
+      <div style={{ ...barStyle, bottom: 0 }} />
+    </>
   );
 };
 

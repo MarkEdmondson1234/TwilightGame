@@ -26,7 +26,7 @@ export type ActivityType = 'till' | 'plant' | 'water' | 'harvest' | 'forage' | '
  */
 export interface StaminaCallbacks {
   showToast: (message: string, type: 'info' | 'success' | 'warning' | 'error') => void;
-  teleportHome: () => void;
+  teleportHome: () => boolean; // Returns true if cutscene started (toast already suppressed by cutscene)
 }
 
 class StaminaManagerClass {
@@ -276,8 +276,11 @@ class StaminaManagerClass {
       return;
     }
 
-    this.callbacks.showToast('You collapsed from exhaustion...', 'warning');
-    this.callbacks.teleportHome();
+    const cutsceneStarted = this.callbacks.teleportHome();
+    // Only show the toast if the cutscene didn't play (cutscene conveys the collapse narrative)
+    if (!cutsceneStarted) {
+      this.callbacks.showToast('You collapsed from exhaustion...', 'warning');
+    }
     this.restoreStaminaFull();
     this.hasShownLowWarning = false;
   }

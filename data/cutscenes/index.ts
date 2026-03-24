@@ -12,6 +12,7 @@ import { elderMemoryCutscene } from './elderMemory';
 import { fairyOakMidnightCutscene } from './fairyOakMidnight';
 import { fairyOakMidnightReturnCutscene } from './fairyOakMidnightReturn';
 import { estrangedSistersReunionCutscene } from './estrangedSisters';
+import { exhaustionCutscene } from './exhaustion';
 
 /**
  * All registered cutscenes
@@ -27,6 +28,7 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   fairyOakMidnightCutscene,
   fairyOakMidnightReturnCutscene,
   estrangedSistersReunionCutscene,
+  exhaustionCutscene,
 ];
 
 /**

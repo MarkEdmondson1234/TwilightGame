@@ -134,6 +134,8 @@ export interface CutsceneScene {
   weatherEffect?: CutsceneWeatherEffect; // Optional weather/particle overlay
   soundEffect?: string; // Audio asset ID to play when this scene starts
   duration?: number; // Optional: auto-advance after X milliseconds (overrides dialogue advance)
+  letterboxClose?: boolean; // Animate two black bars closing (0% → 50%) like eyes shutting, then auto-advance
+  letterboxReveal?: boolean; // Animate two black bars opening (50% → 0%) like eyes opening to reveal scene
   // Scene transition
   transitionOut?: {
     type: 'fade' | 'crossfade' | 'wipe' | 'none';

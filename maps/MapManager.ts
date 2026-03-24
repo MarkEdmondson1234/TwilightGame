@@ -223,30 +223,18 @@ class MapManager {
   ): { transition: any; map: MapDefinition } | null {
     if (!this.currentMap) return null;
 
-    console.log(
-      `[MapManager] Checking transitions for player at (${position.x.toFixed(2)}, ${position.y.toFixed(2)})`
-    );
-    console.log(`[MapManager] Current map has ${this.currentMap.transitions.length} transitions:`);
-
     for (const transition of this.currentMap.transitions) {
-      // Check if player is close enough to the transition tile
       const dx = Math.abs(position.x - transition.fromPosition.x);
       const dy = Math.abs(position.y - transition.fromPosition.y);
 
-      console.log(
-        `  - ${transition.label} at (${transition.fromPosition.x}, ${transition.fromPosition.y}): dx=${dx.toFixed(2)}, dy=${dy.toFixed(2)}`
-      );
-
       // Player needs to be within tolerance of the transition center
       if (dx < tolerance && dy < tolerance) {
-        console.log(`  ✓ MATCH! Transition found to ${transition.toMapId}`);
         // Return transition even if target map doesn't exist yet
         // (RANDOM_* maps are generated on-demand by transitionToMap)
         return { transition, map: null as any };
       }
     }
 
-    console.log(`[MapManager] No transition within range`);
     return null;
   }
 
