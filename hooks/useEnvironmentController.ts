@@ -214,9 +214,14 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    // Check if we're in a procedural forest
+    // Check if we're in a procedural forest or a forest-like map
     const isProceduralForest =
-      currentMapId.startsWith('RANDOM_FOREST_') || currentMapId.startsWith('deep_forest_');
+      currentMapId.startsWith('RANDOM_FOREST_') ||
+      currentMapId.startsWith('deep_forest_') ||
+      currentMapId === 'bear_cave' ||
+      currentMapId === 'magical_lake' ||
+      currentMapId === 'mushroom_forest' ||
+      currentMapId === 'witch_hut';
 
     // Weather conditions that silence the birds
     const badWeatherForBirds = ['rain', 'storm', 'snow'].includes(currentWeather);
@@ -325,7 +330,12 @@ export function useEnvironmentController(
 
   useEffect(() => {
     const isProceduralForest =
-      currentMapId.startsWith('RANDOM_FOREST_') || currentMapId.startsWith('deep_forest_');
+      currentMapId.startsWith('RANDOM_FOREST_') ||
+      currentMapId.startsWith('deep_forest_') ||
+      currentMapId === 'bear_cave' ||
+      currentMapId === 'magical_lake' ||
+      currentMapId === 'mushroom_forest' ||
+      currentMapId === 'witch_hut';
     const { season } = TimeManager.getCurrentTime();
     const isSpring = season === Season.SPRING;
     const badWeather = ['rain', 'storm', 'snow'].includes(currentWeather);
