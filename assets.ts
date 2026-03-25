@@ -418,6 +418,7 @@ export const groceryAssets = {
   pumpkin_seeds: '/TwilightGame/assets-optimized/items/grocery/pumpkin_seeds.png',
   pepper: '/TwilightGame/assets-optimized/items/grocery/pepper.png',
   vinegar: '/TwilightGame/assets-optimized/items/grocery/vinegar.png',
+  terracotta_pot: '/TwilightGame/assets-optimized/items/grocery/terracotta_pot.png',
   vase: '/TwilightGame/assets-optimized/items/grocery/vase.png',
   pea_seeds: '/TwilightGame/assets-optimized/items/grocery/pea_seeds.png',
   pea_crop: '/TwilightGame/assets-optimized/items/grocery/pea_crop.png',

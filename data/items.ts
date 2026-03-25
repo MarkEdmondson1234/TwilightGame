@@ -2061,6 +2061,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 5,
     buyPrice: 15,
     icon: '🪴',
+    image: groceryAssets.terracotta_pot,
   },
 
   // ===== PAINT POTS =====
