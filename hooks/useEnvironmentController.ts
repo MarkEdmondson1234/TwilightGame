@@ -124,7 +124,6 @@ export function useEnvironmentController(
     const unsubscribe = gameState.subscribe((state) => {
       // Sync weather layer with gameState
       if (weatherLayerRef.current && state.weather !== weatherLayerRef.current.getWeather()) {
-        console.log(`[EnvironmentController] Weather changed to: ${state.weather}`);
         weatherLayerRef.current.setWeather(state.weather);
 
         const showWeather = isWeatherAllowedOnMap(state.weather, currentMapId);
@@ -166,7 +165,6 @@ export function useEnvironmentController(
 
   useEffect(() => {
     if (weatherLayerRef.current && currentWeather !== weatherLayerRef.current.getWeather()) {
-      console.log(`[EnvironmentController] Syncing weather layer to: ${currentWeather}`);
       weatherLayerRef.current.setWeather(currentWeather);
     }
   }, [currentWeather, weatherLayerRef]);

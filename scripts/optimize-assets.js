@@ -1219,6 +1219,58 @@ async function optimizeLights() {
 }
 
 // Main execution
+async function optimizeSeasonal() {
+  console.log('🎪 Optimising seasonal event decorations...');
+
+  const seasonalDir = path.join(ASSETS_DIR, 'seasonal');
+  if (!fs.existsSync(seasonalDir)) {
+    console.log('  ℹ️  No seasonal directory found, skipping...\n');
+    return;
+  }
+
+  const allFiles = getAllFiles(seasonalDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    const relativePath = path.relative(seasonalDir, inputPath);
+    const outputPath = normalizePathCase(
+      path.join(OPTIMIZED_DIR, 'seasonal', relativePath.replace(/\.jpeg$/i, '.png'))
+    );
+
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+    deleteIfExists(outputPath);
+
+    // Trees and tall decorations (maypole, yule_tree) at tree quality
+    if (file.includes('tree') || file.includes('maypole')) {
+      await sharp(inputPath)
+        .resize(TREE_SIZE, TREE_SIZE, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 })
+        .toFile(outputPath);
+    } else {
+      // Other seasonal items (bonfire, harvest_table) at large furniture quality
+      await sharp(inputPath)
+        .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
+        .toFile(outputPath);
+    }
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimised ${optimized} seasonal decoration(s)\n`);
+}
+
 async function main() {
   try {
     createDirectories();
@@ -1236,6 +1288,7 @@ async function main() {
     await optimizeItems();
     await optimizeIcons();
     await optimizeLights();
+    await optimizeSeasonal();
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

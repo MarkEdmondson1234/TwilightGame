@@ -358,7 +358,10 @@ class CutsceneManagerClass {
         const gameTime = TimeManager.getCurrentTime();
         const hourMatch = gameTime.hour === trigger.hour;
         const dayMatch = trigger.day === undefined || gameTime.day === trigger.day;
-        return hourMatch && dayMatch;
+        const seasonMatch =
+          trigger.season === undefined ||
+          gameTime.season.toLowerCase() === trigger.season.toLowerCase();
+        return hourMatch && dayMatch && seasonMatch;
       }
 
       case 'event':

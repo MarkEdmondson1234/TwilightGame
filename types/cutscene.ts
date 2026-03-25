@@ -151,7 +151,7 @@ export type CutsceneTrigger =
   | { type: 'position'; mapId: string; position: Position; radius?: number } // Triggered when player enters area
   | { type: 'dialogue'; npcId: string; nodeId: string } // Triggered by dialogue choice
   | { type: 'season_change'; season: 'spring' | 'summer' | 'autumn' | 'winter' } // Season transition
-  | { type: 'time'; hour: number; day?: number } // Specific time/day
+  | { type: 'time'; hour: number; day?: number; season?: string } // Specific time/day (season: 'spring'|'summer'|'autumn'|'winter')
   | { type: 'event'; eventId: string }; // Custom game event
 
 /**

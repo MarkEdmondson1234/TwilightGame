@@ -2337,6 +2337,58 @@ export const ITEMS: Record<string, ItemDefinition> = {
     icon: '🌿',
     placedScale: 1.2,
   },
+
+  // ===== SEASONAL EVENT DECORATIONS =====
+  // Placed in the village square on seasonal festival days (day 42 of each season).
+  // Managed by SeasonalEventManager — not obtainable by the player.
+
+  seasonal_maypole: {
+    id: 'seasonal_maypole',
+    name: 'seasonal_maypole',
+    displayName: 'Maypole',
+    category: ItemCategory.DECORATION,
+    description: 'A traditional Mayday maypole, adorned with colourful ribbons.',
+    stackable: false,
+    sellPrice: 0,
+    icon: '🎏',
+    placedScale: 4,
+  },
+
+  seasonal_bonfire: {
+    id: 'seasonal_bonfire',
+    name: 'seasonal_bonfire',
+    displayName: 'Summer Solstice Bonfire',
+    category: ItemCategory.DECORATION,
+    description: 'A great bonfire lit to celebrate the longest day of the year.',
+    stackable: false,
+    sellPrice: 0,
+    icon: '🔥',
+    placedScale: 4,
+  },
+
+  seasonal_harvest_table: {
+    id: 'seasonal_harvest_table',
+    name: 'seasonal_harvest_table',
+    displayName: 'Harvest Table',
+    category: ItemCategory.DECORATION,
+    description: 'A table laden with the fruits of the autumn harvest.',
+    stackable: false,
+    sellPrice: 0,
+    icon: '🍽️',
+    placedScale: 4,
+  },
+
+  seasonal_yule_tree: {
+    id: 'seasonal_yule_tree',
+    name: 'seasonal_yule_tree',
+    displayName: 'Yule Tree',
+    category: ItemCategory.DECORATION,
+    description: 'An evergreen tree decorated to celebrate the winter solstice.',
+    stackable: false,
+    sellPrice: 0,
+    icon: '🎄',
+    placedScale: 4,
+  },
 };
 
 /**

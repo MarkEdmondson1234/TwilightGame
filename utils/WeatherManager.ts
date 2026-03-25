@@ -111,7 +111,6 @@ export class WeatherManager {
       // Re-evaluate weather immediately when override is cleared
       this.lastSlotIndex = -1;
     }
-    console.log(`[WeatherManager] Manual override: ${enabled}`);
   }
 
   /**
@@ -128,15 +127,10 @@ export class WeatherManager {
   initialize(): void {
     const automaticMode = this.gameState.getAutomaticWeather();
 
-    console.log('[WeatherManager] Initialising (deterministic slot-based)...');
-    console.log(`  Automatic mode: ${automaticMode}`);
-
     if (automaticMode) {
       // Force initial evaluation
       this.forceWeatherUpdate();
     }
-
-    console.log(`  Weather: ${this.gameState.getWeather()}`);
   }
 
   /**

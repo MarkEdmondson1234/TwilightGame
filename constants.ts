@@ -79,6 +79,9 @@ export const TIMING = {
 
   // Event chains
   EVENT_CHAIN_CHECK_MS: 500, // Proximity check throttle for tile triggers/objectives
+
+  // Seasonal events
+  SEASONAL_EVENT_CHECK_MS: 10000, // How often to check for seasonal decoration placement/removal (10s)
 } as const;
 
 /**

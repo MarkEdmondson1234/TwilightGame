@@ -13,6 +13,12 @@ import { fairyOakMidnightCutscene } from './fairyOakMidnight';
 import { fairyOakMidnightReturnCutscene } from './fairyOakMidnightReturn';
 import { estrangedSistersReunionCutscene } from './estrangedSisters';
 import { exhaustionCutscene } from './exhaustion';
+import {
+  maydayCutscene,
+  summerSolsticeCutscene,
+  harvestFestivalCutscene,
+  yuleCutscene,
+} from './seasonalEvents';
 
 /**
  * All registered cutscenes
@@ -29,6 +35,11 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   fairyOakMidnightReturnCutscene,
   estrangedSistersReunionCutscene,
   exhaustionCutscene,
+  // Seasonal festival events (day 42 of each season, 9am)
+  maydayCutscene,
+  summerSolsticeCutscene,
+  harvestFestivalCutscene,
+  yuleCutscene,
 ];
 
 /**

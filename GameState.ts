@@ -978,7 +978,6 @@ class GameStateManager {
   ): void {
     this.state.weather = weather;
     this.notify();
-    console.log(`[GameState] Weather set to: ${weather}`);
   }
 
   getWeather(): 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms' {
@@ -988,7 +987,6 @@ class GameStateManager {
   setAutomaticWeather(enabled: boolean): void {
     this.state.automaticWeather = enabled;
     this.notify();
-    console.log(`[GameState] Automatic weather ${enabled ? 'enabled' : 'disabled'}`);
   }
 
   getAutomaticWeather(): boolean {
@@ -998,7 +996,6 @@ class GameStateManager {
   setWeatherDriftSpeed(speed: number): void {
     this.state.weatherDriftSpeed = Math.max(0.1, Math.min(5.0, speed)); // Clamp between 0.1x and 5x
     this.notify();
-    console.log(`[GameState] Weather drift speed set to: ${this.state.weatherDriftSpeed}x`);
   }
 
   getWeatherDriftSpeed(): number {

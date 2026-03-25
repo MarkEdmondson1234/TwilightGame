@@ -70,6 +70,7 @@ import QuickSlotBar from './components/QuickSlotBar';
 import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
+import { seasonalEventManager } from './utils/SeasonalEventManager';
 import FarmActionAnimation from './components/FarmActionAnimation';
 import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES, getCutsceneById } from './data/cutscenes';
@@ -230,6 +231,7 @@ const App: React.FC = () => {
   const animationFrameId = useRef<number | null>(null);
   const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
   const lastChainCheckTime = useRef<number>(0); // Throttle for event chain proximity checks
+  const lastSeasonalEventCheckTime = useRef<number>(0); // Throttle for seasonal decoration checks
   const lastTransitionTime = useRef<number>(0);
   const fairyFormTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]); // Timers for fairy form warnings/expiry
 
@@ -730,6 +732,12 @@ const App: React.FC = () => {
     if (now - lastChainCheckTime.current >= TIMING.EVENT_CHAIN_CHECK_MS) {
       lastChainCheckTime.current = now;
       checkChainProximity(currentMapId, playerPosRef.current.x, playerPosRef.current.y);
+    }
+
+    // Check seasonal festival decoration placement/removal (throttled)
+    if (now - lastSeasonalEventCheckTime.current >= TIMING.SEASONAL_EVENT_CHECK_MS) {
+      lastSeasonalEventCheckTime.current = now;
+      seasonalEventManager.check();
     }
 
     // Check for position-based cutscene triggers (only when not in dialogue/cutscene)

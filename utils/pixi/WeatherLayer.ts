@@ -133,24 +133,14 @@ export class WeatherLayer {
    * Load weather textures
    */
   async loadTextures(): Promise<void> {
-    console.log('[WeatherLayer] Loading weather textures...');
-
     try {
       // Load particle textures using proper asset URLs (includes base path)
-      console.log('[WeatherLayer] Requesting rain texture from textureManager...');
-      console.log('[WeatherLayer] Rain asset URL:', particleAssets.rain);
       const rainTexture = await textureManager.loadTexture('rain_particle', particleAssets.rain);
-      console.log('[WeatherLayer] Rain texture result:', rainTexture ? 'SUCCESS' : 'NULL');
-
-      console.log('[WeatherLayer] Requesting snow texture from textureManager...');
-      console.log('[WeatherLayer] Snow asset URL:', particleAssets.snow);
       const snowTexture = await textureManager.loadTexture('snow_particle', particleAssets.snow);
-      console.log('[WeatherLayer] Snow texture result:', snowTexture ? 'SUCCESS' : 'NULL');
 
       if (rainTexture) {
         this.particleTextures.set('rain', rainTexture);
         this.particleTextures.set('storm', rainTexture); // Reuse rain for storm
-        console.log('[WeatherLayer] ✓ Rain/Storm textures loaded');
       } else {
         console.error('[WeatherLayer] ✗ Failed to load rain texture');
       }
@@ -158,32 +148,22 @@ export class WeatherLayer {
       if (snowTexture) {
         this.particleTextures.set('snow', snowTexture);
         this.particleTextures.set('cherry_blossoms', snowTexture); // Placeholder for cherry blossoms
-        console.log('[WeatherLayer] ✓ Snow/Cherry Blossom textures loaded');
       } else {
         console.error('[WeatherLayer] ✗ Failed to load snow texture');
       }
 
       // Load fog textures using proper asset URLs (includes base path)
-      console.log('[WeatherLayer] Requesting fog texture...');
-      console.log('[WeatherLayer] Fog asset URL:', particleAssets.fog);
       const fogTexture = await textureManager.loadTexture('fog_overlay', particleAssets.fog);
-      console.log('[WeatherLayer] Fog texture result:', fogTexture ? 'SUCCESS' : 'NULL');
-
-      console.log('[WeatherLayer] Requesting mist texture...');
-      console.log('[WeatherLayer] Mist asset URL:', particleAssets.mist);
       const mistTexture = await textureManager.loadTexture('mist_overlay', particleAssets.mist);
-      console.log('[WeatherLayer] Mist texture result:', mistTexture ? 'SUCCESS' : 'NULL');
 
       if (fogTexture) {
         this.fogTextures.set('fog', fogTexture);
-        console.log('[WeatherLayer] ✓ Fog texture loaded');
       } else {
         console.error('[WeatherLayer] ✗ Failed to load fog texture');
       }
 
       if (mistTexture) {
         this.fogTextures.set('mist', mistTexture);
-        console.log('[WeatherLayer] ✓ Mist texture loaded');
       } else {
         console.error('[WeatherLayer] ✗ Failed to load mist texture');
       }
@@ -269,7 +249,6 @@ export class WeatherLayer {
   private setupParticles(weather: WeatherType): void {
     const config = PARTICLE_CONFIGS[weather];
     if (!config) {
-      console.warn(`[WeatherLayer] No particle config for weather: ${weather}`);
       return;
     }
 
@@ -306,7 +285,6 @@ export class WeatherLayer {
     const texture = this.fogTextures.get(weather);
 
     if (!config || !texture) {
-      console.warn(`[WeatherLayer] No fog config or texture for weather: ${weather}`);
       return;
     }
 
@@ -324,7 +302,6 @@ export class WeatherLayer {
     // Apply feathered edge mask to prevent sharp rectangular cutoff
     this._applyFogMask();
 
-    console.log(`[WeatherLayer] Setup fog overlay for ${weather} using TilingSprite`);
   }
 
   /**
@@ -670,7 +647,6 @@ export class WeatherLayer {
    */
   setVisible(visible: boolean): void {
     this.container.visible = visible;
-    console.log(`[WeatherLayer] Visibility set to ${visible}`);
   }
 
   /**

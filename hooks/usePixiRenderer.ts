@@ -318,7 +318,6 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         app.stage.addChild(highlightLayer.getContainer());
 
         // Create weather layer
-        console.log('[usePixiRenderer] Initializing weather layer...');
         try {
           const weatherLayer = new WeatherLayer(window.innerWidth, window.innerHeight);
           weatherLayerRef.current = weatherLayer;
