@@ -1347,7 +1347,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     maxStack: 5,
     sellPrice: 30,
-    image: '/TwilightGame/assets/cooking/food_yule_log.png',
+    image: '/TwilightGame/assets-optimized/seasonal/yule_log.png',
   },
 
   // ===== MAGICAL INGREDIENTS =====
