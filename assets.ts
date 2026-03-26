@@ -348,6 +348,7 @@ export const herbAssets = {
 
 // Cooking assets - Prepared food items (cooked dishes)
 export const cookingAssets = {
+  apple_cobbler: '/TwilightGame/assets-optimized/cooking/apple_cobbler.png',
   chocolate_cake: '/TwilightGame/assets-optimized/cooking/chocolate_cake.png',
   cookies: '/TwilightGame/assets-optimized/cooking/cookies.png',
   crepes: '/TwilightGame/assets-optimized/cooking/crepes.png',
@@ -842,6 +843,12 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
   // Mr. Fox shopkeeper
   sfx_mr_fox: {
     url: '/TwilightGame/assets/audio/sfx/npcs/mr_fox.mp3',
+    category: 'sfx',
+  },
+
+  // === Sound Effects - Seasonal ===
+  sfx_yule_bells: {
+    url: '/TwilightGame/assets/seasonal/freesound_community-ding-dong.mp3',
     category: 'sfx',
   },
 

@@ -185,14 +185,16 @@ class StaminaManagerClass {
 
   /**
    * Eat food to restore stamina
+   * @param isMastered - if true, applies 1.5× mastery bonus
    * @returns the amount of stamina restored
    */
-  eatFood(foodId: string): number {
+  eatFood(foodId: string, isMastered = false): number {
     if (!this.isInitialised) {
       return 0;
     }
 
-    const restoration = STAMINA.FOOD_RESTORATION[foodId] ?? 10; // Default 10 if unknown food
+    const base = STAMINA.FOOD_RESTORATION[foodId] ?? 10; // Default 10 if unknown food
+    const restoration = isMastered ? Math.round(base * STAMINA.MASTERY_FOOD_MULTIPLIER) : base;
     this.restoreStamina(restoration);
 
     // Reset warning if stamina recovers

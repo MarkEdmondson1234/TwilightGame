@@ -401,6 +401,38 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     ],
   },
 
+  apple_cobbler: {
+    id: 'apple_cobbler',
+    name: 'apple_cobbler',
+    displayName: 'Apple Cobbler',
+    category: 'baking',
+    description: 'A comforting baked dessert — spiced apples under a golden, scone-like cobbler topping.',
+    ingredients: [
+      { itemId: 'apple', quantity: 5 },
+      { itemId: 'sugar', quantity: 1 },
+      { itemId: 'cinnamon', quantity: 1 },
+      { itemId: 'baking_powder', quantity: 1 },
+      { itemId: 'butter', quantity: 1 },
+      { itemId: 'flour', quantity: 1 },
+      { itemId: 'salt', quantity: 1 },
+      { itemId: 'milk', quantity: 1 },
+      { itemId: 'food_ice_cream', quantity: 1 },
+    ],
+    cookingTime: 40,
+    difficulty: 2,
+    resultItemId: 'food_apple_cobbler',
+    resultQuantity: 1,
+    friendshipValue: 35,
+    image: cookingAssets.apple_cobbler,
+    instructions: [
+      'Peel and slice the apples, then put them in a saucepan with the sugar, cinnamon, and a splash of water. Cook gently for five to seven minutes until they just begin to soften but still hold their shape.',
+      'Spoon the apples and their juices into a buttered baking dish. Dot with butter.',
+      'In a bowl, rub the butter into the flour until the mixture resembles breadcrumbs. Stir in the sugar and salt. Gradually add the milk until the dough comes together.',
+      'Drop spoonfuls of dough over the apples, leaving small gaps so the fruit can bubble through.',
+      "Bake for 30–35 minutes, until the topping is golden and the apples are bubbling. Add a scoop of vanilla ice cream on top while it's still steaming hot.",
+    ],
+  },
+
   cucumber_sandwich: {
     id: 'cucumber_sandwich',
     name: 'cucumber_sandwich',
@@ -445,6 +477,11 @@ export const NPC_FOOD_PREFERENCES: Record<string, RecipeCategory[]> = {
 export function getRecipe(recipeId: string): RecipeDefinition | undefined {
   return RECIPES[recipeId];
 }
+
+/** Reverse map: food item ID → recipe ID (e.g. 'food_apple_cobbler' → 'apple_cobbler') */
+export const FOOD_TO_RECIPE_ID: Record<string, string> = Object.fromEntries(
+  Object.values(RECIPES).map((r) => [r.resultItemId, r.id])
+);
 
 /**
  * Get all recipes in a category

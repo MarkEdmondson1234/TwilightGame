@@ -50,6 +50,7 @@ import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { audioManager } from './utils/AudioManager';
 import { cookingManager } from './utils/CookingManager';
+import { FOOD_TO_RECIPE_ID } from './data/recipes';
 import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
 import { photoAlbumManager } from './utils/photoAlbumManager';
@@ -1323,9 +1324,13 @@ const App: React.FC = () => {
         showToast("You don't have any of those!", 'warning');
         return;
       }
-      const restored = staminaManager.eatFood(item.id);
+      const recipeId = FOOD_TO_RECIPE_ID[item.id];
+      const isMastered = STAMINA.ALWAYS_MASTERED_FOODS.includes(item.id) ||
+        (recipeId ? cookingManager.isRecipeMastered(recipeId) : false);
+      const restored = staminaManager.eatFood(item.id, isMastered);
       inventoryManager.removeItem(item.id, 1);
-      showToast(`Ate ${item.name}. Restored ${Math.round(restored)} stamina.`, 'success');
+      const masteryNote = isMastered ? ' ⭐' : '';
+      showToast(`Ate ${item.name}${masteryNote}. Restored ${Math.round(restored)} stamina.`, 'success');
       closeUI('inventory');
     },
     [showToast, closeUI]

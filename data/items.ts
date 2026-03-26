@@ -1306,6 +1306,17 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: cookingAssets.cookies,
   },
 
+  food_apple_cobbler: {
+    id: 'food_apple_cobbler',
+    name: 'food_apple_cobbler',
+    displayName: 'Apple Cobbler',
+    category: ItemCategory.FOOD,
+    description: 'A warm, comforting baked apple dessert with a golden buttery topping. Best served fresh.',
+    stackable: true,
+    sellPrice: 40,
+    image: cookingAssets.apple_cobbler,
+  },
+
   food_chocolate_cake: {
     id: 'food_chocolate_cake',
     name: 'food_chocolate_cake',

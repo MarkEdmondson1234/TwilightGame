@@ -149,6 +149,12 @@ export const STAMINA = {
   POTION_HEALING: 50, // Healing Salve
   POTION_WAKEFULNESS: 100, // Wakefulness Brew (full restore)
 
+  // Mastery bonus multiplier — food from a mastered recipe restores 1.5× stamina
+  MASTERY_FOOD_MULTIPLIER: 1.5,
+
+  // Food items that always receive the mastery bonus (e.g. made by a master chef NPC)
+  ALWAYS_MASTERED_FOODS: ['food_yule_log'] as string[],
+
   // Food restoration values
   FOOD_RESTORATION: {
     food_tea: 5,
@@ -161,7 +167,9 @@ export const STAMINA = {
     food_ice_cream: 15,
     food_marzipan_chocolates: 20,
     food_roast_dinner: 50,
+    food_apple_cobbler: 40,
     food_chocolate_cake: 25,
+    food_yule_log: 30,
     food_pickled_onions: 8,
     food_cucumber_sandwich: 15,
     apple: 10,
