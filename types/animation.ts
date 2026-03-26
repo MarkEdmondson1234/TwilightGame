@@ -12,10 +12,17 @@
 import { TileType, Position } from './core';
 
 // Animation system types
+export interface DaySchedule {
+  cycleLength: number; // Total cycle length in days (e.g. 8 = 3 present + 5 away)
+  presentDays: number; // Days at start of each cycle the NPC is visible (e.g. 3)
+  // NPC is visible when: TimeManager.getCurrentTime().totalDays % cycleLength < presentDays
+}
+
 export interface AnimationConditions {
   season?: 'spring' | 'summer' | 'autumn' | 'winter' | ('spring' | 'summer' | 'autumn' | 'winter')[];
   timeOfDay?: 'day' | 'night' | ('day' | 'night')[];
   weather?: 'rain' | 'snow' | 'clear'; // For future weather system
+  daySchedule?: DaySchedule; // Periodic day-based scheduling
 }
 
 export interface AnimationEffect {

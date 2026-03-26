@@ -11,3 +11,4 @@ export { createDogNPC } from './dog';
 export { createShopkeeperNPC } from './shopkeeper';
 export { createVillageChildNPC } from './villageChild';
 export { createDuckNPC } from './duck';
+export { createSpringPeriwinkleNPC } from './springPeriwinkle';

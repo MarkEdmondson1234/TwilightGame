@@ -511,6 +511,9 @@ export const npcAssets = {
   mum_01: '/TwilightGame/assets-optimized/npcs/mum_01.png',
   mum_02: '/TwilightGame/assets-optimized/npcs/mum_02.png',
   mum_portrait: '/TwilightGame/assets/npcs/mum_01.png',
+  spring_periwinkle_01: '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
+  spring_periwinkle_02: '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle1.png',
+  spring_periwinkle_portrait: '/TwilightGame/assets/npcs/spring_periwinkle/spring_periwinkle.png',
   // Umbra Wolf assets (forest creature)
   umbrawolf_standing1: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing1.png',
   umbrawolf_standing2: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing2.png',

@@ -15,6 +15,7 @@ export {
   createShopkeeperNPC,
   createVillageChildNPC,
   createDuckNPC,
+  createSpringPeriwinkleNPC,
 } from './villageNPCs';
 
 // Home/Family NPCs

@@ -8,6 +8,7 @@ import {
   createShopkeeperNPC,
   createVillageChildNPC,
   createDuckNPC,
+  createSpringPeriwinkleNPC,
 } from '../../utils/npcFactories';
 import { TIMING } from '../../constants';
 
@@ -226,5 +227,8 @@ export const village: MapDefinition = {
     // Only appears in spring (uses visibilityConditions to hide during other seasons)
     // Single duck to make it feel more special and rare
     createDuckNPC('village_duck', { x: 20, y: 17 }, 'Duck'),
+    // Spring Periwinkle - visiting rabbit, present for 3 days every 8-day cycle
+    // Follows the little girl in spring/summer; moves to house2 with her in autumn/winter
+    createSpringPeriwinkleNPC('spring_periwinkle', { x: 18, y: 9 }),
   ],
 };

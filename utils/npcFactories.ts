@@ -18,6 +18,7 @@ export {
   createShopkeeperNPC,
   createVillageChildNPC,
   createDuckNPC,
+  createSpringPeriwinkleNPC,
   // Home/Family NPCs
   createMumNPC,
   // Forest/Wildlife NPCs

@@ -151,7 +151,7 @@ class NPCManagerClass {
 
   /**
    * Check if an NPC is visible based on its visibility conditions
-   * Checks season, time of day, and weather (when implemented)
+   * Checks season, time of day, weather, and day schedule
    */
   isNPCVisible(npc: NPC): boolean {
     if (!npc.visibilityConditions) {
@@ -161,14 +161,28 @@ class NPCManagerClass {
     const conditions = npc.visibilityConditions;
     const currentTime = TimeManager.getCurrentTime();
 
-    // Check season condition
-    if (conditions.season && conditions.season !== currentTime.season.toLowerCase()) {
-      return false; // Hide NPC if season doesn't match
+    // Check season condition (supports single value or array)
+    if (conditions.season) {
+      const allowed = Array.isArray(conditions.season) ? conditions.season : [conditions.season];
+      if (!allowed.includes(currentTime.season.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter')) {
+        return false;
+      }
     }
 
-    // Check time of day condition
-    if (conditions.timeOfDay && conditions.timeOfDay !== currentTime.timeOfDay.toLowerCase()) {
-      return false; // Hide NPC if time of day doesn't match
+    // Check time of day condition (supports single value or array)
+    if (conditions.timeOfDay) {
+      const allowed = Array.isArray(conditions.timeOfDay) ? conditions.timeOfDay : [conditions.timeOfDay];
+      if (!allowed.includes(currentTime.timeOfDay.toLowerCase() as 'day' | 'night')) {
+        return false;
+      }
+    }
+
+    // Check day schedule (periodic presence: NPC visible for first N days of each cycle)
+    if (conditions.daySchedule) {
+      const { cycleLength, presentDays } = conditions.daySchedule;
+      if (currentTime.totalDays % cycleLength >= presentDays) {
+        return false;
+      }
     }
 
     // Weather conditions can be added here in the future
