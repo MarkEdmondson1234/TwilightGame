@@ -13,6 +13,7 @@
  */
 
 import { CutsceneDefinition } from '../../types';
+import { YULE_CUTSCENE_ID } from '../yuleCelebration';
 
 // NPC sprite paths (reused from seasonChange.ts for consistency)
 const sprites = {
@@ -291,6 +292,68 @@ export const yuleCutscene: CutsceneDefinition = {
         text: "Ah, Yule — the longest night of the year. From this moment, darkness retreats and the light returns, day by day. Gather close, friend. Warmth and good cheer to all who shelter from the cold tonight.",
       },
       transitionOut: { type: 'fade', duration: 1200 },
+    },
+  ],
+};
+
+// ============================================================================
+// Yule Celebration Opening (manual trigger — fired when player clicks the tree)
+// ============================================================================
+
+export const yuleCelebrationOpeningCutscene: CutsceneDefinition = {
+  id: YULE_CUTSCENE_ID,
+  name: 'Yule Celebration',
+  canSkip: true,
+  canReplay: false,
+  playOnce: false, // YuleCelebrationManager handles the once-per-year check
+  cooldownMs: 0,
+
+  trigger: { type: 'manual', id: YULE_CUTSCENE_ID },
+
+  onComplete: { action: 'return' },
+
+  scenes: [
+    {
+      id: 'yule_gathering',
+      backgroundLayers: [
+        {
+          image: '/TwilightGame/assets/cutscenes/summer_sky_cutscene.png',
+          zIndex: 0,
+          opacity: 0.45,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: '/TwilightGame/assets/cutscenes/summer_just_hills.PNG',
+          zIndex: 1,
+          opacity: 0.65,
+          animation: {
+            type: 'zoom',
+            duration: 8000,
+            zoomFrom: 1.12,
+            zoomTo: 1.0,
+            easing: 'ease-out',
+          },
+        },
+      ],
+      weatherEffect: {
+        type: 'snow',
+        intensity: 'medium',
+        opacity: 0.7,
+      },
+      characters: [
+        {
+          characterId: 'yule_tree_celebration',
+          spriteUrl: '/TwilightGame/assets-optimized/seasonal/yule_tree.png',
+          position: { x: 50, y: 48 },
+          scale: 2.8,
+          entrance: { type: 'fade', duration: 1000 },
+        },
+      ],
+      dialogue: {
+        speaker: 'Village Elder',
+        text: "The village square fills with warmth and laughter. Voices rise in old Yule songs, gifts are exchanged with joy, and for one glowing evening, the darkness of winter feels very far away indeed.",
+      },
+      transitionOut: { type: 'fade', duration: 1500 },
     },
   ],
 };

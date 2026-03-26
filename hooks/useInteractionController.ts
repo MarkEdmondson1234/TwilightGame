@@ -33,6 +33,7 @@ import { staminaManager } from '../utils/StaminaManager';
 import { registerItemSprite } from '../utils/inventoryUIHelper';
 import type { MiniGameTriggerData } from '../minigames/types';
 import { getDistance } from '../utils/pathfinding';
+import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 import { InventoryItem } from '../components/Inventory';
 import type { UseUIStateReturn } from './useUIState';
 import {
@@ -369,6 +370,9 @@ export function useInteractionController(
       },
       onOpenPaintingEasel: () => {
         openUI('paintingEasel');
+      },
+      onBeginYuleCelebration: () => {
+        yuleCelebrationManager.startCelebration();
       },
       onOpenMiniGame: (miniGameId: string, triggerData: MiniGameTriggerData) => {
         openUI('miniGame', {

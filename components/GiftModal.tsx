@@ -18,6 +18,7 @@ import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import GameIcon from './GameIcon';
 import { Z_MODAL, zClass } from '../zIndex';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
+import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 
 export interface GiftResult {
   success: boolean;
@@ -114,6 +115,9 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
     // Give the gift via FriendshipManager
     const result = friendshipManager.giveGift(npcId, selectedItemId, npc || undefined);
 
+    // Yule celebration intercept — grants Yule reward if celebration is active
+    const yuleResult = yuleCelebrationManager.interceptGift(npcId, selectedItemId);
+
     // Remove item from inventory
     inventoryManager.removeItem(selectedItemId, 1);
 
@@ -141,7 +145,7 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
       points: result.points,
       reaction: result.reaction,
       message,
-      dialogueNodeId: result.dialogueNodeId,
+      dialogueNodeId: yuleResult ? 'yule_gift_reaction' : result.dialogueNodeId,
     });
 
     onClose();

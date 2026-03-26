@@ -117,6 +117,14 @@ export class PlacedItemsLayer extends PixiLayer {
           }
         }
 
+        // item.image set but not yet in texture cache (e.g. seasonal decorations) — load async
+        if (!texture && imageUrl) {
+          textureManager.loadTexture(imageUrl, imageUrl).catch((err) => {
+            console.warn(`[PlacedItemsLayer] Failed to load item image: ${err}`);
+          });
+          continue;
+        }
+
         if (!texture) {
           // Fallback: generate emoji texture for items without image assets
           const itemDefFb = getItem(item.itemId);

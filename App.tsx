@@ -105,6 +105,9 @@ import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
 import VFXRenderer from './components/VFXRenderer';
 import VFXTestPanel from './components/VFXTestPanel';
+import YuleTimer from './components/YuleTimer';
+import { yuleCelebrationManager, YULE_MUM_GREETING } from './utils/YuleCelebrationManager';
+import { YULE_CUTSCENE_ID, YULE_NPC_CONFIGS } from './data/yuleCelebration';
 
 /**
  * Find the nearest clear MINE_FLOOR tile to an origin position.
@@ -163,6 +166,14 @@ const App: React.FC = () => {
     slotIndex: number;
   } | null>(null);
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
+
+  // Yule celebration state
+  const [isYuleCelebrationActive, setIsYuleCelebrationActive] = useState(false);
+  const [yuleNpcWishes, setYuleNpcWishes] = useState<Record<string, string>>({});
+  const [yuleGiftsReceived, setYuleGiftsReceived] = useState<Set<string>>(new Set());
+  const [isYuleBlackout, setIsYuleBlackout] = useState(false);
+  const [yuleBlackoutOpacity, setYuleBlackoutOpacity] = useState(0);
+  const [yuleThoughtBubbleIndex, setYuleThoughtBubbleIndex] = useState(0);
 
   // Camera: track photo count to pass to CameraOverlay
   const [photoCount, setPhotoCount] = useState(() => inventoryManager.getPhotos().length);
@@ -373,6 +384,12 @@ const App: React.FC = () => {
     teleportPlayer(spawnPos);
     lastTransitionTime.current = Date.now();
 
+    // End Yule celebration BEFORE updating the NPC manager's map, so that
+    // removeDynamicNPC() still targets 'village' (its currentMapId at this point).
+    if (mapId !== 'village' && yuleCelebrationManager.isActive()) {
+      yuleCelebrationManager.forceEnd();
+    }
+
     // Update NPC manager's current map
     npcManager.setCurrentMap(mapId);
 
@@ -423,6 +440,11 @@ const App: React.FC = () => {
 
     if (resolvedAction.action === 'transition' && resolvedAction.mapId && resolvedAction.position) {
       handleMapTransition(resolvedAction.mapId, resolvedAction.position);
+    }
+
+    // Handle Yule celebration opening cutscene completion
+    if (action.cutsceneId === YULE_CUTSCENE_ID) {
+      yuleCelebrationManager.onCutsceneComplete();
     }
 
     // Handle fairy queen cutscene completions
@@ -501,6 +523,43 @@ const App: React.FC = () => {
       showToast(`${payload.npcName} gave you: ${itemNames}!`, 'success');
     });
   }, [showToast]);
+
+  // Yule celebration EventBus subscriptions
+  useEffect(() => {
+    const unsubStart = eventBus.on(GameEvent.YULE_CELEBRATION_STARTED, (payload) => {
+      setIsYuleCelebrationActive(true);
+      setYuleNpcWishes(payload.npcWishes);
+      setYuleGiftsReceived(new Set());
+      showToast(YULE_MUM_GREETING, 'success');
+      audioManager.playMusic('music_yule_celebration', { fadeIn: 2000, crossfade: true });
+    });
+    const unsubEnd = eventBus.on(GameEvent.YULE_CELEBRATION_ENDED, () => {
+      setIsYuleCelebrationActive(false);
+      setYuleNpcWishes({});
+      setYuleGiftsReceived(new Set());
+      showToast('A very merry Yule to everyone!', 'success');
+      audioManager.stopMusic(2000);
+    });
+    const unsubGift = eventBus.on(GameEvent.YULE_GIFT_GIVEN, (payload) => {
+      setYuleGiftsReceived((prev) => new Set([...prev, payload.npcId]));
+      // Dialogue shown via DialogueBox (yule_gift_reaction → yule_gift_reciprocation)
+    });
+    const unsubBlackout = eventBus.on(GameEvent.YULE_BLACKOUT, (payload) => {
+      if (payload.phase === 'fade_in') {
+        setIsYuleBlackout(true);
+        // Small tick to allow element to mount before starting CSS transition
+        setTimeout(() => setYuleBlackoutOpacity(1), 30);
+      } else {
+        setYuleBlackoutOpacity(0);
+        // Remove overlay after fade-out transition completes
+        setTimeout(() => setIsYuleBlackout(false), 1100);
+      }
+    });
+    return () => { unsubStart(); unsubEnd(); unsubGift(); unsubBlackout(); };
+  }, [showToast]);
+
+  // Dispose Yule timer on unmount
+  useEffect(() => () => yuleCelebrationManager.dispose(), []);
 
   // Subscribe to magic level-up — direct player to see the witch
   useEffect(() => {
@@ -1296,6 +1355,7 @@ const App: React.FC = () => {
     weatherManagerRef,
     weatherLayerRef,
     highlightLayerRef,
+    thoughtBubbleLayerRef,
     updateAnimations,
   } = usePixiRenderer({
     enabled: USE_PIXI_RENDERER,
@@ -1342,6 +1402,55 @@ const App: React.FC = () => {
       setLoadingProgress(total > 0 ? 0.5 + (loaded / total) * 0.5 : 0.5);
     }, []),
   });
+
+  // Cycle thought bubbles through pending NPCs every 15 seconds
+  useEffect(() => {
+    if (!isYuleCelebrationActive) return;
+    const id = setInterval(() => setYuleThoughtBubbleIndex((i) => i + 1), 15_000);
+    return () => clearInterval(id);
+  }, [isYuleCelebrationActive]);
+
+  // Drive the PixiJS thought bubble layer from state
+  useEffect(() => {
+    if (!thoughtBubbleLayerRef.current) return;
+
+    if (!isYuleCelebrationActive || currentMapId !== 'village') {
+      thoughtBubbleLayerRef.current.hide();
+      return;
+    }
+
+    const pendingIds = YULE_NPC_CONFIGS
+      .map((c) => c.celebrationId)
+      .filter((id) => !yuleGiftsReceived.has(id) && yuleNpcWishes[id]);
+
+    if (pendingIds.length === 0) {
+      thoughtBubbleLayerRef.current.hide();
+      return;
+    }
+
+    const activeId = pendingIds[yuleThoughtBubbleIndex % pendingIds.length];
+    const itemId = yuleNpcWishes[activeId];
+    if (!itemId) { thoughtBubbleLayerRef.current.hide(); return; }
+
+    const npc = npcManager.getNPCById(activeId);
+    if (!npc) { thoughtBubbleLayerRef.current.hide(); return; }
+
+    const item = getItem(itemId);
+    if (!item) { thoughtBubbleLayerRef.current.hide(); return; }
+
+    const config = YULE_NPC_CONFIGS.find((c) => c.celebrationId === activeId);
+    const npcName = config?.displayName ?? npc.name;
+
+    thoughtBubbleLayerRef.current.show(npc, item.image ?? '', npcName, effectiveTileSize);
+  }, [
+    isYuleCelebrationActive,
+    currentMapId,
+    yuleNpcWishes,
+    yuleGiftsReceived,
+    yuleThoughtBubbleIndex,
+    effectiveTileSize,
+    thoughtBubbleLayerRef,
+  ]);
 
   // Game is fully ready when: loading mode active + cutscene animation done + PixiJS textures loaded
   const isGameReady = isLoadingCutscene && !isCutscenePlaying && isPixiInitialized;
@@ -2064,6 +2173,22 @@ const App: React.FC = () => {
           }}
         />
       )}
+      {/* ── Yule Celebration Overlays ── */}
+      <YuleTimer isActive={isYuleCelebrationActive} />
+      {isYuleBlackout && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: '#000',
+            opacity: yuleBlackoutOpacity,
+            transition: 'opacity 1.5s ease',
+            zIndex: 9998,
+            pointerEvents: 'none',
+          }}
+        />
+      )}
+
       {ui.glamourModal && (
         <GlamourModal
           onClose={() => {

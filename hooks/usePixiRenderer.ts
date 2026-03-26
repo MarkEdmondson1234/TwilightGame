@@ -29,6 +29,7 @@ import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
 import { HighlightLayer } from '../utils/pixi/HighlightLayer';
+import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
 import { tileAssets, farmingAssets, cookingAssets, npcAssets, itemAssets, orchardAssets } from '../assets';
@@ -131,6 +132,9 @@ export interface UsePixiRendererReturn {
   /** Highlight layer ref (for tile hover highlight) */
   highlightLayerRef: React.RefObject<HighlightLayer | null>;
 
+  /** Thought bubble layer ref (for Yule celebration NPC wish bubbles) */
+  thoughtBubbleLayerRef: React.RefObject<ThoughtBubbleLayer | null>;
+
   /** Update animations (called from game loop) */
   updateAnimations: (deltaTime: number) => void;
 }
@@ -155,6 +159,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
   const highlightLayerRef = useRef<HighlightLayer | null>(null);
+  const thoughtBubbleLayerRef = useRef<ThoughtBubbleLayer | null>(null);
   const weatherLayerRef = useRef<WeatherLayer | null>(null);
   const darknessLayerRef = useRef<DarknessLayer | null>(null);
   const torchPositionsRef = useRef<LightSource[]>([]);
@@ -304,6 +309,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         placedItemsLayerRef.current = placedItemsLayer;
         placedItemsLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(placedItemsLayer.getContainer());
+
+        // Create thought bubble layer (added to depthSortedContainer for correct world-space positioning)
+        const thoughtBubbleLayer = new ThoughtBubbleLayer();
+        thoughtBubbleLayerRef.current = thoughtBubbleLayer;
+        depthSortedContainer.addChild(thoughtBubbleLayer.getContainer());
 
         // Create shadow layer (conditional)
         if (USE_SPRITE_SHADOWS) {
@@ -869,6 +879,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     weatherManagerRef,
     weatherLayerRef,
     highlightLayerRef,
+    thoughtBubbleLayerRef,
     updateAnimations,
   };
 }

@@ -37,6 +37,7 @@ import {
 import { miniGameManager } from '../minigames/MiniGameManager';
 import type { MiniGameTriggerData } from '../minigames/types';
 import { fruitTreeManager } from './fruitTreeManager';
+import { yuleCelebrationManager } from './YuleCelebrationManager';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -1059,7 +1060,8 @@ export type InteractionType =
   | 'open_workshop'
   | 'open_painting_easel'
   | 'open_mini_game'
-  | 'fireplace_tea';
+  | 'fireplace_tea'
+  | 'yule_begin_celebration';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -1126,6 +1128,7 @@ export interface GetInteractionsConfig {
   }) => void;
   onOpenDecorationWorkshop?: () => void;
   onOpenPaintingEasel?: () => void;
+  onBeginYuleCelebration?: () => void;
   /** Open a mini-game by ID with trigger data */
   onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
 }
@@ -1156,6 +1159,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     onCollectResource,
     onDeskAction,
     onPlaceDecoration,
+    onBeginYuleCelebration,
   } = config;
 
   const interactions: AvailableInteraction[] = [];
@@ -1164,18 +1168,34 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   const tileData = getTileData(tileX, tileY);
   const tilePos = { x: tileX, y: tileY };
 
-  // Check for placed items (food, etc.) at this position
+  // Check for placed items (food, etc.) at this position.
+  // Large decorations (placedScale > 1) render centered on their position, so we
+  // also match any tile within their scaled bounding box.
   const placedItems = gameState.getPlacedItems(currentMapId);
-  const itemAtPosition = placedItems.find(
-    (item) => item.position.x === tileX && item.position.y === tileY
-  );
+  const itemAtPosition = placedItems.find((item) => {
+    if (item.position.x === tileX && item.position.y === tileY) return true;
+    const def = getItem(item.itemId);
+    const scale = item.customScale ?? def?.placedScale ?? 1;
+    if (scale <= 1) return false;
+    // Sprite renders from (position - (scale-1)/2) to (position + (scale+1)/2) in tile coords.
+    // Lower bound uses (scale-1)/2; upper bound uses (scale+1)/2 (one tile larger).
+    const halfLo = (scale - 1) / 2;
+    const halfHi = (scale + 1) / 2;
+    return (
+      tileX >= Math.floor(item.position.x - halfLo) &&
+      tileX <= Math.floor(item.position.x + halfHi) &&
+      tileY >= Math.floor(item.position.y - halfLo) &&
+      tileY <= Math.floor(item.position.y + halfHi)
+    );
+  });
 
   if (itemAtPosition && onPlacedItemAction) {
     const placedItemDef = getItem(itemAtPosition.itemId);
     const isDecoration = placedItemDef?.category === ItemCategory.DECORATION;
 
-    // Pick up option (always available)
-    interactions.push({
+    // Pick up option (not available for seasonal event decorations — they are placed/removed automatically)
+    const isSeasonalDecoration = itemAtPosition.itemId.startsWith('seasonal_');
+    if (!isSeasonalDecoration) interactions.push({
       type: 'pickup_item',
       label: 'Pick Up',
       icon: '👋',
@@ -1246,6 +1266,21 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           execute: () => config.onOpenPaintingEasel!(),
         });
       }
+    }
+
+    // Yule tree: offer "Begin Celebration" once per year in winter
+    if (
+      itemAtPosition.itemId === 'seasonal_yule_tree' &&
+      onBeginYuleCelebration &&
+      yuleCelebrationManager.canStartCelebration()
+    ) {
+      interactions.push({
+        type: 'yule_begin_celebration',
+        label: 'Begin Celebration!',
+        icon: '🎄',
+        color: '#16a34a',
+        execute: onBeginYuleCelebration,
+      });
     }
 
     // Eat and Taste options only for non-decoration items (food)

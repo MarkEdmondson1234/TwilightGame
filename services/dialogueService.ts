@@ -15,6 +15,8 @@ import { GiftReaction, getGiftReactionDialogue } from '../data/giftReactions';
 import { friendshipManager } from '../utils/FriendshipManager';
 import { globalEventManager } from '../utils/GlobalEventManager';
 import { eventChainManager } from '../utils/EventChainManager';
+import { YULE_RECIPROCATION_DIALOGUE } from '../data/yuleCelebration';
+import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 
 /**
  * Enhanced NPC Persona for AI dialogue
@@ -926,6 +928,24 @@ function createGiftReactionNode(npcId: string, reaction: GiftReaction): Dialogue
  * Uses the pre-written dialogue trees from NPC definition
  */
 function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null {
+  // Two-node Yule gift dialogue chain (overrides normal gift reaction)
+  if (currentNodeId === 'yule_gift_reaction') {
+    const text = yuleCelebrationManager.getPendingGiftDialogue() ?? '...';
+    yuleCelebrationManager.clearPendingGiftDialogue();
+    return {
+      id: 'yule_gift_reaction',
+      text,
+      responses: [{ text: 'Continue', nextId: 'yule_gift_reciprocation' }],
+    };
+  }
+  if (currentNodeId === 'yule_gift_reciprocation') {
+    return {
+      id: 'yule_gift_reciprocation',
+      text: YULE_RECIPROCATION_DIALOGUE,
+      responses: [],
+    };
+  }
+
   // Check if this is a gift reaction node (prefixed with 'gift_')
   if (currentNodeId.startsWith('gift_')) {
     const reaction = currentNodeId.replace('gift_', '') as GiftReaction;
@@ -1148,6 +1168,11 @@ export async function getDialogue(
   currentNodeId: string = 'greeting',
   playerMessage?: string
 ): Promise<DialogueNode | null> {
+  // Yule gift nodes are always handled statically — they must not reach the AI path
+  if (currentNodeId === 'yule_gift_reaction' || currentNodeId === 'yule_gift_reciprocation') {
+    return getStaticDialogue(npc, currentNodeId);
+  }
+
   // If AI is disabled, use static dialogue
   if (!DIALOGUE_CONFIG.useAI) {
     return getStaticDialogue(npc, currentNodeId);

@@ -18,6 +18,7 @@ import {
   summerSolsticeCutscene,
   harvestFestivalCutscene,
   yuleCutscene,
+  yuleCelebrationOpeningCutscene,
 } from './seasonalEvents';
 
 /**
@@ -40,6 +41,8 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   summerSolsticeCutscene,
   harvestFestivalCutscene,
   yuleCutscene,
+  // Yule celebration (manually triggered by clicking the tree)
+  yuleCelebrationOpeningCutscene,
 ];
 
 /**

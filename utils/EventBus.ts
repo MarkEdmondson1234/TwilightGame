@@ -89,6 +89,12 @@ export enum GameEvent {
 
   // Fruit tree events
   FRUIT_TREE_CHANGED = 'fruitTree:changed',
+
+  // Yule celebration events
+  YULE_CELEBRATION_STARTED = 'yule:celebration_started',
+  YULE_CELEBRATION_ENDED = 'yule:celebration_ended',
+  YULE_GIFT_GIVEN = 'yule:gift_given',
+  YULE_BLACKOUT = 'yule:blackout',
 }
 
 // ============================================================================
@@ -229,6 +235,24 @@ export interface EventPayloads {
     x: number;
     y: number;
     action: 'pruned' | 'mulched' | 'harvested';
+  };
+  [GameEvent.YULE_CELEBRATION_STARTED]: {
+    year: number;
+    npcWishes: Record<string, string>; // npcId -> itemId
+  };
+  [GameEvent.YULE_CELEBRATION_ENDED]: {
+    year: number;
+    giftsGiven: number;
+  };
+  [GameEvent.YULE_GIFT_GIVEN]: {
+    npcId: string;
+    itemId: string;
+    wasWish: boolean;
+    dialogue: string;
+    rewardItemId: string;
+  };
+  [GameEvent.YULE_BLACKOUT]: {
+    phase: 'fade_in' | 'fade_out';
   };
 }
 

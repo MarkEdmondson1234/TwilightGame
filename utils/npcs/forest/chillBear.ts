@@ -230,7 +230,7 @@ export function createChillBearNPC(
       },
     ],
     friendshipConfig: {
-      canBefriend: false,
+      canBefriend: true,
       startingPoints: 0,
     },
   });

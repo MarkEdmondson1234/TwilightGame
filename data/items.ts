@@ -1338,6 +1338,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 40,
   },
 
+  food_yule_log: {
+    id: 'food_yule_log',
+    name: 'food_yule_log',
+    displayName: 'Yule Log',
+    category: ItemCategory.FOOD,
+    description: 'A rich chocolate log cake, decorated with holly and dusted with icing sugar. Shared at Yule to bring warmth and good cheer.',
+    stackable: true,
+    maxStack: 5,
+    sellPrice: 30,
+    image: '/TwilightGame/assets/cooking/food_yule_log.png',
+  },
+
   // ===== MAGICAL INGREDIENTS =====
   // Forageable - Time/Weather dependent
   moonpetal: {

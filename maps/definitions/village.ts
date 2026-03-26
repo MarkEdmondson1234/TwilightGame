@@ -78,10 +78,10 @@ LG,G,,,PPPPPPPPPPPPP,,,,k,,Gte
 tG,,G,,,G,.PG,l,,lGPPPPPP;;,eG
 LPPPPPPPPPPPP,,,¬8,,,,G,,G,,,G
 oG,G,l,G,,,PG,cG,,Gl,lG,,l,GeY
-UoG,cG,,PPPPGGG,G,,Ge=i,G,,G,t
-LG,G,GGGGGPG,,G,,G,i,,i,,l,GLG
-oGGG,,GGGGPG,G,,G,,,,G,,,G,,oG
-LG,G,GGGGPPG,,G,,eG,G,,G,,,GLG
+UoG,cG,,PPPPGGG,G,,=eG,,G,,G,t
+LG,G,GGGGGPG,,G,,G,i,,G,,l,GLG
+oGGG,,GGGGPG,G,,G,,,,G,,,G,,,G
+LG,G,GGGGPPG,,G,,eG,G,,G,,,GoG
 ,G,,;",G,PPPG,,,,GJG,G,,5G,,Ge
 oG,G,,,8,HPPG;,G,,5,,,,,,l,GGU
 UG,cGXXXXXXPG,G,,c"",GK,5,,,eU

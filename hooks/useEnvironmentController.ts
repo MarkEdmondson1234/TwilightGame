@@ -23,6 +23,7 @@ import {
 } from '../data/weatherConfig';
 import { mapManager } from '../maps/MapManager';
 import { npcManager } from '../NPCManager';
+import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
 import type { WeatherLayer } from '../utils/pixi/WeatherLayer';
@@ -599,6 +600,12 @@ export function useEnvironmentController(
     const playRandomMusic = () => {
       if (isMusicPlaying) return;
 
+      // Don't play ambient map music while the Yule celebration has its own track
+      if (yuleCelebrationManager.isActive()) {
+        musicTimeout = setTimeout(playRandomMusic, getRandomInterval());
+        return;
+      }
+
       const musicKey = getMusicForMap(currentMapId);
       if (!musicKey || !audioManager.hasSound(musicKey)) {
         // Schedule next attempt
@@ -613,7 +620,10 @@ export function useEnvironmentController(
       // Schedule fade out
       const duration = getRandomDuration();
       musicTimeout = setTimeout(() => {
-        audioManager.stopMusic(8000); // 8 second fade out
+        // Don't stop music if the Yule celebration took over the track
+        if (!yuleCelebrationManager.isActive()) {
+          audioManager.stopMusic(8000); // 8 second fade out
+        }
         isMusicPlaying = false;
 
         // Schedule next music play
@@ -629,7 +639,10 @@ export function useEnvironmentController(
       if (musicTimeout) {
         clearTimeout(musicTimeout);
       }
-      audioManager.stopMusic(1000);
+      // Don't stop music if the Yule celebration is managing the track
+      if (!yuleCelebrationManager.isActive()) {
+        audioManager.stopMusic(1000);
+      }
     };
   }, [currentMapId]);
 

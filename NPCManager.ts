@@ -49,6 +49,12 @@ class NPCManagerClass {
   // Global NPC registry for NPCs with seasonal locations (can appear on multiple maps)
   private globalNPCs: Map<string, NPC> = new Map();
 
+  // Temporary position overrides applied during special events (e.g. Yule celebration)
+  private eventOverrides: Map<string, Position> = new Map();
+
+  // NPCs frozen in place during scripted events (separate from isInDialogue so talking doesn't unfreeze them)
+  private frozenNPCIds: Set<string> = new Set();
+
   private readonly NPC_SPEED = 1.0; // tiles per second
   private readonly NPC_SIZE = PLAYER_SIZE; // Same size as player
 
@@ -204,6 +210,16 @@ class NPCManagerClass {
     if (state) {
       state.isInDialogue = false;
     }
+  }
+
+  /** Freeze a wandering NPC in place during a scripted event (e.g. Yule celebration). */
+  freezeWandering(npcId: string): void {
+    this.frozenNPCIds.add(npcId);
+  }
+
+  /** Unfreeze a wandering NPC after the scripted event ends. */
+  unfreezeWandering(npcId: string): void {
+    this.frozenNPCIds.delete(npcId);
   }
 
   /**
@@ -580,6 +596,9 @@ class NPCManagerClass {
       // Don't move if NPC is in dialogue
       if (state.isInDialogue) return;
 
+      // Don't move if NPC is frozen for a scripted event (e.g. Yule celebration)
+      if (this.frozenNPCIds.has(npc.id)) return;
+
       // HOSTILE PURSUIT — chase player and trigger combat on contact
       if (npc.hostileConfig && playerPos) {
         const hc = npc.hostileConfig;
@@ -873,6 +892,80 @@ class NPCManagerClass {
 
     console.log(`[NPCManager] Removed dynamic NPC ${npcId} from map ${this.currentMapId}`);
     eventBus.emit(GameEvent.NPC_DESPAWNED, { npcId, mapId: this.currentMapId });
+  }
+
+  /**
+   * Temporarily override an NPC's scale for a special event (e.g. Yule celebration).
+   * Updates both npc.scale AND npcState.baseScale so the animation system respects the
+   * new size (otherwise per-state scale logic resets it every tick).
+   * Returns the original scale so the caller can restore it.
+   */
+  setEventScaleOverride(npcId: string, scale: number): number | null {
+    // Find NPC across all maps (it may have been moved cross-map by setEventOverridePosition)
+    let npc: NPC | undefined;
+    for (const npcs of this.npcsByMap.values()) {
+      const found = npcs.find((n) => n.id === npcId);
+      if (found) { npc = found; break; }
+    }
+    if (!npc) return null;
+
+    const npcState = this.npcStates.get(npcId);
+    const originalScale = npc.scale ?? npcState?.baseScale ?? 3.0;
+
+    npc.scale = scale;
+    if (npcState) npcState.baseScale = scale;
+
+    return originalScale;
+  }
+
+  /**
+   * Restore an NPC's scale after a special event.
+   * Updates both npc.scale AND npcState.baseScale.
+   */
+  restoreEventScale(npcId: string, scale: number): void {
+    let npc: NPC | undefined;
+    for (const npcs of this.npcsByMap.values()) {
+      const found = npcs.find((n) => n.id === npcId);
+      if (found) { npc = found; break; }
+    }
+    if (!npc) return;
+
+    npc.scale = scale;
+    const npcState = this.npcStates.get(npcId);
+    if (npcState) npcState.baseScale = scale;
+  }
+
+  /**
+   * Temporarily override an NPC's position for a special event (e.g. Yule celebration).
+   * Only works for NPCs already on the current map.
+   */
+  setEventOverridePosition(npcId: string, position: Position): void {
+    const npc = this.getNPCById(npcId);
+    if (!npc) {
+      console.warn(`[NPCManager] setEventOverridePosition: NPC "${npcId}" not found on current map`);
+      return;
+    }
+    if (!this.eventOverrides.has(npcId)) {
+      this.eventOverrides.set(npcId, { ...npc.position });
+    }
+    npc.position = { ...position };
+    eventBus.emit(GameEvent.NPC_MOVED, { npcId, position });
+  }
+
+  /**
+   * Restore all NPCs to their positions before event overrides were applied,
+   * then clear the override registry.
+   */
+  clearEventOverrides(): void {
+    for (const [npcId, originalPosition] of this.eventOverrides) {
+      const npc = this.getNPCById(npcId);
+      if (npc) {
+        npc.position = { ...originalPosition };
+        eventBus.emit(GameEvent.NPC_MOVED, { npcId, position: originalPosition });
+      }
+    }
+    this.eventOverrides.clear();
+    this.frozenNPCIds.clear();
   }
 
   /**
