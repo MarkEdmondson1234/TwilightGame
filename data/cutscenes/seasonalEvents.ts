@@ -246,6 +246,7 @@ export const yuleCutscene: CutsceneDefinition = {
   scenes: [
     {
       id: 'yule_greeting',
+      soundEffect: 'sfx_yule_bells',
       backgroundLayers: [
         {
           image: 'summer_sky_cutscene.png',
