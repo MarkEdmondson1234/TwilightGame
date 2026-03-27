@@ -2259,9 +2259,11 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     const currentMap = mapManager.getCurrentMap();
     const isIndoorMap = currentMap?.colorScheme === 'indoor' || currentMap?.colorScheme === 'shop';
     const isWalkable = tileData.collisionType === CollisionType.WALKABLE;
+    const heldItem = getItem(currentTool);
+    const canPlaceHere = isWalkable && (isIndoorMap || heldItem?.allowOutdoorPlacement);
 
-    if (isIndoorMap && isWalkable) {
-      const itemDef = getItem(currentTool);
+    if (canPlaceHere) {
+      const itemDef = heldItem;
       if (itemDef && itemDef.category === ItemCategory.DECORATION) {
         // Check no existing placed item at this tile
         const existingItem = placedItems.find(
@@ -2333,7 +2335,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
                   onPlaceDecoration({
                     itemId: itemDef.id,
                     position: tilePos,
-                    image: itemDef.image || '',
+                    image: itemDef.placedImage || itemDef.image || '',
                   }),
               });
             }

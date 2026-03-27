@@ -25,7 +25,7 @@ import { getItem } from '../../data/items';
 import { textureManager } from '../TextureManager';
 import { shouldShowDecayWarning } from '../itemDecayManager';
 import { PixiLayer } from './PixiLayer';
-import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
+import { Z_DEPTH_SORTED_BASE, Z_SPRITE_BACKGROUND } from '../../zIndex';
 
 export class PlacedItemsLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
@@ -178,9 +178,13 @@ export class PlacedItemsLayer extends PixiLayer {
       sprite.visible = inRange;
 
       // Depth sort: z-index based on bottom edge of item (like "feet" position)
-      // Uses the same formula as player/NPCs: Z_DEPTH_SORTED_BASE + floor(Y * 10)
-      const bottomY = item.position.y + effectiveScale;
-      sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(bottomY * 10);
+      // Items with placesBelowCharacters use a fixed background z-level instead
+      if (itemDef?.placesBelowCharacters) {
+        sprite.zIndex = Z_SPRITE_BACKGROUND;
+      } else {
+        const bottomY = item.position.y + effectiveScale;
+        sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(bottomY * 10);
+      }
 
       // Apply decay warning visual effect (blinking)
       const showWarning = shouldShowDecayWarning(item);

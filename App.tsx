@@ -2057,15 +2057,20 @@ const App: React.FC = () => {
                 // Close inventory after drinking potion for immersion
                 closeUI('inventory');
               }
-            } else if (itemDef && (itemDef.category === ItemCategory.FOOD || itemDef.edible)) {
-              // Food items and edible crops show a radial menu: Select, Place, or Eat
+            } else if (
+              itemDef &&
+              (itemDef.category === ItemCategory.FOOD ||
+                itemDef.edible ||
+                itemDef.category === ItemCategory.DECORATION)
+            ) {
+              // Food, edible crops, and decoration items show a radial menu
               setInventoryRadialMenu({
                 position: { x: event.clientX, y: event.clientY },
                 item,
                 slotIndex,
               });
             } else {
-              // For non-potions, non-food: just select the item
+              // For non-potions, non-food, non-decoration: just select the item
               setSelectedItemSlot(slotIndex);
             }
           }}
@@ -2410,47 +2415,55 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Radial menu for food items clicked in inventory */}
-      {inventoryRadialMenu && (
-        <RadialMenu
-          position={inventoryRadialMenu.position}
-          zIndex={Z_INVENTORY_RADIAL_MENU}
-          options={[
-            {
-              id: 'select',
-              label: 'Select',
-              icon: iconAssets.hand,
-              color: '#6b7280',
-              onSelect: () => {
-                setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                setInventoryRadialMenu(null);
+      {/* Radial menu for food/decoration items clicked in inventory */}
+      {inventoryRadialMenu && (() => {
+        const invItemDef = getItem(inventoryRadialMenu.item.id);
+        const isFood = invItemDef && (invItemDef.category === ItemCategory.FOOD || invItemDef.edible);
+        return (
+          <RadialMenu
+            position={inventoryRadialMenu.position}
+            zIndex={Z_INVENTORY_RADIAL_MENU}
+            options={[
+              {
+                id: 'select',
+                label: 'Select',
+                icon: iconAssets.hand,
+                color: '#6b7280',
+                onSelect: () => {
+                  setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                  setInventoryRadialMenu(null);
+                },
               },
-            },
-            {
-              id: 'place',
-              label: 'Place',
-              icon: '🌍',
-              color: '#3b82f6',
-              onSelect: () => {
-                setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                closeUI('inventory');
-                setInventoryRadialMenu(null);
+              {
+                id: 'place',
+                label: 'Place in World',
+                icon: '🌍',
+                color: '#3b82f6',
+                onSelect: () => {
+                  setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                  closeUI('inventory');
+                  setInventoryRadialMenu(null);
+                },
               },
-            },
-            {
-              id: 'eat',
-              label: 'Eat',
-              icon: '🍽️',
-              color: '#f59e0b',
-              onSelect: () => {
-                handleFoodEat(inventoryRadialMenu.item);
-                setInventoryRadialMenu(null);
-              },
-            },
-          ]}
-          onClose={() => setInventoryRadialMenu(null)}
-        />
-      )}
+              ...(isFood
+                ? [
+                    {
+                      id: 'eat',
+                      label: 'Eat',
+                      icon: '🍽️',
+                      color: '#f59e0b',
+                      onSelect: () => {
+                        handleFoodEat(inventoryRadialMenu.item);
+                        setInventoryRadialMenu(null);
+                      },
+                    },
+                  ]
+                : []),
+            ]}
+            onClose={() => setInventoryRadialMenu(null)}
+          />
+        );
+      })()}
 
       {/* Toast notifications for user feedback - positioned above player */}
       {!isCutscenePlaying && (

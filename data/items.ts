@@ -52,6 +52,9 @@ export interface ItemDefinition {
   icon?: string; // Emoji fallback when no image available
   forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
   placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
+  placedImage?: string; // Alt image URL to use when item is placed in the world (overrides `image`)
+  allowOutdoorPlacement?: boolean; // If true, placement works on outdoor maps as well as indoor
+  placesBelowCharacters?: boolean; // If true, renders at background z-level (above tiles, below player/NPCs)
   persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
   edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)
 }
@@ -707,8 +710,11 @@ export const ITEMS: Record<string, ItemDefinition> = {
     category: ItemCategory.DECORATION,
     description: 'A cosy folded picnic blanket. Perfect for a sunny afternoon.',
     stackable: false,
-    placedScale: 2.0,
+    placedScale: 3.0,
     image: itemAssets.picnic_blanket_folded,
+    placedImage: itemAssets.picnic_blanket,
+    allowOutdoorPlacement: true,
+    placesBelowCharacters: true,
     icon: '🧺',
   },
 
