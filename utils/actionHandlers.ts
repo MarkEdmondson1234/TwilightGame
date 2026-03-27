@@ -1062,7 +1062,8 @@ export type InteractionType =
   | 'open_painting_easel'
   | 'open_mini_game'
   | 'fireplace_tea'
-  | 'yule_begin_celebration';
+  | 'yule_begin_celebration'
+  | 'add_to_basket';
 
 export interface AvailableInteraction {
   type: InteractionType;
