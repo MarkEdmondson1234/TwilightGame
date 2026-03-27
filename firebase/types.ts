@@ -279,7 +279,8 @@ export type SharedEventType =
   | 'achievement' // Milestone reached
   | 'seasonal' // Seasonal event participation
   | 'community' // Community goal progress
-  | 'mystery'; // Mysterious happenings
+  | 'mystery' // Mysterious happenings
+  | 'romance'; // Romance/relationship events
 
 /**
  * Sync metadata for hybrid save system

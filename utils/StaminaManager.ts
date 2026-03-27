@@ -18,7 +18,7 @@ import { gameState } from '../GameState';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
 
-export type ActivityType = 'till' | 'plant' | 'water' | 'harvest' | 'forage' | 'cook';
+export type ActivityType = 'till' | 'plant' | 'water' | 'harvest' | 'forage' | 'cook' | 'mess_clean';
 
 /**
  * Callbacks required by StaminaManager
@@ -242,6 +242,8 @@ class StaminaManagerClass {
         return STAMINA.FORAGE_COST;
       case 'cook':
         return STAMINA.COOK_COST;
+      case 'mess_clean':
+        return STAMINA.MESS_CLEAN_COST;
       default:
         return 1;
     }

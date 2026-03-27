@@ -155,6 +155,9 @@ export interface DialogueResponse {
   requiredFireplaceTutorialComplete?: boolean; // Only show after player has used the fireplace
   // Decoration system requirements
   hiddenIfHasEasel?: boolean; // Hide if player already has the easel
+  // Inventory item requirements
+  requiredItem?: string; // Only show if player has this item in inventory
+  hiddenIfHasItem?: string; // Hide if player has this item in inventory
   // Item-giving actions triggered by selecting this response
   givesItems?: Array<{ itemId: string; quantity: number }>; // Give items to player when selected
   grantsEasel?: boolean; // Grant easel via DecorationManager when selected

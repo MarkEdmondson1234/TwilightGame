@@ -197,6 +197,18 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
         }
       }
 
+      // Check inventory item requirements
+      if (response.requiredItem) {
+        if (!inventoryManager.hasItem(response.requiredItem)) {
+          return false;
+        }
+      }
+      if (response.hiddenIfHasItem) {
+        if (inventoryManager.hasItem(response.hiddenIfHasItem)) {
+          return false;
+        }
+      }
+
       return true;
     });
   };

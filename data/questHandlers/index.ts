@@ -9,6 +9,7 @@
 import './altheaChoresHandler';
 import './witchGardenHandler';
 import './daveadLavaCakeHandler';
+import './mrFoxPicnicHandler';
 // gardeningQuestHandler has no stage handlers (logic is pull-based via dialogue)
 // fairyBluebellsHandler has no stage handlers (item delivery is pull-based)
 // fairyQueenHandler has no stage handlers (fairy meetings are pull-based)
@@ -18,6 +19,33 @@ import './daveadLavaCakeHandler';
 export * from './altheaChoresHandler';
 export * from './witchGardenHandler';
 export * from './daveadLavaCakeHandler';
+export {
+  TOTAL_MESS_PILES,
+  MAX_BASKET_MEALS,
+  MESS_PILE_POSITIONS,
+  isMrFoxPicnicActive,
+  isMrFoxPicnicCompleted,
+  getMrFoxPicnicStage,
+  isMrFoxPicnicAtStage,
+  startMrFoxPicnic,
+  hasDeclinedPicnicOffer,
+  markPicnicOfferDeclined,
+  getMessCleaned,
+  getMessRemaining,
+  areAllMessCleaned,
+  markMessCleaned,
+  checkShedComplete,
+  handleBlanketGiven,
+  getBasketContents,
+  isBasketFull,
+  addMealToBasket,
+  handleBasketGiven,
+  handleQuestComplete,
+  setProximityOfferPending,
+  consumeProximityOfferPending,
+  QUEST_ID as MR_FOX_PICNIC_QUEST_ID,
+} from './mrFoxPicnicHandler';
+export type { MessPilePosition } from './mrFoxPicnicHandler';
 export * from './gardeningQuestHandler';
 export * from './fairyBluebellsHandler';
 export * from './fairyQueenHandler';

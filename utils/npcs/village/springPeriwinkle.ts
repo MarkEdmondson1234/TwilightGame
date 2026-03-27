@@ -82,6 +82,8 @@ export function createSpringPeriwinkleNPC(
           { text: 'Tell me about yourself.', nextId: 'about_spring' },
           { text: 'You visit often?', nextId: 'visit_schedule' },
           { text: 'Have you noticed anything unusual lately?', nextId: 'noticed_deflect' },
+          // Mr Fox's Picnic — post-quest option
+          { text: 'How are things going with Mr Fox?', nextId: 'mfp_post_quest', requiredQuest: 'mr_fox_picnic', requiredQuestStage: 9 },
           { text: 'Lovely to meet you!' },
         ],
       },
@@ -159,6 +161,20 @@ export function createSpringPeriwinkleNPC(
       {
         id: 'noticed_someone',
         text: "I've noticed someone watching me when I walk through the village. A fox gentleman — always at a polite distance. It's rather flattering, truth be told. Though I haven't spoken to him. Perhaps one day.",
+      },
+
+      // Mr Fox's Picnic — post-quest dialogue
+      {
+        id: 'mfp_post_quest',
+        text: "*she goes very pink* Oh — you mean Mr Fox. Archibald. Well. *she straightens her collar* He's been very attentive. We've had the most wonderful conversations. He's... surprisingly funny, actually. Dreadfully charming, once you get past the nerves.",
+        responses: [
+          { text: 'Do you think something might come of it?', nextId: 'mfp_post_quest_2' },
+        ],
+      },
+      {
+        id: 'mfp_post_quest_2',
+        text: "*she laughs softly* I really couldn't say. But... I do find myself thinking about the village rather a lot lately. *pause* Rather a lot more than before, in any case. *she smiles at you warmly* You had something to do with that picnic, didn't you? I thought so. Thank you.",
+        responses: [],
       },
     ],
   });

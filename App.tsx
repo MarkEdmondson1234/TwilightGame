@@ -99,6 +99,7 @@ import type { Photo } from './types';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
+import BasketModal from './components/BasketModal';
 import GlamourModal from './components/GlamourModal';
 import { usePotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
 import { getItem, ItemCategory } from './data/items';
@@ -109,6 +110,7 @@ import VFXTestPanel from './components/VFXTestPanel';
 import YuleTimer from './components/YuleTimer';
 import { yuleCelebrationManager, YULE_MUM_GREETING } from './utils/YuleCelebrationManager';
 import { YULE_CUTSCENE_ID, YULE_NPC_CONFIGS } from './data/yuleCelebration';
+import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
 
 /**
  * Find the nearest clear MINE_FLOOR tile to an origin position.
@@ -354,6 +356,15 @@ const App: React.FC = () => {
     playerPos,
     currentMapId,
     enabled: isMapInitialized && !activeNPC && !isCutscenePlaying,
+  });
+
+  // Mr Fox's Picnic quest — auto-trigger dialogue when near Mr Fox in spring/summer with Periwinkle
+  useProximityQuestTriggers({
+    playerPosition: playerPos,
+    currentMapId,
+    activeNPC,
+    isCutscenePlaying,
+    setActiveNPC,
   });
 
   // Event chain UI - manages popup state and proximity checking for tile-triggered chains
@@ -2176,6 +2187,12 @@ const App: React.FC = () => {
             // Open dialogue with the NPC showing their reaction
             setActiveNPC(ui.context.giftTargetNpcId!);
           }}
+        />
+      )}
+      {ui.basketModal && (
+        <BasketModal
+          onClose={() => closeUI('basketModal')}
+          onResult={(message, success) => showToast(message, success ? 'success' : 'warning')}
         />
       )}
       {/* ── Yule Celebration Overlays ── */}

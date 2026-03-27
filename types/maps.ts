@@ -68,8 +68,18 @@ export interface CobwebLayerCondition {
   showWhen: 'not_cleaned';
 }
 
+/**
+ * Condition for showing/hiding a mess pile overlay (Mr Fox's Picnic quest).
+ * The layer is visible when the pile has NOT been cleaned yet.
+ */
+export interface MessPileLayerCondition {
+  type: 'mess_pile';
+  pileId: number; // 0–2
+  showWhen: 'not_cleaned';
+}
+
 /** Union of all supported layer condition types */
-export type LayerCondition = QuestLayerCondition | CobwebLayerCondition;
+export type LayerCondition = QuestLayerCondition | CobwebLayerCondition | MessPileLayerCondition;
 
 /**
  * Base properties shared by all room layer types

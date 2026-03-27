@@ -30,6 +30,7 @@ import { ForageResult, handleForageAction } from './forageHandlers';
 import { decorationManager } from './DecorationManager';
 import { cookingManager, CookingResult } from './CookingManager';
 import { getFrameStyle } from './frameStyles';
+import { isMrFoxPicnicAtStage } from '../data/questHandlers/mrFoxPicnicHandler';
 import {
   getMiniGamesForPlacedItem,
   getMiniGamesForNPC,
@@ -1075,7 +1076,7 @@ export interface AvailableInteraction {
 }
 
 export interface PlacedItemAction {
-  action: 'pickup' | 'eat' | 'taste';
+  action: 'pickup' | 'eat' | 'taste' | 'add_to_basket';
   itemId: string;
   placedItemId: string;
   imageUrl: string; // Sprite image URL for inventory display
@@ -1192,6 +1193,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   if (itemAtPosition && onPlacedItemAction) {
     const placedItemDef = getItem(itemAtPosition.itemId);
     const isDecoration = placedItemDef?.category === ItemCategory.DECORATION;
+    const isFoodItem = placedItemDef?.category === ItemCategory.FOOD || placedItemDef?.edible === true;
 
     // Pick up option (not available for seasonal event decorations — they are placed/removed automatically)
     const isSeasonalDecoration = itemAtPosition.itemId.startsWith('seasonal_');
@@ -1209,6 +1211,28 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           imageUrl: itemAtPosition.image,
         }),
     });
+
+    // "Add Food" option for the picnic basket during the filling_basket quest stage
+    if (
+      itemAtPosition.itemId === 'quest_picnic_basket' &&
+      isMrFoxPicnicAtStage('filling_basket') &&
+      onPlacedItemAction
+    ) {
+      interactions.push({
+        type: 'add_to_basket',
+        label: 'Add Food',
+        icon: '🍽️',
+        color: '#f59e0b',
+        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+        execute: () =>
+          onPlacedItemAction({
+            action: 'add_to_basket',
+            itemId: itemAtPosition.itemId,
+            placedItemId: itemAtPosition.id,
+            imageUrl: itemAtPosition.image,
+          }),
+      });
+    }
 
     // Mini-game interactions for placed items (registry-based)
     if (config.onOpenMiniGame) {
@@ -1283,8 +1307,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       });
     }
 
-    // Eat and Taste options only for non-decoration items (food)
-    if (!isDecoration) {
+    // Eat and Taste options only for actual food items
+    if (isFoodItem) {
       // Eat option
       interactions.push({
         type: 'eat_item',

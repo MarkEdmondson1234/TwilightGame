@@ -75,6 +75,9 @@ export enum GameEvent {
   // Cobweb events
   COBWEB_CLEANED = 'cobweb:cleaned',
 
+  // Mess pile events (Mr Fox's Picnic)
+  MESS_PILE_CLEANED = 'mess_pile:cleaned',
+
   // Magic events
   MAGIC_LEVEL_UP = 'magic:level_up',
 
@@ -210,6 +213,9 @@ export interface EventPayloads {
   };
   [GameEvent.COBWEB_CLEANED]: {
     cobwebId: number;
+  };
+  [GameEvent.MESS_PILE_CLEANED]: {
+    pileId: number;
   };
   [GameEvent.MAGIC_LEVEL_UP]: {
     previousLevel: 'novice' | 'journeyman' | 'master';

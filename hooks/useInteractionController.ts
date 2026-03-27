@@ -42,6 +42,12 @@ import {
   cleanCobweb,
   calculateOverlayBounds,
 } from '../utils/cobwebInteractions';
+import {
+  canCleanMessPiles,
+  checkMessPileClick,
+  cleanMessPile,
+  calculateShedOverlayBounds,
+} from '../utils/messInteractions';
 import { mapManager } from '../maps';
 
 // ============================================================================
@@ -340,6 +346,8 @@ export function useInteractionController(
           onShowToast(`Ate the food (+${restored} stamina)`, 'success');
         } else if (action.action === 'taste') {
           onShowToast('Mmm, tasty!', 'info');
+        } else if (action.action === 'add_to_basket') {
+          openUI('basketModal');
         }
       },
       onCollectWater: (result: { success: boolean; message: string }) => {
@@ -485,6 +493,42 @@ export function useInteractionController(
             }
           }
           return; // Don't process other interactions when cleaning cobwebs
+        }
+      }
+
+      // === Mess Pile Cleaning Special Handler ===
+      // Check for mess pile clicks in the seed shed during Mr Fox's Picnic quest
+      if (canCleanMessPiles(currentMapId)) {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const referenceWidth = 1280;
+        const referenceHeight = 720;
+        const viewportScale = Math.min(viewportWidth / referenceWidth, viewportHeight / referenceHeight);
+
+        const shedBounds = calculateShedOverlayBounds(viewportWidth, viewportHeight, viewportScale);
+
+        const pileResult = checkMessPileClick(
+          clickInfo.screenPos.x,
+          clickInfo.screenPos.y,
+          shedBounds.left,
+          shedBounds.top,
+          shedBounds.width,
+          shedBounds.height
+        );
+
+        if (pileResult.hit) {
+          if (pileResult.alreadyCleaned) {
+            onShowToast("That's already tidied up.", 'info');
+          } else {
+            const staminaOk = staminaManager.performActivity('mess_clean');
+            if (staminaOk) {
+              const cleanResult = cleanMessPile(pileResult.pileIndex);
+              onShowToast(cleanResult.message, cleanResult.allCleaned ? 'success' : 'info');
+            } else {
+              onShowToast("You're too tired to tidy up right now.", 'warning');
+            }
+          }
+          return; // Don't process other interactions when cleaning mess piles
         }
       }
 

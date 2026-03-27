@@ -23,7 +23,7 @@ const yamlModules = import.meta.glob('/data/eventChains/*.yaml', {
 // Validation
 // ============================================
 
-const VALID_EVENT_TYPES = new Set(['discovery', 'achievement', 'seasonal', 'community', 'mystery']);
+const VALID_EVENT_TYPES = new Set(['discovery', 'achievement', 'seasonal', 'community', 'mystery', 'romance']);
 const VALID_TRIGGER_TYPES = new Set([
   'manual',
   'event_count',

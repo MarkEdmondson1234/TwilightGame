@@ -18,6 +18,16 @@ import {
 } from '../data/questHandlers/gardeningQuestHandler';
 import { startFairyBluebellsQuest } from '../data/questHandlers/fairyBluebellsHandler';
 import {
+  startMrFoxPicnic,
+  handleBlanketGiven,
+  handleBasketGiven,
+  isMrFoxPicnicAtStage,
+  isBasketFull,
+  QUEST_ID as MFP_QUEST_ID,
+  consumeProximityOfferPending,
+} from '../data/questHandlers/mrFoxPicnicHandler';
+import { eventChainManager } from './EventChainManager';
+import {
   startWitchGardenQuest,
   startPickledOnionsPhase,
   deliverPickledOnions,
@@ -76,9 +86,11 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
     handleSeedPickup(nodeId);
   }
 
-  // Handle recipe teaching from Mum
+  // Handle recipe teaching and quest actions from Mum
   if (npcId.includes('mum')) {
     handleRecipeTeaching(nodeId);
+    const redirect = handleMumQuestActions(nodeId);
+    if (redirect) return redirect;
   }
 
   // Handle Althea's chores quest (NPC id is 'old_woman_knitting', not 'althea')
@@ -101,6 +113,12 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   // Handle witch garden quest
   if (npcId === 'witch') {
     const redirect = handleWitchQuestActions(nodeId);
+    if (redirect) return redirect;
+  }
+
+  // Handle Mr Fox's picnic quest (shopkeeper NPC)
+  if (npcId.includes('shopkeeper')) {
+    const redirect = handleMrFoxPicnicActions(nodeId);
     if (redirect) return redirect;
   }
 }
@@ -608,5 +626,72 @@ function handleEliasQuestActions(nodeId: string): string | void {
   if (nodeId === 'fairy_bluebells_accept') {
     startFairyBluebellsQuest();
     if (DEBUG.QUEST) console.log('[dialogueHandlers] 🔔 Fairy Bluebells quest started!');
+  }
+}
+
+/**
+ * Handle Mr Fox's Picnic quest dialogue actions and greeting redirects
+ */
+function handleMrFoxPicnicActions(nodeId: string): string | void {
+  // Redirect greeting to the appropriate quest node based on current stage
+  if (nodeId === 'greeting') {
+    // Proximity auto-trigger: open the offer node directly
+    if (consumeProximityOfferPending()) return 'mfp_offer';
+
+    if (isMrFoxPicnicAtStage('blanket_obtained')) {
+      return 'mfp_give_blanket';
+    }
+    if (isMrFoxPicnicAtStage('cooking_problem')) {
+      return 'mfp_cooking_confession';
+    }
+    if (isMrFoxPicnicAtStage('give_basket')) {
+      // Player has basket — check if it's full
+      if (isBasketFull()) return 'mfp_give_basket';
+      return 'mfp_basket_too_empty';
+    }
+  }
+
+  // Starting the quest from the offer or predicament conversation
+  if (nodeId === 'mfp_blanket_offer') {
+    startMrFoxPicnic();
+    eventChainManager.advanceToStage(MFP_QUEST_ID, 'ask_mum_blanket');
+    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🦊 Mr Fox's Picnic quest started → ask_mum_blanket");
+  }
+
+  // Player gives the blanket to Mr Fox
+  if (nodeId === 'mfp_give_blanket') {
+    handleBlanketGiven();
+    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🧺 Blanket given to Mr Fox");
+  }
+
+  // Trigger the fox picnic cutscene when the basket is accepted
+  if (nodeId === 'mfp_basket_accepted') {
+    handleBasketGiven(); // Remove basket from inventory — returned empty on quest complete
+    cutsceneManager.startCutscene('fox_picnic');
+    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🎬 Fox picnic cutscene triggered");
+  }
+}
+
+/**
+ * Handle Mr Fox's Picnic quest dialogue actions for Mum
+ */
+function handleMumQuestActions(nodeId: string): string | void {
+  // Redirect Mum's greeting to the appropriate quest node based on current stage
+  if (nodeId === 'greeting') {
+    if (isMrFoxPicnicAtStage('ask_mum_blanket')) return 'mfp_blanket_ask';
+    if (isMrFoxPicnicAtStage('ask_mum_food')) return 'mfp_food_ask';
+  }
+
+  // Player agrees to tidy the shed — advance to shed_cleaning stage
+  if (nodeId === 'mfp_blanket_agreed') {
+    eventChainManager.advanceToStage(MFP_QUEST_ID, 'shed_cleaning');
+    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🧹 Mum sent player to seed shed — advancing to shed_cleaning");
+  }
+
+  // Player asks Mum to help with food — advance to filling_basket stage
+  // (the stage handler will spawn the picnic basket as a placed item)
+  if (nodeId === 'mfp_food_agreed') {
+    eventChainManager.advanceToStage(MFP_QUEST_ID, 'filling_basket');
+    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🍱 Mum helping with food — advancing to filling_basket");
   }
 }

@@ -27,6 +27,7 @@ import { npcManager } from '../../NPCManager';
 import { gameState } from '../../GameState';
 import { eventBus, GameEvent } from '../EventBus';
 import { getCobwebsCleaned } from '../../data/questHandlers/altheaChoresHandler';
+import { getMessCleaned } from '../../data/questHandlers/mrFoxPicnicHandler';
 
 interface LayerSprite {
   sprite: PIXI.Sprite;
@@ -68,6 +69,8 @@ export class BackgroundImageLayer {
   private scalingConfig: ScalingConfig | null = null;
   // Individual cobweb sprites tracked for dynamic show/hide on clean
   private cobwebLayerEntries: Array<{ sprite: PIXI.Sprite; cobwebId: number }> = [];
+  // Individual mess pile sprites tracked for dynamic show/hide on clean
+  private messPileLayerEntries: Array<{ sprite: PIXI.Sprite; pileId: number }> = [];
 
   constructor() {
     // Background container - behind all game content
@@ -79,6 +82,15 @@ export class BackgroundImageLayer {
     eventBus.on(GameEvent.COBWEB_CLEANED, ({ cobwebId }) => {
       for (const entry of this.cobwebLayerEntries) {
         if (entry.cobwebId === cobwebId) {
+          entry.sprite.visible = false;
+        }
+      }
+    });
+
+    // Hide mess pile sprites when cleaned (Mr Fox's Picnic)
+    eventBus.on(GameEvent.MESS_PILE_CLEANED, ({ pileId }) => {
+      for (const entry of this.messPileLayerEntries) {
+        if (entry.pileId === pileId) {
           entry.sprite.visible = false;
         }
       }
@@ -233,6 +245,11 @@ export class BackgroundImageLayer {
       return !cleaned[condition.cobwebId]; // show when NOT cleaned
     }
 
+    if (condition.type === 'mess_pile') {
+      const cleaned = getMessCleaned();
+      return !cleaned[condition.pileId]; // show when NOT cleaned
+    }
+
     return true; // Unknown condition type = show by default
   }
 
@@ -249,10 +266,12 @@ export class BackgroundImageLayer {
 
     for (const layer of layers) {
       const isCobwebLayer = layer.condition?.type === 'cobweb';
+      const isMessPileLayer = layer.condition?.type === 'mess_pile';
+      const isDynamicLayer = isCobwebLayer || isMessPileLayer;
 
       // For quest conditions: skip the layer entirely if condition not met.
-      // For cobweb conditions: always create the sprite so it can be hidden dynamically.
-      if (!isCobwebLayer && !this.checkLayerCondition(layer.condition)) {
+      // For dynamic layers (cobweb/mess_pile): always create so they can be hidden at runtime.
+      if (!isDynamicLayer && !this.checkLayerCondition(layer.condition)) {
         continue;
       }
 
@@ -265,6 +284,13 @@ export class BackgroundImageLayer {
             const cobwebId = layer.condition.cobwebId;
             layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
             this.cobwebLayerEntries.push({ sprite: layerSprite.sprite, cobwebId });
+          }
+
+          // Mess pile layers: set initial visibility and register for live toggling
+          if (isMessPileLayer && layer.condition?.type === 'mess_pile') {
+            const pileId = layer.condition.pileId;
+            layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
+            this.messPileLayerEntries.push({ sprite: layerSprite.sprite, pileId });
           }
 
           // Categorize by z-index for reference (background vs foreground)
@@ -495,6 +521,8 @@ export class BackgroundImageLayer {
 
     // Clear cobweb sprite tracking (sprites already destroyed above)
     this.cobwebLayerEntries = [];
+    // Clear mess pile sprite tracking
+    this.messPileLayerEntries = [];
 
     this.currentMapId = null;
   }

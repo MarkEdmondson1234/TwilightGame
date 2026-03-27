@@ -1,0 +1,131 @@
+# Mr Fox's Picnic - Romance quest
+#
+# Mr Archibald Fox is secretly in love with Spring Periwinkle, the visiting
+# rabbit babysitter. With the player's help, he organises a picnic to woo her.
+#
+# Quest stages:
+#  1. active         - Player agreed to help; Mr Fox needs a picnic blanket
+#  2. ask_mum_blanket - Talk to Mum about a blanket
+#  3. shed_cleaning  - Mum sent player to clean the seed shed
+#  4. blanket_obtained - Blanket found; give it to Mr Fox
+#  5. cooking_problem - Mr Fox admits he cannot cook
+#  6. ask_mum_food   - Ask Mum for help with food
+#  7. filling_basket - Mum gave basket; fill it with 3 different meals
+#  8. give_basket    - Basket full; give it to Mr Fox
+#  9. completed      - Quest done; new post-quest dialogue unlocked
+#
+# Complex logic (mess pile mini-game, basket contents, basket spawning)
+# is handled by the TypeScript handler: data/questHandlers/mrFoxPicnicHandler.ts
+#
+# Trigger: manual — started by hooks/useProximityQuestTriggers.ts when player
+# walks within 5 tiles of Mr Fox in spring/summer with Periwinkle in town.
+
+id: mr_fox_picnic
+title: "Mr Fox's Picnic"
+description: Help Mr Fox plan the perfect picnic to impress Miss Periwinkle.
+type: romance
+
+trigger:
+  type: manual  # Started via proximity trigger and dialogue
+
+stages:
+  - id: active
+    stageNumber: 1
+    text: >
+      Mr Fox has a thing for Miss Periwinkle and wants to invite her on a picnic.
+      He needs a picnic blanket — ask your mother if she knows where to find one.
+    dialogue:
+      shopkeeper:
+        text: "Right then! A picnic blanket... I don't suppose you've managed to track one down yet?"
+        expression: thinky
+      mum:
+        text: "Oh, you're helping Mr Fox? How sweet. He's a good sort, really."
+        expression: smile
+
+  - id: ask_mum_blanket
+    stageNumber: 2
+    text: >
+      Ask your mother about finding a picnic blanket.
+    dialogue:
+      shopkeeper:
+        text: "Any luck with the blanket? I've been practising my picnic conversation topics. Did you know there are over forty varieties of cloud?"
+        expression: default
+
+  - id: shed_cleaning
+    stageNumber: 3
+    text: >
+      Mum says there might be a blanket in the seed shed in the common kitchen garden —
+      but it's a dreadful mess in there. Tidy it up to find the blanket!
+      Each pile costs 30 stamina to clear.
+    dialogue:
+      shopkeeper:
+        text: "Ah, the seed shed! Yes, I know the one. Frightful state, I imagine. Do be careful of splinters."
+        expression: thinky
+      mum:
+        text: "Have you had a chance to tidy up the shed yet, love? The blanket must be buried in all that mess."
+        expression: default
+
+  - id: blanket_obtained
+    stageNumber: 4
+    text: >
+      You found the picnic blanket! Bring it to Mr Fox — or give it to him as a gift.
+    dialogue:
+      shopkeeper:
+        text: "Oh! Is that — is that a picnic blanket? I say!"
+        expression: default
+      mum:
+        text: "Did you find it? Oh, well done you! Mr Fox will be so pleased."
+        expression: smile
+
+  - id: cooking_problem
+    stageNumber: 5
+    text: >
+      Mr Fox admitted he cannot cook at all. He needs help filling a picnic basket.
+      Ask your mother if she can help.
+    dialogue:
+      shopkeeper:
+        text: "I've been thinking about the picnic basket situation rather a lot. Have you had a chance to speak with your mother?"
+        expression: thinky
+      mum:
+        text: "Poor Mr Fox! He really can't cook a thing. Leave it to me — I'll sort out a basket."
+        expression: smile
+
+  - id: ask_mum_food
+    stageNumber: 6
+    text: >
+      Ask your mother for help preparing food for the picnic basket.
+
+  - id: filling_basket
+    stageNumber: 7
+    text: >
+      Mum has given you a picnic basket. Fill it with three different meals —
+      variety is the spice of life! Place food items from your inventory into the basket.
+    dialogue:
+      shopkeeper:
+        text: "A picnic basket! Splendid. I do hope it will be adequately filled. Three courses, at minimum, I should think."
+        expression: default
+      mum:
+        text: "How's the basket coming along? Remember, three different dishes — Mr Fox deserves a proper spread!"
+        expression: smile
+
+  - id: give_basket
+    stageNumber: 8
+    text: >
+      The picnic basket is full! Bring it to Mr Fox.
+
+  - id: completed
+    stageNumber: 9
+    text: >
+      The picnic was a wonderful success. Mr Fox and Miss Periwinkle are quite taken with one another.
+    event:
+      title: "Mr Fox's picnic"
+      description: helped Mr Fox organise a picnic and brought him and Miss Periwinkle closer together
+      contributor: A hopeless romantic
+    dialogue:
+      shopkeeper:
+        text: "Ah, you! My dear benefactor. Things have been going rather wonderfully, if I do say so myself."
+        expression: smile
+      spring_periwinkle:
+        text: "Isn't it a lovely day? I do think the village has rather grown on me lately..."
+        expression: smile
+    end: true

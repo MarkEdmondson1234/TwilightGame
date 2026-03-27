@@ -69,6 +69,8 @@ export function createMumNPC(
           { text: 'Tell me about the village.', nextId: 'village_chat' },
           { text: 'Can you teach me to cook?', nextId: 'teach_cooking' },
           { text: 'Tell me about yourself, Mum.', nextId: 'about_mum' },
+          // Mr Fox's Picnic quest
+          { text: 'How did the picnic go?', nextId: 'mfp_post_quest', requiredQuest: 'mr_fox_picnic', requiredQuestStage: 9 },
           { text: 'I should get going.' },
         ],
       },
@@ -273,6 +275,53 @@ export function createMumNPC(
         id: 'favourite_books',
         text: 'Oh, I couldn\'t possibly choose just one! I love stories about ordinary people who discover they can do extraordinary things. *She chuckles.* Maybe that\'s why I like living here. This village has a certain... magic to it, don\'t you think?',
         expression: 'smile',
+      },
+
+      // -----------------------------------------------------------------------
+      // Mr Fox's Picnic Quest
+      // -----------------------------------------------------------------------
+      {
+        id: 'mfp_blanket_ask',
+        text: 'A picnic blanket? Well, there might be one tucked away in the seed shed — the little outbuilding in the common kitchen garden. I warn you though, love, it\'s a dreadful mess in there. You\'d need a good tidy-up before you\'d find anything.',
+        expression: 'default',
+        responses: [
+          { text: 'I\'ll sort it out! Leave it to me.', nextId: 'mfp_blanket_agreed' },
+          { text: 'Maybe later.' },
+        ],
+      },
+      {
+        id: 'mfp_blanket_agreed',
+        text: 'That\'s the spirit! Thank you, love. You\'re a treasure.',
+        expression: 'happy',
+        responses: [],
+      },
+      {
+        id: 'mfp_food_ask',
+        text: '*She claps her hands together.* A picnic! Oh, how perfectly lovely! Of course I\'ll help. Now then — here\'s a wicker basket. Fill it with three different dishes, something for every course. You know how to cook, don\'t you? Come to me if you need to learn a new recipe.',
+        expression: 'happy',
+        responses: [
+          { text: 'Thank you, Mum — I\'ll get right to it!', nextId: 'mfp_food_agreed' },
+        ],
+      },
+      {
+        id: 'mfp_food_agreed',
+        text: 'The basket is just there — pick it up and start filling it. Three different dishes, mind you! Mr Fox is very lucky to have your help. I do hope the picnic goes well.',
+        expression: 'smile',
+        responses: [],
+      },
+      {
+        id: 'mfp_post_quest',
+        text: 'Oh! The picnic — how did it go? *Her eyes light up with anticipation.*',
+        expression: 'happy',
+        responses: [
+          { text: 'It was wonderful. They had a lovely time.', nextId: 'mfp_post_quest_2' },
+        ],
+      },
+      {
+        id: 'mfp_post_quest_2',
+        text: '*She puts a hand to her heart.* Oh, how sweet! Those two are perfectly matched, don\'t you think? I do hope something lovely comes of it. You\'re a wonderful matchmaker, love — though I suspect you\'ll deny all credit.',
+        expression: 'happy',
+        responses: [],
       },
     ],
     friendshipConfig: {

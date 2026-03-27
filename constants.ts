@@ -141,6 +141,7 @@ export const STAMINA = {
   HARVEST_COST: 3,
   FORAGE_COST: 2,
   COOK_COST: 5,
+  MESS_CLEAN_COST: 30, // Cleaning mess piles in the seed shed (Mr Fox's Picnic quest)
 
   // Restoration (home)
   HOME_RESTORE_PER_SECOND: 0.167, // ~10 per minute, full restore in ~10 mins

@@ -110,6 +110,23 @@ export function createShopkeeperNPC(
           {
             text: 'Just browsing, thanks.',
           },
+          {
+            text: 'You seem a little distracted, Mr Fox. Is everything all right?',
+            nextId: 'mfp_predicament',
+            hiddenIfQuestStarted: 'mr_fox_picnic',
+          },
+          {
+            text: 'Any news on the picnic front?',
+            nextId: 'mfp_progress_check',
+            requiredQuest: 'mr_fox_picnic',
+            hiddenIfQuestCompleted: 'mr_fox_picnic',
+          },
+          {
+            text: 'How are things going with Miss Periwinkle?',
+            nextId: 'mfp_post_quest',
+            requiredQuest: 'mr_fox_picnic',
+            requiredQuestStage: 9,
+          },
         ],
       },
       {
@@ -198,6 +215,185 @@ export function createShopkeeperNPC(
           winter:
             "*folds paws* I won't mislead you — fresh seasonal produce is done for the year. Winter is a pantry season. But I am very well stocked: flour, sugar, salt, yeast, oils, all your dairy, spices, herbs, rice, pasta. Everything you need to cook through the cold months. The seeds and fresh crops will return in spring. Until then, it is casserole weather.",
         },
+      },
+      // ── Mr Fox's Picnic Quest ─────────────────────────────────────────────
+
+      // Proximity-triggered offer (opened via useProximityQuestTriggers hook)
+      {
+        id: 'mfp_offer',
+        text: "Ohoy, there! I say — I'm in a bit of a predicament. Wondering if you'd be willing to help out this silly ol' fox?",
+        responses: [
+          {
+            text: 'Of course! What is it?',
+            nextId: 'mfp_explanation',
+          },
+          {
+            text: "I'd rather not, sorry.",
+            nextId: 'mfp_decline',
+          },
+        ],
+      },
+
+      // Accessible from the greeting when quest not yet started
+      {
+        id: 'mfp_predicament',
+        text: "*pauses and smooths his lapel* Ah. Well. There is... a matter. Rather a personal one. I wasn't going to mention it, but since you've asked...",
+        responses: [
+          {
+            text: "You can tell me.",
+            nextId: 'mfp_explanation',
+          },
+          {
+            text: "Sorry for prying!",
+          },
+        ],
+      },
+
+      // The decline path
+      {
+        id: 'mfp_decline',
+        text: "*straightens up* Quite all right, quite all right. No need to trouble yourself on my account. I shall... manage. Probably.",
+        responses: [
+          {
+            text: "Actually — what's the matter?",
+            nextId: 'mfp_explanation',
+          },
+          {
+            text: 'Good luck!',
+          },
+        ],
+      },
+
+      // Mr Fox explains his feelings — this starts the quest
+      {
+        id: 'mfp_explanation',
+        text: "Well... *clears throat* ...truth be told, I have rather developed a — a — a *fondness* for Miss Periwinkle. The rabbit who visits young Celia. She is — she is quite extraordinary, in my view. Clever, and kind, and she laughs at things I say even when they aren't entirely funny. And I find myself at a complete and utter loss about what to do about it.",
+        responses: [
+          {
+            text: "You could invite her on a picnic!",
+            nextId: 'mfp_suggestion',
+          },
+        ],
+      },
+
+      // Player suggests a picnic
+      {
+        id: 'mfp_suggestion',
+        text: "*eyes light up* A picnic! Yes! Yes, of course! That is — that is marvellous. A picnic in the meadow, warm afternoon, perhaps some good food... *deflates slightly* Ah. There is one small snag. I don't actually own a picnic blanket.",
+        responses: [
+          {
+            text: "I could ask my mother if she has one.",
+            nextId: 'mfp_blanket_offer',
+          },
+        ],
+      },
+
+      // Player offers to find blanket — starts quest
+      {
+        id: 'mfp_blanket_offer',
+        text: "Would you? Oh, that would be most marvellous. I shall be right here, practising what I intend to say. *under breath* 'Lovely weather we're having.' No, too dull. 'Have you read anything interesting?' Better.",
+        responses: [
+          {
+            text: "I'll find you a blanket.",
+            nextId: undefined,
+            startsQuest: 'mr_fox_picnic',
+          },
+        ],
+      },
+
+      // Progress check during the quest (from greeting)
+      {
+        id: 'mfp_progress_check',
+        text: "*straightens lapel* Yes, well. The picnic situation is very much on my mind. I do appreciate your help.",
+      },
+
+      // Stage 4: Player has the blanket and can give it
+      {
+        id: 'mfp_give_blanket',
+        text: "Oh! Is that — is that the picnic blanket? *reaches forward, then composes himself* My goodness. You actually found one. Thank you — truly, thank you.",
+        responses: [
+          {
+            text: "It was buried in the seed shed. I had to tidy the whole place up to find it.",
+            nextId: 'mfp_blanket_thanks',
+          },
+        ],
+      },
+
+      {
+        id: 'mfp_blanket_thanks',
+        text: "*blinks* You tidied the shed? The whole shed? ...Good heavens. I — well. That is really rather above and beyond, and I want you to know I am genuinely, sincerely grateful. *smooths the blanket carefully* This is going to be perfect. Absolutely perfect. Now all I need is — *stops suddenly*",
+        responses: [
+          {
+            text: "Is something wrong?",
+            nextId: 'mfp_cooking_confession',
+          },
+        ],
+      },
+
+      // Mr Fox admits he cannot cook
+      {
+        id: 'mfp_cooking_confession',
+        text: "*pauses* ...There is, I confess, one further issue. I cannot cook. At all. I attempted boiled eggs once. They were somehow simultaneously raw and burnt. I do not know how I managed it. *long pause* So the question of what to put IN the picnic basket remains rather open.",
+        responses: [
+          {
+            text: "Perhaps I could ask my mother for help?",
+            nextId: 'mfp_cooking_agreed',
+          },
+        ],
+      },
+
+      {
+        id: 'mfp_cooking_agreed',
+        text: "Your mother? *brightens considerably* Oh, now THERE is an idea. She is an excellent cook, from what I understand. If you could prevail upon her — yes, I think that might work rather well.",
+        responses: [
+          {
+            text: "I'll ask her.",
+            nextId: undefined,
+            advancesQuest: 'mr_fox_picnic',
+          },
+        ],
+      },
+
+      // Stage 8: Player has a full basket and can give it
+      {
+        id: 'mfp_give_basket',
+        text: "*peers into basket, then looks up with wide eyes* Oh. Oh my. That looks — that looks wonderful. *swallows* Right. I am going to do this. I am going to invite Miss Periwinkle on a picnic. Thank you. Truly.",
+        responses: [
+          {
+            text: "You've got this, Mr Fox. Go for it!",
+            nextId: 'mfp_basket_accepted',
+            completesQuest: 'mr_fox_picnic',
+          },
+        ],
+      },
+
+      // Basket not full enough
+      {
+        id: 'mfp_basket_too_empty',
+        text: "*peers into basket politely* Oh — I don't mean to be ungrateful, truly, you've been wonderfully helpful — but it does look a little sparse. Perhaps just a bit more variety? Something for every course, ideally.",
+      },
+
+      // Post-giving — the picnic happens
+      {
+        id: 'mfp_basket_accepted',
+        text: "*straightens coat, takes a deep breath* Right then. *quietly, mostly to himself* Don't mention the clouds. Don't mention the clouds.",
+      },
+
+      // Post-quest: Mr Fox gushes
+      {
+        id: 'mfp_post_quest',
+        text: "*a slow, involuntary smile spreads across his face* Things are going... rather well, actually. Miss Periwinkle said — and I am quoting directly — that it was the loveliest afternoon she'd had in years. She asked if we might do it again sometime. *collects himself* I said I would think about it. I had already planned it. In detail. The previous evening.",
+        responses: [
+          {
+            text: "That's wonderful, Mr Fox.",
+            nextId: 'mfp_post_quest_2',
+          },
+        ],
+      },
+
+      {
+        id: 'mfp_post_quest_2',
+        text: "*quietly* She laughed at something I said about clouds. It wasn't even meant to be funny. *long pause* I think I am in rather serious trouble.",
       },
     ],
     friendshipConfig: {

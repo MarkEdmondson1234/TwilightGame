@@ -48,6 +48,8 @@ export interface CutsceneBackgroundLayer {
   // Position adjustment (percentage-based)
   offsetX?: number; // Horizontal offset (-100 to 100, default 0)
   offsetY?: number; // Vertical offset (-100 to 100, default 0)
+  // Override CSS background-size (default: 'cover'). Use e.g. '80%' for letterboxed display.
+  backgroundSize?: string;
 }
 
 /**

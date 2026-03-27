@@ -698,6 +698,31 @@ export const ITEMS: Record<string, ItemDefinition> = {
     icon: '📝',
   },
 
+  // ===== MR FOX'S PICNIC QUEST ITEMS =====
+
+  quest_picnic_blanket: {
+    id: 'quest_picnic_blanket',
+    name: 'quest_picnic_blanket',
+    displayName: 'Picnic Blanket',
+    category: ItemCategory.DECORATION,
+    description: 'A cosy folded picnic blanket. Perfect for a sunny afternoon.',
+    stackable: false,
+    placedScale: 2.0,
+    image: itemAssets.picnic_blanket_folded,
+    icon: '🧺',
+  },
+
+  quest_picnic_basket: {
+    id: 'quest_picnic_basket',
+    name: 'quest_picnic_basket',
+    displayName: 'Picnic Basket',
+    category: ItemCategory.MISC,
+    description: 'A wicker basket. Fill it with three different meals for Mr Fox.',
+    stackable: false,
+    image: itemAssets.picnic_basket,
+    icon: '🧺',
+  },
+
   // ===== COOKING INGREDIENTS (shop-bought) =====
 
   // Basic ingredients (Mother stocks these)

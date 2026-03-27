@@ -46,6 +46,43 @@ const shedLayers: RoomLayer[] = [
     scale: 1.3, // Match bear den / cottage interior scale
     centered: true,
   },
+  // Mess pile overlays (Mr Fox's Picnic quest) — hidden when cleaned
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/seedShed/shed_interior_mess1.png',
+    zIndex: Z_PARALLAX_FAR + 1,
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,
+    height: 540,
+    scale: 1.3,
+    centered: true,
+    condition: { type: 'mess_pile', pileId: 0, showWhen: 'not_cleaned' },
+  },
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/seedShed/shed_interior_mess2.png',
+    zIndex: Z_PARALLAX_FAR + 1,
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,
+    height: 540,
+    scale: 1.3,
+    centered: true,
+    condition: { type: 'mess_pile', pileId: 1, showWhen: 'not_cleaned' },
+  },
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/seedShed/shed_interior_mess3.png',
+    zIndex: Z_PARALLAX_FAR + 1,
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,
+    height: 540,
+    scale: 1.3,
+    centered: true,
+    condition: { type: 'mess_pile', pileId: 2, showWhen: 'not_cleaned' },
+  },
 ];
 
 export const seedShed: MapDefinition = {

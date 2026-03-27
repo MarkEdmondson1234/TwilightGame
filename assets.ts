@@ -743,6 +743,9 @@ export const itemAssets = {
   sourdough_starter: '/TwilightGame/assets-optimized/items/sourdough_starter.png',
   // Tools - Quest and special items
   feather_duster: '/TwilightGame/assets-optimized/items/quest/feather_duster.png',
+  picnic_blanket_folded: '/TwilightGame/assets-optimized/items/quest/picnic_blanket_folded.png',
+  picnic_blanket: '/TwilightGame/assets-optimized/items/quest/picnic_blanket.png',
+  picnic_basket: '/TwilightGame/assets-optimized/items/quest/picnic_basket.png',
   camera: '/TwilightGame/assets-optimized/items/grocery/camera.png',
   // Decorations
   sunflower_bouquet:
