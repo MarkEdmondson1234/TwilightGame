@@ -19,7 +19,7 @@
  * Rewards: A wreath decoration item + friendship with Mushra.
  */
 
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import { getItem } from '../../data/items';
 import { decorationManager } from '../../utils/DecorationManager';
@@ -30,7 +30,6 @@ import { tileAssets, herbAssets } from '../../assets';
 // ---------------------------------------------------------------------------
 
 const MIN_FLOWERS = 4;
-const GOLD_COST = 15;
 
 /** Base size for flower images before scaling (px). */
 const FLOWER_BASE_SIZE = 80;
@@ -249,25 +248,34 @@ interface WreathQuality {
   itemId: string;
   label: string;
   friendship: number;
+  sellPrice: number;
 }
 
+/**
+ * Score = uniqueTypes × 3 + totalItems.
+ * Quantity and diversity both contribute, so a straw-only wreath can still
+ * reach higher tiers by sheer volume, while a diverse wreath gets there faster.
+ */
 function getWreathQuality(slots: SlotData[]): WreathQuality {
   const uniqueTypes = new Set(slots.map((s) => s.itemId)).size;
+  const score = uniqueTypes * 3 + slots.length;
 
-  if (uniqueTypes >= 5) {
+  if (score >= 19) {
     return {
       tier: 'magnificent',
       itemId: 'decoration_wreath_magnificent',
       label: 'Magnificent',
       friendship: 5,
+      sellPrice: 180,
     };
   }
-  if (uniqueTypes >= 3) {
+  if (score >= 8) {
     return {
       tier: 'fine',
       itemId: 'decoration_wreath_fine',
       label: 'Fine',
       friendship: 3,
+      sellPrice: 80,
     };
   }
   return {
@@ -275,6 +283,7 @@ function getWreathQuality(slots: SlotData[]): WreathQuality {
     itemId: 'decoration_wreath_rustic',
     label: 'Rustic',
     friendship: 2,
+    sellPrice: 35,
   };
 }
 
@@ -533,6 +542,21 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     setIsCropping(false);
   }, [editingSlot]);
 
+  // Delete/Backspace removes the selected flower
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Delete' && e.key !== 'Backspace') return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (editingSlot === null) return;
+      e.preventDefault();
+      setPlacedItems((prev) => prev.filter((_, i) => i !== editingSlot));
+      setEditingSlot(null);
+      setIsCropping(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [editingSlot]);
+
   // Crop zoom control
   const handleCropZoom = useCallback(
     (delta: number) => {
@@ -734,12 +758,6 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const handleCreate = useCallback(async () => {
     const filled = placedItems;
     if (filled.length < MIN_FLOWERS || isCreating) return;
-
-    if (!context.actions.spendGold(GOLD_COST)) {
-      setMessage("You haven't got enough gold!");
-      setTimeout(() => setMessage(null), 3000);
-      return;
-    }
 
     setIsCreating(true);
 
@@ -1492,7 +1510,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             </div>
           )}
 
-          {/* Quality preview & cost */}
+          {/* Quality preview & sell value */}
           <div
             style={{
               display: 'flex',
@@ -1507,10 +1525,12 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
           >
             <div>
               {canCreate && quality
-                ? `Quality: ${quality.label} (${uniqueCount} types)`
+                ? `${quality.label} · ${uniqueCount} type${uniqueCount !== 1 ? 's' : ''} · ${filledCount} item${filledCount !== 1 ? 's' : ''}`
                 : `Need at least ${MIN_FLOWERS} flowers`}
             </div>
-            <div>Cost: {GOLD_COST}g</div>
+            {canCreate && quality && (
+              <div style={{ color: '#86efac' }}>Sell: {quality.sellPrice}g</div>
+            )}
           </div>
 
           {/* Action buttons */}
