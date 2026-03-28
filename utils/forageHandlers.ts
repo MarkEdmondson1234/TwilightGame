@@ -154,6 +154,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     TileType.MUSTARD_FLOWER,
     TileType.FROST_FLOWER,
     TileType.HEATHER,
+    TileType.MEADOW_GRASS,
   ]);
   if (forageableResult.found && forageableResult.position) {
     cooldownCheckPos = forageableResult.position;
@@ -872,6 +873,65 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'forest_mushroom',
       seedName: forestMushroom.displayName,
       message: `Found ${quantityFound} ${forestMushroom.displayName}!`,
+    };
+  }
+
+  // Meadow grass foraging (straw) - autumn only
+  const meadowGrassResult = findTileTypeNearby(playerTileX, playerTileY, TileType.MEADOW_GRASS);
+  const meadowGrassAnchor = meadowGrassResult.found ? meadowGrassResult.position : null;
+
+  if (meadowGrassAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found meadow grass anchor at (${meadowGrassAnchor.x}, ${meadowGrassAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+
+    // Only forageable in autumn — the grass dries into straw
+    const { season } = TimeManager.getCurrentTime();
+    if (season === Season.WINTER) {
+      return {
+        found: false,
+        message: 'The meadow grass is buried under frost. Come back in autumn when it has dried.',
+      };
+    }
+    if (season !== Season.AUTUMN) {
+      return {
+        found: false,
+        message: 'The meadow grass is too green and lush to gather. Come back in autumn when it has dried.',
+      };
+    }
+
+    const straw = getItem('straw');
+    if (!straw) {
+      console.error('[Forage] Straw item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    const successRate = straw.forageSuccessRate ?? 0.9;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      gameState.recordForage(currentMapId, meadowGrassAnchor.x, meadowGrassAnchor.y);
+      return {
+        found: false,
+        message: 'You pull at the dried grass, but it crumbles before you can gather it properly.',
+      };
+    }
+
+    const quantityFound = rollForageQuantity();
+    inventoryManager.addItem('straw', quantityFound);
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found ${quantityFound} ${straw.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+      );
+
+    saveForageResult(currentMapId, meadowGrassAnchor.x, meadowGrassAnchor.y, 'straw');
+
+    return {
+      found: true,
+      seedId: 'straw',
+      seedName: straw.displayName,
+      message: `Found ${quantityFound} ${straw.displayName}!`,
     };
   }
 

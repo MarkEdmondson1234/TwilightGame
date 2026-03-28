@@ -2170,6 +2170,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           TileType.DEAD_SPRUCE,
           TileType.GIANT_MUSHROOM,
           TileType.SAKURA_TREE,
+          TileType.MEADOW_GRASS,
         ],
         1
       );

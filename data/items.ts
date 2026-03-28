@@ -2070,6 +2070,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
 
   // ===== DECORATION CRAFTING MATERIALS =====
 
+  straw: {
+    id: 'straw',
+    name: 'straw',
+    displayName: 'Straw',
+    category: ItemCategory.MATERIAL,
+    description: 'Dried meadow grass gathered in autumn. Useful for crafting seasonal wreaths and decorations.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 5,
+    image: itemAssets.straw,
+    forageSuccessRate: 0.9,
+  },
+
   linen: {
     id: 'linen',
     name: 'linen',
