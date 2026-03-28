@@ -43,6 +43,7 @@ const DEFAULT_SCALE = 2.2;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3.0;
 const SCALE_STEP = 0.15;
+const ROTATION_STEP = 15;
 
 /** Minimum drag distance (px) before treating as a drag instead of a click. */
 const DRAG_THRESHOLD = 4;
@@ -145,6 +146,12 @@ interface SlotData {
   cropY: number;
   /** Crop zoom (1 = full image, >1 = zoomed in / cropped tighter). */
   cropZoom: number;
+  /** Rotation in degrees (clockwise). */
+  rotation: number;
+  /** Mirror horizontally. */
+  flipH: boolean;
+  /** Mirror vertically. */
+  flipV: boolean;
 }
 
 /** Create a new SlotData with defaults. */
@@ -157,6 +164,9 @@ function makeSlot(itemId: string, overrides?: Partial<SlotData>): SlotData {
     cropX: 0,
     cropY: 0,
     cropZoom: DEFAULT_CROP_ZOOM,
+    rotation: 0,
+    flipH: false,
+    flipV: false,
     ...overrides,
   };
 }
@@ -349,6 +359,13 @@ async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
       const cx = (anchor.x + slot.offsetX) * scale;
       const cy = (anchor.y + slot.offsetY) * scale;
       const size = flowerSize * scale;
+      ctx.save();
+      // Apply rotation + flip transforms around the flower centre
+      ctx.translate(cx, cy);
+      ctx.rotate((slot.rotation * Math.PI) / 180);
+      ctx.scale(slot.flipH ? -1 : 1, slot.flipV ? -1 : 1);
+      ctx.translate(-cx, -cy);
+
       if (slot.cropZoom > 1) {
         // Draw with circular clip — mirrors the CSS transform approach:
         // scale(cropZoom) translate(cropX, cropY) from image centre
@@ -356,8 +373,6 @@ async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
         ctx.beginPath();
         ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
         ctx.clip();
-        // The CSS does: transform-origin center, scale then translate.
-        // In canvas: move origin to centre, apply scale, then translate.
         const cropScale = slot.cropZoom;
         const drawSize = size * cropScale;
         const drawX = cx - drawSize / 2 + slot.cropX * cropScale * scale;
@@ -367,6 +382,8 @@ async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
       } else {
         ctx.drawImage(img, cx - size / 2, cy - size / 2, size, size);
       }
+
+      ctx.restore();
     } catch {
       // Skip flowers that fail to load
     }
@@ -563,6 +580,37 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       return newSlots;
     });
   }, [editingSlot]);
+
+  const handleRotate = useCallback(
+    (delta: number) => {
+      if (editingSlot === null) return;
+      setWreathSlots((prev) => {
+        const newSlots = [...prev];
+        const slot = newSlots[editingSlot];
+        if (!slot) return prev;
+        // Normalise to 0–359
+        const newRot = ((slot.rotation + delta) % 360 + 360) % 360;
+        newSlots[editingSlot] = { ...slot, rotation: newRot };
+        return newSlots;
+      });
+    },
+    [editingSlot]
+  );
+
+  const handleFlip = useCallback(
+    (axis: 'h' | 'v') => {
+      if (editingSlot === null) return;
+      setWreathSlots((prev) => {
+        const newSlots = [...prev];
+        const slot = newSlots[editingSlot];
+        if (!slot) return prev;
+        newSlots[editingSlot] =
+          axis === 'h' ? { ...slot, flipH: !slot.flipH } : { ...slot, flipV: !slot.flipV };
+        return newSlots;
+      });
+    },
+    [editingSlot]
+  );
 
   // =========================================================================
   // Drag handlers — repositioning flowers on the wreath
@@ -1190,22 +1238,34 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                   }
                 >
                   {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={item?.displayName ?? slot.itemId}
+                    <div
                       style={{
                         width: '100%',
                         height: '100%',
-                        objectFit: 'contain',
-                        pointerEvents: 'none',
                         transformOrigin: 'center center',
                         transform:
-                          isCropped || showCropBorder
-                            ? `scale(${slot.cropZoom}) translate(${slot.cropX}px, ${slot.cropY}px)`
+                          slot.rotation !== 0 || slot.flipH || slot.flipV
+                            ? `rotate(${slot.rotation}deg) scale(${slot.flipH ? -1 : 1}, ${slot.flipV ? -1 : 1})`
                             : undefined,
                       }}
-                      draggable={false}
-                    />
+                    >
+                      <img
+                        src={imageUrl}
+                        alt={item?.displayName ?? slot.itemId}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'contain',
+                          pointerEvents: 'none',
+                          transformOrigin: 'center center',
+                          transform:
+                            isCropped || showCropBorder
+                              ? `scale(${slot.cropZoom}) translate(${slot.cropX}px, ${slot.cropY}px)`
+                              : undefined,
+                        }}
+                        draggable={false}
+                      />
+                    </div>
                   ) : (
                     <span
                       style={{
@@ -1314,7 +1374,68 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                 )}
               </div>
 
-              {/* Second row: crop toggle + remove */}
+              {/* Rotation row */}
+              {!isCropping && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    padding: '6px 12px',
+                    background: '#2a3a22',
+                    borderRadius: 8,
+                    border: '1px solid #3a5a2a',
+                    width: '100%',
+                  }}
+                >
+                  <span style={{ fontSize: 11, color: '#6a7a5a' }}>Rotate:</span>
+                  <button
+                    onClick={() => handleRotate(-ROTATION_STEP)}
+                    style={ZOOM_BTN}
+                    title="Rotate anticlockwise 15°"
+                  >
+                    ↺
+                  </button>
+                  <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
+                    {editingSlotData.rotation}°
+                  </div>
+                  <button
+                    onClick={() => handleRotate(ROTATION_STEP)}
+                    style={ZOOM_BTN}
+                    title="Rotate clockwise 15°"
+                  >
+                    ↻
+                  </button>
+                  {editingSlotData.rotation !== 0 && (
+                    <button
+                      onClick={() =>
+                        setWreathSlots((prev) => {
+                          const newSlots = [...prev];
+                          const slot = newSlots[editingSlot!];
+                          if (!slot) return prev;
+                          newSlots[editingSlot!] = { ...slot, rotation: 0 };
+                          return newSlots;
+                        })
+                      }
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: 6,
+                        border: '1px solid #5a7a4a',
+                        background: '#2a3a22',
+                        color: '#8a9a7a',
+                        cursor: 'pointer',
+                        fontSize: 10,
+                      }}
+                      title="Reset rotation"
+                    >
+                      Reset
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Second row: mirror + crop toggle + remove */}
               <div
                 style={{
                   display: 'flex',
@@ -1323,6 +1444,36 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                   gap: 8,
                 }}
               >
+                <button
+                  onClick={() => handleFlip('h')}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 6,
+                    border: editingSlotData.flipH ? '1px solid #6ee7b7' : '1px solid #5a7a4a',
+                    background: editingSlotData.flipH ? '#1a3a2a' : '#2a3a22',
+                    color: editingSlotData.flipH ? '#6ee7b7' : '#8a9a7a',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                  }}
+                  title="Flip horizontally"
+                >
+                  ⇔ Flip
+                </button>
+                <button
+                  onClick={() => handleFlip('v')}
+                  style={{
+                    padding: '3px 10px',
+                    borderRadius: 6,
+                    border: editingSlotData.flipV ? '1px solid #6ee7b7' : '1px solid #5a7a4a',
+                    background: editingSlotData.flipV ? '#1a3a2a' : '#2a3a22',
+                    color: editingSlotData.flipV ? '#6ee7b7' : '#8a9a7a',
+                    cursor: 'pointer',
+                    fontSize: 11,
+                  }}
+                  title="Flip vertically"
+                >
+                  ⇕ Flip
+                </button>
                 <button
                   onClick={() => {
                     if (!isCropping && editingSlot !== null) {
