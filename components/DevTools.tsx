@@ -1081,13 +1081,15 @@ const MiniGamesDebugSection: React.FC<{
       'vanilla',
       'dragonfly_wings',
       'ghost_lichen',
+      'heather_sprig',
+      'straw',
     ];
     for (const id of flowers) {
       inventoryManager.addItem(id, 3);
     }
     const inv = inventoryManager.getInventoryData();
     characterData.saveInventory(inv.items, inv.tools);
-    console.log('[DevTools] Gave 3x each wreath flower (18 types)');
+    console.log('[DevTools] Gave 3x each wreath flower (20 types)');
   };
 
   return (
