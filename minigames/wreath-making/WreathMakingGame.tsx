@@ -29,12 +29,8 @@ import { tileAssets, herbAssets } from '../../assets';
 // Constants
 // ---------------------------------------------------------------------------
 
-const SLOT_COUNT = 8;
 const MIN_FLOWERS = 4;
 const GOLD_COST = 15;
-
-/** Size of the empty slot indicator circle (small — just a click target). */
-const SLOT_INDICATOR_SIZE = 40;
 
 /** Base size for flower images before scaling (px). */
 const FLOWER_BASE_SIZE = 80;
@@ -47,9 +43,6 @@ const ROTATION_STEP = 15;
 
 /** Minimum drag distance (px) before treating as a drag instead of a click. */
 const DRAG_THRESHOLD = 4;
-
-/** How far flowers can be dragged from their slot anchor (px). */
-const MAX_DRAG_OFFSET = 80;
 
 /** Default crop zoom (1 = full image, no crop). */
 const DEFAULT_CROP_ZOOM = 1;
@@ -134,10 +127,10 @@ const ZOOM_BTN: React.CSSProperties = {
 
 interface SlotData {
   itemId: string;
-  /** Horizontal offset from slot anchor (px). */
-  offsetX: number;
-  /** Vertical offset from slot anchor (px). */
-  offsetY: number;
+  /** Absolute X position (centre) within the wreath canvas (px). */
+  x: number;
+  /** Absolute Y position (centre) within the wreath canvas (px). */
+  y: number;
   /** Scale multiplier for the flower image. */
   scale: number;
   /** Crop: horizontal pan within image (px from centre). */
@@ -155,11 +148,11 @@ interface SlotData {
 }
 
 /** Create a new SlotData with defaults. */
-function makeSlot(itemId: string, overrides?: Partial<SlotData>): SlotData {
+function makeSlot(itemId: string, x: number, y: number, overrides?: Partial<SlotData>): SlotData {
   return {
     itemId,
-    offsetX: 0,
-    offsetY: 0,
+    x,
+    y,
     scale: DEFAULT_SCALE,
     cropX: 0,
     cropY: 0,
@@ -258,9 +251,8 @@ interface WreathQuality {
   friendship: number;
 }
 
-function getWreathQuality(slots: (SlotData | null)[]): WreathQuality {
-  const filled = slots.filter(Boolean) as SlotData[];
-  const uniqueTypes = new Set(filled.map((s) => s.itemId)).size;
+function getWreathQuality(slots: SlotData[]): WreathQuality {
+  const uniqueTypes = new Set(slots.map((s) => s.itemId)).size;
 
   if (uniqueTypes >= 5) {
     return {
@@ -287,19 +279,10 @@ function getWreathQuality(slots: (SlotData | null)[]): WreathQuality {
 }
 
 // ---------------------------------------------------------------------------
-// Slot positions (arranged in a circle)
+// Wreath canvas dimensions
 // ---------------------------------------------------------------------------
 
-const WREATH_RADIUS = 100;
 const WREATH_CENTRE = 140;
-
-function getSlotPosition(index: number): { x: number; y: number } {
-  const angle = ((index * 360) / SLOT_COUNT - 90) * (Math.PI / 180);
-  return {
-    x: WREATH_CENTRE + WREATH_RADIUS * Math.cos(angle),
-    y: WREATH_CENTRE + WREATH_RADIUS * Math.sin(angle),
-  };
-}
 
 // ---------------------------------------------------------------------------
 // Wreath image capture (offscreen canvas → base64)
@@ -312,7 +295,7 @@ const CAPTURE_SIZE = 512;
  * Render the wreath to an offscreen canvas and return a base64 PNG data URL.
  * Draws the ring + all placed flowers at their scaled positions.
  */
-async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
+async function captureWreathImage(slots: SlotData[]): Promise<string> {
   const canvas = document.createElement('canvas');
   canvas.width = CAPTURE_SIZE;
   canvas.height = CAPTURE_SIZE;
@@ -338,26 +321,22 @@ async function captureWreathImage(slots: (SlotData | null)[]): Promise<string> {
   } catch {
     // Fallback: draw a plain ring if the sprite fails to load
     ctx.beginPath();
-    ctx.arc(WREATH_CENTRE * scale, WREATH_CENTRE * scale, WREATH_RADIUS * scale, 0, Math.PI * 2);
+    ctx.arc(WREATH_CENTRE * scale, WREATH_CENTRE * scale, (WREATH_CENTRE * 0.7) * scale, 0, Math.PI * 2);
     ctx.lineWidth = 14 * scale;
     ctx.strokeStyle = '#3a5a2a';
     ctx.stroke();
   }
 
   // Draw each placed flower
-  for (let i = 0; i < SLOT_COUNT; i++) {
-    const slot = slots[i];
-    if (!slot) continue;
-
+  for (const slot of slots) {
     const imageUrl = getFlowerImage(slot.itemId);
     if (!imageUrl) continue;
 
     try {
       const img = await loadImage(imageUrl);
-      const anchor = getSlotPosition(i);
       const flowerSize = FLOWER_BASE_SIZE * slot.scale;
-      const cx = (anchor.x + slot.offsetX) * scale;
-      const cy = (anchor.y + slot.offsetY) * scale;
+      const cx = slot.x * scale;
+      const cy = slot.y * scale;
       const size = flowerSize * scale;
       ctx.save();
       // Apply rotation + flip transforms around the flower centre
@@ -416,7 +395,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   onClose,
   onComplete,
 }) => {
-  const [wreathSlots, setWreathSlots] = useState<(SlotData | null)[]>(Array(SLOT_COUNT).fill(null));
+  const [placedItems, setPlacedItems] = useState<SlotData[]>([]);
   const [selectedFlower, setSelectedFlower] = useState<string | null>(null);
   const [editingSlot, setEditingSlot] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -456,7 +435,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     for (const matId of WREATH_MATERIALS) {
       const inInventory = context.actions.getItemQuantity(matId);
       if (inInventory <= 0) continue;
-      const usedInSlots = wreathSlots.filter((s) => s?.itemId === matId).length;
+      const usedInSlots = placedItems.filter((s) => s.itemId === matId).length;
       const available = inInventory - usedInSlots;
       if (available > 0) {
         const item = getItem(matId);
@@ -468,18 +447,18 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       }
     }
     return result;
-  }, [wreathSlots, context.actions]);
+  }, [placedItems, context.actions]);
 
-  const filledCount = wreathSlots.filter(Boolean).length;
-  const uniqueCount = new Set(wreathSlots.filter(Boolean).map((s) => (s as SlotData).itemId)).size;
+  const filledCount = placedItems.length;
+  const uniqueCount = new Set(placedItems.map((s) => s.itemId)).size;
   const canCreate = filledCount >= MIN_FLOWERS;
-  const quality = canCreate ? getWreathQuality(wreathSlots) : null;
+  const quality = canCreate ? getWreathQuality(placedItems) : null;
 
   // Determine which flower to show in the gallery preview
   const previewFlowerId =
     galleryDragItem ??
     galleryFlower ??
-    (editingSlot !== null ? (wreathSlots[editingSlot]?.itemId ?? null) : null) ??
+    (editingSlot !== null ? (placedItems[editingSlot]?.itemId ?? null) : null) ??
     selectedFlower ??
     (availableFlowers.length > 0 ? availableFlowers[0].itemId : null);
 
@@ -496,26 +475,30 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     setGalleryFlower(itemId);
   }, []);
 
-  /** Click an empty slot to place the currently selected flower. */
-  const handleEmptySlotClick = useCallback(
-    (index: number) => {
+  /** Click empty canvas space to place the currently selected flower there. */
+  const handleWreathCanvasClick = useCallback(
+    (e: React.MouseEvent) => {
       if (!selectedFlower) return;
+      if (e.target !== e.currentTarget) return; // a placed flower was clicked
       const avail = availableFlowers.find((f) => f.itemId === selectedFlower);
       if (!avail || avail.available <= 0) return;
-      const newSlots = [...wreathSlots];
-      newSlots[index] = makeSlot(selectedFlower);
-      setWreathSlots(newSlots);
-      setEditingSlot(index);
+      const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const newIndex = placedItems.length;
+      setPlacedItems((prev) => [...prev, makeSlot(selectedFlower, x, y)]);
+      setEditingSlot(newIndex);
       setGalleryFlower(selectedFlower);
       setSelectedFlower(null);
       setIsCropping(false);
     },
-    [wreathSlots, selectedFlower, availableFlowers]
+    [placedItems, selectedFlower, availableFlowers]
   );
 
   /** Click a placed flower to select it for editing. */
   const handleFlowerClick = useCallback(
-    (index: number) => {
+    (e: React.MouseEvent, index: number) => {
+      e.stopPropagation();
       if (wasDragRef.current) {
         wasDragRef.current = false;
         return;
@@ -523,23 +506,21 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       if (editingSlot !== index) setIsCropping(false);
       setEditingSlot(index);
       setSelectedFlower(null);
-      const slot = wreathSlots[index];
-      if (slot) setGalleryFlower(slot.itemId);
+      setGalleryFlower(placedItems[index].itemId);
     },
-    [wreathSlots, editingSlot]
+    [placedItems, editingSlot]
   );
 
   // Zoom controls
   const handleZoom = useCallback(
     (delta: number) => {
       if (editingSlot === null) return;
-      setWreathSlots((prev) => {
-        const newSlots = [...prev];
-        const slot = newSlots[editingSlot];
+      setPlacedItems((prev) => {
+        const next = [...prev];
+        const slot = next[editingSlot];
         if (!slot) return prev;
-        const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, slot.scale + delta));
-        newSlots[editingSlot] = { ...slot, scale: newScale };
-        return newSlots;
+        next[editingSlot] = { ...slot, scale: Math.max(MIN_SCALE, Math.min(MAX_SCALE, slot.scale + delta)) };
+        return next;
       });
     },
     [editingSlot]
@@ -547,24 +528,21 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
   const handleRemoveFromSlot = useCallback(() => {
     if (editingSlot === null) return;
-    const newSlots = [...wreathSlots];
-    newSlots[editingSlot] = null;
-    setWreathSlots(newSlots);
+    setPlacedItems((prev) => prev.filter((_, i) => i !== editingSlot));
     setEditingSlot(null);
     setIsCropping(false);
-  }, [editingSlot, wreathSlots]);
+  }, [editingSlot]);
 
   // Crop zoom control
   const handleCropZoom = useCallback(
     (delta: number) => {
       if (editingSlot === null) return;
-      setWreathSlots((prev) => {
-        const newSlots = [...prev];
-        const slot = newSlots[editingSlot];
+      setPlacedItems((prev) => {
+        const next = [...prev];
+        const slot = next[editingSlot];
         if (!slot) return prev;
-        const newCZ = Math.max(DEFAULT_CROP_ZOOM, Math.min(MAX_CROP_ZOOM, slot.cropZoom + delta));
-        newSlots[editingSlot] = { ...slot, cropZoom: newCZ };
-        return newSlots;
+        next[editingSlot] = { ...slot, cropZoom: Math.max(DEFAULT_CROP_ZOOM, Math.min(MAX_CROP_ZOOM, slot.cropZoom + delta)) };
+        return next;
       });
     },
     [editingSlot]
@@ -572,26 +550,24 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
   const handleResetCrop = useCallback(() => {
     if (editingSlot === null) return;
-    setWreathSlots((prev) => {
-      const newSlots = [...prev];
-      const slot = newSlots[editingSlot];
+    setPlacedItems((prev) => {
+      const next = [...prev];
+      const slot = next[editingSlot];
       if (!slot) return prev;
-      newSlots[editingSlot] = { ...slot, cropX: 0, cropY: 0, cropZoom: DEFAULT_CROP_ZOOM };
-      return newSlots;
+      next[editingSlot] = { ...slot, cropX: 0, cropY: 0, cropZoom: DEFAULT_CROP_ZOOM };
+      return next;
     });
   }, [editingSlot]);
 
   const handleRotate = useCallback(
     (delta: number) => {
       if (editingSlot === null) return;
-      setWreathSlots((prev) => {
-        const newSlots = [...prev];
-        const slot = newSlots[editingSlot];
+      setPlacedItems((prev) => {
+        const next = [...prev];
+        const slot = next[editingSlot];
         if (!slot) return prev;
-        // Normalise to 0–359
-        const newRot = ((slot.rotation + delta) % 360 + 360) % 360;
-        newSlots[editingSlot] = { ...slot, rotation: newRot };
-        return newSlots;
+        next[editingSlot] = { ...slot, rotation: ((slot.rotation + delta) % 360 + 360) % 360 };
+        return next;
       });
     },
     [editingSlot]
@@ -600,13 +576,13 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const handleFlip = useCallback(
     (axis: 'h' | 'v') => {
       if (editingSlot === null) return;
-      setWreathSlots((prev) => {
-        const newSlots = [...prev];
-        const slot = newSlots[editingSlot];
+      setPlacedItems((prev) => {
+        const next = [...prev];
+        const slot = next[editingSlot];
         if (!slot) return prev;
-        newSlots[editingSlot] =
+        next[editingSlot] =
           axis === 'h' ? { ...slot, flipH: !slot.flipH } : { ...slot, flipV: !slot.flipV };
-        return newSlots;
+        return next;
       });
     },
     [editingSlot]
@@ -618,7 +594,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
   const handleDragStart = useCallback(
     (e: React.MouseEvent | React.TouchEvent, index: number) => {
-      const slot = wreathSlots[index];
+      const slot = placedItems[index];
       if (!slot) return;
       const pos = getClientPos(e as React.MouseEvent);
       if (!pos) return;
@@ -627,15 +603,15 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         slotIndex: index,
         startX: pos.x,
         startY: pos.y,
-        startOffsetX: isCropping ? slot.cropX : slot.offsetX,
-        startOffsetY: isCropping ? slot.cropY : slot.offsetY,
+        startOffsetX: isCropping ? slot.cropX : slot.x,
+        startOffsetY: isCropping ? slot.cropY : slot.y,
         didDrag: false,
       };
       wasDragRef.current = false;
       setEditingSlot(index);
       setSelectedFlower(null);
     },
-    [wreathSlots, isCropping]
+    [placedItems, isCropping]
   );
 
   // =========================================================================
@@ -699,23 +675,21 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         // Pan the crop window within the image
         const newCX = Math.max(-MAX_CROP_PAN, Math.min(MAX_CROP_PAN, startOffsetX + dx));
         const newCY = Math.max(-MAX_CROP_PAN, Math.min(MAX_CROP_PAN, startOffsetY + dy));
-        setWreathSlots((prev) => {
-          const newSlots = [...prev];
-          const slot = newSlots[slotIndex];
+        setPlacedItems((prev) => {
+          const next = [...prev];
+          const slot = next[slotIndex];
           if (!slot) return prev;
-          newSlots[slotIndex] = { ...slot, cropX: newCX, cropY: newCY };
-          return newSlots;
+          next[slotIndex] = { ...slot, cropX: newCX, cropY: newCY };
+          return next;
         });
       } else {
-        // Move the flower on the wreath
-        const newOffsetX = Math.max(-MAX_DRAG_OFFSET, Math.min(MAX_DRAG_OFFSET, startOffsetX + dx));
-        const newOffsetY = Math.max(-MAX_DRAG_OFFSET, Math.min(MAX_DRAG_OFFSET, startOffsetY + dy));
-        setWreathSlots((prev) => {
-          const newSlots = [...prev];
-          const slot = newSlots[slotIndex];
+        // Freehand reposition
+        setPlacedItems((prev) => {
+          const next = [...prev];
+          const slot = next[slotIndex];
           if (!slot) return prev;
-          newSlots[slotIndex] = { ...slot, offsetX: newOffsetX, offsetY: newOffsetY };
-          return newSlots;
+          next[slotIndex] = { ...slot, x: startOffsetX + dx, y: startOffsetY + dy };
+          return next;
         });
       }
     },
@@ -724,35 +698,18 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
   const handleAnyEnd = useCallback(
     (e: React.MouseEvent | React.TouchEvent) => {
-      // Gallery drag end — find nearest empty slot and place
+      // Gallery drag end — place at exact drop position
       if (galleryDragItem) {
         const pos = getClientPos(e as React.MouseEvent) ?? galleryDragPosRef.current;
         if (pos && wreathRef.current) {
           const rect = wreathRef.current.getBoundingClientRect();
-          const relX = pos.x - rect.left;
-          const relY = pos.y - rect.top;
-
-          // Find the nearest empty slot
-          let bestSlot = -1;
-          let bestDist = Infinity;
-          for (let i = 0; i < SLOT_COUNT; i++) {
-            if (wreathSlots[i] !== null) continue;
-            const sp = getSlotPosition(i);
-            const dist = Math.hypot(relX - sp.x, relY - sp.y);
-            if (dist < bestDist) {
-              bestDist = dist;
-              bestSlot = i;
-            }
-          }
-
-          // Place if dropped reasonably close (within the wreath area)
-          if (bestSlot >= 0 && bestDist < WREATH_RADIUS * 1.5) {
-            setWreathSlots((prev) => {
-              const newSlots = [...prev];
-              newSlots[bestSlot] = makeSlot(galleryDragItem);
-              return newSlots;
-            });
-            setEditingSlot(bestSlot);
+          const x = pos.x - rect.left;
+          const y = pos.y - rect.top;
+          // Only place if dropped within the canvas bounds
+          if (x >= 0 && x <= WREATH_CENTRE * 2 && y >= 0 && y <= WREATH_CENTRE * 2) {
+            const newIndex = placedItems.length;
+            setPlacedItems((prev) => [...prev, makeSlot(galleryDragItem, x, y)]);
+            setEditingSlot(newIndex);
           }
         }
 
@@ -767,7 +724,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       }
       dragRef.current = null;
     },
-    [galleryDragItem, wreathSlots]
+    [galleryDragItem, placedItems]
   );
 
   // =========================================================================
@@ -775,7 +732,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   // =========================================================================
 
   const handleCreate = useCallback(async () => {
-    const filled = wreathSlots.filter(Boolean) as SlotData[];
+    const filled = placedItems;
     if (filled.length < MIN_FLOWERS || isCreating) return;
 
     if (!context.actions.spendGold(GOLD_COST)) {
@@ -795,12 +752,12 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       context.actions.removeItem(itemId, qty);
     }
 
-    const q = getWreathQuality(wreathSlots);
+    const q = getWreathQuality(placedItems);
 
     // Capture the wreath arrangement as an image
     let wreathImageUrl = '';
     try {
-      const dataUrl = await captureWreathImage(wreathSlots);
+      const dataUrl = await captureWreathImage(placedItems);
       const decorationId = decorationManager.registerCustomDecoration({
         imageUrl: dataUrl,
         name: `${q.label} Wreath`,
@@ -836,9 +793,9 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     };
 
     onComplete(result);
-  }, [wreathSlots, context.actions, context.storage, onComplete, isCreating]);
+  }, [placedItems, context.actions, context.storage, onComplete, isCreating]);
 
-  const editingSlotData = editingSlot !== null ? wreathSlots[editingSlot] : null;
+  const editingSlotData = editingSlot !== null ? (placedItems[editingSlot] ?? null) : null;
 
   // =========================================================================
   // Render
@@ -934,11 +891,11 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
               Your Flowers
               {selectedFlower ? (
                 <span style={{ fontWeight: 'normal', marginLeft: 6, fontStyle: 'italic' }}>
-                  — tap an empty slot to place
+                  — click wreath to place
                 </span>
               ) : (
                 <span style={{ fontWeight: 'normal', marginLeft: 6, fontStyle: 'italic' }}>
-                  — drag onto wreath
+                  — drag or click to place
                 </span>
               )}
             </div>
@@ -1083,13 +1040,15 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             gap: 8,
           }}
         >
-          {/* Wreath area — flowers are free-floating and can overlap */}
+          {/* Wreath area — freehand placement canvas */}
           <div
             ref={wreathRef}
+            onClick={handleWreathCanvasClick}
             style={{
               position: 'relative',
               width: WREATH_CENTRE * 2,
               height: WREATH_CENTRE * 2,
+              cursor: selectedFlower ? 'crosshair' : 'default',
             }}
           >
             {/* Decorative wreath ring */}
@@ -1108,89 +1067,82 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
               }}
             />
 
-            {/* Empty slot indicators — small dashed circles as placement targets */}
-            {Array.from({ length: SLOT_COUNT }).map((_, i) => {
-              const pos = getSlotPosition(i);
-              const slot = wreathSlots[i];
-              if (slot) return null; // Don't show indicator for filled slots
-              const isTarget = selectedFlower !== null || galleryDragItem !== null;
-              const half = SLOT_INDICATOR_SIZE / 2;
-
-              return (
-                <div
-                  key={`empty-${i}`}
-                  onClick={() => handleEmptySlotClick(i)}
-                  style={{
-                    position: 'absolute',
-                    left: pos.x - half,
-                    top: pos.y - half,
-                    width: SLOT_INDICATOR_SIZE,
-                    height: SLOT_INDICATOR_SIZE,
-                    borderRadius: '50%',
-                    border: isTarget ? '2px dashed #8a9a7a' : '2px dashed #3a5a2a',
-                    background: isTarget ? 'rgba(100, 140, 80, 0.15)' : 'rgba(0,0,0,0.15)',
-                    cursor: isTarget ? 'pointer' : 'default',
-                    zIndex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {isTarget && <span style={{ fontSize: 16, color: '#6a7a5a' }}>+</span>}
-                </div>
-              );
-            })}
-
-            {/* Centre label */}
-            <div
-              style={{
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                width: WREATH_CENTRE * 2,
-                height: WREATH_CENTRE * 2,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                pointerEvents: 'none',
-                zIndex: 2,
-              }}
-            >
-              <div style={{ fontSize: 13, color: '#8a9a7a' }}>
-                {filledCount}/{SLOT_COUNT} slots
+            {/* Click-to-place hint overlay when a flower is selected */}
+            {selectedFlower && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  width: WREATH_CENTRE * 2,
+                  height: WREATH_CENTRE * 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                  background: 'rgba(100, 140, 80, 0.08)',
+                  borderRadius: '50%',
+                }}
+              >
+                <span style={{ fontSize: 12, color: '#8a9a7a', fontStyle: 'italic' }}>
+                  Click to place
+                </span>
               </div>
-              {canCreate && quality && (
-                <div
-                  style={{
-                    fontSize: 14,
-                    fontWeight: 'bold',
-                    color:
-                      quality.tier === 'magnificent'
-                        ? '#fbbf24'
-                        : quality.tier === 'fine'
-                          ? '#93c5fd'
-                          : '#a8b89a',
-                    marginTop: 4,
-                  }}
-                >
-                  {quality.label}
-                </div>
-              )}
-              <div style={{ fontSize: 11, color: '#6a7a5a', marginTop: 2 }}>
-                {uniqueCount} type{uniqueCount !== 1 ? 's' : ''}
-              </div>
-            </div>
+            )}
 
-            {/* Placed flowers — free-floating, can overlap! */}
-            {Array.from({ length: SLOT_COUNT }).map((_, i) => {
-              const slot = wreathSlots[i];
-              if (!slot) return null;
-              const anchor = getSlotPosition(i);
+            {/* Centre label (only when nothing is selected) */}
+            {!selectedFlower && (
+              <div
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 0,
+                  width: WREATH_CENTRE * 2,
+                  height: WREATH_CENTRE * 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pointerEvents: 'none',
+                  zIndex: 2,
+                }}
+              >
+                {filledCount === 0 && (
+                  <div style={{ fontSize: 12, color: '#5a6a4a', fontStyle: 'italic' }}>
+                    Drag flowers here
+                  </div>
+                )}
+                {canCreate && quality && (
+                  <div
+                    style={{
+                      fontSize: 14,
+                      fontWeight: 'bold',
+                      color:
+                        quality.tier === 'magnificent'
+                          ? '#fbbf24'
+                          : quality.tier === 'fine'
+                            ? '#93c5fd'
+                            : '#a8b89a',
+                    }}
+                  >
+                    {quality.label}
+                  </div>
+                )}
+                {filledCount > 0 && (
+                  <div style={{ fontSize: 11, color: '#6a7a5a', marginTop: 2 }}>
+                    {filledCount} item{filledCount !== 1 ? 's' : ''} · {uniqueCount} type{uniqueCount !== 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Placed flowers — freehand, fully overlappable */}
+            {placedItems.map((slot, i) => {
               const isEditing = editingSlot === i;
               const flowerSize = FLOWER_BASE_SIZE * slot.scale;
-              const cx = anchor.x + slot.offsetX;
-              const cy = anchor.y + slot.offsetY;
+              const cx = slot.x;
+              const cy = slot.y;
               const imageUrl = getFlowerImage(slot.itemId);
               const item = getItem(slot.itemId);
 
@@ -1200,7 +1152,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
               return (
                 <div
                   key={`flower-${i}`}
-                  onClick={() => handleFlowerClick(i)}
+                  onClick={(e) => handleFlowerClick(e, i)}
                   onMouseDown={(e) => handleDragStart(e, i)}
                   onTouchStart={(e) => handleDragStart(e, i)}
                   onWheel={(e) => {
@@ -1410,12 +1362,12 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                   {editingSlotData.rotation !== 0 && (
                     <button
                       onClick={() =>
-                        setWreathSlots((prev) => {
-                          const newSlots = [...prev];
-                          const slot = newSlots[editingSlot!];
+                        setPlacedItems((prev) => {
+                          const next = [...prev];
+                          const slot = next[editingSlot!];
                           if (!slot) return prev;
-                          newSlots[editingSlot!] = { ...slot, rotation: 0 };
-                          return newSlots;
+                          next[editingSlot!] = { ...slot, rotation: 0 };
+                          return next;
                         })
                       }
                       style={{
@@ -1478,13 +1430,13 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                   onClick={() => {
                     if (!isCropping && editingSlot !== null) {
                       // Entering crop mode — auto-zoom to 1.4 if currently uncropped
-                      setWreathSlots((prev) => {
-                        const newSlots = [...prev];
-                        const slot = newSlots[editingSlot];
+                      setPlacedItems((prev) => {
+                        const next = [...prev];
+                        const slot = next[editingSlot];
                         if (slot && slot.cropZoom <= 1) {
-                          newSlots[editingSlot] = { ...slot, cropZoom: 1.4 };
+                          next[editingSlot] = { ...slot, cropZoom: 1.4 };
                         }
-                        return newSlots;
+                        return next;
                       });
                     }
                     setIsCropping((prev) => !prev);
@@ -1536,7 +1488,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                 fontStyle: 'italic',
               }}
             >
-              Tap a flower to resize, or drag to reposition
+              Tap a flower to edit, or drag to reposition
             </div>
           )}
 
