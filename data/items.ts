@@ -54,6 +54,8 @@ export interface ItemDefinition {
   placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
   placedImage?: string; // Alt image URL to use when item is placed in the world (overrides `image`)
   allowOutdoorPlacement?: boolean; // If true, placement works on outdoor maps as well as indoor
+  allowAnyTilePlacement?: boolean; // If true, can be placed on non-walkable tiles (e.g. walls, buildings)
+  placedOnSurface?: boolean; // If true, renders above all building/tree sprites (for items placed ON buildings)
   placesBelowCharacters?: boolean; // If true, renders at background z-level (above tiles, below player/NPCs)
   persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
   edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)
@@ -2083,6 +2085,31 @@ export const ITEMS: Record<string, ItemDefinition> = {
     forageSuccessRate: 0.9,
   },
 
+  maple_leaf: {
+    id: 'maple_leaf',
+    name: 'maple_leaf',
+    displayName: 'Maple Leaf',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A dried autumn maple leaf, still bright with colour. Collected from piles gathered by the wind.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 5,
+    image: magicalAssets.maple_leaf,
+  },
+
+  red_berries: {
+    id: 'red_berries',
+    name: 'red_berries',
+    displayName: 'Red Berries',
+    category: ItemCategory.MATERIAL,
+    description: 'Bright red hawthorn berries, gathered in small clusters in autumn. Lovely for decorations.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 4,
+    image: magicalAssets.red_berries,
+    forageSuccessRate: 0.8,
+  },
+
   linen: {
     id: 'linen',
     name: 'linen',
@@ -2270,6 +2297,21 @@ export const ITEMS: Record<string, ItemDefinition> = {
     placedScale: 3.0,
   },
 
+  // ===== CRAFTING TABLE =====
+
+  crafting_table: {
+    id: 'crafting_table',
+    name: 'crafting_table',
+    displayName: 'Crafting Table',
+    category: ItemCategory.DECORATION,
+    description: 'A sturdy wooden table for crafting wreaths and other decorations.',
+    stackable: false,
+    image: itemAssets.crafting_table,
+    icon: '🌿',
+    placedScale: 2.5,
+    placesBelowCharacters: true,
+  },
+
   // ===== CRAFTED DECORATIONS =====
 
   framed_painting: {
@@ -2382,6 +2424,24 @@ export const ITEMS: Record<string, ItemDefinition> = {
 
   // ===== WREATHS =====
 
+  // Quest item — given to the player by Mushra after delivering materials
+  decoration_wreath_mushras: {
+    id: 'decoration_wreath_mushras',
+    name: 'decoration_wreath_mushras',
+    displayName: "Mushra's Wreath",
+    category: ItemCategory.DECORATION,
+    description:
+      "A magnificent wreath handcrafted by Mushra herself — woven from maple leaves, straw, lavender, heather and a single red rose. A true work of art.",
+    stackable: false,
+    sellPrice: 180,
+    image: magicalAssets.mushras_wreath,
+    placedScale: 0.6,
+    allowOutdoorPlacement: true,
+    allowAnyTilePlacement: true,
+    placedOnSurface: true,
+  },
+
+  // Craftable wreaths — made at the wreath workshop crafting table
   decoration_wreath_rustic: {
     id: 'decoration_wreath_rustic',
     name: 'decoration_wreath_rustic',
@@ -2391,7 +2451,10 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: false,
     sellPrice: 35,
     icon: '🌿',
-    placedScale: 1.2,
+    placedScale: 0.6,
+    allowOutdoorPlacement: true,
+    allowAnyTilePlacement: true,
+    placedOnSurface: true,
   },
 
   decoration_wreath_fine: {
@@ -2403,7 +2466,10 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: false,
     sellPrice: 80,
     icon: '🌿',
-    placedScale: 1.2,
+    placedScale: 0.6,
+    allowOutdoorPlacement: true,
+    allowAnyTilePlacement: true,
+    placedOnSurface: true,
   },
 
   decoration_wreath_magnificent: {
@@ -2415,7 +2481,10 @@ export const ITEMS: Record<string, ItemDefinition> = {
     stackable: false,
     sellPrice: 180,
     icon: '🌿',
-    placedScale: 1.2,
+    placedScale: 0.6,
+    allowOutdoorPlacement: true,
+    allowAnyTilePlacement: true,
+    placedOnSurface: true,
   },
 
   // ===== SEASONAL EVENT DECORATIONS =====

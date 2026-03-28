@@ -97,6 +97,22 @@ export async function initializeGameAssets(
   eventChainManager.initialise();
   console.log(`[App] Initialised event chain system`);
 
+  // Remove legacy hung-wreath placed items (old quest system used customScale: 1.5 items with
+  // IDs like "hung_wreath_player_home" — these persist in localStorage and must be cleaned up)
+  {
+    const { gameState } = await import('../GameState');
+    const legacyIds = gameState
+      .getPlacedItems('village')
+      .filter((item) => item.id.startsWith('hung_wreath_'))
+      .map((item) => item.id);
+    for (const id of legacyIds) {
+      gameState.removePlacedItem(id);
+    }
+    if (legacyIds.length > 0) {
+      console.log(`[gameInitializer] Removed ${legacyIds.length} legacy hung-wreath item(s)`);
+    }
+  }
+
   // Initialize FruitTreeManager (loads saved tree states, subscribes to season changes)
   const { fruitTreeManager } = await import('./fruitTreeManager');
   fruitTreeManager.initialise();

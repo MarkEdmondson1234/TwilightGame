@@ -55,6 +55,7 @@ import {
   completeEstrangedSistersQuest,
   QUEST_STAGES as SISTERS_STAGES,
 } from '../data/questHandlers/estrangedSistersHandler';
+import { hasAllMaterials, deliverMaterials } from '../data/questHandlers/mushraWreathHandler';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -119,6 +120,12 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   // Handle Mr Fox's picnic quest (shopkeeper NPC)
   if (npcId.includes('shopkeeper')) {
     const redirect = handleMrFoxPicnicActions(nodeId);
+    if (redirect) return redirect;
+  }
+
+  // Handle Mushra's wreath workshop quest (village autumn NPC)
+  if (npcId === 'village_mushra') {
+    const redirect = handleMushraWreathActions(nodeId);
     if (redirect) return redirect;
   }
 }
@@ -693,5 +700,21 @@ function handleMumQuestActions(nodeId: string): string | void {
   if (nodeId === 'mfp_food_agreed') {
     eventChainManager.advanceToStage(MFP_QUEST_ID, 'filling_basket');
     if (DEBUG.QUEST) console.log("[dialogueHandlers] 🍱 Mum helping with food — advancing to filling_basket");
+  }
+}
+
+/**
+ * Handle Mushra's wreath workshop quest actions (village Mushra NPC during autumn)
+ */
+function handleMushraWreathActions(nodeId: string): string | void {
+  // Player clicks "Here are the materials!" — check if all items are present
+  if (nodeId === 'wreath_deliver_materials') {
+    if (hasAllMaterials()) {
+      deliverMaterials();
+      if (DEBUG.QUEST) console.log('[dialogueHandlers] 🌿 Wreath materials delivered — advancing to hanging stage');
+      return 'wreath_materials_accepted';
+    } else {
+      return 'wreath_materials_missing';
+    }
   }
 }

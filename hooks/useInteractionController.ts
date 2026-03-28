@@ -49,6 +49,7 @@ import {
   calculateShedOverlayBounds,
 } from '../utils/messInteractions';
 import { mapManager } from '../maps';
+import { onWreathPlacedInVillage, WREATH_ITEM_IDS } from '../data/questHandlers/mushraWreathHandler';
 
 // ============================================================================
 // Configuration Interface
@@ -421,6 +422,10 @@ export function useInteractionController(
           ...(result.customScale != null && { customScale: result.customScale }),
         });
         eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: currentMapId, action: 'add' });
+        // Check if a wreath was just placed in the village (for Mushra's quest)
+        if (currentMapId === 'village' && WREATH_ITEM_IDS.includes(result.itemId)) {
+          onWreathPlacedInVillage();
+        }
         const itemDef = getItem(result.itemId);
         onShowToast(`Placed ${itemDef?.displayName || 'decoration'}`, 'success');
       },

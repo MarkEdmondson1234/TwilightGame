@@ -724,6 +724,13 @@ class InventoryManager {
     // DEV: Testing magical crops (quest-locked in production)
     this.addItem('seed_fairy_bluebell', 5);
 
+    // DEV: Wreath workshop test materials (TODO: remove after testing)
+    this.addItem('maple_leaf', 10);
+    this.addItem('straw', 15);
+    this.addItem('crop_lavender', 5);
+    this.addItem('red_berries', 6);
+    this.addItem('heather_sprig', 8);
+
     // Start with some harvested crops/materials
     this.addItem('crop_blackberry', 12); // Wild berries
     this.addItem('crop_radish', 5);

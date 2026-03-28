@@ -81,6 +81,13 @@ export const Z_PLAYER_FLYING = 650;
 /** Placed items (food, dropped objects - above player) */
 export const Z_PLACED_ITEMS = 150;
 
+/**
+ * Surface decorations that must render above all building/tree sprites regardless of Y position.
+ * Used for items like wreaths that are placed ON buildings.
+ * Above depth-sort max (600) and below Z_PLAYER_FLYING (650).
+ */
+export const Z_SURFACE_DECORATION = 620;
+
 /** Foreground sprites (trees, buildings - in front of player) - DEPRECATED: use depth sorting */
 export const Z_SPRITE_FOREGROUND = 200;
 

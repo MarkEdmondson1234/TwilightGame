@@ -213,6 +213,7 @@ export const tileAssets = {
   shrinking_violet: '/TwilightGame/assets-optimized/tiles/forest/shrinking_violet.png',
   heather_spring_summer: '/TwilightGame/assets-optimized/tiles/forest/heather_spring-summer.png',
   heather_autumn: '/TwilightGame/assets-optimized/tiles/forest/heather_autumn.png',
+  pile_of_leaves: '/TwilightGame/assets-optimized/items/decoration/pile_of_leaves.png',
   frost_flower_bloom: '/TwilightGame/assets-optimized/tiles/ruins/frost_flower_bloom.png',
   // Ruins entrance assets (seasonal variations - 8x8 multi-tile sprite)
   ruins_entrance_spring_summer:
@@ -452,6 +453,9 @@ export const magicalAssets = {
   rose_crop: '/TwilightGame/assets-optimized/items/rose_crop.png',
   rose_red_crop: '/TwilightGame/assets-optimized/items/rose_red_crop.png',
   heather_sprig: '/TwilightGame/assets-optimized/items/decoration/heather_sprig.png',
+  red_berries: '/TwilightGame/assets-optimized/items/decoration/red_berries.png',
+  maple_leaf: '/TwilightGame/assets-optimized/items/decoration/maple_leaf.png',
+  mushras_wreath: '/TwilightGame/assets-optimized/items/decoration/mushras_wreath.png',
 };
 
 // Potion assets - Brewed magical potions (results from brewing recipes)
@@ -755,6 +759,7 @@ export const itemAssets = {
     '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',
   straw: '/TwilightGame/assets-optimized/items/decoration/straw.png',
   easel: '/TwilightGame/assets-optimized/items/crafting/easel.png',
+  crafting_table: '/TwilightGame/assets-optimized/items/crafting/crafting_table.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds

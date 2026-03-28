@@ -351,6 +351,23 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
     brightnessRange: { min: 0.95, max: 1.05 }, // Subtle brightness variation
   },
+  {
+    tileType: TileType.PILE_OF_LEAVES,
+    spriteWidth: 2,
+    spriteHeight: 2,
+    offsetX: -0.5,
+    offsetY: -1,
+    image: tileAssets.pile_of_leaves,
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 },
+  },
   // ============================================
   // Mushroom Forest Plants
   // ============================================

@@ -10,6 +10,7 @@ import './altheaChoresHandler';
 import './witchGardenHandler';
 import './daveadLavaCakeHandler';
 import './mrFoxPicnicHandler';
+import './mushraWreathHandler';
 // gardeningQuestHandler has no stage handlers (logic is pull-based via dialogue)
 // fairyBluebellsHandler has no stage handlers (item delivery is pull-based)
 // fairyQueenHandler has no stage handlers (fairy meetings are pull-based)
@@ -47,6 +48,21 @@ export {
 } from './mrFoxPicnicHandler';
 export type { MessPilePosition } from './mrFoxPicnicHandler';
 export * from './gardeningQuestHandler';
+export {
+  QUEST_ID as WREATH_WORKSHOP_QUEST_ID,
+  REQUIRED_MATERIALS,
+  WREATH_ITEM_IDS,
+  VILLAGE_CRAFTING_TABLE_ID,
+  isWreathWorkshopActive,
+  isWreathWorkshopComplete,
+  isWreathWorkshopStarted,
+  isWreathWorkshopAtStage,
+  getWreathWorkshopStage,
+  startWreathWorkshop,
+  hasAllMaterials,
+  deliverMaterials,
+  onWreathPlacedInVillage,
+} from './mushraWreathHandler';
 export * from './fairyBluebellsHandler';
 export * from './fairyQueenHandler';
 export {

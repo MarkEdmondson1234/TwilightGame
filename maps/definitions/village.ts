@@ -10,6 +10,7 @@ import {
   createDuckNPC,
   createSpringPeriwinkleNPC,
 } from '../../utils/npcFactories';
+import { createVillageMushraNPC } from '../../utils/npcs/forest/mushra';
 import { TIMING } from '../../constants';
 
 // Note: All NPCs now use factory functions from npcFactories.ts
@@ -63,32 +64,32 @@ import { TIMING } from '../../constants';
 
 const gridString = `
 oLULYoLtULoLtULUUULLU,LLGULJLG
-oe,eJlL,,L:lel:,,,,,loLL,l:l:G
-LoG,G,GeGG,,l,oG,G,,l:eeGGGLGG
-tG,G,,G,,,XXX,G,G,,,MlGG,yGGeG
+oe,eJlL],L:lel:,,,,,loLL,l:l:G
+LoG,G,GeGG],l,oG,G,,l:eeGGGLGG
+tG,G,,G,],XXX,G,G,,,MlGG,yGGeG
 LG,,c,,,G,XXX,c,,,e,P,GeGeGeGG
 oGol,;,GAGGP,l,,sG,;P,G,Gl,lGG
 Ytl,,,,,,G¬PPPPPPPPPP¬G,,,,cGG
 LG,,G,,,PPPP,G,,G,G",,,e,GlGLG
-tG,G,,,,PG,,,G,,J,,G,,,,eG,GeG
-Lc,,GJ,,P,G,,,PG,,G,,l,,,,,GLG
-JG,G,,,GP,,G,,PG,l,,lGGR,RG,,e
+tG,G,],,PG,,,G,,J,,G,,,,eG,GeG
+Lc,,GJ,,P,G,,,PG,,G,,l,],,,GLG
+JG,G,],GP,,G,,PG,l,,lGGR,RG,,e
 LJG,Gc,GPe%G,,PG,:,,GPR,,,eGGL
 oGc,l,,PG,G,,GP,c,G,lP,,,,PPPP
 LG,G,,,PPPPPPPPPPPPP,,,,k,,Gte
-tG,,G,,,G,.PG,l,,lGPPPPPP;;,eG
+tG,,G,],G,.PG,l,,lGPPPPPP;;,eG
 LPPPPPPPPPPPP,,,¬8,,,,G,,G,,,G
-oG,G,l,G,,,PG,cG,,Gl,lG,,l,GeY
+oG,G,l,G,],PG,cG,,Gl,lG,,l,GeY
 UoG,cG,,PPPPGGG,G,,=eG,,G,,G,t
 LG,G,GGGGGPG,,G,,G,i,,G,,l,GLG
-oGGG,,GGGGPG,G,,G,,,,G,,,G,,,G
+oGGG,,GGGGPG,G,,G,],,G,,,G,,,G
 LG,G,GGGGPPG,,G,,eG,G,,G,,,GoG
 ,G,,;",G,PPPG,,,,GJG,G,,5G,,Ge
 oG,G,,,8,HPPG;,G,,5,,,,,,l,GGU
 UG,cGXXXXXXPG,G,,c"",GK,5,,,eU
 GG,G,XXXXXXPPPPPPP¬G,G,,,,c,UJ
 LG,,GXXXXXX,G,lP,,G,,,,,G,e,GL
-JG,GG,,G,,;;G,,P,,GXXXXXG,5eGt
+JG,GG],G,,;;G,,P,,GXXXXXG,5eGt
 LG,,,G,G,,G,G,,PG,GXXXXXeG,,GU
 oGoc,,;;,G,,,G,P,,G,G,,l,U,,,,
 tLoGG,l,,lGL,´GLG,,L,L,LUoLL,,
@@ -106,6 +107,7 @@ export const village: MapDefinition = {
     H: TileType.PLAYER_HOME, // H = Player home (15x15 seasonal building)
     A: TileType.OLD_COTTAGE, // A = Old Cottage (village only, weathered cottage)
     '¬': TileType.GARDEN_LAMP, // ¬ = Garden lamp (lights up at dusk/night)
+    ']': TileType.PILE_OF_LEAVES, // ] = Pile of leaves (autumn-only, walkable)
   }),
   colorScheme: 'village',
   hasClouds: true,
@@ -230,5 +232,8 @@ export const village: MapDefinition = {
     // Spring Periwinkle - visiting rabbit, present for 3 days every 8-day cycle
     // Follows the little girl in spring/summer; moves to house2 with her in autumn/winter
     createSpringPeriwinkleNPC('spring_periwinkle', { x: 18, y: 9 }),
+    // Village Mushra - static NPC for wreath workshop (autumn only, days 1-7 + while quest active)
+    // Stands next to the crafting table at (15, 24) and doesn't wander
+    createVillageMushraNPC('village_mushra', { x: 14, y: 24 }),
   ],
 };

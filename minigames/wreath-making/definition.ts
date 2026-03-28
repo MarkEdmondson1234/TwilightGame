@@ -18,6 +18,7 @@ export const wreathMakingDefinition: MiniGameDefinition = {
   component: WreathMakingGame,
   triggers: {
     npcId: 'forest_mushra',
+    placedItemId: 'crafting_table',
   },
   customBackdrop: false,
 };

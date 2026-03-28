@@ -77,6 +77,7 @@ const WREATH_MATERIALS = [
   'crop_lavender',
   'heather_sprig',
   'straw',
+  'red_berries',
 ] as const;
 
 /** Visual colour associated with each flower for the slot border. */
@@ -102,6 +103,7 @@ const FLOWER_COLOURS: Record<string, string> = {
   crop_lavender: '#b19cd9',
   heather_sprig: '#9b6dbd',
   straw: '#d4a843',
+  red_berries: '#c0392b',
 };
 
 /** Shared style for the round zoom/size buttons. */

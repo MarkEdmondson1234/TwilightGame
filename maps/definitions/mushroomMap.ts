@@ -40,13 +40,13 @@ LGGGGGGGGiGGGGGGGGGGGGGGGGGGGL
 LGGeGGGGGGGG)GGuGGGGG4GGeGGGGL
 LGGGeGGe4GGGGmG7eeGGGeGGGGGGGL
 LGGGGuGGeGGGiGGeGGG7GGGGGuG7GL
-LGGyGGGGGGGGGGGGGGeGG7PGGGuGGL
+LGGyGGGGGG]GGGGGGGeGG7PGGGuGGL
 LGGGGGGGGaGGGGGGaGGGGPuGG9G¤uL
 L6GeGGGGGGG7GGGGG-GPPGGaGGeGGL
 LGG7GGGGGGuGGeeGuGPPGGGeeGeutL
 LGeGGmGGaGGGGxGGGPPaGeeGG7eGGL
 L7GGGGyGGG4GGeGPPGeGeeGGeGe7GL
-LGGGuGiGGGGGuG4GPGGuGGeGGxGeGL
+LGGGuGiGG]GGuG4GPGGuGGeGGxGeGL
 LGxGuGGiGGaGGGuuaPeGeGG4iGGeeL
 LGGGeGGG)GGGGuGGGGPeGxGGGieGtL
 LGeGGGGGGGGGGmG7eGGPPeiG)GuGGL
@@ -64,6 +64,7 @@ export const mushroomMap: MapDefinition = {
   height: 20,
   grid: parseGrid(gridString, {
     m: TileType.FOREST_MUSHROOM, // m = Forest mushroom (2x2, autumn-only forageable)
+    ']': TileType.PILE_OF_LEAVES, // ] = Pile of leaves (autumn-only, walkable)
   }),
   colorScheme: 'mushroom_forest', // Very dark forest floor with shadow colour
   hasClouds: true, // Outdoor area

@@ -4,7 +4,8 @@
 
 import { NPC, Direction, Position } from '../../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../../assets';
-import { createWanderingNPC } from '../createNPC';
+import { createWanderingNPC, createStaticNPC } from '../createNPC';
+import { QUEST_ID as WREATH_QUEST_ID } from '../../../data/questHandlers/mushraWreathHandler';
 
 /**
  * Create a Mushra NPC - young artist who lives in a mushroom house
@@ -315,5 +316,137 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       canBefriend: true,
       startingPoints: 0,
     },
+  });
+}
+
+/**
+ * Create a static village Mushra NPC for the autumn wreath workshop.
+ *
+ * Mushra stands next to her crafting table in the village on autumn days 1–7
+ * (and while the quest is active) offering to help decorate for the harvest
+ * festival. She is STATIC — she does NOT wander, so she stays next to the table.
+ *
+ * visibilityConditions: { season: 'autumn' } ensures she only appears in autumn.
+ */
+export function createVillageMushraNPC(id: string, position: Position): NPC {
+  return createStaticNPC({
+    id,
+    name: 'Mushra',
+    position,
+    direction: Direction.Down,
+    sprite: npcAssets.mushra_01,
+    portraitSprite: npcAssets.mushra_portrait,
+    dialogueExpressions: dialogueSpriteAssets.mushra,
+    scale: 4.0,
+    interactionRadius: 1.5,
+    collisionRadius: 0.35,
+    visibilityConditions: {
+      season: 'autumn',
+    },
+    dialogue: [
+      // ── Quest not yet started ────────────────────────────────────────────────
+      {
+        id: 'greeting',
+        expression: 'thinky',
+        text: '*Mushra waves you over, looking a little harried.* "Oh, thank goodness! I was hoping someone would come by. Elias asked me to help decorate the village for the harvest festival — he knows I love a creative project. But..." *She glances at her pile of materials.* "I\'m a bit overwhelmed, if I\'m honest. Would you like to help?"',
+        hiddenIfQuestStarted: WREATH_QUEST_ID,
+        responses: [
+          {
+            text: "I'd love to help!",
+            nextId: 'offer_accept',
+          },
+          {
+            text: "I'm a bit busy right now...",
+            nextId: 'offer_later',
+          },
+        ],
+      },
+      {
+        id: 'offer_accept',
+        expression: 'smile',
+        text: '*Mushra claps her hands together, visibly relieved.* "Oh, wonderful! I knew I could count on you. Right — I need some natural materials to make the wreaths. Could you gather: ten maple leaves, fifteen straws, five lavender, one red rose, and eight sprigs of heather? I\'ll start on the frame while you\'re out!"',
+        responses: [
+          {
+            text: "I'll get them right away!",
+            startsQuest: WREATH_QUEST_ID,
+          },
+        ],
+      },
+      {
+        id: 'offer_later',
+        expression: 'default',
+        text: '"Oh... no worries! I\'ll be here if you change your mind." *She smiles, though she looks a little anxious.*',
+      },
+      // ── Gathering stage (stageNumber 1) ──────────────────────────────────────
+      {
+        id: 'greeting',
+        expression: 'thinky',
+        text: '*Mushra looks up from her work.* "Any luck finding the materials? I need ten maple leaves, fifteen straws, five lavender, one red rose, and eight sprigs of heather."',
+        requiredQuest: WREATH_QUEST_ID,
+        requiredQuestStage: 1,
+        maxQuestStage: 1,
+        responses: [
+          {
+            text: "Here are the materials!",
+            nextId: 'wreath_deliver_materials',
+          },
+          {
+            text: "Not quite yet.",
+            nextId: 'gathering_encouragement',
+          },
+        ],
+      },
+      {
+        id: 'wreath_deliver_materials',
+        text: '...',
+        // Redirected by dialogueHandlers.handleVillageMushraActions
+      },
+      {
+        id: 'wreath_materials_accepted',
+        expression: 'smile',
+        text: '*Mushra\'s face lights up as she takes the materials.* "Perfect — this is exactly what I needed! Now, let me make a start on the first wreath..." *She busies herself at the table, and a minute later turns around with a beautiful wreath.* "Here you go! Could you hang this for me? Oh, and — could you help me make some more? There are four houses that each need one. You can craft more at my table!"',
+      },
+      {
+        id: 'wreath_materials_missing',
+        expression: 'thinky',
+        text: '"Hmm... it looks like you\'re still missing some of the materials. You need: ten maple leaves, fifteen straws, five lavender, one red rose, and eight sprigs of heather."',
+      },
+      {
+        id: 'gathering_encouragement',
+        expression: 'default',
+        text: '"No worries — take your time! Maple leaves can be gathered from piles blown together around the village and the forest. Straw comes from the meadow grass, and heather and lavender grow in the forest. The red rose — have a look at the rosebushes in the village!"',
+      },
+      // ── Hanging stage (stageNumber 2) ────────────────────────────────────────
+      {
+        id: 'greeting',
+        expression: 'smile',
+        text: '*Mushra gestures at the crafting table.* "You can make more wreaths here whenever you like! Each of the four houses in the village needs at least one decoration. Hang them near the front doors — the buildings you can actually enter. I\'ll be right here if you need anything."',
+        requiredQuest: WREATH_QUEST_ID,
+        requiredQuestStage: 2,
+        maxQuestStage: 2,
+        responses: [
+          {
+            text: 'Which houses need a decoration?',
+            nextId: 'hanging_houses',
+          },
+          {
+            text: 'Got it, I\'ll get to work!',
+          },
+        ],
+      },
+      {
+        id: 'hanging_houses',
+        expression: 'thinky',
+        text: '"There are four: your home, the north-west house, the cottage with the stone walls, and the smaller cottage near the farm plots. Walk up close to a building door and the option to hang a wreath should appear!"',
+      },
+      // ── Complete stage (stageNumber 3) ───────────────────────────────────────
+      {
+        id: 'greeting',
+        expression: 'smile',
+        text: '*Mushra beams at you.* "Frankly, I don\'t think I would have managed this without you! The village looks absolutely beautiful. And I\'ve moved my workshop to the seed shed — come and use it whenever you like!"',
+        requiredQuest: WREATH_QUEST_ID,
+        requiredQuestStage: 3,
+      },
+    ],
   });
 }

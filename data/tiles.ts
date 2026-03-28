@@ -963,6 +963,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 1x1 single-tile sprite (see SPRITE_METADATA)
   },
+  [TileType.PILE_OF_LEAVES]: {
+    name: 'Pile of Leaves',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.WALKABLE,
+    baseType: TileType.GRASS,
+    seasonalImages: {
+      spring: [],
+      summer: [],
+      autumn: [tileAssets.pile_of_leaves],
+      winter: [],
+      default: [],
+    },
+    // 2x2 multi-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending

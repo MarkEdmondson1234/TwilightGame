@@ -1,0 +1,53 @@
+# Mushra's Wreath Workshop - Help decorate the village for the harvest festival
+#
+# Triggered manually when player accepts Mushra's offer.
+# Mushra appears in the village in autumn (days 1-7) next to a crafting table.
+# She asks the player to gather materials, then hang wreaths on all 4 houses.
+# On completion, her crafting table moves permanently to the seed shed.
+#
+# Spawn/despawn of the crafting table is managed by WreathWorkshopManager.ts
+# Item delivery and wreath-hanging logic is in mushraWreathHandler.ts
+
+id: mushra_wreath_workshop
+title: Mushra's Wreath Workshop
+description: Help Mushra gather materials and hang wreaths on every house for the harvest festival.
+type: achievement
+
+trigger:
+  type: manual
+
+stages:
+  - id: gathering
+    stageNumber: 1
+    text: >
+      Mushra needs you to collect: 10 maple leaves, 15 straws, 5 lavender,
+      1 red rose, and 8 sprigs of heather for the wreath decorations.
+    dialogue:
+      village_mushra:
+        text: "Have you managed to find everything yet? No rush — just whenever you're ready."
+        expression: thinky
+
+  - id: hanging
+    stageNumber: 2
+    text: >
+      Mushra has made the first wreath! Help hang decorations on all four houses
+      in the village. You can craft more wreaths at the crafting table.
+    dialogue:
+      village_mushra:
+        text: "There are four houses that each need a decoration. You can craft more wreaths at my table!"
+        expression: smile
+
+  - id: complete
+    stageNumber: 3
+    text: >
+      All four houses are decorated! The village looks beautiful for the harvest festival.
+      Mushra's crafting table is now permanently in the seed shed.
+    event:
+      title: Village decorated for harvest festival
+      description: helped hang wreaths on every house in the village for the harvest festival
+      contributor: A helpful decorator
+    dialogue:
+      village_mushra:
+        text: "I've moved my workshop to the seed shed now. Come and use it whenever you like!"
+        expression: smile
+    end: true

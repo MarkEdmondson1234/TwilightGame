@@ -164,6 +164,7 @@ export enum TileType {
   SHRINKING_VIOLET, // Purple shrinking violet (1x1, blooms spring only)
   FROST_FLOWER, // Magical frost flower (1x1, only visible when snowing)
   HEATHER, // Purple heather (1x1, spring/summer visible, autumn blooms + forageable, winter dormant)
+  PILE_OF_LEAVES, // Autumn leaf pile — decorative, walkable, autumn-only (village/mushroom forest/bear cave)
   // Utility tiles
   INVISIBLE_WALL, // Blocks movement but renders as transparent (invisible boundary)
 }

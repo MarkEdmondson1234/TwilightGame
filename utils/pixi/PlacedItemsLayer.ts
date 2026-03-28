@@ -25,16 +25,22 @@ import { getItem } from '../../data/items';
 import { textureManager } from '../TextureManager';
 import { shouldShowDecayWarning } from '../itemDecayManager';
 import { PixiLayer } from './PixiLayer';
-import { Z_DEPTH_SORTED_BASE, Z_SPRITE_BACKGROUND } from '../../zIndex';
+import { Z_DEPTH_SORTED_BASE, Z_SPRITE_BACKGROUND, Z_SURFACE_DECORATION } from '../../zIndex';
 
 export class PlacedItemsLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private blinkState: Map<string, boolean> = new Map(); // Track blink state for each item
   private lastBlinkTime: number = 0;
   private depthContainer: PIXI.Container | null = null;
+  private onTextureLoaded: (() => void) | null = null;
 
   constructor() {
     super(Z_DEPTH_SORTED_BASE, true);
+  }
+
+  /** Set a callback to fire when an async texture finishes loading (used to trigger re-render) */
+  setOnTextureLoaded(cb: () => void): void {
+    this.onTextureLoaded = cb;
   }
 
   /**
@@ -119,7 +125,9 @@ export class PlacedItemsLayer extends PixiLayer {
 
         // item.image set but not yet in texture cache (e.g. seasonal decorations) — load async
         if (!texture && imageUrl) {
-          textureManager.loadTexture(imageUrl, imageUrl).catch((err) => {
+          textureManager.loadTexture(imageUrl, imageUrl).then(() => {
+            this.onTextureLoaded?.();
+          }).catch((err) => {
             console.warn(`[PlacedItemsLayer] Failed to load item image: ${err}`);
           });
           continue;
@@ -179,8 +187,11 @@ export class PlacedItemsLayer extends PixiLayer {
 
       // Depth sort: z-index based on bottom edge of item (like "feet" position)
       // Items with placesBelowCharacters use a fixed background z-level instead
+      // Items with placedOnSurface (e.g. wreaths on buildings) always render above all sprites
       if (itemDef?.placesBelowCharacters) {
         sprite.zIndex = Z_SPRITE_BACKGROUND;
+      } else if (itemDef?.placedOnSurface) {
+        sprite.zIndex = Z_SURFACE_DECORATION;
       } else {
         const bottomY = item.position.y + effectiveScale;
         sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(bottomY * 10);

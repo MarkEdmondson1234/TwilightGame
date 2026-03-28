@@ -109,6 +109,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.SHRINKING_VIOLET]: 'grass', // Shrinking violet sits on grass background
   [TileType.FROST_FLOWER]: 'grass', // Frost flower sits on grass background (weather-conditional)
   [TileType.HEATHER]: 'grass',
+  [TileType.PILE_OF_LEAVES]: 'grass',
   [TileType.GIANT_MUSHROOM]: 'grass',
   [TileType.SAMBUCA_BUSH]: 'grass',
   [TileType.DEAD_SPRUCE]: 'grass',

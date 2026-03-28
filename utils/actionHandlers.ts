@@ -24,7 +24,7 @@ import { getCropIdFromSeed, getItem, ItemCategory } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { WATER_CAN, TIMING, DEBUG } from '../constants';
 import { staminaManager } from './StaminaManager';
-import { itemAssets, groceryAssets } from '../assets';
+import { itemAssets, groceryAssets, magicalAssets } from '../assets';
 import { getTierName } from './MagicEffects';
 import { ForageResult, handleForageAction } from './forageHandlers';
 import { decorationManager } from './DecorationManager';
@@ -559,6 +559,49 @@ export function handleFarmAction(
     }
   }
 
+  // Check for red berry harvesting from adjacent hawthorn bushes (autumn only)
+  if (currentTool === 'hand') {
+    for (const tile of getSurroundingTiles(playerPos)) {
+      const adjacentTileData = getTileData(tile.x, tile.y);
+      if (adjacentTileData && adjacentTileData.type === TileType.BUSH) {
+        const currentSeason = TimeManager.getCurrentTime().season;
+
+        if (currentSeason !== Season.AUTUMN) {
+          return {
+            handled: false,
+            message: 'The hawthorn bush has no ripe berries yet.',
+            messageType: 'info',
+          };
+        }
+
+        if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
+          return {
+            handled: false,
+            message: `You've already picked from this bush. Come back tomorrow!`,
+            messageType: 'info',
+          };
+        }
+
+        if (!staminaManager.performActivity('harvest')) {
+          return { handled: false };
+        }
+
+        gameState.recordForage(currentMapId, tile.x, tile.y);
+
+        const berryYield = Math.floor(Math.random() * 4) + 3; // 3–6
+        inventoryManager.addItem('red_berries', berryYield);
+
+        const inventoryData = inventoryManager.getInventoryData();
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
+
+        const message = `Picked ${berryYield} red berries!`;
+        if (DEBUG.FARM) console.log(`[Action] ${message}`);
+        onAnimationTrigger?.('harvest');
+        return { handled: true, message, messageType: 'success' };
+      }
+    }
+  }
+
   // Check if this is a farm tile or farm action (check both visual tile and plot state)
   if (
     (tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) ||
@@ -1063,7 +1106,10 @@ export type InteractionType =
   | 'open_mini_game'
   | 'fireplace_tea'
   | 'yule_begin_celebration'
-  | 'add_to_basket';
+  | 'add_to_basket'
+  | 'harvest_red_berries'
+  | 'tidy_leaves'
+  | 'pickup_leaves';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -1133,6 +1179,24 @@ export interface GetInteractionsConfig {
   onBeginYuleCelebration?: () => void;
   /** Open a mini-game by ID with trigger data */
   onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
+}
+
+/**
+ * Handle interacting with a pile of leaves — either tidying (no reward) or picking up (gives maple_leaf).
+ * Sets the forage cooldown either way so the player can't use both options on the same pile.
+ */
+function handleLeavesAction(
+  mode: 'tidy' | 'pickup',
+  pos: { x: number; y: number },
+  mapId: string
+): void {
+  gameState.recordForage(mapId, pos.x, pos.y);
+  if (mode === 'pickup') {
+    const qty = Math.random() < 0.5 ? 1 : 2;
+    inventoryManager.addItem('maple_leaf', qty);
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+  }
 }
 
 /**
@@ -1700,6 +1764,50 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     });
   }
 
+  // Check for red berry harvesting from adjacent hawthorn bushes (autumn only)
+  const hasHawthornBush = adjacentTiles.some((tile) => {
+    const adjacentTileData = getTileData(tile.x, tile.y);
+    return adjacentTileData && adjacentTileData.type === TileType.BUSH;
+  });
+
+  if (hasHawthornBush) {
+    const currentSeason = TimeManager.getCurrentTime().season;
+    if (currentSeason === Season.AUTUMN) {
+      interactions.push({
+        type: 'harvest_red_berries',
+        label: 'Pick Red Berries',
+        icon: magicalAssets.red_berries,
+        color: '#b91c1c',
+        execute: () => {
+          const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
+          onFarmAction?.(farmResult);
+        },
+      });
+    }
+  }
+
+  // Check for leaf pile interactions (tidy up or pick up — autumn decorative tile)
+  const nearLeaves = findTileTypeNearby(tileX, tileY, [TileType.PILE_OF_LEAVES]);
+  if (nearLeaves.found && nearLeaves.position) {
+    const leavesPos = nearLeaves.position;
+    if (!gameState.isForageTileOnCooldown(currentMapId, leavesPos.x, leavesPos.y, TIMING.FORAGE_COOLDOWN_MS)) {
+      interactions.push({
+        type: 'tidy_leaves',
+        label: 'Tidy Up',
+        icon: '🧹',
+        color: '#a0855a',
+        execute: () => handleLeavesAction('tidy', leavesPos, currentMapId),
+      });
+      interactions.push({
+        type: 'pickup_leaves',
+        label: 'Pick Up',
+        icon: magicalAssets.maple_leaf,
+        color: '#c0782a',
+        execute: () => handleLeavesAction('pickup', leavesPos, currentMapId),
+      });
+    }
+  }
+
   // Check for fruit tree interactions (prune / mulch / harvest)
   const nearAppleTree = findTileTypeNearby(tileX, tileY, [TileType.APPLE_TREE], 1);
   if (nearAppleTree.found && nearAppleTree.position) {
@@ -2263,7 +2371,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     const isIndoorMap = currentMap?.colorScheme === 'indoor' || currentMap?.colorScheme === 'shop';
     const isWalkable = tileData.collisionType === CollisionType.WALKABLE;
     const heldItem = getItem(currentTool);
-    const canPlaceHere = isWalkable && (isIndoorMap || heldItem?.allowOutdoorPlacement);
+    const tileOk = isWalkable || heldItem?.allowAnyTilePlacement;
+    const canPlaceHere = tileOk && (isIndoorMap || heldItem?.allowOutdoorPlacement);
 
     if (canPlaceHere) {
       const itemDef = heldItem;

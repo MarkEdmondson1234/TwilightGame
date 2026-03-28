@@ -41,6 +41,7 @@ import { DEFAULT_REFERENCE_VIEWPORT } from './useViewportScale';
 import type { Season } from '../data/shopInventory';
 import { MovementMode } from '../utils/tileCategories';
 import { getCachedPerformanceSettings } from '../utils/performanceTier';
+import { eventBus, GameEvent } from '../utils/EventBus';
 
 // Weather type
 type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -308,6 +309,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         const placedItemsLayer = new PlacedItemsLayer();
         placedItemsLayerRef.current = placedItemsLayer;
         placedItemsLayer.setDepthContainer(depthSortedContainer);
+        placedItemsLayer.setOnTextureLoaded(() => {
+          eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: mapManager.getCurrentMapId() ?? 'village' });
+        });
         app.stage.addChild(placedItemsLayer.getContainer());
 
         // Create thought bubble layer (added to depthSortedContainer for correct world-space positioning)

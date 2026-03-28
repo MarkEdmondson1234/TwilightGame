@@ -33,12 +33,12 @@ LGGGGenGGdGGGGGGGGbGGYGGtGGYGL
 LGGtGGGGGGGGGdGGGGtGGeGYjGeGGL
 LGGGGtGGGhGGGGGGGGGtGGtGGGbGGL
 LtGnGGYGGGGGGGGGGGGGGGGGYGtGGL
-LGGYGGGtGGGGGGGGGGGGGGGtGGtGGL
+LGGY]GGtGGGGGGGGGGGGGGGtGGtGGL
 LGGGGGGGGGGG{GGGGGGGGGGGbGtGGL
-LGGeGGGGGGGGGGGGGGGGGGGGGGGGtL
+LGGe]GGGGGGGGGGGGGGGGGGGGGGGtL
 LYGGjGGGGGGGGGGGGGnGGYGGGGYGLG
 LGGjGYGGGGGGGGGGGGGGGGGGtGGGGL
-LGnGeGGGGdGGPGGGGdGGGGPPPGGGtG
+LGnGeG]GGdGGPGGGGdGGGGPPPGGGtG
 tGYGtGnGdGGPGGGGGGGGGtGePbGGGL
 LtGeGGGGGGPGGGGGGGGGGGGGPGeYGL
 LGGnGGGhGPGGGGGGdGGGGhYePGGtGL
@@ -53,7 +53,9 @@ export const bearCave: MapDefinition = {
   name: "Bear's Cave Clearing",
   width: 30,
   height: 20,
-  grid: parseGrid(gridString),
+  grid: parseGrid(gridString, {
+    ']': TileType.PILE_OF_LEAVES, // ] = Pile of leaves (autumn-only, walkable)
+  }),
   colorScheme: 'bear_cave', // Cozy outdoor clearing without darkness overlay
   hasClouds: true, // Outdoor area with sky
   isRandom: false,

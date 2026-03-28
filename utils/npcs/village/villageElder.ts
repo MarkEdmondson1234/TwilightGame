@@ -9,6 +9,7 @@ import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 import { GARDENING_QUEST_ID, GARDENING_QUEST_STAGES } from '../../../data/questHandlers/gardeningQuestHandler';
 import { FAIRY_BLUEBELLS_QUEST_ID } from '../../../data/questHandlers/fairyBluebellsHandler';
+import { WREATH_WORKSHOP_QUEST_ID } from '../../../data/questHandlers';
 
 export function createVillageElderNPC(
   id: string,
@@ -421,6 +422,14 @@ export function createVillageElderNPC(
         id: 'fairy_bluebells_complete',
         text: '*Tears well in his eyes.* Thou hast done it! Althea will be so happy with the violets, and the bear will feast well. As promised, here is my most treasured possession - a fairy bluebell seed. Plant it with care, and watch it closely at night. The old tales say... but I shall let thee discover that for thyself. Thank thee, dear friend. Truly.',
         requiredQuest: FAIRY_BLUEBELLS_QUEST_ID,
+      },
+
+      // ===== MUSHRA'S WREATH WORKSHOP =====
+      {
+        id: 'wreath_workshop_praise',
+        text: "*He gestures at the wreaths adorning the village buildings with a broad smile.* What a wonderful job thou didst helping young Mushra with those wreaths! The village has never looked so beautiful for the harvest festival. She was quite nervous asking anyone — I'm so glad she found thee.",
+        requiredQuest: WREATH_WORKSHOP_QUEST_ID,
+        requiredQuestStage: 3, // complete stage
       },
 
       // ===== ENCYCLOPEDIC KNOWLEDGE =====
