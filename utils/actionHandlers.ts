@@ -2166,6 +2166,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           TileType.MUSTARD_FLOWER,
           TileType.SHRINKING_VIOLET,
           TileType.FROST_FLOWER,
+          TileType.HEATHER,
           TileType.DEAD_SPRUCE,
           TileType.GIANT_MUSHROOM,
           TileType.SAKURA_TREE,

@@ -211,6 +211,8 @@ export const tileAssets = {
   forest_mushrooms: '/TwilightGame/assets-optimized/tiles/forest/forest_mushrooms.png',
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',
   shrinking_violet: '/TwilightGame/assets-optimized/tiles/forest/shrinking_violet.png',
+  heather_spring_summer: '/TwilightGame/assets-optimized/tiles/forest/heather_spring-summer.png',
+  heather_autumn: '/TwilightGame/assets-optimized/tiles/forest/heather_autumn.png',
   frost_flower_bloom: '/TwilightGame/assets-optimized/tiles/ruins/frost_flower_bloom.png',
   // Ruins entrance assets (seasonal variations - 8x8 multi-tile sprite)
   ruins_entrance_spring_summer:
@@ -449,6 +451,7 @@ export const magicalAssets = {
   phoenix_ash: '/TwilightGame/assets-optimized/items/magical/shop/phoenix_ash.png',
   rose_crop: '/TwilightGame/assets-optimized/items/rose_crop.png',
   rose_red_crop: '/TwilightGame/assets-optimized/items/rose_red_crop.png',
+  heather_sprig: '/TwilightGame/assets-optimized/items/decoration/heather_sprig.png',
 };
 
 // Potion assets - Brewed magical potions (results from brewing recipes)

@@ -1620,6 +1620,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     forageSuccessRate: 0.85,
   },
 
+  heather_sprig: {
+    id: 'heather_sprig',
+    name: 'heather_sprig',
+    displayName: 'Heather Sprig',
+    category: ItemCategory.MAGICAL_INGREDIENT,
+    description: 'A sprig of purple heather, gathered in the brief window of autumn bloom. Sweet-scented and long-lasting.',
+    rarity: ItemRarity.UNCOMMON,
+    stackable: true,
+    sellPrice: 18,
+    image: magicalAssets.heather_sprig,
+    forageSuccessRate: 0.75,
+  },
+
   phoenix_ash: {
     id: 'phoenix_ash',
     name: 'phoenix_ash',

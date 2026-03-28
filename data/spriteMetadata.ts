@@ -315,6 +315,23 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     scaleRange: { min: 0.9, max: 1.1 }, // Slight variation: 90% to 110%
   },
   {
+    tileType: TileType.HEATHER,
+    spriteWidth: 1,
+    spriteHeight: 1,
+    offsetX: 0,
+    offsetY: 0,
+    image: tileAssets.heather_spring_summer,
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+    enableFlip: true,
+    enableRotation: false,
+    enableScale: true,
+    enableBrightness: false,
+    scaleRange: { min: 0.9, max: 1.1 },
+  },
+  {
     tileType: TileType.MUSHROOM_CLUSTER,
     spriteWidth: 2, // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall (square image)

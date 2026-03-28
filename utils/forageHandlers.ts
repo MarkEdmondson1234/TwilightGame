@@ -69,6 +69,7 @@ const RARE_FORAGE_ITEMS = new Set([
   'luminescent_toadstool',
   'shrinking_violet',
   'frost_flower',
+  'heather_sprig',
   'fly_agaric',
   'fairy_bluebell',
   'ghost_lichen',
@@ -152,6 +153,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     TileType.FOREST_MUSHROOM,
     TileType.MUSTARD_FLOWER,
     TileType.FROST_FLOWER,
+    TileType.HEATHER,
   ]);
   if (forageableResult.found && forageableResult.position) {
     cooldownCheckPos = forageableResult.position;
@@ -589,6 +591,58 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       seedId: 'wolfsbane', // Reuse field for item ID
       seedName: wolfsbane.displayName,
       message: `Found ${quantityFound} ${wolfsbane.displayName}!`,
+    };
+  }
+
+  // Heather foraging (forest, autumn only)
+  const heatherResult = findTileTypeNearby(playerTileX, playerTileY, TileType.HEATHER);
+  const heatherAnchor = heatherResult.found ? heatherResult.position : null;
+
+  if (heatherAnchor) {
+    const { season } = TimeManager.getCurrentTime();
+
+    if (season !== Season.AUTUMN) {
+      const msg =
+        season === Season.WINTER
+          ? "The heather is buried under the frost. It blooms in autumn."
+          : "The heather isn't in bloom yet. Come back in autumn.";
+      return { found: false, message: msg };
+    }
+
+    if (
+      gameState.isForageTileOnCooldown(
+        currentMapId,
+        heatherAnchor.x,
+        heatherAnchor.y,
+        TIMING.FORAGE_COOLDOWN_MS
+      )
+    ) {
+      return { found: false, message: "You've already gathered from this heather today." };
+    }
+
+    const heatherSprig = getItem('heather_sprig');
+    if (!heatherSprig) {
+      console.error('[Forage] heather_sprig item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    const successRate = heatherSprig.forageSuccessRate ?? 0.75;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      gameState.recordForage(currentMapId, heatherAnchor.x, heatherAnchor.y);
+      return { found: false, message: 'You search the heather, but find no sprigs worth taking.' };
+    }
+
+    const quantityFound = rollForageQuantity();
+    inventoryManager.addItem('heather_sprig', quantityFound);
+    saveForageResult(currentMapId, heatherAnchor.x, heatherAnchor.y, 'heather_sprig');
+
+    return {
+      found: true,
+      seedId: 'heather_sprig',
+      seedName: heatherSprig.displayName,
+      message: `Found ${quantityFound} ${heatherSprig.displayName}!`,
     };
   }
 

@@ -949,6 +949,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     // 1x1 single-tile sprite (see SPRITE_METADATA)
   },
+  [TileType.HEATHER]: {
+    name: 'Heather',
+    color: 'bg-palette-sage',
+    collisionType: CollisionType.WALKABLE,
+    baseType: TileType.GRASS,
+    seasonalImages: {
+      spring: [tileAssets.heather_spring_summer],
+      summer: [tileAssets.heather_spring_summer],
+      autumn: [tileAssets.heather_autumn],
+      winter: [], // Dormant under snow
+      default: [tileAssets.heather_spring_summer],
+    },
+    // 1x1 single-tile sprite (see SPRITE_METADATA)
+  },
   [TileType.VILLAGE_FLOWERS]: {
     name: 'Village Flowers',
     color: 'bg-palette-sage', // Base grass color for blending
