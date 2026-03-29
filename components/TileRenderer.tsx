@@ -142,9 +142,13 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                                 } else if (growthStage === 1) { // YOUNG
                                     // Use crop-specific young sprite if available, otherwise use generic
                                     selectedImage = (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
-                                } else { // ADULT
-                                    // Use crop-specific adult sprite if available, otherwise use generic
-                                    selectedImage = (farmingAssets as any)[`plant_${cropType}_adult`] || farmingAssets.seedling;
+                                } else { // ADULT — dormant herbs may use a winter-specific sprite
+                                    const winterKey = `plant_${cropType}_winter`;
+                                    const adultKey = `plant_${cropType}_adult`;
+                                    selectedImage =
+                                        (isHerbDormant && (farmingAssets as any)[winterKey])
+                                            ? (farmingAssets as any)[winterKey]
+                                            : (farmingAssets as any)[adultKey] || farmingAssets.seedling;
                                 }
                             } else {
                                 // Use a separate hash for image selection to avoid bias

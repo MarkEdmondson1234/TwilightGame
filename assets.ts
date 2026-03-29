@@ -323,6 +323,7 @@ export const farmingAssets = {
   // Herbs — adult sprites used on the tile (shared key pattern: plant_<cropId>_adult)
   plant_thyme_adult: '/TwilightGame/assets-optimized/herbs/plant_thyme.png',
   plant_lavender_adult: '/TwilightGame/assets-optimized/herbs/lavender_bush.png',
+  plant_lavender_winter: '/TwilightGame/assets-optimized/herbs/lavender_winter.png',
   plant_mint_adult: '/TwilightGame/assets-optimized/herbs/mint_bush.png',
 };
 
