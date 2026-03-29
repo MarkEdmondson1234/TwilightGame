@@ -107,6 +107,12 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
+    itemId: 'buttermilk',
+    buyPrice: 12,
+    sellPrice: 4,
+    stock: 'unlimited',
+  },
+  {
     itemId: 'cheese',
     buyPrice: 20,
     sellPrice: 8,

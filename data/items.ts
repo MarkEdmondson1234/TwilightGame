@@ -796,6 +796,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.butter,
   },
 
+  buttermilk: {
+    id: 'buttermilk',
+    name: 'buttermilk',
+    displayName: 'Buttermilk',
+    category: ItemCategory.INGREDIENT,
+    description: 'Tangy buttermilk, perfect for baking fluffy cakes.',
+    stackable: true,
+    sellPrice: 4,
+    buyPrice: 12,
+    image: groceryAssets.buttermilk,
+  },
+
   cheese: {
     id: 'cheese',
     name: 'cheese',
@@ -806,18 +818,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 8,
     buyPrice: 6, // Was 20
     image: groceryAssets.cheese,
-  },
-
-  buttermilk: {
-    id: 'buttermilk',
-    name: 'buttermilk',
-    displayName: 'Buttermilk',
-    category: ItemCategory.INGREDIENT,
-    description: 'Tangy cultured buttermilk. Perfect for baking.',
-    stackable: true,
-    sellPrice: 4,
-    buyPrice: 3, // Was 10
-    // Note: No buttermilk sprite yet - add buttermilk.png to grocery folder
   },
 
   almonds: {

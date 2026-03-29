@@ -373,6 +373,7 @@ export const groceryAssets = {
   basil: '/TwilightGame/assets-optimized/items/grocery/basil.png',
   bread: '/TwilightGame/assets-optimized/items/grocery/bread.png',
   butter: '/TwilightGame/assets-optimized/items/grocery/butter.png',
+  buttermilk: '/TwilightGame/assets-optimized/items/grocery/buttermilk.png',
   canned_tomato: '/TwilightGame/assets-optimized/items/grocery/canned_tomato.png',
   canned_tuna: '/TwilightGame/assets-optimized/items/grocery/canned_tuna.png',
   carrot_bunch: '/TwilightGame/assets-optimized/items/grocery/carrot_bunch.png',
