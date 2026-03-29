@@ -185,12 +185,12 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Cauliflower Seeds',
     category: ItemCategory.SEED,
     description: 'Creamy cauliflower seeds. Lovely roasted.',
+    image: farmingAssets.plant_cauliflower_young,
     rarity: ItemRarity.UNCOMMON,
     stackable: true,
     sellPrice: 12,
     buyPrice: 25,
     cropId: 'cauliflower',
-    icon: '🥬',
   },
 
   // Friendship seeds (from Old Man - no buy price)
@@ -466,9 +466,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Cauliflower',
     category: ItemCategory.CROP,
     description: 'Creamy white cauliflower.',
+    image: farmingAssets.plant_cauliflower_adult,
     stackable: true,
     sellPrice: 45,
-    icon: '🥬',
   },
 
   crop_sunflower: {
