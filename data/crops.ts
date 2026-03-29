@@ -326,7 +326,7 @@ export const CROPS: Record<string, CropDefinition> = {
     rarity: CropRarity.UNCOMMON,
     seedSource: 'friendship',
     dualHarvest: {
-      flowerOption: { label: 'Pick Flowers', icon: '🌻', color: '#eab308', cropYield: 1, seedYield: 0, flowerItemId: 'decoration_sunflower_bouquet' },
+      flowerOption: { label: 'Pick Flowers', icon: '🌻', color: '#eab308', cropYield: 1, seedYield: 0, flowerItemId: 'crop_sunflower' },
       seedOption: { label: 'Harvest Seeds', icon: '🌰', color: '#92400e', cropYield: 0, seedYield: 6 },
     },
   },

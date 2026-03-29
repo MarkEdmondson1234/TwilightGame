@@ -479,7 +479,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A bright, cheerful sunflower.',
     stackable: true,
     sellPrice: 50,
-    image: farmingAssets.plant_sunflower_adult,
+    image: itemAssets.sunflower_crop,
     icon: '🌻',
   },
 
@@ -2064,6 +2064,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     category: ItemCategory.DECORATION,
     description: 'A cheerful bouquet of sunflowers. Brightens up any room!',
     stackable: true,
+    buyPrice: 80,
     sellPrice: 30,
     image: itemAssets.sunflower_bouquet,
     icon: '🌻',

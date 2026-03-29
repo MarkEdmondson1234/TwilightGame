@@ -758,6 +758,7 @@ export const itemAssets = {
   // Decorations
   sunflower_bouquet:
     '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',
+  sunflower_crop: '/TwilightGame/assets-optimized/items/decoration/sunflower_crop.png',
   straw: '/TwilightGame/assets-optimized/items/decoration/straw.png',
   easel: '/TwilightGame/assets-optimized/items/crafting/easel.png',
   crafting_table: '/TwilightGame/assets-optimized/items/crafting/crafting_table.png',

@@ -39,7 +39,7 @@ export const SEASONAL_SEEDS: Record<
   spring: [
     { itemId: 'seed_tomato', quantity: 3 },
     { itemId: 'seed_pea', quantity: 5 },
-    { itemId: 'seed_sunflower', quantity: 2 },
+    { itemId: 'seed_sunflower', quantity: 5 },
   ],
   summer: [
     { itemId: 'seed_carrot', quantity: 3 },

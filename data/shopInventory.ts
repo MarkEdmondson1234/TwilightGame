@@ -326,6 +326,13 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
 
   // Seasonal produce (fresh from local farms)
   {
+    itemId: 'decoration_sunflower_bouquet',
+    buyPrice: 80,
+    sellPrice: 30,
+    stock: 'unlimited',
+    availableSeasons: ['summer'],
+  },
+  {
     itemId: 'crop_blackberry',
     buyPrice: 50,
     sellPrice: 35, // Better sell price than normal (shop buys at 70% instead of 60%)
