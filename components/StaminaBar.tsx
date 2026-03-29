@@ -13,7 +13,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { TILE_SIZE, STAMINA } from '../constants';
+import { TILE_SIZE, STAMINA, PLAYER_SIZE } from '../constants';
 import { gameState } from '../GameState';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { Z_HUD } from '../zIndex';
@@ -47,9 +47,12 @@ export function StaminaBar({
   const percentage = max > 0 ? (current / max) * 100 : 0;
   const isLow = percentage <= lowThreshold;
 
-  // Calculate screen position (centered above player head)
-  const screenX = playerX * TILE_SIZE - cameraX;
-  const screenY = playerY * TILE_SIZE - cameraY - 20; // 20px above player
+  // Calculate screen position (centred above player head)
+  const BAR_WIDTH = 64;
+  const BAR_HEIGHT = 8;
+  const HALF_PLAYER_PX = Math.round((PLAYER_SIZE * TILE_SIZE) / 2); // 26px
+  const screenX = playerX * TILE_SIZE - cameraX - BAR_WIDTH / 2 - 11;   // centred on player
+  const screenY = playerY * TILE_SIZE - cameraY - HALF_PLAYER_PX - BAR_HEIGHT - 20; // 20px above head
 
   // Only show if: hovered, low stamina, or always (for debugging)
   const shouldShow = isHovered || isLow;
@@ -59,8 +62,8 @@ export function StaminaBar({
     position: 'absolute',
     left: screenX - 8, // Slightly wider than bar
     top: screenY - 10, // Slightly taller than bar
-    width: 80, // 64 + 16 padding
-    height: 24, // 8 + 16 padding
+    width: BAR_WIDTH + 16,
+    height: BAR_HEIGHT + 16,
     cursor: 'pointer',
     zIndex: Z_HUD, // Above player, below weather
   };
@@ -69,8 +72,8 @@ export function StaminaBar({
     position: 'absolute',
     left: screenX,
     top: screenY,
-    width: 64, // 1 tile wide
-    height: 8,
+    width: BAR_WIDTH,
+    height: BAR_HEIGHT,
     backgroundColor: 'rgba(30, 41, 59, 0.8)', // slate-800 with transparency
     borderRadius: 4,
     border: '1px solid rgba(71, 85, 105, 0.8)', // slate-600
