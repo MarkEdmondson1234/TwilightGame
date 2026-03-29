@@ -68,7 +68,7 @@ oe,eJlL],L:lel:,,,,,loLL,l:l:G
 LoG,G,GeGG],l,oG,G,,l:eeGGGLGG
 tG,G,,G,],XXX,G,G,,,MlGG,yGGeG
 LG,,c,,,G,XXX,c,,,e,P,GeGeGeGG
-oGol,;,GAGGP,l,,sG,;P,G,Gl,lGG
+oGol,;,GAGGP,l,,GG,;P,G,Gl,lGG
 Ytl,,,,,,G¬PPPPPPPPPP¬G,,,,cGG
 LG,,G,,,PPPP,G,,G,G",,,e,GlGLG
 tG,G,],,PG,,,G,,J,,G,,,,eG,GeG
@@ -115,7 +115,7 @@ export const village: MapDefinition = {
   spawnPoint: { x: 15, y: 27 }, // On the path below the home building
   transitions: [
     {
-      fromPosition: { x: 9.5, y: 21 }, // Player home door (bottom of 13x13 sprite, anchor H at y=22)
+      fromPosition: { x: 10.0, y: 21 }, // Player home door (bottom of 13x13 sprite, anchor H at y=22)
       tileType: TileType.PLAYER_HOME,
       toMapId: 'mums_kitchen',
       toPosition: { x: 10, y: 22 },
@@ -131,7 +131,7 @@ export const village: MapDefinition = {
       hasDoor: true,
     },
     {
-      fromPosition: { x: 23.5, y: 13 }, // Cottage medium (Little Girl's house)
+      fromPosition: { x: 24.0, y: 13 }, // Cottage medium (Little Girl's house)
       tileType: TileType.COTTAGE_STONE,
       toMapId: 'house2',
       toPosition: { x: 3, y: 4 },
@@ -139,7 +139,7 @@ export const village: MapDefinition = {
       hasDoor: true,
     },
     {
-      fromPosition: { x: 11.5, y: 12.5 }, // Shop building (next to fox)
+      fromPosition: { x: 12.0, y: 12.5 }, // Shop building (next to fox)
       tileType: TileType.SHOP,
       toMapId: 'shop',
       toPosition: { x: 10, y: 8 }, // Center of walkable floor in shop (19x11 grid)
@@ -147,7 +147,7 @@ export const village: MapDefinition = {
       hasDoor: true,
     },
     {
-      fromPosition: { x: 21.4, y: 24 }, // Cottage entrance (K tile)
+      fromPosition: { x: 21.9, y: 24 }, // Cottage entrance (K tile)
       tileType: TileType.COTTAGE,
       toMapId: 'cottage_interior',
       toPosition: { x: 0, y: 8 }, // Bottom left near door

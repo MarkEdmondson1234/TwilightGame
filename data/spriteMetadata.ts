@@ -483,7 +483,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     tileType: TileType.PLAYER_HOME,
     spriteWidth: 13, // 13 tiles wide (large seasonal home)
     spriteHeight: 13, // 13 tiles tall
-    offsetX: -6, // Centre horizontally: sprite spans x=anchor-6 to x=anchor+7
+    offsetX: -5.5, // Shifted +0.5 right so door aligns to whole tile
     offsetY: -12, // Anchor at door (bottom): sprite spans y=anchor-12 to y=anchor+1
     image: tileAssets.home_spring,
     enableFlip: false,
@@ -493,14 +493,14 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // Block the main building body; leave bottom open for the door area
     collisionWidth: 11,
     collisionHeight: 5,
-    collisionOffsetX: -5,
+    collisionOffsetX: -4.5,
     collisionOffsetY: -6, // Upper portion of sprite (walls, windows, roof)
   },
   {
     tileType: TileType.COTTAGE,
     spriteWidth: 6, // 6 tiles wide (actual cottage width)
     spriteHeight: 6, // 5 tiles tall (actual cottage height)
-    offsetX: -3, // Offset to center cottage
+    offsetX: -2.5, // Shifted +0.5 right so door aligns to whole tile
     offsetY: -4, // Extends upward from K tile
     image: tileAssets.cottage_wooden,
     enableFlip: false,
@@ -510,7 +510,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // Collision at the front wall (full width, but only bottom 2 rows)
     collisionWidth: 4.0,
     collisionHeight: 2.5,
-    collisionOffsetX: -1.7,
+    collisionOffsetX: -1.2,
     collisionOffsetY: -1.2, // Just the bottom 2 rows (player can walk behind roof/chimney)
   },
   {
@@ -693,7 +693,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     tileType: TileType.COTTAGE_STONE,
     spriteWidth: 9,  // 9×9 tile footprint (square image)
     spriteHeight: 8,
-    offsetX: -4.5,   // centres sprite horizontally on anchor tile
+    offsetX: -4.0,   // Shifted +0.5 right so door aligns to whole tile
     offsetY: -6.5,   // sprite extends mostly upward; bottom 1.5 tiles below anchor
     image: tileAssets.cottage_medium_spring, // seasonal rendering overrides at runtime
     enableFlip: false,
@@ -703,14 +703,14 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // Collision covers most of the base; tune after map placement
     collisionWidth: 7.0,
     collisionHeight: 2.5,
-    collisionOffsetX: -3.0,
+    collisionOffsetX: -2.5,
     collisionOffsetY: -2,
   },
   {
     tileType: TileType.SHOP,
     spriteWidth: 6, // 6 tiles wide (shop building width)
     spriteHeight: 6, // 6 tiles tall (shop building height)
-    offsetX: -1, // Offset to center shop
+    offsetX: -0.5, // Shifted +0.5 right so door aligns to whole tile
     offsetY: -4, // Extends upward from anchor tile
     image: tileAssets.shop_spring, // Default image (overridden by seasonalImages in TILE_LEGEND)
     enableFlip: false,
@@ -720,7 +720,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     // Collision at the front of the shop (player cannot walk through building)
     collisionWidth: 4.8,
     collisionHeight: 4.4,
-    collisionOffsetX: -0.3,
+    collisionOffsetX: 0.2,
     collisionOffsetY: -2.2, // Just the bottom area (player can walk behind roof)
   },
   {
