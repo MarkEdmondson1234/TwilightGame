@@ -52,7 +52,7 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
   { itemId: 'seed_pumpkin', buyPrice: 50, sellPrice: 25, stock: 'unlimited' },
   { itemId: 'seed_onion', buyPrice: 12, sellPrice: 5, stock: 'unlimited' },
   { itemId: 'seed_broccoli', buyPrice: 20, sellPrice: 10, stock: 'unlimited' },
-  { itemId: 'seed_cauliflower', buyPrice: 25, sellPrice: 12, stock: 'unlimited' },
+  { itemId: 'seed_cauliflower', buyPrice: 25, sellPrice: 12, stock: 'unlimited', availableSeasons: ['spring'] },
   { itemId: 'seed_potato', buyPrice: 5, sellPrice: 2, stock: 'unlimited' },
   { itemId: 'seed_pea', buyPrice: 8, sellPrice: 3, stock: 'unlimited' },
   { itemId: 'seed_salad', buyPrice: 7, sellPrice: 3, stock: 'unlimited' },
