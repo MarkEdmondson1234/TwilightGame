@@ -122,6 +122,35 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             )}
           </button>
 
+          {/* Photo Album - 175×1000 natural ratio */}
+          <button
+            onClick={handlePhotoAlbumClick}
+            onTouchStart={(e) => handleBookTouch('photoAlbum', onPhotoAlbumOpen, e)}
+            className={`
+              origin-bottom-left transition-all duration-300 ease-out
+              focus:outline-none rounded block hover:z-10
+              active:scale-95 focus:ring-2 focus:ring-amber-400 cursor-pointer
+              ${expandedBook === 'photoAlbum' ? 'scale-100 z-10' : 'scale-[0.33]'}
+              ${!isTouchDevice ? 'hover:scale-100' : ''}
+            `}
+            style={{
+              // Pull next book closer when shrunk (70px * 0.67 = ~47px of empty space)
+              marginRight: expandedBook === 'photoAlbum' ? '0px' : '-47px',
+            }}
+            title="Photo Album"
+          >
+            <img
+              src={uiAssets.book_photo_album}
+              alt="Photo Album"
+              className="drop-shadow-2xl block"
+              style={{
+                imageRendering: 'auto',
+                width: 'auto',
+                height: '400px',
+              }}
+            />
+          </button>
+
           {/* Recipe Book - 93×398 natural ratio */}
           <button
             onClick={handleRecipeBookClick}
@@ -155,16 +184,12 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             onClick={handleJournalClick}
             onTouchStart={(e) => handleBookTouch('journal', onJournalOpen, e)}
             className={`
-              relative origin-bottom-left transition-all duration-300 ease-out
+              origin-bottom-left transition-all duration-300 ease-out
               focus:outline-none rounded block hover:z-10
               active:scale-95 focus:ring-2 focus:ring-green-400 cursor-pointer
               ${expandedBook === 'journal' ? 'scale-100 z-10' : 'scale-[0.33]'}
               ${!isTouchDevice ? 'hover:scale-100' : ''}
             `}
-            style={{
-              // Pull next book closer when shrunk (112px * 0.67 = ~75px of empty space)
-              marginRight: expandedBook === 'journal' ? '0px' : '-75px',
-            }}
             title="Journal"
           >
             <img
@@ -177,38 +202,6 @@ const Bookshelf: React.FC<BookshelfProps> = ({
                 height: '400px',
               }}
             />
-          </button>
-
-          {/* Photo Album - uses journal image as placeholder, teal tint */}
-          <button
-            onClick={handlePhotoAlbumClick}
-            onTouchStart={(e) => handleBookTouch('photoAlbum', onPhotoAlbumOpen, e)}
-            className={`
-              relative origin-bottom-left transition-all duration-300 ease-out
-              focus:outline-none rounded block hover:z-10
-              active:scale-95 focus:ring-2 focus:ring-teal-400 cursor-pointer
-              ${expandedBook === 'photoAlbum' ? 'scale-100 z-10' : 'scale-[0.33]'}
-              ${!isTouchDevice ? 'hover:scale-100' : ''}
-            `}
-            title="Photo Album"
-          >
-            <img
-              src={uiAssets.book_journal}
-              alt="Photo Album"
-              className="drop-shadow-2xl block"
-              style={{
-                imageRendering: 'auto',
-                width: '112px',
-                height: '400px',
-                filter: 'hue-rotate(150deg) saturate(0.8)',
-              }}
-            />
-            <span
-              className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs font-bold text-white bg-teal-700/80 rounded px-1 py-0.5 whitespace-nowrap"
-              style={{ fontSize: '0.5rem' }}
-            >
-              📷 Album
-            </span>
           </button>
         </div>
       </div>
