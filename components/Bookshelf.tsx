@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { uiAssets } from '../assets';
 import { Z_HUD, zClass } from '../zIndex';
 import { magicManager } from '../utils/MagicManager';
+import { inventoryManager } from '../utils/inventoryManager';
 import GameIcon from './GameIcon';
 
 interface BookshelfProps {
@@ -33,6 +34,8 @@ const Bookshelf: React.FC<BookshelfProps> = ({
 }) => {
   // Check if magic book is unlocked (player talked to Witch)
   const magicBookUnlocked = magicManager.isMagicBookUnlocked();
+  // Check if player owns a camera (required to use the photo album)
+  const cameraOwned = inventoryManager.hasItem('camera', 1);
 
   // Track which book is expanded (for touch devices - tap to expand, tap again to open)
   const [expandedBook, setExpandedBook] = useState<string | null>(null);
@@ -52,7 +55,9 @@ const Bookshelf: React.FC<BookshelfProps> = ({
   };
 
   const handlePhotoAlbumClick = () => {
-    onPhotoAlbumOpen?.();
+    if (cameraOwned) {
+      onPhotoAlbumOpen?.();
+    }
   };
 
   // Touch handler for tap-to-expand pattern
@@ -125,19 +130,23 @@ const Bookshelf: React.FC<BookshelfProps> = ({
           {/* Photo Album - 175×1000 natural ratio */}
           <button
             onClick={handlePhotoAlbumClick}
-            onTouchStart={(e) => handleBookTouch('photoAlbum', onPhotoAlbumOpen, e)}
+            onTouchStart={(e) => cameraOwned && handleBookTouch('photoAlbum', onPhotoAlbumOpen, e)}
+            disabled={!cameraOwned}
             className={`
-              origin-bottom-left transition-all duration-300 ease-out
+              relative origin-bottom-left transition-all duration-300 ease-out
               focus:outline-none rounded block hover:z-10
-              active:scale-95 focus:ring-2 focus:ring-amber-400 cursor-pointer
               ${expandedBook === 'photoAlbum' ? 'scale-100 z-10' : 'scale-[0.33]'}
-              ${!isTouchDevice ? 'hover:scale-100' : ''}
+              ${
+                cameraOwned
+                  ? `${!isTouchDevice ? 'hover:scale-100' : ''} active:scale-95 focus:ring-2 focus:ring-amber-400 cursor-pointer`
+                  : 'opacity-50 cursor-not-allowed grayscale'
+              }
             `}
             style={{
               // Pull next book closer when shrunk (70px * 0.67 = ~47px of empty space)
               marginRight: expandedBook === 'photoAlbum' ? '0px' : '-47px',
             }}
-            title="Photo Album"
+            title={cameraOwned ? 'Photo Album' : 'Photo Album (Locked)'}
           >
             <img
               src={uiAssets.book_photo_album}
@@ -149,6 +158,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({
                 height: '400px',
               }}
             />
+            {!cameraOwned && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <GameIcon icon="🔒" size={96} className="drop-shadow-md" />
+              </div>
+            )}
           </button>
 
           {/* Recipe Book - 93×398 natural ratio */}
