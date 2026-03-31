@@ -78,6 +78,7 @@ export const GOBLIN_CONFIG: CombatantConfig = {
     { itemId: 'ghost_lichen', quantity: 1, chance: 0.3 },
     { itemId: 'eye_of_newt', quantity: 1, chance: 0.2 },
   ],
+  // TODO: add goblin actionSprites when artwork is ready (see UMBRA_WOLF_CONFIG for pattern)
 };
 
 // =============================================================================

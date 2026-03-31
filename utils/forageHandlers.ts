@@ -4,7 +4,7 @@
  */
 
 import { Position, TileType } from '../types';
-import { getTileData, findTileTypeNearby, hasTileTypeNearby } from './mapUtils';
+import { getTileData, findTileTypeNearby, hasTileTypeNearby, getLavaLakeAnchor } from './mapUtils';
 import { gameState } from '../GameState';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
@@ -480,27 +480,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
   // Phoenix Ash foraging (lava lakes in lava caverns)
   // Player must be standing within the lake's visual footprint to forage
-  const findLavaLakeAnchor = (): { x: number; y: number; type: TileType } | null => {
-    const checks: [TileType, number, number][] = [
-      [TileType.LAVA_LAKE_SM, 2, 1],
-      [TileType.LAVA_LAKE_MD, 5, 4],
-      [TileType.LAVA_LAKE_LG, 8, 8],
-    ];
-    for (const [type, size, radius] of checks) {
-      const r = findTileTypeNearby(playerTileX, playerTileY, type, radius);
-      if (r.found && r.position) {
-        const a = r.position;
-        if (
-          playerTileX >= a.x && playerTileX < a.x + size &&
-          playerTileY >= a.y && playerTileY < a.y + size
-        ) {
-          return { x: a.x, y: a.y, type };
-        }
-      }
-    }
-    return null;
-  };
-  const lavaLakeAnchor = findLavaLakeAnchor();
+  const lavaLakeAnchor = getLavaLakeAnchor(playerTileX, playerTileY);
 
   if (lavaLakeAnchor) {
     const phoenixAsh = getItem('phoenix_ash');
@@ -520,7 +500,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       };
     }
 
-    const quantity = Math.random() < 0.7 ? 1 : 2;
+    const quantity = rollForageQuantity();
     inventoryManager.addItem('phoenix_ash', quantity);
     if (DEBUG.FORAGE)
       console.log(`[Forage] Found ${quantity} ${phoenixAsh.displayName} in lava lake`);

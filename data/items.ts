@@ -875,7 +875,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'sourdough',
     displayName: 'Sourdough Starter',
     category: ItemCategory.INGREDIENT,
-    description: 'A bubbling sourdough starter. The secret to proper bread. Keep it fed and it will last forever.',
+    description:
+      'A bubbling sourdough starter. The secret to proper bread. Keep it fed and it will last forever.',
     stackable: false,
     persistent: true,
     image: itemAssets.sourdough_starter,
@@ -1366,7 +1367,8 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'food_cucumber_sandwich',
     displayName: 'Cucumber Sandwich',
     category: ItemCategory.FOOD,
-    description: 'Delicate cucumber finger sandwiches — fit for royalty and perfect with afternoon tea.',
+    description:
+      'Delicate cucumber finger sandwiches — fit for royalty and perfect with afternoon tea.',
     stackable: true,
     sellPrice: 15,
     image: cookingAssets.cucumber_sandwich,
@@ -1377,9 +1379,11 @@ export const ITEMS: Record<string, ItemDefinition> = {
     name: 'food_lava_cake',
     displayName: 'Lava Cake',
     category: ItemCategory.FOOD,
-    description: "A decadent chocolate cake with a molten centre. When you bite in, the chocolate spills like lava. A flamingo's family secret.",
+    description:
+      "A decadent chocolate cake with a molten centre. When you bite in, the chocolate spills like lava. A flamingo's family secret.",
     stackable: true,
     sellPrice: 40,
+    // TODO: add image when lava_cake artwork is ready (add to public/assets/cooking/ + cookingAssets in assets.ts)
   },
 
   food_yule_log: {

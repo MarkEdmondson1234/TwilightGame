@@ -151,6 +151,45 @@ export function hasTileTypeNearby(
 }
 
 /**
+ * Lava lake detection radii for each lake size.
+ * Used by both stamina drain (App.tsx) and phoenix ash foraging (forageHandlers.ts)
+ * to ensure consistent gameplay: you can forage iff you'd be draining stamina.
+ */
+const LAVA_LAKE_RADII: [TileType, number][] = [
+  [TileType.LAVA_LAKE_SM, 1],
+  [TileType.LAVA_LAKE_MD, 4],
+  [TileType.LAVA_LAKE_LG, 8],
+];
+
+/**
+ * Detect whether the player is standing within a lava lake's footprint.
+ * Returns the anchor tile position + type, or null if not near any lava lake.
+ * Used by stamina drain (App.tsx) and phoenix ash foraging (forageHandlers.ts).
+ */
+export function getLavaLakeAnchor(
+  tileX: number,
+  tileY: number
+): { x: number; y: number; type: TileType } | null {
+  for (const [type, radius] of LAVA_LAKE_RADII) {
+    const result = findTileTypeNearby(tileX, tileY, type, radius);
+    if (result.found && result.position) {
+      const anchor = result.position;
+      const size = type === TileType.LAVA_LAKE_SM ? 2 : type === TileType.LAVA_LAKE_MD ? 5 : 8;
+      // Verify player is within the lake's actual footprint (anchor to anchor+size)
+      if (
+        tileX >= anchor.x &&
+        tileX < anchor.x + size &&
+        tileY >= anchor.y &&
+        tileY < anchor.y + size
+      ) {
+        return { x: anchor.x, y: anchor.y, type };
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Simple seeded random for deterministic grass/tuft selection
  * Uses position-based seed for consistent results across renders
  */

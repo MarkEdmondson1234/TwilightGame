@@ -18,6 +18,39 @@ import {
  * These create random maps with guaranteed exits back to the village
  */
 
+/**
+ * Creates a pair of footprint-tracking helpers over a shared blocked-tile set.
+ * Used by cave lakes, lava lakes, and crystals to prevent overlapping placements.
+ *   - isClear(x, y, w, h): true if no blocked tile within the WxH footprint
+ *   - mark(x, y, w, h): blocks WxH plus a 1-tile buffer around it
+ */
+function createFootprintTracker() {
+  const blocked = new Set<string>();
+  return {
+    /** True if no blocked tile within the WxH footprint */
+    isClear(x: number, y: number, w: number, h: number): boolean {
+      for (let dy = 0; dy < h; dy++) {
+        for (let dx = 0; dx < w; dx++) {
+          if (blocked.has(`${x + dx},${y + dy}`)) return false;
+        }
+      }
+      return true;
+    },
+    /** Block WxH footprint plus a 1-tile buffer around it */
+    mark(x: number, y: number, w: number, h: number): void {
+      for (let dy = -1; dy <= h; dy++) {
+        for (let dx = -1; dx <= w; dx++) {
+          blocked.add(`${x + dx},${y + dy}`);
+        }
+      }
+    },
+    /** Check if a single tile is blocked */
+    has(x: number, y: number): boolean {
+      return blocked.has(`${x},${y}`);
+    },
+  };
+}
+
 function generatePatches(
   map: TileType[][],
   tileType: TileType,
@@ -1100,24 +1133,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   // Shared blocked-tiles set — prevents any two large sprites from overlapping.
   // After a sprite is placed we mark its W×H footprint plus a 1-tile buffer.
   // All three scatter passes (columns, lakes, crystals) share this set.
-  const blockedTiles = new Set<string>();
-
-  const isFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
-    for (let dy = 0; dy < h; dy++) {
-      for (let dx = 0; dx < w; dx++) {
-        if (blockedTiles.has(`${x + dx},${y + dy}`)) return false;
-      }
-    }
-    return true;
-  };
-
-  const markFootprint = (x: number, y: number, w: number, h: number): void => {
-    for (let dy = -1; dy <= h; dy++) {
-      for (let dx = -1; dx <= w; dx++) {
-        blockedTiles.add(`${x + dx},${y + dy}`);
-      }
-    }
-  };
+  const { isClear: isFootprintClear, mark: markFootprint } = createFootprintTracker();
 
   // Checks whether a sprite footprint (anchor x,y plus w×h tiles) would overlap the
   // spawn clear zone or either exit transition corridor.  Used by the lake and crystal
@@ -1182,22 +1198,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const lakeGridRows = 4;
   const lakeCellW = Math.floor((width - 2) / lakeGridCols);
   const lakeCellH = Math.floor((height - 2) / lakeGridRows);
-  const lakeBlockedTiles = new Set<string>(); // Independent set — not shared with columns
-  const isLakeFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
-    for (let dy = 0; dy < h; dy++) {
-      for (let dx = 0; dx < w; dx++) {
-        if (lakeBlockedTiles.has(`${x + dx},${y + dy}`)) return false;
-      }
-    }
-    return true;
-  };
-  const markLakeFootprint = (x: number, y: number, w: number, h: number): void => {
-    for (let dy = -1; dy <= h; dy++) {
-      for (let dx = -1; dx <= w; dx++) {
-        lakeBlockedTiles.add(`${x + dx},${y + dy}`);
-      }
-    }
-  };
+  // Independent tracker — not shared with columns
+  const lakeTracker = createFootprintTracker();
   const maxLakes = 1 + Math.floor(Math.random() * 3); // 1–3 lakes per map
   let lakesPlaced = 0;
   for (let row = 0; row < lakeGridRows; row++) {
@@ -1217,10 +1219,10 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
           map[y][x] === TileType.MINE_FLOOR &&
           lakeSize &&
           !footprintOverlapsProtectedArea(x, y, lakeSize.w, lakeSize.h) &&
-          isLakeFootprintClear(x, y, lakeSize.w, lakeSize.h)
+          lakeTracker.isClear(x, y, lakeSize.w, lakeSize.h)
         ) {
           map[y][x] = lakeType;
-          markLakeFootprint(x, y, lakeSize.w, lakeSize.h);
+          lakeTracker.mark(x, y, lakeSize.w, lakeSize.h);
           lakesPlaced++;
           break;
         }
@@ -1240,22 +1242,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const crystalGridRows = 4;
   const crystalCellW = Math.floor((width - 2) / crystalGridCols);
   const crystalCellH = Math.floor((height - 2) / crystalGridRows);
-  const crystalBlockedTiles = new Set<string>(); // Independent set — not shared with columns/lakes
-  const isCrystalFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
-    for (let dy = 0; dy < h; dy++) {
-      for (let dx = 0; dx < w; dx++) {
-        if (crystalBlockedTiles.has(`${x + dx},${y + dy}`)) return false;
-      }
-    }
-    return true;
-  };
-  const markCrystalFootprint = (x: number, y: number, w: number, h: number): void => {
-    for (let dy = -1; dy <= h; dy++) {
-      for (let dx = -1; dx <= w; dx++) {
-        crystalBlockedTiles.add(`${x + dx},${y + dy}`);
-      }
-    }
-  };
+  // Independent tracker — not shared with columns/lakes
+  const crystalTracker = createFootprintTracker();
   for (let row = 0; row < crystalGridRows; row++) {
     for (let col = 0; col < crystalGridCols; col++) {
       if (Math.random() > 0.6) continue; // ~60% fill
@@ -1274,10 +1262,10 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
           map[y][x] === TileType.MINE_FLOOR &&
           crystalSize &&
           !footprintOverlapsProtectedArea(x, y, crystalSize.w, crystalSize.h) &&
-          isCrystalFootprintClear(x, y, crystalSize.w, crystalSize.h)
+          crystalTracker.isClear(x, y, crystalSize.w, crystalSize.h)
         ) {
           map[y][x] = crystalType;
-          markCrystalFootprint(x, y, crystalSize.w, crystalSize.h);
+          crystalTracker.mark(x, y, crystalSize.w, crystalSize.h);
           break;
         }
       }
@@ -1301,8 +1289,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
         const dy = Math.abs(y - spawnY);
         if (
           map[y][x] === TileType.MINE_FLOOR &&
-          !lakeBlockedTiles.has(`${x},${y}`) &&
-          !crystalBlockedTiles.has(`${x},${y}`) &&
+          !lakeTracker.has(x, y) &&
+          !crystalTracker.has(x, y) &&
           (dx > 5 || dy > 5)
         ) {
           map[y][x] = TileType.WALL_TORCH;
@@ -1545,9 +1533,7 @@ export function generateRandomShop(
  * @param returnToMapId - The cave map to return to when exiting left
  * @param returnToPosition - Where the player spawns in the cave on exit
  */
-export function generateLavaMap(
-  seed: number = Date.now()
-): MapDefinition {
+export function generateLavaMap(seed: number = Date.now()): MapDefinition {
   const width = 30;
   const height = 30;
   const lavaDepth = gameState.getLavaDepth();
@@ -1623,7 +1609,11 @@ export function generateLavaMap(
       attempts++;
     } while (attempts < 20 && Math.abs(wx - spawnX) < 5 && Math.abs(wy - spawnY) < 5);
     npcs.push(
-      createLavaFrogWorkerNPC(`lava_frog_worker_${seed}_${i}`, { x: wx, y: wy }, lavaWorkerNames[nameIndex])
+      createLavaFrogWorkerNPC(
+        `lava_frog_worker_${seed}_${i}`,
+        { x: wx, y: wy },
+        lavaWorkerNames[nameIndex]
+      )
     );
   }
 
@@ -1634,22 +1624,7 @@ export function generateLavaMap(
     [TileType.LAVA_LAKE_LG]: { w: 8, h: 8 },
   };
 
-  const lavaLakeBlocked = new Set<string>();
-  const isLavaLakeFootprintClear = (x: number, y: number, w: number, h: number): boolean => {
-    for (let dy = 0; dy < h; dy++) {
-      for (let dx = 0; dx < w; dx++) {
-        if (lavaLakeBlocked.has(`${x + dx},${y + dy}`)) return false;
-      }
-    }
-    return true;
-  };
-  const markLavaLakeFootprint = (x: number, y: number, w: number, h: number): void => {
-    for (let dy = -1; dy <= h; dy++) {
-      for (let dx = -1; dx <= w; dx++) {
-        lavaLakeBlocked.add(`${x + dx},${y + dy}`);
-      }
-    }
-  };
+  const lavaLakeTracker = createFootprintTracker();
   const lavaLakeOverlapsProtected = (x: number, y: number, w: number, h: number): boolean => {
     const x2 = x + w - 1;
     const y2 = y + h - 1;
@@ -1675,9 +1650,7 @@ export function generateLavaMap(
       if (rand() > 0.3) continue; // ~30% fill — lakes are sparse
       const isEdgeCell =
         row === 0 || row === lavaLakeGridRows - 1 || col === 0 || col === lavaLakeGridCols - 1;
-      const eligible = isEdgeCell
-        ? [TileType.LAVA_LAKE_SM, TileType.LAVA_LAKE_MD]
-        : lavaLakeTypes;
+      const eligible = isEdgeCell ? [TileType.LAVA_LAKE_SM, TileType.LAVA_LAKE_MD] : lavaLakeTypes;
       const lakeType = eligible[Math.floor(rand() * eligible.length)];
       for (let attempt = 0; attempt < 15; attempt++) {
         const x = 1 + col * lavaLakeCellW + Math.floor(rand() * lavaLakeCellW);
@@ -1688,10 +1661,10 @@ export function generateLavaMap(
           map[y][x] === TileType.LAVA_FLOOR &&
           lakeSize &&
           !lavaLakeOverlapsProtected(x, y, lakeSize.w, lakeSize.h) &&
-          isLavaLakeFootprintClear(x, y, lakeSize.w, lakeSize.h)
+          lavaLakeTracker.isClear(x, y, lakeSize.w, lakeSize.h)
         ) {
           map[y][x] = lakeType;
-          markLavaLakeFootprint(x, y, lakeSize.w, lakeSize.h);
+          lavaLakeTracker.mark(x, y, lakeSize.w, lakeSize.h);
           lavaLakesPlaced++;
           break;
         }
