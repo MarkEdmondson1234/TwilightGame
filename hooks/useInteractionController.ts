@@ -541,6 +541,7 @@ export function useInteractionController(
 
       const interactions = getAvailableInteractions({
         position: clickInfo.worldPos,
+        playerPosition: playerPosRef.current,
         currentMapId: currentMapId,
         currentTool: currentTool,
         selectedSeed: null, // Seeds are now part of the tool system
@@ -562,8 +563,13 @@ export function useInteractionController(
       // Only interact if player is nearby (no walk-to-interact)
       // Exception: background-image rooms are small single-screen rooms where
       // everything is visible — allow clicking anywhere (mini-game style)
+      // Exception: fruit tree interactions use player proximity to the anchor tile
+      // (checked inside getAvailableInteractions via playerPosition), so the click
+      // position can legitimately be far from the player (e.g. clicking the canopy).
+      const FRUIT_TREE_TYPES = new Set(['prune_tree', 'mulch_tree', 'harvest_fruit_tree']);
+      const isFruitTreeOnly = interactions.every((i) => FRUIT_TREE_TYPES.has(i.type));
       const isBackgroundImageRoom = mapManager.getCurrentMap()?.renderMode === 'background-image';
-      if (!isBackgroundImageRoom) {
+      if (!isBackgroundImageRoom && !isFruitTreeOnly) {
         const currentPlayerPos = playerPosRef.current;
         const distanceToClick = getDistance(currentPlayerPos, clickInfo.worldPos);
         const isNearby = distanceToClick <= INTERACTION.RANGE;

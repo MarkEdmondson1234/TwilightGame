@@ -4,11 +4,14 @@
  */
 
 import { useEffect, useRef, MutableRefObject } from 'react';
-import { Position } from '../types';
+import { Position, TileType } from '../types';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { audioManager } from '../utils/AudioManager';
 import { cookingManager } from '../utils/CookingManager';
+import { fruitTreeManager } from '../utils/fruitTreeManager';
+import { TimeManager, Season } from '../utils/TimeManager';
+import { getTileCoords, findTileTypeNearby } from '../utils/mapUtils';
 import {
   checkMirrorInteraction,
   checkStoveInteraction,
@@ -318,6 +321,50 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         if (farmResult.message && onShowToast) {
           onShowToast(farmResult.message, farmResult.messageType || 'warning');
           return; // Don't check for other interactions after showing message
+        }
+
+        // Check for fruit tree interactions (prune in winter, mulch in spring, harvest in autumn)
+        const treePos = getTileCoords(playerPosRef.current);
+        const nearAppleTree = findTileTypeNearby(treePos.x, treePos.y, [TileType.APPLE_TREE], 1);
+        if (nearAppleTree.found && nearAppleTree.position) {
+          const { x: tx, y: ty } = nearAppleTree.position;
+          const currentSeason = TimeManager.getCurrentTime().season;
+
+          if (currentSeason === Season.WINTER) {
+            if (!fruitTreeManager.isPruned(currentMapId, tx, ty)) {
+              fruitTreeManager.pruneTree(currentMapId, tx, ty);
+              onShowToast?.('You pruned the apple tree.', 'success');
+            } else {
+              onShowToast?.('This tree has already been pruned this winter.', 'info');
+            }
+            return;
+          }
+
+          if (currentSeason === Season.SPRING) {
+            if (!fruitTreeManager.isMulched(currentMapId, tx, ty)) {
+              fruitTreeManager.mulchTree(currentMapId, tx, ty);
+              onShowToast?.('You mulched around the apple tree.', 'success');
+            } else {
+              onShowToast?.('This tree has already been mulched this spring.', 'info');
+            }
+            return;
+          }
+
+          if (currentSeason === Season.AUTUMN) {
+            if (!fruitTreeManager.isHarvested(currentMapId, tx, ty)) {
+              const wasAbundant = fruitTreeManager.isAbundant(currentMapId, tx, ty);
+              const result = fruitTreeManager.harvestTree(currentMapId, tx, ty);
+              if (result.success) {
+                const hint = wasAbundant ? '' : ' (Prune in winter and mulch in spring for a fuller crop.)';
+                onShowToast?.(`Harvested ${result.quantity} apple${result.quantity !== 1 ? 's' : ''}!${hint}`, 'success');
+              } else {
+                onShowToast?.("You're too tired to harvest right now.", 'warning');
+              }
+            } else {
+              onShowToast?.('Already harvested this tree this year.', 'info');
+            }
+            return;
+          }
         }
       }
 

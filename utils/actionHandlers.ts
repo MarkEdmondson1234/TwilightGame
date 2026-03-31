@@ -1138,6 +1138,9 @@ export interface DeskAction {
 
 export interface GetInteractionsConfig {
   position: Position;
+  /** Player's world position — used for large multi-tile sprites (e.g. fruit trees)
+   *  where the click target may be on the canopy, far above the anchor tile. */
+  playerPosition?: Position;
   currentMapId: string;
   currentTool: string;
   selectedSeed: string | null;
@@ -1206,6 +1209,7 @@ function handleLeavesAction(
 export function getAvailableInteractions(config: GetInteractionsConfig): AvailableInteraction[] {
   const {
     position,
+    playerPosition,
     currentMapId,
     currentTool,
     selectedSeed,
@@ -1809,7 +1813,11 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   }
 
   // Check for fruit tree interactions (prune / mulch / harvest)
-  const nearAppleTree = findTileTypeNearby(tileX, tileY, [TileType.APPLE_TREE], 1);
+  // Use the player's position (if provided) rather than the click/interaction position.
+  // Apple tree sprites are 6 tiles tall with the APPLE_TREE anchor only at the trunk base,
+  // so clicking on the canopy would miss the anchor tile if we used the click position.
+  const treeSearchPos = playerPosition ? getTileCoords(playerPosition) : { x: tileX, y: tileY };
+  const nearAppleTree = findTileTypeNearby(treeSearchPos.x, treeSearchPos.y, [TileType.APPLE_TREE], 1);
   if (nearAppleTree.found && nearAppleTree.position) {
     const { x: tx, y: ty } = nearAppleTree.position;
     const currentSeason = TimeManager.getCurrentTime().season;
@@ -1822,6 +1830,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         color: '#6B7280',
         execute: () => {
           fruitTreeManager.pruneTree(currentMapId, tx, ty);
+          onFarmAction?.({ handled: true, message: 'You pruned the apple tree.' });
         },
       });
     }
@@ -1834,6 +1843,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         color: '#78350F',
         execute: () => {
           fruitTreeManager.mulchTree(currentMapId, tx, ty);
+          onFarmAction?.({ handled: true, message: 'You mulched around the apple tree.' });
         },
       });
     }
