@@ -38,6 +38,17 @@ export interface KeyboardControlsConfig {
   showJournal: boolean;
   showInventory: boolean;
   showShopUI: boolean;
+  showViewingPhoto: boolean;
+  showRadialMenu: boolean;
+  showBrewingUI: boolean;
+  showGiftModal: boolean;
+  showGlamourModal: boolean;
+  showBasketModal: boolean;
+  showDecorationWorkshop: boolean;
+  showPaintingEasel: boolean;
+  showMagicBook: boolean;
+  showPhotoAlbum: boolean;
+  showDevTools: boolean;
   selectedItemSlot: number | null;
   inventoryItems: Array<{
     id: string;
@@ -59,6 +70,16 @@ export interface KeyboardControlsConfig {
   onSetShowJournal: (show: boolean) => void;
   onSetShowInventory: (show: boolean) => void;
   onSetShowShopUI: (show: boolean) => void;
+  onCloseViewingPhoto: () => void;
+  onSetShowRadialMenu: (show: boolean) => void;
+  onSetShowBrewingUI: (show: boolean) => void;
+  onSetShowGiftModal: (show: boolean) => void;
+  onSetShowGlamourModal: (show: boolean) => void;
+  onSetShowBasketModal: (show: boolean) => void;
+  onSetShowDecorationWorkshop: (show: boolean) => void;
+  onSetShowPaintingEasel: (show: boolean) => void;
+  onSetShowMagicBook: (show: boolean) => void;
+  onSetShowPhotoAlbum: (show: boolean) => void;
   onSetPlayerPos: (pos: Position) => void;
   onMapTransition: (mapId: string, spawnPos: Position) => void;
   onFarmUpdate: () => void;
@@ -81,6 +102,17 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showJournal,
     showInventory,
     showShopUI,
+    showViewingPhoto,
+    showRadialMenu,
+    showBrewingUI,
+    showGiftModal,
+    showGlamourModal,
+    showBasketModal,
+    showDecorationWorkshop,
+    showPaintingEasel,
+    showMagicBook,
+    showPhotoAlbum,
+    showDevTools,
     selectedItemSlot,
     inventoryItems,
     keysPressed,
@@ -96,6 +128,16 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetShowJournal,
     onSetShowInventory,
     onSetShowShopUI,
+    onCloseViewingPhoto,
+    onSetShowRadialMenu,
+    onSetShowBrewingUI,
+    onSetShowGiftModal,
+    onSetShowGlamourModal,
+    onSetShowBasketModal,
+    onSetShowDecorationWorkshop,
+    onSetShowPaintingEasel,
+    onSetShowMagicBook,
+    onSetShowPhotoAlbum,
     onSetPlayerPos,
     onMapTransition,
     onFarmUpdate,
@@ -135,12 +177,34 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showJournal,
     showInventory,
     showShopUI,
+    showViewingPhoto,
+    showRadialMenu,
+    showBrewingUI,
+    showGiftModal,
+    showGlamourModal,
+    showBasketModal,
+    showDecorationWorkshop,
+    showPaintingEasel,
+    showMagicBook,
+    showPhotoAlbum,
+    showDevTools,
     onSetShowHelpBrowser,
     onSetShowCookingUI,
     onSetShowRecipeBook,
     onSetShowJournal,
     onSetShowInventory,
     onSetShowShopUI,
+    onCloseViewingPhoto,
+    onSetShowRadialMenu,
+    onSetShowBrewingUI,
+    onSetShowGiftModal,
+    onSetShowGlamourModal,
+    onSetShowBasketModal,
+    onSetShowDecorationWorkshop,
+    onSetShowPaintingEasel,
+    onSetShowMagicBook,
+    onSetShowPhotoAlbum,
+    onSetShowDevTools: (show: boolean) => onSetShowDevTools(show),
   };
 
   const debugHandlers = {

@@ -15,33 +15,108 @@ export interface UIKeyHandlers {
   showJournal: boolean;
   showInventory: boolean;
   showShopUI: boolean;
+  showViewingPhoto: boolean;
+  showRadialMenu: boolean;
+  showBrewingUI: boolean;
+  showGiftModal: boolean;
+  showGlamourModal: boolean;
+  showBasketModal: boolean;
+  showDecorationWorkshop: boolean;
+  showPaintingEasel: boolean;
+  showMagicBook: boolean;
+  showPhotoAlbum: boolean;
+  showDevTools: boolean;
   onSetShowHelpBrowser: (show: boolean) => void;
   onSetShowCookingUI: (show: boolean) => void;
   onSetShowRecipeBook: (show: boolean) => void;
   onSetShowJournal: (show: boolean) => void;
   onSetShowInventory: (show: boolean) => void;
   onSetShowShopUI: (show: boolean) => void;
+  onCloseViewingPhoto: () => void;
+  onSetShowRadialMenu: (show: boolean) => void;
+  onSetShowBrewingUI: (show: boolean) => void;
+  onSetShowGiftModal: (show: boolean) => void;
+  onSetShowGlamourModal: (show: boolean) => void;
+  onSetShowBasketModal: (show: boolean) => void;
+  onSetShowDecorationWorkshop: (show: boolean) => void;
+  onSetShowPaintingEasel: (show: boolean) => void;
+  onSetShowMagicBook: (show: boolean) => void;
+  onSetShowPhotoAlbum: (show: boolean) => void;
+  onSetShowDevTools: (show: boolean) => void;
 }
 
 /**
- * Handle Escape key - Close the topmost open modal
- * Returns true if a modal was closed, false otherwise
+ * Handle Escape key - Close the topmost open modal/overlay.
+ * Priority order: fullscreen first, then modals, then panels, then help/dev last.
+ * Returns true if something was closed, false otherwise.
  */
 export function handleEscape(handlers: UIKeyHandlers): boolean {
-  if (handlers.showHelpBrowser) {
-    handlers.onSetShowHelpBrowser(false);
+  if (handlers.showViewingPhoto) {
+    handlers.onCloseViewingPhoto();
+    return true;
+  }
+  if (handlers.showRadialMenu) {
+    handlers.onSetShowRadialMenu(false);
+    return true;
+  }
+  if (handlers.showGiftModal) {
+    handlers.onSetShowGiftModal(false);
+    return true;
+  }
+  if (handlers.showGlamourModal) {
+    handlers.onSetShowGlamourModal(false);
+    return true;
+  }
+  if (handlers.showBasketModal) {
+    handlers.onSetShowBasketModal(false);
+    return true;
+  }
+  if (handlers.showShopUI) {
+    handlers.onSetShowShopUI(false);
     return true;
   }
   if (handlers.showCookingUI) {
     handlers.onSetShowCookingUI(false);
     return true;
   }
+  if (handlers.showBrewingUI) {
+    handlers.onSetShowBrewingUI(false);
+    return true;
+  }
+  if (handlers.showDecorationWorkshop) {
+    handlers.onSetShowDecorationWorkshop(false);
+    return true;
+  }
+  if (handlers.showPaintingEasel) {
+    handlers.onSetShowPaintingEasel(false);
+    return true;
+  }
   if (handlers.showRecipeBook) {
     handlers.onSetShowRecipeBook(false);
     return true;
   }
+  if (handlers.showMagicBook) {
+    handlers.onSetShowMagicBook(false);
+    return true;
+  }
+  if (handlers.showPhotoAlbum) {
+    handlers.onSetShowPhotoAlbum(false);
+    return true;
+  }
   if (handlers.showJournal) {
     handlers.onSetShowJournal(false);
+    return true;
+  }
+  if (handlers.showInventory) {
+    handlers.onSetShowInventory(false);
+    return true;
+  }
+  if (handlers.showHelpBrowser) {
+    handlers.onSetShowHelpBrowser(false);
+    return true;
+  }
+  if (handlers.showDevTools) {
+    handlers.onSetShowDevTools(false);
     return true;
   }
   return false;

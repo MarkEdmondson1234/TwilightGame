@@ -647,6 +647,17 @@ const App: React.FC = () => {
     showJournal: ui.journal,
     showInventory: ui.inventory,
     showShopUI: ui.shopUI,
+    showViewingPhoto: !!viewingPhoto,
+    showRadialMenu: radialMenuVisible,
+    showBrewingUI: ui.brewingUI,
+    showGiftModal: ui.giftModal,
+    showGlamourModal: ui.glamourModal,
+    showBasketModal: ui.basketModal,
+    showDecorationWorkshop: ui.decorationWorkshop,
+    showPaintingEasel: ui.paintingEasel,
+    showMagicBook: ui.magicBook,
+    showPhotoAlbum: ui.photoAlbum,
+    showDevTools: ui.devTools,
     selectedItemSlot,
     inventoryItems,
     keysPressed,
@@ -686,6 +697,20 @@ const App: React.FC = () => {
         closeUI('shopUI');
       }
     },
+    onCloseViewingPhoto: () => setViewingPhoto(null),
+    onSetShowRadialMenu: setRadialMenuVisible,
+    onSetShowBrewingUI: (show: boolean) => (show ? openUI('brewingUI') : closeUI('brewingUI')),
+    onSetShowGiftModal: (show: boolean) => (show ? openUI('giftModal') : closeUI('giftModal')),
+    onSetShowGlamourModal: (show: boolean) =>
+      show ? openUI('glamourModal') : closeUI('glamourModal'),
+    onSetShowBasketModal: (show: boolean) =>
+      show ? openUI('basketModal') : closeUI('basketModal'),
+    onSetShowDecorationWorkshop: (show: boolean) =>
+      show ? openUI('decorationWorkshop') : closeUI('decorationWorkshop'),
+    onSetShowPaintingEasel: (show: boolean) =>
+      show ? openUI('paintingEasel') : closeUI('paintingEasel'),
+    onSetShowMagicBook: (show: boolean) => (show ? openUI('magicBook') : closeUI('magicBook')),
+    onSetShowPhotoAlbum: (show: boolean) => (show ? openUI('photoAlbum') : closeUI('photoAlbum')),
     onSetPlayerPos: setPlayerPos,
     onMapTransition: handleMapTransition,
     onFarmUpdate: handleFarmUpdate,
