@@ -126,7 +126,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 8, y: 6 }, // North-west house
       tileType: TileType.BUILDING_DOOR,
       toMapId: 'house1',
-      toPosition: { x: 3, y: 4 },
+      toPosition: { x: 2, y: 6 },
       label: 'To House',
       hasDoor: true,
     },
@@ -134,7 +134,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 24.0, y: 13 }, // Cottage medium (Little Girl's house)
       tileType: TileType.COTTAGE_STONE,
       toMapId: 'house2',
-      toPosition: { x: 3, y: 4 },
+      toPosition: { x: 2, y: 6 },
       label: "To Little Girl's House",
       hasDoor: true,
     },

@@ -56,8 +56,8 @@ export function createSpringPeriwinkleNPC(
     seasonalLocations: {
       spring: { mapId: 'village', position: { x: 18, y: 9 }, direction: Direction.Down },
       summer: { mapId: 'village', position: { x: 18, y: 9 }, direction: Direction.Down },
-      autumn: { mapId: 'house2', position: { x: 5, y: 4 }, direction: Direction.Left },
-      winter: { mapId: 'house2', position: { x: 5, y: 4 }, direction: Direction.Left },
+      autumn: { mapId: 'house2', position: { x: 6, y: 6 }, direction: Direction.Left },
+      winter: { mapId: 'house2', position: { x: 6, y: 6 }, direction: Direction.Left },
     },
     friendshipConfig: {
       canBefriend: true,

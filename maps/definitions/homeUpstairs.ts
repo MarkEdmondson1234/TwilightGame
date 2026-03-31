@@ -1,45 +1,63 @@
-import { MapDefinition, TileType } from '../../types';
+import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
+import { Z_PARALLAX_FAR } from '../../zIndex';
 
 /**
- * Home Upstairs - Bedroom area
+ * Home Upstairs - Bedroom area (background-image interior)
  *
- * A cozy upstairs bedroom with:
- * - Stairs down at bottom (D)
- * - Bed and sofa
- * - Chimney on right wall
+ * Placeholder background until a unique drawing is complete.
+ * Image: /TwilightGame/assets/rooms/empty_room.png (1920×1080, displayed at 960×540)
  *
- * Grid Legend:
- * 2 = Wooden Wall (Regular)
- * F = Floor
- * C = Carpet
- * D = Door (stairs down)
- * A = Bed (3x3 tiles, anchor at center)
- * @ = Sofa (3 tiles wide)
- * & = Chimney (2x2)
- * _ = Desk (surface for placing items)
+ * Walkmesh Grid Legend (invisible — collision only):
+ * # = Wall/obstacle (solid)
+ * . = Floor (walkable)
+ * D = Door (transition tile — stairs down to Mum's Kitchen)
+ *
+ * Key positions:
+ * - mumsKitchen transition spawns player at {x:3, y:6} → walkable row 6
+ * - Transition back to kitchen at {x:3, y:7} → door tile at grid[7][3]
  */
 
+// 15 columns × 9 rows — standard background-image room layout
 const gridString = `
-2222222222
-2ff@fffff2
-2ffffffff2
-2ffrfffff2
-2fffffAf&2
-2_fffffff2
-2ffffffff2
-222D222222
+###############
+###############
+###############
+###############
+###############
+###############
+...............
+...D...........
+###############
 `;
+
+const homeUpstairsLayers: RoomLayer[] = [
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/empty_room.png',
+    zIndex: Z_PARALLAX_FAR,
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,
+    height: 540,
+    scale: 1.3,
+    centered: true,
+  },
+];
 
 export const homeUpstairs: MapDefinition = {
   id: 'home_upstairs',
   name: 'Home Upstairs',
-  width: 10,
-  height: 8,
+  width: 15,
+  height: 9,
   grid: parseGrid(gridString),
   colorScheme: 'indoor',
   isRandom: false,
-  spawnPoint: { x: 5, y: 6 }, // Start near stairs
+  spawnPoint: { x: 7, y: 6 },
+  renderMode: 'background-image',
+  characterScale: 1.8,
+  referenceViewport: { width: 1280, height: 720 },
+  layers: homeUpstairsLayers,
   transitions: [
     {
       fromPosition: { x: 3, y: 7 }, // Stairs down
