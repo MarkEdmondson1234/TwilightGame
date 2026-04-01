@@ -108,6 +108,10 @@ export function createShopkeeperNPC(
             nextId: 'seasonal_wares',
           },
           {
+            text: 'Can you walk me through what you sell?',
+            nextId: 'fox_shop_guide',
+          },
+          {
             text: 'Just browsing, thanks.',
           },
           {
@@ -394,6 +398,174 @@ export function createShopkeeperNPC(
       {
         id: 'mfp_post_quest_2',
         text: "*quietly* She laughed at something I said about clouds. It wasn't even meant to be funny. *long pause* I think I am in rather serious trouble.",
+      },
+
+      // ── Mr Fox's Shop Guide ───────────────────────────────────────────────────
+
+      {
+        id: 'fox_shop_guide',
+        text: "*straightens up with evident satisfaction* I run a well-organised shop. If thou hast ever wondered what precisely I stock and why, this is thy moment. What category interests thee?",
+        responses: [
+          { text: 'Tell me about seeds.', nextId: 'fox_seeds_hub' },
+          { text: 'What fresh produce do you carry?', nextId: 'fox_fresh_produce' },
+          { text: 'What pantry staples do you have?', nextId: 'fox_pantry' },
+          { text: 'Dairy and eggs?', nextId: 'fox_dairy' },
+          { text: 'Spices, herbs, and oils?', nextId: 'fox_spices' },
+          { text: 'Proteins?', nextId: 'fox_proteins' },
+          { text: 'Tools and materials?', nextId: 'fox_tools' },
+          { text: 'Special items?', nextId: 'fox_specials' },
+          { text: "That's all I needed. Thank you." },
+        ],
+      },
+
+      {
+        id: 'fox_seeds_hub',
+        text: "Seeds are my most seasonally complex category, so pay attention. I divide them into four groups: spring-only, spring-and-summer, herb seeds, and the autumn varieties. Which wouldst thou like to know about?",
+        responses: [
+          { text: 'Spring-only seeds.', nextId: 'fox_seeds_spring' },
+          { text: 'Spring and summer seeds.', nextId: 'fox_seeds_summer' },
+          { text: 'Herb seeds.', nextId: 'fox_seeds_herbs' },
+          { text: 'Autumn seeds and carrots.', nextId: 'fox_seeds_autumn' },
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
+      },
+
+      {
+        id: 'fox_seeds_spring',
+        text: "These must go in the ground during spring. Miss the window and thou art waiting a full year — I cannot stress this enough. *ticks off on fingers* Radish at 5 gold — the fastest crop I stock, good for beginners. Potato at 5 gold. Pea at 8. Salad at 7. Spinach at 8. Broccoli at 20. Cauliflower at 25 — I only stock those in spring, naturally. And the two larger investments: melon at 30 gold and pumpkin at 50. Those last two are strictly spring-only. No exceptions.",
+        seasonalText: {
+          spring:
+            "These must go in during spring — and thou art in luck, because it *is* spring. *ticks off on fingers* Radish at 5 gold, potato at 5, pea at 8, salad at 7, spinach at 8, broccoli at 20, cauliflower at 25 — which I only stock this season. Melon at 30 and pumpkin at 50 gold. The pumpkin in particular is worth planning for. Get them in early.",
+          summer:
+            "I am afraid spring-only seeds are no longer available. Pumpkin, melon, cauliflower, broccoli, spinach, salad, pea, and potato all needed to go in during spring. My apologies — this is the risk of late planning.",
+          autumn:
+            "Spring seeds are, by definition, for spring. They are all gone now. If thou art already thinking ahead to next year — which I respect enormously — come back when spring arrives. I keep thorough stock.",
+          winter:
+            "Spring seeds will not be available until spring returns. I know that is obvious, but thou wouldst be surprised how often I am asked. Come back in a few months.",
+        },
+        responses: [
+          { text: 'Back to seeds.', nextId: 'fox_seeds_hub' },
+        ],
+      },
+
+      {
+        id: 'fox_seeds_summer',
+        text: "A more forgiving category — these can go in during spring or summer, so there is a second chance if one misses the first sowing. *counts* Tomato seeds at 15 gold — popular, versatile, good for cooking. Cucumber at 10. Corn at 25. Chili at 15 gold. All can be planted in either spring or summer, though earlier planting gives a longer growing season.",
+        seasonalText: {
+          spring:
+            "Good timing — all four are currently in stock and ready to plant. Tomato at 15, cucumber at 10, corn at 25, chili at 15 gold. If thou art also sowing spring-only crops, do those first and come back for these — they are in no hurry.",
+          summer:
+            "Still available and still plantable! This is precisely why I call them the forgiving group. Tomato at 15, cucumber at 10, corn at 25, chili at 15. Get them in now and thou shouldst have a good harvest before autumn.",
+          autumn:
+            "These are spring-and-summer seeds — the planting window is now closed. I still stock them, but planting now would be a wasted investment. They will be back next spring.",
+          winter:
+            "Spring and summer seeds will return with the warmer weather. I recommend making a shopping list now while thou art thinking about it.",
+        },
+        responses: [
+          { text: 'Back to seeds.', nextId: 'fox_seeds_hub' },
+        ],
+      },
+
+      {
+        id: 'fox_seeds_herbs',
+        text: "Herb seeds are a rewarding category — they regrow after harvest, so one purchase goes a long way. Thyme seeds at 8 gold, lavender at 10, and mint at 10. All three can be planted in spring or summer. *slight pause* I should note I also sell dried thyme and rosemary as spices if thou dost not wish to grow thy own — though growing is considerably cheaper in the long run.",
+        seasonalText: {
+          spring:
+            "All three herb seeds are in and ready: thyme at 8, lavender at 10, mint at 10. Spring is a fine time to establish herbs — they will be producing well by summer.",
+          summer:
+            "Still available and plantable: thyme at 8, lavender at 10, mint at 10. Herb plants established in summer will provide harvests through the rest of the season.",
+          autumn:
+            "Herb seeds are spring and summer plantings only — they are out of season now. The dried herb spices are still available year-round, however, if thou needest thyme or rosemary for cooking.",
+          winter:
+            "Herb seeds will return in spring. For cooking herbs this winter, I stock dried thyme, rosemary, and basil in the spice section.",
+        },
+        responses: [
+          { text: 'Back to seeds.', nextId: 'fox_seeds_hub' },
+        ],
+      },
+
+      {
+        id: 'fox_seeds_autumn',
+        text: "Two interesting cases. Onion seeds are exclusively an autumn planting at 12 gold — the only crop I know of that categorically refuses any other season. Then there is the carrot at 8 gold: planted in spring, and fresh carrots also come into stock in autumn when they are harvested. They are, in other words, useful across the year.",
+        seasonalText: {
+          spring:
+            "Carrot seeds at 8 gold are available now for spring planting. Onion seeds are an autumn-only item — I do not stock them until then. Fresh carrots will be available again in autumn.",
+          summer:
+            "Carrot seeds are a spring crop and are no longer in stock for planting. Onion seeds will not arrive until autumn. Come back then.",
+          autumn:
+            "*brightens slightly* Autumn is precisely the right moment for this section. Onion seeds are in — 12 gold — plant them now. And fresh carrots have just arrived in the produce section at 35 gold if thou dost not wish to grow them thyself.",
+          winter:
+            "Onion seeds were an autumn item and are out of stock until next autumn. I find winter is a good time to plan the spring garden — makes the cold months feel purposeful.",
+        },
+        responses: [
+          { text: 'Back to seeds.', nextId: 'fox_seeds_hub' },
+        ],
+      },
+
+      {
+        id: 'fox_fresh_produce',
+        text: "Fresh produce changes with the seasons — I buy from local farms when things are in harvest. What is available right now depends on the time of year.",
+        seasonalText: {
+          spring:
+            "*counts carefully* Spring produce: fresh strawberries at 45 gold, fresh salad at 35, fresh spinach at 30, and fresh carrots at 35. Strawberry jam also comes in at 25 gold — good if thou dost not wish to cook it thyself. All lovely young growth.",
+          summer:
+            "Summer is generous. Strawberries are still coming in at 45 gold, and fresh tomatoes have just started at 12 gold. Salad at 35 and spinach at 30 are still excellent. Strawberry jam remains at 25 gold. And I have sunflower bouquets this season only — 80 gold, a real statement piece.",
+          autumn:
+            "*raises a finger* Blackberries are in at 50 gold — and this is the only time of year thou wilt find them. Do not dawdle. Fresh tomatoes are still going at 12 gold, and carrots are back at 35 gold. Strawberry jam holds on through autumn at 25 gold. The salad and spinach are finished for the year, I am afraid.",
+          winter:
+            "*folds paws* Fresh produce is done for the year. Winter is a pantry season — everything I stock now is shelf-stable. The fresh crops will return with spring. In the meantime, I have tinned tomatoes in the pantry section, which are a reasonable substitute for certain recipes.",
+        },
+        responses: [
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
+      },
+
+      {
+        id: 'fox_pantry',
+        text: "*with calm authority* Pantry staples are available year-round, no exceptions. Flour at 6 gold. Whole grain wheat at 5. Sugar at 8. Salt at 3 — the cheapest item in the shop, and I will not apologise for that. Yeast at 5 gold. Rice at 8. Pasta at 10. Bread at 12 gold, delivered regularly. Tinned tomatoes at 10 gold — useful all winter. Vinegar at 8. And water at 1 gold, which I include for completeness, though I have always felt slightly embarrassed charging for it.",
+        responses: [
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
+      },
+
+      {
+        id: 'fox_dairy',
+        text: "*gestures to the chilled section* Dairy is a reliable year-round category. Milk at 8 gold — the most versatile thing I stock. Cream at 12. Butter at 10. Buttermilk at 12 — essential for certain bakes. Cheese at 20 gold. Eggs at 5 gold, which I would buy in bulk if I were thee. *slight pause* I also stock almonds at 15 gold here — not dairy, technically, but they group well with the baking ingredients.",
+        responses: [
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
+      },
+
+      {
+        id: 'fox_spices',
+        text: "*with quiet enthusiasm* Spices and herbs are a section I take particular interest in. Basil at 10 gold. Dried thyme at 8 — also available as a living herb seed, as I mentioned. Rosemary at 10 gold, likewise. Allspice at 12. Curry powder at 15 — a blend I source specifically. Black pepper at 8, which I would recommend keeping permanently stocked. Cinnamon at 15. *shifts to the oils* Olive oil at 15 gold and sunflower oil at 12. I consider oils to be liquid spices. Others may disagree.",
+        responses: [
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
+      },
+
+      {
+        id: 'fox_proteins',
+        text: "*matter-of-factly* The protein section. Meat at 35 gold — good quality, general purpose. Minced meat at 30, for those who prefer it prepared. Tinned tuna at 15 gold — shelf-stable and underrated. And gravy at 8 gold, which I classify as a protein accompaniment. *brief pause* I am aware that as a fox there is a certain irony in my stocking meat products. I prefer not to dwell on it.",
+        responses: [
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
+      },
+
+      {
+        id: 'fox_tools',
+        text: "*taps counter decisively* Tools. The hoe at 50 gold — tills soil for planting, essential for farming. The watering can at 75 gold — crops must be watered each day or they wilt. *slight pause* The watering can is, I suspect, the item most purchased twice: once by enthusiastic beginners who lose it in the shed, and again when they find it. Fertiliser at 15 gold — applied to tilled soil before planting, it accelerates crop growth considerably. Worth the investment if thou art in a hurry.",
+        responses: [
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
+      },
+
+      {
+        id: 'fox_specials',
+        text: "*with something approaching enthusiasm* Several items that deserve individual mention. For baking: chocolate at 25 gold, vanilla at 20 — essential, do not substitute — cocoa powder at 18, and baking powder at 7. *shifts to another section* For decoration and crafting: linen at 15 gold, wooden frames at 20, ceramic vases at 25, plant pots at 15. The camera at 180 gold is a significant investment, but remarkable for documenting one's travels. *leans forward slightly* And I stock sunflower bouquets at 80 gold — but only in summer. One cannot rush flowers.",
+        responses: [
+          { text: 'Back to categories.', nextId: 'fox_shop_guide' },
+        ],
       },
     ],
     friendshipConfig: {
