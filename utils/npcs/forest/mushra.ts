@@ -2,7 +2,7 @@
  * Mushra NPC Factory Function
  */
 
-import { NPC, Direction, Position } from '../../../types';
+import { NPC, Direction, NPCBehavior, Position } from '../../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../../assets';
 import { createWanderingNPC, createStaticNPC } from '../createNPC';
 import { QUEST_ID as WREATH_QUEST_ID } from '../../../data/questHandlers/mushraWreathHandler';
@@ -317,6 +317,31 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       startingPoints: 0,
     },
   });
+}
+
+/**
+ * Create a static Mushra NPC for inside her shop interior.
+ *
+ * Same dialogue as the forest version but STATIC — she stands in place
+ * behind her counter rather than wandering around the room.
+ */
+export function createMushraShopNPC(id: string, position: Position): NPC {
+  const npc = createMushraNPC(id, position);
+  if (npc.animatedStates?.states['roaming']) {
+    const state = npc.animatedStates.states['roaming'];
+    // Blink effect: open eyes held for ~3s, closed eyes brief (~200ms)
+    // Each frame is 200ms, so 15 open frames = 3000ms open, 1 closed frame = 200ms closed
+    state.sprites = [
+      ...Array(15).fill(npcAssets.mushra_01), // open eyes
+      npcAssets.mushra_02,                    // blink
+    ];
+    state.animationSpeed = 200;
+  }
+  return {
+    ...npc,
+    behavior: NPCBehavior.STATIC,
+    scale: 4.5,
+  };
 }
 
 /**

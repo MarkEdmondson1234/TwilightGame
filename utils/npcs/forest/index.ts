@@ -11,7 +11,7 @@ export { createStellaNPC } from './stella';
 export { createMorganNPC } from './morgan';
 export { createBunnyflyNPC } from './bunnyfly';
 export { createMotherSeaNPC } from './motherSea';
-export { createMushraNPC } from './mushra';
+export { createMushraNPC, createMushraShopNPC } from './mushra';
 export { createDaveadNPC } from './davead';
 export { createDeerNPC } from './deer';
 export { createPuffleNPC } from './puffle';

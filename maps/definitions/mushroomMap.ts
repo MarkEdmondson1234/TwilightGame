@@ -85,6 +85,14 @@ export const mushroomMap: MapDefinition = {
       toPosition: { x: 5, y: 16 }, // Near mushroom forest entrance on west side
       label: 'To Village',
     },
+    {
+      fromPosition: { x: 25, y: 6 }, // Mushroom house anchor tile (north-east area)
+      tileType: TileType.MUSHROOM_HOUSE,
+      toMapId: 'mushras_shop',
+      toPosition: { x: 7, y: 8 }, // Spawn inside Mushra's shop
+      label: "Enter Mushra's Shop",
+      hasDoor: true,
+    },
   ],
   npcs: [
     // Mushra - friendly mushroom girl who lives in the mushroom house

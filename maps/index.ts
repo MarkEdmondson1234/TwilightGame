@@ -21,6 +21,7 @@ import { magicalLake } from './definitions/magicalLake';
 import { bearCave } from './definitions/bearCave';
 import { bearDen } from './definitions/bearDen';
 import { mushroomMap } from './definitions/mushroomMap';
+import { mushraShop } from './definitions/mushraShop';
 import { ruins } from './definitions/ruins';
 import { personalGarden } from './definitions/personalGarden';
 import { generateRandomForest, generateRandomCave, generateRandomShop, generateLavaMap } from './procedural';
@@ -58,6 +59,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(bearCave);
   mapManager.registerMap(bearDen);
   mapManager.registerMap(mushroomMap);
+  mapManager.registerMap(mushraShop);
   mapManager.registerMap(ruins);
   mapManager.registerMap(personalGarden);
 

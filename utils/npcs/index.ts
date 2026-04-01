@@ -34,6 +34,7 @@ export {
   createBunnyflyNPC,
   createMotherSeaNPC,
   createMushraNPC,
+  createMushraShopNPC,
   createDaveadNPC,
   createDeerNPC,
   createPuffleNPC,
