@@ -280,6 +280,7 @@ Declared: 15x9, Actual grid: 15x9
 ## Documentation
 
 Detailed documentation is located in the [`docs/`](docs/) folder:
+- [`docs/ARCHITECTURE_GOTCHAS.md`](docs/ARCHITECTURE_GOTCHAS.md) - **READ FIRST** — Non-obvious bugs & root causes (coordinate pipeline, click detection, audio lifecycle, z-index traps)
 - [`docs/MAP_GUIDE.md`](docs/MAP_GUIDE.md) - Map creation guide
 - [`docs/ASSETS.md`](docs/ASSETS.md) - Asset management and guidelines
 - [`docs/FARMING.md`](docs/FARMING.md) - Farming system documentation
@@ -1283,6 +1284,16 @@ Run tests with: `npx vitest run tests/myUtils.test.ts`
 10. **Check map validation**: After creating/modifying maps, check browser console for validation errors (see Map Validation section)
 11. **Watch file sizes**: Refactor files that exceed 500 lines (see Code Maintenance Guidelines above)
 12. **Extract, don't expand**: When adding features, create new focused files rather than growing existing ones
+
+### Common Pitfalls (see [`docs/ARCHITECTURE_GOTCHAS.md`](docs/ARCHITECTURE_GOTCHAS.md) for full details)
+
+These are the bugs that keep coming back. **Read the gotchas doc before touching these systems.**
+
+- **Click offsets in background-image rooms**: `effectiveGridOffset` in App.tsx must multiply by `zoom`. If you touch the coordinate pipeline, test at zoom > 1 in BOTH room types (tiled AND background-image).
+- **Clicks going through HUD**: `isUIElement()` in `useMouseControls.ts` must use `document.elementsFromPoint()`, not `e.target` traversal. HUD containers use `pointer-events: none`, so `e.target` is the canvas behind them.
+- **Loading/modal overlays appearing behind game elements**: Always use z-index constants from `zIndex.ts` (e.g. `Z_LOADING = 3500`). Never hardcode `z-[150]` or similar — HUD is at 1000, dialogues at 2010.
+- **Ambient audio going silent on map transitions**: Each ambient effect owns its own `stopAmbient` calls. The weather effect must ONLY stop weather sounds — never blanket-stop birds, stream, countryside, etc.
+- **React `stopPropagation()` doesn't block native listeners**: `useMouseControls` uses native `addEventListener`. React `e.stopPropagation()` in UI components won't prevent game clicks.
 
 ## Claude Skills
 
