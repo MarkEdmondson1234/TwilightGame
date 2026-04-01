@@ -87,26 +87,7 @@ export function createShopkeeperNPC(
             "Isn't it magical? The petals drift past my shop windows like pink snowflakes! Such weather is good for the soul - and good for business! What can I help thee find?",
         },
         responses: [
-          {
-            text: 'What do you sell?',
-            nextId: 'shop_wares',
-          },
-          {
-            text: 'Any news from travellers?',
-            nextId: 'shop_gossip',
-          },
-          {
-            text: 'Why do you stand outside all day?',
-            nextId: 'standing_outside',
-          },
-          {
-            text: "If you're a fox, why do you own a shop?",
-            nextId: 'fox_evolution',
-          },
-          {
-            text: "What's in season right now?",
-            nextId: 'seasonal_wares',
-          },
+          // ── Always visible ────────────────────────────────────────────────
           {
             text: 'Can you walk me through what you sell?',
             nextId: 'fox_shop_guide',
@@ -114,6 +95,74 @@ export function createShopkeeperNPC(
           {
             text: 'Just browsing, thanks.',
           },
+
+          // ── Acquaintance tier: unlocks once, disappears after asked ───────
+          {
+            text: "If you're a fox, why do you own a shop?",
+            nextId: 'fox_evolution',
+            requiredFriendshipTier: 'acquaintance',
+            hiddenIfQuestStarted: 'fox_asked_evolution',
+            startsQuest: 'fox_asked_evolution',
+          },
+
+          // ── After evolution asked: standing_outside unlocks, disappears after asked ──
+          {
+            text: 'Why do you stand outside all day?',
+            nextId: 'standing_outside',
+            requiredQuest: 'fox_asked_evolution',
+            hiddenIfQuestStarted: 'fox_asked_standing',
+            startsQuest: 'fox_asked_standing',
+          },
+
+          // ── After standing_outside asked: gossip unlocks ──────────────────
+          {
+            text: 'Got any gossip for me?',
+            nextId: 'shop_gossip',
+            requiredQuest: 'fox_asked_standing',
+          },
+
+          // ── Good friend: rotating personal topics ─────────────────────────
+          // Slot A – Dreams, first time only (quest not yet started)
+          {
+            text: 'What are your dreams, Mr Fox?',
+            nextId: 'fox_dreams',
+            requiredFriendshipTier: 'good_friend',
+            hiddenIfQuestStarted: 'fox_chat_rotation',
+            startsQuest: 'fox_chat_rotation',
+            setsQuestStage: { questId: 'fox_chat_rotation', stage: 1 },
+          },
+          // Slot A – Dreams, recurring (after rotation cycles back to stage 0)
+          {
+            text: 'What are your dreams, Mr Fox?',
+            nextId: 'fox_dreams',
+            requiredFriendshipTier: 'good_friend',
+            requiredQuest: 'fox_chat_rotation',
+            requiredQuestStage: 0,
+            maxQuestStage: 0,
+            setsQuestStage: { questId: 'fox_chat_rotation', stage: 1 },
+          },
+          // Slot B – City life (stage 1)
+          {
+            text: 'Have you ever considered leaving the village?',
+            nextId: 'fox_city_life',
+            requiredFriendshipTier: 'good_friend',
+            requiredQuest: 'fox_chat_rotation',
+            requiredQuestStage: 1,
+            maxQuestStage: 1,
+            setsQuestStage: { questId: 'fox_chat_rotation', stage: 2 },
+          },
+          // Slot C – Village wishes (stage 2, cycles back to 0)
+          {
+            text: 'Is there anything you wish were different here?',
+            nextId: 'fox_village_wishes',
+            requiredFriendshipTier: 'good_friend',
+            requiredQuest: 'fox_chat_rotation',
+            requiredQuestStage: 2,
+            maxQuestStage: 2,
+            setsQuestStage: { questId: 'fox_chat_rotation', stage: 0 },
+          },
+
+          // ── Picnic quest responses (unchanged) ───────────────────────────
           {
             text: 'You seem a little distracted, Mr Fox. Is everything all right?',
             nextId: 'mfp_predicament',
@@ -133,20 +182,8 @@ export function createShopkeeperNPC(
           },
         ],
       },
-      {
-        id: 'shop_wares',
-        text: 'I have seeds for farming, tools for crafting, and rare trinkets from distant lands. Come inside and see!',
-        seasonalText: {
-          spring:
-            'Ah! Spring seeds are my specialty this season - peas, carrots, and beautiful flower bulbs. I also have new tools fresh from the blacksmith!',
-          summer:
-            'Thou art in luck! I have watering cans, hoes, and the finest fertiliser for thy summer crops. And cooling drinks, of course!',
-          autumn:
-            'Perfect timing! I have storage jars for preserves, warm blankets, and seeds that flourish in cooler weather. Stock up before winter!',
-          winter:
-            'Winter supplies! Warm clothing, preserved foods, and indoor crafts to pass the long evenings. Everything a villager needs!',
-        },
-      },
+
+      // ── Gossip hub ────────────────────────────────────────────────────────
       {
         id: 'shop_gossip',
         text: "*leans against the doorframe with evident pleasure* Oh, there is always something worth knowing in a village this size. I make it my business to pay attention — one of the many advantages of standing outside all day. Any particular thread you'd like me to pull on?",
@@ -188,6 +225,8 @@ export function createShopkeeperNPC(
         id: 'gossip_althea',
         text: "*pauses, choosing words carefully* I will tell you one thing: Althea has a sister. Whether she has mentioned this to you, I do not know. It is not a topic she raises willingly, and I would strongly advise you to pick your moment carefully if you intend to bring it up. Catch her in the wrong mood and you will know about it. Catch her in the right one, though, and... well. I suspect there is quite a story there. I don't know the details myself — she is not exactly forthcoming — but the few things I have gathered suggest it is complicated. *tilts head* More than that, I really cannot say.",
       },
+
+      // ── Standing outside & evolution (now gated, text unchanged) ─────────
       {
         id: 'standing_outside',
         text: "*gazes around with quiet satisfaction* Ah, you've noticed my post. One observes a great deal from here, you know. The village has a rhythm to it — the baker who always arrives late on Tuesdays, the sparrows that squabble over the same rooftop every single morning. And the seasons! One feels the change in the air before any calendar announces it. I watch the colours shift in the trees, I listen to what people are carrying home from market, I catch the odd scrap of gossip drifting past on the breeze. And the clouds! People never look up nearly enough. This morning I spotted one shaped remarkably like a hedgehog carrying an umbrella.",
@@ -206,20 +245,21 @@ export function createShopkeeperNPC(
         id: 'fox_evolution',
         text: "*blinks slowly, as if the question is both obvious and mildly exhausting* You might as well ask why, if *you're* a primate, you aren't currently swinging between trees. It is a simple matter of evolution. E-vo-lu-tion. Certain species — myself, the bear, the elves — have quite clearly developed considerably larger brains over time. Larger brains led to speech. Speech led to commerce. Commerce led, naturally, to shops. This is not to say it couldn't have gone differently, of course. One can easily imagine a parallel universe where quite other creatures made the leap — a world where, say, elves have rounded ears and walk about on four legs, while foxes... well. *smooths lapel* We turned out rather well, I think.",
       },
+
+      // ── Good friend: rotating personal conversations ──────────────────────
       {
-        id: 'seasonal_wares',
-        text: 'Good question. My pantry staples are available year-round — flour, sugar, salt, oils, spices, dairy — the foundations of any decent kitchen. But fresh produce? That changes with the seasons. Ask me again and I can tell you what is particularly worth buying right now.',
-        seasonalText: {
-          spring:
-            "*counts on a paw* Spring is a fine time to stock up. Fresh strawberries and strawberry jam are in, as are salad leaves and spinach — lovely young growth. Carrot seeds are ready for planting, and if you want strawberry plants, now is precisely the moment. The pantry staples are of course always here whenever you need them.",
-          summer:
-            '*leans forward slightly* Summer is generous. Strawberries are still coming in beautifully, and the tomatoes are just beginning — I have fresh tomatoes and tomato seeds for those who want to grow their own. Salad and spinach remain excellent. Strawberry jam, naturally. And everything in the pantry, as always — flour, sugar, spices, the lot.',
-          autumn:
-            "*raises a finger* Autumn is when the blackberries arrive — only available now, so do not dawdle. Tomatoes are still going, and carrots come back into stock this season as well. Strawberry jam holds on through autumn too. The fresh greens — salad, spinach — are gone for the year, I am afraid. Stock up on pantry essentials now before the winter merchants thin out.",
-          winter:
-            "*folds paws* I won't mislead you — fresh seasonal produce is done for the year. Winter is a pantry season. But I am very well stocked: flour, sugar, salt, yeast, oils, all your dairy, spices, herbs, rice, pasta. Everything you need to cook through the cold months. The seeds and fresh crops will return in spring. Until then, it is casserole weather.",
-        },
+        id: 'fox_dreams',
+        text: "*is quiet for a moment, watching the square* If I am honest... what I want, above most things, is for this shop to do well. Not extravagantly — I am not a greedy fox. But enough to mean something. *pauses* And a family, in time. A litter, perhaps. Someone to hand this all on to. I think about it sometimes. Standing here in the evenings, watching the light go off the rooftops. Whether there might be small foxes running about one day. *straightens lapel* It is a simple sort of dream. But it is mine.",
       },
+      {
+        id: 'fox_city_life',
+        text: "*considers carefully* I did wonder, once, whether I ought to be somewhere larger. A city, perhaps — better opportunities, more customers, all of that. I even went to visit my cousin. Lives in the capital. Very grand. Marble floors. Dining on the finest things. *pause* But everything else came with it too. The noise, the rush, the sense that if you slipped for a moment, someone would simply step over you. *long pause* My cousin seemed perfectly content. But I came home after three days and felt an enormous amount of relief. I rather think this village was waiting for me.",
+      },
+      {
+        id: 'fox_village_wishes',
+        text: "*gazes along the high street* I do wish there were more people here. More life in it. *slight pause* Not that I am unhappy — I love this village, genuinely. But a village this size ought to have a bakery, I think. Proper bread, fresh every morning. A bookshop would not go amiss either. And perhaps — *brightens slightly* — a little café. Somewhere to sit in the afternoon. *wry* I am not talking about competition, you understand. I stock groceries. A café is something else entirely. Just... people. Activity. The sort of place that pulls in travellers who might then wander into a shop.",
+      },
+
       // ── Mr Fox's Picnic Quest ─────────────────────────────────────────────
 
       // Proximity-triggered offer (opened via useProximityQuestTriggers hook)
