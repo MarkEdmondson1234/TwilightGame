@@ -56,7 +56,7 @@ import { staminaManager } from './utils/StaminaManager';
 import { photoAlbumManager } from './utils/photoAlbumManager';
 import { TimeManager } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
-import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, zClass } from './zIndex';
+import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, Z_LOADING, zClass } from './zIndex';
 import { iconAssets } from './iconAssets';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
@@ -447,7 +447,10 @@ const App: React.FC = () => {
     if (action.action === 'return' && action.cutsceneId) {
       const cutscene = getCutsceneById(action.cutsceneId);
       if (cutscene && cutscene.onComplete.action !== 'return') {
-        resolvedAction = { ...(cutscene.onComplete as typeof action), cutsceneId: action.cutsceneId };
+        resolvedAction = {
+          ...(cutscene.onComplete as typeof action),
+          cutsceneId: action.cutsceneId,
+        };
       }
     }
 
@@ -568,7 +571,12 @@ const App: React.FC = () => {
         setTimeout(() => setIsYuleBlackout(false), 1100);
       }
     });
-    return () => { unsubStart(); unsubEnd(); unsubGift(); unsubBlackout(); };
+    return () => {
+      unsubStart();
+      unsubEnd();
+      unsubGift();
+      unsubBlackout();
+    };
   }, [showToast]);
 
   // Dispose Yule timer on unmount
@@ -1072,6 +1080,12 @@ const App: React.FC = () => {
         imageWidth *= viewportScale;
         imageHeight *= viewportScale;
 
+        // Apply zoom — the PixiJS stage is scaled by zoom, so the centered
+        // image occupies (imageWidth * zoom) screen pixels.  The grid offset
+        // must reflect this so screenToTile can invert correctly.
+        imageWidth *= zoom;
+        imageHeight *= zoom;
+
         // Use tracked viewport dimensions for centering (responds to resize/zoom)
         const offsetX = (viewportSize.width - imageWidth) / 2;
         const offsetY = (viewportSize.height - imageHeight) / 2;
@@ -1081,7 +1095,7 @@ const App: React.FC = () => {
     }
 
     return undefined;
-  }, [currentMap, currentMapId, viewportScale, viewportSize]); // Recalculate when map, scale, or viewport changes
+  }, [currentMap, currentMapId, viewportScale, viewportSize, zoom]); // Recalculate when map, scale, or viewport changes
 
   // Calculate effective tile size for background-image rooms (scaled)
   // Must include both viewport scale AND layer scale to match the background image
@@ -1346,12 +1360,16 @@ const App: React.FC = () => {
         return;
       }
       const recipeId = FOOD_TO_RECIPE_ID[item.id];
-      const isMastered = STAMINA.ALWAYS_MASTERED_FOODS.includes(item.id) ||
+      const isMastered =
+        STAMINA.ALWAYS_MASTERED_FOODS.includes(item.id) ||
         (recipeId ? cookingManager.isRecipeMastered(recipeId) : false);
       const restored = staminaManager.eatFood(item.id, isMastered);
       inventoryManager.removeItem(item.id, 1);
       const masteryNote = isMastered ? ' ⭐' : '';
-      showToast(`Ate ${item.name}${masteryNote}. Restored ${Math.round(restored)} stamina.`, 'success');
+      showToast(
+        `Ate ${item.name}${masteryNote}. Restored ${Math.round(restored)} stamina.`,
+        'success'
+      );
       closeUI('inventory');
     },
     [showToast, closeUI]
@@ -1445,9 +1463,9 @@ const App: React.FC = () => {
       return;
     }
 
-    const pendingIds = YULE_NPC_CONFIGS
-      .map((c) => c.celebrationId)
-      .filter((id) => !yuleGiftsReceived.has(id) && yuleNpcWishes[id]);
+    const pendingIds = YULE_NPC_CONFIGS.map((c) => c.celebrationId).filter(
+      (id) => !yuleGiftsReceived.has(id) && yuleNpcWishes[id]
+    );
 
     if (pendingIds.length === 0) {
       thoughtBubbleLayerRef.current.hide();
@@ -1456,13 +1474,22 @@ const App: React.FC = () => {
 
     const activeId = pendingIds[yuleThoughtBubbleIndex % pendingIds.length];
     const itemId = yuleNpcWishes[activeId];
-    if (!itemId) { thoughtBubbleLayerRef.current.hide(); return; }
+    if (!itemId) {
+      thoughtBubbleLayerRef.current.hide();
+      return;
+    }
 
     const npc = npcManager.getNPCById(activeId);
-    if (!npc) { thoughtBubbleLayerRef.current.hide(); return; }
+    if (!npc) {
+      thoughtBubbleLayerRef.current.hide();
+      return;
+    }
 
     const item = getItem(itemId);
-    if (!item) { thoughtBubbleLayerRef.current.hide(); return; }
+    if (!item) {
+      thoughtBubbleLayerRef.current.hide();
+      return;
+    }
 
     const config = YULE_NPC_CONFIGS.find((c) => c.celebrationId === activeId);
     const npcName = config?.displayName ?? npc.name;
@@ -1943,7 +1970,9 @@ const App: React.FC = () => {
             onResetPress={touchControls.handleResetPress}
             compact={isCompactMode}
             onPhotoPress={
-              selectedItemSlot !== null && inventoryItems[selectedItemSlot]?.id === 'camera' && !ui.inventory
+              selectedItemSlot !== null &&
+              inventoryItems[selectedItemSlot]?.id === 'camera' &&
+              !ui.inventory
                 ? touchControls.handlePhotoPress
                 : undefined
             }
@@ -2317,7 +2346,11 @@ const App: React.FC = () => {
         <CottageBook isOpen={ui.journal} onClose={() => closeUI('journal')} theme="journal" />
       )}
       {ui.photoAlbum && (
-        <CottageBook isOpen={ui.photoAlbum} onClose={() => closeUI('photoAlbum')} theme="photoAlbum" />
+        <CottageBook
+          isOpen={ui.photoAlbum}
+          onClose={() => closeUI('photoAlbum')}
+          theme="photoAlbum"
+        />
       )}
       {/* Photo viewer — opens when double-clicking a photo in inventory */}
       {viewingPhoto && (
@@ -2326,7 +2359,7 @@ const App: React.FC = () => {
           onClose={() => setViewingPhoto(null)}
           onRename={(newName) => {
             inventoryManager.updatePhotoName(viewingPhoto.id, newName);
-            setViewingPhoto((prev) => prev ? { ...prev, photoName: newName } : prev);
+            setViewingPhoto((prev) => (prev ? { ...prev, photoName: newName } : prev));
           }}
           onSendToAlbum={() => {
             photoAlbumManager.addToAlbum(viewingPhoto);
@@ -2366,7 +2399,9 @@ const App: React.FC = () => {
       )}
       {/* Loading cutscene done — show "Enter Game" button or progress bar */}
       {isLoadingCutscene && !isCutscenePlaying && (
-        <div className="fixed inset-0 bg-black z-[150] flex flex-col items-center justify-center gap-6">
+        <div
+          className={`fixed inset-0 bg-black ${zClass(Z_LOADING)} flex flex-col items-center justify-center gap-6`}
+        >
           {isGameReady ? (
             <button
               onClick={() => {
@@ -2425,54 +2460,56 @@ const App: React.FC = () => {
       )}
 
       {/* Radial menu for food/decoration items clicked in inventory */}
-      {inventoryRadialMenu && (() => {
-        const invItemDef = getItem(inventoryRadialMenu.item.id);
-        const isFood = invItemDef && (invItemDef.category === ItemCategory.FOOD || invItemDef.edible);
-        return (
-          <RadialMenu
-            position={inventoryRadialMenu.position}
-            zIndex={Z_INVENTORY_RADIAL_MENU}
-            options={[
-              {
-                id: 'select',
-                label: 'Select',
-                icon: iconAssets.hand,
-                color: '#6b7280',
-                onSelect: () => {
-                  setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                  setInventoryRadialMenu(null);
+      {inventoryRadialMenu &&
+        (() => {
+          const invItemDef = getItem(inventoryRadialMenu.item.id);
+          const isFood =
+            invItemDef && (invItemDef.category === ItemCategory.FOOD || invItemDef.edible);
+          return (
+            <RadialMenu
+              position={inventoryRadialMenu.position}
+              zIndex={Z_INVENTORY_RADIAL_MENU}
+              options={[
+                {
+                  id: 'select',
+                  label: 'Select',
+                  icon: iconAssets.hand,
+                  color: '#6b7280',
+                  onSelect: () => {
+                    setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                    setInventoryRadialMenu(null);
+                  },
                 },
-              },
-              {
-                id: 'place',
-                label: 'Place in World',
-                icon: '🌍',
-                color: '#3b82f6',
-                onSelect: () => {
-                  setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                  closeUI('inventory');
-                  setInventoryRadialMenu(null);
+                {
+                  id: 'place',
+                  label: 'Place in World',
+                  icon: '🌍',
+                  color: '#3b82f6',
+                  onSelect: () => {
+                    setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                    closeUI('inventory');
+                    setInventoryRadialMenu(null);
+                  },
                 },
-              },
-              ...(isFood
-                ? [
-                    {
-                      id: 'eat',
-                      label: 'Eat',
-                      icon: '🍽️',
-                      color: '#f59e0b',
-                      onSelect: () => {
-                        handleFoodEat(inventoryRadialMenu.item);
-                        setInventoryRadialMenu(null);
+                ...(isFood
+                  ? [
+                      {
+                        id: 'eat',
+                        label: 'Eat',
+                        icon: '🍽️',
+                        color: '#f59e0b',
+                        onSelect: () => {
+                          handleFoodEat(inventoryRadialMenu.item);
+                          setInventoryRadialMenu(null);
+                        },
                       },
-                    },
-                  ]
-                : []),
-            ]}
-            onClose={() => setInventoryRadialMenu(null)}
-          />
-        );
-      })()}
+                    ]
+                  : []),
+              ]}
+              onClose={() => setInventoryRadialMenu(null)}
+            />
+          );
+        })()}
 
       {/* Toast notifications for user feedback - positioned above player */}
       {!isCutscenePlaying && (

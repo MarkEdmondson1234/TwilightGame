@@ -185,19 +185,14 @@ export function useEnvironmentController(
       clear: null, // No ambient for clear weather
     };
 
-    // Stop all weather ambient sounds first
+    // Stop weather-specific ambient sounds only.
+    // Non-weather ambient (birds, stream, countryside, cave, lava) is managed
+    // by its own dedicated effect — stopping it here causes a silence gap
+    // because this effect runs before the others can re-evaluate.
     audioManager.stopAmbient('ambient_rain_light', 1000);
     audioManager.stopAmbient('ambient_rain_thunder', 1000);
     audioManager.stopAmbient('ambient_thunderstorm', 1000);
     audioManager.stopAmbient('ambient_blizzard', 1000);
-    audioManager.stopAmbient('ambient_birds', 1000);
-    audioManager.stopAmbient('ambient_running_stream', 1000);
-    audioManager.stopAmbient('ambient_countryside_summer', 1000);
-    audioManager.stopAmbient('ambient_countryside_autumn', 1000);
-    audioManager.stopAmbient('ambient_cave_wind', 1000);
-    audioManager.stopAmbient('ambient_cave_dripping_water', 1000);
-    audioManager.stopAmbient('ambient_lava', 1000);
-    audioManager.stopAmbient('ambient_forest_spring', 1000);
 
     // Play new weather ambient if outdoors and audio exists
     if (isOutdoors) {
@@ -213,19 +208,22 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    // Check if we're in a procedural forest or a forest-like map
-    const isProceduralForest =
+    // Check if we're in an outdoor area where birds would be heard
+    const isOutdoorWithBirds =
       currentMapId.startsWith('RANDOM_FOREST_') ||
       currentMapId.startsWith('deep_forest_') ||
       currentMapId === 'bear_cave' ||
       currentMapId === 'magical_lake' ||
       currentMapId === 'mushroom_forest' ||
-      currentMapId === 'witch_hut';
+      currentMapId === 'witch_hut' ||
+      currentMapId === 'village' ||
+      currentMapId === 'farm' ||
+      currentMapId === 'picnic_meadow';
 
     // Weather conditions that silence the birds
     const badWeatherForBirds = ['rain', 'storm', 'snow'].includes(currentWeather);
 
-    if (isProceduralForest && !badWeatherForBirds) {
+    if (isOutdoorWithBirds && !badWeatherForBirds) {
       // Play bird ambience in forests (only if not already playing)
       if (audioManager.hasSound('ambient_birds')) {
         // playAmbient handles not re-triggering if already playing
@@ -267,8 +265,7 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    const isLavaLevel =
-      currentMapId.startsWith('lava_') || currentMapId === 'king_lava_frog_lair';
+    const isLavaLevel = currentMapId.startsWith('lava_') || currentMapId === 'king_lava_frog_lair';
 
     if (isLavaLevel) {
       if (audioManager.hasSound('ambient_lava')) {
@@ -422,15 +419,17 @@ export function useEnvironmentController(
   }, [currentMapId, currentWeather]);
 
   // -------------------------------------------------------------------------
-  // Village Countryside Ambience (Summer, Clear Weather)
+  // Village Countryside Ambience (Outdoor, Clear Weather, Spring–Autumn)
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    const isVillage = currentMapId === 'village';
+    const isOutdoorVillageArea =
+      currentMapId === 'village' || currentMapId === 'farm' || currentMapId === 'picnic_meadow';
     const { season } = TimeManager.getCurrentTime();
-    const isSummerClear = season === Season.SUMMER && currentWeather === 'clear';
+    const isWarmSeason = season !== Season.WINTER;
+    const isClear = currentWeather === 'clear';
 
-    if (isVillage && isSummerClear) {
+    if (isOutdoorVillageArea && isWarmSeason && isClear) {
       if (audioManager.hasSound('ambient_countryside_summer')) {
         audioManager.playAmbient('ambient_countryside_summer');
       }

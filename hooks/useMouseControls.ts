@@ -66,21 +66,53 @@ function isTouchControlElement(element: EventTarget | null): boolean {
 }
 
 /**
- * Check if the clicked element is a UI overlay (above game world)
- * Uses z-index to determine if element is HUD/modal level
+ * Check if the click position overlaps a UI overlay (above game world).
+ *
+ * Previous approach only inspected e.target's ancestor chain, which missed
+ * HUD containers that use pointer-events:none (clicks fall through to the
+ * canvas, so e.target is the canvas — not the HUD).
+ *
+ * Now uses document.elementsFromPoint to check ALL elements stacked at the
+ * click position regardless of pointer-events, catching any UI layer with
+ * z-index >= Z_HUD.
  */
-function isUIElement(element: EventTarget | null): boolean {
+function isUIElement(element: EventTarget | null, clientX?: number, clientY?: number): boolean {
   if (!element || !(element instanceof HTMLElement)) return false;
 
-  // First check existing class-based detection
+  // Class-based detection on the direct target (fast path)
   if (isTouchControlElement(element)) return true;
 
-  // Check z-index of clicked element and its ancestors
+  // If we have screen coordinates, check every element at that point
+  if (clientX !== undefined && clientY !== undefined) {
+    const elementsAtPoint = document.elementsFromPoint(clientX, clientY);
+    for (const el of elementsAtPoint) {
+      if (!(el instanceof HTMLElement)) continue;
+
+      // Class-based check
+      if (
+        el.classList.contains('hud-element') ||
+        el.classList.contains('inventory-bar') ||
+        el.classList.contains('touch-controls') ||
+        el.dataset.touchControl === 'true'
+      ) {
+        return true;
+      }
+
+      // z-index check — anything at HUD level or above is UI
+      const style = window.getComputedStyle(el);
+      const zIndex = parseInt(style.zIndex, 10);
+      if (!isNaN(zIndex) && zIndex >= Z_HUD) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Fallback: walk ancestor chain (no coordinates available)
   let el: HTMLElement | null = element;
   while (el) {
     const style = window.getComputedStyle(el);
     const zIndex = parseInt(style.zIndex, 10);
-    // Z_HUD is 1000 - anything at or above this is UI
     if (!isNaN(zIndex) && zIndex >= Z_HUD) {
       return true;
     }
@@ -167,7 +199,7 @@ export function useMouseControls(config: MouseControlsConfig) {
       if (!enabled) return;
 
       // Check if click is on a UI element (HUD, modal, etc.)
-      if (isUIElement(e.target)) {
+      if (isUIElement(e.target, e.clientX, e.clientY)) {
         return;
       }
 
@@ -184,13 +216,11 @@ export function useMouseControls(config: MouseControlsConfig) {
      */
     const handleTouchEnd = (e: TouchEvent) => {
       // Ignore touches on UI elements (HUD, modal, etc.)
-      if (isUIElement(e.target)) {
-        return;
-      }
-
-      // Get the last touch point
       const touch = e.changedTouches[0];
       if (!touch) return;
+      if (isUIElement(e.target, touch.clientX, touch.clientY)) {
+        return;
+      }
 
       const rect = container.getBoundingClientRect();
       const screenX = touch.clientX - rect.left;
