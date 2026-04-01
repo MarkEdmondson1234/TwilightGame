@@ -1109,7 +1109,8 @@ export type InteractionType =
   | 'add_to_basket'
   | 'harvest_red_berries'
   | 'tidy_leaves'
-  | 'pickup_leaves';
+  | 'pickup_leaves'
+  | 'open_shop';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -1180,6 +1181,7 @@ export interface GetInteractionsConfig {
   onOpenDecorationWorkshop?: () => void;
   onOpenPaintingEasel?: () => void;
   onBeginYuleCelebration?: () => void;
+  onOpenShop?: () => void;
   /** Open a mini-game by ID with trigger data */
   onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
 }
@@ -1230,6 +1232,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     onDeskAction,
     onPlaceDecoration,
     onBeginYuleCelebration,
+    onOpenShop,
   } = config;
 
   const interactions: AvailableInteraction[] = [];
@@ -1237,6 +1240,18 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   const tileY = Math.floor(position.y);
   const tileData = getTileData(tileX, tileY);
   const tilePos = { x: tileX, y: tileY };
+
+  // Mushra's shop counter — clicking tiles (9,4) or (10,4) opens the shop
+  if (currentMapId === 'mushras_shop' && tileY === 4 && (tileX === 9 || tileX === 10)) {
+    interactions.push({
+      type: 'open_shop',
+      label: "Browse Mushra's Wares",
+      icon: '🍄',
+      color: '#86efac',
+      execute: () => onOpenShop?.(),
+    });
+    return interactions;
+  }
 
   // Check for placed items (food, etc.) at this position.
   // Large decorations (placedScale > 1) render centered on their position, so we

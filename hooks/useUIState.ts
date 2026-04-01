@@ -42,6 +42,8 @@ export interface UIContext {
   // Mini-game context
   activeMiniGameId: string | null;
   miniGameTriggerData: MiniGameTriggerData | null;
+  // Shop context
+  activeShopId: string | null;
 }
 
 /**
@@ -87,6 +89,8 @@ export interface OpenUIOptions {
   // For mini-game
   activeMiniGameId?: string;
   miniGameTriggerData?: MiniGameTriggerData;
+  // For shop UI
+  activeShopId?: string;
 }
 
 /** Book overlay names — mutually exclusive (opening one closes the others) */
@@ -112,6 +116,7 @@ const initialContext: UIContext = {
   giftTargetNpcId: null,
   activeMiniGameId: null,
   miniGameTriggerData: null,
+  activeShopId: null,
 };
 
 const initialState: UIState = {
@@ -196,6 +201,9 @@ export function useUIState() {
         if (options.miniGameTriggerData !== undefined) {
           newState.context.miniGameTriggerData = options.miniGameTriggerData;
         }
+        if (options.activeShopId !== undefined) {
+          newState.context.activeShopId = options.activeShopId;
+        }
       }
 
       return newState;
@@ -231,6 +239,11 @@ export function useUIState() {
           ...prev.context,
           activeMiniGameId: null,
           miniGameTriggerData: null,
+        };
+      } else if (name === 'shopUI') {
+        newState.context = {
+          ...prev.context,
+          activeShopId: null,
         };
       }
 

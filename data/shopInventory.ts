@@ -326,13 +326,6 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
 
   // Seasonal produce (fresh from local farms)
   {
-    itemId: 'decoration_sunflower_bouquet',
-    buyPrice: 80,
-    sellPrice: 30,
-    stock: 'unlimited',
-    availableSeasons: ['summer'],
-  },
-  {
     itemId: 'crop_blackberry',
     buyPrice: 50,
     sellPrice: 35, // Better sell price than normal (shop buys at 70% instead of 60%)
@@ -382,7 +375,14 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     availableSeasons: ['summer', 'autumn'],
   },
 
-  // ===== DECORATION CRAFTING MATERIALS =====
+];
+
+/**
+ * Mushra's Shop inventory — artisan and creative goods.
+ * These items are exclusive to Mushra's shop and not sold at the General Store.
+ */
+export const MUSHRAS_SHOP_INVENTORY: ShopItem[] = [
+  // ===== CANVAS SUPPLIES =====
   {
     itemId: 'linen',
     buyPrice: 15,
@@ -396,16 +396,15 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
-    itemId: 'ceramic_vase',
-    buyPrice: 25,
-    sellPrice: 10,
+    itemId: 'decoration_sunflower_bouquet',
+    buyPrice: 80,
+    sellPrice: 30,
     stock: 'unlimited',
   },
-  // TODO: move to Mushra's shop when implemented
   {
-    itemId: 'camera',
-    buyPrice: 180,
-    sellPrice: 0,
+    itemId: 'ceramic_vase',
+    buyPrice: 300,
+    sellPrice: 10,
     stock: 'unlimited',
   },
   {
@@ -414,7 +413,30 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     sellPrice: 5,
     stock: 'unlimited',
   },
+  {
+    itemId: 'easel',
+    buyPrice: 540,
+    sellPrice: 80,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'camera',
+    buyPrice: 800,
+    sellPrice: 0,
+    stock: 'unlimited',
+  },
 ];
+
+/**
+ * Get Mushra's shop inventory filtered by current season.
+ */
+export function getMushrasShopInventory(season: Season): ShopItem[] {
+  return MUSHRAS_SHOP_INVENTORY.filter((item) => {
+    const seasons = getEffectiveSeasons(item);
+    if (!seasons) return true;
+    return seasons.includes(season);
+  });
+}
 
 /**
  * Get the effective available seasons for a shop item.

@@ -760,13 +760,14 @@ export const itemAssets = {
   picnic_blanket_folded: '/TwilightGame/assets-optimized/items/quest/picnic_blanket_folded.png',
   picnic_blanket: '/TwilightGame/assets-optimized/items/quest/picnic_blanket.png',
   picnic_basket: '/TwilightGame/assets-optimized/items/quest/picnic_basket.png',
-  camera: '/TwilightGame/assets-optimized/items/grocery/camera.png',
-  // Decorations
+  // Mushra's Shop items
+  camera: '/TwilightGame/assets-optimized/items/mushras_shop/camera.png',
   sunflower_bouquet:
-    '/TwilightGame/assets-optimized/items/decoration/decoration_sunflower_bouquet.png',
+    '/TwilightGame/assets-optimized/items/mushras_shop/decoration_sunflower_bouquet.png',
+  easel: '/TwilightGame/assets-optimized/items/mushras_shop/easel.png',
+  // Decorations
   sunflower_crop: '/TwilightGame/assets-optimized/items/decoration/sunflower_crop.png',
   straw: '/TwilightGame/assets-optimized/items/decoration/straw.png',
-  easel: '/TwilightGame/assets-optimized/items/crafting/easel.png',
   crafting_table: '/TwilightGame/assets-optimized/items/crafting/crafting_table.png',
 };
 

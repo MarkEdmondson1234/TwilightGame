@@ -8,6 +8,7 @@ import {
   GENERAL_STORE_INVENTORY,
   ShopItem,
   getSeasonalInventory,
+  getMushrasShopInventory,
   getBuyPrice,
   getSellPrice,
   Season as ShopSeason
@@ -67,6 +68,19 @@ export class ShopManager {
   public getCurrentInventory(): ShopItem[] {
     const currentTime = TimeManager.getCurrentTime();
     const season = this.convertSeason(currentTime.season);
+    return getSeasonalInventory(season);
+  }
+
+  /**
+   * Get inventory for a specific shop, filtered by season.
+   * @param shopId Map ID of the shop ('shop' = General Store, 'mushras_shop' = Mushra's)
+   */
+  public getInventoryForShop(shopId: string): ShopItem[] {
+    const currentTime = TimeManager.getCurrentTime();
+    const season = this.convertSeason(currentTime.season);
+    if (shopId === 'mushras_shop') {
+      return getMushrasShopInventory(season);
+    }
     return getSeasonalInventory(season);
   }
 

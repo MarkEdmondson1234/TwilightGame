@@ -22,6 +22,7 @@ import { audioManager } from '../utils/AudioManager';
 
 interface ShopUIProps {
   isOpen: boolean;
+  shopId?: string;
   onClose: () => void;
   playerGold: number;
   playerInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[];
@@ -37,11 +38,30 @@ interface DragState {
 
 const ShopUI: React.FC<ShopUIProps> = ({
   isOpen,
+  shopId = 'shop',
   onClose,
   playerGold,
   playerInventory,
   onTransaction,
 }) => {
+  const isMushrasShop = shopId === 'mushras_shop';
+  const theme = isMushrasShop
+    ? {
+        title: "Mushra's Shop",
+        container: 'bg-gradient-to-b from-rose-950 to-rose-900 border-4 border-rose-800',
+        titleColor: 'text-rose-200',
+        stockHeader: 'text-rose-300',
+        filterActive: 'bg-rose-500 text-rose-950',
+        filterInactive: 'bg-rose-900/50 text-rose-300 border border-rose-700 hover:bg-rose-800/60',
+      }
+    : {
+        title: 'General Store',
+        container: 'bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600',
+        titleColor: 'text-amber-200',
+        stockHeader: 'text-emerald-300',
+        filterActive: 'bg-emerald-500 text-emerald-950',
+        filterInactive: 'bg-emerald-900/50 text-emerald-300 border border-emerald-700 hover:bg-emerald-800/60',
+      };
   const [shopInventory, setShopInventory] = useState<ShopItem[]>([]);
   const [dragState, setDragState] = useState<DragState | null>(null);
 
@@ -62,13 +82,13 @@ const ShopUI: React.FC<ShopUIProps> = ({
     onClose();
   }, [onClose]);
 
-  // Load shop inventory (filtered by season)
+  // Load shop inventory (filtered by season) for the correct shop
   useEffect(() => {
     if (isOpen) {
-      const inventory = shopManager.getCurrentInventory();
+      const inventory = shopManager.getInventoryForShop(shopId);
       setShopInventory(inventory);
     }
-  }, [isOpen]);
+  }, [isOpen, shopId]);
 
   // Close handler (ESC key)
   useEffect(() => {
@@ -400,12 +420,12 @@ const ShopUI: React.FC<ShopUIProps> = ({
         onClick={handleClose}
       >
         <div
-          className="bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col"
+          className={`${theme.container} rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header with Gold Display and Close Button */}
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-3xl font-bold text-amber-200">General Store</h2>
+            <h2 className={`text-3xl font-bold ${theme.titleColor}`}>{theme.title}</h2>
             <div className="flex items-center gap-4">
               {/* Prominent Gold Display */}
               <div className="bg-gradient-to-br from-yellow-600 to-yellow-800 border-4 border-yellow-500 rounded-lg px-6 py-3 shadow-lg">
@@ -450,7 +470,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
           <div className="flex-1 grid grid-cols-2 gap-6 overflow-hidden">
             {/* Shop Inventory (Left) */}
             <div className="flex flex-col">
-              <h3 className="text-xl font-bold text-emerald-300 mb-2">Shop Stock</h3>
+              <h3 className={`text-xl font-bold ${theme.stockHeader} mb-2`}>Shop Stock</h3>
               {/* Shop Category Filter */}
               <div className="flex flex-wrap gap-1 mb-2">
                 {shopFilterTabs.map((tab) => (
@@ -459,8 +479,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
                     onClick={() => setShopFilter(tab.id)}
                     className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors ${
                       shopFilter === tab.id
-                        ? 'bg-emerald-500 text-emerald-950'
-                        : 'bg-emerald-900/50 text-emerald-300 border border-emerald-700 hover:bg-emerald-800/60'
+                        ? theme.filterActive
+                        : theme.filterInactive
                     }`}
                   >
                     {tab.label}

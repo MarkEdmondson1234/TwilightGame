@@ -673,10 +673,10 @@ export const ITEMS: Record<string, ItemDefinition> = {
     id: 'camera',
     name: 'camera',
     displayName: 'Camera',
-    category: ItemCategory.TOOL,
+    category: ItemCategory.MISC,
     description: 'A hand-wound film camera. Takes 24 exposures per roll.',
     stackable: false,
-    buyPrice: 180,
+    buyPrice: 800,
     image: itemAssets.camera,
   },
 

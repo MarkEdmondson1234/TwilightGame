@@ -635,13 +635,14 @@ const App: React.FC = () => {
   }, [openUI]);
 
   // Intercept shop counter fox interaction to open shop UI instead of dialogue
-  // Only the 'shop_counter_fox' NPC inside the shop triggers the shop UI
-  // The village 'shopkeeper' NPC just shows normal dialogue
+  // Specific NPCs trigger the shop UI instead of normal dialogue
   useEffect(() => {
     if (activeNPC === 'shop_counter_fox') {
-      // Clear the NPC dialogue and open shop UI instead
       setActiveNPC(null);
-      openUI('shopUI');
+      openUI('shopUI', { activeShopId: 'shop' });
+    } else if (activeNPC === 'mushra_shop') {
+      setActiveNPC(null);
+      openUI('shopUI', { activeShopId: 'mushras_shop' });
     }
   }, [activeNPC]);
 
@@ -698,8 +699,7 @@ const App: React.FC = () => {
     onSetShowJournal: (show: boolean) => (show ? openUI('journal') : closeUI('journal')),
     onSetShowInventory: (show: boolean) => (show ? openUI('inventory') : closeUI('inventory')),
     onSetShowShopUI: (show) => {
-      // Only allow opening shop when inside shop map
-      if (show && currentMapId === 'shop') {
+      if (show && (currentMapId === 'shop' || currentMapId === 'mushras_shop')) {
         openUI('shopUI');
       } else {
         closeUI('shopUI');
@@ -2278,6 +2278,7 @@ const App: React.FC = () => {
       {ui.shopUI && (
         <ShopUI
           isOpen={ui.shopUI}
+          shopId={ui.context.activeShopId ?? 'shop'}
           onClose={() => closeUI('shopUI')}
           playerGold={gameState.getGold()}
           playerInventory={gameState.getState().inventory.items}

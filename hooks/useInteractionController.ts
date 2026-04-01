@@ -270,6 +270,7 @@ export function useInteractionController(
   const buildInteractionCallbacks = useCallback(() => {
     return {
       onMirror: () => openUI('characterCreator'),
+      onOpenShop: () => openUI('shopUI', { activeShopId: currentMapId }),
       onNPC: (npcId: string) => {
         // Play duck quacking if interacting with a duck
         if (npcId.toLowerCase().includes('duck')) {
