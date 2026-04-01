@@ -9,7 +9,7 @@ import { createMushraShopNPC } from '../../utils/npcFactories';
  * The cosy interior of Mushra's mushroom house in the mushroom forest.
  * A warm, artistic space filled with hand-crafted goods and forest finds.
  *
- * Image dimensions: 1920x1080 pixels (rendered at half dimensions 960x540 with scale 1.3)
+ * Image dimensions: 1920x1080 pixels (rendered at 1200x675 with 1.2 scale)
  * Grid is 15x10 tiles for collision detection.
  *
  * Walkmesh Grid Legend:
@@ -51,9 +51,9 @@ const mushraShopLayers: RoomLayer[] = [
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
-    width: 960, // Using half dimensions like cottage interior (actual image is 1920x1080)
-    height: 540,
-    scale: 1.3, // Match bear den / cottage interior scale
+    width: 1200,
+    height: 675,
+    scale: 1.2, // 20% larger to fill viewport
     centered: true,
   },
 
@@ -71,9 +71,9 @@ const mushraShopLayers: RoomLayer[] = [
     zIndex: Z_INTERIOR_FOREGROUND, // 65: In front of NPCs, behind player
     parallaxFactor: 1.0,
     opacity: 1.0,
-    width: 960, // Must match background layer dimensions
-    height: 540,
-    scale: 1.3, // Must match background scale
+    width: 1200,
+    height: 675,
+    scale: 1.2, // Must match background scale
     centered: true,
   },
 
