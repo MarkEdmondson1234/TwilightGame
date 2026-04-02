@@ -1,12 +1,13 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
-import { Z_PARALLAX_FAR } from '../../zIndex';
+import { Z_PARALLAX_FAR, Z_SPRITE_FOREGROUND } from '../../zIndex';
 
 /**
  * House 2 Interior - Little girl's house (background-image interior)
  *
- * Placeholder background until a unique drawing is complete.
- * Image: /TwilightGame/assets/rooms/empty_room.png (1920×1080, displayed at 960×540)
+ * Background: celias_room_background.png (1920×1080, displayed at 960×540 @ 1.3×)
+ * Foreground: celias_room_foreground.png (1920×1080, displayed at 960×540 @ 1.3×) — renders in front of player
+ * width=960 = mapWidth(15) × TILE_SIZE(64), which keeps the debug grid aligned with the image
  *
  * Walkmesh Grid Legend (invisible — collision only):
  * # = Wall/obstacle (solid)
@@ -34,17 +35,33 @@ const gridString = `
 `;
 
 const house2Layers: RoomLayer[] = [
+  // Layer 1: Background (walls, furniture, room decor — behind everything)
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/empty_room.png',
-    zIndex: Z_PARALLAX_FAR,
+    image: '/TwilightGame/assets/rooms/little_girls_house/celias_room_background.png',
+    zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
-    width: 960,
+    width: 960,  // = mapWidth (15) × TILE_SIZE (64) — keeps grid aligned with image
+    height: 540, // 16:9 aspect ratio
+    scale: 1.3,
+    centered: true,
+  },
+
+  // Layer 2: Foreground (objects that appear in front of the player)
+  {
+    type: 'image',
+    image: '/TwilightGame/assets/rooms/little_girls_house/celias_room_foreground.png',
+    zIndex: Z_SPRITE_FOREGROUND, // 200: In front of player
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,  // Must match background (keeps grid aligned)
     height: 540,
     scale: 1.3,
     centered: true,
   },
+
+  // Player is implicitly at Z_PLAYER (100) — between background and foreground
 ];
 
 export const house2: MapDefinition = {
