@@ -18,7 +18,7 @@ const characterSprites = {
   cat: '/TwilightGame/assets/npcs/cat/cat_sleeping_01.png',
   dog: '/TwilightGame/assets/npcs/dog_01.png',
   fox: '/TwilightGame/assets/npcs/shop_keeper_fox_01.png',
-  bear: '/TwilightGame/assets/npcs/bear/bear_01.png',
+  bear: '/TwilightGame/assets/npcs/bear/chill_bear_tea_01.png',
   witch: '/TwilightGame/assets/npcs/witch/witch_wolf_01.png',
   morgan: '/TwilightGame/assets/npcs/morgan/morgan_front.png',
 };
