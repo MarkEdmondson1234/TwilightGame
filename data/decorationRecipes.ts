@@ -300,7 +300,7 @@ export const POTTED_PLANT_RECIPES: Record<string, DecorationRecipe> = {
     category: 'potted_plant',
     ingredients: [
       { itemId: 'plant_pot', quantity: 1 },
-      { itemId: 'mint', quantity: 2 },
+      { itemId: 'crop_mint', quantity: 2 },
     ],
     resultItemId: 'decoration_potted_herbs',
     resultQuantity: 1,

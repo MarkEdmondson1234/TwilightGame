@@ -78,6 +78,7 @@ const WREATH_MATERIALS = [
   'heather_sprig',
   'straw',
   'red_berries',
+  'crop_mint',
 ] as const;
 
 /** Visual colour associated with each flower for the slot border. */
@@ -104,6 +105,7 @@ const FLOWER_COLOURS: Record<string, string> = {
   heather_sprig: '#9b6dbd',
   straw: '#d4a843',
   red_berries: '#c0392b',
+  crop_mint: '#6ee7b7',
 };
 
 /** Shared style for the round zoom/size buttons. */
@@ -172,6 +174,7 @@ function makeSlot(itemId: string, x: number, y: number, overrides?: Partial<Slot
 /** Per-item image overrides for the wreath mini-game (used when the default item image doesn't suit the small slot). */
 const WREATH_IMAGE_OVERRIDES: Record<string, string> = {
   crop_lavender: herbAssets.lavender_sprig,
+  crop_mint: herbAssets.mint_sprig,
 };
 
 function getFlowerImage(itemId: string): string | null {

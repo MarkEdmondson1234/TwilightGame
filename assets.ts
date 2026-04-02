@@ -350,6 +350,7 @@ export const herbAssets = {
   mint_seeds: '/TwilightGame/assets-optimized/herbs/mint_seeds.png',
   mint_plant: '/TwilightGame/assets-optimized/herbs/mint_bush.png',
   mint_crop: '/TwilightGame/assets-optimized/herbs/mint_bunch.png',
+  mint_sprig: '/TwilightGame/assets-optimized/herbs/mint_sprig.png',
 };
 
 // Cooking assets - Prepared food items (cooked dishes)

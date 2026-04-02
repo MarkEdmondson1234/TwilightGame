@@ -1707,9 +1707,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.vinegar,
   },
 
-  mint: {
-    id: 'mint',
-    name: 'mint',
+  crop_mint: {
+    id: 'crop_mint',
+    name: 'crop_mint',
     displayName: 'Fresh Mint',
     category: ItemCategory.CROP,
     description: 'Fragrant mint leaves. Cooling to the touch and refreshing in potions.',

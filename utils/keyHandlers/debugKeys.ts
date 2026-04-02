@@ -118,7 +118,7 @@ export function handleF9(): void {
     'temporal_dust',
     'feather',
     'vinegar',
-    'mint',
+    'crop_mint',
     'hearthstone',
     'golden_apple',
   ];

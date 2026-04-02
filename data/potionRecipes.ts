@@ -246,7 +246,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     description: 'A cold white potion with swirling flakes inside.',
     ingredients: [
       { itemId: 'milk', quantity: 1 },
-      { itemId: 'mint', quantity: 1 },
+      { itemId: 'crop_mint', quantity: 1 },
       { itemId: 'frost_flower', quantity: 1 },
     ],
     brewingTime: 30,

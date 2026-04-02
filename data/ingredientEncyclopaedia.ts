@@ -128,8 +128,8 @@ const ENCYCLOPAEDIA_DATA: Record<string, EncyclopaediaEntry> = {
     lore: 'These softly glowing cyan mushrooms illuminate the forest floor like fallen stars. Unlike bioluminescent fungi of the mundane world, their light never fades — even specimens centuries old continue to glow in museum collections. The luminescence is cool to the touch and casts no heat, making them prized as natural lanterns by those who venture into deep caves. In potions, they impart a steadying clarity that sharpens the mind and calms the nerves.',
   },
 
-  mint: {
-    itemId: 'mint',
+  crop_mint: {
+    itemId: 'crop_mint',
     latinName: 'Mentha magica',
     type: 'Herb',
     canBeFound: 'Grow your own mint by planting mint seeds in your garden. Seeds are available from the village shop in spring and summer.',
