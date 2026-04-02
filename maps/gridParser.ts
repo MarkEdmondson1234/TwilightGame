@@ -66,7 +66,7 @@ export const GRID_CODES: Record<string, TileType> = {
   M: TileType.MINE_ENTRANCE,
   // Furniture
   T: TileType.TABLE,
-  H: TileType.CHAIR,
+  H: TileType.HEARTH, // Hearth/indoor fireplace (triggers fire animation overlay)
   I: TileType.MIRROR, // Mirror (I looks like a mirror!)
   // interior
   A: TileType.BED, // A = bed (A bed to sleep in!)

@@ -1354,6 +1354,12 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     collisionType: CollisionType.DESK, // Desk collision: solid + allows item placement for cooked food
     image: [], // No single-tile image - uses multi-tile sprite from SPRITE_METADATA
   },
+  [TileType.HEARTH]: {
+    name: 'Hearth',
+    color: 'bg-palette-charcoal', // Fallback colour (not visible in background-image rooms)
+    collisionType: CollisionType.SOLID,
+    image: [], // Visual comes from background room image; fire overlay via TILE_ANIMATIONS
+  },
   [TileType.DESK]: {
     name: 'Desk',
     color: 'bg-palette-tan', // Base floor color (shows through transparent parts)

@@ -13,11 +13,13 @@ import { Z_PARALLAX_FAR, Z_SPRITE_FOREGROUND } from '../../zIndex';
  * # = Wall/obstacle (solid)
  * . = Floor (walkable)
  * D = Door (transition tile — exit to village)
+ * H = Hearth (solid — triggers fire animation overlay at this position)
  *
  * Key positions:
  * - Village transition spawns player (PC) at {x:7.6, y:6} → walkable row 6
  * - Little girl at {x:10, y:6}, Periwinkle at {x:6, y:6} → walkable row 6
  * - Exit door at {x:7, y:7} → bottom-centre door tile
+ * - Hearth/fireplace at {x:7, y:4} → matches fireplace in background image
  */
 
 // 15 columns × 9 rows — standard background-image room layout
@@ -26,7 +28,7 @@ const gridString = `
 ###############
 ###############
 ###############
-###############
+#######H#######
 ...............
 .###...........
 .###.........#.

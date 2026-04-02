@@ -1728,6 +1728,8 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="background"
+          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
         {/* Foreground Image Layers are now rendered by PixiJS BackgroundImageLayer */}
@@ -1740,6 +1742,8 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="midground"
+          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
         {/* Render Player as DOM element when PixiJS is disabled */}
@@ -1803,6 +1807,8 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="foreground"
+          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
         {/* Weather effects now handled by PixiJS WeatherLayer */}

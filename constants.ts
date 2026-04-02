@@ -371,6 +371,20 @@ export const TILE_ANIMATIONS: import('./types').TileAnimation[] = [
     },
   },
 
+  // Flickering fire in indoor hearths/fireplaces
+  {
+    id: 'hearth_fire',
+    image: animationAssets.fire,
+    tileType: TileType.HEARTH,
+    offsetX: 0,
+    offsetY: -0.36, // Nudged up ~29px to align with the fireplace in the background image
+    radius: 1,
+    layer: 'midground', // Behind player, in front of background image
+    loop: true,
+    opacity: 0.9,
+    scale: 0.125, // 512px × 0.125 = 64px = 1 tile
+  },
+
   // Future examples:
   // {
   //   id: 'chimney_smoke',

@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapDefinition, TileAnimation } from '../types';
+import { MapDefinition, TileAnimation, Position } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { TILE_SIZE, TILE_ANIMATIONS } from '../constants';
 
@@ -14,6 +14,10 @@ interface AnimationOverlayProps {
   seasonKey: 'spring' | 'summer' | 'autumn' | 'winter';
   timeOfDay: 'day' | 'night';
   layer: 'background' | 'midground' | 'foreground';
+  /** Pass effectiveGridOffset from App.tsx for background-image rooms */
+  gridOffset?: Position;
+  /** Pass effectiveTileSize from App.tsx for background-image rooms */
+  tileSize?: number;
 }
 
 /**
@@ -29,6 +33,7 @@ interface AnimationOverlayProps {
  * - Supports random horizontal flip
  * - Viewport culling for performance
  * - Configurable opacity and scale
+ * - Supports background-image rooms via gridOffset + tileSize props
  */
 const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
   currentMap,
@@ -36,6 +41,8 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
   seasonKey,
   timeOfDay,
   layer,
+  gridOffset,
+  tileSize,
 }) => {
   // Filter animations for this layer
   const layerAnimations = TILE_ANIMATIONS.filter((anim) => anim.layer === layer);
@@ -44,6 +51,14 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
   if (layerAnimations.length === 0) {
     return null;
   }
+
+  // In background-image rooms, use effectiveTileSize and gridOffset so animations
+  // align with the scaled/centred background image instead of raw TILE_SIZE coords.
+  const effectiveTileSize = tileSize ?? TILE_SIZE;
+  const gridOffsetX = gridOffset?.x ?? 0;
+  const gridOffsetY = gridOffset?.y ?? 0;
+  // Scale factor applied to animation sizes so they stay proportional to the tile size
+  const tileSizeScale = effectiveTileSize / TILE_SIZE;
 
   // Track which animations we've already rendered (to avoid duplicates)
   const renderedAnimations = new Set<string>();
@@ -88,9 +103,9 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
           }
         }
 
-        // Calculate base position of trigger tile
-        const tileX = x * TILE_SIZE;
-        const tileY = y * TILE_SIZE;
+        // Calculate base position of trigger tile in effective coordinate space
+        const tileX = gridOffsetX + x * effectiveTileSize;
+        const tileY = gridOffsetY + y * effectiveTileSize;
 
         // Determine how many instances to render for this animation
         const instanceCount = animation.instances
@@ -145,18 +160,22 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
 
           // Use animation-specific GIF size, or default to 512 for optimized GIFs
           const gifSize = animation.gifSize || 512;
-          const scaledSize = gifSize * scale;
+          // Adjust scale so the animation stays proportional to the effective tile size
+          const adjustedScale = scale * tileSizeScale;
+          const scaledSize = gifSize * adjustedScale;
 
-          // Position includes offset from tile center, minus half the scaled GIF size to center it
-          const animX = tileX + offsetX * TILE_SIZE + TILE_SIZE / 2 - scaledSize / 2;
-          const animY = tileY + offsetY * TILE_SIZE + TILE_SIZE / 2 - scaledSize / 2;
+          // Position includes offset from tile centre, minus half the scaled GIF size to centre it
+          const animX =
+            tileX + offsetX * effectiveTileSize + effectiveTileSize / 2 - scaledSize / 2;
+          const animY =
+            tileY + offsetY * effectiveTileSize + effectiveTileSize / 2 - scaledSize / 2;
 
-          // Check if animation is within visible bounds (accounting for scale)
+          // Check if animation is within visible bounds (accounting for scale and offset)
           if (
-            animX + scaledSize < visibleRange.minX * TILE_SIZE ||
-            animX - scaledSize > visibleRange.maxX * TILE_SIZE ||
-            animY + scaledSize < visibleRange.minY * TILE_SIZE ||
-            animY - scaledSize > visibleRange.maxY * TILE_SIZE
+            animX + scaledSize < gridOffsetX + visibleRange.minX * effectiveTileSize ||
+            animX - scaledSize > gridOffsetX + visibleRange.maxX * effectiveTileSize ||
+            animY + scaledSize < gridOffsetY + visibleRange.minY * effectiveTileSize ||
+            animY - scaledSize > gridOffsetY + visibleRange.maxY * effectiveTileSize
           ) {
             continue;
           }
@@ -172,7 +191,7 @@ const AnimationOverlay: React.FC<AnimationOverlayProps> = ({
                 top: animY,
                 width: gifSize,
                 height: gifSize,
-                transform: `scale(${scale}) ${flipTransform}`.trim(),
+                transform: `scale(${adjustedScale}) ${flipTransform}`.trim(),
                 transformOrigin: 'top left',
                 opacity: animation.opacity ?? 1,
                 pointerEvents: 'none',

@@ -139,6 +139,7 @@ export enum TileType {
   SOFA,
   CHIMNEY,
   STOVE,
+  HEARTH, // Indoor fireplace — triggers fire animation overlay
   DESK, // Desk surface for placing/picking up items (uses CollisionType.DESK)
   // Outdoor structures
   WELL,
