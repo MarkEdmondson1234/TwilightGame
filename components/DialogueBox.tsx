@@ -8,6 +8,7 @@ import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
+import { CookingDomain } from '../data/recipes';
 import { decorationManager } from '../utils/DecorationManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import { getItem } from '../data/items';
@@ -144,6 +145,13 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
         );
         const anyUnlocked = domainRecipes.some((r) => cookingManager.isRecipeUnlocked(r.id));
         if (!anyUnlocked) {
+          return false;
+        }
+      }
+
+      // Check if all recipes in a domain must be unlocked (regardless of mastery)
+      if (response.requiredAllDomainRecipesUnlocked) {
+        if (!cookingManager.isDomainAllRecipesUnlocked(response.requiredAllDomainRecipesUnlocked as CookingDomain)) {
           return false;
         }
       }

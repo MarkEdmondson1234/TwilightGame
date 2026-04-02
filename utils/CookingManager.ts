@@ -281,6 +281,15 @@ class CookingManagerClass {
   }
 
   /**
+   * Check if all recipes in a domain have been unlocked (regardless of mastery)
+   */
+  isDomainAllRecipesUnlocked(domain: CookingDomain): boolean {
+    const domainRecipes = getRecipesByDomain(domain);
+    if (domainRecipes.length === 0) return false;
+    return domainRecipes.every((recipe) => this.isRecipeUnlocked(recipe.id));
+  }
+
+  /**
    * Get cooking skill level based on mastered domains and recipes
    */
   getCookingSkillLevel(): number {

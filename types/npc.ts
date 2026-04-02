@@ -120,6 +120,7 @@ export interface DialogueResponse {
   // Cooking domain requirements (savoury, dessert, baking)
   requiredDomainMastered?: string; // Only show if this cooking domain is mastered
   requiredDomainStarted?: string; // Only show if this domain has been started (any recipe unlocked)
+  requiredAllDomainRecipesUnlocked?: string; // Only show if all recipes in this domain are unlocked
   hiddenIfDomainStarted?: string; // Hide if any recipe in this domain is unlocked
   hiddenIfDomainMastered?: string; // Hide if this domain is fully mastered
   hiddenIfAnyDomainStarted?: boolean; // Hide if player has started any domain (not mastered yet)

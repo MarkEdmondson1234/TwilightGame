@@ -178,6 +178,7 @@ export function createMumNPC(
           { text: 'Pizza with potatoes.', nextId: 'learn_potato_pizza', hiddenIfRecipeUnlocked: 'potato_pizza' },
           { text: 'Roast dinner.', nextId: 'learn_roast_dinner', requiredRecipeMastered: 'spaghetti_meat_sauce', hiddenIfRecipeUnlocked: 'roast_dinner' },
           { text: 'Roast dinner.', nextId: 'not_ready_roast_dinner', hiddenIfRecipeMastered: 'spaghetti_meat_sauce' },
+          { text: "I've already learned all your recipes...", nextId: 'domain_mastery_needed', requiredAllDomainRecipesUnlocked: 'savoury', hiddenIfDomainMastered: 'savoury' },
           { text: 'Not right now.' },
         ],
       },
@@ -192,6 +193,7 @@ export function createMumNPC(
           { text: 'What about marzipan chocolates?', nextId: 'learn_marzipan', hiddenIfRecipeUnlocked: 'marzipan_chocolates' },
           { text: 'Ice cream sounds lovely!', nextId: 'learn_ice_cream', requiredRecipeMastered: 'crepes', hiddenIfRecipeUnlocked: 'vanilla_ice_cream' },
           { text: 'Ice cream sounds lovely!', nextId: 'not_ready_ice_cream', hiddenIfRecipeMastered: 'crepes' },
+          { text: "I've already learned all your recipes...", nextId: 'domain_mastery_needed', requiredAllDomainRecipesUnlocked: 'dessert', hiddenIfDomainMastered: 'dessert' },
           { text: 'Never mind.' },
         ],
       },
@@ -203,6 +205,7 @@ export function createMumNPC(
           { text: 'Chocolate cookies, please!', nextId: 'learn_biscuits', hiddenIfRecipeUnlocked: 'cookies' },
           { text: 'Chocolate cake!', nextId: 'learn_chocolate_cake', requiredRecipeMastered: 'cookies', hiddenIfRecipeUnlocked: 'chocolate_cake' },
           { text: 'Chocolate cake!', nextId: 'not_ready_chocolate_cake', hiddenIfRecipeMastered: 'cookies' },
+          { text: "I've already learned all your recipes...", nextId: 'domain_mastery_needed', requiredAllDomainRecipesUnlocked: 'baking', hiddenIfDomainMastered: 'baking' },
           { text: 'Not right now.' },
         ],
       },
@@ -217,6 +220,13 @@ export function createMumNPC(
       { id: 'not_ready_chocolate_cake', text: 'Chocolate cake is quite advanced, dear. Master the chocolate cookies recipe first - once you\'ve got the hang of basic baking, then we can tackle the cake. Practice makes perfect!', expression: 'default', responses: [] },
       { id: 'not_ready_ice_cream', text: 'Ice cream is tricky, love. Show me you\'ve mastered crêpes first, then I\'ll teach you the secrets of making perfect ice cream.', expression: 'default', responses: [] },
       { id: 'not_ready_roast_dinner', text: 'A roast dinner is quite a challenge! Master the spaghetti recipe first, dear, then we\'ll work our way up to a proper Sunday roast.', expression: 'default', responses: [] },
+
+      {
+        id: 'domain_mastery_needed',
+        text: "You've learned all the recipes I have for you at the moment, love! But knowing a recipe and truly mastering it are two different things. Cook each dish until it feels like second nature — at least a few times each. Once you've really got the hang of all of them, come and find me and we'll move on to something new.",
+        expression: 'default',
+        responses: [],
+      },
 
       // Personal story dialogues
       {
