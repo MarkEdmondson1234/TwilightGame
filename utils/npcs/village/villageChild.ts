@@ -141,8 +141,8 @@ export function createVillageChildNPC(
     seasonalLocations: {
       spring: { mapId: 'village', position: { x: 18, y: 8 }, direction: Direction.Down },
       summer: { mapId: 'village', position: { x: 18, y: 8 }, direction: Direction.Down },
-      autumn: { mapId: 'house2', position: { x: 10, y: 6 }, direction: Direction.Down },
-      winter: { mapId: 'house2', position: { x: 10, y: 6 }, direction: Direction.Down },
+      autumn: { mapId: 'house2', position: { x: 11.5, y: 6 }, direction: Direction.Down, static: true },
+      winter: { mapId: 'house2', position: { x: 11.5, y: 6 }, direction: Direction.Down, static: true },
     },
   });
 }

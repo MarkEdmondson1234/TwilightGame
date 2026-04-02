@@ -988,7 +988,7 @@ class NPCManagerClass {
    */
   private getSeasonalLocationForNPC(
     npc: NPC
-  ): { mapId: string; position: Position; direction: Direction } | null {
+  ): { mapId: string; position: Position; direction: Direction; static?: boolean } | null {
     if (!npc.seasonalLocations) {
       // No seasonal locations, use base location
       const state = this.npcStates.get(npc.id);
@@ -1010,6 +1010,7 @@ class NPCManagerClass {
         mapId: seasonalData.mapId,
         position: seasonalData.position,
         direction: seasonalData.direction || npc.direction,
+        static: seasonalData.static,
       };
     }
 
@@ -1047,7 +1048,7 @@ class NPCManagerClass {
       const locationData = this.getSeasonalLocationForNPC(npc);
       if (!locationData) return;
 
-      const { mapId, position, direction } = locationData;
+      const { mapId, position, direction, static: isStatic } = locationData;
 
       // Remove NPC from all maps first
       this.npcsByMap.forEach((mapNPCs, currentMapId) => {
@@ -1063,6 +1064,13 @@ class NPCManagerClass {
       // Update NPC position and direction
       npc.position = { ...position };
       npc.direction = direction;
+
+      // Freeze wandering when the seasonal location is marked as static (e.g. indoors)
+      if (isStatic) {
+        this.frozenNPCIds.add(npc.id);
+      } else {
+        this.frozenNPCIds.delete(npc.id);
+      }
 
       // Only add if not already in the map
       if (!targetMapNPCs.find((n) => n.id === npc.id)) {

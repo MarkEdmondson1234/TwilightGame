@@ -165,10 +165,10 @@ export interface DialogueResponse {
 
 // Seasonal location configuration for NPCs
 export interface SeasonalLocation {
-  spring?: { mapId: string; position: Position; direction?: Direction };
-  summer?: { mapId: string; position: Position; direction?: Direction };
-  autumn?: { mapId: string; position: Position; direction?: Direction };
-  winter?: { mapId: string; position: Position; direction?: Direction };
+  spring?: { mapId: string; position: Position; direction?: Direction; static?: boolean };
+  summer?: { mapId: string; position: Position; direction?: Direction; static?: boolean };
+  autumn?: { mapId: string; position: Position; direction?: Direction; static?: boolean };
+  winter?: { mapId: string; position: Position; direction?: Direction; static?: boolean };
 }
 
 /** Entry animation configuration for NPCs that walk to their position when entering a map */
