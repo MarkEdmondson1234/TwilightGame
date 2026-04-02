@@ -80,6 +80,12 @@ Place your animated GIF in `/public/assets/animations/`:
 - Use transparent backgrounds for overlay effects
 - Ensure smooth looping (first and last frames should match)
 
+**IMPORTANT — Infinite looping:** GIF looping is controlled by metadata in the file itself, not by the `loop: true` config property. Always set the loop flag after placing the file:
+```bash
+npx gifsicle --loop=0 --batch public/assets/animations/your_animation.gif
+```
+(`--loop=0` = loop infinitely. Without this, the GIF may play once and stop.)
+
 ### 2. Register in assets.ts
 
 Add the animation to the `animationAssets` object in `assets.ts`:
@@ -146,10 +152,11 @@ export const WEATHER_ANIMATIONS: import('./types').WeatherAnimation[] = [
 
 Check that:
 - Animation file exists at `/public/assets/animations/[fileName].gif`
+- GIF has infinite loop flag set (`npx gifsicle --loop=0 --batch public/assets/animations/[fileName].gif`)
 - Asset is registered in `animationAssets`
 - Configuration added to `TILE_ANIMATIONS`
 - No TypeScript errors: `npx tsc --noEmit`
-- Animation appears in-game near trigger tiles
+- Animation appears in-game near trigger tiles and loops continuously
 
 ## Configuration Options
 
