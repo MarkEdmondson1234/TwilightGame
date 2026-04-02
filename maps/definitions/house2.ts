@@ -15,7 +15,7 @@ import { Z_PARALLAX_FAR, Z_SPRITE_FOREGROUND } from '../../zIndex';
  * D = Door (transition tile — exit to village)
  *
  * Key positions:
- * - Village transition spawns player (PC) at {x:2, y:6} → walkable row 6
+ * - Village transition spawns player (PC) at {x:7.6, y:6} → walkable row 6
  * - Little girl at {x:10, y:6}, Periwinkle at {x:6, y:6} → walkable row 6
  * - Exit door at {x:7, y:7} → bottom-centre door tile
  */
@@ -28,9 +28,9 @@ const gridString = `
 ###############
 ###############
 ...............
-...............
-...............
-.......D.......
+.###...........
+.###.........#.
+.###...D....###
 ###############
 `;
 
