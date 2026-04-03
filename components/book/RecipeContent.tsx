@@ -4,8 +4,7 @@ import { getItem } from '../../data/items';
 import { cookingManager, CookingResult } from '../../utils/CookingManager';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
-import { gameState } from '../../GameState';
-import { PlacedItem, Position } from '../../types';
+import { Position } from '../../types';
 import { BookThemeConfig, getThemeStyles } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import GameIcon from '../GameIcon';
@@ -131,32 +130,6 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 
       setCookingResult(result);
       setShowResult(true);
-
-      // Place food on cooking surface if successful
-      if (result.success && result.foodProduced && currentMapId) {
-        const recipe = getRecipe(recipeId);
-        if (recipe?.image) {
-          inventoryManager.removeItem(result.foodProduced.itemId, result.foodProduced.quantity);
-          const placePosition = cookingPosition
-            ? { x: cookingPosition.x, y: cookingPosition.y }
-            : playerPosition
-              ? { x: Math.round(playerPosition.x), y: Math.round(playerPosition.y) - 1 }
-              : null;
-
-          if (placePosition) {
-            const placedItem: PlacedItem = {
-              id: `food_${Date.now()}_${Math.random()}`,
-              itemId: result.foodProduced.itemId,
-              position: placePosition,
-              mapId: currentMapId,
-              image: recipe.image,
-              timestamp: Date.now(),
-            };
-            gameState.addPlacedItem(placedItem);
-            onItemPlaced?.();
-          }
-        }
-      }
 
       // Popup handles its own auto-dismiss via CookingResultPopup
     },

@@ -4,8 +4,7 @@ import { getItem } from '../data/items';
 import { cookingManager, CookingResult } from '../utils/CookingManager';
 import { audioManager } from '../utils/AudioManager';
 import { inventoryManager } from '../utils/inventoryManager';
-import { gameState } from '../GameState';
-import { Position, PlacedItem } from '../types';
+import { Position } from '../types';
 import { Z_COOKING, zClass } from '../zIndex';
 import CookingResultPopup from './CookingResultPopup';
 
@@ -77,30 +76,6 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
 
     // Show the result from CookingManager (success, or missing ingredients error)
     setCookingResult(result);
-
-    // If cooking succeeded and we have a cooking position, place the item on the stove/campfire
-    if (result.success && result.foodProduced && cookingPosition && currentMapId && recipe.image) {
-      // Remove the item from inventory (CookingManager added it, but we want it on the stove instead)
-      inventoryManager.removeItem(result.foodProduced.itemId, result.foodProduced.quantity);
-
-      // Place the cooked item at the cooking position
-      const placedItem: PlacedItem = {
-        id: `cooked_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        itemId: result.foodProduced.itemId,
-        position: {
-          x: cookingPosition.x,
-          y: cookingPosition.y,
-        },
-        mapId: currentMapId,
-        image: recipe.image,
-        timestamp: Date.now(),
-      };
-      gameState.addPlacedItem(placedItem);
-      console.log('[CookingInterface] Placed food on stove:', placedItem);
-
-      // Notify parent to update the placed items display
-      onItemPlaced?.();
-    }
 
     setShowResult(true);
     // Popup handles its own auto-dismiss via CookingResultPopup
