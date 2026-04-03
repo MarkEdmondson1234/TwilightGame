@@ -405,7 +405,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     id: 'apple_cobbler',
     name: 'apple_cobbler',
     displayName: 'Apple Cobbler',
-    category: 'baking',
+    category: 'miscellaneous',
     description: 'A comforting baked dessert — spiced apples under a golden, scone-like cobbler topping.',
     ingredients: [
       { itemId: 'apple', quantity: 5 },
