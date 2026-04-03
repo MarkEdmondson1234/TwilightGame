@@ -460,6 +460,7 @@ export const magicalAssets = {
   rose_red_crop: '/TwilightGame/assets-optimized/items/rose_red_crop.png',
   heather_sprig: '/TwilightGame/assets-optimized/items/decoration/heather_sprig.png',
   red_berries: '/TwilightGame/assets-optimized/items/decoration/red_berries.png',
+  spruce_sprig: '/TwilightGame/assets-optimized/items/decoration/spruce_sprig.png',
   maple_leaf: '/TwilightGame/assets-optimized/items/decoration/maple_leaf.png',
   mushras_wreath: '/TwilightGame/assets-optimized/items/decoration/mushras_wreath.png',
 };

@@ -2281,7 +2281,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       }
     }
 
-    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet, frost flower, dead spruce)
+    // Check for forageable multi-tile sprites (bee hive, toadstool, moonpetal, addersmeat, wolfsbane, mustard flower, shrinking violet, frost flower, dead spruce, spruce trees)
     // Use radius=1 (3x3 search) — covers 3x3 sprites with centred anchors; larger sprites need clicking near the base
     if (!canForage) {
       canForage = hasTileTypeNearby(
@@ -2301,6 +2301,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           TileType.FROST_FLOWER,
           TileType.HEATHER,
           TileType.DEAD_SPRUCE,
+          TileType.SPRUCE_TREE,
+          TileType.SPRUCE_TREE_SMALL,
           TileType.GIANT_MUSHROOM,
           TileType.SAKURA_TREE,
           TileType.MEADOW_GRASS,

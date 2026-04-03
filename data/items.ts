@@ -2115,6 +2115,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     forageSuccessRate: 0.8,
   },
 
+  spruce_sprig: {
+    id: 'spruce_sprig',
+    name: 'spruce_sprig',
+    displayName: 'Spruce Sprig',
+    category: ItemCategory.MATERIAL,
+    description: 'A fresh sprig snapped from a spruce tree in the cold of winter. Perfect for festive wreaths.',
+    rarity: ItemRarity.COMMON,
+    stackable: true,
+    sellPrice: 6,
+    image: magicalAssets.spruce_sprig,
+    forageSuccessRate: 0.75,
+  },
+
   linen: {
     id: 'linen',
     name: 'linen',

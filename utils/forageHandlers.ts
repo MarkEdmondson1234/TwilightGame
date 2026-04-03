@@ -964,6 +964,58 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     };
   }
 
+  // Spruce tree foraging (spruce sprig) - winter only
+  const spruceResult = findTileTypeNearby(playerTileX, playerTileY, [
+    TileType.SPRUCE_TREE,
+    TileType.SPRUCE_TREE_SMALL,
+  ]);
+  const spruceAnchor = spruceResult.found ? spruceResult.position : null;
+
+  if (spruceAnchor) {
+    if (DEBUG.FORAGE)
+      console.log(
+        `[Forage] Found spruce anchor at (${spruceAnchor.x}, ${spruceAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+      );
+
+    const { season } = TimeManager.getCurrentTime();
+
+    if (season !== Season.WINTER) {
+      return {
+        found: false,
+        message: 'The spruce tree holds its branches tight. In winter, fallen sprigs can be gathered from beneath.',
+      };
+    }
+
+    if (gameState.isForageTileOnCooldown(currentMapId, spruceAnchor.x, spruceAnchor.y, TIMING.FORAGE_COOLDOWN_MS)) {
+      return { found: false, message: "You've already gathered from this tree today." };
+    }
+
+    const spruceSprig = getItem('spruce_sprig');
+    if (!spruceSprig) {
+      console.error('[Forage] spruce_sprig item not found!');
+      return { found: false, message: 'Something went wrong.' };
+    }
+
+    const successRate = spruceSprig.forageSuccessRate ?? 0.75;
+    const succeeded = Math.random() < successRate;
+
+    if (!succeeded) {
+      gameState.recordForage(currentMapId, spruceAnchor.x, spruceAnchor.y);
+      return { found: false, message: 'You search beneath the spruce, but find no suitable sprigs.' };
+    }
+
+    const quantityFound = rollForageQuantity();
+    inventoryManager.addItem('spruce_sprig', quantityFound);
+    saveForageResult(currentMapId, spruceAnchor.x, spruceAnchor.y, 'spruce_sprig');
+
+    return {
+      found: true,
+      seedId: 'spruce_sprig',
+      seedName: spruceSprig.displayName,
+      message: `Gathered ${quantityFound} ${spruceSprig.displayName}!`,
+    };
+  }
+
   // Giant mushroom foraging (giant mushroom cap) - available year-round, any time of day
   const giantMushroomResult = findTileTypeNearby(playerTileX, playerTileY, TileType.GIANT_MUSHROOM);
   const giantMushroomAnchor = giantMushroomResult.found ? giantMushroomResult.position : null;
