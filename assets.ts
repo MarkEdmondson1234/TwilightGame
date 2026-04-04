@@ -763,6 +763,7 @@ export const itemAssets = {
   picnic_blanket_folded: '/TwilightGame/assets-optimized/items/quest/picnic_blanket_folded.png',
   picnic_blanket: '/TwilightGame/assets-optimized/items/quest/picnic_blanket.png',
   picnic_basket: '/TwilightGame/assets-optimized/items/quest/picnic_basket.png',
+  letter_from_althea: '/TwilightGame/assets-optimized/items/quest/letter_to_juniper.png',
   // Mushra's Shop items
   camera: '/TwilightGame/assets-optimized/items/mushras_shop/camera.png',
   sunflower_bouquet:

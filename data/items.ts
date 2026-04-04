@@ -700,7 +700,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: "A handwritten letter from Althea to her sister Juniper, sealed with a pressed violet. It feels important.",
     stackable: false,
     // Not buyable or sellable — a quest keepsake
-    icon: '📝',
+    icon: itemAssets.letter_from_althea,
   },
 
   // ===== MR FOX'S PICNIC QUEST ITEMS =====
