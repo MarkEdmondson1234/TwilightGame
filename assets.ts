@@ -775,6 +775,13 @@ export const itemAssets = {
   crafting_table: '/TwilightGame/assets-optimized/items/crafting/crafting_table.png',
 };
 
+// Furniture assets - Placeable furniture items with utility effects
+export const furnitureAssets = {
+  bed_inventory: '/TwilightGame/assets-optimized/items/furniture/bed_starter.png',
+  bed_background: '/TwilightGame/assets-optimized/items/furniture/bed_starter_back.png',
+  bed_foreground: '/TwilightGame/assets-optimized/items/furniture/bed_starter_front.png',
+};
+
 // Audio assets - Sound effects, music, and ambient sounds
 // Note: Add audio files to /public/assets/audio/ and they will be auto-served
 // Recommended format: OGG (best compression) or MP3 (wide compatibility)

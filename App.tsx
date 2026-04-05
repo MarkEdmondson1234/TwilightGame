@@ -168,6 +168,7 @@ const App: React.FC = () => {
     position: { x: number; y: number };
     item: InventoryItem;
     slotIndex: number;
+    mode?: 'confirmDelete';
   } | null>(null);
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
 
@@ -863,8 +864,23 @@ const App: React.FC = () => {
     const _pty = Math.floor(playerPosRef.current.y);
     const isOnLavaLake = getLavaLakeAnchor(_ptx, _pty) !== null;
 
-    // Update stamina (drain when walking, restore when at home, drain on lava lake)
-    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId, isOnLavaLake);
+    // Check if player is resting on a placed furniture bed
+    const _px = playerPosRef.current.x;
+    const _py = playerPosRef.current.y;
+    const isOnBed = gameState.getPlacedItems(currentMapId).some((item) => {
+      const def = getItem(item.itemId);
+      if (def?.furnitureEffect !== 'sleep') return false;
+      const scale = item.customScale ?? def.placedScale ?? 1;
+      return (
+        _px >= item.position.x - 0.5 &&
+        _px <= item.position.x + scale - 0.5 &&
+        _py >= item.position.y - 0.5 &&
+        _py <= item.position.y + scale - 0.5
+      );
+    });
+
+    // Update stamina (drain when walking, restore when at home/bed, drain on lava lake)
+    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId, isOnLavaLake, isOnBed);
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
   }, [
@@ -2105,9 +2121,10 @@ const App: React.FC = () => {
               itemDef &&
               (itemDef.category === ItemCategory.FOOD ||
                 itemDef.edible ||
-                itemDef.category === ItemCategory.DECORATION)
+                itemDef.category === ItemCategory.DECORATION ||
+                itemDef.category === ItemCategory.FURNITURE)
             ) {
-              // Food, edible crops, and decoration items show a radial menu
+              // Food, edible crops, decoration, and furniture items show a radial menu
               setInventoryRadialMenu({
                 position: { x: event.clientX, y: event.clientY },
                 item,
@@ -2454,6 +2471,17 @@ const App: React.FC = () => {
           cameraX={cameraX}
           cameraY={cameraY}
           lowThreshold={STAMINA.LOW_THRESHOLD}
+          forceShow={gameState.getPlacedItems(currentMapId).some((item) => {
+            const def = getItem(item.itemId);
+            if (def?.furnitureEffect !== 'sleep') return false;
+            const scale = item.customScale ?? def.placedScale ?? 1;
+            return (
+              playerPos.x >= item.position.x - 0.5 &&
+              playerPos.x <= item.position.x + scale - 0.5 &&
+              playerPos.y >= item.position.y - 0.5 &&
+              playerPos.y <= item.position.y + scale - 0.5
+            );
+          })}
         />
       )}
 
@@ -2466,53 +2494,100 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Radial menu for food/decoration items clicked in inventory */}
+      {/* Radial menu for food/decoration/furniture items clicked in inventory */}
       {inventoryRadialMenu &&
         (() => {
           const invItemDef = getItem(inventoryRadialMenu.item.id);
           const isFood =
             invItemDef && (invItemDef.category === ItemCategory.FOOD || invItemDef.edible);
+          const isPlaceable =
+            invItemDef &&
+            (invItemDef.category === ItemCategory.DECORATION ||
+              invItemDef.category === ItemCategory.FURNITURE);
+          const isConfirming = inventoryRadialMenu.mode === 'confirmDelete';
           return (
             <RadialMenu
               position={inventoryRadialMenu.position}
               zIndex={Z_INVENTORY_RADIAL_MENU}
-              options={[
-                {
-                  id: 'select',
-                  label: 'Select',
-                  icon: iconAssets.hand,
-                  color: '#6b7280',
-                  onSelect: () => {
-                    setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                    setInventoryRadialMenu(null);
-                  },
-                },
-                {
-                  id: 'place',
-                  label: 'Place in World',
-                  icon: '🌍',
-                  color: '#3b82f6',
-                  onSelect: () => {
-                    setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                    closeUI('inventory');
-                    setInventoryRadialMenu(null);
-                  },
-                },
-                ...(isFood
+              options={
+                isConfirming
                   ? [
                       {
-                        id: 'eat',
-                        label: 'Eat',
-                        icon: '🍽️',
-                        color: '#f59e0b',
+                        id: 'confirm_delete',
+                        label: 'Yes, delete it',
+                        icon: '🗑️',
+                        color: '#ef4444',
                         onSelect: () => {
-                          handleFoodEat(inventoryRadialMenu.item);
+                          inventoryManager.removeItem(inventoryRadialMenu.item.id, 1);
                           setInventoryRadialMenu(null);
                         },
                       },
+                      {
+                        id: 'cancel_delete',
+                        label: 'Cancel',
+                        icon: iconAssets.hand,
+                        color: '#6b7280',
+                        staysOpen: true,
+                        onSelect: () => {
+                          setInventoryRadialMenu({ ...inventoryRadialMenu, mode: undefined });
+                        },
+                      },
                     ]
-                  : []),
-              ]}
+                  : [
+                      {
+                        id: 'select',
+                        label: 'Select',
+                        icon: iconAssets.hand,
+                        color: '#6b7280',
+                        onSelect: () => {
+                          setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                          setInventoryRadialMenu(null);
+                        },
+                      },
+                      {
+                        id: 'place',
+                        label: 'Place in World',
+                        icon: '🌍',
+                        color: '#3b82f6',
+                        onSelect: () => {
+                          setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                          closeUI('inventory');
+                          setInventoryRadialMenu(null);
+                        },
+                      },
+                      ...(isFood
+                        ? [
+                            {
+                              id: 'eat',
+                              label: 'Eat',
+                              icon: '🍽️',
+                              color: '#f59e0b',
+                              onSelect: () => {
+                                handleFoodEat(inventoryRadialMenu.item);
+                                setInventoryRadialMenu(null);
+                              },
+                            },
+                          ]
+                        : []),
+                      ...(isPlaceable
+                        ? [
+                            {
+                              id: 'delete',
+                              label: 'Delete',
+                              icon: '🗑️',
+                              color: '#ef4444',
+                              staysOpen: true,
+                              onSelect: () => {
+                                setInventoryRadialMenu({
+                                  ...inventoryRadialMenu,
+                                  mode: 'confirmDelete',
+                                });
+                              },
+                            },
+                          ]
+                        : []),
+                    ]
+              }
               onClose={() => setInventoryRadialMenu(null)}
             />
           );

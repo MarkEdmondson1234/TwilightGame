@@ -14,6 +14,8 @@ export interface RadialMenuOption {
   icon?: string;
   color?: string;
   onSelect: () => void;
+  /** If true, the menu does not close after this option is selected (e.g. for confirmation flows) */
+  staysOpen?: boolean;
 }
 
 interface RadialMenuProps {
@@ -60,7 +62,9 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ position, options, onClose, zIn
     setSelectedIndex(index);
     setTimeout(() => {
       option.onSelect();
-      onClose();
+      if (!option.staysOpen) {
+        onClose();
+      }
     }, 100);
   };
 

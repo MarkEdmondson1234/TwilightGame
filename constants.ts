@@ -145,6 +145,7 @@ export const STAMINA = {
 
   // Restoration (home)
   HOME_RESTORE_PER_SECOND: 0.167, // ~10 per minute, full restore in ~10 mins
+  BED_RESTORE_PER_SECOND: 2.0, // ~120 per minute, full restore in ~50 seconds
 
   // Potion restoration
   POTION_HEALING: 50, // Healing Salve

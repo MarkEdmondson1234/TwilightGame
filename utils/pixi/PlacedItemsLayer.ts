@@ -29,6 +29,7 @@ import { Z_DEPTH_SORTED_BASE, Z_SPRITE_BACKGROUND, Z_SURFACE_DECORATION } from '
 
 export class PlacedItemsLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
+  private fgSprites: Map<string, PIXI.Sprite> = new Map(); // Foreground layer sprites (e.g. bed blanket above player)
   private blinkState: Map<string, boolean> = new Map(); // Track blink state for each item
   private lastBlinkTime: number = 0;
   private depthContainer: PIXI.Container | null = null;
@@ -197,6 +198,42 @@ export class PlacedItemsLayer extends PixiLayer {
         sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(bottomY * 10);
       }
 
+      // Render foreground layer (e.g. bed blanket/pillow that appears above the player)
+      if (item.foregroundImage) {
+        const fgKey = `${key}_fg`;
+        let fgSprite = this.fgSprites.get(fgKey);
+
+        if (!fgSprite) {
+          let fgTexture = textureManager.getTexture(item.foregroundImage);
+          if (!fgTexture) {
+            textureManager.loadTexture(item.foregroundImage, item.foregroundImage).then(() => {
+              this.onTextureLoaded?.();
+            }).catch((err) => {
+              console.warn(`[PlacedItemsLayer] Failed to load foreground image: ${err}`);
+            });
+          } else {
+            if (fgTexture.source) {
+              fgTexture.source.scaleMode = 'linear';
+            }
+            fgSprite = new PIXI.Sprite(fgTexture);
+            fgSprite.width = tileSize * effectiveScale;
+            fgSprite.height = tileSize * effectiveScale;
+            this.fgSprites.set(fgKey, fgSprite);
+            target.addChild(fgSprite);
+          }
+        }
+
+        if (fgSprite) {
+          fgSprite.x = sprite.x;
+          fgSprite.y = sprite.y;
+          fgSprite.width = sprite.width;
+          fgSprite.height = sprite.height;
+          fgSprite.visible = inRange;
+          // Render just above the player's depth at the bottom of the item's bounding area
+          fgSprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor((item.position.y + effectiveScale) * 10) + 2;
+        }
+      }
+
       // Apply decay warning visual effect (blinking)
       const showWarning = shouldShowDecayWarning(item);
       if (showWarning) {
@@ -213,6 +250,13 @@ export class PlacedItemsLayer extends PixiLayer {
         sprite.destroy();
         this.sprites.delete(key);
         this.blinkState.delete(key);
+        // Also remove foreground sprite if present
+        const fgKey = `${key}_fg`;
+        const fgSprite = this.fgSprites.get(fgKey);
+        if (fgSprite) {
+          fgSprite.destroy();
+          this.fgSprites.delete(fgKey);
+        }
       }
     }
   }
@@ -226,5 +270,9 @@ export class PlacedItemsLayer extends PixiLayer {
     }
     this.sprites.clear();
     this.blinkState.clear();
+    for (const fgSprite of this.fgSprites.values()) {
+      fgSprite.destroy();
+    }
+    this.fgSprites.clear();
   }
 }

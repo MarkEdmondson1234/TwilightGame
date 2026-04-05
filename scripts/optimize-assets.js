@@ -1040,6 +1040,16 @@ async function optimizeItems() {
     // Delete existing output if it exists
     deleteIfExists(outputPath);
 
+    // Furniture sprites (beds, sofas, etc.) need larger resolution — they render as multi-tile placed items
+    if (relativePath.startsWith('furniture' + path.sep) || relativePath.startsWith('furniture/')) {
+      await sharp(inputPath)
+        .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
+          fit: 'contain',
+          background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 4 })
+        .toFile(outputPath);
+    } else {
     // Optimize item sprites to 256x256 with good quality
     await sharp(inputPath)
       .resize(ITEM_SIZE, ITEM_SIZE, {
@@ -1048,6 +1058,7 @@ async function optimizeItems() {
       })
       .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 6 })
       .toFile(outputPath);
+    }
 
     const optimizedSize = fs.statSync(outputPath).size;
     const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);

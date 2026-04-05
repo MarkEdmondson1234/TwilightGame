@@ -1184,6 +1184,7 @@ export interface GetInteractionsConfig {
   onOpenShop?: () => void;
   /** Open a mini-game by ID with trigger data */
   onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
+  onShowToast?: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
 }
 
 /**
@@ -1233,6 +1234,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     onPlaceDecoration,
     onBeginYuleCelebration,
     onOpenShop,
+    onShowToast,
   } = config;
 
   const interactions: AvailableInteraction[] = [];
@@ -2396,14 +2398,22 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   if (onPlaceDecoration && tileData) {
     const currentMap = mapManager.getCurrentMap();
     const isIndoorMap = currentMap?.colorScheme === 'indoor' || currentMap?.colorScheme === 'shop';
+    const isStrictlyIndoor = currentMap?.colorScheme === 'indoor';
     const isWalkable = tileData.collisionType === CollisionType.WALKABLE;
     const heldItem = getItem(currentTool);
     const tileOk = isWalkable || heldItem?.allowAnyTilePlacement;
-    const canPlaceHere = tileOk && (isIndoorMap || heldItem?.allowOutdoorPlacement);
+    const blockedByIndoorOnly = !!(heldItem?.indoorOnly && !isStrictlyIndoor);
+    const mapOk = (isIndoorMap || heldItem?.allowOutdoorPlacement) && !blockedByIndoorOnly;
+    const canPlaceHere = tileOk && mapOk;
+
+    // Show feedback when an indoor-only item is held but the current map doesn't qualify
+    if (!canPlaceHere && blockedByIndoorOnly && tileOk && onShowToast) {
+      onShowToast("You cannot place this outside!", 'warning');
+    }
 
     if (canPlaceHere) {
       const itemDef = heldItem;
-      if (itemDef && itemDef.category === ItemCategory.DECORATION) {
+      if (itemDef && (itemDef.category === ItemCategory.DECORATION || itemDef.category === ItemCategory.FURNITURE)) {
         // Check no existing placed item at this tile
         const existingItem = placedItems.find(
           (item) => Math.floor(item.position.x) === tileX && Math.floor(item.position.y) === tileY

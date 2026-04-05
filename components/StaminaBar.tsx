@@ -24,6 +24,7 @@ interface StaminaBarProps {
   cameraX: number; // Camera X offset (in pixels)
   cameraY: number; // Camera Y offset (in pixels)
   lowThreshold?: number; // Percentage below which bar is always shown (default 25)
+  forceShow?: boolean; // Always show the bar regardless of stamina level (e.g. while resting in bed)
 }
 
 export function StaminaBar({
@@ -32,6 +33,7 @@ export function StaminaBar({
   cameraX,
   cameraY,
   lowThreshold = 25,
+  forceShow = false,
 }: StaminaBarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [current, setCurrent] = useState(() => gameState.getStamina());
@@ -54,8 +56,7 @@ export function StaminaBar({
   const screenX = playerX * TILE_SIZE - cameraX - BAR_WIDTH / 2 - 11;   // centred on player
   const screenY = playerY * TILE_SIZE - cameraY - HALF_PLAYER_PX - BAR_HEIGHT - 20; // 20px above head
 
-  // Only show if: hovered, low stamina, or always (for debugging)
-  const shouldShow = isHovered || isLow;
+  const shouldShow = isHovered || isLow || forceShow;
 
   // Create hover area (larger than the bar for easier interaction)
   const hoverAreaStyle: React.CSSProperties = {

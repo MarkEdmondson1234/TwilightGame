@@ -202,6 +202,7 @@ export interface PlacedItem {
     pattern: 'solid' | 'gradient' | 'double' | 'filigree' | 'frosted';
   };
   customScale?: number; // Per-instance tile scale (overrides itemDef.placedScale)
+  foregroundImage?: string; // Foreground layer image rendered above the player (for furniture like beds)
 }
 
 // Item placed on a desk surface

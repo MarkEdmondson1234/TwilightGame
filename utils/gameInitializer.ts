@@ -14,6 +14,7 @@ import { photoAlbumManager } from './photoAlbumManager';
 import { syncPaintingsFromCloud } from './paintingImageService';
 import { deskManager } from './deskManager';
 import { performanceMonitor } from './PerformanceMonitor';
+import { getItem } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
 import { ColorResolver } from './ColorResolver';
 import { initAnthropicClient } from '../services/anthropicClient';
@@ -194,6 +195,25 @@ export async function initializeGameAssets(
   // Load desk contents from saved state
   deskManager.initialise();
   console.log(`[App] Initialised desk system`);
+
+  // Seed default furniture: place a bed in home_upstairs on first play only
+  if (!gameState.hasCutsceneCompleted('furniture_bed_seeded')) {
+    const bedDef = getItem('furniture_bed');
+    if (bedDef) {
+      gameState.addPlacedItem({
+        id: 'furniture_bed_default',
+        itemId: 'furniture_bed',
+        position: { x: 12, y: 5 },
+        mapId: 'home_upstairs',
+        image: bedDef.placedImage ?? bedDef.image ?? '',
+        foregroundImage: bedDef.foregroundPlacedImage,
+        timestamp: Date.now(),
+        permanent: true,
+      });
+      gameState.markCutsceneCompleted('furniture_bed_seeded');
+      console.log('[gameInitializer] Placed default bed in home_upstairs');
+    }
+  }
 
   // Initialize AI dialogue (optional - non-blocking)
   const aiEnabled = initAnthropicClient();

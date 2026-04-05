@@ -6,6 +6,7 @@
 import {
   cookingAssets,
   farmingAssets,
+  furnitureAssets,
   groceryAssets,
   herbAssets,
   itemAssets,
@@ -24,6 +25,7 @@ export enum ItemCategory {
   FOOD = 'food', // Cooked food items
   POTION = 'potion', // Brewed potions
   DECORATION = 'decoration', // Placeable decorations for home/maps
+  FURNITURE = 'furniture', // Placeable furniture with utility effects (beds, etc.)
   MISC = 'misc',
   KEEPSAKE = 'keepsake', // Unique collectibles (photos, mementos) — not stackable, not tradeable
 }
@@ -54,9 +56,12 @@ export interface ItemDefinition {
   placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
   placedImage?: string; // Alt image URL to use when item is placed in the world (overrides `image`)
   allowOutdoorPlacement?: boolean; // If true, placement works on outdoor maps as well as indoor
+  indoorOnly?: boolean; // If true, placement is restricted to 'indoor' colour-scheme maps only (e.g. not shops or outdoors)
   allowAnyTilePlacement?: boolean; // If true, can be placed on non-walkable tiles (e.g. walls, buildings)
   placedOnSurface?: boolean; // If true, renders above all building/tree sprites (for items placed ON buildings)
   placesBelowCharacters?: boolean; // If true, renders at background z-level (above tiles, below player/NPCs)
+  foregroundPlacedImage?: string; // Second image rendered above the player when placed (for furniture like beds)
+  furnitureEffect?: 'sleep'; // Utility effect when player stands on this furniture
   persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
   edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)
 }
@@ -2555,6 +2560,23 @@ export const ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 0,
     icon: '🎄',
     placedScale: 4,
+  },
+
+  // ===== FURNITURE =====
+  furniture_bed: {
+    id: 'furniture_bed',
+    name: 'furniture_bed',
+    displayName: 'Bed',
+    category: ItemCategory.FURNITURE,
+    description: 'A cosy bed. Rest here to restore your stamina.',
+    stackable: false,
+    image: furnitureAssets.bed_inventory,
+    placedImage: furnitureAssets.bed_background,
+    foregroundPlacedImage: furnitureAssets.bed_foreground,
+    placedScale: 3,
+    placesBelowCharacters: true,
+    indoorOnly: true,
+    furnitureEffect: 'sleep',
   },
 };
 

@@ -91,14 +91,28 @@ class StaminaManagerClass {
    * @param deltaTime - Time since last frame in seconds
    * @param isWalking - Whether the player is currently walking
    * @param mapId - Current map ID (for home restoration)
+   * @param isOnLavaTile - Whether the player is standing on a lava lake tile
+   * @param isOnBed - Whether the player is resting on a placed furniture bed
    * @returns true if player became exhausted this frame
    */
-  update(deltaTime: number, isWalking: boolean, mapId: string, isOnLavaTile = false): boolean {
+  update(deltaTime: number, isWalking: boolean, mapId: string, isOnLavaTile = false, isOnBed = false): boolean {
     if (!this.callbacks || !this.isInitialised) {
       return false;
     }
 
     const currentStamina = gameState.getStamina();
+
+    // Bed restoration (faster passive restore while resting on a placed bed; suppresses all drains)
+    if (isOnBed) {
+      const restoreAmount = STAMINA.BED_RESTORE_PER_SECOND * deltaTime;
+      if (currentStamina < STAMINA.MAX) {
+        this.restoreStamina(restoreAmount);
+        if (gameState.getStamina() > STAMINA.LOW_THRESHOLD) {
+          this.hasShownLowWarning = false;
+        }
+      }
+      return false; // Resting in bed suppresses all drains and exhaustion
+    }
 
     // Home restoration (slow passive restore while at home)
     if (mapId === 'mums_kitchen' || mapId === 'home_upstairs') {

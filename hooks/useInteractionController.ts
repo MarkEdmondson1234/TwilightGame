@@ -405,6 +405,7 @@ export function useInteractionController(
         customScale?: number;
       }) => {
         inventoryManager.removeItem(result.itemId, 1);
+        const placedItemDef = getItem(result.itemId);
         gameState.addPlacedItem({
           id: `decoration_${Date.now()}_${Math.random().toString(36).slice(2)}`,
           itemId: result.itemId,
@@ -421,6 +422,10 @@ export function useInteractionController(
           }),
           // Per-instance scale (from painting size selection)
           ...(result.customScale != null && { customScale: result.customScale }),
+          // Foreground layer image for furniture (e.g. bed blanket rendered above player)
+          ...(placedItemDef?.foregroundPlacedImage && {
+            foregroundImage: placedItemDef.foregroundPlacedImage,
+          }),
         });
         eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: currentMapId, action: 'add' });
         // Check if a wreath was just placed in the village (for Mushra's quest)
@@ -546,6 +551,7 @@ export function useInteractionController(
         currentMapId: currentMapId,
         currentTool: currentTool,
         selectedSeed: null, // Seeds are now part of the tool system
+        onShowToast,
         ...callbacks,
       });
 
