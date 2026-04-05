@@ -180,8 +180,10 @@ export class PlacedItemsLayer extends PixiLayer {
       const itemDef = getItem(item.itemId);
       const effectiveScale = (item.customScale ?? itemDef?.placedScale ?? 1) * characterScale;
       const offset = (tileSize * (effectiveScale - 1)) / 2;
-      sprite.x = item.position.x * tileSize - offset + offsetX;
-      sprite.y = item.position.y * tileSize - offset + offsetY;
+      const placedOffsetX = (itemDef?.placedOffsetX ?? 0) * tileSize;
+      const placedOffsetY = (itemDef?.placedOffsetY ?? 0) * tileSize;
+      sprite.x = item.position.x * tileSize - offset + offsetX + placedOffsetX;
+      sprite.y = item.position.y * tileSize - offset + offsetY + placedOffsetY;
       sprite.width = tileSize * effectiveScale;
       sprite.height = tileSize * effectiveScale;
       sprite.visible = inRange;

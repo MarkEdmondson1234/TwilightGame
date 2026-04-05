@@ -39,8 +39,10 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({
         const scale = baseScale * characterScale;
         const itemSize = tileSize * scale;
         const offset = (tileSize * (scale - 1)) / 2;
-        const screenX = item.position.x * tileSize - cameraX - offset + gox;
-        const screenY = item.position.y * tileSize - cameraY - offset + goy;
+        const placedOffsetX = (itemDef?.placedOffsetX ?? 0) * tileSize;
+        const placedOffsetY = (itemDef?.placedOffsetY ?? 0) * tileSize;
+        const screenX = item.position.x * tileSize - cameraX - offset + gox + placedOffsetX;
+        const screenY = item.position.y * tileSize - cameraY - offset + goy + placedOffsetY;
         // Depth sort: bottom of item determines z-index (same system as player/NPCs)
         // Items with placesBelowCharacters use a fixed background z-level instead
         const feetY = item.position.y + scale;

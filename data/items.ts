@@ -54,6 +54,8 @@ export interface ItemDefinition {
   icon?: string; // Emoji fallback when no image available
   forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
   placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
+  placedOffsetX?: number; // Horizontal render offset in tiles when placed (positive = shift right)
+  placedOffsetY?: number; // Vertical render offset in tiles when placed (positive = shift down, negative = shift up)
   placedImage?: string; // Alt image URL to use when item is placed in the world (overrides `image`)
   allowOutdoorPlacement?: boolean; // If true, placement works on outdoor maps as well as indoor
   indoorOnly?: boolean; // If true, placement is restricted to 'indoor' colour-scheme maps only (e.g. not shops or outdoors)
@@ -2090,6 +2092,21 @@ export const ITEMS: Record<string, ItemDefinition> = {
     buyPrice: 60,
     sellPrice: 20,
     image: itemAssets.hanging_plant,
+    icon: '🪴',
+    placedScale: 2,
+    allowAnyTilePlacement: true,
+  },
+
+  decoration_monstera_plant: {
+    id: 'decoration_monstera_plant',
+    name: 'decoration_monstera_plant',
+    displayName: 'Monstera Plant',
+    category: ItemCategory.DECORATION,
+    description: 'A striking monstera plant with beautiful split leaves. Adds a touch of the tropics to any room.',
+    stackable: true,
+    buyPrice: 120,
+    sellPrice: 40,
+    image: itemAssets.monstera_plant,
     icon: '🪴',
     placedScale: 2,
     allowAnyTilePlacement: true,

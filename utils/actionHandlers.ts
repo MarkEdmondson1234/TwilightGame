@@ -2430,11 +2430,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     if (canPlaceHere) {
       const itemDef = heldItem;
       if (itemDef && (itemDef.category === ItemCategory.DECORATION || itemDef.category === ItemCategory.FURNITURE)) {
-        // Check no existing placed item at this tile
-        const existingItem = placedItems.find(
-          (item) => Math.floor(item.position.x) === tileX && Math.floor(item.position.y) === tileY
-        );
-        if (!existingItem) {
+        // Check no existing placed item at this tile (use itemAtPosition which handles scaled bounding boxes)
+        if (!itemAtPosition) {
           // For paintings, look up the actual painting data (custom image + frame)
           if (itemDef.id === 'framed_painting') {
             const placedPaintingIds = new Set(
