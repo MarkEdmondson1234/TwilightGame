@@ -1887,6 +1887,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   }
 
   // Check for farming actions
+  // Advance plot states before reading them so cooldowns/growth reflect real elapsed time.
+  farmManager.updateAllPlots();
   // Search the clicked tile first; if no growing crop found, check adjacent tiles.
   // This handles tall crop sprites (e.g. peas, corn) whose visuals extend one tile
   // above the soil tile — clicking the upper portion maps to the tile above the plot.

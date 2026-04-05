@@ -179,7 +179,9 @@ class FarmManager {
         // HERB_COOLDOWN → READY (or DORMANT if winter) when cooldown expires
         if (plot.state === FarmPlotState.HERB_COOLDOWN) {
           const cooldownMs = (herbCrop.harvestCooldownDays ?? 1) * TimeManager.MS_PER_GAME_DAY;
-          if (plot.harvestedAtTimestamp != null && now - plot.harvestedAtTimestamp >= cooldownMs) {
+          // Treat missing timestamp as already expired (handles old save data)
+          const elapsed = plot.harvestedAtTimestamp != null ? now - plot.harvestedAtTimestamp : cooldownMs;
+          if (elapsed >= cooldownMs) {
             return {
               ...plot,
               state: isWinter ? FarmPlotState.HERB_DORMANT : FarmPlotState.READY,
