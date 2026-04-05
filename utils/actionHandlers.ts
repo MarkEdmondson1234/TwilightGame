@@ -1255,6 +1255,20 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     return interactions;
   }
 
+  // Grocery shop counter — clicking in the counter area (above the walkable floor) opens the shop
+  // Equivalent to the Mushra shop tile check; the fox NPC alone is unreliable because
+  // getNPCAtPosition uses click position (not player position) and skips NPCs in entry animation.
+  if (currentMapId === 'shop' && tileY >= 4 && tileY <= 8 && tileX >= 5 && tileX <= 14) {
+    interactions.push({
+      type: 'open_shop',
+      label: 'Browse the Shop',
+      icon: '🛒',
+      color: '#86efac',
+      execute: () => onOpenShop?.(),
+    });
+    return interactions;
+  }
+
   // Check for placed items (food, etc.) at this position.
   // Large decorations (placedScale > 1) render centered on their position, so we
   // also match any tile within their scaled bounding box.

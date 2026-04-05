@@ -60,7 +60,7 @@ const mushraShopLayers: RoomLayer[] = [
   // Layer 2: Mushra behind her counter
   {
     type: 'npc',
-    npc: createMushraShopNPC('mushra_shop', { x: 8, y: 5 }),
+    npc: { ...createMushraShopNPC('mushra_shop', { x: 8, y: 5 }), interactionRadius: 4 },
     zIndex: Z_SPRITE_BACKGROUND, // 50: Behind the foreground counter layer
   },
 
