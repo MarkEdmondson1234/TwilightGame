@@ -2080,6 +2080,21 @@ export const ITEMS: Record<string, ItemDefinition> = {
     placedScale: 6,
   },
 
+  decoration_hanging_plant: {
+    id: 'decoration_hanging_plant',
+    name: 'decoration_hanging_plant',
+    displayName: 'Hanging Plant',
+    category: ItemCategory.DECORATION,
+    description: 'A lush hanging plant. Perfect for brightening up a cosy room.',
+    stackable: true,
+    buyPrice: 60,
+    sellPrice: 20,
+    image: itemAssets.hanging_plant,
+    icon: '🪴',
+    placedScale: 2,
+    allowAnyTilePlacement: true,
+  },
+
   // ===== DECORATION CRAFTING MATERIALS =====
 
   straw: {

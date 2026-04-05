@@ -402,6 +402,12 @@ export const MUSHRAS_SHOP_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
+    itemId: 'decoration_hanging_plant',
+    buyPrice: 60,
+    sellPrice: 20,
+    stock: 'unlimited',
+  },
+  {
     itemId: 'ceramic_vase',
     buyPrice: 300,
     sellPrice: 10,

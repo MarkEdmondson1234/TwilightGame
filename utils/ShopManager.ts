@@ -105,10 +105,11 @@ export class ShopManager {
     itemId: string,
     quantity: number,
     playerGold: number,
-    playerInventory: InventoryItem[]
+    playerInventory: InventoryItem[],
+    shopId: string = 'shop'
   ): TransactionResult {
     // Get shop item
-    const shopInventory = this.getCurrentInventory();
+    const shopInventory = this.getInventoryForShop(shopId);
     const shopItem = shopInventory.find(item => item.itemId === itemId);
 
     if (!shopItem) {
@@ -244,14 +245,16 @@ export class ShopManager {
     itemId: string,
     quantity: number,
     playerGold: number,
-    playerInventory: InventoryItem[]
+    playerInventory: InventoryItem[],
+    shopId: string = 'shop'
   ): { gold: number; inventory: InventoryItem[]; result: TransactionResult } | null {
     // Validate transaction
     const validation = this.validateBuyTransaction(
       itemId,
       quantity,
       playerGold,
-      playerInventory
+      playerInventory,
+      shopId
     );
 
     if (!validation.success || validation.goldChange === undefined) {

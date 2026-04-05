@@ -169,7 +169,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
         itemId,
         quantity,
         playerGold,
-        playerInventory
+        playerInventory,
+        shopId
       );
 
       if (result) {
@@ -180,7 +181,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
           itemId,
           quantity,
           playerGold,
-          playerInventory
+          playerInventory,
+          shopId
         );
         setFeedback({ message: validation.message, type: 'error' });
       }
