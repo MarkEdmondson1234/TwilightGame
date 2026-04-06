@@ -216,7 +216,8 @@ export class DarknessLayer {
     season: Season | string,
     timeOfDay: TimeOfDay | string,
     viewportWidth: number,
-    viewportHeight: number
+    viewportHeight: number,
+    instant = false
   ): void {
     const config = DARKNESS_CONFIG[colorScheme];
 
@@ -254,6 +255,12 @@ export class DarknessLayer {
     }
 
     this.targetDarkness = darkness;
+
+    // On map transitions, snap immediately rather than lerping
+    if (instant) {
+      this.currentDarkness = darkness;
+      this._stopTransitionTicker();
+    }
 
     // Ensure continuous lerp updates when flicker timer isn't running (no lights on screen)
     if (this.targetDarkness !== this.currentDarkness && !this.flickerTimer) {

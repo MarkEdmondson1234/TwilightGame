@@ -163,6 +163,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const thoughtBubbleLayerRef = useRef<ThoughtBubbleLayer | null>(null);
   const weatherLayerRef = useRef<WeatherLayer | null>(null);
   const darknessLayerRef = useRef<DarknessLayer | null>(null);
+  const prevMapIdRef = useRef<string>('');
   const torchPositionsRef = useRef<LightSource[]>([]);
   const weatherManagerRef = useRef<WeatherManager | null>(null);
   const depthSortedContainerRef = useRef<PIXI.Container | null>(null);
@@ -675,14 +676,17 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       );
     }
 
-    // Update darkness layer
+    // Update darkness layer — snap instantly on map transitions, lerp for natural time changes
     if (darknessLayerRef.current) {
+      const isMapTransition = prevMapIdRef.current !== currentMapId;
+      prevMapIdRef.current = currentMapId;
       darknessLayerRef.current.update(
         map.colorScheme,
         currentTime.season,
         currentTime.timeOfDay,
         window.innerWidth,
-        window.innerHeight
+        window.innerHeight,
+        isMapTransition
       );
     }
   }, [
