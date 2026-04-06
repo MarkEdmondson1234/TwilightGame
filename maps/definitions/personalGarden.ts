@@ -69,7 +69,7 @@ export const personalGarden: MapDefinition = {
       fromPosition: { x: 8, y: 24 },
       tileType: TileType.PATH,
       toMapId: 'village',
-      toPosition: { x: 5.22, y: 6 }, // East side of village
+      toPosition: { x: 6, y: 22 }, // Return to village
       label: 'Back to Village',
     },
   ],

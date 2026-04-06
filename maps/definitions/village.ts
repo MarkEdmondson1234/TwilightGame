@@ -165,7 +165,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 28, y: 12 }, // East exit to forest (last G before R border)
       tileType: TileType.GRASS,
       toMapId: 'RANDOM_FOREST',
-      toPosition: { x: 20, y: 15 }, // Spawn in center of forest (safe zone)
+      toPosition: { x: 29, y: 7 }, // Spawn in forest
       label: 'To Forest',
     },
     {
@@ -181,13 +181,6 @@ export const village: MapDefinition = {
       toMapId: 'magical_lake',
       toPosition: { x: 14, y: 28 }, // Spawn at south entrance of magical lake
       label: 'To Magical Lake (Debug)',
-    },
-    {
-      fromPosition: { x: 4, y: 15 }, // Bear cave entrance (1 down from Magical Lake)
-      tileType: TileType.GRASS,
-      toMapId: 'bear_cave',
-      toPosition: { x: 8, y: 17 }, // Spawn on path near entrance (safe from bear house collision)
-      label: "To Bear's Cave",
     },
     {
       fromPosition: { x: 18, y: 1 }, // North side to ruins

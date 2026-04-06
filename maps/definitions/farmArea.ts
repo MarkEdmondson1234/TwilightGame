@@ -83,7 +83,7 @@ export const farmArea: MapDefinition = {
       fromPosition: { x: 10, y: 24 },
       tileType: TileType.PATH,
       toMapId: 'village',
-      toPosition: { x: 27, y: 27 }, // Return to village bottom-right corner
+      toPosition: { x: 15, y: 26 }, // Return to village
       label: 'Back to Village',
     },
     {

@@ -62,17 +62,10 @@ export const bearCave: MapDefinition = {
   spawnPoint: { x: 15, y: 15 }, // On path near south entrance (moved up 3 tiles)
   transitions: [
     {
-      fromPosition: { x: 28, y: 18 }, // East path exit
-      tileType: TileType.PATH,
-      toMapId: 'village',
-      toPosition: { x: 4, y: 15 }, // Return to village (next to magical lake entrance)
-      label: 'To Village',
-    },
-    {
       fromPosition: { x: 2, y: 18 }, // West path exit
       tileType: TileType.PATH,
       toMapId: 'farm_area',
-      toPosition: { x: 18, y: 24 }, // Return to farmArea behind seed shed
+      toPosition: { x: 17, y: 20 }, // Return to farm area
       label: 'To Farm Area',
     },
     {
