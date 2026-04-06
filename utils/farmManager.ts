@@ -1052,8 +1052,11 @@ class FarmManager {
       }
     }
 
-    if (wateredCount > 0 && DEBUG.FARM) {
-      console.log(`[FarmManager] Rain watered ${wateredCount} outdoor plots`);
+    if (wateredCount > 0) {
+      if (DEBUG.FARM) {
+        console.log(`[FarmManager] Rain watered ${wateredCount} outdoor plots`);
+      }
+      eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { action: 'water' });
     }
 
     return wateredCount;
