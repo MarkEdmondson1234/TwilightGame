@@ -19,6 +19,28 @@ import { TimeManager } from '../utils/TimeManager';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 import { audioManager } from '../utils/AudioManager';
+import { decorationManager } from '../utils/DecorationManager';
+
+/** Item IDs whose display image is per-instance (stored in DecorationManager). */
+const CUSTOM_IMAGE_ITEMS = new Set([
+  'decoration_wreath_rustic',
+  'decoration_wreath_fine',
+  'decoration_wreath_magnificent',
+]);
+
+/**
+ * Get the display image for an item, checking DecorationManager for per-instance
+ * custom decorations (e.g. crafted wreaths) before falling back to the item definition.
+ */
+function getPlayerItemImage(itemId: string, itemDef: ItemDefinition): string | undefined {
+  if (CUSTOM_IMAGE_ITEMS.has(itemId)) {
+    const decorations = decorationManager.getDecorationsForItem(itemId);
+    if (decorations.length > 0) {
+      return decorations[0].imageUrl;
+    }
+  }
+  return itemDef.image;
+}
 
 interface ShopUIProps {
   isOpen: boolean;
@@ -317,11 +339,14 @@ const ShopUI: React.FC<ShopUIProps> = ({
       additionalInfo += ` (${multiplier} mastery)`;
     }
 
+    // Per-instance image (e.g. crafted wreaths have unique canvas captures)
+    const itemImage = getPlayerItemImage(inventoryItem.itemId, itemDef);
+
     // Tooltip content
     const tooltipContent: TooltipContent = {
       name: itemDef.displayName,
       description: itemDef.description,
-      image: itemDef.image,
+      image: itemImage,
       quantity: inventoryItem.quantity,
       additionalInfo,
     };
@@ -336,12 +361,14 @@ const ShopUI: React.FC<ShopUIProps> = ({
         >
           {/* Item Image/Icon */}
           <div className="absolute inset-0 flex items-center justify-center p-2">
-            {itemDef.image ? (
+            {itemImage ? (
               <img
-                src={itemDef.image}
+                src={itemImage}
                 alt={itemDef.displayName}
-                className="max-w-full max-h-full object-contain pixelated"
+                className="max-w-full max-h-full object-contain"
               />
+            ) : itemDef.icon ? (
+              <span className="text-3xl">{itemDef.icon}</span>
             ) : (
               <img
                 src={FALLBACK_ITEM_ICON}
