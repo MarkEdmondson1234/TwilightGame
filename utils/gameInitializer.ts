@@ -215,6 +215,24 @@ export async function initializeGameAssets(
     }
   }
 
+  // Seed default furniture: place a garden bench in farm_area on first play only
+  if (!gameState.hasCutsceneCompleted('furniture_garden_bench_seeded')) {
+    const benchDef = getItem('furniture_garden_bench');
+    if (benchDef) {
+      gameState.addPlacedItem({
+        id: 'furniture_garden_bench_default',
+        itemId: 'furniture_garden_bench',
+        position: { x: 13, y: 4 },
+        mapId: 'farm_area',
+        image: benchDef.placedImage ?? benchDef.image ?? '',
+        timestamp: Date.now(),
+        permanent: true,
+      });
+      gameState.markCutsceneCompleted('furniture_garden_bench_seeded');
+      console.log('[gameInitializer] Placed default garden bench in farm_area');
+    }
+  }
+
   // Initialize AI dialogue (optional - non-blocking)
   const aiEnabled = initAnthropicClient();
   console.log(`[App] AI dialogue: ${aiEnabled ? 'enabled' : 'disabled'}`);

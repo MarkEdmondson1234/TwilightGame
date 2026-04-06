@@ -864,7 +864,7 @@ const App: React.FC = () => {
     const _pty = Math.floor(playerPosRef.current.y);
     const isOnLavaLake = getLavaLakeAnchor(_ptx, _pty) !== null;
 
-    // Check if player is resting on a placed furniture bed
+    // Check if player is resting on a placed furniture bed or garden bench
     const _px = playerPosRef.current.x;
     const _py = playerPosRef.current.y;
     const isOnBed = gameState.getPlacedItems(currentMapId).some((item) => {
@@ -878,9 +878,20 @@ const App: React.FC = () => {
         _py <= item.position.y + scale - 0.5
       );
     });
+    const isOnBench = gameState.getPlacedItems(currentMapId).some((item) => {
+      const def = getItem(item.itemId);
+      if (def?.furnitureEffect !== 'rest') return false;
+      const scale = item.customScale ?? def.placedScale ?? 1;
+      return (
+        _px >= item.position.x - 0.5 &&
+        _px <= item.position.x + scale - 0.5 &&
+        _py >= item.position.y - 0.5 &&
+        _py <= item.position.y + scale - 0.5
+      );
+    });
 
-    // Update stamina (drain when walking, restore when at home/bed, drain on lava lake)
-    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId, isOnLavaLake, isOnBed);
+    // Update stamina (drain when walking, restore when at home/bed/bench, drain on lava lake)
+    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId, isOnLavaLake, isOnBed, isOnBench);
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
   }, [
@@ -2473,7 +2484,7 @@ const App: React.FC = () => {
           lowThreshold={STAMINA.LOW_THRESHOLD}
           forceShow={gameState.getPlacedItems(currentMapId).some((item) => {
             const def = getItem(item.itemId);
-            if (def?.furnitureEffect !== 'sleep') return false;
+            if (def?.furnitureEffect !== 'sleep' && def?.furnitureEffect !== 'rest') return false;
             const scale = item.customScale ?? def.placedScale ?? 1;
             return (
               playerPos.x >= item.position.x - 0.5 &&

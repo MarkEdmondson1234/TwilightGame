@@ -2419,12 +2419,17 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
     const heldItem = getItem(currentTool);
     const tileOk = isWalkable || heldItem?.allowAnyTilePlacement;
     const blockedByIndoorOnly = !!(heldItem?.indoorOnly && !isStrictlyIndoor);
-    const mapOk = (isIndoorMap || heldItem?.allowOutdoorPlacement) && !blockedByIndoorOnly;
+    const blockedByOutdoorOnly = !!(heldItem?.outdoorOnly && isIndoorMap);
+    const mapOk = (isIndoorMap || heldItem?.allowOutdoorPlacement) && !blockedByIndoorOnly && !blockedByOutdoorOnly;
     const canPlaceHere = tileOk && mapOk;
 
     // Show feedback when an indoor-only item is held but the current map doesn't qualify
     if (!canPlaceHere && blockedByIndoorOnly && tileOk && onShowToast) {
       onShowToast("You cannot place this outside!", 'warning');
+    }
+    // Show feedback when an outdoor-only item is held but the current map is indoors
+    if (!canPlaceHere && blockedByOutdoorOnly && tileOk && onShowToast) {
+      onShowToast("This can only be placed outside!", 'warning');
     }
 
     if (canPlaceHere) {

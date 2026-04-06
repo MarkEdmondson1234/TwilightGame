@@ -63,7 +63,8 @@ export interface ItemDefinition {
   placedOnSurface?: boolean; // If true, renders above all building/tree sprites (for items placed ON buildings)
   placesBelowCharacters?: boolean; // If true, renders at background z-level (above tiles, below player/NPCs)
   foregroundPlacedImage?: string; // Second image rendered above the player when placed (for furniture like beds)
-  furnitureEffect?: 'sleep'; // Utility effect when player stands on this furniture
+  furnitureEffect?: 'sleep' | 'rest'; // Utility effect when player stands on this furniture
+  outdoorOnly?: boolean; // If true, placement is restricted to outdoor (non-indoor) maps
   persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
   edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)
 }
@@ -2609,6 +2610,21 @@ export const ITEMS: Record<string, ItemDefinition> = {
     placesBelowCharacters: true,
     indoorOnly: true,
     furnitureEffect: 'sleep',
+  },
+
+  furniture_garden_bench: {
+    id: 'furniture_garden_bench',
+    name: 'furniture_garden_bench',
+    displayName: 'Garden Bench',
+    category: ItemCategory.FURNITURE,
+    description: 'A sturdy garden bench. Sit here to rest and plan your kitchen garden. Restores stamina slowly — a proper sleep indoors is much faster.',
+    stackable: false,
+    image: furnitureAssets.garden_bench,
+    placedImage: furnitureAssets.garden_bench,
+    placedScale: 3,
+    placesBelowCharacters: true,
+    outdoorOnly: true,
+    furnitureEffect: 'rest',
   },
 };
 

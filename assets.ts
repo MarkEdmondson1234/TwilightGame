@@ -782,6 +782,7 @@ export const furnitureAssets = {
   bed_inventory: '/TwilightGame/assets-optimized/items/furniture/bed_starter.png',
   bed_background: '/TwilightGame/assets-optimized/items/furniture/bed_starter_back.png',
   bed_foreground: '/TwilightGame/assets-optimized/items/furniture/bed_starter_front.png',
+  garden_bench: '/TwilightGame/assets-optimized/items/furniture/garden_bench.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds

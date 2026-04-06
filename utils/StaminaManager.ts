@@ -93,9 +93,10 @@ class StaminaManagerClass {
    * @param mapId - Current map ID (for home restoration)
    * @param isOnLavaTile - Whether the player is standing on a lava lake tile
    * @param isOnBed - Whether the player is resting on a placed furniture bed
+   * @param isOnBench - Whether the player is resting on an outdoor garden bench
    * @returns true if player became exhausted this frame
    */
-  update(deltaTime: number, isWalking: boolean, mapId: string, isOnLavaTile = false, isOnBed = false): boolean {
+  update(deltaTime: number, isWalking: boolean, mapId: string, isOnLavaTile = false, isOnBed = false, isOnBench = false): boolean {
     if (!this.callbacks || !this.isInitialised) {
       return false;
     }
@@ -112,6 +113,18 @@ class StaminaManagerClass {
         }
       }
       return false; // Resting in bed suppresses all drains and exhaustion
+    }
+
+    // Bench restoration (slow outdoor rest; suppresses drains but much slower than bed)
+    if (isOnBench) {
+      const restoreAmount = STAMINA.BENCH_RESTORE_PER_SECOND * deltaTime;
+      if (currentStamina < STAMINA.MAX) {
+        this.restoreStamina(restoreAmount);
+        if (gameState.getStamina() > STAMINA.LOW_THRESHOLD) {
+          this.hasShownLowWarning = false;
+        }
+      }
+      return false; // Resting on bench suppresses drains
     }
 
     // Home restoration (slow passive restore while at home)
