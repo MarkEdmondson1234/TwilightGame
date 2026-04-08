@@ -227,6 +227,8 @@ export class DarknessLayer {
       }
       this.darknessSprite.visible = false;
       this.currentDarkness = 0;
+      this.targetDarkness = 0;
+      this.lastColorScheme = colorScheme;
       this._clearLights();
       return;
     }
