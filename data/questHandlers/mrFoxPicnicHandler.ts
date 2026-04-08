@@ -41,9 +41,9 @@ export interface MessPilePosition {
 }
 
 export const MESS_PILE_POSITIONS: MessPilePosition[] = [
-  { id: 0, relativeX: 0.20, relativeY: 0.75, radius: 0.12, description: 'Left floor pile' },
-  { id: 1, relativeX: 0.50, relativeY: 0.80, radius: 0.12, description: 'Centre floor pile' },
-  { id: 2, relativeX: 0.78, relativeY: 0.72, radius: 0.12, description: 'Right floor pile' },
+  { id: 0, relativeX: 0.20, relativeY: 0.47, radius: 0.12, description: 'Left floor pile' },
+  { id: 1, relativeX: 0.49, relativeY: 0.47, radius: 0.12, description: 'Centre floor pile' },
+  { id: 2, relativeX: 0.80, relativeY: 0.47, radius: 0.12, description: 'Right floor pile' },
 ];
 
 // ============================================================================
