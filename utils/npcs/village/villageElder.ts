@@ -32,26 +32,26 @@ export function createVillageElderNPC(
     dialogue: [
       {
         id: 'greeting',
-        text: 'Hail and well met, traveller! A fine day to rest beneath this ancient tree.',
+        text: 'Hail and well met, young one! A fine day to rest beneath this ancient tree.',
         seasonalText: {
           spring:
-            'Hail and well met, traveller! Behold the cherry blossoms in their springtime glory. Art thou not filled with wonder?',
+            'Hail and well met, young one! Behold the cherry blossoms in their springtime glory. Art thou not filled with wonder?',
           summer:
-            'Hail and well met, traveller! The cherry tree bears sweet fruit this season. Mayhaps thou wouldst care to taste?',
+            'Hail and well met, young one! The cherry tree bears sweet fruit this season. Mayhaps thou wouldst care to taste?',
           autumn:
-            "Hail and well met, traveller! See how the cherry leaves turn crimson and gold. 'Tis my favourite season, watching nature's gentle farewell.",
+            "Hail and well met, young one! See how the cherry leaves turn crimson and gold. 'Tis my favourite season, watching nature's gentle farewell.",
           winter:
-            "Hail and well met, traveller! Even in winter's grasp, this old tree stands strong. Much like we villagers, eh?",
+            "Hail and well met, young one! Even in winter's grasp, this old tree stands strong. Much like we villagers, eh?",
         },
         weatherText: {
-          rain: 'Hail and well met, traveller! A perfect day for the crops, this rain. Come, shelter beneath the tree with me.',
-          snow: "Hail and well met, traveller! The snow falls gently today. Even in winter's grasp, there is beauty to behold.",
-          fog: "Hail and well met, traveller! Can't see much through this fog, can we? Best stay close to the path.",
-          mist: 'Hail and well met, traveller! The mist creeps in like an old memory. Mysterious, yet somehow comforting.',
+          rain: 'Hail and well met, young one! A perfect day for the crops, this rain. Come, shelter beneath the tree with me.',
+          snow: "Hail and well met, young one! The snow falls gently today. Even in winter's grasp, there is beauty to behold.",
+          fog: "Hail and well met, young one! Can't see much through this fog, can we? Best stay close to the path.",
+          mist: 'Hail and well met, young one! The mist creeps in like an old memory. Mysterious, yet somehow comforting.',
           storm:
-            "Hail and well met, traveller! Quite a storm we're having! Best seek shelter until it passes.",
+            "Hail and well met, young one! Quite a storm we're having! Best seek shelter until it passes.",
           cherry_blossoms:
-            "Hail and well met, traveller! Behold the petals dancing on the wind! 'Tis a sight that never grows old, no matter how many springs I witness.",
+            "Hail and well met, young one! Behold the petals dancing on the wind! 'Tis a sight that never grows old, no matter how many springs I witness.",
         },
         responses: [
           {
@@ -102,7 +102,7 @@ export function createVillageElderNPC(
           summer:
             'Aye! The fruit is sweetest when shared with friends. Althea makes the most wonderful cherry preserves from this very tree.',
           autumn:
-            "Thou hast a keen eye, traveller. These autumn leaves fall like nature's own farewell. My Althea says I spend too much time here, but she understands.",
+            "Thou hast a keen eye, young one. These autumn leaves fall like nature's own farewell. My Althea says I spend too much time here, but she understands.",
           winter:
             'True, true. Bare branches against the snow... there is a stark beauty in it. Althea knits me warm scarves so I may sit here even in winter.',
         },
@@ -161,7 +161,7 @@ export function createVillageElderNPC(
       },
       {
         id: 'village_constants',
-        text: 'The cherry tree blooms. The seasons turn. Neighbours help neighbours. These truths endure, traveller.',
+        text: 'The cherry tree blooms. The seasons turn. Neighbours help neighbours. These truths endure, young one.',
       },
       {
         id: 'wife_althea',
