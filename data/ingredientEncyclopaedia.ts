@@ -188,7 +188,7 @@ const ENCYCLOPAEDIA_DATA: Record<string, EncyclopaediaEntry> = {
     type: 'Essence',
     canBeFound: 'Pools of deep shadow in places where light has never reached.',
     seasonsAvailable: 'Year-round',
-    lore: 'A wisp of pure darkness captured in a glass vial — shadow essence is unsettling to hold, as it seems to absorb the light around it and weighs nothing at all. It is not evil, despite appearances; shadow is merely the absence of light, and in potion-making it serves to diminish, conceal, and quieten. A drop in an invisibility potion makes the drinker harder to notice; a drop in a sleeping draught deepens the rest. The challenge lies entirely in the gathering, for one must find shadows so deep that they have substance.',
+    lore: 'A wisp of pure darkness captured in a glass vial — shadow essence is unsettling to hold, as it seems to absorb the light around it and weighs nothing at all. It is not evil, despite appearances; shadow is merely the absence of light, and in potion-making it serves to diminish, conceal, and quieten. A drop in an invisibility potion makes the drinker harder to notice; a drop in a sleeping draught deepens the rest. There is a long-standing association between shadow essence and the restless dead: ghosts are drawn to places of deep shadow, and some practitioners believe the essence carries a faint imprint of their presence. The challenge lies entirely in the gathering, for one must find shadows so deep that they have substance.',
   },
 
   shrinking_violet: {

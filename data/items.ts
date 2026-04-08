@@ -1521,6 +1521,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.RARE,
     stackable: true,
     sellPrice: 60,
+    image: magicalAssets.shadow_essence,
   },
 
   ghost_lichen: {

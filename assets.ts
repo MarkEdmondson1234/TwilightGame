@@ -456,6 +456,7 @@ export const magicalAssets = {
   forest_mushroom:
     '/TwilightGame/assets-optimized/items/magical/forageable/forest_mushroom_ingredient.png',
   phoenix_ash: '/TwilightGame/assets-optimized/items/magical/shop/phoenix_ash.png',
+  shadow_essence: '/TwilightGame/assets-optimized/items/magical/shop/shadow_essence.png',
   rose_crop: '/TwilightGame/assets-optimized/items/rose_crop.png',
   rose_red_crop: '/TwilightGame/assets-optimized/items/rose_red_crop.png',
   heather_sprig: '/TwilightGame/assets-optimized/items/decoration/heather_sprig.png',
