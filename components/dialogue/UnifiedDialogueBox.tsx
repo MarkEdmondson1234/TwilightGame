@@ -140,6 +140,17 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
     if (mode !== 'scripted') return;
 
     const loadDialogue = async () => {
+      // Check for greeting redirects BEFORE rendering — prevents a one-frame
+      // flash of the greeting node content when the handler redirects to another node
+      if (currentNodeId === 'greeting' && onNodeChange) {
+        const redirect = onNodeChange(npc.id, currentNodeId);
+        if (redirect) {
+          onNodeChange(npc.id, redirect);
+          setCurrentNodeId(redirect);
+          return;
+        }
+      }
+
       const dialogue = await getDialogue(npc, currentNodeId);
       setCurrentDialogue(dialogue);
 
@@ -155,15 +166,6 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         setTypewriterDone(false);
         chatHistory.addAssistantMessage(dialogue.text, undefined, undefined, true);
         addToChatHistory(npc.id, 'assistant', `[${currentNodeId}] ${dialogue.text}`);
-      }
-
-      // Handle auto-redirects on greeting
-      if (currentNodeId === 'greeting' && onNodeChange) {
-        const redirect = onNodeChange(npc.id, currentNodeId);
-        if (redirect) {
-          onNodeChange(npc.id, redirect);
-          setCurrentNodeId(redirect);
-        }
       }
     };
     loadDialogue();
@@ -224,6 +226,9 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         }
       }
       if (response.grantsEasel) decorationManager.grantEasel();
+      if (response.addsFriendshipPoints && npc?.id) {
+        friendshipManager.addPoints(npc.id, response.addsFriendshipPoints, 'dialogue_choice');
+      }
 
       // Navigate to next node
       if (response.nextId) {

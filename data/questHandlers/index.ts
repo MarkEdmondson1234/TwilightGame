@@ -6,6 +6,7 @@
  */
 
 // Import each handler to trigger its handlerRegistry.register() calls
+import './ghostQueenHandler';
 import './altheaChoresHandler';
 import './witchGardenHandler';
 import './daveadLavaCakeHandler';
@@ -73,3 +74,18 @@ export {
   deliverPhotoToJuniper,
   completeEstrangedSistersQuest,
 } from './estrangedSistersHandler';
+export {
+  GHOST_QUEEN_QUEST_ID,
+  GHOST_QUEEN_NPC_ID,
+  isGhostQuestStarted,
+  isGhostQuestActive,
+  isGhostQuestComplete,
+  getGhostQuestStage,
+  startGhostQuest,
+  advanceGhostQuestToHasBook,
+  completeGhostQuest,
+  hasMetGhost,
+  setHasMetGhost,
+  setGhostOfferPending,
+  consumeGhostOfferPending,
+} from './ghostQueenHandler';

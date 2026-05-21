@@ -711,6 +711,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     icon: itemAssets.letter_from_althea,
   },
 
+  // ===== THE INVISIBLE GHOST QUEST ITEMS =====
+
+  history_book: {
+    id: 'history_book',
+    name: 'history_book',
+    displayName: 'History Book',
+    category: ItemCategory.KEEPSAKE,
+    description: 'A dusty tome covering the medieval kingdoms of this region. One entry in particular catches your eye.',
+    stackable: false,
+    // Not buyable or sellable — a quest keepsake
+    image: magicalAssets.history_book,
+  },
+
   // ===== MR FOX'S PICNIC QUEST ITEMS =====
 
   quest_picnic_blanket: {

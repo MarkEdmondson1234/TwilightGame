@@ -74,6 +74,12 @@ export function createMushraNPC(id: string, position: Position, name: string = '
             nextId: 'offer_easel',
             hiddenIfHasEasel: true,
           },
+          {
+            text: 'Do you know anything about a place called Nevarre?',
+            nextId: 'nevarre_enquiry',
+            requiredQuest: 'ghost_queen',
+            hiddenIfQuestCompleted: 'ghost_queen',
+          },
         ],
       },
       // Stranger/Acquaintance greeting - used before reaching Good Friends
@@ -104,7 +110,29 @@ export function createMushraNPC(id: string, position: Position, name: string = '
             nextId: 'offer_easel',
             hiddenIfHasEasel: true,
           },
+          {
+            text: 'Do you know anything about a place called Nevarre?',
+            nextId: 'nevarre_enquiry',
+            requiredQuest: 'ghost_queen',
+            hiddenIfQuestCompleted: 'ghost_queen',
+          },
         ],
+      },
+      {
+        id: 'nevarre_enquiry',
+        text: '"Nevarre! Oh, *yes* — I have been reading about the medieval kingdoms of this region! Such a fascinating period." *She rummages through a stack of books beside her.* "Here, take this — there is an entry on Nevarre somewhere in the middle, if I remember rightly."',
+        requiredQuest: 'ghost_queen',
+        hiddenIfQuestCompleted: 'ghost_queen',
+        responses: [
+          { text: 'Thank you, Mushra!', nextId: 'mushra_nevarre_book_given' },
+        ],
+      },
+      { id: 'mushra_nevarre_book_given', text: '' }, // intercepted by dialogueHandlers
+      {
+        id: 'mushra_nevarre_book_accepted',
+        text: '"Good luck! I do hope it is useful."',
+        requiredQuest: 'ghost_queen',
+        hiddenIfQuestCompleted: 'ghost_queen',
       },
       {
         id: 'who_are_you',

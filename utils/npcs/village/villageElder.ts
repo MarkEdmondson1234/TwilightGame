@@ -89,9 +89,22 @@ export function createVillageElderNPC(
             nextId: 'elias_knowledge_hub',
           },
           {
+            text: 'Do you know anything about a place called Nevarre?',
+            nextId: 'nevarre_enquiry',
+            requiredQuest: 'ghost_queen',
+            hiddenIfQuestCompleted: 'ghost_queen',
+          },
+          {
             text: 'Farewell, elder.',
           },
         ],
+      },
+      {
+        id: 'nevarre_enquiry',
+        text: '"The Queendom of Nevarre? I have read widely, and I cannot say I have come across that name. It would have to be *very* old indeed. You might try speaking with the young woman in the forest — the one who collects mushrooms. She has a remarkable library for someone who lives in the woods."',
+        requiredQuest: 'ghost_queen',
+        hiddenIfQuestCompleted: 'ghost_queen',
+        responses: [{ text: 'Thank you, elder.' }],
       },
       {
         id: 'tree_admiration',

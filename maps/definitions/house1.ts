@@ -1,6 +1,7 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR } from '../../zIndex';
+import { createGhostQueenNPC } from '../../utils/npcs/village/queenAvaricia';
 
 /**
  * House 1 Interior - North-west house (background-image interior)
@@ -55,6 +56,7 @@ export const house1: MapDefinition = {
   colorScheme: 'indoor',
   isRandom: false,
   spawnPoint: { x: 2, y: 6 },
+  npcs: [createGhostQueenNPC()],
   renderMode: 'background-image',
   characterScale: 1.8,
   referenceViewport: { width: 1280, height: 720 },

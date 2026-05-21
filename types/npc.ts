@@ -162,6 +162,7 @@ export interface DialogueResponse {
   // Item-giving actions triggered by selecting this response
   givesItems?: Array<{ itemId: string; quantity: number }>; // Give items to player when selected
   grantsEasel?: boolean; // Grant easel via DecorationManager when selected
+  addsFriendshipPoints?: number; // Award friendship points with the NPC when this response is selected
 }
 
 // Seasonal location configuration for NPCs

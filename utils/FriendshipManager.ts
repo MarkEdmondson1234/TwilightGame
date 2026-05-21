@@ -61,6 +61,11 @@ import {
   QUEST_STAGES as SISTERS_STAGES,
   QUEST_ITEMS as SISTERS_ITEMS,
 } from '../data/questHandlers/estrangedSistersHandler';
+import {
+  isGhostQuestActive,
+  advanceGhostQuestToHasBook,
+  GHOST_QUEEN_QUEST_ID,
+} from '../data/questHandlers/ghostQueenHandler';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -419,6 +424,15 @@ class FriendshipManagerClass {
       }
     }
 
+    // ===== GHOST QUEEN QUEST HANDLING =====
+    // Accept history book during the ghost_queen quest (searching stage)
+    if (npcId === 'ghost_queen') {
+      const questResult = this.handleGhostQueenGift(itemId);
+      if (questResult) {
+        return questResult;
+      }
+    }
+
     // ===== ELIAS QUEST HANDLING =====
     // Check for gardening quest and fairy bluebells quest items when gifting to Elias
     if (npcId === 'village_elder') {
@@ -574,6 +588,26 @@ class FriendshipManagerClass {
     }
 
     return null;
+  }
+
+  /**
+   * Handle quest-specific gifts for the Ghost Queen (ghost_queen)
+   * - Ghost queen quest: Accept history book during the searching stage
+   *
+   * @returns Gift result if quest item was accepted, null if not a quest item
+   */
+  private handleGhostQueenGift(itemId: string): {
+    points: number;
+    reaction: GiftReaction;
+    dialogueNodeId?: string;
+  } | null {
+    if (itemId !== 'history_book') return null;
+    if (!isGhostQuestActive()) return null;
+
+    advanceGhostQuestToHasBook();
+    inventoryManager.removeItem('history_book', 1);
+    if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Ghost Queen receives the history book.');
+    return { points: 0, reaction: 'neutral', dialogueNodeId: 'ghost_deliver' };
   }
 
   /**

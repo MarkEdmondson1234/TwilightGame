@@ -137,8 +137,21 @@ export function createWitchWolfNPC(
             requiredQuest: 'estranged_sisters',
             requiredQuestStage: 4,
           },
+          {
+            text: 'Do you know anything about a place called Nevarre?',
+            nextId: 'nevarre_enquiry',
+            requiredQuest: 'ghost_queen',
+            hiddenIfQuestCompleted: 'ghost_queen',
+          },
           { text: 'Just passing through.' },
         ],
+      },
+      {
+        id: 'nevarre_enquiry',
+        text: '"Nevarre? The name carries no power that I recognise. Whatever it was, it is long gone." *She returns to her cauldron.* "Ask the living if you want the past. Old things tend to know old things."',
+        requiredQuest: 'ghost_queen',
+        hiddenIfQuestCompleted: 'ghost_queen',
+        responses: [{ text: 'Thank you.' }],
       },
       {
         id: 'introduction',

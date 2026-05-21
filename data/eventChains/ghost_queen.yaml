@@ -1,0 +1,55 @@
+# The Invisible Ghost — Quest event chain
+#
+# Queen Avaricia, ghost of the former ruler of Nevarre, haunts the old house
+# in the village. She wants news of her long-lost kingdom.
+#
+# Quest stages:
+#  1. searching   - Player agreed to help; must find news of Nevarre
+#  2. has_book    - Player found the history book from Mushra; return to ghost
+#  3. completed   - Quest done; Queen Avaricia reveals herself
+#
+# Complex logic (NPC swap on completion, friendship awards for dialogue choices)
+# is handled by: data/questHandlers/ghostQueenHandler.ts
+#
+# Trigger: manual — started via hooks/useProximityQuestTriggers.ts when player
+# enters house1 and completes the opening ghost dialogue.
+
+id: ghost_queen
+title: "The Invisible Ghost"
+description: "A ghost in the old house needs news of her long-lost kingdom."
+type: discovery
+
+trigger:
+  type: manual  # Started via proximity trigger and NPC dialogue
+
+stages:
+  - id: searching
+    stageNumber: 1
+    text: >
+      The ghost in the old house wants news of the Queendom of Nevarre.
+      Ask around the village — someone must know something.
+    dialogue:
+      ghost_queen:
+        text: "Hmph. You again. Well — have you managed to find any news of Nevarre?"
+
+  - id: has_book
+    stageNumber: 2
+    text: >
+      You found a history book covering the medieval kingdoms of the region.
+      Return to the ghost in the old house.
+    dialogue:
+      ghost_queen:
+        text: "You have something for me? Well, don't just stand there."
+
+  - id: completed
+    stageNumber: 3
+    text: >
+      You helped Queen Avaricia learn the fate of Nevarre. She has revealed herself.
+    event:
+      title: "The Invisible Ghost"
+      description: brought news of the lost Queendom of Nevarre to its ghost queen
+      contributor: A friend of the forgotten
+    dialogue:
+      ghost_queen:
+        text: "Ah. You again. Pull up a — well. I suppose there are no chairs. I never did get around to furnishing this place."
+    end: true

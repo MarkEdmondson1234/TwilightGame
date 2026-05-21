@@ -11,6 +11,7 @@ import { cookingManager } from '../utils/CookingManager';
 import { CookingDomain } from '../data/recipes';
 import { decorationManager } from '../utils/DecorationManager';
 import { inventoryManager } from '../utils/inventoryManager';
+import { friendshipManager } from '../utils/FriendshipManager';
 import { getItem } from '../data/items';
 import { gameState } from '../GameState';
 
@@ -224,17 +225,9 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
   // Load dialogue node with seasonal/time-of-day context
   useEffect(() => {
     const loadDialogue = async () => {
-      const dialogue = await getDialogue(npc, currentNodeId);
-      setCurrentDialogue(dialogue);
-
-      // Save NPC's scripted dialogue to chat history (so AI mode remembers it)
-      if (dialogue?.text && currentNodeId !== lastSavedNodeRef.current) {
-        lastSavedNodeRef.current = currentNodeId;
-        addToChatHistory(npc.id, 'assistant', `[${currentNodeId}] ${dialogue.text}`);
-      }
-
-      // Notify parent when dialogue starts (greeting node) for friendship tracking
-      // Also handles auto-redirects (e.g. Elias jumps to quest check when quest is active)
+      // Check for greeting redirects BEFORE rendering — prevents a one-frame
+      // flash of the greeting node content when the handler redirects to another node
+      // (e.g. ghost_queen proximity trigger → ghost_intro / ghost_back_again)
       if (currentNodeId === 'greeting' && onNodeChange) {
         const redirect = onNodeChange(npc.id, currentNodeId);
         if (redirect) {
@@ -243,6 +236,15 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
           setCurrentNodeId(redirect);
           return;
         }
+      }
+
+      const dialogue = await getDialogue(npc, currentNodeId);
+      setCurrentDialogue(dialogue);
+
+      // Save NPC's scripted dialogue to chat history (so AI mode remembers it)
+      if (dialogue?.text && currentNodeId !== lastSavedNodeRef.current) {
+        lastSavedNodeRef.current = currentNodeId;
+        addToChatHistory(npc.id, 'assistant', `[${currentNodeId}] ${dialogue.text}`);
       }
     };
     loadDialogue();
@@ -326,6 +328,11 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
           `[Dialogue] Gave player: ${itemDef?.displayName ?? gift.itemId} x${gift.quantity}`
         );
       }
+    }
+
+    // Award friendship points for choosing the right dialogue option
+    if (response.addsFriendshipPoints && npc?.id) {
+      friendshipManager.addPoints(npc.id, response.addsFriendshipPoints, 'dialogue_choice');
     }
 
     // Grant easel via DecorationManager

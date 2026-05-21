@@ -56,6 +56,17 @@ import {
   QUEST_STAGES as SISTERS_STAGES,
 } from '../data/questHandlers/estrangedSistersHandler';
 import { hasAllMaterials, deliverMaterials } from '../data/questHandlers/mushraWreathHandler';
+import {
+  consumeGhostOfferPending,
+  hasMetGhost,
+  setHasMetGhost,
+  startGhostQuest,
+  completeGhostQuest,
+  isGhostQuestStarted,
+  advanceGhostQuestToHasBook,
+  GHOST_QUEEN_QUEST_ID,
+} from '../data/questHandlers/ghostQueenHandler';
+import { createQueenAvericiaaNPC } from './npcs/village/queenAvaricia';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -126,6 +137,18 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   // Handle Mushra's wreath workshop quest (village autumn NPC)
   if (npcId === 'village_mushra') {
     const redirect = handleMushraWreathActions(nodeId);
+    if (redirect) return redirect;
+  }
+
+  // Handle Mushra book delivery for ghost queen quest
+  if (npcId === 'mushra' || npcId.startsWith('mushra_')) {
+    const redirect = handleMushraGhostQuestActions(nodeId);
+    if (redirect) return redirect;
+  }
+
+  // Handle Ghost Queen / Queen Avaricia quest
+  if (npcId === 'ghost_queen') {
+    const redirect = handleGhostQueenActions(nodeId);
     if (redirect) return redirect;
   }
 }
@@ -716,5 +739,61 @@ function handleMushraWreathActions(nodeId: string): string | void {
     } else {
       return 'wreath_materials_missing';
     }
+  }
+}
+
+/**
+ * Handle Mushra's history book delivery for the ghost queen quest.
+ * Uses the same pattern as Althea chores: empty pass-through node → handler gives item + advances quest.
+ */
+function handleMushraGhostQuestActions(nodeId: string): string | void {
+  if (nodeId === 'mushra_nevarre_book_given') {
+    inventoryManager.addItem('history_book', 1);
+    const inv = inventoryManager.getInventoryData();
+    characterData.saveInventory(inv.items, inv.tools);
+    advanceGhostQuestToHasBook();
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 📖 History book given by Mushra');
+    return 'mushra_nevarre_book_accepted';
+  }
+}
+
+/**
+ * Handle Ghost Queen / Queen Avaricia dialogue actions.
+ *
+ * Responsibilities:
+ * - Redirect "greeting" to ghost_intro or ghost_back_again when proximity offer is pending
+ * - Complete the quest and swap NPC when player delivers the history book
+ */
+function handleGhostQueenActions(nodeId: string): string | void {
+  // Proximity trigger fired — redirect greeting to the appropriate intro node
+  if (nodeId === 'greeting' && !isGhostQuestStarted()) {
+    // Always redirect away from greeting before the quest starts —
+    // whether triggered by proximity or by manual interaction.
+    // consumeGhostOfferPending is called to clear the flag if set.
+    consumeGhostOfferPending();
+    if (hasMetGhost()) {
+      return 'ghost_back_again';
+    } else {
+      setHasMetGhost();
+      return 'ghost_intro';
+    }
+  }
+
+  // Player hands over the history book — remove from inventory and redirect to reading scene
+  if (nodeId === 'ghost_deliver_book') {
+    inventoryManager.removeItem('history_book', 1);
+    const inv = inventoryManager.getInventoryData();
+    characterData.saveInventory(inv.items, inv.tools);
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 📖 History book delivered to ghost');
+    return 'ghost_deliver';
+  }
+
+  // Player selected "Thank you." after ghost gives shadow essence — complete quest
+  if (nodeId === 'ghost_reward') {
+    completeGhostQuest();
+    // Swap invisible ghost → visible Queen Avaricia in-place
+    npcManager.removeDynamicNPC('ghost_queen');
+    npcManager.addDynamicNPC(createQueenAvericiaaNPC());
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 👑 Ghost → Queen Avaricia NPC swap complete');
   }
 }

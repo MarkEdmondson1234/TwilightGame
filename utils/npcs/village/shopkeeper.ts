@@ -180,7 +180,22 @@ export function createShopkeeperNPC(
             requiredQuest: 'mr_fox_picnic',
             requiredQuestStage: 9,
           },
+          {
+            text: 'Do you know anything about a place called Nevarre?',
+            nextId: 'nevarre_enquiry',
+            requiredQuest: 'ghost_queen',
+            hiddenIfQuestCompleted: 'ghost_queen',
+          },
         ],
+      },
+
+      // ── Nevarre enquiry (Ghost Queen quest) ──────────────────────────────
+      {
+        id: 'nevarre_enquiry',
+        text: '"Nevarre? Can\'t say I\'ve ever heard of the place. Sounds rather old, mind you."',
+        requiredQuest: 'ghost_queen',
+        hiddenIfQuestCompleted: 'ghost_queen',
+        responses: [{ text: 'Never mind. Thanks.' }],
       },
 
       // ── Gossip hub ────────────────────────────────────────────────────────

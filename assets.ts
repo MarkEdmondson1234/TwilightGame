@@ -464,6 +464,7 @@ export const magicalAssets = {
   spruce_sprig: '/TwilightGame/assets-optimized/items/decoration/spruce_sprig.png',
   maple_leaf: '/TwilightGame/assets-optimized/items/decoration/maple_leaf.png',
   mushras_wreath: '/TwilightGame/assets-optimized/items/decoration/mushras_wreath.png',
+  history_book: '/TwilightGame/assets-optimized/items/magical/quest/history_book.png',
 };
 
 // Potion assets - Brewed magical potions (results from brewing recipes)
@@ -560,6 +561,11 @@ export const npcAssets = {
   goblin_walk1: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk1.png',
   goblin_walk2: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk2.png',
   goblin_portrait: '/TwilightGame/assets/npcs/mine/goblin01.gif',
+  // Ghost Queen / Queen Avaricia assets
+  ghost_invisible: '/TwilightGame/assets/npcs/ghost_queen/ghost_invisible.png',
+  queen_avaricia_open_eyes: '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
+  queen_avaricia_closed_eyes: '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_closed_eyes.png',
+  queen_avaricia_portrait: '/TwilightGame/assets/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
   // Witch Wolf assets (rare forest creature with blinking animation)
   witch_wolf_01: '/TwilightGame/assets/npcs/witch/witch_wolf_01.png',
   witch_wolf_02: '/TwilightGame/assets/npcs/witch/witch_wolf_02.png',

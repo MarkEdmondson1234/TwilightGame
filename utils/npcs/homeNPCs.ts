@@ -71,8 +71,16 @@ export function createMumNPC(
           { text: 'Tell me about yourself, Mum.', nextId: 'about_mum' },
           // Mr Fox's Picnic quest
           { text: 'How did the picnic go?', nextId: 'mfp_post_quest', requiredQuest: 'mr_fox_picnic', requiredQuestStage: 9 },
+          { text: 'Do you know anything about a place called Nevarre?', nextId: 'nevarre_enquiry', requiredQuest: 'ghost_queen', hiddenIfQuestCompleted: 'ghost_queen' },
           { text: 'I should get going.' },
         ],
+      },
+      {
+        id: 'nevarre_enquiry',
+        text: '"Nevarre? Never heard of it, love. Though — you know who might? That strange girl in the forest. The one who\'s always going on about mushrooms. Mushra, I think her name is. She has books on all sorts of odd things."',
+        requiredQuest: 'ghost_queen',
+        hiddenIfQuestCompleted: 'ghost_queen',
+        responses: [{ text: 'Thanks, Mum.' }],
       },
       {
         id: 'home_tasks',

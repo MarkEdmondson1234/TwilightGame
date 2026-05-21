@@ -122,9 +122,22 @@ export function createOldWomanKnittingNPC(
             requiredQuestStage: 4,
           },
           {
+            text: 'Do you know anything about a place called Nevarre?',
+            nextId: 'nevarre_enquiry',
+            requiredQuest: 'ghost_queen',
+            hiddenIfQuestCompleted: 'ghost_queen',
+          },
+          {
             text: 'Take care!',
           },
         ],
+      },
+      {
+        id: 'nevarre_enquiry',
+        text: '"Nevarre? No, dear, that doesn\'t ring any bells at all. Perhaps it\'s from a storybook?"',
+        requiredQuest: 'ghost_queen',
+        hiddenIfQuestCompleted: 'ghost_queen',
+        responses: [{ text: 'Perhaps it is. Thanks.' }],
       },
       {
         id: 'knitting_project',
