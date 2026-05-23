@@ -561,6 +561,9 @@ export const npcAssets = {
   goblin_walk1: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk1.png',
   goblin_walk2: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk2.png',
   goblin_portrait: '/TwilightGame/assets/npcs/mine/goblin01.gif',
+  // Goddess of Eyes
+  goddess_of_eyes_open: '/TwilightGame/assets-optimized/npcs/goddess_of_eyes/goddess_of_eyes1.png',
+  goddess_of_eyes_closed: '/TwilightGame/assets-optimized/npcs/goddess_of_eyes/goddess_of_eyes2.png',
   // Ghost Queen / Queen Avaricia assets
   ghost_invisible: '/TwilightGame/assets/npcs/ghost_queen/ghost_invisible.png',
   queen_avaricia_open_eyes: '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',

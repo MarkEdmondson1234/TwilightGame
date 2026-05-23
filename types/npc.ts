@@ -238,6 +238,11 @@ export interface NPC {
     pulseSpeed?: number; // Pulse animation in ms (default: no pulse)
     steps?: number; // Gradient smoothness (default 32, higher = smoother)
   };
+  hover?: {
+    // Optional: floating/hovering effect — sprite bobs up and down over time
+    amplitude: number; // Vertical range in tiles (e.g. 0.12 for subtle movement)
+    frequency: number; // Duration of one full cycle in ms (e.g. 2200 for slow ethereal bob)
+  };
 }
 
 // NPC gift-giving configuration (what NPCs give to players when friendship is high)

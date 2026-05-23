@@ -204,7 +204,10 @@ export class NPCLayer extends PixiLayer {
 
       // Calculate position (center of NPC) - use tileSize for viewport scaling
       sprite.x = npc.position.x * tileSize + offsetX;
-      sprite.y = npc.position.y * tileSize + offsetY;
+      const hoverOffsetY = npc.hover
+        ? Math.sin((Date.now() / npc.hover.frequency) * Math.PI * 2) * npc.hover.amplitude * tileSize
+        : 0;
+      sprite.y = npc.position.y * tileSize + offsetY + hoverOffsetY;
 
       // Update size (use tileSize for viewport scaling)
       sprite.width = PLAYER_SIZE * npcScale * tileSize;

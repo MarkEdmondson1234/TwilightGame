@@ -117,6 +117,10 @@ export interface NPCConfig {
     pulseSpeed?: number;
     steps?: number;
   };
+  hover?: {
+    amplitude: number;
+    frequency: number;
+  };
 }
 
 /**
@@ -209,6 +213,7 @@ export function createNPC(config: NPCConfig): NPC {
     entryAnimation,
     hostileConfig,
     glow,
+    hover,
   } = config;
 
   // Create animated states if provided
@@ -243,6 +248,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (entryAnimation) npc.entryAnimation = entryAnimation;
   if (hostileConfig) npc.hostileConfig = hostileConfig;
   if (glow) npc.glow = glow;
+  if (hover) npc.hover = hover;
   if (collisionRadius !== undefined) npc.collisionRadius = collisionRadius;
 
   return npc;

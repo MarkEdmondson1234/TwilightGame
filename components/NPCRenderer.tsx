@@ -104,7 +104,8 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({
               className="absolute pointer-events-none"
               style={{
                 left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetX,
-                top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY,
+                top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY +
+                  (npc.hover ? Math.sin((Date.now() / npc.hover.frequency) * Math.PI * 2) * npc.hover.amplitude * TILE_SIZE : 0),
                 width: PLAYER_SIZE * npcScale * TILE_SIZE,
                 height: PLAYER_SIZE * npcScale * TILE_SIZE,
                 imageRendering: 'pixelated',

@@ -20,6 +20,7 @@ import {
   createProfessorBirdimenNPC,
   createPossumNPC,
 } from '../../utils/npcFactories';
+import { createGoddessOfEyesNPC } from '../../utils/npcs/goddessOfEyes';
 
 /**
  * Debug NPC Showcase Map
@@ -90,8 +91,9 @@ const npcs = [
   pinToDebugMap(createVillageChildNPC('debug_child', { x: 14, y: 10 }, 'Little Girl')),
   createMumNPC('debug_mum', { x: 18, y: 10 }, 'Mum'),
 
-  // Row 3: Shopkeeper
+  // Row 3: Shopkeeper + Goddess of Eyes
   createShopkeeperNPC('debug_shopkeeper', { x: 6, y: 14 }, 'Shopkeeper Fox'),
+  createGoddessOfEyesNPC('debug_goddess_of_eyes', { x: 22, y: 14 }),
 
   // Row 4: Forest creatures (larger, need more space)
   createUmbraWolfNPC('debug_umbra_wolf', { x: 6, y: 18 }, 'Umbra Wolf'),
