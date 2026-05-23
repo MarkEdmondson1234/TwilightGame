@@ -196,6 +196,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-palette-orange',
     collisionType: CollisionType.WALKABLE,
     image: [tileAssets.lava_floor_tileable],
+    textureGridSize: 4,
   },
   [TileType.CAVE_ROCK]: {
     name: 'Cave Rock',
