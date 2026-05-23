@@ -189,6 +189,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     color: 'bg-stone-700', // Rocky mine floor color
     collisionType: CollisionType.WALKABLE,
     image: [tileAssets.mine_floor],
+    textureGridSize: 4,
   },
   [TileType.LAVA_FLOOR]: {
     name: 'Lava Floor',

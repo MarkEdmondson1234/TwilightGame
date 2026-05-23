@@ -61,6 +61,8 @@ export interface TileData {
   color: string;
   collisionType: CollisionType; // Walkability category (WALKABLE, SOLID, DESK)
   image?: string[]; // Simple array of images (backward compatible)
+  /** If > 1, the image spans this many tiles in each axis using TilingSprite (e.g. 2 = image covers a 2×2 tile area). */
+  textureGridSize?: number;
   seasonalImages?: SeasonalImageSet; // Seasonal variations (new)
   timeOfDayImages?: Record<'spring' | 'summer' | 'autumn' | 'winter', TimeOfDayImageSet>; // Time-of-day variations per season
   weatherImages?: WeatherImageSet; // Weather-conditional images (e.g., frost flower only visible when snowing)

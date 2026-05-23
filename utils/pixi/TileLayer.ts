@@ -130,7 +130,7 @@ export const CROP_SPRITE_CONFIG: Record<CropGrowthStage, CropSpriteConfig> = {
 };
 
 export class TileLayer extends PixiLayer {
-  private sprites: Map<string, PIXI.Sprite | PIXI.Graphics> = new Map();
+  private sprites: Map<string, PIXI.Sprite | PIXI.TilingSprite | PIXI.Graphics> = new Map();
   private currentMapId: string | null = null;
   private currentSeason: string | null = null;
   private farmUpdateTrigger: number = 0;
@@ -506,10 +506,9 @@ export class TileLayer extends PixiLayer {
         return;
       }
 
-      sprite = new PIXI.Sprite(texture);
-
       // Position and size based on whether this is a crop sprite
       if (cropConfig) {
+        sprite = new PIXI.Sprite(texture);
         // Multi-tile crop sprite rendering
         sprite.x = (x + cropConfig.offsetX) * TILE_SIZE;
         sprite.y = (y + cropConfig.offsetY) * TILE_SIZE;
@@ -522,17 +521,45 @@ export class TileLayer extends PixiLayer {
             ? Z_TILE_SPRITES
             : Z_DEPTH_SORTED_BASE + Math.floor((y + 1) * 10);
       } else {
-        // Standard single-tile rendering
-        sprite.x = x * TILE_SIZE;
-        sprite.y = y * TILE_SIZE;
-        // Calculate scale based on texture size vs desired render size
-        const textureScale = TILE_SIZE / texture.width;
-        sprite.scale.set(textureScale, textureScale);
-        sprite.zIndex = Z_TILE_SPRITES;
+        const gridSize = tileData.textureGridSize;
+        if (gridSize && gridSize > 1) {
+          // Use TilingSprite so the texture tiles seamlessly at a larger scale.
+          // Each tile shows its portion of the pattern via tilePosition offset.
+          const ts = new PIXI.TilingSprite({ texture, width: TILE_SIZE, height: TILE_SIZE });
+          const tileScale = (TILE_SIZE * gridSize) / texture.width;
+          ts.tileScale.set(tileScale);
+          ts.tilePosition.set(-(x % gridSize) * TILE_SIZE, -(y % gridSize) * TILE_SIZE);
+          ts.x = x * TILE_SIZE;
+          ts.y = y * TILE_SIZE;
+          ts.zIndex = Z_TILE_SPRITES;
+          sprite = ts as unknown as PIXI.Sprite;
+        } else {
+          sprite = new PIXI.Sprite(texture);
+          // Standard single-tile rendering
+          sprite.x = x * TILE_SIZE;
+          sprite.y = y * TILE_SIZE;
+          // Calculate scale based on texture size vs desired render size
+          const textureScale = TILE_SIZE / texture.width;
+          sprite.scale.set(textureScale, textureScale);
+          sprite.zIndex = Z_TILE_SPRITES;
+        }
       }
 
       this.container.addChild(sprite);
       this.sprites.set(spriteKey, sprite);
+    } else if (sprite instanceof PIXI.TilingSprite) {
+      // Update existing TilingSprite (used for tiles with textureGridSize > 1)
+      const newTexture = textureManager.getTexture(imageUrl);
+      if (newTexture && sprite.texture !== newTexture) {
+        sprite.texture = newTexture;
+      }
+      const gridSize = tileData.textureGridSize ?? 1;
+      const tileScale = (TILE_SIZE * gridSize) / (newTexture || sprite.texture).width;
+      sprite.tileScale.set(tileScale);
+      sprite.tilePosition.set(-(x % gridSize) * TILE_SIZE, -(y % gridSize) * TILE_SIZE);
+      sprite.x = x * TILE_SIZE;
+      sprite.y = y * TILE_SIZE;
+      sprite.visible = true;
     } else if (sprite instanceof PIXI.Sprite) {
       // Update existing sprite if texture changed
       const newTexture = textureManager.getTexture(imageUrl);
@@ -655,15 +682,29 @@ export class TileLayer extends PixiLayer {
         return;
       }
 
-      baseSprite = new PIXI.Sprite(texture);
-      baseSprite.x = x * TILE_SIZE;
-      baseSprite.y = y * TILE_SIZE;
-      baseSprite.width = TILE_SIZE;
-      baseSprite.height = TILE_SIZE;
-      baseSprite.zIndex = baseVisible ? Z_TILE_BASE_SPRITE : Z_TILE_BASE;
+      const gridSize = baseTileData.textureGridSize;
+      if (gridSize && gridSize > 1) {
+        const ts = new PIXI.TilingSprite({ texture, width: TILE_SIZE, height: TILE_SIZE });
+        const tileScale = (TILE_SIZE * gridSize) / texture.width;
+        ts.tileScale.set(tileScale);
+        ts.tilePosition.set(-(x % gridSize) * TILE_SIZE, -(y % gridSize) * TILE_SIZE);
+        ts.x = x * TILE_SIZE;
+        ts.y = y * TILE_SIZE;
+        ts.zIndex = baseVisible ? Z_TILE_BASE_SPRITE : Z_TILE_BASE;
+        baseSprite = ts as unknown as PIXI.Sprite;
+      } else {
+        baseSprite = new PIXI.Sprite(texture);
+        baseSprite.x = x * TILE_SIZE;
+        baseSprite.y = y * TILE_SIZE;
+        baseSprite.width = TILE_SIZE;
+        baseSprite.height = TILE_SIZE;
+        baseSprite.zIndex = baseVisible ? Z_TILE_BASE_SPRITE : Z_TILE_BASE;
+      }
 
       this.container.addChild(baseSprite);
       this.sprites.set(baseKey, baseSprite);
+    } else if (baseSprite instanceof PIXI.TilingSprite) {
+      baseSprite.visible = true;
     } else if (baseSprite instanceof PIXI.Sprite) {
       baseSprite.visible = true;
     }
