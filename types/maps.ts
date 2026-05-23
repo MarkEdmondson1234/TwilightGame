@@ -178,6 +178,14 @@ export interface MapDefinition {
     width: number; // Viewport width the room was designed for (e.g., 1920)
     height: number; // Viewport height the room was designed for (e.g., 1080)
   };
+
+  /** Map-wide tileable background texture, rendered between the solid colour layer and tile sprites.
+   *  Transparent parts of tile sprites let this texture show through. */
+  backgroundTexture?: {
+    image: string; // Asset URL
+    gridSize?: number; // Tiles per texture repeat (default 4)
+    seasons?: ('spring' | 'summer' | 'autumn' | 'winter')[]; // Seasons to show; if omitted, always visible
+  };
 }
 
 // Simple character-based grid for child-friendly map editing

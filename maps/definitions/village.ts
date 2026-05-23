@@ -1,5 +1,6 @@
 import { MapDefinition, TileType, Direction } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 import {
   createCatNPC,
   createOldWomanKnittingNPC,
@@ -112,6 +113,11 @@ export const village: MapDefinition = {
   colorScheme: 'village',
   hasClouds: true,
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   spawnPoint: { x: 15, y: 27 }, // On the path below the home building
   transitions: [
     {

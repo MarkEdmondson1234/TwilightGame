@@ -143,6 +143,8 @@ export class TileLayer extends PixiLayer {
     string,
     { frames: string[]; speed: number; currentFrame: number; lastFrameTime: number }
   > = new Map();
+  // Single map-wide background texture sprite (for maps with backgroundTexture config)
+  private bgTextureSprite: PIXI.TilingSprite | null = null;
 
   constructor() {
     super(0, true); // Z-index 0: Base tile layer
@@ -182,6 +184,9 @@ export class TileLayer extends PixiLayer {
       this.colorCache.clear();
       this.currentSeason = seasonKey;
     }
+
+    // Update map-wide background texture (single TilingSprite covering full map)
+    this.updateBackgroundTexture(map, seasonKey);
 
     // Hide sprites outside visible range (culling)
     this.cullSprites(visibleRange);
@@ -1049,11 +1054,63 @@ export class TileLayer extends PixiLayer {
   }
 
   /**
+   * Render (or update) a single map-wide TilingSprite for maps with backgroundTexture config.
+   * Sits at Z_TILE_BASE_SPRITE (0.5) — above solid colour tiles (0) but below tile sprites (1).
+   * Transparent areas of tile sprites let this texture show through.
+   */
+  private updateBackgroundTexture(
+    map: MapDefinition,
+    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter'
+  ): void {
+    const config = map.backgroundTexture;
+
+    if (!config) {
+      if (this.bgTextureSprite) {
+        this.bgTextureSprite.destroy();
+        this.bgTextureSprite = null;
+      }
+      return;
+    }
+
+    const isVisible = !config.seasons || config.seasons.includes(seasonKey);
+    const texture = textureManager.getTexture(config.image);
+
+    if (!texture) {
+      if (this.bgTextureSprite) this.bgTextureSprite.visible = false;
+      return;
+    }
+
+    const gridSize = config.gridSize ?? 4;
+    const mapWidth = map.width * TILE_SIZE;
+    const mapHeight = map.height * TILE_SIZE;
+
+    if (!this.bgTextureSprite) {
+      this.bgTextureSprite = new PIXI.TilingSprite({ texture, width: mapWidth, height: mapHeight });
+      this.bgTextureSprite.zIndex = Z_TILE_BASE_SPRITE;
+      this.bgTextureSprite.x = 0;
+      this.bgTextureSprite.y = 0;
+      this.container.addChild(this.bgTextureSprite);
+    } else {
+      if (this.bgTextureSprite.texture !== texture) this.bgTextureSprite.texture = texture;
+      this.bgTextureSprite.width = mapWidth;
+      this.bgTextureSprite.height = mapHeight;
+    }
+
+    const tileScale = (TILE_SIZE * gridSize) / texture.width;
+    this.bgTextureSprite.tileScale.set(tileScale);
+    this.bgTextureSprite.visible = isVisible;
+  }
+
+  /**
    * Clear all sprites (when changing maps)
    */
   clear(): void {
     this.sprites.forEach((sprite) => sprite.destroy());
     this.sprites.clear();
+    if (this.bgTextureSprite) {
+      this.bgTextureSprite.destroy();
+      this.bgTextureSprite = null;
+    }
     this.colorCache.clear(); // Clear color cache when map changes
     this.animatedTiles.clear(); // Clear animated tile tracking
     console.log('[TileLayer] Cleared all sprites');
