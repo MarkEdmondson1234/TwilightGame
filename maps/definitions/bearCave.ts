@@ -75,6 +75,13 @@ export const bearCave: MapDefinition = {
       label: 'To Farm Area',
     },
     {
+      fromPosition: { x: 27, y: 18 }, // East path exit — one-way back to village (no return transition in village)
+      tileType: TileType.PATH,
+      toMapId: 'village',
+      toPosition: { x: 21, y: 17 }, // Just right of the well
+      label: 'To Village',
+    },
+    {
       fromPosition: { x: 12, y: 11 }, // Bear house entrance (accessible position in front of house)
       tileType: TileType.BEAR_HOUSE,
       toMapId: 'bear_den',
