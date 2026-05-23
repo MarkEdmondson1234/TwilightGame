@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 import { createMotherSeaNPC, createBunnyflyNPC, createSparrowNPC } from '../../utils/npcFactories';
 
 /**
@@ -68,6 +69,11 @@ export const magicalLake: MapDefinition = {
   colorScheme: 'forest',
   hasClouds: true,
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   spawnPoint: { x: 14, y: 28 }, // On path near south entrance
   transitions: [
     {

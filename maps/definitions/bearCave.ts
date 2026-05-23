@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 
 /**
  * Bear Cave - Outdoor cave clearing with the Chill Bear's house
@@ -59,6 +60,11 @@ export const bearCave: MapDefinition = {
   colorScheme: 'bear_cave', // Cozy outdoor clearing without darkness overlay
   hasClouds: true, // Outdoor area with sky
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   spawnPoint: { x: 15, y: 15 }, // On path near south entrance (moved up 3 tiles)
   transitions: [
     {

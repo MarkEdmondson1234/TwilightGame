@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 import { createCowNPC } from '../../utils/npcFactories';
 
 /**
@@ -70,6 +71,11 @@ export const farmArea: MapDefinition = {
   colorScheme: 'village',
   hasClouds: true,
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   spawnPoint: { x: 8, y: 24 }, // On path near entrance (changed from 10 to 8 - on the P tile)
   transitions: [
     {

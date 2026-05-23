@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 
 /**
  * Personal Garden - A private farming area for the player
@@ -63,6 +64,11 @@ export const personalGarden: MapDefinition = {
   colorScheme: 'village',
   hasClouds: true,
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   spawnPoint: { x: 8, y: 24 },
   transitions: [
     {

@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 
 /**
  * The Orchard — accessible from the top of the farm (behind Bessie the cow)
@@ -52,6 +53,11 @@ export const orchard: MapDefinition = {
   colorScheme: 'village',
   hasClouds: true,
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   borderTileType: TileType.OAK_TREE, // Surround the clearing with forest
   spawnPoint: { x: 8, y: 17 },
   transitions: [

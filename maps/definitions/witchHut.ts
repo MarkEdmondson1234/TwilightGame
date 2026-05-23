@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 import { createWitchWolfNPC } from '../../utils/npcFactories';
 
 /**
@@ -75,6 +76,11 @@ export const witchHut: MapDefinition = {
   colorScheme: 'forest',
   hasClouds: true,
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   spawnPoint: { x: 11, y: 28 }, // On path at south entrance
   transitions: [
     {

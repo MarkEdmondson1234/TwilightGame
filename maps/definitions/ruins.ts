@@ -1,5 +1,6 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
+import { tileAssets } from '../../assets';
 
 /**
  * Ancient Ruins - Mysterious overgrown ruins in a forest clearing
@@ -68,6 +69,11 @@ export const ruins: MapDefinition = {
   colorScheme: 'bear_cave',
   hasClouds: true,
   isRandom: false,
+  backgroundTexture: {
+    image: tileAssets.village_ground_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   spawnPoint: { x: 14, y: 16 },
   transitions: [
     {
