@@ -433,7 +433,7 @@ export class TileLayer extends PixiLayer {
           soilSprite.y = y * TILE_SIZE;
           soilSprite.width = TILE_SIZE;
           soilSprite.height = TILE_SIZE;
-          soilSprite.zIndex = Z_TILE_BACKGROUND;
+          soilSprite.zIndex = Z_TILE_SPRITES;
           this.container.addChild(soilSprite);
           this.sprites.set(soilKey, soilSprite);
         } else if (soilSprite instanceof PIXI.Sprite) {
