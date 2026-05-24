@@ -395,11 +395,10 @@ export class SpriteLayer extends PixiLayer {
     sprite.height = metadata.spriteHeight * TILE_SIZE;
 
     // Calculate dynamic z-index based on depth line
-    // Ground decorations (tufts, ferns, rocks) stay at ground level
+    // Ferns and rocks stay at flat ground level; tufts use depth sorting so they
+    // appear in front of tree roots / building bases at lower Y positions (3D feel)
     const isGroundDecoration =
-      metadata.tileType === TileType.TUFT ||
       metadata.tileType === TileType.FERN ||
-      metadata.tileType === TileType.TUFT_SPARSE ||
       metadata.tileType === TileType.ROCK;
     let spriteZIndex: number;
     if (isGroundDecoration) {
