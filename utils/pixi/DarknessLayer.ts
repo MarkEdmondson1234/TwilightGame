@@ -66,14 +66,6 @@ const DARKNESS_CONFIG: Record<
       [Season.WINTER]: 0.22,
     },
   },
-  village: {
-    baseDarkness: 0.25,
-    nightMultiplier: 2.0,
-  },
-  outdoor: {
-    baseDarkness: 0.25,
-    nightMultiplier: 2.0,
-  },
 };
 
 const MAX_DARKNESS = 0.7;
