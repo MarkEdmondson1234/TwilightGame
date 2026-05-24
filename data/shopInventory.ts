@@ -437,6 +437,12 @@ export const MUSHRAS_SHOP_INVENTORY: ShopItem[] = [
     sellPrice: 0,
     stock: 'unlimited',
   },
+  {
+    itemId: 'furniture_catalogue',
+    buyPrice: 80,
+    sellPrice: 0,
+    stock: 'unlimited',
+  },
 ];
 
 /**

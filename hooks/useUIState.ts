@@ -25,7 +25,8 @@ export type UIOverlayName =
   | 'paintingEasel'
   | 'miniGame'
   | 'photoAlbum'
-  | 'basketModal';
+  | 'basketModal'
+  | 'furnitureCatalogueUI';
 
 /**
  * Context data associated with specific UI overlays.
@@ -70,6 +71,7 @@ export interface UIState {
   paintingEasel: boolean;
   miniGame: boolean;
   photoAlbum: boolean;
+  furnitureCatalogueUI: boolean;
   // Context data
   context: UIContext;
 }
@@ -139,6 +141,7 @@ const initialState: UIState = {
   paintingEasel: false,
   miniGame: false,
   photoAlbum: false,
+  furnitureCatalogueUI: false,
   context: { ...initialContext },
 };
 

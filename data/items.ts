@@ -2640,6 +2640,48 @@ export const ITEMS: Record<string, ItemDefinition> = {
     outdoorOnly: true,
     furnitureEffect: 'rest',
   },
+
+  furniture_bookshelf: {
+    id: 'furniture_bookshelf',
+    name: 'furniture_bookshelf',
+    displayName: 'Mahogany Bookshelf',
+    category: ItemCategory.FURNITURE,
+    description: 'A handsome mahogany bookshelf. Purely decorative, but rather lovely.',
+    stackable: false,
+    image: furnitureAssets.mahogany_bookshelf,
+    placedImage: furnitureAssets.mahogany_bookshelf,
+    placedScale: 2,
+    placesBelowCharacters: true,
+    indoorOnly: true,
+    allowAnyTilePlacement: true,
+    buyPrice: 450,
+  },
+
+  furniture_armchair: {
+    id: 'furniture_armchair',
+    name: 'furniture_armchair',
+    displayName: 'Comfy Armchair',
+    category: ItemCategory.FURNITURE,
+    description: 'A wonderfully comfortable armchair. Sit down to rest and restore your stamina.',
+    stackable: false,
+    image: furnitureAssets.comfy_armchair,
+    placedImage: furnitureAssets.comfy_armchair,
+    placedScale: 1.7,
+    placesBelowCharacters: true,
+    indoorOnly: true,
+    furnitureEffect: 'rest',
+    buyPrice: 600,
+  },
+
+  furniture_catalogue: {
+    id: 'furniture_catalogue',
+    name: 'furniture_catalogue',
+    displayName: 'Furniture Catalogue',
+    category: ItemCategory.FURNITURE,
+    description: 'A glossy catalogue of premium furniture. Click to browse and order.',
+    stackable: false,
+    image: furnitureAssets.catalogue,
+  },
 };
 
 /**

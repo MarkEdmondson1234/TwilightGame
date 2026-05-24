@@ -99,6 +99,7 @@ import { CAMERA } from './constants';
 import type { Photo } from './types';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
+import FurnitureCatalogueUI from './components/FurnitureCatalogueUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
 import BasketModal from './components/BasketModal';
 import GlamourModal from './components/GlamourModal';
@@ -2117,6 +2118,11 @@ const App: React.FC = () => {
           onPhotoDoubleClick={(photo) => setViewingPhoto(photo)}
           onItemClick={(item, slotIndex, event) => {
             const itemDef = getItem(item.id);
+            if (item.id === 'furniture_catalogue') {
+              closeUI('inventory');
+              openUI('furnitureCatalogueUI');
+              return;
+            }
             if (itemDef && itemDef.category === ItemCategory.POTION) {
               // Friendship/Grudge potions are given to NPCs, not drunk
               if (item.id === 'potion_friendship' || item.id === 'potion_bitter_grudge') {
@@ -2347,6 +2353,29 @@ const App: React.FC = () => {
             const updatedSlotOrder = inventoryManager.getSlotOrder();
             characterData.saveInventory(newInventory, currentTools, updatedSlotOrder);
             console.log('[App] Saved inventory to GameState');
+          }}
+        />
+      )}
+      {ui.furnitureCatalogueUI && (
+        <FurnitureCatalogueUI
+          isOpen={ui.furnitureCatalogueUI}
+          onClose={() => closeUI('furnitureCatalogueUI')}
+          playerGold={gameState.getGold()}
+          playerInventory={gameState.getState().inventory.items}
+          onTransaction={(newGold, newInventory) => {
+            const currentGold = gameState.getGold();
+            const goldDifference = newGold - currentGold;
+            if (goldDifference > 0) {
+              gameState.addGold(goldDifference);
+            } else if (goldDifference < 0) {
+              gameState.spendGold(Math.abs(goldDifference));
+            }
+            const currentTools = gameState.getState().inventory.tools;
+            const currentSlotOrder = inventoryManager.getSlotOrder();
+            inventoryManager.loadInventory(newInventory, currentTools, currentSlotOrder);
+            const updatedSlotOrder = inventoryManager.getSlotOrder();
+            characterData.saveInventory(newInventory, currentTools, updatedSlotOrder);
+            openUI('inventory');
           }}
         />
       )}
