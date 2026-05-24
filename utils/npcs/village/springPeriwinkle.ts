@@ -34,7 +34,7 @@ export function createSpringPeriwinkleNPC(
     direction: Direction.Down,
     sprite: npcAssets.spring_periwinkle_02,
     portraitSprite: npcAssets.spring_periwinkle_portrait,
-    scale: 4.0,
+    scale: 3.5,
     collisionRadius: 0.35,
     // Follows the little girl in the village (spring/summer).
     // In autumn/winter she is on a different map (house2), so followTarget has no effect.
