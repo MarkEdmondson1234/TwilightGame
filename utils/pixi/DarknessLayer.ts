@@ -50,6 +50,8 @@ const DARKNESS_CONFIG: Record<
     baseDarkness: number;
     nightMultiplier: number;
     seasonModifiers?: Record<string, number>;
+    /** Override final darkness for specific times of day, bypassing baseDarkness * multiplier */
+    timeOfDayOverrides?: Partial<Record<TimeOfDay, number>>;
   }
 > = {
   cave: {
@@ -64,6 +66,16 @@ const DARKNESS_CONFIG: Record<
       [Season.SPRING]: 0.25,
       [Season.AUTUMN]: 0.3,
       [Season.WINTER]: 0.22,
+    },
+  },
+  village: {
+    baseDarkness: 0,
+    nightMultiplier: 2.0,
+    timeOfDayOverrides: {
+      [TimeOfDay.DAY]: 0,
+      [TimeOfDay.DAWN]: 0.15,
+      [TimeOfDay.DUSK]: 0.15,
+      [TimeOfDay.NIGHT]: 0.4,
     },
   },
 };
@@ -230,8 +242,12 @@ export class DarknessLayer {
       baseDarkness = config.seasonModifiers[season];
     }
 
+    const todOverride = config.timeOfDayOverrides?.[timeOfDay as TimeOfDay];
     const todMultiplier = TIME_OF_DAY_MULTIPLIERS[timeOfDay as TimeOfDay] ?? 1.0;
-    const darkness = Math.min(baseDarkness * todMultiplier, MAX_DARKNESS);
+    const darkness =
+      todOverride !== undefined
+        ? todOverride
+        : Math.min(baseDarkness * todMultiplier, MAX_DARKNESS);
 
     const sizeChanged =
       viewportWidth !== this.viewportWidth || viewportHeight !== this.viewportHeight;
