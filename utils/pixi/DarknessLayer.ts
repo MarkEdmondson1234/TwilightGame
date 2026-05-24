@@ -78,6 +78,26 @@ const DARKNESS_CONFIG: Record<
       [TimeOfDay.NIGHT]: 0.4,
     },
   },
+  outdoor: {
+    baseDarkness: 0,
+    nightMultiplier: 2.0,
+    timeOfDayOverrides: {
+      [TimeOfDay.DAY]: 0,
+      [TimeOfDay.DAWN]: 0.15,
+      [TimeOfDay.DUSK]: 0.15,
+      [TimeOfDay.NIGHT]: 0.4,
+    },
+  },
+  bear_cave: {
+    baseDarkness: 0,
+    nightMultiplier: 2.0,
+    timeOfDayOverrides: {
+      [TimeOfDay.DAY]: 0,
+      [TimeOfDay.DAWN]: 0.15,
+      [TimeOfDay.DUSK]: 0.15,
+      [TimeOfDay.NIGHT]: 0.4,
+    },
+  },
 };
 
 const MAX_DARKNESS = 0.7;
