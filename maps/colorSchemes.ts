@@ -214,6 +214,13 @@ export const COLOR_SCHEMES: Record<string, ColorScheme> = {
       mushroom: 'bg-palette-shadow', // Same as grass
       background: 'bg-palette-black',
     },
+    seasonalModifiers: {
+      winter: {
+        grass: 'bg-palette-snow',
+        path: 'bg-palette-snow',
+        water: 'bg-palette-periwinkle',
+      },
+    },
   },
 
   lava: {
