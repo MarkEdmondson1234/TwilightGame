@@ -96,6 +96,7 @@ export const tileAssets = {
   tuft_winter: '/TwilightGame/assets-optimized/tiles/tuft/tuft_winter.png',
   village_green: '/TwilightGame/assets-optimized/tiles/village_green.png',
   village_ground_texture: '/TwilightGame/assets-optimized/tiles/village/village_ground_texture.png',
+  forest_floor_texture: '/TwilightGame/assets-optimized/tiles/forest/forest_floor_texture.png',
   // Hawthorn bush assets (seasonal variations)
   hawthorn_spring: '/TwilightGame/assets-optimized/tiles/hawthorn_bush/hawthorn_spring.png',
   hawthorn_summer: '/TwilightGame/assets-optimized/tiles/hawthorn_bush/hawthorn_summer.png',

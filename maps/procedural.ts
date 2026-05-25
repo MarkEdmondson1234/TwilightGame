@@ -1,4 +1,5 @@
 import { MapDefinition, TileType, Position } from '../types';
+import { tileAssets } from '../assets';
 import { gameState } from '../GameState';
 import {
   createUmbraWolfNPC,
@@ -1081,6 +1082,11 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     spawnPoint: { x: spawnX, y: spawnY },
     transitions,
     npcs,
+    backgroundTexture: {
+      image: tileAssets.forest_floor_texture,
+      gridSize: 4,
+      seasons: ['spring', 'summer', 'autumn'],
+    },
   };
 }
 
