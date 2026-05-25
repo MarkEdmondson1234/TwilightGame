@@ -209,6 +209,8 @@ export const tileAssets = {
   branch: '/TwilightGame/assets-optimized/tiles/mushroomMap/branch.png',
   // Mushroom cluster (2x2 decorative mushrooms for mushroom forest and procedural forests)
   mushroom_cluster: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom.png',
+  // Mushroom forest floor background texture (tileable)
+  mushroom_floor_texture: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom_floor_texture.png',
   // Common forageable plants
   forest_mushrooms: '/TwilightGame/assets-optimized/tiles/forest/forest_mushrooms.png',
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',

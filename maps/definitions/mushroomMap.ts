@@ -1,6 +1,7 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createMushraNPC, createDaveadNPC } from '../../utils/npcFactories';
+import { tileAssets } from '../../assets';
 
 /**
  * Mushroom Forest - A damp, shady area filled with fungi
@@ -68,6 +69,11 @@ export const mushroomMap: MapDefinition = {
   }),
   colorScheme: 'mushroom_forest', // Very dark forest floor with shadow colour
   hasClouds: true, // Outdoor area
+  backgroundTexture: {
+    image: tileAssets.mushroom_floor_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   isRandom: false,
   spawnPoint: { x: 15, y: 17 }, // On path near south entrance
   transitions: [
