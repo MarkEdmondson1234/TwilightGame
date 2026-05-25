@@ -164,14 +164,14 @@ export const village: MapDefinition = {
       fromPosition: { x: 20, y: 3 }, // Mine entrance (M tile)
       tileType: TileType.MINE_ENTRANCE,
       toMapId: 'RANDOM_CAVE',
-      toPosition: { x: 17, y: 12 }, // Spawn in center of cave (safe zone)
+      toPosition: { x: 3, y: 12 }, // Spawn left side, next to village exit tile
       label: 'To Mine',
     },
     {
-      fromPosition: { x: 28, y: 12 }, // East exit to forest (last G before R border)
+      fromPosition: { x: 28, y: 16 }, // East exit to forest (last G before R border)
       tileType: TileType.GRASS,
       toMapId: 'RANDOM_FOREST',
-      toPosition: { x: 29, y: 7 }, // Spawn in forest
+      toPosition: { x: 3, y: 15 }, // Spawn left side, mid-screen in forest
       label: 'To Forest',
     },
     {

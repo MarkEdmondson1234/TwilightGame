@@ -66,7 +66,7 @@ export const house1: MapDefinition = {
       fromPosition: { x: 7, y: 8 }, // Door exit (bottom centre)
       tileType: TileType.DOOR,
       toMapId: 'village',
-      toPosition: { x: 6, y: 6 },
+      toPosition: { x: 8, y: 7 },
       label: 'To Village',
       hasDoor: true,
     },

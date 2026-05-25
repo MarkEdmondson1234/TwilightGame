@@ -101,8 +101,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
-  // Spawn in the middle of the map
-  const spawnX = Math.floor(width / 2);
+  // Spawn on the left side, vertically centred
+  const spawnX = 3;
   const spawnY = Math.floor(height / 2);
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
@@ -806,7 +806,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       fromPosition: { x: 1, y: spawnY },
       tileType: TileType.PATH,
       toMapId: 'village',
-      toPosition: { x: 15, y: 15 }, // Center of main path - guaranteed safe
+      toPosition: { x: 28, y: 16 },
       label: 'Back to Village',
     },
     {
@@ -1106,8 +1106,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
     }
   }
 
-  // Spawn in the middle of the map where it's safe
-  const spawnX = Math.floor(width / 2);
+  // Spawn on the left side, vertically centred (next to village exit tile)
+  const spawnX = 3;
   const spawnY = Math.floor(height / 2);
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
