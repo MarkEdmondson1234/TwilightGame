@@ -8,6 +8,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import type { CombatMove } from './combatTypes';
+import { COUNTERED_BY } from './combatTypes';
 import { getCombatantByNPCName, getCombatantByGameId } from './antagonists';
 import { useCombatLogic, calculateRewards } from './useCombatLogic';
 import { gameState } from '../../GameState';
@@ -16,21 +17,42 @@ import { Direction } from '../../types';
 import { DEFAULT_CHARACTER } from '../../utils/characterSprites';
 import { STAMINA } from '../../constants';
 import { Z_DIALOGUE, zClass } from '../../zIndex';
+import { eventBus, GameEvent } from '../../utils/EventBus';
 
 // =============================================================================
 // Move config (icons, colours, labels)
 // =============================================================================
 
-const MOVE_CONFIG: Record<
-  CombatMove,
-  { label: string; icon: string; colour: string; counter: string }
-> = {
-  strike: { label: 'Strike', icon: '\u2694\uFE0F', colour: '#c0392b', counter: 'dodge' },
-  block: { label: 'Block', icon: '\u{1F6E1}\uFE0F', colour: '#2980b9', counter: 'strike' },
-  dodge: { label: 'Dodge', icon: '\u{1F4A8}', colour: '#27ae60', counter: 'block' },
+const MOVE_CONFIG: Record<CombatMove, { label: string; icon: string; colour: string }> = {
+  strike: { label: 'Strike', icon: '\u2694\uFE0F', colour: '#c0392b' },
+  block: { label: 'Block', icon: '\u{1F6E1}\uFE0F', colour: '#2980b9' },
+  dodge: { label: 'Dodge', icon: '\u{1F4A8}', colour: '#27ae60' },
 };
 
 const SERIF_FONT = '"Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif';
+
+// Keyframe animations injected once. Used for the pulsing aura around the
+// enemy portrait and the floating wind-up icon that telegraphs intent.
+const COMBAT_KEYFRAMES = `
+@keyframes combatAuraPulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+@keyframes combatIconWindup {
+  0% { transform: translate(-50%, 0) scale(0.6) rotate(-4deg); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(-50%, -10px) scale(1.15) rotate(4deg); opacity: 1; }
+}
+@keyframes combatIconShake {
+  0%, 100% { transform: translate(-50%, -10px) scale(1.15) rotate(4deg); }
+  25% { transform: translate(-50%, -10px) scale(1.18) rotate(-4deg); }
+  75% { transform: translate(-50%, -10px) scale(1.18) rotate(6deg); }
+}
+@keyframes combatCounterRing {
+  0%, 100% { box-shadow: 0 0 0 2px var(--combat-ring-colour), 0 0 12px var(--combat-ring-colour); }
+  50% { box-shadow: 0 0 0 3px var(--combat-ring-colour), 0 0 20px var(--combat-ring-colour); }
+}
+`;
 
 // =============================================================================
 // Sub-components
@@ -314,12 +336,13 @@ const CombatEncounterInner: React.FC<
     combat.start();
   }, [combat]);
 
-  // Track stamina changes
+  // Track stamina via EventBus — drainStamina (and item-use restoration) emits
+  // STAMINA_CHANGED, so we re-read on every event rather than polling every 100ms.
   useEffect(() => {
-    const interval = setInterval(() => {
-      setStamina(context.actions.getStamina());
-    }, 100);
-    return () => clearInterval(interval);
+    setStamina(context.actions.getStamina());
+    return eventBus.on(GameEvent.STAMINA_CHANGED, (payload) => {
+      setStamina(payload.value);
+    });
   }, [context.actions]);
 
   // Handle combat end
@@ -381,9 +404,9 @@ const CombatEncounterInner: React.FC<
   const handleUseItem = useCallback(
     (itemId: string) => {
       combat.useItem(itemId);
-      setStamina(context.actions.getStamina());
+      // No setStamina call needed — STAMINA_CHANGED listener picks it up.
     },
-    [combat, context.actions]
+    [combat]
   );
 
   const isIntro = state.phase === 'intro';
@@ -391,6 +414,16 @@ const CombatEncounterInner: React.FC<
   const isCombatActive = !['victory', 'defeat', 'fled', 'intro'].includes(state.phase);
 
   // Determine outcome indicator
+  // Visual telegraph: during the telegraph phase we colour-code intent via the
+  // enemy portrait aura, a floating wind-up icon, and a highlight on the
+  // player's countering button. The feint is preserved \u2014 the highlighted
+  // counter may be the "wrong" one if the enemy is faking.
+  const showTelegraphCue = state.phase === 'telegraph' && state.telegraphedMove !== null;
+  const telegraphedMove = showTelegraphCue ? state.telegraphedMove! : null;
+  const telegraphColour = telegraphedMove ? MOVE_CONFIG[telegraphedMove].colour : null;
+  const telegraphIcon = telegraphedMove ? MOVE_CONFIG[telegraphedMove].icon : null;
+  const counterMove: CombatMove | null = telegraphedMove ? COUNTERED_BY[telegraphedMove] : null;
+
   const outcomeIcon =
     state.roundOutcome === 'win'
       ? '\u2728'
@@ -405,6 +438,7 @@ const CombatEncounterInner: React.FC<
       className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}
       style={{ pointerEvents: 'auto' }}
     >
+      <style>{COMBAT_KEYFRAMES}</style>
       {/* Background — captures clicks so nothing reaches the game beneath */}
       <div
         className="absolute inset-0"
@@ -459,11 +493,43 @@ const CombatEncounterInner: React.FC<
               className="absolute bottom-0 right-0 w-full h-full object-contain object-bottom"
               style={{
                 imageRendering: 'auto',
-                filter: `drop-shadow(0 0 30px rgba(255, 80, 80, 0.3))`,
+                // Swap the dull red drop-shadow for a brighter move-coloured
+                // aura during the telegraph phase. Pulses via keyframes so
+                // it's obvious the enemy is committing to something.
+                filter: telegraphColour
+                  ? `drop-shadow(0 0 24px ${telegraphColour}cc) drop-shadow(0 0 60px ${telegraphColour}88)`
+                  : 'drop-shadow(0 0 30px rgba(255, 80, 80, 0.3))',
                 opacity: state.phase === 'victory' ? 0.4 : 1,
-                transition: 'opacity 0.5s ease',
+                transformOrigin: 'bottom center',
+                transition: 'opacity 0.5s ease, filter 0.25s ease',
+                animation: telegraphColour
+                  ? 'combatAuraPulse 0.8s ease-in-out infinite'
+                  : undefined,
               }}
             />
+          )}
+          {/* Floating wind-up icon: shows the move the enemy is telegraphing
+              as a large symbol above their portrait. Grows + shakes as the
+              timer runs out for unmistakable visual intent. */}
+          {telegraphIcon && telegraphColour && (
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                top: '8%',
+                left: '50%',
+                fontSize: 84,
+                pointerEvents: 'none',
+                textShadow: `0 0 18px ${telegraphColour}, 0 0 36px ${telegraphColour}aa`,
+                filter: `drop-shadow(0 4px 8px rgba(0,0,0,0.6))`,
+                animation:
+                  state.timerProgress < 0.35
+                    ? 'combatIconWindup 0.4s ease-out forwards, combatIconShake 0.18s ease-in-out infinite 0.4s'
+                    : 'combatIconWindup 0.4s ease-out forwards',
+              }}
+            >
+              {telegraphIcon}
+            </div>
           )}
         </div>
       </div>
@@ -631,6 +697,18 @@ const CombatEncounterInner: React.FC<
               const isPlayerMove = state.playerMove === move;
               const isEnemyMove =
                 state.actualMove === move && ['reveal', 'result'].includes(state.phase);
+              // Highlight the move that would beat the telegraphed move, so
+              // the player has a clear visual answer to "what should I press?"
+              // — but they still have to decide whether the telegraph is true
+              // or a feint.
+              const isCounterHint = counterMove === move && !isPlayerMove;
+              const ringStyle: React.CSSProperties = isCounterHint
+                ? {
+                    // CSS variable consumed by the combatCounterRing keyframe
+                    ['--combat-ring-colour' as never]: `${cfg.colour}cc`,
+                    animation: 'combatCounterRing 1.1s ease-in-out infinite',
+                  }
+                : {};
 
               return (
                 <button
@@ -646,21 +724,24 @@ const CombatEncounterInner: React.FC<
                       : '2px solid rgba(200, 180, 140, 0.2)',
                     background: isPlayerMove
                       ? `${cfg.colour}33`
-                      : isActionPhase
-                        ? 'rgba(255,255,255,0.08)'
-                        : 'rgba(255,255,255,0.03)',
+                      : isCounterHint
+                        ? `${cfg.colour}1f`
+                        : isActionPhase
+                          ? 'rgba(255,255,255,0.08)'
+                          : 'rgba(255,255,255,0.03)',
                     color: isActionPhase ? '#f0e6cc' : '#666',
                     fontFamily: SERIF_FONT,
                     fontSize: 15,
                     fontWeight: 600,
                     cursor: isActionPhase ? 'pointer' : 'default',
-                    transition: 'all 0.2s ease',
+                    transition: 'background 0.2s ease, border 0.2s ease, opacity 0.2s ease',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: 4,
                     position: 'relative',
                     opacity: isActionPhase ? 1 : 0.5,
+                    ...ringStyle,
                   }}
                 >
                   <span style={{ fontSize: 24 }}>{cfg.icon}</span>

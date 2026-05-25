@@ -12,37 +12,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { COMBAT, STAMINA } from '../../constants';
 import type { CombatMove, RoundOutcome, CombatState, CombatantConfig } from './combatTypes';
 import { resolveRound, INITIAL_COMBAT_STATE } from './combatTypes';
+import { pick, pickWeightedMove, pickFeintTelegraph, randomInt } from './combatHelpers';
 import type { MiniGameActions } from '../types';
-
-// =============================================================================
-// Helpers
-// =============================================================================
-
-function pick<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function pickWeightedMove(weights: Record<CombatMove, number>): CombatMove {
-  const moves: CombatMove[] = ['strike', 'block', 'dodge'];
-  const total = moves.reduce((sum, m) => sum + weights[m], 0);
-  let r = Math.random() * total;
-  for (const m of moves) {
-    r -= weights[m];
-    if (r <= 0) return m;
-  }
-  return moves[2];
-}
-
-function pickFeintTelegraph(actualMove: CombatMove): CombatMove {
-  const others: CombatMove[] = (['strike', 'block', 'dodge'] as const).filter(
-    (m) => m !== actualMove
-  );
-  return pick(others);
-}
-
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
 
 // =============================================================================
 // Hook

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Z_SHOP, zClass } from '../zIndex';
 import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
@@ -11,7 +11,10 @@ interface FurnitureCatalogueUIProps {
   onClose: () => void;
   playerGold: number;
   playerInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[];
-  onTransaction: (newGold: number, newInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[]) => void;
+  onTransaction: (
+    newGold: number,
+    newInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[]
+  ) => void;
 }
 
 export default function FurnitureCatalogueUI({
@@ -21,10 +24,18 @@ export default function FurnitureCatalogueUI({
   onTransaction,
 }: FurnitureCatalogueUIProps) {
   const [feedback, setFeedback] = useState<string | null>(null);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, []);
 
   const showFeedback = useCallback((msg: string) => {
     setFeedback(msg);
-    setTimeout(() => setFeedback(null), 3000);
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    feedbackTimerRef.current = setTimeout(() => setFeedback(null), 3000);
   }, []);
 
   const handleOrder = useCallback(
@@ -44,7 +55,7 @@ export default function FurnitureCatalogueUI({
       onTransaction(playerGold - price, newInventory);
       onClose();
     },
-    [playerGold, onTransaction, onClose],
+    [playerGold, onTransaction, onClose]
   );
 
   if (!isOpen) return null;
@@ -95,7 +106,6 @@ export default function FurnitureCatalogueUI({
                     src={def.image ?? FALLBACK_ITEM_ICON}
                     alt={def.displayName}
                     className="w-full h-full object-contain"
-                    style={{ imageRendering: 'auto' }}
                   />
                 </div>
 

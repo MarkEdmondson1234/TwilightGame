@@ -32,10 +32,17 @@ export type CombatPhase =
 // =============================================================================
 
 /** What each move beats */
-const BEATS: Record<CombatMove, CombatMove> = {
+export const BEATS: Record<CombatMove, CombatMove> = {
   strike: 'dodge', // strike catches someone mid-dodge
   dodge: 'block', // dodge slips around a stationary blocker
   block: 'strike', // block absorbs an incoming strike
+};
+
+/** The move that beats a given move (inverse of BEATS) — useful for UI hints */
+export const COUNTERED_BY: Record<CombatMove, CombatMove> = {
+  strike: 'block',
+  dodge: 'strike',
+  block: 'dodge',
 };
 
 /** Resolve a round: does the player win, lose, or draw? */
