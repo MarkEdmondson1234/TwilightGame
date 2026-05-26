@@ -88,7 +88,7 @@ export const mushroomMap: MapDefinition = {
       fromPosition: { x: 23, y: 17 }, // East path exit
       tileType: TileType.PATH,
       toMapId: 'village',
-      toPosition: { x: 5, y: 16 }, // Near mushroom forest entrance on west side
+      toPosition: { x: 21, y: 17 },
       label: 'To Village',
     },
     {
