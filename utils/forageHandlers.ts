@@ -115,6 +115,7 @@ export interface ForageResult {
   seedId?: string;
   seedName?: string;
   message: string;
+  outOfSeason?: boolean;
 }
 
 /**
@@ -358,6 +359,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The moonpetal is dormant. It only blooms in spring and summer.',
+        outOfSeason: true,
       };
     }
 
@@ -427,6 +429,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The addersmeat is dormant underground. It only emerges in spring and summer.',
+        outOfSeason: true,
       };
     }
 
@@ -532,6 +535,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
         found: false,
         message:
           'The wolfsbane is dormant underground. It only emerges in spring, summer, and autumn.',
+        outOfSeason: true,
       };
     }
 
@@ -587,7 +591,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
         season === Season.WINTER
           ? "The heather is buried under the frost. It blooms in autumn."
           : "The heather isn't in bloom yet. Come back in autumn.";
-      return { found: false, message: msg };
+      return { found: false, message: msg, outOfSeason: true };
     }
 
     if (
@@ -643,6 +647,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The rosebush is bare in winter. Come back when it blooms.',
+        outOfSeason: true,
       };
     }
 
@@ -696,6 +701,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The rosebush is bare in winter. Come back when it blooms.',
+        outOfSeason: true,
       };
     }
 
@@ -808,6 +814,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'These mushrooms only appear in autumn. Come back then!',
+        outOfSeason: true,
       };
     }
 
@@ -872,12 +879,14 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The meadow grass is buried under frost. Come back in autumn when it has dried.',
+        outOfSeason: true,
       };
     }
     if (season !== Season.AUTUMN) {
       return {
         found: false,
         message: 'The meadow grass is too green and lush to gather. Come back in autumn when it has dried.',
+        outOfSeason: true,
       };
     }
 
@@ -983,6 +992,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The spruce tree holds its branches tight. In winter, fallen sprigs can be gathered from beneath.',
+        outOfSeason: true,
       };
     }
 
@@ -1086,6 +1096,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The cherry tree has no blossoms to collect petals from right now.',
+        outOfSeason: true,
       };
     }
 
@@ -1145,6 +1156,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The bees are dormant in winter. Come back in spring!',
+        outOfSeason: true,
       };
     }
 
@@ -1219,6 +1231,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The mustard flowers are dormant. Come back in spring or summer!',
+        outOfSeason: true,
       };
     }
 
@@ -1297,6 +1310,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       return {
         found: false,
         message: 'The shrinking violets only bloom in spring. Come back next year!',
+        outOfSeason: true,
       };
     }
 
@@ -1453,7 +1467,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
           ? 'The wild strawberry plants are not ripe yet — they fruit in summer.'
           : 'The wild strawberry season has already passed for this year.';
       if (DEBUG.FORAGE) console.log(`[Forage] Wild strawberries out of season (${currentSeason})`);
-      return { found: false, message };
+      return { found: false, message, outOfSeason: true };
     }
   }
 

@@ -332,7 +332,7 @@ export function useInteractionController(
       },
       onFarmAnimation: handleFarmActionAnimation,
       onForage: (result: ForageResult) => {
-        if (result.message) {
+        if (result.message && !result.outOfSeason) {
           onShowToast(result.message, result.found ? 'success' : 'info');
         }
       },
