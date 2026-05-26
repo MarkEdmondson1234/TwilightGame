@@ -398,7 +398,6 @@ export class SpriteLayer extends PixiLayer {
     // Ferns and rocks stay at flat ground level; tufts use depth sorting so they
     // appear in front of tree roots / building bases at lower Y positions (3D feel)
     const isGroundDecoration =
-      metadata.tileType === TileType.FERN ||
       metadata.tileType === TileType.ROCK;
     let spriteZIndex: number;
     if (isGroundDecoration) {

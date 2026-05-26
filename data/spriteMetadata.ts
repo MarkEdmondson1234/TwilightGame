@@ -131,6 +131,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
+    depthLineOffset: 1, // Depth line at sprite base so player can walk behind flowers
     // Transform controls: flipping for variety
     enableFlip: true,
     enableRotation: false,
@@ -433,6 +434,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
+    depthLineOffset: 1, // Depth line at sprite base so player can walk behind ferns
     // Transform controls: variety for natural forest floor
     enableFlip: true,
     enableRotation: true,
@@ -1085,6 +1087,7 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionHeight: 0,
     collisionOffsetX: 0,
     collisionOffsetY: 0,
+    depthLineOffset: 1, // Depth line at sprite base so player can walk behind grass tufts
   },
   {
     tileType: TileType.FAIRY_OAK,
