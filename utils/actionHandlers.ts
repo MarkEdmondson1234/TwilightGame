@@ -1534,20 +1534,17 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   });
 
   if (hasHawthornBush) {
-    const currentSeason = TimeManager.getCurrentTime().season;
-    if (currentSeason === Season.AUTUMN) {
-      interactions.push({
-        type: 'harvest_red_berries',
-        label: 'Pick Red Berries',
-        icon: magicalAssets.red_berries,
-        color: '#b91c1c',
-        execute: () => {
-          if (!staminaManager.performActivity('harvest')) return;
-          const result = handleRedBerryHarvest(position, currentMapId);
-          onForage?.(result);
-        },
-      });
-    }
+    interactions.push({
+      type: 'harvest_red_berries',
+      label: 'Pick Red Berries',
+      icon: magicalAssets.red_berries,
+      color: '#b91c1c',
+      execute: () => {
+        if (!staminaManager.performActivity('harvest')) return;
+        const result = handleRedBerryHarvest(position, currentMapId);
+        onForage?.(result);
+      },
+    });
   }
 
   // Check for leaf pile interactions (tidy up or pick up — autumn decorative tile)
