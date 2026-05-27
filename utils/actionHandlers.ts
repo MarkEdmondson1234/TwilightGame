@@ -26,7 +26,14 @@ import { WATER_CAN, TIMING, DEBUG } from '../constants';
 import { staminaManager } from './StaminaManager';
 import { itemAssets, groceryAssets, magicalAssets } from '../assets';
 import { getTierName } from './MagicEffects';
-import { ForageResult, handleForageAction } from './forageHandlers';
+import {
+  ForageResult,
+  handleForageAction,
+  handleBlackberryHarvest,
+  handleHazelnutHarvest,
+  handleBlueberryHarvest,
+  handleRedBerryHarvest,
+} from './forageHandlers';
 import { decorationManager } from './DecorationManager';
 import { cookingManager, CookingResult } from './CookingManager';
 import { getFrameStyle } from './frameStyles';
@@ -320,288 +327,6 @@ export function handleFarmAction(
     );
 
   // Check for wild strawberry harvesting with hand tool
-  if (currentTool === 'hand' && tileData && tileData.type === TileType.WILD_STRAWBERRY) {
-    // Check cooldown for this specific strawberry plant
-    if (
-      gameState.isForageTileOnCooldown(
-        currentMapId,
-        position.x,
-        position.y,
-        TIMING.FORAGE_COOLDOWN_MS
-      )
-    ) {
-      return {
-        handled: false,
-        message: `You've already picked from this plant. Come back tomorrow!`,
-        messageType: 'info',
-      };
-    }
-
-    if (DEBUG.FARM) console.log('[Action] Attempting to harvest wild strawberries');
-
-    // Costs stamina
-    if (!staminaManager.performActivity('harvest')) {
-      return { handled: false };
-    }
-
-    // Record the harvest (starts cooldown for this plant)
-    gameState.recordForage(currentMapId, position.x, position.y);
-
-    // Random yield: 2-5 strawberries (always successful)
-    const berryYield = Math.floor(Math.random() * 4) + 2; // 2-5
-    inventoryManager.addItem('crop_strawberry', berryYield);
-
-    // 30% chance to also get seeds when picking berries
-    const gotSeeds = Math.random() < 0.3;
-    let seedCount = 0;
-    if (gotSeeds) {
-      seedCount = Math.floor(Math.random() * 2) + 1; // 1-2 seeds
-      inventoryManager.addItem('seed_wild_strawberry', seedCount);
-    }
-
-    const inventoryData = inventoryManager.getInventoryData();
-    characterData.saveInventory(inventoryData.items, inventoryData.tools);
-
-    const message = gotSeeds
-      ? `Picked ${berryYield} strawberries and found ${seedCount} seeds!`
-      : `Picked ${berryYield} strawberries!`;
-
-    if (DEBUG.FARM) console.log(`[Action] ${message}`);
-    onAnimationTrigger?.('harvest');
-    return {
-      handled: true,
-      message: message,
-      messageType: 'success',
-    };
-  }
-
-  // Check for blackberry harvesting from adjacent brambles with hand tool (summer only)
-  if (currentTool === 'hand') {
-    // Check adjacent tiles (including diagonals) for brambles
-    for (const tile of getSurroundingTiles(playerPos)) {
-      const adjacentTileData = getTileData(tile.x, tile.y);
-      if (adjacentTileData && adjacentTileData.type === TileType.BRAMBLES) {
-        const currentSeason = TimeManager.getCurrentTime().season;
-
-        if (currentSeason !== Season.SUMMER) {
-          if (DEBUG.FARM)
-            console.log(
-              `[Action] Brambles have no ripe blackberries (current season: ${currentSeason})`
-            );
-          return {
-            handled: false,
-            message: 'The brambles have no ripe berries yet.',
-            messageType: 'info',
-          };
-        }
-
-        // Check cooldown for this specific bramble bush
-        if (
-          gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)
-        ) {
-          return {
-            handled: false,
-            message: `You've already picked from this bush. Come back tomorrow!`,
-            messageType: 'info',
-          };
-        }
-
-        if (DEBUG.FARM) console.log('[Action] Attempting to harvest blackberries from brambles');
-
-        // Costs stamina
-        if (!staminaManager.performActivity('harvest')) {
-          return { handled: false };
-        }
-
-        // Record the harvest (starts cooldown for this bush)
-        gameState.recordForage(currentMapId, tile.x, tile.y);
-
-        // Random yield: 3-7 blackberries (wild-only, cannot be planted)
-        const berryYield = Math.floor(Math.random() * 5) + 3; // 3-7
-        inventoryManager.addItem('crop_blackberry', berryYield);
-
-        const inventoryData = inventoryManager.getInventoryData();
-        characterData.saveInventory(inventoryData.items, inventoryData.tools);
-
-        const message = `Picked ${berryYield} blackberries!`;
-
-        if (DEBUG.FARM) console.log(`[Action] ${message}`);
-        onAnimationTrigger?.('harvest');
-        return {
-          handled: true,
-          message: message,
-          messageType: 'success',
-        };
-      }
-    }
-  }
-
-  // Check for hazelnut harvesting from adjacent hazel bushes with hand tool (autumn only)
-  if (currentTool === 'hand') {
-    // Check adjacent tiles (including diagonals) for hazel bushes
-    for (const tile of getSurroundingTiles(playerPos)) {
-      const adjacentTileData = getTileData(tile.x, tile.y);
-      if (adjacentTileData && adjacentTileData.type === TileType.HAZEL_BUSH) {
-        const currentSeason = TimeManager.getCurrentTime().season;
-
-        if (currentSeason !== Season.AUTUMN) {
-          if (DEBUG.FARM)
-            console.log(
-              `[Action] Hazel bushes have no ripe hazelnuts (current season: ${currentSeason})`
-            );
-          return {
-            handled: false,
-            message: 'The hazel bushes have no ripe nuts yet.',
-            messageType: 'info',
-          };
-        }
-
-        // Check cooldown for this specific hazel bush
-        if (
-          gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)
-        ) {
-          return {
-            handled: false,
-            message: `You've already picked from this bush. Come back tomorrow!`,
-            messageType: 'info',
-          };
-        }
-
-        if (DEBUG.FARM) console.log('[Action] Attempting to harvest hazelnuts from hazel bush');
-
-        // Costs stamina
-        if (!staminaManager.performActivity('harvest')) {
-          return { handled: false };
-        }
-
-        // Record the harvest (starts cooldown for this bush)
-        gameState.recordForage(currentMapId, tile.x, tile.y);
-
-        // Random yield: 4-8 hazelnuts (wild-only, cannot be planted)
-        const nutYield = Math.floor(Math.random() * 5) + 4; // 4-8
-        inventoryManager.addItem('crop_hazelnut', nutYield);
-
-        const inventoryData = inventoryManager.getInventoryData();
-        characterData.saveInventory(inventoryData.items, inventoryData.tools);
-
-        const message = `Picked ${nutYield} hazelnuts!`;
-
-        if (DEBUG.FARM) console.log(`[Action] ${message}`);
-        onAnimationTrigger?.('harvest');
-        return {
-          handled: true,
-          message: message,
-          messageType: 'success',
-        };
-      }
-    }
-  }
-
-  // Check for blueberry harvesting from adjacent blueberry bushes with hand tool (summer and autumn)
-  if (currentTool === 'hand') {
-    // Check adjacent tiles (including diagonals) for blueberry bushes
-    for (const tile of getSurroundingTiles(playerPos)) {
-      const adjacentTileData = getTileData(tile.x, tile.y);
-      if (adjacentTileData && adjacentTileData.type === TileType.BLUEBERRY_BUSH) {
-        const currentSeason = TimeManager.getCurrentTime().season;
-
-        if (currentSeason !== Season.SUMMER && currentSeason !== Season.AUTUMN) {
-          if (DEBUG.FARM)
-            console.log(
-              `[Action] Blueberry bushes have no ripe berries (current season: ${currentSeason})`
-            );
-          return {
-            handled: false,
-            message: 'The blueberry bushes have no ripe berries yet.',
-            messageType: 'info',
-          };
-        }
-
-        // Check cooldown for this specific blueberry bush
-        if (
-          gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)
-        ) {
-          return {
-            handled: false,
-            message: `You've already picked from this bush. Come back tomorrow!`,
-            messageType: 'info',
-          };
-        }
-
-        if (DEBUG.FARM)
-          console.log('[Action] Attempting to harvest blueberries from blueberry bush');
-
-        // Costs stamina
-        if (!staminaManager.performActivity('harvest')) {
-          return { handled: false };
-        }
-
-        // Record the harvest (starts cooldown for this bush)
-        gameState.recordForage(currentMapId, tile.x, tile.y);
-
-        // Random yield: 3-6 blueberries (wild-only, cannot be planted)
-        const berryYield = Math.floor(Math.random() * 4) + 3; // 3-6
-        inventoryManager.addItem('crop_blueberry', berryYield);
-
-        const inventoryData = inventoryManager.getInventoryData();
-        characterData.saveInventory(inventoryData.items, inventoryData.tools);
-
-        const message = `Picked ${berryYield} blueberries!`;
-
-        if (DEBUG.FARM) console.log(`[Action] ${message}`);
-        onAnimationTrigger?.('harvest');
-        return {
-          handled: true,
-          message: message,
-          messageType: 'success',
-        };
-      }
-    }
-  }
-
-  // Check for red berry harvesting from adjacent hawthorn bushes (autumn only)
-  if (currentTool === 'hand') {
-    for (const tile of getSurroundingTiles(playerPos)) {
-      const adjacentTileData = getTileData(tile.x, tile.y);
-      if (adjacentTileData && adjacentTileData.type === TileType.BUSH) {
-        const currentSeason = TimeManager.getCurrentTime().season;
-
-        if (currentSeason !== Season.AUTUMN) {
-          return {
-            handled: false,
-            message: 'The hawthorn bush has no ripe berries yet.',
-            messageType: 'info',
-          };
-        }
-
-        if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
-          return {
-            handled: false,
-            message: `You've already picked from this bush. Come back tomorrow!`,
-            messageType: 'info',
-          };
-        }
-
-        if (!staminaManager.performActivity('harvest')) {
-          return { handled: false };
-        }
-
-        gameState.recordForage(currentMapId, tile.x, tile.y);
-
-        const berryYield = Math.floor(Math.random() * 4) + 3; // 3–6
-        inventoryManager.addItem('red_berries', berryYield);
-
-        const inventoryData = inventoryManager.getInventoryData();
-        characterData.saveInventory(inventoryData.items, inventoryData.tools);
-
-        const message = `Picked ${berryYield} red berries!`;
-        if (DEBUG.FARM) console.log(`[Action] ${message}`);
-        onAnimationTrigger?.('harvest');
-        return { handled: true, message, messageType: 'success' };
-      }
-    }
-  }
-
   // Check if this is a farm tile or farm action (check both visual tile and plot state)
   if (
     (tileData && tileData.type >= TileType.SOIL_FALLOW && tileData.type <= TileType.SOIL_DEAD) ||
@@ -1722,8 +1447,8 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       icon: itemAssets.strawberry,
       color: '#ef4444',
       execute: () => {
-        const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
-        onFarmAction?.(farmResult);
+        const result = handleForageAction(position, currentMapId);
+        onForage?.(result);
       },
     });
   }
@@ -1753,8 +1478,9 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       icon: itemAssets.blackberries,
       color: '#7c3aed',
       execute: () => {
-        const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
-        onFarmAction?.(farmResult);
+        if (!staminaManager.performActivity('harvest')) return;
+        const result = handleBlackberryHarvest(position, currentMapId);
+        onForage?.(result);
       },
     });
   }
@@ -1773,8 +1499,9 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       icon: groceryAssets.hazelnuts,
       color: '#92400e',
       execute: () => {
-        const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
-        onFarmAction?.(farmResult);
+        if (!staminaManager.performActivity('harvest')) return;
+        const result = handleHazelnutHarvest(position, currentMapId);
+        onForage?.(result);
       },
     });
   }
@@ -1793,8 +1520,9 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
       icon: itemAssets.blackberries, // TODO: Use dedicated blueberry sprite
       color: '#3b82f6',
       execute: () => {
-        const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
-        onFarmAction?.(farmResult);
+        if (!staminaManager.performActivity('harvest')) return;
+        const result = handleBlueberryHarvest(position, currentMapId);
+        onForage?.(result);
       },
     });
   }
@@ -1814,8 +1542,9 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         icon: magicalAssets.red_berries,
         color: '#b91c1c',
         execute: () => {
-          const farmResult = handleFarmAction(position, 'hand', currentMapId, onFarmAnimation);
-          onFarmAction?.(farmResult);
+          if (!staminaManager.performActivity('harvest')) return;
+          const result = handleRedBerryHarvest(position, currentMapId);
+          onForage?.(result);
         },
       });
     }

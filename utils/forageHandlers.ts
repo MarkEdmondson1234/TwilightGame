@@ -4,7 +4,7 @@
  */
 
 import { Position, TileType } from '../types';
-import { getTileData, findTileTypeNearby, hasTileTypeNearby, getLavaLakeAnchor } from './mapUtils';
+import { getTileData, findTileTypeNearby, hasTileTypeNearby, getLavaLakeAnchor, getSurroundingTiles } from './mapUtils';
 import { gameState } from '../GameState';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
@@ -1448,6 +1448,19 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     };
   }
 
+  // Wild berry bushes — check adjacent tiles, any map
+  const brambleResult = handleBlackberryHarvest(playerPos, currentMapId);
+  if (brambleResult.found || brambleResult.message) return brambleResult;
+
+  const hazelResult = handleHazelnutHarvest(playerPos, currentMapId);
+  if (hazelResult.found || hazelResult.message) return hazelResult;
+
+  const blueberryResult = handleBlueberryHarvest(playerPos, currentMapId);
+  if (blueberryResult.found || blueberryResult.message) return blueberryResult;
+
+  const redBerryResult = handleRedBerryHarvest(playerPos, currentMapId);
+  if (redBerryResult.found || redBerryResult.message) return redBerryResult;
+
   // Forest foraging (existing logic)
   if (!currentMapId.startsWith('forest') && currentMapId !== 'deep_forest') {
     return { found: false, message: 'Nothing to forage here.' };
@@ -1553,4 +1566,140 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     seedName: seed.displayName,
     message: `Found ${seed.displayName}!`,
   };
+}
+
+/**
+ * Harvest blackberries from an adjacent bramble bush (summer only).
+ * Returns { found: false, message: '' } if no brambles nearby — caller should continue.
+ * Does not drain stamina — caller is responsible.
+ */
+export function handleBlackberryHarvest(playerPos: Position, currentMapId: string): ForageResult {
+  const playerTileX = Math.floor(playerPos.x);
+  const playerTileY = Math.floor(playerPos.y);
+
+  for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
+    const tileData = getTileData(tile.x, tile.y);
+    if (!tileData || tileData.type !== TileType.BRAMBLES) continue;
+
+    const { season } = TimeManager.getCurrentTime();
+    if (season !== Season.SUMMER) {
+      if (DEBUG.FORAGE) console.log(`[Forage] Brambles out of season (${season})`);
+      return { found: false, message: 'The brambles have no ripe berries yet.', outOfSeason: true };
+    }
+
+    if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
+      return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
+    }
+
+    const berryYield = Math.floor(Math.random() * 5) + 3; // 3–7
+    inventoryManager.addItem('crop_blackberry', berryYield);
+    saveForageResult(currentMapId, tile.x, tile.y);
+
+    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${berryYield} blackberries`);
+    return { found: true, message: `Picked ${berryYield} blackberries!` };
+  }
+
+  return { found: false, message: '' };
+}
+
+/**
+ * Harvest hazelnuts from an adjacent hazel bush (autumn only).
+ * Returns { found: false, message: '' } if no hazel bush nearby — caller should continue.
+ * Does not drain stamina — caller is responsible.
+ */
+export function handleHazelnutHarvest(playerPos: Position, currentMapId: string): ForageResult {
+  const playerTileX = Math.floor(playerPos.x);
+  const playerTileY = Math.floor(playerPos.y);
+
+  for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
+    const tileData = getTileData(tile.x, tile.y);
+    if (!tileData || tileData.type !== TileType.HAZEL_BUSH) continue;
+
+    const { season } = TimeManager.getCurrentTime();
+    if (season !== Season.AUTUMN) {
+      if (DEBUG.FORAGE) console.log(`[Forage] Hazel bush out of season (${season})`);
+      return { found: false, message: 'The hazel bushes have no ripe nuts yet.', outOfSeason: true };
+    }
+
+    if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
+      return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
+    }
+
+    const nutYield = Math.floor(Math.random() * 5) + 4; // 4–8
+    inventoryManager.addItem('crop_hazelnut', nutYield);
+    saveForageResult(currentMapId, tile.x, tile.y);
+
+    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${nutYield} hazelnuts`);
+    return { found: true, message: `Picked ${nutYield} hazelnuts!` };
+  }
+
+  return { found: false, message: '' };
+}
+
+/**
+ * Harvest blueberries from an adjacent blueberry bush (summer and autumn).
+ * Returns { found: false, message: '' } if no blueberry bush nearby — caller should continue.
+ * Does not drain stamina — caller is responsible.
+ */
+export function handleBlueberryHarvest(playerPos: Position, currentMapId: string): ForageResult {
+  const playerTileX = Math.floor(playerPos.x);
+  const playerTileY = Math.floor(playerPos.y);
+
+  for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
+    const tileData = getTileData(tile.x, tile.y);
+    if (!tileData || tileData.type !== TileType.BLUEBERRY_BUSH) continue;
+
+    const { season } = TimeManager.getCurrentTime();
+    if (season !== Season.SUMMER && season !== Season.AUTUMN) {
+      if (DEBUG.FORAGE) console.log(`[Forage] Blueberry bush out of season (${season})`);
+      return { found: false, message: 'The blueberry bushes have no ripe berries yet.', outOfSeason: true };
+    }
+
+    if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
+      return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
+    }
+
+    const berryYield = Math.floor(Math.random() * 4) + 3; // 3–6
+    inventoryManager.addItem('crop_blueberry', berryYield);
+    saveForageResult(currentMapId, tile.x, tile.y);
+
+    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${berryYield} blueberries`);
+    return { found: true, message: `Picked ${berryYield} blueberries!` };
+  }
+
+  return { found: false, message: '' };
+}
+
+/**
+ * Harvest red berries from an adjacent hawthorn bush (autumn only).
+ * Returns { found: false, message: '' } if no hawthorn bush nearby — caller should continue.
+ * Does not drain stamina — caller is responsible.
+ */
+export function handleRedBerryHarvest(playerPos: Position, currentMapId: string): ForageResult {
+  const playerTileX = Math.floor(playerPos.x);
+  const playerTileY = Math.floor(playerPos.y);
+
+  for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
+    const tileData = getTileData(tile.x, tile.y);
+    if (!tileData || tileData.type !== TileType.BUSH) continue;
+
+    const { season } = TimeManager.getCurrentTime();
+    if (season !== Season.AUTUMN) {
+      if (DEBUG.FORAGE) console.log(`[Forage] Hawthorn bush out of season (${season})`);
+      return { found: false, message: 'The hawthorn bush has no ripe berries yet.', outOfSeason: true };
+    }
+
+    if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
+      return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
+    }
+
+    const berryYield = Math.floor(Math.random() * 4) + 3; // 3–6
+    inventoryManager.addItem('red_berries', berryYield);
+    saveForageResult(currentMapId, tile.x, tile.y);
+
+    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${berryYield} red berries`);
+    return { found: true, message: `Picked ${berryYield} red berries!` };
+  }
+
+  return { found: false, message: '' };
 }
