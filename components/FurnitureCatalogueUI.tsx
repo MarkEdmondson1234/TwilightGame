@@ -4,7 +4,7 @@ import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 
-const CATALOGUE_ITEM_IDS = ['furniture_bookshelf', 'furniture_armchair'];
+const CATALOGUE_ITEM_IDS = ['furniture_bookshelf', 'furniture_armchair', 'furniture_cozy_rug'];
 
 interface FurnitureCatalogueUIProps {
   isOpen: boolean;

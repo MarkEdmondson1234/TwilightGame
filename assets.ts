@@ -799,6 +799,7 @@ export const furnitureAssets = {
   garden_bench: '/TwilightGame/assets-optimized/items/furniture/garden_bench.png',
   mahogany_bookshelf: '/TwilightGame/assets-optimized/items/furniture/mahogany_book_shelf.png',
   comfy_armchair: '/TwilightGame/assets-optimized/items/furniture/comfy_armchair.png',
+  cosy_rug: '/TwilightGame/assets-optimized/items/furniture/cosy_rug.png',
   catalogue: '/TwilightGame/assets-optimized/items/furniture/furniture_catalogue.png',
 };
 

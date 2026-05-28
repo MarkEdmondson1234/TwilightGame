@@ -2673,6 +2673,22 @@ export const ITEMS: Record<string, ItemDefinition> = {
     buyPrice: 600,
   },
 
+  furniture_cozy_rug: {
+    id: 'furniture_cozy_rug',
+    name: 'furniture_cozy_rug',
+    displayName: 'Cosy Rug',
+    category: ItemCategory.FURNITURE,
+    description: 'A soft, cosy rug that adds warmth and colour to any room.',
+    stackable: false,
+    image: furnitureAssets.cosy_rug,
+    placedImage: furnitureAssets.cosy_rug,
+    placedScale: 4,
+    placesBelowCharacters: true,
+    indoorOnly: true,
+    allowAnyTilePlacement: true,
+    buyPrice: 500,
+  },
+
   furniture_catalogue: {
     id: 'furniture_catalogue',
     name: 'furniture_catalogue',
