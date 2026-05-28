@@ -800,6 +800,8 @@ export const furnitureAssets = {
   mahogany_bookshelf: '/TwilightGame/assets-optimized/items/furniture/mahogany_book_shelf.png',
   comfy_armchair: '/TwilightGame/assets-optimized/items/furniture/comfy_armchair.png',
   cosy_rug: '/TwilightGame/assets-optimized/items/furniture/cosy_rug.png',
+  cosy_rug_blue: '/TwilightGame/assets-optimized/items/furniture/cosy_rug_blue.png',
+  cosy_rug_green: '/TwilightGame/assets-optimized/items/furniture/cosy_rug_green.png',
   catalogue: '/TwilightGame/assets-optimized/items/furniture/furniture_catalogue.png',
 };
 
