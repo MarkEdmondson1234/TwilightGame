@@ -1,6 +1,7 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
 import { createBunnyflyNPC, createSparrowNPC } from '../../utils/npcFactories';
+import { tileAssets } from '../../assets';
 
 /**
  * Deep Forest - Sacred grove of the Giant Fairy Oak
@@ -79,6 +80,11 @@ export const deepForest: MapDefinition = {
   height: 35,
   grid: parseGrid(gridString),
   colorScheme: 'forest',
+  backgroundTexture: {
+    image: tileAssets.forest_floor_texture,
+    gridSize: 4,
+    seasons: ['spring', 'summer', 'autumn'],
+  },
   hasClouds: true,
   isRandom: false,
   spawnPoint: { x: 17, y: 33 }, // On path near south entrance
