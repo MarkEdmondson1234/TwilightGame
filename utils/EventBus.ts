@@ -78,6 +78,9 @@ export enum GameEvent {
   // Mess pile events (Mr Fox's Picnic)
   MESS_PILE_CLEANED = 'mess_pile:cleaned',
 
+  // Wallpaper events
+  WALLPAPER_APPLIED = 'items:wallpaper_applied',
+
   // Magic events
   MAGIC_LEVEL_UP = 'magic:level_up',
 
@@ -216,6 +219,10 @@ export interface EventPayloads {
   };
   [GameEvent.MESS_PILE_CLEANED]: {
     pileId: number;
+  };
+  [GameEvent.WALLPAPER_APPLIED]: {
+    mapId: string;
+    wallpaperId: string;
   };
   [GameEvent.MAGIC_LEVEL_UP]: {
     previousLevel: 'novice' | 'journeyman' | 'master';

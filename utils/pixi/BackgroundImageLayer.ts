@@ -71,6 +71,8 @@ export class BackgroundImageLayer {
   private cobwebLayerEntries: Array<{ sprite: PIXI.Sprite; cobwebId: number }> = [];
   // Individual mess pile sprites tracked for dynamic show/hide on clean
   private messPileLayerEntries: Array<{ sprite: PIXI.Sprite; pileId: number }> = [];
+  // Wallpaper overlay sprites tracked for dynamic show on apply
+  private wallpaperLayerEntries: Array<{ sprite: PIXI.Sprite; mapId: string; wallpaperId: string }> = [];
 
   constructor() {
     // Background container - behind all game content
@@ -92,6 +94,15 @@ export class BackgroundImageLayer {
       for (const entry of this.messPileLayerEntries) {
         if (entry.pileId === pileId) {
           entry.sprite.visible = false;
+        }
+      }
+    });
+
+    // Show wallpaper overlay when applied (while player is already in the room)
+    eventBus.on(GameEvent.WALLPAPER_APPLIED, ({ mapId, wallpaperId }) => {
+      for (const entry of this.wallpaperLayerEntries) {
+        if (entry.mapId === mapId && entry.wallpaperId === wallpaperId) {
+          entry.sprite.visible = true;
         }
       }
     });
@@ -250,6 +261,10 @@ export class BackgroundImageLayer {
       return !cleaned[condition.pileId]; // show when NOT cleaned
     }
 
+    if (condition.type === 'wallpaper') {
+      return gameState.getAppliedWallpaper(this.currentMapId ?? '') === condition.wallpaperId;
+    }
+
     return true; // Unknown condition type = show by default
   }
 
@@ -267,7 +282,8 @@ export class BackgroundImageLayer {
     for (const layer of layers) {
       const isCobwebLayer = layer.condition?.type === 'cobweb';
       const isMessPileLayer = layer.condition?.type === 'mess_pile';
-      const isDynamicLayer = isCobwebLayer || isMessPileLayer;
+      const isWallpaperLayer = layer.condition?.type === 'wallpaper';
+      const isDynamicLayer = isCobwebLayer || isMessPileLayer || isWallpaperLayer;
 
       // For quest conditions: skip the layer entirely if condition not met.
       // For dynamic layers (cobweb/mess_pile): always create so they can be hidden at runtime.
@@ -291,6 +307,17 @@ export class BackgroundImageLayer {
             const pileId = layer.condition.pileId;
             layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
             this.messPileLayerEntries.push({ sprite: layerSprite.sprite, pileId });
+          }
+
+          // Wallpaper layers: set initial visibility and register for live show on apply
+          if (isWallpaperLayer && layer.condition?.type === 'wallpaper') {
+            const wallpaperId = layer.condition.wallpaperId;
+            layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
+            this.wallpaperLayerEntries.push({
+              sprite: layerSprite.sprite,
+              mapId: this.currentMapId ?? '',
+              wallpaperId,
+            });
           }
 
           // Categorize by z-index for reference (background vs foreground)
@@ -523,6 +550,8 @@ export class BackgroundImageLayer {
     this.cobwebLayerEntries = [];
     // Clear mess pile sprite tracking
     this.messPileLayerEntries = [];
+    // Clear wallpaper sprite tracking
+    this.wallpaperLayerEntries = [];
 
     this.currentMapId = null;
   }

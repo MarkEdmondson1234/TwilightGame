@@ -2540,8 +2540,10 @@ const App: React.FC = () => {
           const invItemDef = getItem(inventoryRadialMenu.item.id);
           const isFood =
             invItemDef && (invItemDef.category === ItemCategory.FOOD || invItemDef.edible);
+          const isWallpaper = invItemDef?.isWallpaper === true;
           const isPlaceable =
             invItemDef &&
+            !isWallpaper &&
             (invItemDef.category === ItemCategory.DECORATION ||
               invItemDef.category === ItemCategory.FURNITURE);
           const isConfirming = inventoryRadialMenu.mode === 'confirmDelete';
@@ -2584,17 +2586,40 @@ const App: React.FC = () => {
                           setInventoryRadialMenu(null);
                         },
                       },
-                      {
-                        id: 'place',
-                        label: 'Place in World',
-                        icon: '🌍',
-                        color: '#3b82f6',
-                        onSelect: () => {
-                          setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                          closeUI('inventory');
-                          setInventoryRadialMenu(null);
-                        },
-                      },
+                      ...(isWallpaper
+                        ? [
+                            {
+                              id: 'apply_wallpaper',
+                              label: 'Apply to Bedroom',
+                              icon: '🖼️',
+                              color: '#ec4899',
+                              onSelect: () => {
+                                const targetMapId = invItemDef!.targetMapId!;
+                                gameState.applyWallpaper(targetMapId, inventoryRadialMenu.item.id);
+                                inventoryManager.removeItem(inventoryRadialMenu.item.id, 1);
+                                eventBus.emit(GameEvent.WALLPAPER_APPLIED, {
+                                  mapId: targetMapId,
+                                  wallpaperId: inventoryRadialMenu.item.id,
+                                });
+                                showToast(`${invItemDef!.displayName} applied to your bedroom!`, 'success');
+                                closeUI('inventory');
+                                setInventoryRadialMenu(null);
+                              },
+                            },
+                          ]
+                        : [
+                            {
+                              id: 'place',
+                              label: 'Place in World',
+                              icon: '🌍',
+                              color: '#3b82f6',
+                              onSelect: () => {
+                                setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                                closeUI('inventory');
+                                setInventoryRadialMenu(null);
+                              },
+                            },
+                          ]),
                       ...(isFood
                         ? [
                             {

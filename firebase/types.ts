@@ -121,6 +121,7 @@ export interface WorldSaveData {
   placedItems: PlacedItem[];
   deskContents: DeskContents[];
   forageCooldowns: Record<string, number>;
+  appliedWallpapers?: Record<string, string>;
   cutscenes: {
     completed: string[];
     lastSeasonTriggered?: string;

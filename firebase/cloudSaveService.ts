@@ -237,6 +237,7 @@ class CloudSaveService {
       placedItems: state.placedItems,
       deskContents: state.deskContents,
       forageCooldowns: state.forageCooldowns,
+      appliedWallpapers: state.appliedWallpapers,
       cutscenes: state.cutscenes,
     };
     batch.set(
@@ -405,6 +406,7 @@ class CloudSaveService {
       wateringCan: stats?.wateringCan || { currentLevel: 8 },
       dailyResourceCollections: stats?.dailyResourceCollections || {},
       forageCooldowns: world?.forageCooldowns || {},
+      appliedWallpapers: world?.appliedWallpapers || {},
       movementEffect: stats?.movementEffect || null,
       transformations: stats?.transformations || {
         isFairyForm: false,

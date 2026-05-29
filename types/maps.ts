@@ -78,8 +78,17 @@ export interface MessPileLayerCondition {
   showWhen: 'not_cleaned';
 }
 
+/**
+ * Condition for showing/hiding a room layer based on an applied wallpaper.
+ * The layer is visible when the specified wallpaper is currently applied to the map.
+ */
+export interface WallpaperLayerCondition {
+  type: 'wallpaper';
+  wallpaperId: string; // e.g. 'furniture_strawberry_wallpaper'
+}
+
 /** Union of all supported layer condition types */
-export type LayerCondition = QuestLayerCondition | CobwebLayerCondition | MessPileLayerCondition;
+export type LayerCondition = QuestLayerCondition | CobwebLayerCondition | MessPileLayerCondition | WallpaperLayerCondition;
 
 /**
  * Base properties shared by all room layer types

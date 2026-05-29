@@ -803,6 +803,8 @@ export const furnitureAssets = {
   cosy_rug_blue: '/TwilightGame/assets-optimized/items/furniture/cosy_rug_blue.png',
   cosy_rug_green: '/TwilightGame/assets-optimized/items/furniture/cosy_rug_green.png',
   catalogue: '/TwilightGame/assets-optimized/items/furniture/furniture_catalogue.png',
+  strawberry_wallpaper: '/TwilightGame/assets-optimized/items/furniture/strawberry_wallpaper.png',
+  strawberry_wallpaper_thumbnail: '/TwilightGame/assets-optimized/items/furniture/strawberry_wallpaper_thumbnail.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds

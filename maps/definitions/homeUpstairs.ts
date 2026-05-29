@@ -1,6 +1,7 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR } from '../../zIndex';
+import { furnitureAssets } from '../../assets';
 
 /**
  * Home Upstairs - Bedroom area (background-image interior)
@@ -42,6 +43,18 @@ const homeUpstairsLayers: RoomLayer[] = [
     height: 540,
     scale: 1.3,
     centered: true,
+  },
+  {
+    type: 'image',
+    image: furnitureAssets.strawberry_wallpaper,
+    zIndex: Z_PARALLAX_FAR + 1, // -99, just above base room image
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,
+    height: 540,
+    scale: 1.3,
+    centered: true,
+    condition: { type: 'wallpaper', wallpaperId: 'furniture_strawberry_wallpaper' },
   },
 ];
 

@@ -1042,13 +1042,24 @@ async function optimizeItems() {
 
     // Furniture sprites (beds, sofas, etc.) need larger resolution — they render as multi-tile placed items
     if (relativePath.startsWith('furniture' + path.sep) || relativePath.startsWith('furniture/')) {
-      await sharp(inputPath)
-        .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
-          fit: 'contain',
-          background: { r: 0, g: 0, b: 0, alpha: 0 }
-        })
-        .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 4 })
-        .toFile(outputPath);
+      // Room wallpaper overlays: preserve aspect ratio at 1920×1080 max, no transparent padding
+      if (file.includes('wallpaper') && !file.includes('thumbnail')) {
+        await sharp(inputPath)
+          .resize(1920, 1080, {
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 })
+          .toFile(outputPath);
+      } else {
+        await sharp(inputPath)
+          .resize(LARGE_FURNITURE_SIZE, LARGE_FURNITURE_SIZE, {
+            fit: 'contain',
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+          })
+          .png({ palette: false, quality: HIGH_QUALITY, compressionLevel: 4 })
+          .toFile(outputPath);
+      }
     } else {
     // Optimize item sprites to 256x256 with good quality
     await sharp(inputPath)

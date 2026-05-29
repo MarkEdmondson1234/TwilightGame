@@ -71,6 +71,8 @@ export interface ItemDefinition {
   outdoorOnly?: boolean; // If true, placement is restricted to outdoor (non-indoor) maps
   persistent?: boolean; // If true, item is never consumed when used as a recipe ingredient (e.g. sourdough starter)
   edible?: boolean; // Raw fruits/produce that can be eaten directly (triggers eat radial menu)
+  isWallpaper?: boolean; // If true, triggers "Apply to room" flow instead of grid placement
+  targetMapId?: string; // The map ID this wallpaper applies to (used when isWallpaper is true)
 }
 
 /**
@@ -2742,6 +2744,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     description: 'A glossy catalogue of premium furniture. Click to browse and order.',
     stackable: false,
     image: furnitureAssets.catalogue,
+  },
+
+  furniture_strawberry_wallpaper: {
+    id: 'furniture_strawberry_wallpaper',
+    name: 'furniture_strawberry_wallpaper',
+    displayName: 'Strawberry Wallpaper',
+    category: ItemCategory.FURNITURE,
+    description: 'Charming strawberry-patterned wallpaper for your bedroom. Once applied, it adorns the walls permanently.',
+    stackable: false,
+    image: furnitureAssets.strawberry_wallpaper_thumbnail,
+    isWallpaper: true,
+    targetMapId: 'home_upstairs',
+    buyPrice: 350,
   },
 };
 

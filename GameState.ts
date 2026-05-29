@@ -225,6 +225,9 @@ export interface GameState {
     };
   };
 
+  // Applied wallpapers per map (mapId → itemId of applied wallpaper)
+  appliedWallpapers: Record<string, string>;
+
   // Active potion effects (for timed effects like Beast Tongue)
   // Key is effect type (e.g., 'beast_tongue'), value contains timing info
   activePotionEffects: {
@@ -555,6 +558,11 @@ class GameStateManager {
           parsed.revealedLavaEntrances = {};
         }
 
+        // Migrate old save data that doesn't have applied wallpapers
+        if (!parsed.appliedWallpapers) {
+          parsed.appliedWallpapers = {};
+        }
+
         return parsed;
       }
     } catch (error) {
@@ -627,6 +635,7 @@ class GameStateManager {
       quests: {},
       activePotionEffects: {},
       playerDisguise: null,
+      appliedWallpapers: {},
     };
   }
 
@@ -1569,6 +1578,7 @@ class GameStateManager {
       quests: {},
       activePotionEffects: {},
       playerDisguise: null,
+      appliedWallpapers: {},
     };
     console.log('[GameState] State reset');
     this.notify();
@@ -2025,6 +2035,25 @@ class GameStateManager {
       return 0;
     }
     return this.state.quests[questId].stage;
+  }
+
+  /**
+   * Get the currently applied wallpaper item ID for a map, or null if none.
+   */
+  getAppliedWallpaper(mapId: string): string | null {
+    return this.state.appliedWallpapers?.[mapId] ?? null;
+  }
+
+  /**
+   * Apply a wallpaper to a map. Permanently replaces any previously applied wallpaper.
+   */
+  applyWallpaper(mapId: string, wallpaperId: string): void {
+    if (!this.state.appliedWallpapers) {
+      this.state.appliedWallpapers = {};
+    }
+    this.state.appliedWallpapers[mapId] = wallpaperId;
+    this.saveState();
+    this.notify();
   }
 
   /**
