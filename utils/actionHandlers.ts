@@ -999,8 +999,14 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
   // also match any tile within their scaled bounding box.
   const placedItems = gameState.getPlacedItems(currentMapId);
   const itemAtPosition = placedItems.find((item) => {
-    if (item.position.x === tileX && item.position.y === tileY) return true;
     const def = getItem(item.itemId);
+    // Items with interactionTileRadius: 0 only respond to clicks on their (optionally offset) anchor tile
+    if (def?.interactionTileRadius === 0) {
+      const ix = item.position.x + (def.interactionOffsetX ?? 0);
+      const iy = item.position.y + (def.interactionOffsetY ?? 0);
+      return tileX === ix && tileY === iy;
+    }
+    if (item.position.x === tileX && item.position.y === tileY) return true;
     const scale = item.customScale ?? def?.placedScale ?? 1;
     if (scale <= 1) return false;
     // Sprite renders from (position - (scale-1)/2) to (position + (scale+1)/2) in tile coords.

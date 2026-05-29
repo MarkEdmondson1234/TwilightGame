@@ -54,6 +54,10 @@ export interface ItemDefinition {
   icon?: string; // Emoji fallback when no image available
   forageSuccessRate?: number; // Success rate for foraging (0.0-1.0, e.g., 1.0 = 100%, 0.5 = 50%)
   placedScale?: number; // Render scale when placed on map (1 = 1 tile, 1.5 = 1.5 tiles, etc.)
+  interactionTileRadius?: number; // 0 = only the anchor tile is interactive; absent = full bounding box from placedScale
+  interactionOffsetX?: number; // Tile offset applied to the anchor tile for interaction detection (requires interactionTileRadius: 0)
+  interactionOffsetY?: number; // Tile offset applied to the anchor tile for interaction detection (requires interactionTileRadius: 0)
+  confirmPickup?: boolean; // true = always show radial menu before pick-up (prevents single-click auto-execute)
   placedOffsetX?: number; // Horizontal render offset in tiles when placed (positive = shift right)
   placedOffsetY?: number; // Vertical render offset in tiles when placed (positive = shift down, negative = shift up)
   placedImage?: string; // Alt image URL to use when item is placed in the world (overrides `image`)
@@ -2686,6 +2690,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
     placesBelowCharacters: true,
     indoorOnly: true,
     allowAnyTilePlacement: true,
+    interactionTileRadius: 0,
+    interactionOffsetY: 2,
+    confirmPickup: true,
     buyPrice: 500,
   },
 
@@ -2702,6 +2709,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
     placesBelowCharacters: true,
     indoorOnly: true,
     allowAnyTilePlacement: true,
+    interactionTileRadius: 0,
+    interactionOffsetY: 2,
+    confirmPickup: true,
     buyPrice: 500,
   },
 
@@ -2718,6 +2728,9 @@ export const ITEMS: Record<string, ItemDefinition> = {
     placesBelowCharacters: true,
     indoorOnly: true,
     allowAnyTilePlacement: true,
+    interactionTileRadius: 0,
+    interactionOffsetY: 2,
+    confirmPickup: true,
     buyPrice: 500,
   },
 

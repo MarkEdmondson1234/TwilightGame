@@ -588,8 +588,14 @@ export function useInteractionController(
       }
 
       if (interactions.length === 1) {
-        interactions[0].execute();
-        return;
+        const sole = interactions[0];
+        const soleData = sole.data as { itemId?: string } | undefined;
+        const soleDef = soleData?.itemId ? getItem(soleData.itemId) : null;
+        if (!soleDef?.confirmPickup) {
+          sole.execute();
+          return;
+        }
+        // confirmPickup: true — fall through to show radial menu for deliberate confirmation
       }
 
       // Multiple interactions — show radial menu
