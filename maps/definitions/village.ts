@@ -28,43 +28,48 @@ import { TIMING } from '../../constants';
  * - Exit to forest areas (paths at edges)
  *
  * Grid Legend:
+ *
+ * Ground & paths
  * G = Grass
- * , = Village Green (decorative ground cover)
- * L = Wall boundary (trees for map edges)
- * R = Rock (in-map decorative obstacles)
+ * . = Grass Tuft (seasonal grass variation)
+ * , = Village Green (sparse decorative turf)
+ * : = Meadow Grass (seasonal ground cover)
  * P = Path
- * ( = Magical Lake (12x12 lake sprite)
- * ) = Small Lake (6x6 pond sprite)
- * D = Door (back to home)
- * S = Shop Door
- * s = TileType.COTTAGE_STONE,
- * k = TileType.COTTAGE_STONE,
- * % = TileType.SHOP (seasonal shop building)
+ * X = Farm plot (fallow soil)
  * M = Mine Entrance
- * B = Building Wall
- * O = Building Roof
- * N = Building Door (eNtrance)
- * V = Building Window
+ * R = Rock (decorative obstacle)
+ *
+ * Plants & foliage
+ * e = Fern
+ * l = Village Flowers (decorative stem flowers)
+ * ] = Pile of Leaves (autumn-only, walkable)
+ * ; = Pink Rosebush (2x2, dormant in winter)
+ * " = Red Rosebush (2x2, dormant in winter)
+ * 5 = Wolfsbane (2x2 forageable plant)
+ * 8 = Mustard Flower (blooms spring/summer)
+ *
+ * Trees & shrubs
+ * Y = Tree (large decorative)
+ * J = Sakura Tree (seasonal)
+ * o = Oak Tree (seasonal)
+ * t = Spruce Tree (evergreen conifer)
+ * y = Willow Tree
+ * c = Lilac Tree (flowering shrub)
+ *
+ * Structures & features
+ * L = Wall Boundary (map edge trees/walls)
+ * U = Bush (decorative foliage)
+ * = = Well (2x2 sprite, winter variation)
+ * % = Shop (seasonal shop building)
+ * k = Cottage Stone (stone cottage entrance)
  * K = Cottage (4x4 wooden house)
  * A = Old Cottage (weathered cottage, spring/summer/autumn + winter variant)
  * H = Player Home (15x15 seasonal building, entrance to Mum's kitchen)
- * X = Farm plot (fallow soil)
- * U = Bush (decorative foliage)
- * e = Fern (forest floor plant)
- * Y = Tree (large decorative tree)
- * Z = Big Tree (extra large tree)
- * J = Sakura Tree (seasonal)
- * o = Oak Tree (seasonal oak tree)
- * t = Spruce Tree (evergreen conifer)
- * y = Willow Tree (graceful weeping willow)
- * i = Wild Iris (flowering plant near water)
- * = = Well (stone well, 2x2 sprite with winter variation)
- * ; = Pink Rosebush (2x2, local code, dormant in winter)
- * " = Red Rosebush (2x2, local code, dormant in winter)
+ * ¬ = Garden Lamp (lights up at dusk/night)
  */
 
 const gridString = `
-oLULYoLtULoLtULUUULLU,LLGULJLG
+oLULYoLtULoLtULGGGLLU,LLGULJLG
 oe,eJlL],L:lel:,,,,,loLL,l:l:G
 LoG,G,GeGG],l,oG,G,,l:eeGGGLGG
 tG,G,,G,],XXX,G,G,,,MlGG,yGGeG
@@ -86,12 +91,12 @@ LG,G,GGGGGPG,,G,,G,,,,G,,l,GLG
 oGGG,,GGGGPG,G,,G,],,G,,,G,,,G
 LG,G,GGGGPPG,,G,,eG,G,,G,,,GoG
 ,G,,;",G,PPPG,,,,GJG,G,,5G,,Ge
-oG,G,,,8,HPPG;,G,,5,,,,,,l,GGU
+oG,G,,,,,HPPG;,G,,5,,,,,,l,GGU
 UG,cGXXXXXXPG,G,,c"",GK,5,,,eU
 GG,G,XXXXXXPPPPPPP¬G,G,,,,c,UJ
 LG,,GXXXXXX,G,lP,,G,,,,,G,e,GL
-JG,GG],G,,;;G,,P,,GXXXXXG,5eGt
-LG,,,G,G,,G,G,,PG,GXXXXXeG,,GU
+JG,GG,,G,,GGG,,P,,GXXXXXG,5eGt
+LG,,,G,G,,;;G8,PG,GXXXXXeG,,GU
 oGoc,,;;,G,,,G,P,,G,G,,l,U,,,,
 tLoGG,l,,lGL,´GLG,,L,L,LUoLL,,
 `;
