@@ -2758,6 +2758,19 @@ export const ITEMS: Record<string, ItemDefinition> = {
     targetMapId: 'home_upstairs',
     buyPrice: 350,
   },
+
+  furniture_stripey_curtains: {
+    id: 'furniture_stripey_curtains',
+    name: 'furniture_stripey_curtains',
+    displayName: 'Stripey Curtains',
+    category: ItemCategory.FURNITURE,
+    description: 'Cheerful striped curtains for your bedroom window. Once hung, they can be taken down again if you change your mind.',
+    stackable: false,
+    image: furnitureAssets.stripey_curtains_thumbnail,
+    isWallpaper: true,
+    targetMapId: 'home_upstairs',
+    buyPrice: 280,
+  },
 };
 
 /**

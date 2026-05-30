@@ -56,6 +56,18 @@ const homeUpstairsLayers: RoomLayer[] = [
     centered: true,
     condition: { type: 'wallpaper', wallpaperId: 'furniture_strawberry_wallpaper' },
   },
+  {
+    type: 'image',
+    image: furnitureAssets.stripey_curtains,
+    zIndex: Z_PARALLAX_FAR + 2, // -98, above wallpaper layer
+    parallaxFactor: 1.0,
+    opacity: 1.0,
+    width: 960,
+    height: 540,
+    scale: 1.3,
+    centered: true,
+    condition: { type: 'wallpaper', wallpaperId: 'furniture_stripey_curtains' },
+  },
 ];
 
 export const homeUpstairs: MapDefinition = {

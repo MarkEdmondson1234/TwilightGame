@@ -46,6 +46,7 @@ import { miniGameManager } from '../minigames/MiniGameManager';
 import type { MiniGameTriggerData } from '../minigames/types';
 import { fruitTreeManager } from './fruitTreeManager';
 import { yuleCelebrationManager } from './YuleCelebrationManager';
+import { eventBus, GameEvent } from './EventBus';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -835,7 +836,8 @@ export type InteractionType =
   | 'harvest_red_berries'
   | 'tidy_leaves'
   | 'pickup_leaves'
-  | 'open_shop';
+  | 'open_shop'
+  | 'remove_curtains';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -2242,6 +2244,28 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
         }
       }
     }
+  }
+
+  // Curtain removal: click the upper wall area (window region) of the bedroom when curtains are hung
+  if (
+    currentMapId === 'home_upstairs' &&
+    tileY <= 3 &&
+    gameState.getAppliedWallpaper('home_upstairs') === 'furniture_stripey_curtains'
+  ) {
+    interactions.push({
+      type: 'remove_curtains',
+      label: 'Take Down Curtains',
+      icon: '🪟',
+      color: '#6b7280',
+      execute: () => {
+        gameState.removeWallpaper('home_upstairs');
+        inventoryManager.addItem('furniture_stripey_curtains', 1);
+        const inventoryData = inventoryManager.getInventoryData();
+        characterData.saveInventory(inventoryData.items, inventoryData.tools);
+        eventBus.emit(GameEvent.WALLPAPER_REMOVED, { mapId: 'home_upstairs' });
+        config.onShowToast?.('Stripey Curtains taken down.', 'info');
+      },
+    });
   }
 
   return interactions;

@@ -4,7 +4,7 @@ import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 
-const CATALOGUE_ITEM_IDS = ['furniture_bookshelf', 'furniture_armchair', 'furniture_cozy_rug', 'furniture_cozy_rug_blue', 'furniture_cozy_rug_green', 'furniture_strawberry_wallpaper'];
+const CATALOGUE_ITEM_IDS = ['furniture_bookshelf', 'furniture_armchair', 'furniture_cozy_rug', 'furniture_cozy_rug_blue', 'furniture_cozy_rug_green', 'furniture_strawberry_wallpaper', 'furniture_stripey_curtains'];
 
 interface FurnitureCatalogueUIProps {
   isOpen: boolean;
@@ -89,7 +89,7 @@ export default function FurnitureCatalogueUI({
         </div>
 
         {/* Item list */}
-        <div className="p-4 flex flex-col gap-3">
+        <div className="p-4 flex flex-col gap-3 max-h-[60vh] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#9f1239_#4c0519]">
           {CATALOGUE_ITEM_IDS.map((itemId) => {
             const def = getItem(itemId);
             if (!def) return null;

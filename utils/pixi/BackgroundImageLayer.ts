@@ -106,6 +106,15 @@ export class BackgroundImageLayer {
         }
       }
     });
+
+    // Hide wallpaper overlay when removed
+    eventBus.on(GameEvent.WALLPAPER_REMOVED, ({ mapId }) => {
+      for (const entry of this.wallpaperLayerEntries) {
+        if (entry.mapId === mapId) {
+          entry.sprite.visible = false;
+        }
+      }
+    });
   }
 
   /**

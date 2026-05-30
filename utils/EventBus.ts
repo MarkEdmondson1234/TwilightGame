@@ -80,6 +80,7 @@ export enum GameEvent {
 
   // Wallpaper events
   WALLPAPER_APPLIED = 'items:wallpaper_applied',
+  WALLPAPER_REMOVED = 'items:wallpaper_removed',
 
   // Magic events
   MAGIC_LEVEL_UP = 'magic:level_up',
@@ -223,6 +224,9 @@ export interface EventPayloads {
   [GameEvent.WALLPAPER_APPLIED]: {
     mapId: string;
     wallpaperId: string;
+  };
+  [GameEvent.WALLPAPER_REMOVED]: {
+    mapId: string;
   };
   [GameEvent.MAGIC_LEVEL_UP]: {
     previousLevel: 'novice' | 'journeyman' | 'master';

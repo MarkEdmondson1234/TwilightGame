@@ -2056,6 +2056,14 @@ class GameStateManager {
     this.notify();
   }
 
+  removeWallpaper(mapId: string): void {
+    if (this.state.appliedWallpapers) {
+      delete this.state.appliedWallpapers[mapId];
+      this.saveState();
+      this.notify();
+    }
+  }
+
   /**
    * Check if quest is started (delegates to EventChainManager if chain exists)
    */
