@@ -224,11 +224,7 @@ export function useEnvironmentController(
     const badWeatherForBirds = ['rain', 'storm', 'snow'].includes(currentWeather);
 
     if (isOutdoorWithBirds && !badWeatherForBirds) {
-      // Play bird ambience in forests (only if not already playing)
-      if (audioManager.hasSound('ambient_birds')) {
-        // playAmbient handles not re-triggering if already playing
-        audioManager.playAmbient('ambient_birds');
-      }
+      audioManager.playAmbient('ambient_birds');
     } else {
       // Stop bird ambience when leaving forest or in bad weather
       audioManager.stopAmbient('ambient_birds', 1000);
@@ -248,9 +244,7 @@ export function useEnvironmentController(
       currentMapId.startsWith('RANDOM_CAVE') || currentMapId.startsWith('cave_');
 
     if (isProceduralCave) {
-      if (audioManager.hasSound('ambient_cave_wind')) {
-        audioManager.playAmbient('ambient_cave_wind');
-      }
+      audioManager.playAmbient('ambient_cave_wind');
     } else {
       audioManager.stopAmbient('ambient_cave_wind', 1000);
     }
@@ -268,9 +262,7 @@ export function useEnvironmentController(
     const isLavaLevel = currentMapId.startsWith('lava_') || currentMapId === 'king_lava_frog_lair';
 
     if (isLavaLevel) {
-      if (audioManager.hasSound('ambient_lava')) {
-        audioManager.playAmbient('ambient_lava');
-      }
+      audioManager.playAmbient('ambient_lava');
     } else {
       audioManager.stopAmbient('ambient_lava', 1000);
     }
@@ -406,9 +398,7 @@ export function useEnvironmentController(
     const badWeatherForStream = ['storm'].includes(currentWeather);
 
     if (hasStream && !badWeatherForStream) {
-      if (audioManager.hasSound('ambient_running_stream')) {
-        audioManager.playAmbient('ambient_running_stream');
-      }
+      audioManager.playAmbient('ambient_running_stream');
     } else {
       audioManager.stopAmbient('ambient_running_stream', 1000);
     }
@@ -430,9 +420,7 @@ export function useEnvironmentController(
     const isClear = currentWeather === 'clear';
 
     if (isOutdoorVillageArea && isWarmSeason && isClear) {
-      if (audioManager.hasSound('ambient_countryside_summer')) {
-        audioManager.playAmbient('ambient_countryside_summer');
-      }
+      audioManager.playAmbient('ambient_countryside_summer');
     } else {
       audioManager.stopAmbient('ambient_countryside_summer', 1000);
     }
@@ -452,9 +440,7 @@ export function useEnvironmentController(
     const isAutumn = season === Season.AUTUMN;
 
     if (isVillage && isAutumn) {
-      if (audioManager.hasSound('ambient_countryside_autumn')) {
-        audioManager.playAmbient('ambient_countryside_autumn');
-      }
+      audioManager.playAmbient('ambient_countryside_autumn');
     } else {
       audioManager.stopAmbient('ambient_countryside_autumn', 1000);
     }
@@ -585,6 +571,10 @@ export function useEnvironmentController(
           return 'music_village_autumn';
         }
         return 'music_village';
+      }
+      // Farm area gets its own dedicated track
+      if (mapId === 'farm_area') {
+        return 'music_farm';
       }
       // Default to village music for other areas
       return 'music_village';

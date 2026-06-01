@@ -171,6 +171,8 @@ class AudioManager {
   // Ambient sounds tracking
   private activeAmbients: Map<string, string> = new Map(); // key -> activeSound id
   private ambientCrossfadeTimers: Map<string, ReturnType<typeof setTimeout>> = new Map(); // key -> crossfade timer
+  // Deferred ambient plays: sounds requested before they finished loading
+  private pendingAmbients: Map<string, { volume?: number }> = new Map();
 
   // Settings
   private settings: AudioSettings = {
@@ -340,6 +342,14 @@ class AudioManager {
           baseVolume: options.baseVolume ?? 1.0,
         });
         this.loading.delete(key);
+
+        // Auto-start if this sound was requested as ambient before it finished loading
+        if (this.pendingAmbients.has(key)) {
+          const opts = this.pendingAmbients.get(key)!;
+          this.pendingAmbients.delete(key);
+          this.playAmbient(key, opts.volume !== undefined ? { volume: opts.volume } : undefined);
+        }
+
         return buffer;
       })
       .catch((error) => {
@@ -566,7 +576,15 @@ class AudioManager {
    * the next copy to fade in before the current one ends.
    */
   playAmbient(key: string, options?: { volume?: number }): string | null {
-    if (!this.context || !this.sounds.has(key) || this.settings.muted) return null;
+    if (!this.context || this.settings.muted) return null;
+
+    // Sound not loaded yet — queue it so it auto-starts once loaded
+    if (!this.sounds.has(key)) {
+      if (!this.pendingAmbients.has(key)) {
+        this.pendingAmbients.set(key, { volume: options?.volume });
+      }
+      return null;
+    }
 
     // Check if this ambient is already playing
     if (this.activeAmbients.has(key)) {
@@ -673,6 +691,9 @@ class AudioManager {
    * Stop a specific ambient sound by key
    */
   stopAmbient(key: string, fadeOutMs: number = 1000): void {
+    // Cancel any pending deferred play
+    this.pendingAmbients.delete(key);
+
     // Cancel any pending crossfade timer
     const timer = this.ambientCrossfadeTimers.get(key);
     if (timer) {
@@ -691,6 +712,9 @@ class AudioManager {
    * Stop all ambient sounds
    */
   stopAllAmbients(fadeOutMs: number = 1000): void {
+    // Cancel all deferred plays
+    this.pendingAmbients.clear();
+
     // Cancel all pending crossfade timers
     for (const [, timer] of this.ambientCrossfadeTimers) {
       clearTimeout(timer);

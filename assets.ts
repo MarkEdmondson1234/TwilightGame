@@ -936,6 +936,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_farm: {
+    url: '/TwilightGame/assets/audio/music/farming_the_land.mp3',
+    category: 'music',
+    loop: true,
+  },
   music_yule_celebration: {
     url: '/TwilightGame/assets/seasonal/yule_celebration.mp3',
     category: 'music',
