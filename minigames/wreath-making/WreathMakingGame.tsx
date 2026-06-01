@@ -81,6 +81,7 @@ const WREATH_MATERIALS = [
   'crop_mint',
   'spruce_sprig',
   'maple_leaf',
+  'decoration_velvet_bow',
 ] as const;
 
 /** Visual colour associated with each flower for the slot border. */
@@ -110,6 +111,7 @@ const FLOWER_COLOURS: Record<string, string> = {
   crop_mint: '#6ee7b7',
   spruce_sprig: '#4d8a52',
   maple_leaf: '#d97706',
+  decoration_velvet_bow: '#9b2335',
 };
 
 /** Shared style for the round zoom/size buttons. */

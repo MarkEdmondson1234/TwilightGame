@@ -2103,6 +2103,18 @@ export const ITEMS: Record<string, ItemDefinition> = {
     placedScale: 6,
   },
 
+  decoration_velvet_bow: {
+    id: 'decoration_velvet_bow',
+    name: 'decoration_velvet_bow',
+    displayName: 'Velvet Bow',
+    category: ItemCategory.DECORATION,
+    description: 'A luxurious velvet bow. Lovely as a wreath accent or a gift.',
+    stackable: true,
+    buyPrice: 5,
+    sellPrice: 2,
+    image: itemAssets.velvet_bow,
+  },
+
   decoration_hanging_plant: {
     id: 'decoration_hanging_plant',
     name: 'decoration_hanging_plant',

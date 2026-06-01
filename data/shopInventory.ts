@@ -443,6 +443,12 @@ export const MUSHRAS_SHOP_INVENTORY: ShopItem[] = [
     sellPrice: 0,
     stock: 'unlimited',
   },
+  {
+    itemId: 'decoration_velvet_bow',
+    buyPrice: 5,
+    sellPrice: 2,
+    stock: 'unlimited',
+  },
 ];
 
 /**
