@@ -127,6 +127,9 @@ export interface MiniGameActions {
   /** Add an item to the player's inventory */
   addItem: (itemId: string, quantity?: number) => boolean;
 
+  /** Add a decoration item linked to a specific custom decorationId (for wreaths, etc.) */
+  addItemWithDecoration: (itemId: string, decorationId: string) => boolean;
+
   /** Remove an item from the player's inventory */
   removeItem: (itemId: string, quantity?: number) => boolean;
 

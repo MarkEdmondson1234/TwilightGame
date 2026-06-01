@@ -783,9 +783,10 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
     // Capture the wreath arrangement as an image
     let wreathImageUrl = '';
+    let decorationId = '';
     try {
       const dataUrl = await captureWreathImage(placedItems);
-      const decorationId = decorationManager.registerCustomDecoration({
+      decorationId = decorationManager.registerCustomDecoration({
         imageUrl: dataUrl,
         name: `${q.label} Wreath`,
         linkedItemId: q.itemId,
@@ -797,8 +798,12 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
       console.warn('[WreathMaking] Failed to capture wreath image:', err);
     }
 
-    // Add the wreath item to inventory directly (not via rewards, to avoid double-add)
-    context.actions.addItem(q.itemId, 1);
+    // Add the wreath item to inventory, linking it to its custom decoration image
+    if (decorationId) {
+      context.actions.addItemWithDecoration(q.itemId, decorationId);
+    } else {
+      context.actions.addItem(q.itemId, 1); // fallback if image capture failed
+    }
 
     const result: MiniGameResult = {
       success: true,

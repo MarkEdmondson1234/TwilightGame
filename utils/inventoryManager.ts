@@ -23,6 +23,7 @@ export interface InventoryItem {
   uses?: number; // Current uses remaining for this item (only if item has maxUses defined)
   masteryLevel?: number; // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
   photoData?: Photo; // For KEEPSAKE photo items — links to the captured image and metadata
+  decorationId?: string; // For custom decoration items (wreaths, etc.) — links instance to its PaintingData
 }
 
 class InventoryManager {
@@ -144,6 +145,41 @@ class InventoryManager {
     );
     this.saveToGameState();
     return true;
+  }
+
+  /**
+   * Add a non-stackable decoration item linked to a specific custom decorationId.
+   * Use this for wreaths and other custom-image decorations so each inventory
+   * instance can be matched to the correct image at placement time.
+   */
+  addItemWithDecoration(itemId: string, decorationId: string): boolean {
+    const item = getItem(itemId);
+    if (!item) {
+      console.warn(`[InventoryManager] Unknown item: ${itemId}`);
+      return false;
+    }
+
+    const instance: InventoryItem = { itemId, quantity: 1, decorationId };
+    const existing = this.items.get(itemId) ?? [];
+    this.items.set(itemId, [...existing, instance]);
+
+    if (!this.slotOrder.includes(itemId)) {
+      this.slotOrder.push(itemId);
+    }
+
+    console.log(`[InventoryManager] Added ${item.displayName} with decoration ${decorationId}`);
+    this.saveToGameState();
+    return true;
+  }
+
+  /**
+   * Return the decorationId of the first inventory instance of an item that has one.
+   * Used at placement time to look up the correct custom image for a wreath instance.
+   */
+  getFirstDecorationId(itemId: string): string | undefined {
+    const instances = this.items.get(itemId);
+    if (!instances) return undefined;
+    return instances.find((i) => i.decorationId)?.decorationId;
   }
 
   /**

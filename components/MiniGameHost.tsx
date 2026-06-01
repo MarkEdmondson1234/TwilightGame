@@ -70,6 +70,8 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
     () => ({
       showToast,
       addItem: (itemId: string, quantity = 1) => inventoryManager.addItem(itemId, quantity),
+      addItemWithDecoration: (itemId: string, decorationId: string) =>
+        inventoryManager.addItemWithDecoration(itemId, decorationId),
       removeItem: (itemId: string, quantity = 1) => inventoryManager.removeItem(itemId, quantity),
       hasItem: (itemId: string, quantity = 1) => inventoryManager.hasItem(itemId, quantity),
       getItemQuantity: (itemId: string) => inventoryManager.getQuantity(itemId),

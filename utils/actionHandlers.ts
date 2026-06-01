@@ -2202,14 +2202,17 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
               });
             }
           } else {
-            // For custom-image decorations (wreaths, etc.), look up the image
-            const placedDecoIds = new Set(
-              placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!)
-            );
-            const customDeco = decorationManager.getNextUnplacedDecoration(
-              itemDef.id,
-              placedDecoIds
-            );
+            // For custom-image decorations (wreaths, etc.), look up the image.
+            // Prefer the decorationId stored on the inventory instance (set when the
+            // wreath was crafted) so multiple wreaths always get their own image.
+            // Fall back to the old "first unplaced" search for saves made before this fix.
+            const instanceDecoId = inventoryManager.getFirstDecorationId(itemDef.id);
+            const customDeco = instanceDecoId
+              ? decorationManager.getPainting(instanceDecoId)
+              : decorationManager.getNextUnplacedDecoration(
+                  itemDef.id,
+                  new Set(placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!))
+                );
             if (customDeco) {
               interactions.push({
                 type: 'place_decoration',
