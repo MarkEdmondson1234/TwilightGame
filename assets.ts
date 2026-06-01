@@ -1021,4 +1021,9 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'ambient',
     loop: false,
   },
+  ambient_spring_summer: {
+    url: '/TwilightGame/assets/audio/ambient/spring-summer-ambience.mp3',
+    category: 'ambient',
+    loop: true,
+  },
 };

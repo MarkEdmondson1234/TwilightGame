@@ -313,54 +313,6 @@ export function useEnvironmentController(
   }, [currentMapId]);
 
   // -------------------------------------------------------------------------
-  // Spring Forest Ambience (intermittent)
-  // -------------------------------------------------------------------------
-
-  useEffect(() => {
-    const isProceduralForest =
-      currentMapId.startsWith('RANDOM_FOREST_') ||
-      currentMapId.startsWith('deep_forest_') ||
-      currentMapId === 'bear_cave' ||
-      currentMapId === 'magical_lake' ||
-      currentMapId === 'mushroom_forest' ||
-      currentMapId === 'witch_hut';
-    const { season } = TimeManager.getCurrentTime();
-    const isSpring = season === Season.SPRING;
-    const badWeather = ['rain', 'storm', 'snow'].includes(currentWeather);
-
-    if (!isProceduralForest || !isSpring || badWeather) return;
-
-    let forestTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    // Play for 20–50 seconds, then wait 90–240 seconds before the next burst
-    const getPlayDuration = () => Math.floor(Math.random() * 30000) + 20000;
-    const getGapDuration = () => Math.floor(Math.random() * 150000) + 90000;
-
-    const scheduleForest = () => {
-      forestTimeout = setTimeout(() => {
-        if (!audioManager.hasSound('ambient_forest_spring')) {
-          forestTimeout = setTimeout(scheduleForest, getGapDuration());
-          return;
-        }
-
-        audioManager.playAmbient('ambient_forest_spring');
-
-        forestTimeout = setTimeout(() => {
-          audioManager.stopAmbient('ambient_forest_spring', 3000);
-          forestTimeout = setTimeout(scheduleForest, getGapDuration());
-        }, getPlayDuration());
-      }, getGapDuration());
-    };
-
-    scheduleForest();
-
-    return () => {
-      if (forestTimeout) clearTimeout(forestTimeout);
-      audioManager.stopAmbient('ambient_forest_spring', 500);
-    };
-  }, [currentMapId, currentWeather]);
-
-  // -------------------------------------------------------------------------
   // Umbra Wolf Entry Howl
   // -------------------------------------------------------------------------
 
@@ -413,13 +365,17 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    const isOutdoorVillageArea =
-      currentMapId === 'village' || currentMapId === 'farm' || currentMapId === 'picnic_meadow';
+    const isNewTrackArea =
+      currentMapId === 'village' || currentMapId === 'farm' || currentMapId === 'farm_area';
+    const isPicnicMeadow = currentMapId === 'picnic_meadow';
     const { season } = TimeManager.getCurrentTime();
+    const isAutumn = season === Season.AUTUMN;
     const isWarmSeason = season !== Season.WINTER;
     const isClear = currentWeather === 'clear';
 
-    if (isOutdoorVillageArea && isWarmSeason && isClear) {
+    // village/farm/farm_area: spring+summer now covered by ambient_spring_summer, so only play in autumn
+    // picnic_meadow: not covered by new track, keep original not-winter behaviour
+    if ((isNewTrackArea && isAutumn && isClear) || (isPicnicMeadow && isWarmSeason && isClear)) {
       audioManager.playAmbient('ambient_countryside_summer');
     } else {
       audioManager.stopAmbient('ambient_countryside_summer', 1000);
@@ -447,6 +403,41 @@ export function useEnvironmentController(
 
     return () => {
       audioManager.stopAmbient('ambient_countryside_autumn', 500);
+    };
+  }, [currentMapId, currentWeather]);
+
+  // -------------------------------------------------------------------------
+  // Spring / Summer Ambience
+  // -------------------------------------------------------------------------
+
+  useEffect(() => {
+    const isSpringOrSummerMap =
+      currentMapId.startsWith('RANDOM_FOREST_') ||
+      currentMapId.startsWith('deep_forest_') ||
+      currentMapId === 'deep_forest' ||
+      currentMapId === 'bear_cave' ||
+      currentMapId === 'magical_lake' ||
+      currentMapId === 'mushroom_forest' ||
+      currentMapId === 'orchard' ||
+      currentMapId === 'personal_garden' ||
+      currentMapId === 'ruins' ||
+      currentMapId === 'village' ||
+      currentMapId === 'farm_area' ||
+      currentMapId === 'farm' ||
+      currentMapId === 'witch_hut';
+
+    const { season } = TimeManager.getCurrentTime();
+    const isSpringOrSummer = season === Season.SPRING || season === Season.SUMMER;
+    const badWeather = ['rain', 'storm', 'snow'].includes(currentWeather);
+
+    if (isSpringOrSummerMap && isSpringOrSummer && !badWeather) {
+      audioManager.playAmbient('ambient_spring_summer');
+    } else {
+      audioManager.stopAmbient('ambient_spring_summer', 1000);
+    }
+
+    return () => {
+      audioManager.stopAmbient('ambient_spring_summer', 500);
     };
   }, [currentMapId, currentWeather]);
 
