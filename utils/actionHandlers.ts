@@ -855,6 +855,7 @@ export interface PlacedItemAction {
   itemId: string;
   placedItemId: string;
   imageUrl: string; // Sprite image URL for inventory display
+  paintingId?: string; // Decoration ID to restore on the inventory item (for wreaths, paintings, etc.)
 }
 
 export interface DeskAction {
@@ -1042,6 +1043,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
           itemId: itemAtPosition.itemId,
           placedItemId: itemAtPosition.id,
           imageUrl: itemAtPosition.image,
+          paintingId: itemAtPosition.paintingId,
         }),
     });
 
@@ -2226,7 +2228,7 @@ export function getAvailableInteractions(config: GetInteractionsConfig): Availab
                     image: itemDef.image || '',
                     paintingId: customDeco.id,
                     customImage: customDeco.imageUrl,
-                    customScale: customDeco.scale,
+                    // customScale omitted — item's placedScale (0.6) determines size
                   }),
               });
             } else {

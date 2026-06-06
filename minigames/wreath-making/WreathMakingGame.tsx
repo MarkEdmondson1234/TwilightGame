@@ -302,7 +302,17 @@ function getWreathQuality(slots: SlotData[]): WreathQuality {
 // Wreath canvas dimensions
 // ---------------------------------------------------------------------------
 
-const WREATH_CENTRE = 140;
+/** Visual size of the wreath ring sprite (unchanged). */
+const WREATH_RING_SIZE = 280;
+
+/** Full placement canvas size — ring is centred inside with 100px breathing room. */
+const WREATH_CANVAS_SIZE = 480;
+
+/** Pixel offset to centre the ring inside the canvas. */
+const WREATH_RING_OFFSET = (WREATH_CANVAS_SIZE - WREATH_RING_SIZE) / 2;
+
+/** Target outer width of the workshop modal. */
+const TARGET_WORKSHOP_WIDTH = 1100;
 
 // ---------------------------------------------------------------------------
 // Wreath image capture (offscreen canvas → base64)
@@ -322,7 +332,7 @@ async function captureWreathImage(slots: SlotData[]): Promise<string> {
   const ctx = canvas.getContext('2d')!;
 
   // Scale factor from wreath-area coords → capture canvas
-  const scale = CAPTURE_SIZE / (WREATH_CENTRE * 2);
+  const scale = CAPTURE_SIZE / WREATH_CANVAS_SIZE;
 
   // Load all flower images first
   const loadImage = (src: string): Promise<HTMLImageElement> =>
@@ -341,7 +351,7 @@ async function captureWreathImage(slots: SlotData[]): Promise<string> {
   } catch {
     // Fallback: draw a plain ring if the sprite fails to load
     ctx.beginPath();
-    ctx.arc(WREATH_CENTRE * scale, WREATH_CENTRE * scale, (WREATH_CENTRE * 0.7) * scale, 0, Math.PI * 2);
+    ctx.arc((WREATH_CANVAS_SIZE / 2) * scale, (WREATH_CANVAS_SIZE / 2) * scale, (WREATH_RING_SIZE / 2 * 0.7) * scale, 0, Math.PI * 2);
     ctx.lineWidth = 14 * scale;
     ctx.strokeStyle = '#3a5a2a';
     ctx.stroke();
@@ -422,6 +432,8 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const [isCreating, setIsCreating] = useState(false);
   /** Flower currently shown in the gallery preview. */
   const [galleryFlower, setGalleryFlower] = useState<string | null>(null);
+  /** Current viewport width — used to scale down the workshop on small screens. */
+  const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
   /** Item ID being dragged from the gallery. */
   const [galleryDragItem, setGalleryDragItem] = useState<string | null>(null);
   /** Whether the user is in crop mode for the currently editing slot. */
@@ -552,6 +564,13 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
     setEditingSlot(null);
     setIsCropping(false);
   }, [editingSlot]);
+
+  // Track viewport width for responsive scaling
+  useEffect(() => {
+    const onResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
 
   // Delete/Backspace removes the selected flower
   useEffect(() => {
@@ -741,7 +760,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
           const x = pos.x - rect.left;
           const y = pos.y - rect.top;
           // Only place if dropped within the canvas bounds
-          if (x >= 0 && x <= WREATH_CENTRE * 2 && y >= 0 && y <= WREATH_CENTRE * 2) {
+          if (x >= 0 && x <= WREATH_CANVAS_SIZE && y >= 0 && y <= WREATH_CANVAS_SIZE) {
             const newIndex = placedItems.length;
             setPlacedItems((prev) => [...prev, makeSlot(galleryDragItem, x, y)]);
             setEditingSlot(newIndex);
@@ -831,6 +850,9 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
 
   const editingSlotData = editingSlot !== null ? (placedItems[editingSlot] ?? null) : null;
 
+  // Scale the workshop down proportionally when the viewport is too narrow
+  const workshopScale = Math.min(1, (windowWidth * 0.95) / TARGET_WORKSHOP_WIDTH);
+
   // =========================================================================
   // Render
   // =========================================================================
@@ -842,11 +864,13 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         border: '3px solid #6b8e5a',
         borderRadius: 16,
         padding: 24,
-        width: 720,
-        maxWidth: '94vw',
+        width: TARGET_WORKSHOP_WIDTH,
+        maxWidth: '96vw',
         color: '#e0e8d0',
         userSelect: 'none',
         fontFamily: 'inherit',
+        transform: workshopScale < 1 ? `scale(${workshopScale})` : undefined,
+        transformOrigin: 'top center',
       }}
       onMouseMove={handleAnyMove}
       onMouseUp={handleAnyEnd}
@@ -906,7 +930,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         {/* ——————————————— LEFT: Flower Gallery ——————————————— */}
         <div
           style={{
-            flex: '0 0 280px',
+            flex: '0 0 250px',
             display: 'flex',
             flexDirection: 'column',
             gap: 12,
@@ -1064,10 +1088,10 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
           </div>
         </div>
 
-        {/* ——————————————— RIGHT: Wreath + Controls ——————————————— */}
+        {/* ——————————————— CENTRE: Wreath Canvas + Buttons ——————————————— */}
         <div
           style={{
-            flex: 1,
+            flex: '0 0 auto',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -1080,9 +1104,12 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             onClick={handleWreathCanvasClick}
             style={{
               position: 'relative',
-              width: WREATH_CENTRE * 2,
-              height: WREATH_CENTRE * 2,
+              width: WREATH_CANVAS_SIZE,
+              height: WREATH_CANVAS_SIZE,
               cursor: selectedFlower ? 'crosshair' : 'default',
+              overflow: 'hidden',
+              outline: '2px dashed rgba(255, 255, 255, 0.25)',
+              outlineOffset: '-2px',
             }}
           >
             {/* Decorative wreath ring */}
@@ -1092,10 +1119,10 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
               draggable={false}
               style={{
                 position: 'absolute',
-                left: 0,
-                top: 0,
-                width: WREATH_CENTRE * 2,
-                height: WREATH_CENTRE * 2,
+                left: WREATH_RING_OFFSET,
+                top: WREATH_RING_OFFSET,
+                width: WREATH_RING_SIZE,
+                height: WREATH_RING_SIZE,
                 pointerEvents: 'none',
                 zIndex: 0,
               }}
@@ -1108,8 +1135,8 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                   position: 'absolute',
                   left: 0,
                   top: 0,
-                  width: WREATH_CENTRE * 2,
-                  height: WREATH_CENTRE * 2,
+                  width: WREATH_CANVAS_SIZE,
+                  height: WREATH_CANVAS_SIZE,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -1132,8 +1159,8 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
                   position: 'absolute',
                   left: 0,
                   top: 0,
-                  width: WREATH_CENTRE * 2,
-                  height: WREATH_CENTRE * 2,
+                  width: WREATH_CANVAS_SIZE,
+                  height: WREATH_CANVAS_SIZE,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
@@ -1273,245 +1300,6 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             })}
           </div>
 
-          {/* Editing controls for the selected flower */}
-          {editingSlotData && editingSlot !== null && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 6,
-                width: '100%',
-                maxWidth: 340,
-              }}
-            >
-              {/* Main toolbar row */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  padding: '8px 12px',
-                  background: '#2a3a22',
-                  borderRadius: 8,
-                  border: '1px solid #3a5a2a',
-                  width: '100%',
-                }}
-              >
-                <FlowerThumb itemId={editingSlotData.itemId} size={24} />
-                <span style={{ fontSize: 11, color: '#8a9a7a', minWidth: 0 }}>
-                  {getItem(editingSlotData.itemId)?.displayName}
-                </span>
-                {!isCropping && (
-                  <>
-                    <span style={{ fontSize: 11, color: '#6a7a5a' }}>Size:</span>
-                    <button
-                      onClick={() => handleZoom(-SCALE_STEP)}
-                      style={ZOOM_BTN}
-                      title="Smaller"
-                    >
-                      −
-                    </button>
-                    <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
-                      {Math.round(editingSlotData.scale * 100)}%
-                    </div>
-                    <button onClick={() => handleZoom(SCALE_STEP)} style={ZOOM_BTN} title="Bigger">
-                      +
-                    </button>
-                  </>
-                )}
-                {isCropping && (
-                  <>
-                    <span style={{ fontSize: 11, color: '#6a7a5a' }}>Crop:</span>
-                    <button
-                      onClick={() => handleCropZoom(-CROP_ZOOM_STEP)}
-                      style={ZOOM_BTN}
-                      title="Less crop"
-                    >
-                      −
-                    </button>
-                    <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
-                      {Math.round(editingSlotData.cropZoom * 100)}%
-                    </div>
-                    <button
-                      onClick={() => handleCropZoom(CROP_ZOOM_STEP)}
-                      style={ZOOM_BTN}
-                      title="More crop"
-                    >
-                      +
-                    </button>
-                    <button
-                      onClick={handleResetCrop}
-                      style={{
-                        padding: '3px 8px',
-                        borderRadius: 6,
-                        border: '1px solid #5a7a4a',
-                        background: '#2a3a22',
-                        color: '#8a9a7a',
-                        cursor: 'pointer',
-                        fontSize: 10,
-                      }}
-                      title="Reset crop"
-                    >
-                      Reset
-                    </button>
-                  </>
-                )}
-              </div>
-
-              {/* Rotation row */}
-              {!isCropping && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 8,
-                    padding: '6px 12px',
-                    background: '#2a3a22',
-                    borderRadius: 8,
-                    border: '1px solid #3a5a2a',
-                    width: '100%',
-                  }}
-                >
-                  <span style={{ fontSize: 11, color: '#6a7a5a' }}>Rotate:</span>
-                  <button
-                    onClick={() => handleRotate(-ROTATION_STEP)}
-                    style={ZOOM_BTN}
-                    title="Rotate anticlockwise 15°"
-                  >
-                    ↺
-                  </button>
-                  <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
-                    {editingSlotData.rotation}°
-                  </div>
-                  <button
-                    onClick={() => handleRotate(ROTATION_STEP)}
-                    style={ZOOM_BTN}
-                    title="Rotate clockwise 15°"
-                  >
-                    ↻
-                  </button>
-                  {editingSlotData.rotation !== 0 && (
-                    <button
-                      onClick={() =>
-                        setPlacedItems((prev) => {
-                          const next = [...prev];
-                          const slot = next[editingSlot!];
-                          if (!slot) return prev;
-                          next[editingSlot!] = { ...slot, rotation: 0 };
-                          return next;
-                        })
-                      }
-                      style={{
-                        padding: '3px 8px',
-                        borderRadius: 6,
-                        border: '1px solid #5a7a4a',
-                        background: '#2a3a22',
-                        color: '#8a9a7a',
-                        cursor: 'pointer',
-                        fontSize: 10,
-                      }}
-                      title="Reset rotation"
-                    >
-                      Reset
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Second row: mirror + crop toggle + remove */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                }}
-              >
-                <button
-                  onClick={() => handleFlip('h')}
-                  style={{
-                    padding: '3px 10px',
-                    borderRadius: 6,
-                    border: editingSlotData.flipH ? '1px solid #6ee7b7' : '1px solid #5a7a4a',
-                    background: editingSlotData.flipH ? '#1a3a2a' : '#2a3a22',
-                    color: editingSlotData.flipH ? '#6ee7b7' : '#8a9a7a',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                  }}
-                  title="Flip horizontally"
-                >
-                  ⇔ Flip
-                </button>
-                <button
-                  onClick={() => handleFlip('v')}
-                  style={{
-                    padding: '3px 10px',
-                    borderRadius: 6,
-                    border: editingSlotData.flipV ? '1px solid #6ee7b7' : '1px solid #5a7a4a',
-                    background: editingSlotData.flipV ? '#1a3a2a' : '#2a3a22',
-                    color: editingSlotData.flipV ? '#6ee7b7' : '#8a9a7a',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                  }}
-                  title="Flip vertically"
-                >
-                  ⇕ Flip
-                </button>
-                <button
-                  onClick={() => {
-                    if (!isCropping && editingSlot !== null) {
-                      // Entering crop mode — auto-zoom to 1.4 if currently uncropped
-                      setPlacedItems((prev) => {
-                        const next = [...prev];
-                        const slot = next[editingSlot];
-                        if (slot && slot.cropZoom <= 1) {
-                          next[editingSlot] = { ...slot, cropZoom: 1.4 };
-                        }
-                        return next;
-                      });
-                    }
-                    setIsCropping((prev) => !prev);
-                  }}
-                  style={{
-                    padding: '3px 10px',
-                    borderRadius: 6,
-                    border: isCropping ? '1px solid #c4b5fd' : '1px solid #5a7a4a',
-                    background: isCropping ? '#3a3a52' : '#2a3a22',
-                    color: isCropping ? '#c4b5fd' : '#8a9a7a',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                  }}
-                  title={isCropping ? 'Exit crop mode' : 'Crop the flower image into a circle'}
-                >
-                  {isCropping ? '✂ Done cropping' : '✂ Crop'}
-                </button>
-                {isCropping && (
-                  <span style={{ fontSize: 10, color: '#6a7a5a', fontStyle: 'italic' }}>
-                    Drag to pan, scroll to zoom
-                  </span>
-                )}
-                <button
-                  onClick={handleRemoveFromSlot}
-                  style={{
-                    padding: '3px 10px',
-                    borderRadius: 6,
-                    border: '1px solid #6a3a3a',
-                    background: '#3a2222',
-                    color: '#e8a0a0',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                  }}
-                  title="Remove this flower"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
-          )}
-
           {/* Hint */}
           {editingSlot === null && filledCount > 0 && (
             <div
@@ -1533,7 +1321,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
               justifyContent: 'space-between',
               alignItems: 'center',
               width: '100%',
-              maxWidth: 300,
+              maxWidth: 480,
               fontSize: 13,
               color: '#8a9a7a',
               marginTop: 4,
@@ -1597,6 +1385,274 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
             >
               {isCreating ? 'Creating...' : 'Create Wreath'}
             </button>
+          </div>
+        </div>
+
+        {/* ——————————————— RIGHT: Editing Tool Panel ——————————————— */}
+        <div
+          style={{
+            flex: '0 0 280px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            paddingTop: 8,
+          }}
+        >
+          {/* Header — flower name when selected, hint when not */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              minHeight: 28,
+            }}
+          >
+            {editingSlotData ? (
+              <>
+                <FlowerThumb itemId={editingSlotData.itemId} size={20} />
+                <span style={{ fontSize: 12, color: '#a0b090', fontWeight: 'bold' }}>
+                  {getItem(editingSlotData.itemId)?.displayName}
+                </span>
+              </>
+            ) : (
+              <span style={{ fontSize: 11, color: '#4a5a3a', fontStyle: 'italic' }}>
+                Click a flower on the wreath to edit it.
+              </span>
+            )}
+          </div>
+
+          {/* Controls — always visible, dimmed and locked when nothing is selected */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: 6,
+              width: '100%',
+              opacity: editingSlotData ? 1 : 0.35,
+              pointerEvents: editingSlotData ? 'auto' : 'none',
+              transition: 'opacity 0.15s',
+            }}
+          >
+            {/* Main toolbar row */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+                padding: '8px 12px',
+                background: '#2a3a22',
+                borderRadius: 8,
+                border: '1px solid #3a5a2a',
+                width: '100%',
+              }}
+            >
+              {!isCropping && (
+                <>
+                  <span style={{ fontSize: 11, color: '#6a7a5a' }}>Size:</span>
+                  <button
+                    onClick={() => handleZoom(-SCALE_STEP)}
+                    style={ZOOM_BTN}
+                    title="Smaller"
+                  >
+                    −
+                  </button>
+                  <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
+                    {editingSlotData ? `${Math.round(editingSlotData.scale * 100)}%` : '—'}
+                  </div>
+                  <button onClick={() => handleZoom(SCALE_STEP)} style={ZOOM_BTN} title="Bigger">
+                    +
+                  </button>
+                </>
+              )}
+              {isCropping && (
+                <>
+                  <span style={{ fontSize: 11, color: '#6a7a5a' }}>Crop:</span>
+                  <button
+                    onClick={() => handleCropZoom(-CROP_ZOOM_STEP)}
+                    style={ZOOM_BTN}
+                    title="Less crop"
+                  >
+                    −
+                  </button>
+                  <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
+                    {editingSlotData ? `${Math.round(editingSlotData.cropZoom * 100)}%` : '—'}
+                  </div>
+                  <button
+                    onClick={() => handleCropZoom(CROP_ZOOM_STEP)}
+                    style={ZOOM_BTN}
+                    title="More crop"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={handleResetCrop}
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #5a7a4a',
+                      background: '#2a3a22',
+                      color: '#8a9a7a',
+                      cursor: 'pointer',
+                      fontSize: 10,
+                    }}
+                    title="Reset crop"
+                  >
+                    Reset
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Rotation row */}
+            {!isCropping && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap',
+                  gap: 8,
+                  padding: '6px 12px',
+                  background: '#2a3a22',
+                  borderRadius: 8,
+                  border: '1px solid #3a5a2a',
+                  width: '100%',
+                }}
+              >
+                <span style={{ fontSize: 11, color: '#6a7a5a' }}>Rotate:</span>
+                <button
+                  onClick={() => handleRotate(-ROTATION_STEP)}
+                  style={ZOOM_BTN}
+                  title="Rotate anticlockwise 15°"
+                >
+                  ↺
+                </button>
+                <div style={{ width: 36, textAlign: 'center', fontSize: 11, color: '#8a9a7a' }}>
+                  {editingSlotData ? `${editingSlotData.rotation}°` : '—'}
+                </div>
+                <button
+                  onClick={() => handleRotate(ROTATION_STEP)}
+                  style={ZOOM_BTN}
+                  title="Rotate clockwise 15°"
+                >
+                  ↻
+                </button>
+                {editingSlotData && editingSlotData.rotation !== 0 && (
+                  <button
+                    onClick={() =>
+                      setPlacedItems((prev) => {
+                        const next = [...prev];
+                        const slot = next[editingSlot!];
+                        if (!slot) return prev;
+                        next[editingSlot!] = { ...slot, rotation: 0 };
+                        return next;
+                      })
+                    }
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: 6,
+                      border: '1px solid #5a7a4a',
+                      background: '#2a3a22',
+                      color: '#8a9a7a',
+                      cursor: 'pointer',
+                      fontSize: 10,
+                    }}
+                    title="Reset rotation"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Second row: mirror + crop toggle + remove */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 8,
+              }}
+            >
+              <button
+                onClick={() => handleFlip('h')}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 6,
+                  border: editingSlotData?.flipH ? '1px solid #6ee7b7' : '1px solid #5a7a4a',
+                  background: editingSlotData?.flipH ? '#1a3a2a' : '#2a3a22',
+                  color: editingSlotData?.flipH ? '#6ee7b7' : '#8a9a7a',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                }}
+                title="Flip horizontally"
+              >
+                ⇔ Flip
+              </button>
+              <button
+                onClick={() => handleFlip('v')}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 6,
+                  border: editingSlotData?.flipV ? '1px solid #6ee7b7' : '1px solid #5a7a4a',
+                  background: editingSlotData?.flipV ? '#1a3a2a' : '#2a3a22',
+                  color: editingSlotData?.flipV ? '#6ee7b7' : '#8a9a7a',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                }}
+                title="Flip vertically"
+              >
+                ⇕ Flip
+              </button>
+              <button
+                onClick={() => {
+                  if (!isCropping && editingSlot !== null) {
+                    setPlacedItems((prev) => {
+                      const next = [...prev];
+                      const slot = next[editingSlot];
+                      if (slot && slot.cropZoom <= 1) {
+                        next[editingSlot] = { ...slot, cropZoom: 1.4 };
+                      }
+                      return next;
+                    });
+                  }
+                  setIsCropping((prev) => !prev);
+                }}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 6,
+                  border: isCropping ? '1px solid #c4b5fd' : '1px solid #5a7a4a',
+                  background: isCropping ? '#3a3a52' : '#2a3a22',
+                  color: isCropping ? '#c4b5fd' : '#8a9a7a',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                }}
+                title={isCropping ? 'Exit crop mode' : 'Crop the flower image into a circle'}
+              >
+                {isCropping ? '✂ Done cropping' : '✂ Crop'}
+              </button>
+              {isCropping && (
+                <span style={{ fontSize: 10, color: '#6a7a5a', fontStyle: 'italic' }}>
+                  Drag to pan, scroll to zoom
+                </span>
+              )}
+              <button
+                onClick={handleRemoveFromSlot}
+                style={{
+                  padding: '3px 10px',
+                  borderRadius: 6,
+                  border: '1px solid #6a3a3a',
+                  background: '#3a2222',
+                  color: '#e8a0a0',
+                  cursor: 'pointer',
+                  fontSize: 11,
+                }}
+                title="Remove this flower"
+              >
+                Remove
+              </button>
+            </div>
           </div>
         </div>
       </div>

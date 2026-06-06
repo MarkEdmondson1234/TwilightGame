@@ -339,7 +339,11 @@ export function useInteractionController(
       onPlacedItemAction: (action: PlacedItemAction) => {
         if (action.action === 'pickup') {
           registerItemSprite(action.itemId, action.imageUrl);
-          inventoryManager.addItem(action.itemId, 1);
+          if (action.paintingId) {
+            inventoryManager.addItemWithDecoration(action.itemId, action.paintingId);
+          } else {
+            inventoryManager.addItem(action.itemId, 1);
+          }
           gameState.removePlacedItem(action.placedItemId);
           onShowToast('Picked up item', 'success');
         } else if (action.action === 'eat') {
