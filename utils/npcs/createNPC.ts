@@ -98,6 +98,7 @@ export interface NPCConfig {
   noFlip?: boolean;
   reverseFlip?: boolean;
   zIndexOverride?: number;
+  feetYOffset?: number;
   visibilityConditions?: AnimationConditions;
   seasonalLocations?: SeasonalLocation;
   entryAnimation?: EntryAnimation;
@@ -208,6 +209,7 @@ export function createNPC(config: NPCConfig): NPC {
     noFlip,
     reverseFlip,
     zIndexOverride,
+    feetYOffset,
     visibilityConditions,
     seasonalLocations,
     entryAnimation,
@@ -243,6 +245,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (noFlip !== undefined) npc.noFlip = noFlip;
   if (reverseFlip !== undefined) npc.reverseFlip = reverseFlip;
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
+  if (feetYOffset !== undefined) npc.feetYOffset = feetYOffset;
   if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
   if (seasonalLocations) npc.seasonalLocations = seasonalLocations;
   if (entryAnimation) npc.entryAnimation = entryAnimation;

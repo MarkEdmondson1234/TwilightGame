@@ -159,7 +159,7 @@ export class NPCLayer extends PixiLayer {
         }
 
         // Z-index: glow appears behind NPC sprite
-        const feetY = npc.position.y + 0.3;
+        const feetY = npc.position.y + (npc.feetYOffset ?? 0.3);
         glowGfx.zIndex = (npc.zIndexOverride ?? Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10)) - 1;
         glowGfx.visible = true;
       } else if (npc.glow && !perfSettings.enableGlows) {
@@ -242,9 +242,9 @@ export class NPCLayer extends PixiLayer {
       // Calculate feet position for z-ordering (same calculation as DOM renderer)
       // NPCs are centered on their position, but the visual character's feet
       // are NOT at the bottom of the sprite (there's padding in sprite images)
-      // Use a smaller offset (~0.3 tiles) to approximate where feet actually appear
-      const feetOffset = 0.3;
-      const feetY = npc.position.y + feetOffset;
+      // Use a smaller offset (~0.3 tiles) to approximate where feet actually appear.
+      // Large sprites (e.g. animals) can override this via feetYOffset.
+      const feetY = npc.position.y + (npc.feetYOffset ?? 0.3);
 
       // Z-index: use override if provided (for layered rooms like shop),
       // otherwise calculate based on feet Y position for proper depth sorting.
