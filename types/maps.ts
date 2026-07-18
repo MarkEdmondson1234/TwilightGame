@@ -188,6 +188,11 @@ export interface MapDefinition {
     height: number; // Viewport height the room was designed for (e.g., 1080)
   };
 
+  /** Force the player to render as a DOM element (z-index sorted) instead of via PixiJS.
+   *  Use in background-image rooms that have midground DOM animations (e.g. fireplace fire)
+   *  which must appear behind the player but in front of the room background. */
+  useDOMPlayer?: boolean;
+
   /** Map-wide tileable background texture, rendered between the solid colour layer and tile sprites.
    *  Transparent parts of tile sprites let this texture show through. */
   backgroundTexture?: {

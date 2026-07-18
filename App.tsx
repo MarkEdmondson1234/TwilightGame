@@ -1774,8 +1774,9 @@ const App: React.FC = () => {
           tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
-        {/* Render Player as DOM element when PixiJS is disabled */}
-        {!USE_PIXI_RENDERER &&
+        {/* Render Player as DOM element when PixiJS is disabled, or when the map opts in
+            to DOM player so depth-sorted z-index keeps the player above midground DOM animations */}
+        {(!USE_PIXI_RENDERER || currentMap?.useDOMPlayer) &&
           (() => {
             // Apply map's characterScale multiplier (default 1.0)
             // NOTE: viewportScale is already in effectiveTileSize, don't include it here

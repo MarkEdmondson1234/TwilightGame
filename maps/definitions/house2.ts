@@ -76,6 +76,7 @@ export const house2: MapDefinition = {
   isRandom: false,
   spawnPoint: { x: 2, y: 6 },
   renderMode: 'background-image',
+  useDOMPlayer: true, // fire animation must render behind player (DOM z-index sorting)
   characterScale: 1.8,
   referenceViewport: { width: 1280, height: 720 },
   layers: house2Layers,
