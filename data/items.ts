@@ -2397,7 +2397,6 @@ export const ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.crafting_table,
     icon: '🌿',
     placedScale: 2.5,
-    placesBelowCharacters: true,
   },
 
   // ===== CRAFTED DECORATIONS =====

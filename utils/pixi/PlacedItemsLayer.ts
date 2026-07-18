@@ -196,7 +196,9 @@ export class PlacedItemsLayer extends PixiLayer {
       } else if (itemDef?.placedOnSurface) {
         sprite.zIndex = Z_SURFACE_DECORATION;
       } else {
-        const bottomY = item.position.y + effectiveScale;
+        // Visual bottom of a centred item: anchor - (scale-1)/2 + scale = anchor + (scale+1)/2
+        // Also add placedOffsetY (in tiles) so offset items sort correctly.
+        const bottomY = item.position.y + (effectiveScale + 1) / 2 + (itemDef?.placedOffsetY ?? 0);
         sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(bottomY * 10);
       }
 
@@ -231,8 +233,8 @@ export class PlacedItemsLayer extends PixiLayer {
           fgSprite.width = sprite.width;
           fgSprite.height = sprite.height;
           fgSprite.visible = inRange;
-          // Render just above the player's depth at the bottom of the item's bounding area
-          fgSprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor((item.position.y + effectiveScale) * 10) + 2;
+          // Render just above the player's depth at the visual bottom of the item
+          fgSprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor((item.position.y + (effectiveScale + 1) / 2 + (itemDef?.placedOffsetY ?? 0)) * 10) + 2;
         }
       }
 
