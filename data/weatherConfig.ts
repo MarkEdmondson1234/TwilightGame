@@ -358,12 +358,23 @@ function mulberry32(seed: number): () => number {
 }
 
 /**
+ * Avalanche hash (splitmix32-style) to produce a well-mixed seed from a slot index.
+ * Avoids the linear correlation between adjacent slot indices that caused long snow streaks.
+ */
+function hashSeed(x: number): number {
+  x = ((x + 0x9e3779b9) | 0);
+  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b);
+  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35);
+  return (x ^ (x >>> 16)) >>> 0;
+}
+
+/**
  * Get the deterministic weather for a specific time slot.
  * All players calling this with the same slotIndex + season get the same result.
  */
 export function getWeatherForSlot(slotIndex: number, season: Season): WeatherType {
-  // XOR with Knuth multiplicative hash to scatter adjacent indices into distant seed space
-  const slotSeed = WEATHER_SEED ^ Math.imul(slotIndex, 0x9e3779b9);
+  // Avalanche hash to avoid clustering from linearly-correlated adjacent slot seeds
+  const slotSeed = hashSeed(slotIndex ^ WEATHER_SEED);
   const rng = mulberry32(slotSeed);
 
   const probabilities = WEATHER_PROBABILITIES[season];
