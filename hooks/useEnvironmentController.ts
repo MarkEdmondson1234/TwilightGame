@@ -220,10 +220,12 @@ export function useEnvironmentController(
       currentMapId === 'farm' ||
       currentMapId === 'picnic_meadow';
 
-    // Weather conditions that silence the birds
+    // Weather and season conditions that silence the birds
     const badWeatherForBirds = ['rain', 'storm', 'snow'].includes(currentWeather);
+    const { season } = TimeManager.getCurrentTime();
+    const isWinter = season === Season.WINTER;
 
-    if (isOutdoorWithBirds && !badWeatherForBirds) {
+    if (isOutdoorWithBirds && !badWeatherForBirds && !isWinter) {
       audioManager.playAmbient('ambient_birds');
     } else {
       // Stop bird ambience when leaving forest or in bad weather

@@ -29,22 +29,32 @@ async function killExistingServers() {
 
   return new Promise((resolve) => {
     if (isWindows) {
-      // Windows: Use taskkill to find and kill node processes running vite
-      exec('tasklist /FI "IMAGENAME eq node.exe" /FO CSV', (err, stdout) => {
-        if (err || !stdout.includes('node.exe')) {
-          console.log('No existing servers found');
-          resolve(0);
-          return;
-        }
+      // Windows: Find only node processes whose command line includes "vite", kill by PID
+      exec(
+        'wmic process where "name=\'node.exe\' and commandline like \'%vite%\'" get ProcessId /format:value',
+        (err, stdout) => {
+          const pids = (stdout || '')
+            .split('\n')
+            .map(line => { const m = line.match(/ProcessId=(\d+)/); return m && m[1]; })
+            .filter(Boolean);
 
-        // Kill all node processes (bit aggressive but works)
-        exec('taskkill /F /IM node.exe /T 2>nul', (killErr) => {
-          if (!killErr) {
-            console.log('Killed existing server(s)');
+          if (!pids.length) {
+            console.log('No existing servers found');
+            resolve(0);
+            return;
           }
-          resolve(1);
-        });
-      });
+
+          let done = 0;
+          for (const pid of pids) {
+            exec(`taskkill /F /PID ${pid}`, () => {
+              if (++done === pids.length) {
+                console.log(`Killed ${pids.length} existing server(s)`);
+                resolve(pids.length);
+              }
+            });
+          }
+        }
+      );
     } else {
       // Unix: Use pkill
       exec('pkill -f "node.*vite" 2>/dev/null', (err) => {
