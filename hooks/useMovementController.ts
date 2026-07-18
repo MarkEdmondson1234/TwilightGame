@@ -175,6 +175,7 @@ export function useMovementController(
   const walkFrameCounts = getSpriteConfig(characterId).frameCounts;
 
   const lastFootstepSoundRef = useRef<string | null>(null);
+  const footstepStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onFootstep = useCallback((_position: Position) => {
     // Don't re-trigger while the sound is still playing
@@ -195,6 +196,7 @@ export function useMovementController(
 
   useEffect(() => {
     return () => {
+      if (footstepStopTimerRef.current) clearTimeout(footstepStopTimerRef.current);
       if (lastFootstepSoundRef.current) audioManager.stopSound(lastFootstepSoundRef.current, 0);
     };
   }, []);
@@ -220,10 +222,20 @@ export function useMovementController(
       const result = updatePlayerMovement(deltaTime, now);
       isMovingRef.current = result.isMoving;
 
-      // Stop footstep sound the frame movement ends
-      if (wasMoving && !result.isMoving && lastFootstepSoundRef.current) {
-        audioManager.stopSound(lastFootstepSoundRef.current, 100);
-        lastFootstepSoundRef.current = null;
+      if (result.isMoving) {
+        // Cancel any pending stop so direction changes don't interrupt the sound
+        if (footstepStopTimerRef.current) {
+          clearTimeout(footstepStopTimerRef.current);
+          footstepStopTimerRef.current = null;
+        }
+      } else if (wasMoving && lastFootstepSoundRef.current) {
+        // Delay the stop so brief pauses between direction changes are ignored
+        const soundId = lastFootstepSoundRef.current;
+        footstepStopTimerRef.current = setTimeout(() => {
+          audioManager.stopSound(soundId, 100);
+          lastFootstepSoundRef.current = null;
+          footstepStopTimerRef.current = null;
+        }, 150);
       }
 
       return result;

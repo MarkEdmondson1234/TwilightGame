@@ -18,6 +18,15 @@ const FOOTSTEP_RULES: FootstepRule[] = [
     seasons: [Season.WINTER],
     key: 'footstep_snow',
   },
+  {
+    maps: [
+      'house1', 'house2', 'home_upstairs',
+      'mums_kitchen', 'cottage_interior', 'mushras_shop',
+      'bear_den', 'seed_shed', 'shop',
+    ],
+    seasons: [Season.SPRING, Season.SUMMER, Season.AUTUMN, Season.WINTER],
+    key: 'footstep_inside',
+  },
   // Add new entries here as audio files are uploaded
 ];
 

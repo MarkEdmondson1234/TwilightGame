@@ -1045,4 +1045,9 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'sfx',
     baseVolume: 0.6,
   },
+  footstep_inside: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_inside.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+  },
 };
