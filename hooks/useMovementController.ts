@@ -184,7 +184,8 @@ export function useMovementController(
 
     const mapId = mapManager.getCurrentMapId() ?? '';
     const { season } = TimeManager.getCurrentTime();
-    const key = getFootstepKey(mapId, season);
+    const isOutdoor = mapManager.getCurrentMap()?.renderMode !== 'background-image';
+    const key = getFootstepKey(mapId, season, isOutdoor);
 
     if (key) {
       const id = audioManager.playSfx(key, { pitch: 0.9 + Math.random() * 0.2, fadeIn: 80 });

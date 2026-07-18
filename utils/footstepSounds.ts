@@ -1,7 +1,8 @@
 import { Season } from './TimeManager';
 
 interface FootstepRule {
-  maps: string[];
+  maps?: string[];
+  outdoor?: boolean;
   seasons: Season[];
   key: string;
 }
@@ -12,15 +13,20 @@ const FOOTSTEP_RULES: FootstepRule[] = [
     seasons: [Season.SPRING, Season.SUMMER, Season.AUTUMN],
     key: 'footstep_village_grass',
   },
+  {
+    outdoor: true,
+    seasons: [Season.WINTER],
+    key: 'footstep_snow',
+  },
   // Add new entries here as audio files are uploaded
 ];
 
 /** Returns the audio key to play for footsteps, or null if none defined for this context. */
-export function getFootstepKey(mapId: string, season: Season): string | null {
+export function getFootstepKey(mapId: string, season: Season, isOutdoor: boolean): string | null {
   for (const rule of FOOTSTEP_RULES) {
-    if (rule.maps.some((m) => mapId === m || mapId.startsWith(m + '_'))) {
-      if (rule.seasons.includes(season)) return rule.key;
-    }
+    if (rule.maps && !rule.maps.some((m) => mapId === m || mapId.startsWith(m + '_'))) continue;
+    if (rule.outdoor && !isOutdoor) continue;
+    if (rule.seasons.includes(season)) return rule.key;
   }
   return null;
 }
