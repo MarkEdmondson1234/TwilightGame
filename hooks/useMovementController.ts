@@ -13,6 +13,10 @@ import { gameState } from '../GameState';
 import { getSpriteConfig } from '../utils/characterSprites';
 import { usePlayerMovement } from './usePlayerMovement';
 import { useClickToMove } from './useClickToMove';
+import { TimeManager } from '../utils/TimeManager';
+import { audioManager } from '../utils/AudioManager';
+import { getFootstepKey } from '../utils/footstepSounds';
+import { mapManager } from '../maps';
 
 // Re-export SizeTier type for convenience
 export type SizeTier = -3 | -2 | -1 | 0 | 1 | 2 | 3;
@@ -170,6 +174,30 @@ export function useMovementController(
   const characterId = gameState.getSelectedCharacter()?.characterId ?? 'character1';
   const walkFrameCounts = getSpriteConfig(characterId).frameCounts;
 
+  const lastFootstepSoundRef = useRef<string | null>(null);
+
+  const onFootstep = useCallback((_position: Position) => {
+    // Don't re-trigger while the sound is still playing
+    if (lastFootstepSoundRef.current && audioManager.hasActiveSound(lastFootstepSoundRef.current)) {
+      return;
+    }
+
+    const mapId = mapManager.getCurrentMapId() ?? '';
+    const { season } = TimeManager.getCurrentTime();
+    const key = getFootstepKey(mapId, season);
+
+    if (key) {
+      const id = audioManager.playSfx(key, { pitch: 0.9 + Math.random() * 0.2, fadeIn: 80 });
+      lastFootstepSoundRef.current = id;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (lastFootstepSoundRef.current) audioManager.stopSound(lastFootstepSoundRef.current, 0);
+    };
+  }, []);
+
   const { updatePlayerMovement, isKeyboardInput } = usePlayerMovement({
     keysPressed,
     checkCollision,
@@ -181,13 +209,22 @@ export function useMovementController(
     pathingVector,
     animateWhenIdle: isFairyForm, // Fairy wings keep flapping even when idle
     walkFrameCounts,
+    onFootstep,
   });
 
   // Wrapper for game loop
   const updateMovement = useCallback(
     (deltaTime: number, now: number) => {
+      const wasMoving = isMovingRef.current;
       const result = updatePlayerMovement(deltaTime, now);
       isMovingRef.current = result.isMoving;
+
+      // Stop footstep sound the frame movement ends
+      if (wasMoving && !result.isMoving && lastFootstepSoundRef.current) {
+        audioManager.stopSound(lastFootstepSoundRef.current, 100);
+        lastFootstepSoundRef.current = null;
+      }
+
       return result;
     },
     [updatePlayerMovement]

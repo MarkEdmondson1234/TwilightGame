@@ -1028,4 +1028,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'ambient',
     loop: true,
   },
+
+  // === Sound Effects - Footsteps ===
+  footstep_village_grass: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_through_grass.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+  },
 };

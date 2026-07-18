@@ -393,7 +393,7 @@ class AudioManager {
   /**
    * Play a sound effect (one-shot)
    */
-  playSfx(key: string, options: { volume?: number; pitch?: number } = {}): string | null {
+  playSfx(key: string, options: { volume?: number; pitch?: number; fadeIn?: number } = {}): string | null {
     if (!this.context || !this.sounds.has(key) || this.settings.muted) return null;
 
     const sound = this.sounds.get(key)!;
@@ -408,7 +408,13 @@ class AudioManager {
     // Create gain node for this sound
     const gainNode = this.context.createGain();
     const volume = (options.volume ?? 1.0) * sound.baseVolume;
-    gainNode.gain.value = volume;
+
+    if (options.fadeIn && options.fadeIn > 0) {
+      gainNode.gain.setValueAtTime(0, this.context.currentTime);
+      gainNode.gain.linearRampToValueAtTime(volume, this.context.currentTime + options.fadeIn / 1000);
+    } else {
+      gainNode.gain.value = volume;
+    }
 
     // Connect through category gain
     const categoryGain = this.categoryGains.get(sound.category);
@@ -732,6 +738,13 @@ class AudioManager {
    */
   playUI(key: string): void {
     this.playSfx(key, { volume: 1.0 });
+  }
+
+  /**
+   * Check whether a specific sound is still playing
+   */
+  hasActiveSound(id: string): boolean {
+    return this.activeSounds.has(id);
   }
 
   /**
