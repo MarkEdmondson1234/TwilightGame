@@ -294,6 +294,10 @@ export function useInteractionController(
         if (npcId.toLowerCase().includes('mum')) {
           audioManager.playSfx('sfx_mum');
         }
+        // Play humming if interacting with the little girl
+        if (npcId.toLowerCase().includes('child')) {
+          audioManager.playSfx('sfx_girl_humming');
+        }
         setActiveNPC(npcId);
       },
       onGiveGift: (npcId: string) => {

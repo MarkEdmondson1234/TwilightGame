@@ -904,6 +904,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/npcs/mum.mp3',
     category: 'sfx',
   },
+  // Little Girl humming
+  sfx_girl_humming: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/girl_humming.mp3',
+    category: 'sfx',
+  },
   // Mr. Fox shopkeeper
   sfx_mr_fox: {
     url: '/TwilightGame/assets/audio/sfx/npcs/mr_fox.mp3',
