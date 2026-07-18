@@ -1050,4 +1050,9 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'sfx',
     baseVolume: 0.6,
   },
+  footstep_stone: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_on_stone.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+  },
 };
