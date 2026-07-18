@@ -2145,6 +2145,21 @@ export const ITEMS: Record<string, ItemDefinition> = {
     allowAnyTilePlacement: true,
   },
 
+  decoration_antique_painting: {
+    id: 'decoration_antique_painting',
+    name: 'decoration_antique_painting',
+    displayName: 'Antique Painting',
+    category: ItemCategory.DECORATION,
+    description: 'A beautifully framed oil painting of a golden sunrise over the countryside. Perfect for brightening up any room.',
+    stackable: false,
+    buyPrice: 650,
+    sellPrice: 200,
+    image: itemAssets.antique_painting,
+    icon: '🖼️',
+    placedScale: 1.53,
+    allowAnyTilePlacement: true,
+  },
+
   // ===== DECORATION CRAFTING MATERIALS =====
 
   straw: {

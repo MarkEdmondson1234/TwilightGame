@@ -414,6 +414,12 @@ export const MUSHRAS_SHOP_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
+    itemId: 'decoration_antique_painting',
+    buyPrice: 650,
+    sellPrice: 200,
+    stock: 'unlimited',
+  },
+  {
     itemId: 'ceramic_vase',
     buyPrice: 300,
     sellPrice: 10,
