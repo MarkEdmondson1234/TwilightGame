@@ -177,7 +177,7 @@ class AudioManager {
   // Settings
   private settings: AudioSettings = {
     masterVolume: 0.7,
-    musicVolume: 0.25,
+    musicVolume: 0.45,
     ambientVolume: 0.6,
     sfxVolume: 0.8,
     uiVolume: 0.7,

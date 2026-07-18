@@ -924,7 +924,7 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
   // === Music - Map Themes ===
   // Each map can have its own background music with crossfade transitions
   music_village: {
-    url: '/TwilightGame/assets/audio/music/twilight-village.m4a',
+    url: '/TwilightGame/assets/audio/music/twilight_gardening.mp3',
     category: 'music',
     loop: true,
   },
