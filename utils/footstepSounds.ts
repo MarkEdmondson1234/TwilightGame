@@ -19,6 +19,11 @@ const FOOTSTEP_RULES: FootstepRule[] = [
     key: 'footstep_stone',
   },
   {
+    maps: ['forest', 'deep_forest', 'mushroom_forest', 'bear_cave', 'witch_hut', 'magical_lake', 'ruins'],
+    seasons: [Season.SPRING, Season.SUMMER, Season.AUTUMN],
+    key: 'footstep_leaves',
+  },
+  {
     outdoor: true,
     seasons: [Season.WINTER],
     key: 'footstep_snow',

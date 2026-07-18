@@ -65,6 +65,8 @@ export interface AudioAssetConfig {
   category?: SoundCategory;
   loop?: boolean;
   baseVolume?: number;
+  fadeIn?: number;
+  fadeOut?: number;
 }
 
 // Sound metadata for loaded sounds
@@ -73,6 +75,8 @@ interface SoundData {
   category: SoundCategory;
   loop: boolean;
   baseVolume: number;
+  fadeIn?: number;
+  fadeOut?: number;
 }
 
 // Active sound instance for tracking/stopping
@@ -312,7 +316,7 @@ class AudioManager {
   async loadSound(
     key: string,
     url: string,
-    options: { category?: SoundCategory; loop?: boolean; baseVolume?: number } = {}
+    options: { category?: SoundCategory; loop?: boolean; baseVolume?: number; fadeIn?: number; fadeOut?: number } = {}
   ): Promise<AudioBuffer | null> {
     if (!this.context) await this.initialise();
     if (!this.context) return null;
@@ -340,6 +344,8 @@ class AudioManager {
           category: options.category || 'sfx',
           loop: options.loop || false,
           baseVolume: options.baseVolume ?? 1.0,
+          fadeIn: options.fadeIn,
+          fadeOut: options.fadeOut,
         });
         this.loading.delete(key);
 
@@ -381,6 +387,8 @@ class AudioManager {
           category: config.category,
           loop: config.loop,
           baseVolume: config.baseVolume,
+          fadeIn: config.fadeIn,
+          fadeOut: config.fadeOut,
         }).catch(() => null) // Don't fail entire batch on single error
     );
 
@@ -393,27 +401,37 @@ class AudioManager {
   /**
    * Play a sound effect (one-shot)
    */
-  playSfx(key: string, options: { volume?: number; pitch?: number; fadeIn?: number } = {}): string | null {
+  playSfx(key: string, options: { volume?: number; pitch?: number; fadeIn?: number; fadeOut?: number } = {}): string | null {
     if (!this.context || !this.sounds.has(key) || this.settings.muted) return null;
 
     const sound = this.sounds.get(key)!;
     const source = this.context.createBufferSource();
     source.buffer = sound.buffer;
 
-    // Apply pitch variation if specified
-    if (options.pitch) {
-      source.playbackRate.value = options.pitch;
+    const pitchRate = options.pitch ?? 1.0;
+    if (pitchRate !== 1.0) {
+      source.playbackRate.value = pitchRate;
     }
 
     // Create gain node for this sound
     const gainNode = this.context.createGain();
     const volume = (options.volume ?? 1.0) * sound.baseVolume;
 
-    if (options.fadeIn && options.fadeIn > 0) {
+    const effectiveFadeIn = options.fadeIn ?? sound.fadeIn ?? 0;
+    const effectiveFadeOut = options.fadeOut ?? sound.fadeOut ?? 0;
+
+    if (effectiveFadeIn > 0) {
       gainNode.gain.setValueAtTime(0, this.context.currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume, this.context.currentTime + options.fadeIn / 1000);
+      gainNode.gain.linearRampToValueAtTime(volume, this.context.currentTime + effectiveFadeIn / 1000);
     } else {
       gainNode.gain.value = volume;
+    }
+
+    if (effectiveFadeOut > 0 && source.buffer) {
+      const duration = source.buffer.duration / pitchRate;
+      const fadeStart = this.context.currentTime + Math.max(duration - effectiveFadeOut / 1000, effectiveFadeIn / 1000);
+      gainNode.gain.setValueAtTime(volume, fadeStart);
+      gainNode.gain.linearRampToValueAtTime(0, this.context.currentTime + duration);
     }
 
     // Connect through category gain

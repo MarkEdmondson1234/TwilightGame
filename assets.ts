@@ -1055,4 +1055,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'sfx',
     baseVolume: 0.6,
   },
+  footstep_leaves: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_through_leaves.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+    fadeIn: 120,
+    fadeOut: 120,
+  },
 };
