@@ -76,7 +76,7 @@ export function createGhostNPC(): NPC {
       // ----------------------------------------------------------------
       {
         id: 'ghost_scary',
-        text: '"Well, you *should* be! I am *extremely* frightening, I\'ll have you know. OoooOOOO!"',
+        text: '"Well, you *should* be! I am, indeed, a ghoulish, vicious ghost — a capricious entity from beyond the veil of death, and *extremely* frightening, I\'ll have you know. OoooOOOO!"',
         responses: [
           {
             text: 'Indeed you are!',
@@ -134,15 +134,17 @@ export function createGhostNPC(): NPC {
       },
       {
         id: 'ghost_nevarre_unknown',
-        text: '"What? How can you *not*? That is impossible! Though... I suppose it has been quite a long while. Say — perhaps you could do me a small favour?"',
-        responses: [
-          { text: 'That depends.', nextId: 'ghost_insolence' },
-          { text: 'Certainly. What is it?', nextId: 'ghost_gracious', addsFriendshipPoints: 50 },
-        ],
+        text: '"What? How can you *not*? That is impossible! Though... I suppose it has been quite a long while."',
+        responses: [{ text: '...', nextId: 'ghost_favour_ask' }],
       },
       {
         id: 'ghost_nevarre_seen',
-        text: '"I do find myself wondering how things stand at home these days. Say — perhaps you could do me a small favour?"',
+        text: '"I do find myself wondering how things stand at home these days."',
+        responses: [{ text: '...', nextId: 'ghost_favour_ask' }],
+      },
+      {
+        id: 'ghost_favour_ask',
+        text: '"Say — perhaps you could do me a small favour?"',
         responses: [
           { text: 'That depends.', nextId: 'ghost_insolence' },
           { text: 'Certainly. What is it?', nextId: 'ghost_gracious', addsFriendshipPoints: 50 },
