@@ -929,7 +929,7 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     loop: true,
   },
   music_village_autumn: {
-    url: '/TwilightGame/assets/audio/music/village-autumn.m4a',
+    url: '/TwilightGame/assets/audio/music/twilight_autumn.mp3',
     category: 'music',
     loop: true,
   },
