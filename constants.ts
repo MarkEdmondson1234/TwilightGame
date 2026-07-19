@@ -82,6 +82,7 @@ export const TIMING = {
 
   // Seasonal events
   SEASONAL_EVENT_CHECK_MS: 10000, // How often to check for seasonal decoration placement/removal (10s)
+  SNOW_ANGEL_DURATION_MS: 3 * 60 * 1000, // How long a placed snow angel lasts before disappearing (3 min)
 } as const;
 
 /**

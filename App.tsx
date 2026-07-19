@@ -73,6 +73,7 @@ import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import { seasonalEventManager } from './utils/SeasonalEventManager';
 import { wreathWorkshopManager } from './utils/WreathWorkshopManager';
+import { snowAngelManager } from './utils/SnowAngelManager';
 import FarmActionAnimation from './components/FarmActionAnimation';
 import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES, getCutsceneById } from './data/cutscenes';
@@ -846,6 +847,7 @@ const App: React.FC = () => {
       lastSeasonalEventCheckTime.current = now;
       seasonalEventManager.check();
       wreathWorkshopManager.check();
+      snowAngelManager.check();
     }
 
     // Check for position-based cutscene triggers (only when not in dialogue/cutscene)

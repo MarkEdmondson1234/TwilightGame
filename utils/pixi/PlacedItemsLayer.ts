@@ -159,6 +159,11 @@ export class PlacedItemsLayer extends PixiLayer {
         } else {
           sprite = new PIXI.Sprite(texture);
 
+          // Rotated items pivot around their own centre rather than the default top-left corner
+          if (item.rotation !== undefined) {
+            sprite.anchor.set(0.5, 0.5);
+          }
+
           // Use per-instance customScale if set, otherwise item definition's placedScale
           const itemDefForScale = getItem(item.itemId);
           const scale = (item.customScale ?? itemDefForScale?.placedScale ?? 1) * characterScale;
@@ -182,8 +187,15 @@ export class PlacedItemsLayer extends PixiLayer {
       const offset = (tileSize * (effectiveScale - 1)) / 2;
       const placedOffsetX = (itemDef?.placedOffsetX ?? 0) * tileSize;
       const placedOffsetY = (itemDef?.placedOffsetY ?? 0) * tileSize;
-      sprite.x = item.position.x * tileSize - offset + offsetX + placedOffsetX;
-      sprite.y = item.position.y * tileSize - offset + offsetY + placedOffsetY;
+      if (item.rotation !== undefined) {
+        // Centre-anchored: pivot the rotation around the sprite's own centre
+        sprite.x = item.position.x * tileSize + tileSize / 2 + offsetX + placedOffsetX;
+        sprite.y = item.position.y * tileSize + tileSize / 2 + offsetY + placedOffsetY;
+        sprite.rotation = item.rotation;
+      } else {
+        sprite.x = item.position.x * tileSize - offset + offsetX + placedOffsetX;
+        sprite.y = item.position.y * tileSize - offset + offsetY + placedOffsetY;
+      }
       sprite.width = tileSize * effectiveScale;
       sprite.height = tileSize * effectiveScale;
       sprite.visible = inRange;

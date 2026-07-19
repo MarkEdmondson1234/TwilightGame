@@ -203,6 +203,7 @@ export interface PlacedItem {
   };
   customScale?: number; // Per-instance tile scale (overrides itemDef.placedScale)
   foregroundImage?: string; // Foreground layer image rendered above the player (for furniture like beds)
+  rotation?: number; // Optional visual rotation (radians) around the sprite's centre; most placed items omit this
 }
 
 // Item placed on a desk surface
