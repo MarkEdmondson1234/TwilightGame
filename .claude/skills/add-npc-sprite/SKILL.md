@@ -86,7 +86,7 @@ Check that:
 - Asset is properly registered in `npcAssets` object (or create this object if it doesn't exist)
 - `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
 - `tests/assetIntegrity.test.ts` walks every path exported from `assets.ts` and fails if the new `npcAssets` entry does not resolve to a real file — typically a typo, wrong case, or (for PNG) a skipped `npm run optimize-assets`
-- **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 
 ## Asset Key Naming Convention
 

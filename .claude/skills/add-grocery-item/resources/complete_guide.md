@@ -349,7 +349,7 @@ sellPrice: 6,   // Must match
 # Check for TypeScript errors AND run the test suite
 make verify
 # (Never `npm test` — that is watch mode and never exits.
-#  Baseline: cropGrowth + eventChains already fail on main, so "2 failed" is green.)
+#  The suite is fully green — any failure is a real regression.)
 # tests/itemSSoT.test.ts catches duplicate/missing item IDs.
 # tests/assetIntegrity.test.ts catches unresolvable asset paths.
 

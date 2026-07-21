@@ -442,7 +442,7 @@ make verify
 
 **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
 
-**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
 
 **Tests that guard this skill's output:**
 - `tests/assetIntegrity.test.ts` — walks every path in `assets.ts`, `iconAssets.ts` and the `image` fields of `ITEMS`, and fails if one does not resolve to a real file on disk. A failure here almost always means a typo/wrong case, a path pointing at `assets/` instead of `assets-optimized/`, or a skipped `npm run optimize-assets`.
@@ -624,7 +624,7 @@ When adding a new inventory item sprite:
 - [ ] 4b. Remove emoji fallback from `ITEM_ICON_MAP` if it exists (keeps code clean)
 - [ ] 4c. (Optional) If crop is also shop item, add to `data/shopInventory.ts`
 - [ ] 5. Run `npm run optimize-assets` (creates optimized version)
-- [ ] 6. Run `make verify` (typecheck + full test suite; `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches bad item IDs. Only `cropGrowth` + `eventChains` should fail — that is the known baseline)
+- [ ] 6. Run `make verify` (typecheck + full test suite; `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches bad item IDs. the suite is fully green)
 - [ ] 7. Test in game:
   - Add item to inventory (verify sprite in inventory UI)
   - If shop item: visit shop and verify sprite displays (not 📦)

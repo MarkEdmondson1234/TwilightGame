@@ -108,7 +108,7 @@ Typecheck must pass with zero errors and the test suite must be clean.
 
 **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
 
-**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
 
 `tests/assetIntegrity.test.ts` has a dedicated `iconAssets.ts` block: it fails if the new icon path does not resolve to a real file on disk, which usually means a typo in the category/filename or a skipped `npm run optimize-assets`.
 

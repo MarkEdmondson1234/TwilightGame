@@ -137,7 +137,7 @@ make verify
 
 **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
 
-**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
 
 **Tests that guard this skill's output:**
 - `tests/itemSSoT.test.ts` — fails if the new item duplicates an existing one (same displayName, different ID), if a shop entry references an item ID that does not exist in `ITEMS`, or if a recipe references a missing ingredient. This is the test that catches "I created `almonds` when `crop_almond` already existed".

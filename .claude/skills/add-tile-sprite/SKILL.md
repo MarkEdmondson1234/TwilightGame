@@ -213,7 +213,7 @@ make verify
 
 **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
 
-**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
 
 **Tests that guard this skill's output:**
 - `tests/assetIntegrity.test.ts` — fails if a registered asset path does not resolve to a real file on disk. Most common causes: a typo/wrong case in the path, pointing at `assets/` instead of `assets-optimized/`, or forgetting to run `npm run optimize-assets`.
@@ -333,7 +333,7 @@ Adding a new grass variation (`grass_3.png`):
    ```bash
    make verify
    ```
-   `tests/assetIntegrity.test.ts` will fail here if the path is wrong or optimisation was skipped. Expect the known baseline of 2 failures (`cropGrowth`, `eventChains`).
+   `tests/assetIntegrity.test.ts` will fail here if the path is wrong or optimisation was skipped. The suite is fully green, so any failure is a real regression.
 
 ### Example 2: Adding Multi-Tile Sprite Variations
 
@@ -384,7 +384,7 @@ Adding sofa variations (`sofa_01.png`, `sofa_02.png`):
    ```bash
    make verify
    ```
-   `tests/assetIntegrity.test.ts` will fail here if the path is wrong or optimisation was skipped. Expect the known baseline of 2 failures (`cropGrowth`, `eventChains`).
+   `tests/assetIntegrity.test.ts` will fail here if the path is wrong or optimisation was skipped. The suite is fully green, so any failure is a real regression.
 
 7. **Test in game:**
    ```bash
@@ -498,7 +498,7 @@ const gridString = `
 ```bash
 make verify
 # Typecheck must be clean; test suite must show only the 2 known baseline
-# failures (cropGrowth, eventChains)
+# the suite is fully green
 ```
 A new tile type must be added to `TILE_TYPE_TO_COLOR_KEY` or `tests/colorResolver.test.ts` will fail, and its asset path must resolve or `tests/assetIntegrity.test.ts` will fail.
 

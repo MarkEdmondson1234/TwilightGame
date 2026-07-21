@@ -117,7 +117,7 @@ Farming plant sprites are resized to **768px** and compressed at 95% quality int
 - Optimised files exist at `/public/assets-optimized/farming/plant_[crop]_young.png` and `plant_[crop]_adult.png`
 - `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
 - `tests/assetIntegrity.test.ts` fails if a `farmingAssets` path does not resolve to a real file — usually a typo or a skipped `npm run optimize-assets`
-- **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 
 ---
 
@@ -163,7 +163,7 @@ npm run optimize-assets
 - Optimised file exists at `/public/assets-optimized/items/grocery/[crop]_crop.png`
 - `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
 - `tests/assetIntegrity.test.ts` fails if the item's `image` path does not resolve to a real file; `tests/itemSSoT.test.ts` fails if the crop item duplicates an existing entry or is referenced by a non-existent ID
-- **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 
 ---
 
@@ -264,7 +264,7 @@ npm run optimize-assets
 - All three optimised files exist
 - `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
 - `tests/assetIntegrity.test.ts` catches unresolvable sprite paths; `tests/itemSSoT.test.ts` catches duplicate or missing `seed_*` / `crop_*` IDs and shop entries; `tests/farmManager.test.ts` covers the plant/water/harvest lifecycle the new crop plugs into
-- **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 - Test in-game: plant the crop and confirm the young → adult sprite transition, then harvest and check the inventory icon
 
 ---

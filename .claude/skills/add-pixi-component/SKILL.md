@@ -190,7 +190,7 @@ See [resources/reference.md](resources/reference.md#performance-optimization) fo
 - [ ] Camera smooth
 - [ ] Textures load
 - [ ] Hand-drawn art renders smoothly (`scaleMode: 'linear'` + mipmaps — **never** `'nearest'`)
-- [ ] `make verify` clean (typecheck + full test suite). **Never `npm test`** — watch mode, never exits; use `make test` or `npm run test:run` for tests alone. Only `cropGrowth` + `eventChains` should fail — that is the known baseline on `main`
+- [ ] `make verify` clean (typecheck + full test suite). **Never `npm test`** — watch mode, never exits; use `make test` or `npm run test:run` for tests alone. The suite is fully green, so any failure is a real regression
 - [ ] If the component resolves tile colours, `tests/colorResolver.test.ts` still passes — any new `TileType` must be mapped in `TILE_TYPE_TO_COLOR_KEY`
 - [ ] If the component references new textures, `tests/assetIntegrity.test.ts` still passes — every asset path must resolve to a real file
 

@@ -183,7 +183,7 @@ Typecheck must pass with zero errors before testing in-game, and the test suite 
 
 **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
 
-**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
 
 **Tests that guard this skill's output:**
 - `tests/itemSSoT.test.ts` — fails if `seed_<id>` or `crop_<id>` duplicates an existing item, or if the shop entry references an item ID that is not in `ITEMS`.
@@ -214,7 +214,7 @@ Growth goes: **Seedling → Adult** (young stage skipped for all herbs).
 - [ ] `data/shopInventory.ts` — `seed_<id>` entry (no `availableSeasons` needed)
 - [ ] `utils/pixi/TileLayer.ts` — `CROP_ADULT_SIZES` entry for sprite sizing
 - [ ] `npm run optimize-assets` — generate optimised sprites
-- [ ] `make verify` — typecheck clean; only the 2 known baseline test failures (`cropGrowth`, `eventChains`)
+- [ ] `make verify` — typecheck clean; the test suite is fully green
 
 ---
 

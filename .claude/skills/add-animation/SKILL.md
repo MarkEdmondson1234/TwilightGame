@@ -157,7 +157,7 @@ Check that:
 - Configuration added to `TILE_ANIMATIONS`
 - `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
 - `tests/assetIntegrity.test.ts` fails if the `animationAssets` path does not resolve to a real file on disk (typo, wrong directory segment, or missing GIF)
-- **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 - Animation appears in-game near trigger tiles and loops continuously
 
 ## Configuration Options

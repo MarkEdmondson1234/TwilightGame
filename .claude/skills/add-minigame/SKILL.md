@@ -112,7 +112,7 @@ Only proceed to code after user confirms.
 
    **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
 
-   `tests/minigameRegistry.test.ts` guards the registry entry's structure and checks that every item ID in requirements/rewards exists in `ITEMS`. **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green.
+   `tests/minigameRegistry.test.ts` guards the registry entry's structure and checks that every item ID in requirements/rewards exists in `ITEMS`. **Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
 
 ---
 
@@ -287,7 +287,7 @@ Mini-games can emit events to notify other systems:
 
 Before considering the mini-game complete, verify:
 
-- [ ] `make verify` is clean — typecheck passes with zero errors and the test suite shows only the 2 known baseline failures (`cropGrowth`, `eventChains`, both pre-existing on `main`)
+- [ ] `make verify` is clean — typecheck passes with zero errors and the test suite is fully green
 - [ ] All item IDs in requirements/rewards exist in `data/items.ts` — `tests/minigameRegistry.test.ts` enforces this, along with unique mini-game IDs and valid trigger item IDs
 - [ ] All NPC IDs in triggers/rewards exist in the game
 - [ ] Trigger item (placedItemId/npcId) exists in the game world

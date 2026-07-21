@@ -360,7 +360,7 @@ Fix any TypeScript errors before testing, and confirm the test suite is clean.
 
 **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
 
-**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
 
 **Tests that guard this skill's output:**
 - `tests/colorResolver.test.ts` — fails if the new `TileType` was not added to `TILE_TYPE_TO_COLOR_KEY` (Phase 7). This is the wrong-coloured-box bug.
@@ -510,5 +510,5 @@ Also check all three locations in `actionHandlers.ts`:
 - [ ] 10b. Add foraging handler in `handleForageAction()`
 - [ ] 10c. Add to cooldown check in `handleForageAction()`
 - [ ] 11. (Optional) Add to procedural generation in `maps/procedural.ts`
-- [ ] 12. Run `make verify` to validate (typecheck + tests; `tests/colorResolver.test.ts` catches a missing `TILE_TYPE_TO_COLOR_KEY` entry, `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches item duplicates. Only `cropGrowth` + `eventChains` should fail — known baseline)
+- [ ] 12. Run `make verify` to validate (typecheck + tests; `tests/colorResolver.test.ts` catches a missing `TILE_TYPE_TO_COLOR_KEY` entry, `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches item duplicates. the suite is fully green)
 - [ ] 13. Test in game (place on map, forage, check inventory)
