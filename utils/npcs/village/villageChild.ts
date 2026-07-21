@@ -46,7 +46,7 @@ export function createVillageChildNPC(
           summer:
             "Hi! It's so hot today! Want to play by the water? We could splash around and cool off!",
           autumn:
-            "Hi! Have you seen all the colourful leaves? I've been collecting the prettiest ones! Want to see my collection?",
+            "Hi! Have you seen all the colourful leaves? I've been collecting the prettiest ones! Oh — and if you've got a pumpkin, I'll show you how to carve a properly spooky face. I'm very good at it.",
           winter:
             "Hi! Did you see the snow? I want to build a snowman but mum says it's too cold. Will you help me convince her?",
         },

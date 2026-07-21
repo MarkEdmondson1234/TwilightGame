@@ -1,10 +1,10 @@
 /**
  * Pumpkin Carving Mini-Game Definition
  *
- * Example mini-game that demonstrates the plugin architecture.
- * Triggered by interacting with a carving_table placed item.
- * Requires one pumpkin (consumed on completion).
- * Available only in autumn.
+ * Triggered by talking to the village child (id 'child') in the village square.
+ * Requires one pumpkin, consumed on completion — grow it on the farm, or buy the seeds.
+ * Available only in autumn; MiniGameManager enforces the season, so the option simply
+ * does not appear the rest of the year.
  */
 
 import type { MiniGameDefinition } from '../types';
@@ -18,7 +18,10 @@ export const pumpkinCarvingDefinition: MiniGameDefinition = {
   colour: '#f97316',
   component: PumpkinCarvingGame,
   triggers: {
-    placedItemId: 'carving_table',
+    // The village child offers this in autumn — she is already standing outside in the
+    // village square. There is no carving-table item or artwork, so an NPC trigger is how
+    // this reaches the player (the same way Mushra offers wreath-making).
+    npcId: 'child',
   },
   requirements: [{ itemId: 'crop_pumpkin', quantity: 1, consumeOn: 'onComplete' }],
   availability: {
