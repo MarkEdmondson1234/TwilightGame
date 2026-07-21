@@ -108,7 +108,11 @@ Only proceed to code after user confirms.
 
 ### Then Validate
 
-4. Run `npx tsc --noEmit` — must pass with zero errors
+4. Run `make verify` — typecheck + full test suite, must be clean
+
+   **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+
+   `tests/minigameRegistry.test.ts` guards the registry entry's structure and checks that every item ID in requirements/rewards exists in `ITEMS`. **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green.
 
 ---
 
@@ -268,7 +272,7 @@ These are the real IDs and values from the game. Use these when building definit
 | `easel` | Painting easel, Decoration crafting |
 | `carving_table` | Pumpkin carving |
 
-New placed items can be created in `data/items.ts` if needed.
+New placed items can be created in `data/items/decorations.ts` if needed.
 
 ### EventBus Events (via `context.actions.emitEvent`)
 
@@ -283,15 +287,15 @@ Mini-games can emit events to notify other systems:
 
 Before considering the mini-game complete, verify:
 
-- [ ] `npx tsc --noEmit` passes with zero errors
-- [ ] All item IDs in requirements/rewards exist in `data/items.ts`
+- [ ] `make verify` is clean — typecheck passes with zero errors and the test suite shows only the 2 known baseline failures (`cropGrowth`, `eventChains`, both pre-existing on `main`)
+- [ ] All item IDs in requirements/rewards exist in `data/items.ts` — `tests/minigameRegistry.test.ts` enforces this, along with unique mini-game IDs and valid trigger item IDs
 - [ ] All NPC IDs in triggers/rewards exist in the game
 - [ ] Trigger item (placedItemId/npcId) exists in the game world
 - [ ] All user-facing text is in British English (colour, favourite, travelling)
 - [ ] Component handles both mouse and touch input (iPad support)
 - [ ] Cancel button calls `onClose()` (lets player exit without penalty)
 - [ ] Finish/complete button calls `onComplete()` with a valid `MiniGameResult`
-- [ ] If new items are needed, they've been added to `data/items.ts`
+- [ ] If new items are needed, they've been added to the matching module under `data/items/`
 
 ## Progressive Disclosure
 

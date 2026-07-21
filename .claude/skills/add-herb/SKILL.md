@@ -15,11 +15,11 @@ This skill will:
 1. Verify sprites exist in /public/assets/herbs/
 2. Register sprites in assets.ts (farmingAssets + herbAssets)
 3. Add crop definition in data/crops.ts
-4. Add two items in data/items.ts (seed + harvested crop)
+4. Add two items: seed in data/items/seeds.ts, harvested crop in data/items/crops.ts
 5. Add seed to shop inventory in data/shopInventory.ts
 6. Add adult size/offset config in utils/pixi/TileLayer.ts
 7. Run npm run optimize-assets
-8. Run npx tsc --noEmit
+8. Run make verify (typecheck + full test suite)
 ```
 
 ## When to Use This Skill
@@ -100,9 +100,11 @@ lavender: {
 - `seedDropMin: 0, seedDropMax: 0` — herbs never drop seeds
 - `growthTime` — use `MINUTE` during dev, `GAME_DAY` for production
 
-### 4. Add Items in data/items.ts
+### 4. Add Items in data/items/seeds.ts and data/items/crops.ts
 
-**Seed item** (needs `herbAssets` imported at top):
+Item definitions live in per-category modules under `data/items/` — see the category → module table in the `data/items.ts` header.
+
+**Seed item** — add to `SEED_ITEMS` in `data/items/seeds.ts` (needs `herbAssets` imported at top):
 ```typescript
 seed_lavender: {
   id: 'seed_lavender',
@@ -119,7 +121,7 @@ seed_lavender: {
 },
 ```
 
-**Harvested crop item** (sell-only — no `buyPrice`):
+**Harvested crop item** — add to `CROP_ITEMS` in `data/items/crops.ts` (sell-only — no `buyPrice`):
 ```typescript
 crop_lavender: {
   id: 'crop_lavender',
@@ -174,10 +176,18 @@ Verify the output folder exists: `public/assets-optimized/herbs/`
 ### 8. TypeScript Check
 
 ```bash
-npx tsc --noEmit
+make verify
 ```
 
-Must pass with zero errors before testing in-game.
+Typecheck must pass with zero errors before testing in-game, and the test suite must be clean.
+
+**Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+
+**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+
+**Tests that guard this skill's output:**
+- `tests/itemSSoT.test.ts` — fails if `seed_<id>` or `crop_<id>` duplicates an existing item, or if the shop entry references an item ID that is not in `ITEMS`.
+- `tests/assetIntegrity.test.ts` — fails if any `farmingAssets` / `herbAssets` path does not resolve to a real file, which is what happens when `npm run optimize-assets` was skipped.
 
 ---
 
@@ -199,11 +209,12 @@ Growth goes: **Seedling → Adult** (young stage skipped for all herbs).
 
 - [ ] `assets.ts` — `farmingAssets.plant_<id>_adult` + `herbAssets.<id>_*`
 - [ ] `data/crops.ts` — crop definition with `isHerb: true`
-- [ ] `data/items.ts` — `seed_<id>` (with `cropId`) and `crop_<id>` items
+- [ ] `data/items/seeds.ts` — `seed_<id>` item (with `cropId`)
+- [ ] `data/items/crops.ts` — `crop_<id>` item
 - [ ] `data/shopInventory.ts` — `seed_<id>` entry (no `availableSeasons` needed)
 - [ ] `utils/pixi/TileLayer.ts` — `CROP_ADULT_SIZES` entry for sprite sizing
 - [ ] `npm run optimize-assets` — generate optimised sprites
-- [ ] `npx tsc --noEmit` — zero errors
+- [ ] `make verify` — typecheck clean; only the 2 known baseline test failures (`cropGrowth`, `eventChains`)
 
 ---
 

@@ -248,11 +248,12 @@ export function handleForageAction(
 
 ### 10. Create Crop/Item Definitions (Optional)
 
-**File:** `data/items.ts`
+**Files:** `data/items/crops.ts` and `data/items/seeds.ts`
 
-If your plant produces harvestable items, add them to the items system:
+If your plant produces harvestable items, add them to the module matching each item's category under `data/items/` — see the category → module table in the `data/items.ts` header:
 
 ```typescript
+// data/items/crops.ts → CROP_ITEMS
 // Strawberry crop item (harvested berry)
 crop_strawberry: {
   id: 'crop_strawberry',
@@ -264,6 +265,7 @@ crop_strawberry: {
   sellPrice: 30,
 },
 
+// data/items/seeds.ts → SEED_ITEMS
 // Strawberry seeds (for farming)
 seed_strawberry: {
   id: 'seed_strawberry',
@@ -386,7 +388,7 @@ Use this checklist when adding a new forageable plant:
 - [ ] **Step 7:** Run `npm run optimize-assets`
 - [ ] **Step 8:** Add to FORAGEABLE_TILES in `utils/actionHandlers.ts` (if forageable)
 - [ ] **Step 9:** Implement custom foraging logic in `handleForageAction()` (if needed)
-- [ ] **Step 10:** Create crop/item definitions in `data/items.ts` and `data/crops.ts` (if harvestable)
+- [ ] **Step 10:** Create crop/item definitions in the matching `data/items/` modules (e.g. `data/items/crops.ts`, `data/items/seeds.ts`) and `data/crops.ts` (if harvestable)
 - [ ] **Step 11:** Add plants to map grids in `maps/definitions/`
 - [ ] **Step 12:** Run `npx tsc --noEmit` (validate TypeScript)
 - [ ] **Step 13:** Test in browser (`npm run dev`)

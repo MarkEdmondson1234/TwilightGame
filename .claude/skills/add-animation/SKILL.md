@@ -155,7 +155,9 @@ Check that:
 - GIF has infinite loop flag set (`npx gifsicle --loop=0 --batch public/assets/animations/[fileName].gif`)
 - Asset is registered in `animationAssets`
 - Configuration added to `TILE_ANIMATIONS`
-- No TypeScript errors: `npx tsc --noEmit`
+- `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
+- `tests/assetIntegrity.test.ts` fails if the `animationAssets` path does not resolve to a real file on disk (typo, wrong directory segment, or missing GIF)
+- **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green
 - Animation appears in-game near trigger tiles and loops continuously
 
 ## Configuration Options

@@ -99,10 +99,15 @@ When implementing new features:
 - `make build` - Build for production
 - `make preview` - Preview production build
 - `make optimize-assets` - Optimise images using Sharp
-- `make typecheck` - Check TypeScript for errors
+- `make verify` - **Typecheck + run all tests. Run this before calling any change done.**
+- `make typecheck` - Check TypeScript only
+- `make test` - Run all tests once
 - `make clean` - Remove build artifacts
 - `make reload` - **Restart dev server** (fixes HMR cascade hangs)
 - `make test-game` - Open game in browser for testing
+
+> ⚠️ **Do NOT run `npm test`** — that is `vitest` in **watch mode** and never exits, which will
+> hang your session. Use `make verify`, `make test`, or `npm run test:run`.
 
 ### Handling HMR Cascade Hangs
 
@@ -151,7 +156,7 @@ This command:
   - Never access map data directly - always use MapManager
 - **Current Systems**: MapManager handles all map loading, transitions, and color schemes
 - **Character Data**: `utils/CharacterData.ts` is the unified persistence API for all character-specific data
-- **Items**: `data/items.ts` defines ALL items - crops, ingredients, tools, food, potions
+- **Items**: `data/items.ts` defines ALL items - crops, ingredients, tools, food, potions. It is a thin facade: the definitions live in per-category modules under `data/items/` (`seeds.ts`, `crops.ts`, `ingredients.ts`, `potions.ts`, `furniture.ts`, …). The header of `data/items.ts` maps category → module, so add a new item to the right module rather than opening the whole catalogue. Everything still imports from `data/items`.
 
 ### Item and Recipe SSoT
 
@@ -168,9 +173,10 @@ This command:
 3. If a crop needs to be purchasable, add `buyPrice` to the crop - don't create a duplicate INGREDIENT
 
 **When Adding New Items:**
-1. Check `data/items.ts` for similar items first
-2. Use consistent naming: `crop_*` for crops, `seed_*` for seeds, `food_*` for cooked food
-3. Ensure the `id`, `name`, and object key all match exactly
+1. Check for similar items first — `grep` the `data/items/` modules, or read the category → module table in the `data/items.ts` header
+2. Add the definition to the matching `data/items/<category>.ts` module (NOT to the `data/items.ts` facade)
+3. Use consistent naming: `crop_*` for crops, `seed_*` for seeds, `food_*` for cooked food
+4. Ensure the `id`, `name`, and object key all match exactly
 
 **Automated Tests**: Run `npx vitest run tests/itemSSoT.test.ts` to catch:
 - Recipe ingredients that don't exist in ITEMS
@@ -295,7 +301,7 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 
 ### Core Files
 
-- `App.tsx` - Main component: rendering, camera system, game loop orchestration (~1,600 lines)
+- `App.tsx` - Main component: rendering, camera system, game loop orchestration (~2,700 lines — **over the 500-line rule and a known refactor target**; extract to controllers/hooks rather than growing it further)
 - `constants.ts` - Game constants (`TILE_SIZE`, `PLAYER_SIZE`), tile legend with all tile types, DEBUG flags
 - `types.ts` - TypeScript types including `TileType`, `Position`, `Direction`, `MapDefinition`, `Transition`, `ColorScheme`
 
@@ -320,7 +326,8 @@ Custom React hooks for game systems:
 Pure functions and game systems:
 
 - `utils/gameInitializer.ts` - Game startup (palette, maps, assets, inventory, farm plots)
-- `utils/actionHandlers.ts` - Shared action logic (mirror, NPC, transition, farming interactions)
+- `utils/actionHandlers.ts` - Shared action helpers (`checkMirrorInteraction`, `handleFarmAction`, `checkDeskInteraction`, …) called by keyboard, touch AND the interaction providers
+- `utils/interactions/` - **Click interaction system** — see its [README](utils/interactions/README.md). One provider module per interaction kind
 - `utils/CharacterData.ts` - **Unified persistence API** for all character data (inventory, farming, cooking, friendships)
 - `utils/EventBus.ts` - **Type-safe pub/sub event system** for decoupling managers from React components
 - `utils/mapUtils.ts` - Tile data access via MapManager
@@ -365,9 +372,13 @@ Pure functions and game systems:
 - Shared action handlers in `utils/actionHandlers.ts` eliminate code duplication
 - Architecture: Input hooks → Action handlers → Game state updates
 
-**Interaction System** (`utils/actionHandlers.ts`, `components/RadialMenu.tsx`):
+**Interaction System** (`utils/interactions/`, `components/RadialMenu.tsx`):
+- **Read [`utils/interactions/README.md`](utils/interactions/README.md) before adding an interaction.**
 - Click-based: Primary interaction method - click on objects/tiles to interact
 - `getAvailableInteractions()`: Returns all possible interactions at a position
+- **Provider architecture**: each interaction kind is one small module in `utils/interactions/providers/`, listed in `utils/interactions/registry.ts`. Adding an interaction = new provider file + one registry line + one entry in the `InteractionType` union. You should not need to open any other file.
+- **Providers must be side-effect free at collection time** — `getAvailableInteractions()` runs on every click just to see what is *possible*. Mutate game state only inside an interaction's `execute` callback.
+- Registry order is the radial menu order. `exclusive: true` suppresses all later providers (used by shop counters).
 - Interaction types: mirror, NPC, transition, cooking, farming (till, plant, water, harvest, clear), foraging, berry harvesting
 - **Multi-seed planting**: When clicking tilled soil with seeds tool, radial menu shows all available seed types
 - **Radial menu**: Circular menu that displays options around click point with icons and colours
@@ -981,7 +992,7 @@ Multi-tile sprites (furniture, large objects) require special handling:
    - Example: StaminaManager emits `STAMINA_CHANGED`, StaminaBar subscribes
 
 **Refactoring Checklist:**
-- [ ] Run `npx tsc --noEmit` before and after
+- [ ] Run `make verify` (typecheck + tests) before and after
 - [ ] Test in browser after changes
 - [ ] Update documentation if APIs change
 - [ ] Remove unused imports
@@ -1042,8 +1053,31 @@ data/            - Game data (crops, items, NPCs)
 
 ### Testing and Validation
 
+**Run `make verify` before calling ANY change done.** It runs the typecheck and the full test
+suite. Do not report work as complete without it — several test files exist specifically to
+catch the mistakes that are invisible until someone plays the game (a mistyped asset path
+renders as nothing, an unregistered tile renders with a wrong-coloured box, an out-of-bounds
+NPC spawns inside a wall).
+
+```bash
+make verify        # typecheck + all tests  ← the one you want
+make test          # tests only
+npm run test:run   # same, if make is unavailable
+```
+
+⚠️ Never run `npm test` — it is vitest in watch mode and will hang. An optional hook that
+blocks it lives at `.claude/hooks/guard-test-command.sh` (not registered by default; see
+[`tests/README.md`](tests/README.md) to enable).
+
+**Expected baseline:** two tests currently fail on `main` (`cropGrowth`, `eventChains`) for
+reasons unrelated to most work. Treat "2 failed" as green; investigate only if the count rises
+or a *different* file fails.
+
+**What the tests guard:** see [`tests/README.md`](tests/README.md) — it maps each test file to
+the mistake it catches, so a failure tells you what to fix.
+
 **Before Committing:**
-1. Run `npx tsc --noEmit` - Must pass with zero errors
+1. Run `make verify` - typecheck must be clean, tests at or below the known baseline
 2. Test in browser - Game must run without console errors
 3. Check HMR - Changes should hot-reload
 4. Review self-tests - Startup sanity checks must pass
@@ -1051,8 +1085,12 @@ data/            - Game data (crops, items, NPCs)
 **When Adding Features:**
 1. Add constants to `constants.ts` (no magic numbers)
 2. Add TypeScript types to `types.ts`
-3. Add sanity checks to `utils/testUtils.ts` for critical systems
-4. Update relevant documentation in `docs/`
+3. **Add or extend a test** — if your feature has an invariant that could silently break
+   (an id that must exist, an asset that must resolve, a registry that must stay in sync),
+   encode it in `tests/`. Follow the style in `tests/itemSSoT.test.ts`: collect every
+   violation and assert once, with a failure message that says how to fix it.
+4. Add sanity checks to `utils/testUtils.ts` for critical systems
+5. Update relevant documentation in `docs/`
 
 ### Don't Repeat Yourself (DRY)
 
@@ -1272,7 +1310,7 @@ Run tests with: `npx vitest run tests/myUtils.test.ts`
 
 ## Development Guidelines
 
-1. **Validate changes**: After making code changes, ALWAYS run `npx tsc --noEmit` to check for TypeScript errors before considering the task complete
+1. **Validate changes**: After making code changes, ALWAYS run `make verify` (typecheck + full test suite) before considering the task complete. Never `npm test` — that is watch mode and hangs. If you added an invariant worth protecting, add a test for it too
 2. **Always run sanity checks** (`runSelfTests()`) after modifying core systems - these run automatically on app startup
 3. **Never bypass SSoT**: Use MapManager for map data, `getTileData()` for tile access
 4. **Add constants to `constants.ts`**: Never hardcode values

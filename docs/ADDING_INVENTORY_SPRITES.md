@@ -69,12 +69,12 @@ export const itemAssets = {
 
 ### 3. Link Sprite to Item Definition
 
-In `data/items.ts`, add the `image` property to your item definition:
+Add the `image` property to your item definition in the module that matches its category under `data/items/` — see the category → module table in the `data/items.ts` header. The example below is an ingredient, so it goes in `data/items/ingredients.ts`:
 
 ```typescript
-import { groceryAssets } from '../assets';
+import { groceryAssets } from '../../assets';
 
-export const ITEMS: Record<string, ItemDefinition> = {
+export const INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
   // Example: Grocery item
   chocolate: {
     id: 'chocolate',
@@ -251,7 +251,7 @@ When adding a new inventory item sprite:
 
 - [ ] 1. Add PNG file to `/public/assets/items/{category}/filename.png`
 - [ ] 2. Register in `assets.ts` → appropriate assets object (e.g., `groceryAssets`)
-- [ ] 3. Link in `data/items.ts` → item definition `image` property
+- [ ] 3. Link in the matching `data/items/` module → item definition `image` property
 - [ ] 4. **CRITICAL:** Map in `utils/inventoryUIHelper.ts` → `ITEM_SPRITE_MAP`
 - [ ] 5. Run `npm run optimize-assets`
 - [ ] 6. Clear localStorage and test in game
@@ -273,9 +273,9 @@ export const groceryAssets = {
 };
 ```
 
-**3. Link in `data/items.ts`:**
+**3. Link in `data/items/ingredients.ts`:**
 ```typescript
-import { groceryAssets } from '../assets';
+import { groceryAssets } from '../../assets';
 
 olive_oil: {
   id: 'olive_oil',
@@ -325,7 +325,7 @@ export const itemAssets = {
 };
 ```
 
-**3. Link in `data/items.ts`:**
+**3. Link in `data/items/toolsAndMaterials.ts`:**
 ```typescript
 tool_axe: {
   id: 'tool_axe',

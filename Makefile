@@ -1,7 +1,7 @@
 # Makefile for TwilightGame
 # Provides convenient shortcuts for common development tasks
 
-.PHONY: help install dev build preview optimize-assets typecheck clean test-game reload firebase-login firebase-deploy firebase-rules
+.PHONY: help install dev build preview optimize-assets typecheck test verify clean test-game reload firebase-login firebase-deploy firebase-rules
 
 # Default target - show help
 help:
@@ -13,10 +13,18 @@ help:
 	@echo "  make build           Build for production"
 	@echo "  make preview         Preview production build"
 	@echo "  make optimize-assets Optimise images (runs before build)"
-	@echo "  make typecheck       Check TypeScript for errors"
 	@echo "  make clean           Remove build artifacts"
 	@echo "  make reload          Restart dev server (fixes HMR cascade hangs)"
 	@echo "  make test-game       Launch game tester agent in Chrome"
+	@echo ""
+	@echo "Checking Your Changes"
+	@echo "---------------------"
+	@echo "  make verify          Typecheck + run all tests — USE THIS before finishing work"
+	@echo "  make typecheck       Check TypeScript only"
+	@echo "  make test            Run all tests once (not watch mode)"
+	@echo ""
+	@echo "  NOTE: 'npm test' starts vitest in WATCH mode and never exits."
+	@echo "        Use 'make test' or 'npm run test:run' instead."
 	@echo ""
 	@echo "Firebase Commands"
 	@echo "-----------------"
@@ -47,6 +55,18 @@ optimize-assets:
 # Check TypeScript for errors (no emit)
 typecheck:
 	npx tsc --noEmit
+
+# Run the full test suite once and exit.
+# Deliberately NOT `npm test` — that is `vitest` in watch mode, which never exits.
+test:
+	npm run test:run
+
+# The one command to run before calling a change done: types + tests.
+verify:
+	@echo "→ Typechecking..."
+	@npx tsc --noEmit
+	@echo "→ Running tests..."
+	@npm run test:run
 
 # Clean build artifacts
 clean:

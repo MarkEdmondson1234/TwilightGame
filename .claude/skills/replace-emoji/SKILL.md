@@ -101,10 +101,16 @@ Verify the icon appears in output:
 ### Step 6: Verify TypeScript
 
 ```bash
-npx tsc --noEmit
+make verify
 ```
 
-Must pass with zero errors.
+Typecheck must pass with zero errors and the test suite must be clean.
+
+**Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+
+**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+
+`tests/assetIntegrity.test.ts` has a dedicated `iconAssets.ts` block: it fails if the new icon path does not resolve to a real file on disk, which usually means a typo in the category/filename or a skipped `npm run optimize-assets`.
 
 ### Step 7: Test in Game
 
