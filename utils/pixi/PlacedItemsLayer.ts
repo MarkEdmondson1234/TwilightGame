@@ -159,6 +159,11 @@ export class PlacedItemsLayer extends PixiLayer {
         } else {
           sprite = new PIXI.Sprite(texture);
 
+          // Rotated items pivot around their own centre rather than the default top-left corner
+          if (item.rotation !== undefined) {
+            sprite.anchor.set(0.5, 0.5);
+          }
+
           // Use per-instance customScale if set, otherwise item definition's placedScale
           const itemDefForScale = getItem(item.itemId);
           const scale = (item.customScale ?? itemDefForScale?.placedScale ?? 1) * characterScale;
@@ -182,8 +187,15 @@ export class PlacedItemsLayer extends PixiLayer {
       const offset = (tileSize * (effectiveScale - 1)) / 2;
       const placedOffsetX = (itemDef?.placedOffsetX ?? 0) * tileSize;
       const placedOffsetY = (itemDef?.placedOffsetY ?? 0) * tileSize;
-      sprite.x = item.position.x * tileSize - offset + offsetX + placedOffsetX;
-      sprite.y = item.position.y * tileSize - offset + offsetY + placedOffsetY;
+      if (item.rotation !== undefined) {
+        // Centre-anchored: pivot the rotation around the sprite's own centre
+        sprite.x = item.position.x * tileSize + tileSize / 2 + offsetX + placedOffsetX;
+        sprite.y = item.position.y * tileSize + tileSize / 2 + offsetY + placedOffsetY;
+        sprite.rotation = item.rotation;
+      } else {
+        sprite.x = item.position.x * tileSize - offset + offsetX + placedOffsetX;
+        sprite.y = item.position.y * tileSize - offset + offsetY + placedOffsetY;
+      }
       sprite.width = tileSize * effectiveScale;
       sprite.height = tileSize * effectiveScale;
       sprite.visible = inRange;
@@ -196,7 +208,9 @@ export class PlacedItemsLayer extends PixiLayer {
       } else if (itemDef?.placedOnSurface) {
         sprite.zIndex = Z_SURFACE_DECORATION;
       } else {
-        const bottomY = item.position.y + effectiveScale;
+        // Visual bottom of a centred item: anchor - (scale-1)/2 + scale = anchor + (scale+1)/2
+        // Also add placedOffsetY (in tiles) so offset items sort correctly.
+        const bottomY = item.position.y + (effectiveScale + 1) / 2 + (itemDef?.placedOffsetY ?? 0);
         sprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor(bottomY * 10);
       }
 
@@ -231,8 +245,8 @@ export class PlacedItemsLayer extends PixiLayer {
           fgSprite.width = sprite.width;
           fgSprite.height = sprite.height;
           fgSprite.visible = inRange;
-          // Render just above the player's depth at the bottom of the item's bounding area
-          fgSprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor((item.position.y + effectiveScale) * 10) + 2;
+          // Render just above the player's depth at the visual bottom of the item
+          fgSprite.zIndex = Z_DEPTH_SORTED_BASE + Math.floor((item.position.y + (effectiveScale + 1) / 2 + (itemDef?.placedOffsetY ?? 0)) * 10) + 2;
         }
       }
 

@@ -29,6 +29,7 @@ import { registerItemSprite } from '../utils/inventoryUIHelper';
 import type { MiniGameTriggerData } from '../minigames/types';
 import { getDistance } from '../utils/pathfinding';
 import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
+import { snowAngelManager } from '../utils/SnowAngelManager';
 import { InventoryItem } from '../components/Inventory';
 import type { UseUIStateReturn } from './useUIState';
 import {
@@ -292,6 +293,10 @@ export function useInteractionController(
         if (npcId.toLowerCase().includes('mum')) {
           audioManager.playSfx('sfx_mum');
         }
+        // Play humming if interacting with the little girl
+        if (npcId.toLowerCase().includes('child')) {
+          audioManager.playSfx('sfx_girl_humming');
+        }
         setActiveNPC(npcId);
       },
       onGiveGift: (npcId: string) => {
@@ -385,6 +390,9 @@ export function useInteractionController(
       },
       onBeginYuleCelebration: () => {
         yuleCelebrationManager.startCelebration();
+      },
+      onMakeSnowAngel: (block: Position) => {
+        snowAngelManager.place(block, currentMapId);
       },
       onOpenMiniGame: (miniGameId: string, triggerData: MiniGameTriggerData) => {
         openUI('miniGame', {
@@ -603,11 +611,11 @@ export function useInteractionController(
         const sole = interactions[0];
         const soleData = sole.data as { itemId?: string } | undefined;
         const soleDef = soleData?.itemId ? getItem(soleData.itemId) : null;
-        if (!soleDef?.confirmPickup) {
+        if (!soleDef?.confirmPickup && !sole.requireConfirmation) {
           sole.execute();
           return;
         }
-        // confirmPickup: true — fall through to show radial menu for deliberate confirmation
+        // confirmPickup / requireConfirmation — fall through to show radial menu for deliberate confirmation
       }
 
       // Multiple interactions — show radial menu

@@ -150,6 +150,5 @@ export const CRAFTING_SUPPLY_ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.crafting_table,
     icon: '🌿',
     placedScale: 2.5,
-    placesBelowCharacters: true,
   },
 };

@@ -23,12 +23,19 @@ import { Position } from './core';
  * Animation style for background image layers
  * Ken Burns-style panning and zooming for cinematic effect
  */
+export type CutscenePanDirection =
+  | 'left' | 'right' | 'top' | 'bottom' | 'center'
+  | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
 export interface CutsceneLayerAnimation {
   type: 'pan' | 'zoom' | 'pan-and-zoom' | 'static';
   duration: number; // Animation duration in milliseconds
   // Pan direction (for 'pan' or 'pan-and-zoom' types)
-  panFrom?: 'left' | 'right' | 'top' | 'bottom' | 'center';
-  panTo?: 'left' | 'right' | 'top' | 'bottom' | 'center';
+  panFrom?: CutscenePanDirection;
+  panTo?: CutscenePanDirection;
+  // Pan distance as a percentage of the layer's size (for 'pan' type only, default 20).
+  // 'pan-and-zoom' derives its distance from zoomFrom/zoomTo instead.
+  panAmount?: number;
   // Zoom settings (for 'zoom' or 'pan-and-zoom' types)
   zoomFrom?: number; // Starting scale (e.g., 1.0)
   zoomTo?: number; // Ending scale (e.g., 1.2)

@@ -77,8 +77,15 @@ const WEATHER_PROBABILITIES: Record<Season, SeasonalWeatherProbabilities> = {
   },
 };
 
+function hashSeed(x: number): number {
+  x = ((x + 0x9e3779b9) | 0);
+  x = Math.imul(x ^ (x >>> 16), 0x85ebca6b);
+  x = Math.imul(x ^ (x >>> 13), 0xc2b2ae35);
+  return (x ^ (x >>> 16)) >>> 0;
+}
+
 function getWeatherForSlot(slotIndex: number, season: Season): WeatherType {
-  const slotSeed = WEATHER_SEED ^ Math.imul(slotIndex, 0x9e3779b9);
+  const slotSeed = hashSeed(slotIndex ^ WEATHER_SEED);
   const rng = mulberry32(slotSeed);
 
   const probabilities = WEATHER_PROBABILITIES[season];

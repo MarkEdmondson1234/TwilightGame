@@ -66,8 +66,7 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({
         const npcScale = (npc.scale || 4.0) * characterScale;
 
         // Calculate feet position for z-ordering (only used for DOM rendering)
-        const feetOffset = 0.3;
-        const feetY = npc.position.y + feetOffset;
+        const feetY = npc.position.y + (npc.feetYOffset ?? 0.3);
 
         // Determine if sprite should be flipped horizontally (only for DOM rendering)
         let shouldFlip = false;

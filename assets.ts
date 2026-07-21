@@ -785,6 +785,7 @@ export const itemAssets = {
     '/TwilightGame/assets-optimized/items/mushras_shop/decoration_sunflower_bouquet.png',
   easel: '/TwilightGame/assets-optimized/items/mushras_shop/easel.png',
   // Decorations
+  antique_painting: '/TwilightGame/assets-optimized/items/furniture/antique_painting.png',
   hanging_plant: '/TwilightGame/assets-optimized/items/decoration/hanging_plant.png',
   monstera_plant: '/TwilightGame/assets-optimized/items/decoration/monstera_plant.png',
   sunflower_crop: '/TwilightGame/assets-optimized/items/decoration/sunflower_crop.png',
@@ -903,6 +904,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/sfx/npcs/mum.mp3',
     category: 'sfx',
   },
+  // Little Girl humming
+  sfx_girl_humming: {
+    url: '/TwilightGame/assets/audio/sfx/npcs/girl_humming.mp3',
+    category: 'sfx',
+  },
   // Mr. Fox shopkeeper
   sfx_mr_fox: {
     url: '/TwilightGame/assets/audio/sfx/npcs/mr_fox.mp3',
@@ -918,12 +924,12 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
   // === Music - Map Themes ===
   // Each map can have its own background music with crossfade transitions
   music_village: {
-    url: '/TwilightGame/assets/audio/music/twilight-village.m4a',
+    url: '/TwilightGame/assets/audio/music/twilight_gardening.mp3',
     category: 'music',
     loop: true,
   },
   music_village_autumn: {
-    url: '/TwilightGame/assets/audio/music/village-autumn.m4a',
+    url: '/TwilightGame/assets/audio/music/twilight_autumn.mp3',
     category: 'music',
     loop: true,
   },
@@ -1026,5 +1032,34 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     url: '/TwilightGame/assets/audio/ambient/spring-summer-ambience.mp3',
     category: 'ambient',
     loop: true,
+  },
+
+  // === Sound Effects - Footsteps ===
+  footstep_village_grass: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_through_grass.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+  },
+  footstep_snow: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_through_snow.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+  },
+  footstep_inside: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_inside.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+  },
+  footstep_stone: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_on_stone.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+  },
+  footstep_leaves: {
+    url: '/TwilightGame/assets/audio/sfx/movement/walking_through_leaves.mp3',
+    category: 'sfx',
+    baseVolume: 0.6,
+    fadeIn: 120,
+    fadeOut: 120,
   },
 };

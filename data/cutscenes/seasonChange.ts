@@ -408,34 +408,54 @@ export const winterCutscene: CutsceneDefinition = {
   },
 
   scenes: [
-    // Scene 1: Snow-covered landscape
-    // TODO: Create winter_sky.png (soft grey/blue winter sky)
-    // TODO: Create winter_hills.png (snow-covered hills)
+    // Scene 1: Snow-covered landscape — 4-layer parallax panorama
     {
       id: 'winter_snowfall',
       backgroundLayers: [
-        // Soft winter sky
+        // Winter sky
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_winter_sky.png',
           zIndex: 0,
-          opacity: 0.7, // Muted for winter feel
           animation: {
             type: 'static',
             duration: 0,
           },
         },
-        // TODO: Replace with proper snowy hills
+        // Village rooftops — sits behind the hill layers, peeking out as they drift
         {
-          image: 'summer_just_hills.PNG',
+          image: 'cutscene_winter_village.png',
           zIndex: 1,
-          offsetY: 10,
-          opacity: 0.8,
           animation: {
-            type: 'zoom',
-            duration: 8000,
-            zoomFrom: 1.2,
-            zoomTo: 1.0,
-            easing: 'ease-out',
+            type: 'static',
+            duration: 0,
+          },
+        },
+        // Distant snowy background — zooms in (hill draws closer) while drifting down/left to reveal more village
+        {
+          image: 'cutscene_winter_background.png',
+          zIndex: 2,
+          animation: {
+            type: 'pan-and-zoom',
+            duration: 7000,
+            zoomFrom: 1.0,
+            zoomTo: 1.1,
+            panFrom: 'center',
+            panTo: 'top-right', // NB: 'top-right' maps to negative translateX + positive translateY — see getPanOffset — so this drifts down/left
+            easing: 'ease-in-out',
+          },
+        },
+        // Snowy foreground — closest layer, same zoom-in + down/left drift
+        {
+          image: 'cutscene_winter_foreground.png',
+          zIndex: 3,
+          animation: {
+            type: 'pan-and-zoom',
+            duration: 6000,
+            zoomFrom: 1.0,
+            zoomTo: 1.12,
+            panFrom: 'center',
+            panTo: 'top-right',
+            easing: 'ease-in-out',
           },
         },
       ],
@@ -460,17 +480,53 @@ export const winterCutscene: CutsceneDefinition = {
     {
       id: 'winter_village',
       backgroundLayers: [
-        // TODO: Create winter_cottage.png (cosy cottage in snow)
         {
-          image: 'summer_just_hill.PNG',
+          image: 'cutscene_winter_sky.png',
           zIndex: 0,
-          opacity: 0.85,
+          animation: {
+            type: 'static',
+            duration: 0,
+          },
+        },
+        {
+          image: 'cutscene_winter_village.png',
+          zIndex: 1,
           animation: {
             type: 'zoom',
             duration: 6000,
             zoomFrom: 1.0,
             zoomTo: 1.1,
             easing: 'ease-in-out',
+          },
+        },
+        // Distant snowy background — held static at the resting position it lands on at the end
+        // of slide 1's zoom + down/left drift (scale 1.1, translate(-5%, 5%)), so the hill still
+        // partially obscures the village here rather than sitting behind it
+        {
+          image: 'cutscene_winter_background.png',
+          zIndex: 2,
+          offsetX: -5,
+          offsetY: 5,
+          animation: {
+            type: 'zoom',
+            duration: 0,
+            zoomFrom: 1.1,
+            zoomTo: 1.1,
+          },
+        },
+        // Snowy foreground — held static at the resting position it lands on at the end of
+        // slide 1's zoom + down/left drift (scale 1.12, translate(-6%, 6%)), so the village
+        // still reads as partially obscured by the hill here
+        {
+          image: 'cutscene_winter_foreground.png',
+          zIndex: 3,
+          offsetX: -6,
+          offsetY: 6,
+          animation: {
+            type: 'zoom',
+            duration: 0,
+            zoomFrom: 1.12,
+            zoomTo: 1.12,
           },
         },
       ],

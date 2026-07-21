@@ -36,6 +36,7 @@ export function createCowNPC(
     sprite: npcAssets.cow_01,
     portraitSprite: npcAssets.cow_portrait,
     scale: 4.5, // Large pastoral animal
+    feetYOffset: 1.5, // Sprite is 4.5 tiles tall (anchor.set(0.5,0.5)), so feet are ~1.5 tiles below centre
     interactionRadius: 1.5,
     states: {
       grazing: {

@@ -25,6 +25,7 @@ import { farmingProvider } from './providers/farming';
 import { forageProvider } from './providers/forage';
 import { deskProvider } from './providers/desk';
 import { decorationPlacementProvider } from './providers/decorationPlacement';
+import { snowAngelProvider } from './providers/snowAngel';
 import { curtainProvider } from './providers/curtains';
 
 export const INTERACTION_PROVIDERS: InteractionProvider[] = [
@@ -51,5 +52,9 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   // Placement and furnishing.
   deskProvider,
   decorationPlacementProvider,
+
+  // Seasonal play.
+  snowAngelProvider,
+
   curtainProvider,
 ];

@@ -810,6 +810,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   useEffect(() => {
     if (!enabled || !isPixiInitialized || !playerSpriteRef.current) return;
 
+    // In rooms with useDOMPlayer the player is rendered as a DOM element so it
+    // can depth-sort above midground DOM animations (e.g. the fireplace fire).
+    // Hide the PixiJS sprite to avoid a double-render.
+    if (currentMap?.useDOMPlayer) {
+      playerSpriteRef.current.setVisible(false);
+      return;
+    }
+
     // Ensure player sprite is visible
     playerSpriteRef.current.setVisible(true);
 
@@ -839,6 +847,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     playerScale,
     shouldFlip,
     isPixiInitialized,
+    currentMap?.useDOMPlayer,
     currentMap?.characterScale,
     effectiveGridOffset,
     effectiveTileSize,

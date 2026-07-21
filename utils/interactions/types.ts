@@ -62,7 +62,8 @@ export type InteractionType =
   | 'tidy_leaves'
   | 'pickup_leaves'
   | 'open_shop'
-  | 'remove_curtains';
+  | 'remove_curtains'
+  | 'make_snow_angel';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -71,6 +72,8 @@ export interface AvailableInteraction {
   color?: string;
   /** Additional data for debugging/testing (interaction logic is in execute callback) */
   data?: unknown;
+  /** Force the radial menu to show even when this is the only available interaction */
+  requireConfirmation?: boolean;
   /** Execute this interaction */
   execute: () => void;
 }
@@ -147,6 +150,8 @@ export interface GetInteractionsConfig {
   /** Open a mini-game by ID with trigger data */
   onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
   onShowToast?: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
+  /** Make a snow angel — block is the top-left tile of the clear 2x2 area found near the click */
+  onMakeSnowAngel?: (block: Position) => void;
 }
 
 // ---------------------------------------------------------------------------

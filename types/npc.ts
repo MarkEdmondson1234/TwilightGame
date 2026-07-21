@@ -217,6 +217,7 @@ export interface NPC {
   noFlip?: boolean; // Optional: disable horizontal flipping entirely
   reverseFlip?: boolean; // Optional: flip when facing right instead of left (for sprites that naturally face left)
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
+  feetYOffset?: number; // Optional: override feet Y offset for depth sorting (default 0.3). Use larger values for big sprites like animals.
   visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
   seasonalLocations?: SeasonalLocation; // Optional: different positions/maps per season (if not set, uses base position/current map)
   entryAnimation?: EntryAnimation; // Optional: walk-in animation when player enters the map

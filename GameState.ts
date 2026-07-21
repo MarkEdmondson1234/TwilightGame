@@ -1603,6 +1603,14 @@ class GameStateManager {
   }
 
   /**
+   * Get all placed items across every map (e.g. for managers that need to
+   * clean up items regardless of which map the player is currently on)
+   */
+  getAllPlacedItems(): PlacedItem[] {
+    return this.state.placedItems;
+  }
+
+  /**
    * Remove a placed item by ID
    */
   removePlacedItem(itemId: string): void {

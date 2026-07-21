@@ -76,6 +76,7 @@ export type { Photo } from './photography';
 
 // Cutscene types
 export type {
+  CutscenePanDirection,
   CutsceneLayerAnimation,
   CutsceneBackgroundLayer,
   CutsceneCharacter,

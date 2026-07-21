@@ -9,11 +9,7 @@
  * Every item must keep `id`, `name` and its object key identical (SSoT rule).
  */
 
-import {
-  groceryAssets,
-  itemAssets,
-  magicalAssets,
-} from '../../assets';
+import { groceryAssets, itemAssets, magicalAssets } from '../../assets';
 import { ItemCategory, ItemRarity, type ItemDefinition } from './types';
 
 export const DECORATION_ITEMS: Record<string, ItemDefinition> = {
@@ -65,13 +61,30 @@ export const DECORATION_ITEMS: Record<string, ItemDefinition> = {
     name: 'decoration_monstera_plant',
     displayName: 'Monstera Plant',
     category: ItemCategory.DECORATION,
-    description: 'A striking monstera plant with beautiful split leaves. Adds a touch of the tropics to any room.',
+    description:
+      'A striking monstera plant with beautiful split leaves. Adds a touch of the tropics to any room.',
     stackable: true,
     buyPrice: 120,
     sellPrice: 40,
     image: itemAssets.monstera_plant,
     icon: '🪴',
     placedScale: 2,
+    allowAnyTilePlacement: true,
+  },
+
+  decoration_antique_painting: {
+    id: 'decoration_antique_painting',
+    name: 'decoration_antique_painting',
+    displayName: 'Antique Painting',
+    category: ItemCategory.DECORATION,
+    description:
+      'A beautifully framed oil painting of a golden sunrise over the countryside. Perfect for brightening up any room.',
+    stackable: false,
+    buyPrice: 650,
+    sellPrice: 200,
+    image: itemAssets.antique_painting,
+    icon: '🖼️',
+    placedScale: 1.53,
     allowAnyTilePlacement: true,
   },
 
@@ -82,7 +95,8 @@ export const DECORATION_ITEMS: Record<string, ItemDefinition> = {
     name: 'straw',
     displayName: 'Straw',
     category: ItemCategory.MATERIAL,
-    description: 'Dried meadow grass gathered in autumn. Useful for crafting seasonal wreaths and decorations.',
+    description:
+      'Dried meadow grass gathered in autumn. Useful for crafting seasonal wreaths and decorations.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 5,
@@ -95,7 +109,8 @@ export const DECORATION_ITEMS: Record<string, ItemDefinition> = {
     name: 'maple_leaf',
     displayName: 'Maple Leaf',
     category: ItemCategory.MAGICAL_INGREDIENT,
-    description: 'A dried autumn maple leaf, still bright with colour. Collected from piles gathered by the wind.',
+    description:
+      'A dried autumn maple leaf, still bright with colour. Collected from piles gathered by the wind.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 5,
@@ -107,7 +122,8 @@ export const DECORATION_ITEMS: Record<string, ItemDefinition> = {
     name: 'red_berries',
     displayName: 'Red Berries',
     category: ItemCategory.MATERIAL,
-    description: 'Bright red hawthorn berries, gathered in small clusters in autumn. Lovely for decorations.',
+    description:
+      'Bright red hawthorn berries, gathered in small clusters in autumn. Lovely for decorations.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 4,
@@ -120,7 +136,8 @@ export const DECORATION_ITEMS: Record<string, ItemDefinition> = {
     name: 'spruce_sprig',
     displayName: 'Spruce Sprig',
     category: ItemCategory.MATERIAL,
-    description: 'A fresh sprig snapped from a spruce tree in the cold of winter. Perfect for festive wreaths.',
+    description:
+      'A fresh sprig snapped from a spruce tree in the cold of winter. Perfect for festive wreaths.',
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 6,

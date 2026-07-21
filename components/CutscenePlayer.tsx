@@ -17,6 +17,7 @@ import {
   CutsceneDialogue,
   CutsceneLayerAnimation,
   CutsceneWeatherEffect,
+  CutscenePanDirection,
 } from '../types';
 import { cutsceneManager } from '../utils/CutsceneManager';
 import { TimeManager } from '../utils/TimeManager';
@@ -24,6 +25,7 @@ import { npcManager } from '../NPCManager';
 import { gameState } from '../GameState';
 import { getPortraitSprite } from '../utils/portraitSprites';
 import { audioManager } from '../utils/AudioManager';
+import { useTouchDevice } from '../hooks/useTouchDevice';
 import { Z_CUTSCENE, zClass } from '../zIndex';
 
 interface CutscenePlayerProps {
@@ -374,13 +376,12 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
     return () => clearTimeout(timer);
   }, []);
 
-  const getPanOffset = (
-    direction: 'left' | 'right' | 'top' | 'bottom' | 'center',
-    zoom: number = 1.0
-  ): { x: number; y: number } => {
-    // Pan amount scales with zoom (more zoom = more visible pan)
-    const panAmount = (zoom - 1.0) * 50; // Pan by 50% of the extra zoom area
+  const DEFAULT_PAN_AMOUNT = 20;
 
+  const getPanOffset = (
+    direction: CutscenePanDirection,
+    panAmount: number
+  ): { x: number; y: number } => {
     switch (direction) {
       case 'left':
         return { x: panAmount, y: 0 };
@@ -390,6 +391,14 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
         return { x: 0, y: panAmount };
       case 'bottom':
         return { x: 0, y: -panAmount };
+      case 'top-left':
+        return { x: panAmount, y: panAmount };
+      case 'top-right':
+        return { x: -panAmount, y: panAmount };
+      case 'bottom-left':
+        return { x: panAmount, y: -panAmount };
+      case 'bottom-right':
+        return { x: -panAmount, y: -panAmount };
       case 'center':
       default:
         return { x: 0, y: 0 };
@@ -413,8 +422,9 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
     }
 
     if (animation.type === 'pan') {
-      const panFrom = getPanOffset(animation.panFrom || 'left');
-      const panTo = getPanOffset(animation.panTo || 'right');
+      const panAmount = animation.panAmount ?? DEFAULT_PAN_AMOUNT;
+      const panFrom = getPanOffset(animation.panFrom || 'left', panAmount);
+      const panTo = getPanOffset(animation.panTo || 'right', panAmount);
       const pan = animating ? panTo : panFrom;
       return `translate(${baseOffsetX + pan.x}%, ${baseOffsetY + pan.y}%)`;
     }
@@ -423,8 +433,9 @@ const BackgroundLayer: React.FC<BackgroundLayerProps> = ({ layer, isTransitionin
       const zoomFrom = animation.zoomFrom || 1.0;
       const zoomTo = animation.zoomTo || 1.2;
       const zoom = animating ? zoomTo : zoomFrom;
-      const panFrom = getPanOffset(animation.panFrom || 'left', zoomFrom);
-      const panTo = getPanOffset(animation.panTo || 'right', zoomTo);
+      // Pan amount scales with zoom (more zoom = more visible pan area to move across)
+      const panFrom = getPanOffset(animation.panFrom || 'left', (zoomFrom - 1.0) * 50);
+      const panTo = getPanOffset(animation.panTo || 'right', (zoomTo - 1.0) * 50);
       const pan = animating ? panTo : panFrom;
       return `translate(${baseOffsetX + pan.x}%, ${baseOffsetY + pan.y}%) scale(${zoom})`;
     }
@@ -586,6 +597,8 @@ interface DialogueDisplayProps {
 }
 
 const DialogueDisplay: React.FC<DialogueDisplayProps> = ({ dialogue, onAdvance, onChoice }) => {
+  const isTouchDevice = useTouchDevice();
+
   // Get contextual text based on season/time
   const getText = (): string => {
     const gameTime = TimeManager.getCurrentTime();
@@ -649,7 +662,7 @@ const DialogueDisplay: React.FC<DialogueDisplayProps> = ({ dialogue, onAdvance, 
                 onClick={onAdvance}
                 className="text-gray-400 hover:text-amber-400 transition-colors text-sm"
               >
-                Press E or Enter to continue...
+                {isTouchDevice ? 'Tap to continue...' : 'Press E or Enter to continue...'}
               </button>
             </div>
           )}
