@@ -287,14 +287,14 @@ describe('Tile Registration - No Silently Dropped Duplicates', () => {
  * `customCodes`, parseGrid silently substitutes GRASS and logs a warning nobody reads —
  * so a typo becomes a permanent, invisible patch of grass.
  *
- * `´` (U+00B4) in village.ts is almost certainly a slipped keystroke: on a Mac it is what
- * Option+E produces. Which tile actually belongs there is a judgement call about how that
- * spot in the village should look, so it is recorded rather than guessed at.
+ * This list is empty, and should stay that way. It previously held `´` (U+00B4) at village
+ * (13, 29) — a slipped dead-key keystroke that had been rendering as fallback GRASS since it
+ * was typed. It is now an explicit `G`, which is what that spot always looked like.
  *
  * ⚠️ Do NOT add characters here to silence a grid you are editing. Use a real code, or
  * register one — either in GRID_CODES (maps/gridParser.ts) or in that map's customCodes.
  */
-const KNOWN_UNKNOWN_GRID_CHARS = ['´'];
+const KNOWN_UNKNOWN_GRID_CHARS: string[] = [];
 
 describe('Map grids use only recognised grid codes', () => {
   it('parsing every map definition produces no "Unknown grid code" warnings', async () => {
@@ -316,7 +316,9 @@ describe('Map grids use only recognised grid codes', () => {
     }
 
     const unexpected = [
-      ...new Set(unknown.filter((w) => !KNOWN_UNKNOWN_GRID_CHARS.some((c) => w.includes(`'${c}'`)))),
+      ...new Set(
+        unknown.filter((w) => !KNOWN_UNKNOWN_GRID_CHARS.some((c) => w.includes(`'${c}'`)))
+      ),
     ];
 
     if (unexpected.length > 0) {
