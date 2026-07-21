@@ -50,7 +50,6 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   const editor = useWreathEditor(context.actions);
   const { placedItems } = editor;
 
-  const [message, setMessage] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   /** Current viewport width — used to scale down the workshop on small screens. */
   const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
@@ -185,22 +184,6 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
           ✕
         </button>
       </div>
-
-      {/* Message */}
-      {message && (
-        <div
-          style={{
-            padding: '8px 12px',
-            marginBottom: 12,
-            background: '#4a2020',
-            borderRadius: 6,
-            textAlign: 'center',
-            fontSize: 14,
-          }}
-        >
-          {message}
-        </div>
-      )}
 
       {/* ================================================================= */}
       {/* Two-column layout: Gallery (left) + Wreath (right)                */}

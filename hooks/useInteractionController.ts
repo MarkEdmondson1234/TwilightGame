@@ -406,7 +406,14 @@ export function useInteractionController(
         };
         customScale?: number;
       }) => {
-        inventoryManager.removeItem(result.itemId, 1);
+        // Consume the instance whose artwork is being placed, not just the leading one —
+        // otherwise a legacy wreath at the front of the queue is eaten instead and the
+        // placed decoration stays "available" for the next placement.
+        if (result.paintingId) {
+          inventoryManager.removeItemInstanceByDecorationId(result.itemId, result.paintingId);
+        } else {
+          inventoryManager.removeItem(result.itemId, 1);
+        }
         const placedItemDef = getItem(result.itemId);
         gameState.addPlacedItem({
           id: `decoration_${Date.now()}_${Math.random().toString(36).slice(2)}`,

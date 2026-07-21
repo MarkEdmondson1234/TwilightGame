@@ -29,7 +29,7 @@ Two tests fail on `main` for reasons unrelated to most work:
 - `cropGrowth.test.ts` — a crop ROI/profitability assertion
 - `eventChains.test.ts` — YAML chain validation expects the category list to include `romance`
 
-Treat **2 failed / 410 passed** as green. Investigate only if the count rises or a *different*
+Treat **2 failed / 422 passed** as green. Investigate only if the count rises or a *different*
 file fails. To confirm something is genuinely pre-existing, run it against a clean tree:
 
 ```bash
@@ -55,6 +55,7 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `minigameRegistry.test.ts` | Duplicate ids, missing fields, trigger items **or NPCs** that don't exist | Adding a mini-game |
 | `minigameRequirements.test.ts` | Required items not actually gating play; a game being unreachable | Adding a mini-game with requirements |
 | `interactionProviders.test.ts` | Provider registry wiring and the `exclusive` short-circuit | Adding a click interaction |
+| `wreathWorkshop.test.ts` | Capture geometry, pointer maths under `transform: scale()`, decoration instance matching | Touching the wreath workshop or custom decorations |
 | `colorResolver.test.ts` | Colour resolution behaviour through map schemes | Touching tile colours or palettes |
 | `palette.test.ts` | Palette definitions stay consistent | Changing the colour palette |
 | `farmManager.test.ts` / `cropGrowth.test.ts` | Planting, watering, growth stages, crop economics | Touching farming |

@@ -13,7 +13,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MiniGameContext } from '../types';
 import { getItem } from '../../data/items';
-import { getClientPos } from './wreathHelpers';
+import { getCanvasScale, getClientPos, toCanvasCoords } from './wreathHelpers';
 import { getWreathQuality, type WreathQuality } from './wreathQuality';
 import { makeSlot, type AvailableFlower, type SlotData } from './wreathTypes';
 import {
@@ -91,6 +91,8 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
   /** Drag state for repositioning flowers already on the wreath. */
   const dragRef = useRef<{
     slotIndex: number;
+    /** Canvas scale captured at drag start, so screen deltas convert to canvas units. */
+    scale: number;
     startX: number;
     startY: number;
     startOffsetX: number;
@@ -170,8 +172,7 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
       const avail = availableFlowers.find((f) => f.itemId === selectedFlower);
       if (!avail || avail.available <= 0) return;
       const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
+      const { x, y } = toCanvasCoords(e.clientX, e.clientY, rect);
       const newIndex = placedItems.length;
       setPlacedItems((prev) => [...prev, makeSlot(selectedFlower, x, y)]);
       setEditingSlot(newIndex);
@@ -291,8 +292,10 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
       const pos = getClientPos(e as React.MouseEvent);
       if (!pos) return;
       if ('touches' in e) e.preventDefault();
+      const canvasRect = wreathRef.current?.getBoundingClientRect();
       dragRef.current = {
         slotIndex: index,
+        scale: canvasRect ? getCanvasScale(canvasRect) : 1,
         startX: pos.x,
         startY: pos.y,
         startOffsetX: isCropping ? slot.cropX : slot.x,
@@ -351,12 +354,18 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
       // Wreath flower drag
       if (!dragRef.current) return;
       if ('touches' in e) e.preventDefault();
-      const { slotIndex, startX, startY, startOffsetX, startOffsetY } = dragRef.current;
-      const dx = pos.x - startX;
-      const dy = pos.y - startY;
+      const { slotIndex, scale, startX, startY, startOffsetX, startOffsetY } = dragRef.current;
+      // Raw screen-pixel delta — used for the intent threshold, which is about how far the
+      // finger moved, not how far the flower should travel.
+      const screenDx = pos.x - startX;
+      const screenDy = pos.y - startY;
+      // Slot coordinates are unscaled canvas pixels, so the applied delta must be divided
+      // by the workshop's on-screen scale or the flower lags the pointer on narrow viewports.
+      const dx = screenDx / scale;
+      const dy = screenDy / scale;
 
       if (!dragRef.current.didDrag) {
-        if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+        if (Math.abs(screenDx) > DRAG_THRESHOLD || Math.abs(screenDy) > DRAG_THRESHOLD) {
           dragRef.current.didDrag = true;
         } else {
           return;
@@ -381,8 +390,7 @@ export function useWreathEditor(actions: MiniGameContext['actions']): WreathEdit
         const pos = getClientPos(e as React.MouseEvent) ?? galleryDragPosRef.current;
         if (pos && wreathRef.current) {
           const rect = wreathRef.current.getBoundingClientRect();
-          const x = pos.x - rect.left;
-          const y = pos.y - rect.top;
+          const { x, y } = toCanvasCoords(pos.x, pos.y, rect);
           // Only place if dropped within the canvas bounds
           if (x >= 0 && x <= WREATH_CANVAS_SIZE && y >= 0 && y <= WREATH_CANVAS_SIZE) {
             const newIndex = placedItems.length;

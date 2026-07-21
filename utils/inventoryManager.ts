@@ -182,11 +182,47 @@ class InventoryManager {
   /**
    * Return the decorationId of the first inventory instance of an item that has one.
    * Used at placement time to look up the correct custom image for a wreath instance.
+   *
+   * Whoever places the result MUST consume that same instance via
+   * `removeItemInstanceByDecorationId` — plain `removeItem` always takes instances[0],
+   * which is a different wreath whenever a legacy instance (no decorationId) leads the
+   * queue. Getting that wrong strands the consumed wreath's artwork and re-offers an
+   * already-placed decoration on the next placement.
    */
   getFirstDecorationId(itemId: string): string | undefined {
     const instances = this.items.get(itemId);
     if (!instances) return undefined;
     return instances.find((i) => i.decorationId)?.decorationId;
+  }
+
+  /**
+   * Remove the specific instance carrying `decorationId`, rather than whichever happens to
+   * be first. Use this when placing a custom-image decoration so the wreath taken out of the
+   * inventory is the one whose artwork was placed in the world.
+   *
+   * Falls back to the normal leading-instance removal when nothing carries that id, which
+   * covers paintings and saves predating decorationId tracking.
+   */
+  removeItemInstanceByDecorationId(itemId: string, decorationId: string): boolean {
+    const instances = this.items.get(itemId);
+    if (!instances || instances.length === 0) return false;
+
+    const index = instances.findIndex((i) => i.decorationId === decorationId);
+    if (index === -1) return this.removeItem(itemId, 1);
+
+    instances.splice(index, 1);
+
+    if (instances.length === 0) {
+      this.items.delete(itemId);
+      const slotIndex = this.slotOrder.indexOf(itemId);
+      if (slotIndex !== -1) this.slotOrder.splice(slotIndex, 1);
+    } else {
+      this.items.set(itemId, instances);
+    }
+
+    console.log(`[InventoryManager] Removed ${itemId} instance with decoration ${decorationId}`);
+    this.saveToGameState();
+    return true;
   }
 
   /**
