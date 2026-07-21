@@ -192,7 +192,8 @@ describe('YAML Event Chain Files', () => {
   });
 
   it('should load and validate all chain definitions', async () => {
-    const { loadAllEventChains } = await import('../utils/eventChainLoader');
+    // Assert against the loader's own set, not a copy — see VALID_EVENT_TYPES.
+    const { loadAllEventChains, VALID_EVENT_TYPES } = await import('../utils/eventChainLoader');
     const chains = loadAllEventChains();
 
     expect(chains.length).toBeGreaterThanOrEqual(3);
@@ -204,7 +205,7 @@ describe('YAML Event Chain Files', () => {
       expect(def.id).toBeTruthy();
       expect(def.title).toBeTruthy();
       expect(def.description).toBeTruthy();
-      expect(['discovery', 'achievement', 'seasonal', 'community', 'mystery']).toContain(def.type);
+      expect([...VALID_EVENT_TYPES]).toContain(def.type);
       expect(def.trigger.type).toBeTruthy();
       expect(def.stages.length).toBeGreaterThan(0);
 

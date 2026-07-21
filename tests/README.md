@@ -22,15 +22,27 @@ npm run test:run   # same, if make is unavailable
 > ]
 > ```
 
-## The baseline is "2 failed"
+## The baseline is green
 
-Two tests fail on `main` for reasons unrelated to most work:
+Every test passes on `main`. **Any** failure is a real regression — do not wave one through as
+"pre-existing".
 
-- `cropGrowth.test.ts` — a crop ROI/profitability assertion
-- `eventChains.test.ts` — YAML chain validation expects the category list to include `romance`
+This section used to document two permanent failures (`cropGrowth`, `eventChains`). Both turned
+out to be bugs in the *tests*, not the game data, and are fixed:
 
-Treat **2 failed / 422 passed** as green. Investigate only if the count rises or a *different*
-file fails. To confirm something is genuinely pre-existing, run it against a clean tree:
+- `cropGrowth.test.ts` judged every crop on a single harvest, which is the wrong model for a
+  perennial. Mint (`isHerb: true`) breaks even on harvest one and profits from harvest two
+  onwards — healthy, but it scored `profit === 0`. Annuals and perennials are now asserted
+  separately.
+- `eventChains.test.ts` kept its own copy of the valid chain-type list, which went stale when
+  `romance` was added to the loader. It now imports `VALID_EVENT_TYPES` from
+  `utils/eventChainLoader.ts` so the list cannot drift again.
+
+The lesson worth keeping: a long-lived "known failure" is worth re-reading before trusting it —
+both of these were masking a stale test, and a standing "treat N failed as green" rule will hide
+the next real regression too.
+
+To confirm something is genuinely pre-existing, run it against a clean tree:
 
 ```bash
 git worktree add /tmp/baseline HEAD
