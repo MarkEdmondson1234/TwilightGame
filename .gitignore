@@ -15,6 +15,9 @@ dist-ssr
 # Claude Code local settings (machine-specific)
 .claude/settings.local.json
 
+# Claude Code git worktrees — checkouts of other branches, never part of a commit
+.claude/worktrees/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
