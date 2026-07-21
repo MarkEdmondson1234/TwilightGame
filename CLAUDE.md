@@ -1069,15 +1069,15 @@ npm run test:run   # same, if make is unavailable
 blocks it lives at `.claude/hooks/guard-test-command.sh` (not registered by default; see
 [`tests/README.md`](tests/README.md) to enable).
 
-**Expected baseline:** two tests currently fail on `main` (`cropGrowth`, `eventChains`) for
-reasons unrelated to most work. Treat "2 failed" as green; investigate only if the count rises
-or a *different* file fails.
+**Expected baseline: the suite is fully green.** Every test passes on `main`. Any failure is a
+real regression — yours or one you have just surfaced — so do not wave it through. (This used
+to read "treat 2 failed as green"; those two were test bugs, not data bugs, and are fixed.)
 
 **What the tests guard:** see [`tests/README.md`](tests/README.md) — it maps each test file to
 the mistake it catches, so a failure tells you what to fix.
 
 **Before Committing:**
-1. Run `make verify` - typecheck must be clean, tests at or below the known baseline
+1. Run `make verify` - typecheck must be clean and every test must pass
 2. Test in browser - Game must run without console errors
 3. Check HMR - Changes should hot-reload
 4. Review self-tests - Startup sanity checks must pass

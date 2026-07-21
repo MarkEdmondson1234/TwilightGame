@@ -98,7 +98,7 @@ LG,,GXXXXXX,G,lP,,G,,,,,G,e,GL
 JG,GG,,G,,GGG,,P,,GXXXXXG,5eGt
 LG,,,G,G,,;;G8,PG,GXXXXXeG,,GU
 oGoc,,;;,G,,,G,P,,G,G,,l,U,,,,
-tLoGG,l,,lGL,´GLG,,L,L,LUoLL,,
+tLoGG,l,,lGL,GGLG,,L,L,LUoLL,,
 `;
 
 export const village: MapDefinition = {
