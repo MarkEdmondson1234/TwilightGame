@@ -16,13 +16,8 @@ import { TILE_SIZE, INTERACTION, DEBUG } from '../constants';
 import { MouseClickInfo } from './useMouseControls';
 import { RadialMenuOption } from '../components/RadialMenu';
 import { FarmActionType } from '../components/FarmActionAnimation';
-import {
-  getAvailableInteractions,
-  FarmActionResult,
-  ForageResult,
-  TransitionResult,
-  PlacedItemAction,
-} from '../utils/actionHandlers';
+import { FarmActionResult, ForageResult, TransitionResult } from '../utils/actionHandlers';
+import { getAvailableInteractions, type PlacedItemAction } from '../utils/interactions';
 import { npcManager } from '../NPCManager';
 import { audioManager } from '../utils/AudioManager';
 import { gameState } from '../GameState';
@@ -49,7 +44,10 @@ import {
   calculateShedOverlayBounds,
 } from '../utils/messInteractions';
 import { mapManager } from '../maps';
-import { onWreathPlacedInVillage, WREATH_ITEM_IDS } from '../data/questHandlers/mushraWreathHandler';
+import {
+  onWreathPlacedInVillage,
+  WREATH_ITEM_IDS,
+} from '../data/questHandlers/mushraWreathHandler';
 
 // ============================================================================
 // Configuration Interface
@@ -518,7 +516,10 @@ export function useInteractionController(
         const viewportHeight = window.innerHeight;
         const referenceWidth = 1280;
         const referenceHeight = 720;
-        const viewportScale = Math.min(viewportWidth / referenceWidth, viewportHeight / referenceHeight);
+        const viewportScale = Math.min(
+          viewportWidth / referenceWidth,
+          viewportHeight / referenceHeight
+        );
 
         const shedBounds = calculateShedOverlayBounds(viewportWidth, viewportHeight, viewportScale);
 

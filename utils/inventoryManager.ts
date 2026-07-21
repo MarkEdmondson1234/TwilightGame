@@ -23,7 +23,14 @@ export interface InventoryItem {
   uses?: number; // Current uses remaining for this item (only if item has maxUses defined)
   masteryLevel?: number; // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
   photoData?: Photo; // For KEEPSAKE photo items — links to the captured image and metadata
-  decorationId?: string; // For custom decoration items (wreaths, etc.) — links instance to its PaintingData
+  /**
+   * For custom decoration items (wreaths, etc.) — links this instance to its PaintingData.
+   *
+   * NAMING: the same value is called `paintingId` once the item is placed in the world
+   * (`PlacedItemAction.paintingId` in utils/interactions/types.ts). Keep it attached across
+   * the place → pick up round trip, or the item gets re-matched to arbitrary artwork.
+   */
+  decorationId?: string;
 }
 
 class InventoryManager {
