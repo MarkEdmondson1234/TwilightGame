@@ -168,6 +168,7 @@ Add PixiJS renderer to App.tsx:
 import * as PIXI from 'pixi.js';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { textureManager } from './utils/TextureManager';
+import { getCachedPerformanceSettings } from './utils/performanceTier';
 
 const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -177,14 +178,17 @@ const App: React.FC = () => {
   useEffect(() => {
     // Initialize PixiJS
     const initPixi = async () => {
+      const perfSettings = getCachedPerformanceSettings();
       const app = new PIXI.Application();
       await app.init({
         canvas: canvasRef.current!,
         width: window.innerWidth,
         height: window.innerHeight,
         backgroundColor: 0x1a1a1a,
-        antialias: false, // Pixel art
-        resolution: window.devicePixelRatio,
+        // Device-adaptive, NOT an art-style choice — see utils/performanceTier.ts.
+        // Antialiasing is ON for desktop (HIGH tier) and off only on low/mobile tiers.
+        antialias: perfSettings.antialias,
+        resolution: perfSettings.resolution,
       });
 
       appRef.current = app;

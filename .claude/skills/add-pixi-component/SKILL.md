@@ -75,7 +75,13 @@ import { TileLayer } from './utils/pixi/TileLayer';
 useEffect(() => {
   const initPixi = async () => {
     const app = new PIXI.Application();
-    await app.init({ canvas: canvasRef.current!, antialias: false });
+    // antialias/resolution come from the device tier, not from art style
+    const perfSettings = getCachedPerformanceSettings();
+    await app.init({
+      canvas: canvasRef.current!,
+      antialias: perfSettings.antialias,
+      resolution: perfSettings.resolution,
+    });
     await textureManager.loadBatch(tileAssets);
     
     const tileLayer = new TileLayer();
