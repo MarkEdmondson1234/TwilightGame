@@ -39,19 +39,19 @@ const BASE_URL_PREFIX = '/TwilightGame/';
 const SQUARE_TOLERANCE = 0.02;
 
 /**
- * Sprites declared with non-square tile dimensions despite a square source image.
+ * Sprites allowed to declare non-square tile dimensions despite a square source image.
  *
- * These pre-date this test and need an ART decision, not a code one. The artwork may have
- * been drawn with deliberate padding inside a square canvas — in which case the correct fix
- * is to re-crop the asset, NOT to change spriteWidth/spriteHeight, which would visibly
- * resize the object in-game. They are listed here so the suite stays green and a NEW
- * distortion is a real, actionable failure.
+ * Currently empty, and it should stay that way. The three original entries
+ * (COTTAGE_STONE, OAK_TREE, DEAD_SPRUCE) were genuinely distorted, not padded artwork —
+ * measuring each image's alpha bounding box showed the drawn content filling ~81% of the
+ * canvas rather than sitting in a letterboxed strip, so the tile box was the thing that was
+ * wrong. All three were squared in data/spriteMetadata.ts.
  *
- * ⚠️ Do NOT add to this list to silence a sprite you are adding. Fix the sprite.
- * The "no stale entries" test below fails if a listed sprite is later corrected, so this
- * list cannot quietly rot.
+ * ⚠️ Do NOT add a sprite here to silence a failure. If a sprite looks correct in game
+ * despite a non-square declaration, the artwork is padded inside its canvas and the fix is
+ * to re-crop the asset — check the alpha bounding box before assuming either way.
  */
-const KNOWN_ASPECT_EXCEPTIONS = new Set(['COTTAGE_STONE', 'OAK_TREE', 'DEAD_SPRUCE']);
+const KNOWN_ASPECT_EXCEPTIONS = new Set<string>([]);
 
 /** Resolve a served asset URL to an absolute path under public/. */
 function toDiskPath(assetUrl: string): string {
