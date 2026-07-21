@@ -35,8 +35,9 @@ thyme: {
 },
 ```
 
-### data/items.ts
+### data/items/seeds.ts and data/items/crops.ts
 ```typescript
+// data/items/seeds.ts → SEED_ITEMS
 seed_thyme: {
   id: 'seed_thyme', name: 'seed_thyme', displayName: 'Thyme Seeds',
   category: ItemCategory.SEED,
@@ -46,6 +47,7 @@ seed_thyme: {
   cropId: 'thyme',
   image: herbAssets.thyme_seeds,
 },
+// data/items/crops.ts → CROP_ITEMS
 crop_thyme: {
   id: 'crop_thyme', name: 'crop_thyme', displayName: 'Fresh Thyme',
   category: ItemCategory.CROP,

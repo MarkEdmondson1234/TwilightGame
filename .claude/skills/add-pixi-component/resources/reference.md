@@ -357,13 +357,20 @@ grassContainer.addChild(new PIXI.Sprite(grassTexture));
 
 ### Blurry Sprites
 
-```typescript
-// Solution 1: Set texture scale mode
-texture.source.scaleMode = 'nearest';
+⚠️ **Never set `scaleMode = 'nearest'` in this project.** The artwork is hand-drawn, not pixel
+art; CLAUDE.md mandates linear scaling with mipmaps. Nearest-neighbour will visibly wreck it.
 
-// Solution 2: Global default
-PIXI.TextureSource.defaultOptions.scaleMode = 'nearest';
+```typescript
+// Correct settings — these are what TextureManager already applies
+texture.source.scaleMode = 'linear';
+texture.source.autoGenerateMipmaps = true;
+
+// Global default
+PIXI.TextureSource.defaultOptions.scaleMode = 'linear';
 ```
+
+If a sprite still looks soft, the source asset is under-resolved for its render size. Raise its
+target size in `scripts/optimize-assets.js` and re-run `npm run optimize-assets`.
 
 ### Low FPS
 

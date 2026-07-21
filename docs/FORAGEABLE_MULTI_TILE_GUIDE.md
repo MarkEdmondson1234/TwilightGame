@@ -50,13 +50,13 @@ Before making a multi-tile sprite forageable, ensure you have:
    },
    ```
 
-4. **Forageable Item** (`data/items.ts`)
+4. **Forageable Item** (`data/items/magicalIngredients.ts`)
    ```typescript
    your_item: {
      id: 'your_item',
      name: 'your_item',
      displayName: 'Your Item',
-     category: ItemCategory.FORAGEABLE, // or MAGICAL_INGREDIENT
+     category: ItemCategory.MAGICAL_INGREDIENT, // most forageables; see data/items/types.ts for the full list
      description: 'Found by foraging your sprite.',
      rarity: ItemRarity.UNCOMMON,
      stackable: true,
@@ -403,7 +403,7 @@ Before committing your forageable multi-tile sprite:
 - [ ] Tile type defined in `types/core.ts`
 - [ ] Sprite metadata configured in `data/spriteMetadata.ts`
 - [ ] Tile legend entry in `data/tiles.ts` (no empty `image: []`)
-- [ ] Forageable item defined in `data/items.ts` with `forageSuccessRate`
+- [ ] Forageable item defined in `data/items/magicalIngredients.ts` with `forageSuccessRate`
 - [ ] Added to `forageableTiles` in `getAvailableInteractions()`
 - [ ] Area detection implemented in `handleForageAction()`
 - [ ] Cooldown uses anchor position, not player position

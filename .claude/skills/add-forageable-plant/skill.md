@@ -21,7 +21,7 @@ Every forageable plant requires setup in **eight locations**:
 4. **`data/tiles.ts`** - Add TILE_LEGEND entry with collision and rendering info
 5. **`data/spriteMetadata.ts`** - Add multi-tile sprite configuration
 6. **`utils/ColorResolver.ts`** - Map tile to background colour
-7. **`data/items.ts`** - Add foraged item definition with `forageSuccessRate`
+7. **`data/items/magicalIngredients.ts`** - Add foraged item definition with `forageSuccessRate`
 8. **`utils/inventoryUIHelper.ts`** - Map sprite for inventory UI (CRITICAL)
 
 **Plus foraging logic in `utils/actionHandlers.ts` (CRITICAL - 3 locations):**
@@ -183,7 +183,9 @@ This ensures the grass background shows through transparent areas.
 
 ### Phase 8: Add Foraged Item Definition
 
-**File:** `data/items.ts`
+**File:** `data/items/magicalIngredients.ts` (add to the `MAGICAL_INGREDIENT_ITEMS` object)
+
+Most forageables are magical ingredients. Seasonal decorative forageables (e.g. `maple_leaf`, `spruce_sprig`) live in `data/items/decorations.ts` instead — see the category → module table in the `data/items.ts` header.
 
 ```typescript
 luminescent_toadstool: {
@@ -351,10 +353,20 @@ if (
 ### Phase 12: Validate
 
 ```bash
-npx tsc --noEmit
+make verify
 ```
 
-Fix any TypeScript errors before testing.
+Fix any TypeScript errors before testing, and confirm the test suite is clean.
+
+**Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+
+**Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons. **"2 failed" is the green baseline** — anything beyond those two is yours to fix.
+
+**Tests that guard this skill's output:**
+- `tests/colorResolver.test.ts` — fails if the new `TileType` was not added to `TILE_TYPE_TO_COLOR_KEY` (Phase 7). This is the wrong-coloured-box bug.
+- `tests/assetIntegrity.test.ts` — fails if the tile or inventory sprite path does not resolve to a real file, i.e. a typo or a skipped `npm run optimize-assets`.
+- `tests/itemSSoT.test.ts` — fails if the new magical-ingredient item duplicates an existing item or is referenced anywhere by an ID that is not in `ITEMS`.
+- `tests/interactionProviders.test.ts` — covers the interaction provider registry the foraging interaction is registered through.
 
 ### Phase 13: Add to Procedural Generation (Optional)
 
@@ -466,7 +478,7 @@ Also check all three locations in `actionHandlers.ts`:
 | `data/tiles.ts` | TILE_LEGEND rendering config | ~655 |
 | `data/spriteMetadata.ts` | Multi-tile sprite size/offset | ~223 |
 | `utils/ColorResolver.ts` | Background colour mapping | ~87 |
-| `data/items.ts` | Foraged item definition | ~1332 |
+| `data/items/magicalIngredients.ts` | Foraged item definition | ~50 |
 | `utils/inventoryUIHelper.ts` | Inventory sprite mapping | ~107 |
 | `utils/actionHandlers.ts` | **Forageable tiles list** (CRITICAL) | **~2302** |
 | `utils/actionHandlers.ts` | Foraging handler | ~1323 |
@@ -492,11 +504,11 @@ Also check all three locations in `actionHandlers.ts`:
 - [ ] 5. Add TILE_LEGEND entry in `data/tiles.ts`
 - [ ] 6. Add sprite metadata in `data/spriteMetadata.ts`
 - [ ] 7. Add ColorResolver mapping in `utils/ColorResolver.ts`
-- [ ] 8. Add item definition in `data/items.ts` (with forageSuccessRate)
+- [ ] 8. Add item definition in `data/items/magicalIngredients.ts` (with forageSuccessRate)
 - [ ] 9. Add inventory UI mapping in `utils/inventoryUIHelper.ts`
 - [ ] **10a. Add to forageable tiles list in `getAvailableInteractions()` - CRITICAL!**
 - [ ] 10b. Add foraging handler in `handleForageAction()`
 - [ ] 10c. Add to cooldown check in `handleForageAction()`
 - [ ] 11. (Optional) Add to procedural generation in `maps/procedural.ts`
-- [ ] 12. Run `npx tsc --noEmit` to validate
+- [ ] 12. Run `make verify` to validate (typecheck + tests; `tests/colorResolver.test.ts` catches a missing `TILE_TYPE_TO_COLOR_KEY` entry, `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches item duplicates. Only `cropGrowth` + `eventChains` should fail — known baseline)
 - [ ] 13. Test in game (place on map, forage, check inventory)

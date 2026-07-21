@@ -17,7 +17,10 @@ export const wreathMakingDefinition: MiniGameDefinition = {
   colour: '#6b8e5a',
   component: WreathMakingGame,
   triggers: {
-    npcId: 'forest_mushra',
+    // 'mushra' is the Mushra in the mushroom forest (maps/definitions/mushroomMap.ts).
+    // This previously read 'forest_mushra', which no map declares — so the NPC route was
+    // silently dead and only the placed crafting table opened this game.
+    npcId: 'mushra',
     placedItemId: 'crafting_table',
   },
   customBackdrop: false,

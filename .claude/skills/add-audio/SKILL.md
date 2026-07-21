@@ -270,6 +270,10 @@ When adding a new sound:
    - Magic/potions → After successful effect
    - UI actions → In button/action handlers
 5. ☐ Test in browser (remember: needs user interaction first on mobile)
+6. ☐ Run `make verify` (typecheck + full test suite) and confirm it is clean
+   - **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+   - `tests/assetIntegrity.test.ts` walks `assets.ts` recursively, including the `url` field of every `AudioAssetConfig`, and fails if the file does not exist on disk — this catches a mistyped filename or a file that was never copied into `/public/assets/audio/`.
+   - **Known baseline:** `cropGrowth` and `eventChains` already fail on `main` for unrelated reasons, so "2 failed" is green.
 
 ## Playback Methods
 
@@ -307,6 +311,7 @@ audioManager.resetEffects();                 // Clear all effects
 2. **Console**: `audioManager.getStats()` shows loaded/playing sounds
 3. **Effects**: AudioEffectsSection in DevTools for experimenting with filters
 4. **Check loading**: `audioManager.hasSound('key')` returns true if loaded
+5. **Test suite**: `make verify` (typecheck + all tests). Never `npm test` — it is watch mode and never exits; use `make test` or `npm run test:run` for tests alone. `tests/assetIntegrity.test.ts` fails if an audio `url` does not resolve to a real file. Only `cropGrowth` + `eventChains` should fail — that is the known baseline on `main`.
 
 ## Resources
 

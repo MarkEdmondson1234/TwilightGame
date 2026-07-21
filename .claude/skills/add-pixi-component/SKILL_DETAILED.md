@@ -168,6 +168,7 @@ Add PixiJS renderer to App.tsx:
 import * as PIXI from 'pixi.js';
 import { TileLayer } from './utils/pixi/TileLayer';
 import { textureManager } from './utils/TextureManager';
+import { getCachedPerformanceSettings } from './utils/performanceTier';
 
 const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -177,14 +178,17 @@ const App: React.FC = () => {
   useEffect(() => {
     // Initialize PixiJS
     const initPixi = async () => {
+      const perfSettings = getCachedPerformanceSettings();
       const app = new PIXI.Application();
       await app.init({
         canvas: canvasRef.current!,
         width: window.innerWidth,
         height: window.innerHeight,
         backgroundColor: 0x1a1a1a,
-        antialias: false, // Pixel art
-        resolution: window.devicePixelRatio,
+        // Device-adaptive, NOT an art-style choice — see utils/performanceTier.ts.
+        // Antialiasing is ON for desktop (HIGH tier) and off only on low/mobile tiers.
+        antialias: perfSettings.antialias,
+        resolution: perfSettings.resolution,
       });
 
       appRef.current = app;
@@ -609,16 +613,30 @@ After implementing PixiJS component:
 - [ ] Correct z-ordering (layers render in right order)
 - [ ] Camera movement smooth
 - [ ] Textures load correctly (no missing sprites)
-- [ ] Pixel art rendering sharp (scaleMode: 'nearest')
+- [ ] Hand-drawn art renders smoothly (`scaleMode: 'linear'` + mipmaps — **never** `'nearest'`)
+- [ ] `make verify` clean (typecheck + full test suite). **Never `npm test`** — watch mode, never exits; use `make test` or `npm run test:run` for tests alone. Only `cropGrowth` + `eventChains` should fail — that is the known baseline on `main`
+- [ ] If the component resolves tile colours, `tests/colorResolver.test.ts` still passes — any new `TileType` must be mapped in `TILE_TYPE_TO_COLOR_KEY`
+- [ ] If the component references new textures, `tests/assetIntegrity.test.ts` still passes — every asset path must resolve to a real file
 
 ---
 
 ## Troubleshooting
 
 **Issue: Blurry sprites**
+
+⚠️ Do NOT reach for `scaleMode = 'nearest'`. This project's artwork is **hand-drawn, not pixel
+art**, and CLAUDE.md forbids nearest-neighbour scaling — it makes the art look jagged and cheap.
+Keep `scaleMode: 'linear'`.
+
 ```typescript
-// Solution: Use 'nearest' scale mode
-texture.source.scaleMode = 'nearest';
+// Blurriness with linear scaling almost always means the source texture is being
+// scaled UP beyond its native size, or mipmaps are off when scaling DOWN.
+texture.source.scaleMode = 'linear'; // never 'nearest'
+texture.source.autoGenerateMipmaps = true; // sharp downscaling
+
+// If it is still soft, the asset itself is too low-resolution for the size it renders at.
+// Fix it in scripts/optimize-assets.js (raise the target size / quality for that keyword)
+// rather than changing the scale mode.
 ```
 
 **Issue: Low FPS**

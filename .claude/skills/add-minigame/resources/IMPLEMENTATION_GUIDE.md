@@ -275,7 +275,7 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
 
 ## Creating New Items
 
-If the mini-game needs items that don't exist yet, add them to `data/items.ts`:
+If the mini-game needs items that don't exist yet, add them to the module matching their category under `data/items/` — see the category → module table in the `data/items.ts` header. A `MISC` item like the one below belongs in `data/items/toolsAndMaterials.ts`:
 
 ```typescript
 my_new_item: {
@@ -290,11 +290,11 @@ my_new_item: {
 },
 ```
 
-**Always check existing items first** — run `grep -i 'displayName.*fish' data/items.ts` or similar to avoid creating duplicates.
+**Always check existing items first** — run `grep -ri 'displayName.*fish' data/items/` or similar to avoid creating duplicates.
 
 ## Creating New Placed Items
 
-If the mini-game needs a new trigger object that doesn't exist yet, add it to `data/items.ts` as a DECORATION category item with `placeable: true`. The player will need to place it on a map before the mini-game becomes accessible.
+If the mini-game needs a new trigger object that doesn't exist yet, add it to `data/items/decorations.ts` as a DECORATION category item with `placeable: true`. The player will need to place it on a map before the mini-game becomes accessible.
 
 ## Common Mistakes
 
