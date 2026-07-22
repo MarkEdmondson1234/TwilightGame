@@ -20,6 +20,7 @@
  */
 
 import * as PIXI from 'pixi.js';
+import { attachMask, disposeMask } from './maskUtils';
 import { TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { particleAssets } from '../../assets';
@@ -317,18 +318,12 @@ export class WeatherLayer {
   private _applyFogMask(): void {
     if (!this.fogSprite) return;
 
-    // Clean up old mask
+    // Clean up old mask (disposeMask clears fogSprite.mask before destroying the sprite).
     if (this.fogMaskTexture) {
       this.fogMaskTexture.destroy(true);
       this.fogMaskTexture = null;
     }
-    if (this.fogMaskSprite) {
-      // Clear the mask reference BEFORE destroying the sprite, or the fogSprite keeps an
-      // AlphaMask effect pointing at freed memory and Pixi crashes on the next bounds pass.
-      this.fogSprite.mask = null;
-      this.fogMaskSprite.destroy();
-      this.fogMaskSprite = null;
-    }
+    this.fogMaskSprite = disposeMask(this.fogSprite, this.fogMaskSprite);
 
     this.fogMaskTexture = createFogEdgeMask(
       this.viewportWidth,
@@ -336,10 +331,7 @@ export class WeatherLayer {
       FOG_EDGE_FEATHER
     );
     this.fogMaskSprite = new PIXI.Sprite(this.fogMaskTexture);
-    // Add to the display tree before assigning as a mask (Pixi v8 measures the mask via the
-    // scene graph; assigning first can warn/misbehave).
-    this.fogContainer.addChild(this.fogMaskSprite);
-    this.fogSprite.mask = this.fogMaskSprite;
+    attachMask(this.fogSprite, this.fogMaskSprite, this.fogContainer);
   }
 
   /**
@@ -603,14 +595,11 @@ export class WeatherLayer {
    * Clear fog overlay and its edge mask
    */
   private clearFog(): void {
+    // Detach + destroy the mask first (clears fogSprite.mask safely), then the fog sprite.
+    this.fogMaskSprite = disposeMask(this.fogSprite, this.fogMaskSprite);
     if (this.fogSprite) {
-      this.fogSprite.mask = null;
       this.fogSprite.destroy();
       this.fogSprite = null;
-    }
-    if (this.fogMaskSprite) {
-      this.fogMaskSprite.destroy();
-      this.fogMaskSprite = null;
     }
     if (this.fogMaskTexture) {
       this.fogMaskTexture.destroy(true);
