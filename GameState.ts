@@ -32,7 +32,58 @@ export interface CharacterCustomization {
   weapon: string; // 'sword', 'axe', 'bow', 'staff'
 }
 
+/**
+ * Save schema version.
+ *
+ * Bump this when the persisted shape changes in a way that old saves need converting for,
+ * and add a matching entry to SAVE_MIGRATIONS below. Version 1 is the baseline: the shape
+ * produced by the long-standing field back-fills inside loadState().
+ */
+export const SAVE_VERSION = 1;
+
+/**
+ * Ordered save migrations, keyed by the version each one PRODUCES.
+ *
+ * To evolve the save format: bump SAVE_VERSION to N, then add `[N]: (save) => { ... }` here
+ * that mutates a version-(N-1) save in place into version-N shape. This is the home for new
+ * migrations — prefer it over adding another ad-hoc `if (!parsed.x)` back-fill in loadState,
+ * which runs on every load forever and cannot be retired.
+ *
+ * Empty today: the existing back-fills already bring any legacy save up to version 1.
+ */
+const SAVE_MIGRATIONS: Record<number, (save: Record<string, unknown>) => void> = {};
+
+/**
+ * Bring a parsed save up to SAVE_VERSION by running each migration above its current
+ * version, in order, then stamp it. A save from a NEWER build than this one is loaded as-is
+ * with a warning (best-effort forward compatibility — relevant when a cloud save outruns a
+ * lagging deploy).
+ */
+export function runSaveMigrations(
+  save: Record<string, unknown>,
+  migrations: Record<number, (save: Record<string, unknown>) => void> = SAVE_MIGRATIONS,
+  targetVersion: number = SAVE_VERSION
+): void {
+  const from = typeof save.saveVersion === 'number' ? save.saveVersion : 0;
+  if (from > targetVersion) {
+    console.warn(
+      `[GameState] Save is version ${from}, newer than this build (${targetVersion}). ` +
+        `Loading as-is; some newer data may be ignored.`
+    );
+    return;
+  }
+  for (let v = from + 1; v <= targetVersion; v++) {
+    migrations[v]?.(save);
+  }
+  save.saveVersion = targetVersion;
+}
+
 export interface GameState {
+  /**
+   * Schema version of this save. Written on every save; read on load to run the
+   * migration chain. Absent on saves that predate versioning (treated as version 0).
+   */
+  saveVersion?: number;
   // Character customization
   selectedCharacter: CharacterCustomization | null;
   // Currency
@@ -563,6 +614,9 @@ class GameStateManager {
           parsed.appliedWallpapers = {};
         }
 
+        // Versioned migration chain (runs after the legacy back-fills above) + stamp.
+        runSaveMigrations(parsed);
+
         return parsed;
       }
     } catch (error) {
@@ -661,6 +715,7 @@ class GameStateManager {
   flushSave(): void {
     this.savePending = false;
     try {
+      this.state.saveVersion = SAVE_VERSION;
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
       localStorage.setItem('twilight_last_save', Date.now().toString());
       eventBus.emit(GameEvent.LOCAL_SAVE_FLUSHED, { timestamp: Date.now() });
