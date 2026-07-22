@@ -566,6 +566,9 @@ export function useEnvironmentController(
         if (season === Season.SUMMER && audioManager.hasSound('music_village_summer')) {
           return Math.random() < 0.5 ? 'music_village_summer' : 'music_village';
         }
+        if (season === Season.WINTER && audioManager.hasSound('music_village_winter')) {
+          return Math.random() < 0.5 ? 'music_village_winter' : 'music_village';
+        }
         return 'music_village';
       }
       // Farm area gets its own dedicated track

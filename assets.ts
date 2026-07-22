@@ -938,6 +938,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_village_winter: {
+    url: '/TwilightGame/assets/audio/music/winter_atmo.mp3',
+    category: 'music',
+    loop: true,
+  },
   music_forest: {
     url: '/TwilightGame/assets/audio/music/twilight-forest.m4a',
     category: 'music',
