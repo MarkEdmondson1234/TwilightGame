@@ -25,6 +25,7 @@ import { farmingProvider } from './providers/farming';
 import { forageProvider } from './providers/forage';
 import { deskProvider } from './providers/desk';
 import { decorationPlacementProvider } from './providers/decorationPlacement';
+import { mapLocationProvider } from './providers/mapLocation';
 import { snowAngelProvider } from './providers/snowAngel';
 import { curtainProvider } from './providers/curtains';
 
@@ -37,6 +38,7 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   mirrorProvider,
   npcProvider,
   transitionProvider,
+  mapLocationProvider,
 
   // Stations and resources.
   cookingProvider,

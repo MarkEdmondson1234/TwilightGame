@@ -30,6 +30,7 @@ import {
   getMiniGamesForNPC,
   getMiniGamesForNPCName,
   getMiniGamesForInventoryItem,
+  getMiniGamesForMapLocation,
 } from '../minigames/registry';
 import { ITEMS } from '../data/items';
 import { initializeMaps, mapManager } from '../maps';
@@ -343,5 +344,50 @@ describe('Mini-Game Registry - NPC SSoT', () => {
       );
     }
     expect(missing).toEqual([]);
+  });
+});
+
+// ============================================================================
+// MAP-LOCATION SSoT — mapLocation triggers must point at a real, in-bounds tile
+// ============================================================================
+
+describe('Mini-Game Registry - mapLocation SSoT', () => {
+  it('every mapLocation trigger names a real map and an in-bounds tile', () => {
+    initializeMaps();
+    const problems: string[] = [];
+
+    ALL.forEach((def) => {
+      const loc = def.triggers?.mapLocation;
+      if (!loc) return;
+
+      const map = mapManager.getMap(loc.mapId);
+      if (!map) {
+        problems.push(
+          `Mini-game "${def.id}" triggers.mapLocation.mapId = "${loc.mapId}" but no such map ` +
+            `is registered — the game can never open. Check maps/index.ts.`
+        );
+        return;
+      }
+      if (loc.x < 0 || loc.x >= map.width || loc.y < 0 || loc.y >= map.height) {
+        problems.push(
+          `Mini-game "${def.id}" mapLocation (${loc.x}, ${loc.y}) is outside "${loc.mapId}" ` +
+            `bounds (0-${map.width - 1}, 0-${map.height - 1}).`
+        );
+        return;
+      }
+      // The index must actually return it, or the provider will never surface the game.
+      const found = getMiniGamesForMapLocation(loc.mapId, loc.x, loc.y).some((g) => g.id === def.id);
+      if (!found) {
+        problems.push(
+          `Mini-game "${def.id}" declares a mapLocation but is not indexed for it — ` +
+            `getMiniGamesForMapLocation would not return it.`
+        );
+      }
+    });
+
+    if (problems.length > 0) {
+      console.error('mapLocation trigger problems:\n' + problems.join('\n'));
+    }
+    expect(problems).toEqual([]);
   });
 });

@@ -39,6 +39,12 @@ const byPlacedItem = new Map<string, MiniGameDefinition[]>();
 const byNpc = new Map<string, MiniGameDefinition[]>();
 const byNpcName = new Map<string, MiniGameDefinition[]>();
 const byInventoryItem = new Map<string, MiniGameDefinition[]>();
+const byMapLocation = new Map<string, MiniGameDefinition[]>();
+
+/** Stable key for a map tile: `mapId:x:y`. */
+function mapLocationKey(mapId: string, x: number, y: number): string {
+  return `${mapId}:${x}:${y}`;
+}
 
 function buildIndices(): void {
   byId.clear();
@@ -46,6 +52,7 @@ function buildIndices(): void {
   byNpc.clear();
   byNpcName.clear();
   byInventoryItem.clear();
+  byMapLocation.clear();
 
   for (const def of MINI_GAME_DEFINITIONS) {
     byId.set(def.id, def);
@@ -69,6 +76,13 @@ function buildIndices(): void {
       const list = byInventoryItem.get(def.triggers.inventoryItemId) ?? [];
       list.push(def);
       byInventoryItem.set(def.triggers.inventoryItemId, list);
+    }
+    if (def.triggers.mapLocation) {
+      const { mapId, x, y } = def.triggers.mapLocation;
+      const key = mapLocationKey(mapId, x, y);
+      const list = byMapLocation.get(key) ?? [];
+      list.push(def);
+      byMapLocation.set(key, list);
     }
   }
 }
@@ -102,6 +116,15 @@ export function getMiniGamesForNPCName(npcName: string): MiniGameDefinition[] {
 /** Get all mini-games triggered by an inventory item. */
 export function getMiniGamesForInventoryItem(itemId: string): MiniGameDefinition[] {
   return byInventoryItem.get(itemId) ?? [];
+}
+
+/** Get all mini-games triggered by standing on / clicking a specific map tile. */
+export function getMiniGamesForMapLocation(
+  mapId: string,
+  x: number,
+  y: number
+): MiniGameDefinition[] {
+  return byMapLocation.get(mapLocationKey(mapId, x, y)) ?? [];
 }
 
 /** Get all registered mini-game definitions. */

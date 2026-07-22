@@ -130,7 +130,12 @@ export const myGameDefinition: MiniGameDefinition = {
   colour: '#3b82f6',                // Hex colour for radial menu
   component: MyGame,
   triggers: {
-    placedItemId: 'some_item',      // OR npcId OR inventoryItemId
+    // Pick ONE. All are validated by tests/minigameRegistry.test.ts.
+    placedItemId: 'some_item',                 // a placed decoration/furniture item
+    // npcId: 'village_child',                  // talk to an NPC (must exist in a map)
+    // npcNameMatch: 'Mushra',                  // any NPC with this display name
+    // inventoryItemId: 'some_item',            // use an item from the inventory
+    // mapLocation: { mapId: 'village', x: 12, y: 8 },  // click a specific tile
   },
   requirements: [                    // Optional — omit if no items needed
     { itemId: 'item_id', quantity: 1, consumeOn: 'onComplete' },
