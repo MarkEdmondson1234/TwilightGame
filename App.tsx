@@ -124,6 +124,49 @@ import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
  * Used to place the lava entrance adjacent to a defeated goblin.
  * Searches outward in a spiral, skipping non-floor and existing transition tiles.
  */
+// ═════════════════════════════════════════════════════════════════════════════
+//  App.tsx — top-level game component (~2,650 lines).
+//
+//  This file is large and has resisted splitting: its state, effects and render
+//  tree are tightly coupled. Until it is broken up, use this map — and the golden
+//  rule below — to work in it without making it worse.
+//
+//  ── GOLDEN RULE: ADD LOGIC TO A HOOK, NOT TO THIS FILE ───────────────────────
+//  Most systems already live in a dedicated hook. App.tsx should mostly WIRE them
+//  together and render. If your change fits one of these, put it there and only
+//  touch App.tsx to connect it:
+//    movement / pathfinding / animation ......... hooks/useMovementController.ts
+//    clicks / NPC dialogue / radial menu / farm . hooks/useInteractionController.ts
+//    weather / time-of-day / ambient audio ...... hooks/useEnvironmentController.ts
+//    keyboard / touch / mouse input ............. hooks/use{Keyboard,Touch,Mouse}Controls.ts
+//    manager → React re-render plumbing ......... hooks/useGameEvents.ts
+//    PixiJS layers / rendering .................. hooks/usePixiRenderer.ts, utils/pixi/*
+//    interaction options offered at a tile ...... utils/interactions/ (add a provider)
+//
+//  ── WHERE THINGS ARE (grep the symbol — line numbers drift, these do not) ────
+//    Map init / loading screen .... isMapInitialized, mapErrors, "Phase 2: Slow asset"
+//    Game loop (rAF) .............. gameLoop, animationFrameId, lastFrameTime
+//    Camera / viewport / culling .. viewportScale, effectiveGridOffset,
+//                                   effectiveTileSize, visibleRange, isCompactMode
+//    Cutscenes .................... isCutscenePlaying, handleLoadingCutsceneComplete
+//    Inventory .................... inventoryItems, handleFoodEat, handleInventoryReorder
+//    Potions / magic / fairy form . handlePotionUse, isFairyFormFading, fairyFormTimersRef
+//    Photos ....................... photoCount, viewingPhoto, handleTakePhoto
+//    NPC dialogue / shop / combat . activeNPC, allNPCs, "Freeze/unfreeze NPC", "shop UI"
+//    Yule celebration ............. isYuleCelebrationActive, yuleNpcWishes, yule*
+//    Render tree .................. the `return (` near the bottom; each sub-tree is
+//                                   banner-commented (TileRenderer, NPCRenderer,
+//                                   PlacedItems, HUD, modals, …)
+//
+//  ── EDITING SAFELY ──────────────────────────────────────────────────────────
+//   • Read docs/ARCHITECTURE_GOTCHAS.md before touching the coordinate pipeline
+//     (effectiveGridOffset must include zoom) or ambient audio (each effect stops
+//     only its own sound). Effect ordering and dependency arrays matter here.
+//   • No test exercises this component at runtime and main auto-deploys — verify
+//     visually with `make dev` after any change.
+//   • Don't grow this file. New system → new hook (see the golden rule).
+// ═════════════════════════════════════════════════════════════════════════════
+
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
   const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen } = useUIState();
@@ -769,6 +812,7 @@ const App: React.FC = () => {
     onTakePhoto: handleTakePhoto,
   });
 
+  // ═══════════════════════ GAME LOOP (requestAnimationFrame) ═══════════════════════
   const gameLoop = useCallback(() => {
     // Track frame-to-frame timing for performance metrics
     performanceMonitor.tick();
@@ -1684,6 +1728,7 @@ const App: React.FC = () => {
     );
   }
 
+  // ═══════════════════════════════ RENDER ═══════════════════════════════
   return (
     <div
       ref={gameContainerRef}

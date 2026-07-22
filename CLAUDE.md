@@ -301,7 +301,7 @@ Detailed documentation is located in the [`docs/`](docs/) folder:
 
 ### Core Files
 
-- `App.tsx` - Main component: rendering, camera system, game loop orchestration (~2,700 lines — **over the 500-line rule and a known refactor target**; extract to controllers/hooks rather than growing it further)
+- `App.tsx` - Main component: rendering, camera system, game loop orchestration (~2,700 lines — **over the 500-line rule and known-hard to split**). **Read the navigation header at the top of the file before editing it** — it maps every subsystem to its symbol and, crucially, to the hook that already owns it. The golden rule: add new logic to the matching `use*Controller`/hook and only touch `App.tsx` to wire it — do not grow this file.
 - `constants.ts` - Game constants (`TILE_SIZE`, `PLAYER_SIZE`), tile legend with all tile types, DEBUG flags
 - `types.ts` - TypeScript types including `TileType`, `Position`, `Direction`, `MapDefinition`, `Transition`, `ColorScheme`
 
