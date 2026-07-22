@@ -18,12 +18,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -39,7 +39,7 @@ jobs:
           npx wait-on http://localhost:4000/TwilightGame/ --timeout 60000
 
       - name: Download baseline (if exists)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: perf-baseline
           path: .
@@ -85,7 +85,7 @@ jobs:
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -120,7 +120,7 @@ jobs:
             }
 
       - name: Upload results as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: perf-results
           path: |
@@ -133,7 +133,7 @@ jobs:
 
       - name: Update baseline on main
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: perf-baseline
           path: perf-results.json

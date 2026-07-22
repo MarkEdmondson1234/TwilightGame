@@ -296,16 +296,13 @@ const App: React.FC = () => {
     playerScale,
     playerSizeTier,
     isFairyForm,
-    isPathing,
     clickToMoveDestination,
     clickToMoveTargetNPC,
     playerPosRef,
     isMovingRef,
     updateMovement,
     setDestination: setClickToMoveDestination,
-    cancelPath,
     setPlayerPos,
-    setDirection,
     setPlayerScale,
     setPlayerSizeTier,
     setFairyForm,
@@ -334,14 +331,11 @@ const App: React.FC = () => {
     setRadialMenuVisible,
     farmActionAnimation,
     farmActionKey,
-    waterSparklePos,
-    waterSparkleKey,
     showSplashEffect,
     splashKey,
     handleCanvasClick,
     handleFarmActionAnimation,
     handleAnimationComplete,
-    clearWaterSparkle,
     hideSplashEffect,
   } = useInteractionController({
     playerPos,
@@ -453,7 +447,6 @@ const App: React.FC = () => {
   };
 
   // Farm update handler - no-op since EventBus handles this now
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const handleFarmUpdate = useCallback(() => {
     // Events are now emitted by FarmManager via EventBus
   }, []);
@@ -1451,8 +1444,6 @@ const App: React.FC = () => {
   // PixiJS renderer hook - manages all PixiJS rendering layers
   const {
     isPixiInitialized,
-    pixiAppRef,
-    npcLayerRef,
     backgroundImageLayerRef,
     weatherManagerRef,
     weatherLayerRef,
