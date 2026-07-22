@@ -39,6 +39,10 @@ export const springCutscene: CutsceneDefinition = {
     action: 'return',
   },
 
+  audio: {
+    music: 'music_spring',
+  },
+
   scenes: [
     // Scene 1: Cherry blossoms over the village — 3-layer parallax reveal
     {

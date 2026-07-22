@@ -40,6 +40,13 @@ class CutsceneManagerClass {
   private cutsceneRegistry: Map<string, CutsceneDefinition> = new Map();
   private listeners: Set<(state: CutsceneState) => void> = new Set();
 
+  // Tracks whether cutscene audio has already been started for the currently running
+  // cutscene, since CutscenePlayer can remount mid-cutscene (the loading-screen instance
+  // is swapped for the gameplay-overlay instance once the map finishes initialising) —
+  // without this, the second mount would restart the music from the beginning.
+  private audioStartedForCutsceneId: string | null = null;
+  private previousMusicBeforeCutscene: string | null = null;
+
   /**
    * Register a cutscene definition
    */
@@ -97,6 +104,10 @@ class CutsceneManagerClass {
 
     console.log(`[CutsceneManager] Starting cutscene: ${cutscene.name}`);
 
+    // Reset audio bookkeeping in case a previous cutscene's cleanup never fired
+    this.audioStartedForCutsceneId = null;
+    this.previousMusicBeforeCutscene = null;
+
     // Track season for season_change cutscenes
     let lastSeasonTriggered = this.state.lastSeasonTriggered;
     if (cutscene.trigger.type === 'season_change') {
@@ -130,6 +141,10 @@ class CutsceneManagerClass {
     }
 
     console.log(`[CutsceneManager] Force-starting cutscene: ${cutscene.name}`);
+
+    // Reset audio bookkeeping in case a previous cutscene's cleanup never fired
+    this.audioStartedForCutsceneId = null;
+    this.previousMusicBeforeCutscene = null;
 
     this.state = {
       ...this.state,
@@ -443,6 +458,39 @@ class CutsceneManagerClass {
    */
   getState(): CutsceneState {
     return { ...this.state };
+  }
+
+  /**
+   * Whether cutscene audio has already been started for this cutscene ID — used by
+   * CutscenePlayer to avoid restarting music when it remounts mid-cutscene (see the
+   * loading-screen → gameplay-overlay swap in App.tsx).
+   */
+  hasAudioStarted(cutsceneId: string): boolean {
+    return this.audioStartedForCutsceneId === cutsceneId;
+  }
+
+  /**
+   * Record that cutscene audio has started, along with whatever music was playing
+   * beforehand so it can be restored once the cutscene truly ends.
+   */
+  markAudioStarted(cutsceneId: string, previousMusic: string | null): void {
+    this.audioStartedForCutsceneId = cutsceneId;
+    this.previousMusicBeforeCutscene = previousMusic;
+  }
+
+  /**
+   * The music that was playing before the current cutscene's audio took over.
+   */
+  getPreviousMusicBeforeCutscene(): string | null {
+    return this.previousMusicBeforeCutscene;
+  }
+
+  /**
+   * Clear cutscene audio bookkeeping once the cutscene has genuinely ended.
+   */
+  clearAudioState(): void {
+    this.audioStartedForCutsceneId = null;
+    this.previousMusicBeforeCutscene = null;
   }
 
   /**

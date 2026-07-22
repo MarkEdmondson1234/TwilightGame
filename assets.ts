@@ -953,6 +953,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_spring: {
+    url: '/TwilightGame/assets/audio/music/cutscene_spring.mp3',
+    category: 'music',
+    loop: true,
+  },
 
   // === Ambient - Environmental Sounds ===
   // Looping background ambiance for atmosphere

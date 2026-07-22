@@ -73,7 +73,11 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     }
   }, []);
 
-  // Audio: play music/ambient on cutscene start, stop on unmount
+  // Audio: play music/ambient on cutscene start, stop when the cutscene truly ends.
+  // CutscenePlayer can remount mid-cutscene (the loading-screen instance is swapped for
+  // the gameplay-overlay instance once the map finishes initialising — see App.tsx), so
+  // we track start/stop via cutsceneManager rather than purely on mount/unmount, otherwise
+  // the second mount would restart the music from the beginning.
   useEffect(() => {
     const state = cutsceneManager.getState();
     const cutscene = state.currentCutscene;
@@ -82,19 +86,32 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     const fadeIn = cutscene.audio.fadeInMs ?? 2000;
     const fadeOut = cutscene.audio.fadeOutMs ?? 2000;
 
-    // Save current music so we can restore it later
-    previousMusicRef.current = audioManager.getCurrentMusic();
+    if (cutsceneManager.hasAudioStarted(cutscene.id)) {
+      // Already playing from an earlier mount of this same cutscene — just recover the
+      // pre-cutscene music reference so cleanup can restore it correctly.
+      previousMusicRef.current = cutsceneManager.getPreviousMusicBeforeCutscene();
+    } else {
+      previousMusicRef.current = audioManager.getCurrentMusic();
+      cutsceneManager.markAudioStarted(cutscene.id, previousMusicRef.current);
 
-    if (cutscene.audio.music) {
-      audioManager.playMusic(cutscene.audio.music, { fadeIn, loop: true });
-    }
-    if (cutscene.audio.ambient) {
-      audioManager.playAmbient(cutscene.audio.ambient, {
-        volume: cutscene.audio.ambientVolume,
-      });
+      if (cutscene.audio.music) {
+        audioManager.playMusic(cutscene.audio.music, { fadeIn, loop: true });
+      }
+      if (cutscene.audio.ambient) {
+        audioManager.playAmbient(cutscene.audio.ambient, {
+          volume: cutscene.audio.ambientVolume,
+        });
+      }
     }
 
     return () => {
+      // A mid-cutscene remount unmounts this instance while the cutscene is still
+      // running — leave the music playing for the next instance to inherit.
+      const liveState = cutsceneManager.getState();
+      const cutsceneStillActive =
+        liveState.isPlaying && liveState.currentCutscene?.id === cutscene.id;
+      if (cutsceneStillActive) return;
+
       // Stop cutscene audio when it ends
       if (cutscene.audio?.music) {
         audioManager.stopMusic(fadeOut);
@@ -106,6 +123,7 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
       if (previousMusicRef.current) {
         audioManager.playMusic(previousMusicRef.current, { fadeIn: fadeOut, crossfade: true });
       }
+      cutsceneManager.clearAudioState();
     };
   }, []);
 
