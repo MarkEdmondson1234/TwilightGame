@@ -104,7 +104,11 @@ import FurnitureCatalogueUI from './components/FurnitureCatalogueUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
 import BasketModal from './components/BasketModal';
 import GlamourModal from './components/GlamourModal';
-import { usePotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
+import { applyPotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
+import {
+  onFirstMeetingComplete as onFairyQueenFirstMeeting,
+  grantFairyFormPotion,
+} from './data/questHandlers/fairyQueenHandler';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -469,11 +473,9 @@ const App: React.FC = () => {
     // Handle fairy queen cutscene completions
     if (action.cutsceneId === 'fairy_oak_midnight') {
       // First meeting with Queen Celestia — advance fairy_queen quest
-      const { onFirstMeetingComplete } = require('./data/questHandlers/fairyQueenHandler');
-      onFirstMeetingComplete();
+      onFairyQueenFirstMeeting();
     } else if (action.cutsceneId === 'fairy_oak_midnight_return') {
       // Return visit — grant fairy form potion
-      const { grantFairyFormPotion } = require('./data/questHandlers/fairyQueenHandler');
       grantFairyFormPotion();
     }
 
@@ -1367,7 +1369,7 @@ const App: React.FC = () => {
       }
 
       // Use the potion effect
-      const result = usePotionEffect(itemId, magicEffectCallbacks);
+      const result = applyPotionEffect(itemId, magicEffectCallbacks);
 
       if (result.success) {
         // Play magic sound effect
