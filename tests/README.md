@@ -68,6 +68,7 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `minigameRequirements.test.ts` | Required items not actually gating play; a game being unreachable | Adding a mini-game with requirements |
 | `interactionProviders.test.ts` | Provider registry wiring and the `exclusive` short-circuit | Adding a click interaction |
 | `wreathWorkshop.test.ts` | Capture geometry, pointer maths under `transform: scale()`, decoration instance matching | Touching the wreath workshop or custom decorations |
+| `pixiMaskSafety.test.ts` | Raw `.mask =` assignment outside `maskUtils` (guards the "this.mask is null" crash) | Adding/using a PixiJS mask (fog, lighting, spotlights) |
 | `colorResolver.test.ts` | Colour resolution behaviour through map schemes | Touching tile colours or palettes |
 | `palette.test.ts` | Palette definitions stay consistent | Changing the colour palette |
 | `farmManager.test.ts` / `cropGrowth.test.ts` | Planting, watering, growth stages, crop economics | Touching farming |

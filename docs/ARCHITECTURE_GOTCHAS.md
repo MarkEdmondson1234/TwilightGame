@@ -313,17 +313,28 @@ pass dereferences it and throws. The only user of masks today is `utils/pixi/Wea
 feathered fog edge), so this surfaces as a weather/fog crash — often after a weather transition or a
 resize while fog is active.
 
-**The rules (whenever you use `.mask`):**
-- **Null the reference before destroying the mask sprite:** `sprite.mask = null;` *then*
-  `maskSprite.destroy();` — never the reverse.
-- **Never overwrite a masked sprite reference without tearing the old one down first.** If a setup
-  function reassigns `this.fooSprite = new Sprite(...)`, call the teardown (which nulls the mask and
-  destroys both sprites) at the *top* of setup. Teardown must be null-safe so calling it twice is fine.
-- **Add the mask to the display tree before assigning it:** `container.addChild(maskSprite);` *then*
-  `sprite.mask = maskSprite;` — Pixi measures the mask through the scene graph.
+**Don't hand-roll it — use the helper.** All mask assignment goes through
+[`utils/pixi/maskUtils.ts`](../utils/pixi/maskUtils.ts):
 
-`WeatherLayer.clearFog()` is the reference implementation; `setupFog()` calls it first and
-`_applyFogMask()` nulls the ref before destroying. Follow that shape for any new masked layer.
+```typescript
+import { attachMask, disposeMask } from './maskUtils';
+
+attachMask(target, maskSprite, parent);          // addChild(mask) THEN target.mask = mask
+this.maskSprite = disposeMask(target, maskSprite); // target.mask = null THEN mask.destroy(); returns null
+```
+
+`tests/pixiMaskSafety.test.ts` fails the build if any file outside `maskUtils.ts` assigns `.mask =`
+directly, so the funnel can't be bypassed.
+
+**The rules these helpers encode (why they exist):**
+- **Null the reference before destroying the mask sprite** — never the reverse (`disposeMask`).
+- **Never overwrite a masked sprite without tearing the old one down first.** A setup function that
+  reassigns `this.fooSprite = new Sprite(...)` must call its null-safe teardown at the *top*.
+- **Add the mask to the display tree before assigning it** — Pixi measures it through the scene
+  graph (`attachMask`).
+
+`WeatherLayer` is the reference user: `setupFog()` calls `clearFog()` first, and both `clearFog()`
+and `_applyFogMask()` go through `disposeMask`/`attachMask`.
 
 ---
 
