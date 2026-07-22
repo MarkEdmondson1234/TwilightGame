@@ -59,7 +59,7 @@ describe('PixiJS mask assignment is funnelled through maskUtils', () => {
     const violations: string[] = [];
 
     for (const file of collectSourceFiles(REPO_ROOT)) {
-      const rel = relative(REPO_ROOT, file);
+      const rel = relative(REPO_ROOT, file).replace(/\\/g, '/');
       if (rel === ALLOWED) continue;
 
       const lines = readFileSync(file, 'utf8').split('\n');

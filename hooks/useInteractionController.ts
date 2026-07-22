@@ -17,7 +17,11 @@ import { MouseClickInfo } from './useMouseControls';
 import { RadialMenuOption } from '../components/RadialMenu';
 import { FarmActionType } from '../components/FarmActionAnimation';
 import { FarmActionResult, ForageResult, TransitionResult } from '../utils/actionHandlers';
-import { getAvailableInteractions, type PlacedItemAction } from '../utils/interactions';
+import {
+  getAvailableInteractions,
+  getAvailableInteractionsWithTouchTolerance,
+  type PlacedItemAction,
+} from '../utils/interactions';
 import { npcManager } from '../NPCManager';
 import { audioManager } from '../utils/AudioManager';
 import { gameState } from '../GameState';
@@ -565,7 +569,7 @@ export function useInteractionController(
 
       const callbacks = buildInteractionCallbacks();
 
-      const interactions = getAvailableInteractions({
+      const interactionConfig = {
         position: clickInfo.worldPos,
         playerPosition: playerPosRef.current,
         currentMapId: currentMapId,
@@ -573,7 +577,13 @@ export function useInteractionController(
         selectedSeed: null, // Seeds are now part of the tool system
         onShowToast,
         ...callbacks,
-      });
+      };
+
+      // Touch taps get extra tolerance for nearby tiles — a fingertip is far
+      // less precise than a mouse cursor, so a tap near a door's edge shouldn't miss it.
+      const interactions = clickInfo.isTouch
+        ? getAvailableInteractionsWithTouchTolerance(interactionConfig)
+        : getAvailableInteractions(interactionConfig);
 
       if (DEBUG.CLICK) {
         console.log(

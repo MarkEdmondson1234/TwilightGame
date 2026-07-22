@@ -113,3 +113,52 @@ export function runProviders(
 export function getAvailableInteractions(config: GetInteractionsConfig): AvailableInteraction[] {
   return runProviders(INTERACTION_PROVIDERS, createInteractionContext(config));
 }
+
+/**
+ * Touch-friendly variant of getAvailableInteractions.
+ *
+ * A mouse click is pixel-exact, but a fingertip tap on a touch device rarely lands in the
+ * exact centre of a tile — on a single-tile-wide door this makes transitions "sometimes work"
+ * depending on how close to the tile's edge the tap landed. If the tapped tile has no
+ * interactions, this checks the 8 surrounding tiles (nearest first, within `tolerance` tiles)
+ * and uses the first one that does.
+ */
+export function getAvailableInteractionsWithTouchTolerance(
+  config: GetInteractionsConfig,
+  tolerance: number = 0.6
+): AvailableInteraction[] {
+  const direct = getAvailableInteractions(config);
+  if (direct.length > 0) return direct;
+
+  const { position } = config;
+  const tileX = Math.floor(position.x);
+  const tileY = Math.floor(position.y);
+
+  const offsets = [
+    { dx: -1, dy: 0 },
+    { dx: 1, dy: 0 },
+    { dx: 0, dy: -1 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: -1 },
+    { dx: 1, dy: -1 },
+    { dx: -1, dy: 1 },
+    { dx: 1, dy: 1 },
+  ];
+
+  let best: AvailableInteraction[] = [];
+  let bestDist = Infinity;
+
+  for (const { dx, dy } of offsets) {
+    const centre = { x: tileX + dx + 0.5, y: tileY + dy + 0.5 };
+    const dist = Math.hypot(centre.x - position.x, centre.y - position.y);
+    if (dist > tolerance || dist >= bestDist) continue;
+
+    const candidate = getAvailableInteractions({ ...config, position: centre });
+    if (candidate.length > 0) {
+      best = candidate;
+      bestDist = dist;
+    }
+  }
+
+  return best;
+}
