@@ -45,7 +45,7 @@ import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
 import { checkCookingLocation } from './utils/actionHandlers';
-import { getLavaLakeAnchor } from './utils/mapUtils';
+import { getLavaLakeAnchor, findClearTileNear } from './utils/mapUtils';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { audioManager } from './utils/AudioManager';
@@ -124,31 +124,6 @@ import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
  * Used to place the lava entrance adjacent to a defeated goblin.
  * Searches outward in a spiral, skipping non-floor and existing transition tiles.
  */
-function findClearTileNear(
-  origin: { x: number; y: number },
-  mapId: string
-): { x: number; y: number } | null {
-  const map = mapManager.getMap(mapId);
-  if (!map) return null;
-  const usedPositions = new Set(
-    map.transitions.map((t) => `${t.fromPosition.x},${t.fromPosition.y}`)
-  );
-  for (let radius = 0; radius <= 4; radius++) {
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue; // perimeter only
-        const x = origin.x + dx;
-        const y = origin.y + dy;
-        if (y < 1 || y >= map.grid.length - 1 || x < 1 || x >= map.grid[0].length - 1) continue;
-        if (map.grid[y][x] === TileType.MINE_FLOOR && !usedPositions.has(`${x},${y}`)) {
-          return { x, y };
-        }
-      }
-    }
-  }
-  return null;
-}
-
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
   const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen } = useUIState();
@@ -896,7 +871,14 @@ const App: React.FC = () => {
     });
 
     // Update stamina (drain when walking, restore when at home/bed/bench, drain on lava lake)
-    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId, isOnLavaLake, isOnBed, isOnBench);
+    staminaManager.update(
+      deltaTime,
+      movementResult.isMoving,
+      currentMapId,
+      isOnLavaLake,
+      isOnBed,
+      isOnBench
+    );
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
   }, [
@@ -1760,7 +1742,9 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="background"
-          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          gridOffset={
+            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
+          }
           tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
@@ -1774,7 +1758,9 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="midground"
-          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          gridOffset={
+            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
+          }
           tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
@@ -1840,7 +1826,9 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="foreground"
-          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          gridOffset={
+            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
+          }
           tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
@@ -2606,7 +2594,10 @@ const App: React.FC = () => {
                                   mapId: targetMapId,
                                   wallpaperId: inventoryRadialMenu.item.id,
                                 });
-                                showToast(`${invItemDef!.displayName} applied to your bedroom!`, 'success');
+                                showToast(
+                                  `${invItemDef!.displayName} applied to your bedroom!`,
+                                  'success'
+                                );
                                 closeUI('inventory');
                                 setInventoryRadialMenu(null);
                               },
