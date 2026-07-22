@@ -288,6 +288,13 @@ export class WeatherLayer {
       return;
     }
 
+    // Tear down any previous fog + mask first. Overwriting this.fogSprite below without this
+    // would leak the old (still-masked) sprite; _applyFogMask would then destroy its mask
+    // sprite out from under it, and Pixi's next bounds/cull pass crashes in
+    // AlphaMask.addLocalBounds ("this.mask is null"). clearFog() is null-safe, so calling it
+    // here is harmless on the paths that already cleared.
+    this.clearFog();
+
     // Create tiling fog sprite (seamless scrolling)
     this.fogSprite = new PIXI.TilingSprite({
       texture,
@@ -301,7 +308,6 @@ export class WeatherLayer {
 
     // Apply feathered edge mask to prevent sharp rectangular cutoff
     this._applyFogMask();
-
   }
 
   /**
@@ -317,6 +323,9 @@ export class WeatherLayer {
       this.fogMaskTexture = null;
     }
     if (this.fogMaskSprite) {
+      // Clear the mask reference BEFORE destroying the sprite, or the fogSprite keeps an
+      // AlphaMask effect pointing at freed memory and Pixi crashes on the next bounds pass.
+      this.fogSprite.mask = null;
       this.fogMaskSprite.destroy();
       this.fogMaskSprite = null;
     }
@@ -327,8 +336,10 @@ export class WeatherLayer {
       FOG_EDGE_FEATHER
     );
     this.fogMaskSprite = new PIXI.Sprite(this.fogMaskTexture);
-    this.fogSprite.mask = this.fogMaskSprite;
+    // Add to the display tree before assigning as a mask (Pixi v8 measures the mask via the
+    // scene graph; assigning first can warn/misbehave).
     this.fogContainer.addChild(this.fogMaskSprite);
+    this.fogSprite.mask = this.fogMaskSprite;
   }
 
   /**
