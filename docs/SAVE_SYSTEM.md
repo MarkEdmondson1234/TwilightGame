@@ -224,7 +224,31 @@ const cookingData = characterData.load('cooking');
 
 ### Data Migration
 
-When loading old save files, defensive checks ensure data consistency:
+Saves carry a `saveVersion` and go through an ordered migration chain on load
+(`GameState.ts`). **To change the persisted shape, add a numbered migration** — do not add
+another ad-hoc `if (!parsed.x)` back-fill, which runs on every load forever and can never be
+retired.
+
+```typescript
+// GameState.ts
+export const SAVE_VERSION = 1; // bump this to N when the shape changes
+
+const SAVE_MIGRATIONS: Record<number, (save: Record<string, unknown>) => void> = {
+  // Add [N] producing version N from version N-1:
+  // 2: (save) => {
+  //   save.newField = deriveFrom(save.oldField);
+  //   delete save.oldField;
+  // },
+};
+```
+
+`runSaveMigrations` runs every step above the save's current version, in order, then stamps
+it. A save from a *newer* build is loaded as-is (best-effort forward compatibility, e.g. a
+cloud save that outran a lagging deploy). The chain is covered by
+`tests/saveMigrations.test.ts` — add a case when you add a migration.
+
+The older defensive back-fills below still run (they bring any pre-versioning save up to
+version 1) but new work should use the chain above.
 
 ```typescript
 // Example: CookingManager auto-unlocks recipes with progress

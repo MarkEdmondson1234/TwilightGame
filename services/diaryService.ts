@@ -22,9 +22,8 @@ const MAX_RAW_EXCHANGE_LENGTH = 3000; // Cap raw text to avoid huge localStorage
 // Types
 // ============================================
 
-export interface DiaryEntry extends DiaryEntryDoc {
-  // DiaryEntryDoc has all the fields we need
-}
+// DiaryEntryDoc already has every field a DiaryEntry needs; this alias names the concept.
+export type DiaryEntry = DiaryEntryDoc;
 
 // ============================================
 // localStorage Operations

@@ -246,3 +246,35 @@ export function getTileData(
 
   return { ...legendEntry, type: tileType, color };
 }
+
+/**
+ * Find the nearest MINE_FLOOR tile to `origin` that is not already a transition source.
+ *
+ * Searches outward in square rings (perimeter only) up to radius 4, staying one tile inside
+ * the map border. Used to place a dynamically-spawned entrance (e.g. a goblin's) on a clear
+ * floor tile without colliding with an existing transition. Returns null if none is found.
+ */
+export function findClearTileNear(
+  origin: { x: number; y: number },
+  mapId: string
+): { x: number; y: number } | null {
+  const map = mapManager.getMap(mapId);
+  if (!map) return null;
+  const usedPositions = new Set(
+    map.transitions.map((t) => `${t.fromPosition.x},${t.fromPosition.y}`)
+  );
+  for (let radius = 0; radius <= 4; radius++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue; // perimeter only
+        const x = origin.x + dx;
+        const y = origin.y + dy;
+        if (y < 1 || y >= map.grid.length - 1 || x < 1 || x >= map.grid[0].length - 1) continue;
+        if (map.grid[y][x] === TileType.MINE_FLOOR && !usedPositions.has(`${x},${y}`)) {
+          return { x, y };
+        }
+      }
+    }
+  }
+  return null;
+}
