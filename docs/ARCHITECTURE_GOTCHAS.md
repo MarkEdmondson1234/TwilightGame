@@ -299,7 +299,35 @@ Background-image rooms use pre-drawn artwork instead of tile-by-tile rendering. 
 
 ---
 
-## 6. Quick Debugging Checklist
+## 6. PixiJS Mask Lifecycle — destroy order matters
+
+**Symptom:** the game white-screens into the ErrorBoundary with
+`can't access property "measurable", this.mask is null` (Firefox wording; other browsers phrase
+it differently). It comes from deep inside PixiJS — `AlphaMask.addLocalBounds` → `addMaskLocalBounds`,
+which does `mask.measurable = true` on a mask that is gone.
+
+**Root cause:** assigning `sprite.mask = maskSprite` attaches an `AlphaMask` **effect** to `sprite`
+that holds a reference to `maskSprite`. If you then `maskSprite.destroy()` **without** first setting
+`sprite.mask = null`, the effect is left pointing at freed memory, and Pixi's next bounds/culling
+pass dereferences it and throws. The only user of masks today is `utils/pixi/WeatherLayer.ts` (the
+feathered fog edge), so this surfaces as a weather/fog crash — often after a weather transition or a
+resize while fog is active.
+
+**The rules (whenever you use `.mask`):**
+- **Null the reference before destroying the mask sprite:** `sprite.mask = null;` *then*
+  `maskSprite.destroy();` — never the reverse.
+- **Never overwrite a masked sprite reference without tearing the old one down first.** If a setup
+  function reassigns `this.fooSprite = new Sprite(...)`, call the teardown (which nulls the mask and
+  destroys both sprites) at the *top* of setup. Teardown must be null-safe so calling it twice is fine.
+- **Add the mask to the display tree before assigning it:** `container.addChild(maskSprite);` *then*
+  `sprite.mask = maskSprite;` — Pixi measures the mask through the scene graph.
+
+`WeatherLayer.clearFog()` is the reference implementation; `setupFog()` calls it first and
+`_applyFogMask()` nulls the ref before destroying. Follow that shape for any new masked layer.
+
+---
+
+## 7. Quick Debugging Checklist
 
 When something feels "off" with interactions:
 
