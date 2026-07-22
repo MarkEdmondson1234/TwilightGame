@@ -472,6 +472,11 @@ export const winterCutscene: CutsceneDefinition = {
     action: 'return',
   },
 
+  audio: {
+    music: 'music_winter',
+    musicOneShot: true, // 12s track outlasts the cutscene's ~10.2s dialogue-driven runtime — let it finish naturally
+  },
+
   scenes: [
     // Scene 1: Snow-covered landscape — 4-layer parallax panorama
     {

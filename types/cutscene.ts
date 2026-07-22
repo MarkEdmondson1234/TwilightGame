@@ -194,6 +194,10 @@ export interface CutsceneDefinition {
     ambientVolume?: number; // Ambient volume override (0-1, default uses asset base volume)
     fadeInMs?: number; // Fade in duration in milliseconds (default 2000)
     fadeOutMs?: number; // Fade out duration in milliseconds (default 2000)
+    // When true: don't loop the music, and let it play to its natural end even after the
+    // cutscene finishes, instead of fading/stopping it early. For music cues longer than
+    // the cutscene's own dialogue-driven runtime.
+    musicOneShot?: boolean;
   };
   // Conditions
   requirements?: {

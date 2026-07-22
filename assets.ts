@@ -968,6 +968,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_winter: {
+    url: '/TwilightGame/assets/audio/music/cutscene_winter.mp3',
+    category: 'music',
+    loop: true,
+  },
 
   // === Ambient - Environmental Sounds ===
   // Looping background ambiance for atmosphere

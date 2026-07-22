@@ -177,6 +177,8 @@ class AudioManager {
   private ambientCrossfadeTimers: Map<string, ReturnType<typeof setTimeout>> = new Map(); // key -> crossfade timer
   // Deferred ambient plays: sounds requested before they finished loading
   private pendingAmbients: Map<string, { volume?: number }> = new Map();
+  // Deferred music plays: sounds requested before they finished loading
+  private pendingMusic: Map<string, { fadeIn?: number; crossfade?: boolean; loop?: boolean }> = new Map();
 
   // Settings
   private settings: AudioSettings = {
@@ -356,6 +358,14 @@ class AudioManager {
           this.playAmbient(key, opts.volume !== undefined ? { volume: opts.volume } : undefined);
         }
 
+        // Auto-start if this sound was requested as music before it finished loading
+        if (this.pendingMusic.has(key)) {
+          const opts = this.pendingMusic.get(key)!;
+          this.pendingMusic.delete(key);
+          console.log(`[AudioManager] Finished loading queued music, auto-starting: ${key}`);
+          this.playMusic(key, opts);
+        }
+
         return buffer;
       })
       .catch((error) => {
@@ -491,7 +501,21 @@ class AudioManager {
     key: string,
     options: { fadeIn?: number; crossfade?: boolean; loop?: boolean } = {}
   ): void {
-    if (!this.context || !this.sounds.has(key) || this.settings.muted) return;
+    if (this.settings.muted) return;
+
+    // Context not created yet, or sound not loaded yet — queue it so it auto-starts once
+    // loadBatch()'s loadSound() call for this key completes (that call lazily creates the
+    // AudioContext itself, so this covers both cases). Mirrors playAmbient's pendingAmbients.
+    if (!this.context || !this.sounds.has(key)) {
+      if (!this.pendingMusic.has(key)) {
+        console.log(
+          `[AudioManager] Queuing music — context: ${!!this.context}, loaded: ${this.sounds.has(key)}: ${key}`
+        );
+        this.pendingMusic.set(key, options);
+      }
+      return;
+    }
+    this.pendingMusic.delete(key);
 
     const sound = this.sounds.get(key)!;
     const fadeInMs = options.fadeIn ?? 1000;
@@ -576,6 +600,9 @@ class AudioManager {
    * Stop current music
    */
   stopMusic(fadeOutMs: number = 1000): void {
+    // Cancel any pending deferred play (e.g. a cutscene skipped before its music finished loading)
+    this.pendingMusic.clear();
+
     if (!this.context || !this.currentMusic) return;
 
     const track = this.currentMusic;
@@ -600,10 +627,11 @@ class AudioManager {
    * the next copy to fade in before the current one ends.
    */
   playAmbient(key: string, options?: { volume?: number }): string | null {
-    if (!this.context || this.settings.muted) return null;
+    if (this.settings.muted) return null;
 
-    // Sound not loaded yet — queue it so it auto-starts once loaded
-    if (!this.sounds.has(key)) {
+    // Context not created yet, or sound not loaded yet — queue it so it auto-starts once
+    // loadBatch()'s loadSound() call for this key completes (which lazily creates the context).
+    if (!this.context || !this.sounds.has(key)) {
       if (!this.pendingAmbients.has(key)) {
         this.pendingAmbients.set(key, { volume: options?.volume });
       }

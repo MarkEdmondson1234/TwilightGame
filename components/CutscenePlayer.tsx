@@ -81,6 +81,9 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   useEffect(() => {
     const state = cutsceneManager.getState();
     const cutscene = state.currentCutscene;
+    console.log(
+      `[CutscenePlayer] Audio effect mount — cutscene: ${cutscene?.id}, has audio config: ${!!cutscene?.audio}`
+    );
     if (!cutscene?.audio) return;
 
     const fadeIn = cutscene.audio.fadeInMs ?? 2000;
@@ -89,13 +92,18 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     if (cutsceneManager.hasAudioStarted(cutscene.id)) {
       // Already playing from an earlier mount of this same cutscene — just recover the
       // pre-cutscene music reference so cleanup can restore it correctly.
+      console.log(`[CutscenePlayer] Audio already started for ${cutscene.id}, skipping replay`);
       previousMusicRef.current = cutsceneManager.getPreviousMusicBeforeCutscene();
     } else {
+      console.log(`[CutscenePlayer] Starting audio for ${cutscene.id}: music=${cutscene.audio.music}`);
       previousMusicRef.current = audioManager.getCurrentMusic();
       cutsceneManager.markAudioStarted(cutscene.id, previousMusicRef.current);
 
       if (cutscene.audio.music) {
-        audioManager.playMusic(cutscene.audio.music, { fadeIn, loop: true });
+        audioManager.playMusic(cutscene.audio.music, {
+          fadeIn,
+          loop: !cutscene.audio.musicOneShot,
+        });
       }
       if (cutscene.audio.ambient) {
         audioManager.playAmbient(cutscene.audio.ambient, {
@@ -112,15 +120,16 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
         liveState.isPlaying && liveState.currentCutscene?.id === cutscene.id;
       if (cutsceneStillActive) return;
 
-      // Stop cutscene audio when it ends
-      if (cutscene.audio?.music) {
+      // Stop cutscene audio when it ends — unless it's a one-shot cue, which should be
+      // left alone to finish playing naturally rather than being cut short/faded early.
+      if (cutscene.audio?.music && !cutscene.audio.musicOneShot) {
         audioManager.stopMusic(fadeOut);
       }
       if (cutscene.audio?.ambient) {
         audioManager.stopAmbient(cutscene.audio.ambient, fadeOut);
       }
-      // Restore previous music if there was one
-      if (previousMusicRef.current) {
+      // Restore previous music if there was one (skip if a one-shot cue is still playing out)
+      if (previousMusicRef.current && !cutscene.audio?.musicOneShot) {
         audioManager.playMusic(previousMusicRef.current, { fadeIn: fadeOut, crossfade: true });
       }
       cutsceneManager.clearAudioState();
