@@ -40,31 +40,60 @@ export const springCutscene: CutsceneDefinition = {
   },
 
   scenes: [
-    // Scene 1: Cherry blossoms over the village
+    // Scene 1: Cherry blossoms over the village — 3-layer parallax reveal
     {
       id: 'spring_blossoms',
       backgroundLayers: [
-        // Sky layer
+        // Meadow and cottage — sits behind the framing trees, kept near its native framing so the
+        // house reads as distant; only a very gentle zoom (can't go below 1.0 without letterboxing,
+        // since that's the native "cover" framing of the source art)
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_spring_background.png',
           zIndex: 0,
           animation: {
-            type: 'static',
-            duration: 0,
+            type: 'zoom',
+            duration: 7000,
+            zoomFrom: 1.0,
+            zoomTo: 1.03,
+            easing: 'ease-in-out',
           },
         },
-        // Cherry blossom foreground
+        // Daffodil meadow foreground — sits above the background, zooms in slightly faster for parallax depth
         {
-          image: 'summer_just_cherry.PNG',
+          image: 'cutscene_spring_middleground.png',
           zIndex: 1,
           animation: {
-            type: 'pan-and-zoom',
+            type: 'zoom',
             duration: 7000,
-            panFrom: 'top',
-            panTo: 'bottom',
-            zoomFrom: 1.2,
-            zoomTo: 1.0,
-            easing: 'ease-out',
+            zoomFrom: 1.0,
+            zoomTo: 1.1,
+            easing: 'ease-in-out',
+          },
+        },
+        // Blossom tree flush against the left edge — pans further left/off-canvas to open the view
+        {
+          image: 'cutscene_spring_left.png',
+          zIndex: 2,
+          animation: {
+            type: 'pan',
+            duration: 7000,
+            panFrom: 'center',
+            panTo: 'right', // NB: 'right' maps to negative translateX — see getPanOffset — so this drifts further left, off-canvas
+            panAmount: 20,
+            easing: 'ease-in-out',
+          },
+        },
+        // Blossom tree flush against the right edge — pans further right/off-canvas to open the view
+        {
+          image: 'cutscene_spring_right.png',
+          zIndex: 3,
+          animation: {
+            type: 'pan',
+            duration: 7000,
+            panFrom: 'center',
+            panTo: 'left', // NB: 'left' maps to positive translateX — see getPanOffset — so this drifts further right, off-canvas
+            panAmount: 20,
+            easing: 'ease-in-out',
           },
         },
       ],
@@ -90,14 +119,46 @@ export const springCutscene: CutsceneDefinition = {
       id: 'spring_village',
       backgroundLayers: [
         {
-          image: 'summer_just_green.PNG',
+          image: 'cutscene_spring_background.png',
           zIndex: 0,
           animation: {
             type: 'zoom',
             duration: 6000,
-            zoomFrom: 1.0,
-            zoomTo: 1.15,
+            zoomFrom: 1.03,
+            zoomTo: 1.06,
             easing: 'ease-in-out',
+          },
+        },
+        // Continues the parallax zoom from scene 1
+        {
+          image: 'cutscene_spring_middleground.png',
+          zIndex: 1,
+          animation: {
+            type: 'zoom',
+            duration: 6000,
+            zoomFrom: 1.1,
+            zoomTo: 1.2,
+            easing: 'ease-in-out',
+          },
+        },
+        // Held static at the resting position it lands on at the end of slide 1's pan (translateX -20%)
+        {
+          image: 'cutscene_spring_left.png',
+          zIndex: 2,
+          offsetX: -20,
+          animation: {
+            type: 'static',
+            duration: 0,
+          },
+        },
+        // Held static at the resting position it lands on at the end of slide 1's pan (translateX +20%)
+        {
+          image: 'cutscene_spring_right.png',
+          zIndex: 3,
+          offsetX: 20,
+          animation: {
+            type: 'static',
+            duration: 0,
           },
         },
       ],
