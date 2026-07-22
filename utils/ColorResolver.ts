@@ -71,6 +71,17 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MINE_ENTRANCE]: 'special',
   [TileType.TABLE]: 'furniture',
   [TileType.CHAIR]: 'furniture',
+  // Multi-tile indoor sprites: the floor shows through their transparent parts, so they must
+  // track the scheme's floor colour (which shifts at night) rather than a fixed value.
+  [TileType.SOFA]: 'floor',
+  [TileType.BED]: 'floor',
+  [TileType.STOVE]: 'floor',
+  [TileType.CHIMNEY]: 'floor',
+  // Outdoor buildings/props sitting on grass — must track the seasonal grass colour,
+  // otherwise they render a sage box against olive grass in summer and snow in winter.
+  [TileType.SHOP]: 'grass',
+  [TileType.GARDEN_SHED]: 'grass',
+  [TileType.CAMPFIRE]: 'grass',
   [TileType.MUSHROOM]: 'grass', // Regular mushrooms sit on grass background
   // Farm tiles removed - they should use base colors from TILE_LEGEND, not color scheme overrides
   // This allows farm tiles to always show as brown/chocolate regardless of map theme

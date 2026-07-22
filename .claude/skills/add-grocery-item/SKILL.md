@@ -15,11 +15,11 @@ Add grocery items (cooking ingredients) to the game as purchasable shop items an
 # This skill will:
 # 1. Verify sprite file exists in /public/assets/items/grocery/
 # 2. Register sprite in assets.ts
-# 3. Create item definition in data/items.ts
+# 3. Create item definition in data/items/ingredients.ts
 # 4. Add to shop inventory in data/shopInventory.ts
 # 5. Run npm run optimize-assets (CRITICAL - sprite won't work without this!)
 # 6. Verify optimized file exists
-# 7. Run TypeScript check
+# 7. Run make verify (typecheck + full test suite)
 ```
 
 ## When to Use This Skill
@@ -60,9 +60,11 @@ export const groceryAssets = {
 - Match filename to sprite name
 - Alphabetical ordering preferred
 
-### 3. Create Item Definition in data/items.ts
+### 3. Create Item Definition in data/items/ingredients.ts
 
-**Add to ITEMS object:**
+Item definitions live in per-category modules under `data/items/`; ingredients go in `data/items/ingredients.ts`. See the category → module table in the `data/items.ts` header if you need a different category.
+
+**Add to the `INGREDIENT_ITEMS` object:**
 ```typescript
 almonds: {
   id: 'almonds',
@@ -128,15 +130,24 @@ ls -la public/assets-optimized/items/grocery/[item_name].png
 
 ### 6. Verify with TypeScript
 
-**Run type check:**
+**Run full verification (typecheck + tests):**
 ```bash
-npx tsc --noEmit
+make verify
 ```
+
+**Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
+
+**Tests that guard this skill's output:**
+- `tests/itemSSoT.test.ts` — fails if the new item duplicates an existing one (same displayName, different ID), if a shop entry references an item ID that does not exist in `ITEMS`, or if a recipe references a missing ingredient. This is the test that catches "I created `almonds` when `crop_almond` already existed".
+- `tests/assetIntegrity.test.ts` — fails if the item's `image` path does not resolve to a real file on disk, which is what happens when `npm run optimize-assets` was not run.
 
 **Fix common issues:**
 - Missing import for groceryAssets
 - Typo in item ID
 - Missing comma in object
+- Duplicate item that should have reused an existing `ITEMS` entry
 
 ### 7. Test in Game (Optional)
 
@@ -171,7 +182,7 @@ This skill loads information progressively:
 
 **Three files must be updated:**
 1. `assets.ts` - Sprite path registration
-2. `data/items.ts` - Item definition (the `image` field handles UI display automatically)
+2. `data/items/ingredients.ts` - Item definition (the `image` field handles UI display automatically)
 3. `data/shopInventory.ts` - Shop stock (optional but recommended)
 
 **`utils/inventoryUIHelper.ts` does NOT need updating** — it reads `item.image` directly from the item definition via `getItem()`. There is no ITEM_SPRITE_MAP to maintain.

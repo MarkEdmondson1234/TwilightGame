@@ -201,7 +201,7 @@ class CharacterDataManager {
         case 'friendship':
           gameState.saveFriendships((data as FriendshipData).npcFriendships as never);
           break;
-        case 'farming':
+        case 'farming': {
           const farmData = data as FarmingData;
           gameState.saveFarmPlots(farmData.plots as never);
           if (farmData.currentTool) {
@@ -211,10 +211,12 @@ class CharacterDataManager {
             gameState.setSelectedSeed(farmData.selectedSeed);
           }
           break;
-        case 'inventory':
+        }
+        case 'inventory': {
           const invData = data as InventoryData;
           gameState.saveInventory(invData.items, invData.tools, invData.slotOrder);
           break;
+        }
         case 'magic':
           gameState.saveMagicState(data as MagicData);
           break;
@@ -244,32 +246,36 @@ class CharacterDataManager {
     data: CharacterDataDomains[T]
   ): Record<string, unknown> {
     switch (domain) {
-      case 'cooking':
+      case 'cooking': {
         const cookingData = data as CookingData;
         return {
           recipeBookUnlocked: cookingData.recipeBookUnlocked,
           unlockedRecipesCount: cookingData.unlockedRecipes.length,
           progressCount: Object.keys(cookingData.recipeProgress).length,
         };
-      case 'friendship':
+      }
+      case 'friendship': {
         const friendData = data as FriendshipData;
         return {
           friendshipCount: friendData.npcFriendships.length,
         };
-      case 'farming':
+      }
+      case 'farming': {
         const farmData = data as FarmingData;
         return {
           plotCount: farmData.plots.length,
           currentTool: farmData.currentTool,
           selectedSeed: farmData.selectedSeed,
         };
-      case 'inventory':
+      }
+      case 'inventory': {
         const invData = data as InventoryData;
         return {
           itemCount: invData.items.length,
           toolCount: invData.tools.length,
         };
-      case 'magic':
+      }
+      case 'magic': {
         const magicData = data as MagicData;
         return {
           magicBookUnlocked: magicData.magicBookUnlocked,
@@ -277,18 +283,21 @@ class CharacterDataManager {
           unlockedRecipesCount: magicData.unlockedRecipes.length,
           progressCount: Object.keys(magicData.recipeProgress).length,
         };
-      case 'decoration':
+      }
+      case 'decoration': {
         const decoData = data as DecorationData;
         return {
           craftedPaintsCount: decoData.craftedPaints.length,
           paintingsCount: decoData.paintings.length,
           hasEasel: decoData.hasEasel,
         };
-      case 'photography':
+      }
+      case 'photography': {
         const photoData = data as PhotographyData;
         return {
           albumPhotosCount: photoData.albumPhotos.length,
         };
+      }
       default:
         return { unknown: true };
     }

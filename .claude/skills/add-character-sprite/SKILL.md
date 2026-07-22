@@ -192,7 +192,11 @@ The optimization script handles sprite sheet generation for layered characters.
 1. Check original files exist in `/public/assets/character1/`
 2. Check optimized files created in `/public/assets-optimized/character1/`
 3. Verify all 16 sprites are present for each layer
-4. Run TypeScript check: `npx tsc --noEmit`
+4. Run full verification: `make verify` (typecheck + full test suite; must be clean)
+   - **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+   - **Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
+   - `tests/assetIntegrity.test.ts` will fail if any `playerAssets` path does not resolve to a real file — typically a typo, a path pointing at `assets/` rather than `assets-optimized/`, or a missing `npm run optimize-assets`.
+   - `tests/walkAnimation.test.ts` covers the walk-cycle frame logic these sprites feed.
 5. Test in-game by running `npm run dev`
 6. Verify animations play correctly (press WASD to move)
 

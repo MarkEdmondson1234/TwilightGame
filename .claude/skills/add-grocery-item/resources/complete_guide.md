@@ -17,7 +17,7 @@ Examples: cheese, almonds, butter, flour, chocolate, olive oil, vanilla pods, et
 Adding a grocery item requires updates to **4 files**:
 
 1. **`assets.ts`** - Register the sprite path
-2. **`data/items.ts`** - Define the item properties
+2. **`data/items/ingredients.ts`** - Define the item properties
 3. **`data/shopInventory.ts`** - Add to shop stock (optional but recommended)
 4. **`utils/inventoryUIHelper.ts`** - Map sprite for UI rendering
 
@@ -59,15 +59,17 @@ export const groceryAssets = {
 - The optimization script creates this automatically
 - Use the same filename as your source image
 
-### 3. Define Item in `data/items.ts`
+### 3. Define Item in `data/items/ingredients.ts`
+
+Item definitions live in per-category modules under `data/items/`; ingredients go in `data/items/ingredients.ts`. See the category → module table in the `data/items.ts` header if you need a different category.
 
 Add a new item definition following the grocery item pattern:
 
 ```typescript
-// data/items.ts
-import { groceryAssets } from '../assets';
+// data/items/ingredients.ts
+import { groceryAssets } from '../../assets';
 
-export const ITEMS: Record<string, ItemDefinition> = {
+export const INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
   // ... existing items
 
   almonds: {
@@ -207,7 +209,7 @@ export const groceryAssets = {
 };
 ```
 
-### 3. Defined in `data/items.ts`
+### 3. Defined in `data/items/ingredients.ts`
 ```typescript
 almonds: {
   id: 'almonds',
@@ -344,8 +346,12 @@ sellPrice: 6,   // Must match
 
 **Fix:**
 ```bash
-# Check for TypeScript errors
-npx tsc --noEmit
+# Check for TypeScript errors AND run the test suite
+make verify
+# (Never `npm test` — that is watch mode and never exits.
+#  The suite is fully green — any failure is a real regression.)
+# tests/itemSSoT.test.ts catches duplicate/missing item IDs.
+# tests/assetIntegrity.test.ts catches unresolvable asset paths.
 
 # Common issues:
 # - Forgot to import groceryAssets in items.ts
@@ -357,7 +363,7 @@ npx tsc --noEmit
 
 - [ ] 1. Add PNG file to `/public/assets/items/grocery/your_item.png`
 - [ ] 2. Register in `assets.ts` → `groceryAssets` object
-- [ ] 3. Define in `data/items.ts` → `ITEMS` object with `ItemCategory.INGREDIENT`
+- [ ] 3. Define in `data/items/ingredients.ts` → `INGREDIENT_ITEMS` object with `ItemCategory.INGREDIENT`
 - [ ] 4. Add to `data/shopInventory.ts` → `SHOP_INVENTORY` array (optional)
 - [ ] 5. Map in `utils/inventoryUIHelper.ts` → `ITEM_SPRITE_MAP`
 - [ ] 6. Run `npm run optimize-assets`
@@ -377,7 +383,7 @@ npx tsc --noEmit
 The key insight: **Grocery items require 4 registrations:**
 
 1. **`assets.ts`** - Define sprite path
-2. **`data/items.ts`** - Define item properties (category, prices, description)
+2. **`data/items/ingredients.ts`** - Define item properties (category, prices, description)
 3. **`data/shopInventory.ts`** - Add to shop stock (makes it purchasable)
 4. **`utils/inventoryUIHelper.ts`** - Map sprite for rendering (makes it visible)
 

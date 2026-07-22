@@ -5,6 +5,10 @@ on:
     branches:
       - main  # Deploy when pushing to main branch
 
+  pull_request:
+    branches:
+      - main  # Verify (but do not deploy) every PR targeting main
+
   # Allow manual trigger
   workflow_dispatch:
 
@@ -20,23 +24,50 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  # Gate: types, lint and the full test suite must pass before anything is built or
+  # deployed. Without this, the 400+ tests protect only local development — a broken
+  # test (or a lint error) would ship straight to production. eslint exits non-zero on
+  # errors only, so the 200+ existing warnings do not block; introduce an error and it does.
+  verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint and Type Check
+      - name: Type check
         run: npx tsc --noEmit
+
+      - name: Lint
+        run: npx eslint . --ext .ts,.tsx
+
+      - name: Test
+        run: npm run test:run
+
+  build:
+    runs-on: ubuntu-latest
+    needs: verify
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build
         env:
@@ -50,14 +81,15 @@ jobs:
         run: npm run build
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v6
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: './dist'
 
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -66,4 +98,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

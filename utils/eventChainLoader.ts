@@ -23,7 +23,19 @@ const yamlModules = import.meta.glob('/data/eventChains/*.yaml', {
 // Validation
 // ============================================
 
-const VALID_EVENT_TYPES = new Set(['discovery', 'achievement', 'seasonal', 'community', 'mystery', 'romance']);
+/**
+ * The authoritative set of chain `type` values. Exported so tests assert against this
+ * rather than keeping their own copy — a duplicated list silently goes stale the moment
+ * a new type is added here (which is exactly how 'romance' came to fail the suite).
+ */
+export const VALID_EVENT_TYPES = new Set([
+  'discovery',
+  'achievement',
+  'seasonal',
+  'community',
+  'mystery',
+  'romance',
+]);
 const VALID_TRIGGER_TYPES = new Set([
   'manual',
   'event_count',

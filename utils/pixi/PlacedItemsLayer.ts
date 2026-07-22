@@ -220,7 +220,7 @@ export class PlacedItemsLayer extends PixiLayer {
         let fgSprite = this.fgSprites.get(fgKey);
 
         if (!fgSprite) {
-          let fgTexture = textureManager.getTexture(item.foregroundImage);
+          const fgTexture = textureManager.getTexture(item.foregroundImage);
           if (!fgTexture) {
             textureManager.loadTexture(item.foregroundImage, item.foregroundImage).then(() => {
               this.onTextureLoaded?.();

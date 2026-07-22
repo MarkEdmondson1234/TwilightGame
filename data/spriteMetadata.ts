@@ -693,10 +693,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.COTTAGE_STONE,
+    // Source art is a square 1024×1024 canvas, so the tile box must be square too or the
+    // cottage is drawn 13% too wide. Was 9×8, which contradicted this comment.
     spriteWidth: 9,  // 9×9 tile footprint (square image)
-    spriteHeight: 8,
+    spriteHeight: 9,
     offsetX: -4.0,   // Shifted +0.5 right so door aligns to whole tile
-    offsetY: -6.5,   // sprite extends mostly upward; bottom 1.5 tiles below anchor
+    offsetY: -7.5,   // sprite extends mostly upward; bottom stays 1.5 tiles below anchor
     image: tileAssets.cottage_medium_spring, // seasonal rendering overrides at runtime
     enableFlip: false,
     enableRotation: false,
@@ -1110,9 +1112,11 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.OAK_TREE,
-    spriteWidth: 5, // 5 tiles wide (large deciduous tree)
+    // Square 1024×1024 source, so the tile box is square. Was 5×6, which squeezed the
+    // canopy 17% narrower than drawn; height is preserved and the width corrected.
+    spriteWidth: 6, // 6 tiles wide (broad deciduous canopy)
     spriteHeight: 6, // 6 tiles tall (proper forest oak)
-    offsetX: -2, // Center horizontally on tile
+    offsetX: -2.5, // Center horizontally on tile
     offsetY: -5, // Extends 5 tiles upward
     image: tileAssets.oak_tree_summer, // Default image (overridden by seasonalImages in TILE_LEGEND)
     // Collision only at the base trunk (small area)
@@ -1233,9 +1237,12 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
   },
   {
     tileType: TileType.DEAD_SPRUCE,
-    spriteWidth: 4, // 4 tiles wide (tall barren tree)
+    // Square 256×256 source, so the tile box is square. Was 4×7 — the worst of the three,
+    // squashing the trunk 43% narrower than drawn. Height preserved, width corrected; the
+    // tree itself only occupies ~2 of the 7 tiles, the rest of the box is transparent.
+    spriteWidth: 7, // 7 tiles wide (mostly empty; tree is slender)
     spriteHeight: 7, // 7 tiles tall (tall dead conifer)
-    offsetX: -1.5, // Center horizontally on tile
+    offsetX: -3.0, // Center horizontally on tile
     offsetY: -6, // Extends 6 tiles upward
     image: tileAssets.dead_spruce, // Default image (overridden by seasonalImages in TILE_LEGEND)
     // Collision only at the base trunk (small area)

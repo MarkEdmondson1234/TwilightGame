@@ -27,10 +27,11 @@ export interface MiniGameTrigger {
   npcNameMatch?: string;
   /** Triggered by using an inventory item */
   inventoryItemId?: string;
-  /** Triggered by a quest reaching a certain stage */
-  questTrigger?: { questId: string; stage: number };
-  /** Triggered by a specific map location (tile coordinates) */
+  /** Triggered by clicking a specific map tile (no NPC or item needed). */
   mapLocation?: { mapId: string; x: number; y: number };
+  // NOTE: a quest-stage trigger was declared here but never wired to anything. It was
+  // removed rather than left as a type that silently does nothing. Re-add it together with
+  // its consumer (a registry index + a check on quest advancement) when a game needs it.
 }
 
 /**
@@ -187,7 +188,7 @@ export interface MiniGameStorage {
  */
 export interface MiniGameTriggerData {
   /** What triggered the mini-game */
-  triggerType: 'placedItem' | 'npc' | 'tile' | 'inventory' | 'quest' | 'mapLocation' | 'direct';
+  triggerType: 'placedItem' | 'npc' | 'tile' | 'inventory' | 'mapLocation' | 'direct';
   /** Position where interaction happened */
   position?: Position;
   /** NPC ID if triggered by NPC */

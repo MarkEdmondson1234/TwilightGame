@@ -45,7 +45,7 @@ import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
 import { checkCookingLocation } from './utils/actionHandlers';
-import { getLavaLakeAnchor } from './utils/mapUtils';
+import { getLavaLakeAnchor, findClearTileNear } from './utils/mapUtils';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { audioManager } from './utils/AudioManager';
@@ -104,7 +104,11 @@ import FurnitureCatalogueUI from './components/FurnitureCatalogueUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
 import BasketModal from './components/BasketModal';
 import GlamourModal from './components/GlamourModal';
-import { usePotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
+import { applyPotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
+import {
+  onFirstMeetingComplete as onFairyQueenFirstMeeting,
+  grantFairyFormPotion,
+} from './data/questHandlers/fairyQueenHandler';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -120,30 +124,48 @@ import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
  * Used to place the lava entrance adjacent to a defeated goblin.
  * Searches outward in a spiral, skipping non-floor and existing transition tiles.
  */
-function findClearTileNear(
-  origin: { x: number; y: number },
-  mapId: string
-): { x: number; y: number } | null {
-  const map = mapManager.getMap(mapId);
-  if (!map) return null;
-  const usedPositions = new Set(
-    map.transitions.map((t) => `${t.fromPosition.x},${t.fromPosition.y}`)
-  );
-  for (let radius = 0; radius <= 4; radius++) {
-    for (let dy = -radius; dy <= radius; dy++) {
-      for (let dx = -radius; dx <= radius; dx++) {
-        if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) continue; // perimeter only
-        const x = origin.x + dx;
-        const y = origin.y + dy;
-        if (y < 1 || y >= map.grid.length - 1 || x < 1 || x >= map.grid[0].length - 1) continue;
-        if (map.grid[y][x] === TileType.MINE_FLOOR && !usedPositions.has(`${x},${y}`)) {
-          return { x, y };
-        }
-      }
-    }
-  }
-  return null;
-}
+// ═════════════════════════════════════════════════════════════════════════════
+//  App.tsx — top-level game component (~2,650 lines).
+//
+//  This file is large and has resisted splitting: its state, effects and render
+//  tree are tightly coupled. Until it is broken up, use this map — and the golden
+//  rule below — to work in it without making it worse.
+//
+//  ── GOLDEN RULE: ADD LOGIC TO A HOOK, NOT TO THIS FILE ───────────────────────
+//  Most systems already live in a dedicated hook. App.tsx should mostly WIRE them
+//  together and render. If your change fits one of these, put it there and only
+//  touch App.tsx to connect it:
+//    movement / pathfinding / animation ......... hooks/useMovementController.ts
+//    clicks / NPC dialogue / radial menu / farm . hooks/useInteractionController.ts
+//    weather / time-of-day / ambient audio ...... hooks/useEnvironmentController.ts
+//    keyboard / touch / mouse input ............. hooks/use{Keyboard,Touch,Mouse}Controls.ts
+//    manager → React re-render plumbing ......... hooks/useGameEvents.ts
+//    PixiJS layers / rendering .................. hooks/usePixiRenderer.ts, utils/pixi/*
+//    interaction options offered at a tile ...... utils/interactions/ (add a provider)
+//
+//  ── WHERE THINGS ARE (grep the symbol — line numbers drift, these do not) ────
+//    Map init / loading screen .... isMapInitialized, mapErrors, "Phase 2: Slow asset"
+//    Game loop (rAF) .............. gameLoop, animationFrameId, lastFrameTime
+//    Camera / viewport / culling .. viewportScale, effectiveGridOffset,
+//                                   effectiveTileSize, visibleRange, isCompactMode
+//    Cutscenes .................... isCutscenePlaying, handleLoadingCutsceneComplete
+//    Inventory .................... inventoryItems, handleFoodEat, handleInventoryReorder
+//    Potions / magic / fairy form . handlePotionUse, isFairyFormFading, fairyFormTimersRef
+//    Photos ....................... photoCount, viewingPhoto, handleTakePhoto
+//    NPC dialogue / shop / combat . activeNPC, allNPCs, "Freeze/unfreeze NPC", "shop UI"
+//    Yule celebration ............. isYuleCelebrationActive, yuleNpcWishes, yule*
+//    Render tree .................. the `return (` near the bottom; each sub-tree is
+//                                   banner-commented (TileRenderer, NPCRenderer,
+//                                   PlacedItems, HUD, modals, …)
+//
+//  ── EDITING SAFELY ──────────────────────────────────────────────────────────
+//   • Read docs/ARCHITECTURE_GOTCHAS.md before touching the coordinate pipeline
+//     (effectiveGridOffset must include zoom) or ambient audio (each effect stops
+//     only its own sound). Effect ordering and dependency arrays matter here.
+//   • No test exercises this component at runtime and main auto-deploys — verify
+//     visually with `make dev` after any change.
+//   • Don't grow this file. New system → new hook (see the golden rule).
+// ═════════════════════════════════════════════════════════════════════════════
 
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
@@ -274,16 +296,13 @@ const App: React.FC = () => {
     playerScale,
     playerSizeTier,
     isFairyForm,
-    isPathing,
     clickToMoveDestination,
     clickToMoveTargetNPC,
     playerPosRef,
     isMovingRef,
     updateMovement,
     setDestination: setClickToMoveDestination,
-    cancelPath,
     setPlayerPos,
-    setDirection,
     setPlayerScale,
     setPlayerSizeTier,
     setFairyForm,
@@ -312,14 +331,11 @@ const App: React.FC = () => {
     setRadialMenuVisible,
     farmActionAnimation,
     farmActionKey,
-    waterSparklePos,
-    waterSparkleKey,
     showSplashEffect,
     splashKey,
     handleCanvasClick,
     handleFarmActionAnimation,
     handleAnimationComplete,
-    clearWaterSparkle,
     hideSplashEffect,
   } = useInteractionController({
     playerPos,
@@ -431,7 +447,6 @@ const App: React.FC = () => {
   };
 
   // Farm update handler - no-op since EventBus handles this now
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const handleFarmUpdate = useCallback(() => {
     // Events are now emitted by FarmManager via EventBus
   }, []);
@@ -469,11 +484,9 @@ const App: React.FC = () => {
     // Handle fairy queen cutscene completions
     if (action.cutsceneId === 'fairy_oak_midnight') {
       // First meeting with Queen Celestia — advance fairy_queen quest
-      const { onFirstMeetingComplete } = require('./data/questHandlers/fairyQueenHandler');
-      onFirstMeetingComplete();
+      onFairyQueenFirstMeeting();
     } else if (action.cutsceneId === 'fairy_oak_midnight_return') {
       // Return visit — grant fairy form potion
-      const { grantFairyFormPotion } = require('./data/questHandlers/fairyQueenHandler');
       grantFairyFormPotion();
     }
 
@@ -792,6 +805,7 @@ const App: React.FC = () => {
     onTakePhoto: handleTakePhoto,
   });
 
+  // ═══════════════════════ GAME LOOP (requestAnimationFrame) ═══════════════════════
   const gameLoop = useCallback(() => {
     // Track frame-to-frame timing for performance metrics
     performanceMonitor.tick();
@@ -894,7 +908,14 @@ const App: React.FC = () => {
     });
 
     // Update stamina (drain when walking, restore when at home/bed/bench, drain on lava lake)
-    staminaManager.update(deltaTime, movementResult.isMoving, currentMapId, isOnLavaLake, isOnBed, isOnBench);
+    staminaManager.update(
+      deltaTime,
+      movementResult.isMoving,
+      currentMapId,
+      isOnLavaLake,
+      isOnBed,
+      isOnBench
+    );
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
   }, [
@@ -1367,7 +1388,7 @@ const App: React.FC = () => {
       }
 
       // Use the potion effect
-      const result = usePotionEffect(itemId, magicEffectCallbacks);
+      const result = applyPotionEffect(itemId, magicEffectCallbacks);
 
       if (result.success) {
         // Play magic sound effect
@@ -1423,8 +1444,6 @@ const App: React.FC = () => {
   // PixiJS renderer hook - manages all PixiJS rendering layers
   const {
     isPixiInitialized,
-    pixiAppRef,
-    npcLayerRef,
     backgroundImageLayerRef,
     weatherManagerRef,
     weatherLayerRef,
@@ -1700,6 +1719,7 @@ const App: React.FC = () => {
     );
   }
 
+  // ═══════════════════════════════ RENDER ═══════════════════════════════
   return (
     <div
       ref={gameContainerRef}
@@ -1758,7 +1778,9 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="background"
-          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          gridOffset={
+            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
+          }
           tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
@@ -1772,7 +1794,9 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="midground"
-          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          gridOffset={
+            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
+          }
           tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
@@ -1838,7 +1862,9 @@ const App: React.FC = () => {
           seasonKey={seasonKey}
           timeOfDay={timeOfDay}
           layer="foreground"
-          gridOffset={currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined}
+          gridOffset={
+            currentMap?.renderMode === 'background-image' ? effectiveGridOffset : undefined
+          }
           tileSize={currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined}
         />
 
@@ -2604,7 +2630,10 @@ const App: React.FC = () => {
                                   mapId: targetMapId,
                                   wallpaperId: inventoryRadialMenu.item.id,
                                 });
-                                showToast(`${invItemDef!.displayName} applied to your bedroom!`, 'success');
+                                showToast(
+                                  `${invItemDef!.displayName} applied to your bedroom!`,
+                                  'success'
+                                );
                                 closeUI('inventory');
                                 setInventoryRadialMenu(null);
                               },

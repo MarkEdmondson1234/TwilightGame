@@ -67,12 +67,51 @@ The `effectiveGridOffset` useMemo must recalculate when ANY of these change:
 
 Missing `zoom` from the dependency array was part of the original bug — the offset was stale after zoom changes.
 
+### CSS `transform: scale()` silently breaks pointer maths
+
+The same class of bug appears inside UI panels, not just the game canvas. A responsive
+panel that scales itself down on narrow viewports:
+
+```typescript
+const scale = Math.min(1, (windowWidth * 0.95) / TARGET_WIDTH);
+<div style={{ width: TARGET_WIDTH, transform: `scale(${scale})` }}>
+```
+
+...will place things in the wrong spot if the pointer maths uses raw client pixels:
+
+```typescript
+// ❌ WRONG — rect is the SCALED box, but the coordinates are used as unscaled ones
+const rect = el.getBoundingClientRect();
+const x = e.clientX - rect.left;   // at scale 0.8, a click at the visual centre
+const y = e.clientY - rect.top;    // lands at 80% of the intended position
+```
+
+`getBoundingClientRect()` returns post-transform (scaled) dimensions, so the offset it
+produces is in *screen* pixels while the layout coordinates it gets compared against are
+in *unscaled* pixels. Divide by the effective scale:
+
+```typescript
+// ✅ CORRECT — derive the real scale from the rect rather than trusting a state variable
+const rect = el.getBoundingClientRect();
+const scale = rect.width / UNSCALED_WIDTH;
+const x = (e.clientX - rect.left) / scale;
+const y = (e.clientY - rect.top) / scale;
+```
+
+**Drag deltas need the same treatment** — `pos.x - startX` is a screen-pixel delta, so it
+must also be divided by the scale before being applied to a layout coordinate.
+
+This bites hardest on iPad, where a narrow viewport means the scale is essentially always
+below 1, so the bug is invisible on a desktop dev machine at full width.
+
 ### Testing coordinate fixes
 
 If you change anything in the coordinate pipeline, test in BOTH room types:
 1. **Standard room** (village): click on an NPC, click on a farm plot
 2. **Background-image room** (shop, cottage): click on an NPC, click on interactable objects
 3. **At different zoom levels**: zoom in/out and repeat both tests
+4. **At a narrow viewport**: shrink the window until any responsive `transform: scale()`
+   kicks in, then repeat — this is what an iPad sees
 
 ---
 
@@ -260,7 +299,46 @@ Background-image rooms use pre-drawn artwork instead of tile-by-tile rendering. 
 
 ---
 
-## 6. Quick Debugging Checklist
+## 6. PixiJS Mask Lifecycle — destroy order matters
+
+**Symptom:** the game white-screens into the ErrorBoundary with
+`can't access property "measurable", this.mask is null` (Firefox wording; other browsers phrase
+it differently). It comes from deep inside PixiJS — `AlphaMask.addLocalBounds` → `addMaskLocalBounds`,
+which does `mask.measurable = true` on a mask that is gone.
+
+**Root cause:** assigning `sprite.mask = maskSprite` attaches an `AlphaMask` **effect** to `sprite`
+that holds a reference to `maskSprite`. If you then `maskSprite.destroy()` **without** first setting
+`sprite.mask = null`, the effect is left pointing at freed memory, and Pixi's next bounds/culling
+pass dereferences it and throws. The only user of masks today is `utils/pixi/WeatherLayer.ts` (the
+feathered fog edge), so this surfaces as a weather/fog crash — often after a weather transition or a
+resize while fog is active.
+
+**Don't hand-roll it — use the helper.** All mask assignment goes through
+[`utils/pixi/maskUtils.ts`](../utils/pixi/maskUtils.ts):
+
+```typescript
+import { attachMask, disposeMask } from './maskUtils';
+
+attachMask(target, maskSprite, parent);          // addChild(mask) THEN target.mask = mask
+this.maskSprite = disposeMask(target, maskSprite); // target.mask = null THEN mask.destroy(); returns null
+```
+
+`tests/pixiMaskSafety.test.ts` fails the build if any file outside `maskUtils.ts` assigns `.mask =`
+directly, so the funnel can't be bypassed.
+
+**The rules these helpers encode (why they exist):**
+- **Null the reference before destroying the mask sprite** — never the reverse (`disposeMask`).
+- **Never overwrite a masked sprite without tearing the old one down first.** A setup function that
+  reassigns `this.fooSprite = new Sprite(...)` must call its null-safe teardown at the *top*.
+- **Add the mask to the display tree before assigning it** — Pixi measures it through the scene
+  graph (`attachMask`).
+
+`WeatherLayer` is the reference user: `setupFog()` calls `clearFog()` first, and both `clearFog()`
+and `_applyFogMask()` go through `disposeMask`/`attachMask`.
+
+---
+
+## 7. Quick Debugging Checklist
 
 When something feels "off" with interactions:
 
@@ -271,6 +349,8 @@ When something feels "off" with interactions:
 - [ ] **Check `screenToTile`** — are both branches (tiled vs background-image) correct?
 - [ ] **Check z-index** — is the overlay using a constant from `zIndex.ts`?
 - [ ] **Check `elementsFromPoint`** — is the UI detection using position-based checking?
+- [ ] **Is a parent using `transform: scale()`?** If clicks drift proportionally to how narrow
+      the window is, divide pointer offsets and drag deltas by the effective scale
 
 When ambient audio is silent:
 

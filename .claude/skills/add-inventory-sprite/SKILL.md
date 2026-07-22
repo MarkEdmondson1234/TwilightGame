@@ -14,7 +14,8 @@ Add new sprites for inventory items (grocery items, tools, seeds, resources, pot
 Every inventory sprite must be registered in **exactly three locations**:
 
 1. **`assets.ts`** - Define the optimized sprite path
-2. **`data/items.ts`** - Link sprite to item definition (`image` property)
+2. **The matching module under `data/items/`** - Link sprite to item definition (`image` property)
+   - Pick the module for the item's category (see the category → module table in the `data/items.ts` header)
    - **REQUIRED for shop items** (ShopUI reads from items.ts)
    - Optional for non-shop items (for documentation)
 3. **`utils/inventoryUIHelper.ts`** - Map sprite for inventory UI rendering
@@ -128,13 +129,15 @@ export const potionAssets = {
 
 **IMPORTANT:** Always use `/TwilightGame/assets-optimized/` path (not `/assets/`).
 
-### 3. Link in `data/items.ts`
+### 3. Link in the matching `data/items/` module
+
+Item definitions live in per-category modules under `data/items/` (ingredients, crops, seeds, food, potions, …) — see the category → module table in the `data/items.ts` header. The example below is an ingredient, so it goes in `data/items/ingredients.ts`.
 
 Link the sprite to the item definition by adding the `image` property:
 
 ```typescript
 // Import the asset collection
-import { groceryAssets } from '../assets';
+import { groceryAssets } from '../../assets';
 
 // Add to existing item or create new item:
 new_item: {
@@ -228,7 +231,7 @@ Cooked food items (recipes that produce food) require **four locations** instead
    };
    ```
 
-3. **Link in `data/items.ts`** (the cooked food item):
+3. **Link in `data/items/food.ts`** (the cooked food item):
    ```typescript
    food_chocolate_cake: {
      id: 'food_chocolate_cake',
@@ -290,7 +293,7 @@ if (result.success && result.foodProduced && playerPosition && currentMapId) {
 
 **Four locations for cooked food:**
 1. `assets.ts` - cookingAssets object
-2. `data/items.ts` - food_* item definition (for inventory display)
+2. `data/items/food.ts` - food_* item definition (for inventory display)
 3. `utils/inventoryUIHelper.ts` - ITEM_SPRITE_MAP (for inventory rendering)
 4. `data/recipes.ts` - recipe definition (for spawning sprite after cooking)
 
@@ -313,9 +316,9 @@ Magical potions are brewed via the `MagicManager` system (similar to how food is
    };
    ```
 
-3. **Link in `data/items.ts`** (the potion item):
+3. **Link in `data/items/potions.ts`** (the potion item):
    ```typescript
-   import { potionAssets } from '../assets';
+   import { potionAssets } from '../../assets';
 
    potion_friendship: {
      id: 'potion_friendship',
@@ -358,7 +361,7 @@ Magical potions are brewed via the `MagicManager` system (similar to how food is
 
 **Three locations for potions:**
 1. `assets.ts` - potionAssets object
-2. `data/items.ts` - potion_* item definition (for inventory display)
+2. `data/items/potions.ts` - potion_* item definition (for inventory display)
 3. `utils/inventoryUIHelper.ts` - ITEM_SPRITE_MAP (for inventory rendering)
 
 **Existing potion sprites:**
@@ -432,10 +435,18 @@ npm run optimize-assets
 ### 6. Validate with TypeScript
 
 ```bash
-npx tsc --noEmit
+make verify
 ```
 
-**Should output:** No errors. If errors appear, fix them before testing.
+**Should output:** No typecheck errors, and a clean test run. If errors appear, fix them before testing.
+
+**Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
+
+**Tests that guard this skill's output:**
+- `tests/assetIntegrity.test.ts` — walks every path in `assets.ts`, `iconAssets.ts` and the `image` fields of `ITEMS`, and fails if one does not resolve to a real file on disk. A failure here almost always means a typo/wrong case, a path pointing at `assets/` instead of `assets-optimized/`, or a skipped `npm run optimize-assets`.
+- `tests/itemSSoT.test.ts` — fails if the item ID does not exist in `ITEMS` or duplicates an existing item.
 
 ### 7. Test in Game
 
@@ -497,8 +508,8 @@ const ITEM_SPRITE_MAP: Record<string, string> = {
 
 **Fix:**
 ```typescript
-// Add image property to item definition in data/items.ts
-import { itemAssets } from '../assets';
+// Add image property to item definition in data/items/seeds.ts
+import { itemAssets } from '../../assets';
 
 seed_your_item: {
   id: 'seed_your_item',
@@ -582,8 +593,10 @@ The script recursively scans all subdirectories.
 No specialized scripts needed - this skill uses existing game commands:
 
 - `npm run optimize-assets` - Optimize all sprites
-- `npx tsc --noEmit` - Validate TypeScript
+- `make verify` - Typecheck + run the full test suite (use this before finishing)
 - `npm run dev` - Start dev server
+
+**Never `npm test`** — it is vitest in watch mode and never exits. Use `make test` or `npm run test:run` for tests alone.
 
 ## Resources
 
@@ -603,7 +616,7 @@ When adding a new inventory item sprite:
 
 - [ ] 1. Upload PNG file to `/public/assets/items/{category}/filename.png`
 - [ ] 2. Register in `assets.ts` → appropriate assets object (e.g., `groceryAssets`)
-- [ ] 3. Link in `data/items.ts` → item definition `image` property
+- [ ] 3. Link in the matching `data/items/` module → item definition `image` property
   - **REQUIRED if item is sold in shop** (ShopUI reads from items.ts)
   - Optional for non-shop items (inventory-only items)
 - [ ] 4. **CRITICAL:** Map in `utils/inventoryUIHelper.ts` → `ITEM_SPRITE_MAP`
@@ -611,7 +624,7 @@ When adding a new inventory item sprite:
 - [ ] 4b. Remove emoji fallback from `ITEM_ICON_MAP` if it exists (keeps code clean)
 - [ ] 4c. (Optional) If crop is also shop item, add to `data/shopInventory.ts`
 - [ ] 5. Run `npm run optimize-assets` (creates optimized version)
-- [ ] 6. Run `npx tsc --noEmit` (validate TypeScript)
+- [ ] 6. Run `make verify` (typecheck + full test suite; `tests/assetIntegrity.test.ts` catches bad asset paths, `tests/itemSSoT.test.ts` catches bad item IDs. the suite is fully green)
 - [ ] 7. Test in game:
   - Add item to inventory (verify sprite in inventory UI)
   - If shop item: visit shop and verify sprite displays (not 📦)

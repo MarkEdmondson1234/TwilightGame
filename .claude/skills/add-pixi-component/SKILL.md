@@ -75,7 +75,13 @@ import { TileLayer } from './utils/pixi/TileLayer';
 useEffect(() => {
   const initPixi = async () => {
     const app = new PIXI.Application();
-    await app.init({ canvas: canvasRef.current!, antialias: false });
+    // antialias/resolution come from the device tier, not from art style
+    const perfSettings = getCachedPerformanceSettings();
+    await app.init({
+      canvas: canvasRef.current!,
+      antialias: perfSettings.antialias,
+      resolution: perfSettings.resolution,
+    });
     await textureManager.loadBatch(tileAssets);
     
     const tileLayer = new TileLayer();
@@ -183,7 +189,10 @@ See [resources/reference.md](resources/reference.md#performance-optimization) fo
 - [ ] Correct z-ordering
 - [ ] Camera smooth
 - [ ] Textures load
-- [ ] Pixel art sharp
+- [ ] Hand-drawn art renders smoothly (`scaleMode: 'linear'` + mipmaps — **never** `'nearest'`)
+- [ ] `make verify` clean (typecheck + full test suite). **Never `npm test`** — watch mode, never exits; use `make test` or `npm run test:run` for tests alone. The suite is fully green, so any failure is a real regression
+- [ ] If the component resolves tile colours, `tests/colorResolver.test.ts` still passes — any new `TileType` must be mapped in `TILE_TYPE_TO_COLOR_KEY`
+- [ ] If the component references new textures, `tests/assetIntegrity.test.ts` still passes — every asset path must resolve to a real file
 
 ---
 
@@ -191,7 +200,7 @@ See [resources/reference.md](resources/reference.md#performance-optimization) fo
 
 | Issue | Solution |
 |-------|----------|
-| Blurry sprites | `texture.source.scaleMode = 'nearest'` |
+| Blurry sprites | Keep `scaleMode: 'linear'` + `autoGenerateMipmaps`; if still soft the asset is under-resolved — raise its size in `scripts/optimize-assets.js`. **Never** `'nearest'` (hand-drawn art) |
 | Low FPS | Use texture atlases, ParticleContainer, culling |
 | Memory leaks | `sprite.destroy({ texture: false })` |
 | Textures not loading | `await PIXI.Assets.load(url)` |

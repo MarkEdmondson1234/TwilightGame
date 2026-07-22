@@ -115,7 +115,9 @@ Farming plant sprites are resized to **768px** and compressed at 95% quality int
 ### 4. Verify
 
 - Optimised files exist at `/public/assets-optimized/farming/plant_[crop]_young.png` and `plant_[crop]_adult.png`
-- No TypeScript errors: `npx tsc --noEmit`
+- `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
+- `tests/assetIntegrity.test.ts` fails if a `farmingAssets` path does not resolve to a real file — usually a typo or a skipped `npm run optimize-assets`
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 
 ---
 
@@ -138,7 +140,7 @@ export const groceryAssets = {
 };
 ```
 
-### 3. Link it to the crop item in `data/items.ts`
+### 3. Link it to the crop item in `data/items/crops.ts`
 
 Find the `crop_[crop]` entry and add the `image` property:
 
@@ -159,7 +161,9 @@ npm run optimize-assets
 ### 5. Verify
 
 - Optimised file exists at `/public/assets-optimized/items/grocery/[crop]_crop.png`
-- No TypeScript errors: `npx tsc --noEmit`
+- `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
+- `tests/assetIntegrity.test.ts` fails if the item's `image` path does not resolve to a real file; `tests/itemSSoT.test.ts` fails if the crop item duplicates an existing entry or is referenced by a non-existent ID
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 
 ---
 
@@ -215,9 +219,11 @@ Copy an existing entry of similar rarity and adjust the values:
 },
 ```
 
-### 5. Add seed and crop items in `data/items.ts`
+### 5. Add seed and crop items in `data/items/seeds.ts` and `data/items/crops.ts`
 
-**Seed item:**
+Item definitions live in per-category modules under `data/items/` — see the category → module table in the `data/items.ts` header.
+
+**Seed item** — add to `SEED_ITEMS` in `data/items/seeds.ts`:
 ```typescript
 seed_[crop]: {
   id: 'seed_[crop]',
@@ -233,7 +239,7 @@ seed_[crop]: {
 },
 ```
 
-**Crop item:**
+**Crop item** — add to `CROP_ITEMS` in `data/items/crops.ts`:
 ```typescript
 crop_[crop]: {
   id: 'crop_[crop]',
@@ -256,7 +262,9 @@ npm run optimize-assets
 ### 7. Verify
 
 - All three optimised files exist
-- No TypeScript errors: `npx tsc --noEmit`
+- `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
+- `tests/assetIntegrity.test.ts` catches unresolvable sprite paths; `tests/itemSSoT.test.ts` catches duplicate or missing `seed_*` / `crop_*` IDs and shop entries; `tests/farmManager.test.ts` covers the plant/water/harvest lifecycle the new crop plugs into
+- **Expected result:** the suite is fully green — **any** failure is a real regression, including yours
 - Test in-game: plant the crop and confirm the young → adult sprite transition, then harvest and check the inventory icon
 
 ---

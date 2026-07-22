@@ -67,18 +67,20 @@ class MiniGameManagerClass {
       }
     }
 
-    // Check item requirements (onStart items only)
+    // Check item requirements.
+    //
+    // The player must HOLD every required item to play, whatever `consumeOn` says — you
+    // cannot carve a pumpkin you do not have. `consumeOn` only decides WHEN it is taken
+    // (on open vs on successful completion), not whether it is needed.
     if (def.requirements) {
       for (const req of def.requirements) {
-        if (req.consumeOn === 'onStart') {
-          if (!inventoryManager.hasItem(req.itemId, req.quantity)) {
-            const item = getItem(req.itemId);
-            const name = item?.displayName ?? req.itemId;
-            return {
-              canPlay: false,
-              reason: `Requires ${req.quantity}x ${name}.`,
-            };
-          }
+        if (!inventoryManager.hasItem(req.itemId, req.quantity)) {
+          const item = getItem(req.itemId);
+          const name = item?.displayName ?? req.itemId;
+          return {
+            canPlay: false,
+            reason: `Requires ${req.quantity}x ${name}.`,
+          };
         }
       }
     }

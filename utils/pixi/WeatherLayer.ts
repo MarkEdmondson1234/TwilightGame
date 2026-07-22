@@ -20,6 +20,7 @@
  */
 
 import * as PIXI from 'pixi.js';
+import { attachMask, disposeMask } from './maskUtils';
 import { TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { particleAssets } from '../../assets';
@@ -288,6 +289,13 @@ export class WeatherLayer {
       return;
     }
 
+    // Tear down any previous fog + mask first. Overwriting this.fogSprite below without this
+    // would leak the old (still-masked) sprite; _applyFogMask would then destroy its mask
+    // sprite out from under it, and Pixi's next bounds/cull pass crashes in
+    // AlphaMask.addLocalBounds ("this.mask is null"). clearFog() is null-safe, so calling it
+    // here is harmless on the paths that already cleared.
+    this.clearFog();
+
     // Create tiling fog sprite (seamless scrolling)
     this.fogSprite = new PIXI.TilingSprite({
       texture,
@@ -301,7 +309,6 @@ export class WeatherLayer {
 
     // Apply feathered edge mask to prevent sharp rectangular cutoff
     this._applyFogMask();
-
   }
 
   /**
@@ -311,15 +318,12 @@ export class WeatherLayer {
   private _applyFogMask(): void {
     if (!this.fogSprite) return;
 
-    // Clean up old mask
+    // Clean up old mask (disposeMask clears fogSprite.mask before destroying the sprite).
     if (this.fogMaskTexture) {
       this.fogMaskTexture.destroy(true);
       this.fogMaskTexture = null;
     }
-    if (this.fogMaskSprite) {
-      this.fogMaskSprite.destroy();
-      this.fogMaskSprite = null;
-    }
+    this.fogMaskSprite = disposeMask(this.fogSprite, this.fogMaskSprite);
 
     this.fogMaskTexture = createFogEdgeMask(
       this.viewportWidth,
@@ -327,8 +331,7 @@ export class WeatherLayer {
       FOG_EDGE_FEATHER
     );
     this.fogMaskSprite = new PIXI.Sprite(this.fogMaskTexture);
-    this.fogSprite.mask = this.fogMaskSprite;
-    this.fogContainer.addChild(this.fogMaskSprite);
+    attachMask(this.fogSprite, this.fogMaskSprite, this.fogContainer);
   }
 
   /**
@@ -592,14 +595,11 @@ export class WeatherLayer {
    * Clear fog overlay and its edge mask
    */
   private clearFog(): void {
+    // Detach + destroy the mask first (clears fogSprite.mask safely), then the fog sprite.
+    this.fogMaskSprite = disposeMask(this.fogSprite, this.fogMaskSprite);
     if (this.fogSprite) {
-      this.fogSprite.mask = null;
       this.fogSprite.destroy();
       this.fogSprite = null;
-    }
-    if (this.fogMaskSprite) {
-      this.fogMaskSprite.destroy();
-      this.fogMaskSprite = null;
     }
     if (this.fogMaskTexture) {
       this.fogMaskTexture.destroy(true);

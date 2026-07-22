@@ -5,8 +5,8 @@
  * Effects integrate with game systems: weather, time, farming, player state.
  *
  * Usage:
- *   import { usePotionEffect, MagicEffectCallbacks } from './MagicEffects';
- *   usePotionEffect('potion_raincaller', callbacks);
+ *   import { applyPotionEffect, MagicEffectCallbacks } from './MagicEffects';
+ *   applyPotionEffect('potion_raincaller', callbacks);
  */
 
 import { WeatherType } from '../data/weatherConfig';
@@ -762,7 +762,7 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
  * @param targetNpcId Optional NPC ID for targeted effects
  * @returns Result of the effect
  */
-export function usePotionEffect(
+export function applyPotionEffect(
   potionId: string,
   callbacks: MagicEffectCallbacks,
   targetNpcId?: string

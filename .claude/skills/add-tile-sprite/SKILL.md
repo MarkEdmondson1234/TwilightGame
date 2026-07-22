@@ -205,16 +205,25 @@ Compare file sizes:
 
 ### 7. Validate TypeScript Compilation
 
-Always run TypeScript validation to catch any type errors:
+Always run the full verification (typecheck + test suite) to catch any errors:
 
 ```bash
-npx tsc --noEmit
+make verify
 ```
+
+**Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
+
+**Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
+
+**Tests that guard this skill's output:**
+- `tests/assetIntegrity.test.ts` — fails if a registered asset path does not resolve to a real file on disk. Most common causes: a typo/wrong case in the path, pointing at `assets/` instead of `assets-optimized/`, or forgetting to run `npm run optimize-assets`.
+- `tests/colorResolver.test.ts` — fails if a new tile type is missing from `TILE_TYPE_TO_COLOR_KEY` in `utils/ColorResolver.ts` (this is what causes wrong-coloured boxes behind transparent sprites).
 
 **Common Issues:**
 - Missing asset keys in type definitions
 - Image property type mismatches (string vs string[])
 - Import errors from assets.ts
+- New `TileType` added but not mapped in `TILE_TYPE_TO_COLOR_KEY`
 
 ### 8. Restart Dev Server (IMPORTANT!)
 
@@ -322,8 +331,9 @@ Adding a new grass variation (`grass_3.png`):
 
 6. **Validate TypeScript:**
    ```bash
-   npx tsc --noEmit
+   make verify
    ```
+   `tests/assetIntegrity.test.ts` will fail here if the path is wrong or optimisation was skipped. The suite is fully green, so any failure is a real regression.
 
 ### Example 2: Adding Multi-Tile Sprite Variations
 
@@ -372,8 +382,9 @@ Adding sofa variations (`sofa_01.png`, `sofa_02.png`):
 
 6. **Validate TypeScript:**
    ```bash
-   npx tsc --noEmit
+   make verify
    ```
+   `tests/assetIntegrity.test.ts` will fail here if the path is wrong or optimisation was skipped. The suite is fully green, so any failure is a real regression.
 
 7. **Test in game:**
    ```bash
@@ -485,9 +496,11 @@ const gridString = `
 
 **Step 10: Run TypeScript validation**
 ```bash
-npx tsc --noEmit
-# Should complete with no errors
+make verify
+# Typecheck must be clean; test suite must show only the 2 known baseline
+# the suite is fully green
 ```
+A new tile type must be added to `TILE_TYPE_TO_COLOR_KEY` or `tests/colorResolver.test.ts` will fail, and its asset path must resolve or `tests/assetIntegrity.test.ts` will fail.
 
 **Step 11: Test in game**
 ```bash

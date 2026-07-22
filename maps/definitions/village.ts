@@ -98,7 +98,7 @@ LG,,GXXXXXX,G,lP,,G,,,,,G,e,GL
 JG,GG,,G,,GGG,,P,,GXXXXXG,5eGt
 LG,,,G,G,,;;G8,PG,GXXXXXeG,,GU
 oGoc,,;;,G,,,G,P,,G,G,,l,U,,,,
-tLoGG,l,,lGL,´GLG,,L,L,LUoLL,,
+tLoGG,l,,lGL,GGLG,,L,L,LUoLL,,
 `;
 
 export const village: MapDefinition = {
@@ -129,7 +129,10 @@ export const village: MapDefinition = {
       fromPosition: { x: 10.0, y: 21 }, // Player home door (bottom of 13x13 sprite, anchor H at y=22)
       tileType: TileType.PLAYER_HOME,
       toMapId: 'mums_kitchen',
-      toPosition: { x: 10, y: 22 },
+      // Just inside the kitchen door (the 'D' sits at (3,7); (4,7) is the floor tile beside it).
+      // Was (10,22) — the village-side coordinate copy-pasted from the return transition, which
+      // is outside mums_kitchen's 15x9 bounds and only worked via MapManager's fallback search.
+      toPosition: { x: 4, y: 7 },
       label: 'To Home',
       hasDoor: true,
     },
