@@ -3,6 +3,7 @@ import { MapDefinition, Position, Transition } from '../types';
 import { TILE_SIZE } from '../constants';
 import { Z_ACTION_PROMPTS } from '../zIndex';
 import { getTransitionIcon, COTTAGE_COLOURS, COTTAGE_FONTS } from '../utils/transitionIcons';
+import { useTouchDevice } from '../hooks/useTouchDevice';
 import GameIcon from './GameIcon';
 
 interface TransitionIndicatorsProps {
@@ -62,7 +63,8 @@ const ParchmentTooltip: React.FC<{
   label: string;
   screenX: number;
   screenY: number;
-}> = ({ icon, label, screenX, screenY }) => (
+  showKeyHint: boolean;
+}> = ({ icon, label, screenX, screenY, showKeyHint }) => (
   <div
     className="absolute pointer-events-none animate-tooltip-appear"
     style={{
@@ -100,20 +102,22 @@ const ParchmentTooltip: React.FC<{
     >
       <GameIcon icon={icon} size={18} />
       <span>{label}</span>
-      <span
-        style={{
-          marginLeft: 4,
-          padding: '2px 8px',
-          backgroundColor: COTTAGE_COLOURS.sageGreen,
-          color: COTTAGE_COLOURS.creamText,
-          borderRadius: 4,
-          fontSize: 11,
-          fontWeight: 600,
-          letterSpacing: '0.5px',
-        }}
-      >
-        E
-      </span>
+      {showKeyHint && (
+        <span
+          style={{
+            marginLeft: 4,
+            padding: '2px 8px',
+            backgroundColor: COTTAGE_COLOURS.sageGreen,
+            color: COTTAGE_COLOURS.creamText,
+            borderRadius: 4,
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: '0.5px',
+          }}
+        >
+          E
+        </span>
+      )}
     </div>
     {/* Triangle pointer */}
     <div
@@ -167,6 +171,7 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
 }) => {
   const offsetX = gridOffset?.x ?? 0;
   const offsetY = gridOffset?.y ?? 0;
+  const isTouchDevice = useTouchDevice();
 
   return (
     <>
@@ -202,7 +207,13 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
 
             {/* Parchment tooltip when very close */}
             {isVeryClose && (
-              <ParchmentTooltip icon={icon} label={label} screenX={screenX} screenY={screenY} />
+              <ParchmentTooltip
+                icon={icon}
+                label={label}
+                screenX={screenX}
+                screenY={screenY}
+                showKeyHint={!isTouchDevice}
+              />
             )}
           </React.Fragment>
         );

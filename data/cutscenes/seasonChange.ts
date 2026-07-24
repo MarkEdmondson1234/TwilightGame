@@ -229,38 +229,41 @@ export const summerCutscene: CutsceneDefinition = {
     {
       id: 'summer_panorama',
       backgroundLayers: [
-        // Sky with clouds
+        // Meadow and cottage backdrop — gentle zoom, mirrors spring's background treatment
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_summer_background.png',
           zIndex: 0,
           animation: {
-            type: 'static',
-            duration: 0,
-          },
-        },
-        // Rolling green hills
-        {
-          image: 'summer_just_hills.PNG',
-          zIndex: 1,
-          offsetY: 20,
-          animation: {
-            type: 'pan',
-            duration: 8000,
-            panFrom: 'left',
-            panTo: 'right',
+            type: 'zoom',
+            duration: 7000,
+            zoomFrom: 1.0,
+            zoomTo: 1.03,
             easing: 'ease-in-out',
           },
         },
-        // Foreground greenery
+        // Fence post flush against the left edge — pans further left/off-canvas to open the view
         {
-          image: 'summer_just_green.PNG',
-          zIndex: 2,
-          offsetY: 30,
+          image: 'cutscene_summer_front_left.png',
+          zIndex: 1,
           animation: {
             type: 'pan',
-            duration: 6000,
-            panFrom: 'right',
-            panTo: 'left',
+            duration: 7000,
+            panFrom: 'center',
+            panTo: 'right', // NB: 'right' maps to negative translateX — see getPanOffset — so this drifts further left, off-canvas
+            panAmount: 20,
+            easing: 'ease-in-out',
+          },
+        },
+        // Fence post flush against the right edge — pans further right/off-canvas to open the view
+        {
+          image: 'cutscene_summer_front_right.png',
+          zIndex: 2,
+          animation: {
+            type: 'pan',
+            duration: 7000,
+            panFrom: 'center',
+            panTo: 'left', // NB: 'left' maps to positive translateX — see getPanOffset — so this drifts further right, off-canvas
+            panAmount: 20,
             easing: 'ease-in-out',
           },
         },
@@ -281,15 +284,36 @@ export const summerCutscene: CutsceneDefinition = {
     {
       id: 'summer_village',
       backgroundLayers: [
+        // Continues the parallax zoom from scene 1
         {
-          image: 'summer_just_hill.PNG',
+          image: 'cutscene_summer_background.png',
           zIndex: 0,
           animation: {
             type: 'zoom',
-            duration: 7000,
-            zoomFrom: 1.1,
-            zoomTo: 1.0,
-            easing: 'ease-out',
+            duration: 6000,
+            zoomFrom: 1.03,
+            zoomTo: 1.06,
+            easing: 'ease-in-out',
+          },
+        },
+        // Held static at the resting position it lands on at the end of slide 1's pan (translateX -20%)
+        {
+          image: 'cutscene_summer_front_left.png',
+          zIndex: 1,
+          offsetX: -20,
+          animation: {
+            type: 'static',
+            duration: 0,
+          },
+        },
+        // Held static at the resting position it lands on at the end of slide 1's pan (translateX +20%)
+        {
+          image: 'cutscene_summer_front_right.png',
+          zIndex: 2,
+          offsetX: 20,
+          animation: {
+            type: 'static',
+            duration: 0,
           },
         },
       ],

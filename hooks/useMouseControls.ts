@@ -18,6 +18,10 @@ export interface MouseClickInfo {
   screenPos: { x: number; y: number };
   /** Tile coordinates (floored) */
   tilePos: { x: number; y: number };
+  /** Whether this click originated from a touch tap rather than a mouse click.
+   *  A fingertip is far less precise than a cursor, so touch taps get extra
+   *  tolerance when resolving which tile was meant (see getAvailableInteractionsWithTouchTolerance). */
+  isTouch: boolean;
 }
 
 export interface MouseControlsConfig {
@@ -173,7 +177,8 @@ export function useMouseControls(config: MouseControlsConfig) {
       screenX: number,
       screenY: number,
       clientX: number,
-      clientY: number
+      clientY: number,
+      isTouch: boolean
     ): MouseClickInfo => {
       const result = screenToTile(
         screenX,
@@ -189,6 +194,7 @@ export function useMouseControls(config: MouseControlsConfig) {
         worldPos: { x: result.worldX, y: result.worldY },
         screenPos: { x: clientX, y: clientY },
         tilePos: { x: result.tileX, y: result.tileY },
+        isTouch,
       };
     };
 
@@ -207,7 +213,7 @@ export function useMouseControls(config: MouseControlsConfig) {
       const screenX = e.clientX - rect.left;
       const screenY = e.clientY - rect.top;
 
-      const clickInfo = createClickInfo(screenX, screenY, e.clientX, e.clientY);
+      const clickInfo = createClickInfo(screenX, screenY, e.clientX, e.clientY, false);
       onCanvasClickRef.current(clickInfo);
     };
 
@@ -226,7 +232,7 @@ export function useMouseControls(config: MouseControlsConfig) {
       const screenX = touch.clientX - rect.left;
       const screenY = touch.clientY - rect.top;
 
-      const clickInfo = createClickInfo(screenX, screenY, touch.clientX, touch.clientY);
+      const clickInfo = createClickInfo(screenX, screenY, touch.clientX, touch.clientY, true);
       onCanvasClickRef.current(clickInfo);
     };
 

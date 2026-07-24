@@ -6,6 +6,7 @@ import { audioManager } from '../utils/AudioManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import { Position } from '../types';
 import { Z_COOKING, zClass } from '../zIndex';
+import { useTouchDevice } from '../hooks/useTouchDevice';
 import CookingResultPopup from './CookingResultPopup';
 
 interface CookingInterfaceProps {
@@ -30,6 +31,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
   currentMapId,
   onItemPlaced,
 }) => {
+  const isTouchDevice = useTouchDevice();
   const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
@@ -286,7 +288,8 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
         {/* Footer */}
         <div className="bg-amber-900/50 px-4 py-2 border-t border-amber-700 text-center">
           <p className="text-amber-400 text-xs">
-            Press ESC or E to close • Cook recipes 3 times to master them
+            {isTouchDevice ? 'Tap ✕ to close' : 'Press ESC or E to close'} • Cook recipes 3 times
+            to master them
           </p>
         </div>
 

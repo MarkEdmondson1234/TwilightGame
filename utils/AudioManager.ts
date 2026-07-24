@@ -542,6 +542,15 @@ class AudioManager {
 
     const newTrack: MusicTrack = { source, gainNode, id: key };
 
+    // One-shot (non-looping) tracks stop themselves when the buffer ends, but nothing else
+    // observes that — without this, `currentMusic` keeps pointing at a finished, silent
+    // source, and the next cutscene's cleanup restores it as "previous music" and loops it.
+    source.onended = () => {
+      if (this.currentMusic === newTrack) {
+        this.currentMusic = null;
+      }
+    };
+
     // Crossfade if there's current music
     if (this.currentMusic && crossfade) {
       this.crossfadeMusic(this.currentMusic, newTrack, fadeInMs);
