@@ -67,7 +67,8 @@ export function createMumNPC(
         responses: [
           { text: 'What are you working on?', nextId: 'home_tasks' },
           { text: 'Tell me about the village.', nextId: 'village_chat' },
-          { text: 'Can you teach me to cook?', nextId: 'teach_cooking' },
+          { text: 'Can you teach me to cook?', nextId: 'teach_cooking', hiddenIfCookingCourseComplete: true },
+          { text: 'How can I learn more recipes?', nextId: 'learn_more_recipes', requiredCookingCourseComplete: true },
           { text: 'Tell me about yourself, Mum.', nextId: 'about_mum' },
           // Mr Fox's Picnic quest
           { text: 'How did the picnic go?', nextId: 'mfp_post_quest', requiredQuest: 'mr_fox_picnic', requiredQuestStage: 9 },
@@ -115,6 +116,12 @@ export function createMumNPC(
           { text: 'It is peaceful here.' },
           { text: 'Thank you for the chat.' },
         ],
+      },
+      {
+        id: 'learn_more_recipes',
+        text: "You've learned everything I know how to teach you, love! But there's more out there — you can buy cookbooks from the shop for new recipes. And if you get to know the villagers and ask nicely, some of them might teach you their favourite dish.",
+        expression: 'happy',
+        responses: [],
       },
       {
         id: 'teach_cooking',

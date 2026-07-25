@@ -85,6 +85,9 @@ export enum GameEvent {
   // Magic events
   MAGIC_LEVEL_UP = 'magic:level_up',
 
+  // Cooking events
+  COOKING_COURSE_COMPLETE = 'cooking:course_complete',
+
   // Save events
   LOCAL_SAVE_FLUSHED = 'save:local_flushed',
   CLOUD_SYNC_STARTED = 'save:cloud_sync_started',
@@ -232,6 +235,7 @@ export interface EventPayloads {
     previousLevel: 'novice' | 'journeyman' | 'master';
     newLevel: 'novice' | 'journeyman' | 'master';
   };
+  [GameEvent.COOKING_COURSE_COMPLETE]: Record<string, never>;
   [GameEvent.LOCAL_SAVE_FLUSHED]: {
     timestamp: number;
   };

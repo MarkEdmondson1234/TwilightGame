@@ -49,6 +49,12 @@ function filterResponses(responses: DialogueResponse[] | undefined): DialogueRes
     if (response.hiddenIfDomainMastered) {
       if (cookingManager.isDomainMastered(response.hiddenIfDomainMastered as any)) return false;
     }
+    if (response.requiredCookingCourseComplete) {
+      if (!cookingManager.isCookingCourseComplete()) return false;
+    }
+    if (response.hiddenIfCookingCourseComplete) {
+      if (cookingManager.isCookingCourseComplete()) return false;
+    }
     if (response.hiddenIfAnyDomainStarted) {
       const masteredCount = cookingManager.getMasteredDomainCount();
       const unlockedRecipes = cookingManager.getUnlockedRecipes();

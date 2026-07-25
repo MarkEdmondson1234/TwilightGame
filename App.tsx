@@ -609,6 +609,13 @@ const App: React.FC = () => {
     });
   }, [showToast]);
 
+  // Subscribe to cooking course completion — Mum congratulates the player
+  useEffect(() => {
+    return eventBus.on(GameEvent.COOKING_COURSE_COMPLETE, () => {
+      showToast("You've learned all the basics of cooking! Well done, love!", 'success');
+    });
+  }, [showToast]);
+
   // Weather visibility, ambient audio, forest birds, ambient music, time polling,
   // item decay, and movement effect expiration are now handled by EnvironmentController
 

@@ -31,57 +31,10 @@ import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { staminaManager } from './StaminaManager';
+import { eventBus, GameEvent } from './EventBus';
 
 // Constants
 const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
-
-// Cooking skill level definitions
-export interface CookingSkillLevel {
-  level: number;
-  name: string;
-  teaFailRate: number; // Failure rate for tea specifically
-  otherFailRate: number; // Failure rate for all other recipes
-  description: string;
-}
-
-export const COOKING_SKILL_LEVELS: Record<number, CookingSkillLevel> = {
-  0: {
-    level: 0,
-    name: 'Beginner',
-    teaFailRate: 0.1,
-    otherFailRate: 1.0, // 100% failure (can't cook other recipes)
-    description: 'You can only make tea, and even that goes wrong sometimes.',
-  },
-  1: {
-    level: 1,
-    name: 'Novice',
-    teaFailRate: 0.0,
-    otherFailRate: 0.3,
-    description:
-      "You've learned your first recipe! Tea is easy now, but other dishes are still challenging.",
-  },
-  2: {
-    level: 2,
-    name: 'Apprentice',
-    teaFailRate: 0.0,
-    otherFailRate: 0.2,
-    description: "You've mastered one cooking domain. Things are getting easier!",
-  },
-  3: {
-    level: 3,
-    name: 'Cook',
-    teaFailRate: 0.0,
-    otherFailRate: 0.1,
-    description: "You've mastered two cooking domains. You're becoming quite skilled!",
-  },
-  4: {
-    level: 4,
-    name: 'Master Chef',
-    teaFailRate: 0.0,
-    otherFailRate: 0.01,
-    description: "You've mastered all three cooking domains! You rarely make mistakes now.",
-  },
-};
 
 export interface RecipeProgress {
   recipeId: string;
@@ -95,6 +48,8 @@ export interface CookingState {
   fireplaceTutorialComplete: boolean; // Whether player has opened the fireplace in Mum's kitchen
   unlockedRecipes: string[]; // Recipe IDs the player knows
   recipeProgress: Record<string, RecipeProgress>;
+  cookingCourseCongratsShown?: boolean; // Whether the course-complete toast has already fired
+  cookbookShopUnlocked?: boolean; // Whether the Cookbook is purchasable in the village shop
 }
 
 export interface CookingResult {
@@ -102,8 +57,6 @@ export interface CookingResult {
   message: string;
   foodProduced?: { itemId: string; quantity: number };
   masteryAchieved?: boolean;
-  isTerrible?: boolean; // True if cooking failed and produced terrible food
-  feelingSick?: boolean; // True if player got sick from making terrible food
 }
 
 class CookingManagerClass {
@@ -111,6 +64,8 @@ class CookingManagerClass {
   private recipeProgress: Map<string, RecipeProgress> = new Map();
   private recipeBookUnlocked = false; // Track locally to avoid circular dependency with GameState
   private fireplaceTutorialComplete = false;
+  private cookingCourseCongratsShown = false;
+  private cookbookShopUnlocked = false;
   private initialised = false;
 
   /**
@@ -124,6 +79,8 @@ class CookingManagerClass {
       // Load recipeBookUnlocked locally (critical: don't rely on reading from GameState later)
       this.recipeBookUnlocked = saved.recipeBookUnlocked ?? false;
       this.fireplaceTutorialComplete = saved.fireplaceTutorialComplete ?? false;
+      this.cookingCourseCongratsShown = saved.cookingCourseCongratsShown ?? false;
+      this.cookbookShopUnlocked = saved.cookbookShopUnlocked ?? false;
 
       // Load unlocked recipes
       saved.unlockedRecipes.forEach((id) => this.unlockedRecipes.add(id));
@@ -287,28 +244,6 @@ class CookingManagerClass {
     const domainRecipes = getRecipesByDomain(domain);
     if (domainRecipes.length === 0) return false;
     return domainRecipes.every((recipe) => this.isRecipeUnlocked(recipe.id));
-  }
-
-  /**
-   * Get cooking skill level based on mastered domains and recipes
-   */
-  getCookingSkillLevel(): number {
-    const masteredDomains = this.getMasteredDomainCount();
-    const unlockedCount = this.unlockedRecipes.size;
-
-    if (masteredDomains >= 3) return 4; // Master Chef
-    if (masteredDomains >= 2) return 3; // Cook
-    if (masteredDomains >= 1) return 2; // Apprentice
-    if (unlockedCount > 1) return 1; // Novice (learned first non-tea recipe)
-    return 0; // Beginner (only tea)
-  }
-
-  /**
-   * Get current skill info with failure rates
-   */
-  getSkillInfo(): CookingSkillLevel {
-    const level = this.getCookingSkillLevel();
-    return COOKING_SKILL_LEVELS[level];
   }
 
   /**
@@ -499,6 +434,18 @@ class CookingManagerClass {
       console.log(`[CookingManager] 🌟 Mastered recipe: ${recipe.displayName}!`);
     }
 
+    // Check for full course completion (all 3 domains mastered) — fires once.
+    // Deliberately NOT gated on `masteryAchieved` from this specific cook: a player who
+    // completed the course in an earlier session (before this flag existed) would
+    // otherwise never trigger it again, since none of their recipes will newly cross
+    // the mastery threshold. Checking unconditionally on every successful cook means it
+    // fires on the very next cook after the course is (or was already) complete.
+    if (!this.cookingCourseCongratsShown && this.isCookingCourseComplete()) {
+      this.cookingCourseCongratsShown = true;
+      console.log('[CookingManager] 🎉 Cooking course complete! All domains mastered.');
+      eventBus.emit(GameEvent.COOKING_COURSE_COMPLETE, {});
+    }
+
     // Log result
     console.log(
       `[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`
@@ -521,8 +468,6 @@ class CookingManagerClass {
         quantity: resultQuantity,
       },
       masteryAchieved,
-      isTerrible: false,
-      feelingSick: false,
     };
   }
 
@@ -574,6 +519,8 @@ class CookingManagerClass {
       fireplaceTutorialComplete: this.fireplaceTutorialComplete,
       unlockedRecipes: Array.from(this.unlockedRecipes),
       recipeProgress: recipeProgressObj,
+      cookingCourseCongratsShown: this.cookingCourseCongratsShown,
+      cookbookShopUnlocked: this.cookbookShopUnlocked,
     };
   }
 
@@ -630,6 +577,25 @@ class CookingManagerClass {
   }
 
   /**
+   * Check if the Cookbook is purchasable in the village shop
+   */
+  isCookbookShopUnlocked(): boolean {
+    return this.cookbookShopUnlocked;
+  }
+
+  /**
+   * Unlock the Cookbook for purchase in the village shop (called when Mum tells the
+   * player how to learn more recipes)
+   */
+  unlockCookbookShop(): void {
+    if (this.cookbookShopUnlocked) return;
+
+    this.cookbookShopUnlocked = true;
+    console.log('[CookingManager] 📚 Cookbook now available in the village shop!');
+    this.save();
+  }
+
+  /**
    * Save cooking state to GameState
    * Uses the unified CharacterData API for consistent persistence
    */
@@ -654,6 +620,8 @@ class CookingManagerClass {
     this.recipeProgress.clear();
     this.recipeBookUnlocked = false;
     this.fireplaceTutorialComplete = false;
+    this.cookingCourseCongratsShown = false;
+    this.cookbookShopUnlocked = false;
     this.initialised = false;
 
     // Re-add starter recipes

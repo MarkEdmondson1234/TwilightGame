@@ -70,4 +70,14 @@ export const TOOL_AND_MATERIAL_ITEMS: Record<string, ItemDefinition> = {
     buyPrice: 800,
     image: itemAssets.camera,
   },
+
+  // TODO: replace with real artwork
+  cookbook: {
+    id: 'cookbook',
+    name: 'cookbook',
+    displayName: 'Cookbook',
+    category: ItemCategory.MISC,
+    description: 'A book of recipes waiting to be learned. (Placeholder — proper art coming later.)',
+    stackable: false,
+  },
 };

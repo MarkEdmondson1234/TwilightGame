@@ -377,6 +377,12 @@ function handleRecipeTeaching(nodeId: string): void {
     if (DEBUG.QUEST) console.log('[dialogueHandlers] 🔥 Fireplace tutorial complete!');
   }
 
+  // Unlock the Cookbook in the village shop when Mum explains how to learn more recipes
+  if (nodeId === 'learn_more_recipes' && !cookingManager.isCookbookShopUnlocked()) {
+    cookingManager.unlockCookbookShop();
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 📚 Cookbook unlocked in the village shop!');
+  }
+
   // Map dialogue nodes to recipe IDs
   const recipeNodes: Record<string, string> = {
     learn_spaghetti: 'spaghetti_meat_sauce',

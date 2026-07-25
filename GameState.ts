@@ -701,6 +701,7 @@ class GameStateManager {
 
   saveCookingState(cooking: {
     recipeBookUnlocked: boolean;
+    fireplaceTutorialComplete?: boolean;
     unlockedRecipes: string[];
     recipeProgress: Record<
       string,
@@ -711,6 +712,8 @@ class GameStateManager {
         unlockedAt: number;
       }
     >;
+    cookingCourseCongratsShown?: boolean;
+    cookbookShopUnlocked?: boolean;
   }): void {
     this.state.cooking = cooking;
     this.notify();
@@ -729,6 +732,8 @@ class GameStateManager {
         unlockedAt: number;
       }
     >;
+    cookingCourseCongratsShown?: boolean;
+    cookbookShopUnlocked?: boolean;
   } | null {
     return this.state.cooking || null;
   }

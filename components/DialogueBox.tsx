@@ -175,6 +175,18 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
         }
       }
 
+      // Check cooking course completion (all 3 domains mastered)
+      if (response.requiredCookingCourseComplete) {
+        if (!cookingManager.isCookingCourseComplete()) {
+          return false;
+        }
+      }
+      if (response.hiddenIfCookingCourseComplete) {
+        if (cookingManager.isCookingCourseComplete()) {
+          return false;
+        }
+      }
+
       // Check if should be hidden when any domain is started but not mastered
       if (response.hiddenIfAnyDomainStarted) {
         const masteredCount = cookingManager.getMasteredDomainCount();

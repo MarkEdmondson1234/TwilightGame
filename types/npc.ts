@@ -124,6 +124,8 @@ export interface DialogueResponse {
   hiddenIfDomainStarted?: string; // Hide if any recipe in this domain is unlocked
   hiddenIfDomainMastered?: string; // Hide if this domain is fully mastered
   hiddenIfAnyDomainStarted?: boolean; // Hide if player has started any domain (not mastered yet)
+  requiredCookingCourseComplete?: boolean; // Only show once all 3 cooking domains are mastered
+  hiddenIfCookingCourseComplete?: boolean; // Hide once all 3 cooking domains are mastered
   // Quest requirements for this response option
   requiredQuest?: string; // Only show if this quest is started
   requiredQuestStage?: number; // Only show if quest is at this stage or higher

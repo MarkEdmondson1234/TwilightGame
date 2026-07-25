@@ -15,6 +15,7 @@ import {
 } from '../data/shopInventory';
 import { TimeManager, Season as GameSeason } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
+import { cookingManager } from './CookingManager';
 
 /**
  * Transaction result
@@ -62,13 +63,30 @@ export class ShopManager {
   }
 
   /**
+   * Resolve whether a shop item's `requiresFlag` condition is currently satisfied.
+   * Add new flags here as they're introduced.
+   */
+  private isFlagSatisfied(flag: string): boolean {
+    switch (flag) {
+      case 'cookbookShopUnlocked':
+        return cookingManager.isCookbookShopUnlocked();
+      default:
+        return true;
+    }
+  }
+
+  private filterUnlockedItems(items: ShopItem[]): ShopItem[] {
+    return items.filter((item) => !item.requiresFlag || this.isFlagSatisfied(item.requiresFlag));
+  }
+
+  /**
    * Get current shop inventory (filtered by season)
    * @returns Array of shop items available this season
    */
   public getCurrentInventory(): ShopItem[] {
     const currentTime = TimeManager.getCurrentTime();
     const season = this.convertSeason(currentTime.season);
-    return getSeasonalInventory(season);
+    return this.filterUnlockedItems(getSeasonalInventory(season));
   }
 
   /**
@@ -79,9 +97,9 @@ export class ShopManager {
     const currentTime = TimeManager.getCurrentTime();
     const season = this.convertSeason(currentTime.season);
     if (shopId === 'mushras_shop') {
-      return getMushrasShopInventory(season);
+      return this.filterUnlockedItems(getMushrasShopInventory(season));
     }
-    return getSeasonalInventory(season);
+    return this.filterUnlockedItems(getSeasonalInventory(season));
   }
 
   /**

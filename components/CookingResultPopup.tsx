@@ -20,8 +20,6 @@ interface PopupResult {
   success: boolean;
   message: string;
   masteryAchieved?: boolean;
-  isTerrible?: boolean;
-  feelingSick?: boolean;
 }
 
 /** Ingredient entry for the checklist (itemId + quantity needed) */
@@ -283,19 +281,6 @@ const CookingResultPopup: React.FC<CookingResultPopupProps> = ({
               style={{ color: colours.accent, fontFamily: fontBody }}
             >
               You&apos;ve perfected this recipe!
-            </p>
-          )}
-          {result.isTerrible && (
-            <p className="text-sm italic mb-2" style={{ color: mutedColour, fontFamily: fontBody }}>
-              Perhaps try a different approach next time...
-            </p>
-          )}
-          {result.feelingSick && (
-            <p
-              className="text-sm italic mb-2"
-              style={{ color: colours.accent, fontFamily: fontBody }}
-            >
-              Your stomach doesn&apos;t feel so good.
             </p>
           )}
 

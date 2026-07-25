@@ -59,6 +59,8 @@ export interface CookingData {
       unlockedAt: number;
     }
   >;
+  cookingCourseCongratsShown?: boolean;
+  cookbookShopUnlocked?: boolean;
 }
 
 export interface FriendshipData {

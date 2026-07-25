@@ -375,6 +375,16 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     availableSeasons: ['summer', 'autumn'],
   },
 
+  // ===== BOOKS =====
+  // Only available once Mum has told the player how to learn more recipes
+  {
+    itemId: 'cookbook',
+    buyPrice: 150,
+    sellPrice: 0,
+    stock: 'unlimited',
+    requiresFlag: 'cookbookShopUnlocked',
+  },
+
 ];
 
 /**
