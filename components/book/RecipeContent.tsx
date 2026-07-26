@@ -86,7 +86,6 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
   // Get unlock hint for locked recipes
   const getUnlockHint = useCallback((recipe: RecipeDefinition): string => {
     if (recipe.category === 'starter') return 'Available from the start';
-    if (recipe.teacherNpc) return `Learn from ${recipe.teacherNpc}`;
     if (recipe.unlockRequirement) {
       const prereq = getRecipe(recipe.unlockRequirement);
       return prereq ? `Master "${prereq.displayName}" first` : 'Complete prerequisite recipe';

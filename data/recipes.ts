@@ -437,7 +437,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     id: 'cucumber_sandwich',
     name: 'cucumber_sandwich',
     displayName: 'Cucumber Sandwich',
-    category: 'savoury',
+    category: 'miscellaneous',
     description:
       "There is nothing quite like a cucumber sandwich! Although the ingredients are simple, it is fit for royalty, and it goes perfectly with afternoon tea as well as in the picnic basket.",
     ingredients: [
