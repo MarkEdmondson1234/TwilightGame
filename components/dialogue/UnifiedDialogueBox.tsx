@@ -163,7 +163,16 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
           setCurrentEmotion('neutral'); // Reset — scripted uses expression not emotion
         }
 
-        setTypewriterDone(false);
+        // addAssistantMessage silently no-ops when this text duplicates the last
+        // shown message (e.g. reopening on an unchanged greeting) — no new
+        // `typewriter` flag gets set, so the completion callback that reveals the
+        // response controls would never fire. Skip hiding the controls in that
+        // case rather than waiting on a typewriter animation that isn't coming.
+        const lastMessage = chatHistory.chatMessages[chatHistory.chatMessages.length - 1];
+        const isDuplicateMessage =
+          lastMessage?.role === 'assistant' && lastMessage.content === dialogue.text;
+
+        setTypewriterDone(isDuplicateMessage);
         chatHistory.addAssistantMessage(dialogue.text, undefined, undefined, true);
         addToChatHistory(npc.id, 'assistant', `[${currentNodeId}] ${dialogue.text}`);
       }

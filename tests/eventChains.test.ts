@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 /**
  * Event Chain System Tests
@@ -333,5 +333,47 @@ describe('GameContext - Event Chain Support', () => {
 
     expect(context.activeEventChains).toHaveLength(2);
     expect(context.activeEventChains).toContain('Strange Lights in the Forest');
+  });
+});
+
+// ============================================
+// EventChainManager - day tracking
+// ============================================
+
+describe('EventChainManager - getDaysSinceStageEntered', () => {
+  const CHAIN_ID = 'mr_fox_picnic';
+
+  afterAll(async () => {
+    const { TimeManager } = await import('../utils/TimeManager');
+    TimeManager.clearTimeOverride();
+  });
+
+  beforeEach(async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { TimeManager, Season } = await import('../utils/TimeManager');
+
+    eventChainManager.initialise();
+    eventChainManager.resetChain(CHAIN_ID);
+    TimeManager.setTimeOverride({ season: Season.SPRING, year: 1, day: 1 });
+  });
+
+  it('returns null before the chain has started', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    expect(eventChainManager.getDaysSinceStageEntered(CHAIN_ID)).toBeNull();
+  });
+
+  it('returns 0 on the day the chain starts', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    await eventChainManager.startChain(CHAIN_ID);
+    expect(eventChainManager.getDaysSinceStageEntered(CHAIN_ID)).toBe(0);
+  });
+
+  it('increases as the in-game day advances', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { TimeManager } = await import('../utils/TimeManager');
+
+    await eventChainManager.startChain(CHAIN_ID);
+    TimeManager.setTimeOverride({ day: 8 }); // 7 days after starting
+    expect(eventChainManager.getDaysSinceStageEntered(CHAIN_ID)).toBe(7);
   });
 });

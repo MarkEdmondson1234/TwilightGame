@@ -89,6 +89,7 @@ export interface DialogueNode {
   hiddenIfQuestStarted?: string; // Hide if this quest is started
   hiddenIfQuestCompleted?: string; // Hide if this quest is completed
   hiddenIfQuestAtMinStage?: { questId: string; stage: number }; // Hide if quest is at stage >= value
+  hiddenIfQuestStageDaysElapsed?: { questId: string; days: number }; // Hide once this many in-game days have passed since the quest's current stage was entered
   // Transformation requirements for this dialogue node
   requiredTransformation?: string; // Only show if player has this transformation (e.g., 'fairy')
   hiddenIfTransformed?: string; // Hide if player has this transformation
@@ -133,6 +134,7 @@ export interface DialogueResponse {
   hiddenIfQuestStarted?: string; // Hide if this quest is started
   hiddenIfQuestCompleted?: string; // Hide if this quest is completed
   hiddenIfQuestAtMinStage?: { questId: string; stage: number }; // Hide if quest is at stage >= value
+  hiddenIfQuestStageDaysElapsed?: { questId: string; days: number }; // Hide once this many in-game days have passed since the quest's current stage was entered
   // Quest actions triggered by selecting this response
   startsQuest?: string; // Start this quest when selected
   advancesQuest?: string; // Advance this quest to next stage when selected

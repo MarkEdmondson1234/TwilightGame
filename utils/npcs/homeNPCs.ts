@@ -65,15 +65,14 @@ export function createMumNPC(
           cherry_blossoms: 'Look at those beautiful petals falling! The cherry tree is in full bloom. It reminds me of when you were little - you loved catching the petals.',
         },
         responses: [
-          { text: 'What are you working on?', nextId: 'home_tasks' },
           { text: 'Tell me about the village.', nextId: 'village_chat' },
           { text: 'Can you teach me to cook?', nextId: 'teach_cooking', hiddenIfCookingCourseComplete: true },
           { text: 'How can I learn more recipes?', nextId: 'learn_more_recipes', requiredCookingCourseComplete: true },
-          { text: 'Tell me about yourself, Mum.', nextId: 'about_mum' },
-          // Mr Fox's Picnic quest
-          { text: 'How did the picnic go?', nextId: 'mfp_post_quest', requiredQuest: 'mr_fox_picnic', requiredQuestStage: 9 },
+          { text: 'What are you working on?', nextId: 'home_tasks', requiredCookingCourseComplete: true },
+          { text: 'Tell me about yourself, Mum.', nextId: 'about_mum', requiredCookingCourseComplete: true },
+          // Mr Fox's Picnic quest — disappears 7 in-game days after the picnic wraps up
+          { text: 'How did the picnic go?', nextId: 'mfp_post_quest', requiredQuest: 'mr_fox_picnic', requiredQuestStage: 9, hiddenIfQuestStageDaysElapsed: { questId: 'mr_fox_picnic', days: 7 } },
           { text: 'Do you know anything about a place called Nevarre?', nextId: 'nevarre_enquiry', requiredQuest: 'ghost_queen', hiddenIfQuestCompleted: 'ghost_queen' },
-          { text: 'I should get going.' },
         ],
       },
       {

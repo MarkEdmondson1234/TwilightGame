@@ -1030,6 +1030,12 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
       }
     }
 
+    if (node.hiddenIfQuestStageDaysElapsed) {
+      const { questId, days } = node.hiddenIfQuestStageDaysElapsed;
+      const daysSince = eventChainManager.getDaysSinceStageEntered(questId);
+      if (daysSince !== null && daysSince > days) return false;
+    }
+
     // Check friendship tier requirements
     if (node.requiredFriendshipTier && !meetsMinTier(npcTier, node.requiredFriendshipTier)) {
       return false;
@@ -1112,6 +1118,12 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
       if (gameState.isQuestStarted(questId) && gameState.getQuestStage(questId) >= stage) {
         return false;
       }
+    }
+
+    if (response.hiddenIfQuestStageDaysElapsed) {
+      const { questId, days } = response.hiddenIfQuestStageDaysElapsed;
+      const daysSince = eventChainManager.getDaysSinceStageEntered(questId);
+      if (daysSince !== null && daysSince > days) return false;
     }
 
     // Check friendship tier requirements on responses

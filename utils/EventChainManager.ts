@@ -90,6 +90,13 @@ class EventChainManager {
     return this.progress.get(chainId);
   }
 
+  /** Days elapsed since this chain's current stage was entered (null if chain not started) */
+  getDaysSinceStageEntered(chainId: string): number | null {
+    const progress = this.progress.get(chainId);
+    if (!progress) return null;
+    return this.getCurrentGameDay() - progress.stageEnteredDay;
+  }
+
   /** Get all active (non-completed) chain progress */
   getActiveChains(): EventChainProgress[] {
     return [...this.progress.values()].filter((p) => !p.completed);
