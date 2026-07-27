@@ -21,6 +21,7 @@ const characterSprites = {
   bear: '/TwilightGame/assets/npcs/bear/chill_bear_tea_01.png',
   witch: '/TwilightGame/assets/npcs/witch/witch_wolf_01.png',
   morgan: '/TwilightGame/assets/npcs/morgan/morgan_front.png',
+  mushra: '/TwilightGame/assets/npcs/mushra/mushra_01.png',
 };
 
 export const springCutscene: CutsceneDefinition = {
@@ -478,8 +479,8 @@ export const autumnCutscene: CutsceneDefinition = {
       ],
       characters: [
         {
-          characterId: 'fox_shopkeeper',
-          spriteUrl: characterSprites.fox,
+          characterId: 'mushra',
+          spriteUrl: characterSprites.mushra,
           position: { x: 25, y: 50 },
           scale: 1.6,
           entrance: {
