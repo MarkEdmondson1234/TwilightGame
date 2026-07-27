@@ -375,31 +375,45 @@ export const autumnCutscene: CutsceneDefinition = {
   },
 
   scenes: [
-    // Scene 1: Autumn forest
-    // TODO: Replace with proper autumn_forest.png when created
+    // Scene 1: Approaching the mushroom house — 3-layer parallax
     {
-      id: 'autumn_forest',
+      id: 'autumn_arrival',
       backgroundLayers: [
-        // Sky - reusing summer sky with warm tint applied via CSS could be nice
+        // Stays subtly in place — same gentle zoom pacing as spring/summer's background layer
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_autumn_background.png',
           zIndex: 0,
           animation: {
-            type: 'static',
-            duration: 0,
+            type: 'zoom',
+            duration: 7000,
+            zoomFrom: 1.0,
+            zoomTo: 1.03,
+            easing: 'ease-in-out',
           },
         },
-        // Hills - will look like autumn with golden lighting
-        // TODO: Create autumn_hills.png with orange/gold foliage
+        // Zooms in faster than the background for parallax depth (mirrors spring's middleground)
         {
-          image: 'summer_just_hills.PNG',
+          image: 'cutscene_autumn_middleground.png',
           zIndex: 1,
-          offsetY: 15,
+          animation: {
+            type: 'zoom',
+            duration: 7000,
+            zoomFrom: 1.0,
+            zoomTo: 1.1,
+            easing: 'ease-in-out',
+          },
+        },
+        // Drifts left throughout, giving the sense of walking past it towards the mushroom house
+        // NB: panTo: 'right' maps to negative translateX — see getPanOffset — so this drifts left
+        {
+          image: 'cutscene_autumn_foreground.png',
+          zIndex: 2,
           animation: {
             type: 'pan',
             duration: 7000,
-            panFrom: 'right',
-            panTo: 'left',
+            panFrom: 'center',
+            panTo: 'right',
+            panAmount: 20,
             easing: 'ease-in-out',
           },
         },
@@ -421,19 +435,43 @@ export const autumnCutscene: CutsceneDefinition = {
         duration: 1000,
       },
     },
-    // Scene 2: Harvest time with villagers
+    // Scene 2: Harvest time with villagers — continues scene 1's parallax
     {
-      id: 'autumn_harvest',
+      id: 'autumn_village',
       backgroundLayers: [
-        // TODO: Create autumn_field.png with harvest imagery
         {
-          image: 'summer_just_green.PNG',
+          image: 'cutscene_autumn_background.png',
           zIndex: 0,
           animation: {
             type: 'zoom',
             duration: 6000,
-            zoomFrom: 1.0,
-            zoomTo: 1.1,
+            zoomFrom: 1.03,
+            zoomTo: 1.06,
+            easing: 'ease-in-out',
+          },
+        },
+        {
+          image: 'cutscene_autumn_middleground.png',
+          zIndex: 1,
+          animation: {
+            type: 'zoom',
+            duration: 6000,
+            zoomFrom: 1.1,
+            zoomTo: 1.2,
+            easing: 'ease-in-out',
+          },
+        },
+        // Carries forward the -20% resting position from scene 1, then continues drifting left to -40%
+        {
+          image: 'cutscene_autumn_foreground.png',
+          zIndex: 2,
+          offsetX: -20,
+          animation: {
+            type: 'pan',
+            duration: 6000,
+            panFrom: 'center',
+            panTo: 'right',
+            panAmount: 20,
             easing: 'ease-in-out',
           },
         },
