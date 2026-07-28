@@ -1434,8 +1434,8 @@ const App: React.FC = () => {
   );
 
   // Handle inventory reorder (drag-drop)
-  const handleInventoryReorder = useCallback((fromIndex: number, toIndex: number) => {
-    inventoryManager.swapInventoryItems(fromIndex, toIndex);
+  const handleInventoryReorder = useCallback((fromItemId: string, toItemId: string) => {
+    inventoryManager.swapInventoryItems(fromItemId, toItemId);
     // EventBus will trigger inventory update automatically
   }, []);
 

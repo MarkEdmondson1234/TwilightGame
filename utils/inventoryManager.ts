@@ -493,23 +493,24 @@ class InventoryManager {
   }
 
   /**
-   * Swap two items in inventory (for drag-drop reordering)
-   * Swaps positions in the slotOrder array which controls UI display order
-   * @param fromIndex - Source slot index (UI position)
-   * @param toIndex - Target slot index (UI position)
+   * Swap two item types in inventory (for drag-drop reordering)
+   * Swaps positions in the slotOrder array which controls UI display order.
+   * Takes item IDs rather than UI slot indices because the UI grid can be
+   * filtered, padded with empty slots, or expanded (photos/paintings/decorations
+   * render one item type as many slots) — none of which map 1:1 to slotOrder.
+   * @param fromItemId - Source item type
+   * @param toItemId - Target item type
    */
-  swapInventoryItems(fromIndex: number, toIndex: number): void {
-    // Validate indices against slotOrder (UI display order)
-    if (
-      fromIndex < 0 ||
-      fromIndex >= this.slotOrder.length ||
-      toIndex < 0 ||
-      toIndex >= this.slotOrder.length
-    ) {
-      console.warn('[InventoryManager] Swap failed: invalid indices', {
-        fromIndex,
-        toIndex,
-        slotOrderLength: this.slotOrder.length,
+  swapInventoryItems(fromItemId: string, toItemId: string): void {
+    if (fromItemId === toItemId) return;
+
+    const fromIndex = this.slotOrder.indexOf(fromItemId);
+    const toIndex = this.slotOrder.indexOf(toItemId);
+
+    if (fromIndex === -1 || toIndex === -1) {
+      console.warn('[InventoryManager] Swap failed: invalid item ids', {
+        fromItemId,
+        toItemId,
       });
       return;
     }

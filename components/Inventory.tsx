@@ -21,7 +21,8 @@ interface InventoryProps {
   onClose: () => void;
   items: InventoryItem[];
   onItemClick?: (item: InventoryItem, slotIndex: number, event: React.MouseEvent) => void;
-  onReorder?: (fromIndex: number, toIndex: number) => void;
+  /** Reorder two item types by id — slot indices in the grid don't map 1:1 to inventory order (filtering, padding, expanded photo/painting slots) */
+  onReorder?: (fromItemId: string, toItemId: string) => void;
   onPhotoDoubleClick?: (photo: Photo) => void;
   selectedSlot?: number | null; // Currently selected slot index
   maxSlots?: number;
@@ -152,9 +153,15 @@ const Inventory: React.FC<InventoryProps> = ({
     } else if (swapSelectedIndex === index) {
       // Same slot: deselect
       setSwapSelectedIndex(null);
+    } else if (item) {
+      // Different slot with an item: swap by item id
+      const selectedItem = slots[swapSelectedIndex];
+      if (selectedItem) {
+        onReorder?.(selectedItem.id, item.id);
+      }
+      setSwapSelectedIndex(null);
     } else {
-      // Different slot: swap
-      onReorder?.(swapSelectedIndex, index);
+      // Tapped an empty slot as the second pick: cancel selection
       setSwapSelectedIndex(null);
     }
   };
@@ -176,14 +183,14 @@ const Inventory: React.FC<InventoryProps> = ({
     e.preventDefault();
     if (!dragState) return;
 
-    const fromIndex = dragState.fromIndex;
-    if (fromIndex === targetIndex) {
+    const targetItem = slots[targetIndex];
+    if (!targetItem || targetItem.id === dragState.itemId) {
       setDragState(null);
-      return; // No-op if dropped on same slot
+      return; // No-op if dropped on an empty slot or the same item type
     }
 
-    // Notify parent to reorder inventory
-    onReorder?.(fromIndex, targetIndex);
+    // Notify parent to reorder inventory by item id
+    onReorder?.(dragState.itemId, targetItem.id);
     setDragState(null);
   };
 
