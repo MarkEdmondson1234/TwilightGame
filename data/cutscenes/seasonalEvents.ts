@@ -53,12 +53,18 @@ export const maydayCutscene: CutsceneDefinition = {
       id: 'mayday_greeting',
       backgroundLayers: [
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_spring_background.png',
           zIndex: 0,
-          animation: { type: 'static', duration: 0 },
+          animation: {
+            type: 'zoom',
+            duration: 6000,
+            zoomFrom: 1.02,
+            zoomTo: 1.0,
+            easing: 'ease-out',
+          },
         },
         {
-          image: 'summer_just_cherry.PNG',
+          image: 'cutscene_spring_middleground.png',
           zIndex: 1,
           animation: {
             type: 'zoom',
@@ -67,6 +73,20 @@ export const maydayCutscene: CutsceneDefinition = {
             zoomTo: 1.0,
             easing: 'ease-out',
           },
+        },
+        // Pinned at spring's own scene-2 resting offset — the establishing pan has already
+        // happened, so the tree reads as settled rather than mid-reveal
+        {
+          image: 'cutscene_spring_left.png',
+          zIndex: 2,
+          offsetX: -20,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: 'cutscene_spring_right.png',
+          zIndex: 3,
+          offsetX: 20,
+          animation: { type: 'static', duration: 0 },
         },
       ],
       weatherEffect: {
@@ -118,13 +138,8 @@ export const summerSolsticeCutscene: CutsceneDefinition = {
       id: 'solstice_greeting',
       backgroundLayers: [
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_summer_background.png',
           zIndex: 0,
-          animation: { type: 'static', duration: 0 },
-        },
-        {
-          image: 'summer_just_green.PNG',
-          zIndex: 1,
           animation: {
             type: 'zoom',
             duration: 7000,
@@ -132,6 +147,19 @@ export const summerSolsticeCutscene: CutsceneDefinition = {
             zoomTo: 1.0,
             easing: 'ease-out',
           },
+        },
+        // Pinned at summer's own scene-2 resting offset — see mayday_greeting above
+        {
+          image: 'cutscene_summer_front_left.png',
+          zIndex: 1,
+          offsetX: -20,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: 'cutscene_summer_front_right.png',
+          zIndex: 2,
+          offsetX: 20,
+          animation: { type: 'static', duration: 0 },
         },
       ],
       weatherEffect: {
@@ -183,12 +211,18 @@ export const harvestFestivalCutscene: CutsceneDefinition = {
       id: 'harvest_greeting',
       backgroundLayers: [
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_autumn_background.png',
           zIndex: 0,
-          animation: { type: 'static', duration: 0 },
+          animation: {
+            type: 'zoom',
+            duration: 6000,
+            zoomFrom: 1.02,
+            zoomTo: 1.0,
+            easing: 'ease-in-out',
+          },
         },
         {
-          image: 'summer_just_green.PNG',
+          image: 'cutscene_autumn_middleground.png',
           zIndex: 1,
           animation: {
             type: 'zoom',
@@ -197,6 +231,15 @@ export const harvestFestivalCutscene: CutsceneDefinition = {
             zoomTo: 1.0,
             easing: 'ease-in-out',
           },
+        },
+        // Pinned at the resting offset the real autumn cutscene's foreground drifts to by the
+        // end of its two-scene leftward pan — the reveal (and the walk to the mushroom house)
+        // has already happened
+        {
+          image: 'cutscene_autumn_foreground.png',
+          zIndex: 2,
+          offsetX: -40,
+          animation: { type: 'static', duration: 0 },
         },
       ],
       weatherEffect: {
@@ -249,21 +292,38 @@ export const yuleCutscene: CutsceneDefinition = {
       soundEffect: 'sfx_yule_bells',
       backgroundLayers: [
         {
-          image: 'summer_sky_cutscene.png',
+          image: 'cutscene_winter_sky.png',
           zIndex: 0,
-          opacity: 0.6,
           animation: { type: 'static', duration: 0 },
         },
         {
-          image: 'summer_just_hills.PNG',
+          image: 'cutscene_winter_village.png',
           zIndex: 1,
-          opacity: 0.75,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: 'cutscene_winter_background.png',
+          zIndex: 2,
           animation: {
             type: 'zoom',
             duration: 7000,
-            zoomFrom: 1.1,
+            zoomFrom: 1.05,
             zoomTo: 1.0,
             easing: 'ease-out',
+          },
+        },
+        // Pinned at winter's own scene-2 resting frame (offsetX -6, scale 1.12) via a
+        // zero-duration zoom-hold — the reveal has already happened, so the foreground reads
+        // as settled rather than mid-pan
+        {
+          image: 'cutscene_winter_foreground.png',
+          zIndex: 3,
+          offsetX: -6,
+          animation: {
+            type: 'zoom',
+            duration: 0,
+            zoomFrom: 1.12,
+            zoomTo: 1.12,
           },
         },
       ],
@@ -318,21 +378,36 @@ export const yuleCelebrationOpeningCutscene: CutsceneDefinition = {
       id: 'yule_gathering',
       backgroundLayers: [
         {
-          image: '/TwilightGame/assets/cutscenes/summer_sky_cutscene.png',
+          image: 'cutscene_winter_sky.png',
           zIndex: 0,
-          opacity: 0.45,
           animation: { type: 'static', duration: 0 },
         },
         {
-          image: '/TwilightGame/assets/cutscenes/summer_just_hills.PNG',
+          image: 'cutscene_winter_village.png',
           zIndex: 1,
-          opacity: 0.65,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: 'cutscene_winter_background.png',
+          zIndex: 2,
           animation: {
             type: 'zoom',
             duration: 8000,
-            zoomFrom: 1.12,
+            zoomFrom: 1.06,
             zoomTo: 1.0,
             easing: 'ease-out',
+          },
+        },
+        // Pinned at winter's own scene-2 resting frame — see yule_greeting above
+        {
+          image: 'cutscene_winter_foreground.png',
+          zIndex: 3,
+          offsetX: -6,
+          animation: {
+            type: 'zoom',
+            duration: 0,
+            zoomFrom: 1.12,
+            zoomTo: 1.12,
           },
         },
       ],
