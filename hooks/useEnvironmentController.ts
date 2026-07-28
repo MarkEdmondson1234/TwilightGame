@@ -225,7 +225,12 @@ export function useEnvironmentController(
     const { season } = TimeManager.getCurrentTime();
     const isWinter = season === Season.WINTER;
 
-    if (isOutdoorWithBirds && !badWeatherForBirds && !isWinter) {
+    // ambient_spring_summer already carries birdsong on this map during spring/summer —
+    // stacking ambient_birds on top doubled up into an overly aggressive chirp layer.
+    const isSpringOrSummer = season === Season.SPRING || season === Season.SUMMER;
+    const isCoveredBySpringSummer = isSpringOrSummer && currentMapId !== 'picnic_meadow';
+
+    if (isOutdoorWithBirds && !badWeatherForBirds && !isWinter && !isCoveredBySpringSummer) {
       audioManager.playAmbient('ambient_birds');
     } else {
       // Stop bird ambience when leaving forest or in bad weather
