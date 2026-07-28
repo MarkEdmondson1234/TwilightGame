@@ -8,6 +8,7 @@ import { useDialogueAnimation } from '../hooks/useDialogueAnimation';
 import { useTypewriter } from '../hooks/useTypewriter';
 import { Z_DIALOGUE, zClass } from '../zIndex';
 import { cookingManager } from '../utils/CookingManager';
+import { TimeManager } from '../utils/TimeManager';
 import { CookingDomain } from '../data/recipes';
 import { decorationManager } from '../utils/DecorationManager';
 import { inventoryManager } from '../utils/inventoryManager';
@@ -183,6 +184,13 @@ const DialogueBox: React.FC<DialogueBoxProps> = ({
       }
       if (response.hiddenIfCookingCourseComplete) {
         if (cookingManager.isCookingCourseComplete()) {
+          return false;
+        }
+      }
+
+      // Check season requirement
+      if (response.requiredSeason) {
+        if (TimeManager.getCurrentTime().season.toLowerCase() !== response.requiredSeason) {
           return false;
         }
       }

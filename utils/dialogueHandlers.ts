@@ -218,6 +218,15 @@ function handleAltheaQuestItems(nodeId: string): string | void {
     return;
   }
 
+  // Teach Apple Cobbler once player has completed the cooking course and it's autumn
+  if (nodeId === 'apple_cobbler_offer') {
+    if (cookingManager.teachRecipe('apple_cobbler', 'old_woman_knitting')) {
+      if (DEBUG.QUEST)
+        console.log('[dialogueHandlers] 🥧 Althea taught you how to make Apple Cobbler!');
+    }
+    return;
+  }
+
   // Estranged sisters: player agrees to help Althea to the ruins — complete quest and trigger cutscene
   if (nodeId === 'sisters_help_confirm') {
     completeEstrangedSistersQuest();

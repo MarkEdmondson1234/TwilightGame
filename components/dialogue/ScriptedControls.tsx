@@ -8,6 +8,7 @@
 import React from 'react';
 import { DialogueNode, DialogueResponse } from '../../types';
 import { cookingManager } from '../../utils/CookingManager';
+import { TimeManager } from '../../utils/TimeManager';
 import { decorationManager } from '../../utils/DecorationManager';
 import { TEXT_FONT } from './dialogueHelpers';
 
@@ -54,6 +55,9 @@ function filterResponses(responses: DialogueResponse[] | undefined): DialogueRes
     }
     if (response.hiddenIfCookingCourseComplete) {
       if (cookingManager.isCookingCourseComplete()) return false;
+    }
+    if (response.requiredSeason) {
+      if (TimeManager.getCurrentTime().season.toLowerCase() !== response.requiredSeason) return false;
     }
     if (response.hiddenIfAnyDomainStarted) {
       const masteredCount = cookingManager.getMasteredDomainCount();

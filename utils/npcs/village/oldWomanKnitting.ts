@@ -128,6 +128,13 @@ export function createOldWomanKnittingNPC(
             hiddenIfQuestCompleted: 'ghost_queen',
           },
           {
+            text: "I've heard your apple cobbler is the best in the village. Would you teach me the recipe?",
+            nextId: 'apple_cobbler_offer',
+            requiredCookingCourseComplete: true,
+            requiredSeason: 'autumn',
+            hiddenIfRecipeUnlocked: 'apple_cobbler',
+          },
+          {
             text: 'Take care!',
           },
         ],
@@ -138,6 +145,11 @@ export function createOldWomanKnittingNPC(
         requiredQuest: 'ghost_queen',
         hiddenIfQuestCompleted: 'ghost_queen',
         responses: [{ text: 'Perhaps it is. Thanks.' }],
+      },
+      {
+        id: 'apple_cobbler_offer',
+        text: "Well - it's a family secret, but I know you're a great cook. I guess it's time for me to pass it on.",
+        responses: [{ text: "Thank you, Althea. I'll treasure it." }],
       },
       {
         id: 'knitting_project',

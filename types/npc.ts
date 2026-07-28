@@ -127,6 +127,7 @@ export interface DialogueResponse {
   hiddenIfAnyDomainStarted?: boolean; // Hide if player has started any domain (not mastered yet)
   requiredCookingCourseComplete?: boolean; // Only show once all 3 cooking domains are mastered
   hiddenIfCookingCourseComplete?: boolean; // Hide once all 3 cooking domains are mastered
+  requiredSeason?: 'spring' | 'summer' | 'autumn' | 'winter'; // Only show during this in-game season
   // Quest requirements for this response option
   requiredQuest?: string; // Only show if this quest is started
   requiredQuestStage?: number; // Only show if quest is at this stage or higher

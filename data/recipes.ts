@@ -423,6 +423,7 @@ export const RECIPES: Record<string, RecipeDefinition> = {
     resultItemId: 'food_apple_cobbler',
     resultQuantity: 1,
     friendshipValue: 35,
+    teacherNpc: 'old_woman_knitting',
     image: cookingAssets.apple_cobbler,
     instructions: [
       'Peel and slice the apples, then put them in a saucepan with the sugar, cinnamon, and a splash of water. Cook gently for five to seven minutes until they just begin to soften but still hold their shape.',
