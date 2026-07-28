@@ -31,9 +31,14 @@ import { createWitchWolfNPC } from '../../utils/npcFactories';
  * P = Path
  * ? = Witch Hut (magical dwelling)
  * + = Cauldron (bubbling animated pot)
+ * z = Plain grass (no tuft sprite - under witch hut art footprint)
  */
 
 // 30x30 map - witch hut centered at (15, 15)
+// Grid cells under the witch hut's 16x16 sprite footprint (rows 9-24, cols 6-21) use
+// 'z' (GRASS_PLAIN) instead of 'G' so the random grass-tuft sprite never gets drawn
+// there - the hut artwork has organic transparent gaps (canopy hole, moss texture)
+// that a tuft sprite would otherwise poke through, looking like it sprouts mid-picture.
 const gridString = `
 GGGGGGGsGGbssGGGeGGGGGJGGGbYsb
 boGeGeGGsessssGGGeuuuGGGesGGeb
@@ -44,22 +49,22 @@ eGGGGGGeeGGGGGGGuGGGGuuGeGGGGt
 GGGGGGY=xGGXXXGuuuuuuGeeGGGGGG
 bGGGeeGGGeGGGGGGGGGGGGGGGGsGGY
 btGGGGGGeeGGXXXGGGGGGGGeGGGGGb
-eeGGGGGGeGGGGGGGGGGGGeeGGGGGGo
-JexGGYGGGeGseGGGGGGGGGYeGGGGeb
-bGGGGGGGeGGGGGGGGGGGGGeGGGGGGy
-YbGeGGGGyeGGGGGGGGGyeGGGGGGGGb
-bbGGGGGeGGGeGGGGGGGeGGGGGGGGGy
-boGyGGGGeGGGGG?GGGGGGGGGGGeGGb
-beGGGGGGeGGGGGPPGGGeGGGGGGGGGt
-eeGxGGGeGgGGiGGPGGgGGGpGGGGGGJ
-bGGsGGGGeeGGGGGPGeeiiGpGGxsGGY
-bGGGGGGpeGGpGGPPGGGGpGGGGGGGGb
-bGGGGGGiGGGGGPPPGGpGipGGJeGGGt
-YGGGGGspipGiPPPPPpiipGsiGGGsGo
-otGGGGGeiGeeGGPPieeeGGGGGGGssb
-bGGGGGGGGGGGGGPGGGeGGGGYGGsGGs
-tGGGGGGGGGGGGGPGGGGGGGGGGGesGt
-YGGGsGGeGGGGGGPGGGGeGGGGGGxssb
+eeGGGGzzezzzzzzzzzzzzeeGGGGGGo
+JexGGYzzzezsezzzzzzzzzYeGGGGeb
+bGGGGGzzezzzzzzzzzzzzzeGGGGGGy
+YbGeGGzzyezzzzzzzzzyezGGGGGGGb
+bbGGGGzezzzezzzzzzzezzGGGGGGGy
+boGyGGzzezzzzz?zzzzzzzGGGGeGGb
+beGGGGzzezzzzzPPzzzezzGGGGGGGt
+eeGxGGzezgzzizzPzzgzzzpGGGGGGJ
+bGGsGGzzeezzzzzPzeeiizpGGxsGGY
+bGGGGGzpezzpzzPPzzzzpzGGGGGGGb
+bGGGGGzizzzzzPPPzzpzipGGJeGGGt
+YGGGGGspipziPPPPPpiipzsiGGGsGo
+otGGGGzeizeezzPPieeezzGGGGGssb
+bGGGGGzzzzzzzzPzzzezzzGYGGsGGs
+tGGGGGzzzzzzzzPzzzzzzzGGGGesGt
+YGGGsGzezzzzzzPzzzzezzGGGGxssb
 bGGGGGGeGGGGGGGPGGGGGeGGGGGGGY
 bGGGGGGGGGbGPPPPPGGeGGGGGGGGGb
 boGbGGxGeGGPGGGGGPPeeGGGGGGGGY
@@ -72,7 +77,7 @@ export const witchHut: MapDefinition = {
   name: 'Witch Hut - Hidden Grove',
   width: 30,
   height: 30,
-  grid: parseGrid(gridString),
+  grid: parseGrid(gridString, { z: TileType.GRASS_PLAIN }),
   colorScheme: 'forest',
   hasClouds: true,
   isRandom: false,

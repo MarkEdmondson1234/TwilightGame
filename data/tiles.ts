@@ -28,6 +28,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
       scaleRange: { min: 0.95, max: 1.05 }, // Very subtle size variation (5%)
     },
   },
+  [TileType.GRASS_PLAIN]: {
+    name: 'Plain Grass',
+    color: 'bg-palette-sage', // Same background as grass, overridden by map color scheme
+    collisionType: CollisionType.WALKABLE,
+    // No image/seasonalImages - flat colour only, never shows a tuft sprite.
+    // Used under large building art (e.g. witch hut) whose transparent gaps would
+    // otherwise let a randomly-placed grass tuft poke through the painted image.
+  },
   [TileType.TUFT]: {
     name: 'Tuft Grass',
     color: 'bg-palette-sage', // Same background as grass, overridden by map color scheme

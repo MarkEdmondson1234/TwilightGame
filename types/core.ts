@@ -32,6 +32,7 @@ export function isTileSolid(collisionType: CollisionType): boolean {
 export enum TileType {
   // Outdoor tiles
   GRASS,
+  GRASS_PLAIN, // Flat grass, no decorative tuft sprite - for use under building art where tufts would poke through transparent gaps
   TUFT, // Grass with tufts - seasonal variation (replaces 90% of grass)
   TUFT_SPARSE, // Sparse tuft variant - less visual intensity (uses only sparse images)
   ROCK,
