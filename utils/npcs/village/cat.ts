@@ -4,7 +4,7 @@
  * A cat with sleeping/angry/standing state machine.
  */
 
-import { NPC, Position } from '../../../types';
+import { NPC, Direction, Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 
@@ -54,6 +54,29 @@ export function createCatNPC(id: string, position: Position, name: string = 'Cat
       },
     },
     initialState: 'sleeping',
+    // Seasonal locations: Outside in warm months, curled up on Althea's bed for cold months
+    seasonalLocations: {
+      spring: {
+        mapId: 'village',
+        position, // Same spot as the base position
+        direction: Direction.Down,
+      },
+      summer: {
+        mapId: 'village',
+        position, // Same spot, enjoying the summer weather
+        direction: Direction.Down,
+      },
+      autumn: {
+        mapId: 'cottage_interior',
+        position: { x: 13, y: 5 }, // Curled up on the bed
+        direction: Direction.Down,
+      },
+      winter: {
+        mapId: 'cottage_interior',
+        position: { x: 13, y: 5 }, // Curled up on the bed, staying warm
+        direction: Direction.Down,
+      },
+    },
     dialogue: [
       // Normal dialogue (without Beast Tongue potion)
       {
