@@ -35,7 +35,7 @@ export function createOldWomanKnittingNPC(
     sprite: npcAssets.old_woman_01,
     portraitSprite: npcAssets.old_woman_portrait,
     collisionRadius: 0.4, // NPCs have collision so player can't walk through
-    scale: 3.4, // Larger scale to match cottage interior room scale
+    scale: 3.4, // Base/outdoor scale (spring & summer); overridden to 2.9 for the cottage interior below
     states: {
       knitting: {
         sprites: [npcAssets.old_woman_01, npcAssets.old_woman_02],
@@ -59,11 +59,13 @@ export function createOldWomanKnittingNPC(
         mapId: 'cottage_interior',
         position: { x: 10, y: 6 }, // Inside the cottage, sitting in the middle area
         direction: Direction.Down,
+        scale: 2.9, // One size smaller than the outdoor 3.4 to fit the cottage interior
       },
       winter: {
         mapId: 'cottage_interior',
         position: { x: 10, y: 6 }, // Inside, staying warm and cosy
         direction: Direction.Down,
+        scale: 2.9, // One size smaller than the outdoor 3.4 to fit the cottage interior
       },
     },
     dialogue: [

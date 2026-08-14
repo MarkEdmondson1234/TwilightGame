@@ -31,7 +31,8 @@ interface NPCState {
   baseMapId: string; // Original map where NPC was registered
   basePosition: Position; // Original position when NPC was created
   baseDirection: Direction; // Original direction when NPC was created
-  baseScale?: number; // Original scale for restoring after state-based scale override
+  baseScale?: number; // Current base scale (state-based overrides restore to this); mutated by seasonal/event scale overrides
+  defaultScale?: number; // True original scale from NPC creation, never mutated — fallback for seasons without a scale override
   // Proximity trigger tracking
   previousState?: string; // State before proximity trigger (for recovery)
   proximityRecoveryStartTime?: number; // Timestamp when player left proximity zone
@@ -84,11 +85,13 @@ class NPCManagerClass {
           basePosition: { ...npc.position },
           baseDirection: npc.direction,
           baseScale: npc.scale,
+          defaultScale: npc.scale,
         });
       } else {
         // Update baseScale on re-registration (e.g., shop fox has different scale than village fox)
         const state = this.npcStates.get(npc.id)!;
         state.baseScale = npc.scale;
+        state.defaultScale = npc.scale;
       }
     });
 
@@ -988,7 +991,7 @@ class NPCManagerClass {
    */
   private getSeasonalLocationForNPC(
     npc: NPC
-  ): { mapId: string; position: Position; direction: Direction; static?: boolean } | null {
+  ): { mapId: string; position: Position; direction: Direction; static?: boolean; scale?: number } | null {
     if (!npc.seasonalLocations) {
       // No seasonal locations, use base location
       const state = this.npcStates.get(npc.id);
@@ -1011,6 +1014,7 @@ class NPCManagerClass {
         position: seasonalData.position,
         direction: seasonalData.direction || npc.direction,
         static: seasonalData.static,
+        scale: seasonalData.scale,
       };
     }
 
@@ -1048,7 +1052,7 @@ class NPCManagerClass {
       const locationData = this.getSeasonalLocationForNPC(npc);
       if (!locationData) return;
 
-      const { mapId, position, direction, static: isStatic } = locationData;
+      const { mapId, position, direction, static: isStatic, scale } = locationData;
 
       // Remove NPC from all maps first
       this.npcsByMap.forEach((mapNPCs, currentMapId) => {
@@ -1064,6 +1068,18 @@ class NPCManagerClass {
       // Update NPC position and direction
       npc.position = { ...position };
       npc.direction = direction;
+
+      // Apply a per-season scale override, falling back to the NPC's true default
+      // scale when this season doesn't specify one. Updates baseScale (not just
+      // npc.scale) so the per-state animation scale logic in the update loop
+      // doesn't stomp on it — defaultScale itself is never mutated, so switching
+      // back to an unscaled season always restores the original size.
+      const npcState = this.npcStates.get(npc.id);
+      const resolvedScale = scale ?? npcState?.defaultScale;
+      if (resolvedScale !== undefined) {
+        npc.scale = resolvedScale;
+        if (npcState) npcState.baseScale = resolvedScale;
+      }
 
       // Freeze wandering when the seasonal location is marked as static (e.g. indoors)
       if (isStatic) {
