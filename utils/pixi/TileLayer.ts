@@ -223,7 +223,7 @@ export class TileLayer extends PixiLayer {
     }
 
     // Determine if we should hide this sprite during snowfall
-    const hideSpriteDuringSnow =
+    let hideSpriteDuringSnow =
       currentWeather === 'snow' &&
       (tileData.type === TileType.GRASS ||
         tileData.type === TileType.TUFT ||
@@ -266,42 +266,55 @@ export class TileLayer extends PixiLayer {
       }
     }
 
+    // Soil tiles get buried under snow too (fallow through fully grown crops)
+    if (currentWeather === 'snow' && isSoilTile(tileData.type)) {
+      hideSpriteDuringSnow = true;
+    }
+
     // Render farm fence overlays at edges of farm plot sections
     if (isSoilTile(tileData.type)) {
-      // Bottom fence: soil tile with non-soil below
-      const tileBelow = getTileData(x, y + 1);
-      if (!tileBelow || !isSoilTile(tileBelow.type)) {
-        this.renderFarmFence(x, y);
+      if (hideSpriteDuringSnow) {
+        // Snowed in — bury the fence posts along with the soil/crop
+        for (const suffix of ['_fence', '_fence_top', '_fence_left', '_fence_right']) {
+          const s = this.sprites.get(`${x},${y}${suffix}`);
+          if (s) s.visible = false;
+        }
       } else {
-        const fenceSprite = this.sprites.get(`${x},${y}_fence`);
-        if (fenceSprite) fenceSprite.visible = false;
-      }
+        // Bottom fence: soil tile with non-soil below
+        const tileBelow = getTileData(x, y + 1);
+        if (!tileBelow || !isSoilTile(tileBelow.type)) {
+          this.renderFarmFence(x, y);
+        } else {
+          const fenceSprite = this.sprites.get(`${x},${y}_fence`);
+          if (fenceSprite) fenceSprite.visible = false;
+        }
 
-      // Top fence: soil tile with non-soil above
-      const tileAbove = getTileData(x, y - 1);
-      if (!tileAbove || !isSoilTile(tileAbove.type)) {
-        this.renderFarmFenceTop(x, y);
-      } else {
-        const fenceTopSprite = this.sprites.get(`${x},${y}_fence_top`);
-        if (fenceTopSprite) fenceTopSprite.visible = false;
-      }
+        // Top fence: soil tile with non-soil above
+        const tileAbove = getTileData(x, y - 1);
+        if (!tileAbove || !isSoilTile(tileAbove.type)) {
+          this.renderFarmFenceTop(x, y);
+        } else {
+          const fenceTopSprite = this.sprites.get(`${x},${y}_fence_top`);
+          if (fenceTopSprite) fenceTopSprite.visible = false;
+        }
 
-      // Left fence: soil tile with non-soil to the left
-      const tileLeft = getTileData(x - 1, y);
-      if (!tileLeft || !isSoilTile(tileLeft.type)) {
-        this.renderFarmFenceSide(x, y, 'left');
-      } else {
-        const s = this.sprites.get(`${x},${y}_fence_left`);
-        if (s) s.visible = false;
-      }
+        // Left fence: soil tile with non-soil to the left
+        const tileLeft = getTileData(x - 1, y);
+        if (!tileLeft || !isSoilTile(tileLeft.type)) {
+          this.renderFarmFenceSide(x, y, 'left');
+        } else {
+          const s = this.sprites.get(`${x},${y}_fence_left`);
+          if (s) s.visible = false;
+        }
 
-      // Right fence: soil tile with non-soil to the right
-      const tileRight = getTileData(x + 1, y);
-      if (!tileRight || !isSoilTile(tileRight.type)) {
-        this.renderFarmFenceSide(x, y, 'right');
-      } else {
-        const s = this.sprites.get(`${x},${y}_fence_right`);
-        if (s) s.visible = false;
+        // Right fence: soil tile with non-soil to the right
+        const tileRight = getTileData(x + 1, y);
+        if (!tileRight || !isSoilTile(tileRight.type)) {
+          this.renderFarmFenceSide(x, y, 'right');
+        } else {
+          const s = this.sprites.get(`${x},${y}_fence_right`);
+          if (s) s.visible = false;
+        }
       }
     }
 
@@ -407,12 +420,17 @@ export class TileLayer extends PixiLayer {
 
     // Always render background color first (even if we'll show sprite on top)
     // This ensures color-only tiles and sprite tiles have matching backgrounds
-    const resolvedColor = ColorResolver.getTileColor(tileData.type);
+    // Snow-covered soil uses the same icy-white colour as winter grass, instead of its
+    // usual brown/chocolate (which ColorResolver otherwise keeps fixed year-round).
+    const resolvedColor =
+      hideSpriteDuringSnow && isSoilTile(tileData.type)
+        ? 'bg-palette-snow'
+        : ColorResolver.getTileColor(tileData.type);
     this.renderColorTile(x, y, resolvedColor, map, `${x},${y}_color`);
 
     // Render soil texture under crop sprites (tilled for dry, tilled_wet for watered)
     const soilKey = `${x},${y}_soil`;
-    const needsSoilBg = growthStage !== null && cropType;
+    const needsSoilBg = growthStage !== null && cropType && !hideSpriteDuringSnow;
     const soilImageUrl = needsSoilBg
       ? (tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_READY)
         ? farmingAssets.tilled_wet
