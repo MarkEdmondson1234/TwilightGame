@@ -73,6 +73,10 @@ const CUTSCENE_HEIGHT = 1080;
 const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
 const ITEM_SIZE = 256; // Resize item sprites to 256x256 (inventory icons, tool sprites)
 const ICON_SIZE = 256; // Resize hand-drawn icons to 256x256 (UI icons replacing emojis, displayed at 16-64px)
+const SKI_BACKDROP_MAX = 1920; // Skiing mini-game full-screen backdrops (sky, level bands, clouds)
+const SKI_OBSTACLE_MAX = 1024; // Skiing mini-game trees/brambles — scale up close to the camera, need detail
+const SKI_PICKUP_MAX = 640; // Skiing mini-game on-course firewood pickups — smaller on screen than obstacles
+const SKI_PC_MAX = 1024; // Skiing mini-game player sprite (matches character sprite quality)
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -799,6 +803,101 @@ async function optimizeCutscenes() {
   console.log(`\n  Optimized ${optimized} cutscene image(s)\n`);
 }
 
+// Optimize skiing mini-game canvas assets (backdrops, obstacles, pickups, player sprite)
+// Note: the "banked" inventory icon versions (skis.png, low/medium/fine_quality_wood.png) are
+// handled separately by optimizeItems() — this only processes the ski_-prefixed gameplay canvas
+// assets plus the player sprite, which are not tile/item sprites.
+async function optimizeSkiingGame() {
+  console.log('⛷️  Optimizing skiing mini-game assets...');
+
+  const skiingDir = path.join(ASSETS_DIR, 'skiing_game');
+  if (!fs.existsSync(skiingDir)) {
+    console.log('  ℹ️  No skiing_game directory found, skipping...\n');
+    return;
+  }
+
+  const BACKDROP_FILES = new Set([
+    'ski_sunny_sky.png',
+    'ski_overcast_sky.png',
+    'ski_level1.png',
+    'ski_level2.png',
+  ]);
+  // Clouds are small wispy shapes on an otherwise-transparent 1920x1600 canvas (same padding
+  // issue the obstacle sprites originally had). Unlike the obstacle/pickup/player sprites —
+  // which the artist now crops by hand, since their bounding box also drives collision sizing
+  // — clouds are purely decorative, so it's safe to auto-trim them here.
+  const CLOUD_FILES = new Set(['ski_cloud1.png', 'ski_cloud2.png', 'ski_cloud3.png']);
+  const OBSTACLE_FILES = new Set([
+    'ski_needle_tree.png',
+    'ski_spruce.png',
+    'ski_birch.png',
+    'ski_brambles.png',
+  ]);
+  const PICKUP_FILES = new Set([
+    'ski_low_quality_wood.png',
+    'ski_medium_quality_wood.png',
+    'ski_fine_firewood.png',
+  ]);
+  const PC_FILES = new Set(['skiing_male_pc.png']);
+
+  const allFiles = getAllFiles(skiingDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    // The banked inventory icons live under items/ via optimizeItems() — skip their sources here
+    if (
+      !BACKDROP_FILES.has(file) &&
+      !CLOUD_FILES.has(file) &&
+      !OBSTACLE_FILES.has(file) &&
+      !PICKUP_FILES.has(file) &&
+      !PC_FILES.has(file)
+    ) {
+      continue;
+    }
+
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'skiing_game', file.replace(/\.jpeg$/i, '.png')));
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+    deleteIfExists(outputPath);
+
+    const maxSize = BACKDROP_FILES.has(file) || CLOUD_FILES.has(file)
+      ? SKI_BACKDROP_MAX
+      : OBSTACLE_FILES.has(file)
+      ? SKI_OBSTACLE_MAX
+      : PC_FILES.has(file)
+      ? SKI_PC_MAX
+      : SKI_PICKUP_MAX;
+    const quality = PICKUP_FILES.has(file) ? HIGH_QUALITY : SHOWCASE_QUALITY;
+
+    // Preserve the source aspect ratio (these aren't square) — just cap the largest dimension.
+    // Obstacle/pickup/player source files are pre-cropped to their visible content by hand —
+    // don't auto-trim those. Clouds are the one category still safe to auto-trim (see above).
+    let pipeline = sharp(inputPath);
+    if (CLOUD_FILES.has(file)) pipeline = pipeline.trim();
+    await pipeline
+      .resize(maxSize, maxSize, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .png({ palette: false, quality, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} skiing mini-game asset(s)\n`);
+}
+
 // Optimize witch hut assets
 async function optimizeWitchHut() {
   console.log('🏚️  Optimizing witch hut assets...');
@@ -1304,6 +1403,7 @@ async function main() {
     await optimizeNPCs();
     await optimizeAnimations();
     await optimizeCutscenes();
+    await optimizeSkiingGame();
     await optimizeWitchHut();
     await optimizeCooking();
     await optimizeCauldron();

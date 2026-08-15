@@ -52,6 +52,7 @@ export interface KeyboardControlsConfig {
   showMagicBook: boolean;
   showPhotoAlbum: boolean;
   showDevTools: boolean;
+  showMiniGame: boolean;
   selectedItemSlot: number | null;
   inventoryItems: Array<{
     id: string;
@@ -116,6 +117,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showMagicBook,
     showPhotoAlbum,
     showDevTools,
+    showMiniGame,
     selectedItemSlot,
     inventoryItems,
     keysPressed,
@@ -160,6 +162,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   const showRecipeBookRef = useRef(showRecipeBook);
   const showJournalRef = useRef(showJournal);
   const showHelpBrowserRef = useRef(showHelpBrowser);
+  const showMiniGameRef = useRef(showMiniGame);
 
   // Update refs when values change
   selectedItemSlotRef.current = selectedItemSlot;
@@ -171,6 +174,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   showRecipeBookRef.current = showRecipeBook;
   showJournalRef.current = showJournal;
   showHelpBrowserRef.current = showHelpBrowser;
+  showMiniGameRef.current = showMiniGame;
 
   // Build handlers object for key handler utilities
   const uiHandlers = {
@@ -191,6 +195,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showMagicBook,
     showPhotoAlbum,
     showDevTools,
+    showMiniGame,
     onSetShowHelpBrowser,
     onSetShowCookingUI,
     onSetShowRecipeBook,
@@ -233,8 +238,8 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       return;
     }
 
-    // I key to toggle inventory (works during dialogue)
-    if (e.key === 'i' || e.key === 'I') {
+    // I key to toggle inventory (works during dialogue, but not over a full-screen mini-game)
+    if ((e.key === 'i' || e.key === 'I') && !showMiniGameRef.current) {
       e.preventDefault();
       handleInventoryToggle(uiHandlers);
       return;
@@ -265,6 +270,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         showRecipeBook: showRecipeBookRef.current,
         showJournal: showJournalRef.current,
         showInventory: showInventoryRef.current,
+        showMiniGame: showMiniGameRef.current,
       })
     ) {
       return;

@@ -26,6 +26,7 @@ export interface UIKeyHandlers {
   showMagicBook: boolean;
   showPhotoAlbum: boolean;
   showDevTools: boolean;
+  showMiniGame: boolean;
   onSetShowHelpBrowser: (show: boolean) => void;
   onSetShowCookingUI: (show: boolean) => void;
   onSetShowRecipeBook: (show: boolean) => void;
@@ -188,7 +189,12 @@ export function isBlockingUIOpen(
   activeNPC: string | null,
   handlers: Pick<
     UIKeyHandlers,
-    'showCookingUI' | 'showShopUI' | 'showRecipeBook' | 'showJournal' | 'showInventory'
+    | 'showCookingUI'
+    | 'showShopUI'
+    | 'showRecipeBook'
+    | 'showJournal'
+    | 'showInventory'
+    | 'showMiniGame'
   >
 ): boolean {
   return !!(
@@ -197,6 +203,7 @@ export function isBlockingUIOpen(
     handlers.showShopUI ||
     handlers.showRecipeBook ||
     handlers.showJournal ||
-    handlers.showInventory
+    handlers.showInventory ||
+    handlers.showMiniGame
   );
 }

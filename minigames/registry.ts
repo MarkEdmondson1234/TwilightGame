@@ -17,6 +17,7 @@ import { paintingEaselDefinition } from './painting-easel/definition';
 import { pumpkinCarvingDefinition } from './pumpkin-carving/definition';
 import { wreathMakingDefinition } from './wreath-making/definition';
 import { goblinCombatDefinition, umbraWolfCombatDefinition } from './combat-encounter/definition';
+import { skiingDefinition } from './skiing/definition';
 
 /**
  * All registered mini-games.
@@ -28,6 +29,7 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
   wreathMakingDefinition,
   goblinCombatDefinition,
   umbraWolfCombatDefinition,
+  skiingDefinition,
 ];
 
 // =============================================================================

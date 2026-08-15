@@ -754,6 +754,10 @@ export const dialogueSpriteAssets = {
 export const itemAssets = {
   hoe: '/TwilightGame/assets-optimized/items/hoe.png',
   watering_can: '/TwilightGame/assets-optimized/items/watering_can.png',
+  skis: '/TwilightGame/assets-optimized/items/skis.png',
+  wood_poor: '/TwilightGame/assets-optimized/items/wood_poor.png',
+  wood_medium: '/TwilightGame/assets-optimized/items/wood_medium.png',
+  wood_fine: '/TwilightGame/assets-optimized/items/wood_fine.png',
   water: '/TwilightGame/assets-optimized/items/water.png',
   carrot_seeds: '/TwilightGame/assets-optimized/items/carrot_seeds.png',
   radish_seeds: '/TwilightGame/assets-optimized/items/radish_seeds.png',

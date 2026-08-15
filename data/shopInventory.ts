@@ -77,6 +77,12 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     sellPrice: 45,
     stock: 'unlimited',
   },
+  {
+    itemId: 'tool_skis',
+    buyPrice: 150,
+    sellPrice: 90,
+    stock: 'unlimited',
+  },
 
   // ===== MATERIALS =====
   {

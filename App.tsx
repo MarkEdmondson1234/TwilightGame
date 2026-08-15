@@ -54,7 +54,7 @@ import { FOOD_TO_RECIPE_ID } from './data/recipes';
 import { characterData } from './utils/CharacterData';
 import { staminaManager } from './utils/StaminaManager';
 import { photoAlbumManager } from './utils/photoAlbumManager';
-import { TimeManager } from './utils/TimeManager';
+import { TimeManager, Season } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
 import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, Z_LOADING, zClass } from './zIndex';
 import { iconAssets } from './iconAssets';
@@ -690,6 +690,7 @@ const App: React.FC = () => {
     showMagicBook: ui.magicBook,
     showPhotoAlbum: ui.photoAlbum,
     showDevTools: ui.devTools,
+    showMiniGame: ui.miniGame,
     selectedItemSlot,
     inventoryItems,
     keysPressed,
@@ -851,8 +852,8 @@ const App: React.FC = () => {
     // Update PixiJS animations (weather particles, sprite animations, tile animations)
     updateAnimations(deltaTime);
 
-    // Pause movement when dialogue, cutscene, or event chain popup is active
-    if (activeNPC || isCutscenePlaying || activeChainPopup) {
+    // Pause movement when dialogue, cutscene, event chain popup, or a full-screen mini-game is active
+    if (activeNPC || isCutscenePlaying || activeChainPopup || ui.miniGame) {
       animationFrameId.current = requestAnimationFrame(gameLoop);
       return;
     }
@@ -932,6 +933,7 @@ const App: React.FC = () => {
     activeChainPopup,
     checkChainProximity,
     currentMapId,
+    ui.miniGame,
   ]);
 
   // Disabled automatic transitions - now using action key (E or Enter)
@@ -2175,9 +2177,10 @@ const App: React.FC = () => {
               (itemDef.category === ItemCategory.FOOD ||
                 itemDef.edible ||
                 itemDef.category === ItemCategory.DECORATION ||
-                itemDef.category === ItemCategory.FURNITURE)
+                itemDef.category === ItemCategory.FURNITURE ||
+                item.id === 'tool_skis')
             ) {
-              // Food, edible crops, decoration, and furniture items show a radial menu
+              // Food, edible crops, decoration, furniture, and skis show a radial menu
               setInventoryRadialMenu({
                 position: { x: event.clientX, y: event.clientY },
                 item,
@@ -2582,6 +2585,7 @@ const App: React.FC = () => {
             !isWallpaper &&
             (invItemDef.category === ItemCategory.DECORATION ||
               invItemDef.category === ItemCategory.FURNITURE);
+          const isSkis = inventoryRadialMenu.item.id === 'tool_skis';
           const isConfirming = inventoryRadialMenu.mode === 'confirmDelete';
           return (
             <RadialMenu
@@ -2646,6 +2650,8 @@ const App: React.FC = () => {
                               },
                             },
                           ]
+                        : isSkis
+                        ? []
                         : [
                             {
                               id: 'place',
@@ -2659,6 +2665,39 @@ const App: React.FC = () => {
                               },
                             },
                           ]),
+                      ...(isSkis
+                        ? [
+                            {
+                              id: 'go_skiing',
+                              label: 'Go Skiing',
+                              icon: '⛷️',
+                              color: '#38bdf8',
+                              onSelect: () => {
+                                setInventoryRadialMenu(null);
+                                const currentMapId = mapManager.getCurrentMapId() ?? '';
+                                const isForest =
+                                  currentMapId.startsWith('forest') || currentMapId === 'deep_forest';
+                                const isWinter =
+                                  TimeManager.getCurrentTime().season === Season.WINTER;
+                                if (isForest && isWinter) {
+                                  closeUI('inventory');
+                                  openUI('miniGame', {
+                                    activeMiniGameId: 'skiing',
+                                    miniGameTriggerData: {
+                                      triggerType: 'inventory',
+                                      itemId: 'tool_skis',
+                                    },
+                                  });
+                                } else {
+                                  showToast(
+                                    'To go skiing, you need to be in the forest at winter',
+                                    'warning'
+                                  );
+                                }
+                              },
+                            },
+                          ]
+                        : []),
                       ...(isFood
                         ? [
                             {

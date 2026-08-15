@@ -25,6 +25,39 @@ export const TOOL_AND_MATERIAL_ITEMS: Record<string, ItemDefinition> = {
     icon: '💩',
   },
 
+  wood_poor: {
+    id: 'wood_poor',
+    name: 'wood_poor',
+    displayName: 'Poor Quality Firewood',
+    category: ItemCategory.MATERIAL,
+    description: 'Damp, knotty firewood. Burns, but not for long.',
+    stackable: true,
+    sellPrice: 2,
+    image: itemAssets.wood_poor,
+  },
+
+  wood_medium: {
+    id: 'wood_medium',
+    name: 'wood_medium',
+    displayName: 'Medium Quality Firewood',
+    category: ItemCategory.MATERIAL,
+    description: 'Well-seasoned firewood that burns steady and warm.',
+    stackable: true,
+    sellPrice: 6,
+    image: itemAssets.wood_medium,
+  },
+
+  wood_fine: {
+    id: 'wood_fine',
+    name: 'wood_fine',
+    displayName: 'Fine Quality Firewood',
+    category: ItemCategory.MATERIAL,
+    description: 'Beautifully seasoned firewood, prized for a long, even burn.',
+    stackable: true,
+    sellPrice: 14,
+    image: itemAssets.wood_fine,
+  },
+
   // ===== TOOLS =====
   tool_hoe: {
     id: 'tool_hoe',
@@ -46,6 +79,17 @@ export const TOOL_AND_MATERIAL_ITEMS: Record<string, ItemDefinition> = {
     stackable: false,
     buyPrice: 75,
     image: itemAssets.watering_can,
+  },
+
+  tool_skis: {
+    id: 'tool_skis',
+    name: 'tool_skis',
+    displayName: 'Skis',
+    category: ItemCategory.TOOL,
+    description: 'A pair of skis. Select them while in a winter forest to go skiing.',
+    stackable: false,
+    buyPrice: 150,
+    image: itemAssets.skis,
   },
 
   tool_feather_duster: {
