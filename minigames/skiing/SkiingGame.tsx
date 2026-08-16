@@ -39,7 +39,13 @@ const OBSTACLE_KINDS: ObstacleKind[] = ['tree_needle', 'tree_spruce', 'tree_birc
 // projection formula below for how they map to screen space)
 // =============================================================================
 
-const CAMERA_FOV = 90; // degrees
+// The visible world-X half-width at any depth zDiff works out to zDiff × tan(FOV/2) — at the
+// old 90° (tan(45°) = 1) that's just zDiff itself, so an object spawned near the edge of the
+// (now much wider) OBSTACLE_SPAWN_X_RANGE only scrolled on-screen once it was within that same
+// distance of the player — i.e. invisible for most of its close-range approach, the exact
+// stretch where a player would be reacting to it. Widened so more of the reachable field is
+// actually visible up close, without pushing into fisheye-looking territory.
+const CAMERA_FOV = 112; // degrees
 const CAMERA_ALTITUDE = 150;
 const HORIZON_RATIO = 0.48; // where the horizon sits, as a fraction of canvas height — objects
 // were spawning right at this line (nearly zero vertical offset at Z_SPAWN), which sat above
@@ -66,7 +72,14 @@ const CLOUD_LAYERS = [
 // front of the player" gate is the dynamic objScreenY check in update(); this constant just
 // needs to stay safely above the crossing point across realistic window shapes.
 const Z_NEAR = 700;
-const Z_SPAWN = 10000; // objects spawn this far ahead of the camera
+// Screen offset for a given lateral worldX scales with 1/zDiff, so an object only visibly
+// spreads out to its true lateral position in roughly the last 10-20% of its journey from
+// Z_SPAWN — for the rest it's compressed near the vanishing point regardless of FOV (an
+// unavoidable property of perspective at large distances). Kept much shorter than the old
+// 10000 so a bigger share of each object's on-screen lifetime falls in that "spread out"
+// window instead of the "still compressed near centre" one — trades some warning time
+// (~7s at BASE_SPEED, down from ~18s) for objects actually using the width of the screen.
+const Z_SPAWN = 4000; // objects spawn this far ahead of the camera
 // Depth at which an object switches from drawing behind level2 (occluded, only its top
 // visible above the ridge) to drawing in front of it (fully revealed) — see render().
 const RIDGE_SWITCH_Z = 2200;
@@ -84,8 +97,12 @@ const NO_RIDGE_OCCLUSION_KINDS = new Set<ObjKind>([
   'wood_fine',
 ]);
 
-const STEER_RANGE = 380; // max lateral offset the player can steer to
-const STEER_SPEED = 520; // world units/sec
+// This is an open snowfield, not a road — the whole visible width should be real, reachable
+// terrain, not a narrow dodgeable lane surrounded by decorative scenery. STEER_SPEED is scaled
+// with STEER_RANGE so crossing the full range still takes the same ~1.46s as before; widening
+// the range alone would have made steering feel sluggish.
+const STEER_RANGE = 900; // max lateral offset the player can steer to
+const STEER_SPEED = 1230; // world units/sec
 
 // level2 (the near snow ridge) sits almost directly under the player, so — unlike the
 // static sky/level1 backdrop — it needs to visibly pan with steering to match how nearby
@@ -97,30 +114,23 @@ const GROUND_ZOOM = 1.5; // level2 drawn at this multiple of canvas width
 const GROUND_PARALLAX_STRENGTH = 0.85; // fraction of the zoom's margin used at max steer (leaves a safety buffer)
 
 // Firewood spawns within reach of STEER_RANGE so every pickup is actually collectible.
-// Obstacles are a mix: most spawn "near" (within real dodging reach, so the game is
-// actually challenging), the rest spawn across a much wider decorative band purely for
-// horizon variety — a believable forest needs trees scattered along the whole horizon,
-// not just clustered near the vanishing point in front of you.
-const PICKUP_SPAWN_X_RANGE = 350;
-const OBSTACLE_NEAR_SPAWN_X_RANGE = 480;
-const OBSTACLE_SPAWN_X_RANGE = 9000;
+// Obstacles use the same single reachable band — every obstacle is real and dodgeable, there's
+// no separate decorative-only band anymore (see LANE_COUNT below for why this doesn't just
+// crowd the player).
+const PICKUP_SPAWN_X_RANGE = 830;
+const OBSTACLE_SPAWN_X_RANGE = 1150;
 
 // Clear-path guarantee: every object's worldZ is fixed at spawn (only cameraZ advances),
 // so two obstacles spawned close together in worldZ stay close together in zDiff for their
 // whole journey — they'll always reach the danger zone at nearly the same moment. That makes
 // it safe to decide "will these threaten the player at the same time" once, at spawn time,
-// using worldZ alone. The near band is divided into LANE_COUNT lanes; a new near obstacle is
-// only ever placed in a lane that isn't already occupied by another obstacle within
-// Z_CLUSTER_WINDOW of it — if every lane is taken, it falls back to a wide/decorative spawn
-// instead of overcrowding the reachable band. Guarantees at least one lane-width gap
-// (~2×OBSTACLE_NEAR_SPAWN_X_RANGE/LANE_COUNT) stays clear within steering reach.
-const LANE_COUNT = 3;
+// using worldZ alone. The band is divided into LANE_COUNT lanes; a new obstacle is only ever
+// placed in a lane that isn't already occupied by another obstacle within Z_CLUSTER_WINDOW of
+// it — if every lane is taken, the spawn is skipped rather than overcrowding the band.
+// Guarantees at least one lane-width gap (~2×OBSTACLE_SPAWN_X_RANGE/LANE_COUNT) stays clear
+// within steering reach.
+const LANE_COUNT = 6;
 const Z_CLUSTER_WINDOW = 900;
-
-// Purely decorative — a second spawn stream, independent of gameplay pacing, so forest
-// density in the wide band can be tuned freely without affecting how often real obstacles
-// appear in the reachable band.
-const DECORATIVE_SPAWN_INTERVAL_MS = 180;
 
 // Obstacles never draw larger than this fraction of canvas width, however close they
 // get — without a cap, the "3x bigger" sizing left almost no visible gap to dodge into
@@ -130,8 +140,15 @@ const MAX_DRAW_WIDTH_RATIO = 0.46;
 const BASE_SPEED = 550; // world Z units/sec — kept slow so obstacles are visible well before they arrive
 const BOOST_SPEED = 1000;
 
-const TIER1_END = 3000; // distanceTraveled thresholds for wood-quality/density tiers
-const TIER2_END = 8000;
+// Progression: the run is split into fixed-distance stages, each pairing one obstacle
+// density with exactly one firewood quality — no blending between stages, so each stage
+// reads as a distinct, deliberate step up in difficulty/reward. Thresholds are
+// BASE_SPEED × seconds — an approximation of "10s / 20s of play" in world-Z distance (most
+// play happens near base speed, with boost used in bursts rather than held continuously, so
+// this is a close enough proxy without needing a separate timer). Stage 3 has no further
+// ramp — it's today's baseline density.
+const STAGE1_END = BASE_SPEED * 20; // ≈20s — scattered obstacles, wood_poor only
+const STAGE2_END = STAGE1_END + BASE_SPEED * 10; // stage 2 spans ~10s — denser obstacles, wood_medium only
 
 // Firewood is meant to read as an occasional rare find while skiing through the forest, not
 // a resource you're farming — a typical run should turn up only a handful of pieces. Kept as
@@ -181,7 +198,7 @@ const PLAYER_SCREEN_WIDTH_RATIO = 0.26; // fraction of canvas width
 // fraction of canvas width. The backdrop is static, so without this the only
 // motion cue was the obstacles shifting — steering read as "broken" rather than
 // "dodging". Object projection still uses the same cameraX for the actual dodge.
-const PLAYER_SCREEN_SHIFT_RATIO = 0.17;
+const PLAYER_SCREEN_SHIFT_RATIO = 0.38;
 // The player's ground anchor sits this far up from the bottom edge, as a fraction of
 // canvas height — shared by rendering and the collision Y-gate below.
 const PLAYER_BOTTOM_MARGIN_RATIO = 0.03;
@@ -205,15 +222,15 @@ function capDrawWidth(base: number, gap: number, zDiff: number, canvasWidth: num
  * every lane is already occupied by an obstacle that will threaten around the same time.
  */
 function pickNearObstacleX(objects: WorldObj[], candidateWorldZ: number): number | null {
-  const laneWidth = (2 * OBSTACLE_NEAR_SPAWN_X_RANGE) / LANE_COUNT;
+  const laneWidth = (2 * OBSTACLE_SPAWN_X_RANGE) / LANE_COUNT;
   const occupiedLanes = new Set<number>();
   for (const obj of objects) {
     if (!OBSTACLE_KINDS.includes(obj.kind as ObstacleKind)) continue;
     if (Math.abs(obj.worldZ - candidateWorldZ) >= Z_CLUSTER_WINDOW) continue;
-    if (obj.worldX < -OBSTACLE_NEAR_SPAWN_X_RANGE || obj.worldX > OBSTACLE_NEAR_SPAWN_X_RANGE) continue;
+    if (obj.worldX < -OBSTACLE_SPAWN_X_RANGE || obj.worldX > OBSTACLE_SPAWN_X_RANGE) continue;
     const lane = Math.min(
       LANE_COUNT - 1,
-      Math.floor((obj.worldX + OBSTACLE_NEAR_SPAWN_X_RANGE) / laneWidth)
+      Math.floor((obj.worldX + OBSTACLE_SPAWN_X_RANGE) / laneWidth)
     );
     occupiedLanes.add(lane);
   }
@@ -225,7 +242,7 @@ function pickNearObstacleX(objects: WorldObj[], candidateWorldZ: number): number
   if (freeLanes.length === 0) return null;
 
   const lane = freeLanes[Math.floor(Math.random() * freeLanes.length)];
-  const laneStart = -OBSTACLE_NEAR_SPAWN_X_RANGE + lane * laneWidth;
+  const laneStart = -OBSTACLE_SPAWN_X_RANGE + lane * laneWidth;
   return laneStart + Math.random() * laneWidth;
 }
 
@@ -277,7 +294,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
   const objectsRef = useRef<WorldObj[]>([]);
   const nextIdRef = useRef(1);
   const spawnTimerRef = useRef(600);
-  const decorativeSpawnTimerRef = useRef(DECORATIVE_SPAWN_INTERVAL_MS);
+  const seededRef = useRef(false); // guards the one-time field pre-population below
   const woodCountsRef = useRef({ wood_poor: 0, wood_medium: 0, wood_fine: 0 });
   const phaseRef = useRef<'playing' | 'crashed'>('playing');
   const heldRef = useRef({ left: false, right: false, boost: false });
@@ -414,24 +431,22 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     let kind: ObjKind;
     if (isObstacle) {
       kind = OBSTACLE_KINDS[Math.floor(Math.random() * OBSTACLE_KINDS.length)];
-    } else if (distance < TIER1_END) {
+    } else if (distance < STAGE1_END) {
       kind = 'wood_poor';
-    } else if (distance < TIER2_END) {
-      kind = Math.random() < 0.6 ? 'wood_poor' : 'wood_medium';
+    } else if (distance < STAGE2_END) {
+      kind = 'wood_medium';
     } else {
-      const roll = Math.random();
-      kind = roll < 0.35 ? 'wood_poor' : roll < 0.7 ? 'wood_medium' : 'wood_fine';
+      kind = 'wood_fine';
     }
-    // Obstacles: most TRY to spawn within real dodging reach (so steering is actually
-    // required), via the lane-reservation helper — which guarantees at least one clear lane
-    // stays open among simultaneous threats, falling back to the wide decorative band if
-    // every lane is already taken. Pickups always spawn within reach so every one is
+    // Every obstacle goes through the lane-reservation helper, which guarantees at least one
+    // clear lane stays open among simultaneous threats — there's no separate decorative band
+    // to fall back to anymore, so if every lane is taken this spawn is simply skipped rather
+    // than overcrowding the reachable field. Pickups always spawn within reach so every one is
     // collectible.
-    let worldX: number;
+    let worldX: number | null;
     if (isObstacle) {
-      const wantsNear = Math.random() < 0.55;
-      const nearX = wantsNear ? pickNearObstacleX(objectsRef.current, worldZ) : null;
-      worldX = nearX ?? (Math.random() * 2 - 1) * OBSTACLE_SPAWN_X_RANGE;
+      worldX = pickNearObstacleX(objectsRef.current, worldZ);
+      if (worldX === null) return; // every lane occupied — skip this spawn
     } else {
       worldX = (Math.random() * 2 - 1) * PICKUP_SPAWN_X_RANGE;
     }
@@ -441,26 +456,10 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       worldX,
       worldZ,
     });
-    // Cap array size defensively so a stalled tab can't accumulate forever
-    // Cap sized generously above the estimated steady-state count (regular + decorative
-    // spawn rates × average object lifetime ≈ 150-160) — shift() removes the OLDEST entry,
-    // which is the one closest to reaching the player, so trimming too eagerly here would
-    // silently drop soon-to-be-relevant obstacles/pickups rather than just decoration.
-    if (objectsRef.current.length > 260) objectsRef.current.shift();
-  }, []);
-
-  // ─── Decorative spawning — purely for horizon density, never affects gameplay pacing ───
-  const spawnDecorativeTree = useCallback(() => {
-    objectsRef.current.push({
-      id: nextIdRef.current++,
-      kind: OBSTACLE_KINDS[Math.floor(Math.random() * OBSTACLE_KINDS.length)],
-      worldX: (Math.random() * 2 - 1) * OBSTACLE_SPAWN_X_RANGE,
-      worldZ: cameraZRef.current + Z_SPAWN,
-    });
-    // Cap sized generously above the estimated steady-state count (regular + decorative
-    // spawn rates × average object lifetime ≈ 150-160) — shift() removes the OLDEST entry,
-    // which is the one closest to reaching the player, so trimming too eagerly here would
-    // silently drop soon-to-be-relevant obstacles/pickups rather than just decoration.
+    // Cap array size defensively so a stalled tab can't accumulate forever — sized generously
+    // above the estimated steady-state count. shift() removes the OLDEST entry, which is the
+    // one closest to reaching the player, so trimming too eagerly here would silently drop
+    // soon-to-be-relevant obstacles/pickups.
     if (objectsRef.current.length > 260) objectsRef.current.shift();
   }, []);
 
@@ -477,17 +476,11 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
 
       const distance = cameraZRef.current;
       const spawnIntervalMs =
-        distance < TIER1_END ? 650 : distance < TIER2_END ? 480 : 350;
+        distance < STAGE1_END ? 650 : distance < STAGE2_END ? 480 : 350;
       spawnTimerRef.current -= dt * 1000;
       if (spawnTimerRef.current <= 0) {
         spawnObject();
         spawnTimerRef.current = spawnIntervalMs + (Math.random() * 240 - 120);
-      }
-
-      decorativeSpawnTimerRef.current -= dt * 1000;
-      if (decorativeSpawnTimerRef.current <= 0) {
-        spawnDecorativeTree();
-        decorativeSpawnTimerRef.current = DECORATIVE_SPAWN_INTERVAL_MS + (Math.random() * 60 - 30);
       }
 
       const remaining: WorldObj[] = [];
@@ -539,7 +532,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       }
       objectsRef.current = remaining;
     },
-    [spawnObject, spawnDecorativeTree, handleCrash]
+    [spawnObject, handleCrash]
   );
 
   // ─── Render ───
@@ -694,6 +687,32 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
   // ─── Game loop ───
   useEffect(() => {
     if (!assetsLoaded) return;
+
+    // Pre-populate the field once, on the first run of this effect. Without this, the object
+    // pipeline starts empty and every spawn takes Z_SPAWN/BASE_SPEED to arrive from the
+    // horizon — the forest reads as barren for the whole opening stretch of every run. Floored
+    // just above Z_NEAR (not RIDGE_SWITCH_Z) so some pre-seeded obstacles already sit close
+    // enough to show their true spread-out lateral position at frame 1 — flooring further out
+    // left everything still visually compressed near centre until gameplay caught up (see
+    // screenshots from actual playtesting). Still comfortably above the real collision gate
+    // (~200-280, see Z_NEAR's comment), so nothing is unfairly close.
+    if (!seededRef.current) {
+      seededRef.current = true;
+      const PREFILL_MIN_Z = Z_NEAR + 200;
+      const prefillCount = Math.round((Z_SPAWN - PREFILL_MIN_Z) / BASE_SPEED / 0.5); // ≈ one spawn per 0.5s of backfilled time
+      for (let i = 0; i < prefillCount; i++) {
+        const worldZ = PREFILL_MIN_Z + Math.random() * (Z_SPAWN - PREFILL_MIN_Z);
+        const worldX = pickNearObstacleX(objectsRef.current, worldZ);
+        if (worldX === null) continue; // lanes full at this depth — skip, same as a normal spawn would
+        objectsRef.current.push({
+          id: nextIdRef.current++,
+          kind: OBSTACLE_KINDS[Math.floor(Math.random() * OBSTACLE_KINDS.length)],
+          worldX,
+          worldZ,
+        });
+      }
+    }
+
     let lastTime = performance.now();
     const loop = (time: number) => {
       const dt = Math.min((time - lastTime) / 1000, MAX_DT);
