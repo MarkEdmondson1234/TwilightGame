@@ -87,6 +87,15 @@ const NO_RIDGE_OCCLUSION_KINDS = new Set<ObjKind>([
 const STEER_RANGE = 380; // max lateral offset the player can steer to
 const STEER_SPEED = 520; // world units/sec
 
+// level2 (the near snow ridge) sits almost directly under the player, so — unlike the
+// static sky/level1 backdrop — it needs to visibly pan with steering to match how nearby
+// trees shift, or the ground reads as frozen under a moving world. Drawn wider than the
+// canvas ("zoomed in") so panning never exposes a transparent edge. Source art is native
+// 1920x1600 (see optimize-assets.js SKI_BACKDROP_MAX) so the zoom is kept modest to avoid
+// visible upscaling softness.
+const GROUND_ZOOM = 1.5; // level2 drawn at this multiple of canvas width
+const GROUND_PARALLAX_STRENGTH = 0.85; // fraction of the zoom's margin used at max steer (leaves a safety buffer)
+
 // Firewood spawns within reach of STEER_RANGE so every pickup is actually collectible.
 // Obstacles are a mix: most spawn "near" (within real dodging reach, so the game is
 // actually challenging), the rest spawn across a much wider decorative band purely for
@@ -135,12 +144,21 @@ const MAX_DT = 0.033; // clamp frame delta so fast obstacles can't skip the coll
 // capped draw size keeps "looks like it's touching" and "counts as a hit" in sync.
 const COLLISION_FUDGE = 0.55; // fraction of the combined sprite widths that counts as touching
 
-// Per-kind multiplier on top of COLLISION_FUDGE. Most obstacles are visually solid across
-// their drawn width, so 1 is correct. The birch is a bare winter tree — its crown is wide
-// but mostly sparse branches with gaps of open air, so its drawn bounding-box width
-// overstates how much of it you'd actually collide with; narrow its hitbox to match.
+// Confirmed via the F3 debug overlay + [Skiing] HIT console log: at the drawn (bounding-box)
+// width, objects were registering hits while still visually far from the player — e.g. a
+// tree_spruce triggered a crash at zDiff=697 (barely inside the Z_NEAR collision window) with
+// a 525px-wide hitbox on a 1745px canvas. The drawn sprite width includes a lot of visual
+// padding/thin branches that isn't actually "solid", so the collision hitbox needs to be
+// substantially narrower than the sprite's full drawn width. Only the player's own box is left
+// untouched — the bug was specifically about obstacle/pickup hitboxes reading too wide, not
+// the player's.
+const COLLISION_WIDTH_SCALE_DEFAULT = 1 / 3;
+// Per-kind multiplier on top of COLLISION_FUDGE and COLLISION_WIDTH_SCALE_DEFAULT. The birch
+// is a bare winter tree — its crown is wide but mostly sparse branches with gaps of open air,
+// so it needs to be narrower still than the already-narrowed default; keep it at the same
+// proportion (0.55×) relative to the default it had before.
 const COLLISION_WIDTH_SCALE: Partial<Record<ObjKind, number>> = {
-  tree_birch: 0.55,
+  tree_birch: 0.55 * COLLISION_WIDTH_SCALE_DEFAULT,
 };
 
 const DRAW_BASE: Record<ObjKind, number> = {
@@ -260,6 +278,11 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
   const rafRef = useRef(0);
   const canvasWidthRef = useRef(0);
   const canvasHeightRef = useRef(0);
+  // F3 collision-box overlay — self-contained like the rest of this minigame's input (see
+  // below); doesn't touch the main game's DEBUG/debugOpen state since that's gated off while
+  // a minigame owns the keyboard. Read as a ref (not state) since render() polls it every
+  // frame anyway via requestAnimationFrame — no need to trigger a React re-render on toggle.
+  const debugRef = useRef(false);
 
   // ─── Input: keyboard (self-contained — main game's controls are already gated
   // off via ui.miniGame while this is open, see hooks/useKeyboardControls.ts) ───
@@ -271,6 +294,10 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       if (key === 'a' || key === 'arrowleft') heldRef.current.left = true;
       if (key === 'd' || key === 'arrowright') heldRef.current.right = true;
       if (BOOST_KEYS.has(key)) heldRef.current.boost = true;
+      if (key === 'f3') {
+        e.preventDefault();
+        debugRef.current = !debugRef.current;
+      }
       if (STEER_KEYS.has(key) || BOOST_KEYS.has(key)) e.preventDefault();
     };
     const onKeyUp = (e: KeyboardEvent) => {
@@ -476,10 +503,21 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           const playerAnchorY = h - h * PLAYER_BOTTOM_MARGIN_RATIO;
           const screenSeparation = Math.abs((gap * (obj.worldX - cameraXRef.current)) / zDiff);
           const objDrawWidth =
-            capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w) * (COLLISION_WIDTH_SCALE[obj.kind] ?? 1);
+            capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w) * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
           const playerDrawWidth = w * PLAYER_SCREEN_WIDTH_RATIO;
           const hitThreshold = ((objDrawWidth + playerDrawWidth) / 2) * COLLISION_FUDGE;
           if (objScreenY < playerAnchorY && screenSeparation < hitThreshold) {
+            if (debugRef.current) {
+              const rawDrawWidth = capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w);
+              // eslint-disable-next-line no-console
+              console.log(
+                `[Skiing] HIT kind=${obj.kind} zDiff=${zDiff.toFixed(0)} ` +
+                  `screenSeparation=${screenSeparation.toFixed(1)}px hitThreshold=${hitThreshold.toFixed(1)}px | ` +
+                  `objDrawWidth: raw=${rawDrawWidth.toFixed(1)}px scale=${COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT} scaled=${objDrawWidth.toFixed(1)}px | ` +
+                  `playerDrawWidth=${playerDrawWidth.toFixed(1)}px fudge=${COLLISION_FUDGE} | ` +
+                  `objScreenY=${objScreenY.toFixed(1)} playerAnchorY=${playerAnchorY.toFixed(1)} | canvas=${w}x${h}`
+              );
+            }
             if (OBSTACLE_KINDS.includes(obj.kind as ObstacleKind)) {
               handleCrash();
               return; // stop processing — the run is over
@@ -555,7 +593,12 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     );
 
     farObjects.forEach(drawObj);
-    if (images.level2) ctx.drawImage(images.level2, 0, 0, w, h);
+    if (images.level2) {
+      const groundDrawWidth = w * GROUND_ZOOM;
+      const groundMarginPx = (groundDrawWidth - w) / 2;
+      const groundShiftPx = -(cameraXRef.current / STEER_RANGE) * groundMarginPx * GROUND_PARALLAX_STRENGTH;
+      ctx.drawImage(images.level2, -groundMarginPx + groundShiftPx, 0, groundDrawWidth, h);
+    }
 
     // Drifting clouds — slowly right to left, staying inside the sky's transparent band
     // in ski_level1.png (measured: fully transparent above ~22% of image height, treeline
@@ -587,6 +630,60 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       const pw = w * PLAYER_SCREEN_WIDTH_RATIO;
       const ph = pw / (images.player.naturalWidth / images.player.naturalHeight);
       ctx.drawImage(images.player, playerScreenX - pw / 2, h - ph - h * PLAYER_BOTTOM_MARGIN_RATIO, pw, ph);
+    }
+
+    // ─── Debug: collision box overlay (F3) — mirrors the exact maths update() uses to
+    // decide a hit, so what you see here is what actually triggers a crash/pickup. ───
+    if (debugRef.current) {
+      const playerDrawWidth = w * PLAYER_SCREEN_WIDTH_RATIO;
+      const playerHalfWidth = (playerDrawWidth / 2) * COLLISION_FUDGE;
+      const playerAnchorY = h - h * PLAYER_BOTTOM_MARGIN_RATIO;
+
+      ctx.save();
+      ctx.lineWidth = 2;
+      ctx.font = '11px monospace';
+      ctx.textBaseline = 'bottom';
+
+      // Y-gate line — an object at/below this line has visually already passed the player
+      // and can no longer collide, even if it's still overlapping on X (see update()).
+      ctx.strokeStyle = 'rgba(80, 180, 255, 0.5)';
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(0, playerAnchorY);
+      ctx.lineTo(w, playerAnchorY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Player's own collision box — same half-width formula update() uses.
+      ctx.strokeStyle = 'rgba(80, 180, 255, 0.9)';
+      ctx.strokeRect(playerScreenX - playerHalfWidth, playerAnchorY - 24, playerHalfWidth * 2, 24);
+
+      for (const obj of objectsRef.current) {
+        const zDiff = obj.worldZ - cameraZRef.current;
+        if (zDiff <= 0 || zDiff > Z_NEAR) continue; // matches update()'s collision-check window
+        const objScreenX = playerScreenX + (gap * (obj.worldX - cameraXRef.current)) / zDiff;
+        const objScreenY = horizonY + (gap * CAMERA_ALTITUDE) / zDiff;
+        const objDrawWidth =
+          capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w) * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
+        const objHalfWidth = (objDrawWidth / 2) * COLLISION_FUDGE;
+        const screenSeparation = Math.abs(objScreenX - playerScreenX);
+        const isHit = objScreenY < playerAnchorY && screenSeparation < playerHalfWidth + objHalfWidth;
+
+        const color = isHit
+          ? '255, 60, 60'
+          : OBSTACLE_KINDS.includes(obj.kind as ObstacleKind)
+            ? '255, 190, 0'
+            : '80, 220, 120';
+        ctx.strokeStyle = `rgba(${color}, 0.9)`;
+        ctx.strokeRect(objScreenX - objHalfWidth, objScreenY - 24, objHalfWidth * 2, 24);
+        ctx.fillStyle = `rgba(${color}, 0.9)`;
+        ctx.fillText(`${obj.kind} z=${Math.round(zDiff)}`, objScreenX - objHalfWidth, objScreenY - 26);
+      }
+
+      ctx.fillStyle = 'rgba(80, 180, 255, 0.9)';
+      ctx.font = 'bold 12px monospace';
+      ctx.fillText('F3 DEBUG — collision boxes', 12, 20);
+      ctx.restore();
     }
   }, []);
 
