@@ -4,7 +4,7 @@
  * The player skis continuously forward through a winter forest, steering left/right
  * to dodge trees/brambles and collect firewood. No braking — only steering and a
  * forward boost. Crashing triggers the same "collapse and get sent home" flow as
- * stamina exhaustion; the "Go home" button ends the run safely and banks the haul.
+ * stamina exhaustion; the "Stop skiing" button ends the run safely and banks the haul.
  *
  * Pseudo-3D projection is adapted from the reference project erendn/outrun-js
  * (specifically its Vector3.project() perspective-divide formula) — simplified since
@@ -132,6 +132,12 @@ const BOOST_SPEED = 1000;
 
 const TIER1_END = 3000; // distanceTraveled thresholds for wood-quality/density tiers
 const TIER2_END = 8000;
+
+// Firewood is meant to read as an occasional rare find while skiing through the forest, not
+// a resource you're farming — a typical run should turn up only a handful of pieces. Kept as
+// a slice of the regular (obstacle) spawn timer rather than its own stream, so it stays rare
+// at every pace tier without needing separate tuning.
+const PICKUP_SPAWN_CHANCE = 0.03;
 
 const MAX_DT = 0.033; // clamp frame delta so fast obstacles can't skip the collision window
 
@@ -387,7 +393,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     [onComplete]
   );
 
-  const handleGoHome = useCallback(() => {
+  const handleStopSkiing = useCallback(() => {
     finishRun(true);
   }, [finishRun]);
 
@@ -404,9 +410,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
   const spawnObject = useCallback(() => {
     const distance = cameraZRef.current;
     const worldZ = cameraZRef.current + Z_SPAWN;
-    // Mostly obstacles now — firewood was far too common, and with nearly all obstacles
-    // scattered wide for horizon variety there was almost nothing left to actually dodge.
-    const isObstacle = Math.random() < 0.75;
+    const isObstacle = Math.random() >= PICKUP_SPAWN_CHANCE;
     let kind: ObjKind;
     if (isObstacle) {
       kind = OBSTACLE_KINDS[Math.floor(Math.random() * OBSTACLE_KINDS.length)];
@@ -801,9 +805,9 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
             ))}
           </div>
 
-          {/* Go home button */}
+          {/* Stop skiing button */}
           <button
-            onClick={handleGoHome}
+            onClick={handleStopSkiing}
             style={{
               position: 'absolute',
               top: 16,
@@ -817,7 +821,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
               cursor: 'pointer',
             }}
           >
-            Go home
+            Stop skiing
           </button>
 
           {phase === 'crashed' && (
