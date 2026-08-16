@@ -71,6 +71,19 @@ const Z_SPAWN = 10000; // objects spawn this far ahead of the camera
 // visible above the ridge) to drawing in front of it (fully revealed) — see render().
 const RIDGE_SWITCH_Z = 2200;
 
+// These obstacle/pickup kinds are short enough that their whole sprite sits below the ridge
+// line even far away — under the normal RIDGE_SWITCH_Z split they'd render fully invisible
+// until suddenly popping in close to the player, giving no time to dodge. Route them straight
+// to the "in front of the ridge" pass at any distance instead, like tall trees already are once
+// their tip pokes above the ridge.
+const NO_RIDGE_OCCLUSION_KINDS = new Set<ObjKind>([
+  'tree_spruce',
+  'brambles',
+  'wood_poor',
+  'wood_medium',
+  'wood_fine',
+]);
+
 const STEER_RANGE = 380; // max lateral offset the player can steer to
 const STEER_SPEED = 520; // world units/sec
 
@@ -534,8 +547,12 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     // it), then once an object crosses RIDGE_SWITCH_Z it draws AFTER level2 instead, so the
     // full sprite — trunk included — appears "in front of" the ridge.
     const sorted = [...objectsRef.current].sort((a, b) => b.worldZ - a.worldZ);
-    const farObjects = sorted.filter((o) => o.worldZ - cameraZRef.current > RIDGE_SWITCH_Z);
-    const nearObjects = sorted.filter((o) => o.worldZ - cameraZRef.current <= RIDGE_SWITCH_Z);
+    const farObjects = sorted.filter(
+      (o) => o.worldZ - cameraZRef.current > RIDGE_SWITCH_Z && !NO_RIDGE_OCCLUSION_KINDS.has(o.kind)
+    );
+    const nearObjects = sorted.filter(
+      (o) => o.worldZ - cameraZRef.current <= RIDGE_SWITCH_Z || NO_RIDGE_OCCLUSION_KINDS.has(o.kind)
+    );
 
     farObjects.forEach(drawObj);
     if (images.level2) ctx.drawImage(images.level2, 0, 0, w, h);
