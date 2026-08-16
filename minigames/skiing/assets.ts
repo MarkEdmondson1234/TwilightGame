@@ -17,6 +17,8 @@ export const skiingAssets = {
   cloud1: `${BASE}/ski_cloud1.png`,
   cloud2: `${BASE}/ski_cloud2.png`,
   cloud3: `${BASE}/ski_cloud3.png`,
+  cloud4: `${BASE}/ski_cloud4.png`,
+  cloud5: `${BASE}/ski_cloud5.png`,
   needleTree: `${BASE}/ski_needle_tree.png`,
   spruce: `${BASE}/ski_spruce.png`,
   birch: `${BASE}/ski_birch.png`,

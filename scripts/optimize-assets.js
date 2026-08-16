@@ -826,7 +826,7 @@ async function optimizeSkiingGame() {
   // issue the obstacle sprites originally had). Unlike the obstacle/pickup/player sprites —
   // which the artist now crops by hand, since their bounding box also drives collision sizing
   // — clouds are purely decorative, so it's safe to auto-trim them here.
-  const CLOUD_FILES = new Set(['ski_cloud1.png', 'ski_cloud2.png', 'ski_cloud3.png']);
+  const CLOUD_FILES = new Set(['ski_cloud1.png', 'ski_cloud2.png', 'ski_cloud3.png', 'ski_cloud4.png', 'ski_cloud5.png']);
   const OBSTACLE_FILES = new Set([
     'ski_needle_tree.png',
     'ski_spruce.png',

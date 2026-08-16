@@ -45,6 +45,17 @@ const HORIZON_RATIO = 0.48; // where the horizon sits, as a fraction of canvas h
 // were spawning right at this line (nearly zero vertical offset at Z_SPAWN), which sat above
 // the artwork's own treeline, making them look like they floated over the horizon
 
+// Per-cloud drift tuning — gives the three background clouds distinct speeds/sizes/steer-sway
+// instead of moving in lockstep, so they read as separate depth layers and visibly drift past
+// one another rather than holding fixed relative spacing forever.
+const CLOUD_LAYERS = [
+  { speedMul: 0.5, scaleMul: 0.8, xParallaxMul: 0.5 }, // farthest, slowest, smallest
+  { speedMul: 0.8, scaleMul: 0.9, xParallaxMul: 0.75 },
+  { speedMul: 1.1, scaleMul: 1.0, xParallaxMul: 1.0 }, // baseline
+  { speedMul: 1.4, scaleMul: 1.1, xParallaxMul: 1.25 },
+  { speedMul: 1.8, scaleMul: 1.25, xParallaxMul: 1.5 }, // nearest, fastest, largest
+];
+
 // A cheap outer pre-filter only — skips the per-frame collision maths for objects still
 // far away. It is NOT the real "has this reached the player" cutoff: working through the
 // projection maths, an object's projected ground position (objScreenY, see update()) only
@@ -201,6 +212,8 @@ type ImageKey =
   | 'cloud1'
   | 'cloud2'
   | 'cloud3'
+  | 'cloud4'
+  | 'cloud5'
   | 'tree_needle'
   | 'tree_spruce'
   | 'tree_birch'
@@ -271,6 +284,8 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       ['cloud1', skiingAssets.cloud1],
       ['cloud2', skiingAssets.cloud2],
       ['cloud3', skiingAssets.cloud3],
+      ['cloud4', skiingAssets.cloud4],
+      ['cloud5', skiingAssets.cloud5],
       ['tree_needle', skiingAssets.needleTree],
       ['tree_spruce', skiingAssets.spruce],
       ['tree_birch', skiingAssets.birch],
@@ -529,19 +544,21 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     // in ski_level1.png (measured: fully transparent above ~22% of image height, treeline
     // starts around 22-25%). Sized from canvas HEIGHT rather than width so that band-fit
     // holds regardless of the window's aspect ratio.
-    const cloudImgs = [images.cloud1, images.cloud2, images.cloud3];
+    const cloudImgs = [images.cloud1, images.cloud2, images.cloud3, images.cloud4, images.cloud5];
     const t = cameraZRef.current;
     cloudImgs.forEach((img, i) => {
       if (!img) return;
-      const cw = h * 0.56; // doubled — the transparent sky band is shallow, so height stays
-      // near the very top edge (minimal vertical stagger) to fit the bigger clouds under it
+      const layer = CLOUD_LAYERS[i];
+      const cw = h * 0.56 * layer.scaleMul; // doubled — the transparent sky band is shallow, so
+      // height stays near the very top edge (minimal vertical stagger) to fit the bigger clouds under it
       const ch = cw / (img.naturalWidth / img.naturalHeight);
-      const cycle = w + cw;
+      const cycle = w + cw; // each cloud's own width, so faster/slower clouds wrap on
+      // different-length loops and drift apart instead of holding fixed spacing forever
       // Negative t term makes the loop travel right-to-left; the double-modulo keeps the
       // result positive regardless of sign (JS '%' can return negative for negative input).
-      const raw = i * (w * 0.6) - t * 0.012;
+      const raw = i * (w * 0.6) - t * 0.012 * layer.speedMul;
       const wrapped = ((raw % cycle) + cycle) % cycle;
-      const cx = wrapped - cw - cameraXRef.current * 0.03;
+      const cx = wrapped - cw - cameraXRef.current * 0.03 * layer.xParallaxMul;
       const cy = h * (0.005 + i * 0.008);
       ctx.drawImage(img, cx, cy, cw, ch);
     });
