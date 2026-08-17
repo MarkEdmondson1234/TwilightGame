@@ -62,6 +62,25 @@ const CLOUD_LAYERS = [
   { speedMul: 1.8, scaleMul: 1.25, xParallaxMul: 1.5 }, // nearest, fastest, largest
 ];
 
+// Falling snow, shown only while gameState.getWeather() === 'snow' (checked live in render()).
+const SNOW_FLAKE_COUNT = 120;
+const SNOW_FALL_SPEED = 90; // px/sec at speedMul = 1
+const SNOW_DRIFT_AMPLITUDE = 18; // px of sideways sway
+const SNOW_BASE_SIZE = 2.2; // px radius at sizeMul = 1
+
+// Static per-flake identity, generated once at module load (mirrors CLOUD_LAYERS giving each
+// cloud a fixed identity rather than re-randomizing every frame). Screen position is recomputed
+// fresh each render() call from real elapsed time, so flakes never need persisted/updated state
+// and stay correct across canvas resizes.
+const SNOW_SEEDS = Array.from({ length: SNOW_FLAKE_COUNT }, () => ({
+  xSeed: Math.random(),
+  ySeed: Math.random(),
+  speedMul: 0.6 + Math.random() * 0.8,
+  driftFreq: 0.5 + Math.random() * 1.5,
+  driftPhase: Math.random() * Math.PI * 2,
+  sizeMul: 0.5 + Math.random(),
+}));
+
 // A cheap outer pre-filter only — skips the per-frame collision maths for objects still
 // far away. It is NOT the real "has this reached the player" cutoff: working through the
 // projection maths, an object's projected ground position (objScreenY, see update()) only
@@ -627,6 +646,28 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       const pw = w * PLAYER_SCREEN_WIDTH_RATIO;
       const ph = pw / (images.player.naturalWidth / images.player.naturalHeight);
       ctx.drawImage(images.player, playerScreenX - pw / 2, h - ph - h * PLAYER_BOTTOM_MARGIN_RATIO, pw, ph);
+    }
+
+    // Falling snow — reacts live to weather (unlike the sky image, which is only picked once at
+    // asset-load time). Positions are pure functions of real elapsed time + each flake's static
+    // seed, so no per-frame particle state is needed — same approach as the cloud layer above.
+    // Drawn last so it reads as precipitation in front of the whole scene.
+    if (gameState.getWeather() === 'snow') {
+      const snowT = performance.now() / 1000;
+      ctx.save();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+      for (const seed of SNOW_SEEDS) {
+        const fallSpeed = SNOW_FALL_SPEED * seed.speedMul;
+        const span = h + 20;
+        const y = (((seed.ySeed * span + snowT * fallSpeed) % span) + span) % span - 10;
+        const drift = Math.sin(snowT * seed.driftFreq + seed.driftPhase) * SNOW_DRIFT_AMPLITUDE;
+        const xSpan = w + 20;
+        const x = (((seed.xSeed * xSpan + drift) % xSpan) + xSpan) % xSpan - 10;
+        ctx.beginPath();
+        ctx.arc(x, y, SNOW_BASE_SIZE * seed.sizeMul, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
     }
 
     // ─── Debug: collision box overlay (F3) — mirrors the exact maths update() uses to
