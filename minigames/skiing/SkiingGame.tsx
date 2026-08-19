@@ -212,6 +212,23 @@ const DRAW_BASE: Record<ObjKind, number> = {
   wood_medium: 190,
   wood_fine: 190,
 };
+
+// Every sprite PNG has some fully-transparent margin below its actual visible pixels (measured
+// directly from each image's alpha channel — e.g. ski_needle_tree.png is opaque only up to row
+// 812 of 870, a 6.6% gap; the wood pickups are squatter piles on a much taller canvas and run
+// 12-21%). The collision Y-gate (see update()) anchors to the sprite's drawn BOTTOM edge, which
+// includes that invisible margin — so an obstacle was registering as "reached the player" while
+// its visible branches were still a gap above them, reading as a crash out of empty snow. Used
+// by getCollisionAnchorY() below to pull the collision anchor up to the actual visible base.
+const GROUND_PAD_RATIO: Record<ObjKind, number> = {
+  tree_needle: 0.066,
+  tree_spruce: 0.064,
+  tree_birch: 0.035,
+  brambles: 0.043,
+  wood_poor: 0.212,
+  wood_medium: 0.131,
+  wood_fine: 0.125,
+};
 const PLAYER_SCREEN_WIDTH_RATIO = 0.26; // fraction of canvas width
 // How far the player sprite itself slides across the screen when steering, as a
 // fraction of canvas width. The backdrop is static, so without this the only
@@ -219,8 +236,21 @@ const PLAYER_SCREEN_WIDTH_RATIO = 0.26; // fraction of canvas width
 // "dodging". Object projection still uses the same cameraX for the actual dodge.
 const PLAYER_SCREEN_SHIFT_RATIO = 0.38;
 // The player's ground anchor sits this far up from the bottom edge, as a fraction of
-// canvas height — shared by rendering and the collision Y-gate below.
+// canvas height — used for RENDERING (see the drawImage call below). The collision anchor
+// is derived from this but corrected for the sprite's own padding — see PLAYER_GROUND_PAD_RATIO.
 const PLAYER_BOTTOM_MARGIN_RATIO = 0.03;
+
+// Measured directly from skiing_male_pc.png's alpha channel (1000x1000, square): opaque
+// pixels only span rows 148-728, a 27.1% fully-transparent margin below the boots/ski-tips.
+// The raw player anchor (PLAYER_BOTTOM_MARGIN_RATIO above) places that padding's bottom edge
+// on screen, not the boots — so both the collision Y-gate and the F3 debug box were floating
+// well below her visible feet. At that true visible bottom, the boots/ski-tips are also only
+// ~14-17% of the sprite's full width (the arms+poles spread wider, but well above where the
+// collision box actually sits) — vs. the un-narrowed full sprite width every obstacle check
+// was using, which is the main reason hits registered while still visually far apart on X.
+// Rendering is untouched by either of these — same principle as GROUND_PAD_RATIO for obstacles.
+const PLAYER_GROUND_PAD_RATIO = 0.271;
+const PLAYER_COLLISION_WIDTH_SCALE = 0.2; // slightly above the measured 14-17%, for animation-frame margin
 
 // =============================================================================
 // Shared projection helpers (used by both collision checks and rendering, so the
@@ -233,6 +263,36 @@ function computeGap(canvasWidth: number): number {
 
 function capDrawWidth(base: number, gap: number, zDiff: number, canvasWidth: number): number {
   return Math.min((base * gap) / zDiff, canvasWidth * MAX_DRAW_WIDTH_RATIO);
+}
+
+/**
+ * Adjusts a sprite's raw ground-projection Y (its drawn bottom edge, incl. transparent margin)
+ * up to the actual visible base of the artwork, using GROUND_PAD_RATIO. Rendering still draws
+ * the full image at the raw anchor (art/shadow placement is untouched) — only collision checks
+ * should use this, so a hit only registers once the visible pixels reach the player.
+ */
+function getCollisionAnchorY(
+  rawAnchorY: number,
+  drawWidth: number,
+  img: HTMLImageElement | undefined,
+  kind: ObjKind
+): number {
+  const pad = img ? (drawWidth / (img.naturalWidth / img.naturalHeight)) * GROUND_PAD_RATIO[kind] : 0;
+  return rawAnchorY - pad;
+}
+
+/**
+ * The player-equivalent of getCollisionAnchorY()/objDrawWidth's narrowing — see
+ * PLAYER_GROUND_PAD_RATIO/PLAYER_COLLISION_WIDTH_SCALE above for the measurements behind
+ * these. Used by both the real collision check and the F3 debug box so they can't drift apart.
+ */
+function getPlayerCollisionAnchorY(canvasWidth: number, canvasHeight: number): number {
+  const spriteDrawHeight = canvasWidth * PLAYER_SCREEN_WIDTH_RATIO; // player sprite is square
+  return canvasHeight - canvasHeight * PLAYER_BOTTOM_MARGIN_RATIO - spriteDrawHeight * PLAYER_GROUND_PAD_RATIO;
+}
+
+function getPlayerCollisionWidth(canvasWidth: number): number {
+  return canvasWidth * PLAYER_SCREEN_WIDTH_RATIO * PLAYER_COLLISION_WIDTH_SCALE;
 }
 
 /**
@@ -514,23 +574,29 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           // Once the object's projected ground position has dropped level with (or past)
           // the player's own ground anchor, it would visually be drawn beneath/in front of
           // the player — it's already "passed" and shouldn't be able to collide, even if
-          // zDiff is technically still positive.
-          const objScreenY = h * HORIZON_RATIO + (gap * CAMERA_ALTITUDE) / zDiff;
-          const playerAnchorY = h - h * PLAYER_BOTTOM_MARGIN_RATIO;
+          // zDiff is technically still positive. Adjusted up to the sprite's actual visible
+          // base (see getCollisionAnchorY) so the gate lines up with the artwork, not the
+          // transparent margin beneath it.
+          const rawDrawWidth = capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w);
+          const objScreenY = getCollisionAnchorY(
+            h * HORIZON_RATIO + (gap * CAMERA_ALTITUDE) / zDiff,
+            rawDrawWidth,
+            imagesRef.current[obj.kind],
+            obj.kind
+          );
+          const playerAnchorY = getPlayerCollisionAnchorY(w, h);
           const screenSeparation = Math.abs((gap * (obj.worldX - cameraXRef.current)) / zDiff);
-          const objDrawWidth =
-            capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w) * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
-          const playerDrawWidth = w * PLAYER_SCREEN_WIDTH_RATIO;
-          const hitThreshold = ((objDrawWidth + playerDrawWidth) / 2) * COLLISION_FUDGE;
+          const objDrawWidth = rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
+          const playerCollisionWidth = getPlayerCollisionWidth(w);
+          const hitThreshold = ((objDrawWidth + playerCollisionWidth) / 2) * COLLISION_FUDGE;
           if (objScreenY < playerAnchorY && screenSeparation < hitThreshold) {
             if (debugRef.current) {
-              const rawDrawWidth = capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w);
               // eslint-disable-next-line no-console
               console.log(
                 `[Skiing] HIT kind=${obj.kind} zDiff=${zDiff.toFixed(0)} ` +
                   `screenSeparation=${screenSeparation.toFixed(1)}px hitThreshold=${hitThreshold.toFixed(1)}px | ` +
                   `objDrawWidth: raw=${rawDrawWidth.toFixed(1)}px scale=${COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT} scaled=${objDrawWidth.toFixed(1)}px | ` +
-                  `playerDrawWidth=${playerDrawWidth.toFixed(1)}px fudge=${COLLISION_FUDGE} | ` +
+                  `playerCollisionWidth=${playerCollisionWidth.toFixed(1)}px fudge=${COLLISION_FUDGE} | ` +
                   `objScreenY=${objScreenY.toFixed(1)} playerAnchorY=${playerAnchorY.toFixed(1)} | canvas=${w}x${h}`
               );
             }
@@ -673,9 +739,9 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     // ─── Debug: collision box overlay (F3) — mirrors the exact maths update() uses to
     // decide a hit, so what you see here is what actually triggers a crash/pickup. ───
     if (debugRef.current) {
-      const playerDrawWidth = w * PLAYER_SCREEN_WIDTH_RATIO;
-      const playerHalfWidth = (playerDrawWidth / 2) * COLLISION_FUDGE;
-      const playerAnchorY = h - h * PLAYER_BOTTOM_MARGIN_RATIO;
+      const playerCollisionWidth = getPlayerCollisionWidth(w);
+      const playerHalfWidth = (playerCollisionWidth / 2) * COLLISION_FUDGE;
+      const playerAnchorY = getPlayerCollisionAnchorY(w, h);
 
       ctx.save();
       ctx.lineWidth = 2;
@@ -700,9 +766,14 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
         const zDiff = obj.worldZ - cameraZRef.current;
         if (zDiff <= 0 || zDiff > Z_NEAR) continue; // matches update()'s collision-check window
         const objScreenX = playerScreenX + (gap * (obj.worldX - cameraXRef.current)) / zDiff;
-        const objScreenY = horizonY + (gap * CAMERA_ALTITUDE) / zDiff;
-        const objDrawWidth =
-          capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w) * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
+        const rawDrawWidth = capDrawWidth(DRAW_BASE[obj.kind], gap, zDiff, w);
+        const objScreenY = getCollisionAnchorY(
+          horizonY + (gap * CAMERA_ALTITUDE) / zDiff,
+          rawDrawWidth,
+          images[obj.kind],
+          obj.kind
+        );
+        const objDrawWidth = rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
         const objHalfWidth = (objDrawWidth / 2) * COLLISION_FUDGE;
         const screenSeparation = Math.abs(objScreenX - playerScreenX);
         const isHit = objScreenY < playerAnchorY && screenSeparation < playerHalfWidth + objHalfWidth;
