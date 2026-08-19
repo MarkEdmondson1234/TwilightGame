@@ -169,11 +169,11 @@ const BOOST_SPEED = 1000;
 const STAGE1_END = BASE_SPEED * 20; // ≈20s — scattered obstacles, wood_poor only
 const STAGE2_END = STAGE1_END + BASE_SPEED * 10; // stage 2 spans ~10s — denser obstacles, wood_medium only
 
-// Firewood is meant to read as an occasional rare find while skiing through the forest, not
-// a resource you're farming — a typical run should turn up only a handful of pieces. Kept as
+// Firewood is meant to read as an occasional find while skiing through the forest, not
+// a resource you're farming — a typical run should turn up a modest haul, not a flood. Kept as
 // a slice of the regular (obstacle) spawn timer rather than its own stream, so it stays rare
 // at every pace tier without needing separate tuning.
-const PICKUP_SPAWN_CHANCE = 0.03;
+const PICKUP_SPAWN_CHANCE = 0.1;
 
 const MAX_DT = 0.033; // clamp frame delta so fast obstacles can't skip the collision window
 
