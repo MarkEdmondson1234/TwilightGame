@@ -164,98 +164,105 @@ async function generateCharacterSpriteSheets() {
   }
 
   const directions = ['down', 'up', 'left', 'right'];
-
-  for (const direction of directions) {
-    const frames = [];
-
-    // Collect all frames for this direction (0-3)
-    for (let i = 0; i <= 3; i++) {
-      const framePath = path.join(baseDir, `${direction}_${i}.png`);
-      if (fs.existsSync(framePath)) {
-        frames.push(framePath);
-      }
-    }
-
-    if (frames.length === 0) {
-      console.log(`  ⚠️  No frames found for ${direction}`);
-      continue;
-    }
-
-    // First, resize all frames to target size
-    const resizedFrames = [];
-    const tempDir = path.join(OPTIMIZED_DIR, 'temp');
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
-
-    for (let i = 0; i < frames.length; i++) {
-      const tempPath = path.join(tempDir, `${direction}_${i}.png`);
-      await sharp(frames[i])
-        .resize(SPRITE_SIZE, SPRITE_SIZE, {
-          fit: 'contain',
-          background: { r: 0, g: 0, b: 0, alpha: 0 }
-        })
-        .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
-        .toFile(tempPath);
-      resizedFrames.push(tempPath);
-    }
-
-    // Generate sprite sheet from resized frames
-    await new Promise((resolve, reject) => {
-      Spritesmith.run({ src: resizedFrames }, async (err, result) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        const outputPath = path.join(OPTIMIZED_DIR, 'character1', `${direction}.png`);
-        const metadataPath = path.join(OPTIMIZED_DIR, 'character1', `${direction}.json`);
-
-        // Save sprite sheet
-        await sharp(result.image)
-          .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
-          .toFile(outputPath);
-
-        // Save metadata (frame positions)
-        const metadata = {
-          frames: {},
-          meta: {
-            size: { w: result.properties.width, h: result.properties.height },
-            frameSize: { w: SPRITE_SIZE, h: SPRITE_SIZE }
-          }
-        };
-
-        Object.keys(result.coordinates).forEach((framePath, index) => {
-          const coords = result.coordinates[framePath];
-          metadata.frames[index] = {
-            x: coords.x,
-            y: coords.y,
-            w: coords.width,
-            h: coords.height
-          };
-        });
-
-        fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
-
-        const originalSizes = frames.map(f => fs.statSync(f).size);
-        const totalOriginal = originalSizes.reduce((a, b) => a + b, 0);
-        const optimizedSize = fs.statSync(outputPath).size;
-        const savings = ((1 - optimizedSize / totalOriginal) * 100).toFixed(1);
-
-        console.log(`  ✅ ${direction}: ${frames.length} frames → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
-
-        resolve();
-      });
-    });
-
-    // Clean up temp files
-    resizedFrames.forEach(f => fs.unlinkSync(f));
-  }
-
-  // Clean up temp directory
   const tempDir = path.join(OPTIMIZED_DIR, 'temp');
-  if (fs.existsSync(tempDir)) {
-    fs.rmdirSync(tempDir);
+
+  try {
+    for (const direction of directions) {
+      const frames = [];
+
+      // Collect all frames for this direction (0-3)
+      for (let i = 0; i <= 3; i++) {
+        const framePath = path.join(baseDir, `${direction}_${i}.png`);
+        if (fs.existsSync(framePath)) {
+          frames.push(framePath);
+        }
+      }
+
+      if (frames.length === 0) {
+        console.log(`  ⚠️  No frames found for ${direction}`);
+        continue;
+      }
+
+      // First, resize all frames to target size
+      const resizedFrames = [];
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      for (let i = 0; i < frames.length; i++) {
+        const tempPath = path.join(tempDir, `${direction}_${i}.png`);
+        await sharp(frames[i])
+          .resize(SPRITE_SIZE, SPRITE_SIZE, {
+            fit: 'contain',
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+          })
+          .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
+          .toFile(tempPath);
+        resizedFrames.push(tempPath);
+      }
+
+      // Generate sprite sheet from resized frames
+      await new Promise((resolve, reject) => {
+        Spritesmith.run({ src: resizedFrames }, async (err, result) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+
+          const outputPath = path.join(OPTIMIZED_DIR, 'character1', `${direction}.png`);
+          const metadataPath = path.join(OPTIMIZED_DIR, 'character1', `${direction}.json`);
+
+          // Save sprite sheet
+          await sharp(result.image)
+            .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for main character
+            .toFile(outputPath);
+
+          // Save metadata (frame positions)
+          const metadata = {
+            frames: {},
+            meta: {
+              size: { w: result.properties.width, h: result.properties.height },
+              frameSize: { w: SPRITE_SIZE, h: SPRITE_SIZE }
+            }
+          };
+
+          Object.keys(result.coordinates).forEach((framePath, index) => {
+            const coords = result.coordinates[framePath];
+            metadata.frames[index] = {
+              x: coords.x,
+              y: coords.y,
+              w: coords.width,
+              h: coords.height
+            };
+          });
+
+          fs.writeFileSync(metadataPath, JSON.stringify(metadata, null, 2));
+
+          const originalSizes = frames.map(f => fs.statSync(f).size);
+          const totalOriginal = originalSizes.reduce((a, b) => a + b, 0);
+          const optimizedSize = fs.statSync(outputPath).size;
+          const savings = ((1 - optimizedSize / totalOriginal) * 100).toFixed(1);
+
+          console.log(`  ✅ ${direction}: ${frames.length} frames → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+
+          resolve();
+        });
+      });
+
+      // Clean up temp files
+      resizedFrames.forEach(f => fs.unlinkSync(f));
+    }
+  } finally {
+    // Always remove the temp directory, even if a direction failed above. `rmdirSync`
+    // requires an empty directory and throws ENOTEMPTY otherwise — if a Spritesmith
+    // error left resized frames behind, the next run's cleanup would fail on files
+    // it doesn't know about, aborting the ENTIRE optimize-assets run (not just the
+    // character sprite sheets) with a confusing ENOTEMPTY error. `rmSync` with
+    // `recursive: true, force: true` removes whatever is there, or no-ops if the
+    // directory is already gone.
+    if (fs.existsSync(tempDir)) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
   }
 
   console.log('');
