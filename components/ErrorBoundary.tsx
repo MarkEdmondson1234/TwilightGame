@@ -31,7 +31,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 
   handleClearAndReload = () => {
     try {
-      localStorage.removeItem('gameState');
+      localStorage.removeItem('twilight_game_state');
     } catch {
       // Ignore storage errors during cleanup
     }

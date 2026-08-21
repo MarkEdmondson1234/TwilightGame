@@ -19,7 +19,7 @@ import DevTools from './components/DevTools';
 import SpriteMetadataEditor from './components/SpriteMetadataEditor/SpriteMetadataEditor';
 import Bookshelf from './components/Bookshelf';
 import { initializeGameCore, initializeGameAssets } from './utils/gameInitializer';
-import { mapManager } from './maps';
+import { mapManager, transitionToMap } from './maps';
 import { getValidationErrors, hasValidationErrors, MapValidationError } from './maps/gridParser';
 import { gameState, CharacterCustomization } from './GameState';
 import { useTouchDevice } from './hooks/useTouchDevice';
@@ -184,6 +184,11 @@ const App: React.FC = () => {
   // Load player location from saved state
   const savedLocation = gameState.getPlayerLocation();
   const [currentMapId, setCurrentMapId] = useState<string>(savedLocation.mapId);
+  // Always-fresh mirror of currentMapId for closures captured once at mount (e.g. the
+  // stamina-exhaustion teleportHome callback below), which would otherwise keep reading
+  // the boot-time map id forever instead of the player's actual map when they collapse.
+  const currentMapIdRef = useRef(currentMapId);
+  currentMapIdRef.current = currentMapId;
   const [isDebugOpen, setDebugOpen] = useState(false);
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(false); // Toggle collision box overlay
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]); // Player inventory items
@@ -408,22 +413,28 @@ const App: React.FC = () => {
 
   // Map transition handler
   const handleMapTransition = (mapId: string, spawnPos: Position) => {
-    const oldMapId = currentMapId;
-    // Load the new map in MapManager so collision, tile data, and getTransitionAt() all
-    // reflect the target map immediately (before React batches the state update).
-    mapManager.loadMap(mapId);
-    setCurrentMapId(mapId);
-    teleportPlayer(spawnPos);
+    // Read via the ref, not the closed-over `currentMapId` state, since some callers
+    // (e.g. the stamina-exhaustion teleportHome callback) capture this function once at
+    // mount — the state value would stay frozen at whatever map was current at mount.
+    const oldMapId = currentMapIdRef.current;
+    // Route through transitionToMap (the same validated entry point door-based
+    // transitions use) so hardcoded destinations — cutscenes, the stamina-exhaustion
+    // teleport-home, "sent to bed" — get wall/bounds validation and a safe-spawn
+    // fallback too. A stale or mistyped coordinate here must never drop the player
+    // inside a solid tile with no way to recover.
+    const { map, spawn } = transitionToMap(mapId, spawnPos);
+    setCurrentMapId(map.id);
+    teleportPlayer(spawn);
     lastTransitionTime.current = Date.now();
 
     // End Yule celebration BEFORE updating the NPC manager's map, so that
     // removeDynamicNPC() still targets 'village' (its currentMapId at this point).
-    if (mapId !== 'village' && yuleCelebrationManager.isActive()) {
+    if (map.id !== 'village' && yuleCelebrationManager.isActive()) {
       yuleCelebrationManager.forceEnd();
     }
 
     // Update NPC manager's current map
-    npcManager.setCurrentMap(mapId);
+    npcManager.setCurrentMap(map.id);
 
     // Reset fairy attraction manager when changing maps
     fairyAttractionManager.reset();
@@ -432,13 +443,13 @@ const App: React.FC = () => {
     resetZoom();
 
     // Play Mr. Fox greeting when entering the shop
-    if (mapId.includes('shop')) {
+    if (map.id.includes('shop')) {
       setTimeout(() => audioManager.playSfx('sfx_mr_fox'), 800);
     }
 
     // Shared farm sync: start/stop when entering/leaving shared maps
     const wasShared = SHARED_FARM_MAP_IDS.has(oldMapId);
-    const isShared = SHARED_FARM_MAP_IDS.has(mapId);
+    const isShared = SHARED_FARM_MAP_IDS.has(map.id);
     if (isShared && !wasShared) {
       farmManager.startSharedSync();
     } else if (wasShared && !isShared) {
@@ -2651,20 +2662,20 @@ const App: React.FC = () => {
                             },
                           ]
                         : isSkis
-                        ? []
-                        : [
-                            {
-                              id: 'place',
-                              label: 'Place in World',
-                              icon: '🌍',
-                              color: '#3b82f6',
-                              onSelect: () => {
-                                setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                                closeUI('inventory');
-                                setInventoryRadialMenu(null);
+                          ? []
+                          : [
+                              {
+                                id: 'place',
+                                label: 'Place in World',
+                                icon: '🌍',
+                                color: '#3b82f6',
+                                onSelect: () => {
+                                  setSelectedItemSlot(inventoryRadialMenu.slotIndex);
+                                  closeUI('inventory');
+                                  setInventoryRadialMenu(null);
+                                },
                               },
-                            },
-                          ]),
+                            ]),
                       ...(isSkis
                         ? [
                             {
@@ -2676,7 +2687,8 @@ const App: React.FC = () => {
                                 setInventoryRadialMenu(null);
                                 const currentMapId = mapManager.getCurrentMapId() ?? '';
                                 const isForest =
-                                  currentMapId.startsWith('forest') || currentMapId === 'deep_forest';
+                                  currentMapId.startsWith('forest') ||
+                                  currentMapId === 'deep_forest';
                                 const isWinter =
                                   TimeManager.getCurrentTime().season === Season.WINTER;
                                 if (isForest && isWinter) {

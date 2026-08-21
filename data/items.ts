@@ -108,10 +108,14 @@ export function getCropItemId(cropId: string): string {
 }
 
 /**
- * Get seed item ID from crop definition ID
+ * Get seed item ID from crop definition ID.
+ * Looks up the actual registered seed item rather than guessing `seed_${cropId}`,
+ * since some seeds (e.g. `seed_wild_strawberry` for crop `strawberry`) don't follow
+ * that naming pattern.
  */
 export function getSeedItemId(cropId: string): string {
-  return `seed_${cropId}`;
+  const seedItem = getSeedForCrop(cropId);
+  return seedItem ? seedItem.id : `seed_${cropId}`;
 }
 
 /**

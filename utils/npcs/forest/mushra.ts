@@ -56,7 +56,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
           summer:
             '*She pats the grass beside her.* "Perfect timing! I just found the most wonderful mushroom and I wanted to show someone who\'d appreciate it."',
           autumn:
-            '*Her eyes sparkle.* "You\'re here! I\'ve been dying to show you — the autumn colours this year are extraordinary. I\'ve filled half a sketchbook already."',
+            "*Her eyes sparkle.* \"You're here! I've been dying to show you — the autumn colours this year are extraordinary. I've filled half a sketchbook already.\"",
           winter:
             '*She pulls her scarf tighter and smiles warmly.* "I\'m so glad you came! It\'s a bit chilly, but the frost patterns on the mushrooms are gorgeous today."',
         },
@@ -78,6 +78,8 @@ export function createMushraNPC(id: string, position: Position, name: string = '
             text: 'Do you know anything about a place called Nevarre?',
             nextId: 'nevarre_enquiry',
             requiredQuest: 'ghost_queen',
+            requiredQuestStage: 1,
+            maxQuestStage: 1,
             hiddenIfQuestCompleted: 'ghost_queen',
           },
         ],
@@ -114,6 +116,8 @@ export function createMushraNPC(id: string, position: Position, name: string = '
             text: 'Do you know anything about a place called Nevarre?',
             nextId: 'nevarre_enquiry',
             requiredQuest: 'ghost_queen',
+            requiredQuestStage: 1,
+            maxQuestStage: 1,
             hiddenIfQuestCompleted: 'ghost_queen',
           },
         ],
@@ -122,10 +126,10 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         id: 'nevarre_enquiry',
         text: '"Nevarre! Oh, *yes* — I have been reading about the medieval kingdoms of this region! Such a fascinating period." *She rummages through a stack of books beside her.* "Here, take this — there is an entry on Nevarre somewhere in the middle, if I remember rightly."',
         requiredQuest: 'ghost_queen',
+        requiredQuestStage: 1,
+        maxQuestStage: 1,
         hiddenIfQuestCompleted: 'ghost_queen',
-        responses: [
-          { text: 'Thank you, Mushra!', nextId: 'mushra_nevarre_book_given' },
-        ],
+        responses: [{ text: 'Thank you, Mushra!', nextId: 'mushra_nevarre_book_given' }],
       },
       { id: 'mushra_nevarre_book_given', text: '' }, // intercepted by dialogueHandlers
       {
@@ -181,7 +185,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
       {
         id: 'fly_agaric',
         expression: 'smile',
-        text: '"Fly agaric! Amanita muscaria — the classic red cap with white spots. I just can\'t resist their cute polka dots!" *She clasps her hands together.* "They\'re terribly toxic, of course, but absolutely gorgeous. I\'ve painted dozens of them. There\'s something almost fairy-tale about them, isn\'t there?"',
+        text: "\"Fly agaric! Amanita muscaria — the classic red cap with white spots. I just can't resist their cute polka dots!\" *She clasps her hands together.* \"They're terribly toxic, of course, but absolutely gorgeous. I've painted dozens of them. There's something almost fairy-tale about them, isn't there?\"",
         responses: [
           { text: 'Have you ever tried to find a fairy?', nextId: 'have_you_seen_fairies' },
           { text: 'They are rather magical-looking.' },
@@ -237,8 +241,8 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         text: '*She looks at you thoughtfully.* "I won\'t pretend the solitude isn\'t hard sometimes. There are days when I wish I had someone to share a cup of tea with, someone who appreciates the little things." *She smiles warmly.* "That\'s why I value friends like you. You understand."',
         requiredFriendshipTier: 'good_friend',
         responses: [
-          { text: 'I\'m glad we\'re friends too.', nextId: 'one_good_friend' },
-          { text: 'You\'re never alone with me around.' },
+          { text: "I'm glad we're friends too.", nextId: 'one_good_friend' },
+          { text: "You're never alone with me around." },
         ],
       },
       // Good Friends hub node - deeper personal conversation topics
@@ -248,10 +252,10 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         text: '"Hi, there! I was hoping to see you. Would you keep me company for a bit? I love living in the forest, but sometimes I get a bit lonely."',
         requiredFriendshipTier: 'good_friend',
         responses: [
-          { text: 'Of course! I\'ll stay a while.', nextId: 'best_of_both_worlds' },
+          { text: "Of course! I'll stay a while.", nextId: 'best_of_both_worlds' },
           { text: 'Do you ever get lonely out here?', nextId: 'keep_company' },
           { text: 'What do you miss about the city?', nextId: 'cinema' },
-          { text: 'How\'s your family?', nextId: 'family_visit' },
+          { text: "How's your family?", nextId: 'family_visit' },
         ],
       },
       {
@@ -260,7 +264,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         text: '*She flips through pages of delicate watercolours — mushrooms, trees, and tiny fairy portraits.* "I\'ve been experimenting with new techniques. What do you think?"',
         requiredFriendshipTier: 'good_friend',
         responses: [
-          { text: 'They\'re beautiful!', nextId: 'comfortable_silence' },
+          { text: "They're beautiful!", nextId: 'comfortable_silence' },
           { text: 'I love the fairy ones.' },
         ],
       },
@@ -271,7 +275,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         requiredFriendshipTier: 'good_friend',
         responses: [
           { text: 'That makes me happy too.', nextId: 'one_good_friend' },
-          { text: 'Don\'t you miss having neighbours?', nextId: 'loneliness' },
+          { text: "Don't you miss having neighbours?", nextId: 'loneliness' },
         ],
       },
       {
@@ -281,7 +285,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         requiredFriendshipTier: 'good_friend',
         responses: [
           { text: 'I feel the same way.', nextId: 'comfortable_silence' },
-          { text: 'You\'re a wonderful friend, Mushra.' },
+          { text: "You're a wonderful friend, Mushra." },
         ],
       },
       {
@@ -290,7 +294,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         requiredFriendshipTier: 'good_friend',
         responses: [
           { text: 'I like the quiet too.', nextId: 'being_herself' },
-          { text: 'You\'re not strange at all.' },
+          { text: "You're not strange at all." },
         ],
       },
       {
@@ -307,7 +311,7 @@ export function createMushraNPC(id: string, position: Position, name: string = '
         text: '"I used to get so exhausted trying to pretend I was like everyone else. Now I\'m just me." *She shrugs.* "If they think I\'m weird, that\'s up to them."',
         requiredFriendshipTier: 'good_friend',
         responses: [
-          { text: 'I think you\'re brilliant.', nextId: 'being_herself' },
+          { text: "I think you're brilliant.", nextId: 'being_herself' },
           { text: 'Being yourself is the bravest thing.' },
         ],
       },
@@ -361,7 +365,7 @@ export function createMushraShopNPC(id: string, position: Position): NPC {
     // Each frame is 200ms, so 15 open frames = 3000ms open, 1 closed frame = 200ms closed
     state.sprites = [
       ...Array(15).fill(npcAssets.mushra_01), // open eyes
-      npcAssets.mushra_02,                    // blink
+      npcAssets.mushra_02, // blink
     ];
     state.animationSpeed = 200;
   }
@@ -440,11 +444,11 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
         maxQuestStage: 1,
         responses: [
           {
-            text: "Here are the materials!",
+            text: 'Here are the materials!',
             nextId: 'wreath_deliver_materials',
           },
           {
-            text: "Not quite yet.",
+            text: 'Not quite yet.',
             nextId: 'gathering_encouragement',
           },
         ],
@@ -483,7 +487,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
             nextId: 'hanging_houses',
           },
           {
-            text: 'Got it, I\'ll get to work!',
+            text: "Got it, I'll get to work!",
           },
         ],
       },

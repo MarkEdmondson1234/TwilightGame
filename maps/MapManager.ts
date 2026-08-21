@@ -2,6 +2,7 @@ import { MapDefinition, Position, TileType, ColorScheme, isTileSolid, Transition
 import { npcManager } from '../NPCManager';
 import { validateMapDefinition } from './gridParser';
 import { TILE_LEGEND, PLAYER_SIZE } from '../constants';
+import { metadataCache } from '../utils/MetadataCache';
 
 /**
  * MapManager - Single Source of Truth for all map data
@@ -130,6 +131,46 @@ class MapManager {
         }
       }
     }
+
+    // Also check multi-tile sprite footprints (furniture, trees, buildings). Their solid
+    // collision box extends well beyond the single anchor tile marked in the grid — e.g.
+    // WITCH_HUT is 11 tiles wide from one anchor — so a spawn point can land on a plain,
+    // walkable-looking grid cell while actually sitting inside a large structure. This
+    // mirrors the second pass in hooks/useCollisionDetection.ts.
+    const searchRadius = Math.ceil(metadataCache.maxSpriteSize) + 1;
+    for (let tileY = minTileY - searchRadius; tileY <= maxTileY + searchRadius; tileY++) {
+      if (tileY < 0 || tileY >= map.grid.length) continue;
+      for (let tileX = minTileX - searchRadius; tileX <= maxTileX + searchRadius; tileX++) {
+        if (tileX < 0 || tileX >= map.grid[0].length) continue;
+
+        const tileType = map.grid[tileY][tileX];
+        const spriteMetadata = metadataCache.getMetadata(tileType);
+        if (!spriteMetadata) continue;
+
+        const tileData = TILE_LEGEND[tileType];
+        if (!tileData || !isTileSolid(tileData.collisionType)) continue;
+
+        const collisionWidth = spriteMetadata.collisionWidth ?? spriteMetadata.spriteWidth;
+        const collisionHeight = spriteMetadata.collisionHeight ?? spriteMetadata.spriteHeight;
+        const collisionOffsetX = spriteMetadata.collisionOffsetX ?? spriteMetadata.offsetX;
+        const collisionOffsetY = spriteMetadata.collisionOffsetY ?? spriteMetadata.offsetY;
+
+        const spriteLeft = tileX + collisionOffsetX;
+        const spriteRight = spriteLeft + collisionWidth;
+        const spriteTop = tileY + collisionOffsetY;
+        const spriteBottom = spriteTop + collisionHeight;
+
+        if (
+          pos.x + halfSize > spriteLeft &&
+          pos.x - halfSize < spriteRight &&
+          pos.y + halfSize > spriteTop &&
+          pos.y - halfSize < spriteBottom
+        ) {
+          return false; // Position would collide with a multi-tile sprite
+        }
+      }
+    }
+
     return true; // Position is safe
   }
 

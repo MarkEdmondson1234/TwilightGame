@@ -32,7 +32,14 @@ import { HighlightLayer } from '../utils/pixi/HighlightLayer';
 import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
-import { tileAssets, farmingAssets, cookingAssets, npcAssets, itemAssets, orchardAssets } from '../assets';
+import {
+  tileAssets,
+  farmingAssets,
+  cookingAssets,
+  npcAssets,
+  itemAssets,
+  orchardAssets,
+} from '../assets';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
@@ -311,7 +318,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         placedItemsLayerRef.current = placedItemsLayer;
         placedItemsLayer.setDepthContainer(depthSortedContainer);
         placedItemsLayer.setOnTextureLoaded(() => {
-          eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: mapManager.getCurrentMapId() ?? 'village' });
+          eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, {
+            mapId: mapManager.getCurrentMapId() ?? 'village',
+          });
         });
         app.stage.addChild(placedItemsLayer.getContainer());
 
@@ -459,6 +468,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         pixiAppRef.current.destroy(true);
         pixiAppRef.current = null;
       }
+      // initPixi() below creates a fresh BackgroundImageLayer with its own EventBus
+      // subscriptions — dispose the old one first or its listeners leak forever
+      // (this effect's own cleanup never runs here, since isPixiInitialized isn't
+      // one of its dependencies).
+      if (backgroundImageLayerRef.current) {
+        backgroundImageLayerRef.current.dispose();
+        backgroundImageLayerRef.current = null;
+      }
       // The effect will re-run because isPixiInitialized changed
       setTimeout(() => initPixi(), 100);
     };
@@ -479,7 +496,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         tileLayerRef.current = null;
       }
       if (backgroundImageLayerRef.current) {
-        backgroundImageLayerRef.current.clear();
+        backgroundImageLayerRef.current.dispose();
         backgroundImageLayerRef.current = null;
       }
       if (spriteLayerRef.current) {

@@ -247,6 +247,21 @@ class InventoryManager {
       return false;
     }
 
+    // Verify enough stock exists before mutating anything, so a shortfall
+    // never partially consumes stock while still reporting failure.
+    const totalAvailable = item.stackable
+      ? instances.reduce((sum, instance) => sum + (instance.quantity || 1), 0)
+      : instances.reduce(
+          (sum, instance) => sum + (item.maxUses && instance.uses ? instance.uses : 1),
+          0
+        );
+    if (totalAvailable < quantity) {
+      console.warn(
+        `[InventoryManager] Not enough ${item.displayName} (need ${quantity}, only had ${totalAvailable})`
+      );
+      return false;
+    }
+
     // For stackable items, remove from quantity (not uses)
     if (item.stackable) {
       let remaining = quantity;
@@ -272,25 +287,9 @@ class InventoryManager {
           );
         }
       }
-
-      if (remaining > 0) {
-        console.warn(
-          `[InventoryManager] Not enough ${item.displayName} (need ${quantity}, only had ${quantity - remaining})`
-        );
-        // Restore what we removed (transaction should be atomic)
-        // This is a safeguard - validation should prevent this
-        return false;
-      }
     } else {
       // Non-stackable items: process removal for each quantity requested
       for (let i = 0; i < quantity; i++) {
-        if (instances.length === 0) {
-          console.warn(
-            `[InventoryManager] Not enough ${item.displayName} (need ${quantity}, processed ${i})`
-          );
-          return false;
-        }
-
         // Get first instance
         const instance = instances[0];
 

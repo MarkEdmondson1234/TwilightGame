@@ -15,9 +15,10 @@
 
 /** @vitest-environment node */
 import { describe, it, expect } from 'vitest';
-import { ITEMS, getItem, ItemCategory } from '../data/items';
+import { ITEMS, getItem, getSeedItemId, ItemCategory } from '../data/items';
 import { RECIPES } from '../data/recipes';
 import { GENERAL_STORE_INVENTORY } from '../data/shopInventory';
+import { CROPS } from '../data/crops';
 
 // ============================================================================
 // AUTOMATIC SSoT CHECKS - These catch future violations
@@ -196,6 +197,33 @@ describe('Item SSoT - Recipe Ingredients Exist', () => {
 
     const potatoIngredient = recipe.ingredients.find((ing) => ing.itemId === 'crop_potato');
     expect(potatoIngredient).toBeDefined();
+  });
+});
+
+describe('Item SSoT - Regression: getSeedItemId resolves to a real item', () => {
+  it('getSeedItemId(cropId) must return an item id that exists in ITEMS for every crop with seed drops', () => {
+    // Regression for a bug where harvesting strawberries silently destroyed their
+    // seed drops: getSeedItemId() guessed `seed_${cropId}` ('seed_strawberry'),
+    // but the registered item is 'seed_wild_strawberry'. inventoryManager.addItem()
+    // logs "Unknown item" and no-ops on an unrecognised id, so the drop vanished
+    // with no player-visible error.
+    const brokenSeedIds: string[] = [];
+
+    Object.entries(CROPS).forEach(([cropId, crop]) => {
+      if (crop.seedDropMax <= 0) return; // Crop never drops seeds; no id needed
+      const seedItemId = getSeedItemId(cropId);
+      if (!getItem(seedItemId)) {
+        brokenSeedIds.push(
+          `Crop "${cropId}" -> getSeedItemId() returned "${seedItemId}", which is not in ITEMS`
+        );
+      }
+    });
+
+    expect(brokenSeedIds).toEqual([]);
+  });
+
+  it('strawberry seed drops resolve to the registered seed_wild_strawberry item', () => {
+    expect(getSeedItemId('strawberry')).toBe('seed_wild_strawberry');
   });
 });
 

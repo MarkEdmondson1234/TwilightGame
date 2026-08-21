@@ -24,18 +24,39 @@ interface ToastProps {
  * Messages auto-dismiss after 3 seconds
  */
 const Toast: React.FC<ToastProps> = ({ messages, onDismiss, playerScreenX, playerScreenY }) => {
+  // Track one dismiss timer per message id so a newly-arriving toast doesn't
+  // reset the countdown for toasts that are already on screen.
+  const timersRef = React.useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
   useEffect(() => {
-    // Auto-dismiss messages after 3 seconds
-    const timers = messages.map((msg) => {
-      return setTimeout(() => {
-        onDismiss(msg.id);
-      }, 3000);
+    const timers = timersRef.current;
+    const currentIds = new Set(messages.map((msg) => msg.id));
+
+    messages.forEach((msg) => {
+      if (!timers.has(msg.id)) {
+        const timer = setTimeout(() => {
+          timers.delete(msg.id);
+          onDismiss(msg.id);
+        }, 3000);
+        timers.set(msg.id, timer);
+      }
     });
 
+    timers.forEach((timer, id) => {
+      if (!currentIds.has(id)) {
+        clearTimeout(timer);
+        timers.delete(id);
+      }
+    });
+  }, [messages, onDismiss]);
+
+  useEffect(() => {
+    const timers = timersRef.current;
     return () => {
       timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
     };
-  }, [messages, onDismiss]);
+  }, []);
 
   if (messages.length === 0) return null;
 
@@ -98,7 +119,12 @@ const Toast: React.FC<ToastProps> = ({ messages, onDismiss, playerScreenX, playe
             boxShadow: '0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)',
           }}
         >
-          <GameIcon icon={getIcon(msg.type)} size={16} className="mr-2" style={{ display: 'inline-block', verticalAlign: 'middle' }} />
+          <GameIcon
+            icon={getIcon(msg.type)}
+            size={16}
+            className="mr-2"
+            style={{ display: 'inline-block', verticalAlign: 'middle' }}
+          />
           <span className="text-sm font-medium italic">{msg.message}</span>
         </div>
       ))}

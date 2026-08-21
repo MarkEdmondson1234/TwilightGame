@@ -72,7 +72,13 @@ export class BackgroundImageLayer {
   // Individual mess pile sprites tracked for dynamic show/hide on clean
   private messPileLayerEntries: Array<{ sprite: PIXI.Sprite; pileId: number }> = [];
   // Wallpaper overlay sprites tracked for dynamic show on apply
-  private wallpaperLayerEntries: Array<{ sprite: PIXI.Sprite; mapId: string; wallpaperId: string }> = [];
+  private wallpaperLayerEntries: Array<{
+    sprite: PIXI.Sprite;
+    mapId: string;
+    wallpaperId: string;
+  }> = [];
+  // Unsubscribe functions for this instance's EventBus listeners, released in dispose()
+  private eventUnsubscribers: Array<() => void> = [];
 
   constructor() {
     // Background container - behind all game content
@@ -81,40 +87,48 @@ export class BackgroundImageLayer {
     this.backgroundContainer.zIndex = Z_PARALLAX_FAR; // -100
 
     // Hide individual cobweb sprites when a cobweb is cleaned mid-room
-    eventBus.on(GameEvent.COBWEB_CLEANED, ({ cobwebId }) => {
-      for (const entry of this.cobwebLayerEntries) {
-        if (entry.cobwebId === cobwebId) {
-          entry.sprite.visible = false;
+    this.eventUnsubscribers.push(
+      eventBus.on(GameEvent.COBWEB_CLEANED, ({ cobwebId }) => {
+        for (const entry of this.cobwebLayerEntries) {
+          if (entry.cobwebId === cobwebId) {
+            entry.sprite.visible = false;
+          }
         }
-      }
-    });
+      })
+    );
 
     // Hide mess pile sprites when cleaned (Mr Fox's Picnic)
-    eventBus.on(GameEvent.MESS_PILE_CLEANED, ({ pileId }) => {
-      for (const entry of this.messPileLayerEntries) {
-        if (entry.pileId === pileId) {
-          entry.sprite.visible = false;
+    this.eventUnsubscribers.push(
+      eventBus.on(GameEvent.MESS_PILE_CLEANED, ({ pileId }) => {
+        for (const entry of this.messPileLayerEntries) {
+          if (entry.pileId === pileId) {
+            entry.sprite.visible = false;
+          }
         }
-      }
-    });
+      })
+    );
 
     // Show wallpaper overlay when applied (while player is already in the room)
-    eventBus.on(GameEvent.WALLPAPER_APPLIED, ({ mapId, wallpaperId }) => {
-      for (const entry of this.wallpaperLayerEntries) {
-        if (entry.mapId === mapId && entry.wallpaperId === wallpaperId) {
-          entry.sprite.visible = true;
+    this.eventUnsubscribers.push(
+      eventBus.on(GameEvent.WALLPAPER_APPLIED, ({ mapId, wallpaperId }) => {
+        for (const entry of this.wallpaperLayerEntries) {
+          if (entry.mapId === mapId && entry.wallpaperId === wallpaperId) {
+            entry.sprite.visible = true;
+          }
         }
-      }
-    });
+      })
+    );
 
     // Hide wallpaper overlay when removed
-    eventBus.on(GameEvent.WALLPAPER_REMOVED, ({ mapId }) => {
-      for (const entry of this.wallpaperLayerEntries) {
-        if (entry.mapId === mapId) {
-          entry.sprite.visible = false;
+    this.eventUnsubscribers.push(
+      eventBus.on(GameEvent.WALLPAPER_REMOVED, ({ mapId }) => {
+        for (const entry of this.wallpaperLayerEntries) {
+          if (entry.mapId === mapId) {
+            entry.sprite.visible = false;
+          }
         }
-      }
-    });
+      })
+    );
   }
 
   /**
@@ -563,6 +577,19 @@ export class BackgroundImageLayer {
     this.wallpaperLayerEntries = [];
 
     this.currentMapId = null;
+  }
+
+  /**
+   * Permanently discard this instance: clears sprites and unsubscribes its
+   * EventBus listeners. Use this (not clear()) when the instance itself is
+   * being thrown away — e.g. on WebGL context-loss re-initialization or
+   * component unmount — since clear() alone leaves the constructor's
+   * COBWEB_CLEANED/MESS_PILE_CLEANED/WALLPAPER_* listeners subscribed forever.
+   */
+  dispose(): void {
+    this.clear();
+    this.eventUnsubscribers.forEach((unsubscribe) => unsubscribe());
+    this.eventUnsubscribers = [];
   }
 
   /**
