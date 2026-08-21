@@ -158,7 +158,7 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
       'Hazelnuts fall from hazel bushes in autumn - look beneath the hazel trees in the deep forest',
       // Foraging - other
       'Forest mushrooms appear in autumn in the deep forest - look in the shaded, damp spots near the trees',
-      'Honey comes from bee hives deep in the forest. The bear knows where every hive is - find the bear\'s territory and you\'ll find honey nearby',
+      "Honey comes from bee hives deep in the forest. The bear knows where every hive is - find the bear's territory and you'll find honey nearby",
       'Rosebushes in the village gardens bloom year-round - both pink and red varieties',
       'Yellow mustard flowers appear in the meadows in spring and summer',
       'Feathers can be found near the trees where sparrows roost - keep an eye on the ground',
@@ -209,7 +209,15 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
 
     relationshipToPlayer: 'stranger',
     maxResponseLength: 3,
-    tabooTopics: ['violence', 'modern technology', 'magic potions', 'potion ingredients', 'alchemy', 'spells', 'enchantments'],
+    tabooTopics: [
+      'violence',
+      'modern technology',
+      'magic potions',
+      'potion ingredients',
+      'alchemy',
+      'spells',
+      'enchantments',
+    ],
   },
 
   shopkeeper_fox: {
@@ -771,7 +779,12 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
         'comfortable silence',
         'the wood wide web',
       ],
-      disliked: ['crowds and noise', 'being rushed', 'pretending to be someone you are not', 'broccoli'],
+      disliked: [
+        'crowds and noise',
+        'being rushed',
+        'pretending to be someone you are not',
+        'broccoli',
+      ],
     },
 
     relationshipToPlayer: 'friendly stranger',
@@ -1046,6 +1059,12 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
     ) {
       return false;
     }
+    if (node.requiredFriendshipTierWithNpc) {
+      const { npcId, tier } = node.requiredFriendshipTierWithNpc;
+      if (!meetsMinTier(friendshipManager.getFriendshipTier(npcId), tier)) {
+        return false;
+      }
+    }
     if (node.requiredSpecialFriend && !npcFriendship?.isSpecialFriend) {
       return false;
     }
@@ -1127,7 +1146,10 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
     }
 
     // Check friendship tier requirements on responses
-    if (response.requiredFriendshipTier && !meetsMinTier(npcTier, response.requiredFriendshipTier)) {
+    if (
+      response.requiredFriendshipTier &&
+      !meetsMinTier(npcTier, response.requiredFriendshipTier)
+    ) {
       return false;
     }
     if (

@@ -113,13 +113,12 @@ export function createDuckNPC(id: string, position: Position, name: string = 'Du
         text: '*looks at wings* Have you seen these? No thumbs! Very good for flying, not so good for carpentry.',
         requiredPotionEffect: 'beast_tongue',
       },
-      // Quest dialogue - requires Good Friends with Elder
+      // Quest dialogue - requires Good Friends with the Elder (not the duck itself)
       {
         id: 'beast_housing_quest',
         text: "You know the Elder well? Oh, wonderful! Do you think... could you ask him to build us a little house? If we had somewhere warm and safe, and someone to feed us, I'd happily give you our eggs!",
         requiredPotionEffect: 'beast_tongue',
-        requiredFriendshipTier: 'good_friend', // This checks friendship with THIS NPC, but dialogue implies Elder
-        // TODO: Need a way to check friendship with a different NPC (Elder)
+        requiredFriendshipTierWithNpc: { npcId: 'village_elder', tier: 'good_friend' },
       },
       {
         id: 'beast_thanks',
