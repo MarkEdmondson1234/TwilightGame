@@ -148,9 +148,18 @@ export class WeatherLayer {
 
       if (snowTexture) {
         this.particleTextures.set('snow', snowTexture);
-        this.particleTextures.set('cherry_blossoms', snowTexture); // Placeholder for cherry blossoms
       } else {
         console.error('[WeatherLayer] ✗ Failed to load snow texture');
+      }
+
+      const cherryBlossomTexture = await textureManager.loadTexture(
+        'cherry_blossom_particle',
+        particleAssets.cherry_blossom
+      );
+      if (cherryBlossomTexture) {
+        this.particleTextures.set('cherry_blossoms', cherryBlossomTexture);
+      } else {
+        console.error('[WeatherLayer] ✗ Failed to load cherry blossom texture');
       }
 
       // Load fog textures using proper asset URLs (includes base path)

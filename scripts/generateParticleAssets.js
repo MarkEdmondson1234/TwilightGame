@@ -94,6 +94,55 @@ async function generateSnowflake() {
   console.log('✓ snowflake.png created');
 }
 
+async function generateCherryBlossom() {
+  console.log('Generating cherry_blossom.png (10x14px)...');
+
+  // A soft pink petal: an ellipse that narrows toward the bottom into a
+  // teardrop point, distinguishing it from snow's plain circular dot.
+  const width = 10;
+  const height = 14;
+  const channels = 4;
+
+  const buffer = Buffer.alloc(width * height * channels);
+
+  const center = { x: width / 2, y: height / 2 };
+  const radiusX = width / 2;
+  const radiusY = height / 2;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const idx = (y * width + x) * channels;
+
+      const dy = (y - center.y + 0.5) / radiusY; // -1 (top) .. 1 (bottom)
+      const dx = (x - center.x + 0.5) / radiusX;
+
+      // Narrow the ellipse toward the bottom to form a petal tip
+      const taper = 1 - 0.5 * Math.max(0, dy);
+      const dist = Math.sqrt((dx / taper) ** 2 + dy ** 2);
+
+      // Cherry blossom pink
+      buffer[idx] = 255;     // R
+      buffer[idx + 1] = 183; // G
+      buffer[idx + 2] = 210; // B
+
+      if (dist <= 1) {
+        const edge = Math.max(0, 1 - dist);
+        buffer[idx + 3] = Math.floor(255 * edge); // A
+      } else {
+        buffer[idx + 3] = 0; // Transparent
+      }
+    }
+  }
+
+  await sharp(buffer, {
+    raw: { width, height, channels }
+  })
+    .png()
+    .toFile(join(particlesDir, 'cherry_blossom.png'));
+
+  console.log('✓ cherry_blossom.png created');
+}
+
 async function generateFog() {
   console.log('Generating fog.png (512x512px)...');
 
@@ -179,6 +228,7 @@ async function main() {
     // Generate all particle assets
     await generateRaindrop();
     await generateSnowflake();
+    await generateCherryBlossom();
     await generateFog();
     await generateMist();
 
@@ -186,6 +236,7 @@ async function main() {
     console.log('\nGenerated files:');
     console.log('  - /public/assets/particles/rain.png (4x16px)');
     console.log('  - /public/assets/particles/snow.png (8x8px)');
+    console.log('  - /public/assets/particles/cherry_blossom.png (10x14px)');
     console.log('  - /public/assets/particles/fog.png (512x512px)');
     console.log('  - /public/assets/particles/mist.png (512x512px)');
   } catch (error) {
