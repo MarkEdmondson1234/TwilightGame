@@ -476,6 +476,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         backgroundImageLayerRef.current.dispose();
         backgroundImageLayerRef.current = null;
       }
+      // Same leak risk as BackgroundImageLayer above: initPixi() creates a fresh
+      // DarknessLayer with its own setInterval-based flicker/transition timers —
+      // dispose the old one first or those timers run forever on an orphaned instance.
+      if (darknessLayerRef.current) {
+        darknessLayerRef.current.destroy();
+        darknessLayerRef.current = null;
+      }
       // The effect will re-run because isPixiInitialized changed
       setTimeout(() => initPixi(), 100);
     };
@@ -522,6 +529,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       if (weatherLayerRef.current) {
         weatherLayerRef.current.destroy();
         weatherLayerRef.current = null;
+      }
+      if (darknessLayerRef.current) {
+        darknessLayerRef.current.destroy();
+        darknessLayerRef.current = null;
       }
     };
   }, [enabled, isMapInitialized]); // Only initialize once when map is ready
