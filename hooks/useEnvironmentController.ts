@@ -24,6 +24,7 @@ import {
 import { mapManager } from '../maps/MapManager';
 import { npcManager } from '../NPCManager';
 import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
+import { eventChainManager } from '../utils/EventChainManager';
 import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
 import type { WeatherLayer } from '../utils/pixi/WeatherLayer';
@@ -657,6 +658,10 @@ export function useEnvironmentController(
       if (weatherManagerRef.current) {
         weatherManagerRef.current.checkWeatherUpdate();
       }
+
+      // Auto-advance event chain stages that have waited long enough
+      // (waitDays stages with no player choices — see EventChainManager.checkAutoAdvance)
+      eventChainManager.checkAutoAdvance();
     }, 10000); // Check every 10 seconds
 
     return () => clearInterval(interval);

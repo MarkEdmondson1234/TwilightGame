@@ -377,3 +377,81 @@ describe('EventChainManager - getDaysSinceStageEntered', () => {
     expect(eventChainManager.getDaysSinceStageEntered(CHAIN_ID)).toBe(7);
   });
 });
+
+// ============================================
+// EventChainManager - checkAutoAdvance()
+// ============================================
+
+describe('EventChainManager - checkAutoAdvance()', () => {
+  // Real, shipped content: mysterious_lights' "wait and see" choice leads to a
+  // waitDays:2 stage with no player choices. checkAutoAdvance() is what's
+  // supposed to move it on — it used to never be called anywhere in the app
+  // (see hooks/useEnvironmentController.ts), so this path was a permanent
+  // dead end for any player who picked it.
+  const CHAIN_ID = 'mysterious_lights';
+  const CAUTIOUS_CHOICE_INDEX = 1; // "Let's wait and see what happens" -> cautious_path
+
+  afterAll(async () => {
+    const { TimeManager } = await import('../utils/TimeManager');
+    TimeManager.clearTimeOverride();
+  });
+
+  beforeEach(async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { TimeManager, Season } = await import('../utils/TimeManager');
+
+    eventChainManager.initialise();
+    eventChainManager.resetChain(CHAIN_ID);
+    TimeManager.setTimeOverride({ season: Season.SPRING, year: 1, day: 1 });
+  });
+
+  it('does not advance a waitDays stage before enough days have passed', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { TimeManager } = await import('../utils/TimeManager');
+
+    await eventChainManager.startChain(CHAIN_ID);
+    await eventChainManager.makeChoice(CHAIN_ID, CAUTIOUS_CHOICE_INDEX);
+    expect(eventChainManager.getProgress(CHAIN_ID)?.currentStageId).toBe('cautious_path');
+
+    TimeManager.setTimeOverride({ day: 2 }); // only 1 day elapsed, waitDays is 2
+    await eventChainManager.checkAutoAdvance();
+
+    expect(eventChainManager.getProgress(CHAIN_ID)?.currentStageId).toBe('cautious_path');
+  });
+
+  it('advances a waitDays stage with no choices once enough days have passed, and grants its rewards', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { TimeManager } = await import('../utils/TimeManager');
+    const { inventoryManager } = await import('../utils/inventoryManager');
+
+    while (inventoryManager.hasItem('moonpetal', 1)) {
+      inventoryManager.removeItem('moonpetal', 1);
+    }
+
+    await eventChainManager.startChain(CHAIN_ID);
+    await eventChainManager.makeChoice(CHAIN_ID, CAUTIOUS_CHOICE_INDEX);
+    expect(eventChainManager.getProgress(CHAIN_ID)?.currentStageId).toBe('cautious_path');
+
+    TimeManager.setTimeOverride({ day: 3 }); // 2 days elapsed, meets waitDays: 2
+    await eventChainManager.checkAutoAdvance();
+
+    expect(eventChainManager.getProgress(CHAIN_ID)?.currentStageId).toBe('resolution');
+    expect(eventChainManager.isChainCompleted(CHAIN_ID)).toBe(true);
+    // resolution stage grants 3x moonpetal — confirms auto-advance actually
+    // runs the stage-entry side effects, not just moving the pointer.
+    expect(inventoryManager.hasItem('moonpetal', 3)).toBe(true);
+  });
+
+  it('does not touch stages that still have player choices pending', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { TimeManager } = await import('../utils/TimeManager');
+
+    await eventChainManager.startChain(CHAIN_ID);
+    expect(eventChainManager.getProgress(CHAIN_ID)?.currentStageId).toBe('rumours');
+
+    TimeManager.setTimeOverride({ day: 30 }); // plenty of days, but 'rumours' has choices
+    await eventChainManager.checkAutoAdvance();
+
+    expect(eventChainManager.getProgress(CHAIN_ID)?.currentStageId).toBe('rumours');
+  });
+});
