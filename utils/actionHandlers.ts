@@ -3,7 +3,7 @@
  * Shared between keyboard and touch input handlers
  */
 
-import { Position, TileType, CollisionType, SizeTier, FarmPlotState } from '../types';
+import { Position, TileType, CollisionType, SizeTier, FarmPlotState, NPC } from '../types';
 import {
   getTileData,
   getAdjacentTiles,
@@ -38,10 +38,7 @@ import { decorationManager } from './DecorationManager';
 import { cookingManager, CookingResult } from './CookingManager';
 import { getFrameStyle } from './frameStyles';
 import { isMrFoxPicnicAtStage } from '../data/questHandlers/mrFoxPicnicHandler';
-import {
-  getMiniGamesForPlacedItem,
-  getMiniGamesForNPC,
-} from '../minigames/registry';
+import { getMiniGamesForPlacedItem, getMiniGamesForNPC } from '../minigames/registry';
 import { miniGameManager } from '../minigames/MiniGameManager';
 import type { MiniGameTriggerData } from '../minigames/types';
 import { fruitTreeManager } from './fruitTreeManager';
@@ -186,6 +183,28 @@ export function checkNPCInteraction(playerPos: Position): string | null {
   }
 
   return null;
+}
+
+// Display labels for NPC.friendshipConfig.likedFoodTypes, used by getGiftPreferenceReveal().
+const GIFT_PREFERENCE_LABELS: Record<string, string> = {
+  savoury: 'savoury foods',
+  dessert: 'desserts',
+  baked: 'baked goods',
+};
+
+/**
+ * Builds the "X would love a gift of Y!" reveal text for the Revealing Tonic
+ * potion's reveal_gift_preference effect, or null if this NPC has no known
+ * gift preference to reveal.
+ */
+export function getGiftPreferenceReveal(npc: NPC | null): string | null {
+  const likedTypes = npc?.friendshipConfig?.likedFoodTypes;
+  if (!npc || !likedTypes || likedTypes.length === 0) {
+    return null;
+  }
+
+  const labels = likedTypes.map((type) => GIFT_PREFERENCE_LABELS[type] || type);
+  return `${npc.name} would love a gift of ${labels.join(' or ')}!`;
 }
 
 /**
