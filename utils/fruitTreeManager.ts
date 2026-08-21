@@ -26,8 +26,8 @@ import { staminaManager } from './StaminaManager';
 // ============================================================================
 
 export interface FruitTreeState {
-  pruned: boolean;   // Pruned this winter (carries into spring/summer/autumn)
-  mulched: boolean;  // Mulched this spring (carries into summer/autumn)
+  pruned: boolean; // Pruned this winter (carries into spring/summer/autumn)
+  mulched: boolean; // Mulched this spring (carries into summer/autumn)
   harvested: boolean; // Already harvested this autumn
 }
 
@@ -45,10 +45,14 @@ const STORAGE_KEY = 'twilight_fruit_trees';
 class FruitTreeManager {
   private trees: Map<string, FruitTreeState> = new Map();
   private lastKnownSeason: string = '';
+  private initialised = false;
 
   // ── Initialisation ─────────────────────────────────────────────────────────
 
   initialise(): void {
+    if (this.initialised) return;
+    this.initialised = true;
+
     this.load();
 
     // Detect season transitions via TIME_CHANGED
@@ -155,7 +159,7 @@ class FruitTreeManager {
 
     const abundant = state.pruned && state.mulched;
     const quantity = abundant
-      ? Math.floor(Math.random() * 4) + 7  // 7–10
+      ? Math.floor(Math.random() * 4) + 7 // 7–10
       : Math.floor(Math.random() * 4) + 2; // 2–5
 
     state.harvested = true;
