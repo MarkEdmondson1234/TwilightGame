@@ -210,7 +210,8 @@ export const tileAssets = {
   // Mushroom cluster (2x2 decorative mushrooms for mushroom forest and procedural forests)
   mushroom_cluster: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom.png',
   // Mushroom forest floor background texture (tileable)
-  mushroom_floor_texture: '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom_floor_texture.png',
+  mushroom_floor_texture:
+    '/TwilightGame/assets-optimized/tiles/mushroomMap/mushroom_floor_texture.png',
   // Common forageable plants
   forest_mushrooms: '/TwilightGame/assets-optimized/tiles/forest/forest_mushrooms.png',
   mustard_flower: '/TwilightGame/assets-optimized/tiles/mustard_flower.png',
@@ -335,9 +336,12 @@ export const farmingAssets = {
 export const orchardAssets = {
   apple_tree_spring: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_spring.png',
   apple_tree_summer: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_summer.png',
-  apple_tree_autumn_sparse: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_autumn_sparse.png',
-  apple_tree_autumn_abundant: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_autumn_abundant.png',
-  apple_tree_after_harvest: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_after_harvest.png',
+  apple_tree_autumn_sparse:
+    '/TwilightGame/assets-optimized/farming/orchard/apple_tree_autumn_sparse.png',
+  apple_tree_autumn_abundant:
+    '/TwilightGame/assets-optimized/farming/orchard/apple_tree_autumn_abundant.png',
+  apple_tree_after_harvest:
+    '/TwilightGame/assets-optimized/farming/orchard/apple_tree_after_harvest.png',
   apple_tree_winter: '/TwilightGame/assets-optimized/farming/orchard/apple_tree_winter.png',
   apple_crop: '/TwilightGame/assets-optimized/farming/orchard/apple_crop.png',
 };
@@ -531,8 +535,10 @@ export const npcAssets = {
   mum_01: '/TwilightGame/assets-optimized/npcs/mum_01.png',
   mum_02: '/TwilightGame/assets-optimized/npcs/mum_02.png',
   mum_portrait: '/TwilightGame/assets/npcs/mum_01.png',
-  spring_periwinkle_01: '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
-  spring_periwinkle_02: '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle1.png',
+  spring_periwinkle_01:
+    '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
+  spring_periwinkle_02:
+    '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle1.png',
   spring_periwinkle_portrait: '/TwilightGame/assets/npcs/spring_periwinkle/spring_periwinkle.png',
   // Umbra Wolf assets (forest creature)
   umbrawolf_standing1: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing1.png',
@@ -551,15 +557,19 @@ export const npcAssets = {
   umbrawolf_walk6: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf6.png',
   // Combat action sprites (used in fight UI)
   umbrawolf_attacking: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking.png',
-  umbrawolf_attacking_block: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking_block.png',
-  umbrawolf_attacking_duck: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking_duck.png',
+  umbrawolf_attacking_block:
+    '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking_block.png',
+  umbrawolf_attacking_duck:
+    '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_attacking_duck.png',
   // King Lava Frog (boss of the lava caverns)
   king_lava_frog_01: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
   king_lava_frog_02: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog02.png',
   king_lava_frog_portrait: '/TwilightGame/assets/npcs/king_lava_frog/king_lava_frog01.png',
   // Lava Frog Workers (wander the procedural lava levels)
-  lava_frog_worker_01: '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker01.png',
-  lava_frog_worker_02: '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker02.png',
+  lava_frog_worker_01:
+    '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker01.png',
+  lava_frog_worker_02:
+    '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker02.png',
   // Goblin (mine creature - spawns every 5th cave level)
   goblin_idle: '/TwilightGame/assets-optimized/npcs/mine/goblin_idle.png',
   goblin_walk1: '/TwilightGame/assets-optimized/npcs/mine/goblin_walk1.png',
@@ -567,11 +577,14 @@ export const npcAssets = {
   goblin_portrait: '/TwilightGame/assets/npcs/mine/goblin01.gif',
   // Goddess of Eyes
   goddess_of_eyes_open: '/TwilightGame/assets-optimized/npcs/goddess_of_eyes/goddess_of_eyes1.png',
-  goddess_of_eyes_closed: '/TwilightGame/assets-optimized/npcs/goddess_of_eyes/goddess_of_eyes2.png',
+  goddess_of_eyes_closed:
+    '/TwilightGame/assets-optimized/npcs/goddess_of_eyes/goddess_of_eyes2.png',
   // Ghost Queen / Queen Avaricia assets
   ghost_invisible: '/TwilightGame/assets/npcs/ghost_queen/ghost_invisible.png',
-  queen_avaricia_open_eyes: '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
-  queen_avaricia_closed_eyes: '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_closed_eyes.png',
+  queen_avaricia_open_eyes:
+    '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
+  queen_avaricia_closed_eyes:
+    '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_closed_eyes.png',
   queen_avaricia_portrait: '/TwilightGame/assets/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
   // Witch Wolf assets (rare forest creature with blinking animation)
   witch_wolf_01: '/TwilightGame/assets/npcs/witch/witch_wolf_01.png',
@@ -692,6 +705,7 @@ export const animationAssets = {
 export const particleAssets = {
   rain: '/TwilightGame/assets/particles/rain.png',
   snow: '/TwilightGame/assets/particles/snow.png',
+  cherry_blossom: '/TwilightGame/assets/particles/cherry_blossom.png',
   fog: '/TwilightGame/assets/particles/fog.png',
   mist: '/TwilightGame/assets/particles/mist.png',
 };
@@ -810,9 +824,11 @@ export const furnitureAssets = {
   cosy_rug_green: '/TwilightGame/assets-optimized/items/furniture/cosy_rug_green.png',
   catalogue: '/TwilightGame/assets-optimized/items/furniture/furniture_catalogue.png',
   strawberry_wallpaper: '/TwilightGame/assets-optimized/items/furniture/strawberry_wallpaper.png',
-  strawberry_wallpaper_thumbnail: '/TwilightGame/assets-optimized/items/furniture/strawberry_wallpaper_thumbnail.png',
+  strawberry_wallpaper_thumbnail:
+    '/TwilightGame/assets-optimized/items/furniture/strawberry_wallpaper_thumbnail.png',
   stripey_curtains: '/TwilightGame/assets-optimized/items/furniture/stripey_curtains.png',
-  stripey_curtains_thumbnail: '/TwilightGame/assets-optimized/items/furniture/stripey_curtains_thumbnail.png',
+  stripey_curtains_thumbnail:
+    '/TwilightGame/assets-optimized/items/furniture/stripey_curtains_thumbnail.png',
 };
 
 // Audio assets - Sound effects, music, and ambient sounds

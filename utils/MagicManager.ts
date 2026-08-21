@@ -33,6 +33,7 @@ import { inventoryManager } from './inventoryManager';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
+import { TimeManager } from './TimeManager';
 
 // Constants
 const MASTERY_THRESHOLD = 1; // Brew a potion once to master it (for level progression)
@@ -235,9 +236,7 @@ class MagicManagerClass {
       this.unlockedRecipes.add(recipe.id);
     });
 
-    console.log(
-      `[MagicManager] 📖 Unlocked ${newLevelRecipes.length} ${nextLevel} recipes!`
-    );
+    console.log(`[MagicManager] 📖 Unlocked ${newLevelRecipes.length} ${nextLevel} recipes!`);
 
     // Emit event for other systems (toast, UI refresh)
     eventBus.emit(GameEvent.MAGIC_LEVEL_UP, { previousLevel, newLevel: nextLevel });
@@ -368,7 +367,7 @@ class MagicManagerClass {
         recipeId,
         timesBrewed: 1,
         isMastered: false,
-        unlockedAt: 0, // TODO: Get current game day from TimeManager
+        unlockedAt: TimeManager.getCurrentTime().totalDays,
       };
       this.recipeProgress.set(recipeId, progress);
     } else {
@@ -541,9 +540,7 @@ class MagicManagerClass {
     lines.push(`Mastered: ${mastered.length} recipes`);
 
     const progress = this.getLevelMasteryProgress();
-    lines.push(
-      `Level Progress: ${progress.mastered}/${progress.total} (${progress.percentage}%)`
-    );
+    lines.push(`Level Progress: ${progress.mastered}/${progress.total} (${progress.percentage}%)`);
 
     if (unlocked.length > 0) {
       lines.push('');

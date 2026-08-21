@@ -79,8 +79,9 @@ export interface DialogueNode {
   };
   responses?: DialogueResponse[]; // For branching dialogue (no nextId = close dialogue)
   // Friendship requirements for this dialogue node
-  requiredFriendshipTier?: FriendshipTier; // Only show if friendship >= tier
+  requiredFriendshipTier?: FriendshipTier; // Only show if friendship with THIS npc >= tier
   maxFriendshipTier?: FriendshipTier; // Only show if friendship <= tier (hide when tier exceeded)
+  requiredFriendshipTierWithNpc?: { npcId: string; tier: FriendshipTier }; // Only show if friendship with a DIFFERENT npc >= tier (e.g. a quest referencing a third party)
   requiredSpecialFriend?: boolean; // Only show if special friend
   // Quest requirements for this dialogue node
   requiredQuest?: string; // Only show if this quest is started
@@ -172,10 +173,34 @@ export interface DialogueResponse {
 
 // Seasonal location configuration for NPCs
 export interface SeasonalLocation {
-  spring?: { mapId: string; position: Position; direction?: Direction; static?: boolean; scale?: number };
-  summer?: { mapId: string; position: Position; direction?: Direction; static?: boolean; scale?: number };
-  autumn?: { mapId: string; position: Position; direction?: Direction; static?: boolean; scale?: number };
-  winter?: { mapId: string; position: Position; direction?: Direction; static?: boolean; scale?: number };
+  spring?: {
+    mapId: string;
+    position: Position;
+    direction?: Direction;
+    static?: boolean;
+    scale?: number;
+  };
+  summer?: {
+    mapId: string;
+    position: Position;
+    direction?: Direction;
+    static?: boolean;
+    scale?: number;
+  };
+  autumn?: {
+    mapId: string;
+    position: Position;
+    direction?: Direction;
+    static?: boolean;
+    scale?: number;
+  };
+  winter?: {
+    mapId: string;
+    position: Position;
+    direction?: Direction;
+    static?: boolean;
+    scale?: number;
+  };
 }
 
 /** Entry animation configuration for NPCs that walk to their position when entering a map */

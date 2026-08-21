@@ -336,15 +336,20 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
   potion_revealing: {
     potionId: 'potion_revealing',
     effectType: 'reveal_gift_preference',
-    execute: (callbacks, targetNpcId) => {
-      // The Revealing Tonic shows gift preferences - use while talking to an NPC
-      callbacks.showToast('Talk to a villager to learn their favourite gifts!', 'info');
-      // Don't consume the potion - user needs to give it to an NPC or use it in dialogue
-      // TODO: Implement proper NPC targeting for this potion
+    execute: (callbacks) => {
+      // 1 game day = 2 real hours = 7,200,000 ms. While active, talking to an
+      // NPC reveals their favourite gift category (see onNPC in
+      // useInteractionController.ts, which checks this effect).
+      const duration = 7200000;
+      callbacks.setActivePotionEffect?.('reveal_gift_preference', duration);
+      callbacks.showToast('Talk to a villager to learn their favourite gifts!', 'success');
+      callbacks.triggerVFX?.('aura_glow', callbacks.getPlayerPosition());
       return {
-        success: false,
-        message: 'Use while talking to an NPC',
+        success: true,
+        message: 'You can now sense gift preferences for a day',
         effectType: 'reveal_gift_preference',
+        vfxType: 'aura_glow',
+        duration,
       };
     },
   },
@@ -738,7 +743,10 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
       // Duration: 1 hour real-time (plenty of time to visit the fairy queen)
       const duration = 60 * 60 * 1000;
       callbacks.setFairyForm?.(true, duration);
-      callbacks.showToast('You shrink down to fairy size! Time to visit the Fairy Queen.', 'success');
+      callbacks.showToast(
+        'You shrink down to fairy size! Time to visit the Fairy Queen.',
+        'success'
+      );
       callbacks.triggerVFX?.('shrink', callbacks.getPlayerPosition());
       return {
         success: true,

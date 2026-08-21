@@ -108,7 +108,9 @@ To verify the fix:
 
 **Date Discovered**: 2025-12-05
 **Severity**: Medium (causes confusion, potential loading errors)
-**Status**: Ongoing
+**Status**: Prevented by test — `tests/assetCasing.test.ts` fails the build if any two files
+under `public/` are tracked with paths that differ only by case, so a new duplicate like this
+can no longer land silently. No duplicates are currently tracked in the repo.
 
 #### Symptoms
 

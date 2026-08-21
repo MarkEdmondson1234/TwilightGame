@@ -16,7 +16,12 @@ import { TILE_SIZE, INTERACTION, DEBUG } from '../constants';
 import { MouseClickInfo } from './useMouseControls';
 import { RadialMenuOption } from '../components/RadialMenu';
 import { FarmActionType } from '../components/FarmActionAnimation';
-import { FarmActionResult, ForageResult, TransitionResult } from '../utils/actionHandlers';
+import {
+  FarmActionResult,
+  ForageResult,
+  TransitionResult,
+  getGiftPreferenceReveal,
+} from '../utils/actionHandlers';
 import {
   getAvailableInteractions,
   getAvailableInteractionsWithTouchTolerance,
@@ -301,6 +306,15 @@ export function useInteractionController(
         if (npcId.toLowerCase().includes('child')) {
           audioManager.playSfx('sfx_girl_humming');
         }
+
+        // Revealing Tonic effect: reveal the NPC's favourite gift category
+        if (gameState.hasActivePotionEffect('reveal_gift_preference')) {
+          const revealMessage = getGiftPreferenceReveal(npcManager.getNPCById(npcId));
+          if (revealMessage) {
+            onShowToast(revealMessage, 'info');
+          }
+        }
+
         setActiveNPC(npcId);
       },
       onGiveGift: (npcId: string) => {
