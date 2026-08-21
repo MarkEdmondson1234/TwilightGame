@@ -32,6 +32,7 @@ import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { staminaManager } from './StaminaManager';
 import { eventBus, GameEvent } from './EventBus';
+import { TimeManager } from './TimeManager';
 
 // Constants
 const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
@@ -420,7 +421,7 @@ class CookingManagerClass {
         recipeId,
         timesCooked: 1,
         isMastered: false,
-        unlockedAt: 0, // TODO: Get current game day from TimeManager
+        unlockedAt: TimeManager.getCurrentTime().totalDays,
       };
       this.recipeProgress.set(recipeId, progress);
     } else {
