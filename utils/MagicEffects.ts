@@ -565,8 +565,10 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
       const grownCount = growingPlots.length;
 
       if (grownCount > 0) {
-        // Advance time by 7 days (604800000 ms) to mature all crops
-        farmManager.debugAdvanceTime(604800000);
+        // Advance time by 7 days (604800000 ms) to mature crops on the current map only —
+        // unscoped, this would also fast-forward every other map's plots (including the
+        // shared village farm) past their watering window, silently wilting them offscreen.
+        farmManager.debugAdvanceTime(604800000, mapId);
       }
 
       callbacks.refreshFarmPlots();
@@ -654,9 +656,9 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
 
       plots.forEach((plot) => {
         if (plot.state === FarmPlotState.WILTING || plot.state === FarmPlotState.DEAD) {
-          // Water the wilting crop to revive it
-          farmManager.waterPlot(mapId, plot.position);
-          revivedCount++;
+          if (farmManager.reviveCrop(mapId, plot.position)) {
+            revivedCount++;
+          }
         }
       });
 

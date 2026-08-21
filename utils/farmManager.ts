@@ -180,7 +180,8 @@ class FarmManager {
         if (plot.state === FarmPlotState.HERB_COOLDOWN) {
           const cooldownMs = (herbCrop.harvestCooldownDays ?? 1) * TimeManager.MS_PER_GAME_DAY;
           // Treat missing timestamp as already expired (handles old save data)
-          const elapsed = plot.harvestedAtTimestamp != null ? now - plot.harvestedAtTimestamp : cooldownMs;
+          const elapsed =
+            plot.harvestedAtTimestamp != null ? now - plot.harvestedAtTimestamp : cooldownMs;
           if (elapsed >= cooldownMs) {
             return {
               ...plot,
@@ -470,6 +471,39 @@ class FarmManager {
   }
 
   /**
+   * Revive a wilting or dead crop back to a healthy, watered state.
+   * Unlike waterPlot(), this also handles DEAD plots — a dead crop's cropType and
+   * plantedAtTimestamp are still intact (only its state changed), so reviving it
+   * just needs to clear the death and treat it as freshly watered.
+   */
+  reviveCrop(mapId: string, position: Position): boolean {
+    const plot = this.getPlot(mapId, position);
+    if (!plot || (plot.state !== FarmPlotState.WILTING && plot.state !== FarmPlotState.DEAD)) {
+      return false;
+    }
+
+    const gameTime = TimeManager.getCurrentTime();
+    const now = Date.now();
+
+    const updatedPlot: FarmPlot = {
+      ...plot,
+      state: FarmPlotState.WATERED,
+      lastWateredDay: gameTime.totalDays,
+      lastWateredHour: gameTime.hour,
+      stateChangedAtDay: gameTime.totalDays,
+      stateChangedAtHour: gameTime.hour,
+      lastWateredTimestamp: now,
+      stateChangedAtTimestamp: now,
+    };
+
+    this.registerPlot(updatedPlot);
+    if (DEBUG.FARM) console.log(`[FarmManager] Revived crop at ${position.x},${position.y}`);
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'revive' });
+    this.syncSharedPlot(mapId, position);
+    return true;
+  }
+
+  /**
    * Apply fertiliser to a growing crop
    * Requires player to have fertiliser in inventory (consumes 1)
    * Improves final crop quality when harvested
@@ -577,7 +611,11 @@ class FarmManager {
 
     let updatedPlot: FarmPlot;
     if (crop.isHerb) {
-      // Herbs persist after harvest — enter cooldown, plot stays occupied
+      // Herbs persist after harvest — enter cooldown, plot stays occupied.
+      // Unlike annual crops, herbs never pass back through till()/plantSeed() (the only
+      // other places these boosts get cleared), so they must be reset here or a single
+      // fertiliser/blessing application would compound into a permanent bonus on every
+      // future harvest of the same plant.
       updatedPlot = {
         ...plot,
         state: FarmPlotState.HERB_COOLDOWN,
@@ -585,6 +623,9 @@ class FarmManager {
         stateChangedAtHour: gameTime.hour,
         stateChangedAtTimestamp: now,
         harvestedAtTimestamp: now,
+        quality: 'normal',
+        fertiliserApplied: false,
+        abundantHarvest: false,
       };
     } else {
       // Normal crops reset to fallow
@@ -1184,7 +1225,9 @@ class FarmManager {
         }
 
         if (purged > 0) {
-          console.log(`[SharedFarm] Rejected ${purged} orphaned remote plots — queued for Firestore deletion`);
+          console.log(
+            `[SharedFarm] Rejected ${purged} orphaned remote plots — queued for Firestore deletion`
+          );
         }
 
         // Check for locally-known shared plots that were removed remotely
@@ -1336,13 +1379,19 @@ class FarmManager {
   }
 
   /**
-   * DEBUG: Advance time for all farm plots by specified milliseconds
-   * This rewinds timestamps to simulate time passing
+   * DEBUG: Advance time for farm plots by specified milliseconds
+   * This rewinds timestamps to simulate time passing.
+   * Pass mapId to scope the advance to a single map (e.g. a magic effect that should
+   * only affect the player's current field) — omit it to affect every plot on every
+   * map, as debug tooling intends.
    */
-  debugAdvanceTime(milliseconds: number): void {
-    console.log(`[FarmManager DEBUG] Advancing time by ${milliseconds}ms`);
+  debugAdvanceTime(milliseconds: number, mapId?: string): void {
+    console.log(
+      `[FarmManager DEBUG] Advancing time by ${milliseconds}ms${mapId ? ` (map: ${mapId})` : ''}`
+    );
 
     for (const plot of this.plots.values()) {
+      if (mapId !== undefined && plot.mapId !== mapId) continue;
       const updatedPlot = { ...plot };
 
       // Rewind timestamps (subtract time to make them "older")

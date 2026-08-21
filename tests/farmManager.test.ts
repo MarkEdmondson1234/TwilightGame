@@ -218,6 +218,68 @@ describe('FarmManager', () => {
 
       expect(result).toBe(true);
     });
+
+    it('should refuse to water a dead crop', () => {
+      const position = { x: 5, y: 10 };
+      farmManager.tillSoil('test_map', position);
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
+      const plot = farmManager.getPlot('test_map', position)!;
+      farmManager.loadPlots([{ ...plot, state: FarmPlotState.DEAD }]);
+
+      const result = farmManager.waterPlot('test_map', position);
+
+      expect(result).toBe(false);
+      expect(farmManager.getPlot('test_map', position)?.state).toBe(FarmPlotState.DEAD);
+    });
+  });
+
+  describe('reviveCrop', () => {
+    beforeEach(() => {
+      vi.mocked(inventoryManager.removeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.hasItem).mockReturnValue(true);
+    });
+
+    it('should revive a dead crop back to a watered, growing state', () => {
+      // waterPlot() intentionally refuses DEAD plots (there's nothing to "keep watered")
+      // — reviveCrop() exists specifically to bring a dead crop back to life, which the
+      // Root Revival potion relies on.
+      const position = { x: 5, y: 10 };
+      farmManager.tillSoil('test_map', position);
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
+      const plot = farmManager.getPlot('test_map', position)!;
+      farmManager.loadPlots([{ ...plot, state: FarmPlotState.DEAD }]);
+
+      const result = farmManager.reviveCrop('test_map', position);
+
+      expect(result).toBe(true);
+      const updatedPlot = farmManager.getPlot('test_map', position);
+      expect(updatedPlot?.state).toBe(FarmPlotState.WATERED);
+      expect(updatedPlot?.cropType).toBe('radish');
+    });
+
+    it('should revive a wilting crop back to a watered state', () => {
+      const position = { x: 5, y: 10 };
+      farmManager.tillSoil('test_map', position);
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
+      const plot = farmManager.getPlot('test_map', position)!;
+      farmManager.loadPlots([{ ...plot, state: FarmPlotState.WILTING }]);
+
+      const result = farmManager.reviveCrop('test_map', position);
+
+      expect(result).toBe(true);
+      expect(farmManager.getPlot('test_map', position)?.state).toBe(FarmPlotState.WATERED);
+    });
+
+    it('should do nothing to a healthy crop', () => {
+      const position = { x: 5, y: 10 };
+      farmManager.tillSoil('test_map', position);
+      farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
+
+      const result = farmManager.reviveCrop('test_map', position);
+
+      expect(result).toBe(false);
+      expect(farmManager.getPlot('test_map', position)?.state).toBe(FarmPlotState.PLANTED);
+    });
   });
 
   describe('harvestCrop', () => {
@@ -266,6 +328,36 @@ describe('FarmManager', () => {
 
       expect(result).toBeNull();
       expect(inventoryManager.addItem).not.toHaveBeenCalled();
+    });
+
+    it('should reset quality/fertiliser/abundantHarvest on a herb harvest instead of carrying them into the next cycle', () => {
+      const position = { x: 5, y: 10 };
+
+      // Herbs cycle READY <-> HERB_COOLDOWN and never pass back through
+      // till()/plantSeed(), so harvestCrop() is the only place these can reset.
+      farmManager.tillSoil('test_map', position);
+      farmManager.plantSeed('test_map', position, 'thyme', 'seed_thyme');
+      const plot = farmManager.getPlot('test_map', position)!;
+      farmManager.loadPlots([
+        {
+          ...plot,
+          state: FarmPlotState.READY,
+          quality: 'excellent',
+          fertiliserApplied: true,
+          abundantHarvest: true,
+        },
+      ]);
+
+      const result = farmManager.harvestCrop('test_map', position);
+
+      expect(result?.cropId).toBe('thyme');
+      expect(result?.quality).toBe('excellent'); // reported quality reflects the harvest just taken
+
+      const updatedPlot = farmManager.getPlot('test_map', position);
+      expect(updatedPlot?.state).toBe(FarmPlotState.HERB_COOLDOWN);
+      expect(updatedPlot?.quality).toBe('normal');
+      expect(updatedPlot?.fertiliserApplied).toBe(false);
+      expect(updatedPlot?.abundantHarvest).toBe(false);
     });
   });
 
@@ -520,6 +612,53 @@ describe('FarmManager', () => {
         const plot = farmManager.getPlot('village', { x: 99, y: 99 });
         expect(plot).toBeUndefined();
       });
+    });
+  });
+
+  describe('debugAdvanceTime', () => {
+    const plantedPlot = (mapId: string, x: number, y: number): FarmPlot => ({
+      mapId,
+      position: { x, y },
+      state: FarmPlotState.PLANTED,
+      cropType: 'radish',
+      plantedAtDay: 1,
+      plantedAtHour: 12,
+      lastWateredDay: 1,
+      lastWateredHour: 12,
+      stateChangedAtDay: 1,
+      stateChangedAtHour: 12,
+      plantedAtTimestamp: Date.now(),
+      lastWateredTimestamp: Date.now(),
+      stateChangedAtTimestamp: Date.now(),
+      quality: 'normal',
+      fertiliserApplied: false,
+    });
+
+    it('only rewinds timestamps for the given map when mapId is provided', () => {
+      farmManager.loadPlots([plantedPlot('village', 1, 1), plantedPlot('personal_garden', 2, 2)]);
+      const beforeOther = farmManager.getPlot('personal_garden', {
+        x: 2,
+        y: 2,
+      })!.plantedAtTimestamp;
+
+      farmManager.debugAdvanceTime(604800000, 'village');
+
+      const village = farmManager.getPlot('village', { x: 1, y: 1 })!;
+      const other = farmManager.getPlot('personal_garden', { x: 2, y: 2 })!;
+      expect(village.state).toBe(FarmPlotState.READY); // matured 7 days ahead
+      expect(other.plantedAtTimestamp).toBe(beforeOther); // untouched
+      expect(other.state).toBe(FarmPlotState.PLANTED); // untouched
+    });
+
+    it('rewinds every map when mapId is omitted', () => {
+      farmManager.loadPlots([plantedPlot('village', 1, 1), plantedPlot('personal_garden', 2, 2)]);
+
+      farmManager.debugAdvanceTime(604800000);
+
+      expect(farmManager.getPlot('village', { x: 1, y: 1 })?.state).toBe(FarmPlotState.READY);
+      expect(farmManager.getPlot('personal_garden', { x: 2, y: 2 })?.state).toBe(
+        FarmPlotState.READY
+      );
     });
   });
 });
