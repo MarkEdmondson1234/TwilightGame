@@ -12,6 +12,7 @@
 import { CutsceneDefinition, CutsceneTrigger, Position } from '../types';
 import { TimeManager } from './TimeManager';
 import { gameState } from '../GameState';
+import { inventoryManager } from './inventoryManager';
 
 export interface CutsceneState {
   isPlaying: boolean;
@@ -280,10 +281,12 @@ class CutsceneManagerClass {
       return false;
     }
 
-    // Check items (would need inventory check - placeholder for now)
+    // Check items
     if (requiredItems && requiredItems.length > 0) {
-      // TODO: Implement inventory check when inventory system is ready
-      console.warn('[CutsceneManager] Item requirements not yet implemented');
+      const hasAllItems = requiredItems.every((itemId) => inventoryManager.hasItem(itemId));
+      if (!hasAllItems) {
+        return false;
+      }
     }
 
     // Check completed cutscenes
@@ -296,10 +299,15 @@ class CutsceneManagerClass {
       }
     }
 
-    // Check flags (would need flag system - placeholder for now)
+    // Check flags — there is no general game-flag store yet. Fail closed (block
+    // the cutscene) rather than silently ignoring the requirement, so a cutscene
+    // author discovers immediately that this field isn't usable yet instead of
+    // shipping a narrative gate that never actually gates anything.
     if (flags && flags.length > 0) {
-      // TODO: Implement flag check when flag system is ready
-      console.warn('[CutsceneManager] Flag requirements not yet implemented');
+      console.error(
+        `[CutsceneManager] Cutscene "${cutscene.id}" requires flags [${flags.join(', ')}] but no flag system exists yet — blocking playback`
+      );
+      return false;
     }
 
     // Check fairy form
