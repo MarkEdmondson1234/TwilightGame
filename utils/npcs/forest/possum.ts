@@ -68,8 +68,12 @@ export function createPossumNPC(id: string, position: Position, name: string = '
       playing_dead: {
         sprites: [npcAssets.possum_dead],
         animationSpeed: 1000,
-        // No duration/nextState - waits for player to leave
-        // Recovery handled by proximity trigger in roaming/sitting states
+        // Primary recovery is the proximity trigger in roaming/sitting once the
+        // player walks away. This duration is a fallback so the possum can't get
+        // stuck "dead" forever if the player leaves the map before that fires
+        // (proximity checks only run for NPCs on the player's current map).
+        duration: 8000,
+        nextState: 'roaming',
       },
     },
     dialogue: [
