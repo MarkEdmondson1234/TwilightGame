@@ -72,53 +72,6 @@ export interface GameContext {
 }
 
 /**
- * Conversation History - Tracks player interactions with NPCs
- */
-export interface ConversationHistory {
-  npcId: string;
-  messages: {
-    speaker: 'player' | 'npc';
-    text: string;
-    timestamp: number;
-  }[];
-}
-
-/**
- * AI Dialogue Request
- */
-export interface AIDialogueRequest {
-  npc: NPC;
-  persona: NPCPersona;
-  playerMessage: string;
-  conversationHistory: ConversationHistory;
-  gameContext?: {
-    playerLocation?: string;
-    playerInventory?: string[];
-    questStates?: Record<string, any>;
-  };
-}
-
-/**
- * AI Dialogue Response
- */
-export interface AIDialogueResponse {
-  text: string;
-  responses: {
-    text: string;
-    nextId?: string;
-  }[];
-}
-
-/**
- * Configuration for dialogue service
- */
-export const DIALOGUE_CONFIG = {
-  useAI: false, // Toggle AI vs static dialogue (set to true when AI endpoint ready)
-  maxHistoryLength: 10, // Keep last N messages in history
-  aiTimeout: 5000, // Timeout for AI requests (ms)
-};
-
-/**
  * NPC Personas - Define personality for each NPC
  * AI-enabled NPCs have detailed personas for rich AI conversations
  */
@@ -805,69 +758,6 @@ export const NPC_PERSONAS: Record<string, NPCPersona> = {
 };
 
 /**
- * Conversation history storage (in-memory, could be localStorage in future)
- */
-const conversationHistories = new Map<string, ConversationHistory>();
-
-/**
- * Get or create conversation history for an NPC
- */
-export function getConversationHistory(npcId: string): ConversationHistory {
-  if (!conversationHistories.has(npcId)) {
-    conversationHistories.set(npcId, {
-      npcId,
-      messages: [],
-    });
-  }
-  return conversationHistories.get(npcId)!;
-}
-
-/**
- * Add message to conversation history
- */
-export function addToHistory(npcId: string, speaker: 'player' | 'npc', text: string) {
-  const history = getConversationHistory(npcId);
-  history.messages.push({
-    speaker,
-    text,
-    timestamp: Date.now(),
-  });
-
-  // Trim history to max length
-  if (history.messages.length > DIALOGUE_CONFIG.maxHistoryLength) {
-    history.messages = history.messages.slice(-DIALOGUE_CONFIG.maxHistoryLength);
-  }
-}
-
-/**
- * Generate AI dialogue (placeholder for future AI integration)
- *
- * TODO: Implement actual AI API call when ready
- * This could call:
- * - OpenAI API with persona in system prompt
- * - Local LLM endpoint
- * - Custom dialogue generation service
- */
-async function generateAIDialogue(request: AIDialogueRequest): Promise<AIDialogueResponse> {
-  // Placeholder implementation
-  // In production, this would make an API call with persona context
-
-  const systemPrompt = `You are ${request.persona.name}.
-Personality: ${request.persona.personality.join(', ')}
-Speaking Style: ${request.persona.speakingStyle}
-Knowledge: ${request.persona.knowledge.join(', ')}
-Background: ${request.persona.background}
-
-Generate a response in character. Keep responses 1-3 sentences.
-Include 2-4 response options for the player.`;
-
-  // TODO: Replace with actual AI API call
-  // Example: const response = await fetch('/api/dialogue', { ... });
-
-  throw new Error('AI dialogue generation not yet implemented');
-}
-
-/**
  * Get the current player transformation (if any)
  * Returns the transformation name (e.g., 'fairy') or null if not transformed
  */
@@ -1189,83 +1079,21 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
 }
 
 /**
- * Main dialogue service function
- * Returns dialogue for NPC, using AI or static fallback
+ * Main dialogue service function — returns the static dialogue tree node for an NPC.
+ *
+ * (Live AI-driven dialogue is a separate system — see components/AIDialogueBox.tsx
+ * and components/dialogue/UnifiedDialogueBox.tsx, which call buildSystemPrompt()
+ * below directly. This function only ever serves static dialogue.)
  *
  * @param npc - The NPC being talked to
- * @param currentNodeId - Current dialogue node (for static trees)
- * @param playerMessage - Player's message (for AI mode)
+ * @param currentNodeId - Current dialogue node
  * @returns Dialogue node to display
  */
 export async function getDialogue(
   npc: NPC,
-  currentNodeId: string = 'greeting',
-  playerMessage?: string
+  currentNodeId: string = 'greeting'
 ): Promise<DialogueNode | null> {
-  // Yule gift nodes are always handled statically — they must not reach the AI path
-  if (currentNodeId === 'yule_gift_reaction' || currentNodeId === 'yule_gift_reciprocation') {
-    return getStaticDialogue(npc, currentNodeId);
-  }
-
-  // If AI is disabled, use static dialogue
-  if (!DIALOGUE_CONFIG.useAI) {
-    return getStaticDialogue(npc, currentNodeId);
-  }
-
-  // Try AI generation with fallback to static
-  try {
-    const persona = NPC_PERSONAS[npc.id];
-    if (!persona) {
-      console.warn(`No persona defined for NPC: ${npc.id}, using static dialogue`);
-      return getStaticDialogue(npc, currentNodeId);
-    }
-
-    const history = getConversationHistory(npc.id);
-
-    const aiResponse = await Promise.race([
-      generateAIDialogue({
-        npc,
-        persona,
-        playerMessage: playerMessage || 'Hello',
-        conversationHistory: history,
-      }),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('AI timeout')), DIALOGUE_CONFIG.aiTimeout)
-      ),
-    ]);
-
-    // Record AI response in history
-    if (playerMessage) {
-      addToHistory(npc.id, 'player', playerMessage);
-    }
-    addToHistory(npc.id, 'npc', aiResponse.text);
-
-    // Convert AI response to DialogueNode format
-    return {
-      id: `ai_${Date.now()}`,
-      text: aiResponse.text,
-      responses: aiResponse.responses,
-    };
-  } catch (error) {
-    console.warn('AI dialogue generation failed, falling back to static:', error);
-    return getStaticDialogue(npc, currentNodeId);
-  }
-}
-
-/**
- * Reset conversation history for an NPC
- * Useful when starting a new conversation
- */
-export function resetConversationHistory(npcId: string) {
-  conversationHistories.delete(npcId);
-}
-
-/**
- * Enable or disable AI dialogue
- */
-export function setAIDialogueEnabled(enabled: boolean) {
-  DIALOGUE_CONFIG.useAI = enabled;
-  console.log(`AI dialogue ${enabled ? 'enabled' : 'disabled'}`);
+  return getStaticDialogue(npc, currentNodeId);
 }
 
 /**
