@@ -37,9 +37,7 @@ interface GiftModalProps {
 }
 
 // Categories of items that cannot be gifted (tools only)
-const NON_GIFTABLE_CATEGORIES = [
-  ItemCategory.TOOL,
-];
+const NON_GIFTABLE_CATEGORIES = [ItemCategory.TOOL];
 
 // Get display name for recipe category
 const CATEGORY_DISPLAY_NAMES: Record<RecipeCategory, string> = {
@@ -52,6 +50,9 @@ const CATEGORY_DISPLAY_NAMES: Record<RecipeCategory, string> = {
 
 const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) => {
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  // Guards against a double-tap/double-click submitting the gift twice
+  // (awarding friendship points twice) before onClose() unmounts the modal.
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get NPC data
   const npc = useMemo(() => npcManager.getNPCById(npcId), [npcId]);
@@ -107,10 +108,12 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
 
   // Handle gift confirmation
   const handleGiveGift = () => {
-    if (!selectedItemId) return;
+    if (!selectedItemId || isSubmitting) return;
 
     const itemDef = getItem(selectedItemId);
     if (!itemDef) return;
+
+    setIsSubmitting(true);
 
     // Give the gift via FriendshipManager
     const result = friendshipManager.giveGift(npcId, selectedItemId, npc || undefined);
@@ -287,17 +290,18 @@ const GiftModal: React.FC<GiftModalProps> = ({ npcId, onClose, onGiftGiven }) =>
           </div>
           <button
             onClick={handleGiveGift}
-            disabled={!selectedItemId}
+            disabled={!selectedItemId || isSubmitting}
             className={`
               px-6 py-2 rounded-lg font-bold transition-all
               ${
-                selectedItemId
+                selectedItemId && !isSubmitting
                   ? 'bg-pink-600 hover:bg-pink-500 text-white cursor-pointer'
                   : 'bg-pink-800 text-pink-500 cursor-not-allowed'
               }
             `}
           >
-            Give Gift <GameIcon icon="🎁" size={20} alt="Gift" className="inline-block align-middle ml-1" />
+            Give Gift{' '}
+            <GameIcon icon="🎁" size={20} alt="Gift" className="inline-block align-middle ml-1" />
           </button>
         </div>
       </div>
