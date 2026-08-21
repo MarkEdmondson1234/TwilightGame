@@ -212,7 +212,11 @@ function handleAltheaQuestItems(nodeId: string): string | void {
     if (sistersStage === SISTERS_STAGES.PHOTO_NEEDED) return 'sisters_awaiting_photo';
     if (sistersStage === SISTERS_STAGES.PHOTO_DELIVERED) return 'sisters_awaiting_meeting';
     // Althea's chores complete but estranged sisters not yet started — show the post-chores prompt
-    if (isAltheaChoresCompleted() && !isEstrangedSistersActive() && !isEstrangedSistersCompleted()) {
+    if (
+      isAltheaChoresCompleted() &&
+      !isEstrangedSistersActive() &&
+      !isEstrangedSistersCompleted()
+    ) {
       return 'post_chores_reminder';
     }
     return;
@@ -341,10 +345,7 @@ function handleWitchQuestActions(nodeId: string): string | void {
 
     // Quest complete — check if witch needs to congratulate level-up
     if (stage >= WITCH_GARDEN_STAGES.COMPLETED) {
-      if (
-        magicManager.getCurrentLevel() !== 'novice' &&
-        !magicManager.hasReceivedWitchCongrats()
-      ) {
+      if (magicManager.getCurrentLevel() !== 'novice' && !magicManager.hasReceivedWitchCongrats()) {
         return 'journeyman_congrats';
       }
       return; // Normal greeting
@@ -420,8 +421,7 @@ function handleRecipeTeaching(nodeId: string): void {
     inventoryManager.addItem('sourdough', 1);
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools);
-    if (DEBUG.QUEST)
-      console.log('[dialogueHandlers] 🍞 Mum gave you her Sourdough Starter!');
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 🍞 Mum gave you her Sourdough Starter!');
   }
 }
 
@@ -447,8 +447,7 @@ function handleFairyQuestActions(npcId: string, nodeId: string): void {
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools);
     markPotionReceived();
-    if (DEBUG.QUEST)
-      console.log(`[dialogueHandlers] 🧚 ${fairyName} gave Fairy Form Potion!`);
+    if (DEBUG.QUEST) console.log(`[dialogueHandlers] 🧚 ${fairyName} gave Fairy Form Potion!`);
   }
 
   // Give replacement potion when player requests one (Good Friends only)
@@ -700,20 +699,21 @@ function handleMrFoxPicnicActions(nodeId: string): string | void {
   if (nodeId === 'mfp_blanket_offer') {
     startMrFoxPicnic();
     eventChainManager.advanceToStage(MFP_QUEST_ID, 'ask_mum_blanket');
-    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🦊 Mr Fox's Picnic quest started → ask_mum_blanket");
+    if (DEBUG.QUEST)
+      console.log("[dialogueHandlers] 🦊 Mr Fox's Picnic quest started → ask_mum_blanket");
   }
 
   // Player gives the blanket to Mr Fox
   if (nodeId === 'mfp_give_blanket') {
     handleBlanketGiven();
-    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🧺 Blanket given to Mr Fox");
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 🧺 Blanket given to Mr Fox');
   }
 
   // Trigger the fox picnic cutscene when the basket is accepted
   if (nodeId === 'mfp_basket_accepted') {
     handleBasketGiven(); // Remove basket from inventory — returned empty on quest complete
     cutsceneManager.startCutscene('fox_picnic');
-    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🎬 Fox picnic cutscene triggered");
+    if (DEBUG.QUEST) console.log('[dialogueHandlers] 🎬 Fox picnic cutscene triggered');
   }
 }
 
@@ -730,14 +730,18 @@ function handleMumQuestActions(nodeId: string): string | void {
   // Player agrees to tidy the shed — advance to shed_cleaning stage
   if (nodeId === 'mfp_blanket_agreed') {
     eventChainManager.advanceToStage(MFP_QUEST_ID, 'shed_cleaning');
-    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🧹 Mum sent player to seed shed — advancing to shed_cleaning");
+    if (DEBUG.QUEST)
+      console.log(
+        '[dialogueHandlers] 🧹 Mum sent player to seed shed — advancing to shed_cleaning'
+      );
   }
 
   // Player asks Mum to help with food — advance to filling_basket stage
   // (the stage handler will spawn the picnic basket as a placed item)
   if (nodeId === 'mfp_food_agreed') {
     eventChainManager.advanceToStage(MFP_QUEST_ID, 'filling_basket');
-    if (DEBUG.QUEST) console.log("[dialogueHandlers] 🍱 Mum helping with food — advancing to filling_basket");
+    if (DEBUG.QUEST)
+      console.log('[dialogueHandlers] 🍱 Mum helping with food — advancing to filling_basket');
   }
 }
 
@@ -749,7 +753,10 @@ function handleMushraWreathActions(nodeId: string): string | void {
   if (nodeId === 'wreath_deliver_materials') {
     if (hasAllMaterials()) {
       deliverMaterials();
-      if (DEBUG.QUEST) console.log('[dialogueHandlers] 🌿 Wreath materials delivered — advancing to hanging stage');
+      if (DEBUG.QUEST)
+        console.log(
+          '[dialogueHandlers] 🌿 Wreath materials delivered — advancing to hanging stage'
+        );
       return 'wreath_materials_accepted';
     } else {
       return 'wreath_materials_missing';
@@ -763,11 +770,13 @@ function handleMushraWreathActions(nodeId: string): string | void {
  */
 function handleMushraGhostQuestActions(nodeId: string): string | void {
   if (nodeId === 'mushra_nevarre_book_given') {
-    inventoryManager.addItem('history_book', 1);
-    const inv = inventoryManager.getInventoryData();
-    characterData.saveInventory(inv.items, inv.tools);
-    advanceGhostQuestToHasBook();
-    if (DEBUG.QUEST) console.log('[dialogueHandlers] 📖 History book given by Mushra');
+    if (!inventoryManager.hasItem('history_book')) {
+      inventoryManager.addItem('history_book', 1);
+      const inv = inventoryManager.getInventoryData();
+      characterData.saveInventory(inv.items, inv.tools);
+      advanceGhostQuestToHasBook();
+      if (DEBUG.QUEST) console.log('[dialogueHandlers] 📖 History book given by Mushra');
+    }
     return 'mushra_nevarre_book_accepted';
   }
 }
