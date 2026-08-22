@@ -212,7 +212,10 @@ export function createGhostNPC(): NPC {
         requiredQuestStage: 2,
         maxQuestStage: 2,
         responses: [
-          { text: 'The history book — I wanted to hear your thoughts.', nextId: 'ghost_deliver' },
+          {
+            text: 'The history book — I wanted to hear your thoughts.',
+            nextId: 'ghost_deliver_book',
+          },
         ],
       },
       { id: 'ghost_deliver_book', text: '' }, // intercepted by dialogueHandlers — removes book, then redirects here:
@@ -287,10 +290,7 @@ export function createQueenAvericiaaNPC(): NPC {
         id: 'queen_lore_wizard',
         text: '"A fraudulent wizard who had been pestering me for money. I came to his tower seeking counsel, and he repaid me with treachery. I am still absolutely *furious* about it. Five hundred years, and it still stings."',
         expression: 'default',
-        responses: [
-          { text: 'That sounds dreadful.' },
-          { text: 'Goodbye.' },
-        ],
+        responses: [{ text: 'That sounds dreadful.' }, { text: 'Goodbye.' }],
       },
     ],
   });

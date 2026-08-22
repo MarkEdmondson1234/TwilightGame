@@ -117,7 +117,7 @@ export enum GameEvent {
 export interface EventPayloads {
   [GameEvent.FARM_PLOT_CHANGED]: {
     position?: Position;
-    action?: 'till' | 'plant' | 'water' | 'harvest' | 'clear' | 'wilt' | 'die';
+    action?: 'till' | 'plant' | 'water' | 'harvest' | 'clear' | 'wilt' | 'die' | 'revive';
   };
   [GameEvent.FARM_CROP_GREW]: {
     position: Position;

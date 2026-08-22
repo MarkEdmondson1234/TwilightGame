@@ -277,7 +277,9 @@ function getCollisionAnchorY(
   img: HTMLImageElement | undefined,
   kind: ObjKind
 ): number {
-  const pad = img ? (drawWidth / (img.naturalWidth / img.naturalHeight)) * GROUND_PAD_RATIO[kind] : 0;
+  const pad = img
+    ? (drawWidth / (img.naturalWidth / img.naturalHeight)) * GROUND_PAD_RATIO[kind]
+    : 0;
   return rawAnchorY - pad;
 }
 
@@ -288,7 +290,11 @@ function getCollisionAnchorY(
  */
 function getPlayerCollisionAnchorY(canvasWidth: number, canvasHeight: number): number {
   const spriteDrawHeight = canvasWidth * PLAYER_SCREEN_WIDTH_RATIO; // player sprite is square
-  return canvasHeight - canvasHeight * PLAYER_BOTTOM_MARGIN_RATIO - spriteDrawHeight * PLAYER_GROUND_PAD_RATIO;
+  return (
+    canvasHeight -
+    canvasHeight * PLAYER_BOTTOM_MARGIN_RATIO -
+    spriteDrawHeight * PLAYER_GROUND_PAD_RATIO
+  );
 }
 
 function getPlayerCollisionWidth(canvasWidth: number): number {
@@ -378,6 +384,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
   const phaseRef = useRef<'playing' | 'crashed'>('playing');
   const heldRef = useRef({ left: false, right: false, boost: false });
   const rafRef = useRef(0);
+  const crashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const canvasWidthRef = useRef(0);
   const canvasHeightRef = useRef(0);
   // F3 collision-box overlay — self-contained like the rest of this minigame's input (see
@@ -418,7 +425,8 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
 
   // ─── Load assets (sky picked once, matching current weather) ───
   useEffect(() => {
-    const skySrc = gameState.getWeather() === 'clear' ? skiingAssets.skySunny : skiingAssets.skyOvercast;
+    const skySrc =
+      gameState.getWeather() === 'clear' ? skiingAssets.skySunny : skiingAssets.skyOvercast;
     const entries: Array<[ImageKey, string]> = [
       ['sky', skySrc],
       ['level1', skiingAssets.level1],
@@ -499,8 +507,21 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     setPhase('crashed');
     // Firewood collected this run is forfeited on a crash — don't add anything to inventory.
     context.actions.triggerExhaustion();
-    setTimeout(() => finishRun(false), 700);
+    // triggerExhaustion() synchronously starts the exhaustion cutscene, which closes all UI
+    // and unmounts this component almost immediately — clear this on unmount so the stale
+    // finishRun/onComplete closure never fires a redundant, contradictory "crashed" result
+    // after the cutscene has already taken over.
+    crashTimeoutRef.current = setTimeout(() => {
+      crashTimeoutRef.current = null;
+      finishRun(false);
+    }, 700);
   }, [context, finishRun]);
+
+  useEffect(() => {
+    return () => {
+      if (crashTimeoutRef.current !== null) clearTimeout(crashTimeoutRef.current);
+    };
+  }, []);
 
   // ─── Spawning ───
   const spawnObject = useCallback(() => {
@@ -554,8 +575,7 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       cameraZRef.current += speed * dt;
 
       const distance = cameraZRef.current;
-      const spawnIntervalMs =
-        distance < STAGE1_END ? 650 : distance < STAGE2_END ? 480 : 350;
+      const spawnIntervalMs = distance < STAGE1_END ? 650 : distance < STAGE2_END ? 480 : 350;
       spawnTimerRef.current -= dt * 1000;
       if (spawnTimerRef.current <= 0) {
         spawnObject();
@@ -586,7 +606,8 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           );
           const playerAnchorY = getPlayerCollisionAnchorY(w, h);
           const screenSeparation = Math.abs((gap * (obj.worldX - cameraXRef.current)) / zDiff);
-          const objDrawWidth = rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
+          const objDrawWidth =
+            rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
           const playerCollisionWidth = getPlayerCollisionWidth(w);
           const hitThreshold = ((objDrawWidth + playerCollisionWidth) / 2) * COLLISION_FUDGE;
           if (objScreenY < playerAnchorY && screenSeparation < hitThreshold) {
@@ -678,7 +699,8 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     if (images.level2) {
       const groundDrawWidth = w * GROUND_ZOOM;
       const groundMarginPx = (groundDrawWidth - w) / 2;
-      const groundShiftPx = -(cameraXRef.current / STEER_RANGE) * groundMarginPx * GROUND_PARALLAX_STRENGTH;
+      const groundShiftPx =
+        -(cameraXRef.current / STEER_RANGE) * groundMarginPx * GROUND_PARALLAX_STRENGTH;
       ctx.drawImage(images.level2, -groundMarginPx + groundShiftPx, 0, groundDrawWidth, h);
     }
 
@@ -711,7 +733,13 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
     if (images.player) {
       const pw = w * PLAYER_SCREEN_WIDTH_RATIO;
       const ph = pw / (images.player.naturalWidth / images.player.naturalHeight);
-      ctx.drawImage(images.player, playerScreenX - pw / 2, h - ph - h * PLAYER_BOTTOM_MARGIN_RATIO, pw, ph);
+      ctx.drawImage(
+        images.player,
+        playerScreenX - pw / 2,
+        h - ph - h * PLAYER_BOTTOM_MARGIN_RATIO,
+        pw,
+        ph
+      );
     }
 
     // Falling snow — reacts live to weather (unlike the sky image, which is only picked once at
@@ -725,10 +753,10 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
       for (const seed of SNOW_SEEDS) {
         const fallSpeed = SNOW_FALL_SPEED * seed.speedMul;
         const span = h + 20;
-        const y = (((seed.ySeed * span + snowT * fallSpeed) % span) + span) % span - 10;
+        const y = ((((seed.ySeed * span + snowT * fallSpeed) % span) + span) % span) - 10;
         const drift = Math.sin(snowT * seed.driftFreq + seed.driftPhase) * SNOW_DRIFT_AMPLITUDE;
         const xSpan = w + 20;
-        const x = (((seed.xSeed * xSpan + drift) % xSpan) + xSpan) % xSpan - 10;
+        const x = ((((seed.xSeed * xSpan + drift) % xSpan) + xSpan) % xSpan) - 10;
         ctx.beginPath();
         ctx.arc(x, y, SNOW_BASE_SIZE * seed.sizeMul, 0, Math.PI * 2);
         ctx.fill();
@@ -773,10 +801,12 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           images[obj.kind],
           obj.kind
         );
-        const objDrawWidth = rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
+        const objDrawWidth =
+          rawDrawWidth * (COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT);
         const objHalfWidth = (objDrawWidth / 2) * COLLISION_FUDGE;
         const screenSeparation = Math.abs(objScreenX - playerScreenX);
-        const isHit = objScreenY < playerAnchorY && screenSeparation < playerHalfWidth + objHalfWidth;
+        const isHit =
+          objScreenY < playerAnchorY && screenSeparation < playerHalfWidth + objHalfWidth;
 
         const color = isHit
           ? '255, 60, 60'
@@ -786,7 +816,11 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
         ctx.strokeStyle = `rgba(${color}, 0.9)`;
         ctx.strokeRect(objScreenX - objHalfWidth, objScreenY - 24, objHalfWidth * 2, 24);
         ctx.fillStyle = `rgba(${color}, 0.9)`;
-        ctx.fillText(`${obj.kind} z=${Math.round(zDiff)}`, objScreenX - objHalfWidth, objScreenY - 26);
+        ctx.fillText(
+          `${obj.kind} z=${Math.round(zDiff)}`,
+          objScreenX - objHalfWidth,
+          objScreenY - 26
+        );
       }
 
       ctx.fillStyle = 'rgba(80, 180, 255, 0.9)';
@@ -927,7 +961,15 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
             {(['wood_poor', 'wood_medium', 'wood_fine'] as PickupKind[]).map((kind) => (
               <div key={kind} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <img
-                  src={skiingAssets[kind === 'wood_poor' ? 'woodPoor' : kind === 'wood_medium' ? 'woodMedium' : 'woodFine']}
+                  src={
+                    skiingAssets[
+                      kind === 'wood_poor'
+                        ? 'woodPoor'
+                        : kind === 'wood_medium'
+                          ? 'woodMedium'
+                          : 'woodFine'
+                    ]
+                  }
                   alt=""
                   style={{ width: 22, height: 22, objectFit: 'contain' }}
                 />
