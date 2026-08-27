@@ -145,6 +145,16 @@ export type RoomLayer = ImageRoomLayer | NPCRoomLayer;
  * Window view showing outside scenes through interior windows
  * Creates depth by showing parallax-scrolled outside view masked by window shape
  */
+/** A single slow-drifting decorative cloud, rendered as a viewport-fixed DOM overlay. */
+export interface AmbientCloudConfig {
+  image: string; // Cloud sprite path
+  topPercent: number; // Vertical position, % of viewport height
+  durationSeconds: number; // Time for one full crossing - larger = slower
+  widthPx?: number; // Rendered width in px (default 320)
+  opacity?: number; // 0-1 (default 1)
+  delaySeconds?: number; // Stagger start when using multiple clouds (default 0)
+}
+
 export interface WindowView {
   x: number; // Window position in tiles
   y: number;
@@ -170,6 +180,7 @@ export interface MapDefinition {
   transitions: Transition[]; // Exit/entrance definitions
   npcs?: NPC[]; // NPCs in this map (optional)
   hasClouds?: boolean; // Show cloud shadows (default: false, set true for outdoor areas)
+  ambientClouds?: AmbientCloudConfig[]; // Slow-drifting decorative sky clouds (optional)
   borderTileType?: TileType; // Tile rendered outside map bounds (e.g. OAK_TREE for a forest clearing)
 
   // Background interior system (optional)

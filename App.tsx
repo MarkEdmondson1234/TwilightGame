@@ -81,6 +81,7 @@ import { performanceMonitor } from './utils/PerformanceMonitor';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
 import ForegroundParallax from './components/ForegroundParallax';
 import CloudShadows from './components/CloudShadows';
+import AmbientClouds from './components/AmbientClouds';
 import CookingInterface from './components/CookingInterface';
 import DecorationCraftingUI from './components/DecorationCraftingUI';
 import PaintingEaselUI from './components/PaintingEaselUI';
@@ -1956,6 +1957,11 @@ const App: React.FC = () => {
           mapHeight={currentMap.height}
           weather={currentWeather}
         />
+      )}
+
+      {/* Ambient sky clouds - slow-drifting decorative clouds for background-image rooms */}
+      {currentMap?.ambientClouds && currentMap.ambientClouds.length > 0 && (
+        <AmbientClouds clouds={currentMap.ambientClouds} />
       )}
 
       {/* VFX Renderer - magic effects for potions and spells */}
