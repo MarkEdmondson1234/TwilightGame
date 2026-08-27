@@ -6,9 +6,11 @@
  */
 
 import type { AvailableInteraction, InteractionContext, ProviderResult } from '../types';
+import { Season, TimeManager } from '../../TimeManager';
+import { SHELLA_NPC_ID } from '../../npcs/seaSideNPCs';
 
 export function shopCounterProvider(ctx: InteractionContext): ProviderResult {
-  const { currentMapId, onOpenShop, tileX, tileY } = ctx;
+  const { currentMapId, onOpenShop, onNPC, tileX, tileY } = ctx;
   const interactions: AvailableInteraction[] = [];
 
   // Mushra's shop counter — clicking tiles (9,4) or (10,4) opens the shop
@@ -20,6 +22,38 @@ export function shopCounterProvider(ctx: InteractionContext): ProviderResult {
       color: '#86efac',
       execute: () => onOpenShop?.(),
     });
+    return { interactions, exclusive: true };
+  }
+
+  // Shella's food truck — summer only. Unlike the other counters, this offers a pie menu
+  // (Talk / Buy) rather than jumping straight to the shop, so both interactions are pushed
+  // here directly instead of relying on npcProvider's distance-based NPC lookup (which could
+  // inconsistently miss "Talk" near the edges of this multi-tile-wide click zone).
+  if (
+    currentMapId === 'seaSide' &&
+    TimeManager.getCurrentTime().season === Season.SUMMER &&
+    tileY >= 4 &&
+    tileY <= 7 &&
+    tileX >= 9 &&
+    tileX <= 13
+  ) {
+    interactions.push(
+      {
+        type: 'npc',
+        label: 'Talk to Shella',
+        icon: '💬',
+        color: '#60a5fa',
+        data: { npcId: SHELLA_NPC_ID },
+        execute: () => onNPC?.(SHELLA_NPC_ID),
+      },
+      {
+        type: 'open_shop',
+        label: 'Buy',
+        icon: '🍦',
+        color: '#f97316',
+        execute: () => onOpenShop?.(),
+      }
+    );
     return { interactions, exclusive: true };
   }
 

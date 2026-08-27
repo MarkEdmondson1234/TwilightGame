@@ -107,7 +107,6 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({
                   (npc.hover ? Math.sin((Date.now() / npc.hover.frequency) * Math.PI * 2) * npc.hover.amplitude * TILE_SIZE : 0),
                 width: PLAYER_SIZE * npcScale * TILE_SIZE,
                 height: PLAYER_SIZE * npcScale * TILE_SIZE,
-                imageRendering: 'pixelated',
                 transform: shouldFlip ? 'scaleX(-1)' : undefined,
                 zIndex,
               }}

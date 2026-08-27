@@ -169,6 +169,7 @@ export const STAMINA = {
     food_spaghetti: 35,
     food_pizza: 30,
     food_ice_cream: 15,
+    food_ice_cream_cone: 20,
     food_marzipan_chocolates: 20,
     food_roast_dinner: 50,
     food_apple_cobbler: 40,

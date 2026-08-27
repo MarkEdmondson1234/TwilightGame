@@ -45,4 +45,7 @@ export {
   createGoblinNPC,
   createKingLavaFrogNPC,
   createLavaFrogWorkerNPC,
+  // Sea Side NPCs
+  createShellaNPC,
+  SHELLA_NPC_ID,
 } from './npcs';

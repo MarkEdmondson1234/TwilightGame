@@ -11,6 +11,7 @@
 import {
   cookingAssets,
   groceryAssets,
+  itemAssets,
 } from '../../assets';
 import { ItemCategory, type ItemDefinition } from './types';
 
@@ -114,6 +115,17 @@ export const FOOD_ITEMS: Record<string, ItemDefinition> = {
     image: cookingAssets.ice_cream,
     stackable: true,
     sellPrice: 55,
+  },
+
+  food_ice_cream_cone: {
+    id: 'food_ice_cream_cone',
+    name: 'food_ice_cream_cone',
+    displayName: 'Ice Cream Cone',
+    category: ItemCategory.FOOD,
+    description: "A waffle cone piled high with scoops from Shella's truck, drizzled with sauce and topped with a cherry.",
+    image: itemAssets.ice_cream_cone,
+    stackable: true,
+    sellPrice: 12,
   },
 
   food_bread: {

@@ -210,6 +210,13 @@ export const village: MapDefinition = {
       toPosition: { x: 2, y: 22 }, // Spawn at garden entrance
       label: 'To Personal Garden',
     },
+    {
+      fromPosition: { x: 6, y: 13 },
+      tileType: TileType.GRASS,
+      toMapId: 'seaSide',
+      toPosition: { x: 1, y: 8 }, // Sea Side spawn point
+      label: 'To the Sea Side',
+    },
   ],
   npcs: [
     // Village Elder - wise NPC near cherry tree

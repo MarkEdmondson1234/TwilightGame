@@ -41,6 +41,68 @@ export const DECORATION_ITEMS: Record<string, ItemDefinition> = {
     image: itemAssets.velvet_bow,
   },
 
+  // ===== SHELLA'S SHOP (SEA SIDE) =====
+
+  decoration_shell: {
+    id: 'decoration_shell',
+    name: 'decoration_shell',
+    displayName: 'Scallop Shell',
+    category: ItemCategory.DECORATION,
+    description: 'A ridged scallop shell, sun-bleached and smooth.',
+    stackable: true,
+    buyPrice: 10,
+    sellPrice: 4,
+    image: itemAssets.decoration_shell,
+  },
+
+  decoration_white_sea_shell: {
+    id: 'decoration_white_sea_shell',
+    name: 'decoration_white_sea_shell',
+    displayName: 'White Sea Shell',
+    category: ItemCategory.DECORATION,
+    description: 'A pale, delicate shell washed up on the shore.',
+    stackable: true,
+    buyPrice: 12,
+    sellPrice: 5,
+    image: itemAssets.decoration_white_sea_shell,
+  },
+
+  decoration_starfish: {
+    id: 'decoration_starfish',
+    name: 'decoration_starfish',
+    displayName: 'Starfish',
+    category: ItemCategory.DECORATION,
+    description: 'A dried starfish with a lovely dusty-pink hue.',
+    stackable: true,
+    buyPrice: 20,
+    sellPrice: 8,
+    image: itemAssets.decoration_starfish,
+  },
+
+  decoration_coral: {
+    id: 'decoration_coral',
+    name: 'decoration_coral',
+    displayName: 'Coral',
+    category: ItemCategory.DECORATION,
+    description: 'A branch of sun-dried coral in a warm terracotta red.',
+    stackable: true,
+    buyPrice: 35,
+    sellPrice: 15,
+    image: itemAssets.decoration_coral,
+  },
+
+  decoration_conch: {
+    id: 'decoration_conch',
+    name: 'decoration_conch',
+    displayName: 'Conch Shell',
+    category: ItemCategory.DECORATION,
+    description: 'A large spiralled conch shell. Hold it to your ear and you might hear the sea.',
+    stackable: true,
+    buyPrice: 45,
+    sellPrice: 18,
+    image: itemAssets.decoration_conch,
+  },
+
   decoration_hanging_plant: {
     id: 'decoration_hanging_plant',
     name: 'decoration_hanging_plant',

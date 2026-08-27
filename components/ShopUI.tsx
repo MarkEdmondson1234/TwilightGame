@@ -67,6 +67,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
   onTransaction,
 }) => {
   const isMushrasShop = shopId === 'mushras_shop';
+  const isShellaShop = shopId === 'seaSide';
   const theme = isMushrasShop
     ? {
         title: "Mushra's Shop",
@@ -75,6 +76,15 @@ const ShopUI: React.FC<ShopUIProps> = ({
         stockHeader: 'text-rose-300',
         filterActive: 'bg-rose-500 text-rose-950',
         filterInactive: 'bg-rose-900/50 text-rose-300 border border-rose-700 hover:bg-rose-800/60',
+      }
+    : isShellaShop
+    ? {
+        title: "Shella's Food Truck",
+        container: 'bg-gradient-to-b from-teal-900 to-teal-950 border-4 border-orange-500',
+        titleColor: 'text-orange-200',
+        stockHeader: 'text-teal-300',
+        filterActive: 'bg-orange-500 text-orange-950',
+        filterInactive: 'bg-teal-900/50 text-teal-300 border border-teal-700 hover:bg-teal-800/60',
       }
     : {
         title: 'General Store',

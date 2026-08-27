@@ -9,6 +9,7 @@ import {
   ShopItem,
   getSeasonalInventory,
   getMushrasShopInventory,
+  getShellaShopInventory,
   getBuyPrice,
   getSellPrice,
   Season as ShopSeason
@@ -98,6 +99,9 @@ export class ShopManager {
     const season = this.convertSeason(currentTime.season);
     if (shopId === 'mushras_shop') {
       return this.filterUnlockedItems(getMushrasShopInventory(season));
+    }
+    if (shopId === 'seaSide') {
+      return this.filterUnlockedItems(getShellaShopInventory(season));
     }
     return this.filterUnlockedItems(getSeasonalInventory(season));
   }

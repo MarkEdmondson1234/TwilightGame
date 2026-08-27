@@ -485,6 +485,59 @@ export function getMushrasShopInventory(season: Season): ShopItem[] {
 }
 
 /**
+ * Shella's Food Truck inventory — sea shells and ice cream.
+ */
+export const SHELLA_SHOP_INVENTORY: ShopItem[] = [
+  {
+    itemId: 'food_ice_cream_cone',
+    buyPrice: 25,
+    sellPrice: 12,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'decoration_shell',
+    buyPrice: 10,
+    sellPrice: 4,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'decoration_white_sea_shell',
+    buyPrice: 12,
+    sellPrice: 5,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'decoration_starfish',
+    buyPrice: 20,
+    sellPrice: 8,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'decoration_coral',
+    buyPrice: 35,
+    sellPrice: 15,
+    stock: 'unlimited',
+  },
+  {
+    itemId: 'decoration_conch',
+    buyPrice: 45,
+    sellPrice: 18,
+    stock: 'unlimited',
+  },
+];
+
+/**
+ * Get Shella's shop inventory filtered by current season.
+ */
+export function getShellaShopInventory(season: Season): ShopItem[] {
+  return SHELLA_SHOP_INVENTORY.filter((item) => {
+    const seasons = getEffectiveSeasons(item);
+    if (!seasons) return true;
+    return seasons.includes(season);
+  });
+}
+
+/**
  * Get the effective available seasons for a shop item.
  * For seeds, this is auto-derived from the crop's plantSeasons (SSoT).
  * For other items, uses the hardcoded availableSeasons if set.

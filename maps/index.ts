@@ -16,6 +16,7 @@ import { deepForest } from './definitions/deepForest';
 import { kingLavaFrogLair } from './definitions/kingLavaFrogLair';
 import { witchHut } from './definitions/witchHut';
 import { witchHutInterior } from './definitions/witchHutInterior';
+import { seaSide } from './definitions/seaSide';
 import { mumsKitchen } from './definitions/mumsKitchen';
 import { magicalLake } from './definitions/magicalLake';
 import { bearCave } from './definitions/bearCave';
@@ -54,6 +55,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(kingLavaFrogLair);
   mapManager.registerMap(witchHut);
   mapManager.registerMap(witchHutInterior);
+  mapManager.registerMap(seaSide);
   mapManager.registerMap(mumsKitchen);
   mapManager.registerMap(magicalLake);
   mapManager.registerMap(bearCave);

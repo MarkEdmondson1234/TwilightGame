@@ -665,6 +665,10 @@ export const npcAssets = {
   davead_01: '/TwilightGame/assets-optimized/npcs/flamingo/davead_the_flamingo01.png',
   davead_02: '/TwilightGame/assets-optimized/npcs/flamingo/davead_the_flamingo02.png',
   davead_portrait: '/TwilightGame/assets/npcs/flamingo/davead_the_flamingo01.png',
+  // Shella assets (food truck vendor - Sea Side, summer only)
+  shella_food_truck_1: '/TwilightGame/assets-optimized/npcs/shella/food_truck1.png',
+  shella_food_truck_2: '/TwilightGame/assets-optimized/npcs/shella/food_truck2.png',
+  shella_portrait: '/TwilightGame/assets/npcs/shella/food_truck1.png',
 };
 
 // Player assets (add your custom sprites here when ready)
@@ -760,6 +764,11 @@ export const dialogueSpriteAssets = {
     default: '/TwilightGame/assets/npcs/mushra/dialogue/mushra_default.png',
     smile: '/TwilightGame/assets/npcs/mushra/dialogue/mushra_smile.png',
   },
+  // Shella dialogue expressions (default, serious)
+  shella: {
+    default: '/TwilightGame/assets/npcs/shella/shella_talk.png',
+    serious: '/TwilightGame/assets/npcs/shella/shella_talk_2.png',
+  },
   // Add more NPCs as artwork becomes available
   // shopkeeper: { default: '...', happy: '...', etc. },
 };
@@ -809,6 +818,14 @@ export const itemAssets = {
   sunflower_crop: '/TwilightGame/assets-optimized/items/decoration/sunflower_crop.png',
   straw: '/TwilightGame/assets-optimized/items/decoration/straw.png',
   crafting_table: '/TwilightGame/assets-optimized/items/crafting/crafting_table.png',
+  // Shella's Shop items (Sea Side food truck)
+  ice_cream_cone: '/TwilightGame/assets-optimized/items/ice_cream_cone.png',
+  decoration_conch: '/TwilightGame/assets-optimized/items/decoration/conch.png',
+  decoration_coral: '/TwilightGame/assets-optimized/items/decoration/coral.png',
+  decoration_shell: '/TwilightGame/assets-optimized/items/decoration/shell.png',
+  decoration_starfish: '/TwilightGame/assets-optimized/items/decoration/starfish.png',
+  decoration_white_sea_shell:
+    '/TwilightGame/assets-optimized/items/decoration/white_sea_shell.png',
 };
 
 // Furniture assets - Placeable furniture items with utility effects
