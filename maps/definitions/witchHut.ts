@@ -99,7 +99,7 @@ export const witchHut: MapDefinition = {
       fromPosition: { x: 15, y: 18 },
       tileType: TileType.GRASS,
       toMapId: 'witch_hut_interior',
-      toPosition: { x: 5, y: 3 }, // Center of interior floor (10x6 map)
+      toPosition: { x: 7, y: 6 }, // Spawn point on the interior floor band
       label: 'Enter Witch Hut',
     },
   ],
