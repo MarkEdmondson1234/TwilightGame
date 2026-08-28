@@ -20,7 +20,7 @@
  */
 
 import * as PIXI from 'pixi.js';
-import { Season, TimeOfDay } from '../TimeManager';
+import { Season, TimeOfDay, TimeManager } from '../TimeManager';
 import { Z_WEATHER_TINT } from '../../zIndex';
 import { TILE_SIZE } from '../../constants';
 
@@ -52,6 +52,14 @@ const DARKNESS_CONFIG: Record<
     seasonModifiers?: Record<string, number>;
     /** Override final darkness for specific times of day, bypassing baseDarkness * multiplier */
     timeOfDayOverrides?: Partial<Record<TimeOfDay, number>>;
+    /**
+     * When set, darkness ignores season/TimeOfDay entirely and is a hard on/off cut at
+     * TimeManager.isFixedNightWindow's fixed 9pm-6am clock window: this value at night,
+     * 0 otherwise. Use this to stay in lockstep with a paired night-only background image
+     * that swaps on the same fixed window rather than the seasonal dawn/dusk/night
+     * boundaries (which can disagree with it - e.g. Summer's 5am sunrise).
+     */
+    fixedNightValue?: number;
   }
 > = {
   cave: {
@@ -97,6 +105,15 @@ const DARKNESS_CONFIG: Record<
       [TimeOfDay.DUSK]: 0.15,
       [TimeOfDay.NIGHT]: 0.4,
     },
+  },
+  // Milder than village/outdoor - pairs with a purpose-painted night background image
+  // (seaSide), so the overlay only needs to tint characters, not re-darken the art.
+  // Uses fixedNightValue (not timeOfDayOverrides) so it stays in lockstep with the
+  // night background's own fixed 9pm-6am swap, regardless of season.
+  seaside: {
+    baseDarkness: 0,
+    nightMultiplier: 2.0,
+    fixedNightValue: 0.3,
   },
 };
 
@@ -239,6 +256,7 @@ export class DarknessLayer {
     colorScheme: string,
     season: Season | string,
     timeOfDay: TimeOfDay | string,
+    hour: number,
     viewportWidth: number,
     viewportHeight: number,
     instant = false
@@ -257,17 +275,22 @@ export class DarknessLayer {
       return;
     }
 
-    let baseDarkness = config.baseDarkness;
-    if (config.seasonModifiers?.[season] !== undefined) {
-      baseDarkness = config.seasonModifiers[season];
-    }
+    let darkness: number;
+    if (config.fixedNightValue !== undefined) {
+      darkness = TimeManager.isFixedNightWindow(hour) ? config.fixedNightValue : 0;
+    } else {
+      let baseDarkness = config.baseDarkness;
+      if (config.seasonModifiers?.[season] !== undefined) {
+        baseDarkness = config.seasonModifiers[season];
+      }
 
-    const todOverride = config.timeOfDayOverrides?.[timeOfDay as TimeOfDay];
-    const todMultiplier = TIME_OF_DAY_MULTIPLIERS[timeOfDay as TimeOfDay] ?? 1.0;
-    const darkness =
-      todOverride !== undefined
-        ? todOverride
-        : Math.min(baseDarkness * todMultiplier, MAX_DARKNESS);
+      const todOverride = config.timeOfDayOverrides?.[timeOfDay as TimeOfDay];
+      const todMultiplier = TIME_OF_DAY_MULTIPLIERS[timeOfDay as TimeOfDay] ?? 1.0;
+      darkness =
+        todOverride !== undefined
+          ? todOverride
+          : Math.min(baseDarkness * todMultiplier, MAX_DARKNESS);
+    }
 
     const sizeChanged =
       viewportWidth !== this.viewportWidth || viewportHeight !== this.viewportHeight;

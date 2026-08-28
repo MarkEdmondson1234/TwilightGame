@@ -19,7 +19,7 @@
  */
 
 import * as PIXI from 'pixi.js';
-import { TILE_SIZE } from '../../constants';
+import { TILE_SIZE, TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { MapDefinition, RoomLayer, ImageRoomLayer, NPC, LayerCondition } from '../../types';
 import { Z_PARALLAX_FAR, Z_PLAYER } from '../../zIndex';
@@ -28,6 +28,7 @@ import { gameState } from '../../GameState';
 import { eventBus, GameEvent } from '../EventBus';
 import { getCobwebsCleaned } from '../../data/questHandlers/altheaChoresHandler';
 import { getMessCleaned } from '../../data/questHandlers/mrFoxPicnicHandler';
+import { TimeManager } from '../TimeManager';
 
 interface LayerSprite {
   sprite: PIXI.Sprite;
@@ -77,6 +78,10 @@ export class BackgroundImageLayer {
     mapId: string;
     wallpaperId: string;
   }> = [];
+  // Time-conditioned sprites (e.g. day/sunset/night backgrounds) tracked for periodic re-check
+  private timeLayerEntries: Array<{ sprite: PIXI.Sprite; showWhen: 'day' | 'sunset' | 'night' }> = [];
+  // Interval polling the game clock to toggle timeLayerEntries visibility, cleared in dispose()
+  private timeCheckIntervalId: ReturnType<typeof setInterval> | null = null;
   // Unsubscribe functions for this instance's EventBus listeners, released in dispose()
   private eventUnsubscribers: Array<() => void> = [];
 
@@ -129,6 +134,10 @@ export class BackgroundImageLayer {
         }
       })
     );
+
+    // Periodically re-check day/night layer visibility against the game clock.
+    // Nothing emits a regular "clock ticked" event, so this owns its own poll.
+    this.timeCheckIntervalId = setInterval(() => this.updateTimeLayers(), TIMING.TIME_LAYER_CHECK_MS);
   }
 
   /**
@@ -288,6 +297,11 @@ export class BackgroundImageLayer {
       return gameState.getAppliedWallpaper(this.currentMapId ?? '') === condition.wallpaperId;
     }
 
+    if (condition.type === 'time') {
+      const phase = TimeManager.getFixedDayPhase(TimeManager.getCurrentTime().hour);
+      return condition.showWhen === phase;
+    }
+
     return true; // Unknown condition type = show by default
   }
 
@@ -306,10 +320,12 @@ export class BackgroundImageLayer {
       const isCobwebLayer = layer.condition?.type === 'cobweb';
       const isMessPileLayer = layer.condition?.type === 'mess_pile';
       const isWallpaperLayer = layer.condition?.type === 'wallpaper';
-      const isDynamicLayer = isCobwebLayer || isMessPileLayer || isWallpaperLayer;
+      const isTimeLayer = layer.condition?.type === 'time';
+      const isDynamicLayer = isCobwebLayer || isMessPileLayer || isWallpaperLayer || isTimeLayer;
 
       // For quest conditions: skip the layer entirely if condition not met.
-      // For dynamic layers (cobweb/mess_pile): always create so they can be hidden at runtime.
+      // For dynamic layers (cobweb/mess_pile/wallpaper/time): always create so they can be
+      // shown/hidden at runtime.
       if (!isDynamicLayer && !this.checkLayerCondition(layer.condition)) {
         continue;
       }
@@ -343,6 +359,16 @@ export class BackgroundImageLayer {
             });
           }
 
+          // Time layers (e.g. day/night backgrounds): set initial visibility and
+          // register for periodic re-check against the game clock
+          if (isTimeLayer && layer.condition?.type === 'time') {
+            layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
+            this.timeLayerEntries.push({
+              sprite: layerSprite.sprite,
+              showWhen: layer.condition.showWhen,
+            });
+          }
+
           // Categorize by z-index for reference (background vs foreground)
           if (layer.zIndex < Z_PLAYER) {
             this.backgroundSprites.push(layerSprite);
@@ -360,6 +386,19 @@ export class BackgroundImageLayer {
         };
         this.layerNPCs.push(npcWithZIndex);
       }
+    }
+  }
+
+  /**
+   * Re-check the game clock and toggle visibility of any time-conditioned layers
+   * (e.g. day/sunset/night backgrounds). Called on a periodic interval since nothing
+   * emits a regular "clock ticked" event.
+   */
+  private updateTimeLayers(): void {
+    if (this.timeLayerEntries.length === 0) return;
+    const phase = TimeManager.getFixedDayPhase(TimeManager.getCurrentTime().hour);
+    for (const entry of this.timeLayerEntries) {
+      entry.sprite.visible = entry.showWhen === phase;
     }
   }
 
@@ -575,6 +614,8 @@ export class BackgroundImageLayer {
     this.messPileLayerEntries = [];
     // Clear wallpaper sprite tracking
     this.wallpaperLayerEntries = [];
+    // Clear time-conditioned sprite tracking (the interval itself keeps running)
+    this.timeLayerEntries = [];
 
     this.currentMapId = null;
   }
@@ -590,6 +631,10 @@ export class BackgroundImageLayer {
     this.clear();
     this.eventUnsubscribers.forEach((unsubscribe) => unsubscribe());
     this.eventUnsubscribers = [];
+    if (this.timeCheckIntervalId !== null) {
+      clearInterval(this.timeCheckIntervalId);
+      this.timeCheckIntervalId = null;
+    }
   }
 
   /**

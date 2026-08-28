@@ -709,9 +709,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       const isMapTransition = prevMapIdRef.current !== currentMapId;
       prevMapIdRef.current = currentMapId;
       darknessLayerRef.current.update(
-        map.colorScheme,
+        map.darknessColorScheme ?? map.colorScheme,
         currentTime.season,
         currentTime.timeOfDay,
+        currentTime.hour,
         window.innerWidth,
         window.innerHeight,
         isMapTransition

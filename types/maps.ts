@@ -87,8 +87,19 @@ export interface WallpaperLayerCondition {
   wallpaperId: string; // e.g. 'furniture_strawberry_wallpaper'
 }
 
+/**
+ * Condition for showing/hiding a room layer based on a fixed game-clock window.
+ * 'day' = 6am-8pm, 'sunset' = 8pm-9pm, 'night' = 9pm-6am (see TimeManager.getFixedDayPhase).
+ * This is a fixed clock window, independent of the seasonal TimeOfDay (dawn/dusk)
+ * system used for lighting.
+ */
+export interface TimeLayerCondition {
+  type: 'time';
+  showWhen: 'day' | 'sunset' | 'night';
+}
+
 /** Union of all supported layer condition types */
-export type LayerCondition = QuestLayerCondition | CobwebLayerCondition | MessPileLayerCondition | WallpaperLayerCondition;
+export type LayerCondition = QuestLayerCondition | CobwebLayerCondition | MessPileLayerCondition | WallpaperLayerCondition | TimeLayerCondition;
 
 /**
  * Base properties shared by all room layer types
@@ -186,6 +197,12 @@ export interface MapDefinition {
   // Background interior system (optional)
   renderMode?: MapRenderMode; // Default: 'tiled'
   layers?: RoomLayer[]; // All layers (images + NPCs) in z-order
+  /** Override colorScheme used ONLY for DarknessLayer's night-tint lookup
+   *  (see DARKNESS_CONFIG in utils/pixi/DarknessLayer.ts). Use this when a room needs
+   *  outdoor-style night darkening but must keep its real `colorScheme` for tile-colour
+   *  and indoor/outdoor placement rules (e.g. a background-image outdoor room whose
+   *  colorScheme is 'indoor'). Falls back to `colorScheme` when unset. */
+  darknessColorScheme?: string;
   windowViews?: WindowView[]; // Windows showing outside scenes
   sourceMapId?: string; // For window views: which map player came from
   characterScale?: number; // Scale multiplier for player/NPCs (default: 1.0)

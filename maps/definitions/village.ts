@@ -214,7 +214,7 @@ export const village: MapDefinition = {
       fromPosition: { x: 6, y: 13 },
       tileType: TileType.GRASS,
       toMapId: 'seaSide',
-      toPosition: { x: 1, y: 8 }, // Sea Side spawn point
+      toPosition: { x: 1, y: 7 }, // Sea Side spawn point
       label: 'To the Sea Side',
     },
   ],

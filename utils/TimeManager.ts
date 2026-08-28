@@ -147,6 +147,26 @@ export class TimeManager {
   }
 
   /**
+   * Fixed clock phase for a given hour: day (6am-8pm), sunset (8pm-9pm), or
+   * night (9pm-6am) - independent of season. Distinct from the seasonal TimeOfDay
+   * boundaries (dawn/day/dusk/night) returned by getCurrentTime(), which shift with
+   * SEASONAL_DAYLIGHT and can disagree with this fixed window (e.g. Summer's sunrise
+   * at 5am means TimeOfDay flips to DAY a full hour before night's fixed window ends
+   * at 6am). Use this when a feature needs to stay in a strict, season-independent
+   * clock window - e.g. pairing day/sunset/night background images with a matching tint.
+   */
+  static getFixedDayPhase(hour: number): 'day' | 'sunset' | 'night' {
+    if (hour >= 21 || hour < 6) return 'night';
+    if (hour >= 20) return 'sunset'; // 20:00-20:59
+    return 'day';
+  }
+
+  /** True during the fixed 9pm-6am window. See getFixedDayPhase() for details. */
+  static isFixedNightWindow(hour: number): boolean {
+    return TimeManager.getFixedDayPhase(hour) === 'night';
+  }
+
+  /**
    * Get game time for a given real-world timestamp (e.g. from saved chat history)
    */
   static getTimeForTimestamp(timestamp: number): GameTime {
