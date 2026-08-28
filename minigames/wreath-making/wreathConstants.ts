@@ -81,6 +81,11 @@ export const WREATH_MATERIALS = [
   'spruce_sprig',
   'maple_leaf',
   'decoration_velvet_bow',
+  'decoration_shell',
+  'decoration_white_sea_shell',
+  'decoration_starfish',
+  'decoration_coral',
+  'decoration_conch',
 ] as const;
 
 /** Visual colour associated with each flower for the slot border. */
@@ -111,6 +116,11 @@ export const FLOWER_COLOURS: Record<string, string> = {
   spruce_sprig: '#4d8a52',
   maple_leaf: '#d97706',
   decoration_velvet_bow: '#9b2335',
+  decoration_shell: '#f5deb3',
+  decoration_white_sea_shell: '#fdf6ec',
+  decoration_starfish: '#f97316',
+  decoration_coral: '#fb7185',
+  decoration_conch: '#fecdd3',
 };
 
 /** Shared style for the round zoom/size buttons. */
