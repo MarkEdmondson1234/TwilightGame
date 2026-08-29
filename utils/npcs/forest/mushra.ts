@@ -5,7 +5,11 @@
 import { NPC, Direction, NPCBehavior, Position } from '../../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../../assets';
 import { createWanderingNPC, createStaticNPC } from '../createNPC';
-import { QUEST_ID as WREATH_QUEST_ID } from '../../../data/questHandlers/mushraWreathHandler';
+import {
+  QUEST_ID as WREATH_QUEST_ID,
+  isWreathWorkshopComplete,
+  shouldSeedShedMushraAppear,
+} from '../../../data/questHandlers/mushraWreathHandler';
 
 /**
  * Create a Mushra NPC - young artist who lives in a mushroom house
@@ -384,6 +388,8 @@ export function createMushraShopNPC(id: string, position: Position): NPC {
  * festival. She is STATIC — she does NOT wander, so she stays next to the table.
  *
  * visibilityConditions: { season: 'autumn' } ensures she only appears in autumn.
+ * customVisibility hides her permanently once the quest is complete — she relocates
+ * to the seed shed instead (see createSeedShedMushraNPC below).
  */
 export function createVillageMushraNPC(id: string, position: Position): NPC {
   return createStaticNPC({
@@ -400,6 +406,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
     visibilityConditions: {
       season: 'autumn',
     },
+    customVisibility: () => !isWreathWorkshopComplete(),
     dialogue: [
       // ── Quest not yet started ────────────────────────────────────────────────
       {
@@ -496,13 +503,42 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
         expression: 'thinky',
         text: '"There are four: your home, the north-west house, the cottage with the stone walls, and the smaller cottage near the farm plots. Walk up close to a building door and the option to hang a wreath should appear!"',
       },
-      // ── Complete stage (stageNumber 3) ───────────────────────────────────────
+      // Note: no stage-3 "complete" greeting here — the moment the quest completes, village
+      // Mushra disappears (customVisibility above) and reappears in the seed shed instead
+      // (see createSeedShedMushraNPC), where she delivers the equivalent line.
+    ],
+  });
+}
+
+/**
+ * Create a static Mushra NPC for the seed shed, where her wreath workshop relocates once
+ * the quest is complete.
+ *
+ * Only appears for the remainder of the autumn the quest completed in — gone in every
+ * autumn after that (see shouldSeedShedMushraAppear), leaving just the permanent crafting
+ * table behind as a trace of the finished quest.
+ */
+export function createSeedShedMushraNPC(id: string, position: Position): NPC {
+  return createStaticNPC({
+    id,
+    name: 'Mushra',
+    position,
+    direction: Direction.Down,
+    sprite: npcAssets.mushra_01,
+    portraitSprite: npcAssets.mushra_portrait,
+    dialogueExpressions: dialogueSpriteAssets.mushra,
+    scale: 4.0,
+    interactionRadius: 1.5,
+    collisionRadius: 0.35,
+    visibilityConditions: {
+      season: 'autumn',
+    },
+    customVisibility: shouldSeedShedMushraAppear,
+    dialogue: [
       {
         id: 'greeting',
         expression: 'smile',
-        text: '*Mushra beams at you.* "Frankly, I don\'t think I would have managed this without you! The village looks absolutely beautiful. And I\'ve moved my workshop to the seed shed — come and use it whenever you like!"',
-        requiredQuest: WREATH_QUEST_ID,
-        requiredQuestStage: 3,
+        text: '*Mushra beams at you from behind her new workbench.* "Frankly, I don\'t think I would have managed the village decorations without you! I\'ve settled in here nicely — come and use the crafting table whenever you like!"',
       },
     ],
   });

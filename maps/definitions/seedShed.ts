@@ -1,6 +1,7 @@
 import { MapDefinition, TileType, RoomLayer } from '../../types';
 import { parseGrid } from '../gridParser';
 import { Z_PARALLAX_FAR } from '../../zIndex';
+import { createSeedShedMushraNPC } from '../../utils/npcs/forest/mushra';
 
 /**
  * Seed Shed - Background Image Interior
@@ -100,6 +101,8 @@ export const seedShed: MapDefinition = {
   referenceViewport: { width: 1280, height: 720 },
 
   layers: shedLayers,
+
+  npcs: [createSeedShedMushraNPC('seed_shed_mushra', { x: 4, y: 6 })],
 
   transitions: [
     {

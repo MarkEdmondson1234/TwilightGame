@@ -18,6 +18,7 @@ import { eventBus, GameEvent } from '../../utils/EventBus';
 import { gameState } from '../../GameState';
 import { itemAssets } from '../../assets';
 import { DEBUG } from '../../constants';
+import { TimeManager } from '../../utils/TimeManager';
 
 // ============================================================================
 // Constants
@@ -73,6 +74,22 @@ export function getWreathWorkshopStage(): string | undefined {
 
 export function isWreathWorkshopAtStage(stageId: string): boolean {
   return getWreathWorkshopStage() === stageId;
+}
+
+/** Village Mushra appears until the quest is complete — then she's moved to the shed. */
+export function shouldVillageMushraAppear(): boolean {
+  return !isWreathWorkshopComplete();
+}
+
+/**
+ * Seed Shed Mushra appears only for the remainder of the autumn the quest completed in —
+ * never again in later years (combined with `visibilityConditions: { season: 'autumn' }`
+ * on the NPC itself, which bounds this to autumn even within the completion year).
+ */
+export function shouldSeedShedMushraAppear(): boolean {
+  if (!isWreathWorkshopComplete()) return false;
+  const completedYear = eventChainManager.getMetadata(QUEST_ID, 'completedYear');
+  return completedYear === TimeManager.getCurrentTime().year;
 }
 
 /** Start the quest — called from Mushra's acceptance dialogue */
@@ -169,6 +186,9 @@ handlerRegistry.register(QUEST_ID, 'hanging', async () => {
 
 // On quest complete: remove village crafting table, place one in seed shed
 handlerRegistry.register(QUEST_ID, 'complete', async () => {
+  // Record the completion year so village/shed Mushra gating knows which autumn this was
+  eventChainManager.setMetadata(QUEST_ID, 'completedYear', TimeManager.getCurrentTime().year);
+
   // Remove village table (WreathWorkshopManager will also skip spawning henceforth)
   gameState.removePlacedItem(VILLAGE_CRAFTING_TABLE_ID);
 

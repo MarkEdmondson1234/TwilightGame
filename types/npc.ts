@@ -249,6 +249,7 @@ export interface NPC {
   zIndexOverride?: number; // Optional: override z-index for layered rooms (e.g., 50 to appear behind counter at 200)
   feetYOffset?: number; // Optional: override feet Y offset for depth sorting (default 0.3). Use larger values for big sprites like animals.
   visibilityConditions?: AnimationConditions; // Optional: conditions for when NPC should be visible (e.g., seasonal creatures)
+  customVisibility?: () => boolean; // Optional: extra predicate ANDed with visibilityConditions (e.g. one-time seasonal quest givers gated on quest/year state)
   seasonalLocations?: SeasonalLocation; // Optional: different positions/maps per season (if not set, uses base position/current map)
   entryAnimation?: EntryAnimation; // Optional: walk-in animation when player enters the map
   hostileConfig?: {

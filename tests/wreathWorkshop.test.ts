@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { getCanvasScale, toCanvasCoords } from '../minigames/wreath-making/wreathHelpers';
 import { ringDrawRect, CAPTURE_SIZE } from '../minigames/wreath-making/wreathCapture';
 import {
@@ -8,6 +8,13 @@ import {
   WREATH_RING_OFFSET,
 } from '../minigames/wreath-making/wreathConstants';
 import { inventoryManager } from '../utils/inventoryManager';
+import { eventChainManager } from '../utils/EventChainManager';
+import { TimeManager, Season } from '../utils/TimeManager';
+import {
+  QUEST_ID,
+  shouldVillageMushraAppear,
+  shouldSeedShedMushraAppear,
+} from '../data/questHandlers/mushraWreathHandler';
 
 /**
  * Regression tests for three wreath workshop bugs.
@@ -156,5 +163,59 @@ describe('wreath decoration instance matching', () => {
 
   it('returns undefined when the player holds none', () => {
     expect(inventoryManager.getFirstDecorationId(WREATH_ITEM)).toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Village/shed Mushra respawn gating
+// ---------------------------------------------------------------------------
+
+/**
+ * Regression: village Mushra's spawn only checked `visibilityConditions: { season: 'autumn' }`
+ * — it never checked whether the wreath quest was already completed, so she kept reappearing
+ * in the village every autumn even after the player finished the quest in a prior year.
+ */
+describe('village/shed Mushra respawn gating', () => {
+  beforeEach(() => {
+    eventChainManager.initialise();
+    eventChainManager.resetChain(QUEST_ID);
+    TimeManager.setTimeOverride({ season: Season.AUTUMN, year: 1, day: 1 });
+  });
+
+  afterAll(() => {
+    TimeManager.clearTimeOverride();
+  });
+
+  it('shows village Mushra and hides shed Mushra before the quest starts', () => {
+    expect(shouldVillageMushraAppear()).toBe(true);
+    expect(shouldSeedShedMushraAppear()).toBe(false);
+  });
+
+  it('shows village Mushra and hides shed Mushra while the quest is active', async () => {
+    await eventChainManager.startChain(QUEST_ID);
+    expect(shouldVillageMushraAppear()).toBe(true);
+    expect(shouldSeedShedMushraAppear()).toBe(false);
+  });
+
+  it('moves her to the shed for the rest of the autumn the quest completes in', async () => {
+    await eventChainManager.startChain(QUEST_ID);
+    await eventChainManager.advanceToStage(QUEST_ID, 'complete');
+
+    expect(shouldVillageMushraAppear()).toBe(false);
+    expect(shouldSeedShedMushraAppear()).toBe(true);
+
+    // Later the same year — she should still be in the shed.
+    TimeManager.setTimeOverride({ season: Season.AUTUMN, year: 1, day: 7 });
+    expect(shouldSeedShedMushraAppear()).toBe(true);
+  });
+
+  it('hides her everywhere once a later year\'s autumn arrives', async () => {
+    await eventChainManager.startChain(QUEST_ID);
+    await eventChainManager.advanceToStage(QUEST_ID, 'complete');
+
+    TimeManager.setTimeOverride({ season: Season.AUTUMN, year: 2, day: 1 });
+
+    expect(shouldVillageMushraAppear()).toBe(false);
+    expect(shouldSeedShedMushraAppear()).toBe(false);
   });
 });

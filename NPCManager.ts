@@ -157,6 +157,10 @@ class NPCManagerClass {
    * Checks season, time of day, weather, and day schedule
    */
   isNPCVisible(npc: NPC): boolean {
+    if (npc.customVisibility && !npc.customVisibility()) {
+      return false;
+    }
+
     if (!npc.visibilityConditions) {
       return true; // No conditions means always visible
     }

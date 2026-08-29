@@ -100,6 +100,7 @@ export interface NPCConfig {
   zIndexOverride?: number;
   feetYOffset?: number;
   visibilityConditions?: AnimationConditions;
+  customVisibility?: () => boolean;
   seasonalLocations?: SeasonalLocation;
   entryAnimation?: EntryAnimation;
   hostileConfig?: {
@@ -211,6 +212,7 @@ export function createNPC(config: NPCConfig): NPC {
     zIndexOverride,
     feetYOffset,
     visibilityConditions,
+    customVisibility,
     seasonalLocations,
     entryAnimation,
     hostileConfig,
@@ -247,6 +249,7 @@ export function createNPC(config: NPCConfig): NPC {
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
   if (feetYOffset !== undefined) npc.feetYOffset = feetYOffset;
   if (visibilityConditions) npc.visibilityConditions = visibilityConditions;
+  if (customVisibility) npc.customVisibility = customVisibility;
   if (seasonalLocations) npc.seasonalLocations = seasonalLocations;
   if (entryAnimation) npc.entryAnimation = entryAnimation;
   if (hostileConfig) npc.hostileConfig = hostileConfig;
