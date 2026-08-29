@@ -600,23 +600,28 @@ const ShopUI: React.FC<ShopUIProps> = ({
               );
             })()}
 
-            {/* Quantity Slider */}
+            {/* Quantity Stepper */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-bold text-slate-300">Quantity:</label>
-                <span className="text-2xl font-bold text-yellow-300">{selectedQuantity}</span>
+                <span className="text-xs text-slate-400">Max: {pendingTransaction.maxQuantity}</span>
               </div>
-              <input
-                type="range"
-                min="1"
-                max={pendingTransaction.maxQuantity}
-                value={selectedQuantity}
-                onChange={(e) => setSelectedQuantity(parseInt(e.target.value))}
-                className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-yellow-500"
-              />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>1</span>
-                <span>{pendingTransaction.maxQuantity}</span>
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={() => setSelectedQuantity(q => Math.max(1, q - 1))}
+                  disabled={selectedQuantity <= 1}
+                  className="w-12 h-12 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-2xl font-bold rounded-full transition-colors"
+                >
+                  −
+                </button>
+                <span className="text-2xl font-bold text-yellow-300 w-12 text-center">{selectedQuantity}</span>
+                <button
+                  onClick={() => setSelectedQuantity(q => Math.min(pendingTransaction.maxQuantity, q + 1))}
+                  disabled={selectedQuantity >= pendingTransaction.maxQuantity}
+                  className="w-12 h-12 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-2xl font-bold rounded-full transition-colors"
+                >
+                  +
+                </button>
               </div>
             </div>
 
