@@ -60,6 +60,8 @@ import {
   consumeGhostOfferPending,
   hasMetGhost,
   setHasMetGhost,
+  wasRudeToGhost,
+  setWasRudeToGhost,
   startGhostQuest,
   completeGhostQuest,
   isGhostQuestStarted,
@@ -795,12 +797,21 @@ function handleGhostQueenActions(nodeId: string): string | void {
     // whether triggered by proximity or by manual interaction.
     // consumeGhostOfferPending is called to clear the flag if set.
     consumeGhostOfferPending();
-    if (hasMetGhost()) {
+    if (wasRudeToGhost()) {
+      return 'ghost_rude_revisit';
+    } else if (hasMetGhost()) {
       return 'ghost_back_again';
     } else {
       setHasMetGhost();
       return 'ghost_intro';
     }
+  }
+
+  // Player picked the rude response and dead-ended the conversation —
+  // remember it so the next visit opens with ghost_rude_revisit instead
+  // of the normal ghost_back_again greeting.
+  if (nodeId === 'ghost_rude_end') {
+    setWasRudeToGhost();
   }
 
   // Player hands over the history book — remove from inventory and redirect to reading scene

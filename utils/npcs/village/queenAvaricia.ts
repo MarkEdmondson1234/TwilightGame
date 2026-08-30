@@ -72,11 +72,27 @@ export function createGhostNPC(): NPC {
         ],
       },
       // ----------------------------------------------------------------
+      // Revisit node — replaces ghost_back_again when the player was rude
+      // in a previous conversation (see ghost_rude_end). Gives the player
+      // a way back in, but makes clear Avaricia hasn't simply forgotten.
+      // ----------------------------------------------------------------
+      {
+        id: 'ghost_rude_revisit',
+        text: '"Oh. It\'s that rude mortal again. Just my luck."',
+        hiddenIfQuestStarted: GHOST_QUEEN_QUEST_ID,
+        responses: [
+          {
+            text: "I'm sorry if I was rude before. I understand your situation must be difficult.",
+            nextId: 'ghost_sympathy',
+          },
+        ],
+      },
+      // ----------------------------------------------------------------
       // Main dialogue tree (shared by intro and re-visit paths)
       // ----------------------------------------------------------------
       {
         id: 'ghost_scary',
-        text: '"Well, you *should* be! I am, indeed, a ghoulish, vicious ghost — a capricious entity from beyond the veil of death, and *extremely* frightening, I\'ll have you know. OoooOOOO!"',
+        text: '"Well, you *should* be! I am a ghoulish, vicious ghost — a capricious entity from beyond the veil of death, and *extremely* frightening, I\'ll have you know. OoooOOOO!"',
         responses: [
           {
             text: 'Indeed you are!',
@@ -93,6 +109,7 @@ export function createGhostNPC(): NPC {
         id: 'ghost_rude_end',
         text: '"Why am I making that sound, you ask? I shall *tell* you why — because I am a very frightening ghost, and you ought to be trembling with fear. *That* is why!"',
         // No responses — dialogue ends here. Quest does NOT start.
+        // Player gets another chance on their next visit via 'ghost_rude_revisit' below.
       },
       {
         id: 'ghost_noticed',
@@ -186,14 +203,7 @@ export function createGhostNPC(): NPC {
         requiredQuest: GHOST_QUEEN_QUEST_ID,
         requiredQuestStage: 1,
         maxQuestStage: 1,
-        responses: [
-          { text: "I'm still looking.", nextId: 'ghost_wait' },
-          {
-            text: 'I found this history book.',
-            nextId: 'ghost_deliver_book',
-            requiredItem: 'history_book',
-          },
-        ],
+        responses: [{ text: "I'm still looking.", nextId: 'ghost_wait' }],
       },
       {
         id: 'ghost_wait',

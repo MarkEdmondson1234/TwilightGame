@@ -89,6 +89,31 @@ export function setHasMetGhost(): void {
 }
 
 // ============================================================================
+// "Was Rude" flag (localStorage, pre-quest)
+// Switches ghost_back_again → ghost_rude_revisit on the next visit after the
+// player picks the rude response in ghost_scary (dead-ends at ghost_rude_end)
+// ============================================================================
+
+const WAS_RUDE_KEY = 'gq_was_rude';
+
+export function wasRudeToGhost(): boolean {
+  try {
+    return localStorage.getItem(WAS_RUDE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function setWasRudeToGhost(): void {
+  try {
+    localStorage.setItem(WAS_RUDE_KEY, '1');
+    if (DEBUG.QUEST) console.log('[GhostQueen] wasRudeToGhost flag set');
+  } catch {
+    // localStorage not available — ignore
+  }
+}
+
+// ============================================================================
 // Proximity Offer Pending (module-level flag used by dialogueHandlers.ts)
 // ============================================================================
 

@@ -605,7 +605,6 @@ class FriendshipManagerClass {
     if (!isGhostQuestActive()) return null;
 
     advanceGhostQuestToHasBook();
-    inventoryManager.removeItem('history_book', 1);
     if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Ghost Queen receives the history book.');
     return { points: 0, reaction: 'neutral', dialogueNodeId: 'ghost_deliver' };
   }
