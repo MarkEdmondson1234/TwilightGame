@@ -349,6 +349,7 @@ export const MAGICAL_INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.VERY_RARE,
     stackable: false,
     sellPrice: 500,
+    image: magicalAssets.hearthstone,
   },
 
   golden_apple: {
@@ -361,5 +362,6 @@ export const MAGICAL_INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.VERY_RARE,
     stackable: true,
     sellPrice: 300,
+    image: magicalAssets.golden_apple,
   },
 };

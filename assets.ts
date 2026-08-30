@@ -473,6 +473,8 @@ export const magicalAssets = {
   maple_leaf: '/TwilightGame/assets-optimized/items/decoration/maple_leaf.png',
   mushras_wreath: '/TwilightGame/assets-optimized/items/decoration/mushras_wreath.png',
   history_book: '/TwilightGame/assets-optimized/items/magical/quest/history_book.png',
+  golden_apple: '/TwilightGame/assets-optimized/items/magical/quest/golden_apple.png',
+  hearthstone: '/TwilightGame/assets-optimized/items/magical/quest/hearthstone.png',
 };
 
 // Potion assets - Brewed magical potions (results from brewing recipes)

@@ -114,9 +114,9 @@ const ENCYCLOPAEDIA_DATA: Record<string, EncyclopaediaEntry> = {
     itemId: 'hearthstone',
     latinName: 'Lapis focaris',
     type: 'Mineral',
-    canBeFound: 'A precious stone imbued with the essence of home — given only as a heartfelt gift.',
+    canBeFound: 'A cluster of stones from an ancient hearth, imbued with the essence of home — given only as a heartfelt gift.',
     seasonsAvailable: 'Special (gift from Mum)',
-    lore: 'Not a gemstone in any mineralogical sense, the hearthstone is formed over years of love and warmth concentrated into physical form. It is always warm to the touch, and those who hold it report a profound sense of comfort and belonging. No two hearthstones are alike — each carries the character of the home that created it. They cannot be bought, sold, or stolen; a hearthstone given grudgingly crumbles to dust. In potion-making, it anchors volatile ingredients and prevents unwanted transformations.',
+    lore: 'Not a single gemstone but a small cluster of them, gathered from the hearth of an ancient home where magic was once brewed night after night. Years of warmth, love, and simmering potions seeped into the stones themselves, leaving them always warm to the touch. Those who hold them report a profound sense of comfort and belonging. No two hearthstones are alike — each carries the character of the home that created it. They cannot be bought, sold, or stolen; a hearthstone given grudgingly crumbles to dust. In potion-making, it anchors volatile ingredients and prevents unwanted transformations.',
   },
 
   luminescent_toadstool: {
