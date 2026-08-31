@@ -15,6 +15,7 @@ import {
   isGardeningQuestActive,
   getCurrentSeasonTask,
   markSeasonCompleted,
+  hasCompletedSeason,
 } from '../data/questHandlers/gardeningQuestHandler';
 import { startFairyBluebellsQuest } from '../data/questHandlers/fairyBluebellsHandler';
 import {
@@ -649,6 +650,11 @@ function handleEliasQuestActions(nodeId: string): string | void {
           inventoryManager.removeItem('honey', 1);
           const invData = inventoryManager.getInventoryData();
           characterData.saveInventory(invData.items, invData.tools);
+          // Autumn is always the final seasonal task — check spring/summer BEFORE
+          // marking autumn complete (markSeasonCompleted already triggers the
+          // quest-completion check/chain-advance internally; checking here avoids
+          // calling that a second time and racing its async stage transition).
+          const isFinalSeason = hasCompletedSeason('spring') && hasCompletedSeason('summer');
           markSeasonCompleted('autumn');
           friendshipManager.addPoints(
             'village_elder',
@@ -657,7 +663,10 @@ function handleEliasQuestActions(nodeId: string): string | void {
           );
           if (DEBUG.QUEST)
             console.log('[dialogueHandlers] 🍯 Elias accepts your honey for autumn task!');
-          return 'garden_task_complete';
+          // Route to the one-time wrap-up node instead of the "come back next
+          // season" loop, which would otherwise imply the tutorial continues
+          // indefinitely (see garden_quest_complete).
+          return isFinalSeason ? 'garden_quest_complete' : 'garden_task_complete';
         }
       }
 
