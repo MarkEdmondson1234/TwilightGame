@@ -1333,31 +1333,52 @@ class FarmManager {
 
       // Snapshot the dirty set but DON'T clear yet — keeps protection active during async writes
       const toFlush = new Set(this.dirtySharedPlots);
+      const succeeded = new Set<string>();
 
       let written = 0;
       let cleared = 0;
+      let failed = 0;
       const now = Date.now();
       for (const plotKey of toFlush) {
         const plot = this.plots.get(plotKey);
         if (!plot || plot.state === FarmPlotState.FALLOW) {
-          await service.clearPlot(plotKey);
-          cleared++;
+          const ok = await service.clearPlot(plotKey);
+          if (ok) {
+            cleared++;
+            succeeded.add(plotKey);
+          } else {
+            failed++;
+            console.warn(`[SharedFarm] Failed to clear plot ${plotKey} — will retry next flush`);
+          }
         } else {
           const ok = await service.writePlot(plotKey, plot);
-          if (ok) written++;
-          else console.warn(`[SharedFarm] Failed to write plot ${plotKey}`);
+          if (ok) {
+            written++;
+            succeeded.add(plotKey);
+          } else {
+            failed++;
+            console.warn(`[SharedFarm] Failed to write plot ${plotKey} — will retry next flush`);
+          }
         }
-        // Track as recently flushed so we ignore Firestore echoes
-        this.recentlyFlushed.set(plotKey, now);
+        // Only suppress Firestore echoes for changes that actually reached the server —
+        // a failed write stays dirty and must still be applied when it eventually lands.
+        if (succeeded.has(plotKey)) {
+          this.recentlyFlushed.set(plotKey, now);
+        }
       }
 
-      // NOW clear only the keys we actually flushed (new dirty entries added during writes are preserved)
-      for (const plotKey of toFlush) {
+      // Only clear the keys that actually succeeded — a failed write/clear stays in
+      // dirtySharedPlots so the next flush retries it, instead of being silently dropped
+      // (new dirty entries added during writes are unaffected either way).
+      for (const plotKey of succeeded) {
         this.dirtySharedPlots.delete(plotKey);
       }
 
       if (written > 0 || cleared > 0) {
         console.log(`[SharedFarm] Flushed ${written} writes, ${cleared} clears to Firestore`);
+      }
+      if (failed > 0) {
+        console.warn(`[SharedFarm] ${failed} plot write(s) failed and will be retried`);
       }
     } catch {
       console.log('[SharedFarm] Flush failed — Firebase not available');
