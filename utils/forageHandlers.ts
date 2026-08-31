@@ -1587,36 +1587,74 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 }
 
 /**
- * Harvest blackberries from an adjacent bramble bush (summer only).
- * Returns { found: false, message: '' } if no brambles nearby — caller should continue.
- * Does not drain stamina — caller is responsible.
+ * Config for the four adjacent-bush harvests below — they were four
+ * near-identical ~35-line functions (find bush type in the surrounding
+ * 8 tiles → season check → cooldown check → random yield → grant item),
+ * differing only in the values below.
  */
-export function handleBlackberryHarvest(playerPos: Position, currentMapId: string): ForageResult {
+interface BushHarvestConfig {
+  tileType: TileType;
+  seasons: Season[];
+  itemId: string;
+  /** Lower-case plant name, for log lines only (e.g. "blackberries"). */
+  logLabel: string;
+  /** Inclusive yield range. */
+  yieldMin: number;
+  yieldMax: number;
+  outOfSeasonMessage: string;
+  successMessage: (quantity: number) => string;
+}
+
+/** Shared implementation for the four handleXHarvest functions below. */
+function harvestBush(
+  playerPos: Position,
+  currentMapId: string,
+  config: BushHarvestConfig
+): ForageResult {
   const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
     const tileData = getTileData(tile.x, tile.y);
-    if (!tileData || tileData.type !== TileType.BRAMBLES) continue;
+    if (!tileData || tileData.type !== config.tileType) continue;
 
     const { season } = TimeManager.getCurrentTime();
-    if (season !== Season.SUMMER) {
-      if (DEBUG.FORAGE) console.log(`[Forage] Brambles out of season (${season})`);
-      return { found: false, message: 'The brambles have no ripe berries yet.', outOfSeason: true };
+    if (!config.seasons.includes(season)) {
+      if (DEBUG.FORAGE) console.log(`[Forage] ${config.logLabel} bush out of season (${season})`);
+      return { found: false, message: config.outOfSeasonMessage, outOfSeason: true };
     }
 
     if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
       return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
     }
 
-    const berryYield = Math.floor(Math.random() * 5) + 3; // 3–7
-    inventoryManager.addItem('crop_blackberry', berryYield);
+    const quantity =
+      Math.floor(Math.random() * (config.yieldMax - config.yieldMin + 1)) + config.yieldMin;
+    inventoryManager.addItem(config.itemId, quantity);
     saveForageResult(currentMapId, tile.x, tile.y);
 
-    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${berryYield} blackberries`);
-    return { found: true, message: `Picked ${berryYield} blackberries!` };
+    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${quantity} ${config.logLabel}`);
+    return { found: true, message: config.successMessage(quantity) };
   }
 
   return { found: false, message: '' };
+}
+
+/**
+ * Harvest blackberries from an adjacent bramble bush (summer only).
+ * Returns { found: false, message: '' } if no brambles nearby — caller should continue.
+ * Does not drain stamina — caller is responsible.
+ */
+export function handleBlackberryHarvest(playerPos: Position, currentMapId: string): ForageResult {
+  return harvestBush(playerPos, currentMapId, {
+    tileType: TileType.BRAMBLES,
+    seasons: [Season.SUMMER],
+    itemId: 'crop_blackberry',
+    logLabel: 'blackberries',
+    yieldMin: 3,
+    yieldMax: 7,
+    outOfSeasonMessage: 'The brambles have no ripe berries yet.',
+    successMessage: (quantity) => `Picked ${quantity} blackberries!`,
+  });
 }
 
 /**
@@ -1625,35 +1663,16 @@ export function handleBlackberryHarvest(playerPos: Position, currentMapId: strin
  * Does not drain stamina — caller is responsible.
  */
 export function handleHazelnutHarvest(playerPos: Position, currentMapId: string): ForageResult {
-  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
-
-  for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
-    const tileData = getTileData(tile.x, tile.y);
-    if (!tileData || tileData.type !== TileType.HAZEL_BUSH) continue;
-
-    const { season } = TimeManager.getCurrentTime();
-    if (season !== Season.AUTUMN) {
-      if (DEBUG.FORAGE) console.log(`[Forage] Hazel bush out of season (${season})`);
-      return {
-        found: false,
-        message: 'The hazel bushes have no ripe nuts yet.',
-        outOfSeason: true,
-      };
-    }
-
-    if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
-      return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
-    }
-
-    const nutYield = Math.floor(Math.random() * 5) + 4; // 4–8
-    inventoryManager.addItem('crop_hazelnut', nutYield);
-    saveForageResult(currentMapId, tile.x, tile.y);
-
-    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${nutYield} hazelnuts`);
-    return { found: true, message: `Picked ${nutYield} hazelnuts!` };
-  }
-
-  return { found: false, message: '' };
+  return harvestBush(playerPos, currentMapId, {
+    tileType: TileType.HAZEL_BUSH,
+    seasons: [Season.AUTUMN],
+    itemId: 'crop_hazelnut',
+    logLabel: 'hazelnuts',
+    yieldMin: 4,
+    yieldMax: 8,
+    outOfSeasonMessage: 'The hazel bushes have no ripe nuts yet.',
+    successMessage: (quantity) => `Picked ${quantity} hazelnuts!`,
+  });
 }
 
 /**
@@ -1662,35 +1681,16 @@ export function handleHazelnutHarvest(playerPos: Position, currentMapId: string)
  * Does not drain stamina — caller is responsible.
  */
 export function handleBlueberryHarvest(playerPos: Position, currentMapId: string): ForageResult {
-  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
-
-  for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
-    const tileData = getTileData(tile.x, tile.y);
-    if (!tileData || tileData.type !== TileType.BLUEBERRY_BUSH) continue;
-
-    const { season } = TimeManager.getCurrentTime();
-    if (season !== Season.SUMMER && season !== Season.AUTUMN) {
-      if (DEBUG.FORAGE) console.log(`[Forage] Blueberry bush out of season (${season})`);
-      return {
-        found: false,
-        message: 'The blueberry bushes have no ripe berries yet.',
-        outOfSeason: true,
-      };
-    }
-
-    if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
-      return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
-    }
-
-    const berryYield = Math.floor(Math.random() * 4) + 3; // 3–6
-    inventoryManager.addItem('crop_blueberry', berryYield);
-    saveForageResult(currentMapId, tile.x, tile.y);
-
-    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${berryYield} blueberries`);
-    return { found: true, message: `Picked ${berryYield} blueberries!` };
-  }
-
-  return { found: false, message: '' };
+  return harvestBush(playerPos, currentMapId, {
+    tileType: TileType.BLUEBERRY_BUSH,
+    seasons: [Season.SUMMER, Season.AUTUMN],
+    itemId: 'crop_blueberry',
+    logLabel: 'blueberries',
+    yieldMin: 3,
+    yieldMax: 6,
+    outOfSeasonMessage: 'The blueberry bushes have no ripe berries yet.',
+    successMessage: (quantity) => `Picked ${quantity} blueberries!`,
+  });
 }
 
 /**
@@ -1699,33 +1699,14 @@ export function handleBlueberryHarvest(playerPos: Position, currentMapId: string
  * Does not drain stamina — caller is responsible.
  */
 export function handleRedBerryHarvest(playerPos: Position, currentMapId: string): ForageResult {
-  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
-
-  for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
-    const tileData = getTileData(tile.x, tile.y);
-    if (!tileData || tileData.type !== TileType.BUSH) continue;
-
-    const { season } = TimeManager.getCurrentTime();
-    if (season !== Season.AUTUMN) {
-      if (DEBUG.FORAGE) console.log(`[Forage] Hawthorn bush out of season (${season})`);
-      return {
-        found: false,
-        message: 'The hawthorn bush has no ripe berries yet.',
-        outOfSeason: true,
-      };
-    }
-
-    if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
-      return { found: false, message: "You've already picked from this bush. Come back tomorrow!" };
-    }
-
-    const berryYield = Math.floor(Math.random() * 4) + 3; // 3–6
-    inventoryManager.addItem('red_berries', berryYield);
-    saveForageResult(currentMapId, tile.x, tile.y);
-
-    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${berryYield} red berries`);
-    return { found: true, message: `Picked ${berryYield} red berries!` };
-  }
-
-  return { found: false, message: '' };
+  return harvestBush(playerPos, currentMapId, {
+    tileType: TileType.BUSH,
+    seasons: [Season.AUTUMN],
+    itemId: 'red_berries',
+    logLabel: 'red berries',
+    yieldMin: 3,
+    yieldMax: 6,
+    outOfSeasonMessage: 'The hawthorn bush has no ripe berries yet.',
+    successMessage: (quantity) => `Picked ${quantity} red berries!`,
+  });
 }
