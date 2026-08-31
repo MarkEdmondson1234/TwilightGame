@@ -12,6 +12,7 @@ import { findTileTypeNearby } from '../../mapUtils';
 import { gameState } from '../../../GameState';
 import { inventoryManager } from '../../inventoryManager';
 import { magicalAssets } from '../../../assets';
+import { Season, TimeManager } from '../../TimeManager';
 
 /**
  * Handle interacting with a pile of leaves — either tidying (no reward) or picking up (gives maple_leaf).
@@ -34,6 +35,17 @@ function handleLeavesAction(
 export function leafPileProvider(ctx: InteractionContext): AvailableInteraction[] {
   const { currentMapId, tileX, tileY } = ctx;
   const interactions: AvailableInteraction[] = [];
+
+  // Leaf piles are placed as static map tiles that persist year-round, but their
+  // sprite is only drawn in autumn (data/tiles.ts seasonalImages — every other
+  // season is an explicit empty array, so SpriteLayer renders nothing and the
+  // grass baseType shows through). That made them invisible-but-still-clickable
+  // outside autumn — clicking the empty grass where a pile used to be still
+  // offered Tidy Up / Pick Up (issue #22). Gate the interaction to autumn too,
+  // matching the sprite's own seasonal dormancy.
+  if (!TimeManager.isCurrentSeason(Season.AUTUMN)) {
+    return interactions;
+  }
 
   // Check for leaf pile interactions (tidy up or pick up — autumn decorative tile)
   const nearLeaves = findTileTypeNearby(tileX, tileY, [TileType.PILE_OF_LEAVES]);
