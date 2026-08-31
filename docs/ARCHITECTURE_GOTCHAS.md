@@ -318,13 +318,43 @@ magnify with the browser like everything else. Guarded by [`tests/viewportZoom.t
 Note `useBrowserZoomLock` only blocks Ctrl/⌘ + scroll / +/-/0 — the browser's View→Zoom menu and
 persisted per-site zoom still apply, so this path has to be correct.
 
+### Maps not filling the screen at some aspect ratios
+
+Two independent fits used to be **contain** (fit fully inside, gap on the axis with room to
+spare) instead of **cover** (fill both axes, crop the overflow) — at a viewport aspect ratio
+that didn't match the map/reference, the game's own background colour showed through the gap.
+
+- **Tiled rooms**: `useCamera`'s "map smaller than the effective viewport" branch centred the
+  map with empty space on the sides instead of scaling up to cover. Fix:
+  [`getCoverZoom`](../hooks/usePinchZoom.ts) computes the minimum zoom needed to guarantee
+  coverage for the current map + viewport; `App.tsx` feeds it in as the **pinch-zoom minimum**
+  (`getZoomLimitsForRoom`'s `coverZoom` param), so the same `zoom` value that drives the CSS
+  `scale()` transform is also what `useCamera` uses for its math — they can never disagree.
+  `useCamera`'s existing follow-the-player logic (unchanged) then naturally pans the cropped
+  view with the player instead of it sitting static. The axis that determined `coverZoom` is an
+  exact tie (zero pan room, by definition of "just barely covers") — only the other axis has
+  slack to pan on; see [`tests/cameraCoverage.test.ts`](../tests/cameraCoverage.test.ts).
+- **Background-image rooms**: `calculateViewportScale` (`hooks/useViewportScale.ts`) now takes a
+  `fitMode: 'contain' | 'cover'` param (default stays `'contain'` — only `App.tsx`'s
+  `viewportScale` memo passes `'cover'`). These rooms still don't pan with the player — that's a
+  deliberate, larger follow-up left out of the initial fix (see `docs/ARCHITECTURE_GOTCHAS.md`
+  Common mistake #4 below; introducing panning here would touch the click-coordinate pipeline
+  this whole section is about, and needs live-browser verification).
+
+Guarded by [`tests/mapFillsScreen.test.ts`](../tests/mapFillsScreen.test.ts) and
+[`tests/cameraCoverage.test.ts`](../tests/cameraCoverage.test.ts).
+
 ### Common mistakes
 
 1. **Forgetting zoom in gridOffset** — see Section 1
 2. **Placing NPCs using pixel coordinates** — NPCs use tile coordinates, not pixels
 3. **Testing only at zoom=1** — offset bugs only manifest when zoomed
-4. **Assuming camera works the same** — background-image rooms don't scroll; camera is effectively fixed
+4. **Assuming camera works the same** — background-image rooms don't scroll or pan with the
+   player (unlike tiled rooms — see "Maps not filling the screen" above); camera is effectively fixed
 5. **Deriving interior sizes from raw `innerWidth`** — factor out browser zoom (see above) or interiors won't match tiled rooms
+6. **Using `calculateViewportScale`'s default (contain) when you actually need cover** — contain
+   leaves a gap on the axis with room to spare; pass `fitMode: 'cover'` explicitly when the goal
+   is to fill the viewport with no gaps, cropping overflow instead
 
 ---
 

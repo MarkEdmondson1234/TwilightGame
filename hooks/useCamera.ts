@@ -21,6 +21,12 @@ interface CameraPosition {
  * Hook for camera positioning logic
  * Centers small maps, follows player on large maps
  * Accounts for zoom — at zoom 2x the effective viewport is half the screen size
+ *
+ * `zoom` is expected to already be at least whatever getCoverZoom
+ * (hooks/usePinchZoom.ts) requires for the current map/viewport — App.tsx
+ * enforces that as the pinch-zoom minimum. Given that, mapPixelWidth/Height
+ * should never actually be smaller than the effective viewport below; the
+ * "centre it" branches are a defensive fallback only (issue #26).
  */
 export function useCamera(config: CameraConfig): CameraPosition {
   const {
@@ -44,7 +50,7 @@ export function useCamera(config: CameraConfig): CameraPosition {
     let cameraY: number;
 
     // If map is smaller than effective viewport, center it
-    if (mapPixelWidth < effectiveWidth) {
+    if (mapPixelWidth <= effectiveWidth) {
       cameraX = -(effectiveWidth - mapPixelWidth) / 2;
     } else {
       // Otherwise follow player
@@ -54,7 +60,7 @@ export function useCamera(config: CameraConfig): CameraPosition {
       );
     }
 
-    if (mapPixelHeight < effectiveHeight) {
+    if (mapPixelHeight <= effectiveHeight) {
       cameraY = -(effectiveHeight - mapPixelHeight) / 2;
     } else {
       cameraY = Math.min(
