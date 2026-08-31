@@ -12,6 +12,7 @@ import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
+import SplashScreen from './components/SplashScreen';
 import TouchControls from './components/TouchControls';
 import UnifiedDialogueBox from './components/dialogue/UnifiedDialogueBox';
 import HelpBrowser from './components/HelpBrowser';
@@ -172,6 +173,12 @@ import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
   const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen } = useUIState();
+
+  // Title screen shown before anything else. Purely a UI gate — game asset
+  // loading (the effect a few lines below) already starts on mount regardless,
+  // so by the time the player clicks Play a returning session may already be
+  // ready to go straight into gameplay.
+  const [showSplashScreen, setShowSplashScreen] = useState(true);
 
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [mapErrors, setMapErrors] = useState<MapValidationError[]>([]); // Map validation errors to display
@@ -1770,6 +1777,13 @@ const App: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // Title screen — shown first, ahead of map/asset loading (which is already
+  // running in the background regardless). Map validation errors above still
+  // take priority so a developer sees them immediately without an extra click.
+  if (showSplashScreen) {
+    return <SplashScreen onPlay={() => setShowSplashScreen(false)} />;
   }
 
   // Loading screen: show cutscene if active, otherwise simple text
