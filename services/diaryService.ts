@@ -323,6 +323,12 @@ export async function recordConversation(
 /**
  * Record a scripted (non-AI) dialogue exchange.
  * Always stores as raw transcript since there's no AI to summarise.
+ *
+ * Skips logging entirely when this exchange is word-for-word identical to the
+ * most recent prior day's entry for this NPC — many NPCs fall back to the same
+ * repeated line once they have no new dialogue for the day, and logging that
+ * verbatim repeat every single day would clutter the diary with duplicates
+ * (issue #18). A genuinely new exchange (even to the same NPC) still logs.
  */
 export async function recordScriptedConversation(
   npcId: string,
@@ -340,6 +346,15 @@ export async function recordScriptedConversation(
   const existingIndex = entries.findIndex(
     (e) => e.npcId === npcId && e.totalDays === gameTime.totalDays
   );
+
+  if (existingIndex < 0) {
+    const mostRecentPrior = entries
+      .filter((e) => e.npcId === npcId && e.totalDays < gameTime.totalDays)
+      .sort((a, b) => b.totalDays - a.totalDays)[0];
+    if (mostRecentPrior && mostRecentPrior.rawExchanges.endsWith(newExchange)) {
+      return;
+    }
+  }
 
   let entry: DiaryEntry;
 
