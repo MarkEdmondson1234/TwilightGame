@@ -324,7 +324,7 @@ See [`resources/reference.md`](resources/reference.md) for:
 ## Notes
 
 - Audio loads in background (non-blocking)
-- Mobile Safari requires user gesture to start AudioContext (useAudio handles this)
+- Mobile Safari requires user gesture to start AudioContext (the resume-on-gesture effect in `useEnvironmentController.ts` handles this)
 - M4A format recommended for quality/size balance
 - Use DevTools to experiment, then copy code snippets
 - **Common mistake**: Registering sounds but forgetting to wire them up!

@@ -191,6 +191,17 @@ The "Enter Game" overlay renders AFTER the game world is fully initialized. This
 
 ## 4. Ambient Audio and React Effect Lifecycle
 
+### Silent on first load — AudioContext autoplay policy
+
+Browsers suspend a newly created `AudioContext` until a user gesture explicitly
+resumes it. `audioManager.playAmbient()` queues/starts ambient sources with no
+gesture check, so a freshly created context schedules an audible-looking source
+that produces no sound. `useEnvironmentController.ts` resumes the context on the
+player's first `click`/`touchstart`/`keydown` — if that resume-on-gesture effect
+is ever removed without a replacement, ambient audio goes silent on first load
+again, only "starting" once some *unrelated* click/keypress elsewhere happens to
+satisfy the browser's own gesture-detection heuristic.
+
 ### Each ambient sound owns its own effect
 
 The audio system uses separate `useEffect` hooks for each ambient category:
