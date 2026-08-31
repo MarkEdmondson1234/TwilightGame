@@ -441,8 +441,10 @@ const App: React.FC = () => {
     teleportPlayer(spawn);
     lastTransitionTime.current = Date.now();
 
-    // End Yule celebration BEFORE updating the NPC manager's map, so that
-    // removeDynamicNPC() still targets 'village' (its currentMapId at this point).
+    // End Yule celebration when leaving the village mid-timer. Note transitionToMap()
+    // above already moved npcManager's currentMapId to the destination (MapManager.loadMap
+    // updates it as soon as the map loads) — forceEnd() cleans up village NPCs by explicit
+    // map id (YULE_MAP_ID), not currentMapId, so this doesn't need to run before that call.
     if (map.id !== 'village' && yuleCelebrationManager.isActive()) {
       yuleCelebrationManager.forceEnd();
     }
@@ -503,7 +505,12 @@ const App: React.FC = () => {
 
     // Handle Yule celebration opening cutscene completion
     if (action.cutsceneId === YULE_CUTSCENE_ID) {
-      yuleCelebrationManager.onCutsceneComplete();
+      // Nudge the player out of the way if they're standing where an event NPC
+      // is about to be placed, so they can't end up trapped inside one (#27).
+      const safePlayerPosition = yuleCelebrationManager.onCutsceneComplete(playerPos);
+      if (safePlayerPosition) {
+        teleportPlayer(safePlayerPosition);
+      }
     }
 
     // Handle fairy queen cutscene completions

@@ -11,6 +11,7 @@
  * - Ends with a screen blackout and NPC restoration
  */
 
+import type { Position } from '../types';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
@@ -50,11 +51,55 @@ interface CelebrationState {
   startTime: number;
   year: number;
   npcWishes: Record<string, string>; // celebrationId -> itemId
-  giftsReceived: Set<string>;        // celebrationIds who have received a gift
+  giftsReceived: Set<string>; // celebrationIds who have received a gift
 }
 
 interface PersistedData {
   celebratedYears: number[];
+}
+
+// ============================================================================
+// Player clearance (issue #27 — player must not end up trapped inside an
+// NPC placed for the celebration)
+// ============================================================================
+
+/** Minimum distance (tiles) the player must be from a Yule NPC's celebration tile. */
+const YULE_PLAYER_CLEARANCE = 1.2;
+
+function distance(a: Position, b: Position): number {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+/**
+ * If the player's current position is too close to one of the positions Yule
+ * NPCs are about to occupy, find the nearest clear tile to nudge them to.
+ * Returns null if the player's current position is already clear (the common case).
+ *
+ * Searches outward in square rings from the player's own position so the nudge
+ * is always the smallest one that clears every occupied tile.
+ */
+export function findSafePlayerPosition(
+  playerPosition: Position,
+  occupiedPositions: Position[]
+): Position | null {
+  const isTooClose = (pos: Position) =>
+    occupiedPositions.some((occupied) => distance(pos, occupied) < YULE_PLAYER_CLEARANCE);
+
+  if (!isTooClose(playerPosition)) return null;
+
+  const MAX_SEARCH_RADIUS = 6;
+  for (let radius = 1; radius <= MAX_SEARCH_RADIUS; radius++) {
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue; // ring only, nearest first
+        const candidate = { x: playerPosition.x + dx, y: playerPosition.y + dy };
+        if (!isTooClose(candidate)) return candidate;
+      }
+    }
+  }
+  // Effectively unreachable (would need 7 NPCs to blanket a 13x13 area), but
+  // never leave the player stuck with no fallback.
+  return null;
 }
 
 // ============================================================================
@@ -127,12 +172,27 @@ class YuleCelebrationManagerClass {
   /**
    * Called by App.tsx when the Yule celebration cutscene finishes.
    * Moves NPCs to celebration positions, gives Mum's Yule log, starts timer.
+   *
+   * Pass the player's current position to have the player nudged out of the way
+   * if it's too close to a tile an NPC is about to be placed on (issue #27 — the
+   * player must not end up trapped inside an NPC's collision box). Returns the
+   * safe position to teleport the player to, or null if no nudge is needed.
    */
-  onCutsceneComplete(): void {
-    if (!this.state) return;
+  onCutsceneComplete(playerPosition?: Position): Position | null {
+    if (!this.state) return null;
 
     this.state.isActive = true;
     this.state.startTime = Date.now();
+
+    // Check the player isn't standing where an NPC is about to be placed BEFORE
+    // placing any of them, so the returned position is always safe by the time
+    // the caller acts on it.
+    const safePlayerPosition = playerPosition
+      ? findSafePlayerPosition(
+          playerPosition,
+          YULE_NPC_CONFIGS.map((config) => config.position)
+        )
+      : null;
 
     // Place dynamic festival NPCs on the village map
     this.placeFestivalNPCs();
@@ -176,6 +236,8 @@ class YuleCelebrationManagerClass {
 
     this.startTimer();
     console.log('[YuleCelebration] Celebration started — 10 minutes on the clock!');
+
+    return safePlayerPosition;
   }
 
   private placeFestivalNPCs(): void {
@@ -328,7 +390,7 @@ class YuleCelebrationManagerClass {
       // Remove dynamic festival NPCs
       for (const config of YULE_NPC_CONFIGS) {
         if (config.isDynamic) {
-          npcManager.removeDynamicNPC(config.celebrationId);
+          npcManager.removeDynamicNPC(config.celebrationId, YULE_MAP_ID);
         }
       }
 
@@ -359,8 +421,13 @@ class YuleCelebrationManagerClass {
 
   /**
    * Force-end the celebration immediately (e.g. player leaves the village).
-   * Skips the blackout animation and cleans up NPCs synchronously so that
-   * npcManager.currentMapId is still 'village' at the time of removal.
+   * Skips the blackout animation and cleans up NPCs synchronously.
+   *
+   * removeDynamicNPC() is passed YULE_MAP_ID explicitly rather than relying on
+   * npcManager's "current" map — MapManager.loadMap() sets that as soon as a map
+   * transition starts (before the caller here gets to run), so by the time this is
+   * invoked from App.tsx's handleMapTransition, currentMapId is already the
+   * destination map, not 'village'. See NPCManager.removeDynamicNPC/clearEventOverrides.
    */
   forceEnd(): void {
     if (!this.state) return;
@@ -373,7 +440,7 @@ class YuleCelebrationManagerClass {
     // Remove dynamic festival NPCs immediately (currentMapId is still 'village')
     for (const config of YULE_NPC_CONFIGS) {
       if (config.isDynamic) {
-        npcManager.removeDynamicNPC(config.celebrationId);
+        npcManager.removeDynamicNPC(config.celebrationId, YULE_MAP_ID);
       }
     }
 
