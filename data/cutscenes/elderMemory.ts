@@ -92,7 +92,7 @@ export const elderMemoryCutscene: CutsceneDefinition = {
       ],
       dialogue: {
         speaker: 'Village Elder',
-        text: 'I was but a young lad then, lying beneath the cherry tree, dreaming of adventures beyond the village. Time moves swiftly, traveller.',
+        text: 'I was but a young lad then, lying beneath the cherry tree, dreaming of adventures beyond the village. Time moves swiftly, young one.',
       },
       transitionOut: {
         type: 'fade',
