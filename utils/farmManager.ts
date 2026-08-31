@@ -31,6 +31,10 @@ class FarmManager {
   private dirtySharedPlots: Set<string> = new Set(); // plot keys that need Firestore write
   private recentlyFlushed: Map<string, number> = new Map(); // plot key → flush timestamp
   private flushInterval: ReturnType<typeof setInterval> | null = null;
+
+  // Last-observed growth stage per growing plot, used by checkGrowthStageTransitions()
+  // to detect sub-stage crossings (see that method for why this exists).
+  private lastKnownGrowthStages: Map<string, CropGrowthStage> = new Map();
   private sharedListenerUnsub: (() => void) | null = null;
 
   /**
@@ -935,6 +939,37 @@ class FarmManager {
       return CropGrowthStage.YOUNG;
     } else {
       return CropGrowthStage.ADULT;
+    }
+  }
+
+  /**
+   * Detect growth-stage sub-boundary crossings (seedling→young→adult) for every
+   * growing plot and emit FARM_CROP_GREW for each one that changed since the
+   * last check.
+   *
+   * getGrowthStage() computes stage live from elapsed time, but crossing a
+   * sub-stage boundary is NOT a plot state transition (PLANTED/WATERED/READY —
+   * the only things that emit FARM_PLOT_CHANGED and trigger a tile re-render).
+   * For a fast-growing crop the seedling window can be as short as ~30 real
+   * seconds; if nothing else happens to trigger a re-render during that window,
+   * the seedling sprite is skipped entirely and the plot appears to jump
+   * straight from bare soil to young/adult (issue #16). Call this periodically
+   * (see useEnvironmentController.ts) to guarantee one eventually fires.
+   */
+  checkGrowthStageTransitions(): void {
+    const growingStates = new Set([FarmPlotState.PLANTED, FarmPlotState.WATERED]);
+
+    for (const plot of this.plots.values()) {
+      if (!growingStates.has(plot.state) || !plot.cropType) continue;
+
+      const key = this.getPlotKey(plot.mapId, plot.position);
+      const stage = this.getGrowthStage(plot);
+      const previous = this.lastKnownGrowthStages.get(key);
+      this.lastKnownGrowthStages.set(key, stage);
+
+      if (previous !== undefined && previous !== stage) {
+        eventBus.emit(GameEvent.FARM_CROP_GREW, { position: plot.position, stage });
+      }
     }
   }
 

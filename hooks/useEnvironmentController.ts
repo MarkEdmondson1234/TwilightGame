@@ -25,6 +25,7 @@ import { mapManager } from '../maps/MapManager';
 import { npcManager } from '../NPCManager';
 import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 import { eventChainManager } from '../utils/EventChainManager';
+import { farmManager } from '../utils/farmManager';
 import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
 import type { WeatherLayer } from '../utils/pixi/WeatherLayer';
@@ -714,6 +715,11 @@ export function useEnvironmentController(
       // Auto-advance event chain stages that have waited long enough
       // (waitDays stages with no player choices — see EventChainManager.checkAutoAdvance)
       eventChainManager.checkAutoAdvance();
+
+      // Catch crop growth-stage sub-boundary crossings (seedling→young→adult)
+      // that no discrete plot-state-change event covers — see
+      // FarmManager.checkGrowthStageTransitions (issue #16).
+      farmManager.checkGrowthStageTransitions();
     }, 10000); // Check every 10 seconds
 
     return () => clearInterval(interval);
