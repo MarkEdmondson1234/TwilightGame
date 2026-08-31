@@ -35,6 +35,11 @@ export function fruitTreeProvider(ctx: InteractionContext): AvailableInteraction
         label: 'Prune Tree',
         icon: '✂️',
         color: '#6B7280',
+        // Fruit tree care is usually the ONLY interaction available near the
+        // tree, which would otherwise auto-execute the click with no radial
+        // menu shown at all — looking, to the player, exactly like the option
+        // is "missing" (issue #24). Force the menu so it's always visible.
+        requireConfirmation: true,
         execute: () => {
           fruitTreeManager.pruneTree(currentMapId, tx, ty);
           onFarmAction?.({ handled: true, message: 'You pruned the apple tree.' });
@@ -48,6 +53,7 @@ export function fruitTreeProvider(ctx: InteractionContext): AvailableInteraction
         label: 'Mulch Tree',
         icon: '🌱',
         color: '#78350F',
+        requireConfirmation: true,
         execute: () => {
           fruitTreeManager.mulchTree(currentMapId, tx, ty);
           onFarmAction?.({ handled: true, message: 'You mulched around the apple tree.' });
@@ -61,6 +67,7 @@ export function fruitTreeProvider(ctx: InteractionContext): AvailableInteraction
         label: 'Harvest Apples',
         icon: '🍎',
         color: '#DC2626',
+        requireConfirmation: true,
         execute: () => {
           const wasAbundant = fruitTreeManager.isAbundant(currentMapId, tx, ty);
           const result = fruitTreeManager.harvestTree(currentMapId, tx, ty);
