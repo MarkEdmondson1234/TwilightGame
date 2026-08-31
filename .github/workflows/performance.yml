@@ -11,6 +11,10 @@ concurrency:
   group: perf-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: write # "Comment on PR" step posts/updates the performance report
+
 jobs:
   performance:
     runs-on: ubuntu-latest
