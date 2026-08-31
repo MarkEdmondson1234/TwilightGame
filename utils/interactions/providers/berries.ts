@@ -7,14 +7,27 @@
 
 import type { AvailableInteraction, InteractionContext } from '../types';
 import { TileType } from '../../../types';
-import { getTileData } from '../../mapUtils';
+import { findTileTypeNearby } from '../../mapUtils';
 import { groceryAssets, itemAssets, magicalAssets } from '../../../assets';
-import { handleBlackberryHarvest, handleBlueberryHarvest, handleForageAction, handleHazelnutHarvest, handleRedBerryHarvest } from '../../forageHandlers';
+import {
+  handleBlackberryHarvest,
+  handleBlueberryHarvest,
+  handleForageAction,
+  handleHazelnutHarvest,
+  handleRedBerryHarvest,
+} from '../../forageHandlers';
 import { staminaManager } from '../../StaminaManager';
+import { Season, TimeManager } from '../../TimeManager';
 
 export function berryProvider(ctx: InteractionContext): AvailableInteraction[] {
   const { position, currentMapId, onForage, tileX, tileY, tileData } = ctx;
   const interactions: AvailableInteraction[] = [];
+
+  // Each harvest handler below (handleBlackberryHarvest etc.) already rejects an
+  // out-of-season pick with a "not ripe yet" message, but this provider offered
+  // the radial-menu option year-round regardless — the option itself was the bug
+  // (issue #20), not the harvest. Gate each one to match its handler's season.
+  const currentSeason = TimeManager.getCurrentTime().season;
 
   // Check for wild strawberry harvesting
   // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
@@ -31,25 +44,15 @@ export function berryProvider(ctx: InteractionContext): AvailableInteraction[] {
     });
   }
 
-  // Check for blackberry harvesting from adjacent brambles
-  // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
-  const adjacentTiles = [
-    { x: tileX - 1, y: tileY },
-    { x: tileX + 1, y: tileY },
-    { x: tileX, y: tileY - 1 },
-    { x: tileX, y: tileY + 1 },
-    { x: tileX - 1, y: tileY - 1 },
-    { x: tileX + 1, y: tileY - 1 },
-    { x: tileX - 1, y: tileY + 1 },
-    { x: tileX + 1, y: tileY + 1 },
-  ];
+  // Check for blackberry/hazelnut/blueberry/hawthorn harvesting from a bush at or
+  // adjacent to the click. findTileTypeNearby's radius=1 search includes the
+  // clicked tile itself as well as its 8 neighbours — a hand-rolled version of
+  // this used to check only the 8 neighbours, so clicking directly on the bush's
+  // own anchor tile never matched (only clicking one tile away from it did),
+  // making the click hitbox appear offset from the visible sprite (issue #21).
+  const hasBrambles = findTileTypeNearby(tileX, tileY, [TileType.BRAMBLES], 1).found;
 
-  const hasBrambles = adjacentTiles.some((tile) => {
-    const adjacentTileData = getTileData(tile.x, tile.y);
-    return adjacentTileData && adjacentTileData.type === TileType.BRAMBLES;
-  });
-
-  if (hasBrambles) {
+  if (hasBrambles && currentSeason === Season.SUMMER) {
     interactions.push({
       type: 'harvest_blackberry',
       label: 'Pick Blackberries',
@@ -65,12 +68,9 @@ export function berryProvider(ctx: InteractionContext): AvailableInteraction[] {
 
   // Check for hazelnut harvesting from adjacent hazel bushes
   // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
-  const hasHazelBush = adjacentTiles.some((tile) => {
-    const adjacentTileData = getTileData(tile.x, tile.y);
-    return adjacentTileData && adjacentTileData.type === TileType.HAZEL_BUSH;
-  });
+  const hasHazelBush = findTileTypeNearby(tileX, tileY, [TileType.HAZEL_BUSH], 1).found;
 
-  if (hasHazelBush) {
+  if (hasHazelBush && currentSeason === Season.AUTUMN) {
     interactions.push({
       type: 'harvest_hazelnut',
       label: 'Pick Hazelnuts',
@@ -86,12 +86,9 @@ export function berryProvider(ctx: InteractionContext): AvailableInteraction[] {
 
   // Check for blueberry harvesting from adjacent blueberry bushes
   // Allow picking with any tool or no tool (mouse click works regardless of equipped tool)
-  const hasBlueberryBush = adjacentTiles.some((tile) => {
-    const adjacentTileData = getTileData(tile.x, tile.y);
-    return adjacentTileData && adjacentTileData.type === TileType.BLUEBERRY_BUSH;
-  });
+  const hasBlueberryBush = findTileTypeNearby(tileX, tileY, [TileType.BLUEBERRY_BUSH], 1).found;
 
-  if (hasBlueberryBush) {
+  if (hasBlueberryBush && (currentSeason === Season.SUMMER || currentSeason === Season.AUTUMN)) {
     interactions.push({
       type: 'harvest_blueberry',
       label: 'Pick Blueberries',
@@ -106,12 +103,9 @@ export function berryProvider(ctx: InteractionContext): AvailableInteraction[] {
   }
 
   // Check for red berry harvesting from adjacent hawthorn bushes (autumn only)
-  const hasHawthornBush = adjacentTiles.some((tile) => {
-    const adjacentTileData = getTileData(tile.x, tile.y);
-    return adjacentTileData && adjacentTileData.type === TileType.BUSH;
-  });
+  const hasHawthornBush = findTileTypeNearby(tileX, tileY, [TileType.BUSH], 1).found;
 
-  if (hasHawthornBush) {
+  if (hasHawthornBush && currentSeason === Season.AUTUMN) {
     interactions.push({
       type: 'harvest_red_berries',
       label: 'Pick Red Berries',
