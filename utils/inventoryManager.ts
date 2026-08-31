@@ -800,16 +800,6 @@ class InventoryManager {
     this.addItem('seed_tomato', 8);
     this.addItem('seed_salad', 20);
 
-    // DEV: Testing magical crops (quest-locked in production)
-    this.addItem('seed_fairy_bluebell', 5);
-
-    // DEV: Wreath workshop test materials (TODO: remove after testing)
-    this.addItem('maple_leaf', 10);
-    this.addItem('straw', 15);
-    this.addItem('crop_lavender', 5);
-    this.addItem('red_berries', 6);
-    this.addItem('heather_sprig', 8);
-
     // Start with some harvested crops/materials
     this.addItem('crop_blackberry', 12); // Wild berries
     this.addItem('crop_radish', 5);
@@ -817,36 +807,6 @@ class InventoryManager {
     // Start with cooking ingredients for tea (starter recipe)
     this.addItem('tea_leaves', 5);
     this.addItem('water', 10);
-
-    // DEV: Add all grocery ingredients for testing
-    this.addItem('milk', 1);
-    this.addItem('cream', 1);
-    this.addItem('butter', 1);
-    this.addItem('cheese', 1);
-    this.addItem('egg', 1);
-    this.addItem('flour', 1);
-    this.addItem('sugar', 1);
-    this.addItem('salt', 1);
-    this.addItem('yeast', 1);
-    this.addItem('olive_oil', 1);
-    this.addItem('vanilla', 1);
-    this.addItem('cinnamon', 1);
-    this.addItem('meat', 1);
-    this.addItem('minced_meat', 1);
-    this.addItem('pasta', 1);
-    this.addItem('bread', 1);
-    this.addItem('chocolate', 1);
-    this.addItem('almonds', 1);
-    this.addItem('strawberry_jam', 1);
-    this.addItem('basil', 1);
-    this.addItem('thyme', 1);
-    this.addItem('allspice', 1);
-    this.addItem('curry_powder', 1);
-    this.addItem('baking_powder', 1);
-    this.addItem('cocoa_powder', 1);
-    this.addItem('rice', 1);
-    this.addItem('tomato_tin', 1);
-    this.addItem('crop_tomato', 1);
   }
 }
 
