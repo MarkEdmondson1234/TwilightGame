@@ -75,6 +75,46 @@ export interface UseEnvironmentControllerReturn {
 }
 
 // ============================================================================
+// Audio Unlock Helper (pure — exported for testing)
+// ============================================================================
+
+/**
+ * Attaches one-shot click/touchstart/keydown listeners to `target` that call
+ * `onResume` the first time any of them fires, then remove themselves. Used to
+ * resume a suspended AudioContext on the player's first gesture (issue #15) —
+ * see the "Audio Unlock" effect below for why this is needed.
+ *
+ * Returns a cleanup function that removes the listeners without firing `onResume`
+ * (for the React effect's unmount case).
+ */
+export function attachAudioUnlockListeners(
+  target: Pick<Document, 'addEventListener' | 'removeEventListener'>,
+  onResume: () => void
+): () => void {
+  let resumed = false;
+
+  const handleInteraction = () => {
+    if (resumed) return;
+    resumed = true;
+    onResume();
+    target.removeEventListener('click', handleInteraction);
+    target.removeEventListener('touchstart', handleInteraction);
+    target.removeEventListener('keydown', handleInteraction);
+  };
+
+  target.addEventListener('click', handleInteraction);
+  // passive: true avoids blocking touch for 100-300ms on iOS
+  target.addEventListener('touchstart', handleInteraction, { passive: true });
+  target.addEventListener('keydown', handleInteraction);
+
+  return () => {
+    target.removeEventListener('click', handleInteraction);
+    target.removeEventListener('touchstart', handleInteraction);
+    target.removeEventListener('keydown', handleInteraction);
+  };
+}
+
+// ============================================================================
 // Hook Implementation
 // ============================================================================
 
@@ -91,6 +131,18 @@ export function useEnvironmentController(
     weatherLayerRef,
     onShowToast,
   } = props;
+
+  // -------------------------------------------------------------------------
+  // Audio Unlock (browser autoplay policy)
+  // -------------------------------------------------------------------------
+  // Browsers suspend a newly created AudioContext until a user gesture resumes
+  // it. audioManager.playAmbient() queues/starts ambient sources unconditionally
+  // with no gesture check, so without this, ambient audio is silent on first
+  // load — it only "starts working" once some unrelated click/keypress elsewhere
+  // happens to satisfy the browser's own gesture-detection heuristic (issue #15).
+  useEffect(() => {
+    return attachAudioUnlockListeners(document, () => audioManager.resume());
+  }, []);
 
   // -------------------------------------------------------------------------
   // Weather State Management
