@@ -40,10 +40,15 @@ export interface MessPilePosition {
   description: string;
 }
 
+// NOTE: pile 0's artwork (shed_interior_mess1.png) is actually painted on the
+// right of the shed backdrop, and pile 2's artwork (shed_interior_mess3.png)
+// on the left — the opposite of what their ids would suggest. relativeX below
+// is calibrated to where the clutter is actually drawn, not to the id order,
+// so clicking a pile clears the pile that's visibly there.
 export const MESS_PILE_POSITIONS: MessPilePosition[] = [
-  { id: 0, relativeX: 0.20, relativeY: 0.47, radius: 0.12, description: 'Left floor pile' },
+  { id: 0, relativeX: 0.8, relativeY: 0.47, radius: 0.12, description: 'Right floor pile' },
   { id: 1, relativeX: 0.49, relativeY: 0.47, radius: 0.12, description: 'Centre floor pile' },
-  { id: 2, relativeX: 0.80, relativeY: 0.47, radius: 0.12, description: 'Right floor pile' },
+  { id: 2, relativeX: 0.2, relativeY: 0.47, radius: 0.12, description: 'Left floor pile' },
 ];
 
 // ============================================================================
@@ -174,7 +179,8 @@ export function checkShedComplete(): void {
 
     // Advance quest
     eventChainManager.advanceToStage(QUEST_ID, 'blanket_obtained');
-    if (DEBUG.QUEST) console.log('[MrFoxPicnic] Shed clean — blanket awarded, advancing to blanket_obtained');
+    if (DEBUG.QUEST)
+      console.log('[MrFoxPicnic] Shed clean — blanket awarded, advancing to blanket_obtained');
   }
 }
 
@@ -192,7 +198,8 @@ export function handleBlanketGiven(): void {
   eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'remove', itemId: 'quest_picnic_blanket' });
 
   eventChainManager.advanceToStage(QUEST_ID, 'cooking_problem');
-  if (DEBUG.QUEST) console.log('[MrFoxPicnic] Blanket given to Mr Fox, advancing to cooking_problem');
+  if (DEBUG.QUEST)
+    console.log('[MrFoxPicnic] Blanket given to Mr Fox, advancing to cooking_problem');
 }
 
 // ============================================================================
@@ -270,9 +277,9 @@ export function handleQuestComplete(): void {
 // as a placed item in Mum's kitchen so the player can pick it up and fill it.
 handlerRegistry.register(QUEST_ID, 'filling_basket', async (_chainId, _stageId, _ctx) => {
   // Only spawn once — check if basket already exists on the map
-  const existing = gameState.getPlacedItems('mums_kitchen').find(
-    (item) => item.itemId === 'quest_picnic_basket'
-  );
+  const existing = gameState
+    .getPlacedItems('mums_kitchen')
+    .find((item) => item.itemId === 'quest_picnic_basket');
   if (existing) return;
 
   gameState.addPlacedItem({
