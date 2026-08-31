@@ -171,14 +171,20 @@ class NPCManagerClass {
     // Check season condition (supports single value or array)
     if (conditions.season) {
       const allowed = Array.isArray(conditions.season) ? conditions.season : [conditions.season];
-      if (!allowed.includes(currentTime.season.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter')) {
+      if (
+        !allowed.includes(
+          currentTime.season.toLowerCase() as 'spring' | 'summer' | 'autumn' | 'winter'
+        )
+      ) {
         return false;
       }
     }
 
     // Check time of day condition (supports single value or array)
     if (conditions.timeOfDay) {
-      const allowed = Array.isArray(conditions.timeOfDay) ? conditions.timeOfDay : [conditions.timeOfDay];
+      const allowed = Array.isArray(conditions.timeOfDay)
+        ? conditions.timeOfDay
+        : [conditions.timeOfDay];
       if (!allowed.includes(currentTime.timeOfDay.toLowerCase() as 'day' | 'night')) {
         return false;
       }
@@ -892,27 +898,32 @@ class NPCManagerClass {
   }
 
   /**
-   * Remove a dynamic NPC from the current map (for despawning)
+   * Remove a dynamic NPC from a map (for despawning). Defaults to the current map,
+   * but accepts an explicit `mapId` for callers (e.g. YuleCelebrationManager) that
+   * may run after `currentMapId` has already moved on — MapManager.loadMap() sets
+   * it as soon as a transition starts, before any "player is leaving map X" cleanup
+   * gets a chance to run.
    */
-  removeDynamicNPC(npcId: string): void {
-    if (!this.currentMapId) {
+  removeDynamicNPC(npcId: string, mapId?: string): void {
+    const targetMapId = mapId ?? this.currentMapId;
+    if (!targetMapId) {
       console.warn('[NPCManager] Cannot remove dynamic NPC: No current map');
       return;
     }
 
-    const mapNPCs = this.npcsByMap.get(this.currentMapId) || [];
+    const mapNPCs = this.npcsByMap.get(targetMapId) || [];
     const filteredNPCs = mapNPCs.filter((n) => n.id !== npcId);
 
     if (filteredNPCs.length === mapNPCs.length) {
-      console.warn(`[NPCManager] NPC ${npcId} not found on map ${this.currentMapId}`);
+      console.warn(`[NPCManager] NPC ${npcId} not found on map ${targetMapId}`);
       return;
     }
 
-    this.npcsByMap.set(this.currentMapId, filteredNPCs);
+    this.npcsByMap.set(targetMapId, filteredNPCs);
     this.npcStates.delete(npcId);
 
-    console.log(`[NPCManager] Removed dynamic NPC ${npcId} from map ${this.currentMapId}`);
-    eventBus.emit(GameEvent.NPC_DESPAWNED, { npcId, mapId: this.currentMapId });
+    console.log(`[NPCManager] Removed dynamic NPC ${npcId} from map ${targetMapId}`);
+    eventBus.emit(GameEvent.NPC_DESPAWNED, { npcId, mapId: targetMapId });
   }
 
   /**
@@ -926,7 +937,10 @@ class NPCManagerClass {
     let npc: NPC | undefined;
     for (const npcs of this.npcsByMap.values()) {
       const found = npcs.find((n) => n.id === npcId);
-      if (found) { npc = found; break; }
+      if (found) {
+        npc = found;
+        break;
+      }
     }
     if (!npc) return null;
 
@@ -947,7 +961,10 @@ class NPCManagerClass {
     let npc: NPC | undefined;
     for (const npcs of this.npcsByMap.values()) {
       const found = npcs.find((n) => n.id === npcId);
-      if (found) { npc = found; break; }
+      if (found) {
+        npc = found;
+        break;
+      }
     }
     if (!npc) return;
 
@@ -963,7 +980,9 @@ class NPCManagerClass {
   setEventOverridePosition(npcId: string, position: Position): void {
     const npc = this.getNPCById(npcId);
     if (!npc) {
-      console.warn(`[NPCManager] setEventOverridePosition: NPC "${npcId}" not found on current map`);
+      console.warn(
+        `[NPCManager] setEventOverridePosition: NPC "${npcId}" not found on current map`
+      );
       return;
     }
     if (!this.eventOverrides.has(npcId)) {
@@ -976,10 +995,22 @@ class NPCManagerClass {
   /**
    * Restore all NPCs to their positions before event overrides were applied,
    * then clear the override registry.
+   *
+   * Looks the NPC up across all maps (like setEventScaleOverride/restoreEventScale
+   * already do) rather than via getNPCById/currentMapId — MapManager.loadMap() sets
+   * currentMapId as soon as a transition starts, so a caller cleaning up after
+   * "player left map X" can no longer rely on currentMapId still being X.
    */
   clearEventOverrides(): void {
     for (const [npcId, originalPosition] of this.eventOverrides) {
-      const npc = this.getNPCById(npcId);
+      let npc: NPC | undefined;
+      for (const npcs of this.npcsByMap.values()) {
+        const found = npcs.find((n) => n.id === npcId);
+        if (found) {
+          npc = found;
+          break;
+        }
+      }
       if (npc) {
         npc.position = { ...originalPosition };
         eventBus.emit(GameEvent.NPC_MOVED, { npcId, position: originalPosition });
@@ -993,9 +1024,13 @@ class NPCManagerClass {
    * Get the current location for an NPC based on the current season
    * Returns null if NPC should not appear this season
    */
-  private getSeasonalLocationForNPC(
-    npc: NPC
-  ): { mapId: string; position: Position; direction: Direction; static?: boolean; scale?: number } | null {
+  private getSeasonalLocationForNPC(npc: NPC): {
+    mapId: string;
+    position: Position;
+    direction: Direction;
+    static?: boolean;
+    scale?: number;
+  } | null {
     if (!npc.seasonalLocations) {
       // No seasonal locations, use base location
       const state = this.npcStates.get(npc.id);

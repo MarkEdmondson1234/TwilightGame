@@ -57,7 +57,8 @@ function filterResponses(responses: DialogueResponse[] | undefined): DialogueRes
       if (cookingManager.isCookingCourseComplete()) return false;
     }
     if (response.requiredSeason) {
-      if (TimeManager.getCurrentTime().season.toLowerCase() !== response.requiredSeason) return false;
+      if (TimeManager.getCurrentTime().season.toLowerCase() !== response.requiredSeason)
+        return false;
     }
     if (response.hiddenIfAnyDomainStarted) {
       const masteredCount = cookingManager.getMasteredDomainCount();
@@ -82,18 +83,22 @@ const ScriptedControls: React.FC<ScriptedControlsProps> = ({
 }) => {
   const filtered = filterResponses(dialogue.responses);
 
+  const continueButton = (
+    <button
+      onClick={onClose}
+      className="text-xs transition-colors duration-200"
+      style={{ fontFamily: TEXT_FONT, color: 'rgba(180, 160, 140, 0.8)' }}
+      onMouseEnter={(e) => (e.currentTarget.style.color = '#d4a373')}
+      onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180, 160, 140, 0.8)')}
+    >
+      Click to continue ▼
+    </button>
+  );
+
   if (filtered.length === 0 && !canUseAI) {
     return (
       <div className="flex-shrink-0 flex justify-center" style={{ padding: '6px 6% 8px' }}>
-        <button
-          onClick={onClose}
-          className="text-xs transition-colors duration-200"
-          style={{ fontFamily: TEXT_FONT, color: 'rgba(180, 160, 140, 0.8)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#d4a373')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(180, 160, 140, 0.8)')}
-        >
-          Click to continue ▼
-        </button>
+        {continueButton}
       </div>
     );
   }
@@ -103,7 +108,11 @@ const ScriptedControls: React.FC<ScriptedControlsProps> = ({
       className="flex-shrink-0 overflow-y-auto"
       style={{ padding: '6px 6% 8px', maxHeight: '90px' }}
     >
-      <div className="flex flex-wrap gap-1.5 justify-center">
+      <div className="flex flex-wrap gap-1.5 justify-center items-center">
+        {/* No scripted responses to show (only reachable when canUseAI is true —
+            see the early return above) — still needs a way to dismiss the box
+            without going into AI chat. */}
+        {filtered.length === 0 && continueButton}
         {filtered.map((response, index) => (
           <button
             key={index}
