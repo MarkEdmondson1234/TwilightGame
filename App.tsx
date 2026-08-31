@@ -36,6 +36,7 @@ import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSp
 import { useCamera } from './hooks/useCamera';
 import { usePinchZoom } from './hooks/usePinchZoom';
 import { useBrowserZoomLock } from './hooks/useBrowserZoomLock';
+import { useBrowserZoom } from './hooks/useBrowserZoom';
 import { useViewportCulling } from './hooks/useViewportCulling';
 import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
@@ -1079,6 +1080,10 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Browser page-zoom factor relative to load (1.0 = normal). Keeps the
+  // viewportScale memo below invariant to browser zoom — see useBrowserZoom.
+  const browserZoom = useBrowserZoom();
+
   // Calculate viewport scale for background-image rooms
   // This scales the entire room (image, grid, characters) to fit the viewport
   // IMPORTANT: Only scale UP on large screens, never scale down on small screens
@@ -1090,10 +1095,15 @@ const App: React.FC = () => {
     // Get reference viewport from map definition, or use defaults
     const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
 
-    // Calculate scale to fit current viewport
+    // Divide the browser-zoom factor back out of the viewport dimensions before
+    // fitting. Browser zoom shrinks innerWidth/innerHeight (CSS px), which would
+    // otherwise drag viewportScale toward its 1.0 floor and cancel the zoom on
+    // large monitors — leaving the room image and character the only things that
+    // don't magnify. Normalising here lets interiors zoom WITH the browser, like
+    // tiled rooms do. See useBrowserZoom / docs/ARCHITECTURE_GOTCHAS.md.
     const rawScale = calculateViewportScale(
-      viewportSize.width,
-      viewportSize.height,
+      viewportSize.width * browserZoom,
+      viewportSize.height * browserZoom,
       refViewport.width,
       refViewport.height,
       0.5, // minScale (absolute floor)
@@ -1103,7 +1113,7 @@ const App: React.FC = () => {
     // Only scale UP on larger viewports, never scale down
     // This ensures small screens still see the original design
     return Math.max(1.0, rawScale);
-  }, [currentMap?.renderMode, currentMap?.referenceViewport, viewportSize]);
+  }, [currentMap?.renderMode, currentMap?.referenceViewport, viewportSize, browserZoom]);
 
   // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
   const isCompactMode = useMemo(() => {
