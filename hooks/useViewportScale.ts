@@ -56,6 +56,11 @@ export interface ViewportScaleResult {
  * @param referenceHeight - Reference viewport height content was designed for
  * @param minScale - Minimum allowed scale (default: 0.5)
  * @param maxScale - Maximum allowed scale (default: 2.0)
+ * @param fitMode - 'contain' (default, fits inside without cropping — leaves a
+ *   letterboxed gap at mismatched aspect ratios) or 'cover' (fills the whole
+ *   viewport, cropping whichever axis has the excess — see the "cover" callers
+ *   in App.tsx for issue #26, where a letterboxed gap left the game's own
+ *   background colour visible around a background-image room).
  * @returns Scale factor to apply
  */
 export function calculateViewportScale(
@@ -64,14 +69,16 @@ export function calculateViewportScale(
   referenceWidth: number,
   referenceHeight: number,
   minScale: number = 0.5,
-  maxScale: number = 2.0
+  maxScale: number = 2.0,
+  fitMode: 'contain' | 'cover' = 'contain'
 ): number {
   // Calculate scale needed to fit both dimensions
   const scaleX = viewportWidth / referenceWidth;
   const scaleY = viewportHeight / referenceHeight;
 
-  // Use the smaller scale to ensure content fits (contain behavior)
-  const scale = Math.min(scaleX, scaleY);
+  // contain: use the smaller scale so content fits fully inside, with letterboxing.
+  // cover: use the larger scale so content fills the viewport, cropping overflow.
+  const scale = fitMode === 'cover' ? Math.max(scaleX, scaleY) : Math.min(scaleX, scaleY);
 
   // Clamp to min/max bounds
   return Math.max(minScale, Math.min(maxScale, scale));

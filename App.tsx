@@ -34,7 +34,7 @@ import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
-import { usePinchZoom, getZoomLimitsForRoom } from './hooks/usePinchZoom';
+import { usePinchZoom, getZoomLimitsForRoom, getCoverZoom } from './hooks/usePinchZoom';
 import { useBrowserZoomLock } from './hooks/useBrowserZoomLock';
 import { useBrowserZoom } from './hooks/useBrowserZoom';
 import { useViewportCulling } from './hooks/useViewportCulling';
@@ -247,6 +247,27 @@ const App: React.FC = () => {
   // Game container ref for click detection
   const gameContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Track viewport dimensions for responsive scaling (updates on resize/zoom).
+  // Declared here (rather than down with the other viewport-driven memos) so
+  // the zoom-limits computation below — which needs it for coverZoom — can use it.
+  const [viewportSize, setViewportSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 1920,
+    height: typeof window !== 'undefined' ? window.innerHeight : 1080,
+  });
+
+  // Listen for viewport changes (resize, zoom)
+  useEffect(() => {
+    const handleResize = () => {
+      setViewportSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
   // Background-image rooms (interiors) can only zoom in, not out
   // Disable zoom when UI overlays are open so scroll/pinch works in menus
@@ -276,9 +297,23 @@ const App: React.FC = () => {
     const map = mapManager.getMap(currentMapId);
     return map?.renderMode === 'background-image';
   }, [currentMapId]);
+  // Minimum zoom needed for a TILED room to fully cover the viewport (issue #26)
+  // — see getCoverZoom. Irrelevant for background-image rooms, which use their
+  // own viewportScale system and have zoom disabled entirely.
+  const coverZoom = useMemo(() => {
+    if (isBackgroundImageRoom) return 1;
+    const map = mapManager.getMap(currentMapId);
+    if (!map) return 1;
+    return getCoverZoom(
+      map.width * TILE_SIZE,
+      map.height * TILE_SIZE,
+      viewportSize.width,
+      viewportSize.height
+    );
+  }, [isBackgroundImageRoom, currentMapId, viewportSize]);
   const zoomLimits = useMemo(
-    () => getZoomLimitsForRoom(isBackgroundImageRoom, isAnyOverlayOpen),
-    [isBackgroundImageRoom, isAnyOverlayOpen]
+    () => getZoomLimitsForRoom(isBackgroundImageRoom, isAnyOverlayOpen, coverZoom),
+    [isBackgroundImageRoom, isAnyOverlayOpen, coverZoom]
   );
   // Always prevent browser-level zoom changes (Ctrl+scroll, Ctrl+/-/0)
   // Runs independently of game zoom — never disabled, even when overlays are open
@@ -1096,25 +1131,6 @@ const App: React.FC = () => {
   const mapWidth = currentMap ? currentMap.width : 50;
   const mapHeight = currentMap ? currentMap.height : 30;
 
-  // Track viewport dimensions for responsive scaling (updates on resize/zoom)
-  const [viewportSize, setViewportSize] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1920,
-    height: typeof window !== 'undefined' ? window.innerHeight : 1080,
-  });
-
-  // Listen for viewport changes (resize, zoom)
-  useEffect(() => {
-    const handleResize = () => {
-      setViewportSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   // Browser page-zoom factor relative to load (1.0 = normal). Keeps the
   // viewportScale memo below invariant to browser zoom — see useBrowserZoom.
   const browserZoom = useBrowserZoom();
@@ -1136,13 +1152,20 @@ const App: React.FC = () => {
     // large monitors — leaving the room image and character the only things that
     // don't magnify. Normalising here lets interiors zoom WITH the browser, like
     // tiled rooms do. See useBrowserZoom / docs/ARCHITECTURE_GOTCHAS.md.
+    //
+    // 'cover' (not the default 'contain'): at a viewport aspect ratio that
+    // doesn't match the reference, 'contain' fits the room fully on screen but
+    // leaves a letterboxed gap on one axis, showing the game's own background
+    // colour through it (issue #26). 'cover' scales to fill both axes instead,
+    // cropping whichever axis has the excess.
     const rawScale = calculateViewportScale(
       viewportSize.width * browserZoom,
       viewportSize.height * browserZoom,
       refViewport.width,
       refViewport.height,
       0.5, // minScale (absolute floor)
-      2.5 // maxScale - allow larger scaling for big monitors
+      2.5, // maxScale - allow larger scaling for big monitors
+      'cover'
     );
 
     // Only scale UP on larger viewports, never scale down

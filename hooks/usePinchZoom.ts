@@ -34,25 +34,56 @@ export interface ZoomLimits {
 }
 
 /**
+ * Minimum zoom needed so a mapPixelWidth x mapPixelHeight tiled room, once
+ * scaled, covers the full given viewport in both axes (like CSS
+ * `background-size: cover`) — never below 1 (never asks for a zoom-OUT just
+ * because the map happens to be huge; that's what the normal zoom-out range
+ * is for).
+ *
+ * Without this, useCamera's "map smaller than viewport" branch centred the
+ * map at 1:1 and left the game's own background colour visible in a border
+ * around it whenever a map was smaller than the browser window in some axis,
+ * or the window's aspect ratio didn't match the map's — issue #26. Feeding
+ * this in as the pinch-zoom minimum (see getZoomLimitsForRoom) means the
+ * actual rendered scale always covers the viewport, and useCamera's existing
+ * follow-the-player logic — unchanged — naturally makes the cropped overflow
+ * pan with the player instead of sitting static.
+ */
+export function getCoverZoom(
+  mapPixelWidth: number,
+  mapPixelHeight: number,
+  viewportWidth: number,
+  viewportHeight: number
+): number {
+  if (mapPixelWidth <= 0 || mapPixelHeight <= 0) return 1;
+  return Math.max(1, viewportWidth / mapPixelWidth, viewportHeight / mapPixelHeight);
+}
+
+/**
  * Decides the pinch/wheel zoom limits for the current room.
  *
  * Background-image rooms (interiors) already fit the viewport responsively via
  * `viewportScale`. Letting pinch/wheel zoom apply on top of that re-fits the room
  * at a different scale mid-frame, which visibly rearranges furniture, NPCs and the
  * character — so game zoom is pinned to 1.0 (disabled) for these rooms. Tiled
- * rooms keep the normal min/max, and are also disabled while a UI overlay is open
- * so scroll/pinch works in menus instead.
+ * rooms keep the normal min/max (raised by `coverZoom` when the map wouldn't
+ * otherwise cover the viewport — see getCoverZoom), and are also disabled while a
+ * UI overlay is open so scroll/pinch works in menus instead.
  */
 export function getZoomLimitsForRoom(
   isBackgroundImageRoom: boolean,
-  isAnyOverlayOpen: boolean
+  isAnyOverlayOpen: boolean,
+  coverZoom: number = DEFAULT_MIN_ZOOM
 ): ZoomLimits {
   if (isBackgroundImageRoom) {
     return { minZoom: 1.0, maxZoom: 1.0, enabled: false };
   }
+  const minZoom = Math.max(DEFAULT_MIN_ZOOM, coverZoom);
   return {
-    minZoom: DEFAULT_MIN_ZOOM,
-    maxZoom: DEFAULT_MAX_ZOOM,
+    minZoom,
+    // A very small map could need more zoom to cover than the default max
+    // allows — extend the ceiling to match rather than leaving a gap.
+    maxZoom: Math.max(DEFAULT_MAX_ZOOM, minZoom),
     enabled: !isAnyOverlayOpen,
   };
 }
