@@ -1157,8 +1157,7 @@ class FarmManager {
       if (plot.mapId !== mapId) continue;
       if (plot.state === FarmPlotState.FALLOW) continue;
 
-      const tileX = Math.floor(plot.position.x);
-      const tileY = Math.floor(plot.position.y);
+      const { x: tileX, y: tileY } = getTileCoords(plot.position);
       const baseTile = mapDef.grid[tileY]?.[tileX];
 
       if (baseTile !== TileType.SOIL_FALLOW) {
@@ -1238,8 +1237,7 @@ class FarmManager {
           // If the map was edited to remove farm tiles here, delete the stale Firestore record.
           const mapDef = mapManager.getMap(farmPlot.mapId);
           if (mapDef) {
-            const tileX = Math.floor(farmPlot.position.x);
-            const tileY = Math.floor(farmPlot.position.y);
+            const { x: tileX, y: tileY } = getTileCoords(farmPlot.position);
             const baseTile = mapDef.grid[tileY]?.[tileX];
             if (baseTile !== TileType.SOIL_FALLOW) {
               this.dirtySharedPlots.add(plotId);

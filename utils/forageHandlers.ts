@@ -4,7 +4,14 @@
  */
 
 import { Position, TileType } from '../types';
-import { getTileData, findTileTypeNearby, hasTileTypeNearby, getLavaLakeAnchor, getSurroundingTiles } from './mapUtils';
+import {
+  getTileData,
+  getTileCoords,
+  findTileTypeNearby,
+  hasTileTypeNearby,
+  getLavaLakeAnchor,
+  getSurroundingTiles,
+} from './mapUtils';
 import { gameState } from '../GameState';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
@@ -49,7 +56,7 @@ function findNearbySparrow(
     const dx = Math.abs(npc.position.x - playerTileX);
     const dy = Math.abs(npc.position.y - playerTileY);
     if (dx <= 3 && dy <= 3) {
-      return { x: Math.floor(npc.position.x), y: Math.floor(npc.position.y) };
+      return getTileCoords(npc.position);
     }
   }
   return null;
@@ -129,8 +136,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     return { found: false, message: '' };
   }
 
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
   const tileData = getTileData(playerTileX, playerTileY);
 
   if (!tileData) {
@@ -589,7 +595,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     if (season !== Season.AUTUMN) {
       const msg =
         season === Season.WINTER
-          ? "The heather is buried under the frost. It blooms in autumn."
+          ? 'The heather is buried under the frost. It blooms in autumn.'
           : "The heather isn't in bloom yet. Come back in autumn.";
       return { found: false, message: msg, outOfSeason: true };
     }
@@ -885,7 +891,8 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     if (season !== Season.AUTUMN) {
       return {
         found: false,
-        message: 'The meadow grass is too green and lush to gather. Come back in autumn when it has dried.',
+        message:
+          'The meadow grass is too green and lush to gather. Come back in autumn when it has dried.',
         outOfSeason: true,
       };
     }
@@ -991,12 +998,20 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     if (season !== Season.WINTER) {
       return {
         found: false,
-        message: 'The spruce tree holds its branches tight. In winter, fallen sprigs can be gathered from beneath.',
+        message:
+          'The spruce tree holds its branches tight. In winter, fallen sprigs can be gathered from beneath.',
         outOfSeason: true,
       };
     }
 
-    if (gameState.isForageTileOnCooldown(currentMapId, spruceAnchor.x, spruceAnchor.y, TIMING.FORAGE_COOLDOWN_MS)) {
+    if (
+      gameState.isForageTileOnCooldown(
+        currentMapId,
+        spruceAnchor.x,
+        spruceAnchor.y,
+        TIMING.FORAGE_COOLDOWN_MS
+      )
+    ) {
       return { found: false, message: "You've already gathered from this tree today." };
     }
 
@@ -1011,7 +1026,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     if (!succeeded) {
       gameState.recordForage(currentMapId, spruceAnchor.x, spruceAnchor.y);
-      return { found: false, message: 'You search beneath the spruce, but find no suitable sprigs.' };
+      return {
+        found: false,
+        message: 'You search beneath the spruce, but find no suitable sprigs.',
+      };
     }
 
     const quantityFound = rollForageQuantity();
@@ -1574,8 +1592,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
  * Does not drain stamina — caller is responsible.
  */
 export function handleBlackberryHarvest(playerPos: Position, currentMapId: string): ForageResult {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
     const tileData = getTileData(tile.x, tile.y);
@@ -1608,8 +1625,7 @@ export function handleBlackberryHarvest(playerPos: Position, currentMapId: strin
  * Does not drain stamina — caller is responsible.
  */
 export function handleHazelnutHarvest(playerPos: Position, currentMapId: string): ForageResult {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
     const tileData = getTileData(tile.x, tile.y);
@@ -1618,7 +1634,11 @@ export function handleHazelnutHarvest(playerPos: Position, currentMapId: string)
     const { season } = TimeManager.getCurrentTime();
     if (season !== Season.AUTUMN) {
       if (DEBUG.FORAGE) console.log(`[Forage] Hazel bush out of season (${season})`);
-      return { found: false, message: 'The hazel bushes have no ripe nuts yet.', outOfSeason: true };
+      return {
+        found: false,
+        message: 'The hazel bushes have no ripe nuts yet.',
+        outOfSeason: true,
+      };
     }
 
     if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
@@ -1642,8 +1662,7 @@ export function handleHazelnutHarvest(playerPos: Position, currentMapId: string)
  * Does not drain stamina — caller is responsible.
  */
 export function handleBlueberryHarvest(playerPos: Position, currentMapId: string): ForageResult {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
     const tileData = getTileData(tile.x, tile.y);
@@ -1652,7 +1671,11 @@ export function handleBlueberryHarvest(playerPos: Position, currentMapId: string
     const { season } = TimeManager.getCurrentTime();
     if (season !== Season.SUMMER && season !== Season.AUTUMN) {
       if (DEBUG.FORAGE) console.log(`[Forage] Blueberry bush out of season (${season})`);
-      return { found: false, message: 'The blueberry bushes have no ripe berries yet.', outOfSeason: true };
+      return {
+        found: false,
+        message: 'The blueberry bushes have no ripe berries yet.',
+        outOfSeason: true,
+      };
     }
 
     if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {
@@ -1676,8 +1699,7 @@ export function handleBlueberryHarvest(playerPos: Position, currentMapId: string
  * Does not drain stamina — caller is responsible.
  */
 export function handleRedBerryHarvest(playerPos: Position, currentMapId: string): ForageResult {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   for (const tile of getSurroundingTiles({ x: playerTileX, y: playerTileY })) {
     const tileData = getTileData(tile.x, tile.y);
@@ -1686,7 +1708,11 @@ export function handleRedBerryHarvest(playerPos: Position, currentMapId: string)
     const { season } = TimeManager.getCurrentTime();
     if (season !== Season.AUTUMN) {
       if (DEBUG.FORAGE) console.log(`[Forage] Hawthorn bush out of season (${season})`);
-      return { found: false, message: 'The hawthorn bush has no ripe berries yet.', outOfSeason: true };
+      return {
+        found: false,
+        message: 'The hawthorn bush has no ripe berries yet.',
+        outOfSeason: true,
+      };
     }
 
     if (gameState.isForageTileOnCooldown(currentMapId, tile.x, tile.y, TIMING.FORAGE_COOLDOWN_MS)) {

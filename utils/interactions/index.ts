@@ -8,7 +8,7 @@
  * under ./providers/ — see ./README.md before adding one.
  */
 
-import { getTileData } from '../mapUtils';
+import { getTileData, getTileCoords } from '../mapUtils';
 import { gameState } from '../../GameState';
 import { getItem } from '../../data/items';
 import { INTERACTION_PROVIDERS } from './registry';
@@ -60,8 +60,7 @@ function findItemAtPosition(
 
 /** Build the context shared by every provider. */
 function createInteractionContext(config: GetInteractionsConfig): InteractionContext {
-  const tileX = Math.floor(config.position.x);
-  const tileY = Math.floor(config.position.y);
+  const { x: tileX, y: tileY } = getTileCoords(config.position);
   const placedItems = gameState.getPlacedItems(config.currentMapId);
 
   return {
