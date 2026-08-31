@@ -2,7 +2,7 @@
 
 ## Overview
 
-Twilight Village is a living, breathing world where things happen — not just to you, but to everyone playing. **World events** are shared happenings that all players can see and react to. **Event chains** are branching stories that unfold over time based on your choices.
+Clover Village is a living, breathing world where things happen — not just to you, but to everyone playing. **World events** are shared happenings that all players can see and react to. **Event chains** are branching stories that unfold over time based on your choices.
 
 ## World Events
 

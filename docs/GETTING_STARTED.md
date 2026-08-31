@@ -1,6 +1,6 @@
 # Getting Started
 
-Welcome to Twilight Village! This peaceful farming and exploration game lets you explore a charming village, meet quirky characters, grow crops, and discover secrets.
+Welcome to Clover Village! This peaceful farming and exploration game lets you explore a charming village, meet quirky characters, grow crops, and discover secrets.
 
 ## Your First Steps
 
@@ -189,4 +189,4 @@ Press **F1** anytime to open the Help Browser:
 - **AI Chat** - Setting up AI conversations
 - **Cloud Saves** - Save your progress across devices
 
-Enjoy your time in Twilight Village!
+Enjoy your time in Clover Village!
