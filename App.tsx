@@ -34,7 +34,7 @@ import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
 import { useCharacterSprites, getPlayerSpriteInfo } from './hooks/useCharacterSprites';
 import { useCamera } from './hooks/useCamera';
-import { usePinchZoom } from './hooks/usePinchZoom';
+import { usePinchZoom, getZoomLimitsForRoom } from './hooks/usePinchZoom';
 import { useBrowserZoomLock } from './hooks/useBrowserZoomLock';
 import { useBrowserZoom } from './hooks/useBrowserZoom';
 import { useViewportCulling } from './hooks/useViewportCulling';
@@ -262,14 +262,26 @@ const App: React.FC = () => {
     ui.miniGame ||
     ui.devTools ||
     ui.vfxTestPanel;
-  const zoomMinForMap = useMemo(() => {
+  // Background-image rooms (interiors) already fit the viewport responsively via
+  // `viewportScale` (see the memo below); pinch/wheel zoom is disabled there so it
+  // can't re-fit the room at a different scale mid-frame and rearrange the layout.
+  // See getZoomLimitsForRoom (hooks/usePinchZoom.ts) for the full rationale.
+  const isBackgroundImageRoom = useMemo(() => {
     const map = mapManager.getMap(currentMapId);
-    return map?.renderMode === 'background-image' ? 1.0 : 0.5;
+    return map?.renderMode === 'background-image';
   }, [currentMapId]);
+  const zoomLimits = useMemo(
+    () => getZoomLimitsForRoom(isBackgroundImageRoom, isAnyOverlayOpen),
+    [isBackgroundImageRoom, isAnyOverlayOpen]
+  );
   // Always prevent browser-level zoom changes (Ctrl+scroll, Ctrl+/-/0)
   // Runs independently of game zoom — never disabled, even when overlays are open
   useBrowserZoomLock();
-  const { zoom, resetZoom } = usePinchZoom({ minZoom: zoomMinForMap, enabled: !isAnyOverlayOpen });
+  const { zoom, resetZoom } = usePinchZoom({
+    minZoom: zoomLimits.minZoom,
+    maxZoom: zoomLimits.maxZoom,
+    enabled: zoomLimits.enabled,
+  });
 
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();

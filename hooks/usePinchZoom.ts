@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Default zoom limits */
-const DEFAULT_MIN_ZOOM = 0.5;
-const DEFAULT_MAX_ZOOM = 2.0;
+export const DEFAULT_MIN_ZOOM = 0.5;
+export const DEFAULT_MAX_ZOOM = 2.0;
 const DEFAULT_ZOOM = 1.0;
 
 /** Mouse wheel zoom sensitivity (smaller = slower) */
@@ -25,6 +25,36 @@ interface UsePinchZoomResult {
   zoom: number;
   /** Reset zoom to 1.0 */
   resetZoom: () => void;
+}
+
+export interface ZoomLimits {
+  minZoom: number;
+  maxZoom: number;
+  enabled: boolean;
+}
+
+/**
+ * Decides the pinch/wheel zoom limits for the current room.
+ *
+ * Background-image rooms (interiors) already fit the viewport responsively via
+ * `viewportScale`. Letting pinch/wheel zoom apply on top of that re-fits the room
+ * at a different scale mid-frame, which visibly rearranges furniture, NPCs and the
+ * character — so game zoom is pinned to 1.0 (disabled) for these rooms. Tiled
+ * rooms keep the normal min/max, and are also disabled while a UI overlay is open
+ * so scroll/pinch works in menus instead.
+ */
+export function getZoomLimitsForRoom(
+  isBackgroundImageRoom: boolean,
+  isAnyOverlayOpen: boolean
+): ZoomLimits {
+  if (isBackgroundImageRoom) {
+    return { minZoom: 1.0, maxZoom: 1.0, enabled: false };
+  }
+  return {
+    minZoom: DEFAULT_MIN_ZOOM,
+    maxZoom: DEFAULT_MAX_ZOOM,
+    enabled: !isAnyOverlayOpen,
+  };
 }
 
 /**
