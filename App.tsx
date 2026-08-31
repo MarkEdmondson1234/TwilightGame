@@ -179,7 +179,13 @@ const App: React.FC = () => {
   const [isCutscenePlaying, setIsCutscenePlaying] = useState(false); // Track cutscene state
 
   // Loading-screen cutscene state
-  const [isLoadingCutscene, setIsLoadingCutscene] = useState(false); // Overall loading-cutscene mode
+  // Defaults to true (not false!) so the black loading overlay covers the very
+  // first paint, before the mount effect below has decided whether a season
+  // cutscene is actually due — otherwise interaction prompts near the player's
+  // spawn point can render and be clickable for a frame before that effect
+  // resolves (issue #17). The effect flips this back to false immediately when
+  // no cutscene is due this session.
+  const [isLoadingCutscene, setIsLoadingCutscene] = useState(true); // Overall loading-cutscene mode
   const loadingCutsceneDoneRef = useRef(false); // Cutscene animation has ended
   const [loadingProgress, setLoadingProgress] = useState(0); // 0-1 combined loading progress
 
@@ -998,9 +1004,19 @@ const App: React.FC = () => {
 
     if (started) {
       console.log(`[App] Loading cutscene started: ${seasonCutsceneId}`);
+      // Already true by default (see the useState below) — this is the case that
+      // default exists for, but keep it explicit here for clarity.
       setIsLoadingCutscene(true);
       setIsCutscenePlaying(true);
       loadingCutsceneDoneRef.current = false;
+    } else {
+      // No loading cutscene due this session — skip straight to the game, same
+      // as before. isLoadingCutscene defaults to true (not false) so that on
+      // the very first paint, before this effect has even run, the black
+      // loading overlay is what's on screen — not the game world underneath it.
+      // Without that, NPC/transition interaction prompts could render and be
+      // clickable for a frame or two before this effect resolves (issue #17).
+      setIsLoadingCutscene(false);
     }
 
     // Phase 2: Slow async asset loading (runs in parallel with cutscene)
