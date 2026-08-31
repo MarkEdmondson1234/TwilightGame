@@ -87,6 +87,124 @@ function generatePatches(
   }
 }
 
+interface ScatterOptions {
+  spawnZone?: { x: number; y: number; radius: number };
+  avoidWater?: (x: number, y: number) => boolean;
+}
+
+const SCATTER_MAX_ATTEMPTS = 60;
+
+/** One attempt to place a single instance of `tileType`. Returns true if placed. */
+function tryPlaceOne(
+  map: TileType[][],
+  tileType: TileType,
+  width: number,
+  height: number,
+  tracker: ReturnType<typeof createFootprintTracker>,
+  footprint: number,
+  options: ScatterOptions
+): boolean {
+  const half = Math.floor(footprint / 2);
+  const { spawnZone, avoidWater } = options;
+
+  for (let attempt = 0; attempt < SCATTER_MAX_ATTEMPTS; attempt++) {
+    const x = Math.floor(Math.random() * (width - 2)) + 1;
+    const y = Math.floor(Math.random() * (height - 2)) + 1;
+
+    if (spawnZone) {
+      const dx = Math.abs(x - spawnZone.x);
+      const dy = Math.abs(y - spawnZone.y);
+      if (dx <= spawnZone.radius && dy <= spawnZone.radius) continue;
+    }
+    if (map[y]?.[x] !== TileType.GRASS) continue;
+    if (avoidWater?.(x, y)) continue;
+    if (!tracker.isClear(x - half, y - half, footprint, footprint)) continue;
+
+    map[y][x] = tileType;
+    tracker.mark(x - half, y - half, footprint, footprint);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Scatter up to `count` instances of `tileType` on random GRASS tiles, using a
+ * shared footprint tracker so multi-tile plant sprites don't visually overlap
+ * each other — the anchor-tile-only check every scattered-plant loop used to
+ * do (`map[y][x] === GRASS`) only prevented two plants sharing one exact tile;
+ * it had no idea a 6×6 tree canopy extends 3 tiles past its anchor, so trees,
+ * bushes and flowers could (and did) land right on top of each other, making
+ * them hard to click individually and sometimes blocking a walkable path
+ * (issue #14). `footprint` should roughly track the tile's visual sprite size
+ * (SPRITE_METADATA spriteWidth/spriteHeight) — not its usually much smaller
+ * collision box — so cross-species spacing looks natural. createFootprintTracker
+ * already solved this for cave lakes/crystals/lava lakes; this reuses it for
+ * every plant type in one shared tracker so they all respect each other.
+ *
+ * Retries each failed placement a few times (some random spots will always be
+ * unavailable) rather than giving up on the first miss, so density stays close
+ * to what a caller asks for even once earlier species have claimed the good spots.
+ */
+function placeScattered(
+  map: TileType[][],
+  tileType: TileType,
+  count: number,
+  width: number,
+  height: number,
+  tracker: ReturnType<typeof createFootprintTracker>,
+  footprint: number,
+  options: ScatterOptions = {}
+): number {
+  let placed = 0;
+  for (let i = 0; i < count; i++) {
+    if (tryPlaceOne(map, tileType, width, height, tracker, footprint, options)) {
+      placed++;
+    }
+  }
+  return placed;
+}
+
+/**
+ * Like placeScattered, but interleaves several species round-robin — one
+ * placement ATTEMPT per species per pass — instead of fully placing one
+ * species before starting the next.
+ *
+ * Matters once several species' combined counts×footprints approach the map's
+ * capacity: placing the first species to completion (e.g. all 50 regular
+ * trees) claims most of the remaining open ground before the next species
+ * (oaks, spruces...) gets a single turn, so a caller-ordering artifact — not
+ * anything about the species itself — decided who gets to spawn at all.
+ * Round-robining spends the shrinking pool of free tiles fairly across the
+ * whole group instead (issue #14).
+ */
+function placeScatteredMixed(
+  map: TileType[][],
+  specs: Array<{
+    tileType: TileType;
+    count: number;
+    footprint: number;
+    avoidWater?: (x: number, y: number) => boolean;
+  }>,
+  width: number,
+  height: number,
+  tracker: ReturnType<typeof createFootprintTracker>,
+  spawnZone?: { x: number; y: number; radius: number }
+): void {
+  const remaining = specs.map((s) => s.count);
+
+  while (remaining.some((r) => r > 0)) {
+    for (let s = 0; s < specs.length; s++) {
+      if (remaining[s] <= 0) continue;
+      const spec = specs[s];
+      tryPlaceOne(map, spec.tileType, width, height, tracker, spec.footprint, {
+        spawnZone,
+        avoidWater: spec.avoidWater,
+      });
+      remaining[s]--;
+    }
+  }
+}
+
 export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const width = 40;
   const height = 30;
@@ -284,15 +402,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
   }
 
+  // Shared footprint tracker for every plant placed below, so multi-tile sprites
+  // (trees especially) don't visually overlap each other or the mushroom cluster
+  // pair / well placed further down (issue #14). See placeScattered() for why.
+  const plantTracker = createFootprintTracker();
+
   // Add mushrooms scattered throughout forest (walkable decoration)
-  for (let i = 0; i < 25; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles
-    if (map[y][x] === TileType.GRASS) {
-      map[y][x] = TileType.MUSHROOM;
-    }
-  }
+  placeScattered(map, TileType.MUSHROOM, 25, width, height, plantTracker, 0);
 
   // Add mushroom cluster pair with transition to mushroom forest (30% chance)
   // Two 2x2 mushroom clusters with a path tile between them leading to the mushroom forest
@@ -360,6 +476,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
         // Place left mushroom cluster (2x2 sprite anchor)
         map[y + 1][x] = TileType.MUSHROOM_CLUSTER;
+        plantTracker.mark(x - 1, y, 2, 2);
 
         // Place transition path tile in the middle (between the two clusters)
         mushroomTransitionX = x + 2;
@@ -368,6 +485,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
         // Place right mushroom cluster (2x2 sprite anchor)
         map[y + 1][x + 4] = TileType.MUSHROOM_CLUSTER;
+        plantTracker.mark(x + 3, y, 2, 2);
 
         hasMushroomTransition = true;
         console.log(`[Forest] 🍄🍄 Mushroom cluster pair with transition spawned at (${x}, ${y})!`);
@@ -482,26 +600,6 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     );
   }
 
-  // Add ferns scattered throughout forest (walkable decoration, quite common)
-  // Random placement - general forest ground cover
-  for (let i = 0; i < 45; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles
-    if (map[y][x] === TileType.GRASS) {
-      map[y][x] = TileType.FERN;
-    }
-  }
-
-  // Add meadow grass scattered throughout forest (walkable seasonal ground cover)
-  for (let i = 0; i < 8; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    if (map[y][x] === TileType.GRASS) {
-      map[y][x] = TileType.MEADOW_GRASS;
-    }
-  }
-
   // Add wild irises in organic clusters near water (beautiful yellow flowering plants)
   // Only spawn if water exists on the map
   if (waterAdjacentTiles.length > 0) {
@@ -530,9 +628,13 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
         const x = center.x + offsetX;
         const y = center.y + offsetY;
 
-        // Check bounds and if tile is grass
+        // Check bounds and if tile is grass. Irises within a cluster are meant to
+        // sit close together (that's the "organic cluster" look), so this doesn't
+        // gate on plantTracker.isClear — but it still marks the tracker afterwards
+        // so later, non-iris species don't land on top of a cluster.
         if (x >= 1 && x < width - 1 && y >= 1 && y < height - 1 && map[y][x] === TileType.GRASS) {
           map[y][x] = TileType.WILD_IRIS;
+          plantTracker.mark(x, y, 1, 1);
           irisesPlaced++;
           placedInCluster++;
         }
@@ -546,126 +648,46 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     console.log(`[Forest] No water features found - skipping iris placement`);
   }
 
-  // Add lots of bushes scattered throughout forest (solid decoration)
-  for (let i = 0; i < 40; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.BUSH;
-    }
-  }
+  const spawnZone4 = { x: spawnX, y: spawnY, radius: 4 };
 
-  // Add brambles scattered throughout forest (thorny obstacles, forageable in summer)
-  for (let i = 0; i < 8; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.BRAMBLES;
-    }
-  }
+  // Placement order below is deliberately biggest-first: trees, then medium bushes,
+  // then light single-tile ground cover last. placeScattered's footprint tracker
+  // makes later placements fail once the map fills up (retrying a bounded number
+  // of times before giving up on that instance), so space-hungry, visually
+  // important species need first pick of the map while it's still mostly open —
+  // small ground cover is far more tolerant of being squeezed into whatever gaps
+  // are left over, and there's a lot more of it to fall back on if some doesn't fit.
+  //
+  // Within the tree tier, placeScatteredMixed interleaves all seven species so
+  // regular trees (the highest count) don't claim the whole map before oaks,
+  // spruces etc. get a single turn — see its doc comment.
 
-  // Add hazel bushes scattered throughout forest (wild forageable, harvestable in autumn)
-  for (let i = 0; i < 6; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.HAZEL_BUSH;
-    }
-  }
-
-  // Add blueberry bushes scattered throughout forest (wild forageable, harvestable in summer and autumn)
-  for (let i = 0; i < 5; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.BLUEBERRY_BUSH;
-    }
-  }
-
-  // Add mustard flowers scattered throughout forest (forageable for Eye of Newt, blooms spring/summer)
-  for (let i = 0; i < 8; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.MUSTARD_FLOWER;
-    }
-  }
-
-  // Add forest mushrooms scattered throughout forest (forageable, autumn-only)
-  // Spawn ~6 instances (seasonal exclusivity makes them moderately rare)
-  for (let i = 0; i < 6; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.FOREST_MUSHROOM;
-    }
-  }
-
-  // Add shrinking violets scattered throughout forest (forageable, spring-only)
-  // Only spawn ~5 instances (rarer than mustard flowers due to seasonal exclusivity)
-  for (let i = 0; i < 5; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.SHRINKING_VIOLET;
-    }
-  }
-
-  // Add heather scattered throughout forest (forageable in autumn, dormant in winter)
-  for (let i = 0; i < 8; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.HEATHER;
-    }
-  }
-
-  // Add lots of trees scattered throughout forest (solid decoration, taller than bushes)
-  for (let i = 0; i < 50; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone and water features
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.TREE;
-    }
-  }
-
-  // Add big trees scattered throughout forest (20% of regular trees)
-  for (let i = 0; i < 10; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.TREE_BIG;
-    }
-  }
+  // Fairy oak removed from random forests - now only found in the sacred Deep Forest grove
+  placeScatteredMixed(
+    map,
+    [
+      // Regular trees, taller than bushes
+      { tileType: TileType.TREE, count: 50, footprint: 2, avoidWater: isAdjacentToWater },
+      // Big trees (20% of regular trees)
+      { tileType: TileType.TREE_BIG, count: 10, footprint: 2, avoidWater: isAdjacentToWater },
+      // Oak trees (seasonal variety, common)
+      { tileType: TileType.OAK_TREE, count: 15, footprint: 2, avoidWater: isAdjacentToWater },
+      // Spruce trees (evergreen conifers)
+      { tileType: TileType.SPRUCE_TREE, count: 12, footprint: 2, avoidWater: isAdjacentToWater },
+      // Cherry trees (seasonal variety, ~10% of regular trees)
+      { tileType: TileType.SAKURA_TREE, count: 5, footprint: 2, avoidWater: isAdjacentToWater },
+      // Dead spruce trees (barren conifers — the sprite box is 7x7 but mostly
+      // transparent, the tree itself is slender, so a smaller footprint than the
+      // box matches how it actually looks on screen)
+      { tileType: TileType.DEAD_SPRUCE, count: 5, footprint: 2, avoidWater: isAdjacentToWater },
+      // Small spruce trees (solid small trees)
+      { tileType: TileType.SPRUCE_TREE_SMALL, count: 18, footprint: 2 },
+    ],
+    width,
+    height,
+    plantTracker,
+    spawnZone4
+  );
 
   // Add rare well spawn (10% chance of appearing in forest)
   if (Math.random() < 0.1) {
@@ -688,82 +710,59 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
         map[y + 1][x + 1] === TileType.GRASS
       ) {
         map[y][x] = TileType.WELL;
+        plantTracker.mark(x, y, 2, 2);
         break;
       }
     }
   }
 
-  // Add cherry trees scattered throughout forest (seasonal variety, ~10% of regular trees)
-  for (let i = 0; i < 5; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.SAKURA_TREE;
-    }
-  }
+  // Bush tier, also interleaved so brambles/hazel/blueberry get a fair share
+  // rather than losing out to the much higher bush count.
+  placeScatteredMixed(
+    map,
+    [
+      { tileType: TileType.BUSH, count: 40, footprint: 1 },
+      { tileType: TileType.BRAMBLES, count: 8, footprint: 1 },
+      { tileType: TileType.HAZEL_BUSH, count: 6, footprint: 2, avoidWater: isAdjacentToWater },
+      { tileType: TileType.BLUEBERRY_BUSH, count: 5, footprint: 2, avoidWater: isAdjacentToWater },
+    ],
+    width,
+    height,
+    plantTracker,
+    spawnZone4
+  );
 
-  // Add oak trees scattered throughout forest (seasonal variety, common)
-  for (let i = 0; i < 15; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.OAK_TREE;
-    }
-  }
+  // Add ferns scattered throughout forest (walkable decoration, quite common)
+  // Random placement - general forest ground cover
+  placeScattered(map, TileType.FERN, 45, width, height, plantTracker, 1);
 
-  // Fairy oak removed from random forests - now only found in the sacred Deep Forest grove
+  // Add meadow grass scattered throughout forest (walkable seasonal ground cover)
+  placeScattered(map, TileType.MEADOW_GRASS, 8, width, height, plantTracker, 1);
 
-  // Add spruce trees scattered throughout forest (evergreen conifers)
-  for (let i = 0; i < 12; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.SPRUCE_TREE;
-    }
-  }
+  // Add mustard flowers scattered throughout forest (forageable for Eye of Newt, blooms spring/summer)
+  placeScattered(map, TileType.MUSTARD_FLOWER, 8, width, height, plantTracker, 0, {
+    spawnZone: spawnZone4,
+  });
 
-  // Add dead spruce trees scattered throughout forest (barren conifers)
-  for (let i = 0; i < 5; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4) && !isAdjacentToWater(x, y)) {
-      map[y][x] = TileType.DEAD_SPRUCE;
-    }
-  }
+  // Add forest mushrooms scattered throughout forest (forageable, autumn-only)
+  // Spawn ~6 instances (seasonal exclusivity makes them moderately rare)
+  placeScattered(map, TileType.FOREST_MUSHROOM, 6, width, height, plantTracker, 0, {
+    spawnZone: spawnZone4,
+  });
+
+  // Add shrinking violets scattered throughout forest (forageable, spring-only)
+  // Only spawn ~5 instances (rarer than mustard flowers due to seasonal exclusivity)
+  placeScattered(map, TileType.SHRINKING_VIOLET, 5, width, height, plantTracker, 0, {
+    spawnZone: spawnZone4,
+  });
+
+  // Add heather scattered throughout forest (forageable in autumn, dormant in winter)
+  placeScattered(map, TileType.HEATHER, 8, width, height, plantTracker, 0, {
+    spawnZone: spawnZone4,
+  });
 
   // Add small fir trees scattered throughout forest (walkable underbrush)
-  for (let i = 0; i < 25; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles
-    if (map[y][x] === TileType.GRASS) {
-      map[y][x] = TileType.FIR_TREE_SMALL;
-    }
-  }
-
-  // Add small spruce trees scattered throughout forest (solid small trees)
-  for (let i = 0; i < 18; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
-    // Only place on grass tiles, avoid spawn zone
-    const dx = Math.abs(x - spawnX);
-    const dy = Math.abs(y - spawnY);
-    if (map[y][x] === TileType.GRASS && (dx > 4 || dy > 4)) {
-      map[y][x] = TileType.SPRUCE_TREE_SMALL;
-    }
-  }
+  placeScattered(map, TileType.FIR_TREE_SMALL, 25, width, height, plantTracker, 1);
 
   // Place exit back to village on left side (middle of map)
   map[spawnY][1] = TileType.PATH;
