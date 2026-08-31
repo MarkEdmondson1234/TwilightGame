@@ -290,12 +290,30 @@ Background-image rooms use pre-drawn artwork instead of tile-by-tile rendering. 
 - **`layers`**: Array of image layers (back, NPC, front) composited in order
 - **`centered`**: Flag on image layers indicating viewport centering
 
+### Browser zoom vs `viewportScale` (the "interior won't zoom" bug)
+
+`viewportScale` (responsive fit for interiors) is derived from `window.innerWidth/innerHeight`,
+which are **CSS pixels** — browser page zoom shrinks them. On any monitor larger than the
+reference viewport (1920×1080), zooming in used to drag `viewportScale` back toward its `1.0`
+floor and **exactly cancel the browser's magnification**: the room artwork and the character
+(both sized by `viewportScale`) stayed the same physical size while tiled rooms magnified
+normally. Tiled rooms have no `viewportScale`, so the browser's own scaling passes straight
+through — hence the mismatch.
+
+Fix: [`hooks/useBrowserZoom.ts`](../hooks/useBrowserZoom.ts) reports the page-zoom factor
+(`devicePixelRatio / baselineDpr`), and the `viewportScale` memo in `App.tsx` multiplies it back
+into the viewport dimensions so `viewportScale` is **browser-zoom-invariant**. Interiors then
+magnify with the browser like everything else. Guarded by [`tests/viewportZoom.test.ts`](../tests/viewportZoom.test.ts).
+Note `useBrowserZoomLock` only blocks Ctrl/⌘ + scroll / +/-/0 — the browser's View→Zoom menu and
+persisted per-site zoom still apply, so this path has to be correct.
+
 ### Common mistakes
 
 1. **Forgetting zoom in gridOffset** — see Section 1
 2. **Placing NPCs using pixel coordinates** — NPCs use tile coordinates, not pixels
 3. **Testing only at zoom=1** — offset bugs only manifest when zoomed
 4. **Assuming camera works the same** — background-image rooms don't scroll; camera is effectively fixed
+5. **Deriving interior sizes from raw `innerWidth`** — factor out browser zoom (see above) or interiors won't match tiled rooms
 
 ---
 
