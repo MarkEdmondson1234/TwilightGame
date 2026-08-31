@@ -16,7 +16,7 @@ import SplashScreen from '../components/SplashScreen';
 describe('SplashScreen', () => {
   it('renders the title and a Play button without throwing', () => {
     render(<SplashScreen onPlay={() => {}} />);
-    expect(screen.getByText('Twilight Village')).toBeInTheDocument();
+    expect(screen.getByText('Clover Village')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Play' })).toBeInTheDocument();
   });
 

@@ -1712,10 +1712,30 @@ const App: React.FC = () => {
     onShowToast: showToast,
   });
 
+  // Title screen overlay. Deliberately NOT an early return: map/asset loading
+  // (including mounting the PixiJS canvas below, once isMapInitialized flips
+  // true) must keep proceeding on its normal schedule underneath while the
+  // splash is up, exactly as it would with no splash at all. An early return
+  // here previously blocked the canvas from ever mounting until Play was
+  // pressed, which could leave the game stuck on a black screen with a frozen
+  // loading bar once the splash *was* dismissed — the canvas-mounting effects
+  // had already run once against a canvas that didn't exist yet, and never
+  // got a reason to retry. SplashScreen renders itself as a fixed,
+  // high-z-index overlay, so it just needs to be painted alongside whichever
+  // branch below is currently rendering, not returned instead of it.
+  const splashOverlay = showSplashScreen ? (
+    <SplashScreen onPlay={() => setShowSplashScreen(false)} />
+  ) : null;
+
   // Show character creator as full-screen replacement only on first launch (before map loads)
   // When opened mid-game (via settings), it renders as an overlay further below
   if (ui.characterCreator && !isMapInitialized) {
-    return <CharacterCreator onComplete={handleCharacterCreated} />;
+    return (
+      <>
+        <CharacterCreator onComplete={handleCharacterCreated} />
+        {splashOverlay}
+      </>
+    );
   }
 
   // Show validation errors screen if there are map errors
@@ -1775,15 +1795,9 @@ const App: React.FC = () => {
             <li>Save the file - HMR will reload automatically</li>
           </ol>
         </div>
+        {splashOverlay}
       </div>
     );
-  }
-
-  // Title screen — shown first, ahead of map/asset loading (which is already
-  // running in the background regardless). Map validation errors above still
-  // take priority so a developer sees them immediately without an extra click.
-  if (showSplashScreen) {
-    return <SplashScreen onPlay={() => setShowSplashScreen(false)} />;
   }
 
   // Loading screen: show cutscene if active, otherwise simple text
@@ -1799,6 +1813,7 @@ const App: React.FC = () => {
               style={{ width: `${loadingProgress * 100}%` }}
             />
           </div>
+          {splashOverlay}
         </div>
       );
     }
@@ -1812,12 +1827,14 @@ const App: React.FC = () => {
               style={{ width: `${loadingProgress * 100}%` }}
             />
           </div>
+          {splashOverlay}
         </div>
       );
     }
     return (
       <div className="bg-gray-900 text-white w-full h-full flex items-center justify-center">
         Loading map...
+        {splashOverlay}
       </div>
     );
   }
@@ -2848,6 +2865,8 @@ const App: React.FC = () => {
 
       {/* Character creator overlay (mid-game, via settings button) */}
       {ui.characterCreator && <CharacterCreator onComplete={handleCharacterCreated} />}
+
+      {splashOverlay}
     </div>
   );
 };

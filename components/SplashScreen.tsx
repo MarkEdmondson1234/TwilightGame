@@ -13,6 +13,7 @@ import React, { useEffect, useState } from 'react';
 import HelpBrowser from './HelpBrowser';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
+import { Z_SPLASH_SCREEN, zClass } from '../zIndex';
 
 interface SplashScreenProps {
   onPlay: () => void;
@@ -63,63 +64,72 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- play once per mount, not on season re-reads
   }, []);
 
-  if (showHelp) {
-    return <HelpBrowser onClose={() => setShowHelp(false)} />;
-  }
-
+  // Wrapped in its own fixed, high-z-index root: this renders alongside the
+  // game underneath (which keeps loading/initialising the whole time — see
+  // App.tsx), not in place of it, so it must out-rank every other overlay
+  // (including the loading screen and its own "Enter Game" gate) to stay on
+  // top. The wrapper also gives HelpBrowser (rendered inside it, below, at
+  // its own normal z-index) a fresh local stacking context, so it isn't
+  // compared against the game's z-indexed overlays directly.
   return (
-    <div
-      className="fixed inset-0 w-full h-full flex flex-col items-center justify-end select-none"
-      style={{
-        backgroundImage: `url(${backgroundUrl})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      {/* Bottom gradient so the title/buttons stay legible over any background */}
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            'linear-gradient(to bottom, rgba(20,15,10,0) 40%, rgba(20,15,10,0.55) 75%, rgba(20,15,10,0.85) 100%)',
-        }}
-      />
-
-      <div className="relative z-10 flex flex-col items-center gap-2 pb-6">
-        <h1
-          className="text-6xl sm:text-7xl font-bold text-amber-50 tracking-wide"
+    <div className={`fixed inset-0 ${zClass(Z_SPLASH_SCREEN)}`}>
+      {showHelp ? (
+        <HelpBrowser onClose={() => setShowHelp(false)} />
+      ) : (
+        <div
+          className="fixed inset-0 w-full h-full flex flex-col items-center justify-end select-none"
           style={{
-            fontFamily: TITLE_FONT,
-            textShadow: '0 3px 12px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.8)',
+            backgroundImage: `url(${backgroundUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
         >
-          Twilight Village
-        </h1>
-        <p
-          className="text-base sm:text-lg text-amber-100/90 mb-4"
-          style={{ fontFamily: TITLE_FONT, textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}
-        >
-          A peaceful place where time flows gently with the seasons
-        </p>
+          {/* Bottom gradient so the title/buttons stay legible over any background */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                'linear-gradient(to bottom, rgba(20,15,10,0) 40%, rgba(20,15,10,0.55) 75%, rgba(20,15,10,0.85) 100%)',
+            }}
+          />
 
-        <button
-          onClick={onPlay}
-          className="px-10 py-3 text-lg text-amber-100 bg-amber-800/70 border border-amber-600/60 rounded-lg
+          <div className="relative z-10 flex flex-col items-center gap-2 pb-6">
+            <h1
+              className="text-6xl sm:text-7xl font-bold text-amber-50 tracking-wide"
+              style={{
+                fontFamily: TITLE_FONT,
+                textShadow: '0 3px 12px rgba(0,0,0,0.6), 0 1px 3px rgba(0,0,0,0.8)',
+              }}
+            >
+              Clover Village
+            </h1>
+            <p
+              className="text-base sm:text-lg text-amber-100/90 mb-4"
+              style={{ fontFamily: TITLE_FONT, textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}
+            >
+              A peaceful place where time flows gently with the seasons
+            </p>
+
+            <button
+              onClick={onPlay}
+              className="px-10 py-3 text-lg text-amber-100 bg-amber-800/70 border border-amber-600/60 rounded-lg
             hover:bg-amber-700/80 hover:border-amber-500/70 transition-all duration-300
             animate-pulse hover:animate-none cursor-pointer shadow-lg"
-          style={{ fontFamily: TITLE_FONT }}
-        >
-          Play
-        </button>
+              style={{ fontFamily: TITLE_FONT }}
+            >
+              Play
+            </button>
 
-        <button
-          onClick={() => setShowHelp(true)}
-          className="mt-3 text-sm text-amber-100/70 hover:text-amber-100 transition-colors duration-200 cursor-pointer underline underline-offset-4"
-          style={{ fontFamily: TITLE_FONT }}
-        >
-          Help
-        </button>
-      </div>
+            <button
+              onClick={() => setShowHelp(true)}
+              className="mt-3 text-sm text-amber-100/70 hover:text-amber-100 transition-colors duration-200 cursor-pointer underline underline-offset-4"
+              style={{ fontFamily: TITLE_FONT }}
+            >
+              Help
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

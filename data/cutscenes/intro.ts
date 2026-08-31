@@ -47,12 +47,12 @@ export const introCutscene: CutsceneDefinition = {
         },
       ],
       dialogue: {
-        text: 'Welcome to Twilight Village, a peaceful place where time flows gently with the seasons.',
+        text: 'Welcome to Clover Village, a peaceful place where time flows gently with the seasons.',
         seasonalText: {
-          spring: 'Welcome to Twilight Village in the springtime, when cherry blossoms paint the sky pink.',
-          summer: 'Welcome to Twilight Village in summer, when the sun shines bright and the crops grow tall.',
-          autumn: 'Welcome to Twilight Village in autumn, when leaves turn gold and harvests are abundant.',
-          winter: 'Welcome to Twilight Village in winter, when snow blankets the land in peaceful silence.',
+          spring: 'Welcome to Clover Village in the springtime, when cherry blossoms paint the sky pink.',
+          summer: 'Welcome to Clover Village in summer, when the sun shines bright and the crops grow tall.',
+          autumn: 'Welcome to Clover Village in autumn, when leaves turn gold and harvests are abundant.',
+          winter: 'Welcome to Clover Village in winter, when snow blankets the land in peaceful silence.',
         },
       },
       transitionOut: {
@@ -179,7 +179,7 @@ export const introCutscene: CutsceneDefinition = {
         },
       ],
       dialogue: {
-        text: 'Your journey begins now. Explore the village, meet your neighbours, and build your new life in Twilight Village.',
+        text: 'Your journey begins now. Explore the village, meet your neighbours, and build your new life in Clover Village.',
         autoAdvance: {
           delay: 4000,
         },

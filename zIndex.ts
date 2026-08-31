@@ -251,6 +251,11 @@ export const Z_LOADING = 3500;
 /** Error overlays */
 export const Z_ERROR = 4000;
 
+/** Title/splash screen — sits above absolutely everything, including errors,
+ *  since it's rendered as an overlay (not a replacement) so the game can
+ *  keep initialising underneath while it's shown. */
+export const Z_SPLASH_SCREEN = 4500;
+
 // =============================================================================
 // HELPER - Tailwind class generator
 // =============================================================================
