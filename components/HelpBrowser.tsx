@@ -11,6 +11,7 @@ import {
 } from '../services/anthropicClient';
 import { audioManager } from '../utils/AudioManager';
 import { getAuthService, getSyncManager, type AuthState, type SyncState } from '../firebase/safe';
+import { reportError } from '../utils/errorReporting';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -167,6 +168,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Sign in failed';
       setAuthError(message);
+      reportError(error, 'auth', { action: 'signIn' });
     } finally {
       setAuthLoading(false);
     }
@@ -191,6 +193,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Sign up failed';
       setAuthError(message);
+      reportError(error, 'auth', { action: 'signUp' });
     } finally {
       setAuthLoading(false);
     }
@@ -204,6 +207,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Google sign in failed';
       setAuthError(message);
+      reportError(error, 'auth', { action: 'signInWithGoogle' });
     } finally {
       setAuthLoading(false);
     }
@@ -217,6 +221,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Guest sign in failed';
       setAuthError(message);
+      reportError(error, 'auth', { action: 'signInAnonymously' });
     } finally {
       setAuthLoading(false);
     }
@@ -228,6 +233,9 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     try {
       await getSyncManager().syncNow();
     } catch (error: unknown) {
+      // Not reported here — syncNow() calls uploadToCloud(), which already
+      // reports at the source (see firebase/syncManager.ts) so every caller
+      // doesn't have to.
       const message = error instanceof Error ? error.message : 'Cloud save failed';
       setAuthError(message);
     } finally {
@@ -244,6 +252,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Sign out failed';
       setAuthError(message);
+      reportError(error, 'auth', { action: 'signOut' });
     } finally {
       setAuthLoading(false);
     }

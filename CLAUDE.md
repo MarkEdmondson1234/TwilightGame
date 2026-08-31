@@ -39,6 +39,22 @@ import { authService } from '../firebase/index';
 import { sharedDataService } from '../firebase/sharedDataService';
 ```
 
+## Error Reporting (Sentry)
+
+Remote error/crash reporting, so a real player's failed login or sync is visible without someone having to notice something looks broken and paste console output.
+
+**Status:** Silently disabled when `VITE_SENTRY_DSN` is unset — same no-op pattern as Firebase above.
+
+**Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'game_crash'`.
+
+**Wired into:** `components/ErrorBoundary.tsx` (`componentDidCatch`), `index.tsx` (`onUncaughtError`/`onRecoverableError` — NOT `onCaughtError`, which would double-report what ErrorBoundary already catches), `components/HelpBrowser.tsx` (auth actions), `firebase/syncManager.ts` (`uploadToCloud`/`downloadFromCloud`/`getCloudSyncMeta` — reported once at the source, not at every caller, since multiple call sites funnel through the same methods), `utils/farmManager.ts` (aggregate shared-farm write failures per flush, not per-plot).
+
+**Deliberately not enabled:** performance tracing (`browserTracingIntegration`, `tracesSampleRate: 0`) and session replay (`replayIntegration`) — both are in Sentry's default React setup guide, but are a separate quota and, for replay, a bigger privacy footprint (recording gameplay sessions) than plain error reporting needs. Add them later if actually wanted.
+
+**Setup:** Sign up at sentry.io (free tier), create a React project, copy the DSN into `.env.local` as `VITE_SENTRY_DSN`. For production, add the same value as a `VITE_SENTRY_DSN` GitHub Actions secret (see `.github/workflows/deploy.yml`, which passes it through the build the same way Firebase secrets are, plus `VITE_APP_VERSION` set to `github.sha` so errors can be traced back to the deploy that shipped them).
+
+**Not set up:** source map upload (`@sentry/vite-plugin` + a Sentry auth token) — without it, stack traces in the dashboard show minified names from the production bundle rather than real source lines. Worth adding if the minified traces turn out to be too hard to debug from.
+
 ## Language and Localisation
 
 **IMPORTANT**: This game uses **British English** exclusively.

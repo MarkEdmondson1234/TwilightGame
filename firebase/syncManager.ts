@@ -22,6 +22,7 @@ import { syncDiaryFromFirestore } from '../services/diaryService';
 import { gameState } from '../GameState';
 import { FIRESTORE_PATHS, SyncMetadata } from './types';
 import { eventBus, GameEvent } from '../utils/EventBus';
+import { reportError } from '../utils/errorReporting';
 
 // ============================================
 // Constants
@@ -193,6 +194,11 @@ class SyncManager {
         error: error instanceof Error ? error.message : 'Upload failed',
       });
       eventBus.emit(GameEvent.CLOUD_SYNC_COMPLETED, { success: false });
+      // Reported once here (not at each caller) since every caller —
+      // onSignIn, periodic sync, syncBeforeSignOut, exit-save, manual Save
+      // Now — funnels through this one method and either rethrows or
+      // swallows the same error.
+      reportError(error, 'sync', { action: 'uploadToCloud', slotId });
       throw error;
     }
   }
@@ -239,6 +245,7 @@ class SyncManager {
         status: 'error',
         error: error instanceof Error ? error.message : 'Download failed',
       });
+      reportError(error, 'sync', { action: 'downloadFromCloud', slotId });
       throw error;
     }
   }
@@ -366,6 +373,11 @@ class SyncManager {
       }
     } catch (error) {
       console.warn('[SyncManager] Failed to get cloud sync meta:', error);
+      // Otherwise-invisible: a failed read here makes onSignIn() treat cloud
+      // as if it had never synced (cloudTimestamp 0), which can trigger an
+      // upload that overwrites cloud data with a stale local save — worth
+      // knowing about even though gameplay isn't blocked.
+      reportError(error, 'sync', { action: 'getCloudSyncMeta' });
     }
 
     return null;

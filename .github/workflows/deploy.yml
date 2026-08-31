@@ -78,6 +78,11 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: twiightgame.appspot.com
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # Error reporting (public - embedded in browser JS, like the Firebase config above).
+          # Unset until the VITE_SENTRY_DSN secret is added — errorReporting.ts no-ops without it.
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+          # Tags Sentry errors with the commit that shipped them.
+          VITE_APP_VERSION: ${{ github.sha }}
         run: npm run build
 
       - name: Setup Pages

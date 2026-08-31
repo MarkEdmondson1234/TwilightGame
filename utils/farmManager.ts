@@ -17,6 +17,7 @@ import { getTileCoords } from './mapUtils';
 import { GROWTH_THRESHOLDS, DEBUG, SHARED_FARM_MAP_IDS } from '../constants';
 import { getWeatherZone } from '../data/weatherConfig';
 import { eventBus, GameEvent } from './EventBus';
+import { reportMessage } from './errorReporting';
 
 /** Interval for batch-flushing dirty shared plots to Firestore */
 const SHARED_SYNC_INTERVAL_MS = 10_000;
@@ -1379,6 +1380,14 @@ class FarmManager {
       }
       if (failed > 0) {
         console.warn(`[SharedFarm] ${failed} plot write(s) failed and will be retried`);
+        // Aggregate, not per-plot — a bad connection can fail many plots in
+        // one flush cycle and this runs every 10s, so per-plot reporting
+        // would spam the error budget for what's really one outage.
+        reportMessage(`Shared farm flush: ${failed} plot write(s) failed`, 'shared_farm', {
+          failed,
+          written,
+          cleared,
+        });
       }
     } catch {
       console.log('[SharedFarm] Flush failed — Firebase not available');

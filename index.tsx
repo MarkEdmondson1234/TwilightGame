@@ -3,13 +3,18 @@ import ReactDOM from 'react-dom/client';
 import './src/styles/global.css';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
+import { initErrorReporting, onUncaughtError, onRecoverableError } from './utils/errorReporting';
+
+// No-ops when VITE_SENTRY_DSN isn't set — see utils/errorReporting.ts.
+// Called before render so it can catch errors from mount onward.
+initErrorReporting();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error('Could not find root element to mount to');
 }
 
-const root = ReactDOM.createRoot(rootElement);
+const root = ReactDOM.createRoot(rootElement, { onUncaughtError, onRecoverableError });
 root.render(
   <React.StrictMode>
     <ErrorBoundary>

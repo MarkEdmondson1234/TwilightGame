@@ -1,4 +1,5 @@
 import React from 'react';
+import { reportError } from '../utils/errorReporting';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -23,6 +24,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('[ErrorBoundary] Game crashed:', error, errorInfo.componentStack);
+    reportError(error, 'game_crash', { componentStack: errorInfo.componentStack ?? undefined });
   }
 
   handleReload = () => {
