@@ -85,8 +85,7 @@ export interface DeskInteractionResult {
  * Returns the closest desk with its position and state
  */
 export function checkDeskInteraction(playerPos: Position, mapId: string): DeskInteractionResult {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   // Check adjacent tiles (not diagonals - must be directly adjacent for desk use)
   const adjacentTiles = [
@@ -629,8 +628,7 @@ export function handleFarmAction(
  * Wells are 2x2 multi-tile sprites, so check current tile and adjacent tiles
  */
 export function checkWellInteraction(playerPos: Position): boolean {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   // Check player's current tile and adjacent tiles (including diagonals for 2x2 well)
   const tilesToCheck = [
@@ -661,8 +659,7 @@ export function checkWellInteraction(playerPos: Position): boolean {
  * Used for refilling the watering can
  */
 export function checkWaterSource(playerPos: Position): boolean {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   // Water source tile types
   const waterSourceTypes = [
@@ -751,8 +748,7 @@ export function handleCollectWater(): { success: boolean; message: string } {
  * Returns the type and position of the cooking location if found
  */
 export function checkCookingLocation(playerPos: Position): CookingLocationResult {
-  const playerTileX = Math.floor(playerPos.x);
-  const playerTileY = Math.floor(playerPos.y);
+  const { x: playerTileX, y: playerTileY } = getTileCoords(playerPos);
 
   // Check player's current tile and adjacent tiles (not diagonal)
   const tilesToCheck = [
