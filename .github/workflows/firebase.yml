@@ -59,7 +59,12 @@ jobs:
           echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa.json
           export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
 
-          if firebase database:instances:list --project twiightgame 2>/dev/null | grep -qE '[a-z0-9]'; then
+          # Key the skip on the CLI's exit status, not on its output. When no
+          # instance exists, `database:instances:list` prints its error to STDOUT
+          # and exits non-zero — so grepping the output for text matches the error
+          # message itself and takes the deploy branch, which is how this step
+          # failed the first time it ran.
+          if firebase database:instances:list --project twiightgame >/dev/null 2>&1; then
             firebase deploy --only database --project twiightgame
             echo "RTDB_DEPLOYED=true" >> $GITHUB_ENV
           else
