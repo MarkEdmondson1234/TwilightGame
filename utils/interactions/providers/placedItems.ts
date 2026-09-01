@@ -18,7 +18,6 @@ export function placedItemProvider(ctx: InteractionContext): AvailableInteractio
 
   if (itemAtPosition && onPlacedItemAction) {
     const placedItemDef = getItem(itemAtPosition.itemId);
-    const isDecoration = placedItemDef?.category === ItemCategory.DECORATION;
     const isFoodItem =
       placedItemDef?.category === ItemCategory.FOOD || placedItemDef?.edible === true;
 
@@ -85,39 +84,6 @@ export function placedItemProvider(ctx: InteractionContext): AvailableInteractio
             },
           });
         }
-      }
-    }
-
-    // Legacy easel callbacks (kept for backward compatibility, remove when fully migrated)
-    if (itemAtPosition.itemId === 'easel' && config.onOpenDecorationWorkshop) {
-      // Only add legacy callback if no mini-game was registered for this
-      const hasMiniGame = getMiniGamesForPlacedItem('easel').some(
-        (mg) => mg.id === 'decoration-crafting'
-      );
-      if (!hasMiniGame) {
-        interactions.push({
-          type: 'open_workshop',
-          label: 'Craft Workshop',
-          icon: '🎨',
-          color: '#8b5cf6',
-          data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
-          execute: () => config.onOpenDecorationWorkshop!(),
-        });
-      }
-    }
-    if (itemAtPosition.itemId === 'easel' && config.onOpenPaintingEasel) {
-      const hasMiniGame = getMiniGamesForPlacedItem('easel').some(
-        (mg) => mg.id === 'painting-easel'
-      );
-      if (!hasMiniGame) {
-        interactions.push({
-          type: 'open_painting_easel',
-          label: 'Draw',
-          icon: '✏️',
-          color: '#d97706',
-          data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
-          execute: () => config.onOpenPaintingEasel!(),
-        });
       }
     }
 

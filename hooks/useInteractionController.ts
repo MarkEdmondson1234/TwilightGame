@@ -400,12 +400,6 @@ export function useInteractionController(
           onShowToast(result.message, 'info');
         }
       },
-      onOpenDecorationWorkshop: () => {
-        openUI('decorationWorkshop');
-      },
-      onOpenPaintingEasel: () => {
-        openUI('paintingEasel');
-      },
       onBeginYuleCelebration: () => {
         yuleCelebrationManager.startCelebration();
       },

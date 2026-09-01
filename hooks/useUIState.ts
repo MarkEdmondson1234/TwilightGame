@@ -21,8 +21,6 @@ export type UIOverlayName =
   | 'giftModal'
   | 'glamourModal'
   | 'journal'
-  | 'decorationWorkshop'
-  | 'paintingEasel'
   | 'miniGame'
   | 'photoAlbum'
   | 'basketModal'
@@ -67,8 +65,6 @@ export interface UIState {
   glamourModal: boolean;
   basketModal: boolean;
   journal: boolean;
-  decorationWorkshop: boolean;
-  paintingEasel: boolean;
   miniGame: boolean;
   photoAlbum: boolean;
   furnitureCatalogueUI: boolean;
@@ -137,8 +133,6 @@ const initialState: UIState = {
   glamourModal: false,
   basketModal: false,
   journal: false,
-  decorationWorkshop: false,
-  paintingEasel: false,
   miniGame: false,
   photoAlbum: false,
   furnitureCatalogueUI: false,
@@ -321,7 +315,6 @@ export function useUIState() {
       state.giftModal ||
       state.basketModal ||
       state.journal ||
-      state.paintingEasel ||
       state.miniGame
     );
   }, [state]);

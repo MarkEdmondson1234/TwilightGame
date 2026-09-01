@@ -87,20 +87,6 @@ class PerformanceMonitor {
   }
 
   /**
-   * @deprecated Use tick() instead. Kept for backwards compatibility.
-   */
-  frameStart(): void {
-    this.tick();
-  }
-
-  /**
-   * @deprecated No longer needed with tick(). Kept for backwards compatibility.
-   */
-  frameEnd(): void {
-    // No-op - tick() handles everything now
-  }
-
-  /**
    * Set sprite count (call from PixiJS renderer)
    */
   setSpriteCount(count: number): void {

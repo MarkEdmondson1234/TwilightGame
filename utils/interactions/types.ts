@@ -52,8 +52,6 @@ export type InteractionType =
   | 'desk_place'
   | 'desk_pickup'
   | 'place_decoration'
-  | 'open_workshop'
-  | 'open_painting_easel'
   | 'open_mini_game'
   | 'fireplace_tea'
   | 'yule_begin_celebration'
@@ -145,8 +143,6 @@ export interface GetInteractionsConfig {
     };
     customScale?: number;
   }) => void;
-  onOpenDecorationWorkshop?: () => void;
-  onOpenPaintingEasel?: () => void;
   onBeginYuleCelebration?: () => void;
   onOpenShop?: () => void;
   /** Open a mini-game by ID with trigger data */

@@ -21,8 +21,6 @@ export interface UIKeyHandlers {
   showGiftModal: boolean;
   showGlamourModal: boolean;
   showBasketModal: boolean;
-  showDecorationWorkshop: boolean;
-  showPaintingEasel: boolean;
   showMagicBook: boolean;
   showPhotoAlbum: boolean;
   showDevTools: boolean;
@@ -39,8 +37,6 @@ export interface UIKeyHandlers {
   onSetShowGiftModal: (show: boolean) => void;
   onSetShowGlamourModal: (show: boolean) => void;
   onSetShowBasketModal: (show: boolean) => void;
-  onSetShowDecorationWorkshop: (show: boolean) => void;
-  onSetShowPaintingEasel: (show: boolean) => void;
   onSetShowMagicBook: (show: boolean) => void;
   onSetShowPhotoAlbum: (show: boolean) => void;
   onSetShowDevTools: (show: boolean) => void;
@@ -82,14 +78,6 @@ export function handleEscape(handlers: UIKeyHandlers): boolean {
   }
   if (handlers.showBrewingUI) {
     handlers.onSetShowBrewingUI(false);
-    return true;
-  }
-  if (handlers.showDecorationWorkshop) {
-    handlers.onSetShowDecorationWorkshop(false);
-    return true;
-  }
-  if (handlers.showPaintingEasel) {
-    handlers.onSetShowPaintingEasel(false);
     return true;
   }
   if (handlers.showRecipeBook) {

@@ -38,6 +38,4 @@ export function curtainProvider(ctx: InteractionContext): AvailableInteraction[]
   }
 
   return interactions;
-
-  return interactions;
 }

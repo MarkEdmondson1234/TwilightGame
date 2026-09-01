@@ -91,8 +91,6 @@ import ForegroundParallax from './components/ForegroundParallax';
 import CloudShadows from './components/CloudShadows';
 import AmbientClouds from './components/AmbientClouds';
 import CookingInterface from './components/CookingInterface';
-import DecorationCraftingUI from './components/DecorationCraftingUI';
-import PaintingEaselUI from './components/PaintingEaselUI';
 import MiniGameHost from './components/MiniGameHost';
 import { CottageBook } from './components/book';
 import Toast, { useToast } from './components/Toast';
@@ -304,8 +302,6 @@ const App: React.FC = () => {
     ui.brewingUI ||
     ui.magicBook ||
     ui.journal ||
-    ui.decorationWorkshop ||
-    ui.paintingEasel ||
     ui.miniGame ||
     ui.devTools ||
     ui.vfxTestPanel;
@@ -886,8 +882,6 @@ const App: React.FC = () => {
     showGiftModal: ui.giftModal,
     showGlamourModal: ui.glamourModal,
     showBasketModal: ui.basketModal,
-    showDecorationWorkshop: ui.decorationWorkshop,
-    showPaintingEasel: ui.paintingEasel,
     showMagicBook: ui.magicBook,
     showPhotoAlbum: ui.photoAlbum,
     showDevTools: ui.devTools,
@@ -938,10 +932,6 @@ const App: React.FC = () => {
       show ? openUI('glamourModal') : closeUI('glamourModal'),
     onSetShowBasketModal: (show: boolean) =>
       show ? openUI('basketModal') : closeUI('basketModal'),
-    onSetShowDecorationWorkshop: (show: boolean) =>
-      show ? openUI('decorationWorkshop') : closeUI('decorationWorkshop'),
-    onSetShowPaintingEasel: (show: boolean) =>
-      show ? openUI('paintingEasel') : closeUI('paintingEasel'),
     onSetShowMagicBook: (show: boolean) => (show ? openUI('magicBook') : closeUI('magicBook')),
     onSetShowPhotoAlbum: (show: boolean) => (show ? openUI('photoAlbum') : closeUI('photoAlbum')),
     onSetPlayerPos: setPlayerPos,
@@ -2434,15 +2424,6 @@ const App: React.FC = () => {
             // GameState emits PLACED_ITEMS_CHANGED event when items are placed
           }}
         />
-      )}
-      {ui.decorationWorkshop && (
-        <DecorationCraftingUI
-          isOpen={ui.decorationWorkshop}
-          onClose={() => closeUI('decorationWorkshop')}
-        />
-      )}
-      {ui.paintingEasel && (
-        <PaintingEaselUI isOpen={ui.paintingEasel} onClose={() => closeUI('paintingEasel')} />
       )}
       {ui.miniGame && ui.context.activeMiniGameId && (
         <MiniGameHost
