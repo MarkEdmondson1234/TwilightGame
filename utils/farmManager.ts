@@ -717,9 +717,17 @@ class FarmManager {
     void (async () => {
       try {
         const { getCommunityGardenService } = await import('../firebase/safe');
-        const won = await getCommunityGardenService().claimPlot(
+        const service = getCommunityGardenService();
+        // The claim is settled on the planting, not on the stored state: a crop
+        // that ripened since its last flush still reads WATERED remotely, and
+        // comparing states made every such harvest look like a lost race.
+        const won = await service.claimPlot(
           plotId,
-          plotBefore.state,
+          {
+            cropType: plotBefore.cropType,
+            plantedAtTimestamp: plotBefore.plantedAtTimestamp,
+            knownRemote: service.getRemotePlots().has(plotId),
+          },
           plotAfter
         );
 
