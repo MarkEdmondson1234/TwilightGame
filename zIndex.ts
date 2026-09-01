@@ -32,6 +32,17 @@ export const Z_TILE_BACKGROUND = 0;
 /** Base tile sprite layer (e.g., mine_floor under cave rock/mushroom — above flat color, below tile sprite) */
 export const Z_TILE_BASE_SPRITE = 0.5;
 
+/**
+ * Farm soil underlay (tilled/tilled_wet) painted beneath a crop sprite.
+ *
+ * Must sit above Z_TILE_BASE_SPRITE so a map's ground texture (e.g. the village
+ * TilingSprite) does not paint over the soil, and strictly below Z_TILE_SPRITES so it
+ * never covers the crop growing on it. Sharing Z_TILE_SPRITES with the crop left the
+ * two tied, and PixiJS breaks a zIndex tie by insertion order — planting on an
+ * already-tilled tile adds the soil after the crop sprite, which hid seedlings entirely.
+ */
+export const Z_FARM_SOIL = 0.75;
+
 /** Tile sprites (stepping stones, furniture) */
 export const Z_TILE_SPRITES = 1;
 

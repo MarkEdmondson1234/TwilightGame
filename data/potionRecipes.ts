@@ -328,7 +328,7 @@ export const POTION_RECIPES: Record<string, PotionRecipeDefinition> = {
     resultItemId: 'potion_beast_tongue',
     resultQuantity: 1,
     unlockRequirement: 'beastward_balm',
-    effectDescription: 'Allows you to talk to animals',
+    effectDescription: 'Talk to animals for 1 day',
   },
 
   floatation_philtre: {
