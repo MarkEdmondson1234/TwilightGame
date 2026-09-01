@@ -11,6 +11,7 @@
 
 // Re-export types that don't need the package at runtime
 export type { AuthState } from './authService';
+import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -96,11 +97,29 @@ const stubCommunityGardenService = {
   onPlotsChanged: (_cb: (plots: Map<string, unknown>) => void) => () => {},
   writePlot: async () => false as boolean,
   clearPlot: async () => false as boolean,
+  // Local-only play has nobody to lose a race to, so every claim succeeds.
+  claimPlot: async () => true as boolean,
   docToFarmPlot: (_doc: unknown) => null as any,
   getPlotId: (mapId: string, x: number, y: number) => `${mapId}:${x}:${y}`,
   getRemotePlots: () => new Map<string, unknown>(),
   isActive: () => false,
   destroy: () => {},
+};
+
+/**
+ * Stub presenceService when Firebase is not available.
+ * Every method must exist here or the game crashes only in the no-Firebase
+ * configuration — tests/multiplayerSafeStubs.test.ts guards the parity.
+ */
+const stubPresenceService = {
+  isAvailable: () => false,
+  getUid: () => null as string | null,
+  getCurrentRoom: () => null as string | null,
+  onPresence: (_cb: (event: PresenceEvent) => void) => () => {},
+  enterRoom: async (_mapId: string) => false as boolean,
+  leaveRoom: async () => {},
+  publish: async (_state: LocalPresenceState) => false as boolean,
+  destroy: async () => {},
 };
 
 /** Stub cloudSaveService when Firebase is not available */
@@ -194,6 +213,15 @@ export function getCloudSaveService() {
  */
 export function getSyncManager() {
   return firebaseModule?.syncManager ?? stubSyncManager;
+}
+
+/**
+ * Get presenceService (real or stub).
+ * Returns the stub until loadFirebase() has resolved, which is exactly right:
+ * before then there is nothing to publish to.
+ */
+export function getPresenceService() {
+  return firebaseModule?.presenceService ?? stubPresenceService;
 }
 
 /**

@@ -23,6 +23,9 @@ import { TileLayer } from '../utils/pixi/TileLayer';
 import { PlayerSprite } from '../utils/pixi/PlayerSprite';
 import { SpriteLayer } from '../utils/pixi/SpriteLayer';
 import { NPCLayer } from '../utils/pixi/NPCLayer';
+import { RemotePlayerLayer } from '../utils/pixi/RemotePlayerLayer';
+import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
+import { getLocalEmote } from '../multiplayer/localEmote';
 import { ShadowLayer } from '../utils/pixi/ShadowLayer';
 import { WeatherLayer } from '../utils/pixi/WeatherLayer';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
@@ -128,6 +131,9 @@ export interface UsePixiRendererReturn {
   /** NPC layer ref (for collision detection and interactions) */
   npcLayerRef: React.RefObject<NPCLayer | null>;
 
+  /** Remote player layer ref (for pruning display objects on map change) */
+  remotePlayerLayerRef: React.RefObject<RemotePlayerLayer | null>;
+
   /** Background image layer ref (for layer NPC access) */
   backgroundImageLayerRef: React.RefObject<BackgroundImageLayer | null>;
 
@@ -164,6 +170,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const spriteLayerRef = useRef<SpriteLayer | null>(null);
   const playerSpriteRef = useRef<PlayerSprite | null>(null);
   const npcLayerRef = useRef<NPCLayer | null>(null);
+  const remotePlayerLayerRef = useRef<RemotePlayerLayer | null>(null);
   const placedItemsLayerRef = useRef<PlacedItemsLayer | null>(null);
   const shadowLayerRef = useRef<ShadowLayer | null>(null);
   const highlightLayerRef = useRef<HighlightLayer | null>(null);
@@ -174,6 +181,18 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const torchPositionsRef = useRef<LightSource[]>([]);
   const weatherManagerRef = useRef<WeatherManager | null>(null);
   const depthSortedContainerRef = useRef<PIXI.Container | null>(null);
+
+  /**
+   * Latest per-frame render parameters, mirrored into a ref so the game-loop
+   * callbacks below (which are intentionally dependency-free) can read them
+   * without being rebuilt every time the camera moves.
+   */
+  const frameParamsRef = useRef({
+    gridOffset: { x: 0, y: 0 } as { x: number; y: number },
+    tileSize: 64,
+    characterScale: 1,
+    playerPos: { x: 0, y: 0 } as { x: number; y: number },
+  });
 
   // Destructure for cleaner access
   const { isMapInitialized, currentMapId, currentMap, currentWeather } = mapConfig;
@@ -201,6 +220,16 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const { seasonKey, timeOfDay } = timing;
   const { farmUpdateTrigger, placedItemsUpdateTrigger, renderVersion, npcUpdateTrigger } = triggers;
 
+  // Mirror the current frame parameters into the ref read by updateAnimations.
+  // Assigning during render (rather than in an effect) keeps them one frame
+  // fresher and matches the currentMapIdRef pattern used in App.tsx.
+  frameParamsRef.current = {
+    gridOffset: effectiveGridOffset,
+    tileSize: effectiveTileSize,
+    characterScale: currentMap?.characterScale ?? 1.0,
+    playerPos,
+  };
+
   // Animation update function (called from game loop)
   const updateAnimations = useCallback((deltaTime: number) => {
     if (weatherLayerRef.current) {
@@ -214,6 +243,28 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     }
     // Tick player flicker (no-op when not flickering)
     playerSpriteRef.current?.tickFlicker(deltaTime);
+
+    // Remote players are polled straight from the manager every frame rather
+    // than pushed through React state — interpolated positions change on every
+    // frame and must never cost a re-render.
+    if (remotePlayerLayerRef.current) {
+      const { gridOffset, tileSize, characterScale, playerPos: localPos } = frameParamsRef.current;
+      void remotePlayerLayerRef.current.renderRemotePlayers(
+        remotePlayerManager.getRemotePlayers(),
+        characterScale,
+        gridOffset,
+        tileSize
+      );
+      // Your own emote, drawn the same way as everybody else's so pressing one
+      // gives immediate feedback instead of a silent hope somebody saw it.
+      remotePlayerLayerRef.current.renderLocalEmote(
+        getLocalEmote(),
+        localPos,
+        characterScale,
+        gridOffset,
+        tileSize
+      );
+    }
   }, []);
 
   // =========================================================================
@@ -312,6 +363,12 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         npcLayer.setStage(app.stage);
         npcLayer.setDepthContainer(depthSortedContainer);
         app.stage.addChild(npcLayer.getContainer());
+
+        // Create remote player layer (other players — depth-sorted with player/NPCs)
+        const remotePlayerLayer = new RemotePlayerLayer();
+        remotePlayerLayerRef.current = remotePlayerLayer;
+        remotePlayerLayer.setDepthContainer(depthSortedContainer);
+        app.stage.addChild(remotePlayerLayer.getContainer());
 
         // Create placed items layer (depth-sorted with player/NPCs)
         const placedItemsLayer = new PlacedItemsLayer();
@@ -513,6 +570,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       if (playerSpriteRef.current) {
         playerSpriteRef.current.destroy();
         playerSpriteRef.current = null;
+      }
+      if (remotePlayerLayerRef.current) {
+        remotePlayerLayerRef.current.clear();
+        remotePlayerLayerRef.current = null;
       }
       if (npcLayerRef.current) {
         npcLayerRef.current.clear();
@@ -921,6 +982,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     isPixiInitialized,
     pixiAppRef,
     npcLayerRef,
+    remotePlayerLayerRef,
     backgroundImageLayerRef,
     weatherManagerRef,
     weatherLayerRef,

@@ -6,6 +6,22 @@ This directory contains design documents for planned features and architectural 
 
 ## Active Plans
 
+### 🧑‍🤝‍🧑 Multiplayer — Shared World
+
+**Status**: Implemented (Phases 0-4). Inert until `VITE_FIREBASE_DATABASE_URL` is set.
+**Remaining**: Phase 5 - phrase book, shared decorations, mailbox gifting
+
+**Documents**:
+- [MULTIPLAYER.md](./MULTIPLAYER.md) - Shared-world multiplayer: presence, state tiering, determinism, safety
+
+**Why This Matters**:
+- Players see each other move around Clover Village, with emotes and name tags
+- Firestore for durable shared state, Realtime Database for ephemeral presence
+- Also fixes the shared farm's double-harvest race, and makes procedural forests
+  reproducible per day instead of regenerating on every entry
+
+---
+
 ### 🎮 PixiJS Migration (High Priority)
 
 **Status**: Ready to implement

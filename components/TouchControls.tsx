@@ -8,6 +8,8 @@ interface TouchControlsProps {
   onResetPress: () => void;
   /** Called when the photo button is pressed (only rendered when provided) */
   onPhotoPress?: () => void;
+  /** Called when the emote button is pressed (only rendered when provided) */
+  onEmotePress?: () => void;
   /** Use smaller controls for small screens (< 600px height) */
   compact?: boolean;
 }
@@ -29,6 +31,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionRelease,
   onResetPress,
   onPhotoPress,
+  onEmotePress,
   compact = false,
 }) => {
   const handleTouchStart = (direction: 'up' | 'down' | 'left' | 'right') => {
@@ -120,6 +123,19 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             title="Take Photo"
           >
             <img src={itemAssets.camera} alt="Take Photo" className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} object-contain`} />
+          </button>
+        )}
+        {/* Emote button — the only player-to-player channel (see multiplayer/emotes.ts) */}
+        {onEmotePress && (
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              onEmotePress();
+            }}
+            className={`${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-full border-2 border-amber-400/70 flex items-center justify-center text-white ${compact ? 'text-xl' : 'text-2xl'} shadow-md`}
+            title="Emotes"
+          >
+            👋
           </button>
         )}
         {/* Reset button - small, for getting unstuck */}

@@ -18,6 +18,7 @@ import {
   deleteDoc,
   collection,
   onSnapshot,
+  runTransaction,
   serverTimestamp,
   Unsubscribe,
   Timestamp,
@@ -47,6 +48,9 @@ export interface SharedPlotDoc {
   quality: 'normal' | 'good' | 'excellent';
   fertiliserApplied: boolean;
   abundantHarvest?: boolean;
+  /** Display name of the player who last harvested this plot */
+  claimedBy?: string | null;
+  claimedAtTimestamp?: number | null;
   updatedAt: ReturnType<typeof serverTimestamp> | Timestamp;
 }
 
@@ -183,6 +187,74 @@ class SharedFarmService {
     } catch (error) {
       console.error(`[SharedFarm] Failed to clear plot ${plotId}:`, error);
       return false;
+    }
+  }
+
+  /**
+   * Atomically claim a harvestable plot.
+   *
+   * The shared farm is otherwise last-write-wins on a 10s flush, which means two
+   * players clicking the same ripe carrot within ten seconds of each other both
+   * get a carrot. This is the one genuinely contended action in the game, and a
+   * transaction is the only way to settle it.
+   *
+   * Returns true if we won the plot (or if there is nothing to lose it to).
+   * Returns false ONLY when we can prove somebody else got there first — a
+   * network failure counts as a win, because confiscating a crop the player
+   * legitimately harvested is a far worse outcome than one duplicate carrot.
+   */
+  async claimPlot(plotId: string, expectedState: number, resultPlot: FarmPlot): Promise<boolean> {
+    if (!isFirebaseInitialized() || !authService.isAuthenticated()) {
+      return true; // Local-only play: nobody to race against.
+    }
+
+    try {
+      const db = getFirebaseDb();
+      const plotRef = doc(db, SHARED_PLOTS_COLLECTION, plotId);
+      const user = authService.getUser();
+      const claimedBy = user?.displayName || user?.email || 'Someone';
+
+      return await runTransaction(db, async (transaction) => {
+        const snapshot = await transaction.get(plotRef);
+
+        // Never synced (or already tidied away): we cannot prove a loss, so the
+        // player keeps what they picked.
+        if (!snapshot.exists()) return true;
+
+        const remote = snapshot.data() as SharedPlotDoc;
+        if (remote.state !== expectedState) {
+          // Somebody moved this plot on before us — that is a real, provable loss.
+          return false;
+        }
+
+        if (resultPlot.state === FarmPlotState.FALLOW) {
+          // Matches the flush path, which deletes rather than storing fallow plots.
+          transaction.delete(plotRef);
+        } else {
+          transaction.set(plotRef, {
+            mapId: resultPlot.mapId,
+            x: resultPlot.position.x,
+            y: resultPlot.position.y,
+            state: resultPlot.state,
+            cropType: resultPlot.cropType,
+            plantedBy: remote.plantedBy ?? null,
+            plantedByUid: remote.plantedByUid ?? null,
+            plantedAtTimestamp: resultPlot.plantedAtTimestamp,
+            lastWateredTimestamp: resultPlot.lastWateredTimestamp,
+            stateChangedAtTimestamp: resultPlot.stateChangedAtTimestamp,
+            quality: resultPlot.quality ?? 'normal',
+            fertiliserApplied: resultPlot.fertiliserApplied ?? false,
+            abundantHarvest: resultPlot.abundantHarvest ?? false,
+            claimedBy,
+            claimedAtTimestamp: Date.now(),
+            updatedAt: serverTimestamp(),
+          });
+        }
+        return true;
+      });
+    } catch (error) {
+      console.warn(`[SharedFarm] Claim transaction failed for ${plotId} — keeping harvest:`, error);
+      return true;
     }
   }
 

@@ -170,6 +170,12 @@ export const Z_INVENTORY = 1000;
 /** Touch controls (mobile) */
 export const Z_TOUCH_CONTROLS = 1050;
 
+/** Multiplayer presence indicator ("2 friends here") — sits with the HUD */
+export const Z_PRESENCE_INDICATOR = 1000;
+
+/** Emote picker — above the touch controls it is opened from */
+export const Z_EMOTE_WHEEL = 1060;
+
 // =============================================================================
 // DEBUG PANELS (1100-1199)
 // =============================================================================

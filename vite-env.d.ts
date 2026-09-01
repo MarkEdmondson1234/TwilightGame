@@ -12,6 +12,11 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_STORAGE_BUCKET?: string;
   readonly VITE_FIREBASE_MESSAGING_SENDER_ID?: string;
   readonly VITE_FIREBASE_APP_ID?: string;
+  readonly VITE_FIREBASE_ENABLED?: string;
+
+  // Multiplayer (Realtime Database presence)
+  readonly VITE_FIREBASE_DATABASE_URL?: string;
+  readonly VITE_MULTIPLAYER_ENABLED?: string;
 
   // Firebase Emulators (development only)
   readonly VITE_USE_FIREBASE_EMULATORS?: string;

@@ -1,4 +1,6 @@
 import { mapManager } from './MapManager';
+import { TimeManager } from '../utils/TimeManager';
+import { hashString } from '../utils/seededRandom';
 import { COLOR_SCHEMES } from './colorSchemes';
 import { homeUpstairs } from './definitions/homeUpstairs';
 import { village } from './definitions/village';
@@ -118,12 +120,24 @@ export function transitionToMap(
     const type = mapId.replace('RANDOM_', '').toLowerCase();
     let newMap;
 
+    // Seed procedural maps from the game day and depth rather than Date.now().
+    //
+    // Two reasons. Multiplayer: with a per-call clock seed, two players who walk
+    // into "the forest" together arrive in *different* forests, with the lakes,
+    // wolves and bears in different places — so RANDOM_* maps could never be
+    // shared. Single-player: it also fixes the long-standing oddity where
+    // stepping out of the forest and straight back in regenerated it entirely.
+    // The world still reshuffles daily, which is the variety the seed was for.
+    const { totalDays } = TimeManager.getCurrentTime();
+    const dailySeed = (kind: string, depth: number) =>
+      hashString(`${kind}:${totalDays}:${depth}`);
+
     switch (type) {
       case 'forest':
-        newMap = generateRandomForest();
+        newMap = generateRandomForest(dailySeed('forest', gameState.getForestDepth()));
         break;
       case 'cave':
-        newMap = generateRandomCave();
+        newMap = generateRandomCave(dailySeed('cave', gameState.getCaveDepth()));
         break;
       case 'shop': {
         // Generate shop with exit back to the current map location from game state
@@ -132,7 +146,7 @@ export function transitionToMap(
         break;
       }
       case 'lava': {
-        newMap = generateLavaMap();
+        newMap = generateLavaMap(dailySeed('lava', gameState.getLavaDepth()));
         break;
       }
       default:

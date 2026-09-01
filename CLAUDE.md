@@ -19,6 +19,9 @@ Firebase provides cloud saves via Firestore and cross-player features (NPC gossi
 - `firebase/cloudSaveService.ts` — Save/load game state to Firestore
 - `firebase/sharedDataService.ts` — Cross-player NPC gossip sharing
 - `firebase/syncManager.ts` — Local↔Cloud save synchronisation
+- `firebase/communityGardenService.ts` — Shared farm plots (+ `claimPlot` harvest transactions)
+- `firebase/presenceService.ts` — **Multiplayer presence** (Realtime Database, not Firestore)
+- `firebase/realtimeConfig.ts` — Realtime Database init (`VITE_FIREBASE_DATABASE_URL`)
 - `components/HelpBrowser.tsx` — Account & Cloud Saves UI (F1 → Settings)
 - `components/AIDialogueBox.tsx` — Gossip injection into NPC conversations
 
@@ -54,6 +57,35 @@ Remote error/crash reporting, so a real player's failed login or sync is visible
 **Setup:** Sign up at sentry.io (free tier), create a React project, copy the DSN into `.env.local` as `VITE_SENTRY_DSN`. For production, add the same value as a `VITE_SENTRY_DSN` GitHub Actions secret (see `.github/workflows/deploy.yml`, which passes it through the build the same way Firebase secrets are, plus `VITE_APP_VERSION` set to `github.sha` so errors can be traced back to the deploy that shipped them).
 
 **Not set up:** source map upload (`@sentry/vite-plugin` + a Sentry auth token) — without it, stack traces in the dashboard show minified names from the production bundle rather than real source lines. Worth adding if the minified traces turn out to be too hard to debug from.
+
+## Multiplayer (Shared World)
+
+Players can inhabit the same maps at once — see each other walk around, and emote. Design and
+implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned/MULTIPLAYER.md).
+
+**Status:** Implemented, inert until `VITE_FIREBASE_DATABASE_URL` is set. Toggle with
+`MULTIPLAYER_ENABLED` in `constants.ts`. Without it the game is exactly single-player.
+
+**Key files:**
+- `multiplayer/` — pure logic: `wire.ts` (encode/validate), `interpolation.ts`, `publishPolicy.ts`,
+  `emotes.ts`, `RemotePlayerManager.ts` (SSoT for other players — mirrors `NPCManager`)
+- `hooks/useMultiplayerController.ts` — the domain controller; App.tsx only wires it
+- `utils/pixi/RemotePlayerLayer.ts` — rendering (mirrors `NPCLayer`)
+- `database.rules.json` — RTDB security rules
+
+**Three rules that are easy to break:**
+
+1. **Never put remote player positions through React state.** They change every frame.
+   `usePixiRenderer`'s per-frame `updateAnimations()` polls `remotePlayerManager` directly; the
+   EventBus trigger fires only on join/leave.
+2. **The emote list is duplicated in `multiplayer/emotes.ts` and `database.rules.json` on purpose** —
+   the rules enforce the closed vocabulary server-side, which is the whole reason player-to-player
+   communication is safe for a young audience. There is no free-text chat and there should not be.
+   `tests/emoteVocabulary.test.ts` fails if the two lists drift.
+3. **Anything in the shared simulation must be deterministic.** Time and weather already are.
+   NPC wander and fairy spawns now use `utils/seededRandom.ts` keyed on `(id, time slot)`.
+   Reintroducing `Math.random()` there silently desyncs what two players see —
+   `tests/determinism.test.ts` guards it.
 
 ## Language and Localisation
 
@@ -336,6 +368,7 @@ Custom React hooks for game systems:
 - `hooks/useMovementController.ts` - Player position, direction, animation, pathfinding, size effects
 - `hooks/useInteractionController.ts` - NPC dialogue, radial menu, farm actions, canvas clicks
 - `hooks/useEnvironmentController.ts` - Weather, time of day, ambient audio, item decay, movement effects
+- `hooks/useMultiplayerController.ts` - Presence rooms, publishing the local player, remote player lifecycle, emotes
 
 ### Utilities (`utils/`)
 
@@ -346,6 +379,7 @@ Pure functions and game systems:
 - `utils/interactions/` - **Click interaction system** — see its [README](utils/interactions/README.md). One provider module per interaction kind
 - `utils/CharacterData.ts` - **Unified persistence API** for all character data (inventory, farming, cooking, friendships)
 - `utils/EventBus.ts` - **Type-safe pub/sub event system** for decoupling managers from React components
+- `utils/seededRandom.ts` - Deterministic PRNG keyed on (id, time slot) — use instead of `Math.random()` in anything two players must agree on
 - `utils/mapUtils.ts` - Tile data access via MapManager
 - `utils/testUtils.ts` - Startup sanity checks
 - `utils/tileRenderUtils.ts` - Tile transform calculations

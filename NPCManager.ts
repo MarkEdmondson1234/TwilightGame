@@ -5,6 +5,7 @@ import { metadataCache } from './utils/MetadataCache';
 import { TimeManager, Season } from './utils/TimeManager';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { audioManager } from './utils/AudioManager';
+import { createDecisionRandom, slotPhaseOffset } from './utils/seededRandom';
 
 /**
  * NPCManager - Single Source of Truth for all NPC data
@@ -27,6 +28,8 @@ interface NPCState {
   moveDuration: number; // How long to move in current direction (ms)
   waitDuration: number; // How long to wait before next move (ms)
   isWaiting: boolean;
+  /** Absolute wander slot this NPC last made a decision in (see WANDER_SLOT_MS) */
+  lastWanderSlot?: number;
   isInDialogue: boolean; // Freeze movement when talking to player
   baseMapId: string; // Original map where NPC was registered
   basePosition: Position; // Original position when NPC was created
@@ -57,6 +60,23 @@ class NPCManagerClass {
   private frozenNPCIds: Set<string> = new Set();
 
   private readonly NPC_SPEED = 1.0; // tiles per second
+
+  /**
+   * Length of one wander decision slot, in milliseconds.
+   *
+   * Wander decisions are keyed to absolute wall-clock slots rather than to
+   * accumulated local state, so every client picks the same direction for the
+   * same NPC at the same instant — no bandwidth, no host, no handoff. This is
+   * the same technique WeatherManager uses for weather.
+   *
+   * Caveat, deliberately not hidden: identical *decisions* do not guarantee
+   * identical *positions*. Two clients that started watching an NPC at
+   * different times, or that reached a wall from different places, can still
+   * drift apart. Full convergence would need the wander expressed as a
+   * closed-form function of time; this gets the shared-moment benefit
+   * ("look, the deer!") for a fraction of the risk.
+   */
+  private readonly WANDER_SLOT_MS = 2500;
   private readonly NPC_SIZE = PLAYER_SIZE; // Same size as player
 
   /**
@@ -743,24 +763,36 @@ class NPCManagerClass {
           }
         }
 
+        // Which absolute slot are we in? The per-NPC phase offset staggers
+        // decisions so the whole village does not turn on the same tick.
+        const phase = slotPhaseOffset(npc.id, this.WANDER_SLOT_MS);
+        const slot = Math.floor((currentTime + phase) / this.WANDER_SLOT_MS);
+
+        if (state.lastWanderSlot !== slot) {
+          // New slot: decide where to go and for how long, from the slot seed.
+          const random = createDecisionRandom(npc.id, slot);
+          const directions = npc.allowedDirections?.length
+            ? npc.allowedDirections
+            : [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
+
+          state.lastWanderSlot = slot;
+          state.moveDirection = directions[Math.floor(random() * directions.length)];
+          // Move for part of the slot, then stand for the remainder — this
+          // preserves the old 1-3s amble/1-4s pause rhythm within a fixed slot.
+          state.moveDuration = 800 + random() * (this.WANDER_SLOT_MS - 1000);
+          state.waitDuration = this.WANDER_SLOT_MS - state.moveDuration;
+          state.isWaiting = false;
+          state.lastMoveTime = currentTime;
+          npc.direction = state.moveDirection;
+        }
+
         if (state.isWaiting) {
-          // Waiting between moves
-          if (timeSinceLastMove >= state.waitDuration) {
-            // Pick a random direction and duration
-            const directions = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
-            state.moveDirection = directions[Math.floor(Math.random() * directions.length)];
-            state.moveDuration = 1000 + Math.random() * 2000; // 1-3 seconds
-            state.isWaiting = false;
-            state.lastMoveTime = currentTime;
-            npc.direction = state.moveDirection;
-          }
+          // Standing still until the next slot boundary — nothing to do.
         } else {
           // Moving
           if (timeSinceLastMove >= state.moveDuration) {
-            // Stop moving, start waiting
+            // Stop moving for the rest of this slot
             state.isWaiting = true;
-            state.waitDuration = 1000 + Math.random() * 3000; // 1-4 seconds
-            state.lastMoveTime = currentTime;
           } else {
             // Continue moving in current direction
             const movement = this.NPC_SPEED * deltaTime;
@@ -790,9 +822,12 @@ class NPCManagerClass {
               const allDirections = [Direction.Up, Direction.Down, Direction.Left, Direction.Right];
               const otherDirections = allDirections.filter((d) => d !== state.moveDirection);
 
-              // Shuffle other directions for variety
+              // Shuffle other directions for variety. Seeded from the same
+              // (npc, slot) pair, so two clients that hit the same wall pick
+              // the same way out rather than diverging on the bounce.
+              const fallbackRandom = createDecisionRandom(`${npc.id}:fallback`, slot);
               for (let i = otherDirections.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
+                const j = Math.floor(fallbackRandom() * (i + 1));
                 [otherDirections[i], otherDirections[j]] = [otherDirections[j], otherDirections[i]];
               }
 
@@ -824,11 +859,9 @@ class NPCManagerClass {
                 }
               }
 
-              // If no clear direction found, wait briefly then try again
+              // Boxed in: stand until the next slot picks a new direction.
               if (!foundAlternative) {
                 state.isWaiting = true;
-                state.waitDuration = 300 + Math.random() * 500; // Shorter wait
-                state.lastMoveTime = currentTime;
               }
             }
           }
