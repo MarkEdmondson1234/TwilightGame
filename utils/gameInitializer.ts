@@ -22,6 +22,7 @@ import { npcManager } from '../NPCManager';
 import { audioManager } from './AudioManager';
 import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
+import { cutsceneManager } from './CutsceneManager';
 
 /**
  * Fast synchronous core initialisation (~100ms)
@@ -38,6 +39,9 @@ export function initializeGameCore(): void {
   (window as any).__PERF_MONITOR__ = performanceMonitor;
   (window as any).audioManager = audioManager;
   (window as any).textureManager = textureManager;
+  // Exposed for scripts/perf-test.js, which has to get past the title screen
+  // and any season cutscene before it can measure the game itself.
+  (window as any).cutsceneManager = cutsceneManager;
 
   // Dev tools for colour system testing
   (window as any).TimeManager = TimeManager;
