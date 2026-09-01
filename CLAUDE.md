@@ -148,6 +148,9 @@ When implementing new features:
 - `make preview` - Preview production build
 - `make optimize-assets` - Optimise images using Sharp
 - `make verify` - **Typecheck + run all tests. Run this before calling any change done.**
+  CI's `verify` job additionally runs `npm run lint`, which fails on errors (warnings are
+  fine). If you added or moved files, run `npm run lint` too — a green `make verify` is not
+  the same gate.
 - `make typecheck` - Check TypeScript only
 - `make test` - Run all tests once
 - `make clean` - Remove build artifacts
