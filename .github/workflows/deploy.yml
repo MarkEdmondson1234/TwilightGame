@@ -18,9 +18,18 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deployment
+# Allow one concurrent run per ref.
+#
+# The group MUST stay ref-scoped. It used to be a single global "pages" group, which meant
+# merging anything to main started main's deploy and cancelled the in-flight run on every
+# open PR — killing the `verify` job below mid-`npm ci`. GitHub reports that cancellation as
+# a failed check, indistinguishable at a glance from a real test failure, so PRs looked
+# broken when nothing was wrong with them.
+#
+# Only main deploys (build and deploy are gated on github.event_name != 'pull_request'), so
+# scoping by ref still serialises the actual Pages deployments against each other.
 concurrency:
-  group: "pages"
+  group: pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
