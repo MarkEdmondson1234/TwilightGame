@@ -86,6 +86,29 @@ export const MULTIPLAYER = {
  * Toggle these to enable detailed logging for specific game systems.
  * All flags are automatically disabled in production builds.
  */
+/**
+ * Runtime debug switch, usable in a *deployed* build.
+ *
+ * Some bugs only ever happen in production on somebody else's device — the
+ * multiplayer presence path is the canonical example, since it is silent by
+ * design when it fails. Add `?debug=multiplayer` to the URL (comma-separate
+ * several, or use `all`), or run
+ * `localStorage.setItem('twilight_debug', 'multiplayer')` and reload, to turn
+ * the matching flag on without a new deploy.
+ */
+function runtimeDebug(name: string): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const fromUrl = new URLSearchParams(window.location.search).get('debug');
+    const stored = window.localStorage.getItem('twilight_debug');
+    const flags = `${fromUrl ?? ''},${stored ?? ''}`.toLowerCase().split(',');
+    return flags.some((flag) => flag.trim() === name || flag.trim() === 'all');
+  } catch {
+    // Private-browsing modes can throw on localStorage access. Never fatal.
+    return false;
+  }
+}
+
 export const DEBUG = {
   FARM: import.meta.env.DEV && false, // Farm operations (till, plant, water, harvest)
   FARM_OVERLAY: import.meta.env.DEV && false, // Visual farm debug overlay (F3) - shows crop sprite bounds and offsets
@@ -97,7 +120,9 @@ export const DEBUG = {
   QUEST: import.meta.env.DEV && false, // Quest progression and dialogue actions
   FORAGE: import.meta.env.DEV && false, // Foraging actions and loot rolls
   CLICK: import.meta.env.DEV && false, // Click targeting and interaction detection
-  MULTIPLAYER: import.meta.env.DEV && false, // Presence publish/receive and remote player lifecycle
+  // Off by default everywhere; opt in with `?debug=multiplayer` (works in
+  // production too — see runtimeDebug above).
+  MULTIPLAYER: runtimeDebug('multiplayer'), // Presence publish/receive and remote player lifecycle
 } as const;
 
 /**

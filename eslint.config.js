@@ -70,6 +70,9 @@ export default tseslint.config(
       '*.config.js',
       '*.config.ts',
       'scripts/',
+      // Agent tooling, not game source — same reasoning as scripts/ above.
+      // These are Node scripts and would need a separate env to lint cleanly.
+      '.claude/',
       'validate-build.js',
       'public/sw.js',
     ],

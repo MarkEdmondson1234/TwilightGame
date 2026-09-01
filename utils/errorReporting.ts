@@ -60,7 +60,7 @@ export const onUncaughtError = Sentry.reactErrorHandler();
 export const onRecoverableError = Sentry.reactErrorHandler();
 
 /** Broad categories used to filter/group errors in the Sentry dashboard. */
-export type ErrorReportCategory = 'auth' | 'sync' | 'shared_farm' | 'game_crash';
+export type ErrorReportCategory = 'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash';
 
 /**
  * Report a caught error. Safe no-op when Sentry isn't configured or hasn't

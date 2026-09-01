@@ -48,7 +48,7 @@ Remote error/crash reporting, so a real player's failed login or sync is visible
 
 **Status:** Silently disabled when `VITE_SENTRY_DSN` is unset — same no-op pattern as Firebase above.
 
-**Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'game_crash'`.
+**Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash'`.
 
 **Wired into:** `components/ErrorBoundary.tsx` (`componentDidCatch`), `index.tsx` (`onUncaughtError`/`onRecoverableError` — NOT `onCaughtError`, which would double-report what ErrorBoundary already catches), `components/HelpBrowser.tsx` (auth actions), `firebase/syncManager.ts` (`uploadToCloud`/`downloadFromCloud`/`getCloudSyncMeta` — reported once at the source, not at every caller, since multiple call sites funnel through the same methods), `utils/farmManager.ts` (aggregate shared-farm write failures per flush, not per-plot).
 
@@ -1411,6 +1411,7 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 | **add-animation** | "add animation", "particle effect", "weather effect" | Add GIF animations to tiles/weather |
 | **add-pixi-component** | "PixiJS", "WebGL", "particle system", "shader" | Add PixiJS rendering components |
 | **add-minigame** | "create mini-game", "add mini-game", "new activity" | Create self-contained mini-games (2 files + 1 registry line) |
+| **debug-production** | "works locally but not deployed", "broken on the live site", "check Sentry", "can't reproduce" | Debug production-only bugs: Sentry via MCP, live console probe, deployed-bundle inspection |
 
 ### When to Use Skills
 
@@ -1426,6 +1427,7 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 - User: "Start the game" → Use **dev-server** skill
 - User: "Add rain particles" → Use **add-animation** skill
 - User: "Add almonds as an ingredient" → Use **add-grocery-item** skill
+- User: "Sanne says she can't sign in but it works for me" → Use **debug-production** skill
 
 ### Asset Optimization Keywords
 

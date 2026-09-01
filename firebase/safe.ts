@@ -12,6 +12,7 @@
 // Re-export types that don't need the package at runtime
 export type { AuthState } from './authService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
+import type { PresenceStatus } from '../multiplayer/presenceStatus';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -113,6 +114,12 @@ const stubCommunityGardenService = {
  */
 const stubPresenceService = {
   isAvailable: () => false,
+  getStatus: (): PresenceStatus => ({
+    available: false,
+    reason: 'firebase-not-initialised',
+    uid: null,
+    room: null,
+  }),
   getUid: () => null as string | null,
   getCurrentRoom: () => null as string | null,
   onPresence: (_cb: (event: PresenceEvent) => void) => () => {},
@@ -139,19 +146,40 @@ const stubInitializeFirebase = async () => null;
 
 // Cache the loaded module
 let firebaseModule: typeof import('./index') | null = null;
-let loadAttempted = false;
+let loadPromise: Promise<typeof import('./index') | null> | null = null;
+let initPromise: Promise<Awaited<
+  ReturnType<typeof import('./index').initializeFirebase>
+> | null> | null = null;
 
-/** Try to load the real Firebase module */
+/**
+ * Try to load the real Firebase module.
+ *
+ * The in-flight *promise* is what gets shared, not a "we already started"
+ * boolean. That distinction was a production outage: a boolean made the second
+ * concurrent caller return the module variable while it was still null, so
+ * safeInitializeFirebase() saw "no Firebase" and returned without a word —
+ * initializeFirebase() was never called, and for the rest of the session
+ * signing in threw "Firebase not initialized", cloud saves were off and
+ * multiplayer was invisible. Whether it happened at all came down to which of
+ * the two startup callers won a race against a chunk download.
+ */
 async function loadFirebase(): Promise<typeof import('./index') | null> {
-  if (loadAttempted) return firebaseModule;
-  loadAttempted = true;
-  try {
-    firebaseModule = await import('./index');
-    return firebaseModule;
-  } catch {
-    console.log('[Firebase] Package not installed - cloud saves disabled');
-    return null;
+  if (firebaseModule) return firebaseModule;
+
+  if (!loadPromise) {
+    loadPromise = import('./index')
+      .then((mod) => {
+        firebaseModule = mod;
+        return mod;
+      })
+      .catch(() => {
+        console.log('[Firebase] Package not installed - cloud saves disabled');
+        loadPromise = null; // a chunk that failed to download may succeed later
+        return null;
+      });
   }
+
+  return loadPromise;
 }
 
 /**
@@ -175,23 +203,39 @@ export function getSharedDataService() {
  * Returns null if Firebase is not available or not configured.
  */
 export async function safeInitializeFirebase() {
-  const mod = await loadFirebase();
-  if (!mod) return null;
+  // Memoised so concurrent callers share one initialisation rather than racing
+  // to call authService.initialize() twice. A *failed* attempt is not cached:
+  // pressing "Sign in" after a first-load failure has to be able to retry, and
+  // before this it could not — the account screen just kept saying
+  // "Firebase not initialized" for the rest of the session.
+  if (!initPromise) {
+    initPromise = (async () => {
+      const mod = await loadFirebase();
+      if (!mod) return null;
 
-  try {
-    const result = await mod.initializeFirebase();
-    if (result) {
-      mod.authService.initialize();
-      mod.syncManager.initialize();
-      console.log('[App] Firebase, auth, and sync manager initialized');
-    } else {
-      console.log('[App] Firebase not configured or disabled - cloud saves disabled');
-    }
-    return result;
-  } catch (error) {
-    console.log('[App] Firebase initialization failed - continuing without cloud saves');
-    return null;
+      try {
+        const result = await mod.initializeFirebase();
+        if (result) {
+          mod.authService.initialize();
+          mod.syncManager.initialize();
+          console.log('[App] Firebase, auth, and sync manager initialized');
+        } else {
+          console.log('[App] Firebase not configured or disabled - cloud saves disabled');
+        }
+        return result;
+      } catch (error) {
+        console.warn(
+          '[App] Firebase initialization failed - continuing without cloud saves',
+          error
+        );
+        return null;
+      }
+    })().then((result) => {
+      if (!result) initPromise = null; // allow a retry
+      return result;
+    });
   }
+  return initPromise;
 }
 
 /**
@@ -249,6 +293,10 @@ export function isFirebaseLoaded(): boolean {
  * service. Idempotent: the underlying load runs at most once.
  */
 export async function whenFirebaseSettled(): Promise<boolean> {
-  await loadFirebase();
+  // Awaiting only the *import* was not enough: presence asks whether the
+  // Realtime Database is up the instant the player steps onto a shared map,
+  // and initializeFirebase() may still have been in flight — so multiplayer
+  // read "unavailable" and stayed that way. Wait for real initialisation.
+  await safeInitializeFirebase();
   return firebaseModule !== null;
 }
