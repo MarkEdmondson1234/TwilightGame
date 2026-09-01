@@ -16,7 +16,10 @@
  *  2. The upload must target Sentry's EU region. The org is on `de.sentry.io`;
  *     omitting the URL uploads to the US instance instead, which does not
  *     error — it just isn't where the events are. (Same trap the
- *     debug-production skill documents for reading issues via MCP.)
+ *     debug-production skill documents for reading issues via MCP.) An
+ *     organisation auth token embeds its own region and overrides this — the
+ *     build log says so — so it is a fallback for tokens that do not, not the
+ *     primary defence.
  *  3. The auth token must never gain a VITE_ prefix. Vite inlines every
  *     VITE_-prefixed variable into the browser bundle, so that one rename
  *     would publish an org-write-capable Sentry token to a public GitHub
