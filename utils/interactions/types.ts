@@ -63,7 +63,9 @@ export type InteractionType =
   | 'pickup_leaves'
   | 'open_shop'
   | 'remove_curtains'
-  | 'make_snow_angel';
+  | 'make_snow_angel'
+  | 'sleep_furniture'
+  | 'rest_furniture';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -152,6 +154,11 @@ export interface GetInteractionsConfig {
   onShowToast?: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
   /** Make a snow angel — block is the top-left tile of the clear 2x2 area found near the click */
   onMakeSnowAngel?: (block: Position) => void;
+  /**
+   * Use a placed bed/bench/armchair: walk the player onto `target` so the passive restore
+   * in StaminaManager.update() takes over. Not a time skip — time is shared between players.
+   */
+  onUseFurniture?: (target: Position, effect: 'sleep' | 'rest') => void;
 }
 
 // ---------------------------------------------------------------------------

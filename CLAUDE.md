@@ -417,6 +417,15 @@ Pure functions and game systems:
   - Single interaction: Auto-executes immediately
   - Multiple interactions: Radial menu appears with options in a circle
   - Disabled on touch devices (to avoid conflicts with touch controls)
+  - **An interaction that would be destructive or surprising as a one-click auto-execute must
+    opt out**: set `requireConfirmation: true` on the interaction, or `confirmPickup: true` on
+    the item definition. Both force the radial menu even when the interaction is the only one
+    available. A placed bed offering only "Pick Up" is how clicking a bed to sleep in it
+    carried the bed off instead — `tests/furnitureActions.test.ts` guards that case.
+- **Inventory**: left-click/tap **selects a slot and nothing else**. Every action that
+  consumes, places, applies or deletes an item lives behind **right-click** (desktop) or
+  **long-press** (touch), and is defined in `utils/inventoryActions.ts` — not inline in
+  App.tsx. Add a new item action there.
 - **Keyboard**: WASD/arrows for movement, E/Enter for actions, F-keys for UI, 1-9 for tools/seeds (legacy support)
 - **Touch**: On-screen D-pad and action button for mobile devices
 - Shared action handlers in `utils/actionHandlers.ts` eliminate code duplication

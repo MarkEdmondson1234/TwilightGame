@@ -28,6 +28,7 @@ export const FURNITURE_ITEMS: Record<string, ItemDefinition> = {
     placesBelowCharacters: true,
     indoorOnly: true,
     furnitureEffect: 'sleep',
+    confirmPickup: true, // clicking a bed means "sleep" far more often than "pick up"
   },
 
   furniture_garden_bench: {
@@ -43,6 +44,7 @@ export const FURNITURE_ITEMS: Record<string, ItemDefinition> = {
     placesBelowCharacters: true,
     outdoorOnly: true,
     furnitureEffect: 'rest',
+    confirmPickup: true,
   },
 
   furniture_bookshelf: {
@@ -59,6 +61,7 @@ export const FURNITURE_ITEMS: Record<string, ItemDefinition> = {
     indoorOnly: true,
     allowAnyTilePlacement: true,
     buyPrice: 450,
+    confirmPickup: true, // large, deliberate piece — never whisk it away on a stray click
   },
 
   furniture_armchair: {
@@ -75,6 +78,7 @@ export const FURNITURE_ITEMS: Record<string, ItemDefinition> = {
     indoorOnly: true,
     furnitureEffect: 'rest',
     buyPrice: 600,
+    confirmPickup: true,
   },
 
   furniture_cozy_rug: {

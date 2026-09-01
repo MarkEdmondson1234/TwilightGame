@@ -50,7 +50,13 @@ If your interaction needs a new callback (e.g. to open a UI panel), add it to
   chose it or not.
 
 - **Order in `registry.ts` is the radial menu order.** Reordering changes what the player
-  sees. Only do it deliberately.
+  sees. Only do it deliberately. `furnitureProvider` sits ahead of `placedItemProvider` for
+  exactly this reason: "Sleep" must be offered above "Pick Up".
+
+- **A lone interaction auto-executes.** If your interaction would be destructive or
+  surprising to fire on a single click, set `requireConfirmation: true` on it (or
+  `confirmPickup: true` on the item definition) so the radial menu shows anyway. A placed bed
+  used to offer nothing but "Pick Up", so clicking it to sleep picked the bed up instead.
 
 - **`exclusive: true` suppresses every provider after it.** Return
   `{ interactions, exclusive: true }` when one interaction fully owns the click — the shop
