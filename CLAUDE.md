@@ -48,7 +48,7 @@ Remote error/crash reporting, so a real player's failed login or sync is visible
 
 **Status:** Silently disabled when `VITE_SENTRY_DSN` is unset — same no-op pattern as Firebase above.
 
-**Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'game_crash'`.
+**Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash'`.
 
 **Wired into:** `components/ErrorBoundary.tsx` (`componentDidCatch`), `index.tsx` (`onUncaughtError`/`onRecoverableError` — NOT `onCaughtError`, which would double-report what ErrorBoundary already catches), `components/HelpBrowser.tsx` (auth actions), `firebase/syncManager.ts` (`uploadToCloud`/`downloadFromCloud`/`getCloudSyncMeta` — reported once at the source, not at every caller, since multiple call sites funnel through the same methods), `utils/farmManager.ts` (aggregate shared-farm write failures per flush, not per-plot).
 

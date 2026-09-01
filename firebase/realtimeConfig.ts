@@ -18,6 +18,7 @@ import { getFirebaseApp, isFirebaseInitialized } from './config';
 
 let rtdb: Database | null = null;
 let initAttempted = false;
+let loggedUnconfigured = false;
 
 /**
  * True when a database URL is configured. Presence is optional: the game is
@@ -30,23 +31,36 @@ export function isRealtimeConfigured(): boolean {
 /**
  * Get the Realtime Database instance, or null when unavailable.
  * Safe to call repeatedly; initialisation happens once.
+ *
+ * The "not initialised yet" case must NOT be cached. getRealtimeDb() is first
+ * called the moment the player steps onto a shared map, which can easily be
+ * before initializeFirebase() has resolved — and latching a null then killed
+ * presence for the rest of the session, with no log to say why. Only a real
+ * getDatabase() attempt is allowed to be final.
  */
 export function getRealtimeDb(): Database | null {
   if (rtdb) return rtdb;
-  if (initAttempted) return null;
-  initAttempted = true;
 
-  if (!isFirebaseInitialized() || !isRealtimeConfigured()) {
-    console.log('[Presence] Realtime Database not configured — multiplayer disabled');
+  if (!isRealtimeConfigured()) {
+    if (!loggedUnconfigured) {
+      loggedUnconfigured = true;
+      console.log('[Presence] Realtime Database not configured - multiplayer disabled');
+    }
     return null;
   }
+
+  // Firebase itself is still starting up. Transient: try again next call.
+  if (!isFirebaseInitialized()) return null;
+
+  if (initAttempted) return null;
+  initAttempted = true;
 
   try {
     rtdb = getDatabase(getFirebaseApp(), import.meta.env.VITE_FIREBASE_DATABASE_URL);
     console.log('[Presence] Realtime Database ready');
     return rtdb;
   } catch (error) {
-    console.warn('[Presence] Realtime Database init failed — multiplayer disabled', error);
+    console.warn('[Presence] Realtime Database init failed - multiplayer disabled', error);
     return null;
   }
 }
@@ -55,4 +69,5 @@ export function getRealtimeDb(): Database | null {
 export function resetRealtimeDbForTests(): void {
   rtdb = null;
   initAttempted = false;
+  loggedUnconfigured = false;
 }

@@ -23,6 +23,8 @@ import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
 import { shouldPublish } from '../multiplayer/publishPolicy';
 import { getLocalEmote, setLocalEmote, clearLocalEmote } from '../multiplayer/localEmote';
 import type { EmoteId } from '../multiplayer/emotes';
+import { PRESENCE_REASON_TEXT } from '../multiplayer/presenceStatus';
+import type { PresenceUnavailableReason } from '../multiplayer/presenceStatus';
 import type { LocalPresenceState } from '../multiplayer/types';
 
 export interface UseMultiplayerControllerProps {
@@ -57,6 +59,28 @@ export interface UseMultiplayerControllerReturn {
 /** Presence only runs on maps players are meant to share. */
 function isSharedMap(mapId: string): boolean {
   return MULTIPLAYER.SHARED_MAPS.has(mapId);
+}
+
+/**
+ * Say — once per distinct situation, and regardless of debug flags — why the
+ * player is alone on a map where they expected company.
+ *
+ * Deliberately not gated behind DEBUG.MULTIPLAYER. The whole failure mode is
+ * that nothing happens and nothing is logged, which leaves two people staring
+ * at empty fields with no way to tell whether the problem is their account,
+ * the deploy, or the game.
+ */
+let lastPresenceNotice = '';
+function noticePresenceState(mapId: string, reason: PresenceUnavailableReason | null): void {
+  const notice = `${mapId}:${reason ?? 'ok'}`;
+  if (notice === lastPresenceNotice) return;
+  lastPresenceNotice = notice;
+
+  if (reason) {
+    console.warn(
+      `[Multiplayer] Other players will not appear on "${mapId}": ${PRESENCE_REASON_TEXT[reason]}.`
+    );
+  }
 }
 
 /**
@@ -146,7 +170,10 @@ export function useMultiplayerController(
 
       // A private map (home, personal garden, any RANDOM_* forest) or an
       // unavailable backend both mean the same thing: nobody to see here.
-      if (!isSharedMap(currentMapId) || !presence.isAvailable()) {
+      const status = presence.getStatus();
+      if (isSharedMap(currentMapId)) noticePresenceState(currentMapId, status.reason);
+
+      if (!isSharedMap(currentMapId) || !status.available) {
         await presence.leaveRoom();
         remotePlayerManager.setMap(null);
         if (!cancelled) {
@@ -169,8 +196,12 @@ export function useMultiplayerController(
 
       activeRef.current = joined;
       setIsActive(joined);
-      if (joined && DEBUG.MULTIPLAYER) {
-        console.log(`[Multiplayer] Presence active on "${currentMapId}"`);
+      if (joined) {
+        // One line per map, always on: the counterpart to the warning above, so
+        // a bug report can show presence working as well as failing.
+        console.log(`[Multiplayer] Presence active on "${currentMapId}" as ${status.uid}`);
+      } else {
+        console.warn(`[Multiplayer] Could not join the presence room for "${currentMapId}"`);
       }
     };
 

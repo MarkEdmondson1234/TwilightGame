@@ -10,7 +10,13 @@ import {
   isAIAvailable,
 } from '../services/anthropicClient';
 import { audioManager } from '../utils/AudioManager';
-import { getAuthService, getSyncManager, type AuthState, type SyncState } from '../firebase/safe';
+import {
+  getAuthService,
+  getSyncManager,
+  safeInitializeFirebase,
+  type AuthState,
+  type SyncState,
+} from '../firebase/safe';
 import { reportError } from '../utils/errorReporting';
 
 interface HelpBrowserProps {
@@ -153,6 +159,24 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setSaveMessage('API key removed.');
   };
 
+  /**
+   * Firebase is initialised once during asset loading. When that attempt failed
+   * or had not finished, every button below threw "Firebase not initialized"
+   * and kept doing so for the rest of the session — there was no way back.
+   * Pressing sign-in is exactly the right moment to try again.
+   */
+  const ensureFirebaseReady = async (): Promise<boolean> => {
+    const ready = await safeInitializeFirebase();
+    if (!ready) {
+      setAuthError(
+        'Could not reach the cloud service from this browser. Check your connection ' +
+          '(and any tracking/ad blocker) and try again.'
+      );
+      return false;
+    }
+    return true;
+  };
+
   // Auth handlers
   const handleSignIn = async () => {
     if (!emailInput.trim() || !passwordInput.trim()) {
@@ -162,6 +186,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAuthLoading(true);
     setAuthError('');
     try {
+      if (!(await ensureFirebaseReady())) return;
       await getAuthService().signIn(emailInput.trim(), passwordInput.trim());
       setEmailInput('');
       setPasswordInput('');
@@ -186,6 +211,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAuthLoading(true);
     setAuthError('');
     try {
+      if (!(await ensureFirebaseReady())) return;
       const displayName = emailInput.split('@')[0];
       await getAuthService().signUp(emailInput.trim(), passwordInput.trim(), displayName);
       setEmailInput('');
@@ -203,6 +229,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAuthLoading(true);
     setAuthError('');
     try {
+      if (!(await ensureFirebaseReady())) return;
       await getAuthService().signInWithGoogle();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Google sign in failed';
@@ -217,6 +244,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAuthLoading(true);
     setAuthError('');
     try {
+      if (!(await ensureFirebaseReady())) return;
       await getAuthService().signInAnonymously();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Guest sign in failed';

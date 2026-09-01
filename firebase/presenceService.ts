@@ -25,10 +25,13 @@ import {
   serverTimestamp,
   type DatabaseReference,
 } from 'firebase/database';
-import { getRealtimeDb } from './realtimeConfig';
+import { getRealtimeDb, isRealtimeConfigured } from './realtimeConfig';
+import { isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { DEBUG } from '../constants';
+import { reportError } from '../utils/errorReporting';
 import { encodePresence, decodePresence } from '../multiplayer/wire';
+import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { LocalPresenceState, PresenceEvent } from '../multiplayer/types';
 
 const PRESENCE_ROOT = 'presence';
@@ -44,10 +47,32 @@ class PresenceService {
   private unsubscribers: Array<() => void> = [];
   private selfRef: DatabaseReference | null = null;
   private listeners = new Set<(event: PresenceEvent) => void>();
+  /** Publish runs at 5 Hz — report the first failure only, not 300 a minute. */
+  private reportedPublishFailure = false;
 
   /** True when presence can actually be published — Firebase up and signed in. */
   isAvailable(): boolean {
-    return getRealtimeDb() !== null && authService.isAuthenticated();
+    return this.getStatus().available;
+  }
+
+  /**
+   * The same answer as isAvailable(), plus *why*. Callers surface the reason
+   * so a silent multiplayer failure leaves a trace in the console.
+   */
+  getStatus(): PresenceStatus {
+    const uid = this.getUid();
+    const base = { uid, room: this.roomMapId };
+
+    if (!isRealtimeConfigured()) return { available: false, reason: 'no-database-url', ...base };
+    if (!isFirebaseInitialized()) {
+      return { available: false, reason: 'firebase-not-initialised', ...base };
+    }
+    if (getRealtimeDb() === null) {
+      return { available: false, reason: 'database-init-failed', ...base };
+    }
+    if (!authService.isAuthenticated()) return { available: false, reason: 'signed-out', ...base };
+
+    return { available: true, reason: null, ...base };
   }
 
   getUid(): string | null {
@@ -131,6 +156,7 @@ class PresenceService {
       return true;
     } catch (error) {
       console.warn(`[Presence] Failed to enter room "${mapId}":`, error);
+      reportError(error, 'presence', { room: mapId });
       this.roomMapId = null;
       this.selfRef = null;
       return false;
@@ -180,8 +206,17 @@ class PresenceService {
       await set(this.selfRef, wire);
       return true;
     } catch (error) {
-      // Losing a position update is harmless — the next one is 200 ms away.
-      if (DEBUG.MULTIPLAYER) console.warn('[Presence] Publish failed:', error);
+      // Losing a *single* position update is harmless — the next one is 200 ms
+      // away. Losing every one of them is invisible multiplayer, so the first
+      // failure is always reported, however quiet the debug flags are: a
+      // permission-denied here (rules not deployed) is otherwise undetectable.
+      if (!this.reportedPublishFailure) {
+        this.reportedPublishFailure = true;
+        console.warn('[Presence] Publish failed — other players will not see you:', error);
+        reportError(error, 'presence', { room: this.roomMapId });
+      } else if (DEBUG.MULTIPLAYER) {
+        console.warn('[Presence] Publish failed:', error);
+      }
       return false;
     }
   }
