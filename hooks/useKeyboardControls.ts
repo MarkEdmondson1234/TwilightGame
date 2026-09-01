@@ -94,6 +94,8 @@ export interface KeyboardControlsConfig {
   onForageResult?: (result: ForageResult) => void;
   onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
   onSetSelectedItemSlot?: (slot: number | null) => void;
+  /** T key — open/close the multiplayer emote picker (only wired when multiplayer is on) */
+  onToggleEmoteWheel?: () => void;
 }
 
 export function useKeyboardControls(config: KeyboardControlsConfig) {
@@ -150,6 +152,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onForageResult,
     onShowToast,
     onSetSelectedItemSlot,
+    onToggleEmoteWheel,
   } = config;
 
   // Create refs for values that need to be accessed in the event handler with latest values
@@ -242,6 +245,13 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     if ((e.key === 'i' || e.key === 'I') && !showMiniGameRef.current) {
       e.preventDefault();
       handleInventoryToggle(uiHandlers);
+      return;
+    }
+
+    // T key to toggle the emote picker (the only player-to-player channel)
+    if ((e.key === 't' || e.key === 'T') && onToggleEmoteWheel && !showMiniGameRef.current) {
+      e.preventDefault();
+      onToggleEmoteWheel();
       return;
     }
 

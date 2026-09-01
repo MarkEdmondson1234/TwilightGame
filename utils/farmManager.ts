@@ -667,7 +667,19 @@ class FarmManager {
       cropId: plot.cropType,
       position: plot.position,
     });
-    this.syncSharedPlot(mapId, position);
+
+    // On the shared farm, settle the race with the other players who might have
+    // clicked this same ripe crop. The grant above is deliberately optimistic —
+    // blocking on a round-trip would put a visible stall on every harvest in a
+    // game whose whole appeal is unhurried — so the cost falls entirely on the
+    // rare collision, which is rolled back below.
+    this.claimSharedHarvest(mapId, position, plot, updatedPlot, {
+      cropItemId,
+      cropYield: crop.harvestYield,
+      seedItemId: seedsDropped > 0 ? getSeedItemId(plot.cropType) : null,
+      seedsDropped,
+      cropDisplayName: crop.displayName,
+    });
 
     return {
       cropId: plot.cropType,
@@ -675,6 +687,71 @@ class FarmManager {
       seedsDropped,
       quality,
     };
+  }
+
+  /**
+   * Settle a contested harvest on the shared farm.
+   *
+   * Fire-and-forget: the caller has already granted the crop and moved on. If
+   * the claim transaction proves another player got there first, this puts
+   * everything back — items removed, plot restored — and emits
+   * FARM_HARVEST_CONTESTED so the UI can say so.
+   */
+  private claimSharedHarvest(
+    mapId: string,
+    position: Position,
+    plotBefore: FarmPlot,
+    plotAfter: FarmPlot,
+    granted: {
+      cropItemId: string;
+      cropYield: number;
+      seedItemId: string | null;
+      seedsDropped: number;
+      cropDisplayName: string;
+    }
+  ): void {
+    if (!SHARED_FARM_MAP_IDS.has(mapId)) return;
+
+    const plotId = this.getPlotKey(mapId, position);
+
+    void (async () => {
+      try {
+        const { getCommunityGardenService } = await import('../firebase/safe');
+        const won = await getCommunityGardenService().claimPlot(
+          plotId,
+          plotBefore.state,
+          plotAfter
+        );
+
+        if (won) {
+          // Our write went out inside the transaction; mark it flushed so the
+          // snapshot echo does not overwrite the plot we just harvested.
+          this.recentlyFlushed.set(plotId, Date.now());
+          return;
+        }
+
+        // Lost the race — take the crop back and restore the plot.
+        inventoryManager.removeItem(granted.cropItemId, granted.cropYield);
+        if (granted.seedItemId && granted.seedsDropped > 0) {
+          inventoryManager.removeItem(granted.seedItemId, granted.seedsDropped);
+        }
+        this.registerPlot({ ...plotBefore });
+        this.dirtySharedPlots.delete(plotId);
+
+        console.log(`[SharedFarm] Lost the race for ${plotId} — harvest rolled back`);
+        eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position, action: 'harvest' });
+        eventBus.emit(GameEvent.FARM_HARVEST_CONTESTED, {
+          mapId,
+          position,
+          cropDisplayName: granted.cropDisplayName,
+        });
+      } catch (error) {
+        // A failure here means we could not prove a loss, so the player keeps
+        // the crop. Falling back to the batch flush keeps the plot converging.
+        console.warn(`[SharedFarm] Claim failed for ${plotId} — keeping harvest:`, error);
+        this.syncSharedPlot(mapId, position);
+      }
+    })();
   }
 
   /**

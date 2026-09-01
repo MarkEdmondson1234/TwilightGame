@@ -7,6 +7,7 @@ on:
     paths:
       - 'firestore.rules'
       - 'firestore.indexes.json'
+      - 'database.rules.json'
       - 'firebase.json'
       - '.github/workflows/firebase.yml'
 
@@ -14,7 +15,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy-firestore-rules:
+  deploy-rules:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -42,9 +43,41 @@ jobs:
           # Clean up
           rm /tmp/sa.json
 
+      # Realtime Database holds ephemeral multiplayer presence (see
+      # design_docs/planned/MULTIPLAYER.md). These rules are what make the emote
+      # vocabulary closed server-side, so they must ship before presence is
+      # switched on for anyone.
+      #
+      # Skipped — not failed — when the project has no Realtime Database instance:
+      # creating one is a Firebase Console action (it needs a region choice), and a
+      # red workflow on main for an optional feature that is switched off would be
+      # worse than a clear log line.
+      - name: Deploy Realtime Database Rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$GOOGLE_APPLICATION_CREDENTIALS_JSON" > /tmp/sa.json
+          export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+
+          if firebase database:instances:list --project twiightgame 2>/dev/null | grep -qE '[a-z0-9]'; then
+            firebase deploy --only database --project twiightgame
+            echo "RTDB_DEPLOYED=true" >> $GITHUB_ENV
+          else
+            echo "No Realtime Database instance in project twiightgame - skipping."
+            echo "Create one in the Firebase Console to enable multiplayer presence."
+            echo "RTDB_DEPLOYED=false" >> $GITHUB_ENV
+          fi
+
+          rm /tmp/sa.json
+
       - name: Deployment Summary
         run: |
           echo "## Firebase Deployment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Firestore Rules**: Deployed" >> $GITHUB_STEP_SUMMARY
+          if [ "$RTDB_DEPLOYED" = "true" ]; then
+            echo "- **Realtime Database Rules**: Deployed (multiplayer presence)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **Realtime Database Rules**: Skipped - no RTDB instance in this project" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "- **Project**: twiightgame" >> $GITHUB_STEP_SUMMARY

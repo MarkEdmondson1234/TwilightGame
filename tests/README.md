@@ -79,6 +79,13 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `mapUtils.test.ts` | Tile coordinate helpers | Touching coordinate maths |
 | `firebasePaths.test.ts` | Firestore path construction | Touching cloud saves |
 | `anthropicClient.test.ts` | AI dialogue client behaviour | Touching AI dialogue |
+| `emoteVocabulary.test.ts` | **Safety-critical.** `multiplayer/emotes.ts` and `database.rules.json` listing different emotes — a hole in the closed vocabulary that is the whole reason player-to-player chat is safe | Adding or renaming an emote |
+| `presenceProtocol.test.ts` | Wire encode/decode, publish throttling, staleness eviction, remote-player interpolation lifecycle | Touching presence, the wire format, or RemotePlayerManager |
+| `remotePlayerInterpolation.test.ts` | The lerp/snap/hold maths that makes other players glide instead of teleport | Touching `multiplayer/interpolation.ts` |
+| `multiplayerSafeStubs.test.ts` | A method on the real presence service missing from the `firebase/safe` stub — crashes **only** in a build without the `firebase` package | Adding a method to any Firebase service |
+| `determinism.test.ts` | `Math.random()` creeping back into NPC wander or fairy spawning, which silently desyncs what two players see | Touching NPC movement, fairies, or `utils/seededRandom.ts` |
+| `sharedFarmHarvestClaim.test.ts` | Two players both harvesting one ripe crop; and the opposite error — confiscating a crop on a network blip | Touching harvesting or the shared farm |
+| `multiplayerUI.test.tsx` | Render-time crashes in the emote wheel / presence indicator, which headless Chrome cannot reach (PixiJS never initialises under SwiftShader) | Touching multiplayer UI |
 
 ## Writing a new test
 

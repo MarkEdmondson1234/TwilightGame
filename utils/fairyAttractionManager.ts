@@ -15,6 +15,7 @@ import { farmManager } from './farmManager';
 import { NPC, FarmPlotState } from '../types';
 import { Position } from '../types';
 import { createMorganNPC, createStellaNPC } from './npcs/forestNPCs';
+import { createSeededRandom, hashString } from './seededRandom';
 
 // Night time hours (22:00 to 06:00)
 const NIGHT_START_HOUR = 22;
@@ -119,8 +120,15 @@ class FairyAttractionManager {
     // Spawn fairies (up to max)
     const fairiesNeeded = maxFairies - existingFairyCount;
 
-    // Shuffle bluebells to randomize which ones get fairies
-    const shuffledBluebells = [...matureBluebells].sort(() => Math.random() - 0.5);
+    // Shuffle bluebells to pick which ones get fairies. Seeded on the game day
+    // and map so every player finds the same fairy on the same bluebell tonight
+    // — fairies are a thing you tell each other about, so they must agree.
+    const { totalDays } = TimeManager.getCurrentTime();
+    const nightRandom = createSeededRandom(hashString(`fairies:${mapId}:${totalDays}`));
+    const shuffledBluebells = [...matureBluebells]
+      .map((bluebell) => ({ bluebell, order: nightRandom() }))
+      .sort((a, b) => a.order - b.order)
+      .map((entry) => entry.bluebell);
 
     // Track which fairies we've already spawned
     const spawnedFairyTypes = currentNPCs
@@ -144,8 +152,8 @@ class FairyAttractionManager {
         // Stella already spawned, spawn Morgan
         fairyType = 'morgan';
       } else {
-        // Neither spawned yet, 50/50 chance
-        fairyType = Math.random() < 0.5 ? 'morgan' : 'stella';
+        // Neither spawned yet — 50/50, but the same 50/50 on every client.
+        fairyType = nightRandom() < 0.5 ? 'morgan' : 'stella';
       }
 
       // Create the fairy NPC

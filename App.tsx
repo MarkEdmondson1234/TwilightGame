@@ -30,6 +30,7 @@ import { useCollisionDetection } from './hooks/useCollisionDetection';
 import { useMovementController } from './hooks/useMovementController';
 import { useInteractionController } from './hooks/useInteractionController';
 import { useEnvironmentController } from './hooks/useEnvironmentController';
+import { useMultiplayerController } from './hooks/useMultiplayerController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
@@ -68,6 +69,9 @@ import TileRenderer from './components/TileRenderer';
 // BackgroundSprites and ForegroundSprites removed - now rendered by PixiJS SpriteLayer
 import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
+import RemotePlayerOverlay from './components/RemotePlayerOverlay';
+import EmoteWheel from './components/EmoteWheel';
+import PresenceIndicator from './components/PresenceIndicator';
 import Inventory, { InventoryItem } from './components/Inventory';
 import QuickSlotBar from './components/QuickSlotBar';
 import AnimationOverlay from './components/AnimationOverlay';
@@ -384,6 +388,39 @@ const App: React.FC = () => {
     activeNPC,
   });
 
+  // ── Multiplayer presence ──────────────────────────────────────────────────
+  // Refs so the game-loop publisher below reads live values without being
+  // rebuilt (and re-subscribed) on every step the player takes.
+  const presenceStateRef = useRef({ direction, playerSizeTier, isFairyForm });
+  presenceStateRef.current = { direction, playerSizeTier, isFairyForm };
+
+  const getLocalPresence = useCallback(() => {
+    const character = gameState.getSelectedCharacter();
+    if (!character) return null;
+    const live = presenceStateRef.current;
+    return {
+      name: character.name,
+      characterId: character.characterId || 'character1',
+      position: playerPosRef.current,
+      direction: live.direction,
+      sizeTier: live.playerSizeTier,
+      fairyForm: live.isFairyForm,
+      emote: null,
+    };
+  }, [playerPosRef]);
+
+  const {
+    remotePlayerCount,
+    remotePlayerNames,
+    tickMultiplayer,
+    sendEmote,
+  } = useMultiplayerController({ currentMapId, getLocalPresence });
+
+  const [showEmoteWheel, setShowEmoteWheel] = useState(false);
+  // Stable identity: useKeyboardControls captures its handler once at mount.
+  const toggleEmoteWheel = useCallback(() => setShowEmoteWheel((open) => !open), []);
+  const closeEmoteWheel = useCallback(() => setShowEmoteWheel(false), []);
+
   // Fairy form fading state — true in the last 30s to trigger sprite flicker
   const [isFairyFormFading, setIsFairyFormFading] = useState(false);
 
@@ -636,6 +673,28 @@ const App: React.FC = () => {
     });
   }, [showToast]);
 
+  // Shared farm: another player got to a ripe crop first, so the optimistic
+  // grant was rolled back. Say so, or the item silently vanishing looks like a bug.
+  useEffect(() => {
+    return eventBus.on(GameEvent.FARM_HARVEST_CONTESTED, (payload) => {
+      showToast(`Someone else picked those ${payload.cropDisplayName} first!`, 'info');
+    });
+  }, [showToast]);
+
+  // Another player joined or left this map
+  useEffect(() => {
+    const unsubJoined = eventBus.on(GameEvent.REMOTE_PLAYER_JOINED, (payload) => {
+      showToast(`${payload.name} is here`, 'info');
+    });
+    const unsubLeft = eventBus.on(GameEvent.REMOTE_PLAYER_LEFT, (payload) => {
+      showToast(`${payload.name} wandered off`, 'info');
+    });
+    return () => {
+      unsubJoined();
+      unsubLeft();
+    };
+  }, [showToast]);
+
   // Yule celebration EventBus subscriptions
   useEffect(() => {
     const unsubStart = eventBus.on(GameEvent.YULE_CELEBRATION_STARTED, (payload) => {
@@ -829,6 +888,7 @@ const App: React.FC = () => {
     onFarmActionAnimation: handleFarmActionAnimation,
     onShowToast: showToast,
     onSetSelectedItemSlot: setSelectedItemSlot,
+    onToggleEmoteWheel: toggleEmoteWheel,
   });
 
   /**
@@ -902,6 +962,11 @@ const App: React.FC = () => {
     const now = Date.now();
     const deltaTime = Math.min((now - lastFrameTime.current) / 1000, 0.1); // Cap at 100ms to avoid huge jumps
     lastFrameTime.current = now;
+
+    // Advance remote players (interpolation) and publish our own position.
+    // Runs before the dialogue/cutscene early-return below: other players should
+    // keep walking around while you are mid-conversation.
+    tickMultiplayer(now);
 
     // Update NPCs (they continue moving even when dialogue is open)
     // NPC movement triggers NPC_MOVED event via EventBus
@@ -1014,6 +1079,7 @@ const App: React.FC = () => {
     checkChainProximity,
     currentMapId,
     ui.miniGame,
+    tickMultiplayer,
   ]);
 
   // Disabled automatic transitions - now using action key (E or Enter)
@@ -1723,6 +1789,14 @@ const App: React.FC = () => {
   // got a reason to retry. SplashScreen renders itself as a fixed,
   // high-z-index overlay, so it just needs to be painted alongside whichever
   // branch below is currently rendering, not returned instead of it.
+  /**
+   * True only once the player is actually looking at the world: past the title
+   * screen, past the loading cutscene, map ready, no cutscene running. Gates the
+   * multiplayer UI, which has nothing sensible to say before then.
+   */
+  const isInWorld =
+    !showSplashScreen && !isLoadingCutscene && !isCutscenePlaying && isMapInitialized;
+
   const splashOverlay = showSplashScreen ? (
     <SplashScreen onPlay={() => setShowSplashScreen(false)} />
   ) : null;
@@ -1962,6 +2036,15 @@ const App: React.FC = () => {
           />
         )}
 
+        {/* Render other players as DOM elements when PixiJS is disabled */}
+        {!USE_PIXI_RENDERER && (
+          <RemotePlayerOverlay
+            characterScale={currentMap?.characterScale}
+            gridOffset={effectiveGridOffset}
+            tileSize={effectiveTileSize}
+          />
+        )}
+
         {/* Render Placed Items (food, decorations) - Between player and foreground */}
         {!USE_PIXI_RENDERER && (
           <PlacedItems
@@ -2140,6 +2223,20 @@ const App: React.FC = () => {
         />
       )}
 
+      {/* Multiplayer: who else is here, and the emote picker.
+          Both are gated on the world actually being on screen — an emote picker
+          floating over the black loading screen looks broken. */}
+      {isInWorld && !isAnyOverlayOpen && (
+        <PresenceIndicator
+          count={remotePlayerCount}
+          names={remotePlayerNames}
+          compact={isCompactMode}
+        />
+      )}
+      {isInWorld && showEmoteWheel && (
+        <EmoteWheel onSelect={sendEmote} onClose={closeEmoteWheel} compact={isCompactMode} />
+      )}
+
       {/* Touch controls - hidden when any modal is open or cutscene playing */}
       {isTouchDevice &&
         !activeNPC &&
@@ -2156,6 +2253,7 @@ const App: React.FC = () => {
             onDirectionPress={touchControls.handleDirectionPress}
             onDirectionRelease={touchControls.handleDirectionRelease}
             onResetPress={touchControls.handleResetPress}
+            onEmotePress={toggleEmoteWheel}
             compact={isCompactMode}
             onPhotoPress={
               selectedItemSlot !== null &&

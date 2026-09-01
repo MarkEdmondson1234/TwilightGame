@@ -18,6 +18,68 @@ export const USE_PIXI_RENDERER = true; // Enabled for testing
 // Set to false to disable shadows (minimal performance impact, mostly aesthetic preference)
 export const USE_SPRITE_SHADOWS = true;
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  MULTIPLAYER — shared world, soft sync
+//  See design_docs/planned/MULTIPLAYER.md
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Multiplayer feature flag. When false, every subscription, publish and remote
+ * render path is disabled at the controller boundary and the game is identical
+ * to single-player. Also disabled automatically when Firebase is unavailable.
+ */
+export const MULTIPLAYER_ENABLED = import.meta.env.VITE_MULTIPLAYER_ENABLED !== 'false';
+
+export const MULTIPLAYER = {
+  /**
+   * Maps where other players are visible. Everything else — home interiors,
+   * personal garden, and all RANDOM_* procedural maps — is private.
+   * Procedural maps must stay out: each client generates its own forest from a
+   * different seed, so two players "in the forest" are not in the same forest.
+   */
+  SHARED_MAPS: new Set([
+    'village',
+    'farm_area',
+    'orchard',
+    'sea_side',
+    'magical_lake',
+    'ruins',
+    'mushroom_map',
+  ]),
+
+  /** Maximum position writes per second while moving */
+  PUBLISH_HZ: 5,
+
+  /** Don't publish movement smaller than this (tiles) — kills sub-pixel jitter */
+  MOVE_THRESHOLD_TILES: 0.08,
+
+  /** Republish even when idle, so `t` stays fresh and staleness eviction is meaningful */
+  HEARTBEAT_MS: 15000,
+
+  /** Evict a remote player we have not heard from for this long */
+  STALE_AFTER_MS: 45000,
+
+  /** Render remote players this far in the past, so interpolation always has two samples */
+  INTERPOLATION_DELAY_MS: 120,
+
+  /** Beyond this gap between samples, snap instead of lerping (teleport / map change) */
+  SNAP_DISTANCE_TILES: 3,
+
+  /** How long an emote stays above a player's head */
+  EMOTE_DURATION_MS: 3000,
+
+  /** Tiles of travel per walk-cycle frame. Remote animation is derived from
+   *  distance moved rather than sent over the wire — one less field, and the
+   *  legs move because the character moved, which is always right. */
+  ANIM_TILES_PER_FRAME: 0.35,
+
+  /** Below this speed (tiles/sec) a remote player is considered standing still */
+  IDLE_SPEED_TILES_PER_SEC: 0.15,
+
+  /** Max samples kept per remote player for interpolation */
+  SAMPLE_BUFFER_SIZE: 4,
+} as const;
+
 /**
  * DEBUG - Verbose logging flags for development
  *
@@ -35,6 +97,7 @@ export const DEBUG = {
   QUEST: import.meta.env.DEV && false, // Quest progression and dialogue actions
   FORAGE: import.meta.env.DEV && false, // Foraging actions and loot rolls
   CLICK: import.meta.env.DEV && false, // Click targeting and interaction detection
+  MULTIPLAYER: import.meta.env.DEV && false, // Presence publish/receive and remote player lifecycle
 } as const;
 
 /**

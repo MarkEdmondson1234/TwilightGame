@@ -26,6 +26,14 @@ export interface UseGameEventsReturn {
 
   /** Increments when placed items change on maps */
   placedItemsUpdateTrigger: number;
+
+  /**
+   * Increments when another player joins or leaves the current map.
+   * Deliberately NOT bumped on remote movement — remote positions are polled
+   * straight from remotePlayerManager by the renderer each frame, so they never
+   * cost a React re-render.
+   */
+  remotePlayerUpdateTrigger: number;
 }
 
 /**
@@ -35,6 +43,7 @@ export function useGameEvents(): UseGameEventsReturn {
   const [farmUpdateTrigger, setFarmUpdateTrigger] = useState(0);
   const [npcUpdateTrigger, setNpcUpdateTrigger] = useState(0);
   const [placedItemsUpdateTrigger, setPlacedItemsUpdateTrigger] = useState(0);
+  const [remotePlayerUpdateTrigger, setRemotePlayerUpdateTrigger] = useState(0);
 
   useEffect(() => {
     // Subscribe to all relevant events
@@ -62,6 +71,14 @@ export function useGameEvents(): UseGameEventsReturn {
       eventBus.on(GameEvent.PLACED_ITEMS_CHANGED, () => {
         setPlacedItemsUpdateTrigger((prev) => prev + 1);
       }),
+
+      // Multiplayer presence events (join/leave only — see the doc comment above)
+      eventBus.on(GameEvent.REMOTE_PLAYER_JOINED, () => {
+        setRemotePlayerUpdateTrigger((prev) => prev + 1);
+      }),
+      eventBus.on(GameEvent.REMOTE_PLAYER_LEFT, () => {
+        setRemotePlayerUpdateTrigger((prev) => prev + 1);
+      }),
     ];
 
     // Cleanup: unsubscribe from all events
@@ -74,5 +91,6 @@ export function useGameEvents(): UseGameEventsReturn {
     farmUpdateTrigger,
     npcUpdateTrigger,
     placedItemsUpdateTrigger,
+    remotePlayerUpdateTrigger,
   };
 }

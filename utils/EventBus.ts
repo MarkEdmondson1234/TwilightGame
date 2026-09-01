@@ -30,6 +30,8 @@ export enum GameEvent {
   FARM_PLOT_CHANGED = 'farm:plot_changed',
   FARM_CROP_GREW = 'farm:crop_grew',
   FARM_CROP_HARVESTED = 'farm:crop_harvested',
+  /** Another player harvested this plot first; our optimistic grant was rolled back */
+  FARM_HARVEST_CONTESTED = 'farm:harvest_contested',
 
   // NPC events
   NPC_MOVED = 'npc:moved',
@@ -100,6 +102,11 @@ export enum GameEvent {
   // Fruit tree events
   FRUIT_TREE_CHANGED = 'fruitTree:changed',
 
+  // Multiplayer presence events (other players entering/leaving the map)
+  REMOTE_PLAYER_JOINED = 'multiplayer:player_joined',
+  REMOTE_PLAYER_LEFT = 'multiplayer:player_left',
+  REMOTE_PLAYER_EMOTED = 'multiplayer:player_emoted',
+
   // Yule celebration events
   YULE_CELEBRATION_STARTED = 'yule:celebration_started',
   YULE_CELEBRATION_ENDED = 'yule:celebration_ended',
@@ -127,6 +134,11 @@ export interface EventPayloads {
     mapId: string;
     cropId: string;
     position: Position;
+  };
+  [GameEvent.FARM_HARVEST_CONTESTED]: {
+    mapId: string;
+    position: Position;
+    cropDisplayName: string;
   };
   [GameEvent.NPC_MOVED]: {
     npcId: string;
@@ -256,6 +268,19 @@ export interface EventPayloads {
     x: number;
     y: number;
     action: 'pruned' | 'mulched' | 'harvested';
+  };
+  [GameEvent.REMOTE_PLAYER_JOINED]: {
+    uid: string;
+    name: string;
+  };
+  [GameEvent.REMOTE_PLAYER_LEFT]: {
+    uid: string;
+    name: string;
+  };
+  [GameEvent.REMOTE_PLAYER_EMOTED]: {
+    uid: string;
+    name: string;
+    emote: string;
   };
   [GameEvent.YULE_CELEBRATION_STARTED]: {
     year: number;

@@ -1,0 +1,43 @@
+{
+  "rules": {
+    "presence": {
+      "$mapId": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['n','c','x','y','d','t'])",
+          "n": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+          },
+          "c": {
+            ".validate": "newData.val() === 'character1' || newData.val() === 'character2'"
+          },
+          "x": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200"
+          },
+          "y": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200"
+          },
+          "d": {
+            ".validate": "newData.val() === 'u' || newData.val() === 'd' || newData.val() === 'l' || newData.val() === 'r'"
+          },
+          "s": {
+            ".validate": "newData.isNumber() && newData.val() >= -3 && newData.val() <= 3"
+          },
+          "ff": {
+            ".validate": "newData.isBoolean()"
+          },
+          "e": {
+            ".validate": "newData.val() === null || newData.val() === 'wave' || newData.val() === 'laugh' || newData.val() === 'heart' || newData.val() === 'question' || newData.val() === 'yes' || newData.val() === 'sad' || newData.val() === 'dance' || newData.val() === 'followme'"
+          },
+          "t": {
+            ".validate": "newData.val() === now"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    }
+  }
+}
