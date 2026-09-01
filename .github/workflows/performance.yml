@@ -18,7 +18,12 @@ permissions:
 jobs:
   performance:
     runs-on: ubuntu-latest
-    timeout-minutes: 20  # Increased for multi-map and device-throttled tests
+    # 35, not 20: these tests used to sit on the "Enter Game" overlay for their
+    # whole run, so isInWorld was false and none of the HUD/NPC/weather overlays
+    # rendered — the numbers described a stripped-down scene. Now the harness
+    # enters the world properly, every CDP round-trip queues behind real frames,
+    # and the six sub-tests need roughly half again as long.
+    timeout-minutes: 35  # multi-map + device-throttled tests, measured in-world
 
     steps:
       - name: Checkout code
