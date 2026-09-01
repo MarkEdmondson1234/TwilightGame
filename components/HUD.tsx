@@ -9,6 +9,7 @@ import { gameState } from '../GameState';
 import { WATER_CAN } from '../constants';
 import { resolveIcon, isImageIcon } from '../utils/iconMap';
 import AnalogClock from './AnalogClock';
+import PotionEffectIndicator from './PotionEffectIndicator';
 import SundialClock from './SundialClock';
 
 /**
@@ -159,6 +160,9 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
             </div>
           </div>
         )}
+
+        {/* Timed potion effects (Beast Tongue, Beastward, Revealing) */}
+        <PotionEffectIndicator />
 
         {/* Movement Effect Indicator (Floating/Flying) */}
         {movementEffect && movementTimeRemaining > 0 && (

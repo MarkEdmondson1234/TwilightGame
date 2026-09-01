@@ -189,7 +189,8 @@ export const POTION_ITEMS: Record<string, ItemDefinition> = {
     name: 'potion_beast_tongue',
     displayName: 'Beast Tongue',
     category: ItemCategory.POTION,
-    description: 'A strange potion that tastes like different animals. Lets you talk to beasts!',
+    description:
+      'A strange potion that tastes like different animals. Lets you talk to beasts for a day!',
     stackable: true,
     sellPrice: 100,
   },

@@ -301,8 +301,7 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_beastward',
     effectType: 'beast_ward',
     execute: (callbacks) => {
-      // 1 game day = 2 real hours = 7,200,000 ms
-      const duration = 7200000;
+      const duration = TimeManager.MS_PER_GAME_DAY;
       callbacks.setActivePotionEffect?.('beast_ward', duration);
       callbacks.showToast('Animals will ignore you for a day.', 'success');
       callbacks.triggerVFX?.('shield', callbacks.getPlayerPosition());
@@ -337,10 +336,9 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_revealing',
     effectType: 'reveal_gift_preference',
     execute: (callbacks) => {
-      // 1 game day = 2 real hours = 7,200,000 ms. While active, talking to an
-      // NPC reveals their favourite gift category (see onNPC in
-      // useInteractionController.ts, which checks this effect).
-      const duration = 7200000;
+      // While active, talking to an NPC reveals their favourite gift category
+      // (see onNPC in useInteractionController.ts, which checks this effect).
+      const duration = TimeManager.MS_PER_GAME_DAY;
       callbacks.setActivePotionEffect?.('reveal_gift_preference', duration);
       callbacks.showToast('Talk to a villager to learn their favourite gifts!', 'success');
       callbacks.triggerVFX?.('aura_glow', callbacks.getPlayerPosition());
@@ -477,7 +475,9 @@ const POTION_EFFECTS: Record<string, PotionEffectDefinition> = {
     potionId: 'potion_beast_tongue',
     effectType: 'beast_tongue',
     execute: (callbacks) => {
-      const duration = 300000; // 5 minutes real time
+      // A full game day, matching Beastward Balm. Five real minutes (the old value)
+      // expired before the player could walk from the cottage to the forest animals.
+      const duration = TimeManager.MS_PER_GAME_DAY;
       callbacks.setActivePotionEffect?.('beast_tongue', duration);
       callbacks.showToast('You can now understand the speech of beasts!', 'success');
       callbacks.triggerVFX?.('aura_glow', callbacks.getPlayerPosition());
