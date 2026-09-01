@@ -54,6 +54,28 @@ export interface SharedPlotDoc {
   updatedAt: ReturnType<typeof serverTimestamp> | Timestamp;
 }
 
+/**
+ * Identity of the planting a harvest claim is settling, as the claiming client
+ * saw it. Compared against the stored document to tell "somebody picked this
+ * first" apart from "this crop simply ripened since its last sync".
+ */
+export interface HarvestClaim {
+  /** The crop standing on the plot when we picked it. */
+  cropType: string | null;
+  /** When that crop was sown — the identity of this particular planting. */
+  plantedAtTimestamp: number | null;
+  /** Whether the plot was present in the most recent remote snapshot. */
+  knownRemote: boolean;
+}
+
+/** States a plot can only be in once this planting has already been harvested. */
+const POST_HARVEST_STATES: ReadonlySet<number> = new Set([
+  FarmPlotState.FALLOW,
+  FarmPlotState.TILLED,
+  FarmPlotState.HERB_COOLDOWN,
+  FarmPlotState.HERB_DORMANT,
+]);
+
 // ============================================
 // SharedFarmService Class
 // ============================================
@@ -198,12 +220,19 @@ class SharedFarmService {
    * get a carrot. This is the one genuinely contended action in the game, and a
    * transaction is the only way to settle it.
    *
+   * What is compared is the *planting*, not the plot's stored state. Ripening is
+   * derived locally from `plantedAtTimestamp` on every client and is deliberately
+   * never flushed, so the stored state of a crop that matured after its last sync
+   * still reads WATERED while every player sees it standing ripe. Comparing raw
+   * states therefore called every ordinary harvest a lost race — including in
+   * single player, where there is nobody to lose to.
+   *
    * Returns true if we won the plot (or if there is nothing to lose it to).
    * Returns false ONLY when we can prove somebody else got there first — a
    * network failure counts as a win, because confiscating a crop the player
    * legitimately harvested is a far worse outcome than one duplicate carrot.
    */
-  async claimPlot(plotId: string, expectedState: number, resultPlot: FarmPlot): Promise<boolean> {
+  async claimPlot(plotId: string, expected: HarvestClaim, resultPlot: FarmPlot): Promise<boolean> {
     if (!isFirebaseInitialized() || !authService.isAuthenticated()) {
       return true; // Local-only play: nobody to race against.
     }
@@ -217,15 +246,29 @@ class SharedFarmService {
       return await runTransaction(db, async (transaction) => {
         const snapshot = await transaction.get(plotRef);
 
-        // Never synced (or already tidied away): we cannot prove a loss, so the
-        // player keeps what they picked.
-        if (!snapshot.exists()) return true;
+        if (!snapshot.exists()) {
+          // Harvesting an annual crop deletes the document, so a plot that was
+          // there in the last snapshot and is gone now was picked by somebody
+          // else. A plot we never saw remotely proves nothing — keep the crop.
+          return !expected.knownRemote;
+        }
 
         const remote = snapshot.data() as SharedPlotDoc;
-        if (remote.state !== expectedState) {
-          // Somebody moved this plot on before us — that is a real, provable loss.
+
+        // A different crop, or the same crop from a later sowing, means this
+        // planting was already harvested (and the plot replanted) before us.
+        if (remote.cropType !== expected.cropType) return false;
+        if (
+          expected.plantedAtTimestamp != null &&
+          remote.plantedAtTimestamp != null &&
+          remote.plantedAtTimestamp !== expected.plantedAtTimestamp
+        ) {
           return false;
         }
+
+        // Same planting, but already picked — herbs stay in place and drop into
+        // cooldown rather than clearing the document.
+        if (POST_HARVEST_STATES.has(remote.state)) return false;
 
         if (resultPlot.state === FarmPlotState.FALLOW) {
           // Matches the flush path, which deletes rather than storing fallow plots.

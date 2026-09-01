@@ -56,7 +56,10 @@ vi.mock('../utils/inventoryManager', () => ({
   },
 }));
 
-const { claimPlot } = vi.hoisted(() => ({ claimPlot: vi.fn() }));
+const { claimPlot, remotePlots } = vi.hoisted(() => ({
+  claimPlot: vi.fn(),
+  remotePlots: new Map<string, unknown>(),
+}));
 
 vi.mock('../firebase/safe', () => ({
   getCommunityGardenService: () => ({
@@ -67,6 +70,7 @@ vi.mock('../firebase/safe', () => ({
     stopListening: vi.fn(),
     onPlotsChanged: vi.fn(() => () => {}),
     docToFarmPlot: vi.fn(),
+    getRemotePlots: () => remotePlots,
   }),
 }));
 
@@ -115,6 +119,7 @@ describe('shared farm — contested harvest', () => {
     claimPlot.mockReset();
     addItem.mockReset();
     removeItem.mockReset();
+    remotePlots.clear();
     seedPlot(readyPlot(), key);
   });
 
@@ -193,6 +198,38 @@ describe('shared farm — contested harvest', () => {
     expect(
       (farmManager as unknown as { dirtySharedPlots: Set<string> }).dirtySharedPlots.has(key)
     ).toBe(true);
+  });
+
+  it("settles the claim on the planting, not on the plot's stored state", async () => {
+    // Ripening is derived locally and never flushed, so the stored state of a
+    // crop that matured since its last sync still reads WATERED. Sending READY
+    // as the thing to match made every ordinary harvest look like a lost race.
+    claimPlot.mockResolvedValue(true);
+    const plot = currentPlot(key)!;
+    remotePlots.set(key, {});
+
+    farmManager.harvestCrop('village', { x: 3, y: 4 });
+    await settle();
+
+    expect(claimPlot).toHaveBeenCalledWith(
+      key,
+      {
+        cropType: 'tomato',
+        plantedAtTimestamp: plot.plantedAtTimestamp,
+        knownRemote: true,
+      },
+      expect.objectContaining({ state: FarmPlotState.FALLOW })
+    );
+  });
+
+  it('tells the claim when the plot was never in a remote snapshot', async () => {
+    // Nothing to lose it to — a missing document must not be read as a loss.
+    claimPlot.mockResolvedValue(true);
+
+    farmManager.harvestCrop('village', { x: 3, y: 4 });
+    await settle();
+
+    expect(claimPlot.mock.calls[0][1]).toMatchObject({ knownRemote: false });
   });
 
   it('does not run a claim on a private map', async () => {
