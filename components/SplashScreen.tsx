@@ -67,8 +67,10 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
   // Wrapped in its own fixed, high-z-index root: this renders alongside the
   // game underneath (which keeps loading/initialising the whole time — see
   // App.tsx), not in place of it, so it must out-rank every other overlay
-  // (including the loading screen and its own "Enter Game" gate) to stay on
-  // top. The wrapper also gives HelpBrowser (rendered inside it, below, at
+  // (including the black loading screen underneath it) to stay on top. Its
+  // z-index value must also be listed in the safelist in src/styles/global.css
+  // — Tailwind never generates a class zClass() only builds at runtime.
+  // The wrapper also gives HelpBrowser (rendered inside it, below, at
   // its own normal z-index) a fresh local stacking context, so it isn't
   // compared against the game's z-indexed overlays directly.
   return (
