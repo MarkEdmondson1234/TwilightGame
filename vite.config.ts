@@ -35,9 +35,17 @@ export default defineConfig(({ mode }) => {
             sentryVitePlugin({
               org: 'twilightgame',
               project: 'javascript-react',
-              // The org lives on Sentry's EU region — omitting this uploads to
-              // the US instance, which silently succeeds against the wrong
-              // org and leaves traces minified with no error to explain why.
+              // The org lives on Sentry's EU region. Kept as a fallback for
+              // tokens that do not carry a region: without it such a token
+              // uploads to the US instance, which succeeds against the wrong
+              // org and leaves traces minified with nothing to explain why.
+              //
+              // Expect a WARN in the build log saying this value was ignored
+              // in favour of "https://sentry.io (embedded in token)". That is
+              // correct and not a misconfiguration: an organisation auth token
+              // (`sntrys_…`) embeds its own region and takes precedence, and
+              // routes to the EU org anyway. The warning only means the
+              // fallback was not needed.
               url: 'https://de.sentry.io',
               authToken: sentryAuthToken,
               // Must match the `release` passed to Sentry.init() in
