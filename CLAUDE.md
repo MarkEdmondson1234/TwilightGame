@@ -48,7 +48,13 @@ Remote error/crash reporting, so a real player's failed login or sync is visible
 
 **Status:** Silently disabled when `VITE_SENTRY_DSN` is unset — same no-op pattern as Firebase above.
 
-**Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash'`.
+**Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, `setErrorReportingUser(uid)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash'`.
+
+**Reading errors back:** query the **Sentry MCP server** — the DSN is write-only ingest and cannot read issues. Org `twilightgame`, project `javascript-react`, and note the org is on the **EU region**, so pass `regionUrl: 'https://de.sentry.io'`; omitting it can return empty results that look exactly like "no errors reported". The `debug-production` skill covers the full workflow.
+
+**Player identity:** `setErrorReportingUser()` is called from `firebase/authService.ts`'s `notifyListeners()` — the one place every auth change funnels through — so Sentry can answer "how many distinct players hit this" rather than reporting `Users Impacted: 0` for everything. **Only the Firebase uid is sent**; never email, display name or character name, and `sendDefaultPii` stays off (it would attach IP addresses). This is a children's game — keep it that way when adding context.
+
+**Noise filtering:** `ignoreErrors: [/AbortError/]` drops fetch cancellations, which are normal on navigation and map transitions. They were 85 of the first 87 events ever reported here, across 3 issues with 0 users impacted, and buried a real auth bug underneath.
 
 **Wired into:** `components/ErrorBoundary.tsx` (`componentDidCatch`), `index.tsx` (`onUncaughtError`/`onRecoverableError` — NOT `onCaughtError`, which would double-report what ErrorBoundary already catches), `components/HelpBrowser.tsx` (auth actions), `firebase/syncManager.ts` (`uploadToCloud`/`downloadFromCloud`/`getCloudSyncMeta` — reported once at the source, not at every caller, since multiple call sites funnel through the same methods), `utils/farmManager.ts` (aggregate shared-farm write failures per flush, not per-plot).
 
@@ -56,7 +62,9 @@ Remote error/crash reporting, so a real player's failed login or sync is visible
 
 **Setup:** Sign up at sentry.io (free tier), create a React project, copy the DSN into `.env.local` as `VITE_SENTRY_DSN`. For production, add the same value as a `VITE_SENTRY_DSN` GitHub Actions secret (see `.github/workflows/deploy.yml`, which passes it through the build the same way Firebase secrets are, plus `VITE_APP_VERSION` set to `github.sha` so errors can be traced back to the deploy that shipped them).
 
-**Not set up:** source map upload (`@sentry/vite-plugin` + a Sentry auth token) — without it, stack traces in the dashboard show minified names from the production bundle rather than real source lines. Worth adding if the minified traces turn out to be too hard to debug from.
+**Source maps:** wired in `vite.config.ts` via `@sentry/vite-plugin`, so production traces show real file and line numbers instead of minified `Ri()`/`wW()`. It is **opt-in on `SENTRY_AUTH_TOKEN`** — unset, the plugin is omitted entirely and the build behaves as before (forks and contributors are unaffected). Three things to preserve, each guarded by `tests/sentryBuildConfig.test.ts` because each fails silently: the plugin `release` must match the SDK's (both `VITE_APP_VERSION`) or maps never associate with events; `url` must stay `https://de.sentry.io` (EU region — the US default uploads to the wrong place without erroring); and the token must **never** gain a `VITE_` prefix, which would inline an org-write-capable secret into the public bundle. Maps are deleted after upload (`filesToDeleteAfterUpload`) since GitHub Pages serves everything in `dist/`.
+
+**Setup for source maps:** Sentry → Settings → Auth Tokens → new token with `project:releases` scope → add as a `SENTRY_AUTH_TOKEN` GitHub Actions secret (and optionally `.env.local` for local production builds).
 
 ## Multiplayer (Shared World)
 
@@ -148,6 +156,9 @@ When implementing new features:
 - `make preview` - Preview production build
 - `make optimize-assets` - Optimise images using Sharp
 - `make verify` - **Typecheck + run all tests. Run this before calling any change done.**
+  CI's `verify` job additionally runs `npm run lint`, which fails on errors (warnings are
+  fine). If you added or moved files, run `npm run lint` too — a green `make verify` is not
+  the same gate.
 - `make typecheck` - Check TypeScript only
 - `make test` - Run all tests once
 - `make clean` - Remove build artifacts

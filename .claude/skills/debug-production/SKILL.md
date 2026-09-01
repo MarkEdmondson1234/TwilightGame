@@ -64,8 +64,39 @@ mid-session shows `✔ Connected` while no `mcp__sentry__*` tool exists yet. If
 steps 2 and 3 — they need a fresh session, and waiting for one is rarely worth
 it when the deployed build is right there to interrogate.
 
+**This project's Sentry coordinates** — pass these to every `mcp__sentry__*`
+call rather than rediscovering them:
+
+| Parameter | Value |
+|---|---|
+| `organizationSlug` | `twilightgame` |
+| `projectSlug` | `javascript-react` |
+| `regionUrl` | `https://de.sentry.io` |
+
+The org is on Sentry's **EU region**. Omitting `regionUrl` can return empty
+results or fail outright, which reads exactly like "no errors reported" — do
+not mistake a missing region for an all-clear. The web dashboard is at
+`https://twilightgame.sentry.io`.
+
 Then look for issues in the relevant category tag — `auth`, `sync`,
 `shared_farm`, `presence`, `game_crash` — around the time of the report.
+
+Useful calls, in the order they usually pay off:
+
+```
+search_issues(organizationSlug='twilightgame', regionUrl='https://de.sentry.io',
+              query='is:unresolved', period='24h')       # what is broken now
+get_sentry_resource(resourceType='issue', organizationSlug='twilightgame',
+                    resourceId='JAVASCRIPT-REACT-4')     # full detail on one
+analyze_issue_with_seer(...)                             # only when stuck
+```
+
+`get_sentry_resource` is the one worth reaching for: a single call returns the
+stack trace, the `category` tag, the `details` context passed to
+`reportError()`, the player's browser/OS/locale/geo, and the **`release` tag**
+(the git SHA). Check that SHA with `git branch --contains <sha>` before
+debugging — the deployed build is often behind the fix already sitting on a
+branch, and the answer is "merge it", not "investigate it".
 
 **An empty Sentry is not an all-clear.** Nothing is reported when a function
 returns `null` instead of throwing. Treat silence as "not this kind of bug yet"

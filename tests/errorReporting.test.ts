@@ -10,13 +10,15 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-const { init, captureException, captureMessage, withScope, reactErrorHandler } = vi.hoisted(() => ({
-  init: vi.fn(),
-  captureException: vi.fn(),
-  captureMessage: vi.fn(),
-  withScope: vi.fn((cb: (scope: unknown) => void) => cb({ setTag: vi.fn(), setContext: vi.fn() })),
-  reactErrorHandler: vi.fn(() => vi.fn()),
-}));
+const { init, captureException, captureMessage, withScope, reactErrorHandler, setUser } =
+  vi.hoisted(() => ({
+    init: vi.fn(),
+    captureException: vi.fn(),
+    captureMessage: vi.fn(),
+    withScope: vi.fn((cb: (scope: unknown) => void) => cb({ setTag: vi.fn(), setContext: vi.fn() })),
+    reactErrorHandler: vi.fn(() => vi.fn()),
+    setUser: vi.fn(),
+  }));
 
 vi.mock('@sentry/react', () => ({
   init,
@@ -24,6 +26,7 @@ vi.mock('@sentry/react', () => ({
   captureMessage,
   withScope,
   reactErrorHandler,
+  setUser,
 }));
 
 vi.stubEnv('VITE_SENTRY_DSN', '');
@@ -33,6 +36,7 @@ import {
   initErrorReporting,
   reportError,
   reportMessage,
+  setErrorReportingUser,
 } from '../utils/errorReporting';
 
 describe('errorReporting — safe no-op without a DSN configured', () => {
@@ -40,6 +44,7 @@ describe('errorReporting — safe no-op without a DSN configured', () => {
     init.mockClear();
     captureException.mockClear();
     captureMessage.mockClear();
+    setUser.mockClear();
   });
 
   afterEach(() => {
@@ -68,5 +73,14 @@ describe('errorReporting — safe no-op without a DSN configured', () => {
 
   it('reportError() handles a non-Error value without throwing', () => {
     expect(() => reportError('a plain string rejection', 'auth')).not.toThrow();
+  });
+
+  // authService calls this on every auth state change, including the very
+  // first one — which fires before initErrorReporting() has necessarily run,
+  // and always fires for players with no Firebase configured at all.
+  it('setErrorReportingUser() does not throw and never reaches Sentry.setUser', () => {
+    expect(() => setErrorReportingUser('abc123')).not.toThrow();
+    expect(() => setErrorReportingUser(null)).not.toThrow();
+    expect(setUser).not.toHaveBeenCalled();
   });
 });
