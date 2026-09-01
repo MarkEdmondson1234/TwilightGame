@@ -38,6 +38,7 @@ import {
   Z_TILE_BASE,
   Z_TILE_BASE_SPRITE,
   Z_TILE_BACKGROUND,
+  Z_FARM_SOIL,
   Z_TILE_SPRITES,
   Z_SPRITE_BACKGROUND,
   Z_PLAYER,
@@ -451,7 +452,7 @@ export class TileLayer extends PixiLayer {
           soilSprite.y = y * TILE_SIZE;
           soilSprite.width = TILE_SIZE;
           soilSprite.height = TILE_SIZE;
-          soilSprite.zIndex = Z_TILE_SPRITES;
+          soilSprite.zIndex = Z_FARM_SOIL;
           this.container.addChild(soilSprite);
           this.sprites.set(soilKey, soilSprite);
         } else if (soilSprite instanceof PIXI.Sprite) {
