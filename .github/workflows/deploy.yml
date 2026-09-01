@@ -96,6 +96,12 @@ jobs:
           VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
           # Tags Sentry errors with the commit that shipped them.
           VITE_APP_VERSION: ${{ github.sha }}
+          # Uploads source maps so production stack traces are readable rather
+          # than minified. NOT public and deliberately un-prefixed: a VITE_ name
+          # would embed this write-capable token in the browser bundle. Unset
+          # until the SENTRY_AUTH_TOKEN secret is added — vite.config.ts leaves
+          # the plugin out entirely without it, so the build still succeeds.
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: npm run build
 
       - name: Setup Pages

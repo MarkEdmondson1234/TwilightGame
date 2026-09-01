@@ -42,6 +42,15 @@ export function initErrorReporting(): void {
     // Unset locally (no CI to stamp it), which is fine — Sentry just omits it.
     release: import.meta.env.VITE_APP_VERSION,
     tracesSampleRate: 0, // Error tracking only — no performance/tracing overhead.
+    // Drop fetch cancellations. The browser throws AbortError whenever an
+    // in-flight request is cancelled — which happens normally every time a
+    // player navigates or a map transition supersedes an asset load. These
+    // accounted for 85 of the first 87 events ever reported here (3 separate
+    // issues, 0 users impacted, Sentry's own triage rating them "super_low"),
+    // burning quota and burying the one real bug underneath. Nothing is lost:
+    // a fetch failure that actually matters surfaces as the error thrown by
+    // the code that awaited it, with a real stack.
+    ignoreErrors: [/AbortError/],
   });
   initialised = true;
   console.log('[ErrorReporting] Sentry initialised');
@@ -58,6 +67,28 @@ export function initErrorReporting(): void {
  */
 export const onUncaughtError = Sentry.reactErrorHandler();
 export const onRecoverableError = Sentry.reactErrorHandler();
+
+/**
+ * Attach (or clear) the signed-in player's identity on reported errors.
+ *
+ * Without this every issue reads "Users Impacted: 0" even while real players
+ * are hitting it, because Sentry has no way to tell one browser from another.
+ * That makes the first triage question — "is this one player refreshing, or
+ * thirty players broken?" — unanswerable, which is exactly backwards.
+ *
+ * **Only the Firebase uid is sent.** Never email, display name or character
+ * name: this is a children's game, the uid is an opaque identifier that
+ * answers "how many distinct players" without describing any of them, and
+ * Sentry's own `sendDefaultPii` (which would attach IP addresses) is left off.
+ *
+ * Called from authService's notifyListeners() so it tracks every auth change
+ * from one place — sign-in, sign-out and anonymous upgrade alike. Safe no-op
+ * when Sentry isn't configured.
+ */
+export function setErrorReportingUser(uid: string | null): void {
+  if (!initialised) return;
+  Sentry.setUser(uid ? { id: uid } : null);
+}
 
 /** Broad categories used to filter/group errors in the Sentry dashboard. */
 export type ErrorReportCategory = 'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash';

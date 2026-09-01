@@ -25,6 +25,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb, isFirebaseInitialized } from './config';
 import { UserProfile, FIRESTORE_PATHS } from './types';
+import { setErrorReportingUser } from '../utils/errorReporting';
 
 // ============================================
 // Types
@@ -94,6 +95,11 @@ class AuthService {
 
   private notifyListeners(): void {
     const state = this.getState();
+    // Keep Sentry's idea of "who" in step with auth from the one place every
+    // state change funnels through, rather than at each call site — the same
+    // report-at-the-source rule syncManager follows. uid only; see
+    // setErrorReportingUser() for why nothing else is sent.
+    setErrorReportingUser(this.currentUser?.uid ?? null);
     this.listeners.forEach((cb) => cb(state));
   }
 
