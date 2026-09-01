@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Z-index safelist — DO NOT DELETE.
+ *
+ * zIndex.ts's zClass() builds its class name at runtime (`z-[${value}]`), so
+ * Tailwind's scanner never sees those strings in source and, by default,
+ * generates none of them. A missing utility doesn't error — the element just
+ * silently falls back to `z-index: auto` and sinks behind whatever *did* get a
+ * z-index (this is how the title screen ended up underneath the HUD's quick
+ * slots). Listing every value from zIndex.ts here forces them all to exist.
+ *
+ * tests/zIndexSafelist.test.ts fails if a Z_* constant is missing from this
+ * list, so adding a new constant means adding its value below too.
+ */
+@source inline("z-[{-100,-50,-10,-1,0,0.5,1,5,10,25,50,65,75,80,100,150,200,250,280,295,300,350,400,410,420,450,500,510,520,620,650,1000,1050,1060,1100,2000,2005,2010,2020,2030,2040,2045,2048,2050,2052,2055,2060,2065,2070,2080,2090,2095,3000,3100,3500,4000,4500}]");
+
 /* Ensure html > body > #root chain fills the viewport exactly.
  * Uses percentage-based sizing instead of viewport units (100vw includes
  * scrollbar gutter on Windows Chrome, causing right-side element clipping). */

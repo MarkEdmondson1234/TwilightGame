@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MULTIPLAYER, MULTIPLAYER_ENABLED, DEBUG } from '../constants';
 import { eventBus, GameEvent } from '../utils/EventBus';
-import { getPresenceService } from '../firebase/safe';
+import { getPresenceService, getAuthService, whenFirebaseSettled } from '../firebase/safe';
 import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
 import { shouldPublish } from '../multiplayer/publishPolicy';
 import { getLocalEmote, setLocalEmote, clearLocalEmote } from '../multiplayer/localEmote';
@@ -60,20 +60,15 @@ function isSharedMap(mapId: string): boolean {
 }
 
 /**
- * Resolve the presence transport through firebase/safe, so a build without the
- * `firebase` package gets the no-op stub rather than a module-resolution crash.
- * Matches how farmManager reaches communityGardenService.
+ * The presence transport is always reached through firebase/safe, never cached.
+ *
+ * getPresenceService() returns a no-op stub until the dynamic Firebase import
+ * has settled. Holding on to the result therefore risks latching onto that stub
+ * for the lifetime of the session — which is exactly the bug that made presence
+ * silently dead in production on the first deploy. Re-reading it is a property
+ * lookup, so there is nothing to gain by caching it anyway.
  */
 type PresenceTransport = ReturnType<typeof getPresenceService>;
-
-async function loadPresenceService(): Promise<PresenceTransport | null> {
-  try {
-    const { getPresenceService: get } = await import('../firebase/safe');
-    return get();
-  } catch {
-    return null;
-  }
-}
 
 export function useMultiplayerController(
   props: UseMultiplayerControllerProps
@@ -91,8 +86,14 @@ export function useMultiplayerController(
   const lastPublishedRef = useRef<LocalPresenceState | null>(null);
   const lastPublishAtRef = useRef(0);
   const activeRef = useRef(false);
-  // Resolved once, then read synchronously from the game loop.
-  const presenceRef = useRef<PresenceTransport | null>(null);
+
+  /**
+   * Bumped when Firebase finishes loading and on every auth state change.
+   * Presence needs an authenticated user (the same requirement the community
+   * garden has), so joining must be retried when the player signs in — not just
+   * when they walk to a different map.
+   */
+  const [authTick, setAuthTick] = useState(0);
 
   // -------------------------------------------------------------------------
   // Inbound presence → RemotePlayerManager
@@ -100,24 +101,34 @@ export function useMultiplayerController(
   useEffect(() => {
     if (!MULTIPLAYER_ENABLED) return;
 
-    let unsubscribe: (() => void) | null = null;
+    let unsubscribePresence: (() => void) | null = null;
+    let unsubscribeAuth: (() => void) | null = null;
     let cancelled = false;
 
-    void loadPresenceService().then((service) => {
-      if (!service || cancelled) return;
-      presenceRef.current = service;
-      unsubscribe = service.onPresence((event) => {
+    void (async () => {
+      // Subscribing before the module has settled would attach to the stub and
+      // never receive anything.
+      const loaded = await whenFirebaseSettled();
+      if (cancelled || !loaded) return;
+
+      unsubscribePresence = getPresenceService().onPresence((event) => {
         if (event.type === 'left') {
           remotePlayerManager.remove(event.uid);
         } else {
           remotePlayerManager.apply(event.uid, event.wire);
         }
       });
-    });
+
+      // Re-drive the join effect below whenever sign-in state changes.
+      unsubscribeAuth = getAuthService().onAuthStateChange(() => {
+        if (!cancelled) setAuthTick((tick) => tick + 1);
+      });
+    })();
 
     return () => {
       cancelled = true;
-      unsubscribe?.();
+      unsubscribePresence?.();
+      unsubscribeAuth?.();
     };
   }, []);
 
@@ -130,9 +141,8 @@ export function useMultiplayerController(
     let cancelled = false;
 
     const join = async () => {
-      const presence = presenceRef.current ?? (await loadPresenceService());
-      if (!presence) return;
-      presenceRef.current = presence;
+      await whenFirebaseSettled();
+      const presence: PresenceTransport = getPresenceService();
 
       // A private map (home, personal garden, any RANDOM_* forest) or an
       // unavailable backend both mean the same thing: nobody to see here.
@@ -169,14 +179,14 @@ export function useMultiplayerController(
     return () => {
       cancelled = true;
     };
-  }, [currentMapId]);
+  }, [currentMapId, authTick]);
 
   // Leave cleanly on unmount so we do not rely solely on onDisconnect().
   useEffect(() => {
     return () => {
       clearLocalEmote();
       remotePlayerManager.clear();
-      void presenceRef.current?.leaveRoom();
+      void getPresenceService().leaveRoom();
     };
   }, []);
 
@@ -224,7 +234,7 @@ export function useMultiplayerController(
       if (DEBUG.MULTIPLAYER) console.log(`[Multiplayer] Publishing (${reason})`);
       // Fire and forget: a dropped position update is replaced 200 ms later,
       // and awaiting here would stall the frame.
-      void presenceRef.current?.publish(next);
+      void getPresenceService().publish(next);
     } catch (error) {
       // A presence bug must never be able to stop the game loop.
       console.warn('[Multiplayer] Tick failed:', error);

@@ -237,3 +237,18 @@ export function getCommunityGardenService() {
 export function isFirebaseLoaded(): boolean {
   return firebaseModule !== null;
 }
+
+/**
+ * Resolve once the Firebase module load has been *attempted*, and report whether
+ * it succeeded.
+ *
+ * Every getter above returns its stub while the dynamic import is still in
+ * flight. That is correct for one-shot calls, but a caller that caches the
+ * result — or subscribes to it — latches onto the stub permanently and silently
+ * does nothing forever after. Await this first when you intend to hold on to a
+ * service. Idempotent: the underlying load runs at most once.
+ */
+export async function whenFirebaseSettled(): Promise<boolean> {
+  await loadFirebase();
+  return firebaseModule !== null;
+}

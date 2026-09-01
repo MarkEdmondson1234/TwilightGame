@@ -35,6 +35,8 @@ import {
 export interface KeyboardControlsConfig {
   playerPosRef: MutableRefObject<Position>;
   activeNPC: string | null;
+  /** Title screen is up. The world is live underneath it, so every key must be ignored. */
+  isTitleScreenActive: boolean;
   showHelpBrowser: boolean;
   showCookingUI: boolean;
   showRecipeBook: boolean;
@@ -102,6 +104,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   const {
     playerPosRef,
     activeNPC,
+    isTitleScreenActive,
     showHelpBrowser,
     showCookingUI,
     showRecipeBook,
@@ -166,6 +169,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   const showJournalRef = useRef(showJournal);
   const showHelpBrowserRef = useRef(showHelpBrowser);
   const showMiniGameRef = useRef(showMiniGame);
+  const isTitleScreenActiveRef = useRef(isTitleScreenActive);
 
   // Update refs when values change
   selectedItemSlotRef.current = selectedItemSlot;
@@ -178,6 +182,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   showJournalRef.current = showJournal;
   showHelpBrowserRef.current = showHelpBrowser;
   showMiniGameRef.current = showMiniGame;
+  isTitleScreenActiveRef.current = isTitleScreenActive;
 
   // Build handlers object for key handler utilities
   const uiHandlers = {
@@ -232,6 +237,14 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     // Ignore all keys if user is typing in an input/textarea
     const target = e.target as HTMLElement;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    // Title screen swallows everything — including the debug keys below, since
+    // the splash renders above every game overlay they would open. The game is
+    // already loading (and possibly rendering) behind it, so an ungated WASD
+    // here would walk the player around a world they can't see yet.
+    if (isTitleScreenActiveRef.current) {
       return;
     }
 

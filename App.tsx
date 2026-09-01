@@ -356,8 +356,11 @@ const App: React.FC = () => {
   // Setup collision detection (with NPC collision support and movement mode)
   const { checkCollision } = useCollisionDetection(npcsRef, movementMode);
 
-  // Reuse the overlay flag for path cancellation, etc.
-  const isUIActive = isAnyOverlayOpen;
+  // Reuse the overlay flag for path cancellation, etc. The title screen counts as
+  // an overlay: the world is live and rendering underneath it the whole time it's
+  // up (that's the point — it loads in the background), so without this a stray
+  // click-to-move path or keypress would drive the player around behind the splash.
+  const isUIActive = isAnyOverlayOpen || showSplashScreen;
 
   // Movement controller - owns player position, direction, animation, pathfinding
   const {
@@ -621,10 +624,59 @@ const App: React.FC = () => {
       console.log('[App] Loading cutscene animation finished');
       loadingCutsceneDoneRef.current = true;
       setIsCutscenePlaying(false);
+
+      // Record the completion ourselves. The cutscene subscriber below is the
+      // usual route from CutsceneManager into gameState, but it early-returns
+      // for the entire loading phase — which is exactly when this cutscene
+      // runs, whether it played out or was skipped with Escape.
+      if (_action.cutsceneId) {
+        gameState.markCutsceneCompleted(_action.cutsceneId);
+      }
       // isLoadingCutscene stays true until PixiJS is also ready — checked in effect below
     },
     []
   );
+
+  // Title screen "Play" — the point where the game actually begins.
+  //
+  // This is where the season cutscene starts, not the mount effect below: the
+  // splash is what covers loading now, so a cutscene started on mount would
+  // play to an empty room behind it and mark itself completed without anyone
+  // seeing it. Started here, it plays as the curtain between the title screen
+  // and the world (and is skippable with Escape, as ever).
+  //
+  // Whatever is still loading keeps loading underneath it, exactly as when the
+  // cutscene was the loading screen. If none is due this session, nothing
+  // starts and the effect further down enters the world as soon as it's ready.
+  const handlePlay = useCallback(() => {
+    setShowSplashScreen(false);
+
+    const playerLocation = gameState.getPlayerLocation();
+    const startedId = cutsceneManager.startSeasonCutsceneIfDue({
+      mapId: playerLocation.mapId,
+      position: playerLocation.position,
+    });
+
+    if (!startedId) {
+      loadingCutsceneDoneRef.current = true;
+      return;
+    }
+
+    console.log(`[App] Season cutscene started: ${startedId}`);
+    loadingCutsceneDoneRef.current = false;
+    setIsCutscenePlaying(true);
+
+    // Persist "this season's cutscene has run" NOW, at the start, not when it
+    // ends. The subscriber that normally mirrors CutsceneManager state into
+    // gameState deliberately sits out the whole loading phase (see below), so
+    // nothing else writes this — and recording it up front also means closing
+    // the tab midway through doesn't hand the player the same cutscene again on
+    // their next visit.
+    const lastSeason = cutsceneManager.getState().lastSeasonTriggered;
+    if (lastSeason) {
+      gameState.setLastSeasonTriggered(lastSeason);
+    }
+  }, []);
 
   // Subscribe to cutscene state changes (registration moved to init effect)
   useEffect(() => {
@@ -812,6 +864,7 @@ const App: React.FC = () => {
   useKeyboardControls({
     playerPosRef,
     activeNPC,
+    isTitleScreenActive: showSplashScreen,
     showHelpBrowser: ui.helpBrowser,
     showCookingUI: ui.cookingUI,
     showRecipeBook: ui.recipeBook,
@@ -1101,31 +1154,14 @@ const App: React.FC = () => {
     const lastSeasonTriggered = gameState.getLastSeasonTriggered();
     cutsceneManager.loadState(completedCutscenes, lastSeasonTriggered);
 
-    // Start current season's cutscene as loading screen
-    const currentSeason = TimeManager.getCurrentTime().season.toLowerCase();
-    const seasonCutsceneId = `season_change_${currentSeason}`;
-    const playerLocation = gameState.getPlayerLocation();
-    const started = cutsceneManager.startCutscene(seasonCutsceneId, {
-      mapId: playerLocation.mapId,
-      position: playerLocation.position,
-    });
-
-    if (started) {
-      console.log(`[App] Loading cutscene started: ${seasonCutsceneId}`);
-      // Already true by default (see the useState below) — this is the case that
-      // default exists for, but keep it explicit here for clarity.
-      setIsLoadingCutscene(true);
-      setIsCutscenePlaying(true);
-      loadingCutsceneDoneRef.current = false;
-    } else {
-      // No loading cutscene due this session — skip straight to the game, same
-      // as before. isLoadingCutscene defaults to true (not false) so that on
-      // the very first paint, before this effect has even run, the black
-      // loading overlay is what's on screen — not the game world underneath it.
-      // Without that, NPC/transition interaction prompts could render and be
-      // clickable for a frame or two before this effect resolves (issue #17).
-      setIsLoadingCutscene(false);
-    }
+    // The season cutscene is NOT started here. It used to be, back when it
+    // doubled as the loading screen, but the title screen now covers loading —
+    // so starting it on mount meant it played out behind the splash, unseen,
+    // and marked itself completed. handlePlay starts it instead, once the
+    // player has actually asked to begin. isLoadingCutscene stays true (its
+    // default) until then, so the black overlay covers the world from the very
+    // first paint: without it, NPC/transition prompts near the spawn point can
+    // render and be clickable for a frame or two (issue #17).
 
     // Phase 2: Slow async asset loading (runs in parallel with cutscene)
     const initAssets = async () => {
@@ -1719,6 +1755,19 @@ const App: React.FC = () => {
   // Game is fully ready when: loading mode active + cutscene animation done + PixiJS textures loaded
   const isGameReady = isLoadingCutscene && !isCutscenePlaying && isPixiInitialized;
 
+  // Enter the world the moment it's ready, with no second click. Pressing Play
+  // on the title screen is the player's "start" gesture; there used to be an
+  // "Enter Game" button behind it, which meant clicking twice to begin because
+  // loading now happens underneath the splash rather than after it. If the game
+  // is already loaded when Play is pressed this fires immediately; if not, the
+  // progress bar shows until it is.
+  useEffect(() => {
+    if (!showSplashScreen && isGameReady) {
+      console.log('[App] Entering the game');
+      setIsLoadingCutscene(false);
+    }
+  }, [showSplashScreen, isGameReady]);
+
   // Combined NPCs: npcManager NPCs + layer NPCs (for background-image rooms)
   // Used for interactions, indicators, and rendering
   const allNPCs = useMemo(() => {
@@ -1797,9 +1846,7 @@ const App: React.FC = () => {
   const isInWorld =
     !showSplashScreen && !isLoadingCutscene && !isCutscenePlaying && isMapInitialized;
 
-  const splashOverlay = showSplashScreen ? (
-    <SplashScreen onPlay={() => setShowSplashScreen(false)} />
-  ) : null;
+  const splashOverlay = showSplashScreen ? <SplashScreen onPlay={handlePlay} /> : null;
 
   // Show character creator as full-screen replacement only on first launch (before map loads)
   // When opened mid-game (via settings), it renders as an overlay further below
@@ -2714,31 +2761,21 @@ const App: React.FC = () => {
           </div>
         </>
       )}
-      {/* Loading cutscene done — show "Enter Game" button or progress bar */}
+      {/* Loading cutscene done, world not ready yet — progress only. There is no
+          "Enter Game" button any more: the effect above enters by itself as soon
+          as isGameReady flips, so the player's single Play click is the only one
+          they need. While the title screen is still up this sits behind it and
+          simply hides the half-built world. */}
       {isLoadingCutscene && !isCutscenePlaying && (
         <div
           className={`fixed inset-0 bg-black ${zClass(Z_LOADING)} flex flex-col items-center justify-center gap-6`}
         >
-          {isGameReady ? (
-            <button
-              onClick={() => {
-                console.log('[App] Player entered the game');
-                setIsLoadingCutscene(false);
-              }}
-              className="px-8 py-3 text-lg text-amber-100 bg-amber-800/60 border border-amber-600/50 rounded-lg
-                hover:bg-amber-700/70 hover:border-amber-500/60 transition-all duration-300
-                animate-pulse hover:animate-none cursor-pointer"
-            >
-              Enter Game
-            </button>
-          ) : (
-            <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
-                style={{ width: `${loadingProgress * 100}%` }}
-              />
-            </div>
-          )}
+          <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-amber-600/50 transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress * 100}%` }}
+            />
+          </div>
         </div>
       )}
       {/* Normal gameplay cutscenes (not loading screen) */}

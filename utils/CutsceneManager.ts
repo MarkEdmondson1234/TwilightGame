@@ -131,6 +131,35 @@ class CutsceneManagerClass {
   }
 
   /**
+   * Start the current season's cutscene, but only if it is genuinely due.
+   *
+   * Exists because startCutscene() alone is NOT enough for season cutscenes:
+   * they are `playOnce: false` (they should come back each year), so its only
+   * replay guard never fires for them. The once-per-season rule lives in
+   * checkTrigger(), which a direct startCutscene() call skips entirely — App
+   * used to do exactly that, which meant the season cutscene replayed on every
+   * single page load rather than once when the season turned.
+   *
+   * Returns the id of the cutscene it started, or null if none was due.
+   */
+  startSeasonCutsceneIfDue(savedPosition?: { mapId: string; position: Position }): string | null {
+    const season = TimeManager.getCurrentTime().season.toLowerCase();
+    const cutsceneId = `season_change_${season}`;
+
+    const cutscene = this.getCutscene(cutsceneId);
+    if (!cutscene) {
+      console.warn(`[CutsceneManager] No season cutscene registered for: ${cutsceneId}`);
+      return null;
+    }
+
+    if (!this.checkTrigger(cutscene.trigger, {})) {
+      return null;
+    }
+
+    return this.startCutscene(cutsceneId, savedPosition) ? cutsceneId : null;
+  }
+
+  /**
    * Force-start a cutscene, bypassing requirements and playOnce checks.
    * Used by DevTools for testing.
    */
