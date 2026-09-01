@@ -78,50 +78,6 @@ export const WEATHER_PROBABILITIES: Record<Season, SeasonalWeatherProbabilities>
   },
 };
 
-/**
- * Weather zone probabilities - override seasonal probabilities for specific map types
- * These apply regardless of season
- */
-export const ZONE_WEATHER_PROBABILITIES: Record<
-  WeatherZone,
-  Partial<SeasonalWeatherProbabilities> | null
-> = {
-  // Default zone uses seasonal probabilities (no override)
-  default: null,
-
-  // Forest: Heavy fog/mist, some rain, no storms
-  forest: {
-    clear: 20, // Less clear in dense forest
-    rain: 25, // Moderate rain
-    snow: 15, // Snow in winter (will be 0 in other seasons via seasonal base)
-    fog: 30, // Common fog
-    mist: 25, // Common mist
-    storm: 0, // No storms in protected forest
-    cherry_blossoms: 0,
-  },
-
-  // Cave/Mine: Mostly mist (like dust), no rain/snow/storms
-  cave: {
-    clear: 50, // Mostly clear underground
-    rain: 0, // No rain underground
-    snow: 0, // No snow underground
-    fog: 0, // No fog underground
-    mist: 50, // Dusty/misty atmosphere
-    storm: 0, // No storms underground
-    cherry_blossoms: 0,
-  },
-
-  // Indoor: Always clear (no weather effects)
-  indoor: {
-    clear: 100, // Always clear indoors
-    rain: 0,
-    snow: 0,
-    fog: 0,
-    mist: 0,
-    storm: 0,
-    cherry_blossoms: 0,
-  },
-};
 
 /**
  * Weather zone patterns for procedural maps
@@ -217,24 +173,6 @@ export function isWeatherAllowedOnMap(weather: WeatherType, mapId: string): bool
   return allowed.includes(weather);
 }
 
-/**
- * Weather duration in game hours
- * min/max for random duration selection
- */
-export interface WeatherDuration {
-  min: number; // Minimum hours
-  max: number; // Maximum hours
-}
-
-export const WEATHER_DURATIONS: Record<WeatherType, WeatherDuration> = {
-  clear: { min: 4, max: 12 }, // Long clear periods
-  rain: { min: 2, max: 6 }, // Medium rain duration
-  snow: { min: 3, max: 8 }, // Medium-long snow duration
-  fog: { min: 1, max: 4 }, // Short fog duration
-  mist: { min: 1, max: 3 }, // Short mist duration
-  storm: { min: 1, max: 2 }, // Short storm duration
-  cherry_blossoms: { min: 6, max: 12 }, // Long cherry blossom periods
-};
 
 /**
  * Particle effect configuration
@@ -410,45 +348,4 @@ export function getEffectiveWeather(globalWeather: WeatherType, mapId: string): 
     return 'clear';
   }
   return globalWeather;
-}
-
-// ============================================
-// Legacy (deprecated) — kept for reference
-// ============================================
-
-/**
- * @deprecated Use getCurrentGlobalWeather() + getEffectiveWeather() instead.
- * Non-deterministic: uses Math.random(), so different players get different weather.
- */
-export function selectRandomWeather(season: Season, mapId?: string): WeatherType {
-  let probabilities = { ...WEATHER_PROBABILITIES[season] };
-
-  if (mapId) {
-    const zone = getWeatherZone(mapId);
-    const zoneOverrides = ZONE_WEATHER_PROBABILITIES[zone];
-
-    if (zoneOverrides) {
-      probabilities = { ...probabilities, ...zoneOverrides } as SeasonalWeatherProbabilities;
-    }
-  }
-
-  const total = Object.values(probabilities).reduce((sum, prob) => sum + prob, 0);
-  let random = Math.random() * total;
-
-  for (const [weather, probability] of Object.entries(probabilities)) {
-    random -= probability;
-    if (random <= 0) {
-      return weather as WeatherType;
-    }
-  }
-
-  return 'clear';
-}
-
-/**
- * @deprecated Weather slots have fixed duration (WEATHER_SLOT_HOURS). No random duration needed.
- */
-export function getRandomWeatherDuration(weather: WeatherType): number {
-  const duration = WEATHER_DURATIONS[weather];
-  return Math.random() * (duration.max - duration.min) + duration.min;
 }

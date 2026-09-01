@@ -12,6 +12,7 @@
 import type { InteractionProvider } from './types';
 
 import { shopCounterProvider } from './providers/shopCounters';
+import { furnitureProvider } from './providers/furniture';
 import { placedItemProvider } from './providers/placedItems';
 import { mirrorProvider } from './providers/mirror';
 import { npcProvider } from './providers/npc';
@@ -34,6 +35,8 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   shopCounterProvider,
 
   // World objects the player clicks directly.
+  // furnitureProvider runs before placedItemProvider so "Sleep" is offered above "Pick Up".
+  furnitureProvider,
   placedItemProvider,
   mirrorProvider,
   npcProvider,

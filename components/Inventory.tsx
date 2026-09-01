@@ -4,7 +4,9 @@ import { getItem, ItemCategory } from '../data/items';
 import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import type { Photo } from '../types';
-import { CAMERA } from '../constants';
+import { CAMERA, TIMING } from '../constants';
+
+const LONG_PRESS_MS = TIMING.LONG_PRESS_MS;
 
 export interface InventoryItem {
   id: string;
@@ -21,6 +23,15 @@ interface InventoryProps {
   onClose: () => void;
   items: InventoryItem[];
   onItemClick?: (item: InventoryItem, slotIndex: number, event: React.MouseEvent) => void;
+  /**
+   * Right-click on desktop, long-press on touch: open the item's action menu.
+   * Left-click/tap only ever selects a slot, so every action lives behind this.
+   */
+  onItemContextMenu?: (
+    item: InventoryItem,
+    slotIndex: number,
+    at: { clientX: number; clientY: number }
+  ) => void;
   /** Reorder two item types by id — slot indices in the grid don't map 1:1 to inventory order (filtering, padding, expanded photo/painting slots) */
   onReorder?: (fromItemId: string, toItemId: string) => void;
   onPhotoDoubleClick?: (photo: Photo) => void;
@@ -44,6 +55,7 @@ const Inventory: React.FC<InventoryProps> = ({
   onClose,
   items,
   onItemClick,
+  onItemContextMenu,
   onReorder,
   onPhotoDoubleClick,
   selectedSlot = null,
@@ -66,6 +78,12 @@ const Inventory: React.FC<InventoryProps> = ({
 
   // Detect touch device
   const isTouchDevice = useTouchDevice();
+
+  // Long-press opens the action menu on touch, where there is no right-click.
+  // The timer is cancelled by any move or lift, so a normal tap still selects.
+  // Declared above the isOpen guard — hooks must run in the same order every render.
+  const longPressTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressFiredRef = React.useRef(false);
 
   if (!isOpen) return null;
 
@@ -130,7 +148,43 @@ const Inventory: React.FC<InventoryProps> = ({
     }
   });
 
+  const cancelLongPress = () => {
+    if (longPressTimer.current !== null) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleTouchStart = (item: InventoryItem | null, index: number, e: React.TouchEvent) => {
+    if (!item || !onItemContextMenu) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    const { clientX, clientY } = touch;
+    longPressFiredRef.current = false;
+    cancelLongPress();
+    longPressTimer.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      onItemContextMenu(item, index, { clientX, clientY });
+    }, LONG_PRESS_MS);
+  };
+
+  const handleContextMenu = (
+    item: InventoryItem | null,
+    index: number,
+    e: React.MouseEvent
+  ) => {
+    e.preventDefault(); // suppress the browser's own menu whether or not we show ours
+    if (!item || !onItemContextMenu) return;
+    onItemContextMenu(item, index, { clientX: e.clientX, clientY: e.clientY });
+  };
+
   const handleSlotClick = (item: InventoryItem | null, index: number, event: React.MouseEvent) => {
+    // A long-press already opened the action menu — don't also treat it as a tap.
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      return;
+    }
+
     // Double-click on photo opens the viewer
     if (event.detail === 2 && item?.photoData && onPhotoDoubleClick) {
       onPhotoDoubleClick(item.photoData);
@@ -284,7 +338,13 @@ const Inventory: React.FC<InventoryProps> = ({
                   onDrop={(e) => handleDrop(e, index)}
                   onDragEnd={handleDragEnd}
                   onClick={(e) => handleSlotClick(item, index, e)}
+                  onContextMenu={(e) => handleContextMenu(item, index, e)}
+                  onTouchStart={(e) => handleTouchStart(item, index, e)}
+                  onTouchMove={cancelLongPress}
+                  onTouchEnd={cancelLongPress}
+                  onTouchCancel={cancelLongPress}
                   className={`
+                    no-touch-callout
                     relative w-full aspect-square rounded-lg transition-all
                     ${isDragging ? 'opacity-50 cursor-grabbing' : ''}
                     ${isSwapSelected ? 'border-4 border-amber-400 shadow-lg shadow-amber-500/50' : ''}

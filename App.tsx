@@ -49,6 +49,8 @@ import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
 import { checkCookingLocation } from './utils/actionHandlers';
 import { getLavaLakeAnchor, findClearTileNear } from './utils/mapUtils';
+import { getRestingFurnitureEffect, type RestEffect } from './utils/furnitureRest';
+import { buildInventoryActions, hasInventoryActions } from './utils/inventoryActions';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
 import { audioManager } from './utils/AudioManager';
@@ -89,8 +91,6 @@ import ForegroundParallax from './components/ForegroundParallax';
 import CloudShadows from './components/CloudShadows';
 import AmbientClouds from './components/AmbientClouds';
 import CookingInterface from './components/CookingInterface';
-import DecorationCraftingUI from './components/DecorationCraftingUI';
-import PaintingEaselUI from './components/PaintingEaselUI';
 import MiniGameHost from './components/MiniGameHost';
 import { CottageBook } from './components/book';
 import Toast, { useToast } from './components/Toast';
@@ -98,6 +98,7 @@ import CameraOverlay from './components/CameraOverlay';
 import PhotoViewer from './components/PhotoViewer';
 import RadialMenu from './components/RadialMenu';
 import { StaminaBar } from './components/StaminaBar';
+import { RestIndicator } from './components/RestIndicator';
 import { DestinationMarker } from './components/DestinationMarker';
 import { useMouseControls } from './hooks/useMouseControls';
 import { useMouseHover } from './hooks/useMouseHover';
@@ -188,6 +189,12 @@ const App: React.FC = () => {
   const [mapErrors, setMapErrors] = useState<MapValidationError[]>([]); // Map validation errors to display
   const [characterVersion, setCharacterVersion] = useState(0); // Track character changes
   const [isCutscenePlaying, setIsCutscenePlaying] = useState(false); // Track cutscene state
+
+  // Which furniture the player is resting on, for the drifting "z"s and the stamina bar.
+  // The game loop recomputes this every frame; the ref lets it skip the setState unless
+  // the answer actually changed.
+  const [restingEffect, setRestingEffect] = useState<RestEffect | null>(null);
+  const restingEffectRef = useRef<RestEffect | null>(null);
 
   // Loading-screen cutscene state
   // Defaults to true (not false!) so the black loading overlay covers the very
@@ -295,8 +302,6 @@ const App: React.FC = () => {
     ui.brewingUI ||
     ui.magicBook ||
     ui.journal ||
-    ui.decorationWorkshop ||
-    ui.paintingEasel ||
     ui.miniGame ||
     ui.devTools ||
     ui.vfxTestPanel;
@@ -877,8 +882,6 @@ const App: React.FC = () => {
     showGiftModal: ui.giftModal,
     showGlamourModal: ui.glamourModal,
     showBasketModal: ui.basketModal,
-    showDecorationWorkshop: ui.decorationWorkshop,
-    showPaintingEasel: ui.paintingEasel,
     showMagicBook: ui.magicBook,
     showPhotoAlbum: ui.photoAlbum,
     showDevTools: ui.devTools,
@@ -929,10 +932,6 @@ const App: React.FC = () => {
       show ? openUI('glamourModal') : closeUI('glamourModal'),
     onSetShowBasketModal: (show: boolean) =>
       show ? openUI('basketModal') : closeUI('basketModal'),
-    onSetShowDecorationWorkshop: (show: boolean) =>
-      show ? openUI('decorationWorkshop') : closeUI('decorationWorkshop'),
-    onSetShowPaintingEasel: (show: boolean) =>
-      show ? openUI('paintingEasel') : closeUI('paintingEasel'),
     onSetShowMagicBook: (show: boolean) => (show ? openUI('magicBook') : closeUI('magicBook')),
     onSetShowPhotoAlbum: (show: boolean) => (show ? openUI('photoAlbum') : closeUI('photoAlbum')),
     onSetPlayerPos: setPlayerPos,
@@ -1087,31 +1086,17 @@ const App: React.FC = () => {
     const _pty = Math.floor(playerPosRef.current.y);
     const isOnLavaLake = getLavaLakeAnchor(_ptx, _pty) !== null;
 
-    // Check if player is resting on a placed furniture bed or garden bench
-    const _px = playerPosRef.current.x;
-    const _py = playerPosRef.current.y;
-    const isOnBed = gameState.getPlacedItems(currentMapId).some((item) => {
-      const def = getItem(item.itemId);
-      if (def?.furnitureEffect !== 'sleep') return false;
-      const scale = item.customScale ?? def.placedScale ?? 1;
-      return (
-        _px >= item.position.x - 0.5 &&
-        _px <= item.position.x + scale - 0.5 &&
-        _py >= item.position.y - 0.5 &&
-        _py <= item.position.y + scale - 0.5
-      );
-    });
-    const isOnBench = gameState.getPlacedItems(currentMapId).some((item) => {
-      const def = getItem(item.itemId);
-      if (def?.furnitureEffect !== 'rest') return false;
-      const scale = item.customScale ?? def.placedScale ?? 1;
-      return (
-        _px >= item.position.x - 0.5 &&
-        _px <= item.position.x + scale - 0.5 &&
-        _py >= item.position.y - 0.5 &&
-        _py <= item.position.y + scale - 0.5
-      );
-    });
+    // Check if player is resting on a placed furniture bed, bench or armchair
+    const restingEffect = getRestingFurnitureEffect(playerPosRef.current, currentMapId);
+    const isOnBed = restingEffect === 'sleep';
+    const isOnBench = restingEffect === 'rest';
+
+    // Drive the sleep animation off the same test, but only re-render when it flips —
+    // this runs every frame.
+    if (restingEffect !== restingEffectRef.current) {
+      restingEffectRef.current = restingEffect;
+      setRestingEffect(restingEffect);
+    }
 
     // Update stamina (drain when walking, restore when at home/bed/bench, drain on lava lake)
     staminaManager.update(
@@ -2415,42 +2400,16 @@ const App: React.FC = () => {
           isMagicUnlocked={gameState.isMagicBookUnlocked()}
           photoCount={photoCount}
           onPhotoDoubleClick={(photo) => setViewingPhoto(photo)}
-          onItemClick={(item, slotIndex, event) => {
-            const itemDef = getItem(item.id);
-            if (item.id === 'furniture_catalogue') {
-              closeUI('inventory');
-              openUI('furnitureCatalogueUI');
+          // Left-click/tap only ever selects. Everything that consumes, places or
+          // deletes an item lives behind right-click / long-press, because a stray
+          // click used to drink a potion outright.
+          onItemClick={(_item, slotIndex) => setSelectedItemSlot(slotIndex)}
+          onItemContextMenu={(item, slotIndex, at) => {
+            if (!hasInventoryActions(item.id)) {
+              setSelectedItemSlot(slotIndex);
               return;
             }
-            if (itemDef && itemDef.category === ItemCategory.POTION) {
-              // Friendship/Grudge potions are given to NPCs, not drunk
-              if (item.id === 'potion_friendship' || item.id === 'potion_bitter_grudge') {
-                showToast('Give this to the person you want to befriend.', 'info');
-                closeUI('inventory');
-              } else {
-                // Other potions are used directly
-                handlePotionUse(item.id);
-                // Close inventory after drinking potion for immersion
-                closeUI('inventory');
-              }
-            } else if (
-              itemDef &&
-              (itemDef.category === ItemCategory.FOOD ||
-                itemDef.edible ||
-                itemDef.category === ItemCategory.DECORATION ||
-                itemDef.category === ItemCategory.FURNITURE ||
-                item.id === 'tool_skis')
-            ) {
-              // Food, edible crops, decoration, furniture, and skis show a radial menu
-              setInventoryRadialMenu({
-                position: { x: event.clientX, y: event.clientY },
-                item,
-                slotIndex,
-              });
-            } else {
-              // For non-potions, non-food, non-decoration: just select the item
-              setSelectedItemSlot(slotIndex);
-            }
+            setInventoryRadialMenu({ position: { x: at.clientX, y: at.clientY }, item, slotIndex });
           }}
         />
       )}
@@ -2465,15 +2424,6 @@ const App: React.FC = () => {
             // GameState emits PLACED_ITEMS_CHANGED event when items are placed
           }}
         />
-      )}
-      {ui.decorationWorkshop && (
-        <DecorationCraftingUI
-          isOpen={ui.decorationWorkshop}
-          onClose={() => closeUI('decorationWorkshop')}
-        />
-      )}
-      {ui.paintingEasel && (
-        <PaintingEaselUI isOpen={ui.paintingEasel} onClose={() => closeUI('paintingEasel')} />
       )}
       {ui.miniGame && ui.context.activeMiniGameId && (
         <MiniGameHost
@@ -2801,17 +2751,18 @@ const App: React.FC = () => {
           cameraX={cameraX}
           cameraY={cameraY}
           lowThreshold={STAMINA.LOW_THRESHOLD}
-          forceShow={gameState.getPlacedItems(currentMapId).some((item) => {
-            const def = getItem(item.itemId);
-            if (def?.furnitureEffect !== 'sleep' && def?.furnitureEffect !== 'rest') return false;
-            const scale = item.customScale ?? def.placedScale ?? 1;
-            return (
-              playerPos.x >= item.position.x - 0.5 &&
-              playerPos.x <= item.position.x + scale - 0.5 &&
-              playerPos.y >= item.position.y - 0.5 &&
-              playerPos.y <= item.position.y + scale - 0.5
-            );
-          })}
+          forceShow={restingEffect !== null}
+        />
+      )}
+
+      {/* Drifting "z"s while the player sleeps in a bed or rests on a bench/armchair */}
+      {!isCutscenePlaying && (
+        <RestIndicator
+          effect={restingEffect}
+          playerX={playerPos.x}
+          playerY={playerPos.y}
+          cameraX={cameraX}
+          cameraY={cameraY}
         />
       )}
 
@@ -2824,169 +2775,83 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Radial menu for food/decoration/furniture items clicked in inventory */}
-      {inventoryRadialMenu &&
-        (() => {
-          const invItemDef = getItem(inventoryRadialMenu.item.id);
-          const isFood =
-            invItemDef && (invItemDef.category === ItemCategory.FOOD || invItemDef.edible);
-          const isWallpaper = invItemDef?.isWallpaper === true;
-          const isPlaceable =
-            invItemDef &&
-            !isWallpaper &&
-            (invItemDef.category === ItemCategory.DECORATION ||
-              invItemDef.category === ItemCategory.FURNITURE);
-          const isSkis = inventoryRadialMenu.item.id === 'tool_skis';
-          const isConfirming = inventoryRadialMenu.mode === 'confirmDelete';
-          return (
-            <RadialMenu
-              position={inventoryRadialMenu.position}
-              zIndex={Z_INVENTORY_RADIAL_MENU}
-              options={
-                isConfirming
-                  ? [
-                      {
-                        id: 'confirm_delete',
-                        label: 'Yes, delete it',
-                        icon: '🗑️',
-                        color: '#ef4444',
-                        onSelect: () => {
-                          inventoryManager.removeItem(inventoryRadialMenu.item.id, 1);
-                          setInventoryRadialMenu(null);
-                        },
-                      },
-                      {
-                        id: 'cancel_delete',
-                        label: 'Cancel',
-                        icon: iconAssets.hand,
-                        color: '#6b7280',
-                        staysOpen: true,
-                        onSelect: () => {
-                          setInventoryRadialMenu({ ...inventoryRadialMenu, mode: undefined });
-                        },
-                      },
-                    ]
-                  : [
-                      {
-                        id: 'select',
-                        label: 'Select',
-                        icon: iconAssets.hand,
-                        color: '#6b7280',
-                        onSelect: () => {
-                          setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                          setInventoryRadialMenu(null);
-                        },
-                      },
-                      ...(isWallpaper
-                        ? [
-                            {
-                              id: 'apply_wallpaper',
-                              label: 'Apply to Bedroom',
-                              icon: '🖼️',
-                              color: '#ec4899',
-                              onSelect: () => {
-                                const targetMapId = invItemDef!.targetMapId!;
-                                gameState.applyWallpaper(targetMapId, inventoryRadialMenu.item.id);
-                                inventoryManager.removeItem(inventoryRadialMenu.item.id, 1);
-                                eventBus.emit(GameEvent.WALLPAPER_APPLIED, {
-                                  mapId: targetMapId,
-                                  wallpaperId: inventoryRadialMenu.item.id,
-                                });
-                                showToast(
-                                  `${invItemDef!.displayName} applied to your bedroom!`,
-                                  'success'
-                                );
-                                closeUI('inventory');
-                                setInventoryRadialMenu(null);
-                              },
-                            },
-                          ]
-                        : isSkis
-                          ? []
-                          : [
-                              {
-                                id: 'place',
-                                label: 'Place in World',
-                                icon: '🌍',
-                                color: '#3b82f6',
-                                onSelect: () => {
-                                  setSelectedItemSlot(inventoryRadialMenu.slotIndex);
-                                  closeUI('inventory');
-                                  setInventoryRadialMenu(null);
-                                },
-                              },
-                            ]),
-                      ...(isSkis
-                        ? [
-                            {
-                              id: 'go_skiing',
-                              label: 'Go Skiing',
-                              icon: '⛷️',
-                              color: '#38bdf8',
-                              onSelect: () => {
-                                setInventoryRadialMenu(null);
-                                const currentMapId = mapManager.getCurrentMapId() ?? '';
-                                const isForest =
-                                  currentMapId.startsWith('forest') ||
-                                  currentMapId === 'deep_forest';
-                                const isWinter =
-                                  TimeManager.getCurrentTime().season === Season.WINTER;
-                                if (isForest && isWinter) {
-                                  closeUI('inventory');
-                                  openUI('miniGame', {
-                                    activeMiniGameId: 'skiing',
-                                    miniGameTriggerData: {
-                                      triggerType: 'inventory',
-                                      itemId: 'tool_skis',
-                                    },
-                                  });
-                                } else {
-                                  showToast(
-                                    'To go skiing, you need to be in the forest at winter',
-                                    'warning'
-                                  );
-                                }
-                              },
-                            },
-                          ]
-                        : []),
-                      ...(isFood
-                        ? [
-                            {
-                              id: 'eat',
-                              label: 'Eat',
-                              icon: '🍽️',
-                              color: '#f59e0b',
-                              onSelect: () => {
-                                handleFoodEat(inventoryRadialMenu.item);
-                                setInventoryRadialMenu(null);
-                              },
-                            },
-                          ]
-                        : []),
-                      ...(isPlaceable
-                        ? [
-                            {
-                              id: 'delete',
-                              label: 'Delete',
-                              icon: '🗑️',
-                              color: '#ef4444',
-                              staysOpen: true,
-                              onSelect: () => {
-                                setInventoryRadialMenu({
-                                  ...inventoryRadialMenu,
-                                  mode: 'confirmDelete',
-                                });
-                              },
-                            },
-                          ]
-                        : []),
-                    ]
+      {/* Item action menu — opened by right-click (desktop) or long-press (touch).
+          Options are built in utils/inventoryActions.ts; this only renders them. */}
+      {inventoryRadialMenu && (
+        <RadialMenu
+          position={inventoryRadialMenu.position}
+          zIndex={Z_INVENTORY_RADIAL_MENU}
+          options={buildInventoryActions({
+            item: inventoryRadialMenu.item,
+            slotIndex: inventoryRadialMenu.slotIndex,
+            isConfirmingDelete: inventoryRadialMenu.mode === 'confirmDelete',
+            handIcon: iconAssets.hand,
+            onSelectSlot: (slotIndex) => {
+              setSelectedItemSlot(slotIndex);
+              setInventoryRadialMenu(null);
+            },
+            onEat: (item) => {
+              handleFoodEat(item);
+              setInventoryRadialMenu(null);
+            },
+            onDrink: (itemId) => {
+              handlePotionUse(itemId);
+              setInventoryRadialMenu(null);
+            },
+            onBeginPlacement: (slotIndex) => {
+              setSelectedItemSlot(slotIndex);
+              closeUI('inventory');
+              setInventoryRadialMenu(null);
+            },
+            onApplyWallpaper: (item, def) => {
+              const targetMapId = def.targetMapId!;
+              gameState.applyWallpaper(targetMapId, item.id);
+              inventoryManager.removeItem(item.id, 1);
+              eventBus.emit(GameEvent.WALLPAPER_APPLIED, {
+                mapId: targetMapId,
+                wallpaperId: item.id,
+              });
+              showToast(`${def.displayName} applied to your bedroom!`, 'success');
+              closeUI('inventory');
+              setInventoryRadialMenu(null);
+            },
+            onOpenFurnitureCatalogue: () => {
+              closeUI('inventory');
+              openUI('furnitureCatalogueUI');
+              setInventoryRadialMenu(null);
+            },
+            onGoSkiing: () => {
+              setInventoryRadialMenu(null);
+              const skiMapId = mapManager.getCurrentMapId() ?? '';
+              const isForest = skiMapId.startsWith('forest') || skiMapId === 'deep_forest';
+              const isWinter = TimeManager.getCurrentTime().season === Season.WINTER;
+              if (!isForest || !isWinter) {
+                showToast('To go skiing, you need to be in the forest at winter', 'warning');
+                return;
               }
-              onClose={() => setInventoryRadialMenu(null)}
-            />
-          );
-        })()}
+              closeUI('inventory');
+              openUI('miniGame', {
+                activeMiniGameId: 'skiing',
+                miniGameTriggerData: { triggerType: 'inventory', itemId: 'tool_skis' },
+              });
+            },
+            onDeleteOne: (itemId) => {
+              inventoryManager.removeItem(itemId, 1);
+              setInventoryRadialMenu(null);
+            },
+            onAskDeleteConfirmation: () =>
+              setInventoryRadialMenu({ ...inventoryRadialMenu, mode: 'confirmDelete' }),
+            onCancelDeleteConfirmation: () =>
+              setInventoryRadialMenu({ ...inventoryRadialMenu, mode: undefined }),
+            onShowToast: showToast,
+            onCloseInventory: () => {
+              closeUI('inventory');
+              setInventoryRadialMenu(null);
+            },
+          })}
+          onClose={() => setInventoryRadialMenu(null)}
+        />
+      )}
 
       {/* Toast notifications for user feedback - positioned above player */}
       {!isCutscenePlaying && (

@@ -400,17 +400,22 @@ export function useInteractionController(
           onShowToast(result.message, 'info');
         }
       },
-      onOpenDecorationWorkshop: () => {
-        openUI('decorationWorkshop');
-      },
-      onOpenPaintingEasel: () => {
-        openUI('paintingEasel');
-      },
       onBeginYuleCelebration: () => {
         yuleCelebrationManager.startCelebration();
       },
       onMakeSnowAngel: (block: Position) => {
         snowAngelManager.place(block, currentMapId);
+      },
+      onUseFurniture: (target: Position, effect: 'sleep' | 'rest') => {
+        // Walk onto the furniture; StaminaManager.update() sees the player inside the
+        // footprint and takes over from there. Deliberately not a time skip — time is
+        // shared between players.
+        const walking = setDestination(target);
+        if (!walking) {
+          onShowToast("You can't get to that from here.", 'info');
+          return;
+        }
+        onShowToast(effect === 'sleep' ? 'Off to bed…' : 'Taking a rest…', 'info');
       },
       onOpenMiniGame: (miniGameId: string, triggerData: MiniGameTriggerData) => {
         openUI('miniGame', {
@@ -471,7 +476,15 @@ export function useInteractionController(
         onShowToast(`Placed ${itemDef?.displayName || 'decoration'}`, 'success');
       },
     };
-  }, [openUI, onMapTransition, onFarmUpdate, onShowToast, handleFarmActionAnimation, currentMapId]);
+  }, [
+    openUI,
+    onMapTransition,
+    onFarmUpdate,
+    onShowToast,
+    handleFarmActionAnimation,
+    currentMapId,
+    setDestination,
+  ]);
 
   // -------------------------------------------------------------------------
   // Canvas Click Handler

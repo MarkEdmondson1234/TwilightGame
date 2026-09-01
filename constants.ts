@@ -121,6 +121,7 @@ export const TIMING = {
   DIALOGUE_DELAY_MS: 800, // Delay for dialogue transitions
   TOAST_DURATION_MS: 3000, // How long toast messages display
   MODAL_TRANSITION_MS: 200, // Modal open/close animation
+  LONG_PRESS_MS: 500, // Touch hold that stands in for a right-click (item action menus)
 
   // Game systems
   MAP_TRANSITION_MS: 1000, // Map transition fade duration

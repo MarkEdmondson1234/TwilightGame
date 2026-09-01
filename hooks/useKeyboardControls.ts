@@ -49,8 +49,6 @@ export interface KeyboardControlsConfig {
   showGiftModal: boolean;
   showGlamourModal: boolean;
   showBasketModal: boolean;
-  showDecorationWorkshop: boolean;
-  showPaintingEasel: boolean;
   showMagicBook: boolean;
   showPhotoAlbum: boolean;
   showDevTools: boolean;
@@ -82,8 +80,6 @@ export interface KeyboardControlsConfig {
   onSetShowGiftModal: (show: boolean) => void;
   onSetShowGlamourModal: (show: boolean) => void;
   onSetShowBasketModal: (show: boolean) => void;
-  onSetShowDecorationWorkshop: (show: boolean) => void;
-  onSetShowPaintingEasel: (show: boolean) => void;
   onSetShowMagicBook: (show: boolean) => void;
   onSetShowPhotoAlbum: (show: boolean) => void;
   onSetPlayerPos: (pos: Position) => void;
@@ -117,8 +113,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showGiftModal,
     showGlamourModal,
     showBasketModal,
-    showDecorationWorkshop,
-    showPaintingEasel,
     showMagicBook,
     showPhotoAlbum,
     showDevTools,
@@ -144,8 +138,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetShowGiftModal,
     onSetShowGlamourModal,
     onSetShowBasketModal,
-    onSetShowDecorationWorkshop,
-    onSetShowPaintingEasel,
     onSetShowMagicBook,
     onSetShowPhotoAlbum,
     onSetPlayerPos,
@@ -198,8 +190,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showGiftModal,
     showGlamourModal,
     showBasketModal,
-    showDecorationWorkshop,
-    showPaintingEasel,
     showMagicBook,
     showPhotoAlbum,
     showDevTools,
@@ -216,8 +206,6 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetShowGiftModal,
     onSetShowGlamourModal,
     onSetShowBasketModal,
-    onSetShowDecorationWorkshop,
-    onSetShowPaintingEasel,
     onSetShowMagicBook,
     onSetShowPhotoAlbum,
     onSetShowDevTools: (show: boolean) => onSetShowDevTools(show),
