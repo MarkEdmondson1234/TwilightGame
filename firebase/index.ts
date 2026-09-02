@@ -50,6 +50,8 @@ export { communityGardenService } from './communityGardenService';
 // Presence (Multiplayer — ephemeral, Realtime Database)
 export { presenceService } from './presenceService';
 
+export { chatService } from './chatService';
+
 // Types
 export type {
   UserProfile,

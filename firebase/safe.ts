@@ -13,6 +13,7 @@
 export type { AuthState } from './authService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
+import type { ChatMessage } from '../multiplayer/chat';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -126,6 +127,20 @@ const stubPresenceService = {
   enterRoom: async (_mapId: string) => false as boolean,
   leaveRoom: async () => {},
   publish: async (_state: LocalPresenceState) => false as boolean,
+  destroy: async () => {},
+};
+
+/**
+ * Stub chatService when Firebase is not available.
+ * Parity with the real service is asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubChatService = {
+  isAvailable: () => false,
+  getCurrentRoom: () => null as string | null,
+  onMessage: (_cb: (message: ChatMessage) => void) => () => {},
+  enterRoom: async (_mapId: string) => false as boolean,
+  leaveRoom: async () => {},
+  send: async (_text: string, _name: string) => false as boolean,
   destroy: async () => {},
 };
 
@@ -266,6 +281,15 @@ export function getSyncManager() {
  */
 export function getPresenceService() {
   return firebaseModule?.presenceService ?? stubPresenceService;
+}
+
+/**
+ * Get chatService (real or stub).
+ * Same rule as presence: never cache the result, it is a stub until the
+ * dynamic Firebase import has settled.
+ */
+export function getChatService() {
+  return firebaseModule?.chatService ?? stubChatService;
 }
 
 /**

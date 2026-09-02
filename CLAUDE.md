@@ -13,6 +13,7 @@ Firebase provides cloud saves via Firestore and cross-player features (NPC gossi
 **Status:** Infrastructure fully present, UI active. Gracefully disabled when `firebase` package or env vars are missing.
 
 **Key files:**
+
 - `firebase/safe.ts` — **Safe wrapper** (import from here, not `firebase/index`) — stubs when package missing
 - `firebase/config.ts` — Firebase init, checks `VITE_FIREBASE_*` env vars
 - `firebase/authService.ts` — Email/password and Google auth
@@ -30,6 +31,7 @@ Firebase provides cloud saves via Firestore and cross-player features (NPC gossi
 **Without Firebase:** The game works fully offline. Firebase features silently disable when the package or env vars are missing.
 
 **IMPORTANT — Safe imports:** Components must import from `firebase/safe` (not `firebase/index`) to avoid crashing when the `firebase` npm package is not installed:
+
 ```typescript
 // ✅ CORRECT — safe, works without firebase installed
 import { getAuthService, type AuthState } from '../firebase/safe';
@@ -75,6 +77,7 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
 `MULTIPLAYER_ENABLED` in `constants.ts`. Without it the game is exactly single-player.
 
 **Key files:**
+
 - `multiplayer/` — pure logic: `wire.ts` (encode/validate), `interpolation.ts`, `publishPolicy.ts`,
   `emotes.ts`, `RemotePlayerManager.ts` (SSoT for other players — mirrors `NPCManager`)
 - `hooks/useMultiplayerController.ts` — the domain controller; App.tsx only wires it
@@ -87,9 +90,14 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
    `usePixiRenderer`'s per-frame `updateAnimations()` polls `remotePlayerManager` directly; the
    EventBus trigger fires only on join/leave.
 2. **The emote list is duplicated in `multiplayer/emotes.ts` and `database.rules.json` on purpose** —
-   the rules enforce the closed vocabulary server-side, which is the whole reason player-to-player
-   communication is safe for a young audience. There is no free-text chat and there should not be.
-   `tests/emoteVocabulary.test.ts` fails if the two lists drift.
+   the rules enforce the closed vocabulary server-side. `tests/emoteVocabulary.test.ts` fails if the
+   two lists drift.
+   Free-text chat now exists alongside emotes (`multiplayer/chat.ts`), enabled deliberately by the
+   owner for a group of children who know each other. It is **not** moderated: what protects players
+   is that the world is accounts-only, messages are attributed and length-capped in the rules, and
+   nothing is stored durably against a player. Anyone who creates an account can join and type, so
+   if that group ever widens, restrict the shared world before widening it.
+   `tests/chatRules.test.ts` fails if the client and server-side length caps drift.
 3. **Anything in the shared simulation must be deterministic.** Time and weather already are.
    NPC wander and fairy spawns now use `utils/seededRandom.ts` keyed on `(id, time slot)`.
    Reintroducing `Math.random()` there silently desyncs what two players see —
@@ -119,6 +127,7 @@ This applies to all user-facing text including: dialogue, item descriptions, UI 
 - **Preserve artistic quality** - The rendering system is designed to show artwork as beautifully as it was created
 
 When adding new rendering code:
+
 - ✅ DO: Use linear/smooth scaling for all images
 - ✅ DO: Enable mipmaps for high-quality downscaling
 - ❌ DON'T: Use nearest-neighbor scaling (causes unwanted pixelation)
@@ -130,16 +139,19 @@ When adding new rendering code:
 **IMPORTANT**: All game features must work on both keyboard AND touch devices (iPad).
 
 When implementing new features:
+
 - **Keyboard controls**: Add key bindings to `hooks/useKeyboardControls.ts`
 - **Touch controls**: Add corresponding touch handlers to `hooks/useTouchControls.ts`
 - **Touch UI**: Add buttons to `components/TouchControls.tsx` if the feature needs a dedicated button
 
 **Input Architecture:**
+
 - Shared action logic goes in `utils/actionHandlers.ts` (used by both keyboard and touch)
 - Both input hooks should call the same action handler functions
 - Touch buttons should be optional props (render only when callback provided)
 
 **Example - Adding a new action:**
+
 1. Create handler in `utils/actionHandlers.ts`: `handleNewAction(playerPos, mapId)`
 2. Add to keyboard: F key in `useKeyboardControls.ts`
 3. Add to touch hook: `handleNewActionPress()` in `useTouchControls.ts`
@@ -149,6 +161,7 @@ When implementing new features:
 ## Development Commands
 
 **Makefile Commands** (recommended):
+
 - `make` or `make help` - Show all available commands
 - `make install` - Install dependencies
 - `make dev` - Start development server (Vite on port 4000)
@@ -173,28 +186,33 @@ When implementing new features:
 **IMPORTANT**: When many files change at once (git sync, Claude making multiple edits), Vite's Hot Module Replacement can overwhelm the browser, causing it to hang.
 
 **Symptoms:**
+
 - Browser becomes unresponsive
 - Game won't load (infinite loading)
 - JavaScript consuming high CPU
 
 **Solution - Use `make reload`:**
+
 ```bash
 make reload
 ```
 
 This command:
+
 1. Stops any running Vite servers
 2. Clears Vite's cache
 3. Restarts a fresh dev server
 4. Reminds you to hard-refresh the browser (Cmd+Shift+R)
 
 **When to use:**
+
 - After git pull/sync brings in many file changes
 - When the browser hangs after Claude makes multiple file edits
 - If HMR updates seem to be piling up in the console
 - Whenever the game won't load after code changes
 
 **NPM Commands** (cross-platform - works on macOS, Linux, Windows):
+
 - `npm install` - Install dependencies
 - `npm run dev` - Start development server (Vite on port 4000)
 - `npm run dev:start` - Kill existing servers and start fresh
@@ -243,22 +261,26 @@ screenshot both branches — see "Comparing rendered output" in the
 **CRITICAL**: Each item must have exactly ONE definition. Never create duplicate items with different IDs.
 
 **Common SSoT Violations to Avoid:**
+
 - ❌ Creating `potatoes` (INGREDIENT) when `crop_potato` (CROP) already exists
 - ❌ Creating `tomato_fresh` (INGREDIENT) when `crop_tomato` (CROP) already exists
 - ❌ Using `cane_sugar` in recipes when the item is defined as `sugar`
 
 **When Adding Items to Recipes or Shops:**
+
 1. Check if the item already exists in `data/items.ts`
 2. Use the EXACT `id` from the existing definition
 3. If a crop needs to be purchasable, add `buyPrice` to the crop - don't create a duplicate INGREDIENT
 
 **When Adding New Items:**
+
 1. Check for similar items first — `grep` the `data/items/` modules, or read the category → module table in the `data/items.ts` header
 2. Add the definition to the matching `data/items/<category>.ts` module (NOT to the `data/items.ts` facade)
 3. Use consistent naming: `crop_*` for crops, `seed_*` for seeds, `food_*` for cooked food
 4. Ensure the `id`, `name`, and object key all match exactly
 
 **Automated Tests**: Run `npx vitest run tests/itemSSoT.test.ts` to catch:
+
 - Recipe ingredients that don't exist in ITEMS
 - Shop items that don't exist in ITEMS
 - Duplicate displayNames (potential duplicates)
@@ -282,12 +304,14 @@ characterData.saveFriendships(friendships);
 ```
 
 **Why This Exists:**
+
 - Prevents circular dependency bugs where managers read from GameState and write back stale data
 - Provides consistent logging for debugging persistence issues
 - Single point of control for all character data saves
 - Type-safe with proper TypeScript interfaces
 
 **DO NOT use gameState directly for saves:**
+
 ```typescript
 // ❌ WRONG - bypasses CharacterData API
 gameState.saveInventory(items, tools);
@@ -300,12 +324,14 @@ characterData.saveFarmPlots(plots);
 
 **Manager Pattern:**
 Managers (CookingManager, FriendshipManager, etc.) should:
+
 1. Track state locally as the single source of truth
 2. Load from `characterData` once during `initialise()`
 3. Save via `characterData` when state changes
 4. Never read from GameState during save operations
 
 **Available Domains:**
+
 - `inventory` - Items and tools
 - `farming` - Farm plots, current tool, selected seed
 - `cooking` - Recipe book, unlocked recipes, progress
@@ -332,6 +358,7 @@ The game tests fundamental assumptions on startup:
 **IMPORTANT**: All maps are validated at registration and loading time. The `validateMapDefinition()` function in `maps/gridParser.ts` catches common issues:
 
 **What It Checks:**
+
 - Grid dimensions match declared `width` and `height`
 - All grid rows have consistent width
 - `spawnPoint` is within map bounds
@@ -339,10 +366,12 @@ The game tests fundamental assumptions on startup:
 - NPC positions are within map bounds
 
 **When It Runs:**
+
 - At map registration (`mapManager.registerMap()`) - catches issues at startup
 - At map loading (`mapManager.loadMap()`) - catches issues during transitions
 
 **Console Output:**
+
 ```
 🗺️ Map Validation: mums_kitchen
 Declared: 15x9, Actual grid: 15x9
@@ -353,12 +382,14 @@ Declared: 15x9, Actual grid: 15x9
 ```
 
 **When Creating/Modifying Maps:**
+
 1. Check browser console for validation messages
 2. Fix any ❌ ERRORS before testing (these break gameplay)
 3. Review ⚠️ WARNINGS (NPCs may appear in walls)
 4. Ensure transition `toPosition` values are valid for the TARGET map (not just the source)
 
 **Common Mistakes:**
+
 - Transition spawn positions that exceed target map bounds
 - Grid string rows that don't match declared dimensions
 - NPCs placed in wall tiles (walkable area only: rows with `.` or `F`)
@@ -366,6 +397,7 @@ Declared: 15x9, Actual grid: 15x9
 ## Documentation
 
 Detailed documentation is located in the [`docs/`](docs/) folder:
+
 - [`docs/ARCHITECTURE_GOTCHAS.md`](docs/ARCHITECTURE_GOTCHAS.md) - **READ FIRST** — Non-obvious bugs & root causes (coordinate pipeline, click detection, audio lifecycle, z-index traps)
 - [`docs/MAP_GUIDE.md`](docs/MAP_GUIDE.md) - Map creation guide
 - [`docs/ASSETS.md`](docs/ASSETS.md) - Asset management and guidelines
@@ -397,6 +429,7 @@ Custom React hooks for game systems:
 - `hooks/useTouchDevice.ts` - Touch device detection
 
 **Domain Controllers** (consolidate related state and effects):
+
 - `hooks/useMovementController.ts` - Player position, direction, animation, pathfinding, size effects
 - `hooks/useInteractionController.ts` - NPC dialogue, radial menu, farm actions, canvas clicks
 - `hooks/useEnvironmentController.ts` - Weather, time of day, ambient audio, item decay, movement effects
@@ -424,7 +457,7 @@ Pure functions and game systems:
 ### Map System (`maps/`)
 
 - `maps/MapManager.ts` - **Single source of truth** for all map data, transitions, and current map state
-- `maps/index.ts` - Map registry, initialization, handles RANDOM_* map generation
+- `maps/index.ts` - Map registry, initialization, handles RANDOM\_\* map generation
 - `maps/gridParser.ts` - Converts character-based grid strings to TileType arrays
 - `maps/colorSchemes.ts` - Color scheme definitions for different map themes
 - `maps/procedural.ts` - Random map generators (forest, cave, shop)
@@ -445,6 +478,7 @@ Pure functions and game systems:
 ### Game Systems
 
 **Input System** (`hooks/useKeyboardControls.ts`, `hooks/useTouchControls.ts`, `hooks/useMouseControls.ts`):
+
 - **Mouse**: Click anywhere to interact with objects, NPCs, tiles
   - Single interaction: Auto-executes immediately
   - Multiple interactions: Radial menu appears with options in a circle
@@ -464,11 +498,12 @@ Pure functions and game systems:
 - Architecture: Input hooks → Action handlers → Game state updates
 
 **Interaction System** (`utils/interactions/`, `components/RadialMenu.tsx`):
+
 - **Read [`utils/interactions/README.md`](utils/interactions/README.md) before adding an interaction.**
 - Click-based: Primary interaction method - click on objects/tiles to interact
 - `getAvailableInteractions()`: Returns all possible interactions at a position
 - **Provider architecture**: each interaction kind is one small module in `utils/interactions/providers/`, listed in `utils/interactions/registry.ts`. Adding an interaction = new provider file + one registry line + one entry in the `InteractionType` union. You should not need to open any other file.
-- **Providers must be side-effect free at collection time** — `getAvailableInteractions()` runs on every click just to see what is *possible*. Mutate game state only inside an interaction's `execute` callback.
+- **Providers must be side-effect free at collection time** — `getAvailableInteractions()` runs on every click just to see what is _possible_. Mutate game state only inside an interaction's `execute` callback.
 - Registry order is the radial menu order. `exclusive: true` suppresses all later providers (used by shop counters).
 - Interaction types: mirror, NPC, transition, cooking, farming (till, plant, water, harvest, clear), foraging, berry harvesting
 - **Multi-seed planting**: When clicking tilled soil with seeds tool, radial menu shows all available seed types
@@ -476,6 +511,7 @@ Pure functions and game systems:
 - Each interaction has: label, icon (emoji), colour (hex), and execute callback
 
 **Player System** (`hooks/usePlayerMovement.ts`, `hooks/useCollisionDetection.ts`):
+
 - Movement: Frame-rate independent delta-time based movement (5.0 tiles/second)
 - Animation: 4-frame walk cycle per direction (frame 0 = idle), 150ms between frames
 - Collision: Independent X/Y axis collision, supports both regular tiles and multi-tile sprites
@@ -483,6 +519,7 @@ Pure functions and game systems:
 - Architecture: Isolated collision detection and movement logic in dedicated hooks
 
 **Map System** (`maps/MapManager.ts`):
+
 - **Single Source of Truth**: All map data flows through MapManager
 - Supports designed maps (grid-based) and procedurally generated maps (random seed-based)
 - Handles map transitions when player activates transition tiles
@@ -492,6 +529,7 @@ Pure functions and game systems:
 - Random maps: forest, cave, shop (generated on demand with `RANDOM_*` IDs)
 
 **Tile System** (`constants.ts`, `utils/tileRenderUtils.ts`):
+
 - Tile data stored in `TILE_LEGEND` Record (not array - order-independent)
 - 13+ tile types: outdoor (grass, rock, water, path), indoor (floor, wall, carpet), transitions (doors), furniture (table, chair, sofa, bed)
 - Child-friendly grid codes: `G`=grass, `R`=rock, `#`=wall, `F`=floor, `D`=door, etc.
@@ -500,6 +538,7 @@ Pure functions and game systems:
 - See `MAP_GUIDE.md` for map creation instructions
 
 **Action System** (`utils/actionHandlers.ts`):
+
 - Mirror interaction: Opens character creator
 - NPC interaction: Triggers dialogue or events
 - Map transitions: Loads new map and teleports player
@@ -507,12 +546,14 @@ Pure functions and game systems:
 - Architecture: Reusable action functions shared between keyboard and touch input
 
 **Initialization System** (`utils/gameInitializer.ts`):
+
 - Game startup orchestration: palette → self-tests → maps → assets → inventory → farm plots
 - Handles regeneration of random maps from saved seeds
 - Initializes starter inventory for new players
 - Runs all sanity checks before game starts
 
 **Camera System** (`App.tsx`):
+
 - Follows player with centered viewport
 - Clamped to current map boundaries (varies per map)
 - Viewport culling: Only renders visible tiles for performance
@@ -530,20 +571,21 @@ Pure functions and game systems:
 
 ### Available Events
 
-| Event | Payload | Emitted By | Subscribers |
-|-------|---------|------------|-------------|
-| `STAMINA_CHANGED` | `{ value, maxValue }` | StaminaManager | StaminaBar |
-| `INVENTORY_CHANGED` | `{ action }` | inventoryManager | App.tsx |
-| `FARM_PLOT_CHANGED` | `{ position?, action? }` | farmManager | useGameEvents |
-| `NPC_MOVED` | `{ npcId, position? }` | npcManager | useGameEvents |
-| `NPC_SPAWNED` / `NPC_DESPAWNED` | `{ npcId, mapId }` | npcManager | useGameEvents |
-| `PLACED_ITEMS_CHANGED` | `{ mapId, action? }` | gameState | useGameEvents |
-| `WEATHER_CHANGED` | `{ weather, mapId }` | weatherManager | EnvironmentController |
-| `TIME_CHANGED` | `{ hour, timeOfDay }` | TimeManager | EnvironmentController |
+| Event                           | Payload                  | Emitted By       | Subscribers           |
+| ------------------------------- | ------------------------ | ---------------- | --------------------- |
+| `STAMINA_CHANGED`               | `{ value, maxValue }`    | StaminaManager   | StaminaBar            |
+| `INVENTORY_CHANGED`             | `{ action }`             | inventoryManager | App.tsx               |
+| `FARM_PLOT_CHANGED`             | `{ position?, action? }` | farmManager      | useGameEvents         |
+| `NPC_MOVED`                     | `{ npcId, position? }`   | npcManager       | useGameEvents         |
+| `NPC_SPAWNED` / `NPC_DESPAWNED` | `{ npcId, mapId }`       | npcManager       | useGameEvents         |
+| `PLACED_ITEMS_CHANGED`          | `{ mapId, action? }`     | gameState        | useGameEvents         |
+| `WEATHER_CHANGED`               | `{ weather, mapId }`     | weatherManager   | EnvironmentController |
+| `TIME_CHANGED`                  | `{ hour, timeOfDay }`    | TimeManager      | EnvironmentController |
 
 ### Usage Examples
 
 **Emitting events (in managers):**
+
 ```typescript
 import { eventBus, GameEvent } from './EventBus';
 
@@ -558,6 +600,7 @@ eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
 ```
 
 **Subscribing to events (in React components/hooks):**
+
 ```typescript
 import { eventBus, GameEvent } from '../utils/EventBus';
 
@@ -572,6 +615,7 @@ useEffect(() => {
 ### Adding New Events
 
 1. **Add event type** to `GameEvent` enum in `utils/EventBus.ts`:
+
 ```typescript
 export enum GameEvent {
   // ... existing events
@@ -580,6 +624,7 @@ export enum GameEvent {
 ```
 
 2. **Define payload type** in `EventPayloads` interface:
+
 ```typescript
 export interface EventPayloads {
   // ... existing payloads
@@ -591,11 +636,13 @@ export interface EventPayloads {
 ```
 
 3. **Emit from manager** when state changes:
+
 ```typescript
 eventBus.emit(GameEvent.MY_NEW_EVENT, { someField: 'value', anotherField: 42 });
 ```
 
 4. **Subscribe in components** that need to react:
+
 ```typescript
 useEffect(() => {
   return eventBus.on(GameEvent.MY_NEW_EVENT, (payload) => {
@@ -607,12 +654,14 @@ useEffect(() => {
 ### Debug Mode
 
 Enable EventBus logging in development:
+
 ```typescript
 // In constants.ts DEBUG object
 EVENTS: import.meta.env.DEV,  // Logs all events to console in dev
 ```
 
 Console output when enabled:
+
 ```
 [EventBus] player:stamina_changed { value: 98.5, maxValue: 100 }
 [EventBus] items:inventory_changed { action: 'update' }
@@ -634,6 +683,7 @@ PixiJS is a WebGL-based 2D rendering engine that provides 10-100x performance im
 ### Why PixiJS?
 
 **Performance Benefits:**
+
 - **10-100x faster rendering**: WebGL GPU acceleration vs DOM manipulation
 - **Consistent 60 FPS**: Smooth gameplay on all devices
 - **Scalability**: Support for thousands of sprites (vs ~500 with DOM)
@@ -641,6 +691,7 @@ PixiJS is a WebGL-based 2D rendering engine that provides 10-100x performance im
 - **Future capabilities**: Particle effects, lighting, shaders, post-processing
 
 **Current vs Future:**
+
 - **DOM Renderer**: 30x30 map = ~1,800 DOM nodes, 30-45 FPS
 - **PixiJS Renderer**: 30x30 map = 1 canvas element, 60 FPS
 
@@ -684,20 +735,24 @@ The PixiJS implementation uses a **class-based layer system** with three primary
 ### Core PixiJS Files
 
 **Rendering Layers** (`utils/pixi/`):
+
 - `TileLayer.ts` - Renders background tiles (colors and sprites), handles farm plot states
 - `SpriteLayer.ts` - Renders multi-tile sprites (furniture, buildings, trees) in background/foreground
 - `PlayerSprite.ts` - Renders player character with animation
 
 **Utilities** (`utils/`):
+
 - `TextureManager.ts` - Texture loading, caching, and management (PIXI.Texture instances)
 - `ColorResolver.ts` - Converts palette colors to PixiJS hex format
 
 **Constants** (`constants.ts`):
+
 - `USE_PIXI_RENDERER` - Feature flag to toggle between PixiJS and DOM rendering
 
 ### Key Concepts
 
 **Texture Management:**
+
 - All images loaded as `PIXI.Texture` via `TextureManager`
 - Textures cached and reused (no recreation on re-render)
 - `scaleMode: 'linear'` for smooth hand-drawn artwork (NOT nearest-neighbor)
@@ -705,17 +760,20 @@ The PixiJS implementation uses a **class-based layer system** with three primary
 - **Scoped per map**, NOT all loaded at startup — see below
 
 **Layer System:**
+
 - **TileLayer**: Background colors (z=0) and tile sprites (z=1)
 - **SpriteLayer (background)**: Multi-tile sprites like beds, sofas (z=50)
 - **PlayerSprite**: Character sprite (z=100)
 - **SpriteLayer (foreground)**: Trees, buildings that appear in front of player (z=200)
 
 **Sprite Reuse & Culling:**
+
 - Sprites created once and reused (position/texture updated)
 - Viewport culling: Sprites outside visible range set to `visible=false`
 - Map changes trigger full sprite cleanup and recreation
 
 **Camera System:**
+
 - Camera implemented by moving containers (`container.x = -cameraX`)
 - Player remains centered, world moves around them
 - Each layer updates camera position independently
@@ -723,12 +781,14 @@ The PixiJS implementation uses a **class-based layer system** with three primary
 ### Working with PixiJS
 
 **Adding New Sprites:**
+
 1. Add texture to `TextureManager` during initialization
 2. Create or update sprite in appropriate layer (TileLayer/SpriteLayer)
 3. Set position, size, z-index, and visibility
 4. Apply transforms if needed (flip, rotate, scale)
 
 **Example - Adding a tile sprite:**
+
 ```typescript
 // In TileLayer.renderTile()
 const texture = textureManager.getTexture(imageUrl);
@@ -742,6 +802,7 @@ this.container.addChild(sprite);
 ```
 
 **Texture Loading:**
+
 ```typescript
 // In TextureManager.ts
 const texture = await textureManager.loadTexture(key, url);
@@ -749,6 +810,7 @@ const texture = await textureManager.loadTexture(key, url);
 ```
 
 **Color Rendering (Tiles without images):**
+
 ```typescript
 // TileLayer uses PIXI.Graphics for solid colors
 const graphics = new PIXI.Graphics();
@@ -759,6 +821,7 @@ graphics.fill(hexColor); // Uses palette colors
 ### Performance Guidelines
 
 **DO:**
+
 - ✅ Reuse sprites (update texture/position instead of recreating)
 - ✅ Use viewport culling (`sprite.visible = false` for off-screen)
 - ✅ Batch similar sprites in same container
@@ -767,6 +830,7 @@ graphics.fill(hexColor); // Uses palette colors
 - ✅ Use linear scaling for hand-drawn artwork
 
 **DON'T:**
+
 - ❌ Create/destroy sprites every frame
 - ❌ Render off-screen sprites
 - ❌ Use nearest-neighbor scaling (causes pixelation of hand-drawn art)
@@ -796,7 +860,7 @@ Three things that are easy to get wrong here:
 1. **The resolver is a prefetch hint, not a contract.** It cannot see through
    `TileData.getImage()` (fruit trees pick sprites from runtime state), placed
    furniture, or a crop planted in thirty seconds. `textureManager.getTexture()`
-   therefore *schedules the load on a miss*, and layers skip drawing that frame.
+   therefore _schedules the load on a miss_, and layers skip drawing that frame.
    Never make rendering depend on the set being exhaustive — every omission
    would become a permanently invisible sprite instead of a one-frame delay.
 2. **Only the current season is loaded.** Loading all four quadrupled the cost
@@ -839,6 +903,7 @@ export const USE_PIXI_RENDERER = true; // Toggle PixiJS on/off
 - `false`: DOM-based rendering (fallback, better compatibility)
 
 This allows:
+
 - A/B performance testing
 - Instant rollback if issues arise
 - Gradual migration of rendering features
@@ -850,6 +915,7 @@ The codebase includes a specialized skill for PixiJS development:
 - **`add-pixi-component`** - Adds new PixiJS rendering components (layers, sprites, effects)
 
 Use this skill when:
+
 - Implementing new PixiJS-based renderers
 - Adding particle effects or lighting systems
 - Creating custom shaders or post-processing
@@ -860,6 +926,7 @@ Use this skill when:
 Once PixiJS is fully adopted, these features become possible:
 
 **Particle Systems** (`@pixi/particle-emitter`):
+
 - Rain/snow (1,000+ particles)
 - Falling cherry blossoms (seasonal)
 - Fireflies (night time)
@@ -867,18 +934,21 @@ Once PixiJS is fully adopted, these features become possible:
 - Dust clouds (running)
 
 **Lighting System** (PixiJS filters):
+
 - Day/night ambient lighting
 - Lanterns/torches (point lights)
 - Firefly glow
 - Campfire flickering
 
 **Post-Processing Effects**:
+
 - Bloom (glowing objects)
 - Depth of field (blur distant objects)
 - Color grading (cinematic look)
 - Vignette (focus attention)
 
 **Advanced Features**:
+
 - Custom WebGL shaders (water ripples, grass swaying)
 - Larger maps (100x100+ tiles with chunked loading)
 - Real-time weather effects
@@ -887,11 +957,13 @@ Once PixiJS is fully adopted, these features become possible:
 ### Documentation
 
 **Detailed Documentation:**
+
 - `design_docs/planned/PIXI_MIGRATION.md` - Comprehensive migration guide, API design, testing strategy
 - `design_docs/planned/PIXI_API_REFERENCE.md` - PixiJS API reference
 - `.claude/skills/add-pixi-component/` - Skill for adding PixiJS components
 
 **Official PixiJS Resources:**
+
 - [PixiJS Documentation](https://pixijs.com/docs)
 - [PixiJS Examples](https://pixijs.com/examples)
 - [@pixi/react GitHub](https://github.com/pixijs/pixi-react)
@@ -899,18 +971,21 @@ Once PixiJS is fully adopted, these features become possible:
 ### Debugging PixiJS
 
 **Chrome DevTools:**
+
 - Inspect canvas element in Elements tab
 - Monitor GPU usage in Performance tab
 - Check texture loading in Network tab
 - Profile rendering with Performance profiler
 
 **In-Game Debug Overlay (F3):**
+
 - Shows sprite counts per layer
 - Displays FPS and render time
 - Lists loaded textures
 - Shows viewport culling stats
 
 **Common Issues:**
+
 - **Black screen**: Check texture loading errors in console
 - **Low FPS**: Check sprite count and viewport culling
 - **Pixelated sprites**: Ensure `scaleMode: 'linear'` is set (NOT nearest-neighbor for hand-drawn art)
@@ -960,19 +1035,19 @@ The optimization script (`scripts/optimize-assets.js`) uses Sharp and gifsicle t
 
 The script optimizes different asset types with appropriate settings:
 
-| Asset Type | Size | Quality | Compression | Use Case |
-|------------|------|---------|-------------|----------|
-| **Player character** (`character{1,2}/base`) | 1024×1024 | Showcase (97%) | Level 4 | Player sprite (most-rendered art in the game) |
-| **NPC sprites** | 1024 max edge | Showcase (97%) | Level 4 | NPCs and dialogue portraits |
-| **Trees** | 1024×1024 | Showcase (97%) | Level 4 | Major visual elements |
-| **Decorative flowers** | 768×768 | Showcase (97%) | Level 4 | Multi-tile plants (iris, roses) |
-| **Large furniture** | 768×768 | High (95%) | Level 6 | Beds, sofas, tables |
-| **Shop buildings / bear cave** | 1024×1024 | Very High (98%) | Level 4 | Large multi-tile buildings |
-| **Room backgrounds** (`rooms/`) | 1920×1080 | Very High (98%) | Level 3 | Fill the viewport — downscaling these is upscaling on any desktop |
-| **Farming sprites** | 512×512 | High (95%) | Level 6 | Crop plants (key gameplay) |
-| **Dialogue frames / stream** | 512×512 | High (95%) | Level 6 | UI and animation frames |
-| **Regular tiles** | 256×256 | Standard (85%) | Level 6 | Grass, rocks, paths |
-| **Animated GIFs** | 512×512 | N/A | gifsicle | Weather effects, particles |
+| Asset Type                                   | Size          | Quality         | Compression | Use Case                                                          |
+| -------------------------------------------- | ------------- | --------------- | ----------- | ----------------------------------------------------------------- |
+| **Player character** (`character{1,2}/base`) | 1024×1024     | Showcase (97%)  | Level 4     | Player sprite (most-rendered art in the game)                     |
+| **NPC sprites**                              | 1024 max edge | Showcase (97%)  | Level 4     | NPCs and dialogue portraits                                       |
+| **Trees**                                    | 1024×1024     | Showcase (97%)  | Level 4     | Major visual elements                                             |
+| **Decorative flowers**                       | 768×768       | Showcase (97%)  | Level 4     | Multi-tile plants (iris, roses)                                   |
+| **Large furniture**                          | 768×768       | High (95%)      | Level 6     | Beds, sofas, tables                                               |
+| **Shop buildings / bear cave**               | 1024×1024     | Very High (98%) | Level 4     | Large multi-tile buildings                                        |
+| **Room backgrounds** (`rooms/`)              | 1920×1080     | Very High (98%) | Level 3     | Fill the viewport — downscaling these is upscaling on any desktop |
+| **Farming sprites**                          | 512×512       | High (95%)      | Level 6     | Crop plants (key gameplay)                                        |
+| **Dialogue frames / stream**                 | 512×512       | High (95%)      | Level 6     | UI and animation frames                                           |
+| **Regular tiles**                            | 256×256       | Standard (85%)  | Level 6     | Grass, rocks, paths                                               |
+| **Animated GIFs**                            | 512×512       | N/A             | gifsicle    | Weather effects, particles                                        |
 
 **Two rules that are not obvious from the table:**
 
@@ -988,20 +1063,21 @@ The script optimizes different asset types with appropriate settings:
 
 If an asset must bypass the optimiser, that is a bug in the optimiser, not a
 reason to reference `/assets/`: the original is what the browser then downloads
-*and* uploads to the GPU.
+_and_ uploads to the GPU.
 
 #### Quality Settings
 
 Quality constants in `scripts/optimize-assets.js`:
 
 ```javascript
-const COMPRESSION_QUALITY = 85;      // Standard quality (regular tiles)
-const HIGH_QUALITY = 95;             // High quality (furniture, crops)
-const SHOWCASE_QUALITY = 97;         // Showcase quality (trees, flowers, NPCs)
-const SHOP_QUALITY = 98;             // Very high quality (large buildings)
+const COMPRESSION_QUALITY = 85; // Standard quality (regular tiles)
+const HIGH_QUALITY = 95; // High quality (furniture, crops)
+const SHOWCASE_QUALITY = 97; // Showcase quality (trees, flowers, NPCs)
+const SHOP_QUALITY = 98; // Very high quality (large buildings)
 ```
 
 **Compression Level** (Sharp PNG):
+
 - Lower = better quality, larger files (e.g., 4)
 - Higher = more compression, smaller files (e.g., 6-9)
 
@@ -1031,6 +1107,7 @@ else if (file.includes('iris') || file.includes('rose') || file.includes('lavend
 3. Re-run `npm run optimize-assets`
 
 **Example - Making iris even higher quality**:
+
 ```javascript
 .png({ quality: 98, compressionLevel: 3 }) // Maximum quality
 ```
@@ -1077,7 +1154,7 @@ Multi-tile sprites (furniture, large objects) require special handling:
      fixed: NPCs use `fit: 'inside'` (aspect preserved), and large multi-tile art
      has its own size rules.
    - Referencing an original costs the full source resolution in GPU memory —
-     `width x height x 4` bytes. The five cat sprites alone were 21MB *each*.
+     `width x height x 4` bytes. The five cat sprites alone were 21MB _each_.
    - If an asset genuinely looks wrong optimised, add a keyword rule in
      `scripts/optimize-assets.js` rather than pointing at `/assets/`.
 
@@ -1112,6 +1189,7 @@ Multi-tile sprites (furniture, large objects) require special handling:
 **The 500-Line Rule**: No single file should exceed ~500 lines. When a file approaches this limit, it's time to refactor.
 
 **Warning Signs That Refactoring Is Needed:**
+
 - File exceeds 500 lines
 - Function/component exceeds 100 lines
 - More than 3 levels of nesting
@@ -1162,6 +1240,7 @@ Multi-tile sprites (furniture, large objects) require special handling:
    - Example: StaminaManager emits `STAMINA_CHANGED`, StaminaBar subscribes
 
 **Refactoring Checklist:**
+
 - [ ] Run `make verify` (typecheck + tests) before and after
 - [ ] Test in browser after changes
 - [ ] Update documentation if APIs change
@@ -1172,6 +1251,7 @@ Multi-tile sprites (furniture, large objects) require special handling:
 ### Organization Patterns
 
 **File Structure:**
+
 ```
 hooks/           - Custom React hooks (input, collision, movement, etc.)
 utils/           - Pure functions and utilities (no React)
@@ -1181,6 +1261,7 @@ data/            - Game data (crops, items, NPCs)
 ```
 
 **Naming Conventions:**
+
 - Hooks: `use` prefix (e.g., `usePlayerMovement.ts`)
 - Components: PascalCase (e.g., `TileRenderer.tsx`)
 - Utilities: camelCase (e.g., `gameInitializer.ts`)
@@ -1188,6 +1269,7 @@ data/            - Game data (crops, items, NPCs)
 - Constants: SCREAMING_SNAKE_CASE (e.g., `TILE_SIZE`)
 
 **When to Create a New File:**
+
 - Logic is >100 lines
 - Logic is reused in 2+ places
 - Logic has a single, clear responsibility
@@ -1196,6 +1278,7 @@ data/            - Game data (crops, items, NPCs)
 ### Code Quality Standards
 
 **TypeScript:**
+
 - Always use strict mode
 - No `any` types (use `unknown` and type guards)
 - Define interfaces for all data structures
@@ -1203,6 +1286,7 @@ data/            - Game data (crops, items, NPCs)
 - Export types alongside functions
 
 **React Hooks:**
+
 - Keep hooks focused (one responsibility)
 - Return objects, not arrays (clearer API)
 - Use `useCallback` for functions passed as props
@@ -1210,12 +1294,14 @@ data/            - Game data (crops, items, NPCs)
 - Document hook parameters with TypeScript interfaces
 
 **Performance:**
+
 - Avoid re-renders: use refs for values that don't affect rendering
 - Memoize expensive operations
 - Keep game loop lean (delegate to hooks/utilities)
 - Use `React.memo` for components that rarely change
 
 **Comments:**
+
 - Explain **why**, not **what** (code should be self-documenting)
 - Add comments for non-obvious algorithms
 - Document tricky edge cases
@@ -1247,12 +1333,14 @@ to read "treat 2 failed as green"; those two were test bugs, not data bugs, and 
 the mistake it catches, so a failure tells you what to fix.
 
 **Before Committing:**
+
 1. Run `make verify` - typecheck must be clean and every test must pass
 2. Test in browser - Game must run without console errors
 3. Check HMR - Changes should hot-reload
 4. Review self-tests - Startup sanity checks must pass
 
 **When Adding Features:**
+
 1. Add constants to `constants.ts` (no magic numbers)
 2. Add TypeScript types to `types.ts`
 3. **Add or extend a test** — if your feature has an invariant that could silently break
@@ -1265,12 +1353,14 @@ the mistake it catches, so a failure tells you what to fix.
 ### Don't Repeat Yourself (DRY)
 
 **Common Duplication Patterns to Avoid:**
+
 - Same logic in keyboard and touch handlers → Extract to `utils/actionHandlers.ts`
 - Repeated calculations in render → Extract to hook or utility
 - Multiple files accessing same data → Create single source of truth (manager/utility)
 - Similar components with slight variations → Use props to handle variations
 
 **When You Notice Duplication:**
+
 1. Extract common logic to utility function
 2. Create shared hook if React-specific
 3. Document the new function
@@ -1280,20 +1370,24 @@ the mistake it catches, so a failure tells you what to fix.
 ### Single Responsibility Principle
 
 **Each file/function should do ONE thing well:**
+
 - ✅ GOOD: `useKeyboardControls` - handles keyboard input only
 - ❌ BAD: `useInput` - handles keyboard, mouse, touch, gamepad, and gestures
 
 **Each hook should have a clear, focused API:**
+
 - ✅ GOOD: `useCollisionDetection()` returns `{ checkCollision }`
 - ❌ BAD: `useGame()` returns 50+ functions and values
 
 **Each utility should solve one problem:**
+
 - ✅ GOOD: `gameInitializer.ts` - handles game startup
 - ❌ BAD: `gameHelpers.ts` - 2,000 lines of random utilities
 
 ### Performance Optimization
 
 **Game Loop Optimization:**
+
 - Keep game loop <50 lines
 - Delegate to hooks and utilities
 - Avoid state updates in tight loops
@@ -1301,12 +1395,14 @@ the mistake it catches, so a failure tells you what to fix.
 - Only trigger re-renders when visuals need updating
 
 **Rendering Optimization:**
+
 - Cull off-screen tiles (viewport culling)
 - Use `React.memo` for static components
 - Avoid inline function creation in render
 - Use stable object references (useCallback, useMemo)
 
 **Asset Optimization:**
+
 - Run `npm run optimize-assets` after adding images
 - Use sprite sheets instead of individual frames
 - Lazy-load assets not needed at startup
@@ -1321,14 +1417,25 @@ the mistake it catches, so a failure tells you what to fix.
 When working with tile positions, **always use these utilities** instead of inline `Math.floor()`:
 
 ```typescript
-import { getTileCoords, getAdjacentTiles, getSurroundingTiles, isSameTile, getTileDistance, getTilesInRadius, findTileTypeNearby, hasTileTypeNearby } from './mapUtils';
+import {
+  getTileCoords,
+  getAdjacentTiles,
+  getSurroundingTiles,
+  isSameTile,
+  getTileDistance,
+  getTilesInRadius,
+  findTileTypeNearby,
+  hasTileTypeNearby,
+} from './mapUtils';
 
 // ✅ CORRECT - Use utilities
 const tile = getTileCoords(playerPos);
 const nearby = getAdjacentTiles(playerPos);
 
 // ✅ CORRECT - Check for tile types nearby (replaces manual 3x3 loops)
-if (hasTileTypeNearby(tileX, tileY, TileType.BEE_HIVE)) { canForage = true; }
+if (hasTileTypeNearby(tileX, tileY, TileType.BEE_HIVE)) {
+  canForage = true;
+}
 const result = findTileTypeNearby(tileX, tileY, [TileType.MOONPETAL, TileType.ADDERSMEAT]);
 
 // ❌ WRONG - Don't use inline Math.floor
@@ -1337,20 +1444,22 @@ const tileY = Math.floor(playerPos.y);
 
 // ❌ WRONG - Don't write manual 3x3 loops
 for (let dy = -1; dy <= 1; dy++) {
-  for (let dx = -1; dx <= 1; dx++) { /* ... */ }
+  for (let dx = -1; dx <= 1; dx++) {
+    /* ... */
+  }
 }
 ```
 
-| Function | Purpose |
-|----------|---------|
-| `getTileCoords(pos)` | Convert world position to tile coordinates |
-| `getAdjacentTiles(pos)` | Get current tile + 4 cardinal neighbours |
-| `getSurroundingTiles(pos)` | Get 8 neighbours (no center) |
-| `isSameTile(pos1, pos2)` | Check if two positions are on same tile |
-| `getTileDistance(pos1, pos2)` | Manhattan distance between tiles |
-| `getTilesInRadius(pos, radius)` | Get all tiles in square radius |
+| Function                                  | Purpose                                             |
+| ----------------------------------------- | --------------------------------------------------- |
+| `getTileCoords(pos)`                      | Convert world position to tile coordinates          |
+| `getAdjacentTiles(pos)`                   | Get current tile + 4 cardinal neighbours            |
+| `getSurroundingTiles(pos)`                | Get 8 neighbours (no center)                        |
+| `isSameTile(pos1, pos2)`                  | Check if two positions are on same tile             |
+| `getTileDistance(pos1, pos2)`             | Manhattan distance between tiles                    |
+| `getTilesInRadius(pos, radius)`           | Get all tiles in square radius                      |
 | `findTileTypeNearby(x, y, types, radius)` | Find tile type(s) nearby, returns position if found |
-| `hasTileTypeNearby(x, y, types, radius)` | Check if tile type(s) exist nearby (boolean) |
+| `hasTileTypeNearby(x, y, types, radius)`  | Check if tile type(s) exist nearby (boolean)        |
 
 ### NPC Factory (`utils/npcs/createNPC.ts`)
 
@@ -1380,6 +1489,7 @@ return { id, name, position, animatedStates, ... };
 ```
 
 **Factory handles automatically:**
+
 - `Date.now()` timestamps for animation states
 - Default values (direction, scale, interactionRadius)
 - Optional property handling (dialogueExpressions, visibilityConditions, etc.)
@@ -1401,6 +1511,7 @@ duration: 3000,
 ```
 
 **Available timing constants:**
+
 - `TIMING.PLAYER_FRAME_MS` (150) - Player animation
 - `TIMING.NPC_FRAME_MS` (280) - NPC animation
 - `TIMING.DIALOGUE_DELAY_MS` (800) - Dialogue pauses
@@ -1445,6 +1556,7 @@ sprite.zIndex = Math.floor(feetY) * 10;  // Can produce values outside intended 
 | 3000+ | Critical overlays | `Z_TOOLTIP`, `Z_TOAST`, `Z_LOADING`, `Z_ERROR` |
 
 **When adding new layers:**
+
 1. Check `zIndex.ts` for the appropriate range
 2. Add a new constant if needed (follow the naming convention `Z_LAYER_NAME`)
 3. Import and use the constant - never hardcode values
@@ -1509,30 +1621,32 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 
 ### Available Skills
 
-| Skill | Trigger Phrases | Purpose |
-|-------|-----------------|---------|
-| **dev-server** | "start server", "launch game", "run dev" | Kill old servers, start fresh dev server |
-| **profile-game** | "check performance", "profile", "FPS", "slowdown" | Run headless performance tests |
-| **add-tile-sprite** | "add tile", "new sprite", "add flower", "add tree" | Add tile assets with keyword optimization |
-| **add-npc-sprite** | "add NPC", "new character", "add villager" | Add NPC sprites and factory functions |
-| **add-character-sprite** | "player sprite", "character customization" | Add player character layers |
-| **add-farming-sprite** | "crop sprite", "farming", "soil", "plant" | Add farming system sprites |
-| **add-inventory-sprite** | "inventory sprite", "item image", "tool sprite" | Add inventory item sprites (general items) |
-| **add-grocery-item** | "add ingredient", "grocery item", "cooking ingredient", "shop item" | Add grocery items as ingredients and shop inventory |
-| **add-animation** | "add animation", "particle effect", "weather effect" | Add GIF animations to tiles/weather |
-| **add-pixi-component** | "PixiJS", "WebGL", "particle system", "shader" | Add PixiJS rendering components |
-| **add-minigame** | "create mini-game", "add mini-game", "new activity" | Create self-contained mini-games (2 files + 1 registry line) |
-| **debug-production** | "works locally but not deployed", "broken on the live site", "check Sentry", "can't reproduce" | Debug production-only bugs: Sentry via MCP, live console probe, deployed-bundle inspection |
+| Skill                    | Trigger Phrases                                                                                | Purpose                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **dev-server**           | "start server", "launch game", "run dev"                                                       | Kill old servers, start fresh dev server                                                   |
+| **profile-game**         | "check performance", "profile", "FPS", "slowdown"                                              | Run headless performance tests                                                             |
+| **add-tile-sprite**      | "add tile", "new sprite", "add flower", "add tree"                                             | Add tile assets with keyword optimization                                                  |
+| **add-npc-sprite**       | "add NPC", "new character", "add villager"                                                     | Add NPC sprites and factory functions                                                      |
+| **add-character-sprite** | "player sprite", "character customization"                                                     | Add player character layers                                                                |
+| **add-farming-sprite**   | "crop sprite", "farming", "soil", "plant"                                                      | Add farming system sprites                                                                 |
+| **add-inventory-sprite** | "inventory sprite", "item image", "tool sprite"                                                | Add inventory item sprites (general items)                                                 |
+| **add-grocery-item**     | "add ingredient", "grocery item", "cooking ingredient", "shop item"                            | Add grocery items as ingredients and shop inventory                                        |
+| **add-animation**        | "add animation", "particle effect", "weather effect"                                           | Add GIF animations to tiles/weather                                                        |
+| **add-pixi-component**   | "PixiJS", "WebGL", "particle system", "shader"                                                 | Add PixiJS rendering components                                                            |
+| **add-minigame**         | "create mini-game", "add mini-game", "new activity"                                            | Create self-contained mini-games (2 files + 1 registry line)                               |
+| **debug-production**     | "works locally but not deployed", "broken on the live site", "check Sentry", "can't reproduce" | Debug production-only bugs: Sentry via MCP, live console probe, deployed-bundle inspection |
 
 ### When to Use Skills
 
 **Use skills when:**
+
 - User asks to add assets (tiles, NPCs, animations)
 - User reports performance issues (profile-game)
 - User wants to start/restart the dev server
 - The task matches a skill's trigger phrases
 
 **Example usage:**
+
 - User: "Add a rose flower near the pond" → Use **add-tile-sprite** skill
 - User: "The game is slow" → Use **profile-game** skill
 - User: "Start the game" → Use **dev-server** skill
@@ -1544,13 +1658,13 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 
 When adding new tile types, the optimization script uses **filename keywords** to determine size/quality:
 
-| Keyword | Size | Use Case |
-|---------|------|----------|
-| `tree_`, `oak_`, `willow_` | 1024px | Trees |
-| `iris`, `rose`, flowers | 768px | Decorative flowers (3x3) |
-| `bed`, `sofa`, furniture | 768px | Multi-tile furniture |
-| `shop`, buildings | 1024px | Large buildings |
-| *(default)* | 256px | Regular tiles |
+| Keyword                    | Size   | Use Case                 |
+| -------------------------- | ------ | ------------------------ |
+| `tree_`, `oak_`, `willow_` | 1024px | Trees                    |
+| `iris`, `rose`, flowers    | 768px  | Decorative flowers (3x3) |
+| `bed`, `sofa`, furniture   | 768px  | Multi-tile furniture     |
+| `shop`, buildings          | 1024px | Large buildings          |
+| _(default)_                | 256px  | Regular tiles            |
 
 **To add new keywords**: Edit `scripts/optimize-assets.js` in `optimizeTiles()`.
 

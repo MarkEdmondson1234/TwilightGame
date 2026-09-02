@@ -4,10 +4,16 @@ import './src/styles/global.css';
 import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initErrorReporting, onUncaughtError, onRecoverableError } from './utils/errorReporting';
+import { suppressBrowserContextMenu } from './utils/suppressBrowserContextMenu';
 
 // No-ops when VITE_SENTRY_DSN isn't set — see utils/errorReporting.ts.
 // Called before render so it can catch errors from mount onward.
 initErrorReporting();
+
+// Right-click is a game input (emote picker, inventory item actions), so the
+// browser's menu must never appear over the game. See the module for why this
+// has to be document-level.
+suppressBrowserContextMenu();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
