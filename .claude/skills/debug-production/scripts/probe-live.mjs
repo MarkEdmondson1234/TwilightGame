@@ -31,7 +31,7 @@ const DEFAULT_URL = 'https://code.markedmondson.me/TwilightGame/';
 /** Each group must produce at least one matching line in a healthy startup. */
 const MARKERS = [
   { name: 'firebase module + config', pattern: /\[Firebase\] (App initialized|Not configured|Package not installed)/ },
-  { name: 'firebase init outcome', pattern: /\[App\] Firebase (, auth, and sync manager initialized|not configured or disabled|initialization failed)/ },
+  { name: 'firebase init outcome', pattern: /\[App\] Firebase(, auth, and sync manager initialized| not configured or disabled| initialization failed)/ },
   { name: 'presence transport', pattern: /\[Presence\] Realtime Database/ },
   { name: 'event chains', pattern: /\[App\] Initialised event chain system/ },
   { name: 'audio', pattern: /\[App\] Audio system initialised/ },
