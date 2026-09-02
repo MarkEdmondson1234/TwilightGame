@@ -34,6 +34,12 @@ export interface MouseControlsConfig {
   zoom: number;
   /** Callback when canvas is clicked */
   onCanvasClick: (clickInfo: MouseClickInfo) => void;
+  /**
+   * Callback when the canvas is right-clicked. The browser's own context menu
+   * is suppressed over the game world (but not over the HUD, where a right-click
+   * still belongs to the browser).
+   */
+  onContextClick?: (clickInfo: MouseClickInfo) => void;
   /** Whether to enable mouse controls (touch always enabled for click-to-move) */
   enabled: boolean;
   /** Effective tile size for background-image rooms (includes viewport + layer scale) */
@@ -133,6 +139,7 @@ export function useMouseControls(config: MouseControlsConfig) {
     cameraY,
     zoom,
     onCanvasClick,
+    onContextClick,
     enabled,
     effectiveTileSize,
     gridOffset,
@@ -146,6 +153,7 @@ export function useMouseControls(config: MouseControlsConfig) {
   const effectiveTileSizeRef = useRef(effectiveTileSize);
   const gridOffsetRef = useRef(gridOffset);
   const onCanvasClickRef = useRef(onCanvasClick);
+  const onContextClickRef = useRef(onContextClick);
 
   // Track when the container DOM element becomes available.
   // On first render the game shows "Loading map..." so the container div
@@ -163,6 +171,7 @@ export function useMouseControls(config: MouseControlsConfig) {
   effectiveTileSizeRef.current = effectiveTileSize;
   gridOffsetRef.current = gridOffset;
   onCanvasClickRef.current = onCanvasClick;
+  onContextClickRef.current = onContextClick;
 
   useEffect(() => {
     const container = containerRef.current;
@@ -218,6 +227,31 @@ export function useMouseControls(config: MouseControlsConfig) {
     };
 
     /**
+     * Handle right-click. Used to emote at yourself; see App.tsx.
+     */
+    const handleContextMenu = (e: MouseEvent) => {
+      if (!enabled) return;
+
+      // The HUD has its own right-click handlers (inventory item actions), so a
+      // right-click there is not ours to interpret. The browser menu is already
+      // suppressed document-wide by suppressBrowserContextMenu().
+      if (isUIElement(e.target, e.clientX, e.clientY)) return;
+
+      e.preventDefault();
+      if (!onContextClickRef.current) return;
+
+      const rect = container.getBoundingClientRect();
+      const clickInfo = createClickInfo(
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+        e.clientX,
+        e.clientY,
+        false
+      );
+      onContextClickRef.current(clickInfo);
+    };
+
+    /**
      * Handle touch end (for touch devices - enables click-to-move on iPad)
      */
     const handleTouchEnd = (e: TouchEvent) => {
@@ -239,6 +273,7 @@ export function useMouseControls(config: MouseControlsConfig) {
     // Mouse click only when enabled (non-touch devices)
     if (enabled) {
       container.addEventListener('click', handleClick);
+      container.addEventListener('contextmenu', handleContextMenu);
     }
 
     // Touch always enabled for click-to-move on iPad
@@ -247,6 +282,7 @@ export function useMouseControls(config: MouseControlsConfig) {
 
     return () => {
       container.removeEventListener('click', handleClick);
+      container.removeEventListener('contextmenu', handleContextMenu);
       container.removeEventListener('touchend', handleTouchEnd);
     };
     // Only depend on stable values — camera/zoom/callbacks read from refs

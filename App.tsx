@@ -31,6 +31,7 @@ import { useMovementController } from './hooks/useMovementController';
 import { useInteractionController } from './hooks/useInteractionController';
 import { useEnvironmentController } from './hooks/useEnvironmentController';
 import { useMultiplayerController } from './hooks/useMultiplayerController';
+import { useChatController } from './hooks/useChatController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
@@ -78,6 +79,7 @@ import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
 import RemotePlayerOverlay from './components/RemotePlayerOverlay';
 import EmoteWheel from './components/EmoteWheel';
+import ChatPanel from './components/ChatPanel';
 import PresenceIndicator from './components/PresenceIndicator';
 import Inventory, { InventoryItem } from './components/Inventory';
 import QuickSlotBar from './components/QuickSlotBar';
@@ -105,11 +107,11 @@ import RadialMenu from './components/RadialMenu';
 import { StaminaBar } from './components/StaminaBar';
 import { RestIndicator } from './components/RestIndicator';
 import { DestinationMarker } from './components/DestinationMarker';
-import { useMouseControls } from './hooks/useMouseControls';
+import { useMouseControls, type MouseClickInfo } from './hooks/useMouseControls';
 import { useMouseHover } from './hooks/useMouseHover';
 import { inventoryManager } from './utils/inventoryManager';
 import { captureGameViewport } from './utils/cameraCapture';
-import { CAMERA } from './constants';
+import { CAMERA, MULTIPLAYER } from './constants';
 import type { Photo } from './types';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
@@ -422,16 +424,47 @@ const App: React.FC = () => {
     };
   }, [playerPosRef]);
 
+  const { remotePlayerCount, remotePlayerNames, tickMultiplayer, sendEmote } =
+    useMultiplayerController({ currentMapId, getLocalPresence });
+
+  // ── Player chat ───────────────────────────────────────────────────────────
   const {
-    remotePlayerCount,
-    remotePlayerNames,
-    tickMultiplayer,
-    sendEmote,
-  } = useMultiplayerController({ currentMapId, getLocalPresence });
+    isChatActive,
+    messages: chatMessages,
+    sendMessage,
+  } = useChatController({
+    currentMapId,
+    playerName: gameState.getSelectedCharacter()?.name ?? 'Traveller',
+  });
+
+  const [isComposingChat, setIsComposingChat] = useState(false);
+  const startComposingChat = useCallback(() => setIsComposingChat(true), []);
+  const stopComposingChat = useCallback(() => setIsComposingChat(false), []);
+  const handleSendChat = useCallback(
+    (text: string) => {
+      void sendMessage(text);
+    },
+    [sendMessage]
+  );
 
   const [showEmoteWheel, setShowEmoteWheel] = useState(false);
   // Stable identity: useKeyboardControls captures its handler once at mount.
   const toggleEmoteWheel = useCallback(() => setShowEmoteWheel((open) => !open), []);
+
+  /**
+   * Right-clicking yourself opens the emote picker — the mouse equivalent of the
+   * touch controls' 👋 button, and more discoverable than knowing to press T.
+   * Right-clicks anywhere else fall through to nothing, since the world's own
+   * interactions are all left-click.
+   */
+  const handleContextClick = useCallback(
+    (clickInfo: MouseClickInfo) => {
+      const player = playerPosRef.current;
+      const distance = Math.hypot(clickInfo.worldPos.x - player.x, clickInfo.worldPos.y - player.y);
+      if (distance <= MULTIPLAYER.SELF_CLICK_RADIUS_TILES) toggleEmoteWheel();
+    },
+    [playerPosRef, toggleEmoteWheel]
+  );
   const closeEmoteWheel = useCallback(() => setShowEmoteWheel(false), []);
 
   // Fairy form fading state — true in the last 30s to trigger sprite flicker
@@ -946,6 +979,7 @@ const App: React.FC = () => {
     onShowToast: showToast,
     onSetSelectedItemSlot: setSelectedItemSlot,
     onToggleEmoteWheel: toggleEmoteWheel,
+    onStartChat: startComposingChat,
   });
 
   /**
@@ -1366,6 +1400,7 @@ const App: React.FC = () => {
     cameraY: cameraY,
     zoom: zoom,
     onCanvasClick: handleCanvasClick,
+    onContextClick: handleContextClick,
     enabled: !isTouchDevice, // Disable mouse controls on touch devices
     effectiveTileSize:
       currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined,
@@ -2290,6 +2325,16 @@ const App: React.FC = () => {
         <PresenceIndicator
           count={remotePlayerCount}
           names={remotePlayerNames}
+          compact={isCompactMode}
+        />
+      )}
+      {isInWorld && isChatActive && !isAnyOverlayOpen && (
+        <ChatPanel
+          messages={chatMessages}
+          onSend={handleSendChat}
+          isComposing={isComposingChat}
+          onStartComposing={startComposingChat}
+          onStopComposing={stopComposingChat}
           compact={isCompactMode}
         />
       )}

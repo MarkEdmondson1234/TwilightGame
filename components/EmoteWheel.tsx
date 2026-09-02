@@ -1,10 +1,10 @@
 /**
- * EmoteWheel — the only way players talk to each other.
+ * EmoteWheel — the quickest way players talk to each other.
  *
  * The vocabulary is closed on purpose (see multiplayer/emotes.ts): this game is
  * played by children, and a fixed set of gestures means it is not *possible* to
- * say something harmful, rather than possible-but-moderated. There is no
- * free-text channel and there is not meant to be one.
+ * say something harmful with one. Chat exists too (components/ChatPanel.tsx),
+ * but an emote needs no typing, which on a tablet mid-game matters.
  *
  * Laid out as a bar rather than a true radial: eight targets around a circle are
  * fiddly on a tablet, and this sits directly above the touch controls that open it.

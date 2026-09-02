@@ -68,6 +68,9 @@ export const MULTIPLAYER = {
   /** How long an emote stays above a player's head */
   EMOTE_DURATION_MS: 3000,
 
+  /** Right-clicking within this many tiles of yourself opens the emote picker */
+  SELF_CLICK_RADIUS_TILES: 1.0,
+
   /** Tiles of travel per walk-cycle frame. Remote animation is derived from
    *  distance moved rather than sent over the wire — one less field, and the
    *  legs move because the character moved, which is always right. */

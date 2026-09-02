@@ -94,6 +94,8 @@ export interface KeyboardControlsConfig {
   onSetSelectedItemSlot?: (slot: number | null) => void;
   /** T key — open/close the multiplayer emote picker (only wired when multiplayer is on) */
   onToggleEmoteWheel?: () => void;
+  /** Open the chat composer (M). Chat is only wired on shared maps. */
+  onStartChat?: () => void;
 }
 
 export function useKeyboardControls(config: KeyboardControlsConfig) {
@@ -148,6 +150,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onShowToast,
     onSetSelectedItemSlot,
     onToggleEmoteWheel,
+    onStartChat,
   } = config;
 
   // Create refs for values that need to be accessed in the event handler with latest values
@@ -253,6 +256,15 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     if ((e.key === 't' || e.key === 'T') && onToggleEmoteWheel && !showMiniGameRef.current) {
       e.preventDefault();
       onToggleEmoteWheel();
+      return;
+    }
+
+    // M key to start typing a chat message. The composer is an <input>, and the
+    // guard at the top of this handler ignores keys while one has focus, so the
+    // player types instead of walking.
+    if ((e.key === 'm' || e.key === 'M') && onStartChat && !showMiniGameRef.current) {
+      e.preventDefault();
+      onStartChat();
       return;
     }
 
@@ -372,8 +384,13 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
               const wasAbundant = fruitTreeManager.isAbundant(currentMapId, tx, ty);
               const result = fruitTreeManager.harvestTree(currentMapId, tx, ty);
               if (result.success) {
-                const hint = wasAbundant ? '' : ' (Prune in winter and mulch in spring for a fuller crop.)';
-                onShowToast?.(`Harvested ${result.quantity} apple${result.quantity !== 1 ? 's' : ''}!${hint}`, 'success');
+                const hint = wasAbundant
+                  ? ''
+                  : ' (Prune in winter and mulch in spring for a fuller crop.)';
+                onShowToast?.(
+                  `Harvested ${result.quantity} apple${result.quantity !== 1 ? 's' : ''}!${hint}`,
+                  'success'
+                );
               } else {
                 onShowToast?.("You're too tired to harvest right now.", 'warning');
               }
