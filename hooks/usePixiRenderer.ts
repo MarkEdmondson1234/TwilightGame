@@ -36,13 +36,10 @@ import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
 import {
-  tileAssets,
-  farmingAssets,
-  cookingAssets,
-  npcAssets,
-  itemAssets,
-  orchardAssets,
-} from '../assets';
+  getCoreTextureUrls,
+  getResidentTextureUrls,
+  toSeasonKey,
+} from '../utils/mapTextureSet';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
@@ -162,6 +159,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
   // State
   const [isPixiInitialized, setIsPixiInitialized] = useState(false);
+  /** Bumped when an on-demand texture arrives, so layers re-render with it. */
+  const [textureVersion, setTextureVersion] = useState(0);
 
   // PixiJS refs
   const pixiAppRef = useRef<PIXI.Application | null>(null);
@@ -309,17 +308,16 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         // Enable z-index sorting on stage
         app.stage.sortableChildren = true;
 
-        // Preload all textures
-        console.log('[usePixiRenderer] Preloading textures...');
-        await textureManager.loadBatch(
-          {
-            ...tileAssets,
-            ...farmingAssets,
-            ...orchardAssets,
-            ...cookingAssets,
-            ...npcAssets,
-            ...itemAssets,
-          },
+        // Preload the core set plus this map's textures — NOT the whole game.
+        // Loading every texture up front cost ~1.2GB of GPU memory, which iOS
+        // answers by killing the tab before the first frame. Everything else
+        // arrives on map transition, or on demand via requestTexture() when a
+        // layer misses. See utils/mapTextureSet.ts.
+        const characterId = gameState.getSelectedCharacter()?.characterId ?? 'character1';
+        textureManager.pin(getCoreTextureUrls(characterId));
+        console.log('[usePixiRenderer] Preloading core + map textures...');
+        await textureManager.loadUrls(
+          getResidentTextureUrls(currentMapId, toSeasonKey(seasonKey), characterId),
           onTextureProgress
         );
 
@@ -790,9 +788,62 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     placedItemsUpdateTrigger,
     currentWeather,
     renderVersion,
+    textureVersion,
     effectiveGridOffset,
     effectiveTileSize,
   ]);
+
+  // =========================================================================
+  // EFFECT: Per-map texture residency
+  //
+  // Loads what the current map and season need, then frees what no map in view
+  // needs any more. Eviction runs *after* the render effect above has rebuilt
+  // the layers for this map, so nothing destroys a texture a live sprite still
+  // points at.
+  // =========================================================================
+  useEffect(() => {
+    if (!enabled || !isPixiInitialized) return;
+
+    let cancelled = false;
+    const keep = getResidentTextureUrls(
+      currentMapId,
+      toSeasonKey(seasonKey),
+      gameState.getSelectedCharacter()?.characterId ?? 'character1'
+    );
+
+    void (async () => {
+      await textureManager.loadUrls(keep);
+      if (cancelled) return;
+      // Re-render so anything that was missing while the map drew now appears.
+      setTextureVersion((v) => v + 1);
+      textureManager.evictExcept(keep);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [enabled, isPixiInitialized, currentMapId, seasonKey]);
+
+  // =========================================================================
+  // EFFECT: Re-render when an on-demand texture arrives
+  //
+  // Layers resolve textures synchronously and skip drawing on a miss, so
+  // without this a sprite whose texture arrived late would stay invisible until
+  // some unrelated state change forced a redraw.
+  // =========================================================================
+  useEffect(() => {
+    if (!enabled || !isPixiInitialized) return;
+    let frame = 0;
+    return textureManager.onTextureLoaded(() => {
+      // Coalesce bursts: a map transition can resolve dozens of textures in the
+      // same tick and each one must not cost its own React render.
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setTextureVersion((v) => v + 1);
+      });
+    });
+  }, [enabled, isPixiInitialized]);
 
   // =========================================================================
   // EFFECT: Camera Update (every frame)

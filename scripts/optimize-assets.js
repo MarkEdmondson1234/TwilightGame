@@ -72,6 +72,9 @@ const CUTSCENE_WIDTH = 1920; // Cutscene images: 1920x1080 (16:9 aspect ratio)
 const CUTSCENE_HEIGHT = 1080;
 const CUTSCENE_QUALITY = 92; // High quality for cutscenes (visible compression artifacts would be distracting)
 const ITEM_SIZE = 256; // Resize item sprites to 256x256 (inventory icons, tool sprites)
+const ROOM_SIZE = 1920; // Room backgrounds fill the whole viewport — keep native 1920x1080.
+                        // Downscaling these is upscaling on any desktop display, and they are
+                        // loaded one room at a time, so they are not a mobile memory problem.
 const ICON_SIZE = 256; // Resize hand-drawn icons to 256x256 (UI icons replacing emojis, displayed at 16-64px)
 const SKI_BACKDROP_MAX = 1920; // Skiing mini-game full-screen backdrops (sky, level bands, clouds)
 const SKI_OBSTACLE_MAX = 1024; // Skiing mini-game trees/brambles — scale up close to the camera, need detail
@@ -312,7 +315,7 @@ async function optimizeTiles() {
         .toFile(outputPath);
     }
     // Special handling for large multi-tile sprites (shop, cottage, mine entrance, garden shed, mushroom house, ruins entrance) - extra large size with very high quality (minimal compression)
-    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed') || file.includes('mushroom_house') || file.includes('ruins_entrance')) {
+    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed') || file.includes('mushroom_house') || file.includes('ruins_entrance') || file.includes('bear_cave')) {
       await sharp(inputPath)
         .resize(SHOP_SIZE, SHOP_SIZE, {
           fit: 'contain',
@@ -645,9 +648,22 @@ async function optimizeNPCs() {
     // Delete output file if it exists (handles case-sensitivity issues on Windows)
     deleteIfExists(outputPath);
 
+    // fit:'inside' (not 'contain') preserves the source aspect ratio exactly instead
+    // of padding non-square art out to a square. Padding shifts where the artwork sits
+    // inside the texture, and SPRITE_METADATA offsets are tuned against the *source*
+    // geometry — which is why the non-square NPCs (cat 2732x2048, witch_wolf and
+    // chill_bear 500x530) had to bypass this script and ship as multi-megabyte
+    // originals. For an already-square source 'inside' and 'contain' are identical,
+    // so nothing else here changes.
+    //
+    // withoutEnlargement stops small sources being upscaled to NPC_SIZE. Upscaling
+    // adds no detail but quadruples GPU memory: witch_wolf at 500x530 costs 1MB as
+    // itself and 4MB blown up to 1024x1024. Sprites are scaled to SPRITE_METADATA
+    // dimensions at render time regardless of texture size.
     await sharp(inputPath)
       .resize(NPC_SIZE, NPC_SIZE, {
-        fit: 'contain',
+        fit: 'inside',
+        withoutEnlargement: true,
         background: { r: 0, g: 0, b: 0, alpha: 0 }
       })
       .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 4 }) // Showcase quality for NPCs
@@ -1400,6 +1416,77 @@ async function optimizeSeasonal() {
   console.log(`\n  Optimised ${optimized} seasonal decoration(s)\n`);
 }
 
+/**
+ * Generic directory optimiser for asset folders that previously had no coverage
+ * at all, and so were referenced straight from /assets/ at full source
+ * resolution. Each of these is loaded as a GPU texture, where cost is
+ * width x height x 4 bytes regardless of how well the PNG compresses on disk —
+ * six 2064x2064 fairy sprites are 17MB each in video memory, which is what put
+ * mobile Safari over its per-tab budget.
+ *
+ * Always fit:'inside' with withoutEnlargement so the source aspect ratio is
+ * preserved exactly and nothing is upscaled — see the note in optimizeNPCs().
+ */
+async function optimizeImageDir(dirName, { size, quality, compressionLevel = 4, label }) {
+  console.log(`${label}`);
+
+  const srcDir = path.join(ASSETS_DIR, dirName);
+  if (!fs.existsSync(srcDir)) {
+    console.log(`  ℹ️  No ${dirName} directory found, skipping...\n`);
+    return;
+  }
+
+  const allFiles = getAllFiles(srcDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpe?g)$/i)) continue;
+
+    // Keep JPEGs as JPEGs. Re-encoding a photographic background as PNG makes it
+    // several times LARGER to download (mums_kitchen.jpeg: 85KB -> 566KB) for no
+    // GPU saving, since decoded texture cost is width x height x 4 either way.
+    const isJpeg = /\.jpe?g$/i.test(file);
+    const relativePath = path.relative(srcDir, inputPath);
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, dirName, relativePath));
+
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+    deleteIfExists(outputPath);
+
+    const pipeline = sharp(inputPath).resize(size, size, {
+      fit: 'inside',
+      withoutEnlargement: true,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    });
+
+    await (isJpeg
+      ? pipeline.jpeg({ quality, mozjpeg: true })
+      : pipeline.png({ palette: false, quality, compressionLevel })
+    ).toFile(outputPath);
+
+    // If the source was already small enough that re-encoding gained nothing,
+    // keep the original bytes. Re-encoding an already-compressed image costs
+    // download size without reducing the decoded texture, which is the thing
+    // this whole pass exists to shrink.
+    if (fs.statSync(outputPath).size >= originalSize) {
+      fs.copyFileSync(inputPath, outputPath);
+    }
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+    const displayPath = relativePath.includes(path.sep) ? relativePath : file;
+    console.log(`  ✅ ${displayPath}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimised ${optimized} file(s) in ${dirName}\n`);
+}
+
 async function main() {
   try {
     createDirectories();
@@ -1419,6 +1506,52 @@ async function main() {
     await optimizeIcons();
     await optimizeLights();
     await optimizeSeasonal();
+
+    // Directories that had no optimiser at all — every reference to them in
+    // assets.ts pointed at the full-resolution source. See optimizeImageDir().
+    // The player's own sprites — the most frequently rendered art in the game,
+    // and previously served straight from source at 2064x2064 (17MB of GPU
+    // memory each, 642MB for character1 alone).
+    await optimizeImageDir('character1/base', {
+      size: SPRITE_SIZE,
+      quality: SHOWCASE_QUALITY,
+      label: '🚶 Optimising player character sprites (character1)...',
+    });
+    await optimizeImageDir('character1/variations', {
+      size: SPRITE_SIZE,
+      quality: SHOWCASE_QUALITY,
+      label: '👕 Optimising player sprite variations...',
+    });
+    await optimizeImageDir('character2/base', {
+      size: SPRITE_SIZE,
+      quality: SHOWCASE_QUALITY,
+      label: '🚶 Optimising player character sprites (character2)...',
+    });
+    await optimizeImageDir('character1/fairy', {
+      size: SPRITE_SIZE,
+      quality: SHOWCASE_QUALITY,
+      label: '🧚 Optimising fairy spell sprites...',
+    });
+    // optimizeAnimations() above only matches .gif; the stream/ frames are PNGs
+    // and so were never processed.
+    await optimizeImageDir('animations', {
+      size: 512,
+      quality: HIGH_QUALITY,
+      compressionLevel: 6,
+      label: '🌊 Optimising animation PNG frames...',
+    });
+    await optimizeImageDir('dialogue', {
+      size: 512,
+      quality: HIGH_QUALITY,
+      compressionLevel: 6,
+      label: '💬 Optimising dialogue frames...',
+    });
+    await optimizeImageDir('rooms', {
+      size: ROOM_SIZE,
+      quality: SHOP_QUALITY,
+      compressionLevel: 3,
+      label: '🏠 Optimising room background images...',
+    });
 
     // Final validation - check and fix any 8-bit colormap PNGs
     await validateAndFixColormapPNGs();

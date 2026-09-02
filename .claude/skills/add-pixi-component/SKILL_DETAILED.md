@@ -193,8 +193,10 @@ const App: React.FC = () => {
 
       appRef.current = app;
 
-      // Preload textures
-      await textureManager.loadBatch(tileAssets);
+      // Preload the core set plus this map's textures. Never load every
+      // texture group at startup: that cost ~1.2GB of GPU memory and crashed
+      // the game on iOS. See "Texture Memory" in CLAUDE.md.
+      await textureManager.loadUrls(getResidentTextureUrls(currentMapId, season, characterId));
 
       // Create tile layer
       const tileLayer = new TileLayer();

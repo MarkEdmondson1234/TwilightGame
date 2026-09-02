@@ -202,6 +202,27 @@ This command:
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build
 - `npm run optimize-assets` - Optimise images using Sharp (automatically runs before build)
+- `npm run art-review` - Render before/after contact sheets of any artwork changed
+  against `origin/main`, into `art-review/`
+
+## Reviewing Artwork Changes
+
+Every asset change reviews as "Binary files differ", so a PR can halve a
+sprite's resolution or change its padding — which moves the art inside its
+texture — with nothing to look at. `scripts/art-review.mjs` renders the two
+versions side by side on a checkerboard (so transparency changes are visible).
+
+`.github/workflows/art-review.yml` runs it on PRs touching `public/assets**` or
+the optimiser and posts the result. Inline images need an `ART_REVIEW_TOKEN`
+secret — a **classic** personal access token; GitHub's attachment upload rejects
+the Actions `GITHUB_TOKEN` with "unsupported authentication type". Without the
+secret the comment still posts, linking the sheets in the workflow artifact.
+
+**It compares files, not rendered output.** A file can change while the game
+looks identical, and the game can change while no file does (sprites are scaled
+to their `SPRITE_METADATA` box, not their own dimensions). To settle appearance,
+screenshot both branches — see "Comparing rendered output" in the
+`debug-production` skill.
 
 ## Core Architecture Principles
 
@@ -679,8 +700,9 @@ The PixiJS implementation uses a **class-based layer system** with three primary
 **Texture Management:**
 - All images loaded as `PIXI.Texture` via `TextureManager`
 - Textures cached and reused (no recreation on re-render)
-- `scaleMode: 'linear'` with mipmaps for smooth hand-drawn artwork (NOT nearest-neighbor)
-- Textures preloaded during game initialization
+- `scaleMode: 'linear'` for smooth hand-drawn artwork (NOT nearest-neighbor)
+- Mipmaps on desktop only — see the texture memory section below
+- **Scoped per map**, NOT all loaded at startup — see below
 
 **Layer System:**
 - **TileLayer**: Background colors (z=0) and tile sprites (z=1)
@@ -741,15 +763,68 @@ graphics.fill(hexColor); // Uses palette colors
 - ✅ Use viewport culling (`sprite.visible = false` for off-screen)
 - ✅ Batch similar sprites in same container
 - ✅ Use `zIndex` for layering (instead of multiple containers)
-- ✅ Preload all textures during initialization
-- ✅ Use linear scaling with mipmaps for hand-drawn artwork
+- ✅ Preload the current map's textures, and only those (`utils/mapTextureSet.ts`)
+- ✅ Use linear scaling for hand-drawn artwork
 
 **DON'T:**
 - ❌ Create/destroy sprites every frame
 - ❌ Render off-screen sprites
 - ❌ Use nearest-neighbor scaling (causes pixelation of hand-drawn art)
-- ❌ Load textures during render loop
+- ❌ Load every texture in the game at startup (this crashed the game on iOS — see below)
 - ❌ Recreate containers unnecessarily
+
+### Texture Memory (read before touching asset loading)
+
+**A texture costs `width x height x 4` bytes of GPU memory, whatever the PNG
+weighs on disk.** A 40KB file at 2048x2048 is 16MB resident. This arithmetic —
+not download size — is what has to fit on a phone, and getting it wrong does not
+throw: iOS terminates the whole web content process, so the tab dies and Sentry
+records at most a stray `TypeError: Load failed` from whichever fetch was in
+flight. That exact bug shipped once; startup was loading every texture in the
+game (434 files, ~1.2GB) plus 688MB of character sprites held in a Map that
+never released.
+
+**Textures are scoped to the current map.** `utils/mapTextureSet.ts` resolves:
+
+- `getCoreTextureUrls(characterId)` — always resident: the selected player
+  character, inventory icons, weather particles, cooking, farming soil states.
+- `getTexturesForMap(mapId, season)` — the map's tile images, the multi-tile
+  sprites those tiles trigger, and its NPCs' **world** sprites.
+
+Three things that are easy to get wrong here:
+
+1. **The resolver is a prefetch hint, not a contract.** It cannot see through
+   `TileData.getImage()` (fruit trees pick sprites from runtime state), placed
+   furniture, or a crop planted in thirty seconds. `textureManager.getTexture()`
+   therefore *schedules the load on a miss*, and layers skip drawing that frame.
+   Never make rendering depend on the set being exhaustive — every omission
+   would become a permanently invisible sprite instead of a one-frame delay.
+2. **Only the current season is loaded.** Loading all four quadrupled the cost
+   of every tree. The season change effect re-prefetches.
+3. **NPC dialogue portraits are not GPU textures.** `DialogueBox`, `GiftModal`
+   and `GlamourModal` render them as React `<img>`. They are among the largest
+   art in the game, and counting them charged every map hundreds of megabytes it
+   never used. Only `npc.sprite` and `animatedStates` frames are uploaded.
+
+**Device policy** lives in `utils/performanceTier.ts` and keys on `isMobile`,
+**not** on `tier`. A modern iPhone lands on HIGH (6+ cores, and Safari does not
+expose `navigator.deviceMemory` so it defaults to 4) — correct for render
+quality, wrong for memory. Mobile drops mipmaps (~33% of every texture), gets a
+tighter eviction budget, and caps concurrent loads at 6: firing all 434 requests
+in one tick is what mobile WebKit answers by terminating them.
+
+**Guarded by** `tests/mapTextureBudget.test.ts` (every map's textures resolve
+case-sensitively, and no map exceeds the per-map ceiling) and
+`tests/textureManager.test.ts` (concurrency cap, retry cap, eviction sparing
+pinned textures).
+
+**Sprite URL matching is a silent failure mode.** Custom character artwork
+renders at 3x and SVG placeholders at 1x, chosen by pattern-matching the sprite
+URL (`isCustomCharacterSprite()` in `utils/characterSprites.ts`). When the match
+breaks, nothing throws and no texture 404s — the player simply renders at a
+third of its size. Moving character art between directories has done this once
+already; `tests/characterSpriteScale.test.ts` drives the real path builder into
+the real detector so they cannot drift.
 
 ### Feature Flag
 
@@ -887,15 +962,33 @@ The script optimizes different asset types with appropriate settings:
 
 | Asset Type | Size | Quality | Compression | Use Case |
 |------------|------|---------|-------------|----------|
-| **Character sprites** | 1024×1024 | Showcase (97%) | Level 4 | Player character (highest priority) |
-| **NPC sprites** | 1024×1024 | Showcase (97%) | Level 4 | Dialogue portraits (sharp detail) |
+| **Player character** (`character{1,2}/base`) | 1024×1024 | Showcase (97%) | Level 4 | Player sprite (most-rendered art in the game) |
+| **NPC sprites** | 1024 max edge | Showcase (97%) | Level 4 | NPCs and dialogue portraits |
 | **Trees** | 1024×1024 | Showcase (97%) | Level 4 | Major visual elements |
 | **Decorative flowers** | 768×768 | Showcase (97%) | Level 4 | Multi-tile plants (iris, roses) |
 | **Large furniture** | 768×768 | High (95%) | Level 6 | Beds, sofas, tables |
-| **Shop buildings** | 1024×1024 | Very High (98%) | Level 4 | 6×6 buildings with detail |
+| **Shop buildings / bear cave** | 1024×1024 | Very High (98%) | Level 4 | Large multi-tile buildings |
+| **Room backgrounds** (`rooms/`) | 1920×1080 | Very High (98%) | Level 3 | Fill the viewport — downscaling these is upscaling on any desktop |
 | **Farming sprites** | 512×512 | High (95%) | Level 6 | Crop plants (key gameplay) |
+| **Dialogue frames / stream** | 512×512 | High (95%) | Level 6 | UI and animation frames |
 | **Regular tiles** | 256×256 | Standard (85%) | Level 6 | Grass, rocks, paths |
 | **Animated GIFs** | 512×512 | N/A | gifsicle | Weather effects, particles |
+
+**Two rules that are not obvious from the table:**
+
+1. **NPCs use `fit: 'inside'`, everything else uses `fit: 'contain'`.** `contain`
+   pads non-square art out to a square, which moves the artwork inside its
+   texture — and since sprites are stretched to their `SPRITE_METADATA` box, that
+   changes how they look on screen. `inside` preserves the source aspect ratio
+   exactly. For an already-square source the two are identical. Do **not** flip
+   this globally: ~15 in-use sprites (sofa, mushroom house) have geometry tuned
+   against the current padding.
+2. **`withoutEnlargement` on the paths that use `inside`** — a 500×530 source was
+   being upscaled to 1024×1024, quadrupling its GPU cost for no extra detail.
+
+If an asset must bypass the optimiser, that is a bug in the optimiser, not a
+reason to reference `/assets/`: the original is what the browser then downloads
+*and* uploads to the GPU.
 
 #### Quality Settings
 
@@ -977,9 +1070,16 @@ Multi-tile sprites (furniture, large objects) require special handling:
    - ❌ WRONG: `@@@` creates 3 duplicate overlapping sprites
    - ✅ CORRECT: `@` single anchor automatically renders full 3-tile wide sprite
 
-2. **Asset References**: For multi-tile sprites, use original high-res images (not optimized versions)
-   - Add comment: `// Use original high-res`
-   - Example: `sofa: new URL('./public/assets/tiles/sofa.png', import.meta.url).href`
+2. **Asset References**: Always reference `/assets-optimized/`, including for multi-tile sprites.
+   - This used to say the opposite — "use original high-res images" — because the
+     optimiser padded non-square art out to squares and shrank large sprites to
+     256px, both of which visibly broke them. Those are optimiser bugs and are
+     fixed: NPCs use `fit: 'inside'` (aspect preserved), and large multi-tile art
+     has its own size rules.
+   - Referencing an original costs the full source resolution in GPU memory —
+     `width x height x 4` bytes. The five cat sprites alone were 21MB *each*.
+   - If an asset genuinely looks wrong optimised, add a keyword rule in
+     `scripts/optimize-assets.js` rather than pointing at `/assets/`.
 
 3. **Sprite Metadata**: Configure in `SPRITE_METADATA` array in `constants.ts`
    - **CRITICAL**: Assume all sprite images uploaded are square (1:1 aspect ratio)

@@ -10,6 +10,7 @@
     "build": "npm run optimize-assets && vite build",
     "preview": "vite preview",
     "optimize-assets": "node scripts/optimize-assets.js",
+    "art-review": "node scripts/art-review.mjs",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",

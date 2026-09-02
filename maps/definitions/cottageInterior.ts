@@ -44,7 +44,7 @@ const cottageInteriorLayers: RoomLayer[] = [
   // Layer 1: Background image (cottage interior)
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/cottage_small_interior/cottage_small_interior.png',
+    image: '/TwilightGame/assets-optimized/rooms/cottage_small_interior/cottage_small_interior.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,

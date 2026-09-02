@@ -642,9 +642,12 @@ entirely. They remain off `SHARED_MAPS` for now.
 Runtime behaviour was compared against a pristine worktree of `main` under headless Chrome
 (puppeteer, SwiftShader). Both render identically and produce the same two pre-existing
 `src=""` React warnings, so the change is behaviourally inert with multiplayer unconfigured —
-which is the default. Note that PixiJS does **not** finish initialising under SwiftShader, so the
-world renders black and the game sits on the loading screen in headless; the multiplayer UI is
-therefore covered by `tests/multiplayerUI.test.tsx` instead.
+which is the default. The multiplayer UI is covered by `tests/multiplayerUI.test.tsx`.
+
+> **Correction (2026-09-02):** this section previously claimed PixiJS does not finish initialising
+> under SwiftShader and the world renders black. That is wrong. PixiJS initialises and the world
+> renders headlessly; what the probe sees is the splash screen, which covers the canvas until
+> "Play" is clicked. On a GPU-less machine Chrome also needs `--enable-unsafe-swiftshader`.
 
 **Not verified end-to-end**: two real browsers, two accounts, seeing each other move. That needs a
 Realtime Database instance and `firebase deploy --only database`, which this session did not have.

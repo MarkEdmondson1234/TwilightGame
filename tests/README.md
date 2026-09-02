@@ -85,7 +85,10 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `multiplayerSafeStubs.test.ts` | A method on the real presence service missing from the `firebase/safe` stub — crashes **only** in a build without the `firebase` package | Adding a method to any Firebase service |
 | `determinism.test.ts` | `Math.random()` creeping back into NPC wander or fairy spawning, which silently desyncs what two players see | Touching NPC movement, fairies, or `utils/seededRandom.ts` |
 | `sharedFarmHarvestClaim.test.ts` | Two players both harvesting one ripe crop; and the opposite error — confiscating a crop on a network blip | Touching harvesting or the shared farm |
-| `multiplayerUI.test.tsx` | Render-time crashes in the emote wheel / presence indicator, which headless Chrome cannot reach (PixiJS never initialises under SwiftShader) | Touching multiplayer UI |
+| `multiplayerUI.test.tsx` | Render-time crashes in the emote wheel / presence indicator, which the headless probe does not reach (it does not click past the splash screen) | Touching multiplayer UI |
+| `mapTextureBudget.test.ts` | A texture reference that 404s (renders as *nothing*, with no error), a filename whose case only matches on macOS, or a map whose resident textures exceed what a phone can hold — which kills the tab with no catchable error | Adding a map, NPC, or tile; changing `scripts/optimize-assets.js` |
+| `textureManager.test.ts` | Unbounded texture fan-out at startup (mobile WebKit answers that by terminating requests as `TypeError: Load failed`), a render-loop miss retrying forever, or eviction destroying a texture still in use | Touching `utils/TextureManager.ts` or the loading policy |
+| `characterSpriteScale.test.ts` | The player rendering at a third of its size. Custom art scales 3x and placeholders 1x, chosen by pattern-matching the sprite URL — move the artwork and the match breaks silently, with nothing thrown and no 404 | Moving character art, or touching `isCustomCharacterSprite()` |
 
 ## Writing a new test
 

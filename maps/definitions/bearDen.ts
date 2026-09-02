@@ -49,7 +49,7 @@ const bearDenLayers: RoomLayer[] = [
   // Layer 1: Background image (bear den interior)
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/bear_den/bear_den.png',
+    image: '/TwilightGame/assets-optimized/rooms/bear_den/bear_den.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,

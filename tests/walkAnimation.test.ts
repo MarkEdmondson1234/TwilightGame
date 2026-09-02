@@ -95,10 +95,16 @@ function getSpriteConfig(characterId: string): CharacterSpriteConfig {
   return CHARACTER_SPRITE_CONFIGS[characterId] || CHARACTER_SPRITE_CONFIGS.character1;
 }
 
+/**
+ * Mirrors generateCharacterSprites() in utils/characterSprites.ts, in the style
+ * this file uses throughout. Keep the base path in step with that function: it
+ * points at assets-optimized, because the 2064x2064 sources cost 17MB of GPU
+ * memory per frame — see tests/mapTextureBudget.test.ts.
+ */
 function buildFramePaths(characterId: string, dir: string): string[] {
   const config = getSpriteConfig(characterId);
   const count = config.frameCounts[dir] || 3;
-  const basePath = `/TwilightGame/assets/${characterId}/base`;
+  const basePath = `/TwilightGame/assets-optimized/${characterId}/base`;
   return Array.from({ length: count }, (_, i) => `${basePath}/${dir}_${i}.png`);
 }
 
@@ -233,17 +239,17 @@ describe('Sprite Frame Generation', () => {
       const frames = buildFramePaths('character1', 'left');
       expect(frames).toHaveLength(4);
       expect(frames).toEqual([
-        '/TwilightGame/assets/character1/base/left_0.png',
-        '/TwilightGame/assets/character1/base/left_1.png',
-        '/TwilightGame/assets/character1/base/left_2.png',
-        '/TwilightGame/assets/character1/base/left_3.png',
+        '/TwilightGame/assets-optimized/character1/base/left_0.png',
+        '/TwilightGame/assets-optimized/character1/base/left_1.png',
+        '/TwilightGame/assets-optimized/character1/base/left_2.png',
+        '/TwilightGame/assets-optimized/character1/base/left_3.png',
       ]);
     });
 
     it('should generate 4 frames for right direction', () => {
       const frames = buildFramePaths('character1', 'right');
       expect(frames).toHaveLength(4);
-      expect(frames[3]).toBe('/TwilightGame/assets/character1/base/right_3.png');
+      expect(frames[3]).toBe('/TwilightGame/assets-optimized/character1/base/right_3.png');
     });
 
     it('should generate 3 frames for up direction', () => {

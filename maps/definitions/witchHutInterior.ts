@@ -34,7 +34,7 @@ const gridString = `
 const witchHutInteriorLayers: RoomLayer[] = [
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/witch_hut/witch_hut_interior1.png',
+    image: '/TwilightGame/assets-optimized/rooms/witch_hut/witch_hut_interior1.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,

@@ -122,9 +122,42 @@ no Sentry event. Find the function that owes you that line and work out how it
 returned early. Extend `MARKERS` in the script whenever you add a startup step
 with mutually exclusive logged outcomes.
 
-Limits: PixiJS never initialises under headless SwiftShader, so the world renders
-black and this tells you nothing about how anything *looks*. It is for startup,
-console and network evidence only.
+Limits: this probe reports console, network and startup markers — it does not
+screenshot, so it cannot tell you whether anything *looks* right.
+
+It can, though. The old claim here that "PixiJS never initialises under headless
+SwiftShader" is **wrong** and wasted a lot of debugging time. PixiJS starts fine
+and the world renders; what stops a naive screenshot is the splash screen
+covering the canvas. Click the Play button, wait ~15s, then capture. On a
+GPU-less machine add `--enable-unsafe-swiftshader` (probe-live.mjs already does).
+See "Comparing rendered output" below.
+
+## Comparing rendered output
+
+When the question is "did this change how the game *looks*", screenshot both
+versions and diff them. This settles in minutes what is otherwise an argument.
+
+```bash
+# 1. Serve the baseline beside your branch
+git worktree add /tmp/base origin/main
+ln -s "$PWD/node_modules" /tmp/base/node_modules
+(cd /tmp/base && npx vite --port 4001 &)   # branch stays on 4000
+```
+
+Then, for each port: load the page, **click the Play button** (the splash covers
+the canvas until you do), wait ~15s for textures, and screenshot. Launch Chrome
+with `['--no-sandbox', '--enable-unsafe-swiftshader']`.
+
+Diff the two with `sharp`: read both raw, compare per pixel, and write a heatmap
+so the differences have a location rather than just a number. A mean absolute
+difference under ~1/255 means "identical for review purposes".
+
+**Expect animated NPCs to differ.** They animate on wall-clock time, so two runs
+catch them at different frames. That shows up as thin *outlines* in the heatmap —
+outlines mean a shifted or re-posed sprite, whereas a genuine quality change
+fills the shape. Anything static that lights up is real.
+
+Clean up with `git worktree remove --force /tmp/base`.
 
 ## Step 3 — Read what actually shipped
 

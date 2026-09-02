@@ -7,6 +7,7 @@ import {
   shouldFlipFairySprite,
   getDirectionScale,
   DEFAULT_CHARACTER,
+  isCustomCharacterSprite,
 } from '../utils/characterSprites';
 import { Direction } from '../types';
 
@@ -70,9 +71,7 @@ export function getPlayerSpriteInfo(
   const playerSpriteUrl = playerFrames[animationFrame % playerFrames.length];
 
   // Scale up custom character sprites (they're higher resolution than placeholders)
-  const isCustomSprite =
-    playerSpriteUrl.includes('/assets/character') || playerSpriteUrl.startsWith('data:image');
-  const baseScale = isCustomSprite ? 3.0 : 1.0; // 3.0x for optimized sprites
+  const baseScale = isCustomCharacterSprite(playerSpriteUrl) ? 3.0 : 1.0;
   // Apply per-character direction scale (e.g. character2 left/right are 10% smaller)
   const dirScale = getDirectionScale(characterId, direction);
   const spriteScale = baseScale * dirScale;

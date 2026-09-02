@@ -1,0 +1,155 @@
+name: Art Review
+
+# Posts a before/after contact sheet of any artwork a PR changes.
+#
+# The artwork is the game. A normal diff renders every asset change as "Binary
+# files differ", so a PR can halve a sprite's resolution or pad it out to a
+# square — which moves the art inside its texture — with nothing to review.
+# This attaches pictures to the PR so a human can actually look.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      # Only run when artwork or the optimiser itself changed. The optimiser is
+      # included because a rule change there silently reshapes assets on the
+      # next build, which is exactly the case worth catching.
+      - 'public/assets/**'
+      - 'public/assets-optimized/**'
+      - 'scripts/optimize-assets.js'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: art-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  art-review:
+    runs-on: ubuntu-latest
+    # A PR from a fork gets a read-only token, so posting would fail. Skip
+    # rather than fail a check for something the contributor cannot fix.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The script diffs against the base branch, so it needs its history.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure gh supports --attach
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # --attach (inline media on PR comments) landed in gh 2.99.0. Runner
+          # images lag behind, so install a known-good build when it is older.
+          # Without this the comment step fails on an unknown flag.
+          need=2.99.0
+          have=$(gh --version | head -1 | awk '{print $3}')
+          lowest=$(printf '%s\n%s\n' "$need" "$have" | sort -V | head -1)
+          if [ "$lowest" != "$need" ]; then
+            echo "gh $have is older than $need — installing $need"
+            curl -fsSL "https://github.com/cli/cli/releases/download/v${need}/gh_${need}_linux_amd64.tar.gz" \
+              | tar -xz -C /tmp
+            echo "/tmp/gh_${need}_linux_amd64/bin" >> "$GITHUB_PATH"
+          else
+            echo "gh $have is new enough"
+          fi
+
+      - name: Build contact sheets
+        id: sheets
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          node scripts/art-review.mjs \
+            --base "origin/${{ github.base_ref }}" \
+            --out art-review > sheets.txt
+          echo "count=$(wc -l < sheets.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on the PR
+        env:
+          # Inline images need a token type the attachment API accepts: an OAuth
+          # token from `gh auth login`, or a CLASSIC personal access token. The
+          # Actions GITHUB_TOKEN is an app installation token and is rejected with
+          # "unsupported authentication type", so attachments are opt-in on a
+          # secret. Without it the comment still posts, just pointing at the
+          # workflow artifact instead of showing the sheets inline.
+          ART_REVIEW_TOKEN: ${{ secrets.ART_REVIEW_TOKEN }}
+          FALLBACK_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ ! -f art-review/summary.md ]; then
+            echo "No artwork changed; nothing to post."
+            exit 0
+          fi
+
+          attach=()
+          if [ -n "$ART_REVIEW_TOKEN" ]; then
+            export GH_TOKEN="$ART_REVIEW_TOKEN"
+            # Each sheet is referenced from summary.md by exactly this path, so gh
+            # rewrites the reference in place rather than appending the images in
+            # a lump at the end.
+            while IFS= read -r sheet; do
+              [ -n "$sheet" ] && attach+=(--attach "${sheet}#Changed artwork, before and after")
+            done < sheets.txt
+          else
+            export GH_TOKEN="$FALLBACK_TOKEN"
+            # Strip the image references, which would render as broken links, and
+            # say where the pictures actually are.
+            sed -i '/^!\[Changed artwork\](art-review\/sheet-/d' art-review/summary.md
+            cat >> art-review/summary.md <<NOTE
+
+          > **Contact sheets are in the [workflow artifact]($RUN_URL) ("art-review").**
+          > To show them inline here instead, add a classic personal access token with
+          > \`repo\` scope as the \`ART_REVIEW_TOKEN\` secret — GitHub's attachment upload
+          > rejects the Actions token type.
+          NOTE
+          fi
+
+          # Find this tool's own previous comment by its hidden marker.
+          #
+          # NOT `gh pr comment --edit-last`: that edits the last comment by the
+          # authenticated identity, which in Actions is github-actions[bot] —
+          # shared with every other workflow that comments. It silently
+          # overwrote the performance report the first time this ran.
+          prev=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq 'map(select(.body | startswith("<!-- art-review -->"))) | last | .id // empty')
+
+          if [ ${#attach[@]} -eq 0 ] && [ -n "$prev" ]; then
+            # No media to upload, so the comment can be updated in place — the
+            # review stays where reviewers already found it, and pushing again
+            # does not add another copy.
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${prev}" \
+              -F body=@art-review/summary.md > /dev/null
+            echo "Updated art review comment ${prev}"
+          else
+            # Attachments can only be uploaded while creating a comment, so post
+            # a new one and leave a pointer on the old rather than deleting it.
+            gh pr comment "$PR_NUMBER" --body-file art-review/summary.md "${attach[@]}"
+            if [ -n "$prev" ]; then
+              printf '%s\n' '<!-- art-review-superseded -->' \
+                '_Superseded by a newer art review below._' > superseded.md
+              gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${prev}" \
+                -F body=@superseded.md > /dev/null
+            fi
+          fi
+
+      - name: Upload sheets as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: art-review
+          path: art-review/
+          if-no-files-found: ignore

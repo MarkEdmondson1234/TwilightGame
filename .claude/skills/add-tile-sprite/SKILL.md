@@ -534,7 +534,7 @@ npm run dev
 **Solution:**
 - Match `spriteWidth` and `spriteHeight` to image's natural aspect ratio
 - Don't force square dimensions on rectangular images
-- Consider using original high-res if optimization caused issues
+- If the optimised version is the problem, fix its rule in `scripts/optimize-assets.js` (size, and `fit: 'inside'` for non-square art) — do not reference `/assets/`, which ships the full-resolution original to the GPU
 
 ### 4. Player Walks Through Solid Objects
 **Problem:** Collision detection doesn't work for furniture
@@ -584,10 +584,14 @@ Some tiles span multiple grid squares (beds, sofas, rugs, trees, etc.). These re
    - ❌ WRONG: `@@@` (creates 3 duplicate sprites)
    - ✅ CORRECT: `@` (single anchor, sprite spans 3 tiles)
 
-2. **Use Original High-Res Images**: For large sprites, DO NOT use the optimized version if it causes quality issues.
-   - The optimization script resizes to 64x64 for single tiles, which distorts multi-tile sprites
-   - Use original image path: `'/TwilightGame/assets/tiles/sofa.png'`
-   - Add comment: `// Use original high-res`
+2. **Always reference `/assets-optimized/`**, including for large sprites.
+   - This step used to say to use the original when optimisation "causes quality
+     issues". Do not: an original costs its full resolution in GPU memory
+     (`width x height x 4` bytes — a 2732x2048 sprite is 21MB), and loading enough
+     of them crashes the game on mobile with no catchable error.
+   - If the optimised version looks wrong, the fix is a keyword rule in
+     `scripts/optimize-assets.js` giving that sprite a bigger size (and
+     `fit: 'inside'` if it is not square), then re-running `npm run optimize-assets`.
 
 3. **Sprite Metadata Configuration**:
    - Add entry to `SPRITE_METADATA` array in `data/spriteMetadata.ts`
@@ -625,7 +629,7 @@ Some tiles span multiple grid squares (beds, sofas, rugs, trees, etc.). These re
 
 ```typescript
 // In assets.ts
-sofa: '/TwilightGame/assets/tiles/sofa.png',  // Use original high-res
+sofa: '/TwilightGame/assets-optimized/tiles/sofa.png',
 
 // In data/spriteMetadata.ts SPRITE_METADATA array
 {
