@@ -14,6 +14,7 @@ rules_version = '2';
 // - shared/farming/plots/{plotId}               - Shared farm plots (village + farm_area)
 // - shared/world/placedItems/{itemId}           - Shared placed items (furniture, wreaths, …)
 // - shared/world/paintings/{paintingId}         - Shared player-made paintings
+// - shared/world/albumPhotos/{photoId}          - Shared photo album (the book at Mum's)
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -116,6 +117,18 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // Shared photo album - the book in Mum's kitchen. Photos anybody sends to
+    // the album appear in it for everyone; a private album would just be the
+    // inventory again.
+    // Path: shared/world/albumPhotos/{photoId}
+    match /shared/world/albumPhotos/{photoId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidAlbumPhoto();
+      // Permissive, like placed items: a player may take another player's photo
+      // out of the shared album.
+      allow delete: if isAuthenticated();
+    }
+
     // Shared world events - discoveries, achievements, etc.
     // Path: sharedEvents/{eventId}
     match /sharedEvents/{eventId} {
@@ -153,6 +166,15 @@ service cloud.firestore {
       return request.resource.data.imageData is string
         && request.resource.data.imageData.size() < 1000000
         && request.resource.data.name is string;
+    }
+
+    // An album photo is one base64 image plus who took it. Same 1 MB ceiling as
+    // a painting; the camera compresses to ~15-30 KB.
+    function isValidAlbumPhoto() {
+      return request.resource.data.dataUrl is string
+        && request.resource.data.dataUrl.size() < 1000000
+        && request.resource.data.photoName is string
+        && request.resource.data.byName is string;
     }
 
     // Check if the requesting user owns this data

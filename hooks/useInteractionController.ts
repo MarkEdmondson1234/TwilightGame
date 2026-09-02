@@ -35,6 +35,8 @@ import { gameState } from '../GameState';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
+import { PHOTO_ITEM_ID } from '../types/photography';
+import { savePaintingImage } from '../utils/paintingImageService';
 import { staminaManager } from '../utils/StaminaManager';
 import { registerItemSprite } from '../utils/inventoryUIHelper';
 import type { MiniGameTriggerData } from '../minigames/types';
@@ -483,7 +485,19 @@ export function useInteractionController(
         // Consume the instance whose artwork is being placed, not just the leading one —
         // otherwise a legacy wreath at the front of the queue is eaten instead and the
         // placed decoration stays "available" for the next placement.
-        if (result.paintingId) {
+        if (result.itemId === PHOTO_ITEM_ID && result.paintingId) {
+          // A photo instance is keyed by its photoData, not a decorationId.
+          inventoryManager.removePhotoById(result.paintingId);
+
+          // Hanging a photo publishes it to the shared picture store, keyed by
+          // the photo's own id. Without this the placed item reaches the other
+          // player carrying an id and no image — the image is deliberately
+          // stripped from the shared document (see toPublishablePayload) — and
+          // they would see an empty frame.
+          if (result.customImage) {
+            void savePaintingImage(result.paintingId, result.customImage, 'Photo');
+          }
+        } else if (result.paintingId) {
           inventoryManager.removeItemInstanceByDecorationId(result.itemId, result.paintingId);
         } else {
           inventoryManager.removeItem(result.itemId, 1);

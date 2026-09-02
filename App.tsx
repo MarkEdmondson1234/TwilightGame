@@ -2798,7 +2798,11 @@ const App: React.FC = () => {
             setViewingPhoto((prev) => (prev ? { ...prev, photoName: newName } : prev));
           }}
           onSendToAlbum={() => {
-            photoAlbumManager.addToAlbum(viewingPhoto);
+            // The album is shared, so the photo goes in with a name against it.
+            photoAlbumManager.addToAlbum(
+              viewingPhoto,
+              gameState.getSelectedCharacter()?.name ?? 'Someone'
+            );
             inventoryManager.removePhotoById(viewingPhoto.id);
             setViewingPhoto(null);
             showToast('Photo sent to album!', 'success');

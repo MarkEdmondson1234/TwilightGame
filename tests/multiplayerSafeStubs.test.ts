@@ -16,10 +16,12 @@ import { join } from 'node:path';
 import { presenceService } from '../firebase/presenceService';
 import { chatService } from '../firebase/chatService';
 import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
+import { sharedAlbumService } from '../firebase/sharedAlbumService';
 import {
   getPresenceService,
   getChatService,
   getSharedPlacedItemsService,
+  getSharedAlbumService,
   getCommunityGardenService,
   whenFirebaseSettled,
 } from '../firebase/safe';
@@ -107,6 +109,21 @@ describe('shared placed items stub parity', () => {
       missing,
       'These methods exist on firebase/sharedPlacedItemsService but not on the ' +
         'stub in firebase/safe.ts. Add a no-op to stubSharedPlacedItemsService.'
+    ).toEqual([]);
+  });
+});
+
+describe('shared album stub parity', () => {
+  it('implements every public method of the real shared album service', () => {
+    const missing = methodNames(sharedAlbumService).filter(
+      (name) => !methodNames(getSharedAlbumService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/sharedAlbumService but not on the stub in ' +
+        'firebase/safe.ts. The photo album is opened from the bookshelf in a build ' +
+        'with no Firebase too. Add a no-op to stubSharedAlbumService.'
     ).toEqual([]);
   });
 });

@@ -11,10 +11,13 @@
 
 // Re-export types that don't need the package at runtime
 export type { AuthState } from './authService';
+export type { AlbumEntry } from './sharedAlbumService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { ChatMessage } from '../multiplayer/chat';
 import type { PlacedItem } from '../types';
+import type { Photo } from '../types/photography';
+import type { AlbumEntry } from './sharedAlbumService';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -158,6 +161,21 @@ const stubSharedPlacedItemsService = {
   getPublishedIds: () => [] as string[],
   writeItem: async (_item: PlacedItem) => false as boolean,
   deleteItem: async (_itemId: string) => false as boolean,
+  destroy: () => {},
+};
+
+/**
+ * Stub sharedAlbumService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubSharedAlbumService = {
+  isAvailable: () => false,
+  onChange: (_cb: () => void) => () => {},
+  startListening: () => false,
+  stopListening: () => {},
+  getEntries: () => [] as AlbumEntry[],
+  publish: async (_photo: Photo, _byName: string) => false as boolean,
+  remove: async (_photoId: string) => false as boolean,
   destroy: () => {},
 };
 
@@ -315,6 +333,14 @@ export function getChatService() {
  */
 export function getSharedPlacedItemsService() {
   return firebaseModule?.sharedPlacedItemsService ?? stubSharedPlacedItemsService;
+}
+
+/**
+ * Get sharedAlbumService (real or stub).
+ * Never cache — it is a stub until Firebase has settled.
+ */
+export function getSharedAlbumService() {
+  return firebaseModule?.sharedAlbumService ?? stubSharedAlbumService;
 }
 
 /**
