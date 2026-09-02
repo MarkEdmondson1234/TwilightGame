@@ -38,6 +38,8 @@ const IMAGE_RE = /\.(png|jpe?g|gif|webp)$/i;
 const WATCHED_DIRS = ['public/assets', 'public/assets-optimized'];
 /** GitHub rejects attachments over 10MB; stay well under after PNG compression. */
 const MAX_SHEET_BYTES = 8 * 1024 * 1024;
+/** Hidden marker identifying this tool's own PR comment. See the summary builder. */
+const ART_REVIEW_MARKER = '<!-- art-review -->';
 
 function arg(flag, fallback) {
   const i = process.argv.indexOf(flag);
@@ -258,6 +260,12 @@ async function main() {
   const deltaKb = ((bytes(entries, 'after') - bytes(entries, 'before')) / 1024).toFixed(0);
 
   const lines = [
+    // Marker so CI can find and replace its own previous comment. It must NOT
+    // use `gh pr comment --edit-last`: that edits the last comment by the
+    // authenticated identity, which in Actions is github-actions[bot] — shared
+    // with every other workflow that comments. It clobbered the performance
+    // report the first time this ran.
+    ART_REVIEW_MARKER,
     '## Art review',
     '',
     `\`${changed.length}\` artwork files changed against \`${BASE}\`.`,

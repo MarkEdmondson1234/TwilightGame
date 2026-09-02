@@ -118,12 +118,33 @@ jobs:
           NOTE
           fi
 
-          # --edit-last keeps one comment per PR that updates as the branch moves,
-          # instead of a new wall of images on every push.
-          gh pr comment "$PR_NUMBER" \
-            --body-file art-review/summary.md \
-            --edit-last --create-if-none \
-            "${attach[@]}"
+          # Find this tool's own previous comment by its hidden marker.
+          #
+          # NOT `gh pr comment --edit-last`: that edits the last comment by the
+          # authenticated identity, which in Actions is github-actions[bot] —
+          # shared with every other workflow that comments. It silently
+          # overwrote the performance report the first time this ran.
+          prev=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" --paginate \
+            --jq 'map(select(.body | startswith("<!-- art-review -->"))) | last | .id // empty')
+
+          if [ ${#attach[@]} -eq 0 ] && [ -n "$prev" ]; then
+            # No media to upload, so the comment can be updated in place — the
+            # review stays where reviewers already found it, and pushing again
+            # does not add another copy.
+            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${prev}" \
+              -F body=@art-review/summary.md > /dev/null
+            echo "Updated art review comment ${prev}"
+          else
+            # Attachments can only be uploaded while creating a comment, so post
+            # a new one and leave a pointer on the old rather than deleting it.
+            gh pr comment "$PR_NUMBER" --body-file art-review/summary.md "${attach[@]}"
+            if [ -n "$prev" ]; then
+              printf '%s\n' '<!-- art-review-superseded -->' \
+                '_Superseded by a newer art review below._' > superseded.md
+              gh api -X PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${prev}" \
+                -F body=@superseded.md > /dev/null
+            fi
+          fi
 
       - name: Upload sheets as an artifact
         if: always()
