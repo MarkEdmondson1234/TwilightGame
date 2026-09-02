@@ -7,7 +7,7 @@ import {
   TIMING,
   SHARED_FARM_MAP_IDS,
 } from './constants';
-import { Position, Direction, ImageRoomLayer, NPC, TileType } from './types';
+import { Position, Direction, NPC, TileType } from './types';
 import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -44,6 +44,11 @@ import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
+import {
+  getRoomArtworkSize,
+  getRoomCoverScale,
+  getRoomPan,
+} from './utils/backgroundRoomLayout';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -1237,35 +1242,43 @@ const App: React.FC = () => {
       return 1.0; // No scaling for tiled maps
     }
 
-    // Get reference viewport from map definition, or use defaults
-    const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
-
     // Divide the browser-zoom factor back out of the viewport dimensions before
     // fitting. Browser zoom shrinks innerWidth/innerHeight (CSS px), which would
     // otherwise drag viewportScale toward its 1.0 floor and cancel the zoom on
     // large monitors — leaving the room image and character the only things that
     // don't magnify. Normalising here lets interiors zoom WITH the browser, like
     // tiled rooms do. See useBrowserZoom / docs/ARCHITECTURE_GOTCHAS.md.
-    //
-    // 'cover' (not the default 'contain'): at a viewport aspect ratio that
-    // doesn't match the reference, 'contain' fits the room fully on screen but
-    // leaves a letterboxed gap on one axis, showing the game's own background
-    // colour through it (issue #26). 'cover' scales to fill both axes instead,
-    // cropping whichever axis has the excess.
-    const rawScale = calculateViewportScale(
-      viewportSize.width * browserZoom,
-      viewportSize.height * browserZoom,
-      refViewport.width,
-      refViewport.height,
-      0.5, // minScale (absolute floor)
-      2.5, // maxScale - allow larger scaling for big monitors
-      'cover'
-    );
+    const fitWidth = viewportSize.width * browserZoom;
+    const fitHeight = viewportSize.height * browserZoom;
 
-    // Only scale UP on larger viewports, never scale down
-    // This ensures small screens still see the original design
+    // Scale so the ROOM ARTWORK covers the viewport, measured from the artwork
+    // itself rather than the map's declared `referenceViewport` (issue #26).
+    // The reference is an authoring hint and drifts from the real artwork —
+    // Mum's Kitchen is 960x540 at scale 1.3 = 1248x702 against a declared
+    // 1280x720 — and every bit of that 2.6% drift showed up on screen as the
+    // game's background colour around the room, at every window size.
+    // The `referenceViewport` path below survives only for a background-image
+    // room with no centred artwork to measure; no current map is one.
+    const artwork = getRoomArtworkSize(currentMap);
+    const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
+    const rawScale = artwork
+      ? getRoomCoverScale(artwork.width, artwork.height, fitWidth, fitHeight)
+      : calculateViewportScale(
+          fitWidth,
+          fitHeight,
+          refViewport.width,
+          refViewport.height,
+          0.5, // minScale (absolute floor)
+          2.5, // maxScale - allow larger scaling for big monitors
+          'cover'
+        );
+
+    // Only scale UP on larger viewports, never scale down, so small screens
+    // still see the room at its authored size (cropped, and panned to follow the
+    // player). Deliberately no upper clamp: capping the scale would reopen #26
+    // as a visible gap on a large monitor.
     return Math.max(1.0, rawScale);
-  }, [currentMap?.renderMode, currentMap?.referenceViewport, viewportSize, browserZoom]);
+  }, [currentMap, viewportSize, browserZoom]);
 
   // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
   const isCompactMode = useMemo(() => {
@@ -1273,77 +1286,64 @@ const App: React.FC = () => {
   }, [viewportSize.height]);
 
   // Calculate effective grid offset for centered background-image rooms
-  // This aligns the collision grid/player/NPCs with the centered background image
-  // Now incorporates viewport scaling for responsive rendering
+  // This aligns the collision grid/player/NPCs with the room artwork, and is the
+  // single value every consumer (PixiJS player/NPC/highlight layers, DOM
+  // overlays, click-to-tile) uses to place things in these rooms.
+  //
+  // How far the room artwork slides from dead centre to follow the player
+  // through whatever `cover` scaling cropped off (issue #26). Zero when the
+  // artwork's aspect ratio matches the window, so a 16:9 room in a 16:9 window
+  // doesn't move at all. Shared by effectiveGridOffset below (which positions
+  // everything drawn on top of the room) and BackgroundImageLayer (which
+  // positions the artwork itself) — they must use the same number or the room
+  // slides out from under its own collision grid.
+  const backgroundRoomPan = useMemo((): Position => {
+    const artwork = currentMap?.gridOffset ? null : getRoomArtworkSize(currentMap);
+    if (!artwork) return { x: 0, y: 0 };
+
+    return getRoomPan({
+      playerPos,
+      tileSize: TILE_SIZE * viewportScale * artwork.layerScale * zoom,
+      artworkWidth: artwork.width * viewportScale * zoom,
+      artworkHeight: artwork.height * viewportScale * zoom,
+      viewportWidth: viewportSize.width,
+      viewportHeight: viewportSize.height,
+    });
+  }, [currentMap, viewportScale, viewportSize, zoom, playerPos]);
+
   const effectiveGridOffset = useMemo((): Position | undefined => {
     if (!currentMap) return undefined;
 
     // Use explicit gridOffset if provided (not scaled - assume it's pre-calculated)
     if (currentMap.gridOffset) return currentMap.gridOffset;
 
-    // For background-image rooms, find centered image layer
-    if (currentMap.renderMode === 'background-image' && currentMap.layers) {
-      const centeredLayer = currentMap.layers.find(
-        (layer) => layer.type === 'image' && (layer as ImageRoomLayer).centered
-      ) as ImageRoomLayer | undefined;
+    const artwork = getRoomArtworkSize(currentMap);
+    if (!artwork) return undefined;
 
-      if (centeredLayer) {
-        // Get base image dimensions (use explicit or calculate from grid)
-        let imageWidth: number;
-        let imageHeight: number;
+    // Final on-screen artwork size: authored size x responsive scale x zoom.
+    // The PixiJS stage is scaled by zoom, so the artwork occupies this many
+    // screen pixels and screenToTile must invert the same number.
+    const artworkWidth = artwork.width * viewportScale * zoom;
+    const artworkHeight = artwork.height * viewportScale * zoom;
 
-        if (centeredLayer.width && centeredLayer.height) {
-          imageWidth = centeredLayer.width;
-          imageHeight = centeredLayer.height;
-        } else if (centeredLayer.useNativeSize) {
-          // For native size, we need to know the actual image dimensions
-          // For now, use map grid dimensions as fallback
-          imageWidth = currentMap.width * TILE_SIZE;
-          imageHeight = currentMap.height * TILE_SIZE;
-        } else {
-          imageWidth = currentMap.width * TILE_SIZE;
-          imageHeight = currentMap.height * TILE_SIZE;
-        }
-
-        // Apply layer scale if present
-        const layerScale = centeredLayer.scale ?? 1.0;
-        imageWidth *= layerScale;
-        imageHeight *= layerScale;
-
-        // Apply viewport scaling for responsive rendering
-        imageWidth *= viewportScale;
-        imageHeight *= viewportScale;
-
-        // Apply zoom — the PixiJS stage is scaled by zoom, so the centered
-        // image occupies (imageWidth * zoom) screen pixels.  The grid offset
-        // must reflect this so screenToTile can invert correctly.
-        imageWidth *= zoom;
-        imageHeight *= zoom;
-
-        // Use tracked viewport dimensions for centering (responds to resize/zoom)
-        const offsetX = (viewportSize.width - imageWidth) / 2;
-        const offsetY = (viewportSize.height - imageHeight) / 2;
-
-        return { x: offsetX, y: offsetY };
-      }
-    }
-
-    return undefined;
-  }, [currentMap, currentMapId, viewportScale, viewportSize, zoom]); // Recalculate when map, scale, or viewport changes
+    // Centre the artwork, then apply the pan. Without it the room stays pinned
+    // to the viewport centre and the player walks off the edge of the screen
+    // into artwork that is never drawn there.
+    return {
+      x: (viewportSize.width - artworkWidth) / 2 + backgroundRoomPan.x,
+      y: (viewportSize.height - artworkHeight) / 2 + backgroundRoomPan.y,
+    };
+  }, [currentMap, currentMapId, viewportScale, viewportSize, zoom, backgroundRoomPan]);
 
   // Calculate effective tile size for background-image rooms (scaled)
-  // Must include both viewport scale AND layer scale to match the background image
+  // Must include both viewport scale AND layer scale to match the room artwork
   const effectiveTileSize = useMemo((): number => {
-    if (currentMap?.renderMode === 'background-image' && currentMap.layers) {
-      // Find the centered image layer to get its scale
-      const centeredLayer = currentMap.layers.find(
-        (layer) => layer.type === 'image' && (layer as ImageRoomLayer).centered
-      ) as ImageRoomLayer | undefined;
-      const layerScale = centeredLayer?.scale ?? 1.0;
-      return TILE_SIZE * viewportScale * layerScale;
+    const artwork = getRoomArtworkSize(currentMap);
+    if (artwork) {
+      return TILE_SIZE * viewportScale * artwork.layerScale;
     }
     return TILE_SIZE;
-  }, [currentMap?.renderMode, currentMap?.layers, viewportScale]);
+  }, [currentMap, viewportScale]);
 
   // Use camera hook for positioning
   const { cameraX, cameraY } = useCamera({
@@ -1650,6 +1650,7 @@ const App: React.FC = () => {
       viewportSize,
       effectiveGridOffset: effectiveGridOffset ?? { x: 0, y: 0 },
       effectiveTileSize,
+      backgroundRoomPan,
       zoom,
     },
     player: {

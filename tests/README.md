@@ -89,6 +89,7 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `mapTextureBudget.test.ts` | A texture reference that 404s (renders as *nothing*, with no error), a filename whose case only matches on macOS, or a map whose resident textures exceed what a phone can hold — which kills the tab with no catchable error | Adding a map, NPC, or tile; changing `scripts/optimize-assets.js` |
 | `textureManager.test.ts` | Unbounded texture fan-out at startup (mobile WebKit answers that by terminating requests as `TypeError: Load failed`), a render-loop miss retrying forever, or eviction destroying a texture still in use | Touching `utils/TextureManager.ts` or the loading policy |
 | `characterSpriteScale.test.ts` | The player rendering at a third of its size. Custom art scales 3x and placeholders 1x, chosen by pattern-matching the sprite URL — move the artwork and the match breaks silently, with nothing thrown and no 404 | Moving character art, or touching `isCustomCharacterSprite()` |
+| `backgroundRoomLayout.test.ts` | An interior that doesn't fill the window (a band of background colour down one side, at some window sizes but not others), or one whose artwork stops following the player so they walk off the edge of the screen | Touching interior scaling/panning, or a map's centred image layer `width`/`height`/`scale` |
 
 ## Writing a new test
 

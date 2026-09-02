@@ -19,6 +19,14 @@
  *   screen but leaves a letterboxed gap on whichever axis has room to spare
  *   at a mismatched aspect ratio. 'cover' mode (new) picks the LARGER scale
  *   instead, filling both axes and cropping the overflow.
+ *
+ * NOTE: 'cover' fixed the fit but not the *input* — App.tsx was feeding it the
+ * map's declared `referenceViewport`, which drifts from the artwork it claims
+ * to describe, so interiors were still short by a couple of percent at every
+ * window size. Interiors now size and pan from the artwork itself; see
+ * tests/backgroundRoomLayout.test.ts. What is left here for that half is the
+ * contract of calculateViewportScale's fitMode param, which other callers
+ * still rely on.
  */
 import { describe, it, expect } from 'vitest';
 import {

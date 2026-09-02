@@ -82,6 +82,13 @@ export interface UsePixiRendererProps {
     /** User zoom level (default 1.0) */
     zoom?: number;
     effectiveTileSize: number;
+    /**
+     * Background-image rooms only: how far the room artwork is offset from dead
+     * centre so the `cover` crop follows the player (issue #26). Already folded
+     * into effectiveGridOffset; passed separately because BackgroundImageLayer
+     * centres each layer by its own size and needs the offset, not the result.
+     */
+    backgroundRoomPan?: { x: number; y: number };
   };
 
   /** Player state */
@@ -203,6 +210,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     viewportSize,
     effectiveGridOffset,
     effectiveTileSize,
+    backgroundRoomPan,
     zoom = 1.0,
   } = viewport;
   const {
@@ -879,6 +887,12 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
     // Update camera positions
     if (backgroundImageLayerRef.current) {
+      // Keep the room artwork on the same pan as everything drawn over it
+      // before moving anything (issue #26).
+      backgroundImageLayerRef.current.setCenteredPan(
+        backgroundRoomPan?.x ?? 0,
+        backgroundRoomPan?.y ?? 0
+      );
       backgroundImageLayerRef.current.updateCamera(cameraX, cameraY);
     }
 
@@ -936,6 +950,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     canvasRef,
     effectiveGridOffset,
     effectiveTileSize,
+    backgroundRoomPan,
   ]);
 
   // =========================================================================
