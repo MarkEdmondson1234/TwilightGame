@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, MutableRefObject } from 'react';
 import { Position } from '../types';
 import { Z_HUD } from '../zIndex';
 import { screenToTile } from '../utils/screenToTile';
+import { createLongPressTracker } from '../utils/longPress';
 
 export interface MouseClickInfo {
   /** World position in tile coordinates */
@@ -35,9 +36,9 @@ export interface MouseControlsConfig {
   /** Callback when canvas is clicked */
   onCanvasClick: (clickInfo: MouseClickInfo) => void;
   /**
-   * Callback when the canvas is right-clicked. The browser's own context menu
-   * is suppressed over the game world (but not over the HUD, where a right-click
-   * still belongs to the browser).
+   * Callback when the canvas is right-clicked, or long-pressed on touch — the two
+   * gestures are the same input. The browser's own context menu is suppressed over the
+   * game world (but not over the HUD, where a right-click still belongs to the browser).
    */
   onContextClick?: (clickInfo: MouseClickInfo) => void;
   /** Whether to enable mouse controls (touch always enabled for click-to-move) */
@@ -252,9 +253,44 @@ export function useMouseControls(config: MouseControlsConfig) {
     };
 
     /**
+     * Long press is touch's right-click. It opens the same context menu, from the point
+     * the finger went down on — not where it drifted to, which is why the tracker keeps
+     * the origin coordinates.
+     */
+    const longPress = createLongPressTracker({
+      onLongPress: (clientX, clientY) => {
+        if (!onContextClickRef.current) return;
+        const rect = container.getBoundingClientRect();
+        onContextClickRef.current(
+          createClickInfo(clientX - rect.left, clientY - rect.top, clientX, clientY, true)
+        );
+      },
+    });
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      if (isUIElement(e.target, touch.clientX, touch.clientY)) return;
+      longPress.start(touch.clientX, touch.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      longPress.move(touch.clientX, touch.clientY);
+    };
+
+    /**
      * Handle touch end (for touch devices - enables click-to-move on iPad)
      */
     const handleTouchEnd = (e: TouchEvent) => {
+      // A long press already opened the context menu. The browser still delivers this
+      // touchend, and without swallowing it the player would also walk to the spot they
+      // just opened a menu on — the menu would appear and the ground move underneath it.
+      const firedLongPress = longPress.consumeTap();
+      longPress.cancel();
+      if (firedLongPress) return;
+
       // Ignore touches on UI elements (HUD, modal, etc.)
       const touch = e.changedTouches[0];
       if (!touch) return;
@@ -277,13 +313,22 @@ export function useMouseControls(config: MouseControlsConfig) {
     }
 
     // Touch always enabled for click-to-move on iPad
-    // Use passive: true to avoid blocking scroll/touch for 100-300ms on iOS
+    // Use passive: true to avoid blocking scroll/touch for 100-300ms on iOS.
+    // Nothing here calls preventDefault — long-press suppresses its trailing tap with a
+    // flag instead, precisely so these can stay passive.
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', longPress.cancel, { passive: true });
 
     return () => {
       container.removeEventListener('click', handleClick);
       container.removeEventListener('contextmenu', handleContextMenu);
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', longPress.cancel);
+      longPress.cancel();
     };
     // Only depend on stable values — camera/zoom/callbacks read from refs
     // containerReady triggers re-run when the game container mounts after loading

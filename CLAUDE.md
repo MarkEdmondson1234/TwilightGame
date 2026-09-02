@@ -80,6 +80,10 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
 
 - `multiplayer/` — pure logic: `wire.ts` (encode/validate), `interpolation.ts`, `publishPolicy.ts`,
   `emotes.ts`, `RemotePlayerManager.ts` (SSoT for other players — mirrors `NPCManager`)
+- `utils/interactions/providers/remotePlayers.ts` — right-click another player to wave, emote
+  or chat. **Context-menu only, on purpose**: a left-click near someone must still mean "walk
+  there", since players stand on doors, farm plots and shop counters. Inert without presence
+  (`getRemotePlayers()` is empty), so it needs no `MULTIPLAYER_ENABLED` gate of its own.
 - `hooks/useMultiplayerController.ts` — the domain controller; App.tsx only wires it
 - `utils/pixi/RemotePlayerLayer.ts` — rendering (mirrors `NPCLayer`)
 - `database.rules.json` — RTDB security rules
@@ -488,10 +492,34 @@ Pure functions and game systems:
     the item definition. Both force the radial menu even when the interaction is the only one
     available. A placed bed offering only "Pick Up" is how clicking a bed to sleep in it
     carried the bed off instead — `tests/furnitureActions.test.ts` guards that case.
+- **Right-click (desktop) / long-press (touch)** is the "what can I do here?" gesture, and
+  the deliberate counterweight to left-click, which both walks the player *and* fires a lone
+  interaction outright — so it can never be used to simply look. On yourself it opens the
+  emote wheel; anywhere else it shows every interaction and auto-executes none, however few
+  there are. Providers see this as `ctx.isContextMenu` and may then offer actions the held
+  tool does not allow, switching tools via `onSelectTool` — see
+  [`utils/interactions/README.md`](utils/interactions/README.md), and `providers/farming.ts`
+  which is why the feature exists (till/water/plant were invisible unless the right tool was
+  already in hand).
+- **Long-press is right-click on touch, and there is one implementation**:
+  `utils/longPress.ts` (pure tracker) and `hooks/useLongPress.ts` (React props). Do not
+  hand-roll another timer. Two things it gets right that a fresh one will not:
+  `TIMING.LONG_PRESS_SLOP_PX` of drift tolerance, because a child holding still still
+  wobbles and cancelling on the first `touchmove` made the gesture fail about a third of the
+  time; and `consumeTap()`, without which the click the browser synthesises after the hold
+  also fires. Any surface that gains a long press also needs the `no-touch-callout` class
+  (`src/styles/global.css`), or iOS answers the hold with its own callout instead.
 - **Inventory**: left-click/tap **selects a slot and nothing else**. Every action that
   consumes, places, applies or deletes an item lives behind **right-click** (desktop) or
   **long-press** (touch), and is defined in `utils/inventoryActions.ts` — not inline in
-  App.tsx. Add a new item action there.
+  App.tsx. Add a new item action there. The **quick slot bar shows the same nine slots**
+  and routes to the same menu via `openItemActionMenu` in App.tsx — keep them in step, or
+  the bar becomes the one place an item is visible but cannot be acted on.
+- **Shop**: left-click trades **one**; right-click/long-press opens the quantity picker.
+  This is deliberately the inverse of what it used to be — the picker appeared for any
+  stack over one, so buying a single packet of seeds cost a slider, a plus button and a
+  confirm, while the rare bulk purchase paid nothing extra. `tests/shopClickQuantity.test.tsx`
+  guards it, because a regression here spends the player's gold on a single click.
 - **Keyboard**: WASD/arrows for movement, E/Enter for actions, F-keys for UI, 1-9 for tools/seeds (legacy support)
 - **Touch**: On-screen D-pad and action button for mobile devices
 - Shared action handlers in `utils/actionHandlers.ts` eliminate code duplication

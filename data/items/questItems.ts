@@ -21,10 +21,13 @@ export const QUEST_ITEMS: Record<string, ItemDefinition> = {
     name: 'photo',
     displayName: 'Photo',
     category: ItemCategory.KEEPSAKE,
-    description: 'A photograph taken with your camera.',
+    description: 'A photograph taken with your camera. Hang it on a wall to show it off.',
     stackable: false,
     // Not buyable or sellable — a personal keepsake
     icon: '🖼️',
+    // Hung photos render a little smaller than a painting: a snapshot, not a
+    // portrait. See the photo branch in interactions/providers/decorationPlacement.
+    placedScale: 1.0,
   },
 
   key_letter_from_althea: {

@@ -15,6 +15,7 @@ import { GameTime, TimeManager } from './utils/TimeManager';
 import { shouldDecay } from './utils/itemDecayManager';
 import { STAMINA, WATERING_CAN } from './constants';
 import { eventBus, GameEvent } from './utils/EventBus';
+import { sharedPlacedItemsManager } from './multiplayer/sharedPlacedItems';
 import { eventChainManager } from './utils/EventChainManager';
 import { loadPersistedState, runSaveMigrations, SAVE_VERSION } from './GameStatePersistence';
 export { runSaveMigrations, SAVE_VERSION } from './GameStatePersistence';
@@ -1231,10 +1232,27 @@ class GameStateManager {
   }
 
   /**
-   * Get all placed items for a specific map
+   * Get all placed items for a specific map — ours *and* everyone else's.
+   *
+   * This is the single seam where shared placement enters the game. Merging
+   * here rather than at each call site means the renderer, the click
+   * interactions, the hover layer and `furnitureRest` all see another player's
+   * bench without any of them knowing multiplayer exists — including being able
+   * to sit on it or pick it up, which is the point.
+   *
+   * Deliberately *not* merged into `getAllPlacedItems()` or `this.state`: the
+   * save path reads those, and another player's furniture must never end up
+   * persisted in your save file.
    */
   getPlacedItems(mapId: string): PlacedItem[] {
-    return this.state.placedItems.filter((item) => item.mapId === mapId);
+    const local = this.state.placedItems.filter((item) => item.mapId === mapId);
+    const shared = sharedPlacedItemsManager.getItems(mapId);
+    if (shared.length === 0) return local;
+
+    // Our own items round-trip back through the shared mirror; local wins, so a
+    // placement we have already applied is not drawn twice.
+    const localIds = new Set(local.map((item) => item.id));
+    return [...local, ...shared.filter((item) => !localIds.has(item.id))];
   }
 
   /**
@@ -1249,9 +1267,17 @@ class GameStateManager {
    * Remove a placed item by ID
    */
   removePlacedItem(itemId: string): void {
-    // Find the item first to get its mapId for the event
-    const item = this.state.placedItems.find((i) => i.id === itemId);
+    // Find the item first to get its mapId for the event. It may be another
+    // player's — anyone may pick up anyone's furniture — in which case it is
+    // only in the shared mirror, never in our own state.
+    const item =
+      this.state.placedItems.find((i) => i.id === itemId) ?? sharedPlacedItemsManager.get(itemId);
     this.state.placedItems = this.state.placedItems.filter((i) => i.id !== itemId);
+
+    // Drop it from the mirror immediately rather than waiting for the delete to
+    // round-trip, or the item flickers back for a frame after being picked up.
+    sharedPlacedItemsManager.remove(itemId);
+
     this.notify();
     if (item) {
       eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: item.mapId, action: 'remove' });

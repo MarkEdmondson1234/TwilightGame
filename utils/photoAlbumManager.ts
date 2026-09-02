@@ -10,6 +10,7 @@
 
 import { Photo } from '../types';
 import { characterData } from './CharacterData';
+import { getSharedAlbumService } from '../firebase/safe';
 import { eventBus, GameEvent } from './EventBus';
 
 class PhotoAlbumManagerClass {
@@ -38,16 +39,24 @@ class PhotoAlbumManagerClass {
    * Add a photo to the album and persist.
    * Called when the player clicks "Send to Album" in the PhotoViewer.
    */
-  addToAlbum(photo: Photo): void {
+  addToAlbum(photo: Photo, byName: string = 'Someone'): void {
     this.photos.set(photo.id, { ...photo });
     this.save();
+
+    // The album in Mum's kitchen is shared: sending a photo to it shows it to
+    // everyone. Fire and forget — a failed publish leaves the photo in this
+    // player's own album, which is the same place it was a moment ago, and the
+    // service reports the first failure itself.
+    void getSharedAlbumService().publish(photo, byName);
 
     eventBus.emit(GameEvent.PHOTO_SENT_TO_ALBUM, {
       photo,
       albumSize: this.photos.size,
     });
 
-    console.log(`[PhotoAlbumManager] Added photo "${photo.photoName}" (album size: ${this.photos.size})`);
+    console.log(
+      `[PhotoAlbumManager] Added photo "${photo.photoName}" (album size: ${this.photos.size})`
+    );
   }
 
   /**

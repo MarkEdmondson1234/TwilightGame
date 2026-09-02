@@ -20,6 +20,7 @@ import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 import { audioManager } from '../utils/AudioManager';
 import { decorationManager } from '../utils/DecorationManager';
+import { useLongPress } from '../hooks/useLongPress';
 
 /** Item IDs whose display image is per-instance (stored in DecorationManager). */
 const CUSTOM_IMAGE_ITEMS = new Set([
@@ -66,6 +67,20 @@ const ShopUI: React.FC<ShopUIProps> = ({
   playerInventory,
   onTransaction,
 }) => {
+  // Long-press is right-click on touch: it opens the quantity picker. One hook covers
+  // both grids — the slot the finger went down on is recorded at touchstart, since the
+  // hold fires from a timer with no event to read it from.
+  const shopPressRef = React.useRef<{
+    itemId: string;
+    fromShop: boolean;
+    maxQuantity: number;
+  } | null>(null);
+  const shopLongPress = useLongPress(() => {
+    const target = shopPressRef.current;
+    if (!target) return;
+    handleSlotContextMenu(target.itemId, target.fromShop, target.maxQuantity);
+  });
+
   const isMushrasShop = shopId === 'mushras_shop';
   const isShellaShop = shopId === 'seaSide';
   const theme = isMushrasShop
@@ -164,6 +179,25 @@ const ShopUI: React.FC<ShopUIProps> = ({
     setPendingTransaction({ itemId, fromShop, maxQuantity });
     setSelectedQuantity(1);
     setShowQuantitySlider(true);
+  };
+
+  /**
+   * Left-click a slot: trade exactly one.
+   *
+   * The quantity slider used to appear for any stack of more than one, which taxed the
+   * common case — buying a single packet of seeds meant a slider, a plus button and a
+   * confirm. Buying several is the rarer, more deliberate act, so it moved to right-click
+   * (long-press on touch), where every other "more options" gesture in the game lives.
+   */
+  const handleSlotClick = (itemId: string, fromShop: boolean, maxQuantity: number) => {
+    if (maxQuantity < 1) return;
+    executeTransaction(itemId, 1, fromShop);
+  };
+
+  /** Right-click / long-press a slot: choose how many. */
+  const handleSlotContextMenu = (itemId: string, fromShop: boolean, maxQuantity: number) => {
+    if (maxQuantity < 1) return;
+    handleDragStart(itemId, fromShop, maxQuantity);
   };
 
   /**
@@ -282,10 +316,27 @@ const ShopUI: React.FC<ShopUIProps> = ({
     return (
       <ItemTooltip key={shopItem.itemId} content={tooltipContent}>
         <button
-          onClick={() =>
-            handleDragStart(shopItem.itemId, true, shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold))
-          }
+          onClick={() => {
+            if (shopLongPress.consumeTap()) return;
+            handleSlotClick(shopItem.itemId, true, shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold));
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            handleSlotContextMenu(shopItem.itemId, true, shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold));
+          }}
+          onTouchStart={(e) => {
+            shopPressRef.current = {
+              itemId: shopItem.itemId,
+              fromShop: true,
+              maxQuantity: shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold),
+            };
+            shopLongPress.handlers.onTouchStart(e);
+          }}
+          onTouchMove={shopLongPress.handlers.onTouchMove}
+          onTouchEnd={shopLongPress.handlers.onTouchEnd}
+          onTouchCancel={shopLongPress.handlers.onTouchCancel}
           className={`
+            no-touch-callout
             relative aspect-square rounded-lg border-2 transition-all
             ${canAfford
               ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 cursor-pointer'
@@ -364,10 +415,26 @@ const ShopUI: React.FC<ShopUIProps> = ({
     return (
       <ItemTooltip key={inventoryItem.itemId} content={tooltipContent}>
         <button
-          onClick={() =>
-            handleDragStart(inventoryItem.itemId, false, inventoryItem.quantity)
-          }
-          className="relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 cursor-pointer transition-all"
+          onClick={() => {
+            if (shopLongPress.consumeTap()) return;
+            handleSlotClick(inventoryItem.itemId, false, inventoryItem.quantity);
+          }}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            handleSlotContextMenu(inventoryItem.itemId, false, inventoryItem.quantity);
+          }}
+          onTouchStart={(e) => {
+            shopPressRef.current = {
+              itemId: inventoryItem.itemId,
+              fromShop: false,
+              maxQuantity: inventoryItem.quantity,
+            };
+            shopLongPress.handlers.onTouchStart(e);
+          }}
+          onTouchMove={shopLongPress.handlers.onTouchMove}
+          onTouchEnd={shopLongPress.handlers.onTouchEnd}
+          onTouchCancel={shopLongPress.handlers.onTouchCancel}
+          className="no-touch-callout relative aspect-square rounded-lg border-2 bg-amber-900/40 border-amber-600 hover:bg-amber-800/60 cursor-pointer transition-all"
         >
           {/* Item Image/Icon */}
           <div className="absolute inset-0 flex items-center justify-center p-2">
@@ -532,7 +599,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-400">
-                Click to buy • {filteredShopInventory.length}{shopFilter !== 'all' ? ` / ${shopInventory.length}` : ''} items available
+                Click to buy one • hold or right-click for more • {filteredShopInventory.length}{shopFilter !== 'all' ? ` / ${shopInventory.length}` : ''} items available
               </div>
             </div>
 
@@ -561,7 +628,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-400">
-                Click to sell • {playerInventory.length} items
+                Click to sell one • hold or right-click for more • {playerInventory.length} items
               </div>
             </div>
           </div>

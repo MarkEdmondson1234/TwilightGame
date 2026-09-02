@@ -12,6 +12,9 @@ rules_version = '2';
 // - conversations/{npcId}/summaries/{id}         - Shared conversation summaries
 // - sharedEvents/{eventId}                      - Shared world events
 // - shared/farming/plots/{plotId}               - Shared farm plots (village + farm_area)
+// - shared/world/placedItems/{itemId}           - Shared placed items (furniture, wreaths, …)
+// - shared/world/paintings/{paintingId}         - Shared player-made paintings
+// - shared/world/albumPhotos/{photoId}          - Shared photo album (the book at Mum's)
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -87,6 +90,45 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // Shared placed items - furniture, wreaths, snow angels, anything put down
+    // in a shared map.
+    // Path: shared/world/placedItems/{itemId}
+    match /shared/world/placedItems/{itemId} {
+      allow read: if isAuthenticated();
+
+      // Deliberately no ownership check on write or delete: a player may move or
+      // remove another player's furniture. The players are children who are
+      // friends, and the design steer is to maximise interaction between them
+      // rather than protect them from each other. Revisit if that group widens.
+      allow create, update: if isAuthenticated() && isValidPlacedItem();
+      allow delete: if isAuthenticated();
+    }
+
+    // Shared paintings - player-made pictures, hung on walls anywhere in the
+    // world. Shared because a painting hung in a shared map is a placed item
+    // carrying only its id: whoever looks at the wall has to be able to load the
+    // image, or they see an empty frame.
+    // Path: shared/world/paintings/{paintingId}
+    match /shared/world/paintings/{paintingId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidPainting();
+      // Same permissive stance as placed items: a player may take down and
+      // discard another player's painting.
+      allow delete: if isAuthenticated();
+    }
+
+    // Shared photo album - the book in Mum's kitchen. Photos anybody sends to
+    // the album appear in it for everyone; a private album would just be the
+    // inventory again.
+    // Path: shared/world/albumPhotos/{photoId}
+    match /shared/world/albumPhotos/{photoId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidAlbumPhoto();
+      // Permissive, like placed items: a player may take another player's photo
+      // out of the shared album.
+      allow delete: if isAuthenticated();
+    }
+
     // Shared world events - discoveries, achievements, etc.
     // Path: sharedEvents/{eventId}
     match /sharedEvents/{eventId} {
@@ -104,6 +146,36 @@ service cloud.firestore {
     // ============================================
     // Helper Functions
     // ============================================
+
+    // A placed item must at least be renderable: the client drops anything it
+    // cannot draw, but keeping junk out of the collection is cheaper than
+    // filtering it on every snapshot.
+    function isValidPlacedItem() {
+      return request.resource.data.keys().hasAll(['id', 'itemId', 'mapId', 'image', 'position'])
+        && request.resource.data.id is string
+        && request.resource.data.itemId is string
+        && request.resource.data.mapId is string
+        && request.resource.data.position.x is number
+        && request.resource.data.position.y is number;
+    }
+
+    // A painting is one base64 data URL and a name. The 1 MB cap is Firestore's
+    // own document limit; the client compresses to 512x512 WebP (~40-110 KB), so
+    // anything near the limit is not a painting this game made.
+    function isValidPainting() {
+      return request.resource.data.imageData is string
+        && request.resource.data.imageData.size() < 1000000
+        && request.resource.data.name is string;
+    }
+
+    // An album photo is one base64 image plus who took it. Same 1 MB ceiling as
+    // a painting; the camera compresses to ~15-30 KB.
+    function isValidAlbumPhoto() {
+      return request.resource.data.dataUrl is string
+        && request.resource.data.dataUrl.size() < 1000000
+        && request.resource.data.photoName is string
+        && request.resource.data.byName is string;
+    }
 
     // Check if the requesting user owns this data
     function isOwner(userId) {

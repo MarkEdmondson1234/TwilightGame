@@ -18,7 +18,8 @@ import type { Position } from '../types';
 import { MULTIPLAYER, DEBUG } from '../constants';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { interpolateAt, pushSample } from './interpolation';
-import { decodeDirection } from './wire';
+import { CHAT_BUBBLE_DURATION_MS, truncateForBubble } from './chat';
+import { decodeDirection, isGhostRecord } from './wire';
 import type { EmoteId } from './emotes';
 import type { PresenceSample, PresenceWire, RemotePlayer } from './types';
 
@@ -30,6 +31,9 @@ interface RemotePlayerState {
   fairyForm: boolean;
   emote: EmoteId | null;
   emoteStartedAt: number;
+  /** Most recent thing they said, shown above their head until it expires */
+  chat: string | null;
+  chatStartedAt: number;
   /** Recent position samples, oldest first, on the local clock */
   buffer: PresenceSample[];
   /** Local clock at last received update — the basis for staleness eviction */
@@ -64,6 +68,15 @@ class RemotePlayerManagerClass {
 
   /** Apply an inbound presence record for one player. */
   apply(uid: string, wire: PresenceWire, now: number = Date.now()): void {
+    // A record left behind by a client that died without cleaning up. Applying
+    // it would show a player standing in the village who is not there, and our
+    // own staleness eviction could not save us: it counts from local receipt,
+    // so a ghost looks alive for the first 45 seconds after we walk in.
+    if (isGhostRecord(wire, now, MULTIPLAYER.GHOST_AFTER_MS)) {
+      if (DEBUG.MULTIPLAYER) console.log(`[Multiplayer] Ignoring ghost record from ${uid}`);
+      return;
+    }
+
     const direction = decodeDirection(wire.d) ?? Direction.Down;
     const position: Position = { x: wire.x, y: wire.y };
     const sample: PresenceSample = { position, direction, receivedAt: now };
@@ -79,6 +92,8 @@ class RemotePlayerManagerClass {
         fairyForm: wire.ff,
         emote: null,
         emoteStartedAt: 0,
+        chat: null,
+        chatStartedAt: 0,
         buffer: [sample],
         lastSeenAt: now,
         position,
@@ -110,6 +125,22 @@ class RemotePlayerManagerClass {
     }
   }
 
+  /**
+   * Show what a player just said above their head.
+   *
+   * Chat arrives on a different transport from presence, so this is how the two
+   * meet: the chat controller hands us the message, and the renderer picks it up
+   * on the next frame like any other per-player state. A player who has said
+   * something but is not in the room yet is ignored — there is nothing to draw a
+   * bubble above.
+   */
+  setChat(uid: string, text: string, now: number = Date.now()): void {
+    const state = this.players.get(uid);
+    if (!state) return;
+    state.chat = truncateForBubble(text);
+    state.chatStartedAt = now;
+  }
+
   /** Drop a player who left the room (their presence record was removed). */
   remove(uid: string): void {
     const state = this.players.get(uid);
@@ -136,6 +167,10 @@ class RemotePlayerManagerClass {
 
       if (state.emote && now - state.emoteStartedAt > MULTIPLAYER.EMOTE_DURATION_MS) {
         state.emote = null;
+      }
+
+      if (state.chat && now - state.chatStartedAt > CHAT_BUBBLE_DURATION_MS) {
+        state.chat = null;
       }
 
       const result = interpolateAt(state.buffer, renderTime, {
@@ -182,6 +217,7 @@ class RemotePlayerManagerClass {
         animStep: state.animStep,
         isMoving: state.isMoving,
         emote: state.emote,
+        chat: state.chat,
       });
     }
     return out;

@@ -52,6 +52,11 @@ export { presenceService } from './presenceService';
 
 export { chatService } from './chatService';
 
+export { sharedPlacedItemsService } from './sharedPlacedItemsService';
+
+export { sharedAlbumService } from './sharedAlbumService';
+export type { AlbumEntry } from './sharedAlbumService';
+
 // Types
 export type {
   UserProfile,

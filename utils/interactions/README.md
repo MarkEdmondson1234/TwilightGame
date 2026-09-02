@@ -53,10 +53,28 @@ If your interaction needs a new callback (e.g. to open a UI panel), add it to
   sees. Only do it deliberately. `furnitureProvider` sits ahead of `placedItemProvider` for
   exactly this reason: "Sleep" must be offered above "Pick Up".
 
-- **A lone interaction auto-executes.** If your interaction would be destructive or
-  surprising to fire on a single click, set `requireConfirmation: true` on it (or
+- **A lone interaction auto-executes — on a click.** If your interaction would be destructive
+  or surprising to fire on a single click, set `requireConfirmation: true` on it (or
   `confirmPickup: true` on the item definition) so the radial menu shows anyway. A placed bed
   used to offer nothing but "Pick Up", so clicking it to sleep picked the bed up instead.
+
+- **`ctx.isContextMenu` means the player is asking, not doing.** It is true when the
+  collection came from a right-click or a long press. Nothing auto-executes then, however
+  few interactions you return, and the player has not committed to anything yet.
+
+  Two consequences for a provider:
+
+  1. You may offer actions the *held tool* does not currently allow, as long as the player
+     could actually perform them — `providers/farming.ts` offers "Till Soil" to an empty
+     hand when the hoe is in the inventory, and switches to it via `ctx.onSelectTool` inside
+     `execute`. This is the fix for the game's most common complaint, "I clicked it and
+     nothing happened", where the only thing wrong was which tool was in hand. Still check
+     ownership: the menu shows what is possible, not what a shopping trip would make
+     possible.
+  2. Every label you return will be *read*. Placeholder entries that only exist to be
+     auto-executed unseen must be suppressed when `isContextMenu` is set — the farming
+     provider's "Check Farm Action ❓" guidance entry is one, and it looked like a bug in
+     the menu until it was gated.
 
 - **`exclusive: true` suppresses every provider after it.** Return
   `{ interactions, exclusive: true }` when one interaction fully owns the click — the shop

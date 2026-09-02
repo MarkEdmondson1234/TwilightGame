@@ -72,9 +72,35 @@ describe('emote vocabulary', () => {
   });
 
   it('only lets a player write their own presence record', () => {
-    expect(rules?.rules?.presence?.$mapId?.$uid?.['.write']).toBe(
-      'auth != null && auth.uid === $uid'
-    );
+    const write: string = rules?.rules?.presence?.$mapId?.$uid?.['.write'];
+
+    // The property that matters is that nobody can *speak as* somebody else:
+    // writing a record still requires owning it. Asserted as a property rather
+    // than a string match, because the rule legitimately grew a second clause —
+    // see the sweep test below.
+    expect(write).toContain('auth != null');
+    expect(write).toContain('auth.uid === $uid');
+  });
+
+  it('lets a stale record be swept, but never overwritten, by anyone else', () => {
+    const write: string = rules?.rules?.presence?.$mapId?.$uid?.['.write'];
+
+    // Ghost records are left behind whenever onDisconnect fails to fire, and a
+    // ghost nobody may delete sits in the room for everyone who walks in. The
+    // relaxation is deliberately narrow: deletion only (!newData.exists()), and
+    // only for a record whose own server timestamp proves it is abandoned.
+    const otherPlayerClause = write.split('auth.uid === $uid')[1] ?? '';
+    expect(
+      otherPlayerClause,
+      "Any clause letting one player touch another's presence record must be " +
+        'delete-only. Without !newData.exists() a player could rewrite somebody ' +
+        "else's position, name or emote — which is speaking as them."
+    ).toContain('!newData.exists()');
+    expect(
+      otherPlayerClause,
+      "A sweep must be justified by the record's own server timestamp, or a " +
+        'client could delete a player who is standing right there.'
+    ).toContain("data.child('t').val()");
   });
 
   it('forces the server clock for the freshness timestamp', () => {

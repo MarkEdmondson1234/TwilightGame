@@ -18,6 +18,7 @@ import {
   type SyncState,
 } from '../firebase/safe';
 import { reportError } from '../utils/errorReporting';
+import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -158,6 +159,12 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAiEnabled(false);
     setSaveMessage('API key removed.');
   };
+
+  // Chat history. The transcript is a module-level buffer rather than component
+  // state because it outlives this panel: the player opens Settings *after* the
+  // conversation, and state created on mount would start empty.
+  const [chatHistory, setChatHistory] = useState(getChatHistory);
+  useEffect(() => onChatHistoryChange(() => setChatHistory([...getChatHistory()])), []);
 
   /**
    * Firebase is initialised once during asset loading. When that attempt failed
@@ -494,6 +501,46 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                       {sfxEnabled ? 'Effects On' : 'Effects Off'}
                     </button>
                   </div>
+                </div>
+
+                {/* Chat history — what was said near you. Bubbles above players'
+                    heads are the live channel; this is only for reading back. */}
+                <div
+                  className="rounded-lg p-6 mb-6"
+                  style={{
+                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                    border: `2px solid ${colours.wood}`,
+                  }}
+                >
+                  <h2
+                    className="text-xl font-serif font-bold mb-4"
+                    style={{ color: colours.brass }}
+                  >
+                    💬 Chat History
+                  </h2>
+                  {chatHistory.length === 0 ? (
+                    <p style={{ color: colours.textLight }}>
+                      Nothing said yet. Press <strong>M</strong> (or tap “Say something”) to talk to
+                      players standing near you — what you say appears above your character.
+                    </p>
+                  ) : (
+                    <div
+                      className="max-h-64 overflow-y-auto rounded p-3 text-sm space-y-1"
+                      style={{ background: colours.parchmentDarker }}
+                    >
+                      {chatHistory.map((message) => (
+                        <div key={message.id} style={{ color: colours.textLight }}>
+                          <span
+                            className="font-semibold"
+                            style={{ color: message.isLocal ? colours.brass : colours.wood }}
+                          >
+                            {message.name}
+                          </span>
+                          <span>: {message.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Account Section */}

@@ -74,6 +74,8 @@ export interface RemotePlayer {
   isMoving: boolean;
   /** Active emote, or null once it has expired */
   emote: EmoteId | null;
+  /** What they last said, or null once the bubble has expired */
+  chat: string | null;
 }
 
 /** Events emitted by the presence transport. */

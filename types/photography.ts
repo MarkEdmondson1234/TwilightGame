@@ -8,6 +8,9 @@
  * A single photograph taken by the player.
  * Stored in inventory until sent to the album.
  */
+/** The inventory item id every photo instance uses. */
+export const PHOTO_ITEM_ID = 'photo';
+
 export interface Photo {
   /** Unique identifier, e.g. 'photo_1714000000000' */
   id: string;

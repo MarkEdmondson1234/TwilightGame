@@ -16,6 +16,7 @@ import { furnitureProvider } from './providers/furniture';
 import { placedItemProvider } from './providers/placedItems';
 import { mirrorProvider } from './providers/mirror';
 import { npcProvider } from './providers/npc';
+import { remotePlayerProvider } from './providers/remotePlayers';
 import { transitionProvider } from './providers/transition';
 import { cookingProvider } from './providers/cooking';
 import { waterProvider } from './providers/water';
@@ -39,6 +40,8 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   furnitureProvider,
   placedItemProvider,
   mirrorProvider,
+  // Ahead of npcProvider: when someone is standing on an NPC, the person is who you meant.
+  remotePlayerProvider,
   npcProvider,
   transitionProvider,
   mapLocationProvider,

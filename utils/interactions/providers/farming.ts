@@ -2,6 +2,20 @@
  * Farming — till, plant, water, harvest and clear farm plots.
  *
  * Registered in ../registry.ts. See ../README.md for how to add a new provider.
+ *
+ * ## Held tool vs. context menu
+ *
+ * On a plain click, an action is offered only when the player is already holding the
+ * right tool: till needs the hoe, planting needs a seed selected, watering needs the can.
+ * That is deliberate — clicking is how you *do* things, and swapping the tool out from
+ * under the player mid-click would be surprising.
+ *
+ * It is also the single biggest source of "I clicked it and nothing happened" in the
+ * game, because nothing on screen explains why. So on a right-click / long-press
+ * (`ctx.isContextMenu`) every action the *plot* supports is offered, whether or not it
+ * is in hand, and picking one switches to the required tool first via `onSelectTool`.
+ * Tools the player does not own are still not offered — the menu shows what is possible,
+ * not what would be possible after a shopping trip.
  */
 
 import type { AvailableInteraction, InteractionContext } from '../types';
@@ -15,9 +29,59 @@ import { getCropIdFromSeed } from '../../../data/items';
 import { inventoryManager } from '../../inventoryManager';
 import { handleFarmAction } from '../../actionHandlers';
 
+/** Menu icon per crop. Falls back to a generic seedling for anything unlisted. */
+const SEED_ICONS: Record<string, string> = {
+  radish: '🥕',
+  tomato: '🍅',
+  salad: '🥗',
+  corn: '🌽',
+  pumpkin: '🎃',
+  potato: '🥔',
+  melon: '🍉',
+  chili: '🌶️',
+  spinach: '🥬',
+  broccoli: '🥦',
+  cauliflower: '🥬',
+  sunflower: '🌻',
+  onion: '🧅',
+  pea: '🫛',
+  cucumber: '🥒',
+  carrot: '🥕',
+  strawberry: '🍓',
+};
+
 export function farmingProvider(ctx: InteractionContext): AvailableInteraction[] {
-  const { currentMapId, currentTool, onFarmAction, onFarmAnimation, tileX, tileY, tileData, tilePos } = ctx;
+  const {
+    currentMapId,
+    currentTool,
+    isContextMenu,
+    onFarmAction,
+    onFarmAnimation,
+    onSelectTool,
+    tileX,
+    tileY,
+    tileData,
+    tilePos,
+  } = ctx;
   const interactions: AvailableInteraction[] = [];
+
+  /**
+   * Is `toolId` usable for an action here — either already in hand, or reachable because
+   * this is a context menu and the player owns it?
+   */
+  const canUseTool = (toolId: string): boolean =>
+    currentTool === toolId || (isContextMenu === true && inventoryManager.hasItem(toolId));
+
+  /**
+   * Run a farm action with the tool it requires rather than whatever is in hand, and
+   * leave the player holding that tool afterwards — they almost always want to do it
+   * again to the next plot.
+   */
+  const runWithTool = (toolId: string, position: typeof tilePos) => {
+    if (toolId !== currentTool) onSelectTool?.(toolId);
+    const farmResult = handleFarmAction(position, toolId, currentMapId, onFarmAnimation);
+    onFarmAction?.(farmResult);
+  };
 
   // Check for farming actions
   // Advance plot states before reading them so cooldowns/growth reflect real elapsed time.
@@ -61,71 +125,47 @@ export function farmingProvider(ctx: InteractionContext): AvailableInteraction[]
     plotTileType <= TileType.SOIL_DEAD
   ) {
     // Till soil
-    if (currentTool === 'tool_hoe' && plotTileType === TileType.SOIL_FALLOW) {
+    if (canUseTool('tool_hoe') && plotTileType === TileType.SOIL_FALLOW) {
       interactions.push({
         type: 'farm_till',
         label: 'Till Soil',
         icon: '🔨',
         color: '#92400e',
-        execute: () => {
-          const farmResult = handleFarmAction(
-            farmTilePos,
-            currentTool,
-            currentMapId,
-            onFarmAnimation
-          );
-          onFarmAction?.(farmResult);
-        },
+        execute: () => runWithTool('tool_hoe', farmTilePos),
       });
     }
 
-    // Plant seeds - if player has a seed item selected, allow planting
-    if (currentTool.startsWith('seed_') && plotTileType === TileType.SOIL_TILLED) {
-      // Player has a specific seed selected (e.g., 'seed_radish')
-      const cropId = getCropIdFromSeed(currentTool);
-      if (cropId) {
+    // Plant seeds.
+    //
+    // Clicking plants the seed in hand. A context menu instead lists every seed the
+    // player is carrying, so choosing what to plant does not mean closing the menu,
+    // opening the inventory, selecting a seed and clicking the plot again.
+    if (plotTileType === TileType.SOIL_TILLED) {
+      const plantableSeeds = currentTool.startsWith('seed_')
+        ? [currentTool]
+        : isContextMenu
+          ? // De-duplicated: seeds are stored as one instance per stack.
+            [...new Set(inventoryManager.getAllSeeds().map((seed) => seed.itemId))]
+          : [];
+
+      for (const seedId of plantableSeeds) {
+        const cropId = getCropIdFromSeed(seedId);
+        if (!cropId) continue;
         const crop = getCrop(cropId);
-        const seedIcons: Record<string, string> = {
-          radish: '🥕',
-          tomato: '🍅',
-          salad: '🥗',
-          corn: '🌽',
-          pumpkin: '🎃',
-          potato: '🥔',
-          melon: '🍉',
-          chili: '🌶️',
-          spinach: '🥬',
-          broccoli: '🥦',
-          cauliflower: '🥬',
-          sunflower: '🌻',
-          onion: '🧅',
-          pea: '🫛',
-          cucumber: '🥒',
-          carrot: '🥕',
-          strawberry: '🍓',
-        };
 
         interactions.push({
           type: 'farm_plant',
           label: `Plant ${crop?.displayName || cropId}`,
-          icon: seedIcons[cropId] || '🌱',
+          icon: SEED_ICONS[cropId] || '🌱',
           color: '#16a34a',
-          execute: () => {
-            const farmResult = handleFarmAction(
-              farmTilePos,
-              currentTool,
-              currentMapId,
-              onFarmAnimation
-            );
-            onFarmAction?.(farmResult);
-          },
+          execute: () => runWithTool(seedId, farmTilePos),
         });
       }
     }
 
     // Water soil or crop (not READY crops - those should be harvested; not herb states)
     if (
-      currentTool === 'tool_watering_can' &&
+      canUseTool('tool_watering_can') &&
       (plotTileType === TileType.SOIL_TILLED ||
         plotTileType === TileType.SOIL_PLANTED ||
         plotTileType === TileType.SOIL_WATERED ||
@@ -144,15 +184,7 @@ export function farmingProvider(ctx: InteractionContext): AvailableInteraction[]
           label: isTilled ? 'Water Soil' : 'Water Crop',
           icon: '💧',
           color: '#0ea5e9',
-          execute: () => {
-            const farmResult = handleFarmAction(
-              farmTilePos,
-              currentTool,
-              currentMapId,
-              onFarmAnimation
-            );
-            onFarmAction?.(farmResult);
-          },
+          execute: () => runWithTool('tool_watering_can', farmTilePos),
         });
       }
     }
@@ -341,9 +373,13 @@ export function farmingProvider(ctx: InteractionContext): AvailableInteraction[]
     }
 
     // Fallback: If no specific farm interaction was added, call handleFarmAction to get guidance message
-    // This ensures mouse clicks show the same helpful messages as keyboard input
+    // This ensures mouse clicks show the same helpful messages as keyboard input.
+    //
+    // Never in a context menu: this entry exists only to be auto-executed as a lone
+    // interaction, and its placeholder label ("Check Farm Action" with a ❓) is written on
+    // the assumption nobody reads it. A context menu shows every option, so it would.
     const farmInteractionsAdded = interactions.filter((i) => i.type.startsWith('farm_')).length;
-    if (farmInteractionsAdded === 0 && onFarmAction) {
+    if (farmInteractionsAdded === 0 && onFarmAction && !isContextMenu) {
       // Create a guidance interaction that calls handleFarmAction
       interactions.push({
         type: 'farm_till', // Use generic type

@@ -14,23 +14,51 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MULTIPLAYER, MULTIPLAYER_ENABLED } from '../constants';
 import { getChatService, getAuthService, whenFirebaseSettled } from '../firebase/safe';
-import { CHAT_HISTORY_LIMIT, sanitiseMessage } from '../multiplayer/chat';
+import { sanitiseMessage } from '../multiplayer/chat';
 import type { ChatMessage } from '../multiplayer/chat';
+import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
+import { setLocalChatBubble, clearLocalChatBubble } from '../multiplayer/localChat';
+import { recordChatMessage } from '../multiplayer/chatHistory';
+import type { Position } from '../types';
 
 export interface UseChatControllerProps {
   /** Map the player is currently on */
   currentMapId: string;
   /** The local player's display name, for attribution */
   playerName: string;
+  /**
+   * Where we are standing. Read at message-arrival time, so it must be cheap
+   * and must come from a ref rather than React state.
+   */
+  getLocalPosition: () => Position;
 }
 
 export interface UseChatControllerReturn {
   /** True when chat can actually be sent on this map */
   isChatActive: boolean;
-  /** Recent messages, oldest first */
-  messages: ChatMessage[];
   /** Send a message. Returns false when there was nothing to send. */
   sendMessage: (text: string) => Promise<boolean>;
+}
+
+/**
+ * Could we hear this from where we are standing?
+ *
+ * Chat is proximity-based: a message carries no position of its own, so the
+ * speaker's presence record — the same one that draws them on screen — is what
+ * decides. Somebody who is not in the room at all cannot be heard, which also
+ * neatly drops messages from players who have walked off the map.
+ */
+function canHear(message: ChatMessage, localPosition: Position): boolean {
+  if (message.isLocal) return true;
+
+  const speaker = remotePlayerManager
+    .getRemotePlayers()
+    .find((player) => player.uid === message.uid);
+  if (!speaker) return false;
+
+  const dx = speaker.position.x - localPosition.x;
+  const dy = speaker.position.y - localPosition.y;
+  return Math.hypot(dx, dy) <= MULTIPLAYER.CHAT_HEARING_RADIUS_TILES;
 }
 
 /** Chat runs exactly where presence does — the maps players are meant to share. */
@@ -39,15 +67,17 @@ function isSharedMap(mapId: string): boolean {
 }
 
 export function useChatController(props: UseChatControllerProps): UseChatControllerReturn {
-  const { currentMapId, playerName } = props;
+  const { currentMapId, playerName, getLocalPosition } = props;
 
   const [isChatActive, setIsChatActive] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [authTick, setAuthTick] = useState(0);
 
   // Read at send time, so a name change mid-session does not need a re-subscribe.
   const playerNameRef = useRef(playerName);
   playerNameRef.current = playerName;
+
+  const getLocalPositionRef = useRef(getLocalPosition);
+  getLocalPositionRef.current = getLocalPosition;
 
   // Inbound messages → React state.
   useEffect(() => {
@@ -63,12 +93,17 @@ export function useChatController(props: UseChatControllerProps): UseChatControl
       if (cancelled || !loaded) return;
 
       unsubscribeChat = getChatService().onMessage((message) => {
-        setMessages((previous) => {
-          // RTDB can re-deliver a child on reconnect; keying on id keeps the
-          // player from seeing their own sentence twice.
-          if (previous.some((existing) => existing.id === message.id)) return previous;
-          return [...previous, message].slice(-CHAT_HISTORY_LIMIT);
-        });
+        if (!canHear(message, getLocalPositionRef.current())) return;
+
+        // The bubble is the message. Our own goes above our own head; everyone
+        // else's goes above theirs, via the presence record that already knows
+        // where they are standing.
+        if (message.isLocal) setLocalChatBubble(message.text);
+        else remotePlayerManager.setChat(message.uid, message.text);
+
+        // Only what was heard is remembered — the proximity rule would be worth
+        // nothing if the transcript in Settings ignored it.
+        recordChatMessage(message);
       });
 
       unsubscribeAuth = getAuthService().onAuthStateChange(() => {
@@ -93,9 +128,9 @@ export function useChatController(props: UseChatControllerProps): UseChatControl
       await whenFirebaseSettled();
       const chat = getChatService();
 
-      // Messages are per-map: walking into the orchard should not show what was
-      // said in the village.
-      setMessages([]);
+      // Bubbles are per-map: walking into the orchard should not still show
+      // what somebody said in the village.
+      clearLocalChatBubble();
 
       if (!isSharedMap(currentMapId) || !chat.isAvailable()) {
         await chat.leaveRoom();
@@ -126,5 +161,5 @@ export function useChatController(props: UseChatControllerProps): UseChatControl
     return getChatService().send(text, playerNameRef.current);
   }, []);
 
-  return { isChatActive, messages, sendMessage };
+  return { isChatActive, sendMessage };
 }
