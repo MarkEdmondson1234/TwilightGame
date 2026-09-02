@@ -16,6 +16,7 @@ import { TILE_SIZE, INTERACTION, DEBUG } from '../constants';
 import { MouseClickInfo } from './useMouseControls';
 import { RadialMenuOption } from '../components/RadialMenu';
 import { FarmActionType } from '../components/FarmActionAnimation';
+import type { EmoteId } from '../multiplayer/emotes';
 import {
   FarmActionResult,
   ForageResult,
@@ -25,6 +26,7 @@ import {
 import {
   getAvailableInteractions,
   getAvailableInteractionsWithTouchTolerance,
+  type AvailableInteraction,
   type PlacedItemAction,
 } from '../utils/interactions';
 import { npcManager } from '../NPCManager';
@@ -102,6 +104,25 @@ export interface UseInteractionControllerProps {
   /** Callback to show a toast notification */
   onShowToast: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
 
+  /**
+   * Social actions on another player, from the context menu on them.
+   *
+   * Optional: without multiplayer there are no other players, so the provider that uses
+   * these never fires and App need not supply them.
+   */
+  onEmote?: (emoteId: EmoteId) => void;
+  onOpenEmoteWheel?: () => void;
+  onStartChat?: () => void;
+
+  /**
+   * Select an inventory slot, making it the held tool.
+   *
+   * Used by context-menu actions that need a specific tool in hand (see the farming
+   * provider): the player asked to water a plot, so put the watering can in their hand
+   * rather than telling them they are holding the wrong thing.
+   */
+  onSelectItemSlot: (slotIndex: number) => void;
+
   /** Callback to trigger VFX */
   triggerVFX: (type: string, position?: Position) => void;
 
@@ -124,6 +145,8 @@ export interface UseInteractionControllerReturn {
   radialMenuVisible: boolean;
   radialMenuPosition: { x: number; y: number };
   radialMenuOptions: RadialMenuOption[];
+  /** True when a long press opened the menu, so it can be drawn clear of the finger. */
+  radialMenuOpenedByTouch: boolean;
   setRadialMenuVisible: (visible: boolean) => void;
 
   // === Farm Action Animation State ===
@@ -137,6 +160,8 @@ export interface UseInteractionControllerReturn {
   // === Handlers ===
   /** Handle canvas/mouse click for interactions */
   handleCanvasClick: (clickInfo: MouseClickInfo) => void;
+  /** Right-click / long-press: always show every interaction, never auto-execute. */
+  handleContextClick: (clickInfo: MouseClickInfo) => void;
 
   /** Handle farm action animation (consolidated - use from keyboard/touch/mouse) */
   handleFarmActionAnimation: (action: FarmActionType, tilePos?: Position) => void;
@@ -170,6 +195,10 @@ export function useInteractionController(
     setActiveNPC,
     onMapTransition,
     onShowToast,
+    onSelectItemSlot,
+    onEmote,
+    onOpenEmoteWheel,
+    onStartChat,
     triggerVFX,
     setDestination,
     onFarmUpdate,
@@ -198,6 +227,8 @@ export function useInteractionController(
     y: 0,
   });
   const [radialMenuOptions, setRadialMenuOptions] = useState<RadialMenuOption[]>([]);
+  /** Lifts the menu clear of the finger that opened it. See RadialMenu's TOUCH_LIFT_PX. */
+  const [radialMenuOpenedByTouch, setRadialMenuOpenedByTouch] = useState(false);
   const radialMenuNpcIdRef = useRef<string | null>(null);
 
   // -------------------------------------------------------------------------
@@ -278,6 +309,18 @@ export function useInteractionController(
   const buildInteractionCallbacks = useCallback(() => {
     return {
       onMirror: () => openUI('characterCreator'),
+      /**
+       * Bring `itemId` to hand. Silently does nothing when the player is not carrying it
+       * — providers are expected to have checked ownership before offering the action,
+       * and a toast here would fire mid-action rather than at the decision point.
+       */
+      onSelectTool: (itemId: string) => {
+        const slotIndex = inventoryItems.findIndex((item) => item.id === itemId);
+        if (slotIndex !== -1) onSelectItemSlot(slotIndex);
+      },
+      onEmote,
+      onOpenEmoteWheel,
+      onStartChat,
       onOpenShop: () => openUI('shopUI', { activeShopId: currentMapId }),
       onNPC: (npcId: string) => {
         // Play duck quacking if interacting with a duck
@@ -484,7 +527,130 @@ export function useInteractionController(
     handleFarmActionAnimation,
     currentMapId,
     setDestination,
+    inventoryItems,
+    onSelectItemSlot,
+    onEmote,
+    onOpenEmoteWheel,
+    onStartChat,
   ]);
+
+  // -------------------------------------------------------------------------
+  // Interaction collection (shared by left-click and the context menu)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Work out what the player could do at a clicked position.
+   *
+   * Shared by `handleCanvasClick` and `handleContextClick` so the two gestures can never
+   * disagree about what is possible somewhere — they differ only in what they do with
+   * the answer: left-click runs a lone interaction immediately, right-click always shows
+   * the list.
+   *
+   * Returns null when there is nothing to offer, or when the player is too far away (in
+   * which case it has already told them).
+   */
+  const collectInteractionsAt = useCallback(
+    (clickInfo: MouseClickInfo, isContextMenu: boolean): AvailableInteraction[] | null => {
+      const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+      const currentTool = selectedItem?.id || 'hand';
+      const callbacks = buildInteractionCallbacks();
+
+      const interactionConfig = {
+        position: clickInfo.worldPos,
+        playerPosition: playerPosRef.current,
+        currentMapId: currentMapId,
+        currentTool: currentTool,
+        selectedSeed: null, // Seeds are now part of the tool system
+        isContextMenu,
+        onShowToast,
+        ...callbacks,
+      };
+
+      // Touch taps get extra tolerance for nearby tiles — a fingertip is far
+      // less precise than a mouse cursor, so a tap near a door's edge shouldn't miss it.
+      const interactions = clickInfo.isTouch
+        ? getAvailableInteractionsWithTouchTolerance(interactionConfig)
+        : getAvailableInteractions(interactionConfig);
+
+      if (DEBUG.CLICK) {
+        console.log(
+          `[Click] Tool: ${currentTool}, Context: ${isContextMenu}, Interactions: ${interactions.length}`,
+          interactions.map((i) => i.type)
+        );
+      }
+
+      if (interactions.length === 0) {
+        return null;
+      }
+
+      // Only interact if player is nearby (no walk-to-interact)
+      // Exception: background-image rooms are small single-screen rooms where
+      // everything is visible — allow clicking anywhere (mini-game style)
+      // Exception: fruit tree interactions use player proximity to the anchor tile
+      // (checked inside getAvailableInteractions via playerPosition), so the click
+      // position can legitimately be far from the player (e.g. clicking the canopy).
+      const FRUIT_TREE_TYPES = new Set(['prune_tree', 'mulch_tree', 'harvest_fruit_tree']);
+      const isFruitTreeOnly = interactions.every((i) => FRUIT_TREE_TYPES.has(i.type));
+      const isBackgroundImageRoom = mapManager.getCurrentMap()?.renderMode === 'background-image';
+      if (!isBackgroundImageRoom && !isFruitTreeOnly) {
+        const currentPlayerPos = playerPosRef.current;
+        const distanceToClick = getDistance(currentPlayerPos, clickInfo.worldPos);
+        const isNearby = distanceToClick <= INTERACTION.RANGE;
+
+        if (!isNearby) {
+          onShowToast('Too far away!', 'info');
+          return null;
+        }
+      }
+
+      return interactions;
+    },
+    [
+      selectedItemSlot,
+      inventoryItems,
+      currentMapId,
+      playerPosRef,
+      buildInteractionCallbacks,
+      onShowToast,
+    ]
+  );
+
+  /** Turn interactions into radial menu options, preserving provider order. */
+  const toMenuOptions = useCallback(
+    (interactions: AvailableInteraction[]): RadialMenuOption[] =>
+      interactions.map((interaction, index) => ({
+        id: `${interaction.type}_${index}`,
+        label: interaction.label,
+        icon: interaction.icon,
+        color: interaction.color,
+        onSelect: interaction.execute,
+      })),
+    []
+  );
+
+  /**
+   * Right-click, or long-press on touch: show everything possible here and commit to
+   * nothing.
+   *
+   * This is the deliberate counterpart to left-click. Left-click is overloaded — it both
+   * walks the player and fires a lone interaction outright — so there was no way to ask
+   * "what can I do with this?" without risking doing it. Notably this never pathfinds and
+   * never auto-executes, however few options there are.
+   */
+  const handleContextClick = useCallback(
+    (clickInfo: MouseClickInfo) => {
+      if (isUIBlocking) return;
+
+      const interactions = collectInteractionsAt(clickInfo, true);
+      if (!interactions) return;
+
+      setRadialMenuOptions(toMenuOptions(interactions));
+      setRadialMenuPosition(clickInfo.screenPos);
+      setRadialMenuOpenedByTouch(clickInfo.isTouch);
+      setRadialMenuVisible(true);
+    },
+    [isUIBlocking, collectInteractionsAt, toMenuOptions]
+  );
 
   // -------------------------------------------------------------------------
   // Canvas Click Handler
@@ -594,55 +760,8 @@ export function useInteractionController(
         }
       }
 
-      const callbacks = buildInteractionCallbacks();
-
-      const interactionConfig = {
-        position: clickInfo.worldPos,
-        playerPosition: playerPosRef.current,
-        currentMapId: currentMapId,
-        currentTool: currentTool,
-        selectedSeed: null, // Seeds are now part of the tool system
-        onShowToast,
-        ...callbacks,
-      };
-
-      // Touch taps get extra tolerance for nearby tiles — a fingertip is far
-      // less precise than a mouse cursor, so a tap near a door's edge shouldn't miss it.
-      const interactions = clickInfo.isTouch
-        ? getAvailableInteractionsWithTouchTolerance(interactionConfig)
-        : getAvailableInteractions(interactionConfig);
-
-      if (DEBUG.CLICK) {
-        console.log(
-          `[Click] Tool: ${currentTool}, Interactions: ${interactions.length}`,
-          interactions.map((i) => i.type)
-        );
-      }
-
-      // No interactions at this position — ignore click
-      if (interactions.length === 0) {
-        return;
-      }
-
-      // Only interact if player is nearby (no walk-to-interact)
-      // Exception: background-image rooms are small single-screen rooms where
-      // everything is visible — allow clicking anywhere (mini-game style)
-      // Exception: fruit tree interactions use player proximity to the anchor tile
-      // (checked inside getAvailableInteractions via playerPosition), so the click
-      // position can legitimately be far from the player (e.g. clicking the canopy).
-      const FRUIT_TREE_TYPES = new Set(['prune_tree', 'mulch_tree', 'harvest_fruit_tree']);
-      const isFruitTreeOnly = interactions.every((i) => FRUIT_TREE_TYPES.has(i.type));
-      const isBackgroundImageRoom = mapManager.getCurrentMap()?.renderMode === 'background-image';
-      if (!isBackgroundImageRoom && !isFruitTreeOnly) {
-        const currentPlayerPos = playerPosRef.current;
-        const distanceToClick = getDistance(currentPlayerPos, clickInfo.worldPos);
-        const isNearby = distanceToClick <= INTERACTION.RANGE;
-
-        if (!isNearby) {
-          onShowToast('Too far away!', 'info');
-          return;
-        }
-      }
+      const interactions = collectInteractionsAt(clickInfo, false);
+      if (!interactions) return;
 
       if (interactions.length === 1) {
         const sole = interactions[0];
@@ -656,25 +775,20 @@ export function useInteractionController(
       }
 
       // Multiple interactions — show radial menu
-      const menuOptions: RadialMenuOption[] = interactions.map((interaction, index) => ({
-        id: `${interaction.type}_${index}`,
-        label: interaction.label,
-        icon: interaction.icon,
-        color: interaction.color,
-        onSelect: interaction.execute,
-      }));
-
-      setRadialMenuOptions(menuOptions);
+      setRadialMenuOptions(toMenuOptions(interactions));
       setRadialMenuPosition(clickInfo.screenPos);
+      setRadialMenuOpenedByTouch(clickInfo.isTouch);
       setRadialMenuVisible(true);
     },
     [
       isUIBlocking,
+      currentMapId,
+      // Still read directly by the cobweb / mess-pile handlers above, which gate on the
+      // held tool — dropping these would let those quietly act on a stale selection.
       selectedItemSlot,
       inventoryItems,
-      currentMapId,
-      playerPosRef,
-      buildInteractionCallbacks,
+      collectInteractionsAt,
+      toMenuOptions,
       onShowToast,
     ]
   );
@@ -787,6 +901,7 @@ export function useInteractionController(
     radialMenuVisible,
     radialMenuPosition,
     radialMenuOptions,
+    radialMenuOpenedByTouch,
     setRadialMenuVisible,
 
     // Farm animations
@@ -799,6 +914,7 @@ export function useInteractionController(
 
     // Handlers
     handleCanvasClick,
+    handleContextClick,
     handleFarmActionAnimation,
     handleAnimationComplete,
     clearWaterSparkle,

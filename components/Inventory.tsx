@@ -3,10 +3,9 @@ import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { getItem, ItemCategory } from '../data/items';
 import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';
+import { useLongPress } from '../hooks/useLongPress';
 import type { Photo } from '../types';
-import { CAMERA, TIMING } from '../constants';
-
-const LONG_PRESS_MS = TIMING.LONG_PRESS_MS;
+import { CAMERA } from '../constants';
 
 export interface InventoryItem {
   id: string;
@@ -80,10 +79,19 @@ const Inventory: React.FC<InventoryProps> = ({
   const isTouchDevice = useTouchDevice();
 
   // Long-press opens the action menu on touch, where there is no right-click.
-  // The timer is cancelled by any move or lift, so a normal tap still selects.
   // Declared above the isOpen guard — hooks must run in the same order every render.
-  const longPressTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressFiredRef = React.useRef(false);
+  //
+  // One hook serves the whole grid: the slot the finger went down on is recorded at
+  // touchstart, because by the time the hold fires there is no event to read it from.
+  const pressTargetRef = React.useRef<{ item: InventoryItem; index: number } | null>(null);
+  const onItemContextMenuRef = React.useRef(onItemContextMenu);
+  onItemContextMenuRef.current = onItemContextMenu;
+
+  const longPress = useLongPress((clientX, clientY) => {
+    const target = pressTargetRef.current;
+    if (!target) return;
+    onItemContextMenuRef.current?.(target.item, target.index, { clientX, clientY });
+  });
 
   if (!isOpen) return null;
 
@@ -148,24 +156,10 @@ const Inventory: React.FC<InventoryProps> = ({
     }
   });
 
-  const cancelLongPress = () => {
-    if (longPressTimer.current !== null) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  };
-
   const handleTouchStart = (item: InventoryItem | null, index: number, e: React.TouchEvent) => {
     if (!item || !onItemContextMenu) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-    const { clientX, clientY } = touch;
-    longPressFiredRef.current = false;
-    cancelLongPress();
-    longPressTimer.current = setTimeout(() => {
-      longPressFiredRef.current = true;
-      onItemContextMenu(item, index, { clientX, clientY });
-    }, LONG_PRESS_MS);
+    pressTargetRef.current = { item, index };
+    longPress.handlers.onTouchStart(e);
   };
 
   const handleContextMenu = (
@@ -180,10 +174,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
   const handleSlotClick = (item: InventoryItem | null, index: number, event: React.MouseEvent) => {
     // A long-press already opened the action menu — don't also treat it as a tap.
-    if (longPressFiredRef.current) {
-      longPressFiredRef.current = false;
-      return;
-    }
+    if (longPress.consumeTap()) return;
 
     // Double-click on photo opens the viewer
     if (event.detail === 2 && item?.photoData && onPhotoDoubleClick) {
@@ -340,9 +331,9 @@ const Inventory: React.FC<InventoryProps> = ({
                   onClick={(e) => handleSlotClick(item, index, e)}
                   onContextMenu={(e) => handleContextMenu(item, index, e)}
                   onTouchStart={(e) => handleTouchStart(item, index, e)}
-                  onTouchMove={cancelLongPress}
-                  onTouchEnd={cancelLongPress}
-                  onTouchCancel={cancelLongPress}
+                  onTouchMove={longPress.handlers.onTouchMove}
+                  onTouchEnd={longPress.handlers.onTouchEnd}
+                  onTouchCancel={longPress.handlers.onTouchCancel}
                   className={`
                     no-touch-callout
                     relative w-full aspect-square rounded-lg transition-all

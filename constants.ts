@@ -59,6 +59,19 @@ export const MULTIPLAYER = {
   /** Evict a remote player we have not heard from for this long */
   STALE_AFTER_MS: 45000,
 
+  /**
+   * A presence record whose *server* timestamp is older than this was left
+   * behind by a client that died without its onDisconnect firing. Nobody is
+   * standing there.
+   *
+   * Much longer than STALE_AFTER_MS on purpose. That one measures our own
+   * receipt clock, which is reliable; this one compares a server timestamp
+   * against the local clock, which may be minutes out on a tablet nobody has
+   * ever set the time on. A live player heartbeats every 15 s, so anything this
+   * old is a ghost with room to spare.
+   */
+  GHOST_AFTER_MS: 5 * 60 * 1000,
+
   /** Render remote players this far in the past, so interpolation always has two samples */
   INTERPOLATION_DELAY_MS: 120,
 
@@ -70,6 +83,22 @@ export const MULTIPLAYER = {
 
   /** Right-clicking within this many tiles of yourself opens the emote picker */
   SELF_CLICK_RADIUS_TILES: 1.0,
+
+  /**
+   * How far a spoken message carries, in tiles. Chat is proximity-based: you
+   * hear the people you are standing near, not everyone on the map. Roughly
+   * half a screen, so the speaker is someone you can see.
+   */
+  CHAT_HEARING_RADIUS_TILES: 8,
+
+  /**
+   * Right-clicking within this many tiles of another player offers the social menu.
+   *
+   * Wider than SELF_CLICK_RADIUS_TILES because you are aiming at someone who is moving,
+   * and the click resolves against their interpolated position — which is deliberately a
+   * little behind where they are drawn.
+   */
+  PLAYER_CLICK_RADIUS_TILES: 1.5,
 
   /** Tiles of travel per walk-cycle frame. Remote animation is derived from
    *  distance moved rather than sent over the wire — one less field, and the
@@ -150,6 +179,9 @@ export const TIMING = {
   TOAST_DURATION_MS: 3000, // How long toast messages display
   MODAL_TRANSITION_MS: 200, // Modal open/close animation
   LONG_PRESS_MS: 500, // Touch hold that stands in for a right-click (item action menus)
+  LONG_PRESS_SLOP_PX: 12, // How far a finger may drift mid-hold before it stops counting as a press.
+  //                         A child holding still still wobbles a few pixels; cancelling on the first
+  //                         touchmove made long-press feel broken about a third of the time.
 
   // Game systems
   MAP_TRANSITION_MS: 1000, // Map transition fade duration

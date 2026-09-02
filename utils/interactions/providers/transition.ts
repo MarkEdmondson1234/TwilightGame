@@ -10,8 +10,22 @@ import { getTierName } from '../../MagicEffects';
 import { mapManager, transitionToMap } from '../../../maps';
 
 export function transitionProvider(ctx: InteractionContext): AvailableInteraction[] {
-  const { position, currentMapId, playerSizeTier, onTransition } = ctx;
+  const { position, currentMapId, playerSizeTier, isContextMenu, onTransition } = ctx;
   const interactions: AvailableInteraction[] = [];
+
+  /**
+   * Name the destination when the player is asking rather than going.
+   *
+   * "Go Through Door" tells a child nothing about which door this is, and the map is no
+   * help to someone who cannot read it yet. Only for the context menu: on a plain click
+   * the label is never seen (a lone transition auto-executes), and randomly generated
+   * maps are not registered until they are entered, so there is often no name to give.
+   */
+  const doorLabel = (toMapId: string): string => {
+    if (!isContextMenu) return 'Go Through Door';
+    const name = mapManager.getMap(toMapId)?.name;
+    return name ? `Go to ${name}` : 'Go Through Door';
+  };
 
   // Check for transition (tight tolerance for click — must click on the door tile)
   const transitionData = mapManager.getTransitionAt(position, 0.9);
@@ -59,7 +73,7 @@ export function transitionProvider(ctx: InteractionContext): AvailableInteractio
       // Normal transition - player is the right size
       interactions.push({
         type: 'transition',
-        label: 'Go Through Door',
+        label: doorLabel(transition.toMapId),
         icon: '🚪',
         color: '#34d399',
         execute: () => {

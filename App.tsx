@@ -231,6 +231,24 @@ const App: React.FC = () => {
   } | null>(null);
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
 
+  /**
+   * Open an item's action menu — right-click on desktop, long-press on touch.
+   *
+   * Shared by the inventory grid and the quick slot bar, which show the same slots and
+   * must not disagree about what an item can do. An item with nothing to offer beyond
+   * plain selection just gets selected, rather than opening a one-entry menu.
+   */
+  const openItemActionMenu = useCallback(
+    (item: InventoryItem, slotIndex: number, at: { clientX: number; clientY: number }) => {
+      if (!hasInventoryActions(item.id)) {
+        setSelectedItemSlot(slotIndex);
+        return;
+      }
+      setInventoryRadialMenu({ position: { x: at.clientX, y: at.clientY }, item, slotIndex });
+    },
+    []
+  );
+
   // Yule celebration state
   const [isYuleCelebrationActive, setIsYuleCelebrationActive] = useState(false);
   const [yuleNpcWishes, setYuleNpcWishes] = useState<Record<string, string>>({});
@@ -425,13 +443,12 @@ const App: React.FC = () => {
     useMultiplayerController({ currentMapId, getLocalPresence });
 
   // ── Player chat ───────────────────────────────────────────────────────────
-  const {
-    isChatActive,
-    messages: chatMessages,
-    sendMessage,
-  } = useChatController({
+  const { isChatActive, sendMessage } = useChatController({
     currentMapId,
     playerName: gameState.getSelectedCharacter()?.name ?? 'Traveller',
+    // Chat is proximity-based: read where we are standing at the moment a
+    // message lands, from the ref rather than React state.
+    getLocalPosition: () => playerPosRef.current,
   });
 
   // Furniture, wreaths and anything else put down in a shared map, visible to
@@ -454,16 +471,22 @@ const App: React.FC = () => {
   const toggleEmoteWheel = useCallback(() => setShowEmoteWheel((open) => !open), []);
 
   /**
-   * Right-clicking yourself opens the emote picker — the mouse equivalent of the
-   * touch controls' 👋 button, and more discoverable than knowing to press T.
-   * Right-clicks anywhere else fall through to nothing, since the world's own
-   * interactions are all left-click.
+   * Right-clicking (or long-pressing) yourself opens the emote picker — the mouse
+   * equivalent of the touch controls' 👋 button, and more discoverable than knowing to
+   * press T.
+   *
+   * Returns true when it handled the gesture, so the dispatcher below knows whether to
+   * fall through to the world context menu. Yourself wins: you are standing on a tile
+   * that usually has its own interactions, and "emote" is what a click on your own
+   * character means.
    */
-  const handleContextClick = useCallback(
-    (clickInfo: MouseClickInfo) => {
+  const handleSelfContextClick = useCallback(
+    (clickInfo: MouseClickInfo): boolean => {
       const player = playerPosRef.current;
       const distance = Math.hypot(clickInfo.worldPos.x - player.x, clickInfo.worldPos.y - player.y);
-      if (distance <= MULTIPLAYER.SELF_CLICK_RADIUS_TILES) toggleEmoteWheel();
+      if (distance > MULTIPLAYER.SELF_CLICK_RADIUS_TILES) return false;
+      toggleEmoteWheel();
+      return true;
     },
     [playerPosRef, toggleEmoteWheel]
   );
@@ -480,12 +503,14 @@ const App: React.FC = () => {
     radialMenuVisible,
     radialMenuPosition,
     radialMenuOptions,
+    radialMenuOpenedByTouch,
     setRadialMenuVisible,
     farmActionAnimation,
     farmActionKey,
     showSplashEffect,
     splashKey,
     handleCanvasClick,
+    handleContextClick: handleWorldContextClick,
     handleFarmActionAnimation,
     handleAnimationComplete,
     hideSplashEffect,
@@ -517,10 +542,31 @@ const App: React.FC = () => {
       resetZoom();
     },
     onShowToast: showToast,
+    onSelectItemSlot: setSelectedItemSlot,
+    // Social actions offered when right-clicking another player.
+    onEmote: sendEmote,
+    onOpenEmoteWheel: toggleEmoteWheel,
+    onStartChat: startComposingChat,
     triggerVFX,
     setDestination: setClickToMoveDestination,
     onFarmUpdate: () => {}, // EventBus handles this now
   });
+
+  /**
+   * Right-click, or long-press on touch — one gesture, two meanings by target.
+   *
+   * On yourself it is the emote picker; anywhere else it asks the world "what can I do
+   * here?" and shows every answer without committing to any of them. That second half is
+   * the counterweight to left-click, which both walks the player and fires a lone
+   * interaction outright, and so can never be used to simply look.
+   */
+  const handleContextClick = useCallback(
+    (clickInfo: MouseClickInfo) => {
+      if (handleSelfContextClick(clickInfo)) return;
+      handleWorldContextClick(clickInfo);
+    },
+    [handleSelfContextClick, handleWorldContextClick]
+  );
 
   // Ambient VFX effects (lightning during storms, water sparkles, etc.)
   useAmbientVFX({
@@ -1984,10 +2030,13 @@ const App: React.FC = () => {
   }
 
   // ═══════════════════════════════ RENDER ═══════════════════════════════
+  // `no-touch-callout` on the container: long-press is a game input here (it opens the
+  // world context menu), and iOS answers an unguarded long press with its own callout,
+  // which steals the gesture. Same reason the inventory grid carries the class.
   return (
     <div
       ref={gameContainerRef}
-      className="text-white w-full h-full overflow-hidden font-sans relative select-none"
+      className="no-touch-callout text-white w-full h-full overflow-hidden font-sans relative select-none"
       style={{ backgroundColor: '#5A7247' }}
     >
       {/* PixiJS Renderer (WebGL - High Performance) */}
@@ -2280,6 +2329,11 @@ const App: React.FC = () => {
             items={inventoryItems.slice(0, 9)}
             selectedSlot={selectedItemSlot}
             onSlotClick={setSelectedItemSlot}
+            // The bar shows the first nine inventory slots, so its index is the slot index.
+            onSlotContextMenu={(slotIndex, at) => {
+              const item = inventoryItems[slotIndex];
+              if (item) openItemActionMenu(item, slotIndex, at);
+            }}
           />
         </>
       )}
@@ -2332,7 +2386,6 @@ const App: React.FC = () => {
       )}
       {isInWorld && isChatActive && !isAnyOverlayOpen && (
         <ChatPanel
-          messages={chatMessages}
           onSend={handleSendChat}
           isComposing={isComposingChat}
           onStartComposing={startComposingChat}
@@ -2479,13 +2532,7 @@ const App: React.FC = () => {
           // deletes an item lives behind right-click / long-press, because a stray
           // click used to drink a potion outright.
           onItemClick={(_item, slotIndex) => setSelectedItemSlot(slotIndex)}
-          onItemContextMenu={(item, slotIndex, at) => {
-            if (!hasInventoryActions(item.id)) {
-              setSelectedItemSlot(slotIndex);
-              return;
-            }
-            setInventoryRadialMenu({ position: { x: at.clientX, y: at.clientY }, item, slotIndex });
-          }}
+          onItemContextMenu={openItemActionMenu}
         />
       )}
       {ui.cookingUI && (
@@ -2823,6 +2870,7 @@ const App: React.FC = () => {
         <RadialMenu
           position={radialMenuPosition}
           options={radialMenuOptions}
+          openedByTouch={radialMenuOpenedByTouch}
           onClose={() => setRadialMenuVisible(false)}
         />
       )}
@@ -2832,6 +2880,7 @@ const App: React.FC = () => {
       {inventoryRadialMenu && (
         <RadialMenu
           position={inventoryRadialMenu.position}
+          openedByTouch={isTouchDevice}
           zIndex={Z_INVENTORY_RADIAL_MENU}
           options={buildInventoryActions({
             item: inventoryRadialMenu.item,

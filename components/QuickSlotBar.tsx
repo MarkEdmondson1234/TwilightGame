@@ -1,5 +1,6 @@
 import React from 'react';
 import { Z_HUD, zClass } from '../zIndex';
+import { useLongPress } from '../hooks/useLongPress';
 
 export interface InventoryItem {
   id: string;
@@ -12,6 +13,14 @@ interface QuickSlotBarProps {
   items: InventoryItem[]; // First 9 items from inventory
   selectedSlot: number | null; // Currently selected slot (0-8)
   onSlotClick: (slotIndex: number) => void; // Select slot for equipment/use
+  /**
+   * Right-click on desktop, long-press on touch: open the item's action menu — the same
+   * one the inventory grid opens, since these are the same slots.
+   *
+   * Without this the bar is the one place an item is visible but cannot be acted on, so
+   * eating an apple meant opening the inventory to reach a slot already on screen.
+   */
+  onSlotContextMenu?: (slotIndex: number, at: { clientX: number; clientY: number }) => void;
 }
 
 /**
@@ -19,7 +28,23 @@ interface QuickSlotBarProps {
  * Positioned at bottom center of screen (like MMO action bars)
  * Display-only (no drag-drop) - organization happens in Inventory modal
  */
-const QuickSlotBar: React.FC<QuickSlotBarProps> = ({ items, selectedSlot, onSlotClick }) => {
+const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
+  items,
+  selectedSlot,
+  onSlotClick,
+  onSlotContextMenu,
+}) => {
+  // One hook for the bar: the slot the finger went down on is recorded at touchstart,
+  // because the hold fires from a timer with no event to read it from.
+  const pressSlotRef = React.useRef<number | null>(null);
+  const onSlotContextMenuRef = React.useRef(onSlotContextMenu);
+  onSlotContextMenuRef.current = onSlotContextMenu;
+
+  const longPress = useLongPress((clientX, clientY) => {
+    const slotIndex = pressSlotRef.current;
+    if (slotIndex === null) return;
+    onSlotContextMenuRef.current?.(slotIndex, { clientX, clientY });
+  });
   // Create array of 9 slots (empty or with items)
   const slots: (InventoryItem | null)[] = Array(9).fill(null);
   items.forEach((item, index) => {
@@ -43,8 +68,26 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({ items, selectedSlot, onSlot
           return (
             <button
               key={index}
-              onClick={() => onSlotClick(index)}
+              onClick={() => {
+                // The click the browser synthesises after a hold is not a selection.
+                if (longPress.consumeTap()) return;
+                onSlotClick(index);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault(); // suppress the browser menu whether or not we show ours
+                if (isEmpty) return;
+                onSlotContextMenu?.(index, { clientX: e.clientX, clientY: e.clientY });
+              }}
+              onTouchStart={(e) => {
+                if (isEmpty || !onSlotContextMenu) return;
+                pressSlotRef.current = index;
+                longPress.handlers.onTouchStart(e);
+              }}
+              onTouchMove={longPress.handlers.onTouchMove}
+              onTouchEnd={longPress.handlers.onTouchEnd}
+              onTouchCancel={longPress.handlers.onTouchCancel}
               className={`
+                no-touch-callout
                 relative rounded-lg transition-all
                 w-12 h-12 md:w-12 md:h-12 sm:w-10 sm:h-10
                 ${

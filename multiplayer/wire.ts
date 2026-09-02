@@ -111,6 +111,28 @@ export function decodePresence(raw: unknown): PresenceWire | null {
   };
 }
 
+/**
+ * Is this record a leftover from a client that never cleaned up after itself?
+ *
+ * `onDisconnect()` removes a player's record when their socket drops, but it
+ * cannot fire for every death — a killed tab on a suspended tablet, a rules
+ * change mid-session, a crash between arming and writing. What is left is a
+ * ghost: a player standing in the village who is not there.
+ *
+ * The client-side eviction in RemotePlayerManager cannot catch these on its own,
+ * because it measures staleness from *local receipt*. Walking into a room hands
+ * us the ghost's record fresh, so it looked alive for a full STALE_AFTER_MS
+ * before vanishing — which is exactly what "she is there when I enter the area,
+ * then in time she disappears" describes.
+ *
+ * Records with no usable timestamp are treated as live: a missing `t` means an
+ * older client, not a dead one.
+ */
+export function isGhostRecord(wire: PresenceWire, now: number, ghostAfterMs: number): boolean {
+  if (!wire.t) return false;
+  return now - wire.t > ghostAfterMs;
+}
+
 /** Convenience: the decoded position of a wire record. */
 export function wirePosition(wire: PresenceWire): Position {
   return { x: wire.x, y: wire.y };

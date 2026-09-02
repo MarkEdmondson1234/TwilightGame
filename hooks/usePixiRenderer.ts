@@ -26,6 +26,7 @@ import { NPCLayer } from '../utils/pixi/NPCLayer';
 import { RemotePlayerLayer } from '../utils/pixi/RemotePlayerLayer';
 import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
 import { getLocalEmote } from '../multiplayer/localEmote';
+import { getLocalChatBubble } from '../multiplayer/localChat';
 import { ShadowLayer } from '../utils/pixi/ShadowLayer';
 import { WeatherLayer } from '../utils/pixi/WeatherLayer';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
@@ -266,6 +267,15 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       // gives immediate feedback instead of a silent hope somebody saw it.
       remotePlayerLayerRef.current.renderLocalEmote(
         getLocalEmote(),
+        localPos,
+        characterScale,
+        gridOffset,
+        tileSize
+      );
+      // Likewise your own speech bubble: you should see what you said above your
+      // own head, not only in a panel.
+      remotePlayerLayerRef.current.renderLocalChat(
+        getLocalChatBubble(),
         localPos,
         characterScale,
         gridOffset,

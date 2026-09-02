@@ -67,6 +67,13 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `minigameRegistry.test.ts` | Duplicate ids, missing fields, trigger items **or NPCs** that don't exist | Adding a mini-game |
 | `minigameRequirements.test.ts` | Required items not actually gating play; a game being unreachable | Adding a mini-game with requirements |
 | `interactionProviders.test.ts` | Provider registry wiring and the `exclusive` short-circuit | Adding a click interaction |
+| `farmContextMenu.test.ts` | A right-click farm action that is offered without the tool, or runs with the wrong one | Touching `providers/farming.ts` or `isContextMenu` |
+| `longPress.test.ts` | Long press cancelling on finger drift, or failing to swallow its trailing tap | Touching `utils/longPress.ts` or adding a long-press surface |
+| `radialMenuClamp.test.tsx` | A menu opening partly off-screen — most of a phone screen is near an edge | Touching `RadialMenu` positioning |
+| `quickSlotContextMenu.test.tsx` | The quick slot bar offering fewer actions than the same slot in the inventory | Touching `QuickSlotBar` |
+| `remotePlayerInteractions.test.ts` | Player options leaking onto plain clicks, or naming the wrong person | Touching `providers/remotePlayers.ts` |
+| `doorDestinationLabel.test.ts` | "Go to undefined" on a procedural map, or a size-blocked door losing its reason | Touching `providers/transition.ts` |
+| `shopClickQuantity.test.tsx` | A single click buying more than one, or the quantity picker becoming unreachable | Touching `ShopUI` slot handlers |
 | `wreathWorkshop.test.ts` | Capture geometry, pointer maths under `transform: scale()`, decoration instance matching | Touching the wreath workshop or custom decorations |
 | `pixiMaskSafety.test.ts` | Raw `.mask =` assignment outside `maskUtils` (guards the "this.mask is null" crash) | Adding/using a PixiJS mask (fog, lighting, spotlights) |
 | `colorResolver.test.ts` | Colour resolution behaviour through map schemes | Touching tile colours or palettes |
