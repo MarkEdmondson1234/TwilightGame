@@ -73,8 +73,10 @@ export async function preloadImages(urls: string[], options?: PreloadOptions): P
  * Generate all sprite URLs for a character (all directions and frames)
  * Uses per-character sprite configs to only generate valid URLs.
  */
-function getCharacterSpriteUrls(characterId: string = 'character1'): string[] {
-  const basePath = `/TwilightGame/assets/${characterId}/base`;
+export function getCharacterSpriteUrls(characterId: string = 'character1'): string[] {
+  // Must match the path characterSprites.ts builds, or this preloads one set of
+  // files while the game renders a different one — paying the memory twice.
+  const basePath = `/TwilightGame/assets-optimized/${characterId}/base`;
   const config = getSpriteConfig(characterId);
   const urls: string[] = [];
 
@@ -88,48 +90,20 @@ function getCharacterSpriteUrls(characterId: string = 'character1'): string[] {
 }
 
 /**
- * Get all tile sprite URLs from constants
- */
-function getTileSpriteUrls(): string[] {
-  // Note: Tile sprites are defined in constants.ts TILE_LEGEND
-  // For now, we'll list the known tile assets that are commonly used
-  const basePath = '/TwilightGame/assets/tiles';
-  const knownTiles = [
-    'grass_1.png',
-    'rock_1.png',
-    'rock_2.png',
-    'bush_1.png',
-    'door_1.png',
-    'mushrooms.png',
-    'bricks_1.jpeg',
-  ];
-
-  return knownTiles.map((file) => `${basePath}/${file}`);
-}
-
-/**
- * Get all NPC sprite URLs
- */
-function getNPCSpriteUrls(): string[] {
-  const basePath = '/TwilightGame/assets/npcs';
-  // List known NPCs here - this could be made dynamic later
-  return [`${basePath}/elder.svg`, `${basePath}/merchant.svg`, `${basePath}/child.svg`];
-}
-
-/**
- * Preload all game assets
- * Call this early in app initialization to prevent lag during gameplay
+ * Preload the player character sprites.
+ *
+ * Deliberately narrow. This used to also preload hardcoded lists of tile and
+ * NPC files — several of which no longer existed (bush_1.png, merchant.svg) and
+ * warned on every startup — while the real tile and NPC textures are loaded by
+ * TextureManager per map. Those lists preloaded nothing the game used.
+ *
+ * Character sprites are the exception worth keeping: they are needed on every
+ * map, from the first frame, and are the only art the player sees continuously.
  */
 export async function preloadAllAssets(options?: PreloadOptions): Promise<void> {
-  const allUrls: string[] = [
-    ...getCharacterSpriteUrls('character1'),
-    ...getCharacterSpriteUrls('character2'),
-    ...getTileSpriteUrls(),
-    ...getNPCSpriteUrls(),
+  const uniqueUrls = [
+    ...new Set([...getCharacterSpriteUrls('character1'), ...getCharacterSpriteUrls('character2')]),
   ];
-
-  // Remove duplicates
-  const uniqueUrls = [...new Set(allUrls)];
 
   await preloadImages(uniqueUrls, options);
 }

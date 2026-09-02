@@ -7,7 +7,7 @@ import { furnitureAssets } from '../../assets';
  * Home Upstairs - Bedroom area (background-image interior)
  *
  * Placeholder background until a unique drawing is complete.
- * Image: /TwilightGame/assets/rooms/empty_room.png (1920×1080, displayed at 960×540)
+ * Image: /TwilightGame/assets-optimized/rooms/empty_room.png (1920×1080, displayed at 960×540)
  *
  * Walkmesh Grid Legend (invisible — collision only):
  * # = Wall/obstacle (solid)
@@ -35,7 +35,7 @@ const gridString = `
 const homeUpstairsLayers: RoomLayer[] = [
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/empty_room.png',
+    image: '/TwilightGame/assets-optimized/rooms/empty_room.png',
     zIndex: Z_PARALLAX_FAR,
     parallaxFactor: 1.0,
     opacity: 1.0,

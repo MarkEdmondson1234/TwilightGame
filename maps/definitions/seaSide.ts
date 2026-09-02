@@ -41,7 +41,7 @@ const gridString = `
 const seaSideLayers: RoomLayer[] = [
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seaSide/ocean_summer_day_background.png',
+    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_day_background.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -53,7 +53,7 @@ const seaSideLayers: RoomLayer[] = [
   },
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seaSide/ocean_summer_sunset_background.png',
+    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_sunset_background.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything, stacked with the day/night layers
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -65,7 +65,7 @@ const seaSideLayers: RoomLayer[] = [
   },
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seaSide/ocean_summer_night_background.png',
+    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_night_background.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything, stacked with the day/sunset layers
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -90,7 +90,7 @@ const seaSideLayers: RoomLayer[] = [
   // sits below Z_WEATHER_TINT.
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seaSide/ocean_summer_day_layer1.png',
+    image: '/TwilightGame/assets-optimized/rooms/seaSide/ocean_summer_day_layer1.png',
     zIndex: Z_SPRITE_FOREGROUND, // 200: In front of player
     parallaxFactor: 1.0,
     opacity: 1.0,

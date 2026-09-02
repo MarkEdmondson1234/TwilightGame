@@ -76,7 +76,7 @@ export const tileAssets = {
   garden_lamp_night: '/TwilightGame/assets-optimized/lights/lamp_post_night.png',
   garden_lamp_day_winter: '/TwilightGame/assets-optimized/lights/lamp_post_day_winter.png',
   garden_lamp_night_winter: '/TwilightGame/assets-optimized/lights/lamp_post_night_winter.png',
-  wreath_base: '/TwilightGame/assets/items/wreath_base.png',
+  wreath_base: '/TwilightGame/assets-optimized/items/wreath_base.png',
   // Lake tiles (directional edges for proper water rendering)
   water_center: '/TwilightGame/assets-optimized/tiles/lake/water_middle.png',
   water_left: '/TwilightGame/assets-optimized/tiles/lake/water_left.png',
@@ -241,9 +241,9 @@ export const tileAssets = {
   cauldron_8: '/TwilightGame/assets-optimized/cauldron/cauldron_8.png',
   cauldron_9: '/TwilightGame/assets-optimized/cauldron/cauldron_9.png',
   // Stream animation frames (flowing water for forest levels)
-  stream_1: '/TwilightGame/assets/animations/stream/stream1.png',
-  stream_2: '/TwilightGame/assets/animations/stream/stream2.png',
-  stream_3: '/TwilightGame/assets/animations/stream/stream3.png',
+  stream_1: '/TwilightGame/assets-optimized/animations/stream/stream1.png',
+  stream_2: '/TwilightGame/assets-optimized/animations/stream/stream2.png',
+  stream_3: '/TwilightGame/assets-optimized/animations/stream/stream3.png',
   // Giant mushroom assets (magical mushrooms for witch hut area)
   giant_mushroom: '/TwilightGame/assets-optimized/tiles/giant_mushroom.png',
   giant_mushroom_winter: '/TwilightGame/assets-optimized/tiles/giant_mushroom_winter.png',
@@ -272,9 +272,9 @@ export const tileAssets = {
   magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',
   // Bear house assets (seasonal variations for bear cave clearing)
   // Use original high-res 2100x2100 sprites for sharp rendering (multi-tile structure)
-  bear_house_spring_summer: '/TwilightGame/assets/tiles/bear_cave/bear_cave_spring-summer.png',
-  bear_house_autumn: '/TwilightGame/assets/tiles/bear_cave/bear_cave_autumn.png',
-  bear_house_winter: '/TwilightGame/assets/tiles/bear_cave/bear_cave_winter.png',
+  bear_house_spring_summer: '/TwilightGame/assets-optimized/tiles/bear_cave/bear_cave_spring-summer.png',
+  bear_house_autumn: '/TwilightGame/assets-optimized/tiles/bear_cave/bear_cave_autumn.png',
+  bear_house_winter: '/TwilightGame/assets-optimized/tiles/bear_cave/bear_cave_winter.png',
   // Bee hive asset (no seasonality, appears in bear cave area)
   bee_hive: '/TwilightGame/assets-optimized/tiles/bear_cave/bee_hive.png',
 };
@@ -508,24 +508,24 @@ export const potionAssets = {
 // NPC assets - Use optimized versions (1024px, 97% quality) for in-game, originals for portraits
 export const npcAssets = {
   little_girl: '/TwilightGame/assets-optimized/npcs/little_girl.png',
-  little_girl_portrait: '/TwilightGame/assets/npcs/little_girl.png',
+  little_girl_portrait: '/TwilightGame/assets-optimized/npcs/little_girl.png',
   // Cat assets: Using originals (in subfolder, not auto-optimized by script)
-  cat_sleeping_01: '/TwilightGame/assets/npcs/cat/cat_sleeping_01.png',
-  cat_sleeping_02: '/TwilightGame/assets/npcs/cat/cat_sleeping_02.png',
-  cat_sleeping_angry: '/TwilightGame/assets/npcs/cat/cat_sleeping_angry.png',
-  cat_stand_01: '/TwilightGame/assets/npcs/cat/cat_stand_01.png',
-  cat_stand_02: '/TwilightGame/assets/npcs/cat/cat_stand_02.png',
-  cat_portrait: '/TwilightGame/assets/npcs/cat/cat_sleeping_01.png',
+  cat_sleeping_01: '/TwilightGame/assets-optimized/npcs/cat/cat_sleeping_01.png',
+  cat_sleeping_02: '/TwilightGame/assets-optimized/npcs/cat/cat_sleeping_02.png',
+  cat_sleeping_angry: '/TwilightGame/assets-optimized/npcs/cat/cat_sleeping_angry.png',
+  cat_stand_01: '/TwilightGame/assets-optimized/npcs/cat/cat_stand_01.png',
+  cat_stand_02: '/TwilightGame/assets-optimized/npcs/cat/cat_stand_02.png',
+  cat_portrait: '/TwilightGame/assets-optimized/npcs/cat/cat_sleeping_01.png',
   elderly_01: '/TwilightGame/assets-optimized/npcs/elderly_01.png',
   elderly_02: '/TwilightGame/assets-optimized/npcs/elderly_02.png',
-  elderly_portrait: '/TwilightGame/assets/npcs/elderly_01.png',
+  elderly_portrait: '/TwilightGame/assets-optimized/npcs/elderly_01.png',
   old_woman_01: '/TwilightGame/assets-optimized/npcs/old_woman_knitting_01.png',
   old_woman_02: '/TwilightGame/assets-optimized/npcs/old_woman_knitting_02.png',
-  old_woman_portrait: '/TwilightGame/assets/npcs/old_woman_knitting_02.png',
+  old_woman_portrait: '/TwilightGame/assets-optimized/npcs/old_woman_knitting_02.png',
   // Fox shopkeeper (fox_shopkeeper/ subfolder)
   shopkeeper_fox_01: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
   shopkeeper_fox_02: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_02.png',
-  shopkeeper_fox_portrait: '/TwilightGame/assets/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
+  shopkeeper_fox_portrait: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
   // Walk animation frames (4-frame cycle)
   shopkeeper_fox_walk_01: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_01.png',
   shopkeeper_fox_walk_02: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_02.png',
@@ -533,15 +533,15 @@ export const npcAssets = {
   shopkeeper_fox_walk_04: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_04.png',
   dog_01: '/TwilightGame/assets-optimized/npcs/dog_01.png',
   dog_02: '/TwilightGame/assets-optimized/npcs/dog_02.png',
-  dog_portrait: '/TwilightGame/assets/npcs/dog_01.png',
+  dog_portrait: '/TwilightGame/assets-optimized/npcs/dog_01.png',
   mum_01: '/TwilightGame/assets-optimized/npcs/mum_01.png',
   mum_02: '/TwilightGame/assets-optimized/npcs/mum_02.png',
-  mum_portrait: '/TwilightGame/assets/npcs/mum_01.png',
+  mum_portrait: '/TwilightGame/assets-optimized/npcs/mum_01.png',
   spring_periwinkle_01:
     '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
   spring_periwinkle_02:
     '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle1.png',
-  spring_periwinkle_portrait: '/TwilightGame/assets/npcs/spring_periwinkle/spring_periwinkle.png',
+  spring_periwinkle_portrait: '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
   // Umbra Wolf assets (forest creature)
   umbrawolf_standing1: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing1.png',
   umbrawolf_standing2: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing2.png',
@@ -549,7 +549,7 @@ export const npcAssets = {
   umbrawolf_sitting_02: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_sitting_02.png',
   umbrawolf_front: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_front.png',
   umbrawolf_back: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_back.png',
-  umbrawolf_portrait: '/TwilightGame/assets/npcs/umbra_wolf/umbrawolf_front.png',
+  umbrawolf_portrait: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_front.png',
   // Walking animation frames (facing right - flip for left)
   umbrawolf_walk1: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf1.png',
   umbrawolf_walk2: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf2.png',
@@ -566,7 +566,7 @@ export const npcAssets = {
   // King Lava Frog (boss of the lava caverns)
   king_lava_frog_01: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
   king_lava_frog_02: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog02.png',
-  king_lava_frog_portrait: '/TwilightGame/assets/npcs/king_lava_frog/king_lava_frog01.png',
+  king_lava_frog_portrait: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
   // Lava Frog Workers (wander the procedural lava levels)
   lava_frog_worker_01:
     '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker01.png',
@@ -582,95 +582,95 @@ export const npcAssets = {
   goddess_of_eyes_closed:
     '/TwilightGame/assets-optimized/npcs/goddess_of_eyes/goddess_of_eyes2.png',
   // Ghost Queen / Queen Avaricia assets
-  ghost_invisible: '/TwilightGame/assets/npcs/ghost_queen/ghost_invisible.png',
+  ghost_invisible: '/TwilightGame/assets-optimized/npcs/ghost_queen/ghost_invisible.png',
   queen_avaricia_open_eyes:
     '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
   queen_avaricia_closed_eyes:
     '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_closed_eyes.png',
-  queen_avaricia_portrait: '/TwilightGame/assets/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
+  queen_avaricia_portrait: '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
   // Witch Wolf assets (rare forest creature with blinking animation)
-  witch_wolf_01: '/TwilightGame/assets/npcs/witch/witch_wolf_01.png',
-  witch_wolf_02: '/TwilightGame/assets/npcs/witch/witch_wolf_02.png',
-  witch_wolf_portrait: '/TwilightGame/assets/npcs/witch/witch_wolf_01.png',
+  witch_wolf_01: '/TwilightGame/assets-optimized/npcs/witch/witch_wolf_01.png',
+  witch_wolf_02: '/TwilightGame/assets-optimized/npcs/witch/witch_wolf_02.png',
+  witch_wolf_portrait: '/TwilightGame/assets-optimized/npcs/witch/witch_wolf_01.png',
   // Chill Bear assets (peaceful forest creature drinking tea)
-  chill_bear_01: '/TwilightGame/assets/npcs/bear/chill_bear_tea_01.png',
-  chill_bear_02: '/TwilightGame/assets/npcs/bear/chill_bear_tea_02.png',
-  chill_bear_portrait: '/TwilightGame/assets/npcs/bear/chill_bear_tea_01.png',
+  chill_bear_01: '/TwilightGame/assets-optimized/npcs/bear/chill_bear_tea_01.png',
+  chill_bear_02: '/TwilightGame/assets-optimized/npcs/bear/chill_bear_tea_02.png',
+  chill_bear_portrait: '/TwilightGame/assets-optimized/npcs/bear/chill_bear_tea_01.png',
   // Stella assets (fairy of the deep forest)
-  stella_01: '/TwilightGame/assets/npcs/stella/stella_01.png',
-  stella_02: '/TwilightGame/assets/npcs/stella/stella_02.png',
-  stella_portrait: '/TwilightGame/assets/npcs/stella/stella_01.png',
+  stella_01: '/TwilightGame/assets-optimized/npcs/stella/stella_01.png',
+  stella_02: '/TwilightGame/assets-optimized/npcs/stella/stella_02.png',
+  stella_portrait: '/TwilightGame/assets-optimized/npcs/stella/stella_01.png',
   // Morgan assets (fairy companion)
-  morgan_01: '/TwilightGame/assets/npcs/morgan/morgan_01.png',
-  morgan_02: '/TwilightGame/assets/npcs/morgan/morgan_02.png',
-  morgan_portrait: '/TwilightGame/assets/npcs/morgan/morgan_01.png',
+  morgan_01: '/TwilightGame/assets-optimized/npcs/morgan/morgan_01.png',
+  morgan_02: '/TwilightGame/assets-optimized/npcs/morgan/morgan_02.png',
+  morgan_portrait: '/TwilightGame/assets-optimized/npcs/morgan/morgan_01.png',
   // Bunnyfly assets (forest creature - butterfly-bunny hybrid)
   // Using originals (1000x1000) for maximum quality - small creatures need crisp detail
-  bunnyfly_01: '/TwilightGame/assets/npcs/bunnyfly_01.png',
-  bunnyfly_02: '/TwilightGame/assets/npcs/bunnyfly_02.png',
-  bunnyfly_portrait: '/TwilightGame/assets/npcs/bunnyfly_01.png',
+  bunnyfly_01: '/TwilightGame/assets-optimized/npcs/bunnyfly_01.png',
+  bunnyfly_02: '/TwilightGame/assets-optimized/npcs/bunnyfly_02.png',
+  bunnyfly_portrait: '/TwilightGame/assets-optimized/npcs/bunnyfly_01.png',
   // Sparrow assets (forest bird - animated takeoff/landing/flight)
   // Using originals for maximum quality - small creatures need crisp detail
-  sparrow_sitting: '/TwilightGame/assets/npcs/sparrow/sparrow_sitting.png',
-  sparrow_takeoff_01: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff01.png',
-  sparrow_takeoff_02: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff02.png',
-  sparrow_takeoff_03: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff03.png',
-  sparrow_takeoff_04: '/TwilightGame/assets/npcs/sparrow/sparrow_takeoff04.png',
-  sparrow_flight_wings_up: '/TwilightGame/assets/npcs/sparrow/sparrow_flight_wings_up.png',
-  sparrow_flight_wings_down: '/TwilightGame/assets/npcs/sparrow/sparrow_flight_wings_down.png',
-  sparrow_portrait: '/TwilightGame/assets/npcs/sparrow/sparrow_sitting.png',
+  sparrow_sitting: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_sitting.png',
+  sparrow_takeoff_01: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_takeoff01.png',
+  sparrow_takeoff_02: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_takeoff02.png',
+  sparrow_takeoff_03: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_takeoff03.png',
+  sparrow_takeoff_04: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_takeoff04.png',
+  sparrow_flight_wings_up: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_up.png',
+  sparrow_flight_wings_down: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_down.png',
+  sparrow_portrait: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_sitting.png',
   // Duck assets (pond creature)
   duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
   duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',
-  duck_portrait: '/TwilightGame/assets/npcs/duck_01.png',
+  duck_portrait: '/TwilightGame/assets-optimized/npcs/duck_01.png',
   // Cow assets (farm animal - gives milk)
-  cow_01: '/TwilightGame/assets/npcs/cow/cow_01.png',
-  cow_02: '/TwilightGame/assets/npcs/cow/cow_02.png',
-  cow_portrait: '/TwilightGame/assets/npcs/cow/cow_01.png',
+  cow_01: '/TwilightGame/assets-optimized/npcs/cow/cow_01.png',
+  cow_02: '/TwilightGame/assets-optimized/npcs/cow/cow_02.png',
+  cow_portrait: '/TwilightGame/assets-optimized/npcs/cow/cow_01.png',
   // Mother Sea assets (mystical lake spirit - rises from the magical lake)
   mother_sea_01: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_01.png',
   mother_sea_02: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_02.png',
-  mother_sea_portrait: '/TwilightGame/assets/npcs/mother_sea/mother-sea_01.png',
+  mother_sea_portrait: '/TwilightGame/assets-optimized/npcs/mother_sea/mother-sea_01.png',
   // Mushra assets (friendly mushroom creature)
   mushra_01: '/TwilightGame/assets-optimized/npcs/mushra/mushra_01.png',
   mushra_02: '/TwilightGame/assets-optimized/npcs/mushra/mushra_02.png',
-  mushra_portrait: '/TwilightGame/assets/npcs/mushra/mushra_01.png',
+  mushra_portrait: '/TwilightGame/assets-optimized/npcs/mushra/mushra_01.png',
   // Deer assets (forest creature)
   deer_01: '/TwilightGame/assets-optimized/npcs/deer/deer_01.png',
   deer_02: '/TwilightGame/assets-optimized/npcs/deer/deer_02.png',
   deer_03: '/TwilightGame/assets-optimized/npcs/deer/deer_03.png',
-  deer_portrait: '/TwilightGame/assets/npcs/deer/deer_01.png',
+  deer_portrait: '/TwilightGame/assets-optimized/npcs/deer/deer_01.png',
   // Puffle assets (cute forest creature, always appears with Suffle)
   puffle_01: '/TwilightGame/assets-optimized/npcs/puffle/puffle_01.png',
   puffle_02: '/TwilightGame/assets-optimized/npcs/puffle/puffle_02.png',
-  puffle_portrait: '/TwilightGame/assets/npcs/puffle/puffle_01.png',
+  puffle_portrait: '/TwilightGame/assets-optimized/npcs/puffle/puffle_01.png',
   // Suffle assets (cute forest creature, always appears with Puffle)
   suffle_01: '/TwilightGame/assets-optimized/npcs/suffle/suffle_01.png',
   suffle_02: '/TwilightGame/assets-optimized/npcs/suffle/suffle_02.png',
-  suffle_portrait: '/TwilightGame/assets/npcs/suffle/suffle_01.png',
+  suffle_portrait: '/TwilightGame/assets-optimized/npcs/suffle/suffle_01.png',
   // Professor Birdimen assets (scholarly bird character)
-  professor_birdimen_01: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
-  professor_birdimen_02: '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_02.png',
+  professor_birdimen_01: '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_01.png',
+  professor_birdimen_02: '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_02.png',
   professor_birdimen_portrait:
-    '/TwilightGame/assets/npcs/professor_birdimen/professor_birdimen_01.png',
+    '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_01.png',
   // Possum assets (forest creature - plays dead when approached)
-  possum_walking_01: '/TwilightGame/assets/npcs/possum/possum_walking01.png',
-  possum_walking_02: '/TwilightGame/assets/npcs/possum/possum_walking02.png',
-  possum_walking_03: '/TwilightGame/assets/npcs/possum/possum_walking03.png',
-  possum_sitting: '/TwilightGame/assets/npcs/possum/possum_sitting.png',
-  possum_dead: '/TwilightGame/assets/npcs/possum/possum_dead.png',
-  possum_portrait: '/TwilightGame/assets/npcs/possum/possum_dead.png',
+  possum_walking_01: '/TwilightGame/assets-optimized/npcs/possum/possum_walking01.png',
+  possum_walking_02: '/TwilightGame/assets-optimized/npcs/possum/possum_walking02.png',
+  possum_walking_03: '/TwilightGame/assets-optimized/npcs/possum/possum_walking03.png',
+  possum_sitting: '/TwilightGame/assets-optimized/npcs/possum/possum_sitting.png',
+  possum_dead: '/TwilightGame/assets-optimized/npcs/possum/possum_dead.png',
+  possum_portrait: '/TwilightGame/assets-optimized/npcs/possum/possum_dead.png',
   // Queen Celestia assets (fairy queen of the deep forest)
-  celestia: '/TwilightGame/assets/npcs/celestia/celistia.png',
-  celestia_portrait: '/TwilightGame/assets/npcs/celestia/celistia.png',
+  celestia: '/TwilightGame/assets-optimized/npcs/celestia/celistia.png',
+  celestia_portrait: '/TwilightGame/assets-optimized/npcs/celestia/celistia.png',
   // Davead the Flamingo (mushroom forest expat)
   davead_01: '/TwilightGame/assets-optimized/npcs/flamingo/davead_the_flamingo01.png',
   davead_02: '/TwilightGame/assets-optimized/npcs/flamingo/davead_the_flamingo02.png',
-  davead_portrait: '/TwilightGame/assets/npcs/flamingo/davead_the_flamingo01.png',
+  davead_portrait: '/TwilightGame/assets-optimized/npcs/flamingo/davead_the_flamingo01.png',
   // Shella assets (food truck vendor - Sea Side, summer only)
   shella_food_truck_1: '/TwilightGame/assets-optimized/npcs/shella/food_truck1.png',
   shella_food_truck_2: '/TwilightGame/assets-optimized/npcs/shella/food_truck2.png',
-  shella_portrait: '/TwilightGame/assets/npcs/shella/food_truck1.png',
+  shella_portrait: '/TwilightGame/assets-optimized/npcs/shella/food_truck1.png',
 };
 
 // Player assets (add your custom sprites here when ready)
@@ -683,14 +683,14 @@ export const playerAssets = {
 // Right-facing sprites use flipped left sprites (handled in sprite rendering)
 export const fairyAssets = {
   // Down-facing
-  down_01: '/TwilightGame/assets/character1/fairy/down_fairy_spell01.png',
-  down_02: '/TwilightGame/assets/character1/fairy/down_fairy_spell02.png',
+  down_01: '/TwilightGame/assets-optimized/character1/fairy/down_fairy_spell01.png',
+  down_02: '/TwilightGame/assets-optimized/character1/fairy/down_fairy_spell02.png',
   // Up-facing
-  up_01: '/TwilightGame/assets/character1/fairy/up_fairy_spell01.png',
-  up_02: '/TwilightGame/assets/character1/fairy/up_fairy_spell02.png',
+  up_01: '/TwilightGame/assets-optimized/character1/fairy/up_fairy_spell01.png',
+  up_02: '/TwilightGame/assets-optimized/character1/fairy/up_fairy_spell02.png',
   // Left-facing (also used for right with horizontal flip)
-  left_01: '/TwilightGame/assets/character1/fairy/left_fairy_spell01.png',
-  left_02: '/TwilightGame/assets/character1/fairy/left_fairy_spell02.png',
+  left_01: '/TwilightGame/assets-optimized/character1/fairy/left_fairy_spell01.png',
+  left_02: '/TwilightGame/assets-optimized/character1/fairy/left_fairy_spell02.png',
 };
 
 // Animation assets - Animated GIFs for environmental effects
@@ -698,8 +698,8 @@ export const fairyAssets = {
 // Some GIFs use original size when specified (e.g., dragonfly_stream)
 export const animationAssets = {
   cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.gif',
-  dragonfly_stream: '/TwilightGame/assets/animations/dragonfly_stream.gif', // Use original size
-  bees: '/TwilightGame/assets/animations/bees.gif', // Use original size
+  dragonfly_stream: '/TwilightGame/assets-optimized/animations/dragonfly_stream.gif', // Use original size
+  bees: '/TwilightGame/assets-optimized/animations/bees.gif', // Use original size
   fire: '/TwilightGame/assets-optimized/animations/fire/fire.gif',
   // Future animations:
   // rain: '/TwilightGame/assets-optimized/animations/rain.gif',
@@ -726,29 +726,29 @@ export const uiAssets = {
   wallet: '/TwilightGame/assets-optimized/ui/wallet.png',
   satchel: '/TwilightGame/assets-optimized/ui/satchel.png',
   // Open book UI - cottagecore book backgrounds for recipe/magic menus
-  openbook_ui: '/TwilightGame/assets/ui/openbook_ui.png',
-  magicbook_ui: '/TwilightGame/assets/ui/magicbook_ui.PNG',
+  openbook_ui: '/TwilightGame/assets-optimized/ui/openbook_ui.png',
+  magicbook_ui: '/TwilightGame/assets-optimized/ui/magicbook_ui.png',
 };
 
 // Dialogue UI assets - Animated dialogue window frames
 export const dialogueAssets = {
   // Animation frames for dialogue window (subtle animation effect)
-  frame_01: '/TwilightGame/assets/dialogue/dialog_01.png',
-  frame_02: '/TwilightGame/assets/dialogue/dialog_02.png',
-  frame_03: '/TwilightGame/assets/dialogue/dialog_03.png',
-  frame_04: '/TwilightGame/assets/dialogue/dialog_04.png',
-  frame_05: '/TwilightGame/assets/dialogue/dialog_05.png',
-  frame_06: '/TwilightGame/assets/dialogue/dialog_06.png',
+  frame_01: '/TwilightGame/assets-optimized/dialogue/dialog_01.png',
+  frame_02: '/TwilightGame/assets-optimized/dialogue/dialog_02.png',
+  frame_03: '/TwilightGame/assets-optimized/dialogue/dialog_03.png',
+  frame_04: '/TwilightGame/assets-optimized/dialogue/dialog_04.png',
+  frame_05: '/TwilightGame/assets-optimized/dialogue/dialog_05.png',
+  frame_06: '/TwilightGame/assets-optimized/dialogue/dialog_06.png',
 };
 
 // All dialogue frames as array for animation cycling
 export const dialogueFrames = [
-  '/TwilightGame/assets/dialogue/dialog_01.png',
-  '/TwilightGame/assets/dialogue/dialog_02.png',
-  '/TwilightGame/assets/dialogue/dialog_03.png',
-  '/TwilightGame/assets/dialogue/dialog_04.png',
-  '/TwilightGame/assets/dialogue/dialog_05.png',
-  '/TwilightGame/assets/dialogue/dialog_06.png',
+  '/TwilightGame/assets-optimized/dialogue/dialog_01.png',
+  '/TwilightGame/assets-optimized/dialogue/dialog_02.png',
+  '/TwilightGame/assets-optimized/dialogue/dialog_03.png',
+  '/TwilightGame/assets-optimized/dialogue/dialog_04.png',
+  '/TwilightGame/assets-optimized/dialogue/dialog_05.png',
+  '/TwilightGame/assets-optimized/dialogue/dialog_06.png',
 ];
 
 // Dialogue character sprites - Special artwork for dialogue scenes (larger, more expressive)
@@ -757,19 +757,19 @@ export const dialogueFrames = [
 export const dialogueSpriteAssets = {
   // Mum dialogue expressions (default, happy, smile)
   mum: {
-    default: '/TwilightGame/assets/npcs/mum/dialogue/mum_default.png',
-    happy: '/TwilightGame/assets/npcs/mum/dialogue/mum_happy.png',
-    smile: '/TwilightGame/assets/npcs/mum/dialogue/mum_smile.png',
+    default: '/TwilightGame/assets-optimized/npcs/mum/dialogue/mum_default.png',
+    happy: '/TwilightGame/assets-optimized/npcs/mum/dialogue/mum_happy.png',
+    smile: '/TwilightGame/assets-optimized/npcs/mum/dialogue/mum_smile.png',
   },
   // Mushra dialogue expressions (default, smile)
   mushra: {
-    default: '/TwilightGame/assets/npcs/mushra/dialogue/mushra_default.png',
-    smile: '/TwilightGame/assets/npcs/mushra/dialogue/mushra_smile.png',
+    default: '/TwilightGame/assets-optimized/npcs/mushra/dialogue/mushra_default.png',
+    smile: '/TwilightGame/assets-optimized/npcs/mushra/dialogue/mushra_smile.png',
   },
   // Shella dialogue expressions (default, serious)
   shella: {
-    default: '/TwilightGame/assets/npcs/shella/shella_talk.png',
-    serious: '/TwilightGame/assets/npcs/shella/shella_talk_2.png',
+    default: '/TwilightGame/assets-optimized/npcs/shella/shella_talk.png',
+    serious: '/TwilightGame/assets-optimized/npcs/shella/shella_talk_2.png',
   },
   // Add more NPCs as artwork becomes available
   // shopkeeper: { default: '...', happy: '...', etc. },

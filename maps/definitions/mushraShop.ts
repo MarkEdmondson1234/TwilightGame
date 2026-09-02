@@ -47,7 +47,7 @@ const mushraShopLayers: RoomLayer[] = [
   // Layer 1: Background image (back wall, shelves, room decor)
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/mushra_shop/mushra_shop_background.png',
+    image: '/TwilightGame/assets-optimized/rooms/mushra_shop/mushra_shop_background.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -67,7 +67,7 @@ const mushraShopLayers: RoomLayer[] = [
   // Layer 3: Foreground overlay (counter/shelves in front of NPCs, behind player)
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/mushra_shop/mushra_shop_foreground.png',
+    image: '/TwilightGame/assets-optimized/rooms/mushra_shop/mushra_shop_foreground.png',
     zIndex: Z_INTERIOR_FOREGROUND, // 65: In front of NPCs, behind player
     parallaxFactor: 1.0,
     opacity: 1.0,

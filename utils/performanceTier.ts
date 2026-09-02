@@ -13,11 +13,45 @@ export enum PerformanceTier {
 
 interface PerformanceSettings {
   tier: PerformanceTier;
+  /**
+   * Whether this is a phone/tablet, tracked separately from `tier`.
+   *
+   * A modern iPhone lands on HIGH (6+ cores, and Safari doesn't expose
+   * navigator.deviceMemory so it defaults to 4) — which is the right call for
+   * *render* quality but the wrong one for *memory*. iOS caps the entire web
+   * content process well below a desktop's VRAM and kills the tab when it is
+   * exceeded, with no JS error and nothing reportable to Sentry. So the texture
+   * policy below keys on this flag, never on the tier.
+   */
+  isMobile: boolean;
   resolution: number;
   antialias: boolean;
   glowSteps: number;
   enableGlows: boolean;
   enableShadows: boolean;
+
+  // ---- Texture memory policy (see isMobile) ----
+  /**
+   * Mipmaps cost an extra ~33% of every texture's memory for smoother
+   * downscaling. Worth it on desktop, not worth a tab kill on mobile.
+   */
+  generateMipmaps: boolean;
+  /**
+   * Soft ceiling on resident decoded texture memory, in MB, above which
+   * TextureManager frees anything the current map does not need.
+   *
+   * This is an *eviction trigger*, so it sits deliberately above the largest
+   * single map's working set (~300MB, asserted by tests/mapTextureBudget.test.ts)
+   * — otherwise every map change would evict textures the very next one needs
+   * and thrash. It fires when more than roughly one map's worth has piled up.
+   */
+  textureBudgetMB: number;
+  /**
+   * How many textures may be fetched at once. The startup batch used to fire
+   * every request simultaneously; on mobile that storm is what produced the
+   * uncaught "TypeError: Load failed" rejections.
+   */
+  maxConcurrentTextureLoads: number;
 }
 
 /**
@@ -128,11 +162,28 @@ export function detectPerformanceTier(): PerformanceTier {
 export function getPerformanceSettings(): PerformanceSettings {
   const tier = detectPerformanceTier();
   const dpr = window.devicePixelRatio || 1;
+  const isMobile = isMobileDevice() || isOldIPad();
+
+  // Texture policy is chosen by form factor, not by tier. A fast phone still
+  // has a phone's memory ceiling — see the isMobile doc comment above.
+  const texturePolicy = isMobile
+    ? {
+        generateMipmaps: false,
+        textureBudgetMB: tier === PerformanceTier.LOW ? 256 : 384,
+        maxConcurrentTextureLoads: tier === PerformanceTier.LOW ? 4 : 6,
+      }
+    : {
+        generateMipmaps: true,
+        textureBudgetMB: 1536,
+        maxConcurrentTextureLoads: 16,
+      };
 
   switch (tier) {
     case PerformanceTier.LOW:
       return {
         tier,
+        isMobile,
+        ...texturePolicy,
         resolution: 1, // Never use retina on old devices
         antialias: false, // Disable antialias completely
         glowSteps: 0, // Disable glows entirely
@@ -143,6 +194,8 @@ export function getPerformanceSettings(): PerformanceSettings {
     case PerformanceTier.MEDIUM:
       return {
         tier,
+        isMobile,
+        ...texturePolicy,
         resolution: Math.min(dpr, 1.5), // Cap at 1.5x
         antialias: false, // Disable antialias on mobile
         glowSteps: 8, // Reduced glow quality
@@ -154,6 +207,8 @@ export function getPerformanceSettings(): PerformanceSettings {
     default:
       return {
         tier,
+        isMobile,
+        ...texturePolicy,
         resolution: Math.min(dpr, 2), // Cap at 2x even on high-end
         antialias: true, // Enable antialias on desktop
         glowSteps: 32, // Full glow quality

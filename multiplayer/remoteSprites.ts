@@ -15,6 +15,7 @@ import {
   generateFairySprites,
   getDirectionScale,
   shouldFlipFairySprite,
+  isCustomCharacterSprite,
 } from '../utils/characterSprites';
 import { getScaleForTier, clampTier } from '../utils/MagicEffects';
 import type { CharacterCustomization } from '../GameState';
@@ -90,8 +91,7 @@ export function getRemoteSpriteInfo(player: RemotePlayer): RemoteSpriteInfo {
 
   // Matches getPlayerSpriteInfo() in hooks/useCharacterSprites.ts: the custom
   // artwork is authored at a higher resolution than the placeholder SVGs.
-  const isCustomSprite = url.includes('/assets/character') || url.startsWith('data:image');
-  const baseScale = isCustomSprite ? 3.0 : 1.0;
+  const baseScale = isCustomCharacterSprite(url) ? 3.0 : 1.0;
   const directionScale = getDirectionScale(player.characterId, player.direction);
   const sizeScale = getScaleForTier(clampTier(player.sizeTier));
 

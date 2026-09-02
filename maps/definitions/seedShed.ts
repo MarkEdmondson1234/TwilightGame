@@ -38,7 +38,7 @@ const shedLayers: RoomLayer[] = [
   // Background image (seed shed interior)
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seedShed/shed_interior.png',
+    image: '/TwilightGame/assets-optimized/rooms/seedShed/shed_interior.png',
     zIndex: Z_PARALLAX_FAR, // -100: Behind everything
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -50,7 +50,7 @@ const shedLayers: RoomLayer[] = [
   // Mess pile overlays (Mr Fox's Picnic quest) — hidden when cleaned
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seedShed/shed_interior_mess1.png',
+    image: '/TwilightGame/assets-optimized/rooms/seedShed/shed_interior_mess1.png',
     zIndex: Z_PARALLAX_FAR + 1,
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -62,7 +62,7 @@ const shedLayers: RoomLayer[] = [
   },
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seedShed/shed_interior_mess2.png',
+    image: '/TwilightGame/assets-optimized/rooms/seedShed/shed_interior_mess2.png',
     zIndex: Z_PARALLAX_FAR + 1,
     parallaxFactor: 1.0,
     opacity: 1.0,
@@ -74,7 +74,7 @@ const shedLayers: RoomLayer[] = [
   },
   {
     type: 'image',
-    image: '/TwilightGame/assets/rooms/seedShed/shed_interior_mess3.png',
+    image: '/TwilightGame/assets-optimized/rooms/seedShed/shed_interior_mess3.png',
     zIndex: Z_PARALLAX_FAR + 1,
     parallaxFactor: 1.0,
     opacity: 1.0,

@@ -60,6 +60,21 @@ export function getDirectionScale(characterId: string, direction: Direction): nu
  * - Frame 0 = idle/standing pose
  * - Frame 1+ = walking animation
  */
+/**
+ * Whether a sprite URL is the hand-drawn character artwork rather than a
+ * generated SVG placeholder. The artwork is authored much larger than the
+ * placeholders, so it is rendered at 3x where a placeholder is rendered at 1x.
+ *
+ * Matches on the character directory, NOT on a path prefix. These files moved
+ * from /assets/characterN/ to /assets-optimized/characterN/, and the previous
+ * check — `url.includes('/assets/character')` — silently stopped matching:
+ * nothing throws, the player just renders at a third of its size. Any future
+ * move of the artwork must keep `/characterN/` in the path, or update this.
+ */
+export function isCustomCharacterSprite(url: string): boolean {
+  return url.startsWith('data:image') || /\/character\d+\//.test(url);
+}
+
 export function generateCharacterSprites(
   character: CharacterCustomization
 ): Record<Direction, string[]> {
@@ -71,7 +86,10 @@ export function generateCharacterSprites(
 
     if (hasCustomSprites()) {
       const characterId = character.characterId || 'character1';
-      const basePath = `/TwilightGame/assets/${characterId}/base`;
+      // Optimised copies, not the sources: the originals are 2064x2064, which
+      // is 17MB of GPU memory per frame for the sprite drawn more often than
+      // any other in the game (642MB across character1's 16 frames alone).
+      const basePath = `/TwilightGame/assets-optimized/${characterId}/base`;
       const config = getSpriteConfig(characterId);
 
       const buildFrames = (dir: string): string[] => {
