@@ -15,9 +15,11 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { presenceService } from '../firebase/presenceService';
 import { chatService } from '../firebase/chatService';
+import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
 import {
   getPresenceService,
   getChatService,
+  getSharedPlacedItemsService,
   getCommunityGardenService,
   whenFirebaseSettled,
 } from '../firebase/safe';
@@ -92,6 +94,20 @@ describe('chat stub parity', () => {
     const unsubscribe = getChatService().onMessage(() => {});
     expect(typeof unsubscribe).toBe('function');
     expect(() => unsubscribe()).not.toThrow();
+  });
+});
+
+describe('shared placed items stub parity', () => {
+  it('implements every public method of the real shared placement service', () => {
+    const missing = methodNames(sharedPlacedItemsService).filter(
+      (name) => !methodNames(getSharedPlacedItemsService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/sharedPlacedItemsService but not on the ' +
+        'stub in firebase/safe.ts. Add a no-op to stubSharedPlacedItemsService.'
+    ).toEqual([]);
   });
 });
 

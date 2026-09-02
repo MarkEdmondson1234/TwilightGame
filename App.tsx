@@ -32,6 +32,7 @@ import { useInteractionController } from './hooks/useInteractionController';
 import { useEnvironmentController } from './hooks/useEnvironmentController';
 import { useMultiplayerController } from './hooks/useMultiplayerController';
 import { useChatController } from './hooks/useChatController';
+import { useSharedPlacedItemsController } from './hooks/useSharedPlacedItemsController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
@@ -45,11 +46,7 @@ import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
-import {
-  getRoomArtworkSize,
-  getRoomCoverScale,
-  getRoomPan,
-} from './utils/backgroundRoomLayout';
+import { getRoomArtworkSize, getRoomCoverScale, getRoomPan } from './utils/backgroundRoomLayout';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -436,6 +433,11 @@ const App: React.FC = () => {
     currentMapId,
     playerName: gameState.getSelectedCharacter()?.name ?? 'Traveller',
   });
+
+  // Furniture, wreaths and anything else put down in a shared map, visible to
+  // everyone there. Nothing else needs wiring: GameState merges the shared items
+  // into getPlacedItems(), which the renderer and interactions already use.
+  useSharedPlacedItemsController({ currentMapId });
 
   const [isComposingChat, setIsComposingChat] = useState(false);
   const startComposingChat = useCallback(() => setIsComposingChat(true), []);

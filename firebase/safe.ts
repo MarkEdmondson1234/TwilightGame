@@ -14,6 +14,7 @@ export type { AuthState } from './authService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { ChatMessage } from '../multiplayer/chat';
+import type { PlacedItem } from '../types';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -142,6 +143,22 @@ const stubChatService = {
   leaveRoom: async () => {},
   send: async (_text: string, _name: string) => false as boolean,
   destroy: async () => {},
+};
+
+/**
+ * Stub sharedPlacedItemsService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubSharedPlacedItemsService = {
+  isAvailable: () => false,
+  getListeningMap: () => null as string | null,
+  onChange: (_cb: () => void) => () => {},
+  startListening: (_mapId: string) => false,
+  stopListening: () => {},
+  getPublishedIds: () => [] as string[],
+  writeItem: async (_item: PlacedItem) => false as boolean,
+  deleteItem: async (_itemId: string) => false as boolean,
+  destroy: () => {},
 };
 
 /** Stub cloudSaveService when Firebase is not available */
@@ -290,6 +307,14 @@ export function getPresenceService() {
  */
 export function getChatService() {
   return firebaseModule?.chatService ?? stubChatService;
+}
+
+/**
+ * Get sharedPlacedItemsService (real or stub).
+ * Never cache the result — it is a stub until Firebase has settled.
+ */
+export function getSharedPlacedItemsService() {
+  return firebaseModule?.sharedPlacedItemsService ?? stubSharedPlacedItemsService;
 }
 
 /**

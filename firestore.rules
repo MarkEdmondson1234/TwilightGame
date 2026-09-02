@@ -12,6 +12,7 @@ rules_version = '2';
 // - conversations/{npcId}/summaries/{id}         - Shared conversation summaries
 // - sharedEvents/{eventId}                      - Shared world events
 // - shared/farming/plots/{plotId}               - Shared farm plots (village + farm_area)
+// - shared/world/placedItems/{itemId}           - Shared placed items (furniture, wreaths, …)
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -87,6 +88,20 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // Shared placed items - furniture, wreaths, snow angels, anything put down
+    // in a shared map.
+    // Path: shared/world/placedItems/{itemId}
+    match /shared/world/placedItems/{itemId} {
+      allow read: if isAuthenticated();
+
+      // Deliberately no ownership check on write or delete: a player may move or
+      // remove another player's furniture. The players are children who are
+      // friends, and the design steer is to maximise interaction between them
+      // rather than protect them from each other. Revisit if that group widens.
+      allow create, update: if isAuthenticated() && isValidPlacedItem();
+      allow delete: if isAuthenticated();
+    }
+
     // Shared world events - discoveries, achievements, etc.
     // Path: sharedEvents/{eventId}
     match /sharedEvents/{eventId} {
@@ -104,6 +119,18 @@ service cloud.firestore {
     // ============================================
     // Helper Functions
     // ============================================
+
+    // A placed item must at least be renderable: the client drops anything it
+    // cannot draw, but keeping junk out of the collection is cheaper than
+    // filtering it on every snapshot.
+    function isValidPlacedItem() {
+      return request.resource.data.keys().hasAll(['id', 'itemId', 'mapId', 'image', 'position'])
+        && request.resource.data.id is string
+        && request.resource.data.itemId is string
+        && request.resource.data.mapId is string
+        && request.resource.data.position.x is number
+        && request.resource.data.position.y is number;
+    }
 
     // Check if the requesting user owns this data
     function isOwner(userId) {

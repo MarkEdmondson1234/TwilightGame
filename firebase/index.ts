@@ -52,6 +52,8 @@ export { presenceService } from './presenceService';
 
 export { chatService } from './chatService';
 
+export { sharedPlacedItemsService } from './sharedPlacedItemsService';
+
 // Types
 export type {
   UserProfile,

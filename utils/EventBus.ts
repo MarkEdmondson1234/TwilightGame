@@ -160,7 +160,12 @@ export interface EventPayloads {
   };
   [GameEvent.PLACED_ITEMS_CHANGED]: {
     mapId: string;
-    action?: 'add' | 'remove' | 'update';
+    /**
+     * 'sync' means another player's change arrived from the shared mirror.
+     * Distinguishing it matters: the shared-placement controller must not treat
+     * an inbound change as a reason to publish or delete anything.
+     */
+    action?: 'add' | 'remove' | 'update' | 'sync';
   };
   [GameEvent.INVENTORY_CHANGED]: {
     action: 'add' | 'remove' | 'update';
