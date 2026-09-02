@@ -78,6 +78,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # scripts/optimize-assets.js runs as a prebuild step and pipes GIFs through
+      # gifsicle, falling back to copying them verbatim when it is absent. The
+      # runner had no gifsicle, so every deploy regenerated the GIFs uncompressed
+      # and overwrote the optimised files committed in the repo — the build warned
+      # about it in the log and shipped anyway. Without this the optimisation
+      # exists everywhere except the one place it matters.
+      - name: Install gifsicle
+        run: sudo apt-get update && sudo apt-get install -y gifsicle
+
       - name: Build
         env:
           # Firebase client config (public - embedded in browser JS)
