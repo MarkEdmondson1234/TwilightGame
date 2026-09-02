@@ -68,6 +68,10 @@ export class BackgroundImageLayer {
   private layerNPCs: NPC[] = [];
   // Viewport scaling configuration
   private scalingConfig: ScalingConfig | null = null;
+  // Offset from dead centre for centered layers, so the crop that `cover`
+  // scaling introduces follows the player instead of sitting static (issue #26).
+  // Owned by App.tsx (getRoomPan) and pushed in every frame via setCenteredPan.
+  private centeredPan: { x: number; y: number } = { x: 0, y: 0 };
   // Individual cobweb sprites tracked for dynamic show/hide on clean
   private cobwebLayerEntries: Array<{ sprite: PIXI.Sprite; cobwebId: number }> = [];
   // Individual mess pile sprites tracked for dynamic show/hide on clean
@@ -157,6 +161,37 @@ export class BackgroundImageLayer {
   }
 
   /**
+   * Set how far centered layers are offset from dead centre.
+   *
+   * `cover` scaling makes the artwork larger than the viewport on one axis; this
+   * pan slides the crop so it follows the player, exactly as the camera does in
+   * a tiled room. Pass the value App.tsx already folds into effectiveGridOffset,
+   * so the artwork and everything positioned on top of it move together — a
+   * mismatch here would slide the room out from under the collision grid.
+   */
+  setCenteredPan(x: number, y: number): void {
+    if (this.centeredPan.x === x && this.centeredPan.y === y) return;
+    this.centeredPan = { x, y };
+    this.updateSpritesForScale();
+  }
+
+  /**
+   * Screen position of a centered layer of the given scaled size: centred in the
+   * viewport, then panned. One place, so every caller agrees.
+   */
+  private centeredPosition(
+    scaledWidth: number,
+    scaledHeight: number
+  ): { x: number; y: number } {
+    const viewportWidth = this.scalingConfig?.viewportWidth ?? window.innerWidth;
+    const viewportHeight = this.scalingConfig?.viewportHeight ?? window.innerHeight;
+    return {
+      x: (viewportWidth - scaledWidth) / 2 + this.centeredPan.x,
+      y: (viewportHeight - scaledHeight) / 2 + this.centeredPan.y,
+    };
+  }
+
+  /**
    * Set scaling configuration for viewport-relative rendering
    * When set, images scale to fill the viewport while maintaining aspect ratio
    */
@@ -174,7 +209,7 @@ export class BackgroundImageLayer {
   private updateSpritesForScale(): void {
     if (!this.scalingConfig) return;
 
-    const { viewportScale, viewportWidth, viewportHeight } = this.scalingConfig;
+    const { viewportScale } = this.scalingConfig;
 
     // Update all sprites
     const allSprites = [...this.backgroundSprites, ...this.foregroundSprites];
@@ -187,8 +222,9 @@ export class BackgroundImageLayer {
 
       // Recalculate position for centered sprites
       if (layerSprite.centered) {
-        layerSprite.sprite.x = (viewportWidth - scaledWidth) / 2;
-        layerSprite.sprite.y = (viewportHeight - scaledHeight) / 2;
+        const { x, y } = this.centeredPosition(scaledWidth, scaledHeight);
+        layerSprite.sprite.x = x;
+        layerSprite.sprite.y = y;
       } else {
         // Scale offset position too
         layerSprite.sprite.x = layerSprite.baseX * viewportScale;
@@ -481,10 +517,9 @@ export class BackgroundImageLayer {
 
     if (layer.centered) {
       // Use scaling config viewport dimensions for consistent centering
-      const vw = this.scalingConfig?.viewportWidth ?? window.innerWidth;
-      const vh = this.scalingConfig?.viewportHeight ?? window.innerHeight;
-      baseX = (vw - finalWidth) / 2;
-      baseY = (vh - finalHeight) / 2;
+      const centred = this.centeredPosition(finalWidth, finalHeight);
+      baseX = centred.x;
+      baseY = centred.y;
     } else {
       // Scale offset positions too
       baseX *= viewportScale;
@@ -517,8 +552,6 @@ export class BackgroundImageLayer {
    */
   updateCamera(cameraX: number, cameraY: number): void {
     // Use scaling config viewport dimensions for consistent positioning
-    const viewportWidth = this.scalingConfig?.viewportWidth ?? window.innerWidth;
-    const viewportHeight = this.scalingConfig?.viewportHeight ?? window.innerHeight;
     const viewportScale = this.scalingConfig?.viewportScale ?? 1.0;
 
     // Update background sprites
@@ -528,9 +561,11 @@ export class BackgroundImageLayer {
       const scaledHeight = layerSprite.height * viewportScale;
 
       if (layerSprite.centered) {
-        // Centered layers stay fixed in viewport - recalculate center position
-        layerSprite.sprite.x = (viewportWidth - scaledWidth) / 2;
-        layerSprite.sprite.y = (viewportHeight - scaledHeight) / 2;
+        // Centered layers ignore the tiled-room camera; they sit in the viewport
+        // centre, offset by the pan that follows the player through the crop.
+        const { x, y } = this.centeredPosition(scaledWidth, scaledHeight);
+        layerSprite.sprite.x = x;
+        layerSprite.sprite.y = y;
       } else {
         // Normal parallax scrolling (with scaled positions)
         const offsetX = cameraX * (1 - layerSprite.parallaxFactor);
@@ -551,9 +586,11 @@ export class BackgroundImageLayer {
       const scaledHeight = layerSprite.height * viewportScale;
 
       if (layerSprite.centered) {
-        // Centered layers stay fixed in viewport
-        layerSprite.sprite.x = (viewportWidth - scaledWidth) / 2;
-        layerSprite.sprite.y = (viewportHeight - scaledHeight) / 2;
+        // Centered layers ignore the tiled-room camera; they sit in the viewport
+        // centre, offset by the pan that follows the player through the crop.
+        const { x, y } = this.centeredPosition(scaledWidth, scaledHeight);
+        layerSprite.sprite.x = x;
+        layerSprite.sprite.y = y;
       } else {
         // Normal parallax scrolling (with scaled positions)
         const offsetX = cameraX * (1 - layerSprite.parallaxFactor);
@@ -607,6 +644,10 @@ export class BackgroundImageLayer {
 
     // Clear layer NPCs
     this.layerNPCs = [];
+
+    // Reset the pan so the next room starts centred rather than inheriting the
+    // previous room's crop offset for a frame.
+    this.centeredPan = { x: 0, y: 0 };
 
     // Clear cobweb sprite tracking (sprites already destroyed above)
     this.cobwebLayerEntries = [];

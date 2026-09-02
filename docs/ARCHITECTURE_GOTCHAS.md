@@ -36,7 +36,7 @@ The game has **two fundamentally different** rendering pipelines:
 | | Standard tiled rooms | Background-image rooms |
 |---|---|---|
 | **Examples** | Village, forest, caves | Shop, cottage interior, Mum's kitchen |
-| **How it works** | PixiJS renders each tile, camera scrolls | Pre-drawn image centered in viewport |
+| **How it works** | PixiJS renders each tile, camera scrolls | Pre-drawn image scaled to cover the viewport, panned to follow the player |
 | **Coordinate conversion** | Uses `cameraX/Y` and `TILE_SIZE` | Uses `gridOffset` and `effectiveTileSize` |
 | **Map property** | `renderMode: undefined` or `'tiled'` | `renderMode: 'background-image'` |
 | **Zoom handling** | PixiJS stage.scale handles it | Must manually factor zoom into gridOffset |
@@ -47,8 +47,11 @@ The game has **two fundamentally different** rendering pipelines:
 
 ```
 imageWidth = baseWidth × layerScale × viewportScale × zoom
-offsetX = (viewportSize.width - imageWidth) / 2
+offsetX = (viewportSize.width - imageWidth) / 2 + pan.x
 ```
+
+(`pan` comes from `getRoomPan` — see "Maps not filling the screen" below. It is zero
+whenever the artwork's aspect ratio matches the window, which is the common case.)
 
 **Why zoom matters**: PixiJS `stage.scale.set(zoom)` scales the rendered image. At zoom=2, the image occupies twice the screen pixels. If `gridOffset` doesn't account for this, `screenToTile` produces coordinates that are offset by a factor of zoom — clicks land on the wrong tile.
 
@@ -64,6 +67,7 @@ The `effectiveGridOffset` useMemo must recalculate when ANY of these change:
 - `viewportScale` — responsive scaling
 - `viewportSize` — window resize
 - `zoom` — user zoom level
+- `playerPos` (via `backgroundRoomPan`) — the artwork pans to follow the player
 
 Missing `zoom` from the dependency array was part of the original bug — the offset was stale after zoom changes.
 
@@ -334,14 +338,33 @@ that didn't match the map/reference, the game's own background colour showed thr
   view with the player instead of it sitting static. The axis that determined `coverZoom` is an
   exact tie (zero pan room, by definition of "just barely covers") — only the other axis has
   slack to pan on; see [`tests/cameraCoverage.test.ts`](../tests/cameraCoverage.test.ts).
-- **Background-image rooms**: `calculateViewportScale` (`hooks/useViewportScale.ts`) now takes a
-  `fitMode: 'contain' | 'cover'` param (default stays `'contain'` — only `App.tsx`'s
-  `viewportScale` memo passes `'cover'`). These rooms still don't pan with the player — that's a
-  deliberate, larger follow-up left out of the initial fix (see `docs/ARCHITECTURE_GOTCHAS.md`
-  Common mistake #4 below; introducing panning here would touch the click-coordinate pipeline
-  this whole section is about, and needs live-browser verification).
+- **Background-image rooms**: two separate faults, both now in
+  [`utils/backgroundRoomLayout.ts`](../utils/backgroundRoomLayout.ts).
 
-Guarded by [`tests/mapFillsScreen.test.ts`](../tests/mapFillsScreen.test.ts) and
+  1. *The gap.* `calculateViewportScale` gained a `fitMode: 'cover'`, but was still fed the map's
+     declared `referenceViewport` — an authoring hint that drifts from the artwork it claims to
+     describe. Mum's Kitchen is 960×540 at `scale: 1.3` = **1248×702**, 2.6% short of its declared
+     **1280×720**, so `cover` filled a box 2.6% larger than the room at *every* window size and the
+     background colour showed through the difference on all four sides. `getRoomCoverScale` now
+     measures the artwork itself, so `referenceViewport` can no longer be wrong — it is no longer
+     consulted. (This is also why it looked fine on a small laptop and broken on a bigger screen:
+     below 1280×720 the `Math.max(1.0, …)` floor takes over and the artwork already exceeds the
+     window.) There is deliberately **no upper clamp** on the cover scale; the old `2.5` cap would
+     reopen the gap as a ~700px band on a 4K display, and upscaling a sprite costs sharpness, not
+     GPU memory.
+  2. *Walking off-screen.* Covering means cropping, and the crop used to be a static centre crop
+     with no camera — so the cropped strip was simply unreachable, and walking toward it took the
+     character off the screen. `getRoomPan` slides the artwork to follow the player, clamped at the
+     artwork's edges so it can never reopen the gap. It returns an **offset from centre**, not an
+     absolute origin, because a room can pair a background and foreground layer of different sizes:
+     each stays centred by its own size, and they all pan together. `App.tsx` folds it into
+     `effectiveGridOffset` (so player, NPCs, placed items, highlights, DOM overlays and
+     `screenToTile` all move as one) and passes it to `BackgroundImageLayer.setCenteredPan` (so the
+     artwork moves with them). **Those two must use the same number** — a mismatch slides the room
+     out from under its own collision grid.
+
+Guarded by [`tests/backgroundRoomLayout.test.ts`](../tests/backgroundRoomLayout.test.ts),
+[`tests/mapFillsScreen.test.ts`](../tests/mapFillsScreen.test.ts) and
 [`tests/cameraCoverage.test.ts`](../tests/cameraCoverage.test.ts).
 
 ### Common mistakes
@@ -349,12 +372,18 @@ Guarded by [`tests/mapFillsScreen.test.ts`](../tests/mapFillsScreen.test.ts) and
 1. **Forgetting zoom in gridOffset** — see Section 1
 2. **Placing NPCs using pixel coordinates** — NPCs use tile coordinates, not pixels
 3. **Testing only at zoom=1** — offset bugs only manifest when zoomed
-4. **Assuming camera works the same** — background-image rooms don't scroll or pan with the
-   player (unlike tiled rooms — see "Maps not filling the screen" above); camera is effectively fixed
+4. **Assuming camera works the same** — background-image rooms have no `cameraX/cameraY`; they
+   follow the player through `effectiveGridOffset` instead (see "Maps not filling the screen"
+   above). This used to say the camera was fixed for these rooms. It was, and that was the bug:
+   once the artwork is scaled to *cover* the window, a fixed camera lets the player walk into the
+   cropped strip and off the screen
 5. **Deriving interior sizes from raw `innerWidth`** — factor out browser zoom (see above) or interiors won't match tiled rooms
 6. **Using `calculateViewportScale`'s default (contain) when you actually need cover** — contain
    leaves a gap on the axis with room to spare; pass `fitMode: 'cover'` explicitly when the goal
    is to fill the viewport with no gaps, cropping overflow instead
+7. **Trusting `referenceViewport` to describe a room's artwork** — it is an authoring hint that
+   nothing validates, and most maps' copy of it is wrong by a couple of percent. Size from the
+   centred layer's own `width × height × scale` (`getRoomArtworkSize`)
 
 ---
 
