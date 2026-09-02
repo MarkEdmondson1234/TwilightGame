@@ -14,9 +14,15 @@
  *   node .claude/skills/debug-production/scripts/probe-live.mjs --filter 'Presence|Multiplayer'
  *   node .claude/skills/debug-production/scripts/probe-live.mjs --all
  *
- * Note: PixiJS does not initialise under headless SwiftShader, so the world
- * renders black. This probe is for startup/console/network evidence only —
- * it cannot tell you whether anything looks right on screen.
+ * Note: this probe reports console, network and startup markers. It does NOT
+ * screenshot, because the game boots to a splash screen that covers the canvas
+ * until "Play" is clicked.
+ *
+ * It is *not* true that PixiJS cannot render headlessly — this file used to say
+ * so, and the claim cost a lot of wasted debugging. PixiJS initialises fine and
+ * the world renders. To capture it: click the Play button, wait ~15s, then
+ * screenshot. On a machine with no GPU (CI), Chrome also needs
+ * `--enable-unsafe-swiftshader`, which is passed below.
  */
 import puppeteer from 'puppeteer';
 
@@ -46,7 +52,13 @@ const filter = new RegExp(
 );
 
 const lines = [];
-const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
+// --enable-unsafe-swiftshader lets Chrome fall back to software WebGL when no GPU
+// is present (CI). Without it WebGL is refused there and PixiJS genuinely cannot
+// start — which is how the "PixiJS never initialises headlessly" myth began.
+const browser = await puppeteer.launch({
+  headless: 'new',
+  args: ['--no-sandbox', '--enable-unsafe-swiftshader'],
+});
 try {
   const page = await browser.newPage();
   page.on('console', (m) => lines.push({ kind: m.type(), text: m.text() }));

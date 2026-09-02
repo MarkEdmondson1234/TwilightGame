@@ -82,7 +82,9 @@ useEffect(() => {
       antialias: perfSettings.antialias,
       resolution: perfSettings.resolution,
     });
-    await textureManager.loadBatch(tileAssets);
+    // Core + this map only, NOT every texture in the game — see the
+    // "Texture Memory" section of CLAUDE.md.
+    await textureManager.loadUrls(getResidentTextureUrls(currentMapId, season, characterId));
     
     const tileLayer = new TileLayer();
     app.stage.addChild(tileLayer.getContainer());
