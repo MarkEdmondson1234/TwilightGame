@@ -18,6 +18,7 @@ import { pumpkinCarvingDefinition } from './pumpkin-carving/definition';
 import { wreathMakingDefinition } from './wreath-making/definition';
 import { goblinCombatDefinition, umbraWolfCombatDefinition } from './combat-encounter/definition';
 import { skiingDefinition } from './skiing/definition';
+import { slidingCratePuzzleDefinition } from './sliding-crate-puzzle/definition';
 
 /**
  * All registered mini-games.
@@ -30,6 +31,7 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
   goblinCombatDefinition,
   umbraWolfCombatDefinition,
   skiingDefinition,
+  slidingCratePuzzleDefinition,
 ];
 
 // =============================================================================

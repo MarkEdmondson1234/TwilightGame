@@ -7,6 +7,8 @@ export const tileAssets = {
   rock_1: '/TwilightGame/assets-optimized/tiles/rock_1.png',
   rock_2: '/TwilightGame/assets-optimized/tiles/rock_2.png',
   door_1: '/TwilightGame/assets-optimized/tiles/door_1.png',
+  crate: '/TwilightGame/assets-optimized/tiles/crate.png',
+  rock_wall: '/TwilightGame/assets-optimized/tiles/rock_wall.png',
   mushrooms: '/TwilightGame/assets-optimized/tiles/mushrooms.png',
   stump: '/TwilightGame/assets-optimized/tiles/stump.png',
   sakura_tree_spring: '/TwilightGame/assets-optimized/tiles/sakura_tree_spring.png',
