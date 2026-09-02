@@ -14,7 +14,11 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { gameState } from '../GameState';
-import { sharedPlacedItemsManager, decodeSharedPlacedItem } from '../multiplayer/sharedPlacedItems';
+import {
+  sharedPlacedItemsManager,
+  decodeSharedPlacedItem,
+  toPublishablePayload,
+} from '../multiplayer/sharedPlacedItems';
 import type { PlacedItem } from '../types';
 
 const MAP = 'village';
@@ -113,5 +117,28 @@ describe('decodeSharedPlacedItem', () => {
   it('fills in a timestamp rather than rejecting a document without one', () => {
     const decoded = decodeSharedPlacedItem({ ...makeItem('a'), timestamp: undefined });
     expect(decoded?.timestamp).toBeTypeOf('number');
+  });
+});
+
+describe('toPublishablePayload', () => {
+  it("leaves a wreath's generated image alone — there is nowhere else to get it", () => {
+    const wreath = makeItem('w', { customImage: 'data:image/webp;base64,AAAA' });
+    expect(toPublishablePayload(wreath).customImage).toBe('data:image/webp;base64,AAAA');
+  });
+
+  it('strips a painting image, which the receiver hydrates from its id', () => {
+    const painting = makeItem('p', {
+      paintingId: 'painting-1',
+      customImage: 'data:image/webp;base64,' + 'A'.repeat(100_000),
+    });
+
+    const payload = toPublishablePayload(painting);
+
+    expect(
+      payload.customImage,
+      'A ~100 KB base64 image must not ride along in a document every client ' +
+        're-downloads on every snapshot — the image lives in shared/world/paintings.'
+    ).toBeUndefined();
+    expect(payload.paintingId).toBe('painting-1');
   });
 });

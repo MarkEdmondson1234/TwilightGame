@@ -19,7 +19,11 @@ import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { DEBUG } from '../constants';
 import { reportError } from '../utils/errorReporting';
-import { decodeSharedPlacedItem, sharedPlacedItemsManager } from '../multiplayer/sharedPlacedItems';
+import {
+  decodeSharedPlacedItem,
+  sharedPlacedItemsManager,
+  toPublishablePayload,
+} from '../multiplayer/sharedPlacedItems';
 import type { PlacedItem } from '../types';
 
 const PLACED_ITEMS_COLLECTION = 'shared/world/placedItems';
@@ -141,8 +145,9 @@ class SharedPlacedItemsService {
     try {
       const db = getFirebaseDb();
       this.publishedIds.add(item.id);
+
       await setDoc(doc(db, PLACED_ITEMS_COLLECTION, item.id), {
-        ...item,
+        ...toPublishablePayload(item),
         // Attribution is for curiosity, not permission: anyone may move or
         // remove anyone's furniture. See multiplayer/sharedPlacedItems.ts.
         placedByUid: authService.getUserId(),

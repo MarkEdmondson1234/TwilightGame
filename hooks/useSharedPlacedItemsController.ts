@@ -21,6 +21,7 @@ import { eventBus, GameEvent } from '../utils/EventBus';
 import { gameState } from '../GameState';
 import { getSharedPlacedItemsService, whenFirebaseSettled } from '../firebase/safe';
 import { sharedPlacedItemsManager } from '../multiplayer/sharedPlacedItems';
+import { loadPaintingImage } from '../utils/paintingImageService';
 import type { PlacedItem } from '../types';
 
 export interface UseSharedPlacedItemsControllerProps {
@@ -92,15 +93,47 @@ export function useSharedPlacedItemsController(
     let unsubscribe: (() => void) | null = null;
     let cancelled = false;
 
+    // A hung painting arrives as an id, not an image — the picture itself lives
+    // in the shared paintings collection so it is not re-downloaded with every
+    // snapshot. Fetch each one once; without this the other player sees an
+    // empty frame.
+    const hydrating = new Set<string>();
+
+    const announce = () => {
+      eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, {
+        mapId: sharedPlacedItemsManager.getMapId() ?? '',
+        action: 'sync',
+      });
+    };
+
+    const hydratePaintings = () => {
+      const mapId = sharedPlacedItemsManager.getMapId();
+      if (!mapId) return;
+
+      for (const item of sharedPlacedItemsManager.getItems(mapId)) {
+        if (!item.paintingId) continue;
+        if (item.customImage?.startsWith('data:')) continue;
+        if (hydrating.has(item.paintingId)) continue;
+
+        hydrating.add(item.paintingId);
+        void loadPaintingImage(item.paintingId).then((dataUrl) => {
+          if (cancelled || !dataUrl) return;
+          // Re-read: the item may have moved or gone while we were fetching.
+          const current = sharedPlacedItemsManager.get(item.id);
+          if (!current) return;
+          sharedPlacedItemsManager.apply({ ...current, customImage: dataUrl });
+          announce();
+        });
+      }
+    };
+
     void (async () => {
       const loaded = await whenFirebaseSettled();
       if (cancelled || !loaded) return;
 
       unsubscribe = getSharedPlacedItemsService().onChange(() => {
-        eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, {
-          mapId: sharedPlacedItemsManager.getMapId() ?? '',
-          action: 'sync',
-        });
+        hydratePaintings();
+        announce();
       });
     })();
 

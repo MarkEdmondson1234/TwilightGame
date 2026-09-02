@@ -40,6 +40,22 @@ export function decodeSharedPlacedItem(raw: unknown): PlacedItem | null {
   };
 }
 
+/**
+ * What actually goes on the wire for one item.
+ *
+ * A hung painting carries its ~100 KB base64 image in `customImage`. That does
+ * not belong in a document every client re-downloads on every snapshot: the
+ * image lives in the shared paintings collection, and the receiving client
+ * hydrates it from `paintingId`. An item with no `paintingId` — a wreath's
+ * generated image, say — keeps its image, because there is nowhere else for it
+ * to come from.
+ */
+export function toPublishablePayload(item: PlacedItem): PlacedItem {
+  if (!item.paintingId) return item;
+  const { customImage: _omitted, ...withoutImage } = item;
+  return withoutImage;
+}
+
 class SharedPlacedItemsManager {
   /** Every item currently published for the map we are mirroring, keyed by id. */
   private items = new Map<string, PlacedItem>();
