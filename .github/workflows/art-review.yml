@@ -79,24 +79,48 @@ jobs:
 
       - name: Comment on the PR
         env:
-          GH_TOKEN: ${{ github.token }}
+          # Inline images need a token type the attachment API accepts: an OAuth
+          # token from `gh auth login`, or a CLASSIC personal access token. The
+          # Actions GITHUB_TOKEN is an app installation token and is rejected with
+          # "unsupported authentication type", so attachments are opt-in on a
+          # secret. Without it the comment still posts, just pointing at the
+          # workflow artifact instead of showing the sheets inline.
+          ART_REVIEW_TOKEN: ${{ secrets.ART_REVIEW_TOKEN }}
+          FALLBACK_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           if [ ! -f art-review/summary.md ]; then
             echo "No artwork changed; nothing to post."
             exit 0
           fi
 
-          # Each sheet is referenced from summary.md as ![sheet-N.png](./sheet-N.png);
-          # gh rewrites those to the uploaded asset URLs, so they land inline
-          # rather than being appended in a lump at the end.
           attach=()
-          while IFS= read -r sheet; do
-            [ -n "$sheet" ] && attach+=(--attach "${sheet}#Changed artwork, before and after")
-          done < sheets.txt
+          if [ -n "$ART_REVIEW_TOKEN" ]; then
+            export GH_TOKEN="$ART_REVIEW_TOKEN"
+            # Each sheet is referenced from summary.md by exactly this path, so gh
+            # rewrites the reference in place rather than appending the images in
+            # a lump at the end.
+            while IFS= read -r sheet; do
+              [ -n "$sheet" ] && attach+=(--attach "${sheet}#Changed artwork, before and after")
+            done < sheets.txt
+          else
+            export GH_TOKEN="$FALLBACK_TOKEN"
+            # Strip the image references, which would render as broken links, and
+            # say where the pictures actually are.
+            sed -i '/^!\[Changed artwork\](art-review\/sheet-/d' art-review/summary.md
+            cat >> art-review/summary.md <<NOTE
 
-          # --edit-last keeps one comment per PR that updates as the branch
-          # moves, instead of a new wall of images on every push.
-          gh pr comment "${{ github.event.pull_request.number }}" \
+          > **Contact sheets are in the [workflow artifact]($RUN_URL) ("art-review").**
+          > To show them inline here instead, add a classic personal access token with
+          > \`repo\` scope as the \`ART_REVIEW_TOKEN\` secret — GitHub's attachment upload
+          > rejects the Actions token type.
+          NOTE
+          fi
+
+          # --edit-last keeps one comment per PR that updates as the branch moves,
+          # instead of a new wall of images on every push.
+          gh pr comment "$PR_NUMBER" \
             --body-file art-review/summary.md \
             --edit-last --create-if-none \
             "${attach[@]}"
