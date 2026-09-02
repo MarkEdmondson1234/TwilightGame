@@ -2161,6 +2161,33 @@ const App: React.FC = () => {
             onComplete={hideSplashEffect}
           />
         )}
+
+        {/* Stamina bar above player head (subscribes to EventBus for stamina changes).
+            Rendered inside this container (not screen space) so it inherits the same camera
+            transform as the player sprite, and gridOffset/tileSize for background-image rooms. */}
+        {!isCutscenePlaying && (
+          <StaminaBar
+            playerX={playerPos.x}
+            playerY={playerPos.y}
+            gridOffset={effectiveGridOffset}
+            tileSize={effectiveTileSize}
+            characterScale={currentMap?.characterScale ?? 1.0}
+            lowThreshold={STAMINA.LOW_THRESHOLD}
+            forceShow={restingEffect !== null}
+          />
+        )}
+
+        {/* Drifting "z"s while the player sleeps in a bed or rests on a bench/armchair */}
+        {!isCutscenePlaying && (
+          <RestIndicator
+            effect={restingEffect}
+            playerX={playerPos.x}
+            playerY={playerPos.y}
+            gridOffset={effectiveGridOffset}
+            tileSize={effectiveTileSize}
+            characterScale={currentMap?.characterScale ?? 1.0}
+          />
+        )}
       </div>
 
       {/* Cloud shadows - subtle moving shadows on the ground for outdoor maps */}
@@ -2741,29 +2768,6 @@ const App: React.FC = () => {
           cameraX={cameraX}
           cameraY={cameraY}
           isNPCTarget={clickToMoveTargetNPC !== null}
-        />
-      )}
-
-      {/* Stamina bar above player head (subscribes to EventBus for stamina changes) */}
-      {!isCutscenePlaying && (
-        <StaminaBar
-          playerX={playerPos.x}
-          playerY={playerPos.y}
-          cameraX={cameraX}
-          cameraY={cameraY}
-          lowThreshold={STAMINA.LOW_THRESHOLD}
-          forceShow={restingEffect !== null}
-        />
-      )}
-
-      {/* Drifting "z"s while the player sleeps in a bed or rests on a bench/armchair */}
-      {!isCutscenePlaying && (
-        <RestIndicator
-          effect={restingEffect}
-          playerX={playerPos.x}
-          playerY={playerPos.y}
-          cameraX={cameraX}
-          cameraY={cameraY}
         />
       )}
 

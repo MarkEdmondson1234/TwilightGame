@@ -17,12 +17,15 @@ import { TILE_SIZE, STAMINA, PLAYER_SIZE } from '../constants';
 import { gameState } from '../GameState';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { Z_HUD } from '../zIndex';
+import type { Position } from '../types';
 
 interface StaminaBarProps {
   playerX: number; // Player world X position (in tiles)
   playerY: number; // Player world Y position (in tiles)
-  cameraX: number; // Camera X offset (in pixels)
-  cameraY: number; // Camera Y offset (in pixels)
+  gridOffset?: Position; // Offset for background-image rooms with centred layers
+  tileSize?: number; // Effective tile size (includes viewport scaling for background-image rooms)
+  characterScale?: number; // Map's characterScale multiplier (e.g. 1.8 in home_upstairs) — the
+  // player sprite is drawn at PLAYER_SIZE * characterScale, so "above head" must scale with it
   lowThreshold?: number; // Percentage below which bar is always shown (default 25)
   forceShow?: boolean; // Always show the bar regardless of stamina level (e.g. while resting in bed)
 }
@@ -30,8 +33,9 @@ interface StaminaBarProps {
 export function StaminaBar({
   playerX,
   playerY,
-  cameraX,
-  cameraY,
+  gridOffset,
+  tileSize = TILE_SIZE,
+  characterScale = 1.0,
   lowThreshold = 25,
   forceShow = false,
 }: StaminaBarProps) {
@@ -49,12 +53,24 @@ export function StaminaBar({
   const percentage = max > 0 ? (current / max) * 100 : 0;
   const isLow = percentage <= lowThreshold;
 
-  // Calculate screen position (centred above player head)
+  // Calculate screen position (centred above player head). playerX/Y are converted with
+  // gridOffset/tileSize rather than a camera offset because this renders inside the same
+  // "Hybrid Layer" container as the player sprite (see App.tsx) — that container itself
+  // applies the camera translate for tiled rooms, so children only need to add the
+  // background-image room's gridOffset (undefined/0 for tiled rooms, where tileSize is
+  // just TILE_SIZE too).
+  const offsetX = gridOffset?.x ?? 0;
+  const offsetY = gridOffset?.y ?? 0;
   const BAR_WIDTH = 64;
   const BAR_HEIGHT = 8;
-  const HALF_PLAYER_PX = Math.round((PLAYER_SIZE * TILE_SIZE) / 2); // 26px
-  const screenX = playerX * TILE_SIZE - cameraX - BAR_WIDTH / 2 - 11;   // centred on player
-  const screenY = playerY * TILE_SIZE - cameraY - HALF_PLAYER_PX - BAR_HEIGHT - 20; // 20px above head
+  const HALF_PLAYER_PX = Math.round((PLAYER_SIZE * characterScale * tileSize) / 2);
+  // Clearance above the sprite's own bounding box before the bar starts. Scales with
+  // characterScale like HALF_PLAYER_PX above it — tuned at 105px for home_upstairs's 1.8x
+  // characterScale, so the base (exterior, characterScale 1.0) value is 105 / 1.8.
+  const HEAD_GAP_BASE = 58;
+  const HEAD_GAP = HEAD_GAP_BASE * characterScale;
+  const screenX = playerX * tileSize + offsetX - BAR_WIDTH / 2 - 11;   // centred on player
+  const screenY = playerY * tileSize + offsetY - HALF_PLAYER_PX - BAR_HEIGHT - HEAD_GAP;
 
   const shouldShow = isHovered || isLow || forceShow;
 
@@ -67,6 +83,7 @@ export function StaminaBar({
     height: BAR_HEIGHT + 16,
     cursor: 'pointer',
     zIndex: Z_HUD, // Above player, below weather
+    pointerEvents: 'auto', // Re-enable events: the parent layer sets pointer-events: none
   };
 
   const containerStyle: React.CSSProperties = {

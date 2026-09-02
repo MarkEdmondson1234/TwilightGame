@@ -5,15 +5,17 @@
  * bench's footprint, which is the same test StaminaManager reads to decide whether to
  * restore stamina — so the animation and the stamina gain can never disagree.
  *
- * Positioned in screen space from the player's world position, mirroring StaminaBar. It
- * sits slightly right of centre so it does not cover the stamina bar, which is force-shown
- * while resting.
+ * Positioned in screen space from the player's world position, mirroring StaminaBar —
+ * including its use of gridOffset/tileSize (not a camera offset) so it stays pinned to the
+ * player in background-image rooms too. It sits slightly right of centre so it does not
+ * cover the stamina bar, which is force-shown while resting.
  *
  * The glyphs are text today. If a hand-drawn sleep sprite is ever added, swap the spans for
  * an <img> — nothing else here needs to change.
  */
 
 import { TILE_SIZE, PLAYER_SIZE } from '../constants';
+import type { Position } from '../types';
 import type { RestEffect } from '../utils/furnitureRest';
 import { Z_ACTION_PROMPTS } from '../zIndex';
 
@@ -22,20 +24,29 @@ interface RestIndicatorProps {
   effect: RestEffect | null;
   playerX: number; // world tiles
   playerY: number; // world tiles
-  cameraX: number; // pixels
-  cameraY: number; // pixels
+  gridOffset?: Position; // Offset for background-image rooms with centred layers
+  tileSize?: number; // Effective tile size (includes viewport scaling for background-image rooms)
+  characterScale?: number; // Map's characterScale multiplier — see StaminaBar for why
 }
-
-const HALF_PLAYER_PX = Math.round((PLAYER_SIZE * TILE_SIZE) / 2);
 
 /** Sleeping in a bed is a deeper rest than perching on a bench, so the zs are bigger. */
 const GLYPH_SIZE: Record<RestEffect, number> = { sleep: 22, rest: 16 };
 
-export function RestIndicator({ effect, playerX, playerY, cameraX, cameraY }: RestIndicatorProps) {
+export function RestIndicator({
+  effect,
+  playerX,
+  playerY,
+  gridOffset,
+  tileSize = TILE_SIZE,
+  characterScale = 1.0,
+}: RestIndicatorProps) {
   if (!effect) return null;
 
-  const screenX = playerX * TILE_SIZE - cameraX + 6;
-  const screenY = playerY * TILE_SIZE - cameraY - HALF_PLAYER_PX - 30;
+  const offsetX = gridOffset?.x ?? 0;
+  const offsetY = gridOffset?.y ?? 0;
+  const halfPlayerPx = Math.round((PLAYER_SIZE * characterScale * tileSize) / 2);
+  const screenX = playerX * tileSize + offsetX + 6;
+  const screenY = playerY * tileSize + offsetY - halfPlayerPx - 30;
 
   return (
     <div
