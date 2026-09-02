@@ -1,0 +1,110 @@
+name: Art Review
+
+# Posts a before/after contact sheet of any artwork a PR changes.
+#
+# The artwork is the game. A normal diff renders every asset change as "Binary
+# files differ", so a PR can halve a sprite's resolution or pad it out to a
+# square — which moves the art inside its texture — with nothing to review.
+# This attaches pictures to the PR so a human can actually look.
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      # Only run when artwork or the optimiser itself changed. The optimiser is
+      # included because a rule change there silently reshapes assets on the
+      # next build, which is exactly the case worth catching.
+      - 'public/assets/**'
+      - 'public/assets-optimized/**'
+      - 'scripts/optimize-assets.js'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: art-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  art-review:
+    runs-on: ubuntu-latest
+    # A PR from a fork gets a read-only token, so posting would fail. Skip
+    # rather than fail a check for something the contributor cannot fix.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          # The script diffs against the base branch, so it needs its history.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure gh supports --attach
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # --attach (inline media on PR comments) landed in gh 2.99.0. Runner
+          # images lag behind, so install a known-good build when it is older.
+          # Without this the comment step fails on an unknown flag.
+          need=2.99.0
+          have=$(gh --version | head -1 | awk '{print $3}')
+          lowest=$(printf '%s\n%s\n' "$need" "$have" | sort -V | head -1)
+          if [ "$lowest" != "$need" ]; then
+            echo "gh $have is older than $need — installing $need"
+            curl -fsSL "https://github.com/cli/cli/releases/download/v${need}/gh_${need}_linux_amd64.tar.gz" \
+              | tar -xz -C /tmp
+            echo "/tmp/gh_${need}_linux_amd64/bin" >> "$GITHUB_PATH"
+          else
+            echo "gh $have is new enough"
+          fi
+
+      - name: Build contact sheets
+        id: sheets
+        run: |
+          git fetch --no-tags --depth=1 origin "${{ github.base_ref }}"
+          node scripts/art-review.mjs \
+            --base "origin/${{ github.base_ref }}" \
+            --out art-review > sheets.txt
+          echo "count=$(wc -l < sheets.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Comment on the PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f art-review/summary.md ]; then
+            echo "No artwork changed; nothing to post."
+            exit 0
+          fi
+
+          # Each sheet is referenced from summary.md as ![sheet-N.png](./sheet-N.png);
+          # gh rewrites those to the uploaded asset URLs, so they land inline
+          # rather than being appended in a lump at the end.
+          attach=()
+          while IFS= read -r sheet; do
+            [ -n "$sheet" ] && attach+=(--attach "${sheet}#Changed artwork, before and after")
+          done < sheets.txt
+
+          # --edit-last keeps one comment per PR that updates as the branch
+          # moves, instead of a new wall of images on every push.
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --body-file art-review/summary.md \
+            --edit-last --create-if-none \
+            "${attach[@]}"
+
+      - name: Upload sheets as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: art-review
+          path: art-review/
+          if-no-files-found: ignore

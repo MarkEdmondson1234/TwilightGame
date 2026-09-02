@@ -32,3 +32,5 @@ perf-screenshot.png
 perf-*.json
 perf-report.md
 regression-detected
+# Local output of scripts/art-review.mjs (contact sheets are attached to PRs, not committed)
+art-review/
