@@ -10,6 +10,7 @@
  */
 
 import { isFirebaseLoaded, getPaintingStorageService } from '../firebase/safe';
+import { debugLog } from './debugLog';
 
 // ===== Constants =====
 
@@ -221,7 +222,7 @@ export async function syncPaintingsFromCloud(): Promise<void> {
     }
 
     if (synced > 0) {
-      console.log(`[PaintingImageService] Synced ${synced} painting(s) from cloud`);
+      debugLog('PaintingImageService', `Synced ${synced} painting(s) from cloud`);
     }
   } catch (e) {
     console.warn('[PaintingImageService] Cloud sync failed:', e);

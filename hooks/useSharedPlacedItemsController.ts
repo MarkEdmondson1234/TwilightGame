@@ -23,6 +23,7 @@ import { getSharedPlacedItemsService, whenFirebaseSettled } from '../firebase/sa
 import { sharedPlacedItemsManager } from '../multiplayer/sharedPlacedItems';
 import { loadPaintingImage } from '../utils/paintingImageService';
 import type { PlacedItem } from '../types';
+import { debugLog } from '../utils/debugLog';
 
 export interface UseSharedPlacedItemsControllerProps {
   /** Map the player is currently on */
@@ -164,7 +165,7 @@ export function useSharedPlacedItemsController(
       for (const item of local) {
         const published = sharedPlacedItemsManager.get(item.id);
         if (!published || differs(item, published)) {
-          if (DEBUG.MULTIPLAYER) console.log(`[SharedItems] Publishing ${item.itemId}`);
+          if (DEBUG.MULTIPLAYER) debugLog('SharedItems', `Publishing ${item.itemId}`);
           void service.writeItem(item);
         }
       }
@@ -177,7 +178,7 @@ export function useSharedPlacedItemsController(
       for (const id of service.getPublishedIds()) {
         if (localIds.has(id)) continue;
         if (sharedPlacedItemsManager.has(id)) continue;
-        if (DEBUG.MULTIPLAYER) console.log(`[SharedItems] Deleting picked-up item ${id}`);
+        if (DEBUG.MULTIPLAYER) debugLog('SharedItems', `Deleting picked-up item ${id}`);
         void service.deleteItem(id);
       }
     };

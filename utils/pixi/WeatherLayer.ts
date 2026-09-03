@@ -32,6 +32,7 @@ import {
   ParticleConfig,
 } from '../../data/weatherConfig';
 import { Z_WEATHER_PARTICLES, Z_WEATHER_TINT } from '../../zIndex';
+import { debugLog } from '../debugLog';
 
 // Edge feathering for fog/mist — how many pixels at each edge fade to transparent
 const FOG_EDGE_FEATHER = 120;
@@ -178,8 +179,9 @@ export class WeatherLayer {
         console.error('[WeatherLayer] ✗ Failed to load mist texture');
       }
 
-      console.log(
-        '[WeatherLayer] Texture loading complete. Available textures:',
+      debugLog(
+        'WeatherLayer',
+        'Texture loading complete. Available textures:',
         Array.from(this.particleTextures.keys()),
         'fog textures:',
         Array.from(this.fogTextures.keys())
@@ -198,8 +200,9 @@ export class WeatherLayer {
       return;
     }
 
-    console.log(
-      `[WeatherLayer] Transitioning weather from ${this.currentWeather} to ${weather}${immediate ? ' (immediate)' : ''}`
+    debugLog(
+      'WeatherLayer',
+      `Transitioning weather from ${this.currentWeather} to ${weather}${immediate ? ' (immediate)' : ''}`
     );
 
     // Instant switch — no fade (used when entering indoor/cave maps)
@@ -282,8 +285,9 @@ export class WeatherLayer {
       this.particleContainer.addChild(sprite);
     }
 
-    console.log(
-      `[WeatherLayer] ✓ Created particle pool: ${config.maxParticles} sprites for ${weather}`
+    debugLog(
+      'WeatherLayer',
+      `✓ Created particle pool: ${config.maxParticles} sprites for ${weather}`
     );
   }
 

@@ -26,6 +26,7 @@ import { getPortraitSprite } from '../utils/portraitSprites';
 import { audioManager } from '../utils/AudioManager';
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import { Z_CUTSCENE, zClass } from '../zIndex';
+import { debugLog } from '../utils/debugLog';
 
 interface CutscenePlayerProps {
   onComplete: (action: {
@@ -84,8 +85,9 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
   useEffect(() => {
     const state = cutsceneManager.getState();
     const cutscene = state.currentCutscene;
-    console.log(
-      `[CutscenePlayer] Audio effect mount — cutscene: ${cutscene?.id}, has audio config: ${!!cutscene?.audio}`
+    debugLog(
+      'CutscenePlayer',
+      `Audio effect mount — cutscene: ${cutscene?.id}, has audio config: ${!!cutscene?.audio}`
     );
     if (!cutscene?.audio) return;
 
@@ -95,11 +97,12 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     if (cutsceneManager.hasAudioStarted(cutscene.id)) {
       // Already playing from an earlier mount of this same cutscene — just recover the
       // pre-cutscene music reference so cleanup can restore it correctly.
-      console.log(`[CutscenePlayer] Audio already started for ${cutscene.id}, skipping replay`);
+      debugLog('CutscenePlayer', `Audio already started for ${cutscene.id}, skipping replay`);
       previousMusicRef.current = cutsceneManager.getPreviousMusicBeforeCutscene();
     } else {
-      console.log(
-        `[CutscenePlayer] Starting audio for ${cutscene.id}: music=${cutscene.audio.music}`
+      debugLog(
+        'CutscenePlayer',
+        `Starting audio for ${cutscene.id}: music=${cutscene.audio.music}`
       );
       previousMusicRef.current = audioManager.getCurrentMusic();
       cutsceneManager.markAudioStarted(cutscene.id, previousMusicRef.current);

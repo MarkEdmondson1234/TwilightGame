@@ -14,6 +14,7 @@
 import { generateResponse, isAIAvailable } from './anthropicClient';
 import { TimeManager } from '../utils/TimeManager';
 import type { DiaryEntryDoc } from '../firebase/types';
+import { debugLog } from '../utils/debugLog';
 
 const DIARY_STORAGE_KEY = 'diary_entries';
 const MAX_RAW_EXCHANGE_LENGTH = 3000; // Cap raw text to avoid huge localStorage entries
@@ -105,7 +106,7 @@ async function saveToFirestore(entry: DiaryEntry): Promise<void> {
       updatedAt: entry.updatedAt,
     });
 
-    console.log(`[Diary] Saved to Firestore: ${entryId}`);
+    debugLog('Diary', `Saved to Firestore: ${entryId}`);
   } catch {
     // Non-fatal — localStorage is the primary store for display
   }
@@ -163,7 +164,7 @@ export async function syncDiaryFromFirestore(): Promise<void> {
 
   if (added > 0 || updated > 0) {
     saveDiaryEntries(Array.from(localMap.values()));
-    console.log(`[Diary] Synced from Firestore: ${added} added, ${updated} updated`);
+    debugLog('Diary', `Synced from Firestore: ${added} added, ${updated} updated`);
   }
 }
 
@@ -312,8 +313,9 @@ export async function recordConversation(
   }
   saveDiaryEntries(entries);
 
-  console.log(
-    `[Diary] ${existingIndex >= 0 ? 'Updated' : 'Created'} entry: ${entryId} (AI: ${entry.isAISummary}, exchanges: ${entry.exchanges})`
+  debugLog(
+    'Diary',
+    `${existingIndex >= 0 ? 'Updated' : 'Created'} entry: ${entryId} (AI: ${entry.isAISummary}, exchanges: ${entry.exchanges})`
   );
 
   // Save to Firestore in background (non-blocking)

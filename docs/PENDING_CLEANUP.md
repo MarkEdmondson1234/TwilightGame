@@ -11,13 +11,13 @@ redone. Pick items up in any order — each section is self-contained.
 The sweep started from a clean bill of health (tsc clean, 874/874 tests, 0 lint
 errors) and worked the warning backlog down. Current baseline:
 
-| Metric                        | Sweep start | Now                                                                     |
-| ----------------------------- | ----------- | ----------------------------------------------------------------------- |
-| ESLint warnings               | 277         | **0**                                                                   |
-| `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                                    |
-| `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                                    |
-| `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                                    |
-| raw `console.log` sites       | 682         | **570** (PR #84 started the migration; helper + first subsystem landed) |
+| Metric                        | Sweep start | Now                                                   |
+| ----------------------------- | ----------- | ----------------------------------------------------- |
+| ESLint warnings               | 277         | **0**                                                 |
+| `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                  |
+| `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                  |
+| `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                  |
+| raw `console.log` sites       | 682         | **17** (PRs #84–#90; 595 now flow through `debugLog`) |
 
 **Verification command:** `npm run verify` (tsc + full test suite, ~4s).
 **Lint:** `npx eslint .` — the working rule all session: warnings are signal, so
@@ -54,48 +54,33 @@ The reusable typed contracts added there, for future use:
 
 ---
 
-## 2. Console noise: migration in progress (helper landed in PR #84)
+## 2. ~~Console noise~~ — migration complete (PRs #84–#90)
 
-`utils/debugLog.ts` now exists: category-gated `debugLog(category, ...args)` that
+`utils/debugLog.ts` exists: category-gated `debugLog(category, ...args)` that
 re-attaches the `[Prefix]` tag on output. Flag sources are the same as
 `runtimeDebug()` in constants.ts: `?debug=<categories|1|all>` URL param and the
 `twilight_debug` localStorage key, plus a DevTools toggle (World tab → "Debug
 Logging") that persists and needs no reload. Case-insensitive category matching.
 `console.warn`/`error` stay ungated everywhere (player-visible diagnostics).
 
-**eslint config** has a `no-console: ['warn', {allow: ['warn','error','info']}]`
-override scoped to converted files (`utils/debugLog.ts` itself is exempt).
-**Extend that `files` list as each subsystem converts** — that is what keeps the
-count honest afterwards.
+**Status: done.** 595 sites flow through `debugLog`; what remains raw is
+deliberate:
 
-**Migration recipe** (see `utils/dialogueHandlers.ts` for the worked example —
-39 sites, one codemod + hand-fixed multi-line forms):
+- `utils/debugLog.ts` — the helper itself (the one sanctioned console.log)
+- `utils/EventBus.ts` — has its own working `setDebug()` gate; ships no noise
+- `hooks/useMultiplayerController.ts` — one log deliberately always-on so bug
+  reports show presence working as well as failing (comment in the file)
+- `maps/gridParser.ts` — console.group validation report; its error path is
+  `console.error` (ungated by design), splitting the group would break it
+- `utils/testUtils.ts` — test infrastructure
+- `components/DevTools.tsx` — one match is help text, not a call
 
-1. Run `node scripts/convert-debug-log.mjs <files...>` — it rewrites
-   `console.log('[Tag] ...')` → `debugLog('Tag', ...)` (prefix moves out of the
-   string into the first argument; output looks identical), handles multi-line
-   calls, and unwraps dead `if (DEBUG.X)` guards. Live `DEBUG.MULTIPLAYER`
-   guards are kept by default (extend via `--keep-guards=`). Anything needing
-   judgement is reported as `MANUAL file:line` and left untouched.
-2. Review the diff — promote anything a player genuinely needs to
-   `console.warn` (ungated); routine traces stay gated `debugLog`.
-3. Add the file to the eslint `no-console` override list.
-4. `npm run verify` + prettier, then commit.
-
-**Remaining inventory** (console.log counts on main after the merge): GameState.ts ~43,
-GameStatePersistence.ts ~32, farmManager.ts ~31, FriendshipManager.ts ~30,
-actionHandlers.ts ~27, gameInitializer.ts ~24, procedural.ts ~20,
-inventoryManager.ts ~17, App.tsx ~17, AudioManager.ts ~16, then tail. 113
-unique `[Prefix]` tags total — the prefix _is_ the category, so most files are
-one-category conversions.
-
-**Done when:** every non-test source file is either in the eslint override list
-or uses only `console.warn`/`error`.
-
-**Known trap:** at least one `no-console` eslint-disable in the repo was a
-no-op because the rule was never enabled (removed in #75). The new override
-actually enables the rule, so disables inside converted files would now be
-meaningful — don't add any; delete the call instead.
+**Mechanics for anyone extending this:** `scripts/convert-debug-log.mjs` does
+the mechanical rewrite (prefix extraction, multi-line calls, dead-guard
+unwrapping, MANUAL reporting); the migrated-file list lives in
+`eslint.config.js` as `debugLogMigrated` with the exclusions documented inline.
+The `no-console: ['warn', {allow: ['warn','error','info']}]` rule covers exactly
+those files, keeping the count at zero going forward.
 
 ---
 
@@ -186,8 +171,7 @@ not drift.
 
 1. ~~§3 dead dialogue components~~ — DONE (PR #81)
 2. ~~§1 remaining `no-explicit-any`~~ — DONE (PR #82)
-3. §2 `debugLog` migration — helper + pattern landed (PR #84); convert the
-   remaining ~570 sites subsystem-by-subsystem per the recipe in §2, one or a
-   few files per PR, extending the eslint override list each time
+3. ~~§2 `debugLog` migration~~ — DONE (PRs #84–#90; helper + full conversion,
+   ~595 sites; deliberate exemptions documented in the eslint config and §2)
 4. §4 TODOs — only when their feature/art work actually happens
 5. §5 god-file extraction — ongoing background work, one domain per PR

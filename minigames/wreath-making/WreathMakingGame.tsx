@@ -41,6 +41,7 @@ import { captureWreathImage } from './wreathCapture';
 import { getWreathQuality } from './wreathQuality';
 import { useWreathEditor } from './useWreathEditor';
 import { MIN_FLOWERS, TARGET_WORKSHOP_WIDTH } from './wreathConstants';
+import { debugLog } from '../../utils/debugLog';
 
 export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
   context,
@@ -94,7 +95,7 @@ export const WreathMakingGame: React.FC<MiniGameComponentProps> = ({
         scale: 1.5,
       });
       wreathImageUrl = dataUrl;
-      console.log(`[WreathMaking] Captured wreath image, decoration ${decorationId}`);
+      debugLog('WreathMaking', `Captured wreath image, decoration ${decorationId}`);
     } catch (err) {
       console.warn('[WreathMaking] Failed to capture wreath image:', err);
     }

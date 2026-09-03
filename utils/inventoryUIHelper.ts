@@ -9,6 +9,7 @@ import { getItem, ItemCategory, ItemDefinition } from '../data/items';
 import { decorationManager } from './DecorationManager';
 import { gameState } from '../GameState';
 import { FALLBACK_ITEM_ICON } from './iconMap';
+import { debugLog } from './debugLog';
 
 /**
  * Runtime sprite registry for dynamically registered items
@@ -22,7 +23,7 @@ const runtimeSpriteRegistry: Record<string, string> = {};
  */
 export function registerItemSprite(itemId: string, imageUrl: string): void {
   runtimeSpriteRegistry[itemId] = imageUrl;
-  console.log(`[InventoryUIHelper] Registered sprite for ${itemId}: ${imageUrl}`);
+  debugLog('InventoryUIHelper', `Registered sprite for ${itemId}: ${imageUrl}`);
 }
 
 /**

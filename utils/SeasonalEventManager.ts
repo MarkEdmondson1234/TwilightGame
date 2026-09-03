@@ -18,6 +18,7 @@
 
 import { TimeManager, Season } from './TimeManager';
 import { gameState } from '../GameState';
+import { debugLog } from './debugLog';
 
 // ============================================================================
 // Constants
@@ -35,10 +36,7 @@ const DECORATION_ITEM_ID = 'seasonal_decoration_current';
  * Maps each season to the item ID and placeholder image for its decoration.
  * Replace image paths with real asset URLs once sprites are created.
  */
-const SEASON_DECORATIONS: Record<
-  Season,
-  { itemId: string; image: string }
-> = {
+const SEASON_DECORATIONS: Record<Season, { itemId: string; image: string }> = {
   [Season.SPRING]: {
     itemId: 'seasonal_maypole',
     image: '/TwilightGame/assets/seasonal/maypole.png',
@@ -83,9 +81,7 @@ class SeasonalEventManagerClass {
   // ============================================================================
 
   private getActiveDecoration() {
-    return gameState
-      .getPlacedItems(VILLAGE_MAP_ID)
-      .find((item) => item.id === DECORATION_ITEM_ID);
+    return gameState.getPlacedItems(VILLAGE_MAP_ID).find((item) => item.id === DECORATION_ITEM_ID);
   }
 
   private placeDecoration(season: Season): void {
@@ -102,14 +98,15 @@ class SeasonalEventManagerClass {
       permanent: true, // Prevent normal decay — SeasonalEventManager controls removal
     });
 
-    console.log(
-      `[SeasonalEventManager] Placed ${decorationData.itemId} in village square for ${season}`
+    debugLog(
+      'SeasonalEventManager',
+      `Placed ${decorationData.itemId} in village square for ${season}`
     );
   }
 
   private removeDecoration(): void {
     gameState.removePlacedItem(DECORATION_ITEM_ID);
-    console.log('[SeasonalEventManager] Removed seasonal decoration from village square');
+    debugLog('SeasonalEventManager', 'Removed seasonal decoration from village square');
   }
 }
 

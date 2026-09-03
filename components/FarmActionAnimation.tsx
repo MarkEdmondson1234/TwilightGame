@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Z_FARM_ACTIONS } from '../zIndex';
 import GameIcon from './GameIcon';
 import { iconAssets } from '../iconAssets';
+import { debugLog } from '../utils/debugLog';
 
 export type FarmActionType = 'till' | 'plant' | 'water' | 'harvest' | 'clear';
 
@@ -24,19 +25,20 @@ const FarmActionAnimation: React.FC<FarmActionAnimationProps> = ({
 }) => {
   // Call onComplete after animation finishes (1s)
   useEffect(() => {
-    console.log(
-      '[FarmActionAnimation] Mounted with action:',
+    debugLog(
+      'FarmActionAnimation',
+      'Mounted with action:',
       action,
       'at position:',
       playerX,
       playerY
     );
     const timer = setTimeout(() => {
-      console.log('[FarmActionAnimation] Animation complete, calling onComplete');
+      debugLog('FarmActionAnimation', 'Animation complete, calling onComplete');
       onComplete();
     }, 1000);
     return () => {
-      console.log('[FarmActionAnimation] Unmounting');
+      debugLog('FarmActionAnimation', 'Unmounting');
       clearTimeout(timer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- mounted per action via key; the position is only logged at mount, and adding it as a dep would restart the completion timer whenever the player moves during the 1-second animation

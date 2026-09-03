@@ -47,6 +47,7 @@ import type { Season } from '../data/shopInventory';
 import { MovementMode } from '../utils/tileCategories';
 import { getCachedPerformanceSettings } from '../utils/performanceTier';
 import { eventBus, GameEvent } from '../utils/EventBus';
+import { debugLog } from '../utils/debugLog';
 
 // Weather type
 type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -288,7 +289,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     if (!enabled || !canvasRef.current || !isMapInitialized) return;
 
     const initPixi = async () => {
-      console.log('[usePixiRenderer] Initializing PixiJS renderer...');
+      debugLog('usePixiRenderer', 'Initializing PixiJS renderer...');
       const startTime = performance.now();
 
       try {
@@ -299,8 +300,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
         // Get performance settings for this device
         const perfSettings = getCachedPerformanceSettings();
-        console.log(
-          `[usePixiRenderer] Using ${perfSettings.tier} tier: resolution=${perfSettings.resolution}, antialias=${perfSettings.antialias}`
+        debugLog(
+          'usePixiRenderer',
+          `Using ${perfSettings.tier} tier: resolution=${perfSettings.resolution}, antialias=${perfSettings.antialias}`
         );
 
         // Create PixiJS Application with device-adaptive settings
@@ -335,7 +337,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         // layer misses. See utils/mapTextureSet.ts.
         const characterId = gameState.getSelectedCharacter()?.characterId ?? 'character1';
         textureManager.pin(getCoreTextureUrls(characterId));
-        console.log('[usePixiRenderer] Preloading core + map textures...');
+        debugLog('usePixiRenderer', 'Preloading core + map textures...');
         await textureManager.loadUrls(
           getResidentTextureUrls(currentMapId, toSeasonKey(seasonKey), characterId),
           onTextureProgress
@@ -519,7 +521,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         }
 
         const endTime = performance.now();
-        console.log(`[usePixiRenderer] Initialized in ${(endTime - startTime).toFixed(0)}ms`);
+        debugLog('usePixiRenderer', `Initialized in ${(endTime - startTime).toFixed(0)}ms`);
         setIsPixiInitialized(true);
       } catch (error) {
         console.error('[usePixiRenderer] Failed to initialize:', error);
@@ -536,7 +538,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       console.warn('[usePixiRenderer] WebGL context lost — waiting for restoration');
     };
     const handleContextRestored = () => {
-      console.log('[usePixiRenderer] WebGL context restored — reinitializing');
+      debugLog('usePixiRenderer', 'WebGL context restored — reinitializing');
       // Force full re-initialization by destroying and re-creating
       setIsPixiInitialized(false);
       if (pixiAppRef.current) {
@@ -570,7 +572,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       canvas?.removeEventListener('webglcontextlost', handleContextLost);
       canvas?.removeEventListener('webglcontextrestored', handleContextRestored);
       if (pixiAppRef.current) {
-        console.log('[usePixiRenderer] Destroying PixiJS application');
+        debugLog('usePixiRenderer', 'Destroying PixiJS application');
         // Drop the stage reference BEFORE destroy, so nothing can walk a tree
         // that is being torn down.
         performanceMonitor.attachStage(null);
@@ -640,7 +642,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         );
       }
 
-      console.log(`[usePixiRenderer] Resized to ${window.innerWidth}x${window.innerHeight}`);
+      debugLog('usePixiRenderer', `Resized to ${window.innerWidth}x${window.innerHeight}`);
     };
 
     window.addEventListener('resize', handleResize);

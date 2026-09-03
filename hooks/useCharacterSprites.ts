@@ -10,6 +10,7 @@ import {
   isCustomCharacterSprite,
 } from '../utils/characterSprites';
 import { Direction } from '../types';
+import { debugLog } from '../utils/debugLog';
 
 /**
  * Hook for managing character sprite loading and updates
@@ -37,7 +38,7 @@ export function useCharacterSprites(
     if (isFairyForm) {
       const fairySprites = generateFairySprites();
       setPlayerSprites(fairySprites);
-      console.log('[useCharacterSprites] Using fairy transformation sprites');
+      debugLog('useCharacterSprites', 'Using fairy transformation sprites');
       return;
     }
 
@@ -47,7 +48,7 @@ export function useCharacterSprites(
     generateCharacterSpritesAsync(char)
       .then((sprites) => {
         setPlayerSprites(sprites);
-        console.log('[useCharacterSprites] Player sprites loaded (optimized)');
+        debugLog('useCharacterSprites', 'Player sprites loaded (optimized)');
       })
       .catch((error) => {
         console.error('[useCharacterSprites] Failed to load sprite sheets, using fallback:', error);

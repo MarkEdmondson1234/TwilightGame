@@ -31,6 +31,7 @@ import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
 import { deletePaintingImage, loadPaintingImage, savePaintingImage } from './paintingImageService';
 import { PLAYER_SIZE } from '../constants';
+import { debugLog } from './debugLog';
 
 // ===== Types =====
 
@@ -95,14 +96,15 @@ class DecorationManagerClass {
       });
       this.hasEasel = saved.hasEasel ?? false;
 
-      console.log(
-        `[DecorationManager] Loaded: ${this.craftedPaints.size} paints, ` +
+      debugLog(
+        'DecorationManager',
+        `Loaded: ${this.craftedPaints.size} paints, ` +
           `${this.paintings.size} paintings, easel=${this.hasEasel}`
       );
     }
 
     this.initialised = true;
-    console.log('[DecorationManager] Initialised');
+    debugLog('DecorationManager', 'Initialised');
 
     // Hydrate painting images from persistent storage (async, non-blocking)
     this.hydratePaintingImages().catch((e) => {
@@ -131,7 +133,7 @@ class DecorationManagerClass {
 
     if (hydrated > 0) {
       this.save();
-      console.log(`[DecorationManager] Hydrated ${hydrated} painting image(s)`);
+      debugLog('DecorationManager', `Hydrated ${hydrated} painting image(s)`);
     }
 
     // 2. Hydrate placed items that have a paintingId but missing/stale customImage
@@ -162,7 +164,7 @@ class DecorationManagerClass {
     if (placedHydrated > 0) {
       // Trigger re-render and save by emitting event
       eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: '', action: 'update' });
-      console.log(`[DecorationManager] Hydrated ${placedHydrated} placed painting(s)`);
+      debugLog('DecorationManager', `Hydrated ${placedHydrated} placed painting(s)`);
     }
   }
 
@@ -394,8 +396,9 @@ class DecorationManagerClass {
       console.warn('[DecorationManager] Failed to save custom decoration image:', e);
     });
 
-    console.log(
-      `[DecorationManager] Registered custom decoration "${params.name}" (${decorationId}) → ${params.linkedItemId}`
+    debugLog(
+      'DecorationManager',
+      `Registered custom decoration "${params.name}" (${decorationId}) → ${params.linkedItemId}`
     );
     return decorationId;
   }
@@ -507,7 +510,7 @@ class DecorationManagerClass {
     if (this.hasEasel) return;
     this.hasEasel = true;
     this.save();
-    console.log('[DecorationManager] Easel granted!');
+    debugLog('DecorationManager', 'Easel granted!');
   }
 
   /**

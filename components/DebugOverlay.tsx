@@ -7,6 +7,7 @@ import { Z_DEBUG_TILES, Z_DEBUG_TRANSITIONS, Z_DEBUG_CLICK, zClass } from '../zI
 import { mapManager } from '../maps';
 import { farmManager } from '../utils/farmManager';
 import { CROP_ADULT_SIZES, CROP_SPRITE_CONFIG } from '../utils/pixi/TileLayer';
+import { debugLog } from '../utils/debugLog';
 
 interface DebugOverlayProps {
   playerPos: Position;
@@ -32,7 +33,7 @@ const DebugOverlay: React.FC<DebugOverlayProps> = ({
   const handleTileClick = useCallback((x: number, y: number, e: React.MouseEvent) => {
     e.stopPropagation();
     setClickedTile({ x, y });
-    console.log(`[Debug] Clicked tile: (${x}, ${y})`);
+    debugLog('Debug', `Clicked tile: (${x}, ${y})`);
   }, []);
 
   // Clear clicked tile

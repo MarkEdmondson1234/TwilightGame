@@ -20,6 +20,7 @@
 
 import { Assets, Texture } from 'pixi.js';
 import { getCachedPerformanceSettings } from './performanceTier';
+import { debugLog } from './debugLog';
 
 /** Bytes per pixel for an RGBA texture. */
 const BYTES_PER_PIXEL = 4;
@@ -116,7 +117,10 @@ class TextureManager {
    * Load a list of URLs (keyed by URL) with bounded concurrency.
    * Returns once every URL has either loaded or definitively failed.
    */
-  async loadUrls(urls: string[], onProgress?: (loaded: number, total: number) => void): Promise<void> {
+  async loadUrls(
+    urls: string[],
+    onProgress?: (loaded: number, total: number) => void
+  ): Promise<void> {
     const pending = urls.filter((url) => !this.textures.has(url));
     const total = pending.length;
     if (total === 0) {
@@ -125,7 +129,7 @@ class TextureManager {
     }
 
     const limit = getCachedPerformanceSettings().maxConcurrentTextureLoads;
-    console.log(`[TextureManager] Loading ${total} textures (max ${limit} at a time)...`);
+    debugLog('TextureManager', `Loading ${total} textures (max ${limit} at a time)...`);
     const startTime = performance.now();
 
     let cursor = 0;
@@ -163,8 +167,9 @@ class TextureManager {
         console.warn(`[TextureManager] Failed: ${url}`, reason);
       });
     } else {
-      console.log(
-        `[TextureManager] ✓ Loaded ${loaded} textures in ${loadTime}ms (${this.getEstimatedMemoryMB().toFixed(0)}MB resident)`
+      debugLog(
+        'TextureManager',
+        `✓ Loaded ${loaded} textures in ${loadTime}ms (${this.getEstimatedMemoryMB().toFixed(0)}MB resident)`
       );
     }
   }
@@ -284,8 +289,9 @@ class TextureManager {
     }
 
     if (evicted > 0) {
-      console.log(
-        `[TextureManager] Evicted ${evicted} textures (${(freedBytes / 1024 / 1024).toFixed(0)}MB freed, ${this.getEstimatedMemoryMB().toFixed(0)}MB resident, budget ${budgetMB}MB)`
+      debugLog(
+        'TextureManager',
+        `Evicted ${evicted} textures (${(freedBytes / 1024 / 1024).toFixed(0)}MB freed, ${this.getEstimatedMemoryMB().toFixed(0)}MB resident, budget ${budgetMB}MB)`
       );
     }
     return evicted;
@@ -326,7 +332,7 @@ class TextureManager {
     this.loading.clear();
     this.pinned.clear();
     this.attempts.clear();
-    console.log('[TextureManager] Cache cleared');
+    debugLog('TextureManager', 'Cache cleared');
   }
 
   /**

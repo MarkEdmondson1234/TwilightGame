@@ -15,6 +15,7 @@ import { TimeManager } from './TimeManager';
 import { farmManager } from './farmManager';
 
 import { Position, FarmPlotState } from '../types';
+import { debugLog } from './debugLog';
 
 // ============================================================================
 // Size Tier System
@@ -788,9 +789,9 @@ export function applyPotionEffect(
     };
   }
 
-  console.log(`[MagicEffects] Using ${potionId}...`);
+  debugLog('MagicEffects', `Using ${potionId}...`);
   const result = effect.execute(callbacks, targetNpcId);
-  console.log(`[MagicEffects] Effect result:`, result);
+  debugLog('MagicEffects', `Effect result:`, result);
 
   return result;
 }

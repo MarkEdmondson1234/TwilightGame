@@ -17,6 +17,7 @@ import { characterData } from '../CharacterData';
 import { transitionToMap } from '../../maps';
 import { Position } from '../../types';
 import { inventoryManager } from '../inventoryManager';
+import { debugLog } from '../debugLog';
 
 export interface DebugKeyHandlers {
   onSetShowHelpBrowser: (show: boolean) => void;
@@ -59,18 +60,18 @@ export function handleF6(handlers: Pick<DebugKeyHandlers, 'onFarmUpdate'>): void
   farmManager.debugAdvanceTime(60 * 1000);
   characterData.saveFarmPlots(farmManager.getAllPlots());
   handlers.onFarmUpdate();
-  console.log('[Debug] Advanced farm time by 1 minute');
+  debugLog('Debug', 'Advanced farm time by 1 minute');
 }
 
 /**
  * Handle F7 key - Teleport to debug NPC map
  */
 export function handleF7(handlers: Pick<DebugKeyHandlers, 'onMapTransition'>): void {
-  console.log('[Debug] Teleporting to NPC debug showcase...');
+  debugLog('Debug', 'Teleporting to NPC debug showcase...');
   try {
     const { map, spawn } = transitionToMap('debug_npcs', { x: 15, y: 25 });
     handlers.onMapTransition(map.id, spawn);
-    console.log(`[Debug] Loaded debug map: ${map.name}`);
+    debugLog('Debug', `Loaded debug map: ${map.name}`);
   } catch (error) {
     console.error('[Debug] Failed to load debug map:', error);
   }
@@ -95,7 +96,7 @@ export function handleF10(handlers: Pick<DebugKeyHandlers, 'onSetShowVFXTestPane
  * Useful for testing the potion brewing system
  */
 export function handleF9(): void {
-  console.log('[Debug] Giving magical ingredients for testing...');
+  debugLog('Debug', 'Giving magical ingredients for testing...');
 
   // Magical ingredients (5 of each)
   const magicalIngredients = [
@@ -178,7 +179,7 @@ export function handleF9(): void {
     inventoryManager.addItem(itemId, 2);
   });
 
-  console.log('[Debug] Added magical ingredients, cooking ingredients, crops, and sample potions!');
+  debugLog('Debug', 'Added magical ingredients, cooking ingredients, crops, and sample potions!');
 }
 
 /**

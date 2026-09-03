@@ -29,6 +29,7 @@ import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE, Z_GROUND_DECORATION } from '../../zIndex';
 import { TimeManager, TimeOfDay } from '../TimeManager';
 import { getCachedPerformanceSettings } from '../performanceTier';
+import { debugLog } from '../debugLog';
 
 export class SpriteLayer extends PixiLayer {
   private sprites: Map<string, PIXI.Sprite> = new Map();
@@ -397,8 +398,7 @@ export class SpriteLayer extends PixiLayer {
     // Calculate dynamic z-index based on depth line
     // Ferns and rocks stay at flat ground level; tufts use depth sorting so they
     // appear in front of tree roots / building bases at lower Y positions (3D feel)
-    const isGroundDecoration =
-      metadata.tileType === TileType.ROCK;
+    const isGroundDecoration = metadata.tileType === TileType.ROCK;
     let spriteZIndex: number;
     if (isGroundDecoration) {
       spriteZIndex = Z_GROUND_DECORATION;
@@ -474,7 +474,7 @@ export class SpriteLayer extends PixiLayer {
     });
     this.glowGraphics.clear();
 
-    console.log(`[SpriteLayer] Cleared all sprites and glows`);
+    debugLog('SpriteLayer', `Cleared all sprites and glows`);
   }
 
   /**

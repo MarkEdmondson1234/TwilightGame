@@ -44,6 +44,7 @@ import {
   Z_PLAYER,
   Z_DEPTH_SORTED_BASE,
 } from '../../zIndex';
+import { debugLog } from '../debugLog';
 
 /** Check if a tile type is any farm soil variant (fallow through dead) */
 const isSoilTile = (type: TileType): boolean =>
@@ -176,7 +177,7 @@ export class TileLayer extends PixiLayer {
     // Skip tile rendering for background-image maps
     // BackgroundImageLayer handles rendering, collision still uses grid
     if (map.renderMode === 'background-image') {
-      console.log(`[TileLayer] Skipping tile rendering for background-image map: ${mapId}`);
+      debugLog('TileLayer', `Skipping tile rendering for background-image map: ${mapId}`);
       return;
     }
 
@@ -1132,7 +1133,7 @@ export class TileLayer extends PixiLayer {
     }
     this.colorCache.clear(); // Clear color cache when map changes
     this.animatedTiles.clear(); // Clear animated tile tracking
-    console.log('[TileLayer] Cleared all sprites');
+    debugLog('TileLayer', 'Cleared all sprites');
   }
 
   /**
