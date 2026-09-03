@@ -53,7 +53,6 @@ const MAX_SAVE_SLOTS = 3;
  * Recursively replace `undefined` values with `null` in an object.
  * Firestore rejects `undefined` but accepts `null`.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function stripUndefined<T>(obj: T): T {
   if (obj === undefined) return null as unknown as T;
   if (obj === null || typeof obj !== 'object') return obj;

@@ -113,7 +113,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
   const [shopFilter, setShopFilter] = useState<ShopFilter>('all');
   const [playerFilter, setPlayerFilter] = useState<ShopFilter>('all');
   const [selectedQuantity, setSelectedQuantity] = useState<number>(1);
-  const [showQuantitySlider, setShowQuantitySlider] = useState<boolean>(false);
+  const [showQuantityStepper, setShowQuantityStepper] = useState<boolean>(false);
   const [pendingTransaction, setPendingTransaction] = useState<{
     itemId: string;
     fromShop: boolean;
@@ -161,19 +161,19 @@ const ShopUI: React.FC<ShopUIProps> = ({
   const currentTime = TimeManager.getCurrentTime();
 
   /**
-   * Handle drag start (from shop or player inventory)
+   * Start a trade: single items execute immediately; multi-item stacks open the stepper.
    */
-  const handleDragStart = (itemId: string, fromShop: boolean, maxQuantity: number) => {
+  const initiateTrade = (itemId: string, fromShop: boolean, maxQuantity: number) => {
     // If only 1 item, execute immediately
     if (maxQuantity === 1) {
       executeTransaction(itemId, 1, fromShop);
       return;
     }
 
-    // Show quantity slider for multi-item stacks
+    // Open the quantity stepper for multi-item stacks
     setPendingTransaction({ itemId, fromShop, maxQuantity });
     setSelectedQuantity(1);
-    setShowQuantitySlider(true);
+    setShowQuantityStepper(true);
   };
 
   /**
@@ -192,7 +192,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
   /** Right-click / long-press a slot: choose how many. */
   const handleSlotContextMenu = (itemId: string, fromShop: boolean, maxQuantity: number) => {
     if (maxQuantity < 1) return;
-    handleDragStart(itemId, fromShop, maxQuantity);
+    initiateTrade(itemId, fromShop, maxQuantity);
   };
 
   /**
@@ -240,7 +240,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
       }
     }
 
-    setShowQuantitySlider(false);
+    setShowQuantityStepper(false);
     setPendingTransaction(null);
   };
 
@@ -257,7 +257,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
    * Cancel quantity selection
    */
   const cancelQuantity = () => {
-    setShowQuantitySlider(false);
+    setShowQuantityStepper(false);
     setPendingTransaction(null);
     setSelectedQuantity(1);
   };
@@ -631,8 +631,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
         </div>
       </div>
 
-      {/* Quantity Slider Modal */}
-      {showQuantitySlider && pendingTransaction && (
+      {/* Quantity Stepper Modal */}
+      {showQuantityStepper && pendingTransaction && (
         <div
           className={`fixed inset-0 bg-black/90 flex items-center justify-center ${zClass(Z_SHOP_CONFIRM)} pointer-events-auto`}
         >
