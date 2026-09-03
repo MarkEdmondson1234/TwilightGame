@@ -30,6 +30,7 @@ import {
 } from '../data/weatherConfig';
 import { farmManager } from './farmManager';
 import { characterData } from './CharacterData';
+import { debugLog } from './debugLog';
 
 /**
  * Interface for GameState methods used by WeatherManager
@@ -75,8 +76,9 @@ export class WeatherManager {
     const currentWeather = this.gameState.getWeather();
 
     if (effectiveWeather !== currentWeather) {
-      console.log(
-        `[WeatherManager] Slot ${slotIndex}: ${effectiveWeather} (season: ${time.season}, map: ${currentMapId})`
+      debugLog(
+        'WeatherManager',
+        `Slot ${slotIndex}: ${effectiveWeather} (season: ${time.season}, map: ${currentMapId})`
       );
       this.gameState.setWeather(effectiveWeather);
     }
@@ -85,7 +87,7 @@ export class WeatherManager {
     if (globalWeather === 'rain' || globalWeather === 'storm') {
       const wateredCount = farmManager.waterAllOutdoorPlots();
       if (wateredCount > 0) {
-        console.log(`[WeatherManager] Rain watered ${wateredCount} crops on outdoor maps`);
+        debugLog('WeatherManager', `Rain watered ${wateredCount} crops on outdoor maps`);
         characterData.saveFarmPlots(farmManager.getAllPlots());
       }
     }

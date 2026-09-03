@@ -9,6 +9,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { debugLog } from '../utils/debugLog';
 
 const HAIKU_MODEL = 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 400; // Structured JSON output
@@ -77,7 +78,7 @@ export function getStoredApiKey(): string | null {
 export function setStoredApiKey(apiKey: string): void {
   try {
     localStorage.setItem(STORAGE_KEY, apiKey);
-    console.log('[AI] API key stored in localStorage');
+    debugLog('AI', 'API key stored in localStorage');
   } catch (error) {
     console.error('[AI] Failed to store API key:', error);
   }
@@ -89,7 +90,7 @@ export function setStoredApiKey(apiKey: string): void {
 export function clearStoredApiKey(): void {
   try {
     localStorage.removeItem(STORAGE_KEY);
-    console.log('[AI] API key removed from localStorage');
+    debugLog('AI', 'API key removed from localStorage');
   } catch (error) {
     console.error('[AI] Failed to clear API key:', error);
   }
@@ -113,7 +114,7 @@ export function initAnthropicClient(): boolean {
   const apiKey = getStoredApiKey();
 
   if (!apiKey) {
-    console.info('[AI] No API key configured - add one via F1 → Settings');
+    debugLog('AI', 'No API key configured - add one via F1 → Settings');
     return false;
   }
 
@@ -124,7 +125,7 @@ export function initAnthropicClient(): boolean {
     dangerouslyAllowBrowser: true,
   });
 
-  console.log('[AI] Anthropic client initialized');
+  debugLog('AI', 'Anthropic client initialized');
   return true;
 }
 

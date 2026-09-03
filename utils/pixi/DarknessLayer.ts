@@ -23,6 +23,7 @@ import * as PIXI from 'pixi.js';
 import { Season, TimeOfDay, TimeManager } from '../TimeManager';
 import { Z_WEATHER_TINT } from '../../zIndex';
 import { TILE_SIZE } from '../../constants';
+import { debugLog } from '../debugLog';
 
 /** Light source descriptor — passed from the renderer to describe each active light */
 export interface LightSource {
@@ -265,7 +266,7 @@ export class DarknessLayer {
 
     if (!config) {
       if (this.darknessSprite.visible) {
-        console.log(`[DarknessLayer] No config for '${colorScheme}', hiding overlay`);
+        debugLog('DarknessLayer', `No config for '${colorScheme}', hiding overlay`);
       }
       this.darknessSprite.visible = false;
       this.currentDarkness = 0;
@@ -302,8 +303,9 @@ export class DarknessLayer {
     }
 
     if (schemeChanged || timeChanged || Math.abs(darkness - this.targetDarkness) > 0.01) {
-      console.log(
-        `[DarknessLayer] scheme=${colorScheme} season=${season} tod=${timeOfDay} darkness=${(darkness * 100).toFixed(0)}%`
+      debugLog(
+        'DarknessLayer',
+        `scheme=${colorScheme} season=${season} tod=${timeOfDay} darkness=${(darkness * 100).toFixed(0)}%`
       );
     }
 

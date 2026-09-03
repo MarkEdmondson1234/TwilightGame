@@ -4,6 +4,81 @@ import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import prettier from 'eslint-config-prettier';
 
+// §2 of docs/PENDING_CLEANUP.md: console.log is migrating to the category-
+// gated utils/debugLog.ts helper. Files listed here have completed the
+// migration; extend this list as each subsystem converts. console.warn and
+// console.error stay permitted everywhere — they carry player-relevant
+// failure diagnostics and are deliberately ungated.
+//
+// Deliberately NOT on this list:
+//   utils/EventBus.ts          — has its own working setDebug() gate
+//   hooks/useMultiplayerController.ts — one log is deliberately always-on so
+//     bug reports show presence working as well as failing (see the comment
+//     above it in that file)
+//   utils/testUtils.ts         — test infrastructure
+const debugLogMigrated = [
+  'utils/debugLog.ts',
+  'utils/dialogueHandlers.ts',
+  'GameState.ts',
+  'GameStatePersistence.ts',
+  'utils/farmManager.ts',
+  'utils/FriendshipManager.ts',
+  'utils/actionHandlers.ts',
+  'utils/forageHandlers.ts',
+  'utils/CookingManager.ts',
+  'utils/MagicManager.ts',
+  'utils/CutsceneManager.ts',
+  'components/DevTools.tsx',
+  'NPCManager.ts',
+  'data/questHandlers/*.ts',
+  'utils/gameInitializer.ts',
+  'maps/procedural.ts',
+  'utils/inventoryManager.ts',
+  'utils/AudioManager.ts',
+  'App.tsx',
+  'hooks/useCharacterSprites.ts',
+  'hooks/useEnvironmentController.ts',
+  'hooks/useInteractionController.ts',
+  'hooks/useKeyboardControls.ts',
+  'hooks/useMouseHover.ts',
+  'hooks/usePixiRenderer.ts',
+  'hooks/useSharedPlacedItemsController.ts',
+  'hooks/useTouchControls.ts',
+  'hooks/useVFX.ts',
+  'maps/index.ts',
+  'minigames/skiing/SkiingGame.tsx',
+  'minigames/wreath-making/WreathMakingGame.tsx',
+  'multiplayer/RemotePlayerManager.ts',
+  'services/aiChatHistory.ts',
+  'services/anthropicClient.ts',
+  'services/diaryService.ts',
+  'utils/assetPreloader.ts',
+  'utils/CharacterData.ts',
+  'utils/DecorationManager.ts',
+  'utils/deskManager.ts',
+  'utils/EventChainManager.ts',
+  'utils/GlobalEventManager.ts',
+  'utils/interactions/providers/farming.ts',
+  'utils/keyHandlers/debugKeys.ts',
+  'utils/MagicEffects.ts',
+  'utils/performanceTier.ts',
+  'utils/photoAlbumManager.ts',
+  'utils/pixi/BackgroundImageLayer.ts',
+  'utils/pixi/DarknessLayer.ts',
+  'utils/pixi/TileLayer.ts',
+  'utils/pixi/WeatherLayer.ts',
+  'utils/SeasonalEventManager.ts',
+  'utils/TextureManager.ts',
+  'utils/TimeManager.ts',
+  'utils/WeatherManager.ts',
+  'utils/YuleCelebrationManager.ts',
+  'components/CutscenePlayer.tsx',
+  'components/DebugOverlay.tsx',
+  'components/dialogue/UnifiedDialogueBox.tsx',
+  'components/FarmActionAnimation.tsx',
+  'components/PlacedItems.tsx',
+];
+
 export default tseslint.config(
   // Base configs
   js.configs.recommended,
@@ -66,27 +141,7 @@ export default tseslint.config(
   // console.error stay permitted everywhere — they carry player-relevant
   // failure diagnostics and are deliberately ungated.
   {
-    files: [
-      'utils/debugLog.ts',
-      'utils/dialogueHandlers.ts',
-      'GameState.ts',
-      'GameStatePersistence.ts',
-      'utils/farmManager.ts',
-      'utils/FriendshipManager.ts',
-      'utils/actionHandlers.ts',
-      'utils/forageHandlers.ts',
-      'utils/CookingManager.ts',
-      'utils/MagicManager.ts',
-      'utils/CutsceneManager.ts',
-      'components/DevTools.tsx',
-      'NPCManager.ts',
-      'data/questHandlers/*.ts',
-      'utils/gameInitializer.ts',
-      'maps/procedural.ts',
-      'utils/inventoryManager.ts',
-      'utils/AudioManager.ts',
-      'App.tsx',
-    ],
+    files: debugLogMigrated,
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
     },

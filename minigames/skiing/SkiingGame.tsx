@@ -16,6 +16,7 @@ import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import { skiingAssets } from './assets';
 import { gameState } from '../../GameState';
 import { Z_MINI_GAME, zClass } from '../../zIndex';
+import { debugLog } from '../../utils/debugLog';
 
 // =============================================================================
 // Types
@@ -612,8 +613,9 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           const hitThreshold = ((objDrawWidth + playerCollisionWidth) / 2) * COLLISION_FUDGE;
           if (objScreenY < playerAnchorY && screenSeparation < hitThreshold) {
             if (debugRef.current) {
-              console.log(
-                `[Skiing] HIT kind=${obj.kind} zDiff=${zDiff.toFixed(0)} ` +
+              debugLog(
+                'Skiing',
+                `HIT kind=${obj.kind} zDiff=${zDiff.toFixed(0)} ` +
                   `screenSeparation=${screenSeparation.toFixed(1)}px hitThreshold=${hitThreshold.toFixed(1)}px | ` +
                   `objDrawWidth: raw=${rawDrawWidth.toFixed(1)}px scale=${COLLISION_WIDTH_SCALE[obj.kind] ?? COLLISION_WIDTH_SCALE_DEFAULT} scaled=${objDrawWidth.toFixed(1)}px | ` +
                   `playerCollisionWidth=${playerCollisionWidth.toFixed(1)}px fudge=${COLLISION_FUDGE} | ` +

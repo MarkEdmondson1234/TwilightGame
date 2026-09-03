@@ -48,6 +48,7 @@ import {
   getFallbackResponse,
   getDefaultSuggestions,
 } from './dialogueHelpers';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Types
@@ -380,7 +381,16 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         onClose();
       }
     },
-    [npc.id, npc.name, currentDialogue, onNodeChange, onClose, playerName, switchToAI, addPlayerMessage]
+    [
+      npc.id,
+      npc.name,
+      currentDialogue,
+      onNodeChange,
+      onClose,
+      playerName,
+      switchToAI,
+      addPlayerMessage,
+    ]
   );
 
   // -------------------------------------------------------------------------
@@ -421,7 +431,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         getSharedDataService()
           .getNPCGossip(npc.id, npc.name)
           .then((gossip) => {
-            if (gossip) console.log(`[AI] Gossip available for ${npc.name}: ${gossip}`);
+            if (gossip) debugLog('AI', `Gossip available for ${npc.name}: ${gossip}`);
           });
 
         await generateStreamingResponse(systemPrompt, history, message, {
@@ -461,7 +471,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
             }
 
             if (shouldSendToBedAfter && onSendToBed) {
-              console.log(`[AI] Moderation triggered: score ${moderationScore}`);
+              debugLog('AI', `Moderation triggered: score ${moderationScore}`);
               setPendingSendToBed(true);
               setTimeout(() => onSendToBed(), 2500);
             }
@@ -543,14 +553,16 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
 
   useEffect(() => {
     if (streamState.isStreaming && streamState.dialogueText) {
-      updateStreamingMessage(
-        streamState.dialogueText,
-        streamState.emotion,
-        streamState.action
-      );
+      updateStreamingMessage(streamState.dialogueText, streamState.emotion, streamState.action);
       setCurrentEmotion(streamState.emotion);
     }
-  }, [streamState.dialogueText, streamState.emotion, streamState.action, streamState.isStreaming, updateStreamingMessage]);
+  }, [
+    streamState.dialogueText,
+    streamState.emotion,
+    streamState.action,
+    streamState.isStreaming,
+    updateStreamingMessage,
+  ]);
 
   useEffect(() => {
     if (streamState.isStreaming && streamState.dialogueText) {

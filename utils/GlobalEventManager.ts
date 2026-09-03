@@ -11,6 +11,7 @@
 import type { SharedWorldEvent, SharedEventType } from '../firebase/types';
 import { getSharedDataService } from '../firebase/safe';
 import { eventBus, GameEvent } from './EventBus';
+import { debugLog } from './debugLog';
 
 // ============================================
 // Constants
@@ -68,7 +69,7 @@ class GlobalEventManager {
       });
     });
 
-    console.log('[GlobalEventManager] Initialised');
+    debugLog('GlobalEventManager', 'Initialised');
   }
 
   /**
@@ -103,7 +104,7 @@ class GlobalEventManager {
       });
 
       if (events.length > 0) {
-        console.log(`[GlobalEventManager] Cached ${events.length} global events`);
+        debugLog('GlobalEventManager', `Cached ${events.length} global events`);
       }
     } catch (error) {
       console.warn('[GlobalEventManager] Failed to fetch events:', error);
@@ -166,7 +167,7 @@ class GlobalEventManager {
       const result = await shared.addWorldEvent(eventType, title, description, location, metadata);
 
       if (result) {
-        console.log(`[GlobalEventManager] Published event: ${title}`);
+        debugLog('GlobalEventManager', `Published event: ${title}`);
         // Force refresh to include our own event in the cache
         await this.forceRefresh();
       }

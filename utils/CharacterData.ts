@@ -45,6 +45,7 @@
 
 import { gameState } from '../GameState';
 import { FarmPlot, NPCFriendship, Photo } from '../types';
+import { debugLog } from './debugLog';
 
 // Type definitions for each data domain
 export interface CookingData {
@@ -191,7 +192,7 @@ class CharacterDataManager {
   save<T extends DataDomain>(domain: T, data: CharacterDataDomains[T]): boolean {
     try {
       // Log the save for debugging
-      console.log(`[CharacterData] Saving ${domain}:`, this.summarizeData(domain, data));
+      debugLog('CharacterData', `Saving ${domain}:`, this.summarizeData(domain, data));
 
       // Track save timestamp for debugging race conditions
       this.lastSaveTimestamps.set(domain, Date.now());
@@ -324,11 +325,11 @@ class CharacterDataManager {
    * Trigger all registered save callbacks (e.g., before page unload)
    */
   saveAll(): void {
-    console.log('[CharacterData] Saving all domains...');
+    debugLog('CharacterData', 'Saving all domains...');
     this.saveCallbacks.forEach((callback, domain) => {
       try {
         callback();
-        console.log(`[CharacterData] Saved ${domain}`);
+        debugLog('CharacterData', `Saved ${domain}`);
       } catch (error) {
         console.error(`[CharacterData] Failed to save ${domain}:`, error);
       }

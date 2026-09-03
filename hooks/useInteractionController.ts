@@ -62,6 +62,7 @@ import {
   onWreathPlacedInVillage,
   WREATH_ITEM_IDS,
 } from '../data/questHandlers/mushraWreathHandler';
+import { debugLog } from '../utils/debugLog';
 
 // ============================================================================
 // Configuration Interface
@@ -258,7 +259,7 @@ export function useInteractionController(
 
   const handleFarmActionAnimation = useCallback(
     (action: FarmActionType, tilePos?: Position) => {
-      console.log('[InteractionController] Farm action animation:', action, tilePos);
+      debugLog('InteractionController', 'Farm action animation:', action, tilePos);
       setFarmActionAnimation(action);
       setFarmActionKey((prev) => prev + 1);
 
@@ -292,7 +293,7 @@ export function useInteractionController(
   // -------------------------------------------------------------------------
 
   const handleAnimationComplete = useCallback(() => {
-    console.log('[InteractionController] Animation complete');
+    debugLog('InteractionController', 'Animation complete');
     setFarmActionAnimation(null);
   }, []);
 
@@ -588,8 +589,9 @@ export function useInteractionController(
         : getAvailableInteractions(interactionConfig);
 
       if (DEBUG.CLICK) {
-        console.log(
-          `[Click] Tool: ${currentTool}, Context: ${isContextMenu}, Interactions: ${interactions.length}`,
+        debugLog(
+          'Click',
+          `Tool: ${currentTool}, Context: ${isContextMenu}, Interactions: ${interactions.length}`,
           interactions.map((i) => i.type)
         );
       }
@@ -674,8 +676,9 @@ export function useInteractionController(
   const handleCanvasClick = useCallback(
     (clickInfo: MouseClickInfo) => {
       if (DEBUG.CLICK) {
-        console.log(
-          `[Click] Screen: (${clickInfo.screenPos.x}, ${clickInfo.screenPos.y})`,
+        debugLog(
+          'Click',
+          `Screen: (${clickInfo.screenPos.x}, ${clickInfo.screenPos.y})`,
           `World: (${clickInfo.worldPos.x.toFixed(2)}, ${clickInfo.worldPos.y.toFixed(2)})`,
           `Tile: (${clickInfo.tilePos.x}, ${clickInfo.tilePos.y})`
         );
@@ -683,7 +686,7 @@ export function useInteractionController(
 
       // Don't process clicks during dialogue, cutscenes, or UI overlays
       if (isUIBlocking) {
-        if (DEBUG.CLICK) console.log('[Click] Ignoring - UI overlay active');
+        debugLog('Click', 'Ignoring - UI overlay active');
         return;
       }
 
@@ -717,7 +720,7 @@ export function useInteractionController(
         );
 
         if (cobwebResult.hit) {
-          console.log('[InteractionController] Cobweb clicked:', cobwebResult);
+          debugLog('InteractionController', 'Cobweb clicked:', cobwebResult);
 
           if (cobwebResult.alreadyCleaned) {
             onShowToast('This cobweb has already been cleaned.', 'info');

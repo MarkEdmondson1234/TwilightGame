@@ -10,6 +10,7 @@
 
 import { DeskContents, DeskItem, Position } from '../types';
 import { gameState } from '../GameState';
+import { debugLog } from './debugLog';
 
 // Maximum items per desk tile
 const MAX_DESK_ITEMS = 4;
@@ -40,7 +41,7 @@ class DeskManager {
     }
 
     this.initialised = true;
-    console.log(`[DeskManager] Initialised with ${savedDesks.length} desks`);
+    debugLog('DeskManager', `Initialised with ${savedDesks.length} desks`);
   }
 
   /**
@@ -117,8 +118,9 @@ class DeskManager {
     desk.items.push(deskItem);
     this.persistDesk(desk);
 
-    console.log(
-      `[DeskManager] Added ${itemId} to desk at ${mapId}:(${position.x},${position.y}) slot ${slotIndex}`
+    debugLog(
+      'DeskManager',
+      `Added ${itemId} to desk at ${mapId}:(${position.x},${position.y}) slot ${slotIndex}`
     );
     return deskItem;
   }
@@ -143,8 +145,9 @@ class DeskManager {
     const [removedItem] = desk.items.splice(itemIndex, 1);
     this.persistDesk(desk);
 
-    console.log(
-      `[DeskManager] Removed ${removedItem.itemId} from desk at ${mapId}:(${position.x},${position.y}) slot ${slotIndex}`
+    debugLog(
+      'DeskManager',
+      `Removed ${removedItem.itemId} from desk at ${mapId}:(${position.x},${position.y}) slot ${slotIndex}`
     );
     return removedItem;
   }
@@ -169,8 +172,9 @@ class DeskManager {
     const [removedItem] = desk.items.splice(itemIndex, 1);
     this.persistDesk(desk);
 
-    console.log(
-      `[DeskManager] Removed item ${itemId} from desk at ${mapId}:(${position.x},${position.y})`
+    debugLog(
+      'DeskManager',
+      `Removed item ${itemId} from desk at ${mapId}:(${position.x},${position.y})`
     );
     return removedItem;
   }
@@ -218,8 +222,9 @@ class DeskManager {
     desk.items = [];
     this.persistDesk(desk);
 
-    console.log(
-      `[DeskManager] Cleared desk at ${mapId}:(${position.x},${position.y}), removed ${removedItems.length} items`
+    debugLog(
+      'DeskManager',
+      `Cleared desk at ${mapId}:(${position.x},${position.y}), removed ${removedItems.length} items`
     );
     return removedItems;
   }

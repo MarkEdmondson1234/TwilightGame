@@ -29,6 +29,7 @@ import { eventBus, GameEvent } from '../EventBus';
 import { getCobwebsCleaned } from '../../data/questHandlers/altheaChoresHandler';
 import { getMessCleaned } from '../../data/questHandlers/mrFoxPicnicHandler';
 import { TimeManager } from '../TimeManager';
+import { debugLog } from '../debugLog';
 
 interface LayerSprite {
   sprite: PIXI.Sprite;
@@ -257,7 +258,7 @@ export class BackgroundImageLayer {
   ): Promise<void> {
     // Skip if already loaded for this map
     if (this.currentMapId === mapId && this.backgroundSprites.length > 0) {
-      console.log(`[BackgroundImageLayer] Already loaded for ${mapId}, skipping`);
+      debugLog('BackgroundImageLayer', `Already loaded for ${mapId}, skipping`);
       return;
     }
 
@@ -278,8 +279,9 @@ export class BackgroundImageLayer {
     // Process unified layers array
     if (map.layers && map.layers.length > 0) {
       await this.processUnifiedLayers(map.layers, map);
-      console.log(
-        `[BackgroundImageLayer] Loaded unified layers for ${mapId}: ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground images, ${this.layerNPCs.length} NPCs`
+      debugLog(
+        'BackgroundImageLayer',
+        `Loaded unified layers for ${mapId}: ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground images, ${this.layerNPCs.length} NPCs`
       );
 
       // Register layer NPCs with npcManager so they're found by interaction handlers
@@ -288,8 +290,9 @@ export class BackgroundImageLayer {
         const existingNPCs = npcManager.getNPCsForMap(mapId);
         const combinedNPCs = [...existingNPCs, ...this.layerNPCs];
         npcManager.registerNPCs(mapId, combinedNPCs);
-        console.log(
-          `[BackgroundImageLayer] Registered ${this.layerNPCs.length} layer NPCs with npcManager`
+        debugLog(
+          'BackgroundImageLayer',
+          `Registered ${this.layerNPCs.length} layer NPCs with npcManager`
         );
       }
     }

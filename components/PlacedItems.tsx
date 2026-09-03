@@ -4,6 +4,7 @@ import { TILE_SIZE } from '../constants';
 import { shouldShowDecayWarning } from '../utils/itemDecayManager';
 import { getItem } from '../data/items';
 import { Z_PLAYER, Z_SPRITE_BACKGROUND } from '../zIndex';
+import { debugLog } from '../utils/debugLog';
 
 interface PlacedItemsProps {
   items: PlacedItem[];
@@ -29,7 +30,7 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({
 }) => {
   const gox = gridOffset?.x ?? 0;
   const goy = gridOffset?.y ?? 0;
-  console.log('[PlacedItems] Rendering placed items:', items.length, items);
+  debugLog('PlacedItems', 'Rendering placed items:', items.length, items);
 
   return (
     <>

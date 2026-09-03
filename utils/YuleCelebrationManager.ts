@@ -35,6 +35,7 @@ import {
   YULE_STORAGE_KEY,
   YULE_MUM_GREETING,
 } from '../data/yuleCelebration';
+import { debugLog } from './debugLog';
 
 // ============================================================================
 // Types
@@ -235,7 +236,7 @@ class YuleCelebrationManagerClass {
     // (App.tsx shows the YULE_MUM_GREETING toast on YULE_CELEBRATION_STARTED)
 
     this.startTimer();
-    console.log('[YuleCelebration] Celebration started — 10 minutes on the clock!');
+    debugLog('YuleCelebration', 'Celebration started — 10 minutes on the clock!');
 
     return safePlayerPosition;
   }
@@ -415,7 +416,7 @@ class YuleCelebrationManagerClass {
       }
 
       this.state = null;
-      console.log('[YuleCelebration] Celebration ended. Until next Yule!');
+      debugLog('YuleCelebration', 'Celebration ended. Until next Yule!');
     }, 1500); // 1.5 s — matches the CSS blackout transition duration
   }
 
@@ -462,7 +463,7 @@ class YuleCelebrationManagerClass {
     }
 
     this.state = null;
-    console.log('[YuleCelebration] Celebration force-ended (player left village).');
+    debugLog('YuleCelebration', 'Celebration force-ended (player left village).');
   }
 
   /** Clean up intervals — call from App.tsx useEffect cleanup. */
