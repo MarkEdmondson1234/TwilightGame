@@ -144,7 +144,15 @@ const PaintingEaselGame: React.FC<MiniGameComponentProps> = ({ onClose }) => {
     } else {
       showMessage(result.message);
     }
-  }, [painting, paintingName, selectedFramePaints, showMessage, onClose]);
+  }, [
+    painting,
+    paintingName,
+    selectedFramePaints,
+    selectedScale,
+    transparentBg,
+    showMessage,
+    onClose,
+  ]);
 
   const handleToggleFramePaint = useCallback((paintId: string) => {
     setSelectedFramePaints((prev) =>

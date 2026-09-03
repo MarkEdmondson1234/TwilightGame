@@ -4,7 +4,15 @@ import { getItem } from '../data/items';
 import { inventoryManager } from '../utils/inventoryManager';
 import { FALLBACK_ITEM_ICON } from '../utils/iconMap';
 
-const CATALOGUE_ITEM_IDS = ['furniture_bookshelf', 'furniture_armchair', 'furniture_cozy_rug', 'furniture_cozy_rug_blue', 'furniture_cozy_rug_green', 'furniture_strawberry_wallpaper', 'furniture_stripey_curtains'];
+const CATALOGUE_ITEM_IDS = [
+  'furniture_bookshelf',
+  'furniture_armchair',
+  'furniture_cozy_rug',
+  'furniture_cozy_rug_blue',
+  'furniture_cozy_rug_green',
+  'furniture_strawberry_wallpaper',
+  'furniture_stripey_curtains',
+];
 
 interface FurnitureCatalogueUIProps {
   isOpen: boolean;
@@ -55,7 +63,7 @@ export default function FurnitureCatalogueUI({
       onTransaction(playerGold - price, newInventory);
       onClose();
     },
-    [playerGold, onTransaction, onClose]
+    [playerGold, onTransaction, onClose, showFeedback]
   );
 
   if (!isOpen) return null;

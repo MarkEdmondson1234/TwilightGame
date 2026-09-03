@@ -311,12 +311,11 @@ const CombatEncounterInner: React.FC<
   );
 
   const currentEnemySprite = useMemo(() => {
-    const { phase, telegraphedMove, actualMove } = state;
-    if (phase === 'telegraph' && telegraphedMove) {
-      return config.actionSprites?.[telegraphedMove] ?? npcSprite;
+    if (state.phase === 'telegraph' && state.telegraphedMove) {
+      return config.actionSprites?.[state.telegraphedMove] ?? npcSprite;
     }
-    if ((phase === 'reveal' || phase === 'result') && actualMove) {
-      return config.actionSprites?.[actualMove] ?? npcSprite;
+    if ((state.phase === 'reveal' || state.phase === 'result') && state.actualMove) {
+      return config.actionSprites?.[state.actualMove] ?? npcSprite;
     }
     return npcSprite;
   }, [state.phase, state.telegraphedMove, state.actualMove, config, npcSprite]);

@@ -39,7 +39,8 @@ const FarmActionAnimation: React.FC<FarmActionAnimationProps> = ({
       console.log('[FarmActionAnimation] Unmounting');
       clearTimeout(timer);
     };
-  }, [onComplete]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mounted per action via key; the position is only logged at mount, and adding it as a dep would restart the completion timer whenever the player moves during the 1-second animation
+  }, [action, onComplete]);
 
   if (!action) return null;
 

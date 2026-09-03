@@ -798,7 +798,7 @@ const App: React.FC = () => {
     });
 
     return unsubscribe;
-  }, [isLoadingCutscene]);
+  }, [isLoadingCutscene, closeAllUI, setRadialMenuVisible]);
 
   // Subscribe to EventBus for inventory updates (only triggers when inventory actually changes)
   useEffect(() => {
@@ -916,6 +916,7 @@ const App: React.FC = () => {
         return cutsceneStarted;
       },
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleMapTransition is a plain function read through currentMapIdRef precisely so it can be captured once here; re-initialising the stamina manager per render would reset its state
   }, [showToast]);
 
   // Track hostile NPC that initiated combat (for post-combat cleanup)
@@ -949,7 +950,7 @@ const App: React.FC = () => {
       setActiveNPC(null);
       openUI('shopUI', { activeShopId: 'mushras_shop' });
     }
-  }, [activeNPC]);
+  }, [activeNPC, openUI]);
 
   // Setup keyboard controls
   useKeyboardControls({
@@ -1196,6 +1197,7 @@ const App: React.FC = () => {
     );
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateAnimations is a stable useCallback destructured from usePixiRenderer below this line
   }, [
     updateMovement,
     activeNPC,
@@ -1205,6 +1207,8 @@ const App: React.FC = () => {
     currentMapId,
     ui.miniGame,
     tickMultiplayer,
+    isMovingRef,
+    playerPosRef,
   ]);
 
   // Disabled automatic transitions - now using action key (E or Enter)
@@ -1261,6 +1265,7 @@ const App: React.FC = () => {
     };
 
     initAssets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only by design: initAssets reads currentMapId once to load/regenerate the saved map; the effect must not re-run when the player changes maps
   }, []); // Only run once on mount
 
   // Debug logging for DevTools state
@@ -1293,6 +1298,7 @@ const App: React.FC = () => {
       clearInterval(farmUpdateInterval);
       farmManager.stopSharedSync(); // Flush and stop shared farm sync on unmount
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the belt-and-braces startSharedSync for loading a save straight onto a shared map; the map-transition handler owns the shared-sync lifecycle, and re-running this per map change would cancel/restart the rAF loop and flush shared sync on every transition
   }, [isMapInitialized, gameLoop]);
 
   // Freeze/unfreeze NPC movement during dialogue
@@ -1415,7 +1421,7 @@ const App: React.FC = () => {
       x: (viewportSize.width - artworkWidth) / 2 + backgroundRoomPan.x,
       y: (viewportSize.height - artworkHeight) / 2 + backgroundRoomPan.y,
     };
-  }, [currentMap, currentMapId, viewportScale, viewportSize, zoom, backgroundRoomPan]);
+  }, [currentMap, viewportScale, viewportSize, zoom, backgroundRoomPan]);
 
   // Calculate effective tile size for background-image rooms (scaled)
   // Must include both viewport scale AND layer scale to match the room artwork
@@ -1636,6 +1642,7 @@ const App: React.FC = () => {
         }
       },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the callbacks read refs, singletons and the mount-captured handleMapTransition (which reads currentMapIdRef by design); currentMapId/playerPos/playerScale/playerSizeTier are the real invalidation triggers
     [currentMapId, playerPos, playerScale, playerSizeTier, triggerVFX]
   );
 
@@ -1666,7 +1673,7 @@ const App: React.FC = () => {
 
       return false;
     },
-    [magicEffectCallbacks]
+    [magicEffectCallbacks, showToast]
   );
 
   // Handle eating food directly from inventory
@@ -1854,6 +1861,7 @@ const App: React.FC = () => {
     // Deduplicate NPCs by ID (layer NPCs take precedence over map NPCs)
     const uniqueNPCs = Array.from(new Map(npcs.map((npc) => [npc.id, npc])).values());
     return uniqueNPCs;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- npcUpdateTrigger is a version counter: the NPCs read manager singletons, so the counter is the invalidation mechanism
   }, [currentMapId, npcUpdateTrigger, backgroundImageLayerRef]);
 
   // Keep NPCs ref in sync for collision detection

@@ -127,7 +127,7 @@ const MiniGameHost: React.FC<MiniGameHostProps> = ({
         },
       },
     }),
-    [gameStateSnapshot, actions, storage, triggerData]
+    [gameStateSnapshot, actions, storage, triggerData, activeMiniGameId]
   );
 
   // Handle mini-game completion

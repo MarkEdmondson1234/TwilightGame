@@ -472,12 +472,16 @@ export function usePaintingLayers(config: UsePaintingLayersConfig): UsePaintingL
   // ─── Cleanup on unmount ──────────────────────────────────────────
 
   useEffect(() => {
+    // Snapshot the maps now: the cleanup must destroy the atrament instances
+    // that exist for this hook instance, not whatever the refs hold later.
+    const drawingStatesMap = drawingStates.current;
+    const imageStatesMap = imageStates.current;
     return () => {
-      for (const [, ds] of drawingStates.current) {
+      for (const [, ds] of drawingStatesMap) {
         ds.atrament?.destroy();
       }
-      drawingStates.current.clear();
-      imageStates.current.clear();
+      drawingStatesMap.clear();
+      imageStatesMap.clear();
     };
   }, []);
 

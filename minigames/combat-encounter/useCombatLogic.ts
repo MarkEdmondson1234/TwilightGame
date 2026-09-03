@@ -131,7 +131,7 @@ export function useCombatLogic(
     }));
 
     timerRef.current = setTimeout(startTelegraph, COMBAT.STANDOFF_MS);
-  }, [config, startTelegraph]);
+  }, [startTelegraph]);
 
   // Keep ref in sync
   startStandoffRef.current = startStandoff;
