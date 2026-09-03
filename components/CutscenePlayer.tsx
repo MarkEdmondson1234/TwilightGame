@@ -15,7 +15,6 @@ import {
   CutsceneBackgroundLayer,
   CutsceneCharacter,
   CutsceneDialogue,
-  CutsceneLayerAnimation,
   CutsceneWeatherEffect,
   CutscenePanDirection,
 } from '../types';
@@ -58,7 +57,11 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     const cutscene = state.currentCutscene;
     if (cutscene) {
       // Capture completion action now — it will be cleared when endCutscene() fires
-      const onComplete = cutscene.onComplete as { action: string; mapId?: string; position?: { x: number; y: number } };
+      const onComplete = cutscene.onComplete as {
+        action: string;
+        mapId?: string;
+        position?: { x: number; y: number };
+      };
       completionActionRef.current = { ...onComplete, cutsceneId: cutscene.id };
     }
 
@@ -95,7 +98,9 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
       console.log(`[CutscenePlayer] Audio already started for ${cutscene.id}, skipping replay`);
       previousMusicRef.current = cutsceneManager.getPreviousMusicBeforeCutscene();
     } else {
-      console.log(`[CutscenePlayer] Starting audio for ${cutscene.id}: music=${cutscene.audio.music}`);
+      console.log(
+        `[CutscenePlayer] Starting audio for ${cutscene.id}: music=${cutscene.audio.music}`
+      );
       previousMusicRef.current = audioManager.getCurrentMusic();
       cutsceneManager.markAudioStarted(cutscene.id, previousMusicRef.current);
 
@@ -141,10 +146,28 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     if (currentScene?.soundEffect) {
       audioManager.playSfx(currentScene.soundEffect);
     }
-  }, [currentScene?.id]);
+  }, [currentScene?.id, currentScene?.soundEffect]);
 
   // Track cutscene ID for natural ending detection
   const cutsceneIdRef = useRef<string | undefined>(cutsceneManager.getState().currentCutscene?.id);
+
+  // Handle scene transitions
+  const handleSceneTransition = useCallback(
+    (newScene: CutsceneScene) => {
+      setIsTransitioning(true);
+      setShowDialogue(false);
+
+      const transitionDuration = currentScene?.transitionOut?.duration || 500;
+
+      setTimeout(() => {
+        setCurrentScene(newScene);
+        setIsTransitioning(false);
+        const delay = newScene.letterboxReveal ? 1500 : 300;
+        setTimeout(() => setShowDialogue(true), delay);
+      }, transitionDuration);
+    },
+    [currentScene]
+  );
 
   // Subscribe to cutscene manager state changes
   useEffect(() => {
@@ -154,7 +177,10 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
         // before notifying, so we can't read it from state here)
         if (!onCompleteCalledRef.current) {
           onCompleteCalledRef.current = true;
-          const action = completionActionRef.current ?? { action: 'return', cutsceneId: cutsceneIdRef.current };
+          const action = completionActionRef.current ?? {
+            action: 'return',
+            cutsceneId: cutsceneIdRef.current,
+          };
           onComplete(action);
         }
         return;
@@ -168,22 +194,7 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     });
 
     return unsubscribe;
-  }, [currentScene, onComplete]);
-
-  // Handle scene transitions
-  const handleSceneTransition = (newScene: CutsceneScene) => {
-    setIsTransitioning(true);
-    setShowDialogue(false);
-
-    const transitionDuration = currentScene?.transitionOut?.duration || 500;
-
-    setTimeout(() => {
-      setCurrentScene(newScene);
-      setIsTransitioning(false);
-      const delay = newScene.letterboxReveal ? 1500 : 300;
-      setTimeout(() => setShowDialogue(true), delay);
-    }, transitionDuration);
-  };
+  }, [currentScene, onComplete, handleSceneTransition]);
 
   // Advance to next scene
   const handleAdvance = useCallback((nextSceneIndex?: number) => {
@@ -214,7 +225,7 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
       // Advance to specified scene or next scene
       handleAdvance(choice.nextSceneIndex);
     },
-    [currentScene, handleAdvance, onComplete]
+    [currentScene, handleAdvance]
   );
 
   // Keyboard controls
@@ -363,8 +374,12 @@ const LetterboxBars: React.FC<LetterboxBarsProps> = ({ mode, onClosed }) => {
 
   const height =
     mode === 'close'
-      ? active ? '50%' : '0%'  // close: 0% → 50%
-      : active ? '0%' : '50%'; // open:  50% → 0%
+      ? active
+        ? '50%'
+        : '0%' // close: 0% → 50%
+      : active
+        ? '0%'
+        : '50%'; // open:  50% → 0%
 
   const barStyle: React.CSSProperties = {
     position: 'absolute',

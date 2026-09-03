@@ -31,6 +31,8 @@ import { useMovementController } from './hooks/useMovementController';
 import { useInteractionController } from './hooks/useInteractionController';
 import { useEnvironmentController } from './hooks/useEnvironmentController';
 import { useMultiplayerController } from './hooks/useMultiplayerController';
+import { useChatController } from './hooks/useChatController';
+import { useSharedPlacedItemsController } from './hooks/useSharedPlacedItemsController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
@@ -44,11 +46,7 @@ import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
-import {
-  getRoomArtworkSize,
-  getRoomCoverScale,
-  getRoomPan,
-} from './utils/backgroundRoomLayout';
+import { getRoomArtworkSize, getRoomCoverScale, getRoomPan } from './utils/backgroundRoomLayout';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -79,6 +77,7 @@ import PlacedItems from './components/PlacedItems';
 import NPCRenderer from './components/NPCRenderer';
 import RemotePlayerOverlay from './components/RemotePlayerOverlay';
 import EmoteWheel from './components/EmoteWheel';
+import ChatPanel from './components/ChatPanel';
 import PresenceIndicator from './components/PresenceIndicator';
 import Inventory, { InventoryItem } from './components/Inventory';
 import QuickSlotBar from './components/QuickSlotBar';
@@ -108,11 +107,11 @@ import RadialMenu from './components/RadialMenu';
 import { StaminaBar } from './components/StaminaBar';
 import { RestIndicator } from './components/RestIndicator';
 import { DestinationMarker } from './components/DestinationMarker';
-import { useMouseControls } from './hooks/useMouseControls';
+import { useMouseControls, type MouseClickInfo } from './hooks/useMouseControls';
 import { useMouseHover } from './hooks/useMouseHover';
 import { inventoryManager } from './utils/inventoryManager';
 import { captureGameViewport } from './utils/cameraCapture';
-import { CAMERA } from './constants';
+import { CAMERA, MULTIPLAYER } from './constants';
 import type { Photo } from './types';
 import { convertInventoryToUI } from './utils/inventoryUIHelper';
 import ShopUI from './components/ShopUI';
@@ -234,6 +233,24 @@ const App: React.FC = () => {
     mode?: 'confirmDelete';
   } | null>(null);
   const [renderVersion, setRenderVersion] = useState(0); // Increments to force tile re-renders (for cache busting)
+
+  /**
+   * Open an item's action menu — right-click on desktop, long-press on touch.
+   *
+   * Shared by the inventory grid and the quick slot bar, which show the same slots and
+   * must not disagree about what an item can do. An item with nothing to offer beyond
+   * plain selection just gets selected, rather than opening a one-entry menu.
+   */
+  const openItemActionMenu = useCallback(
+    (item: InventoryItem, slotIndex: number, at: { clientX: number; clientY: number }) => {
+      if (!hasInventoryActions(item.id)) {
+        setSelectedItemSlot(slotIndex);
+        return;
+      }
+      setInventoryRadialMenu({ position: { x: at.clientX, y: at.clientY }, item, slotIndex });
+    },
+    []
+  );
 
   // Yule celebration state
   const [isYuleCelebrationActive, setIsYuleCelebrationActive] = useState(false);
@@ -425,16 +442,57 @@ const App: React.FC = () => {
     };
   }, [playerPosRef]);
 
-  const {
-    remotePlayerCount,
-    remotePlayerNames,
-    tickMultiplayer,
-    sendEmote,
-  } = useMultiplayerController({ currentMapId, getLocalPresence });
+  const { remotePlayerCount, remotePlayerNames, tickMultiplayer, sendEmote } =
+    useMultiplayerController({ currentMapId, getLocalPresence });
+
+  // ── Player chat ───────────────────────────────────────────────────────────
+  const { isChatActive, sendMessage } = useChatController({
+    currentMapId,
+    playerName: gameState.getSelectedCharacter()?.name ?? 'Traveller',
+    // Chat is proximity-based: read where we are standing at the moment a
+    // message lands, from the ref rather than React state.
+    getLocalPosition: () => playerPosRef.current,
+  });
+
+  // Furniture, wreaths and anything else put down in a shared map, visible to
+  // everyone there. Nothing else needs wiring: GameState merges the shared items
+  // into getPlacedItems(), which the renderer and interactions already use.
+  useSharedPlacedItemsController({ currentMapId });
+
+  const [isComposingChat, setIsComposingChat] = useState(false);
+  const startComposingChat = useCallback(() => setIsComposingChat(true), []);
+  const stopComposingChat = useCallback(() => setIsComposingChat(false), []);
+  const handleSendChat = useCallback(
+    (text: string) => {
+      void sendMessage(text);
+    },
+    [sendMessage]
+  );
 
   const [showEmoteWheel, setShowEmoteWheel] = useState(false);
   // Stable identity: useKeyboardControls captures its handler once at mount.
   const toggleEmoteWheel = useCallback(() => setShowEmoteWheel((open) => !open), []);
+
+  /**
+   * Right-clicking (or long-pressing) yourself opens the emote picker — the mouse
+   * equivalent of the touch controls' 👋 button, and more discoverable than knowing to
+   * press T.
+   *
+   * Returns true when it handled the gesture, so the dispatcher below knows whether to
+   * fall through to the world context menu. Yourself wins: you are standing on a tile
+   * that usually has its own interactions, and "emote" is what a click on your own
+   * character means.
+   */
+  const handleSelfContextClick = useCallback(
+    (clickInfo: MouseClickInfo): boolean => {
+      const player = playerPosRef.current;
+      const distance = Math.hypot(clickInfo.worldPos.x - player.x, clickInfo.worldPos.y - player.y);
+      if (distance > MULTIPLAYER.SELF_CLICK_RADIUS_TILES) return false;
+      toggleEmoteWheel();
+      return true;
+    },
+    [playerPosRef, toggleEmoteWheel]
+  );
   const closeEmoteWheel = useCallback(() => setShowEmoteWheel(false), []);
 
   // Fairy form fading state — true in the last 30s to trigger sprite flicker
@@ -448,12 +506,14 @@ const App: React.FC = () => {
     radialMenuVisible,
     radialMenuPosition,
     radialMenuOptions,
+    radialMenuOpenedByTouch,
     setRadialMenuVisible,
     farmActionAnimation,
     farmActionKey,
     showSplashEffect,
     splashKey,
     handleCanvasClick,
+    handleContextClick: handleWorldContextClick,
     handleFarmActionAnimation,
     handleAnimationComplete,
     hideSplashEffect,
@@ -485,10 +545,31 @@ const App: React.FC = () => {
       resetZoom();
     },
     onShowToast: showToast,
+    onSelectItemSlot: setSelectedItemSlot,
+    // Social actions offered when right-clicking another player.
+    onEmote: sendEmote,
+    onOpenEmoteWheel: toggleEmoteWheel,
+    onStartChat: startComposingChat,
     triggerVFX,
     setDestination: setClickToMoveDestination,
     onFarmUpdate: () => {}, // EventBus handles this now
   });
+
+  /**
+   * Right-click, or long-press on touch — one gesture, two meanings by target.
+   *
+   * On yourself it is the emote picker; anywhere else it asks the world "what can I do
+   * here?" and shows every answer without committing to any of them. That second half is
+   * the counterweight to left-click, which both walks the player and fires a lone
+   * interaction outright, and so can never be used to simply look.
+   */
+  const handleContextClick = useCallback(
+    (clickInfo: MouseClickInfo) => {
+      if (handleSelfContextClick(clickInfo)) return;
+      handleWorldContextClick(clickInfo);
+    },
+    [handleSelfContextClick, handleWorldContextClick]
+  );
 
   // Ambient VFX effects (lightning during storms, water sparkles, etc.)
   useAmbientVFX({
@@ -720,7 +801,7 @@ const App: React.FC = () => {
     });
 
     return unsubscribe;
-  }, [isLoadingCutscene]);
+  }, [isLoadingCutscene, closeAllUI, setRadialMenuVisible]);
 
   // Subscribe to EventBus for inventory updates (only triggers when inventory actually changes)
   useEffect(() => {
@@ -838,6 +919,7 @@ const App: React.FC = () => {
         return cutsceneStarted;
       },
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleMapTransition is a plain function read through currentMapIdRef precisely so it can be captured once here; re-initialising the stamina manager per render would reset its state
   }, [showToast]);
 
   // Track hostile NPC that initiated combat (for post-combat cleanup)
@@ -871,7 +953,7 @@ const App: React.FC = () => {
       setActiveNPC(null);
       openUI('shopUI', { activeShopId: 'mushras_shop' });
     }
-  }, [activeNPC]);
+  }, [activeNPC, openUI]);
 
   // Setup keyboard controls
   useKeyboardControls({
@@ -949,6 +1031,7 @@ const App: React.FC = () => {
     onShowToast: showToast,
     onSetSelectedItemSlot: setSelectedItemSlot,
     onToggleEmoteWheel: toggleEmoteWheel,
+    onStartChat: startComposingChat,
   });
 
   /**
@@ -1117,6 +1200,7 @@ const App: React.FC = () => {
     );
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateAnimations is a stable useCallback destructured from usePixiRenderer below this line
   }, [
     updateMovement,
     activeNPC,
@@ -1126,6 +1210,8 @@ const App: React.FC = () => {
     currentMapId,
     ui.miniGame,
     tickMultiplayer,
+    isMovingRef,
+    playerPosRef,
   ]);
 
   // Disabled automatic transitions - now using action key (E or Enter)
@@ -1182,6 +1268,7 @@ const App: React.FC = () => {
     };
 
     initAssets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only by design: initAssets reads currentMapId once to load/regenerate the saved map; the effect must not re-run when the player changes maps
   }, []); // Only run once on mount
 
   // Debug logging for DevTools state
@@ -1214,6 +1301,7 @@ const App: React.FC = () => {
       clearInterval(farmUpdateInterval);
       farmManager.stopSharedSync(); // Flush and stop shared farm sync on unmount
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the belt-and-braces startSharedSync for loading a save straight onto a shared map; the map-transition handler owns the shared-sync lifecycle, and re-running this per map change would cancel/restart the rAF loop and flush shared sync on every transition
   }, [isMapInitialized, gameLoop]);
 
   // Freeze/unfreeze NPC movement during dialogue
@@ -1336,7 +1424,7 @@ const App: React.FC = () => {
       x: (viewportSize.width - artworkWidth) / 2 + backgroundRoomPan.x,
       y: (viewportSize.height - artworkHeight) / 2 + backgroundRoomPan.y,
     };
-  }, [currentMap, currentMapId, viewportScale, viewportSize, zoom, backgroundRoomPan]);
+  }, [currentMap, viewportScale, viewportSize, zoom, backgroundRoomPan]);
 
   // Calculate effective tile size for background-image rooms (scaled)
   // Must include both viewport scale AND layer scale to match the room artwork
@@ -1369,6 +1457,7 @@ const App: React.FC = () => {
     cameraY: cameraY,
     zoom: zoom,
     onCanvasClick: handleCanvasClick,
+    onContextClick: handleContextClick,
     enabled: !isTouchDevice, // Disable mouse controls on touch devices
     effectiveTileSize:
       currentMap?.renderMode === 'background-image' ? effectiveTileSize : undefined,
@@ -1556,6 +1645,7 @@ const App: React.FC = () => {
         }
       },
     }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the callbacks read refs, singletons and the mount-captured handleMapTransition (which reads currentMapIdRef by design); currentMapId/playerPos/playerScale/playerSizeTier are the real invalidation triggers
     [currentMapId, playerPos, playerScale, playerSizeTier, triggerVFX]
   );
 
@@ -1586,7 +1676,7 @@ const App: React.FC = () => {
 
       return false;
     },
-    [magicEffectCallbacks]
+    [magicEffectCallbacks, showToast]
   );
 
   // Handle eating food directly from inventory
@@ -1774,6 +1864,7 @@ const App: React.FC = () => {
     // Deduplicate NPCs by ID (layer NPCs take precedence over map NPCs)
     const uniqueNPCs = Array.from(new Map(npcs.map((npc) => [npc.id, npc])).values());
     return uniqueNPCs;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- npcUpdateTrigger is a version counter: the NPCs read manager singletons, so the counter is the invalidation mechanism
   }, [currentMapId, npcUpdateTrigger, backgroundImageLayerRef]);
 
   // Keep NPCs ref in sync for collision detection
@@ -1950,10 +2041,13 @@ const App: React.FC = () => {
   }
 
   // ═══════════════════════════════ RENDER ═══════════════════════════════
+  // `no-touch-callout` on the container: long-press is a game input here (it opens the
+  // world context menu), and iOS answers an unguarded long press with its own callout,
+  // which steals the gesture. Same reason the inventory grid carries the class.
   return (
     <div
       ref={gameContainerRef}
-      className="text-white w-full h-full overflow-hidden font-sans relative select-none"
+      className="no-touch-callout text-white w-full h-full overflow-hidden font-sans relative select-none"
       style={{ backgroundColor: '#5A7247' }}
     >
       {/* PixiJS Renderer (WebGL - High Performance) */}
@@ -2256,6 +2350,11 @@ const App: React.FC = () => {
             items={inventoryItems.slice(0, 9)}
             selectedSlot={selectedItemSlot}
             onSlotClick={setSelectedItemSlot}
+            // The bar shows the first nine inventory slots, so its index is the slot index.
+            onSlotContextMenu={(slotIndex, at) => {
+              const item = inventoryItems[slotIndex];
+              if (item) openItemActionMenu(item, slotIndex, at);
+            }}
           />
         </>
       )}
@@ -2303,6 +2402,15 @@ const App: React.FC = () => {
         <PresenceIndicator
           count={remotePlayerCount}
           names={remotePlayerNames}
+          compact={isCompactMode}
+        />
+      )}
+      {isInWorld && isChatActive && !isAnyOverlayOpen && (
+        <ChatPanel
+          onSend={handleSendChat}
+          isComposing={isComposingChat}
+          onStartComposing={startComposingChat}
+          onStopComposing={stopComposingChat}
           compact={isCompactMode}
         />
       )}
@@ -2445,13 +2553,7 @@ const App: React.FC = () => {
           // deletes an item lives behind right-click / long-press, because a stray
           // click used to drink a potion outright.
           onItemClick={(_item, slotIndex) => setSelectedItemSlot(slotIndex)}
-          onItemContextMenu={(item, slotIndex, at) => {
-            if (!hasInventoryActions(item.id)) {
-              setSelectedItemSlot(slotIndex);
-              return;
-            }
-            setInventoryRadialMenu({ position: { x: at.clientX, y: at.clientY }, item, slotIndex });
-          }}
+          onItemContextMenu={openItemActionMenu}
         />
       )}
       {ui.cookingUI && (
@@ -2734,7 +2836,11 @@ const App: React.FC = () => {
             setViewingPhoto((prev) => (prev ? { ...prev, photoName: newName } : prev));
           }}
           onSendToAlbum={() => {
-            photoAlbumManager.addToAlbum(viewingPhoto);
+            // The album is shared, so the photo goes in with a name against it.
+            photoAlbumManager.addToAlbum(
+              viewingPhoto,
+              gameState.getSelectedCharacter()?.name ?? 'Someone'
+            );
             inventoryManager.removePhotoById(viewingPhoto.id);
             setViewingPhoto(null);
             showToast('Photo sent to album!', 'success');
@@ -2806,6 +2912,7 @@ const App: React.FC = () => {
         <RadialMenu
           position={radialMenuPosition}
           options={radialMenuOptions}
+          openedByTouch={radialMenuOpenedByTouch}
           onClose={() => setRadialMenuVisible(false)}
         />
       )}
@@ -2815,6 +2922,7 @@ const App: React.FC = () => {
       {inventoryRadialMenu && (
         <RadialMenu
           position={inventoryRadialMenu.position}
+          openedByTouch={isTouchDevice}
           zIndex={Z_INVENTORY_RADIAL_MENU}
           options={buildInventoryActions({
             item: inventoryRadialMenu.item,

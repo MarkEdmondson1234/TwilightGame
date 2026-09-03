@@ -302,5 +302,5 @@ export function useMouseHover(config: UseMouseHoverConfig): void {
     };
     // Only depend on stable values — everything else read from refs
     // containerReady triggers re-run when the game container mounts after loading
-  }, [containerRef, isTouchDevice, containerReady]);
+  }, [containerRef, isTouchDevice, containerReady, playerPosRef]);
 }

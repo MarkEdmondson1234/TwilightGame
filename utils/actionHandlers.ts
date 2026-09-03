@@ -4,14 +4,7 @@
  */
 
 import { Position, TileType, CollisionType, SizeTier, FarmPlotState, NPC } from '../types';
-import {
-  getTileData,
-  getAdjacentTiles,
-  getTileCoords,
-  getSurroundingTiles,
-  hasTileTypeNearby,
-  findTileTypeNearby,
-} from './mapUtils';
+import { getTileData, getAdjacentTiles, getTileCoords } from './mapUtils';
 import { deskManager } from './deskManager';
 import { mapManager, transitionToMap } from '../maps';
 import { gameState } from '../GameState';
@@ -20,30 +13,14 @@ import { farmManager } from './farmManager';
 import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
 import { getCrop } from '../data/crops';
-import { getCropIdFromSeed, getItem, ItemCategory } from '../data/items';
-import { TimeManager, Season } from './TimeManager';
-import { WATER_CAN, TIMING, DEBUG } from '../constants';
+import { getCropIdFromSeed } from '../data/items';
+
+import { WATER_CAN, DEBUG } from '../constants';
 import { staminaManager } from './StaminaManager';
-import { itemAssets, groceryAssets, magicalAssets } from '../assets';
+
 import { getTierName } from './MagicEffects';
-import {
-  ForageResult,
-  handleForageAction,
-  handleBlackberryHarvest,
-  handleHazelnutHarvest,
-  handleBlueberryHarvest,
-  handleRedBerryHarvest,
-} from './forageHandlers';
-import { decorationManager } from './DecorationManager';
+
 import { cookingManager, CookingResult } from './CookingManager';
-import { getFrameStyle } from './frameStyles';
-import { isMrFoxPicnicAtStage } from '../data/questHandlers/mrFoxPicnicHandler';
-import { getMiniGamesForPlacedItem, getMiniGamesForNPC } from '../minigames/registry';
-import { miniGameManager } from '../minigames/MiniGameManager';
-import type { MiniGameTriggerData } from '../minigames/types';
-import { fruitTreeManager } from './fruitTreeManager';
-import { yuleCelebrationManager } from './YuleCelebrationManager';
-import { eventBus, GameEvent } from './EventBus';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -289,16 +266,8 @@ export function checkTransition(
 
   try {
     // Transition to new map (pass current map ID for depth tracking)
-    const { map, spawn } = transitionToMap(
-      transition.toMapId,
-      transition.toPosition,
-      currentMapId || undefined
-    );
+    const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition);
     if (DEBUG.MAP) console.log(`[Action] Successfully loaded map: ${map.id} (${map.name})`);
-
-    // Extract seed from random map IDs (e.g., "forest_1234" -> 1234)
-    const seedMatch = map.id.match(/_([\d]+)$/);
-    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
 
     return {
       success: true,

@@ -6,7 +6,7 @@
  */
 
 import { Position, NPC, isTileSolid } from '../types';
-import { PLAYER_SIZE } from '../constants';
+
 import { metadataCache } from './MetadataCache';
 import { getTileData, getTileCoords } from './mapUtils';
 import { mapManager } from '../maps';

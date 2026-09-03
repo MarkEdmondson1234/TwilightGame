@@ -1,5 +1,5 @@
 import React from 'react';
-import { WEATHER_ANIMATIONS, TILE_SIZE } from '../constants';
+import { WEATHER_ANIMATIONS } from '../constants';
 
 interface WeatherOverlayProps {
   weather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -22,7 +22,7 @@ const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
 }) => {
   // Filter animations for this layer and current weather
   const layerAnimations = WEATHER_ANIMATIONS.filter(
-    anim => anim.layer === layer && anim.weather === weather
+    (anim) => anim.layer === layer && anim.weather === weather
   );
 
   if (layerAnimations.length === 0) {

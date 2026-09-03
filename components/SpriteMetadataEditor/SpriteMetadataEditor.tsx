@@ -9,7 +9,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { TileType, SpriteMetadata } from '../../types';
-import { SPRITE_METADATA, TILE_LEGEND, TILE_SIZE } from '../../constants';
+import { TILE_LEGEND, TILE_SIZE } from '../../constants';
 import { spriteMetadataOverrides } from '../../utils/SpriteMetadataOverrides';
 import './SpriteMetadataEditor.css';
 
@@ -20,7 +20,7 @@ interface SpriteMetadataEditorProps {
 
 const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, onApply }) => {
   const [selectedTileType, setSelectedTileType] = useState<TileType | null>(null);
-  const [overrideVersion, setOverrideVersion] = useState(0);
+  const [, setOverrideVersion] = useState(0);
   const [searchFilter, setSearchFilter] = useState('');
   const [showCollisionBoxes, setShowCollisionBoxes] = useState(true);
   const [showGrid, setShowGrid] = useState(true);
@@ -29,7 +29,7 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
   // Subscribe to override changes
   useEffect(() => {
     return spriteMetadataOverrides.subscribe(() => {
-      setOverrideVersion(v => v + 1);
+      setOverrideVersion((v) => v + 1);
       onApply?.();
     });
   }, [onApply]);
@@ -38,27 +38,33 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
   const allSprites = spriteMetadataOverrides.getAllMetadata();
 
   // Filter sprites by search
-  const filteredSprites = allSprites.filter(sprite => {
+  const filteredSprites = allSprites.filter((sprite) => {
     if (!searchFilter) return true;
     const tileName = TileType[sprite.tileType].toLowerCase();
     const legendName = TILE_LEGEND[sprite.tileType]?.name.toLowerCase() || '';
-    return tileName.includes(searchFilter.toLowerCase()) ||
-           legendName.includes(searchFilter.toLowerCase());
+    return (
+      tileName.includes(searchFilter.toLowerCase()) ||
+      legendName.includes(searchFilter.toLowerCase())
+    );
   });
 
   // Get currently selected sprite metadata
-  const selectedSprite = selectedTileType !== null
-    ? spriteMetadataOverrides.getMetadata(selectedTileType)
-    : null;
+  const selectedSprite =
+    selectedTileType !== null ? spriteMetadataOverrides.getMetadata(selectedTileType) : null;
 
   // Handle metadata field changes
-  const handleFieldChange = useCallback((
-    field: keyof SpriteMetadata,
-    value: number | boolean | string | { min: number; max: number }
-  ) => {
-    if (selectedTileType === null) return;
-    spriteMetadataOverrides.setOverride(selectedTileType, { [field]: value } as Partial<SpriteMetadata>);
-  }, [selectedTileType]);
+  const handleFieldChange = useCallback(
+    (
+      field: keyof SpriteMetadata,
+      value: number | boolean | string | { min: number; max: number }
+    ) => {
+      if (selectedTileType === null) return;
+      spriteMetadataOverrides.setOverride(selectedTileType, {
+        [field]: value,
+      } as Partial<SpriteMetadata>);
+    },
+    [selectedTileType]
+  );
 
   // Reset selected sprite to defaults
   const handleResetSprite = useCallback(() => {
@@ -164,7 +170,7 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
 
             {/* Sprite grid */}
             <div className="sprite-editor-grid">
-              {filteredSprites.map(sprite => {
+              {filteredSprites.map((sprite) => {
                 const isSelected = selectedTileType === sprite.tileType;
                 const isModified = spriteMetadataOverrides.hasOverride(sprite.tileType);
                 const tileName = TileType[sprite.tileType];
@@ -308,18 +314,24 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                     />
 
                     {/* Collision box overlay */}
-                    {showCollisionBoxes && selectedSprite.collisionWidth && selectedSprite.collisionHeight && (
-                      <div
-                        className="sprite-preview-collision"
-                        style={{
-                          width: (selectedSprite.collisionWidth || 0) * TILE_SIZE,
-                          height: (selectedSprite.collisionHeight || 0) * TILE_SIZE,
-                          left: (-selectedSprite.offsetX + (selectedSprite.collisionOffsetX || 0)) * TILE_SIZE,
-                          top: (-selectedSprite.offsetY + (selectedSprite.collisionOffsetY || 0)) * TILE_SIZE,
-                        }}
-                        title="Collision Box"
-                      />
-                    )}
+                    {showCollisionBoxes &&
+                      selectedSprite.collisionWidth &&
+                      selectedSprite.collisionHeight && (
+                        <div
+                          className="sprite-preview-collision"
+                          style={{
+                            width: (selectedSprite.collisionWidth || 0) * TILE_SIZE,
+                            height: (selectedSprite.collisionHeight || 0) * TILE_SIZE,
+                            left:
+                              (-selectedSprite.offsetX + (selectedSprite.collisionOffsetX || 0)) *
+                              TILE_SIZE,
+                            top:
+                              (-selectedSprite.offsetY + (selectedSprite.collisionOffsetY || 0)) *
+                              TILE_SIZE,
+                          }}
+                          title="Collision Box"
+                        />
+                      )}
 
                     {/* Depth line indicator (blue horizontal line) */}
                     <div
@@ -330,10 +342,12 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                         right: 0,
                         height: '2px',
                         background: '#4a90d9',
-                        top: (-selectedSprite.offsetY +
-                          (selectedSprite.depthLineOffset ??
-                            ((selectedSprite.collisionOffsetY ?? selectedSprite.offsetY) +
-                             (selectedSprite.collisionHeight ?? selectedSprite.spriteHeight)))) * TILE_SIZE,
+                        top:
+                          (-selectedSprite.offsetY +
+                            (selectedSprite.depthLineOffset ??
+                              (selectedSprite.collisionOffsetY ?? selectedSprite.offsetY) +
+                                (selectedSprite.collisionHeight ?? selectedSprite.spriteHeight))) *
+                          TILE_SIZE,
                         pointerEvents: 'none',
                         zIndex: 15,
                         boxShadow: '0 0 4px rgba(74, 144, 217, 0.8)',
@@ -357,7 +371,9 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           min="0.5"
                           max="20"
                           value={selectedSprite.spriteWidth}
-                          onChange={(e) => handleFieldChange('spriteWidth', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            handleFieldChange('spriteWidth', parseFloat(e.target.value))
+                          }
                         />
                       </label>
                       <label>
@@ -368,7 +384,9 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           min="0.5"
                           max="20"
                           value={selectedSprite.spriteHeight}
-                          onChange={(e) => handleFieldChange('spriteHeight', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            handleFieldChange('spriteHeight', parseFloat(e.target.value))
+                          }
                         />
                       </label>
                     </div>
@@ -415,7 +433,9 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           min="0"
                           max="20"
                           value={selectedSprite.collisionWidth ?? 0}
-                          onChange={(e) => handleFieldChange('collisionWidth', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            handleFieldChange('collisionWidth', parseFloat(e.target.value))
+                          }
                         />
                       </label>
                       <label>
@@ -426,7 +446,9 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           min="0"
                           max="20"
                           value={selectedSprite.collisionHeight ?? 0}
-                          onChange={(e) => handleFieldChange('collisionHeight', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            handleFieldChange('collisionHeight', parseFloat(e.target.value))
+                          }
                         />
                       </label>
                     </div>
@@ -439,7 +461,9 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           min="-20"
                           max="20"
                           value={selectedSprite.collisionOffsetX ?? 0}
-                          onChange={(e) => handleFieldChange('collisionOffsetX', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            handleFieldChange('collisionOffsetX', parseFloat(e.target.value))
+                          }
                         />
                       </label>
                       <label>
@@ -450,7 +474,9 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           min="-20"
                           max="20"
                           value={selectedSprite.collisionOffsetY ?? 0}
-                          onChange={(e) => handleFieldChange('collisionOffsetY', parseFloat(e.target.value))}
+                          onChange={(e) =>
+                            handleFieldChange('collisionOffsetY', parseFloat(e.target.value))
+                          }
                         />
                       </label>
                     </div>
@@ -508,10 +534,12 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                             min="0.1"
                             max="2"
                             value={selectedSprite.scaleRange?.min ?? 0.98}
-                            onChange={(e) => handleFieldChange('scaleRange', {
-                              min: parseFloat(e.target.value),
-                              max: selectedSprite.scaleRange?.max ?? 1.02,
-                            })}
+                            onChange={(e) =>
+                              handleFieldChange('scaleRange', {
+                                min: parseFloat(e.target.value),
+                                max: selectedSprite.scaleRange?.max ?? 1.02,
+                              })
+                            }
                           />
                         </label>
                         <label>
@@ -522,10 +550,12 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                             min="0.1"
                             max="2"
                             value={selectedSprite.scaleRange?.max ?? 1.02}
-                            onChange={(e) => handleFieldChange('scaleRange', {
-                              min: selectedSprite.scaleRange?.min ?? 0.98,
-                              max: parseFloat(e.target.value),
-                            })}
+                            onChange={(e) =>
+                              handleFieldChange('scaleRange', {
+                                min: selectedSprite.scaleRange?.min ?? 0.98,
+                                max: parseFloat(e.target.value),
+                              })
+                            }
                           />
                         </label>
                       </div>
@@ -536,8 +566,8 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                   <div className="sprite-form-section">
                     <h4>Depth Sorting</h4>
                     <p style={{ fontSize: '11px', color: '#888', margin: '0 0 10px 0' }}>
-                      The depth line determines where this sprite sorts with player/NPCs.
-                      Default: collision box bottom.
+                      The depth line determines where this sprite sorts with player/NPCs. Default:
+                      collision box bottom.
                     </p>
                     <div className="sprite-form-row">
                       <label>
@@ -547,16 +577,22 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           step="0.1"
                           min="-20"
                           max="20"
-                          value={selectedSprite.depthLineOffset ??
-                            ((selectedSprite.collisionOffsetY ?? selectedSprite.offsetY) +
-                             (selectedSprite.collisionHeight ?? selectedSprite.spriteHeight))}
-                          onChange={(e) => handleFieldChange('depthLineOffset', parseFloat(e.target.value))}
+                          value={
+                            selectedSprite.depthLineOffset ??
+                            (selectedSprite.collisionOffsetY ?? selectedSprite.offsetY) +
+                              (selectedSprite.collisionHeight ?? selectedSprite.spriteHeight)
+                          }
+                          onChange={(e) =>
+                            handleFieldChange('depthLineOffset', parseFloat(e.target.value))
+                          }
                         />
                       </label>
                       {selectedSprite.depthLineOffset !== undefined && (
                         <button
                           className="sprite-editor-btn sprite-editor-btn-small"
-                          onClick={() => handleFieldChange('depthLineOffset', undefined as unknown as number)}
+                          onClick={() =>
+                            handleFieldChange('depthLineOffset', undefined as unknown as number)
+                          }
                           title="Reset to default (collision box bottom)"
                         >
                           Reset
@@ -576,7 +612,9 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
 
         {/* Footer */}
         <div className="sprite-editor-footer">
-          <p>Press <kbd>F6</kbd> or <kbd>ESC</kbd> to close</p>
+          <p>
+            Press <kbd>F6</kbd> or <kbd>ESC</kbd> to close
+          </p>
         </div>
       </div>
     </div>

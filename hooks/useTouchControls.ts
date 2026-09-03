@@ -9,153 +9,168 @@ import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { audioManager } from '../utils/AudioManager';
 import {
-    checkMirrorInteraction,
-    checkStoveInteraction,
-    checkNPCInteraction,
-    checkTransition,
-    handleFarmAction,
-    handleForageAction,
-    ForageResult,
-    FarmActionResult,
+  checkMirrorInteraction,
+  checkStoveInteraction,
+  checkNPCInteraction,
+  checkTransition,
+  handleFarmAction,
+  handleForageAction,
+  ForageResult,
 } from '../utils/actionHandlers';
 
 export interface TouchControlsConfig {
-    playerPosRef: MutableRefObject<Position>;
-    selectedItemSlot: number | null;
-    inventoryItems: Array<{ id: string; name: string; icon: string; quantity: number; value?: number }>;
-    keysPressed: Record<string, boolean>;
-    onShowCharacterCreator: (show: boolean) => void;
-    onSetShowCookingUI: (show: boolean) => void;
-    onSetActiveNPC: (npcId: string | null) => void;
-    onSetPlayerPos: (pos: Position) => void;
-    onMapTransition: (mapId: string, spawnPos: Position) => void;
-    onFarmUpdate: () => void;
-    onFarmActionAnimation: (action: 'till' | 'plant' | 'water' | 'harvest' | 'clear', tilePos?: Position) => void;
-    onForageResult?: (result: ForageResult) => void;
-    onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
-    onTakePhoto?: () => void;
+  playerPosRef: MutableRefObject<Position>;
+  selectedItemSlot: number | null;
+  inventoryItems: Array<{
+    id: string;
+    name: string;
+    icon: string;
+    quantity: number;
+    value?: number;
+  }>;
+  keysPressed: Record<string, boolean>;
+  onShowCharacterCreator: (show: boolean) => void;
+  onSetShowCookingUI: (show: boolean) => void;
+  onSetActiveNPC: (npcId: string | null) => void;
+  onSetPlayerPos: (pos: Position) => void;
+  onMapTransition: (mapId: string, spawnPos: Position) => void;
+  onFarmUpdate: () => void;
+  onFarmActionAnimation: (
+    action: 'till' | 'plant' | 'water' | 'harvest' | 'clear',
+    tilePos?: Position
+  ) => void;
+  onForageResult?: (result: ForageResult) => void;
+  onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
+  onTakePhoto?: () => void;
 }
 
 export function useTouchControls(config: TouchControlsConfig) {
-    const {
-        playerPosRef,
-        selectedItemSlot,
-        inventoryItems,
-        keysPressed,
-        onShowCharacterCreator,
-        onSetShowCookingUI,
-        onSetActiveNPC,
-        onSetPlayerPos,
-        onMapTransition,
-        onFarmUpdate,
-        onFarmActionAnimation,
-        onForageResult,
-        onShowToast,
-        onTakePhoto,
-    } = config;
+  const {
+    playerPosRef,
+    selectedItemSlot,
+    inventoryItems,
+    keysPressed,
+    onShowCharacterCreator,
+    onSetShowCookingUI,
+    onSetActiveNPC,
+    onSetPlayerPos,
+    onMapTransition,
+    onFarmUpdate,
+    onFarmActionAnimation,
+    onForageResult,
+    onShowToast,
+    onTakePhoto,
+  } = config;
 
-    const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
-        const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
-        keysPressed[keyMap[direction]] = true;
-    };
+  const handleDirectionPress = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+    keysPressed[keyMap[direction]] = true;
+  };
 
-    const handleDirectionRelease = (direction: 'up' | 'down' | 'left' | 'right') => {
-        const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
-        keysPressed[keyMap[direction]] = false;
-    };
+  const handleDirectionRelease = (direction: 'up' | 'down' | 'left' | 'right') => {
+    const keyMap = { up: 'w', down: 's', left: 'a', right: 'd' };
+    keysPressed[keyMap[direction]] = false;
+  };
 
-    const handleActionPress = () => {
-        console.log(`[Touch Action] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`);
+  const handleActionPress = () => {
+    console.log(
+      `[Touch Action] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`
+    );
 
-        const currentMapId = mapManager.getCurrentMapId();
+    const currentMapId = mapManager.getCurrentMapId();
 
-        // Check for farm action first (on current tile)
-        if (currentMapId) {
-            // Get selected item from inventory (if any)
-            const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
-            const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
+    // Check for farm action first (on current tile)
+    if (currentMapId) {
+      // Get selected item from inventory (if any)
+      const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
+      const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
 
-            console.log(`[Touch Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlot})`);
+      console.log(`[Touch Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlot})`);
 
-            const farmResult = handleFarmAction(playerPosRef.current, currentTool, currentMapId, onFarmActionAnimation);
+      const farmResult = handleFarmAction(
+        playerPosRef.current,
+        currentTool,
+        currentMapId,
+        onFarmActionAnimation
+      );
 
-            if (farmResult.handled) {
-                onFarmUpdate();
-                return; // Don't check for other interactions
-            }
+      if (farmResult.handled) {
+        onFarmUpdate();
+        return; // Don't check for other interactions
+      }
 
-            // Show feedback message if action failed with a reason
-            if (farmResult.message && onShowToast) {
-                onShowToast(farmResult.message, farmResult.messageType || 'warning');
-                return; // Don't check for other interactions after showing message
-            }
-        }
+      // Show feedback message if action failed with a reason
+      if (farmResult.message && onShowToast) {
+        onShowToast(farmResult.message, farmResult.messageType || 'warning');
+        return; // Don't check for other interactions after showing message
+      }
+    }
 
-        // Check for mirror interaction
-        const foundMirror = checkMirrorInteraction(playerPosRef.current);
-        if (foundMirror) {
-            onShowCharacterCreator(true);
-            return; // Don't check for transitions if we found a mirror
-        }
+    // Check for mirror interaction
+    const foundMirror = checkMirrorInteraction(playerPosRef.current);
+    if (foundMirror) {
+      onShowCharacterCreator(true);
+      return; // Don't check for transitions if we found a mirror
+    }
 
-        // Check for stove interaction (opens cooking interface)
-        const foundStove = checkStoveInteraction(playerPosRef.current);
-        if (foundStove) {
-            onSetShowCookingUI(true);
-            return; // Don't check for other interactions if we found a stove
-        }
+    // Check for stove interaction (opens cooking interface)
+    const foundStove = checkStoveInteraction(playerPosRef.current);
+    if (foundStove) {
+      onSetShowCookingUI(true);
+      return; // Don't check for other interactions if we found a stove
+    }
 
-        // Check for NPC interaction
-        const npcId = checkNPCInteraction(playerPosRef.current);
-        if (npcId) {
-            onSetActiveNPC(npcId);
-            return; // Don't check for transitions if talking to NPC
-        }
+    // Check for NPC interaction
+    const npcId = checkNPCInteraction(playerPosRef.current);
+    if (npcId) {
+      onSetActiveNPC(npcId);
+      return; // Don't check for transitions if talking to NPC
+    }
 
-        // Check for transition
-        const transitionResult = checkTransition(playerPosRef.current, currentMapId);
+    // Check for transition
+    const transitionResult = checkTransition(playerPosRef.current, currentMapId);
 
-        if (transitionResult.success && transitionResult.mapId && transitionResult.spawnPosition) {
-            if (transitionResult.hasDoor) {
-                audioManager.playSfx('sfx_door_open');
-            }
-            onMapTransition(transitionResult.mapId, transitionResult.spawnPosition);
+    if (transitionResult.success && transitionResult.mapId && transitionResult.spawnPosition) {
+      if (transitionResult.hasDoor) {
+        audioManager.playSfx('sfx_door_open');
+      }
+      onMapTransition(transitionResult.mapId, transitionResult.spawnPosition);
 
-            // Save player location when transitioning maps
-            const seedMatch = transitionResult.mapId.match(/_([\d]+)$/);
-            const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
-            gameState.updatePlayerLocation(transitionResult.mapId, transitionResult.spawnPosition, seed);
-        }
-    };
+      // Save player location when transitioning maps
+      const seedMatch = transitionResult.mapId.match(/_([\d]+)$/);
+      const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+      gameState.updatePlayerLocation(transitionResult.mapId, transitionResult.spawnPosition, seed);
+    }
+  };
 
-    const handleResetPress = () => {
-        const currentMap = mapManager.getCurrentMap();
-        if (currentMap && currentMap.spawnPoint) {
-            console.log('[Touch Reset] Teleporting to spawn point:', currentMap.spawnPoint);
-            onSetPlayerPos(currentMap.spawnPoint);
-            playerPosRef.current = currentMap.spawnPoint;
-        }
-    };
+  const handleResetPress = () => {
+    const currentMap = mapManager.getCurrentMap();
+    if (currentMap && currentMap.spawnPoint) {
+      console.log('[Touch Reset] Teleporting to spawn point:', currentMap.spawnPoint);
+      onSetPlayerPos(currentMap.spawnPoint);
+      playerPosRef.current = currentMap.spawnPoint;
+    }
+  };
 
-    const handleForagePress = () => {
-        const currentMapId = mapManager.getCurrentMapId();
-        if (currentMapId) {
-            const result = handleForageAction(playerPosRef.current, currentMapId);
-            console.log(`[Touch Forage] ${result.message}`);
-            onForageResult?.(result);
-        }
-    };
+  const handleForagePress = () => {
+    const currentMapId = mapManager.getCurrentMapId();
+    if (currentMapId) {
+      const result = handleForageAction(playerPosRef.current, currentMapId);
+      console.log(`[Touch Forage] ${result.message}`);
+      onForageResult?.(result);
+    }
+  };
 
-    const handlePhotoPress = () => {
-        onTakePhoto?.();
-    };
+  const handlePhotoPress = () => {
+    onTakePhoto?.();
+  };
 
-    return {
-        handleDirectionPress,
-        handleDirectionRelease,
-        handleActionPress,
-        handleResetPress,
-        handleForagePress,
-        handlePhotoPress,
-    };
+  return {
+    handleDirectionPress,
+    handleDirectionRelease,
+    handleActionPress,
+    handleResetPress,
+    handleForagePress,
+    handlePhotoPress,
+  };
 }

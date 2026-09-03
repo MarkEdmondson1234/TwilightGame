@@ -18,6 +18,7 @@ import {
   type SyncState,
 } from '../firebase/safe';
 import { reportError } from '../utils/errorReporting';
+import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory';
 
 interface HelpBrowserProps {
   onClose: () => void;
@@ -158,6 +159,12 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAiEnabled(false);
     setSaveMessage('API key removed.');
   };
+
+  // Chat history. The transcript is a module-level buffer rather than component
+  // state because it outlives this panel: the player opens Settings *after* the
+  // conversation, and state created on mount would start empty.
+  const [chatHistory, setChatHistory] = useState(getChatHistory);
+  useEffect(() => onChatHistoryChange(() => setChatHistory([...getChatHistory()])), []);
 
   /**
    * Firebase is initialised once during asset loading. When that attempt failed
@@ -494,6 +501,46 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                       {sfxEnabled ? 'Effects On' : 'Effects Off'}
                     </button>
                   </div>
+                </div>
+
+                {/* Chat history — what was said near you. Bubbles above players'
+                    heads are the live channel; this is only for reading back. */}
+                <div
+                  className="rounded-lg p-6 mb-6"
+                  style={{
+                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                    border: `2px solid ${colours.wood}`,
+                  }}
+                >
+                  <h2
+                    className="text-xl font-serif font-bold mb-4"
+                    style={{ color: colours.brass }}
+                  >
+                    💬 Chat History
+                  </h2>
+                  {chatHistory.length === 0 ? (
+                    <p style={{ color: colours.textLight }}>
+                      Nothing said yet. Press <strong>M</strong> (or tap “Say something”) to talk to
+                      players standing near you — what you say appears above your character.
+                    </p>
+                  ) : (
+                    <div
+                      className="max-h-64 overflow-y-auto rounded p-3 text-sm space-y-1"
+                      style={{ background: colours.parchmentDarker }}
+                    >
+                      {chatHistory.map((message) => (
+                        <div key={message.id} style={{ color: colours.textLight }}>
+                          <span
+                            className="font-semibold"
+                            style={{ color: message.isLocal ? colours.brass : colours.wood }}
+                          >
+                            {message.name}
+                          </span>
+                          <span>: {message.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Account Section */}
@@ -906,52 +953,52 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                   remarkPlugins={[remarkGfm]}
                   components={{
                     // Custom cottagecore styling for markdown elements
-                    h1: ({ node, ...props }) => (
+                    h1: ({ ...props }) => (
                       <h1
                         className="text-4xl font-serif font-bold mb-4 pb-2"
                         style={{ color: colours.brass, borderBottom: `2px solid ${colours.wood}` }}
                         {...props}
                       />
                     ),
-                    h2: ({ node, ...props }) => (
+                    h2: ({ ...props }) => (
                       <h2
                         className="text-3xl font-serif font-bold mt-8 mb-3"
                         style={{ color: colours.brassDark }}
                         {...props}
                       />
                     ),
-                    h3: ({ node, ...props }) => (
+                    h3: ({ ...props }) => (
                       <h3
                         className="text-2xl font-serif font-bold mt-6 mb-2"
                         style={{ color: colours.wood }}
                         {...props}
                       />
                     ),
-                    p: ({ node, ...props }) => (
+                    p: ({ ...props }) => (
                       <p
                         className="mb-4 leading-relaxed"
                         style={{ color: colours.text }}
                         {...props}
                       />
                     ),
-                    ul: ({ node, ...props }) => (
+                    ul: ({ ...props }) => (
                       <ul
                         className="list-disc list-inside mb-4 space-y-1"
                         style={{ color: colours.text }}
                         {...props}
                       />
                     ),
-                    ol: ({ node, ...props }) => (
+                    ol: ({ ...props }) => (
                       <ol
                         className="list-decimal list-inside mb-4 space-y-1"
                         style={{ color: colours.text }}
                         {...props}
                       />
                     ),
-                    li: ({ node, ...props }) => (
+                    li: ({ ...props }) => (
                       <li className="ml-4" style={{ color: colours.text }} {...props} />
                     ),
-                    code: ({ node, inline, ...props }: any) =>
+                    code: ({ inline, ...props }: any) =>
                       inline ? (
                         <code
                           className="px-2 py-1 rounded font-mono text-sm"
@@ -965,31 +1012,31 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                           {...props}
                         />
                       ),
-                    pre: ({ node, ...props }) => (
+                    pre: ({ ...props }) => (
                       <pre
                         className="p-4 rounded overflow-x-auto mb-4"
                         style={{ background: colours.parchmentDark }}
                         {...props}
                       />
                     ),
-                    strong: ({ node, ...props }) => (
+                    strong: ({ ...props }) => (
                       <strong
                         className="font-bold"
                         style={{ color: colours.woodDarker }}
                         {...props}
                       />
                     ),
-                    em: ({ node, ...props }) => (
+                    em: ({ ...props }) => (
                       <em className="italic" style={{ color: colours.wood }} {...props} />
                     ),
-                    a: ({ node, ...props }) => (
+                    a: ({ ...props }) => (
                       <a
                         className="underline hover:brightness-125"
                         style={{ color: colours.brass }}
                         {...props}
                       />
                     ),
-                    blockquote: ({ node, ...props }) => (
+                    blockquote: ({ ...props }) => (
                       <blockquote
                         className="pl-4 italic mb-4"
                         style={{
@@ -999,10 +1046,10 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                         {...props}
                       />
                     ),
-                    table: ({ node, ...props }) => (
+                    table: ({ ...props }) => (
                       <table className="w-full border-collapse mb-4" {...props} />
                     ),
-                    th: ({ node, ...props }) => (
+                    th: ({ ...props }) => (
                       <th
                         className="px-4 py-2 text-left font-serif font-bold"
                         style={{
@@ -1013,7 +1060,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                         {...props}
                       />
                     ),
-                    td: ({ node, ...props }) => (
+                    td: ({ ...props }) => (
                       <td
                         className="px-4 py-2"
                         style={{ border: `1px solid ${colours.wood}`, color: colours.text }}

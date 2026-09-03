@@ -3,10 +3,9 @@ import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { getItem, ItemCategory } from '../data/items';
 import { Z_INVENTORY_MODAL, zClass } from '../zIndex';
 import { useTouchDevice } from '../hooks/useTouchDevice';
+import { useLongPress } from '../hooks/useLongPress';
 import type { Photo } from '../types';
-import { CAMERA, TIMING } from '../constants';
-
-const LONG_PRESS_MS = TIMING.LONG_PRESS_MS;
+import { CAMERA } from '../constants';
 
 export interface InventoryItem {
   id: string;
@@ -64,7 +63,14 @@ const Inventory: React.FC<InventoryProps> = ({
   isMagicUnlocked = false,
   photoCount = 0,
 }) => {
-  type InventoryFilter = 'all' | 'ingredients' | 'farming' | 'seeds' | 'materials' | 'magical' | 'photos';
+  type InventoryFilter =
+    | 'all'
+    | 'ingredients'
+    | 'farming'
+    | 'seeds'
+    | 'materials'
+    | 'magical'
+    | 'photos';
   const [activeFilter, setActiveFilter] = useState<InventoryFilter>('all');
 
   // Drag-drop state for desktop
@@ -80,55 +86,55 @@ const Inventory: React.FC<InventoryProps> = ({
   const isTouchDevice = useTouchDevice();
 
   // Long-press opens the action menu on touch, where there is no right-click.
-  // The timer is cancelled by any move or lift, so a normal tap still selects.
   // Declared above the isOpen guard — hooks must run in the same order every render.
-  const longPressTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressFiredRef = React.useRef(false);
+  //
+  // One hook serves the whole grid: the slot the finger went down on is recorded at
+  // touchstart, because by the time the hold fires there is no event to read it from.
+  const pressTargetRef = React.useRef<{ item: InventoryItem; index: number } | null>(null);
+  const onItemContextMenuRef = React.useRef(onItemContextMenu);
+  onItemContextMenuRef.current = onItemContextMenu;
+
+  const longPress = useLongPress((clientX, clientY) => {
+    const target = pressTargetRef.current;
+    if (!target) return;
+    onItemContextMenuRef.current?.(target.item, target.index, { clientX, clientY });
+  });
 
   if (!isOpen) return null;
 
-  // Calculate dynamic slot count for unlimited inventory
+  // Dynamic slot count for unlimited inventory
   const COLS = 9;
   const MIN_ROWS = 4; // Always show at least 4 rows (36 slots) for quick slots + buffer
   const BUFFER_ROWS = 1; // Show one extra empty row after last item
 
-  // Keep total count for footer display (unfiltered)
-  let displaySlots: number;
-  if (maxSlots !== undefined) {
-    displaySlots = maxSlots;
-  } else {
-    const usedSlots = items.length;
-    const requiredRows = Math.ceil(usedSlots / COLS) + BUFFER_ROWS;
-    displaySlots = Math.max(MIN_ROWS, requiredRows) * COLS;
-  }
-
   const FILTER_CATEGORIES: Record<InventoryFilter, ItemCategory[]> = {
-    all:         [],
+    all: [],
     ingredients: [ItemCategory.INGREDIENT, ItemCategory.FOOD, ItemCategory.CROP],
-    farming:     [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
-    seeds:       [ItemCategory.SEED],
-    materials:   [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
-    magical:     [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
-    photos:      [ItemCategory.KEEPSAKE],
+    farming: [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
+    seeds: [ItemCategory.SEED],
+    materials: [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
+    magical: [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
+    photos: [ItemCategory.KEEPSAKE],
   };
 
   const filterTabs: { id: InventoryFilter; label: string }[] = [
-    { id: 'all',         label: 'All' },
+    { id: 'all', label: 'All' },
     { id: 'ingredients', label: 'Ingredients' },
-    { id: 'farming',     label: 'Farming' },
-    { id: 'seeds',       label: 'Seeds' },
-    { id: 'materials',   label: 'Materials' },
+    { id: 'farming', label: 'Farming' },
+    { id: 'seeds', label: 'Seeds' },
+    { id: 'materials', label: 'Materials' },
     ...(isMagicUnlocked ? [{ id: 'magical' as InventoryFilter, label: 'Magical' }] : []),
     { id: 'photos', label: `Photos${photoCount > 0 ? ` (${photoCount})` : ''}` },
   ];
 
   // Apply category filter
-  const filteredItems = activeFilter === 'all'
-    ? items
-    : items.filter((item) => {
-        const cat = getItem(item.id)?.category;
-        return cat !== undefined && FILTER_CATEGORIES[activeFilter].includes(cat);
-      });
+  const filteredItems =
+    activeFilter === 'all'
+      ? items
+      : items.filter((item) => {
+          const cat = getItem(item.id)?.category;
+          return cat !== undefined && FILTER_CATEGORIES[activeFilter].includes(cat);
+        });
 
   // Recalculate slot count for filtered view
   let filteredDisplaySlots: number;
@@ -148,31 +154,13 @@ const Inventory: React.FC<InventoryProps> = ({
     }
   });
 
-  const cancelLongPress = () => {
-    if (longPressTimer.current !== null) {
-      clearTimeout(longPressTimer.current);
-      longPressTimer.current = null;
-    }
-  };
-
   const handleTouchStart = (item: InventoryItem | null, index: number, e: React.TouchEvent) => {
     if (!item || !onItemContextMenu) return;
-    const touch = e.touches[0];
-    if (!touch) return;
-    const { clientX, clientY } = touch;
-    longPressFiredRef.current = false;
-    cancelLongPress();
-    longPressTimer.current = setTimeout(() => {
-      longPressFiredRef.current = true;
-      onItemContextMenu(item, index, { clientX, clientY });
-    }, LONG_PRESS_MS);
+    pressTargetRef.current = { item, index };
+    longPress.handlers.onTouchStart(e);
   };
 
-  const handleContextMenu = (
-    item: InventoryItem | null,
-    index: number,
-    e: React.MouseEvent
-  ) => {
+  const handleContextMenu = (item: InventoryItem | null, index: number, e: React.MouseEvent) => {
     e.preventDefault(); // suppress the browser's own menu whether or not we show ours
     if (!item || !onItemContextMenu) return;
     onItemContextMenu(item, index, { clientX: e.clientX, clientY: e.clientY });
@@ -180,10 +168,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
   const handleSlotClick = (item: InventoryItem | null, index: number, event: React.MouseEvent) => {
     // A long-press already opened the action menu — don't also treat it as a tap.
-    if (longPressFiredRef.current) {
-      longPressFiredRef.current = false;
-      return;
-    }
+    if (longPress.consumeTap()) return;
 
     // Double-click on photo opens the viewer
     if (event.detail === 2 && item?.photoData && onPhotoDoubleClick) {
@@ -305,7 +290,11 @@ const Inventory: React.FC<InventoryProps> = ({
           {activeFilter === 'photos' && filteredItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 text-amber-500 text-sm gap-2">
               <span className="text-4xl">📷</span>
-              <p className="text-center">No photos yet.<br />Equip your camera and take some!</p>
+              <p className="text-center">
+                No photos yet.
+                <br />
+                Equip your camera and take some!
+              </p>
             </div>
           )}
           <div className={`grid ${gridCols} ${slotGap}`}>
@@ -340,9 +329,9 @@ const Inventory: React.FC<InventoryProps> = ({
                   onClick={(e) => handleSlotClick(item, index, e)}
                   onContextMenu={(e) => handleContextMenu(item, index, e)}
                   onTouchStart={(e) => handleTouchStart(item, index, e)}
-                  onTouchMove={cancelLongPress}
-                  onTouchEnd={cancelLongPress}
-                  onTouchCancel={cancelLongPress}
+                  onTouchMove={longPress.handlers.onTouchMove}
+                  onTouchEnd={longPress.handlers.onTouchEnd}
+                  onTouchCancel={longPress.handlers.onTouchCancel}
                   className={`
                     no-touch-callout
                     relative w-full aspect-square rounded-lg transition-all
@@ -390,7 +379,9 @@ const Inventory: React.FC<InventoryProps> = ({
 
                       {/* Exposure counter badge on camera */}
                       {item.id === 'camera' && (
-                        <div className={`absolute bottom-0 right-0 text-white text-xs font-bold px-1 py-0.5 rounded-tl-lg rounded-br-lg min-w-[28px] text-center ${photoCount >= CAMERA.MAX_EXPOSURES ? 'bg-red-700/90' : 'bg-teal-700/90'}`}>
+                        <div
+                          className={`absolute bottom-0 right-0 text-white text-xs font-bold px-1 py-0.5 rounded-tl-lg rounded-br-lg min-w-[28px] text-center ${photoCount >= CAMERA.MAX_EXPOSURES ? 'bg-red-700/90' : 'bg-teal-700/90'}`}
+                        >
                           {photoCount}/{CAMERA.MAX_EXPOSURES}
                         </div>
                       )}

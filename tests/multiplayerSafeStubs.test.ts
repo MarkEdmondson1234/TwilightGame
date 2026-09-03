@@ -14,8 +14,14 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { presenceService } from '../firebase/presenceService';
+import { chatService } from '../firebase/chatService';
+import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
+import { sharedAlbumService } from '../firebase/sharedAlbumService';
 import {
   getPresenceService,
+  getChatService,
+  getSharedPlacedItemsService,
+  getSharedAlbumService,
   getCommunityGardenService,
   whenFirebaseSettled,
 } from '../firebase/safe';
@@ -71,6 +77,57 @@ describe('presence stub parity', () => {
   });
 });
 
+describe('chat stub parity', () => {
+  it('implements every public method of the real chat service', () => {
+    const realMethods = methodNames(chatService);
+    const stubMethods = methodNames(getChatService());
+
+    const missing = realMethods.filter((name) => !stubMethods.includes(name));
+
+    expect(
+      missing,
+      'These methods exist on firebase/chatService but not on the stub in ' +
+        'firebase/safe.ts. The game would crash on them in a build without the ' +
+        '`firebase` package. Add a no-op to stubChatService.'
+    ).toEqual([]);
+  });
+
+  it('returns a working unsubscribe from onMessage', () => {
+    const unsubscribe = getChatService().onMessage(() => {});
+    expect(typeof unsubscribe).toBe('function');
+    expect(() => unsubscribe()).not.toThrow();
+  });
+});
+
+describe('shared placed items stub parity', () => {
+  it('implements every public method of the real shared placement service', () => {
+    const missing = methodNames(sharedPlacedItemsService).filter(
+      (name) => !methodNames(getSharedPlacedItemsService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/sharedPlacedItemsService but not on the ' +
+        'stub in firebase/safe.ts. Add a no-op to stubSharedPlacedItemsService.'
+    ).toEqual([]);
+  });
+});
+
+describe('shared album stub parity', () => {
+  it('implements every public method of the real shared album service', () => {
+    const missing = methodNames(sharedAlbumService).filter(
+      (name) => !methodNames(getSharedAlbumService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/sharedAlbumService but not on the stub in ' +
+        'firebase/safe.ts. The photo album is opened from the bookshelf in a build ' +
+        'with no Firebase too. Add a no-op to stubSharedAlbumService.'
+    ).toEqual([]);
+  });
+});
+
 describe('community garden stub parity', () => {
   it('still exposes the shared-farm API the same way', () => {
     // Sanity check on the pattern presence follows, so a regression in the
@@ -96,17 +153,21 @@ describe('presence must not latch onto the stub', () => {
    * settled, and the controller must not hold on to what it returns.
    */
 
+  // Generous timeout: these two are the only tests that actually await the
+  // dynamic import of the whole Firebase SDK, which on a cold, loaded machine
+  // takes longer than vitest's 5 s default. They were failing intermittently on
+  // slowness, not on the property they assert.
   it('returns the real service, not the stub, once Firebase has settled', async () => {
     const loaded = await whenFirebaseSettled();
     expect(loaded, 'the firebase package should be installed in the test env').toBe(true);
     expect(getPresenceService()).toBe(presenceService);
-  });
+  }, 30_000);
 
   it('resolves whenFirebaseSettled idempotently', async () => {
     // The controller and App both await this; the underlying load must run once.
     await expect(whenFirebaseSettled()).resolves.toBe(true);
     await expect(whenFirebaseSettled()).resolves.toBe(true);
-  });
+  }, 30_000);
 
   it('does not cache a presence service in the controller', () => {
     const source = readFileSync(

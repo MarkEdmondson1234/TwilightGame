@@ -28,7 +28,12 @@ import { mushroomMap } from './definitions/mushroomMap';
 import { mushraShop } from './definitions/mushraShop';
 import { ruins } from './definitions/ruins';
 import { personalGarden } from './definitions/personalGarden';
-import { generateRandomForest, generateRandomCave, generateRandomShop, generateLavaMap } from './procedural';
+import {
+  generateRandomForest,
+  generateRandomCave,
+  generateRandomShop,
+  generateLavaMap,
+} from './procedural';
 import { gameState } from '../GameState';
 
 /**
@@ -80,11 +85,7 @@ export function initializeMaps(): void {
  * Handle transition to a map, generating random maps as needed
  * Also updates game state for depth tracking
  */
-export function transitionToMap(
-  mapId: string,
-  spawnPoint?: { x: number; y: number },
-  fromMapId?: string
-) {
+export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: number }) {
   // Track depth changes
   if (mapId.startsWith('RANDOM_')) {
     const type = mapId.replace('RANDOM_', '').toLowerCase();
@@ -131,8 +132,7 @@ export function transitionToMap(
     // stepping out of the forest and straight back in regenerated it entirely.
     // The world still reshuffles daily, which is the variety the seed was for.
     const { totalDays } = TimeManager.getCurrentTime();
-    const dailySeed = (kind: string, depth: number) =>
-      hashString(`${kind}:${totalDays}:${depth}`);
+    const dailySeed = (kind: string, depth: number) => hashString(`${kind}:${totalDays}:${depth}`);
 
     switch (type) {
       case 'forest':

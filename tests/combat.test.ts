@@ -6,7 +6,7 @@
  * tested here (it carries timer/state-machine complexity that's better
  * covered by an integration test).
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, vi } from 'vitest';
 import type { CombatMove } from '../minigames/combat-encounter/combatTypes';
 import { resolveRound, BEATS, COUNTERED_BY } from '../minigames/combat-encounter/combatTypes';
 import {

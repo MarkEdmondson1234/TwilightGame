@@ -6,7 +6,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
-import { DIALOGUE_FONT, TEXT_FONT } from './dialogueHelpers';
+import { DIALOGUE_FONT } from './dialogueHelpers';
 
 interface AIControlsProps {
   suggestions: string[];

@@ -17,7 +17,7 @@ bed you tilled yesterday. She waves. You wave back. You both wander off to forag
 the pond.
 
 That is the whole ambition. It is a peaceful game and the multiplayer should feel peaceful too:
-*presence and traces*, not competition.
+_presence and traces_, not competition.
 
 ### Goals
 
@@ -26,8 +26,8 @@ That is the whole ambition. It is a peaceful game and the multiplayer should fee
 2. **Share the spaces that matter** — Clover Village, the farm area, the orchard. The world one
    player changes is the world the others see.
 3. **Leave traces** — "Sanne watered your carrots", gifts in a mailbox, shared discoveries.
-4. **Communicate safely** — emotes and a closed phrase book. No free-text chat (this game has a
-   young audience; see §9).
+4. **Communicate safely** — emotes and a closed phrase book, plus free-text chat added later
+   at the owner's request (see the risk table, row 5, for exactly what that gave up).
 5. **Degrade to single-player perfectly** — no Firebase, no network, bad Wi-Fi: the game plays
    exactly as it does today.
 
@@ -35,7 +35,7 @@ That is the whole ambition. It is a peaceful game and the multiplayer should fee
 
 - An authoritative game server. There is no server-side simulation and there will not be one.
 - Anti-cheat. The threat model is "a nine-year-old with the dev console", and the cost of cheating
-  is that they get extra carrots. Rules validate *shape*, not *fairness*.
+  is that they get extra carrots. Rules validate _shape_, not _fairness_.
 - Lobbies, matchmaking, friend requests, instancing. One world, everyone in it.
 - PvP or contested combat.
 - Scale beyond ~20 concurrent players. The design would need a different transport at 100+.
@@ -47,16 +47,16 @@ That is the whole ambition. It is a peaceful game and the multiplayer should fee
 Most of the hard parts of a shared world are already solved here, by accident or by good design.
 This is worth stating precisely, because it changes what the work actually is.
 
-| Already true | Where | What it buys us |
-|---|---|---|
-| **Time is wall-clock derived** — `GAME_START_DATE + Date.now()`, 2 real hours per game day | `utils/TimeManager.ts:62` | Every client already agrees on the hour, day, season and year with **zero synchronisation**. Nothing to build. |
-| **Weather is a seeded PRNG** keyed on time-slot index + season | `utils/WeatherManager.ts` | Every client already sees the same rain at the same moment. Guarded by `tests/deterministicWeather.test.ts`. |
-| **A shared-world subsystem already ships** — the community garden | `firebase/communityGardenService.ts`, `utils/farmManager.ts` (`startSharedSync`) | The pattern is proven in production: optimistic local write → dirty set → batched flush every 10s → `onSnapshot` for remote changes → echo-suppression grace period. Generalise it; don't reinvent it. |
-| **Auth exists, including anonymous** | `firebase/authService.ts:161` | A player can be identified without an account. Anonymous → linked account is already implemented. |
-| **A layer that renders N animated characters with depth sorting** | `utils/pixi/NPCLayer.ts` | Remote players are, structurally, *NPCs we do not control*. The renderer barely changes. |
-| **EventBus decouples managers from React** | `utils/EventBus.ts` | A `RemotePlayerManager` can drive re-renders exactly like `NPCManager` does. |
-| **`firebase/safe.ts` stub pattern** | `firebase/safe.ts` | Multiplayer disables itself when the package or env is missing, with no call-site changes. |
-| **Character appearance is one string** | `utils/characterSprites.ts:63` | Sprites resolve to `/assets/{characterId}/base/{dir}_{n}.png`. Replicating a player's look costs **one field**: `characterId`. |
+| Already true                                                                               | Where                                                                            | What it buys us                                                                                                                                                                                        |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Time is wall-clock derived** — `GAME_START_DATE + Date.now()`, 2 real hours per game day | `utils/TimeManager.ts:62`                                                        | Every client already agrees on the hour, day, season and year with **zero synchronisation**. Nothing to build.                                                                                         |
+| **Weather is a seeded PRNG** keyed on time-slot index + season                             | `utils/WeatherManager.ts`                                                        | Every client already sees the same rain at the same moment. Guarded by `tests/deterministicWeather.test.ts`.                                                                                           |
+| **A shared-world subsystem already ships** — the community garden                          | `firebase/communityGardenService.ts`, `utils/farmManager.ts` (`startSharedSync`) | The pattern is proven in production: optimistic local write → dirty set → batched flush every 10s → `onSnapshot` for remote changes → echo-suppression grace period. Generalise it; don't reinvent it. |
+| **Auth exists, including anonymous**                                                       | `firebase/authService.ts:161`                                                    | A player can be identified without an account. Anonymous → linked account is already implemented.                                                                                                      |
+| **A layer that renders N animated characters with depth sorting**                          | `utils/pixi/NPCLayer.ts`                                                         | Remote players are, structurally, _NPCs we do not control_. The renderer barely changes.                                                                                                               |
+| **EventBus decouples managers from React**                                                 | `utils/EventBus.ts`                                                              | A `RemotePlayerManager` can drive re-renders exactly like `NPCManager` does.                                                                                                                           |
+| **`firebase/safe.ts` stub pattern**                                                        | `firebase/safe.ts`                                                               | Multiplayer disables itself when the package or env is missing, with no call-site changes.                                                                                                             |
+| **Character appearance is one string**                                                     | `utils/characterSprites.ts:63`                                                   | Sprites resolve to `/assets/{characterId}/base/{dir}_{n}.png`. Replicating a player's look costs **one field**: `characterId`.                                                                         |
 
 So the remaining work is narrower than "make it multiplayer". It is four things:
 
@@ -73,40 +73,40 @@ So the remaining work is narrower than "make it multiplayer". It is four things:
 Everything in the game falls into exactly one of these. Getting each item into the right row is the
 single most important design decision in this document.
 
-| Tier | Meaning | Transport | Conflict rule |
-|---|---|---|---|
-| **Ephemeral** | Only true while you are online: position, facing, current emote | Realtime Database | Last write wins; `onDisconnect()` removes it |
-| **Shared durable** | A change one player makes that others must see later | Firestore (existing pattern) | Last-write-wins, plus *claim transactions* for consumables (§8) |
-| **Private** | Yours alone; nobody else can observe it | Firestore per-user cloud save (already built) | None — single writer |
-| **Derived** | Recomputed identically on every client from time + seeds | **None** | Must stay deterministic (§7) |
+| Tier               | Meaning                                                         | Transport                                     | Conflict rule                                                   |
+| ------------------ | --------------------------------------------------------------- | --------------------------------------------- | --------------------------------------------------------------- |
+| **Ephemeral**      | Only true while you are online: position, facing, current emote | Realtime Database                             | Last write wins; `onDisconnect()` removes it                    |
+| **Shared durable** | A change one player makes that others must see later            | Firestore (existing pattern)                  | Last-write-wins, plus _claim transactions_ for consumables (§8) |
+| **Private**        | Yours alone; nobody else can observe it                         | Firestore per-user cloud save (already built) | None — single writer                                            |
+| **Derived**        | Recomputed identically on every client from time + seeds        | **None**                                      | Must stay deterministic (§7)                                    |
 
 ### Classification of every subsystem
 
-| System | Tier | Notes |
-|---|---|---|
-| Player position / direction / animation | Ephemeral | §5 |
-| Emote, "is typing a phrase" | Ephemeral | Short TTL |
-| Farm plots on `village` + `farm_area` | Shared durable | **Already shared.** Extend with claims (§8) |
-| Placed items / decoration on shared maps | Shared durable | Phase 4. Currently `gameState.getPlacedItems(mapId)` is local |
-| Community wreath / Yule decorations | Shared durable | Natural co-op showpiece |
-| Player mailbox (gifts) | Shared durable | New; write to *recipient's* subcollection |
-| World events / discoveries | Shared durable | **Already exists** — `sharedEvents` collection |
-| NPC gossip / conversation summaries | Shared durable | **Already exists** — `conversations/{npcId}/summaries` |
-| Inventory, gold, stamina | Private | Never replicate. Two players harvesting is not two players sharing a bag |
-| Quests, event chains, magic level, cooking book | Private | Each player has their own story. Do not share |
-| Friendships with NPCs | Private | Mum can be everyone's mum |
-| Photos, paintings | Private, with opt-in share | Paintings already have Firestore storage; a "hang in the village gallery" feature is a Phase 5 idea |
-| Foraging, berry bushes, fruit trees, cobwebs, mess piles | **Private (recommended)** | See the design note below |
-| Shop stock | Private | Shared stock means the first player online empties the shop. Bad |
-| Time, date, season, weather | Derived | Already correct |
-| NPC positions and states | Derived | Currently **non-deterministic** — see §7 |
-| Procedural `RANDOM_*` maps | Derived, currently **broken for sharing** — see §7 |
+| System                                                   | Tier                                               | Notes                                                                                               |
+| -------------------------------------------------------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Player position / direction / animation                  | Ephemeral                                          | §5                                                                                                  |
+| Emote, "is typing a phrase"                              | Ephemeral                                          | Short TTL                                                                                           |
+| Farm plots on `village` + `farm_area`                    | Shared durable                                     | **Already shared.** Extend with claims (§8)                                                         |
+| Placed items / decoration on shared maps                 | Shared durable                                     | Phase 4. Currently `gameState.getPlacedItems(mapId)` is local                                       |
+| Community wreath / Yule decorations                      | Shared durable                                     | Natural co-op showpiece                                                                             |
+| Player mailbox (gifts)                                   | Shared durable                                     | New; write to _recipient's_ subcollection                                                           |
+| World events / discoveries                               | Shared durable                                     | **Already exists** — `sharedEvents` collection                                                      |
+| NPC gossip / conversation summaries                      | Shared durable                                     | **Already exists** — `conversations/{npcId}/summaries`                                              |
+| Inventory, gold, stamina                                 | Private                                            | Never replicate. Two players harvesting is not two players sharing a bag                            |
+| Quests, event chains, magic level, cooking book          | Private                                            | Each player has their own story. Do not share                                                       |
+| Friendships with NPCs                                    | Private                                            | Mum can be everyone's mum                                                                           |
+| Photos, paintings                                        | Private, with opt-in share                         | Paintings already have Firestore storage; a "hang in the village gallery" feature is a Phase 5 idea |
+| Foraging, berry bushes, fruit trees, cobwebs, mess piles | **Private (recommended)**                          | See the design note below                                                                           |
+| Shop stock                                               | Private                                            | Shared stock means the first player online empties the shop. Bad                                    |
+| Time, date, season, weather                              | Derived                                            | Already correct                                                                                     |
+| NPC positions and states                                 | Derived                                            | Currently **non-deterministic** — see §7                                                            |
+| Procedural `RANDOM_*` maps                               | Derived, currently **broken for sharing** — see §7 |
 
 **Design note — renewables stay private.** It is tempting to make berry bushes and fruit trees
 shared, for "realism". Don't. A shared renewable means whoever logs in first strips the map and
 everyone else walks through an empty world. Private renewables mean the world is always generous,
-which is the tone this game is going for. Share the things players *build* (farm beds, decorations);
-keep the things the world *gives* per-player.
+which is the tone this game is going for. Share the things players _build_ (farm beds, decorations);
+keep the things the world _gives_ per-player.
 
 ---
 
@@ -121,7 +121,7 @@ child playing one afternoon would exhaust it, and paid pricing is ~£0.14 per 10
 but absurd for data with a 200 ms shelf life.
 
 Realtime Database bills by bandwidth and stored bytes, has sub-100 ms fan-out, and — decisively —
-has **`onDisconnect()`**, which lets the *server* delete a player's presence node when their socket
+has **`onDisconnect()`**, which lets the _server_ delete a player's presence node when their socket
 drops. Without it, every crashed tab leaves a ghost standing in the village forever, and we would
 have to invent a heartbeat-and-reap scheme to clean them up.
 
@@ -153,7 +153,7 @@ presence/
     }
 ```
 
-`Direction` is a *numeric* enum in `types/core.ts`, so sending the raw value would break every
+`Direction` is a _numeric_ enum in `types/core.ts`, so sending the raw value would break every
 older client the day somebody reorders that enum. Four bytes of stable single-character codes is a
 fair price for not leaving a compatibility landmine in a shared data format.
 
@@ -161,7 +161,7 @@ About 90 bytes per player. `onDisconnect(ref).remove()` is registered immediatel
 write, so a closed tab, a killed browser or a dead Wi-Fi connection cleans itself up.
 
 **Rooms are map IDs.** A client subscribes to `presence/{currentMapId}` only. Bandwidth therefore
-scales with *co-located* players, not total players — which is the property that makes this cheap.
+scales with _co-located_ players, not total players — which is the property that makes this cheap.
 
 **Private maps are excluded.** `home_interior`, `home_upstairs`, `mums_kitchen`, `personal_garden`
 and all `RANDOM_*` maps publish no presence. Define the shared set explicitly in `constants.ts`:
@@ -170,12 +170,12 @@ and all `RANDOM_*` maps publish no presence. Define the shared set explicitly in
 export const MULTIPLAYER = {
   /** Maps where other players are visible. Everything else is private. */
   SHARED_MAPS: new Set(['village', 'farm_area', 'orchard', 'sea_side', 'magical_lake']),
-  PUBLISH_HZ: 5,               // max position writes per second
-  MOVE_THRESHOLD_TILES: 0.08,  // don't publish sub-pixel jitter
-  HEARTBEAT_MS: 15000,         // republish even when idle, so `t` stays fresh
-  STALE_AFTER_MS: 45000,       // evict a remote player we stopped hearing from
+  PUBLISH_HZ: 5, // max position writes per second
+  MOVE_THRESHOLD_TILES: 0.08, // don't publish sub-pixel jitter
+  HEARTBEAT_MS: 15000, // republish even when idle, so `t` stays fresh
+  STALE_AFTER_MS: 45000, // evict a remote player we stopped hearing from
   INTERPOLATION_DELAY_MS: 120, // render remote players this far in the past
-  SNAP_DISTANCE_TILES: 3,      // teleport instead of lerping beyond this
+  SNAP_DISTANCE_TILES: 3, // teleport instead of lerping beyond this
   EMOTE_DURATION_MS: 3000,
 } as const;
 ```
@@ -220,7 +220,7 @@ The interpolation function must be **pure and exported**, so it can be unit-test
 export function interpolateAt(
   buffer: PresenceSnapshot[],
   renderTimeMs: number
-): { pos: Position; direction: Direction; speed: number } | null
+): { pos: Position; direction: Direction; speed: number } | null;
 ```
 
 ---
@@ -300,17 +300,17 @@ trees. When they say "look at the deer!" they are pointing at nothing.
 
 Three options:
 
-| Option | Cost | Verdict |
-|---|---|---|
-| **A. Accept it** — NPCs are local scenery | Zero | Cheapest, but kills shared moments. Acceptable for Phase 1 only |
-| **B. Seeded wander** — replace `Math.random()` with a PRNG keyed on `(npcId, floor(now / DECISION_INTERVAL_MS))` | ~40 lines in `NPCManager` | **Recommended, and what was built.** Zero bandwidth, testable, and it makes NPC behaviour reproducible for debugging too. See the caveat below — this converges *decisions*, not *positions* |
-| **C. Host-authoritative NPCs** — elect the lowest-uid client in the room to publish NPC positions | High | Adds a host-handoff failure mode for a purely cosmetic benefit. No |
+| Option                                                                                                           | Cost                      | Verdict                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A. Accept it** — NPCs are local scenery                                                                        | Zero                      | Cheapest, but kills shared moments. Acceptable for Phase 1 only                                                                                                                              |
+| **B. Seeded wander** — replace `Math.random()` with a PRNG keyed on `(npcId, floor(now / DECISION_INTERVAL_MS))` | ~40 lines in `NPCManager` | **Recommended, and what was built.** Zero bandwidth, testable, and it makes NPC behaviour reproducible for debugging too. See the caveat below — this converges _decisions_, not _positions_ |
+| **C. Host-authoritative NPCs** — elect the lowest-uid client in the room to publish NPC positions                | High                      | Adds a host-handoff failure mode for a purely cosmetic benefit. No                                                                                                                           |
 
 Option B follows the pattern `WeatherManager` already uses and that `tests/deterministicWeather.test.ts`
 already guards. Same trick, same test shape.
 
 **Caveat, stated plainly because it was overclaimed in the first draft of this document.**
-Identical decisions do *not* guarantee identical positions. Every client now picks the same
+Identical decisions do _not_ guarantee identical positions. Every client now picks the same
 direction for the same NPC at the same instant, but two clients that started watching an NPC at
 different times — or that reached a wall from slightly different places — can still drift apart.
 Full convergence would mean expressing the wander as a closed-form function of time (smooth noise
@@ -320,7 +320,7 @@ follow behaviour. That is a large, risky rewrite of a working system for a cosme
 is built gets the shared-moment payoff — "look, the deer!" — for a fraction of the risk. Revisit
 if drift turns out to be noticeable in practice.
 
-Note that NPC *dialogue* state stays local and should: `isInDialogue` freezes an NPC for the player
+Note that NPC _dialogue_ state stays local and should: `isInDialogue` freezes an NPC for the player
 talking to them. Two players can both be mid-conversation with Mum, each seeing her attentive. That
 is the correct behaviour, not a bug.
 
@@ -330,7 +330,7 @@ condition is already time-and-bluebell keyed, so it is nearly deterministic alre
 ### 7.2 Procedural maps (currently per-player instances)
 
 `generateRandomForest(seed: number = Date.now())` (`maps/procedural.ts:208`) — every client that
-walks into the forest generates a *different forest*. Two players "in the forest together" are in
+walks into the forest generates a _different forest_. Two players "in the forest together" are in
 different worlds with differently-placed lakes, wolves and bears.
 
 Two acceptable answers:
@@ -372,7 +372,7 @@ that multiplayer will make visible.
    "Sanne got there first!" as a toast, and revert the plot.
 ```
 
-Blocking on the transaction before granting would be *correct* and would feel awful — a 200 ms stall
+Blocking on the transaction before granting would be _correct_ and would feel awful — a 200 ms stall
 on every harvest, in a game whose whole appeal is unhurried tactility. Optimistic-with-rollback puts
 the cost entirely on the rare collision.
 
@@ -390,13 +390,18 @@ This game is played by children. Interaction design here is a safety decision be
 decision, and the safest system is one where **the vocabulary is closed** — where it is not possible
 to say something harmful, rather than possible-but-moderated.
 
-| Tier | Feature | Risk | Phase |
-|---|---|---|---|
-| 1 | See each other, name tags | Display names are user-set → needs a filter or a generator (§12) | 1 |
-| 2 | **Emote wheel** — ~8 fixed emotes (wave, laugh, heart, question, thumbs up, sad, dance, follow-me) | None. Closed vocabulary | 2 |
-| 3 | **Phrase book** — ~20 fixed sentences ("Hello!", "Come and see this", "Thank you", "Want to farm together?") | None. Closed vocabulary, and trivially localisable | 5 |
-| 4 | **Mailbox gifting** — leave an item for a named player, collected later | Low. Item-only, no text | 4 |
-| 5 | Free-text chat | High. Requires moderation, reporting, parental controls | **Not recommended. Do not build.** |
+**That principle no longer describes the whole system.** Free-text chat was added in September 2026
+at the owner's request, for a group of children who know one another (row 5). Everything else here
+still holds, and the closed vocabulary is still the default channel — but a reader should not take
+the paragraph above as a description of what ships today.
+
+| Tier | Feature                                                                                                      | Risk                                                             | Phase                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---- | ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | See each other, name tags                                                                                    | Display names are user-set → needs a filter or a generator (§12) | 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 2    | **Emote wheel** — ~8 fixed emotes (wave, laugh, heart, question, thumbs up, sad, dance, follow-me)           | None. Closed vocabulary                                          | 2                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 3    | **Phrase book** — ~20 fixed sentences ("Hello!", "Come and see this", "Thank you", "Want to farm together?") | None. Closed vocabulary, and trivially localisable               | 5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 4    | **Mailbox gifting** — leave an item for a named player, collected later                                      | Low. Item-only, no text                                          | 4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 5    | Free-text chat                                                                                               | High. Requires moderation, reporting, parental controls          | **Built anyway, deliberately (Sept 2026).** The owner enabled it for a group of children who know each other. None of the mitigations above exist: no moderation, no reporting, no parental controls. What stands in their place is that the world is accounts-only, every message is attributed and length-capped server-side, and chat is ephemeral per map. That is a judgement about _this_ group of players, not a general one — if the player group widens, restrict the shared world first. See `multiplayer/chat.ts`. |
 
 Emotes render through the existing `ThoughtBubbleLayer` / `components/ThoughtBubble.tsx` — the art
 and the positioning logic are already there.
@@ -429,13 +434,17 @@ is not in the allowlist, so an inspected-console child cannot make their charact
         "$uid": {
           ".write": "auth != null && auth.uid === $uid",
           ".validate": "newData.hasChildren(['n','c','x','y','d','t'])",
-          "n":  { ".validate": "newData.isString() && newData.val().length <= 20" },
-          "c":  { ".validate": "newData.val() === 'character1' || newData.val() === 'character2'" },
-          "x":  { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
-          "y":  { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
-          "d":  { ".validate": "newData.val() === 'up' || newData.val() === 'down' || newData.val() === 'left' || newData.val() === 'right'" },
-          "e":  { ".validate": "newData.val() === null || newData.val() === 'wave' || newData.val() === 'laugh' || newData.val() === 'heart' || newData.val() === 'question' || newData.val() === 'thumbsup' || newData.val() === 'sad' || newData.val() === 'dance' || newData.val() === 'followme'" },
-          "t":  { ".validate": "newData.val() === now" },
+          "n": { ".validate": "newData.isString() && newData.val().length <= 20" },
+          "c": { ".validate": "newData.val() === 'character1' || newData.val() === 'character2'" },
+          "x": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
+          "y": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200" },
+          "d": {
+            ".validate": "newData.val() === 'up' || newData.val() === 'down' || newData.val() === 'left' || newData.val() === 'right'"
+          },
+          "e": {
+            ".validate": "newData.val() === null || newData.val() === 'wave' || newData.val() === 'laugh' || newData.val() === 'heart' || newData.val() === 'question' || newData.val() === 'thumbsup' || newData.val() === 'sad' || newData.val() === 'dance' || newData.val() === 'followme'"
+          },
+          "t": { ".validate": "newData.val() === now" },
           "$other": { ".validate": false }
         }
       }
@@ -446,7 +455,9 @@ is not in the allowlist, so an inspected-console child cannot make their charact
 
 `"t": newData.val() === now` forces a server timestamp, so stale-eviction cannot be gamed by a
 client lying about its clock. `"$other": false` rejects arbitrary extra keys — without it, presence
-becomes an unmoderated free-text channel by the back door, which defeats §9 entirely.
+becomes a text channel by the back door. That still matters now that chat exists: chat records are
+attributed, length-capped and rate-limited under `chat/{mapId}`, and presence must not become a
+second, unconstrained way to do the same thing at 5 Hz.
 
 The emote allowlist is duplicated here from `multiplayer/emotes.ts`. **Add a test that asserts the
 two lists match** — this is exactly the kind of drift `tests/` exists to catch.
@@ -456,7 +467,7 @@ two lists match** — this is exactly the kind of drift `tests/` exists to catch
 - `shared/farming/plots/{plotId}` — add `claimedBy` / `claimedAt` to `isValidSharedPlot()`
 - `users/{uid}/mailbox/{giftId}` — `allow create: if isAuthenticated()` with validation that the
   item id is a string and quantity is a small positive int; `allow read, delete: if isOwner(uid)`.
-  A gift is written by the *sender* into the *recipient's* subcollection, which is the one place
+  A gift is written by the _sender_ into the _recipient's_ subcollection, which is the one place
   this design lets a user write outside their own document tree
 
 ---
@@ -465,11 +476,11 @@ two lists match** — this is exactly the kind of drift `tests/` exists to catch
 
 Four players, two hours a day, all in the village:
 
-| | Per player | Total/month |
-|---|---|---|
-| Presence upload | 90 B × 5/s × 7200 s ≈ 3.2 MB/day | ~390 MB |
-| Presence download | 3.2 MB × 3 peers ≈ 9.7 MB/day | ~1.2 GB |
-| Firestore writes | Unchanged (farm flush every 10 s only when dirty) | Well under free tier |
+|                   | Per player                                        | Total/month          |
+| ----------------- | ------------------------------------------------- | -------------------- |
+| Presence upload   | 90 B × 5/s × 7200 s ≈ 3.2 MB/day                  | ~390 MB              |
+| Presence download | 3.2 MB × 3 peers ≈ 9.7 MB/day                     | ~1.2 GB              |
+| Firestore writes  | Unchanged (farm flush every 10 s only when dirty) | Well under free tier |
 
 RTDB free tier is 1 GB stored / 10 GB downloaded per month and 100 simultaneous connections. This
 sits comfortably inside it. Storage is negligible — presence nodes are deleted on disconnect.
@@ -482,14 +493,14 @@ via geohash-style bucket keys) — worth noting, not worth building now.
 
 ## 12. Risks and open questions
 
-| Risk | Mitigation |
-|---|---|
-| **Display names.** They come from the account `displayName`, which is user-set free text — a hole in the closed-vocabulary safety model of §9 | Generate names from a curated word list (`Brave Otter`, `Quiet Fern`) and let players *pick*, not type. Decide before Phase 1 ships |
-| **Same account, two devices.** `syncManager` is last-write-wins; two live sessions on one account will clobber each other's saves | Take a session lock in `users/{uid}/meta/session` at sign-in; warn and go read-only on the second device |
-| **NPC divergence noticed before Phase 3** | Ship Phase 1 to a small group who know; or pull §7.1 forward |
-| **Only two character sprite sets exist** (`character1`, `character2`) | Everyone looks like one of two people. Fine for family scale; a real limitation later. Tint/palette variation via Pixi `tint` is a cheap partial answer |
-| **Interiors.** Should two players be able to stand in the same kitchen? | Recommend private interiors for Phase 1 — the maps are 15×9 and two characters would be in each other's way. Revisit for shops |
-| **Testing multiplayer locally** needs two identities | Two browser profiles + two anonymous sign-ins. RTDB emulator (`firebase emulators:start`) for the automated path — `connectFirestoreEmulator` is already wired in `firebase/config.ts:91` |
+| Risk                                                                                                                                          | Mitigation                                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Display names.** They come from the account `displayName`, which is user-set free text — a hole in the closed-vocabulary safety model of §9 | Generate names from a curated word list (`Brave Otter`, `Quiet Fern`) and let players _pick_, not type. Decide before Phase 1 ships                                                       |
+| **Same account, two devices.** `syncManager` is last-write-wins; two live sessions on one account will clobber each other's saves             | Take a session lock in `users/{uid}/meta/session` at sign-in; warn and go read-only on the second device                                                                                  |
+| **NPC divergence noticed before Phase 3**                                                                                                     | Ship Phase 1 to a small group who know; or pull §7.1 forward                                                                                                                              |
+| **Only two character sprite sets exist** (`character1`, `character2`)                                                                         | Everyone looks like one of two people. Fine for family scale; a real limitation later. Tint/palette variation via Pixi `tint` is a cheap partial answer                                   |
+| **Interiors.** Should two players be able to stand in the same kitchen?                                                                       | Recommend private interiors for Phase 1 — the maps are 15×9 and two characters would be in each other's way. Revisit for shops                                                            |
+| **Testing multiplayer locally** needs two identities                                                                                          | Two browser profiles + two anonymous sign-ins. RTDB emulator (`firebase emulators:start`) for the automated path — `connectFirestoreEmulator` is already wired in `firebase/config.ts:91` |
 
 ---
 
@@ -548,13 +559,13 @@ disappears within a second of closing the other tab.
 Follow `tests/README.md` conventions — node environment, collect every violation, assert once, and
 write the failure message so it says how to fix the problem.
 
-| File | Guards |
-|---|---|
-| `tests/multiplayerSafeStubs.test.ts` | Every method on the real presence service exists on the stub. Catches the drift that makes the game crash *only* when Firebase is absent |
-| `tests/presenceProtocol.test.ts` | Throttle logic, move threshold, heartbeat, stale eviction — against a fake transport. Mirror the `firebase/safe` mocking in `tests/sharedFarmSyncRetry.test.ts` |
-| `tests/remotePlayerInterpolation.test.ts` | `interpolateAt()` — pure, no Firebase. Buffer under/overrun, snap threshold, direction selection |
-| `tests/determinism.test.ts` | Two `NPCManager` instances + fixed clock ⇒ identical positions |
-| `tests/emoteVocabulary.test.ts` | `multiplayer/emotes.ts` and `database.rules.json` list the *same* emote ids. This is the safety-critical one |
+| File                                      | Guards                                                                                                                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tests/multiplayerSafeStubs.test.ts`      | Every method on the real presence service exists on the stub. Catches the drift that makes the game crash _only_ when Firebase is absent                        |
+| `tests/presenceProtocol.test.ts`          | Throttle logic, move threshold, heartbeat, stale eviction — against a fake transport. Mirror the `firebase/safe` mocking in `tests/sharedFarmSyncRetry.test.ts` |
+| `tests/remotePlayerInterpolation.test.ts` | `interpolateAt()` — pure, no Firebase. Buffer under/overrun, snap threshold, direction selection                                                                |
+| `tests/determinism.test.ts`               | Two `NPCManager` instances + fixed clock ⇒ identical positions                                                                                                  |
+| `tests/emoteVocabulary.test.ts`           | `multiplayer/emotes.ts` and `database.rules.json` list the _same_ emote ids. This is the safety-critical one                                                    |
 
 Manual: `make dev`, two browser profiles, watch the console with `DEBUG.MULTIPLAYER` on.
 
@@ -625,7 +636,7 @@ one so it does not appear in that runtime comparison.
 interpolated positions. One less wire field, and the legs move because the character moved, which
 looks right at any update rate.
 
-**Claims are optimistic with silent rollback, and asymmetric.** A *proven* loss (the plot doc
+**Claims are optimistic with silent rollback, and asymmetric.** A _proven_ loss (the plot doc
 exists and its state has moved on) rolls the harvest back. A network failure or a missing doc keeps
 the crop: confiscating something a player legitimately picked is a far worse experience than one
 duplicate carrot. Both directions are asserted in `tests/sharedFarmHarvestClaim.test.ts`.

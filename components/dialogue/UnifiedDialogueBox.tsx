@@ -9,7 +9,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { NPC, DialogueNode, DialogueResponse } from '../../types';
 import {
-  NPCPersona,
   NPC_PERSONAS,
   buildSystemPrompt,
   GameContext,
@@ -37,7 +36,6 @@ import { globalEventManager } from '../../utils/GlobalEventManager';
 import { eventChainManager } from '../../utils/EventChainManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { decorationManager } from '../../utils/DecorationManager';
-import { getItem } from '../../data/items';
 
 import DialogueFrame from './DialogueFrame';
 import DialogueChatHistory from './DialogueChatHistory';
@@ -110,7 +108,19 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
     handleError,
   } = useStreamingDialogue();
 
-  const chatHistory = useChatHistory();
+  const {
+    chatMessages,
+    scrollRef,
+    handleScroll,
+    scrollToBottom,
+    loadHistory,
+    addPlayerMessage,
+    addAssistantMessage,
+    startStreamingMessage,
+    updateStreamingMessage,
+    finaliseStreamingMessage,
+    replaceStreamingWithFallback,
+  } = useChatHistory();
 
   const persona = NPC_PERSONAS[npc.id];
   const canUseAI = isAIAvailable() && persona?.aiEnabled;
@@ -123,8 +133,11 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
   // -------------------------------------------------------------------------
 
   useEffect(() => {
-    chatHistory.loadHistory(npc.id);
-  }, []);
+    loadHistory(npc.id);
+    // loadHistory is a stable useCallback, so this re-runs only when the NPC
+    // changes — which matters: App renders this box without a key, so it stays
+    // mounted across NPC switches and must swap in the new NPC's history.
+  }, [loadHistory, npc.id]);
 
   // Reset to initialNodeId when NPC changes
   useEffect(() => {
@@ -168,93 +181,18 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         // `typewriter` flag gets set, so the completion callback that reveals the
         // response controls would never fire. Skip hiding the controls in that
         // case rather than waiting on a typewriter animation that isn't coming.
-        const lastMessage = chatHistory.chatMessages[chatHistory.chatMessages.length - 1];
+        const lastMessage = chatMessages[chatMessages.length - 1];
         const isDuplicateMessage =
           lastMessage?.role === 'assistant' && lastMessage.content === dialogue.text;
 
         setTypewriterDone(isDuplicateMessage);
-        chatHistory.addAssistantMessage(dialogue.text, undefined, undefined, true);
+        addAssistantMessage(dialogue.text, undefined, undefined, true);
         addToChatHistory(npc.id, 'assistant', `[${currentNodeId}] ${dialogue.text}`);
       }
     };
     loadDialogue();
-  }, [npc, currentNodeId, mode]);
+  }, [npc, currentNodeId, mode, chatMessages, addAssistantMessage, onNodeChange]);
 
-  // -------------------------------------------------------------------------
-  // Scripted response handling
-  // -------------------------------------------------------------------------
-
-  const handleScriptedResponse = useCallback(
-    (response: DialogueResponse | string) => {
-      if (typeof response === 'string') {
-        if (response === '__AI_CHAT__') {
-          switchToAI();
-          return;
-        }
-        if (response) {
-          let target = response;
-          if (onNodeChange) {
-            const redirect = onNodeChange(npc.id, response);
-            if (redirect) target = redirect;
-          }
-          setCurrentNodeId(target);
-        } else {
-          onClose();
-        }
-        return;
-      }
-
-      // Add player's response as a chat bubble
-      chatHistory.addPlayerMessage(response.text);
-      addToChatHistory(npc.id, 'user', response.text);
-
-      // Record to diary
-      if (currentDialogue?.text) {
-        recordScriptedConversation(
-          npc.id,
-          npc.name,
-          playerName,
-          response.text,
-          currentDialogue.text
-        ).catch(() => {});
-      }
-
-      // Process quest actions
-      if (response.startsQuest) gameState.startQuest(response.startsQuest);
-      if (response.advancesQuest) {
-        const stage = gameState.getQuestStage(response.advancesQuest);
-        gameState.setQuestStage(response.advancesQuest, stage + 1);
-      }
-      if (response.completesQuest) gameState.completeQuest(response.completesQuest);
-      if (response.setsQuestStage) {
-        gameState.setQuestStage(response.setsQuestStage.questId, response.setsQuestStage.stage);
-      }
-      if (response.givesItems) {
-        for (const gift of response.givesItems) {
-          inventoryManager.addItem(gift.itemId, gift.quantity);
-        }
-      }
-      if (response.grantsEasel) decorationManager.grantEasel();
-      if (response.addsFriendshipPoints && npc?.id) {
-        friendshipManager.addPoints(npc.id, response.addsFriendshipPoints, 'dialogue_choice');
-      }
-
-      // Navigate to next node
-      if (response.nextId) {
-        let target = response.nextId;
-        if (onNodeChange) {
-          const redirect = onNodeChange(npc.id, response.nextId);
-          if (redirect) target = redirect;
-        }
-        setCurrentNodeId(target);
-      } else {
-        onClose();
-      }
-    },
-    [npc.id, currentDialogue, onNodeChange, onClose, playerName]
-  );
-
-  // -------------------------------------------------------------------------
   // AI mode: game context
   // -------------------------------------------------------------------------
 
@@ -325,10 +263,10 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
       );
 
       if (response.error) {
-        chatHistory.addAssistantMessage(getFallbackGreeting(persona));
+        addAssistantMessage(getFallbackGreeting(persona));
         setSuggestions(getDefaultSuggestions(persona));
       } else {
-        chatHistory.addAssistantMessage(response.dialogue, response.emotion, response.action);
+        addAssistantMessage(response.dialogue, response.emotion, response.action);
         setCurrentEmotion(response.emotion);
         setSuggestions(
           response.suggestions.length > 0 ? response.suggestions : getDefaultSuggestions(persona)
@@ -340,12 +278,112 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         setHistory((prev) => [...prev, { role: 'assistant', content: full }]);
       }
     } catch {
-      chatHistory.addAssistantMessage(getFallbackGreeting(persona));
+      addAssistantMessage(getFallbackGreeting(persona));
       setSuggestions(getDefaultSuggestions(persona));
     } finally {
       setIsLoading(false);
     }
-  }, [npc.id, npc.name, persona, playerName, getGameContext]);
+  }, [npc.id, npc.name, persona, playerName, getGameContext, addAssistantMessage]);
+
+  // Conversation summary for diary + shared data
+  // -------------------------------------------------------------------------
+
+  const contributeConversationSummary = useCallback(
+    (playerMessage: string, npcResponse: string) => {
+      const gameTime = TimeManager.getCurrentTime();
+      const topic = playerMessage.length > 90 ? playerMessage.slice(0, 87) + '...' : playerMessage;
+      const snippet = npcResponse.length > 300 ? npcResponse.slice(0, 297) + '...' : npcResponse;
+      const summary = `${playerName}: "${topic}" — ${npc.name}: "${snippet}"`;
+
+      getSharedDataService()
+        .addConversationSummary(npc.id, npc.name, topic, summary.slice(0, 1000), 'neutral', {
+          season: gameTime.season,
+          gameDay: gameTime.day,
+        })
+        .catch((err) => console.warn('[AI] Failed to contribute conversation summary:', err));
+
+      recordConversation(npc.id, npc.name, playerName, playerMessage, npcResponse).catch((err) =>
+        console.warn('[AI] Failed to record diary entry:', err)
+      );
+    },
+    [npc.id, npc.name, playerName]
+  );
+
+  // -------------------------------------------------------------------------
+  // Scripted response handling
+  // -------------------------------------------------------------------------
+
+  const handleScriptedResponse = useCallback(
+    (response: DialogueResponse | string) => {
+      if (typeof response === 'string') {
+        if (response === '__AI_CHAT__') {
+          switchToAI();
+          return;
+        }
+        if (response) {
+          let target = response;
+          if (onNodeChange) {
+            const redirect = onNodeChange(npc.id, response);
+            if (redirect) target = redirect;
+          }
+          setCurrentNodeId(target);
+        } else {
+          onClose();
+        }
+        return;
+      }
+
+      // Add player's response as a chat bubble
+      addPlayerMessage(response.text);
+      addToChatHistory(npc.id, 'user', response.text);
+
+      // Record to diary
+      if (currentDialogue?.text) {
+        recordScriptedConversation(
+          npc.id,
+          npc.name,
+          playerName,
+          response.text,
+          currentDialogue.text
+        ).catch(() => {});
+      }
+
+      // Process quest actions
+      if (response.startsQuest) gameState.startQuest(response.startsQuest);
+      if (response.advancesQuest) {
+        const stage = gameState.getQuestStage(response.advancesQuest);
+        gameState.setQuestStage(response.advancesQuest, stage + 1);
+      }
+      if (response.completesQuest) gameState.completeQuest(response.completesQuest);
+      if (response.setsQuestStage) {
+        gameState.setQuestStage(response.setsQuestStage.questId, response.setsQuestStage.stage);
+      }
+      if (response.givesItems) {
+        for (const gift of response.givesItems) {
+          inventoryManager.addItem(gift.itemId, gift.quantity);
+        }
+      }
+      if (response.grantsEasel) decorationManager.grantEasel();
+      if (response.addsFriendshipPoints && npc?.id) {
+        friendshipManager.addPoints(npc.id, response.addsFriendshipPoints, 'dialogue_choice');
+      }
+
+      // Navigate to next node
+      if (response.nextId) {
+        let target = response.nextId;
+        if (onNodeChange) {
+          const redirect = onNodeChange(npc.id, response.nextId);
+          if (redirect) target = redirect;
+        }
+        setCurrentNodeId(target);
+      } else {
+        onClose();
+      }
+    },
+    [npc.id, npc.name, currentDialogue, onNodeChange, onClose, playerName, switchToAI, addPlayerMessage]
+  );
+
+  // -------------------------------------------------------------------------
 
   // -------------------------------------------------------------------------
   // AI mode: send message
@@ -360,14 +398,14 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         return;
       }
 
-      chatHistory.addPlayerMessage(message);
+      addPlayerMessage(message);
       setSuggestions([]);
       setError(null);
       setShowCustomInput(false);
       setInputText('');
 
       startStreaming();
-      chatHistory.startStreamingMessage();
+      startStreamingMessage();
       addToChatHistory(npc.id, 'user', message, playerName);
 
       let streamedAction: string | undefined;
@@ -404,7 +442,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
           },
           onComplete: () => {
             handleComplete();
-            chatHistory.finaliseStreamingMessage(streamedDialogue, undefined, streamedAction);
+            finaliseStreamingMessage(streamedDialogue, undefined, streamedAction);
             if (streamedAction) setCurrentEmotion(streamState.emotion);
 
             const full = streamedAction
@@ -435,7 +473,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
             try {
               const resp = await generateStructuredResponse(systemPrompt, history, message);
               if (!resp.error) {
-                chatHistory.replaceStreamingWithFallback(resp.dialogue, resp.emotion, resp.action);
+                replaceStreamingWithFallback(resp.dialogue, resp.emotion, resp.action);
                 setCurrentEmotion(resp.emotion);
                 setSuggestions(
                   resp.suggestions.length > 0 ? resp.suggestions : getDefaultSuggestions(persona)
@@ -456,19 +494,19 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
                 }
               } else {
                 setError(resp.error);
-                chatHistory.replaceStreamingWithFallback(getFallbackResponse(persona));
+                replaceStreamingWithFallback(getFallbackResponse(persona));
                 setSuggestions(getDefaultSuggestions(persona));
               }
             } catch {
               setError('Failed to get response');
-              chatHistory.replaceStreamingWithFallback(getFallbackResponse(persona));
+              replaceStreamingWithFallback(getFallbackResponse(persona));
               setSuggestions(getDefaultSuggestions(persona));
             }
           },
         });
       } catch {
         setError('Failed to get response');
-        chatHistory.replaceStreamingWithFallback(getFallbackResponse(persona));
+        replaceStreamingWithFallback(getFallbackResponse(persona));
         setSuggestions(getDefaultSuggestions(persona));
       }
     },
@@ -491,6 +529,11 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
       handleSuggestions,
       handleComplete,
       handleError,
+      addPlayerMessage,
+      startStreamingMessage,
+      finaliseStreamingMessage,
+      replaceStreamingWithFallback,
+      contributeConversationSummary,
     ]
   );
 
@@ -500,45 +543,22 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
 
   useEffect(() => {
     if (streamState.isStreaming && streamState.dialogueText) {
-      chatHistory.updateStreamingMessage(
+      updateStreamingMessage(
         streamState.dialogueText,
         streamState.emotion,
         streamState.action
       );
       setCurrentEmotion(streamState.emotion);
     }
-  }, [streamState.dialogueText, streamState.emotion, streamState.action, streamState.isStreaming]);
+  }, [streamState.dialogueText, streamState.emotion, streamState.action, streamState.isStreaming, updateStreamingMessage]);
 
   useEffect(() => {
     if (streamState.isStreaming && streamState.dialogueText) {
-      chatHistory.scrollToBottom();
+      scrollToBottom();
     }
-  }, [streamState.dialogueText, streamState.isStreaming]);
+  }, [streamState.dialogueText, streamState.isStreaming, scrollToBottom]);
 
   // -------------------------------------------------------------------------
-  // Conversation summary for diary + shared data
-  // -------------------------------------------------------------------------
-
-  const contributeConversationSummary = useCallback(
-    (playerMessage: string, npcResponse: string) => {
-      const gameTime = TimeManager.getCurrentTime();
-      const topic = playerMessage.length > 90 ? playerMessage.slice(0, 87) + '...' : playerMessage;
-      const snippet = npcResponse.length > 300 ? npcResponse.slice(0, 297) + '...' : npcResponse;
-      const summary = `${playerName}: "${topic}" — ${npc.name}: "${snippet}"`;
-
-      getSharedDataService()
-        .addConversationSummary(npc.id, npc.name, topic, summary.slice(0, 1000), 'neutral', {
-          season: gameTime.season,
-          gameDay: gameTime.day,
-        })
-        .catch((err) => console.warn('[AI] Failed to contribute conversation summary:', err));
-
-      recordConversation(npc.id, npc.name, playerName, playerMessage, npcResponse).catch((err) =>
-        console.warn('[AI] Failed to record diary entry:', err)
-      );
-    },
-    [npc.id, npc.name, playerName]
-  );
 
   // -------------------------------------------------------------------------
   // Switch back to scripted
@@ -602,9 +622,9 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
     >
       {/* Scrollable chat history */}
       <DialogueChatHistory
-        messages={chatHistory.chatMessages}
-        scrollRef={chatHistory.scrollRef}
-        onScroll={chatHistory.handleScroll}
+        messages={chatMessages}
+        scrollRef={scrollRef}
+        onScroll={handleScroll}
         npcName={npc.name}
         playerName={playerName}
         isLoading={isActivelyLoading}

@@ -28,9 +28,9 @@ import {
 import { getRealtimeDb, isRealtimeConfigured } from './realtimeConfig';
 import { isFirebaseInitialized } from './config';
 import { authService } from './authService';
-import { DEBUG } from '../constants';
+import { DEBUG, MULTIPLAYER } from '../constants';
 import { reportError } from '../utils/errorReporting';
-import { encodePresence, decodePresence } from '../multiplayer/wire';
+import { encodePresence, decodePresence, isGhostRecord } from '../multiplayer/wire';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { LocalPresenceState, PresenceEvent } from '../multiplayer/types';
 
@@ -139,6 +139,18 @@ class PresenceService {
           }
           return;
         }
+
+        // A record left behind by a client whose onDisconnect never fired.
+        // Sweep it rather than only ignoring it: otherwise every player who
+        // walks in sees the same ghost for as long as it sits there. The rules
+        // allow anyone to delete a demonstrably stale record, and a live player
+        // heartbeats every 15 s, so this cannot evict somebody who is present.
+        if (isGhostRecord(wire, Date.now(), MULTIPLAYER.GHOST_AFTER_MS)) {
+          if (DEBUG.MULTIPLAYER) console.log(`[Presence] Sweeping ghost record ${otherUid}`);
+          void this.#sweepGhost(mapId, otherUid);
+          return;
+        }
+
         this.#emit({ type, uid: otherUid, wire });
       };
 
@@ -160,6 +172,20 @@ class PresenceService {
       this.roomMapId = null;
       this.selfRef = null;
       return false;
+    }
+  }
+
+  /**
+   * Best-effort removal of a stale record. Failure is fine and unremarkable:
+   * another client may have swept it first, or the rules may predate this.
+   */
+  async #sweepGhost(mapId: string, uid: string): Promise<void> {
+    const db = getRealtimeDb();
+    if (!db) return;
+    try {
+      await remove(ref(db, `${PRESENCE_ROOT}/${mapId}/${uid}`));
+    } catch (error) {
+      if (DEBUG.MULTIPLAYER) console.warn('[Presence] Ghost sweep failed:', error);
     }
   }
 

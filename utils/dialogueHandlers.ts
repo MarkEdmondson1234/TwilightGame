@@ -63,11 +63,9 @@ import {
   setHasMetGhost,
   wasRudeToGhost,
   setWasRudeToGhost,
-  startGhostQuest,
   completeGhostQuest,
   isGhostQuestStarted,
   advanceGhostQuestToHasBook,
-  GHOST_QUEEN_QUEST_ID,
 } from '../data/questHandlers/ghostQueenHandler';
 import { createQueenAvericiaaNPC } from './npcs/village/queenAvaricia';
 

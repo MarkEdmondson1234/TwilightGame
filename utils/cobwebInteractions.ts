@@ -14,9 +14,7 @@ import {
   getCobwebsRemaining,
   markCobwebCleaned,
   isAltheaChoresActive,
-  QUEST_ID,
 } from '../data/questHandlers/altheaChoresHandler';
-import { gameState } from '../GameState';
 
 /**
  * Result of a cobweb click check
@@ -178,7 +176,9 @@ export function isInCobwebCleaningArea(mapId: string): boolean {
  */
 export function canCleanCobwebs(mapId: string, currentToolId: string | undefined): boolean {
   return (
-    isAltheaChoresActive() && isInCobwebCleaningArea(mapId) && isFeatherDusterEquipped(currentToolId)
+    isAltheaChoresActive() &&
+    isInCobwebCleaningArea(mapId) &&
+    isFeatherDusterEquipped(currentToolId)
   );
 }
 

@@ -1,9 +1,14 @@
 /**
  * Emote vocabulary — the single source of truth.
  *
- * This game is played by children. The safety model is a *closed vocabulary*:
- * it is not possible to say something harmful, rather than possible-but-
- * moderated. There is no free-text channel between players, by design.
+ * This game is played by children. Emotes are a *closed vocabulary*: it is not
+ * possible to say something harmful with one, rather than possible-but-
+ * moderated. That property still holds for everything in this file.
+ *
+ * Free-text chat now exists alongside them (see multiplayer/chat.ts), added
+ * deliberately for a group of children who know one another. Emotes remain the
+ * quicker channel and the only one available without typing, so they are not a
+ * legacy path.
  *
  * The same ids are enumerated in `database.rules.json`, so a client with an
  * open dev console still cannot publish anything that is not on this list.

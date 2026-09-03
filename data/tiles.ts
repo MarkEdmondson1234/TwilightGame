@@ -6,7 +6,7 @@
  */
 
 import { TileType, TileData, CollisionType } from '../types';
-import { tileAssets, farmingAssets, orchardAssets } from '../assets';
+import { tileAssets, farmingAssets } from '../assets';
 import { resolveAppleTreeImage } from '../utils/fruitTreeRegistry';
 
 export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {

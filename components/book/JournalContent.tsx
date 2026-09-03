@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
@@ -66,16 +66,6 @@ function getNPCIdsWithConversations(): string[] {
 }
 
 /**
- * Format an NPC ID into a display name (e.g. "village_elder" → "Village Elder")
- */
-function formatNPCName(npcId: string): string {
-  return npcId
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-/**
  * JournalContent - Quest diary and NPC conversation journal
  *
  * Three chapters:
@@ -88,7 +78,6 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
   const [diaryRefreshKey, setDiaryRefreshKey] = useState(0);
 
   // Build journal entries for each chapter
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entriesByChapter = useMemo(() => {
     // Active quests
     const activeQuests: JournalEntry[] = eventChainManager.getActiveChains().map((progress) => {
@@ -162,6 +151,7 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
       completed: completedQuests,
       conversations,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- diaryRefreshKey is a version counter: the entries read manager singletons, not React state, so the counter is the invalidation mechanism
   }, [diaryRefreshKey]);
 
   const pagination = useBookPagination(JOURNAL_CHAPTERS, entriesByChapter, 6);

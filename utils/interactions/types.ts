@@ -15,6 +15,7 @@ import type { ForageResult } from '../forageHandlers';
 import type { getTileData } from '../mapUtils';
 import type { gameState } from '../../GameState';
 import type { TransitionResult, FarmActionResult } from '../actionHandlers';
+import type { EmoteId } from '../../multiplayer/emotes';
 
 /**
  * Available interaction types
@@ -63,7 +64,10 @@ export type InteractionType =
   | 'remove_curtains'
   | 'make_snow_angel'
   | 'sleep_furniture'
-  | 'rest_furniture';
+  | 'rest_furniture'
+  | 'player_wave'
+  | 'player_emote'
+  | 'player_chat';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -110,6 +114,17 @@ export interface GetInteractionsConfig {
   currentMapId: string;
   currentTool: string;
   selectedSeed: string | null;
+  /**
+   * This collection is for a right-click / long-press context menu rather than a plain
+   * click.
+   *
+   * Providers may use it to offer actions the held tool does not currently allow — the
+   * player is asking what is *possible* here, not committing to anything, and nothing
+   * auto-executes from a context menu. A provider that does this must still check the
+   * player owns the required tool, and must switch to it via `onSelectTool` when the
+   * action runs. See providers/farming.ts, the motivating case.
+   */
+  isContextMenu?: boolean;
   playerSizeTier?: SizeTier; // Player's current size tier for size-restricted transitions
   onMirror?: () => void;
   onNPC?: (npcId: string) => void;
@@ -119,6 +134,14 @@ export interface GetInteractionsConfig {
   onFireplaceTea?: (result: CookingResult) => void;
   onBrewing?: (position?: Position) => void;
   onFarmAction?: (result: FarmActionResult) => void;
+  /**
+   * Select the inventory slot holding `itemId`, making it the held tool.
+   *
+   * Lets a context-menu action bring the right tool to hand instead of failing silently
+   * because the player was holding the watering can. No-ops when the item is not in the
+   * inventory.
+   */
+  onSelectTool?: (itemId: string) => void;
   onFarmAnimation?: (
     action: 'till' | 'plant' | 'water' | 'harvest' | 'clear',
     tilePos?: Position
@@ -161,6 +184,12 @@ export interface GetInteractionsConfig {
    * in StaminaManager.update() takes over. Not a time skip — time is shared between players.
    */
   onUseFurniture?: (target: Position, effect: 'sleep' | 'rest') => void;
+  /** Broadcast one of the closed-vocabulary emotes (see multiplayer/emotes.ts). */
+  onEmote?: (emoteId: EmoteId) => void;
+  /** Open the emote picker, for the emotes not offered directly in a menu. */
+  onOpenEmoteWheel?: () => void;
+  /** Focus the chat composer so the player can type. */
+  onStartChat?: () => void;
 }
 
 // ---------------------------------------------------------------------------

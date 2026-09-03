@@ -98,8 +98,6 @@ export const PumpkinCarvingGame: React.FC<MiniGameComponentProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [carvePercent, setCarvePercent] = useState(0);
 
-  const getKnifeRadius = () => KNIFE_SIZES.find((k) => k.id === knifeSize)!.radius;
-
   // ─── Load pumpkin asset image ────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -226,7 +224,7 @@ export const PumpkinCarvingGame: React.FC<MiniGameComponentProps> = ({
       const ctx = surface.getContext('2d');
       if (!ctx) return;
 
-      const r = getKnifeRadius();
+      const r = KNIFE_SIZES.find((k) => k.id === knifeSize)!.radius;
 
       // Erase a circle from the surface (reveals interior)
       ctx.save();
@@ -354,7 +352,7 @@ export const PumpkinCarvingGame: React.FC<MiniGameComponentProps> = ({
 
     const pct = pumpkinPixels > 0 ? Math.round((carvedPixels / pumpkinPixels) * 100) : 0;
     setCarvePercent(pct);
-  }, [imageLoaded]);
+  }, []);
 
   // ─── Finish carving ─────────────────────────────────────────────────────
   const handleFinish = useCallback(() => {

@@ -14,7 +14,7 @@
  * - Manual: User-triggered save to cloud
  */
 
-import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { cloudSaveService } from './cloudSaveService';

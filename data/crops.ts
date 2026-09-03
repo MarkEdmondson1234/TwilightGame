@@ -85,8 +85,21 @@ export interface CropDefinition {
 
   // Dual-harvest: crop offers two harvest modes via radial menu (e.g. pick flowers vs harvest seeds)
   dualHarvest?: {
-    flowerOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number; flowerItemId?: string };
-    seedOption: { label: string; icon: string; color: string; cropYield: number; seedYield: number };
+    flowerOption: {
+      label: string;
+      icon: string;
+      color: string;
+      cropYield: number;
+      seedYield: number;
+      flowerItemId?: string;
+    };
+    seedOption: {
+      label: string;
+      icon: string;
+      color: string;
+      cropYield: number;
+      seedYield: number;
+    };
   };
 
   // Herb behaviour: plot persists after harvest, re-grows after cooldown, skips young stage
@@ -96,12 +109,9 @@ export interface CropDefinition {
 
 // Time constants (for readability)
 const MINUTE = 60 * 1000;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
 
 // Game time constants - use TimeManager as single source of truth
 const GAME_DAY = TimeManager.MS_PER_GAME_DAY; // 7,200,000 ms (2 real hours)
-const GAME_HOUR = GAME_DAY / 24; // 300,000 ms (5 real minutes)
 
 /**
  * Testing mode: When true, crops grow in real minutes (for testing)
@@ -326,8 +336,21 @@ export const CROPS: Record<string, CropDefinition> = {
     rarity: CropRarity.UNCOMMON,
     seedSource: 'friendship',
     dualHarvest: {
-      flowerOption: { label: 'Pick Flowers', icon: '🌻', color: '#eab308', cropYield: 1, seedYield: 0, flowerItemId: 'crop_sunflower' },
-      seedOption: { label: 'Harvest Seeds', icon: '🌰', color: '#92400e', cropYield: 0, seedYield: 6 },
+      flowerOption: {
+        label: 'Pick Flowers',
+        icon: '🌻',
+        color: '#eab308',
+        cropYield: 1,
+        seedYield: 0,
+        flowerItemId: 'crop_sunflower',
+      },
+      seedOption: {
+        label: 'Harvest Seeds',
+        icon: '🌰',
+        color: '#92400e',
+        cropYield: 0,
+        seedYield: 6,
+      },
     },
   },
 

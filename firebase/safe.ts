@@ -11,8 +11,13 @@
 
 // Re-export types that don't need the package at runtime
 export type { AuthState } from './authService';
+export type { AlbumEntry } from './sharedAlbumService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
+import type { ChatMessage } from '../multiplayer/chat';
+import type { PlacedItem } from '../types';
+import type { Photo } from '../types/photography';
+import type { AlbumEntry } from './sharedAlbumService';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -129,6 +134,51 @@ const stubPresenceService = {
   destroy: async () => {},
 };
 
+/**
+ * Stub chatService when Firebase is not available.
+ * Parity with the real service is asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubChatService = {
+  isAvailable: () => false,
+  getCurrentRoom: () => null as string | null,
+  onMessage: (_cb: (message: ChatMessage) => void) => () => {},
+  enterRoom: async (_mapId: string) => false as boolean,
+  leaveRoom: async () => {},
+  send: async (_text: string, _name: string) => false as boolean,
+  destroy: async () => {},
+};
+
+/**
+ * Stub sharedPlacedItemsService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubSharedPlacedItemsService = {
+  isAvailable: () => false,
+  getListeningMap: () => null as string | null,
+  onChange: (_cb: () => void) => () => {},
+  startListening: (_mapId: string) => false,
+  stopListening: () => {},
+  getPublishedIds: () => [] as string[],
+  writeItem: async (_item: PlacedItem) => false as boolean,
+  deleteItem: async (_itemId: string) => false as boolean,
+  destroy: () => {},
+};
+
+/**
+ * Stub sharedAlbumService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubSharedAlbumService = {
+  isAvailable: () => false,
+  onChange: (_cb: () => void) => () => {},
+  startListening: () => false,
+  stopListening: () => {},
+  getEntries: () => [] as AlbumEntry[],
+  publish: async (_photo: Photo, _byName: string) => false as boolean,
+  remove: async (_photoId: string) => false as boolean,
+  destroy: () => {},
+};
+
 /** Stub cloudSaveService when Firebase is not available */
 const stubCloudSaveService = {
   getSaveSlots: async () => [] as any[],
@@ -140,9 +190,6 @@ const stubCloudSaveService = {
   getNextAvailableSlot: async () => null as string | null,
   migrateLocalSave: async () => {},
 };
-
-/** Stub initializeFirebase when Firebase is not available */
-const stubInitializeFirebase = async () => null;
 
 // Cache the loaded module
 let firebaseModule: typeof import('./index') | null = null;
@@ -266,6 +313,31 @@ export function getSyncManager() {
  */
 export function getPresenceService() {
   return firebaseModule?.presenceService ?? stubPresenceService;
+}
+
+/**
+ * Get chatService (real or stub).
+ * Same rule as presence: never cache the result, it is a stub until the
+ * dynamic Firebase import has settled.
+ */
+export function getChatService() {
+  return firebaseModule?.chatService ?? stubChatService;
+}
+
+/**
+ * Get sharedPlacedItemsService (real or stub).
+ * Never cache the result — it is a stub until Firebase has settled.
+ */
+export function getSharedPlacedItemsService() {
+  return firebaseModule?.sharedPlacedItemsService ?? stubSharedPlacedItemsService;
+}
+
+/**
+ * Get sharedAlbumService (real or stub).
+ * Never cache — it is a stub until Firebase has settled.
+ */
+export function getSharedAlbumService() {
+  return firebaseModule?.sharedAlbumService ?? stubSharedAlbumService;
 }
 
 /**

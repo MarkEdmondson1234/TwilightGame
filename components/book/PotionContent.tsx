@@ -1,16 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import {
-  PotionRecipeDefinition,
-  PotionLevel,
-  POTION_RECIPES,
-  getPotionRecipe,
-} from '../../data/potionRecipes';
+import { PotionRecipeDefinition, PotionLevel } from '../../data/potionRecipes';
 import { getItem } from '../../data/items';
 import { magicManager, BrewingResult } from '../../utils/MagicManager';
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
-import { BookThemeConfig, getThemeStyles } from './bookThemes';
+import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
@@ -44,8 +39,6 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
     });
   }, []);
 
-  const styles = getThemeStyles(theme);
-
   // Get current apprentice level and progress
   const currentLevel = magicManager.getCurrentLevel();
   const levelProgress = magicManager.getLevelMasteryProgress();
@@ -69,10 +62,12 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
       },
       { id: 'encyclopaedia', label: 'Encyclopaedia', icon: '🌿', locked: false },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- magicUpdateTrigger is a version counter invalidating this list when the magic level changes
     [magicUpdateTrigger]
   );
 
   // Get all unlocked recipes (re-evaluate when level changes to include new recipes)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- same version-counter pattern as above
   const unlockedRecipes = useMemo(() => magicManager.getUnlockedRecipes(), [magicUpdateTrigger]);
 
   // Group recipes by level (plus encyclopaedia entries)
@@ -147,8 +142,6 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
     : null;
 
   // Check if we can brew
-  const canBrew = selectedPotion ? magicManager.hasIngredients(selectedPotion.id) : false;
-
   // Difficulty stars display
   const difficultyStars = (difficulty: 1 | 2 | 3) => {
     return '★'.repeat(difficulty) + '☆'.repeat(3 - difficulty);

@@ -23,7 +23,7 @@ vi.mock('../../firebase/config', () => ({
 
 vi.mock('../../firebase/authService', () => ({
   authService: {
-    onAuthStateChange: vi.fn((cb) => {
+    onAuthStateChange: vi.fn((_cb) => {
       // Return unsubscribe function
       return () => {};
     }),

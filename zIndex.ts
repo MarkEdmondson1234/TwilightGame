@@ -184,6 +184,9 @@ export const Z_TOUCH_CONTROLS = 1050;
 /** Multiplayer presence indicator ("2 friends here") — sits with the HUD */
 export const Z_PRESENCE_INDICATOR = 1000;
 
+/** Chat panel — beside the touch controls, below the emote picker */
+export const Z_CHAT_PANEL = 1055;
+
 /** Emote picker — above the touch controls it is opened from */
 export const Z_EMOTE_WHEEL = 1060;
 

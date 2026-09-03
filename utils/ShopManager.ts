@@ -3,16 +3,15 @@
  * Handles buying, selling, and inventory filtering for the shop system
  */
 
-import { ITEMS, ItemDefinition, getItem } from '../data/items';
+import { ItemDefinition, getItem } from '../data/items';
 import {
-  GENERAL_STORE_INVENTORY,
   ShopItem,
   getSeasonalInventory,
   getMushrasShopInventory,
   getShellaShopInventory,
   getBuyPrice,
   getSellPrice,
-  Season as ShopSeason
+  Season as ShopSeason,
 } from '../data/shopInventory';
 import { TimeManager, Season as GameSeason } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
@@ -24,7 +23,7 @@ import { cookingManager } from './CookingManager';
 export interface TransactionResult {
   success: boolean;
   message: string;
-  goldChange?: number;  // Positive = gained, negative = spent
+  goldChange?: number; // Positive = gained, negative = spent
 }
 
 /**
@@ -33,8 +32,8 @@ export interface TransactionResult {
 export interface InventoryItem {
   itemId: string;
   quantity: number;
-  uses?: number;  // Current uses remaining for this item (only if item has maxUses defined)
-  masteryLevel?: number;  // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
+  uses?: number; // Current uses remaining for this item (only if item has maxUses defined)
+  masteryLevel?: number; // Mastery level when food was cooked (0 = not mastered, 1-3 = times cooked when produced)
 }
 
 /**
@@ -132,7 +131,7 @@ export class ShopManager {
   ): TransactionResult {
     // Get shop item
     const shopInventory = this.getInventoryForShop(shopId);
-    const shopItem = shopInventory.find(item => item.itemId === itemId);
+    const shopItem = shopInventory.find((item) => item.itemId === itemId);
 
     if (!shopItem) {
       return {
@@ -217,7 +216,7 @@ export class ShopManager {
     }
 
     // Check player has item
-    const inventoryItem = playerInventory.find(item => item.itemId === itemId);
+    const inventoryItem = playerInventory.find((item) => item.itemId === itemId);
     if (!inventoryItem || inventoryItem.quantity < quantity) {
       return {
         success: false,
@@ -241,8 +240,12 @@ export class ShopManager {
     // Add mastery bonus info to message if applicable
     let message = `Sold ${quantity}× ${itemDef.displayName} for ${totalEarnings}g`;
     if (inventoryItem.masteryLevel !== undefined && inventoryItem.masteryLevel >= 1) {
-      const multiplier = inventoryItem.masteryLevel >= 3 ? '2.0x' :
-                         inventoryItem.masteryLevel === 2 ? '1.5x' : '1.2x';
+      const multiplier =
+        inventoryItem.masteryLevel >= 3
+          ? '2.0x'
+          : inventoryItem.masteryLevel === 2
+            ? '1.5x'
+            : '1.2x';
       message += ` (${multiplier} mastery bonus)`;
     }
 
@@ -368,7 +371,7 @@ export class ShopManager {
    * @returns Maximum sellable quantity
    */
   public getMaxSellQuantity(itemId: string, playerInventory: InventoryItem[]): number {
-    const inventoryItem = playerInventory.find(item => item.itemId === itemId);
+    const inventoryItem = playerInventory.find((item) => item.itemId === itemId);
     return inventoryItem?.quantity || 0;
   }
 
@@ -379,7 +382,7 @@ export class ShopManager {
    * @returns Sell price with mastery bonus, or undefined if not sellable
    */
   public getItemSellPrice(itemId: string, playerInventory: InventoryItem[]): number | undefined {
-    const inventoryItem = playerInventory.find(item => item.itemId === itemId);
+    const inventoryItem = playerInventory.find((item) => item.itemId === itemId);
     if (!inventoryItem) return undefined;
 
     return getSellPrice(itemId, inventoryItem.masteryLevel);

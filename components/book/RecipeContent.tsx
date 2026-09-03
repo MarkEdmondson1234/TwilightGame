@@ -5,7 +5,7 @@ import { cookingManager, CookingResult } from '../../utils/CookingManager';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { Position } from '../../types';
-import { BookThemeConfig, getThemeStyles } from './bookThemes';
+import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import GameIcon from '../GameIcon';
 import BookSpread from './BookSpread';
@@ -38,16 +38,10 @@ const RECIPE_CHAPTERS: BookChapter<RecipeCategory | 'all'>[] = [
  */
 const RecipeContent: React.FC<RecipeContentProps> = ({
   theme,
-  playerPosition,
-  currentMapId,
-  cookingPosition,
   nearbyNPCs = [],
-  onItemPlaced,
 }) => {
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
-
-  const styles = getThemeStyles(theme);
 
   // Get all recipes
   const allRecipes = useMemo(() => Object.values(RECIPES), []);
@@ -132,7 +126,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 
       // Popup handles its own auto-dismiss via CookingResultPopup
     },
-    [nearbyNPCs, currentMapId, cookingPosition, playerPosition, onItemPlaced]
+    [nearbyNPCs]
   );
 
   // Get selected recipe details

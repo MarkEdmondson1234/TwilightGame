@@ -13,11 +13,12 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
-import { Position, Direction, MapDefinition, TileType, TileData } from '../types';
+import { Position, Direction, MapDefinition, TileData } from '../types';
 import { USE_SPRITE_SHADOWS, TILE_LEGEND } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
 import { textureManager } from '../utils/TextureManager';
+import { performanceMonitor, SceneNode } from '../utils/PerformanceMonitor';
 import { ColorResolver } from '../utils/ColorResolver';
 import { TileLayer } from '../utils/pixi/TileLayer';
 import { PlayerSprite } from '../utils/pixi/PlayerSprite';
@@ -26,6 +27,7 @@ import { NPCLayer } from '../utils/pixi/NPCLayer';
 import { RemotePlayerLayer } from '../utils/pixi/RemotePlayerLayer';
 import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
 import { getLocalEmote } from '../multiplayer/localEmote';
+import { getLocalChatBubble } from '../multiplayer/localChat';
 import { ShadowLayer } from '../utils/pixi/ShadowLayer';
 import { WeatherLayer } from '../utils/pixi/WeatherLayer';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
@@ -35,11 +37,7 @@ import { HighlightLayer } from '../utils/pixi/HighlightLayer';
 import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
-import {
-  getCoreTextureUrls,
-  getResidentTextureUrls,
-  toSeasonKey,
-} from '../utils/mapTextureSet';
+import { getCoreTextureUrls, getResidentTextureUrls, toSeasonKey } from '../utils/mapTextureSet';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
@@ -271,6 +269,15 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         gridOffset,
         tileSize
       );
+      // Likewise your own speech bubble: you should see what you said above your
+      // own head, not only in a panel.
+      remotePlayerLayerRef.current.renderLocalChat(
+        getLocalChatBubble(),
+        localPos,
+        characterScale,
+        gridOffset,
+        tileSize
+      );
     }
   }, []);
 
@@ -315,6 +322,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
 
         // Enable z-index sorting on stage
         app.stage.sortableChildren = true;
+
+        // Hand the stage to the performance monitor. This is what makes CI able
+        // to say anything true about performance: a GPU-less runner cannot
+        // measure fps, but it can count exactly what the stage asks to draw.
+        performanceMonitor.attachStage(app.stage as unknown as SceneNode);
 
         // Preload the core set plus this map's textures — NOT the whole game.
         // Loading every texture up front cost ~1.2GB of GPU memory, which iOS
@@ -528,6 +540,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       // Force full re-initialization by destroying and re-creating
       setIsPixiInitialized(false);
       if (pixiAppRef.current) {
+        performanceMonitor.attachStage(null);
         pixiAppRef.current.destroy(true);
         pixiAppRef.current = null;
       }
@@ -558,6 +571,9 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       canvas?.removeEventListener('webglcontextrestored', handleContextRestored);
       if (pixiAppRef.current) {
         console.log('[usePixiRenderer] Destroying PixiJS application');
+        // Drop the stage reference BEFORE destroy, so nothing can walk a tree
+        // that is being torn down.
+        performanceMonitor.attachStage(null);
         pixiAppRef.current.destroy(true);
         pixiAppRef.current = null;
       }
@@ -602,6 +618,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         darknessLayerRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init-once by design: the twelve flagged values are per-frame/per-render inputs consumed through refs and the game loop; re-initialising the whole PixiJS renderer when they change would tear down and rebuild the GPU context every frame
   }, [enabled, isMapInitialized]); // Only initialize once when map is ready
 
   // =========================================================================

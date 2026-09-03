@@ -11,6 +11,7 @@ import { ItemCategory, getItem } from '../../../data/items';
 import { decorationManager } from '../../DecorationManager';
 import { getFrameStyle } from '../../frameStyles';
 import { inventoryManager } from '../../inventoryManager';
+import { PHOTO_ITEM_ID } from '../../../types/photography';
 import { mapManager } from '../../../maps';
 
 export function decorationPlacementProvider(ctx: InteractionContext): AvailableInteraction[] {
@@ -35,10 +36,14 @@ export function decorationPlacementProvider(ctx: InteractionContext): AvailableI
     const tileOk = isWalkable || heldItem?.allowAnyTilePlacement;
     const blockedByIndoorOnly = !!(heldItem?.indoorOnly && !isStrictlyIndoor);
     const blockedByOutdoorOnly = !!(heldItem?.outdoorOnly && isIndoorMap);
-    const mapOk =
-      (isIndoorMap || heldItem?.allowOutdoorPlacement) &&
-      !blockedByIndoorOnly &&
-      !blockedByOutdoorOnly;
+    // `outdoorOnly` implies outdoor placement is allowed — otherwise an item declared
+    // outdoor-only could be placed nowhere at all: rejected outside for want of
+    // `allowOutdoorPlacement`, and rejected inside by its own flag. The garden bench was
+    // exactly that, and it failed in the worst possible way: outdoors neither branch below
+    // fires a toast, so the click produced no placement, no message, and fell through to
+    // click-to-move — the player walked to the spot they were trying to put a bench on.
+    const outdoorAllowed = heldItem?.allowOutdoorPlacement || heldItem?.outdoorOnly;
+    const mapOk = (isIndoorMap || outdoorAllowed) && !blockedByIndoorOnly && !blockedByOutdoorOnly;
     const canPlaceHere = tileOk && mapOk;
 
     // Show feedback when an indoor-only item is held but the current map doesn't qualify
@@ -55,7 +60,10 @@ export function decorationPlacementProvider(ctx: InteractionContext): AvailableI
       if (
         itemDef &&
         (itemDef.category === ItemCategory.DECORATION ||
-          itemDef.category === ItemCategory.FURNITURE)
+          itemDef.category === ItemCategory.FURNITURE ||
+          // A photo is a keepsake rather than a decoration, but hanging one is
+          // the same act as hanging a painting, so it takes the same path.
+          itemDef.id === PHOTO_ITEM_ID)
       ) {
         // Check no existing placed item at this tile (use itemAtPosition which handles scaled bounding boxes)
         if (!itemAtPosition) {
@@ -65,8 +73,33 @@ export function decorationPlacementProvider(ctx: InteractionContext): AvailableI
             placedItems.filter((i) => i.paintingId).map((i) => i.paintingId!)
           );
 
+          // A photo carries its own image on the inventory instance. It is
+          // published to the shared picture store when hung (see
+          // useInteractionController), so the other player sees the photograph
+          // rather than an empty frame.
+          if (itemDef.id === PHOTO_ITEM_ID) {
+            const photo = inventoryManager
+              .getPhotos()
+              .find((candidate) => !placedPaintingIds.has(candidate.id));
+            if (photo) {
+              interactions.push({
+                type: 'place_decoration',
+                label: `Hang "${photo.photoName}"`,
+                icon: '📷',
+                color: '#8b5cf6',
+                execute: () =>
+                  onPlaceDecoration({
+                    itemId: itemDef.id,
+                    position: tilePos,
+                    image: itemDef.icon || '',
+                    paintingId: photo.id,
+                    customImage: photo.dataUrl,
+                  }),
+              });
+            }
+          }
           // For paintings, look up the actual painting data (custom image + frame)
-          if (itemDef.id === 'framed_painting') {
+          else if (itemDef.id === 'framed_painting') {
             const painting = decorationManager.getNextUnplacedPainting(placedPaintingIds);
             if (painting) {
               const frame = getFrameStyle(painting.paintIds);

@@ -24,9 +24,6 @@ interface BookshelfProps {
  */
 const Bookshelf: React.FC<BookshelfProps> = ({
   isTouchDevice,
-  playerPosition,
-  currentMapId,
-  nearbyNPCs,
   onRecipeBookOpen,
   onMagicBookOpen,
   onJournalOpen,

@@ -612,7 +612,6 @@ export const SkiingGame: React.FC<MiniGameComponentProps> = ({ context, onComple
           const hitThreshold = ((objDrawWidth + playerCollisionWidth) / 2) * COLLISION_FUDGE;
           if (objScreenY < playerAnchorY && screenSeparation < hitThreshold) {
             if (debugRef.current) {
-              // eslint-disable-next-line no-console
               console.log(
                 `[Skiing] HIT kind=${obj.kind} zDiff=${zDiff.toFixed(0)} ` +
                   `screenSeparation=${screenSeparation.toFixed(1)}px hitThreshold=${hitThreshold.toFixed(1)}px | ` +

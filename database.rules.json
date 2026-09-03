@@ -4,7 +4,7 @@
       "$mapId": {
         ".read": "auth != null",
         "$uid": {
-          ".write": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && (auth.uid === $uid || (!newData.exists() && data.child('t').val() < now - 300000))",
           ".validate": "newData.hasChildren(['n','c','x','y','d','t'])",
           "n": {
             ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
@@ -29,6 +29,30 @@
           },
           "e": {
             ".validate": "newData.val() === null || newData.val() === 'wave' || newData.val() === 'laugh' || newData.val() === 'heart' || newData.val() === 'question' || newData.val() === 'yes' || newData.val() === 'sad' || newData.val() === 'dance' || newData.val() === 'followme'"
+          },
+          "t": {
+            ".validate": "newData.val() === now"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "chat": {
+      "$mapId": {
+        ".read": "auth != null",
+        "$messageId": {
+          ".write": "auth != null && ((!data.exists() && newData.child('u').val() === auth.uid) || (!newData.exists() && data.child('u').val() === auth.uid))",
+          ".validate": "newData.hasChildren(['u','n','m','t'])",
+          "u": {
+            ".validate": "newData.val() === auth.uid"
+          },
+          "n": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+          },
+          "m": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 140"
           },
           "t": {
             ".validate": "newData.val() === now"

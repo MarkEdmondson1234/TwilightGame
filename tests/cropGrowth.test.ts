@@ -3,7 +3,7 @@
  *
  * Uses node environment to avoid jsdom compatibility issues.
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock TimeManager — crops.ts uses both Season enum and TimeManager.MS_PER_GAME_DAY
 vi.mock('../utils/TimeManager', () => ({
@@ -32,7 +32,7 @@ describe('Crop Growth System', () => {
     });
 
     it('should have valid growth times', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         expect(crop.growthTime).toBeGreaterThan(0);
         expect(crop.growthTimeWatered).toBeGreaterThan(0);
         expect(crop.growthTimeWatered).toBeLessThan(crop.growthTime); // Watered should be faster
@@ -40,7 +40,7 @@ describe('Crop Growth System', () => {
     });
 
     it('should have valid water requirements', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         expect(crop.waterNeededInterval).toBeGreaterThan(0);
         expect(crop.wiltingGracePeriod).toBeGreaterThan(0);
         expect(crop.deathGracePeriod).toBeGreaterThan(0);
@@ -48,7 +48,7 @@ describe('Crop Growth System', () => {
     });
 
     it('should have positive yields and prices (except decorative crops)', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         // Decorative crops (e.g. fairy_bluebell) intentionally have 0 yield/price
         if (crop.harvestYield === 0) {
           expect(crop.sellPrice).toBe(0);
@@ -101,7 +101,7 @@ describe('Crop Growth System', () => {
     });
 
     it('watering should provide meaningful time savings', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         const timeSaved = crop.growthTime - crop.growthTimeWatered;
         const percentSaved = (timeSaved / crop.growthTime) * 100;
 
@@ -118,7 +118,7 @@ describe('Crop Growth System', () => {
         expect(true).toBe(true);
         return;
       }
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         // Water interval should be less than growth time
         // (crops need watering at least once during growth)
         expect(crop.waterNeededInterval).toBeLessThan(crop.growthTime);
@@ -242,7 +242,7 @@ describe('Crop Growth System', () => {
 
   describe('Crop Metadata', () => {
     it('should have display names', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         expect(crop.displayName).toBeTruthy();
         expect(crop.displayName.length).toBeGreaterThan(0);
         // Display name should be capitalized
@@ -251,20 +251,20 @@ describe('Crop Growth System', () => {
     });
 
     it('should have descriptions', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         expect(crop.description).toBeTruthy();
         expect(crop.description.length).toBeGreaterThan(10);
       });
     });
 
     it('should have rarity levels', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         expect(['common', 'uncommon', 'rare', 'very_rare']).toContain(crop.rarity);
       });
     });
 
     it('should have experience values', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         expect(crop.experience).toBeGreaterThan(0);
       });
     });
@@ -280,7 +280,7 @@ describe('Crop Growth System', () => {
     });
 
     it('should have grace periods in reasonable ranges', () => {
-      Object.entries(CROPS).forEach(([id, crop]) => {
+      Object.entries(CROPS).forEach(([_id, crop]) => {
         // Grace periods should be less than water interval
         expect(crop.wiltingGracePeriod).toBeLessThan(crop.waterNeededInterval);
         expect(crop.deathGracePeriod).toBeLessThan(crop.waterNeededInterval);

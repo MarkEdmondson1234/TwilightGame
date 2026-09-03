@@ -24,6 +24,7 @@ import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
 import { getRemoteSpriteInfo } from '../../multiplayer/remoteSprites';
 import { getEmoteIcon } from '../../multiplayer/emotes';
+import { PlayerSpeechBubble } from './PlayerSpeechBubble';
 import type { RemotePlayer } from '../../multiplayer/types';
 
 /** Same feet offset PlayerSprite uses, so remote and local players sort alike. */
@@ -35,10 +36,14 @@ const NAME_TAG_OFFSET_TILES = 0.85;
 /** Emote bubble sits above the name tag. */
 const EMOTE_OFFSET_TILES = 1.35;
 
+/** Chat bubbles sit above the emote, which sits above the name tag. */
+const CHAT_OFFSET_TILES = 1.35;
+
 interface RemotePlayerDisplay {
   sprite: PIXI.Sprite;
   nameTag: PIXI.Text;
   emote: PIXI.Text;
+  chat: PlayerSpeechBubble;
   currentSpriteUrl: string | null;
   currentName: string | null;
 }
@@ -46,6 +51,9 @@ interface RemotePlayerDisplay {
 export class RemotePlayerLayer extends PixiLayer {
   private displays = new Map<string, RemotePlayerDisplay>();
   private depthContainer: PIXI.Container | null = null;
+  /** Bubble for the local player's own chat message */
+  private localChatBubble: PlayerSpeechBubble | null = null;
+
   /** Bubble for the local player's own emote — immediate feedback on pressing one */
   private localEmoteText: PIXI.Text | null = null;
 
@@ -60,7 +68,7 @@ export class RemotePlayerLayer extends PixiLayer {
   setDepthContainer(container: PIXI.Container): void {
     this.depthContainer = container;
     for (const display of this.displays.values()) {
-      for (const object of [display.sprite, display.nameTag, display.emote]) {
+      for (const object of [display.sprite, display.nameTag, display.emote, display.chat.container]) {
         if (object.parent === this.container) {
           this.container.removeChild(object);
           container.addChild(object);
@@ -112,7 +120,9 @@ export class RemotePlayerLayer extends PixiLayer {
     emote.resolution = 2;
     target.addChild(emote);
 
-    return { sprite, nameTag, emote, currentSpriteUrl: null, currentName: null };
+    const chat = new PlayerSpeechBubble(target);
+
+    return { sprite, nameTag, emote, chat, currentSpriteUrl: null, currentName: null };
   }
 
   /**
@@ -197,6 +207,13 @@ export class RemotePlayerLayer extends PixiLayer {
       } else {
         display.emote.visible = false;
       }
+
+      display.chat.update(
+        player.chat,
+        x,
+        y - CHAT_OFFSET_TILES * tileSize * characterScale,
+        zIndex + 3
+      );
     }
 
     // Players who left this frame: hide rather than destroy, since they may
@@ -206,6 +223,7 @@ export class RemotePlayerLayer extends PixiLayer {
       display.sprite.visible = false;
       display.nameTag.visible = false;
       display.emote.visible = false;
+      display.chat.update(null, 0, 0, 0);
     }
   }
 
@@ -247,6 +265,34 @@ export class RemotePlayerLayer extends PixiLayer {
     this.localEmoteText.visible = true;
   }
 
+  /**
+   * Draw the local player's own speech bubble, so saying something gives
+   * immediate feedback rather than a silent hope that it reached anybody.
+   */
+  renderLocalChat(
+    text: string | null,
+    position: Position,
+    characterScale: number = 1.0,
+    gridOffset?: Position,
+    tileSize: number = TILE_SIZE
+  ): void {
+    if (!text && !this.localChatBubble) return;
+
+    if (!this.localChatBubble) {
+      this.localChatBubble = new PlayerSpeechBubble(this.getTargetContainer());
+    }
+
+    const x = position.x * tileSize + (gridOffset?.x ?? 0);
+    const y = position.y * tileSize + (gridOffset?.y ?? 0);
+
+    this.localChatBubble.update(
+      text,
+      x,
+      y - CHAT_OFFSET_TILES * tileSize * characterScale,
+      Z_DEPTH_SORTED_BASE + Math.floor((position.y + PLAYER_FEET_OFFSET) * 10) + 3
+    );
+  }
+
   /** Drop the display objects for players we no longer track. */
   prune(activeUids: Set<string>): void {
     for (const [uid, display] of this.displays) {
@@ -261,6 +307,7 @@ export class RemotePlayerLayer extends PixiLayer {
       if (object.parent) object.parent.removeChild(object);
       object.destroy();
     }
+    display.chat.destroy();
   }
 
   /** Clear all remote player sprites (required by PixiLayer). */
@@ -275,5 +322,8 @@ export class RemotePlayerLayer extends PixiLayer {
       this.localEmoteText.destroy();
       this.localEmoteText = null;
     }
+
+    this.localChatBubble?.destroy();
+    this.localChatBubble = null;
   }
 }
