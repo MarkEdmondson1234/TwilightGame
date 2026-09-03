@@ -120,7 +120,7 @@ export function useSharedPlacedItemsController(
     const followRemovals = (removedIds: string[]) => {
       for (const id of removedIds) {
         if (!gameState.getAllPlacedItems().some((item) => item.id === id)) continue;
-        if (DEBUG.MULTIPLAYER) console.log(`[SharedItems] ${id} was picked up by someone else`);
+        if (DEBUG.MULTIPLAYER) debugLog('SharedItems', `${id} was picked up by someone else`);
         // Safe against a loop: the document is already gone from publishedIds,
         // so the reconcile this triggers has nothing left to delete.
         gameState.removePlacedItem(id);

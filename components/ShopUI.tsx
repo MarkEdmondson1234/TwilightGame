@@ -177,16 +177,18 @@ const ShopUI: React.FC<ShopUIProps> = ({
   };
 
   /**
-   * Left-click a slot: trade exactly one.
+   * Left-click a slot: open the trade. Single-stock items buy one immediately;
+   * stacks open the item preview + quantity picker.
    *
-   * The quantity slider used to appear for any stack of more than one, which taxed the
-   * common case — buying a single packet of seeds meant a slider, a plus button and a
-   * confirm. Buying several is the rarer, more deliberate act, so it moved to right-click
-   * (long-press on touch), where every other "more options" gesture in the game lives.
+   * This is the confirmation step on purpose: the picker shows what you are
+   * buying and lets you choose how many before any money moves. A previous
+   * experiment made left-click buy one instantly (quantity moved to right-click
+   * / long-press) — it was reverted because silently spending gold on a single
+   * click skipped exactly that "what am I buying, how many" moment.
    */
   const handleSlotClick = (itemId: string, fromShop: boolean, maxQuantity: number) => {
     if (maxQuantity < 1) return;
-    executeTransaction(itemId, 1, fromShop);
+    initiateTrade(itemId, fromShop, maxQuantity);
   };
 
   /** Right-click / long-press a slot: choose how many. */
@@ -594,7 +596,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-400">
-                Click to buy one • hold or right-click for more • {filteredShopInventory.length}
+                Click to buy • hold or right-click to choose how many •{' '}
+                {filteredShopInventory.length}
                 {shopFilter !== 'all' ? ` / ${shopInventory.length}` : ''} items available
               </div>
             </div>
@@ -624,7 +627,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-400">
-                Click to sell one • hold or right-click for more • {playerInventory.length} items
+                Click to sell • hold or right-click to choose how many • {playerInventory.length}{' '}
+                items
               </div>
             </div>
           </div>
