@@ -52,6 +52,8 @@ export { presenceService } from './presenceService';
 
 export { chatService } from './chatService';
 
+export { npcSpeechService } from './npcSpeechService';
+
 export { sharedPlacedItemsService } from './sharedPlacedItemsService';
 
 export { sharedAlbumService } from './sharedAlbumService';

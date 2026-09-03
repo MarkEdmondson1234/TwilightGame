@@ -99,6 +99,9 @@ export enum GameEvent {
   PHOTO_TAKEN = 'camera:photo_taken',
   PHOTO_SENT_TO_ALBUM = 'camera:photo_sent_to_album',
 
+  /** An NPC finished saying a line — shared so nearby players can follow along */
+  NPC_SPOKE = 'npc:spoke',
+
   // Fruit tree events
   FRUIT_TREE_CHANGED = 'fruitTree:changed',
 
@@ -267,6 +270,10 @@ export interface EventPayloads {
   [GameEvent.PHOTO_SENT_TO_ALBUM]: {
     photo: Photo;
     albumSize: number;
+  };
+  [GameEvent.NPC_SPOKE]: {
+    npcId: string;
+    text: string;
   };
   [GameEvent.FRUIT_TREE_CHANGED]: {
     mapId: string;
