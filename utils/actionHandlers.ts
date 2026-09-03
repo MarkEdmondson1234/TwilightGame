@@ -15,12 +15,13 @@ import { characterData } from './CharacterData';
 import { getCrop } from '../data/crops';
 import { getCropIdFromSeed } from '../data/items';
 
-import { WATER_CAN, DEBUG } from '../constants';
+import { WATER_CAN } from '../constants';
 import { staminaManager } from './StaminaManager';
 
 import { getTierName } from './MagicEffects';
 
 import { cookingManager, CookingResult } from './CookingManager';
+import { debugLog } from './debugLog';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -95,11 +96,11 @@ export function checkDeskInteraction(playerPos: Position, mapId: string): DeskIn
   }
 
   if (closestDesk.found) {
-    if (DEBUG.NPC)
-      console.log(
-        `[Action] Found desk at (${closestDesk.position?.x}, ${closestDesk.position?.y}), ` +
-          `hasItems: ${closestDesk.hasItems}, hasSpace: ${closestDesk.hasSpace}`
-      );
+    debugLog(
+      'Action',
+      `Found desk at (${closestDesk.position?.x}, ${closestDesk.position?.y}), ` +
+        `hasItems: ${closestDesk.hasItems}, hasSpace: ${closestDesk.hasSpace}`
+    );
   }
 
   return closestDesk;
@@ -113,7 +114,7 @@ export function checkStoveInteraction(playerPos: Position): boolean {
   for (const tile of getAdjacentTiles(playerPos)) {
     const tileData = getTileData(tile.x, tile.y);
     if (tileData && tileData.type === TileType.STOVE) {
-      if (DEBUG.NPC) console.log(`[Action] Found stove at (${tile.x}, ${tile.y})`);
+      debugLog('Action', `Found stove at (${tile.x}, ${tile.y})`);
       return true;
     }
   }
@@ -129,7 +130,7 @@ export function checkMirrorInteraction(playerPos: Position): boolean {
   for (const tile of getAdjacentTiles(playerPos)) {
     const tileData = getTileData(tile.x, tile.y);
     if (tileData && tileData.type === TileType.MIRROR) {
-      if (DEBUG.NPC) console.log(`[Action] Found mirror at (${tile.x}, ${tile.y})`);
+      debugLog('Action', `Found mirror at (${tile.x}, ${tile.y})`);
       return true;
     }
   }
@@ -145,7 +146,7 @@ export function checkNPCInteraction(playerPos: Position): string | null {
   const nearbyNPC = npcManager.getNPCAtPosition(playerPos);
 
   if (nearbyNPC) {
-    if (DEBUG.NPC) console.log(`[Action] Interacting with NPC: ${nearbyNPC.name}`);
+    debugLog('Action', `Interacting with NPC: ${nearbyNPC.name}`);
 
     // Trigger NPC event if it has animated states
     if (nearbyNPC.animatedStates) {
@@ -198,7 +199,7 @@ export function checkTransition(
   const transitionData = mapManager.getTransitionAt(playerPos);
 
   if (!transitionData) {
-    if (DEBUG.MAP) console.log(`[Action] No transition found near player position`);
+    debugLog('Action', `No transition found near player position`);
     return { success: false };
   }
 
@@ -211,10 +212,10 @@ export function checkTransition(
     const requiredStage = transition.requiresQuestStage ?? 1; // Default to stage 1 if not specified
 
     if (!questStarted || questStage < requiredStage) {
-      if (DEBUG.MAP)
-        console.log(
-          `[Action] Transition blocked: requires quest '${transition.requiresQuest}' stage ${requiredStage} (current: ${questStage})`
-        );
+      debugLog(
+        'Action',
+        `Transition blocked: requires quest '${transition.requiresQuest}' stage ${requiredStage} (current: ${questStage})`
+      );
       return {
         success: false,
         blocked: true,
@@ -230,10 +231,10 @@ export function checkTransition(
   if (transition.minSizeTier !== undefined && playerSizeTier < transition.minSizeTier) {
     const requiredSize = getTierName(transition.minSizeTier);
     const currentSize = getTierName(playerSizeTier);
-    if (DEBUG.MAP)
-      console.log(
-        `[Action] Transition blocked: player too small (${currentSize}, needs at least ${requiredSize})`
-      );
+    debugLog(
+      'Action',
+      `Transition blocked: player too small (${currentSize}, needs at least ${requiredSize})`
+    );
     return {
       success: false,
       blocked: true,
@@ -244,10 +245,10 @@ export function checkTransition(
   if (playerSizeTier > effectiveMaxSize) {
     const maxSize = getTierName(effectiveMaxSize as SizeTier);
     const currentSize = getTierName(playerSizeTier);
-    if (DEBUG.MAP)
-      console.log(
-        `[Action] Transition blocked: player too big (${currentSize}, max allowed ${maxSize})`
-      );
+    debugLog(
+      'Action',
+      `Transition blocked: player too big (${currentSize}, max allowed ${maxSize})`
+    );
     return {
       success: false,
       blocked: true,
@@ -255,19 +256,16 @@ export function checkTransition(
     };
   }
 
-  if (DEBUG.MAP)
-    console.log(
-      `[Action] Found transition at (${transition.fromPosition.x}, ${transition.fromPosition.y})`
-    );
-  if (DEBUG.MAP)
-    console.log(
-      `[Action] Transitioning from ${mapManager.getCurrentMapId()} to ${transition.toMapId}`
-    );
+  debugLog(
+    'Action',
+    `Found transition at (${transition.fromPosition.x}, ${transition.fromPosition.y})`
+  );
+  debugLog('Action', `Transitioning from ${mapManager.getCurrentMapId()} to ${transition.toMapId}`);
 
   try {
     // Transition to new map (pass current map ID for depth tracking)
     const { map, spawn } = transitionToMap(transition.toMapId, transition.toPosition);
-    if (DEBUG.MAP) console.log(`[Action] Successfully loaded map: ${map.id} (${map.name})`);
+    debugLog('Action', `Successfully loaded map: ${map.id} (${map.name})`);
 
     return {
       success: true,
@@ -309,10 +307,10 @@ export function handleFarmAction(
   const plot = farmManager.getPlot(currentMapId, position);
   const plotTileType = plot ? farmManager.getTileTypeForPlot(plot) : tileData?.type;
 
-  if (DEBUG.FARM)
-    console.log(
-      `[Action] Tile at (${position.x}, ${position.y}): visual type=${tileData?.type}, plot type=${plotTileType}, currentTool=${currentTool}`
-    );
+  debugLog(
+    'Action',
+    `Tile at (${position.x}, ${position.y}): visual type=${tileData?.type}, plot type=${plotTileType}, currentTool=${currentTool}`
+  );
 
   // Check for wild strawberry harvesting with hand tool
   // Check if this is a farm tile or farm action (check both visual tile and plot state)
@@ -322,10 +320,10 @@ export function handleFarmAction(
       plotTileType >= TileType.SOIL_FALLOW &&
       plotTileType <= TileType.SOIL_DEAD)
   ) {
-    if (DEBUG.FARM)
-      console.log(
-        `[Action] Farm tile detected! Visual: ${tileData?.type}, Plot state: ${plotTileType}`
-      );
+    debugLog(
+      'Action',
+      `Farm tile detected! Visual: ${tileData?.type}, Plot state: ${plotTileType}`
+    );
 
     let farmActionTaken = false;
 
@@ -334,10 +332,9 @@ export function handleFarmAction(
       if (!staminaManager.performActivity('till')) {
         return { handled: false };
       }
-      if (DEBUG.FARM)
-        console.log(`[Action] Attempting to till soil at (${position.x}, ${position.y})`);
+      debugLog('Action', `Attempting to till soil at (${position.x}, ${position.y})`);
       if (farmManager.tillSoil(currentMapId, position)) {
-        if (DEBUG.FARM) console.log('[Action] Tilled soil');
+        debugLog('Action', 'Tilled soil');
         onAnimationTrigger?.('till');
         farmActionTaken = true;
       }
@@ -357,17 +354,17 @@ export function handleFarmAction(
           messageType: 'warning',
         };
       }
-      if (DEBUG.FARM) console.log(`[Action] Attempting to plant: ${currentTool} (crop: ${cropId})`);
+      debugLog('Action', `Attempting to plant: ${currentTool} (crop: ${cropId})`);
       const plantResult = farmManager.plantSeed(currentMapId, position, cropId, currentTool);
       if (plantResult.success) {
         // FarmManager consumed seed from inventory, save it
         const inventoryData = inventoryManager.getInventoryData();
         characterData.saveInventory(inventoryData.items, inventoryData.tools);
-        if (DEBUG.FARM) console.log(`[Action] Planted ${cropId}`);
+        debugLog('Action', `Planted ${cropId}`);
         onAnimationTrigger?.('plant');
         farmActionTaken = true;
       } else {
-        if (DEBUG.FARM) console.log(`[Action] Failed to plant: ${plantResult.reason}`);
+        debugLog('Action', `Failed to plant: ${plantResult.reason}`);
         // Return the failure reason to show to user
         return {
           handled: false,
@@ -412,7 +409,7 @@ export function handleFarmAction(
         };
       }
       if (farmManager.waterPlot(currentMapId, position)) {
-        if (DEBUG.FARM) console.log('[Action] Watered crop');
+        debugLog('Action', 'Watered crop');
         gameState.useWater(); // Consume water
         onAnimationTrigger?.('water', position);
         farmActionTaken = true;
@@ -451,10 +448,10 @@ export function handleFarmAction(
             result.quality !== 'normal'
               ? ` (${result.quality} quality, ${qualityMultiplier}x gold!)`
               : '';
-          if (DEBUG.FARM)
-            console.log(
-              `[Action] Harvested ${result.yield}x ${crop.displayName}${qualityStr} for ${totalGold} gold`
-            );
+          debugLog(
+            'Action',
+            `Harvested ${result.yield}x ${crop.displayName}${qualityStr} for ${totalGold} gold`
+          );
         }
         onAnimationTrigger?.('harvest', position);
         farmActionTaken = true;
@@ -462,7 +459,7 @@ export function handleFarmAction(
     } else if (plotTileType === TileType.SOIL_DEAD) {
       // Clear dead crop (works with any tool - no need to switch)
       if (farmManager.clearDeadCrop(currentMapId, position)) {
-        if (DEBUG.FARM) console.log('[Action] Cleared dead crop');
+        debugLog('Action', 'Cleared dead crop');
         onAnimationTrigger?.('clear');
         farmActionTaken = true;
       }
@@ -615,7 +612,7 @@ export function checkWellInteraction(playerPos: Position): boolean {
   for (const tile of tilesToCheck) {
     const tileData = getTileData(tile.x, tile.y);
     if (tileData && tileData.type === TileType.WELL) {
-      if (DEBUG.FARM) console.log(`[Action] Found well at (${tile.x}, ${tile.y})`);
+      debugLog('Action', `Found well at (${tile.x}, ${tile.y})`);
       return true;
     }
   }
@@ -682,7 +679,7 @@ export function handleRefillWaterCan(): { success: boolean; message: string } {
   // Refill the can
   gameState.refillWaterCan();
   const message = 'Refilled watering can!';
-  if (DEBUG.FARM) console.log(`[Action] ${message}`);
+  debugLog('Action', `${message}`);
 
   return {
     success: true,
@@ -704,7 +701,7 @@ export function handleCollectWater(): { success: boolean; message: string } {
   characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
   const message = `Collected ${waterAmount} water from the well!`;
-  if (DEBUG.FARM) console.log(`[Action] ${message}`);
+  debugLog('Action', `${message}`);
 
   return {
     success: true,
@@ -733,7 +730,7 @@ export function checkCookingLocation(playerPos: Position): CookingLocationResult
     if (!tileData) continue;
 
     if (tileData.type === TileType.STOVE) {
-      if (DEBUG.NPC) console.log(`[Action] Found stove at (${tile.x}, ${tile.y})`);
+      debugLog('Action', `Found stove at (${tile.x}, ${tile.y})`);
       return {
         found: true,
         locationType: 'stove',
@@ -742,7 +739,7 @@ export function checkCookingLocation(playerPos: Position): CookingLocationResult
     }
 
     if (tileData.type === TileType.CAMPFIRE) {
-      if (DEBUG.NPC) console.log(`[Action] Found campfire at (${tile.x}, ${tile.y})`);
+      debugLog('Action', `Found campfire at (${tile.x}, ${tile.y})`);
       return {
         found: true,
         locationType: 'campfire',
@@ -751,7 +748,7 @@ export function checkCookingLocation(playerPos: Position): CookingLocationResult
     }
 
     if (tileData.type === TileType.CAULDRON) {
-      if (DEBUG.NPC) console.log(`[Action] Found cauldron at (${tile.x}, ${tile.y})`);
+      debugLog('Action', `Found cauldron at (${tile.x}, ${tile.y})`);
       return {
         found: true,
         locationType: 'cauldron',
