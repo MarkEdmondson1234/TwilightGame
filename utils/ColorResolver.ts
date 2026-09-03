@@ -14,7 +14,7 @@ import { TileType, ColorScheme } from '../types';
 import { TILE_LEGEND } from '../constants';
 import { mapManager } from '../maps';
 import { TimeManager, Season } from './TimeManager';
-import { getColorHex } from '../palette';
+import { getColorHexByName } from '../palette';
 
 type TileColorKey = keyof ColorScheme['colors'];
 type SeasonKey = 'spring' | 'summer' | 'autumn' | 'winter';
@@ -219,7 +219,7 @@ export class ColorResolver {
     }
 
     const colorName = match[1];
-    const hex = getColorHex(colorName as any);
+    const hex = getColorHexByName(colorName);
 
     if (!hex || hex === '#000000') {
       console.warn(`[ColorResolver] Palette color "${colorName}" not found in palette.ts`);

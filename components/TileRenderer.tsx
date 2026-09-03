@@ -4,7 +4,7 @@ import { getTileData } from '../utils/mapUtils';
 import { TILE_SIZE, SPRITE_METADATA } from '../constants';
 import { calculateTileTransforms } from '../utils/tileRenderUtils';
 import { farmManager } from '../utils/farmManager';
-import { farmingAssets } from '../assets';
+import { farmingAssets, lookupFarmingAsset } from '../assets';
 import { ColorResolver } from '../utils/ColorResolver';
 
 interface TileRendererProps {
@@ -161,15 +161,15 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                   // YOUNG
                   // Use crop-specific young sprite if available, otherwise use generic
                   selectedImage =
-                    (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
+                    lookupFarmingAsset(`plant_${cropType}_young`) || farmingAssets.seedling;
                 } else {
                   // ADULT — dormant herbs may use a winter-specific sprite
                   const winterKey = `plant_${cropType}_winter`;
                   const adultKey = `plant_${cropType}_adult`;
                   selectedImage =
-                    isHerbDormant && (farmingAssets as any)[winterKey]
-                      ? (farmingAssets as any)[winterKey]
-                      : (farmingAssets as any)[adultKey] || farmingAssets.seedling;
+                    isHerbDormant && lookupFarmingAsset(winterKey)
+                      ? lookupFarmingAsset(winterKey)
+                      : lookupFarmingAsset(adultKey) || farmingAssets.seedling;
                 }
               } else {
                 // Use a separate hash for image selection to avoid bias

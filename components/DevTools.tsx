@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TimeManager, Season } from '../utils/TimeManager';
+import { WeatherType } from '../data/weatherConfig';
 import { gameState } from '../GameState';
 import { characterData } from '../utils/CharacterData';
 import { farmManager } from '../utils/farmManager';
@@ -1269,9 +1270,7 @@ const DevTools: React.FC<DevToolsProps> = ({
   const [season, setSeason] = useState<Season>(currentTime.season);
   const [day, setDay] = useState<number>(currentTime.day);
   const [hour, setHour] = useState<number>(currentTime.hour);
-  const [weather, setWeather] = useState<
-    'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
-  >(currentWeather);
+  const [weather, setWeather] = useState<WeatherType>(currentWeather);
   const [automaticWeather, setAutomaticWeather] = useState<boolean>(currentAutomaticWeather);
   const [driftSpeed, setDriftSpeed] = useState<number>(currentDriftSpeed);
 
@@ -1302,9 +1301,7 @@ const DevTools: React.FC<DevToolsProps> = ({
     TimeManager.setTimeOverride({ season, day, hour: newHour });
   };
 
-  const handleWeatherChange = (
-    newWeather: 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms'
-  ) => {
+  const handleWeatherChange = (newWeather: WeatherType) => {
     setWeather(newWeather);
     gameState.setWeather(newWeather);
   };
@@ -1458,7 +1455,7 @@ const DevTools: React.FC<DevToolsProps> = ({
                   <label>Current Weather</label>
                   <select
                     value={weather}
-                    onChange={(e) => handleWeatherChange(e.target.value as any)}
+                    onChange={(e) => handleWeatherChange(e.target.value as WeatherType)}
                     disabled={automaticWeather}
                   >
                     <option value="clear">Clear</option>

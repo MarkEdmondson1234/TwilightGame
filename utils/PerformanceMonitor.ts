@@ -30,30 +30,30 @@
  * the quantities a regression would actually move.
  */
 export interface SceneCost {
-  nodes: number;          // every node in the stage tree
-  sprites: number;        // renderable leaves (Sprite/AnimatedSprite/Text/Graphics)
+  nodes: number; // every node in the stage tree
+  sprites: number; // renderable leaves (Sprite/AnimatedSprite/Text/Graphics)
   visibleSprites: number; // ...of those, the ones actually drawn this frame
-  containers: number;     // grouping nodes
-  maxDepth: number;       // deepest nesting — proxy for transform/sort work
-  textures: number;       // distinct texture sources referenced by visible sprites
-  textureMB: number;      // estimated GPU residency of those sources (RGBA)
+  containers: number; // grouping nodes
+  maxDepth: number; // deepest nesting — proxy for transform/sort work
+  textures: number; // distinct texture sources referenced by visible sprites
+  textureMB: number; // estimated GPU residency of those sources (RGBA)
 }
 
 export interface PerformanceMetrics {
   // Frame timing
   fps: number;
-  avgFrameTime: number;      // Average ms per frame
-  minFrameTime: number;      // Best frame time in sample
-  maxFrameTime: number;      // Worst frame time in sample (jank indicator)
+  avgFrameTime: number; // Average ms per frame
+  minFrameTime: number; // Best frame time in sample
+  maxFrameTime: number; // Worst frame time in sample (jank indicator)
   frameTimeVariance: number; // Standard deviation (jank indicator)
 
   // Memory (if available)
-  heapUsed: number;          // JS heap used (bytes)
-  heapTotal: number;         // JS heap total (bytes)
+  heapUsed: number; // JS heap used (bytes)
+  heapTotal: number; // JS heap total (bytes)
 
   // Counts
-  spriteCount: number;       // PixiJS sprite count
-  domNodeCount: number;      // DOM node count
+  spriteCount: number; // PixiJS sprite count
+  domNodeCount: number; // DOM node count
 
   // Scene cost — see SceneCost. Hardware-independent, so unlike fps these
   // survive being measured on a software renderer.
@@ -61,8 +61,8 @@ export interface PerformanceMetrics {
 
   // Timing
   timestamp: number;
-  uptime: number;            // Seconds since monitoring started
-  frameCount: number;        // Total frames rendered
+  uptime: number; // Seconds since monitoring started
+  frameCount: number; // Total frames rendered
 }
 
 export interface PerformanceSnapshot {
@@ -239,7 +239,7 @@ class PerformanceMonitor {
       maxFrameTime = Math.max(...this.frameTimes);
 
       // Calculate variance
-      const squaredDiffs = this.frameTimes.map(t => Math.pow(t - avgFrameTime, 2));
+      const squaredDiffs = this.frameTimes.map((t) => Math.pow(t - avgFrameTime, 2));
       variance = Math.sqrt(squaredDiffs.reduce((a, b) => a + b, 0) / this.frameTimes.length);
 
       // FPS from average frame time
@@ -249,7 +249,7 @@ class PerformanceMonitor {
     // Memory info (Chrome only)
     let heapUsed = 0;
     let heapTotal = 0;
-    const perfMemory = (performance as any).memory;
+    const perfMemory = performance.memory;
     if (perfMemory) {
       heapUsed = perfMemory.usedJSHeapSize;
       heapTotal = perfMemory.totalJSHeapSize;
@@ -345,7 +345,7 @@ class PerformanceMonitor {
     const start = this.getMetrics();
     this.reset();
 
-    await new Promise(resolve => setTimeout(resolve, durationMs));
+    await new Promise((resolve) => setTimeout(resolve, durationMs));
 
     const end = this.getMetrics();
 

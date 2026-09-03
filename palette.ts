@@ -125,7 +125,11 @@ export const DEFAULT_PALETTE: GamePalette = {
   gray: { name: 'gray', hex: '#6B6B6B', description: 'Medium gray' },
   black: { name: 'black', hex: '#1A1A1A', description: 'Near black' },
   snow: { name: 'snow', hex: '#EFF7FA', description: 'Icy white-blue (winter grass)' },
-  shadow: { name: 'shadow', hex: '#122415', description: 'Very dark green (mushroom forest floor)' },
+  shadow: {
+    name: 'shadow',
+    hex: '#122415',
+    description: 'Very dark green (mushroom forest floor)',
+  },
 };
 
 /**
@@ -176,7 +180,7 @@ export function applyPaletteToDOM(): void {
 
   // Generate CSS for all palette colors
   const css = Object.values(currentPalette)
-    .map(color => `.bg-palette-${color.name} { background-color: ${color.hex}; }`)
+    .map((color) => `.bg-palette-${color.name} { background-color: ${color.hex}; }`)
     .join('\n');
 
   // Inject CSS into document
@@ -193,6 +197,17 @@ export function applyPaletteToDOM(): void {
  */
 export function getColorHex(colorName: keyof GamePalette): string {
   return currentPalette[colorName]?.hex || '#000000';
+}
+
+/**
+ * Get color hex value by an arbitrary string name, e.g. parsed out of a CSS
+ * class at runtime. Unknown names fall back to black, exactly like getColorHex
+ * does for a missing key.
+ */
+export function getColorHexByName(colorName: string): string {
+  // The `in` check guarantees the keyof cast is valid for real palette keys;
+  // unknown names take the same black fallback getColorHex uses for missing keys.
+  return colorName in currentPalette ? getColorHex(colorName as keyof GamePalette) : '#000000';
 }
 
 /**
@@ -214,4 +229,3 @@ export function exportPalette(): string {
   });
   return JSON.stringify(exportData, null, 2);
 }
-

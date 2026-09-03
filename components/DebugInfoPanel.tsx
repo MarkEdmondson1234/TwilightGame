@@ -5,7 +5,7 @@ import { PLAYER_SIZE } from '../constants';
 import { mapManager } from '../maps';
 import { TimeManager } from '../utils/TimeManager';
 import { ColorResolver } from '../utils/ColorResolver';
-import { getColorHex } from '../palette';
+import { getColorHexByName } from '../palette';
 import { Z_DEBUG_PANEL, zClass } from '../zIndex';
 
 interface DebugInfoPanelProps {
@@ -30,7 +30,7 @@ const DebugInfoPanel: React.FC<DebugInfoPanelProps> = ({
   const clickedColorName =
     clickedColorTrace?.finalColor?.match(/bg-palette-(\w+)/)?.[1] || 'unknown';
   const clickedColorHex =
-    clickedColorName !== 'unknown' ? getColorHex(clickedColorName as any) : '#000000';
+    clickedColorName !== 'unknown' ? getColorHexByName(clickedColorName) : '#000000';
 
   const halfSize = PLAYER_SIZE / 2;
 
@@ -47,7 +47,7 @@ const DebugInfoPanel: React.FC<DebugInfoPanelProps> = ({
   // Get resolved color with full trace for current tile
   const colorTrace = tileData ? ColorResolver.traceTileColor(tileData.type) : null;
   const colorName = colorTrace?.finalColor?.match(/bg-palette-(\w+)/)?.[1] || 'unknown';
-  const colorHex = colorName !== 'unknown' ? getColorHex(colorName as any) : '#000000';
+  const colorHex = colorName !== 'unknown' ? getColorHexByName(colorName) : '#000000';
 
   // Source labels for display
   const sourceLabels: Record<string, { label: string; color: string }> = {

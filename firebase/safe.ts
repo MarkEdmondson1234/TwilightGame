@@ -11,11 +11,13 @@
 
 // Re-export types that don't need the package at runtime
 export type { AuthState } from './authService';
-export type { AlbumEntry } from './sharedAlbumService';
+import type { AuthState } from './authService';
+import type { FarmPlot, PlacedItem } from '../types';
+import type { SharedConversationSummary, SharedWorldEvent, SaveSlot } from './types';
+import type { SharedPlotDoc } from './communityGardenService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { ChatMessage } from '../multiplayer/chat';
-import type { PlacedItem } from '../types';
 import type { Photo } from '../types/photography';
 import type { AlbumEntry } from './sharedAlbumService';
 
@@ -23,7 +25,7 @@ import type { AlbumEntry } from './sharedAlbumService';
 const stubAuthService = {
   initialize: () => {},
   destroy: () => {},
-  onAuthStateChange: (_cb: (state: any) => void) => {
+  onAuthStateChange: (_cb: (state: AuthState) => void) => {
     // Immediately notify with "not loaded" state
     _cb({ user: null, isLoading: false, isAuthenticated: false, isAnonymous: false });
     return () => {};
@@ -48,14 +50,14 @@ const stubAuthService = {
 const stubSharedDataService = {
   getNPCGossip: async () => null,
   addConversationSummary: async () => {},
-  getWorldEvents: async () => [] as any[],
+  getWorldEvents: async () => [] as SharedWorldEvent[],
   addWorldEvent: async () => false,
   getRecentDiscoveries: async () => [] as string[],
-  getConversationSummaries: async () => [] as any[],
+  getConversationSummaries: async () => [] as SharedConversationSummary[],
   getRemainingContributions: () => 0,
   // Admin methods
-  getAllConversationSummaries: async () => [] as any[],
-  getWorldEventsWithIds: async () => [] as any[],
+  getAllConversationSummaries: async () => [] as (SharedConversationSummary & { docId: string })[],
+  getWorldEventsWithIds: async () => [] as (SharedWorldEvent & { docId: string })[],
   deleteConversationSummary: async () => false,
   deleteWorldEvent: async () => false,
 };
@@ -100,14 +102,16 @@ const stubPaintingStorage = {
 const stubCommunityGardenService = {
   startListening: () => {},
   stopListening: () => {},
-  onPlotsChanged: (_cb: (plots: Map<string, unknown>) => void) => () => {},
+  onPlotsChanged: (_cb: (plots: Map<string, SharedPlotDoc>) => void) => () => {},
   writePlot: async () => false as boolean,
   clearPlot: async () => false as boolean,
   // Local-only play has nobody to lose a race to, so every claim succeeds.
   claimPlot: async () => true as boolean,
-  docToFarmPlot: (_doc: unknown) => null as any,
+  // No Firestore docs exist to convert, and the real service can only ever
+  // produce a FarmPlot for a valid doc — null is the honest stub value.
+  docToFarmPlot: (_doc: unknown): FarmPlot | null => null,
   getPlotId: (mapId: string, x: number, y: number) => `${mapId}:${x}:${y}`,
-  getRemotePlots: () => new Map<string, unknown>(),
+  getRemotePlots: () => new Map<string, SharedPlotDoc>(),
   isActive: () => false,
   destroy: () => {},
 };
@@ -181,7 +185,7 @@ const stubSharedAlbumService = {
 
 /** Stub cloudSaveService when Firebase is not available */
 const stubCloudSaveService = {
-  getSaveSlots: async () => [] as any[],
+  getSaveSlots: async () => [] as SaveSlot[],
   getSaveMetadata: async () => null,
   saveGame: async () => {},
   loadGame: async () => null,

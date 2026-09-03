@@ -998,7 +998,10 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                     li: ({ ...props }) => (
                       <li className="ml-4" style={{ color: colours.text }} {...props} />
                     ),
-                    code: ({ inline, ...props }: any) =>
+                    code: ({
+                      inline,
+                      ...props
+                    }: { inline?: boolean } & React.ComponentPropsWithoutRef<'code'>) =>
                       inline ? (
                         <code
                           className="px-2 py-1 rounded font-mono text-sm"

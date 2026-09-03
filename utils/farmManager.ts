@@ -1316,7 +1316,7 @@ class FarmManager {
         let applied = 0;
         let purged = 0;
         for (const [plotId, doc] of remotePlots) {
-          const farmPlot = service.docToFarmPlot(doc as any);
+          const farmPlot = service.docToFarmPlot(doc);
           if (!farmPlot) continue;
 
           // Validate that this position is still a valid farm tile in the map definition.

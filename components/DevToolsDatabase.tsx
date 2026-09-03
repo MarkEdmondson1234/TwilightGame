@@ -20,7 +20,7 @@ import {
   type SyncState,
 } from '../firebase/safe';
 import { isAdmin } from '../firebase/adminUtils';
-import type { SaveSlot } from '../firebase/types';
+import type { SaveSlot, SharedEventType } from '../firebase/types';
 
 // ============================================
 // Helpers
@@ -352,16 +352,13 @@ function SharedEventsSection() {
   const admin = isAdmin();
   const [events, setEvents] = useState<EventWithId[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filterType, setFilterType] = useState('');
+  const [filterType, setFilterType] = useState<SharedEventType | ''>('');
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await shared.getWorldEventsWithIds(
-        filterType ? (filterType as any) : undefined,
-        50
-      );
-      setEvents(result as EventWithId[]);
+      const result = await shared.getWorldEventsWithIds(filterType || undefined, 50);
+      setEvents(result);
     } catch (err) {
       console.error('[DevToolsDB] Failed to fetch events:', err);
     } finally {
@@ -397,7 +394,7 @@ function SharedEventsSection() {
         <div className="devtools-control" style={{ marginBottom: 0, flex: 1, minWidth: '120px' }}>
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value)}
+            onChange={(e) => setFilterType(e.target.value as SharedEventType | '')}
             style={{ width: '100%' }}
           >
             <option value="">All Types</option>

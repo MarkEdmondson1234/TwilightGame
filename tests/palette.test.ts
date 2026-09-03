@@ -11,6 +11,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getPalette,
   getColorHex,
+  getColorHexByName,
   updatePaletteColor,
   resetPalette,
   exportPalette,
@@ -72,8 +73,9 @@ describe('palette.ts', () => {
     });
 
     it('returns fallback for unknown color', () => {
-      // Unknown color should return #000000
-      expect(getColorHex('nonexistent' as any)).toBe('#000000');
+      // Unknown color should return #000000 (public string-name API, same
+      // fallback path getColorHex uses for a missing key)
+      expect(getColorHexByName('nonexistent')).toBe('#000000');
     });
 
     it('returns hex in correct format (#XXXXXX)', () => {

@@ -12,6 +12,7 @@
 import { Position, Direction } from './core';
 import { AnimationConditions } from './animation';
 import type { SharedEventType } from '../firebase/types';
+import type { CookingDomain, RecipeCategory } from '../data/recipes';
 
 // NPC (Non-Player Character) system
 export enum NPCBehavior {
@@ -120,11 +121,11 @@ export interface DialogueResponse {
   hiddenIfRecipeUnlocked?: string; // Hide if this recipe is already unlocked
   hiddenIfRecipeMastered?: string; // Hide if this recipe is already mastered
   // Cooking domain requirements (savoury, dessert, baking)
-  requiredDomainMastered?: string; // Only show if this cooking domain is mastered
-  requiredDomainStarted?: string; // Only show if this domain has been started (any recipe unlocked)
+  requiredDomainMastered?: CookingDomain; // Only show if this cooking domain is mastered
+  requiredDomainStarted?: RecipeCategory; // Only show if this category has any recipe unlocked
   requiredAllDomainRecipesUnlocked?: string; // Only show if all recipes in this domain are unlocked
-  hiddenIfDomainStarted?: string; // Hide if any recipe in this domain is unlocked
-  hiddenIfDomainMastered?: string; // Hide if this domain is fully mastered
+  hiddenIfDomainStarted?: RecipeCategory; // Hide if any recipe in this category is unlocked
+  hiddenIfDomainMastered?: CookingDomain; // Hide if this domain is fully mastered
   hiddenIfAnyDomainStarted?: boolean; // Hide if player has started any domain (not mastered yet)
   requiredCookingCourseComplete?: boolean; // Only show once all 3 cooking domains are mastered
   hiddenIfCookingCourseComplete?: boolean; // Hide once all 3 cooking domains are mastered
