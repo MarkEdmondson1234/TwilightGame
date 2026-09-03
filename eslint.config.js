@@ -71,6 +71,9 @@ export default tseslint.config(
       'utils/dialogueHandlers.ts',
       'GameState.ts',
       'GameStatePersistence.ts',
+      'utils/farmManager.ts',
+      'utils/FriendshipManager.ts',
+      'utils/actionHandlers.ts',
     ],
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],

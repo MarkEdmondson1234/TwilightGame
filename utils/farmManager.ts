@@ -14,10 +14,11 @@ import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
 import { getTileCoords } from './mapUtils';
-import { GROWTH_THRESHOLDS, DEBUG, SHARED_FARM_MAP_IDS } from '../constants';
+import { GROWTH_THRESHOLDS, SHARED_FARM_MAP_IDS } from '../constants';
 import { getWeatherZone } from '../data/weatherConfig';
 import { eventBus, GameEvent } from './EventBus';
 import { reportMessage } from './errorReporting';
+import { debugLog, isDebugLogEnabled } from './debugLog';
 
 /** Interval for batch-flushing dirty shared plots to Firestore */
 const SHARED_SYNC_INTERVAL_MS = 10_000;
@@ -126,9 +127,7 @@ class FarmManager {
     }
 
     if (updated.length > 0) {
-      if (DEBUG.FARM) {
-        console.log(`[FarmManager] Updated ${updated.length} plots`);
-      }
+      debugLog('FarmManager', `Updated ${updated.length} plots`);
       // Emit a single event for all crop growth updates
       eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
     }
@@ -229,8 +228,7 @@ class FarmManager {
     if (plot.state === FarmPlotState.WILTING) {
       const msSinceStateChange = now - plot.stateChangedAtTimestamp;
       if (msSinceStateChange >= crop.deathGracePeriod) {
-        if (DEBUG.FARM)
-          console.log(`[FarmManager] Crop died at ${plot.position.x},${plot.position.y}`);
+        debugLog('FarmManager', `Crop died at ${plot.position.x},${plot.position.y}`);
         return {
           ...plot,
           state: FarmPlotState.DEAD,
@@ -247,8 +245,7 @@ class FarmManager {
       if (needsWater) {
         const msSinceNeeded = msSinceWatered - crop.waterNeededInterval;
         if (msSinceNeeded >= crop.wiltingGracePeriod) {
-          if (DEBUG.FARM)
-            console.log(`[FarmManager] Crop wilting at ${plot.position.x},${plot.position.y}`);
+          debugLog('FarmManager', `Crop wilting at ${plot.position.x},${plot.position.y}`);
           return {
             ...plot,
             state: FarmPlotState.WILTING,
@@ -274,8 +271,7 @@ class FarmManager {
       const growthTime = isWatered ? crop.growthTimeWatered : crop.growthTime;
 
       if (msSincePlanted >= growthTime) {
-        if (DEBUG.FARM)
-          console.log(`[FarmManager] Crop ready at ${plot.position.x},${plot.position.y}`);
+        debugLog('FarmManager', `Crop ready at ${plot.position.x},${plot.position.y}`);
         return {
           ...plot,
           state: FarmPlotState.READY,
@@ -296,10 +292,10 @@ class FarmManager {
     const key = this.getPlotKey(mapId, position);
     const existing = this.plots.get(key);
 
-    if (DEBUG.FARM)
-      console.log(
-        `[FarmManager] tillSoil called: mapId=${mapId}, position=(${position.x},${position.y}), existing=${existing ? `state=${FarmPlotState[existing.state]}` : 'none'}`
-      );
+    debugLog(
+      'FarmManager',
+      `tillSoil called: mapId=${mapId}, position=(${position.x},${position.y}), existing=${existing ? `state=${FarmPlotState[existing.state]}` : 'none'}`
+    );
 
     // Can only till fallow soil or create new plots
     if (existing && existing.state !== FarmPlotState.FALLOW) {
@@ -331,7 +327,7 @@ class FarmManager {
     };
 
     this.registerPlot(plot);
-    if (DEBUG.FARM) console.log(`[FarmManager] Tilled soil at ${position.x},${position.y}`);
+    debugLog('FarmManager', `Tilled soil at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: tile, action: 'till' });
     this.syncSharedPlot(mapId, position);
     return true;
@@ -403,10 +399,10 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM)
-      console.log(
-        `[FarmManager] Planted ${cropId} at ${position.x},${position.y} in ${gameTime.season} (used 1 seed)`
-      );
+    debugLog(
+      'FarmManager',
+      `Planted ${cropId} at ${position.x},${position.y} in ${gameTime.season} (used 1 seed)`
+    );
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'plant' });
     this.syncSharedPlot(mapId, position);
     return { success: true };
@@ -469,7 +465,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM) console.log(`[FarmManager] Watered crop at ${position.x},${position.y}`);
+    debugLog('FarmManager', `Watered crop at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'water' });
     this.syncSharedPlot(mapId, position);
     return true;
@@ -502,7 +498,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM) console.log(`[FarmManager] Revived crop at ${position.x},${position.y}`);
+    debugLog('FarmManager', `Revived crop at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'revive' });
     this.syncSharedPlot(mapId, position);
     return true;
@@ -553,10 +549,10 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM)
-      console.log(
-        `[FarmManager] Applied fertiliser at ${position.x},${position.y}, quality now ${newQuality}`
-      );
+    debugLog(
+      'FarmManager',
+      `Applied fertiliser at ${position.x},${position.y}, quality now ${newQuality}`
+    );
     return { success: true };
   }
 
@@ -653,12 +649,13 @@ class FarmManager {
     }
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM) {
+    if (isDebugLogEnabled('FarmManager')) {
       const qualityStr = quality !== 'normal' ? ` (${quality} quality)` : '';
       const seedsInfo = seedsDropped > 0 ? ` + ${seedsDropped}x seeds` : '';
       const herbInfo = crop.isHerb ? ' (herb — plot persists, in cooldown)' : '';
-      console.log(
-        `[FarmManager] Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr}${seedsInfo}${herbInfo} at ${position.x},${position.y}`
+      debugLog(
+        'FarmManager',
+        `Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr}${seedsInfo}${herbInfo} at ${position.x},${position.y}`
       );
     }
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
@@ -746,7 +743,7 @@ class FarmManager {
         this.registerPlot({ ...plotBefore });
         this.dirtySharedPlots.delete(plotId);
 
-        console.log(`[SharedFarm] Lost the race for ${plotId} — harvest rolled back`);
+        debugLog('SharedFarm', `Lost the race for ${plotId} — harvest rolled back`);
         eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position, action: 'harvest' });
         eventBus.emit(GameEvent.FARM_HARVEST_CONTESTED, {
           mapId,
@@ -803,7 +800,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM) console.log(`[FarmManager] Removed herb at ${position.x},${position.y}`);
+    debugLog('FarmManager', `Removed herb at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'clear' });
     this.syncSharedPlot(mapId, position);
     return true;
@@ -885,10 +882,11 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM) {
+    if (isDebugLogEnabled('FarmManager')) {
       const qualityStr = quality !== 'normal' ? ` (${quality} quality)` : '';
-      console.log(
-        `[FarmManager] Dual-harvest (${mode}): ${cropYield}x ${crop.displayName} + ${seedsDropped}x seeds${qualityStr} at ${position.x},${position.y}`
+      debugLog(
+        'FarmManager',
+        `Dual-harvest (${mode}): ${cropYield}x ${crop.displayName} + ${seedsDropped}x seeds${qualityStr} at ${position.x},${position.y}`
       );
     }
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
@@ -936,7 +934,7 @@ class FarmManager {
     };
 
     this.registerPlot(updatedPlot);
-    if (DEBUG.FARM) console.log(`[FarmManager] Cleared dead crop at ${position.x},${position.y}`);
+    debugLog('FarmManager', `Cleared dead crop at ${position.x},${position.y}`);
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'clear' });
     this.syncSharedPlot(mapId, position);
     return true;
@@ -1123,9 +1121,7 @@ class FarmManager {
       }
     }
 
-    if (affectedCount > 0 && DEBUG.FARM) {
-      console.log(`[FarmManager] Set ${affectedCount} crops to ${quality} quality`);
-    }
+    debugLog('FarmManager', `Set ${affectedCount} crops to ${quality} quality`);
 
     return affectedCount;
   }
@@ -1160,9 +1156,7 @@ class FarmManager {
       }
     }
 
-    if (affectedCount > 0 && DEBUG.FARM) {
-      console.log(`[FarmManager] Applied abundant harvest blessing to ${affectedCount} crops`);
-    }
+    debugLog('FarmManager', `Applied abundant harvest blessing to ${affectedCount} crops`);
 
     return affectedCount;
   }
@@ -1215,9 +1209,7 @@ class FarmManager {
     }
 
     if (wateredCount > 0) {
-      if (DEBUG.FARM) {
-        console.log(`[FarmManager] Rain watered ${wateredCount} outdoor plots`);
-      }
+      debugLog('FarmManager', `Rain watered ${wateredCount} outdoor plots`);
       eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { action: 'water' });
     }
 
@@ -1259,12 +1251,12 @@ class FarmManager {
         this.plots.set(key, fallenPlot);
         this.dirtySharedPlots.add(key);
         purgedCount++;
-        if (DEBUG.FARM) console.log(`[SharedFarm] Orphaned local plot queued for deletion: ${key}`);
+        debugLog('SharedFarm', `Orphaned local plot queued for deletion: ${key}`);
       }
     }
 
     if (purgedCount > 0) {
-      console.log(`[SharedFarm] Purged ${purgedCount} orphaned local plots from ${mapId}`);
+      debugLog('SharedFarm', `Purged ${purgedCount} orphaned local plots from ${mapId}`);
       eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
     }
   }
@@ -1277,7 +1269,7 @@ class FarmManager {
     if (!SHARED_FARM_MAP_IDS.has(mapId)) return;
     const key = this.getPlotKey(mapId, position);
     this.dirtySharedPlots.add(key);
-    if (DEBUG.FARM) console.log(`[SharedFarm] Marked dirty: ${key}`);
+    debugLog('SharedFarm', `Marked dirty: ${key}`);
   }
 
   /**
@@ -1297,7 +1289,7 @@ class FarmManager {
 
     // Start the flush interval
     this.flushInterval = setInterval(() => this.flushDirtyPlots(), SHARED_SYNC_INTERVAL_MS);
-    console.log(`[SharedFarm] Started batch sync (${SHARED_SYNC_INTERVAL_MS / 1000}s interval)`);
+    debugLog('SharedFarm', `Started batch sync (${SHARED_SYNC_INTERVAL_MS / 1000}s interval)`);
 
     // Start real-time listener for remote changes
     try {
@@ -1328,7 +1320,7 @@ class FarmManager {
             if (baseTile !== TileType.SOIL_FALLOW) {
               this.dirtySharedPlots.add(plotId);
               purged++;
-              if (DEBUG.FARM) console.log(`[SharedFarm] Rejecting orphaned remote plot: ${plotId}`);
+              debugLog('SharedFarm', `Rejecting orphaned remote plot: ${plotId}`);
               continue;
             }
           }
@@ -1344,8 +1336,9 @@ class FarmManager {
         }
 
         if (purged > 0) {
-          console.log(
-            `[SharedFarm] Rejected ${purged} orphaned remote plots — queued for Firestore deletion`
+          debugLog(
+            'SharedFarm',
+            `Rejected ${purged} orphaned remote plots — queued for Firestore deletion`
           );
         }
 
@@ -1368,12 +1361,12 @@ class FarmManager {
         }
 
         if (applied > 0) {
-          console.log(`[SharedFarm] Applied ${applied} remote updates from other players`);
+          debugLog('SharedFarm', `Applied ${applied} remote updates from other players`);
           eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { action: 'water' });
         }
       });
     } catch {
-      console.log('[SharedFarm] Firebase not available — local-only mode');
+      debugLog('SharedFarm', 'Firebase not available — local-only mode');
     }
   }
 
@@ -1404,7 +1397,7 @@ class FarmManager {
       // Firebase not available
     }
 
-    console.log('[SharedFarm] Stopped batch sync');
+    debugLog('SharedFarm', 'Stopped batch sync');
   }
 
   /**
@@ -1461,7 +1454,7 @@ class FarmManager {
       }
 
       if (written > 0 || cleared > 0) {
-        console.log(`[SharedFarm] Flushed ${written} writes, ${cleared} clears to Firestore`);
+        debugLog('SharedFarm', `Flushed ${written} writes, ${cleared} clears to Firestore`);
       }
       if (failed > 0) {
         console.warn(`[SharedFarm] ${failed} plot write(s) failed and will be retried`);
@@ -1475,7 +1468,7 @@ class FarmManager {
         });
       }
     } catch {
-      console.log('[SharedFarm] Flush failed — Firebase not available');
+      debugLog('SharedFarm', 'Flush failed — Firebase not available');
     }
   }
 
@@ -1534,8 +1527,9 @@ class FarmManager {
    * map, as debug tooling intends.
    */
   debugAdvanceTime(milliseconds: number, mapId?: string): void {
-    console.log(
-      `[FarmManager DEBUG] Advancing time by ${milliseconds}ms${mapId ? ` (map: ${mapId})` : ''}`
+    debugLog(
+      'FarmManager',
+      `Advancing time by ${milliseconds}ms${mapId ? ` (map: ${mapId})` : ''}`
     );
 
     for (const plot of this.plots.values()) {
@@ -1558,7 +1552,7 @@ class FarmManager {
 
     // Trigger update to recalculate states
     this.updateAllPlots();
-    console.log(`[FarmManager DEBUG] Time advanced, plots updated`);
+    debugLog('FarmManager', `Time advanced, plots updated`);
   }
 }
 
