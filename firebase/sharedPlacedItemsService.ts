@@ -96,7 +96,6 @@ class SharedPlacedItemsService {
               sharedPlacedItemsManager.remove(change.doc.id);
               continue;
             }
-            this.publishedIds.add(change.doc.id);
             const item = decodeSharedPlacedItem(change.doc.data());
             if (!item) {
               if (DEBUG.MULTIPLAYER) {
@@ -105,6 +104,17 @@ class SharedPlacedItemsService {
               continue;
             }
             if (item.mapId !== mapId) continue;
+
+            // Only ids for the mirrored map, as getPublishedIds() promises.
+            //
+            // This add used to sit above the map check, so publishedIds accumulated every
+            // document in the collection while the mirror held only the current map. The
+            // deletion pass in useSharedPlacedItemsController treats "published but not in
+            // the mirror and not ours" as "picked up" — so placing anything on one shared
+            // map deleted every shared item on all the others. A malformed document is
+            // likewise left out: we cannot read its map, so we must not conclude it is
+            // ours to delete.
+            this.publishedIds.add(change.doc.id);
             sharedPlacedItemsManager.apply(item);
           }
           this.#emit();
