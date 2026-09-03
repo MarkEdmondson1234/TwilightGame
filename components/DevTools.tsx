@@ -29,6 +29,7 @@ import type { MiniGameTriggerData } from '../minigames/types';
 import DevToolsDatabase from './DevToolsDatabase';
 import { cutsceneManager } from '../utils/CutsceneManager';
 import { ALL_CUTSCENES } from '../data/cutscenes';
+import { debugLog } from '../utils/debugLog';
 import './DevTools.css';
 
 interface DevToolsProps {
@@ -83,7 +84,7 @@ const AudioDebugSection: React.FC = () => {
     if (audioManager.hasSound(key)) {
       audioManager.playSfx(key);
     } else {
-      console.log(`[DevTools] Sound "${key}" not loaded yet`);
+      debugLog('DevTools', `Sound "${key}" not loaded yet`);
     }
   };
 
@@ -466,7 +467,7 @@ const MagicDebugSection: React.FC = () => {
     magicManager.unlockMagicBook();
     setMagicBookUnlocked(true);
     setCurrentLevel(magicManager.getCurrentLevel());
-    console.log('[DevTools] Magic book unlocked!');
+    debugLog('DevTools', 'Magic book unlocked!');
   };
 
   return (
@@ -548,7 +549,7 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
     farmManager.debugAdvanceTime(ms);
     characterData.saveFarmPlots(farmManager.getAllPlots());
     onFarmUpdate?.();
-    console.log(`[DevTools] Advanced farm time by ${ms / 1000}s`);
+    debugLog('DevTools', `Advanced farm time by ${ms / 1000}s`);
   };
 
   const resetAllPlots = () => {
@@ -561,7 +562,7 @@ const FarmingDebugSection: React.FC<{ onFarmUpdate?: () => void }> = ({ onFarmUp
     farmManager.loadPlots(otherMapPlots);
     characterData.saveFarmPlots(otherMapPlots);
     onFarmUpdate?.();
-    console.log(`[DevTools] Reset all farm plots for map: ${currentMapId}`);
+    debugLog('DevTools', `Reset all farm plots for map: ${currentMapId}`);
   };
 
   return (
@@ -1056,7 +1057,7 @@ const MiniGamesDebugSection: React.FC<{
     const inv = inventoryManager.getInventoryData();
     characterData.saveInventory(inv.items, inv.tools);
     updateArtStatus();
-    console.log('[DevTools] Granted art supplies: easel, 5 canvases, 6 paint types (x2 each)');
+    debugLog('DevTools', 'Granted art supplies: easel, 5 canvases, 6 paint types (x2 each)');
   };
 
   // IDs that get the art supplies helper
@@ -1091,7 +1092,7 @@ const MiniGamesDebugSection: React.FC<{
     }
     const inv = inventoryManager.getInventoryData();
     characterData.saveInventory(inv.items, inv.tools);
-    console.log('[DevTools] Gave 3x each wreath flower (20 types)');
+    debugLog('DevTools', 'Gave 3x each wreath flower (20 types)');
   };
 
   return (
@@ -1342,13 +1343,13 @@ const DevTools: React.FC<DevToolsProps> = ({
   const handleAutomaticWeatherToggle = (enabled: boolean) => {
     setAutomaticWeather(enabled);
     gameState.setAutomaticWeather(enabled);
-    console.log(`[DevTools] Automatic weather ${enabled ? 'enabled' : 'disabled'}`);
+    debugLog('DevTools', `Automatic weather ${enabled ? 'enabled' : 'disabled'}`);
   };
 
   const handleDriftSpeedChange = (newSpeed: number) => {
     setDriftSpeed(newSpeed);
     gameState.setWeatherDriftSpeed(newSpeed);
-    console.log(`[DevTools] Drift speed set to ${newSpeed}x`);
+    debugLog('DevTools', `Drift speed set to ${newSpeed}x`);
   };
 
   const handleResetToRealTime = () => {
@@ -1602,8 +1603,9 @@ const DevTools: React.FC<DevToolsProps> = ({
                       className="devtools-button"
                       onClick={() => {
                         handleF9();
-                        console.log(
-                          '[DevTools] Gave magical ingredients, cooking items, crops, and potions'
+                        debugLog(
+                          'DevTools',
+                          'Gave magical ingredients, cooking items, crops, and potions'
                         );
                       }}
                       title="5x each: magical ingredients, cooking items, crops, and sample potions"
@@ -1614,7 +1616,7 @@ const DevTools: React.FC<DevToolsProps> = ({
                       className="devtools-button"
                       onClick={() => {
                         gameState.addGold(500);
-                        console.log('[DevTools] Added 500 gold');
+                        debugLog('DevTools', 'Added 500 gold');
                       }}
                       title="Add 500 gold"
                     >

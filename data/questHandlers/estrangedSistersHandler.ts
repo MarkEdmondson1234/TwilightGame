@@ -11,7 +11,7 @@ import { inventoryManager } from '../../utils/inventoryManager';
 import { characterData } from '../../utils/CharacterData';
 import { friendshipManager } from '../../utils/FriendshipManager';
 import { eventBus, GameEvent } from '../../utils/EventBus';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -59,7 +59,7 @@ export function getEstrangedSistersStage(): string | null {
  */
 export function deliverLetterToJuniper(): string {
   if (!inventoryManager.hasItem(QUEST_ITEMS.LETTER)) {
-    if (DEBUG.QUEST) console.log('[EstrangedSisters] Player offered letter but has none!');
+    debugLog('EstrangedSisters', 'Player offered letter but has none!');
     return 'sisters_letter_no_letter';
   }
 
@@ -70,7 +70,7 @@ export function deliverLetterToJuniper(): string {
 
   eventChainManager.advanceToStage(QUEST_ID, QUEST_STAGES.PHOTO_NEEDED);
 
-  if (DEBUG.QUEST) console.log('[EstrangedSisters] Letter delivered to Juniper.');
+  debugLog('EstrangedSisters', 'Letter delivered to Juniper.');
   return 'sisters_letter_read';
 }
 
@@ -81,7 +81,7 @@ export function deliverLetterToJuniper(): string {
  */
 export function deliverPhotoToJuniper(): string {
   if (!inventoryManager.hasItem(QUEST_ITEMS.PHOTO)) {
-    if (DEBUG.QUEST) console.log('[EstrangedSisters] Player offered photo but has none!');
+    debugLog('EstrangedSisters', 'Player offered photo but has none!');
     return 'sisters_photo_no_photo';
   }
 
@@ -92,7 +92,7 @@ export function deliverPhotoToJuniper(): string {
 
   eventChainManager.advanceToStage(QUEST_ID, QUEST_STAGES.PHOTO_DELIVERED);
 
-  if (DEBUG.QUEST) console.log('[EstrangedSisters] Photo delivered to Juniper.');
+  debugLog('EstrangedSisters', 'Photo delivered to Juniper.');
   return 'sisters_photo_seen';
 }
 
@@ -113,5 +113,5 @@ export function completeEstrangedSistersQuest(): void {
   );
   friendshipManager.addPoints('witch', 300, 'estranged sisters quest: sisters reunited');
 
-  if (DEBUG.QUEST) console.log('[EstrangedSisters] Quest complete! +300 friendship to both sisters.');
+  debugLog('EstrangedSisters', 'Quest complete! +300 friendship to both sisters.');
 }

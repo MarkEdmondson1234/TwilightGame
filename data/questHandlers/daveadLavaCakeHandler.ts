@@ -14,7 +14,7 @@ import { inventoryManager } from '../../utils/inventoryManager';
 import { characterData } from '../../utils/CharacterData';
 import { cookingManager } from '../../utils/CookingManager';
 import { eventBus, GameEvent } from '../../utils/EventBus';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -34,16 +34,21 @@ handlerRegistry.register(DAVEAD_QUEST_ID, 'complete', async (_chainId, _stageId,
     inventoryManager.removeItem(DAVEAD_SANDWICH_ITEM_ID, 1);
     const invData = inventoryManager.getInventoryData();
     characterData.saveInventory(invData.items, invData.tools);
-    eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'remove', itemId: DAVEAD_SANDWICH_ITEM_ID });
-    if (DEBUG.QUEST) console.log('[DaveadLavaCake] Removed cucumber and salmon sandwich from inventory');
+    eventBus.emit(GameEvent.INVENTORY_CHANGED, {
+      action: 'remove',
+      itemId: DAVEAD_SANDWICH_ITEM_ID,
+    });
+    debugLog('DaveadLavaCake', 'Removed cucumber and salmon sandwich from inventory');
   } else {
-    console.warn('[DaveadLavaCake] Quest complete but sandwich not found in inventory — proceeding anyway');
+    console.warn(
+      '[DaveadLavaCake] Quest complete but sandwich not found in inventory — proceeding anyway'
+    );
   }
 
   // Teach the lava cake recipe
   const taught = cookingManager.teachRecipe(DAVEAD_RECIPE_ID, 'davead');
   if (taught) {
-    if (DEBUG.QUEST) console.log('[DaveadLavaCake] Lava cake recipe unlocked in recipe book');
+    debugLog('DaveadLavaCake', 'Lava cake recipe unlocked in recipe book');
   } else {
     console.warn('[DaveadLavaCake] teachRecipe returned false — recipe may already be unlocked');
   }

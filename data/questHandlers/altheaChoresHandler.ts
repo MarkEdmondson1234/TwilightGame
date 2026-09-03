@@ -11,7 +11,7 @@ import { handlerRegistry } from '../../utils/EventChainHandlers';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { characterData } from '../../utils/CharacterData';
 import { eventBus, GameEvent } from '../../utils/EventBus';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -39,10 +39,34 @@ export interface CobwebPosition {
 }
 
 export const COBWEB_POSITIONS: CobwebPosition[] = [
-  { id: 0, relativeX: 0.93, relativeY: 0.11, radius: 0.07, description: 'Top-right corner (small web)' },
-  { id: 1, relativeX: 0.05, relativeY: 0.15, radius: 0.10, description: 'Top-left corner (large web with spider)' },
-  { id: 2, relativeX: 0.47, relativeY: 0.18, radius: 0.04, description: 'Centre ceiling (tiny hanging spider)' },
-  { id: 3, relativeX: 0.51, relativeY: 0.87, radius: 0.06, description: 'Centre-bottom floor (faint web)' },
+  {
+    id: 0,
+    relativeX: 0.93,
+    relativeY: 0.11,
+    radius: 0.07,
+    description: 'Top-right corner (small web)',
+  },
+  {
+    id: 1,
+    relativeX: 0.05,
+    relativeY: 0.15,
+    radius: 0.1,
+    description: 'Top-left corner (large web with spider)',
+  },
+  {
+    id: 2,
+    relativeX: 0.47,
+    relativeY: 0.18,
+    radius: 0.04,
+    description: 'Centre ceiling (tiny hanging spider)',
+  },
+  {
+    id: 3,
+    relativeX: 0.51,
+    relativeY: 0.87,
+    radius: 0.06,
+    description: 'Centre-bottom floor (faint web)',
+  },
   { id: 4, relativeX: 0.03, relativeY: 0.62, radius: 0.05, description: 'Left wall mid-height' },
 ];
 
@@ -104,9 +128,7 @@ export function markCobwebCleaned(cobwebId: number): boolean {
   cleaned[cobwebId] = true;
   eventChainManager.setMetadata(QUEST_ID, 'cobwebsCleaned', cleaned);
 
-  if (DEBUG.QUEST) {
-    console.log(`[AltheaChores] Cobweb ${cobwebId} cleaned (${getCobwebsRemaining()} remaining)`);
-  }
+  debugLog('AltheaChores', `Cobweb ${cobwebId} cleaned (${getCobwebsRemaining()} remaining)`);
 
   eventBus.emit(GameEvent.COBWEB_CLEANED, { cobwebId });
 
@@ -120,7 +142,7 @@ export function isTeaDelivered(): boolean {
 
 export function markTeaDelivered(): void {
   eventChainManager.setMetadata(QUEST_ID, 'teaDelivered', true);
-  if (DEBUG.QUEST) console.log('[AltheaChores] Tea delivered');
+  debugLog('AltheaChores', 'Tea delivered');
   checkQuestCompletion();
 }
 
@@ -130,7 +152,7 @@ export function areCookiesDelivered(): boolean {
 
 export function markCookiesDelivered(): void {
   eventChainManager.setMetadata(QUEST_ID, 'cookiesDelivered', true);
-  if (DEBUG.QUEST) console.log('[AltheaChores] Cookies delivered');
+  debugLog('AltheaChores', 'Cookies delivered');
   checkQuestCompletion();
 }
 
@@ -145,7 +167,7 @@ export function checkQuestCompletion(): boolean {
     // Advance to intermediate stage, NOT the end stage.
     // The dialogue with Althea will complete the quest after the lore reveal.
     eventChainManager.advanceToStage(QUEST_ID, 'chores_done');
-    if (DEBUG.QUEST) console.log('[AltheaChores] All chores done — awaiting lore reveal.');
+    debugLog('AltheaChores', 'All chores done — awaiting lore reveal.');
     return true;
   }
   return false;
@@ -162,6 +184,6 @@ handlerRegistry.register(QUEST_ID, 'active', async (_chainId, _stageId, _ctx) =>
     const invData = inventoryManager.getInventoryData();
     characterData.saveInventory(invData.items, invData.tools);
     eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add', itemId: 'tool_feather_duster' });
-    if (DEBUG.QUEST) console.log('[AltheaChores] Granted feather duster');
+    debugLog('AltheaChores', 'Granted feather duster');
   }
 });

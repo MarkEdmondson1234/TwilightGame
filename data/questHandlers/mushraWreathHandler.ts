@@ -17,8 +17,8 @@ import { characterData } from '../../utils/CharacterData';
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { gameState } from '../../GameState';
 import { itemAssets } from '../../assets';
-import { DEBUG } from '../../constants';
 import { TimeManager } from '../../utils/TimeManager';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -96,7 +96,7 @@ export function shouldSeedShedMushraAppear(): boolean {
 export function startWreathWorkshop(): void {
   if (eventChainManager.isChainStarted(QUEST_ID)) return;
   eventChainManager.startChain(QUEST_ID);
-  if (DEBUG.QUEST) console.log('[WreathWorkshop] Quest started');
+  debugLog('WreathWorkshop', 'Quest started');
 }
 
 // ============================================================================
@@ -135,7 +135,7 @@ export function deliverMaterials(): boolean {
   // Advance quest — the hanging handler will give the first wreath
   eventChainManager.advanceToStage(QUEST_ID, 'hanging');
 
-  if (DEBUG.QUEST) console.log('[WreathWorkshop] Materials delivered, advancing to hanging');
+  debugLog('WreathWorkshop', 'Materials delivered, advancing to hanging');
   return true;
 }
 
@@ -154,10 +154,10 @@ export function onWreathPlacedInVillage(): void {
     .getPlacedItems('village')
     .filter((item) => WREATH_ITEM_IDS.includes(item.itemId));
 
-  if (DEBUG.QUEST)
-    console.log(
-      `[WreathWorkshop] Wreaths placed in village: ${placedWreaths.length}/${WREATHS_REQUIRED}`
-    );
+  debugLog(
+    'WreathWorkshop',
+    `Wreaths placed in village: ${placedWreaths.length}/${WREATHS_REQUIRED}`
+  );
 
   if (placedWreaths.length >= WREATHS_REQUIRED) {
     eventChainManager.advanceToStage(QUEST_ID, 'complete');
@@ -170,7 +170,7 @@ export function onWreathPlacedInVillage(): void {
 
 // On entering gathering stage: nothing to spawn yet (table managed by WreathWorkshopManager)
 handlerRegistry.register(QUEST_ID, 'gathering', async () => {
-  if (DEBUG.QUEST) console.log('[WreathWorkshop] Stage: gathering');
+  debugLog('WreathWorkshop', 'Stage: gathering');
 });
 
 // On entering hanging stage: give the first wreath automatically
@@ -181,7 +181,7 @@ handlerRegistry.register(QUEST_ID, 'hanging', async () => {
   characterData.saveInventory(invData.items, invData.tools);
   eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add' });
 
-  if (DEBUG.QUEST) console.log('[WreathWorkshop] Stage: hanging — gave first wreath');
+  debugLog('WreathWorkshop', 'Stage: hanging — gave first wreath');
 });
 
 // On quest complete: remove village crafting table, place one in seed shed
@@ -209,5 +209,5 @@ handlerRegistry.register(QUEST_ID, 'complete', async () => {
     });
   }
 
-  if (DEBUG.QUEST) console.log('[WreathWorkshop] Quest complete — table moved to seed shed');
+  debugLog('WreathWorkshop', 'Quest complete — table moved to seed shed');
 });
