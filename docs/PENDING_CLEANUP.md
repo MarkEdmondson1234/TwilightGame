@@ -11,13 +11,13 @@ redone. Pick items up in any order — each section is self-contained.
 The sweep started from a clean bill of health (tsc clean, 874/874 tests, 0 lint
 errors) and worked the warning backlog down. Current baseline:
 
-| Metric                        | Sweep start | Now                                                                     |
-| ----------------------------- | ----------- | ----------------------------------------------------------------------- |
-| ESLint warnings               | 277         | **0**                                                                   |
-| `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                                    |
-| `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                                    |
-| `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                                    |
-| raw `console.log` sites       | 682         | **570** (PR #84 started the migration; helper + first subsystem landed) |
+| Metric                        | Sweep start | Now                                                   |
+| ----------------------------- | ----------- | ----------------------------------------------------- |
+| ESLint warnings               | 277         | **0**                                                 |
+| `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                  |
+| `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                  |
+| `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                  |
+| raw `console.log` sites       | 682         | **17** (PRs #84–#90; 595 now flow through `debugLog`) |
 
 **Verification command:** `npm run verify` (tsc + full test suite, ~4s).
 **Lint:** `npx eslint .` — the working rule all session: warnings are signal, so
