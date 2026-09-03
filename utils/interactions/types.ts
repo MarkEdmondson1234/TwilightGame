@@ -170,6 +170,12 @@ export interface GetInteractionsConfig {
   onOpenShop?: () => void;
   /** Open a mini-game by ID with trigger data */
   onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;
+  /** Ask the player to confirm before opening a mini-game (used when the definition sets `confirmMessage`) */
+  onConfirmMiniGame?: (
+    miniGameId: string,
+    message: string,
+    triggerData: MiniGameTriggerData
+  ) => void;
   onShowToast?: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
   /** Make a snow angel — block is the top-left tile of the clear 2x2 area found near the click */
   onMakeSnowAngel?: (block: Position) => void;

@@ -194,7 +194,7 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
   },
   [TileType.MINE_FLOOR]: {
     name: 'Mine Floor',
-    color: 'bg-stone-700', // Rocky mine floor color
+    color: 'bg-palette-gray', // Rocky mine floor color
     collisionType: CollisionType.WALKABLE,
     image: [tileAssets.mine_floor],
     textureGridSize: 4,
@@ -487,6 +487,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     name: 'Mine Entrance',
     color: 'bg-palette-sage', // Base grass color for background
     collisionType: CollisionType.SOLID, // Player cannot walk through the rocks
+    image: [], // Uses multi-tile sprite from SPRITE_METADATA
+  },
+  [TileType.WIZARD_TRIALS_ENTRANCE]: {
+    name: 'Wizard Trials Entrance',
+    color: 'bg-palette-gray',
+    collisionType: CollisionType.WALKABLE, // No collision - solid blocked the click-to-interact
+    baseType: TileType.MINE_FLOOR,
+    baseVisible: true,
     image: [], // Uses multi-tile sprite from SPRITE_METADATA
   },
 

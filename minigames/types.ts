@@ -97,6 +97,13 @@ export interface MiniGameDefinition {
    * If false (default), MiniGameHost renders a standard dark backdrop.
    */
   customBackdrop?: boolean;
+
+  /**
+   * If set, clicking a `mapLocation` trigger for this game shows a Yes/No
+   * confirmation prompt with this message before launching, instead of
+   * opening immediately. Only `mapLocationProvider` consults this today.
+   */
+  confirmMessage?: string;
 }
 
 // =============================================================================

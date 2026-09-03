@@ -22,6 +22,7 @@ export type UIOverlayName =
   | 'glamourModal'
   | 'journal'
   | 'miniGame'
+  | 'miniGameConfirm'
   | 'photoAlbum'
   | 'basketModal'
   | 'furnitureCatalogueUI';
@@ -41,6 +42,10 @@ export interface UIContext {
   // Mini-game context
   activeMiniGameId: string | null;
   miniGameTriggerData: MiniGameTriggerData | null;
+  // Mini-game confirmation prompt context
+  pendingMiniGameId: string | null;
+  pendingMiniGameMessage: string | null;
+  pendingMiniGameTriggerData: MiniGameTriggerData | null;
   // Shop context
   activeShopId: string | null;
 }
@@ -66,6 +71,7 @@ export interface UIState {
   basketModal: boolean;
   journal: boolean;
   miniGame: boolean;
+  miniGameConfirm: boolean;
   photoAlbum: boolean;
   furnitureCatalogueUI: boolean;
   // Context data
@@ -87,6 +93,10 @@ export interface OpenUIOptions {
   // For mini-game
   activeMiniGameId?: string;
   miniGameTriggerData?: MiniGameTriggerData;
+  // For mini-game confirmation prompt
+  pendingMiniGameId?: string;
+  pendingMiniGameMessage?: string;
+  pendingMiniGameTriggerData?: MiniGameTriggerData;
   // For shop UI
   activeShopId?: string;
 }
@@ -114,6 +124,9 @@ const initialContext: UIContext = {
   giftTargetNpcId: null,
   activeMiniGameId: null,
   miniGameTriggerData: null,
+  pendingMiniGameId: null,
+  pendingMiniGameMessage: null,
+  pendingMiniGameTriggerData: null,
   activeShopId: null,
 };
 
@@ -134,6 +147,7 @@ const initialState: UIState = {
   basketModal: false,
   journal: false,
   miniGame: false,
+  miniGameConfirm: false,
   photoAlbum: false,
   furnitureCatalogueUI: false,
   context: { ...initialContext },
@@ -198,6 +212,15 @@ export function useUIState() {
         if (options.miniGameTriggerData !== undefined) {
           newState.context.miniGameTriggerData = options.miniGameTriggerData;
         }
+        if (options.pendingMiniGameId !== undefined) {
+          newState.context.pendingMiniGameId = options.pendingMiniGameId;
+        }
+        if (options.pendingMiniGameMessage !== undefined) {
+          newState.context.pendingMiniGameMessage = options.pendingMiniGameMessage;
+        }
+        if (options.pendingMiniGameTriggerData !== undefined) {
+          newState.context.pendingMiniGameTriggerData = options.pendingMiniGameTriggerData;
+        }
         if (options.activeShopId !== undefined) {
           newState.context.activeShopId = options.activeShopId;
         }
@@ -236,6 +259,13 @@ export function useUIState() {
           ...prev.context,
           activeMiniGameId: null,
           miniGameTriggerData: null,
+        };
+      } else if (name === 'miniGameConfirm') {
+        newState.context = {
+          ...prev.context,
+          pendingMiniGameId: null,
+          pendingMiniGameMessage: null,
+          pendingMiniGameTriggerData: null,
         };
       } else if (name === 'shopUI') {
         newState.context = {
@@ -315,7 +345,8 @@ export function useUIState() {
       state.giftModal ||
       state.basketModal ||
       state.journal ||
-      state.miniGame
+      state.miniGame ||
+      state.miniGameConfirm
     );
   }, [state]);
 

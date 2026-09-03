@@ -121,6 +121,17 @@ function tileImages(
   // NOTE: data.getImage() is deliberately not called — it is a runtime resolver
   // needing map/position/season/time. Those sprites arrive via requestTexture().
 
+  // getTileData() (utils/mapUtils.ts) silently substitutes GRASS -> TUFT at ~90% of
+  // positions for natural outdoor variety. Anything that resolves to GRASS here —
+  // directly, or as another tile's baseType (e.g. LUMINESCENT_TOADSTOOL, normally
+  // placed on grass) — can therefore render TUFT's art at render time instead. Without
+  // this, a map that never otherwise needs TUFT (a cave/lava room using GRASS only as a
+  // decoration's baseType, say) never preloads it, so that decoration shows an
+  // untextured colour-fallback square at ~90% of its placements instead of its base.
+  if (tileType === TileType.GRASS) {
+    tileImages(TileType.TUFT, season, seen, out);
+  }
+
   if (data.baseType !== undefined) tileImages(data.baseType, season, seen, out);
 }
 

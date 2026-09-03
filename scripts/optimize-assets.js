@@ -315,7 +315,7 @@ async function optimizeTiles() {
         .toFile(outputPath);
     }
     // Special handling for large multi-tile sprites (shop, cottage, mine entrance, garden shed, mushroom house, ruins entrance) - extra large size with very high quality (minimal compression)
-    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed') || file.includes('mushroom_house') || file.includes('ruins_entrance') || file.includes('bear_cave')) {
+    else if (file.includes('shop') || file.includes('cottage') || file.includes('mine_entrance') || file.includes('garden_shed') || file.includes('mushroom_house') || file.includes('ruins_entrance') || file.includes('bear_cave') || file.includes('entrance_wizard_trials')) {
       await sharp(inputPath)
         .resize(SHOP_SIZE, SHOP_SIZE, {
           fit: 'contain',
