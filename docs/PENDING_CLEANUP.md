@@ -17,7 +17,7 @@ errors) and worked the warning backlog down. Current baseline:
 | `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                                     |
 | `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                                     |
 | `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                                     |
-| raw `console.log` sites       | 682         | **~640** (PR #83 started the migration; helper + first subsystem landed) |
+| raw `console.log` sites       | 682         | **~640** (PR #84 started the migration; helper + first subsystem landed) |
 
 **Verification command:** `npm run verify` (tsc + full test suite, ~4s).
 **Lint:** `npx eslint .` — the working rule all session: warnings are signal, so
@@ -36,7 +36,7 @@ fix or explicitly justify; never leave the count creeping back up.
 | #79 | Prop bindings orphaned by #78 removed                                                                                                                                                                     |
 | #81 | Dead `DialogueBox`/`AIDialogueBox` deleted; AI_CONVERSATIONS_DEV.md rewritten for the unified box                                                                                                         |
 | #82 | All 43 remaining `no-explicit-any` removed; `tests/pixi-import-test.ts` deleted; `getColorHexByName`/`lookupFarmingAsset` typed contracts added; `Navigator`/`Performance` ambient types in vite-env.d.ts |
-| #83 | `utils/debugLog.ts` category-gated logging helper + DevTools toggle + `no-console` guard on converted files; `dialogueHandlers.ts` converted as the pattern                                               |
+| #84 | `utils/debugLog.ts` category-gated logging helper + DevTools toggle + `no-console` guard on converted files; `dialogueHandlers.ts` converted as the pattern                                               |
 
 Each merge auto-deploys to GitHub Pages via `.github/workflows/deploy.yml`.
 
@@ -54,7 +54,7 @@ The reusable typed contracts added there, for future use:
 
 ---
 
-## 2. Console noise: migration in progress (helper landed in PR #83)
+## 2. Console noise: migration in progress (helper landed in PR #84)
 
 `utils/debugLog.ts` now exists: category-gated `debugLog(category, ...args)` that
 re-attaches the `[Prefix]` tag on output. Flag sources are the same as
@@ -80,7 +80,7 @@ count honest afterwards.
 4. Per category, sanity-check intent: diagnostics → gated `debugLog`; anything
    a player genuinely needs → keep/convert to `console.warn` (ungated).
 
-**Remaining inventory** (console.log counts at PR #83 time): GameState.ts ~43,
+**Remaining inventory** (console.log counts at PR #84 time): GameState.ts ~43,
 GameStatePersistence.ts ~32, farmManager.ts ~31, FriendshipManager.ts ~30,
 actionHandlers.ts ~27, gameInitializer.ts ~24, procedural.ts ~20,
 inventoryManager.ts ~17, App.tsx ~17, AudioManager.ts ~16, then tail. 113
@@ -184,7 +184,7 @@ not drift.
 
 1. ~~§3 dead dialogue components~~ — DONE (PR #81)
 2. ~~§1 remaining `no-explicit-any`~~ — DONE (PR #82)
-3. §2 `debugLog` migration — helper + pattern landed (PR #83); convert the
+3. §2 `debugLog` migration — helper + pattern landed (PR #84); convert the
    remaining ~600 sites subsystem-by-subsystem per the recipe in §2, one or a
    few files per PR, extending the eslint override list each time
 4. §4 TODOs — only when their feature/art work actually happens
