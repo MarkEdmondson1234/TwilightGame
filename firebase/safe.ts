@@ -20,6 +20,7 @@ import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { ChatMessage } from '../multiplayer/chat';
 import type { Photo } from '../types/photography';
 import type { AlbumEntry } from './sharedAlbumService';
+import type { NpcSpeechWire } from '../multiplayer/npcSpeech';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -183,6 +184,20 @@ const stubSharedAlbumService = {
   destroy: () => {},
 };
 
+/**
+ * Stub npcSpeechService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubNpcSpeechService = {
+  isAvailable: () => false,
+  getCurrentRoom: () => null as string | null,
+  onSpeech: (_cb: (npcId: string, wire: NpcSpeechWire) => void) => () => {},
+  enterRoom: async (_mapId: string) => false as boolean,
+  leaveRoom: async () => {},
+  publish: async (_npcId: string, _text: string) => false as boolean,
+  destroy: async () => {},
+};
+
 /** Stub cloudSaveService when Firebase is not available */
 const stubCloudSaveService = {
   getSaveSlots: async () => [] as SaveSlot[],
@@ -342,6 +357,14 @@ export function getSharedPlacedItemsService() {
  */
 export function getSharedAlbumService() {
   return firebaseModule?.sharedAlbumService ?? stubSharedAlbumService;
+}
+
+/**
+ * Get npcSpeechService (real or stub).
+ * Never cache — it is a stub until Firebase has settled.
+ */
+export function getNpcSpeechService() {
+  return firebaseModule?.npcSpeechService ?? stubNpcSpeechService;
 }
 
 /**

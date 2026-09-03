@@ -33,6 +33,7 @@ import { useEnvironmentController } from './hooks/useEnvironmentController';
 import { useMultiplayerController } from './hooks/useMultiplayerController';
 import { useChatController } from './hooks/useChatController';
 import { useSharedPlacedItemsController } from './hooks/useSharedPlacedItemsController';
+import { useNpcSpeechController } from './hooks/useNpcSpeechController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
@@ -456,6 +457,14 @@ const App: React.FC = () => {
   // everyone there. Nothing else needs wiring: GameState merges the shared items
   // into getPlacedItems(), which the renderer and interactions already use.
   useSharedPlacedItemsController({ currentMapId });
+
+  // What the NPCs are saying, shared: a snippet floats above the NPC for anyone
+  // standing near enough, so a conversation is something the other player can
+  // notice and wander over to rather than watching you stand still.
+  useNpcSpeechController({
+    currentMapId,
+    getLocalPosition: () => playerPosRef.current,
+  });
 
   const [isComposingChat, setIsComposingChat] = useState(false);
   const startComposingChat = useCallback(() => setIsComposingChat(true), []);

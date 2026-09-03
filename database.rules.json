@@ -62,6 +62,27 @@
           }
         }
       }
+    },
+    "npcSpeech": {
+      "$mapId": {
+        ".read": "auth != null",
+        "$npcId": {
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['m','t','u'])",
+          "m": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 90"
+          },
+          "t": {
+            ".validate": "newData.val() === now"
+          },
+          "u": {
+            ".validate": "newData.val() === auth.uid"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
     }
   }
 }

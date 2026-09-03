@@ -21,10 +21,16 @@ import * as PIXI from 'pixi.js';
 import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction, NPC } from '../../types';
 import { textureManager } from '../TextureManager';
+import { PlayerSpeechBubble } from './PlayerSpeechBubble';
+import { npcSpeechManager } from '../../multiplayer/npcSpeech';
+import { getPresenceService } from '../../firebase/safe';
 import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
 import { TimeManager, TimeOfDay } from '../TimeManager';
 import { getCachedPerformanceSettings } from '../performanceTier';
+
+/** How far above an NPC their speech bubble floats, in tiles. */
+const NPC_SPEECH_OFFSET_TILES = 1.35;
 
 export class NPCLayer extends PixiLayer {
   private npcSprites: Map<string, PIXI.Sprite> = new Map();
@@ -36,6 +42,9 @@ export class NPCLayer extends PixiLayer {
   // When set, regular NPCs are added here instead of this.container for cross-layer z-sorting
   private depthContainer: PIXI.Container | null = null;
   // Glow effects behind NPCs
+  /** Speech bubbles for NPCs the *other* player is talking to */
+  private speechBubbles: Map<string, PlayerSpeechBubble> = new Map();
+
   private glowGraphics: Map<string, PIXI.Graphics> = new Map();
 
   constructor() {
@@ -94,6 +103,9 @@ export class NPCLayer extends PixiLayer {
 
     // Track which NPCs we've rendered this frame
     const renderedIds = new Set<string>();
+
+    // Read once per frame, not per NPC: it decides whose conversation to skip.
+    const localUid = getPresenceService().getUid();
 
     for (const npc of npcs) {
       renderedIds.add(npc.id);
@@ -205,7 +217,9 @@ export class NPCLayer extends PixiLayer {
       // Calculate position (center of NPC) - use tileSize for viewport scaling
       sprite.x = npc.position.x * tileSize + offsetX;
       const hoverOffsetY = npc.hover
-        ? Math.sin((Date.now() / npc.hover.frequency) * Math.PI * 2) * npc.hover.amplitude * tileSize
+        ? Math.sin((Date.now() / npc.hover.frequency) * Math.PI * 2) *
+          npc.hover.amplitude *
+          tileSize
         : 0;
       sprite.y = npc.position.y * tileSize + offsetY + hoverOffsetY;
 
@@ -253,6 +267,23 @@ export class NPCLayer extends PixiLayer {
 
       // Show sprite
       sprite.visible = true;
+
+      // A snippet of what this NPC is saying to somebody else, so a
+      // conversation is something you can notice from across the square. The
+      // manager returns null for our own conversation — we have the dialogue
+      // box for that — and for anything that has expired.
+      const speech = npcSpeechManager.getSpeech(npc.id, localUid);
+      let bubble = this.speechBubbles.get(npc.id);
+      if (speech && !bubble) {
+        bubble = new PlayerSpeechBubble(this.getTargetContainer());
+        this.speechBubbles.set(npc.id, bubble);
+      }
+      bubble?.update(
+        speech,
+        sprite.x,
+        sprite.y - NPC_SPEECH_OFFSET_TILES * tileSize * characterScale,
+        (npc.zIndexOverride ?? Z_DEPTH_SORTED_BASE + Math.floor(feetY * 10)) + 3
+      );
     }
 
     // Remove sprites for NPCs that are no longer in the list
@@ -272,12 +303,22 @@ export class NPCLayer extends PixiLayer {
         glow.visible = false;
       }
     }
+    for (const [npcId, bubble] of this.speechBubbles.entries()) {
+      if (!renderedIds.has(npcId)) {
+        bubble.update(null, 0, 0, 0);
+      }
+    }
   }
 
   /**
    * Clear all NPC sprites (required by PixiLayer)
    */
   clear(): void {
+    for (const bubble of this.speechBubbles.values()) {
+      bubble.destroy();
+    }
+    this.speechBubbles.clear();
+
     const targetContainer = this.getTargetContainer();
 
     // Clear regular NPC sprites (may be in depth container or own container)
