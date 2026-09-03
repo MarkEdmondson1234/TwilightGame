@@ -745,6 +745,23 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetY: 0,
   },
   {
+    tileType: TileType.WIZARD_TRIALS_ENTRANCE,
+    spriteWidth: 3.45, // 3 tiles wide, +15%  - freestanding stone archway door
+    spriteHeight: 3.45, // 3 tiles tall, +15%
+    offsetX: -1.225, // Center the sprite on the anchor tile
+    offsetY: -2.45, // Base of the door sits on the anchor tile
+    image: tileAssets.entrance_wizard_trials,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // No collision - a freestanding decoration you click, walking through it is fine
+    collisionWidth: 0,
+    collisionHeight: 0,
+    collisionOffsetX: 0,
+    collisionOffsetY: 0,
+  },
+  {
     tileType: TileType.GARDEN_SHED,
     spriteWidth: 6, // 6 tiles wide (garden shed on stilts with stairs)
     spriteHeight: 6, // 6 tiles tall

@@ -136,6 +136,15 @@ export const debugNPCs: MapDefinition = {
       toPosition: { x: 15, y: 15 }, // Center of village
       hasDoor: true,
     },
+    {
+      // Dev shortcut to the Wizard Trials antechamber (normally reached via a rare
+      // roll deep in the lava levels - see generateLavaMap() in maps/procedural.ts)
+      fromPosition: { x: 27, y: 6 },
+      tileType: TileType.DOOR,
+      toMapId: 'wizard_trials',
+      toPosition: { x: 3, y: 7 },
+      label: 'To Wizard Trials',
+    },
   ],
   npcs,
 };

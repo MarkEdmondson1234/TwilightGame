@@ -70,6 +70,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.MINE_CRYSTAL_MD]: 'grass',
   [TileType.MINE_CRYSTAL_LG]: 'grass',
   [TileType.MINE_ENTRANCE]: 'special',
+  [TileType.WIZARD_TRIALS_ENTRANCE]: 'floor', // Matches MINE_FLOOR's key - same background as the room floor
   [TileType.TABLE]: 'furniture',
   [TileType.CHAIR]: 'furniture',
   // Multi-tile indoor sprites: the floor shows through their transparent parts, so they must

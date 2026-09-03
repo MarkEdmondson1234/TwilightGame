@@ -1585,15 +1585,25 @@ export function generateLavaMap(seed: number = Date.now()): MapDefinition {
   }
   map[exitY][width - 2] = TileType.MINE_ENTRANCE;
 
-  // 20% chance to discover King Lava Frog's Lair instead of another lava level
+  // 20% chance (split two ways) to discover a special lava location instead of another lava level
   const lairChance = ((seed * 37) % 100) / 100;
-  const deeperLavaDestination = lairChance < 0.2 ? 'king_lava_frog_lair' : 'RANDOM_LAVA';
-  const deeperLavaLabel = lairChance < 0.2 ? 'Something stirs in the heat...' : 'Deeper into Lava';
-  const deeperLavaSpawn = lairChance < 0.2 ? { x: 3, y: 15 } : { x: 3, y: exitY };
+  let deeperLavaDestination: string = 'RANDOM_LAVA';
+  let deeperLavaLabel = 'Deeper into Lava';
+  let deeperLavaSpawn = { x: 3, y: exitY };
 
-  if (lairChance < 0.2) {
+  if (lairChance < 0.1) {
+    deeperLavaDestination = 'king_lava_frog_lair';
+    deeperLavaLabel = 'Something stirs in the heat...';
+    deeperLavaSpawn = { x: 3, y: 15 };
     console.log(
       `[Lava] 🐸 Rare passage to King Lava Frog's Lair discovered! (chance was ${(lairChance * 100).toFixed(1)}%)`
+    );
+  } else if (lairChance < 0.2) {
+    deeperLavaDestination = 'wizard_trials';
+    deeperLavaLabel = 'A strange glow beckons...';
+    deeperLavaSpawn = { x: 3, y: 7 };
+    console.log(
+      `[Lava] 🔮 Rare passage to the Wizard Trials discovered! (chance was ${(lairChance * 100).toFixed(1)}%)`
     );
   }
 

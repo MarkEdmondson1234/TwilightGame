@@ -127,6 +127,7 @@ export enum TileType {
   SHOP,
   GARDEN_SHED,
   RUINS_ENTRANCE, // Ancient ruins entrance (8x8 multi-tile, seasonal)
+  WIZARD_TRIALS_ENTRANCE, // Floating stone archway door - entrance to the Wizard Trials mini-game series
   // Farmland tiles
   SOIL_FALLOW,
   SOIL_TILLED,
