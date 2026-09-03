@@ -51,12 +51,14 @@ const BasketModal: React.FC<BasketModalProps> = ({ onClose, onResult }) => {
           alreadyInBasket: basketContents.includes(item.itemId),
         };
       });
-  }, []);
+  }, [basketContents]);
 
   const displaySlots = Math.max(MIN_ROWS * COLS, Math.ceil(foodItems.length / COLS) * COLS);
   const slots = useMemo(() => {
     const arr: ((typeof foodItems)[0] | null)[] = Array(displaySlots).fill(null);
-    foodItems.forEach((item, i) => { if (i < displaySlots) arr[i] = item; });
+    foodItems.forEach((item, i) => {
+      if (i < displaySlots) arr[i] = item;
+    });
     return arr;
   }, [foodItems, displaySlots]);
 
@@ -116,7 +118,12 @@ const BasketModal: React.FC<BasketModalProps> = ({ onClose, onResult }) => {
                 const alreadyAdded = item?.alreadyInBasket ?? false;
 
                 const tooltipContent: TooltipContent | null = item
-                  ? { name: item.name, description: item.description, image: item.icon, quantity: item.quantity }
+                  ? {
+                      name: item.name,
+                      description: item.description,
+                      image: item.icon,
+                      quantity: item.quantity,
+                    }
                   : null;
 
                 const slotButton = (
@@ -126,13 +133,14 @@ const BasketModal: React.FC<BasketModalProps> = ({ onClose, onResult }) => {
                     onClick={() => !isEmpty && !alreadyAdded && setSelectedItemId(item!.id)}
                     className={`
                       aspect-square rounded border-2 flex flex-col items-center justify-center p-1 transition-all
-                      ${isEmpty
-                        ? 'border-amber-800 bg-amber-900/30 cursor-default'
-                        : alreadyAdded
-                          ? 'border-amber-700 bg-amber-800/40 cursor-not-allowed opacity-50'
-                          : isSelected
-                            ? 'border-amber-400 bg-amber-700 scale-105 shadow-lg'
-                            : 'border-amber-700 bg-amber-800/60 hover:border-amber-500 hover:bg-amber-700/60 cursor-pointer'
+                      ${
+                        isEmpty
+                          ? 'border-amber-800 bg-amber-900/30 cursor-default'
+                          : alreadyAdded
+                            ? 'border-amber-700 bg-amber-800/40 cursor-not-allowed opacity-50'
+                            : isSelected
+                              ? 'border-amber-400 bg-amber-700 scale-105 shadow-lg'
+                              : 'border-amber-700 bg-amber-800/60 hover:border-amber-500 hover:bg-amber-700/60 cursor-pointer'
                       }
                     `}
                   >
@@ -165,30 +173,31 @@ const BasketModal: React.FC<BasketModalProps> = ({ onClose, onResult }) => {
         </div>
 
         {/* Selected item info + confirm */}
-        {selectedItemId && (() => {
-          const item = foodItems.find((i) => i.id === selectedItemId);
-          if (!item) return null;
-          return (
-            <div className="mt-4 pt-4 border-t border-amber-700">
-              <div className="flex items-center gap-3 mb-3">
-                <img src={item.icon} alt={item.name} className="w-10 h-10 object-contain" />
-                <div>
-                  <p className="text-amber-200 font-semibold">{item.name}</p>
-                  {item.description && (
-                    <p className="text-amber-400 text-xs italic">{item.description}</p>
-                  )}
+        {selectedItemId &&
+          (() => {
+            const item = foodItems.find((i) => i.id === selectedItemId);
+            if (!item) return null;
+            return (
+              <div className="mt-4 pt-4 border-t border-amber-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <img src={item.icon} alt={item.name} className="w-10 h-10 object-contain" />
+                  <div>
+                    <p className="text-amber-200 font-semibold">{item.name}</p>
+                    {item.description && (
+                      <p className="text-amber-400 text-xs italic">{item.description}</p>
+                    )}
+                  </div>
                 </div>
+                <button
+                  onClick={handleAddToBasket}
+                  disabled={remaining <= 0}
+                  className="w-full py-2 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 disabled:opacity-50 text-white font-bold rounded transition-colors"
+                >
+                  Add to basket
+                </button>
               </div>
-              <button
-                onClick={handleAddToBasket}
-                disabled={remaining <= 0}
-                className="w-full py-2 bg-amber-600 hover:bg-amber-500 disabled:bg-amber-800 disabled:opacity-50 text-white font-bold rounded transition-colors"
-              >
-                Add to basket
-              </button>
-            </div>
-          );
-        })()}
+            );
+          })()}
       </div>
     </div>
   );

@@ -130,7 +130,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 
       // Popup handles its own auto-dismiss via CookingResultPopup
     },
-    [nearbyNPCs, currentMapId, cookingPosition, playerPosition, onItemPlaced]
+    [nearbyNPCs]
   );
 
   // Get selected recipe details

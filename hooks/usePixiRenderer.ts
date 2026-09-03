@@ -618,6 +618,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         darknessLayerRef.current = null;
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init-once by design: the twelve flagged values are per-frame/per-render inputs consumed through refs and the game loop; re-initialising the whole PixiJS renderer when they change would tear down and rebuild the GPU context every frame
   }, [enabled, isMapInitialized]); // Only initialize once when map is ready
 
   // =========================================================================

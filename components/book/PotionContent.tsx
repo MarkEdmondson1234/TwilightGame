@@ -62,10 +62,12 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
       },
       { id: 'encyclopaedia', label: 'Encyclopaedia', icon: '🌿', locked: false },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- magicUpdateTrigger is a version counter invalidating this list when the magic level changes
     [magicUpdateTrigger]
   );
 
   // Get all unlocked recipes (re-evaluate when level changes to include new recipes)
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- same version-counter pattern as above
   const unlockedRecipes = useMemo(() => magicManager.getUnlockedRecipes(), [magicUpdateTrigger]);
 
   // Group recipes by level (plus encyclopaedia entries)

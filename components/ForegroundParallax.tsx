@@ -195,6 +195,7 @@ const ForegroundParallax: React.FC<ForegroundParallaxProps> = ({
       assets[tree.id] = getSeasonalTree(tree.treeType);
     }
     return assets;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- season is the invalidation trigger: getSeasonalTree reads the season from TimeManager internally
   }, [season]);
 
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;

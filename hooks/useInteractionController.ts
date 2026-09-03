@@ -546,6 +546,7 @@ export function useInteractionController(
     onEmote,
     onOpenEmoteWheel,
     onStartChat,
+    setActiveNPC,
   ]);
 
   // -------------------------------------------------------------------------

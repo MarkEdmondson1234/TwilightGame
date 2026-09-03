@@ -151,6 +151,7 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
       completed: completedQuests,
       conversations,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- diaryRefreshKey is a version counter: the entries read manager singletons, not React state, so the counter is the invalidation mechanism
   }, [diaryRefreshKey]);
 
   const pagination = useBookPagination(JOURNAL_CHAPTERS, entriesByChapter, 6);
