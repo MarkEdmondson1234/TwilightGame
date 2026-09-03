@@ -23,6 +23,7 @@ import { audioManager } from './AudioManager';
 import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
 import { cutsceneManager } from './CutsceneManager';
+import { debugLog } from './debugLog';
 
 /**
  * Fast synchronous core initialisation (~100ms)
@@ -49,8 +50,9 @@ export function initializeGameCore(): void {
   window.ColorResolver = ColorResolver;
 
   // Log dev commands help
-  console.log(`
-[Dev Tools] Commands:
+  debugLog(
+    'Dev Tools',
+    `Commands:
   // Time & Colour
   TimeManager.setTimeOverride({ season: Season.WINTER })  // Set to winter
   TimeManager.setTimeOverride({ season: Season.SUMMER, hour: 1 })  // Summer night
@@ -69,7 +71,8 @@ export function initializeGameCore(): void {
   audioManager.playMusic('music_village_day')  // Play background music
   audioManager.setVolume('master', 0.5)  // Set volume (0.0 - 1.0)
   audioManager.toggleMute()       // Toggle mute
-    `);
+    `
+  );
 
   initializePalette(); // Initialize color palette (must be first)
   runSelfTests(); // Run sanity checks on startup
@@ -100,7 +103,7 @@ export async function initializeGameAssets(
   // Initialize EventChainManager (loads YAML event chains, restores progress)
   const { eventChainManager } = await import('./EventChainManager');
   eventChainManager.initialise();
-  console.log(`[App] Initialised event chain system`);
+  debugLog('App', `Initialised event chain system`);
 
   // Remove legacy hung-wreath placed items (old quest system used customScale: 1.5 items with
   // IDs like "hung_wreath_player_home" — these persist in localStorage and must be cleaned up)
@@ -114,23 +117,23 @@ export async function initializeGameAssets(
       gameState.removePlacedItem(id);
     }
     if (legacyIds.length > 0) {
-      console.log(`[gameInitializer] Removed ${legacyIds.length} legacy hung-wreath item(s)`);
+      debugLog('gameInitializer', `Removed ${legacyIds.length} legacy hung-wreath item(s)`);
     }
   }
 
   // Initialize FruitTreeManager (loads saved tree states, subscribes to season changes)
   const { fruitTreeManager } = await import('./fruitTreeManager');
   fruitTreeManager.initialise();
-  console.log('[App] Initialised fruit tree system');
+  debugLog('App', 'Initialised fruit tree system');
 
   // Preload all assets early to prevent lag on first use
   await preloadAllAssets({
     onProgress: (loaded, total) => {
-      console.log(`[App] Asset preload progress: ${loaded}/${total}`);
+      debugLog('App', `Asset preload progress: ${loaded}/${total}`);
       options?.onProgress?.(loaded, total);
     },
     onComplete: () => {
-      console.log('[App] All assets preloaded successfully');
+      debugLog('App', 'All assets preloaded successfully');
     },
   });
 
@@ -143,14 +146,14 @@ export async function initializeGameAssets(
       console.warn('[AudioManager] Some audio assets failed to load:', err);
     });
   });
-  console.log('[App] Audio system initialised');
+  debugLog('App', 'Audio system initialised');
 
   // Load inventory from saved state using CharacterData API
   const savedInventory = characterData.loadInventory();
   const items = savedInventory?.items || [];
   const tools = savedInventory?.tools || [];
   const slotOrder = savedInventory?.slotOrder;
-  console.log('[gameInitializer] Loading inventory from saved state:', {
+  debugLog('gameInitializer', 'Loading inventory from saved state:', {
     items,
     tools,
     slotOrder: slotOrder?.length ?? 0,
@@ -158,47 +161,47 @@ export async function initializeGameAssets(
 
   if (items.length > 0 || tools.length > 0) {
     inventoryManager.loadInventory(items, tools, slotOrder);
-    console.log(`[gameInitializer] Loaded inventory: ${items.length} items, ${tools.length} tools`);
+    debugLog('gameInitializer', `Loaded inventory: ${items.length} items, ${tools.length} tools`);
   } else {
     // First time: initialize with starter items
-    console.log('[gameInitializer] No saved inventory found, initializing starter items');
+    debugLog('gameInitializer', 'No saved inventory found, initializing starter items');
     inventoryManager.initializeStarterItems();
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools, inventoryData.slotOrder);
-    console.log('[gameInitializer] Initialized starter inventory');
+    debugLog('gameInitializer', 'Initialized starter inventory');
   }
 
   // Load farm plots from saved state using CharacterData API
   const savedFarming = characterData.loadFarmPlots();
   const savedPlots = savedFarming?.plots || [];
   farmManager.loadPlots(savedPlots);
-  console.log(`[App] Loaded ${savedPlots.length} farm plots from save`);
+  debugLog('App', `Loaded ${savedPlots.length} farm plots from save`);
 
   // Load friendships from saved state
   friendshipManager.initialise();
-  console.log(`[App] Initialised friendship system`);
+  debugLog('App', `Initialised friendship system`);
 
   // Load cooking progress from saved state
   cookingManager.initialise();
-  console.log(`[App] Initialised cooking system`);
+  debugLog('App', `Initialised cooking system`);
 
   // Load magic progress from saved state
   magicManager.initialise();
-  console.log(`[App] Initialised magic system`);
+  debugLog('App', `Initialised magic system`);
 
   // Load decoration crafting progress from saved state
   decorationManager.initialise();
   // Sync painting images from cloud in background (non-blocking)
   syncPaintingsFromCloud().catch(() => {});
-  console.log(`[App] Initialised decoration system`);
+  debugLog('App', `Initialised decoration system`);
 
   // Load photo album from saved state
   photoAlbumManager.initialise();
-  console.log(`[App] Initialised photography system`);
+  debugLog('App', `Initialised photography system`);
 
   // Load desk contents from saved state
   deskManager.initialise();
-  console.log(`[App] Initialised desk system`);
+  debugLog('App', `Initialised desk system`);
 
   // Seed default furniture: place a bed in home_upstairs on first play only
   if (!gameState.hasCutsceneCompleted('furniture_bed_seeded')) {
@@ -215,7 +218,7 @@ export async function initializeGameAssets(
         permanent: true,
       });
       gameState.markCutsceneCompleted('furniture_bed_seeded');
-      console.log('[gameInitializer] Placed default bed in home_upstairs');
+      debugLog('gameInitializer', 'Placed default bed in home_upstairs');
     }
   }
 
@@ -233,13 +236,13 @@ export async function initializeGameAssets(
         permanent: true,
       });
       gameState.markCutsceneCompleted('furniture_garden_bench_seeded');
-      console.log('[gameInitializer] Placed default garden bench in farm_area');
+      debugLog('gameInitializer', 'Placed default garden bench in farm_area');
     }
   }
 
   // Initialize AI dialogue (optional - non-blocking)
   const aiEnabled = initAnthropicClient();
-  console.log(`[App] AI dialogue: ${aiEnabled ? 'enabled' : 'disabled'}`);
+  debugLog('App', `AI dialogue: ${aiEnabled ? 'enabled' : 'disabled'}`);
 
   // Update farm states on startup (uses TimeManager internally)
   farmManager.updateAllPlots();
@@ -251,7 +254,7 @@ export async function initializeGameAssets(
 
   // Initialize seasonal NPC locations (must be called after all maps are registered)
   npcManager.initializeSeasonalLocations();
-  console.log(`[App] Initialised seasonal NPC locations`);
+  debugLog('App', `Initialised seasonal NPC locations`);
 
   // If loading a random map, regenerate it with the saved seed
   const savedLocation = gameState.getPlayerLocation();
@@ -261,7 +264,7 @@ export async function initializeGameAssets(
     savedLocation.mapId = 'mums_kitchen';
     savedLocation.position = { x: 7, y: 6 };
     gameState.updatePlayerLocation(savedLocation.mapId, savedLocation.position);
-    console.log('[App] Migrated save from home_interior → mums_kitchen');
+    debugLog('App', 'Migrated save from home_interior → mums_kitchen');
   }
 
   // Handle both "cave_12345" format and "RANDOM_CAVE" format
@@ -279,7 +282,7 @@ export async function initializeGameAssets(
     // Regenerate the random map with the saved seed
     const seed = savedLocation.seed || Date.now();
 
-    console.log(`[App] Regenerating ${mapType} map with seed ${seed}`);
+    debugLog('App', `Regenerating ${mapType} map with seed ${seed}`);
 
     // Import and call the appropriate generator
     const { generateRandomForest, generateRandomCave, generateRandomShop, generateLavaMap } =

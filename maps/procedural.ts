@@ -13,6 +13,7 @@ import {
   createGoblinNPC,
   createLavaFrogWorkerNPC,
 } from '../utils/npcFactories';
+import { debugLog } from '../utils/debugLog';
 
 /**
  * Procedural map generation functions
@@ -297,7 +298,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Re-place the lake anchor after clearing
     map[lakeY][lakeX] = lakeType;
     const lakeName = isSmallLake ? 'Small pond' : 'Magical lake';
-    console.log(`[Forest] 🌊 ${lakeName} spawned at (${lakeX}, ${lakeY})`);
+    debugLog('Forest', `🌊 ${lakeName} spawned at (${lakeX}, ${lakeY})`);
   }
 
   // Add animated streams (50% chance) - flowing water for forest ambiance
@@ -389,7 +390,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     }
 
     if (streamsPlaced > 0) {
-      console.log(`[Forest] 💧 ${streamsPlaced} stream(s) spawned (50% chance)`);
+      debugLog('Forest', `💧 ${streamsPlaced} stream(s) spawned (50% chance)`);
     }
   }
 
@@ -488,7 +489,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
         plantTracker.mark(x + 3, y, 2, 2);
 
         hasMushroomTransition = true;
-        console.log(`[Forest] 🍄🍄 Mushroom cluster pair with transition spawned at (${x}, ${y})!`);
+        debugLog('Forest', `🍄🍄 Mushroom cluster pair with transition spawned at (${x}, ${y})!`);
       }
     }
   }
@@ -595,8 +596,9 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   }
 
   if (waterTileCount > 0) {
-    console.log(
-      `[Forest] 💧 ${waterTileCount} water tiles found, ${waterAdjacentTiles.length} adjacent grass tiles available`
+    debugLog(
+      'Forest',
+      `💧 ${waterTileCount} water tiles found, ${waterAdjacentTiles.length} adjacent grass tiles available`
     );
   }
 
@@ -641,11 +643,12 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       }
     }
 
-    console.log(
-      `[Forest] 🌸 ${irisesPlaced} Wild Irises (yellow) spawned in ${clustersToPlace} organic clusters near water`
+    debugLog(
+      'Forest',
+      `🌸 ${irisesPlaced} Wild Irises (yellow) spawned in ${clustersToPlace} organic clusters near water`
     );
   } else {
-    console.log(`[Forest] No water features found - skipping iris placement`);
+    debugLog('Forest', `No water features found - skipping iris placement`);
   }
 
   const spawnZone4 = { x: spawnX, y: spawnY, radius: 4 };
@@ -795,8 +798,9 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     deepForestChance < 0.2 ? 'A Strange Light Ahead...' : 'Deeper into Forest';
 
   if (deepForestChance < 0.2) {
-    console.log(
-      `[Forest] ✨ Rare path to the Sacred Grove discovered! (chance was ${(deepForestChance * 100).toFixed(1)}%)`
+    debugLog(
+      'Forest',
+      `✨ Rare path to the Sacred Grove discovered! (chance was ${(deepForestChance * 100).toFixed(1)}%)`
     );
   }
 
@@ -853,8 +857,9 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       toPosition: { x: 6, y: 7 },
       label: 'To Shop',
     });
-    console.log(
-      `[Forest] Shop spawned at depth ${forestDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`
+    debugLog(
+      'Forest',
+      `Shop spawned at depth ${forestDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`
     );
   }
 
@@ -883,7 +888,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       'Umbra Wolf'
     );
     npcs.push(umbraWolf);
-    console.log(`[Forest] 🐺 Umbra Wolf spawned at (${wolfX}, ${wolfY})!`);
+    debugLog('Forest', `🐺 Umbra Wolf spawned at (${wolfX}, ${wolfY})!`);
   }
 
   // Chill Bear: 20% chance of spawning - peaceful tea-drinking forest creature
@@ -913,7 +918,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       'Chill Bear'
     );
     npcs.push(chillBear);
-    console.log(`[Forest] 🐻☕ Chill Bear spawned at (${bearX}, ${bearY})!`);
+    debugLog('Forest', `🐻☕ Chill Bear spawned at (${bearX}, ${bearY})!`);
   }
 
   // Bunnyfly: 80% chance of spawning (very common) - gentle forest creatures
@@ -947,7 +952,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       );
       npcs.push(bunnyfly);
     }
-    console.log(`[Forest] 🐰🦋 ${bunnyflyCount} Bunnyfly(s) spawned!`);
+    debugLog('Forest', `🐰🦋 ${bunnyflyCount} Bunnyfly(s) spawned!`);
   }
 
   // Sparrow: 70% chance of spawning - common small forest bird
@@ -975,7 +980,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       );
       npcs.push(sparrow);
     }
-    console.log(`[Forest] 🐦 ${sparrowCount} Sparrow(s) spawned!`);
+    debugLog('Forest', `🐦 ${sparrowCount} Sparrow(s) spawned!`);
   }
 
   // Deer: 60% chance of spawning - gentle forest creatures, very common
@@ -1009,7 +1014,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
       );
       npcs.push(deer);
     }
-    console.log(`[Forest] 🦌 ${deerCount} Deer spawned!`);
+    debugLog('Forest', `🦌 ${deerCount} Deer spawned!`);
   }
 
   // Possum: 15% chance of spawning - shy creature that plays dead when approached
@@ -1033,7 +1038,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
     const possum = createPossumNPC(`possum_${seed}`, { x: possumX, y: possumY }, 'Possum');
     npcs.push(possum);
-    console.log(`[Forest] 🐿️ Possum spawned at (${possumX}, ${possumY})!`);
+    debugLog('Forest', `🐿️ Possum spawned at (${possumX}, ${possumY})!`);
   }
 
   // Puffle & Suffle: 5% chance of spawning together - very rare cute duo, always appear as a pair
@@ -1066,7 +1071,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     const suffle = createSuffleNPC(`suffle_${seed}`, { x: suffleX, y: suffleY }, 'Suffle');
     npcs.push(suffle);
 
-    console.log(`[Forest] 💕 Rare Puffle & Suffle duo spawned at (${puffleX}, ${puffleY})!`);
+    debugLog('Forest', `💕 Rare Puffle & Suffle duo spawned at (${puffleX}, ${puffleY})!`);
   }
 
   return {
@@ -1408,8 +1413,9 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       toPosition: { x: 6, y: 7 },
       label: 'To Shop',
     });
-    console.log(
-      `[Cave] Shop spawned at depth ${caveDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`
+    debugLog(
+      'Cave',
+      `Shop spawned at depth ${caveDepth} (chance was ${(shopChance * 100).toFixed(1)}%)`
     );
   }
 
@@ -1427,7 +1433,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       (Math.abs(goblinX - spawnX) < 8 && Math.abs(goblinY - spawnY) < 8)
     );
     npcs.push(createGoblinNPC(`goblin_depth_${caveDepth}_${seed}`, { x: goblinX, y: goblinY }));
-    console.log(`[Cave] ⚔️ Goblin spawned at depth ${caveDepth} (${goblinX}, ${goblinY})`);
+    debugLog('Cave', `⚔️ Goblin spawned at depth ${caveDepth} (${goblinX}, ${goblinY})`);
   }
 
   // Restore any goblin-revealed lava entrance for this map (persisted across sessions)
@@ -1452,7 +1458,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
       toPosition: { x: 3, y: Math.floor(height / 2) },
       label: 'Enter Lava Levels',
     });
-    console.log(`[Cave] Restored lava entrance at (${ex}, ${ey}) for cave_${seed}`);
+    debugLog('Cave', `Restored lava entrance at (${ex}, ${ey}) for cave_${seed}`);
   }
 
   return {
@@ -1592,12 +1598,13 @@ export function generateLavaMap(seed: number = Date.now()): MapDefinition {
   const deeperLavaSpawn = lairChance < 0.2 ? { x: 3, y: 15 } : { x: 3, y: exitY };
 
   if (lairChance < 0.2) {
-    console.log(
-      `[Lava] 🐸 Rare passage to King Lava Frog's Lair discovered! (chance was ${(lairChance * 100).toFixed(1)}%)`
+    debugLog(
+      'Lava',
+      `🐸 Rare passage to King Lava Frog's Lair discovered! (chance was ${(lairChance * 100).toFixed(1)}%)`
     );
   }
 
-  console.log(`[Lava] Generated lava level at depth ${lavaDepth} (seed ${seed})`);
+  debugLog('Lava', `Generated lava level at depth ${lavaDepth} (seed ${seed})`);
 
   // Spawn 1–3 wandering lava frog workers per level
   const lavaWorkerNames = ['Molten', 'Scoria', 'Pumice', 'Cinder', 'Basalt', 'Igneous', 'Flint'];

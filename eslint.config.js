@@ -74,6 +74,11 @@ export default tseslint.config(
       'utils/farmManager.ts',
       'utils/FriendshipManager.ts',
       'utils/actionHandlers.ts',
+      'utils/gameInitializer.ts',
+      'maps/procedural.ts',
+      'utils/inventoryManager.ts',
+      'utils/AudioManager.ts',
+      'App.tsx',
     ],
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
