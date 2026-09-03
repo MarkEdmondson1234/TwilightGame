@@ -71,14 +71,16 @@ count honest afterwards.
 **Migration recipe** (see `utils/dialogueHandlers.ts` for the worked example —
 39 sites, one codemod + hand-fixed multi-line forms):
 
-1. Per file: `console.log('[Prefix] ...')` → `debugLog('Prefix', ...)` (prefix
-   moves out of the string into the first argument; output looks identical).
-2. Drop any `if (DEBUG.X)` guards wrapping the logs — `DEBUG.QUEST`-style flags
-   are hardcoded `import.meta.env.DEV && false` (never on); the category flag
-   revives these diagnostics behind `?debug=<category>`.
+1. Run `node scripts/convert-debug-log.mjs <files...>` — it rewrites
+   `console.log('[Tag] ...')` → `debugLog('Tag', ...)` (prefix moves out of the
+   string into the first argument; output looks identical), handles multi-line
+   calls, and unwraps dead `if (DEBUG.X)` guards. Live `DEBUG.MULTIPLAYER`
+   guards are kept by default (extend via `--keep-guards=`). Anything needing
+   judgement is reported as `MANUAL file:line` and left untouched.
+2. Review the diff — promote anything a player genuinely needs to
+   `console.warn` (ungated); routine traces stay gated `debugLog`.
 3. Add the file to the eslint `no-console` override list.
-4. Per category, sanity-check intent: diagnostics → gated `debugLog`; anything
-   a player genuinely needs → keep/convert to `console.warn` (ungated).
+4. `npm run verify` + prettier, then commit.
 
 **Remaining inventory** (console.log counts on main after the merge): GameState.ts ~43,
 GameStatePersistence.ts ~32, farmManager.ts ~31, FriendshipManager.ts ~30,
