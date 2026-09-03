@@ -260,10 +260,19 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       return;
     }
 
-    // M key to start typing a chat message. The composer is an <input>, and the
-    // guard at the top of this handler ignores keys while one has focus, so the
-    // player types instead of walking.
-    if ((e.key === 'm' || e.key === 'M') && onStartChat && !showMiniGameRef.current) {
+    // Space (or M) to start typing a chat message. The composer is an <input>,
+    // and the guard at the top of this handler ignores keys while one has focus,
+    // so the player types instead of walking.
+    //
+    // Space rather than Enter: Enter is half of the action key (E/Enter) and
+    // taking it would break every prompt and dialogue. Space was unbound, and
+    // "press space to talk" is a shorter thing to remember than a letter.
+    // preventDefault matters here — space scrolls the page otherwise.
+    if (
+      (e.key === ' ' || e.key === 'm' || e.key === 'M') &&
+      onStartChat &&
+      !showMiniGameRef.current
+    ) {
       e.preventDefault();
       onStartChat();
       return;

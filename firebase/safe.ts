@@ -159,7 +159,7 @@ const stubChatService = {
 const stubSharedPlacedItemsService = {
   isAvailable: () => false,
   getListeningMap: () => null as string | null,
-  onChange: (_cb: () => void) => () => {},
+  onChange: (_cb: (removedIds: string[]) => void) => () => {},
   startListening: (_mapId: string) => false,
   stopListening: () => {},
   getPublishedIds: () => [] as string[],

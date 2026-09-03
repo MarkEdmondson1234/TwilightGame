@@ -19,7 +19,12 @@ vi.mock('../constants', async () => {
 
 import { MULTIPLAYER } from '../constants';
 import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
-import { CHAT_BUBBLE_DURATION_MS, truncateForBubble, MAX_BUBBLE_CHARS } from '../multiplayer/chat';
+import {
+  CHAT_BUBBLE_DURATION_MS,
+  truncateForBubble,
+  MAX_BUBBLE_CHARS,
+  MAX_CHAT_LENGTH,
+} from '../multiplayer/chat';
 import {
   setLocalChatBubble,
   getLocalChatBubble,
@@ -100,9 +105,18 @@ describe('truncateForBubble', () => {
     expect(truncateForBubble('come and see my farm')).toBe('come and see my farm');
   });
 
-  it('elides a wall of text rather than covering the map with it', () => {
-    const long = 'a'.repeat(MAX_BUBBLE_CHARS + 40);
-    const shown = truncateForBubble(long);
+  it('shows a whole message, because anything sendable is readable', () => {
+    // The cap used to be 64 while MAX_CHAT_LENGTH was 140, so the back half of a
+    // sentence vanished into an ellipsis and the bubble could never grow to show
+    // it. Whatever a player may send, the bubble must be willing to display.
+    const longest = 'a'.repeat(MAX_CHAT_LENGTH);
+    expect(truncateForBubble(longest)).toBe(longest);
+    expect(MAX_BUBBLE_CHARS).toBeGreaterThanOrEqual(MAX_CHAT_LENGTH);
+  });
+
+  it('still elides something longer than a client is allowed to send', () => {
+    const overlong = 'a'.repeat(MAX_BUBBLE_CHARS + 40);
+    const shown = truncateForBubble(overlong);
     expect(shown).toHaveLength(MAX_BUBBLE_CHARS);
     expect(shown.endsWith('…')).toBe(true);
   });

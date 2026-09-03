@@ -107,6 +107,26 @@ export function useSharedPlacedItemsController(
       });
     };
 
+    /**
+     * Someone picked up an item that is also in our own save.
+     *
+     * Local state wins in getPlacedItems(), and it is what the outbound
+     * reconcile publishes — so an item deleted by another player stayed on our
+     * screen *and* was republished on our next placement. Picking up somebody's
+     * bench therefore duplicated it rather than moving it, and a bench they
+     * removed came back. Following the deletion into local state is what keeps
+     * the two stores telling the same story.
+     */
+    const followRemovals = (removedIds: string[]) => {
+      for (const id of removedIds) {
+        if (!gameState.getAllPlacedItems().some((item) => item.id === id)) continue;
+        if (DEBUG.MULTIPLAYER) console.log(`[SharedItems] ${id} was picked up by someone else`);
+        // Safe against a loop: the document is already gone from publishedIds,
+        // so the reconcile this triggers has nothing left to delete.
+        gameState.removePlacedItem(id);
+      }
+    };
+
     const hydratePaintings = () => {
       const mapId = sharedPlacedItemsManager.getMapId();
       if (!mapId) return;
@@ -132,7 +152,8 @@ export function useSharedPlacedItemsController(
       const loaded = await whenFirebaseSettled();
       if (cancelled || !loaded) return;
 
-      unsubscribe = getSharedPlacedItemsService().onChange(() => {
+      unsubscribe = getSharedPlacedItemsService().onChange((removedIds) => {
+        followRemovals(removedIds);
         hydratePaintings();
         announce();
       });

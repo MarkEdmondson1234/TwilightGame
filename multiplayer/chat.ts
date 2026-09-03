@@ -31,11 +31,19 @@ export const CHAT_MAX_AGE_MS = 10 * 60 * 1000;
 export const CHAT_BUBBLE_DURATION_MS = 8000;
 
 /**
- * Longest text a bubble shows before eliding. A bubble that grows to 140
- * characters covers the map it is floating over; the full text stays readable
- * in the chat history.
+ * Longest text a bubble shows before eliding.
+ *
+ * Deliberately the same as MAX_CHAT_LENGTH: anything a player is allowed to
+ * send, they are allowed to see. This used to be 64 while messages could be
+ * 140 characters long, so a bubble silently ate the back half of a sentence and
+ * no amount of expanding would show it. The bubble wraps instead, which costs a
+ * couple of lines of sky and reads properly.
+ *
+ * It stays as a cap rather than being deleted because inbound records come from
+ * other clients: the rules enforce 140 server-side, and a bubble should elide
+ * rather than paint over the map if that ever changes.
  */
-export const MAX_BUBBLE_CHARS = 64;
+export const MAX_BUBBLE_CHARS = MAX_CHAT_LENGTH;
 
 /** Text as it appears in a speech bubble. */
 export function truncateForBubble(text: string): string {
