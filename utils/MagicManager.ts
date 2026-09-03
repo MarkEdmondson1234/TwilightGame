@@ -33,6 +33,7 @@ import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
+import { debugLog } from './debugLog';
 
 // Constants
 const MASTERY_THRESHOLD = 1; // Brew a potion once to master it (for level progression)
@@ -90,16 +91,18 @@ class MagicManagerClass {
         this.recipeProgress.set(id, progress);
       });
 
-      console.log(
-        `[MagicManager] Loaded state: magicBookUnlocked=${this.magicBookUnlocked}, ` +
+      debugLog(
+        'MagicManager',
+        `Loaded state: magicBookUnlocked=${this.magicBookUnlocked}, ` +
           `level=${this.currentLevel}, recipes=${saved.unlockedRecipes.length}, ` +
           `progress=${Object.keys(saved.recipeProgress).length}`
       );
     }
 
     this.initialised = true;
-    console.log(
-      `[MagicManager] Initialised with ${this.unlockedRecipes.size} unlocked recipes at level ${this.currentLevel}`
+    debugLog(
+      'MagicManager',
+      `Initialised with ${this.unlockedRecipes.size} unlocked recipes at level ${this.currentLevel}`
     );
 
     // Save initial state
@@ -227,7 +230,7 @@ class MagicManagerClass {
     const previousLevel = this.currentLevel;
     this.currentLevel = nextLevel;
     this.witchCongratsReceived = false; // Reset so witch can congratulate on new level
-    console.log(`[MagicManager] 🌟 Level up! You are now a ${nextLevel} witch!`);
+    debugLog('MagicManager', `🌟 Level up! You are now a ${nextLevel} witch!`);
 
     // Unlock all recipes in the new level
     const newLevelRecipes = getPotionRecipesByLevel(nextLevel);
@@ -235,7 +238,7 @@ class MagicManagerClass {
       this.unlockedRecipes.add(recipe.id);
     });
 
-    console.log(`[MagicManager] 📖 Unlocked ${newLevelRecipes.length} ${nextLevel} recipes!`);
+    debugLog('MagicManager', `📖 Unlocked ${newLevelRecipes.length} ${nextLevel} recipes!`);
 
     // Emit event for other systems (toast, UI refresh)
     eventBus.emit(GameEvent.MAGIC_LEVEL_UP, { previousLevel, newLevel: nextLevel });
@@ -254,12 +257,12 @@ class MagicManagerClass {
     }
 
     if (this.unlockedRecipes.has(recipeId)) {
-      console.log(`[MagicManager] ℹ️ Recipe already unlocked: ${recipe.displayName}`);
+      debugLog('MagicManager', `ℹ️ Recipe already unlocked: ${recipe.displayName}`);
       return false;
     }
 
     this.unlockedRecipes.add(recipeId);
-    console.log(`[MagicManager] 📖 Unlocked recipe: ${recipe.displayName}`);
+    debugLog('MagicManager', `📖 Unlocked recipe: ${recipe.displayName}`);
     this.save();
     return true;
   }
@@ -377,15 +380,16 @@ class MagicManagerClass {
     if (!progress.isMastered && progress.timesBrewed >= MASTERY_THRESHOLD) {
       progress.isMastered = true;
       masteryAchieved = true;
-      console.log(`[MagicManager] 🌟 Mastered recipe: ${recipe.displayName}!`);
+      debugLog('MagicManager', `🌟 Mastered recipe: ${recipe.displayName}!`);
     }
 
     // Check for level progression
     const levelResult = this.checkLevelProgression();
 
     // Log result
-    console.log(
-      `[MagicManager] 🧪 Brewed ${recipe.displayName} (${progress?.timesBrewed || 0}x total)`
+    debugLog(
+      'MagicManager',
+      `🧪 Brewed ${recipe.displayName} (${progress?.timesBrewed || 0}x total)`
     );
 
     // Save inventory and magic state
@@ -467,13 +471,13 @@ class MagicManagerClass {
    */
   unlockMagicBook(): void {
     if (this.magicBookUnlocked) {
-      console.log('[MagicManager] Magic book already unlocked');
+      debugLog('MagicManager', 'Magic book already unlocked');
       return;
     }
 
     this.magicBookUnlocked = true;
     this.currentLevel = 'novice'; // Start at novice level
-    console.log('[MagicManager] 📖 Magic book unlocked! You are now a novice witch!');
+    debugLog('MagicManager', '📖 Magic book unlocked! You are now a novice witch!');
 
     // Unlock all novice recipes
     const noviceRecipes = getPotionRecipesByLevel('novice');
@@ -481,7 +485,7 @@ class MagicManagerClass {
       this.unlockedRecipes.add(recipe.id);
     });
 
-    console.log(`[MagicManager] 📖 Unlocked ${noviceRecipes.length} novice recipes!`);
+    debugLog('MagicManager', `📖 Unlocked ${noviceRecipes.length} novice recipes!`);
 
     // Sync to GameState (for backwards compatibility and other systems that check it)
     gameState.unlockMagicBook();
@@ -518,7 +522,7 @@ class MagicManagerClass {
     this.witchCongratsReceived = false;
     this.initialised = false;
 
-    console.log('[MagicManager] Reset magic progress');
+    debugLog('MagicManager', 'Reset magic progress');
 
     // Save reset state
     this.save();
