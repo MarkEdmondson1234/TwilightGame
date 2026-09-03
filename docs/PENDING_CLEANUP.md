@@ -11,13 +11,13 @@ redone. Pick items up in any order — each section is self-contained.
 The sweep started from a clean bill of health (tsc clean, 874/874 tests, 0 lint
 errors) and worked the warning backlog down. Current baseline:
 
-| Metric                        | Sweep start | Now                                                                      |
-| ----------------------------- | ----------- | ------------------------------------------------------------------------ |
-| ESLint warnings               | 277         | **0**                                                                    |
-| `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                                     |
-| `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                                     |
-| `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                                     |
-| raw `console.log` sites       | 682         | **~640** (PR #84 started the migration; helper + first subsystem landed) |
+| Metric                        | Sweep start | Now                                                                     |
+| ----------------------------- | ----------- | ----------------------------------------------------------------------- |
+| ESLint warnings               | 277         | **0**                                                                   |
+| `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                                    |
+| `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                                    |
+| `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                                    |
+| raw `console.log` sites       | 682         | **570** (PR #84 started the migration; helper + first subsystem landed) |
 
 **Verification command:** `npm run verify` (tsc + full test suite, ~4s).
 **Lint:** `npx eslint .` — the working rule all session: warnings are signal, so
@@ -80,7 +80,7 @@ count honest afterwards.
 4. Per category, sanity-check intent: diagnostics → gated `debugLog`; anything
    a player genuinely needs → keep/convert to `console.warn` (ungated).
 
-**Remaining inventory** (console.log counts at PR #84 time): GameState.ts ~43,
+**Remaining inventory** (console.log counts on main after the merge): GameState.ts ~43,
 GameStatePersistence.ts ~32, farmManager.ts ~31, FriendshipManager.ts ~30,
 actionHandlers.ts ~27, gameInitializer.ts ~24, procedural.ts ~20,
 inventoryManager.ts ~17, App.tsx ~17, AudioManager.ts ~16, then tail. 113
@@ -185,7 +185,7 @@ not drift.
 1. ~~§3 dead dialogue components~~ — DONE (PR #81)
 2. ~~§1 remaining `no-explicit-any`~~ — DONE (PR #82)
 3. §2 `debugLog` migration — helper + pattern landed (PR #84); convert the
-   remaining ~600 sites subsystem-by-subsystem per the recipe in §2, one or a
+   remaining ~570 sites subsystem-by-subsystem per the recipe in §2, one or a
    few files per PR, extending the eslint override list each time
 4. §4 TODOs — only when their feature/art work actually happens
 5. §5 god-file extraction — ongoing background work, one domain per PR
