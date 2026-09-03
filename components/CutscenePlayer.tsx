@@ -15,7 +15,6 @@ import {
   CutsceneBackgroundLayer,
   CutsceneCharacter,
   CutsceneDialogue,
-  CutsceneLayerAnimation,
   CutsceneWeatherEffect,
   CutscenePanDirection,
 } from '../types';
@@ -58,7 +57,11 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
     const cutscene = state.currentCutscene;
     if (cutscene) {
       // Capture completion action now — it will be cleared when endCutscene() fires
-      const onComplete = cutscene.onComplete as { action: string; mapId?: string; position?: { x: number; y: number } };
+      const onComplete = cutscene.onComplete as {
+        action: string;
+        mapId?: string;
+        position?: { x: number; y: number };
+      };
       completionActionRef.current = { ...onComplete, cutsceneId: cutscene.id };
     }
 
@@ -95,7 +98,9 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
       console.log(`[CutscenePlayer] Audio already started for ${cutscene.id}, skipping replay`);
       previousMusicRef.current = cutsceneManager.getPreviousMusicBeforeCutscene();
     } else {
-      console.log(`[CutscenePlayer] Starting audio for ${cutscene.id}: music=${cutscene.audio.music}`);
+      console.log(
+        `[CutscenePlayer] Starting audio for ${cutscene.id}: music=${cutscene.audio.music}`
+      );
       previousMusicRef.current = audioManager.getCurrentMusic();
       cutsceneManager.markAudioStarted(cutscene.id, previousMusicRef.current);
 
@@ -154,7 +159,10 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
         // before notifying, so we can't read it from state here)
         if (!onCompleteCalledRef.current) {
           onCompleteCalledRef.current = true;
-          const action = completionActionRef.current ?? { action: 'return', cutsceneId: cutsceneIdRef.current };
+          const action = completionActionRef.current ?? {
+            action: 'return',
+            cutsceneId: cutsceneIdRef.current,
+          };
           onComplete(action);
         }
         return;
@@ -363,8 +371,12 @@ const LetterboxBars: React.FC<LetterboxBarsProps> = ({ mode, onClosed }) => {
 
   const height =
     mode === 'close'
-      ? active ? '50%' : '0%'  // close: 0% → 50%
-      : active ? '0%' : '50%'; // open:  50% → 0%
+      ? active
+        ? '50%'
+        : '0%' // close: 0% → 50%
+      : active
+        ? '0%'
+        : '50%'; // open:  50% → 0%
 
   const barStyle: React.CSSProperties = {
     position: 'absolute',

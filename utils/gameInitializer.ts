@@ -1,5 +1,5 @@
 import { runSelfTests } from './testUtils';
-import { initializeMaps, mapManager, transitionToMap } from '../maps';
+import { initializeMaps, mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { initializePalette } from '../palette';

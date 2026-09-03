@@ -24,7 +24,6 @@ interface NPCRendererProps {
  */
 const NPCRenderer: React.FC<NPCRendererProps> = ({
   playerPos,
-  npcUpdateTrigger,
   characterScale = 1.0,
   gridOffset,
 }) => {
@@ -103,8 +102,14 @@ const NPCRenderer: React.FC<NPCRendererProps> = ({
               className="absolute pointer-events-none"
               style={{
                 left: (npc.position.x - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetX,
-                top: (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE + offsetY +
-                  (npc.hover ? Math.sin((Date.now() / npc.hover.frequency) * Math.PI * 2) * npc.hover.amplitude * TILE_SIZE : 0),
+                top:
+                  (npc.position.y - (PLAYER_SIZE * npcScale) / 2) * TILE_SIZE +
+                  offsetY +
+                  (npc.hover
+                    ? Math.sin((Date.now() / npc.hover.frequency) * Math.PI * 2) *
+                      npc.hover.amplitude *
+                      TILE_SIZE
+                    : 0),
                 width: PLAYER_SIZE * npcScale * TILE_SIZE,
                 height: PLAYER_SIZE * npcScale * TILE_SIZE,
                 transform: shouldFlip ? 'scaleX(-1)' : undefined,

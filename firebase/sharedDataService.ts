@@ -21,7 +21,6 @@ import {
   limit,
   where,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
@@ -36,8 +35,6 @@ import {
 // Constants
 // ============================================
 
-const MAX_SUMMARIES_PER_NPC = 50; // Max summaries to fetch per NPC
-const MAX_EVENTS = 100; // Max events to fetch
 const MAX_CONTRIBUTIONS_PER_MINUTE = 10; // Rate limit per user
 
 // Hash user ID for privacy (one-way, consistent)
@@ -256,7 +253,6 @@ class SharedDataService {
 
     // Format summaries into gossip
     const topics = [...new Set(summaries.map((s) => s.topic))];
-    const recentSummary = summaries[0];
 
     if (topics.length === 1) {
       return `Other villagers have been asking ${npcName} about ${topics[0]} recently.`;

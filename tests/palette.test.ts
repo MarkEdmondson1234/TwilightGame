@@ -7,7 +7,7 @@
  * Uses happy-dom instead of jsdom to avoid webidl-conversions compatibility issues.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   getPalette,
   getColorHex,
@@ -16,7 +16,6 @@ import {
   exportPalette,
   initializePalette,
   DEFAULT_PALETTE,
-  GamePalette,
 } from '../palette';
 
 // Mock DOM for applyPaletteToDOM

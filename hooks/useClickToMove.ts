@@ -7,8 +7,7 @@
 
 import { useState, useCallback, useRef, MutableRefObject } from 'react';
 import { Position, NPC } from '../types';
-import { findPath, findAdjacentWalkableTile, getDistance } from '../utils/pathfinding';
-import { getTileCoords } from '../utils/mapUtils';
+import { findPath } from '../utils/pathfinding';
 
 /** Threshold for considering a waypoint reached (in tiles) */
 const WAYPOINT_THRESHOLD = 0.15;

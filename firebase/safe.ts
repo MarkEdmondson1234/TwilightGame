@@ -191,9 +191,6 @@ const stubCloudSaveService = {
   migrateLocalSave: async () => {},
 };
 
-/** Stub initializeFirebase when Firebase is not available */
-const stubInitializeFirebase = async () => null;
-
 // Cache the loaded module
 let firebaseModule: typeof import('./index') | null = null;
 let loadPromise: Promise<typeof import('./index') | null> | null = null;

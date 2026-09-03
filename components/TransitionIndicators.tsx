@@ -165,7 +165,6 @@ function getTransitionLabel(transition: Transition): string {
 const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
   currentMap,
   playerPos,
-  lastTransitionTime,
   gridOffset,
   tileSize = TILE_SIZE,
 }) => {

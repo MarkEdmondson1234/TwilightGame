@@ -9,7 +9,7 @@
  */
 
 import { DialogueNode, NPC, FriendshipTier } from '../types';
-import { TimeManager, Season, TimeOfDay } from '../utils/TimeManager';
+import { TimeManager } from '../utils/TimeManager';
 import { gameState } from '../GameState';
 import { GiftReaction, getGiftReactionDialogue } from '../data/giftReactions';
 import { friendshipManager } from '../utils/FriendshipManager';

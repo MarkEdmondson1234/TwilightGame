@@ -18,7 +18,6 @@ const NPCS_WITH_INDICATORS = ['shop_counter_fox'];
 
 // Distance thresholds
 const ICON_VISIBLE_DISTANCE = 3.0; // Icon visible from further away
-const TOOLTIP_DISTANCE = 1.5; // Tooltip only when very close
 
 /**
  * Floating icon that bobs gently above an NPC

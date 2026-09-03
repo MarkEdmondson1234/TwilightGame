@@ -9,7 +9,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { NPC, DialogueNode, DialogueResponse } from '../../types';
 import {
-  NPCPersona,
   NPC_PERSONAS,
   buildSystemPrompt,
   GameContext,
@@ -37,7 +36,6 @@ import { globalEventManager } from '../../utils/GlobalEventManager';
 import { eventChainManager } from '../../utils/EventChainManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { decorationManager } from '../../utils/DecorationManager';
-import { getItem } from '../../data/items';
 
 import DialogueFrame from './DialogueFrame';
 import DialogueChatHistory from './DialogueChatHistory';

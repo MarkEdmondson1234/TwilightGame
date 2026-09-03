@@ -8,17 +8,17 @@ import { farmingAssets } from '../assets';
 import { ColorResolver } from '../utils/ColorResolver';
 
 interface TileRendererProps {
-    currentMap: MapDefinition;
-    currentMapId: string | null;
-    visibleRange: {
-        minX: number;
-        maxX: number;
-        minY: number;
-        maxY: number;
-    };
-    seasonKey: 'spring' | 'summer' | 'autumn' | 'winter';
-    farmUpdateTrigger: number;
-    renderVersion?: number;  // Cache-busting prop to force re-render
+  currentMap: MapDefinition;
+  currentMapId: string | null;
+  visibleRange: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
+  seasonKey: 'spring' | 'summer' | 'autumn' | 'winter';
+  farmUpdateTrigger: number;
+  renderVersion?: number; // Cache-busting prop to force re-render
 }
 
 /**
@@ -29,198 +29,221 @@ interface TileRendererProps {
  * - Viewport culling for performance
  */
 const TileRenderer: React.FC<TileRendererProps> = ({
-    currentMap,
-    currentMapId,
-    visibleRange,
-    seasonKey,
-    farmUpdateTrigger,
-    renderVersion, // Unused - just for cache busting
+  currentMap,
+  currentMapId,
+  visibleRange,
+  seasonKey,
+  farmUpdateTrigger,
 }) => {
-    return (
-        <>
-            {currentMap.grid.map((row, y) =>
-                row.map((_, x) => {
-                    // Performance: Skip tiles outside viewport
-                    if (x < visibleRange.minX || x > visibleRange.maxX || y < visibleRange.minY || y > visibleRange.maxY) {
-                        return null;
-                    }
+  return (
+    <>
+      {currentMap.grid.map((row, y) =>
+        row.map((_, x) => {
+          // Performance: Skip tiles outside viewport
+          if (
+            x < visibleRange.minX ||
+            x > visibleRange.maxX ||
+            y < visibleRange.minY ||
+            y > visibleRange.maxY
+          ) {
+            return null;
+          }
 
-                    // Check if this tile has a farm plot override
-                    // (farmUpdateTrigger forces re-render when farm plots change)
-                    let tileData = getTileData(x, y);
-                    if (!tileData) return null;
+          // Check if this tile has a farm plot override
+          // (farmUpdateTrigger forces re-render when farm plots change)
+          let tileData = getTileData(x, y);
+          if (!tileData) return null;
 
-                    // Override tile appearance if there's an active farm plot here
-                    let growthStage: number | null = null;
-                    let cropType: string | null = null;
-                    let isHerbDormant = false;
-                    if (currentMapId && farmUpdateTrigger >= 0) { // Include farmUpdateTrigger to force re-evaluation
-                        const plot = farmManager.getPlot(currentMapId, { x, y });
-                        if (plot) {
-                            // Get the tile type for this plot's state
-                            const plotTileType = farmManager.getTileTypeForPlot(plot);
-                            // Get the visual data for this tile type
-                            const plotTileData = getTileData(x, y, plotTileType);
-                            if (plotTileData) {
-                                tileData = plotTileData;
-                            }
-                            // Get growth stage for all growing crops (planted, watered, ready, wilting)
-                            // Also include herb post-harvest states (HERB_COOLDOWN, HERB_DORMANT) — they show the adult sprite
-                            if (plot.state === FarmPlotState.PLANTED ||
-                                plot.state === FarmPlotState.WATERED ||
-                                plot.state === FarmPlotState.READY ||
-                                plot.state === FarmPlotState.WILTING ||
-                                plot.state === FarmPlotState.HERB_COOLDOWN ||
-                                plot.state === FarmPlotState.HERB_DORMANT) {
-                                growthStage = farmManager.getGrowthStage(plot);
-                                cropType = plot.cropType;
-                                isHerbDormant = plot.state === FarmPlotState.HERB_DORMANT;
-                            }
-                        }
-                    }
+          // Override tile appearance if there's an active farm plot here
+          let growthStage: number | null = null;
+          let cropType: string | null = null;
+          let isHerbDormant = false;
+          if (currentMapId && farmUpdateTrigger >= 0) {
+            // Include farmUpdateTrigger to force re-evaluation
+            const plot = farmManager.getPlot(currentMapId, { x, y });
+            if (plot) {
+              // Get the tile type for this plot's state
+              const plotTileType = farmManager.getTileTypeForPlot(plot);
+              // Get the visual data for this tile type
+              const plotTileData = getTileData(x, y, plotTileType);
+              if (plotTileData) {
+                tileData = plotTileData;
+              }
+              // Get growth stage for all growing crops (planted, watered, ready, wilting)
+              // Also include herb post-harvest states (HERB_COOLDOWN, HERB_DORMANT) — they show the adult sprite
+              if (
+                plot.state === FarmPlotState.PLANTED ||
+                plot.state === FarmPlotState.WATERED ||
+                plot.state === FarmPlotState.READY ||
+                plot.state === FarmPlotState.WILTING ||
+                plot.state === FarmPlotState.HERB_COOLDOWN ||
+                plot.state === FarmPlotState.HERB_DORMANT
+              ) {
+                growthStage = farmManager.getGrowthStage(plot);
+                cropType = plot.cropType;
+                isHerbDormant = plot.state === FarmPlotState.HERB_DORMANT;
+              }
+            }
+          }
 
-                    // Select image variant using deterministic hash
-                    let selectedImage: string | null = null;
-                    let selectedImageIndex: number | undefined = undefined;
+          // Select image variant using deterministic hash
+          let selectedImage: string | null = null;
+          let selectedImageIndex: number | undefined = undefined;
 
-                    // Determine which image array to use (seasonal or regular)
-                    let imageArray: string[] | undefined = undefined;
+          // Determine which image array to use (seasonal or regular)
+          let imageArray: string[] | undefined = undefined;
 
-                    if (tileData.seasonalImages) {
-                        // Use seasonal images if available (season cached above for performance)
-                        imageArray = seasonKey in tileData.seasonalImages ? tileData.seasonalImages[seasonKey] : tileData.seasonalImages.default;
+          if (tileData.seasonalImages) {
+            // Use seasonal images if available (season cached above for performance)
+            imageArray =
+              seasonKey in tileData.seasonalImages
+                ? tileData.seasonalImages[seasonKey]
+                : tileData.seasonalImages.default;
+          } else if (tileData.image) {
+            // Fall back to regular images
+            imageArray = tileData.image;
+          }
 
-                    } else if (tileData.image) {
-                        // Fall back to regular images
-                        imageArray = tileData.image;
-                    }
+          // Check if this tile has a multi-tile sprite (if so, don't render its own background image)
+          const hasMultiTileSprite = SPRITE_METADATA.some((s) => s.tileType === tileData.type);
 
-                    // Check if this tile has a multi-tile sprite (if so, don't render its own background image)
-                    const hasMultiTileSprite = SPRITE_METADATA.some(s =>
-                        s.tileType === tileData.type
-                    );
+          // If this tile has a baseType (like cherry trees on grass), use base tile's visuals
+          let renderTileData = tileData;
+          if (hasMultiTileSprite && tileData.baseType !== undefined) {
+            const baseTileData = getTileData(x, y, tileData.baseType);
+            if (baseTileData) {
+              renderTileData = baseTileData;
+              // Re-determine image array for base tile (season cached above)
+              if (renderTileData.seasonalImages) {
+                imageArray =
+                  seasonKey in renderTileData.seasonalImages
+                    ? renderTileData.seasonalImages[seasonKey]
+                    : renderTileData.seasonalImages.default;
+              } else if (renderTileData.image) {
+                imageArray = renderTileData.image;
+              }
+            }
+          }
 
-                    // If this tile has a baseType (like cherry trees on grass), use base tile's visuals
-                    let renderTileData = tileData;
-                    if (hasMultiTileSprite && tileData.baseType !== undefined) {
-                        const baseTileData = getTileData(x, y, tileData.baseType);
-                        if (baseTileData) {
-                            renderTileData = baseTileData;
-                            // Re-determine image array for base tile (season cached above)
-                            if (renderTileData.seasonalImages) {
-                                imageArray = seasonKey in renderTileData.seasonalImages ? renderTileData.seasonalImages[seasonKey] : renderTileData.seasonalImages.default;
-                            } else if (renderTileData.image) {
-                                imageArray = renderTileData.image;
-                            }
-                        }
-                    }
+          // All tiles with images use random selection now (including paths)
+          if (
+            imageArray &&
+            imageArray.length > 0 &&
+            (!hasMultiTileSprite || tileData.baseType !== undefined)
+          ) {
+            const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
+            const hashValue = hash % 1;
 
-                    // All tiles with images use random selection now (including paths)
-                    if (imageArray && imageArray.length > 0 && (!hasMultiTileSprite || tileData.baseType !== undefined)) {
-                        const hash = Math.abs(Math.sin(x * 12.9898 + y * 78.233) * 43758.5453);
-                        const hashValue = hash % 1;
+            // For grass tiles (and tiles with grass backgrounds), only show image on 30% of tiles (sparse)
+            // For other tiles, always show image
+            // Use renderTileData since we might be rendering base tile (e.g., grass under cherry tree)
+            const isGrassTile =
+              renderTileData.type === TileType.GRASS ||
+              renderTileData.type === TileType.TREE ||
+              renderTileData.type === TileType.TREE_BIG;
+            const showImage = isGrassTile ? hashValue < 0.3 : true;
 
-                        // For grass tiles (and tiles with grass backgrounds), only show image on 30% of tiles (sparse)
-                        // For other tiles, always show image
-                        // Use renderTileData since we might be rendering base tile (e.g., grass under cherry tree)
-                        const isGrassTile = renderTileData.type === TileType.GRASS ||
-                                            renderTileData.type === TileType.TREE ||
-                                            renderTileData.type === TileType.TREE_BIG;
-                        const showImage = isGrassTile ? hashValue < 0.3 : true;
+            if (showImage) {
+              // For farm plots with growth stages, select sprite based on stage and crop type
+              if (
+                growthStage !== null &&
+                cropType &&
+                (tileData.type === TileType.SOIL_PLANTED ||
+                  tileData.type === TileType.SOIL_WATERED ||
+                  tileData.type === TileType.SOIL_READY ||
+                  tileData.type === TileType.SOIL_WILTING)
+              ) {
+                // Override with growth-stage-specific sprite based on crop type
+                if (growthStage === 0) {
+                  // SEEDLING
+                  selectedImage = farmingAssets.seedling;
+                } else if (growthStage === 1) {
+                  // YOUNG
+                  // Use crop-specific young sprite if available, otherwise use generic
+                  selectedImage =
+                    (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
+                } else {
+                  // ADULT — dormant herbs may use a winter-specific sprite
+                  const winterKey = `plant_${cropType}_winter`;
+                  const adultKey = `plant_${cropType}_adult`;
+                  selectedImage =
+                    isHerbDormant && (farmingAssets as any)[winterKey]
+                      ? (farmingAssets as any)[winterKey]
+                      : (farmingAssets as any)[adultKey] || farmingAssets.seedling;
+                }
+              } else {
+                // Use a separate hash for image selection to avoid bias
+                const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
+                const index = Math.floor((imageHash % 1) * imageArray.length);
+                selectedImage = imageArray[index];
+                selectedImageIndex = index; // Store for lake edge rotation
+              }
+            }
+          }
 
-                        if (showImage) {
-                            // For farm plots with growth stages, select sprite based on stage and crop type
-                            if (growthStage !== null && cropType && (
-                                tileData.type === TileType.SOIL_PLANTED ||
-                                tileData.type === TileType.SOIL_WATERED ||
-                                tileData.type === TileType.SOIL_READY ||
-                                tileData.type === TileType.SOIL_WILTING
-                            )) {
-                                // Override with growth-stage-specific sprite based on crop type
-                                if (growthStage === 0) { // SEEDLING
-                                    selectedImage = farmingAssets.seedling;
-                                } else if (growthStage === 1) { // YOUNG
-                                    // Use crop-specific young sprite if available, otherwise use generic
-                                    selectedImage = (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
-                                } else { // ADULT — dormant herbs may use a winter-specific sprite
-                                    const winterKey = `plant_${cropType}_winter`;
-                                    const adultKey = `plant_${cropType}_adult`;
-                                    selectedImage =
-                                        (isHerbDormant && (farmingAssets as any)[winterKey])
-                                            ? (farmingAssets as any)[winterKey]
-                                            : (farmingAssets as any)[adultKey] || farmingAssets.seedling;
-                                }
-                            } else {
-                                // Use a separate hash for image selection to avoid bias
-                                const imageHash = Math.abs(Math.sin(x * 99.123 + y * 45.678) * 12345.6789);
-                                const index = Math.floor((imageHash % 1) * imageArray.length);
-                                selectedImage = imageArray[index];
-                                selectedImageIndex = index; // Store for lake edge rotation
-                            }
-                        }
-                    }
+          // Calculate transforms using centralized utility (respects tile's transform settings)
+          const { transform, filter } = selectedImage
+            ? calculateTileTransforms(tileData, x, y, selectedImageIndex)
+            : { transform: 'none', filter: 'none' };
 
-                    // Calculate transforms using centralized utility (respects tile's transform settings)
-                    const { transform, filter } = selectedImage
-                        ? calculateTileTransforms(tileData, x, y, selectedImageIndex)
-                        : { transform: 'none', filter: 'none' };
+          // Use ColorResolver to get correct color from color scheme (not TILE_LEGEND fallback)
+          // ColorResolver handles season/time-of-day modifiers automatically
+          const tileColor = ColorResolver.getTileColor(renderTileData.type);
 
-                    // Use ColorResolver to get correct color from color scheme (not TILE_LEGEND fallback)
-                    // ColorResolver handles season/time-of-day modifiers automatically
-                    const tileColor = ColorResolver.getTileColor(renderTileData.type);
-
-                    return (
-                        <div
-                            key={`${x}-${y}`}
-                            className={`absolute ${tileColor}`}
-                            style={{
-                                left: x * TILE_SIZE,
-                                top: y * TILE_SIZE,
-                                width: TILE_SIZE,
-                                height: TILE_SIZE,
-                            }}
-                        >
-                            {growthStage !== null && cropType && (
-                                <img
-                                    src={(tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_READY)
-                                        ? farmingAssets.tilled_wet
-                                        : farmingAssets.tilled}
-                                    alt="Soil"
-                                    className="absolute"
-                                    style={{
-                                        left: 0,
-                                        top: 0,
-                                        width: TILE_SIZE,
-                                        height: TILE_SIZE,
-                                    }}
-                                />
-                            )}
-                            {selectedImage && (
-                                <img
-                                    src={selectedImage}
-                                    alt={renderTileData.name}
-                                    className="absolute"
-                                    style={{
-                                        left: 0,
-                                        top: 0,
-                                        width: TILE_SIZE,
-                                        height: TILE_SIZE,
-                                        imageRendering: 'pixelated',
-                                        transform: transform,
-                                        filter: isHerbDormant
-                                            ? `${filter !== 'none' ? filter + ' ' : ''}saturate(0.3) brightness(0.7)`
-                                            : filter,
-                                        transformOrigin: 'center center',
-                                        opacity: isHerbDormant ? 0.75 : undefined,
-                                    }}
-                                />
-                            )}
-                        </div>
-                    );
-                })
-            )}
-        </>
-    );
+          return (
+            <div
+              key={`${x}-${y}`}
+              className={`absolute ${tileColor}`}
+              style={{
+                left: x * TILE_SIZE,
+                top: y * TILE_SIZE,
+                width: TILE_SIZE,
+                height: TILE_SIZE,
+              }}
+            >
+              {growthStage !== null && cropType && (
+                <img
+                  src={
+                    tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_READY
+                      ? farmingAssets.tilled_wet
+                      : farmingAssets.tilled
+                  }
+                  alt="Soil"
+                  className="absolute"
+                  style={{
+                    left: 0,
+                    top: 0,
+                    width: TILE_SIZE,
+                    height: TILE_SIZE,
+                  }}
+                />
+              )}
+              {selectedImage && (
+                <img
+                  src={selectedImage}
+                  alt={renderTileData.name}
+                  className="absolute"
+                  style={{
+                    left: 0,
+                    top: 0,
+                    width: TILE_SIZE,
+                    height: TILE_SIZE,
+                    imageRendering: 'pixelated',
+                    transform: transform,
+                    filter: isHerbDormant
+                      ? `${filter !== 'none' ? filter + ' ' : ''}saturate(0.3) brightness(0.7)`
+                      : filter,
+                    transformOrigin: 'center center',
+                    opacity: isHerbDormant ? 0.75 : undefined,
+                  }}
+                />
+              )}
+            </div>
+          );
+        })
+      )}
+    </>
+  );
 };
 
 export default TileRenderer;

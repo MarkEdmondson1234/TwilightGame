@@ -10,7 +10,7 @@ import { getTierName } from '../../MagicEffects';
 import { mapManager, transitionToMap } from '../../../maps';
 
 export function transitionProvider(ctx: InteractionContext): AvailableInteraction[] {
-  const { position, currentMapId, playerSizeTier, isContextMenu, onTransition } = ctx;
+  const { position, playerSizeTier, isContextMenu, onTransition } = ctx;
   const interactions: AvailableInteraction[] = [];
 
   /**
@@ -78,14 +78,8 @@ export function transitionProvider(ctx: InteractionContext): AvailableInteractio
         color: '#34d399',
         execute: () => {
           try {
-            const result = transitionToMap(
-              transition.toMapId,
-              transition.toPosition,
-              currentMapId || undefined
-            );
+            const result = transitionToMap(transition.toMapId, transition.toPosition);
             const map = result.map;
-            const seedMatch = map.id.match(/_([\d]+)$/);
-            const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
             onTransition?.({
               success: true,
               mapId: map.id,

@@ -323,7 +323,7 @@ const CombatEncounterInner: React.FC<
 
   const [showItemPicker, setShowItemPicker] = useState(false);
   const [stamina, setStamina] = useState(context.actions.getStamina());
-  const [introReady, setIntroReady] = useState(false);
+  const [, setIntroReady] = useState(false);
   const [fadeToBlack, setFadeToBlack] = useState(false);
 
   // Show intro text on mount, wait for player to click Ready

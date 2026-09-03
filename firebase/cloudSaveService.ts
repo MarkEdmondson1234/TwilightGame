@@ -12,14 +12,12 @@
 
 import {
   doc,
-  setDoc,
   getDoc,
   getDocs,
   deleteDoc,
   collection,
   serverTimestamp,
   writeBatch,
-  Timestamp,
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';

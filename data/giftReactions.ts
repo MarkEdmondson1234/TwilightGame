@@ -9,8 +9,8 @@
  * Following the centralised data pattern from NPC_FOOD_PREFERENCES.
  */
 
-import { ItemCategory, getItem, ITEMS } from './items';
-import { RECIPES, RecipeCategory } from './recipes';
+import { ItemCategory, getItem } from './items';
+import { RECIPES } from './recipes';
 
 export type GiftReaction = 'loved' | 'liked' | 'neutral' | 'disliked';
 
@@ -51,13 +51,7 @@ export interface GiftReactionDialogue {
 export const NPC_GIFT_PREFERENCES: Record<string, NPCGiftPreferences> = {
   // Chill Bear - loves honey and berries, dislikes spices
   bear: {
-    loves: [
-      'honey',
-      'crop_blueberry',
-      'strawberry_jam',
-      'crop_blackberry',
-      'crop_hazelnut',
-    ],
+    loves: ['honey', 'crop_blueberry', 'strawberry_jam', 'crop_blackberry', 'crop_hazelnut'],
     dislikes: ['allspice', 'curry_powder', 'cinnamon'],
     lovesHomeCookedFood: true,
   },
@@ -254,10 +248,7 @@ export const DEFAULT_GIFT_REACTIONS: Record<GiftReaction, GiftReactionDialogue> 
  * NPC-specific gift reaction dialogue
  * Speaking NPCs have dialogue text, non-speaking NPCs have descriptive actions in italics
  */
-export const NPC_GIFT_REACTIONS: Record<
-  string,
-  Record<GiftReaction, GiftReactionDialogue>
-> = {
+export const NPC_GIFT_REACTIONS: Record<string, Record<GiftReaction, GiftReactionDialogue>> = {
   // === SPEAKING NPCs ===
 
   bear: {
@@ -274,7 +265,7 @@ export const NPC_GIFT_REACTIONS: Record<
       expression: 'default',
     },
     disliked: {
-      text: "*sniffs and wrinkles nose* Ugh, too spicy for my taste. Bears prefer simple flavours, you know.",
+      text: '*sniffs and wrinkles nose* Ugh, too spicy for my taste. Bears prefer simple flavours, you know.',
       expression: 'thinky',
     },
   },
@@ -293,7 +284,7 @@ export const NPC_GIFT_REACTIONS: Record<
       expression: 'default',
     },
     disliked: {
-      text: "Oh... spinach. I never did care for the stuff, dear. But thank you for thinking of me.",
+      text: 'Oh... spinach. I never did care for the stuff, dear. But thank you for thinking of me.',
       expression: 'thinky',
     },
   },
@@ -338,11 +329,11 @@ export const NPC_GIFT_REACTIONS: Record<
 
   witch: {
     loved: {
-      text: 'Ooh, delicious! *cackles* You know the way to a witch\'s heart. Not literally, mind you - that requires a different ritual entirely.',
+      text: "Ooh, delicious! *cackles* You know the way to a witch's heart. Not literally, mind you - that requires a different ritual entirely.",
       expression: 'happy',
     },
     liked: {
-      text: "Hmm, useful. I shall add this to my collection. You have my thanks.",
+      text: 'Hmm, useful. I shall add this to my collection. You have my thanks.',
       expression: 'smile',
     },
     neutral: {
@@ -350,7 +341,7 @@ export const NPC_GIFT_REACTIONS: Record<
       expression: 'default',
     },
     disliked: {
-      text: "A potion? I MAKE these, child! What need have I for my own work? *huffs* Though I suppose it shows you pay attention...",
+      text: 'A potion? I MAKE these, child! What need have I for my own work? *huffs* Though I suppose it shows you pay attention...',
       expression: 'thinky',
     },
   },
@@ -369,7 +360,7 @@ export const NPC_GIFT_REACTIONS: Record<
       expression: 'default',
     },
     disliked: {
-      text: '*She wrinkles her nose slightly.* "That\'s... kind of you. I\'ll find a use for it, I\'m sure."',
+      text: "*She wrinkles her nose slightly.* \"That's... kind of you. I'll find a use for it, I'm sure.\"",
       expression: 'thinky',
     },
   },
@@ -464,7 +455,7 @@ export const NPC_GIFT_REACTIONS: Record<
       expression: 'default',
     },
     disliked: {
-      text: "*puffs up slightly* Savoury? Bleh! I prefer sweet things... but thank you for trying.",
+      text: '*puffs up slightly* Savoury? Bleh! I prefer sweet things... but thank you for trying.',
       expression: 'thinky',
     },
   },
@@ -483,14 +474,14 @@ export const NPC_GIFT_REACTIONS: Record<
       expression: 'default',
     },
     disliked: {
-      text: "*wrinkles nose* Too savoury for my taste... I prefer desserts. But thank you.",
+      text: '*wrinkles nose* Too savoury for my taste... I prefer desserts. But thank you.',
       expression: 'thinky',
     },
   },
 
   mr_fox: {
     loved: {
-      text: '*licks lips* Ah, proper home cooking! You know the way to a fox\'s heart. Most generous!',
+      text: "*licks lips* Ah, proper home cooking! You know the way to a fox's heart. Most generous!",
       expression: 'happy',
     },
     liked: {
@@ -591,7 +582,7 @@ export const NPC_GIFT_REACTIONS: Record<
       expression: 'happy',
     },
     liked: {
-      text: "*The cow accepts your offering and chews thoughtfully, regarding you with warm, gentle eyes.*",
+      text: '*The cow accepts your offering and chews thoughtfully, regarding you with warm, gentle eyes.*',
       expression: 'smile',
     },
     neutral: {

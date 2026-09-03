@@ -3,7 +3,7 @@
 // FIX: Added and exported the 'runSelfTests' function to resolve the import error in App.tsx.
 // This function performs basic sanity checks as suggested by its usage context.
 import { TILE_LEGEND, MAP_DATA, MAP_WIDTH, MAP_HEIGHT } from '../constants';
-import { TileType, Direction, isTileSolid } from '../types';
+import { TileType, isTileSolid } from '../types';
 import { mapManager } from '../maps';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { GRID_CODES, parseGrid, gridToString } from '../maps/gridParser';
@@ -261,7 +261,7 @@ function validateSpawnPoints(): void {
     }
 
     // Validate transition spawn points (require safe spawn tiles)
-    const transitionTests = map.transitions.map((t, idx) => ({
+    const transitionTests = map.transitions.map((t) => ({
       label: `${mapId} → ${t.label || t.toMapId} (${t.toPosition.x}, ${t.toPosition.y})`,
       position: t.toPosition,
     }));
@@ -367,45 +367,41 @@ function validateFarmSystem(): void {
  */
 function validateInventorySystem(): void {
   // Dynamic import to avoid circular dependencies
-  import('../data/items').then(
-    ({ ITEMS, getItem, getSeedForCrop, getCropItemId, getSeedItemId }) => {
-      import('../data/crops').then(({ CROPS }) => {
-        // Validate that all crops have corresponding seed and crop items
-        for (const cropId of Object.keys(CROPS)) {
-          const seedItem = getSeedForCrop(cropId);
-          if (!seedItem) {
-            console.error(`[Sanity Check] Crop "${cropId}" has no corresponding seed item`);
-          }
-
-          // Skip crop item check for decorative crops (harvestYield: 0)
-          const cropDef = CROPS[cropId];
-          if (cropDef.harvestYield > 0) {
-            const cropItemId = getCropItemId(cropId);
-            const cropItem = getItem(cropItemId);
-            if (!cropItem) {
-              console.error(
-                `[Sanity Check] Crop "${cropId}" has no corresponding crop item (expected "${cropItemId}")`
-              );
-            }
-          }
+  import('../data/items').then(({ ITEMS, getItem, getSeedForCrop, getCropItemId }) => {
+    import('../data/crops').then(({ CROPS }) => {
+      // Validate that all crops have corresponding seed and crop items
+      for (const cropId of Object.keys(CROPS)) {
+        const seedItem = getSeedForCrop(cropId);
+        if (!seedItem) {
+          console.error(`[Sanity Check] Crop "${cropId}" has no corresponding seed item`);
         }
 
-        // Validate that all seed items reference valid crops
-        for (const [itemId, item] of Object.entries(ITEMS)) {
-          if (item.category === 'seed' && item.cropId) {
-            const crop = CROPS[item.cropId];
-            if (!crop) {
-              console.error(
-                `[Sanity Check] Seed item "${itemId}" references non-existent crop "${item.cropId}"`
-              );
-            }
+        // Skip crop item check for decorative crops (harvestYield: 0)
+        const cropDef = CROPS[cropId];
+        if (cropDef.harvestYield > 0) {
+          const cropItemId = getCropItemId(cropId);
+          const cropItem = getItem(cropItemId);
+          if (!cropItem) {
+            console.error(
+              `[Sanity Check] Crop "${cropId}" has no corresponding crop item (expected "${cropItemId}")`
+            );
           }
         }
+      }
 
-        console.log(
-          `[Sanity Check] Inventory system: ${Object.keys(ITEMS).length} items validated`
-        );
-      });
-    }
-  );
+      // Validate that all seed items reference valid crops
+      for (const [itemId, item] of Object.entries(ITEMS)) {
+        if (item.category === 'seed' && item.cropId) {
+          const crop = CROPS[item.cropId];
+          if (!crop) {
+            console.error(
+              `[Sanity Check] Seed item "${itemId}" references non-existent crop "${item.cropId}"`
+            );
+          }
+        }
+      }
+
+      console.log(`[Sanity Check] Inventory system: ${Object.keys(ITEMS).length} items validated`);
+    });
+  });
 }

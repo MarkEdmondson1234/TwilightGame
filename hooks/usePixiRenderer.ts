@@ -13,7 +13,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
-import { Position, Direction, MapDefinition, TileType, TileData } from '../types';
+import { Position, Direction, MapDefinition, TileData } from '../types';
 import { USE_SPRITE_SHADOWS, TILE_LEGEND } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
@@ -36,11 +36,7 @@ import { HighlightLayer } from '../utils/pixi/HighlightLayer';
 import { ThoughtBubbleLayer } from '../utils/pixi/ThoughtBubbleLayer';
 import { WeatherManager } from '../utils/WeatherManager';
 import { shouldShowWeather } from '../data/weatherConfig';
-import {
-  getCoreTextureUrls,
-  getResidentTextureUrls,
-  toSeasonKey,
-} from '../utils/mapTextureSet';
+import { getCoreTextureUrls, getResidentTextureUrls, toSeasonKey } from '../utils/mapTextureSet';
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';

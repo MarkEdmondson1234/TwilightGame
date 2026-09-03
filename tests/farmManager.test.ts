@@ -51,9 +51,9 @@ vi.mock('../utils/TimeManager', () => ({
 // Mock inventoryManager
 vi.mock('../utils/inventoryManager', () => ({
   inventoryManager: {
-    removeItem: vi.fn((itemId: string, quantity: number) => true),
-    hasItem: vi.fn((itemId: string, quantity: number) => true),
-    addItem: vi.fn((itemId: string, quantity: number) => {}),
+    removeItem: vi.fn((_itemId: string, _quantity: number) => true),
+    hasItem: vi.fn((_itemId: string, _quantity: number) => true),
+    addItem: vi.fn((_itemId: string, _quantity: number) => {}),
     getInventoryData: vi.fn(() => ({ items: {}, tools: {} })),
   },
 }));

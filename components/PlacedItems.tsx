@@ -1,7 +1,7 @@
 import React from 'react';
 import { PlacedItem } from '../types';
 import { TILE_SIZE } from '../constants';
-import { shouldShowDecayWarning, getDecayProgress } from '../utils/itemDecayManager';
+import { shouldShowDecayWarning } from '../utils/itemDecayManager';
 import { getItem } from '../data/items';
 import { Z_PLAYER, Z_SPRITE_BACKGROUND } from '../zIndex';
 
@@ -50,7 +50,6 @@ const PlacedItems: React.FC<PlacedItemsProps> = ({
           ? Z_SPRITE_BACKGROUND
           : Z_PLAYER + Math.floor(feetY);
         const showWarning = shouldShowDecayWarning(item);
-        const decayProgress = getDecayProgress(item);
         const imageSrc = item.customImage || item.image;
         const hasFrame = !!item.frameStyle;
         const emojiIcon = !imageSrc && itemDef?.icon ? itemDef.icon : null;
