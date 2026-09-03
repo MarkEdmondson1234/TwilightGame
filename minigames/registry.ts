@@ -44,6 +44,7 @@ const byNpc = new Map<string, MiniGameDefinition[]>();
 const byNpcName = new Map<string, MiniGameDefinition[]>();
 const byInventoryItem = new Map<string, MiniGameDefinition[]>();
 const byMapLocation = new Map<string, MiniGameDefinition[]>();
+const byMapId = new Map<string, Array<{ def: MiniGameDefinition; x: number; y: number }>>();
 
 /** Stable key for a map tile: `mapId:x:y`. */
 function mapLocationKey(mapId: string, x: number, y: number): string {
@@ -57,6 +58,7 @@ function buildIndices(): void {
   byNpcName.clear();
   byInventoryItem.clear();
   byMapLocation.clear();
+  byMapId.clear();
 
   for (const def of MINI_GAME_DEFINITIONS) {
     byId.set(def.id, def);
@@ -87,6 +89,10 @@ function buildIndices(): void {
       const list = byMapLocation.get(key) ?? [];
       list.push(def);
       byMapLocation.set(key, list);
+
+      const mapList = byMapId.get(mapId) ?? [];
+      mapList.push({ def, x, y });
+      byMapId.set(mapId, mapList);
     }
   }
 }
@@ -129,6 +135,13 @@ export function getMiniGamesForMapLocation(
   y: number
 ): MiniGameDefinition[] {
   return byMapLocation.get(mapLocationKey(mapId, x, y)) ?? [];
+}
+
+/** Get every mapLocation trigger on a given map, with its (x, y) — for drawing interaction indicators. */
+export function getMiniGameLocationsForMap(
+  mapId: string
+): Array<{ def: MiniGameDefinition; x: number; y: number }> {
+  return byMapId.get(mapId) ?? [];
 }
 
 /** Get all registered mini-game definitions. */

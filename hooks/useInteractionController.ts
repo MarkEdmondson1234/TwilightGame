@@ -423,6 +423,13 @@ export function useInteractionController(
           miniGameTriggerData: triggerData,
         });
       },
+      onConfirmMiniGame: (miniGameId: string, message: string, triggerData: MiniGameTriggerData) => {
+        openUI('miniGameConfirm', {
+          pendingMiniGameId: miniGameId,
+          pendingMiniGameMessage: message,
+          pendingMiniGameTriggerData: triggerData,
+        });
+      },
       onPlaceDecoration: (result: {
         itemId: string;
         position: Position;

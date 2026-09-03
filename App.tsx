@@ -71,6 +71,7 @@ import { iconAssets } from './iconAssets';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
+import MiniGameLocationIndicators from './components/MiniGameLocationIndicators';
 import NPCInteractionIndicators from './components/NPCInteractionIndicators';
 import TileRenderer from './components/TileRenderer';
 // BackgroundSprites and ForegroundSprites removed - now rendered by PixiJS SpriteLayer
@@ -97,6 +98,8 @@ import CloudShadows from './components/CloudShadows';
 import AmbientClouds from './components/AmbientClouds';
 import CookingInterface from './components/CookingInterface';
 import MiniGameHost from './components/MiniGameHost';
+import ConfirmMiniGameModal from './components/ConfirmMiniGameModal';
+import { miniGameManager } from './minigames/MiniGameManager';
 import { CottageBook } from './components/book';
 import Toast, { useToast } from './components/Toast';
 import CameraOverlay from './components/CameraOverlay';
@@ -2116,6 +2119,16 @@ const App: React.FC = () => {
           tileSize={effectiveTileSize}
         />
 
+        {/* Mini-game location indicators (e.g. the Wizard Trials door) — same
+            bobbing icon + tooltip affordance as real transitions, since these
+            aren't in currentMap.transitions */}
+        <MiniGameLocationIndicators
+          currentMapId={currentMap.id}
+          playerPos={playerPos}
+          gridOffset={effectiveGridOffset}
+          tileSize={effectiveTileSize}
+        />
+
         {/* NPC interaction indicators (shows when player is near interactable NPCs) */}
         <NPCInteractionIndicators
           npcs={allNPCs}
@@ -2501,6 +2514,23 @@ const App: React.FC = () => {
             }
           }}
           showToast={showToast}
+        />
+      )}
+      {ui.miniGameConfirm && ui.context.pendingMiniGameId && ui.context.pendingMiniGameMessage && (
+        <ConfirmMiniGameModal
+          message={ui.context.pendingMiniGameMessage}
+          onCancel={() => closeUI('miniGameConfirm')}
+          onConfirm={() => {
+            const { pendingMiniGameId, pendingMiniGameTriggerData } = ui.context;
+            closeUI('miniGameConfirm');
+            if (pendingMiniGameId && pendingMiniGameTriggerData) {
+              miniGameManager.consumeStartRequirements(pendingMiniGameId);
+              openUI('miniGame', {
+                activeMiniGameId: pendingMiniGameId,
+                miniGameTriggerData: pendingMiniGameTriggerData,
+              });
+            }
+          }}
         />
       )}
       {ui.brewingUI && (

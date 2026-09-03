@@ -2,17 +2,9 @@
  * Sliding Crate Puzzle mini-game definition.
  *
  * Sokoban-style puzzle: push crates out of the way to clear a path from the
- * bottom-left start to the top-right exit.
- *
- * The mapLocation trigger below points at the F7 debug NPC showcase map as a
- * placeholder entrance — chosen because mapLocation triggers require a fixed,
- * statically-known map id, and the originally-desired entrance (inside the
- * procedurally-generated lava map) has no such fixed id (it's `lava_${seed}`,
- * different every time one is generated). Follow-up: move this into the real
- * lava map once entrance marker art exists, via either a small fixed antechamber
- * map reached by a transition placed inside generateLavaMap() (reuses this same
- * mapLocation mechanism), or a bespoke tile type + interaction placed directly
- * in the lava generator.
+ * bottom-left start to the top-right exit. First trial of the Wizard Trials
+ * series, entered via the floating door in the Wizard Trials antechamber
+ * (maps/definitions/wizardTrials.ts, a rare special lava location).
  */
 
 import type { MiniGameDefinition } from '../types';
@@ -26,7 +18,8 @@ export const slidingCratePuzzleDefinition: MiniGameDefinition = {
   colour: '#a16207',
   component: SlidingCratePuzzleGame,
   triggers: {
-    mapLocation: { mapId: 'debug_npcs', x: 27, y: 6 },
+    mapLocation: { mapId: 'wizard_trials', x: 12, y: 7 },
   },
+  confirmMessage: 'Are you sure you want to enter the Wizard Trials?',
   customBackdrop: true,
 };
