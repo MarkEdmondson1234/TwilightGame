@@ -78,7 +78,6 @@ const JournalContent: React.FC<JournalContentProps> = ({ theme }) => {
   const [diaryRefreshKey, setDiaryRefreshKey] = useState(0);
 
   // Build journal entries for each chapter
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const entriesByChapter = useMemo(() => {
     // Active quests
     const activeQuests: JournalEntry[] = eventChainManager.getActiveChains().map((progress) => {
