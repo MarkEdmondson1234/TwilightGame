@@ -60,6 +60,26 @@ export default tseslint.config(
   // Prettier must be last to override other formatting rules
   prettier,
 
+  // §2 of docs/PENDING_CLEANUP.md: console.log is migrating to the category-
+  // gated utils/debugLog.ts helper. Files listed here have completed the
+  // migration; extend this list as each subsystem converts. console.warn and
+  // console.error stay permitted everywhere — they carry player-relevant
+  // failure diagnostics and are deliberately ungated.
+  {
+    files: ['utils/debugLog.ts', 'utils/dialogueHandlers.ts'],
+    rules: {
+      'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
+    },
+  },
+
+  // The helper itself is the single sanctioned console.log site.
+  {
+    files: ['utils/debugLog.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+
   // Ignore patterns
   {
     ignores: [
