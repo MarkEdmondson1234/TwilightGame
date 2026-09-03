@@ -1081,9 +1081,9 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
 /**
  * Main dialogue service function — returns the static dialogue tree node for an NPC.
  *
- * (Live AI-driven dialogue is a separate system — see components/AIDialogueBox.tsx
- * and components/dialogue/UnifiedDialogueBox.tsx, which call buildSystemPrompt()
- * below directly. This function only ever serves static dialogue.)
+ * (Live AI-driven dialogue is handled by components/dialogue/UnifiedDialogueBox.tsx,
+ * which calls buildSystemPrompt() below directly in its AI mode. This function
+ * only ever serves static dialogue.)
  *
  * @param npc - The NPC being talked to
  * @param currentNodeId - Current dialogue node
