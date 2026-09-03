@@ -30,23 +30,23 @@ import { cutsceneManager } from './CutsceneManager';
  * Call this first so TimeManager and cutscene system are available immediately.
  */
 export function initializeGameCore(): void {
-  // Expose game objects to window for testing/debugging
-  (window as any).gameState = gameState;
-  (window as any).mapManager = mapManager;
-  (window as any).inventoryManager = inventoryManager;
-  (window as any).cookingManager = cookingManager;
-  (window as any).magicManager = magicManager;
-  (window as any).__PERF_MONITOR__ = performanceMonitor;
-  (window as any).audioManager = audioManager;
-  (window as any).textureManager = textureManager;
+  // Expose game objects to window for testing/debugging (typed in vite-env.d.ts)
+  window.gameState = gameState;
+  window.mapManager = mapManager;
+  window.inventoryManager = inventoryManager;
+  window.cookingManager = cookingManager;
+  window.magicManager = magicManager;
+  window.__PERF_MONITOR__ = performanceMonitor;
+  window.audioManager = audioManager;
+  window.textureManager = textureManager;
   // Exposed for scripts/perf-test.js, which has to get past the title screen
   // and any season cutscene before it can measure the game itself.
-  (window as any).cutsceneManager = cutsceneManager;
+  window.cutsceneManager = cutsceneManager;
 
   // Dev tools for colour system testing
-  (window as any).TimeManager = TimeManager;
-  (window as any).Season = Season;
-  (window as any).ColorResolver = ColorResolver;
+  window.TimeManager = TimeManager;
+  window.Season = Season;
+  window.ColorResolver = ColorResolver;
 
   // Log dev commands help
   console.log(`
