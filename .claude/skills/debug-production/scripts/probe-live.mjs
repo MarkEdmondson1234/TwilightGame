@@ -43,7 +43,18 @@ const arg = (flag, fallback) => {
   const i = args.indexOf(flag);
   return i === -1 ? fallback : args[i + 1];
 };
-const url = arg('--url', DEFAULT_URL);
+const rawUrl = arg('--url', DEFAULT_URL);
+
+/**
+ * Ask the page to log. `debugLog()` is off in production unless a `debug`
+ * parameter says otherwise, and the markers below are mostly its output.
+ */
+function withDebugLogging(target) {
+  const parsed = new URL(target);
+  if (!parsed.searchParams.has('debug')) parsed.searchParams.set('debug', 'all');
+  return parsed.toString();
+}
+const url = withDebugLogging(rawUrl);
 const waitMs = Number(arg('--wait', '35')) * 1000;
 const showAll = args.includes('--all');
 const filter = new RegExp(
@@ -103,8 +114,11 @@ try {
   console.log(
     missing === 0
       ? '\nAll startup markers present.'
-      : `\n${missing} marker(s) missing. A missing marker is the bug, not a gap in this probe: ` +
-          'find the function that must log one of those lines and work out how it returned early.'
+      : `\n${missing} marker(s) missing. Usually that means a startup step returned ` +
+          'without logging — find the function that owes the line and work out how it ' +
+          'returned early. Before concluding that, check the line still exists: gating a ' +
+          'log behind debugLog() removes a marker without breaking anything, and a whole ' +
+          'group going missing at once looks far more like a refactor than an outage.'
   );
 } finally {
   await browser.close();
