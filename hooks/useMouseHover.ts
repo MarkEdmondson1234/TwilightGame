@@ -21,6 +21,7 @@ import { farmManager } from '../utils/farmManager';
 import { hasTileTypeNearby } from '../utils/mapUtils';
 import { gameState } from '../GameState';
 import { HighlightLayer, type HighlightCategory } from '../utils/pixi/HighlightLayer';
+import { debugLog } from '../utils/debugLog';
 
 export interface UseMouseHoverConfig {
   /** Reference to the game container element */
@@ -188,17 +189,17 @@ export function useMouseHover(config: UseMouseHoverConfig): void {
   useEffect(() => {
     // No hover on touch devices
     if (isTouchDevice) {
-      console.log('[MouseHover] Disabled — touch device');
+      debugLog('MouseHover', 'Disabled — touch device');
       return;
     }
 
     const container = containerRef.current;
     if (!container) {
-      console.log('[MouseHover] No container ref');
+      debugLog('MouseHover', 'No container ref');
       return;
     }
 
-    console.log('[MouseHover] Attaching mousemove listener');
+    debugLog('MouseHover', 'Attaching mousemove listener');
 
     // Track last tile for efficient re-checks
     let lastTileX = -999;
@@ -231,7 +232,7 @@ export function useMouseHover(config: UseMouseHoverConfig): void {
       const layer = highlightLayerRef.current;
       if (!layer) {
         if (!loggedOnce) {
-          console.log('[MouseHover] No highlight layer available yet');
+          debugLog('MouseHover', 'No highlight layer available yet');
           loggedOnce = true;
         }
         return;

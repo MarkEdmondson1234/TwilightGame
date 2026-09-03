@@ -33,6 +33,7 @@ import { useEnvironmentController } from './hooks/useEnvironmentController';
 import { useMultiplayerController } from './hooks/useMultiplayerController';
 import { useChatController } from './hooks/useChatController';
 import { useSharedPlacedItemsController } from './hooks/useSharedPlacedItemsController';
+import { useNpcSpeechController } from './hooks/useNpcSpeechController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
@@ -133,6 +134,7 @@ import YuleTimer from './components/YuleTimer';
 import { yuleCelebrationManager, YULE_MUM_GREETING } from './utils/YuleCelebrationManager';
 import { YULE_CUTSCENE_ID, YULE_NPC_CONFIGS } from './data/yuleCelebration';
 import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
+import { debugLog } from './utils/debugLog';
 
 /**
  * Find the nearest clear MINE_FLOOR tile to an origin position.
@@ -459,6 +461,14 @@ const App: React.FC = () => {
   // into getPlacedItems(), which the renderer and interactions already use.
   useSharedPlacedItemsController({ currentMapId });
 
+  // What the NPCs are saying, shared: a snippet floats above the NPC for anyone
+  // standing near enough, so a conversation is something the other player can
+  // notice and wander over to rather than watching you stand still.
+  useNpcSpeechController({
+    currentMapId,
+    getLocalPosition: () => playerPosRef.current,
+  });
+
   const [isComposingChat, setIsComposingChat] = useState(false);
   const startComposingChat = useCallback(() => setIsComposingChat(true), []);
   const stopComposingChat = useCallback(() => setIsComposingChat(false), []);
@@ -604,7 +614,7 @@ const App: React.FC = () => {
     gameState.selectCharacter(character);
     closeUI('characterCreator');
     setCharacterVersion((prev) => prev + 1); // Trigger sprite regeneration
-    console.log('[App] Character created:', character);
+    debugLog('App', 'Character created:', character);
   };
 
   // Map transition handler
@@ -715,7 +725,7 @@ const App: React.FC = () => {
       mapId?: string;
       position?: { x: number; y: number };
     }) => {
-      console.log('[App] Loading cutscene animation finished');
+      debugLog('App', 'Loading cutscene animation finished');
       loadingCutsceneDoneRef.current = true;
       setIsCutscenePlaying(false);
 
@@ -756,7 +766,7 @@ const App: React.FC = () => {
       return;
     }
 
-    console.log(`[App] Season cutscene started: ${startedId}`);
+    debugLog('App', `Season cutscene started: ${startedId}`);
     loadingCutsceneDoneRef.current = false;
     setIsCutscenePlaying(true);
 
@@ -1264,7 +1274,7 @@ const App: React.FC = () => {
 
       // Load inventory AFTER game initialization completes
       setInventoryItems(convertInventoryToUI());
-      console.log('[App] Inventory loaded after game initialization');
+      debugLog('App', 'Inventory loaded after game initialization');
     };
 
     initAssets();
@@ -1273,7 +1283,7 @@ const App: React.FC = () => {
 
   // Debug logging for DevTools state
   useEffect(() => {
-    console.log('[App] ui.devTools changed to:', ui.devTools);
+    debugLog('App', 'ui.devTools changed to:', ui.devTools);
   }, [ui.devTools]);
 
   // Set up game loop and farm update interval after map is initialized
@@ -1446,8 +1456,8 @@ const App: React.FC = () => {
 
   // Debug: Log touch device status
   useEffect(() => {
-    console.log('[App] Touch device detection:', isTouchDevice);
-    console.log('[App] Mouse controls will be:', isTouchDevice ? 'DISABLED' : 'ENABLED');
+    debugLog('App', 'Touch device detection:', isTouchDevice);
+    debugLog('App', 'Mouse controls will be:', isTouchDevice ? 'DISABLED' : 'ENABLED');
   }, [isTouchDevice]);
 
   // Setup mouse controls (must be after camera hook)
@@ -1842,7 +1852,7 @@ const App: React.FC = () => {
   // progress bar shows until it is.
   useEffect(() => {
     if (!showSplashScreen && isGameReady) {
-      console.log('[App] Entering the game');
+      debugLog('App', 'Entering the game');
       setIsLoadingCutscene(false);
     }
   }, [showSplashScreen, isGameReady]);
@@ -2482,17 +2492,17 @@ const App: React.FC = () => {
       {ui.devTools && (
         <DevTools
           onClose={() => {
-            console.log('[App] Closing DevTools');
+            debugLog('App', 'Closing DevTools');
             closeUI('devTools');
           }}
           onFarmUpdate={() => {
-            console.log('[App] Farm update triggered from DevTools');
+            debugLog('App', 'Farm update triggered from DevTools');
             // EventBus handles re-renders via FARM_PLOT_CHANGED events
             eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
           }}
           isFairyForm={isFairyForm}
           onFairyFormToggle={(active) => {
-            console.log(`[App] Fairy form ${active ? 'activated' : 'deactivated'}`);
+            debugLog('App', `Fairy form ${active ? 'activated' : 'deactivated'}`);
             // Update game state
             gameState.setFairyForm(active);
             // Update local state
@@ -2733,7 +2743,7 @@ const App: React.FC = () => {
           playerGold={gameState.getGold()}
           playerInventory={gameState.getState().inventory.items}
           onTransaction={(newGold, newInventory) => {
-            console.log('[App] onTransaction called:', {
+            debugLog('App', 'onTransaction called:', {
               newGold,
               newInventoryLength: newInventory.length,
             });
@@ -2742,14 +2752,14 @@ const App: React.FC = () => {
             const currentGold = gameState.getGold();
             const goldDifference = newGold - currentGold;
 
-            console.log('[App] Gold change:', { currentGold, newGold, goldDifference });
+            debugLog('App', 'Gold change:', { currentGold, newGold, goldDifference });
 
             if (goldDifference > 0) {
               gameState.addGold(goldDifference);
-              console.log('[App] Added gold:', goldDifference);
+              debugLog('App', 'Added gold:', goldDifference);
             } else if (goldDifference < 0) {
               gameState.spendGold(Math.abs(goldDifference));
-              console.log('[App] Spent gold:', Math.abs(goldDifference));
+              debugLog('App', 'Spent gold:', Math.abs(goldDifference));
             }
 
             // Update InventoryManager with new inventory (triggers EventBus INVENTORY_CHANGED)
@@ -2757,12 +2767,12 @@ const App: React.FC = () => {
             const currentTools = gameState.getState().inventory.tools;
             const currentSlotOrder = inventoryManager.getSlotOrder();
             inventoryManager.loadInventory(newInventory, currentTools, currentSlotOrder);
-            console.log('[App] Updated InventoryManager with new inventory');
+            debugLog('App', 'Updated InventoryManager with new inventory');
 
             // Save to GameState using CharacterData API
             const updatedSlotOrder = inventoryManager.getSlotOrder();
             characterData.saveInventory(newInventory, currentTools, updatedSlotOrder);
-            console.log('[App] Saved inventory to GameState');
+            debugLog('App', 'Saved inventory to GameState');
           }}
         />
       )}

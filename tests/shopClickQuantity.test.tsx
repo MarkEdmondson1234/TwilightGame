@@ -1,17 +1,18 @@
 /**
  * @vitest-environment jsdom
  *
- * Buying one thing should cost one click.
+ * The quantity picker is the confirmation step for a shop trade.
  *
- * The shop used to open a quantity slider for any stack of more than one, so buying a
- * single packet of seeds meant a slider, a plus button and a confirm — while buying one
- * of something you could only afford one of went straight through. The common case paid
- * for the rare one.
+ * Clicking a slot shows what you are buying — the item preview card — and lets
+ * you choose how many before any money moves; single-stock items buy one
+ * immediately because there is nothing to choose. Right-click / long-press
+ * opens the same picker directly.
  *
- * Now left-click trades exactly one and right-click (long-press on touch) opens the
- * picker, matching every other "more options" gesture in the game. This is real money
- * moving on a single click, so both halves are pinned: a click must never silently buy
- * more than one, and the picker must still be reachable.
+ * (A previous experiment made left-click buy exactly one instantly and moved
+ * the picker to right-click only. It was reverted at the owner's request: real
+ * money moving on a single click skipped the "what am I buying, how many"
+ * moment entirely.) Both halves are pinned here: a click must never silently
+ * buy more than one, and the picker must still be reachable.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
@@ -23,10 +24,12 @@ const executeBuyTransaction = vi.fn((..._args: unknown[]) => ({
   result: { message: 'Bought 1x Radish Seeds' },
 }));
 
+const maxBuyQuantity = vi.fn((_itemId: string, _gold: number) => 9);
+
 vi.mock('../utils/ShopManager', () => ({
   shopManager: {
     getInventoryForShop: () => [{ itemId: 'seed_radish', buyPrice: 10, stock: 99 }],
-    getMaxBuyQuantity: () => 9,
+    getMaxBuyQuantity: (itemId: string, gold: number) => maxBuyQuantity(itemId, gold),
     getItemSellPrice: () => 5,
     executeBuyTransaction: (...args: unknown[]) => executeBuyTransaction(...args),
     executeSellTransaction: () => ({
@@ -75,11 +78,25 @@ function shopSlot(): HTMLElement {
 
 const quantityPickerOpen = () => screen.queryByText(/confirm/i) !== null;
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+  vi.clearAllMocks();
+  maxBuyQuantity.mockReturnValue(9);
+});
 afterEach(cleanup);
 
 describe('shop slot: click vs right-click', () => {
-  it('buys exactly one on a left-click, with no picker in the way', () => {
+  it('opens the item preview + quantity picker on left-click, and buys nothing yet', () => {
+    renderShop();
+    fireEvent.click(shopSlot());
+
+    expect(executeBuyTransaction).not.toHaveBeenCalled();
+    expect(quantityPickerOpen()).toBe(true);
+    // The picker names what is being bought.
+    expect(screen.getByText('Radish Seeds')).toBeTruthy();
+  });
+
+  it('buys exactly one immediately when only one is affordable', () => {
+    maxBuyQuantity.mockReturnValue(1);
     renderShop();
     fireEvent.click(shopSlot());
 

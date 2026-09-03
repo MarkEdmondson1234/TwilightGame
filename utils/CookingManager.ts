@@ -33,6 +33,7 @@ import { characterData } from './CharacterData';
 import { staminaManager } from './StaminaManager';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
+import { debugLog } from './debugLog';
 
 // Constants
 const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
@@ -91,8 +92,9 @@ class CookingManagerClass {
         this.recipeProgress.set(id, progress);
       });
 
-      console.log(
-        `[CookingManager] Loaded state: recipeBookUnlocked=${this.recipeBookUnlocked}, ` +
+      debugLog(
+        'CookingManager',
+        `Loaded state: recipeBookUnlocked=${this.recipeBookUnlocked}, ` +
           `recipes=${saved.unlockedRecipes.length}, progress=${Object.keys(saved.recipeProgress).length}`
       );
     }
@@ -122,8 +124,8 @@ class CookingManagerClass {
     });
 
     this.initialised = true;
-    console.log(`[CookingManager] Initialised with ${this.unlockedRecipes.size} unlocked recipes`);
-    console.log(`[CookingManager] Unlocked recipes:`, Array.from(this.unlockedRecipes));
+    debugLog('CookingManager', `Initialised with ${this.unlockedRecipes.size} unlocked recipes`);
+    debugLog('CookingManager', `Unlocked recipes:`, Array.from(this.unlockedRecipes));
 
     // Save initial state to ensure starter recipes are persisted
     this.save();
@@ -259,7 +261,7 @@ class CookingManagerClass {
     }
 
     if (this.unlockedRecipes.has(recipeId)) {
-      console.log(`[CookingManager] ℹ️ Recipe already unlocked: ${recipe.displayName}`);
+      debugLog('CookingManager', `ℹ️ Recipe already unlocked: ${recipe.displayName}`);
       return false;
     }
 
@@ -279,7 +281,7 @@ class CookingManagerClass {
     }
 
     this.unlockedRecipes.add(recipeId);
-    console.log(`[CookingManager] 📖 Unlocked recipe: ${recipe.displayName}`);
+    debugLog('CookingManager', `📖 Unlocked recipe: ${recipe.displayName}`);
     this.save();
     return true;
   }
@@ -298,7 +300,7 @@ class CookingManagerClass {
     }
 
     if (this.unlockRecipe(recipeId)) {
-      console.log(`[CookingManager] 👩‍🍳 ${npcId} taught you: ${recipe.displayName}`);
+      debugLog('CookingManager', `👩‍🍳 ${npcId} taught you: ${recipe.displayName}`);
       return true;
     }
 
@@ -432,7 +434,7 @@ class CookingManagerClass {
     if (!progress.isMastered && progress.timesCooked >= MASTERY_THRESHOLD) {
       progress.isMastered = true;
       masteryAchieved = true;
-      console.log(`[CookingManager] 🌟 Mastered recipe: ${recipe.displayName}!`);
+      debugLog('CookingManager', `🌟 Mastered recipe: ${recipe.displayName}!`);
     }
 
     // Check for full course completion (all 3 domains mastered) — fires once.
@@ -443,13 +445,14 @@ class CookingManagerClass {
     // fires on the very next cook after the course is (or was already) complete.
     if (!this.cookingCourseCongratsShown && this.isCookingCourseComplete()) {
       this.cookingCourseCongratsShown = true;
-      console.log('[CookingManager] 🎉 Cooking course complete! All domains mastered.');
+      debugLog('CookingManager', '🎉 Cooking course complete! All domains mastered.');
       eventBus.emit(GameEvent.COOKING_COURSE_COMPLETE, {});
     }
 
     // Log result
-    console.log(
-      `[CookingManager] 🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`
+    debugLog(
+      'CookingManager',
+      `🍳 Cooked ${recipe.displayName} (${progress?.timesCooked || 0}x total)`
     );
 
     // Save inventory and cooking state
@@ -545,7 +548,7 @@ class CookingManagerClass {
   setFireplaceTutorialComplete(): void {
     if (this.fireplaceTutorialComplete) return;
     this.fireplaceTutorialComplete = true;
-    console.log('[CookingManager] 🔥 Fireplace tutorial complete!');
+    debugLog('CookingManager', '🔥 Fireplace tutorial complete!');
     this.save();
   }
 
@@ -563,12 +566,12 @@ class CookingManagerClass {
    */
   unlockRecipeBook(): void {
     if (this.recipeBookUnlocked) {
-      console.log('[CookingManager] Recipe book already unlocked');
+      debugLog('CookingManager', 'Recipe book already unlocked');
       return;
     }
 
     this.recipeBookUnlocked = true;
-    console.log('[CookingManager] 📖 Recipe book unlocked!');
+    debugLog('CookingManager', '📖 Recipe book unlocked!');
 
     // Sync to GameState (for backwards compatibility and other systems that check it)
     gameState.unlockRecipeBook();
@@ -592,7 +595,7 @@ class CookingManagerClass {
     if (this.cookbookShopUnlocked) return;
 
     this.cookbookShopUnlocked = true;
-    console.log('[CookingManager] 📚 Cookbook now available in the village shop!');
+    debugLog('CookingManager', '📚 Cookbook now available in the village shop!');
     this.save();
   }
 
@@ -638,8 +641,8 @@ class CookingManagerClass {
       this.unlockedRecipes.add('tea');
     }
 
-    console.log('[CookingManager] Reset cooking progress');
-    console.log(`[CookingManager] Unlocked recipes after reset:`, Array.from(this.unlockedRecipes));
+    debugLog('CookingManager', 'Reset cooking progress');
+    debugLog('CookingManager', `Unlocked recipes after reset:`, Array.from(this.unlockedRecipes));
 
     // Save reset state to persist starter recipes
     this.save();

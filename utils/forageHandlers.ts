@@ -17,10 +17,11 @@ import { inventoryManager } from './inventoryManager';
 import { characterData } from './CharacterData';
 import { generateForageSeed, getItem } from '../data/items';
 import { TimeManager, Season } from './TimeManager';
-import { DEBUG, TIMING } from '../constants';
+import { TIMING } from '../constants';
 import { globalEventManager } from './GlobalEventManager';
 import { npcManager } from '../NPCManager';
 import { staminaManager } from './StaminaManager';
+import { debugLog } from './debugLog';
 
 /**
  * Forageable tile types - tiles where players can search for wild seeds
@@ -181,8 +182,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
       TIMING.FORAGE_COOLDOWN_MS
     )
   ) {
-    if (DEBUG.FORAGE)
-      console.log(`[Forage] Tile (${cooldownCheckPos.x}, ${cooldownCheckPos.y}) is on cooldown`);
+    debugLog('Forage', `Tile (${cooldownCheckPos.x}, ${cooldownCheckPos.y}) is on cooldown`);
     return { found: false, message: '' };
   }
 
@@ -266,10 +266,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('dragonfly_wings', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${dragonflyWings.displayName} near stream (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${dragonflyWings.displayName} near stream (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown
     saveForageResult(currentMapId, playerTileX, playerTileY);
@@ -333,10 +333,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     const quantityFound = Math.random() < 0.7 ? 1 : 2;
 
     inventoryManager.addItem('feather', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} Feather(s) near sparrow (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} Feather(s) near sparrow (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     saveForageResult(currentMapId, nearbySparrow.x, nearbySparrow.y, 'feather');
 
@@ -354,10 +354,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const moonpetalAnchor = moonpetalResult.found ? moonpetalResult.position : null;
 
   if (moonpetalAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found moonpetal anchor at (${moonpetalAnchor.x}, ${moonpetalAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found moonpetal anchor at (${moonpetalAnchor.x}, ${moonpetalAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season, timeOfDay } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring or summer)
@@ -402,10 +402,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('moonpetal', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${moonpetal.displayName} at night in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${moonpetal.displayName} at night in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, moonpetalAnchor.x, moonpetalAnchor.y, 'moonpetal');
@@ -424,10 +424,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const addersmeatAnchor = addersmeatResult.found ? addersmeatResult.position : null;
 
   if (addersmeatAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found addersmeat anchor at (${addersmeatAnchor.x}, ${addersmeatAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found addersmeat anchor at (${addersmeatAnchor.x}, ${addersmeatAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season, timeOfDay } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring or summer)
@@ -471,10 +471,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('addersmeat', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${addersmeat.displayName} at night in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${addersmeat.displayName} at night in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, addersmeatAnchor.x, addersmeatAnchor.y, 'addersmeat');
@@ -511,8 +511,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     const quantity = rollForageQuantity();
     inventoryManager.addItem('phoenix_ash', quantity);
-    if (DEBUG.FORAGE)
-      console.log(`[Forage] Found ${quantity} ${phoenixAsh.displayName} in lava lake`);
+    debugLog('Forage', `Found ${quantity} ${phoenixAsh.displayName} in lava lake`);
 
     saveForageResult(currentMapId, lavaLakeAnchor.x, lavaLakeAnchor.y, 'phoenix_ash');
     return {
@@ -529,10 +528,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const wolfsbaneAnchor = wolfsbaneResult.found ? wolfsbaneResult.position : null;
 
   if (wolfsbaneAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found wolfsbane anchor at (${wolfsbaneAnchor.x}, ${wolfsbaneAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found wolfsbane anchor at (${wolfsbaneAnchor.x}, ${wolfsbaneAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season } = TimeManager.getCurrentTime();
 
     // Check if it's winter (wolfsbane is dormant underground)
@@ -569,10 +568,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('wolfsbane', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${wolfsbane.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${wolfsbane.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, wolfsbaneAnchor.x, wolfsbaneAnchor.y, 'wolfsbane');
@@ -642,10 +641,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const rosebushAnchor = rosebushResult.found ? rosebushResult.position : null;
 
   if (rosebushAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found rosebush anchor at (${rosebushAnchor.x}, ${rosebushAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found rosebush anchor at (${rosebushAnchor.x}, ${rosebushAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
 
     const { season } = TimeManager.getCurrentTime();
 
@@ -676,10 +675,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     const quantityFound = rollForageQuantity();
     inventoryManager.addItem('rose_crop', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${roseCrop.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${roseCrop.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     saveForageResult(currentMapId, rosebushAnchor.x, rosebushAnchor.y, 'rose_crop');
 
@@ -696,10 +695,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const redRosebushAnchor = redRosebushResult.found ? redRosebushResult.position : null;
 
   if (redRosebushAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found red rosebush anchor at (${redRosebushAnchor.x}, ${redRosebushAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found red rosebush anchor at (${redRosebushAnchor.x}, ${redRosebushAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
 
     const { season } = TimeManager.getCurrentTime();
 
@@ -730,10 +729,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     const quantityFound = rollForageQuantity();
     inventoryManager.addItem('rose_red_crop', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${roseRedCrop.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${roseRedCrop.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     saveForageResult(currentMapId, redRosebushAnchor.x, redRosebushAnchor.y, 'rose_red_crop');
 
@@ -755,10 +754,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const toadstoolAnchor = toadstoolResult.found ? toadstoolResult.position : null;
 
   if (toadstoolAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found luminescent toadstool anchor at (${toadstoolAnchor.x}, ${toadstoolAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found luminescent toadstool anchor at (${toadstoolAnchor.x}, ${toadstoolAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const toadstool = getItem('luminescent_toadstool');
     if (!toadstool) {
       console.error('[Forage] Luminescent toadstool item not found!');
@@ -784,10 +783,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('luminescent_toadstool', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${toadstool.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${toadstool.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, toadstoolAnchor.x, toadstoolAnchor.y, 'luminescent_toadstool');
@@ -809,10 +808,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const forestMushroomAnchor = forestMushroomResult.found ? forestMushroomResult.position : null;
 
   if (forestMushroomAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found forest mushroom anchor at (${forestMushroomAnchor.x}, ${forestMushroomAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found forest mushroom anchor at (${forestMushroomAnchor.x}, ${forestMushroomAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
 
     // Check if it's the right season (autumn only - dormant other seasons)
     const { season } = TimeManager.getCurrentTime();
@@ -848,10 +847,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('forest_mushroom', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${forestMushroom.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${forestMushroom.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(
@@ -874,10 +873,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const meadowGrassAnchor = meadowGrassResult.found ? meadowGrassResult.position : null;
 
   if (meadowGrassAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found meadow grass anchor at (${meadowGrassAnchor.x}, ${meadowGrassAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found meadow grass anchor at (${meadowGrassAnchor.x}, ${meadowGrassAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
 
     // Only forageable in autumn — the grass dries into straw
     const { season } = TimeManager.getCurrentTime();
@@ -916,10 +915,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     const quantityFound = rollForageQuantity();
     inventoryManager.addItem('straw', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${straw.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${straw.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     saveForageResult(currentMapId, meadowGrassAnchor.x, meadowGrassAnchor.y, 'straw');
 
@@ -936,10 +935,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const deadSpruceAnchor = deadSpruceResult.found ? deadSpruceResult.position : null;
 
   if (deadSpruceAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found dead spruce anchor at (${deadSpruceAnchor.x}, ${deadSpruceAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found dead spruce anchor at (${deadSpruceAnchor.x}, ${deadSpruceAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const ghostLichen = getItem('ghost_lichen');
     if (!ghostLichen) {
       console.error('[Forage] Ghost lichen item not found!');
@@ -964,10 +963,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('ghost_lichen', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${ghostLichen.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${ghostLichen.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, deadSpruceAnchor.x, deadSpruceAnchor.y, 'ghost_lichen');
@@ -988,10 +987,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const spruceAnchor = spruceResult.found ? spruceResult.position : null;
 
   if (spruceAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found spruce anchor at (${spruceAnchor.x}, ${spruceAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found spruce anchor at (${spruceAnchor.x}, ${spruceAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
 
     const { season } = TimeManager.getCurrentTime();
 
@@ -1049,10 +1048,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const giantMushroomAnchor = giantMushroomResult.found ? giantMushroomResult.position : null;
 
   if (giantMushroomAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found giant mushroom anchor at (${giantMushroomAnchor.x}, ${giantMushroomAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found giant mushroom anchor at (${giantMushroomAnchor.x}, ${giantMushroomAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const giantMushroomCap = getItem('giant_mushroom_cap');
     if (!giantMushroomCap) {
       console.error('[Forage] Giant mushroom cap item not found!');
@@ -1077,10 +1076,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('giant_mushroom_cap', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${giantMushroomCap.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${giantMushroomCap.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(
@@ -1103,10 +1102,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const cherryTreeAnchor = cherryTreeResult.found ? cherryTreeResult.position : null;
 
   if (cherryTreeAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found cherry tree anchor at (${cherryTreeAnchor.x}, ${cherryTreeAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found cherry tree anchor at (${cherryTreeAnchor.x}, ${cherryTreeAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
 
     // Seasonal check - only available in spring
     const { season } = TimeManager.getCurrentTime();
@@ -1142,10 +1141,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('sakura_petal', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${sakuraPetal.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${sakuraPetal.displayName} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, cherryTreeAnchor.x, cherryTreeAnchor.y, 'sakura_petal');
@@ -1163,10 +1162,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const beeHiveAnchor = beeHiveResult.found ? beeHiveResult.position : null;
 
   if (beeHiveAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found bee hive anchor at (${beeHiveAnchor.x}, ${beeHiveAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found bee hive anchor at (${beeHiveAnchor.x}, ${beeHiveAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring, summer, or autumn - bees are dormant in winter)
@@ -1217,10 +1216,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('honey', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${honey.displayName} from bee hive in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${honey.displayName} from bee hive in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, beeHiveAnchor.x, beeHiveAnchor.y);
@@ -1238,10 +1237,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const mustardFlowerAnchor = mustardFlowerResult.found ? mustardFlowerResult.position : null;
 
   if (mustardFlowerAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found mustard flower anchor at (${mustardFlowerAnchor.x}, ${mustardFlowerAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found mustard flower anchor at (${mustardFlowerAnchor.x}, ${mustardFlowerAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season } = TimeManager.getCurrentTime();
 
     // Check if it's the right season (spring/summer - mustard flowers are dormant in autumn/winter)
@@ -1292,10 +1291,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('eye_of_newt', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${eyeOfNewt.displayName} from mustard flower in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${eyeOfNewt.displayName} from mustard flower in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, mustardFlowerAnchor.x, mustardFlowerAnchor.y);
@@ -1317,10 +1316,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const shrinkingVioletAnchor = shrinkingVioletResult.found ? shrinkingVioletResult.position : null;
 
   if (shrinkingVioletAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found shrinking violet anchor at (${shrinkingVioletAnchor.x}, ${shrinkingVioletAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found shrinking violet anchor at (${shrinkingVioletAnchor.x}, ${shrinkingVioletAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
     const { season } = TimeManager.getCurrentTime();
 
     // Check if it's spring (only blooms in spring)
@@ -1371,10 +1370,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('shrinking_violet', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${shrinkingViolet.displayName} from shrinking violet in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${shrinkingViolet.displayName} from shrinking violet in ${season} (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(
@@ -1397,10 +1396,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const frostFlowerAnchor = frostFlowerResult.found ? frostFlowerResult.position : null;
 
   if (frostFlowerAnchor) {
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found frost flower anchor at (${frostFlowerAnchor.x}, ${frostFlowerAnchor.y}), player at (${playerTileX}, ${playerTileY})`
-      );
+    debugLog(
+      'Forage',
+      `Found frost flower anchor at (${frostFlowerAnchor.x}, ${frostFlowerAnchor.y}), player at (${playerTileX}, ${playerTileY})`
+    );
 
     // Check if it's snowing (frost flowers only appear during snowfall)
     const currentWeather = gameState.getWeather();
@@ -1450,10 +1449,10 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
     // Add to inventory
     inventoryManager.addItem('frost_flower', quantityFound);
-    if (DEBUG.FORAGE)
-      console.log(
-        `[Forage] Found ${quantityFound} ${frostFlower.displayName} during snowfall (${(successRate * 100).toFixed(0)}% success rate)`
-      );
+    debugLog(
+      'Forage',
+      `Found ${quantityFound} ${frostFlower.displayName} during snowfall (${(successRate * 100).toFixed(0)}% success rate)`
+    );
 
     // Save and set cooldown at ANCHOR position
     saveForageResult(currentMapId, frostFlowerAnchor.x, frostFlowerAnchor.y, 'frost_flower');
@@ -1497,7 +1496,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
         currentSeason === Season.SPRING
           ? 'The wild strawberry plants are not ripe yet — they fruit in summer.'
           : 'The wild strawberry season has already passed for this year.';
-      if (DEBUG.FORAGE) console.log(`[Forage] Wild strawberries out of season (${currentSeason})`);
+      debugLog('Forage', `Wild strawberries out of season (${currentSeason})`);
       return { found: false, message, outOfSeason: true };
     }
   }
@@ -1528,7 +1527,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
         ? `You picked ${berryYield} strawberries and found ${seedCount} seeds!`
         : `You picked ${berryYield} strawberries!`;
 
-      if (DEBUG.FORAGE) console.log(`[Forage] ${message}`);
+      debugLog('Forage', `${message}`);
       return {
         found: true,
         seedId: gotSeeds ? 'seed_wild_strawberry' : undefined,
@@ -1536,7 +1535,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
         message,
       };
     } else {
-      if (DEBUG.FORAGE) console.log('[Forage] Strawberry plant had no ripe berries');
+      debugLog('Forage', 'Strawberry plant had no ripe berries');
       return { found: false, message: 'This strawberry plant has no ripe berries yet.' };
     }
   }
@@ -1545,7 +1544,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   if (tileData.type === TileType.MUSHROOM) {
     // 70% chance to find nothing (silent failure)
     if (Math.random() < 0.7) {
-      if (DEBUG.FORAGE) console.log('[Forage] Searched mushrooms but found nothing');
+      debugLog('Forage', 'Searched mushrooms but found nothing');
       gameState.recordForage(currentMapId, playerTileX, playerTileY);
       return { found: false, message: '' };
     }
@@ -1554,7 +1553,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
     inventoryManager.addItem('mushroom', 1);
     saveForageResult(currentMapId, playerTileX, playerTileY);
 
-    if (DEBUG.FORAGE) console.log('[Forage] Found a mushroom');
+    debugLog('Forage', 'Found a mushroom');
     return {
       found: true,
       seedId: 'mushroom',
@@ -1568,7 +1567,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
 
   if (!seed) {
     // Silent failure - no message
-    if (DEBUG.FORAGE) console.log('[Forage] Searched but found nothing');
+    debugLog('Forage', 'Searched but found nothing');
     return { found: false, message: '' };
   }
 
@@ -1577,7 +1576,7 @@ export function handleForageAction(playerPos: Position, currentMapId: string): F
   const inventoryData = inventoryManager.getInventoryData();
   characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
-  if (DEBUG.FORAGE) console.log(`[Forage] Found ${seed.displayName}`);
+  debugLog('Forage', `Found ${seed.displayName}`);
   return {
     found: true,
     seedId: seed.id,
@@ -1619,7 +1618,7 @@ function harvestBush(
 
     const { season } = TimeManager.getCurrentTime();
     if (!config.seasons.includes(season)) {
-      if (DEBUG.FORAGE) console.log(`[Forage] ${config.logLabel} bush out of season (${season})`);
+      debugLog('Forage', `${config.logLabel} bush out of season (${season})`);
       return { found: false, message: config.outOfSeasonMessage, outOfSeason: true };
     }
 
@@ -1632,7 +1631,7 @@ function harvestBush(
     inventoryManager.addItem(config.itemId, quantity);
     saveForageResult(currentMapId, tile.x, tile.y);
 
-    if (DEBUG.FORAGE) console.log(`[Forage] Picked ${quantity} ${config.logLabel}`);
+    debugLog('Forage', `Picked ${quantity} ${config.logLabel}`);
     return { found: true, message: config.successMessage(quantity) };
   }
 

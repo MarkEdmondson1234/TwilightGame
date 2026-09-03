@@ -31,7 +31,7 @@ const PLACED_ITEMS_COLLECTION = 'shared/world/placedItems';
 class SharedPlacedItemsService {
   private unsubscribe: Unsubscribe | null = null;
   private listeningMapId: string | null = null;
-  private listeners = new Set<() => void>();
+  private listeners = new Set<(removedIds: string[]) => void>();
   private reportedWriteFailure = false;
   /**
    * Ids Firestore actually holds, straight from the snapshots and never touched
@@ -50,18 +50,27 @@ class SharedPlacedItemsService {
     return this.listeningMapId;
   }
 
-  /** Notified whenever the mirrored set changes, so the renderer can refresh. */
-  onChange(callback: () => void): () => void {
+  /**
+   * Notified whenever the mirrored set changes, so the renderer can refresh.
+   *
+   * Receives the ids Firestore dropped in this batch. The caller needs them:
+   * an item another player picked up is gone from the world, but it may still
+   * sit in *our* local save, and local state wins in getPlacedItems(). Without
+   * following the deletion the item stays on screen and is republished on our
+   * next reconcile — so picking up somebody's bench duplicated it instead of
+   * moving it.
+   */
+  onChange(callback: (removedIds: string[]) => void): () => void {
     this.listeners.add(callback);
     return () => {
       this.listeners.delete(callback);
     };
   }
 
-  #emit(): void {
+  #emit(removedIds: string[]): void {
     for (const listener of this.listeners) {
       try {
-        listener();
+        listener(removedIds);
       } catch (error) {
         console.warn('[SharedItems] Listener threw:', error);
       }
@@ -90,8 +99,10 @@ class SharedPlacedItemsService {
       this.unsubscribe = onSnapshot(
         collection(db, PLACED_ITEMS_COLLECTION),
         (snapshot) => {
+          const removedIds: string[] = [];
           for (const change of snapshot.docChanges()) {
             if (change.type === 'removed') {
+              removedIds.push(change.doc.id);
               this.publishedIds.delete(change.doc.id);
               sharedPlacedItemsManager.remove(change.doc.id);
               continue;
@@ -117,7 +128,7 @@ class SharedPlacedItemsService {
             this.publishedIds.add(change.doc.id);
             sharedPlacedItemsManager.apply(item);
           }
-          this.#emit();
+          this.#emit(removedIds);
         },
         (error) => {
           console.warn('[SharedItems] Listener failed:', error);

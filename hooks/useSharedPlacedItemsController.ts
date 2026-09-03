@@ -23,6 +23,7 @@ import { getSharedPlacedItemsService, whenFirebaseSettled } from '../firebase/sa
 import { sharedPlacedItemsManager } from '../multiplayer/sharedPlacedItems';
 import { loadPaintingImage } from '../utils/paintingImageService';
 import type { PlacedItem } from '../types';
+import { debugLog } from '../utils/debugLog';
 
 export interface UseSharedPlacedItemsControllerProps {
   /** Map the player is currently on */
@@ -106,6 +107,26 @@ export function useSharedPlacedItemsController(
       });
     };
 
+    /**
+     * Someone picked up an item that is also in our own save.
+     *
+     * Local state wins in getPlacedItems(), and it is what the outbound
+     * reconcile publishes — so an item deleted by another player stayed on our
+     * screen *and* was republished on our next placement. Picking up somebody's
+     * bench therefore duplicated it rather than moving it, and a bench they
+     * removed came back. Following the deletion into local state is what keeps
+     * the two stores telling the same story.
+     */
+    const followRemovals = (removedIds: string[]) => {
+      for (const id of removedIds) {
+        if (!gameState.getAllPlacedItems().some((item) => item.id === id)) continue;
+        if (DEBUG.MULTIPLAYER) debugLog('SharedItems', `${id} was picked up by someone else`);
+        // Safe against a loop: the document is already gone from publishedIds,
+        // so the reconcile this triggers has nothing left to delete.
+        gameState.removePlacedItem(id);
+      }
+    };
+
     const hydratePaintings = () => {
       const mapId = sharedPlacedItemsManager.getMapId();
       if (!mapId) return;
@@ -131,7 +152,8 @@ export function useSharedPlacedItemsController(
       const loaded = await whenFirebaseSettled();
       if (cancelled || !loaded) return;
 
-      unsubscribe = getSharedPlacedItemsService().onChange(() => {
+      unsubscribe = getSharedPlacedItemsService().onChange((removedIds) => {
+        followRemovals(removedIds);
         hydratePaintings();
         announce();
       });
@@ -164,7 +186,7 @@ export function useSharedPlacedItemsController(
       for (const item of local) {
         const published = sharedPlacedItemsManager.get(item.id);
         if (!published || differs(item, published)) {
-          if (DEBUG.MULTIPLAYER) console.log(`[SharedItems] Publishing ${item.itemId}`);
+          if (DEBUG.MULTIPLAYER) debugLog('SharedItems', `Publishing ${item.itemId}`);
           void service.writeItem(item);
         }
       }
@@ -177,7 +199,7 @@ export function useSharedPlacedItemsController(
       for (const id of service.getPublishedIds()) {
         if (localIds.has(id)) continue;
         if (sharedPlacedItemsManager.has(id)) continue;
-        if (DEBUG.MULTIPLAYER) console.log(`[SharedItems] Deleting picked-up item ${id}`);
+        if (DEBUG.MULTIPLAYER) debugLog('SharedItems', `Deleting picked-up item ${id}`);
         void service.deleteItem(id);
       }
     };

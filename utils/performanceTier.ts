@@ -1,3 +1,4 @@
+import { debugLog } from './debugLog';
 /**
  * Performance Tier Detection
  *
@@ -61,8 +62,8 @@ function isTouchDevice(): boolean {
   return (
     'ontouchstart' in window ||
     navigator.maxTouchPoints > 0 ||
-    // @ts-expect-error - msMaxTouchPoints is IE/Edge specific
-    navigator.msMaxTouchPoints > 0
+    // msMaxTouchPoints is IE/Edge specific (typed as optional in vite-env.d.ts)
+    (navigator.msMaxTouchPoints ?? 0) > 0
   );
 }
 
@@ -131,7 +132,7 @@ function isMobileDevice(): boolean {
 export function detectPerformanceTier(): PerformanceTier {
   // Old iPads get LOW tier
   if (isOldIPad()) {
-    console.log('[PerformanceTier] Detected old iPad - using LOW tier');
+    debugLog('PerformanceTier', 'Detected old iPad - using LOW tier');
     return PerformanceTier.LOW;
   }
 
@@ -143,16 +144,16 @@ export function detectPerformanceTier(): PerformanceTier {
     const memory = navigator.deviceMemory || 4;
 
     if (cores >= 6 && memory >= 4) {
-      console.log('[PerformanceTier] Detected powerful mobile - using HIGH tier');
+      debugLog('PerformanceTier', 'Detected powerful mobile - using HIGH tier');
       return PerformanceTier.HIGH;
     }
 
-    console.log('[PerformanceTier] Detected mobile device - using MEDIUM tier');
+    debugLog('PerformanceTier', 'Detected mobile device - using MEDIUM tier');
     return PerformanceTier.MEDIUM;
   }
 
   // Desktop defaults to HIGH
-  console.log('[PerformanceTier] Detected desktop - using HIGH tier');
+  debugLog('PerformanceTier', 'Detected desktop - using HIGH tier');
   return PerformanceTier.HIGH;
 }
 
@@ -227,7 +228,7 @@ let cachedSettings: PerformanceSettings | null = null;
 export function getCachedPerformanceSettings(): PerformanceSettings {
   if (!cachedSettings) {
     cachedSettings = getPerformanceSettings();
-    console.log('[PerformanceTier] Settings:', cachedSettings);
+    debugLog('PerformanceTier', 'Settings:', cachedSettings);
   }
   return cachedSettings;
 }

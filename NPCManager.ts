@@ -6,6 +6,7 @@ import { TimeManager, Season } from './utils/TimeManager';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { audioManager } from './utils/AudioManager';
 import { createDecisionRandom, slotPhaseOffset } from './utils/seededRandom';
+import { debugLog } from './utils/debugLog';
 
 /**
  * NPCManager - Single Source of Truth for all NPC data
@@ -115,7 +116,7 @@ class NPCManagerClass {
       }
     });
 
-    console.log(`[NPCManager] Registered ${npcs.length} NPCs for map: ${mapId}`);
+    debugLog('NPCManager', `Registered ${npcs.length} NPCs for map: ${mapId}`);
 
     // Reset entry animations for NPCs being registered on the current map
     // This handles background-image maps where NPCs are registered via loadLayers()
@@ -166,8 +167,9 @@ class NPCManagerClass {
         audioManager.playSfx(entry.sound);
       }
 
-      console.log(
-        `[NPCManager] Entry animation: ${npc.id} starts at (${entry.startPosition.x}, ${entry.startPosition.y})`
+      debugLog(
+        'NPCManager',
+        `Entry animation: ${npc.id} starts at (${entry.startPosition.x}, ${entry.startPosition.y})`
       );
     }
   }
@@ -483,7 +485,7 @@ class NPCManagerClass {
       return;
     }
 
-    console.log(`[NPCManager] NPC ${npcId} transitioning: ${states.currentState} -> ${newState}`);
+    debugLog('NPCManager', `NPC ${npcId} transitioning: ${states.currentState} -> ${newState}`);
 
     states.currentState = newState;
     states.lastStateChange = Date.now();
@@ -926,7 +928,7 @@ class NPCManagerClass {
       });
     }
 
-    console.log(`[NPCManager] Added dynamic NPC ${npc.id} to map ${this.currentMapId}`);
+    debugLog('NPCManager', `Added dynamic NPC ${npc.id} to map ${this.currentMapId}`);
     eventBus.emit(GameEvent.NPC_SPAWNED, { npcId: npc.id, mapId: this.currentMapId });
   }
 
@@ -955,7 +957,7 @@ class NPCManagerClass {
     this.npcsByMap.set(targetMapId, filteredNPCs);
     this.npcStates.delete(npcId);
 
-    console.log(`[NPCManager] Removed dynamic NPC ${npcId} from map ${targetMapId}`);
+    debugLog('NPCManager', `Removed dynamic NPC ${npcId} from map ${targetMapId}`);
     eventBus.emit(GameEvent.NPC_DESPAWNED, { npcId, mapId: targetMapId });
   }
 
@@ -1114,8 +1116,9 @@ class NPCManagerClass {
       return;
     }
 
-    console.log(
-      `[NPCManager] Season changed from ${this.currentSeason} to ${newSeason}, updating NPC locations`
+    debugLog(
+      'NPCManager',
+      `Season changed from ${this.currentSeason} to ${newSeason}, updating NPC locations`
     );
     this.currentSeason = newSeason;
 
@@ -1166,8 +1169,9 @@ class NPCManagerClass {
         this.npcsByMap.set(mapId, targetMapNPCs);
       }
 
-      console.log(
-        `[NPCManager] Moved NPC ${npc.id} to map ${mapId} at (${position.x}, ${position.y}) for ${newSeason}`
+      debugLog(
+        'NPCManager',
+        `Moved NPC ${npc.id} to map ${mapId} at (${position.x}, ${position.y}) for ${newSeason}`
       );
     });
   }
@@ -1180,7 +1184,7 @@ class NPCManagerClass {
     this.currentSeason = null;
     // Now update to the actual current season (this will trigger placement)
     this.updateSeasonalLocations();
-    console.log(`[NPCManager] Initialized seasonal locations for ${this.currentSeason}`);
+    debugLog('NPCManager', `Initialized seasonal locations for ${this.currentSeason}`);
   }
 
   /**
@@ -1206,7 +1210,7 @@ class NPCManagerClass {
     this.globalNPCs.clear();
     this.currentMapId = null;
     this.currentSeason = null;
-    console.log('[NPCManager] Cleared all NPCs');
+    debugLog('NPCManager', 'Cleared all NPCs');
   }
 }
 

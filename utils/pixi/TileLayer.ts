@@ -25,12 +25,12 @@ import { TILE_SIZE, TIMING } from '../../constants';
 import { textureManager } from '../TextureManager';
 import { getTileData } from '../mapUtils';
 import { MapDefinition, TileType, TileData, FarmPlotState, CropGrowthStage } from '../../types';
-import { getColorHex } from '../../palette';
+import { getColorHexByName } from '../../palette';
 import { mapManager } from '../../maps';
 import { calculateTileTransforms } from '../tileRenderUtils';
 import { ColorResolver } from '../ColorResolver';
 import { farmManager } from '../farmManager';
-import { farmingAssets } from '../../assets';
+import { farmingAssets, lookupFarmingAsset } from '../../assets';
 import { selectVariant, getPositionHash } from '../spriteVariantUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
@@ -44,6 +44,7 @@ import {
   Z_PLAYER,
   Z_DEPTH_SORTED_BASE,
 } from '../../zIndex';
+import { debugLog } from '../debugLog';
 
 /** Check if a tile type is any farm soil variant (fallow through dead) */
 const isSoilTile = (type: TileType): boolean =>
@@ -176,7 +177,7 @@ export class TileLayer extends PixiLayer {
     // Skip tile rendering for background-image maps
     // BackgroundImageLayer handles rendering, collision still uses grid
     if (map.renderMode === 'background-image') {
-      console.log(`[TileLayer] Skipping tile rendering for background-image map: ${mapId}`);
+      debugLog('TileLayer', `Skipping tile rendering for background-image map: ${mapId}`);
       return;
     }
 
@@ -402,15 +403,15 @@ export class TileLayer extends PixiLayer {
           } else if (growthStage === 1) {
             // YOUNG
             // Use crop-specific young sprite if available, otherwise use generic
-            imageUrl = (farmingAssets as any)[`plant_${cropType}_young`] || farmingAssets.seedling;
+            imageUrl = lookupFarmingAsset(`plant_${cropType}_young`) || farmingAssets.seedling;
           } else {
             // ADULT — dormant herbs may use a winter-specific sprite
             const winterKey = `plant_${cropType}_winter`;
             const adultKey = `plant_${cropType}_adult`;
             imageUrl =
-              isHerbDormant && (farmingAssets as any)[winterKey]
-                ? (farmingAssets as any)[winterKey]
-                : (farmingAssets as any)[adultKey] || farmingAssets.seedling;
+              isHerbDormant && lookupFarmingAsset(winterKey)
+                ? lookupFarmingAsset(winterKey)
+                : lookupFarmingAsset(adultKey) || farmingAssets.seedling;
           }
         } else {
           // Select image variant deterministically
@@ -991,7 +992,7 @@ export class TileLayer extends PixiLayer {
     let result: number;
     if (paletteMatch) {
       const colorName = paletteMatch[1];
-      const hex = getColorHex(colorName as any);
+      const hex = getColorHexByName(colorName);
 
       if (!hex || hex === '#000000') {
         console.warn(
@@ -1132,7 +1133,7 @@ export class TileLayer extends PixiLayer {
     }
     this.colorCache.clear(); // Clear color cache when map changes
     this.animatedTiles.clear(); // Clear animated tile tracking
-    console.log('[TileLayer] Cleared all sprites');
+    debugLog('TileLayer', 'Cleared all sprites');
   }
 
   /**

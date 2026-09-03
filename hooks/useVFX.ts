@@ -8,6 +8,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { Position } from '../types';
 import { getVFXDefinition } from '../data/vfxConfig';
+import { debugLog } from '../utils/debugLog';
 
 export interface ActiveVFX {
   id: string;
@@ -50,7 +51,7 @@ export function useVFX(defaultPosition?: Position): UseVFXReturn {
         duration: definition.duration,
       };
 
-      console.log(`[VFX] Triggering ${vfxType} at`, effect.position);
+      debugLog('VFX', `Triggering ${vfxType} at`, effect.position);
       setActiveEffects((prev) => [...prev, effect]);
 
       // Auto-remove after duration (with small buffer for fade-out)

@@ -17,6 +17,7 @@ import {
   handleForageAction,
   ForageResult,
 } from '../utils/actionHandlers';
+import { debugLog } from '../utils/debugLog';
 
 export interface TouchControlsConfig {
   playerPosRef: MutableRefObject<Position>;
@@ -73,8 +74,9 @@ export function useTouchControls(config: TouchControlsConfig) {
   };
 
   const handleActionPress = () => {
-    console.log(
-      `[Touch Action] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`
+    debugLog(
+      'Touch Action',
+      `Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`
     );
 
     const currentMapId = mapManager.getCurrentMapId();
@@ -85,7 +87,7 @@ export function useTouchControls(config: TouchControlsConfig) {
       const selectedItem = selectedItemSlot !== null ? inventoryItems[selectedItemSlot] : null;
       const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
 
-      console.log(`[Touch Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlot})`);
+      debugLog('Touch Action', `Using tool: ${currentTool} (selected slot: ${selectedItemSlot})`);
 
       const farmResult = handleFarmAction(
         playerPosRef.current,
@@ -146,7 +148,7 @@ export function useTouchControls(config: TouchControlsConfig) {
   const handleResetPress = () => {
     const currentMap = mapManager.getCurrentMap();
     if (currentMap && currentMap.spawnPoint) {
-      console.log('[Touch Reset] Teleporting to spawn point:', currentMap.spawnPoint);
+      debugLog('Touch Reset', 'Teleporting to spawn point:', currentMap.spawnPoint);
       onSetPlayerPos(currentMap.spawnPoint);
       playerPosRef.current = currentMap.spawnPoint;
     }
@@ -156,7 +158,7 @@ export function useTouchControls(config: TouchControlsConfig) {
     const currentMapId = mapManager.getCurrentMapId();
     if (currentMapId) {
       const result = handleForageAction(playerPosRef.current, currentMapId);
-      console.log(`[Touch Forage] ${result.message}`);
+      debugLog('Touch Forage', `${result.message}`);
       onForageResult?.(result);
     }
   };

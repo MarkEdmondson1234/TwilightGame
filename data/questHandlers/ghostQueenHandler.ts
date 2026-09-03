@@ -12,7 +12,7 @@
 import { eventChainManager } from '../../utils/EventChainManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { friendshipManager } from '../../utils/FriendshipManager';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -46,13 +46,13 @@ export function getGhostQuestStage(): string | undefined {
 export function startGhostQuest(): void {
   if (!eventChainManager.isChainStarted(GHOST_QUEEN_QUEST_ID)) {
     eventChainManager.startChain(GHOST_QUEEN_QUEST_ID, {});
-    if (DEBUG.QUEST) console.log('[GhostQueen] Quest started');
+    debugLog('GhostQueen', 'Quest started');
   }
 }
 
 export function advanceGhostQuestToHasBook(): void {
   eventChainManager.advanceToStage(GHOST_QUEEN_QUEST_ID, 'has_book');
-  if (DEBUG.QUEST) console.log('[GhostQueen] Advanced to has_book stage');
+  debugLog('GhostQueen', 'Advanced to has_book stage');
 }
 
 /**
@@ -63,7 +63,7 @@ export function completeGhostQuest(): void {
   eventChainManager.advanceToStage(GHOST_QUEEN_QUEST_ID, 'completed');
   inventoryManager.addItem('shadow_essence', 1);
   friendshipManager.addPoints(GHOST_QUEEN_NPC_ID, 50, 'quest_completed');
-  if (DEBUG.QUEST) console.log('[GhostQueen] Quest completed — shadow essence awarded');
+  debugLog('GhostQueen', 'Quest completed — shadow essence awarded');
 }
 
 // ============================================================================
@@ -82,7 +82,7 @@ export function hasMetGhost(): boolean {
 export function setHasMetGhost(): void {
   try {
     localStorage.setItem(HAS_MET_GHOST_KEY, '1');
-    if (DEBUG.QUEST) console.log('[GhostQueen] hasMetGhost flag set');
+    debugLog('GhostQueen', 'hasMetGhost flag set');
   } catch {
     // localStorage not available — ignore
   }
@@ -107,7 +107,7 @@ export function wasRudeToGhost(): boolean {
 export function setWasRudeToGhost(): void {
   try {
     localStorage.setItem(WAS_RUDE_KEY, '1');
-    if (DEBUG.QUEST) console.log('[GhostQueen] wasRudeToGhost flag set');
+    debugLog('GhostQueen', 'wasRudeToGhost flag set');
   } catch {
     // localStorage not available — ignore
   }

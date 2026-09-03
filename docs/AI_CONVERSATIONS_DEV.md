@@ -12,20 +12,16 @@ The AI conversations system allows NPCs to engage in free-form dialogue using th
 └────────────────────────────┬────────────────────────────────────┘
                              │
                              ▼
-              ┌──────────────────────────────┐
-              │      DialogueBox.tsx         │
-              │   (Static dialogue trees)    │
-              │                              │
-              │   "Chat freely..." button    │
-              └──────────────┬───────────────┘
-                             │ onSwitchToAIMode()
-                             ▼
-              ┌──────────────────────────────┐
-              │     AIDialogueBox.tsx        │
-              │   - Text input (optional)    │
-              │   - AI-generated suggestions │
-              │   - Animated dialogue frame  │
-              └──────────────┬───────────────┘
+              ┌────────────────────────────────┐
+              │ UnifiedDialogueBox.tsx         │
+              │  One component, internal mode: │
+              │                                │
+              │  scripted ──"Chat freely..."──►│
+              │  ai ◄────"Return to conversation"── scripted
+              │   - Text input (optional)      │
+              │   - AI-generated suggestions   │
+              │   - Animated dialogue frame    │
+              └──────────────┬─────────────────┘
                              │
           ┌──────────────────┼──────────────────┐
           ▼                  ▼                  ▼
@@ -40,14 +36,15 @@ The AI conversations system allows NPCs to engage in free-form dialogue using th
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `services/anthropicClient.ts` | Anthropic API wrapper, key management |
-| `services/aiChatHistory.ts` | Three-tier memory system with localStorage |
-| `services/dialogueService.ts` | NPC personas, system prompt builder |
-| `components/AIDialogueBox.tsx` | AI chat UI component |
-| `components/DialogueBox.tsx` | Modified to add "Chat freely..." button |
-| `components/HelpBrowser.tsx` | Settings tab for API key management |
+| File                                         | Purpose                                                                                                     |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `services/anthropicClient.ts`                | Anthropic API wrapper, key management                                                                       |
+| `services/aiChatHistory.ts`                  | Three-tier memory system with localStorage                                                                  |
+| `services/dialogueService.ts`                | NPC personas, system prompt builder                                                                         |
+| `components/dialogue/UnifiedDialogueBox.tsx` | Single dialogue UI for both scripted and AI modes (replaced the separate `DialogueBox` and `AIDialogueBox`) |
+| `components/dialogue/ScriptedControls.tsx`   | Scripted-mode controls, incl. the "Chat freely..." button                                                   |
+| `components/dialogue/AIControls.tsx`         | AI-mode controls, incl. "Return to conversation"                                                            |
+| `components/HelpBrowser.tsx`                 | Settings tab for API key management                                                                         |
 
 ## Adding AI to an NPC
 
@@ -162,13 +159,15 @@ NPC dialogue text here.
 ```
 
 The `generateResponse()` function parses this into:
+
 - `text`: The NPC's dialogue
 - `suggestions`: Array of clickable response options
 
 ### Error Handling
 
 If the API call fails:
-1. A fallback greeting/response is shown (defined in AIDialogueBox.tsx)
+
+1. A fallback greeting/response is shown (defined in `components/dialogue/dialogueHelpers.ts`)
 2. Default suggestion buttons appear
 3. Error is logged but doesn't crash the game
 
@@ -191,29 +190,33 @@ The `buildSystemPrompt()` function creates a prompt with these sections:
 
 ## Mode Switching
 
-### From Static to AI
+The old static/AI split across two components (`DialogueBox` / `AIDialogueBox`) is
+gone — `UnifiedDialogueBox` holds a single `mode` state (`'scripted' | 'ai'`) and
+only the bottom controls area changes.
 
-In `DialogueBox.tsx`:
-- If `isAIAvailable()` and `NPC_PERSONAS[npc.id]?.aiEnabled`
-- Show "Chat freely..." button
-- Clicking triggers `onSwitchToAIMode()`
+### From Scripted to AI
 
-In `App.tsx`:
-- `dialogueMode` state toggles between `'static'` and `'ai'`
-- Renders either `DialogueBox` or `AIDialogueBox`
+In `UnifiedDialogueBox.tsx`:
 
-### From AI to Static
+- `canUseAI = isAIAvailable() && persona?.aiEnabled`
+- When true, `ScriptedControls` shows the "Chat freely..." button
+- Clicking calls `switchToAI()`, which sets `mode` to `'ai'`, loads persisted
+  history and memories, and starts the AI greeting
 
-- Click "Return to conversation" in AIDialogueBox
-- Triggers `onSwitchToStatic()` → sets `dialogueMode` to `'static'`
+### From AI to Scripted
+
+- Click "← Return to conversation" in `AIControls`
+- Calls `switchToScripted()` → sets `mode` back to `'scripted'`
 
 ## Cost Estimation
 
 Using Claude 4.5 Haiku (as of January 2025):
+
 - Input: $0.80 per million tokens
 - Output: $4.00 per million tokens
 
 Per conversation:
+
 - System prompt: ~500 tokens
 - Average message: ~50 tokens
 - 10-message chat: ~1,000 tokens total
@@ -240,22 +243,22 @@ Per conversation:
 // In browser console:
 
 // Check if AI is available
-isAIAvailable()
+isAIAvailable();
 
 // View stored API key (just checks existence)
-localStorage.getItem('twilight_anthropic_api_key')
+localStorage.getItem('twilight_anthropic_api_key');
 
 // View chat history for an NPC
-JSON.parse(localStorage.getItem('ai_chat_village_elder'))
+JSON.parse(localStorage.getItem('ai_chat_village_elder'));
 
 // View memories
-JSON.parse(localStorage.getItem('ai_memory_village_elder'))
-JSON.parse(localStorage.getItem('ai_core_village_elder'))
+JSON.parse(localStorage.getItem('ai_memory_village_elder'));
+JSON.parse(localStorage.getItem('ai_core_village_elder'));
 
 // Clear all AI data for an NPC
-localStorage.removeItem('ai_chat_village_elder')
-localStorage.removeItem('ai_memory_village_elder')
-localStorage.removeItem('ai_core_village_elder')
+localStorage.removeItem('ai_chat_village_elder');
+localStorage.removeItem('ai_memory_village_elder');
+localStorage.removeItem('ai_core_village_elder');
 ```
 
 ## Security Notes

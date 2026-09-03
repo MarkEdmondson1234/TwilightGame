@@ -53,7 +53,6 @@ import {
 } from '../data/questHandlers/altheaChoresHandler';
 import { magicManager } from './MagicManager';
 import { decorationManager } from './DecorationManager';
-import { DEBUG } from '../constants';
 import {
   getEstrangedSistersStage,
   deliverLetterToJuniper,
@@ -65,6 +64,7 @@ import {
   isGhostQuestActive,
   advanceGhostQuestToHasBook,
 } from '../data/questHandlers/ghostQueenHandler';
+import { debugLog } from './debugLog';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
 // Format: { npcId: { tier: [{ itemId, quantity }] } }
@@ -187,8 +187,7 @@ class FriendshipManagerClass {
     }
 
     this.initialised = true;
-    if (DEBUG.FRIENDSHIP)
-      console.log(`[FriendshipManager] Initialised with ${this.friendships.size} friendships`);
+    debugLog('FriendshipManager', `Initialised with ${this.friendships.size} friendships`);
   }
 
   /**
@@ -289,20 +288,19 @@ class FriendshipManagerClass {
     const newLevel = this.getFriendshipLevel(npcId);
     const newTier = this.getFriendshipTier(npcId);
 
-    if (DEBUG.FRIENDSHIP)
-      console.log(
-        `[FriendshipManager] ${npcId}: +${amount} points (${reason}). Now ${friendship.points} points, level ${newLevel}, tier: ${newTier}`
-      );
+    debugLog(
+      'FriendshipManager',
+      `${npcId}: +${amount} points (${reason}). Now ${friendship.points} points, level ${newLevel}, tier: ${newTier}`
+    );
 
     // Announce level up
     if (newLevel > oldLevel) {
-      if (DEBUG.FRIENDSHIP)
-        console.log(`[FriendshipManager] 🎉 ${npcId} friendship increased to level ${newLevel}!`);
+      debugLog('FriendshipManager', `🎉 ${npcId} friendship increased to level ${newLevel}!`);
     }
 
     // Check for tier change and give rewards
     if (newTier !== oldTier) {
-      if (DEBUG.FRIENDSHIP) console.log(`[FriendshipManager] 🌟 ${npcId} is now a ${newTier}!`);
+      debugLog('FriendshipManager', `🌟 ${npcId} is now a ${newTier}!`);
       this.giveTierReward(npcId, newTier, friendship);
     }
 
@@ -322,18 +320,17 @@ class FriendshipManagerClass {
     // Check if already received this tier's reward
     const rewardKey = `${npcId}_${tier}`;
     if (friendship.rewardsReceived?.includes(rewardKey)) {
-      if (DEBUG.FRIENDSHIP)
-        console.log(`[FriendshipManager] Already received ${tier} reward from ${npcId}`);
+      debugLog('FriendshipManager', `Already received ${tier} reward from ${npcId}`);
       return;
     }
 
     // Give the rewards
     for (const reward of rewards) {
       inventoryManager.addItem(reward.itemId, reward.quantity);
-      if (DEBUG.FRIENDSHIP)
-        console.log(
-          `[FriendshipManager] 🎁 Received ${reward.quantity}x ${reward.itemId} from ${npcId}!`
-        );
+      debugLog(
+        'FriendshipManager',
+        `🎁 Received ${reward.quantity}x ${reward.itemId} from ${npcId}!`
+      );
 
       // Special handling for Easel - track in DecorationManager
       if (reward.itemId === 'easel') {
@@ -364,8 +361,7 @@ class FriendshipManagerClass {
       })),
     });
 
-    if (DEBUG.FRIENDSHIP)
-      console.log(`[FriendshipManager] 🎁 ${npcId} gave you a gift for becoming their ${tier}!`);
+    debugLog('FriendshipManager', `🎁 ${npcId} gave you a gift for becoming their ${tier}!`);
   }
 
   /**
@@ -378,7 +374,7 @@ class FriendshipManagerClass {
 
     // Check if already talked today
     if (friendship.lastTalkedDay === currentDay) {
-      if (DEBUG.FRIENDSHIP) console.log(`[FriendshipManager] Already talked to ${npcId} today`);
+      debugLog('FriendshipManager', `Already talked to ${npcId} today`);
       return false;
     }
 
@@ -445,8 +441,7 @@ class FriendshipManagerClass {
     if (itemId === 'potion_friendship') {
       const points = 300;
       this.addPoints(npcId, points, 'friendship elixir');
-      if (DEBUG.FRIENDSHIP)
-        console.log(`[FriendshipManager] 💖 ${npcId} drinks the Friendship Elixir! (+${points})`);
+      debugLog('FriendshipManager', `💖 ${npcId} drinks the Friendship Elixir! (+${points})`);
       return { points, reaction: 'loved' };
     }
 
@@ -454,8 +449,7 @@ class FriendshipManagerClass {
     if (itemId === 'potion_bitter_grudge') {
       const points = -300;
       this.addPoints(npcId, points, 'bitter grudge potion');
-      if (DEBUG.FRIENDSHIP)
-        console.log(`[FriendshipManager] 💔 ${npcId} drinks the Bitter Grudge... (${points})`);
+      debugLog('FriendshipManager', `💔 ${npcId} drinks the Bitter Grudge... (${points})`);
       return { points, reaction: 'disliked' };
     }
 
@@ -466,19 +460,16 @@ class FriendshipManagerClass {
 
       if (isSpecial) {
         // Special Friends are understanding and don't lose friendship
-        if (DEBUG.FRIENDSHIP)
-          console.log(
-            `[FriendshipManager] 😅 ${npcId} (Special Friend) tries your terrible food but doesn't mind`
-          );
+        debugLog(
+          'FriendshipManager',
+          `😅 ${npcId} (Special Friend) tries your terrible food but doesn't mind`
+        );
         return { points: 0, reaction: 'neutral' };
       } else {
         // Regular NPCs lose 1 friendship point
         const points = -1;
         this.addPoints(npcId, points, `terrible food gift: ${item.displayName}`);
-        if (DEBUG.FRIENDSHIP)
-          console.log(
-            `[FriendshipManager] 😖 ${npcId} is disgusted by your terrible food (-1 point)`
-          );
+        debugLog('FriendshipManager', `😖 ${npcId} is disgusted by your terrible food (-1 point)`);
         return { points, reaction: 'disliked' };
       }
     }
@@ -493,27 +484,23 @@ class FriendshipManagerClass {
       case 'loved':
         points = LIKED_GIFT_POINTS; // +300 points
         this.addPoints(npcId, points, `loved gift: ${item.displayName}`);
-        if (DEBUG.FRIENDSHIP)
-          console.log(`[FriendshipManager] 💕 ${npcId} loves ${item.displayName}! (+${points})`);
+        debugLog('FriendshipManager', `💕 ${npcId} loves ${item.displayName}! (+${points})`);
         break;
       case 'liked':
         points = GIFT_POINTS; // +100 points
         this.addPoints(npcId, points, `liked gift: ${item.displayName}`);
-        if (DEBUG.FRIENDSHIP)
-          console.log(`[FriendshipManager] 😊 ${npcId} likes ${item.displayName}. (+${points})`);
+        debugLog('FriendshipManager', `😊 ${npcId} likes ${item.displayName}. (+${points})`);
         break;
       case 'disliked':
         points = -100; // -100 points for disliked items
         this.addPoints(npcId, points, `disliked gift: ${item.displayName}`);
-        if (DEBUG.FRIENDSHIP)
-          console.log(`[FriendshipManager] 😟 ${npcId} dislikes ${item.displayName}. (${points})`);
+        debugLog('FriendshipManager', `😟 ${npcId} dislikes ${item.displayName}. (${points})`);
         break;
       case 'neutral':
       default:
         points = GIFT_POINTS; // +100 points
         this.addPoints(npcId, points, `gift: ${item.displayName}`);
-        if (DEBUG.FRIENDSHIP)
-          console.log(`[FriendshipManager] 🙂 ${npcId} accepts ${item.displayName}. (+${points})`);
+        debugLog('FriendshipManager', `🙂 ${npcId} accepts ${item.displayName}. (+${points})`);
         break;
     }
 
@@ -556,8 +543,7 @@ class FriendshipManagerClass {
       getEstrangedSistersStage() === SISTERS_STAGES.LETTER_GIVEN
     ) {
       const nodeId = deliverLetterToJuniper();
-      if (DEBUG.FRIENDSHIP)
-        console.log("[FriendshipManager] Witch receives Althea's letter via gift.");
+      debugLog('FriendshipManager', "Witch receives Althea's letter via gift.");
       return { points: 0, reaction: 'neutral', dialogueNodeId: nodeId };
     }
 
@@ -567,7 +553,7 @@ class FriendshipManagerClass {
       getEstrangedSistersStage() === SISTERS_STAGES.PHOTO_NEEDED
     ) {
       const nodeId = deliverPhotoToJuniper();
-      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Witch receives photograph via gift.');
+      debugLog('FriendshipManager', 'Witch receives photograph via gift.');
       return { points: 0, reaction: 'neutral', dialogueNodeId: nodeId };
     }
 
@@ -583,8 +569,7 @@ class FriendshipManagerClass {
       magicManager.unlockMagicBook();
       const points = 300;
       this.addPoints('witch', points, 'witch garden quest: pickled onions delivered');
-      if (DEBUG.FRIENDSHIP)
-        console.log(`[FriendshipManager] Witch accepts your pickled onions! (+${points})`);
+      debugLog('FriendshipManager', `Witch accepts your pickled onions! (+${points})`);
       return {
         points,
         reaction: 'loved',
@@ -611,7 +596,7 @@ class FriendshipManagerClass {
     if (!isGhostQuestActive()) return null;
 
     advanceGhostQuestToHasBook();
-    if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Ghost Queen receives the history book.');
+    debugLog('FriendshipManager', 'Ghost Queen receives the history book.');
     return { points: 0, reaction: 'neutral', dialogueNodeId: 'ghost_deliver' };
   }
 
@@ -632,7 +617,7 @@ class FriendshipManagerClass {
       markTeaDelivered();
       const points = 100;
       this.addPoints('old_woman_knitting', points, 'althea chores: tea delivered');
-      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Althea receives tea! (+${points})');
+      debugLog('FriendshipManager', 'Althea receives tea! (+${points})');
       return { points, reaction: 'loved', dialogueNodeId: 'chores_tea_accepted' };
     }
 
@@ -640,8 +625,7 @@ class FriendshipManagerClass {
       markCookiesDelivered();
       const points = 100;
       this.addPoints('old_woman_knitting', points, 'althea chores: cookies delivered');
-      if (DEBUG.FRIENDSHIP)
-        console.log('[FriendshipManager] Althea receives cookies! (+${points})');
+      debugLog('FriendshipManager', 'Althea receives cookies! (+${points})');
       return { points, reaction: 'loved', dialogueNodeId: 'chores_cookies_accepted' };
     }
 
@@ -671,8 +655,7 @@ class FriendshipManagerClass {
         markSeasonCompleted(task);
         const points = 100;
         this.addPoints('village_elder', points, `gardening quest: ${task} crop delivered`);
-        if (DEBUG.FRIENDSHIP)
-          console.log(`[FriendshipManager] 🌱 Elias accepts your ${task} harvest! (+${points})`);
+        debugLog('FriendshipManager', `🌱 Elias accepts your ${task} harvest! (+${points})`);
         return { points, reaction: 'loved', dialogueNodeId: 'garden_task_complete' };
       }
 
@@ -681,8 +664,7 @@ class FriendshipManagerClass {
         markSeasonCompleted('autumn');
         const points = 100;
         this.addPoints('village_elder', points, 'gardening quest: autumn honey delivered');
-        if (DEBUG.FRIENDSHIP)
-          console.log(`[FriendshipManager] 🍯 Elias is delighted with the honey! (+${points})`);
+        debugLog('FriendshipManager', `🍯 Elias is delighted with the honey! (+${points})`);
         return { points, reaction: 'loved', dialogueNodeId: 'garden_task_complete' };
       }
     }
@@ -708,10 +690,10 @@ class FriendshipManagerClass {
 
             const points = 150;
             this.addPoints('village_elder', points, 'fairy bluebells quest completed');
-            if (DEBUG.FRIENDSHIP)
-              console.log(
-                `[FriendshipManager] 🔔 Fairy Bluebells quest complete! Received fairy bluebell seed! (+${points})`
-              );
+            debugLog(
+              'FriendshipManager',
+              `🔔 Fairy Bluebells quest complete! Received fairy bluebell seed! (+${points})`
+            );
             return {
               points,
               reaction: 'loved',
@@ -719,10 +701,10 @@ class FriendshipManagerClass {
               dialogueNodeId: 'fairy_bluebells_complete',
             };
           } else {
-            if (DEBUG.FRIENDSHIP)
-              console.log(
-                `[FriendshipManager] 🔔 Elias accepts your ${questItemType} for the Fairy Bluebells quest!`
-              );
+            debugLog(
+              'FriendshipManager',
+              `🔔 Elias accepts your ${questItemType} for the Fairy Bluebells quest!`
+            );
             return {
               points: 0,
               reaction: 'loved',
@@ -731,8 +713,7 @@ class FriendshipManagerClass {
           }
         } else {
           // Already delivered this item
-          if (DEBUG.FRIENDSHIP)
-            console.log(`[FriendshipManager] Elias already received ${questItemType}`);
+          debugLog('FriendshipManager', `Elias already received ${questItemType}`);
           // Fall through to normal gift handling
         }
       }
@@ -757,8 +738,7 @@ class FriendshipManagerClass {
     friendship.isSpecialFriend = true;
     friendship.crisisCompleted = crisisId;
 
-    if (DEBUG.FRIENDSHIP)
-      console.log(`[FriendshipManager] 💫 ${npcId} is now a Special Friend! (crisis: ${crisisId})`);
+    debugLog('FriendshipManager', `💫 ${npcId} is now a Special Friend! (crisis: ${crisisId})`);
     this.save();
   }
 
@@ -799,8 +779,7 @@ class FriendshipManagerClass {
           const inventoryData = inventoryManager.getInventoryData();
           characterData.saveInventory(inventoryData.items, inventoryData.tools);
 
-          if (DEBUG.FRIENDSHIP)
-            console.log(`[FriendshipManager] 🎁 ${npcId} gave player ${item.displayName}!`);
+          debugLog('FriendshipManager', `🎁 ${npcId} gave player ${item.displayName}!`);
 
           return {
             itemId: gift.itemId,
@@ -882,7 +861,7 @@ class FriendshipManagerClass {
   reset(): void {
     this.friendships.clear();
     this.initialised = false;
-    if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Reset all friendships');
+    debugLog('FriendshipManager', 'Reset all friendships');
   }
 }
 

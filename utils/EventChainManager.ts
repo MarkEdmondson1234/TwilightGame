@@ -25,6 +25,7 @@ import type {
 import { loadAllEventChains } from './eventChainLoader';
 import { globalEventManager } from './GlobalEventManager';
 import { eventBus, GameEvent } from './EventBus';
+import { debugLog } from './debugLog';
 import { TimeManager, Season } from './TimeManager';
 import { handlerRegistry } from './EventChainHandlers';
 import { inventoryManager } from './inventoryManager';
@@ -65,9 +66,9 @@ class EventChainManager {
     // Restore saved progress from GameState
     this.loadProgress();
 
-    console.log(
-      `${LOG_PREFIX} Initialised with ${this.chains.length} chain(s), ` +
-        `${this.progress.size} active`
+    debugLog(
+      'EventChainManager',
+      `Initialised with ${this.chains.length} chain(s), ` + `${this.progress.size} active`
     );
   }
 
@@ -240,7 +241,7 @@ class EventChainManager {
     // If the first stage has choices, prompt the player
     this.emitChoiceIfNeeded(chain, firstStage);
 
-    console.log(`${LOG_PREFIX} Started chain: ${chain.definition.title}`);
+    debugLog('EventChainManager', `Started chain: ${chain.definition.title}`);
     return true;
   }
 
@@ -318,7 +319,7 @@ class EventChainManager {
       // Emit backward-compatible quest completed event
       eventBus.emit(GameEvent.QUEST_COMPLETED, { questId: chainId });
 
-      console.log(`${LOG_PREFIX} Chain completed: ${chain.definition.title}`);
+      debugLog('EventChainManager', `Chain completed: ${chain.definition.title}`);
     } else {
       eventBus.emit(GameEvent.EVENT_CHAIN_UPDATED, {
         chainId,
@@ -377,7 +378,7 @@ class EventChainManager {
       stageId: '',
       action: 'reset',
     });
-    console.log(`${LOG_PREFIX} Reset chain: ${chainId}`);
+    debugLog('EventChainManager', `Reset chain: ${chainId}`);
   }
 
   // ============================================
@@ -495,7 +496,10 @@ class EventChainManager {
 
     for (const reward of stage.rewards) {
       inventoryManager.addItem(reward.item, reward.quantity);
-      console.log(`${LOG_PREFIX} Rewarded ${reward.quantity}x ${reward.item} (chain: ${chainId})`);
+      debugLog(
+        'EventChainManager',
+        `Rewarded ${reward.quantity}x ${reward.item} (chain: ${chainId})`
+      );
     }
 
     // Save inventory after adding rewards

@@ -17,11 +17,13 @@ import { presenceService } from '../firebase/presenceService';
 import { chatService } from '../firebase/chatService';
 import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
 import { sharedAlbumService } from '../firebase/sharedAlbumService';
+import { npcSpeechService } from '../firebase/npcSpeechService';
 import {
   getPresenceService,
   getChatService,
   getSharedPlacedItemsService,
   getSharedAlbumService,
+  getNpcSpeechService,
   getCommunityGardenService,
   whenFirebaseSettled,
 } from '../firebase/safe';
@@ -124,6 +126,21 @@ describe('shared album stub parity', () => {
       'These methods exist on firebase/sharedAlbumService but not on the stub in ' +
         'firebase/safe.ts. The photo album is opened from the bookshelf in a build ' +
         'with no Firebase too. Add a no-op to stubSharedAlbumService.'
+    ).toEqual([]);
+  });
+});
+
+describe('npc speech stub parity', () => {
+  it('implements every public method of the real npc speech service', () => {
+    const missing = methodNames(npcSpeechService).filter(
+      (name) => !methodNames(getNpcSpeechService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/npcSpeechService but not on the stub in ' +
+        'firebase/safe.ts. NPC dialogue runs in a build with no Firebase too, and ' +
+        'the publish call sits on that path. Add a no-op to stubNpcSpeechService.'
     ).toEqual([]);
   });
 });

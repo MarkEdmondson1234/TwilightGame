@@ -22,6 +22,7 @@ import { CHAT_BUBBLE_DURATION_MS, truncateForBubble } from './chat';
 import { decodeDirection, isGhostRecord } from './wire';
 import type { EmoteId } from './emotes';
 import type { PresenceSample, PresenceWire, RemotePlayer } from './types';
+import { debugLog } from '../utils/debugLog';
 
 interface RemotePlayerState {
   uid: string;
@@ -73,7 +74,7 @@ class RemotePlayerManagerClass {
     // own staleness eviction could not save us: it counts from local receipt,
     // so a ghost looks alive for the first 45 seconds after we walk in.
     if (isGhostRecord(wire, now, MULTIPLAYER.GHOST_AFTER_MS)) {
-      if (DEBUG.MULTIPLAYER) console.log(`[Multiplayer] Ignoring ghost record from ${uid}`);
+      if (DEBUG.MULTIPLAYER) debugLog('Multiplayer', `Ignoring ghost record from ${uid}`);
       return;
     }
 
@@ -103,7 +104,7 @@ class RemotePlayerManagerClass {
         isMoving: false,
       };
       this.players.set(uid, state);
-      if (DEBUG.MULTIPLAYER) console.log(`[Multiplayer] ${wire.n} joined (${uid})`);
+      if (DEBUG.MULTIPLAYER) debugLog('Multiplayer', `${wire.n} joined (${uid})`);
       eventBus.emit(GameEvent.REMOTE_PLAYER_JOINED, { uid, name: wire.n });
     } else {
       state.name = wire.n;
@@ -146,7 +147,7 @@ class RemotePlayerManagerClass {
     const state = this.players.get(uid);
     if (!state) return;
     this.players.delete(uid);
-    if (DEBUG.MULTIPLAYER) console.log(`[Multiplayer] ${state.name} left (${uid})`);
+    if (DEBUG.MULTIPLAYER) debugLog('Multiplayer', `${state.name} left (${uid})`);
     eventBus.emit(GameEvent.REMOTE_PLAYER_LEFT, { uid, name: state.name });
   }
 

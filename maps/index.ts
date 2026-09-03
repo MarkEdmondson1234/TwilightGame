@@ -35,6 +35,7 @@ import {
   generateLavaMap,
 } from './procedural';
 import { gameState } from '../GameState';
+import { debugLog } from '../utils/debugLog';
 
 /**
  * Initialize all maps and color schemes
@@ -105,15 +106,15 @@ export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: numb
     const currentLavaDepth = gameState.getLavaDepth();
 
     if (currentForestDepth > 0) {
-      console.log(`[GameState] Exited forest completely (was at depth ${currentForestDepth})`);
+      debugLog('GameState', `Exited forest completely (was at depth ${currentForestDepth})`);
       gameState.resetForestDepth();
     }
     if (currentCaveDepth > 0) {
-      console.log(`[GameState] Exited cave completely (was at depth ${currentCaveDepth})`);
+      debugLog('GameState', `Exited cave completely (was at depth ${currentCaveDepth})`);
       gameState.resetCaveDepth();
     }
     if (currentLavaDepth > 0) {
-      console.log(`[GameState] Exited lava completely (was at depth ${currentLavaDepth})`);
+      debugLog('GameState', `Exited lava completely (was at depth ${currentLavaDepth})`);
       gameState.resetLavaDepth();
     }
   }

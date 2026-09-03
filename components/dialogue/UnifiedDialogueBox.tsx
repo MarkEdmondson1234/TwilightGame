@@ -28,6 +28,7 @@ import {
 import { useStreamingDialogue } from '../../hooks/useStreamingDialogue';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { TimeManager } from '../../utils/TimeManager';
+import { eventBus, GameEvent } from '../../utils/EventBus';
 import { gameState } from '../../GameState';
 import { getSharedDataService } from '../../firebase/safe';
 import { recordConversation, recordScriptedConversation } from '../../services/diaryService';
@@ -48,6 +49,7 @@ import {
   getFallbackResponse,
   getDefaultSuggestions,
 } from './dialogueHelpers';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Types
@@ -192,6 +194,21 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
     };
     loadDialogue();
   }, [npc, currentNodeId, mode, chatMessages, addAssistantMessage, onNodeChange]);
+
+  /**
+   * Share the NPC's latest line, so a player standing nearby sees a snippet
+   * above the NPC's head instead of watching you stand still.
+   *
+   * Watching the message list rather than hooking each addAssistantMessage
+   * call: scripted dialogue, AI replies and the offline fallback all land here,
+   * and there is exactly one place to get wrong. Streaming placeholders are
+   * skipped — publishing every token would be a write per character.
+   */
+  useEffect(() => {
+    const last = chatMessages[chatMessages.length - 1];
+    if (!last || last.role !== 'assistant' || last.isStreaming || !last.content) return;
+    eventBus.emit(GameEvent.NPC_SPOKE, { npcId: npc.id, text: last.content });
+  }, [chatMessages, npc.id]);
 
   // AI mode: game context
   // -------------------------------------------------------------------------
@@ -380,7 +397,16 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         onClose();
       }
     },
-    [npc.id, npc.name, currentDialogue, onNodeChange, onClose, playerName, switchToAI, addPlayerMessage]
+    [
+      npc.id,
+      npc.name,
+      currentDialogue,
+      onNodeChange,
+      onClose,
+      playerName,
+      switchToAI,
+      addPlayerMessage,
+    ]
   );
 
   // -------------------------------------------------------------------------
@@ -421,7 +447,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
         getSharedDataService()
           .getNPCGossip(npc.id, npc.name)
           .then((gossip) => {
-            if (gossip) console.log(`[AI] Gossip available for ${npc.name}: ${gossip}`);
+            if (gossip) debugLog('AI', `Gossip available for ${npc.name}: ${gossip}`);
           });
 
         await generateStreamingResponse(systemPrompt, history, message, {
@@ -461,7 +487,7 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
             }
 
             if (shouldSendToBedAfter && onSendToBed) {
-              console.log(`[AI] Moderation triggered: score ${moderationScore}`);
+              debugLog('AI', `Moderation triggered: score ${moderationScore}`);
               setPendingSendToBed(true);
               setTimeout(() => onSendToBed(), 2500);
             }
@@ -543,14 +569,16 @@ const UnifiedDialogueBox: React.FC<UnifiedDialogueBoxProps> = ({
 
   useEffect(() => {
     if (streamState.isStreaming && streamState.dialogueText) {
-      updateStreamingMessage(
-        streamState.dialogueText,
-        streamState.emotion,
-        streamState.action
-      );
+      updateStreamingMessage(streamState.dialogueText, streamState.emotion, streamState.action);
       setCurrentEmotion(streamState.emotion);
     }
-  }, [streamState.dialogueText, streamState.emotion, streamState.action, streamState.isStreaming, updateStreamingMessage]);
+  }, [
+    streamState.dialogueText,
+    streamState.emotion,
+    streamState.action,
+    streamState.isStreaming,
+    updateStreamingMessage,
+  ]);
 
   useEffect(() => {
     if (streamState.isStreaming && streamState.dialogueText) {

@@ -19,7 +19,6 @@
  */
 
 import type { AvailableInteraction, InteractionContext } from '../types';
-import { DEBUG } from '../../../constants';
 import { FarmPlotState, TileType } from '../../../types';
 import { characterData } from '../../CharacterData';
 import { farmManager } from '../../farmManager';
@@ -28,6 +27,7 @@ import { getCrop } from '../../../data/crops';
 import { getCropIdFromSeed } from '../../../data/items';
 import { inventoryManager } from '../../inventoryManager';
 import { handleFarmAction } from '../../actionHandlers';
+import { debugLog } from '../../debugLog';
 
 /** Menu icon per crop. Falls back to a generic seedling for anything unlisted. */
 const SEED_ICONS: Record<string, string> = {
@@ -266,10 +266,10 @@ export function farmingProvider(ctx: InteractionContext): AvailableInteraction[]
                   result.quality !== 'normal'
                     ? ` (${result.quality} quality, ${qualityMultiplier}x gold!)`
                     : '';
-                if (DEBUG.FARM)
-                  console.log(
-                    `[Action] Picked ${result.yield}x ${crop.displayName}${qualityStr} for ${totalGold} gold`
-                  );
+                debugLog(
+                  'Action',
+                  `Picked ${result.yield}x ${crop.displayName}${qualityStr} for ${totalGold} gold`
+                );
               }
               completeDualHarvest();
             }
@@ -286,10 +286,7 @@ export function farmingProvider(ctx: InteractionContext): AvailableInteraction[]
             if (result) {
               const crop = getCrop(result.cropId);
               if (crop) {
-                if (DEBUG.FARM)
-                  console.log(
-                    `[Action] Harvested ${result.seedsDropped}x ${crop.displayName} Seeds`
-                  );
+                debugLog('Action', `Harvested ${result.seedsDropped}x ${crop.displayName} Seeds`);
               }
               completeDualHarvest();
             }

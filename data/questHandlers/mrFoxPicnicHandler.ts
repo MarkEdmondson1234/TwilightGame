@@ -13,7 +13,7 @@ import { characterData } from '../../utils/CharacterData';
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { gameState } from '../../GameState';
 import { itemAssets } from '../../assets';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -83,7 +83,7 @@ export function isMrFoxPicnicAtStage(stageId: string): boolean {
 export function startMrFoxPicnic(): void {
   if (!eventChainManager.isChainStarted(QUEST_ID)) {
     eventChainManager.startChain(QUEST_ID, DEFAULT_METADATA);
-    if (DEBUG.QUEST) console.log('[MrFoxPicnic] Quest started');
+    debugLog('MrFoxPicnic', 'Quest started');
   }
 }
 
@@ -102,7 +102,7 @@ export function hasDeclinedPicnicOffer(): boolean {
 export function markPicnicOfferDeclined(): void {
   try {
     localStorage.setItem(DECLINED_OFFER_KEY, '1');
-    if (DEBUG.QUEST) console.log('[MrFoxPicnic] Offer permanently declined');
+    debugLog('MrFoxPicnic', 'Offer permanently declined');
   } catch {
     // localStorage not available — ignore
   }
@@ -157,9 +157,7 @@ export function markMessCleaned(pileId: number): boolean {
   cleaned[pileId] = true;
   eventChainManager.setMetadata(QUEST_ID, 'messCleaned', cleaned);
 
-  if (DEBUG.QUEST) {
-    console.log(`[MrFoxPicnic] Mess pile ${pileId} cleaned (${getMessRemaining()} remaining)`);
-  }
+  debugLog('MrFoxPicnic', `Mess pile ${pileId} cleaned (${getMessRemaining()} remaining)`);
 
   eventBus.emit(GameEvent.MESS_PILE_CLEANED, { pileId });
   checkShedComplete();
@@ -179,8 +177,7 @@ export function checkShedComplete(): void {
 
     // Advance quest
     eventChainManager.advanceToStage(QUEST_ID, 'blanket_obtained');
-    if (DEBUG.QUEST)
-      console.log('[MrFoxPicnic] Shed clean — blanket awarded, advancing to blanket_obtained');
+    debugLog('MrFoxPicnic', 'Shed clean — blanket awarded, advancing to blanket_obtained');
   }
 }
 
@@ -198,8 +195,7 @@ export function handleBlanketGiven(): void {
   eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'remove', itemId: 'quest_picnic_blanket' });
 
   eventChainManager.advanceToStage(QUEST_ID, 'cooking_problem');
-  if (DEBUG.QUEST)
-    console.log('[MrFoxPicnic] Blanket given to Mr Fox, advancing to cooking_problem');
+  debugLog('MrFoxPicnic', 'Blanket given to Mr Fox, advancing to cooking_problem');
 }
 
 // ============================================================================
@@ -228,14 +224,12 @@ export function addMealToBasket(mealId: string): { success: boolean; message: st
   contents.push(mealId);
   eventChainManager.setMetadata(QUEST_ID, 'basketContents', contents);
 
-  if (DEBUG.QUEST) {
-    console.log(`[MrFoxPicnic] Added ${mealId} to basket (${contents.length}/${MAX_BASKET_MEALS})`);
-  }
+  debugLog('MrFoxPicnic', `Added ${mealId} to basket (${contents.length}/${MAX_BASKET_MEALS})`);
 
   // Auto-advance to give_basket stage when full
   if (contents.length >= MAX_BASKET_MEALS && isMrFoxPicnicAtStage('filling_basket')) {
     eventChainManager.advanceToStage(QUEST_ID, 'give_basket');
-    if (DEBUG.QUEST) console.log('[MrFoxPicnic] Basket full — advancing to give_basket');
+    debugLog('MrFoxPicnic', 'Basket full — advancing to give_basket');
   }
 
   return {
@@ -266,7 +260,7 @@ export function handleQuestComplete(): void {
   const invData = inventoryManager.getInventoryData();
   characterData.saveInventory(invData.items, invData.tools);
   eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add', itemId: 'quest_rewards' });
-  if (DEBUG.QUEST) console.log('[MrFoxPicnic] Quest complete — returned blanket and basket');
+  debugLog('MrFoxPicnic', 'Quest complete — returned blanket and basket');
 }
 
 // ============================================================================
@@ -292,7 +286,7 @@ handlerRegistry.register(QUEST_ID, 'filling_basket', async (_chainId, _stageId, 
     permanent: true,
   });
 
-  if (DEBUG.QUEST) console.log('[MrFoxPicnic] Spawned picnic basket in mums_kitchen');
+  debugLog('MrFoxPicnic', 'Spawned picnic basket in mums_kitchen');
 });
 
 // When the quest completes, reward the player

@@ -31,6 +31,7 @@ import {
   handleActionCloseUI,
   isBlockingUIOpen,
 } from '../utils/keyHandlers';
+import { debugLog } from '../utils/debugLog';
 
 export interface KeyboardControlsConfig {
   playerPosRef: MutableRefObject<Position>;
@@ -259,10 +260,19 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       return;
     }
 
-    // M key to start typing a chat message. The composer is an <input>, and the
-    // guard at the top of this handler ignores keys while one has focus, so the
-    // player types instead of walking.
-    if ((e.key === 'm' || e.key === 'M') && onStartChat && !showMiniGameRef.current) {
+    // Space (or M) to start typing a chat message. The composer is an <input>,
+    // and the guard at the top of this handler ignores keys while one has focus,
+    // so the player types instead of walking.
+    //
+    // Space rather than Enter: Enter is half of the action key (E/Enter) and
+    // taking it would break every prompt and dialogue. Space was unbound, and
+    // "press space to talk" is a shorter thing to remember than a letter.
+    // preventDefault matters here — space scrolls the page otherwise.
+    if (
+      (e.key === ' ' || e.key === 'm' || e.key === 'M') &&
+      onStartChat &&
+      !showMiniGameRef.current
+    ) {
       e.preventDefault();
       onStartChat();
       return;
@@ -306,7 +316,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     if (e.key === 'r' || e.key === 'R') {
       const currentMap = mapManager.getCurrentMap();
       if (currentMap && currentMap.spawnPoint) {
-        console.log('[Reset] Teleporting to spawn point:', currentMap.spawnPoint);
+        debugLog('Reset', 'Teleporting to spawn point:', currentMap.spawnPoint);
         onSetPlayerPos(currentMap.spawnPoint);
         playerPosRef.current = currentMap.spawnPoint;
       }
@@ -315,8 +325,9 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     // Action key (E or Enter) to trigger transitions, farming, or mirror
     if (e.key === 'e' || e.key === 'E' || e.key === 'Enter') {
       e.preventDefault();
-      console.log(
-        `[Action Key Pressed] Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`
+      debugLog(
+        'Action Key Pressed',
+        `Player at (${playerPosRef.current.x.toFixed(2)}, ${playerPosRef.current.y.toFixed(2)})`
       );
 
       const currentMapId = mapManager.getCurrentMapId();
@@ -330,8 +341,9 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
             : null;
         const currentTool = selectedItem?.id || 'hand'; // Use selected item or default to 'hand'
 
-        console.log(
-          `[Keyboard Action] Using tool: ${currentTool} (selected slot: ${selectedItemSlotRef.current})`
+        debugLog(
+          'Keyboard Action',
+          `Using tool: ${currentTool} (selected slot: ${selectedItemSlotRef.current})`
         );
 
         const farmResult = handleFarmAction(
@@ -446,7 +458,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     if (e.key >= '1' && e.key <= '9') {
       const slotIndex = parseInt(e.key) - 1; // Convert 1-9 to 0-8
       onSetSelectedItemSlot?.(slotIndex);
-      console.log(`[Inventory] Quick slot ${e.key} selected (index: ${slotIndex})`);
+      debugLog('Inventory', `Quick slot ${e.key} selected (index: ${slotIndex})`);
       return;
     }
 
@@ -456,7 +468,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       const currentMapId = mapManager.getCurrentMapId();
       if (currentMapId) {
         const result = handleForageAction(playerPosRef.current, currentMapId);
-        console.log(`[Forage] ${result.message}`);
+        debugLog('Forage', `${result.message}`);
         onForageResult?.(result);
       }
       return;
@@ -467,10 +479,10 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       e.preventDefault();
       const cookingLocation = checkCookingLocation(playerPosRef.current);
       if (cookingLocation.found) {
-        console.log(`[Keyboard] Opening cooking UI at ${cookingLocation.locationType}`);
+        debugLog('Keyboard', `Opening cooking UI at ${cookingLocation.locationType}`);
         onSetShowCookingUI(true);
       } else {
-        console.log('[Keyboard] No stove or campfire nearby');
+        debugLog('Keyboard', 'No stove or campfire nearby');
       }
       return;
     }
@@ -480,7 +492,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       e.preventDefault();
       // Check if recipe book is unlocked (use cookingManager as single source of truth)
       if (!cookingManager.isRecipeBookUnlocked()) {
-        console.log('[Keyboard] Recipe book is locked - talk to Mum first');
+        debugLog('Keyboard', 'Recipe book is locked - talk to Mum first');
         onShowToast?.('Talk to Mum if you want to learn how to cook!', 'info');
         return;
       }

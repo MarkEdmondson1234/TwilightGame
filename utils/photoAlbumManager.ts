@@ -12,6 +12,7 @@ import { Photo } from '../types';
 import { characterData } from './CharacterData';
 import { getSharedAlbumService } from '../firebase/safe';
 import { eventBus, GameEvent } from './EventBus';
+import { debugLog } from './debugLog';
 
 class PhotoAlbumManagerClass {
   private photos: Map<string, Photo> = new Map();
@@ -28,7 +29,7 @@ class PhotoAlbumManagerClass {
     saved.forEach((photo) => this.photos.set(photo.id, photo));
 
     this.initialised = true;
-    console.log(`[PhotoAlbumManager] Initialised with ${this.photos.size} album photo(s)`);
+    debugLog('PhotoAlbumManager', `Initialised with ${this.photos.size} album photo(s)`);
   }
 
   // ============================================================
@@ -54,8 +55,9 @@ class PhotoAlbumManagerClass {
       albumSize: this.photos.size,
     });
 
-    console.log(
-      `[PhotoAlbumManager] Added photo "${photo.photoName}" (album size: ${this.photos.size})`
+    debugLog(
+      'PhotoAlbumManager',
+      `Added photo "${photo.photoName}" (album size: ${this.photos.size})`
     );
   }
 
@@ -79,7 +81,7 @@ class PhotoAlbumManagerClass {
     if (!this.photos.has(photoId)) return false;
     this.photos.delete(photoId);
     this.save();
-    console.log(`[PhotoAlbumManager] Removed photo ${photoId}`);
+    debugLog('PhotoAlbumManager', `Removed photo ${photoId}`);
     return true;
   }
 
@@ -116,7 +118,7 @@ class PhotoAlbumManagerClass {
     this.photos.clear();
     this.initialised = false;
     this.save();
-    console.log('[PhotoAlbumManager] Reset');
+    debugLog('PhotoAlbumManager', 'Reset');
   }
 }
 

@@ -17,8 +17,16 @@ import { STAMINA } from '../constants';
 import { gameState } from '../GameState';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
+import { debugLog } from './debugLog';
 
-export type ActivityType = 'till' | 'plant' | 'water' | 'harvest' | 'forage' | 'cook' | 'mess_clean';
+export type ActivityType =
+  | 'till'
+  | 'plant'
+  | 'water'
+  | 'harvest'
+  | 'forage'
+  | 'cook'
+  | 'mess_clean';
 
 /**
  * Callbacks required by StaminaManager
@@ -41,7 +49,7 @@ class StaminaManagerClass {
     this.callbacks = callbacks;
     this.isInitialised = true;
     this.hasShownLowWarning = false;
-    console.log('[StaminaManager] Initialised');
+    debugLog('StaminaManager', 'Initialised');
   }
 
   /**
@@ -96,7 +104,14 @@ class StaminaManagerClass {
    * @param isOnBench - Whether the player is resting on an outdoor garden bench
    * @returns true if player became exhausted this frame
    */
-  update(deltaTime: number, isWalking: boolean, mapId: string, isOnLavaTile = false, isOnBed = false, isOnBench = false): boolean {
+  update(
+    deltaTime: number,
+    isWalking: boolean,
+    mapId: string,
+    isOnLavaTile = false,
+    isOnBed = false,
+    isOnBench = false
+  ): boolean {
     if (!this.callbacks || !this.isInitialised) {
       return false;
     }

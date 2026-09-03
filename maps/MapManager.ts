@@ -258,10 +258,7 @@ class MapManager {
    * Check if player is on a transition tile
    * Checks if player's center is within 1.5 tiles of the transition position
    */
-  getTransitionAt(
-    position: Position,
-    tolerance: number = 1.5
-  ): { transition: any; map: MapDefinition } | null {
+  getTransitionAt(position: Position, tolerance: number = 1.5): { transition: Transition } | null {
     if (!this.currentMap) return null;
 
     for (const transition of this.currentMap.transitions) {
@@ -270,9 +267,9 @@ class MapManager {
 
       // Player needs to be within tolerance of the transition center
       if (dx < tolerance && dy < tolerance) {
-        // Return transition even if target map doesn't exist yet
-        // (RANDOM_* maps are generated on-demand by transitionToMap)
-        return { transition, map: null as any };
+        // Returned without checking whether the target map exists —
+        // RANDOM_* maps are generated on-demand by transitionToMap.
+        return { transition };
       }
     }
 

@@ -1,3 +1,4 @@
+import { debugLog } from './debugLog';
 /**
  * TimeManager - Single Source of Truth for game time
  *
@@ -287,7 +288,7 @@ export class TimeManager {
       daylight,
     };
 
-    console.log('[TimeManager] Time override set:', TimeManager.timeOverride);
+    debugLog('TimeManager', 'Time override set:', TimeManager.timeOverride);
   }
 
   /**
@@ -295,7 +296,7 @@ export class TimeManager {
    */
   static clearTimeOverride(): void {
     TimeManager.timeOverride = null;
-    console.log('[TimeManager] Time override cleared, using real-world time');
+    debugLog('TimeManager', 'Time override cleared, using real-world time');
   }
 
   /**

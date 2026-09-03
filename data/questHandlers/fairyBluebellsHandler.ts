@@ -8,7 +8,7 @@
  */
 
 import { eventChainManager } from '../../utils/EventChainManager';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -76,7 +76,7 @@ export function startFairyBluebellsQuest(): void {
   if (!eventChainManager.isChainStarted(FAIRY_BLUEBELLS_QUEST_ID)) {
     eventChainManager.startChain(FAIRY_BLUEBELLS_QUEST_ID, DEFAULT_METADATA);
   }
-  if (DEBUG.QUEST) console.log('[FairyBluebells] Quest started');
+  debugLog('FairyBluebells', 'Quest started');
 }
 
 export function isItemDelivered(item: 'violet' | 'hazelnut' | 'blueberry'): boolean {
@@ -91,12 +91,12 @@ export function markItemDelivered(item: 'violet' | 'hazelnut' | 'blueberry'): bo
 
   const key = `${item}Delivered`;
   if (eventChainManager.getMetadata(FAIRY_BLUEBELLS_QUEST_ID, key) === true) {
-    if (DEBUG.QUEST) console.log(`[FairyBluebells] ${item} already delivered`);
+    debugLog('FairyBluebells', `${item} already delivered`);
     return false;
   }
 
   eventChainManager.setMetadata(FAIRY_BLUEBELLS_QUEST_ID, key, true);
-  if (DEBUG.QUEST) console.log(`[FairyBluebells] ${item} delivered`);
+  debugLog('FairyBluebells', `${item} delivered`);
 
   checkFairyBluebellsCompletion();
   return true;
@@ -111,7 +111,7 @@ export function checkFairyBluebellsCompletion(): boolean {
 
   if (areAllItemsDelivered()) {
     eventChainManager.advanceToStage(FAIRY_BLUEBELLS_QUEST_ID, 'complete');
-    if (DEBUG.QUEST) console.log('[FairyBluebells] All items delivered! Quest complete.');
+    debugLog('FairyBluebells', 'All items delivered! Quest complete.');
     return true;
   }
   return false;
@@ -125,9 +125,7 @@ export function getRemainingItems(): string[] {
   return remaining;
 }
 
-export function getQuestItemType(
-  itemId: string
-): 'violet' | 'hazelnut' | 'blueberry' | null {
+export function getQuestItemType(itemId: string): 'violet' | 'hazelnut' | 'blueberry' | null {
   switch (itemId) {
     case REQUIRED_ITEMS.SHRINKING_VIOLET:
       return 'violet';

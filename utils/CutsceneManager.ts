@@ -13,6 +13,7 @@ import { CutsceneDefinition, CutsceneTrigger, Position } from '../types';
 import { TimeManager } from './TimeManager';
 import { gameState } from '../GameState';
 import { inventoryManager } from './inventoryManager';
+import { debugLog } from './debugLog';
 
 export interface CutsceneState {
   isPlaying: boolean;
@@ -53,7 +54,7 @@ class CutsceneManagerClass {
    */
   registerCutscene(cutscene: CutsceneDefinition): void {
     this.cutsceneRegistry.set(cutscene.id, cutscene);
-    console.log(`[CutsceneManager] Registered cutscene: ${cutscene.id} (${cutscene.name})`);
+    debugLog('CutsceneManager', `Registered cutscene: ${cutscene.id} (${cutscene.name})`);
   }
 
   /**
@@ -93,17 +94,17 @@ class CutsceneManagerClass {
 
     // Check if cutscene should only play once
     if (cutscene.playOnce && this.state.completedCutscenes.includes(cutsceneId)) {
-      console.log(`[CutsceneManager] Cutscene already played (playOnce): ${cutsceneId}`);
+      debugLog('CutsceneManager', `Cutscene already played (playOnce): ${cutsceneId}`);
       return false;
     }
 
     // Check requirements
     if (!this.checkRequirements(cutscene)) {
-      console.log(`[CutsceneManager] Requirements not met for cutscene: ${cutsceneId}`);
+      debugLog('CutsceneManager', `Requirements not met for cutscene: ${cutsceneId}`);
       return false;
     }
 
-    console.log(`[CutsceneManager] Starting cutscene: ${cutscene.name}`);
+    debugLog('CutsceneManager', `Starting cutscene: ${cutscene.name}`);
 
     // Reset audio bookkeeping in case a previous cutscene's cleanup never fired
     this.audioStartedForCutsceneId = null;
@@ -114,7 +115,7 @@ class CutsceneManagerClass {
     if (cutscene.trigger.type === 'season_change') {
       const currentTime = TimeManager.getCurrentTime();
       lastSeasonTriggered = currentTime.season.toLowerCase();
-      console.log(`[CutsceneManager] Marking season ${lastSeasonTriggered} as triggered`);
+      debugLog('CutsceneManager', `Marking season ${lastSeasonTriggered} as triggered`);
     }
 
     this.state = {
@@ -170,7 +171,7 @@ class CutsceneManagerClass {
       return false;
     }
 
-    console.log(`[CutsceneManager] Force-starting cutscene: ${cutscene.name}`);
+    debugLog('CutsceneManager', `Force-starting cutscene: ${cutscene.name}`);
 
     // Reset audio bookkeeping in case a previous cutscene's cleanup never fired
     this.audioStartedForCutsceneId = null;
@@ -203,7 +204,7 @@ class CutsceneManagerClass {
       return;
     }
 
-    console.log(`[CutsceneManager] Advancing to scene ${targetIndex}`);
+    debugLog('CutsceneManager', `Advancing to scene ${targetIndex}`);
 
     this.state = {
       ...this.state,
@@ -228,7 +229,7 @@ class CutsceneManagerClass {
 
     const cutscene = this.state.currentCutscene;
     const cutsceneId = cutscene.id;
-    console.log(`[CutsceneManager] Ending cutscene: ${cutscene.name}`);
+    debugLog('CutsceneManager', `Ending cutscene: ${cutscene.name}`);
 
     // Mark as completed and record play time (for cooldown checks)
     if (!this.state.completedCutscenes.includes(cutscene.id)) {
@@ -285,11 +286,11 @@ class CutsceneManagerClass {
     }
 
     if (this.state.currentCutscene.canSkip === false) {
-      console.log(`[CutsceneManager] Cutscene cannot be skipped: ${this.state.currentCutscene.id}`);
+      debugLog('CutsceneManager', `Cutscene cannot be skipped: ${this.state.currentCutscene.id}`);
       return false;
     }
 
-    console.log(`[CutsceneManager] Skipping cutscene: ${this.state.currentCutscene.name}`);
+    debugLog('CutsceneManager', `Skipping cutscene: ${this.state.currentCutscene.name}`);
     this.endCutscene();
     return true;
   }
@@ -553,9 +554,9 @@ class CutsceneManagerClass {
   loadState(savedCompletedCutscenes: string[], lastSeasonTriggered?: string): void {
     this.state.completedCutscenes = savedCompletedCutscenes;
     this.state.lastSeasonTriggered = lastSeasonTriggered;
-    console.log(`[CutsceneManager] Loaded ${savedCompletedCutscenes.length} completed cutscenes`);
+    debugLog('CutsceneManager', `Loaded ${savedCompletedCutscenes.length} completed cutscenes`);
     if (lastSeasonTriggered) {
-      console.log(`[CutsceneManager] Restored lastSeasonTriggered: ${lastSeasonTriggered}`);
+      debugLog('CutsceneManager', `Restored lastSeasonTriggered: ${lastSeasonTriggered}`);
     }
   }
 

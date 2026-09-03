@@ -16,6 +16,7 @@ import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
 import { CAMERA } from '../constants';
 import type { Photo } from '../types';
+import { debugLog } from './debugLog';
 
 export interface InventoryItem {
   itemId: string;
@@ -67,7 +68,7 @@ class InventoryManager {
       if (isNew && !this.slotOrder.includes(itemId)) {
         this.slotOrder.push(itemId);
       }
-      console.log(`[InventoryManager] Acquired tool: ${item.displayName}`);
+      debugLog('InventoryManager', `Acquired tool: ${item.displayName}`);
       this.saveToGameState();
       return true;
     }
@@ -103,8 +104,9 @@ class InventoryManager {
           // All items stacked successfully
           this.items.set(itemId, instances);
           const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
-          console.log(
-            `[InventoryManager] +${amountToAdd} ${item.displayName}${masteryStr} (stacked, total: ${existingInstance.quantity})`
+          debugLog(
+            'InventoryManager',
+            `+${amountToAdd} ${item.displayName}${masteryStr} (stacked, total: ${existingInstance.quantity})`
           );
           this.saveToGameState();
           return true;
@@ -147,8 +149,9 @@ class InventoryManager {
 
     const totalQuantity = instances.reduce((sum, inst) => sum + (inst.quantity || 1), 0);
     const masteryStr = masteryLevel !== undefined ? ` (mastery: ${masteryLevel})` : '';
-    console.log(
-      `[InventoryManager] Added ${item.displayName}${masteryStr} (total: ${totalQuantity})`
+    debugLog(
+      'InventoryManager',
+      `Added ${item.displayName}${masteryStr} (total: ${totalQuantity})`
     );
     this.saveToGameState();
     return true;
@@ -174,7 +177,7 @@ class InventoryManager {
       this.slotOrder.push(itemId);
     }
 
-    console.log(`[InventoryManager] Added ${item.displayName} with decoration ${decorationId}`);
+    debugLog('InventoryManager', `Added ${item.displayName} with decoration ${decorationId}`);
     this.saveToGameState();
     return true;
   }
@@ -220,7 +223,7 @@ class InventoryManager {
       this.items.set(itemId, instances);
     }
 
-    console.log(`[InventoryManager] Removed ${itemId} instance with decoration ${decorationId}`);
+    debugLog('InventoryManager', `Removed ${itemId} instance with decoration ${decorationId}`);
     this.saveToGameState();
     return true;
   }
@@ -275,16 +278,15 @@ class InventoryManager {
           // Partial removal from this stack
           instance.quantity = availableInStack - remaining;
           remaining = 0;
-          console.log(
-            `[InventoryManager] Removed ${quantity} ${item.displayName} (${instance.quantity} remaining in stack)`
+          debugLog(
+            'InventoryManager',
+            `Removed ${quantity} ${item.displayName} (${instance.quantity} remaining in stack)`
           );
         } else {
           // Remove entire stack
           instances.shift();
           remaining -= availableInStack;
-          console.log(
-            `[InventoryManager] Removed stack of ${availableInStack} ${item.displayName}`
-          );
+          debugLog('InventoryManager', `Removed stack of ${availableInStack} ${item.displayName}`);
         }
       }
     } else {
@@ -300,16 +302,17 @@ class InventoryManager {
           if (instance.uses <= 0) {
             // Used up, remove instance
             instances.shift();
-            console.log(`[InventoryManager] ${item.displayName} used up (0 uses remaining)`);
+            debugLog('InventoryManager', `${item.displayName} used up (0 uses remaining)`);
           } else {
-            console.log(
-              `[InventoryManager] Used ${item.displayName} (${instance.uses}/${item.maxUses} uses remaining)`
+            debugLog(
+              'InventoryManager',
+              `Used ${item.displayName} (${instance.uses}/${item.maxUses} uses remaining)`
             );
           }
         } else {
           // Single-use item: remove entire instance
           instances.shift();
-          console.log(`[InventoryManager] Consumed ${item.displayName}`);
+          debugLog('InventoryManager', `Consumed ${item.displayName}`);
         }
       }
     }
@@ -536,7 +539,7 @@ class InventoryManager {
   clear(): void {
     this.items.clear();
     this.tools.clear();
-    console.log('[InventoryManager] Inventory cleared');
+    debugLog('InventoryManager', 'Inventory cleared');
   }
 
   /**
@@ -587,8 +590,9 @@ class InventoryManager {
       this.slotOrder = [...this.items.keys(), ...this.tools];
     }
 
-    console.log(
-      `[InventoryManager] Loaded ${this.items.size} item types and ${this.tools.size} tools, slotOrder: ${this.slotOrder.length} items`
+    debugLog(
+      'InventoryManager',
+      `Loaded ${this.items.size} item types and ${this.tools.size} tools, slotOrder: ${this.slotOrder.length} items`
     );
     // Emit event for UI components to update
     eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'update' });
@@ -678,7 +682,7 @@ class InventoryManager {
   clearAll(): void {
     this.items.clear();
     this.tools.clear();
-    console.log('[InventoryManager] Cleared all inventory');
+    debugLog('InventoryManager', 'Cleared all inventory');
     this.saveToGameState();
   }
 
@@ -715,8 +719,9 @@ class InventoryManager {
       this.slotOrder.push('photo');
     }
 
-    console.log(
-      `[InventoryManager] Added photo "${photo.photoName}" (${currentCount + 1}/${CAMERA.MAX_EXPOSURES} exposures used)`
+    debugLog(
+      'InventoryManager',
+      `Added photo "${photo.photoName}" (${currentCount + 1}/${CAMERA.MAX_EXPOSURES} exposures used)`
     );
     this.saveToGameState();
     return true;
@@ -757,7 +762,7 @@ class InventoryManager {
       this.items.set('photo', instances);
     }
 
-    console.log(`[InventoryManager] Removed photo ${photoId} from inventory`);
+    debugLog('InventoryManager', `Removed photo ${photoId} from inventory`);
     this.saveToGameState();
     return true;
   }
@@ -782,14 +787,14 @@ class InventoryManager {
   resetToStarter(): void {
     this.clearAll();
     this.initializeStarterItems();
-    console.log('[InventoryManager] Reset to starter items');
+    debugLog('InventoryManager', 'Reset to starter items');
   }
 
   /**
    * Initialize with starter items
    */
   initializeStarterItems(): void {
-    console.log('[InventoryManager] Initializing starter items');
+    debugLog('InventoryManager', 'Initializing starter items');
 
     // Start with basic tools
     this.addItem('tool_hoe', 1);

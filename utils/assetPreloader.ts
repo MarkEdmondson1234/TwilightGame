@@ -6,6 +6,7 @@
  */
 
 import { getSpriteConfig } from './characterSprites';
+import { debugLog } from './debugLog';
 
 interface PreloadOptions {
   onProgress?: (loaded: number, total: number) => void;
@@ -56,7 +57,7 @@ export async function preloadImages(urls: string[], options?: PreloadOptions): P
   const total = urls.length;
   let loaded = 0;
 
-  console.log(`[AssetPreloader] Starting preload of ${total} images...`);
+  debugLog('AssetPreloader', `Starting preload of ${total} images...`);
 
   const promises = urls.map(async (url) => {
     await preloadImage(url);
@@ -66,7 +67,7 @@ export async function preloadImages(urls: string[], options?: PreloadOptions): P
 
   await Promise.all(promises);
   options?.onComplete?.();
-  console.log(`[AssetPreloader] Preloaded ${total} images`);
+  debugLog('AssetPreloader', `Preloaded ${total} images`);
 }
 
 /**

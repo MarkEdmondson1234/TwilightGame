@@ -5,10 +5,11 @@
 
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
-import { getItem, ItemCategory } from '../data/items';
+import { getItem, ItemCategory, ItemDefinition } from '../data/items';
 import { decorationManager } from './DecorationManager';
 import { gameState } from '../GameState';
 import { FALLBACK_ITEM_ICON } from './iconMap';
+import { debugLog } from './debugLog';
 
 /**
  * Runtime sprite registry for dynamically registered items
@@ -22,7 +23,7 @@ const runtimeSpriteRegistry: Record<string, string> = {};
  */
 export function registerItemSprite(itemId: string, imageUrl: string): void {
   runtimeSpriteRegistry[itemId] = imageUrl;
-  console.log(`[InventoryUIHelper] Registered sprite for ${itemId}: ${imageUrl}`);
+  debugLog('InventoryUIHelper', `Registered sprite for ${itemId}: ${imageUrl}`);
 }
 
 /**
@@ -103,7 +104,7 @@ export function convertInventoryToUI(): UIInventoryItem[] {
   const slotOrder = inventoryManager.getSlotOrder();
 
   // Group items by itemId and sum their quantities
-  const itemMap = new Map<string, { totalQuantity: number; itemDef: any }>();
+  const itemMap = new Map<string, { totalQuantity: number; itemDef: ItemDefinition }>();
 
   allItems.forEach(({ itemId, quantity }) => {
     const itemDef = getItem(itemId);

@@ -29,6 +29,7 @@ import { farmManager } from '../utils/farmManager';
 import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
 import type { WeatherLayer } from '../utils/pixi/WeatherLayer';
+import { debugLog } from '../utils/debugLog';
 
 // ============================================================================
 // Configuration Interface
@@ -703,7 +704,7 @@ export function useEnvironmentController(
       const newTimeOfDay: 'day' | 'night' = time.timeOfDay === 'Day' ? 'day' : 'night';
 
       if (newTimeOfDay !== timeOfDay) {
-        console.log(`[EnvironmentController] Time of day changed: ${timeOfDay} → ${newTimeOfDay}`);
+        debugLog('EnvironmentController', `Time of day changed: ${timeOfDay} → ${newTimeOfDay}`);
         setTimeOfDay(newTimeOfDay);
       }
 
@@ -733,7 +734,7 @@ export function useEnvironmentController(
     const decayInterval = setInterval(() => {
       const removedCount = gameState.removeDecayedItems();
       if (removedCount > 0) {
-        console.log(`[EnvironmentController] Removed ${removedCount} decayed item(s)`);
+        debugLog('EnvironmentController', `Removed ${removedCount} decayed item(s)`);
         // Re-render now handled by EventBus (PLACED_ITEMS_CHANGED)
       }
     }, 10000); // Check every 10 seconds

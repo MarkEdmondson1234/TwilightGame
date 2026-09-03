@@ -11,12 +11,13 @@ redone. Pick items up in any order — each section is self-contained.
 The sweep started from a clean bill of health (tsc clean, 874/874 tests, 0 lint
 errors) and worked the warning backlog down. Current baseline:
 
-| Metric | Sweep start | Now |
-|---|---|---|
-| ESLint warnings | 277 | **47** |
-| `no-unused-vars` | 174 | **0** (PRs #74, #79) |
-| `react-hooks/exhaustive-deps` | 40 | **0** (PRs #77, #78) |
-| `no-explicit-any` | 60 | **47** (PR #76 did the window globals) |
+| Metric                        | Sweep start | Now                                                   |
+| ----------------------------- | ----------- | ----------------------------------------------------- |
+| ESLint warnings               | 277         | **0**                                                 |
+| `no-unused-vars`              | 174         | **0** (PRs #74, #79)                                  |
+| `react-hooks/exhaustive-deps` | 40          | **0** (PRs #77, #78)                                  |
+| `no-explicit-any`             | 60          | **0** (PRs #76, #82)                                  |
+| raw `console.log` sites       | 682         | **17** (PRs #84–#90; 595 now flow through `debugLog`) |
 
 **Verification command:** `npm run verify` (tsc + full test suite, ~4s).
 **Lint:** `npx eslint .` — the working rule all session: warnings are signal, so
@@ -24,114 +25,84 @@ fix or explicitly justify; never leave the count creeping back up.
 
 ### Already merged (do not redo)
 
-| PR | Content |
-|---|---|
-| #73 | CI perf gate moved from fps to **scene cost** (sprite/node/texture counts); fps gates only between real-GPU runs |
-| #74 | All 174 unused imports/locals/args removed (AST codemod + manual triage) |
-| #75 | ShopUI `handleDragStart`→`initiateTrade`, `showQuantitySlider`→`showQuantityStepper`; 3 stale eslint-disable directives removed |
-| #76 | Typed `Window` interface in `vite-env.d.ts`; 13 `(window as any)` casts replaced |
-| #77 | `useChatHistory` returns a memoised object; NPC-switch chat-history bug fixed; dialogue dep arrays made honest |
-| #78 | Full exhaustive-deps triage: 4 real bugs fixed (BasketModal, PaintingEaselGame, MiniGameHost, CombatEncounter), intentional patterns documented with reasons |
-| #79 | Prop bindings orphaned by #78 removed |
+| PR  | Content                                                                                                                                                                                                   |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #73 | CI perf gate moved from fps to **scene cost** (sprite/node/texture counts); fps gates only between real-GPU runs                                                                                          |
+| #74 | All 174 unused imports/locals/args removed (AST codemod + manual triage)                                                                                                                                  |
+| #75 | ShopUI `handleDragStart`→`initiateTrade`, `showQuantitySlider`→`showQuantityStepper`; 3 stale eslint-disable directives removed                                                                           |
+| #76 | Typed `Window` interface in `vite-env.d.ts`; 13 `(window as any)` casts replaced                                                                                                                          |
+| #77 | `useChatHistory` returns a memoised object; NPC-switch chat-history bug fixed; dialogue dep arrays made honest                                                                                            |
+| #78 | Full exhaustive-deps triage: 4 real bugs fixed (BasketModal, PaintingEaselGame, MiniGameHost, CombatEncounter), intentional patterns documented with reasons                                              |
+| #79 | Prop bindings orphaned by #78 removed                                                                                                                                                                     |
+| #81 | Dead `DialogueBox`/`AIDialogueBox` deleted; AI_CONVERSATIONS_DEV.md rewritten for the unified box                                                                                                         |
+| #82 | All 43 remaining `no-explicit-any` removed; `tests/pixi-import-test.ts` deleted; `getColorHexByName`/`lookupFarmingAsset` typed contracts added; `Navigator`/`Performance` ambient types in vite-env.d.ts |
+| #84 | `utils/debugLog.ts` category-gated logging helper + DevTools toggle + `no-console` guard on converted files; `dialogueHandlers.ts` converted as the pattern                                               |
 
 Each merge auto-deploys to GitHub Pages via `.github/workflows/deploy.yml`.
 
 ---
 
-## 1. The last lint category: 47 `no-explicit-any`
+## 1. ~~The last lint category: 47 `no-explicit-any`~~ — DONE (PR #82)
 
-Current distribution (run `npx eslint .` for live numbers):
+Zero as of PR #82. `npx eslint .` reports 0 warnings total.
 
-| File | Count | Notes / suggested approach |
-|---|---|---|
-| `firebase/safe.ts` | 7 | Module-loading/dynamic-import plumbing. Type against `typeof import('./index')` shapes where possible; some `unknown` + narrowing is honest. |
-| `tests/pixi-import-test.ts` | 6 | Test harness file — consider whether it's still needed at all (it reads like a one-off import smoke test). |
-| `utils/pixi/TileLayer.ts` | 5 | PixiJS internals. Pixi v8 has decent types; try real types first. |
-| `GameState.ts` | 4 | Look before blanket-typing — may be save-data boundaries where `unknown` + validation is correct. |
-| `components/TileRenderer.tsx` | 4 | DOM/Pixi interop. |
-| `components/DialogueBox.tsx` | 4 | **Dead file (see §3) — disappears with the deletion, no work needed.** |
-| `components/dialogue/ScriptedControls.tsx` | 4 | Props for markdown/event handlers — likely real types available. |
-| `maps/MapManager.ts`, `DebugInfoPanel.tsx` | 2+2 | |
-| 10 other files | 1 each | Cheap single-file sweep. |
+The reusable typed contracts added there, for future use:
 
-**Precedent to follow:** PR #76's `vite-env.d.ts` approach — one typed contract
-beats N casts. Every removal is verified by `npm run verify`; `unknown` +
-narrowing is preferred over inventing loose types.
-
-**Done when:** `npx eslint . | grep -c no-explicit-any` → 0, or the remainder
-carry a written justification comment.
+- `palette.ts` → `getColorHexByName(string)` (regex-extracted colour names)
+- `assets.ts` → `lookupFarmingAsset(key)` (runtime-built crop sprite keys)
+- `vite-env.d.ts` → `Navigator.msMaxTouchPoints`, `Performance.memory`
 
 ---
 
-## 2. Console noise: 682 `console.log` statements, no logging abstraction
+## 2. ~~Console noise~~ — migration complete (PRs #84–#90)
 
-682 sites in non-test source (App.tsx ~17, GameState.ts ~43, NPCManager.ts ~9,
-plus ~600 across utils/components). Production players' consoles see all of it,
-including per-frame debug lines like `[App] ui.devTools changed to:`.
+`utils/debugLog.ts` exists: category-gated `debugLog(category, ...args)` that
+re-attaches the `[Prefix]` tag on output. Flag sources are the same as
+`runtimeDebug()` in constants.ts: `?debug=<categories|1|all>` URL param and the
+`twilight_debug` localStorage key, plus a DevTools toggle (World tab → "Debug
+Logging") that persists and needs no reload. Case-insensitive category matching.
+`console.warn`/`error` stay ungated everywhere (player-visible diagnostics).
 
-**Suggested design** (small, in `utils/`):
+**Status: done.** 595 sites flow through `debugLog`; what remains raw is
+deliberate:
 
-```ts
-// utils/debugLog.ts
-// Gates on a runtime flag: ?debug=1 query param, localStorage key, or the
-// existing DevTools toggle. Categories let devtools filtering work:
-debugLog('map', 'Loaded map: village (30x30)');
-```
+- `utils/debugLog.ts` — the helper itself (the one sanctioned console.log)
+- `utils/EventBus.ts` — has its own working `setDebug()` gate; ships no noise
+- `hooks/useMultiplayerController.ts` — one log deliberately always-on so bug
+  reports show presence working as well as failing (comment in the file)
+- `maps/gridParser.ts` — console.group validation report; its error path is
+  `console.error` (ungated by design), splitting the group would break it
+- `utils/testUtils.ts` — test infrastructure
+- `components/DevTools.tsx` — one match is help text, not a call
 
-**Migration strategy — do NOT blanket-convert:**
-
-1. Build the helper + wire the flag (small PR on its own).
-2. Convert by category per file, keeping the existing `[Prefix]` tags as
-   categories — the prefixes already encode meaning.
-3. Decide per category whether it is debug-only (gated) or player-visible
-   diagnostics (keep as `console.warn`/`error` — those stay untouched).
-4. The eslint config has **no `no-console` rule**; consider adding it as
-   `warn` with an allowlist once the helper exists, so the count stays at zero
-   afterwards.
-
-**Known trap:** at least one `no-console` eslint-disable in the repo was a
-no-op because the rule was never enabled (removed in #75).
+**Mechanics for anyone extending this:** `scripts/convert-debug-log.mjs` does
+the mechanical rewrite (prefix extraction, multi-line calls, dead-guard
+unwrapping, MANUAL reporting); the migrated-file list lives in
+`eslint.config.js` as `debugLogMigrated` with the exclusions documented inline.
+The `no-console: ['warn', {allow: ['warn','error','info']}]` rule covers exactly
+those files, keeping the count at zero going forward.
 
 ---
 
-## 3. Dead code: two complete dialogue components to delete
+## 3. ~~Dead code: two complete dialogue components to delete~~ — DONE (PR #81)
 
-Both are superseded by `components/dialogue/UnifiedDialogueBox.tsx` — its
-header comment says so explicitly. Both are verified **imported by nothing**
-(re-checked 2026-09-03 with import-graph greps):
-
-- `components/AIDialogueBox.tsx` — 940 lines. Its exhaustive-deps warning was
-  given a "not currently mounted" disable in #77 as a stopgap.
-- `components/DialogueBox.tsx` — also unimported.
-
-**Deletion procedure:**
-
-1. `grep -rn "AIDialogueBox\|components/DialogueBox"` one more time (cheap insurance).
-2. Delete both files, run `npm run verify` (the 4 `any`s in DialogueBox vanish
-   with it — see §1).
-3. Check `docs/AI_CHAT.md` / `docs/AI_CONVERSATIONS_DEV.md` for references and
-   update them to point at `UnifiedDialogueBox` only.
-4. One PR for both, prose commit message noting they were replaced by the
-   unified box. Git history preserves everything.
-
-**After deleting, re-check:** `useStreamingDialogue`, `useChatHistory` and
-other hooks they consumed may become partially or fully unused — run the
-unused-vars sweep again and follow the same triage.
+Both deleted; `AI_CONVERSATIONS_DEV.md` updated; consumed hooks all remain in
+use by `UnifiedDialogueBox` (verified in PR #81).
 
 ---
 
 ## 4. Tracked TODOs (8, all content/art, all safe to defer)
 
-| Location | TODO |
-|---|---|
-| `maps/definitions/witchHut.ts:109` | Add familiar/pet NPCs (black cat, owl) |
-| `App.tsx:1582` | GlamourModal component (feature gap) |
-| `minigames/combat-encounter/antagonists.ts:81` | Goblin actionSprites (art) |
-| `NPCManager.ts:871` | PATROL behaviour for NPCs (feature) |
-| `utils/interactions/providers/berries.ts:95` | Dedicated blueberry sprite (art) |
-| `data/items/food.ts:196` | lava_cake artwork (art; notes where to add it) |
-| `data/items/toolsAndMaterials.ts:106` | Add item to Mushra's shop (design) |
-| `data/items/toolsAndMaterials.ts:118` | Replace placeholder with real artwork |
+| Location                                       | TODO                                           |
+| ---------------------------------------------- | ---------------------------------------------- |
+| `maps/definitions/witchHut.ts:109`             | Add familiar/pet NPCs (black cat, owl)         |
+| `App.tsx:1582`                                 | GlamourModal component (feature gap)           |
+| `minigames/combat-encounter/antagonists.ts:81` | Goblin actionSprites (art)                     |
+| `NPCManager.ts:871`                            | PATROL behaviour for NPCs (feature)            |
+| `utils/interactions/providers/berries.ts:95`   | Dedicated blueberry sprite (art)               |
+| `data/items/food.ts:196`                       | lava_cake artwork (art; notes where to add it) |
+| `data/items/toolsAndMaterials.ts:106`          | Add item to Mushra's shop (design)             |
+| `data/items/toolsAndMaterials.ts:118`          | Replace placeholder with real artwork          |
 
 These are fine to leave until the relevant feature/art work happens. The one
 with real gameplay impact is `NPCManager.ts:871` (PATROL) if wandering NPCs
@@ -146,14 +117,14 @@ hooks: `useInteractionController`, `useMultiplayerController`,
 `useKeyboardControls`, …; domain managers under `utils/`). Continue it
 incrementally — one controller per PR, never a big-bang split:
 
-| File | Lines | Notes |
-|---|---|---|
-| `App.tsx` | ~2,990 | The wiring hub: ~104 imports, ~84 hook call sites. Extract remaining domains (cutscene wiring, farm animation, UI effects) the same way `useUIState`/`useToast` were done. |
-| `GameState.ts` | ~2,056 | Save-state + placement + quest surface. Consider splitting persistence-facing code from state. |
-| `utils/forageHandlers.ts` | ~1,712 | |
-| `maps/procedural.ts` | ~1,708 | |
-| `components/DevTools.tsx` | ~1,670 | Debug tooling — low priority. |
-| `utils/farmManager.ts` | ~1,566 | |
+| File                      | Lines  | Notes                                                                                                                                                                      |
+| ------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `App.tsx`                 | ~2,990 | The wiring hub: ~104 imports, ~84 hook call sites. Extract remaining domains (cutscene wiring, farm animation, UI effects) the same way `useUIState`/`useToast` were done. |
+| `GameState.ts`            | ~2,056 | Save-state + placement + quest surface. Consider splitting persistence-facing code from state.                                                                             |
+| `utils/forageHandlers.ts` | ~1,712 |                                                                                                                                                                            |
+| `maps/procedural.ts`      | ~1,708 |                                                                                                                                                                            |
+| `components/DevTools.tsx` | ~1,670 | Debug tooling — low priority.                                                                                                                                              |
+| `utils/farmManager.ts`    | ~1,566 |                                                                                                                                                                            |
 
 **Do not start this** until §1–§3 are done — refactoring while lint noise
 exists hides regressions. Note `App.tsx` grew slightly during the sweep
@@ -191,15 +162,16 @@ not drift.
     pattern**: the dep exists to invalidate a memo that reads manager
     singletons. Keep it, add `eslint-disable-next-line … -- reason`.
 - **PR conventions:** prose-style commit subjects (see `git log`), body
-  explains the *why*; run `npx prettier --write <touched files>` before
+  explains the _why_; run `npx prettier --write <touched files>` before
   committing; `npm run verify` green before pushing.
 
 ---
 
 ## Suggested order for a fresh session
 
-1. §3 dead dialogue components (30 min, shrinks §1 by 4 and unblocks §2's count)
-2. §1 remaining `no-explicit-any` (~43 sites, half a day)
-3. §2 `debugLog` helper + migration (a day; can be split per-subsystem)
+1. ~~§3 dead dialogue components~~ — DONE (PR #81)
+2. ~~§1 remaining `no-explicit-any`~~ — DONE (PR #82)
+3. ~~§2 `debugLog` migration~~ — DONE (PRs #84–#90; helper + full conversion,
+   ~595 sites; deliberate exemptions documented in the eslint config and §2)
 4. §4 TODOs — only when their feature/art work actually happens
 5. §5 god-file extraction — ongoing background work, one domain per PR

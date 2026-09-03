@@ -96,7 +96,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           }`}
         >
           <span aria-hidden="true">💬</span>
-          <span>Say something</span>
+          <span>Say something (space)</span>
         </button>
       )}
     </div>

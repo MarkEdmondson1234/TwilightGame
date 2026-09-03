@@ -27,6 +27,7 @@ import { calculateScanBounds, calculateSpriteMargin } from '../viewportUtils';
 import { metadataCache } from '../MetadataCache';
 import { PixiLayer } from './PixiLayer';
 import { Z_SHADOWS } from '../../zIndex';
+import { debugLog } from '../debugLog';
 
 // Shadow configuration
 const SHADOW_CONFIG = {
@@ -324,7 +325,7 @@ export class ShadowLayer extends PixiLayer {
   clear(): void {
     this.shadows.forEach((shadow) => shadow.destroy());
     this.shadows.clear();
-    console.log('[ShadowLayer] Cleared all shadows');
+    debugLog('ShadowLayer', 'Cleared all shadows');
   }
 
   /**

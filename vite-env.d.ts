@@ -50,3 +50,23 @@ interface Window {
   Season?: typeof import('./utils/TimeManager').Season;
   ColorResolver?: typeof import('./utils/ColorResolver').ColorResolver;
 }
+
+/**
+ * IE/legacy-Edge touch detection, still probed defensively by
+ * hooks/useTouchDevice.ts alongside the standard maxTouchPoints.
+ */
+interface Navigator {
+  readonly msMaxTouchPoints?: number;
+}
+
+/**
+ * Chrome-only non-standard heap metrics, read by utils/PerformanceMonitor.ts
+ * (guarded by a truthiness check before use).
+ */
+interface Performance {
+  readonly memory?: {
+    usedJSHeapSize: number;
+    totalJSHeapSize: number;
+    jsHeapSizeLimit: number;
+  };
+}

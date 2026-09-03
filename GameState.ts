@@ -18,6 +18,7 @@ import { eventBus, GameEvent } from './utils/EventBus';
 import { sharedPlacedItemsManager } from './multiplayer/sharedPlacedItems';
 import { eventChainManager } from './utils/EventChainManager';
 import { loadPersistedState, SAVE_VERSION } from './GameStatePersistence';
+import { debugLog } from './utils/debugLog';
 export { runSaveMigrations, SAVE_VERSION } from './GameStatePersistence';
 
 export interface CharacterCustomization {
@@ -229,7 +230,7 @@ export interface GameState {
       started: boolean;
       completed: boolean;
       stage: number; // Current stage of multi-stage quests
-      data: Record<string, any>; // Quest-specific data
+      data: Record<string, unknown>; // Quest-specific data
     };
   };
 
@@ -327,7 +328,7 @@ class GameStateManager {
 
   selectCharacter(character: CharacterCustomization): void {
     this.state.selectedCharacter = character;
-    console.log(`[GameState] Character selected: ${character.name}`);
+    debugLog('GameState', `Character selected: ${character.name}`);
     this.notify();
   }
 
@@ -343,14 +344,14 @@ class GameStateManager {
 
   addGold(amount: number): void {
     this.state.gold += amount;
-    console.log(`[GameState] +${amount} gold (total: ${this.state.gold})`);
+    debugLog('GameState', `+${amount} gold (total: ${this.state.gold})`);
     this.notify();
   }
 
   spendGold(amount: number): boolean {
     if (this.state.gold >= amount) {
       this.state.gold -= amount;
-      console.log(`[GameState] -${amount} gold (total: ${this.state.gold})`);
+      debugLog('GameState', `-${amount} gold (total: ${this.state.gold})`);
       this.notify();
       return true;
     }
@@ -361,28 +362,28 @@ class GameStateManager {
 
   enterForest(): void {
     this.state.forestDepth += 1;
-    console.log(`[GameState] Entered forest depth ${this.state.forestDepth}`);
+    debugLog('GameState', `Entered forest depth ${this.state.forestDepth}`);
     this.notify();
   }
 
   exitForest(): void {
     if (this.state.forestDepth > 0) {
       this.state.forestDepth -= 1;
-      console.log(`[GameState] Exited forest, now at depth ${this.state.forestDepth}`);
+      debugLog('GameState', `Exited forest, now at depth ${this.state.forestDepth}`);
       this.notify();
     }
   }
 
   enterCave(): void {
     this.state.caveDepth += 1;
-    console.log(`[GameState] Entered cave depth ${this.state.caveDepth}`);
+    debugLog('GameState', `Entered cave depth ${this.state.caveDepth}`);
     this.notify();
   }
 
   exitCave(): void {
     if (this.state.caveDepth > 0) {
       this.state.caveDepth -= 1;
-      console.log(`[GameState] Exited cave, now at depth ${this.state.caveDepth}`);
+      debugLog('GameState', `Exited cave, now at depth ${this.state.caveDepth}`);
       this.notify();
     }
   }
@@ -407,14 +408,14 @@ class GameStateManager {
 
   enterLava(): void {
     this.state.lavaDepth += 1;
-    console.log(`[GameState] Entered lava depth ${this.state.lavaDepth}`);
+    debugLog('GameState', `Entered lava depth ${this.state.lavaDepth}`);
     this.notify();
   }
 
   exitLava(): void {
     if (this.state.lavaDepth > 0) {
       this.state.lavaDepth -= 1;
-      console.log(`[GameState] Exited lava, now at depth ${this.state.lavaDepth}`);
+      debugLog('GameState', `Exited lava, now at depth ${this.state.lavaDepth}`);
       this.notify();
     }
   }
@@ -430,8 +431,9 @@ class GameStateManager {
 
   revealLavaEntrance(caveMapId: string, position: { x: number; y: number }): void {
     this.state.revealedLavaEntrances[caveMapId] = position;
-    console.log(
-      `[GameState] Revealed lava entrance on ${caveMapId} at (${position.x}, ${position.y})`
+    debugLog(
+      'GameState',
+      `Revealed lava entrance on ${caveMapId} at (${position.x}, ${position.y})`
     );
     this.notify();
   }
@@ -463,7 +465,7 @@ class GameStateManager {
     this.state.player.position = { x: 15, y: 25 };
     this.state.forestDepth = 0;
     this.state.caveDepth = 0;
-    console.log('[GameState] Player respawned at village');
+    debugLog('GameState', 'Player respawned at village');
     this.notify();
   }
 
@@ -497,7 +499,7 @@ class GameStateManager {
     this.state.inventory.items = [];
     this.state.inventory.tools = [];
     this.notify();
-    console.log('[GameState] Inventory cleared - will reload starter items on next refresh');
+    debugLog('GameState', 'Inventory cleared - will reload starter items on next refresh');
   }
 
   // === Crafting Methods ===
@@ -505,7 +507,7 @@ class GameStateManager {
   unlockRecipe(recipeId: string): void {
     if (!this.state.crafting.unlockedRecipes.includes(recipeId)) {
       this.state.crafting.unlockedRecipes.push(recipeId);
-      console.log(`[GameState] Unlocked recipe: ${recipeId}`);
+      debugLog('GameState', `Unlocked recipe: ${recipeId}`);
       this.notify();
     }
   }
@@ -517,7 +519,7 @@ class GameStateManager {
   addMaterial(materialId: string, quantity: number): void {
     this.state.crafting.materials[materialId] =
       (this.state.crafting.materials[materialId] || 0) + quantity;
-    console.log(`[GameState] +${quantity} ${materialId} material`);
+    debugLog('GameState', `+${quantity} ${materialId} material`);
     this.notify();
   }
 
@@ -534,7 +536,7 @@ class GameStateManager {
 
   setFarmingTool(tool: 'hoe' | 'seeds' | 'wateringCan' | 'hand'): void {
     this.state.farming.currentTool = tool;
-    console.log(`[GameState] Switched to ${tool}`);
+    debugLog('GameState', `Switched to ${tool}`);
     this.notify();
   }
 
@@ -545,7 +547,7 @@ class GameStateManager {
   setSelectedSeed(seedId: string | null): void {
     this.state.farming.selectedSeed = seedId;
     if (seedId) {
-      console.log(`[GameState] Selected seed: ${seedId}`);
+      debugLog('GameState', `Selected seed: ${seedId}`);
     }
     this.notify();
   }
@@ -567,7 +569,7 @@ class GameStateManager {
   saveCustomColors(colors: Record<string, string>): void {
     this.state.customColors = colors;
     this.notify();
-    console.log('[GameState] Custom colors saved:', Object.keys(colors).length, 'colors');
+    debugLog('GameState', 'Custom colors saved:', Object.keys(colors).length, 'colors');
   }
 
   loadCustomColors(): Record<string, string> | undefined {
@@ -581,7 +583,7 @@ class GameStateManager {
   clearCustomColors(): void {
     this.state.customColors = undefined;
     this.notify();
-    console.log('[GameState] Custom colors cleared');
+    debugLog('GameState', 'Custom colors cleared');
   }
 
   // Color scheme management
@@ -591,7 +593,7 @@ class GameStateManager {
     }
     this.state.customColorSchemes[scheme.name] = scheme;
     this.notify();
-    console.log('[GameState] Color scheme saved:', scheme.name);
+    debugLog('GameState', 'Color scheme saved:', scheme.name);
   }
 
   loadColorSchemes(): Record<string, ColorScheme> | undefined {
@@ -601,14 +603,14 @@ class GameStateManager {
   clearColorSchemes(): void {
     this.state.customColorSchemes = undefined;
     this.notify();
-    console.log('[GameState] Color schemes cleared');
+    debugLog('GameState', 'Color schemes cleared');
   }
 
   clearColorScheme(schemeName: string): void {
     if (this.state.customColorSchemes && this.state.customColorSchemes[schemeName]) {
       delete this.state.customColorSchemes[schemeName];
       this.notify();
-      console.log('[GameState] Color scheme cleared:', schemeName);
+      debugLog('GameState', 'Color scheme cleared:', schemeName);
     }
   }
 
@@ -656,7 +658,7 @@ class GameStateManager {
     if (!this.state.cutscenes.completed.includes(cutsceneId)) {
       this.state.cutscenes.completed.push(cutsceneId);
       this.notify();
-      console.log(`[GameState] Cutscene completed: ${cutsceneId}`);
+      debugLog('GameState', `Cutscene completed: ${cutsceneId}`);
     }
   }
 
@@ -1005,7 +1007,7 @@ class GameStateManager {
       return false;
     }
     this.state.wateringCan.currentLevel -= 1;
-    console.log(`[GameState] Water used, ${this.state.wateringCan.currentLevel} remaining`);
+    debugLog('GameState', `Water used, ${this.state.wateringCan.currentLevel} remaining`);
     this.notify();
     return true;
   }
@@ -1019,7 +1021,7 @@ class GameStateManager {
     } else {
       this.state.wateringCan.currentLevel = WATERING_CAN.CAPACITY;
     }
-    console.log('[GameState] Watering can refilled');
+    debugLog('GameState', 'Watering can refilled');
     this.notify();
   }
 
@@ -1060,7 +1062,7 @@ class GameStateManager {
       mode,
       expiresAt: Date.now() + durationMs,
     };
-    console.log(`[GameState] Movement effect set: ${mode} for ${durationMs}ms`);
+    debugLog('GameState', `Movement effect set: ${mode} for ${durationMs}ms`);
     this.saveState();
     this.notify();
   }
@@ -1070,7 +1072,7 @@ class GameStateManager {
    */
   clearMovementEffect(): void {
     if (this.state.movementEffect) {
-      console.log('[GameState] Movement effect cleared');
+      debugLog('GameState', 'Movement effect cleared');
       this.state.movementEffect = null;
       this.saveState();
       this.notify();
@@ -1140,8 +1142,9 @@ class GameStateManager {
     this.state.transformations.fairyFormExpiresAt =
       active && durationMs ? Date.now() + durationMs : null;
 
-    console.log(
-      `[GameState] Fairy form ${active ? 'activated' : 'deactivated'}${durationMs ? ` for ${durationMs}ms` : ''}`
+    debugLog(
+      'GameState',
+      `Fairy form ${active ? 'activated' : 'deactivated'}${durationMs ? ` for ${durationMs}ms` : ''}`
     );
     this.saveState();
     this.notify();
@@ -1152,7 +1155,7 @@ class GameStateManager {
    */
   clearFairyForm(): void {
     if (this.state.transformations?.isFairyForm) {
-      console.log('[GameState] Fairy form cleared');
+      debugLog('GameState', 'Fairy form cleared');
       this.state.transformations.isFairyForm = false;
       this.state.transformations.fairyFormExpiresAt = null;
       this.saveState();
@@ -1216,7 +1219,7 @@ class GameStateManager {
       playerDisguise: null,
       appliedWallpapers: {},
     };
-    console.log('[GameState] State reset');
+    debugLog('GameState', 'State reset');
     this.notify();
   }
 
@@ -1300,7 +1303,7 @@ class GameStateManager {
 
     if (removedCount > 0) {
       this.notify();
-      console.log(`[GameState] Removed ${removedCount} decayed item(s)`);
+      debugLog('GameState', `Removed ${removedCount} decayed item(s)`);
       // Emit generic update event (items could be from any map)
       eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, { mapId: '*', action: 'remove' });
     }
@@ -1528,7 +1531,7 @@ class GameStateManager {
         delete this.state.forageCooldowns[key];
       }
       this.saveState();
-      console.log(`[GameState] Cleaned up ${keysToRemove.length} expired forage cooldowns`);
+      debugLog('GameState', `Cleaned up ${keysToRemove.length} expired forage cooldowns`);
     }
   }
 
@@ -1556,7 +1559,7 @@ class GameStateManager {
         delete this.state.forageCooldowns[key];
       }
       this.saveState();
-      console.log(`[GameState] Cleared ${keysToRemove.length} forage cooldowns on map ${mapId}`);
+      debugLog('GameState', `Cleared ${keysToRemove.length} forage cooldowns on map ${mapId}`);
     }
 
     return keysToRemove.length;
@@ -1571,7 +1574,7 @@ class GameStateManager {
       const newState = JSON.parse(jsonState);
       this.state = newState;
       this.notify();
-      console.log('[GameState] State imported successfully');
+      debugLog('GameState', 'State imported successfully');
       return true;
     } catch (error) {
       console.error('[GameState] Failed to import state:', error);
@@ -1594,7 +1597,7 @@ class GameStateManager {
   /**
    * Start a quest (delegates to EventChainManager if chain exists)
    */
-  startQuest(questId: string, initialData: Record<string, any> = {}): void {
+  startQuest(questId: string, initialData: Record<string, unknown> = {}): void {
     const chainMgr = this.getChainManager();
 
     // If this is a YAML event chain, start it via EventChainManager
@@ -1617,7 +1620,7 @@ class GameStateManager {
         stage: 0,
         data: initialData,
       };
-      console.log(`[GameState] Quest started: ${questId}`);
+      debugLog('GameState', `Quest started: ${questId}`);
       this.notify();
       eventBus.emit(GameEvent.QUEST_STARTED, { questId });
     }
@@ -1651,7 +1654,7 @@ class GameStateManager {
 
     if (this.state.quests[questId]) {
       this.state.quests[questId].completed = true;
-      console.log(`[GameState] Quest completed: ${questId}`);
+      debugLog('GameState', `Quest completed: ${questId}`);
       this.notify();
       eventBus.emit(GameEvent.QUEST_COMPLETED, { questId });
     }
@@ -1683,7 +1686,7 @@ class GameStateManager {
     if (this.state.quests[questId]) {
       const previousStage = this.state.quests[questId].stage;
       this.state.quests[questId].stage = stage;
-      console.log(`[GameState] Quest ${questId} stage set to ${stage}`);
+      debugLog('GameState', `Quest ${questId} stage set to ${stage}`);
       this.notify();
       eventBus.emit(GameEvent.QUEST_STAGE_CHANGED, { questId, stage, previousStage });
     }
@@ -1762,7 +1765,7 @@ class GameStateManager {
   /**
    * Set quest data (delegates to EventChainManager metadata if chain exists)
    */
-  setQuestData(questId: string, key: string, value: any): void {
+  setQuestData(questId: string, key: string, value: unknown): void {
     const chainMgr = this.getChainManager();
 
     if (chainMgr.hasChain(questId)) {
@@ -1785,7 +1788,7 @@ class GameStateManager {
   /**
    * Get quest data (delegates to EventChainManager metadata if chain exists)
    */
-  getQuestData(questId: string, key: string): any {
+  getQuestData(questId: string, key: string): unknown {
     const chainMgr = this.getChainManager();
 
     if (chainMgr.hasChain(questId)) {
@@ -1813,7 +1816,7 @@ class GameStateManager {
       expiresAt: now + durationMs,
     };
 
-    console.log(`[GameState] Potion effect activated: ${effectType} for ${durationMs}ms`);
+    debugLog('GameState', `Potion effect activated: ${effectType} for ${durationMs}ms`);
     this.saveState();
     this.notify();
   }
@@ -1853,7 +1856,7 @@ class GameStateManager {
 
     if (this.state.activePotionEffects[effectType]) {
       delete this.state.activePotionEffects[effectType];
-      console.log(`[GameState] Potion effect cleared: ${effectType}`);
+      debugLog('GameState', `Potion effect cleared: ${effectType}`);
       this.saveState();
       this.notify();
     }
@@ -1920,7 +1923,7 @@ class GameStateManager {
       for (const effectType of expiredEffects) {
         delete this.state.activePotionEffects[effectType];
       }
-      console.log(`[GameState] Cleaned up ${expiredEffects.length} expired potion effect(s)`);
+      debugLog('GameState', `Cleaned up ${expiredEffects.length} expired potion effect(s)`);
       this.saveState();
       this.notify();
     }
@@ -1943,7 +1946,7 @@ class GameStateManager {
       expiresAt: Date.now() + durationMs,
     };
 
-    console.log(`[GameState] Player disguised as ${npcName} for ${durationMs}ms`);
+    debugLog('GameState', `Player disguised as ${npcName} for ${durationMs}ms`);
     this.saveState();
     this.notify();
   }
@@ -1976,7 +1979,7 @@ class GameStateManager {
    */
   clearPlayerDisguise(): void {
     if (this.state.playerDisguise) {
-      console.log('[GameState] Player disguise cleared');
+      debugLog('GameState', 'Player disguise cleared');
       this.state.playerDisguise = null;
       this.saveState();
       this.notify();
@@ -2020,7 +2023,7 @@ class GameStateManager {
    * Replaces the current state with cloud data
    */
   loadFromCloud(cloudState: GameState): void {
-    console.log('[GameState] Loading state from cloud');
+    debugLog('GameState', 'Loading state from cloud');
 
     // Merge cloud state with any migration defaults
     this.state = {
@@ -2041,7 +2044,7 @@ class GameStateManager {
     this.saveState();
     this.notify();
 
-    console.log('[GameState] Cloud state loaded and saved to localStorage');
+    debugLog('GameState', 'Cloud state loaded and saved to localStorage');
   }
 }
 

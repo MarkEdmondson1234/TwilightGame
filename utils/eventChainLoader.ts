@@ -7,6 +7,7 @@
 
 import { parse } from 'yaml';
 import type { EventChainDefinition, LoadedEventChain } from './eventChainTypes';
+import { debugLog } from './debugLog';
 
 // ============================================
 // YAML File Discovery (Vite glob import)
@@ -158,7 +159,7 @@ export function loadAllEventChains(): LoadedEventChain[] {
   }
 
   if (chains.length > 0) {
-    console.log(`[EventChainLoader] Loaded ${chains.length} event chain(s)`);
+    debugLog('EventChainLoader', `Loaded ${chains.length} event chain(s)`);
   }
 
   return chains;

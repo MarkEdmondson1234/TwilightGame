@@ -13,6 +13,7 @@
  */
 
 import { generateResponse } from './anthropicClient';
+import { debugLog } from '../utils/debugLog';
 
 const CHAT_PREFIX = 'ai_chat_';
 const MEMORY_PREFIX = 'ai_memory_';
@@ -283,7 +284,7 @@ Only create memories that capture something NEW and significant. If these memori
 
         // Check we're not at core memory limit
         if (coreMemories.length >= MAX_CORE_MEMORIES) {
-          console.log(`[aiChatHistory] Core memory limit reached for ${npcId}`);
+          debugLog('aiChatHistory', `Core memory limit reached for ${npcId}`);
           break;
         }
 
@@ -299,8 +300,9 @@ Only create memories that capture something NEW and significant. If these memori
 
     const key = `${CORE_PREFIX}${npcId}`;
     localStorage.setItem(key, JSON.stringify(coreMemories));
-    console.log(
-      `[aiChatHistory] Consolidated memories into ${coreMemories.length} core memories for ${npcId}`
+    debugLog(
+      'aiChatHistory',
+      `Consolidated memories into ${coreMemories.length} core memories for ${npcId}`
     );
   } catch (error) {
     console.warn(`[aiChatHistory] Core consolidation failed:`, error);
@@ -438,7 +440,7 @@ Only include truly memorable facts. If nothing significant, respond with: [NONE]
       }
     }
 
-    console.log(`[aiChatHistory] Extracted ${lines.length} memories for ${npcId}`);
+    debugLog('aiChatHistory', `Extracted ${lines.length} memories for ${npcId}`);
   } catch (error) {
     console.warn(`[aiChatHistory] Memory extraction failed:`, error);
     // Non-fatal - memories just won't be extracted this time
@@ -573,7 +575,7 @@ export function restoreConversationData(
     }
   }
 
-  console.log(`[aiChatHistory] Restored conversation data for ${Object.keys(data).length} NPC(s)`);
+  debugLog('aiChatHistory', `Restored conversation data for ${Object.keys(data).length} NPC(s)`);
 }
 
 /**

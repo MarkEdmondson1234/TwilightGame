@@ -9,7 +9,7 @@ import { eventChainManager } from '../../utils/EventChainManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { characterData } from '../../utils/CharacterData';
 import { eventBus, GameEvent } from '../../utils/EventBus';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -64,8 +64,9 @@ export function getQuestStage(): QuestStage {
   if (!eventChainManager.isChainStarted(FAIRY_QUEEN_QUEST_ID)) {
     return QUEST_STAGES.NOT_STARTED;
   }
-  return (eventChainManager.getStageNumber(FAIRY_QUEEN_QUEST_ID) as QuestStage) ||
-    QUEST_STAGES.MET_FAIRY;
+  return (
+    (eventChainManager.getStageNumber(FAIRY_QUEEN_QUEST_ID) as QuestStage) || QUEST_STAGES.MET_FAIRY
+  );
 }
 
 export function startFairyQueenQuest(fairyName: 'morgan' | 'stella'): void {
@@ -76,7 +77,7 @@ export function startFairyQueenQuest(fairyName: 'morgan' | 'stella'): void {
     const key = fairyName === 'morgan' ? 'metMorgan' : 'metStella';
     eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, key, true);
 
-    if (DEBUG.QUEST) console.log(`[FairyQueen] Quest started - first met ${fairyName}`);
+    debugLog('FairyQueen', `Quest started - first met ${fairyName}`);
   }
 }
 
@@ -87,7 +88,7 @@ export function markFairyMet(fairyName: 'morgan' | 'stella'): void {
   if (eventChainManager.getMetadata(FAIRY_QUEEN_QUEST_ID, key) === true) return;
 
   eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, key, true);
-  if (DEBUG.QUEST) console.log(`[FairyQueen] Met ${fairyName}`);
+  debugLog('FairyQueen', `Met ${fairyName}`);
 }
 
 export function markPotionReceived(): void {
@@ -95,14 +96,14 @@ export function markPotionReceived(): void {
 
   eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'potionReceived', true);
   eventChainManager.advanceToStage(FAIRY_QUEEN_QUEST_ID, 'received_potion');
-  if (DEBUG.QUEST) console.log('[FairyQueen] Received Fairy Form Potion - stage 2');
+  debugLog('FairyQueen', 'Received Fairy Form Potion - stage 2');
 }
 
 export function markPotionUsed(): void {
   if (!isFairyQueenQuestActive()) return;
 
   eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'potionUsed', true);
-  if (DEBUG.QUEST) console.log('[FairyQueen] Used Fairy Form Potion');
+  debugLog('FairyQueen', 'Used Fairy Form Potion');
 }
 
 export function markVisitedFairyOak(): void {
@@ -110,14 +111,14 @@ export function markVisitedFairyOak(): void {
 
   eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'visitedFairyOak', true);
   eventChainManager.advanceToStage(FAIRY_QUEEN_QUEST_ID, 'visited_queen');
-  if (DEBUG.QUEST) console.log('[FairyQueen] Visited the Fairy Oak - stage 3');
+  debugLog('FairyQueen', 'Visited the Fairy Oak - stage 3');
 }
 
 export function completeFairyQueenQuest(): void {
   if (!isFairyQueenQuestActive()) return;
 
   eventChainManager.advanceToStage(FAIRY_QUEEN_QUEST_ID, 'complete');
-  if (DEBUG.QUEST) console.log('[FairyQueen] Quest completed!');
+  debugLog('FairyQueen', 'Quest completed!');
 }
 
 export function hasPotionBeenReceived(): boolean {
@@ -146,7 +147,7 @@ export function onFirstMeetingComplete(): void {
   eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'metQueen', true);
   eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'visitedFairyOak', true);
   eventChainManager.advanceToStage(FAIRY_QUEEN_QUEST_ID, 'visited_queen');
-  if (DEBUG.QUEST) console.log('[FairyQueen] Met Queen Celestia — advanced to visited_queen');
+  debugLog('FairyQueen', 'Met Queen Celestia — advanced to visited_queen');
 }
 
 /**
@@ -165,6 +166,5 @@ export function grantFairyFormPotion(): void {
     (eventChainManager.getMetadata(FAIRY_QUEEN_QUEST_ID, 'potionGiftCount') as number) || 0;
   eventChainManager.setMetadata(FAIRY_QUEEN_QUEST_ID, 'potionGiftCount', currentCount + 1);
 
-  if (DEBUG.QUEST)
-    console.log(`[FairyQueen] Granted fairy form potion (gift #${currentCount + 1})`);
+  debugLog('FairyQueen', `Granted fairy form potion (gift #${currentCount + 1})`);
 }

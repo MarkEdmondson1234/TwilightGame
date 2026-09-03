@@ -18,6 +18,7 @@
  */
 
 import { TileType } from '../types/core';
+import { debugLog } from './debugLog';
 
 // Sound categories with individual volume control
 export type SoundCategory = 'master' | 'music' | 'ambient' | 'sfx' | 'ui';
@@ -178,7 +179,8 @@ class AudioManager {
   // Deferred ambient plays: sounds requested before they finished loading
   private pendingAmbients: Map<string, { volume?: number }> = new Map();
   // Deferred music plays: sounds requested before they finished loading
-  private pendingMusic: Map<string, { fadeIn?: number; crossfade?: boolean; loop?: boolean }> = new Map();
+  private pendingMusic: Map<string, { fadeIn?: number; crossfade?: boolean; loop?: boolean }> =
+    new Map();
 
   // Settings
   private settings: AudioSettings = {
@@ -279,7 +281,7 @@ class AudioManager {
       this.loadSettings();
       this.applySettings();
 
-      console.log('[AudioManager] Initialised successfully with effects chain');
+      debugLog('AudioManager', 'Initialised successfully with effects chain');
     } catch (error) {
       console.error('[AudioManager] Failed to initialise:', error);
     }
@@ -298,7 +300,7 @@ class AudioManager {
       try {
         await this.context.resume();
         this.isResumed = true;
-        console.log('[AudioManager] Audio context resumed');
+        debugLog('AudioManager', 'Audio context resumed');
       } catch (error) {
         console.error('[AudioManager] Failed to resume:', error);
       }
@@ -318,7 +320,13 @@ class AudioManager {
   async loadSound(
     key: string,
     url: string,
-    options: { category?: SoundCategory; loop?: boolean; baseVolume?: number; fadeIn?: number; fadeOut?: number } = {}
+    options: {
+      category?: SoundCategory;
+      loop?: boolean;
+      baseVolume?: number;
+      fadeIn?: number;
+      fadeOut?: number;
+    } = {}
   ): Promise<AudioBuffer | null> {
     if (!this.context) await this.initialise();
     if (!this.context) return null;
@@ -362,7 +370,7 @@ class AudioManager {
         if (this.pendingMusic.has(key)) {
           const opts = this.pendingMusic.get(key)!;
           this.pendingMusic.delete(key);
-          console.log(`[AudioManager] Finished loading queued music, auto-starting: ${key}`);
+          debugLog('AudioManager', `Finished loading queued music, auto-starting: ${key}`);
           this.playMusic(key, opts);
         }
 
@@ -384,11 +392,11 @@ class AudioManager {
   async loadBatch(assets: Record<string, AudioAssetConfig>): Promise<void> {
     const assetCount = Object.keys(assets).length;
     if (assetCount === 0) {
-      console.log('[AudioManager] No audio assets to load');
+      debugLog('AudioManager', 'No audio assets to load');
       return;
     }
 
-    console.log(`[AudioManager] Loading ${assetCount} sounds...`);
+    debugLog('AudioManager', `Loading ${assetCount} sounds...`);
     const startTime = performance.now();
 
     const promises = Object.entries(assets).map(
@@ -405,13 +413,16 @@ class AudioManager {
     await Promise.all(promises);
 
     const loadTime = (performance.now() - startTime).toFixed(0);
-    console.log(`[AudioManager] Loaded ${this.sounds.size} sounds in ${loadTime}ms`);
+    debugLog('AudioManager', `Loaded ${this.sounds.size} sounds in ${loadTime}ms`);
   }
 
   /**
    * Play a sound effect (one-shot)
    */
-  playSfx(key: string, options: { volume?: number; pitch?: number; fadeIn?: number; fadeOut?: number } = {}): string | null {
+  playSfx(
+    key: string,
+    options: { volume?: number; pitch?: number; fadeIn?: number; fadeOut?: number } = {}
+  ): string | null {
     if (!this.context || !this.sounds.has(key) || this.settings.muted) return null;
 
     const sound = this.sounds.get(key)!;
@@ -432,14 +443,19 @@ class AudioManager {
 
     if (effectiveFadeIn > 0) {
       gainNode.gain.setValueAtTime(0, this.context.currentTime);
-      gainNode.gain.linearRampToValueAtTime(volume, this.context.currentTime + effectiveFadeIn / 1000);
+      gainNode.gain.linearRampToValueAtTime(
+        volume,
+        this.context.currentTime + effectiveFadeIn / 1000
+      );
     } else {
       gainNode.gain.value = volume;
     }
 
     if (effectiveFadeOut > 0 && source.buffer) {
       const duration = source.buffer.duration / pitchRate;
-      const fadeStart = this.context.currentTime + Math.max(duration - effectiveFadeOut / 1000, effectiveFadeIn / 1000);
+      const fadeStart =
+        this.context.currentTime +
+        Math.max(duration - effectiveFadeOut / 1000, effectiveFadeIn / 1000);
       gainNode.gain.setValueAtTime(volume, fadeStart);
       gainNode.gain.linearRampToValueAtTime(0, this.context.currentTime + duration);
     }
@@ -508,8 +524,9 @@ class AudioManager {
     // AudioContext itself, so this covers both cases). Mirrors playAmbient's pendingAmbients.
     if (!this.context || !this.sounds.has(key)) {
       if (!this.pendingMusic.has(key)) {
-        console.log(
-          `[AudioManager] Queuing music — context: ${!!this.context}, loaded: ${this.sounds.has(key)}: ${key}`
+        debugLog(
+          'AudioManager',
+          `Queuing music — context: ${!!this.context}, loaded: ${this.sounds.has(key)}: ${key}`
         );
         this.pendingMusic.set(key, options);
       }
@@ -569,7 +586,7 @@ class AudioManager {
       this.currentMusic = newTrack;
     }
 
-    console.log(`[AudioManager] Playing music: ${key}`);
+    debugLog('AudioManager', `Playing music: ${key}`);
   }
 
   /**
@@ -627,7 +644,7 @@ class AudioManager {
     }, fadeOutMs);
 
     this.currentMusic = null;
-    console.log('[AudioManager] Music stopped');
+    debugLog('AudioManager', 'Music stopped');
   }
 
   /**
@@ -655,7 +672,7 @@ class AudioManager {
     const volume = options?.volume ?? this.sounds.get(key)!.baseVolume;
     const id = this.startAmbientCopy(key, volume, true);
     if (id) {
-      console.log(`[AudioManager] Playing ambient: ${key}`);
+      debugLog('AudioManager', `Playing ambient: ${key}`);
     }
     return id;
   }
@@ -907,7 +924,7 @@ class AudioManager {
       this.masterGain.gain.value = muted ? 0 : this.settings.masterVolume;
     }
     this.saveSettings();
-    console.log(`[AudioManager] ${muted ? 'Muted' : 'Unmuted'}`);
+    debugLog('AudioManager', `${muted ? 'Muted' : 'Unmuted'}`);
   }
 
   isMuted(): boolean {
@@ -923,7 +940,7 @@ class AudioManager {
     this.settings.musicMuted = muted;
     this.applySettings();
     this.saveSettings();
-    console.log(`[AudioManager] Music ${muted ? 'muted' : 'unmuted'}`);
+    debugLog('AudioManager', `Music ${muted ? 'muted' : 'unmuted'}`);
   }
 
   isMusicMuted(): boolean {
@@ -934,7 +951,7 @@ class AudioManager {
     this.settings.sfxMuted = muted;
     this.applySettings();
     this.saveSettings();
-    console.log(`[AudioManager] SFX ${muted ? 'muted' : 'unmuted'}`);
+    debugLog('AudioManager', `SFX ${muted ? 'muted' : 'unmuted'}`);
   }
 
   isSfxMuted(): boolean {
@@ -1045,7 +1062,7 @@ class AudioManager {
     this.setHighPassFilter(false);
     this.setReverb(false);
     this.effects.pitchShift = 1.0;
-    console.log('[AudioManager] Effects reset to defaults');
+    debugLog('AudioManager', 'Effects reset to defaults');
   }
 
   /**
@@ -1083,7 +1100,7 @@ class AudioManager {
         this.setPitchShift(0.9);
         break;
     }
-    console.log(`[AudioManager] Applied preset: ${preset}`);
+    debugLog('AudioManager', `Applied preset: ${preset}`);
   }
 
   /**
@@ -1119,7 +1136,7 @@ class AudioManager {
       if (saved) {
         const parsed = JSON.parse(saved);
         this.settings = { ...this.settings, ...parsed };
-        console.log('[AudioManager] Settings loaded from localStorage');
+        debugLog('AudioManager', 'Settings loaded from localStorage');
       }
     } catch (error) {
       console.warn('[AudioManager] Failed to load settings:', error);
