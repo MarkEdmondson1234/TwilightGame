@@ -174,10 +174,16 @@ const AIDialogueBox: React.FC<AIDialogueBoxProps> = ({
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  // Load persisted history and generate greeting on mount
+  // Load persisted history and generate greeting on mount.
+  // Deliberately mount-only: the greeting is an AI call that must fire once per
+  // opened dialogue, not per render or per unrelated dep change. Note this is
+  // the pre-unified dialogue UI (superseded by UnifiedDialogueBox) and is not
+  // currently mounted anywhere; loadInitialGreeting is a plain closure, so
+  // listing it would re-fire the AI call every render.
   useEffect(() => {
     loadHistory(npc.id);
     loadInitialGreeting();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Sync streaming state into chat bubbles

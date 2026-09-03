@@ -5,7 +5,7 @@
  * and handles auto-scroll to bottom with pause-on-user-scroll.
  */
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { getChatHistory } from '../services/aiChatHistory';
 import { parseAssistantContent } from '../components/ChatBubble';
 import { NPCEmotion } from '../services/anthropicClient';
@@ -193,17 +193,35 @@ export function useChatHistory() {
     scrollToBottom();
   }, [chatMessages, scrollToBottom]);
 
-  return {
-    chatMessages,
-    scrollRef,
-    handleScroll,
-    scrollToBottom,
-    loadHistory,
-    addPlayerMessage,
-    addAssistantMessage,
-    startStreamingMessage,
-    updateStreamingMessage,
-    finaliseStreamingMessage,
-    replaceStreamingWithFallback,
-  };
+  // Stable identity between renders: consumers depend on this object in effect
+  // and callback dep arrays. It changes only when chatMessages changes — every
+  // function is a useCallback with stable deps, so listing `chatHistory` in a
+  // dep array means "re-run when the messages actually change".
+  return useMemo(
+    () => ({
+      chatMessages,
+      scrollRef,
+      handleScroll,
+      scrollToBottom,
+      loadHistory,
+      addPlayerMessage,
+      addAssistantMessage,
+      startStreamingMessage,
+      updateStreamingMessage,
+      finaliseStreamingMessage,
+      replaceStreamingWithFallback,
+    }),
+    [
+      chatMessages,
+      handleScroll,
+      scrollToBottom,
+      loadHistory,
+      addPlayerMessage,
+      addAssistantMessage,
+      startStreamingMessage,
+      updateStreamingMessage,
+      finaliseStreamingMessage,
+      replaceStreamingWithFallback,
+    ]
+  );
 }
