@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { WeatherType } from '../data/weatherConfig';
+import { isDebugLogEnabled, setDebugLogsEnabled } from '../utils/debugLog';
 import { gameState } from '../GameState';
 import { characterData } from '../utils/CharacterData';
 import { farmManager } from '../utils/farmManager';
@@ -1250,6 +1251,38 @@ const MiniGamesDebugSection: React.FC<{
   );
 };
 
+/**
+ * Debug Log Section - toggle gated console diagnostics (utils/debugLog.ts)
+ */
+const DebugLogSection: React.FC = () => {
+  const [enabled, setEnabled] = useState(() => isDebugLogEnabled());
+
+  const handleDebugLogToggle = (on: boolean) => {
+    setDebugLogsEnabled(on);
+    setEnabled(on);
+  };
+
+  return (
+    <div className="devtools-section">
+      <h3>Debug Logging</h3>
+      <div className="devtools-control">
+        <label>
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => handleDebugLogToggle(e.target.checked)}
+          />{' '}
+          Enable console diagnostics
+        </label>
+        <small style={{ display: 'block', marginTop: '4px', opacity: 0.7 }}>
+          Gated console.log output (categories via ?debug=&lt;name&gt; or localStorage
+          'twilight_debug'). Takes effect immediately; persists across reloads.
+        </small>
+      </div>
+    </div>
+  );
+};
+
 const DevTools: React.FC<DevToolsProps> = ({
   onClose,
   onFarmUpdate,
@@ -1489,6 +1522,8 @@ const DevTools: React.FC<DevToolsProps> = ({
                   </small>
                 </div>
               </div>
+
+              <DebugLogSection />
 
               <div className="devtools-section">
                 <h3>Current Status</h3>
