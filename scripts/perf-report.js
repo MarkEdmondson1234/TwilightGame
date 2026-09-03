@@ -6,6 +6,31 @@
  * Generates a markdown report from performance test results.
  * Used by GitHub Actions to post PR comments.
  *
+ * WHY THE FPS GRADE NO LONGER GATES
+ * ---------------------------------
+ * This report used to award a letter grade from average FPS and fail the build
+ * when FPS fell 10% below a stored baseline. Both were measuring the CI runner.
+ *
+ * The evidence: four consecutive main-branch runs, on effectively identical
+ * code, reported 49.6, 7.5, 1.5 and 1.4 fps -- a 35x spread -- with worst-frame
+ * times between 1.9s and 3.7s. That is structural, not flaky. CI launches Chrome
+ * with `--use-angle=swiftshader` on a GPU-less shared runner, and this game is
+ * GPU render-bound, so the suite measured in software the one axis it cannot
+ * represent, then graded the answer against a scale where 58 fps is an A. The
+ * grade was F on every run that mattered: arithmetic, not a finding.
+ *
+ * A gate whose verdict is uncorrelated with the diff is worse than no gate. It
+ * teaches everyone to scroll past a red X, and takes the real failures with it.
+ *
+ * So on a software renderer, frame timings are recorded and shown but never
+ * graded and never gating. The gate moves to SCENE COST -- how many sprites,
+ * nodes and textures the map asks the renderer to draw. Those are counts, equal
+ * on a Mac, an iPad and SwiftShader, and per the forest-perf investigation they
+ * are the real lever on device frame rate.
+ *
+ * On a GPU runner the timing grade returns by itself: the switch is the actual
+ * WEBGL_debug_renderer_info string, not a CI environment variable.
+ *
  * Usage:
  *   node scripts/perf-report.js
  *
@@ -38,6 +63,22 @@ const THRESHOLDS = {
     regressionPct: 25,  // 25% more memory growth is regression
     warningPct: 15,     // 15% increase triggers warning
   },
+};
+
+/**
+ * Scene-cost budgets -- the metrics that actually gate.
+ *
+ * `minAbs` is there because a percentage on a small count is noise: 3 textures
+ * to 4 is +33% and means nothing. A field must clear BOTH the percentage and the
+ * absolute delta, so the gate stays quiet about rounding and speaks up about a
+ * map that grew a thousand sprites.
+ */
+const SCENE_BUDGETS = {
+  sprites: { label: 'Sprites (drawn)', regressionPct: 20, warningPct: 10, minAbs: 25 },
+  nodes: { label: 'Scene nodes', regressionPct: 20, warningPct: 10, minAbs: 40 },
+  textures: { label: 'Textures', regressionPct: 20, warningPct: 10, minAbs: 4 },
+  textureMB: { label: 'Texture memory', regressionPct: 20, warningPct: 10, minAbs: 8, unit: ' MB' },
+  maxDepth: { label: 'Tree depth', regressionPct: 25, warningPct: 15, minAbs: 2 },
 };
 
 function loadJson(filename) {
@@ -89,31 +130,122 @@ function getStatusEmoji(status) {
   }
 }
 
+/**
+ * Scene-cost status, with the absolute-delta floor applied.
+ */
+function getSceneStatus(current, baseline, budget) {
+  if (baseline === undefined || baseline === null || baseline === 0) return 'neutral';
+  if (Math.abs(current - baseline) < budget.minAbs) return 'neutral';
+  return getRegressionStatus(current, baseline, budget, false);
+}
+
+/**
+ * Frame timings only compare between two runs on the same class of renderer --
+ * and at the same CPU throttle, since a throttled run is a different machine.
+ */
+function timingsAreComparable(results, baseline) {
+  if (!baseline) return false;
+  if (results.renderer?.software || baseline.renderer?.software) return false;
+  return (results.cpuThrottle || 1) === (baseline.cpuThrottle || 1);
+}
+
+/**
+ * Prefer the at-rest snapshot: it does not depend on how far the scripted
+ * movement travelled, which itself depends on the frame rate we do not trust.
+ */
+function sceneOf(run) {
+  if (run?.sceneAtRest) return run.sceneAtRest;
+  if (run?.scene) {
+    return Object.fromEntries(Object.entries(run.scene).map(([k, v]) => [k, v.peak]));
+  }
+  return null;
+}
+
+/**
+ * The scene-cost table. Counts, so they mean the same thing on every machine.
+ */
+function sceneTable(rows, hasBaseline, results) {
+  if (rows.length === 0) {
+    return '\n> :warning: No scene-cost data in this result. The stage was never registered\n' +
+      '> with the performance monitor, so this run graded nothing. Check that\n' +
+      '> usePixiRenderer still calls `performanceMonitor.attachStage`.\n';
+  }
+
+  const where = results.sceneAtRest ? 'at rest, after map load' : 'peak during scenario';
+  let out = `
+### Scene Cost (${where})
+
+What the map asks the renderer to draw. These are counts, so they read the same
+on a laptop, an iPad and a CI software rasteriser — which is why they, and not
+frame rate, decide whether this check passes.
+
+| Metric | Current | ${hasBaseline ? 'Baseline | Change | ' : ''}Status |
+|--------|---------|${hasBaseline ? '---------|--------|' : ''}--------|
+`;
+  for (const row of rows) {
+    const unit = row.budget.unit || '';
+    const baseCell = hasBaseline
+      ? `${row.base ?? 'n/a'}${row.base != null ? unit : ''} | ${row.base != null ? formatChange(row.current, row.base) : ''} | `
+      : '';
+    out += `| **${row.budget.label}** | ${row.current}${unit} | ${baseCell}${getStatusEmoji(row.status)} |\n`;
+  }
+  return out;
+}
+
+function softwareCaveat(results) {
+  return `
+> Measured on \`${results.renderer.name}\`, a **software rasteriser** on a shared
+> CI runner with no GPU. This game is GPU render-bound, so the numbers below
+> describe the runner, not the code in this PR — across four main-branch runs of
+> effectively identical code they ranged from 1.4 to 49.6 fps. Kept for the
+> record, **never graded, never gating**.
+>
+> For a real frame rate, profile on hardware: \`npm run perf:headed\`.
+`;
+}
+
 function generateReport(results, baseline) {
   const hasBaseline = !!baseline;
+  const software = !!results.renderer?.software;
+  const gradeTimings = timingsAreComparable(results, baseline);
   let hasRegression = false;
   let hasWarning = false;
 
-  // Calculate regression statuses
-  const fpsStatus = hasBaseline
+  // Scene cost -- the part that gates, because it is the part CI can measure.
+  const scene = sceneOf(results);
+  const baseScene = hasBaseline ? sceneOf(baseline) : null;
+  const sceneRows = [];
+  if (scene) {
+    for (const [key, budget] of Object.entries(SCENE_BUDGETS)) {
+      const current = scene[key] ?? 0;
+      const base = baseScene ? baseScene[key] : null;
+      const status = getSceneStatus(current, base, budget);
+      if (status === 'regression') hasRegression = true;
+      if (status === 'warning') hasWarning = true;
+      sceneRows.push({ budget, current, base, status });
+    }
+  }
+
+  // Frame timings -- graded only when both runs came off a real GPU.
+  const fpsStatus = gradeTimings
     ? getRegressionStatus(results.fps.avg, baseline.fps.avg, THRESHOLDS.fps, true)
     : 'neutral';
-  const frameTimeStatus = hasBaseline
+  const frameTimeStatus = gradeTimings
     ? getRegressionStatus(results.frameTime.avg, baseline.frameTime.avg, THRESHOLDS.frameTime)
     : 'neutral';
-  const jankStatus = hasBaseline
+  const jankStatus = gradeTimings
     ? getRegressionStatus(results.jank.maxFrameTime, baseline.jank.maxFrameTime, THRESHOLDS.jank)
     : 'neutral';
+
+  if ([fpsStatus, frameTimeStatus, jankStatus].includes('regression')) hasRegression = true;
+  if ([fpsStatus, frameTimeStatus, jankStatus].includes('warning')) hasWarning = true;
+
+  // Heap is CPU-side and so survives the software renderer, but a shared runner
+  // makes it noisy enough to warn rather than gate.
   const memoryStatus = hasBaseline && results.memory && baseline.memory
     ? getRegressionStatus(results.memory.growthMB, baseline.memory.growthMB, THRESHOLDS.memory)
     : 'neutral';
-
-  if ([fpsStatus, frameTimeStatus, jankStatus, memoryStatus].includes('regression')) {
-    hasRegression = true;
-  }
-  if ([fpsStatus, frameTimeStatus, jankStatus, memoryStatus].includes('warning')) {
-    hasWarning = true;
-  }
+  if (memoryStatus === 'regression' || memoryStatus === 'warning') hasWarning = true;
 
   // Overall status
   let overallStatus = ':white_check_mark: **PASSED**';
@@ -128,32 +260,55 @@ function generateReport(results, baseline) {
 ${overallStatus}
 
 **Scenario:** ${results.scenario} | **Duration:** ${results.duration / 1000}s | **Samples:** ${results.sampleCount}
+**Renderer:** \`${results.renderer?.name || 'unknown'}\`${software ? ' — **software rasteriser, no GPU**' : ''}${(results.cpuThrottle || 1) > 1 ? ` | **CPU throttle:** ${results.cpuThrottle}x` : ''}
+${sceneTable(sceneRows, hasBaseline, results)}
+### Frame Timings${software ? ' — advisory only' : ''}
+${software ? softwareCaveat(results) : ''}
 
-### Metrics
-
-| Metric | Current | ${hasBaseline ? 'Baseline | Change |' : ''} Status |
-|--------|---------|${hasBaseline ? '---------|--------|' : ''} ------ |
-| **FPS (avg)** | ${results.fps.avg} fps | ${hasBaseline ? `${baseline.fps.avg} fps | ${formatChange(results.fps.avg, baseline.fps.avg, true)} |` : ''} ${getStatusEmoji(fpsStatus)} |
-| **FPS (min)** | ${results.fps.min} fps | ${hasBaseline ? `${baseline.fps.min} fps | ${formatChange(results.fps.min, baseline.fps.min, true)} |` : ''} |
-| **Frame Time (avg)** | ${results.frameTime.avg} ms | ${hasBaseline ? `${baseline.frameTime.avg} ms | ${formatChange(results.frameTime.avg, baseline.frameTime.avg)} |` : ''} ${getStatusEmoji(frameTimeStatus)} |
-| **Frame Time (P95)** | ${results.frameTime.p95} ms | ${hasBaseline ? `${baseline.frameTime.p95} ms | ${formatChange(results.frameTime.p95, baseline.frameTime.p95)} |` : ''} |
-| **Jank (worst)** | ${results.jank.maxFrameTime} ms | ${hasBaseline ? `${baseline.jank.maxFrameTime} ms | ${formatChange(results.jank.maxFrameTime, baseline.jank.maxFrameTime)} |` : ''} ${getStatusEmoji(jankStatus)} |
+| Metric | Current | ${gradeTimings ? 'Baseline | Change |' : ''} Status |
+|--------|---------|${gradeTimings ? '---------|--------|' : ''} ------ |
+| **FPS (avg)** | ${results.fps.avg} fps | ${gradeTimings ? `${baseline.fps.avg} fps | ${formatChange(results.fps.avg, baseline.fps.avg, true)} |` : ''} ${getStatusEmoji(fpsStatus)} |
+| **FPS (min)** | ${results.fps.min} fps | ${gradeTimings ? `${baseline.fps.min} fps | ${formatChange(results.fps.min, baseline.fps.min, true)} |` : ''} |
+| **Frame Time (avg)** | ${results.frameTime.avg} ms | ${gradeTimings ? `${baseline.frameTime.avg} ms | ${formatChange(results.frameTime.avg, baseline.frameTime.avg)} |` : ''} ${getStatusEmoji(frameTimeStatus)} |
+| **Frame Time (P95)** | ${results.frameTime.p95} ms | ${gradeTimings ? `${baseline.frameTime.p95} ms | ${formatChange(results.frameTime.p95, baseline.frameTime.p95)} |` : ''} |
+| **Jank (worst)** | ${results.jank.maxFrameTime} ms | ${gradeTimings ? `${baseline.jank.maxFrameTime} ms | ${formatChange(results.jank.maxFrameTime, baseline.jank.maxFrameTime)} |` : ''} ${getStatusEmoji(jankStatus)} |
 `;
 
+  // Heap gets its own table: it is CPU-side, so it stays comparable across
+  // renderers even when the timings above are not, and it must not inherit the
+  // timing table's column count.
   if (results.memory) {
-    report += `| **Memory Growth** | ${results.memory.growthMB} MB | ${hasBaseline && baseline.memory ? `${baseline.memory.growthMB} MB | ${formatChange(results.memory.growthMB, baseline.memory.growthMB)} |` : ''} ${getStatusEmoji(memoryStatus)} |
-| **Heap (max)** | ${results.memory.maxMB} MB | ${hasBaseline && baseline.memory ? `${baseline.memory.maxMB} MB | ${formatChange(results.memory.maxMB, baseline.memory.maxMB)} |` : ''} |
+    const memBase = hasBaseline && baseline.memory;
+    report += `
+### Memory
+
+| Metric | Current | ${memBase ? 'Baseline | Change |' : ''} Status |
+|--------|---------|${memBase ? '---------|--------|' : ''} ------ |
+| **Growth** | ${results.memory.growthMB} MB | ${memBase ? `${baseline.memory.growthMB} MB | ${formatChange(results.memory.growthMB, baseline.memory.growthMB)} |` : ''} ${getStatusEmoji(memoryStatus)} |
+| **Heap (max)** | ${results.memory.maxMB} MB | ${memBase ? `${baseline.memory.maxMB} MB | ${formatChange(results.memory.maxMB, baseline.memory.maxMB)} |` : ''} |
 `;
   }
 
-  // Performance grade
-  let grade = 'A';
-  if (results.fps.avg < 30) grade = 'F';
-  else if (results.fps.avg < 45) grade = 'D';
-  else if (results.fps.avg < 55) grade = 'C';
-  else if (results.fps.avg < 58) grade = 'B';
+  // Performance grade.
+  //
+  // A letter grade derived from FPS needs a GPU to grade. On a software
+  // rasteriser it only ever restated the runner's speed, so it is withheld
+  // rather than guessed -- an honest "n/a" beats a confident F.
+  if (software) {
+    report += `
+### Performance Grade: **n/a — no GPU on this runner**
 
-  report += `
+The scene-cost budget above is what gated this run. To grade the frame rate,
+measure it on hardware: \`npm run perf:headed\`.
+`;
+  } else {
+    let grade = 'A';
+    if (results.fps.avg < 30) grade = 'F';
+    else if (results.fps.avg < 45) grade = 'D';
+    else if (results.fps.avg < 55) grade = 'C';
+    else if (results.fps.avg < 58) grade = 'B';
+
+    report += `
 ### Performance Grade: **${grade}**
 
 | Grade | FPS Range | Description |
@@ -164,7 +319,10 @@ ${overallStatus}
 | D | 30-45 fps | Poor |
 | F | <30 fps | Unplayable |
 
+<sub>Measured on \`${results.renderer?.name || 'unknown'}\`.</sub>
+
 `;
+  }
 
   if (hasRegression) {
     report += `
@@ -173,6 +331,11 @@ ${overallStatus}
 Performance has degraded compared to baseline. Please investigate the following:
 
 `;
+    for (const row of sceneRows.filter((r) => r.status === 'regression')) {
+      const pct = (((row.current - row.base) / row.base) * 100).toFixed(1);
+      report += `- **${row.budget.label}** grew ${pct}% (${row.base} → ${row.current}${row.budget.unit || ''}) — ` +
+        `more work per frame on every device, which is the thing that actually shows up as lag.\n`;
+    }
     if (fpsStatus === 'regression') {
       report += `- **FPS dropped** by ${(((baseline.fps.avg - results.fps.avg) / baseline.fps.avg) * 100).toFixed(1)}%\n`;
     }
@@ -190,6 +353,13 @@ Performance has degraded compared to baseline. Please investigate the following:
   if (!hasBaseline) {
     report += `
 > :information_source: No baseline available for comparison. This run will become the baseline on merge to main.
+`;
+  } else if (!gradeTimings && !software) {
+    report += `
+> :information_source: Frame timings not compared: the baseline was recorded on a
+> different machine class (\`${baseline.renderer?.name || 'unknown'}\`, throttle
+> ${baseline.cpuThrottle || 1}x). Scene-cost counters are machine-independent and
+> were compared.
 `;
   }
 
@@ -221,7 +391,15 @@ if (hasRegression) {
 }
 
 // Print summary to console
+const summaryScene = sceneOf(results);
 console.log('\n--- Performance Summary ---');
+console.log(`Renderer: ${results.renderer?.name || 'unknown'}${results.renderer?.software ? ' (software — timings advisory)' : ''}`);
+if (summaryScene) {
+  console.log(
+    `Scene: ${summaryScene.sprites} sprites, ${summaryScene.nodes} nodes, ` +
+    `${summaryScene.textures} textures (${summaryScene.textureMB}MB), depth ${summaryScene.maxDepth}`
+  );
+}
 console.log(`FPS: ${results.fps.avg} (min: ${results.fps.min})`);
 console.log(`Frame Time: ${results.frameTime.avg}ms (P95: ${results.frameTime.p95}ms)`);
 console.log(`Jank: ${results.jank.maxFrameTime}ms worst frame`);

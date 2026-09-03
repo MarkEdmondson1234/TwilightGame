@@ -105,6 +105,13 @@ const DEVICE_PROFILES = {
   },
 };
 
+// The GPU we ended up on, filled in once the page is open. Read by
+// analyseResults so every saved result records what measured it.
+let RENDERER = { available: false, name: 'unknown', software: false };
+
+// Scene cost sampled once after warmup, before the scenario moves anything.
+let AT_REST = null;
+
 // Check if running in GitHub Actions
 const isGitHubActions = process.env.GITHUB_ACTIONS === 'true' || CONFIG.github;
 
@@ -135,6 +142,43 @@ function logMetric(name, value, unit = '', threshold = null) {
     }
   }
   console.log(`  ${name.padEnd(20)} ${colours[colour]}${value}${unit}${colours.reset}`);
+}
+
+/**
+ * Ask the GPU what it actually is.
+ *
+ * `gl.RENDERER` is masked to "WebKit WebGL" for fingerprinting reasons, so it
+ * tells you nothing; WEBGL_debug_renderer_info gives the real string. This
+ * matters because every fps number this script produces is only meaningful on
+ * hardware. On SwiftShader (CI) the frame time is the software rasteriser's,
+ * not the game's, and reporting it as a grade invents a finding.
+ *
+ * Detecting it here rather than keying off `GITHUB_ACTIONS` means the gate
+ * re-arms itself automatically the day these tests move to a GPU runner.
+ */
+const SOFTWARE_RENDERER_MARKERS = ['swiftshader', 'llvmpipe', 'software', 'lavapipe', 'mesa offscreen'];
+
+async function detectRenderer(page) {
+  const info = await page.evaluate(() => {
+    try {
+      const canvas = document.createElement('canvas');
+      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+      if (!gl) return { available: false, name: 'none' };
+      const ext = gl.getExtension('WEBGL_debug_renderer_info');
+      return {
+        available: true,
+        name: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER),
+        vendor: ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : '',
+      };
+    } catch (e) {
+      return { available: false, name: 'error', error: e.message };
+    }
+  });
+
+  const name = String(info.name || 'unknown');
+  const software = SOFTWARE_RENDERER_MARKERS.some((m) => name.toLowerCase().includes(m));
+
+  return { ...info, name, software };
 }
 
 async function waitForGame(page) {
@@ -657,6 +701,13 @@ function analyseResults(samples) {
     scenario: CONFIG.scenario,
     sampleCount: samples.length,
 
+    // Provenance. A result carries the renderer that produced it so a consumer
+    // can refuse to compare a SwiftShader run against a GPU run — the single
+    // mistake that made this whole suite report noise as regressions.
+    renderer: RENDERER,
+    device: CONFIG.device || null,
+    cpuThrottle: (CONFIG.device ? DEVICE_PROFILES[CONFIG.device]?.cpuThrottle : CONFIG.cpuThrottle) || 1,
+
     fps: {
       avg: Math.round(avg(fpsSamples) * 10) / 10,
       min: Math.round(min(fpsSamples) * 10) / 10,
@@ -681,9 +732,46 @@ function analyseResults(samples) {
       growthMB: Math.round(((heapSamples[heapSamples.length - 1] - heapSamples[0]) / 1024 / 1024) * 10) / 10,
     } : null,
 
+    // Scene cost — the hardware-independent half of the results, and the only
+    // half CI can compare run to run. `peak` rather than `avg` because a budget
+    // is about the worst moment: the frame that drops on an old iPad is the one
+    // with the most sprites resident, not the average one.
+    scene: sceneSummary(samples),
+
+    // The reproducible one — see where AT_REST is captured.
+    sceneAtRest: AT_REST,
+
     // Final snapshot values
     finalMetrics: samples[samples.length - 1],
   };
+}
+
+/**
+ * Reduce the per-sample scene counts to a peak + median per field.
+ *
+ * Counts move as the player walks (sprites cull in and out), so a single sample
+ * is noisy in a way a total is not. Median describes the steady state, peak
+ * describes what the device actually has to survive.
+ */
+function sceneSummary(samples) {
+  const scenes = samples.map((s) => s.scene).filter(Boolean);
+  if (scenes.length === 0) return null;
+
+  const median = (arr) => {
+    const sorted = [...arr].sort((a, b) => a - b);
+    return sorted[Math.floor(sorted.length / 2)];
+  };
+
+  const fields = ['nodes', 'sprites', 'visibleSprites', 'containers', 'maxDepth', 'textures', 'textureMB'];
+  const out = {};
+  for (const field of fields) {
+    const values = scenes.map((s) => s[field] ?? 0);
+    out[field] = {
+      median: Math.round(median(values) * 10) / 10,
+      peak: Math.round(Math.max(...values) * 10) / 10,
+    };
+  }
+  return out;
 }
 
 function printResults(results) {
@@ -715,6 +803,17 @@ function printResults(results) {
     logMetric('Growth', results.memory.growthMB, ' MB', 10);
   }
 
+  if (results.scene) {
+    log('\nScene Cost (hardware-independent):', 'yellow');
+    logMetric('Sprites (peak)', results.scene.sprites.peak);
+    logMetric('  ...drawn', results.scene.visibleSprites.peak);
+    logMetric('Containers (peak)', results.scene.containers.peak);
+    logMetric('Nodes (peak)', results.scene.nodes.peak);
+    logMetric('Tree depth', results.scene.maxDepth.peak);
+    logMetric('Textures (peak)', results.scene.textures.peak);
+    logMetric('Texture memory', results.scene.textureMB.peak, ' MB');
+  }
+
   log('\n========================================\n', 'cyan');
 
   // GitHub Actions output
@@ -735,6 +834,10 @@ function printGitHubSummary(results) {
 | **Frame Time (avg)** | ${results.frameTime.avg} ms | ${results.frameTime.avg <= 20 ? ':white_check_mark:' : results.frameTime.avg <= 33 ? ':warning:' : ':x:'} |
 | **Jank (worst)** | ${results.jank.maxFrameTime} ms | ${results.jank.maxFrameTime <= 50 ? ':white_check_mark:' : ':warning:'} |
 ${results.memory ? `| **Memory Growth** | ${results.memory.growthMB} MB | ${results.memory.growthMB <= 10 ? ':white_check_mark:' : ':warning:'} |` : ''}
+${results.scene ? `| **Sprites (peak)** | ${results.scene.sprites.peak} | :heavy_minus_sign: |
+| **Textures (peak)** | ${results.scene.textures.peak} (${results.scene.textureMB.peak} MB) | :heavy_minus_sign: |` : ''}
+
+${results.renderer?.software ? `> Renderer: \`${results.renderer.name}\` — **software**. Frame timings above describe the CI rasteriser, not the game.` : `> Renderer: \`${results.renderer?.name || 'unknown'}\``}
 `;
 
   // Write to GitHub step summary if available
@@ -743,15 +846,26 @@ ${results.memory ? `| **Memory Growth** | ${results.memory.growthMB} MB | ${resu
     console.log('Wrote summary to GITHUB_STEP_SUMMARY');
   }
 
-  // Output annotations for warnings/errors
-  if (results.fps.avg < 30) {
-    console.log(`::error::Critical: Average FPS (${results.fps.avg}) is below 30 fps`);
-  } else if (results.fps.avg < 45) {
-    console.log(`::warning::Average FPS (${results.fps.avg}) is below target (45 fps)`);
-  }
+  // Output annotations for warnings/errors.
+  //
+  // Frame-timing annotations are suppressed on a software renderer. They used to
+  // fire on every CI run — "Critical: Average FPS (1.4) is below 30" — which is
+  // true of SwiftShader and says nothing about the game. An annotation that is
+  // always red is an annotation nobody reads, so it took the real ones with it.
+  if (results.renderer?.software) {
+    console.log(
+      `::notice::Frame timings measured on a software renderer (${results.renderer.name}) — recorded, but not graded. Scene-cost counters are the comparable metrics.`
+    );
+  } else {
+    if (results.fps.avg < 30) {
+      console.log(`::error::Critical: Average FPS (${results.fps.avg}) is below 30 fps`);
+    } else if (results.fps.avg < 45) {
+      console.log(`::warning::Average FPS (${results.fps.avg}) is below target (45 fps)`);
+    }
 
-  if (results.jank.maxFrameTime > 100) {
-    console.log(`::warning::High jank detected: ${results.jank.maxFrameTime}ms worst frame`);
+    if (results.jank.maxFrameTime > 100) {
+      console.log(`::warning::High jank detected: ${results.jank.maxFrameTime}ms worst frame`);
+    }
   }
 
   if (results.memory && results.memory.growthMB > 20) {
@@ -799,7 +913,18 @@ function compareResults(current, baseline) {
 
   log('\n========================================\n', 'cyan');
 
-  // Return pass/fail status
+  // Return pass/fail status.
+  //
+  // Frame timings only compare within the same renderer class. Comparing a GPU
+  // baseline to a SwiftShader run (or two SwiftShader runs to each other, where
+  // the spread across identical code was 1.4 to 49.6 fps) produces a verdict
+  // with no relationship to the code under test.
+  if (current.renderer?.software || baseline.renderer?.software) {
+    log('Frame timings not compared: software renderer involved.', 'yellow');
+    log('RESULT: PERFORMANCE OK (timings advisory)', 'green');
+    return true;
+  }
+
   const fpsRegression = current.fps.avg < baseline.fps.avg * 0.9;
   const frameTimeRegression = current.frameTime.avg > baseline.frameTime.avg * 1.1;
   const jankRegression = current.jank.maxFrameTime > baseline.jank.maxFrameTime * 1.5;
@@ -950,6 +1075,10 @@ async function main() {
     // Wait for game to initialise
     await waitForGame(page);
 
+    RENDERER = await detectRenderer(page);
+    log(`  Renderer: ${RENDERER.name}${RENDERER.software ? ' (SOFTWARE — frame timings are not comparable to real hardware)' : ''}`,
+        RENDERER.software ? 'yellow' : 'dim');
+
     // Log current game state
     await logCurrentGameState(page);
 
@@ -963,6 +1092,18 @@ async function main() {
     // Warmup period
     log(`Warming up for ${CONFIG.warmupMs / 1000}s...`, 'dim');
     await new Promise((r) => setTimeout(r, CONFIG.warmupMs));
+
+    // Scene cost at rest: map loaded, textures settled, player still on the spawn
+    // tile. This is the one measurement in the whole run that is genuinely
+    // reproducible, because it does not depend on how far the scripted movement
+    // got — and on a 1.4 fps software renderer, "hold W for one second" covers a
+    // very different distance than it does at 60 fps. Everything measured during
+    // the scenario inherits that variance; this does not.
+    AT_REST = await page.evaluate(() => window.__PERF_MONITOR__?.getMetrics()?.scene ?? null);
+    if (AT_REST) {
+      log(`  Scene at rest: ${AT_REST.visibleSprites}/${AT_REST.sprites} sprites drawn, ` +
+          `${AT_REST.textures} textures (${AT_REST.textureMB} MB), depth ${AT_REST.maxDepth}`, 'dim');
+    }
 
     // Run scenario
     await runScenario(page, CONFIG.scenario);
