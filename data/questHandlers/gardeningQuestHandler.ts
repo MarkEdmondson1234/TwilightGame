@@ -8,7 +8,7 @@
 
 import { eventChainManager } from '../../utils/EventChainManager';
 import { Season, TimeManager } from '../../utils/TimeManager';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -46,9 +46,7 @@ export const SEASONAL_SEEDS: Record<
     { itemId: 'seed_corn', quantity: 3 },
     { itemId: 'seed_chili', quantity: 2 },
   ],
-  autumn: [
-    { itemId: 'seed_onion', quantity: 5 },
-  ],
+  autumn: [{ itemId: 'seed_onion', quantity: 5 }],
 };
 
 export const ELIAS_TIPS = [
@@ -91,8 +89,10 @@ export function getGardeningQuestStage(): GardeningQuestStage {
   if (!eventChainManager.isChainStarted(GARDENING_QUEST_ID)) {
     return GARDENING_QUEST_STAGES.NOT_STARTED;
   }
-  return (eventChainManager.getStageNumber(GARDENING_QUEST_ID) as GardeningQuestStage) ||
-    GARDENING_QUEST_STAGES.ACTIVE;
+  return (
+    (eventChainManager.getStageNumber(GARDENING_QUEST_ID) as GardeningQuestStage) ||
+    GARDENING_QUEST_STAGES.ACTIVE
+  );
 }
 
 export function setQuestOffered(): void {
@@ -100,7 +100,7 @@ export function setQuestOffered(): void {
     eventChainManager.startChain(GARDENING_QUEST_ID, DEFAULT_METADATA);
     // Stay at 'offered' stage (stageNumber 1) - startChain enters it
   }
-  if (DEBUG.QUEST) console.log('[GardeningQuest] Quest offered (player declined)');
+  debugLog('GardeningQuest', 'Quest offered (player declined)');
 }
 
 export function startGardeningQuest(): void {
@@ -109,11 +109,13 @@ export function startGardeningQuest(): void {
   }
   // Advance to 'active' stage
   eventChainManager.advanceToStage(GARDENING_QUEST_ID, 'active');
-  if (DEBUG.QUEST) console.log('[GardeningQuest] Quest started');
+  debugLog('GardeningQuest', 'Quest started');
 }
 
 export function getCurrentSeasonTask(): SeasonTask {
-  return (eventChainManager.getMetadata(GARDENING_QUEST_ID, 'currentSeasonTask') as SeasonTask) || null;
+  return (
+    (eventChainManager.getMetadata(GARDENING_QUEST_ID, 'currentSeasonTask') as SeasonTask) || null
+  );
 }
 
 export function hasCompletedSeason(season: 'spring' | 'summer' | 'autumn'): boolean {
@@ -121,7 +123,8 @@ export function hasCompletedSeason(season: 'spring' | 'summer' | 'autumn'): bool
 }
 
 export function hasSeedsForSeason(season: 'spring' | 'summer' | 'autumn'): boolean {
-  const seedsReceived = (eventChainManager.getMetadata(GARDENING_QUEST_ID, 'seedsReceived') as string[]) || [];
+  const seedsReceived =
+    (eventChainManager.getMetadata(GARDENING_QUEST_ID, 'seedsReceived') as string[]) || [];
   return seedsReceived.includes(season);
 }
 
@@ -134,22 +137,24 @@ export function assignSeasonTask(
   }
 
   if (hasCompletedSeason(season)) {
-    if (DEBUG.QUEST) console.log(`[GardeningQuest] ${season} task already completed`);
+    debugLog('GardeningQuest', `${season} task already completed`);
     return null;
   }
 
   eventChainManager.setMetadata(GARDENING_QUEST_ID, 'currentSeasonTask', season);
 
-  const seedsReceived = (eventChainManager.getMetadata(GARDENING_QUEST_ID, 'seedsReceived') as string[]) || [];
+  const seedsReceived =
+    (eventChainManager.getMetadata(GARDENING_QUEST_ID, 'seedsReceived') as string[]) || [];
   const alreadyReceivedSeeds = seedsReceived.includes(season);
   if (!alreadyReceivedSeeds) {
     seedsReceived.push(season);
     eventChainManager.setMetadata(GARDENING_QUEST_ID, 'seedsReceived', seedsReceived);
   }
 
-  if (DEBUG.QUEST) {
-    console.log(`[GardeningQuest] Assigned ${season} task (seeds ${alreadyReceivedSeeds ? 'already received' : 'given'})`);
-  }
+  debugLog(
+    'GardeningQuest',
+    `Assigned ${season} task (seeds ${alreadyReceivedSeeds ? 'already received' : 'given'})`
+  );
   return alreadyReceivedSeeds ? null : SEASONAL_SEEDS[season];
 }
 
@@ -162,7 +167,7 @@ export function markSeasonCompleted(season: 'spring' | 'summer' | 'autumn'): voi
   eventChainManager.setMetadata(GARDENING_QUEST_ID, `${season}Completed`, true);
   eventChainManager.setMetadata(GARDENING_QUEST_ID, 'currentSeasonTask', null);
 
-  if (DEBUG.QUEST) console.log(`[GardeningQuest] ${season} task completed`);
+  debugLog('GardeningQuest', `${season} task completed`);
   checkGardeningQuestCompletion();
 }
 
@@ -175,7 +180,7 @@ export function checkGardeningQuestCompletion(): boolean {
 
   if (springDone && summerDone && autumnDone) {
     eventChainManager.advanceToStage(GARDENING_QUEST_ID, 'complete');
-    if (DEBUG.QUEST) console.log('[GardeningQuest] All seasonal tasks completed! Quest finished.');
+    debugLog('GardeningQuest', 'All seasonal tasks completed! Quest finished.');
     return true;
   }
   return false;

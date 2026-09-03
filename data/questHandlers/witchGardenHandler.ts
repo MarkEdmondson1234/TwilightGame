@@ -9,7 +9,7 @@
 import { eventChainManager } from '../../utils/EventChainManager';
 
 import { eventBus, GameEvent } from '../../utils/EventBus';
-import { DEBUG } from '../../constants';
+import { debugLog } from '../../utils/debugLog';
 
 // ============================================================================
 // Constants
@@ -78,9 +78,7 @@ export function startWitchGardenQuest(): void {
   if (!eventChainManager.isChainStarted(WITCH_GARDEN_QUEST_ID)) {
     eventChainManager.startChain(WITCH_GARDEN_QUEST_ID, DEFAULT_METADATA);
   }
-  if (DEBUG.QUEST) {
-    console.log("[WitchGardenQuest] Quest started - grow 3 different crops in the witch's garden");
-  }
+  debugLog('WitchGardenQuest', "Quest started - grow 3 different crops in the witch's garden");
 }
 
 export function recordCropHarvested(cropId: string): boolean {
@@ -89,18 +87,17 @@ export function recordCropHarvested(cropId: string): boolean {
 
   const cropsGrown = getGardenCropsGrown();
   if (cropsGrown.includes(cropId)) {
-    if (DEBUG.QUEST) console.log(`[WitchGardenQuest] Crop "${cropId}" already recorded`);
+    debugLog('WitchGardenQuest', `Crop "${cropId}" already recorded`);
     return false;
   }
 
   const updatedCrops = [...cropsGrown, cropId];
   eventChainManager.setMetadata(WITCH_GARDEN_QUEST_ID, 'gardenCropsGrown', updatedCrops);
 
-  if (DEBUG.QUEST) {
-    console.log(
-      `[WitchGardenQuest] New crop recorded: "${cropId}" (${updatedCrops.length}/${REQUIRED_UNIQUE_CROPS})`
-    );
-  }
+  debugLog(
+    'WitchGardenQuest',
+    `New crop recorded: "${cropId}" (${updatedCrops.length}/${REQUIRED_UNIQUE_CROPS})`
+  );
 
   if (updatedCrops.length >= REQUIRED_UNIQUE_CROPS) {
     completeGardenPhase();
@@ -112,20 +109,20 @@ export function recordCropHarvested(cropId: string): boolean {
 export function completeGardenPhase(): void {
   if (getWitchGardenStage() >= WITCH_GARDEN_STAGES.GARDEN_COMPLETE) return;
   eventChainManager.advanceToStage(WITCH_GARDEN_QUEST_ID, 'garden_complete');
-  if (DEBUG.QUEST) console.log('[WitchGardenQuest] Garden phase complete!');
+  debugLog('WitchGardenQuest', 'Garden phase complete!');
 }
 
 export function startPickledOnionsPhase(): void {
   if (getWitchGardenStage() >= WITCH_GARDEN_STAGES.PICKLED_ONIONS) return;
   eventChainManager.advanceToStage(WITCH_GARDEN_QUEST_ID, 'pickled_onions');
-  if (DEBUG.QUEST) console.log('[WitchGardenQuest] Pickled onions phase started');
+  debugLog('WitchGardenQuest', 'Pickled onions phase started');
 }
 
 export function deliverPickledOnions(): void {
   if (getWitchGardenStage() !== WITCH_GARDEN_STAGES.PICKLED_ONIONS) return;
   eventChainManager.setMetadata(WITCH_GARDEN_QUEST_ID, 'pickledOnionsDelivered', true);
   eventChainManager.advanceToStage(WITCH_GARDEN_QUEST_ID, 'complete');
-  if (DEBUG.QUEST) console.log('[WitchGardenQuest] Pickled onions delivered! Quest complete.');
+  debugLog('WitchGardenQuest', 'Pickled onions delivered! Quest complete.');
 }
 
 // ============================================================================
@@ -139,5 +136,5 @@ export function initWitchGardenTracking(): void {
     if (!isWitchGardenQuestActive()) return;
     recordCropHarvested(payload.cropId);
   });
-  if (DEBUG.QUEST) console.log('[WitchGardenQuest] Harvest tracking initialised');
+  debugLog('WitchGardenQuest', 'Harvest tracking initialised');
 }
