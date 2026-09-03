@@ -45,7 +45,6 @@ import {
   getStoredApiKey,
   isAIAvailable,
   reinitializeClient,
-  type StructuredAIResponse,
   type NPCEmotion,
 } from '../services/anthropicClient';
 
@@ -112,39 +111,31 @@ describe('anthropicClient', () => {
       clearStoredApiKey();
       reinitializeClient();
 
-      const result = await generateStructuredResponse(
-        'Test system prompt',
-        [],
-        'Hello'
-      );
+      const result = await generateStructuredResponse('Test system prompt', [], 'Hello');
 
       expect(result.error).toBe('AI not available');
-      expect(result.dialogue).toBe("Hmm? I lost my train of thought. What were we discussing?");
+      expect(result.dialogue).toBe('Hmm? I lost my train of thought. What were we discussing?');
     });
 
     it('should parse valid structured response', async () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Hello, traveller! Welcome to our village.",
-        action: "waves warmly",
-        emotion: "happy",
-        suggestions: ["Tell me about the village", "What's your name?", "Farewell"],
+        dialogue: 'Hello, traveller! Welcome to our village.',
+        action: 'waves warmly',
+        emotion: 'happy',
+        suggestions: ['Tell me about the village', "What's your name?", 'Farewell'],
       };
 
       mockCreate.mockResolvedValueOnce({
         content: [{ type: 'text', text: JSON.stringify(mockResponse) }],
       });
 
-      const result = await generateStructuredResponse(
-        'You are a friendly villager',
-        [],
-        'Hello!'
-      );
+      const result = await generateStructuredResponse('You are a friendly villager', [], 'Hello!');
 
-      expect(result.dialogue).toBe("Hello, traveller! Welcome to our village.");
-      expect(result.action).toBe("waves warmly");
-      expect(result.emotion).toBe("happy");
+      expect(result.dialogue).toBe('Hello, traveller! Welcome to our village.');
+      expect(result.action).toBe('waves warmly');
+      expect(result.emotion).toBe('happy');
       expect(result.moderationScore).toBe(0);
       expect(result.shouldSendToBed).toBe(false);
       expect(result.suggestions).toHaveLength(3);
@@ -154,11 +145,11 @@ describe('anthropicClient', () => {
     it('should handle moderation - rude message', async () => {
       const mockResponse = {
         moderationScore: 8,
-        moderationReason: "Rude language used",
+        moderationReason: 'Rude language used',
         shouldSendToBed: true,
-        dialogue: "That is no way to speak to an elder! Off to bed with you!",
-        action: "looks disappointed",
-        emotion: "angry",
+        dialogue: 'That is no way to speak to an elder! Off to bed with you!',
+        action: 'looks disappointed',
+        emotion: 'angry',
         suggestions: [],
       };
 
@@ -174,45 +165,49 @@ describe('anthropicClient', () => {
 
       expect(result.moderationScore).toBe(8);
       expect(result.shouldSendToBed).toBe(true);
-      expect(result.moderationReason).toBe("Rude language used");
-      expect(result.emotion).toBe("angry");
+      expect(result.moderationReason).toBe('Rude language used');
+      expect(result.emotion).toBe('angry');
     });
 
     it('should clamp moderation score to 0-10 range', async () => {
       const mockResponse = {
         moderationScore: 15, // Out of range
         shouldSendToBed: false,
-        dialogue: "Hello!",
-        emotion: "neutral",
-        suggestions: ["Hi"],
+        dialogue: 'Hello!',
+        emotion: 'neutral',
+        suggestions: ['Hi'],
       };
 
       mockCreate.mockResolvedValueOnce({
         content: [{ type: 'text', text: JSON.stringify(mockResponse) }],
       });
 
-      const result = await generateStructuredResponse(
-        'Test prompt',
-        [],
-        'Hello'
-      );
+      const result = await generateStructuredResponse('Test prompt', [], 'Hello');
 
       expect(result.moderationScore).toBe(10); // Should be clamped to max
     });
 
     it('should handle all valid emotions', async () => {
       const validEmotions: NPCEmotion[] = [
-        'neutral', 'happy', 'sad', 'surprised', 'angry',
-        'thoughtful', 'worried', 'excited', 'embarrassed', 'loving'
+        'neutral',
+        'happy',
+        'sad',
+        'surprised',
+        'angry',
+        'thoughtful',
+        'worried',
+        'excited',
+        'embarrassed',
+        'loving',
       ];
 
       for (const emotion of validEmotions) {
         const mockResponse = {
           moderationScore: 0,
           shouldSendToBed: false,
-          dialogue: "Test",
+          dialogue: 'Test',
           emotion,
-          suggestions: ["Test"],
+          suggestions: ['Test'],
         };
 
         mockCreate.mockResolvedValueOnce({
@@ -228,9 +223,9 @@ describe('anthropicClient', () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Test",
-        emotion: "invalid_emotion",
-        suggestions: ["Test"],
+        dialogue: 'Test',
+        emotion: 'invalid_emotion',
+        suggestions: ['Test'],
       };
 
       mockCreate.mockResolvedValueOnce({
@@ -245,8 +240,8 @@ describe('anthropicClient', () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Hello!",
-        emotion: "neutral",
+        dialogue: 'Hello!',
+        emotion: 'neutral',
         suggestions: [],
       };
 
@@ -255,16 +250,16 @@ describe('anthropicClient', () => {
       });
 
       const result = await generateStructuredResponse('Test', [], 'Hello');
-      expect(result.suggestions).toEqual(["Tell me more", "I should go"]);
+      expect(result.suggestions).toEqual(['Tell me more', 'I should go']);
     });
 
     it('should limit suggestions to 4', async () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Hello!",
-        emotion: "neutral",
-        suggestions: ["One", "Two", "Three", "Four", "Five", "Six"],
+        dialogue: 'Hello!',
+        emotion: 'neutral',
+        suggestions: ['One', 'Two', 'Three', 'Four', 'Five', 'Six'],
       };
 
       mockCreate.mockResolvedValueOnce({
@@ -279,9 +274,9 @@ describe('anthropicClient', () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "I remember you!",
-        emotion: "happy",
-        suggestions: ["Good to see you"],
+        dialogue: 'I remember you!',
+        emotion: 'happy',
+        suggestions: ['Good to see you'],
       };
 
       mockCreate.mockResolvedValueOnce({
@@ -310,9 +305,9 @@ describe('anthropicClient', () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Hello!",
-        emotion: "neutral",
-        suggestions: ["Hi"],
+        dialogue: 'Hello!',
+        emotion: 'neutral',
+        suggestions: ['Hi'],
       };
 
       mockCreate.mockResolvedValueOnce({
@@ -346,7 +341,7 @@ describe('anthropicClient', () => {
       const result = await generateStructuredResponse('Test', [], 'Hello');
 
       expect(result.error).toBe('API rate limit exceeded');
-      expect(result.dialogue).toBe("Hmm? I lost my train of thought. What were we discussing?");
+      expect(result.dialogue).toBe('Hmm? I lost my train of thought. What were we discussing?');
       expect(result.emotion).toBe('neutral');
     });
 
@@ -358,7 +353,7 @@ describe('anthropicClient', () => {
       const result = await generateStructuredResponse('Test', [], 'Hello');
 
       // Should return default response
-      expect(result.dialogue).toBe("Hmm? I lost my train of thought. What were we discussing?");
+      expect(result.dialogue).toBe('Hmm? I lost my train of thought. What were we discussing?');
       expect(result.emotion).toBe('neutral');
     });
 
@@ -369,16 +364,16 @@ describe('anthropicClient', () => {
 
       const result = await generateStructuredResponse('Test', [], 'Hello');
 
-      expect(result.dialogue).toBe("Hmm? I lost my train of thought. What were we discussing?");
+      expect(result.dialogue).toBe('Hmm? I lost my train of thought. What were we discussing?');
     });
 
     it('should use correct model', async () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Hello!",
-        emotion: "neutral",
-        suggestions: ["Hi"],
+        dialogue: 'Hello!',
+        emotion: 'neutral',
+        suggestions: ['Hi'],
       };
 
       mockCreate.mockResolvedValueOnce({
@@ -405,9 +400,9 @@ describe('anthropicClient', () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Test",
-        emotion: "neutral",
-        suggestions: ["Test"],
+        dialogue: 'Test',
+        emotion: 'neutral',
+        suggestions: ['Test'],
       };
 
       mockCreate.mockResolvedValueOnce({
@@ -431,9 +426,9 @@ describe('anthropicClient', () => {
       const mockResponse = {
         moderationScore: 0,
         shouldSendToBed: false,
-        dialogue: "Test",
-        emotion: "neutral",
-        suggestions: ["Test"],
+        dialogue: 'Test',
+        emotion: 'neutral',
+        suggestions: ['Test'],
       };
 
       mockCreate.mockResolvedValueOnce({
@@ -446,8 +441,16 @@ describe('anthropicClient', () => {
       const emotionSchema = callArgs.output_format.schema.properties.emotion;
 
       expect(emotionSchema.enum).toEqual([
-        'neutral', 'happy', 'sad', 'surprised', 'angry',
-        'thoughtful', 'worried', 'excited', 'embarrassed', 'loving'
+        'neutral',
+        'happy',
+        'sad',
+        'surprised',
+        'angry',
+        'thoughtful',
+        'worried',
+        'excited',
+        'embarrassed',
+        'loving',
       ]);
     });
   });

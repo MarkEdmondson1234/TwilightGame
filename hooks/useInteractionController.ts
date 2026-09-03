@@ -11,7 +11,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect, MutableRefObject } from 'react';
-import { Position, NPC, TileType } from '../types';
+import { Position, NPC } from '../types';
 import { TILE_SIZE, INTERACTION, DEBUG } from '../constants';
 import { MouseClickInfo } from './useMouseControls';
 import { RadialMenuOption } from '../components/RadialMenu';

@@ -25,34 +25,31 @@ const ImageZoomPopover: React.FC<ImageZoomPopoverProps> = ({
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseEnter = useCallback(
-    (e: React.MouseEvent) => {
-      if (!containerRef.current) return;
+  const handleMouseEnter = useCallback(() => {
+    if (!containerRef.current) return;
 
-      const rect = containerRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
+    const rect = containerRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
 
-      // Position popover to the right of the element by default
-      let x = rect.right + 10;
-      let y = rect.top + rect.height / 2 - zoomSize / 2;
+    // Position popover to the right of the element by default
+    let x = rect.right + 10;
+    let y = rect.top + rect.height / 2 - zoomSize / 2;
 
-      // If would go off right edge, position to the left
-      if (x + zoomSize > viewportWidth - 20) {
-        x = rect.left - zoomSize - 10;
-      }
+    // If would go off right edge, position to the left
+    if (x + zoomSize > viewportWidth - 20) {
+      x = rect.left - zoomSize - 10;
+    }
 
-      // Keep within vertical bounds
-      if (y < 10) y = 10;
-      if (y + zoomSize > viewportHeight - 10) {
-        y = viewportHeight - zoomSize - 10;
-      }
+    // Keep within vertical bounds
+    if (y < 10) y = 10;
+    if (y + zoomSize > viewportHeight - 10) {
+      y = viewportHeight - zoomSize - 10;
+    }
 
-      setPopoverPosition({ x, y });
-      setIsHovered(true);
-    },
-    [zoomSize]
-  );
+    setPopoverPosition({ x, y });
+    setIsHovered(true);
+  }, [zoomSize]);
 
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false);

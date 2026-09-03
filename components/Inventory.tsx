@@ -63,7 +63,14 @@ const Inventory: React.FC<InventoryProps> = ({
   isMagicUnlocked = false,
   photoCount = 0,
 }) => {
-  type InventoryFilter = 'all' | 'ingredients' | 'farming' | 'seeds' | 'materials' | 'magical' | 'photos';
+  type InventoryFilter =
+    | 'all'
+    | 'ingredients'
+    | 'farming'
+    | 'seeds'
+    | 'materials'
+    | 'magical'
+    | 'photos';
   const [activeFilter, setActiveFilter] = useState<InventoryFilter>('all');
 
   // Drag-drop state for desktop
@@ -95,48 +102,39 @@ const Inventory: React.FC<InventoryProps> = ({
 
   if (!isOpen) return null;
 
-  // Calculate dynamic slot count for unlimited inventory
+  // Dynamic slot count for unlimited inventory
   const COLS = 9;
   const MIN_ROWS = 4; // Always show at least 4 rows (36 slots) for quick slots + buffer
   const BUFFER_ROWS = 1; // Show one extra empty row after last item
 
-  // Keep total count for footer display (unfiltered)
-  let displaySlots: number;
-  if (maxSlots !== undefined) {
-    displaySlots = maxSlots;
-  } else {
-    const usedSlots = items.length;
-    const requiredRows = Math.ceil(usedSlots / COLS) + BUFFER_ROWS;
-    displaySlots = Math.max(MIN_ROWS, requiredRows) * COLS;
-  }
-
   const FILTER_CATEGORIES: Record<InventoryFilter, ItemCategory[]> = {
-    all:         [],
+    all: [],
     ingredients: [ItemCategory.INGREDIENT, ItemCategory.FOOD, ItemCategory.CROP],
-    farming:     [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
-    seeds:       [ItemCategory.SEED],
-    materials:   [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
-    magical:     [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
-    photos:      [ItemCategory.KEEPSAKE],
+    farming: [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
+    seeds: [ItemCategory.SEED],
+    materials: [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
+    magical: [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
+    photos: [ItemCategory.KEEPSAKE],
   };
 
   const filterTabs: { id: InventoryFilter; label: string }[] = [
-    { id: 'all',         label: 'All' },
+    { id: 'all', label: 'All' },
     { id: 'ingredients', label: 'Ingredients' },
-    { id: 'farming',     label: 'Farming' },
-    { id: 'seeds',       label: 'Seeds' },
-    { id: 'materials',   label: 'Materials' },
+    { id: 'farming', label: 'Farming' },
+    { id: 'seeds', label: 'Seeds' },
+    { id: 'materials', label: 'Materials' },
     ...(isMagicUnlocked ? [{ id: 'magical' as InventoryFilter, label: 'Magical' }] : []),
     { id: 'photos', label: `Photos${photoCount > 0 ? ` (${photoCount})` : ''}` },
   ];
 
   // Apply category filter
-  const filteredItems = activeFilter === 'all'
-    ? items
-    : items.filter((item) => {
-        const cat = getItem(item.id)?.category;
-        return cat !== undefined && FILTER_CATEGORIES[activeFilter].includes(cat);
-      });
+  const filteredItems =
+    activeFilter === 'all'
+      ? items
+      : items.filter((item) => {
+          const cat = getItem(item.id)?.category;
+          return cat !== undefined && FILTER_CATEGORIES[activeFilter].includes(cat);
+        });
 
   // Recalculate slot count for filtered view
   let filteredDisplaySlots: number;
@@ -162,11 +160,7 @@ const Inventory: React.FC<InventoryProps> = ({
     longPress.handlers.onTouchStart(e);
   };
 
-  const handleContextMenu = (
-    item: InventoryItem | null,
-    index: number,
-    e: React.MouseEvent
-  ) => {
+  const handleContextMenu = (item: InventoryItem | null, index: number, e: React.MouseEvent) => {
     e.preventDefault(); // suppress the browser's own menu whether or not we show ours
     if (!item || !onItemContextMenu) return;
     onItemContextMenu(item, index, { clientX: e.clientX, clientY: e.clientY });
@@ -296,7 +290,11 @@ const Inventory: React.FC<InventoryProps> = ({
           {activeFilter === 'photos' && filteredItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 text-amber-500 text-sm gap-2">
               <span className="text-4xl">📷</span>
-              <p className="text-center">No photos yet.<br />Equip your camera and take some!</p>
+              <p className="text-center">
+                No photos yet.
+                <br />
+                Equip your camera and take some!
+              </p>
             </div>
           )}
           <div className={`grid ${gridCols} ${slotGap}`}>
@@ -381,7 +379,9 @@ const Inventory: React.FC<InventoryProps> = ({
 
                       {/* Exposure counter badge on camera */}
                       {item.id === 'camera' && (
-                        <div className={`absolute bottom-0 right-0 text-white text-xs font-bold px-1 py-0.5 rounded-tl-lg rounded-br-lg min-w-[28px] text-center ${photoCount >= CAMERA.MAX_EXPOSURES ? 'bg-red-700/90' : 'bg-teal-700/90'}`}>
+                        <div
+                          className={`absolute bottom-0 right-0 text-white text-xs font-bold px-1 py-0.5 rounded-tl-lg rounded-br-lg min-w-[28px] text-center ${photoCount >= CAMERA.MAX_EXPOSURES ? 'bg-red-700/90' : 'bg-teal-700/90'}`}
+                        >
                           {photoCount}/{CAMERA.MAX_EXPOSURES}
                         </div>
                       )}

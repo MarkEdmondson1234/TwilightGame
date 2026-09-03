@@ -49,14 +49,10 @@ interface ShopUIProps {
   onClose: () => void;
   playerGold: number;
   playerInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[];
-  onTransaction: (newGold: number, newInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[]) => void;
-}
-
-interface DragState {
-  itemId: string;
-  quantity: number;
-  fromShop: boolean; // true = dragging from shop, false = dragging from player
-  maxQuantity: number;
+  onTransaction: (
+    newGold: number,
+    newInventory: { itemId: string; quantity: number; uses?: number; masteryLevel?: number }[]
+  ) => void;
 }
 
 const ShopUI: React.FC<ShopUIProps> = ({
@@ -93,24 +89,25 @@ const ShopUI: React.FC<ShopUIProps> = ({
         filterInactive: 'bg-rose-900/50 text-rose-300 border border-rose-700 hover:bg-rose-800/60',
       }
     : isShellaShop
-    ? {
-        title: "Shella's Food Truck",
-        container: 'bg-gradient-to-b from-teal-900 to-teal-950 border-4 border-orange-500',
-        titleColor: 'text-orange-200',
-        stockHeader: 'text-teal-300',
-        filterActive: 'bg-orange-500 text-orange-950',
-        filterInactive: 'bg-teal-900/50 text-teal-300 border border-teal-700 hover:bg-teal-800/60',
-      }
-    : {
-        title: 'General Store',
-        container: 'bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600',
-        titleColor: 'text-amber-200',
-        stockHeader: 'text-emerald-300',
-        filterActive: 'bg-emerald-500 text-emerald-950',
-        filterInactive: 'bg-emerald-900/50 text-emerald-300 border border-emerald-700 hover:bg-emerald-800/60',
-      };
+      ? {
+          title: "Shella's Food Truck",
+          container: 'bg-gradient-to-b from-teal-900 to-teal-950 border-4 border-orange-500',
+          titleColor: 'text-orange-200',
+          stockHeader: 'text-teal-300',
+          filterActive: 'bg-orange-500 text-orange-950',
+          filterInactive:
+            'bg-teal-900/50 text-teal-300 border border-teal-700 hover:bg-teal-800/60',
+        }
+      : {
+          title: 'General Store',
+          container: 'bg-gradient-to-b from-slate-800 to-slate-900 border-4 border-slate-600',
+          titleColor: 'text-amber-200',
+          stockHeader: 'text-emerald-300',
+          filterActive: 'bg-emerald-500 text-emerald-950',
+          filterInactive:
+            'bg-emerald-900/50 text-emerald-300 border border-emerald-700 hover:bg-emerald-800/60',
+        };
   const [shopInventory, setShopInventory] = useState<ShopItem[]>([]);
-  const [dragState, setDragState] = useState<DragState | null>(null);
 
   type ShopFilter = 'all' | 'ingredients' | 'farming' | 'seeds' | 'materials' | 'magical';
   const [shopFilter, setShopFilter] = useState<ShopFilter>('all');
@@ -122,7 +119,9 @@ const ShopUI: React.FC<ShopUIProps> = ({
     fromShop: boolean;
     maxQuantity: number;
   } | null>(null);
-  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(
+    null
+  );
 
   const handleClose = useCallback(() => {
     audioManager.playSfx('sfx_cash_register');
@@ -164,11 +163,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
   /**
    * Handle drag start (from shop or player inventory)
    */
-  const handleDragStart = (
-    itemId: string,
-    fromShop: boolean,
-    maxQuantity: number
-  ) => {
+  const handleDragStart = (itemId: string, fromShop: boolean, maxQuantity: number) => {
     // If only 1 item, execute immediately
     if (maxQuantity === 1) {
       executeTransaction(itemId, 1, fromShop);
@@ -198,31 +193,6 @@ const ShopUI: React.FC<ShopUIProps> = ({
   const handleSlotContextMenu = (itemId: string, fromShop: boolean, maxQuantity: number) => {
     if (maxQuantity < 1) return;
     handleDragStart(itemId, fromShop, maxQuantity);
-  };
-
-  /**
-   * Handle drag over (allow drop)
-   */
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  /**
-   * Handle drop (execute transaction)
-   */
-  const handleDrop = (e: React.DragEvent, targetIsShop: boolean) => {
-    e.preventDefault();
-
-    if (!dragState) return;
-
-    // Can't drop in same inventory
-    if (dragState.fromShop === targetIsShop) {
-      setDragState(null);
-      return;
-    }
-
-    executeTransaction(dragState.itemId, dragState.quantity, dragState.fromShop);
-    setDragState(null);
   };
 
   /**
@@ -280,11 +250,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
   const confirmQuantity = () => {
     if (!pendingTransaction) return;
 
-    executeTransaction(
-      pendingTransaction.itemId,
-      selectedQuantity,
-      pendingTransaction.fromShop
-    );
+    executeTransaction(pendingTransaction.itemId, selectedQuantity, pendingTransaction.fromShop);
   };
 
   /**
@@ -310,7 +276,9 @@ const ShopUI: React.FC<ShopUIProps> = ({
       name: itemDef.displayName,
       description: itemDef.description,
       image: itemDef.image,
-      additionalInfo: canAfford ? `Buy: ${shopItem.buyPrice}g` : `Buy: ${shopItem.buyPrice}g (cannot afford)`,
+      additionalInfo: canAfford
+        ? `Buy: ${shopItem.buyPrice}g`
+        : `Buy: ${shopItem.buyPrice}g (cannot afford)`,
     };
 
     return (
@@ -318,11 +286,19 @@ const ShopUI: React.FC<ShopUIProps> = ({
         <button
           onClick={() => {
             if (shopLongPress.consumeTap()) return;
-            handleSlotClick(shopItem.itemId, true, shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold));
+            handleSlotClick(
+              shopItem.itemId,
+              true,
+              shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold)
+            );
           }}
           onContextMenu={(e) => {
             e.preventDefault();
-            handleSlotContextMenu(shopItem.itemId, true, shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold));
+            handleSlotContextMenu(
+              shopItem.itemId,
+              true,
+              shopManager.getMaxBuyQuantity(shopItem.itemId, playerGold)
+            );
           }}
           onTouchStart={(e) => {
             shopPressRef.current = {
@@ -338,9 +314,10 @@ const ShopUI: React.FC<ShopUIProps> = ({
           className={`
             no-touch-callout
             relative aspect-square rounded-lg border-2 transition-all
-            ${canAfford
-              ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 cursor-pointer'
-              : 'bg-gray-900/40 border-gray-600 cursor-not-allowed opacity-50'
+            ${
+              canAfford
+                ? 'bg-emerald-900/40 border-emerald-600 hover:bg-emerald-800/60 cursor-pointer'
+                : 'bg-gray-900/40 border-gray-600 cursor-not-allowed opacity-50'
             }
           `}
           disabled={!canAfford}
@@ -376,7 +353,15 @@ const ShopUI: React.FC<ShopUIProps> = ({
   /**
    * Render player inventory slot
    */
-  const renderPlayerSlot = (inventoryItem: { itemId: string; quantity: number; uses?: number; masteryLevel?: number } | null, index: number) => {
+  const renderPlayerSlot = (
+    inventoryItem: {
+      itemId: string;
+      quantity: number;
+      uses?: number;
+      masteryLevel?: number;
+    } | null,
+    index: number
+  ) => {
     if (!inventoryItem) {
       // Empty slot
       return (
@@ -395,8 +380,12 @@ const ShopUI: React.FC<ShopUIProps> = ({
     // Add mastery info if applicable
     let additionalInfo = `Sell: ${sellPrice || 0}g each`;
     if (inventoryItem.masteryLevel !== undefined && inventoryItem.masteryLevel >= 1) {
-      const multiplier = inventoryItem.masteryLevel >= 3 ? '2.0x' :
-                         inventoryItem.masteryLevel === 2 ? '1.5x' : '1.2x';
+      const multiplier =
+        inventoryItem.masteryLevel >= 3
+          ? '2.0x'
+          : inventoryItem.masteryLevel === 2
+            ? '1.5x'
+            : '1.2x';
       additionalInfo += ` (${multiplier} mastery)`;
     }
 
@@ -470,36 +459,38 @@ const ShopUI: React.FC<ShopUIProps> = ({
   const isMagicUnlocked = magicManager.isMagicBookUnlocked();
 
   const SHOP_FILTER_CATEGORIES: Record<ShopFilter, ItemCategory[]> = {
-    all:         [],
+    all: [],
     ingredients: [ItemCategory.INGREDIENT, ItemCategory.FOOD, ItemCategory.CROP],
-    farming:     [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
-    seeds:       [ItemCategory.SEED],
-    materials:   [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
-    magical:     [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
+    farming: [ItemCategory.CROP, ItemCategory.SEED, ItemCategory.TOOL],
+    seeds: [ItemCategory.SEED],
+    materials: [ItemCategory.MATERIAL, ItemCategory.MISC, ItemCategory.DECORATION],
+    magical: [ItemCategory.MAGICAL_INGREDIENT, ItemCategory.POTION],
   };
 
   const shopFilterTabs: { id: ShopFilter; label: string }[] = [
-    { id: 'all',         label: 'All' },
+    { id: 'all', label: 'All' },
     { id: 'ingredients', label: 'Ingredients' },
-    { id: 'farming',     label: 'Farming' },
-    { id: 'seeds',       label: 'Seeds' },
-    { id: 'materials',   label: 'Materials' },
+    { id: 'farming', label: 'Farming' },
+    { id: 'seeds', label: 'Seeds' },
+    { id: 'materials', label: 'Materials' },
     ...(isMagicUnlocked ? [{ id: 'magical' as ShopFilter, label: 'Magical' }] : []),
   ];
 
-  const filteredShopInventory = shopFilter === 'all'
-    ? shopInventory
-    : shopInventory.filter((shopItem) => {
-        const cat = getItem(shopItem.itemId)?.category;
-        return cat !== undefined && SHOP_FILTER_CATEGORIES[shopFilter].includes(cat);
-      });
+  const filteredShopInventory =
+    shopFilter === 'all'
+      ? shopInventory
+      : shopInventory.filter((shopItem) => {
+          const cat = getItem(shopItem.itemId)?.category;
+          return cat !== undefined && SHOP_FILTER_CATEGORIES[shopFilter].includes(cat);
+        });
 
-  const filteredPlayerInventory = playerFilter === 'all'
-    ? playerInventory
-    : playerInventory.filter((item) => {
-        const cat = getItem(item.itemId)?.category;
-        return cat !== undefined && SHOP_FILTER_CATEGORIES[playerFilter].includes(cat);
-      });
+  const filteredPlayerInventory =
+    playerFilter === 'all'
+      ? playerInventory
+      : playerInventory.filter((item) => {
+          const cat = getItem(item.itemId)?.category;
+          return cat !== undefined && SHOP_FILTER_CATEGORIES[playerFilter].includes(cat);
+        });
 
   // Create slots for player inventory (dynamic unlimited capacity)
   const COLS = 6;
@@ -511,7 +502,8 @@ const ShopUI: React.FC<ShopUIProps> = ({
   const totalRows = Math.max(MIN_ROWS, requiredRows);
   const displaySlots = totalRows * COLS;
 
-  const playerSlots: ({ itemId: string; quantity: number } | null)[] = Array(displaySlots).fill(null);
+  const playerSlots: ({ itemId: string; quantity: number } | null)[] =
+    Array(displaySlots).fill(null);
   filteredPlayerInventory.forEach((item, index) => {
     if (index < displaySlots) {
       playerSlots[index] = item;
@@ -537,7 +529,10 @@ const ShopUI: React.FC<ShopUIProps> = ({
               <div className="bg-gradient-to-br from-yellow-600 to-yellow-800 border-4 border-yellow-500 rounded-lg px-6 py-3 shadow-lg">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">💰</span>
-                  <span className="text-3xl font-bold text-yellow-100" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+                  <span
+                    className="text-3xl font-bold text-yellow-100"
+                    style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}
+                  >
                     {playerGold}g
                   </span>
                 </div>
@@ -567,7 +562,9 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
           {/* Season and Time Info */}
           <div className="mb-3 text-sm text-slate-400">
-            <span className="text-cyan-300 font-bold">{currentTime.season} {currentTime.day}</span>
+            <span className="text-cyan-300 font-bold">
+              {currentTime.season} {currentTime.day}
+            </span>
             {' • '}
             <span>Seasonal items available</span>
           </div>
@@ -584,9 +581,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
                     key={tab.id}
                     onClick={() => setShopFilter(tab.id)}
                     className={`px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors ${
-                      shopFilter === tab.id
-                        ? theme.filterActive
-                        : theme.filterInactive
+                      shopFilter === tab.id ? theme.filterActive : theme.filterInactive
                     }`}
                   >
                     {tab.label}
@@ -595,11 +590,12 @@ const ShopUI: React.FC<ShopUIProps> = ({
               </div>
               <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] shop-scrollbar">
                 <div className="grid grid-cols-6 gap-2">
-                  {filteredShopInventory.map(shopItem => renderShopSlot(shopItem))}
+                  {filteredShopInventory.map((shopItem) => renderShopSlot(shopItem))}
                 </div>
               </div>
               <div className="mt-2 text-xs text-slate-400">
-                Click to buy one • hold or right-click for more • {filteredShopInventory.length}{shopFilter !== 'all' ? ` / ${shopInventory.length}` : ''} items available
+                Click to buy one • hold or right-click for more • {filteredShopInventory.length}
+                {shopFilter !== 'all' ? ` / ${shopInventory.length}` : ''} items available
               </div>
             </div>
 
@@ -637,7 +633,9 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
       {/* Quantity Slider Modal */}
       {showQuantitySlider && pendingTransaction && (
-        <div className={`fixed inset-0 bg-black/90 flex items-center justify-center ${zClass(Z_SHOP_CONFIRM)} pointer-events-auto`}>
+        <div
+          className={`fixed inset-0 bg-black/90 flex items-center justify-center ${zClass(Z_SHOP_CONFIRM)} pointer-events-auto`}
+        >
           <div className="bg-gradient-to-b from-slate-700 to-slate-800 border-4 border-slate-500 rounded-lg p-6 max-w-md w-full">
             <h3 className="text-2xl font-bold text-white mb-4">
               {pendingTransaction.fromShop ? 'Buy' : 'Sell'} How Many?
@@ -659,9 +657,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
                   )}
                   <div>
                     <p className="text-lg font-bold text-amber-200">{itemDef.displayName}</p>
-                    <p className="text-sm text-slate-400">
-                      Max: {pendingTransaction.maxQuantity}
-                    </p>
+                    <p className="text-sm text-slate-400">Max: {pendingTransaction.maxQuantity}</p>
                   </div>
                 </div>
               );
@@ -671,19 +667,25 @@ const ShopUI: React.FC<ShopUIProps> = ({
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
                 <label className="text-sm font-bold text-slate-300">Quantity:</label>
-                <span className="text-xs text-slate-400">Max: {pendingTransaction.maxQuantity}</span>
+                <span className="text-xs text-slate-400">
+                  Max: {pendingTransaction.maxQuantity}
+                </span>
               </div>
               <div className="flex items-center justify-center gap-4">
                 <button
-                  onClick={() => setSelectedQuantity(q => Math.max(1, q - 1))}
+                  onClick={() => setSelectedQuantity((q) => Math.max(1, q - 1))}
                   disabled={selectedQuantity <= 1}
                   className="w-12 h-12 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-2xl font-bold rounded-full transition-colors"
                 >
                   −
                 </button>
-                <span className="text-2xl font-bold text-yellow-300 w-12 text-center">{selectedQuantity}</span>
+                <span className="text-2xl font-bold text-yellow-300 w-12 text-center">
+                  {selectedQuantity}
+                </span>
                 <button
-                  onClick={() => setSelectedQuantity(q => Math.min(pendingTransaction.maxQuantity, q + 1))}
+                  onClick={() =>
+                    setSelectedQuantity((q) => Math.min(pendingTransaction.maxQuantity, q + 1))
+                  }
                   disabled={selectedQuantity >= pendingTransaction.maxQuantity}
                   className="w-12 h-12 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-800 disabled:text-slate-600 disabled:cursor-not-allowed text-white text-2xl font-bold rounded-full transition-colors"
                 >
@@ -698,17 +700,19 @@ const ShopUI: React.FC<ShopUIProps> = ({
               if (!itemDef) return null;
 
               const price = pendingTransaction.fromShop
-                ? shopInventory.find(si => si.itemId === pendingTransaction.itemId)?.buyPrice || 0
+                ? shopInventory.find((si) => si.itemId === pendingTransaction.itemId)?.buyPrice || 0
                 : shopManager.getItemSellPrice(pendingTransaction.itemId, playerInventory) || 0;
 
               const total = price * selectedQuantity;
 
               return (
-                <div className={`mb-6 p-4 rounded-lg border-2 ${
-                  pendingTransaction.fromShop
-                    ? 'bg-red-900/40 border-red-500'
-                    : 'bg-green-900/40 border-green-500'
-                }`}>
+                <div
+                  className={`mb-6 p-4 rounded-lg border-2 ${
+                    pendingTransaction.fromShop
+                      ? 'bg-red-900/40 border-red-500'
+                      : 'bg-green-900/40 border-green-500'
+                  }`}
+                >
                   <p className="text-lg font-bold text-white">
                     {pendingTransaction.fromShop ? 'Total Cost:' : 'Total Earnings:'}
                     <span className="ml-2 text-2xl text-yellow-300">{total}g</span>

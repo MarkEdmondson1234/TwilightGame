@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { RecipeDefinition, RecipeCategory, RECIPES, getRecipe } from '../data/recipes';
+import { RecipeCategory, getRecipe } from '../data/recipes';
 import { getItem } from '../data/items';
 import { cookingManager, CookingResult } from '../utils/CookingManager';
 import { audioManager } from '../utils/AudioManager';
@@ -23,14 +23,7 @@ interface CookingInterfaceProps {
  * Shows recipes, ingredients, and allows player to cook
  * Cooked items appear on the stove/campfire instead of in inventory
  */
-const CookingInterface: React.FC<CookingInterfaceProps> = ({
-  isOpen,
-  onClose,
-  locationType,
-  cookingPosition,
-  currentMapId,
-  onItemPlaced,
-}) => {
+const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, locationType }) => {
   const isTouchDevice = useTouchDevice();
   const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
@@ -48,12 +41,6 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
 
   // Get selected recipe details
   const recipe = selectedRecipe ? getRecipe(selectedRecipe) : null;
-
-  // Check if we can cook
-  const canCook = recipe ? cookingManager.hasIngredients(recipe.id) : false;
-
-  // Get missing ingredients
-  const missingIngredients = recipe ? cookingManager.getMissingIngredients(recipe.id) : [];
 
   // Get ingredient display info
   const getIngredientInfo = (itemId: string, needed: number) => {
@@ -288,8 +275,8 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({
         {/* Footer */}
         <div className="bg-amber-900/50 px-4 py-2 border-t border-amber-700 text-center">
           <p className="text-amber-400 text-xs">
-            {isTouchDevice ? 'Tap ✕ to close' : 'Press ESC or E to close'} • Cook recipes 3 times
-            to master them
+            {isTouchDevice ? 'Tap ✕ to close' : 'Press ESC or E to close'} • Cook recipes 3 times to
+            master them
           </p>
         </div>
 

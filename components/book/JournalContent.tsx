@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
@@ -63,16 +63,6 @@ function getNPCIdsWithConversations(): string[] {
     npcIds.add(entry.npcId);
   }
   return [...npcIds];
-}
-
-/**
- * Format an NPC ID into a display name (e.g. "village_elder" → "Village Elder")
- */
-function formatNPCName(npcId: string): string {
-  return npcId
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 /**

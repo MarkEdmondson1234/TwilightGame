@@ -20,7 +20,6 @@ import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
 import {
   isGhostQuestComplete,
-  isGhostQuestStarted,
   GHOST_QUEEN_QUEST_ID,
 } from '../../../data/questHandlers/ghostQueenHandler';
 

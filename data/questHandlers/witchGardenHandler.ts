@@ -7,7 +7,7 @@
  */
 
 import { eventChainManager } from '../../utils/EventChainManager';
-import { handlerRegistry } from '../../utils/EventChainHandlers';
+
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { DEBUG } from '../../constants';
 
@@ -27,8 +27,7 @@ export const WITCH_GARDEN_STAGES = {
   COMPLETED: 4,
 } as const;
 
-export type WitchGardenStage =
-  (typeof WITCH_GARDEN_STAGES)[keyof typeof WITCH_GARDEN_STAGES];
+export type WitchGardenStage = (typeof WITCH_GARDEN_STAGES)[keyof typeof WITCH_GARDEN_STAGES];
 
 // ============================================================================
 // Default Data
@@ -59,12 +58,16 @@ export function getWitchGardenStage(): WitchGardenStage {
   if (!eventChainManager.isChainStarted(WITCH_GARDEN_QUEST_ID)) {
     return WITCH_GARDEN_STAGES.NOT_STARTED;
   }
-  return (eventChainManager.getStageNumber(WITCH_GARDEN_QUEST_ID) as WitchGardenStage) ||
-    WITCH_GARDEN_STAGES.ACTIVE;
+  return (
+    (eventChainManager.getStageNumber(WITCH_GARDEN_QUEST_ID) as WitchGardenStage) ||
+    WITCH_GARDEN_STAGES.ACTIVE
+  );
 }
 
 export function getGardenCropsGrown(): string[] {
-  return (eventChainManager.getMetadata(WITCH_GARDEN_QUEST_ID, 'gardenCropsGrown') as string[]) || [];
+  return (
+    (eventChainManager.getMetadata(WITCH_GARDEN_QUEST_ID, 'gardenCropsGrown') as string[]) || []
+  );
 }
 
 export function isGardenComplete(): boolean {
@@ -94,7 +97,9 @@ export function recordCropHarvested(cropId: string): boolean {
   eventChainManager.setMetadata(WITCH_GARDEN_QUEST_ID, 'gardenCropsGrown', updatedCrops);
 
   if (DEBUG.QUEST) {
-    console.log(`[WitchGardenQuest] New crop recorded: "${cropId}" (${updatedCrops.length}/${REQUIRED_UNIQUE_CROPS})`);
+    console.log(
+      `[WitchGardenQuest] New crop recorded: "${cropId}" (${updatedCrops.length}/${REQUIRED_UNIQUE_CROPS})`
+    );
   }
 
   if (updatedCrops.length >= REQUIRED_UNIQUE_CROPS) {

@@ -1,16 +1,11 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import {
-  PotionRecipeDefinition,
-  PotionLevel,
-  POTION_RECIPES,
-  getPotionRecipe,
-} from '../../data/potionRecipes';
+import { PotionRecipeDefinition, PotionLevel } from '../../data/potionRecipes';
 import { getItem } from '../../data/items';
 import { magicManager, BrewingResult } from '../../utils/MagicManager';
 import { eventBus, GameEvent } from '../../utils/EventBus';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
-import { BookThemeConfig, getThemeStyles } from './bookThemes';
+import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import BookSpread from './BookSpread';
 import ImageZoomPopover from './ImageZoomPopover';
@@ -43,8 +38,6 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
       setMagicUpdateTrigger((prev) => prev + 1);
     });
   }, []);
-
-  const styles = getThemeStyles(theme);
 
   // Get current apprentice level and progress
   const currentLevel = magicManager.getCurrentLevel();
@@ -147,8 +140,6 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
     : null;
 
   // Check if we can brew
-  const canBrew = selectedPotion ? magicManager.hasIngredients(selectedPotion.id) : false;
-
   // Difficulty stars display
   const difficultyStars = (difficulty: 1 | 2 | 3) => {
     return '★'.repeat(difficulty) + '☆'.repeat(3 - difficulty);

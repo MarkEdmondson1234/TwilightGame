@@ -11,9 +11,9 @@
 
 import { WeatherType } from '../data/weatherConfig';
 import { mapManager } from '../maps';
-import { TimeManager, TimeOfDay } from './TimeManager';
+import { TimeManager } from './TimeManager';
 import { farmManager } from './farmManager';
-import { friendshipManager } from './FriendshipManager';
+
 import { Position, FarmPlotState } from '../types';
 
 // ============================================================================
@@ -806,13 +806,6 @@ export function hasPotionEffect(potionId: string): boolean {
  * Get all VFX types used by potion effects (for preloading)
  */
 export function getAllVFXTypes(): string[] {
-  const vfxTypes = new Set<string>();
-
-  Object.values(POTION_EFFECTS).forEach((effect) => {
-    // Execute with dummy callbacks to get vfxType
-    // This is a bit hacky, but works for getting static vfx types
-  });
-
   // Manually list all VFX types for now
   return [
     'shrink',

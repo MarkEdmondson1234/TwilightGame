@@ -22,7 +22,7 @@ import { characterData, FriendshipData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
-import { getItem, ItemCategory } from '../data/items';
+import { getItem } from '../data/items';
 import { RECIPES, NPC_FOOD_PREFERENCES, RecipeCategory } from '../data/recipes';
 import { getGiftReaction, GiftReaction } from '../data/giftReactions';
 import {
@@ -64,7 +64,6 @@ import {
 import {
   isGhostQuestActive,
   advanceGhostQuestToHasBook,
-  GHOST_QUEEN_QUEST_ID,
 } from '../data/questHandlers/ghostQueenHandler';
 
 // Tier reward definitions - items given when reaching a tier with certain NPCs
@@ -398,7 +397,7 @@ class FriendshipManagerClass {
   giveGift(
     npcId: string,
     itemId: string,
-    npc?: NPC
+    _npc?: NPC
   ): { points: number; reaction: GiftReaction; questCompleted?: boolean; dialogueNodeId?: string } {
     const item = getItem(itemId);
     if (!item) {
@@ -552,14 +551,21 @@ class FriendshipManagerClass {
     dialogueNodeId?: string;
   } | null {
     // ===== ESTRANGED SISTERS: Accept letter from Althea =====
-    if (itemId === SISTERS_ITEMS.LETTER && getEstrangedSistersStage() === SISTERS_STAGES.LETTER_GIVEN) {
+    if (
+      itemId === SISTERS_ITEMS.LETTER &&
+      getEstrangedSistersStage() === SISTERS_STAGES.LETTER_GIVEN
+    ) {
       const nodeId = deliverLetterToJuniper();
-      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Witch receives Althea\'s letter via gift.');
+      if (DEBUG.FRIENDSHIP)
+        console.log("[FriendshipManager] Witch receives Althea's letter via gift.");
       return { points: 0, reaction: 'neutral', dialogueNodeId: nodeId };
     }
 
     // ===== ESTRANGED SISTERS: Accept photograph of Althea =====
-    if (itemId === SISTERS_ITEMS.PHOTO && getEstrangedSistersStage() === SISTERS_STAGES.PHOTO_NEEDED) {
+    if (
+      itemId === SISTERS_ITEMS.PHOTO &&
+      getEstrangedSistersStage() === SISTERS_STAGES.PHOTO_NEEDED
+    ) {
       const nodeId = deliverPhotoToJuniper();
       if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Witch receives photograph via gift.');
       return { points: 0, reaction: 'neutral', dialogueNodeId: nodeId };
@@ -634,7 +640,8 @@ class FriendshipManagerClass {
       markCookiesDelivered();
       const points = 100;
       this.addPoints('old_woman_knitting', points, 'althea chores: cookies delivered');
-      if (DEBUG.FRIENDSHIP) console.log('[FriendshipManager] Althea receives cookies! (+${points})');
+      if (DEBUG.FRIENDSHIP)
+        console.log('[FriendshipManager] Althea receives cookies! (+${points})');
       return { points, reaction: 'loved', dialogueNodeId: 'chores_cookies_accepted' };
     }
 

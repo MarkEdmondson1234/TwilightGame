@@ -93,7 +93,7 @@ export const CROP_ADULT_SIZES: Record<
 
   // Herbs (1.2x1.2 tile) - slightly oversized for a lush look
   thyme: { width: 1.2, height: 1.2, offsetX: -0.1, offsetY: -0.125 },
-  lavender: { width: 1.8, height: 1.8, offsetX: -0.4, offsetY: -0.650 },
+  lavender: { width: 1.8, height: 1.8, offsetX: -0.4, offsetY: -0.65 },
   mint: { width: 1.4, height: 1.4, offsetX: -0.2, offsetY: -0.3 },
 
   // Small crops (1x1 tile) - centred on soil tile
@@ -408,7 +408,7 @@ export class TileLayer extends PixiLayer {
             const winterKey = `plant_${cropType}_winter`;
             const adultKey = `plant_${cropType}_adult`;
             imageUrl =
-              (isHerbDormant && (farmingAssets as any)[winterKey])
+              isHerbDormant && (farmingAssets as any)[winterKey]
                 ? (farmingAssets as any)[winterKey]
                 : (farmingAssets as any)[adultKey] || farmingAssets.seedling;
           }
@@ -433,7 +433,7 @@ export class TileLayer extends PixiLayer {
     const soilKey = `${x},${y}_soil`;
     const needsSoilBg = growthStage !== null && cropType && !hideSpriteDuringSnow;
     const soilImageUrl = needsSoilBg
-      ? (tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_READY)
+      ? tileData.type === TileType.SOIL_WATERED || tileData.type === TileType.SOIL_READY
         ? farmingAssets.tilled_wet
         : farmingAssets.tilled
       : null;
@@ -978,7 +978,7 @@ export class TileLayer extends PixiLayer {
    * Only supports palette colors: 'bg-palette-sage' → '#87AE73'
    * Results are cached for performance
    */
-  private getHexFromTailwind(colorClass: string, map: MapDefinition): number {
+  private getHexFromTailwind(colorClass: string, _map: MapDefinition): number {
     // Check cache first
     const cached = TileLayer.hexColorCache.get(colorClass);
     if (cached !== undefined) {

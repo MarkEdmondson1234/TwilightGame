@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Z_FARM_ACTIONS } from '../zIndex';
 import GameIcon from './GameIcon';
 import { iconAssets } from '../iconAssets';

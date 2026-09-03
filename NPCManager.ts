@@ -1,4 +1,4 @@
-import { NPC, Position, Direction, NPCBehavior, isTileSolid, SeasonalLocation } from './types';
+import { NPC, Position, Direction, NPCBehavior, isTileSolid } from './types';
 import { getTileData } from './utils/mapUtils';
 import { PLAYER_SIZE } from './constants';
 import { metadataCache } from './utils/MetadataCache';
@@ -1176,7 +1176,6 @@ class NPCManagerClass {
    * Initialize seasonal locations (call this after all maps are registered)
    */
   initializeSeasonalLocations(): void {
-    const currentTime = TimeManager.getCurrentTime();
     // Set currentSeason to null first to force the initial placement
     this.currentSeason = null;
     // Now update to the actual current season (this will trigger placement)

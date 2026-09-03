@@ -365,9 +365,9 @@ class CookingManagerClass {
    * Cook a recipe - consumes ingredients and produces food
    * Returns result with success and any produced items
    * @param recipeId - Recipe to cook
-   * @param campfireBonus - Optional parameter (unused, kept for backwards compatibility)
+   * @param _campfireBonus - Optional parameter (unused, kept for backwards compatibility)
    */
-  cook(recipeId: string, campfireBonus = 0): CookingResult {
+  cook(recipeId: string, _campfireBonus = 0): CookingResult {
     // Cooking costs stamina
     if (!staminaManager.performActivity('cook')) {
       return { success: false, message: "You're too tired to cook right now." };

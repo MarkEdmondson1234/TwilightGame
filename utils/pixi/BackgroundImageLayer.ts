@@ -83,7 +83,8 @@ export class BackgroundImageLayer {
     wallpaperId: string;
   }> = [];
   // Time-conditioned sprites (e.g. day/sunset/night backgrounds) tracked for periodic re-check
-  private timeLayerEntries: Array<{ sprite: PIXI.Sprite; showWhen: 'day' | 'sunset' | 'night' }> = [];
+  private timeLayerEntries: Array<{ sprite: PIXI.Sprite; showWhen: 'day' | 'sunset' | 'night' }> =
+    [];
   // Interval polling the game clock to toggle timeLayerEntries visibility, cleared in dispose()
   private timeCheckIntervalId: ReturnType<typeof setInterval> | null = null;
   // Unsubscribe functions for this instance's EventBus listeners, released in dispose()
@@ -141,7 +142,10 @@ export class BackgroundImageLayer {
 
     // Periodically re-check day/night layer visibility against the game clock.
     // Nothing emits a regular "clock ticked" event, so this owns its own poll.
-    this.timeCheckIntervalId = setInterval(() => this.updateTimeLayers(), TIMING.TIME_LAYER_CHECK_MS);
+    this.timeCheckIntervalId = setInterval(
+      () => this.updateTimeLayers(),
+      TIMING.TIME_LAYER_CHECK_MS
+    );
   }
 
   /**
@@ -179,10 +183,7 @@ export class BackgroundImageLayer {
    * Screen position of a centered layer of the given scaled size: centred in the
    * viewport, then panned. One place, so every caller agrees.
    */
-  private centeredPosition(
-    scaledWidth: number,
-    scaledHeight: number
-  ): { x: number; y: number } {
+  private centeredPosition(scaledWidth: number, scaledHeight: number): { x: number; y: number } {
     const viewportWidth = this.scalingConfig?.viewportWidth ?? window.innerWidth;
     const viewportHeight = this.scalingConfig?.viewportHeight ?? window.innerHeight;
     return {
@@ -246,12 +247,13 @@ export class BackgroundImageLayer {
    *
    * @param map - The map definition
    * @param mapId - The map ID
-   * @param skipForeground - If true, skip foreground layers (render them as DOM instead)
+   * @param _skipForeground - Ignored; retained for call compatibility. Foreground layers
+   *   always load here and render as DOM for proper NPC z-ordering.
    */
   async loadLayers(
     map: MapDefinition,
     mapId: string,
-    skipForeground: boolean = true // Default to true - foreground layers render as DOM for proper NPC z-ordering
+    _skipForeground: boolean = true
   ): Promise<void> {
     // Skip if already loaded for this map
     if (this.currentMapId === mapId && this.backgroundSprites.length > 0) {

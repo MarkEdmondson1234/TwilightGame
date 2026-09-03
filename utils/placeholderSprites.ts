@@ -142,7 +142,7 @@ function generateSVGSprite(
   return `data:image/svg+xml,${encoded}`;
 }
 
-function getHairPath(hairStyle: string, direction: Direction): string {
+function getHairPath(hairStyle: string, _direction: Direction): string {
   // Simple hair shapes - can be enhanced later
   switch (hairStyle) {
     case 'short':

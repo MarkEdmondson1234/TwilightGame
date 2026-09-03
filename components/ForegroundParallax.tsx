@@ -182,7 +182,6 @@ const FULL_FADE_DISTANCE = 250; // Fully faded when player is this close
 const ForegroundParallax: React.FC<ForegroundParallaxProps> = ({
   cameraX,
   cameraY,
-  mapWidth,
   mapHeight,
   enabled = true,
 }) => {

@@ -54,9 +54,6 @@ const TouchControls: React.FC<TouchControlsProps> = ({
   const dpadButtonText = compact ? 'text-lg' : 'text-xl sm:text-2xl';
   const dpadCenterSize = compact ? 'w-8 h-8' : 'w-10 h-10 sm:w-12 sm:h-12';
 
-  const actionButtonSize = compact ? 'w-10 h-10' : 'w-12 h-12 sm:w-14 sm:h-14';
-  const actionButtonText = compact ? 'text-lg' : 'text-xl sm:text-2xl';
-
   return (
     <div
       className={`touch-controls fixed left-0 right-0 flex justify-between items-end px-4 sm:px-6 pointer-events-auto ${zClass(Z_TOUCH_CONTROLS)}`}
@@ -122,7 +119,11 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             className={`${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-full border-2 border-teal-400/70 flex items-center justify-center text-white text-2xl shadow-md`}
             title="Take Photo"
           >
-            <img src={itemAssets.camera} alt="Take Photo" className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} object-contain`} />
+            <img
+              src={itemAssets.camera}
+              alt="Take Photo"
+              className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} object-contain`}
+            />
           </button>
         )}
         {/* Emote button — the only player-to-player channel (see multiplayer/emotes.ts) */}

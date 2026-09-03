@@ -11,7 +11,7 @@
  * - Materials and misc items
  */
 
-import { ItemCategory, getItem, ITEMS } from '../data/items';
+import { ItemCategory, getItem } from '../data/items';
 import { characterData } from './CharacterData';
 import { eventBus, GameEvent } from './EventBus';
 import { CAMERA } from '../constants';

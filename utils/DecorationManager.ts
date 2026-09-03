@@ -483,7 +483,6 @@ class DecorationManagerClass {
     unlocked: boolean;
     hint?: string;
   }> {
-    const colourMap = getPaintColourMap();
     return Object.values(PAINT_RECIPES).map((recipe) => ({
       paintId: recipe.resultItemId,
       colour: recipe.colour ?? '#888888',

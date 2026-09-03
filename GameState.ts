@@ -17,7 +17,7 @@ import { STAMINA, WATERING_CAN } from './constants';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { sharedPlacedItemsManager } from './multiplayer/sharedPlacedItems';
 import { eventChainManager } from './utils/EventChainManager';
-import { loadPersistedState, runSaveMigrations, SAVE_VERSION } from './GameStatePersistence';
+import { loadPersistedState, SAVE_VERSION } from './GameStatePersistence';
 export { runSaveMigrations, SAVE_VERSION } from './GameStatePersistence';
 
 export interface CharacterCustomization {

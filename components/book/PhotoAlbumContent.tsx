@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookThemeConfig, bookStyles } from './bookThemes';
+import { BookThemeConfig } from './bookThemes';
 import BookSpread from './BookSpread';
 import { photoAlbumManager } from '../../utils/photoAlbumManager';
 import { getSharedAlbumService } from '../../firebase/safe';

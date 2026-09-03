@@ -5,7 +5,7 @@ import { cookingManager, CookingResult } from '../../utils/CookingManager';
 import { audioManager } from '../../utils/AudioManager';
 import { inventoryManager } from '../../utils/inventoryManager';
 import { Position } from '../../types';
-import { BookThemeConfig, getThemeStyles } from './bookThemes';
+import { BookThemeConfig } from './bookThemes';
 import { BookChapter, useBookPagination } from '../../hooks/useBookPagination';
 import GameIcon from '../GameIcon';
 import BookSpread from './BookSpread';
@@ -46,8 +46,6 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
 }) => {
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
-
-  const styles = getThemeStyles(theme);
 
   // Get all recipes
   const allRecipes = useMemo(() => Object.values(RECIPES), []);

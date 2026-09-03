@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapDefinition, TileAnimation, Position } from '../types';
+import { MapDefinition, Position } from '../types';
 import { getTileData } from '../utils/mapUtils';
 import { TILE_SIZE, TILE_ANIMATIONS } from '../constants';
 
