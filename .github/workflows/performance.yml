@@ -18,12 +18,11 @@ permissions:
 jobs:
   performance:
     runs-on: ubuntu-latest
-    # 35, not 20: these tests used to sit on the "Enter Game" overlay for their
-    # whole run, so isInWorld was false and none of the HUD/NPC/weather overlays
-    # rendered — the numbers described a stripped-down scene. Now the harness
-    # enters the world properly, every CDP round-trip queues behind real frames,
-    # and the six sub-tests need roughly half again as long.
-    timeout-minutes: 35  # multi-map + device-throttled tests, measured in-world
+    # 35 covered six sub-tests; the three device-throttled ones are gone (see
+    # below), leaving three. 25 keeps headroom for the slow case: the harness
+    # enters the world properly, so every CDP round-trip queues behind real
+    # frames, and on a bad runner those frames take seconds.
+    timeout-minutes: 25  # three in-world map runs
 
     steps:
       - name: Checkout code
@@ -77,16 +76,17 @@ jobs:
           echo "## Testing witch_hut map..."
           node scripts/perf-test.js --map witch_hut --scenario explore --duration 10000 --github --save perf-witch.json || true
 
-      - name: Run device-throttled tests (simulated old iPad)
-        run: |
-          echo "## Testing village on simulated iPad Air 2 (4x CPU throttle)..."
-          node scripts/perf-test.js --device ipad --map village --scenario movement --duration 10000 --github --save perf-ipad-village.json || true
-
-          echo "## Testing bear_cave on simulated iPad 4th Gen (6x CPU throttle)..."
-          node scripts/perf-test.js --device ipad-old --map bear_cave --scenario explore --duration 10000 --github --save perf-ipad-bear.json || true
-
-          echo "## Testing witch_hut on simulated iPad 4th Gen (6x CPU throttle)..."
-          node scripts/perf-test.js --device ipad-old --map witch_hut --scenario explore --duration 10000 --github --save perf-ipad-witch.json || true
+      # The simulated-iPad runs (4x and 6x CPU throttle) were removed here on
+      # 2026-09-03. They applied a CPU throttle on top of a software rasteriser,
+      # which is not a slow tablet — it is two unrelated slowdowns multiplied,
+      # and the resulting fps described neither device. What CI can compare is
+      # scene cost, and scene cost does not change with CPU speed: those runs
+      # produced the same counts as the unthrottled runs of the same maps, at
+      # roughly five minutes of runner time each.
+      #
+      # Device emulation is still genuinely useful on a real machine, where a
+      # throttle models a slow CPU against a real GPU. It lives on as
+      # `npm run perf:ipad` / `perf:ipad-old` / `perf:android`.
 
       - name: Generate performance report
         id: report
@@ -136,7 +136,6 @@ jobs:
             perf-results.json
             perf-bear.json
             perf-witch.json
-            perf-ipad-*.json
             perf-screenshot.png
           retention-days: 30
 
@@ -148,9 +147,15 @@ jobs:
           path: perf-results.json
           retention-days: 90
 
+      # What this gates on, since 2026-09-03: scene cost — the number of sprites,
+      # nodes and textures the map asks the renderer to draw. Frame rate is
+      # recorded but never gates, because CI has no GPU and this game is GPU
+      # render-bound; four main-branch runs of identical code spanned 1.4 to
+      # 49.6 fps, so the old fps gate fired on the runner's mood. Full reasoning
+      # in the header of scripts/perf-report.js.
       - name: Check for regressions
         run: |
           if [ -f regression-detected ]; then
-            echo "::error::Performance regression detected! Check the PR comment for details."
+            echo "::error::Scene-cost regression detected — the maps got more expensive to draw. Check the PR comment."
             exit 1
           fi
