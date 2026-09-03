@@ -38,11 +38,7 @@ const RECIPE_CHAPTERS: BookChapter<RecipeCategory | 'all'>[] = [
  */
 const RecipeContent: React.FC<RecipeContentProps> = ({
   theme,
-  playerPosition,
-  currentMapId,
-  cookingPosition,
   nearbyNPCs = [],
-  onItemPlaced,
 }) => {
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
