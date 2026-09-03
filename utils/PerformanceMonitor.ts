@@ -16,7 +16,7 @@
  *   const metrics = performanceMonitor.getMetrics();
  *
  *   // Expose for headless testing:
- *   (window as any).__PERF_MONITOR__ = performanceMonitor;
+ *   window.__PERF_MONITOR__ = performanceMonitor;
  */
 
 /**
@@ -360,9 +360,9 @@ class PerformanceMonitor {
 // Singleton instance
 export const performanceMonitor = new PerformanceMonitor();
 
-// Expose globally for headless testing
+// Expose globally for headless testing (typed in vite-env.d.ts)
 if (typeof window !== 'undefined') {
-  (window as any).__PERF_MONITOR__ = performanceMonitor;
+  window.__PERF_MONITOR__ = performanceMonitor;
 }
 
 export default performanceMonitor;
