@@ -66,7 +66,12 @@ export default tseslint.config(
   // console.error stay permitted everywhere — they carry player-relevant
   // failure diagnostics and are deliberately ungated.
   {
-    files: ['utils/debugLog.ts', 'utils/dialogueHandlers.ts'],
+    files: [
+      'utils/debugLog.ts',
+      'utils/dialogueHandlers.ts',
+      'GameState.ts',
+      'GameStatePersistence.ts',
+    ],
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
     },

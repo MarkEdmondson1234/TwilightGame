@@ -13,6 +13,7 @@
 import type { GameState } from './GameState';
 import { TimeManager } from './utils/TimeManager';
 import { STAMINA, WATERING_CAN } from './constants';
+import { debugLog } from './utils/debugLog';
 
 /**
  * Save schema version.
@@ -68,7 +69,7 @@ export function loadPersistedState(storageKey: string): GameState {
 
       // Migrate old save data that doesn't have player location
       if (!parsed.player) {
-        console.log('[GameState] Migrating old save data - adding player location');
+        debugLog('GameState', 'Migrating old save data - adding player location');
         parsed.player = {
           currentMapId: 'village',
           position: { x: 15, y: 25 },
@@ -77,7 +78,7 @@ export function loadPersistedState(storageKey: string): GameState {
 
       // Migrate old save data that doesn't have character customization
       if (!parsed.selectedCharacter) {
-        console.log('[GameState] No character found - will show character creator');
+        debugLog('GameState', 'No character found - will show character creator');
         parsed.selectedCharacter = null;
       }
 
@@ -102,21 +103,21 @@ export function loadPersistedState(storageKey: string): GameState {
         );
 
         if (!hasAllFields) {
-          console.log('[GameState] Character data incomplete - resetting to force re-creation');
+          debugLog('GameState', 'Character data incomplete - resetting to force re-creation');
           parsed.selectedCharacter = null;
         }
       }
 
       // Migrate old farming data structure
       if (!parsed.farming.currentTool) {
-        console.log('[GameState] Migrating old save data - adding farming tools');
+        debugLog('GameState', 'Migrating old save data - adding farming tools');
         parsed.farming.currentTool = 'hand';
         parsed.farming.selectedSeed = 'radish';
       }
 
       // Migrate old inventory structure (object to new format)
       if (parsed.inventory && !Array.isArray(parsed.inventory.items)) {
-        console.log('[GameState] Migrating old inventory format');
+        debugLog('GameState', 'Migrating old inventory format');
         const oldInventory = parsed.inventory as Record<string, number>;
         parsed.inventory = {
           items: Object.entries(oldInventory).map(([itemId, quantity]) => ({
@@ -139,7 +140,7 @@ export function loadPersistedState(storageKey: string): GameState {
       const hasHoe = parsed.inventory.tools.includes('tool_hoe');
       const hasWateringCan = parsed.inventory.tools.includes('tool_watering_can');
       if (!hasHoe || !hasWateringCan) {
-        console.log('[GameState] Migrating old save data - adding missing starter tools');
+        debugLog('GameState', 'Migrating old save data - adding missing starter tools');
         if (!hasHoe) {
           parsed.inventory.tools.push('tool_hoe');
         }
@@ -160,7 +161,7 @@ export function loadPersistedState(storageKey: string): GameState {
       );
 
       if (!hasRadishSeeds || !hasTeaLeaves || !hasWater) {
-        console.log('[GameState] Migrating old save data - adding starter items');
+        debugLog('GameState', 'Migrating old save data - adding starter items');
         if (!hasRadishSeeds) {
           parsed.inventory.items.push({ itemId: 'seed_radish', quantity: 10 });
         }
@@ -174,14 +175,14 @@ export function loadPersistedState(storageKey: string): GameState {
 
       // Migrate old save data that doesn't have weather
       if (!parsed.weather) {
-        console.log('[GameState] Migrating old save data - adding weather system');
+        debugLog('GameState', 'Migrating old save data - adding weather system');
         parsed.weather = 'clear';
       }
 
       // Migrate old save data that doesn't have automatic weather
       // Also force-enable for users who had it disabled from previous defaults
       if (parsed.automaticWeather === undefined || parsed.automaticWeather === false) {
-        console.log('[GameState] Migrating save data - enabling automatic weather');
+        debugLog('GameState', 'Migrating save data - enabling automatic weather');
         parsed.automaticWeather = true;
       }
       if (!parsed.nextWeatherCheckTime) {
@@ -190,25 +191,25 @@ export function loadPersistedState(storageKey: string): GameState {
 
       // Migrate old save data that doesn't have cutscene tracking
       if (!parsed.cutscenes) {
-        console.log('[GameState] Migrating old save data - adding cutscene tracking');
+        debugLog('GameState', 'Migrating old save data - adding cutscene tracking');
         parsed.cutscenes = { completed: [] };
       }
 
       // Migrate old save data that doesn't have weather drift speed
       if (parsed.weatherDriftSpeed === undefined) {
-        console.log('[GameState] Migrating old save data - adding weather drift speed');
+        debugLog('GameState', 'Migrating old save data - adding weather drift speed');
         parsed.weatherDriftSpeed = 1.0; // Default normal speed
       }
 
       // Migrate old save data that doesn't have relationships
       if (!parsed.relationships) {
-        console.log('[GameState] Migrating old save data - adding relationships');
+        debugLog('GameState', 'Migrating old save data - adding relationships');
         parsed.relationships = { npcFriendships: [] };
       }
 
       // Migrate old save data that doesn't have cooking
       if (!parsed.cooking) {
-        console.log('[GameState] Migrating old save data - adding cooking');
+        debugLog('GameState', 'Migrating old save data - adding cooking');
         parsed.cooking = {
           recipeBookUnlocked: false,
           unlockedRecipes: ['tea'],
@@ -217,19 +218,19 @@ export function loadPersistedState(storageKey: string): GameState {
       } else {
         // Migrate old cooking data that doesn't have recipeBookUnlocked
         if (parsed.cooking.recipeBookUnlocked === undefined) {
-          console.log('[GameState] Migrating old save data - adding recipeBookUnlocked');
+          debugLog('GameState', 'Migrating old save data - adding recipeBookUnlocked');
           parsed.cooking.recipeBookUnlocked = false;
         }
         // Ensure tea is always unlocked, even in existing saves
         if (!parsed.cooking.unlockedRecipes.includes('tea')) {
-          console.log('[GameState] Migrating old save data - ensuring tea is unlocked');
+          debugLog('GameState', 'Migrating old save data - ensuring tea is unlocked');
           parsed.cooking.unlockedRecipes.push('tea');
         }
       }
 
       // Migrate old save data that doesn't have status effects
       if (!parsed.statusEffects) {
-        console.log('[GameState] Migrating old save data - adding status effects');
+        debugLog('GameState', 'Migrating old save data - adding status effects');
         parsed.statusEffects = {
           feelingSick: false,
           stamina: STAMINA.MAX,
@@ -240,8 +241,9 @@ export function loadPersistedState(storageKey: string): GameState {
 
       // Migrate old status effects to include stamina (new session = full stamina)
       if (parsed.statusEffects.stamina === undefined) {
-        console.log(
-          '[GameState] Migrating old save data - adding stamina (full restore on session start)'
+        debugLog(
+          'GameState',
+          'Migrating old save data - adding stamina (full restore on session start)'
         );
         parsed.statusEffects.stamina = STAMINA.MAX;
         parsed.statusEffects.maxStamina = STAMINA.MAX;
@@ -251,47 +253,47 @@ export function loadPersistedState(storageKey: string): GameState {
         const timeSinceLastUpdate = Date.now() - (parsed.statusEffects.lastStaminaUpdate || 0);
 
         if (timeSinceLastUpdate >= TimeManager.MS_PER_GAME_DAY) {
-          console.log('[GameState] Offline for 2+ hours - restoring stamina to full (slept well!)');
+          debugLog('GameState', 'Offline for 2+ hours - restoring stamina to full (slept well!)');
           parsed.statusEffects.stamina = parsed.statusEffects.maxStamina || STAMINA.MAX;
         } else {
-          console.log('[GameState] Quick session resume - stamina unchanged');
+          debugLog('GameState', 'Quick session resume - stamina unchanged');
         }
         parsed.statusEffects.lastStaminaUpdate = Date.now();
       }
 
       // Migrate old save data that doesn't have placed items
       if (!parsed.placedItems) {
-        console.log('[GameState] Migrating old save data - adding placed items');
+        debugLog('GameState', 'Migrating old save data - adding placed items');
         parsed.placedItems = [];
       }
 
       // Migrate old save data that doesn't have desk contents
       if (!parsed.deskContents) {
-        console.log('[GameState] Migrating old save data - adding desk contents');
+        debugLog('GameState', 'Migrating old save data - adding desk contents');
         parsed.deskContents = [];
       }
 
       // Migrate old save data that doesn't have watering can state
       if (!parsed.wateringCan) {
-        console.log('[GameState] Migrating old save data - adding watering can');
+        debugLog('GameState', 'Migrating old save data - adding watering can');
         parsed.wateringCan = { currentLevel: WATERING_CAN.CAPACITY }; // Start with full water can
       }
 
       // Migrate old save data that doesn't have forage cooldowns
       if (!parsed.forageCooldowns) {
-        console.log('[GameState] Migrating old save data - adding forage cooldowns');
+        debugLog('GameState', 'Migrating old save data - adding forage cooldowns');
         parsed.forageCooldowns = {};
       }
 
       // Migrate old save data that doesn't have movement effect
       if (parsed.movementEffect === undefined) {
-        console.log('[GameState] Migrating old save data - adding movement effect');
+        debugLog('GameState', 'Migrating old save data - adding movement effect');
         parsed.movementEffect = null;
       }
 
       // Migrate old save data that doesn't have transformations
       if (!parsed.transformations) {
-        console.log('[GameState] Migrating old save data - adding transformations');
+        debugLog('GameState', 'Migrating old save data - adding transformations');
         parsed.transformations = {
           isFairyForm: false,
           fairyFormExpiresAt: null,
@@ -304,26 +306,26 @@ export function loadPersistedState(storageKey: string): GameState {
         parsed.transformations.fairyFormExpiresAt &&
         parsed.transformations.fairyFormExpiresAt <= Date.now()
       ) {
-        console.log('[GameState] Clearing expired fairy form on load');
+        debugLog('GameState', 'Clearing expired fairy form on load');
         parsed.transformations.isFairyForm = false;
         parsed.transformations.fairyFormExpiresAt = null;
       }
 
       // Clear expired movement effects on load
       if (parsed.movementEffect && parsed.movementEffect.expiresAt <= Date.now()) {
-        console.log('[GameState] Clearing expired movement effect on load');
+        debugLog('GameState', 'Clearing expired movement effect on load');
         parsed.movementEffect = null;
       }
 
       // Migrate old save data that doesn't have quest tracking
       if (!parsed.quests) {
-        console.log('[GameState] Migrating old save data - adding quest tracking');
+        debugLog('GameState', 'Migrating old save data - adding quest tracking');
         parsed.quests = {};
       }
 
       // Migrate old save data that doesn't have active potion effects
       if (!parsed.activePotionEffects) {
-        console.log('[GameState] Migrating old save data - adding active potion effects');
+        debugLog('GameState', 'Migrating old save data - adding active potion effects');
         parsed.activePotionEffects = {};
       }
 
@@ -331,20 +333,20 @@ export function loadPersistedState(storageKey: string): GameState {
       const now = Date.now();
       for (const effectType of Object.keys(parsed.activePotionEffects)) {
         if (parsed.activePotionEffects[effectType].expiresAt <= now) {
-          console.log(`[GameState] Clearing expired potion effect: ${effectType}`);
+          debugLog('GameState', `Clearing expired potion effect: ${effectType}`);
           delete parsed.activePotionEffects[effectType];
         }
       }
 
       // Migrate old save data that doesn't have player disguise
       if (parsed.playerDisguise === undefined) {
-        console.log('[GameState] Migrating old save data - adding player disguise');
+        debugLog('GameState', 'Migrating old save data - adding player disguise');
         parsed.playerDisguise = null;
       }
 
       // Clear expired disguise on load
       if (parsed.playerDisguise && parsed.playerDisguise.expiresAt <= now) {
-        console.log('[GameState] Clearing expired player disguise on load');
+        debugLog('GameState', 'Clearing expired player disguise on load');
         parsed.playerDisguise = null;
       }
 
