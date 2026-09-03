@@ -22,6 +22,7 @@ import {
   isWreathWorkshopActive,
   VILLAGE_CRAFTING_TABLE_ID,
 } from '../data/questHandlers/mushraWreathHandler';
+import { debugLog } from './debugLog';
 
 const VILLAGE_MAP_ID = 'village';
 
@@ -84,7 +85,7 @@ class WreathWorkshopManagerClass {
       timestamp: Date.now(),
       permanent: true,
     });
-    console.log('[WreathWorkshopManager] Placed crafting table in village');
+    debugLog('WreathWorkshopManager', 'Placed crafting table in village');
   }
 }
 

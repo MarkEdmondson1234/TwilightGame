@@ -19,6 +19,7 @@
  */
 
 import * as Sentry from '@sentry/react';
+import { debugLog } from './debugLog';
 
 let initialised = false;
 
@@ -53,7 +54,7 @@ export function initErrorReporting(): void {
     ignoreErrors: [/AbortError/],
   });
   initialised = true;
-  console.log('[ErrorReporting] Sentry initialised');
+  debugLog('ErrorReporting', 'Sentry initialised');
 }
 
 /**

@@ -77,6 +77,14 @@ const debugLogMigrated = [
   'components/dialogue/UnifiedDialogueBox.tsx',
   'components/FarmActionAnimation.tsx',
   'components/PlacedItems.tsx',
+  'utils/WreathWorkshopManager.ts',
+  'utils/StaminaManager.ts',
+  'utils/pixi/SpriteLayer.ts',
+  'utils/pixi/ShadowLayer.ts',
+  'utils/paintingImageService.ts',
+  'utils/inventoryUIHelper.ts',
+  'utils/eventChainLoader.ts',
+  'utils/errorReporting.ts',
 ];
 
 export default tseslint.config(
