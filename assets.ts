@@ -274,7 +274,8 @@ export const tileAssets = {
   magical_lake: '/TwilightGame/assets-optimized/tiles/lake/magical_lake.png',
   // Bear house assets (seasonal variations for bear cave clearing)
   // Use original high-res 2100x2100 sprites for sharp rendering (multi-tile structure)
-  bear_house_spring_summer: '/TwilightGame/assets-optimized/tiles/bear_cave/bear_cave_spring-summer.png',
+  bear_house_spring_summer:
+    '/TwilightGame/assets-optimized/tiles/bear_cave/bear_cave_spring-summer.png',
   bear_house_autumn: '/TwilightGame/assets-optimized/tiles/bear_cave/bear_cave_autumn.png',
   bear_house_winter: '/TwilightGame/assets-optimized/tiles/bear_cave/bear_cave_winter.png',
   // Bee hive asset (no seasonality, appears in bear cave area)
@@ -333,6 +334,16 @@ export const farmingAssets = {
   plant_lavender_winter: '/TwilightGame/assets-optimized/herbs/lavender_winter.png',
   plant_mint_adult: '/TwilightGame/assets-optimized/herbs/mint_bush.png',
 };
+
+/**
+ * Look up a farming asset by a dynamically-built key (crop names arrive at
+ * runtime from save data). Returns undefined for keys that don't exist so
+ * callers can fall back to the generic sprite.
+ */
+export function lookupFarmingAsset(key: string): string | undefined {
+  // The `in` check guarantees the keyof cast only hits real farmingAssets keys.
+  return key in farmingAssets ? farmingAssets[key as keyof typeof farmingAssets] : undefined;
+}
 
 // Orchard assets — fruit tree sprites (seasonal + state-based)
 export const orchardAssets = {
@@ -527,7 +538,8 @@ export const npcAssets = {
   // Fox shopkeeper (fox_shopkeeper/ subfolder)
   shopkeeper_fox_01: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
   shopkeeper_fox_02: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_02.png',
-  shopkeeper_fox_portrait: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
+  shopkeeper_fox_portrait:
+    '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/shop_keeper_fox_01.png',
   // Walk animation frames (4-frame cycle)
   shopkeeper_fox_walk_01: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_01.png',
   shopkeeper_fox_walk_02: '/TwilightGame/assets-optimized/npcs/fox_shopkeeper/fox_walk_02.png',
@@ -543,7 +555,8 @@ export const npcAssets = {
     '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
   spring_periwinkle_02:
     '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle1.png',
-  spring_periwinkle_portrait: '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
+  spring_periwinkle_portrait:
+    '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
   // Umbra Wolf assets (forest creature)
   umbrawolf_standing1: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing1.png',
   umbrawolf_standing2: '/TwilightGame/assets-optimized/npcs/umbra_wolf/umbrawolf_standing2.png',
@@ -568,7 +581,8 @@ export const npcAssets = {
   // King Lava Frog (boss of the lava caverns)
   king_lava_frog_01: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
   king_lava_frog_02: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog02.png',
-  king_lava_frog_portrait: '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
+  king_lava_frog_portrait:
+    '/TwilightGame/assets-optimized/npcs/king_lava_frog/king_lava_frog01.png',
   // Lava Frog Workers (wander the procedural lava levels)
   lava_frog_worker_01:
     '/TwilightGame/assets-optimized/npcs/king_lava_frog/lava_frog/lava_frog_worker01.png',
@@ -589,7 +603,8 @@ export const npcAssets = {
     '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
   queen_avaricia_closed_eyes:
     '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_closed_eyes.png',
-  queen_avaricia_portrait: '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
+  queen_avaricia_portrait:
+    '/TwilightGame/assets-optimized/npcs/queen_avaricia/queen_avaricia_open_eyes.png',
   // Witch Wolf assets (rare forest creature with blinking animation)
   witch_wolf_01: '/TwilightGame/assets-optimized/npcs/witch/witch_wolf_01.png',
   witch_wolf_02: '/TwilightGame/assets-optimized/npcs/witch/witch_wolf_02.png',
@@ -618,8 +633,10 @@ export const npcAssets = {
   sparrow_takeoff_02: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_takeoff02.png',
   sparrow_takeoff_03: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_takeoff03.png',
   sparrow_takeoff_04: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_takeoff04.png',
-  sparrow_flight_wings_up: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_up.png',
-  sparrow_flight_wings_down: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_down.png',
+  sparrow_flight_wings_up:
+    '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_up.png',
+  sparrow_flight_wings_down:
+    '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_down.png',
   sparrow_portrait: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_sitting.png',
   // Duck assets (pond creature)
   duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
@@ -651,8 +668,10 @@ export const npcAssets = {
   suffle_02: '/TwilightGame/assets-optimized/npcs/suffle/suffle_02.png',
   suffle_portrait: '/TwilightGame/assets-optimized/npcs/suffle/suffle_01.png',
   // Professor Birdimen assets (scholarly bird character)
-  professor_birdimen_01: '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_01.png',
-  professor_birdimen_02: '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_02.png',
+  professor_birdimen_01:
+    '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_01.png',
+  professor_birdimen_02:
+    '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_02.png',
   professor_birdimen_portrait:
     '/TwilightGame/assets-optimized/npcs/professor_birdimen/professor_birdimen_01.png',
   // Possum assets (forest creature - plays dead when approached)
@@ -828,8 +847,7 @@ export const itemAssets = {
   decoration_coral: '/TwilightGame/assets-optimized/items/decoration/coral.png',
   decoration_shell: '/TwilightGame/assets-optimized/items/decoration/shell.png',
   decoration_starfish: '/TwilightGame/assets-optimized/items/decoration/starfish.png',
-  decoration_white_sea_shell:
-    '/TwilightGame/assets-optimized/items/decoration/white_sea_shell.png',
+  decoration_white_sea_shell: '/TwilightGame/assets-optimized/items/decoration/white_sea_shell.png',
 };
 
 // Furniture assets - Placeable furniture items with utility effects

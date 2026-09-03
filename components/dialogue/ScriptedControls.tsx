@@ -37,18 +37,18 @@ function filterResponses(responses: DialogueResponse[] | undefined): DialogueRes
       if (cookingManager.isRecipeMastered(response.hiddenIfRecipeMastered)) return false;
     }
     if (response.requiredDomainMastered) {
-      if (!cookingManager.isDomainMastered(response.requiredDomainMastered as any)) return false;
+      if (!cookingManager.isDomainMastered(response.requiredDomainMastered)) return false;
     }
     if (response.requiredDomainStarted) {
-      const recipes = cookingManager.getRecipesByCategory(response.requiredDomainStarted as any);
+      const recipes = cookingManager.getRecipesByCategory(response.requiredDomainStarted);
       if (!recipes.some((r) => cookingManager.isRecipeUnlocked(r.id))) return false;
     }
     if (response.hiddenIfDomainStarted) {
-      const recipes = cookingManager.getRecipesByCategory(response.hiddenIfDomainStarted as any);
+      const recipes = cookingManager.getRecipesByCategory(response.hiddenIfDomainStarted);
       if (recipes.some((r) => cookingManager.isRecipeUnlocked(r.id))) return false;
     }
     if (response.hiddenIfDomainMastered) {
-      if (cookingManager.isDomainMastered(response.hiddenIfDomainMastered as any)) return false;
+      if (cookingManager.isDomainMastered(response.hiddenIfDomainMastered)) return false;
     }
     if (response.requiredCookingCourseComplete) {
       if (!cookingManager.isCookingCourseComplete()) return false;

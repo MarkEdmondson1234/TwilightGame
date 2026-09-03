@@ -229,7 +229,7 @@ export interface GameState {
       started: boolean;
       completed: boolean;
       stage: number; // Current stage of multi-stage quests
-      data: Record<string, any>; // Quest-specific data
+      data: Record<string, unknown>; // Quest-specific data
     };
   };
 
@@ -1594,7 +1594,7 @@ class GameStateManager {
   /**
    * Start a quest (delegates to EventChainManager if chain exists)
    */
-  startQuest(questId: string, initialData: Record<string, any> = {}): void {
+  startQuest(questId: string, initialData: Record<string, unknown> = {}): void {
     const chainMgr = this.getChainManager();
 
     // If this is a YAML event chain, start it via EventChainManager
@@ -1762,7 +1762,7 @@ class GameStateManager {
   /**
    * Set quest data (delegates to EventChainManager metadata if chain exists)
    */
-  setQuestData(questId: string, key: string, value: any): void {
+  setQuestData(questId: string, key: string, value: unknown): void {
     const chainMgr = this.getChainManager();
 
     if (chainMgr.hasChain(questId)) {
@@ -1785,7 +1785,7 @@ class GameStateManager {
   /**
    * Get quest data (delegates to EventChainManager metadata if chain exists)
    */
-  getQuestData(questId: string, key: string): any {
+  getQuestData(questId: string, key: string): unknown {
     const chainMgr = this.getChainManager();
 
     if (chainMgr.hasChain(questId)) {

@@ -9,11 +9,10 @@ export function useTouchDevice(): boolean {
   useEffect(() => {
     const checkTouchDevice = () => {
       // Check for touch capability
-      const hasTouch = (
+      const hasTouch =
         'ontouchstart' in window ||
         navigator.maxTouchPoints > 0 ||
-        (navigator as any).msMaxTouchPoints > 0
-      );
+        (navigator.msMaxTouchPoints ?? 0) > 0;
 
       // Check for mobile/tablet user agent
       const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(

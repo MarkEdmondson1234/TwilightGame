@@ -61,8 +61,8 @@ function isTouchDevice(): boolean {
   return (
     'ontouchstart' in window ||
     navigator.maxTouchPoints > 0 ||
-    // @ts-expect-error - msMaxTouchPoints is IE/Edge specific
-    navigator.msMaxTouchPoints > 0
+    // msMaxTouchPoints is IE/Edge specific (typed as optional in vite-env.d.ts)
+    (navigator.msMaxTouchPoints ?? 0) > 0
   );
 }
 
