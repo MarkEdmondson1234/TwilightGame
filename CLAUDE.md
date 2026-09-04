@@ -493,7 +493,7 @@ Pure functions and game systems:
     available. A placed bed offering only "Pick Up" is how clicking a bed to sleep in it
     carried the bed off instead — `tests/furnitureActions.test.ts` guards that case.
 - **Right-click (desktop) / long-press (touch)** is the "what can I do here?" gesture, and
-  the deliberate counterweight to left-click, which both walks the player *and* fires a lone
+  the deliberate counterweight to left-click, which both walks the player _and_ fires a lone
   interaction outright — so it can never be used to simply look. On yourself it opens the
   emote wheel; anywhere else it shows every interaction and auto-executes none, however few
   there are. Providers see this as `ctx.isContextMenu` and may then offer actions the held
@@ -599,16 +599,17 @@ Pure functions and game systems:
 
 ### Available Events
 
-| Event                           | Payload                  | Emitted By       | Subscribers           |
-| ------------------------------- | ------------------------ | ---------------- | --------------------- |
-| `STAMINA_CHANGED`               | `{ value, maxValue }`    | StaminaManager   | StaminaBar            |
-| `INVENTORY_CHANGED`             | `{ action }`             | inventoryManager | App.tsx               |
-| `FARM_PLOT_CHANGED`             | `{ position?, action? }` | farmManager      | useGameEvents         |
-| `NPC_MOVED`                     | `{ npcId, position? }`   | npcManager       | useGameEvents         |
-| `NPC_SPAWNED` / `NPC_DESPAWNED` | `{ npcId, mapId }`       | npcManager       | useGameEvents         |
-| `PLACED_ITEMS_CHANGED`          | `{ mapId, action? }`     | gameState        | useGameEvents         |
-| `WEATHER_CHANGED`               | `{ weather, mapId }`     | weatherManager   | EnvironmentController |
-| `TIME_CHANGED`                  | `{ hour, timeOfDay }`    | TimeManager      | EnvironmentController |
+| Event                           | Payload                  | Emitted By       | Subscribers                      |
+| ------------------------------- | ------------------------ | ---------------- | -------------------------------- |
+| `STAMINA_CHANGED`               | `{ value, maxValue }`    | StaminaManager   | StaminaBar                       |
+| `INVENTORY_CHANGED`             | `{ action }`             | inventoryManager | App.tsx                          |
+| `FARM_PLOT_CHANGED`             | `{ position?, action? }` | farmManager      | useGameEvents                    |
+| `FARM_CROPS_DIED`               | `{ count }`              | farmManager      | useEnvironmentController (toast) |
+| `NPC_MOVED`                     | `{ npcId, position? }`   | npcManager       | useGameEvents                    |
+| `NPC_SPAWNED` / `NPC_DESPAWNED` | `{ npcId, mapId }`       | npcManager       | useGameEvents                    |
+| `PLACED_ITEMS_CHANGED`          | `{ mapId, action? }`     | gameState        | useGameEvents                    |
+| `WEATHER_CHANGED`               | `{ weather, mapId }`     | weatherManager   | EnvironmentController            |
+| `TIME_CHANGED`                  | `{ hour, timeOfDay }`    | TimeManager      | EnvironmentController            |
 
 ### Usage Examples
 

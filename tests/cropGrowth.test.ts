@@ -281,9 +281,16 @@ describe('Crop Growth System', () => {
 
     it('should have grace periods in reasonable ranges', () => {
       Object.entries(CROPS).forEach(([_id, crop]) => {
-        // Grace periods should be less than water interval
-        expect(crop.wiltingGracePeriod).toBeLessThan(crop.waterNeededInterval);
-        expect(crop.deathGracePeriod).toBeLessThan(crop.waterNeededInterval);
+        // A missed watering must not be fatal: the crop survives at least one
+        // full extra watering cycle past the point it needed water (grace ≥
+        // cadence), so an overnight gap or a busy session never kills a crop
+        // that was watered on schedule.
+        expect(crop.wiltingGracePeriod + crop.deathGracePeriod).toBeGreaterThanOrEqual(
+          crop.waterNeededInterval
+        );
+        // Death only ever comes after a visible wilting phase.
+        expect(crop.deathGracePeriod).toBeGreaterThan(0);
+        expect(crop.wiltingGracePeriod).toBeGreaterThan(0);
       });
     });
   });

@@ -60,7 +60,7 @@ export interface GameTime {
 
 export class TimeManager {
   // Game start date: October 17, 2025 00:00:00 UTC
-  private static readonly GAME_START_DATE = new Date('2025-10-17T00:00:00Z').getTime();
+  // (the canonical declaration is further down, next to the time constants)
 
   // Time constants
   // 1 real week = 1 game season: 168 hours / 2 hours per day = 84 game days
@@ -76,12 +76,33 @@ export class TimeManager {
   static readonly MS_PER_GAME_DAY = 2 * 60 * 60 * 1000; // 7,200,000 ms = 2 hours
   static readonly MS_PER_GAME_HOUR = TimeManager.MS_PER_GAME_DAY / 24; // 300,000 ms = 5 minutes
 
+  /**
+   * When the shared game clock started. Public because systems that reason about
+   * *past* game time in real milliseconds (retroactive rain watering, tests) need
+   * the same epoch the rest of the clock uses — see utils/retroactiveRain.ts.
+   */
+  static readonly GAME_START_DATE = new Date('2025-10-17T00:00:00Z').getTime();
+
   private static readonly SEASON_ORDER = [
     Season.SPRING,
     Season.SUMMER,
     Season.AUTUMN,
     Season.WINTER,
   ];
+
+  /**
+   * Season at a given total game hour since the game clock started.
+   *
+   * Shared by getCurrentTime and retroactive rain watering, which must know the
+   * season of *past* weather slots (the season param of getWeatherForSlot).
+   * Negative hours (before the clock started) clamp to spring.
+   */
+  static seasonAtTotalHours(totalHours: number): Season {
+    const totalDays = Math.max(0, Math.floor(totalHours / 24));
+    const dayInYear = totalDays % TimeManager.DAYS_PER_YEAR;
+    const seasonIndex = Math.floor(dayInYear / TimeManager.DAYS_PER_SEASON);
+    return TimeManager.SEASON_ORDER[seasonIndex];
+  }
 
   // Dev mode: Override time for testing/debugging
   private static timeOverride: GameTime | null = null;
@@ -108,17 +129,15 @@ export class TimeManager {
     // Calculate day within the year (0-335)
     const dayInYear = totalDays % TimeManager.DAYS_PER_YEAR;
 
-    // Calculate season (0-3)
-    const seasonIndex = Math.floor(dayInYear / TimeManager.DAYS_PER_SEASON);
-    const season = TimeManager.SEASON_ORDER[seasonIndex];
-
-    // Calculate day within season (1-84)
-    const day = (dayInYear % TimeManager.DAYS_PER_SEASON) + 1;
-
     // Calculate hours - 24 hours per game day
     // 5 real minutes = 1 game hour
     const msPerGameHour = TimeManager.MS_PER_GAME_DAY / 24;
     const totalHours = Math.floor(msSinceStart / msPerGameHour);
+    const season = TimeManager.seasonAtTotalHours(totalHours);
+
+    // Calculate day within season (1-84)
+    const day = (dayInYear % TimeManager.DAYS_PER_SEASON) + 1;
+
     const hour = totalHours % 24; // 0-23
 
     // Calculate minutes within the hour

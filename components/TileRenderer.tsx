@@ -58,6 +58,9 @@ const TileRenderer: React.FC<TileRendererProps> = ({
           let growthStage: number | null = null;
           let cropType: string | null = null;
           let isHerbDormant = false;
+          // Wilting crops get a droop filter — without it they render identical
+          // to healthy ones and the player gets no warning before they die.
+          let isWilting = false;
           if (currentMapId && farmUpdateTrigger >= 0) {
             // Include farmUpdateTrigger to force re-evaluation
             const plot = farmManager.getPlot(currentMapId, { x, y });
@@ -82,6 +85,7 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                 growthStage = farmManager.getGrowthStage(plot);
                 cropType = plot.cropType;
                 isHerbDormant = plot.state === FarmPlotState.HERB_DORMANT;
+                isWilting = plot.state === FarmPlotState.WILTING;
               }
             }
           }
@@ -232,7 +236,9 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                     transform: transform,
                     filter: isHerbDormant
                       ? `${filter !== 'none' ? filter + ' ' : ''}saturate(0.3) brightness(0.7)`
-                      : filter,
+                      : isWilting
+                        ? `${filter !== 'none' ? filter + ' ' : ''}sepia(0.45) saturate(0.75)`
+                        : filter,
                     transformOrigin: 'center center',
                     opacity: isHerbDormant ? 0.75 : undefined,
                   }}

@@ -51,6 +51,12 @@ const isSoilTile = (type: TileType): boolean =>
   type >= TileType.SOIL_FALLOW && type <= TileType.SOIL_DEAD;
 
 /**
+ * Sickly yellow-brown tint for wilting crops. A wilting crop otherwise renders
+ * identical to a healthy one, so players get no warning it needs water before
+ * it dies. Dead crops use the wilted_plant sprite instead — no tint there.
+ */
+const WILTING_TINT = 0xa8925f;
+/**
  * Crop sprite sizing configuration per growth stage
  * Crops grow from seedling (small) to adult (large multi-tile sprite)
  */
@@ -616,11 +622,18 @@ export class TileLayer extends PixiLayer {
       sprite.visible = true;
     }
 
-    // Apply herb dormancy visual (desaturated, dimmed)
+    // Apply herb dormancy visual (desaturated, dimmed) and wilting droop tint.
+    // This is the single place sprite tint is decided — every render, so state
+    // changes (wilted → watered → harvested) can never leave a stale tint.
     if (sprite instanceof PIXI.Sprite) {
       if (isHerbDormant) {
         sprite.tint = 0x8898aa; // Cool grey-blue tint for dormancy
         sprite.alpha = 0.75;
+      } else if (cropConfig && tileData.type === TileType.SOIL_WILTING) {
+        // Sickly yellow-brown: a wilting crop otherwise renders identical to a
+        // healthy one, so players get no warning it needs water before it dies.
+        sprite.tint = WILTING_TINT;
+        sprite.alpha = 1.0;
       } else {
         sprite.tint = 0xffffff; // Reset tint
         sprite.alpha = 1.0;

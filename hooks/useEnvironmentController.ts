@@ -26,6 +26,7 @@ import { npcManager } from '../NPCManager';
 import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 import { eventChainManager } from '../utils/EventChainManager';
 import { farmManager } from '../utils/farmManager';
+import { eventBus, GameEvent } from '../utils/EventBus';
 import { TileType } from '../types';
 import type { WeatherManager } from '../utils/WeatherManager';
 import type { WeatherLayer } from '../utils/pixi/WeatherLayer';
@@ -745,6 +746,20 @@ export function useEnvironmentController(
   // -------------------------------------------------------------------------
   // Movement Effect Expiration
   // -------------------------------------------------------------------------
+
+  // Crop death notification — death is otherwise silent (bare soil gives no
+  // hint anything was there), and crops can die while the game is closed.
+  // farmManager batches all deaths per update pass into one event.
+  useEffect(() => {
+    return eventBus.on(GameEvent.FARM_CROPS_DIED, ({ count }) => {
+      onShowToast(
+        count === 1
+          ? 'One of your crops died of thirst. Clear the soil and replant when you can.'
+          : `${count} of your crops died of thirst. Clear the soil and replant when you can.`,
+        'warning'
+      );
+    });
+  }, [onShowToast]);
 
   useEffect(() => {
     const movementEffectInterval = setInterval(() => {
