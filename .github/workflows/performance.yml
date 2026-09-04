@@ -22,7 +22,9 @@ jobs:
     # below), leaving three. 25 keeps headroom for the slow case: the harness
     # enters the world properly, so every CDP round-trip queues behind real
     # frames, and on a bad runner those frames take seconds.
-    timeout-minutes: 25  # three in-world map runs
+    timeout-minutes: 45  # three in-world map runs — sized for the 2026-09-04
+    # slow-runner day (~25 min against the usual ~9); a cap too close to the
+    # happy path cancels the job mid-run instead of failing a real regression
 
     steps:
       - name: Checkout code
