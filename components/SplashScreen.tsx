@@ -2,8 +2,8 @@
  * SplashScreen - Title screen shown before the game starts loading.
  *
  * Purely presentational: a season-appropriate scenic backdrop (reusing the
- * existing cutscene background art, not new assets), the game's name, and
- * a Play button. Also offers Help (opens the in-game F1 documentation
+ * existing cutscene art, composited statically — see utils/splashScenes.ts),
+ * the game's name, and a Play button. Also offers Help (opens the in-game F1 documentation
  * browser) as a self-contained overlay, so this component has no dependency
  * on the rest of App.tsx's UI state machine — it can render at the very top
  * of the component tree, before map/asset loading has even started.
@@ -13,18 +13,12 @@ import React, { useEffect, useState } from 'react';
 import HelpBrowser from './HelpBrowser';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { audioManager } from '../utils/AudioManager';
+import { CUTSCENE_DIR, SEASON_SCENES } from '../utils/splashScenes';
 import { Z_SPLASH_SCREEN, zClass } from '../zIndex';
 
 interface SplashScreenProps {
   onPlay: () => void;
 }
-
-const SEASON_BACKGROUNDS: Record<Season, string> = {
-  [Season.SPRING]: 'cutscene_spring_background.png',
-  [Season.SUMMER]: 'cutscene_summer_background.png',
-  [Season.AUTUMN]: 'cutscene_autumn_background.png',
-  [Season.WINTER]: 'cutscene_winter_background.png',
-};
 
 // Reuses the same village theme (and seasonal variants) the village map
 // itself plays — there's no dedicated title track yet, but this is the
@@ -48,8 +42,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
   // only mounts once per page load, so there's no benefit to memoising and
   // it always reflects "right now" if the player reloads later in the day.
   const season = TimeManager.getCurrentTime().season;
-  const backgroundFile = SEASON_BACKGROUNDS[season] ?? SEASON_BACKGROUNDS[Season.SPRING];
-  const backgroundUrl = `/TwilightGame/assets-optimized/cutscenes/${backgroundFile}`;
+  const layers = SEASON_SCENES[season] ?? SEASON_SCENES[Season.SPRING];
 
   // Music plays for as long as the splash (title card + Help) is mounted,
   // and fades out once the player presses Play — the in-game ambient music
@@ -78,18 +71,27 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
       {showHelp ? (
         <HelpBrowser onClose={() => setShowHelp(false)} />
       ) : (
-        <div
-          className="fixed inset-0 w-full h-full flex flex-col items-center justify-end select-none"
-          style={{
-            backgroundImage: `url(${backgroundUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
-        >
-          {/* Bottom gradient so the title/buttons stay legible over any background */}
+        <div className="fixed inset-0 w-full h-full flex flex-col items-center justify-end select-none">
+          {/* Composited seasonal scene — each layer full-viewport, bottom to top */}
+          {layers.map((layer) => (
+            <div
+              key={layer.image}
+              className="absolute inset-0 bg-center"
+              style={{
+                backgroundImage: `url(${CUTSCENE_DIR}${layer.image})`,
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+                zIndex: layer.zIndex,
+              }}
+            />
+          ))}
+
+          {/* Bottom gradient so the title/buttons stay legible over any background.
+              Above every backdrop layer (max zIndex 3), below the title (z-10). */}
           <div
             className="absolute inset-0"
             style={{
+              zIndex: 4,
               background:
                 'linear-gradient(to bottom, rgba(20,15,10,0) 40%, rgba(20,15,10,0.55) 75%, rgba(20,15,10,0.85) 100%)',
             }}
