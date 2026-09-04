@@ -29,6 +29,7 @@ export enum GameEvent {
   // Farm events
   FARM_PLOT_CHANGED = 'farm:plot_changed',
   FARM_CROP_GREW = 'farm:crop_grew',
+  FARM_CROPS_DIED = 'farm:crops_died',
   FARM_CROP_HARVESTED = 'farm:crop_harvested',
   /** Another player harvested this plot first; our optimistic grant was rolled back */
   FARM_HARVEST_CONTESTED = 'farm:harvest_contested',
@@ -132,6 +133,10 @@ export interface EventPayloads {
   [GameEvent.FARM_CROP_GREW]: {
     position: Position;
     stage: number;
+  };
+  /** Emitted once per update pass when one or more crops died of thirst. */
+  [GameEvent.FARM_CROPS_DIED]: {
+    count: number;
   };
   [GameEvent.FARM_CROP_HARVESTED]: {
     mapId: string;

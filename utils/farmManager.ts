@@ -15,8 +15,9 @@ import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
 import { getTileCoords } from './mapUtils';
 import { GROWTH_THRESHOLDS, SHARED_FARM_MAP_IDS } from '../constants';
-import { getWeatherZone } from '../data/weatherConfig';
+import { getWeatherZone, getWeatherForSlot, WEATHER_SLOT_HOURS } from '../data/weatherConfig';
 import { eventBus, GameEvent } from './EventBus';
+import { findRainWateringTimestamp } from './retroactiveRain';
 import { reportMessage } from './errorReporting';
 import { debugLog, isDebugLogEnabled } from './debugLog';
 
@@ -109,9 +110,14 @@ class FarmManager {
    * Called when player enters a map and periodically
    */
   updateAllPlots(): void {
+    // Replay rain that fell while the game was closed BEFORE evaluating decay,
+    // so a crop the weather actually saved is never marked dead first.
+    this.applyRetroactiveRainWatering();
+
     const currentGameTime = TimeManager.getCurrentTime();
     const now = Date.now();
     const updated: FarmPlot[] = [];
+    let diedCount = 0;
 
     for (const plot of this.plots.values()) {
       const updatedPlot = this.calculatePlotState(
@@ -121,6 +127,9 @@ class FarmManager {
         now
       );
       if (updatedPlot !== plot) {
+        if (updatedPlot.state === FarmPlotState.DEAD && plot.state !== FarmPlotState.DEAD) {
+          diedCount++;
+        }
         this.registerPlot(updatedPlot);
         updated.push(updatedPlot);
       }
@@ -131,6 +140,86 @@ class FarmManager {
       // Emit a single event for all crop growth updates
       eventBus.emit(GameEvent.FARM_PLOT_CHANGED, {});
     }
+
+    // Death is otherwise silent — bare soil gives no hint anything was there.
+    // One batched event per pass (e.g. everything that died while away), not
+    // one per plot.
+    if (diedCount > 0) {
+      eventBus.emit(GameEvent.FARM_CROPS_DIED, { count: diedCount });
+    }
+  }
+
+  /**
+   * Water plots that rain reached while the game was closed.
+   *
+   * Game time and weather are deterministic and keep running while the game is
+   * shut, but the live rain-watering only runs while the game is open — so
+   * crops could die overnight despite pouring rain. This replays completed
+   * weather slots from each plot's last watering (see utils/retroactiveRain.ts)
+   * and applies the same watering the live manager would have. Timestamp-based
+   * so all players agree on shared farm plots.
+   *
+   * @param isWetSlot injectable for tests; defaults to the real deterministic
+   *        weather (rain and storm water crops, snow does not).
+   */
+  applyRetroactiveRainWatering(
+    isWetSlot: (slotIndex: number, season: Season) => boolean = (slot, season) => {
+      const weather = getWeatherForSlot(slot, season);
+      return weather === 'rain' || weather === 'storm';
+    }
+  ): number {
+    const gameTime = TimeManager.getCurrentTime();
+    const currentSlotIndex = Math.floor(gameTime.totalHours / WEATHER_SLOT_HOURS);
+    const msPerSlot = WEATHER_SLOT_HOURS * TimeManager.MS_PER_GAME_HOUR;
+    let wateredCount = 0;
+
+    for (const plot of this.plots.values()) {
+      // Only growing crops benefit from rain; indoor/cave maps never see it.
+      if (
+        plot.state !== FarmPlotState.PLANTED &&
+        plot.state !== FarmPlotState.WATERED &&
+        plot.state !== FarmPlotState.WILTING
+      ) {
+        continue;
+      }
+      if (getWeatherZone(plot.mapId) === 'indoor' || getWeatherZone(plot.mapId) === 'cave') {
+        continue;
+      }
+      const crop = plot.cropType ? getCrop(plot.cropType) : null;
+      if (!crop || plot.lastWateredTimestamp === null) {
+        continue;
+      }
+
+      const result = findRainWateringTimestamp({
+        lastWateredMs: plot.lastWateredTimestamp,
+        deathWindowMs: crop.waterNeededInterval + crop.wiltingGracePeriod + crop.deathGracePeriod,
+        currentSlotIndex,
+        msPerSlot,
+        gameStartMs: TimeManager.GAME_START_DATE,
+        seasonForSlot: (slot) => TimeManager.seasonAtTotalHours(slot * WEATHER_SLOT_HOURS),
+        isWetSlot,
+      });
+      if (!result) {
+        continue;
+      }
+
+      // Rain revives wilting crops back to WATERED, matching waterAllOutdoorPlots.
+      const slotTime = TimeManager.getTimeForTimestamp(result.wateredAtMs);
+      this.registerPlot({
+        ...plot,
+        state: FarmPlotState.WATERED,
+        lastWateredDay: slotTime.totalDays,
+        lastWateredHour: slotTime.hour,
+        lastWateredTimestamp: result.wateredAtMs,
+      });
+      wateredCount++;
+    }
+
+    if (wateredCount > 0) {
+      debugLog('FarmManager', `Retroactive rain watered ${wateredCount} plots`);
+      eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { action: 'water' });
+    }
+    return wateredCount;
   }
 
   /**
