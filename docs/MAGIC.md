@@ -108,7 +108,7 @@ Help your farm flourish:
 | Quality Blessing | Upgrades all crops to excellent quality |
 | Root Revival | Revives wilting or dead crops |
 | Abundant Harvest | Crops will yield maximum seeds when harvested |
-| Verdant Surge | Replenishes all forageable bushes |
+| Verdant Surge | Replenishes all forageable bushes; can also be applied to an apple tree to bless its next harvest with a golden apple |
 
 ## Friendship Potions
 

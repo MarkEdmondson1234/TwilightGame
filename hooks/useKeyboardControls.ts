@@ -399,8 +399,9 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
                 const hint = wasAbundant
                   ? ''
                   : ' (Prune in winter and mulch in spring for a fuller crop.)';
+                const bonus = result.bonusGoldenApple ? ' A golden apple gleams among them!' : '';
                 onShowToast?.(
-                  `Harvested ${result.quantity} apple${result.quantity !== 1 ? 's' : ''}!${hint}`,
+                  `Harvested ${result.quantity} apple${result.quantity !== 1 ? 's' : ''}!${hint}${bonus}`,
                   'success'
                 );
               } else {

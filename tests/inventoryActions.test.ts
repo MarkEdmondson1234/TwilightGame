@@ -73,6 +73,41 @@ describe('buildInventoryActions', () => {
     expect(onDrink).toHaveBeenCalledWith('potion_healing');
   });
 
+  it('offers Apply to Tree for Verdant Surge, between Drink and Select', () => {
+    const ids = idsOf(ctx({ item: item('potion_verdant_surge') }));
+    expect(ids).toEqual(['drink', 'apply_to_tree', 'select']);
+  });
+
+  it('does not offer Apply to Tree for other potions', () => {
+    const ids = idsOf(ctx({ item: item('potion_healing') }));
+    expect(ids).not.toContain('apply_to_tree');
+  });
+
+  it('Apply to Tree equips the potion and closes the inventory, without drinking it', () => {
+    const onBeginPlacement = vi.fn();
+    const onShowToast = vi.fn();
+    const onDrink = vi.fn();
+    const onSelectSlot = vi.fn();
+    const c = ctx({
+      item: item('potion_verdant_surge'),
+      slotIndex: 5,
+      onBeginPlacement,
+      onShowToast,
+      onDrink,
+      onSelectSlot,
+    });
+    const options = buildInventoryActions(c);
+    const apply = options.find((o) => o.id === 'apply_to_tree');
+    expect(apply).toBeDefined();
+    expect(onBeginPlacement).not.toHaveBeenCalled(); // nothing fires just from building the menu
+
+    apply!.onSelect();
+    expect(onBeginPlacement).toHaveBeenCalledWith(5);
+    expect(onShowToast).toHaveBeenCalled();
+    expect(onDrink).not.toHaveBeenCalled();
+    expect(onSelectSlot).not.toHaveBeenCalled();
+  });
+
   it('never offers Drink for the potions that are gifts, not drinks', () => {
     for (const id of ['potion_friendship', 'potion_bitter_grudge']) {
       const ids = idsOf(ctx({ item: item(id) }));

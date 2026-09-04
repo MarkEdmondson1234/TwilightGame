@@ -294,7 +294,7 @@ export interface EventPayloads {
     mapId: string;
     x: number;
     y: number;
-    action: 'pruned' | 'mulched' | 'harvested';
+    action: 'pruned' | 'mulched' | 'harvested' | 'blessed';
   };
   [GameEvent.REMOTE_PLAYER_JOINED]: {
     uid: string;

@@ -18,6 +18,7 @@ import { getAvailableInteractions } from '../utils/interactions/index';
 import { mapManager, transitionToMap } from '../maps';
 import { TimeManager, Season } from '../utils/TimeManager';
 import { fruitTreeManager } from '../utils/fruitTreeManager';
+import { inventoryManager } from '../utils/inventoryManager';
 import type { MapDefinition } from '../types';
 import { TileType } from '../types';
 
@@ -118,5 +119,165 @@ describe('Fruit tree care actions require radial-menu confirmation (#24)', () =>
     });
 
     expect(interactions.map((i) => i.type)).not.toContain('prune_tree');
+  });
+});
+
+describe('Verdant Surge apply-to-tree interaction', () => {
+  // fruitTreeManager state is keyed by "mapId:x:y" and persists for the life of the
+  // singleton, so each test gets its own map id — a tree blessed in one test must not
+  // leak into the next.
+  let mapId: string;
+  let mapCounter = 0;
+  const treePos = { x: 2, y: 2 };
+  const playerPos = { x: 2, y: 3 };
+  const potionId = 'potion_verdant_surge';
+
+  beforeEach(() => {
+    mapId = `orchard_verdant_test_${mapCounter++}`;
+    mapManager.registerMap(orchardMap(mapId));
+    transitionToMap(mapId, playerPos);
+    vi.spyOn(TimeManager, 'getCurrentTime').mockReturnValue({
+      year: 1,
+      season: Season.SUMMER,
+      day: 50,
+      totalDays: 50,
+      hour: 12,
+      minute: 0,
+      timeOfDay: 'day' as never,
+      totalHours: 1212,
+      daylight: { dawn: 7, sunrise: 8, sunset: 16, dusk: 17 },
+    });
+    // Start from a clean slate so each test controls its own stock.
+    while (inventoryManager.hasItem(potionId, 1)) {
+      inventoryManager.removeItem(potionId, 1);
+    }
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    while (inventoryManager.hasItem(potionId, 1)) {
+      inventoryManager.removeItem(potionId, 1);
+    }
+  });
+
+  it('appears in the context menu when the potion is held', () => {
+    inventoryManager.addItem(potionId, 1);
+
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: 'hand',
+      selectedSeed: null,
+      isContextMenu: true,
+    });
+
+    expect(interactions.map((i) => i.type)).toContain('apply_verdant_surge');
+  });
+
+  it('does not appear when the potion is not held', () => {
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: 'hand',
+      selectedSeed: null,
+      isContextMenu: true,
+    });
+
+    expect(interactions.map((i) => i.type)).not.toContain('apply_verdant_surge');
+  });
+
+  it('does not appear on a plain click (not a context menu)', () => {
+    inventoryManager.addItem(potionId, 1);
+
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: 'hand',
+      selectedSeed: null,
+    });
+
+    expect(interactions.map((i) => i.type)).not.toContain('apply_verdant_surge');
+  });
+
+  it('does not appear once the tree is already blessed', () => {
+    inventoryManager.addItem(potionId, 1);
+    fruitTreeManager.applyVerdantSurge(mapId, treePos.x, treePos.y);
+
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: 'hand',
+      selectedSeed: null,
+      isContextMenu: true,
+    });
+
+    expect(interactions.map((i) => i.type)).not.toContain('apply_verdant_surge');
+  });
+
+  it('executing it consumes the potion and blesses the tree', () => {
+    inventoryManager.addItem(potionId, 1);
+
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: 'hand',
+      selectedSeed: null,
+      isContextMenu: true,
+    });
+
+    const applyOption = interactions.find((i) => i.type === 'apply_verdant_surge');
+    expect(applyOption).toBeDefined();
+    applyOption!.execute();
+
+    expect(inventoryManager.hasItem(potionId, 1)).toBe(false);
+    expect(fruitTreeManager.isBlessed(mapId, treePos.x, treePos.y)).toBe(true);
+  });
+
+  it('appears on a plain click when the potion is the equipped currentTool', () => {
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: potionId,
+      selectedSeed: null,
+    });
+
+    expect(interactions.map((i) => i.type)).toContain('apply_verdant_surge');
+  });
+
+  it('does not appear on a plain click when a different item is equipped and the potion is not held', () => {
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: 'hand',
+      selectedSeed: null,
+    });
+
+    expect(interactions.map((i) => i.type)).not.toContain('apply_verdant_surge');
+  });
+
+  it('executing via the equipped path also consumes the potion and blesses the tree', () => {
+    inventoryManager.addItem(potionId, 1);
+
+    const interactions = getAvailableInteractions({
+      position: treePos,
+      playerPosition: playerPos,
+      currentMapId: mapId,
+      currentTool: potionId,
+      selectedSeed: null,
+    });
+
+    const applyOption = interactions.find((i) => i.type === 'apply_verdant_surge');
+    expect(applyOption).toBeDefined();
+    applyOption!.execute();
+
+    expect(inventoryManager.hasItem(potionId, 1)).toBe(false);
+    expect(fruitTreeManager.isBlessed(mapId, treePos.x, treePos.y)).toBe(true);
   });
 });

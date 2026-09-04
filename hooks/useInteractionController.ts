@@ -619,7 +619,12 @@ export function useInteractionController(
       // Exception: fruit tree interactions use player proximity to the anchor tile
       // (checked inside getAvailableInteractions via playerPosition), so the click
       // position can legitimately be far from the player (e.g. clicking the canopy).
-      const FRUIT_TREE_TYPES = new Set(['prune_tree', 'mulch_tree', 'harvest_fruit_tree']);
+      const FRUIT_TREE_TYPES = new Set([
+        'prune_tree',
+        'mulch_tree',
+        'harvest_fruit_tree',
+        'apply_verdant_surge',
+      ]);
       const isFruitTreeOnly = interactions.every((i) => FRUIT_TREE_TYPES.has(i.type));
       const isBackgroundImageRoom = mapManager.getCurrentMap()?.renderMode === 'background-image';
       if (!isBackgroundImageRoom && !isFruitTreeOnly) {

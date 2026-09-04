@@ -136,6 +136,19 @@ export function buildInventoryActions(ctx: InventoryActionContext): RadialMenuOp
     }
   }
 
+  if (item.id === 'potion_verdant_surge') {
+    options.push({
+      id: 'apply_to_tree',
+      label: 'Apply to Tree',
+      icon: '✨',
+      color: '#22c55e',
+      onSelect: () => {
+        ctx.onBeginPlacement(slotIndex);
+        ctx.onShowToast('Right-click an apple tree to apply Verdant Surge.', 'info');
+      },
+    });
+  }
+
   if (isCatalogue) {
     options.push({
       id: 'open_catalogue',

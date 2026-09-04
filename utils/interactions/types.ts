@@ -43,6 +43,7 @@ export type InteractionType =
   | 'prune_tree'
   | 'mulch_tree'
   | 'harvest_fruit_tree'
+  | 'apply_verdant_surge'
   | 'pickup_item'
   | 'eat_item'
   | 'taste_item'
