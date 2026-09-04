@@ -24,7 +24,7 @@ Firebase provides cloud saves via Firestore and cross-player features (NPC gossi
 - `firebase/presenceService.ts` — **Multiplayer presence** (Realtime Database, not Firestore)
 - `firebase/realtimeConfig.ts` — Realtime Database init (`VITE_FIREBASE_DATABASE_URL`)
 - `components/HelpBrowser.tsx` — Account & Cloud Saves UI (F1 → Settings)
-- `components/AIDialogueBox.tsx` — Gossip injection into NPC conversations
+- `components/dialogue/UnifiedDialogueBox.tsx` — Unified scripted + AI dialogue (gossip injection into NPC conversations happens here)
 
 **Setup:** Copy `.env.example` to `.env.local` and fill in Firebase credentials. Use the `setup-firebase` skill for guided setup.
 
@@ -475,7 +475,7 @@ Pure functions and game systems:
 - `components/DebugOverlay.tsx` - Debug information (toggle with F3)
 - `components/DebugInfoPanel.tsx` - Debug panel component
 - `components/CharacterCreator.tsx` - Character customization UI
-- `components/DialogueBox.tsx` - NPC dialogue display
+- `components/dialogue/UnifiedDialogueBox.tsx` - NPC dialogue display (scripted and AI modes in one component; see `docs/AI_CONVERSATIONS_DEV.md`)
 - `components/HelpBrowser.tsx` - In-game documentation browser (F1)
 - `components/Modal.tsx` - Modal component
 
@@ -893,7 +893,7 @@ Three things that are easy to get wrong here:
    would become a permanently invisible sprite instead of a one-frame delay.
 2. **Only the current season is loaded.** Loading all four quadrupled the cost
    of every tree. The season change effect re-prefetches.
-3. **NPC dialogue portraits are not GPU textures.** `DialogueBox`, `GiftModal`
+3. **NPC dialogue portraits are not GPU textures.** `UnifiedDialogueBox`, `GiftModal`
    and `GlamourModal` render them as React `<img>`. They are among the largest
    art in the game, and counting them charged every map hundreds of megabytes it
    never used. Only `npc.sprite` and `animatedStates` frames are uploaded.
