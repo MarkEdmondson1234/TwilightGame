@@ -113,19 +113,29 @@ function validateColorSchemes(): void {
 }
 
 /**
- * Validate GRID_CODES covers all TileType enum values
+ * Validate GRID_CODES entries all name a real TileType.
+ *
+ * Deliberately does NOT check the reverse (every TileType having a code):
+ * 37 of 125 types are uncoded by design — runtime farm-soil states, procedural
+ * cave/lava pieces, placed-furniture parts and composite buildings never appear
+ * in an authored grid, and a few (FROST_FLOWER) use map-specific codes. Warning
+ * about that fired on every startup and printed raw enum numbers.
+ *
+ * What IS a bug: a typo in a code's value (e.g. `TileType.FROST_FLOWER` spelled
+ * slightly differently in gridParser.ts than in types.ts) silently maps a grid
+ * character to `undefined`, and every tile drawn with it renders as an
+ * untextured box. Catching that here names the offending character.
  */
 function validateGridCodes(): void {
-  const tileTypes = Object.keys(TileType).filter((key) => isNaN(Number(key)));
-  const codedTypes = new Set(Object.values(GRID_CODES));
+  const undefinedCodes = Object.entries(GRID_CODES).filter(
+    ([, type]) => type === undefined
+  );
 
-  // Note: MUSHROOM (14) might not have a grid code if it's only used procedurally
-  const missingCodes = tileTypes
-    .map((name) => TileType[name as keyof typeof TileType])
-    .filter((type) => !codedTypes.has(type) && type !== TileType.MUSHROOM);
-
-  if (missingCodes.length > 0) {
-    console.warn(`[Sanity Check] TileTypes without GRID_CODES: ${missingCodes.join(', ')}`);
+  if (undefinedCodes.length > 0) {
+    console.error(
+      `[Sanity Check] GRID_CODES characters map to undefined TileTypes ` +
+        `(typo in gridParser.ts?): ${undefinedCodes.map(([code]) => `'${code}'`).join(', ')}`
+    );
   }
 }
 

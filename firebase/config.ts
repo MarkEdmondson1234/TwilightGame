@@ -11,10 +11,11 @@
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, connectAuthEmulator } from 'firebase/auth';
 import {
-  getFirestore,
+  initializeFirestore,
   Firestore,
   connectFirestoreEmulator,
-  enableIndexedDbPersistence,
+  persistentLocalCache,
+  persistentMultipleTabManager,
 } from 'firebase/firestore';
 
 // Firebase configuration from environment variables
@@ -84,8 +85,15 @@ export async function initializeFirebase(): Promise<{
     // Initialize Auth
     auth = getAuth(app);
 
-    // Initialize Firestore
-    db = getFirestore(app);
+    // Initialize Firestore.
+    // Offline persistence is configured via settings (persistentLocalCache) rather
+    // than the legacy enableIndexedDbPersistence() call, which fires a deprecation
+    // warning on every boot. The multi-tab manager replaces the old
+    // 'failed-precondition' failure when two tabs are open — persistence now works
+    // in every tab instead of only the first.
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    });
 
     // Connect to emulators in development (if configured)
     if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
@@ -94,22 +102,7 @@ export async function initializeFirebase(): Promise<{
       connectFirestoreEmulator(db, 'localhost', 8080);
     }
 
-    // Enable offline persistence for Firestore
-    try {
-      await enableIndexedDbPersistence(db);
-      console.log('[Firebase] Offline persistence enabled');
-    } catch (err: unknown) {
-      const error = err as { code?: string };
-      if (error.code === 'failed-precondition') {
-        // Multiple tabs open, persistence can only be enabled in one tab at a time
-        console.warn('[Firebase] Offline persistence unavailable - multiple tabs open');
-      } else if (error.code === 'unimplemented') {
-        // Browser doesn't support required features
-        console.warn('[Firebase] Offline persistence not supported in this browser');
-      } else {
-        console.warn('[Firebase] Offline persistence failed:', error);
-      }
-    }
+    console.log('[Firebase] Offline persistence enabled (multi-tab)');
 
     initialized = true;
     console.log('[Firebase] Initialization complete');

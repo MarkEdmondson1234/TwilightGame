@@ -1,5 +1,18 @@
-<svg width="192" height="192" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" fill="#111827"/>
-  <circle cx="96" cy="96" r="60" fill="#3b82f6"/>
-  <text x="96" y="110" font-family="Arial" font-size="48" fill="white" text-anchor="middle">🌙</text>
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    App icon, drawn without text or emoji glyphs: the original used an emoji
+    <text> for the moon, which renders with the system font in a browser but
+    silently disappears when the SVG is rasterised to PNG by sharp/librsvg
+    (no emoji font). A path-based crescent looks the same everywhere.
+    Palette matches the PWA theme colours in manifest.json / index.html.
+  -->
+  <defs>
+    <mask id="crescent">
+      <rect width="192" height="192" fill="#ffffff"/>
+      <circle cx="120" cy="76" r="46" fill="#000000"/>
+    </mask>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="#111827"/>
+  <circle cx="96" cy="96" r="62" fill="#3b82f6"/>
+  <circle cx="96" cy="100" r="44" fill="#ffffff" mask="url(#crescent)"/>
 </svg>
