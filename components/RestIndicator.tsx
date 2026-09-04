@@ -12,6 +12,10 @@
  *
  * The glyphs are text today. If a hand-drawn sleep sprite is ever added, swap the spans for
  * an <img> — nothing else here needs to change.
+ *
+ * Bed = sleeping (zzz). Bench/armchair = resting upright, so zs would read as literally
+ * being asleep (issue #92) — those show musical notes instead, reading as quietly
+ * humming while resting.
  */
 
 import { TILE_SIZE, PLAYER_SIZE } from '../constants';
@@ -29,8 +33,17 @@ interface RestIndicatorProps {
   characterScale?: number; // Map's characterScale multiplier — see StaminaBar for why
 }
 
-/** Sleeping in a bed is a deeper rest than perching on a bench, so the zs are bigger. */
+/** Sleeping in a bed is a deeper rest than perching on a bench, so the glyphs are bigger. */
 const GLYPH_SIZE: Record<RestEffect, number> = { sleep: 22, rest: 16 };
+
+/** Per-effect glyph set — see the doc comment about issue #92. */
+const GLYPHS: Record<RestEffect, string[]> = {
+  sleep: ['z', 'z', 'z'],
+  rest: ['♪', '♪', '♪'],
+};
+
+/** Stagger so the three glyphs drift one after another. */
+const DELAYS = [0, 0.8, 1.6];
 
 export function RestIndicator({
   effect,
@@ -54,18 +67,18 @@ export function RestIndicator({
       style={{ left: screenX, top: screenY, zIndex: Z_ACTION_PROMPTS }}
       aria-hidden="true"
     >
-      {[0, 0.8, 1.6].map((delay, i) => (
+      {GLYPHS[effect].map((glyph, i) => (
         <span
           key={i}
           className="animate-rest-drift absolute font-bold"
           style={{
-            animationDelay: `${delay}s`,
+            animationDelay: `${DELAYS[i]}s`,
             fontSize: GLYPH_SIZE[effect] - i * 3,
             color: '#e9d5ff',
             textShadow: '0 1px 3px rgba(0, 0, 0, 0.6)',
           }}
         >
-          z
+          {glyph}
         </span>
       ))}
     </div>
