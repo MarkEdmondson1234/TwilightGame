@@ -130,8 +130,7 @@ export function getAvailableInteractionsWithTouchTolerance(
   if (direct.length > 0) return direct;
 
   const { position } = config;
-  const tileX = Math.floor(position.x);
-  const tileY = Math.floor(position.y);
+  const { x: tileX, y: tileY } = getTileCoords(position);
 
   const offsets = [
     { dx: -1, dy: 0 },
