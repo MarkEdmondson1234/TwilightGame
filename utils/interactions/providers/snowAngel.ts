@@ -6,7 +6,7 @@
 
 import { CollisionType, isTileSolid, type Position } from '../../../types';
 import type { AvailableInteraction, InteractionContext, PlacedItem } from '../types';
-import { getTileData } from '../../mapUtils';
+import { getTileData, getTileCoords } from '../../mapUtils';
 import { metadataCache } from '../../MetadataCache';
 import { Season, TimeManager } from '../../TimeManager';
 import { gameState } from '../../../GameState';
@@ -32,11 +32,11 @@ function isSnowAngelBlockClear(topLeft: Position, placedItems: PlacedItem[]): bo
     if (tileData.collisionType !== CollisionType.WALKABLE) return false;
   }
 
-  const blockedByItem = placedItems.some((item) =>
-    blockTiles.some(
-      (tile) => tile.x === Math.floor(item.position.x) && tile.y === Math.floor(item.position.y)
-    )
-  );
+  // Anchor floors hoisted out of the tile loop — one conversion per item instead of one per block tile.
+  const blockedByItem = placedItems.some((item) => {
+    const anchor = getTileCoords(item.position);
+    return blockTiles.some((tile) => tile.x === anchor.x && tile.y === anchor.y);
+  });
   if (blockedByItem) return false;
 
   const blockLeft = topLeft.x;

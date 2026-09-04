@@ -6,6 +6,7 @@
 
 import type { AvailableInteraction, InteractionContext } from '../types';
 import { checkCookingLocation, handleFireplaceTea } from '../../actionHandlers';
+import { getTileCoords } from '../../mapUtils';
 
 export function cookingProvider(ctx: InteractionContext): AvailableInteraction[] {
   const { position, currentMapId, onCooking, onBrewing } = ctx;
@@ -42,8 +43,7 @@ export function cookingProvider(ctx: InteractionContext): AvailableInteraction[]
   // Mum's kitchen fireplace — position-based tea interaction (no tile type needed)
   if (currentMapId === 'mums_kitchen') {
     const fireplacePos = { x: 4, y: 5 };
-    const playerTileX = Math.floor(position.x);
-    const playerTileY = Math.floor(position.y);
+    const { x: playerTileX, y: playerTileY } = getTileCoords(position);
     const isAdjacentToFireplace = [
       { x: playerTileX, y: playerTileY },
       { x: playerTileX - 1, y: playerTileY },
