@@ -45,12 +45,14 @@ export {
 /**
  * Tiles whose multi-tile anchor participates in the EARLY cooldown scan below.
  *
- * Deliberately narrower than the full source table: BEE_HIVE is excluded (it
- * has its own cooldown check with a custom message), and the sources with
- * explicit cooldownMessages in sources.ts (heather, spruce, mustard, violet,
- * frost flower) also self-check. Tiles NOT listed here — dead spruce, spruce
- * trees, giant mushroom, sakura — have no cooldown gate anywhere, matching the
- * pre-refactor behaviour (flagged as a likely oversight in the refactor notes).
+ * Deliberately narrower than the full source table: BEE_HIVE is excluded (its
+ * custom "collected honey" message needs the anchor), and every other source
+ * that declares a cooldownMessage in sources.ts (heather, spruce trees, dead
+ * spruce, giant mushroom, cherry tree, mustard, violet, frost flower)
+ * self-checks against its own anchor instead — which also avoids the scan's
+ * cross-source silencing, where a cooldown on ANY listed tile nearby mutes
+ * every forage. The scan remains for the sources that predate self-checks
+ * (moonpetal, addersmeat, wolfsbane, rosebushes, toadstool, forest mushroom).
  */
 const EARLY_COOLDOWN_TILES = [
   TileType.MOONPETAL,

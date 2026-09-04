@@ -103,7 +103,7 @@ export function forageWildTile(
     // 70% chance to find nothing (silent failure)
     if (Math.random() < 0.7) {
       debugLog('Forage', 'Searched mushrooms but found nothing');
-      gameState.recordForage(currentMapId, playerTileX, playerTileY);
+      // Cooldown already started by the recordForage above — no need to re-record.
       return { found: false, message: '' };
     }
 

@@ -47,13 +47,15 @@ describe('forage source table', () => {
   });
 
   it('declares cooldownMessage exactly for the sources that self-check cooldown', () => {
-    // Mirrors the pre-refactor chain: heather, spruce tree, bee hive, mustard
-    // flower, shrinking violet and frost flower each check the anchor cooldown
-    // with a custom message; every other source relies on the early scan or
-    // has no cooldown gate at all.
+    // The sources with a custom-message cooldown check against their anchor.
+    // Everything else relies on the early scan (moonpetal, addersmeat,
+    // wolfsbane, rosebushes, toadstool, forest mushroom) or has no gate.
     const expected = new Set([
       'heather',
       'spruce tree',
+      'dead spruce',
+      'giant mushroom',
+      'cherry tree',
       'bee hive',
       'mustard flower',
       'shrinking violet',

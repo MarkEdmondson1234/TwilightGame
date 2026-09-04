@@ -7,11 +7,13 @@
  * a player sees when standing near two forageables at once.
  *
  * Behaviour notes preserved from the original chain:
- *  - Sources whose tiles appear in EARLY_COOLDOWN_TILES (forageHandlers.ts)
- *    rely on that scan for their cooldown and declare no cooldownMessage.
- *  - ghost_lichen, giant_mushroom_cap and sakura_petal sources have NO
- *    cooldown check anywhere in the original chain — no cooldownMessage here
- *    keeps that (pre-existing) behaviour; stamina is the only limiter.
+ *  - Sources whose tiles appear in the early cooldown scan (forageHandlers.ts)
+ *    rely on that scan for their anchor cooldown; sources with a
+ *    cooldownMessage self-check against their anchor instead. BEE_HIVE does
+ *    the latter with a custom message (its tile is deliberately absent from
+ *    the early scan).
+ *  - The lava-lake source keys off the lake's footprint via findAnchor, not
+ *    simple adjacency.
  */
 
 import { TileType } from '../../types';
@@ -173,6 +175,7 @@ export const FORAGE_SOURCES: ForageSource[] = [
     tileTypes: [TileType.DEAD_SPRUCE],
     itemId: 'ghost_lichen',
     fallbackSuccessRate: 0.5,
+    cooldownMessage: "You've already scraped this dead spruce today.",
     failureMessage: 'You scrape at the dead spruce bark, but find no lichen worth collecting.',
   },
 
@@ -199,6 +202,7 @@ export const FORAGE_SOURCES: ForageSource[] = [
     tileTypes: [TileType.GIANT_MUSHROOM],
     itemId: 'giant_mushroom_cap',
     fallbackSuccessRate: 0.5,
+    cooldownMessage: "You've already searched this giant mushroom. Come back tomorrow!",
     failureMessage: "You search the giant mushroom, but can't find a piece worth taking.",
   },
 
@@ -214,6 +218,7 @@ export const FORAGE_SOURCES: ForageSource[] = [
         'The cherry tree has no blossoms to collect petals from right now.'
       ),
     ],
+    cooldownMessage: "You've already gathered from this cherry tree today.",
     failureMessage: 'You reach for the falling petals, but they slip through your fingers.',
   },
 
