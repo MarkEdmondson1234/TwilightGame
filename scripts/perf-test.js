@@ -1005,6 +1005,13 @@ async function main() {
     log('Launching browser...', 'dim');
     browser = await puppeteer.launch({
       headless: CONFIG.headed ? false : 'new',
+      // CDP round-trips queue behind real frames, and on a slow CI runner those
+      // frames take seconds — an end-of-test screenshot can then exceed
+      // Puppeteer's default 180s protocolTimeout and kill the whole run before
+      // results are written (seen 2026-09-04 on main, not a timeout of the job
+      // itself). 10 min bounds a genuinely stuck call while absorbing that; the
+      // workflow's timeout-minutes is the outer bound.
+      protocolTimeout: 600_000,
       args: [
         '--enable-precise-memory-info', // Enable detailed memory metrics
         '--disable-gpu-vsync', // Disable vsync for consistent measurements
