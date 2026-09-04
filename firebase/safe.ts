@@ -21,6 +21,7 @@ import type { ChatMessage } from '../multiplayer/chat';
 import type { Photo } from '../types/photography';
 import type { AlbumEntry } from './sharedAlbumService';
 import type { NpcSpeechWire } from '../multiplayer/npcSpeech';
+import { debugLog } from '../utils/debugLog';
 
 /** Stub authService when Firebase is not available */
 const stubAuthService = {
@@ -239,7 +240,7 @@ async function loadFirebase(): Promise<typeof import('./index') | null> {
         return mod;
       })
       .catch(() => {
-        console.log('[Firebase] Package not installed - cloud saves disabled');
+        debugLog('Firebase', 'Package not installed - cloud saves disabled');
         loadPromise = null; // a chunk that failed to download may succeed later
         return null;
       });
@@ -284,9 +285,9 @@ export async function safeInitializeFirebase() {
         if (result) {
           mod.authService.initialize();
           mod.syncManager.initialize();
-          console.log('[App] Firebase, auth, and sync manager initialized');
+          debugLog('App', 'Firebase, auth, and sync manager initialized');
         } else {
-          console.log('[App] Firebase not configured or disabled - cloud saves disabled');
+          debugLog('App', 'Firebase not configured or disabled - cloud saves disabled');
         }
         return result;
       } catch (error) {

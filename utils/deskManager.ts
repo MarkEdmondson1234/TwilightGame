@@ -9,7 +9,7 @@
  */
 
 import { DeskContents, DeskItem, Position } from '../types';
-import { gameState } from '../GameState';
+import { characterData } from './CharacterData';
 import { debugLog } from './debugLog';
 
 // Maximum items per desk tile
@@ -32,7 +32,7 @@ class DeskManager {
   initialise(): void {
     if (this.initialised) return;
 
-    const savedDesks = gameState.loadDeskContents();
+    const savedDesks = characterData.loadDesks();
     this.deskContents.clear();
 
     for (const desk of savedDesks) {
@@ -201,10 +201,10 @@ class DeskManager {
   }
 
   /**
-   * Persist desk contents to GameState
+   * Persist desk contents via the CharacterData API (never gameState directly)
    */
   private persistDesk(desk: DeskContents): void {
-    gameState.saveDeskContents(desk);
+    characterData.saveDesk(desk);
   }
 
   /**

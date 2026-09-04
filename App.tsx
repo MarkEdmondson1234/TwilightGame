@@ -65,7 +65,7 @@ import { staminaManager } from './utils/StaminaManager';
 import { photoAlbumManager } from './utils/photoAlbumManager';
 import { TimeManager, Season } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
-import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, Z_LOADING, zClass } from './zIndex';
+import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, Z_LOADING, Z_FULL_SCREEN_EFFECT, zClass } from './zIndex';
 import { iconAssets } from './iconAssets';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
@@ -2708,7 +2708,7 @@ const App: React.FC = () => {
             background: '#000',
             opacity: yuleBlackoutOpacity,
             transition: 'opacity 1.5s ease',
-            zIndex: 9998,
+            zIndex: Z_FULL_SCREEN_EFFECT,
             pointerEvents: 'none',
           }}
         />

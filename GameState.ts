@@ -1356,6 +1356,14 @@ class GameStateManager {
   }
 
   /**
+   * Replace all desk contents (for CharacterData 'desk' domain saves)
+   */
+  saveAllDeskContents(desks: DeskContents[]): void {
+    this.state.deskContents = desks;
+    this.notify();
+  }
+
+  /**
    * Remove a desk's contents (when desk is removed from map)
    */
   removeDeskContents(mapId: string, x: number, y: number): void {

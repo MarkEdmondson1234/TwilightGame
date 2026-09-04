@@ -330,7 +330,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
               <img
                 src={itemDef.image}
                 alt={itemDef.displayName}
-                className="max-w-full max-h-full object-contain pixelated"
+                className="max-w-full max-h-full object-contain"
               />
             ) : itemDef.icon ? (
               <span className="text-3xl">{itemDef.icon}</span>
@@ -656,7 +656,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
                     <img
                       src={itemDef.image}
                       alt={itemDef.displayName}
-                      className="w-16 h-16 object-contain pixelated"
+                      className="w-16 h-16 object-contain"
                     />
                   )}
                   <div>

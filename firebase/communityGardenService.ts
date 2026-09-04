@@ -26,6 +26,7 @@ import {
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
 import { FarmPlot, FarmPlotState } from '../types';
+import { debugLog } from '../utils/debugLog';
 
 // ============================================
 // Constants
@@ -93,7 +94,7 @@ class SharedFarmService {
   startListening(): void {
     if (this.isListening) return;
     if (!isFirebaseInitialized() || !authService.isAuthenticated()) {
-      console.log('[SharedFarm] Firebase not available — running in local-only mode');
+      debugLog('SharedFarm', 'Firebase not available — running in local-only mode');
       return;
     }
 
@@ -114,7 +115,7 @@ class SharedFarmService {
 
         // Notify all listeners
         this.listeners.forEach((cb) => cb(this.remotePlots));
-        console.log(`[SharedFarm] Synced ${this.remotePlots.size} plots`);
+        debugLog('SharedFarm', `Synced ${this.remotePlots.size} plots`);
       },
       (error) => {
         console.error('[SharedFarm] Snapshot error:', error);
@@ -122,7 +123,7 @@ class SharedFarmService {
     );
 
     this.isListening = true;
-    console.log('[SharedFarm] Started real-time listener');
+    debugLog('SharedFarm', 'Started real-time listener');
   }
 
   /**
@@ -135,7 +136,7 @@ class SharedFarmService {
       this.unsubscribe = null;
     }
     this.isListening = false;
-    console.log('[SharedFarm] Stopped real-time listener');
+    debugLog('SharedFarm', 'Stopped real-time listener');
   }
 
   /**

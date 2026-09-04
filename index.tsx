@@ -5,6 +5,7 @@ import App from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initErrorReporting, onUncaughtError, onRecoverableError } from './utils/errorReporting';
 import { suppressBrowserContextMenu } from './utils/suppressBrowserContextMenu';
+import { debugLog } from './utils/debugLog';
 
 // No-ops when VITE_SENTRY_DSN isn't set — see utils/errorReporting.ts.
 // Called before render so it can catch errors from mount onward.
@@ -36,10 +37,11 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker
       .register('/TwilightGame/sw.js')
       .then((registration) => {
-        console.log('[PWA] Service Worker registered:', registration);
+        debugLog('PWA', 'Service Worker registered:', registration);
       })
       .catch((error) => {
-        console.log('[PWA] Service Worker registration failed:', error);
+        // A failed service-worker registration is a real problem — keep it ungated.
+        console.warn('[PWA] Service Worker registration failed:', error);
       });
   });
 }

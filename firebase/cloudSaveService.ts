@@ -41,6 +41,7 @@ import {
   SAVE_DATA_DOCS,
 } from './types';
 import { getAllConversationData, restoreConversationData } from '../services/aiChatHistory';
+import { debugLog } from '../utils/debugLog';
 
 // ============================================
 // Constants
@@ -104,7 +105,7 @@ class CloudSaveService {
       return bTime - aTime;
     });
 
-    console.log(`[CloudSave] Found ${slots.length} save slots`);
+    debugLog('CloudSave', `Found ${slots.length} save slots`);
     return slots;
   }
 
@@ -137,7 +138,7 @@ class CloudSaveService {
     const db = getFirebaseDb();
     const batch = writeBatch(db);
 
-    console.log(`[CloudSave] Saving to slot ${slotId}...`);
+    debugLog('CloudSave', `Saving to slot ${slotId}...`);
 
     // Save metadata directly in the slot document
     const metadata: Omit<SaveMetadata, 'lastSaved'> & {
@@ -288,7 +289,7 @@ class CloudSaveService {
 
     // Commit all writes atomically
     await batch.commit();
-    console.log(`[CloudSave] Saved to slot ${slotId} successfully`);
+    debugLog('CloudSave', `Saved to slot ${slotId} successfully`);
   }
 
   /**
@@ -300,7 +301,7 @@ class CloudSaveService {
     const userId = authService.getUserId()!;
     const db = getFirebaseDb();
 
-    console.log(`[CloudSave] Loading from slot ${slotId}...`);
+    debugLog('CloudSave', `Loading from slot ${slotId}...`);
 
     // Load all documents in parallel
     const [
@@ -415,7 +416,7 @@ class CloudSaveService {
       decoration: decorationData || undefined,
     };
 
-    console.log(`[CloudSave] Loaded from slot ${slotId} successfully`);
+    debugLog('CloudSave', `Loaded from slot ${slotId} successfully`);
     return gameState;
   }
 
@@ -428,7 +429,7 @@ class CloudSaveService {
     const userId = authService.getUserId()!;
     const db = getFirebaseDb();
 
-    console.log(`[CloudSave] Deleting slot ${slotId}...`);
+    debugLog('CloudSave', `Deleting slot ${slotId}...`);
 
     // Delete all data documents
     const deletePromises = SAVE_DATA_DOCS.map((docType) =>
@@ -439,7 +440,7 @@ class CloudSaveService {
     deletePromises.push(deleteDoc(doc(db, FIRESTORE_PATHS.saveSlot(userId, slotId))));
 
     await Promise.all(deletePromises);
-    console.log(`[CloudSave] Deleted slot ${slotId} successfully`);
+    debugLog('CloudSave', `Deleted slot ${slotId} successfully`);
   }
 
   /**
@@ -479,7 +480,7 @@ class CloudSaveService {
   async migrateLocalSave(targetSlotId: string): Promise<void> {
     const localSave = localStorage.getItem('twilight_game_state');
     if (!localSave) {
-      console.log('[CloudSave] No local save to migrate');
+      debugLog('CloudSave', 'No local save to migrate');
       return;
     }
 
@@ -487,7 +488,7 @@ class CloudSaveService {
       const state = JSON.parse(localSave) as GameState;
       const playTime = state.stats?.totalPlayTime || 0;
       await this.saveGame(targetSlotId, state, playTime);
-      console.log('[CloudSave] Local save migrated to cloud');
+      debugLog('CloudSave', 'Local save migrated to cloud');
     } catch (error) {
       console.error('[CloudSave] Failed to migrate local save:', error);
       throw error;

@@ -15,6 +15,7 @@
 
 import { getDatabase, Database } from 'firebase/database';
 import { getFirebaseApp, isFirebaseInitialized } from './config';
+import { debugLog } from '../utils/debugLog';
 
 let rtdb: Database | null = null;
 let initAttempted = false;
@@ -44,7 +45,7 @@ export function getRealtimeDb(): Database | null {
   if (!isRealtimeConfigured()) {
     if (!loggedUnconfigured) {
       loggedUnconfigured = true;
-      console.log('[Presence] Realtime Database not configured - multiplayer disabled');
+      debugLog('Presence', 'Realtime Database not configured - multiplayer disabled');
     }
     return null;
   }
@@ -57,7 +58,7 @@ export function getRealtimeDb(): Database | null {
 
   try {
     rtdb = getDatabase(getFirebaseApp(), import.meta.env.VITE_FIREBASE_DATABASE_URL);
-    console.log('[Presence] Realtime Database ready');
+    debugLog('Presence', 'Realtime Database ready');
     return rtdb;
   } catch (error) {
     console.warn('[Presence] Realtime Database init failed - multiplayer disabled', error);

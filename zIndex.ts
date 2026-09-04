@@ -276,6 +276,10 @@ export const Z_ERROR = 4000;
  *  keep initialising underneath while it's shown. */
 export const Z_SPLASH_SCREEN = 4500;
 
+/** Full-screen effect overlays (e.g. the Yule celebration blackout) — must cover
+ *  every other layer, including the splash screen. */
+export const Z_FULL_SCREEN_EFFECT = 9998;
+
 // =============================================================================
 // HELPER - Tailwind class generator
 // =============================================================================

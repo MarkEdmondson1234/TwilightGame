@@ -44,7 +44,7 @@
  */
 
 import { gameState } from '../GameState';
-import { FarmPlot, NPCFriendship, Photo } from '../types';
+import { FarmPlot, NPCFriendship, Photo, DeskContents } from '../types';
 import { debugLog } from './debugLog';
 
 // Type definitions for each data domain
@@ -115,6 +115,10 @@ export interface PhotographyData {
   albumPhotos: Photo[];
 }
 
+export interface DeskData {
+  desks: DeskContents[];
+}
+
 // Map of domain names to their data types
 export interface CharacterDataDomains {
   cooking: CookingData;
@@ -124,6 +128,7 @@ export interface CharacterDataDomains {
   magic: MagicData;
   decoration: DecorationData;
   photography: PhotographyData;
+  desk: DeskData;
 }
 
 // Type for domain names
@@ -175,6 +180,8 @@ class CharacterDataManager {
             ? (saved as unknown as CharacterDataDomains[T])
             : ({ albumPhotos: [] } as unknown as CharacterDataDomains[T]);
         }
+        case 'desk':
+          return { desks: gameState.loadDeskContents() } as unknown as CharacterDataDomains[T];
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
           return null;
@@ -228,6 +235,9 @@ class CharacterDataManager {
           break;
         case 'photography':
           gameState.savePhotographyState(data as PhotographyData);
+          break;
+        case 'desk':
+          gameState.saveAllDeskContents((data as DeskData).desks);
           break;
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
@@ -293,6 +303,12 @@ class CharacterDataManager {
           craftedPaintsCount: decoData.craftedPaints.length,
           paintingsCount: decoData.paintings.length,
           hasEasel: decoData.hasEasel,
+        };
+      }
+      case 'desk': {
+        const deskData = data as DeskData;
+        return {
+          desksCount: deskData.desks.length,
         };
       }
       case 'photography': {
@@ -414,6 +430,27 @@ class CharacterDataManager {
   loadPhotos(): Photo[] {
     const data = this.load('photography');
     return data?.albumPhotos ?? [];
+  }
+
+  /**
+   * Save or update a single desk's contents (convenience method)
+   * Use this instead of gameState.saveDeskContents() directly
+   */
+  saveDesk(desk: DeskContents): boolean {
+    const existing = this.load('desk');
+    const desks = (existing?.desks ?? []).filter(
+      (d) =>
+        !(d.mapId === desk.mapId && d.position.x === desk.position.x && d.position.y === desk.position.y)
+    );
+    desks.push(desk);
+    return this.save('desk', { desks });
+  }
+
+  /**
+   * Load all desk contents (convenience method)
+   */
+  loadDesks(): DeskContents[] {
+    return this.load('desk')?.desks ?? [];
   }
 }
 

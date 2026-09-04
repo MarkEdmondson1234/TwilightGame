@@ -190,7 +190,6 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           maxWidth: '100%',
                           maxHeight: '80px',
                           objectFit: 'contain',
-                          imageRendering: 'pixelated',
                         }}
                       />
                     </div>
@@ -298,7 +297,6 @@ const SpriteMetadataEditor: React.FC<SpriteMetadataEditorProps> = ({ onClose, on
                           width: '100%',
                           height: '100%',
                           objectFit: 'contain',
-                          imageRendering: 'pixelated',
                         }}
                       />
                     </div>

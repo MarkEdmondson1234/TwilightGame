@@ -8,9 +8,10 @@ import { mapManager } from '../maps';
 import { COLOR_SCHEMES } from '../maps/colorSchemes';
 import { GRID_CODES, parseGrid, gridToString } from '../maps/gridParser';
 import { isPositionValid, validatePositions } from './positionValidator';
+import { debugLog } from './debugLog';
 
 export function runSelfTests(): void {
-  console.log('Running startup sanity checks...');
+  debugLog('Sanity Check', 'Running startup sanity checks...');
 
   // === Constants Validation ===
   validateTileLegend();
@@ -31,7 +32,7 @@ export function runSelfTests(): void {
   // === Inventory System Validation ===
   validateInventorySystem();
 
-  console.log('✓ All sanity checks complete.');
+  debugLog('Sanity Check', '✓ All sanity checks complete.');
 }
 
 /**
@@ -80,7 +81,7 @@ function validateTileLegend(): void {
 
   // All checks passed
   if (missingInLegend.length === 0 && extraKeys.length === 0) {
-    console.log(`[Sanity Check] ✓ TILE_LEGEND validated: ${tileTypeNames.length} tile types`);
+    debugLog('Sanity Check', `✓ TILE_LEGEND validated: ${tileTypeNames.length} tile types`);
   }
 }
 
@@ -369,7 +370,7 @@ function validateFarmSystem(): void {
     );
   }
 
-  console.log(`[Sanity Check] Farm system: ${farmTileTypes.length} tile types validated`);
+  debugLog('Sanity Check', `Farm system: ${farmTileTypes.length} tile types validated`);
 }
 
 /**
@@ -411,7 +412,7 @@ function validateInventorySystem(): void {
         }
       }
 
-      console.log(`[Sanity Check] Inventory system: ${Object.keys(ITEMS).length} items validated`);
+      debugLog('Sanity Check', `Inventory system: ${Object.keys(ITEMS).length} items validated`);
     });
   });
 }

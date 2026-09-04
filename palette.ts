@@ -1,3 +1,4 @@
+import { debugLog } from './utils/debugLog';
 /**
  * Game Color Palette
  *
@@ -189,7 +190,7 @@ export function applyPaletteToDOM(): void {
   styleTag.textContent = css;
   document.head.appendChild(styleTag);
 
-  console.log('[Palette] Applied palette to DOM');
+  debugLog('Palette', 'Applied palette to DOM');
 }
 
 /**
@@ -216,7 +217,7 @@ export function getColorHexByName(colorName: string): string {
  */
 export function initializePalette(): void {
   applyPaletteToDOM();
-  console.log('[Palette] Initialized with', Object.keys(currentPalette).length, 'colors');
+  debugLog('Palette', 'Initialized with', Object.keys(currentPalette).length, 'colors');
 }
 
 /**

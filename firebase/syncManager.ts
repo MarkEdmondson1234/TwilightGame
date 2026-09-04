@@ -23,6 +23,7 @@ import { gameState } from '../GameState';
 import { FIRESTORE_PATHS, SyncMetadata } from './types';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { reportError } from '../utils/errorReporting';
+import { debugLog } from '../utils/debugLog';
 
 // ============================================
 // Constants
@@ -99,14 +100,14 @@ class SyncManager {
       });
     }
 
-    console.log('[SyncManager] Initialized');
+    debugLog('SyncManager', 'Initialized');
   }
 
   /**
    * Handle user sign in - compare and sync saves
    */
   private async onSignIn(): Promise<void> {
-    console.log('[SyncManager] User signed in, checking for sync...');
+    debugLog('SyncManager', 'User signed in, checking for sync...');
 
     try {
       this.updateState({ status: 'syncing' });
@@ -118,8 +119,9 @@ class SyncManager {
       const cloudMeta = await this.getCloudSyncMeta();
       const cloudTimestamp = cloudMeta?.lastCloudSync || 0;
 
-      console.log(
-        '[SyncManager] Local timestamp:',
+      debugLog(
+        'SyncManager',
+        'Local timestamp:',
         localTimestamp,
         'Cloud timestamp:',
         cloudTimestamp
@@ -127,14 +129,14 @@ class SyncManager {
 
       if (localTimestamp > cloudTimestamp) {
         // Local is newer - upload to cloud
-        console.log('[SyncManager] Local save is newer, uploading to cloud...');
+        debugLog('SyncManager', 'Local save is newer, uploading to cloud...');
         await this.uploadToCloud();
       } else if (cloudTimestamp > localTimestamp) {
         // Cloud is newer - download to local
-        console.log('[SyncManager] Cloud save is newer, downloading...');
+        debugLog('SyncManager', 'Cloud save is newer, downloading...');
         await this.downloadFromCloud();
       } else {
-        console.log('[SyncManager] Saves are in sync');
+        debugLog('SyncManager', 'Saves are in sync');
       }
 
       // Sync diary entries from Firestore (non-blocking)
@@ -164,7 +166,7 @@ class SyncManager {
    */
   async uploadToCloud(slotId: string = DEFAULT_SLOT): Promise<void> {
     if (!authService.isAuthenticated()) {
-      console.log('[SyncManager] Not authenticated, skipping upload');
+      debugLog('SyncManager', 'Not authenticated, skipping upload');
       return;
     }
 
@@ -186,7 +188,7 @@ class SyncManager {
       });
 
       eventBus.emit(GameEvent.CLOUD_SYNC_COMPLETED, { success: true });
-      console.log('[SyncManager] Uploaded to cloud successfully');
+      debugLog('SyncManager', 'Uploaded to cloud successfully');
     } catch (error) {
       console.error('[SyncManager] Upload failed:', error);
       this.updateState({
@@ -208,7 +210,7 @@ class SyncManager {
    */
   async downloadFromCloud(slotId: string = DEFAULT_SLOT): Promise<void> {
     if (!authService.isAuthenticated()) {
-      console.log('[SyncManager] Not authenticated, skipping download');
+      debugLog('SyncManager', 'Not authenticated, skipping download');
       return;
     }
 
@@ -238,7 +240,7 @@ class SyncManager {
         console.warn('[SyncManager] Diary sync during download failed:', err);
       });
 
-      console.log('[SyncManager] Downloaded from cloud successfully');
+      debugLog('SyncManager', 'Downloaded from cloud successfully');
     } catch (error) {
       console.error('[SyncManager] Download failed:', error);
       this.updateState({
@@ -273,7 +275,7 @@ class SyncManager {
     if (!authService.isAuthenticated() || !this.state.pendingChanges) return;
     try {
       await this.uploadToCloud();
-      console.log('[SyncManager] Final sync before sign-out completed');
+      debugLog('SyncManager', 'Final sync before sign-out completed');
     } catch (error) {
       console.warn('[SyncManager] Final sync before sign-out failed:', error);
     }
@@ -286,7 +288,7 @@ class SyncManager {
   private attemptExitSave(): void {
     if (!authService.isAuthenticated() || !this.state.pendingChanges) return;
 
-    console.log('[SyncManager] Attempting exit save...');
+    debugLog('SyncManager', 'Attempting exit save...');
     this.uploadToCloud().catch((error) => {
       console.warn('[SyncManager] Exit save failed (expected if page closed):', error);
     });
@@ -328,7 +330,7 @@ class SyncManager {
 
       // Upload game state if there are pending changes
       if (this.state.pendingChanges) {
-        console.log('[SyncManager] Periodic sync triggered');
+        debugLog('SyncManager', 'Periodic sync triggered');
         try {
           await this.uploadToCloud();
         } catch (error) {
@@ -342,14 +344,14 @@ class SyncManager {
       });
     }, SYNC_INTERVAL_MS);
 
-    console.log('[SyncManager] Periodic sync started (every 5 minutes)');
+    debugLog('SyncManager', 'Periodic sync started (every 5 minutes)');
   }
 
   private stopPeriodicSync(): void {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
-      console.log('[SyncManager] Periodic sync stopped');
+      debugLog('SyncManager', 'Periodic sync stopped');
     }
   }
 

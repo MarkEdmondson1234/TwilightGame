@@ -232,7 +232,6 @@ const TileRenderer: React.FC<TileRendererProps> = ({
                     top: 0,
                     width: TILE_SIZE,
                     height: TILE_SIZE,
-                    imageRendering: 'pixelated',
                     transform: transform,
                     filter: isHerbDormant
                       ? `${filter !== 'none' ? filter + ' ' : ''}saturate(0.3) brightness(0.7)`

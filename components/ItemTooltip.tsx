@@ -122,9 +122,6 @@ const ItemTooltip: React.FC<ItemTooltipProps> = ({ content, children, delay = 30
                     src={content.image}
                     alt={content.name}
                     className="w-32 h-32 object-contain"
-                    style={{
-                      imageRendering: content.image.startsWith('data:') ? 'auto' : 'pixelated',
-                    }}
                   />
                 </div>
               )}

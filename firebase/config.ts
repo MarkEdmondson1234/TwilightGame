@@ -10,6 +10,7 @@
 
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, connectAuthEmulator } from 'firebase/auth';
+import { debugLog } from '../utils/debugLog';
 import {
   initializeFirestore,
   Firestore,
@@ -67,7 +68,7 @@ export async function initializeFirebase(): Promise<{
   }
 
   if (isFirebaseDisabled()) {
-    console.log('[Firebase] Disabled via VITE_FIREBASE_ENABLED=false');
+    debugLog('Firebase', 'Disabled via VITE_FIREBASE_ENABLED=false');
     return null;
   }
 
@@ -80,7 +81,7 @@ export async function initializeFirebase(): Promise<{
   try {
     // Initialize Firebase app
     app = initializeApp(firebaseConfig);
-    console.log('[Firebase] App initialized for project:', firebaseConfig.projectId);
+    debugLog('Firebase', 'App initialized for project:', firebaseConfig.projectId);
 
     // Initialize Auth
     auth = getAuth(app);
@@ -97,15 +98,15 @@ export async function initializeFirebase(): Promise<{
 
     // Connect to emulators in development (if configured)
     if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
-      console.log('[Firebase] Connecting to local emulators...');
+      debugLog('Firebase', 'Connecting to local emulators...');
       connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
       connectFirestoreEmulator(db, 'localhost', 8080);
     }
 
-    console.log('[Firebase] Offline persistence enabled (multi-tab)');
+    debugLog('Firebase', 'Offline persistence enabled (multi-tab)');
 
     initialized = true;
-    console.log('[Firebase] Initialization complete');
+    debugLog('Firebase', 'Initialization complete');
 
     return { app, auth, db };
   } catch (error) {

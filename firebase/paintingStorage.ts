@@ -30,6 +30,7 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
+import { debugLog } from '../utils/debugLog';
 
 // Firestore path: shared/world/paintings/{paintingId}
 const SHARED_PAINTINGS_COLLECTION = 'shared/world/paintings';
@@ -65,7 +66,7 @@ class PaintingStorageService {
         paintedByUid: userId,
         createdAt: serverTimestamp(),
       });
-      console.log(`[PaintingStorage] Saved painting "${name}" to Firestore`);
+      debugLog('PaintingStorage', `Saved painting "${name}" to Firestore`);
       return true;
     } catch (e) {
       console.warn('[PaintingStorage] Save failed:', e);
@@ -109,7 +110,7 @@ class PaintingStorageService {
       // from the legacy path the next time it is loaded.
       await deleteDoc(doc(db, sharedPaintingDoc(paintingId)));
       await deleteDoc(doc(db, legacyPaintingDoc(userId, paintingId)));
-      console.log(`[PaintingStorage] Deleted painting ${paintingId} from Firestore`);
+      debugLog('PaintingStorage', `Deleted painting ${paintingId} from Firestore`);
     } catch (e) {
       console.warn('[PaintingStorage] Delete failed:', e);
     }
@@ -142,7 +143,7 @@ class PaintingStorageService {
           }
         }
       }
-      console.log(`[PaintingStorage] Loaded ${result.size} painting(s) from Firestore`);
+      debugLog('PaintingStorage', `Loaded ${result.size} painting(s) from Firestore`);
     } catch (e) {
       console.warn('[PaintingStorage] Load all failed:', e);
     }

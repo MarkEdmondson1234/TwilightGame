@@ -24,6 +24,7 @@ import {
 } from 'firebase/firestore';
 import { getFirebaseDb, isFirebaseInitialized } from './config';
 import { authService } from './authService';
+import { debugLog } from '../utils/debugLog';
 import {
   SharedConversationSummary,
   SharedWorldEvent,
@@ -82,7 +83,7 @@ class SharedDataService {
         summaries.push(doc.data() as SharedConversationSummary);
       });
 
-      console.log(`[SharedData] Fetched ${summaries.length} conversation summaries for ${npcId}`);
+      debugLog('SharedData', `Fetched ${summaries.length} conversation summaries for ${npcId}`);
       return summaries;
     } catch (error) {
       console.error('[SharedData] Failed to get conversation summaries:', error);
@@ -103,16 +104,16 @@ class SharedDataService {
     gameContext: { season: string; gameDay: number }
   ): Promise<boolean> {
     if (!this.canContribute()) {
-      console.log('[SharedData] Rate limited, skipping contribution');
+      debugLog('SharedData', 'Rate limited, skipping contribution');
       return false;
     }
 
     if (!isFirebaseInitialized()) {
-      console.log('[SharedData] Skipping conversation summary: Firebase not initialised');
+      debugLog('SharedData', 'Skipping conversation summary: Firebase not initialised');
       return false;
     }
     if (!authService.isAuthenticated()) {
-      console.log('[SharedData] Skipping conversation summary: not authenticated');
+      debugLog('SharedData', 'Skipping conversation summary: not authenticated');
       return false;
     }
 
@@ -121,7 +122,7 @@ class SharedDataService {
       const user = authService.getUser();
       const db = getFirebaseDb();
 
-      console.log(`[SharedData] Writing conversation summary for ${npcName}: "${topic}"`);
+      debugLog('SharedData', `Writing conversation summary for ${npcName}: "${topic}"`);
 
       const summaryData: Omit<SharedConversationSummary, 'timestamp'> & {
         timestamp: ReturnType<typeof serverTimestamp>;
@@ -142,7 +143,7 @@ class SharedDataService {
       await addDoc(summariesRef, summaryData);
 
       this.recordContribution();
-      console.log(`[SharedData] Added conversation summary for ${npcName}`);
+      debugLog('SharedData', `Added conversation summary for ${npcName}`);
       return true;
     } catch (error) {
       console.error('[SharedData] Failed to add conversation summary:', error);
@@ -184,7 +185,7 @@ class SharedDataService {
         events.push(doc.data() as SharedWorldEvent);
       });
 
-      console.log(`[SharedData] Fetched ${events.length} world events`);
+      debugLog('SharedData', `Fetched ${events.length} world events`);
       return events;
     } catch (error) {
       console.error('[SharedData] Failed to get world events:', error);
@@ -204,7 +205,7 @@ class SharedDataService {
     metadata?: Record<string, unknown>
   ): Promise<boolean> {
     if (!this.canContribute()) {
-      console.log('[SharedData] Rate limited, skipping contribution');
+      debugLog('SharedData', 'Rate limited, skipping contribution');
       return false;
     }
 
@@ -232,7 +233,7 @@ class SharedDataService {
       await addDoc(eventsRef, eventData);
 
       this.recordContribution();
-      console.log(`[SharedData] Added world event: ${title}`);
+      debugLog('SharedData', `Added world event: ${title}`);
       return true;
     } catch (error) {
       console.error('[SharedData] Failed to add world event:', error);
@@ -337,7 +338,7 @@ class SharedDataService {
         });
       });
 
-      console.log(`[SharedData] Admin: fetched ${summaries.length} conversation summaries`);
+      debugLog('SharedData', `Admin: fetched ${summaries.length} conversation summaries`);
       return summaries;
     } catch (error) {
       console.error('[SharedData] Failed to get all conversation summaries:', error);
@@ -382,7 +383,7 @@ class SharedDataService {
         });
       });
 
-      console.log(`[SharedData] Admin: fetched ${events.length} world events`);
+      debugLog('SharedData', `Admin: fetched ${events.length} world events`);
       return events;
     } catch (error) {
       console.error('[SharedData] Failed to get world events with IDs:', error);
@@ -399,7 +400,7 @@ class SharedDataService {
     try {
       const db = getFirebaseDb();
       await deleteDoc(doc(db, FIRESTORE_PATHS.sharedConversationDoc(npcId, summaryDocId)));
-      console.log(`[SharedData] Deleted conversation summary ${summaryDocId} for ${npcId}`);
+      debugLog('SharedData', `Deleted conversation summary ${summaryDocId} for ${npcId}`);
       return true;
     } catch (error) {
       console.error('[SharedData] Failed to delete conversation summary:', error);
@@ -416,7 +417,7 @@ class SharedDataService {
     try {
       const db = getFirebaseDb();
       await deleteDoc(doc(db, FIRESTORE_PATHS.sharedEventDoc(eventDocId)));
-      console.log(`[SharedData] Deleted world event ${eventDocId}`);
+      debugLog('SharedData', `Deleted world event ${eventDocId}`);
       return true;
     } catch (error) {
       console.error('[SharedData] Failed to delete world event:', error);

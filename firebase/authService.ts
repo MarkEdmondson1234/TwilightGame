@@ -26,6 +26,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb, isFirebaseInitialized } from './config';
 import { UserProfile, FIRESTORE_PATHS } from './types';
 import { setErrorReportingUser } from '../utils/errorReporting';
+import { debugLog } from '../utils/debugLog';
 
 // ============================================
 // Types
@@ -66,7 +67,7 @@ class AuthService {
 
     // Set up auth state listener
     this.unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      console.log('[AuthService] Auth state changed:', user ? user.uid : 'signed out');
+      debugLog('AuthService', 'Auth state changed:', user ? user.uid : 'signed out');
       this.currentUser = user;
       this.isLoading = false;
       this.notifyListeners();
@@ -126,7 +127,7 @@ class AuthService {
     const auth = getFirebaseAuth();
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
     await this.createUserProfile(user, displayName);
-    console.log('[AuthService] User signed up:', user.uid);
+    debugLog('AuthService', 'User signed up:', user.uid);
     return user;
   }
 
@@ -137,7 +138,7 @@ class AuthService {
     const auth = getFirebaseAuth();
     const { user } = await signInWithEmailAndPassword(auth, email, password);
     await this.updateLastLogin(user.uid);
-    console.log('[AuthService] User signed in:', user.uid);
+    debugLog('AuthService', 'User signed in:', user.uid);
     return user;
   }
 
@@ -157,7 +158,7 @@ class AuthService {
       await this.updateLastLogin(user.uid);
     }
 
-    console.log('[AuthService] User signed in with Google:', user.uid);
+    debugLog('AuthService', 'User signed in with Google:', user.uid);
     return user;
   }
 
@@ -167,7 +168,7 @@ class AuthService {
   async signInAnonymously(): Promise<User> {
     const auth = getFirebaseAuth();
     const { user } = await firebaseSignInAnonymously(auth);
-    console.log('[AuthService] Anonymous user signed in:', user.uid);
+    debugLog('AuthService', 'Anonymous user signed in:', user.uid);
     return user;
   }
 
@@ -183,7 +184,7 @@ class AuthService {
     const result: UserCredential = await linkWithCredential(this.currentUser, credential);
     await this.createUserProfile(result.user, displayName);
 
-    console.log('[AuthService] Anonymous account linked:', result.user.uid);
+    debugLog('AuthService', 'Anonymous account linked:', result.user.uid);
     return result.user;
   }
 
@@ -193,7 +194,7 @@ class AuthService {
   async signOut(): Promise<void> {
     const auth = getFirebaseAuth();
     await firebaseSignOut(auth);
-    console.log('[AuthService] User signed out');
+    debugLog('AuthService', 'User signed out');
   }
 
   // ============================================
@@ -223,7 +224,7 @@ class AuthService {
     };
 
     await setDoc(profileRef, profile, { merge: true });
-    console.log('[AuthService] User profile created for:', user.uid);
+    debugLog('AuthService', 'User profile created for:', user.uid);
   }
 
   /**
