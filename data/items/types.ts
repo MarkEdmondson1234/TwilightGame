@@ -49,6 +49,7 @@ export interface ItemDefinition {
   interactionOffsetX?: number; // Tile offset applied to the anchor tile for interaction detection (requires interactionTileRadius: 0)
   interactionOffsetY?: number; // Tile offset applied to the anchor tile for interaction detection (requires interactionTileRadius: 0)
   confirmPickup?: boolean; // true = always show radial menu before pick-up (prevents single-click auto-execute)
+  fixed?: boolean; // true = part of the world, never offer Pick Up (quest fixtures like Mushra's crafting tables — their manager owns the whole lifecycle)
   placedOffsetX?: number; // Horizontal render offset in tiles when placed (positive = shift right)
   placedOffsetY?: number; // Vertical render offset in tiles when placed (positive = shift down, negative = shift up)
   placedImage?: string; // Alt image URL to use when item is placed in the world (overrides `image`)

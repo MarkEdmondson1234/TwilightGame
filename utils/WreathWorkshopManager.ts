@@ -79,7 +79,9 @@ class WreathWorkshopManagerClass {
     gameState.addPlacedItem({
       id: VILLAGE_CRAFTING_TABLE_ID,
       itemId: 'crafting_table',
-      position: { x: 12, y: 23 },
+      // Beside Mushra (village (14, 24)) so she stands at her bench — this is the
+      // position the village map comment has always documented
+      position: { x: 15, y: 24 },
       mapId: VILLAGE_MAP_ID,
       image: itemAssets.crafting_table,
       timestamp: Date.now(),

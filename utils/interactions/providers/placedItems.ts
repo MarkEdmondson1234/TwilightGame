@@ -21,9 +21,12 @@ export function placedItemProvider(ctx: InteractionContext): AvailableInteractio
     const isFoodItem =
       placedItemDef?.category === ItemCategory.FOOD || placedItemDef?.edible === true;
 
-    // Pick up option (not available for seasonal event decorations — they are placed/removed automatically)
+    // Pick up option (not available for seasonal event decorations — they are placed/removed
+    // automatically — or for fixed fixtures like quest crafting tables, whose owning manager
+    // spawns and removes them; picking one up just made it vanish and respawn 10s later)
     const isSeasonalDecoration = itemAtPosition.itemId.startsWith('seasonal_');
-    if (!isSeasonalDecoration)
+    const isFixedFixture = placedItemDef?.fixed === true;
+    if (!isSeasonalDecoration && !isFixedFixture)
       interactions.push({
         type: 'pickup_item',
         label: 'Pick Up',
