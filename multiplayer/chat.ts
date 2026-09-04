@@ -25,6 +25,28 @@ export const CHAT_HISTORY_LIMIT = 30;
 export const CHAT_MAX_AGE_MS = 10 * 60 * 1000;
 
 /**
+ * Server/client clock skew tolerated when classifying a message as backlog.
+ * `t` in a message is the server's clock and the join moment is ours, so a
+ * message sent the instant we enter could otherwise be misclassified by a few
+ * seconds of skew. 5 s of tolerance cannot be seen — the bubble would only
+ * just have appeared anyway — and it keeps live messages live.
+ */
+export const CHAT_BACKLOG_GRACE_MS = 5 * 1000;
+
+/**
+ * Whether a message already existed in the room when we joined.
+ *
+ * Backlog is history, not conversation: it belongs in the transcript (F1), not
+ * as a bubble popping above somebody's head for a message said minutes ago —
+ * which is exactly what re-entering an area used to do, replaying your own
+ * last messages as fresh bubbles.
+ */
+export function isBacklogMessage(sentAt: number, joinedAt: number): boolean {
+  if (sentAt <= 0) return false; // unknown clock — treat as live, it passed the age filter
+  return sentAt < joinedAt - CHAT_BACKLOG_GRACE_MS;
+}
+
+/**
  * How long a message floats above the speaker's head. Longer than an emote
  * (3 s) because this one has to be read, and a child reads slowly.
  */
@@ -72,6 +94,12 @@ export interface ChatMessage {
   sentAt: number;
   /** True when this is our own message */
   isLocal: boolean;
+  /**
+   * True when the message was already in the room before we joined — set by
+   * the transport, which knows the join moment. Backlog goes to the transcript
+   * only, never to a bubble.
+   */
+  isBacklog?: boolean;
 }
 
 /**

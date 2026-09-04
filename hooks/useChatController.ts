@@ -97,12 +97,18 @@ export function useChatController(props: UseChatControllerProps): UseChatControl
 
         // The bubble is the message. Our own goes above our own head; everyone
         // else's goes above theirs, via the presence record that already knows
-        // where they are standing.
-        if (message.isLocal) setLocalChatBubble(message.text);
-        else remotePlayerManager.setChat(message.uid, message.text);
+        // where they are standing. Backlog — what was already in the room when
+        // we entered — is history: it goes to the transcript below, but it must
+        // not pop above heads as if it had just been said. That replay is what
+        // made an old bubble reappear on re-entering an area.
+        if (!message.isBacklog) {
+          if (message.isLocal) setLocalChatBubble(message.text);
+          else remotePlayerManager.setChat(message.uid, message.text);
+        }
 
         // Only what was heard is remembered — the proximity rule would be worth
-        // nothing if the transcript in Settings ignored it.
+        // nothing if the transcript in Settings ignored it. Backlog included:
+        // it is how you catch up on what was said while you were away.
         recordChatMessage(message);
       });
 

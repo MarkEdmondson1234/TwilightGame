@@ -29,6 +29,7 @@ import { reportError } from '../utils/errorReporting';
 import {
   sanitiseMessage,
   decodeChatMessage,
+  isBacklogMessage,
   CHAT_HISTORY_LIMIT,
   CHAT_MAX_AGE_MS,
 } from '../multiplayer/chat';
@@ -102,6 +103,9 @@ class ChatService {
           // the server clock and `joinedAt` is ours, so this is approximate on
           // purpose — it only has to keep last week's messages off the screen.
           if (message.sentAt > 0 && joinedAt - message.sentAt > CHAT_MAX_AGE_MS) return;
+          // Tag what already existed at join time so the controller can put
+          // backlog in the transcript without popping bubbles for it.
+          message.isBacklog = isBacklogMessage(message.sentAt, joinedAt);
           this.#emit(message);
         })
       );
