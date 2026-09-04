@@ -28,6 +28,7 @@ import { gameState } from '../../GameState';
 import { eventBus, GameEvent } from '../EventBus';
 import { getCobwebsCleaned } from '../../data/questHandlers/altheaChoresHandler';
 import { getMessCleaned } from '../../data/questHandlers/mrFoxPicnicHandler';
+import { getBouldersCleared } from '../../data/questHandlers/wizardTrialsStrengthHandler';
 import { TimeManager } from '../TimeManager';
 import { debugLog } from '../debugLog';
 
@@ -77,6 +78,8 @@ export class BackgroundImageLayer {
   private cobwebLayerEntries: Array<{ sprite: PIXI.Sprite; cobwebId: number }> = [];
   // Individual mess pile sprites tracked for dynamic show/hide on clean
   private messPileLayerEntries: Array<{ sprite: PIXI.Sprite; pileId: number }> = [];
+  // Individual boulder sprites tracked for dynamic show/hide on clear
+  private boulderLayerEntries: Array<{ sprite: PIXI.Sprite; boulderId: number }> = [];
   // Wallpaper overlay sprites tracked for dynamic show on apply
   private wallpaperLayerEntries: Array<{
     sprite: PIXI.Sprite;
@@ -113,6 +116,17 @@ export class BackgroundImageLayer {
       eventBus.on(GameEvent.MESS_PILE_CLEANED, ({ pileId }) => {
         for (const entry of this.messPileLayerEntries) {
           if (entry.pileId === pileId) {
+            entry.sprite.visible = false;
+          }
+        }
+      })
+    );
+
+    // Hide boulder sprites when cleared (Wizard Trials — Strength Trial)
+    this.eventUnsubscribers.push(
+      eventBus.on(GameEvent.BOULDER_CLEARED, ({ boulderId }) => {
+        for (const entry of this.boulderLayerEntries) {
+          if (entry.boulderId === boulderId) {
             entry.sprite.visible = false;
           }
         }
@@ -334,6 +348,11 @@ export class BackgroundImageLayer {
       return !cleaned[condition.pileId]; // show when NOT cleaned
     }
 
+    if (condition.type === 'boulder') {
+      const cleared = getBouldersCleared();
+      return !cleared[condition.boulderId]; // show when NOT cleared
+    }
+
     if (condition.type === 'wallpaper') {
       return gameState.getAppliedWallpaper(this.currentMapId ?? '') === condition.wallpaperId;
     }
@@ -360,12 +379,14 @@ export class BackgroundImageLayer {
     for (const layer of layers) {
       const isCobwebLayer = layer.condition?.type === 'cobweb';
       const isMessPileLayer = layer.condition?.type === 'mess_pile';
+      const isBoulderLayer = layer.condition?.type === 'boulder';
       const isWallpaperLayer = layer.condition?.type === 'wallpaper';
       const isTimeLayer = layer.condition?.type === 'time';
-      const isDynamicLayer = isCobwebLayer || isMessPileLayer || isWallpaperLayer || isTimeLayer;
+      const isDynamicLayer =
+        isCobwebLayer || isMessPileLayer || isBoulderLayer || isWallpaperLayer || isTimeLayer;
 
       // For quest conditions: skip the layer entirely if condition not met.
-      // For dynamic layers (cobweb/mess_pile/wallpaper/time): always create so they can be
+      // For dynamic layers (cobweb/mess_pile/boulder/wallpaper/time): always create so they can be
       // shown/hidden at runtime.
       if (!isDynamicLayer && !this.checkLayerCondition(layer.condition)) {
         continue;
@@ -387,6 +408,13 @@ export class BackgroundImageLayer {
             const pileId = layer.condition.pileId;
             layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
             this.messPileLayerEntries.push({ sprite: layerSprite.sprite, pileId });
+          }
+
+          // Boulder layers: set initial visibility and register for live toggling
+          if (isBoulderLayer && layer.condition?.type === 'boulder') {
+            const boulderId = layer.condition.boulderId;
+            layerSprite.sprite.visible = this.checkLayerCondition(layer.condition);
+            this.boulderLayerEntries.push({ sprite: layerSprite.sprite, boulderId });
           }
 
           // Wallpaper layers: set initial visibility and register for live show on apply
@@ -658,6 +686,8 @@ export class BackgroundImageLayer {
     this.cobwebLayerEntries = [];
     // Clear mess pile sprite tracking
     this.messPileLayerEntries = [];
+    // Clear boulder sprite tracking
+    this.boulderLayerEntries = [];
     // Clear wallpaper sprite tracking
     this.wallpaperLayerEntries = [];
     // Clear time-conditioned sprite tracking (the interval itself keeps running)

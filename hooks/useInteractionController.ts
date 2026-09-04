@@ -57,6 +57,12 @@ import {
   cleanMessPile,
   calculateShedOverlayBounds,
 } from '../utils/messInteractions';
+import {
+  canClearBoulders,
+  checkBoulderClick,
+  clearBoulder,
+  boulderTierToActivity,
+} from '../utils/boulderInteractions';
 import { mapManager } from '../maps';
 import {
   onWreathPlacedInVillage,
@@ -782,6 +788,35 @@ export function useInteractionController(
             }
           }
           return; // Don't process other interactions when cleaning mess piles
+        }
+      }
+
+      // === Boulder Clearing Special Handler ===
+      // Check for boulder clicks in the strength_trial room during the Wizard Trials.
+      // Uses the click's grid tile (same pipeline the F3 debug overlay reads its
+      // tile coordinates from) rather than screen-pixel/image-fraction math — see
+      // the comment at the top of utils/boulderInteractions.ts for why.
+      if (canClearBoulders(currentMapId)) {
+        const boulderResult = checkBoulderClick(clickInfo.tilePos.x, clickInfo.tilePos.y);
+
+        if (boulderResult.hit) {
+          if (boulderResult.alreadyCleared) {
+            onShowToast("You've already cleared that one.", 'info');
+          } else if (boulderResult.tier) {
+            const activity = boulderTierToActivity(boulderResult.tier);
+            const staminaOk = staminaManager.performActivity(activity);
+            if (staminaOk) {
+              const clearResult = clearBoulder(boulderResult.boulderIndex);
+              const cost = staminaManager.getActivityCost(activity);
+              const message = clearResult.success
+                ? `${clearResult.message} (-${cost} stamina)`
+                : clearResult.message;
+              onShowToast(message, clearResult.allCleared ? 'success' : 'info');
+            } else {
+              onShowToast("You're too tired to shift that right now.", 'warning');
+            }
+          }
+          return; // Don't process other interactions when clearing boulders
         }
       }
 

@@ -47,6 +47,11 @@ export enum GameEvent {
 
   // Player status events
   STAMINA_CHANGED = 'player:stamina_changed',
+  // Fired specifically for a discrete activity cost (till, harvest, clearing a
+  // boulder, ...) — NOT the continuous per-frame walking/lava/late-night drain.
+  // StaminaBar uses this to flash itself briefly, which a per-frame event would
+  // make impossible (it would just stay visible the whole time you walk).
+  STAMINA_ACTIVITY_PERFORMED = 'player:stamina_activity_performed',
 
   // Environment events
   WEATHER_CHANGED = 'env:weather_changed',
@@ -79,6 +84,9 @@ export enum GameEvent {
 
   // Mess pile events (Mr Fox's Picnic)
   MESS_PILE_CLEANED = 'mess_pile:cleaned',
+
+  // Boulder events (Wizard Trials — Strength Trial)
+  BOULDER_CLEARED = 'boulder:cleared',
 
   // Wallpaper events
   WALLPAPER_APPLIED = 'items:wallpaper_applied',
@@ -178,6 +186,10 @@ export interface EventPayloads {
     value: number;
     maxValue: number;
   };
+  [GameEvent.STAMINA_ACTIVITY_PERFORMED]: {
+    activity: string;
+    cost: number;
+  };
   [GameEvent.WEATHER_CHANGED]: {
     weather: string;
     mapId: string;
@@ -243,6 +255,9 @@ export interface EventPayloads {
   };
   [GameEvent.MESS_PILE_CLEANED]: {
     pileId: number;
+  };
+  [GameEvent.BOULDER_CLEARED]: {
+    boulderId: number;
   };
   [GameEvent.WALLPAPER_APPLIED]: {
     mapId: string;

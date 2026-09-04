@@ -79,6 +79,16 @@ export interface MessPileLayerCondition {
 }
 
 /**
+ * Condition for showing/hiding a boulder overlay (Wizard Trials — Strength Trial).
+ * The layer is visible when the boulder has NOT been cleared yet.
+ */
+export interface BoulderLayerCondition {
+  type: 'boulder';
+  boulderId: number; // 0–5
+  showWhen: 'not_cleared';
+}
+
+/**
  * Condition for showing/hiding a room layer based on an applied wallpaper.
  * The layer is visible when the specified wallpaper is currently applied to the map.
  */
@@ -99,7 +109,7 @@ export interface TimeLayerCondition {
 }
 
 /** Union of all supported layer condition types */
-export type LayerCondition = QuestLayerCondition | CobwebLayerCondition | MessPileLayerCondition | WallpaperLayerCondition | TimeLayerCondition;
+export type LayerCondition = QuestLayerCondition | CobwebLayerCondition | MessPileLayerCondition | BoulderLayerCondition | WallpaperLayerCondition | TimeLayerCondition;
 
 /**
  * Base properties shared by all room layer types

@@ -1,0 +1,36 @@
+# Strength Trial - second trial in the Wizard Trials series
+#
+# No NPC or dialogue is involved — this chain exists purely to gate the
+# Strength Trial's door transition and hold boulder-clearing progress as
+# metadata. Started automatically when the player lands in the strength_trial
+# map after winning "Test of Wits" (the sliding-crate-puzzle mini-game).
+#
+# Quest stages:
+#  1. active  - Boulders block the door; player must clear all six
+#  2. cleared - All boulders cleared; the door transition unlocks
+#
+# Complex logic (boulder click detection, per-boulder tracking, reset on
+# exhaustion) is handled by the TypeScript handler:
+# data/questHandlers/wizardTrialsStrengthHandler.ts
+#
+# Trigger: manual — started by App.tsx when the player enters strength_trial.
+
+id: wizard_trials_strength
+title: 'Strength Trial'
+description: Clear the boulders blocking the door.
+type: discovery
+
+trigger:
+  type: manual # Started manually when the player enters the room
+
+stages:
+  - id: active
+    stageNumber: 1
+    text: >
+      Six boulders block the door out. Clearing them will take some doing.
+
+  - id: cleared
+    stageNumber: 2
+    text: >
+      The last boulder gives way — the door ahead is finally clear.
+    end: true

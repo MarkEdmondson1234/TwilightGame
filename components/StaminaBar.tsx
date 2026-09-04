@@ -12,8 +12,8 @@
  * Subscribes to EventBus STAMINA_CHANGED events for reactivity.
  */
 
-import { useState, useEffect } from 'react';
-import { TILE_SIZE, STAMINA, PLAYER_SIZE } from '../constants';
+import { useState, useEffect, useRef } from 'react';
+import { TILE_SIZE, STAMINA, PLAYER_SIZE, TIMING } from '../constants';
 import { gameState } from '../GameState';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { Z_HUD } from '../zIndex';
@@ -41,6 +41,8 @@ export function StaminaBar({
 }: StaminaBarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [current, setCurrent] = useState(() => gameState.getStamina());
+  const [recentlyActive, setRecentlyActive] = useState(false);
+  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const max = STAMINA.MAX;
 
   // Subscribe to stamina changes via EventBus
@@ -48,6 +50,26 @@ export function StaminaBar({
     return eventBus.on(GameEvent.STAMINA_CHANGED, (payload) => {
       setCurrent(payload.value);
     });
+  }, []);
+
+  // Flash the bar briefly after a discrete activity cost (till, harvest, clearing
+  // a boulder, ...) — deliberately a separate event from STAMINA_CHANGED, which
+  // also fires every frame while walking and would otherwise keep this on permanently.
+  useEffect(() => {
+    return eventBus.on(GameEvent.STAMINA_ACTIVITY_PERFORMED, () => {
+      setRecentlyActive(true);
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+      flashTimeoutRef.current = setTimeout(() => {
+        setRecentlyActive(false);
+        flashTimeoutRef.current = null;
+      }, TIMING.STAMINA_BAR_FLASH_MS);
+    });
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    };
   }, []);
 
   const percentage = max > 0 ? (current / max) * 100 : 0;
@@ -72,7 +94,7 @@ export function StaminaBar({
   const screenX = playerX * tileSize + offsetX - BAR_WIDTH / 2 - 11;   // centred on player
   const screenY = playerY * tileSize + offsetY - HALF_PLAYER_PX - BAR_HEIGHT - HEAD_GAP;
 
-  const shouldShow = isHovered || isLow || forceShow;
+  const shouldShow = isHovered || isLow || forceShow || recentlyActive;
 
   // Create hover area (larger than the bar for easier interaction)
   const hoverAreaStyle: React.CSSProperties = {

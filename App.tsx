@@ -125,6 +125,11 @@ import {
   onFirstMeetingComplete as onFairyQueenFirstMeeting,
   grantFairyFormPotion,
 } from './data/questHandlers/fairyQueenHandler';
+import {
+  startWizardTrialsStrength,
+  resetWizardTrialsStrengthIfActive,
+  restartWizardTrialsStrength,
+} from './data/questHandlers/wizardTrialsStrengthHandler';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -633,6 +638,17 @@ const App: React.FC = () => {
     teleportPlayer(spawn);
     lastTransitionTime.current = Date.now();
 
+    // Persist so a hard refresh reloads here. The door-tile input hooks
+    // (useKeyboardControls/useTouchControls/useInteractionController) already
+    // call gameState.updatePlayerLocation() themselves after a real transition;
+    // handleMapTransition is the equivalent entry point for every *hardcoded*
+    // destination (cutscenes, the exhaustion teleport-home, mini-game rewards),
+    // so without this a reload lands wherever the player last walked through an
+    // actual door tile, not wherever a script last sent them.
+    const seedMatch = map.id.match(/_([\d]+)$/);
+    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+    gameState.updatePlayerLocation(map.id, spawn, seed);
+
     // End Yule celebration when leaving the village mid-timer. Note transitionToMap()
     // above already moved npcManager's currentMapId to the destination (MapManager.loadMap
     // updates it as soon as the map loads) — forceEnd() cleans up village NPCs by explicit
@@ -919,6 +935,8 @@ const App: React.FC = () => {
     staminaManager.initialise({
       showToast,
       teleportHome: () => {
+        // Fainting mid-trial means starting the Wizard Trials over from scratch
+        resetWizardTrialsStrengthIfActive();
         const spawnPoint = mapManager.getMap('mums_kitchen')?.spawnPoint ?? { x: 8, y: 6 };
         // Try to play the exhaustion cutscene first; it transitions to mums_kitchen on completion
         const cutsceneStarted = cutsceneManager.startCutscene('exhaustion');
@@ -1260,6 +1278,19 @@ const App: React.FC = () => {
           setLoadingProgress(total > 0 ? (loaded / total) * 0.5 : 0);
         },
       });
+
+      // A hard refresh while standing in the Strength Trial (saved position
+      // restored via gameState.getPlayerLocation() into the currentMapId initial
+      // state above) restarts it fresh — every boulder back in place — so its
+      // hitboxes can be recalibrated by repeatedly reloading rather than
+      // replaying the whole Wizard Trials approach each time. Must run after
+      // initializeGameAssets, not in its own earlier-declared mount effect:
+      // eventChainManager.initialise() (which loads the chain's YAML) happens
+      // inside initializeGameAssets, so starting the chain any earlier fails
+      // silently ("Unknown chain") and boulder clicks go dead for the session.
+      if (currentMapId === 'strength_trial') {
+        restartWizardTrialsStrength();
+      }
 
       // Set initial map in NPC manager
       npcManager.setCurrentMap(currentMapId);
@@ -2585,7 +2616,14 @@ const App: React.FC = () => {
           playerPosition={playerPos}
           currentMapId={currentMap?.id ?? 'unknown'}
           onClose={(result) => {
+            const miniGameId = ui.context.activeMiniGameId;
             closeUI('miniGame');
+            // Winning "Test of Wits" sends the player straight into the Strength Trial
+            if (miniGameId === 'sliding-crate-puzzle' && result?.success) {
+              startWizardTrialsStrength();
+              const spawn = mapManager.getMap('strength_trial')?.spawnPoint ?? { x: 7, y: 6 };
+              handleMapTransition('strength_trial', spawn);
+            }
             // Post-combat cleanup for hostile NPCs
             if (combatNpcIdRef.current) {
               const npcId = combatNpcIdRef.current;
