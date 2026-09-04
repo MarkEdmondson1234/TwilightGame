@@ -12,12 +12,14 @@
  * Season reset rules (triggered via TIME_CHANGED events):
  * - Winter starts → reset pruned flag (fresh pruning window)
  * - Spring starts → reset mulched & harvested flags (prune flag carries over)
+ * - Missed seasons are reconciled on startup — see reconcileMissedSeasons()
  */
 
 import { orchardAssets } from '../assets';
 import { registerAppleTreeImageFn } from './fruitTreeRegistry';
 import { eventBus, GameEvent } from './EventBus';
-import { TimeManager } from './TimeManager';
+import { TimeManager, Season } from './TimeManager';
+import { crossedSeasonStart, seasonsBetween } from './seasonReconcile';
 import { inventoryManager } from './inventoryManager';
 import { staminaManager } from './StaminaManager';
 
@@ -34,6 +36,8 @@ export interface FruitTreeState {
 interface PersistedFruitTreeData {
   trees: Record<string, FruitTreeState>; // key: "mapId:x:y"
   lastKnownSeason: string;
+  /** Game-day count when last saved — lets startup detect seasons missed while closed. */
+  lastKnownDay?: number;
 }
 
 const STORAGE_KEY = 'twilight_fruit_trees';
@@ -45,6 +49,7 @@ const STORAGE_KEY = 'twilight_fruit_trees';
 class FruitTreeManager {
   private trees: Map<string, FruitTreeState> = new Map();
   private lastKnownSeason: string = '';
+  private lastKnownDay: number | null = null;
   private initialised = false;
 
   // ── Initialisation ─────────────────────────────────────────────────────────
@@ -54,6 +59,7 @@ class FruitTreeManager {
     this.initialised = true;
 
     this.load();
+    this.reconcileMissedSeasons();
 
     // Detect season transitions via TIME_CHANGED
     eventBus.on(GameEvent.TIME_CHANGED, () => {
@@ -67,6 +73,43 @@ class FruitTreeManager {
 
     // Set current season on startup
     this.lastKnownSeason = TimeManager.getCurrentTime().season.toLowerCase();
+  }
+
+  /**
+   * Apply season resets for seasons that passed while the game was closed.
+   *
+   * The TIME_CHANGED listener only fires while the game is running, and
+   * lastKnownSeason used to be overwritten with the current season on startup —
+   * so a spring that passed while nobody was playing was never observed.
+   * harvested/mulched then stayed true and the orchard rendered bare
+   * "after harvest" trees every autumn until a spring was played through.
+   * One real week per season makes that the common case, not the edge.
+   */
+  private reconcileMissedSeasons(): void {
+    const currentDay = TimeManager.getTotalGameDays();
+    const currentSeason = TimeManager.getCurrentTime().season.toLowerCase();
+
+    if (this.lastKnownDay !== null) {
+      // Exact path: check the calendar for season starts crossed while closed.
+      const daysPerYear = TimeManager.DAYS_PER_YEAR;
+      const springStart = TimeManager.seasonStartDayInYear(Season.SPRING);
+      const winterStart = TimeManager.seasonStartDayInYear(Season.WINTER);
+      if (crossedSeasonStart(this.lastKnownDay, currentDay, springStart, daysPerYear)) {
+        this.onSeasonChanged('spring');
+      }
+      if (crossedSeasonStart(this.lastKnownDay, currentDay, winterStart, daysPerYear)) {
+        this.onSeasonChanged('winter');
+      }
+    } else if (this.lastKnownSeason && this.lastKnownSeason !== currentSeason) {
+      // Legacy saves recorded only the season name — walk forward season by
+      // season. (Cannot detect a whole missing year when from === to; saves
+      // stamped from now on carry the day count, which handles that exactly.)
+      for (const season of seasonsBetween(this.lastKnownSeason, currentSeason)) {
+        this.onSeasonChanged(season);
+      }
+    }
+
+    this.lastKnownDay = currentDay;
   }
 
   // ── Season Change Logic ─────────────────────────────────────────────────────
@@ -203,6 +246,7 @@ class FruitTreeManager {
     const data: PersistedFruitTreeData = {
       trees: Object.fromEntries(this.trees.entries()),
       lastKnownSeason: this.lastKnownSeason,
+      lastKnownDay: TimeManager.getTotalGameDays(),
     };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
@@ -217,6 +261,7 @@ class FruitTreeManager {
       if (!raw) return;
       const data = JSON.parse(raw) as PersistedFruitTreeData;
       this.lastKnownSeason = data.lastKnownSeason ?? '';
+      this.lastKnownDay = data.lastKnownDay ?? null;
       for (const [key, state] of Object.entries(data.trees ?? {})) {
         this.trees.set(key, {
           pruned: state.pruned ?? false,

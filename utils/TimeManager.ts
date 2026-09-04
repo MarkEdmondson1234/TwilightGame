@@ -66,7 +66,7 @@ export class TimeManager {
   // 1 real week = 1 game season: 168 hours / 2 hours per day = 84 game days
   private static readonly DAYS_PER_SEASON = 84;
   private static readonly SEASONS_PER_YEAR = 4;
-  private static readonly DAYS_PER_YEAR =
+  static readonly DAYS_PER_YEAR =
     TimeManager.DAYS_PER_SEASON * TimeManager.SEASONS_PER_YEAR; // 336 days
 
   // Real time to game time conversion
@@ -97,6 +97,21 @@ export class TimeManager {
    * season of *past* weather slots (the season param of getWeatherForSlot).
    * Negative hours (before the clock started) clamp to spring.
    */
+  /**
+   * Total game days elapsed since the clock started (real-time derived).
+   * Lets startup code detect seasons that passed while the game was closed
+   * (e.g. FruitTreeManager's missed spring resets) without re-deriving the
+   * epoch maths. Ignores dev time overrides — absences are real-world gaps.
+   */
+  static getTotalGameDays(): number {
+    return Math.floor((Date.now() - TimeManager.GAME_START_DATE) / TimeManager.MS_PER_GAME_DAY);
+  }
+
+  /** Day-of-year index on which a season starts (0, 84, 168, 252). */
+  static seasonStartDayInYear(season: Season): number {
+    return TimeManager.SEASON_ORDER.indexOf(season) * TimeManager.DAYS_PER_SEASON;
+  }
+
   static seasonAtTotalHours(totalHours: number): Season {
     const totalDays = Math.max(0, Math.floor(totalHours / 24));
     const dayInYear = totalDays % TimeManager.DAYS_PER_YEAR;
