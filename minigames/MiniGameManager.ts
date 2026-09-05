@@ -65,6 +65,15 @@ class MiniGameManagerClass {
           };
         }
       }
+
+      if (def.availability.requiresQuest) {
+        const requiredStage = def.availability.requiresQuestStage ?? 1;
+        const questStarted = gameState.isQuestStarted(def.availability.requiresQuest);
+        const questStage = gameState.getQuestStage(def.availability.requiresQuest);
+        if (!questStarted || questStage < requiredStage) {
+          return { canPlay: false, reason: 'Not yet accessible.' };
+        }
+      }
     }
 
     // Check item requirements.

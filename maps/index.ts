@@ -17,6 +17,8 @@ import { debugNPCs } from './definitions/debugNPCs';
 import { deepForest } from './definitions/deepForest';
 import { kingLavaFrogLair } from './definitions/kingLavaFrogLair';
 import { wizardTrials } from './definitions/wizardTrials';
+import { strengthTrial } from './definitions/strengthTrial';
+import { testOfPatience } from './definitions/testOfPatience';
 import { witchHut } from './definitions/witchHut';
 import { witchHutInterior } from './definitions/witchHutInterior';
 import { seaSide } from './definitions/seaSide';
@@ -63,6 +65,8 @@ export function initializeMaps(): void {
   mapManager.registerMap(deepForest);
   mapManager.registerMap(kingLavaFrogLair);
   mapManager.registerMap(wizardTrials);
+  mapManager.registerMap(strengthTrial);
+  mapManager.registerMap(testOfPatience);
   mapManager.registerMap(witchHut);
   mapManager.registerMap(witchHutInterior);
   mapManager.registerMap(seaSide);

@@ -20,6 +20,7 @@ import { goblinCombatDefinition, umbraWolfCombatDefinition } from './combat-enco
 import { skiingDefinition } from './skiing/definition';
 import { slidingCratePuzzleDefinition } from './sliding-crate-puzzle/definition';
 import { lavaLeapDefinition } from './lava-leap/definition';
+import { testOfAgilityDefinition } from './test-of-agility/definition';
 
 /**
  * All registered mini-games.
@@ -34,6 +35,7 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
   skiingDefinition,
   slidingCratePuzzleDefinition,
   lavaLeapDefinition,
+  testOfAgilityDefinition,
 ];
 
 // =============================================================================

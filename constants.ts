@@ -177,6 +177,7 @@ export const TIMING = {
   // UI and interactions
   DIALOGUE_DELAY_MS: 800, // Delay for dialogue transitions
   TOAST_DURATION_MS: 3000, // How long toast messages display
+  STAMINA_BAR_FLASH_MS: 3000, // How long the stamina bar stays visible after a discrete activity cost
   MODAL_TRANSITION_MS: 200, // Modal open/close animation
   LONG_PRESS_MS: 500, // Touch hold that stands in for a right-click (item action menus)
   LONG_PRESS_SLOP_PX: 12, // How far a finger may drift mid-hold before it stops counting as a press.
@@ -270,6 +271,9 @@ export const STAMINA = {
   FORAGE_COST: 2,
   COOK_COST: 5,
   MESS_CLEAN_COST: 30, // Cleaning mess piles in the seed shed (Mr Fox's Picnic quest)
+  BOULDER_LARGE_COST: 50, // Clearing the big boulder in the Strength Trial
+  BOULDER_MEDIUM_COST: 25, // Clearing a medium boulder in the Strength Trial
+  BOULDER_SMALL_COST: 15, // Clearing a small boulder in the Strength Trial
 
   // Restoration (home)
   HOME_RESTORE_PER_SECOND: 0.167, // ~10 per minute, full restore in ~10 mins

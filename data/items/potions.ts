@@ -178,7 +178,8 @@ export const POTION_ITEMS: Record<string, ItemDefinition> = {
     name: 'potion_verdant_surge',
     displayName: 'Verdant Surge',
     category: ItemCategory.POTION,
-    description: 'A vibrant green potion bursting with life. Replenishes all forage bushes.',
+    description:
+      'A vibrant green potion bursting with life. Replenishes all forage bushes, or apply it to an apple tree to bless its next harvest with a golden apple.',
     stackable: true,
     sellPrice: 120,
     image: potionAssets.verdant_surge,

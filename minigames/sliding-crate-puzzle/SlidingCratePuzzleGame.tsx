@@ -180,14 +180,18 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
   const spriteFrames = useMemo(() => generateCharacterSprites(character), [character]);
   const playerSprite = spriteFrames[facing]?.[0] ?? spriteFrames[Direction.Down]?.[0];
 
-  const handleClaim = useCallback(() => {
+  // Winning immediately hands control back to App.tsx (which plays Mordecai's next
+  // cutscene) rather than waiting on a "Claim" button click — stepping onto the exit
+  // tile is the win, so there's nothing left to confirm.
+  useEffect(() => {
+    if (!won) return;
     const result: MiniGameResult = {
       success: true,
       message: 'Congratulations! You passed the Test of Wits!',
       messageType: 'success',
     };
     onComplete(result);
-  }, [onComplete]);
+  }, [won, onComplete]);
 
   const boardWidth = level.width * cellSize;
   const boardHeight = level.height * cellSize;
@@ -340,36 +344,6 @@ export const SlidingCratePuzzleGame: React.FC<MiniGameComponentProps> = ({
           }}
         />
 
-        {won && (
-          <div
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'rgba(0,0,0,0.7)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-            }}
-          >
-            <div style={{ fontSize: 20, fontWeight: 600 }}>You passed the Test of Wits!</div>
-            <button
-              onClick={handleClaim}
-              style={{
-                padding: '8px 20px',
-                borderRadius: 8,
-                border: 'none',
-                background: '#ffd76a',
-                color: '#1a1a2e',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Claim
-            </button>
-          </div>
-        )}
         </div>
       </div>
 

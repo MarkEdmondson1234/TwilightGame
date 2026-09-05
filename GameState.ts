@@ -2059,6 +2059,17 @@ class GameStateManager {
 // Singleton instance
 export const gameState = new GameStateManager();
 
+// Force the debounced save (saveState()'s 1s setTimeout) through immediately on
+// page unload, mirroring utils/CharacterData.ts's own beforeunload flush. Without
+// this, a quick refresh shortly after a state change (e.g. updatePlayerLocation
+// right after a mini-game hands off to a new map) loses the pending write and
+// reloads from whatever was last actually flushed.
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    gameState.flushSave();
+  });
+}
+
 // Flush any pending save on page unload (pagehide is more reliable on iPad Safari)
 if (typeof window !== 'undefined') {
   window.addEventListener('pagehide', () => {

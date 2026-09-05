@@ -31,6 +31,7 @@ export interface FruitTreeState {
   pruned: boolean; // Pruned this winter (carries into spring/summer/autumn)
   mulched: boolean; // Mulched this spring (carries into summer/autumn)
   harvested: boolean; // Already harvested this autumn
+  blessed: boolean; // Verdant Surge applied — next successful harvest grants 1 bonus golden_apple
 }
 
 interface PersistedFruitTreeData {
@@ -139,7 +140,7 @@ class FruitTreeManager {
   private getState(mapId: string, x: number, y: number): FruitTreeState {
     const key = this.getKey(mapId, x, y);
     if (!this.trees.has(key)) {
-      this.trees.set(key, { pruned: false, mulched: false, harvested: false });
+      this.trees.set(key, { pruned: false, mulched: false, harvested: false, blessed: false });
     }
     return this.trees.get(key)!;
   }
@@ -159,6 +160,10 @@ class FruitTreeManager {
   isAbundant(mapId: string, x: number, y: number): boolean {
     const state = this.getState(mapId, x, y);
     return state.pruned && state.mulched;
+  }
+
+  isBlessed(mapId: string, x: number, y: number): boolean {
+    return this.getState(mapId, x, y).blessed;
   }
 
   // ── Actions ─────────────────────────────────────────────────────────────────
@@ -189,15 +194,29 @@ class FruitTreeManager {
     return true;
   }
 
-  harvestTree(mapId: string, x: number, y: number): { success: boolean; quantity: number } {
+  applyVerdantSurge(mapId: string, x: number, y: number): boolean {
+    const state = this.getState(mapId, x, y);
+    if (state.blessed) return false; // already blessed — don't double-consume
+
+    state.blessed = true;
+    this.save();
+    eventBus.emit(GameEvent.FRUIT_TREE_CHANGED, { mapId, x, y, action: 'blessed' });
+    return true;
+  }
+
+  harvestTree(
+    mapId: string,
+    x: number,
+    y: number
+  ): { success: boolean; quantity: number; bonusGoldenApple: boolean } {
     const currentSeason = TimeManager.getCurrentTime().season.toLowerCase();
-    if (currentSeason !== 'autumn') return { success: false, quantity: 0 };
+    if (currentSeason !== 'autumn') return { success: false, quantity: 0, bonusGoldenApple: false };
 
     const state = this.getState(mapId, x, y);
-    if (state.harvested) return { success: false, quantity: 0 };
+    if (state.harvested) return { success: false, quantity: 0, bonusGoldenApple: false };
 
     if (!staminaManager.performActivity('harvest')) {
-      return { success: false, quantity: 0 };
+      return { success: false, quantity: 0, bonusGoldenApple: false };
     }
 
     const abundant = state.pruned && state.mulched;
@@ -207,9 +226,16 @@ class FruitTreeManager {
 
     state.harvested = true;
     inventoryManager.addItem('apple', quantity);
+
+    const bonusGoldenApple = state.blessed;
+    if (bonusGoldenApple) {
+      inventoryManager.addItem('golden_apple', 1);
+      state.blessed = false; // consume the blessing
+    }
+
     this.save();
     eventBus.emit(GameEvent.FRUIT_TREE_CHANGED, { mapId, x, y, action: 'harvested' });
-    return { success: true, quantity };
+    return { success: true, quantity, bonusGoldenApple };
   }
 
   // ── Sprite Resolution ────────────────────────────────────────────────────────
@@ -267,6 +293,7 @@ class FruitTreeManager {
           pruned: state.pruned ?? false,
           mulched: state.mulched ?? false,
           harvested: state.harvested ?? false,
+          blessed: state.blessed ?? false,
         });
       }
     } catch (error) {

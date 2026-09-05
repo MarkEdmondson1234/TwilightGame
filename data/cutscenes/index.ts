@@ -21,6 +21,7 @@ import {
   yuleCutscene,
   yuleCelebrationOpeningCutscene,
 } from './seasonalEvents';
+import { ALL_WIZARD_TRIALS_CUTSCENES } from './wizardTrials';
 
 /**
  * All registered cutscenes
@@ -45,6 +46,8 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   yuleCutscene,
   // Yule celebration (manually triggered by clicking the tree)
   yuleCelebrationOpeningCutscene,
+  // Wizard Trials (Mordecai's projection)
+  ...ALL_WIZARD_TRIALS_CUTSCENES,
 ];
 
 /**

@@ -308,4 +308,16 @@ export const SEED_ITEMS: Record<string, ItemDefinition> = {
     cropId: 'fairy_bluebell',
     image: itemAssets.fairy_bluebell_seeds,
   },
+  seed_magic_bean: {
+    id: 'seed_magic_bean',
+    name: 'seed_magic_bean',
+    displayName: 'Magic Bean',
+    category: ItemCategory.SEED,
+    description: 'A single, oddly warm bean. It practically hums with potential.',
+    rarity: ItemRarity.VERY_RARE,
+    stackable: true,
+    sellPrice: 0,
+    cropId: 'magic_bean',
+    image: itemAssets.magic_bean_seeds,
+  },
 };

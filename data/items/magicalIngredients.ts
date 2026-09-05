@@ -358,10 +358,10 @@ export const MAGICAL_INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     displayName: 'Golden Apple',
     category: ItemCategory.MAGICAL_INGREDIENT,
     description:
-      'A shimmering apple gifted by the fairies. Said to grant exceptional quality to anything.',
+      'A shimmering apple, said to grant exceptional quality to anything — orchard trees occasionally bear one when treated with Verdant Surge magic.',
     rarity: ItemRarity.VERY_RARE,
     stackable: true,
-    sellPrice: 300,
+    sellPrice: 1000,
     image: magicalAssets.golden_apple,
   },
 };

@@ -90,6 +90,11 @@ export const CROP_ADULT_SIZES: Record<
 
   // Magical crops (2.5x2.5 tiles) - high resolution sprites
   fairy_bluebell: { width: 2.5, height: 2.5, offsetX: -0.75, offsetY: -1.5 },
+  // Giant beanstalk (8x8 tiles) - towers far above every other crop, quest-only.
+  // magic_bean_stalk.png is a square 1000x1000 canvas (the vine art sits inside
+  // transparent padding); the render box must stay square too or the whole
+  // canvas gets stretched non-uniformly, distorting the vine.
+  magic_bean: { width: 8, height: 8, offsetX: -3.5, offsetY: -7 },
 
   // Medium crops (2x2 tiles) - extend 1 tile up from soil
   pumpkin: { width: 2, height: 2, offsetX: -0.5, offsetY: -1 },

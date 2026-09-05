@@ -20,6 +20,6 @@ export const slidingCratePuzzleDefinition: MiniGameDefinition = {
   triggers: {
     mapLocation: { mapId: 'wizard_trials', x: 12, y: 7 },
   },
-  confirmMessage: 'Are you sure you want to enter the Wizard Trials?',
+  precedingCutsceneId: 'wizard_trials_wits_intro',
   customBackdrop: true,
 };

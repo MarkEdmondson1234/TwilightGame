@@ -112,6 +112,11 @@ describe('Map texture sets', () => {
   });
 
   it('core set plus any single map fits in the mobile texture budget', () => {
+    // This reads a file-header-only size for every texture, across every map x
+    // every season — thousands of synchronous fs reads as the map registry
+    // grows. It's I/O-bound, not slow because anything here is actually wrong,
+    // and was landing right at (then past) vitest's 5s default as the registry
+    // grew, so give it real headroom rather than re-fighting this each time.
     const sizeOf = (urls: string[]) =>
       urls.reduce((total, url) => {
         const local = toLocalPath(url);
@@ -177,5 +182,5 @@ describe('Map texture sets', () => {
       );
     }
     expect(over.map((r) => r.mapId)).toEqual([]);
-  });
+  }, 45000);
 });

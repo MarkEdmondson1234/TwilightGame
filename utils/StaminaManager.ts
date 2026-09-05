@@ -26,7 +26,10 @@ export type ActivityType =
   | 'harvest'
   | 'forage'
   | 'cook'
-  | 'mess_clean';
+  | 'mess_clean'
+  | 'clear_boulder_large'
+  | 'clear_boulder_medium'
+  | 'clear_boulder_small';
 
 /**
  * Callbacks required by StaminaManager
@@ -216,6 +219,7 @@ class StaminaManagerClass {
     }
 
     const exhausted = this.drainStamina(cost);
+    eventBus.emit(GameEvent.STAMINA_ACTIVITY_PERFORMED, { activity, cost });
     this.checkLowStaminaWarning();
 
     if (exhausted) {
@@ -268,9 +272,10 @@ class StaminaManagerClass {
   }
 
   /**
-   * Get the stamina cost for an activity
+   * Get the stamina cost for an activity. Public so callers can show it
+   * (e.g. in a toast) without duplicating the STAMINA constant lookup.
    */
-  private getActivityCost(activity: ActivityType): number {
+  getActivityCost(activity: ActivityType): number {
     switch (activity) {
       case 'till':
         return STAMINA.TILL_COST;
@@ -286,6 +291,12 @@ class StaminaManagerClass {
         return STAMINA.COOK_COST;
       case 'mess_clean':
         return STAMINA.MESS_CLEAN_COST;
+      case 'clear_boulder_large':
+        return STAMINA.BOULDER_LARGE_COST;
+      case 'clear_boulder_medium':
+        return STAMINA.BOULDER_MEDIUM_COST;
+      case 'clear_boulder_small':
+        return STAMINA.BOULDER_SMALL_COST;
       default:
         return 1;
     }

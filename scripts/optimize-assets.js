@@ -38,9 +38,12 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import sharp from 'sharp';
 import Spritesmith from 'spritesmith';
+
+const require = createRequire(import.meta.url);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,6 +83,9 @@ const SKI_BACKDROP_MAX = 1920; // Skiing mini-game full-screen backdrops (sky, l
 const SKI_OBSTACLE_MAX = 1024; // Skiing mini-game trees/brambles — scale up close to the camera, need detail
 const SKI_PICKUP_MAX = 640; // Skiing mini-game on-course firewood pickups — smaller on screen than obstacles
 const SKI_PC_MAX = 1024; // Skiing mini-game player sprite (matches character sprite quality)
+const AGILITY_BACKDROP_MAX = 1920; // Test of Agility full-screen backdrops (roof, walls, floor)
+const AGILITY_OBSTACLE_MAX = 1024; // Test of Agility crystal obstacle — scales up close to the camera
+const AGILITY_PC_MAX = 1024; // Test of Agility mine cart player sprite
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -532,14 +538,17 @@ async function optimizeFarming() {
 
     // Orchard fruit trees — tree-scale quality (add new fruit tree keywords here)
     const isOrchardTree = file.includes('apple_tree') || file.includes('pear_tree');
+    // Magic beanstalk (8x8 tiles) - towers far above every other crop, needs
+    // tree-scale quality or it looks blurry blown up that large.
+    const isGiantCrop = file.includes('magic_bean');
     // Plant sprites (seedling, plant_*, wilted, crop stages) - use larger size for visibility
     // Reduced compression level to 5 for better quality (user feedback: less compression needed)
     // Soil sprites (fallow, tilled) - use regular tile size
     const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted') ||
                           file.includes('_young') || file.includes('_adult');
-    const targetSize = isOrchardTree ? TREE_SIZE : isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
-    const targetQuality = isOrchardTree ? SHOWCASE_QUALITY : isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
-    const targetCompression = isOrchardTree ? 4 : isPlantSprite ? 5 : 9;
+    const targetSize = isOrchardTree || isGiantCrop ? TREE_SIZE : isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
+    const targetQuality = isOrchardTree || isGiantCrop ? SHOWCASE_QUALITY : isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
+    const targetCompression = isOrchardTree || isGiantCrop ? 4 : isPlantSprite ? 5 : 9;
 
     await sharp(inputPath)
       .resize(targetSize, targetSize, {
@@ -681,14 +690,27 @@ async function optimizeNPCs() {
   console.log(`\n  Optimized ${optimized} NPC sprites\n`);
 }
 
-// Check if gifsicle is installed
-function hasGifsicle() {
+// Resolve a gifsicle binary: prefer one already on PATH (e.g. the apt-get
+// install in CI), otherwise fall back to the prebuilt binary shipped by the
+// npm `gifsicle` devDependency so a fresh checkout works without any manual
+// system install (this is what silently produced uncompressed GIFs before).
+function resolveGifsicle() {
   try {
     execSync('which gifsicle', { stdio: 'ignore' });
-    return true;
+    return 'gifsicle';
   } catch {
-    return false;
+    // fall through to the npm package
   }
+  try {
+    const bundled = require('gifsicle');
+    const binPath = bundled.default || bundled;
+    if (binPath && fs.existsSync(binPath)) {
+      return `"${binPath}"`;
+    }
+  } catch {
+    // npm package not installed either
+  }
+  return null;
 }
 
 // Optimize animated GIFs
@@ -703,11 +725,11 @@ async function optimizeAnimations() {
 
   const allFiles = getAllFiles(animationsDir);
   let optimized = 0;
-  const hasGifsicleInstalled = hasGifsicle();
+  const gifsicleBin = resolveGifsicle();
 
-  if (!hasGifsicleInstalled) {
+  if (!gifsicleBin) {
     console.log('⚠️  gifsicle not found - GIFs will be copied without optimization');
-    console.log('   Install with: brew install gifsicle (macOS) or apt-get install gifsicle (Linux)\n');
+    console.log('   Install with: npm install --save-dev gifsicle (or brew/apt-get install gifsicle)\n');
   }
 
   for (const inputPath of allFiles) {
@@ -730,11 +752,11 @@ async function optimizeAnimations() {
     // Delete output file if it exists (handles case-sensitivity issues on Windows)
     deleteIfExists(outputPath);
 
-    if (hasGifsicleInstalled) {
+    if (gifsicleBin) {
       try {
         // Optimize GIF with gifsicle: resize and optimize
         execSync(
-          `gifsicle --resize ${ANIMATION_SIZE}x${ANIMATION_SIZE} --optimize=3 --colors 256 "${inputPath}" -o "${outputPath}"`,
+          `${gifsicleBin} --resize ${ANIMATION_SIZE}x${ANIMATION_SIZE} --optimize=3 --colors 256 "${inputPath}" -o "${outputPath}"`,
           { stdio: 'pipe' }
         );
 
@@ -919,6 +941,72 @@ async function optimizeSkiingGame() {
   }
 
   console.log(`\n  Optimized ${optimized} skiing mini-game asset(s)\n`);
+}
+
+// Note: these are bespoke canvas assets for the Test of Agility mini-game (mine cart
+// backdrops, obstacle, player sprite), not tile/item sprites — mirrors optimizeSkiingGame()
+// above. Source files are already alpha-cropped by hand, so no auto-trim step is needed.
+async function optimizeTestOfAgility() {
+  console.log('⛏️  Optimizing Test of Agility mini-game assets...');
+
+  const agilityDir = path.join(ASSETS_DIR, 'test_of_agility');
+  if (!fs.existsSync(agilityDir)) {
+    console.log('  ℹ️  No test_of_agility directory found, skipping...\n');
+    return;
+  }
+
+  const BACKDROP_FILES = new Set([
+    'cart_game_roof.png',
+    'cart_game_layer1.png',
+    'cart_game_layer2.png',
+    'cart_game_layer3.png',
+    'cart_game_floor.png',
+  ]);
+  const OBSTACLE_FILES = new Set(['crystal.png']);
+  const PC_FILES = new Set(['mine_cart_male.png']);
+
+  const allFiles = getAllFiles(agilityDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    if (!BACKDROP_FILES.has(file) && !OBSTACLE_FILES.has(file) && !PC_FILES.has(file)) {
+      continue;
+    }
+
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'test_of_agility', file.replace(/\.jpeg$/i, '.png')));
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+    deleteIfExists(outputPath);
+
+    const maxSize = BACKDROP_FILES.has(file)
+      ? AGILITY_BACKDROP_MAX
+      : OBSTACLE_FILES.has(file)
+      ? AGILITY_OBSTACLE_MAX
+      : AGILITY_PC_MAX;
+
+    // Preserve the source aspect ratio (these aren't square) — just cap the largest dimension.
+    await sharp(inputPath)
+      .resize(maxSize, maxSize, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} Test of Agility mini-game asset(s)\n`);
 }
 
 // Optimize witch hut assets
@@ -1498,6 +1586,7 @@ async function main() {
     await optimizeAnimations();
     await optimizeCutscenes();
     await optimizeSkiingGame();
+    await optimizeTestOfAgility();
     await optimizeWitchHut();
     await optimizeCooking();
     await optimizeCauldron();

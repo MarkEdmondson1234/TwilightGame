@@ -30,6 +30,7 @@ import { decorationPlacementProvider } from './providers/decorationPlacement';
 import { mapLocationProvider } from './providers/mapLocation';
 import { snowAngelProvider } from './providers/snowAngel';
 import { curtainProvider } from './providers/curtains';
+import { chestProvider } from './providers/chest';
 
 export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   // Exclusive — a shop counter fully owns the click.
@@ -40,6 +41,7 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   furnitureProvider,
   placedItemProvider,
   mirrorProvider,
+  chestProvider,
   // Ahead of npcProvider: when someone is standing on an NPC, the person is who you meant.
   remotePlayerProvider,
   npcProvider,

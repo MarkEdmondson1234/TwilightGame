@@ -8,9 +8,10 @@ import type { AvailableInteraction, InteractionContext } from '../types';
 import { SizeTier } from '../../../types';
 import { getTierName } from '../../MagicEffects';
 import { mapManager, transitionToMap } from '../../../maps';
+import { cutsceneManager } from '../../CutsceneManager';
 
 export function transitionProvider(ctx: InteractionContext): AvailableInteraction[] {
-  const { position, playerSizeTier, isContextMenu, onTransition } = ctx;
+  const { position, playerSizeTier, isContextMenu, onTransition, currentMapId } = ctx;
   const interactions: AvailableInteraction[] = [];
 
   /**
@@ -77,6 +78,13 @@ export function transitionProvider(ctx: InteractionContext): AvailableInteractio
         icon: '🚪',
         color: '#34d399',
         execute: () => {
+          if (transition.precedingCutsceneId) {
+            cutsceneManager.triggerManualCutscene(transition.precedingCutsceneId, {
+              mapId: currentMapId,
+              position,
+            });
+            return;
+          }
           try {
             const result = transitionToMap(transition.toMapId, transition.toPosition);
             const map = result.map;

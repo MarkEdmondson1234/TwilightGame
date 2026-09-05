@@ -14,6 +14,7 @@
 import type { AvailableInteraction, InteractionContext } from '../types';
 import { getMiniGameLocationsForMap } from '../../../minigames/registry';
 import { miniGameManager } from '../../../minigames/MiniGameManager';
+import { cutsceneManager } from '../../CutsceneManager';
 
 /** Matches transitionProvider's click tolerance for mapManager.getTransitionAt(). */
 const CLICK_TOLERANCE = 0.9;
@@ -51,6 +52,13 @@ export function mapLocationProvider(ctx: InteractionContext): AvailableInteracti
       color: mg.colour,
       data: { miniGameId: mg.id, mapId: currentMapId, x: locX, y: locY },
       execute: () => {
+        if (mg.precedingCutsceneId) {
+          cutsceneManager.triggerManualCutscene(mg.precedingCutsceneId, {
+            mapId: currentMapId,
+            position,
+          });
+          return;
+        }
         if (mg.confirmMessage && onConfirmMiniGame) {
           onConfirmMiniGame(mg.id, mg.confirmMessage, triggerData);
           return;

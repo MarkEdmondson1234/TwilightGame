@@ -60,6 +60,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.STONE_COLUMN_MD]: 'grass',
   [TileType.STONE_COLUMN_LG]: 'grass',
   [TileType.WALL_TORCH]: 'grass',
+  [TileType.CHEST]: 'grass',
   [TileType.CAVE_LAKE_SM]: 'grass',
   [TileType.CAVE_LAKE_MD]: 'grass',
   [TileType.CAVE_LAKE_LG]: 'grass',

@@ -125,6 +125,12 @@ import {
   onFirstMeetingComplete as onFairyQueenFirstMeeting,
   grantFairyFormPotion,
 } from './data/questHandlers/fairyQueenHandler';
+import {
+  startWizardTrialsStrength,
+  resetWizardTrialsStrengthIfActive,
+  restartWizardTrialsStrength,
+} from './data/questHandlers/wizardTrialsStrengthHandler';
+import { startWizardTrialsPatience } from './data/questHandlers/wizardTrialsPatienceHandler';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -633,6 +639,17 @@ const App: React.FC = () => {
     teleportPlayer(spawn);
     lastTransitionTime.current = Date.now();
 
+    // Persist so a hard refresh reloads here. The door-tile input hooks
+    // (useKeyboardControls/useTouchControls/useInteractionController) already
+    // call gameState.updatePlayerLocation() themselves after a real transition;
+    // handleMapTransition is the equivalent entry point for every *hardcoded*
+    // destination (cutscenes, the exhaustion teleport-home, mini-game rewards),
+    // so without this a reload lands wherever the player last walked through an
+    // actual door tile, not wherever a script last sent them.
+    const seedMatch = map.id.match(/_([\d]+)$/);
+    const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
+    gameState.updatePlayerLocation(map.id, spawn, seed);
+
     // End Yule celebration when leaving the village mid-timer. Note transitionToMap()
     // above already moved npcManager's currentMapId to the destination (MapManager.loadMap
     // updates it as soon as the map loads) — forceEnd() cleans up village NPCs by explicit
@@ -712,6 +729,31 @@ const App: React.FC = () => {
     } else if (action.cutsceneId === 'fairy_oak_midnight_return') {
       // Return visit — grant fairy form potion
       grantFairyFormPotion();
+    }
+
+    // Wizard Trials: these two cutscenes precede a mini-game rather than a map
+    // transition (their onComplete is 'none') — launch the mini-game directly here,
+    // the same way mapLocationProvider would have without the cutscene in between.
+    if (action.cutsceneId === 'wizard_trials_wits_intro') {
+      miniGameManager.consumeStartRequirements('sliding-crate-puzzle');
+      openUI('miniGame', {
+        activeMiniGameId: 'sliding-crate-puzzle',
+        miniGameTriggerData: {
+          triggerType: 'mapLocation',
+          position: { x: 12, y: 7 },
+          extra: { mapId: 'wizard_trials', x: 12, y: 7 },
+        },
+      });
+    } else if (action.cutsceneId === 'wizard_trials_agility_intro') {
+      miniGameManager.consumeStartRequirements('test-of-agility');
+      openUI('miniGame', {
+        activeMiniGameId: 'test-of-agility',
+        miniGameTriggerData: {
+          triggerType: 'mapLocation',
+          position: { x: 7, y: 4 },
+          extra: { mapId: 'strength_trial', x: 7, y: 4 },
+        },
+      });
     }
 
     setIsCutscenePlaying(false);
@@ -919,6 +961,8 @@ const App: React.FC = () => {
     staminaManager.initialise({
       showToast,
       teleportHome: () => {
+        // Fainting mid-trial means starting the Wizard Trials over from scratch
+        resetWizardTrialsStrengthIfActive();
         const spawnPoint = mapManager.getMap('mums_kitchen')?.spawnPoint ?? { x: 8, y: 6 };
         // Try to play the exhaustion cutscene first; it transitions to mums_kitchen on completion
         const cutsceneStarted = cutsceneManager.startCutscene('exhaustion');
@@ -1260,6 +1304,19 @@ const App: React.FC = () => {
           setLoadingProgress(total > 0 ? (loaded / total) * 0.5 : 0);
         },
       });
+
+      // A hard refresh while standing in the Strength Trial (saved position
+      // restored via gameState.getPlayerLocation() into the currentMapId initial
+      // state above) restarts it fresh — every boulder back in place — so its
+      // hitboxes can be recalibrated by repeatedly reloading rather than
+      // replaying the whole Wizard Trials approach each time. Must run after
+      // initializeGameAssets, not in its own earlier-declared mount effect:
+      // eventChainManager.initialise() (which loads the chain's YAML) happens
+      // inside initializeGameAssets, so starting the chain any earlier fails
+      // silently ("Unknown chain") and boulder clicks go dead for the session.
+      if (currentMapId === 'strength_trial') {
+        restartWizardTrialsStrength();
+      }
 
       // Set initial map in NPC manager
       npcManager.setCurrentMap(currentMapId);
@@ -2585,7 +2642,30 @@ const App: React.FC = () => {
           playerPosition={playerPos}
           currentMapId={currentMap?.id ?? 'unknown'}
           onClose={(result) => {
+            const miniGameId = ui.context.activeMiniGameId;
             closeUI('miniGame');
+            // Winning "Test of Wits" plays Mordecai's Strength Trial intro cutscene,
+            // which transitions the player into the Strength Trial itself on "Next"
+            // (see data/cutscenes/wizardTrials.ts's onComplete).
+            if (miniGameId === 'sliding-crate-puzzle' && result?.success) {
+              startWizardTrialsStrength();
+              cutsceneManager.triggerManualCutscene('wizard_trials_strength_intro', {
+                mapId: currentMap?.id ?? 'wizard_trials',
+                position: playerPos,
+              });
+            }
+            // Winning "Test of Agility" sends the player on to the Test of Patience;
+            // crashing casts them back to the Wizard Trials antechamber instead.
+            if (miniGameId === 'test-of-agility') {
+              if (result?.success) {
+                startWizardTrialsPatience();
+                const spawn = mapManager.getMap('test_of_patience')?.spawnPoint ?? { x: 4, y: 10 };
+                handleMapTransition('test_of_patience', spawn);
+              } else {
+                const spawn = mapManager.getMap('wizard_trials')?.spawnPoint ?? { x: 3, y: 7 };
+                handleMapTransition('wizard_trials', spawn);
+              }
+            }
             // Post-combat cleanup for hostile NPCs
             if (combatNpcIdRef.current) {
               const npcId = combatNpcIdRef.current;

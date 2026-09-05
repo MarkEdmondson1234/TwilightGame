@@ -9,9 +9,11 @@ import { Season, TimeManager } from '../../TimeManager';
 import { TileType } from '../../../types';
 import { findTileTypeNearby, getTileCoords } from '../../mapUtils';
 import { fruitTreeManager } from '../../fruitTreeManager';
+import { inventoryManager } from '../../inventoryManager';
 
 export function fruitTreeProvider(ctx: InteractionContext): AvailableInteraction[] {
-  const { playerPosition, currentMapId, onFarmAction, tileX, tileY } = ctx;
+  const { playerPosition, currentMapId, onFarmAction, tileX, tileY, isContextMenu, currentTool } =
+    ctx;
   const interactions: AvailableInteraction[] = [];
 
   // Check for fruit tree interactions (prune / mulch / harvest)
@@ -80,6 +82,29 @@ export function fruitTreeProvider(ctx: InteractionContext): AvailableInteraction
               message: `Harvested ${result.quantity} apple${result.quantity !== 1 ? 's' : ''}!${hint}`,
             });
           }
+        },
+      });
+    }
+
+    const holdingVerdantSurge =
+      currentTool === 'potion_verdant_surge' ||
+      (isContextMenu === true && inventoryManager.hasItem('potion_verdant_surge', 1));
+
+    if (holdingVerdantSurge && !fruitTreeManager.isBlessed(currentMapId, tx, ty)) {
+      interactions.push({
+        type: 'apply_verdant_surge',
+        label: 'Apply Verdant Surge',
+        icon: '✨',
+        color: '#22C55E',
+        requireConfirmation: true,
+        execute: () => {
+          inventoryManager.removeItem('potion_verdant_surge', 1);
+          fruitTreeManager.applyVerdantSurge(currentMapId, tx, ty);
+          onFarmAction?.({
+            handled: true,
+            message:
+              'The tree hums with verdant magic — its next harvest will yield a golden apple!',
+          });
         },
       });
     }

@@ -54,6 +54,10 @@ export interface MiniGameAvailability {
   timeOfDay?: 'day' | 'night';
   /** Minimum friendship level with a specific NPC */
   minFriendship?: { npcId: string; level: number };
+  /** Quest that must be started (and, if requiresQuestStage is set, at that stage or later) */
+  requiresQuest?: string;
+  /** Minimum stage of requiresQuest. Defaults to 1 if requiresQuest is set but this isn't. */
+  requiresQuestStage?: number;
 }
 
 // =============================================================================
@@ -104,6 +108,15 @@ export interface MiniGameDefinition {
    * opening immediately. Only `mapLocationProvider` consults this today.
    */
   confirmMessage?: string;
+
+  /**
+   * If set, clicking a `mapLocation` trigger for this game plays the named
+   * cutscene instead of opening the game (or showing `confirmMessage`)
+   * directly. Whatever ends the cutscene is then responsible for opening the
+   * mini-game — see App.tsx's `handleCutsceneComplete`. Only
+   * `mapLocationProvider` consults this today.
+   */
+  precedingCutsceneId?: string;
 }
 
 // =============================================================================
