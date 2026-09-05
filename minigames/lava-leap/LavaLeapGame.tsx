@@ -12,7 +12,6 @@ import {
   CRYSTALS,
   GEMS,
   LAVA_Y,
-  PLAYER,
   PLATFORMS,
   chutePhase,
   createState,
@@ -23,6 +22,7 @@ import {
   type Input,
 } from './engine';
 import './lavaLeap.css';
+import { LavaLeapPlayer } from './LavaLeapPlayer';
 
 interface Progress {
   windUnlocked?: boolean;
@@ -202,10 +202,13 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
           },
     });
   };
-  const control = (action: keyof Input, label: string, text: string) => (
+  const control = (action: keyof Input, label: string, text: React.ReactNode) => (
     <button
       type="button"
       aria-label={label}
+      className={
+        action === 'jump' || action === 'power' ? 'll-action-button' : 'll-direction-button'
+      }
       disabled={mode !== 'playing' || frame.won}
       onPointerDown={(e) => {
         e.preventDefault();
@@ -369,18 +372,13 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
                 <span>❄ {Math.ceil(frame.ice.expires - frame.time)}s</span>
               </div>
             )}
-            <div
-              className={`ll-player ${frame.rescueGlow > 0 ? 'rescued' : ''}`}
-              style={{
-                left: frame.x - 14,
-                top: frame.y - 16,
-                width: PLAYER.w + 28,
-                height: PLAYER.h + 16,
-              }}
-            >
-              {sprite ? <img src={sprite} alt="Your character" /> : <span>🧙</span>}
-              {frame.glide > 0 && <span className="ll-wind-trail">≈</span>}
-            </div>
+            <LavaLeapPlayer
+              x={frame.x}
+              y={frame.y}
+              sprite={sprite}
+              rescued={frame.rescueGlow > 0}
+              gliding={frame.glide > 0}
+            />
           </div>
         </div>
         {(mode !== 'playing' || frame.won) && (
@@ -449,6 +447,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
       <footer className="ll-controls">
         <div className="ll-movement">
           {control('left', 'Move left', '◀')}
+          <span className="ll-pad-centre" aria-hidden="true" />
           {control('right', 'Move right', '▶')}
         </div>
         <div className="ll-crystals">
@@ -468,15 +467,28 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
           ))}
         </div>
         <div className="ll-actions">
-          {control('jump', 'Jump', 'Jump ↑')}
+          {control(
+            'jump',
+            'Jump',
+            <>
+              <span>Jump ↑</span>
+              <small>Space</small>
+            </>
+          )}
           {control(
             'power',
             `Use ${active.name} crystal`,
-            frame.cooldown > 0
-              ? `${frame.cooldown.toFixed(1)}s`
-              : frame.crystal === 'wind' && frame.windUsed
-                ? 'Land to recharge'
-                : `${active.symbol} Power`
+            <>
+              <span>Use {active.name}</span>
+              <small>
+                E ·{' '}
+                {frame.cooldown > 0
+                  ? `${frame.cooldown.toFixed(1)}s`
+                  : frame.crystal === 'wind' && frame.windUsed
+                    ? 'Land to recharge'
+                    : 'Ready'}
+              </small>
+            </>
           )}
         </div>
       </footer>

@@ -4,6 +4,8 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MiniGameContext } from '../minigames/types';
 import { LavaLeapGame } from '../minigames/lava-leap/LavaLeapGame';
+import { LavaLeapPlayer } from '../minigames/lava-leap/LavaLeapPlayer';
+import { PLAYER } from '../minigames/lava-leap/engine';
 
 vi.mock('../GameState', () => ({ gameState: { getSelectedCharacter: () => null } }));
 vi.mock('../utils/characterSprites', () => ({
@@ -58,6 +60,28 @@ afterEach(() => {
 });
 
 describe('Lava Leap controls', () => {
+  it('anchors the visible artwork to the same ground as the physics', () => {
+    render(
+      <LavaLeapPlayer
+        x={80}
+        y={410 - PLAYER.h}
+        sprite="/TwilightGame/assets-optimized/character1/base/right_0.png"
+        rescued={false}
+        gliding={false}
+      />
+    );
+    const player = document.querySelector<HTMLElement>('.ll-player')!;
+    expect(parseFloat(player.style.top) + parseFloat(player.style.height)).toBe(410);
+    expect(parseFloat(player.style.height)).toBeGreaterThanOrEqual(72);
+    expect(screen.getByRole('img', { name: 'Your character' }).getAttribute('viewBox')).toBe(
+      '349 122 323 598'
+    );
+  });
+  it('keeps the activation keys visible on the action buttons', () => {
+    setup();
+    expect(screen.getByRole('button', { name: 'Jump' }).textContent).toContain('Space');
+    expect(screen.getByRole('button', { name: 'Use Frost crystal' }).textContent).toContain('E');
+  });
   it('starts developer practice with fresh unlocks even when normal play has unlocked Wind', () => {
     setup(true, true);
     expect(screen.getByRole('button', { name: /Wind/ }).hasAttribute('disabled')).toBe(true);
@@ -97,6 +121,34 @@ describe('Lava Leap controls', () => {
     advance();
     expect(playerX()).toBeGreaterThan(start);
     fireEvent.pointerCancel(right, { pointerId: 1 });
+    const stopped = playerX();
+    advance();
+    expect(playerX()).toBe(stopped);
+  });
+
+  it('keeps moving when a second finger jumps and is lifted', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Enter the cavern' }));
+    const right = screen.getByRole('button', { name: 'Move right' });
+    const jump = screen.getByRole('button', { name: 'Jump' });
+    right.setPointerCapture = vi.fn();
+    jump.setPointerCapture = vi.fn();
+    const pointer = (target: HTMLElement, type: string, pointerId: number) =>
+      fireEvent(target, Object.assign(new Event(type, { bubbles: true }), { pointerId }));
+    const initialTop = document.querySelector<HTMLElement>('.ll-player')!.style.top;
+    pointer(right, 'pointerdown', 11);
+    pointer(jump, 'pointerdown', 22);
+    advance();
+    expect(parseFloat(document.querySelector<HTMLElement>('.ll-player')!.style.top)).toBeLessThan(
+      parseFloat(initialTop)
+    );
+    pointer(jump, 'pointerup', 22);
+    const x = playerX();
+    advance();
+    expect(playerX()).toBeGreaterThan(x);
+    pointer(right, 'pointerup', 11);
+    // Physics runs at 120 Hz, display at 30 Hz: flush the last pending paint.
+    advance(3);
     const stopped = playerX();
     advance();
     expect(playerX()).toBe(stopped);

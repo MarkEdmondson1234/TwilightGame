@@ -193,6 +193,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  object-position: center bottom;
 }
 .ll-player.rescued {
   filter: drop-shadow(0 0 12px #b8ecff);
@@ -263,7 +264,7 @@
 }
 .ll-controls {
   display: flex;
-  align-items: stretch;
+  align-items: center;
   justify-content: space-between;
   gap: 14px;
   padding: 0 24px 8px;
@@ -290,6 +291,53 @@
   font-size: 10px;
   font-weight: normal;
 }
+.ll-controls .ll-action-button {
+  width: 92px;
+  height: 92px;
+  padding: 8px;
+  border-radius: 50%;
+  border: 2px solid #94a3b8;
+  background: #334155;
+  box-shadow: 0 4px 0 #182431;
+}
+.ll-action-button small {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: normal;
+}
+.ll-controls .ll-direction-button {
+  width: 60px;
+  min-width: 60px;
+  height: 64px;
+  border: 2px solid #64748b;
+  background: #334155;
+  font-size: 24px;
+}
+.ll-direction-button:first-child {
+  border-radius: 16px 5px 5px 16px;
+}
+.ll-direction-button:last-child {
+  border-radius: 5px 16px 16px 5px;
+}
+.ll-movement {
+  gap: 3px;
+  align-items: center;
+}
+.ll-pad-centre {
+  width: 16px;
+  height: 22px;
+  border-radius: 50%;
+  background: #1e293b;
+  border: 1px solid #475569;
+}
+.ll-controls button {
+  -webkit-touch-callout: none;
+}
+.ll-controls button:active:not(:disabled) {
+  background: #526781;
+  transform: translateY(2px);
+}
 .ll-help {
   padding: 0 12px max(8px, env(safe-area-inset-bottom));
   text-align: center;
@@ -299,6 +347,14 @@
     sans-serif;
 }
 @media (max-width: 650px) {
+  .ll-controls .ll-action-button {
+    width: 76px;
+    height: 76px;
+  }
+  .ll-controls .ll-direction-button {
+    width: 48px;
+    min-width: 48px;
+  }
   .ll-header {
     gap: 7px;
     padding: 8px;
