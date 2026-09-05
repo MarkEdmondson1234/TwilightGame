@@ -281,6 +281,7 @@
 }
 .ll-crystals button {
   color: var(--crystal-colour);
+  padding: 8px 10px;
 }
 .ll-crystals button[aria-pressed='true'] {
   border: 2px solid var(--crystal-colour);

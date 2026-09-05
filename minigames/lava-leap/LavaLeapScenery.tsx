@@ -1,7 +1,9 @@
 import React from 'react';
 import { tileAssets } from '../../assets';
-import { CHECKPOINTS, CHUTES, LAVA_Y, PLATFORMS, chutePhase } from './engine';
+import { LAVA_Y, chutePhase } from './engine';
 import './scenery.css';
+import type { Course } from './courses';
+import { CrystalArtwork } from './CrystalArtwork';
 
 const HAVEN_NAMES = [
   'Trailhead',
@@ -17,15 +19,19 @@ export function LavaLeapScenery({
   time,
   checkpoint,
   checkpointTime,
+  course,
+  sealedVent,
 }: {
+  course: Course;
+  sealedVent: { x: number; expires: number } | null;
   time: number;
   checkpoint: number;
   checkpointTime: number;
 }) {
   return (
     <>
-      {CHECKPOINTS.map((x, i) => {
-        const ground = PLATFORMS.find((p) => x >= p.x && x < p.x + p.w)!.y;
+      {course.checkpoints.map((x, i) => {
+        const ground = course.platforms.find((p) => x >= p.x && x < p.x + p.w)!.y;
         const lit = i <= checkpoint;
         const arrival = i === checkpoint ? Math.max(0, 1 - (time - checkpointTime) / 1.4) : 0;
         return (
@@ -70,17 +76,9 @@ export function LavaLeapScenery({
                 </>
               )}
               <image href={tileAssets.rock_1} x="10" y="77" width="76" height="34" />
-              <path
-                d="M36 87L32 58L47 29L62 59L58 87Z"
-                fill={lit ? '#69b9b7' : '#556675'}
-                stroke={lit ? '#caffee' : '#91a4ab'}
-                strokeWidth="2"
-              />
-              <path
-                d="M47 29L47 88L32 58ZM47 29L62 59L47 69"
-                fill={lit ? '#d9fff0' : '#7f929d'}
-                opacity=".75"
-              />
+              <foreignObject x="25" y="29" width="46" height="58">
+                <CrystalArtwork crystal={course.power} size={46} />
+              </foreignObject>
               <path
                 d="M27 96L34 93M62 94L69 96M44 99H51"
                 stroke={lit ? '#dcffe5' : '#87959f'}
@@ -104,10 +102,12 @@ export function LavaLeapScenery({
           </div>
         );
       })}
-      {CHUTES.map((chute, i) => {
-        const phase = chutePhase(time, chute.phase);
+      {course.chutes.map((chute, i) => {
+        const sealed = sealedVent?.x === chute.x && sealedVent.expires > time;
+        const phase = sealed ? 'quiet' : chutePhase(time, chute.phase);
         const cycle = (time + chute.phase) % 6;
-        const base = PLATFORMS.find((p) => chute.x >= p.x && chute.x < p.x + p.w)?.y ?? LAVA_Y;
+        const base =
+          course.platforms.find((p) => chute.x >= p.x && chute.x < p.x + p.w)?.y ?? LAVA_Y;
         const height = base - 170;
         const warning = phase === 'warning' ? (cycle - 3.5) / 1.3 : 0;
         const wave = Math.sin(time * 24 + i) * 5;
@@ -140,6 +140,14 @@ export function LavaLeapScenery({
                 ry="6"
                 fill={phase === 'quiet' ? '#a64526' : '#ffbc57'}
               />
+              {sealed && (
+                <>
+                  <image href={tileAssets.rock_1} x="32" y={base - 147} width="66" height="32" />
+                  <text x="65" y={base - 151} textAnchor="middle" fill="#ffe3b1" fontSize="13">
+                    Sealed {Math.ceil(sealedVent!.expires - time)}s
+                  </text>
+                </>
+              )}
               {phase === 'warning' && (
                 <>
                   <ellipse

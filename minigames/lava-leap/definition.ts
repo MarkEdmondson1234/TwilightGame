@@ -5,7 +5,8 @@ import { LAVA_LEAP_GUIDE_NAME } from '../../utils/npcs/mine/lavaLeapGuide';
 export const lavaLeapDefinition: MiniGameDefinition = {
   id: 'lava-leap',
   displayName: 'Lava Leap',
-  description: 'Cross volcanic rivers with Frost and Wind crystals.',
+  description:
+    'Discover Frost, Wind and Earth, then choose a crystal grotto, mushroom cavern or forge passage.',
   icon: '💎',
   colour: '#9fe9ff',
   component: LavaLeapGame,

@@ -25,6 +25,7 @@ export interface Transition {
   label?: string; // Optional description like "To Village"
   // Conditional access - transition only available if quest condition is met
   requiresQuest?: string; // Quest ID that must be started
+  blockedMessage?: string; // Player-facing explanation when a quest gate is closed
   requiresQuestStage?: number; // Specific quest stage required (optional, defaults to any stage > 0)
   // Size restrictions - player must be within tier range to use transition
   minSizeTier?: SizeTier; // Minimum size tier required (e.g., -2 = must be at least "Very Small")
