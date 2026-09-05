@@ -4,6 +4,12 @@ export interface Platform {
   w: number;
 }
 export type CourseId = 'lava' | 'grotto' | 'heights' | 'forge';
+export interface Chute {
+  x: number;
+  phase: number;
+  /** Linked pressure vents reach the ceiling and need Earth to stop them. */
+  pressureGroup?: string;
+}
 export interface Course {
   id: CourseId;
   name: string;
@@ -13,7 +19,7 @@ export interface Course {
   platforms: Platform[];
   checkpoints: number[];
   gems: { x: number; y: number }[];
-  chutes: { x: number; phase: number }[];
+  chutes: Chute[];
 }
 export const COURSES: Record<CourseId, Course> = {
   lava: {
@@ -103,31 +109,30 @@ export const COURSES: Record<CourseId, Course> = {
     id: 'forge',
     name: 'Old Forge',
     description:
-      'Use Earth near a vent to seal it for four seconds. Cross while its stone lid holds.',
+      'Seal linked pressure chutes with Earth, dash through, then rest at the next haven.',
     power: 'earth',
     width: 2700,
     platforms: [
-      { x: 0, y: 410, w: 280 },
-      { x: 400, y: 410, w: 390 },
-      { x: 930, y: 380, w: 440 },
-      { x: 1500, y: 410, w: 440 },
-      { x: 2090, y: 410, w: 610 },
+      { x: 0, y: 410, w: 800 },
+      { x: 920, y: 380, w: 480 },
+      { x: 1520, y: 410, w: 1180 },
     ],
-    checkpoints: [80, 450, 980, 1560, 2140],
+    checkpoints: [80, 730, 980, 1580, 2130, 2530],
     gems: [
-      { x: 540, y: 340 },
+      { x: 540, y: 380 },
       { x: 730, y: 340 },
-      { x: 1090, y: 310 },
-      { x: 1310, y: 310 },
-      { x: 1820, y: 340 },
-      { x: 2430, y: 340 },
+      { x: 1140, y: 350 },
+      { x: 1430, y: 310 },
+      { x: 1740, y: 380 },
+      { x: 2340, y: 380 },
     ],
-    chutes: [
-      { x: 610, phase: 0 },
-      { x: 1140, phase: 2 },
-      { x: 1690, phase: 4 },
-      { x: 2300, phase: 1 },
-    ],
+    chutes: [450, 1050, 1650, 2250].flatMap((start, group) =>
+      [0, 90, 180].map((offset) => ({
+        x: start + offset,
+        phase: 0,
+        pressureGroup: `forge-${group}`,
+      }))
+    ),
   },
 };
 export const BRANCHES: CourseId[] = ['grotto', 'heights', 'forge'];

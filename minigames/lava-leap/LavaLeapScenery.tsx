@@ -1,6 +1,7 @@
 import React from 'react';
 import { tileAssets } from '../../assets';
-import { LAVA_Y, chutePhase } from './engine';
+import { LAVA_Y } from './engine';
+import { isVentSealed, ventPhase, VENT_WARNING_SECONDS } from './vents';
 import './scenery.css';
 import type { Course } from './courses';
 import { CrystalArtwork } from './CrystalArtwork';
@@ -30,6 +31,26 @@ export function LavaLeapScenery({
 }) {
   return (
     <>
+      {course.chutes
+        .filter(
+          (c, i, all) =>
+            c.pressureGroup && all.findIndex((v) => v.pressureGroup === c.pressureGroup) === i
+        )
+        .map((chute) => {
+          const group = course.chutes.filter((c) => c.pressureGroup === chute.pressureGroup);
+          const ground = course.platforms.find((p) => chute.x >= p.x && chute.x < p.x + p.w)!.y;
+          return (
+            <div
+              key={chute.pressureGroup}
+              className={`ll-pressure-link ${isVentSealed(course, chute, sealedVent, time) ? 'sealed' : ''}`}
+              style={{
+                left: chute.x,
+                top: ground + 13,
+                width: group[group.length - 1].x - chute.x,
+              }}
+            />
+          );
+        })}
       {course.checkpoints.map((x, i) => {
         const ground = course.platforms.find((p) => x >= p.x && x < p.x + p.w)!.y;
         const lit = i <= checkpoint;
@@ -103,30 +124,37 @@ export function LavaLeapScenery({
         );
       })}
       {course.chutes.map((chute, i) => {
-        const sealed = sealedVent?.x === chute.x && sealedVent.expires > time;
-        const phase = sealed ? 'quiet' : chutePhase(time, chute.phase);
+        const sealed = isVentSealed(course, chute, sealedVent, time);
+        const expiring = sealed && sealedVent!.expires - time < VENT_WARNING_SECONDS;
+        const origin = chute.pressureGroup ? -40 : 130;
+        const phase = ventPhase(course, chute, sealedVent, time);
         const cycle = (time + chute.phase) % 6;
         const base =
           course.platforms.find((p) => chute.x >= p.x && chute.x < p.x + p.w)?.y ?? LAVA_Y;
-        const height = base - 170;
-        const warning = phase === 'warning' ? (cycle - 3.5) / 1.3 : 0;
+        const height = base - origin - 40;
+        const warning =
+          phase === 'warning'
+            ? chute.pressureGroup
+              ? time / VENT_WARNING_SECONDS
+              : (cycle - 3.5) / VENT_WARNING_SECONDS
+            : 0;
         const wave = Math.sin(time * 24 + i) * 5;
         return (
           <div
             key={i}
-            className={`ll-vent ${phase}`}
-            style={{ left: chute.x - 65, top: 130, height: base - 130 + 22 }}
-            aria-label={`Lava chute: ${phase}`}
+            className={`ll-vent ${phase} ${chute.pressureGroup ? 'pressure' : ''} ${expiring ? 'expiring' : ''}`}
+            style={{ left: chute.x - 65, top: origin, height: base - origin + 22 }}
+            aria-label={`${chute.pressureGroup ? 'Pressure' : 'Lava'} chute: ${sealed ? 'sealed' : phase}`}
           >
             <svg
               width="130"
-              height={base - 130 + 22}
-              viewBox={`0 0 130 ${base - 130 + 22}`}
+              height={base - origin + 22}
+              viewBox={`0 0 130 ${base - origin + 22}`}
               aria-hidden="true"
             >
               <ellipse
                 cx="65"
-                cy={base - 130 + 4}
+                cy={base - origin + 4}
                 rx="33"
                 ry="12"
                 fill="#382c34"
@@ -135,15 +163,27 @@ export function LavaLeapScenery({
               />
               <ellipse
                 cx="65"
-                cy={base - 130}
+                cy={base - origin}
                 rx="21"
                 ry="6"
                 fill={phase === 'quiet' ? '#a64526' : '#ffbc57'}
               />
               {sealed && (
                 <>
-                  <image href={tileAssets.rock_1} x="32" y={base - 147} width="66" height="32" />
-                  <text x="65" y={base - 151} textAnchor="middle" fill="#ffe3b1" fontSize="13">
+                  <image
+                    href={tileAssets.rock_1}
+                    x="32"
+                    y={base - origin - 17}
+                    width="66"
+                    height="32"
+                  />
+                  <text
+                    x="65"
+                    y={base - origin - 21}
+                    textAnchor="middle"
+                    fill="#ffe3b1"
+                    fontSize="13"
+                  >
                     Sealed {Math.ceil(sealedVent!.expires - time)}s
                   </text>
                 </>
@@ -152,7 +192,7 @@ export function LavaLeapScenery({
                 <>
                   <ellipse
                     cx="65"
-                    cy={base - 138}
+                    cy={base - origin - 8}
                     rx={20 + warning * 8}
                     ry={5 + warning * 9}
                     fill="#ffbc57"
@@ -163,7 +203,7 @@ export function LavaLeapScenery({
                       className="ll-pressure-bubble"
                       key={n}
                       cx={51 + n * 13}
-                      cy={base - 145 - ((time * 33 + n * 7) % 26)}
+                      cy={base - origin - 15 - ((time * 33 + n * 7) % 26)}
                       r={3 + warning * 3}
                       fill="#ffdb8b"
                     />
@@ -210,7 +250,7 @@ export function LavaLeapScenery({
                       className="ll-vent-steam"
                       key={n}
                       cx={65 + Math.sin(time + n) * t * 18}
-                      cy={base - 145 - t * 55}
+                      cy={base - origin - 15 - t * 55}
                       rx={6 + t * 13}
                       ry={4 + t * 8}
                       fill="#d5c6c5"
@@ -219,12 +259,18 @@ export function LavaLeapScenery({
                   );
                 })}
             </svg>
-            <span>
-              {phase === 'warning'
-                ? '⚠ Eruption coming'
-                : phase === 'erupting'
-                  ? 'Wait for it…'
-                  : 'Clear to cross'}
+            <span style={chute.pressureGroup ? { top: base - origin + 30 } : undefined}>
+              {sealed
+                ? expiring
+                  ? 'Lids lifting!'
+                  : 'Cross now'
+                : chute.pressureGroup
+                  ? 'Earth seals this group'
+                  : phase === 'warning'
+                    ? '⚠ Eruption coming'
+                    : phase === 'erupting'
+                      ? 'Wait for it…'
+                      : 'Clear to cross'}
             </span>
           </div>
         );

@@ -45,8 +45,8 @@ export function ExpeditionOverlay({
             {frame.won && frame.courseId === 'lava' ? (
               <>
                 <p>
-                  You found the Earth crystal! It seals nearby vents for four seconds. Choose a
-                  passage: each leads through a different cavern.
+                  You found the Earth crystal! It seals nearby vents and linked groups for four
+                  seconds. Choose a passage: each leads through a different cavern.
                 </p>
                 <div className="ll-route-choice">
                   {BRANCHES.map((id) => (

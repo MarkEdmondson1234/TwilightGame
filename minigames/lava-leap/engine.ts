@@ -1,5 +1,7 @@
 /** Fixed-step, renderer-independent physics. Coordinates are in cavern pixels. */
 import { COURSES, type CourseId, type Platform } from './courses';
+import { EARTH_SEAL_SECONDS, ventPhase } from './vents';
+export { chutePhase } from './vents';
 export type { Platform } from './courses';
 export type Crystal = 'frost' | 'wind' | 'earth';
 export const COURSE_WIDTH = COURSES.lava.width;
@@ -17,7 +19,7 @@ export const CRYSTALS: Record<
     name: 'Earth',
     symbol: '⬟',
     colour: '#dfbc8c',
-    help: 'Stand near a vent and seal it for four seconds.',
+    help: 'Seal a nearby vent or linked group for four seconds. Switching crystals removes the seal.',
     cooldown: 3,
   },
   frost: {
@@ -95,10 +97,6 @@ export function createState(windUnlocked = false): State {
     notice: 'Walk to the river. Use Frost to grow a stepping stone, then jump across.',
   };
 }
-export function chutePhase(time: number, offset: number): 'quiet' | 'warning' | 'erupting' {
-  const t = (time + offset) % 6;
-  return t < 3.5 ? 'quiet' : t < 4.8 ? 'warning' : 'erupting';
-}
 export function selectCrystal(s: State, crystal: Crystal): void {
   if (crystal === 'earth' && !s.earthUnlocked) return;
   if (crystal === 'wind' && !s.windUnlocked) return;
@@ -138,7 +136,10 @@ export function activatePower(s: State): boolean {
       s.notice = 'Move closer to a vent before using Earth.';
       return false;
     }
-    s.sealedVent = { x: vent.x, expires: s.time + 4 };
+    s.sealedVent = { x: vent.x, expires: s.time + EARTH_SEAL_SECONDS };
+    s.notice = vent.pressureGroup
+      ? 'All three chutes sealed! Cross to the next safe haven before the lids lift.'
+      : 'Vent sealed for four seconds. Cross while the stone lid holds.';
   } else {
     if (!s.windUnlocked || s.windUsed) return false;
     s.vy = -510;
@@ -193,11 +194,10 @@ export function step(s: State, input: Input, dt: number): void {
   }
   for (const chute of course.chutes) {
     if (
-      s.sealedVent?.x !== chute.x &&
-      chutePhase(s.time, chute.phase) === 'erupting' &&
+      ventPhase(course, chute, s.sealedVent, s.time) === 'erupting' &&
       s.x + PLAYER.w > chute.x - 18 &&
       s.x < chute.x + 18 &&
-      s.y + PLAYER.h > 170
+      (chute.pressureGroup || s.y + PLAYER.h > 170)
     ) {
       rescue(s);
       return;

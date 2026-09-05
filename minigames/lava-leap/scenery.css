@@ -2,6 +2,68 @@
   position: absolute;
   pointer-events: none;
 }
+.ll-backdrop.grotto {
+  --cave-top: #102b45e0;
+  --cave-bottom: #236778ad;
+}
+.ll-backdrop.heights {
+  --cave-top: #14283ae0;
+  --cave-bottom: #27604fc9;
+}
+.ll-backdrop.forge {
+  --cave-top: #211817e8;
+  --cave-bottom: #853d27b8;
+}
+.ll-rock.grotto {
+  border-top-color: #95e7ea;
+  box-shadow: inset 0 8px 18px #4b96ab88;
+}
+.ll-rock.heights {
+  border-top-color: #aed69e;
+  box-shadow: inset 0 12px 20px #4a785d99;
+}
+.ll-rock.forge {
+  border-top-color: #d59463;
+  box-shadow: inset 0 12px 24px #4e2928aa;
+}
+.ll-lava.ll-mushroom-depths {
+  filter: hue-rotate(110deg) saturate(0.35);
+  opacity: 0.35;
+}
+.ll-vent.pressure > span {
+  font-size: 10px;
+  width: 90px;
+  left: 20px;
+}
+.ll-vent.expiring > span {
+  color: #ffce70;
+  font-weight: 700;
+}
+.ll-pressure-link {
+  position: absolute;
+  height: 8px;
+  border: 2px solid #db9a6b;
+  border-radius: 4px;
+  background: #653b2b;
+}
+.ll-pressure-link.sealed {
+  background: #a8cfb1;
+  border-color: #deefd4;
+}
+.ll-forge-instruction {
+  position: absolute;
+  width: 240px;
+  padding: 12px;
+  background: #271e1dda;
+  color: #f5d9b6;
+  border-left: 4px solid #deba84;
+  font:
+    16px/1.5 Georgia,
+    serif;
+}
+.ll-forge-instruction strong {
+  display: block;
+}
 .ll-crystal-art {
   vertical-align: middle;
 }

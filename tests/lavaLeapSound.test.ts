@@ -6,6 +6,21 @@ import { lavaSoundEvents } from '../minigames/lava-leap/soundEvents';
 import { lavaLeapAudioAssets } from '../minigames/lava-leap/audioAssets';
 
 describe('Lava Leap sound cues', () => {
+  it('warns once before linked lids lift, then plays a single eruption for the group', () => {
+    const before = {
+      ...createState(),
+      courseId: 'forge' as const,
+      x: 540,
+      time: 2.69,
+      sealedVent: { x: 450, expires: 4 },
+    };
+    const warning = { ...before, time: 2.71 };
+    expect(lavaSoundEvents(before, warning)).toEqual(['warning']);
+    expect(lavaSoundEvents(warning, { ...warning, time: 2.8 })).toEqual([]);
+    expect(
+      lavaSoundEvents({ ...before, time: 3.99 }, { ...before, time: 4.01, sealedVent: null })
+    ).toEqual(['eruption']);
+  });
   it('plays a nearby chute warning once, followed by its eruption', () => {
     const before = createState();
     before.x = 1250;

@@ -303,9 +303,9 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
           aria-label="Side-scrolling volcanic cavern"
         >
           <div
-            className="ll-backdrop"
+            className={`ll-backdrop ${course.id}`}
             style={{
-              backgroundImage: `linear-gradient(#18242be0, #352639c9), url(${tileAssets.rock_wall})`,
+              backgroundImage: `linear-gradient(var(--cave-top, #18242be0), var(--cave-bottom, #352639c9)), url(${tileAssets.rock_wall})`,
               backgroundPositionX: -camera * 0.2,
             }}
           />
@@ -315,7 +315,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
           >
             <CourseBackdrop course={course} />
             <div
-              className={`ll-lava ${course.id === 'grotto' ? 'll-pool' : ''}`}
+              className={`ll-lava ${course.id === 'grotto' ? 'll-pool' : ''} ${course.id === 'heights' ? 'll-mushroom-depths' : ''}`}
               style={{
                 top: LAVA_Y,
                 backgroundImage:
@@ -327,7 +327,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
             {course.platforms.map((p, i) => (
               <div
                 key={i}
-                className="ll-rock"
+                className={`ll-rock ${course.id}`}
                 style={{
                   left: p.x,
                   top: p.y,
@@ -363,7 +363,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
                 </div>
               </>
             )}
-            {frame.courseId !== 'lava' && (
+            {frame.courseId !== 'lava' && frame.courseId !== 'forge' && (
               <div className="ll-sign" style={{ left: 135, top: 180, maxWidth: 310 }}>
                 {course.name}
                 <br />
