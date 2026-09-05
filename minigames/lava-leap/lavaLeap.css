@@ -1,0 +1,375 @@
+.lava-leap {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: #17232b;
+  color: #f4efe3;
+  font-family: Georgia, 'Times New Roman', serif;
+  user-select: none;
+  overscroll-behavior: none;
+}
+.lava-leap button {
+  min-height: 46px;
+  padding: 8px 16px;
+  border: 1px solid #75888d;
+  border-radius: 12px;
+  color: #f4efe3;
+  background: #293c46;
+  cursor: pointer;
+  font:
+    600 15px system-ui,
+    sans-serif;
+  touch-action: none;
+}
+.lava-leap button:hover {
+  background: #38525d;
+}
+.lava-leap button:focus-visible {
+  outline: 3px solid #fff3b8;
+  outline-offset: 3px;
+}
+.lava-leap button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.ll-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #465660;
+}
+.ll-header h1 {
+  margin: 0;
+  font-size: 29px;
+  line-height: 1.15;
+}
+.ll-header span,
+.ll-score small {
+  font:
+    12px system-ui,
+    sans-serif;
+  color: #c2ced1;
+}
+.ll-score {
+  margin-left: auto;
+  text-align: center;
+  color: #b1f0ff;
+  font-size: 23px;
+}
+.ll-score small {
+  display: block;
+}
+.ll-stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: #111c25;
+}
+.ll-viewport {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  overflow: hidden;
+  transform-origin: center;
+}
+.ll-backdrop {
+  position: absolute;
+  inset: 0;
+  background-size: auto, 540px;
+}
+.ll-world {
+  position: absolute;
+  height: 540px;
+  will-change: transform;
+}
+.ll-lava {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background-size: auto, 320px;
+  border-top: 5px solid #ffd078;
+  box-shadow: 0 -22px 70px #f776354d;
+}
+.ll-rock {
+  position: absolute;
+  background-size: 230px;
+  border-top: 7px solid #988b9a;
+  border-radius: 12px 14px 0 0;
+  box-shadow: inset 0 10px 15px #0005;
+}
+.ll-checkpoint {
+  position: absolute;
+  color: #a5a2a9;
+  width: 90px;
+}
+.ll-checkpoint span {
+  font-size: 34px;
+}
+.ll-checkpoint small {
+  display: block;
+  font:
+    12px system-ui,
+    sans-serif;
+}
+.ll-checkpoint.lit {
+  color: #b9eedb;
+}
+.ll-sign {
+  position: absolute;
+  color: #e9dee8;
+  border-left: 3px solid #9fe9ff;
+  padding: 8px 12px;
+  font-size: 16px;
+  line-height: 1.6;
+  background: #17232baa;
+}
+.ll-gem {
+  position: absolute;
+  width: 40px;
+  height: 50px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 9px #9fe9ff);
+}
+.ll-chute {
+  position: absolute;
+  top: 170px;
+  height: 310px;
+  width: 36px;
+  border-bottom: 8px solid #786676;
+}
+.ll-chute span {
+  position: absolute;
+  width: 120px;
+  left: -42px;
+  top: -28px;
+  text-align: center;
+  color: #ddd0d1;
+  font:
+    14px system-ui,
+    sans-serif;
+}
+.ll-chute.warning {
+  border-bottom-color: #ffd078;
+  background: linear-gradient(transparent 75%, #ffd07880);
+}
+.ll-chute.warning span {
+  color: #ffd078;
+  font-weight: bold;
+}
+.ll-chute.erupting {
+  background: linear-gradient(90deg, #ef6229, #ffdf79, #ef6229);
+  border-radius: 50% 50% 0 0;
+  box-shadow: 0 0 28px #ff9d4277;
+}
+.ll-ice {
+  position: absolute;
+  height: 18px;
+  border-radius: 9px;
+  border-top: 5px solid #dcf9ff;
+  background: #70b8d3;
+  box-shadow: 0 0 22px #9fe9ff77;
+}
+.ll-ice span {
+  position: absolute;
+  top: 22px;
+  left: 65px;
+  color: #d1f5ff;
+  font:
+    bold 16px system-ui,
+    sans-serif;
+}
+.ll-ice.crumbling {
+  background: repeating-linear-gradient(115deg, #70b8d3 0 24px, #22313b 24px 29px);
+  border-top-style: dashed;
+}
+.ll-player {
+  position: absolute;
+}
+.ll-player img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.ll-player.rescued {
+  filter: drop-shadow(0 0 12px #b8ecff);
+}
+.ll-wind-trail {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  font-size: 44px;
+  color: #c4b5fd;
+}
+.ll-exit {
+  position: absolute;
+  color: #c1f6da;
+  font-size: 68px;
+  text-shadow: 0 0 30px #b8f6d8;
+}
+.ll-exit span {
+  display: block;
+  font-size: 16px;
+}
+.ll-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0b1623ad;
+  overflow: auto;
+  padding: 12px;
+}
+.ll-panel {
+  max-width: 550px;
+  padding: 24px 32px;
+  border: 1px solid #8b9aa4;
+  border-radius: 22px 22px 7px 7px;
+  background: #25343e;
+  text-align: center;
+  box-shadow: 0 12px 50px #0005;
+}
+.ll-panel-icon {
+  color: #b8e5ff;
+  font-size: 34px;
+}
+.ll-panel h2 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 12px 0;
+}
+.ll-panel p {
+  font:
+    15px/1.6 system-ui,
+    sans-serif;
+  color: #e0e8e9;
+  margin: 12px 0;
+}
+.ll-panel button {
+  margin: 5px;
+  background: #416273;
+}
+.ll-notice {
+  min-height: 38px;
+  padding: 8px 16px;
+  text-align: center;
+  color: #f1dbae;
+  font:
+    13px/1.5 system-ui,
+    sans-serif;
+}
+.ll-controls {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 24px 8px;
+}
+.ll-movement,
+.ll-actions,
+.ll-crystals {
+  display: flex;
+  gap: 8px;
+}
+.ll-controls button {
+  min-width: 65px;
+  min-height: 58px;
+}
+.ll-crystals button {
+  color: var(--crystal-colour);
+}
+.ll-crystals button[aria-pressed='true'] {
+  border: 2px solid var(--crystal-colour);
+  background: #344954;
+}
+.ll-crystals small {
+  display: block;
+  font-size: 10px;
+  font-weight: normal;
+}
+.ll-help {
+  padding: 0 12px max(8px, env(safe-area-inset-bottom));
+  text-align: center;
+  color: #bacacf;
+  font:
+    12px/1.4 system-ui,
+    sans-serif;
+}
+@media (max-width: 650px) {
+  .ll-header {
+    gap: 7px;
+    padding: 8px;
+  }
+  .ll-header h1 {
+    font-size: 21px;
+  }
+  .ll-header span,
+  .ll-score small {
+    font-size: 10px;
+  }
+  .ll-header button {
+    padding: 6px 9px;
+  }
+  .ll-controls {
+    gap: 6px;
+    padding: 0 6px 6px;
+    flex-wrap: wrap;
+  }
+  .ll-controls button {
+    min-width: 48px;
+    padding: 8px;
+    font-size: 13px;
+  }
+  .ll-crystals {
+    order: -1;
+    width: 100%;
+    justify-content: center;
+  }
+  .ll-crystals button {
+    min-height: 46px;
+    flex: 1;
+  }
+  .ll-panel {
+    padding: 14px;
+  }
+  .ll-panel h2 {
+    font-size: 23px;
+  }
+  .ll-panel p {
+    font-size: 13px;
+  }
+  .ll-panel-icon {
+    display: none;
+  }
+}
+@media (max-height: 550px) {
+  .ll-header {
+    padding: 5px 12px;
+  }
+  .ll-header h1 {
+    font-size: 20px;
+  }
+  .ll-header span,
+  .ll-help {
+    display: none;
+  }
+  .ll-notice {
+    padding: 4px;
+    min-height: 25px;
+  }
+  .ll-controls button {
+    min-height: 46px;
+  }
+  .ll-panel {
+    padding: 10px 20px;
+  }
+  .ll-panel-icon {
+    display: none;
+  }
+  .ll-panel p {
+    margin: 7px 0;
+  }
+}

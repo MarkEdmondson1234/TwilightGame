@@ -19,6 +19,7 @@ import { wreathMakingDefinition } from './wreath-making/definition';
 import { goblinCombatDefinition, umbraWolfCombatDefinition } from './combat-encounter/definition';
 import { skiingDefinition } from './skiing/definition';
 import { slidingCratePuzzleDefinition } from './sliding-crate-puzzle/definition';
+import { lavaLeapDefinition } from './lava-leap/definition';
 
 /**
  * All registered mini-games.
@@ -32,6 +33,7 @@ const MINI_GAME_DEFINITIONS: MiniGameDefinition[] = [
   umbraWolfCombatDefinition,
   skiingDefinition,
   slidingCratePuzzleDefinition,
+  lavaLeapDefinition,
 ];
 
 // =============================================================================

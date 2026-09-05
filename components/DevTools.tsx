@@ -1173,6 +1173,7 @@ const MiniGamesDebugSection: React.FC<{
                   onClick={() =>
                     onOpenMiniGame(game.id, {
                       triggerType: 'direct',
+                      ...(game.id === 'lava-leap' ? { extra: { playtest: true } } : {}),
                     })
                   }
                   style={{ fontSize: '11px' }}
@@ -1182,8 +1183,11 @@ const MiniGamesDebugSection: React.FC<{
                       : `Cannot launch: ${'reason' in check ? check.reason : 'unknown'}`
                   }
                 >
-                  Launch
+                  {game.id === 'lava-leap' ? 'Try me' : 'Launch'}
                 </button>
+                {game.id === 'lava-leap' && (
+                  <small>Fresh practice run; no saved progress or rewards.</small>
+                )}
                 {!check.canPlay && 'reason' in check && (
                   <span style={{ fontSize: '10px', color: '#f87171' }}>{check.reason}</span>
                 )}

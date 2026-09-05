@@ -7,7 +7,7 @@
 import type { AvailableInteraction, InteractionContext } from '../types';
 import { TimeManager } from '../../TimeManager';
 import { gameState } from '../../../GameState';
-import { getMiniGamesForNPC } from '../../../minigames/registry';
+import { getMiniGamesForNPC, getMiniGamesForNPCName } from '../../../minigames/registry';
 import { inventoryManager } from '../../inventoryManager';
 import { miniGameManager } from '../../../minigames/MiniGameManager';
 import { npcManager } from '../../../NPCManager';
@@ -84,7 +84,8 @@ export function npcProvider(ctx: InteractionContext): AvailableInteraction[] {
     if (config.onOpenMiniGame) {
       const byId = getMiniGamesForNPC(npcId);
       const seen = new Set<string>();
-      const npcMiniGames = [...byId].filter((mg) => {
+      const byName = npc?.name ? getMiniGamesForNPCName(npc.name) : [];
+      const npcMiniGames = [...byId, ...byName].filter((mg) => {
         if (seen.has(mg.id)) return false;
         seen.add(mg.id);
         return true;

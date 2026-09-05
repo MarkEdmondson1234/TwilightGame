@@ -14,6 +14,7 @@ import {
   createLavaFrogWorkerNPC,
 } from '../utils/npcFactories';
 import { debugLog } from '../utils/debugLog';
+import { createLavaLeapGuide } from '../utils/npcs/mine/lavaLeapGuide';
 
 /**
  * Procedural map generation functions
@@ -1617,7 +1618,8 @@ export function generateLavaMap(seed: number = Date.now()): MapDefinition {
 
   debugLog('Lava', `Generated lava level at depth ${lavaDepth} (seed ${seed})`);
 
-  // Spawn 1–3 wandering lava frog workers per level
+  // The first worker is Cinder, on protected ground near the entrance.
+  // Still consume the same random draws so existing lake layouts stay stable.
   const lavaWorkerNames = ['Molten', 'Scoria', 'Pumice', 'Cinder', 'Basalt', 'Igneous', 'Flint'];
   const workerCount = Math.floor(rand() * 3) + 1;
   const npcs = [];
@@ -1632,11 +1634,13 @@ export function generateLavaMap(seed: number = Date.now()): MapDefinition {
       attempts++;
     } while (attempts < 20 && Math.abs(wx - spawnX) < 5 && Math.abs(wy - spawnY) < 5);
     npcs.push(
-      createLavaFrogWorkerNPC(
-        `lava_frog_worker_${seed}_${i}`,
-        { x: wx, y: wy },
-        lavaWorkerNames[nameIndex]
-      )
+      i === 0
+        ? createLavaLeapGuide(`lava_frog_worker_${seed}_${i}`, { x: spawnX + 2, y: spawnY + 1 })
+        : createLavaFrogWorkerNPC(
+            `lava_frog_worker_${seed}_${i}`,
+            { x: wx, y: wy },
+            lavaWorkerNames[nameIndex]
+          )
     );
   }
 
