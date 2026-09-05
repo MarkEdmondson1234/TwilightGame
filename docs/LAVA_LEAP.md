@@ -28,6 +28,16 @@ This starts a fresh practice run without saving unlocks, best scores or awarding
 Progress uses the framework's per-minigame browser storage, not cloud saves.
 There is no entry cost, seasonal restriction, overall time limit or inventory loss.
 
+Safe havens are named stone-and-crystal beacons. They light up when reached and
+emit a brief arrival ring. Chutes bubble and steam before their jets erupt; the
+effect timing follows the simulation, including pause. Reduced-motion mode removes
+particles, ripples and the animated inner jet while retaining hazard warnings.
+
+Ten original PCM sound effects share the game's SFX/master volume and mute settings.
+They are generated reproducibly with `node scripts/generate-lava-audio.mjs`.
+Chute sounds play on phase changes only when nearby; other cues mark successful
+powers, jumping, landing, treasures, checkpoints, rescues and completion.
+
 ## Implementation and validation
 
 `minigames/lava-leap/engine.ts` owns fixed-step physics, level geometry and crystal

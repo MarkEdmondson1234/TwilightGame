@@ -6,14 +6,11 @@ import { DEFAULT_CHARACTER, generateCharacterSprites } from '../../utils/charact
 import { Direction } from '../../types';
 import { Z_MINI_GAME } from '../../zIndex';
 import {
-  CHECKPOINTS,
-  CHUTES,
   COURSE_WIDTH,
   CRYSTALS,
   GEMS,
   LAVA_Y,
   PLATFORMS,
-  chutePhase,
   createState,
   rescue,
   selectCrystal,
@@ -23,6 +20,8 @@ import {
 } from './engine';
 import './lavaLeap.css';
 import { LavaLeapPlayer } from './LavaLeapPlayer';
+import { LavaLeapScenery } from './LavaLeapScenery';
+import { lavaSoundEvents } from './soundEvents';
 
 interface Progress {
   windUnlocked?: boolean;
@@ -156,7 +155,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
       last = now;
       const s = simulation.current;
       const hadWind = s.windUnlocked;
-      const gems = s.collected.length;
+      const before = { ...s, collected: [...s.collected] };
       while (accumulator >= 1 / 120) {
         step(s, input.current, 1 / 120);
         input.current.jump = false;
@@ -165,8 +164,8 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
       }
       if (!hadWind && s.windUnlocked) {
         if (!playtest) context.storage.save({ ...saved, windUnlocked: true });
-        context.actions.playSfx('sfx_magic_transition');
-      } else if (s.collected.length > gems) context.actions.playSfx('sfx_harvest');
+      }
+      for (const sound of lavaSoundEvents(before, s)) context.actions.playSfx(`sfx_lava_${sound}`);
       if (now - painted >= 1000 / 30 || s.won) {
         setFrame({ ...s, collected: [...s.collected] });
         painted = now;
@@ -308,19 +307,11 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
                 }}
               />
             ))}
-            {CHECKPOINTS.map((x, i) => {
-              const y = PLATFORMS.find((p) => x >= p.x && x < p.x + p.w)!.y;
-              return (
-                <div
-                  key={x}
-                  className={`ll-checkpoint ${i <= frame.checkpoint ? 'lit' : ''}`}
-                  style={{ left: x, top: y - 55 }}
-                >
-                  <span>⚑</span>
-                  <small>{i === 0 ? 'Start' : 'Safe haven'}</small>
-                </div>
-              );
-            })}
+            <LavaLeapScenery
+              time={frame.time}
+              checkpoint={frame.checkpoint}
+              checkpointTime={frame.checkpointTime}
+            />
             <div className="ll-sign" style={{ left: 235, top: 245 }}>
               ❄ Frost makes a foothold
               <br />
@@ -350,20 +341,6 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
                   />
                 )
             )}
-            {CHUTES.map((chute, i) => {
-              const phase = chutePhase(frame.time, chute.phase);
-              return (
-                <div key={i} className={`ll-chute ${phase}`} style={{ left: chute.x - 18 }}>
-                  <span>
-                    {phase === 'warning'
-                      ? '⚠ Stand back!'
-                      : phase === 'erupting'
-                        ? 'Lava!'
-                        : 'Chute'}
-                  </span>
-                </div>
-              );
-            })}
             {frame.ice && (
               <div
                 className={`ll-ice ${frame.ice.expires - frame.time < 1.5 ? 'crumbling' : ''}`}

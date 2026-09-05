@@ -875,8 +875,10 @@ export const furnitureAssets = {
 // Note: Add audio files to /public/assets/audio/ and they will be auto-served
 // Recommended format: OGG (best compression) or MP3 (wide compatibility)
 import { AudioAssetConfig } from './utils/AudioManager';
+import { lavaLeapAudioAssets } from './minigames/lava-leap/audioAssets';
 
 export const audioAssets: Record<string, AudioAssetConfig> = {
+  ...lavaLeapAudioAssets,
   // === Sound Effects - Farming ===
   sfx_till: {
     url: '/TwilightGame/assets/audio/sfx/farming/digging.mp3',

@@ -1,0 +1,75 @@
+.ll-vent {
+  position: absolute;
+  pointer-events: none;
+}
+.ll-vent svg {
+  overflow: visible;
+}
+.ll-vent > span {
+  position: absolute;
+  top: 0;
+  left: -16px;
+  width: 162px;
+  text-align: center;
+  font:
+    13px system-ui,
+    sans-serif;
+  color: #d0d4d6;
+}
+.ll-vent.warning > span {
+  color: #ffdc87;
+  font-weight: 700;
+}
+.ll-vent.erupting > span {
+  color: #ffe7bd;
+}
+.ll-haven {
+  position: absolute;
+  width: 96px;
+  pointer-events: none;
+}
+.ll-haven svg {
+  overflow: visible;
+  display: block;
+}
+.ll-haven > span,
+.ll-haven > small {
+  position: absolute;
+  width: 140px;
+  left: -22px;
+  text-align: center;
+  white-space: nowrap;
+}
+.ll-haven > span {
+  top: -7px;
+  font:
+    16px Georgia,
+    serif;
+  color: #d0d7dc;
+}
+.ll-haven > small {
+  top: 114px;
+  font:
+    11px system-ui,
+    sans-serif;
+  color: #b9c8cd;
+}
+.ll-haven.lit > span {
+  color: #ceffe8;
+}
+.ll-haven.lit > small {
+  color: #b0e7d0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ll-vent.erupting svg > g > path:not(:first-child) {
+    display: none;
+  }
+  .ll-lava-droplet,
+  .ll-pressure-bubble,
+  .ll-vent-steam,
+  .ll-haven-mote,
+  .ll-arrival-ring,
+  .ll-haven-halo {
+    display: none;
+  }
+}

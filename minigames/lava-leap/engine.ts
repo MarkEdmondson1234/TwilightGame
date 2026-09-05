@@ -68,6 +68,7 @@ export interface State {
   grounded: boolean;
   time: number;
   checkpoint: number;
+  checkpointTime: number;
   collected: number[];
   windUnlocked: boolean;
   crystal: Crystal;
@@ -90,6 +91,7 @@ export function createState(windUnlocked = false): State {
     grounded: true,
     time: 0,
     checkpoint: 0,
+    checkpointTime: -2,
     collected: [],
     windUnlocked,
     crystal: 'frost',
@@ -202,6 +204,7 @@ export function step(s: State, input: Input, dt: number): void {
   CHECKPOINTS.forEach((x, i) => {
     if (i > s.checkpoint && s.grounded && s.x >= x && s.x <= x + 100) {
       s.checkpoint = i;
+      s.checkpointTime = s.time;
       s.notice = 'Checkpoint reached. Take a breath and plan your next crossing.';
     }
   });
