@@ -38,9 +38,12 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { execSync } from 'child_process';
 import sharp from 'sharp';
 import Spritesmith from 'spritesmith';
+
+const require = createRequire(import.meta.url);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -687,14 +690,27 @@ async function optimizeNPCs() {
   console.log(`\n  Optimized ${optimized} NPC sprites\n`);
 }
 
-// Check if gifsicle is installed
-function hasGifsicle() {
+// Resolve a gifsicle binary: prefer one already on PATH (e.g. the apt-get
+// install in CI), otherwise fall back to the prebuilt binary shipped by the
+// npm `gifsicle` devDependency so a fresh checkout works without any manual
+// system install (this is what silently produced uncompressed GIFs before).
+function resolveGifsicle() {
   try {
     execSync('which gifsicle', { stdio: 'ignore' });
-    return true;
+    return 'gifsicle';
   } catch {
-    return false;
+    // fall through to the npm package
   }
+  try {
+    const bundled = require('gifsicle');
+    const binPath = bundled.default || bundled;
+    if (binPath && fs.existsSync(binPath)) {
+      return `"${binPath}"`;
+    }
+  } catch {
+    // npm package not installed either
+  }
+  return null;
 }
 
 // Optimize animated GIFs
@@ -709,11 +725,11 @@ async function optimizeAnimations() {
 
   const allFiles = getAllFiles(animationsDir);
   let optimized = 0;
-  const hasGifsicleInstalled = hasGifsicle();
+  const gifsicleBin = resolveGifsicle();
 
-  if (!hasGifsicleInstalled) {
+  if (!gifsicleBin) {
     console.log('⚠️  gifsicle not found - GIFs will be copied without optimization');
-    console.log('   Install with: brew install gifsicle (macOS) or apt-get install gifsicle (Linux)\n');
+    console.log('   Install with: npm install --save-dev gifsicle (or brew/apt-get install gifsicle)\n');
   }
 
   for (const inputPath of allFiles) {
@@ -736,11 +752,11 @@ async function optimizeAnimations() {
     // Delete output file if it exists (handles case-sensitivity issues on Windows)
     deleteIfExists(outputPath);
 
-    if (hasGifsicleInstalled) {
+    if (gifsicleBin) {
       try {
         // Optimize GIF with gifsicle: resize and optimize
         execSync(
-          `gifsicle --resize ${ANIMATION_SIZE}x${ANIMATION_SIZE} --optimize=3 --colors 256 "${inputPath}" -o "${outputPath}"`,
+          `${gifsicleBin} --resize ${ANIMATION_SIZE}x${ANIMATION_SIZE} --optimize=3 --colors 256 "${inputPath}" -o "${outputPath}"`,
           { stdio: 'pipe' }
         );
 
