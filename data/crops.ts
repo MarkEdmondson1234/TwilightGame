@@ -536,6 +536,28 @@ export const CROPS: Record<string, CropDefinition> = {
     seedSource: 'forage', // Obtained through quest
   },
 
+  // Magic Bean - Quest crop that grows into a giant beanstalk (not harvestable)
+  magic_bean: {
+    id: 'magic_bean',
+    name: 'magic_bean',
+    displayName: 'Magic Bean',
+    plantSeasons: [Season.SPRING, Season.SUMMER, Season.AUTUMN, Season.WINTER], // Magical - grows all seasons
+    growthTime: 10 * MINUTE,
+    growthTimeWatered: 7 * MINUTE,
+    waterNeededInterval: 1 * GAME_DAY,
+    wiltingGracePeriod: 0.5 * GAME_DAY,
+    deathGracePeriod: 0.5 * GAME_DAY,
+    harvestYield: 0, // Not harvestable - the stalk itself is the point
+    sellPrice: 0, // Cannot be sold
+    experience: 25, // Small XP for planting
+    seedDropMin: 0, // Does not drop seeds
+    seedDropMax: 0,
+    description: 'A single magic bean, said to grow into something enormous overnight.',
+    seedCost: 0, // Not sold in shop - quest only
+    rarity: CropRarity.VERY_RARE,
+    seedSource: 'forage', // Obtained through quest
+  },
+
   // ===== KEPT FROM ORIGINAL (but updated) =====
 
   // ===== HERBS =====

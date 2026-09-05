@@ -535,14 +535,17 @@ async function optimizeFarming() {
 
     // Orchard fruit trees — tree-scale quality (add new fruit tree keywords here)
     const isOrchardTree = file.includes('apple_tree') || file.includes('pear_tree');
+    // Magic beanstalk (8x8 tiles) - towers far above every other crop, needs
+    // tree-scale quality or it looks blurry blown up that large.
+    const isGiantCrop = file.includes('magic_bean');
     // Plant sprites (seedling, plant_*, wilted, crop stages) - use larger size for visibility
     // Reduced compression level to 5 for better quality (user feedback: less compression needed)
     // Soil sprites (fallow, tilled) - use regular tile size
     const isPlantSprite = file.includes('seedling') || file.includes('plant_') || file.includes('wilted') ||
                           file.includes('_young') || file.includes('_adult');
-    const targetSize = isOrchardTree ? TREE_SIZE : isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
-    const targetQuality = isOrchardTree ? SHOWCASE_QUALITY : isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
-    const targetCompression = isOrchardTree ? 4 : isPlantSprite ? 5 : 9;
+    const targetSize = isOrchardTree || isGiantCrop ? TREE_SIZE : isPlantSprite ? FARMING_PLANT_SIZE : TILE_SIZE;
+    const targetQuality = isOrchardTree || isGiantCrop ? SHOWCASE_QUALITY : isPlantSprite ? HIGH_QUALITY : COMPRESSION_QUALITY;
+    const targetCompression = isOrchardTree || isGiantCrop ? 4 : isPlantSprite ? 5 : 9;
 
     await sharp(inputPath)
       .resize(targetSize, targetSize, {

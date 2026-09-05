@@ -1,0 +1,44 @@
+# Test of Patience - fourth trial in the Wizard Trials series
+#
+# No NPC or dialogue is involved — this chain exists purely to gate the exit
+# door back to the antechamber (and the new climb at the top of the grown
+# beanstalk) until the bed's magic bean has matured. Started when the player
+# wins "Test of Agility" (the mine-cart mini-game) and lands in
+# test_of_patience.
+#
+# Quest stages:
+#  1. active  - The bed is tilled and waiting; the bean hasn't matured yet
+#  2. cleared - The beanstalk has grown to full height; both transitions unlock
+#
+# Completion is NOT harvesting (magic_bean has harvestYield: 0 — the stalk is
+# meant to stay standing, not be harvested away). It's detected by the
+# TypeScript handler listening for the plot reaching its ADULT growth stage:
+# data/questHandlers/wizardTrialsPatienceHandler.ts
+#
+# Unlike wizard_trials_strength, progress here is never reset on reload or
+# faint — a growing crop must survive both, since erasing it would contradict
+# the trial's own premise.
+#
+# Trigger: manual — started by App.tsx when Test of Agility is won.
+
+id: wizard_trials_patience
+title: 'Test of Patience'
+description: Grow something, and wait.
+type: discovery
+
+trigger:
+  type: manual
+
+stages:
+  - id: active
+    stageNumber: 1
+    text: >
+      A single bed of tilled earth, and a well. Whatever grows here will
+      grow in its own time.
+
+  - id: cleared
+    stageNumber: 2
+    text: >
+      The beanstalk has grown to its full, towering height. Patience, it
+      turns out, was the whole trial.
+    end: true

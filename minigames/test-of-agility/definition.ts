@@ -8,17 +8,16 @@ import { MineCartGame } from './MineCartGame';
  * from minigames/skiing/SkiingGame.tsx. See minigames/test-of-agility/MineCartGame.tsx
  * for the gameplay.
  *
- * DEV-ONLY ENTRY: the mapLocation below is temporarily placed on the debug NPC
- * showcase map (debug_npcs, reached via F7), 2 tiles south of that map's existing
- * dev shortcut into wizard_trials at (27,6) — a plain grass tile with nothing else
- * on it. mapLocation triggers need no map-file edits at all (see
- * utils/interactions/providers/mapLocation.ts and MiniGameLocationIndicators.tsx,
+ * Entry point: the doorway art at (7,4) in the Strength Trial chamber
+ * (maps/definitions/strengthTrial.ts) — the tile that room's own comments reserve for
+ * "continuing further into the trials." mapLocation triggers need no map-file edits
+ * (see utils/interactions/providers/mapLocation.ts and MiniGameLocationIndicators.tsx,
  * which render the bobbing icon/tooltip purely from this coordinate), so
- * debugNPCs.ts itself is untouched.
+ * strengthTrial.ts itself is untouched.
  *
- * TODO: once the Strength Trial's exit flow is designed, relocate this trigger to
- * the Strength Trial chamber (maps/definitions/strengthTrial.ts) — a one-line
- * coordinate change here, nothing else.
+ * Gated on wizard_trials_strength stage 2 ('cleared') so the trigger only offers
+ * itself once all six boulders are cleared — otherwise a player could skip the
+ * Strength Trial entirely by walking straight to this tile.
  */
 export const testOfAgilityDefinition: MiniGameDefinition = {
   id: 'test-of-agility',
@@ -28,7 +27,11 @@ export const testOfAgilityDefinition: MiniGameDefinition = {
   colour: '#7c3aed',
   component: MineCartGame,
   triggers: {
-    mapLocation: { mapId: 'debug_npcs', x: 27, y: 8 },
+    mapLocation: { mapId: 'strength_trial', x: 7, y: 4 },
+  },
+  availability: {
+    requiresQuest: 'wizard_trials_strength',
+    requiresQuestStage: 2,
   },
   confirmMessage: 'Board the runaway mine cart?',
   customBackdrop: true,

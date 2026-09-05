@@ -54,6 +54,10 @@ export interface MiniGameAvailability {
   timeOfDay?: 'day' | 'night';
   /** Minimum friendship level with a specific NPC */
   minFriendship?: { npcId: string; level: number };
+  /** Quest that must be started (and, if requiresQuestStage is set, at that stage or later) */
+  requiresQuest?: string;
+  /** Minimum stage of requiresQuest. Defaults to 1 if requiresQuest is set but this isn't. */
+  requiresQuestStage?: number;
 }
 
 // =============================================================================

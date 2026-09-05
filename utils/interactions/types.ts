@@ -63,6 +63,7 @@ export type InteractionType =
   | 'pickup_leaves'
   | 'open_shop'
   | 'remove_curtains'
+  | 'open_chest'
   | 'make_snow_angel'
   | 'sleep_furniture'
   | 'rest_furniture'

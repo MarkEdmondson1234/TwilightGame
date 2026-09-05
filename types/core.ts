@@ -58,6 +58,7 @@ export enum TileType {
   STONE_COLUMN_MD, // Stone column (medium, 5x5 tiles) - cave floor decoration
   STONE_COLUMN_LG, // Stone column (large, 8x8 tiles) - cave floor decoration
   WALL_TORCH, // Wall-mounted torch - cave light source (2-frame animated)
+  CHEST, // Static chest decoration - clickable, not pickupable (e.g. Test of Patience trial)
   CAVE_LAKE_SM, // Cave lake (small, 2x2 tiles) - mine water feature
   CAVE_LAKE_MD, // Cave lake (medium, 5x5 tiles) - mine water feature
   CAVE_LAKE_LG, // Cave lake (large, 8x8 tiles) - mine water feature

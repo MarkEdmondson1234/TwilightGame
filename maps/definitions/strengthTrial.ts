@@ -9,9 +9,9 @@ import { Z_PARALLAX_FAR } from '../../zIndex';
  * on winning "Test of Wits" (the sliding-crate-puzzle mini-game), and can
  * leave once all six boulders blocking the door art are cleared. The exit
  * transition itself is a separate tile at (13,7) rather than the doorway art
- * at (7,4) — that doorway represents continuing further into the trials (no
- * further trial exists yet, so it isn't a transition), and sharing one tile
- * for both meanings was confusing.
+ * at (7,4) — that doorway is the entry point for "Test of Agility" (see
+ * minigames/test-of-agility/definition.ts), a mapLocation trigger rather than
+ * a Transition, and sharing one tile for both meanings was confusing.
  *
  * Boulder-clearing mechanic (click to remove, costs stamina, resets on
  * exhaustion) is handled by:
@@ -36,9 +36,9 @@ import { Z_PARALLAX_FAR } from '../../zIndex';
 // Rows 0-3: back wall (solid — matches how far up the stone wall art actually
 // extends; walkable floor doesn't start until row 4)
 // Rows 4-7: open floor where the boulders sit and the player walks. The
-// door-shaped art at (7,4) is where the trial continues onward (not
-// currently a transition — no further trial exists yet); the actual "Leave
-// the Trial" exit sits apart from it at (13,7), so the two aren't confused.
+// door-shaped art at (7,4) is where the trial continues onward — the
+// mapLocation trigger for "Test of Agility" (not a Transition); the actual
+// "Leave the Trial" exit sits apart from it at (13,7), so the two aren't confused.
 // Row 8: front wall (base trim)
 const gridString = `
 ###############

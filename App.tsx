@@ -130,6 +130,7 @@ import {
   resetWizardTrialsStrengthIfActive,
   restartWizardTrialsStrength,
 } from './data/questHandlers/wizardTrialsStrengthHandler';
+import { startWizardTrialsPatience } from './data/questHandlers/wizardTrialsPatienceHandler';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -2624,11 +2625,17 @@ const App: React.FC = () => {
               const spawn = mapManager.getMap('strength_trial')?.spawnPoint ?? { x: 7, y: 6 };
               handleMapTransition('strength_trial', spawn);
             }
-            // Test of Agility always returns the player to the Wizard Trials antechamber,
-            // on win OR crash — the toast (via result.message) is the only thing that differs.
+            // Winning "Test of Agility" sends the player on to the Test of Patience;
+            // crashing casts them back to the Wizard Trials antechamber instead.
             if (miniGameId === 'test-of-agility') {
-              const spawn = mapManager.getMap('wizard_trials')?.spawnPoint ?? { x: 3, y: 7 };
-              handleMapTransition('wizard_trials', spawn);
+              if (result?.success) {
+                startWizardTrialsPatience();
+                const spawn = mapManager.getMap('test_of_patience')?.spawnPoint ?? { x: 4, y: 10 };
+                handleMapTransition('test_of_patience', spawn);
+              } else {
+                const spawn = mapManager.getMap('wizard_trials')?.spawnPoint ?? { x: 3, y: 7 };
+                handleMapTransition('wizard_trials', spawn);
+              }
             }
             // Post-combat cleanup for hostile NPCs
             if (combatNpcIdRef.current) {

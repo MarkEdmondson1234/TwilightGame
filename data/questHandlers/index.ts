@@ -17,6 +17,7 @@ import './mushraWreathHandler';
 // fairyQueenHandler has no stage handlers (fairy meetings are pull-based)
 // estrangedSistersHandler has no stage handlers (all logic is pull-based)
 // wizardTrialsStrengthHandler has no stage handlers (no dialogue/NPC — pull-based via boulder clicks)
+import './wizardTrialsPatienceHandler';
 
 // Re-export everything for convenience
 export * from './altheaChoresHandler';
@@ -94,6 +95,16 @@ export {
   checkTrialComplete,
 } from './wizardTrialsStrengthHandler';
 export type { BoulderTier } from './wizardTrialsStrengthHandler';
+export {
+  QUEST_ID as WIZARD_TRIALS_PATIENCE_QUEST_ID,
+  PATIENCE_MAP_ID,
+  PATIENCE_PLOT_POSITION,
+  isWizardTrialsPatienceActive,
+  isWizardTrialsPatienceCompleted,
+  getWizardTrialsPatienceStage,
+  isWizardTrialsPatienceAtStage,
+  startWizardTrialsPatience,
+} from './wizardTrialsPatienceHandler';
 export {
   GHOST_QUEEN_QUEST_ID,
   GHOST_QUEEN_NPC_ID,

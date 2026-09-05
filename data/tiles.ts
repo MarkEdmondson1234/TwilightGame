@@ -295,6 +295,20 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
     lightSource: { activeTime: 'always' },
   },
+  [TileType.CHEST]: {
+    name: 'Chest',
+    color: 'bg-palette-gray',
+    collisionType: CollisionType.SOLID,
+    baseType: TileType.MINE_FLOOR,
+    baseVisible: true,
+    image: [tileAssets.chest],
+    transforms: {
+      enableFlip: false,
+      enableScale: false,
+      enableRotation: false,
+      enableBrightness: false,
+    },
+  },
   [TileType.LAVA_LAKE_SM]: {
     name: 'Lava Lake (Small)',
     color: 'bg-palette-orange',
