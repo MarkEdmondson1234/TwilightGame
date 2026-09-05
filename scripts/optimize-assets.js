@@ -80,6 +80,9 @@ const SKI_BACKDROP_MAX = 1920; // Skiing mini-game full-screen backdrops (sky, l
 const SKI_OBSTACLE_MAX = 1024; // Skiing mini-game trees/brambles — scale up close to the camera, need detail
 const SKI_PICKUP_MAX = 640; // Skiing mini-game on-course firewood pickups — smaller on screen than obstacles
 const SKI_PC_MAX = 1024; // Skiing mini-game player sprite (matches character sprite quality)
+const AGILITY_BACKDROP_MAX = 1920; // Test of Agility full-screen backdrops (roof, walls, floor)
+const AGILITY_OBSTACLE_MAX = 1024; // Test of Agility crystal obstacle — scales up close to the camera
+const AGILITY_PC_MAX = 1024; // Test of Agility mine cart player sprite
 
 console.log('🎨 Starting asset optimization...\n');
 
@@ -921,6 +924,72 @@ async function optimizeSkiingGame() {
   console.log(`\n  Optimized ${optimized} skiing mini-game asset(s)\n`);
 }
 
+// Note: these are bespoke canvas assets for the Test of Agility mini-game (mine cart
+// backdrops, obstacle, player sprite), not tile/item sprites — mirrors optimizeSkiingGame()
+// above. Source files are already alpha-cropped by hand, so no auto-trim step is needed.
+async function optimizeTestOfAgility() {
+  console.log('⛏️  Optimizing Test of Agility mini-game assets...');
+
+  const agilityDir = path.join(ASSETS_DIR, 'test_of_agility');
+  if (!fs.existsSync(agilityDir)) {
+    console.log('  ℹ️  No test_of_agility directory found, skipping...\n');
+    return;
+  }
+
+  const BACKDROP_FILES = new Set([
+    'cart_game_roof.png',
+    'cart_game_layer1.png',
+    'cart_game_layer2.png',
+    'cart_game_layer3.png',
+    'cart_game_floor.png',
+  ]);
+  const OBSTACLE_FILES = new Set(['crystal.png']);
+  const PC_FILES = new Set(['mine_cart_male.png']);
+
+  const allFiles = getAllFiles(agilityDir);
+  let optimized = 0;
+
+  for (const inputPath of allFiles) {
+    const file = path.basename(inputPath);
+    if (!file.match(/\.(png|jpeg|jpg)$/i)) continue;
+
+    if (!BACKDROP_FILES.has(file) && !OBSTACLE_FILES.has(file) && !PC_FILES.has(file)) {
+      continue;
+    }
+
+    const outputPath = normalizePathCase(path.join(OPTIMIZED_DIR, 'test_of_agility', file.replace(/\.jpeg$/i, '.png')));
+    const outputDir = path.dirname(outputPath);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    const originalSize = fs.statSync(inputPath).size;
+    deleteIfExists(outputPath);
+
+    const maxSize = BACKDROP_FILES.has(file)
+      ? AGILITY_BACKDROP_MAX
+      : OBSTACLE_FILES.has(file)
+      ? AGILITY_OBSTACLE_MAX
+      : AGILITY_PC_MAX;
+
+    // Preserve the source aspect ratio (these aren't square) — just cap the largest dimension.
+    await sharp(inputPath)
+      .resize(maxSize, maxSize, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .png({ palette: false, quality: SHOWCASE_QUALITY, compressionLevel: 6 })
+      .toFile(outputPath);
+
+    const optimizedSize = fs.statSync(outputPath).size;
+    const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
+    console.log(`  ✅ ${file}: ${(originalSize / 1024).toFixed(1)}KB → ${(optimizedSize / 1024).toFixed(1)}KB (saved ${savings}%)`);
+    optimized++;
+  }
+
+  console.log(`\n  Optimized ${optimized} Test of Agility mini-game asset(s)\n`);
+}
+
 // Optimize witch hut assets
 async function optimizeWitchHut() {
   console.log('🏚️  Optimizing witch hut assets...');
@@ -1498,6 +1567,7 @@ async function main() {
     await optimizeAnimations();
     await optimizeCutscenes();
     await optimizeSkiingGame();
+    await optimizeTestOfAgility();
     await optimizeWitchHut();
     await optimizeCooking();
     await optimizeCauldron();

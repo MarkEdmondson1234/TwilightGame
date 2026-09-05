@@ -2624,6 +2624,12 @@ const App: React.FC = () => {
               const spawn = mapManager.getMap('strength_trial')?.spawnPoint ?? { x: 7, y: 6 };
               handleMapTransition('strength_trial', spawn);
             }
+            // Test of Agility always returns the player to the Wizard Trials antechamber,
+            // on win OR crash — the toast (via result.message) is the only thing that differs.
+            if (miniGameId === 'test-of-agility') {
+              const spawn = mapManager.getMap('wizard_trials')?.spawnPoint ?? { x: 3, y: 7 };
+              handleMapTransition('wizard_trials', spawn);
+            }
             // Post-combat cleanup for hostile NPCs
             if (combatNpcIdRef.current) {
               const npcId = combatNpcIdRef.current;
