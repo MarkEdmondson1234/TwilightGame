@@ -15,6 +15,7 @@ import {
 } from '../utils/npcFactories';
 import { debugLog } from '../utils/debugLog';
 import { createLavaLeapGuide } from '../utils/npcs/mine/lavaLeapGuide';
+import { LAVA_LEAP_QUEST, LAVA_LEAP_GATE_MESSAGE } from '../minigames/lava-leap/progression';
 
 /**
  * Procedural map generation functions
@@ -1618,7 +1619,7 @@ export function generateLavaMap(seed: number = Date.now()): MapDefinition {
 
   debugLog('Lava', `Generated lava level at depth ${lavaDepth} (seed ${seed})`);
 
-  // The first worker is Cinder, on protected ground near the entrance.
+  // Cinder guards the deeper passage, on protected ground beside the exit.
   // Still consume the same random draws so existing lake layouts stay stable.
   const lavaWorkerNames = ['Molten', 'Scoria', 'Pumice', 'Cinder', 'Basalt', 'Igneous', 'Flint'];
   const workerCount = Math.floor(rand() * 3) + 1;
@@ -1635,7 +1636,7 @@ export function generateLavaMap(seed: number = Date.now()): MapDefinition {
     } while (attempts < 20 && Math.abs(wx - spawnX) < 5 && Math.abs(wy - spawnY) < 5);
     npcs.push(
       i === 0
-        ? createLavaLeapGuide(`lava_frog_worker_${seed}_${i}`, { x: spawnX + 2, y: spawnY + 1 })
+        ? createLavaLeapGuide(`lava_frog_worker_${seed}_${i}`, { x: width - 5, y: exitY + 1 })
         : createLavaFrogWorkerNPC(
             `lava_frog_worker_${seed}_${i}`,
             { x: wx, y: wy },
@@ -1723,6 +1724,9 @@ export function generateLavaMap(seed: number = Date.now()): MapDefinition {
         toMapId: deeperLavaDestination,
         toPosition: deeperLavaSpawn,
         label: deeperLavaLabel,
+        requiresQuest: LAVA_LEAP_QUEST,
+        requiresQuestStage: 1,
+        blockedMessage: LAVA_LEAP_GATE_MESSAGE,
       },
     ],
     npcs,

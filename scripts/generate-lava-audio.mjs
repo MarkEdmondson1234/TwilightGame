@@ -16,6 +16,10 @@ function bell(t, frequency) {
   );
 }
 const designs = {
+  earth: [
+    0.8,
+    (t, n, low) => (low * 1.1 + sine(68, t) * 0.13) * Math.exp(-t * 4) + bell(t - 0.12, 330) * 0.15,
+  ],
   warning: [
     1.25,
     (t, n, low) =>

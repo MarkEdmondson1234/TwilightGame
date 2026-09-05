@@ -22,6 +22,7 @@ import { getTierName } from './MagicEffects';
 
 import { cookingManager, CookingResult } from './CookingManager';
 import { debugLog } from './debugLog';
+import { transitionBlockedReason } from './transitionRequirements';
 
 // Re-export forage types and handlers for consumers importing from actionHandlers
 export type { ForageResult } from './forageHandlers';
@@ -205,24 +206,8 @@ export function checkTransition(
 
   const { transition } = transitionData;
 
-  // Check quest requirements for conditional transitions
-  if (transition.requiresQuest) {
-    const questStarted = gameState.isQuestStarted(transition.requiresQuest);
-    const questStage = gameState.getQuestStage(transition.requiresQuest);
-    const requiredStage = transition.requiresQuestStage ?? 1; // Default to stage 1 if not specified
-
-    if (!questStarted || questStage < requiredStage) {
-      debugLog(
-        'Action',
-        `Transition blocked: requires quest '${transition.requiresQuest}' stage ${requiredStage} (current: ${questStage})`
-      );
-      return {
-        success: false,
-        blocked: true,
-        message: 'This path is not yet accessible.',
-      };
-    }
-  }
+  const blockedReason = transitionBlockedReason(transition);
+  if (blockedReason) return { success: false, blocked: true, message: blockedReason };
 
   // Check size restrictions for this transition
   // Default: doors allow Large size or smaller (Very Large/Giant can't fit through normal doors)

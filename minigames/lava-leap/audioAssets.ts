@@ -6,6 +6,7 @@ export const lavaLeapAudioAssets: Record<string, AudioAssetConfig> = Object.from
     'eruption',
     'frost',
     'wind',
+    'earth',
     'treasure',
     'haven',
     'rescue',

@@ -1,4 +1,5 @@
-import { CHUTES, chutePhase, type State } from './engine';
+import { chutePhase, type State } from './engine';
+import { COURSES } from './courses';
 
 /** Compare snapshots once per display tick; never play effects on every physics step. */
 export function lavaSoundEvents(before: State, after: State): string[] {
@@ -11,7 +12,8 @@ export function lavaSoundEvents(before: State, after: State): string[] {
   if (after.checkpoint > before.checkpoint || (!before.windUnlocked && after.windUnlocked))
     sounds.push('haven');
   else if (after.collected.length > before.collected.length) sounds.push('treasure');
-  for (const chute of CHUTES) {
+  for (const chute of COURSES[after.courseId].chutes) {
+    if (after.sealedVent?.x === chute.x && after.sealedVent.expires > after.time) continue;
     if (Math.abs(chute.x - after.x) > 520) continue;
     const phase = chutePhase(after.time, chute.phase);
     if (phase !== chutePhase(before.time, chute.phase)) {

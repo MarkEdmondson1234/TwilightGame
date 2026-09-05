@@ -2,6 +2,64 @@
   position: absolute;
   pointer-events: none;
 }
+.ll-crystal-art {
+  vertical-align: middle;
+}
+.ll-crystal-art.frost {
+  filter: sepia(0.4) saturate(1.8) hue-rotate(135deg) drop-shadow(0 0 3px #a2ddff);
+}
+.ll-crystal-art.wind {
+  filter: sepia(0.4) saturate(1.8) hue-rotate(220deg) drop-shadow(0 0 3px #d3b7ff);
+}
+.ll-crystal-art.earth {
+  filter: sepia(0.6) saturate(1.4) drop-shadow(0 0 3px #e7b36a);
+}
+.ll-haven:not(.lit) .ll-crystal-art {
+  filter: grayscale(1);
+  opacity: 0.5;
+}
+.ll-route-choice {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.ll-route-choice button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+}
+.ll-route-choice span {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: normal;
+}
+.ll-route-choice small {
+  font-size: 10px;
+  color: #d4e5ec;
+}
+.ll-pool {
+  border-top-color: #9bc7df;
+  box-shadow: 0 -22px 70px #3a9bc34d;
+  background-color: #295b70;
+}
+.ll-cave-dressing {
+  position: absolute;
+  pointer-events: none;
+}
+@media (max-width: 500px) {
+  .ll-route-choice {
+    grid-template-columns: 1fr;
+  }
+  .ll-route-choice button {
+    display: grid;
+    grid-template-columns: 46px 1fr;
+  }
+  .ll-route-choice span {
+    grid-column: 2;
+  }
+}
 .ll-vent svg {
   overflow: visible;
 }

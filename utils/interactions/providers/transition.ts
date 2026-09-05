@@ -9,6 +9,7 @@ import { SizeTier } from '../../../types';
 import { getTierName } from '../../MagicEffects';
 import { mapManager, transitionToMap } from '../../../maps';
 import { cutsceneManager } from '../../CutsceneManager';
+import { transitionBlockedReason } from '../../transitionRequirements';
 
 export function transitionProvider(ctx: InteractionContext): AvailableInteraction[] {
   const { position, playerSizeTier, isContextMenu, onTransition, currentMapId } = ctx;
@@ -32,6 +33,17 @@ export function transitionProvider(ctx: InteractionContext): AvailableInteractio
   const transitionData = mapManager.getTransitionAt(position, 0.9);
   if (transitionData) {
     const { transition } = transitionData;
+    const blocked = transitionBlockedReason(transition);
+    if (blocked)
+      return [
+        {
+          type: 'transition',
+          label: blocked,
+          icon: '🔒',
+          color: '#9ca3af',
+          execute: () => onTransition?.({ success: false, blocked: true, message: blocked }),
+        },
+      ];
 
     // Check size restrictions
     // Default: doors allow Large size or smaller (Very Large/Giant can't fit through normal doors)
@@ -78,6 +90,11 @@ export function transitionProvider(ctx: InteractionContext): AvailableInteractio
         icon: '🚪',
         color: '#34d399',
         execute: () => {
+          const reason = transitionBlockedReason(transition);
+          if (reason) {
+            onTransition?.({ success: false, blocked: true, message: reason });
+            return;
+          }
           if (transition.precedingCutsceneId) {
             cutsceneManager.triggerManualCutscene(transition.precedingCutsceneId, {
               mapId: currentMapId,

@@ -1,44 +1,25 @@
 /** Fixed-step, renderer-independent physics. Coordinates are in cavern pixels. */
-export type Crystal = 'frost' | 'wind';
-export interface Platform {
-  x: number;
-  y: number;
-  w: number;
-}
-export const COURSE_WIDTH = 3900;
+import { COURSES, type CourseId, type Platform } from './courses';
+export type { Platform } from './courses';
+export type Crystal = 'frost' | 'wind' | 'earth';
+export const COURSE_WIDTH = COURSES.lava.width;
 export const LAVA_Y = 480;
 export const PLAYER = { w: 30, h: 48, speed: 235, jump: 510, gravity: 1250 };
-export const PLATFORMS: Platform[] = [
-  { x: 0, y: 410, w: 380 },
-  { x: 650, y: 410, w: 330 },
-  { x: 1130, y: 380, w: 320 },
-  { x: 1650, y: 410, w: 370 },
-  { x: 2180, y: 330, w: 180 },
-  { x: 2520, y: 410, w: 300 },
-  { x: 3060, y: 410, w: 150 },
-  { x: 2990, y: 250, w: 160 },
-  { x: 3430, y: 390, w: 470 },
-];
-export const CHECKPOINTS = [80, 720, 1210, 1740, 2610, 3520];
-export const GEMS = [
-  { x: 505, y: 380 },
-  { x: 860, y: 345 },
-  { x: 1280, y: 310 },
-  { x: 1560, y: 320 },
-  { x: 2270, y: 260 },
-  { x: 2720, y: 340 },
-  { x: 3070, y: 180 },
-  { x: 3310, y: 350 },
-];
-export const CHUTES = [
-  { x: 1360, phase: 0 },
-  { x: 2770, phase: 2.5 },
-  { x: 3180, phase: 1 },
-];
+export const PLATFORMS = COURSES.lava.platforms;
+export const CHECKPOINTS = COURSES.lava.checkpoints;
+export const GEMS = COURSES.lava.gems;
+export const CHUTES = COURSES.lava.chutes;
 export const CRYSTALS: Record<
   Crystal,
   { name: string; symbol: string; colour: string; help: string; cooldown: number }
 > = {
+  earth: {
+    name: 'Earth',
+    symbol: '⬟',
+    colour: '#dfbc8c',
+    help: 'Stand near a vent and seal it for four seconds.',
+    cooldown: 3,
+  },
   frost: {
     name: 'Frost',
     symbol: '❄',
@@ -61,6 +42,10 @@ export interface Input {
   power: boolean;
 }
 export interface State {
+  courseId: CourseId;
+  bankedGems: number;
+  earthUnlocked: boolean;
+  sealedVent: { x: number; expires: number } | null;
   x: number;
   y: number;
   vy: number;
@@ -84,6 +69,10 @@ export interface State {
 }
 export function createState(windUnlocked = false): State {
   return {
+    courseId: 'lava',
+    bankedGems: 0,
+    earthUnlocked: false,
+    sealedVent: null,
     x: 80,
     y: 410 - PLAYER.h,
     vy: 0,
@@ -111,19 +100,23 @@ export function chutePhase(time: number, offset: number): 'quiet' | 'warning' | 
   return t < 3.5 ? 'quiet' : t < 4.8 ? 'warning' : 'erupting';
 }
 export function selectCrystal(s: State, crystal: Crystal): void {
+  if (crystal === 'earth' && !s.earthUnlocked) return;
   if (crystal === 'wind' && !s.windUnlocked) return;
   if (s.crystal !== crystal && s.ice) s.ice.expires = Math.min(s.ice.expires, s.time + 1.5);
   if (s.crystal !== crystal) s.glide = 0;
+  if (s.crystal !== crystal) s.sealedVent = null;
   s.crystal = crystal;
 }
 export function rescue(s: State): void {
-  s.x = CHECKPOINTS[s.checkpoint];
-  const platform = PLATFORMS.find((p) => s.x >= p.x && s.x < p.x + p.w)!;
+  const course = COURSES[s.courseId];
+  s.x = course.checkpoints[s.checkpoint];
+  const platform = course.platforms.find((p) => s.x >= p.x && s.x < p.x + p.w)!;
   s.y = platform.y - PLAYER.h;
   s.vy = 0;
   s.grounded = true;
   s.coyote = 0.12;
   s.ice = null;
+  s.sealedVent = null;
   s.glide = 0;
   s.windUsed = false;
   s.cooldown = 0;
@@ -134,8 +127,18 @@ export function rescue(s: State): void {
 export function activatePower(s: State): boolean {
   if (s.cooldown > 0) return false;
   if (s.crystal === 'frost') {
-    const x = Math.max(0, Math.min(COURSE_WIDTH - 180, s.x + s.facing * 150 - 75));
+    const x = Math.max(0, Math.min(COURSES[s.courseId].width - 180, s.x + s.facing * 150 - 75));
     s.ice = { x, y: 440, w: 180, expires: s.time + 5 };
+  } else if (s.crystal === 'earth') {
+    if (!s.earthUnlocked) return false;
+    const vent = COURSES[s.courseId].chutes
+      .filter((c) => Math.abs(c.x - s.x) <= 240)
+      .sort((a, b) => Math.abs(a.x - s.x) - Math.abs(b.x - s.x))[0];
+    if (!vent) {
+      s.notice = 'Move closer to a vent before using Earth.';
+      return false;
+    }
+    s.sealedVent = { x: vent.x, expires: s.time + 4 };
   } else {
     if (!s.windUnlocked || s.windUsed) return false;
     s.vy = -510;
@@ -150,7 +153,9 @@ export function activatePower(s: State): boolean {
 /** Call at 120 Hz. Jump and power are edge-triggered commands. */
 export function step(s: State, input: Input, dt: number): void {
   if (s.won) return;
+  const course = COURSES[s.courseId];
   s.time += dt;
+  if (s.sealedVent && s.time >= s.sealedVent.expires) s.sealedVent = null;
   s.cooldown = Math.max(0, s.cooldown - dt);
   s.glide = Math.max(0, s.glide - dt);
   s.rescueGlow = Math.max(0, s.rescueGlow - dt);
@@ -165,13 +170,13 @@ export function step(s: State, input: Input, dt: number): void {
   if (input.power) activatePower(s);
   const direction = Number(input.right) - Number(input.left);
   if (direction) s.facing = direction;
-  s.x = Math.max(0, Math.min(COURSE_WIDTH - PLAYER.w, s.x + direction * PLAYER.speed * dt));
+  s.x = Math.max(0, Math.min(course.width - PLAYER.w, s.x + direction * PLAYER.speed * dt));
   const oldBottom = s.y + PLAYER.h;
   s.vy += PLAYER.gravity * dt;
   if (s.glide > 0) s.vy = Math.min(s.vy, 85);
   s.y += s.vy * dt;
   s.grounded = false;
-  for (const p of s.ice ? [...PLATFORMS, s.ice] : PLATFORMS) {
+  for (const p of s.ice ? [...course.platforms, s.ice] : course.platforms) {
     if (
       s.x + PLAYER.w > p.x &&
       s.x < p.x + p.w &&
@@ -186,8 +191,9 @@ export function step(s: State, input: Input, dt: number): void {
       s.glide = 0;
     }
   }
-  for (const chute of CHUTES) {
+  for (const chute of course.chutes) {
     if (
+      s.sealedVent?.x !== chute.x &&
       chutePhase(s.time, chute.phase) === 'erupting' &&
       s.x + PLAYER.w > chute.x - 18 &&
       s.x < chute.x + 18 &&
@@ -201,23 +207,39 @@ export function step(s: State, input: Input, dt: number): void {
     rescue(s);
     return;
   }
-  CHECKPOINTS.forEach((x, i) => {
+  course.checkpoints.forEach((x, i) => {
     if (i > s.checkpoint && s.grounded && s.x >= x && s.x <= x + 100) {
       s.checkpoint = i;
       s.checkpointTime = s.time;
       s.notice = 'Checkpoint reached. Take a breath and plan your next crossing.';
     }
   });
-  if (!s.windUnlocked && s.x >= 1710) {
+  if (s.courseId === 'lava' && !s.windUnlocked && s.x >= 1710) {
     s.windUnlocked = true;
     s.notice = 'Wind crystal found! Select Wind, jump, then use its power for a second lift.';
   }
-  GEMS.forEach((g, i) => {
+  course.gems.forEach((g, i) => {
     if (
       !s.collected.includes(i) &&
       Math.hypot(s.x + PLAYER.w / 2 - g.x, s.y + PLAYER.h / 2 - g.y) < 45
     )
       s.collected.push(i);
   });
-  if (s.x > 3760 && s.grounded) s.won = true;
+  if (s.x > course.width - 140 && s.grounded) {
+    s.won = true;
+    if (s.courseId === 'lava') s.earthUnlocked = true;
+  }
+}
+
+/** All three exits from the junction lead to separate playable chambers. */
+export function enterBranch(s: State, courseId: CourseId): State {
+  if (!s.won || s.courseId !== 'lava' || courseId === 'lava') return s;
+  return {
+    ...createState(true),
+    courseId,
+    earthUnlocked: true,
+    bankedGems: s.collected.length,
+    crystal: COURSES[courseId].power,
+    notice: COURSES[courseId].description,
+  };
 }

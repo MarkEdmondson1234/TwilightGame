@@ -1,9 +1,10 @@
 import { NPCBehavior, type NPC, type Position } from '../../../types';
 import { createLavaFrogWorkerNPC } from './lavaFrogWorker';
+import { LAVA_LEAP_QUEST } from '../../../minigames/lava-leap/progression';
 
 export const LAVA_LEAP_GUIDE_NAME = 'Cinder the Guide';
 
-/** A familiar worker on safe ground, offering a voluntary crystal expedition. */
+/** A worker guarding the deeper lava passage and teaching the crystal expedition. */
 export function createLavaLeapGuide(id: string, position: Position): NPC {
   const worker = createLavaFrogWorkerNPC(id, position, LAVA_LEAP_GUIDE_NAME);
   return {
@@ -11,8 +12,19 @@ export function createLavaLeapGuide(id: string, position: Position): NPC {
     behavior: NPCBehavior.STATIC,
     dialogue: [
       {
+        id: 'passage_open',
+        requiredQuest: LAVA_LEAP_QUEST,
+        requiredQuestStage: 1,
+        text: 'Ribbit! You made it through the crystal passages! The way deeper is open for you now. Fancy exploring a different route? Choose Lava Leap when you interact with me.',
+        responses: [
+          { text: 'Thank you, Cinder!' },
+          { text: 'Remind me about the crystals.', nextId: 'lava_leap_crystals' },
+        ],
+      },
+      {
         id: 'greeting',
-        text: "Ribbit! Welcome to the warm bits! I'm Cinder. We workers have a favourite shortcut across the lava rivers, but visitors need a little crystal magic. Fancy trying Lava Leap? I've left safe havens along the way, just in case your boots get adventurous.",
+        hiddenIfQuestAtMinStage: { questId: LAVA_LEAP_QUEST, stage: 1 },
+        text: "Ribbit! I'm Cinder, keeper of the deeper passage. Before I let you through, you'll need to learn our crystal magic. Complete Lava Leap and one of its three cave passages, and I'll open the way. There are safe havens throughout, and you can always head back to the mines.",
         responses: [
           { text: 'How do the crystals work?', nextId: 'lava_leap_crystals' },
           { text: 'How do I start?', nextId: 'lava_leap_start' },
@@ -22,7 +34,7 @@ export function createLavaLeapGuide(id: string, position: Position): NPC {
       },
       {
         id: 'lava_leap_crystals',
-        text: "Frost cools a little patch of lava into a stepping stone. Further along, you'll find Wind, which lifts you over the rocky ridges. Choose the crystal that suits the crossing! Watch the chutes: an amber glow means an eruption is coming. There's no rush, and I'll whisk you to a safe haven if you slip.",
+        text: "Frost makes stepping stones, Wind lifts you to high ledges, and Earth seals a nearby lava vent for four seconds. At the junction, choose the Crystal Grotto, Mushroom Heights or Old Forge. Finish any one to earn passage. I'll whisk you to a safe haven if you slip.",
         responses: [{ text: 'How do I start?', nextId: 'lava_leap_start' }],
       },
       {
