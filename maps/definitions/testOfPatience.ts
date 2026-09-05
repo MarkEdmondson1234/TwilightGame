@@ -82,8 +82,9 @@ export const testOfPatience: MapDefinition = {
     {
       // Top of the fully-grown beanstalk (its sprite's top edge sits exactly
       // at row 0 above the bed at (13,7): offsetY -7 from anchor row 7).
-      // TODO: no "top of the beanstalk" map exists yet — this is a stub
-      // routing back to the antechamber until that content is built.
+      // No "top of the beanstalk" map exists — climbing it instead plays
+      // Mordecai's final judgement cutscene (below), which sends the player
+      // to wizard_trials or mums_kitchen depending on their answer.
       fromPosition: { x: 13, y: 0 },
       tileType: TileType.MINE_FLOOR,
       toMapId: 'wizard_trials',
@@ -91,6 +92,10 @@ export const testOfPatience: MapDefinition = {
       label: 'Climb the Beanstalk',
       requiresQuest: 'wizard_trials_patience',
       requiresQuestStage: 2, // 'cleared' — beanstalk matured
+      // Mordecai's final judgement plays here instead of a plain transition — its own
+      // dialogue choice decides where the player actually ends up (see
+      // data/cutscenes/wizardTrials.ts).
+      precedingCutsceneId: 'wizard_trials_final_judgement',
     },
   ],
 };

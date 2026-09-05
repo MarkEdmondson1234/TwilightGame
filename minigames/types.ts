@@ -108,6 +108,15 @@ export interface MiniGameDefinition {
    * opening immediately. Only `mapLocationProvider` consults this today.
    */
   confirmMessage?: string;
+
+  /**
+   * If set, clicking a `mapLocation` trigger for this game plays the named
+   * cutscene instead of opening the game (or showing `confirmMessage`)
+   * directly. Whatever ends the cutscene is then responsible for opening the
+   * mini-game — see App.tsx's `handleCutsceneComplete`. Only
+   * `mapLocationProvider` consults this today.
+   */
+  precedingCutsceneId?: string;
 }
 
 // =============================================================================

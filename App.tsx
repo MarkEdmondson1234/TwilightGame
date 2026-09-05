@@ -731,6 +731,31 @@ const App: React.FC = () => {
       grantFairyFormPotion();
     }
 
+    // Wizard Trials: these two cutscenes precede a mini-game rather than a map
+    // transition (their onComplete is 'none') — launch the mini-game directly here,
+    // the same way mapLocationProvider would have without the cutscene in between.
+    if (action.cutsceneId === 'wizard_trials_wits_intro') {
+      miniGameManager.consumeStartRequirements('sliding-crate-puzzle');
+      openUI('miniGame', {
+        activeMiniGameId: 'sliding-crate-puzzle',
+        miniGameTriggerData: {
+          triggerType: 'mapLocation',
+          position: { x: 12, y: 7 },
+          extra: { mapId: 'wizard_trials', x: 12, y: 7 },
+        },
+      });
+    } else if (action.cutsceneId === 'wizard_trials_agility_intro') {
+      miniGameManager.consumeStartRequirements('test-of-agility');
+      openUI('miniGame', {
+        activeMiniGameId: 'test-of-agility',
+        miniGameTriggerData: {
+          triggerType: 'mapLocation',
+          position: { x: 7, y: 4 },
+          extra: { mapId: 'strength_trial', x: 7, y: 4 },
+        },
+      });
+    }
+
     setIsCutscenePlaying(false);
   };
 
@@ -2619,11 +2644,15 @@ const App: React.FC = () => {
           onClose={(result) => {
             const miniGameId = ui.context.activeMiniGameId;
             closeUI('miniGame');
-            // Winning "Test of Wits" sends the player straight into the Strength Trial
+            // Winning "Test of Wits" plays Mordecai's Strength Trial intro cutscene,
+            // which transitions the player into the Strength Trial itself on "Next"
+            // (see data/cutscenes/wizardTrials.ts's onComplete).
             if (miniGameId === 'sliding-crate-puzzle' && result?.success) {
               startWizardTrialsStrength();
-              const spawn = mapManager.getMap('strength_trial')?.spawnPoint ?? { x: 7, y: 6 };
-              handleMapTransition('strength_trial', spawn);
+              cutsceneManager.triggerManualCutscene('wizard_trials_strength_intro', {
+                mapId: currentMap?.id ?? 'wizard_trials',
+                position: playerPos,
+              });
             }
             // Winning "Test of Agility" sends the player on to the Test of Patience;
             // crashing casts them back to the Wizard Trials antechamber instead.

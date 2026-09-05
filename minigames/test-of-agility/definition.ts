@@ -33,6 +33,6 @@ export const testOfAgilityDefinition: MiniGameDefinition = {
     requiresQuest: 'wizard_trials_strength',
     requiresQuestStage: 2,
   },
-  confirmMessage: 'Board the runaway mine cart?',
+  precedingCutsceneId: 'wizard_trials_agility_intro',
   customBackdrop: true,
 };

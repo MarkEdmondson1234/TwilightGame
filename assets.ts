@@ -556,6 +556,8 @@ export const npcAssets = {
   mum_01: '/TwilightGame/assets-optimized/npcs/mum_01.png',
   mum_02: '/TwilightGame/assets-optimized/npcs/mum_02.png',
   mum_portrait: '/TwilightGame/assets-optimized/npcs/mum_01.png',
+  // Mordecai's magical projection (Wizard Trials cutscenes only — not a walkable NPC)
+  mordecai_projection: '/TwilightGame/assets-optimized/npcs/mordecai/mordecai_projection.png',
   spring_periwinkle_01:
     '/TwilightGame/assets-optimized/npcs/spring_periwinkle/spring_periwinkle.png',
   spring_periwinkle_02:

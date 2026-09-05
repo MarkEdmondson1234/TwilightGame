@@ -31,6 +31,10 @@ export interface Transition {
   maxSizeTier?: SizeTier; // Maximum size tier allowed (e.g., 1 = cannot be larger than "Large")
   // Audio hint - plays door sound when transitioning (for building entries/exits)
   hasDoor?: boolean;
+  // If set, using this transition plays the named cutscene instead of transitioning
+  // immediately — the cutscene's own onComplete (or a dialogue choice's triggerCutscene)
+  // decides where the player actually ends up.
+  precedingCutsceneId?: string;
 }
 
 // ============================================================================
