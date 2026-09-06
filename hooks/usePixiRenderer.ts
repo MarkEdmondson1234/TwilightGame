@@ -412,7 +412,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         depthSortedContainer.addChild(thoughtBubbleLayer.getContainer());
 
         // Create shadow layer (conditional)
-        if (USE_SPRITE_SHADOWS) {
+        if (USE_SPRITE_SHADOWS && perfSettings.enableShadows) {
           const shadowLayer = new ShadowLayer();
           shadowLayerRef.current = shadowLayer;
           app.stage.addChild(shadowLayer.getContainer());

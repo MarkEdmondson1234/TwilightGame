@@ -152,7 +152,26 @@ export function detectPerformanceTier(): PerformanceTier {
     return PerformanceTier.MEDIUM;
   }
 
-  // Desktop defaults to HIGH
+  // Desktop form factor does not imply a dedicated GPU. Budget Chromebooks
+  // share limited RAM between the browser and integrated graphics. Only use
+  // positive, exposed values: missing browser hints are not zero capacity.
+  const cores = navigator.hardwareConcurrency;
+  const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory;
+  if ((cores > 0 && cores <= 2) || (memory !== undefined && memory > 0 && memory <= 2)) {
+    debugLog('PerformanceTier', 'Detected limited desktop - using LOW tier');
+    return PerformanceTier.LOW;
+  }
+  if ((cores > 0 && cores <= 4) || (memory !== undefined && memory > 0 && memory <= 4)) {
+    debugLog('PerformanceTier', 'Detected modest desktop - using MEDIUM tier');
+    return PerformanceTier.MEDIUM;
+  }
+  // Be conservative when ChromeOS withholds either hardware hint. A capable
+  // Chromebook still earns HIGH when it exposes >4 cores and >4GB of memory.
+  if (navigator.userAgent.includes('CrOS') && !(cores > 4 && memory !== undefined && memory > 4)) {
+    return PerformanceTier.MEDIUM;
+  }
+
+  // Capable desktops, and other desktops with unknown capabilities, keep HIGH.
   debugLog('PerformanceTier', 'Detected desktop - using HIGH tier');
   return PerformanceTier.HIGH;
 }
@@ -165,19 +184,27 @@ export function getPerformanceSettings(): PerformanceSettings {
   const dpr = window.devicePixelRatio || 1;
   const isMobile = isMobileDevice() || isOldIPad();
 
-  // Texture policy is chosen by form factor, not by tier. A fast phone still
-  // has a phone's memory ceiling — see the isMobile doc comment above.
+  // Phones retain their memory policy even at HIGH quality. Limited desktops
+  // also need smaller caches and fewer concurrent texture decodes.
   const texturePolicy = isMobile
     ? {
         generateMipmaps: false,
         textureBudgetMB: tier === PerformanceTier.LOW ? 256 : 384,
         maxConcurrentTextureLoads: tier === PerformanceTier.LOW ? 4 : 6,
       }
-    : {
-        generateMipmaps: true,
-        textureBudgetMB: 1536,
-        maxConcurrentTextureLoads: 16,
-      };
+    : tier !== PerformanceTier.HIGH
+      ? {
+          generateMipmaps: false,
+          // Keep this above the 320MB single-map budget so transitions do not
+          // continually discard the neighbouring map's working set.
+          textureBudgetMB: tier === PerformanceTier.LOW ? 384 : 512,
+          maxConcurrentTextureLoads: tier === PerformanceTier.LOW ? 4 : 6,
+        }
+      : {
+          generateMipmaps: true,
+          textureBudgetMB: 1536,
+          maxConcurrentTextureLoads: 16,
+        };
 
   switch (tier) {
     case PerformanceTier.LOW:
