@@ -68,6 +68,13 @@ import {
   advanceGhostQuestToHasBook,
 } from '../data/questHandlers/ghostQueenHandler';
 import { createQueenAvericiaaNPC } from './npcs/village/queenAvaricia';
+import { createMordecaiWizardNPC } from './npcs/mine/mordecai';
+import {
+  WIZARD_TRIALS_MORDECAI_ID,
+  hasRevealedYear,
+  setHasRevealedYear,
+  setBubblePopped,
+} from '../data/questHandlers/mordecaiTimebubbleHandler';
 
 /**
  * Handle dialogue node changes and trigger associated actions
@@ -149,6 +156,12 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
   // Handle Ghost Queen / Queen Avaricia quest
   if (npcId === 'ghost_queen') {
     const redirect = handleGhostQueenActions(nodeId);
+    if (redirect) return redirect;
+  }
+
+  // Handle Mordecai's time bubble (Wizard Trials epilogue)
+  if (npcId === WIZARD_TRIALS_MORDECAI_ID) {
+    const redirect = handleMordecaiTimebubbleActions(nodeId);
     if (redirect) return redirect;
   }
 }
@@ -824,5 +837,33 @@ function handleGhostQueenActions(nodeId: string): string | void {
     npcManager.removeDynamicNPC('ghost_queen');
     npcManager.addDynamicNPC(createQueenAvericiaaNPC());
     debugLog('dialogueHandlers', '👑 Ghost → Queen Avaricia NPC swap complete');
+  }
+}
+
+/**
+ * Handle Mordecai's time bubble dialogue actions (Wizard Trials epilogue).
+ *
+ * Responsibilities:
+ * - Redirect "greeting" to the reveal conversation (first time) or the chat hub
+ *   (every time after) once Mordecai has been freed
+ * - Swap the sleeping bubble for the freed Mordecai NPC when the player pops it
+ * - Remember once the reveal conversation ("what year is it?!") has played out
+ */
+function handleMordecaiTimebubbleActions(nodeId: string): string | void {
+  if (nodeId === 'greeting') {
+    return hasRevealedYear() ? 'mordecai_chat_hub' : 'mordecai_reveal_intro';
+  }
+
+  // Player chose "Pop the bubble" — swap the sleeping bubble for freed Mordecai
+  if (nodeId === 'bubble_popped') {
+    setBubblePopped();
+    npcManager.removeDynamicNPC(WIZARD_TRIALS_MORDECAI_ID);
+    npcManager.addDynamicNPC(createMordecaiWizardNPC());
+    debugLog('dialogueHandlers', '🫧 Time bubble popped — Mordecai freed');
+  }
+
+  // Reveal conversation concluded — never show it again
+  if (nodeId === 'mordecai_reveal_end') {
+    setHasRevealedYear();
   }
 }

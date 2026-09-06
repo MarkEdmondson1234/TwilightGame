@@ -189,6 +189,26 @@ const CutscenePlayer: React.FC<CutscenePlayerProps> = ({ onComplete }) => {
         return;
       }
 
+      // A dialogue choice's triggerCutscene ends the current cutscene and starts a new
+      // one inside the same synchronous batch (see handleChoice below) — App.tsx's own
+      // subscriber flips isCutscenePlaying back to true before React ever commits the
+      // intervening `false`, so this component is never unmounted in between. The refs
+      // above are otherwise scoped to "since mount", not "for the current cutscene", so
+      // without this, the chained cutscene's real completion later gets silently
+      // swallowed by the guard the first cutscene's spurious ending already tripped.
+      if (state.currentCutscene && state.currentCutscene.id !== cutsceneIdRef.current) {
+        cutsceneIdRef.current = state.currentCutscene.id;
+        completionActionRef.current = {
+          ...(state.currentCutscene.onComplete as {
+            action: string;
+            mapId?: string;
+            position?: { x: number; y: number };
+          }),
+          cutsceneId: state.currentCutscene.id,
+        };
+        onCompleteCalledRef.current = false;
+      }
+
       const scene = cutsceneManager.getCurrentScene();
       if (scene && scene.id !== currentScene?.id) {
         // Scene changed - trigger transition

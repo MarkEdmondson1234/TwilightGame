@@ -132,6 +132,7 @@ import {
   restartWizardTrialsStrength,
 } from './data/questHandlers/wizardTrialsStrengthHandler';
 import { startWizardTrialsPatience } from './data/questHandlers/wizardTrialsPatienceHandler';
+import { spawnWizardTrialsMordecaiIfAbsent } from './utils/npcs/mine';
 import { getItem, ItemCategory } from './data/items';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
@@ -755,6 +756,11 @@ const App: React.FC = () => {
           extra: { mapId: 'strength_trial', x: 7, y: 4 },
         },
       });
+    } else if (action.cutsceneId === 'wizard_trials_apprentice_pass') {
+      // The time bubble containing the trapped Mordecai emerges in the antechamber
+      // the moment the player passes the trials — this runs after handleMapTransition
+      // above has already moved the player back into wizard_trials.
+      spawnWizardTrialsMordecaiIfAbsent();
     }
 
     setIsCutscenePlaying(false);

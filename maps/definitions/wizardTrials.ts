@@ -1,5 +1,6 @@
-import { MapDefinition, TileType } from '../../types';
+import { MapDefinition, TileType, NPC } from '../../types';
 import { parseGrid } from '../gridParser';
+import { createWizardTrialsMordecaiOrNull } from '../../utils/npcs/mine';
 
 /**
  * Wizard Trials (antechamber)
@@ -62,6 +63,7 @@ export const wizardTrials: MapDefinition = {
   colorScheme: 'lava',
   isRandom: false,
   spawnPoint: { x: 3, y: 7 },
+  npcs: [createWizardTrialsMordecaiOrNull()].filter((npc): npc is NPC => npc !== null),
   transitions: [
     {
       fromPosition: { x: 1, y: 6 },
