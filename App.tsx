@@ -70,6 +70,7 @@ import { iconAssets } from './iconAssets';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
 import TransitionIndicators from './components/TransitionIndicators';
+import { activateTransitionIndicator } from './utils/activateTransitionIndicator';
 import MiniGameLocationIndicators from './components/MiniGameLocationIndicators';
 import NPCInteractionIndicators from './components/NPCInteractionIndicators';
 import TileRenderer from './components/TileRenderer';
@@ -2281,6 +2282,17 @@ const App: React.FC = () => {
         {/* Transition indicators (rendered after foreground sprites so they're always visible) */}
         {/* For background-image rooms, pass gridOffset and effectiveTileSize for viewport scaling */}
         <TransitionIndicators
+          onActivate={(transition) => {
+            if (activeNPC || isCutscenePlaying || isAnyOverlayOpen || showSplashScreen) return;
+            activateTransitionIndicator(transition, currentMap, playerPosRef.current,
+              playerSizeTier, lastTransitionTime.current, (result) => {
+                if (result.blocked && result.message) showToast(result.message, 'info');
+                if (result.success && result.mapId && result.spawnPosition) {
+                  if (result.hasDoor) audioManager.playSfx('sfx_door_open');
+                  handleMapTransition(result.mapId, result.spawnPosition);
+                }
+              });
+          }}
           currentMap={currentMap}
           playerPos={playerPos}
           lastTransitionTime={lastTransitionTime.current}

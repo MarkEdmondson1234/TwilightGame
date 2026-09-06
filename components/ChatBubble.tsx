@@ -121,12 +121,14 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
           }}
         >
           {/* Header: NPC name + emotion */}
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex flex-wrap items-center gap-2 mb-1">
             {npcName && (
               <span
                 style={{
                   fontFamily: FONT_FAMILY,
                   fontSize: '0.7rem',
+                  overflowWrap: 'anywhere',
+                  minWidth: 0,
                   color: '#d4a373',
                   fontWeight: 'bold',
                   opacity: 0.8,
@@ -212,6 +214,8 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
             style={{
               fontFamily: FONT_FAMILY,
               fontSize: '0.7rem',
+              overflowWrap: 'anywhere',
+              minWidth: 0,
               color: '#a8d4a0',
               fontWeight: 'bold',
               opacity: 0.8,

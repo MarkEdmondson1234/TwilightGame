@@ -88,6 +88,9 @@ function isTouchControlElement(element: EventTarget | null): boolean {
  * z-index >= Z_HUD.
  */
 function isUIElement(element: EventTarget | null, clientX?: number, clientY?: number): boolean {
+  // Native listeners run before React's delegated bubble handlers. Mark UI
+  // explicitly, including SVG descendants, so closing a modal cannot also move.
+  if (element instanceof Element && element.closest('[data-game-ui="true"]')) return true;
   if (!element || !(element instanceof HTMLElement)) return false;
 
   // Class-based detection on the direct target (fast path)

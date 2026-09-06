@@ -157,6 +157,21 @@ const DialogueChatHistory: React.FC<DialogueChatHistoryProps> = ({
     if (expanded) scrollExpandedToBottom();
   }, [expanded, scrollExpandedToBottom]);
 
+  // History owns dismissal while open; the underlying dialogue also listens on
+  // window for Escape/E, so intercept those keys before they reach that layer.
+  useEffect(() => {
+    if (!expanded) return;
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' || event.key === 'Enter' || event.key.toLowerCase() === 'e') {
+        event.stopImmediatePropagation();
+        event.preventDefault();
+        if (event.key === 'Escape') setExpanded(false);
+      }
+    };
+    document.addEventListener('keydown', handleKey, true);
+    return () => document.removeEventListener('keydown', handleKey, true);
+  }, [expanded]);
+
   return (
     <>
       {/* Inline chat area */}
@@ -203,8 +218,17 @@ const DialogueChatHistory: React.FC<DialogueChatHistoryProps> = ({
         createPortal(
           <div
             className="fixed inset-0 flex items-center justify-center"
+            data-game-ui="true"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Conversation history"
+            onTouchStart={(event) => event.stopPropagation()}
+            onTouchEnd={(event) => event.stopPropagation()}
             style={{ zIndex: 9999, background: 'rgba(10, 8, 15, 0.85)' }}
-            onClick={() => setExpanded(false)}
+            onClick={(event) => {
+              event.stopPropagation();
+              setExpanded(false);
+            }}
           >
             <div
               className="relative flex flex-col"
@@ -234,7 +258,10 @@ const DialogueChatHistory: React.FC<DialogueChatHistoryProps> = ({
                   Conversation with {npcName}
                 </span>
                 <button
-                  onClick={() => setExpanded(false)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setExpanded(false);
+                  }}
                   className="text-sm px-3 py-1 transition-colors duration-200"
                   style={{
                     fontFamily: DIALOGUE_FONT,

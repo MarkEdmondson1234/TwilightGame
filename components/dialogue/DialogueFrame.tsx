@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDialogueAnimation } from '../../hooks/useDialogueAnimation';
+import FittedName from './FittedName';
 import { Z_DIALOGUE, zClass } from '../../zIndex';
 
 interface DialogueFrameProps {
@@ -41,7 +42,17 @@ const DialogueFrame: React.FC<DialogueFrameProps> = ({
   }, []);
 
   return (
-    <div className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}>
+    <div
+      className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Conversation with ${npcName}`}
+      data-game-ui="true"
+      onClick={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onTouchStart={(event) => event.stopPropagation()}
+      onTouchEnd={(event) => event.stopPropagation()}
+    >
       {/* Background gradient overlay */}
       <div
         className="absolute inset-0"
@@ -99,63 +110,74 @@ const DialogueFrame: React.FC<DialogueFrameProps> = ({
       </div>
 
       {/*
-       * Dialogue window — uses EXACT original DialogueBox positioning.
-       * The frame image is 1000x1000. With these values the wooden nameplate
-       * appears at the top of the visible area, content fills the grey box.
+       * The painted portion of each 1000x1000 frame occupies y=490..800.
+       * Cropping that region lets the artwork follow the responsive panel height.
        */}
       <div
         className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto overflow-hidden"
         style={{
           width: 'min(95vw, 900px)',
-          height: 'min(48vh, 350px)',
+          height: 'min(64dvh, 350px)',
           bottom: '20px',
         }}
       >
-        {/* Frame image — original positioning that aligns nameplate correctly */}
-        <img
-          src={currentFrame}
-          alt=""
-          className="absolute"
-          style={{ imageRendering: 'auto', width: '100%', height: 'auto', bottom: '-45%' }}
-        />
+        {/* Crop to the painted region; artwork and labels share one coordinate system. */}
+        <svg
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          viewBox="0 490 1000 310"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <image href={currentFrame} width="1000" height="1000" />
+        </svg>
 
         {/* Content overlay */}
         <div className="absolute inset-0">
-          {/* Name — positioned over the wooden nameplate (original values) */}
+          {/* Name — bounded to the painted nameplate in the cropped image */}
           <div
             className="absolute flex items-center justify-center"
-            style={{ top: '17%', left: '9%', width: '32%', height: '20%' }}
+            style={{
+              top: '8%',
+              left: '15%',
+              width: '20.5%',
+              height: '17%',
+              fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
+              fontWeight: 'bold',
+              color: '#4a3228',
+              textShadow: '0 1px 2px rgba(255,255,255,0.5)',
+            }}
           >
-            <span
-              style={{
-                fontFamily: '"Palatino Linotype", "Book Antiqua", Palatino, serif',
-                fontSize: 'clamp(1.1rem, 3vw, 1.6rem)',
-                fontWeight: 'bold',
-                color: '#4a3228',
-                textShadow: '0 1px 2px rgba(255,255,255,0.5)',
-                letterSpacing: '0.05em',
-              }}
-            >
-              {npcName}
-            </span>
-            {nameExtra}
+            <FittedName name={npcName} extra={nameExtra} />
           </div>
 
           {/* Chat + controls — fills the grey content area, extends to bottom for buttons */}
           <div
             className="absolute flex flex-col"
-            style={{ top: '35%', left: '10%', right: '10%', bottom: '6%' }}
+            style={{
+              top: '30%',
+              left: '10%',
+              right: '10%',
+              bottom: 'calc(9% + 48px)',
+              minHeight: 0,
+              overflow: 'hidden',
+            }}
           >
             {children}
           </div>
 
           {/* Leave button — always visible, bottom-right under the animated arrow */}
           <button
-            onClick={onClose}
+            onClick={(event) => {
+              event.stopPropagation();
+              onClose();
+            }}
             className="absolute text-s transition-colors duration-200"
             style={{
-              bottom: '4%',
-              right: '10%',
+              bottom: '9%',
+              minHeight: 44,
+              minWidth: 64,
+              touchAction: 'manipulation',
+              right: '17%',
               fontFamily: LEAVE_FONT,
               color: 'rgba(180, 160, 140, 0.7)',
               background: 'none',

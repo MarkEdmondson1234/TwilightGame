@@ -5,9 +5,11 @@ import { Z_ACTION_PROMPTS } from '../zIndex';
 import { getTransitionIcon, COTTAGE_COLOURS, COTTAGE_FONTS } from '../utils/transitionIcons';
 import { useTouchDevice } from '../hooks/useTouchDevice';
 import GameIcon from './GameIcon';
+import { TRANSITION_ICON_RANGE } from '../utils/activateTransitionIndicator';
 
 interface TransitionIndicatorsProps {
   currentMap: MapDefinition;
+  onActivate: (transition: Transition) => void;
   playerPos: Position;
   lastTransitionTime: number;
   gridOffset?: Position; // Offset for background-image rooms with centered layers
@@ -15,7 +17,7 @@ interface TransitionIndicatorsProps {
 }
 
 // Distance thresholds
-const ICON_VISIBLE_DISTANCE = 3.5; // Icon visible from further away
+const ICON_VISIBLE_DISTANCE = TRANSITION_ICON_RANGE; // Icon visible from further away
 const TOOLTIP_DISTANCE = 1.5; // Tooltip only when very close
 
 /**
@@ -27,12 +29,28 @@ const FloatingIcon: React.FC<{
   screenX: number;
   screenY: number;
   isClose: boolean;
-}> = ({ icon, colour, screenX, screenY, isClose }) => (
-  <div
-    className="absolute pointer-events-none animate-float-gentle"
+  label: string;
+  onActivate: () => void;
+}> = ({ icon, colour, screenX, screenY, isClose, label, onActivate }) => (
+  <button
+    type="button"
+    aria-label={label}
+    data-game-ui="true"
+    onClick={(event) => {
+      event.stopPropagation();
+      onActivate();
+    }}
+    className="absolute pointer-events-auto animate-float-gentle"
     style={{
-      left: screenX,
-      top: screenY - 20,
+      left: screenX - 24,
+      top: screenY - 24,
+      width: 48,
+      height: 48,
+      padding: 6,
+      border: 0,
+      background: 'transparent',
+      touchAction: 'manipulation',
+      cursor: 'pointer',
       zIndex: Z_ACTION_PROMPTS,
     }}
   >
@@ -52,7 +70,7 @@ const FloatingIcon: React.FC<{
     >
       <GameIcon icon={icon} size={18} />
     </div>
-  </div>
+  </button>
 );
 
 /**
@@ -64,12 +82,25 @@ const ParchmentTooltip: React.FC<{
   screenX: number;
   screenY: number;
   showKeyHint: boolean;
-}> = ({ icon, label, screenX, screenY, showKeyHint }) => (
-  <div
-    className="absolute pointer-events-none animate-tooltip-appear"
+  onActivate: () => void;
+}> = ({ icon, label, screenX, screenY, showKeyHint, onActivate }) => (
+  <button
+    type="button"
+    aria-label={label}
+    data-game-ui="true"
+    onClick={(event) => {
+      event.stopPropagation();
+      onActivate();
+    }}
+    className="absolute pointer-events-auto animate-tooltip-appear"
     style={{
       left: screenX,
       top: screenY - 65,
+      padding: 0,
+      border: 0,
+      background: 'transparent',
+      touchAction: 'manipulation',
+      cursor: 'pointer',
       transform: 'translate(-50%, -100%)',
       zIndex: Z_ACTION_PROMPTS + 1,
     }}
@@ -133,7 +164,7 @@ const ParchmentTooltip: React.FC<{
         borderTop: `8px solid ${COTTAGE_COLOURS.warmBrownBorder}`,
       }}
     />
-  </div>
+  </button>
 );
 
 /**
@@ -164,6 +195,7 @@ function getTransitionLabel(transition: Transition): string {
  */
 const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
   currentMap,
+  onActivate,
   playerPos,
   gridOffset,
   tileSize = TILE_SIZE,
@@ -202,6 +234,8 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
               screenX={screenX}
               screenY={screenY}
               isClose={isVeryClose}
+              label={label}
+              onActivate={() => onActivate(transition)}
             />
 
             {/* Parchment tooltip when very close */}
@@ -212,6 +246,7 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
                 screenX={screenX}
                 screenY={screenY}
                 showKeyHint={!isTouchDevice}
+                onActivate={() => onActivate(transition)}
               />
             )}
           </React.Fragment>
@@ -221,20 +256,4 @@ const TransitionIndicators: React.FC<TransitionIndicatorsProps> = ({
   );
 };
 
-// Skip re-render when player has moved less than 0.5 tiles —
-// indicator visibility only changes at interaction radii of 1.5+ tiles
-const POS_THRESHOLD = 0.5;
-
-export default React.memo(TransitionIndicators, (prev, next) => {
-  if (prev.currentMap !== next.currentMap) return false;
-  if (prev.lastTransitionTime !== next.lastTransitionTime) return false;
-  if (prev.tileSize !== next.tileSize) return false;
-  if (prev.gridOffset !== next.gridOffset) return false;
-  if (
-    Math.abs(prev.playerPos.x - next.playerPos.x) >= POS_THRESHOLD ||
-    Math.abs(prev.playerPos.y - next.playerPos.y) >= POS_THRESHOLD
-  ) {
-    return false;
-  }
-  return true;
-});
+export default React.memo(TransitionIndicators);
