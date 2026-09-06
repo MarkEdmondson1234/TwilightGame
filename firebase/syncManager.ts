@@ -1,3 +1,4 @@
+import { startDiagnosticOperation } from '../utils/sessionDiagnostics';
 /**
  * Sync Manager - Hybrid Save System
  *
@@ -170,6 +171,7 @@ class SyncManager {
       return;
     }
 
+    const finishDiagnostic = startDiagnosticOperation('cloud_upload');
     this.updateState({ status: 'syncing' });
     eventBus.emit(GameEvent.CLOUD_SYNC_STARTED, {});
 
@@ -189,7 +191,9 @@ class SyncManager {
 
       eventBus.emit(GameEvent.CLOUD_SYNC_COMPLETED, { success: true });
       debugLog('SyncManager', 'Uploaded to cloud successfully');
+      finishDiagnostic();
     } catch (error) {
+      finishDiagnostic(false);
       console.error('[SyncManager] Upload failed:', error);
       this.updateState({
         status: 'error',
@@ -214,6 +218,7 @@ class SyncManager {
       return;
     }
 
+    const finishDiagnostic = startDiagnosticOperation('cloud_download');
     this.updateState({ status: 'syncing' });
 
     try {
@@ -241,7 +246,9 @@ class SyncManager {
       });
 
       debugLog('SyncManager', 'Downloaded from cloud successfully');
+      finishDiagnostic();
     } catch (error) {
+      finishDiagnostic(false);
       console.error('[SyncManager] Download failed:', error);
       this.updateState({
         status: 'error',

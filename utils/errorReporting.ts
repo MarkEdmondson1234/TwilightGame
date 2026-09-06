@@ -10,15 +10,12 @@
  * silently disables itself (every export becomes a safe no-op) when the DSN
  * isn't configured, so the game works identically with or without it set up.
  *
- * Deliberately narrower than Sentry's default React setup guide
- * (skills.sentry.dev/instrument): no browserTracingIntegration (performance
- * tracing — separate quota, not what "remote error logging" asked for) and
- * no replayIntegration (records gameplay sessions — a bigger privacy
- * footprint and bundle-size cost than this needs, for a kids/family game).
- * Both can be added later if actually wanted.
+ * Structured session diagnostics use the Logs quota. Automatic tracing and
+ * session replay remain off; no gameplay content is recorded.
  */
 
 import * as Sentry from '@sentry/react';
+import { startSessionDiagnostics } from './sessionDiagnostics';
 import { debugLog } from './debugLog';
 
 let initialised = false;
@@ -42,7 +39,9 @@ export function initErrorReporting(): void {
     // Sentry dashboard be traced back to the exact deploy that shipped them.
     // Unset locally (no CI to stamp it), which is fine — Sentry just omits it.
     release: import.meta.env.VITE_APP_VERSION,
-    tracesSampleRate: 0, // Error tracking only — no performance/tracing overhead.
+    tracesSampleRate: 0,
+    enableLogs: true,
+    sendDefaultPii: false,
     // Drop fetch cancellations. The browser throws AbortError whenever an
     // in-flight request is cancelled — which happens normally every time a
     // player navigates or a map transition supersedes an asset load. These
@@ -54,6 +53,7 @@ export function initErrorReporting(): void {
     ignoreErrors: [/AbortError/],
   });
   initialised = true;
+  startSessionDiagnostics();
   debugLog('ErrorReporting', 'Sentry initialised');
 }
 

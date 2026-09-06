@@ -1,3 +1,4 @@
+import { setDiagnosticRenderer } from '../utils/sessionDiagnostics';
 /**
  * usePixiRenderer Hook
  *
@@ -321,6 +322,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         });
 
         pixiAppRef.current = app;
+        setDiagnosticRenderer(
+          'gl' in app.renderer ? (app.renderer as PIXI.WebGLRenderer).gl : undefined,
+          () => textureManager.getEstimatedMemoryMB()
+        );
 
         // Enable z-index sorting on stage
         app.stage.sortableChildren = true;

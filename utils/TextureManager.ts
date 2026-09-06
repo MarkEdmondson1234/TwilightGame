@@ -1,3 +1,4 @@
+import { startDiagnosticOperation } from './sessionDiagnostics';
 /**
  * TextureManager - Handles PixiJS texture loading and caching (v8 compatible)
  *
@@ -154,7 +155,14 @@ class TextureManager {
       }
     };
 
-    await Promise.all(Array.from({ length: Math.min(limit, total) }, worker));
+    const finishDiagnostic = startDiagnosticOperation('texture_batch');
+    try {
+      await Promise.all(Array.from({ length: Math.min(limit, total) }, worker));
+      finishDiagnostic(failures.length === 0);
+    } catch (error) {
+      finishDiagnostic(false);
+      throw error;
+    }
 
     const loadTime = (performance.now() - startTime).toFixed(0);
     const loaded = total - failures.length;

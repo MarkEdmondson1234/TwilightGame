@@ -1,3 +1,4 @@
+import { setDiagnosticMap, startDiagnosticOperation } from '../utils/sessionDiagnostics';
 import { MapDefinition, Position, TileType, ColorScheme, isTileSolid, Transition } from '../types';
 import { npcManager } from '../NPCManager';
 import { validateMapDefinition } from './gridParser';
@@ -45,26 +46,34 @@ class MapManager {
    * Load and set the current map
    */
   loadMap(mapId: string): MapDefinition {
-    const map = this.maps.get(mapId);
-    if (!map) {
-      throw new Error(`Map not found: ${mapId}`);
+    setDiagnosticMap(mapId);
+    const finishDiagnostic = startDiagnosticOperation('map_load');
+    try {
+      const map = this.maps.get(mapId);
+      if (!map) {
+        throw new Error(`Map not found: ${mapId}`);
+      }
+
+      // Validate map definition to catch common issues
+      const isValid = validateMapDefinition(map);
+      if (!isValid) {
+        console.error(
+          `[MapManager] ⚠️ Map '${mapId}' has validation errors (see above). Loading anyway...`
+        );
+      }
+
+      this.currentMapId = mapId;
+      this.currentMap = map;
+
+      // Update NPCManager's current map (NPCs are already registered in registerMap())
+      npcManager.setCurrentMap(mapId);
+
+      finishDiagnostic();
+      return map;
+    } catch (error) {
+      finishDiagnostic(false);
+      throw error;
     }
-
-    // Validate map definition to catch common issues
-    const isValid = validateMapDefinition(map);
-    if (!isValid) {
-      console.error(
-        `[MapManager] ⚠️ Map '${mapId}' has validation errors (see above). Loading anyway...`
-      );
-    }
-
-    this.currentMapId = mapId;
-    this.currentMap = map;
-
-    // Update NPCManager's current map (NPCs are already registered in registerMap())
-    npcManager.setCurrentMap(mapId);
-
-    return map;
   }
 
   /**

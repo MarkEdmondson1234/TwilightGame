@@ -1,3 +1,4 @@
+import { startDiagnosticOperation } from '../utils/sessionDiagnostics';
 import { mapManager } from './MapManager';
 import { TimeManager } from '../utils/TimeManager';
 import { hashString } from '../utils/seededRandom';
@@ -91,6 +92,18 @@ export function initializeMaps(): void {
  * Also updates game state for depth tracking
  */
 export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: number }) {
+  const finishDiagnostic = startDiagnosticOperation('map_transition');
+  try {
+    const result = prepareMapTransition(mapId, spawnPoint);
+    finishDiagnostic();
+    return result;
+  } catch (error) {
+    finishDiagnostic(false);
+    throw error;
+  }
+}
+
+function prepareMapTransition(mapId: string, spawnPoint?: { x: number; y: number }) {
   // Track depth changes
   if (mapId.startsWith('RANDOM_')) {
     const type = mapId.replace('RANDOM_', '').toLowerCase();

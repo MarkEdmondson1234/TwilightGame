@@ -15,10 +15,15 @@ const { init, captureException, captureMessage, withScope, reactErrorHandler, se
     init: vi.fn(),
     captureException: vi.fn(),
     captureMessage: vi.fn(),
-    withScope: vi.fn((cb: (scope: unknown) => void) => cb({ setTag: vi.fn(), setContext: vi.fn() })),
+    withScope: vi.fn((cb: (scope: unknown) => void) =>
+      cb({ setTag: vi.fn(), setContext: vi.fn() })
+    ),
     reactErrorHandler: vi.fn(() => vi.fn()),
     setUser: vi.fn(),
   }));
+
+const { startSessionDiagnostics } = vi.hoisted(() => ({ startSessionDiagnostics: vi.fn() }));
+vi.mock('../utils/sessionDiagnostics', () => ({ startSessionDiagnostics }));
 
 vi.mock('@sentry/react', () => ({
   init,
@@ -82,5 +87,30 @@ describe('errorReporting — safe no-op without a DSN configured', () => {
     expect(() => setErrorReportingUser('abc123')).not.toThrow();
     expect(() => setErrorReportingUser(null)).not.toThrow();
     expect(setUser).not.toHaveBeenCalled();
+  });
+});
+
+describe('errorReporting — configured diagnostics', () => {
+  it('enables structured logs and starts diagnostics once, without tracing or default PII', async () => {
+    vi.resetModules();
+    vi.stubEnv('VITE_SENTRY_DSN', 'https://public@example.com/1');
+    init.mockClear();
+    startSessionDiagnostics.mockClear();
+    try {
+      const reporting = await import('../utils/errorReporting');
+      reporting.initErrorReporting();
+      reporting.initErrorReporting();
+      expect(init).toHaveBeenCalledTimes(1);
+      expect(init).toHaveBeenCalledWith(
+        expect.objectContaining({
+          enableLogs: true,
+          tracesSampleRate: 0,
+          sendDefaultPii: false,
+        })
+      );
+      expect(startSessionDiagnostics).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.stubEnv('VITE_SENTRY_DSN', '');
+    }
   });
 });

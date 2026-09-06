@@ -91,6 +91,7 @@ import { snowAngelManager } from './utils/SnowAngelManager';
 import FarmActionAnimation from './components/FarmActionAnimation';
 import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES, getCutsceneById } from './data/cutscenes';
+import { recordSessionFrame } from './utils/sessionDiagnostics';
 import { performanceMonitor } from './utils/PerformanceMonitor';
 import WeatherTintOverlay from './components/WeatherTintOverlay';
 import ForegroundParallax from './components/ForegroundParallax';
@@ -1154,6 +1155,7 @@ const App: React.FC = () => {
   const gameLoop = useCallback(() => {
     // Track frame-to-frame timing for performance metrics
     performanceMonitor.tick();
+    recordSessionFrame();
 
     // Calculate delta time for frame-rate independent movement
     const now = Date.now();

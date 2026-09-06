@@ -1,3 +1,4 @@
+import { startDiagnosticOperation } from './utils/sessionDiagnostics';
 /**
  * GameState - Single Source of Truth for all persistent game data
  *
@@ -290,13 +291,16 @@ class GameStateManager {
   }
 
   flushSave(): void {
+    const finishDiagnostic = startDiagnosticOperation('local_save');
     this.savePending = false;
     try {
       this.state.saveVersion = SAVE_VERSION;
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state));
       localStorage.setItem('twilight_last_save', Date.now().toString());
       eventBus.emit(GameEvent.LOCAL_SAVE_FLUSHED, { timestamp: Date.now() });
+      finishDiagnostic();
     } catch (error) {
+      finishDiagnostic(false);
       console.error('[GameState] Failed to save state:', error);
     }
   }
