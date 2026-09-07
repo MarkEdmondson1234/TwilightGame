@@ -50,10 +50,31 @@ export function decodeSharedPlacedItem(raw: unknown): PlacedItem | null {
  * generated image, say — keeps its image, because there is nowhere else for it
  * to come from.
  */
+/**
+ * Firestore rejects `undefined` field values outright — the key must be absent,
+ * not present-with-undefined. Any optional field left undefined by a placement
+ * flow would otherwise fail the whole shared-world write, so prune them
+ * recursively at the boundary (JAVASCRIPT-REACT-9 is the worked example: a
+ * wreath carries paintingId but no frameStyle).
+ */
+function pruneUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((entry) => pruneUndefined(entry)) as unknown as T;
+  }
+  if (value !== null && typeof value === 'object') {
+    const pruned: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      if (entry !== undefined) pruned[key] = pruneUndefined(entry);
+    }
+    return pruned as T;
+  }
+  return value;
+}
+
 export function toPublishablePayload(item: PlacedItem): PlacedItem {
-  if (!item.paintingId) return item;
+  if (!item.paintingId) return pruneUndefined(item);
   const { customImage: _omitted, ...withoutImage } = item;
-  return withoutImage;
+  return pruneUndefined(withoutImage);
 }
 
 class SharedPlacedItemsManager {

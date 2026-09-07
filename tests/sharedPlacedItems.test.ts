@@ -126,6 +126,30 @@ describe('toPublishablePayload', () => {
     expect(toPublishablePayload(wreath).customImage).toBe('data:image/webp;base64,AAAA');
   });
 
+  it('drops optional fields left undefined — Firestore rejects undefined values outright', () => {
+    // JAVASCRIPT-REACT-9: the wreath flow passes paintingId but no frameStyle,
+    // so the placed item carried an explicit `frameStyle: undefined` key, and
+    // setDoc() rejected the whole shared-world write.
+    const wreath = makeItem('w', {
+      paintingId: 'wreath-1',
+      customImage: 'data:image/webp;base64,AAAA',
+      frameStyle: undefined,
+    });
+    const payload = toPublishablePayload(wreath);
+    expect('frameStyle' in payload).toBe(false);
+    expect(payload.paintingId).toBe('wreath-1');
+  });
+
+  it('prunes undefined nested fields too — any undefined anywhere fails the write', () => {
+    const painting = makeItem('p', {
+      paintingId: 'painting-1',
+      frameStyle: { colour: '#fff', borderWidth: 3, pattern: 'solid', secondaryColour: undefined },
+    });
+    const payload = toPublishablePayload(painting);
+    expect('secondaryColour' in (payload.frameStyle ?? {})).toBe(false);
+    expect(payload.frameStyle?.colour).toBe('#fff');
+  });
+
   it('strips a painting image, which the receiver hydrates from its id', () => {
     const painting = makeItem('p', {
       paintingId: 'painting-1',

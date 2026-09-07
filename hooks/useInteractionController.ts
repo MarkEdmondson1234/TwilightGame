@@ -529,7 +529,11 @@ export function useInteractionController(
           ...(result.paintingId && {
             paintingId: result.paintingId,
             customImage: result.customImage,
-            frameStyle: result.frameStyle,
+            // Wreaths and other custom-image decorations carry paintingId but no
+            // frame — an explicit `frameStyle: undefined` here reaches the shared
+            // write, and Firestore rejects undefined field values outright
+            // (JAVASCRIPT-REACT-9). Only include the key when there is a frame.
+            ...(result.frameStyle && { frameStyle: result.frameStyle }),
           }),
           // Per-instance scale (from painting size selection)
           ...(result.customScale != null && { customScale: result.customScale }),

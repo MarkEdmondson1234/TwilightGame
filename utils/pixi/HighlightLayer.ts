@@ -176,6 +176,10 @@ export class HighlightLayer extends PixiLayer {
 
   /** Clear on map change */
   clear(): void {
+    // Base-class destroy() calls this after our own destroy() has already torn
+    // down the Graphics — clearing a destroyed Graphics throws (its context is
+    // gone), which surfaced as JAVASCRIPT-REACT-8 during react-refresh teardown.
+    if (this.highlight.destroyed) return;
     this.highlight.clear();
     this.highlight.visible = false;
     this.currentTileX = -999;
