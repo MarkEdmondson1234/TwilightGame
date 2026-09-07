@@ -79,6 +79,37 @@ export function initializeGameCore(): void {
   initializeMaps(); // Initialize all maps and color schemes
 }
 
+/**
+ * Correct Queen Avaricia's NPC form (pre-reveal ghost vs. revealed queen) for a
+ * returning player whose ghost_queen quest was already complete.
+ *
+ * house1's static `npcs: [createGhostQueenNPC()]` array is evaluated once, when
+ * house1.ts's module loads during initializeMaps() in the fast synchronous startup
+ * phase — which runs BEFORE eventChainManager has loaded saved progress (that
+ * happens later, in the async phase). So that check always sees an empty progress
+ * map and always bakes in the pre-reveal ghost, regardless of what's actually
+ * saved. The only reason the queen is ever seen at all is the live in-session NPC
+ * swap dialogueHandlers.ts performs at the moment the quest completes — which
+ * doesn't survive a fresh reload, since nothing re-applies it afterwards.
+ *
+ * Call this once, after eventChainManager.initialise() has actually loaded
+ * progress, so a completed save gets the right NPC before the player ever sees it.
+ */
+export async function restoreQueenAvariciaFormIfComplete(): Promise<void> {
+  const { GHOST_QUEEN_NPC_ID, isGhostQuestComplete } = await import(
+    '../data/questHandlers/ghostQueenHandler'
+  );
+  if (!isGhostQuestComplete()) return;
+
+  const { createQueenAvericiaaNPC } = await import('./npcs/village/queenAvaricia');
+  npcManager.removeDynamicNPC(GHOST_QUEEN_NPC_ID, 'house1');
+  npcManager.registerNPCs('house1', [
+    ...npcManager.getNPCsForMap('house1'),
+    createQueenAvericiaaNPC(),
+  ]);
+  debugLog('gameInitializer', 'Restored Queen Avaricia form (quest already complete)');
+}
+
 interface AssetLoadOptions {
   onProgress?: (loaded: number, total: number) => void;
 }
@@ -104,6 +135,10 @@ export async function initializeGameAssets(
   const { eventChainManager } = await import('./EventChainManager');
   eventChainManager.initialise();
   debugLog('App', `Initialised event chain system`);
+
+  // Now that saved progress has actually loaded, correct any NPC forms that
+  // house1's static registration baked in before it was available.
+  await restoreQueenAvariciaFormIfComplete();
 
   // Remove legacy hung-wreath placed items (old quest system used customScale: 1.5 items with
   // IDs like "hung_wreath_player_home" — these persist in localStorage and must be cleaned up)
