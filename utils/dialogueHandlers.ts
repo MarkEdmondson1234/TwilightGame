@@ -66,6 +66,7 @@ import {
   completeGhostQuest,
   isGhostQuestStarted,
   advanceGhostQuestToHasBook,
+  getGhostQuestStage,
 } from '../data/questHandlers/ghostQueenHandler';
 import { createQueenAvericiaaNPC } from './npcs/village/queenAvaricia';
 import { createMordecaiWizardNPC } from './npcs/mine/mordecai';
@@ -147,8 +148,15 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
     if (redirect) return redirect;
   }
 
-  // Handle Mushra book delivery for ghost queen quest
-  if (npcId === 'mushra' || npcId.startsWith('mushra_')) {
+  // Handle Mushra book delivery for ghost queen quest — every Mushra instance
+  // (forest, her shop, the autumn village workshop, and its seed-shed relocation)
+  // offers the same "Do you know anything about Nevarre?" question.
+  if (
+    npcId === 'mushra' ||
+    npcId.startsWith('mushra_') ||
+    npcId === 'village_mushra' ||
+    npcId === 'seed_shed_mushra'
+  ) {
     const redirect = handleMushraGhostQuestActions(nodeId);
     if (redirect) return redirect;
   }
@@ -779,10 +787,16 @@ function handleMushraWreathActions(nodeId: string): string | void {
  */
 function handleMushraGhostQuestActions(nodeId: string): string | void {
   if (nodeId === 'mushra_nevarre_book_given') {
-    if (!inventoryManager.hasItem('history_book')) {
-      inventoryManager.addItem('history_book', 1);
-      const inv = inventoryManager.getInventoryData();
-      characterData.saveInventory(inv.items, inv.tools);
+    // Gate the stage advance on quest stage, not item possession — a DevTools event
+    // chain reset clears currentStageId back to 'searching' without touching
+    // inventory, so a player who already held the book (from before the reset)
+    // would otherwise never re-advance past 'searching' on this node firing again.
+    if (getGhostQuestStage() === 'searching') {
+      if (!inventoryManager.hasItem('history_book')) {
+        inventoryManager.addItem('history_book', 1);
+        const inv = inventoryManager.getInventoryData();
+        characterData.saveInventory(inv.items, inv.tools);
+      }
       advanceGhostQuestToHasBook();
       debugLog('dialogueHandlers', '📖 History book given by Mushra');
     }

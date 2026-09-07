@@ -2,7 +2,7 @@
  * Mushra NPC Factory Function
  */
 
-import { NPC, Direction, NPCBehavior, Position } from '../../../types';
+import { NPC, Direction, NPCBehavior, Position, DialogueNode, DialogueResponse } from '../../../types';
 import { npcAssets, dialogueSpriteAssets } from '../../../assets';
 import { createWanderingNPC, createStaticNPC } from '../createNPC';
 import {
@@ -10,6 +10,37 @@ import {
   isWreathWorkshopComplete,
   shouldSeedShedMushraAppear,
 } from '../../../data/questHandlers/mushraWreathHandler';
+import { GHOST_QUEEN_QUEST_ID } from '../../../data/questHandlers/ghostQueenHandler';
+
+/** Shared response option offered by every Mushra instance during the ghost_queen quest. */
+const NEVARRE_ENQUIRY_RESPONSE: DialogueResponse = {
+  text: 'Do you know anything about a place called Nevarre?',
+  nextId: 'nevarre_enquiry',
+  requiredQuest: GHOST_QUEEN_QUEST_ID,
+  requiredQuestStage: 1,
+  maxQuestStage: 1,
+  hiddenIfQuestCompleted: GHOST_QUEEN_QUEST_ID,
+};
+
+/** Shared nodes answering NEVARRE_ENQUIRY_RESPONSE — append to any Mushra instance's dialogue array. */
+const NEVARRE_ENQUIRY_NODES: DialogueNode[] = [
+  {
+    id: 'nevarre_enquiry',
+    text: '"Nevarre! Oh, *yes* — I have been reading about the medieval kingdoms of this region! Such a fascinating period." *She rummages through a stack of books beside her.* "Here, take this — there is an entry on Nevarre somewhere in the middle, if I remember rightly."',
+    requiredQuest: GHOST_QUEEN_QUEST_ID,
+    requiredQuestStage: 1,
+    maxQuestStage: 1,
+    hiddenIfQuestCompleted: GHOST_QUEEN_QUEST_ID,
+    responses: [{ text: 'Thank you, Mushra!', nextId: 'mushra_nevarre_book_given' }],
+  },
+  { id: 'mushra_nevarre_book_given', text: '' }, // intercepted by dialogueHandlers
+  {
+    id: 'mushra_nevarre_book_accepted',
+    text: '"Good luck! I do hope it is useful."',
+    requiredQuest: GHOST_QUEEN_QUEST_ID,
+    hiddenIfQuestCompleted: GHOST_QUEEN_QUEST_ID,
+  },
+];
 
 /**
  * Create a Mushra NPC - young artist who lives in a mushroom house
@@ -423,6 +454,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
             text: "I'm a bit busy right now...",
             nextId: 'offer_later',
           },
+          NEVARRE_ENQUIRY_RESPONSE,
         ],
       },
       {
@@ -458,6 +490,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
             text: 'Not quite yet.',
             nextId: 'gathering_encouragement',
           },
+          NEVARRE_ENQUIRY_RESPONSE,
         ],
       },
       {
@@ -496,6 +529,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
           {
             text: "Got it, I'll get to work!",
           },
+          NEVARRE_ENQUIRY_RESPONSE,
         ],
       },
       {
@@ -506,6 +540,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
       // Note: no stage-3 "complete" greeting here — the moment the quest completes, village
       // Mushra disappears (customVisibility above) and reappears in the seed shed instead
       // (see createSeedShedMushraNPC), where she delivers the equivalent line.
+      ...NEVARRE_ENQUIRY_NODES,
     ],
   });
 }
@@ -539,7 +574,9 @@ export function createSeedShedMushraNPC(id: string, position: Position): NPC {
         id: 'greeting',
         expression: 'smile',
         text: '*Mushra beams at you from behind her new workbench.* "Frankly, I don\'t think I would have managed the village decorations without you! I\'ve settled in here nicely — come and use the crafting table whenever you like!"',
+        responses: [NEVARRE_ENQUIRY_RESPONSE],
       },
+      ...NEVARRE_ENQUIRY_NODES,
     ],
   });
 }

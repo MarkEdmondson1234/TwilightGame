@@ -66,4 +66,27 @@ describe('Mushra ghost_queen book delivery', () => {
 
     expect(nevarreOption).toBeUndefined();
   });
+
+  it('advances the quest even if the player already holds the book (e.g. after a DevTools chain reset)', () => {
+    // Simulate a chain reset that clears progress back to 'searching' without
+    // touching inventory — the item can outlive the reset that a tester used
+    // to re-run the quest.
+    inventoryManager.addItem('history_book', 1);
+    expect(getGhostQuestStage()).toBe('searching');
+
+    handleDialogueAction('mushra', 'mushra_nevarre_book_given');
+
+    expect(getGhostQuestStage()).toBe('has_book');
+    expect(inventoryManager.getQuantity('history_book')).toBe(1);
+  });
+
+  it.each(['village_mushra', 'seed_shed_mushra'])(
+    'the %s instance also delivers the book (autumn workshop / seed shed relocation)',
+    (npcId) => {
+      handleDialogueAction(npcId, 'mushra_nevarre_book_given');
+
+      expect(getGhostQuestStage()).toBe('has_book');
+      expect(inventoryManager.getQuantity('history_book')).toBe(1);
+    }
+  );
 });
