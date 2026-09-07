@@ -8,7 +8,8 @@ description: Debug bugs that only happen in the deployed game — a player repor
 ## Quick Start
 
 ```bash
-claude mcp list | grep sentry                                    # 1. real player errors
+claude mcp list | grep sentry                                    # 1. real player errors (Claude Code)
+# Pi: ask the agent to "list my Sentry organizations" — expect twilightgame
 node .claude/skills/debug-production/scripts/probe-live.mjs      # 2. what the live build logs
 .claude/skills/debug-production/scripts/fetch-bundle.sh 'apiKey' # 3. what actually shipped
 ```
@@ -63,10 +64,11 @@ ask the user to run `/mcp` and authorise it — that flow cannot be completed fo
 them, which is why the token path is preferred.
 
 MCP tools are registered when a session starts, so a server added or authorised
-mid-session shows `✔ Connected` while no `mcp__sentry__*` tool exists yet. If
-`claude mcp list` is green but the tools are absent, say so and carry on with
-steps 2 and 3 — they need a fresh session, and waiting for one is rarely worth
-it when the deployed build is right there to interrogate.
+mid-session can show connected while its tools are absent. In Claude Code they
+are named `mcp__sentry__*`; in Pi the gateway exposes them as `sentry_*`. If
+the server is green but the tools are missing, say so and carry on with steps 2
+and 3 — they need a fresh session, and waiting for one is rarely worth it when
+the deployed build is right there to interrogate.
 
 **This project's Sentry coordinates** — pass these to every `mcp__sentry__*`
 call rather than rediscovering them:
@@ -85,27 +87,57 @@ not mistake a missing region for an all-clear. The web dashboard is at
 Then look for issues in the relevant category tag — `auth`, `sync`,
 `shared_farm`, `presence`, `game_crash` — around the time of the report.
 
-Useful calls, in the order they usually pay off:
+Two tiers of tools. The gateway registers a small core (`search_issues`,
+`search_events`, `get_sentry_resource`, `update_issue`, Seer analysis) at
+startup; the full catalog is dynamic — `search_sentry_tools` lists richer
+single-issue tools by name and `execute_sentry_tool` runs them. Both Claude
+Code and Pi reach the same underlying tools; only the naming differs.
 
 ```
 search_issues(organizationSlug='twilightgame', regionUrl='https://de.sentry.io',
-              query='is:unresolved', period='24h')       # what is broken now
-get_sentry_resource(resourceType='issue', organizationSlug='twilightgame',
-                    resourceId='JAVASCRIPT-REACT-4')     # full detail on one
-analyze_issue_with_seer(...)                             # only when stuck
+              query='is:unresolved environment:production', period='24h')
+execute_sentry_tool(name='get_issue_details',
+              arguments={organizationSlug: 'twilightgame', issueId: 'JAVASCRIPT-REACT-9'})
+execute_sentry_tool(name='get_event_stacktrace', arguments={...})  # source-mapped frames
+execute_sentry_tool(name='search_issue_events', arguments={...})   # within one issue
+analyze_issue_with_seer(...)                            # only when stuck
 ```
 
-`get_sentry_resource` is the one worth reaching for: a single call returns the
-stack trace, the `category` tag, the `details` context passed to
-`reportError()`, the player's browser/OS/locale/geo, and the **`release` tag**
-(the git SHA). Check that SHA with `git branch --contains <sha>` before
-debugging — the deployed build is often behind the fix already sitting on a
-branch, and the answer is "merge it", not "investigate it".
+`get_issue_details` is the one worth reaching for: one call returns the stack
+trace, every tag, the full `details` context passed to `reportError()`, the
+player's browser/OS/locale/geo, the **`release` tag** (the git SHA), and a
+"Code Location" permalink into GitHub. Check the release SHA with
+`git branch --contains <sha>` before debugging — the deployed build is often
+behind the fix already sitting on a branch, and the answer is "merge it", not
+"investigate it".
+
+### What the rich data answers
+
+| Signal | Question it answers |
+|---|---|
+| `category` | Which subsystem: `auth`, `sync`, `shared_farm`, `presence`, `game_crash` |
+| `details.*` | The `extra` payload from `reportError()` — action, feature, itemId; usually names the exact record that broke |
+| `environment` | `production` (a real player) vs `development` (your own machine). Filter it — dev crashes masquerade as player impact |
+| `release` | Which deploy; run `git branch --contains` on it |
+| `user` + `culture` | Distinct players and regions. "Users: 0" means unauthenticated; locale/timezone hints when players were on |
+| `game.map` | Whether the bug is map-specific |
+| `game.session_id` | Correlate what one session hit — the same session_id across issues is one incident, not several |
+| `game_device` | Rule hardware in or out (GPU string, cores, memory, graphics tier) |
+| `game_performance` | Was performance the trigger? fps, frames over 50 ms, heap, visible sprites at the moment of the error |
+| `handled` | `yes` = caught and reported via `reportError()`; `no` = a real crash |
+| `trace`/`span` id | Pivot wider: `get_trace_details`, or `search_events` scoped to the trace |
+
+**Stack-trace caveat:** events from the uncaught/React path arrive fully
+source-mapped — real file paths, line numbers and a GitHub permalink (maps
+upload via `@sentry/vite-plugin` when `SENTRY_AUTH_TOKEN` is set). But errors
+caught in app code and passed to `reportError()` can arrive with **no frames at
+all** ("No thread stacktraces were found"). That is a capture-side gap, not an
+absence of information: fall back to the culprit line, the `details` context
+and the tags above. Do not treat "no stack trace" as a dead end.
 
 **An empty Sentry is not an all-clear.** Nothing is reported when a function
 returns `null` instead of throwing. Treat silence as "not this kind of bug yet"
-and carry on to step 2. Stack traces are also still minified (source-map upload
-is not set up), so expect names like `g5()` — step 3 is how you decode them.
+and carry on to step 2.
 
 ## Step 2 — Watch the live site's console yourself
 
@@ -237,6 +269,9 @@ announces itself. Prefer, in order:
 4. **Make the diagnostics reachable in production** — `?debug=multiplayer` and
    `localStorage.twilight_debug` switch `DEBUG.*` on in a deployed build
    (`runtimeDebug()` in `constants.ts`).
+5. **Close the Sentry issue.** Reference it in the fix commit
+   (`Fixes JAVASCRIPT-REACT-9`) so the release that ships the fix auto-resolves
+   it, or resolve it directly with `update_issue`.
 
 ## Reporting back
 

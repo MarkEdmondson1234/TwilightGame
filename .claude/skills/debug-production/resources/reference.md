@@ -10,7 +10,7 @@ Longer-form material for the `debug-production` skill.
 
 | Question | Where to look |
 |---|---|
-| Did a real player hit an error? | Sentry, via the MCP server (`claude mcp list`) |
+| Did a real player hit an error? | Sentry, via the MCP server (Claude Code: `claude mcp list`; Pi: ask the agent to list organizations) |
 | What does the deployed build log? | `scripts/probe-live.mjs` |
 | Was a build secret set? | `scripts/fetch-bundle.sh` — Vite inlines `VITE_*` |
 | Which commit is live? | `VITE_APP_VERSION` (set to `github.sha` in `deploy.yml`) |
@@ -26,7 +26,13 @@ the dashboard filterable.
 
 ## Not set up yet
 
-- **Source map upload.** Traces show minified names (`g5()`, `Ri()`). Needs
-  `@sentry/vite-plugin` plus a `SENTRY_AUTH_TOKEN` GitHub secret.
 - **Performance tracing and session replay.** Deliberately off — separate quota,
   and replay records gameplay. See the Sentry section of `CLAUDE.md`.
+
+## Recently changed
+
+- **Source map upload is live.** `@sentry/vite-plugin` uploads maps from CI when
+  `SENTRY_AUTH_TOKEN` is set, so production stack traces show real `file.ts:line`
+  frames and a GitHub permalink. Caveat: errors caught in app code and passed to
+  `reportError()` can still arrive frameless — triage those from the culprit
+  line and the `details` context (see the SKILL.md caveat).
