@@ -5,7 +5,7 @@
 
 import { InventoryItem as UIInventoryItem } from '../components/Inventory';
 import { inventoryManager } from './inventoryManager';
-import { getItem, ItemCategory, ItemDefinition } from '../data/items';
+import { getItem, ItemDefinition } from '../data/items';
 import { decorationManager } from './DecorationManager';
 import { gameState } from '../GameState';
 import { FALLBACK_ITEM_ICON } from './iconMap';
@@ -131,8 +131,11 @@ export function convertInventoryToUI(): UIInventoryItem[] {
     const itemData = itemMap.get(itemId);
     if (!itemData) continue;
 
-    // Photos (KEEPSAKE): expand into individual slots with unique thumbnails
-    if (itemData.itemDef.category === ItemCategory.KEEPSAKE) {
+    // Photos: expand into individual slots with unique thumbnails
+    // (checked by item id, not by category — other KEEPSAKE items like history_book
+    // and key_letter_from_althea are quest mementos, not photos, and must render as
+    // themselves rather than being swallowed into the photo roll)
+    if (itemId === 'photo') {
       const photos = inventoryManager.getPhotos();
       for (const photo of photos) {
         result.push({
@@ -183,7 +186,7 @@ export function convertInventoryToUI(): UIInventoryItem[] {
     if (!slotOrder.includes(itemId)) {
       console.warn(`[InventoryUIHelper] Item ${itemId} not in slotOrder, appending`);
 
-      if (itemDef.category === ItemCategory.KEEPSAKE) {
+      if (itemId === 'photo') {
         const photos = inventoryManager.getPhotos();
         for (const photo of photos) {
           result.push({
