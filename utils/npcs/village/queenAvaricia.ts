@@ -297,9 +297,63 @@ export function createQueenAvericiaaNPC(): NPC {
       },
       {
         id: 'queen_lore_wizard',
-        text: '"A fraudulent wizard who had been pestering me for money. I came to his tower seeking counsel, and he repaid me with treachery. I am still absolutely *furious* about it. Five hundred years, and it still stings."',
+        text: '"I was brutally murdered by this wizard\'s apprentice."',
         expression: 'default',
-        responses: [{ text: 'That sounds dreadful.' }, { text: 'Goodbye.' }],
+        responses: [
+          { text: 'Please tell me more.', nextId: 'queen_lore_murder_details' },
+          { text: 'That sounds dreadful.' },
+          { text: 'Goodbye.' },
+        ],
+      },
+      {
+        id: 'queen_lore_murder_details',
+        text: '"Well, surely the details aren\'t important, but if you must know, I was tired of waiting in line for the Great Wizard Mordecai, so I tried bribing his apprentice. It looked like it was working too — until the wizard got suspicious. I guess the apprentice was trying to cover her tracks."',
+        expression: 'default',
+        responses: [
+          { text: 'Tell me about the wizard.', nextId: 'queen_lore_mordecai_full' },
+          { text: 'Goodbye.' },
+        ],
+      },
+      {
+        id: 'queen_lore_mordecai_full',
+        text: '"Ah. The wizard. Now, there\'s a tale.\n\nMany generations ago, a great wizard, named Mordecai, lived in the tower. He became so well known that people came from afar to consult him — kings, and politicians, as well as paupers and beggars — and after a while, a village came about. The people who lived there catered to the people who visited.\n\nMordecai had a daughter named Vesper, whose mother was a fairy, but who lived with him. The girl was attuned to nature, and had a special knack for speaking to animals, listening to the rain, and making fallow things come to life."',
+        expression: 'default',
+        responses: [
+          { text: 'Go on.', nextId: 'queen_lore_mordecai_apprentice' },
+          { text: 'Goodbye.' },
+        ],
+      },
+      {
+        id: 'queen_lore_mordecai_apprentice',
+        text: '"A day came when the wizard decided he had done enough. Someone younger needed to take over for him, so he could enjoy his old age in peace. However, his daughter didn\'t feel she wanted to be at the service of all the people who came to the wizard for advice, so instead, he let it be known that he would take an apprentice.\n\nSo many were interested in becoming the all-powerful wizard\'s apprentice that he had to design a selection process. The apprentice had to conquer five trials: one of wit, one of strength, one of patience, one of agility — and the final one, a trial of the heart."',
+        expression: 'default',
+        responses: [
+          { text: 'Go on.', nextId: 'queen_lore_mordecai_zila' },
+          { text: 'Goodbye.' },
+        ],
+      },
+      {
+        id: 'queen_lore_mordecai_zila',
+        text: '"Unfortunately, the young witch Vesper became friends with one of the young contenders — an ambitious young woman named Zila, who used her to get what she wanted. She persuaded Vesper to help her cheat, and so became the apprentice, although she would never have passed the trial of the heart without Vesper\'s help.\n\nZila became the apprentice of the wizard — even if the old man did have his doubts."',
+        expression: 'default',
+        responses: [
+          { text: 'Go on.', nextId: 'queen_lore_mordecai_avaricia' },
+          { text: 'Goodbye.' },
+        ],
+      },
+      {
+        id: 'queen_lore_mordecai_avaricia',
+        text: '"And this is where I, Queen Avaricia of Nevarre, come into the picture.\n\nYou see, there was such a long line of people wanting the wizard\'s advice. So I, thinking myself clever, decided to consult his apprentice instead. She wanted money, but I was desperate — I agreed.\n\nHowever, I was too trusting. When I met with the apprentice, her advice turned out to be worthless. I may have threatened her with going to the wizard. In hindsight, that was an unwise decision. Alas, she slew me."',
+        expression: 'default',
+        responses: [
+          { text: 'Go on.', nextId: 'queen_lore_mordecai_end' },
+          { text: 'Goodbye.' },
+        ],
+      },
+      {
+        id: 'queen_lore_mordecai_end',
+        text: '"I\'m afraid that is all I can tell you.\n\nMany centuries have passed, but wizards are long-lived. I shouldn\'t be surprised if the Great Wizard Mordecai is still around somewhere — or his apprentice, Zila the Sorceress."',
+        expression: 'default',
       },
     ],
   });
