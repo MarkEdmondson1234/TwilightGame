@@ -460,7 +460,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
       {
         id: 'offer_accept',
         expression: 'smile',
-        text: '*Mushra claps her hands together, visibly relieved.* "Oh, wonderful! I knew I could count on you. Right — I need some natural materials to make the wreaths. Could you gather: ten maple leaves, fifteen straws, five lavender, one red rose, and eight sprigs of heather? I\'ll start on the frame while you\'re out!"',
+        text: '*Mushra claps her hands together, visibly relieved.* "Oh, wonderful! I knew I could count on you. Right — I need some natural materials to make the wreaths. Could you gather: five maple leaves, five straws, five lavender, and eight sprigs of heather? I\'ve already got a red rose from my own garden for the centre of it, so don\'t worry about that one. I\'ll start on the frame while you\'re out!"',
         responses: [
           {
             text: "I'll get them right away!",
@@ -477,7 +477,7 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
       {
         id: 'greeting',
         expression: 'thinky',
-        text: '*Mushra looks up from her work.* "Any luck finding the materials? I need ten maple leaves, fifteen straws, five lavender, one red rose, and eight sprigs of heather."',
+        text: '*Mushra looks up from her work.* "Any luck finding the materials? I need five maple leaves, five straws, five lavender, and eight sprigs of heather."',
         requiredQuest: WREATH_QUEST_ID,
         requiredQuestStage: 1,
         maxQuestStage: 1,
@@ -506,12 +506,12 @@ export function createVillageMushraNPC(id: string, position: Position): NPC {
       {
         id: 'wreath_materials_missing',
         expression: 'thinky',
-        text: '"Hmm... it looks like you\'re still missing some of the materials. You need: ten maple leaves, fifteen straws, five lavender, one red rose, and eight sprigs of heather."',
+        text: '"Hmm... it looks like you\'re still missing some of the materials. You need: five maple leaves, five straws, five lavender, and eight sprigs of heather."',
       },
       {
         id: 'gathering_encouragement',
         expression: 'default',
-        text: '"No worries — take your time! Maple leaves can be gathered from piles blown together around the village and the forest. Straw comes from the meadow grass, and heather and lavender grow in the forest. The red rose — have a look at the rosebushes in the village!"',
+        text: '"No worries — take your time! Maple leaves can be gathered from piles blown together around the village and the forest. Straw comes from the meadow grass, and heather grows in the forest. Lavender\'s a herb, mind — you\'ll find it in the kitchen garden, or your own farm plot if you\'ve grown some there already."',
       },
       // ── Hanging stage (stageNumber 2) ────────────────────────────────────────
       {

@@ -20,8 +20,8 @@ stages:
   - id: gathering
     stageNumber: 1
     text: >
-      Mushra needs you to collect: 10 maple leaves, 15 straws, 5 lavender,
-      1 red rose, and 8 sprigs of heather for the wreath decorations.
+      Mushra needs you to collect: 5 maple leaves, 5 straws, 5 lavender,
+      and 8 sprigs of heather for the wreath decorations.
     dialogue:
       village_mushra:
         text: "Have you managed to find everything yet? No rush — just whenever you're ready."

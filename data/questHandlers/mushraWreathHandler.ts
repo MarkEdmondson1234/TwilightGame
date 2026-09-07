@@ -28,10 +28,9 @@ export const QUEST_ID = 'mushra_wreath_workshop';
 
 /** Items the player must deliver to Mushra */
 export const REQUIRED_MATERIALS: Record<string, number> = {
-  maple_leaf: 10,
-  straw: 15,
+  maple_leaf: 5,
+  straw: 5,
   crop_lavender: 5,
-  rose_red_crop: 1,
   heather_sprig: 8,
 };
 
