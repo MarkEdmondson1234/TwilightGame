@@ -59,6 +59,7 @@ const FORAGEABLE_TILES: ReadonlySet<TileType> = new Set([
   TileType.SHRINKING_VIOLET,
   TileType.FROST_FLOWER,
   TileType.GIANT_MUSHROOM,
+  TileType.CAVE_MUSHROOM,
 ]);
 
 /** Transition/door tile types */

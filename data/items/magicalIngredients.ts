@@ -157,7 +157,7 @@ export const MAGICAL_INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     rarity: ItemRarity.COMMON,
     stackable: true,
     sellPrice: 8,
-    icon: '🍄',
+    image: magicalAssets.forest_mushroom,
   },
 
   shrinking_violet: {

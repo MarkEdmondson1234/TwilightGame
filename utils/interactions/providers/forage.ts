@@ -94,6 +94,7 @@ export function forageProvider(ctx: InteractionContext): AvailableInteraction[] 
           TileType.GIANT_MUSHROOM,
           TileType.SAKURA_TREE,
           TileType.MEADOW_GRASS,
+          TileType.CAVE_MUSHROOM,
         ],
         1
       );

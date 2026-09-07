@@ -55,6 +55,7 @@ describe('forage source table', () => {
       'spruce tree',
       'dead spruce',
       'giant mushroom',
+      'cave mushroom',
       'cherry tree',
       'bee hive',
       'mustard flower',

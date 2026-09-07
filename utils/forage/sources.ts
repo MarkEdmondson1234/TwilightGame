@@ -206,6 +206,16 @@ export const FORAGE_SOURCES: ForageSource[] = [
     failureMessage: "You search the giant mushroom, but can't find a piece worth taking.",
   },
 
+  // ── Cave mushroom (procedural caves) — year-round, any time of day ──
+  {
+    label: 'cave mushroom',
+    tileTypes: [TileType.CAVE_MUSHROOM],
+    itemId: 'mushroom',
+    fallbackSuccessRate: 0.5,
+    cooldownMessage: "You've already searched this patch of mushrooms today.",
+    failureMessage: 'You search the cave mushrooms, but find none worth picking.',
+  },
+
   // ── Cherry tree (sakura petals) — spring only ──
   {
     label: 'cherry tree',
