@@ -8,7 +8,7 @@
  * Every item must keep `id`, `name` and its object key identical (SSoT rule).
  */
 
-import { itemAssets } from '../../assets';
+import { itemAssets, groceryAssets } from '../../assets';
 import { ItemCategory, type ItemDefinition } from './types';
 
 export const TOOL_AND_MATERIAL_ITEMS: Record<string, ItemDefinition> = {
@@ -22,7 +22,7 @@ export const TOOL_AND_MATERIAL_ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 5,
     buyPrice: 15,
-    icon: '💩',
+    image: groceryAssets.fertiliser,
   },
 
   wood_poor: {

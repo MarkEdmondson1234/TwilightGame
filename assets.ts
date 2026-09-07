@@ -418,6 +418,7 @@ export const groceryAssets = {
   curry: '/TwilightGame/assets-optimized/items/grocery/curry.png',
   dried_spaghetti: '/TwilightGame/assets-optimized/items/grocery/dried_spaghetti.png',
   egg: '/TwilightGame/assets-optimized/items/grocery/egg.png',
+  fertiliser: '/TwilightGame/assets-optimized/items/grocery/fertiliser.png',
   flour: '/TwilightGame/assets-optimized/items/grocery/flour.png',
   gravy: '/TwilightGame/assets-optimized/items/grocery/gravy.png',
   whole_grain_wheat: '/TwilightGame/assets-optimized/items/grocery/whole_grain_wheat.png',
