@@ -50,7 +50,26 @@ export function initErrorReporting(): void {
     // burning quota and burying the one real bug underneath. Nothing is lost:
     // a fetch failure that actually matters surfaces as the error thrown by
     // the code that awaited it, with a real stack.
-    ignoreErrors: [/AbortError/],
+    //
+    // Same trade for the transient network-death family (added after the first
+    // weeks of production data — JAVASCRIPT-REACT-5/6/7): every browser has its
+    // own name for "the request never made it" — Chrome "Failed to fetch",
+    // Safari "Load failed", Firefox "NetworkError when attempting to fetch
+    // resource" — plus the service worker's wrapped rethrow
+    // ("FetchEvent.respondWith received an error"). They fire when a player
+    // loses connectivity mid-request or the SW is being replaced; none are code
+    // bugs. These bare browser messages carry no URL, no feature and no stack
+    // (the ones that reached Sentry arrived frameless), so they cannot be
+    // triaged — while feature-level failures that matter still announce
+    // themselves through their own catch blocks' console.warn (which
+    // probe-live.mjs reads) and their once-per-session report.
+    ignoreErrors: [
+      /AbortError/,
+      /^Failed to fetch$/,                              // Chrome
+      /^Load failed$/,                                  // Safari/WebKit
+      /^NetworkError when attempting to fetch resource/, // Firefox
+      /FetchEvent\.respondWith/,                        // service-worker wrapped variant
+    ],
   });
   initialised = true;
   startSessionDiagnostics();

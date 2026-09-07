@@ -24,6 +24,17 @@ Longer-form material for the `debug-production` skill.
 Add a category rather than overloading an existing one — the tag is what makes
 the dashboard filterable.
 
+## Suppressed at the client (deliberate)
+
+`initErrorReporting()` drops two families before they ever reach Sentry:
+`AbortError` (cancelled in-flight requests) and the transient network-death
+family — "Failed to fetch" (Chrome), "Load failed" (Safari), "NetworkError when
+attempting to fetch resource" (Firefox), "FetchEvent.respondWith …" (service
+worker). They arrive frameless and carry no URL or feature — untriageable —
+and were burying real issues. When debugging connectivity, read the live
+console via `probe-live.mjs` or the feature's own catch-block warnings instead
+(see the rationale comment in `utils/errorReporting.ts`).
+
 ## Not set up yet
 
 - **Performance tracing and session replay.** Deliberately off — separate quota,
