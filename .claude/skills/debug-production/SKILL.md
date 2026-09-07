@@ -54,9 +54,13 @@ ingest key and cannot read issues.
 claude mcp list | grep sentry     # expect "✔ Connected"
 ```
 
-If it says `Needs authentication`, ask the user to run `/mcp` and authorise it;
-that OAuth flow cannot be completed for them. If the server is missing:
-`claude mcp add --transport http sentry https://mcp.sentry.dev/mcp`.
+If it says `Needs authentication` or errors with 401, the machine likely has no
+Sentry token installed — run the **setup-sentry-mcp** skill (`scripts/setup-sentry-mcp.sh`
+writes a gitignored `.mcp.json` with a literal token; a **full host restart** is
+required afterwards, config is only read at startup). The OAuth route also
+works: `claude mcp add --transport http sentry https://mcp.sentry.dev/mcp`, then
+ask the user to run `/mcp` and authorise it — that flow cannot be completed for
+them, which is why the token path is preferred.
 
 MCP tools are registered when a session starts, so a server added or authorised
 mid-session shows `✔ Connected` while no `mcp__sentry__*` tool exists yet. If

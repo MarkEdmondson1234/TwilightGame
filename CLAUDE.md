@@ -52,7 +52,7 @@ Remote error/crash reporting, so a real player's failed login or sync is visible
 
 **Key file:** `utils/errorReporting.ts` (uses `@sentry/react`) — `initErrorReporting()` (called once in `index.tsx`), `reportError(error, category, extra?)`, `reportMessage(message, category, extra?)`, `setErrorReportingUser(uid)`, plus `onUncaughtError`/`onRecoverableError` (React 19's `createRoot()` error hooks — wired in `index.tsx`). Categories: `'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash'`.
 
-**Reading errors back:** query the **Sentry MCP server** — the DSN is write-only ingest and cannot read issues. Org `twilightgame`, project `javascript-react`, and note the org is on the **EU region**, so pass `regionUrl: 'https://de.sentry.io'`; omitting it can return empty results that look exactly like "no errors reported". The `debug-production` skill covers the full workflow.
+**Reading errors back:** query the **Sentry MCP server** — the DSN is write-only ingest and cannot read issues. Org `twilightgame`, project `javascript-react`, and note the org is on the **EU region**, so pass `regionUrl: 'https://de.sentry.io'`; omitting it can return empty results that look exactly like "no errors reported". The `debug-production` skill covers the full workflow, and `setup-sentry-mcp` covers the one-time connection setup (token + gitignored `.mcp.json` + restart — shared by Claude Code and Pi).
 
 **Player identity:** `setErrorReportingUser()` is called from `firebase/authService.ts`'s `notifyListeners()` — the one place every auth change funnels through — so Sentry can answer "how many distinct players hit this" rather than reporting `Users Impacted: 0` for everything. **Only the Firebase uid is sent**; never email, display name or character name, and `sendDefaultPii` stays off (it would attach IP addresses). This is a children's game — keep it that way when adding context.
 
@@ -1664,6 +1664,7 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 | **add-pixi-component**   | "PixiJS", "WebGL", "particle system", "shader"                                                 | Add PixiJS rendering components                                                            |
 | **add-minigame**         | "create mini-game", "add mini-game", "new activity"                                            | Create self-contained mini-games (2 files + 1 registry line)                               |
 | **debug-production**     | "works locally but not deployed", "broken on the live site", "check Sentry", "can't reproduce" | Debug production-only bugs: Sentry via MCP, live console probe, deployed-bundle inspection |
+| **setup-sentry-mcp**     | "set up Sentry", "Sentry MCP 401", "Sentry not connecting", "new machine setup"                 | One-time Sentry MCP install for Claude Code + Pi: token, `.mcp.json`, restart, verify       |
 
 ### When to Use Skills
 

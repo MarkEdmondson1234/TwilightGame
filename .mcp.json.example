@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "sentry": {
+      "url": "https://mcp.sentry.dev/mcp",
+      "headers": {
+        "Authorization": "Sentry-Bearer $env:SENTRY_ACCESS_TOKEN"
+      }
+    }
+  }
+}

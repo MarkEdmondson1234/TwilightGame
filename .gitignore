@@ -18,6 +18,10 @@ dist-ssr
 # Claude Code git worktrees — checkouts of other branches, never part of a commit
 .claude/worktrees/
 
+# MCP server config — holds a literal Sentry access token on configured machines.
+# Template: .mcp.json.example · Setup: .claude/skills/setup-sentry-mcp
+.mcp.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
