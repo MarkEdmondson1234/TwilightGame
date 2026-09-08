@@ -79,7 +79,7 @@ const Bookshelf: React.FC<BookshelfProps> = ({
       {/* Books Container - no container scaling since individual books handle their own scale */}
       {/* On touch devices, position at top-left to avoid overlapping D-pad controls */}
       <div
-        className={`fixed left-2 sm:left-4 ${zClass(Z_HUD)} ${isTouchDevice ? 'origin-top-left' : 'origin-bottom-left'}`}
+        className={`pointer-events-none fixed left-2 sm:left-4 ${zClass(Z_HUD)} ${isTouchDevice ? 'origin-top-left' : 'origin-bottom-left'}`}
         style={
           isTouchDevice ? { top: 'calc(80px + env(safe-area-inset-top, 0px))' } : { bottom: '8px' }
         }
@@ -88,11 +88,12 @@ const Bookshelf: React.FC<BookshelfProps> = ({
         <div className="flex gap-0 items-end">
           {/* Magic Recipe Book (front/center) - 108×480 natural ratio */}
           <button
+            data-game-ui="true"
             onClick={handleMagicBookClick}
             onTouchStart={(e) => magicBookUnlocked && handleBookTouch('magic', onMagicBookOpen, e)}
             disabled={!magicBookUnlocked}
             className={`
-              relative origin-bottom-left transition-all duration-300 ease-out
+              pointer-events-auto relative origin-bottom-left transition-all duration-300 ease-out
               focus:outline-none rounded block hover:z-10
               ${expandedBook === 'magic' ? 'scale-100 z-10' : 'scale-[0.33]'}
               ${
@@ -119,18 +120,22 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             />
             {!magicBookUnlocked && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <GameIcon icon="🔒" size={96} className="drop-shadow-md" />
+                {/* Lock badge sized to the spine (issue #98): a flat 96px icon is wider
+                    than this 88px book, so it bled across the negative-margin neighbours
+                    when collapsed and composited into a garbled graphic. */}
+                <GameIcon icon="🔒" size={70} className="drop-shadow-md" />
               </div>
             )}
           </button>
 
           {/* Photo Album - 175×1000 natural ratio */}
           <button
+            data-game-ui="true"
             onClick={handlePhotoAlbumClick}
             onTouchStart={(e) => cameraOwned && handleBookTouch('photoAlbum', onPhotoAlbumOpen, e)}
             disabled={!cameraOwned}
             className={`
-              relative origin-bottom-left transition-all duration-300 ease-out
+              pointer-events-auto relative origin-bottom-left transition-all duration-300 ease-out
               focus:outline-none rounded block hover:z-10
               ${expandedBook === 'photoAlbum' ? 'scale-100 z-10' : 'scale-[0.33]'}
               ${
@@ -157,17 +162,22 @@ const Bookshelf: React.FC<BookshelfProps> = ({
             />
             {!cameraOwned && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <GameIcon icon="🔒" size={96} className="drop-shadow-md" />
+                {/* Lock badge sized to the spine (issue #98): this book is only ~70px
+                    wide (400px tall at its natural 175:1000 ratio), so a flat 96px icon
+                    overflowed ~60px into the recipe book spine pulled over it by the
+                    collapsed-state negative margin — the reported garbled overlay. */}
+                <GameIcon icon="🔒" size={56} className="drop-shadow-md" />
               </div>
             )}
           </button>
 
           {/* Recipe Book - 93×398 natural ratio */}
           <button
+            data-game-ui="true"
             onClick={handleRecipeBookClick}
             onTouchStart={(e) => handleBookTouch('recipe', onRecipeBookOpen, e)}
             className={`
-              origin-bottom-left transition-all duration-300 ease-out
+              pointer-events-auto origin-bottom-left transition-all duration-300 ease-out
               active:scale-95 focus:outline-none focus:ring-2 focus:ring-teal-400 rounded block hover:z-10
               ${expandedBook === 'recipe' ? 'scale-100 z-10' : 'scale-[0.33]'}
               ${!isTouchDevice ? 'hover:scale-100' : ''}
@@ -192,10 +202,11 @@ const Bookshelf: React.FC<BookshelfProps> = ({
 
           {/* Journal - 281×1000 natural ratio, scaled to 112×400 */}
           <button
+            data-game-ui="true"
             onClick={handleJournalClick}
             onTouchStart={(e) => handleBookTouch('journal', onJournalOpen, e)}
             className={`
-              origin-bottom-left transition-all duration-300 ease-out
+              pointer-events-auto origin-bottom-left transition-all duration-300 ease-out
               focus:outline-none rounded block hover:z-10
               active:scale-95 focus:ring-2 focus:ring-green-400 cursor-pointer
               ${expandedBook === 'journal' ? 'scale-100 z-10' : 'scale-[0.33]'}
