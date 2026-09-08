@@ -350,7 +350,7 @@ export function createQueenAvericiaaNPC(): NPC {
       },
       {
         id: 'queen_lore_mordecai_end',
-        text: '"I\'m afraid that is all I can tell you.\n\nMany centuries have passed, but wizards are long-lived. I shouldn\'t be surprised if the Great Wizard Mordecai is still around somewhere — or his apprentice, Zila the Sorceress."',
+        text: '"I\'m afraid that is all I can tell you.\n\nMany centuries have passed, but wizards are long-lived. I wouldn\'t be surprised if the Great Wizard Mordecai is still around somewhere — or his apprentice, Zila the Sorceress."',
         expression: 'default',
       },
     ],
