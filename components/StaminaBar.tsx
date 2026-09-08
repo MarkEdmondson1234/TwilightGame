@@ -87,11 +87,15 @@ export function StaminaBar({
   const BAR_HEIGHT = 8;
   const HALF_PLAYER_PX = Math.round((PLAYER_SIZE * characterScale * tileSize) / 2);
   // Clearance above the sprite's own bounding box before the bar starts. Scales with
-  // characterScale like HALF_PLAYER_PX above it — tuned at 105px for home_upstairs's 1.8x
-  // characterScale, so the base (exterior, characterScale 1.0) value is 105 / 1.8.
+  // characterScale AND tileSize like HALF_PLAYER_PX above it, so the bar keeps the same
+  // distance above the (growing) sprite at every viewport scale — issue #106: a fixed
+  // gap let the cover-scaled interior artwork grow until the bar sat inside the head.
+  // Tuned so exteriors (tileSize === TILE_SIZE) are unchanged: 58 * characterScale, i.e.
+  // 105px at home_upstairs's 1.8x characterScale, ~25px of daylight above the visible
+  // head at the 3x-rendered character artwork's actual top edge.
   const HEAD_GAP_BASE = 58;
-  const HEAD_GAP = HEAD_GAP_BASE * characterScale;
-  const screenX = playerX * tileSize + offsetX - BAR_WIDTH / 2 - 11;   // centred on player
+  const HEAD_GAP = HEAD_GAP_BASE * characterScale * (tileSize / TILE_SIZE);
+  const screenX = playerX * tileSize + offsetX - BAR_WIDTH / 2 - 11; // centred on player
   const screenY = playerY * tileSize + offsetY - HALF_PLAYER_PX - BAR_HEIGHT - HEAD_GAP;
 
   const shouldShow = isHovered || isLow || forceShow || recentlyActive;

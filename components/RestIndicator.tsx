@@ -58,8 +58,13 @@ export function RestIndicator({
   const offsetX = gridOffset?.x ?? 0;
   const offsetY = gridOffset?.y ?? 0;
   const halfPlayerPx = Math.round((PLAYER_SIZE * characterScale * tileSize) / 2);
+  // The right/below offsets scale with characterScale and tileSize (the two factors the
+  // visible sprite grows by) so the zs keep the same spot relative to the head at every
+  // viewport scale — issue #106: a fixed 30px put the drift start on the character's face
+  // once #43 cover-scaled interiors. Exteriors (cs=1, tileSize=TILE_SIZE) are unchanged.
+  const roomScale = characterScale * (tileSize / TILE_SIZE);
   const screenX = playerX * tileSize + offsetX + 6;
-  const screenY = playerY * tileSize + offsetY - halfPlayerPx - 30;
+  const screenY = playerY * tileSize + offsetY - halfPlayerPx - 30 * roomScale;
 
   return (
     <div
