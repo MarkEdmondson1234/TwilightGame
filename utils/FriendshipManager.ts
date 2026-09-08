@@ -841,6 +841,32 @@ class FriendshipManagerClass {
   }
 
   /**
+   * Check if this NPC has already given the named seasonal gift so far this year
+   * (e.g. a repeatable "ask for more seeds" request, capped to once per year)
+   */
+  hasReceivedSeasonalGift(npcId: string, giftKey: string): boolean {
+    const friendship = this.getFriendship(npcId);
+    const year = TimeManager.getCurrentTime().year;
+    return friendship.rewardsReceived?.includes(`${npcId}_${giftKey}_${year}`) ?? false;
+  }
+
+  /**
+   * Record that this NPC has given the named seasonal gift this year, so
+   * hasReceivedSeasonalGift returns true until the same season next year
+   */
+  markSeasonalGiftReceived(npcId: string, giftKey: string): void {
+    const friendship = this.getFriendship(npcId);
+    const year = TimeManager.getCurrentTime().year;
+    const key = `${npcId}_${giftKey}_${year}`;
+
+    friendship.rewardsReceived = friendship.rewardsReceived ?? [];
+    if (!friendship.rewardsReceived.includes(key)) {
+      friendship.rewardsReceived.push(key);
+    }
+    this.save();
+  }
+
+  /**
    * Get all friendships (for UI/save)
    */
   getAllFriendships(): NPCFriendship[] {

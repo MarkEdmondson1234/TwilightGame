@@ -95,6 +95,12 @@ export function createVillageElderNPC(
             hiddenIfQuestCompleted: 'ghost_queen',
           },
           {
+            text: 'Might I trouble thee for a few more sunflower seeds?',
+            nextId: 'sunflower_seed_request',
+            requiredFriendshipTier: 'acquaintance',
+            requiredSeason: 'spring',
+          },
+          {
             text: 'Farewell, elder.',
           },
         ],
@@ -536,6 +542,19 @@ export function createVillageElderNPC(
           { text: 'Which seeds should I plant this season?', nextId: 'elias_seeds_seasonal' },
           { text: 'Thank you, Elias.' },
         ],
+      },
+      // ===== SUNFLOWER SEED REQUEST =====
+      // Repeatable once per Spring (handled in handleEliasQuestActions), gated on
+      // friendship + season in the greeting response above.
+      {
+        id: 'sunflower_seed_request',
+        text: '"Of course, young friend!" *He reaches into his coat and presses a small paper packet into your hand.* "Sunflowers do so love the spring sun. Plant these well."',
+        responses: [{ text: 'Thank you, Elias!' }],
+      },
+      {
+        id: 'sunflower_seed_already_given',
+        text: '"Ah, I\'m afraid I\'ve already given thee sunflower seeds this spring, young one. Come find me again once the season turns round once more."',
+        responses: [{ text: 'Of course, thank you anyway.' }],
       },
     ],
     friendshipConfig: {

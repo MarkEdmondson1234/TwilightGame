@@ -693,6 +693,19 @@ function handleEliasQuestActions(nodeId: string): string | void {
     startFairyBluebellsQuest();
     debugLog('dialogueHandlers', '🔔 Fairy Bluebells quest started!');
   }
+
+  // Player asked Elias for more sunflower seeds - capped to once per Spring
+  if (nodeId === 'sunflower_seed_request') {
+    if (friendshipManager.hasReceivedSeasonalGift('village_elder', 'sunflower_seeds')) {
+      return 'sunflower_seed_already_given';
+    }
+
+    inventoryManager.addItem('seed_sunflower', 3);
+    const inventoryData = inventoryManager.getInventoryData();
+    characterData.saveInventory(inventoryData.items, inventoryData.tools);
+    friendshipManager.markSeasonalGiftReceived('village_elder', 'sunflower_seeds');
+    debugLog('dialogueHandlers', '🌻 Elias gave 3 more sunflower seeds for spring');
+  }
 }
 
 /**
