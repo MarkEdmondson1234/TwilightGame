@@ -122,6 +122,8 @@ export interface UseInteractionControllerProps {
   onEmote?: (emoteId: EmoteId) => void;
   onOpenEmoteWheel?: () => void;
   onStartChat?: () => void;
+  /** Open the gift picker addressed to another player. See remotePlayerProvider. */
+  onGiftPlayer?: (uid: string, name: string) => void;
 
   /**
    * Select an inventory slot, making it the held tool.
@@ -208,6 +210,7 @@ export function useInteractionController(
     onEmote,
     onOpenEmoteWheel,
     onStartChat,
+    onGiftPlayer,
     triggerVFX,
     setDestination,
     onFarmUpdate,
@@ -330,6 +333,7 @@ export function useInteractionController(
       onEmote,
       onOpenEmoteWheel,
       onStartChat,
+      onGiftPlayer,
       onOpenShop: () => openUI('shopUI', { activeShopId: currentMapId }),
       onNPC: (npcId: string) => {
         // Play duck quacking if interacting with a duck
@@ -502,21 +506,28 @@ export function useInteractionController(
         if (result.itemId === PHOTO_ITEM_ID && result.paintingId) {
           // A photo instance is keyed by its photoData, not a decorationId.
           inventoryManager.removePhotoById(result.paintingId);
-
-          // Hanging a photo publishes it to the shared picture store, keyed by
-          // the photo's own id. Without this the placed item reaches the other
-          // player carrying an id and no image — the image is deliberately
-          // stripped from the shared document (see toPublishablePayload) — and
-          // they would see an empty frame.
-          if (result.customImage) {
-            void savePaintingImage(result.paintingId, result.customImage, 'Photo');
-          }
         } else if (result.paintingId) {
           inventoryManager.removeItemInstanceByDecorationId(result.itemId, result.paintingId);
         } else {
           inventoryManager.removeItem(result.itemId, 1);
         }
         const placedItemDef = getItem(result.itemId);
+
+        // Anything placed with its own artwork publishes that artwork to the
+        // shared picture store, keyed by the artwork's id. The shared placed-
+        // item document strips customImage (see toPublishablePayload), so this
+        // is where the other player's hydration gets the picture from. Photos
+        // always needed this; wreaths and paintings saved their image at craft
+        // time only, so a missed or slow craft-time write left the other
+        // player staring at an empty tile. Re-saving here is idempotent — same
+        // id, same image — and heals whatever the earlier write missed.
+        if (result.paintingId && result.customImage) {
+          void savePaintingImage(
+            result.paintingId,
+            result.customImage,
+            placedItemDef?.displayName || 'Picture'
+          );
+        }
         gameState.addPlacedItem({
           id: `decoration_${Date.now()}_${Math.random().toString(36).slice(2)}`,
           itemId: result.itemId,
@@ -564,6 +575,7 @@ export function useInteractionController(
     onEmote,
     onOpenEmoteWheel,
     onStartChat,
+    onGiftPlayer,
     setActiveNPC,
   ]);
 

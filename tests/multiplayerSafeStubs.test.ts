@@ -16,12 +16,14 @@ import { join } from 'node:path';
 import { presenceService } from '../firebase/presenceService';
 import { chatService } from '../firebase/chatService';
 import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
+import { giftService } from '../firebase/giftService';
 import { sharedAlbumService } from '../firebase/sharedAlbumService';
 import { npcSpeechService } from '../firebase/npcSpeechService';
 import {
   getPresenceService,
   getChatService,
   getSharedPlacedItemsService,
+  getGiftService,
   getSharedAlbumService,
   getNpcSpeechService,
   getCommunityGardenService,
@@ -111,6 +113,22 @@ describe('shared placed items stub parity', () => {
       missing,
       'These methods exist on firebase/sharedPlacedItemsService but not on the ' +
         'stub in firebase/safe.ts. Add a no-op to stubSharedPlacedItemsService.'
+    ).toEqual([]);
+  });
+});
+
+describe('gift stub parity', () => {
+  it('implements every public method of the real gift service', () => {
+    const missing = methodNames(giftService).filter(
+      (name) => !methodNames(getGiftService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/giftService but not on the stub in ' +
+        'firebase/safe.ts. useGiftsController calls startListening() on every ' +
+        'boot, so a missing stub method crashes startup in a build with no ' +
+        'Firebase. Add a no-op to stubGiftService.'
     ).toEqual([]);
   });
 });

@@ -69,7 +69,8 @@ export type InteractionType =
   | 'rest_furniture'
   | 'player_wave'
   | 'player_emote'
-  | 'player_chat';
+  | 'player_chat'
+  | 'player_gift';
 
 export interface AvailableInteraction {
   type: InteractionType;
@@ -192,6 +193,11 @@ export interface GetInteractionsConfig {
   onOpenEmoteWheel?: () => void;
   /** Focus the chat composer so the player can type. */
   onStartChat?: () => void;
+  /**
+   * Open the gift picker for another player. Targeted by uid — display names
+   * are not unique and the gift is addressed by uid on the wire.
+   */
+  onGiftPlayer?: (uid: string, name: string) => void;
 }
 
 // ---------------------------------------------------------------------------

@@ -82,8 +82,15 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
 
 - `multiplayer/` — pure logic: `wire.ts` (encode/validate), `interpolation.ts`, `publishPolicy.ts`,
   `emotes.ts`, `RemotePlayerManager.ts` (SSoT for other players — mirrors `NPCManager`)
-- `utils/interactions/providers/remotePlayers.ts` — right-click another player to wave, emote
-  or chat. **Context-menu only, on purpose**: a left-click near someone must still mean "walk
+- `multiplayer/gifts.ts` + `firebase/giftService.ts` + `hooks/useGiftsController.ts` — giving one
+  another items. Transport is **Firestore, not RTDB** where chat and presence live: a gift is
+  durable state, so it must survive the recipient being mid-transition or offline. One document
+  per undelivered gift; the recipient deletes it as the delivery receipt, which is what makes
+  delivery exactly-once. A gifted wreath or painting carries only its `decorationId` — the
+  artwork itself travels via the shared picture store (`shared/world/paintings`), because
+  DecorationManager state is per-account and the recipient has never seen the giver's.
+- `utils/interactions/providers/remotePlayers.ts` — right-click another player to wave, emote,
+  chat or give a gift. **Context-menu only, on purpose**: a left-click near someone must still mean "walk
   there", since players stand on doors, farm plots and shop counters. Inert without presence
   (`getRemotePlayers()` is empty), so it needs no `MULTIPLAYER_ENABLED` gate of its own.
 - `hooks/useMultiplayerController.ts` — the domain controller; App.tsx only wires it

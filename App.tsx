@@ -33,6 +33,7 @@ import { useEnvironmentController } from './hooks/useEnvironmentController';
 import { useMultiplayerController } from './hooks/useMultiplayerController';
 import { useChatController } from './hooks/useChatController';
 import { useSharedPlacedItemsController } from './hooks/useSharedPlacedItemsController';
+import { useGiftsController } from './hooks/useGiftsController';
 import { useNpcSpeechController } from './hooks/useNpcSpeechController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
@@ -482,6 +483,10 @@ const App: React.FC = () => {
   // into getPlacedItems(), which the renderer and interactions already use.
   useSharedPlacedItemsController({ currentMapId });
 
+  // Gifts arriving from another player. Receive-only: the send path lives in
+  // GiftModal's player mode, opened from the right-click menu below.
+  useGiftsController({ onShowToast: showToast });
+
   // What the NPCs are saying, shared: a snippet floats above the NPC for anyone
   // standing near enough, so a conversation is something the other player can
   // notice and wander over to rather than watching you stand still.
@@ -581,6 +586,8 @@ const App: React.FC = () => {
     onEmote: sendEmote,
     onOpenEmoteWheel: toggleEmoteWheel,
     onStartChat: startComposingChat,
+    onGiftPlayer: (uid, name) =>
+      openUI('giftModal', { giftTargetPlayerUid: uid, giftTargetPlayerName: name }),
     triggerVFX,
     setDestination: setClickToMoveDestination,
     onFarmUpdate: () => {}, // EventBus handles this now
@@ -2736,6 +2743,24 @@ const App: React.FC = () => {
             // Open dialogue with the NPC showing their reaction
             setActiveNPC(ui.context.giftTargetNpcId!);
           }}
+        />
+      )}
+      {/* Mutually exclusive with the NPC branch above: one modal, two targets,
+          and a stale context field must never put both on screen at once. */}
+      {ui.giftModal && !ui.context.giftTargetNpcId && ui.context.giftTargetPlayerUid && (
+        <GiftModal
+          playerTarget={{
+            uid: ui.context.giftTargetPlayerUid,
+            name: ui.context.giftTargetPlayerName ?? 'Traveller',
+          }}
+          onClose={() => closeUI('giftModal')}
+          onGiftGiven={(result: GiftResult) => {
+            // No reaction dialogue for a player gift — the other player's own
+            // client announces the arrival. The giver just gets the receipt.
+            closeUI('giftModal');
+            showToast(result.message, 'success');
+          }}
+          onShowToast={showToast}
         />
       )}
       {ui.basketModal && (

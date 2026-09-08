@@ -15,6 +15,7 @@ rules_version = '2';
 // - shared/world/placedItems/{itemId}           - Shared placed items (furniture, wreaths, …)
 // - shared/world/paintings/{paintingId}         - Shared player-made paintings
 // - shared/world/albumPhotos/{photoId}          - Shared photo album (the book at Mum's)
+// - shared/world/gifts/{giftId}                 - Player-to-player gifts, in flight
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -129,6 +130,25 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // Gifts in flight - one document per undelivered gift, addressed to a
+    // player by uid. The recipient deletes the document once the item is in
+    // their bag, so the collection holds only what has not arrived yet.
+    //
+    // Read is open to any signed-in player rather than scoped to the
+    // recipient: the client watches the whole (small) collection and filters
+    // by uid in decodeGift, the same shape placedItems uses for mapId. That
+    // means a curious player could read who sent whom a turnip. Consistent
+    // with every other shared collection here, and cheaper than an index.
+    // Path: shared/world/gifts/{giftId}
+    match /shared/world/gifts/{giftId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidGift();
+      // Delete is the delivery receipt, so it cannot require being the
+      // recipient without also proving it - and the permissive stance
+      // elsewhere already lets players undo each other's shared state.
+      allow delete: if isAuthenticated();
+    }
+
     // Shared world events - discoveries, achievements, etc.
     // Path: sharedEvents/{eventId}
     match /sharedEvents/{eventId} {
@@ -175,6 +195,21 @@ service cloud.firestore {
         && request.resource.data.dataUrl.size() < 1000000
         && request.resource.data.photoName is string
         && request.resource.data.byName is string;
+    }
+
+    // A gift is a pair of uids and an item id, plus optional artwork id for a
+    // crafted wreath or painting. Names are display-only and capped to match
+    // GIFT_MAX_NAME_LENGTH in multiplayer/gifts.ts - tests/giftRules.test.ts
+    // fails if the two drift, the same guard chat's length cap has.
+    function isValidGift() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['f', 'r', 'i'])
+        && data.f is string && data.f.size() > 0
+        && data.r is string && data.r.size() > 0
+        && data.i is string && data.i.size() > 0
+        && (!('n' in data) || (data.n is string && data.n.size() <= 20))
+        && (!('rn' in data) || (data.rn is string && data.rn.size() <= 20))
+        && (!('d' in data) || data.d is string);
     }
 
     // Check if the requesting user owns this data

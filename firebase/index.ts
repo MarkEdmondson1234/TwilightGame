@@ -56,6 +56,8 @@ export { npcSpeechService } from './npcSpeechService';
 
 export { sharedPlacedItemsService } from './sharedPlacedItemsService';
 
+export { giftService } from './giftService';
+
 export { sharedAlbumService } from './sharedAlbumService';
 export type { AlbumEntry } from './sharedAlbumService';
 

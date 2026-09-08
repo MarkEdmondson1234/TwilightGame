@@ -404,6 +404,54 @@ class DecorationManagerClass {
   }
 
   /**
+   * Make sure a custom decoration with this exact id exists, registering it
+   * from its shared picture-store image if it does not.
+   *
+   * A gifted wreath or painting arrives as a decorationId and nothing else —
+   * the artwork's metadata lives in the *giver's* DecorationManager, which the
+   * recipient has never seen (decoration state syncs with a player's own
+   * saves, not across accounts). The image itself is in the shared picture
+   * store under the same id, so fetch it and register the entry locally. The
+   * image is not re-saved: the id is the shared store's key already.
+   *
+   * Returns the entry, or null when the image cannot be found — the caller
+   * falls back to a plain item, which the placement provider already knows how
+   * to render without artwork.
+   */
+  async ensureCustomDecoration(
+    decorationId: string,
+    linkedItemId: string,
+    name: string
+  ): Promise<PaintingData | null> {
+    const existing = this.paintings.get(decorationId);
+    if (existing) return existing;
+
+    const imageUrl = await loadPaintingImage(decorationId);
+    if (!imageUrl) return null;
+
+    const entry: PaintingData = {
+      id: decorationId,
+      name,
+      imageUrl,
+      storageKey: decorationId,
+      paintIds: [],
+      colours: [],
+      createdAt: Date.now(),
+      isUploaded: false,
+      scale: 1.2 * PLAYER_SIZE,
+      linkedItemId,
+    };
+    this.paintings.set(entry.id, entry);
+    this.save();
+
+    debugLog(
+      'DecorationManager',
+      `Registered gifted decoration "${name}" (${decorationId}) → ${linkedItemId}`
+    );
+    return entry;
+  }
+
+  /**
    * Get all custom decorations linked to a specific item ID.
    */
   getDecorationsForItem(itemId: string): PaintingData[] {

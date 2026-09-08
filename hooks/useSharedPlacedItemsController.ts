@@ -100,6 +100,19 @@ export function useSharedPlacedItemsController(
     // empty frame.
     const hydrating = new Set<string>();
 
+    /**
+     * How many times we have tried each painting and failed. A load can miss
+     * for reasons that fix themselves — the crafting client's cloud save is
+     * still in flight when the placed item arrives (placing happens seconds
+     * after crafting), or a transient Firestore error — and without a retry a
+     * single miss meant the other player stared at an empty tile until they
+     * reloaded. Bounded, so a painting that genuinely is not there does not
+     * turn into an endless polling loop.
+     */
+    const hydrateAttempts = new Map<string, number>();
+    const MAX_HYDRATE_ATTEMPTS = 3;
+    const HYDRATE_RETRY_MS = 5000;
+
     const announce = () => {
       eventBus.emit(GameEvent.PLACED_ITEMS_CHANGED, {
         mapId: sharedPlacedItemsManager.getMapId() ?? '',
@@ -137,8 +150,26 @@ export function useSharedPlacedItemsController(
         if (hydrating.has(item.paintingId)) continue;
 
         hydrating.add(item.paintingId);
-        void loadPaintingImage(item.paintingId).then((dataUrl) => {
-          if (cancelled || !dataUrl) return;
+        const paintingId = item.paintingId;
+        void loadPaintingImage(paintingId).then((dataUrl) => {
+          if (cancelled) return;
+          if (!dataUrl) {
+            // Not there — yet. Release the id so a later snapshot can try
+            // again, and schedule one bounded retry ourselves: if the placed
+            // item was the last snapshot for a while, nothing else would
+            // re-trigger hydration and the wreath stayed invisible until
+            // reload even though the picture arrived a second later.
+            hydrating.delete(paintingId);
+            const attempts = (hydrateAttempts.get(paintingId) ?? 0) + 1;
+            hydrateAttempts.set(paintingId, attempts);
+            if (attempts <= MAX_HYDRATE_ATTEMPTS) {
+              window.setTimeout(() => {
+                if (!cancelled) hydratePaintings();
+              }, HYDRATE_RETRY_MS);
+            }
+            return;
+          }
+          hydrateAttempts.delete(paintingId);
           // Re-read: the item may have moved or gone while we were fetching.
           const current = sharedPlacedItemsManager.get(item.id);
           if (!current) return;

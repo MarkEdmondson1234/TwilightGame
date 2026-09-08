@@ -39,6 +39,9 @@ export interface UIContext {
   brewingPosition: Position | null;
   // Gift modal context
   giftTargetNpcId: string | null;
+  /** Player gift: the recipient's uid and display name, when gifting a player */
+  giftTargetPlayerUid: string | null;
+  giftTargetPlayerName: string | null;
   // Mini-game context
   activeMiniGameId: string | null;
   miniGameTriggerData: MiniGameTriggerData | null;
@@ -90,6 +93,8 @@ export interface OpenUIOptions {
   brewingPosition?: Position;
   // For gift modal
   giftTargetNpcId?: string;
+  giftTargetPlayerUid?: string;
+  giftTargetPlayerName?: string;
   // For mini-game
   activeMiniGameId?: string;
   miniGameTriggerData?: MiniGameTriggerData;
@@ -122,6 +127,8 @@ const initialContext: UIContext = {
   cookingPosition: null,
   brewingPosition: null,
   giftTargetNpcId: null,
+  giftTargetPlayerUid: null,
+  giftTargetPlayerName: null,
   activeMiniGameId: null,
   miniGameTriggerData: null,
   pendingMiniGameId: null,
@@ -206,6 +213,12 @@ export function useUIState() {
         if (options.giftTargetNpcId !== undefined) {
           newState.context.giftTargetNpcId = options.giftTargetNpcId;
         }
+        if (options.giftTargetPlayerUid !== undefined) {
+          newState.context.giftTargetPlayerUid = options.giftTargetPlayerUid;
+        }
+        if (options.giftTargetPlayerName !== undefined) {
+          newState.context.giftTargetPlayerName = options.giftTargetPlayerName;
+        }
         if (options.activeMiniGameId !== undefined) {
           newState.context.activeMiniGameId = options.activeMiniGameId;
         }
@@ -253,6 +266,8 @@ export function useUIState() {
         newState.context = {
           ...prev.context,
           giftTargetNpcId: null,
+          giftTargetPlayerUid: null,
+          giftTargetPlayerName: null,
         };
       } else if (name === 'miniGame') {
         newState.context = {

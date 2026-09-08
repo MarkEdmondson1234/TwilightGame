@@ -21,6 +21,7 @@ import type { ChatMessage } from '../multiplayer/chat';
 import type { Photo } from '../types/photography';
 import type { AlbumEntry } from './sharedAlbumService';
 import type { NpcSpeechWire } from '../multiplayer/npcSpeech';
+import type { Gift } from '../multiplayer/gifts';
 import { debugLog } from '../utils/debugLog';
 
 /** Stub authService when Firebase is not available */
@@ -167,6 +168,26 @@ const stubSharedPlacedItemsService = {
   getPublishedIds: () => [] as string[],
   writeItem: async (_item: PlacedItem) => false as boolean,
   deleteItem: async (_itemId: string) => false as boolean,
+  destroy: () => {},
+};
+
+/**
+ * Stub giftService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubGiftService = {
+  isAvailable: () => false,
+  onGift: (_cb: (gift: Gift) => void) => () => {},
+  startListening: () => false,
+  stopListening: () => {},
+  sendGift: async (_gift: {
+    fromName: string;
+    toUid: string;
+    toName: string;
+    itemId: string;
+    decorationId?: string;
+  }) => false as boolean,
+  consumeGift: async (_giftId: string) => false as boolean,
   destroy: () => {},
 };
 
@@ -350,6 +371,14 @@ export function getChatService() {
  */
 export function getSharedPlacedItemsService() {
   return firebaseModule?.sharedPlacedItemsService ?? stubSharedPlacedItemsService;
+}
+
+/**
+ * Get giftService (real or stub).
+ * Never cache — it is a stub until Firebase has settled.
+ */
+export function getGiftService() {
+  return firebaseModule?.giftService ?? stubGiftService;
 }
 
 /**
