@@ -335,10 +335,13 @@ different worlds with differently-placed lakes, wolves and bears.
 
 Two acceptable answers:
 
-- **Exclude `RANDOM_*` maps from presence** (Phase 1 default — they are already off `SHARED_MAPS`).
-- **Make the seed global**: `seed = floor(Date.now() / MS_PER_GAME_DAY) * 1000 + depth`. Everyone
-  who enters the forest at depth 2 today gets the same forest, and it reshuffles daily. This is a
-  small change with a large payoff and is the recommended Phase 3 follow-up.
+- **Exclude `RANDOM_*` maps from presence** (Phase 1 default — they were already off `SHARED_MAPS`).
+- **Make the seed global**: `seed = hash(kind:totalDays:depth)`. Everyone who enters the forest at
+  depth 2 today gets the same forest, and it reshuffles daily. This is a small change with a large
+  payoff and is the recommended Phase 3 follow-up.
+
+**Done (Phase 3).** The forest, the mines and the lava levels are shared. See
+"Shared procedural maps" below for the three things that had to be true first.
 
 The second option also fixes a latent single-player oddity: today, stepping out of the forest and
 back in regenerates it entirely.
@@ -641,10 +644,99 @@ exists and its state has moved on) rolls the harvest back. A network failure or 
 the crop: confiscating something a player legitimately picked is a far worse experience than one
 duplicate carrot. Both directions are asserted in `tests/sharedFarmHarvestClaim.test.ts`.
 
-**Procedural maps now use a shared daily seed** (`hash(kind:totalDays:depth)` rather than
-`Date.now()`). Besides making forests shareable in principle, this fixes a long-standing
-single-player oddity: stepping out of the forest and straight back in used to regenerate it
-entirely. They remain off `SHARED_MAPS` for now.
+### Shared procedural maps
+
+**Procedural maps use a shared daily seed** (`hash(kind:totalDays:depth)` rather than `Date.now()`
+— `dailyProceduralSeed()` in `maps/index.ts`). Besides making forests shareable, this fixes a
+long-standing single-player oddity: stepping out of the forest and straight back in used to
+regenerate it entirely.
+
+The daily seed alone was not enough, and the gap was invisible: two players _did_ hold the same
+`forest_<seed>` id and were still in different worlds. Three things had to be true.
+
+**1. The generators had to actually use the seed.** They mostly did not. The seed steered a handful
+of NPC spawn rolls while the terrain — grass patches, every tree, the lakes, the crystals, the
+wolf, the shop door — came out of raw `Math.random()`. Every random choice in `maps/procedural.ts`
+now runs through `createSeededRandom(seed)`, and the generators take `depth` as an argument rather
+than reading `gameState`, so a map is a pure function of `(seed, depth)`.
+`tests/proceduralDeterminism.test.ts` regenerates each map twice and compares, and scans the source
+for `Math.random()` — the source scan is the real guard, because a randomly generated forest looks
+perfectly fine on its own and no gameplay test would ever notice.
+
+**2. Depth had to mean the same thing to both players.** It is half the seed, and it used to reset
+only on arrival at `village` — so any other way out of a chain (deep*forest → magical_lake) left
+the counter high, and the next trip in started at depth 3 for one player and depth 1 for their
+friend. `maps/proceduralDepth.ts` inverts the rule: list the maps that \_keep* you inside a chain,
+and reset on leaving. Shops are neutral, since they are entered from inside a chain and exit
+straight back.
+
+**3. A returning player had to rejoin today's world.** `gameInitializer` restored the seed stored
+in the save, which after a rotation names a world no other client will ever generate — alone in a
+forest nobody can reach. It now prefers today's seed and drops the player at the new spawn point,
+since their saved position may be inside a tree in the new layout.
+
+`multiplayer/sharedMaps.ts` is now the single predicate for "do other players exist here", used by
+presence, chat, NPC speech and shared placement — they each carried their own copy before.
+`shop_<seed>` stays private: its seed is still a clock value, and its exit transition is written to
+point back at whichever map the individual player came from, so two players in "the same" shop
+would leave through each other's door.
+
+**The seed keys on the real calendar date (UTC), not the in-game one.** An in-game day is two real
+hours, so `TimeManager`'s `totalDays` reshuffled the forest twelve times a day, and anyone standing
+in one when it rolled over was stranded in a world no new arrival could reach. UTC rather than
+local time because the date has to be the same string on both devices and a tablet's timezone is
+not something the game controls.
+
+### Shared battles
+
+One player fights, the others watch and cheer. `design`: the goblin in a mine level used to be a
+strictly private encounter — a full-screen modal on one client while the other player watched a
+character stand motionless next to a goblin. Now that the cave is genuinely the same cave, the
+goblin is genuinely the same goblin.
+
+- `multiplayer/battle.ts` — pure: wire shape, validation, `battleManager` (SSoT for the fights
+  visible on this map, mirroring `RemotePlayerManager`), and the cheer cooldown.
+- `firebase/battleService.ts` — RTDB transport. Two flat rooms, `battles/{mapId}/{npcId}` and
+  `battlesCheers/{mapId}/{npcId}/{uid}`. Siblings rather than parent/child on purpose: the battle
+  record is rewritten several times a round by one client, so nesting cheers under it would mean
+  clobbering other players' cheers on every phase change.
+- `hooks/useBattleController.ts` — the domain controller; App.tsx only wires it.
+- `components/BattleSpectator.tsx` — a HUD panel, **not** a modal: the whole point is that you are
+  still standing in the cave and can walk about, chat and back away while you watch.
+
+**The fight is not simulated remotely.** Only the fighter's client runs `useCombatLogic`;
+spectators receive a summary. Two clients independently simulating rock-paper-scissors would need
+every enemy move seeded and every timer aligned, and the failure mode — two children watching the
+same fight end differently — is worse than anything it would buy.
+
+**The combat mini-game imports no Firebase.** It emits `BATTLE_PROGRESSED` / `BATTLE_ENDED` on the
+EventBus and the controller owns the transport, so combat still works in a build with no Firebase
+at all.
+
+**Exactly one victory record is published, and App.tsx publishes it.** The combat screen publishes
+rounds and never the outcome. A win has to carry the _tile_ where the lava passage opened, and that
+is not chosen until the reward handler runs — a spectator recomputing the position locally would
+pick a different square, and the cave would end up with two mine entrances. So the winner chooses,
+publishes, and everyone else is told where (`utils/lavaEntrance.ts`, idempotent).
+
+**A win is left on the board; a loss is cleared.** The victory record _is_ the notice that tells
+the rest of the room the goblin fell, including someone who walks in a minute later. A loss or a
+flight is removed at once so nobody keeps watching a fight that is over. Cheers are deleted before
+the battle record, because the rule that lets the fighter clear other players' cheers proves they
+are the fighter by reading that record.
+
+**Cheers pay out once.** They arrive through a whole-subtree `onValue`, so every cheer redelivers
+every other cheer alongside it. `useBattleController` keeps the newest server timestamp seen per
+player — comparing `t` to `t` rather than to the local clock — on top of the per-player cooldown,
+which only rate-limits.
+
+**Gold and drops stay with the fighter.** What is shared is the _progression_: the enemy falls for
+everyone and the passage opens for everyone. `tests/sharedBattle.test.ts` covers the wire, the
+spectator rules and client/server parity on the security rules.
+
+**Known asymmetry:** a goblin-revealed lava entrance is per-player progress (`getLavaEntrance`), so
+a player who was not in the cave when it fell still finds the goblin there. That is deliberate —
+helping somebody means being there with them.
 
 ### Verification
 

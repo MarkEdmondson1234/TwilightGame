@@ -17,6 +17,7 @@
  */
 
 import type { Position, Photo } from '../types';
+import type { BattlePhase } from '../multiplayer/battle';
 
 // ============================================================================
 // Event Types
@@ -110,6 +111,19 @@ export enum GameEvent {
 
   /** An NPC finished saying a line — shared so nearby players can follow along */
   NPC_SPOKE = 'npc:spoke',
+
+  /**
+   * The fight the local player is in has moved on a round — published so
+   * nearby players can watch. Emitted by the combat mini-game; the transport is
+   * useBattleController's problem, so the mini-game imports no Firebase.
+   */
+  BATTLE_PROGRESSED = 'battle:progressed',
+  /** We stopped fighting (won, lost, fled, or closed the screen) */
+  BATTLE_ENDED = 'battle:ended',
+  /** Somebody watching cheered us on */
+  BATTLE_CHEERED = 'battle:cheered',
+  /** Another player won a fight here — apply the consequences locally */
+  BATTLE_WON_NEARBY = 'battle:won_nearby',
 
   // Fruit tree events
   FRUIT_TREE_CHANGED = 'fruitTree:changed',
@@ -294,6 +308,41 @@ export interface EventPayloads {
   [GameEvent.NPC_SPOKE]: {
     npcId: string;
     text: string;
+  };
+  [GameEvent.BATTLE_PROGRESSED]: {
+    npcId: string;
+    enemyName: string;
+    phase: BattlePhase;
+    round: number;
+    hitsRemaining: number;
+    hitsTotal: number;
+    stamina: number;
+    line: string;
+    /** On a win, the tile where the lava passage opened */
+    entrance?: { x: number; y: number };
+  };
+  [GameEvent.BATTLE_ENDED]: {
+    npcId: string;
+    /**
+     * How it ended. A win leaves its record standing so the rest of the room
+     * learns the enemy fell; anything else is cleared straight away.
+     */
+    outcome: BattlePhase;
+  };
+  [GameEvent.BATTLE_CHEERED]: {
+    npcId: string;
+    /** Who cheered */
+    name: string;
+    /** Stamina this cheer restored, already applied */
+    stamina: number;
+  };
+  [GameEvent.BATTLE_WON_NEARBY]: {
+    npcId: string;
+    /** Who won it */
+    name: string;
+    enemyName: string;
+    /** Where the lava passage opened, if this fight opened one */
+    entrance?: { x: number; y: number };
   };
   [GameEvent.FRUIT_TREE_CHANGED]: {
     mapId: string;

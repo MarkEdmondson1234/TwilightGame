@@ -1,5 +1,6 @@
 import { runSelfTests } from './testUtils';
-import { initializeMaps, mapManager } from '../maps';
+import { initializeMaps, mapManager, dailyProceduralSeed } from '../maps';
+import type { ProceduralMapKind } from '../maps';
 import { gameState } from '../GameState';
 import { characterData } from './CharacterData';
 import { initializePalette } from '../palette';
@@ -101,9 +102,8 @@ export function initializeGameCore(): void {
  * progress, so a completed save gets the right NPC before the player ever sees it.
  */
 export async function restoreQueenAvariciaFormIfComplete(): Promise<void> {
-  const { GHOST_QUEEN_NPC_ID, isGhostQuestComplete } = await import(
-    '../data/questHandlers/ghostQueenHandler'
-  );
+  const { GHOST_QUEEN_NPC_ID, isGhostQuestComplete } =
+    await import('../data/questHandlers/ghostQueenHandler');
   if (!isGhostQuestComplete()) return;
 
   const { createQueenAvericiaaNPC } = await import('./npcs/village/queenAvaricia');
@@ -319,29 +319,57 @@ export async function initializeGameAssets(
     } else {
       mapType = savedLocation.mapId.split('_')[0];
     }
-    // Regenerate the random map with the saved seed
-    const seed = savedLocation.seed || Date.now();
+    // Regenerate the random map.
+    //
+    // Prefer *today's* seed over the one in the save. Procedural maps rotate on
+    // a daily seed so that everyone entering "the forest" enters the same one
+    // (see dailyProceduralSeed); a player who quit inside yesterday's forest and
+    // came back would otherwise be restored into a world nobody else can reach,
+    // standing alone in a map whose id no other client will ever generate.
+    // Regenerating drops them at the new map's spawn point, since their saved
+    // position may well be inside a tree in the new layout.
+    const depth =
+      mapType === 'forest'
+        ? gameState.getForestDepth()
+        : mapType === 'cave'
+          ? gameState.getCaveDepth()
+          : gameState.getLavaDepth();
+    const todaysSeed =
+      mapType === 'shop'
+        ? null
+        : dailyProceduralSeed(mapType as ProceduralMapKind, Math.max(1, depth));
+    const savedSeed = savedLocation.seed;
+    const seed = todaysSeed ?? savedSeed ?? Date.now();
+    const rotatedAway = todaysSeed !== null && savedSeed !== undefined && savedSeed !== todaysSeed;
 
-    debugLog('App', `Regenerating ${mapType} map with seed ${seed}`);
+    debugLog(
+      'App',
+      `Regenerating ${mapType} map with seed ${seed}` +
+        (rotatedAway ? ` (save held ${savedSeed}, which has since rotated)` : '')
+    );
 
     // Import and call the appropriate generator
     const { generateRandomForest, generateRandomCave, generateRandomShop, generateLavaMap } =
       await import('../maps/procedural');
+    const generatedDepth = Math.max(1, depth);
     let newMap;
     if (mapType === 'forest') {
-      newMap = generateRandomForest(seed);
+      newMap = generateRandomForest(seed, generatedDepth);
     } else if (mapType === 'cave') {
-      newMap = generateRandomCave(seed);
+      newMap = generateRandomCave(seed, generatedDepth);
     } else if (mapType === 'shop') {
       const playerLoc = gameState.getPlayerLocation();
       newMap = generateRandomShop(seed, playerLoc.mapId, playerLoc.position);
     } else if (mapType === 'lava') {
-      newMap = generateLavaMap(seed);
+      newMap = generateLavaMap(seed, generatedDepth);
     }
 
     if (newMap) {
       mapManager.registerMap(newMap);
       mapManager.loadMap(newMap.id);
+      if (rotatedAway) {
+        gameState.updatePlayerLocation(newMap.id, newMap.spawnPoint, seed);
+      }
       onMapInitialized(true);
     }
   } else {

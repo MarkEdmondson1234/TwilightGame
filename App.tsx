@@ -7,7 +7,7 @@ import {
   TIMING,
   SHARED_FARM_MAP_IDS,
 } from './constants';
-import { Position, Direction, NPC, TileType } from './types';
+import { Position, Direction, NPC } from './types';
 import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
@@ -35,6 +35,7 @@ import { useChatController } from './hooks/useChatController';
 import { useSharedPlacedItemsController } from './hooks/useSharedPlacedItemsController';
 import { useGiftsController } from './hooks/useGiftsController';
 import { useNpcSpeechController } from './hooks/useNpcSpeechController';
+import { useBattleController } from './hooks/useBattleController';
 import { useEventChainUI } from './hooks/useEventChainUI';
 import { EventChainPopup } from './components/EventChainPopup';
 import { useAmbientVFX } from './hooks/useAmbientVFX';
@@ -57,7 +58,8 @@ import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
 import { checkCookingLocation } from './utils/actionHandlers';
-import { getLavaLakeAnchor, findClearTileNear } from './utils/mapUtils';
+import { getLavaLakeAnchor } from './utils/mapUtils';
+import { chooseLavaEntranceTile, openLavaEntranceAt } from './utils/lavaEntrance';
 import { getRestingFurnitureEffect, type RestEffect } from './utils/furnitureRest';
 import { buildInventoryActions, hasInventoryActions } from './utils/inventoryActions';
 import { npcManager } from './NPCManager';
@@ -92,6 +94,7 @@ import NPCRenderer from './components/NPCRenderer';
 import RemotePlayerOverlay from './components/RemotePlayerOverlay';
 import EmoteWheel from './components/EmoteWheel';
 import ChatPanel from './components/ChatPanel';
+import BattleSpectator from './components/BattleSpectator';
 import PresenceIndicator from './components/PresenceIndicator';
 import Inventory, { InventoryItem } from './components/Inventory';
 import QuickSlotBar from './components/QuickSlotBar';
@@ -493,6 +496,15 @@ const App: React.FC = () => {
   useNpcSpeechController({
     currentMapId,
     getLocalPosition: () => playerPosRef.current,
+  });
+
+  // Somebody else's fight, watchable. Now that procedural caves are shared, the
+  // goblin in front of you is genuinely the same goblin your friend is fighting
+  // — so the fight is published as it runs, and beating it opens the passage
+  // for everyone standing there.
+  const { spectatedBattle, cheer } = useBattleController({
+    currentMapId,
+    playerName: gameState.getSelectedCharacter()?.name ?? 'Traveller',
   });
 
   const [isComposingChat, setIsComposingChat] = useState(false);
@@ -1005,6 +1017,35 @@ const App: React.FC = () => {
 
   // Track hostile NPC that initiated combat (for post-combat cleanup)
   const combatNpcIdRef = useRef<string | null>(null);
+
+  /**
+   * A friend beat the goblin. Apply it here too.
+   *
+   * This is what "fighting on behalf of" actually means: the enemy is the same
+   * enemy for both of us, so it falls for both of us, and the passage it was
+   * guarding opens on the tile *they* chose rather than one we picked ourselves.
+   * Gold and drops stay with the player who did the fighting.
+   */
+  useEffect(() => {
+    return eventBus.on(GameEvent.BATTLE_WON_NEARBY, (payload) => {
+      // If we are mid-fight with the same enemy, leave our own encounter alone
+      // — our combat screen will despawn it when it finishes. Yanking the NPC
+      // out from under an open modal is worse than a duplicate victory.
+      if (combatNpcIdRef.current === payload.npcId) return;
+
+      const mapId = mapManager.getCurrentMapId();
+      if (payload.entrance && mapId && openLavaEntranceAt(mapId, payload.entrance)) {
+        showToast(
+          `${payload.name} beat the ${payload.enemyName} — a passage to the lava caverns has opened!`,
+          'success'
+        );
+      } else {
+        showToast(`${payload.name} beat the ${payload.enemyName}!`, 'success');
+      }
+
+      npcManager.removeDynamicNPC(payload.npcId);
+    });
+  }, [showToast]);
 
   // Subscribe to hostile NPC combat initiation
   useEffect(() => {
@@ -2477,6 +2518,12 @@ const App: React.FC = () => {
       {isInWorld && showEmoteWheel && (
         <EmoteWheel onSelect={sendEmote} onClose={closeEmoteWheel} compact={isCompactMode} />
       )}
+      {/* Watching a friend fight. Not gated on isAnyOverlayOpen: if *we* are in
+          a fight of our own the controller already hides it, and being in the
+          inventory is no reason to stop following theirs. */}
+      {isInWorld && spectatedBattle && (
+        <BattleSpectator battle={spectatedBattle.battle} onCheer={cheer} />
+      )}
 
       {/* Touch controls - hidden when any modal is open or cutscene playing */}
       {isTouchDevice &&
@@ -2665,31 +2712,36 @@ const App: React.FC = () => {
               combatNpcIdRef.current = null;
               if (result?.success) {
                 // Goblin victory: reveal a lava entrance near where the goblin stood
+                let entrance: { x: number; y: number } | undefined;
                 if (npcId.startsWith('goblin_depth_')) {
                   const goblin = npcManager.getNPCById(npcId); // read position BEFORE removal
-                  if (goblin) {
-                    const goblinPos = {
-                      x: Math.floor(goblin.position.x),
-                      y: Math.floor(goblin.position.y),
-                    };
-                    const currentMapId = mapManager.getCurrentMapId();
-                    if (currentMapId && !gameState.getLavaEntrance(currentMapId)) {
-                      const entrancePos = findClearTileNear(goblinPos, currentMapId);
-                      if (entrancePos) {
-                        mapManager.setTile(entrancePos.x, entrancePos.y, TileType.MINE_ENTRANCE);
-                        mapManager.addTransition({
-                          fromPosition: entrancePos,
-                          tileType: TileType.MINE_ENTRANCE,
-                          toMapId: 'RANDOM_LAVA',
-                          toPosition: { x: 3, y: 15 },
-                          label: 'Enter Lava Levels',
-                        });
-                        gameState.revealLavaEntrance(currentMapId, entrancePos);
-                        showToast('A passage to the lava caverns has been revealed!', 'info');
-                      }
+                  const battleMapId = mapManager.getCurrentMapId();
+                  if (goblin && battleMapId) {
+                    const chosen = chooseLavaEntranceTile(goblin.position, battleMapId);
+                    if (chosen && openLavaEntranceAt(battleMapId, chosen)) {
+                      entrance = chosen;
+                      showToast('A passage to the lava caverns has been revealed!', 'info');
                     }
                   }
                 }
+
+                // Tell everyone else in the cave. This is the *only* victory
+                // record published for the fight (the combat screen publishes
+                // rounds, never the outcome) precisely so it can carry the
+                // chosen tile — a spectator picking its own would put a second
+                // entrance in the same cave.
+                eventBus.emit(GameEvent.BATTLE_PROGRESSED, {
+                  npcId,
+                  enemyName: npcManager.getNPCById(npcId)?.name ?? 'the enemy',
+                  phase: 'won',
+                  round: 0,
+                  hitsRemaining: 0,
+                  hitsTotal: 1,
+                  stamina: Math.round(gameState.getStamina()),
+                  line: '',
+                  ...(entrance ? { entrance } : {}),
+                });
+
                 // Victory: despawn the hostile NPC
                 npcManager.removeDynamicNPC(npcId);
               } else {

@@ -10,10 +10,11 @@
  * when Firebase is missing or the map is private.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { MULTIPLAYER, MULTIPLAYER_ENABLED } from '../constants';
+import { isSharedMap } from '../multiplayer/sharedMaps';
 import { eventBus, GameEvent } from '../utils/EventBus';
-import { getNpcSpeechService, whenFirebaseSettled } from '../firebase/safe';
+import { getNpcSpeechService, getAuthService, whenFirebaseSettled } from '../firebase/safe';
 import { npcSpeechManager } from '../multiplayer/npcSpeech';
 import { npcManager } from '../NPCManager';
 import type { Position } from '../types';
@@ -25,13 +26,21 @@ export interface UseNpcSpeechControllerProps {
   getLocalPosition: () => Position;
 }
 
-/** NPC speech is shared exactly where players can see each other. */
-function isSharedMap(mapId: string): boolean {
-  return MULTIPLAYER.SHARED_MAPS.has(mapId);
-}
-
 export function useNpcSpeechController(props: UseNpcSpeechControllerProps): void {
   const { currentMapId, getLocalPosition } = props;
+
+  /**
+   * Bumped on every auth state change, exactly as presence does.
+   *
+   * Without it the room join below runs once per map change, and Firebase
+   * restores the signed-in session *after* the game has loaded its first map —
+   * so a player who resumes standing in the village found `isAvailable()` false,
+   * left the room, and never retried. NPC conversations then stayed invisible
+   * for the whole session unless they happened to walk out of the village and
+   * back in. Presence carried its own retry and worked, which is what made this
+   * look like "NPC speech is broken" rather than "the room was never joined".
+   */
+  const [authTick, setAuthTick] = useState(0);
 
   // Outbound: publish what an NPC says to us.
   useEffect(() => {
@@ -48,6 +57,7 @@ export function useNpcSpeechController(props: UseNpcSpeechControllerProps): void
     if (!MULTIPLAYER_ENABLED) return;
 
     let unsubscribe: (() => void) | null = null;
+    let unsubscribeAuth: (() => void) | null = null;
     let cancelled = false;
 
     void (async () => {
@@ -67,11 +77,17 @@ export function useNpcSpeechController(props: UseNpcSpeechControllerProps): void
 
         npcSpeechManager.apply(npcId, wire);
       });
+
+      // Re-drive the join effect below whenever sign-in state changes.
+      unsubscribeAuth = getAuthService().onAuthStateChange(() => {
+        if (!cancelled) setAuthTick((tick) => tick + 1);
+      });
     })();
 
     return () => {
       cancelled = true;
       unsubscribe?.();
+      unsubscribeAuth?.();
     };
     // getLocalPosition is a stable arrow reading a ref; re-subscribing on every
     // step would drop lines mid-conversation.
@@ -102,7 +118,7 @@ export function useNpcSpeechController(props: UseNpcSpeechControllerProps): void
     return () => {
       cancelled = true;
     };
-  }, [currentMapId]);
+  }, [currentMapId, authTick]);
 
   // Leave cleanly on unmount rather than waiting for the next map change.
   useEffect(() => {

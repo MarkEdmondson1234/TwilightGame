@@ -28,7 +28,7 @@ Every test passes on `main`. **Any** failure is a real regression — do not wav
 "pre-existing".
 
 This section used to document two permanent failures (`cropGrowth`, `eventChains`). Both turned
-out to be bugs in the *tests*, not the game data, and are fixed:
+out to be bugs in the _tests_, not the game data, and are fixed:
 
 - `cropGrowth.test.ts` judged every crop on a single harvest, which is the wrong model for a
   perennial. Mint (`isHerb: true`) breaks even on harvest one and profits from harvest two
@@ -91,6 +91,11 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `remotePlayerInterpolation.test.ts` | The lerp/snap/hold maths that makes other players glide instead of teleport | Touching `multiplayer/interpolation.ts` |
 | `multiplayerSafeStubs.test.ts` | A method on the real presence service missing from the `firebase/safe` stub — crashes **only** in a build without the `firebase` package | Adding a method to any Firebase service |
 | `determinism.test.ts` | `Math.random()` creeping back into NPC wander or fairy spawning, which silently desyncs what two players see | Touching NPC movement, fairies, or `utils/seededRandom.ts` |
+| `proceduralDeterminism.test.ts` | `Math.random()` or a clock read creeping back into `maps/procedural.ts`, so two players holding the same `forest_<seed>` id rebuild different worlds | Touching any procedural generator |
+| `proceduralDepth.test.ts` | A forest/cave/lava depth counter that fails to reset on the way out — depth is half the map seed, so a drifted counter puts two players in different worlds | Adding a transition out of a procedural chain |
+| `sharedMaps.test.ts` | The shared-world systems disagreeing about which maps other players exist on, or a random shop becoming shared | Changing `MULTIPLAYER.SHARED_MAPS` or `multiplayer/sharedMaps.ts` |
+| `sharedWorldAuthRetry.test.ts` | A per-map room controller that never retries when the player signs in — Firebase signs in after the first map loads, so it silently joins nothing for the whole session | Adding a controller that joins a shared room |
+| `sharedBattle.test.ts` | The shared-battle wire, spectator rules (never watch your own fight, drop a stale one), and client/server parity on the battle security rules | Touching combat sharing, cheering, or `database.rules.json` |
 | `sharedFarmHarvestClaim.test.ts` | Two players both harvesting one ripe crop; and the opposite error — confiscating a crop on a network blip | Touching harvesting or the shared farm |
 | `multiplayerUI.test.tsx` | Render-time crashes in the emote wheel / presence indicator, which the headless probe does not reach (it does not click past the splash screen) | Touching multiplayer UI |
 | `mapTextureBudget.test.ts` | A texture reference that 404s (renders as *nothing*, with no error), a filename whose case only matches on macOS, or a map whose resident textures exceed what a phone can hold — which kills the tab with no catchable error | Adding a map, NPC, or tile; changing `scripts/optimize-assets.js` |

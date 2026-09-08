@@ -190,6 +190,13 @@ export const Z_CHAT_PANEL = 1055;
 /** Emote picker — above the touch controls it is opened from */
 export const Z_EMOTE_WHEEL = 1060;
 
+/**
+ * Spectator panel for another player's fight — with the HUD, not with the
+ * combat mini-game. A spectator is still walking around, so this must sit at
+ * HUD level rather than over the whole screen the way `Z_DIALOGUE` does.
+ */
+export const Z_BATTLE_SPECTATOR = 1058;
+
 // =============================================================================
 // DEBUG PANELS (1100-1199)
 // =============================================================================

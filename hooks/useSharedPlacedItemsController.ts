@@ -16,10 +16,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { MULTIPLAYER, MULTIPLAYER_ENABLED, DEBUG } from '../constants';
+import { MULTIPLAYER_ENABLED, DEBUG } from '../constants';
+import { isSharedMap } from '../multiplayer/sharedMaps';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { gameState } from '../GameState';
-import { getSharedPlacedItemsService, whenFirebaseSettled } from '../firebase/safe';
+import { getSharedPlacedItemsService, getAuthService, whenFirebaseSettled } from '../firebase/safe';
 import { sharedPlacedItemsManager } from '../multiplayer/sharedPlacedItems';
 import { loadPaintingImage } from '../utils/paintingImageService';
 import type { PlacedItem } from '../types';
@@ -33,11 +34,6 @@ export interface UseSharedPlacedItemsControllerProps {
 export interface UseSharedPlacedItemsControllerReturn {
   /** True when placement is being shared on this map */
   isSharingPlacedItems: boolean;
-}
-
-/** Placement is shared exactly where players can see each other. */
-function isSharedMap(mapId: string): boolean {
-  return MULTIPLAYER.SHARED_MAPS.has(mapId);
 }
 
 /** Has anything the other player would notice changed? */
@@ -58,6 +54,17 @@ export function useSharedPlacedItemsController(
 ): UseSharedPlacedItemsControllerReturn {
   const { currentMapId } = props;
   const [isSharingPlacedItems, setIsSharingPlacedItems] = useState(false);
+
+  /**
+   * Bumped on every auth state change, exactly as presence does.
+   *
+   * Firebase restores the signed-in session *after* the game has loaded its
+   * first map, so without this the mirror below saw `isAvailable()` false on a
+   * resumed session, gave up, and never retried — another player's furniture
+   * stayed invisible until the player happened to walk to a different map and
+   * back.
+   */
+  const [authTick, setAuthTick] = useState(0);
 
   // Mirror the current map.
   useEffect(() => {
@@ -83,7 +90,7 @@ export function useSharedPlacedItemsController(
     return () => {
       cancelled = true;
     };
-  }, [currentMapId]);
+  }, [currentMapId, authTick]);
 
   // Inbound changes → tell the game to re-read. The renderer already listens for
   // PLACED_ITEMS_CHANGED, so another player's bench appears by the same path as
@@ -92,6 +99,7 @@ export function useSharedPlacedItemsController(
     if (!MULTIPLAYER_ENABLED) return;
 
     let unsubscribe: (() => void) | null = null;
+    let unsubscribeAuth: (() => void) | null = null;
     let cancelled = false;
 
     // A hung painting arrives as an id, not an image — the picture itself lives
@@ -188,11 +196,17 @@ export function useSharedPlacedItemsController(
         hydratePaintings();
         announce();
       });
+
+      // Re-drive the mirror above whenever sign-in state changes.
+      unsubscribeAuth = getAuthService().onAuthStateChange(() => {
+        if (!cancelled) setAuthTick((tick) => tick + 1);
+      });
     })();
 
     return () => {
       cancelled = true;
       unsubscribe?.();
+      unsubscribeAuth?.();
     };
   }, []);
 
