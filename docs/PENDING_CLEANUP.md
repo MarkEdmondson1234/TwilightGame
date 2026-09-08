@@ -91,21 +91,23 @@ use by `UnifiedDialogueBox` (verified in PR #81).
 
 ---
 
-## 4. Tracked TODOs (8, all content/art, all safe to defer)
+## 4. Tracked TODOs (7, all content/art, all safe to defer)
 
 | Location                                       | TODO                                           |
 | ---------------------------------------------- | ---------------------------------------------- |
 | `maps/definitions/witchHut.ts:109`             | Add familiar/pet NPCs (black cat, owl)         |
-| `App.tsx:1582`                                 | GlamourModal component (feature gap)           |
 | `minigames/combat-encounter/antagonists.ts:81` | Goblin actionSprites (art)                     |
-| `NPCManager.ts:871`                            | PATROL behaviour for NPCs (feature)            |
+| `NPCManager.ts:873`                            | PATROL behaviour for NPCs (feature)            |
 | `utils/interactions/providers/berries.ts:95`   | Dedicated blueberry sprite (art)               |
 | `data/items/food.ts:196`                       | lava_cake artwork (art; notes where to add it) |
 | `data/items/toolsAndMaterials.ts:106`          | Add item to Mushra's shop (design)             |
 | `data/items/toolsAndMaterials.ts:118`          | Replace placeholder with real artwork          |
 
+(The GlamourModal entry from this list shipped with the glamour potion work —
+the component exists and the App.tsx stub comment was removed.)
+
 These are fine to leave until the relevant feature/art work happens. The one
-with real gameplay impact is `NPCManager.ts:871` (PATROL) if wandering NPCs
+with real gameplay impact is `NPCManager.ts:873` (PATROL) if wandering NPCs
 are ever wanted.
 
 ---
