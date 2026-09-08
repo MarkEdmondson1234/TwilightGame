@@ -19,6 +19,7 @@ import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
 import { giftService } from '../firebase/giftService';
 import { sharedAlbumService } from '../firebase/sharedAlbumService';
 import { npcSpeechService } from '../firebase/npcSpeechService';
+import { battleService } from '../firebase/battleService';
 import {
   getPresenceService,
   getChatService,
@@ -26,6 +27,7 @@ import {
   getGiftService,
   getSharedAlbumService,
   getNpcSpeechService,
+  getBattleService,
   getCommunityGardenService,
   whenFirebaseSettled,
 } from '../firebase/safe';
@@ -159,6 +161,22 @@ describe('npc speech stub parity', () => {
       'These methods exist on firebase/npcSpeechService but not on the stub in ' +
         'firebase/safe.ts. NPC dialogue runs in a build with no Firebase too, and ' +
         'the publish call sits on that path. Add a no-op to stubNpcSpeechService.'
+    ).toEqual([]);
+  });
+});
+
+describe('battle stub parity', () => {
+  it('implements every public method of the real battle service', () => {
+    const missing = methodNames(battleService).filter(
+      (name) => !methodNames(getBattleService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/battleService but not on the stub in ' +
+        'firebase/safe.ts. The combat mini-game publishes every round through ' +
+        'this, and it runs in a build with no Firebase too. Add a no-op to ' +
+        'stubBattleService.'
     ).toEqual([]);
   });
 });

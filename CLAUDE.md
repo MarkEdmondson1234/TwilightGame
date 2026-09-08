@@ -94,6 +94,10 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
   there", since players stand on doors, farm plots and shop counters. Inert without presence
   (`getRemotePlayers()` is empty), so it needs no `MULTIPLAYER_ENABLED` gate of its own.
 - `hooks/useMultiplayerController.ts` — the domain controller; App.tsx only wires it
+- `multiplayer/battle.ts` + `firebase/battleService.ts` + `hooks/useBattleController.ts` —
+  **shared battles**: one player fights the goblin, the others watch and cheer, and the
+  victory opens the lava passage for everyone standing in the cave
+- `multiplayer/sharedMaps.ts` — the single `isSharedMap()` predicate, procedural maps included
 - `utils/pixi/RemotePlayerLayer.ts` — rendering (mirrors `NPCLayer`)
 - `database.rules.json` — RTDB security rules
 
@@ -112,9 +116,44 @@ implementation notes: [`design_docs/planned/MULTIPLAYER.md`](design_docs/planned
    if that group ever widens, restrict the shared world before widening it.
    `tests/chatRules.test.ts` fails if the client and server-side length caps drift.
 3. **Anything in the shared simulation must be deterministic.** Time and weather already are.
-   NPC wander and fairy spawns now use `utils/seededRandom.ts` keyed on `(id, time slot)`.
+   NPC wander and fairy spawns use `utils/seededRandom.ts` keyed on `(id, time slot)`.
    Reintroducing `Math.random()` there silently desyncs what two players see —
    `tests/determinism.test.ts` guards it.
+4. **Procedural maps are shared too, and that rests entirely on determinism.**
+   The forest, the mines and the lava levels rotate on a daily seed
+   (`dailyProceduralSeed()` in `maps/index.ts` — `hash(kind:UTC-date:depth)`, the
+   real calendar day, not the two-hour in-game one), so the map id `forest_<seed>`
+   names one world that every player rebuilds from scratch. That makes the id usable
+   as a presence room key. It also means **every random choice in
+   `maps/procedural.ts` must come from the local seeded `rng()`/`rand()`, never
+   `Math.random()`**, and the generators must stay pure functions of `(seed, depth)`
+   rather than reading `gameState`. A stray `Math.random()` here does not throw and
+   does not look wrong — the forest generates perfectly, it is just a _different_
+   forest from your friend's. `tests/proceduralDeterminism.test.ts` scans the source
+   for exactly that. Depth is the other half of the seed, so it has to reset
+   consistently: `maps/proceduralDepth.ts` (guarded by
+   `tests/proceduralDepth.test.ts`) lists the maps that keep you inside a chain and
+   resets on leaving any of them.
+5. **`multiplayer/sharedMaps.ts` is the one predicate for "do other players exist
+   here."** Presence, chat, NPC speech, shared placement and battles all import
+   `isSharedMap` from it. Do not re-add a local copy — they drifted before.
+   `shop_<seed>` is deliberately excluded: its exit points back at whichever map the
+   individual player came from.
+6. **Every controller that joins a per-map room must retry on sign-in.** Firebase
+   restores the session _after_ the game has loaded its first map, so a controller
+   keyed only on `[currentMapId]` runs while `isAvailable()` is false, leaves the
+   room and never comes back — a player who resumes standing in the village is
+   silently in no room for the whole session, and walking out and back in "fixes"
+   it, which makes it look intermittent. This is what made NPC conversations and
+   shared furniture look broken. Copy the `authTick` pattern from
+   `useMultiplayerController`; `tests/sharedWorldAuthRetry.test.ts` fails without it.
+7. **Shared battles: the mini-game imports no Firebase.** `CombatEncounter` emits
+   `BATTLE_PROGRESSED`/`BATTLE_ENDED` on the EventBus and `useBattleController` owns
+   the transport. Only the fighter's client simulates the fight; spectators get a
+   summary panel (`components/BattleSpectator.tsx`) and a cheer button, and a cheer
+   restores a little of the fighter's stamina. **The winner chooses the lava-passage
+   tile and publishes it** — everyone else opens it there via `utils/lavaEntrance.ts`
+   rather than recomputing, or one cave ends up with two entrances.
 
 ## Language and Localisation
 
@@ -1673,7 +1712,7 @@ These are the bugs that keep coming back. **Read the gotchas doc before touching
 | **add-pixi-component**   | "PixiJS", "WebGL", "particle system", "shader"                                                 | Add PixiJS rendering components                                                            |
 | **add-minigame**         | "create mini-game", "add mini-game", "new activity"                                            | Create self-contained mini-games (2 files + 1 registry line)                               |
 | **debug-production**     | "works locally but not deployed", "broken on the live site", "check Sentry", "can't reproduce" | Debug production-only bugs: Sentry via MCP, live console probe, deployed-bundle inspection |
-| **setup-sentry-mcp**     | "set up Sentry", "Sentry MCP 401", "Sentry not connecting", "new machine setup"                 | One-time Sentry MCP install for Claude Code + Pi: token, `.mcp.json`, restart, verify       |
+| **setup-sentry-mcp**     | "set up Sentry", "Sentry MCP 401", "Sentry not connecting", "new machine setup"                | One-time Sentry MCP install for Claude Code + Pi: token, `.mcp.json`, restart, verify      |
 
 ### When to Use Skills
 

@@ -63,6 +63,75 @@
         }
       }
     },
+    "battles": {
+      "$mapId": {
+        ".read": "auth != null",
+        "$npcId": {
+          ".write": "auth != null && ((newData.exists() && newData.child('u').val() === auth.uid) || (!newData.exists() && data.child('u').val() === auth.uid))",
+          ".validate": "newData.hasChildren(['u','n','e','p','r','h','hm','st','t'])",
+          "u": {
+            ".validate": "newData.val() === auth.uid"
+          },
+          "n": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+          },
+          "e": {
+            ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+          },
+          "p": {
+            ".validate": "newData.val() === 'fight' || newData.val() === 'won' || newData.val() === 'lost' || newData.val() === 'fled'"
+          },
+          "r": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 99"
+          },
+          "h": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 99"
+          },
+          "hm": {
+            ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 99"
+          },
+          "st": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100"
+          },
+          "l": {
+            ".validate": "newData.isString() && newData.val().length <= 90"
+          },
+          "x": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200"
+          },
+          "y": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200"
+          },
+          "t": {
+            ".validate": "newData.val() === now"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "battlesCheers": {
+      "$mapId": {
+        ".read": "auth != null",
+        "$npcId": {
+          ".write": "auth != null && !newData.exists() && root.child('battles').child($mapId).child($npcId).child('u').val() === auth.uid",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['n','t'])",
+            "n": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 20"
+            },
+            "t": {
+              ".validate": "newData.val() === now"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    },
     "npcSpeech": {
       "$mapId": {
         ".read": "auth != null",

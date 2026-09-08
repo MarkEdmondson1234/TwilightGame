@@ -1,7 +1,8 @@
 import { startDiagnosticOperation } from '../utils/sessionDiagnostics';
 import { mapManager } from './MapManager';
-import { TimeManager } from '../utils/TimeManager';
 import { hashString } from '../utils/seededRandom';
+import { depthsAfterTransition, PROCEDURAL_KINDS } from './proceduralDepth';
+import type { Depths, ProceduralMapKind } from './proceduralDepth';
 import { COLOR_SCHEMES } from './colorSchemes';
 import { homeUpstairs } from './definitions/homeUpstairs';
 import { village } from './definitions/village';
@@ -103,62 +104,83 @@ export function transitionToMap(mapId: string, spawnPoint?: { x: number; y: numb
   }
 }
 
-function prepareMapTransition(mapId: string, spawnPoint?: { x: number; y: number }) {
-  // Track depth changes
-  if (mapId.startsWith('RANDOM_')) {
-    const type = mapId.replace('RANDOM_', '').toLowerCase();
+/**
+ * The seed for one procedural map — a pure function of the calendar date and how
+ * deep the player is, never `Date.now()` directly.
+ *
+ * Multiplayer: with a per-call clock seed, two players who walk into "the
+ * forest" together arrive in *different* forests, with the lakes, wolves and
+ * bears in different places — so RANDOM_* maps could never be shared. Now the id
+ * `forest_<seed>` names one specific world that both of them rebuild
+ * identically, which is what lets it be a presence room key (see
+ * `multiplayer/sharedMaps.ts`). Single-player: it also fixes the long-standing
+ * oddity where stepping out of the forest and straight back in regenerated it
+ * entirely.
+ *
+ * **The real calendar date, not the in-game one.** An in-game day is two real
+ * hours (`TimeManager.MS_PER_GAME_DAY`), so keying on `totalDays` reshuffled the
+ * forest twelve times a day — and anyone standing in one when it rolled over was
+ * stranded in a world no new arrival could reach. "The forest changed again"
+ * should mean a day has actually passed.
+ *
+ * **UTC, not local time.** The date has to be the same string on both players'
+ * devices, and a tablet's timezone is not something the game controls. UTC
+ * rolls over at 1am BST / midnight GMT, which is nobody's play time.
+ */
+export function dailyProceduralSeed(kind: ProceduralMapKind, depth: number): number {
+  return hashString(`${kind}:${calendarDayKey()}:${depth}`);
+}
 
-    // Going deeper into forest/cave/lava
-    if (type === 'forest') {
-      gameState.enterForest();
-    } else if (type === 'cave') {
-      gameState.enterCave();
-    } else if (type === 'lava') {
-      gameState.enterLava();
-    }
-  } else if (mapId === 'village') {
-    // Coming back to village - reset all depth counters
-    const currentForestDepth = gameState.getForestDepth();
-    const currentCaveDepth = gameState.getCaveDepth();
-    const currentLavaDepth = gameState.getLavaDepth();
+/** `YYYY-MM-DD` in UTC — the same string on every device at the same moment. */
+export function calendarDayKey(at: number = Date.now()): string {
+  return new Date(at).toISOString().slice(0, 10);
+}
 
-    if (currentForestDepth > 0) {
-      debugLog('GameState', `Exited forest completely (was at depth ${currentForestDepth})`);
-      gameState.resetForestDepth();
+function updateDepthCounters(mapId: string): void {
+  const before: Depths = {
+    forest: gameState.getForestDepth(),
+    cave: gameState.getCaveDepth(),
+    lava: gameState.getLavaDepth(),
+  };
+  const after = depthsAfterTransition(mapId, before);
+
+  // depthsAfterTransition only ever returns the same depth, one deeper, or a
+  // reset to zero — so "not zero and not what it was" always means +1, which is
+  // exactly what enterX() does.
+  const apply: Record<ProceduralMapKind, (depth: number) => void> = {
+    forest: (d) => (d === 0 ? gameState.resetForestDepth() : gameState.enterForest()),
+    cave: (d) => (d === 0 ? gameState.resetCaveDepth() : gameState.enterCave()),
+    lava: (d) => (d === 0 ? gameState.resetLavaDepth() : gameState.enterLava()),
+  };
+
+  for (const kind of PROCEDURAL_KINDS) {
+    if (after[kind] === before[kind]) continue;
+    if (after[kind] === 0) {
+      debugLog('GameState', `Exited ${kind} completely (was at depth ${before[kind]})`);
     }
-    if (currentCaveDepth > 0) {
-      debugLog('GameState', `Exited cave completely (was at depth ${currentCaveDepth})`);
-      gameState.resetCaveDepth();
-    }
-    if (currentLavaDepth > 0) {
-      debugLog('GameState', `Exited lava completely (was at depth ${currentLavaDepth})`);
-      gameState.resetLavaDepth();
-    }
+    apply[kind](after[kind]);
   }
+}
+
+function prepareMapTransition(mapId: string, spawnPoint?: { x: number; y: number }) {
+  updateDepthCounters(mapId);
 
   // Handle RANDOM_* map IDs
   if (mapId.startsWith('RANDOM_')) {
     const type = mapId.replace('RANDOM_', '').toLowerCase();
     let newMap;
 
-    // Seed procedural maps from the game day and depth rather than Date.now().
-    //
-    // Two reasons. Multiplayer: with a per-call clock seed, two players who walk
-    // into "the forest" together arrive in *different* forests, with the lakes,
-    // wolves and bears in different places — so RANDOM_* maps could never be
-    // shared. Single-player: it also fixes the long-standing oddity where
-    // stepping out of the forest and straight back in regenerated it entirely.
-    // The world still reshuffles daily, which is the variety the seed was for.
-    const { totalDays } = TimeManager.getCurrentTime();
-    const dailySeed = (kind: string, depth: number) => hashString(`${kind}:${totalDays}:${depth}`);
-
     switch (type) {
-      case 'forest':
-        newMap = generateRandomForest(dailySeed('forest', gameState.getForestDepth()));
+      case 'forest': {
+        const depth = gameState.getForestDepth();
+        newMap = generateRandomForest(dailyProceduralSeed('forest', depth), depth);
         break;
-      case 'cave':
-        newMap = generateRandomCave(dailySeed('cave', gameState.getCaveDepth()));
+      }
+      case 'cave': {
+        const depth = gameState.getCaveDepth();
+        newMap = generateRandomCave(dailyProceduralSeed('cave', depth), depth);
         break;
+      }
       case 'shop': {
         // Generate shop with exit back to the current map location from game state
         const playerLocation = gameState.getPlayerLocation();
@@ -166,7 +188,8 @@ function prepareMapTransition(mapId: string, spawnPoint?: { x: number; y: number
         break;
       }
       case 'lava': {
-        newMap = generateLavaMap(dailySeed('lava', gameState.getLavaDepth()));
+        const depth = gameState.getLavaDepth();
+        newMap = generateLavaMap(dailyProceduralSeed('lava', depth), depth);
         break;
       }
       default:
@@ -183,3 +206,4 @@ function prepareMapTransition(mapId: string, spawnPoint?: { x: number; y: number
 
 // Export the mapManager singleton
 export { mapManager };
+export type { ProceduralMapKind } from './proceduralDepth';

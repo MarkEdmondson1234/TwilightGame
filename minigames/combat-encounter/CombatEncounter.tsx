@@ -5,7 +5,7 @@
  * narrative text in the middle, and three move buttons (Hearth/Wild/Shadow).
  */
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import type { MiniGameComponentProps, MiniGameResult } from '../types';
 import type { CombatMove } from './combatTypes';
 import { COUNTERED_BY } from './combatTypes';
@@ -18,6 +18,8 @@ import { DEFAULT_CHARACTER } from '../../utils/characterSprites';
 import { STAMINA } from '../../constants';
 import { Z_DIALOGUE, zClass } from '../../zIndex';
 import { eventBus, GameEvent } from '../../utils/EventBus';
+import { trimField, MAX_BATTLE_LINE_CHARS } from '../../multiplayer/battle';
+import type { BattlePhase } from '../../multiplayer/battle';
 
 // =============================================================================
 // Move config (icons, colours, labels)
@@ -325,6 +327,21 @@ const CombatEncounterInner: React.FC<
   const [, setIntroReady] = useState(false);
   const [fadeToBlack, setFadeToBlack] = useState(false);
 
+  /** The most recent cheer from a spectator, shown for a few seconds. */
+  const [cheer, setCheer] = useState<{ name: string; stamina: number } | null>(null);
+
+  const npcId = context.triggerData.npcId ?? '';
+
+  /**
+   * The phase the fight ended on, read by the unmount cleanup below.
+   *
+   * A win must leave its record standing — it is how the other players in the
+   * cave learn the goblin fell and where the passage opened — while a loss or a
+   * flight should take it straight off the board so nobody keeps watching a
+   * fight that is over.
+   */
+  const finalPhaseRef = useRef<BattlePhase>('fight');
+
   // Show intro text on mount, wait for player to click Ready
   useEffect(() => {
     combat.showIntro();
@@ -343,6 +360,83 @@ const CombatEncounterInner: React.FC<
       setStamina(payload.value);
     });
   }, [context.actions]);
+
+  /**
+   * Publish the fight so nearby players can watch and cheer.
+   *
+   * An EventBus emit rather than a Firebase call: the mini-game must keep
+   * working in a build with no Firebase at all, and `useBattleController` is
+   * where the transport (and the "is this a shared map" question) lives.
+   *
+   * Every phase is published, not only the round boundaries — a spectator
+   * watching a health bar that only moves once every four seconds cannot tell
+   * a hard-fought round from a frozen screen.
+   */
+  useEffect(() => {
+    if (!npcId) return;
+
+    const phase: BattlePhase =
+      state.phase === 'victory'
+        ? 'won'
+        : state.phase === 'defeat'
+          ? 'lost'
+          : state.phase === 'fled'
+            ? 'fled'
+            : 'fight';
+    finalPhaseRef.current = phase;
+
+    // The terminal record is App.tsx's to publish: a win has to carry the tile
+    // where the passage opened, and that is not known until the reward handler
+    // has picked one. Publishing "won" from here too would put two victory
+    // records on the wire, one of them without the tile.
+    if (phase !== 'fight') return;
+
+    eventBus.emit(GameEvent.BATTLE_PROGRESSED, {
+      npcId,
+      enemyName: npcName,
+      phase,
+      round: state.round,
+      hitsRemaining: state.enemyHitsRemaining,
+      hitsTotal: config.hitsToDefeat,
+      stamina: Math.round(stamina),
+      line: trimField(state.narrativeText, MAX_BATTLE_LINE_CHARS),
+    });
+  }, [
+    npcId,
+    npcName,
+    config.hitsToDefeat,
+    state.phase,
+    state.round,
+    state.enemyHitsRemaining,
+    state.narrativeText,
+    stamina,
+  ]);
+
+  // Take the fight off the board when the screen closes, however it closes.
+  useEffect(() => {
+    return () => {
+      if (npcId) {
+        eventBus.emit(GameEvent.BATTLE_ENDED, { npcId, outcome: finalPhaseRef.current });
+      }
+    };
+  }, [npcId]);
+
+  /**
+   * Somebody cheered. The stamina is already applied by the controller — this
+   * is only the part the fighter sees, which is the point of cheering.
+   */
+  useEffect(() => {
+    return eventBus.on(GameEvent.BATTLE_CHEERED, (payload) => {
+      if (payload.npcId !== npcId) return;
+      setCheer({ name: payload.name, stamina: payload.stamina });
+    });
+  }, [npcId]);
+
+  useEffect(() => {
+    if (!cheer) return;
+    const timer = setTimeout(() => setCheer(null), 3000);
+    return () => clearTimeout(timer);
+  }, [cheer]);
 
   // Handle combat end
   useEffect(() => {
@@ -620,6 +714,23 @@ const CombatEncounterInner: React.FC<
               {state.narrativeText}
             </p>
           </div>
+          {/* Somebody in the cave is cheering. Sits with the narrative rather
+              than in a corner: it is part of what is happening to you. */}
+          {cheer && (
+            <p
+              style={{
+                fontFamily: SERIF_FONT,
+                fontSize: 14,
+                color: '#facc15',
+                margin: '8px 0 0',
+                textAlign: 'center',
+                animation: 'bounce 0.5s ease',
+              }}
+            >
+              {cheer.name} is cheering you on!
+              {cheer.stamina > 0 ? ` (+${cheer.stamina} stamina)` : ''}
+            </p>
+          )}
           {outcomeIcon && state.phase === 'result' && (
             <span
               style={{

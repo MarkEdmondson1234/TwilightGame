@@ -54,6 +54,8 @@ export { chatService } from './chatService';
 
 export { npcSpeechService } from './npcSpeechService';
 
+export { battleService } from './battleService';
+
 export { sharedPlacedItemsService } from './sharedPlacedItemsService';
 
 export { giftService } from './giftService';

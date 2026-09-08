@@ -21,6 +21,7 @@ import type { ChatMessage } from '../multiplayer/chat';
 import type { Photo } from '../types/photography';
 import type { AlbumEntry } from './sharedAlbumService';
 import type { NpcSpeechWire } from '../multiplayer/npcSpeech';
+import type { BattleWire, CheerWire } from '../multiplayer/battle';
 import type { Gift } from '../multiplayer/gifts';
 import { debugLog } from '../utils/debugLog';
 
@@ -220,6 +221,23 @@ const stubNpcSpeechService = {
   destroy: async () => {},
 };
 
+/**
+ * Stub battleService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubBattleService = {
+  isAvailable: () => false,
+  getCurrentRoom: () => null as string | null,
+  onBattle: (_cb: (npcId: string, wire: BattleWire) => void) => () => {},
+  onCheer: (_cb: (npcId: string, uid: string, wire: CheerWire) => void) => () => {},
+  enterRoom: async (_mapId: string) => false as boolean,
+  leaveRoom: async () => {},
+  publishBattle: async (_npcId: string, _battle: Omit<BattleWire, 'u' | 't'>) => false as boolean,
+  clearBattle: async () => {},
+  cheer: async (_npcId: string, _name: string) => false as boolean,
+  destroy: async () => {},
+};
+
 /** Stub cloudSaveService when Firebase is not available */
 const stubCloudSaveService = {
   getSaveSlots: async () => [] as SaveSlot[],
@@ -387,6 +405,14 @@ export function getGiftService() {
  */
 export function getSharedAlbumService() {
   return firebaseModule?.sharedAlbumService ?? stubSharedAlbumService;
+}
+
+/**
+ * Get battleService (real or stub).
+ * Never cache — it is a stub until Firebase has settled.
+ */
+export function getBattleService() {
+  return firebaseModule?.battleService ?? stubBattleService;
 }
 
 /**

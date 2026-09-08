@@ -17,6 +17,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MULTIPLAYER, MULTIPLAYER_ENABLED, DEBUG } from '../constants';
+import { isSharedMap } from '../multiplayer/sharedMaps';
 import { eventBus, GameEvent } from '../utils/EventBus';
 import { getPresenceService, getAuthService, whenFirebaseSettled } from '../firebase/safe';
 import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
@@ -55,11 +56,6 @@ export interface UseMultiplayerControllerReturn {
 
   /** Play an emote — publishes it and shows it above the local player */
   sendEmote: (emote: EmoteId) => void;
-}
-
-/** Presence only runs on maps players are meant to share. */
-function isSharedMap(mapId: string): boolean {
-  return MULTIPLAYER.SHARED_MAPS.has(mapId);
 }
 
 /**

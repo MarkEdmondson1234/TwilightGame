@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MULTIPLAYER, MULTIPLAYER_ENABLED } from '../constants';
+import { isSharedMap } from '../multiplayer/sharedMaps';
 import { getChatService, getAuthService, whenFirebaseSettled } from '../firebase/safe';
 import { sanitiseMessage } from '../multiplayer/chat';
 import type { ChatMessage } from '../multiplayer/chat';
@@ -59,11 +60,6 @@ function canHear(message: ChatMessage, localPosition: Position): boolean {
   const dx = speaker.position.x - localPosition.x;
   const dy = speaker.position.y - localPosition.y;
   return Math.hypot(dx, dy) <= MULTIPLAYER.CHAT_HEARING_RADIUS_TILES;
-}
-
-/** Chat runs exactly where presence does — the maps players are meant to share. */
-function isSharedMap(mapId: string): boolean {
-  return MULTIPLAYER.SHARED_MAPS.has(mapId);
 }
 
 export function useChatController(props: UseChatControllerProps): UseChatControllerReturn {

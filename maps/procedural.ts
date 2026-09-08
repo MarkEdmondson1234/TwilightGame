@@ -14,6 +14,7 @@ import {
   createLavaFrogWorkerNPC,
 } from '../utils/npcFactories';
 import { debugLog } from '../utils/debugLog';
+import { createSeededRandom } from '../utils/seededRandom';
 import { createLavaLeapGuide } from '../utils/npcs/mine/lavaLeapGuide';
 import { LAVA_LEAP_QUEST, LAVA_LEAP_GATE_MESSAGE } from '../minigames/lava-leap/progression';
 
@@ -56,6 +57,7 @@ function createFootprintTracker() {
 }
 
 function generatePatches(
+  rng: () => number,
   map: TileType[][],
   tileType: TileType,
   patchCount: number,
@@ -66,10 +68,10 @@ function generatePatches(
   excludeZone?: { centerX: number; centerY: number; radius: number }
 ): void {
   for (let i = 0; i < patchCount; i++) {
-    const patchWidth = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-    const patchHeight = Math.floor(Math.random() * (maxSize - minSize + 1)) + minSize;
-    const startX = Math.floor(Math.random() * (width - patchWidth - 2)) + 1;
-    const startY = Math.floor(Math.random() * (height - patchHeight - 2)) + 1;
+    const patchWidth = Math.floor(rng() * (maxSize - minSize + 1)) + minSize;
+    const patchHeight = Math.floor(rng() * (maxSize - minSize + 1)) + minSize;
+    const startX = Math.floor(rng() * (width - patchWidth - 2)) + 1;
+    const startY = Math.floor(rng() * (height - patchHeight - 2)) + 1;
 
     for (let y = startY; y < startY + patchHeight && y < height; y++) {
       for (let x = startX; x < startX + patchWidth && x < width; x++) {
@@ -82,7 +84,7 @@ function generatePatches(
           }
         }
 
-        if (map[y] && map[y][x] !== undefined && Math.random() > 0.25) {
+        if (map[y] && map[y][x] !== undefined && rng() > 0.25) {
           map[y][x] = tileType;
         }
       }
@@ -99,6 +101,7 @@ const SCATTER_MAX_ATTEMPTS = 60;
 
 /** One attempt to place a single instance of `tileType`. Returns true if placed. */
 function tryPlaceOne(
+  rng: () => number,
   map: TileType[][],
   tileType: TileType,
   width: number,
@@ -111,8 +114,8 @@ function tryPlaceOne(
   const { spawnZone, avoidWater } = options;
 
   for (let attempt = 0; attempt < SCATTER_MAX_ATTEMPTS; attempt++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    const x = Math.floor(rng() * (width - 2)) + 1;
+    const y = Math.floor(rng() * (height - 2)) + 1;
 
     if (spawnZone) {
       const dx = Math.abs(x - spawnZone.x);
@@ -149,6 +152,7 @@ function tryPlaceOne(
  * to what a caller asks for even once earlier species have claimed the good spots.
  */
 function placeScattered(
+  rng: () => number,
   map: TileType[][],
   tileType: TileType,
   count: number,
@@ -160,7 +164,7 @@ function placeScattered(
 ): number {
   let placed = 0;
   for (let i = 0; i < count; i++) {
-    if (tryPlaceOne(map, tileType, width, height, tracker, footprint, options)) {
+    if (tryPlaceOne(rng, map, tileType, width, height, tracker, footprint, options)) {
       placed++;
     }
   }
@@ -181,6 +185,7 @@ function placeScattered(
  * whole group instead (issue #14).
  */
 function placeScatteredMixed(
+  rng: () => number,
   map: TileType[][],
   specs: Array<{
     tileType: TileType;
@@ -199,7 +204,7 @@ function placeScatteredMixed(
     for (let s = 0; s < specs.length; s++) {
       if (remaining[s] <= 0) continue;
       const spec = specs[s];
-      tryPlaceOne(map, spec.tileType, width, height, tracker, spec.footprint, {
+      tryPlaceOne(rng, map, spec.tileType, width, height, tracker, spec.footprint, {
         spawnZone,
         avoidWater: spec.avoidWater,
       });
@@ -208,7 +213,24 @@ function placeScatteredMixed(
   }
 }
 
-export function generateRandomForest(seed: number = Date.now()): MapDefinition {
+/**
+ * `depth` is passed in rather than read from `gameState` so a generated map is a
+ * pure function of its arguments. It is already baked into the seed, so the two
+ * always agree in normal play — but a generator that quietly consults global
+ * state cannot be tested for determinism, and cannot be regenerated for a player
+ * whose counters have not been restored yet.
+ */
+export function generateRandomForest(
+  seed: number = Date.now(),
+  depth: number = gameState.getForestDepth()
+): MapDefinition {
+  // Every random choice below runs through this seeded generator, never
+  // Math.random(). Two players who walk into the same forest on the same day
+  // hold the same seed, so they must reconstruct the same trees, lakes, wolves
+  // and shop doors from it — otherwise they stand on the same map id looking at
+  // different worlds. Guarded by tests/proceduralDeterminism.test.ts.
+  const rng = createSeededRandom(seed);
+
   const width = 40;
   const height = 30;
   const map: TileType[][] = Array.from({ length: height }, () => Array(width).fill(TileType.GRASS));
@@ -228,8 +250,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
   // Generate forest features, excluding spawn area
-  generatePatches(map, TileType.ROCK, 5, 1, 3, width, height, spawnZone); // Reduced rocks (was 15)
-  generatePatches(map, TileType.PATH, 5, 2, 5, width, height, spawnZone);
+  generatePatches(rng, map, TileType.ROCK, 5, 1, 3, width, height, spawnZone); // Reduced rocks (was 15)
+  generatePatches(rng, map, TileType.PATH, 5, 2, 5, width, height, spawnZone);
 
   // Add a static lake (50% chance) - looks much better than procedural rectangular lakes
   // SMALL_LAKE is 4x4, MAGICAL_LAKE is 12x12
@@ -411,7 +433,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   const plantTracker = createFootprintTracker();
 
   // Add mushrooms scattered throughout forest (walkable decoration)
-  placeScattered(map, TileType.MUSHROOM, 25, width, height, plantTracker, 0);
+  placeScattered(rng, map, TileType.MUSHROOM, 25, width, height, plantTracker, 0);
 
   // Add mushroom cluster pair with transition to mushroom forest (30% chance)
   // Two 2x2 mushroom clusters with a path tile between them leading to the mushroom forest
@@ -609,26 +631,26 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   if (waterAdjacentTiles.length > 0) {
     let irisesPlaced = 0;
     const targetClusters = 4; // 4-6 clusters of irises
-    const clustersToPlace = targetClusters + Math.floor(Math.random() * 3);
+    const clustersToPlace = targetClusters + Math.floor(rng() * 3);
 
     for (let cluster = 0; cluster < clustersToPlace && waterAdjacentTiles.length > 0; cluster++) {
       // Pick a random water-adjacent tile as cluster center
-      const centerIndex = Math.floor(Math.random() * waterAdjacentTiles.length);
+      const centerIndex = Math.floor(rng() * waterAdjacentTiles.length);
       const center = waterAdjacentTiles[centerIndex];
 
       // Remove center from available tiles
       waterAdjacentTiles.splice(centerIndex, 1);
 
       // Place 2-5 irises in a small cluster around this point
-      const clusterSize = 2 + Math.floor(Math.random() * 4); // 2-5 irises per cluster
+      const clusterSize = 2 + Math.floor(rng() * 4); // 2-5 irises per cluster
       const clusterRadius = 2; // Look within 2 tiles of center
 
       // Try to place irises near the cluster center
       let placedInCluster = 0;
       for (let attempt = 0; attempt < clusterSize * 3 && placedInCluster < clusterSize; attempt++) {
         // Random offset from center
-        const offsetX = Math.floor(Math.random() * (clusterRadius * 2 + 1)) - clusterRadius;
-        const offsetY = Math.floor(Math.random() * (clusterRadius * 2 + 1)) - clusterRadius;
+        const offsetX = Math.floor(rng() * (clusterRadius * 2 + 1)) - clusterRadius;
+        const offsetY = Math.floor(rng() * (clusterRadius * 2 + 1)) - clusterRadius;
         const x = center.x + offsetX;
         const y = center.y + offsetY;
 
@@ -669,6 +691,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
   // Fairy oak removed from random forests - now only found in the sacred Deep Forest grove
   placeScatteredMixed(
+    rng,
     map,
     [
       // Regular trees, taller than bushes
@@ -695,11 +718,11 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   );
 
   // Add rare well spawn (10% chance of appearing in forest)
-  if (Math.random() < 0.1) {
+  if (rng() < 0.1) {
     // Find a suitable 2x2 grass area away from spawn zone
     for (let attempt = 0; attempt < 20; attempt++) {
-      const x = Math.floor(Math.random() * (width - 4)) + 2;
-      const y = Math.floor(Math.random() * (height - 4)) + 2;
+      const x = Math.floor(rng() * (width - 4)) + 2;
+      const y = Math.floor(rng() * (height - 4)) + 2;
       const dx = Math.abs(x - spawnX);
       const dy = Math.abs(y - spawnY);
 
@@ -724,6 +747,7 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   // Bush tier, also interleaved so brambles/hazel/blueberry get a fair share
   // rather than losing out to the much higher bush count.
   placeScatteredMixed(
+    rng,
     map,
     [
       { tileType: TileType.BUSH, count: 40, footprint: 1 },
@@ -739,35 +763,35 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
 
   // Add ferns scattered throughout forest (walkable decoration, quite common)
   // Random placement - general forest ground cover
-  placeScattered(map, TileType.FERN, 45, width, height, plantTracker, 1);
+  placeScattered(rng, map, TileType.FERN, 45, width, height, plantTracker, 1);
 
   // Add meadow grass scattered throughout forest (walkable seasonal ground cover)
-  placeScattered(map, TileType.MEADOW_GRASS, 8, width, height, plantTracker, 1);
+  placeScattered(rng, map, TileType.MEADOW_GRASS, 8, width, height, plantTracker, 1);
 
   // Add mustard flowers scattered throughout forest (forageable for Eye of Newt, blooms spring/summer)
-  placeScattered(map, TileType.MUSTARD_FLOWER, 8, width, height, plantTracker, 0, {
+  placeScattered(rng, map, TileType.MUSTARD_FLOWER, 8, width, height, plantTracker, 0, {
     spawnZone: spawnZone4,
   });
 
   // Add forest mushrooms scattered throughout forest (forageable, autumn-only)
   // Spawn ~6 instances (seasonal exclusivity makes them moderately rare)
-  placeScattered(map, TileType.FOREST_MUSHROOM, 6, width, height, plantTracker, 0, {
+  placeScattered(rng, map, TileType.FOREST_MUSHROOM, 6, width, height, plantTracker, 0, {
     spawnZone: spawnZone4,
   });
 
   // Add shrinking violets scattered throughout forest (forageable, spring-only)
   // Only spawn ~5 instances (rarer than mustard flowers due to seasonal exclusivity)
-  placeScattered(map, TileType.SHRINKING_VIOLET, 5, width, height, plantTracker, 0, {
+  placeScattered(rng, map, TileType.SHRINKING_VIOLET, 5, width, height, plantTracker, 0, {
     spawnZone: spawnZone4,
   });
 
   // Add heather scattered throughout forest (forageable in autumn, dormant in winter)
-  placeScattered(map, TileType.HEATHER, 8, width, height, plantTracker, 0, {
+  placeScattered(rng, map, TileType.HEATHER, 8, width, height, plantTracker, 0, {
     spawnZone: spawnZone4,
   });
 
   // Add small fir trees scattered throughout forest (walkable underbrush)
-  placeScattered(map, TileType.FIR_TREE_SMALL, 25, width, height, plantTracker, 1);
+  placeScattered(rng, map, TileType.FIR_TREE_SMALL, 25, width, height, plantTracker, 1);
 
   // Place exit back to village on left side (middle of map)
   map[spawnY][1] = TileType.PATH;
@@ -836,10 +860,10 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   }
 
   // Shop spawn chance increases with depth: 1% at depth 1, +2% per level (max 25%)
-  const forestDepth = gameState.getForestDepth();
+  const forestDepth = depth;
   const shopChance = Math.min(0.01 + (forestDepth - 1) * 0.02, 0.25);
 
-  if (Math.random() < shopChance) {
+  if (rng() < shopChance) {
     const shopX = Math.floor(width * 0.75);
     const shopY = Math.floor(height * 0.3);
     map[shopY][shopX] = TileType.SHOP_DOOR;
@@ -877,8 +901,8 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
     // Place wolf in a random location away from spawn point
     let tempWolfX: number, tempWolfY: number;
     do {
-      tempWolfX = Math.floor(Math.random() * (width - 4)) + 2;
-      tempWolfY = Math.floor(Math.random() * (height - 4)) + 2;
+      tempWolfX = Math.floor(rng() * (width - 4)) + 2;
+      tempWolfY = Math.floor(rng() * (height - 4)) + 2;
     } while (Math.abs(tempWolfX - spawnX) < 8 && Math.abs(tempWolfY - spawnY) < 8);
 
     wolfX = tempWolfX;
@@ -1096,7 +1120,24 @@ export function generateRandomForest(seed: number = Date.now()): MapDefinition {
   };
 }
 
-export function generateRandomCave(seed: number = Date.now()): MapDefinition {
+/**
+ * `depth` is passed in rather than read from `gameState` so a generated map is a
+ * pure function of its arguments. It is already baked into the seed, so the two
+ * always agree in normal play — but a generator that quietly consults global
+ * state cannot be tested for determinism, and cannot be regenerated for a player
+ * whose counters have not been restored yet.
+ */
+export function generateRandomCave(
+  seed: number = Date.now(),
+  depth: number = gameState.getCaveDepth()
+): MapDefinition {
+  // Every random choice below runs through this seeded generator, never
+  // Math.random(). Two players who walk into the same forest on the same day
+  // hold the same seed, so they must reconstruct the same trees, lakes, wolves
+  // and shop doors from it — otherwise they stand on the same map id looking at
+  // different worlds. Guarded by tests/proceduralDeterminism.test.ts.
+  const rng = createSeededRandom(seed);
+
   const width = 35;
   const height = 25;
   const map: TileType[][] = Array.from({ length: height }, () =>
@@ -1118,7 +1159,7 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const spawnZone = { centerX: spawnX, centerY: spawnY, radius: 4 };
 
   // Generate cave features, excluding spawn area
-  generatePatches(map, TileType.CAVE_ROCK, 10, 1, 2, width, height, spawnZone);
+  generatePatches(rng, map, TileType.CAVE_ROCK, 10, 1, 2, width, height, spawnZone);
 
   // Clear spawn area AFTER generating features (9x9 grid)
   for (let y = spawnY - 4; y <= spawnY + 4; y++) {
@@ -1175,16 +1216,16 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const cellH = Math.floor((height - 2) / gridRows);
   for (let row = 0; row < gridRows; row++) {
     for (let col = 0; col < gridCols; col++) {
-      if (Math.random() > 0.8) continue; // ~20% chance to leave a cell empty for variety
+      if (rng() > 0.8) continue; // ~20% chance to leave a cell empty for variety
       // Avoid large columns in edge cells where they'd visually clip into border walls
       const isEdgeCell = row === 0 || row === gridRows - 1 || col === 0 || col === gridCols - 1;
       const eligible = isEdgeCell
         ? [TileType.STONE_COLUMN_SM, TileType.STONE_COLUMN_MD]
         : columnTypes;
-      const colType = eligible[Math.floor(Math.random() * eligible.length)];
+      const colType = eligible[Math.floor(rng() * eligible.length)];
       for (let attempt = 0; attempt < 15; attempt++) {
-        const x = 1 + col * cellW + Math.floor(Math.random() * cellW);
-        const y = 1 + row * cellH + Math.floor(Math.random() * cellH);
+        const x = 1 + col * cellW + Math.floor(rng() * cellW);
+        const y = 1 + row * cellH + Math.floor(rng() * cellH);
         if (x >= width - 1 || y >= height - 1) continue;
         const dx = Math.abs(x - spawnX);
         const dy = Math.abs(y - spawnY);
@@ -1212,19 +1253,19 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const lakeCellH = Math.floor((height - 2) / lakeGridRows);
   // Independent tracker — not shared with columns
   const lakeTracker = createFootprintTracker();
-  const maxLakes = 1 + Math.floor(Math.random() * 3); // 1–3 lakes per map
+  const maxLakes = 1 + Math.floor(rng() * 3); // 1–3 lakes per map
   let lakesPlaced = 0;
   for (let row = 0; row < lakeGridRows; row++) {
     for (let col = 0; col < lakeGridCols; col++) {
       if (lakesPlaced >= maxLakes) break;
-      if (Math.random() > 0.35) continue; // ~35% fill — lakes are sparse
+      if (rng() > 0.35) continue; // ~35% fill — lakes are sparse
       const isEdgeCell =
         row === 0 || row === lakeGridRows - 1 || col === 0 || col === lakeGridCols - 1;
       const eligible = isEdgeCell ? [TileType.CAVE_LAKE_SM, TileType.CAVE_LAKE_MD] : lakeTypes;
-      const lakeType = eligible[Math.floor(Math.random() * eligible.length)];
+      const lakeType = eligible[Math.floor(rng() * eligible.length)];
       for (let attempt = 0; attempt < 15; attempt++) {
-        const x = 1 + col * lakeCellW + Math.floor(Math.random() * lakeCellW);
-        const y = 1 + row * lakeCellH + Math.floor(Math.random() * lakeCellH);
+        const x = 1 + col * lakeCellW + Math.floor(rng() * lakeCellW);
+        const y = 1 + row * lakeCellH + Math.floor(rng() * lakeCellH);
         if (x >= width - 1 || y >= height - 1) continue;
         const lakeSize = CAVE_SPRITE_SIZES[lakeType];
         if (
@@ -1258,16 +1299,16 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const crystalTracker = createFootprintTracker();
   for (let row = 0; row < crystalGridRows; row++) {
     for (let col = 0; col < crystalGridCols; col++) {
-      if (Math.random() > 0.6) continue; // ~60% fill
+      if (rng() > 0.6) continue; // ~60% fill
       const isEdgeCell =
         row === 0 || row === crystalGridRows - 1 || col === 0 || col === crystalGridCols - 1;
       const eligible = isEdgeCell
         ? [TileType.MINE_CRYSTAL_SM, TileType.MINE_CRYSTAL_MD]
         : crystalTypes;
-      const crystalType = eligible[Math.floor(Math.random() * eligible.length)];
+      const crystalType = eligible[Math.floor(rng() * eligible.length)];
       for (let attempt = 0; attempt < 15; attempt++) {
-        const x = 1 + col * crystalCellW + Math.floor(Math.random() * crystalCellW);
-        const y = 1 + row * crystalCellH + Math.floor(Math.random() * crystalCellH);
+        const x = 1 + col * crystalCellW + Math.floor(rng() * crystalCellW);
+        const y = 1 + row * crystalCellH + Math.floor(rng() * crystalCellH);
         if (x >= width - 1 || y >= height - 1) continue;
         const crystalSize = CAVE_SPRITE_SIZES[crystalType];
         if (
@@ -1292,10 +1333,10 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   const torchCellH = Math.floor((height - 2) / torchGridRows);
   for (let row = 0; row < torchGridRows; row++) {
     for (let col = 0; col < torchGridCols; col++) {
-      if (Math.random() > 0.55) continue; // ~55% fill — some cells always stay dark
+      if (rng() > 0.55) continue; // ~55% fill — some cells always stay dark
       for (let attempt = 0; attempt < 12; attempt++) {
-        const x = 1 + col * torchCellW + Math.floor(Math.random() * torchCellW);
-        const y = 1 + row * torchCellH + Math.floor(Math.random() * torchCellH);
+        const x = 1 + col * torchCellW + Math.floor(rng() * torchCellW);
+        const y = 1 + row * torchCellH + Math.floor(rng() * torchCellH);
         if (x >= width - 1 || y >= height - 1) continue;
         const dx = Math.abs(x - spawnX);
         const dy = Math.abs(y - spawnY);
@@ -1314,8 +1355,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
 
   // Add cave mushrooms (red-capped, year-round, away from spawn)
   for (let i = 0; i < 6; i++) {
-    const x = Math.floor(Math.random() * (width - 2)) + 1;
-    const y = Math.floor(Math.random() * (height - 2)) + 1;
+    const x = Math.floor(rng() * (width - 2)) + 1;
+    const y = Math.floor(rng() * (height - 2)) + 1;
     const dx = Math.abs(x - spawnX);
     const dy = Math.abs(y - spawnY);
     if (map[y][x] === TileType.MINE_FLOOR && (dx > 4 || dy > 4)) {
@@ -1324,13 +1365,13 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   }
 
   // Add rare well spawn in cave (5% chance - rarer than forest)
-  if (Math.random() < 0.05) {
+  if (rng() < 0.05) {
     // Find a suitable 2x2 floor area away from spawn zone
     const isFloor = (tile: TileType) =>
       tile === TileType.FLOOR_DARK || tile === TileType.MINE_FLOOR;
     for (let attempt = 0; attempt < 20; attempt++) {
-      const x = Math.floor(Math.random() * (width - 4)) + 2;
-      const y = Math.floor(Math.random() * (height - 4)) + 2;
+      const x = Math.floor(rng() * (width - 4)) + 2;
+      const y = Math.floor(rng() * (height - 4)) + 2;
       const dx = Math.abs(x - spawnX);
       const dy = Math.abs(y - spawnY);
 
@@ -1392,10 +1433,10 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   ];
 
   // Shop spawn chance increases with depth: 1% at depth 1, +2% per level (max 25%)
-  const caveDepth = gameState.getCaveDepth();
+  const caveDepth = depth;
   const shopChance = Math.min(0.01 + (caveDepth - 1) * 0.02, 0.25);
 
-  if (Math.random() < shopChance) {
+  if (rng() < shopChance) {
     const shopX = Math.floor(width * 0.75);
     const shopY = Math.floor(height * 0.7);
     map[shopY][shopX] = TileType.SHOP_DOOR;
@@ -1428,8 +1469,8 @@ export function generateRandomCave(seed: number = Date.now()): MapDefinition {
   if (caveDepth > 0 && caveDepth % 5 === 0) {
     let goblinX: number, goblinY: number;
     do {
-      goblinX = Math.floor(Math.random() * (width - 4)) + 2;
-      goblinY = Math.floor(Math.random() * (height - 4)) + 2;
+      goblinX = Math.floor(rng() * (width - 4)) + 2;
+      goblinY = Math.floor(rng() * (height - 4)) + 2;
     } while (
       map[goblinY][goblinX] !== TileType.MINE_FLOOR ||
       (Math.abs(goblinX - spawnX) < 8 && Math.abs(goblinY - spawnY) < 8)
@@ -1546,17 +1587,23 @@ export function generateRandomShop(
  * @param returnToMapId - The cave map to return to when exiting left
  * @param returnToPosition - Where the player spawns in the cave on exit
  */
-export function generateLavaMap(seed: number = Date.now()): MapDefinition {
+/**
+ * `depth` is passed in rather than read from `gameState` so a generated map is a
+ * pure function of its arguments. It is already baked into the seed, so the two
+ * always agree in normal play — but a generator that quietly consults global
+ * state cannot be tested for determinism, and cannot be regenerated for a player
+ * whose counters have not been restored yet.
+ */
+export function generateLavaMap(
+  seed: number = Date.now(),
+  depth: number = gameState.getLavaDepth()
+): MapDefinition {
   const width = 30;
   const height = 30;
-  const lavaDepth = gameState.getLavaDepth();
+  const lavaDepth = depth;
 
   // Seed the RNG
-  let rng = seed;
-  const rand = () => {
-    rng = (rng * 1664525 + 1013904223) & 0xffffffff;
-    return (rng >>> 0) / 0xffffffff;
-  };
+  const rand = createSeededRandom(seed);
 
   // Fill interior with lava floor, borders with cave rock
   const map: TileType[][] = Array.from({ length: height }, (_, y) =>
