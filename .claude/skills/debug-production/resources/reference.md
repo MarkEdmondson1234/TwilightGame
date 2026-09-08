@@ -35,6 +35,27 @@ and were burying real issues. When debugging connectivity, read the live
 console via `probe-live.mjs` or the feature's own catch-block warnings instead
 (see the rationale comment in `utils/errorReporting.ts`).
 
+## Session logs (the Logs dataset)
+
+`utils/sessionDiagnostics.ts` ships bounded, metadata-only lifecycle telemetry
+via `Sentry.logger.info` — query it with `search_events(dataset='logs')`, not
+the errors dataset. Two gotchas: logs filter by **`severity:`** (`level:` is an
+invalid attribute there) and every entry carries `game.session_id` + `game.map`
+attributes, so you can reconstruct one player's session minute by minute.
+
+| Message | Meaning | Useful attributes |
+|---|---|---|
+| `game.session_start` | Player opened the game | — |
+| `game.renderer_ready` | Pixi renderer up — session reached playability | — |
+| `game.performance` | One-minute window summary | fps / worst-frame / stall fields |
+| `game.operation` | One completion per operation/outcome/speed per minute | `operation.name` (map_transition, map_load, texture_batch, local_save, cloud_upload, cloud_download), `operation.duration_ms`, `operation.success`, `operation.slow`, `operation.background_interrupted` |
+
+Everything is info-severity by design (360 logs max per session, no gameplay
+payloads); warnings and errors arrive through `reportError()`/`reportMessage()`
+as issues instead. A session missing `renderer_ready` after `session_start` is
+a startup hang that never threw — exactly the failure mode Step 2's markers
+probe for.
+
 ## Not set up yet
 
 - **Performance tracing and session replay.** Deliberately off — separate quota,
