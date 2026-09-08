@@ -222,6 +222,9 @@ export const Z_HELP_BROWSER = 2030;
 /** Cooking interface */
 export const Z_COOKING = 2040;
 
+/** Brewing interface (cauldron) */
+export const Z_BREWING = 2042;
+
 /** Magic Recipe Book */
 export const Z_MAGIC_BOOK = 2045;
 
