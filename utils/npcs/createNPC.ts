@@ -95,6 +95,8 @@ export interface NPCConfig {
   dialogueExpressions?: Record<string, string>;
   followTarget?: string;
   canFly?: boolean;
+  patrolPath?: Position[];
+  patrolPauseMs?: number;
   noFlip?: boolean;
   reverseFlip?: boolean;
   zIndexOverride?: number;
@@ -207,6 +209,8 @@ export function createNPC(config: NPCConfig): NPC {
     dialogueExpressions,
     followTarget,
     canFly,
+    patrolPath,
+    patrolPauseMs,
     noFlip,
     reverseFlip,
     zIndexOverride,
@@ -244,6 +248,8 @@ export function createNPC(config: NPCConfig): NPC {
   if (dialogueExpressions) npc.dialogueExpressions = dialogueExpressions;
   if (followTarget) npc.followTarget = followTarget;
   if (canFly) npc.canFly = canFly;
+  if (patrolPath) npc.patrolPath = patrolPath;
+  if (patrolPauseMs !== undefined) npc.patrolPauseMs = patrolPauseMs;
   if (noFlip !== undefined) npc.noFlip = noFlip;
   if (reverseFlip !== undefined) npc.reverseFlip = reverseFlip;
   if (zIndexOverride !== undefined) npc.zIndexOverride = zIndexOverride;
