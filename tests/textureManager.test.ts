@@ -126,6 +126,49 @@ describe('TextureManager on-demand loading', () => {
     expect(manager.getTexture('/tex/late.png')).toBeDefined();
   });
 
+  it('re-arms a failed URL after the cooldown so transient failures recover', async () => {
+    // Issue #107: the attempt cap previously gave up forever, so a transient
+    // failure left a sprite missing for the rest of the session.
+    vi.useFakeTimers();
+    try {
+      const manager = await freshManager();
+      failing.add('/tex/flaky.png');
+
+      // Exhaust the retry budget (2 attempts).
+      manager.getTexture('/tex/flaky.png');
+      await vi.advanceTimersByTimeAsync(5);
+      manager.getTexture('/tex/flaky.png');
+      await vi.advanceTimersByTimeAsync(5);
+      const attemptsSoFar = loadCalls.filter((u) => u === '/tex/flaky.png').length;
+      expect(attemptsSoFar).toBe(2);
+
+      // Hammer it — still within the cooldown, no further requests.
+      for (let i = 0; i < 10; i++) {
+        manager.getTexture('/tex/flaky.png');
+        await vi.advanceTimersByTimeAsync(5);
+      }
+      expect(loadCalls.filter((u) => u === '/tex/flaky.png').length).toBe(2);
+
+      // Cooldown elapses — the URL gets a fresh budget and tries again.
+      await vi.advanceTimersByTimeAsync(31_000);
+      manager.getTexture('/tex/flaky.png');
+      await vi.advanceTimersByTimeAsync(5);
+      expect(loadCalls.filter((u) => u === '/tex/flaky.png').length).toBe(3);
+
+      // And it recovers fully once the failure stops: a success clears the state.
+      failing.delete('/tex/flaky.png');
+      manager.getTexture('/tex/flaky.png');
+      await vi.advanceTimersByTimeAsync(5);
+      expect(manager.hasTexture('/tex/flaky.png')).toBe(true);
+      // ... and a loaded texture is never re-requested from the miss path.
+      loadCalls = [];
+      manager.getTexture('/tex/flaky.png');
+      expect(loadCalls).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('stops retrying a URL that keeps failing', async () => {
     const manager = await freshManager();
     failing.add('/tex/never.png');

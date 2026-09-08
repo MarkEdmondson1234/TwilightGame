@@ -537,7 +537,12 @@ export class TileLayer extends PixiLayer {
 
       const texture = textureManager.getTexture(imageUrl);
       if (!texture) {
-        console.warn(`[TileLayer] Texture not loaded: ${imageUrl}`);
+        // Fires every frame while the miss lasts — gated like the other render-loop
+        // diagnostics; TextureManager logs each load attempt once.
+        debugLog('TileLayer', `Texture not loaded: ${imageUrl}`);
+        // Hide any stale sprite holding a texture that was just evicted — rendering a
+        // destroyed texture surfaces as a garbage-coloured square (issue #107).
+        if (sprite && !(sprite instanceof PIXI.Graphics)) sprite.visible = false;
         // Color background already rendered
         return;
       }
@@ -586,11 +591,17 @@ export class TileLayer extends PixiLayer {
     } else if (sprite instanceof PIXI.TilingSprite) {
       // Update existing TilingSprite (used for tiles with textureGridSize > 1)
       const newTexture = textureManager.getTexture(imageUrl);
-      if (newTexture && sprite.texture !== newTexture) {
+      if (!newTexture) {
+        // Evicted or still loading — hide rather than render a destroyed texture
+        // (garbage-coloured square, issue #107). It re-shows once the texture lands.
+        sprite.visible = false;
+        return;
+      }
+      if (sprite.texture !== newTexture) {
         sprite.texture = newTexture;
       }
       const gridSize = tileData.textureGridSize ?? 1;
-      const tileScale = (TILE_SIZE * gridSize) / (newTexture || sprite.texture).width;
+      const tileScale = (TILE_SIZE * gridSize) / newTexture.width;
       sprite.tileScale.set(tileScale);
       sprite.tilePosition.set(-(x % gridSize) * TILE_SIZE, -(y % gridSize) * TILE_SIZE);
       sprite.x = x * TILE_SIZE;
@@ -599,7 +610,13 @@ export class TileLayer extends PixiLayer {
     } else if (sprite instanceof PIXI.Sprite) {
       // Update existing sprite if texture changed
       const newTexture = textureManager.getTexture(imageUrl);
-      if (newTexture && sprite.texture !== newTexture) {
+      if (!newTexture) {
+        // Texture evicted or still loading — hide rather than render a destroyed
+        // texture (garbage-coloured square, issue #107). Re-shows when it lands.
+        sprite.visible = false;
+        return;
+      }
+      if (sprite.texture !== newTexture) {
         sprite.texture = newTexture;
       }
 
@@ -617,7 +634,7 @@ export class TileLayer extends PixiLayer {
         // Don't reset scale - width/height already set the correct scale internally
       } else {
         // Recalculate scale for new texture size
-        const textureScale = TILE_SIZE / (newTexture || sprite.texture).width;
+        const textureScale = TILE_SIZE / newTexture.width;
         sprite.scale.set(textureScale, textureScale);
         // Reset position and anchor
         sprite.anchor.set(0, 0);
@@ -844,7 +861,11 @@ export class TileLayer extends PixiLayer {
 
       const texture = textureManager.getTexture(imageUrl);
       if (!texture) {
-        console.warn(`[TileLayer] Animated texture not loaded: ${imageUrl}`);
+        // Gated like the other render-loop diagnostics (fires every frame on a miss);
+        // TextureManager logs each load attempt once.
+        debugLog('TileLayer', `Animated texture not loaded: ${imageUrl}`);
+        // Hide any stale sprite holding a texture that was just evicted (issue #107).
+        if (sprite && !(sprite instanceof PIXI.Graphics)) sprite.visible = false;
         return;
       }
 
@@ -863,7 +884,13 @@ export class TileLayer extends PixiLayer {
     } else if (sprite instanceof PIXI.Sprite) {
       // Update texture for current animation frame
       const newTexture = textureManager.getTexture(imageUrl);
-      if (newTexture && sprite.texture !== newTexture) {
+      if (!newTexture) {
+        // Texture evicted or still loading — hide rather than render a destroyed
+        // texture (garbage-coloured square, issue #107). Re-shows when it lands.
+        sprite.visible = false;
+        return;
+      }
+      if (sprite.texture !== newTexture) {
         sprite.texture = newTexture;
         // Recalculate scale for new texture size
         const textureScale = TILE_SIZE / newTexture.width;

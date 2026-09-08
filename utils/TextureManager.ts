@@ -29,6 +29,11 @@ const BYTES_PER_PIXEL = 4;
 const MIPMAP_OVERHEAD = 1.33;
 /** Give up on an on-demand URL after this many failures, so a render-loop miss cannot retry forever. */
 const MAX_ON_DEMAND_ATTEMPTS = 2;
+/** How long an exhausted URL waits before it may try again — a transient failure
+ * (offline blip, aborted fetch during a map transition) recovers here instead of
+ * leaving the sprite missing for the rest of the session (issue #107), while the
+ * render loop still cannot storm a permanently-dead URL at frame rate. */
+const ON_DEMAND_RETRY_COOLDOWN_MS = 30_000;
 
 class TextureManager {
   private textures = new Map<string, Texture>();
@@ -37,6 +42,8 @@ class TextureManager {
   private pinned = new Set<string>();
   /** Failed on-demand attempts per URL, so a miss in the render loop cannot retry forever. */
   private attempts = new Map<string, number>();
+  /** When a URL exhausted its attempts; after the cooldown it gets a fresh budget. */
+  private exhaustedAt = new Map<string, number>();
   /** Subscribers notified when an on-demand texture arrives, so layers can re-render. */
   private loadListeners = new Set<() => void>();
 
@@ -193,23 +200,38 @@ class TextureManager {
    * two late instead of never.
    *
    * Safe to call every frame: already-loaded, in-flight and repeatedly-failed
-   * URLs all return immediately.
+   * URLs all return immediately (a cooled-down URL re-arms at most once per
+   * cooldown window, so the render loop still costs nothing per frame).
    */
   requestTexture(url: string | undefined | null): void {
     if (!url) return;
     if (this.textures.has(url) || this.loading.has(url)) return;
 
-    const attempts = this.attempts.get(url) ?? 0;
-    if (attempts >= MAX_ON_DEMAND_ATTEMPTS) return;
+    let attempts = this.attempts.get(url) ?? 0;
+    if (attempts >= MAX_ON_DEMAND_ATTEMPTS) {
+      // Retry budget exhausted. Not forever, though: once the cooldown elapses the
+      // URL gets a fresh budget, so a transient failure recovers without the
+      // render loop ever retry-storming (issue #107).
+      const exhaustedAt = this.exhaustedAt.get(url);
+      if (exhaustedAt !== undefined && Date.now() - exhaustedAt < ON_DEMAND_RETRY_COOLDOWN_MS) {
+        return;
+      }
+      attempts = 0;
+      this.exhaustedAt.delete(url);
+    }
     this.attempts.set(url, attempts + 1);
 
     this.loadTexture(url, url)
       .then(() => {
         this.attempts.delete(url);
+        this.exhaustedAt.delete(url);
         this.loadListeners.forEach((listener) => listener());
       })
       .catch(() => {
         // loadTexture already logged it; the attempt counter stops the retry storm.
+        if ((this.attempts.get(url) ?? 0) >= MAX_ON_DEMAND_ATTEMPTS) {
+          this.exhaustedAt.set(url, Date.now());
+        }
       });
   }
 
@@ -232,8 +254,9 @@ class TextureManager {
    * With it, the worst case is a sprite appearing a frame or two late.
    *
    * Cheap to call from a render loop: requestTexture() returns immediately for
-   * URLs that are loaded, in flight, or have already failed twice. Use
-   * hasTexture() when you want a pure presence check with no loading.
+   * URLs that are loaded, in flight, or cooling down after exhausting their
+   * retry budget. Use hasTexture() when you want a pure presence check with
+   * no loading.
    */
   getTexture(url: string): Texture | undefined {
     const texture = this.textures.get(url);
@@ -340,6 +363,7 @@ class TextureManager {
     this.loading.clear();
     this.pinned.clear();
     this.attempts.clear();
+    this.exhaustedAt.clear();
     debugLog('TextureManager', 'Cache cleared');
   }
 

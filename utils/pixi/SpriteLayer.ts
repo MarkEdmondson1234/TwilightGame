@@ -365,26 +365,34 @@ export class SpriteLayer extends PixiLayer {
     // Get or create sprite
     let sprite = this.sprites.get(key);
 
-    if (!sprite) {
-      // Load texture
-      const texture = textureManager.getTexture(imageUrl);
-      if (!texture) {
-        console.warn(`[SpriteLayer] Texture not loaded: ${imageUrl}`);
-        return;
-      }
+    // Get the texture — a miss schedules an on-demand load, so the designed worst
+    // case is a sprite appearing a frame or two late, not one that never appears.
+    const texture = textureManager.getTexture(imageUrl);
 
+    if (!texture) {
+      // Not (yet) available. Hide any existing sprite/glow for this key: it may be
+      // holding a texture that was just evicted (destroy(true) frees the GPU source),
+      // and rendering a destroyed texture surfaces as a garbage-coloured square over
+      // multi-tile sprites (issue #107). It re-appears when the texture (re)loads.
+      if (sprite) sprite.visible = false;
+      const existingGlow = this.glowGraphics.get(key);
+      if (existingGlow) existingGlow.visible = false;
+      // Fires every frame while the miss lasts — gated like the other render-loop
+      // diagnostics; TextureManager logs each load attempt once.
+      debugLog('SpriteLayer', `Texture not loaded: ${imageUrl}`);
+      return;
+    }
+
+    if (!sprite) {
       // Create new sprite
       sprite = new PIXI.Sprite(texture);
       sprite.anchor.set(0, 0); // Top-left anchor for tile alignment
 
       this.getTargetContainer().addChild(sprite);
       this.sprites.set(key, sprite);
-    } else {
+    } else if (sprite.texture !== texture) {
       // Update texture if changed
-      const newTexture = textureManager.getTexture(imageUrl);
-      if (newTexture && sprite.texture !== newTexture) {
-        sprite.texture = newTexture;
-      }
+      sprite.texture = texture;
     }
 
     // Position sprite with offset
