@@ -10,6 +10,7 @@
  */
 
 import { isFirebaseLoaded, getPaintingStorageService } from '../firebase/safe';
+import { reportErrorOnce } from './errorReporting';
 import { debugLog } from './debugLog';
 
 // ===== Constants =====
@@ -226,5 +227,7 @@ export async function syncPaintingsFromCloud(): Promise<void> {
     }
   } catch (e) {
     console.warn('[PaintingImageService] Cloud sync failed:', e);
+    // A failed sync quietly strands paintings on one device; once per session.
+    reportErrorOnce(e, 'persistence', { service: 'paintings' }, 'paintings:sync');
   }
 }

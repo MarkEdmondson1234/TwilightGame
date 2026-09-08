@@ -24,6 +24,8 @@ import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
 import { cutsceneManager } from './CutsceneManager';
 import { debugLog } from './debugLog';
+import { setSlowMinuteContext } from './sessionDiagnostics';
+import { getSlowMinuteRuntimeContext } from './diagnosticsRuntimeContext';
 
 /**
  * Fast synchronous core initialisation (~100ms)
@@ -77,6 +79,9 @@ export function initializeGameCore(): void {
   initializePalette(); // Initialize color palette (must be first)
   runSelfTests(); // Run sanity checks on startup
   initializeMaps(); // Initialize all maps and color schemes
+  // Slow-minute attribution: consulted only when a minute crosses the stall
+  // threshold, so registering early costs nothing on healthy sessions.
+  setSlowMinuteContext(getSlowMinuteRuntimeContext);
 }
 
 /**

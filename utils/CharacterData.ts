@@ -46,6 +46,7 @@
 import { gameState } from '../GameState';
 import { FarmPlot, NPCFriendship, Photo, DeskContents } from '../types';
 import { debugLog } from './debugLog';
+import { reportErrorOnce, reportMessageOnce } from './errorReporting';
 
 // Type definitions for each data domain
 export interface CookingData {
@@ -184,10 +185,21 @@ class CharacterDataManager {
           return { desks: gameState.loadDeskContents() } as unknown as CharacterDataDomains[T];
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
+          // A domain in the union without a switch case compiles fine and
+          // then saves nothing — data loss with a straight face.
+          reportMessageOnce(
+            `Unknown load domain: ${domain}`,
+            'persistence',
+            { domain, operation: 'load' },
+            `unknown_domain:load:${domain}`
+          );
           return null;
       }
     } catch (error) {
       console.error(`[CharacterData] Failed to load ${domain}:`, error);
+      // This is the SSoT persistence API — a failure here means a player's
+      // progress is silently not loading, which nothing else will surface.
+      reportErrorOnce(error, 'persistence', { domain, operation: 'load' });
       return null;
     }
   }
@@ -241,12 +253,21 @@ class CharacterDataManager {
           break;
         default:
           console.warn(`[CharacterData] Unknown domain: ${domain}`);
+          reportMessageOnce(
+            `Unknown save domain: ${domain}`,
+            'persistence',
+            { domain, operation: 'save' },
+            `unknown_domain:save:${domain}`
+          );
           return false;
       }
 
       return true;
     } catch (error) {
       console.error(`[CharacterData] Failed to save ${domain}:`, error);
+      // Silent data loss otherwise — the save API returning false is easy for
+      // callers to ignore, and nobody reads a production console.
+      reportErrorOnce(error, 'persistence', { domain, operation: 'save' });
       return false;
     }
   }
@@ -348,6 +369,9 @@ class CharacterDataManager {
         debugLog('CharacterData', `Saved ${domain}`);
       } catch (error) {
         console.error(`[CharacterData] Failed to save ${domain}:`, error);
+        // beforeunload path — the last chance a player's progress has of
+        // reaching disk this session. Once per domain, not per attempt.
+        reportErrorOnce(error, 'persistence', { domain, operation: 'saveAll' });
       }
     });
   }

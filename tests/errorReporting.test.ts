@@ -41,6 +41,8 @@ import {
   initErrorReporting,
   reportError,
   reportMessage,
+  reportErrorOnce,
+  reportMessageOnce,
   setErrorReportingUser,
 } from '../utils/errorReporting';
 
@@ -83,6 +85,13 @@ describe('errorReporting — safe no-op without a DSN configured', () => {
   // authService calls this on every auth state change, including the very
   // first one — which fires before initErrorReporting() has necessarily run,
   // and always fires for players with no Firebase configured at all.
+  it('reportErrorOnce() and reportMessageOnce() are safe no-ops unconfigured', () => {
+    expect(() => reportErrorOnce(new Error('boom'), 'persistence')).not.toThrow();
+    expect(() => reportMessageOnce('drift', 'map')).not.toThrow();
+    expect(captureException).not.toHaveBeenCalled();
+    expect(captureMessage).not.toHaveBeenCalled();
+  });
+
   it('setErrorReportingUser() does not throw and never reaches Sentry.setUser', () => {
     expect(() => setErrorReportingUser('abc123')).not.toThrow();
     expect(() => setErrorReportingUser(null)).not.toThrow();
@@ -112,5 +121,61 @@ describe('errorReporting — configured diagnostics', () => {
     } finally {
       vi.stubEnv('VITE_SENTRY_DSN', '');
     }
+  });
+});
+
+describe('errorReporting — once-per-session dedupe', () => {
+  let reporting: typeof import('../utils/errorReporting');
+
+  beforeEach(async () => {
+    // Fresh module = fresh once-set, so each test starts from zero reports.
+    vi.resetModules();
+    vi.stubEnv('VITE_SENTRY_DSN', 'https://public@example.com/1');
+    init.mockClear();
+    captureException.mockClear();
+    captureMessage.mockClear();
+    reporting = await import('../utils/errorReporting');
+    reporting.initErrorReporting();
+  });
+
+  afterEach(() => {
+    vi.stubEnv('VITE_SENTRY_DSN', '');
+  });
+
+  it('reports the first occurrence of a key and suppresses repeats', () => {
+    reporting.reportMessageOnce(
+      'Cooking self-heal: tea missing from unlocked recipes',
+      'persistence',
+      { recipeId: 'tea' },
+      'cooking:self_heal:tea'
+    );
+    reporting.reportMessageOnce(
+      'Cooking self-heal: tea missing from unlocked recipes',
+      'persistence',
+      { recipeId: 'tea' },
+      'cooking:self_heal:tea'
+    );
+    reporting.reportMessageOnce(
+      'Cooking self-heal: tea missing from unlocked recipes',
+      'persistence',
+      { recipeId: 'tea' },
+      'cooking:self_heal:tea'
+    );
+    expect(captureMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps distinct keys apart — one report each', () => {
+    reporting.reportErrorOnce(new Error('boom'), 'persistence', { domain: 'cooking' }, 'cooking:save');
+    reporting.reportErrorOnce(new Error('boom'), 'persistence', { domain: 'inventory' }, 'inventory:save');
+    expect(captureException).toHaveBeenCalledTimes(2);
+  });
+
+  it('derives a stable default key from the message and extra fields', () => {
+    reporting.reportMessageOnce('Cloud sync failed', 'persistence', { service: 'diary' });
+    reporting.reportMessageOnce('Cloud sync failed', 'persistence', { service: 'diary' });
+    expect(captureMessage).toHaveBeenCalledTimes(1);
+    // A different extra value is a different issue, not a repeat.
+    reporting.reportMessageOnce('Cloud sync failed', 'persistence', { service: 'paintings' });
+    expect(captureMessage).toHaveBeenCalledTimes(2);
   });
 });

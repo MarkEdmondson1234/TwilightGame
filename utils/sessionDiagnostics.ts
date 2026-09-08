@@ -13,6 +13,12 @@ type Operation =
   | 'cloud_download';
 const INTERVAL_MS = 60_000;
 const MAX_LOGS = 360; // Hard ceiling per page session, including operation logs.
+// A minute needs this many frames over 50ms before it counts as "slow" and
+// earns runtime attribution (NPC count, weather, remote players). Healthy
+// minutes log 0–1 such frames; the first real slow minute observed in
+// production had 35. The bar is low enough to catch moderate jank, high
+// enough that healthy sessions never pay the getter call.
+const SLOW_MINUTE_STALLS = 5;
 let active = false;
 let sessionId = '';
 let mapId = 'startup';
@@ -28,6 +34,10 @@ let timer: ReturnType<typeof setInterval> | undefined;
 let residentMemory: (() => number) | undefined;
 const lastOperation = new Map<string, number>();
 let device: Fields = {};
+// Registered via setSlowMinuteContext so this module never imports game
+// modules (GameState already imports sessionDiagnostics — the cycle would be
+// real). Only invoked for slow minutes, so healthy sessions pay nothing.
+let slowMinuteContext: (() => Fields) | undefined;
 
 function safely(action: () => void): void {
   try {
@@ -98,6 +108,12 @@ function reportPerformance(): void {
     if (metrics.heapUsed > 0)
       summary['performance.heap_mb'] = Math.round(metrics.heapUsed / 1048576);
     if (residentMemory) summary['performance.resident_texture_mb'] = Math.round(residentMemory());
+    // Slow minutes earn attribution: what was the world doing? The getter is
+    // only called when the threshold is crossed, and its failure must not cost
+    // us the report we already assembled.
+    if (stalls >= SLOW_MINUTE_STALLS && slowMinuteContext) {
+      safely(() => Object.assign(summary, slowMinuteContext()));
+    }
     Sentry.setContext('game_performance', summary);
     log('game.performance', summary);
   });
@@ -179,6 +195,15 @@ export function logTextureEviction(evicted: number, freedMB: number, residentMB:
   });
 }
 
+/**
+ * Register the runtime-context getter consulted only when a minute crosses
+ * SLOW_MINUTE_STALLS. Keys must be namespaced (e.g. `runtime.npc_count`) — the
+ * getter owns its field names, sessionDiagnostics stays game-agnostic.
+ */
+export function setSlowMinuteContext(getter: () => Fields): void {
+  slowMinuteContext = getter;
+}
+
 export function startDiagnosticOperation(operation: Operation): (success?: boolean) => void {
   if (!active) return () => {};
   const start = performance.now();
@@ -218,5 +243,6 @@ export function stopSessionDiagnostics(): void {
   mapId = 'startup';
   reportDue = false;
   residentMemory = undefined;
+  slowMinuteContext = undefined;
 }
 if (import.meta.hot) import.meta.hot.dispose(stopSessionDiagnostics);

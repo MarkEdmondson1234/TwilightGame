@@ -15,6 +15,7 @@ import { generateResponse, isAIAvailable } from './anthropicClient';
 import { TimeManager } from '../utils/TimeManager';
 import type { DiaryEntryDoc } from '../firebase/types';
 import { debugLog } from '../utils/debugLog';
+import { reportErrorOnce } from '../utils/errorReporting';
 
 const DIARY_STORAGE_KEY = 'diary_entries';
 const MAX_RAW_EXCHANGE_LENGTH = 3000; // Cap raw text to avoid huge localStorage entries
@@ -107,8 +108,11 @@ async function saveToFirestore(entry: DiaryEntry): Promise<void> {
     });
 
     debugLog('Diary', `Saved to Firestore: ${entryId}`);
-  } catch {
-    // Non-fatal — localStorage is the primary store for display
+  } catch (error) {
+    // Non-fatal — localStorage is the primary store for display — but the
+    // child's diary entry is what stops reaching their other devices. Once
+    // per session, not per entry.
+    reportErrorOnce(error, 'persistence', { service: 'diary' }, 'diary:save');
   }
 }
 

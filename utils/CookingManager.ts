@@ -34,6 +34,7 @@ import { staminaManager } from './StaminaManager';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager } from './TimeManager';
 import { debugLog } from './debugLog';
+import { reportMessageOnce } from './errorReporting';
 
 // Constants
 const MASTERY_THRESHOLD = 3; // Cook a recipe this many times to master it
@@ -107,6 +108,9 @@ class CookingManagerClass {
     });
 
     // CRITICAL: Ensure tea is always unlocked (defensive programming)
+    // NOTE: currently unreachable — tea is category 'starter' and the loop
+    // directly above already re-added it. Left as a guard for a future
+    // reclassification, and deliberately NOT wired to Sentry for that reason.
     if (!this.unlockedRecipes.has('tea')) {
       console.warn('[CookingManager] ⚠️ Tea was missing from unlocked recipes! Re-adding it.');
       this.unlockedRecipes.add('tea');
@@ -120,6 +124,12 @@ class CookingManagerClass {
           `[CookingManager] ⚠️ Recipe '${recipeId}' has progress but wasn't unlocked! Auto-unlocking it.`
         );
         this.unlockedRecipes.add(recipeId);
+        reportMessageOnce(
+          'Cooking self-heal: recipe has progress but was not unlocked',
+          'persistence',
+          { recipeId, reason: 'progress_without_unlock' },
+          `cooking:self_heal:${recipeId}`
+        );
       }
     });
 

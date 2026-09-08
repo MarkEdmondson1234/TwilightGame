@@ -4,6 +4,7 @@ import { npcManager } from '../NPCManager';
 import { validateMapDefinition } from './gridParser';
 import { TILE_LEGEND, PLAYER_SIZE } from '../constants';
 import { metadataCache } from '../utils/MetadataCache';
+import { reportMessageOnce } from '../utils/errorReporting';
 
 /**
  * MapManager - Single Source of Truth for all map data
@@ -59,6 +60,14 @@ class MapManager {
       if (!isValid) {
         console.error(
           `[MapManager] ⚠️ Map '${mapId}' has validation errors (see above). Loading anyway...`
+        );
+        // Loading continues anyway, so production players walk around a broken
+        // map with nobody the wiser — once per map per session.
+        reportMessageOnce(
+          `Map '${mapId}' has validation errors; loading anyway`,
+          'map',
+          { mapId },
+          `map:validation:${mapId}`
         );
       }
 
@@ -228,6 +237,15 @@ class MapManager {
       console.warn(
         `[MapManager] ⚠️ Invalid spawn position (${requestedSpawn.x}, ${requestedSpawn.y}) in map '${mapId}' - position is inside a wall or obstacle`
       );
+      // A transition target landing in a wall is a map-authoring bug the
+      // fallback silently papers over. The safe-spawn rescue below usually
+      // hides it entirely — which is exactly why it must be counted.
+      reportMessageOnce(
+        `Invalid transition spawn in map '${mapId}'`,
+        'map',
+        { mapId, x: requestedSpawn.x, y: requestedSpawn.y },
+        `map:spawn:${mapId}`
+      );
 
       // Try to find nearest valid position
       const safeSpawn = this.findNearestValidPositionForMap(map, requestedSpawn, 5);
@@ -254,6 +272,14 @@ class MapManager {
           // If even that fails, just return something - game will handle collision
           console.error(
             `[MapManager] ❌ No valid spawn found in map '${mapId}' - player may be stuck!`
+          );
+          // Separate key from the spawn fallback above: "a transition needed
+          // rescuing" and "this map may trap a player" are different issues.
+          reportMessageOnce(
+            `No valid spawn found in map '${mapId}' - player may be stuck`,
+            'map',
+            { mapId },
+            `map:stuck:${mapId}`
           );
         }
         return { map, spawn: map.spawnPoint };

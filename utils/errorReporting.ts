@@ -111,7 +111,20 @@ export function setErrorReportingUser(uid: string | null): void {
 }
 
 /** Broad categories used to filter/group errors in the Sentry dashboard. */
-export type ErrorReportCategory = 'auth' | 'sync' | 'shared_farm' | 'presence' | 'game_crash';
+export type ErrorReportCategory =
+  | 'auth'
+  | 'sync'
+  | 'shared_farm'
+  | 'presence'
+  | 'game_crash'
+  // Data durability outside the syncManager pipeline: local save failures,
+  // domain loads, diary/painting durability, save-data integrity self-heals.
+  | 'persistence'
+  // Map authoring/integrity problems that survive validation (invalid
+  // transition spawn targets, maps with no valid spawn at all).
+  | 'map'
+  // Gift/shared-world feature errors (gift delivery failures).
+  | 'shared_world';
 
 /**
  * Report a caught error. Safe no-op when Sentry isn't configured or hasn't
@@ -145,4 +158,62 @@ export function reportMessage(
     if (extra) scope.setContext('details', extra);
     Sentry.captureMessage(message, 'warning');
   });
+}
+
+// Keys already reported this page session. Module-scoped on purpose: the page
+// lifetime is the dedupe window — "is this happening at all in production", not
+// "how often". A page reload resets it, and HMR module re-evaluation does too.
+const reportedOnce = new Set<string>();
+
+function onceKey(
+  category: ErrorReportCategory,
+  extra: Record<string, unknown> | undefined,
+  explicit: string | undefined,
+  fallback: string
+): string {
+  if (explicit) return `${category}:${explicit}`;
+  // Collapses to a stable string so two identical failures dedupe even when the
+  // caller did not choose a key; key order in `extra` does not matter.
+  const detail = extra
+    ? Object.entries(extra)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${k}=${String(v)}`)
+        .join(',')
+    : '';
+  return detail ? `${category}:${fallback}:${detail}` : `${category}:${fallback}`;
+}
+
+/**
+ * reportError/reportMessage, but at most once per page session per key. For
+ * failure sites that fire repeatedly (a save attempted every second that keeps
+ * failing, a fallback hit on every map transition) — one issue is signal, a
+ * thousand identical events is quota burn.
+ */
+export function reportErrorOnce(
+  error: unknown,
+  category: ErrorReportCategory,
+  extra?: Record<string, unknown>,
+  key?: string
+): void {
+  if (!initialised) return;
+  const dedupeKey = onceKey(category, extra, key, error instanceof Error ? error.message : String(error));
+  if (reportedOnce.has(dedupeKey)) return;
+  reportedOnce.add(dedupeKey);
+  reportError(error, category, extra);
+}
+
+/**
+ * reportMessage, but at most once per page session per key — see reportErrorOnce.
+ */
+export function reportMessageOnce(
+  message: string,
+  category: ErrorReportCategory,
+  extra?: Record<string, unknown>,
+  key?: string
+): void {
+  if (!initialised) return;
+  const dedupeKey = onceKey(category, extra, key, message);
+  if (reportedOnce.has(dedupeKey)) return;
+  reportedOnce.add(dedupeKey);
+  reportMessage(message, category, extra);
 }

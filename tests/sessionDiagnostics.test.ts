@@ -29,6 +29,7 @@ import {
   logTextureEviction,
   setDiagnosticMap,
   setDiagnosticRenderer,
+  setSlowMinuteContext,
 } from '../utils/sessionDiagnostics';
 
 function visibility(value: 'visible' | 'hidden') {
@@ -151,6 +152,66 @@ describe('bounded foreground session diagnostics', () => {
     const callsBefore = sdk.info.mock.calls.length;
     logTextureEviction(0, 0, 800);
     expect(sdk.info.mock.calls.length).toBe(callsBefore);
+  });
+
+  it('attaches slow-minute runtime context once the stall threshold is crossed', () => {
+    startSessionDiagnostics();
+    const getter = vi.fn(() => ({ 'runtime.npc_count': 7, 'runtime.weather': 'rain' }));
+    setSlowMinuteContext(getter);
+    // 60ms frames: every one of them is over the 50ms stall bar.
+    framesFor(60000, 60);
+    expect(reports()).toHaveLength(1);
+    expect(reports()[0][1]).toMatchObject({
+      'runtime.npc_count': 7,
+      'runtime.weather': 'rain',
+    });
+    expect(getter).toHaveBeenCalledTimes(1);
+  });
+
+  it('never consults the runtime getter on healthy minutes', () => {
+    startSessionDiagnostics();
+    const getter = vi.fn(() => ({ 'runtime.npc_count': 1 }));
+    setSlowMinuteContext(getter);
+    framesFor(60000, 20); // 20ms frames: zero stalls
+    expect(reports()).toHaveLength(1);
+    expect(getter).not.toHaveBeenCalled();
+  });
+
+  it('pins the stall threshold: four stalls stay silent, five earn attribution', () => {
+    startSessionDiagnostics();
+    const getter = vi.fn(() => ({ 'runtime.npc_count': 2 }));
+    setSlowMinuteContext(getter);
+    recordSessionFrame();
+    for (let i = 0; i < 4; i++) {
+      vi.advanceTimersByTime(60);
+      recordSessionFrame();
+    }
+    framesFor(60000 - 4 * 60, 20);
+    expect(reports()).toHaveLength(1);
+    expect(getter).not.toHaveBeenCalled();
+
+    // New minute, one more stall than the threshold. The priming frame matters:
+    // a stall is a delta between two frames, and the report above reset the
+    // anchor, so without it the first of the five only re-anchors and four land.
+    recordSessionFrame();
+    for (let i = 0; i < 5; i++) {
+      vi.advanceTimersByTime(60);
+      recordSessionFrame();
+    }
+    framesFor(60000 - 5 * 60, 20);
+    expect(reports()).toHaveLength(2);
+    expect(getter).toHaveBeenCalledTimes(1);
+    expect(reports()[1][1]).toMatchObject({ 'runtime.npc_count': 2 });
+  });
+
+  it('still sends the slow-minute report when the context getter throws', () => {
+    startSessionDiagnostics();
+    setSlowMinuteContext(() => {
+      throw new Error('manager unavailable');
+    });
+    framesFor(60000, 60);
+    expect(reports()).toHaveLength(1);
+    expect(reports()[0][1]).not.toHaveProperty('runtime.npc_count');
   });
 
   it('marks async operations spanning tab switches', () => {
