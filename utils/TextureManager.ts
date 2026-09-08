@@ -1,4 +1,4 @@
-import { startDiagnosticOperation } from './sessionDiagnostics';
+import { startDiagnosticOperation, logTextureEviction } from './sessionDiagnostics';
 /**
  * TextureManager - Handles PixiJS texture loading and caching (v8 compatible)
  *
@@ -324,6 +324,9 @@ class TextureManager {
         'TextureManager',
         `Evicted ${evicted} textures (${(freedBytes / 1024 / 1024).toFixed(0)}MB freed, ${this.getEstimatedMemoryMB().toFixed(0)}MB resident, budget ${budgetMB}MB)`
       );
+      // Sentry timeline for issue #107: pink-square reports need the eviction
+      // context to be confirmable (or dismissible) from production data.
+      logTextureEviction(evicted, freedBytes / 1024 / 1024, this.getEstimatedMemoryMB());
     }
     return evicted;
   }

@@ -43,6 +43,8 @@ interface NPCState {
   // Hostile NPC pursuit tracking
   lastCombatTime?: number; // Timestamp of last combat trigger (for cooldown)
   isPursuing?: boolean; // Currently in pursuit mode
+  // PATROL tracking
+  patrolIndex?: number; // Index into the NPC's patrolPath of the waypoint being walked toward
 }
 
 class NPCManagerClass {
@@ -61,6 +63,11 @@ class NPCManagerClass {
   private frozenNPCIds: Set<string> = new Set();
 
   private readonly NPC_SPEED = 1.0; // tiles per second
+
+  /** Default dwell time at each PATROL waypoint, in ms. */
+  private readonly PATROL_DEFAULT_PAUSE_MS = 1500;
+  /** How close (in tiles) a patrolling NPC must get to a waypoint to count as arrived. */
+  private readonly PATROL_ARRIVAL_EPSILON = 0.05;
 
   /**
    * Length of one wander decision slot, in milliseconds.
@@ -107,6 +114,7 @@ class NPCManagerClass {
           baseDirection: npc.direction,
           baseScale: npc.scale,
           defaultScale: npc.scale,
+          patrolIndex: 0,
         });
       } else {
         // Update baseScale on re-registration (e.g., shop fox has different scale than village fox)
@@ -870,7 +878,87 @@ class NPCManagerClass {
         }
       }
 
-      // TODO: Implement PATROL behavior
+      // PATROL behaviour: walk the authored waypoint loop, dwelling at each stop.
+      // Movement is axis-by-axis toward the current waypoint (like a person walking
+      // a beat: step to line up, then step along), clamped so a step can never
+      // overshoot the waypoint. Collisions hold the NPC in place rather than
+      // skipping waypoints — a patrol must stay on its route; it resumes as soon
+      // as the tile clears.
+      else if (npc.behavior === NPCBehavior.PATROL && npc.patrolPath && npc.patrolPath.length > 0) {
+        const path = npc.patrolPath;
+        const pauseMs = npc.patrolPauseMs ?? this.PATROL_DEFAULT_PAUSE_MS;
+
+        // Patrol NPCs with animated states move only in their walking animation
+        // states, exactly like WANDER — the state machine owns when motion looks right.
+        if (npc.animatedStates) {
+          const currentAnimState = npc.animatedStates.currentState;
+          if (currentAnimState !== 'roaming' && currentAnimState !== 'walking') {
+            state.isWaiting = true;
+            return; // Skip movement updates, just animate in place
+          }
+        }
+
+        // Safety for re-registered NPCs whose path changed while off-map.
+        if (state.patrolIndex === undefined || state.patrolIndex >= path.length) {
+          state.patrolIndex = 0;
+        }
+
+        const target = path[state.patrolIndex];
+        const dx = target.x - npc.position.x;
+        const dy = target.y - npc.position.y;
+        const step = this.NPC_SPEED * deltaTime;
+
+        if (
+          Math.abs(dx) <= this.PATROL_ARRIVAL_EPSILON &&
+          Math.abs(dy) <= this.PATROL_ARRIVAL_EPSILON
+        ) {
+          // At the waypoint: dwell, then head for the next one (the path loops).
+          if (!state.isWaiting) {
+            state.isWaiting = true;
+            state.lastMoveTime = currentTime;
+          } else if (timeSinceLastMove >= pauseMs) {
+            state.patrolIndex = (state.patrolIndex + 1) % path.length;
+            state.isWaiting = false;
+            state.lastMoveTime = currentTime;
+          }
+        } else {
+          // Walk the dominant axis first, without overshooting the waypoint.
+          const walkAxis = (axis: 'x' | 'y', delta: number): Position => {
+            const pos = { ...npc.position };
+            const move = Math.min(step, Math.abs(delta));
+            if (axis === 'x') {
+              pos.x += delta > 0 ? move : -move;
+              npc.direction = delta > 0 ? Direction.Right : Direction.Left;
+            } else {
+              pos.y += delta > 0 ? move : -move;
+              npc.direction = delta > 0 ? Direction.Down : Direction.Up;
+            }
+            return pos;
+          };
+
+          const primary: 'x' | 'y' = Math.abs(dx) >= Math.abs(dy) ? 'x' : 'y';
+          const primaryDelta = primary === 'x' ? dx : dy;
+          let newPos = walkAxis(primary, primaryDelta);
+
+          if (!this.checkCollision(newPos, npc.canFly)) {
+            npc.position = newPos;
+            anyNPCMoved = true;
+          } else {
+            // Primary axis blocked (a wall, or an NPC standing in the way): try
+            // the other axis this frame so a detour starts immediately, then
+            // simply stand until the way clears — never skip the waypoint.
+            const secondary: 'x' | 'y' = primary === 'x' ? 'y' : 'x';
+            const secondaryDelta = secondary === 'x' ? dx : dy;
+            if (Math.abs(secondaryDelta) > this.PATROL_ARRIVAL_EPSILON) {
+              newPos = walkAxis(secondary, secondaryDelta);
+              if (!this.checkCollision(newPos, npc.canFly)) {
+                npc.position = newPos;
+                anyNPCMoved = true;
+              }
+            }
+          }
+        }
+      }
     });
 
     // Emit event if any NPC moved

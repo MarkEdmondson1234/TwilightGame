@@ -1,4 +1,4 @@
-import { MapDefinition, TileType } from '../../types';
+import { MapDefinition, TileType, NPCBehavior } from '../../types';
 import { parseGrid } from '../gridParser';
 import {
   createCatNPC,
@@ -106,7 +106,18 @@ const npcs = [
 
   // Row 5 continued: Forest creatures
   createMushraNPC('debug_mushra', { x: 14, y: 22 }, 'Mushra'),
-  createDeerNPC('debug_deer', { x: 18, y: 22 }, 'Deer'),
+  // Deer walking a patrol loop — dev demo of NPCBehavior.PATROL (issue TODO in NPCManager)
+  {
+    ...createDeerNPC('debug_deer', { x: 18, y: 22 }, 'Deer'),
+    behavior: NPCBehavior.PATROL,
+    patrolPath: [
+      { x: 18, y: 22 },
+      { x: 21, y: 22 },
+      { x: 21, y: 24 },
+      { x: 18, y: 24 },
+    ],
+    patrolPauseMs: 2000,
+  },
 
   // Row 6: Puffle & Suffle duo (always together!)
   createPuffleNPC('debug_puffle', { x: 6, y: 26 }, 'Puffle'),

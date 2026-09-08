@@ -242,6 +242,8 @@ export interface NPC {
   animatedStates?: AnimatedNPCStates; // Optional: for NPCs with state-based animations
   scale?: number; // Optional: sprite scale multiplier (default 4.0)
   followTarget?: string; // Optional: ID of NPC to follow (for companion NPCs like dogs)
+  patrolPath?: Position[]; // Optional: waypoints (tile coords) for PATROL behaviour — walked in order, looping
+  patrolPauseMs?: number; // Optional: dwell time at each patrol waypoint in ms (default 1500)
   canFly?: boolean; // Optional: flying NPCs bypass tile/sprite collision (still respect map bounds)
   friendshipConfig?: FriendshipConfig; // Optional: friendship system configuration
   dailyResource?: DailyResourceConfig; // Optional: daily collectible resource (e.g., milk from cow)

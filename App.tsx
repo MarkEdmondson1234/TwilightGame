@@ -110,6 +110,7 @@ import ForegroundParallax from './components/ForegroundParallax';
 import CloudShadows from './components/CloudShadows';
 import AmbientClouds from './components/AmbientClouds';
 import CookingInterface from './components/CookingInterface';
+import BrewingInterface from './components/BrewingInterface';
 import MiniGameHost from './components/MiniGameHost';
 import ConfirmMiniGameModal from './components/ConfirmMiniGameModal';
 import { miniGameManager } from './minigames/MiniGameManager';
@@ -1618,7 +1619,6 @@ const App: React.FC = () => {
       },
       // Glamour Draught: Open NPC selection modal for disguise
       openGlamourModal: () => {
-        // TODO: Will be implemented when GlamourModal component is created
         openUI('glamourModal');
       },
       // Fairy Form Potion: shrink player to fairy size for a duration
@@ -2711,30 +2711,10 @@ const App: React.FC = () => {
           }}
         />
       )}
+      {/* The cauldron: where potions get made (the magic book is the recipe manual).
+          Both are thin UIs over MagicManager — the SSoT for recipes, mastery and levels. */}
       {ui.brewingUI && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] pointer-events-auto"
-          onClick={() => closeUI('brewingUI')}
-        >
-          <div
-            className="bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-purple-500 rounded-lg p-8 max-w-md text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 className="text-2xl font-bold text-purple-200 mb-4">🧪 Cauldron</h2>
-            <p className="text-purple-300 mb-6">
-              The bubbling cauldron awaits your magical ingredients...
-            </p>
-            <p className="text-purple-400 text-sm mb-6">
-              Brewing potions coming soon! For now, use F9 to get test potions.
-            </p>
-            <button
-              onClick={() => closeUI('brewingUI')}
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </div>
+        <BrewingInterface isOpen={ui.brewingUI} onClose={() => closeUI('brewingUI')} />
       )}
       {ui.giftModal && ui.context.giftTargetNpcId && (
         <GiftModal

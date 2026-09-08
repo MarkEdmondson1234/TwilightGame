@@ -166,6 +166,19 @@ export function setDiagnosticMap(nextMap: string): void {
 }
 
 /** One completion per operation/outcome/speed class per minute, plus the global session cap. */
+/** Log a texture eviction summary, bounded like every other diagnostic. Issue #107:
+ * correlating pink-square reports with eviction bursts is the main open question —
+ * this gives Sentry the eviction side of the timeline. */
+export function logTextureEviction(evicted: number, freedMB: number, residentMB: number): void {
+  if (!active || sent >= MAX_LOGS || evicted <= 0) return;
+  log('game.texture_eviction', {
+    'game.map': mapId,
+    'texture.evicted': evicted,
+    'texture.freed_mb': Math.round(freedMB * 10) / 10,
+    'texture.resident_mb': Math.round(residentMB * 10) / 10,
+  });
+}
+
 export function startDiagnosticOperation(operation: Operation): (success?: boolean) => void {
   if (!active) return () => {};
   const start = performance.now();
