@@ -26,6 +26,7 @@ import {
   stopSessionDiagnostics,
   recordSessionFrame,
   startDiagnosticOperation,
+  logTextureEviction,
   setDiagnosticMap,
   setDiagnosticRenderer,
 } from '../utils/sessionDiagnostics';
@@ -133,6 +134,25 @@ describe('bounded foreground session diagnostics', () => {
     expect(sdk.info.mock.calls.filter(([name]) => name === 'game.operation')).toHaveLength(3);
     expect(sdk.info.mock.lastCall?.[1]['operation.success']).toBe(false);
   });
+  it('logs texture eviction bursts with counts and skips empty ones', () => {
+    startSessionDiagnostics();
+    setDiagnosticMap('deep_forest');
+
+    logTextureEviction(12, 45.67, 800.25);
+    expect(sdk.info.mock.lastCall?.[0]).toBe('game.texture_eviction');
+    expect(sdk.info.mock.lastCall?.[1]).toMatchObject({
+      'game.map': 'deep_forest',
+      'texture.evicted': 12,
+      'texture.freed_mb': 45.7,
+      'texture.resident_mb': 800.3,
+    });
+
+    // No eviction, no log — keeps the bounded budget for real events.
+    const callsBefore = sdk.info.mock.calls.length;
+    logTextureEviction(0, 0, 800);
+    expect(sdk.info.mock.calls.length).toBe(callsBefore);
+  });
+
   it('marks async operations spanning tab switches', () => {
     startSessionDiagnostics();
     const finish = startDiagnosticOperation('cloud_upload');
