@@ -47,7 +47,11 @@ import { useUIState } from './hooks/useUIState';
 import { useGameEvents } from './hooks/useGameEvents';
 import { eventBus, GameEvent } from './utils/EventBus';
 import { calculateViewportScale, DEFAULT_REFERENCE_VIEWPORT } from './hooks/useViewportScale';
-import { getRoomArtworkSize, getRoomCoverScale, getRoomPan } from './utils/backgroundRoomLayout';
+import {
+  getRoomArtworkSize,
+  getRoomCoverScale,
+  getRoomTransform,
+} from './utils/backgroundRoomLayout';
 import { DEFAULT_CHARACTER } from './utils/characterSprites';
 import { getPortraitSprite } from './utils/portraitSprites';
 import { handleDialogueAction } from './utils/dialogueHandlers';
@@ -65,7 +69,14 @@ import { staminaManager } from './utils/StaminaManager';
 import { photoAlbumManager } from './utils/photoAlbumManager';
 import { TimeManager, Season } from './utils/TimeManager';
 import { fairyAttractionManager } from './utils/fairyAttractionManager';
-import { Z_PLAYER, Z_TILE_BACKGROUND, Z_INVENTORY_RADIAL_MENU, Z_LOADING, Z_FULL_SCREEN_EFFECT, zClass } from './zIndex';
+import {
+  Z_PLAYER,
+  Z_TILE_BACKGROUND,
+  Z_INVENTORY_RADIAL_MENU,
+  Z_LOADING,
+  Z_FULL_SCREEN_EFFECT,
+  zClass,
+} from './zIndex';
 import { iconAssets } from './iconAssets';
 import GameUIControls from './components/GameUIControls';
 import DebugCollisionBoxes from './components/DebugCollisionBoxes';
@@ -186,7 +197,7 @@ import { debugLog } from './utils/debugLog';
 //
 //  ── EDITING SAFELY ──────────────────────────────────────────────────────────
 //   • Read docs/ARCHITECTURE_GOTCHAS.md before touching the coordinate pipeline
-//     (effectiveGridOffset must include zoom) or ambient audio (each effect stops
+//     (effectiveGridOffset must stay in pre-zoom stage pixels) or ambient audio (each effect stops
 //     only its own sound). Effect ordering and dependency arrays matter here.
 //   • No test exercises this component at runtime and main auto-deploys — verify
 //     visually with `make dev` after any change.
@@ -1452,65 +1463,14 @@ const App: React.FC = () => {
     return viewportSize.height < 600;
   }, [viewportSize.height]);
 
-  // Calculate effective grid offset for centered background-image rooms
-  // This aligns the collision grid/player/NPCs with the room artwork, and is the
-  // single value every consumer (PixiJS player/NPC/highlight layers, DOM
-  // overlays, click-to-tile) uses to place things in these rooms.
-  //
-  // How far the room artwork slides from dead centre to follow the player
-  // through whatever `cover` scaling cropped off (issue #26). Zero when the
-  // artwork's aspect ratio matches the window, so a 16:9 room in a 16:9 window
-  // doesn't move at all. Shared by effectiveGridOffset below (which positions
-  // everything drawn on top of the room) and BackgroundImageLayer (which
-  // positions the artwork itself) — they must use the same number or the room
-  // slides out from under its own collision grid.
-  const backgroundRoomPan = useMemo((): Position => {
-    const artwork = currentMap?.gridOffset ? null : getRoomArtworkSize(currentMap);
-    if (!artwork) return { x: 0, y: 0 };
-
-    return getRoomPan({
-      playerPos,
-      tileSize: TILE_SIZE * viewportScale * artwork.layerScale * zoom,
-      artworkWidth: artwork.width * viewportScale * zoom,
-      artworkHeight: artwork.height * viewportScale * zoom,
-      viewportWidth: viewportSize.width,
-      viewportHeight: viewportSize.height,
-    });
-  }, [currentMap, viewportScale, viewportSize, zoom, playerPos]);
-
-  const effectiveGridOffset = useMemo((): Position | undefined => {
-    if (!currentMap) return undefined;
-
-    // Use explicit gridOffset if provided (not scaled - assume it's pre-calculated)
-    if (currentMap.gridOffset) return currentMap.gridOffset;
-
-    const artwork = getRoomArtworkSize(currentMap);
-    if (!artwork) return undefined;
-
-    // Final on-screen artwork size: authored size x responsive scale x zoom.
-    // The PixiJS stage is scaled by zoom, so the artwork occupies this many
-    // screen pixels and screenToTile must invert the same number.
-    const artworkWidth = artwork.width * viewportScale * zoom;
-    const artworkHeight = artwork.height * viewportScale * zoom;
-
-    // Centre the artwork, then apply the pan. Without it the room stays pinned
-    // to the viewport centre and the player walks off the edge of the screen
-    // into artwork that is never drawn there.
-    return {
-      x: (viewportSize.width - artworkWidth) / 2 + backgroundRoomPan.x,
-      y: (viewportSize.height - artworkHeight) / 2 + backgroundRoomPan.y,
-    };
-  }, [currentMap, viewportScale, viewportSize, zoom, backgroundRoomPan]);
-
-  // Calculate effective tile size for background-image rooms (scaled)
-  // Must include both viewport scale AND layer scale to match the room artwork
-  const effectiveTileSize = useMemo((): number => {
-    const artwork = getRoomArtworkSize(currentMap);
-    if (artwork) {
-      return TILE_SIZE * viewportScale * artwork.layerScale;
-    }
-    return TILE_SIZE;
-  }, [currentMap, viewportScale]);
+  // One pre-zoom transform for artwork, entities, labels, and pointer inversion.
+  const roomTransform = useMemo(
+    () => getRoomTransform(currentMap, playerPos, viewportSize, viewportScale, zoom),
+    [currentMap, playerPos, viewportSize, viewportScale, zoom]
+  );
+  const backgroundRoomPan = roomTransform.pan;
+  const effectiveGridOffset = roomTransform.gridOffset;
+  const effectiveTileSize = roomTransform.tileSize;
 
   // Use camera hook for positioning
   const { cameraX, cameraY } = useCamera({
@@ -2284,14 +2244,20 @@ const App: React.FC = () => {
         <TransitionIndicators
           onActivate={(transition) => {
             if (activeNPC || isCutscenePlaying || isAnyOverlayOpen || showSplashScreen) return;
-            activateTransitionIndicator(transition, currentMap, playerPosRef.current,
-              playerSizeTier, lastTransitionTime.current, (result) => {
+            activateTransitionIndicator(
+              transition,
+              currentMap,
+              playerPosRef.current,
+              playerSizeTier,
+              lastTransitionTime.current,
+              (result) => {
                 if (result.blocked && result.message) showToast(result.message, 'info');
                 if (result.success && result.mapId && result.spawnPosition) {
                   if (result.hasDoor) audioManager.playSfx('sfx_door_open');
                   handleMapTransition(result.mapId, result.spawnPosition);
                 }
-              });
+              }
+            );
           }}
           currentMap={currentMap}
           playerPos={playerPos}

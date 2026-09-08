@@ -42,7 +42,8 @@ const FloatingIcon: React.FC<{
     }}
     className="absolute pointer-events-auto animate-float-gentle"
     style={{
-      left: screenX - 24,
+      // The float animation already centers with translateX(-50%).
+      left: screenX,
       top: screenY - 24,
       width: 48,
       height: 48,

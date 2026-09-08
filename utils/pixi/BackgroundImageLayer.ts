@@ -51,7 +51,7 @@ interface ScalingConfig {
   viewportScale: number;
   referenceWidth: number;
   referenceHeight: number;
-  /** Current viewport dimensions (for consistent centering across components) */
+  /** Pre-zoom viewport dimensions (CSS viewport divided by stage zoom) */
   viewportWidth: number;
   viewportHeight: number;
 }
@@ -195,7 +195,7 @@ export class BackgroundImageLayer {
   }
 
   /**
-   * Screen position of a centered layer of the given scaled size: centred in the
+   * Pre-zoom stage position of a centered layer of the given scaled size: centred in the
    * viewport, then panned. One place, so every caller agrees.
    */
   private centeredPosition(scaledWidth: number, scaledHeight: number): { x: number; y: number } {

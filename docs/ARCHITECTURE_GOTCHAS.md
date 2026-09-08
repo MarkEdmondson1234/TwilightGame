@@ -33,43 +33,45 @@ actionHandlers.ts / forageHandlers.ts — uses tile position to find interaction
 
 The game has **two fundamentally different** rendering pipelines:
 
-| | Standard tiled rooms | Background-image rooms |
-|---|---|---|
-| **Examples** | Village, forest, caves | Shop, cottage interior, Mum's kitchen |
-| **How it works** | PixiJS renders each tile, camera scrolls | Pre-drawn image scaled to cover the viewport, panned to follow the player |
-| **Coordinate conversion** | Uses `cameraX/Y` and `TILE_SIZE` | Uses `gridOffset` and `effectiveTileSize` |
-| **Map property** | `renderMode: undefined` or `'tiled'` | `renderMode: 'background-image'` |
-| **Zoom handling** | PixiJS stage.scale handles it | Must manually factor zoom into gridOffset |
+|                           | Standard tiled rooms                     | Background-image rooms                                                    |
+| ------------------------- | ---------------------------------------- | ------------------------------------------------------------------------- |
+| **Examples**              | Village, forest, caves                   | Shop, cottage interior, Mum's kitchen                                     |
+| **How it works**          | PixiJS renders each tile, camera scrolls | Pre-drawn image scaled to cover the viewport, panned to follow the player |
+| **Coordinate conversion** | Uses `cameraX/Y` and `TILE_SIZE`         | Uses `gridOffset` and `effectiveTileSize`                                 |
+| **Map property**          | `renderMode: undefined` or `'tiled'`     | `renderMode: 'background-image'`                                          |
+| **Zoom handling**         | PixiJS stage.scale handles it            | Shared pre-zoom grid offset; stage applies zoom once                      |
 
-### Critical rule: effectiveGridOffset must include zoom
+### Critical rule: use pre-zoom stage coordinates everywhere
 
-`effectiveGridOffset` (in App.tsx) calculates where the centered background image sits on screen. The formula must include ALL scaling factors:
+`getRoomTransform` in `utils/backgroundRoomLayout.ts` supplies the grid offset,
+pan and tile size for DOM overlays, Pixi entities, highlights and tap inversion.
+The renderer receives the same viewport divided by stage zoom:
 
 ```
-imageWidth = baseWidth × layerScale × viewportScale × zoom
-offsetX = (viewportSize.width - imageWidth) / 2 + pan.x
+imageWidth = baseWidth × layerScale × viewportScale
+stageViewportWidth = viewportSize.width / zoom
+offsetX = (stageViewportWidth - imageWidth) / 2 + pan.x
+screenX = (offsetX + tileX × effectiveTileSize) × zoom
+tileX = (screenX / zoom - offsetX) / effectiveTileSize
 ```
 
-(`pan` comes from `getRoomPan` — see "Maps not filling the screen" below. It is zero
-whenever the artwork's aspect ratio matches the window, which is the common case.)
+`pan` is also calculated in pre-zoom pixels. Do not put a final screen-space
+origin into `gridOffset`: both the DOM world and Pixi stage scale that origin
+again. The previous guidance here recommended doing exactly that and was wrong.
+The transform must update for map, viewport, responsive scale, zoom and player
+position changes. Interior game zoom remains disabled; the math also handles
+zoom during map entry and future zoom changes. Browser page zoom is accounted
+for separately by `useBrowserZoom` and responsive scaling.
 
-**Why zoom matters**: PixiJS `stage.scale.set(zoom)` scales the rendered image. At zoom=2, the image occupies twice the screen pixels. If `gridOffset` doesn't account for this, `screenToTile` produces coordinates that are offset by a factor of zoom — clicks land on the wrong tile.
+### Empty HUD layouts must not intercept world input
 
-**Historical bug**: `effectiveGridOffset` was originally calculated without `zoom`, causing all interactions in background-image rooms (farming, foraging, NPC clicks) to be offset. This was the "stubborn offset bug" that persisted across many fix attempts because:
-- It only manifested in background-image rooms (not in the village/forest)
-- The offset grew with zoom level, making it seem intermittent
-- Fixes that adjusted `screenToTile` alone couldn't work because `gridOffset` was wrong upstream
-
-### The dependency array matters
-
-The `effectiveGridOffset` useMemo must recalculate when ANY of these change:
-- `currentMap`, `currentMapId` — map geometry
-- `viewportScale` — responsive scaling
-- `viewportSize` — window resize
-- `zoom` — user zoom level
-- `playerPos` (via `backgroundRoomPan`) — the artwork pans to follow the player
-
-Missing `zoom` from the dependency array was part of the original bug — the offset was stale after zoom changes.
+CSS scaling shrinks a book button visually but leaves its parent's layout box
+at full height. The bookshelf's invisible flex box covered the kitchen exit.
+Use `pointer-events-none` on HUD layout wrappers and `pointer-events-auto` on
+actual controls, with `data-game-ui="true"` to exclude native world handlers.
+The same applies to the empty space between mobile direction/action controls.
+Check `document.elementFromPoint` at the visible target in a real browser;
+a DOM-only click test cannot detect an overlaid invisible box.
 
 ### CSS `transform: scale()` silently breaks pointer maths
 
@@ -86,13 +88,13 @@ const scale = Math.min(1, (windowWidth * 0.95) / TARGET_WIDTH);
 ```typescript
 // ❌ WRONG — rect is the SCALED box, but the coordinates are used as unscaled ones
 const rect = el.getBoundingClientRect();
-const x = e.clientX - rect.left;   // at scale 0.8, a click at the visual centre
-const y = e.clientY - rect.top;    // lands at 80% of the intended position
+const x = e.clientX - rect.left; // at scale 0.8, a click at the visual centre
+const y = e.clientY - rect.top; // lands at 80% of the intended position
 ```
 
 `getBoundingClientRect()` returns post-transform (scaled) dimensions, so the offset it
-produces is in *screen* pixels while the layout coordinates it gets compared against are
-in *unscaled* pixels. Divide by the effective scale:
+produces is in _screen_ pixels while the layout coordinates it gets compared against are
+in _unscaled_ pixels. Divide by the effective scale:
 
 ```typescript
 // ✅ CORRECT — derive the real scale from the rect rather than trusting a state variable
@@ -111,6 +113,7 @@ below 1, so the bug is invisible on a desktop dev machine at full width.
 ### Testing coordinate fixes
 
 If you change anything in the coordinate pipeline, test in BOTH room types:
+
 1. **Standard room** (village): click on an NPC, click on a farm plot
 2. **Background-image room** (shop, cottage): click on an NPC, click on interactable objects
 3. **At different zoom levels**: zoom in/out and repeat both tests
@@ -127,7 +130,7 @@ Many HUD elements use `pointer-events: none` so they don't block game interactio
 
 ```tsx
 <div className="absolute left-2 z-[1000] pointer-events-none">
-  <Wallet />  {/* Visual only, clicks pass through */}
+  <Wallet /> {/* Visual only, clicks pass through */}
 </div>
 ```
 
@@ -145,7 +148,9 @@ for (const el of elementsAtPoint) {
 
 // ❌ WRONG — only checks e.target ancestor chain (misses pointer-events:none layers)
 let el = e.target;
-while (el) { /* check zIndex... */ el = el.parentElement; }
+while (el) {
+  /* check zIndex... */ el = el.parentElement;
+}
 ```
 
 ### React synthetic events vs native DOM events
@@ -158,16 +163,17 @@ React's `e.stopPropagation()` only stops React's synthetic event system. It does
 
 Always import constants from `zIndex.ts`. Key ranges:
 
-| Z-range | Purpose | Must block clicks? |
-|---------|---------|-------------------|
-| 0–99 | Game world (tiles, sprites) | No |
-| 100–199 | Player/NPC level | No |
-| 400–499 | Radial menu, action prompts | Yes |
-| 1000–1099 | HUD elements | Should block if interactive |
-| 2000–2099 | Modals, dialogue, shop | Must block |
-| 3000+ | Toast, loading, errors | Must block |
+| Z-range   | Purpose                     | Must block clicks?          |
+| --------- | --------------------------- | --------------------------- |
+| 0–99      | Game world (tiles, sprites) | No                          |
+| 100–199   | Player/NPC level            | No                          |
+| 400–499   | Radial menu, action prompts | Yes                         |
+| 1000–1099 | HUD elements                | Should block if interactive |
+| 2000–2099 | Modals, dialogue, shop      | Must block                  |
+| 3000+     | Toast, loading, errors      | Must block                  |
 
 **Rule**: Any overlay at Z_HUD (1000) or above that has interactive content MUST either:
+
 - Use `pointer-events: auto` on the container, OR
 - Be detected by `isUIElement()` via `elementsFromPoint`
 
@@ -203,21 +209,21 @@ gesture check, so a freshly created context schedules an audible-looking source
 that produces no sound. `useEnvironmentController.ts` resumes the context on the
 player's first `click`/`touchstart`/`keydown` — if that resume-on-gesture effect
 is ever removed without a replacement, ambient audio goes silent on first load
-again, only "starting" once some *unrelated* click/keypress elsewhere happens to
+again, only "starting" once some _unrelated_ click/keypress elsewhere happens to
 satisfy the browser's own gesture-detection heuristic.
 
 ### Each ambient sound owns its own effect
 
 The audio system uses separate `useEffect` hooks for each ambient category:
 
-| Effect | Sounds | Dependencies |
-|--------|--------|-------------|
-| Weather ambient | rain, storm, blizzard | `currentWeather`, `currentMapId` |
-| Birds | ambient_birds | `currentMapId`, `currentWeather` |
-| Cave wind | ambient_cave_wind | `currentMapId` |
-| Stream | ambient_running_stream | `currentMapId`, `currentWeather` |
-| Countryside | ambient_countryside_summer | `currentMapId`, `currentWeather` |
-| Lava | ambient_lava | `currentMapId` |
+| Effect          | Sounds                     | Dependencies                     |
+| --------------- | -------------------------- | -------------------------------- |
+| Weather ambient | rain, storm, blizzard      | `currentWeather`, `currentMapId` |
+| Birds           | ambient_birds              | `currentMapId`, `currentWeather` |
+| Cave wind       | ambient_cave_wind          | `currentMapId`                   |
+| Stream          | ambient_running_stream     | `currentMapId`, `currentWeather` |
+| Countryside     | ambient_countryside_summer | `currentMapId`, `currentWeather` |
+| Lava            | ambient_lava               | `currentMapId`                   |
 
 ### Never blanket-stop sounds you don't own
 
@@ -230,7 +236,7 @@ audioManager.stopAmbient('ambient_thunderstorm', 1000);
 audioManager.stopAmbient('ambient_blizzard', 1000);
 
 // ❌ WRONG — weather effect stops birds, stream, countryside too
-audioManager.stopAmbient('ambient_birds', 1000);       // Owned by birds effect!
+audioManager.stopAmbient('ambient_birds', 1000); // Owned by birds effect!
 audioManager.stopAmbient('ambient_countryside_summer', 1000); // Owned by countryside effect!
 ```
 
@@ -340,11 +346,10 @@ that didn't match the map/reference, the game's own background colour showed thr
   slack to pan on; see [`tests/cameraCoverage.test.ts`](../tests/cameraCoverage.test.ts).
 - **Background-image rooms**: two separate faults, both now in
   [`utils/backgroundRoomLayout.ts`](../utils/backgroundRoomLayout.ts).
-
-  1. *The gap.* `calculateViewportScale` gained a `fitMode: 'cover'`, but was still fed the map's
+  1. _The gap._ `calculateViewportScale` gained a `fitMode: 'cover'`, but was still fed the map's
      declared `referenceViewport` — an authoring hint that drifts from the artwork it claims to
      describe. Mum's Kitchen is 960×540 at `scale: 1.3` = **1248×702**, 2.6% short of its declared
-     **1280×720**, so `cover` filled a box 2.6% larger than the room at *every* window size and the
+     **1280×720**, so `cover` filled a box 2.6% larger than the room at _every_ window size and the
      background colour showed through the difference on all four sides. `getRoomCoverScale` now
      measures the artwork itself, so `referenceViewport` can no longer be wrong — it is no longer
      consulted. (This is also why it looked fine on a small laptop and broken on a bigger screen:
@@ -352,7 +357,7 @@ that didn't match the map/reference, the game's own background colour showed thr
      window.) There is deliberately **no upper clamp** on the cover scale; the old `2.5` cap would
      reopen the gap as a ~700px band on a 4K display, and upscaling a sprite costs sharpness, not
      GPU memory.
-  2. *Walking off-screen.* Covering means cropping, and the crop used to be a static centre crop
+  2. _Walking off-screen._ Covering means cropping, and the crop used to be a static centre crop
      with no camera — so the cropped strip was simply unreachable, and walking toward it took the
      character off the screen. `getRoomPan` slides the artwork to follow the player, clamped at the
      artwork's edges so it can never reopen the gap. It returns an **offset from centre**, not an
@@ -375,7 +380,7 @@ Guarded by [`tests/backgroundRoomLayout.test.ts`](../tests/backgroundRoomLayout.
 4. **Assuming camera works the same** — background-image rooms have no `cameraX/cameraY`; they
    follow the player through `effectiveGridOffset` instead (see "Maps not filling the screen"
    above). This used to say the camera was fixed for these rooms. It was, and that was the bug:
-   once the artwork is scaled to *cover* the window, a fixed camera lets the player walk into the
+   once the artwork is scaled to _cover_ the window, a fixed camera lets the player walk into the
    cropped strip and off the screen
 5. **Deriving interior sizes from raw `innerWidth`** — factor out browser zoom (see above) or interiors won't match tiled rooms
 6. **Using `calculateViewportScale`'s default (contain) when you actually need cover** — contain
@@ -407,7 +412,7 @@ resize while fog is active.
 ```typescript
 import { attachMask, disposeMask } from './maskUtils';
 
-attachMask(target, maskSprite, parent);          // addChild(mask) THEN target.mask = mask
+attachMask(target, maskSprite, parent); // addChild(mask) THEN target.mask = mask
 this.maskSprite = disposeMask(target, maskSprite); // target.mask = null THEN mask.destroy(); returns null
 ```
 
@@ -415,9 +420,10 @@ this.maskSprite = disposeMask(target, maskSprite); // target.mask = null THEN ma
 directly, so the funnel can't be bypassed.
 
 **The rules these helpers encode (why they exist):**
+
 - **Null the reference before destroying the mask sprite** — never the reverse (`disposeMask`).
 - **Never overwrite a masked sprite without tearing the old one down first.** A setup function that
-  reassigns `this.fooSprite = new Sprite(...)` must call its null-safe teardown at the *top*.
+  reassigns `this.fooSprite = new Sprite(...)` must call its null-safe teardown at the _top_.
 - **Add the mask to the display tree before assigning it** — Pixi measures it through the scene
   graph (`attachMask`).
 
@@ -433,7 +439,7 @@ When something feels "off" with interactions:
 - [ ] **Which room type?** Check `renderMode` in the map definition
 - [ ] **Zoom level?** Does the bug disappear at zoom=1? → Coordinate pipeline issue
 - [ ] **Click or keyboard?** If keyboard works but click doesn't → `isUIElement` or coordinate issue
-- [ ] **Check `effectiveGridOffset`** — does it include zoom? Is zoom in the dependency array?
+- [ ] **Check `effectiveGridOffset`** — is it in pre-zoom stage pixels? Does the shared transform update for zoom?
 - [ ] **Check `screenToTile`** — are both branches (tiled vs background-image) correct?
 - [ ] **Check z-index** — is the overlay using a constant from `zIndex.ts`?
 - [ ] **Check `elementsFromPoint`** — is the UI detection using position-based checking?

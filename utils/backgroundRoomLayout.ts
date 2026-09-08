@@ -134,10 +134,51 @@ export interface RoomPanConfig {
  * of them pan together.
  */
 export function getRoomPan(config: RoomPanConfig): Position {
-  const { playerPos, tileSize, artworkWidth, artworkHeight, viewportWidth, viewportHeight } = config;
+  const { playerPos, tileSize, artworkWidth, artworkHeight, viewportWidth, viewportHeight } =
+    config;
 
   return {
     x: panAxis(playerPos.x * tileSize, artworkWidth, viewportWidth),
     y: panAxis(playerPos.y * tileSize, artworkHeight, viewportHeight),
+  };
+}
+
+/** Layout shared by DOM overlays, Pixi sprites and the inverse tap transform. */
+export function getRoomTransform(
+  map: MapDefinition | null | undefined,
+  playerPos: Position,
+  viewport: { width: number; height: number },
+  viewportScale: number,
+  zoom: number
+) {
+  // Everything below is in pre-zoom stage pixels. Zoom is applied once by
+  // the Pixi stage / DOM world and inverted once by screenToTile.
+  const stageViewport = { width: viewport.width / zoom, height: viewport.height / zoom };
+  const artwork = getRoomArtworkSize(map);
+  const tileSize = TILE_SIZE * viewportScale * (artwork?.layerScale ?? 1);
+  const width = (artwork?.width ?? 0) * viewportScale;
+  const height = (artwork?.height ?? 0) * viewportScale;
+  const pan =
+    artwork && !map?.gridOffset
+      ? getRoomPan({
+          playerPos,
+          tileSize,
+          artworkWidth: width,
+          artworkHeight: height,
+          viewportWidth: stageViewport.width,
+          viewportHeight: stageViewport.height,
+        })
+      : { x: 0, y: 0 };
+  return {
+    tileSize: artwork ? tileSize : TILE_SIZE,
+    pan,
+    gridOffset:
+      map?.gridOffset ??
+      (artwork
+        ? {
+            x: (stageViewport.width - width) / 2 + pan.x,
+            y: (stageViewport.height - height) / 2 + pan.y,
+          }
+        : undefined),
   };
 }

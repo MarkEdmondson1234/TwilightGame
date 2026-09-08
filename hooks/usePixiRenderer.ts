@@ -669,8 +669,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         viewportScale,
         referenceWidth: refViewport.width,
         referenceHeight: refViewport.height,
-        viewportWidth: viewportSize.width,
-        viewportHeight: viewportSize.height,
+        viewportWidth: viewportSize.width / zoom,
+        viewportHeight: viewportSize.height / zoom,
       });
 
       (async () => {
@@ -680,7 +680,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       backgroundImageLayerRef.current.setScalingConfig(null);
       backgroundImageLayerRef.current.clear();
     }
-  }, [enabled, currentMapId, isPixiInitialized, viewportScale, viewportSize]);
+  }, [enabled, currentMapId, isPixiInitialized, viewportScale, viewportSize, zoom]);
 
   // =========================================================================
   // EFFECT: Update weather visibility on map change

@@ -56,7 +56,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
 
   return (
     <div
-      className={`touch-controls fixed left-0 right-0 flex justify-between items-end px-4 sm:px-6 pointer-events-auto ${zClass(Z_TOUCH_CONTROLS)}`}
+      className={`touch-controls fixed left-0 right-0 flex justify-between items-end px-4 sm:px-6 pointer-events-none ${zClass(Z_TOUCH_CONTROLS)}`}
       style={{
         bottom: compact
           ? 'calc(40px + env(safe-area-inset-bottom, 0px))'
@@ -69,7 +69,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('up')}
           onTouchEnd={handleTouchEnd('up')}
-          className={`absolute top-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-t-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
+          className={`pointer-events-auto absolute top-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-t-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ▲
         </button>
@@ -78,7 +78,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('down')}
           onTouchEnd={handleTouchEnd('down')}
-          className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-b-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
+          className={`pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-b-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ▼
         </button>
@@ -87,7 +87,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('left')}
           onTouchEnd={handleTouchEnd('left')}
-          className={`absolute left-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-l-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
+          className={`pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-l-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ◄
         </button>
@@ -96,14 +96,14 @@ const TouchControls: React.FC<TouchControlsProps> = ({
         <button
           onTouchStart={handleTouchStart('right')}
           onTouchEnd={handleTouchEnd('right')}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-r-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
+          className={`pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-r-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
         >
           ►
         </button>
 
         {/* Center */}
         <div
-          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${dpadCenterSize} bg-slate-800/70 rounded-full border-2 border-slate-600`}
+          className={`pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${dpadCenterSize} bg-slate-800/70 rounded-full border-2 border-slate-600`}
         ></div>
       </div>
 
@@ -116,7 +116,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
               e.preventDefault();
               onPhotoPress();
             }}
-            className={`${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-full border-2 border-teal-400/70 flex items-center justify-center text-white text-2xl shadow-md`}
+            className={`pointer-events-auto ${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-full border-2 border-teal-400/70 flex items-center justify-center text-white text-2xl shadow-md`}
             title="Take Photo"
           >
             <img
@@ -133,7 +133,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
               e.preventDefault();
               onEmotePress();
             }}
-            className={`${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-full border-2 border-amber-400/70 flex items-center justify-center text-white ${compact ? 'text-xl' : 'text-2xl'} shadow-md`}
+            className={`pointer-events-auto ${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-full border-2 border-amber-400/70 flex items-center justify-center text-white ${compact ? 'text-xl' : 'text-2xl'} shadow-md`}
             title="Emotes"
           >
             👋
@@ -145,7 +145,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             e.preventDefault();
             onResetPress();
           }}
-          className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} bg-slate-600/70 hover:bg-slate-500/70 active:bg-slate-400/70 rounded-full border border-slate-400/50 flex items-center justify-center text-white/70 text-xs shadow-sm`}
+          className={`pointer-events-auto ${compact ? 'w-8 h-8' : 'w-10 h-10'} bg-slate-600/70 hover:bg-slate-500/70 active:bg-slate-400/70 rounded-full border border-slate-400/50 flex items-center justify-center text-white/70 text-xs shadow-sm`}
           title="Reset position"
         >
           ↺
