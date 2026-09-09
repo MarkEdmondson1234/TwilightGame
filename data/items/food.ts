@@ -150,6 +150,17 @@ export const FOOD_ITEMS: Record<string, ItemDefinition> = {
     image: cookingAssets.cookies,
   },
 
+  food_garden_salad: {
+    id: 'food_garden_salad',
+    name: 'food_garden_salad',
+    displayName: 'Garden Salad',
+    category: ItemCategory.FOOD,
+    description: 'A fresh, crisp garden salad with a light vinaigrette.',
+    stackable: true,
+    sellPrice: 25,
+    image: cookingAssets.garden_salad,
+  },
+
   food_apple_cobbler: {
     id: 'food_apple_cobbler',
     name: 'food_apple_cobbler',
@@ -159,6 +170,17 @@ export const FOOD_ITEMS: Record<string, ItemDefinition> = {
     stackable: true,
     sellPrice: 40,
     image: cookingAssets.apple_cobbler,
+  },
+
+  food_melon_granita: {
+    id: 'food_melon_granita',
+    name: 'food_melon_granita',
+    displayName: 'Melon Granita',
+    category: ItemCategory.FOOD,
+    description: 'A refreshing frozen melon dessert, light as snow.',
+    stackable: true,
+    sellPrice: 35,
+    image: cookingAssets.melon_granita,
   },
 
   food_chocolate_cake: {

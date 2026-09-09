@@ -152,6 +152,7 @@ export const CROP_ITEMS: Record<string, ItemDefinition> = {
     description: 'Fresh lettuce leaves.',
     stackable: true,
     sellPrice: 15,
+    buyPrice: 35,
     image: groceryAssets.salad_head,
   },
 

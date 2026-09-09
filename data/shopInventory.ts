@@ -176,6 +176,12 @@ export const GENERAL_STORE_INVENTORY: ShopItem[] = [
     stock: 'unlimited',
   },
   {
+    itemId: 'lemon',
+    buyPrice: 6,
+    sellPrice: 2,
+    stock: 'unlimited',
+  },
+  {
     itemId: 'sunflower_oil',
     buyPrice: 12,
     sellPrice: 4,

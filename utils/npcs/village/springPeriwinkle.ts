@@ -84,6 +84,12 @@ export function createSpringPeriwinkleNPC(
           { text: 'Have you noticed anything unusual lately?', nextId: 'noticed_deflect' },
           // Mr Fox's Picnic — post-quest option
           { text: 'How are things going with Mr Fox?', nextId: 'mfp_post_quest', requiredQuest: 'mr_fox_picnic', requiredQuestStage: 9 },
+          {
+            text: "What's your favourite recipe?",
+            nextId: 'melon_granita_offer',
+            requiredCookingCourseComplete: true,
+            hiddenIfRecipeUnlocked: 'melon_granita',
+          },
           { text: 'Lovely to meet you!' },
         ],
       },
@@ -149,6 +155,11 @@ export function createSpringPeriwinkleNPC(
           winter:
             "She's been teaching me her snowflake drawing technique. Very important skills, apparently.",
         },
+      },
+      {
+        id: 'melon_granita_offer',
+        text: 'Melon granita - here, let me write it down for you.',
+        responses: [{ text: 'Thank you!' }],
       },
       {
         id: 'noticed_deflect',

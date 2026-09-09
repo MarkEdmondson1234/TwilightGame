@@ -119,6 +119,11 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
     if (redirect) return redirect;
   }
 
+  // Handle Spring Periwinkle's melon granita recipe (taught after cooking course is complete)
+  if (npcId === 'spring_periwinkle') {
+    handleSpringPeriwinkleActions(nodeId);
+  }
+
   // Handle fairy quest actions (Morgan and Stella attracted to fairy bluebells)
   if (npcId.startsWith('fairy_attracted_')) {
     handleFairyQuestActions(npcId, nodeId);
@@ -207,6 +212,18 @@ function handleSeedPickup(nodeId: string): void {
     const inventoryData = inventoryManager.getInventoryData();
     characterData.saveInventory(inventoryData.items, inventoryData.tools);
     debugLog('dialogueHandlers', `Added ${action.quantity}x ${action.itemId} to inventory`);
+  }
+}
+
+/**
+ * Teach Melon Granita once the player reaches Spring Periwinkle's recipe-offer node
+ * (only reachable once the cooking course is complete — see her dialogue definition)
+ */
+function handleSpringPeriwinkleActions(nodeId: string): void {
+  if (nodeId === 'melon_granita_offer') {
+    if (cookingManager.teachRecipe('melon_granita', 'spring_periwinkle')) {
+      debugLog('dialogueHandlers', '🍈 Spring Periwinkle taught you how to make Melon Granita!');
+    }
   }
 }
 
@@ -751,6 +768,13 @@ function handleMrFoxPicnicActions(nodeId: string): string | void {
     handleBasketGiven(); // Remove basket from inventory — returned empty on quest complete
     cutsceneManager.startCutscene('fox_picnic');
     debugLog('dialogueHandlers', '🎬 Fox picnic cutscene triggered');
+  }
+
+  // Teach Garden Salad once the player reaches Mr Fox's recipe-offer node
+  if (nodeId === 'fox_garden_salad_offer') {
+    if (cookingManager.teachRecipe('garden_salad', 'shopkeeper')) {
+      debugLog('dialogueHandlers', '🥗 Mr Fox taught you how to make Garden Salad!');
+    }
   }
 }
 

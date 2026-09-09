@@ -104,6 +104,12 @@ export function createShopkeeperNPC(
             hiddenIfQuestStarted: 'fox_asked_evolution',
             startsQuest: 'fox_asked_evolution',
           },
+          {
+            text: 'Do you ever cook, Mr Fox?',
+            nextId: 'fox_garden_salad_offer',
+            requiredFriendshipTier: 'acquaintance',
+            hiddenIfRecipeUnlocked: 'garden_salad',
+          },
 
           // ── After evolution asked: standing_outside unlocks, disappears after asked ──
           {
@@ -187,6 +193,12 @@ export function createShopkeeperNPC(
             hiddenIfQuestCompleted: 'ghost_queen',
           },
         ],
+      },
+
+      {
+        id: 'fox_garden_salad_offer',
+        text: "To be honest, I'm not much of a cook. But if I have the right ingredients, I can whip up a lovely garden salad. I'll write down the recipe for you.",
+        responses: [{ text: 'Thank you, Mr Fox!' }],
       },
 
       // ── Nevarre enquiry (Ghost Queen quest) ──────────────────────────────

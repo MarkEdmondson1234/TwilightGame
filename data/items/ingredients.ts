@@ -219,6 +219,18 @@ export const INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     image: groceryAssets.yeast,
   },
 
+  lemon: {
+    id: 'lemon',
+    name: 'lemon',
+    displayName: 'Lemon',
+    category: ItemCategory.INGREDIENT,
+    description: 'A tart, juicy lemon.',
+    stackable: true,
+    sellPrice: 2,
+    buyPrice: 6,
+    image: groceryAssets.lemon,
+  },
+
   olive_oil: {
     id: 'olive_oil',
     name: 'olive_oil',
