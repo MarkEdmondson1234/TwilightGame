@@ -150,6 +150,28 @@ export const FOOD_ITEMS: Record<string, ItemDefinition> = {
     image: cookingAssets.cookies,
   },
 
+  food_corn_bread: {
+    id: 'food_corn_bread',
+    name: 'food_corn_bread',
+    displayName: 'Corn Bread',
+    category: ItemCategory.FOOD,
+    description: 'Warm, slightly sweet corn bread — lovely with butter on a cold autumn evening.',
+    stackable: true,
+    sellPrice: 25,
+    image: cookingAssets.corn_bread,
+  },
+
+  food_pumpkin_pie: {
+    id: 'food_pumpkin_pie',
+    name: 'food_pumpkin_pie',
+    displayName: 'Pumpkin Pie',
+    category: ItemCategory.FOOD,
+    description: 'A proper harvest treat — spiced pumpkin filling in a buttery pastry case.',
+    stackable: true,
+    sellPrice: 45,
+    image: cookingAssets.pumpkin_pie,
+  },
+
   food_garden_salad: {
     id: 'food_garden_salad',
     name: 'food_garden_salad',

@@ -80,6 +80,12 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
             requiredCookingCourseComplete: true,
           },
           {
+            text: 'Do you have any harvest time recipes?',
+            nextId: 'learn_harvest',
+            requiredCookingCourseComplete: true,
+            requiredSeason: 'autumn',
+          },
+          {
             text: 'What are you working on?',
             nextId: 'home_tasks',
             requiredCookingCourseComplete: true,
@@ -155,6 +161,30 @@ export function createMumNPC(id: string, position: Position, name: string = 'Mum
         id: 'learn_more_recipes',
         text: "You've learned everything I know how to teach you, love! But there's more out there — you can buy cookbooks from the shop for new recipes. And if you get to know the villagers and ask nicely, some of them might teach you their favourite dish.",
         expression: 'happy',
+        responses: [],
+      },
+      {
+        id: 'learn_harvest',
+        text: 'Let me see. What would you like to learn?',
+        responses: [
+          { text: 'Corn flour.', nextId: 'learn_corn_flour', hiddenIfRecipeUnlocked: 'corn_flour' },
+          { text: 'Corn bread.', nextId: 'learn_corn_bread', hiddenIfRecipeUnlocked: 'corn_bread' },
+          { text: 'Pumpkin pie.', nextId: 'learn_pumpkin_pie', hiddenIfRecipeUnlocked: 'pumpkin_pie' },
+        ],
+      },
+      {
+        id: 'learn_corn_flour',
+        text: "Corn flour — simple, but so useful this time of year. Once you've dried and ground your own, you'll never go back to shop-bought. I'll add it to your recipe book.",
+        responses: [],
+      },
+      {
+        id: 'learn_corn_bread',
+        text: "Corn bread — warm, a little sweet, perfect with butter on a cold evening. You'll need your own corn flour for this one. Let me write it down for you.",
+        responses: [],
+      },
+      {
+        id: 'learn_pumpkin_pie',
+        text: "Pumpkin pie! Now that's a proper harvest treat. Let me write down the recipe for you.",
         responses: [],
       },
       {

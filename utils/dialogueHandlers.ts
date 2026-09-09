@@ -439,6 +439,9 @@ function handleRecipeTeaching(nodeId: string): void {
     learn_chocolate_cake: 'chocolate_cake',
     learn_potato_pizza: 'potato_pizza',
     learn_roast_dinner: 'roast_dinner',
+    learn_corn_flour: 'corn_flour',
+    learn_corn_bread: 'corn_bread',
+    learn_pumpkin_pie: 'pumpkin_pie',
   };
 
   const recipeId = recipeNodes[nodeId];

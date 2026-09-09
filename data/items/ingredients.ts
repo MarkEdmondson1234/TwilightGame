@@ -10,6 +10,7 @@
  */
 
 import {
+  cookingAssets,
   groceryAssets,
   itemAssets,
 } from '../../assets';
@@ -153,6 +154,17 @@ export const INGREDIENT_ITEMS: Record<string, ItemDefinition> = {
     sellPrice: 3,
     buyPrice: 5,
     image: groceryAssets.whole_grain_wheat,
+  },
+
+  corn_flour: {
+    id: 'corn_flour',
+    name: 'corn_flour',
+    displayName: 'Corn Flour',
+    category: ItemCategory.INGREDIENT,
+    description: 'Finely ground corn flour, dried and milled at home.',
+    stackable: true,
+    sellPrice: 5,
+    image: cookingAssets.corn_flour,
   },
 
   sourdough: {
