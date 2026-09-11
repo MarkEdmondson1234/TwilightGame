@@ -10,6 +10,8 @@ import { getMiniGamesForPlacedItem } from '../../../minigames/registry';
 import { isMrFoxPicnicAtStage } from '../../../data/questHandlers/mrFoxPicnicHandler';
 import { miniGameManager } from '../../../minigames/MiniGameManager';
 import { yuleCelebrationManager } from '../../YuleCelebrationManager';
+import { harvestFeastManager } from '../../HarvestFeastManager';
+import { HARVEST_FEAST_TABLE_ITEM_ID } from '../../../data/harvestFeast';
 
 export function placedItemProvider(ctx: InteractionContext): AvailableInteraction[] {
   const { onPlacedItemAction, onBeginYuleCelebration, tilePos, itemAtPosition } = ctx;
@@ -18,15 +20,23 @@ export function placedItemProvider(ctx: InteractionContext): AvailableInteractio
 
   if (itemAtPosition && onPlacedItemAction) {
     const placedItemDef = getItem(itemAtPosition.itemId);
+    // Food sitting on the Harvest Feast table (both the two NPC-placed baseline
+    // dishes and anything a player contributed) is otherwise an ordinary
+    // food_corn_bread/etc. PlacedItem — without this check the player could
+    // just Eat or Pick Up the feast itself the instant it's placed, instead of
+    // letting villagers "eat" it over the scheduled window. See
+    // utils/HarvestFeastManager.ts.
+    const isFeastTableFood = itemAtPosition.id.startsWith('harvest_feast_food_slot_');
     const isFoodItem =
-      placedItemDef?.category === ItemCategory.FOOD || placedItemDef?.edible === true;
+      !isFeastTableFood &&
+      (placedItemDef?.category === ItemCategory.FOOD || placedItemDef?.edible === true);
 
     // Pick up option (not available for seasonal event decorations — they are placed/removed
     // automatically — or for fixed fixtures like quest crafting tables, whose owning manager
     // spawns and removes them; picking one up just made it vanish and respawn 10s later)
     const isSeasonalDecoration = itemAtPosition.itemId.startsWith('seasonal_');
     const isFixedFixture = placedItemDef?.fixed === true;
-    if (!isSeasonalDecoration && !isFixedFixture)
+    if (!isSeasonalDecoration && !isFixedFixture && !isFeastTableFood)
       interactions.push({
         type: 'pickup_item',
         label: 'Pick Up',
@@ -58,6 +68,28 @@ export function placedItemProvider(ctx: InteractionContext): AvailableInteractio
         execute: () =>
           onPlacedItemAction({
             action: 'add_to_basket',
+            itemId: itemAtPosition.itemId,
+            placedItemId: itemAtPosition.id,
+            imageUrl: itemAtPosition.image,
+          }),
+      });
+    }
+
+    // "Place Food" option on the Harvest Feast table while it's accepting contributions
+    if (
+      itemAtPosition.itemId === HARVEST_FEAST_TABLE_ITEM_ID &&
+      harvestFeastManager.isTableOpenForContributions() &&
+      onPlacedItemAction
+    ) {
+      interactions.push({
+        type: 'add_to_feast_table',
+        label: 'Add Food',
+        icon: '🍲',
+        color: '#f59e0b',
+        data: { placedItemId: itemAtPosition.id, itemId: itemAtPosition.itemId },
+        execute: () =>
+          onPlacedItemAction({
+            action: 'add_to_feast_table',
             itemId: itemAtPosition.itemId,
             placedItemId: itemAtPosition.id,
             imageUrl: itemAtPosition.image,

@@ -193,6 +193,18 @@ const stubGiftService = {
 };
 
 /**
+ * Stub harvestFeastService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubHarvestFeastService = {
+  isAvailable: () => false,
+  subscribe: (_year: number, _onChange: (mealIds: string[]) => void) => () => {},
+  getListeningYear: () => null as number | null,
+  contributeMeal: async (_year: number, _mealItemId: string) => false as boolean,
+  destroy: () => {},
+};
+
+/**
  * Stub sharedAlbumService when Firebase is not available.
  * Parity asserted by tests/multiplayerSafeStubs.test.ts.
  */
@@ -397,6 +409,14 @@ export function getSharedPlacedItemsService() {
  */
 export function getGiftService() {
   return firebaseModule?.giftService ?? stubGiftService;
+}
+
+/**
+ * Get harvestFeastService (real or stub).
+ * Never cache — it is a stub until Firebase has settled.
+ */
+export function getHarvestFeastService() {
+  return firebaseModule?.harvestFeastService ?? stubHarvestFeastService;
 }
 
 /**

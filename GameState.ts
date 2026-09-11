@@ -116,6 +116,27 @@ export interface GameState {
     lastSeasonTriggered?: string; // Track last season for season change cutscenes
   };
 
+  // Harvest Feast progress tracking (see utils/HarvestFeastManager.ts).
+  harvestFeast: {
+    celebratedYears: number[]; // Years the feast fully concluded (or was caught up on)
+    lastKnownDay: number | null; // Total game-day count as of last save, for missed-window detection
+    contributedMealIds: string[]; // This year's distinct player-contributed meal ids (local mirror)
+    /**
+     * Real Date.now() when this client first observed gathering begin,
+     * cleared once the feast concludes. Anchors the food-consumption pacing.
+     * Deliberately NOT a pure function of (year, calendar) — that would tie
+     * it to TimeManager's real clock, which a dev time-override deliberately
+     * decouples from Date.now(), breaking testability (jumping to hour 18 via
+     * the console wouldn't make food disappear on any sensible schedule).
+     * Anchoring to "the moment I actually observed it" instead means the
+     * console/DevTools override works for testing exactly as production play
+     * does, at the small cost of two players who arrive at slightly
+     * different real moments pacing their own countdown slightly differently
+     * (removal itself is still shared — see tickConsumption).
+     */
+    gatherStartedAt: number | null;
+  };
+
   // NPC relationships and friendship (managed by FriendshipManager)
   relationships: {
     npcFriendships: NPCFriendship[];
@@ -680,6 +701,72 @@ class GameStateManager {
     this.notify();
   }
 
+  // Harvest Feast management
+
+  hasHarvestFeastBeenCelebrated(year: number): boolean {
+    return this.state.harvestFeast.celebratedYears.includes(year);
+  }
+
+  markHarvestFeastCelebrated(year: number): void {
+    if (!this.state.harvestFeast.celebratedYears.includes(year)) {
+      this.state.harvestFeast.celebratedYears.push(year);
+      this.notify();
+      debugLog('GameState', `Harvest Feast marked celebrated: year ${year}`);
+    }
+  }
+
+  getHarvestFeastLastKnownDay(): number | null {
+    return this.state.harvestFeast.lastKnownDay;
+  }
+
+  setHarvestFeastLastKnownDay(day: number): void {
+    this.state.harvestFeast.lastKnownDay = day;
+    this.notify();
+  }
+
+  getHarvestFeastContributedMealIds(): string[] {
+    return [...this.state.harvestFeast.contributedMealIds];
+  }
+
+  recordHarvestFeastContribution(mealId: string): void {
+    if (!this.state.harvestFeast.contributedMealIds.includes(mealId)) {
+      this.state.harvestFeast.contributedMealIds.push(mealId);
+      this.notify();
+    }
+  }
+
+  /** Reset per-year contribution tracking — called when a new feast's table opens. */
+  resetHarvestFeastContributions(): void {
+    this.state.harvestFeast.contributedMealIds = [];
+    this.notify();
+  }
+
+  getHarvestFeastGatherStartedAt(): number | null {
+    return this.state.harvestFeast.gatherStartedAt;
+  }
+
+  setHarvestFeastGatherStartedAt(timestamp: number | null): void {
+    this.state.harvestFeast.gatherStartedAt = timestamp;
+    this.notify();
+  }
+
+  /**
+   * Dev/testing convenience: wipe this save's Harvest Feast progress so the
+   * event can be replayed without waiting for a real new year. Exposed via
+   * `window.gameState.resetHarvestFeastProgress()` in the console — see
+   * utils/gameInitializer.ts's dev commands log.
+   */
+  resetHarvestFeastProgress(): void {
+    this.state.harvestFeast = {
+      celebratedYears: [],
+      lastKnownDay: null,
+      contributedMealIds: [],
+      gatherStartedAt: null,
+    };
+    this.notify();
+    debugLog('GameState', 'Harvest Feast progress reset for testing');
+  }
+
   getLastSeasonTriggered(): string | undefined {
     return this.state.cutscenes.lastSeasonTriggered;
   }
@@ -1200,6 +1287,12 @@ class GameStateManager {
       nextWeatherCheckTime: 0,
       weatherDriftSpeed: 1.0,
       cutscenes: { completed: [] },
+      harvestFeast: {
+        celebratedYears: [],
+        lastKnownDay: null,
+        contributedMealIds: [],
+        gatherStartedAt: null,
+      },
       relationships: { npcFriendships: [] },
       placedItems: [],
       deskContents: [],
@@ -2050,6 +2143,7 @@ class GameStateManager {
       cooking: cloudState.cooking || this.state.cooking,
       statusEffects: cloudState.statusEffects || this.state.statusEffects,
       cutscenes: cloudState.cutscenes || this.state.cutscenes,
+      harvestFeast: cloudState.harvestFeast || this.state.harvestFeast,
     };
 
     // Save to localStorage immediately

@@ -17,6 +17,7 @@ import { presenceService } from '../firebase/presenceService';
 import { chatService } from '../firebase/chatService';
 import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
 import { giftService } from '../firebase/giftService';
+import { harvestFeastService } from '../firebase/harvestFeastService';
 import { sharedAlbumService } from '../firebase/sharedAlbumService';
 import { npcSpeechService } from '../firebase/npcSpeechService';
 import { battleService } from '../firebase/battleService';
@@ -25,6 +26,7 @@ import {
   getChatService,
   getSharedPlacedItemsService,
   getGiftService,
+  getHarvestFeastService,
   getSharedAlbumService,
   getNpcSpeechService,
   getBattleService,
@@ -131,6 +133,21 @@ describe('gift stub parity', () => {
         'firebase/safe.ts. useGiftsController calls startListening() on every ' +
         'boot, so a missing stub method crashes startup in a build with no ' +
         'Firebase. Add a no-op to stubGiftService.'
+    ).toEqual([]);
+  });
+});
+
+describe('harvest feast stub parity', () => {
+  it('implements every public method of the real harvest feast service', () => {
+    const missing = methodNames(harvestFeastService).filter(
+      (name) => !methodNames(getHarvestFeastService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/harvestFeastService but not on the stub in ' +
+        'firebase/safe.ts. HarvestFeastManager runs in a build with no Firebase too ' +
+        '(falling back to local-only tier tracking). Add a no-op to stubHarvestFeastService.'
     ).toEqual([]);
   });
 });

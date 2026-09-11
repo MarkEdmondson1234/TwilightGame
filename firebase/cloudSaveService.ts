@@ -237,6 +237,7 @@ class CloudSaveService {
       forageCooldowns: state.forageCooldowns,
       appliedWallpapers: state.appliedWallpapers,
       cutscenes: state.cutscenes,
+      harvestFeast: state.harvestFeast,
     };
     batch.set(
       doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'world')),
@@ -386,6 +387,12 @@ class CloudSaveService {
       nextWeatherCheckTime: 0,
       weatherDriftSpeed: world?.weatherDriftSpeed || 1.0,
       cutscenes: world?.cutscenes || { completed: [] },
+      harvestFeast: world?.harvestFeast || {
+        celebratedYears: [],
+        lastKnownDay: null,
+        contributedMealIds: [],
+        gatherStartedAt: null,
+      },
       relationships: { npcFriendships: friendships?.npcFriendships || [] },
       placedItems: world?.placedItems || [],
       deskContents: world?.deskContents || [],

@@ -263,6 +263,14 @@ This command:
 - If HMR updates seem to be piling up in the console
 - Whenever the game won't load after code changes
 
+**If `make reload` + a hard refresh doesn't fix it:** you may have more than one dev server process
+running (its kill step can fail to find an already-running server started from a different
+terminal, so the reload starts a second one on the next free port instead of replacing the first —
+your browser tab then talks to whichever stale instance it's already connected to). This produces
+"impossible" bugs, not hangs — the same code reading two different answers depending on which
+process handles the request. See [`docs/ARCHITECTURE_GOTCHAS.md`](docs/ARCHITECTURE_GOTCHAS.md#7-split-brain-dev-servers--make-reload-didnt-actually-kill-the-old-one)
+for how to spot and clear duplicate processes.
+
 **NPM Commands** (cross-platform - works on macOS, Linux, Windows):
 
 - `npm install` - Install dependencies

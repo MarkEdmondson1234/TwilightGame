@@ -14,6 +14,15 @@
 
 import { CutsceneDefinition } from '../../types';
 import { YULE_CUTSCENE_ID } from '../yuleCelebration';
+import {
+  HARVEST_FEAST_CATCHUP_CUTSCENE_ID,
+  HARVEST_FEAST_GATHERING_CUTSCENE_ID,
+  HARVEST_FEAST_CLOSING_CUTSCENE_IDS,
+  HARVEST_FEAST_DAY,
+  HARVEST_FEAST_CATCHUP_RECAP,
+  ELIAS_GATHERING_LINE,
+  ELIAS_CLOSING_LINES,
+} from '../harvestFeast';
 
 // NPC sprite paths (reused from seasonChange.ts for consistency)
 const sprites = {
@@ -356,6 +365,275 @@ export const yuleCutscene: CutsceneDefinition = {
     },
   ],
 };
+
+// ============================================================================
+// Harvest Feast — morning announcement (day 42 of Autumn, 8am)
+// ============================================================================
+
+// Deliberately hour 8, not 9 — harvestFestivalCutscene above already occupies
+// hour 9/day 42/autumn, and a distinct hour avoids two cutscenes racing on
+// the same trigger tuple rather than relying on registry iteration order.
+export const harvestFeastCutscene: CutsceneDefinition = {
+  id: 'seasonal_event_harvest_feast_morning',
+  name: 'Harvest Feast',
+  canSkip: true,
+  canReplay: false,
+  playOnce: false,
+  cooldownMs: FESTIVAL_COOLDOWN_MS,
+
+  trigger: {
+    type: 'time',
+    hour: 8,
+    day: HARVEST_FEAST_DAY,
+    season: 'autumn',
+  },
+
+  onComplete: { action: 'return' },
+
+  scenes: [
+    {
+      id: 'harvest_feast_morning',
+      backgroundLayers: [
+        {
+          image: 'cutscene_autumn_background.png',
+          zIndex: 0,
+          animation: {
+            type: 'zoom',
+            duration: 6000,
+            zoomFrom: 1.02,
+            zoomTo: 1.0,
+            easing: 'ease-in-out',
+          },
+        },
+        {
+          image: 'cutscene_autumn_middleground.png',
+          zIndex: 1,
+          animation: {
+            type: 'zoom',
+            duration: 6000,
+            zoomFrom: 1.06,
+            zoomTo: 1.0,
+            easing: 'ease-in-out',
+          },
+        },
+      ],
+      weatherEffect: {
+        type: 'falling_leaves',
+        intensity: 'light',
+        opacity: 0.7,
+      },
+      characters: [
+        {
+          // A hand-drawn pumpkin composited as the scene's visual anchor,
+          // the same way yule_tree.png stands in for the Yule tree below —
+          // both are transparent prop illustrations, not landscape art, so
+          // they read best as a positioned "character" rather than a
+          // stretched-to-fill background layer.
+          characterId: 'harvest_feast_pumpkin',
+          spriteUrl: '/TwilightGame/assets-optimized/farming/pumpkin_adult.png',
+          position: { x: 24, y: 56 },
+          scale: 2.2,
+          entrance: { type: 'fade', duration: 800 },
+        },
+        {
+          characterId: 'village_elder',
+          spriteUrl: sprites.elder,
+          position: { x: 67, y: 50 },
+          scale: 1.8,
+          entrance: { type: 'slide', from: 'right', duration: 800 },
+        },
+      ],
+      dialogue: {
+        speaker: 'Old Man Elias',
+        text: "Today's the day! Mind you're back in the village square by evening — we're laying out the Harvest Feast, and there's a place at the table for everyone.",
+      },
+      transitionOut: { type: 'fade', duration: 1000 },
+    },
+  ],
+};
+
+// ============================================================================
+// Harvest Feast — catch-up recap (manual trigger — fired when a player logs
+// in after day 42 of Autumn having missed the live event entirely)
+// ============================================================================
+
+export const harvestFeastCatchupCutscene: CutsceneDefinition = {
+  id: HARVEST_FEAST_CATCHUP_CUTSCENE_ID,
+  name: 'Harvest Feast (missed)',
+  canSkip: true,
+  canReplay: false,
+  playOnce: false, // HarvestFeastManager handles the once-per-year check
+  cooldownMs: 0,
+
+  trigger: { type: 'manual', id: HARVEST_FEAST_CATCHUP_CUTSCENE_ID },
+
+  onComplete: { action: 'return' },
+
+  scenes: [
+    {
+      id: 'harvest_feast_catchup',
+      backgroundLayers: [
+        {
+          image: 'cutscene_autumn_background.png',
+          zIndex: 0,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: 'cutscene_autumn_middleground.png',
+          zIndex: 1,
+          animation: { type: 'static', duration: 0 },
+        },
+      ],
+      weatherEffect: {
+        type: 'falling_leaves',
+        intensity: 'light',
+        opacity: 0.5,
+      },
+      characters: [
+        {
+          characterId: 'harvest_feast_pumpkin_catchup',
+          spriteUrl: '/TwilightGame/assets-optimized/farming/pumpkin_adult.png',
+          position: { x: 24, y: 56 },
+          scale: 1.8,
+          opacity: 0.85,
+          entrance: { type: 'fade', duration: 800 },
+        },
+        {
+          characterId: 'village_elder',
+          spriteUrl: sprites.elder,
+          position: { x: 67, y: 50 },
+          scale: 1.8,
+          entrance: { type: 'fade', duration: 900 },
+        },
+      ],
+      dialogue: {
+        speaker: 'Old Man Elias',
+        text: HARVEST_FEAST_CATCHUP_RECAP,
+      },
+      transitionOut: { type: 'fade', duration: 1000 },
+    },
+  ],
+};
+
+// ============================================================================
+// Harvest Feast — gathering speech (manual trigger — fired when villagers
+// gather round the table, see HarvestFeastManager.ensureGatheringStarted())
+// ============================================================================
+
+export const harvestFeastGatheringCutscene: CutsceneDefinition = {
+  id: HARVEST_FEAST_GATHERING_CUTSCENE_ID,
+  name: 'Harvest Feast Gathering',
+  canSkip: true,
+  canReplay: false,
+  playOnce: false, // HarvestFeastManager handles the once-per-year check
+  cooldownMs: 0,
+
+  trigger: { type: 'manual', id: HARVEST_FEAST_GATHERING_CUTSCENE_ID },
+
+  onComplete: { action: 'return' },
+
+  audio: {
+    music: 'music_harvest_feast_gathering',
+  },
+
+  scenes: [
+    {
+      id: 'harvest_feast_gathering',
+      backgroundLayers: [
+        {
+          image: 'cutscene_autumn_background.png',
+          zIndex: 0,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: 'cutscene_autumn_middleground.png',
+          zIndex: 1,
+          animation: { type: 'static', duration: 0 },
+        },
+      ],
+      weatherEffect: {
+        type: 'falling_leaves',
+        intensity: 'light',
+        opacity: 0.5,
+      },
+      characters: [
+        {
+          characterId: 'village_elder',
+          spriteUrl: sprites.elder,
+          position: { x: 50, y: 50 },
+          scale: 1.8,
+          entrance: { type: 'fade', duration: 800 },
+        },
+      ],
+      dialogue: {
+        speaker: 'Old Man Elias',
+        text: ELIAS_GATHERING_LINE,
+      },
+      transitionOut: { type: 'fade', duration: 1000 },
+    },
+  ],
+};
+
+// ============================================================================
+// Harvest Feast — closing speech (manual trigger, one per tier — fired when
+// the last dish is eaten, see HarvestFeastManager.maybeConclude())
+// ============================================================================
+
+function makeHarvestFeastClosingCutscene(tier: 1 | 2 | 3): CutsceneDefinition {
+  return {
+    id: HARVEST_FEAST_CLOSING_CUTSCENE_IDS[tier],
+    name: `Harvest Feast Closing (tier ${tier})`,
+    canSkip: true,
+    canReplay: false,
+    playOnce: false, // HarvestFeastManager handles the once-per-year check
+    cooldownMs: 0,
+
+    trigger: { type: 'manual', id: HARVEST_FEAST_CLOSING_CUTSCENE_IDS[tier] },
+
+    onComplete: { action: 'return' },
+
+    scenes: [
+      {
+        id: `harvest_feast_closing_tier${tier}`,
+        backgroundLayers: [
+          {
+            image: 'cutscene_autumn_background.png',
+            zIndex: 0,
+            animation: { type: 'static', duration: 0 },
+          },
+          {
+            image: 'cutscene_autumn_middleground.png',
+            zIndex: 1,
+            animation: { type: 'static', duration: 0 },
+          },
+        ],
+        weatherEffect: {
+          type: 'falling_leaves',
+          intensity: 'light',
+          opacity: 0.5,
+        },
+        characters: [
+          {
+            characterId: 'village_elder',
+            spriteUrl: sprites.elder,
+            position: { x: 50, y: 50 },
+            scale: 1.8,
+            entrance: { type: 'fade', duration: 800 },
+          },
+        ],
+        dialogue: {
+          speaker: 'Old Man Elias',
+          text: ELIAS_CLOSING_LINES[tier],
+        },
+        transitionOut: { type: 'fade', duration: 1000 },
+      },
+    ],
+  };
+}
+
+export const harvestFeastClosingCutsceneTier1 = makeHarvestFeastClosingCutscene(1);
+export const harvestFeastClosingCutsceneTier2 = makeHarvestFeastClosingCutscene(2);
+export const harvestFeastClosingCutsceneTier3 = makeHarvestFeastClosingCutscene(3);
 
 // ============================================================================
 // Yule Celebration Opening (manual trigger — fired when player clicks the tree)

@@ -20,6 +20,12 @@ import {
   harvestFestivalCutscene,
   yuleCutscene,
   yuleCelebrationOpeningCutscene,
+  harvestFeastCutscene,
+  harvestFeastCatchupCutscene,
+  harvestFeastGatheringCutscene,
+  harvestFeastClosingCutsceneTier1,
+  harvestFeastClosingCutsceneTier2,
+  harvestFeastClosingCutsceneTier3,
 } from './seasonalEvents';
 import { ALL_WIZARD_TRIALS_CUTSCENES } from './wizardTrials';
 
@@ -46,6 +52,14 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   yuleCutscene,
   // Yule celebration (manually triggered by clicking the tree)
   yuleCelebrationOpeningCutscene,
+  // Harvest Feast (day 42 of Autumn morning, plus its manual catch-up recap
+  // and Elias's manually-triggered gathering/closing speeches)
+  harvestFeastCutscene,
+  harvestFeastCatchupCutscene,
+  harvestFeastGatheringCutscene,
+  harvestFeastClosingCutsceneTier1,
+  harvestFeastClosingCutsceneTier2,
+  harvestFeastClosingCutsceneTier3,
   // Wizard Trials (Mordecai's projection)
   ...ALL_WIZARD_TRIALS_CUTSCENES,
 ];

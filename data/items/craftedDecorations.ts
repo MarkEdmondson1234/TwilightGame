@@ -189,7 +189,9 @@ export const CRAFTED_DECORATION_ITEMS: Record<string, ItemDefinition> = {
 
   // ===== SEASONAL EVENT DECORATIONS =====
   // Placed in the village square on seasonal festival days (day 42 of each season).
-  // Managed by SeasonalEventManager — not obtainable by the player.
+  // Managed by SeasonalEventManager — not obtainable by the player. Exception:
+  // seasonal_harvest_table is managed by HarvestFeastManager instead (a richer,
+  // shared community event; see utils/HarvestFeastManager.ts).
 
   seasonal_maypole: {
     id: 'seasonal_maypole',
@@ -218,13 +220,14 @@ export const CRAFTED_DECORATION_ITEMS: Record<string, ItemDefinition> = {
   seasonal_harvest_table: {
     id: 'seasonal_harvest_table',
     name: 'seasonal_harvest_table',
-    displayName: 'Harvest Table',
+    displayName: 'Harvest Feast Table',
     category: ItemCategory.DECORATION,
-    description: 'A table laden with the fruits of the autumn harvest.',
+    description: 'The table laid out for the village Harvest Feast — villagers bring dishes to share.',
     stackable: false,
     sellPrice: 0,
     icon: '🍽️',
     placedScale: 4,
+    fixed: true,
   },
 
   seasonal_yule_tree: {

@@ -21,6 +21,7 @@ export interface UIKeyHandlers {
   showGiftModal: boolean;
   showGlamourModal: boolean;
   showBasketModal: boolean;
+  showHarvestFeastModal: boolean;
   showMagicBook: boolean;
   showPhotoAlbum: boolean;
   showDevTools: boolean;
@@ -37,6 +38,7 @@ export interface UIKeyHandlers {
   onSetShowGiftModal: (show: boolean) => void;
   onSetShowGlamourModal: (show: boolean) => void;
   onSetShowBasketModal: (show: boolean) => void;
+  onSetShowHarvestFeastModal: (show: boolean) => void;
   onSetShowMagicBook: (show: boolean) => void;
   onSetShowPhotoAlbum: (show: boolean) => void;
   onSetShowDevTools: (show: boolean) => void;
@@ -66,6 +68,10 @@ export function handleEscape(handlers: UIKeyHandlers): boolean {
   }
   if (handlers.showBasketModal) {
     handlers.onSetShowBasketModal(false);
+    return true;
+  }
+  if (handlers.showHarvestFeastModal) {
+    handlers.onSetShowHarvestFeastModal(false);
     return true;
   }
   if (handlers.showShopUI) {

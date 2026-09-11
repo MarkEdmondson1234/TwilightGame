@@ -58,6 +58,7 @@ export type InteractionType =
   | 'fireplace_tea'
   | 'yule_begin_celebration'
   | 'add_to_basket'
+  | 'add_to_feast_table'
   | 'harvest_red_berries'
   | 'tidy_leaves'
   | 'pickup_leaves'
@@ -86,7 +87,7 @@ export interface AvailableInteraction {
 }
 
 export interface PlacedItemAction {
-  action: 'pickup' | 'eat' | 'taste' | 'add_to_basket';
+  action: 'pickup' | 'eat' | 'taste' | 'add_to_basket' | 'add_to_feast_table';
   itemId: string;
   placedItemId: string;
   imageUrl: string; // Sprite image URL for inventory display

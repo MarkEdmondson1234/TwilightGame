@@ -149,6 +149,17 @@ service cloud.firestore {
       allow delete: if isAuthenticated();
     }
 
+    // Harvest Feast community contributions - one doc per year recording the
+    // distinct meal item ids any player has placed on the feast table.
+    // Additive only (arrayUnion); never deleted mid-year so a late-arriving
+    // player computes the same closing-speech tier everyone else sees.
+    // Path: shared/world/harvestFeast/{year}
+    match /shared/world/harvestFeast/{year} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidHarvestFeastContribution();
+      allow delete: if false;
+    }
+
     // Shared world events - discoveries, achievements, etc.
     // Path: sharedEvents/{eventId}
     match /sharedEvents/{eventId} {
@@ -210,6 +221,13 @@ service cloud.firestore {
         && (!('n' in data) || (data.n is string && data.n.size() <= 20))
         && (!('rn' in data) || (data.rn is string && data.rn.size() <= 20))
         && (!('d' in data) || data.d is string);
+    }
+
+    function isValidHarvestFeastContribution() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['m'])
+        && data.m is list
+        && data.m.size() <= 20;
     }
 
     // Check if the requesting user owns this data

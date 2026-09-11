@@ -25,6 +25,7 @@ export type UIOverlayName =
   | 'miniGameConfirm'
   | 'photoAlbum'
   | 'basketModal'
+  | 'harvestFeastModal'
   | 'furnitureCatalogueUI';
 
 /**
@@ -72,6 +73,7 @@ export interface UIState {
   giftModal: boolean;
   glamourModal: boolean;
   basketModal: boolean;
+  harvestFeastModal: boolean;
   journal: boolean;
   miniGame: boolean;
   miniGameConfirm: boolean;
@@ -152,6 +154,7 @@ const initialState: UIState = {
   giftModal: false,
   glamourModal: false,
   basketModal: false,
+  harvestFeastModal: false,
   journal: false,
   miniGame: false,
   miniGameConfirm: false,
@@ -359,6 +362,7 @@ export function useUIState() {
       state.shopUI ||
       state.giftModal ||
       state.basketModal ||
+      state.harvestFeastModal ||
       state.journal ||
       state.miniGame ||
       state.miniGameConfirm

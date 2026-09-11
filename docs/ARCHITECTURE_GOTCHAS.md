@@ -432,7 +432,63 @@ and `_applyFogMask()` go through `disposeMask`/`attachMask`.
 
 ---
 
-## 7. Quick Debugging Checklist
+## 7. Split-Brain Dev Servers — `make reload` didn't actually kill the old one
+
+**Symptom:** behaviour that "shouldn't be possible" given the code. The clearest tell: the same
+getter, called twice within seconds, returns two different answers — e.g. a console command shows
+`mapManager.getCurrentMapId()` as `'village'`, but a log statement placed one line into a function
+that runs from the game loop shows `null` for the exact same call, on a map that never changed. Every
+individual condition a feature depends on checks out correct in isolation (right day, right hour,
+right map, no blocking flag) and yet the feature never fires, with no thrown error and no console
+warning to explain why.
+
+**Root cause:** more than one Vite dev server process is running at once, each with its own separate
+module graph — so `mapManager`, `harvestFeastManager`, or any other "singleton" is not actually a
+singleton across the whole session; there are two independent instances, and different code paths
+(a browser tab vs. whatever the running game loop happens to be bound to) can end up talking to
+different ones. This tends to build up over a long AI-assisted editing session with several
+`make reload`/`npm run dev:reload` cycles: `scripts/dev-server.js --reload`'s kill step
+(`wmic process where "commandline like '%vite%'"` on Windows) can fail to find an already-running
+server — e.g. one started from a different terminal/shell context than the one running the kill
+command — so the reload proceeds to start a **new** server anyway. Since the old one is still
+holding port 4000, Vite silently falls back to the next free port (4001, 4002, ...) rather than
+failing loudly. A browser tab left open on `:4000` then keeps talking to whichever stale instance is
+still alive there, while console commands or other tooling may hit a different one — full page
+reloads don't help, because they just re-fetch from whichever server that tab's origin points at.
+
+**How to confirm it:** list every vite/dev-server process and count how many `vite.js` entries show
+up — more than one is the bug, regardless of how many `dev-server.js` wrapper processes accompany
+them:
+
+```powershell
+Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*vite*' -or $_.CommandLine -like '*dev-server.js*' } | Select-Object ProcessId, CommandLine
+```
+
+Also check the terminal output of the most recent `make reload`/`npm run dev:reload` for
+`Port 4000 is in use, trying another one...` — that line means the kill step failed and a second
+instance just started on top of the first.
+
+**Fix:** kill every matching PID (not just the newest one — kill the wrapper `dev-server.js`
+processes too, or they respawn a vite child), then start exactly one fresh server and confirm from
+its own startup log which port it actually bound to before testing against it:
+
+```powershell
+Stop-Process -Id <pid> -Force   # repeat for every PID from the list above
+```
+
+```bash
+npm run dev   # then read its own "Local:" line — don't assume :4000
+```
+
+This is a different failure mode from the "Handling HMR Cascade Hangs" section in `CLAUDE.md`: that
+one is a single overwhelmed browser tab (too many HMR updates land at once); this one is multiple
+independent *server processes*, which a browser refresh — even a hard one — cannot fix, because
+there's nothing wrong with the tab. If `make reload` plus a hard refresh doesn't resolve a "this
+should obviously work" bug, check for duplicate processes before spending more time on the code.
+
+---
+
+## 8. Quick Debugging Checklist
 
 When something feels "off" with interactions:
 

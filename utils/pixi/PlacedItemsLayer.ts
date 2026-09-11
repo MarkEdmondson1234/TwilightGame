@@ -202,10 +202,14 @@ export class PlacedItemsLayer extends PixiLayer {
 
       // Depth sort: z-index based on bottom edge of item (like "feet" position)
       // Items with placesBelowCharacters use a fixed background z-level instead
-      // Items with placedOnSurface (e.g. wreaths on buildings) always render above all sprites
+      // Items with placedOnSurface (e.g. wreaths on buildings, or any dish on the
+      // Harvest Feast table) always render above all sprites. The per-instance
+      // item.placedOnSurface lets a manager mark specific PlacedItems this way
+      // regardless of what the underlying item normally is (e.g. any food item
+      // a player contributes to the feast table, not just specific recipes).
       if (itemDef?.placesBelowCharacters) {
         sprite.zIndex = Z_SPRITE_BACKGROUND;
-      } else if (itemDef?.placedOnSurface) {
+      } else if (item.placedOnSurface || itemDef?.placedOnSurface) {
         sprite.zIndex = Z_SURFACE_DECORATION;
       } else {
         // Visual bottom of a centred item: anchor - (scale-1)/2 + scale = anchor + (scale+1)/2

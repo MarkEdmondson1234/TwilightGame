@@ -60,6 +60,8 @@ export { sharedPlacedItemsService } from './sharedPlacedItemsService';
 
 export { giftService } from './giftService';
 
+export { harvestFeastService } from './harvestFeastService';
+
 export { sharedAlbumService } from './sharedAlbumService';
 export type { AlbumEntry } from './sharedAlbumService';
 

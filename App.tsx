@@ -102,6 +102,7 @@ import AnimationOverlay from './components/AnimationOverlay';
 import CutscenePlayer from './components/CutscenePlayer';
 import { cutsceneManager } from './utils/CutsceneManager';
 import { seasonalEventManager } from './utils/SeasonalEventManager';
+import { harvestFeastManager } from './utils/HarvestFeastManager';
 import { wreathWorkshopManager } from './utils/WreathWorkshopManager';
 import { snowAngelManager } from './utils/SnowAngelManager';
 import FarmActionAnimation from './components/FarmActionAnimation';
@@ -137,6 +138,7 @@ import ShopUI from './components/ShopUI';
 import FurnitureCatalogueUI from './components/FurnitureCatalogueUI';
 import GiftModal, { GiftResult } from './components/GiftModal';
 import BasketModal from './components/BasketModal';
+import HarvestFeastModal from './components/HarvestFeastModal';
 import GlamourModal from './components/GlamourModal';
 import { applyPotionEffect, MagicEffectCallbacks, SizeTier } from './utils/MagicEffects';
 import {
@@ -974,6 +976,9 @@ const App: React.FC = () => {
   // Dispose Yule timer on unmount
   useEffect(() => () => yuleCelebrationManager.dispose(), []);
 
+  // Dispose Harvest Feast's contribution subscription on unmount
+  useEffect(() => () => harvestFeastManager.dispose(), []);
+
   // Subscribe to magic level-up — direct player to see the witch
   useEffect(() => {
     return eventBus.on(GameEvent.MAGIC_LEVEL_UP, (payload) => {
@@ -1094,6 +1099,7 @@ const App: React.FC = () => {
     showGiftModal: ui.giftModal,
     showGlamourModal: ui.glamourModal,
     showBasketModal: ui.basketModal,
+    showHarvestFeastModal: ui.harvestFeastModal,
     showMagicBook: ui.magicBook,
     showPhotoAlbum: ui.photoAlbum,
     showDevTools: ui.devTools,
@@ -1144,6 +1150,8 @@ const App: React.FC = () => {
       show ? openUI('glamourModal') : closeUI('glamourModal'),
     onSetShowBasketModal: (show: boolean) =>
       show ? openUI('basketModal') : closeUI('basketModal'),
+    onSetShowHarvestFeastModal: (show: boolean) =>
+      show ? openUI('harvestFeastModal') : closeUI('harvestFeastModal'),
     onSetShowMagicBook: (show: boolean) => (show ? openUI('magicBook') : closeUI('magicBook')),
     onSetShowPhotoAlbum: (show: boolean) => (show ? openUI('photoAlbum') : closeUI('photoAlbum')),
     onSetPlayerPos: setPlayerPos,
@@ -1281,6 +1289,16 @@ const App: React.FC = () => {
       seasonalEventManager.check();
       wreathWorkshopManager.check();
       snowAngelManager.check();
+      harvestFeastManager.check(playerPosRef.current);
+      // Gated the same way as the position-based cutscene check below — the
+      // catch-up recap must not interrupt dialogue or another cutscene.
+      if (!activeNPC && !isCutscenePlaying) {
+        harvestFeastManager.checkCatchUpCutscene();
+      }
+      const harvestFeastNudge = harvestFeastManager.consumePendingPlayerNudge();
+      if (harvestFeastNudge) {
+        teleportPlayer(harvestFeastNudge);
+      }
     }
 
     // Check for position-based cutscene triggers (only when not in dialogue/cutscene)
@@ -2818,6 +2836,12 @@ const App: React.FC = () => {
       {ui.basketModal && (
         <BasketModal
           onClose={() => closeUI('basketModal')}
+          onResult={(message, success) => showToast(message, success ? 'success' : 'warning')}
+        />
+      )}
+      {ui.harvestFeastModal && (
+        <HarvestFeastModal
+          onClose={() => closeUI('harvestFeastModal')}
           onResult={(message, success) => showToast(message, success ? 'success' : 'warning')}
         />
       )}

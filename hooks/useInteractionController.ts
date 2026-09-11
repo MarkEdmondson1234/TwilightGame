@@ -431,6 +431,8 @@ export function useInteractionController(
           onShowToast('Mmm, tasty!', 'info');
         } else if (action.action === 'add_to_basket') {
           openUI('basketModal');
+        } else if (action.action === 'add_to_feast_table') {
+          openUI('harvestFeastModal');
         }
       },
       onCollectWater: (result: { success: boolean; message: string }) => {

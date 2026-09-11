@@ -24,6 +24,7 @@ import { audioManager } from './AudioManager';
 import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
 import { cutsceneManager } from './CutsceneManager';
+import { harvestFeastManager } from './HarvestFeastManager';
 import { debugLog } from './debugLog';
 import { setSlowMinuteContext } from './sessionDiagnostics';
 import { getSlowMinuteRuntimeContext } from './diagnosticsRuntimeContext';
@@ -37,6 +38,7 @@ export function initializeGameCore(): void {
   // Expose game objects to window for testing/debugging (typed in vite-env.d.ts)
   window.gameState = gameState;
   window.mapManager = mapManager;
+  window.npcManager = npcManager;
   window.inventoryManager = inventoryManager;
   window.cookingManager = cookingManager;
   window.magicManager = magicManager;
@@ -46,6 +48,7 @@ export function initializeGameCore(): void {
   // Exposed for scripts/perf-test.js, which has to get past the title screen
   // and any season cutscene before it can measure the game itself.
   window.cutsceneManager = cutsceneManager;
+  window.harvestFeastManager = harvestFeastManager;
 
   // Dev tools for colour system testing
   window.TimeManager = TimeManager;
@@ -63,6 +66,25 @@ export function initializeGameCore(): void {
   TimeManager.getCurrentTime()  // Show current game time
   ColorResolver.getTileColor(0)  // Get grass tile colour
   ColorResolver.traceTileColor(0)  // Trace colour resolution (shows all layers)
+
+  // Harvest Feast (stand in the village first — walk to roughly the Yule
+  // tree's spot, tile 24,16 — so the gathering step finds you there)
+  TimeManager.setTimeOverride({ season: Season.AUTUMN, day: 42, hour: 16 })  // Table + baseline food appear
+  TimeManager.setTimeOverride({ season: Season.AUTUMN, day: 42, hour: 18 })  // Villagers gather, Elias speaks
+  // Food then disappears in real time (90s/dish by default) from the moment
+  // you set hour 18 — that's gameState.getHarvestFeastGatherStartedAt(), not
+  // tied to the override, so no need to also fake Date.now().
+  gameState.getHarvestFeastGatherStartedAt()   // When the countdown you're watching began
+  gameState.getHarvestFeastContributedMealIds() // Distinct meals placed so far (drives the closing tier)
+  harvestFeastManager.isTableOpenForContributions()
+  harvestFeastManager.getOpenFoodSlots()
+  harvestFeastManager.resetForTesting()  // Clears progress + any leftover table/food so you can replay it
+  TimeManager.clearTimeOverride()  // Then set this before replaying, or the day/hour won't match
+  // If the gathering never starts despite hour 18 being set correctly and
+  // gatherStartedAt above staying null, confirm the NPC override actually
+  // landed before suspecting the code — see docs/ARCHITECTURE_GOTCHAS.md #7
+  // if this looks right but nothing happens:
+  npcManager.getNPCById('village_elder')?.position  // Should be {x:24,y:14} once gathered, not his usual spot
 
   // Magic System
   magicManager.unlockMagicBook()  // Unlock magic book

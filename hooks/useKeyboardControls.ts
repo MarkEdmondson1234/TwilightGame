@@ -50,6 +50,7 @@ export interface KeyboardControlsConfig {
   showGiftModal: boolean;
   showGlamourModal: boolean;
   showBasketModal: boolean;
+  showHarvestFeastModal: boolean;
   showMagicBook: boolean;
   showPhotoAlbum: boolean;
   showDevTools: boolean;
@@ -81,6 +82,7 @@ export interface KeyboardControlsConfig {
   onSetShowGiftModal: (show: boolean) => void;
   onSetShowGlamourModal: (show: boolean) => void;
   onSetShowBasketModal: (show: boolean) => void;
+  onSetShowHarvestFeastModal: (show: boolean) => void;
   onSetShowMagicBook: (show: boolean) => void;
   onSetShowPhotoAlbum: (show: boolean) => void;
   onSetPlayerPos: (pos: Position) => void;
@@ -116,6 +118,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showGiftModal,
     showGlamourModal,
     showBasketModal,
+    showHarvestFeastModal,
     showMagicBook,
     showPhotoAlbum,
     showDevTools,
@@ -141,6 +144,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetShowGiftModal,
     onSetShowGlamourModal,
     onSetShowBasketModal,
+    onSetShowHarvestFeastModal,
     onSetShowMagicBook,
     onSetShowPhotoAlbum,
     onSetPlayerPos,
@@ -194,6 +198,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     showGiftModal,
     showGlamourModal,
     showBasketModal,
+    showHarvestFeastModal,
     showMagicBook,
     showPhotoAlbum,
     showDevTools,
@@ -210,6 +215,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
     onSetShowGiftModal,
     onSetShowGlamourModal,
     onSetShowBasketModal,
+    onSetShowHarvestFeastModal,
     onSetShowMagicBook,
     onSetShowPhotoAlbum,
     onSetShowDevTools: (show: boolean) => onSetShowDevTools(show),

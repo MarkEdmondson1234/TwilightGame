@@ -38,6 +38,7 @@ interface ImportMeta {
 interface Window {
   gameState?: typeof import('./GameState').gameState;
   mapManager?: typeof import('./maps').mapManager;
+  npcManager?: typeof import('./NPCManager').npcManager;
   inventoryManager?: typeof import('./utils/inventoryManager').inventoryManager;
   cookingManager?: typeof import('./utils/CookingManager').cookingManager;
   magicManager?: typeof import('./utils/MagicManager').magicManager;
@@ -46,6 +47,8 @@ interface Window {
   textureManager?: typeof import('./utils/TextureManager').textureManager;
   /** Used by scripts/perf-test.js to skip the title screen and season cutscenes */
   cutsceneManager?: typeof import('./utils/CutsceneManager').cutsceneManager;
+  /** Console testing for the Harvest Feast event — see utils/gameInitializer.ts's dev commands log */
+  harvestFeastManager?: typeof import('./utils/HarvestFeastManager').harvestFeastManager;
   TimeManager?: typeof import('./utils/TimeManager').TimeManager;
   Season?: typeof import('./utils/TimeManager').Season;
   ColorResolver?: typeof import('./utils/ColorResolver').ColorResolver;

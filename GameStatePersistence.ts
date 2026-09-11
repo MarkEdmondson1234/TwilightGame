@@ -195,6 +195,17 @@ export function loadPersistedState(storageKey: string): GameState {
         parsed.cutscenes = { completed: [] };
       }
 
+      // Migrate old save data that doesn't have Harvest Feast tracking
+      if (!parsed.harvestFeast) {
+        debugLog('GameState', 'Migrating old save data - adding Harvest Feast tracking');
+        parsed.harvestFeast = {
+          celebratedYears: [],
+          lastKnownDay: null,
+          contributedMealIds: [],
+          gatherStartedAt: null,
+        };
+      }
+
       // Migrate old save data that doesn't have weather drift speed
       if (parsed.weatherDriftSpeed === undefined) {
         debugLog('GameState', 'Migrating old save data - adding weather drift speed');
@@ -408,6 +419,12 @@ export function loadPersistedState(storageKey: string): GameState {
     weatherDriftSpeed: 1.0, // Default normal drift speed
     cutscenes: {
       completed: [],
+    },
+    harvestFeast: {
+      celebratedYears: [],
+      lastKnownDay: null,
+      contributedMealIds: [],
+      gatherStartedAt: null,
     },
     relationships: {
       npcFriendships: [],

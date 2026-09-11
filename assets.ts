@@ -1042,6 +1042,11 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_harvest_feast_gathering: {
+    url: '/TwilightGame/assets/seasonal/good_b_music-celtic-violin-song-wave-8781.mp3',
+    category: 'music',
+    loop: true,
+  },
   music_spring: {
     url: '/TwilightGame/assets/audio/music/cutscene_spring.mp3',
     category: 'music',

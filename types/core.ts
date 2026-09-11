@@ -207,6 +207,7 @@ export interface PlacedItem {
   customScale?: number; // Per-instance tile scale (overrides itemDef.placedScale)
   foregroundImage?: string; // Foreground layer image rendered above the player (for furniture like beds)
   rotation?: number; // Optional visual rotation (radians) around the sprite's centre; most placed items omit this
+  placedOnSurface?: boolean; // Per-instance override — renders above all depth-sorted sprites regardless of the underlying item's own definition (e.g. any dish placed on the Harvest Feast table, whatever food item it is)
 }
 
 // Item placed on a desk surface

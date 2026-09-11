@@ -66,6 +66,17 @@ class SeasonalEventManagerClass {
    */
   check(): void {
     const time = TimeManager.getCurrentTime();
+
+    // Autumn's day-42 decoration is now the Harvest Feast — a richer, shared
+    // community event owned by HarvestFeastManager, which places its own
+    // table at the same village tile on its own schedule (4pm, not 9am). This
+    // manager stays out of Autumn entirely so the two never collide.
+    if (time.season === Season.AUTUMN) {
+      const existingItem = this.getActiveDecoration();
+      if (existingItem) this.removeDecoration();
+      return;
+    }
+
     const isFestivalTime = time.day === 42 && time.hour >= 9;
     const existingItem = this.getActiveDecoration();
 

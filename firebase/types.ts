@@ -126,6 +126,12 @@ export interface WorldSaveData {
     completed: string[];
     lastSeasonTriggered?: string;
   };
+  harvestFeast?: {
+    celebratedYears: number[];
+    lastKnownDay: number | null;
+    contributedMealIds: string[];
+    gatherStartedAt: number | null;
+  };
 }
 
 export interface StatsSaveData {
