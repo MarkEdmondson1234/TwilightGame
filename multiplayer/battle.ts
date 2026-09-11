@@ -156,6 +156,22 @@ class BattleManager {
   private battles = new Map<string, BattleWire>();
   private mapId: string | null = null;
 
+  /** The enemy we are fighting ourselves right now, if any. */
+  private fightingNpcId: string | null = null;
+
+  /**
+   * Victories that arrived while we were fighting the same enemy.
+   *
+   * The goblin chases every player on their own screen, so two friends in one
+   * cave usually end up fighting the same goblin within seconds of each other.
+   * When one of them wins, the other's combat screen is still open — and
+   * yanking the enemy out from under it is worse than a short delay. But the
+   * victory must not be *dropped*: it used to be, and a player who then lost
+   * their own round was left with a live goblin, no passage, and a fight that
+   * restarted three seconds later.
+   */
+  private pendingVictories = new Map<string, BattleWire>();
+
   getMapId(): string | null {
     return this.mapId;
   }
@@ -163,7 +179,7 @@ class BattleManager {
   /** Switch maps. Battles do not carry between them. */
   setMap(mapId: string | null): void {
     if (this.mapId === mapId) return;
-    this.battles.clear();
+    this.clear();
     this.mapId = mapId;
   }
 
@@ -177,6 +193,44 @@ class BattleManager {
 
   clear(): void {
     this.battles.clear();
+    this.pendingVictories.clear();
+    this.fightingNpcId = null;
+  }
+
+  /** The published victory over this enemy, if anyone in the room has won it. */
+  getVictory(npcId: string): BattleWire | null {
+    const battle = this.battles.get(npcId);
+    return battle && battle.p === 'won' ? battle : null;
+  }
+
+  /** We started (or, with null, stopped) fighting an enemy ourselves. */
+  setFighting(npcId: string | null): void {
+    this.fightingNpcId = npcId;
+  }
+
+  isFighting(npcId: string): boolean {
+    return this.fightingNpcId === npcId;
+  }
+
+  /**
+   * Somebody else beat this enemy. Returns the record if it should be applied
+   * now, or null if it has to wait until our own fight with the same enemy
+   * closes — `finishFight()` hands it back then.
+   */
+  noteVictory(npcId: string, wire: BattleWire): BattleWire | null {
+    if (this.fightingNpcId === npcId) {
+      this.pendingVictories.set(npcId, wire);
+      return null;
+    }
+    return wire;
+  }
+
+  /** Our own fight closed. Returns any victory that was waiting on it. */
+  finishFight(npcId: string): BattleWire | null {
+    if (this.fightingNpcId === npcId) this.fightingNpcId = null;
+    const pending = this.pendingVictories.get(npcId) ?? null;
+    this.pendingVictories.delete(npcId);
+    return pending;
   }
 
   /**

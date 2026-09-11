@@ -1465,8 +1465,18 @@ export function generateRandomCave(
   // NPCs array for cave creatures
   const npcs = [];
 
-  // Spawn a goblin every 5th cave level (depths 5, 10, 15, …)
-  if (caveDepth > 0 && caveDepth % 5 === 0) {
+  // Restore any goblin-revealed lava entrance for this map (persisted across
+  // sessions). Read up front: it also decides whether the goblin is still here.
+  const savedEntrance = gameState.getLavaEntrance(`cave_${seed}`);
+
+  // Spawn a goblin every 5th cave level (depths 5, 10, 15, …) — unless its
+  // passage is already open, in which case it has been beaten *in this cave*.
+  // The cave keeps the same seed all day now, so without this check every
+  // re-entry put a fresh goblin next to the passage it was supposed to be
+  // guarding, and beating it again revealed nothing.
+  if (caveDepth > 0 && caveDepth % 5 === 0 && savedEntrance) {
+    debugLog('Cave', `Goblin at depth ${caveDepth} already beaten — passage is open`);
+  } else if (caveDepth > 0 && caveDepth % 5 === 0) {
     let goblinX: number, goblinY: number;
     do {
       goblinX = Math.floor(rng() * (width - 4)) + 2;
@@ -1479,8 +1489,6 @@ export function generateRandomCave(
     debugLog('Cave', `⚔️ Goblin spawned at depth ${caveDepth} (${goblinX}, ${goblinY})`);
   }
 
-  // Restore any goblin-revealed lava entrance for this map (persisted across sessions)
-  const savedEntrance = gameState.getLavaEntrance(`cave_${seed}`);
   if (savedEntrance) {
     const { x: ex, y: ey } = savedEntrance;
     // Clear 3×3 area around the entrance so the sprite is fully visible

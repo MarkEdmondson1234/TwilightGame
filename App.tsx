@@ -162,6 +162,7 @@ import { yuleCelebrationManager, YULE_MUM_GREETING } from './utils/YuleCelebrati
 import { YULE_CUTSCENE_ID, YULE_NPC_CONFIGS } from './data/yuleCelebration';
 import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
 import { debugLog } from './utils/debugLog';
+import { reportMessageOnce } from './utils/errorReporting';
 
 /**
  * Find the nearest clear MINE_FLOOR tile to an origin position.
@@ -1030,25 +1031,28 @@ const App: React.FC = () => {
    * enemy for both of us, so it falls for both of us, and the passage it was
    * guarding opens on the tile *they* chose rather than one we picked ourselves.
    * Gold and drops stay with the player who did the fighting.
+   *
+   * Never fires while our own combat screen is open for the same enemy —
+   * useBattleController holds it back until that screen closes (whatever the
+   * outcome), so this only ever has to be idempotent, not defensive: if we won
+   * too, the entrance is already open and the goblin already gone.
    */
   useEffect(() => {
     return eventBus.on(GameEvent.BATTLE_WON_NEARBY, (payload) => {
-      // If we are mid-fight with the same enemy, leave our own encounter alone
-      // — our combat screen will despawn it when it finishes. Yanking the NPC
-      // out from under an open modal is worse than a duplicate victory.
-      if (combatNpcIdRef.current === payload.npcId) return;
-
       const mapId = mapManager.getCurrentMapId();
-      if (payload.entrance && mapId && openLavaEntranceAt(mapId, payload.entrance)) {
+      const opened = !!(payload.entrance && mapId && openLavaEntranceAt(mapId, payload.entrance));
+
+      const stillHere = npcManager.getNPCById(payload.npcId) !== null;
+      if (stillHere) npcManager.removeDynamicNPC(payload.npcId);
+
+      if (opened) {
         showToast(
           `${payload.name} beat the ${payload.enemyName} — a passage to the lava caverns has opened!`,
           'success'
         );
-      } else {
+      } else if (stillHere) {
         showToast(`${payload.name} beat the ${payload.enemyName}!`, 'success');
       }
-
-      npcManager.removeDynamicNPC(payload.npcId);
     });
   }, [showToast]);
 
@@ -2725,20 +2729,53 @@ const App: React.FC = () => {
               }
             }
             // Post-combat cleanup for hostile NPCs
+            const isCombat = miniGameId?.startsWith('combat-encounter') ?? false;
+            if (isCombat && !combatNpcIdRef.current) {
+              // The one branch that turns a won fight into "nothing happened":
+              // the screen closed but nobody told us which NPC it was about.
+              // It was silent for months (see tests/hostileConfront.test.ts).
+              console.warn('[Combat] Combat screen closed with no fight registered — cleanup skipped');
+              reportMessageOnce('Combat screen closed with no fight registered', 'combat', {
+                miniGameId,
+                success: !!result?.success,
+                mapId: mapManager.getCurrentMapId(),
+              });
+            }
             if (combatNpcIdRef.current) {
               const npcId = combatNpcIdRef.current;
               combatNpcIdRef.current = null;
+              const battleMapId = mapManager.getCurrentMapId();
+              debugLog(
+                'Combat',
+                `Fight with ${npcId} ended: ${result ? (result.success ? 'won' : 'lost/fled') : 'closed without result'} on ${battleMapId}`
+              );
               if (result?.success) {
                 // Goblin victory: reveal a lava entrance near where the goblin stood
                 let entrance: { x: number; y: number } | undefined;
                 if (npcId.startsWith('goblin_depth_')) {
                   const goblin = npcManager.getNPCById(npcId); // read position BEFORE removal
-                  const battleMapId = mapManager.getCurrentMapId();
-                  if (goblin && battleMapId) {
-                    const chosen = chooseLavaEntranceTile(goblin.position, battleMapId);
-                    if (chosen && openLavaEntranceAt(battleMapId, chosen)) {
+                  if (!goblin || !battleMapId) {
+                    // Beaten, but not here to despawn — nothing below can run.
+                    reportMessageOnce('Beaten goblin is not on the current map', 'combat', {
+                      npcId,
+                      mapId: battleMapId,
+                      npcMapId: npcManager.getCurrentMapId(),
+                    });
+                  } else {
+                    const chosen = chooseLavaEntranceTile(goblin.position, battleMapId, npcId);
+                    if (!chosen) {
+                      // Boxed in by rock: the player has won and gets no way down.
+                      reportMessageOnce('No clear tile near beaten goblin for the lava passage', 'combat', {
+                        npcId,
+                        mapId: battleMapId,
+                        x: Math.floor(goblin.position.x),
+                        y: Math.floor(goblin.position.y),
+                      });
+                    } else if (openLavaEntranceAt(battleMapId, chosen)) {
                       entrance = chosen;
                       showToast('A passage to the lava caverns has been revealed!', 'info');
+                    } else {
+                      debugLog('Combat', `Lava passage on ${battleMapId} was already open`);
                     }
                   }
                 }

@@ -101,6 +101,13 @@ export function npcProvider(ctx: InteractionContext): AvailableInteraction[] {
             data: { miniGameId: mg.id, npcId },
             execute: () => {
               miniGameManager.consumeStartRequirements(mg.id);
+              // A hostile NPC's fight goes through the same door as being
+              // caught by it. Opening the combat screen directly skips the
+              // COMBAT_INITIATED bookkeeping that despawns a beaten goblin
+              // and opens its passage — so "Confront" won nothing.
+              if (npc?.hostileConfig?.combatMiniGameId === mg.id) {
+                if (npcManager.initiateCombat(npcId, 'confront')) return;
+              }
               config.onOpenMiniGame!(mg.id, {
                 triggerType: 'npc',
                 position,
