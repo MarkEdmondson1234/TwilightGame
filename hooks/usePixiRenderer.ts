@@ -2,6 +2,7 @@ import {
   setDiagnosticRenderer,
   setDiagnosticView,
   reportDiagnosticContextLoss,
+  reportDiagnosticWorldReady,
 } from '../utils/sessionDiagnostics';
 /**
  * usePixiRenderer Hook
@@ -703,6 +704,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       canvasHeight: canvasRef.current.height,
       resolution: app.renderer.resolution,
     });
+    reportDiagnosticWorldReady();
   }, [isPixiInitialized, zoom, viewportSize.width, viewportSize.height, canvasRef]);
 
   // =========================================================================

@@ -12,6 +12,8 @@ type Operation =
   | 'cloud_upload'
   | 'cloud_download';
 const INTERVAL_MS = 60_000;
+const STARTUP_INTERVAL_MS = 15_000;
+const STARTUP_SAMPLES = 4;
 const MAX_LOGS = 360; // Hard ceiling per page session, including operation logs.
 // A minute needs this many frames over 50ms before it counts as "slow" and
 // earns runtime attribution (NPC count, weather, remote players). Healthy
@@ -31,6 +33,8 @@ let worst = 0;
 let stalls = 0;
 let reportDue = false;
 let timer: ReturnType<typeof setInterval> | undefined;
+let startupTimer: ReturnType<typeof setInterval> | undefined;
+let worldReady = false;
 let residentMemory: (() => number) | undefined;
 const lastOperation = new Map<string, number>();
 let device: Fields = {};
@@ -196,6 +200,35 @@ export function setDiagnosticView(next: {
   safely(() => Sentry.setContext('game_view', view));
 }
 
+/** Snapshot the loaded world before a short session can disappear without an exception. */
+export function reportDiagnosticWorldReady(): void {
+  if (!active || worldReady) return;
+  worldReady = true;
+  safely(() => {
+    const details: Fields = { ...view };
+    if (residentMemory) details['performance.resident_texture_mb'] = Math.round(residentMemory());
+    log('game.world_ready', details);
+  });
+  // Anchor early reports to Play/world readiness, not time spent on the title.
+  // Summaries still run on the next visible game frame, keeping stalls and
+  // background gaps subject to the same rules as the regular minute report.
+  if (timer) clearInterval(timer);
+  resetFrames();
+  reportDue = false;
+  let samples = 0;
+  startupTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') reportDue = true;
+    samples++;
+    if (samples >= STARTUP_SAMPLES) {
+      clearInterval(startupTimer);
+      startupTimer = undefined;
+      timer = setInterval(() => {
+        if (document.visibilityState === 'visible') reportDue = true;
+      }, INTERVAL_MS);
+    }
+  }, STARTUP_INTERVAL_MS);
+}
+
 /** Context loss is not an exception, so automatic error reporting misses it. */
 export function reportDiagnosticContextLoss(): void {
   if (!active || contextLossReported) return;
@@ -291,6 +324,9 @@ export function stopSessionDiagnostics(): void {
   reportDue = false;
   residentMemory = undefined;
   view = {};
+  if (startupTimer) clearInterval(startupTimer);
+  startupTimer = undefined;
+  worldReady = false;
   contextLossReported = false;
   slowMinuteContext = undefined;
 }
