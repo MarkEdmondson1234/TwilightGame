@@ -23,7 +23,7 @@ import { textureManager } from '../TextureManager';
 import { PixiLayer } from './PixiLayer';
 import { Z_DEPTH_SORTED_BASE } from '../../zIndex';
 import { getRemoteSpriteInfo } from '../../multiplayer/remoteSprites';
-import { getEmoteIcon } from '../../multiplayer/emotes';
+import { EmoteSprite } from './EmoteSprite';
 import { PlayerSpeechBubble } from './PlayerSpeechBubble';
 import type { RemotePlayer } from '../../multiplayer/types';
 
@@ -42,7 +42,7 @@ const CHAT_OFFSET_TILES = 1.35;
 interface RemotePlayerDisplay {
   sprite: PIXI.Sprite;
   nameTag: PIXI.Text;
-  emote: PIXI.Text;
+  emote: EmoteSprite;
   chat: PlayerSpeechBubble;
   currentSpriteUrl: string | null;
   currentName: string | null;
@@ -55,7 +55,7 @@ export class RemotePlayerLayer extends PixiLayer {
   private localChatBubble: PlayerSpeechBubble | null = null;
 
   /** Bubble for the local player's own emote — immediate feedback on pressing one */
-  private localEmoteText: PIXI.Text | null = null;
+  private localEmoteText: EmoteSprite | null = null;
 
   constructor() {
     super(Z_DEPTH_SORTED_BASE, true);
@@ -68,7 +68,12 @@ export class RemotePlayerLayer extends PixiLayer {
   setDepthContainer(container: PIXI.Container): void {
     this.depthContainer = container;
     for (const display of this.displays.values()) {
-      for (const object of [display.sprite, display.nameTag, display.emote, display.chat.container]) {
+      for (const object of [
+        display.sprite,
+        display.nameTag,
+        display.emote,
+        display.chat.container,
+      ]) {
         if (object.parent === this.container) {
           this.container.removeChild(object);
           container.addChild(object);
@@ -111,13 +116,7 @@ export class RemotePlayerLayer extends PixiLayer {
     nameTag.resolution = 2;
     target.addChild(nameTag);
 
-    const emote = new PIXI.Text({
-      text: '',
-      style: { fontFamily: 'system-ui, sans-serif', fontSize: 28, align: 'center' },
-    });
-    emote.anchor.set(0.5, 1);
-    emote.visible = false;
-    emote.resolution = 2;
+    const emote = new EmoteSprite();
     target.addChild(emote);
 
     const chat = new PlayerSpeechBubble(target);
@@ -197,16 +196,10 @@ export class RemotePlayerLayer extends PixiLayer {
       display.nameTag.zIndex = zIndex + 1;
       display.nameTag.visible = true;
 
-      const icon = player.emote ? getEmoteIcon(player.emote) : null;
-      if (icon) {
-        display.emote.text = icon;
-        display.emote.x = x;
-        display.emote.y = y - EMOTE_OFFSET_TILES * tileSize * characterScale;
-        display.emote.zIndex = zIndex + 2;
-        display.emote.visible = true;
-      } else {
-        display.emote.visible = false;
-      }
+      display.emote.setEmote(player.emote);
+      display.emote.x = x;
+      display.emote.y = y - EMOTE_OFFSET_TILES * tileSize * characterScale;
+      display.emote.zIndex = zIndex + 2;
 
       display.chat.update(
         player.chat,
@@ -222,7 +215,7 @@ export class RemotePlayerLayer extends PixiLayer {
       if (rendered.has(uid)) continue;
       display.sprite.visible = false;
       display.nameTag.visible = false;
-      display.emote.visible = false;
+      display.emote.setEmote(null);
       display.chat.update(null, 0, 0, 0);
     }
   }
@@ -238,31 +231,23 @@ export class RemotePlayerLayer extends PixiLayer {
     gridOffset?: Position,
     tileSize: number = TILE_SIZE
   ): void {
-    const icon = emote ? getEmoteIcon(emote) : null;
-
-    if (!icon) {
-      if (this.localEmoteText) this.localEmoteText.visible = false;
+    if (!emote) {
+      this.localEmoteText?.setEmote(null);
       return;
     }
-
     if (!this.localEmoteText) {
-      this.localEmoteText = new PIXI.Text({
-        text: '',
-        style: { fontFamily: 'system-ui, sans-serif', fontSize: 28, align: 'center' },
-      });
-      this.localEmoteText.anchor.set(0.5, 1);
-      this.localEmoteText.resolution = 2;
+      this.localEmoteText = new EmoteSprite();
       this.getTargetContainer().addChild(this.localEmoteText);
     }
+    this.localEmoteText.setEmote(emote);
 
     const x = position.x * tileSize + (gridOffset?.x ?? 0);
     const y = position.y * tileSize + (gridOffset?.y ?? 0);
 
-    this.localEmoteText.text = icon;
     this.localEmoteText.x = x;
     this.localEmoteText.y = y - EMOTE_OFFSET_TILES * tileSize * characterScale;
-    this.localEmoteText.zIndex = Z_DEPTH_SORTED_BASE + Math.floor((position.y + PLAYER_FEET_OFFSET) * 10) + 2;
-    this.localEmoteText.visible = true;
+    this.localEmoteText.zIndex =
+      Z_DEPTH_SORTED_BASE + Math.floor((position.y + PLAYER_FEET_OFFSET) * 10) + 2;
   }
 
   /**
