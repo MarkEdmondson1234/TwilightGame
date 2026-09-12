@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const sdk = vi.hoisted(() => ({ info: vi.fn(), setTag: vi.fn(), setContext: vi.fn() }));
+const sdk = vi.hoisted(() => ({
+  info: vi.fn(),
+  captureMessage: vi.fn(),
+  setTag: vi.fn(),
+  setContext: vi.fn(),
+}));
 vi.mock('@sentry/react', () => ({
   logger: { info: sdk.info },
+  captureMessage: sdk.captureMessage,
   setTag: sdk.setTag,
   setContext: sdk.setContext,
 }));
@@ -30,6 +36,9 @@ import {
   setDiagnosticMap,
   setDiagnosticRenderer,
   setSlowMinuteContext,
+  setDiagnosticView,
+  reportDiagnosticContextLoss,
+  reportDiagnosticWorldReady,
 } from '../utils/sessionDiagnostics';
 
 function visibility(value: 'visible' | 'hidden') {
@@ -251,5 +260,84 @@ describe('bounded foreground session diagnostics', () => {
     ).not.toThrow();
     expect(() => startDiagnosticOperation('local_save')()).not.toThrow();
     sdk.info.mockReset();
+  });
+});
+
+describe('zoom and graphics failure context', () => {
+  it('reports a context loss once with the current camera, framebuffer and resident textures', () => {
+    startSessionDiagnostics();
+    setDiagnosticRenderer(undefined, () => 321);
+    setDiagnosticView({
+      zoom: 0.5,
+      viewportWidth: 1688,
+      viewportHeight: 780,
+      canvasWidth: 1266,
+      canvasHeight: 585,
+      resolution: 0.75,
+    });
+    reportDiagnosticContextLoss();
+    reportDiagnosticContextLoss();
+    expect(sdk.captureMessage).toHaveBeenCalledTimes(1);
+    expect(sdk.captureMessage).toHaveBeenCalledWith(
+      'WebGL context lost',
+      expect.objectContaining({
+        tags: { category: 'game_crash' },
+        contexts: {
+          details: expect.objectContaining({
+            'view.camera_zoom': 0.5,
+            'view.canvas_width': 1266,
+            'performance.resident_texture_mb': 321,
+          }),
+        },
+      })
+    );
+  });
+  it('keeps graphics diagnostics inert without Sentry configured', () => {
+    reportDiagnosticContextLoss();
+    expect(sdk.captureMessage).not.toHaveBeenCalled();
+  });
+});
+
+describe('first-minute world diagnostics', () => {
+  it('captures loaded texture memory immediately and reports before a minute-long crash', () => {
+    startSessionDiagnostics();
+    setDiagnosticRenderer(undefined, () => 304);
+    setDiagnosticView({
+      zoom: 0.75,
+      viewportWidth: 844,
+      viewportHeight: 390,
+      canvasWidth: 1266,
+      canvasHeight: 585,
+      resolution: 1.5,
+    });
+    reportDiagnosticWorldReady();
+    reportDiagnosticWorldReady();
+    const ready = sdk.info.mock.calls.filter(([name]) => name === 'game.world_ready');
+    expect(ready).toHaveLength(1);
+    expect(ready[0][1]).toMatchObject({
+      'performance.resident_texture_mb': 304,
+      'view.camera_zoom': 0.75,
+    });
+    framesFor(15000);
+    expect(reports()).toHaveLength(1);
+    framesFor(45000);
+    expect(reports()).toHaveLength(4);
+    framesFor(59000);
+    expect(reports()).toHaveLength(4);
+    framesFor(1000);
+    expect(reports()).toHaveLength(5);
+  });
+  it('does not send background samples and removes early timers on shutdown', () => {
+    startSessionDiagnostics();
+    reportDiagnosticWorldReady();
+    visibility('hidden');
+    vi.advanceTimersByTime(60000);
+    expect(reports()).toHaveLength(0);
+    stopSessionDiagnostics();
+    sdk.info.mockClear();
+    visibility('visible');
+    framesFor(120000);
+    expect(sdk.info).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
   });
 });

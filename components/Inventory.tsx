@@ -1,3 +1,5 @@
+import MobileMenuShell from './MobileMenuShell';
+import '../src/styles/mobileMenus.css';
 import React, { useState } from 'react';
 import ItemTooltip, { TooltipContent } from './ItemTooltip';
 import { getItem, ItemCategory } from '../data/items';
@@ -84,6 +86,7 @@ const Inventory: React.FC<InventoryProps> = ({
 
   // Detect touch device
   const isTouchDevice = useTouchDevice();
+  const MenuBoundary = isTouchDevice ? MobileMenuShell : 'div';
 
   // Long-press opens the action menu on touch, where there is no right-click.
   // Declared above the isOpen guard — hooks must run in the same order every render.
@@ -237,27 +240,47 @@ const Inventory: React.FC<InventoryProps> = ({
     setDragState(null); // Clean up if drag cancelled
   };
 
+  const actionIndex = swapSelectedIndex;
+  const actionItem = actionIndex !== null ? slots[actionIndex] : null;
+
   // Use fewer columns on touch devices for larger tap targets
   const gridCols = isTouchDevice ? 'grid-cols-5' : 'grid-cols-9';
   const slotGap = isTouchDevice ? 'gap-3' : 'gap-2';
 
   return (
-    <div
+    <MenuBoundary
       className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_INVENTORY_MODAL)} pointer-events-auto`}
       onClick={onClose}
     >
       <div
+        data-mobile-menu={isTouchDevice ? 'inventory' : undefined}
+        role="dialog"
+        aria-label={title}
         className={`bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-700 rounded-lg max-h-[90vh] flex flex-col ${
           isTouchDevice ? 'p-4 w-[95vw] max-w-none' : 'p-6 max-w-2xl w-full'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-4">
+        <div className="menu-header flex justify-between items-center mb-4">
           <h2 className={`font-bold text-amber-200 ${isTouchDevice ? 'text-xl' : 'text-2xl'}`}>
             {title}
           </h2>
+          {isTouchDevice && actionItem && actionIndex !== null && onItemContextMenu && (
+            <button
+              className="px-3 rounded border border-amber-500 text-amber-100"
+              onClick={(e) =>
+                onItemContextMenu(actionItem, actionIndex, {
+                  clientX: e.clientX,
+                  clientY: e.clientY,
+                })
+              }
+            >
+              Item actions
+            </button>
+          )}
           <button
+            aria-label="Close inventory"
             onClick={onClose}
             className={`bg-red-600 hover:bg-red-500 text-white font-bold rounded-full transition-colors ${
               isTouchDevice ? 'w-10 h-10 text-xl' : 'w-8 h-8'
@@ -268,11 +291,14 @@ const Inventory: React.FC<InventoryProps> = ({
         </div>
 
         {/* Category Filter Bar */}
-        <div className="flex flex-wrap gap-1.5 mb-3">
+        <div className="menu-filters flex flex-wrap gap-1.5 mb-3">
           {filterTabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveFilter(tab.id)}
+              onClick={() => {
+                setActiveFilter(tab.id);
+                setSwapSelectedIndex(null);
+              }}
               className={`px-3 py-1 rounded-full text-sm font-semibold transition-colors ${
                 activeFilter === tab.id
                   ? 'bg-amber-500 text-amber-950'
@@ -285,7 +311,7 @@ const Inventory: React.FC<InventoryProps> = ({
         </div>
 
         {/* Inventory Grid - Scrollable */}
-        <div className="overflow-y-scroll flex-1 pr-2 max-h-[500px] inventory-scrollbar">
+        <div className="menu-scroll overflow-y-scroll flex-1 pr-2 max-h-[500px] inventory-scrollbar">
           {/* Empty state for photos filter */}
           {activeFilter === 'photos' && filteredItems.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 text-amber-500 text-sm gap-2">
@@ -297,7 +323,7 @@ const Inventory: React.FC<InventoryProps> = ({
               </p>
             </div>
           )}
-          <div className={`grid ${gridCols} ${slotGap}`}>
+          <div className={`menu-item-grid grid ${gridCols} ${slotGap}`}>
             {slots.map((item, index) => {
               const isQuickSlot = index < 9;
               const isEmpty = item === null;
@@ -321,6 +347,8 @@ const Inventory: React.FC<InventoryProps> = ({
               const slotButton = (
                 <button
                   key={index}
+                  aria-label={item?.name ?? 'Empty slot'}
+                  aria-pressed={isSelected}
                   draggable={!isEmpty && !isTouchDevice} // Only draggable on desktop if slot has item
                   onDragStart={(e) => handleDragStart(e, index, item)}
                   onDragOver={handleDragOver}
@@ -410,13 +438,17 @@ const Inventory: React.FC<InventoryProps> = ({
         </div>
 
         {/* Footer Info */}
-        <div className="mt-4 pt-4 border-t border-amber-700 text-amber-300 text-sm">
+        <div className="menu-footer mt-4 pt-4 border-t border-amber-700 text-amber-300 text-sm">
           <p>
             {maxSlots !== undefined
               ? `Slots: ${items.length} / ${maxSlots}`
               : `Items: ${items.length}${items.length > 0 ? ' (unlimited capacity)' : ''}`}
           </p>
-          <p className="text-xs text-amber-400 mt-1">First 9 slots are quick slots (1-9 keys)</p>
+          <p className="text-xs text-amber-400 mt-1">
+            {isTouchDevice
+              ? 'Hold an item for actions. First 9 slots are quick slots.'
+              : 'First 9 slots are quick slots (1-9 keys)'}
+          </p>
           {onReorder && (
             <p className="text-xs text-amber-400 mt-1">
               {isTouchDevice ? 'Tap two items to swap positions' : 'Drag items to reorder'}
@@ -427,7 +459,7 @@ const Inventory: React.FC<InventoryProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </MenuBoundary>
   );
 };
 

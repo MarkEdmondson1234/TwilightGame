@@ -112,3 +112,24 @@ describe('MapManager map-integrity reporting', () => {
     expect(spawn).toEqual({ x: 2, y: 2 });
   });
 });
+it('mobile recovery avoids occupied terrain-safe spawn positions and respects room floor constraints', async () => {
+  const { npcManager } = await import('../NPCManager');
+  const map = defineMap('mobile_occupied_spawn');
+  mapManager.registerMap(map);
+  const npcSpy = vi
+    .spyOn(npcManager, 'getNPCsForMap')
+    .mockReturnValue([
+      { position: { x: 2, y: 2 }, collisionRadius: 0.5 } as import('../types').NPC,
+    ]);
+  try {
+    const safe = mapManager.findUnoccupiedPosition(map.id, map.spawnPoint, (pos) => pos.y >= 2);
+    expect(safe).not.toBeNull();
+    expect(Math.hypot(safe!.x - 2, safe!.y - 2)).toBeGreaterThanOrEqual(0.9);
+    expect(safe!.y).toBeGreaterThanOrEqual(2);
+    expect(mapManager.findUnoccupiedPosition(map.id, map.spawnPoint, () => false)).toBeNull();
+    // The existing desktop transition policy is untouched.
+    expect(mapManager.transitionToMap(map.id, map.spawnPoint).spawn).toEqual(map.spawnPoint);
+  } finally {
+    npcSpy.mockRestore();
+  }
+});

@@ -71,6 +71,13 @@ beforeEach(() => {
   loadCalls = [];
   failing.clear();
   vi.clearAllMocks();
+  vi.doMock('../utils/performanceTier', () => ({
+    getCachedPerformanceSettings: () => ({
+      generateMipmaps: false,
+      textureBudgetMB: 1,
+      maxConcurrentTextureLoads: MAX_CONCURRENT,
+    }),
+  }));
 });
 
 describe('TextureManager concurrency', () => {
@@ -221,4 +228,51 @@ describe('TextureManager eviction', () => {
     expect(textureManager.hasTexture('/tex/a.png')).toBe(true);
     vi.doUnmock('../utils/performanceTier');
   });
+});
+
+it('tolerates a destroyed source in memory diagnostics and reloads it instead of returning it', async () => {
+  const manager = await freshManager();
+  const texture = await manager.loadTexture('/tex/dead.png', '/tex/dead.png');
+  Object.defineProperty(texture, 'source', { value: null, configurable: true });
+  expect(manager.getEstimatedMemoryMB()).toBe(0);
+  expect(() => manager.evictExcept([])).not.toThrow();
+  expect(manager.hasTexture('/tex/dead.png')).toBe(false);
+  const replacement = await manager.loadTexture('/tex/dead.png', '/tex/dead.png');
+  expect(replacement).not.toBe(texture);
+  expect(replacement.source).toBeTruthy();
+});
+
+it('keeps shared texture sources alive when another alias is still in use', async () => {
+  const { Assets } = await import('pixi.js');
+  const manager = await freshManager();
+  const shared = fakeTexture(1024, 1024);
+  vi.mocked(Assets.load).mockResolvedValueOnce(shared).mockResolvedValueOnce(shared);
+  await manager.loadTexture('old-alias', '/tex/shared.png');
+  await manager.loadTexture('current-alias', '/tex/shared.png');
+  expect(manager.getEstimatedMemoryMB()).toBe(4);
+  expect(manager.evictExcept(['current-alias'])).toBe(0);
+  expect(shared.destroy).not.toHaveBeenCalled();
+  expect(Assets.unload).not.toHaveBeenCalled();
+});
+
+it('waits for eviction to finish before reloading a revisited map texture', async () => {
+  const { Assets } = await import('pixi.js');
+  const manager = await freshManager();
+  let finish!: () => void;
+  vi.mocked(Assets.unload).mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      })
+  );
+  vi.mocked(Assets.load).mockResolvedValueOnce(fakeTexture(1024, 1024));
+  const old = await manager.loadTexture('/tex/revisit.png', '/tex/revisit.png');
+  manager.evictExcept([]);
+  const calls = vi.mocked(Assets.load).mock.calls.length;
+  const reload = manager.loadTexture('/tex/revisit.png', '/tex/revisit.png');
+  await Promise.resolve();
+  expect(vi.mocked(Assets.load).mock.calls).toHaveLength(calls);
+  expect(old.destroy).not.toHaveBeenCalled(); // Assets owns disposal; no second destroy.
+  finish();
+  expect(await reload).not.toBe(old);
 });

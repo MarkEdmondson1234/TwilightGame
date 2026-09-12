@@ -49,13 +49,15 @@ vi.mock('../utils/AudioManager', () => ({ audioManager: { playSfx: (k: string) =
 vi.mock('../utils/inventoryManager', () => ({
   inventoryManager: { getQuantity: (id: string) => getQuantity(id) },
 }));
-vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => false }));
+const device = vi.hoisted(() => ({ mobile: false }));
+vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => device.mobile }));
 
 function renderInterface() {
   return render(<BrewingInterface isOpen onClose={vi.fn()} />);
 }
 
 beforeEach(() => {
+  device.mobile = false;
   brew.mockReset().mockReturnValue({ success: true, message: 'Brewed 1x Friendship Elixir!' });
   getUnlockedRecipes.mockClear().mockImplementation(() => [recipe]);
   playSfx.mockClear();
@@ -122,4 +124,16 @@ describe('BrewingInterface', () => {
 
     expect(screen.getByText(/journeyman witch/i)).toBeInTheDocument();
   });
+});
+
+it('mobile switches between the recipe list and details without brewing on selection', () => {
+  device.mobile = true;
+  renderInterface();
+  expect(screen.queryByRole('button', { name: '🧪 Brew!' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /Friendship Elixir/ }));
+  expect(screen.getByRole('button', { name: '🧪 Brew!' })).toBeTruthy();
+  expect(brew).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole('button', { name: 'Back to recipes' }));
+  expect(screen.queryByRole('button', { name: '🧪 Brew!' })).toBeNull();
+  expect(screen.getByRole('button', { name: /Friendship Elixir/ })).toBeTruthy();
 });

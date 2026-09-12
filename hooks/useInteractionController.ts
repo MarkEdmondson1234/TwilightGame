@@ -107,7 +107,7 @@ export interface UseInteractionControllerProps {
   // === Callbacks from App.tsx ===
 
   /** Callback to transition to a new map */
-  onMapTransition: (mapId: string, position: Position) => void;
+  onMapTransition: (mapId: string, position: Position) => Position | void;
 
   /** Callback to show a toast notification */
   onShowToast: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
@@ -380,10 +380,10 @@ export function useInteractionController(
           if (result.hasDoor) {
             audioManager.playSfx('sfx_door_open');
           }
-          onMapTransition(result.mapId, result.spawnPosition);
+          const actualSpawn = onMapTransition(result.mapId, result.spawnPosition);
           const seedMatch = result.mapId.match(/_([\d]+)$/);
           const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
-          gameState.updatePlayerLocation(result.mapId, result.spawnPosition, seed);
+          gameState.updatePlayerLocation(result.mapId, actualSpawn || result.spawnPosition, seed);
         }
       },
       onCooking: (locationType: string, position: Position | null) => {
@@ -477,7 +477,11 @@ export function useInteractionController(
           miniGameTriggerData: triggerData,
         });
       },
-      onConfirmMiniGame: (miniGameId: string, message: string, triggerData: MiniGameTriggerData) => {
+      onConfirmMiniGame: (
+        miniGameId: string,
+        message: string,
+        triggerData: MiniGameTriggerData
+      ) => {
         openUI('miniGameConfirm', {
           pendingMiniGameId: miniGameId,
           pendingMiniGameMessage: message,

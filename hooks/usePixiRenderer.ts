@@ -1,4 +1,10 @@
-import { setDiagnosticRenderer } from '../utils/sessionDiagnostics';
+import { playerGroundingOffset } from '../utils/playerGrounding';
+import {
+  setDiagnosticRenderer,
+  setDiagnosticView,
+  reportDiagnosticContextLoss,
+  reportDiagnosticWorldReady,
+} from '../utils/sessionDiagnostics';
 /**
  * usePixiRenderer Hook
  *
@@ -15,9 +21,11 @@ import { setDiagnosticRenderer } from '../utils/sessionDiagnostics';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
 import { Position, Direction, MapDefinition, TileData } from '../types';
-import { USE_SPRITE_SHADOWS, TILE_LEGEND } from '../constants';
+import { USE_SPRITE_SHADOWS, TILE_LEGEND, PLAYER_SIZE } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
+import { reportErrorOnce } from '../utils/errorReporting';
+import { getRendererResolution } from '../utils/rendererResolution';
 import { textureManager } from '../utils/TextureManager';
 import { performanceMonitor, SceneNode } from '../utils/PerformanceMonitor';
 import { ColorResolver } from '../utils/ColorResolver';
@@ -89,6 +97,8 @@ export interface UsePixiRendererProps {
      * centres each layer by its own size and needs the offset, not the result.
      */
     backgroundRoomPan?: { x: number; y: number };
+    roomViewport?: { width: number; height: number };
+    groundPlayers?: boolean;
   };
 
   /** Player state */
@@ -197,6 +207,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     gridOffset: { x: 0, y: 0 } as { x: number; y: number },
     tileSize: 64,
     characterScale: 1,
+    groundPlayers: false,
     playerPos: { x: 0, y: 0 } as { x: number; y: number },
   });
 
@@ -211,6 +222,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     effectiveGridOffset,
     effectiveTileSize,
     backgroundRoomPan,
+    roomViewport = viewportSize,
+    groundPlayers = false,
     zoom = 1.0,
   } = viewport;
   const {
@@ -234,7 +247,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     gridOffset: effectiveGridOffset,
     tileSize: effectiveTileSize,
     characterScale: currentMap?.characterScale ?? 1.0,
-    playerPos,
+    playerPos: groundPlayers ? {
+      x: playerPos.x,
+      y: playerPos.y - playerGroundingOffset(playerSpriteUrl, PLAYER_SIZE * spriteScale * (currentMap?.characterScale ?? 1) * playerScale),
+    } : playerPos,
+    groundPlayers,
   };
 
   // Animation update function (called from game loop)
@@ -255,12 +272,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // than pushed through React state — interpolated positions change on every
     // frame and must never cost a re-render.
     if (remotePlayerLayerRef.current) {
-      const { gridOffset, tileSize, characterScale, playerPos: localPos } = frameParamsRef.current;
+      const { gridOffset, tileSize, characterScale, playerPos: localPos, groundPlayers } = frameParamsRef.current;
       void remotePlayerLayerRef.current.renderRemotePlayers(
         remotePlayerManager.getRemotePlayers(),
         characterScale,
         gridOffset,
-        tileSize
+        tileSize,
+        groundPlayers
       );
       // Your own emote, drawn the same way as everybody else's so pressing one
       // gives immediate feedback instead of a silent hope somebody saw it.
@@ -314,7 +332,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           height: window.innerHeight,
           backgroundColor,
           antialias: perfSettings.antialias,
-          resolution: perfSettings.resolution,
+          resolution: getRendererResolution(
+            window.innerWidth,
+            window.innerHeight,
+            window.screen.width,
+            window.screen.height,
+            perfSettings.resolution
+          ),
           autoDensity: true,
           // Required for canvas.toDataURL() to work — WebGL clears the framebuffer
           // after each frame by default, producing a blank image on capture.
@@ -322,6 +346,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         });
 
         pixiAppRef.current = app;
+        setDiagnosticView({
+          zoom,
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+          canvasWidth: app.canvas.width,
+          canvasHeight: app.canvas.height,
+          resolution: app.renderer.resolution,
+        });
         setDiagnosticRenderer(
           'gl' in app.renderer ? (app.renderer as PIXI.WebGLRenderer).gl : undefined,
           () => textureManager.getEstimatedMemoryMB()
@@ -530,6 +562,16 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         setIsPixiInitialized(true);
       } catch (error) {
         console.error('[usePixiRenderer] Failed to initialize:', error);
+        reportErrorOnce(
+          error,
+          'game_crash',
+          {
+            action: 'initialise_renderer',
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+          },
+          'renderer_initialisation'
+        );
       }
     };
 
@@ -541,6 +583,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     const handleContextLost = (e: Event) => {
       e.preventDefault(); // Allow context restoration
       console.warn('[usePixiRenderer] WebGL context lost — waiting for restoration');
+      reportDiagnosticContextLoss();
     };
     const handleContextRestored = () => {
       debugLog('usePixiRenderer', 'WebGL context restored — reinitializing');
@@ -638,7 +681,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       const app = pixiAppRef.current;
       if (!app) return;
 
-      app.renderer.resize(window.innerWidth, window.innerHeight);
+      const resolution = getRendererResolution(
+        window.innerWidth,
+        window.innerHeight,
+        window.screen.width,
+        window.screen.height,
+        getCachedPerformanceSettings().resolution
+      );
+      app.renderer.resize(window.innerWidth, window.innerHeight, resolution);
 
       if (backgroundImageLayerRef.current && canvasRef.current) {
         backgroundImageLayerRef.current.setViewportDimensions(
@@ -653,6 +703,20 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [enabled, isPixiInitialized, canvasRef]);
+
+  useEffect(() => {
+    const app = pixiAppRef.current;
+    if (!isPixiInitialized || !app || !canvasRef.current) return;
+    setDiagnosticView({
+      zoom,
+      viewportWidth: viewportSize.width,
+      viewportHeight: viewportSize.height,
+      canvasWidth: canvasRef.current.width,
+      canvasHeight: canvasRef.current.height,
+      resolution: app.renderer.resolution,
+    });
+    reportDiagnosticWorldReady();
+  }, [isPixiInitialized, zoom, viewportSize.width, viewportSize.height, canvasRef]);
 
   // =========================================================================
   // EFFECT: Background Image Layer Setup (on map change)
@@ -669,18 +733,24 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         viewportScale,
         referenceWidth: refViewport.width,
         referenceHeight: refViewport.height,
-        viewportWidth: viewportSize.width / zoom,
-        viewportHeight: viewportSize.height / zoom,
+        viewportWidth: roomViewport.width / zoom,
+        viewportHeight: roomViewport.height / zoom,
       });
-
-      (async () => {
-        await backgroundImageLayerRef.current?.loadLayers(map, currentMapId, false);
-      })();
     } else {
       backgroundImageLayerRef.current.setScalingConfig(null);
       backgroundImageLayerRef.current.clear();
     }
-  }, [enabled, currentMapId, isPixiInitialized, viewportScale, viewportSize, zoom]);
+  }, [enabled, currentMapId, isPixiInitialized, viewportScale, roomViewport, zoom]);
+
+  // Artwork loads on map changes only. Scale/pan updates above reuse the sprites.
+  useEffect(() => {
+    if (!enabled || !isPixiInitialized) return;
+    const layer = backgroundImageLayerRef.current;
+    const map = mapManager.getCurrentMap();
+    if (layer && map?.renderMode === 'background-image') {
+      void layer.loadLayers(map, currentMapId, false);
+    }
+  }, [enabled, currentMapId, isPixiInitialized]);
 
   // =========================================================================
   // EFFECT: Update weather visibility on map change
@@ -1015,7 +1085,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       effectiveGridOffset,
       effectiveTileSize,
       shouldFlip,
-      movementMode
+      movementMode,
+      groundPlayers
     );
   }, [
     enabled,
@@ -1032,6 +1103,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     effectiveGridOffset,
     effectiveTileSize,
     movementMode,
+    groundPlayers,
   ]);
 
   // =========================================================================

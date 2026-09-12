@@ -38,6 +38,8 @@ const ON_DEMAND_RETRY_COOLDOWN_MS = 30_000;
 class TextureManager {
   private textures = new Map<string, Texture>();
   private loading = new Map<string, Promise<Texture>>();
+  private urls = new Map<string, string>();
+  private unloading = new Map<string, Promise<void>>();
   /** URLs that must never be evicted (player, UI, weather — needed on every map). */
   private pinned = new Set<string>();
   /** Failed on-demand attempts per URL, so a miss in the render loop cannot retry forever. */
@@ -63,9 +65,36 @@ class TextureManager {
 
   /** Estimated GPU memory of one texture, in bytes. */
   private textureBytes(texture: Texture): number {
-    const { width, height } = texture.source;
+    const source = texture.source;
+    if (texture.destroyed || !source || source.destroyed) return 0;
+    const { width, height } = source;
     const base = width * height * BYTES_PER_PIXEL;
     return getCachedPerformanceSettings().generateMipmaps ? base * MIPMAP_OVERHEAD : base;
+  }
+
+  private unloadUrl(url: string): Promise<void> {
+    const existing = this.unloading.get(url);
+    if (existing) return existing;
+    const pending = Assets.unload(url)
+      .catch(() => {
+        // Already removed from the asset loader; never destroy a shared source twice.
+      })
+      .finally(() => {
+        if (this.unloading.get(url) === pending) this.unloading.delete(url);
+      });
+    this.unloading.set(url, pending);
+    return pending;
+  }
+
+  private cached(key: string): Texture | undefined {
+    const texture = this.textures.get(key);
+    if (texture && (texture.destroyed || !texture.source || texture.source.destroyed)) {
+      this.textures.delete(key);
+      void this.unloadUrl(this.urls.get(key) ?? key);
+      this.urls.delete(key);
+      return undefined;
+    }
+    return texture;
   }
 
   /**
@@ -74,9 +103,8 @@ class TextureManager {
    */
   async loadTexture(key: string, url: string): Promise<Texture> {
     // Return cached texture if already loaded
-    if (this.textures.has(key)) {
-      return this.textures.get(key)!;
-    }
+    const cached = this.cached(key);
+    if (cached) return cached;
 
     // Return existing promise if already loading
     if (this.loading.has(key)) {
@@ -84,12 +112,16 @@ class TextureManager {
     }
 
     // Start loading
-    const promise = Assets.load<Texture>(url)
+    const promise = (async () => {
+      await this.unloading.get(url);
+      return Assets.load<Texture>(url);
+    })()
       .then((texture) => {
         this.applyPolicy(texture);
 
         // Cache texture
         this.textures.set(key, texture);
+        this.urls.set(key, url);
         this.loading.delete(key);
 
         return texture;
@@ -129,7 +161,7 @@ class TextureManager {
     urls: string[],
     onProgress?: (loaded: number, total: number) => void
   ): Promise<void> {
-    const pending = urls.filter((url) => !this.textures.has(url));
+    const pending = urls.filter((url) => !this.cached(url));
     const total = pending.length;
     if (total === 0) {
       onProgress?.(0, 0);
@@ -151,9 +183,7 @@ class TextureManager {
       while (cursor < pending.length) {
         const url = pending[cursor++]!;
         try {
-          const texture = await Assets.load<Texture>(url);
-          this.applyPolicy(texture);
-          this.textures.set(url, texture);
+          await this.loadTexture(url, url);
         } catch (reason) {
           failures.push({ url, reason });
         }
@@ -205,7 +235,7 @@ class TextureManager {
    */
   requestTexture(url: string | undefined | null): void {
     if (!url) return;
-    if (this.textures.has(url) || this.loading.has(url)) return;
+    if (this.cached(url) || this.loading.has(url)) return;
 
     let attempts = this.attempts.get(url) ?? 0;
     if (attempts >= MAX_ON_DEMAND_ATTEMPTS) {
@@ -259,7 +289,7 @@ class TextureManager {
    * no loading.
    */
   getTexture(url: string): Texture | undefined {
-    const texture = this.textures.get(url);
+    const texture = this.cached(url);
     if (!texture) this.requestTexture(url);
     return texture;
   }
@@ -268,7 +298,7 @@ class TextureManager {
    * Check if texture is loaded
    */
   hasTexture(url: string): boolean {
-    return this.textures.has(url);
+    return !!this.cached(url);
   }
 
   /**
@@ -282,7 +312,12 @@ class TextureManager {
   /** Estimated resident GPU texture memory, in MB. */
   getEstimatedMemoryMB(): number {
     let bytes = 0;
-    for (const texture of this.textures.values()) bytes += this.textureBytes(texture);
+    const sources = new Set();
+    for (const texture of this.textures.values()) {
+      if (!texture.source || sources.has(texture.source)) continue;
+      sources.add(texture.source);
+      bytes += this.textureBytes(texture);
+    }
     return bytes / (1024 * 1024);
   }
 
@@ -302,19 +337,27 @@ class TextureManager {
     const keepSet = new Set(keep);
     let freedBytes = 0;
     let evicted = 0;
+    const protectedSources = new Set(
+      [...this.textures]
+        .filter(
+          ([key]) =>
+            keepSet.has(key) ||
+            keepSet.has(this.urls.get(key) ?? key) ||
+            this.pinned.has(key) ||
+            this.pinned.has(this.urls.get(key) ?? key)
+        )
+        .map(([, texture]) => texture.source)
+    );
+    const releasedSources = new Set();
 
     for (const [url, texture] of this.textures) {
-      if (keepSet.has(url) || this.pinned.has(url)) continue;
-      const bytes = this.textureBytes(texture);
-      try {
-        Assets.unload(url).catch(() => {
-          /* already gone, or never registered under this url */
-        });
-        texture.destroy(true);
-      } catch (error) {
-        console.warn(`[TextureManager] Could not destroy ${url}:`, error);
-      }
+      if (texture.source && protectedSources.has(texture.source)) continue;
+      const source = texture.source;
+      const bytes = source && !releasedSources.has(source) ? this.textureBytes(texture) : 0;
+      if (source) releasedSources.add(source);
+      void this.unloadUrl(this.urls.get(url) ?? url);
       this.textures.delete(url);
+      this.urls.delete(url);
       freedBytes += bytes;
       evicted++;
     }
@@ -364,6 +407,7 @@ class TextureManager {
   clear(): void {
     this.textures.clear();
     this.loading.clear();
+    this.urls.clear();
     this.pinned.clear();
     this.attempts.clear();
     this.exhaustedAt.clear();

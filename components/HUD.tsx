@@ -24,13 +24,14 @@ function formatTimeRemaining(ms: number): string {
 }
 
 interface HUDProps {
+  compact?: boolean;
   /** Currently selected item ID (or null if nothing selected) */
   selectedItemId?: string | null;
   /** Quantity of selected item (for display) */
   selectedItemQuantity?: number;
 }
 
-const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
+const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity, compact = false }) => {
   const currentMap = mapManager.getCurrentMap();
   const mapName = currentMap ? currentMap.name : 'Loading...';
   const { gold, forestDepth, caveDepth } = useGameState();
@@ -87,14 +88,19 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
       {/* Top-left: Wallet + Equipped Item */}
       <div
         className={`absolute left-2 ${zClass(Z_HUD)} pointer-events-none flex items-start gap-2`}
-        style={{ top: 'calc(8px + env(safe-area-inset-top, 0px))' }}
+        style={{
+          top: 'calc(8px + env(safe-area-inset-top, 0px))',
+          left: 'max(8px, env(safe-area-inset-left))',
+          maxWidth: compact ? 'calc(50% - 100px)' : undefined,
+          flexWrap: compact ? 'wrap' : undefined,
+        }}
       >
         {/* Floating Wallet - Gold display */}
         <div className="relative">
           <img
             src="/TwilightGame/assets-optimized/ui/wallet.png"
             alt="Gold"
-            className="w-[70px] h-[70px] sm:w-[88px] sm:h-[88px] drop-shadow-lg"
+            className={`${compact ? 'w-11 h-11' : 'w-[70px] h-[70px] sm:w-[88px] sm:h-[88px]'} drop-shadow-lg`}
           />
           <div
             className="absolute inset-0 flex items-center justify-center"
@@ -200,12 +206,27 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
       {/* Right HUD Panel - Clock, calendar, and location */}
       <div
         className={`absolute right-16 sm:right-20 ${zClass(Z_HUD)} pointer-events-none`}
-        style={{ top: 'calc(8px + env(safe-area-inset-top, 0px))' }}
+        style={{
+          top: 'calc(8px + env(safe-area-inset-top, 0px))',
+          ...(compact
+            ? {
+                left: '50%',
+                right: 'auto',
+                transform: 'translateX(-50%)',
+                width: '260px',
+                maxWidth: 'calc(100vw - 300px)',
+              }
+            : { right: 'calc(168px + env(safe-area-inset-right, 0px))' }),
+        }}
       >
-        <div className="flex items-start gap-2">
+        <div className={`flex items-start gap-2 ${compact ? 'justify-center items-center' : ''}`}>
           {/* Location info to the left of clocks (cottagecore styled) */}
           <div
-            className="px-3 py-2 rounded-lg mt-2"
+            className={
+              compact
+                ? 'px-2 py-1 rounded-lg min-w-0 text-center self-center'
+                : 'px-3 py-2 rounded-lg mt-2'
+            }
             style={{
               background: 'linear-gradient(135deg, #f5f0e1, #e8dcc8)',
               border: '2px solid #8b7355',
@@ -213,17 +234,21 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
             }}
           >
             <p
-              className="text-xs font-serif font-bold whitespace-nowrap"
+              className={`${compact ? 'text-[11px] truncate' : 'text-xs whitespace-nowrap'} font-serif font-bold`}
+              title={mapName}
               style={{ color: '#5a4636' }}
             >
               {mapName}
+              {compact && (forestDepth > 0 || caveDepth > 0)
+                ? ` · ${forestDepth || caveDepth}`
+                : ''}
             </p>
-            {forestDepth > 0 && (
+            {!compact && forestDepth > 0 && (
               <p className="text-[10px] font-serif" style={{ color: '#4a7c4a' }}>
                 Depth: {forestDepth}
               </p>
             )}
-            {caveDepth > 0 && (
+            {!compact && caveDepth > 0 && (
               <p className="text-[10px] font-serif" style={{ color: '#6b546b' }}>
                 Depth: {caveDepth}
               </p>
@@ -232,7 +257,7 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
 
           {/* Analog Clock (hours/minutes with rotating hands) */}
           <div
-            className="relative rounded-full"
+            className="relative rounded-full shrink-0"
             style={
               cloudSyncGlow
                 ? {
@@ -242,11 +267,13 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
                 : undefined
             }
           >
-            <AnalogClock currentTime={currentTime} size={70} />
+            <AnalogClock currentTime={currentTime} size={compact ? 36 : 70} />
           </div>
 
           {/* Sundial Calendar (date/season) */}
-          <SundialClock currentTime={currentTime} size={70} />
+          <div className="shrink-0">
+            <SundialClock currentTime={currentTime} size={compact ? 36 : 70} />
+          </div>
         </div>
       </div>
     </>

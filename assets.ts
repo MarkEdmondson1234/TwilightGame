@@ -735,6 +735,7 @@ export const fairyAssets = {
 // Note: Most GIFs are optimized by the asset pipeline (resized to 512x512 with gifsicle)
 // Some GIFs use original size when specified (e.g., dragonfly_stream)
 export const animationAssets = {
+  cave_drip: '/TwilightGame/assets/effects/cave-drip/atlas.png',
   cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.gif',
   dragonfly_stream: '/TwilightGame/assets-optimized/animations/dragonfly_stream.gif', // Use original size
   bees: '/TwilightGame/assets-optimized/animations/bees.gif', // Use original size
@@ -743,6 +744,13 @@ export const animationAssets = {
   // rain: '/TwilightGame/assets-optimized/animations/rain.gif',
   // snow: '/TwilightGame/assets-optimized/animations/snow.gif',
   // fireflies: '/TwilightGame/assets-optimized/animations/fireflies.gif',
+};
+
+// Pre-rendered Blender weather instrument. Order: base, turning arrow, weather signs.
+export const weatherVaneAssets = {
+  base: '/TwilightGame/assets/effects/weather-vane/base.png',
+  rotor: '/TwilightGame/assets/effects/weather-vane/rotor-atlas.png',
+  signs: '/TwilightGame/assets/effects/weather-vane/sign-atlas.png',
 };
 
 // Particle assets - PNG sprites for weather particle systems

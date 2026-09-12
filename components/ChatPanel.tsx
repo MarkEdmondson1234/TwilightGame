@@ -16,11 +16,14 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
+import { useTouchDevice } from '../hooks/useTouchDevice';
+import MobileMenuShell from './MobileMenuShell';
+import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory';
 import { MAX_CHAT_LENGTH } from '../multiplayer/chat';
 import { Z_CHAT_PANEL, zClass } from '../zIndex';
 
 interface ChatPanelProps {
-  onSend: (text: string) => void;
+  onSend: (text: string) => void | Promise<boolean>;
   /** True while the composer should be focused for typing */
   isComposing: boolean;
   onStartComposing: () => void;
@@ -36,7 +39,19 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   onStopComposing,
   compact = false,
 }) => {
+  const isTouchDevice = useTouchDevice();
+  const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
+  const [sendError, setSendError] = useState('');
+  const [history, setHistory] = useState(getChatHistory);
+  useEffect(() => onChatHistoryChange(() => setHistory(getChatHistory())), []);
   const [draft, setDraft] = useState('');
+  const historyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (isTouchDevice && isComposing && historyRef.current) {
+      historyRef.current.scrollTop = historyRef.current.scrollHeight;
+    }
+  }, [history, isComposing, isTouchDevice]);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   // Focus on open. useKeyboardControls ignores keys while an INPUT has focus,
@@ -53,6 +68,109 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     if (text.trim()) onSend(text);
     onStopComposing();
   };
+
+  const submitMobile = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!draft.trim() || sendingRef.current) return;
+    sendingRef.current = true;
+    setSending(true);
+    setSendError('');
+    try {
+      const sent = await onSend(draft);
+      if (sent === false) {
+        setSendError('Message not sent. Your draft is saved; try again.');
+      } else {
+        setDraft('');
+        onStopComposing();
+      }
+    } catch {
+      setSendError('Message not sent. Your draft is saved; try again.');
+    } finally {
+      sendingRef.current = false;
+      setSending(false);
+    }
+  };
+
+  if (isTouchDevice) {
+    if (!isComposing)
+      return (
+        <button
+          data-game-ui
+          onClick={onStartComposing}
+          className={`fixed rounded-full border-2 border-amber-200/50 bg-stone-800/95 text-amber-100 ${zClass(Z_CHAT_PANEL)}`}
+          style={{
+            right: 'calc(84px + env(safe-area-inset-right))',
+            bottom: 'calc(96px + env(safe-area-inset-bottom))',
+            minWidth: 64,
+            minHeight: 44,
+          }}
+        >
+          Chat
+        </button>
+      );
+    return (
+      <MobileMenuShell className={`${zClass(Z_CHAT_PANEL)} bg-black/60`}>
+        <form
+          onSubmit={submitMobile}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Chat"
+          className="w-full max-w-xl max-h-full flex flex-col rounded-2xl border-2 border-amber-200/60 bg-stone-800 text-amber-50 p-3 gap-2"
+          onKeyDown={(event) => {
+            event.stopPropagation();
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              onStopComposing();
+            }
+          }}
+        >
+          <div className="flex justify-between items-center gap-2 shrink-0">
+            <h2 className="font-bold">Chat with nearby players</h2>
+            <button type="button" onClick={onStopComposing} className="px-3 min-h-12">
+              Close
+            </button>
+          </div>
+          <div
+            className="overflow-y-auto min-h-0"
+            style={{ overscrollBehavior: 'contain' }}
+            ref={historyRef}
+            aria-label="Recent messages"
+          >
+            {history.slice(-8).map((message) => (
+              <p key={message.id} className="break-words text-sm mb-2">
+                <strong>{message.name}: </strong>
+                {message.text}
+              </p>
+            ))}
+          </div>
+          {sendError && (
+            <p role="alert" className="text-amber-200 text-sm">
+              {sendError}
+            </p>
+          )}
+          <div className="flex gap-2 shrink-0">
+            <input
+              ref={inputRef}
+              value={draft}
+              maxLength={MAX_CHAT_LENGTH}
+              disabled={sending}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Say something…"
+              aria-label="Chat message"
+              className="min-w-0 flex-1 rounded-lg bg-stone-700 px-3 min-h-12 text-base"
+            />
+            <button
+              type="submit"
+              disabled={sending || !draft.trim()}
+              className="min-h-12 px-4 rounded-lg bg-amber-200 text-stone-900 disabled:opacity-50"
+            >
+              {sending ? 'Sending…' : 'Send'}
+            </button>
+          </div>
+        </form>
+      </MobileMenuShell>
+    );
+  }
 
   return (
     <div

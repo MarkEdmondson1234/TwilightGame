@@ -452,6 +452,7 @@ const PotionContent: React.FC<PotionContentProps> = ({ theme }) => {
       {selectedPotion && (
         <button
           onClick={() => handleBrew(selectedPotion.id)}
+          data-book-action
           className="absolute -top-5 left-1/2 ml-36 px-5 py-1.5 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 z-20"
           style={{
             backgroundColor: theme.buttonColour,

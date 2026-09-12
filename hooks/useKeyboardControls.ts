@@ -86,7 +86,7 @@ export interface KeyboardControlsConfig {
   onSetShowMagicBook: (show: boolean) => void;
   onSetShowPhotoAlbum: (show: boolean) => void;
   onSetPlayerPos: (pos: Position) => void;
-  onMapTransition: (mapId: string, spawnPos: Position) => void;
+  onMapTransition: (mapId: string, spawnPos: Position) => Position | void;
   onFarmUpdate: () => void;
   onFarmActionAnimation: (
     action: 'till' | 'plant' | 'water' | 'harvest' | 'clear',
@@ -448,14 +448,14 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
         if (transitionResult.hasDoor) {
           audioManager.playSfx('sfx_door_open');
         }
-        onMapTransition(transitionResult.mapId, transitionResult.spawnPosition);
+        const actualSpawn = onMapTransition(transitionResult.mapId, transitionResult.spawnPosition);
 
         // Save player location when transitioning maps
         const seedMatch = transitionResult.mapId.match(/_([\d]+)$/);
         const seed = seedMatch ? parseInt(seedMatch[1]) : undefined;
         gameState.updatePlayerLocation(
           transitionResult.mapId,
-          transitionResult.spawnPosition,
+          actualSpawn || transitionResult.spawnPosition,
           seed
         );
       }

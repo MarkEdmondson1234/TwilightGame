@@ -64,6 +64,8 @@ export class BackgroundImageLayer {
   private backgroundSprites: LayerSprite[] = [];
   private foregroundSprites: LayerSprite[] = [];
   private currentMapId: string | null = null;
+  private loadGeneration = 0;
+  private pendingLoad: { mapId: string; promise: Promise<void> } | null = null;
   private viewportDimensions: ViewportDimensions = { width: 0, height: 0 };
   private stageRef: PIXI.Container | null = null;
   // NPCs extracted from unified layers (with zIndexOverride set)
@@ -270,6 +272,8 @@ export class BackgroundImageLayer {
     mapId: string,
     _skipForeground: boolean = true
   ): Promise<void> {
+    if (this.pendingLoad?.mapId === mapId) return this.pendingLoad.promise;
+
     // Skip if already loaded for this map
     if (this.currentMapId === mapId && this.backgroundSprites.length > 0) {
       debugLog('BackgroundImageLayer', `Already loaded for ${mapId}, skipping`);
@@ -287,28 +291,26 @@ export class BackgroundImageLayer {
       return;
     }
 
-    // Clear layer NPCs
+    const generation = this.loadGeneration;
     this.layerNPCs = [];
-
-    // Process unified layers array
-    if (map.layers && map.layers.length > 0) {
-      await this.processUnifiedLayers(map.layers, map);
-      debugLog(
-        'BackgroundImageLayer',
-        `Loaded unified layers for ${mapId}: ${this.backgroundSprites.length} background, ${this.foregroundSprites.length} foreground images, ${this.layerNPCs.length} NPCs`
-      );
-
-      // Register layer NPCs with npcManager so they're found by interaction handlers
+    const promise = (async () => {
+      if (!map.layers?.length) return;
+      await this.processUnifiedLayers(map.layers, map, generation);
+      if (generation !== this.loadGeneration) return;
       if (this.layerNPCs.length > 0) {
-        // Get existing NPCs for this map and combine with layer NPCs
         const existingNPCs = npcManager.getNPCsForMap(mapId);
-        const combinedNPCs = [...existingNPCs, ...this.layerNPCs];
-        npcManager.registerNPCs(mapId, combinedNPCs);
-        debugLog(
-          'BackgroundImageLayer',
-          `Registered ${this.layerNPCs.length} layer NPCs with npcManager`
-        );
+        const layerIds = new Set(this.layerNPCs.map((npc) => npc.id));
+        npcManager.registerNPCs(mapId, [
+          ...existingNPCs.filter((npc) => !layerIds.has(npc.id)),
+          ...this.layerNPCs,
+        ]);
       }
+    })();
+    this.pendingLoad = { mapId, promise };
+    try {
+      await promise;
+    } finally {
+      if (this.pendingLoad?.promise === promise) this.pendingLoad = null;
     }
   }
 
@@ -370,13 +372,18 @@ export class BackgroundImageLayer {
    * All elements are added directly to stage with their z-index for proper sorting
    * Layers with conditions are only added if the condition is met
    */
-  private async processUnifiedLayers(layers: RoomLayer[], map: MapDefinition): Promise<void> {
+  private async processUnifiedLayers(
+    layers: RoomLayer[],
+    map: MapDefinition,
+    generation: number
+  ): Promise<void> {
     if (!this.stageRef) {
       console.warn('[BackgroundImageLayer] Stage reference not set, cannot process unified layers');
       return;
     }
 
     for (const layer of layers) {
+      if (generation !== this.loadGeneration) return;
       const isCobwebLayer = layer.condition?.type === 'cobweb';
       const isMessPileLayer = layer.condition?.type === 'mess_pile';
       const isBoulderLayer = layer.condition?.type === 'boulder';
@@ -395,6 +402,10 @@ export class BackgroundImageLayer {
       if (layer.type === 'image') {
         // Image layer - add directly to stage for proper z-index sorting
         const layerSprite = await this.createImageLayerSprite(layer, map);
+        if (generation !== this.loadGeneration) {
+          layerSprite?.sprite.destroy();
+          return;
+        }
         if (layerSprite) {
           // Cobweb layers: set initial visibility and register for live toggling
           if (isCobwebLayer && layer.condition?.type === 'cobweb') {
@@ -659,6 +670,8 @@ export class BackgroundImageLayer {
    * Clear all sprites (when leaving a background-image room)
    */
   clear(): void {
+    this.loadGeneration++;
+    this.pendingLoad = null;
     // Destroy background sprites
     for (const layerSprite of this.backgroundSprites) {
       layerSprite.sprite.destroy();

@@ -192,6 +192,42 @@ class MapManager {
     return true; // Position is safe
   }
 
+  /** Mobile recovery/entry: terrain-safe spawn that also avoids current NPC bodies. */
+  findUnoccupiedPosition(
+    mapId: string,
+    target: Position,
+    accepts: (position: Position) => boolean = () => true
+  ): Position | null {
+    const map = this.getMap(mapId);
+    if (!map) return null;
+    const npcs = npcManager.getNPCsForMap(mapId);
+    const clear = (pos: Position) =>
+      this.isPositionValidForMap(map, pos) &&
+      accepts(pos) &&
+      npcs.every(
+        (npc) =>
+          !npc.collisionRadius ||
+          npc.collisionRadius <= 0 ||
+          Math.hypot(pos.x - npc.position.x, pos.y - npc.position.y) >=
+            PLAYER_SIZE / 2 + npc.collisionRadius
+      );
+    for (const origin of [target, map.spawnPoint]) {
+      if (clear(origin)) return { ...origin };
+      for (let radius = 0.5; radius <= 8; radius += 0.5) {
+        const steps = Math.ceil(radius * 16);
+        for (let i = 0; i < steps; i++) {
+          const angle = (i * Math.PI * 2) / steps;
+          const pos = {
+            x: origin.x + Math.cos(angle) * radius,
+            y: origin.y + Math.sin(angle) * radius,
+          };
+          if (clear(pos)) return pos;
+        }
+      }
+    }
+    return null;
+  }
+
   /**
    * Find nearest valid position for a specific map
    */

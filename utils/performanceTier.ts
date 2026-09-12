@@ -122,7 +122,8 @@ function isMobileDevice(): boolean {
     (ua.includes('iPad') ||
       ua.includes('iPhone') ||
       ua.includes('Android') ||
-      ua.includes('Mobile'))
+      ua.includes('Mobile') ||
+      (ua.includes('Macintosh') && navigator.maxTouchPoints > 1))
   );
 }
 

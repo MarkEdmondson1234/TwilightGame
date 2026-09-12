@@ -105,6 +105,7 @@ const ScriptedControls: React.FC<ScriptedControlsProps> = ({
 
   return (
     <div
+      data-dialogue-choices
       className="flex-shrink-0 overflow-y-auto"
       style={{ padding: '6px 6% 8px', maxHeight: '90px' }}
     >

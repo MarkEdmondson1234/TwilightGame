@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTouchDevice } from '../../hooks/useTouchDevice';
 import { BookThemeConfig } from './bookThemes';
 import BookPage from './BookPage';
 import { BookChapter } from '../../hooks/useBookPagination';
@@ -45,6 +46,57 @@ function BookSpread<ChapterId extends string>({
   onPrevPage,
   onNextPage,
 }: BookSpreadProps<ChapterId>) {
+  const isTouchDevice = useTouchDevice();
+  if (isTouchDevice) {
+    return (
+      <div
+        className="mobile-book-spread"
+        style={{ color: theme.textPrimary, fontFamily: theme.fontBody }}
+      >
+        {chapters && onChapterSelect && (
+          <nav className="mobile-book-chapters" aria-label="Book chapters">
+            {chapters.map((chapter) => (
+              <button
+                key={chapter.id}
+                disabled={chapter.locked}
+                aria-current={chapter.id === currentChapterId ? 'page' : undefined}
+                onClick={() => onChapterSelect(chapter.id)}
+                style={{ backgroundColor: theme.ribbonColour, color: '#fff' }}
+              >
+                {chapter.label}
+                {chapter.locked ? ' (Locked)' : ''}
+              </button>
+            ))}
+          </nav>
+        )}
+        <div
+          className="mobile-book-pages"
+          key={`${currentChapterId}-${leftPageNumber}-${rightPageNumber}`}
+          style={{ backgroundImage: `url(${theme.backgroundImage})` }}
+        >
+          <section aria-label="Left page">{leftPageContent}</section>
+          <section aria-label="Right page">{rightPageContent}</section>
+        </div>
+        <nav className="mobile-book-navigation" aria-label="Book pages">
+          {onPrevPage && (
+            <button onClick={onPrevPage} disabled={!canGoPrev}>
+              ❮ Previous
+            </button>
+          )}
+          <span>
+            {leftPageNumber !== undefined && totalPages !== undefined
+              ? `${leftPageNumber} of ${totalPages}`
+              : ''}
+          </span>
+          {onNextPage && (
+            <button onClick={onNextPage} disabled={!canGoNext}>
+              Next ❯
+            </button>
+          )}
+        </nav>
+      </div>
+    );
+  }
   return (
     <div className={`relative w-full h-full flex items-center justify-center ${className}`}>
       {/* Book image - this determines the actual size */}

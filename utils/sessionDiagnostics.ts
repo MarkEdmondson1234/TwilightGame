@@ -12,6 +12,8 @@ type Operation =
   | 'cloud_upload'
   | 'cloud_download';
 const INTERVAL_MS = 60_000;
+const STARTUP_INTERVAL_MS = 15_000;
+const STARTUP_SAMPLES = 4;
 const MAX_LOGS = 360; // Hard ceiling per page session, including operation logs.
 // A minute needs this many frames over 50ms before it counts as "slow" and
 // earns runtime attribution (NPC count, weather, remote players). Healthy
@@ -31,9 +33,13 @@ let worst = 0;
 let stalls = 0;
 let reportDue = false;
 let timer: ReturnType<typeof setInterval> | undefined;
+let startupTimer: ReturnType<typeof setInterval> | undefined;
+let worldReady = false;
 let residentMemory: (() => number) | undefined;
 const lastOperation = new Map<string, number>();
 let device: Fields = {};
+let view: Fields = {};
+let contextLossReported = false;
 // Registered via setSlowMinuteContext so this module never imports game
 // modules (GameState already imports sessionDiagnostics — the cycle would be
 // real). Only invoked for slow minutes, so healthy sessions pay nothing.
@@ -95,6 +101,7 @@ function reportPerformance(): void {
   safely(() => {
     const metrics = performanceMonitor.getMetrics();
     const summary: Fields = {
+      ...view,
       'performance.fps': Math.round((frames * 10000) / elapsed) / 10,
       'performance.worst_frame_ms': Math.round(worst),
       'performance.frames_over_50ms': stalls,
@@ -167,6 +174,79 @@ export function setDiagnosticRenderer(
       : 'unavailable';
     Sentry.setContext('game_device', device);
     log('game.renderer_ready');
+  });
+}
+
+/** Camera and actual framebuffer dimensions, refreshed when the view changes. */
+export function setDiagnosticView(next: {
+  zoom: number;
+  viewportWidth: number;
+  viewportHeight: number;
+  canvasWidth: number;
+  canvasHeight: number;
+  resolution: number;
+}): void {
+  if (!active) return;
+  view = {
+    'view.camera_zoom': next.zoom,
+    'view.viewport_width': next.viewportWidth,
+    'view.viewport_height': next.viewportHeight,
+    'view.canvas_width': next.canvasWidth,
+    'view.canvas_height': next.canvasHeight,
+    'view.resolution': next.resolution,
+    'view.pixel_ratio': window.devicePixelRatio || 1,
+    'view.visual_scale': window.visualViewport?.scale ?? 1,
+  };
+  safely(() => Sentry.setContext('game_view', view));
+}
+
+/** Snapshot the loaded world before a short session can disappear without an exception. */
+export function reportDiagnosticWorldReady(): void {
+  if (!active || worldReady) return;
+  worldReady = true;
+  safely(() => {
+    const details: Fields = { ...view };
+    if (residentMemory) details['performance.resident_texture_mb'] = Math.round(residentMemory());
+    log('game.world_ready', details);
+  });
+  // Anchor early reports to Play/world readiness, not time spent on the title.
+  // Summaries still run on the next visible game frame, keeping stalls and
+  // background gaps subject to the same rules as the regular minute report.
+  if (timer) clearInterval(timer);
+  resetFrames();
+  reportDue = false;
+  let samples = 0;
+  startupTimer = setInterval(() => {
+    if (document.visibilityState === 'visible') reportDue = true;
+    samples++;
+    if (samples >= STARTUP_SAMPLES) {
+      clearInterval(startupTimer);
+      startupTimer = undefined;
+      timer = setInterval(() => {
+        if (document.visibilityState === 'visible') reportDue = true;
+      }, INTERVAL_MS);
+    }
+  }, STARTUP_INTERVAL_MS);
+}
+
+/** Context loss is not an exception, so automatic error reporting misses it. */
+export function reportDiagnosticContextLoss(): void {
+  if (!active || contextLossReported) return;
+  contextLossReported = true;
+  safely(() => {
+    const metrics = performanceMonitor.getMetrics();
+    const details: Fields = {
+      ...view,
+      'performance.visible_sprites': metrics.scene.visibleSprites,
+      'performance.scene_texture_mb': metrics.scene.textureMB,
+    };
+    if (residentMemory) details['performance.resident_texture_mb'] = Math.round(residentMemory());
+    Sentry.captureMessage('WebGL context lost', {
+      level: 'warning',
+      tags: { category: 'game_crash' },
+      contexts: { details },
+    });
+    log('game.context_lost', details);
   });
 }
 
@@ -243,6 +323,11 @@ export function stopSessionDiagnostics(): void {
   mapId = 'startup';
   reportDue = false;
   residentMemory = undefined;
+  view = {};
+  if (startupTimer) clearInterval(startupTimer);
+  startupTimer = undefined;
+  worldReady = false;
+  contextLossReported = false;
   slowMinuteContext = undefined;
 }
 if (import.meta.hot) import.meta.hot.dispose(stopSessionDiagnostics);

@@ -1,3 +1,5 @@
+import MobileMenuShell from './MobileMenuShell';
+import '../src/styles/mobileMenus.css';
 import React, { useState, useMemo } from 'react';
 import { RecipeCategory, getRecipe } from '../data/recipes';
 import { getItem } from '../data/items';
@@ -25,6 +27,8 @@ interface CookingInterfaceProps {
  */
 const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, locationType }) => {
   const isTouchDevice = useTouchDevice();
+  const [showRecipeList, setShowRecipeList] = useState(true);
+  const MenuBoundary = isTouchDevice ? MobileMenuShell : 'div';
   const [selectedRecipe, setSelectedRecipe] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<RecipeCategory | 'all'>('all');
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
@@ -89,25 +93,38 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
   }
 
   return (
-    <div
+    <MenuBoundary
       className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_COOKING)} p-2 sm:p-4 pointer-events-auto`}
       onClick={onClose}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseUp={(e) => e.stopPropagation()}
     >
       <div
+        data-mobile-menu={isTouchDevice ? 'cooking' : undefined}
+        role="dialog"
+        aria-label="Cooking"
         className="relative bg-gradient-to-b from-amber-900 to-amber-950 border-4 border-amber-600 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-amber-800 px-4 py-3 border-b-2 border-amber-600 flex items-center justify-between">
+        <div className="menu-header bg-amber-800 px-4 py-3 border-b-2 border-amber-600 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-amber-200 flex items-center gap-2">
             <span>{locationType === 'campfire' ? '🔥' : '🍳'}</span>
             {locationType === 'campfire' ? 'Campfire Cooking' : 'Kitchen'}
           </h2>
+          {isTouchDevice && !showRecipeList && (
+            <button
+              aria-label="Back to recipes"
+              className="px-3 border rounded"
+              onClick={() => setShowRecipeList(true)}
+            >
+              Recipes
+            </button>
+          )}
           <button
+            aria-label="Close cooking"
             onClick={onClose}
             className="text-amber-300 hover:text-white transition-colors text-2xl font-bold px-2"
           >
@@ -116,11 +133,17 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
         </div>
 
         {/* Category Tabs */}
-        <div className="bg-amber-900/50 px-4 py-2 border-b border-amber-700 flex gap-2 overflow-x-auto">
+        <div
+          hidden={isTouchDevice && !showRecipeList}
+          className="menu-filters bg-amber-900/50 px-4 py-2 border-b border-amber-700 flex gap-2 overflow-x-auto"
+        >
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
+              onClick={() => {
+                setSelectedCategory(cat.id);
+                setShowRecipeList(true);
+              }}
               className={`px-3 py-1 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${
                 selectedCategory === cat.id
                   ? 'bg-amber-600 text-white'
@@ -133,9 +156,12 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col sm:flex-row overflow-hidden">
+        <div className="recipe-panels flex-1 flex flex-col sm:flex-row overflow-hidden">
           {/* Recipe List */}
-          <div className="w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-amber-700 overflow-y-auto max-h-40 sm:max-h-none">
+          <div
+            hidden={isTouchDevice && !showRecipeList}
+            className="recipe-list w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-amber-700 overflow-y-auto max-h-40 sm:max-h-none"
+          >
             <div className="p-2 space-y-1">
               {displayedRecipes.length === 0 ? (
                 <p className="text-amber-400 text-sm italic p-2">
@@ -150,7 +176,10 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
                   return (
                     <button
                       key={r.id}
-                      onClick={() => setSelectedRecipe(r.id)}
+                      onClick={() => {
+                        setSelectedRecipe(r.id);
+                        setShowRecipeList(false);
+                      }}
                       className={`w-full text-left px-3 py-2 rounded transition-colors ${
                         selectedRecipe === r.id
                           ? 'bg-amber-600 text-white'
@@ -173,7 +202,10 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
           </div>
 
           {/* Recipe Details */}
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div
+            hidden={isTouchDevice && showRecipeList}
+            className="recipe-details flex-1 p-4 overflow-y-auto"
+          >
             {recipe ? (
               <div className="space-y-4">
                 {/* Recipe Header */}
@@ -253,7 +285,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
                 </div>
 
                 {/* Cook Button */}
-                <div className="pt-4">
+                <div hidden={isTouchDevice} className="recipe-action pt-4">
                   <button
                     onClick={handleCook}
                     className="w-full py-3 rounded-lg font-bold text-lg transition-colors bg-green-600 hover:bg-green-500 text-white"
@@ -272,8 +304,18 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
           </div>
         </div>
 
+        {isTouchDevice && !showRecipeList && recipe && (
+          <div className="mobile-recipe-action pt-2 shrink-0">
+            <button
+              onClick={handleCook}
+              className="w-full min-h-12 rounded-lg font-bold text-lg text-white bg-green-600 hover:bg-green-500"
+            >
+              🍳 Cook!
+            </button>
+          </div>
+        )}
         {/* Footer */}
-        <div className="bg-amber-900/50 px-4 py-2 border-t border-amber-700 text-center">
+        <div className="menu-footer bg-amber-900/50 px-4 py-2 border-t border-amber-700 text-center">
           <p className="text-amber-400 text-xs">
             {isTouchDevice ? 'Tap ✕ to close' : 'Press ESC or E to close'} • Cook recipes 3 times to
             master them
@@ -292,7 +334,7 @@ const CookingInterface: React.FC<CookingInterfaceProps> = ({ isOpen, onClose, lo
           />
         )}
       </div>
-    </div>
+    </MenuBoundary>
   );
 };
 

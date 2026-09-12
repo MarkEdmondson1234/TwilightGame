@@ -38,9 +38,9 @@ import {
 import { calculateViewportScale } from '../hooks/useViewportScale';
 
 describe('getCoverZoom (#26 — tiled rooms)', () => {
-  it('returns 1 when the map already covers the viewport at 1:1', () => {
+  it('allows 50% when a large map still covers the viewport', () => {
     // Map bigger than viewport in both axes — no zoom needed to cover.
-    expect(getCoverZoom(4000, 3000, 1920, 1080)).toBe(1);
+    expect(getCoverZoom(4000, 3000, 1920, 1080)).toBe(0.5);
   });
 
   it('returns >1 when the map is smaller than the viewport in one axis', () => {
@@ -58,9 +58,9 @@ describe('getCoverZoom (#26 — tiled rooms)', () => {
     expect(900 * zoom).toBeGreaterThanOrEqual(1080 - 1e-6);
   });
 
-  it('never returns below 1 (never forces a zoom-out just because the map is huge)', () => {
+  it('keeps small maps covered while allowing the normal zoom floor on large maps', () => {
     expect(getCoverZoom(100, 100, 1920, 1080)).toBeGreaterThanOrEqual(1);
-    expect(getCoverZoom(10000, 10000, 1920, 1080)).toBe(1);
+    expect(getCoverZoom(10000, 10000, 1920, 1080)).toBe(0.5);
   });
 });
 

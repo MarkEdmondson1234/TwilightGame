@@ -27,11 +27,15 @@ import {
   farmingAssets,
   itemAssets,
   particleAssets,
+  animationAssets,
+  weatherVaneAssets,
 } from '../assets';
 import { getCharacterSpriteUrls } from './assetPreloader';
 import { mapManager } from '../maps/MapManager';
 import type { MapDefinition, NPC } from '../types';
 import { TileType } from '../types';
+import { CAVE_DRIP_PLACEMENTS } from '../data/caveDrips';
+import { hasWeatherVane, WEATHER_VANE } from '../data/weatherVane';
 
 /** Season keys as they appear in SeasonalImageSet (lowercase, unlike TimeManager's enum). */
 export const SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'] as const;
@@ -139,6 +143,7 @@ function tileImages(
 function spriteImages(tileTypes: Set<TileType>, season: SeasonKey, out: Set<string>): void {
   for (const entry of SPRITE_METADATA) {
     if (!tileTypes.has(entry.tileType)) continue;
+    if (CAVE_DRIP_PLACEMENTS.has(entry.tileType)) collect(out, animationAssets.cave_drip);
     collect(out, entry.image, entry.animationFrames);
     const seasonal = (entry as { seasonalImages?: Record<string, string | string[]> })
       .seasonalImages;
@@ -189,6 +194,9 @@ export function getTexturesForMap(mapId: string, season: SeasonKey = 'spring'): 
     for (const tile of row) tileTypes.add(tile);
   }
   if (map.borderTileType !== undefined) tileTypes.add(map.borderTileType);
+  if (tileTypes.has(WEATHER_VANE.tileType) && hasWeatherVane(mapId, WEATHER_VANE.tileType)) {
+    collect(out, ...Object.values(weatherVaneAssets));
+  }
 
   const seen = new Set<TileType>();
   for (const tileType of tileTypes) tileImages(tileType, season, seen, out);

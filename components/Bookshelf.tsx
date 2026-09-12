@@ -4,8 +4,11 @@ import { Z_HUD, zClass } from '../zIndex';
 import { magicManager } from '../utils/MagicManager';
 import { inventoryManager } from '../utils/inventoryManager';
 import GameIcon from './GameIcon';
+import MobileMenuShell from './MobileMenuShell';
+import { Z_HELP_BROWSER } from '../zIndex';
 
 interface BookshelfProps {
+  onClose?: () => void;
   isTouchDevice?: boolean;
   playerPosition?: { x: number; y: number };
   currentMapId?: string;
@@ -24,6 +27,7 @@ interface BookshelfProps {
  */
 const Bookshelf: React.FC<BookshelfProps> = ({
   isTouchDevice,
+  onClose,
   onRecipeBookOpen,
   onMagicBookOpen,
   onJournalOpen,
@@ -74,6 +78,72 @@ const Bookshelf: React.FC<BookshelfProps> = ({
     }
   };
 
+  if (isTouchDevice) {
+    const books = [
+      {
+        label: 'Magic recipes',
+        image: uiAssets.book_magic,
+        open: handleMagicBookClick,
+        locked: !magicBookUnlocked,
+      },
+      {
+        label: 'Photo album',
+        image: uiAssets.book_photo_album,
+        open: handlePhotoAlbumClick,
+        locked: !cameraOwned,
+      },
+      {
+        label: 'Recipes',
+        image: uiAssets.book_recipes,
+        open: handleRecipeBookClick,
+        locked: false,
+      },
+      { label: 'Journal', image: uiAssets.book_journal, open: handleJournalClick, locked: false },
+    ];
+    return (
+      <MobileMenuShell className={`${zClass(Z_HELP_BROWSER)} bg-black/40`}>
+        <section
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              e.stopPropagation();
+              onClose?.();
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Books"
+          className="w-full max-w-xl max-h-full overflow-y-auto rounded-xl border-4 border-[#8b7355] bg-[#f5f0e1] text-[#5a4636] p-3"
+        >
+          <div className="flex items-center justify-between gap-3 sticky top-0 bg-[#f5f0e1] z-10">
+            <h2 className="text-xl font-serif font-bold">Books</h2>
+            <button
+              autoFocus
+              onClick={onClose}
+              className="min-h-12 px-4 rounded border-2 border-[#8b7355]"
+            >
+              Close
+            </button>
+          </div>
+          <div className="flex gap-3 overflow-x-auto py-3" style={{ touchAction: 'pan-x' }}>
+            {books.map((book) => (
+              <button
+                key={book.label}
+                onClick={book.open}
+                disabled={book.locked}
+                className="flex-1 min-w-24 flex flex-col items-center gap-2 rounded-lg p-2 disabled:opacity-50 border border-[#8b7355]"
+              >
+                <img src={book.image} alt="" className="h-28 w-14 object-contain" />
+                <span className="font-serif text-sm">
+                  {book.label}
+                  {book.locked ? ' (Locked)' : ''}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+      </MobileMenuShell>
+    );
+  }
   return (
     <>
       {/* Books Container - no container scaling since individual books handle their own scale */}

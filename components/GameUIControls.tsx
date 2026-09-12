@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { uiAssets } from '../assets';
+import { EMOTES } from '../multiplayer/emotes';
 import { Z_HUD, zClass } from '../zIndex';
 
 interface GameUIControlsProps {
   showHelpBrowser: boolean;
   onToggleHelpBrowser: () => void;
+  onOpenAccount?: () => void;
+  onOpenBooks?: () => void;
+  onOpenEmotes?: () => void;
   showCollisionBoxes: boolean;
   onToggleCollisionBoxes: () => void;
   onToggleInventory: () => void;
@@ -16,13 +20,16 @@ interface GameUIControlsProps {
  * Positioned as overlay elements on the game viewport
  *
  * Touch devices:
- * - Satchel is smaller (64px) and expands on tap
- * - Satchel positioned above touch controls
+ * - Satchel stays at 60px and opens with a normal tap
+ * - Satchel occupies the lower-right corner
  * - Dev buttons hidden (desktop only)
  */
 const GameUIControls: React.FC<GameUIControlsProps> = ({
   showHelpBrowser,
   onToggleHelpBrowser,
+  onOpenAccount,
+  onOpenBooks,
+  onOpenEmotes,
   showCollisionBoxes,
   onToggleCollisionBoxes,
   onToggleInventory,
@@ -34,14 +41,45 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
     <>
       {/* Help Button - Top Right (cottagecore styled) */}
       <div
-        className={`absolute right-2 ${zClass(Z_HUD)}`}
+        data-game-ui
+        className={`absolute right-2 flex items-center gap-2 ${zClass(Z_HUD)}`}
         style={{
           top: 'calc(8px + env(safe-area-inset-top, 0px))',
+          right: 'max(8px, env(safe-area-inset-right))',
         }}
       >
+        {isTouchDevice && onOpenBooks && (
+          <button
+            onClick={onOpenBooks}
+            aria-label="Books"
+            title="Books"
+            className="w-11 h-11 flex items-center justify-center rounded-full border border-[#8b7355] bg-[#f5f0e1]"
+          >
+            <img src={uiAssets.book_journal} alt="" className="w-8 h-9 object-contain" />
+          </button>
+        )}
+        {isTouchDevice && onOpenEmotes && (
+          <button
+            onClick={onOpenEmotes}
+            aria-label="Emotes and game icons"
+            title="Emotes and game icons"
+            className="w-11 h-11 flex items-center justify-center rounded-full border border-[#8b7355] bg-[#f5f0e1]"
+          >
+            <img src={EMOTES[1].image} alt="" className="w-9 h-9 object-contain" />
+          </button>
+        )}
+        {!isTouchDevice && onOpenAccount && (
+          <button
+            onClick={onOpenAccount}
+            className="min-h-12 px-3 rounded font-serif font-semibold border-2 border-[#8b7355] bg-[#f5f0e1] text-[#5a4636] pointer-events-auto"
+          >
+            Account
+          </button>
+        )}
         <button
           onClick={onToggleHelpBrowser}
-          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full font-serif font-bold text-xl sm:text-2xl transition-all pointer-events-auto"
+          aria-label="Help and settings"
+          className={`${isTouchDevice ? 'w-11 h-11' : 'w-12 h-12'} rounded-full font-serif font-bold text-xl sm:text-2xl transition-all pointer-events-auto flex items-center justify-center`}
           style={{
             background: showHelpBrowser
               ? 'linear-gradient(to bottom, #d4a84b, #c99a3e)'
@@ -55,32 +93,41 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
           }}
           title="Help [F1]"
         >
-          ?
+          {isTouchDevice ? (
+            <svg
+              aria-hidden="true"
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          ) : (
+            '?'
+          )}
         </button>
       </div>
 
       {/* Inventory Satchel - Responsive sizing and positioning */}
       <div
+        data-game-ui
         className={`absolute right-2 ${zClass(Z_HUD)} transition-all duration-200`}
         style={{
-          // On touch devices, position above touch controls (which sit at ~60px from bottom)
+          // Reserve the lower-right corner for the satchel.
           // Add safe area inset for notched devices
-          bottom: isTouchDevice ? 'calc(140px + env(safe-area-inset-bottom, 0px))' : '64px',
+          bottom: isTouchDevice ? 'calc(8px + env(safe-area-inset-bottom, 0px))' : '64px',
+          right: 'max(8px, env(safe-area-inset-right))',
+          touchAction: 'manipulation',
         }}
       >
         <button
           onClick={onToggleInventory}
           onMouseEnter={() => !isTouchDevice && setSatchelExpanded(true)}
           onMouseLeave={() => setSatchelExpanded(false)}
-          onTouchStart={(e) => {
-            e.preventDefault();
-            setSatchelExpanded(true);
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
-            setSatchelExpanded(false);
-            onToggleInventory();
-          }}
           className="transition-transform focus:outline-none focus:ring-2 focus:ring-amber-400 rounded-lg pointer-events-auto"
           title="Inventory [I]"
         >
@@ -91,22 +138,10 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
             style={{
               imageRendering: 'auto',
               // Responsive sizing:
-              // - Touch: 96px default (larger tap target for iPad), 160px expanded
+              // - Touch: stable 60px target; no growth under a held finger.
               // - Desktop: 85px default (33% of 256), 256px expanded
-              width: isTouchDevice
-                ? satchelExpanded
-                  ? '160px'
-                  : '96px'
-                : satchelExpanded
-                  ? '256px'
-                  : '85px',
-              height: isTouchDevice
-                ? satchelExpanded
-                  ? '160px'
-                  : '96px'
-                : satchelExpanded
-                  ? '256px'
-                  : '85px',
+              width: isTouchDevice ? '60px' : satchelExpanded ? '256px' : '85px',
+              height: isTouchDevice ? '60px' : satchelExpanded ? '256px' : '85px',
             }}
           />
         </button>

@@ -30,8 +30,15 @@ import { Z_DEPTH_SORTED_BASE, Z_GROUND_DECORATION } from '../../zIndex';
 import { TimeManager, TimeOfDay } from '../TimeManager';
 import { getCachedPerformanceSettings } from '../performanceTier';
 import { debugLog } from '../debugLog';
+import { CaveDrips } from './CaveDrips';
+import { WeatherVane } from './WeatherVane';
+import { hasWeatherVane } from '../../data/weatherVane';
+import type { WeatherType } from '../../data/weatherConfig';
 
 export class SpriteLayer extends PixiLayer {
+  private caveDrips = new CaveDrips();
+  private weatherVane = new WeatherVane();
+  private currentWeather: WeatherType = 'clear';
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private currentMapId: string | null = null;
   // Animation tracking for multi-tile sprites (like cauldron)
@@ -99,6 +106,7 @@ export class SpriteLayer extends PixiLayer {
       this.clear();
       this.currentMapId = mapId;
     }
+    this.currentWeather = currentWeather ?? 'clear';
 
     // Skip sprite rendering for background-image maps
     // Background image already includes furniture visuals
@@ -424,6 +432,10 @@ export class SpriteLayer extends PixiLayer {
     }
 
     sprite.visible = true;
+    this.caveDrips.attach(`${this.currentMapId}:${key}`, sprite, metadata, this.getTargetContainer());
+    if (hasWeatherVane(this.currentMapId ?? '', metadata.tileType)) {
+      this.weatherVane.attach(sprite, this.getTargetContainer(), this.currentWeather);
+    }
   }
 
   /**
@@ -431,6 +443,8 @@ export class SpriteLayer extends PixiLayer {
    * Advances frames sequentially based on elapsed time
    */
   updateAnimations(): void {
+    this.caveDrips.update(Date.now());
+    this.weatherVane.update(Date.now());
     if (this.animatedSprites.size === 0) return;
 
     const currentTime = Date.now();
@@ -463,6 +477,8 @@ export class SpriteLayer extends PixiLayer {
    * Clear all sprites (when changing maps)
    */
   clear(): void {
+    this.caveDrips.clear();
+    this.weatherVane.clear();
     const container = this.getTargetContainer();
     this.sprites.forEach((sprite) => {
       if (sprite.parent === container) {

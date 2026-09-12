@@ -8,6 +8,9 @@
  * - Shows hints about NPC preferences
  */
 
+import MobileMenuShell from './MobileMenuShell';
+import { useTouchDevice } from '../hooks/useTouchDevice';
+import '../src/styles/mobileMenus.css';
 import React, { useState, useMemo } from 'react';
 import { inventoryManager } from '../utils/inventoryManager';
 import { friendshipManager } from '../utils/FriendshipManager';
@@ -64,6 +67,8 @@ const GiftModal: React.FC<GiftModalProps> = ({
   onGiftGiven,
   onShowToast,
 }) => {
+  const isTouchDevice = useTouchDevice();
+  const MenuBoundary = isTouchDevice ? MobileMenuShell : 'div';
   const isPlayerGift = !!playerTarget;
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   // Guards against a double-tap/double-click submitting the gift twice
@@ -235,19 +240,23 @@ const GiftModal: React.FC<GiftModalProps> = ({
   };
 
   return (
-    <div
+    <MenuBoundary
       className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_MODAL)} pointer-events-auto`}
       onClick={onClose}
     >
       <div
+        data-mobile-menu={isTouchDevice ? 'gift' : undefined}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Give gift to ${targetName}`}
         className="bg-gradient-to-b from-pink-900 to-pink-950 border-4 border-pink-600 rounded-lg p-6 max-w-xl w-full max-h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header — the NPC's portrait and hearts, or the other player's name */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="menu-header flex justify-between items-start mb-4">
           <div className="flex items-center gap-4">
             {/* NPC Portrait */}
-            <div className="w-16 h-16 rounded-full bg-pink-800 border-2 border-pink-500 overflow-hidden flex items-center justify-center">
+            <div className="gift-portrait w-16 h-16 rounded-full bg-pink-800 border-2 border-pink-500 overflow-hidden flex items-center justify-center">
               {npc?.portraitSprite || npc?.dialogueSprite ? (
                 <img
                   src={npc.portraitSprite || npc.dialogueSprite}
@@ -282,6 +291,7 @@ const GiftModal: React.FC<GiftModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close gifts"
             className="w-8 h-8 bg-red-600 hover:bg-red-500 text-white font-bold rounded-full transition-colors"
           >
             ×
@@ -289,7 +299,7 @@ const GiftModal: React.FC<GiftModalProps> = ({
         </div>
 
         {/* Item Grid */}
-        <div className="flex-1 min-h-0 max-h-[50vh] overflow-y-auto pr-2 gift-scrollbar">
+        <div className="menu-scroll flex-1 min-h-0 max-h-[50vh] overflow-y-auto pr-2 gift-scrollbar">
           {giftableItems.length === 0 ? (
             <div className="text-center text-pink-300 py-8">
               <p className="text-lg mb-2">No items to give</p>
@@ -298,7 +308,7 @@ const GiftModal: React.FC<GiftModalProps> = ({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-6 gap-2">
+            <div className="menu-item-grid grid grid-cols-6 gap-2">
               {slots.map((item, index) => {
                 const isEmpty = item === null;
                 const isSelected = selectedItemId === item?.id;
@@ -315,6 +325,7 @@ const GiftModal: React.FC<GiftModalProps> = ({
                 const slotButton = (
                   <button
                     key={index}
+                    aria-label={item?.name}
                     onClick={() => item && setSelectedItemId(item.id)}
                     className={`
                       relative w-full aspect-square rounded-lg transition-all
@@ -365,7 +376,7 @@ const GiftModal: React.FC<GiftModalProps> = ({
         </div>
 
         {/* Footer with selected item and Give button */}
-        <div className="mt-4 pt-4 border-t border-pink-700 flex justify-between items-center">
+        <div className="gift-footer mt-4 pt-4 border-t border-pink-700 flex justify-between items-center">
           <div className="text-pink-300">
             {selectedItemId ? (
               <span className="font-semibold">{getItem(selectedItemId)?.displayName}</span>
@@ -390,7 +401,7 @@ const GiftModal: React.FC<GiftModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </MenuBoundary>
   );
 };
 

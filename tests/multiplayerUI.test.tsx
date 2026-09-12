@@ -15,6 +15,8 @@ import EmoteWheel from '../components/EmoteWheel';
 import PresenceIndicator from '../components/PresenceIndicator';
 import { EMOTES } from '../multiplayer/emotes';
 
+vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => false }));
+
 describe('EmoteWheel', () => {
   it('offers exactly the emotes in the vocabulary, and nothing else', () => {
     // The picker is the only player-to-player channel; anything here that is
@@ -24,7 +26,7 @@ describe('EmoteWheel', () => {
     for (const emote of EMOTES) {
       expect(screen.getByRole('button', { name: emote.label })).toBeInTheDocument();
     }
-    expect(screen.getAllByRole('button')).toHaveLength(EMOTES.length);
+    expect(screen.getAllByRole('button')).toHaveLength(EMOTES.length + 1);
   });
 
   it('sends the chosen emote and closes', () => {
