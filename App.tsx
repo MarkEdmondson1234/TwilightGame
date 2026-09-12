@@ -108,6 +108,7 @@ import { seasonalEventManager } from './utils/SeasonalEventManager';
 import { harvestFeastManager } from './utils/HarvestFeastManager';
 import { wreathWorkshopManager } from './utils/WreathWorkshopManager';
 import { snowAngelManager } from './utils/SnowAngelManager';
+import { snowmanManager } from './utils/SnowmanManager';
 import FarmActionAnimation from './components/FarmActionAnimation';
 import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES, getCutsceneById } from './data/cutscenes';
@@ -863,6 +864,12 @@ const App: React.FC = () => {
     } else if (action.cutsceneId === 'fairy_oak_midnight_return') {
       // Return visit — grant fairy form potion
       grantFairyFormPotion();
+    } else if (action.cutsceneId === 'build_snowman') {
+      // Place the new snowman at a random free village tile and bring the
+      // player there — the destination is computed at runtime, so this
+      // can't be expressed as a static onComplete.transition position.
+      const pos = snowmanManager.placeRandom('village');
+      if (pos) handleMapTransition('village', pos);
     }
 
     // Wizard Trials: these two cutscenes precede a mini-game rather than a map
@@ -1394,6 +1401,7 @@ const App: React.FC = () => {
       seasonalEventManager.check();
       wreathWorkshopManager.check();
       snowAngelManager.check();
+      snowmanManager.check();
       harvestFeastManager.check(playerPosRef.current);
       yuleCelebrationManager.check(playerPosRef.current);
       // Gated the same way as the position-based cutscene check below — the

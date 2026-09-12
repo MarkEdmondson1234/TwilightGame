@@ -75,9 +75,19 @@ export function createVillageChildNPC(
             nextId: 'child_tales',
           },
           {
+            text: 'Wanna build a snowman?',
+            nextId: 'build_snowman',
+            requiredSeason: 'winter',
+          },
+          {
             text: 'Maybe another time!',
           },
         ],
+      },
+      {
+        id: 'build_snowman',
+        text: 'Do I ever!',
+        responses: [],
       },
       {
         id: 'play_games',

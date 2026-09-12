@@ -217,6 +217,18 @@ export const CRAFTED_DECORATION_ITEMS: Record<string, ItemDefinition> = {
     placedScale: 4,
   },
 
+  seasonal_snowman: {
+    id: 'seasonal_snowman',
+    name: 'seasonal_snowman',
+    displayName: 'Snowman',
+    category: ItemCategory.DECORATION,
+    description: 'A cheerful snowman, built with the little girl on a snowy day.',
+    stackable: false,
+    sellPrice: 0,
+    icon: '⛄',
+    placedScale: 2,
+  },
+
   seasonal_harvest_table: {
     id: 'seasonal_harvest_table',
     name: 'seasonal_harvest_table',
