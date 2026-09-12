@@ -100,12 +100,17 @@ export function getRoomCoverScale(
  * Zero when there's nothing cropped on this axis — so a 16:9 room in a 16:9
  * window doesn't move at all.
  */
-function panAxis(playerOffset: number, artworkSize: number, viewportSize: number): number {
+function panAxis(
+  playerOffset: number,
+  artworkSize: number,
+  viewportSize: number,
+  anchor = viewportSize / 2
+): number {
   const crop = artworkSize - viewportSize;
   if (crop <= 0) return 0;
 
   // Camera measured from the artwork's leading edge, as useCamera does.
-  const wanted = playerOffset - viewportSize / 2;
+  const wanted = playerOffset - anchor;
   const camera = Math.max(0, Math.min(crop, wanted));
 
   // Convert to an offset from the centred position (camera === crop / 2).
@@ -113,6 +118,8 @@ function panAxis(playerOffset: number, artworkSize: number, viewportSize: number
 }
 
 export interface RoomPanConfig {
+  /** Pre-zoom space reserved for lower controls; clamping still uses the full viewport. */
+  bottomInset?: number;
   /** Player position in tile units */
   playerPos: Position;
   /** On-screen size of one tile (TILE_SIZE * viewportScale * layerScale * zoom) */
@@ -139,7 +146,12 @@ export function getRoomPan(config: RoomPanConfig): Position {
 
   return {
     x: panAxis(playerPos.x * tileSize, artworkWidth, viewportWidth),
-    y: panAxis(playerPos.y * tileSize, artworkHeight, viewportHeight),
+    y: panAxis(
+      playerPos.y * tileSize,
+      artworkHeight,
+      viewportHeight,
+      (viewportHeight - (config.bottomInset ?? 0)) / 2
+    ),
   };
 }
 
@@ -149,7 +161,8 @@ export function getRoomTransform(
   playerPos: Position,
   viewport: { width: number; height: number },
   viewportScale: number,
-  zoom: number
+  zoom: number,
+  bottomInset = 0
 ) {
   // Everything below is in pre-zoom stage pixels. Zoom is applied once by
   // the Pixi stage / DOM world and inverted once by screenToTile.
@@ -167,6 +180,7 @@ export function getRoomTransform(
           artworkHeight: height,
           viewportWidth: stageViewport.width,
           viewportHeight: stageViewport.height,
+          bottomInset: bottomInset / zoom,
         })
       : { x: 0, y: 0 };
   return {

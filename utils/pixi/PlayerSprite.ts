@@ -17,6 +17,7 @@
  */
 
 import * as PIXI from 'pixi.js';
+import { playerGroundingOffset } from '../playerGrounding';
 import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import { Position, Direction } from '../../types';
 import { textureManager } from '../TextureManager';
@@ -80,7 +81,8 @@ export class PlayerSprite extends PixiLayer {
     gridOffset?: Position,
     tileSize: number = TILE_SIZE, // Allow override for viewport scaling
     shouldFlip: boolean = false, // Flip sprite horizontally (for fairy right-facing)
-    movementMode: MovementMode = 'normal' // Movement mode affects z-index when flying
+    movementMode: MovementMode = 'normal', // Movement mode affects z-index when flying
+    grounded = false
   ): Promise<void> {
     // Load texture if changed
     if (this.currentSpriteUrl !== spriteUrl) {
@@ -102,7 +104,10 @@ export class PlayerSprite extends PixiLayer {
     const offsetX = gridOffset?.x ?? 0;
     const offsetY = gridOffset?.y ?? 0;
     this.sprite.x = playerPos.x * tileSize + offsetX;
-    this.sprite.y = playerPos.y * tileSize + offsetY;
+    this.sprite.y =
+      playerPos.y * tileSize +
+      offsetY -
+      (grounded ? playerGroundingOffset(spriteUrl, size * tileSize) : 0);
 
     // Update size (use tileSize for viewport scaling)
     // Use scale instead of width/height to support flipping

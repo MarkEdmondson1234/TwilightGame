@@ -30,7 +30,9 @@ interface HelpBrowserProps {
   cameraZoom?: {
     value: number;
     min: number;
+    max?: number;
     fittedRoom: boolean;
+    interiorCamera?: boolean;
     onChange: (value: number) => void;
   };
   onOpenCharacterSelect?: () => void;
@@ -615,11 +617,31 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                       Show more of the world while keeping menus and buttons their normal size.
                     </p>
                     <div className="flex flex-wrap gap-3">
+                      {cameraZoom.interiorCamera && (
+                        <button
+                          onClick={() => cameraZoom.onChange(cameraZoom.min)}
+                          aria-pressed={Math.abs(cameraZoom.value - cameraZoom.min) < 0.01}
+                          className="min-h-12 min-w-16 px-3 rounded border-2"
+                          style={{
+                            borderColor: colours.wood,
+                            background:
+                              Math.abs(cameraZoom.value - cameraZoom.min) < 0.01
+                                ? colours.brass
+                                : colours.parchment,
+                          }}
+                        >
+                          Fit
+                        </button>
+                      )}
                       {[0.5, 0.75, 1].map((value) => (
                         <button
                           key={value}
                           onClick={() => cameraZoom.onChange(value)}
-                          disabled={cameraZoom.fittedRoom || value < cameraZoom.min}
+                          disabled={
+                            cameraZoom.fittedRoom ||
+                            value < cameraZoom.min ||
+                            value > (cameraZoom.max ?? Infinity)
+                          }
                           aria-pressed={Math.abs(cameraZoom.value - value) < 0.01}
                           className="min-h-12 min-w-16 px-3 rounded border-2 disabled:opacity-40"
                           style={{

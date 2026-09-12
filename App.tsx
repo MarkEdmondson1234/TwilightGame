@@ -1,3 +1,4 @@
+import { getPlayerBodyFraction, playerGroundingOffset, isOutsideMobileShopFloor, shopFloorY } from './utils/playerGrounding';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   TILE_SIZE,
@@ -344,8 +345,65 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const currentMap = mapManager.getCurrentMap();
+  const isMobileInteriorCamera = isTouchDevice && ['mums_kitchen', 'shop'].includes(currentMapId);
+  const interiorControlInset = isMobileInteriorCamera ? Math.min(88, viewportSize.height * 0.25) : 0;
+  const roomViewport = useMemo(() => ({
+    width: viewportSize.width,
+    height: viewportSize.height - interiorControlInset,
+  }), [viewportSize, interiorControlInset]);
+  // Browser page-zoom factor relative to load (1.0 = normal). Keeps the
+  // viewportScale memo below invariant to browser zoom — see useBrowserZoom.
+  const browserZoom = useBrowserZoom();
+
+  // Calculate viewport scale for background-image rooms
+  // This scales the entire room (image, grid, characters) to fit the viewport
+  // IMPORTANT: Only scale UP on large screens, never scale down on small screens
+  const viewportScale = useMemo((): number => {
+    if (!currentMap?.renderMode || currentMap.renderMode !== 'background-image') {
+      return 1.0; // No scaling for tiled maps
+    }
+
+    // Divide the browser-zoom factor back out of the viewport dimensions before
+    // fitting. Browser zoom shrinks innerWidth/innerHeight (CSS px), which would
+    // otherwise drag viewportScale toward its 1.0 floor and cancel the zoom on
+    // large monitors — leaving the room image and character the only things that
+    // don't magnify. Normalising here lets interiors zoom WITH the browser, like
+    // tiled rooms do. See useBrowserZoom / docs/ARCHITECTURE_GOTCHAS.md.
+    const fitWidth = viewportSize.width * browserZoom;
+    const fitHeight = roomViewport.height * browserZoom;
+
+    // Scale so the ROOM ARTWORK covers the viewport, measured from the artwork
+    // itself rather than the map's declared `referenceViewport` (issue #26).
+    // The reference is an authoring hint and drifts from the real artwork —
+    // Mum's Kitchen is 960x540 at scale 1.3 = 1248x702 against a declared
+    // 1280x720 — and every bit of that 2.6% drift showed up on screen as the
+    // game's background colour around the room, at every window size.
+    // The `referenceViewport` path below survives only for a background-image
+    // room with no centred artwork to measure; no current map is one.
+    const artwork = getRoomArtworkSize(currentMap);
+    const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
+    const rawScale = artwork
+      ? getRoomCoverScale(artwork.width, artwork.height, fitWidth, fitHeight)
+      : calculateViewportScale(
+          fitWidth,
+          fitHeight,
+          refViewport.width,
+          refViewport.height,
+          0.5, // minScale (absolute floor)
+          2.5, // maxScale - allow larger scaling for big monitors
+          'cover'
+        );
+
+    // Only scale UP on larger viewports, never scale down, so small screens
+    // still see the room at its authored size (cropped, and panned to follow the
+    // player). Deliberately no upper clamp: capping the scale would reopen #26
+    // as a visible gap on a large monitor.
+    return Math.max(1.0, rawScale);
+  }, [currentMap, viewportSize, roomViewport, browserZoom]);
+
   // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
-  // Background-image rooms (interiors) can only zoom in, not out
+  // The mobile interior pilot shares the world transform and has its own preference.
   // Disable zoom when UI overlays are open so scroll/pinch works in menus
   const [showEmoteWheel, setShowEmoteWheel] = useState(false);
   const [isComposingChat, setIsComposingChat] = useState(false);
@@ -353,19 +411,23 @@ const App: React.FC = () => {
   const isMobileCommunicationOpen = isTouchDevice && (isComposingChat || showEmoteWheel);
   const needsLandscape =
     isTouchDevice && viewportSize.width < 768 && viewportSize.height > viewportSize.width;
-  // Background-image rooms (interiors) already fit the viewport responsively via
-  // `viewportScale` (see the memo below); pinch/wheel zoom is disabled there so it
-  // can't re-fit the room at a different scale mid-frame and rearrange the layout.
-  // See getZoomLimitsForRoom (hooks/usePinchZoom.ts) for the full rationale.
-  const isBackgroundImageRoom = useMemo(() => {
-    const map = mapManager.getMap(currentMapId);
-    return map?.renderMode === 'background-image';
-  }, [currentMapId]);
-  // Minimum zoom needed for a TILED room to fully cover the viewport (issue #26)
-  // — see getCoverZoom. Irrelevant for background-image rooms, which use their
-  // own viewportScale system and have zoom disabled entirely.
+
+  // The saved room can render before map registration finishes on mobile startup.
+  // Derive this from the loaded map so its policy updates when artwork becomes available.
+  const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
+  // Coverage is measured after base fitting, before user zoom is applied.
   const coverZoom = useMemo(() => {
-    if (isBackgroundImageRoom) return 1;
+    if (isBackgroundImageRoom) {
+      const artwork = getRoomArtworkSize(currentMap);
+      return artwork
+        ? getRoomCoverScale(
+            artwork.width * viewportScale,
+            artwork.height * viewportScale,
+            viewportSize.width,
+            roomViewport.height
+          )
+        : 1;
+    }
     const map = mapManager.getMap(currentMapId);
     if (!map) return 1;
     return getCoverZoom(
@@ -374,26 +436,7 @@ const App: React.FC = () => {
       viewportSize.width,
       viewportSize.height
     );
-  }, [isBackgroundImageRoom, currentMapId, viewportSize]);
-  const zoomLimits = useMemo(
-    () =>
-      getZoomLimitsForRoom(
-        isBackgroundImageRoom,
-        isAnyOverlayOpen || needsLandscape || showSplashScreen || isMobileCommunicationOpen,
-        coverZoom
-      ),
-    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, isMobileCommunicationOpen, coverZoom]
-  );
-  // Menus retain native browser magnification.
-  useBrowserZoomLock(
-    !isAnyOverlayOpen && !showSplashScreen && !needsLandscape && !isMobileCommunicationOpen
-  );
-  const { zoom, setZoomLevel } = usePinchZoom({
-    minZoom: zoomLimits.minZoom,
-    maxZoom: zoomLimits.maxZoom,
-    enabled: zoomLimits.enabled,
-  });
-
+  }, [isBackgroundImageRoom, currentMapId, currentMap, viewportSize, roomViewport, viewportScale]);
   // Toast notifications for user feedback
   const { messages: toastMessages, showToast, dismissToast } = useToast();
 
@@ -413,7 +456,11 @@ const App: React.FC = () => {
   const movementMode = gameState.getMovementMode();
 
   // Setup collision detection (with NPC collision support and movement mode)
-  const { checkCollision } = useCollisionDetection(npcsRef, movementMode);
+  const { checkCollision: checkWorldCollision } = useCollisionDetection(npcsRef, movementMode);
+  const constrainShopFloor = isMobileInteriorCamera && currentMapId === 'shop' && movementMode !== 'flying';
+  const checkCollision = useCallback((position: Position) =>
+    (constrainShopFloor && isOutsideMobileShopFloor(position)) || checkWorldCollision(position),
+    [constrainShopFloor, checkWorldCollision]);
 
   // Reuse the overlay flag for path cancellation, etc. The title screen counts as
   // an overlay: the world is live and rendering underneath it the whole time it's
@@ -465,6 +512,15 @@ const App: React.FC = () => {
     isCutscenePlaying,
     activeNPC,
   });
+
+  // A desktop save may be on a counter tile allowed by its centre-anchored layout.
+  // Bring mobile feet onto the adjacent floor without changing the shared save format.
+  useEffect(() => {
+    if (constrainShopFloor && isOutsideMobileShopFloor(playerPosRef.current)) {
+      const pos = playerPosRef.current;
+      teleportPlayer({ x: pos.x, y: Math.min(668 / 64, Math.max(shopFloorY(pos.x), pos.y)) });
+    }
+  }, [constrainShopFloor, teleportPlayer, playerPosRef]);
 
   // ── Multiplayer presence ──────────────────────────────────────────────────
   // Refs so the game-loop publisher below reads live values without being
@@ -664,6 +720,42 @@ const App: React.FC = () => {
     gameState.getSelectedCharacter(),
     isFairyForm
   );
+
+  // Get player sprite info (URL and scale, plus flip for fairy form)
+  const { playerSpriteUrl, spriteScale, shouldFlip } = getPlayerSpriteInfo(
+    playerSprites,
+    direction,
+    animationFrame,
+    isFairyForm,
+    gameState.getSelectedCharacter()?.characterId
+  );
+
+  const playerBodyHeight = PLAYER_SIZE * spriteScale * (currentMap?.characterScale ?? 1) *
+    playerScale * TILE_SIZE * viewportScale * (getRoomArtworkSize(currentMap)?.layerScale ?? 1) *
+    getPlayerBodyFraction(playerSpriteUrl);
+  const zoomLimits = useMemo(
+    () =>
+      getZoomLimitsForRoom(
+        isBackgroundImageRoom,
+        isAnyOverlayOpen || needsLandscape || showSplashScreen || isMobileCommunicationOpen,
+        coverZoom,
+        isMobileInteriorCamera
+      ),
+    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, isMobileCommunicationOpen, coverZoom, isMobileInteriorCamera]
+  );
+  // Menus retain native browser magnification.
+  useBrowserZoomLock(
+    !isAnyOverlayOpen && !showSplashScreen && !needsLandscape && !isMobileCommunicationOpen
+  );
+  const maxCameraZoom = isMobileInteriorCamera
+    ? Math.max(zoomLimits.minZoom, Math.min(zoomLimits.maxZoom, (roomViewport.height - 24) / playerBodyHeight))
+    : zoomLimits.maxZoom;
+  const { zoom, setZoomLevel } = usePinchZoom({
+    minZoom: zoomLimits.minZoom,
+    maxZoom: maxCameraZoom,
+    enabled: zoomLimits.enabled,
+    preferenceKey: isMobileInteriorCamera ? 'interior' : 'world',
+  });
 
   const handleCharacterCreated = (character: CharacterCustomization) => {
     gameState.selectCharacter(character);
@@ -1486,59 +1578,8 @@ const App: React.FC = () => {
     };
   }, [activeNPC]);
 
-  const currentMap = mapManager.getCurrentMap();
   const mapWidth = currentMap ? currentMap.width : 50;
   const mapHeight = currentMap ? currentMap.height : 30;
-
-  // Browser page-zoom factor relative to load (1.0 = normal). Keeps the
-  // viewportScale memo below invariant to browser zoom — see useBrowserZoom.
-  const browserZoom = useBrowserZoom();
-
-  // Calculate viewport scale for background-image rooms
-  // This scales the entire room (image, grid, characters) to fit the viewport
-  // IMPORTANT: Only scale UP on large screens, never scale down on small screens
-  const viewportScale = useMemo((): number => {
-    if (!currentMap?.renderMode || currentMap.renderMode !== 'background-image') {
-      return 1.0; // No scaling for tiled maps
-    }
-
-    // Divide the browser-zoom factor back out of the viewport dimensions before
-    // fitting. Browser zoom shrinks innerWidth/innerHeight (CSS px), which would
-    // otherwise drag viewportScale toward its 1.0 floor and cancel the zoom on
-    // large monitors — leaving the room image and character the only things that
-    // don't magnify. Normalising here lets interiors zoom WITH the browser, like
-    // tiled rooms do. See useBrowserZoom / docs/ARCHITECTURE_GOTCHAS.md.
-    const fitWidth = viewportSize.width * browserZoom;
-    const fitHeight = viewportSize.height * browserZoom;
-
-    // Scale so the ROOM ARTWORK covers the viewport, measured from the artwork
-    // itself rather than the map's declared `referenceViewport` (issue #26).
-    // The reference is an authoring hint and drifts from the real artwork —
-    // Mum's Kitchen is 960x540 at scale 1.3 = 1248x702 against a declared
-    // 1280x720 — and every bit of that 2.6% drift showed up on screen as the
-    // game's background colour around the room, at every window size.
-    // The `referenceViewport` path below survives only for a background-image
-    // room with no centred artwork to measure; no current map is one.
-    const artwork = getRoomArtworkSize(currentMap);
-    const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
-    const rawScale = artwork
-      ? getRoomCoverScale(artwork.width, artwork.height, fitWidth, fitHeight)
-      : calculateViewportScale(
-          fitWidth,
-          fitHeight,
-          refViewport.width,
-          refViewport.height,
-          0.5, // minScale (absolute floor)
-          2.5, // maxScale - allow larger scaling for big monitors
-          'cover'
-        );
-
-    // Only scale UP on larger viewports, never scale down, so small screens
-    // still see the room at its authored size (cropped, and panned to follow the
-    // player). Deliberately no upper clamp: capping the scale would reopen #26
-    // as a visible gap on a large monitor.
-    return Math.max(1.0, rawScale);
-  }, [currentMap, viewportSize, browserZoom]);
 
   // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
   const isCompactMode = useMemo(() => {
@@ -1547,8 +1588,11 @@ const App: React.FC = () => {
 
   // One pre-zoom transform for artwork, entities, labels, and pointer inversion.
   const roomTransform = useMemo(
-    () => getRoomTransform(currentMap, playerPos, viewportSize, viewportScale, zoom),
-    [currentMap, playerPos, viewportSize, viewportScale, zoom]
+    () => getRoomTransform(currentMap, isMobileInteriorCamera ? {
+      x: playerPos.x,
+      y: playerPos.y - playerBodyHeight / (TILE_SIZE * viewportScale * (getRoomArtworkSize(currentMap)?.layerScale ?? 1)) / 2,
+    } : playerPos, roomViewport, viewportScale, zoom),
+    [currentMap, playerPos, roomViewport, viewportScale, zoom, isMobileInteriorCamera, playerBodyHeight]
   );
   const backgroundRoomPan = roomTransform.pan;
   const effectiveGridOffset = roomTransform.gridOffset;
@@ -1825,15 +1869,6 @@ const App: React.FC = () => {
     // EventBus will trigger inventory update automatically
   }, []);
 
-  // Get player sprite info (URL and scale, plus flip for fairy form)
-  const { playerSpriteUrl, spriteScale, shouldFlip } = getPlayerSpriteInfo(
-    playerSprites,
-    direction,
-    animationFrame,
-    isFairyForm,
-    gameState.getSelectedCharacter()?.characterId
-  );
-
   // PixiJS renderer hook - manages all PixiJS rendering layers
   const {
     isPixiInitialized,
@@ -1863,6 +1898,8 @@ const App: React.FC = () => {
       effectiveGridOffset: effectiveGridOffset ?? { x: 0, y: 0 },
       effectiveTileSize,
       backgroundRoomPan,
+      roomViewport,
+      groundPlayers: isMobileInteriorCamera,
       zoom,
     },
     player: {
@@ -2168,12 +2205,18 @@ const App: React.FC = () => {
       ref={gameContainerRef}
       data-game-world
       className="no-touch-callout text-white w-full h-full overflow-hidden font-sans relative select-none"
-      style={{ backgroundColor: '#5A7247' }}
+      style={{ backgroundColor: isMobileInteriorCamera ? '#302820' : '#5A7247' }}
     >
       {/* PixiJS Renderer (WebGL - High Performance) */}
       {/* Z_TILE_BACKGROUND ensures canvas stays below foreground parallax (z-250) and weather overlays */}
       {USE_PIXI_RENDERER && (
-        <canvas ref={canvasRef} className={`absolute top-0 left-0 ${zClass(Z_TILE_BACKGROUND)}`} />
+        <canvas ref={canvasRef} className={`absolute top-0 left-0 ${zClass(Z_TILE_BACKGROUND)}`}
+          style={isMobileInteriorCamera ? { clipPath: `inset(0 0 ${interiorControlInset}px 0)` } : undefined} />
+      )}
+
+      {isMobileInteriorCamera && (
+        <div data-game-ui aria-hidden="true" className="absolute bottom-0 left-0 right-0"
+          style={{ height: interiorControlInset, zIndex: 1 }} />
       )}
 
       {/* DOM Tile Renderer (Only when PixiJS is disabled) */}
@@ -2264,7 +2307,8 @@ const App: React.FC = () => {
                     (playerPos.x - (PLAYER_SIZE * effectiveScale) / 2) * effectiveTileSize +
                     (effectiveGridOffset?.x ?? 0),
                   top:
-                    (playerPos.y - (PLAYER_SIZE * effectiveScale) / 2) * effectiveTileSize +
+                    (playerPos.y - (PLAYER_SIZE * effectiveScale) / 2) * effectiveTileSize -
+                    (isMobileInteriorCamera ? playerGroundingOffset(playerSpriteUrl, PLAYER_SIZE * effectiveScale * effectiveTileSize) : 0) +
                     (effectiveGridOffset?.y ?? 0),
                   width: PLAYER_SIZE * effectiveScale * effectiveTileSize,
                   height: PLAYER_SIZE * effectiveScale * effectiveTileSize,
@@ -2700,7 +2744,9 @@ const App: React.FC = () => {
           cameraZoom={{
             value: zoom,
             min: zoomLimits.minZoom,
-            fittedRoom: isBackgroundImageRoom,
+            max: maxCameraZoom,
+            fittedRoom: isBackgroundImageRoom && !isMobileInteriorCamera,
+            interiorCamera: isMobileInteriorCamera,
             onChange: setZoomLevel,
           }}
           onClose={() => closeUI('helpBrowser')}

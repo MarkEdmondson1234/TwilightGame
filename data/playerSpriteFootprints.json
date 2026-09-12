@@ -1,0 +1,138 @@
+{
+  "character1/base/down_0.png": {
+    "top": 0.1201171875,
+    "bottom": 0.7021484375
+  },
+  "character1/base/down_1.png": {
+    "top": 0.1279296875,
+    "bottom": 0.7265625
+  },
+  "character1/base/down_2.png": {
+    "top": 0.1201171875,
+    "bottom": 0.7265625
+  },
+  "character1/base/left_0.png": {
+    "top": 0.1201171875,
+    "bottom": 0.7021484375
+  },
+  "character1/base/left_0_old_walking.png": {
+    "top": 0.205078125,
+    "bottom": 0.7236328125
+  },
+  "character1/base/left_1.png": {
+    "top": 0.189453125,
+    "bottom": 0.7333984375
+  },
+  "character1/base/left_2.png": {
+    "top": 0.205078125,
+    "bottom": 0.7236328125
+  },
+  "character1/base/left_3.png": {
+    "top": 0.2001953125,
+    "bottom": 0.7333984375
+  },
+  "character1/base/right_0.png": {
+    "top": 0.1201171875,
+    "bottom": 0.7021484375
+  },
+  "character1/base/right_0_old_walking.png": {
+    "top": 0.205078125,
+    "bottom": 0.7236328125
+  },
+  "character1/base/right_1.png": {
+    "top": 0.189453125,
+    "bottom": 0.7333984375
+  },
+  "character1/base/right_2.png": {
+    "top": 0.205078125,
+    "bottom": 0.7236328125
+  },
+  "character1/base/right_3.png": {
+    "top": 0.2001953125,
+    "bottom": 0.7333984375
+  },
+  "character1/base/up_0.png": {
+    "top": 0.1484375,
+    "bottom": 0.7158203125
+  },
+  "character1/base/up_1.png": {
+    "top": 0.1484375,
+    "bottom": 0.7265625
+  },
+  "character1/base/up_2.png": {
+    "top": 0.158203125,
+    "bottom": 0.7265625
+  },
+  "character1/fairy/down_fairy_spell01.png": {
+    "top": 0.3515625,
+    "bottom": 0.6416015625
+  },
+  "character1/fairy/down_fairy_spell02.png": {
+    "top": 0.3515625,
+    "bottom": 0.6826171875
+  },
+  "character1/fairy/left_fairy_spell01.png": {
+    "top": 0.3671875,
+    "bottom": 0.65234375
+  },
+  "character1/fairy/left_fairy_spell02.png": {
+    "top": 0.3671875,
+    "bottom": 0.66796875
+  },
+  "character1/fairy/up_fairy_spell01.png": {
+    "top": 0.3525390625,
+    "bottom": 0.8017578125
+  },
+  "character1/fairy/up_fairy_spell02.png": {
+    "top": 0.3525390625,
+    "bottom": 0.8017578125
+  },
+  "character2/base/down_0.png": {
+    "top": 0.158,
+    "bottom": 0.744
+  },
+  "character2/base/down_1.png": {
+    "top": 0.192,
+    "bottom": 0.744
+  },
+  "character2/base/left_0.png": {
+    "top": 0.125,
+    "bottom": 0.771
+  },
+  "character2/base/left_1.png": {
+    "top": 0.083,
+    "bottom": 0.771
+  },
+  "character2/base/left_2.png": {
+    "top": 0.125,
+    "bottom": 0.754
+  },
+  "character2/base/left_3.png": {
+    "top": 0.083,
+    "bottom": 0.771
+  },
+  "character2/base/right_0.png": {
+    "top": 0.125,
+    "bottom": 0.771
+  },
+  "character2/base/right_1.png": {
+    "top": 0.083,
+    "bottom": 0.771
+  },
+  "character2/base/right_2.png": {
+    "top": 0.125,
+    "bottom": 0.754
+  },
+  "character2/base/right_3.png": {
+    "top": 0.083,
+    "bottom": 0.771
+  },
+  "character2/base/up_0.png": {
+    "top": 0.023,
+    "bottom": 0.661
+  },
+  "character2/base/up_1.png": {
+    "top": 0.042,
+    "bottom": 0.661
+  }
+}

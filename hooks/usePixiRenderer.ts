@@ -1,3 +1,4 @@
+import { playerGroundingOffset } from '../utils/playerGrounding';
 import {
   setDiagnosticRenderer,
   setDiagnosticView,
@@ -20,7 +21,7 @@ import {
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
 import { Position, Direction, MapDefinition, TileData } from '../types';
-import { USE_SPRITE_SHADOWS, TILE_LEGEND } from '../constants';
+import { USE_SPRITE_SHADOWS, TILE_LEGEND, PLAYER_SIZE } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
 import { reportErrorOnce } from '../utils/errorReporting';
@@ -96,6 +97,8 @@ export interface UsePixiRendererProps {
      * centres each layer by its own size and needs the offset, not the result.
      */
     backgroundRoomPan?: { x: number; y: number };
+    roomViewport?: { width: number; height: number };
+    groundPlayers?: boolean;
   };
 
   /** Player state */
@@ -204,6 +207,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     gridOffset: { x: 0, y: 0 } as { x: number; y: number },
     tileSize: 64,
     characterScale: 1,
+    groundPlayers: false,
     playerPos: { x: 0, y: 0 } as { x: number; y: number },
   });
 
@@ -218,6 +222,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     effectiveGridOffset,
     effectiveTileSize,
     backgroundRoomPan,
+    roomViewport = viewportSize,
+    groundPlayers = false,
     zoom = 1.0,
   } = viewport;
   const {
@@ -241,7 +247,11 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     gridOffset: effectiveGridOffset,
     tileSize: effectiveTileSize,
     characterScale: currentMap?.characterScale ?? 1.0,
-    playerPos,
+    playerPos: groundPlayers ? {
+      x: playerPos.x,
+      y: playerPos.y - playerGroundingOffset(playerSpriteUrl, PLAYER_SIZE * spriteScale * (currentMap?.characterScale ?? 1) * playerScale),
+    } : playerPos,
+    groundPlayers,
   };
 
   // Animation update function (called from game loop)
@@ -262,12 +272,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // than pushed through React state — interpolated positions change on every
     // frame and must never cost a re-render.
     if (remotePlayerLayerRef.current) {
-      const { gridOffset, tileSize, characterScale, playerPos: localPos } = frameParamsRef.current;
+      const { gridOffset, tileSize, characterScale, playerPos: localPos, groundPlayers } = frameParamsRef.current;
       void remotePlayerLayerRef.current.renderRemotePlayers(
         remotePlayerManager.getRemotePlayers(),
         characterScale,
         gridOffset,
-        tileSize
+        tileSize,
+        groundPlayers
       );
       // Your own emote, drawn the same way as everybody else's so pressing one
       // gives immediate feedback instead of a silent hope somebody saw it.
@@ -722,18 +733,24 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         viewportScale,
         referenceWidth: refViewport.width,
         referenceHeight: refViewport.height,
-        viewportWidth: viewportSize.width / zoom,
-        viewportHeight: viewportSize.height / zoom,
+        viewportWidth: roomViewport.width / zoom,
+        viewportHeight: roomViewport.height / zoom,
       });
-
-      (async () => {
-        await backgroundImageLayerRef.current?.loadLayers(map, currentMapId, false);
-      })();
     } else {
       backgroundImageLayerRef.current.setScalingConfig(null);
       backgroundImageLayerRef.current.clear();
     }
-  }, [enabled, currentMapId, isPixiInitialized, viewportScale, viewportSize, zoom]);
+  }, [enabled, currentMapId, isPixiInitialized, viewportScale, roomViewport, zoom]);
+
+  // Artwork loads on map changes only. Scale/pan updates above reuse the sprites.
+  useEffect(() => {
+    if (!enabled || !isPixiInitialized) return;
+    const layer = backgroundImageLayerRef.current;
+    const map = mapManager.getCurrentMap();
+    if (layer && map?.renderMode === 'background-image') {
+      void layer.loadLayers(map, currentMapId, false);
+    }
+  }, [enabled, currentMapId, isPixiInitialized]);
 
   // =========================================================================
   // EFFECT: Update weather visibility on map change
@@ -1068,7 +1085,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       effectiveGridOffset,
       effectiveTileSize,
       shouldFlip,
-      movementMode
+      movementMode,
+      groundPlayers
     );
   }, [
     enabled,
@@ -1085,6 +1103,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     effectiveGridOffset,
     effectiveTileSize,
     movementMode,
+    groundPlayers,
   ]);
 
   // =========================================================================
