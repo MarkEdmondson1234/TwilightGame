@@ -1,3 +1,5 @@
+import MobileMenuShell from './MobileMenuShell';
+import '../src/styles/mobileMenus.css';
 import React, { useEffect, useMemo, useState } from 'react';
 import { PotionLevel } from '../data/potionRecipes';
 import { getItem } from '../data/items';
@@ -29,6 +31,8 @@ interface BrewingInterfaceProps {
  */
 const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) => {
   const isTouchDevice = useTouchDevice();
+  const [showRecipeList, setShowRecipeList] = useState(true);
+  const MenuBoundary = isTouchDevice ? MobileMenuShell : 'div';
   const [selectedLevel, setSelectedLevel] = useState<PotionLevel | 'all'>('all');
   const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null);
   const [brewingResult, setBrewingResult] = useState<BrewingResult | null>(null);
@@ -107,25 +111,38 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
   ];
 
   return (
-    <div
+    <MenuBoundary
       className={`fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center ${zClass(Z_BREWING)} p-2 sm:p-4 pointer-events-auto`}
       onClick={onClose}
       onMouseDown={(e) => e.stopPropagation()}
       onMouseUp={(e) => e.stopPropagation()}
     >
       <div
+        data-mobile-menu={isTouchDevice ? 'brewing' : undefined}
+        role="dialog"
+        aria-label="Brewing"
         className="relative bg-gradient-to-b from-purple-900 to-purple-950 border-4 border-purple-500 rounded-lg w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-purple-800 px-4 py-3 border-b-2 border-purple-500 flex items-center justify-between">
+        <div className="menu-header bg-purple-800 px-4 py-3 border-b-2 border-purple-500 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-purple-200 flex items-center gap-2">
             <span>🧪</span>
             The Cauldron
           </h2>
+          {isTouchDevice && !showRecipeList && (
+            <button
+              aria-label="Back to recipes"
+              className="px-3 border rounded"
+              onClick={() => setShowRecipeList(true)}
+            >
+              Recipes
+            </button>
+          )}
           <button
+            aria-label="Close brewing"
             onClick={onClose}
             className="text-purple-300 hover:text-white transition-colors text-2xl font-bold px-2"
           >
@@ -134,11 +151,19 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
         </div>
 
         {/* Level Tabs */}
-        <div className="bg-purple-900/50 px-4 py-2 border-b border-purple-700 flex gap-2 overflow-x-auto">
+        <div
+          hidden={isTouchDevice && !showRecipeList}
+          className="menu-filters bg-purple-900/50 px-4 py-2 border-b border-purple-700 flex gap-2 overflow-x-auto"
+        >
           {levelTabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => !tab.locked && setSelectedLevel(tab.id)}
+              onClick={() => {
+                if (!tab.locked) {
+                  setSelectedLevel(tab.id);
+                  setShowRecipeList(true);
+                }
+              }}
               disabled={tab.locked}
               className={`px-3 py-1 rounded-lg text-sm font-bold transition-colors whitespace-nowrap ${
                 tab.locked
@@ -155,9 +180,12 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex flex-col sm:flex-row overflow-hidden">
+        <div className="recipe-panels flex-1 flex flex-col sm:flex-row overflow-hidden">
           {/* Recipe List */}
-          <div className="w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-purple-700 overflow-y-auto max-h-40 sm:max-h-none">
+          <div
+            hidden={isTouchDevice && !showRecipeList}
+            className="recipe-list w-full sm:w-1/3 border-b sm:border-b-0 sm:border-r border-purple-700 overflow-y-auto max-h-40 sm:max-h-none"
+          >
             <div className="p-2 space-y-1">
               {displayedRecipes.length === 0 ? (
                 <p className="text-purple-400 text-sm italic p-2">
@@ -174,7 +202,10 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
                   return (
                     <button
                       key={r.id}
-                      onClick={() => setSelectedRecipeId(r.id)}
+                      onClick={() => {
+                        setSelectedRecipeId(r.id);
+                        setShowRecipeList(false);
+                      }}
                       className={`w-full text-left px-3 py-2 rounded transition-colors ${
                         selectedRecipeId === r.id
                           ? 'bg-purple-600 text-white'
@@ -199,7 +230,10 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
           </div>
 
           {/* Recipe Details */}
-          <div className="flex-1 p-4 overflow-y-auto">
+          <div
+            hidden={isTouchDevice && showRecipeList}
+            className="recipe-details flex-1 p-4 overflow-y-auto"
+          >
             {recipe ? (
               <div className="space-y-4">
                 {/* Recipe Header */}
@@ -282,7 +316,7 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
                 </div>
 
                 {/* Brew Button */}
-                <div className="pt-4">
+                <div hidden={isTouchDevice} className="recipe-action pt-4">
                   <button
                     onClick={handleBrew}
                     className="w-full py-3 rounded-lg font-bold text-lg transition-colors bg-purple-600 hover:bg-purple-500 text-white"
@@ -299,8 +333,18 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
           </div>
         </div>
 
+        {isTouchDevice && !showRecipeList && recipe && (
+          <div className="mobile-recipe-action pt-2 shrink-0">
+            <button
+              onClick={handleBrew}
+              className="w-full min-h-12 rounded-lg font-bold text-lg text-white bg-purple-600 hover:bg-purple-500"
+            >
+              🧪 Brew!
+            </button>
+          </div>
+        )}
         {/* Footer */}
-        <div className="bg-purple-900/50 px-4 py-2 border-t border-purple-700 text-center">
+        <div className="menu-footer bg-purple-900/50 px-4 py-2 border-t border-purple-700 text-center">
           <p className="text-purple-400 text-xs">
             {isTouchDevice ? 'Tap ✕ to close' : 'Press ESC or E to close'} • Brew a recipe once to
             master it
@@ -327,7 +371,7 @@ const BrewingInterface: React.FC<BrewingInterfaceProps> = ({ isOpen, onClose }) 
           <LevelUpCelebration newLevel={levelUpLevel} onDismiss={() => setLevelUpLevel(null)} />
         )}
       </div>
-    </div>
+    </MenuBoundary>
   );
 };
 
