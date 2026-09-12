@@ -19,6 +19,7 @@
  */
 
 import * as PIXI from 'pixi.js';
+import { wrapSpeechText } from './speechBubbleLayout';
 
 /** Padding around the text, in world pixels. */
 const PADDING_X = 10;
@@ -38,7 +39,10 @@ export function bubbleFlipsBelow(tailTopScreenY: number): boolean {
 export class PlayerSpeechBubble {
   readonly container: PIXI.Container;
   private background: PIXI.Graphics;
-  private label: PIXI.Text;
+  private label: PIXI.Sprite;
+  private readonly canvas = document.createElement('canvas');
+  private readonly context = this.canvas.getContext('2d')!;
+  private textTexture: PIXI.Texture | null = null;
   private renderedText: string | null = null;
   private flipped = false;
   /** Scratch objects, so the per-frame flip check allocates nothing. */
@@ -53,21 +57,8 @@ export class PlayerSpeechBubble {
     this.background = new PIXI.Graphics();
     this.container.addChild(this.background);
 
-    this.label = new PIXI.Text({
-      text: '',
-      style: {
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        fontSize: 15,
-        fill: 0x2b2b3a,
-        align: 'center',
-        wordWrap: true,
-        wordWrapWidth: MAX_WIDTH,
-      },
-    });
+    this.label = new PIXI.Sprite();
     this.label.anchor.set(0.5, 0);
-    // Text is UI, not world art: render at 2x so it stays crisp when the map
-    // is zoomed, the same choice the name tags make.
-    this.label.resolution = 2;
     this.container.addChild(this.label);
 
     parent.addChild(this.container);
@@ -95,7 +86,7 @@ export class PlayerSpeechBubble {
     const textChanged = text !== this.renderedText;
     if (textChanged) {
       this.renderedText = text;
-      this.label.text = text;
+      this.renderLabel(text);
     }
     const flipped = this.shouldFlipBelow();
     if (textChanged || flipped !== this.flipped) {
@@ -104,12 +95,6 @@ export class PlayerSpeechBubble {
     }
   }
 
-  /**
-   * Whether the bubble should hang below the head instead of above it.
-   *
-   * Computes where the bubble's top edge lands on the canvas (the global
-   * transform folds in the stage's zoom) and flips when it would be clipped.
-   */
   /**
    * Whether the bubble should hang below the head instead of above it.
    *
@@ -126,6 +111,36 @@ export class PlayerSpeechBubble {
     const extent = this.label.height + PADDING_Y * 2 + TAIL_HEIGHT;
     const top = matrix.apply(this.scratchPoint.set(0, -extent), this.globalPoint);
     return bubbleFlipsBelow(top.y);
+  }
+
+  private renderLabel(text: string): void {
+    const context = this.context;
+    const font = '15px system-ui, -apple-system, sans-serif';
+    context.font = font;
+    const lines = wrapSpeechText(text, MAX_WIDTH, (line) => context.measureText(line).width);
+    const lineHeight = 20;
+    const inset = 2; // Space for glyph overhangs at either edge.
+    const width =
+      Math.ceil(Math.max(1, ...lines.map((line) => context.measureText(line).width))) + inset * 2;
+    const height = lines.length * lineHeight + inset * 2;
+    // Resizing resets canvas state. Restore the exact font used for wrapping.
+    this.canvas.width = width * 2;
+    this.canvas.height = height * 2;
+    context.scale(2, 2);
+    context.font = font;
+    context.fillStyle = '#2b2b3a';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    lines.forEach((line, index) => {
+      context.fillText(line, width / 2, inset + (index + 0.5) * lineHeight);
+    });
+    // Own this source: it must never inherit pooled text-canvas state or metrics.
+    const previous = this.textTexture;
+    this.textTexture = new PIXI.Texture({
+      source: new PIXI.CanvasSource({ resource: this.canvas, resolution: 2 }),
+    });
+    this.label.texture = this.textTexture;
+    previous?.destroy(true);
   }
 
   private redraw(): void {
@@ -149,5 +164,7 @@ export class PlayerSpeechBubble {
 
   destroy(): void {
     this.container.destroy({ children: true });
+    this.textTexture?.destroy(true);
+    this.textTexture = null;
   }
 }

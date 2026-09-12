@@ -1498,11 +1498,14 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     offsetX: -6, // Center horizontally on anchor tile
     offsetY: -6, // Center vertically on anchor tile
     image: tileAssets.magical_lake,
-    // Collision covers most of the lake (10x10 inner area, leaving 1-tile walkable shore)
-    collisionWidth: 10,
-    collisionHeight: 2,
-    collisionOffsetX: -6,
+    // Water occupies the shallow oval near the bottom of the transparent art,
+    // not the full 12x12 image. Keep the grassy front shore walkable.
+    collisionWidth: 11,
+    collisionHeight: 1.3,
+    collisionOffsetX: -5.5,
     collisionOffsetY: 0,
+    // Flat water sorts at its back edge, not like a wall at the front shore.
+    depthLineOffset: 0,
     // No transforms - this is a unique magical feature
     enableFlip: false,
     enableRotation: false,

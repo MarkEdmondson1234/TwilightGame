@@ -1,5 +1,6 @@
 import * as PIXI from 'pixi.js';
 import { getEmoteImage } from '../../multiplayer/emotes';
+import { getEmoteMotion, prefersReducedEmoteMotion } from '../../multiplayer/emoteMotion';
 
 // Only requested 128px thumbnails enter GPU memory. Keep at most eight idle
 // textures; active sprites retain theirs until the emote ends.
@@ -21,6 +22,8 @@ export class EmoteSprite extends PIXI.Sprite {
   private url: string | null = null;
   private generation = 0;
   private ready = false;
+  private emoteId: string | null = null;
+  private startedAt = 0;
 
   constructor() {
     super();
@@ -28,7 +31,7 @@ export class EmoteSprite extends PIXI.Sprite {
     this.visible = false;
   }
 
-  setEmote(id: string | null) {
+  setEmote(id: string | null, now = performance.now()) {
     const url = id ? getEmoteImage(id) : null;
     if (url === this.url) {
       this.visible = !!url && this.ready;
@@ -37,6 +40,8 @@ export class EmoteSprite extends PIXI.Sprite {
     this.release();
     this.url = url;
     if (!url) return;
+    this.emoteId = id;
+    this.startedAt = now;
     const generation = this.generation;
     let entry = cache.get(url);
     if (!entry) {
@@ -73,10 +78,20 @@ export class EmoteSprite extends PIXI.Sprite {
       });
   }
 
+  /** Animate around the current head position; never accumulate offsets as players move. */
+  updatePosition(x: number, y: number, now = performance.now()) {
+    const motion = getEmoteMotion(this.emoteId, now - this.startedAt, prefersReducedEmoteMotion());
+    this.x = x + motion.x;
+    this.y = y + motion.y;
+    this.rotation = motion.rotation;
+  }
+
   private release() {
     this.generation++;
     this.ready = false;
     this.visible = false;
+    this.emoteId = null;
+    this.rotation = 0;
     if (this.url) {
       const entry = cache.get(this.url);
       if (entry) entry.users--;

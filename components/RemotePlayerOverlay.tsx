@@ -19,6 +19,7 @@ import type { Position } from '../types';
 import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
 import { getRemoteSpriteInfo } from '../multiplayer/remoteSprites';
 import { getEmoteImage } from '../multiplayer/emotes';
+import { AnimatedEmoteImage } from './AnimatedEmoteImage';
 
 interface RemotePlayerOverlayProps {
   /** Map-level scale multiplier for all characters */
@@ -34,12 +35,12 @@ const RemotePlayerOverlay: React.FC<RemotePlayerOverlayProps> = ({
   gridOffset,
   tileSize,
 }) => {
-  const [, forceRender] = useState(0);
+  const [now, setNow] = useState(() => performance.now());
 
   useEffect(() => {
     let frameId = 0;
-    const loop = () => {
-      forceRender((n) => n + 1);
+    const loop = (time: number) => {
+      setNow(time);
       frameId = requestAnimationFrame(loop);
     };
     frameId = requestAnimationFrame(loop);
@@ -97,7 +98,7 @@ const RemotePlayerOverlay: React.FC<RemotePlayerOverlayProps> = ({
                   zIndex: zIndex + 2,
                 }}
               >
-                <img src={emoteIcon} alt="Emote" className="w-12 h-12 object-contain" />
+                <AnimatedEmoteImage key={player.emote} id={player.emote!} now={now} />
               </div>
             )}
           </React.Fragment>

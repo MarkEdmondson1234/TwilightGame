@@ -49,3 +49,29 @@ it('ignores late loads after switching emotes or destroying the display', async 
     vi.unstubAllGlobals();
   }
 });
+
+it('keeps animation running through repeated frame updates without drifting from the player', () => {
+  vi.stubGlobal(
+    'Image',
+    class {
+      src = '';
+    }
+  );
+  try {
+    const sprite = new EmoteSprite();
+    sprite.setEmote('wave', 0);
+    sprite.updatePosition(100, 200, 225);
+    expect(sprite.x).toBeCloseTo(105);
+    sprite.setEmote('wave', 225);
+    sprite.updatePosition(300, 400, 225);
+    expect(sprite.x).toBeCloseTo(305);
+    expect(sprite.y).toBe(400);
+    sprite.setEmote(null);
+    sprite.updatePosition(300, 400, 225);
+    expect(sprite.x).toBe(300);
+    expect(sprite.rotation).toBe(0);
+    sprite.destroy();
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});

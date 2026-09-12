@@ -200,8 +200,7 @@ export class RemotePlayerLayer extends PixiLayer {
       display.nameTag.visible = true;
 
       display.emote.setEmote(player.emote);
-      display.emote.x = x;
-      display.emote.y = y - EMOTE_OFFSET_TILES * tileSize * characterScale;
+      display.emote.updatePosition(x, y - EMOTE_OFFSET_TILES * tileSize * characterScale);
       display.emote.zIndex = zIndex + 2;
 
       display.chat.update(
@@ -247,8 +246,7 @@ export class RemotePlayerLayer extends PixiLayer {
     const x = position.x * tileSize + (gridOffset?.x ?? 0);
     const y = position.y * tileSize + (gridOffset?.y ?? 0);
 
-    this.localEmoteText.x = x;
-    this.localEmoteText.y = y - EMOTE_OFFSET_TILES * tileSize * characterScale;
+    this.localEmoteText.updatePosition(x, y - EMOTE_OFFSET_TILES * tileSize * characterScale);
     this.localEmoteText.zIndex =
       Z_DEPTH_SORTED_BASE + Math.floor((position.y + PLAYER_FEET_OFFSET) * 10) + 2;
   }

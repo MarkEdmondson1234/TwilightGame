@@ -95,7 +95,7 @@ export const magicalLake: MapDefinition = {
     // Mother Sea - ancient water spirit rising from the magical lake
     createMotherSeaNPC(
       'mother_sea',
-      { x: 15, y: 13 }, // Center of the magical lake (1 tile up and right from anchor)
+      { x: 15, y: 13 }, // Her visible base meets the water at y≈14.7; lake anchor is (15, 14)
       'Mother Sea'
     ),
     // Bunnyflies - magical creatures that flutter around the sacred waters

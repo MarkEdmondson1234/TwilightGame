@@ -34,6 +34,9 @@ export function createMotherSeaNPC(
     sprite: npcAssets.mother_sea_01,
     portraitSprite: npcAssets.mother_sea_portrait,
     scale: 6.0,
+    // Her visible base is ~85% down the 4.8-tile sprite, inside the water.
+    // Sort there rather than at the normal human-sized feet offset.
+    feetYOffset: 1.7,
     interactionRadius: 3.0,
     glow: {
       color: 0x66ccff, // Soft ethereal blue
