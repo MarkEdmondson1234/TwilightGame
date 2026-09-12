@@ -175,7 +175,7 @@ const DialogueChatHistory: React.FC<DialogueChatHistoryProps> = ({
   return (
     <>
       {/* Inline chat area */}
-      <div className="relative flex-1 min-h-0 flex flex-col">
+      <div data-dialogue-history className="relative flex-1 min-h-0 flex flex-col">
         {/* Expand button — only show when there's history to browse */}
         {hasHistory && !expanded && (
           <button

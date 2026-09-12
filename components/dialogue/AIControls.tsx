@@ -58,6 +58,7 @@ const AIControls: React.FC<AIControlsProps> = ({
       {/* Suggestion buttons */}
       {!showCustomInput && !busy && !pendingSendToBed && suggestions.length > 0 && (
         <div
+          data-dialogue-choices
           className="flex flex-wrap gap-1.5 justify-center mb-1.5 overflow-y-auto"
           style={{ maxHeight: '56px' }}
         >

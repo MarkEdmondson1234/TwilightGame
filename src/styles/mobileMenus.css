@@ -151,3 +151,148 @@
     width: 100%;
   }
 }
+
+/* Book artwork remains behind readable, vertically flowing mobile pages. */
+[data-mobile-menu='book'] {
+  width: min(100%, 900px);
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding-top: 52px;
+}
+[data-mobile-menu='book'] [data-book-close] {
+  top: 0;
+  right: 0;
+  width: 48px;
+  height: 48px;
+}
+[data-mobile-menu='book'] [data-book-title] {
+  translate: none;
+  top: 0;
+  left: 0;
+  transform: none;
+  max-width: calc(100% - 56px);
+  padding: 8px 16px;
+}
+[data-mobile-menu='book'] [data-book-title] span {
+  font-size: 20px;
+}
+[data-mobile-menu='book'] [data-book-help] {
+  display: none;
+}
+[data-mobile-menu='book'] .book-content {
+  min-height: 0;
+  flex: 1;
+}
+[data-mobile-menu='book'] .book-content > div {
+  display: flex;
+  flex-direction: column;
+}
+[data-mobile-menu='book'] [data-book-action] {
+  position: static;
+  margin: 0 0 4px;
+  min-height: 44px;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+[data-mobile-menu='book'] .mobile-book-spread {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  gap: 4px;
+}
+[data-mobile-menu='book'] .mobile-book-chapters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+[data-mobile-menu='book'] .mobile-book-chapters button {
+  flex-shrink: 0;
+  border-radius: 8px;
+  padding: 6px 12px;
+}
+[data-mobile-menu='book'] button {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+[data-mobile-menu='book'] button:disabled {
+  opacity: 0.45;
+}
+[data-mobile-menu='book'] [aria-current='page'] {
+  outline: 2px solid #f5e4be;
+  outline-offset: -3px;
+}
+[data-mobile-menu='book'] .mobile-book-pages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background-size: 100% auto;
+  background-repeat: no-repeat;
+  background-color: #dfceb2;
+  border-radius: 8px;
+  padding: 12px 7%;
+}
+[data-mobile-menu='book'] .mobile-book-pages section {
+  background: rgba(245, 238, 228, 0.9);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+[data-mobile-menu='book'] .mobile-book-pages section + section {
+  margin-top: 12px;
+}
+[data-mobile-menu='book'] .mobile-book-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+  color: #f5eee4;
+}
+[data-mobile-menu='book'] .mobile-book-navigation button {
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: #5c4a3d;
+}
+
+/* Choices can scroll without squeezing away the conversation history. */
+[data-mobile-menu='dialogue'] [data-dialogue-panel] {
+  width: calc(100% - max(16px, env(safe-area-inset-left)) - max(16px, env(safe-area-inset-right)));
+  height: calc(100% - max(8px, env(safe-area-inset-top)) - max(8px, env(safe-area-inset-bottom)));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  max-width: 900px;
+}
+[data-mobile-menu='dialogue'] [data-dialogue-content] {
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+[data-mobile-menu='dialogue'] [data-dialogue-content] > * {
+  flex-shrink: 0;
+}
+[data-mobile-menu='dialogue'] [data-dialogue-history] {
+  flex: none;
+  height: clamp(120px, 25dvh, 220px);
+}
+[data-mobile-menu='dialogue'] [data-dialogue-history]:has(> button) > .overflow-y-auto {
+  padding-top: 44px;
+}
+[data-mobile-menu='dialogue'] [data-dialogue-choices] {
+  max-height: none !important;
+  overflow: visible;
+}
+[data-mobile-menu='dialogue'] button {
+  min-height: 44px;
+  touch-action: manipulation;
+}
+[data-mobile-menu='dialogue'] [data-dialogue-choices] button {
+  font-size: 14px;
+}
+[data-mobile-menu='dialogue'] input,
+[data-mobile-menu='dialogue'] textarea {
+  font-size: 16px;
+}

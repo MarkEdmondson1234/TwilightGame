@@ -1,3 +1,6 @@
+import MobileMenuShell from '../MobileMenuShell';
+import { useTouchDevice } from '../../hooks/useTouchDevice';
+import '../../src/styles/mobileMenus.css';
 import React, { useEffect, useCallback } from 'react';
 import { Position } from '../../types';
 import { Z_RECIPE_BOOK, Z_MAGIC_BOOK, Z_JOURNAL, Z_PHOTO_ALBUM, zClass } from '../../zIndex';
@@ -39,6 +42,8 @@ const CottageBook: React.FC<CottageBookProps> = ({
   nearbyNPCs = [],
   onItemPlaced,
 }) => {
+  const isTouchDevice = useTouchDevice();
+  const MenuBoundary = isTouchDevice ? MobileMenuShell : 'div';
   const themeConfig = getBookTheme(theme);
   const zIndex =
     theme === 'cooking'
@@ -83,7 +88,7 @@ const CottageBook: React.FC<CottageBookProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
+    <MenuBoundary
       className={`fixed inset-0 bg-black/70 flex items-center justify-center ${zClass(zIndex)} p-4`}
       onClick={handleBackdropClick}
       onMouseDown={(e) => e.stopPropagation()}
@@ -92,6 +97,10 @@ const CottageBook: React.FC<CottageBookProps> = ({
       {/* Book container - image inside determines actual size */}
       <div
         className="relative max-w-[95vw] max-h-[95vh]"
+        data-mobile-menu={isTouchDevice ? 'book' : undefined}
+        role="dialog"
+        aria-modal="true"
+        aria-label={themeConfig.name}
         onClick={handleContentClick}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
@@ -102,12 +111,15 @@ const CottageBook: React.FC<CottageBookProps> = ({
           className="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-2xl font-bold transition-all hover:scale-110 z-10"
           style={{ color: themeConfig.textPrimary }}
           title="Close (ESC)"
+          aria-label="Close book"
+          data-book-close
         >
           ×
         </button>
 
         {/* Book title badge */}
         <div
+          data-book-title
           className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 rounded-full shadow-lg z-10"
           style={{
             backgroundColor: themeConfig.ribbonColour,
@@ -119,7 +131,7 @@ const CottageBook: React.FC<CottageBookProps> = ({
         </div>
 
         {/* Book content */}
-        <div className="w-full h-full">
+        <div className="w-full h-full book-content">
           {theme === 'cooking' ? (
             <RecipeContent
               theme={themeConfig}
@@ -140,13 +152,14 @@ const CottageBook: React.FC<CottageBookProps> = ({
 
         {/* Help text */}
         <div
+          data-book-help
           className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-sm opacity-75"
           style={{ color: '#ccc' }}
         >
           Press ESC to close
         </div>
       </div>
-    </div>
+    </MenuBoundary>
   );
 };
 

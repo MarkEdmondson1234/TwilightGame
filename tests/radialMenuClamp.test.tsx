@@ -18,6 +18,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import RadialMenu, { type RadialMenuOption } from '../components/RadialMenu';
 
+vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => false }));
+
 const VIEWPORT_WIDTH = 800;
 const VIEWPORT_HEIGHT = 400; // Roughly an iPhone in landscape.
 const MENU_WIDTH = 200;
@@ -32,7 +34,17 @@ function stubMenuSize(width: number, height: number) {
     const isColumn = this.style.flexDirection === 'column';
     const w = isColumn ? width : 0;
     const h = isColumn ? height : 0;
-    return { width: w, height: h, top: 0, left: 0, right: w, bottom: h, x: 0, y: 0, toJSON: () => ({}) } as DOMRect;
+    return {
+      width: w,
+      height: h,
+      top: 0,
+      left: 0,
+      right: w,
+      bottom: h,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    } as DOMRect;
   });
 }
 

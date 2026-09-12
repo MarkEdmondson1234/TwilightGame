@@ -48,6 +48,15 @@ Stage 4 activity-menu work is implemented on `mobile-activity-menus`:
 
 Validation: 1,313 tests pass across 156 files, lint has no errors and 7 existing warnings, and production build succeeds. Component browser checks with real artwork covered 390 × 844, 640 × 360, 640 × 240 and a 1280 × 800 desktop path. Mobile panels had no horizontal content overflow and Close targets measured 48px. The final short-screen checks include visible trade totals/actions and Cook/Brew buttons. Physical iPhone touch/keyboard verification remains pending. Illustrated book contents, dialogue/context-menu refinements, multiplayer chat and mini-game coverage remain later work; this batch does not claim to finish the complete mobile plan.
 
+Stage 4 book/dialogue follow-up is implemented on `mobile-books-dialogue`:
+
+- All four books use the shared visible-viewport shell on touch devices. Existing page contents flow vertically over the original book artwork, with chapter and page navigation outside the scrolling area. Close remains 48px; recipe/potion actions join the normal layout instead of floating beyond the title.
+- Mobile dialogue uses the available viewport height, retains the painted frame and scrollable conversation history, and lets long scripted/AI choice lists scroll within the content area. Leave stays outside that scroll region; text inputs use 16px text.
+- Touch context menus use a bounded, scrolling action list with wrapped labels and a sticky Close button. Existing action callbacks and confirmation behaviour are retained. Desktop keeps its positioned menu and two-page books.
+
+Validation: `make verify` passes 1,315 tests across 157 files; targeted lint has no errors or warnings, and the production build succeeds. Browser component checks covered all four book themes at 390 × 844, 640 × 360 and 640 × 240, plus desktop at 1280 × 800. Mobile boundaries showed no horizontal overflow; the final long dialogue choice was reachable by scrolling. Review images use disposable component fixtures, not a physical iPhone session. The village crash remains awaiting the owner's deployed-device trial. Multiplayer/chat, expanded history and activity result overlays, mini-games and remaining physical-device checks are still outstanding.
+
+
 ## Design decisions
 
 - Support **landscape gameplay** on phones. Show a friendly “Turn your phone to play” screen in portrait, with Account, Settings and Help still accessible. Release held movement when it appears; do not pause the shared multiplayer world. Preserve progress across rotation.

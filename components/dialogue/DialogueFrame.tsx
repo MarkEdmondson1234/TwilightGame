@@ -7,6 +7,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useDialogueAnimation } from '../../hooks/useDialogueAnimation';
+import { useTouchDevice } from '../../hooks/useTouchDevice';
+import { useMenuViewport } from '../../hooks/useMenuViewport';
+import '../../src/styles/mobileMenus.css';
 import FittedName from './FittedName';
 import { Z_DIALOGUE, zClass } from '../../zIndex';
 
@@ -29,6 +32,8 @@ const DialogueFrame: React.FC<DialogueFrameProps> = ({
   onClose,
   children,
 }) => {
+  const isTouchDevice = useTouchDevice();
+  const viewport = useMenuViewport();
   const { currentFrame } = useDialogueAnimation(150, true);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
 
@@ -44,6 +49,8 @@ const DialogueFrame: React.FC<DialogueFrameProps> = ({
   return (
     <div
       className={`fixed inset-0 ${zClass(Z_DIALOGUE)} overflow-hidden`}
+      style={isTouchDevice ? viewport : undefined}
+      data-mobile-menu={isTouchDevice ? 'dialogue' : undefined}
       role="dialog"
       aria-modal="true"
       aria-label={`Conversation with ${npcName}`}
@@ -114,11 +121,12 @@ const DialogueFrame: React.FC<DialogueFrameProps> = ({
        * Cropping that region lets the artwork follow the responsive panel height.
        */}
       <div
+        data-dialogue-panel
         className="absolute left-1/2 transform -translate-x-1/2 pointer-events-auto overflow-hidden"
         style={{
-          width: 'min(95vw, 900px)',
-          height: 'min(64dvh, 350px)',
-          bottom: '20px',
+          width: isTouchDevice ? undefined : 'min(95vw, 900px)',
+          height: isTouchDevice ? undefined : 'min(64dvh, 350px)',
+          bottom: isTouchDevice ? undefined : '20px',
         }}
       >
         {/* Crop to the painted region; artwork and labels share one coordinate system. */}
@@ -152,6 +160,7 @@ const DialogueFrame: React.FC<DialogueFrameProps> = ({
 
           {/* Chat + controls — fills the grey content area, extends to bottom for buttons */}
           <div
+            data-dialogue-content
             className="absolute flex flex-col"
             style={{
               top: '30%',
