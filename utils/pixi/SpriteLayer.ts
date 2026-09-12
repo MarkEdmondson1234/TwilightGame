@@ -30,8 +30,10 @@ import { Z_DEPTH_SORTED_BASE, Z_GROUND_DECORATION } from '../../zIndex';
 import { TimeManager, TimeOfDay } from '../TimeManager';
 import { getCachedPerformanceSettings } from '../performanceTier';
 import { debugLog } from '../debugLog';
+import { CaveDrips } from './CaveDrips';
 
 export class SpriteLayer extends PixiLayer {
+  private caveDrips = new CaveDrips();
   private sprites: Map<string, PIXI.Sprite> = new Map();
   private currentMapId: string | null = null;
   // Animation tracking for multi-tile sprites (like cauldron)
@@ -424,6 +426,7 @@ export class SpriteLayer extends PixiLayer {
     }
 
     sprite.visible = true;
+    this.caveDrips.attach(`${this.currentMapId}:${key}`, sprite, metadata, this.getTargetContainer());
   }
 
   /**
@@ -431,6 +434,7 @@ export class SpriteLayer extends PixiLayer {
    * Advances frames sequentially based on elapsed time
    */
   updateAnimations(): void {
+    this.caveDrips.update(Date.now());
     if (this.animatedSprites.size === 0) return;
 
     const currentTime = Date.now();
@@ -463,6 +467,7 @@ export class SpriteLayer extends PixiLayer {
    * Clear all sprites (when changing maps)
    */
   clear(): void {
+    this.caveDrips.clear();
     const container = this.getTargetContainer();
     this.sprites.forEach((sprite) => {
       if (sprite.parent === container) {
