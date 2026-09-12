@@ -53,3 +53,11 @@ After those two rooms pass, apply the common camera policy to the other illustra
 - Geometry tests cover four viewport sizes, zoom limits, painted bounds and inverse tap coordinates. Loading tests cover duplicate pending loads and exiting before an image resolves.
 - Still pending: the complete on-device interaction/door route above, actual iPhone Firefox performance, and review of high zoom on very short viewports (the shop’s large authored character can extend above the screen). Fit provides the wider view. Do not expand the pilot to other rooms yet.
 - Parallax remains deferred until suitable separate decorative artwork is available. The village crash remains a separate investigation.
+
+## Review correction: shop spawn and player footprint
+
+The original shop screenshots incorrectly seeded `(8, 7)`, a blocked counter tile. They are superseded by captures starting at the actual `(10, 10)` spawn and walking on row 10. The original images did not demonstrate zoom drift.
+
+A new test instantiates the actual Pixi background layers and player sprite, comparing the rendered player position relative to both image bounds at Fit, 75%, 100% and 150%, through pan and resize. It also inverts the rendered position back to tile coordinates. All 1,334 tests pass. This establishes consistent scaling in that renderer path, not complete on-device correctness.
+
+The corrected captures expose a separate blocking layout problem: the centre-anchored, large shop player extends below the painted floor at the valid spawn. The edge-clamped camera cannot reserve space for the full player footprint and bottom HUD there. This occurs even at Fit. The pilot must remain unmerged pending an agreed player grounding / floor and HUD framing solution. Changing the authored walkmesh or sprite anchor needs deliberate review; do not hide the problem by selecting a prettier test position.
