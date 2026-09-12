@@ -735,6 +735,7 @@ export const fairyAssets = {
 // Note: Most GIFs are optimized by the asset pipeline (resized to 512x512 with gifsicle)
 // Some GIFs use original size when specified (e.g., dragonfly_stream)
 export const animationAssets = {
+  cave_drip: '/TwilightGame/assets/effects/cave-drip/atlas.png',
   cherry_spring_petals: '/TwilightGame/assets-optimized/animations/cherry_spring_petals.gif',
   dragonfly_stream: '/TwilightGame/assets-optimized/animations/dragonfly_stream.gif', // Use original size
   bees: '/TwilightGame/assets-optimized/animations/bees.gif', // Use original size
