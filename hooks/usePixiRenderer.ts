@@ -1,4 +1,8 @@
-import { setDiagnosticRenderer } from '../utils/sessionDiagnostics';
+import {
+  setDiagnosticRenderer,
+  setDiagnosticView,
+  reportDiagnosticContextLoss,
+} from '../utils/sessionDiagnostics';
 /**
  * usePixiRenderer Hook
  *
@@ -18,6 +22,8 @@ import { Position, Direction, MapDefinition, TileData } from '../types';
 import { USE_SPRITE_SHADOWS, TILE_LEGEND } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
+import { reportErrorOnce } from '../utils/errorReporting';
+import { getRendererResolution } from '../utils/rendererResolution';
 import { textureManager } from '../utils/TextureManager';
 import { performanceMonitor, SceneNode } from '../utils/PerformanceMonitor';
 import { ColorResolver } from '../utils/ColorResolver';
@@ -314,7 +320,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
           height: window.innerHeight,
           backgroundColor,
           antialias: perfSettings.antialias,
-          resolution: perfSettings.resolution,
+          resolution: getRendererResolution(
+            window.innerWidth,
+            window.innerHeight,
+            window.screen.width,
+            window.screen.height,
+            perfSettings.resolution
+          ),
           autoDensity: true,
           // Required for canvas.toDataURL() to work — WebGL clears the framebuffer
           // after each frame by default, producing a blank image on capture.
@@ -322,6 +334,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         });
 
         pixiAppRef.current = app;
+        setDiagnosticView({
+          zoom,
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+          canvasWidth: app.canvas.width,
+          canvasHeight: app.canvas.height,
+          resolution: app.renderer.resolution,
+        });
         setDiagnosticRenderer(
           'gl' in app.renderer ? (app.renderer as PIXI.WebGLRenderer).gl : undefined,
           () => textureManager.getEstimatedMemoryMB()
@@ -530,6 +550,16 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         setIsPixiInitialized(true);
       } catch (error) {
         console.error('[usePixiRenderer] Failed to initialize:', error);
+        reportErrorOnce(
+          error,
+          'game_crash',
+          {
+            action: 'initialise_renderer',
+            viewportWidth: window.innerWidth,
+            viewportHeight: window.innerHeight,
+          },
+          'renderer_initialisation'
+        );
       }
     };
 
@@ -541,6 +571,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     const handleContextLost = (e: Event) => {
       e.preventDefault(); // Allow context restoration
       console.warn('[usePixiRenderer] WebGL context lost — waiting for restoration');
+      reportDiagnosticContextLoss();
     };
     const handleContextRestored = () => {
       debugLog('usePixiRenderer', 'WebGL context restored — reinitializing');
@@ -638,7 +669,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       const app = pixiAppRef.current;
       if (!app) return;
 
-      app.renderer.resize(window.innerWidth, window.innerHeight);
+      const resolution = getRendererResolution(
+        window.innerWidth,
+        window.innerHeight,
+        window.screen.width,
+        window.screen.height,
+        getCachedPerformanceSettings().resolution
+      );
+      app.renderer.resize(window.innerWidth, window.innerHeight, resolution);
 
       if (backgroundImageLayerRef.current && canvasRef.current) {
         backgroundImageLayerRef.current.setViewportDimensions(
@@ -653,6 +691,19 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [enabled, isPixiInitialized, canvasRef]);
+
+  useEffect(() => {
+    const app = pixiAppRef.current;
+    if (!isPixiInitialized || !app || !canvasRef.current) return;
+    setDiagnosticView({
+      zoom,
+      viewportWidth: viewportSize.width,
+      viewportHeight: viewportSize.height,
+      canvasWidth: canvasRef.current.width,
+      canvasHeight: canvasRef.current.height,
+      resolution: app.renderer.resolution,
+    });
+  }, [isPixiInitialized, zoom, viewportSize.width, viewportSize.height, canvasRef]);
 
   // =========================================================================
   // EFFECT: Background Image Layer Setup (on map change)

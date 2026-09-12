@@ -14,7 +14,19 @@ The reported invalid-action page was reproduced on the deployed site in Chromium
 
 The owner confirmed that Google sign-in succeeds and returns to the game on iPhone Firefox after the configuration correction. A two-player multiplayer session remains to be verified. The popup flow was retained because the reproduced failure was a referrer restriction, not evidence that a redirect migration was required. No hosting change was made.
 
-Browser layout checks after the changes: email width 314px at 390 × 844, 508px at 640 × 360, and 432px at 844 × 390, without form horizontal overflow. Stages 2–5 remain outstanding, including keyboard/safe-area handling beyond the current dynamic-height account layout and all existing gameplay-control improvements.
+Browser layout checks after the changes: email width 314px at 390 × 844, 508px at 640 × 360, and 432px at 844 × 390, without form horizontal overflow. Physical-device checks and the remaining work in stages 2–5 are tracked below.
+
+Stage 2 foundation is implemented on `mobile-menu-layout`: the shared menu boundary follows visual-viewport resize/scroll and all safe-area insets; Help/Account uses it. Phone portrait gameplay shows a rotation prompt with Account and Settings/Help access. Existing overlays use the common UI-state check (including previously omitted glamour, photo album and furniture catalogue), release held input, and hide touch controls consistently. Blur, rotation and visibility changes also release input. Native browser magnification remains available in menus. Keyboard-viewport behaviour has regression coverage; physical iOS keyboard checks and migration of other activity panels are still pending.
+
+The owner subsequently prioritised repeated iPhone Firefox reloads, an oversized splash screen, camera zoom and fullscreen. They approved deferring the world renderer on mobile while retaining desktop preloading. This follow-up is implemented on `mobile-zoom-diagnostics`:
+
+- Mobile title/account screens allocate no world renderer or map textures until Play. Desktop still warms the world in the background. The splash fits the existing seasonal artwork and exposes all three actions at 844 × 390, 390 × 844 and 640 × 240 in browser emulation.
+- The map-coverage zoom floor incorrectly prevented zooming below 100% even on large maps. It now allows 50%, subject to map coverage. Settings offers 50/75/100% camera choices, preserving menu size and the preferred view across fitted interiors. The default remains 100%. World pinch excludes control fingers and no longer produces a trailing walk/long press.
+- Renderer resolution caps framebuffer pixels against the screen budget when browser zoom enlarges the logical viewport. In the emulated mobile check, doubling both viewport dimensions retained a 1688 × 780 canvas. This is a memory-pressure mitigation, not proof of the reported crash cause.
+- Sentry showed five fresh Firefox iOS sessions between 10:58:32 and 10:59:16 UTC on 12 September, each reaching renderer initialisation. No matching uncaught crash established the cause. Added explicit WebGL context-loss and renderer-initialisation reporting plus camera, viewport, framebuffer and texture-memory context. An OS/browser process kill can still prevent any final JavaScript report from uploading. Removed the temporary production vConsole and unbounded console buffer/synchronous storage logger.
+- Settings requests fullscreen and then landscape locking where supported; failure leaves the game usable. iPhone guidance explains Safari → Share → Add to Home Screen. Fixed manifest/icon paths for `/TwilightGame/` and retained standalone display mode. Portrait account/settings access remains available; the game can require landscape play without reliably forcing physical rotation on iPhone.
+
+Validation: `make verify`, lint and production build; browser emulation measured zero map textures before mobile Play and successful world loading afterwards, 75% camera selection and stable framebuffer size under an expanded viewport. Physical iPhone Firefox crash/reload, keyboard, installation and fullscreen checks remain required after deployment. D-pad/HUD refinements, other activity menus, multiplayer chat and mini-game coverage are still outstanding.
 
 ## Design decisions
 
@@ -113,4 +125,4 @@ Release checks:
 4. **Activity menus and multiplayer UI:** shop/inventory/books, chat, nearby-player actions and connection feedback.
 5. **Mini-game touch coverage and device performance:** remaining activity-specific controls, end-to-end device checks and measured effect optimisations if required.
 
-Do not call the game mobile-ready until the real-device account flow and gameplay acceptance checks pass. The immediate priority is PR 1; merely asking users to rotate would leave the reported Google failure unresolved.
+Do not call the game mobile-ready until the real-device account flow and gameplay acceptance checks pass. Google sign-in has been confirmed on the owner’s iPhone. The immediate release priority is the mobile startup/splash/zoom follow-up, then physical-device validation and the remaining planned controls and activity menus.
