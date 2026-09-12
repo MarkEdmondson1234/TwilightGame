@@ -8,7 +8,8 @@
  *  - exposes the battle to spectate, and the cheer action
  *  - applies inbound cheers to our own stamina when we are the one fighting
  *  - applies another player's victory locally, so beating the goblin opens the
- *    passage for everybody standing there
+ *    passage for everybody standing there — deferred until our own fight with
+ *    that enemy closes, if we happen to be in one (see BattleManager)
  *
  * Mirrors useChatController and useNpcSpeechController: room per map, quietly
  * inert when Firebase is missing or the map is private.
@@ -29,6 +30,7 @@ import {
 import { battleManager, shouldActOnCheer, CHEER_STAMINA } from '../multiplayer/battle';
 import type { BattleWire } from '../multiplayer/battle';
 import { gameState } from '../GameState';
+import { debugLog } from '../utils/debugLog';
 
 export interface UseBattleControllerProps {
   /** Map the player is currently on */
@@ -42,6 +44,18 @@ export interface UseBattleControllerReturn {
   spectatedBattle: { npcId: string; battle: BattleWire } | null;
   /** Cheer on whoever is fighting */
   cheer: () => void;
+}
+
+/** Tell the rest of the game that somebody else's victory applies here too. */
+function emitVictory(npcId: string, wire: BattleWire): void {
+  eventBus.emit(GameEvent.BATTLE_WON_NEARBY, {
+    npcId,
+    name: wire.n,
+    enemyName: wire.e,
+    ...(wire.x !== undefined && wire.y !== undefined
+      ? { entrance: { x: wire.x, y: wire.y } }
+      : {}),
+  });
 }
 
 export function useBattleController(props: UseBattleControllerProps): UseBattleControllerReturn {
@@ -82,6 +96,14 @@ export function useBattleController(props: UseBattleControllerProps): UseBattleC
     if (!MULTIPLAYER_ENABLED) return;
 
     const unsubscribers = [
+      // From the moment contact is made, not from the combat screen's first
+      // publish: a victory that lands in the render between the two must be
+      // deferred, not applied under a screen that is about to open.
+      eventBus.on(GameEvent.COMBAT_INITIATED, (payload) => {
+        fightingNpcIdRef.current = payload.npcId;
+        battleManager.setFighting(payload.npcId);
+      }),
+
       eventBus.on(GameEvent.BATTLE_PROGRESSED, (payload) => {
         if (!isSharedMap(currentMapId)) return;
         fightingNpcIdRef.current = payload.npcId;
@@ -102,6 +124,19 @@ export function useBattleController(props: UseBattleControllerProps): UseBattleC
         fightingNpcIdRef.current = null;
         lastCheerActedRef.current.clear();
         lastCheerSeenRef.current.clear();
+
+        // A friend beat this enemy while our screen was open. Apply it now
+        // that the screen is closed — whatever happened in our fight, the
+        // enemy fell for everyone in the cave. App.tsx already applied our
+        // own outcome, and the handler is idempotent about theirs.
+        const deferred = battleManager.finishFight(payload.npcId);
+        if (deferred) {
+          debugLog(
+            'Battle',
+            `Applying ${deferred.n}'s victory over ${payload.npcId} now that our own fight (${payload.outcome}) has closed`
+          );
+          emitVictory(payload.npcId, deferred);
+        }
 
         // A win is left on the board on purpose: it is the notice that tells
         // everyone else in the cave the goblin fell and where the passage
@@ -146,14 +181,15 @@ export function useBattleController(props: UseBattleControllerProps): UseBattleC
         // open at the same tile rather than wherever this client would have
         // put it.
         if (wire.p === 'won' && wire.u !== localUid()) {
-          eventBus.emit(GameEvent.BATTLE_WON_NEARBY, {
-            npcId,
-            name: wire.n,
-            enemyName: wire.e,
-            ...(wire.x !== undefined && wire.y !== undefined
-              ? { entrance: { x: wire.x, y: wire.y } }
-              : {}),
-          });
+          const applyNow = battleManager.noteVictory(npcId, wire);
+          if (applyNow) {
+            emitVictory(npcId, applyNow);
+          } else {
+            debugLog(
+              'Battle',
+              `${wire.n} beat ${npcId} while we are fighting it — holding their victory until our screen closes`
+            );
+          }
         }
 
         setSpectatedBattle(battleManager.getSpectatedBattle(localUid()));

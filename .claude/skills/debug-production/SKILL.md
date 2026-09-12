@@ -85,7 +85,10 @@ not mistake a missing region for an all-clear. The web dashboard is at
 `https://twilightgame.sentry.io`.
 
 Then look for issues in the relevant category tag — `auth`, `sync`,
-`shared_farm`, `presence`, `game_crash` — around the time of the report.
+`shared_farm`, `presence`, `game_crash`, `persistence`, `map`, `combat` — around the time of
+the report. `combat` is the "we won and nothing happened" family: a combat screen
+closing with no fight registered, a beaten goblin off-map or with no floor for its
+passage. Before it existed, that bug left Sentry empty and took a headless repro to find.
 
 Two tiers of tools. The gateway registers a small core (`search_issues`,
 `search_events`, `get_sentry_resource`, `update_issue`, Seer analysis) at
@@ -115,7 +118,7 @@ behind the fix already sitting on a branch, and the answer is "merge it", not
 
 | Signal | Question it answers |
 |---|---|
-| `category` | Which subsystem: `auth`, `sync`, `shared_farm`, `presence`, `game_crash` |
+| `category` | Which subsystem: `auth`, `sync`, `shared_farm`, `presence`, `game_crash`, `persistence`, `map`, `shared_world`, `combat` |
 | `details.*` | The `extra` payload from `reportError()` — action, feature, itemId; usually names the exact record that broke |
 | `environment` | `production` (a real player) vs `development` (your own machine). Filter it — dev crashes masquerade as player impact |
 | `release` | Which deploy; run `git branch --contains` on it |
@@ -268,7 +271,10 @@ announces itself. Prefer, in order:
    mutually exclusive outcomes.
 4. **Make the diagnostics reachable in production** — `?debug=multiplayer` and
    `localStorage.twilight_debug` switch `DEBUG.*` on in a deployed build
-   (`runtimeDebug()` in `constants.ts`).
+   (`runtimeDebug()` in `constants.ts`). `?debug=combat,battle` prints the
+   fight trail: which door the fight came in by (`contact` or `confront`),
+   how it ended, whether the passage opened or was already open, and — in a
+   shared cave — a friend's victory being held until our own screen closes.
 5. **Close the Sentry issue.** Reference it in the fix commit
    (`Fixes JAVASCRIPT-REACT-9`) so the release that ships the fix auto-resolves
    it, or resolve it directly with `update_issue`.

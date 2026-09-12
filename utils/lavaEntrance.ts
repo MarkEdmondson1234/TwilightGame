@@ -16,6 +16,7 @@ import { gameState } from '../GameState';
 import { findClearTileNear } from './mapUtils';
 import { TileType } from '../types';
 import { debugLog } from './debugLog';
+import { battleManager } from '../multiplayer/battle';
 
 /** Where the lava levels drop the player when they take this passage. */
 const LAVA_SPAWN = { x: 3, y: 15 };
@@ -23,11 +24,21 @@ const LAVA_SPAWN = { x: 3, y: 15 };
 /**
  * Pick the tile a goblin's passage should open on, or null if there is no clear
  * floor near where it stood.
+ *
+ * If somebody else in the cave has already beaten this goblin, their published
+ * tile wins — the goblin chases every player on their own screen, so two
+ * friends beating "the same" goblin a few seconds apart is the normal case,
+ * and each picking their own square is how one cave got two entrances.
  */
 export function chooseLavaEntranceTile(
   goblinPosition: { x: number; y: number },
-  mapId: string
+  mapId: string,
+  npcId?: string
 ): { x: number; y: number } | null {
+  const published = npcId ? battleManager.getVictory(npcId) : null;
+  if (published && published.x !== undefined && published.y !== undefined) {
+    return { x: published.x, y: published.y };
+  }
   return findClearTileNear(
     { x: Math.floor(goblinPosition.x), y: Math.floor(goblinPosition.y) },
     mapId

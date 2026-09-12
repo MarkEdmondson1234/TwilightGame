@@ -124,7 +124,12 @@ export type ErrorReportCategory =
   // transition spawn targets, maps with no valid spawn at all).
   | 'map'
   // Gift/shared-world feature errors (gift delivery failures).
-  | 'shared_world';
+  | 'shared_world'
+  // A fight that ended in a state the game cannot act on: a combat screen
+  // closing with no fight registered, a beaten goblin that is not on the map,
+  // no floor to open its passage on. None of these throw; each one is "we won
+  // and nothing happened" to a player.
+  | 'combat';
 
 /**
  * Report a caught error. Safe no-op when Sentry isn't configured or hasn't

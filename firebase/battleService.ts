@@ -31,7 +31,14 @@ import { getRealtimeDb } from './realtimeConfig';
 import { authService } from './authService';
 import { DEBUG } from '../constants';
 import { reportError } from '../utils/errorReporting';
-import { decodeBattle, decodeCheer, trimField, MAX_BATTLE_NAME_CHARS } from '../multiplayer/battle';
+import { debugLog } from '../utils/debugLog';
+import {
+  battleManager,
+  decodeBattle,
+  decodeCheer,
+  trimField,
+  MAX_BATTLE_NAME_CHARS,
+} from '../multiplayer/battle';
 import type { BattleWire, CheerWire } from '../multiplayer/battle';
 
 const BATTLE_ROOT = 'battles';
@@ -55,6 +62,9 @@ class BattleService {
 
   /** The npc we are currently publishing a fight for, so we can clean it up. */
   private publishedNpcId: string | null = null;
+
+  /** The last fight we declined to publish, so the reason is logged once, not per round. */
+  private skippedNpcId: string | null = null;
 
   isAvailable(): boolean {
     return getRealtimeDb() !== null && authService.isAuthenticated();
@@ -173,6 +183,20 @@ class BattleService {
     const mapId = this.roomMapId;
     if (!db || !uid || !mapId) return false;
 
+    // One record per enemy, and somebody has already beaten this one. The
+    // goblin chases every player on their own screen, so a second fight with
+    // "the same" goblin is common — and publishing it would overwrite the
+    // victory record that tells the room the goblin fell and where the
+    // passage opened. Ours adds nothing to that; keep it to ourselves.
+    const victory = battleManager.getVictory(npcId);
+    if (victory && victory.u !== uid) {
+      if (this.skippedNpcId !== npcId) {
+        this.skippedNpcId = npcId;
+        debugLog('Battle', `Not publishing our fight with ${npcId}: ${victory.n} has already beaten it`);
+      }
+      return false;
+    }
+
     this.publishedNpcId = npcId;
 
     const payload: Record<string, unknown> = {
@@ -196,6 +220,15 @@ class BattleService {
       await set(ref(db, `${BATTLE_ROOT}/${mapId}/${npcId}`), payload);
       return true;
     } catch (error) {
+      // The rules refuse to let anyone but the winner replace a 'won' record.
+      // If one landed while our write was in flight, that refusal is the
+      // system working, not a failure worth a Sentry issue.
+      const nowWon = battleManager.getVictory(npcId);
+      if (nowWon && nowWon.u !== uid) {
+        debugLog('Battle', `Publish of ${npcId} refused: ${nowWon.n} won it while our write was in flight`);
+        return false;
+      }
+
       // Losing one update is survivable — the next round republishes — but a
       // failure that repeats means nobody ever sees a fight, so say so once.
       if (!this.reportedSendFailure) {
@@ -221,6 +254,13 @@ class BattleService {
     if (!db || !mapId || !npcId) return;
 
     this.publishedNpcId = null;
+
+    // Not ours to clear: somebody else won it since we last published, and
+    // their record is what tells everyone the enemy fell. (The rules would
+    // refuse the delete anyway — this just saves the round trip.)
+    const victory = battleManager.getVictory(npcId);
+    if (victory && victory.u !== authService.getUserId()) return;
+
     try {
       // Cheers first: the rule that lets us clear other players' cheer records
       // checks that *we* are the fighter, and it reads that from the battle

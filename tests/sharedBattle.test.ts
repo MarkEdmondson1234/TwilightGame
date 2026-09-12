@@ -125,6 +125,52 @@ describe('battleManager', () => {
     battleManager.setMap('village');
     expect(battleManager.getSpectatedBattle(WATCHER, NOW)).toBeNull();
   });
+
+  // The goblin chases every player on their own screen, so two friends in one
+  // cave usually end up fighting the same goblin within seconds of each other.
+  // A victory that arrives while our own combat screen is open used to be
+  // dropped outright: if we then lost, we kept a live goblin, got no passage,
+  // and were attacked again three seconds later.
+  describe('a victory that arrives mid-fight', () => {
+    const NPC = 'goblin_depth_5_123';
+    const victory = wire({ p: 'won', x: 4, y: 9 });
+
+    it('applies straight away when we are not fighting that enemy', () => {
+      expect(battleManager.noteVictory(NPC, victory)).toBe(victory);
+    });
+
+    it('waits until our own fight with it closes, then hands it back', () => {
+      battleManager.setFighting(NPC);
+      expect(battleManager.noteVictory(NPC, victory)).toBeNull();
+      expect(battleManager.finishFight(NPC)).toBe(victory);
+      // Once handed back, it is gone — a second close must not re-apply it.
+      expect(battleManager.finishFight(NPC)).toBeNull();
+    });
+
+    it('does not hold up a victory over a different enemy', () => {
+      battleManager.setFighting('wolf_1');
+      expect(battleManager.noteVictory(NPC, victory)).toBe(victory);
+    });
+
+    it('is forgotten on leaving the map', () => {
+      battleManager.setFighting(NPC);
+      battleManager.noteVictory(NPC, victory);
+      battleManager.setMap('village');
+      expect(battleManager.finishFight(NPC)).toBeNull();
+    });
+  });
+
+  describe('getVictory', () => {
+    it('reports a published win, so a second winner reuses its tile', () => {
+      battleManager.apply('goblin_depth_5_123', wire({ p: 'won', x: 4, y: 9 }));
+      expect(battleManager.getVictory('goblin_depth_5_123')).toMatchObject({ x: 4, y: 9 });
+    });
+
+    it('is null while the fight is still on', () => {
+      battleManager.apply('goblin_depth_5_123', wire());
+      expect(battleManager.getVictory('goblin_depth_5_123')).toBeNull();
+    });
+  });
 });
 
 describe('shouldActOnCheer', () => {
@@ -150,6 +196,16 @@ describe('battle security rules', () => {
     expect(write).toContain("newData.child('u').val() === auth.uid");
     expect(write).toContain("data.child('u').val() === auth.uid");
     expect(battle?.u?.['.validate']).toBe('newData.val() === auth.uid');
+  });
+
+  it('lets nobody but the winner replace a victory record', () => {
+    // One record per enemy, and everyone in the cave fights their own copy of
+    // it. The second fighter's round-by-round publishes used to overwrite the
+    // first one's 'won' — the only record carrying where the passage opened.
+    // The client already declines to publish over a victory; this is the
+    // server-side backstop for the write that was in flight when it landed.
+    const write: string = battle?.['.write'] ?? '';
+    expect(write).toContain("data.child('p').val() !== 'won'");
   });
 
   it('pins the phase to the closed vocabulary the client uses', () => {

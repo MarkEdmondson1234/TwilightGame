@@ -134,6 +134,11 @@ class NPCManagerClass {
     }
   }
 
+  /** The map NPC updates and lookups currently run against. */
+  getCurrentMapId(): string | null {
+    return this.currentMapId;
+  }
+
   /**
    * Set the current active map
    */
@@ -259,6 +264,54 @@ class NPCManagerClass {
   getNPCById(npcId: string): NPC | null {
     const npcs = this.getCurrentMapNPCs();
     return npcs.find((npc) => npc.id === npcId) || null;
+  }
+
+  /**
+   * Start a fight with a hostile NPC.
+   *
+   * The one entry point for combat, whether the NPC caught the player or the
+   * player chose "Confront" from its menu. It freezes the NPC and emits
+   * COMBAT_INITIATED, which is what App.tsx keys its post-combat cleanup on —
+   * the passage opening and the goblin despawning. "Confront" used to open the
+   * combat screen directly instead, so a fight started that way was won for
+   * nothing: no passage, the goblin still standing, and a rematch seconds later.
+   *
+   * `route` is only for the log trail (`?debug=combat`), so a report of "we
+   * beat it and nothing happened" can say which door the fight came in by.
+   *
+   * Returns false if the NPC is not hostile or is not on the current map.
+   */
+  initiateCombat(
+    npcId: string,
+    route: 'contact' | 'confront' = 'contact',
+    now: number = Date.now()
+  ): boolean {
+    const npc = this.getNPCById(npcId);
+    const state = this.npcStates.get(npcId);
+    if (!npc?.hostileConfig || !state) {
+      console.warn(
+        `[Combat] Cannot start a fight with ${npcId} (${route}): ` +
+          (!npc ? `not on map ${this.currentMapId}` : !npc.hostileConfig ? 'not hostile' : 'no state')
+      );
+      return false;
+    }
+
+    debugLog(
+      'Combat',
+      `Fight started with ${npc.name} (${npc.id}) by ${route} on ${this.currentMapId} at ` +
+        `(${npc.position.x.toFixed(1)}, ${npc.position.y.toFixed(1)})`
+    );
+    state.lastCombatTime = now;
+    state.isPursuing = false;
+    state.isInDialogue = true; // Freeze during combat
+    const portrait = npc.portraitSprite || npc.dialogueSprite || npc.sprite;
+    eventBus.emit(GameEvent.COMBAT_INITIATED, {
+      npcId: npc.id,
+      npcName: npc.name,
+      npcSprite: portrait,
+      miniGameId: npc.hostileConfig.combatMiniGameId,
+    });
+    return true;
   }
 
   /** Unfreeze a hostile NPC after combat ends (allows pursuit to resume after cooldown). */
@@ -678,16 +731,7 @@ class NPCManagerClass {
 
           // Contact — trigger combat
           if (distance <= hc.contactRadius) {
-            state.lastCombatTime = currentTime;
-            state.isPursuing = false;
-            state.isInDialogue = true; // Freeze during combat
-            const portrait = npc.portraitSprite || npc.dialogueSprite || npc.sprite;
-            eventBus.emit(GameEvent.COMBAT_INITIATED, {
-              npcId: npc.id,
-              npcName: npc.name,
-              npcSprite: portrait,
-              miniGameId: hc.combatMiniGameId,
-            });
+            this.initiateCombat(npc.id, 'contact', currentTime);
             return; // Skip all other movement
           }
 
