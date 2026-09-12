@@ -18,6 +18,7 @@ import { DEFAULT_CHARACTER } from '../../utils/characterSprites';
 import { STAMINA } from '../../constants';
 import { Z_DIALOGUE, zClass } from '../../zIndex';
 import { eventBus, GameEvent } from '../../utils/EventBus';
+import { audioManager } from '../../utils/AudioManager';
 import { trimField, MAX_BATTLE_LINE_CHARS } from '../../multiplayer/battle';
 import type { BattlePhase } from '../../multiplayer/battle';
 
@@ -346,6 +347,27 @@ const CombatEncounterInner: React.FC<
   useEffect(() => {
     combat.showIntro();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /**
+   * Some antagonists (currently just the goblin) have their own battle theme.
+   * Crossfades away whatever was playing — usually the cave's ambient music —
+   * for the whole fight, then crossfades back to it (or to silence) on the way
+   * out, whichever way the fight ends. Mirrors CutscenePlayer's capture/restore.
+   */
+  const previousMusicRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!config.battleMusic) return;
+
+    previousMusicRef.current = audioManager.getCurrentMusic();
+    audioManager.playMusic(config.battleMusic, { fadeIn: 600, crossfade: true });
+
+    return () => {
+      audioManager.stopMusic(800);
+      if (previousMusicRef.current) {
+        audioManager.playMusic(previousMusicRef.current, { fadeIn: 800, crossfade: true });
+      }
+    };
+  }, [config.battleMusic]);
 
   const handleReady = useCallback(() => {
     setIntroReady(true);

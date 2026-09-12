@@ -1032,6 +1032,14 @@ export const audioAssets: Record<string, AudioAssetConfig> = {
     category: 'music',
     loop: true,
   },
+  music_goblin_battle: {
+    url: '/TwilightGame/assets/audio/music/goblin_war.mp3',
+    category: 'music',
+    loop: true,
+    // The source file is mastered quieter than the other music tracks, so it
+    // needs a gain boost to match their perceived loudness. Tune by ear.
+    baseVolume: 1.8,
+  },
   music_farm: {
     url: '/TwilightGame/assets/audio/music/farming_the_land.mp3',
     category: 'music',

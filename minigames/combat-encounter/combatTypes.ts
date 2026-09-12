@@ -79,6 +79,8 @@ export interface CombatantConfig {
   portraitSprite: string;
   /** Optional per-move sprites shown during telegraph/reveal; falls back to portraitSprite */
   actionSprites?: Partial<Record<CombatMove, string>>;
+  /** Optional looping AudioManager track key to play for the duration of this fight */
+  battleMusic?: string;
 
   // Flavour text pools (randomly selected each round)
   telegraphText: Record<CombatMove, string[]>;

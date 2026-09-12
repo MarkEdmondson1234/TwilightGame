@@ -570,7 +570,7 @@ class AudioManager {
 
     // Crossfade if there's current music
     if (this.currentMusic && crossfade) {
-      this.crossfadeMusic(this.currentMusic, newTrack, fadeInMs);
+      this.crossfadeMusic(this.currentMusic, newTrack, fadeInMs, sound.baseVolume);
     } else {
       // Stop current music immediately if not crossfading
       if (this.currentMusic) {
@@ -582,7 +582,10 @@ class AudioManager {
       }
       // Simple fade in
       source.start();
-      gainNode.gain.linearRampToValueAtTime(1.0, this.context.currentTime + fadeInMs / 1000);
+      gainNode.gain.linearRampToValueAtTime(
+        sound.baseVolume,
+        this.context.currentTime + fadeInMs / 1000
+      );
       this.currentMusic = newTrack;
     }
 
@@ -590,9 +593,13 @@ class AudioManager {
   }
 
   /**
-   * Crossfade between two music tracks
+   * Crossfade between two music tracks.
+   * @param toVolume - the incoming track's target gain, i.e. its `baseVolume`
+   *   (playSfx/playAmbient already scale by this; music previously always
+   *   ramped to a hardcoded 1.0, silently ignoring baseVolume config for every
+   *   music track).
    */
-  private crossfadeMusic(from: MusicTrack, to: MusicTrack, durationMs: number): void {
+  private crossfadeMusic(from: MusicTrack, to: MusicTrack, durationMs: number, toVolume: number): void {
     if (!this.context) return;
 
     const now = this.context.currentTime;
@@ -610,7 +617,7 @@ class AudioManager {
 
     // Fade in new
     to.source.start();
-    to.gainNode.gain.linearRampToValueAtTime(1.0, now + duration);
+    to.gainNode.gain.linearRampToValueAtTime(toVolume, now + duration);
 
     this.currentMusic = to;
   }

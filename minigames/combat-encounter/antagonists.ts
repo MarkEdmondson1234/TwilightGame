@@ -25,6 +25,7 @@ export const GOBLIN_CONFIG: CombatantConfig = {
   feintRate: 0.25,
   telegraphDurationMs: COMBAT.TELEGRAPH_MS,
   portraitSprite: npcAssets.goblin_portrait,
+  battleMusic: 'music_goblin_battle',
 
   telegraphText: {
     strike: [
