@@ -270,7 +270,13 @@ export function useMouseControls(config: MouseControlsConfig) {
       },
     });
 
+    let multiTouchGesture = false;
     const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        multiTouchGesture = true;
+        longPress.cancel();
+        return;
+      }
       const touch = e.touches[0];
       if (!touch) return;
       if (isUIElement(e.target, touch.clientX, touch.clientY)) return;
@@ -278,6 +284,11 @@ export function useMouseControls(config: MouseControlsConfig) {
     };
 
     const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        multiTouchGesture = true;
+        longPress.cancel();
+        return;
+      }
       const touch = e.touches[0];
       if (!touch) return;
       longPress.move(touch.clientX, touch.clientY);
@@ -287,6 +298,11 @@ export function useMouseControls(config: MouseControlsConfig) {
      * Handle touch end (for touch devices - enables click-to-move on iPad)
      */
     const handleTouchEnd = (e: TouchEvent) => {
+      if (multiTouchGesture) {
+        if (e.touches.length === 0) multiTouchGesture = false;
+        longPress.cancel();
+        return;
+      }
       // A long press already opened the context menu. The browser still delivers this
       // touchend, and without swallowing it the player would also walk to the spot they
       // just opened a menu on — the menu would appear and the ground move underneath it.
@@ -309,6 +325,11 @@ export function useMouseControls(config: MouseControlsConfig) {
       onCanvasClickRef.current(clickInfo);
     };
 
+    const handleTouchCancel = (e: TouchEvent) => {
+      multiTouchGesture = e.touches.length > 0;
+      longPress.cancel();
+    };
+
     // Mouse click only when enabled (non-touch devices)
     if (enabled) {
       container.addEventListener('click', handleClick);
@@ -322,7 +343,7 @@ export function useMouseControls(config: MouseControlsConfig) {
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: true });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
-    container.addEventListener('touchcancel', longPress.cancel, { passive: true });
+    container.addEventListener('touchcancel', handleTouchCancel, { passive: true });
 
     return () => {
       container.removeEventListener('click', handleClick);
@@ -330,7 +351,7 @@ export function useMouseControls(config: MouseControlsConfig) {
       container.removeEventListener('touchstart', handleTouchStart);
       container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
-      container.removeEventListener('touchcancel', longPress.cancel);
+      container.removeEventListener('touchcancel', handleTouchCancel);
       longPress.cancel();
     };
     // Only depend on stable values — camera/zoom/callbacks read from refs

@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const sdk = vi.hoisted(() => ({ info: vi.fn(), setTag: vi.fn(), setContext: vi.fn() }));
+const sdk = vi.hoisted(() => ({
+  info: vi.fn(),
+  captureMessage: vi.fn(),
+  setTag: vi.fn(),
+  setContext: vi.fn(),
+}));
 vi.mock('@sentry/react', () => ({
   logger: { info: sdk.info },
+  captureMessage: sdk.captureMessage,
   setTag: sdk.setTag,
   setContext: sdk.setContext,
 }));
@@ -30,6 +36,8 @@ import {
   setDiagnosticMap,
   setDiagnosticRenderer,
   setSlowMinuteContext,
+  setDiagnosticView,
+  reportDiagnosticContextLoss,
 } from '../utils/sessionDiagnostics';
 
 function visibility(value: 'visible' | 'hidden') {
@@ -251,5 +259,40 @@ describe('bounded foreground session diagnostics', () => {
     ).not.toThrow();
     expect(() => startDiagnosticOperation('local_save')()).not.toThrow();
     sdk.info.mockReset();
+  });
+});
+
+describe('zoom and graphics failure context', () => {
+  it('reports a context loss once with the current camera, framebuffer and resident textures', () => {
+    startSessionDiagnostics();
+    setDiagnosticRenderer(undefined, () => 321);
+    setDiagnosticView({
+      zoom: 0.5,
+      viewportWidth: 1688,
+      viewportHeight: 780,
+      canvasWidth: 1266,
+      canvasHeight: 585,
+      resolution: 0.75,
+    });
+    reportDiagnosticContextLoss();
+    reportDiagnosticContextLoss();
+    expect(sdk.captureMessage).toHaveBeenCalledTimes(1);
+    expect(sdk.captureMessage).toHaveBeenCalledWith(
+      'WebGL context lost',
+      expect.objectContaining({
+        tags: { category: 'game_crash' },
+        contexts: {
+          details: expect.objectContaining({
+            'view.camera_zoom': 0.5,
+            'view.canvas_width': 1266,
+            'performance.resident_texture_mb': 321,
+          }),
+        },
+      })
+    );
+  });
+  it('keeps graphics diagnostics inert without Sentry configured', () => {
+    reportDiagnosticContextLoss();
+    expect(sdk.captureMessage).not.toHaveBeenCalled();
   });
 });
