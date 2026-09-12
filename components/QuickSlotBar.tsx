@@ -70,7 +70,7 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
           ? {
               bottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
               left: `calc(${compact ? 176 : 208}px + env(safe-area-inset-left, 0px))`,
-              right: 'calc(104px + env(safe-area-inset-right, 0px))',
+              right: 'calc(80px + env(safe-area-inset-right, 0px))',
               transform: 'none',
               overflowX: 'auto',
               touchAction: 'pan-x',
@@ -148,9 +148,11 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
               )}
 
               {/* Quick Slot Number Indicator */}
-              <div className="absolute top-0 left-0 bg-purple-600/80 text-white text-xs font-bold px-1 py-0.5 rounded-br-lg rounded-tl-lg">
-                {index + 1}
-              </div>
+              {!isTouchDevice && (
+                <div className="absolute top-0 left-0 bg-purple-600/80 text-white text-xs font-bold px-1 py-0.5 rounded-br-lg rounded-tl-lg">
+                  {index + 1}
+                </div>
+              )}
             </button>
           );
         })}
