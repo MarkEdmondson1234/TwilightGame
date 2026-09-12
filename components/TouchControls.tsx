@@ -1,158 +1,107 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
-import { itemAssets } from '../assets';
 
+type Direction = 'up' | 'down' | 'left' | 'right';
 interface TouchControlsProps {
-  onDirectionPress: (direction: 'up' | 'down' | 'left' | 'right') => void;
-  onDirectionRelease: (direction: 'up' | 'down' | 'left' | 'right') => void;
-  onResetPress: () => void;
-  /** Called when the photo button is pressed (only rendered when provided) */
-  onPhotoPress?: () => void;
-  /** Called when the emote button is pressed (only rendered when provided) */
+  onDirectionPress: (direction: Direction) => void;
+  onDirectionRelease: (direction: Direction) => void;
   onEmotePress?: () => void;
-  /** Use smaller controls for small screens (< 600px height) */
   compact?: boolean;
 }
 
-/**
- * Touch controls for mobile/tablet devices
- *
- * Features:
- * - D-Pad on left for movement
- * - Reset button on right (small, for getting unstuck)
- * - Compact mode for small screens (reduces D-Pad and button sizes)
- * - Safe area insets for notched devices
- *
- * Note: All game interactions (NPCs, transitions, farming, cooking, etc.)
- * are handled via direct tap on the game world.
- */
+/** Existing D-pad, with one owning pointer per direction and explicit cancellation. */
 const TouchControls: React.FC<TouchControlsProps> = ({
   onDirectionPress,
   onDirectionRelease,
-  onResetPress,
-  onPhotoPress,
   onEmotePress,
   compact = false,
 }) => {
-  const handleTouchStart = (direction: 'up' | 'down' | 'left' | 'right') => {
-    return (e: React.TouchEvent) => {
-      e.preventDefault();
-      onDirectionPress(direction);
+  const held = useRef(new Map<Direction, number>());
+  const releaseCallback = useRef(onDirectionRelease);
+  releaseCallback.current = onDirectionRelease;
+  const [pressed, setPressed] = useState<Direction[]>([]);
+  useEffect(() => {
+    const pointers = held.current;
+    const releaseAll = () => {
+      for (const direction of pointers.keys()) releaseCallback.current(direction);
+      pointers.clear();
+      setPressed([]);
     };
-  };
-
-  const handleTouchEnd = (direction: 'up' | 'down' | 'left' | 'right') => {
-    return (e: React.TouchEvent) => {
-      e.preventDefault();
-      onDirectionRelease(direction);
+    window.addEventListener('blur', releaseAll);
+    window.addEventListener('orientationchange', releaseAll);
+    document.addEventListener('visibilitychange', releaseAll);
+    return () => {
+      window.removeEventListener('blur', releaseAll);
+      window.removeEventListener('orientationchange', releaseAll);
+      document.removeEventListener('visibilitychange', releaseAll);
+      for (const direction of pointers.keys()) releaseCallback.current(direction);
+      pointers.clear();
     };
+  }, []);
+  const release = (direction: Direction, pointerId: number) => {
+    if (held.current.get(direction) !== pointerId) return;
+    held.current.delete(direction);
+    releaseCallback.current(direction);
+    setPressed([...held.current.keys()]);
   };
-
-  // Responsive sizes based on compact mode
-  const dpadSize = compact ? 'w-32 h-32' : 'w-40 h-40 sm:w-44 sm:h-44';
-  const dpadButtonSize = compact ? 'w-10 h-10' : 'w-12 h-12 sm:w-14 sm:h-14';
-  const dpadButtonText = compact ? 'text-lg' : 'text-xl sm:text-2xl';
-  const dpadCenterSize = compact ? 'w-8 h-8' : 'w-10 h-10 sm:w-12 sm:h-12';
-
+  const positions = {
+    up: 'top-0 left-1/2 -translate-x-1/2 rounded-t-xl',
+    down: 'bottom-0 left-1/2 -translate-x-1/2 rounded-b-xl',
+    left: 'left-0 top-1/2 -translate-y-1/2 rounded-l-xl',
+    right: 'right-0 top-1/2 -translate-y-1/2 rounded-r-xl',
+  };
+  const symbols = { up: '▲', down: '▼', left: '◄', right: '►' };
   return (
     <div
-      className={`touch-controls fixed left-0 right-0 flex justify-between items-end px-4 sm:px-6 pointer-events-none ${zClass(Z_TOUCH_CONTROLS)}`}
+      data-game-ui
+      className={`touch-controls fixed inset-x-0 pointer-events-none ${zClass(Z_TOUCH_CONTROLS)}`}
       style={{
-        bottom: compact
-          ? 'calc(40px + env(safe-area-inset-bottom, 0px))'
-          : 'calc(60px + env(safe-area-inset-bottom, 0px))',
+        bottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'max(12px, env(safe-area-inset-left))',
+        paddingRight: 'max(12px, env(safe-area-inset-right))',
       }}
     >
-      {/* D-Pad on the left */}
-      <div className={`relative ${dpadSize}`}>
-        {/* Up */}
-        <button
-          onTouchStart={handleTouchStart('up')}
-          onTouchEnd={handleTouchEnd('up')}
-          className={`pointer-events-auto absolute top-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-t-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
-        >
-          ▲
-        </button>
-
-        {/* Down */}
-        <button
-          onTouchStart={handleTouchStart('down')}
-          onTouchEnd={handleTouchEnd('down')}
-          className={`pointer-events-auto absolute bottom-0 left-1/2 -translate-x-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-b-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
-        >
-          ▼
-        </button>
-
-        {/* Left */}
-        <button
-          onTouchStart={handleTouchStart('left')}
-          onTouchEnd={handleTouchEnd('left')}
-          className={`pointer-events-auto absolute left-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-l-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
-        >
-          ◄
-        </button>
-
-        {/* Right */}
-        <button
-          onTouchStart={handleTouchStart('right')}
-          onTouchEnd={handleTouchEnd('right')}
-          className={`pointer-events-auto absolute right-0 top-1/2 -translate-y-1/2 ${dpadButtonSize} bg-slate-700/90 hover:bg-slate-600/90 active:bg-slate-500/90 rounded-r-xl border-2 border-slate-500 flex items-center justify-center text-white font-bold ${dpadButtonText} shadow-md`}
-        >
-          ►
-        </button>
-
-        {/* Center */}
-        <div
-          className={`pointer-events-auto absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${dpadCenterSize} bg-slate-800/70 rounded-full border-2 border-slate-600`}
-        ></div>
+      <div aria-label="Movement" className={`relative ${compact ? 'w-36 h-36' : 'w-44 h-44'}`}>
+        {(Object.keys(positions) as Direction[]).map((direction) => (
+          <button
+            key={direction}
+            aria-label={`Move ${direction}`}
+            aria-pressed={pressed.includes(direction)}
+            onPointerDown={(e) => {
+              if (e.button !== 0 || held.current.has(direction)) return;
+              e.preventDefault();
+              e.currentTarget.setPointerCapture(e.pointerId);
+              held.current.set(direction, e.pointerId);
+              onDirectionPress(direction);
+              setPressed([...held.current.keys()]);
+            }}
+            onPointerUp={(e) => release(direction, e.pointerId)}
+            onPointerCancel={(e) => release(direction, e.pointerId)}
+            onLostPointerCapture={(e) => release(direction, e.pointerId)}
+            onContextMenu={(e) => e.preventDefault()}
+            style={{ touchAction: 'none' }}
+            className={`pointer-events-auto absolute ${positions[direction]} ${compact ? 'w-12 h-12' : 'w-14 h-14'} ${pressed.includes(direction) ? 'bg-slate-500' : 'bg-slate-700/90'} border-2 border-slate-500 flex items-center justify-center text-white font-bold text-xl shadow-md`}
+          >
+            {symbols[direction]}
+          </button>
+        ))}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-slate-800/70 rounded-full border-2 border-slate-600" />
       </div>
-
-      {/* Action buttons on the right */}
-      <div className={`flex flex-col items-end ${compact ? 'gap-2' : 'gap-3'}`}>
-        {/* Camera shutter button — only shown when camera is equipped */}
-        {onPhotoPress && (
-          <button
-            onTouchStart={(e) => {
-              e.preventDefault();
-              onPhotoPress();
-            }}
-            className={`pointer-events-auto ${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-teal-700/90 hover:bg-teal-600/90 active:bg-teal-500/90 rounded-full border-2 border-teal-400/70 flex items-center justify-center text-white text-2xl shadow-md`}
-            title="Take Photo"
-          >
-            <img
-              src={itemAssets.camera}
-              alt="Take Photo"
-              className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} object-contain`}
-            />
-          </button>
-        )}
-        {/* Emote button — the only player-to-player channel (see multiplayer/emotes.ts) */}
-        {onEmotePress && (
-          <button
-            onTouchStart={(e) => {
-              e.preventDefault();
-              onEmotePress();
-            }}
-            className={`pointer-events-auto ${compact ? 'w-12 h-12' : 'w-14 h-14'} bg-amber-700/90 hover:bg-amber-600/90 active:bg-amber-500/90 rounded-full border-2 border-amber-400/70 flex items-center justify-center text-white ${compact ? 'text-xl' : 'text-2xl'} shadow-md`}
-            title="Emotes"
-          >
-            👋
-          </button>
-        )}
-        {/* Reset button - small, for getting unstuck */}
+      {onEmotePress && (
         <button
-          onTouchStart={(e) => {
-            e.preventDefault();
-            onResetPress();
+          onClick={onEmotePress}
+          aria-label="Emotes"
+          className="pointer-events-auto absolute w-12 h-12 bg-amber-700/90 rounded-full border-2 border-amber-400/70 text-xl shadow-md"
+          style={{
+            right: 'max(24px, env(safe-area-inset-right))',
+            bottom: '88px',
+            touchAction: 'manipulation',
           }}
-          className={`pointer-events-auto ${compact ? 'w-8 h-8' : 'w-10 h-10'} bg-slate-600/70 hover:bg-slate-500/70 active:bg-slate-400/70 rounded-full border border-slate-400/50 flex items-center justify-center text-white/70 text-xs shadow-sm`}
-          title="Reset position"
         >
-          ↺
+          👋
         </button>
-      </div>
+      )}
     </div>
   );
 };
-
 export default TouchControls;

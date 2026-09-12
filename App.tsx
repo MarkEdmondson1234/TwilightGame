@@ -2472,6 +2472,7 @@ const App: React.FC = () => {
       {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <>
           <HUD
+            compact={isTouchDevice}
             selectedItemId={selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.id : null}
             selectedItemQuantity={
               selectedItemSlot !== null ? inventoryItems[selectedItemSlot]?.quantity : undefined
@@ -2480,6 +2481,8 @@ const App: React.FC = () => {
 
           {/* Quick Slot Bar - Always visible at bottom center */}
           <QuickSlotBar
+            compact={isCompactMode}
+            isTouchDevice={isTouchDevice}
             items={inventoryItems.slice(0, 9)}
             selectedSlot={selectedItemSlot}
             onSlotClick={setSelectedItemSlot}
@@ -2493,9 +2496,10 @@ const App: React.FC = () => {
       )}
 
       {/* Bookshelf - visible during books so player can switch between them, hidden during minigames/cutscenes */}
-      {!activeNPC && !ui.miniGame && !isCutscenePlaying && (
+      {!activeNPC && !ui.miniGame && !isCutscenePlaying && (!isTouchDevice || ui.bookshelf) && (
         <Bookshelf
           isTouchDevice={isTouchDevice}
+          onClose={() => closeUI('bookshelf')}
           playerPosition={playerPos}
           currentMapId={currentMap.id}
           nearbyNPCs={(() => {
@@ -2509,19 +2513,32 @@ const App: React.FC = () => {
               })
               .map((npc) => npc.id);
           })()}
-          onRecipeBookOpen={() => openUI('recipeBook')}
-          onMagicBookOpen={() => openUI('magicBook')}
-          onJournalOpen={() => openUI('journal')}
-          onPhotoAlbumOpen={() => openUI('photoAlbum')}
+          onRecipeBookOpen={() => {
+            closeUI('bookshelf');
+            openUI('recipeBook');
+          }}
+          onMagicBookOpen={() => {
+            closeUI('bookshelf');
+            openUI('magicBook');
+          }}
+          onJournalOpen={() => {
+            closeUI('bookshelf');
+            openUI('journal');
+          }}
+          onPhotoAlbumOpen={() => {
+            closeUI('bookshelf');
+            openUI('photoAlbum');
+          }}
         />
       )}
 
       {/* Game UI Controls - hidden during dialogue, books, minigames, or cutscenes */}
       {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <GameUIControls
+          onOpenBooks={() => openUI('bookshelf')}
           showHelpBrowser={ui.helpBrowser}
           onToggleHelpBrowser={() => {
-            setHelpInitialTab('getting-started');
+            setHelpInitialTab(isTouchDevice ? 'settings' : 'getting-started');
             toggleUI('helpBrowser');
           }}
           onOpenAccount={() => {
@@ -2542,7 +2559,7 @@ const App: React.FC = () => {
         <PresenceIndicator
           count={remotePlayerCount}
           names={remotePlayerNames}
-          compact={isCompactMode}
+          compact={isTouchDevice || isCompactMode}
         />
       )}
       {isInWorld && isChatActive && !isAnyOverlayOpen && (
@@ -2569,16 +2586,8 @@ const App: React.FC = () => {
         <TouchControls
           onDirectionPress={touchControls.handleDirectionPress}
           onDirectionRelease={touchControls.handleDirectionRelease}
-          onResetPress={touchControls.handleResetPress}
           onEmotePress={toggleEmoteWheel}
           compact={isCompactMode}
-          onPhotoPress={
-            selectedItemSlot !== null &&
-            inventoryItems[selectedItemSlot]?.id === 'camera' &&
-            !ui.inventory
-              ? touchControls.handlePhotoPress
-              : undefined
-          }
         />
       )}
       {activeNPC && !isCutscenePlaying && (
@@ -2672,6 +2681,18 @@ const App: React.FC = () => {
       {ui.helpBrowser && (
         <HelpBrowser
           initialTab={helpInitialTab}
+          onResetPosition={() => {
+            touchControls.handleResetPress();
+            closeUI('helpBrowser');
+          }}
+          onTakePhoto={
+            selectedItemSlot !== null && inventoryItems[selectedItemSlot]?.id === 'camera'
+              ? () => {
+                  touchControls.handlePhotoPress();
+                  closeUI('helpBrowser');
+                }
+              : undefined
+          }
           cameraZoom={{
             value: zoom,
             min: zoomLimits.minZoom,

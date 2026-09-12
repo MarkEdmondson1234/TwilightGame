@@ -28,6 +28,17 @@ The owner subsequently prioritised repeated iPhone Firefox reloads, an oversized
 
 Validation: `make verify`, lint and production build; browser emulation measured zero map textures before mobile Play and successful world loading afterwards, 75% camera selection and stable framebuffer size under an expanded viewport. Physical iPhone Firefox crash/reload, keyboard, installation and fullscreen checks remain required after deployment. D-pad/HUD refinements, other activity menus, multiplayer chat and mini-game coverage are still outstanding.
 
+Stage 3 HUD/control changes are implemented on `mobile-landscape-controls`, based on merged PRs #113–115:
+
+- Compact D-pad targets are 48px (56px on taller screens), with visible held state, pointer capture, per-direction pointer ownership and release on pointer cancellation, lost capture, blur, rotation, visibility change and unmount. A second finger cannot release another finger's direction.
+- The satchel stays at 80px on touch devices and uses native click/tap activation, avoiding expansion under the finger and activation from cancelled touches. It occupies the lower-right corner; the D-pad occupies the lower-left.
+- Quick slots stay 48px, retain the same nine inventory indices and long-press actions, and scroll horizontally between the controls when needed. Books opens the existing illustrated spines in a labelled menu using the common viewport shell and central overlay/input guard.
+- Clock/calendar and location sit centrally on touch screens, clear of Account/Books/Help. Multiplayer presence moves below the compact clock group. Settings contains Unstick player and Take photo (when the camera is equipped), plus a brief reminder of existing tap/hold actions.
+
+The browser resize sweep also showed a lighting overlay ending short of the viewport after enlarging a running game from phone to tablet dimensions. This observed rendering issue is recorded for the stage 5 resize/performance investigation; its cause is not established by the HUD checks.
+
+Automated input regression coverage and full-game browser checks supplement the remaining physical-device validation. Activity-menu reflow, chat composer behaviour and mini-game touch coverage remain in stages 4–5; this PR does not complete them or establish sustained iPhone stability.
+
 ## Design decisions
 
 - Support **landscape gameplay** on phones. Show a friendly “Turn your phone to play” screen in portrait, with Account, Settings and Help still accessible. Release held movement when it appears; do not pause the shared multiplayer world. Preserve progress across rotation.
