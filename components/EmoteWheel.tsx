@@ -10,6 +10,8 @@
  * fiddly on a tablet, and this sits directly above the touch controls that open it.
  */
 
+import { useTouchDevice } from '../hooks/useTouchDevice';
+import MobileMenuShell from './MobileMenuShell';
 import React, { useEffect } from 'react';
 import { EMOTES } from '../multiplayer/emotes';
 import type { EmoteId } from '../multiplayer/emotes';
@@ -23,6 +25,7 @@ interface EmoteWheelProps {
 }
 
 const EmoteWheel: React.FC<EmoteWheelProps> = ({ onSelect, onClose, compact = false }) => {
+  const isTouchDevice = useTouchDevice();
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -42,6 +45,41 @@ const EmoteWheel: React.FC<EmoteWheelProps> = ({ onSelect, onClose, compact = fa
   }, [onClose, onSelect]);
 
   const buttonSize = compact ? 'w-12 h-12 text-2xl' : 'w-14 h-14 text-3xl';
+
+  if (isTouchDevice)
+    return (
+      <MobileMenuShell className={`${zClass(Z_EMOTE_WHEEL)} bg-black/40`}>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Emotes"
+          className="max-h-full overflow-y-auto rounded-2xl border-2 border-amber-200/70 bg-stone-800 p-3 text-amber-50"
+        >
+          <div className="sticky top-0 z-10 bg-stone-800 flex items-center justify-between gap-4">
+            <h2>Emotes</h2>
+            <button onClick={onClose} className="min-h-12 px-3">
+              Close
+            </button>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {EMOTES.map((emote) => (
+              <button
+                key={emote.id}
+                aria-label={emote.label}
+                title={emote.label}
+                onClick={() => {
+                  onSelect(emote.id);
+                  onClose();
+                }}
+                className="w-14 h-14 text-3xl rounded-xl bg-stone-700"
+              >
+                {emote.icon}
+              </button>
+            ))}
+          </div>
+        </div>
+      </MobileMenuShell>
+    );
 
   return (
     <>

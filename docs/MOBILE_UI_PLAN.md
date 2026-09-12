@@ -57,6 +57,16 @@ Stage 4 book/dialogue follow-up is implemented on `mobile-books-dialogue`:
 Validation: `make verify` passes 1,315 tests across 157 files; targeted lint has no errors or warnings, and the production build succeeds. Browser component checks covered all four book themes at 390 × 844, 640 × 360 and 640 × 240, plus desktop at 1280 × 800. Mobile boundaries showed no horizontal overflow; the final long dialogue choice was reachable by scrolling. Review images use disposable component fixtures, not a physical iPhone session. The village crash remains awaiting the owner's deployed-device trial. Multiplayer/chat, expanded history and activity result overlays, mini-games and remaining physical-device checks are still outstanding.
 
 
+Stage 4 chat/gift/emote follow-up is implemented on `mobile-multiplayer-menus`:
+
+- Mobile chat has explicit Send and Close controls, a 16px input and a visual-viewport/safe-area shell. The launcher sits beside the existing emote control, clear of the D-pad. The last eight messages already heard nearby are readable in the composer; proximity and account rules are unchanged.
+- Mobile drafts survive blur, Close/reopen and false/rejected delivery results. Send is guarded while pending, and only successful delivery clears the draft. Desktop keeps its existing composer and submission behaviour.
+- Gifts use the common mobile shell, adaptive inventory grid and fixed selection/Give Gift footer. The existing gift transaction logic is unchanged. Mobile emotes use a four-column grid, a sticky Close button and completed-tap activation.
+- Opening the mobile composer or emote menu releases held movement and suppresses world gestures through the existing UI guard.
+
+Validation: 1,318 tests across 158 files pass, full lint reports no errors and 7 existing warnings, and production build succeeds. Browser component fixtures checked 390 × 844, 640 × 360, 640 × 240 and 640 × 180, plus desktop at 1280 × 800. Close/Send/Give Gift targets remain 48px and inside the mobile viewport. Failed-send checks use a local stub and send no real messages. Native iPhone keyboard behaviour and two-player delivery still require device trials. Connection-state feedback, nearby-player navigation, expanded history/result overlays and mini-game coverage remain outstanding; the village crash investigation is unchanged.
+
+
 ## Design decisions
 
 - Support **landscape gameplay** on phones. Show a friendly “Turn your phone to play” screen in portrait, with Account, Settings and Help still accessible. Release held movement when it appears; do not pause the shared multiplayer world. Preserve progress across rotation.

@@ -347,7 +347,10 @@ const App: React.FC = () => {
   // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
   // Background-image rooms (interiors) can only zoom in, not out
   // Disable zoom when UI overlays are open so scroll/pinch works in menus
+  const [showEmoteWheel, setShowEmoteWheel] = useState(false);
+  const [isComposingChat, setIsComposingChat] = useState(false);
   const isAnyOverlayOpen = !!activeNPC || isAnyUIOpen();
+  const isMobileCommunicationOpen = isTouchDevice && (isComposingChat || showEmoteWheel);
   const needsLandscape =
     isTouchDevice && viewportSize.width < 768 && viewportSize.height > viewportSize.width;
   // Background-image rooms (interiors) already fit the viewport responsively via
@@ -376,13 +379,15 @@ const App: React.FC = () => {
     () =>
       getZoomLimitsForRoom(
         isBackgroundImageRoom,
-        isAnyOverlayOpen || needsLandscape || showSplashScreen,
+        isAnyOverlayOpen || needsLandscape || showSplashScreen || isMobileCommunicationOpen,
         coverZoom
       ),
-    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, coverZoom]
+    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, isMobileCommunicationOpen, coverZoom]
   );
   // Menus retain native browser magnification.
-  useBrowserZoomLock(!isAnyOverlayOpen && !showSplashScreen && !needsLandscape);
+  useBrowserZoomLock(
+    !isAnyOverlayOpen && !showSplashScreen && !needsLandscape && !isMobileCommunicationOpen
+  );
   const { zoom, setZoomLevel } = usePinchZoom({
     minZoom: zoomLimits.minZoom,
     maxZoom: zoomLimits.maxZoom,
@@ -414,7 +419,8 @@ const App: React.FC = () => {
   // an overlay: the world is live and rendering underneath it the whole time it's
   // up (that's the point — it loads in the background), so without this a stray
   // click-to-move path or keypress would drive the player around behind the splash.
-  const isUIActive = isAnyOverlayOpen || showSplashScreen || needsLandscape;
+  const isUIActive =
+    isAnyOverlayOpen || showSplashScreen || needsLandscape || isMobileCommunicationOpen;
   useEffect(() => {
     const release = () => {
       for (const key of Object.keys(keysPressed)) keysPressed[key] = false;
@@ -519,17 +525,15 @@ const App: React.FC = () => {
     playerName: gameState.getSelectedCharacter()?.name ?? 'Traveller',
   });
 
-  const [isComposingChat, setIsComposingChat] = useState(false);
   const startComposingChat = useCallback(() => setIsComposingChat(true), []);
   const stopComposingChat = useCallback(() => setIsComposingChat(false), []);
   const handleSendChat = useCallback(
     (text: string) => {
-      void sendMessage(text);
+      return sendMessage(text);
     },
     [sendMessage]
   );
 
-  const [showEmoteWheel, setShowEmoteWheel] = useState(false);
   // Stable identity: useKeyboardControls captures its handler once at mount.
   const toggleEmoteWheel = useCallback(() => setShowEmoteWheel((open) => !open), []);
 
@@ -3244,7 +3248,7 @@ const App: React.FC = () => {
       {/* Character creator overlay (mid-game, via settings button) */}
       {ui.characterCreator && <CharacterCreator onComplete={handleCharacterCreated} />}
 
-      {!showSplashScreen && needsLandscape && !isAnyOverlayOpen && (
+      {!showSplashScreen && needsLandscape && !isAnyOverlayOpen && !isComposingChat && (
         <PortraitPlayPrompt
           onOpenAccount={() => {
             setHelpInitialTab('account');
