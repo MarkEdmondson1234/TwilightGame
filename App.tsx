@@ -12,6 +12,7 @@ import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
+import { getCachedPerformanceSettings } from './utils/performanceTier';
 import PortraitPlayPrompt from './components/PortraitPlayPrompt';
 import SplashScreen from './components/SplashScreen';
 import TouchControls from './components/TouchControls';
@@ -382,7 +383,7 @@ const App: React.FC = () => {
   );
   // Menus retain native browser magnification.
   useBrowserZoomLock(!isAnyOverlayOpen && !showSplashScreen && !needsLandscape);
-  const { zoom, resetZoom } = usePinchZoom({
+  const { zoom, setZoomLevel } = usePinchZoom({
     minZoom: zoomLimits.minZoom,
     maxZoom: zoomLimits.maxZoom,
     enabled: zoomLimits.enabled,
@@ -601,7 +602,6 @@ const App: React.FC = () => {
       lastTransitionTime.current = Date.now();
       npcManager.setCurrentMap(mapId);
       fairyAttractionManager.reset();
-      resetZoom();
     },
     onShowToast: showToast,
     onSelectItemSlot: setSelectedItemSlot,
@@ -709,8 +709,7 @@ const App: React.FC = () => {
     // Reset fairy attraction manager when changing maps
     fairyAttractionManager.reset();
 
-    // Reset zoom on map transition (new map may have different zoom limits)
-    resetZoom();
+    // Camera zoom is clamped to the new room while retaining the player’s preferred view.
 
     // Play Mr. Fox greeting when entering the shop
     if (map.id.includes('shop')) {
@@ -1841,7 +1840,9 @@ const App: React.FC = () => {
     thoughtBubbleLayerRef,
     updateAnimations,
   } = usePixiRenderer({
-    enabled: USE_PIXI_RENDERER,
+    // Mobile keeps the title/account screen free of the world GPU allocation.
+    // Desktop retains background warming for a fast Play transition.
+    enabled: USE_PIXI_RENDERER && (!getCachedPerformanceSettings().isMobile || !showSplashScreen),
     canvasRef,
     mapConfig: {
       isMapInitialized,
@@ -2161,6 +2162,7 @@ const App: React.FC = () => {
   return (
     <div
       ref={gameContainerRef}
+      data-game-world
       className="no-touch-callout text-white w-full h-full overflow-hidden font-sans relative select-none"
       style={{ backgroundColor: '#5A7247' }}
     >
@@ -2670,6 +2672,12 @@ const App: React.FC = () => {
       {ui.helpBrowser && (
         <HelpBrowser
           initialTab={helpInitialTab}
+          cameraZoom={{
+            value: zoom,
+            min: zoomLimits.minZoom,
+            fittedRoom: isBackgroundImageRoom,
+            onChange: setZoomLevel,
+          }}
           onClose={() => closeUI('helpBrowser')}
           onOpenCharacterSelect={() => openUI('characterCreator')}
         />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DisplayModeControls from './DisplayModeControls';
 import MobileMenuShell from './MobileMenuShell';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -24,6 +25,12 @@ import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory'
 interface HelpBrowserProps {
   onClose: () => void;
   initialTab?: string;
+  cameraZoom?: {
+    value: number;
+    min: number;
+    fittedRoom: boolean;
+    onChange: (value: number) => void;
+  };
   onOpenCharacterSelect?: () => void;
 }
 
@@ -61,6 +68,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
   onClose,
   onOpenCharacterSelect,
   initialTab = 'getting-started',
+  cameraZoom,
 }) => {
   const [showTopics, setShowTopics] = useState(false);
   const selectTab = (tab: string) => {
@@ -593,6 +601,43 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                     </div>
                   </>
                 )}
+                {selectedTab === SETTINGS_TAB && cameraZoom && (
+                  <section
+                    className="rounded-lg p-3 sm:p-6 mb-6 border-2"
+                    style={{ borderColor: colours.wood, color: colours.text }}
+                  >
+                    <h2 className="text-xl font-serif font-bold mb-3">Game view</h2>
+                    <p className="mb-3">
+                      Show more of the world while keeping menus and buttons their normal size.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      {[0.5, 0.75, 1].map((value) => (
+                        <button
+                          key={value}
+                          onClick={() => cameraZoom.onChange(value)}
+                          disabled={cameraZoom.fittedRoom || value < cameraZoom.min}
+                          aria-pressed={Math.abs(cameraZoom.value - value) < 0.01}
+                          className="min-h-12 min-w-16 px-3 rounded border-2 disabled:opacity-40"
+                          style={{
+                            borderColor: colours.wood,
+                            background:
+                              Math.abs(cameraZoom.value - value) < 0.01
+                                ? colours.brass
+                                : colours.parchment,
+                          }}
+                        >
+                          {Math.round(value * 100)}%
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-sm">
+                      {cameraZoom.fittedRoom
+                        ? 'This room is fitted to your screen.'
+                        : 'You can also pinch on the world. Smaller maps limit how far you can zoom out.'}
+                    </p>
+                  </section>
+                )}
+                {selectedTab === SETTINGS_TAB && <DisplayModeControls />}
                 {/* Account Section */}
                 <div
                   className="rounded-lg p-3 sm:p-6 mb-6"

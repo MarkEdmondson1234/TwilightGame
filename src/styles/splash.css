@@ -1,0 +1,98 @@
+.splash-layout {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #25372f;
+}
+.splash-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.splash-content {
+  position: relative;
+  z-index: 10;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 24px max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
+    max(16px, env(safe-area-inset-left));
+  text-align: center;
+}
+.splash-title {
+  font-size: clamp(36px, 6vw, 72px);
+  line-height: 1.05;
+}
+.splash-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.splash-actions button {
+  min-height: 48px;
+}
+@media (pointer: coarse), (max-width: 767px) {
+  .splash-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 40%);
+  }
+  .splash-art {
+    position: relative;
+    min-height: 0;
+    --splash-scene-fit: contain;
+  }
+  .splash-art .splash-shade {
+    display: none;
+  }
+  .splash-content {
+    min-height: 100%;
+    justify-content: center;
+    align-self: start;
+    background: #3d3028;
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom)) 16px;
+  }
+  .splash-title {
+    font-size: clamp(26px, 4vw, 36px);
+  }
+  .splash-tagline {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  .splash-actions {
+    width: 100%;
+    gap: 4px;
+  }
+  .splash-actions button {
+    width: 100%;
+    font-size: 16px;
+    margin-top: 0;
+  }
+}
+@media (max-width: 767px) and (orientation: portrait) {
+  .splash-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(160px, 1fr) auto;
+  }
+  .splash-content {
+    min-height: 0;
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
+  .splash-actions {
+    max-width: 320px;
+  }
+}
+@media (max-height: 360px) and (pointer: coarse) {
+  .splash-tagline {
+    display: none;
+  }
+  .splash-content {
+    gap: 4px;
+    justify-content: flex-start;
+  }
+}

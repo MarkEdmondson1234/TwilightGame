@@ -25,6 +25,7 @@ interface UsePinchZoomResult {
   zoom: number;
   /** Reset zoom to 1.0 */
   resetZoom: () => void;
+  setZoomLevel: (value: number) => void;
 }
 
 export interface ZoomLimits {
@@ -35,10 +36,8 @@ export interface ZoomLimits {
 
 /**
  * Minimum zoom needed so a mapPixelWidth x mapPixelHeight tiled room, once
- * scaled, covers the full given viewport in both axes (like CSS
- * `background-size: cover`) — never below 1 (never asks for a zoom-OUT just
- * because the map happens to be huge; that's what the normal zoom-out range
- * is for).
+ * scaled, covers the viewport in both axes. This is a lower bound, not the
+ * default camera setting: large maps must still allow the normal 50% zoom-out.
  *
  * Without this, useCamera's "map smaller than viewport" branch centred the
  * map at 1:1 and left the game's own background colour visible in a border
@@ -56,7 +55,7 @@ export function getCoverZoom(
   viewportHeight: number
 ): number {
   if (mapPixelWidth <= 0 || mapPixelHeight <= 0) return 1;
-  return Math.max(1, viewportWidth / mapPixelWidth, viewportHeight / mapPixelHeight);
+  return Math.max(DEFAULT_MIN_ZOOM, viewportWidth / mapPixelWidth, viewportHeight / mapPixelHeight);
 }
 
 /**
@@ -101,7 +100,8 @@ export function usePinchZoom({
   minZoom = DEFAULT_MIN_ZOOM,
   maxZoom = DEFAULT_MAX_ZOOM,
 }: UsePinchZoomConfig = {}): UsePinchZoomResult {
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
+  const [preferredZoom, setZoom] = useState(DEFAULT_ZOOM);
+  const zoom = Math.min(maxZoom, Math.max(minZoom, preferredZoom));
 
   // Track pinch state via refs (don't need re-renders)
   const initialPinchDistance = useRef<number | null>(null);
@@ -126,10 +126,12 @@ export function usePinchZoom({
     return Math.min(maxZoomRef.current, Math.max(minZoomRef.current, value));
   }, []);
 
-  // Clamp zoom when limits change (e.g. entering a room that disallows zoom-out)
-  useEffect(() => {
-    setZoom((prev) => Math.min(maxZoom, Math.max(minZoom, prev)));
-  }, [minZoom, maxZoom]);
+  const setZoomLevel = useCallback(
+    (value: number) => {
+      if (Number.isFinite(value)) setZoom(clampZoom(value));
+    },
+    [clampZoom]
+  );
 
   // --- Touch: pinch-to-zoom + double-tap reset ---
   useEffect(() => {
@@ -141,9 +143,19 @@ export function usePinchZoom({
       return Math.sqrt(dx * dx + dy * dy);
     };
 
+    const isWorldTouch = (touch: Touch) =>
+      touch.target instanceof Element &&
+      !!touch.target.closest('[data-game-world]') &&
+      !touch.target.closest('button, input, select, textarea, [data-game-ui], .touch-controls');
     const handleTouchStart = (e: TouchEvent) => {
+      if (!Array.from(e.touches).every(isWorldTouch)) {
+        initialPinchDistance.current = null;
+        lastTapTime.current = 0;
+        return;
+      }
       if (e.touches.length === 2) {
-        initialPinchDistance.current = getTouchDistance(e.touches[0], e.touches[1]);
+        initialPinchDistance.current = getTouchDistance(e.touches[0], e.touches[1]) || null;
+        lastTapTime.current = 0;
         zoomAtPinchStart.current = zoomRef.current;
       } else if (e.touches.length === 1) {
         const now = Date.now();
@@ -172,11 +184,15 @@ export function usePinchZoom({
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
+      initialPinchDistance.current = null;
+      lastTapTime.current = 0;
     };
   }, [enabled, clampZoom]);
 
@@ -185,6 +201,12 @@ export function usePinchZoom({
     if (!enabled) return;
 
     const handleWheel = (e: WheelEvent) => {
+      if (
+        !(e.target instanceof Element) ||
+        !e.target.closest('[data-game-world]') ||
+        e.target.closest('button, input, select, textarea, [data-game-ui], .touch-controls')
+      )
+        return;
       e.preventDefault();
       const delta = -e.deltaY * WHEEL_ZOOM_SPEED;
       setZoom((prev) => clampZoom(prev + delta));
@@ -197,5 +219,5 @@ export function usePinchZoom({
     };
   }, [enabled, clampZoom]);
 
-  return { zoom, resetZoom };
+  return { zoom, resetZoom, setZoomLevel };
 }
