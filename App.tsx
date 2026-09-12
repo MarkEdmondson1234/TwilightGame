@@ -344,8 +344,59 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const currentMap = mapManager.getCurrentMap();
+  // Browser page-zoom factor relative to load (1.0 = normal). Keeps the
+  // viewportScale memo below invariant to browser zoom — see useBrowserZoom.
+  const browserZoom = useBrowserZoom();
+
+  // Calculate viewport scale for background-image rooms
+  // This scales the entire room (image, grid, characters) to fit the viewport
+  // IMPORTANT: Only scale UP on large screens, never scale down on small screens
+  const viewportScale = useMemo((): number => {
+    if (!currentMap?.renderMode || currentMap.renderMode !== 'background-image') {
+      return 1.0; // No scaling for tiled maps
+    }
+
+    // Divide the browser-zoom factor back out of the viewport dimensions before
+    // fitting. Browser zoom shrinks innerWidth/innerHeight (CSS px), which would
+    // otherwise drag viewportScale toward its 1.0 floor and cancel the zoom on
+    // large monitors — leaving the room image and character the only things that
+    // don't magnify. Normalising here lets interiors zoom WITH the browser, like
+    // tiled rooms do. See useBrowserZoom / docs/ARCHITECTURE_GOTCHAS.md.
+    const fitWidth = viewportSize.width * browserZoom;
+    const fitHeight = viewportSize.height * browserZoom;
+
+    // Scale so the ROOM ARTWORK covers the viewport, measured from the artwork
+    // itself rather than the map's declared `referenceViewport` (issue #26).
+    // The reference is an authoring hint and drifts from the real artwork —
+    // Mum's Kitchen is 960x540 at scale 1.3 = 1248x702 against a declared
+    // 1280x720 — and every bit of that 2.6% drift showed up on screen as the
+    // game's background colour around the room, at every window size.
+    // The `referenceViewport` path below survives only for a background-image
+    // room with no centred artwork to measure; no current map is one.
+    const artwork = getRoomArtworkSize(currentMap);
+    const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
+    const rawScale = artwork
+      ? getRoomCoverScale(artwork.width, artwork.height, fitWidth, fitHeight)
+      : calculateViewportScale(
+          fitWidth,
+          fitHeight,
+          refViewport.width,
+          refViewport.height,
+          0.5, // minScale (absolute floor)
+          2.5, // maxScale - allow larger scaling for big monitors
+          'cover'
+        );
+
+    // Only scale UP on larger viewports, never scale down, so small screens
+    // still see the room at its authored size (cropped, and panned to follow the
+    // player). Deliberately no upper clamp: capping the scale would reopen #26
+    // as a visible gap on a large monitor.
+    return Math.max(1.0, rawScale);
+  }, [currentMap, viewportSize, browserZoom]);
+
   // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
-  // Background-image rooms (interiors) can only zoom in, not out
+  // The mobile interior pilot shares the world transform and has its own preference.
   // Disable zoom when UI overlays are open so scroll/pinch works in menus
   const [showEmoteWheel, setShowEmoteWheel] = useState(false);
   const [isComposingChat, setIsComposingChat] = useState(false);
@@ -353,19 +404,24 @@ const App: React.FC = () => {
   const isMobileCommunicationOpen = isTouchDevice && (isComposingChat || showEmoteWheel);
   const needsLandscape =
     isTouchDevice && viewportSize.width < 768 && viewportSize.height > viewportSize.width;
-  // Background-image rooms (interiors) already fit the viewport responsively via
-  // `viewportScale` (see the memo below); pinch/wheel zoom is disabled there so it
-  // can't re-fit the room at a different scale mid-frame and rearrange the layout.
-  // See getZoomLimitsForRoom (hooks/usePinchZoom.ts) for the full rationale.
-  const isBackgroundImageRoom = useMemo(() => {
-    const map = mapManager.getMap(currentMapId);
-    return map?.renderMode === 'background-image';
-  }, [currentMapId]);
-  // Minimum zoom needed for a TILED room to fully cover the viewport (issue #26)
-  // — see getCoverZoom. Irrelevant for background-image rooms, which use their
-  // own viewportScale system and have zoom disabled entirely.
+  // Only the two reviewed mobile rooms opt into zoom; other interiors stay fitted.
+  const isMobileInteriorCamera = isTouchDevice && ['mums_kitchen', 'shop'].includes(currentMapId);
+  // The saved room can render before map registration finishes on mobile startup.
+  // Derive this from the loaded map so its policy updates when artwork becomes available.
+  const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
+  // Coverage is measured after base fitting, before user zoom is applied.
   const coverZoom = useMemo(() => {
-    if (isBackgroundImageRoom) return 1;
+    if (isBackgroundImageRoom) {
+      const artwork = getRoomArtworkSize(currentMap);
+      return artwork
+        ? getRoomCoverScale(
+            artwork.width * viewportScale,
+            artwork.height * viewportScale,
+            viewportSize.width,
+            viewportSize.height
+          )
+        : 1;
+    }
     const map = mapManager.getMap(currentMapId);
     if (!map) return 1;
     return getCoverZoom(
@@ -374,15 +430,16 @@ const App: React.FC = () => {
       viewportSize.width,
       viewportSize.height
     );
-  }, [isBackgroundImageRoom, currentMapId, viewportSize]);
+  }, [isBackgroundImageRoom, currentMapId, currentMap, viewportSize, viewportScale]);
   const zoomLimits = useMemo(
     () =>
       getZoomLimitsForRoom(
         isBackgroundImageRoom,
         isAnyOverlayOpen || needsLandscape || showSplashScreen || isMobileCommunicationOpen,
-        coverZoom
+        coverZoom,
+        isMobileInteriorCamera
       ),
-    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, isMobileCommunicationOpen, coverZoom]
+    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, isMobileCommunicationOpen, coverZoom, isMobileInteriorCamera]
   );
   // Menus retain native browser magnification.
   useBrowserZoomLock(
@@ -392,6 +449,7 @@ const App: React.FC = () => {
     minZoom: zoomLimits.minZoom,
     maxZoom: zoomLimits.maxZoom,
     enabled: zoomLimits.enabled,
+    preferenceKey: isMobileInteriorCamera ? 'interior' : 'world',
   });
 
   // Toast notifications for user feedback
@@ -1486,59 +1544,8 @@ const App: React.FC = () => {
     };
   }, [activeNPC]);
 
-  const currentMap = mapManager.getCurrentMap();
   const mapWidth = currentMap ? currentMap.width : 50;
   const mapHeight = currentMap ? currentMap.height : 30;
-
-  // Browser page-zoom factor relative to load (1.0 = normal). Keeps the
-  // viewportScale memo below invariant to browser zoom — see useBrowserZoom.
-  const browserZoom = useBrowserZoom();
-
-  // Calculate viewport scale for background-image rooms
-  // This scales the entire room (image, grid, characters) to fit the viewport
-  // IMPORTANT: Only scale UP on large screens, never scale down on small screens
-  const viewportScale = useMemo((): number => {
-    if (!currentMap?.renderMode || currentMap.renderMode !== 'background-image') {
-      return 1.0; // No scaling for tiled maps
-    }
-
-    // Divide the browser-zoom factor back out of the viewport dimensions before
-    // fitting. Browser zoom shrinks innerWidth/innerHeight (CSS px), which would
-    // otherwise drag viewportScale toward its 1.0 floor and cancel the zoom on
-    // large monitors — leaving the room image and character the only things that
-    // don't magnify. Normalising here lets interiors zoom WITH the browser, like
-    // tiled rooms do. See useBrowserZoom / docs/ARCHITECTURE_GOTCHAS.md.
-    const fitWidth = viewportSize.width * browserZoom;
-    const fitHeight = viewportSize.height * browserZoom;
-
-    // Scale so the ROOM ARTWORK covers the viewport, measured from the artwork
-    // itself rather than the map's declared `referenceViewport` (issue #26).
-    // The reference is an authoring hint and drifts from the real artwork —
-    // Mum's Kitchen is 960x540 at scale 1.3 = 1248x702 against a declared
-    // 1280x720 — and every bit of that 2.6% drift showed up on screen as the
-    // game's background colour around the room, at every window size.
-    // The `referenceViewport` path below survives only for a background-image
-    // room with no centred artwork to measure; no current map is one.
-    const artwork = getRoomArtworkSize(currentMap);
-    const refViewport = currentMap.referenceViewport ?? DEFAULT_REFERENCE_VIEWPORT;
-    const rawScale = artwork
-      ? getRoomCoverScale(artwork.width, artwork.height, fitWidth, fitHeight)
-      : calculateViewportScale(
-          fitWidth,
-          fitHeight,
-          refViewport.width,
-          refViewport.height,
-          0.5, // minScale (absolute floor)
-          2.5, // maxScale - allow larger scaling for big monitors
-          'cover'
-        );
-
-    // Only scale UP on larger viewports, never scale down, so small screens
-    // still see the room at its authored size (cropped, and panned to follow the
-    // player). Deliberately no upper clamp: capping the scale would reopen #26
-    // as a visible gap on a large monitor.
-    return Math.max(1.0, rawScale);
-  }, [currentMap, viewportSize, browserZoom]);
 
   // Memoize compact mode for touch controls to avoid synchronous DOM reads on every render
   const isCompactMode = useMemo(() => {
@@ -1547,8 +1554,8 @@ const App: React.FC = () => {
 
   // One pre-zoom transform for artwork, entities, labels, and pointer inversion.
   const roomTransform = useMemo(
-    () => getRoomTransform(currentMap, playerPos, viewportSize, viewportScale, zoom),
-    [currentMap, playerPos, viewportSize, viewportScale, zoom]
+    () => getRoomTransform(currentMap, playerPos, viewportSize, viewportScale, zoom, isMobileInteriorCamera ? Math.min(88, viewportSize.height * 0.2) : 0),
+    [currentMap, playerPos, viewportSize, viewportScale, zoom, isMobileInteriorCamera]
   );
   const backgroundRoomPan = roomTransform.pan;
   const effectiveGridOffset = roomTransform.gridOffset;
@@ -2700,7 +2707,8 @@ const App: React.FC = () => {
           cameraZoom={{
             value: zoom,
             min: zoomLimits.minZoom,
-            fittedRoom: isBackgroundImageRoom,
+            fittedRoom: isBackgroundImageRoom && !isMobileInteriorCamera,
+            interiorCamera: isMobileInteriorCamera,
             onChange: setZoomLevel,
           }}
           onClose={() => closeUI('helpBrowser')}

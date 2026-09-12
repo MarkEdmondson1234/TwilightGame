@@ -725,15 +725,21 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         viewportWidth: viewportSize.width / zoom,
         viewportHeight: viewportSize.height / zoom,
       });
-
-      (async () => {
-        await backgroundImageLayerRef.current?.loadLayers(map, currentMapId, false);
-      })();
     } else {
       backgroundImageLayerRef.current.setScalingConfig(null);
       backgroundImageLayerRef.current.clear();
     }
   }, [enabled, currentMapId, isPixiInitialized, viewportScale, viewportSize, zoom]);
+
+  // Artwork loads on map changes only. Scale/pan updates above reuse the sprites.
+  useEffect(() => {
+    if (!enabled || !isPixiInitialized) return;
+    const layer = backgroundImageLayerRef.current;
+    const map = mapManager.getCurrentMap();
+    if (layer && map?.renderMode === 'background-image') {
+      void layer.loadLayers(map, currentMapId, false);
+    }
+  }, [enabled, currentMapId, isPixiInitialized]);
 
   // =========================================================================
   // EFFECT: Update weather visibility on map change

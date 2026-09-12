@@ -18,12 +18,14 @@ interface UsePinchZoomConfig {
   minZoom?: number;
   /** Maximum zoom level (default 2.0) */
   maxZoom?: number;
+  /** Separate indoor and outdoor choices; the mobile interior default is 75%. */
+  preferenceKey?: 'world' | 'interior';
 }
 
 interface UsePinchZoomResult {
   /** Current zoom level */
   zoom: number;
-  /** Reset zoom to 1.0 */
+  /** Reset to the current view preference default. */
   resetZoom: () => void;
   setZoomLevel: (value: number) => void;
 }
@@ -61,35 +63,33 @@ export function getCoverZoom(
 /**
  * Decides the pinch/wheel zoom limits for the current room.
  *
- * Background-image rooms (interiors) already fit the viewport responsively via
- * `viewportScale`. Letting pinch/wheel zoom apply on top of that re-fits the room
- * at a different scale mid-frame, which visibly rearranges furniture, NPCs and the
- * character — so game zoom is pinned to 1.0 (disabled) for these rooms. Tiled
- * rooms keep the normal min/max (raised by `coverZoom` when the map wouldn't
- * otherwise cover the viewport — see getCoverZoom), and are also disabled while a
- * UI overlay is open so scroll/pinch works in menus instead.
+ * Illustrated rooms keep their existing fitted view unless explicitly opted in
+ * for the mobile pilot. Pilot coverage is measured after base viewport fitting,
+ * so user zoom never refits the artwork independently from actors and collisions.
+ * All gestures are disabled while UI overlays are open.
  */
 export function getZoomLimitsForRoom(
   isBackgroundImageRoom: boolean,
   isAnyOverlayOpen: boolean,
-  coverZoom: number = DEFAULT_MIN_ZOOM
+  coverZoom: number = DEFAULT_MIN_ZOOM,
+  allowInteriorZoom = false
 ): ZoomLimits {
-  if (isBackgroundImageRoom) {
+  if (isBackgroundImageRoom && !allowInteriorZoom) {
     return { minZoom: 1.0, maxZoom: 1.0, enabled: false };
   }
-  const minZoom = Math.max(DEFAULT_MIN_ZOOM, coverZoom);
+  const minZoom = Math.max(isBackgroundImageRoom ? 0.1 : DEFAULT_MIN_ZOOM, coverZoom);
   return {
     minZoom,
     // A very small map could need more zoom to cover than the default max
     // allows — extend the ceiling to match rather than leaving a gap.
-    maxZoom: Math.max(DEFAULT_MAX_ZOOM, minZoom),
+    maxZoom: Math.max(isBackgroundImageRoom ? 1.5 : DEFAULT_MAX_ZOOM, minZoom),
     enabled: !isAnyOverlayOpen,
   };
 }
 
 /**
  * Hook for pinch-to-zoom (touch) and mouse wheel zoom (desktop).
- * Double-tap resets zoom to 1.0.
+ * Double-tap resets to 75% indoors or 100% outdoors, bounded by coverage.
  * Attaches listeners to window (game fills entire screen).
  *
  * Zoom limits can change dynamically (e.g. per-map).
@@ -99,8 +99,21 @@ export function usePinchZoom({
   enabled = true,
   minZoom = DEFAULT_MIN_ZOOM,
   maxZoom = DEFAULT_MAX_ZOOM,
+  preferenceKey = 'world',
 }: UsePinchZoomConfig = {}): UsePinchZoomResult {
-  const [preferredZoom, setZoom] = useState(DEFAULT_ZOOM);
+  const defaultZoom = preferenceKey === 'interior' ? 0.75 : DEFAULT_ZOOM;
+  const [preferences, setPreferences] = useState<Partial<Record<'world' | 'interior', number>>>({});
+  const preferredZoom = preferences[preferenceKey] ?? defaultZoom;
+  const setZoom = useCallback(
+    (value: number | ((previous: number) => number)) => {
+      setPreferences((previous) => ({
+        ...previous,
+        [preferenceKey]:
+          typeof value === 'function' ? value(previous[preferenceKey] ?? defaultZoom) : value,
+      }));
+    },
+    [preferenceKey, defaultZoom]
+  );
   const zoom = Math.min(maxZoom, Math.max(minZoom, preferredZoom));
 
   // Track pinch state via refs (don't need re-renders)
@@ -119,8 +132,8 @@ export function usePinchZoom({
   maxZoomRef.current = maxZoom;
 
   const resetZoom = useCallback(() => {
-    setZoom(DEFAULT_ZOOM);
-  }, []);
+    setZoom(defaultZoom);
+  }, [defaultZoom, setZoom]);
 
   const clampZoom = useCallback((value: number) => {
     return Math.min(maxZoomRef.current, Math.max(minZoomRef.current, value));
@@ -130,7 +143,7 @@ export function usePinchZoom({
     (value: number) => {
       if (Number.isFinite(value)) setZoom(clampZoom(value));
     },
-    [clampZoom]
+    [clampZoom, setZoom]
   );
 
   // --- Touch: pinch-to-zoom + double-tap reset ---
@@ -160,7 +173,7 @@ export function usePinchZoom({
       } else if (e.touches.length === 1) {
         const now = Date.now();
         if (now - lastTapTime.current < DOUBLE_TAP_MS) {
-          setZoom(DEFAULT_ZOOM);
+          setZoom(defaultZoom);
           lastTapTime.current = 0;
         } else {
           lastTapTime.current = now;
@@ -194,7 +207,7 @@ export function usePinchZoom({
       initialPinchDistance.current = null;
       lastTapTime.current = 0;
     };
-  }, [enabled, clampZoom]);
+  }, [enabled, clampZoom, setZoom, defaultZoom]);
 
   // --- Desktop: mouse wheel zoom ---
   useEffect(() => {
@@ -217,7 +230,7 @@ export function usePinchZoom({
     return () => {
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [enabled, clampZoom]);
+  }, [enabled, clampZoom, setZoom, defaultZoom]);
 
   return { zoom, resetZoom, setZoomLevel };
 }
