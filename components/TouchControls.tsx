@@ -1,3 +1,4 @@
+import { EMOTES } from '../multiplayer/emotes';
 import React, { useEffect, useRef, useState } from 'react';
 import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
 
@@ -98,7 +99,12 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             touchAction: 'manipulation',
           }}
         >
-          👋
+          <img
+            src={EMOTES[0].image}
+            alt=""
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
         </button>
       )}
     </div>

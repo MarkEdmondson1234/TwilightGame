@@ -1,0 +1,1325 @@
+[
+  {
+    "id": "item:seed_radish",
+    "label": "Radish Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_radish.png",
+    "source": "assets-optimized/items/radish_seeds.png"
+  },
+  {
+    "id": "item:seed_tomato",
+    "label": "Tomato Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_tomato.png",
+    "source": "assets-optimized/items/tomato_seeds.png"
+  },
+  {
+    "id": "item:seed_pumpkin",
+    "label": "Pumpkin Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_pumpkin.png",
+    "source": "assets-optimized/items/grocery/pumpkin_seeds.png"
+  },
+  {
+    "id": "item:seed_melon",
+    "label": "Melon Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_melon.png",
+    "source": "assets-optimized/items/melon_seeds.png"
+  },
+  {
+    "id": "item:seed_chili",
+    "label": "Chili Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_chili.png",
+    "source": "assets-optimized/items/grocery/chili_seeds.png"
+  },
+  {
+    "id": "item:seed_spinach",
+    "label": "Spinach Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_spinach.png",
+    "source": "assets-optimized/items/spinach_seeds.png"
+  },
+  {
+    "id": "item:seed_broccoli",
+    "label": "Broccoli Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_broccoli.png",
+    "source": "assets-optimized/items/broccoli_seeds.png"
+  },
+  {
+    "id": "item:seed_cauliflower",
+    "label": "Cauliflower Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_cauliflower.png",
+    "source": "assets-optimized/items/cauliflower_seeds.png"
+  },
+  {
+    "id": "item:seed_sunflower",
+    "label": "Sunflower Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_sunflower.png",
+    "source": "assets-optimized/items/sunflower_seeds.png"
+  },
+  {
+    "id": "item:seed_salad",
+    "label": "Salad Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_salad.png",
+    "source": "assets-optimized/items/salad_seeds.png"
+  },
+  {
+    "id": "item:seed_onion",
+    "label": "Onion Sets",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_onion.png",
+    "source": "assets-optimized/items/grocery/onion_sets.png"
+  },
+  {
+    "id": "item:seed_potato",
+    "label": "Seed Potatoes",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_potato.png",
+    "source": "assets-optimized/items/grocery/seed_potatoes.png"
+  },
+  {
+    "id": "item:seed_pea",
+    "label": "Pea Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_pea.png",
+    "source": "assets-optimized/items/grocery/pea_seeds.png"
+  },
+  {
+    "id": "item:seed_cucumber",
+    "label": "Cucumber Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_cucumber.png",
+    "source": "assets-optimized/items/cucumber_seeds.png"
+  },
+  {
+    "id": "item:seed_carrot",
+    "label": "Carrot Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_carrot.png",
+    "source": "assets-optimized/items/carrot_seeds.png"
+  },
+  {
+    "id": "item:seed_wild_strawberry",
+    "label": "Wild Strawberry Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_wild_strawberry.png",
+    "source": "assets-optimized/items/wild_seeds.png"
+  },
+  {
+    "id": "item:seed_thyme",
+    "label": "Thyme Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_thyme.png",
+    "source": "assets-optimized/herbs/thyme_seeds.png"
+  },
+  {
+    "id": "item:seed_lavender",
+    "label": "Lavender Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_lavender.png",
+    "source": "assets-optimized/herbs/lavender_seeds.png"
+  },
+  {
+    "id": "item:seed_mint",
+    "label": "Mint Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_mint.png",
+    "source": "assets-optimized/herbs/mint_seeds.png"
+  },
+  {
+    "id": "item:seed_fairy_bluebell",
+    "label": "Fairy Bluebell Seeds",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_fairy_bluebell.png",
+    "source": "assets-optimized/farming/fairy_bluebell_seed.png"
+  },
+  {
+    "id": "item:seed_magic_bean",
+    "label": "Magic Bean",
+    "category": "seed",
+    "image": "assets/emotes/items/seed_magic_bean.png",
+    "source": "assets-optimized/farming/magic_bean_seed.png"
+  },
+  {
+    "id": "item:crop_radish",
+    "label": "Radish",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_radish.png",
+    "source": "assets-optimized/items/radishes.png"
+  },
+  {
+    "id": "item:crop_tomato",
+    "label": "Tomato",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_tomato.png",
+    "source": "assets-optimized/items/grocery/tomato.png"
+  },
+  {
+    "id": "item:crop_corn",
+    "label": "Corn",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_corn.png",
+    "source": "assets-optimized/items/grocery/corn_crop.png"
+  },
+  {
+    "id": "item:crop_pumpkin",
+    "label": "Pumpkin",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_pumpkin.png",
+    "source": "assets-optimized/items/grocery/pumpkin.png"
+  },
+  {
+    "id": "item:crop_potato",
+    "label": "Potato",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_potato.png",
+    "source": "assets-optimized/items/grocery/sack_of_potatoes.png"
+  },
+  {
+    "id": "item:crop_melon",
+    "label": "Melon",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_melon.png",
+    "source": "assets-optimized/items/grocery/melon_crop.png"
+  },
+  {
+    "id": "item:crop_chili",
+    "label": "Chili Pepper",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_chili.png",
+    "source": "assets-optimized/items/grocery/chili_crop.png"
+  },
+  {
+    "id": "item:crop_spinach",
+    "label": "Spinach",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_spinach.png",
+    "source": "assets-optimized/items/grocery/spinach_bundle.png"
+  },
+  {
+    "id": "item:crop_broccoli",
+    "label": "Broccoli",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_broccoli.png",
+    "source": "assets-optimized/items/grocery/broccoli_head.png"
+  },
+  {
+    "id": "item:crop_cauliflower",
+    "label": "Cauliflower",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_cauliflower.png",
+    "source": "assets-optimized/items/grocery/cauliflower_crop.png"
+  },
+  {
+    "id": "item:crop_sunflower",
+    "label": "Sunflower",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_sunflower.png",
+    "source": "assets-optimized/items/decoration/sunflower_crop.png"
+  },
+  {
+    "id": "item:crop_salad",
+    "label": "Salad Greens",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_salad.png",
+    "source": "assets-optimized/items/grocery/salad_head.png"
+  },
+  {
+    "id": "item:crop_onion",
+    "label": "Onion",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_onion.png",
+    "source": "assets-optimized/items/grocery/onion_bunch.png"
+  },
+  {
+    "id": "item:crop_pea",
+    "label": "Peas",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_pea.png",
+    "source": "assets-optimized/items/grocery/pea_crop.png"
+  },
+  {
+    "id": "item:crop_cucumber",
+    "label": "Cucumber",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_cucumber.png",
+    "source": "assets-optimized/items/grocery/cucumber_crop.png"
+  },
+  {
+    "id": "item:crop_carrot",
+    "label": "Carrot",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_carrot.png",
+    "source": "assets-optimized/items/grocery/carrot_bunch.png"
+  },
+  {
+    "id": "item:crop_strawberry",
+    "label": "Strawberry",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_strawberry.png",
+    "source": "assets-optimized/items/strawberry.png"
+  },
+  {
+    "id": "item:crop_blackberry",
+    "label": "Blackberry",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_blackberry.png",
+    "source": "assets-optimized/items/blackberries.png"
+  },
+  {
+    "id": "item:crop_hazelnut",
+    "label": "Hazelnuts",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_hazelnut.png",
+    "source": "assets-optimized/items/grocery/hazelnuts.png"
+  },
+  {
+    "id": "item:crop_blueberry",
+    "label": "Blueberries",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_blueberry.png",
+    "source": "assets-optimized/items/grocery/blueberries_crop.png"
+  },
+  {
+    "id": "item:apple",
+    "label": "Apple",
+    "category": "crop",
+    "image": "assets/emotes/items/apple.png",
+    "source": "assets-optimized/farming/orchard/apple_crop.png"
+  },
+  {
+    "id": "item:crop_thyme",
+    "label": "Fresh Thyme",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_thyme.png",
+    "source": "assets-optimized/herbs/thyme_bunch.png"
+  },
+  {
+    "id": "item:crop_lavender",
+    "label": "Fresh Lavender",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_lavender.png",
+    "source": "assets-optimized/herbs/lavender_bunch.png"
+  },
+  {
+    "id": "item:fertiliser",
+    "label": "Fertiliser",
+    "category": "material",
+    "image": "assets/emotes/items/fertiliser.png",
+    "source": "assets-optimized/items/grocery/fertiliser.png"
+  },
+  {
+    "id": "item:wood_poor",
+    "label": "Poor Quality Firewood",
+    "category": "material",
+    "image": "assets/emotes/items/wood_poor.png",
+    "source": "assets-optimized/items/wood_poor.png"
+  },
+  {
+    "id": "item:wood_medium",
+    "label": "Medium Quality Firewood",
+    "category": "material",
+    "image": "assets/emotes/items/wood_medium.png",
+    "source": "assets-optimized/items/wood_medium.png"
+  },
+  {
+    "id": "item:wood_fine",
+    "label": "Fine Quality Firewood",
+    "category": "material",
+    "image": "assets/emotes/items/wood_fine.png",
+    "source": "assets-optimized/items/wood_fine.png"
+  },
+  {
+    "id": "item:tool_hoe",
+    "label": "Hoe",
+    "category": "tool",
+    "image": "assets/emotes/items/tool_hoe.png",
+    "source": "assets-optimized/items/hoe.png"
+  },
+  {
+    "id": "item:tool_watering_can",
+    "label": "Watering Can",
+    "category": "tool",
+    "image": "assets/emotes/items/tool_watering_can.png",
+    "source": "assets-optimized/items/watering_can.png"
+  },
+  {
+    "id": "item:tool_skis",
+    "label": "Skis",
+    "category": "tool",
+    "image": "assets/emotes/items/tool_skis.png",
+    "source": "assets-optimized/items/skis.png"
+  },
+  {
+    "id": "item:tool_feather_duster",
+    "label": "Feather Duster",
+    "category": "tool",
+    "image": "assets/emotes/items/tool_feather_duster.png",
+    "source": "assets-optimized/items/quest/feather_duster.png"
+  },
+  {
+    "id": "item:camera",
+    "label": "Camera",
+    "category": "misc",
+    "image": "assets/emotes/items/camera.png",
+    "source": "assets-optimized/items/mushras_shop/camera.png"
+  },
+  {
+    "id": "item:history_book",
+    "label": "History Book",
+    "category": "keepsake",
+    "image": "assets/emotes/items/history_book.png",
+    "source": "assets-optimized/items/magical/quest/history_book.png"
+  },
+  {
+    "id": "item:quest_picnic_blanket",
+    "label": "Picnic Blanket",
+    "category": "decoration",
+    "image": "assets/emotes/items/quest_picnic_blanket.png",
+    "source": "assets-optimized/items/quest/picnic_blanket_folded.png"
+  },
+  {
+    "id": "item:quest_picnic_basket",
+    "label": "Picnic Basket",
+    "category": "misc",
+    "image": "assets/emotes/items/quest_picnic_basket.png",
+    "source": "assets-optimized/items/quest/picnic_basket.png"
+  },
+  {
+    "id": "item:tea_leaves",
+    "label": "Tea Leaves",
+    "category": "ingredient",
+    "image": "assets/emotes/items/tea_leaves.png",
+    "source": "assets-optimized/items/grocery/tea.png"
+  },
+  {
+    "id": "item:water",
+    "label": "Water",
+    "category": "ingredient",
+    "image": "assets/emotes/items/water.png",
+    "source": "assets-optimized/items/water.png"
+  },
+  {
+    "id": "item:milk",
+    "label": "Milk",
+    "category": "ingredient",
+    "image": "assets/emotes/items/milk.png",
+    "source": "assets-optimized/items/grocery/milk.png"
+  },
+  {
+    "id": "item:cream",
+    "label": "Cream",
+    "category": "ingredient",
+    "image": "assets/emotes/items/cream.png",
+    "source": "assets-optimized/items/grocery/cream.png"
+  },
+  {
+    "id": "item:butter",
+    "label": "Butter",
+    "category": "ingredient",
+    "image": "assets/emotes/items/butter.png",
+    "source": "assets-optimized/items/grocery/butter.png"
+  },
+  {
+    "id": "item:buttermilk",
+    "label": "Buttermilk",
+    "category": "ingredient",
+    "image": "assets/emotes/items/buttermilk.png",
+    "source": "assets-optimized/items/grocery/buttermilk.png"
+  },
+  {
+    "id": "item:cheese",
+    "label": "Cheese",
+    "category": "ingredient",
+    "image": "assets/emotes/items/cheese.png",
+    "source": "assets-optimized/items/grocery/cheese.png"
+  },
+  {
+    "id": "item:almonds",
+    "label": "Almonds",
+    "category": "ingredient",
+    "image": "assets/emotes/items/almonds.png",
+    "source": "assets-optimized/items/grocery/almonds.png"
+  },
+  {
+    "id": "item:egg",
+    "label": "Egg",
+    "category": "ingredient",
+    "image": "assets/emotes/items/egg.png",
+    "source": "assets-optimized/items/grocery/egg.png"
+  },
+  {
+    "id": "item:flour",
+    "label": "Flour",
+    "category": "ingredient",
+    "image": "assets/emotes/items/flour.png",
+    "source": "assets-optimized/items/grocery/flour.png"
+  },
+  {
+    "id": "item:whole_grain_wheat",
+    "label": "Whole Grain Wheat",
+    "category": "ingredient",
+    "image": "assets/emotes/items/whole_grain_wheat.png",
+    "source": "assets-optimized/items/grocery/whole_grain_wheat.png"
+  },
+  {
+    "id": "item:corn_flour",
+    "label": "Corn Flour",
+    "category": "ingredient",
+    "image": "assets/emotes/items/corn_flour.png",
+    "source": "assets-optimized/cooking/corn_flour.png"
+  },
+  {
+    "id": "item:sourdough",
+    "label": "Sourdough Starter",
+    "category": "ingredient",
+    "image": "assets/emotes/items/sourdough.png",
+    "source": "assets-optimized/items/sourdough_starter.png"
+  },
+  {
+    "id": "item:sugar",
+    "label": "Cane Sugar",
+    "category": "ingredient",
+    "image": "assets/emotes/items/sugar.png",
+    "source": "assets-optimized/items/grocery/sugar.png"
+  },
+  {
+    "id": "item:honey",
+    "label": "Honey",
+    "category": "ingredient",
+    "image": "assets/emotes/items/honey.png",
+    "source": "assets-optimized/items/grocery/honey.png"
+  },
+  {
+    "id": "item:salt",
+    "label": "Salt",
+    "category": "ingredient",
+    "image": "assets/emotes/items/salt.png",
+    "source": "assets-optimized/items/grocery/salt.png"
+  },
+  {
+    "id": "item:yeast",
+    "label": "Yeast",
+    "category": "ingredient",
+    "image": "assets/emotes/items/yeast.png",
+    "source": "assets-optimized/items/grocery/yeast.png"
+  },
+  {
+    "id": "item:lemon",
+    "label": "Lemon",
+    "category": "ingredient",
+    "image": "assets/emotes/items/lemon.png",
+    "source": "assets-optimized/items/grocery/lemon.png"
+  },
+  {
+    "id": "item:olive_oil",
+    "label": "Olive Oil",
+    "category": "ingredient",
+    "image": "assets/emotes/items/olive_oil.png",
+    "source": "assets-optimized/items/grocery/olive_oil.png"
+  },
+  {
+    "id": "item:sunflower_oil",
+    "label": "Sunflower Oil",
+    "category": "ingredient",
+    "image": "assets/emotes/items/sunflower_oil.png",
+    "source": "assets-optimized/items/grocery/sunflower_oil.png"
+  },
+  {
+    "id": "item:vanilla",
+    "label": "Vanilla Pods",
+    "category": "ingredient",
+    "image": "assets/emotes/items/vanilla.png",
+    "source": "assets-optimized/items/grocery/vanilla_pods.png"
+  },
+  {
+    "id": "item:cinnamon",
+    "label": "Cinnamon",
+    "category": "ingredient",
+    "image": "assets/emotes/items/cinnamon.png",
+    "source": "assets-optimized/items/grocery/cinnamon.png"
+  },
+  {
+    "id": "item:pepper",
+    "label": "Black Pepper",
+    "category": "ingredient",
+    "image": "assets/emotes/items/pepper.png",
+    "source": "assets-optimized/items/grocery/pepper.png"
+  },
+  {
+    "id": "item:meat",
+    "label": "Meat",
+    "category": "ingredient",
+    "image": "assets/emotes/items/meat.png",
+    "source": "assets-optimized/items/grocery/meat.png"
+  },
+  {
+    "id": "item:minced_meat",
+    "label": "Minced Meat",
+    "category": "ingredient",
+    "image": "assets/emotes/items/minced_meat.png",
+    "source": "assets-optimized/items/grocery/minced_meat.png"
+  },
+  {
+    "id": "item:pasta",
+    "label": "Pasta",
+    "category": "ingredient",
+    "image": "assets/emotes/items/pasta.png",
+    "source": "assets-optimized/items/grocery/dried_spaghetti.png"
+  },
+  {
+    "id": "item:bread",
+    "label": "Bread",
+    "category": "ingredient",
+    "image": "assets/emotes/items/bread.png",
+    "source": "assets-optimized/items/grocery/bread.png"
+  },
+  {
+    "id": "item:chocolate",
+    "label": "Chocolate",
+    "category": "ingredient",
+    "image": "assets/emotes/items/chocolate.png",
+    "source": "assets-optimized/items/grocery/chocolate_bar.png"
+  },
+  {
+    "id": "item:strawberry_jam",
+    "label": "Strawberry Jam",
+    "category": "ingredient",
+    "image": "assets/emotes/items/strawberry_jam.png",
+    "source": "assets-optimized/items/grocery/strawberry_jam.png"
+  },
+  {
+    "id": "item:basil",
+    "label": "Basil",
+    "category": "ingredient",
+    "image": "assets/emotes/items/basil.png",
+    "source": "assets-optimized/items/grocery/basil.png"
+  },
+  {
+    "id": "item:thyme",
+    "label": "Thyme",
+    "category": "ingredient",
+    "image": "assets/emotes/items/thyme.png",
+    "source": "assets-optimized/items/grocery/thyme.png"
+  },
+  {
+    "id": "item:rosemary",
+    "label": "Rosemary",
+    "category": "ingredient",
+    "image": "assets/emotes/items/rosemary.png",
+    "source": "assets-optimized/items/grocery/rosemary.png"
+  },
+  {
+    "id": "item:allspice",
+    "label": "Allspice",
+    "category": "ingredient",
+    "image": "assets/emotes/items/allspice.png",
+    "source": "assets-optimized/items/grocery/allspice.png"
+  },
+  {
+    "id": "item:curry_powder",
+    "label": "Curry Powder",
+    "category": "ingredient",
+    "image": "assets/emotes/items/curry_powder.png",
+    "source": "assets-optimized/items/grocery/curry.png"
+  },
+  {
+    "id": "item:baking_powder",
+    "label": "Baking Powder",
+    "category": "ingredient",
+    "image": "assets/emotes/items/baking_powder.png",
+    "source": "assets-optimized/items/grocery/baking_powder.png"
+  },
+  {
+    "id": "item:cocoa_powder",
+    "label": "Cocoa Powder",
+    "category": "ingredient",
+    "image": "assets/emotes/items/cocoa_powder.png",
+    "source": "assets-optimized/items/grocery/cocoa_powder.png"
+  },
+  {
+    "id": "item:rice",
+    "label": "Rice",
+    "category": "ingredient",
+    "image": "assets/emotes/items/rice.png",
+    "source": "assets-optimized/items/grocery/rice.png"
+  },
+  {
+    "id": "item:tomato_tin",
+    "label": "Tinned Tomatoes",
+    "category": "ingredient",
+    "image": "assets/emotes/items/tomato_tin.png",
+    "source": "assets-optimized/items/grocery/canned_tomato.png"
+  },
+  {
+    "id": "item:tuna",
+    "label": "Tinned Tuna",
+    "category": "ingredient",
+    "image": "assets/emotes/items/tuna.png",
+    "source": "assets-optimized/items/grocery/canned_tuna.png"
+  },
+  {
+    "id": "item:gravy",
+    "label": "Gravy Granules",
+    "category": "ingredient",
+    "image": "assets/emotes/items/gravy.png",
+    "source": "assets-optimized/items/grocery/gravy.png"
+  },
+  {
+    "id": "item:food_tea",
+    "label": "Cup of Tea",
+    "category": "food",
+    "image": "assets/emotes/items/food_tea.png",
+    "source": "assets-optimized/cooking/cup_of_tea.png"
+  },
+  {
+    "id": "item:food_pickled_onions",
+    "label": "Pickled Onions",
+    "category": "food",
+    "image": "assets/emotes/items/food_pickled_onions.png",
+    "source": "assets-optimized/cooking/pickled_onion.png"
+  },
+  {
+    "id": "item:food_french_toast",
+    "label": "French Toast",
+    "category": "food",
+    "image": "assets/emotes/items/food_french_toast.png",
+    "source": "assets-optimized/cooking/french_toast.png"
+  },
+  {
+    "id": "item:food_spaghetti",
+    "label": "Spaghetti with Meat Sauce",
+    "category": "food",
+    "image": "assets/emotes/items/food_spaghetti.png",
+    "source": "assets-optimized/cooking/spaghetti_dish.png"
+  },
+  {
+    "id": "item:food_pizza",
+    "label": "Potato Pizza",
+    "category": "food",
+    "image": "assets/emotes/items/food_pizza.png",
+    "source": "assets-optimized/cooking/potato_pizza.png"
+  },
+  {
+    "id": "item:food_roast_dinner",
+    "label": "Roast Dinner",
+    "category": "food",
+    "image": "assets/emotes/items/food_roast_dinner.png",
+    "source": "assets-optimized/cooking/roast_dinner.png"
+  },
+  {
+    "id": "item:food_crepes",
+    "label": "Crepes",
+    "category": "food",
+    "image": "assets/emotes/items/food_crepes.png",
+    "source": "assets-optimized/cooking/crepes.png"
+  },
+  {
+    "id": "item:food_marzipan_chocolates",
+    "label": "Marzipan Chocolates",
+    "category": "food",
+    "image": "assets/emotes/items/food_marzipan_chocolates.png",
+    "source": "assets-optimized/cooking/marzipan_chocolates.png"
+  },
+  {
+    "id": "item:food_ice_cream",
+    "label": "Vanilla Ice Cream",
+    "category": "food",
+    "image": "assets/emotes/items/food_ice_cream.png",
+    "source": "assets-optimized/cooking/ice_cream.png"
+  },
+  {
+    "id": "item:food_ice_cream_cone",
+    "label": "Ice Cream Cone",
+    "category": "food",
+    "image": "assets/emotes/items/food_ice_cream_cone.png",
+    "source": "assets-optimized/items/ice_cream_cone.png"
+  },
+  {
+    "id": "item:food_bread",
+    "label": "Fresh Bread",
+    "category": "food",
+    "image": "assets/emotes/items/food_bread.png",
+    "source": "assets-optimized/items/grocery/bread.png"
+  },
+  {
+    "id": "item:food_cookies",
+    "label": "Cookies",
+    "category": "food",
+    "image": "assets/emotes/items/food_cookies.png",
+    "source": "assets-optimized/cooking/cookies.png"
+  },
+  {
+    "id": "item:food_corn_bread",
+    "label": "Corn Bread",
+    "category": "food",
+    "image": "assets/emotes/items/food_corn_bread.png",
+    "source": "assets-optimized/cooking/corn_bread.png"
+  },
+  {
+    "id": "item:food_pumpkin_pie",
+    "label": "Pumpkin Pie",
+    "category": "food",
+    "image": "assets/emotes/items/food_pumpkin_pie.png",
+    "source": "assets-optimized/cooking/pumpkin_pie.png"
+  },
+  {
+    "id": "item:food_garden_salad",
+    "label": "Garden Salad",
+    "category": "food",
+    "image": "assets/emotes/items/food_garden_salad.png",
+    "source": "assets-optimized/cooking/garden_salad.png"
+  },
+  {
+    "id": "item:food_apple_cobbler",
+    "label": "Apple Cobbler",
+    "category": "food",
+    "image": "assets/emotes/items/food_apple_cobbler.png",
+    "source": "assets-optimized/cooking/apple_cobbler.png"
+  },
+  {
+    "id": "item:food_melon_granita",
+    "label": "Melon Granita",
+    "category": "food",
+    "image": "assets/emotes/items/food_melon_granita.png",
+    "source": "assets-optimized/cooking/melon_granita.png"
+  },
+  {
+    "id": "item:food_chocolate_cake",
+    "label": "Chocolate Cake",
+    "category": "food",
+    "image": "assets/emotes/items/food_chocolate_cake.png",
+    "source": "assets-optimized/cooking/chocolate_cake.png"
+  },
+  {
+    "id": "item:food_cucumber_sandwich",
+    "label": "Cucumber Sandwich",
+    "category": "food",
+    "image": "assets/emotes/items/food_cucumber_sandwich.png",
+    "source": "assets-optimized/cooking/cucumber_sandwich.png"
+  },
+  {
+    "id": "item:food_yule_log",
+    "label": "Yule Log",
+    "category": "food",
+    "image": "assets/emotes/items/food_yule_log.png",
+    "source": "assets-optimized/seasonal/yule_log.png"
+  },
+  {
+    "id": "item:moonpetal",
+    "label": "Moonpetal",
+    "category": "magical",
+    "image": "assets/emotes/items/moonpetal.png",
+    "source": "assets-optimized/items/magical/forageable/moonpetal_flower.png"
+  },
+  {
+    "id": "item:addersmeat",
+    "label": "Addersmeat",
+    "category": "magical",
+    "image": "assets/emotes/items/addersmeat.png",
+    "source": "assets-optimized/items/magical/forageable/addersmeat_flower.png"
+  },
+  {
+    "id": "item:luminescent_toadstool",
+    "label": "Luminescent Toadstool",
+    "category": "magical",
+    "image": "assets/emotes/items/luminescent_toadstool.png",
+    "source": "assets-optimized/items/magical/forageable/luminescent_toadstool_ingredient.png"
+  },
+  {
+    "id": "item:dragonfly_wings",
+    "label": "Dragonfly Wings",
+    "category": "magical",
+    "image": "assets/emotes/items/dragonfly_wings.png",
+    "source": "assets-optimized/items/magical/forageable/dragonfly_wings.png"
+  },
+  {
+    "id": "item:frost_flower",
+    "label": "Frost Flower",
+    "category": "magical",
+    "image": "assets/emotes/items/frost_flower.png",
+    "source": "assets-optimized/items/magical/forageable/frost_flower.png"
+  },
+  {
+    "id": "item:sakura_petal",
+    "label": "Sakura Petal",
+    "category": "magical",
+    "image": "assets/emotes/items/sakura_petal.png",
+    "source": "assets-optimized/items/magical/forageable/sakura_petals.png"
+  },
+  {
+    "id": "item:shadow_essence",
+    "label": "Shadow Essence",
+    "category": "magical",
+    "image": "assets/emotes/items/shadow_essence.png",
+    "source": "assets-optimized/items/magical/shop/shadow_essence.png"
+  },
+  {
+    "id": "item:ghost_lichen",
+    "label": "Ghost Lichen",
+    "category": "magical",
+    "image": "assets/emotes/items/ghost_lichen.png",
+    "source": "assets-optimized/items/magical/forageable/ghost_lichen.png"
+  },
+  {
+    "id": "item:mushroom",
+    "label": "Mushroom",
+    "category": "magical",
+    "image": "assets/emotes/items/mushroom.png",
+    "source": "assets-optimized/items/magical/forageable/forest_mushroom_ingredient.png"
+  },
+  {
+    "id": "item:shrinking_violet",
+    "label": "Shrinking Violet",
+    "category": "magical",
+    "image": "assets/emotes/items/shrinking_violet.png",
+    "source": "assets-optimized/items/magical/forageable/shrinking_violet_ingredient.png"
+  },
+  {
+    "id": "item:giant_mushroom_cap",
+    "label": "Giant Mushroom Cap",
+    "category": "magical",
+    "image": "assets/emotes/items/giant_mushroom_cap.png",
+    "source": "assets-optimized/items/magical/forageable/giant_mushroom_cap.png"
+  },
+  {
+    "id": "item:eye_of_newt",
+    "label": "Eye of Newt",
+    "category": "magical",
+    "image": "assets/emotes/items/eye_of_newt.png",
+    "source": "assets-optimized/items/magical/forageable/eye_of_newt.png"
+  },
+  {
+    "id": "item:wolfsbane",
+    "label": "Wolfsbane",
+    "category": "magical",
+    "image": "assets/emotes/items/wolfsbane.png",
+    "source": "assets-optimized/items/magical/forageable/wolfsbane_ingredient.png"
+  },
+  {
+    "id": "item:rose_crop",
+    "label": "Rose",
+    "category": "magical",
+    "image": "assets/emotes/items/rose_crop.png",
+    "source": "assets-optimized/items/rose_crop.png"
+  },
+  {
+    "id": "item:rose_red_crop",
+    "label": "Red Rose",
+    "category": "magical",
+    "image": "assets/emotes/items/rose_red_crop.png",
+    "source": "assets-optimized/items/rose_red_crop.png"
+  },
+  {
+    "id": "item:heather_sprig",
+    "label": "Heather Sprig",
+    "category": "magical",
+    "image": "assets/emotes/items/heather_sprig.png",
+    "source": "assets-optimized/items/decoration/heather_sprig.png"
+  },
+  {
+    "id": "item:phoenix_ash",
+    "label": "Phoenix Ash",
+    "category": "magical",
+    "image": "assets/emotes/items/phoenix_ash.png",
+    "source": "assets-optimized/items/magical/shop/phoenix_ash.png"
+  },
+  {
+    "id": "item:forest_mushroom",
+    "label": "Forest Mushroom",
+    "category": "magical",
+    "image": "assets/emotes/items/forest_mushroom.png",
+    "source": "assets-optimized/items/magical/forageable/forest_mushroom_ingredient.png"
+  },
+  {
+    "id": "item:feather",
+    "label": "Feather",
+    "category": "magical",
+    "image": "assets/emotes/items/feather.png",
+    "source": "assets-optimized/items/magical/forageable/feather.png"
+  },
+  {
+    "id": "item:vinegar",
+    "label": "Vinegar",
+    "category": "magical",
+    "image": "assets/emotes/items/vinegar.png",
+    "source": "assets-optimized/items/grocery/vinegar.png"
+  },
+  {
+    "id": "item:crop_mint",
+    "label": "Fresh Mint",
+    "category": "crop",
+    "image": "assets/emotes/items/crop_mint.png",
+    "source": "assets-optimized/herbs/mint_bunch.png"
+  },
+  {
+    "id": "item:hearthstone",
+    "label": "Hearthstone",
+    "category": "magical",
+    "image": "assets/emotes/items/hearthstone.png",
+    "source": "assets-optimized/items/magical/quest/hearthstone.png"
+  },
+  {
+    "id": "item:golden_apple",
+    "label": "Golden Apple",
+    "category": "magical",
+    "image": "assets/emotes/items/golden_apple.png",
+    "source": "assets-optimized/items/magical/quest/golden_apple.png"
+  },
+  {
+    "id": "item:potion_friendship",
+    "label": "Friendship Elixir",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_friendship.png",
+    "source": "assets-optimized/items/magical/potions/friendship_elixir.png"
+  },
+  {
+    "id": "item:potion_bitter_grudge",
+    "label": "Bitter Grudge",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_bitter_grudge.png",
+    "source": "assets-optimized/items/magical/potions/bitter_grudge.png"
+  },
+  {
+    "id": "item:potion_glamour",
+    "label": "Glamour Draught",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_glamour.png",
+    "source": "assets-optimized/items/magical/potions/glamour_draught.png"
+  },
+  {
+    "id": "item:potion_beastward",
+    "label": "Beastward Balm",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_beastward.png",
+    "source": "assets-optimized/items/magical/potions/beastward_balm.png"
+  },
+  {
+    "id": "item:potion_wakefulness",
+    "label": "Wakefulness Brew",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_wakefulness.png",
+    "source": "assets-optimized/items/magical/potions/wakefulness_brew.png"
+  },
+  {
+    "id": "item:potion_revealing",
+    "label": "Revealing Tonic",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_revealing.png",
+    "source": "assets-optimized/items/magical/potions/revealing_tonic.png"
+  },
+  {
+    "id": "item:potion_healing",
+    "label": "Healing Salve",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_healing.png",
+    "source": "assets-optimized/items/magical/potions/healing_salve.png"
+  },
+  {
+    "id": "item:potion_drink_me",
+    "label": "Drink Me",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_drink_me.png",
+    "source": "assets-optimized/items/magical/potions/drink_me.png"
+  },
+  {
+    "id": "item:potion_eat_me",
+    "label": "Eat Me",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_eat_me.png",
+    "source": "assets-optimized/items/magical/potions/eat_me.png"
+  },
+  {
+    "id": "item:potion_raincaller",
+    "label": "Raincaller",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_raincaller.png",
+    "source": "assets-optimized/items/magical/potions/raincaller.png"
+  },
+  {
+    "id": "item:potion_sunburst",
+    "label": "Sunburst",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_sunburst.png",
+    "source": "assets-optimized/items/magical/potions/sunburst.png"
+  },
+  {
+    "id": "item:potion_snowglobe",
+    "label": "Snowglobe",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_snowglobe.png",
+    "source": "assets-optimized/items/magical/potions/snowglobe.png"
+  },
+  {
+    "id": "item:potion_cherry_blossom",
+    "label": "Cherry Blossom Dream",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_cherry_blossom.png",
+    "source": "assets-optimized/items/magical/potions/cherry_blossom.png"
+  },
+  {
+    "id": "item:potion_mistweaver",
+    "label": "Mistweaver",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_mistweaver.png",
+    "source": "assets-optimized/items/magical/potions/mistweaver.png"
+  },
+  {
+    "id": "item:potion_verdant_surge",
+    "label": "Verdant Surge",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_verdant_surge.png",
+    "source": "assets-optimized/items/magical/potions/verdant_surge.png"
+  },
+  {
+    "id": "item:potion_time_skip",
+    "label": "Time Skip",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_time_skip.png",
+    "source": "assets-optimized/items/magical/potions/time_skip.png"
+  },
+  {
+    "id": "item:potion_dawns_herald",
+    "label": "Dawn's Herald",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_dawns_herald.png",
+    "source": "assets-optimized/items/magical/potions/dawns_herald.png"
+  },
+  {
+    "id": "item:potion_harvest_moon",
+    "label": "Harvest Moon",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_harvest_moon.png",
+    "source": "assets-optimized/items/magical/potions/harvest_moon.png"
+  },
+  {
+    "id": "item:potion_quality_blessing",
+    "label": "Quality Blessing",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_quality_blessing.png",
+    "source": "assets-optimized/items/magical/potions/quality_blessing.png"
+  },
+  {
+    "id": "item:potion_homeward",
+    "label": "Homeward",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_homeward.png",
+    "source": "assets-optimized/items/magical/potions/homeward.png"
+  },
+  {
+    "id": "item:potion_fairy_form",
+    "label": "Fairy Form Potion",
+    "category": "potion",
+    "image": "assets/emotes/items/potion_fairy_form.png",
+    "source": "assets-optimized/items/magical/quest/fairy_form_potion.png"
+  },
+  {
+    "id": "item:decoration_sunflower_bouquet",
+    "label": "Sunflower Bouquet",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_sunflower_bouquet.png",
+    "source": "assets-optimized/items/mushras_shop/decoration_sunflower_bouquet.png"
+  },
+  {
+    "id": "item:decoration_velvet_bow",
+    "label": "Velvet Bow",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_velvet_bow.png",
+    "source": "assets-optimized/items/mushras_shop/velvet_bow.png"
+  },
+  {
+    "id": "item:decoration_shell",
+    "label": "Scallop Shell",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_shell.png",
+    "source": "assets-optimized/items/decoration/shell.png"
+  },
+  {
+    "id": "item:decoration_white_sea_shell",
+    "label": "White Sea Shell",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_white_sea_shell.png",
+    "source": "assets-optimized/items/decoration/white_sea_shell.png"
+  },
+  {
+    "id": "item:decoration_starfish",
+    "label": "Starfish",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_starfish.png",
+    "source": "assets-optimized/items/decoration/starfish.png"
+  },
+  {
+    "id": "item:decoration_coral",
+    "label": "Coral",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_coral.png",
+    "source": "assets-optimized/items/decoration/coral.png"
+  },
+  {
+    "id": "item:decoration_conch",
+    "label": "Conch Shell",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_conch.png",
+    "source": "assets-optimized/items/decoration/conch.png"
+  },
+  {
+    "id": "item:decoration_hanging_plant",
+    "label": "Hanging Plant",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_hanging_plant.png",
+    "source": "assets-optimized/items/decoration/hanging_plant.png"
+  },
+  {
+    "id": "item:decoration_monstera_plant",
+    "label": "Monstera Plant",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_monstera_plant.png",
+    "source": "assets-optimized/items/decoration/monstera_plant.png"
+  },
+  {
+    "id": "item:decoration_antique_painting",
+    "label": "Antique Painting",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_antique_painting.png",
+    "source": "assets-optimized/items/furniture/antique_painting.png"
+  },
+  {
+    "id": "item:straw",
+    "label": "Straw",
+    "category": "material",
+    "image": "assets/emotes/items/straw.png",
+    "source": "assets-optimized/items/decoration/straw.png"
+  },
+  {
+    "id": "item:maple_leaf",
+    "label": "Maple Leaf",
+    "category": "magical",
+    "image": "assets/emotes/items/maple_leaf.png",
+    "source": "assets-optimized/items/decoration/maple_leaf.png"
+  },
+  {
+    "id": "item:red_berries",
+    "label": "Red Berries",
+    "category": "material",
+    "image": "assets/emotes/items/red_berries.png",
+    "source": "assets-optimized/items/decoration/red_berries.png"
+  },
+  {
+    "id": "item:spruce_sprig",
+    "label": "Spruce Sprig",
+    "category": "material",
+    "image": "assets/emotes/items/spruce_sprig.png",
+    "source": "assets-optimized/items/decoration/spruce_sprig.png"
+  },
+  {
+    "id": "item:ceramic_vase",
+    "label": "Ceramic Vase",
+    "category": "material",
+    "image": "assets/emotes/items/ceramic_vase.png",
+    "source": "assets-optimized/items/grocery/vase.png"
+  },
+  {
+    "id": "item:plant_pot",
+    "label": "Plant Pot",
+    "category": "material",
+    "image": "assets/emotes/items/plant_pot.png",
+    "source": "assets-optimized/items/grocery/terracotta_pot.png"
+  },
+  {
+    "id": "item:easel",
+    "label": "Easel",
+    "category": "decoration",
+    "image": "assets/emotes/items/easel.png",
+    "source": "assets-optimized/items/mushras_shop/easel.png"
+  },
+  {
+    "id": "item:crafting_table",
+    "label": "Crafting Table",
+    "category": "decoration",
+    "image": "assets/emotes/items/crafting_table.png",
+    "source": "assets-optimized/items/crafting/crafting_table.png"
+  },
+  {
+    "id": "item:decoration_wreath_mushras",
+    "label": "Mushra's Wreath",
+    "category": "decoration",
+    "image": "assets/emotes/items/decoration_wreath_mushras.png",
+    "source": "assets-optimized/items/decoration/mushras_wreath.png"
+  },
+  {
+    "id": "item:furniture_bed",
+    "label": "Bed",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_bed.png",
+    "source": "assets-optimized/items/furniture/bed_starter.png"
+  },
+  {
+    "id": "item:furniture_garden_bench",
+    "label": "Garden Bench",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_garden_bench.png",
+    "source": "assets-optimized/items/furniture/garden_bench.png"
+  },
+  {
+    "id": "item:furniture_bookshelf",
+    "label": "Mahogany Bookshelf",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_bookshelf.png",
+    "source": "assets-optimized/items/furniture/mahogany_book_shelf.png"
+  },
+  {
+    "id": "item:furniture_armchair",
+    "label": "Comfy Armchair",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_armchair.png",
+    "source": "assets-optimized/items/furniture/comfy_armchair.png"
+  },
+  {
+    "id": "item:furniture_cozy_rug",
+    "label": "Cosy Rug",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_cozy_rug.png",
+    "source": "assets-optimized/items/furniture/cosy_rug.png"
+  },
+  {
+    "id": "item:furniture_cozy_rug_blue",
+    "label": "Cosy Rug (Blue)",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_cozy_rug_blue.png",
+    "source": "assets-optimized/items/furniture/cosy_rug_blue.png"
+  },
+  {
+    "id": "item:furniture_cozy_rug_green",
+    "label": "Cosy Rug (Green)",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_cozy_rug_green.png",
+    "source": "assets-optimized/items/furniture/cosy_rug_green.png"
+  },
+  {
+    "id": "item:furniture_catalogue",
+    "label": "Furniture Catalogue",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_catalogue.png",
+    "source": "assets-optimized/items/furniture/furniture_catalogue.png"
+  },
+  {
+    "id": "item:furniture_strawberry_wallpaper",
+    "label": "Strawberry Wallpaper",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_strawberry_wallpaper.png",
+    "source": "assets-optimized/items/furniture/strawberry_wallpaper_thumbnail.png"
+  },
+  {
+    "id": "item:furniture_stripey_curtains",
+    "label": "Stripey Curtains",
+    "category": "furniture",
+    "image": "assets/emotes/items/furniture_stripey_curtains.png",
+    "source": "assets-optimized/items/furniture/stripey_curtains_thumbnail.png"
+  }
+]

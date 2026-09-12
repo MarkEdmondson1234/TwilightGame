@@ -66,3 +66,14 @@ it('selects emotes on completed taps, not the start of a cancelled touch', () =>
   expect(select).toHaveBeenCalledTimes(1);
   expect(close).toHaveBeenCalledTimes(1);
 });
+
+it('opens the larger icon picker, searches artwork and sends its catalog id', () => {
+  const select = vi.fn();
+  const close = vi.fn();
+  render(<EmoteWheel onSelect={select} onClose={close} />);
+  fireEvent.click(screen.getByRole('button', { name: 'More icons…' }));
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'Radish Seeds' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Radish Seeds' }));
+  expect(select).toHaveBeenCalledWith('item:seed_radish');
+  expect(close).toHaveBeenCalledTimes(1);
+});

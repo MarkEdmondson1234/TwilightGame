@@ -18,7 +18,7 @@ import { Z_PLAYER } from '../zIndex';
 import type { Position } from '../types';
 import { remotePlayerManager } from '../multiplayer/RemotePlayerManager';
 import { getRemoteSpriteInfo } from '../multiplayer/remoteSprites';
-import { getEmoteIcon } from '../multiplayer/emotes';
+import { getEmoteImage } from '../multiplayer/emotes';
 
 interface RemotePlayerOverlayProps {
   /** Map-level scale multiplier for all characters */
@@ -58,7 +58,7 @@ const RemotePlayerOverlay: React.FC<RemotePlayerOverlayProps> = ({
         const left = (player.position.x - (PLAYER_SIZE * effectiveScale) / 2) * tileSize + offsetX;
         const top = (player.position.y - (PLAYER_SIZE * effectiveScale) / 2) * tileSize + offsetY;
         const zIndex = Z_PLAYER + Math.floor(player.position.y + 0.3);
-        const emoteIcon = player.emote ? getEmoteIcon(player.emote) : null;
+        const emoteIcon = player.emote ? getEmoteImage(player.emote) : null;
 
         return (
           <React.Fragment key={player.uid}>
@@ -97,7 +97,7 @@ const RemotePlayerOverlay: React.FC<RemotePlayerOverlayProps> = ({
                   zIndex: zIndex + 2,
                 }}
               >
-                {emoteIcon}
+                <img src={emoteIcon} alt="Emote" className="w-12 h-12 object-contain" />
               </div>
             )}
           </React.Fragment>

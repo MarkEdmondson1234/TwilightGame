@@ -26,7 +26,7 @@ describe('EmoteWheel', () => {
     for (const emote of EMOTES) {
       expect(screen.getByRole('button', { name: emote.label })).toBeInTheDocument();
     }
-    expect(screen.getAllByRole('button')).toHaveLength(EMOTES.length);
+    expect(screen.getAllByRole('button')).toHaveLength(EMOTES.length + 1);
   });
 
   it('sends the chosen emote and closes', () => {
