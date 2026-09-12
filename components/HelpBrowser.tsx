@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import MobileMenuShell from './MobileMenuShell';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Z_HELP_BROWSER, zClass } from '../zIndex';
@@ -337,11 +338,9 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
   };
 
   return (
-    <div
-      className={`fixed inset-0 bg-black/70 flex items-center justify-center ${zClass(Z_HELP_BROWSER)} p-2 sm:p-4`}
-    >
+    <MobileMenuShell className={`bg-black/70 ${zClass(Z_HELP_BROWSER)}`}>
       <div
-        className="w-full max-w-6xl h-[90dvh] flex flex-col rounded-lg overflow-hidden"
+        className="w-full max-w-6xl h-full max-h-[900px] flex flex-col rounded-lg overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${colours.parchment}, ${colours.parchmentDark})`,
           border: `4px solid ${colours.wood}`,
@@ -1201,7 +1200,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
           anytime to open help
         </div>
       </div>
-    </div>
+    </MobileMenuShell>
   );
 };
 

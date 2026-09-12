@@ -16,6 +16,8 @@ The owner confirmed that Google sign-in succeeds and returns to the game on iPho
 
 Browser layout checks after the changes: email width 314px at 390 × 844, 508px at 640 × 360, and 432px at 844 × 390, without form horizontal overflow. Stages 2–5 remain outstanding, including keyboard/safe-area handling beyond the current dynamic-height account layout and all existing gameplay-control improvements.
 
+Stage 2 foundation is implemented on `mobile-menu-layout`: the shared menu boundary follows visual-viewport resize/scroll and all safe-area insets; Help/Account uses it. Phone portrait gameplay shows a rotation prompt with Account and Settings/Help access. Existing overlays use the common UI-state check (including previously omitted glamour, photo album and furniture catalogue), release held input, and hide touch controls consistently. Blur, rotation and visibility changes also release input. Native browser magnification remains available in menus. Keyboard-viewport behaviour has regression coverage; physical iOS keyboard checks and migration of other activity panels are still pending.
+
 ## Design decisions
 
 - Support **landscape gameplay** on phones. Show a friendly “Turn your phone to play” screen in portrait, with Account, Settings and Help still accessible. Release held movement when it appears; do not pause the shared multiplayer world. Preserve progress across rotation.
