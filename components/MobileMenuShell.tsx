@@ -5,13 +5,18 @@ import { useMenuViewport } from '../hooks/useMenuViewport';
 export default function MobileMenuShell({
   children,
   className = '',
+  ...events
 }: {
   children: React.ReactNode;
   className?: string;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
+  onMouseDown?: React.MouseEventHandler<HTMLDivElement>;
+  onMouseUp?: React.MouseEventHandler<HTMLDivElement>;
 }) {
   const viewport = useMenuViewport();
   return (
     <div
+      {...events}
       data-game-ui
       className={`fixed flex items-center justify-center overflow-hidden ${className}`}
       style={{

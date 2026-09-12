@@ -1,3 +1,6 @@
+import { useTouchDevice } from '../hooks/useTouchDevice';
+import MobileMenuShell from './MobileMenuShell';
+import '../src/styles/mobileMenus.css';
 /**
  * ShopUI - Dual-grid inventory interface for buying and selling items
  * Features:
@@ -63,6 +66,9 @@ const ShopUI: React.FC<ShopUIProps> = ({
   playerInventory,
   onTransaction,
 }) => {
+  const isTouchDevice = useTouchDevice();
+  const [tradeTab, setTradeTab] = useState<'buy' | 'sell'>('buy');
+  const MenuBoundary = isTouchDevice ? MobileMenuShell : 'div';
   // Long-press is right-click on touch: it opens the quantity picker. One hook covers
   // both grids — the slot the finger went down on is recorded at touchstart, since the
   // hold fires from a timer with no event to read it from.
@@ -165,7 +171,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
    */
   const initiateTrade = (itemId: string, fromShop: boolean, maxQuantity: number) => {
     // If only 1 item, execute immediately
-    if (maxQuantity === 1) {
+    if (maxQuantity === 1 && !isTouchDevice) {
       executeTransaction(itemId, 1, fromShop);
       return;
     }
@@ -286,6 +292,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
     return (
       <ItemTooltip key={shopItem.itemId} content={tooltipContent}>
         <button
+          aria-label={itemDef.displayName}
           onClick={() => {
             if (shopLongPress.consumeTap()) return;
             handleSlotClick(
@@ -515,20 +522,44 @@ const ShopUI: React.FC<ShopUIProps> = ({
   return (
     <>
       {/* Main Shop UI */}
-      <div
+      <MenuBoundary
         className={`fixed inset-0 bg-black/80 flex items-center justify-center ${zClass(Z_SHOP)} pointer-events-auto`}
         onClick={handleClose}
       >
         <div
+          data-mobile-menu={isTouchDevice ? 'shop' : undefined}
+          role="dialog"
+          aria-label={theme.title}
           className={`${theme.container} rounded-lg p-6 max-w-6xl w-full max-h-[90vh] flex flex-col`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header with Gold Display and Close Button */}
-          <div className="flex justify-between items-center mb-4">
+          <div className="menu-header flex justify-between items-center mb-4">
             <h2 className={`text-3xl font-bold ${theme.titleColor}`}>{theme.title}</h2>
+            {isTouchDevice && (
+              <div className="trade-tabs menu-filters flex gap-2" role="tablist" aria-label="Trade">
+                <button
+                  role="tab"
+                  aria-selected={tradeTab === 'buy'}
+                  onClick={() => setTradeTab('buy')}
+                  className={tradeTab === 'buy' ? theme.filterActive : theme.filterInactive}
+                >
+                  Buy
+                </button>
+                <button
+                  role="tab"
+                  aria-selected={tradeTab === 'sell'}
+                  onClick={() => setTradeTab('sell')}
+                  className={tradeTab === 'sell' ? theme.filterActive : theme.filterInactive}
+                >
+                  Sell
+                </button>
+              </div>
+            )}
+
             <div className="flex items-center gap-4">
               {/* Prominent Gold Display */}
-              <div className="bg-gradient-to-br from-yellow-600 to-yellow-800 border-4 border-yellow-500 rounded-lg px-6 py-3 shadow-lg">
+              <div className="shop-gold bg-gradient-to-br from-yellow-600 to-yellow-800 border-4 border-yellow-500 rounded-lg px-6 py-3 shadow-lg">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">💰</span>
                   <span
@@ -541,6 +572,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
               </div>
               {/* Close Button */}
               <button
+                aria-label="Close shop"
                 onClick={handleClose}
                 className="w-10 h-10 bg-red-600 hover:bg-red-500 text-white text-2xl font-bold rounded-full transition-colors"
               >
@@ -563,7 +595,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
           )}
 
           {/* Season and Time Info */}
-          <div className="mb-3 text-sm text-slate-400">
+          <div className="shop-season mb-3 text-sm text-slate-400">
             <span className="text-cyan-300 font-bold">
               {currentTime.season} {currentTime.day}
             </span>
@@ -572,12 +604,12 @@ const ShopUI: React.FC<ShopUIProps> = ({
           </div>
 
           {/* Dual Grid Layout */}
-          <div className="flex-1 grid grid-cols-2 gap-6 overflow-hidden">
+          <div className="shop-panels flex-1 grid grid-cols-2 gap-6 overflow-hidden">
             {/* Shop Inventory (Left) */}
-            <div className="flex flex-col">
+            <div className="shop-panel flex flex-col" hidden={isTouchDevice && tradeTab !== 'buy'}>
               <h3 className={`text-xl font-bold ${theme.stockHeader} mb-2`}>Shop Stock</h3>
               {/* Shop Category Filter */}
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="menu-filters flex flex-wrap gap-1 mb-2">
                 {shopFilterTabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -590,23 +622,25 @@ const ShopUI: React.FC<ShopUIProps> = ({
                   </button>
                 ))}
               </div>
-              <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] shop-scrollbar">
-                <div className="grid grid-cols-6 gap-2">
+              <div className="menu-scroll flex-1 overflow-y-auto pr-2 max-h-[500px] shop-scrollbar">
+                <div className="menu-item-grid grid grid-cols-6 gap-2">
                   {filteredShopInventory.map((shopItem) => renderShopSlot(shopItem))}
                 </div>
               </div>
-              <div className="mt-2 text-xs text-slate-400">
-                Click to buy • hold or right-click to choose how many •{' '}
+              <div className="shop-hint mt-2 text-xs text-slate-400">
+                {isTouchDevice
+                  ? 'Tap an item to review your purchase •'
+                  : 'Click to buy • hold or right-click to choose how many •'}{' '}
                 {filteredShopInventory.length}
                 {shopFilter !== 'all' ? ` / ${shopInventory.length}` : ''} items available
               </div>
             </div>
 
             {/* Player Inventory (Right) */}
-            <div className="flex flex-col">
+            <div className="shop-panel flex flex-col" hidden={isTouchDevice && tradeTab !== 'sell'}>
               <h3 className="text-xl font-bold text-amber-300 mb-2">Your Inventory</h3>
               {/* Player Inventory Category Filter */}
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="menu-filters flex flex-wrap gap-1 mb-2">
                 {shopFilterTabs.map((tab) => (
                   <button
                     key={tab.id}
@@ -621,26 +655,33 @@ const ShopUI: React.FC<ShopUIProps> = ({
                   </button>
                 ))}
               </div>
-              <div className="flex-1 overflow-y-auto pr-2 max-h-[500px] player-inventory-scrollbar">
-                <div className="grid grid-cols-6 gap-2">
+              <div className="menu-scroll flex-1 overflow-y-auto pr-2 max-h-[500px] player-inventory-scrollbar">
+                <div className="menu-item-grid grid grid-cols-6 gap-2">
                   {playerSlots.map((item, index) => renderPlayerSlot(item, index))}
                 </div>
               </div>
-              <div className="mt-2 text-xs text-slate-400">
-                Click to sell • hold or right-click to choose how many • {playerInventory.length}{' '}
-                items
+              <div className="shop-hint mt-2 text-xs text-slate-400">
+                {isTouchDevice
+                  ? 'Tap an item to review your sale •'
+                  : 'Click to sell • hold or right-click to choose how many •'}{' '}
+                {playerInventory.length} items
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </MenuBoundary>
 
       {/* Quantity Stepper Modal */}
       {showQuantityStepper && pendingTransaction && (
-        <div
+        <MenuBoundary
           className={`fixed inset-0 bg-black/90 flex items-center justify-center ${zClass(Z_SHOP_CONFIRM)} pointer-events-auto`}
         >
-          <div className="bg-gradient-to-b from-slate-700 to-slate-800 border-4 border-slate-500 rounded-lg p-6 max-w-md w-full">
+          <div
+            data-mobile-menu={isTouchDevice ? 'quantity' : undefined}
+            role="dialog"
+            aria-label="Confirm trade"
+            className="bg-gradient-to-b from-slate-700 to-slate-800 border-4 border-slate-500 rounded-lg p-6 max-w-md w-full"
+          >
             <h3 className="text-2xl font-bold text-white mb-4">
               {pendingTransaction.fromShop ? 'Buy' : 'Sell'} How Many?
             </h3>
@@ -662,6 +703,9 @@ const ShopUI: React.FC<ShopUIProps> = ({
                   <div>
                     <p className="text-lg font-bold text-amber-200">{itemDef.displayName}</p>
                     <p className="text-sm text-slate-400">Max: {pendingTransaction.maxQuantity}</p>
+                    {isTouchDevice && (
+                      <p className="text-sm text-slate-200">{itemDef.description}</p>
+                    )}
                   </div>
                 </div>
               );
@@ -711,7 +755,7 @@ const ShopUI: React.FC<ShopUIProps> = ({
 
               return (
                 <div
-                  className={`mb-6 p-4 rounded-lg border-2 ${
+                  className={`trade-total mb-6 p-4 rounded-lg border-2 ${
                     pendingTransaction.fromShop
                       ? 'bg-red-900/40 border-red-500'
                       : 'bg-green-900/40 border-green-500'
@@ -726,22 +770,36 @@ const ShopUI: React.FC<ShopUIProps> = ({
             })()}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={confirmQuantity}
-                className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
-              >
-                Confirm
-              </button>
-              <button
-                onClick={cancelQuantity}
-                className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
-              >
-                Cancel
-              </button>
+            <div className="menu-actions">
+              {isTouchDevice && (
+                <p className="mb-2 text-lg font-bold text-yellow-200">
+                  {pendingTransaction.fromShop ? 'Total cost' : 'Total earnings'}:{' '}
+                  {selectedQuantity *
+                    (pendingTransaction.fromShop
+                      ? (shopInventory.find((item) => item.itemId === pendingTransaction.itemId)
+                          ?.buyPrice ?? 0)
+                      : (shopManager.getItemSellPrice(pendingTransaction.itemId, playerInventory) ??
+                        0))}
+                  g
+                </p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  onClick={confirmQuantity}
+                  className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
+                >
+                  Confirm
+                </button>
+                <button
+                  onClick={cancelQuantity}
+                  className="flex-1 bg-gray-600 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-lg transition-colors text-lg"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </MenuBoundary>
       )}
     </>
   );

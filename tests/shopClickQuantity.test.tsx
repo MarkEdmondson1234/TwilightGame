@@ -17,6 +17,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 
+const device = vi.hoisted(() => ({ mobile: false }));
+vi.mock('../hooks/useTouchDevice', () => ({ useTouchDevice: () => device.mobile }));
+
 // Shape must match what ShopUI reads back: { gold, inventory, result: { message } }.
 const executeBuyTransaction = vi.fn((..._args: unknown[]) => ({
   gold: 90,
@@ -80,6 +83,7 @@ const quantityPickerOpen = () => screen.queryByText(/confirm/i) !== null;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  device.mobile = false;
   maxBuyQuantity.mockReturnValue(9);
 });
 afterEach(cleanup);
@@ -119,5 +123,31 @@ describe('shop slot: click vs right-click', () => {
     const event = new MouseEvent('contextmenu', { bubbles: true, cancelable: true });
     shopSlot().dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
+  });
+});
+
+describe('mobile trade review', () => {
+  it('requires confirmation even for one item and preserves desktop immediate-one behaviour', () => {
+    device.mobile = true;
+    maxBuyQuantity.mockReturnValue(1);
+    renderShop();
+    fireEvent.click(shopSlot());
+    expect(executeBuyTransaction).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Confirm trade' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(executeBuyTransaction).toHaveBeenCalledTimes(1);
+    expect(executeBuyTransaction.mock.calls[0][1]).toBe(1);
+  });
+  it('switches Buy/Sell panels and cancels without spending gold', () => {
+    device.mobile = true;
+    renderShop();
+    fireEvent.click(screen.getByRole('tab', { name: 'Sell' }));
+    expect(screen.getByRole('tab', { name: 'Sell' }).getAttribute('aria-selected')).toBe('true');
+    expect(screen.queryByRole('button', { name: 'Radish Seeds' })).toBeNull();
+    fireEvent.click(screen.getByRole('tab', { name: 'Buy' }));
+    fireEvent.click(shopSlot());
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(executeBuyTransaction).not.toHaveBeenCalled();
+    expect(quantityPickerOpen()).toBe(false);
   });
 });

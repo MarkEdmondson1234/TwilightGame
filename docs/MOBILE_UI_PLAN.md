@@ -39,6 +39,15 @@ The browser resize sweep also showed a lighting overlay ending short of the view
 
 Automated input regression coverage and full-game browser checks supplement the remaining physical-device validation. Activity-menu reflow, chat composer behaviour and mini-game touch coverage remain in stages 4–5; this PR does not complete them or establish sustained iPhone stability.
 
+Stage 4 activity-menu work is implemented on `mobile-activity-menus`:
+
+- Inventory uses the visual-viewport/safe-area shell on the existing touch-device path, with a single scrolling filter row and an adaptive grid of at least 64px slots. A selected item exposes an Item actions button in addition to the existing hold gesture; changing filters clears the pending item-action selection.
+- Shops show Buy/Sell tabs on touch devices, adaptive grids and compact gold/header controls. Every mobile trade opens the item/quantity review, including a single affordable item, with the total and Confirm/Cancel kept visible. Desktop retains its dual grids and existing immediate single-item behaviour.
+- Cooking and brewing use list/detail navigation on touch devices. Recipes and Close stay in the header; Cook/Brew occupies a separate fixed action row while details scroll. Desktop keeps its side-by-side recipe list and details.
+- New CSS is scoped to explicit mobile menu attributes; desktop rendering checks confirmed those attributes are absent. The previously approved desktop HUD changes remain.
+
+Validation: 1,313 tests pass across 156 files, lint has no errors and 7 existing warnings, and production build succeeds. Component browser checks with real artwork covered 390 × 844, 640 × 360, 640 × 240 and a 1280 × 800 desktop path. Mobile panels had no horizontal content overflow and Close targets measured 48px. The final short-screen checks include visible trade totals/actions and Cook/Brew buttons. Physical iPhone touch/keyboard verification remains pending. Illustrated book contents, dialogue/context-menu refinements, multiplayer chat and mini-game coverage remain later work; this batch does not claim to finish the complete mobile plan.
+
 ## Design decisions
 
 - Support **landscape gameplay** on phones. Show a friendly “Turn your phone to play” screen in portrait, with Account, Settings and Help still accessible. Release held movement when it appears; do not pause the shared multiplayer world. Preserve progress across rotation.
