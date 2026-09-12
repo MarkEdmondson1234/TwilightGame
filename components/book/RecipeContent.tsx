@@ -36,10 +36,7 @@ const RECIPE_CHAPTERS: BookChapter<RecipeCategory | 'all'>[] = [
  * Displays recipes organised by category (chapters) with a list on the
  * left page and recipe details on the right page.
  */
-const RecipeContent: React.FC<RecipeContentProps> = ({
-  theme,
-  nearbyNPCs = [],
-}) => {
+const RecipeContent: React.FC<RecipeContentProps> = ({ theme, nearbyNPCs = [] }) => {
   const [cookingResult, setCookingResult] = useState<CookingResult | null>(null);
   const [showResult, setShowResult] = useState(false);
 
@@ -391,6 +388,7 @@ const RecipeContent: React.FC<RecipeContentProps> = ({
       {selectedRecipe && recipeUnlocked && (
         <button
           onClick={() => handleCook(selectedRecipe.id)}
+          data-book-action
           className="absolute -top-5 left-1/2 ml-32 px-5 py-1.5 rounded-full font-bold text-white shadow-lg transition-all hover:scale-105 active:scale-95 z-20"
           style={{
             backgroundColor: theme.buttonColour,
