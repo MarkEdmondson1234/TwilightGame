@@ -848,6 +848,13 @@ function getStaticDialogue(npc: NPC, currentNodeId: string): DialogueNode | null
       responses: [],
     };
   }
+  if (currentNodeId === 'yule_gift_already_claimed') {
+    return {
+      id: 'yule_gift_already_claimed',
+      text: "It looks like someone's already given them their Yule gift this year.",
+      responses: [],
+    };
+  }
 
   // Check if this is a gift reaction node (prefixed with 'gift_')
   if (currentNodeId.startsWith('gift_')) {

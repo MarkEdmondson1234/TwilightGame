@@ -49,6 +49,8 @@ interface Window {
   cutsceneManager?: typeof import('./utils/CutsceneManager').cutsceneManager;
   /** Console testing for the Harvest Feast event — see utils/gameInitializer.ts's dev commands log */
   harvestFeastManager?: typeof import('./utils/HarvestFeastManager').harvestFeastManager;
+  /** Console testing for the Yule celebration — see utils/gameInitializer.ts's dev commands log */
+  yuleCelebrationManager?: typeof import('./utils/YuleCelebrationManager').yuleCelebrationManager;
   TimeManager?: typeof import('./utils/TimeManager').TimeManager;
   Season?: typeof import('./utils/TimeManager').Season;
   ColorResolver?: typeof import('./utils/ColorResolver').ColorResolver;

@@ -36,7 +36,7 @@ const DECORATION_ITEM_ID = 'seasonal_decoration_current';
  * Maps each season to the item ID and placeholder image for its decoration.
  * Replace image paths with real asset URLs once sprites are created.
  */
-const SEASON_DECORATIONS: Record<Season, { itemId: string; image: string }> = {
+const SEASON_DECORATIONS: Partial<Record<Season, { itemId: string; image: string }>> = {
   [Season.SPRING]: {
     itemId: 'seasonal_maypole',
     image: '/TwilightGame/assets/seasonal/maypole.png',
@@ -49,10 +49,11 @@ const SEASON_DECORATIONS: Record<Season, { itemId: string; image: string }> = {
     itemId: 'seasonal_harvest_table',
     image: '/TwilightGame/assets/seasonal/harvest_table.png',
   },
-  [Season.WINTER]: {
-    itemId: 'seasonal_yule_tree',
-    image: '/TwilightGame/assets-optimized/seasonal/yule_tree.png',
-  },
+  // Winter's day-42 decoration is the Yule celebration — a richer, shared
+  // community event owned by YuleCelebrationManager, which places its own
+  // tree at the same village tile on its own schedule. This manager stays
+  // out of Winter entirely so the two never collide (same carve-out Autumn
+  // already has for the Harvest Feast).
 };
 
 // ============================================================================
@@ -67,11 +68,13 @@ class SeasonalEventManagerClass {
   check(): void {
     const time = TimeManager.getCurrentTime();
 
-    // Autumn's day-42 decoration is now the Harvest Feast — a richer, shared
-    // community event owned by HarvestFeastManager, which places its own
-    // table at the same village tile on its own schedule (4pm, not 9am). This
-    // manager stays out of Autumn entirely so the two never collide.
-    if (time.season === Season.AUTUMN) {
+    // Autumn's day-42 decoration is now the Harvest Feast, and Winter's is
+    // now the Yule celebration — both richer, shared community events owned
+    // by their own managers (HarvestFeastManager/YuleCelebrationManager),
+    // which place their own decoration at the same village tile on their own
+    // schedule. This manager stays out of both entirely so they never
+    // collide with the generic decoration below.
+    if (time.season === Season.AUTUMN || time.season === Season.WINTER) {
       const existingItem = this.getActiveDecoration();
       if (existingItem) this.removeDecoration();
       return;

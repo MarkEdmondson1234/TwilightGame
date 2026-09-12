@@ -205,6 +205,18 @@ const stubHarvestFeastService = {
 };
 
 /**
+ * Stub yuleCelebrationService when Firebase is not available.
+ * Parity asserted by tests/multiplayerSafeStubs.test.ts.
+ */
+const stubYuleCelebrationService = {
+  isAvailable: () => false,
+  subscribe: (_year: number, _onChange: (npcIds: string[]) => void) => () => {},
+  getListeningYear: () => null as number | null,
+  claimGift: async (_year: number, _npcId: string) => false as boolean,
+  destroy: () => {},
+};
+
+/**
  * Stub sharedAlbumService when Firebase is not available.
  * Parity asserted by tests/multiplayerSafeStubs.test.ts.
  */
@@ -417,6 +429,14 @@ export function getGiftService() {
  */
 export function getHarvestFeastService() {
   return firebaseModule?.harvestFeastService ?? stubHarvestFeastService;
+}
+
+/**
+ * Get yuleCelebrationService (real or stub).
+ * Never cache — it is a stub until Firebase has settled.
+ */
+export function getYuleCelebrationService() {
+  return firebaseModule?.yuleCelebrationService ?? stubYuleCelebrationService;
 }
 
 /**

@@ -13,7 +13,7 @@
  */
 
 import { CutsceneDefinition } from '../../types';
-import { YULE_CUTSCENE_ID } from '../yuleCelebration';
+import { YULE_CUTSCENE_ID, YULE_CATCHUP_CUTSCENE_ID, YULE_CATCHUP_RECAP } from '../yuleCelebration';
 import {
   HARVEST_FEAST_CATCHUP_CUTSCENE_ID,
   HARVEST_FEAST_GATHERING_CUTSCENE_ID,
@@ -708,6 +708,69 @@ export const yuleCelebrationOpeningCutscene: CutsceneDefinition = {
         text: "The village square fills with warmth and laughter. Voices rise in old Yule songs, gifts are exchanged with joy, and for one glowing evening, the darkness of winter feels very far away indeed.",
       },
       transitionOut: { type: 'fade', duration: 1500 },
+    },
+  ],
+};
+
+// ============================================================================
+// Yule — catch-up recap (manual trigger — fired when a player logs in after
+// day 42 of Winter having missed the live celebration entirely)
+// ============================================================================
+
+export const yuleCatchupCutscene: CutsceneDefinition = {
+  id: YULE_CATCHUP_CUTSCENE_ID,
+  name: 'Yule Celebration (missed)',
+  canSkip: true,
+  canReplay: false,
+  playOnce: false, // YuleCelebrationManager handles the once-per-year check
+  cooldownMs: 0,
+
+  trigger: { type: 'manual', id: YULE_CATCHUP_CUTSCENE_ID },
+
+  onComplete: { action: 'return' },
+
+  scenes: [
+    {
+      id: 'yule_catchup',
+      backgroundLayers: [
+        {
+          image: 'cutscene_winter_sky.png',
+          zIndex: 0,
+          animation: { type: 'static', duration: 0 },
+        },
+        {
+          image: 'cutscene_winter_village.png',
+          zIndex: 1,
+          animation: { type: 'static', duration: 0 },
+        },
+      ],
+      weatherEffect: {
+        type: 'snow',
+        intensity: 'light',
+        opacity: 0.5,
+      },
+      characters: [
+        {
+          characterId: 'yule_tree_catchup',
+          spriteUrl: '/TwilightGame/assets-optimized/seasonal/yule_tree.png',
+          position: { x: 24, y: 56 },
+          scale: 1.8,
+          opacity: 0.85,
+          entrance: { type: 'fade', duration: 800 },
+        },
+        {
+          characterId: 'village_elder',
+          spriteUrl: sprites.elder,
+          position: { x: 67, y: 50 },
+          scale: 1.8,
+          entrance: { type: 'fade', duration: 900 },
+        },
+      ],
+      dialogue: {
+        speaker: 'Village Elder',
+        text: YULE_CATCHUP_RECAP,
+      },
+      transitionOut: { type: 'fade', duration: 1000 },
     },
   ],
 };

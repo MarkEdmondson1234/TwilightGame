@@ -20,6 +20,7 @@ import {
   harvestFestivalCutscene,
   yuleCutscene,
   yuleCelebrationOpeningCutscene,
+  yuleCatchupCutscene,
   harvestFeastCutscene,
   harvestFeastCatchupCutscene,
   harvestFeastGatheringCutscene,
@@ -50,8 +51,10 @@ export const ALL_CUTSCENES: CutsceneDefinition[] = [
   summerSolsticeCutscene,
   harvestFestivalCutscene,
   yuleCutscene,
-  // Yule celebration (manually triggered by clicking the tree)
+  // Yule celebration (clock-driven, gathers automatically day 42/hour 9,
+  // plus its manual catch-up recap)
   yuleCelebrationOpeningCutscene,
+  yuleCatchupCutscene,
   // Harvest Feast (day 42 of Autumn morning, plus its manual catch-up recap
   // and Elias's manually-triggered gathering/closing speeches)
   harvestFeastCutscene,

@@ -9,12 +9,11 @@ import { ItemCategory, getItem } from '../../../data/items';
 import { getMiniGamesForPlacedItem } from '../../../minigames/registry';
 import { isMrFoxPicnicAtStage } from '../../../data/questHandlers/mrFoxPicnicHandler';
 import { miniGameManager } from '../../../minigames/MiniGameManager';
-import { yuleCelebrationManager } from '../../YuleCelebrationManager';
 import { harvestFeastManager } from '../../HarvestFeastManager';
 import { HARVEST_FEAST_TABLE_ITEM_ID } from '../../../data/harvestFeast';
 
 export function placedItemProvider(ctx: InteractionContext): AvailableInteraction[] {
-  const { onPlacedItemAction, onBeginYuleCelebration, tilePos, itemAtPosition } = ctx;
+  const { onPlacedItemAction, tilePos, itemAtPosition } = ctx;
   const config = ctx;
   const interactions: AvailableInteraction[] = [];
 
@@ -120,21 +119,6 @@ export function placedItemProvider(ctx: InteractionContext): AvailableInteractio
           });
         }
       }
-    }
-
-    // Yule tree: offer "Begin Celebration" once per year in winter
-    if (
-      itemAtPosition.itemId === 'seasonal_yule_tree' &&
-      onBeginYuleCelebration &&
-      yuleCelebrationManager.canStartCelebration()
-    ) {
-      interactions.push({
-        type: 'yule_begin_celebration',
-        label: 'Begin Celebration!',
-        icon: '🎄',
-        color: '#16a34a',
-        execute: onBeginYuleCelebration,
-      });
     }
 
     // Eat and Taste options only for actual food items

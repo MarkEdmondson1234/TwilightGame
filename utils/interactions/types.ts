@@ -56,7 +56,6 @@ export type InteractionType =
   | 'place_decoration'
   | 'open_mini_game'
   | 'fireplace_tea'
-  | 'yule_begin_celebration'
   | 'add_to_basket'
   | 'add_to_feast_table'
   | 'harvest_red_berries'
@@ -170,7 +169,6 @@ export interface GetInteractionsConfig {
     };
     customScale?: number;
   }) => void;
-  onBeginYuleCelebration?: () => void;
   onOpenShop?: () => void;
   /** Open a mini-game by ID with trigger data */
   onOpenMiniGame?: (miniGameId: string, triggerData: MiniGameTriggerData) => void;

@@ -138,6 +138,7 @@ export enum GameEvent {
   YULE_CELEBRATION_ENDED = 'yule:celebration_ended',
   YULE_GIFT_GIVEN = 'yule:gift_given',
   YULE_BLACKOUT = 'yule:blackout',
+  YULE_CLAIMS_SYNCED = 'yule:claims_synced',
 }
 
 // ============================================================================
@@ -366,6 +367,7 @@ export interface EventPayloads {
   [GameEvent.YULE_CELEBRATION_STARTED]: {
     year: number;
     npcWishes: Record<string, string>; // npcId -> itemId
+    claimedNpcIds: string[]; // NPCs already claimed at the moment this client observed gathering start
   };
   [GameEvent.YULE_CELEBRATION_ENDED]: {
     year: number;
@@ -380,6 +382,9 @@ export interface EventPayloads {
   };
   [GameEvent.YULE_BLACKOUT]: {
     phase: 'fade_in' | 'fade_out';
+  };
+  [GameEvent.YULE_CLAIMS_SYNCED]: {
+    claimedNpcIds: string[];
   };
 }
 

@@ -18,6 +18,7 @@ import { chatService } from '../firebase/chatService';
 import { sharedPlacedItemsService } from '../firebase/sharedPlacedItemsService';
 import { giftService } from '../firebase/giftService';
 import { harvestFeastService } from '../firebase/harvestFeastService';
+import { yuleCelebrationService } from '../firebase/yuleCelebrationService';
 import { sharedAlbumService } from '../firebase/sharedAlbumService';
 import { npcSpeechService } from '../firebase/npcSpeechService';
 import { battleService } from '../firebase/battleService';
@@ -27,6 +28,7 @@ import {
   getSharedPlacedItemsService,
   getGiftService,
   getHarvestFeastService,
+  getYuleCelebrationService,
   getSharedAlbumService,
   getNpcSpeechService,
   getBattleService,
@@ -148,6 +150,21 @@ describe('harvest feast stub parity', () => {
       'These methods exist on firebase/harvestFeastService but not on the stub in ' +
         'firebase/safe.ts. HarvestFeastManager runs in a build with no Firebase too ' +
         '(falling back to local-only tier tracking). Add a no-op to stubHarvestFeastService.'
+    ).toEqual([]);
+  });
+});
+
+describe('yule celebration stub parity', () => {
+  it('implements every public method of the real yule celebration service', () => {
+    const missing = methodNames(yuleCelebrationService).filter(
+      (name) => !methodNames(getYuleCelebrationService()).includes(name)
+    );
+
+    expect(
+      missing,
+      'These methods exist on firebase/yuleCelebrationService but not on the stub in ' +
+        'firebase/safe.ts. YuleCelebrationManager runs in a build with no Firebase too ' +
+        '(falling back to local-only claim tracking). Add a no-op to stubYuleCelebrationService.'
     ).toEqual([]);
   });
 });

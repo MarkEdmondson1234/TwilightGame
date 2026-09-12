@@ -1,9 +1,9 @@
 /**
  * HarvestFeastManager
  *
- * Runs the annual Harvest Feast — a shared community event, unlike the
- * private, per-player Yule celebration (utils/YuleCelebrationManager.ts).
- * Every client runs this exact same deterministic logic off the same
+ * Runs the annual Harvest Feast — a shared community event, like the Yule
+ * celebration (utils/YuleCelebrationManager.ts). Every client runs this
+ * exact same deterministic logic off the same
  * TimeManager clock, so the table, the food, the NPC gathering and Elias's
  * closing speech look the same to every player physically present in the
  * village, with almost no new networking:
@@ -51,7 +51,7 @@ import { createMushraNPC } from './npcs/forest/mushra';
 import { createChillBearNPC } from './npcs/forest/chillBear';
 import { findSafePlayerPosition } from './YuleCelebrationManager';
 import { createDecisionRandom } from './seededRandom';
-import { hasCrossedAutumnDay42 } from './seasonReconcile';
+import { hasCrossedSeasonDay42 } from './seasonReconcile';
 import { getHarvestFeastService } from '../firebase/safe';
 import { getItem } from '../data/items';
 import { debugLog } from './debugLog';
@@ -166,7 +166,7 @@ class HarvestFeastManagerClass {
     const lastKnownDay = gameState.getHarvestFeastLastKnownDay();
     const crossedWhileClosed =
       lastKnownDay !== null &&
-      hasCrossedAutumnDay42(
+      hasCrossedSeasonDay42(
         lastKnownDay,
         TimeManager.getTotalGameDays(),
         TimeManager.seasonStartDayInYear(Season.AUTUMN),

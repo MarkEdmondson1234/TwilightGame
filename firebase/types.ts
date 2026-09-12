@@ -132,6 +132,12 @@ export interface WorldSaveData {
     contributedMealIds: string[];
     gatherStartedAt: number | null;
   };
+  yule?: {
+    celebratedYears: number[];
+    lastKnownDay: number | null;
+    startedAt: number | null;
+    giftsClaimedLocally: string[];
+  };
 }
 
 export interface StatsSaveData {

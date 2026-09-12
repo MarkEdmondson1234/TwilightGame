@@ -35,22 +35,23 @@ export function crossedSeasonStart(
 }
 
 /**
- * Whether Autumn day 42 (the Harvest Feast) falls in the game-day interval
+ * Whether a fixed day within a season (e.g. Autumn day 42 for the Harvest
+ * Feast, or Winter day 42 for Yule) falls in the game-day interval
  * (fromDay, toDay] — same wraparound arithmetic as crossedSeasonStart, but for
  * a fixed day within a season rather than a season's first day. Used to
- * detect a player was offline for the *entire* Harvest Feast window on the
- * day itself, not just logged in late that day (which needs no
- * reconciliation — the live event is simply still going).
+ * detect a player was offline for the *entire* event window on the day
+ * itself, not just logged in late that day (which needs no reconciliation —
+ * the live event is simply still going).
  */
-export function hasCrossedAutumnDay42(
+export function hasCrossedSeasonDay42(
   fromDay: number,
   toDay: number,
-  autumnStartDayInYear: number,
+  seasonStartDayInYear: number,
   daysPerYear: number,
-  harvestFeastDay: number = 42
+  eventDay: number = 42
 ): boolean {
   if (toDay <= fromDay) return false;
-  const targetDayInYear = autumnStartDayInYear + (harvestFeastDay - 1);
+  const targetDayInYear = seasonStartDayInYear + (eventDay - 1);
   const daysUntilNext =
     (((targetDayInYear - (fromDay % daysPerYear)) % daysPerYear) + daysPerYear) % daysPerYear;
   const firstBoundaryDay = fromDay + (daysUntilNext === 0 ? daysPerYear : daysUntilNext);

@@ -160,6 +160,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Yule celebration gift claims - one doc per year recording which of the
+    // 7 celebration NPCs any player has already gifted. Additive only
+    // (arrayUnion); never deleted mid-year, so an NPC can only be gifted once
+    // total across all players, not once per player.
+    // Path: shared/world/yuleCelebration/{year}
+    match /shared/world/yuleCelebration/{year} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidYuleClaim();
+      allow delete: if false;
+    }
+
     // Shared world events - discoveries, achievements, etc.
     // Path: sharedEvents/{eventId}
     match /sharedEvents/{eventId} {
@@ -228,6 +239,13 @@ service cloud.firestore {
       return data.keys().hasOnly(['m'])
         && data.m is list
         && data.m.size() <= 20;
+    }
+
+    function isValidYuleClaim() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['g'])
+        && data.g is list
+        && data.g.size() <= 7;
     }
 
     // Check if the requesting user owns this data

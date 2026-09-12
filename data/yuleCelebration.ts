@@ -1,7 +1,11 @@
 /**
  * Yule Celebration Configuration
  *
- * Data-only file for the annual Yule gift-giving event.
+ * Data-only file for the annual Yule gift-giving event — a genuinely shared
+ * community spectacle, like the Harvest Feast (data/harvestFeast.ts): every
+ * client's YuleCelebrationManager gathers the same NPCs at the same clock-
+ * driven moment off the same TimeManager clock, with no player action
+ * required to start it. See utils/YuleCelebrationManager.ts.
  * All item IDs have been verified against data/items.ts.
  */
 
@@ -15,8 +19,37 @@ export const YULE_MAP_ID = 'village';
 export const YULE_TREE_POSITION: Position = { x: 24, y: 16 };
 export const YULE_CUTSCENE_ID = 'yule_celebration_opening';
 export const YULE_CELEBRATION_DURATION_MS = 10 * 60 * 1000; // 10 minutes
-export const YULE_STORAGE_KEY = 'twilight_yule_celebration';
 export const YULE_THOUGHT_BUBBLE_CYCLE_MS = 15_000; // 15 seconds per NPC
+
+/** The day of Winter the celebration happens on. */
+export const YULE_DAY = 42;
+
+/** Hour the tree appears and NPCs gather — a single threshold, unlike Harvest
+ * Feast's two-phase table/gather split, since Yule has no pre-gathering
+ * contribution phase (gifting happens during the gathering itself). Matches
+ * the legacy tree-appearance hour and the existing ambient hour-9 narration
+ * cutscene (seasonal_event_yule), so the "villagers gather" narration and the
+ * actual gathering read as coincident. */
+export const YULE_GATHER_HOUR = 9;
+
+/** Reuses the same generic seasonal decoration item SeasonalEventManager used
+ * to place for all of Winter — now owned entirely by YuleCelebrationManager. */
+export const YULE_TREE_ITEM_ID = 'seasonal_yule_tree';
+export const YULE_TREE_IMAGE = '/TwilightGame/assets-optimized/seasonal/yule_tree.png';
+
+/**
+ * Deterministic PlacedItem id for the tree itself — fixed (not year-scoped)
+ * since it is added and removed within the same year, mirroring
+ * HARVEST_FEAST_TABLE_PLACED_ID.
+ */
+export const YULE_TREE_PLACED_ID = 'yule_tree_current';
+
+/** Manual cutscene id for the "you missed it" retrospective recap. */
+export const YULE_CATCHUP_CUTSCENE_ID = 'yule_catchup';
+
+/** Recap shown in the catch-up cutscene, for a player who missed the whole day. */
+export const YULE_CATCHUP_RECAP =
+  "Ah, you missed Yule this year. Mum handed out warm Yule logs, and the whole village gathered round the tree to exchange gifts. There's always next Yule, traveller.";
 
 // ============================================================================
 // NPC Positions

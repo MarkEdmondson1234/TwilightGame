@@ -137,6 +137,27 @@ export interface GameState {
     gatherStartedAt: number | null;
   };
 
+  // Yule celebration progress tracking (see utils/YuleCelebrationManager.ts).
+  yule: {
+    celebratedYears: number[]; // Years the celebration fully concluded (or was caught up on)
+    lastKnownDay: number | null; // Total game-day count as of last save, for missed-window detection
+    /**
+     * Real Date.now() when this client first observed gathering begin,
+     * cleared once the celebration concludes. Anchors the 10-minute gifting
+     * window and the console-testability under TimeManager.setTimeOverride()
+     * — same reasoning as harvestFeast.gatherStartedAt above.
+     */
+    startedAt: number | null;
+    // NPC celebrationIds this client itself successfully gifted this year —
+    // NOT the full "claimed" set (that's this ∪ the live Firestore
+    // subscription, merged at read time by YuleCelebrationManager). Unlike
+    // Harvest Feast's contributedMealIds, this needs to persist across reload
+    // because a gifted NPC's thought bubble disappears with nothing else left
+    // to observe — Harvest Feast's food-eaten state stays visible as shared
+    // PlacedItems and needs no local record for the same reason.
+    giftsClaimedLocally: string[];
+  };
+
   // NPC relationships and friendship (managed by FriendshipManager)
   relationships: {
     npcFriendships: NPCFriendship[];
@@ -767,6 +788,66 @@ class GameStateManager {
     debugLog('GameState', 'Harvest Feast progress reset for testing');
   }
 
+  // Yule celebration management
+
+  hasYuleBeenCelebrated(year: number): boolean {
+    return this.state.yule.celebratedYears.includes(year);
+  }
+
+  markYuleCelebrated(year: number): void {
+    if (!this.state.yule.celebratedYears.includes(year)) {
+      this.state.yule.celebratedYears.push(year);
+      this.notify();
+      debugLog('GameState', `Yule celebration marked celebrated: year ${year}`);
+    }
+  }
+
+  getYuleLastKnownDay(): number | null {
+    return this.state.yule.lastKnownDay;
+  }
+
+  setYuleLastKnownDay(day: number): void {
+    this.state.yule.lastKnownDay = day;
+    this.notify();
+  }
+
+  getYuleStartedAt(): number | null {
+    return this.state.yule.startedAt;
+  }
+
+  setYuleStartedAt(timestamp: number | null): void {
+    this.state.yule.startedAt = timestamp;
+    this.notify();
+  }
+
+  getYuleGiftsClaimedLocally(): string[] {
+    return [...this.state.yule.giftsClaimedLocally];
+  }
+
+  recordYuleGiftClaim(npcId: string): void {
+    if (!this.state.yule.giftsClaimedLocally.includes(npcId)) {
+      this.state.yule.giftsClaimedLocally.push(npcId);
+      this.notify();
+    }
+  }
+
+  /**
+   * Dev/testing convenience: wipe this save's Yule progress so the
+   * celebration can be replayed without waiting for a real new year. Exposed
+   * via `window.gameState.resetYuleProgress()` in the console — see
+   * utils/gameInitializer.ts's dev commands log.
+   */
+  resetYuleProgress(): void {
+    this.state.yule = {
+      celebratedYears: [],
+      lastKnownDay: null,
+      startedAt: null,
+      giftsClaimedLocally: [],
+    };
+    this.notify();
+    debugLog('GameState', 'Yule progress reset for testing');
+  }
+
   getLastSeasonTriggered(): string | undefined {
     return this.state.cutscenes.lastSeasonTriggered;
   }
@@ -1292,6 +1373,12 @@ class GameStateManager {
         lastKnownDay: null,
         contributedMealIds: [],
         gatherStartedAt: null,
+      },
+      yule: {
+        celebratedYears: [],
+        lastKnownDay: null,
+        startedAt: null,
+        giftsClaimedLocally: [],
       },
       relationships: { npcFriendships: [] },
       placedItems: [],
@@ -2144,6 +2231,7 @@ class GameStateManager {
       statusEffects: cloudState.statusEffects || this.state.statusEffects,
       cutscenes: cloudState.cutscenes || this.state.cutscenes,
       harvestFeast: cloudState.harvestFeast || this.state.harvestFeast,
+      yule: cloudState.yule || this.state.yule,
     };
 
     // Save to localStorage immediately

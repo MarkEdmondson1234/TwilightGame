@@ -1,14 +1,17 @@
 /**
  * Harvest Feast Configuration
  *
- * Data-only file for the annual Harvest Feast community event. Unlike the Yule
- * celebration (a private, per-player instance triggered by clicking the tree),
- * the Harvest Feast is a genuinely shared spectacle: every player physically
- * present in the village sees the same table, the same food, the same
- * gathering, and hears the same closing speech. That is achieved by every
- * client's HarvestFeastManager running identical, deterministic logic off the
- * same TimeManager clock rather than any new broadcast mechanism — see
- * utils/HarvestFeastManager.ts.
+ * Data-only file for the annual Harvest Feast community event — a genuinely
+ * shared spectacle, like the Yule celebration (data/yuleCelebration.ts):
+ * every player physically present in the village sees the same table, the
+ * same food, the same gathering, and hears the same closing speech. That is
+ * achieved by every client's HarvestFeastManager running identical,
+ * deterministic logic off the same TimeManager clock rather than any new
+ * broadcast mechanism — see utils/HarvestFeastManager.ts. The two events
+ * differ mainly in shape: Harvest Feast has a contribution phase before the
+ * gathering (hence its two-phase table/gather hour split) and no per-item
+ * exclusivity; Yule's gifting happens during its single gathering and each
+ * NPC's reward is claimable once, globally.
  */
 
 import type { Position } from '../types';

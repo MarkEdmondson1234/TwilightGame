@@ -159,7 +159,7 @@ import VFXRenderer from './components/VFXRenderer';
 import VFXTestPanel from './components/VFXTestPanel';
 import YuleTimer from './components/YuleTimer';
 import { yuleCelebrationManager, YULE_MUM_GREETING } from './utils/YuleCelebrationManager';
-import { YULE_CUTSCENE_ID, YULE_NPC_CONFIGS } from './data/yuleCelebration';
+import { YULE_NPC_CONFIGS } from './data/yuleCelebration';
 import { useProximityQuestTriggers } from './hooks/useProximityQuestTriggers';
 import { debugLog } from './utils/debugLog';
 
@@ -748,16 +748,6 @@ const App: React.FC = () => {
       handleMapTransition(resolvedAction.mapId, resolvedAction.position);
     }
 
-    // Handle Yule celebration opening cutscene completion
-    if (action.cutsceneId === YULE_CUTSCENE_ID) {
-      // Nudge the player out of the way if they're standing where an event NPC
-      // is about to be placed, so they can't end up trapped inside one (#27).
-      const safePlayerPosition = yuleCelebrationManager.onCutsceneComplete(playerPos);
-      if (safePlayerPosition) {
-        teleportPlayer(safePlayerPosition);
-      }
-    }
-
     // Handle fairy queen cutscene completions
     if (action.cutsceneId === 'fairy_oak_midnight') {
       // First meeting with Queen Celestia — advance fairy_queen quest
@@ -939,9 +929,12 @@ const App: React.FC = () => {
     const unsubStart = eventBus.on(GameEvent.YULE_CELEBRATION_STARTED, (payload) => {
       setIsYuleCelebrationActive(true);
       setYuleNpcWishes(payload.npcWishes);
-      setYuleGiftsReceived(new Set());
+      setYuleGiftsReceived(new Set(payload.claimedNpcIds));
       showToast(YULE_MUM_GREETING, 'success');
       audioManager.playMusic('music_yule_celebration', { fadeIn: 2000, crossfade: true });
+    });
+    const unsubClaimsSynced = eventBus.on(GameEvent.YULE_CLAIMS_SYNCED, (payload) => {
+      setYuleGiftsReceived(new Set(payload.claimedNpcIds));
     });
     const unsubEnd = eventBus.on(GameEvent.YULE_CELEBRATION_ENDED, () => {
       setIsYuleCelebrationActive(false);
@@ -970,6 +963,7 @@ const App: React.FC = () => {
       unsubEnd();
       unsubGift();
       unsubBlackout();
+      unsubClaimsSynced();
     };
   }, [showToast]);
 
@@ -1290,14 +1284,20 @@ const App: React.FC = () => {
       wreathWorkshopManager.check();
       snowAngelManager.check();
       harvestFeastManager.check(playerPosRef.current);
+      yuleCelebrationManager.check(playerPosRef.current);
       // Gated the same way as the position-based cutscene check below — the
       // catch-up recap must not interrupt dialogue or another cutscene.
       if (!activeNPC && !isCutscenePlaying) {
         harvestFeastManager.checkCatchUpCutscene();
+        yuleCelebrationManager.checkCatchUpCutscene();
       }
       const harvestFeastNudge = harvestFeastManager.consumePendingPlayerNudge();
       if (harvestFeastNudge) {
         teleportPlayer(harvestFeastNudge);
+      }
+      const yuleNudge = yuleCelebrationManager.consumePendingPlayerNudge();
+      if (yuleNudge) {
+        teleportPlayer(yuleNudge);
       }
     }
 

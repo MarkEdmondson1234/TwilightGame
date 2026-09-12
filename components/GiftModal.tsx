@@ -223,7 +223,12 @@ const GiftModal: React.FC<GiftModalProps> = ({
       points: result.points,
       reaction: result.reaction,
       message,
-      dialogueNodeId: yuleResult ? 'yule_gift_reaction' : result.dialogueNodeId,
+      dialogueNodeId:
+        yuleResult === 'already_claimed'
+          ? 'yule_gift_already_claimed'
+          : yuleResult
+            ? 'yule_gift_reaction'
+            : result.dialogueNodeId,
     });
 
     onClose();

@@ -206,6 +206,17 @@ export function loadPersistedState(storageKey: string): GameState {
         };
       }
 
+      // Migrate old save data that doesn't have Yule celebration tracking
+      if (!parsed.yule) {
+        debugLog('GameState', 'Migrating old save data - adding Yule celebration tracking');
+        parsed.yule = {
+          celebratedYears: [],
+          lastKnownDay: null,
+          startedAt: null,
+          giftsClaimedLocally: [],
+        };
+      }
+
       // Migrate old save data that doesn't have weather drift speed
       if (parsed.weatherDriftSpeed === undefined) {
         debugLog('GameState', 'Migrating old save data - adding weather drift speed');
@@ -425,6 +436,12 @@ export function loadPersistedState(storageKey: string): GameState {
       lastKnownDay: null,
       contributedMealIds: [],
       gatherStartedAt: null,
+    },
+    yule: {
+      celebratedYears: [],
+      lastKnownDay: null,
+      startedAt: null,
+      giftsClaimedLocally: [],
     },
     relationships: {
       npcFriendships: [],

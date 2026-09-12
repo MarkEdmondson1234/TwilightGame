@@ -41,7 +41,6 @@ import { staminaManager } from '../utils/StaminaManager';
 import { registerItemSprite } from '../utils/inventoryUIHelper';
 import type { MiniGameTriggerData } from '../minigames/types';
 import { getDistance } from '../utils/pathfinding';
-import { yuleCelebrationManager } from '../utils/YuleCelebrationManager';
 import { snowAngelManager } from '../utils/SnowAngelManager';
 import { InventoryItem } from '../components/Inventory';
 import type { UseUIStateReturn } from './useUIState';
@@ -457,9 +456,6 @@ export function useInteractionController(
         } else {
           onShowToast(result.message, 'info');
         }
-      },
-      onBeginYuleCelebration: () => {
-        yuleCelebrationManager.startCelebration();
       },
       onMakeSnowAngel: (block: Position) => {
         snowAngelManager.place(block, currentMapId);

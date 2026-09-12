@@ -25,6 +25,7 @@ import { textureManager } from './TextureManager';
 import { audioAssets } from '../assets';
 import { cutsceneManager } from './CutsceneManager';
 import { harvestFeastManager } from './HarvestFeastManager';
+import { yuleCelebrationManager } from './YuleCelebrationManager';
 import { debugLog } from './debugLog';
 import { setSlowMinuteContext } from './sessionDiagnostics';
 import { getSlowMinuteRuntimeContext } from './diagnosticsRuntimeContext';
@@ -49,6 +50,7 @@ export function initializeGameCore(): void {
   // and any season cutscene before it can measure the game itself.
   window.cutsceneManager = cutsceneManager;
   window.harvestFeastManager = harvestFeastManager;
+  window.yuleCelebrationManager = yuleCelebrationManager;
 
   // Dev tools for colour system testing
   window.TimeManager = TimeManager;
@@ -85,6 +87,16 @@ export function initializeGameCore(): void {
   // landed before suspecting the code — see docs/ARCHITECTURE_GOTCHAS.md #7
   // if this looks right but nothing happens:
   npcManager.getNPCById('village_elder')?.position  // Should be {x:24,y:14} once gathered, not his usual spot
+
+  // Yule Celebration (stand in the village first — near the tree's spot,
+  // tile 24,16 — so the gathering step finds you there)
+  TimeManager.setTimeOverride({ season: Season.WINTER, day: 42, hour: 9 })  // Tree appears, NPCs gather automatically
+  gameState.getYuleStartedAt()          // When the 10-minute gifting window began
+  gameState.getYuleGiftsClaimedLocally() // NPCs this client has personally gifted this year
+  yuleCelebrationManager.getAllWishes()  // npcId -> wished-for itemId, deterministic per year
+  yuleCelebrationManager.getFormattedTimeRemaining()
+  yuleCelebrationManager.resetForTesting()  // Clears progress + any leftover tree so you can replay it
+  TimeManager.clearTimeOverride()  // Then set this before replaying, or the day/hour won't match
 
   // Magic System
   magicManager.unlockMagicBook()  // Unlock magic book

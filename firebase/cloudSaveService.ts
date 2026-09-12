@@ -238,6 +238,7 @@ class CloudSaveService {
       appliedWallpapers: state.appliedWallpapers,
       cutscenes: state.cutscenes,
       harvestFeast: state.harvestFeast,
+      yule: state.yule,
     };
     batch.set(
       doc(db, FIRESTORE_PATHS.saveData(userId, slotId, 'world')),
@@ -392,6 +393,12 @@ class CloudSaveService {
         lastKnownDay: null,
         contributedMealIds: [],
         gatherStartedAt: null,
+      },
+      yule: world?.yule || {
+        celebratedYears: [],
+        lastKnownDay: null,
+        startedAt: null,
+        giftsClaimedLocally: [],
       },
       relationships: { npcFriendships: friendships?.npcFriendships || [] },
       placedItems: world?.placedItems || [],

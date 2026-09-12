@@ -2,9 +2,9 @@
  * @vitest-environment node
  *
  * The Harvest Feast's once-per-year flag and contribution tracking live in
- * synced GameState (not raw localStorage) deliberately — Yule's equivalent
- * flag (YULE_STORAGE_KEY) is device-local only and doesn't survive an
- * account/device change, which this was built to avoid repeating.
+ * synced GameState (not raw localStorage) so they survive an account/device
+ * change — the Yule celebration's equivalent flag (see tests/yuleGameState.test.ts)
+ * now follows the same pattern.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { gameState } from '../GameState';

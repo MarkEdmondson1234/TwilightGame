@@ -1,27 +1,49 @@
 /**
  * YuleCelebrationManager
  *
- * Manages the annual Yule gift-giving celebration:
- * - Once-per-year check (persisted to localStorage)
- * - Assigns random gift wishes to 7 NPCs
- * - Triggers the opening cutscene
- * - Moves NPCs to positions around the Yule tree
- * - Runs a 10-minute real-time countdown
- * - Handles gift interception (checks wish match, grants reward)
- * - Ends with a screen blackout and NPC restoration
+ * Runs the annual Yule gift-giving celebration — a shared community event,
+ * like the Harvest Feast (utils/HarvestFeastManager.ts), not the private,
+ * click-to-begin instance this used to be. Every client runs this exact same
+ * deterministic logic off the same TimeManager clock, so the tree, the NPC
+ * gathering and the gift wishes look the same to every player physically
+ * present in the village, with almost no new networking:
+ *
+ * - The tree is an ordinary PlacedItem, already synced across players for
+ *   free (hooks/useSharedPlacedItemsController.ts).
+ * - Which item each NPC wishes for, and which reward a gift earns, are pure
+ *   deterministic functions of the year (and NPC, for rewards) via
+ *   createDecisionRandom — the same trick WeatherManager and
+ *   harvestFeastConsumptionOrder() use — so every client agrees on "the
+ *   correct gift" and on what a claim rewards without any shared state.
+ * - The one thing that genuinely cannot be derived from currently-live state
+ *   is which of the 7 NPCs has already been gifted this year: once an NPC's
+ *   wish thought-bubble disappears there's nothing left to observe, unlike
+ *   Harvest Feast's food (which stays visible as shared PlacedItems until
+ *   eaten). That is tracked by the small, additive Firestore doc in
+ *   firebase/yuleCelebrationService.ts.
+ *
+ * check() is polled from App.tsx every TIMING.SEASONAL_EVENT_CHECK_MS,
+ * alongside HarvestFeastManager/SeasonalEventManager/WreathWorkshopManager.
+ * checkCatchUpCutscene() is polled from the same place App.tsx checks
+ * position-based cutscenes, gated the same way (!activeNPC && !isCutscenePlaying).
  */
 
 import type { Position } from '../types';
 import { eventBus, GameEvent } from './EventBus';
 import { TimeManager, Season } from './TimeManager';
+import { gameState } from '../GameState';
 import { inventoryManager } from './inventoryManager';
 import { npcManager } from '../NPCManager';
+import { mapManager } from '../maps/MapManager';
 import { cutsceneManager } from './CutsceneManager';
 import { createMumNPC } from './npcs/homeNPCs';
 import { createMushraNPC } from './npcs/forest/mushra';
 import { createChillBearNPC } from './npcs/forest/chillBear';
 import { createOldWomanKnittingNPC } from './npcs/village/oldWomanKnitting';
 import { createVillageChildNPC } from './npcs/village/villageChild';
+import { createDecisionRandom } from './seededRandom';
+import { hasCrossedSeasonDay42 } from './seasonReconcile';
+import { getYuleCelebrationService } from '../firebase/safe';
 import {
   YULE_NPC_CONFIGS,
   YULE_WISH_POOL,
@@ -32,8 +54,14 @@ import {
   YULE_CELEBRATION_DURATION_MS,
   YULE_CUTSCENE_ID,
   YULE_MAP_ID,
-  YULE_STORAGE_KEY,
   YULE_MUM_GREETING,
+  YULE_DAY,
+  YULE_GATHER_HOUR,
+  YULE_TREE_POSITION,
+  YULE_TREE_ITEM_ID,
+  YULE_TREE_IMAGE,
+  YULE_TREE_PLACED_ID,
+  YULE_CATCHUP_CUTSCENE_ID,
 } from '../data/yuleCelebration';
 import { debugLog } from './debugLog';
 
@@ -45,18 +73,6 @@ export interface YuleGiftResult {
   wasWish: boolean;
   dialogue: string;
   rewardItemId: string;
-}
-
-interface CelebrationState {
-  isActive: boolean;
-  startTime: number;
-  year: number;
-  npcWishes: Record<string, string>; // celebrationId -> itemId
-  giftsReceived: Set<string>; // celebrationIds who have received a gift
-}
-
-interface PersistedData {
-  celebratedYears: number[];
 }
 
 // ============================================================================
@@ -78,6 +94,9 @@ function distance(a: Position, b: Position): number {
  *
  * Searches outward in square rings from the player's own position so the nudge
  * is always the smallest one that clears every occupied tile.
+ *
+ * Also imported by utils/HarvestFeastManager.ts, which reuses this exact
+ * helper for its own NPC gathering — do not change this signature.
  */
 export function findSafePlayerPosition(
   playerPosition: Position,
@@ -104,177 +123,155 @@ export function findSafePlayerPosition(
 }
 
 // ============================================================================
+// Pure helpers (exported for tests)
+// ============================================================================
+
+/**
+ * Deterministic wish assignment — Fisher-Yates over the wish pool, seeded on
+ * the year, identical on every client. Wishes must be shared now that "the
+ * correct gift" is a globally-exclusive claim: two players must agree on
+ * which item is right for a given NPC.
+ */
+export function computeYuleWishes(year: number): Record<string, string> {
+  const rng = createDecisionRandom(`yule-wishes-${year}`, 0);
+  const shuffled = [...YULE_WISH_POOL];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  const wishes: Record<string, string> = {};
+  YULE_NPC_CONFIGS.forEach((config, i) => {
+    if (i < shuffled.length) {
+      wishes[config.celebrationId] = shuffled[i];
+    }
+  });
+  return wishes;
+}
+
+/**
+ * Deterministic reward pick for one NPC's gift, seeded on (year, npcId) so a
+ * same-tick race between two simultaneous gifters converges on the identical
+ * reward regardless of which client's write reaches Firestore first.
+ */
+export function pickYuleReward(year: number, npcId: string, wasWish: boolean): string {
+  const pool = wasWish ? YULE_RARE_REWARDS : YULE_COMMON_REWARDS;
+  const rng = createDecisionRandom(`yule-reward-${year}-${npcId}`, 0);
+  return pool[Math.floor(rng() * pool.length)];
+}
+
+// ============================================================================
 // Manager
 // ============================================================================
 
 class YuleCelebrationManagerClass {
-  private state: CelebrationState | null = null;
-  private timerIntervalId: ReturnType<typeof setInterval> | null = null;
+  /** In-memory only: guards against re-placing NPCs every ~10s tick. */
+  private npcsGatheredForYear: number | null = null;
+  private pendingPlayerNudge: Position | null = null;
   private originalScales: Map<string, number> = new Map();
   private pendingGiftDialogue: string | null = null;
 
-  // ---- Persistence ----
+  private claimUnsubscribe: (() => void) | null = null;
+  private listeningYear: number | null = null;
+  private remoteClaims: string[] = [];
 
-  private loadPersistedData(): PersistedData {
-    try {
-      const raw = localStorage.getItem(YULE_STORAGE_KEY);
-      if (raw) return JSON.parse(raw) as PersistedData;
-    } catch {
-      // corrupted data — start fresh
-    }
-    return { celebratedYears: [] };
-  }
+  private blackoutTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
-  private savePersistedData(data: PersistedData): void {
-    try {
-      localStorage.setItem(YULE_STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      console.warn('[YuleCelebration] Failed to persist celebration data');
-    }
-  }
+  // ---- Clock-driven gathering ----
 
-  hasBeenCelebratedThisYear(year: number): boolean {
-    return this.loadPersistedData().celebratedYears.includes(year);
-  }
-
-  // ---- Year / season check ----
-
-  canStartCelebration(): boolean {
-    if (this.state?.isActive) return false;
+  /**
+   * Safe to call unconditionally — App.tsx's game loop only reaches this call
+   * site while it is safe to open a cutscene, mirroring
+   * HarvestFeastManager.check().
+   */
+  check(playerPosition?: Position): void {
     const time = TimeManager.getCurrentTime();
-    if (time.season !== Season.WINTER) return false;
-    if (time.day < 42) return false;
-    if (this.hasBeenCelebratedThisYear(time.year)) return false;
-    return true;
-  }
 
-  // ---- Lifecycle ----
+    this.trackLastKnownDay();
+    this.syncClaimSubscription(time.year);
 
-  startCelebration(): void {
-    if (!this.canStartCelebration()) {
-      console.warn('[YuleCelebration] Cannot start celebration — conditions not met');
-      return;
+    if (time.season !== Season.WINTER || time.day !== YULE_DAY) return;
+    if (gameState.hasYuleBeenCelebrated(time.year)) return;
+
+    if (time.hour >= YULE_GATHER_HOUR) {
+      this.ensureTreeAndGatheringStarted(time.year, playerPosition);
+      this.maybeConclude(time.year);
     }
-
-    const time = TimeManager.getCurrentTime();
-    const wishes = this.assignWishes();
-
-    this.state = {
-      isActive: false, // becomes true after cutscene ends
-      startTime: 0,
-      year: time.year,
-      npcWishes: wishes,
-      giftsReceived: new Set(),
-    };
-
-    cutsceneManager.triggerManualCutscene(YULE_CUTSCENE_ID);
   }
 
   /**
-   * Called by App.tsx when the Yule celebration cutscene finishes.
-   * Moves NPCs to celebration positions, gives Mum's Yule log, starts timer.
-   *
-   * Pass the player's current position to have the player nudged out of the way
-   * if it's too close to a tile an NPC is about to be placed on (issue #27 — the
-   * player must not end up trapped inside an NPC's collision box). Returns the
-   * safe position to teleport the player to, or null if no nudge is needed.
+   * The retrospective "you missed it" recap cutscene. Must only be called
+   * while it is safe to open a cutscene — see HarvestFeastManager's
+   * checkCatchUpCutscene() for why this is a separate call site from check().
    */
-  onCutsceneComplete(playerPosition?: Position): Position | null {
-    if (!this.state) return null;
+  checkCatchUpCutscene(): void {
+    const time = TimeManager.getCurrentTime();
 
-    this.state.isActive = true;
-    this.state.startTime = Date.now();
+    // Winter is the last season of the year (TimeManager.SEASON_ORDER), so
+    // the relevant past Yule is always this year's if we're currently in
+    // Winter, and last year's (year - 1) for every other season.
+    const targetYear = time.season === Season.WINTER ? time.year : time.year - 1;
+    if (targetYear < 0) return; // no prior Yule exists yet on a brand new save
 
-    // Check the player isn't standing where an NPC is about to be placed BEFORE
-    // placing any of them, so the returned position is always safe by the time
-    // the caller acts on it.
-    const safePlayerPosition = playerPosition
-      ? findSafePlayerPosition(
-          playerPosition,
-          YULE_NPC_CONFIGS.map((config) => config.position)
-        )
-      : null;
+    if (gameState.hasYuleBeenCelebrated(targetYear)) return;
 
-    // Place dynamic festival NPCs on the village map
-    this.placeFestivalNPCs();
+    const pastDay42ThisWinter = time.season === Season.WINTER && time.day > YULE_DAY;
 
-    // Override village NPC positions
-    for (const config of YULE_NPC_CONFIGS) {
-      if (!config.isDynamic) {
-        npcManager.setEventOverridePosition(config.celebrationId, config.position);
-      }
-    }
+    const lastKnownDay = gameState.getYuleLastKnownDay();
+    const crossedWhileClosed =
+      lastKnownDay !== null &&
+      hasCrossedSeasonDay42(
+        lastKnownDay,
+        TimeManager.getTotalGameDays(),
+        TimeManager.seasonStartDayInYear(Season.WINTER),
+        TimeManager.DAYS_PER_YEAR
+      );
 
-    // Freeze all Yule NPCs in position (prevents wandering ones like Little Girl and Mushra from drifting away)
-    for (const config of YULE_NPC_CONFIGS) {
-      npcManager.freezeWandering(config.celebrationId);
-    }
+    if (!pastDay42ThisWinter && !crossedWhileClosed) return;
 
-    // Apply temporary scale overrides for the duration of the celebration.
-    // Uses setEventScaleOverride so the animation system's per-state scale logic
-    // doesn't immediately overwrite the override every tick.
-    this.originalScales.clear();
-    for (const config of YULE_NPC_CONFIGS) {
-      if (config.scaleOverride === undefined) continue;
-      const original = npcManager.setEventScaleOverride(config.celebrationId, config.scaleOverride);
-      if (original !== null) {
-        this.originalScales.set(config.celebrationId, original);
-      }
-    }
-
-    // Mum gives the player a Yule log automatically
-    inventoryManager.addItem('food_yule_log', 1);
-    eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add', itemId: 'food_yule_log' });
-
-    // Notify React so it can show Mum's greeting toast
-    eventBus.emit(GameEvent.YULE_CELEBRATION_STARTED, {
-      year: this.state.year,
-      npcWishes: this.state.npcWishes,
-    });
-
-    // Also emit the Mum greeting as a special first gift event marker
-    // (App.tsx shows the YULE_MUM_GREETING toast on YULE_CELEBRATION_STARTED)
-
-    this.startTimer();
-    debugLog('YuleCelebration', 'Celebration started — 10 minutes on the clock!');
-
-    return safePlayerPosition;
-  }
-
-  private placeFestivalNPCs(): void {
-    for (const config of YULE_NPC_CONFIGS) {
-      if (!config.isDynamic) continue;
-      let npc = null;
-      if (config.originalId === 'mum') {
-        npc = createMumNPC(config.celebrationId, config.position, 'Mum');
-      } else if (config.originalId === 'mushra') {
-        npc = createMushraNPC(config.celebrationId, config.position, 'Mushra');
-      } else if (config.originalId === 'chill_bear') {
-        npc = createChillBearNPC(config.celebrationId, config.position, 'Mr Bear');
-      } else if (config.originalId === 'old_woman_knitting') {
-        npc = createOldWomanKnittingNPC(config.celebrationId, config.position, 'Althea');
-      } else if (config.originalId === 'child') {
-        npc = createVillageChildNPC(config.celebrationId, config.position, 'Little Girl');
-      }
-      if (npc) {
-        npcManager.addDynamicNPC(npc);
-      }
+    const started = cutsceneManager.triggerManualCutscene(YULE_CATCHUP_CUTSCENE_ID);
+    if (started) {
+      gameState.markYuleCelebrated(targetYear);
+      debugLog('YuleCelebration', `Catch-up recap shown for year ${targetYear}`);
     }
   }
 
-  private startTimer(): void {
-    this.timerIntervalId = setInterval(() => {
-      if (this.getRemainingMs() <= 0) {
-        this.endCelebration();
-      }
-    }, 1000);
+  /** Consumed by App.tsx right after check() to nudge the player clear of a gathering NPC. */
+  consumePendingPlayerNudge(): Position | null {
+    const pos = this.pendingPlayerNudge;
+    this.pendingPlayerNudge = null;
+    return pos;
+  }
+
+  // ---- State queries ----
+
+  isActive(): boolean {
+    return this.npcsGatheredForYear !== null;
+  }
+
+  canReceiveGift(npcId: string): boolean {
+    if (!this.isActive()) return false;
+    const isParticipant = YULE_NPC_CONFIGS.some((c) => c.celebrationId === npcId);
+    if (!isParticipant) return false;
+    return !this.getEffectiveClaimedNpcIds().includes(npcId);
+  }
+
+  /** Returns all current wishes (npcId -> itemId) for rendering thought bubbles */
+  getAllWishes(): Record<string, string> {
+    if (this.npcsGatheredForYear === null) return {};
+    return computeYuleWishes(this.npcsGatheredForYear);
+  }
+
+  /** Returns the set of NPC IDs that have already received a gift */
+  getGiftsReceived(): Set<string> {
+    return new Set(this.getEffectiveClaimedNpcIds());
   }
 
   // ---- Timer ----
 
   getRemainingMs(): number {
-    if (!this.state?.isActive) return 0;
-    const elapsed = Date.now() - this.state.startTime;
+    const startedAt = gameState.getYuleStartedAt();
+    if (startedAt === null) return 0;
+    const elapsed = Date.now() - startedAt;
     return Math.max(0, YULE_CELEBRATION_DURATION_MS - elapsed);
   }
 
@@ -287,68 +284,40 @@ class YuleCelebrationManagerClass {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  // ---- State queries ----
-
-  isActive(): boolean {
-    return this.state?.isActive === true;
-  }
-
-  canReceiveGift(npcId: string): boolean {
-    if (!this.state?.isActive) return false;
-    const isParticipant = YULE_NPC_CONFIGS.some((c) => c.celebrationId === npcId);
-    if (!isParticipant) return false;
-    return !this.state.giftsReceived.has(npcId);
-  }
-
-  getNPCWish(npcId: string): string | null {
-    if (!this.state) return null;
-    if (this.state.giftsReceived.has(npcId)) return null;
-    return this.state.npcWishes[npcId] ?? null;
-  }
-
-  /** Returns all current wishes (npcId -> itemId) for rendering thought bubbles */
-  getAllWishes(): Record<string, string> {
-    return this.state?.npcWishes ?? {};
-  }
-
-  /** Returns the set of NPC IDs that have already received a gift */
-  getGiftsReceived(): Set<string> {
-    return this.state?.giftsReceived ?? new Set();
-  }
-
   // ---- Gift interception ----
 
   /**
-   * Called from the existing gift-giving handler when a gift is given to an NPC
-   * during the Yule celebration. Returns null if not applicable (not active, NPC
-   * already gifted, etc.).
+   * Called from the existing gift-giving handler when a gift is given to an
+   * NPC during the Yule celebration. Returns null if not applicable (not
+   * gathering, NPC not a participant), or 'already_claimed' if another player
+   * (or this one, earlier) already gifted that NPC this year.
    */
-  interceptGift(npcId: string, itemId: string): YuleGiftResult | null {
-    if (!this.state?.isActive) return null;
-    if (!this.canReceiveGift(npcId)) return null;
+  interceptGift(npcId: string, itemId: string): YuleGiftResult | 'already_claimed' | null {
+    if (this.npcsGatheredForYear === null) return null;
+    if (!YULE_NPC_CONFIGS.some((c) => c.celebrationId === npcId)) return null;
 
-    const wish = this.state.npcWishes[npcId];
-    const wasWish = wish === itemId;
+    const year = this.npcsGatheredForYear;
 
-    // Choose reward
-    const rewardPool = wasWish ? YULE_RARE_REWARDS : YULE_COMMON_REWARDS;
-    const rewardItemId = rewardPool[Math.floor(Math.random() * rewardPool.length)];
-
-    // Grant reward
-    if (rewardItemId) {
-      inventoryManager.addItem(rewardItemId, 1);
-      eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add', itemId: rewardItemId });
+    if (this.getEffectiveClaimedNpcIds().includes(npcId)) {
+      return 'already_claimed';
     }
 
-    // Choose dialogue
+    const wish = computeYuleWishes(year)[npcId];
+    const wasWish = wish === itemId;
+    const rewardItemId = pickYuleReward(year, npcId, wasWish);
+
+    inventoryManager.addItem(rewardItemId, 1);
+    eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add', itemId: rewardItemId });
+
     const dialoguePool = wasWish ? YULE_PERFECT_GIFT_DIALOGUES : YULE_ANY_GIFT_DIALOGUES;
     const dialogue = dialoguePool[Math.floor(Math.random() * dialoguePool.length)];
-
-    // Store dialogue text so the DialogueBox can retrieve it via yule_gift_reaction node
     this.pendingGiftDialogue = dialogue;
 
-    // Mark this NPC as gifted
-    this.state.giftsReceived.add(npcId);
+    gameState.recordYuleGiftClaim(npcId);
+    const service = getYuleCelebrationService();
+    if (service.isAvailable()) {
+      void service.claimGift(year, npcId);
+    }
 
     const result: YuleGiftResult = { wasWish, dialogue, rewardItemId };
 
@@ -375,51 +344,6 @@ class YuleCelebrationManagerClass {
 
   // ---- End ----
 
-  endCelebration(): void {
-    if (!this.state) return;
-
-    this.clearTimer();
-
-    const giftsGiven = this.state.giftsReceived.size;
-    const year = this.state.year;
-
-    // Signal blackout start — App.tsx fades screen to black
-    eventBus.emit(GameEvent.YULE_BLACKOUT, { phase: 'fade_in' });
-
-    // After blackout covers the screen, restore NPCs and fade out
-    setTimeout(() => {
-      // Remove dynamic festival NPCs
-      for (const config of YULE_NPC_CONFIGS) {
-        if (config.isDynamic) {
-          npcManager.removeDynamicNPC(config.celebrationId, YULE_MAP_ID);
-        }
-      }
-
-      // Restore village NPCs to their original positions and scales
-      npcManager.clearEventOverrides();
-      for (const [npcId, originalScale] of this.originalScales) {
-        npcManager.restoreEventScale(npcId, originalScale);
-      }
-      this.originalScales.clear();
-
-      // Signal blackout end — App.tsx fades back in
-      eventBus.emit(GameEvent.YULE_BLACKOUT, { phase: 'fade_out' });
-
-      // Emit celebration ended (App.tsx shows the "Merry Yule" toast)
-      eventBus.emit(GameEvent.YULE_CELEBRATION_ENDED, { year, giftsGiven });
-
-      // Save the year so the celebration cannot run again this year
-      const data = this.loadPersistedData();
-      if (!data.celebratedYears.includes(year)) {
-        data.celebratedYears.push(year);
-        this.savePersistedData(data);
-      }
-
-      this.state = null;
-      debugLog('YuleCelebration', 'Celebration ended. Until next Yule!');
-    }, 1500); // 1.5 s — matches the CSS blackout transition duration
-  }
-
   /**
    * Force-end the celebration immediately (e.g. player leaves the village).
    * Skips the blackout animation and cleans up NPCs synchronously.
@@ -431,78 +355,213 @@ class YuleCelebrationManagerClass {
    * destination map, not 'village'. See NPCManager.removeDynamicNPC/clearEventOverrides.
    */
   forceEnd(): void {
-    if (!this.state) return;
+    if (this.npcsGatheredForYear === null) return;
 
-    this.clearTimer();
+    const year = this.npcsGatheredForYear;
+    const giftsGiven = this.getEffectiveClaimedNpcIds().length;
 
-    const giftsGiven = this.state.giftsReceived.size;
-    const year = this.state.year;
+    this.clearBlackoutTimeout();
+    this.teardownGathering();
 
-    // Remove dynamic festival NPCs immediately (currentMapId is still 'village')
+    gameState.markYuleCelebrated(year);
+    gameState.setYuleStartedAt(null);
+    this.npcsGatheredForYear = null;
+
+    eventBus.emit(GameEvent.YULE_CELEBRATION_ENDED, { year, giftsGiven });
+
+    debugLog('YuleCelebration', 'Celebration force-ended (player left village).');
+  }
+
+  /**
+   * Dev/testing convenience: wipe this save's progress and remove any tree
+   * still standing, so the whole event can be replayed on the dev server
+   * without waiting for a real new year. Exposed on the console via
+   * `window.yuleCelebrationManager.resetForTesting()`.
+   */
+  resetForTesting(): void {
+    const year = TimeManager.getCurrentTime().year;
+    this.clearBlackoutTimeout();
+    this.teardownGathering();
+    gameState.resetYuleProgress();
+    this.npcsGatheredForYear = null;
+    debugLog('YuleCelebration', `Reset for testing (was year ${year})`);
+  }
+
+  /** Clean up intervals/subscriptions — call from App.tsx unmount cleanup. */
+  dispose(): void {
+    this.clearBlackoutTimeout();
+    this.claimUnsubscribe?.();
+    this.claimUnsubscribe = null;
+    this.listeningYear = null;
+  }
+
+  // ============================================================================
+  // Private helpers
+  // ============================================================================
+
+  private trackLastKnownDay(): void {
+    const totalDays = TimeManager.getTotalGameDays();
+    if (gameState.getYuleLastKnownDay() !== totalDays) {
+      gameState.setYuleLastKnownDay(totalDays);
+    }
+  }
+
+  private syncClaimSubscription(year: number): void {
+    if (this.listeningYear === year) return;
+    this.claimUnsubscribe?.();
+    this.listeningYear = year;
+    this.remoteClaims = [];
+    this.claimUnsubscribe = getYuleCelebrationService().subscribe(year, (npcIds) => {
+      this.remoteClaims = npcIds;
+      eventBus.emit(GameEvent.YULE_CLAIMS_SYNCED, { claimedNpcIds: this.getEffectiveClaimedNpcIds() });
+    });
+  }
+
+  /** Deduped union of this client's local claims and the last-synced shared record. */
+  private getEffectiveClaimedNpcIds(): string[] {
+    const local = gameState.getYuleGiftsClaimedLocally();
+    return [...new Set([...local, ...this.remoteClaims])];
+  }
+
+  private ensureTreeAndGatheringStarted(year: number, playerPosition?: Position): void {
+    if (this.npcsGatheredForYear === year) return;
+    if (mapManager.getCurrentMapId() !== YULE_MAP_ID) return;
+
+    if (!gameState.getPlacedItems(YULE_MAP_ID).some((i) => i.id === YULE_TREE_PLACED_ID)) {
+      gameState.addPlacedItem({
+        id: YULE_TREE_PLACED_ID,
+        itemId: YULE_TREE_ITEM_ID,
+        position: YULE_TREE_POSITION,
+        mapId: YULE_MAP_ID,
+        image: YULE_TREE_IMAGE,
+        timestamp: Date.now(),
+        permanent: true,
+      });
+      debugLog('YuleCelebration', 'Yule tree raised in the village square');
+    }
+
+    if (playerPosition) {
+      this.pendingPlayerNudge = findSafePlayerPosition(
+        playerPosition,
+        YULE_NPC_CONFIGS.map((config) => config.position)
+      );
+    }
+
+    this.placeFestivalNPCs();
+
+    for (const config of YULE_NPC_CONFIGS) {
+      if (!config.isDynamic) {
+        npcManager.setEventOverridePosition(config.celebrationId, config.position);
+      }
+    }
+
+    for (const config of YULE_NPC_CONFIGS) {
+      npcManager.freezeWandering(config.celebrationId);
+    }
+
+    this.originalScales.clear();
+    for (const config of YULE_NPC_CONFIGS) {
+      if (config.scaleOverride === undefined) continue;
+      const original = npcManager.setEventScaleOverride(config.celebrationId, config.scaleOverride);
+      if (original !== null) {
+        this.originalScales.set(config.celebrationId, original);
+      }
+    }
+
+    inventoryManager.addItem('food_yule_log', 1);
+    eventBus.emit(GameEvent.INVENTORY_CHANGED, { action: 'add', itemId: 'food_yule_log' });
+
+    this.npcsGatheredForYear = year;
+    if (gameState.getYuleStartedAt() === null) {
+      gameState.setYuleStartedAt(Date.now());
+    }
+
+    eventBus.emit(GameEvent.YULE_CELEBRATION_STARTED, {
+      year,
+      npcWishes: computeYuleWishes(year),
+      claimedNpcIds: this.getEffectiveClaimedNpcIds(),
+    });
+
+    cutsceneManager.triggerManualCutscene(YULE_CUTSCENE_ID);
+
+    debugLog('YuleCelebration', 'Celebration started — 10 minutes on the clock!');
+  }
+
+  private placeFestivalNPCs(): void {
+    for (const config of YULE_NPC_CONFIGS) {
+      if (!config.isDynamic) continue;
+      let npc = null;
+      if (config.originalId === 'mum') {
+        npc = createMumNPC(config.celebrationId, config.position, 'Mum');
+      } else if (config.originalId === 'mushra') {
+        npc = createMushraNPC(config.celebrationId, config.position, 'Mushra');
+      } else if (config.originalId === 'chill_bear') {
+        npc = createChillBearNPC(config.celebrationId, config.position, 'Mr Bear');
+      } else if (config.originalId === 'old_woman_knitting') {
+        npc = createOldWomanKnittingNPC(config.celebrationId, config.position, 'Althea');
+      } else if (config.originalId === 'child') {
+        npc = createVillageChildNPC(config.celebrationId, config.position, 'Little Girl');
+      }
+      if (npc) {
+        npcManager.addDynamicNPC(npc);
+      }
+    }
+  }
+
+  private maybeConclude(year: number): void {
+    if (this.npcsGatheredForYear !== year) return;
+
+    const startedAt = gameState.getYuleStartedAt();
+    if (startedAt === null) return;
+    if (Date.now() < startedAt + YULE_CELEBRATION_DURATION_MS) return;
+
+    const giftsGiven = this.getEffectiveClaimedNpcIds().length;
+
+    // Signal blackout start — App.tsx fades screen to black
+    eventBus.emit(GameEvent.YULE_BLACKOUT, { phase: 'fade_in' });
+
+    this.clearBlackoutTimeout();
+    this.blackoutTimeoutId = setTimeout(() => {
+      this.blackoutTimeoutId = null;
+      this.teardownGathering();
+
+      // Signal blackout end — App.tsx fades back in
+      eventBus.emit(GameEvent.YULE_BLACKOUT, { phase: 'fade_out' });
+
+      eventBus.emit(GameEvent.YULE_CELEBRATION_ENDED, { year, giftsGiven });
+
+      gameState.markYuleCelebrated(year);
+      gameState.setYuleStartedAt(null);
+      this.npcsGatheredForYear = null;
+
+      debugLog('YuleCelebration', 'Celebration ended. Until next Yule!');
+    }, 1500); // 1.5 s — matches the CSS blackout transition duration
+  }
+
+  private clearBlackoutTimeout(): void {
+    if (this.blackoutTimeoutId !== null) {
+      clearTimeout(this.blackoutTimeoutId);
+      this.blackoutTimeoutId = null;
+    }
+  }
+
+  private teardownGathering(): void {
     for (const config of YULE_NPC_CONFIGS) {
       if (config.isDynamic) {
         npcManager.removeDynamicNPC(config.celebrationId, YULE_MAP_ID);
       }
     }
 
-    // Restore village NPCs to their original positions and scales
     npcManager.clearEventOverrides();
     for (const [npcId, originalScale] of this.originalScales) {
       npcManager.restoreEventScale(npcId, originalScale);
     }
     this.originalScales.clear();
 
-    // Emit ended (no blackout — player already left)
-    eventBus.emit(GameEvent.YULE_CELEBRATION_ENDED, { year, giftsGiven });
-
-    // Save the year
-    const data = this.loadPersistedData();
-    if (!data.celebratedYears.includes(year)) {
-      data.celebratedYears.push(year);
-      this.savePersistedData(data);
-    }
-
-    this.state = null;
-    debugLog('YuleCelebration', 'Celebration force-ended (player left village).');
-  }
-
-  /** Clean up intervals — call from App.tsx useEffect cleanup. */
-  dispose(): void {
-    this.clearTimer();
-  }
-
-  // ---- Helpers ----
-
-  private clearTimer(): void {
-    if (this.timerIntervalId !== null) {
-      clearInterval(this.timerIntervalId);
-      this.timerIntervalId = null;
-    }
-  }
-
-  /** Fisher-Yates shuffle, returns a new array */
-  private shuffle<T>(arr: T[]): T[] {
-    const a = [...arr];
-    for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [a[i], a[j]] = [a[j], a[i]];
-    }
-    return a;
-  }
-
-  /**
-   * Randomly assigns one wish per NPC with no duplicates.
-   * Returns a record of celebrationId -> itemId.
-   */
-  private assignWishes(): Record<string, string> {
-    const shuffled = this.shuffle(YULE_WISH_POOL);
-    const wishes: Record<string, string> = {};
-    YULE_NPC_CONFIGS.forEach((config, i) => {
-      if (i < shuffled.length) {
-        wishes[config.celebrationId] = shuffled[i];
-      }
-    });
-    return wishes;
+    // The tree is added with permanent: true (so players can't pick it up
+    // mid-celebration) but is not meant to outlive the celebration itself —
+    // removePlacedItem() is a harmless no-op if it's already gone.
+    gameState.removePlacedItem(YULE_TREE_PLACED_ID);
   }
 }
 

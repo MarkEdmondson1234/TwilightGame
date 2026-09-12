@@ -11,7 +11,7 @@
  * @vitest-environment node
  */
 import { describe, it, expect } from 'vitest';
-import { crossedSeasonStart, seasonsBetween, hasCrossedAutumnDay42 } from '../utils/seasonReconcile';
+import { crossedSeasonStart, seasonsBetween, hasCrossedSeasonDay42 } from '../utils/seasonReconcile';
 
 // Same calendar as TimeManager: 84 game days per season, 336 per year.
 // Spring starts on day-of-year 0, winter on 252 (index 3 × 84).
@@ -20,6 +20,7 @@ const SPRING_START = 0;
 const WINTER_START = 252;
 const AUTUMN_START = 168; // index 2 × 84
 const AUTUMN_DAY_42 = AUTUMN_START + 41; // day 42 is 1-indexed within the season
+const WINTER_DAY_42 = WINTER_START + 41;
 
 describe('crossedSeasonStart', () => {
   it('detects a spring boundary inside the interval', () => {
@@ -63,22 +64,22 @@ describe('crossedSeasonStart', () => {
   });
 });
 
-describe('hasCrossedAutumnDay42 (Harvest Feast catch-up)', () => {
+describe('hasCrossedSeasonDay42 (Harvest Feast / Yule catch-up)', () => {
   it('detects the Harvest Feast day inside the interval', () => {
     // Saved mid-autumn before day 42, returning after it.
     expect(
-      hasCrossedAutumnDay42(AUTUMN_START + 10, AUTUMN_START + 60, AUTUMN_START, CYCLE)
+      hasCrossedSeasonDay42(AUTUMN_START + 10, AUTUMN_START + 60, AUTUMN_START, CYCLE)
     ).toBe(true);
   });
 
   it('detects a boundary exactly on the return day', () => {
-    expect(hasCrossedAutumnDay42(AUTUMN_START + 10, AUTUMN_DAY_42, AUTUMN_START, CYCLE)).toBe(
+    expect(hasCrossedSeasonDay42(AUTUMN_START + 10, AUTUMN_DAY_42, AUTUMN_START, CYCLE)).toBe(
       true
     );
   });
 
   it('does not re-apply when the save was stamped ON day 42', () => {
-    expect(hasCrossedAutumnDay42(AUTUMN_DAY_42, AUTUMN_DAY_42 + 50, AUTUMN_START, CYCLE)).toBe(
+    expect(hasCrossedSeasonDay42(AUTUMN_DAY_42, AUTUMN_DAY_42 + 50, AUTUMN_START, CYCLE)).toBe(
       false
     );
   });
@@ -87,25 +88,41 @@ describe('hasCrossedAutumnDay42 (Harvest Feast catch-up)', () => {
     // Both endpoints are after day 42 in the same autumn — the next
     // occurrence is a full year away.
     expect(
-      hasCrossedAutumnDay42(AUTUMN_DAY_42 + 5, AUTUMN_DAY_42 + 40, AUTUMN_START, CYCLE)
+      hasCrossedSeasonDay42(AUTUMN_DAY_42 + 5, AUTUMN_DAY_42 + 40, AUTUMN_START, CYCLE)
     ).toBe(false);
   });
 
   it('detects the boundary across multiple absent years', () => {
     expect(
-      hasCrossedAutumnDay42(AUTUMN_START, AUTUMN_START + 3 * CYCLE, AUTUMN_START, CYCLE)
+      hasCrossedSeasonDay42(AUTUMN_START, AUTUMN_START + 3 * CYCLE, AUTUMN_START, CYCLE)
     ).toBe(true);
   });
 
   it('returns false for an empty or backwards interval', () => {
-    expect(hasCrossedAutumnDay42(200, 200, AUTUMN_START, CYCLE)).toBe(false);
-    expect(hasCrossedAutumnDay42(300, 100, AUTUMN_START, CYCLE)).toBe(false);
+    expect(hasCrossedSeasonDay42(200, 200, AUTUMN_START, CYCLE)).toBe(false);
+    expect(hasCrossedSeasonDay42(300, 100, AUTUMN_START, CYCLE)).toBe(false);
   });
 
-  it('honours a custom harvestFeastDay override', () => {
+  it('honours a custom eventDay override', () => {
     const day10 = AUTUMN_START + 9;
-    expect(hasCrossedAutumnDay42(AUTUMN_START, day10 + 5, AUTUMN_START, CYCLE, 10)).toBe(true);
-    expect(hasCrossedAutumnDay42(day10, day10 + 5, AUTUMN_START, CYCLE, 10)).toBe(false);
+    expect(hasCrossedSeasonDay42(AUTUMN_START, day10 + 5, AUTUMN_START, CYCLE, 10)).toBe(true);
+    expect(hasCrossedSeasonDay42(day10, day10 + 5, AUTUMN_START, CYCLE, 10)).toBe(false);
+  });
+
+  it('detects the Yule day inside the interval, for Winter', () => {
+    // Saved mid-winter before day 42, returning after it — same math, a
+    // different season's start-day-in-year. Guards the generalization from
+    // hasCrossedAutumnDay42 to hasCrossedSeasonDay42 actually being exercised
+    // by a second caller (YuleCelebrationManager), not just renamed.
+    expect(
+      hasCrossedSeasonDay42(WINTER_START + 10, WINTER_START + 60, WINTER_START, CYCLE)
+    ).toBe(true);
+    expect(hasCrossedSeasonDay42(WINTER_START + 10, WINTER_DAY_42, WINTER_START, CYCLE)).toBe(
+      true
+    );
+    expect(hasCrossedSeasonDay42(WINTER_DAY_42, WINTER_DAY_42 + 50, WINTER_START, CYCLE)).toBe(
+      false
+    );
   });
 });
 
