@@ -23,6 +23,8 @@ import { reportError } from '../utils/errorReporting';
 import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory';
 
 interface HelpBrowserProps {
+  onResetPosition?: () => void;
+  onTakePhoto?: () => void;
   onClose: () => void;
   initialTab?: string;
   cameraZoom?: {
@@ -69,6 +71,8 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
   onOpenCharacterSelect,
   initialTab = 'getting-started',
   cameraZoom,
+  onResetPosition,
+  onTakePhoto,
 }) => {
   const [showTopics, setShowTopics] = useState(false);
   const selectTab = (tab: string) => {
@@ -637,7 +641,33 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                     </p>
                   </section>
                 )}
-                {selectedTab === SETTINGS_TAB && <DisplayModeControls />}
+                {selectedTab === SETTINGS_TAB && (
+                  <>
+                    <div className="flex flex-wrap gap-3 mb-4">
+                      {onResetPosition && (
+                        <button
+                          onClick={onResetPosition}
+                          className="min-h-12 px-4 border-2 rounded border-[#8b7355]"
+                        >
+                          Unstick player
+                        </button>
+                      )}
+                      {onTakePhoto && (
+                        <button
+                          onClick={onTakePhoto}
+                          className="min-h-12 px-4 border-2 rounded border-[#8b7355]"
+                        >
+                          Take photo
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm mb-3">
+                      Tap the world to walk or interact. Hold a world object or quick-slot item to
+                      see its actions.
+                    </p>
+                    <DisplayModeControls />
+                  </>
+                )}
                 {/* Account Section */}
                 <div
                   className="rounded-lg p-3 sm:p-6 mb-6"

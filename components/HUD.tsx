@@ -24,13 +24,14 @@ function formatTimeRemaining(ms: number): string {
 }
 
 interface HUDProps {
+  compact?: boolean;
   /** Currently selected item ID (or null if nothing selected) */
   selectedItemId?: string | null;
   /** Quantity of selected item (for display) */
   selectedItemQuantity?: number;
 }
 
-const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
+const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity, compact = false }) => {
   const currentMap = mapManager.getCurrentMap();
   const mapName = currentMap ? currentMap.name : 'Loading...';
   const { gold, forestDepth, caveDepth } = useGameState();
@@ -87,14 +88,19 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
       {/* Top-left: Wallet + Equipped Item */}
       <div
         className={`absolute left-2 ${zClass(Z_HUD)} pointer-events-none flex items-start gap-2`}
-        style={{ top: 'calc(8px + env(safe-area-inset-top, 0px))' }}
+        style={{
+          top: 'calc(8px + env(safe-area-inset-top, 0px))',
+          left: 'max(8px, env(safe-area-inset-left))',
+          maxWidth: compact ? 'calc(50% - 100px)' : undefined,
+          flexWrap: compact ? 'wrap' : undefined,
+        }}
       >
         {/* Floating Wallet - Gold display */}
         <div className="relative">
           <img
             src="/TwilightGame/assets-optimized/ui/wallet.png"
             alt="Gold"
-            className="w-[70px] h-[70px] sm:w-[88px] sm:h-[88px] drop-shadow-lg"
+            className={`${compact ? 'w-14 h-14' : 'w-[70px] h-[70px] sm:w-[88px] sm:h-[88px]'} drop-shadow-lg`}
           />
           <div
             className="absolute inset-0 flex items-center justify-center"
@@ -200,12 +206,21 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
       {/* Right HUD Panel - Clock, calendar, and location */}
       <div
         className={`absolute right-16 sm:right-20 ${zClass(Z_HUD)} pointer-events-none`}
-        style={{ top: 'calc(8px + env(safe-area-inset-top, 0px))' }}
+        style={{
+          top: 'calc(8px + env(safe-area-inset-top, 0px))',
+          ...(compact
+            ? { left: '50%', right: 'auto', transform: 'translateX(-50%)', maxWidth: '160px' }
+            : { right: 'calc(168px + env(safe-area-inset-right, 0px))' }),
+        }}
       >
-        <div className="flex items-start gap-2">
+        <div className={`flex items-start gap-2 ${compact ? 'flex-wrap justify-center' : ''}`}>
           {/* Location info to the left of clocks (cottagecore styled) */}
           <div
-            className="px-3 py-2 rounded-lg mt-2"
+            className={
+              compact
+                ? 'px-2 py-1 rounded-lg order-last w-full text-center'
+                : 'px-3 py-2 rounded-lg mt-2'
+            }
             style={{
               background: 'linear-gradient(135deg, #f5f0e1, #e8dcc8)',
               border: '2px solid #8b7355',
@@ -242,11 +257,11 @@ const HUD: React.FC<HUDProps> = ({ selectedItemId, selectedItemQuantity }) => {
                 : undefined
             }
           >
-            <AnalogClock currentTime={currentTime} size={70} />
+            <AnalogClock currentTime={currentTime} size={compact ? 48 : 70} />
           </div>
 
           {/* Sundial Calendar (date/season) */}
-          <SundialClock currentTime={currentTime} size={70} />
+          <SundialClock currentTime={currentTime} size={compact ? 48 : 70} />
         </div>
       </div>
     </>

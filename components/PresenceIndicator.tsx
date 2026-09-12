@@ -24,7 +24,7 @@ const PresenceIndicator: React.FC<PresenceIndicatorProps> = ({ count, names, com
   return (
     <div
       className={`pointer-events-none fixed left-1/2 -translate-x-1/2 ${zClass(Z_PRESENCE_INDICATOR)}`}
-      style={{ top: compact ? '8px' : '14px' }}
+      style={{ top: compact ? 'calc(104px + env(safe-area-inset-top, 0px))' : '14px' }}
       title={names.join(', ')}
     >
       <div

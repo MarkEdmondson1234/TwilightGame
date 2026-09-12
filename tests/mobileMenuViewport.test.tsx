@@ -34,7 +34,7 @@ describe('mobile menu viewport', () => {
     });
     expect(shell.style.top).toBe('70px');
   });
-  it.each(['glamourModal', 'photoAlbum', 'furnitureCatalogueUI', 'giftModal'] as const)(
+  it.each(['bookshelf', 'glamourModal', 'photoAlbum', 'furnitureCatalogueUI', 'giftModal'] as const)(
     'blocks world input for %s',
     (name) => {
       const { result } = renderHook(() => useUIState());

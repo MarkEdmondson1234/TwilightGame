@@ -10,6 +10,8 @@ export interface InventoryItem {
 }
 
 interface QuickSlotBarProps {
+  isTouchDevice?: boolean;
+  compact?: boolean;
   items: InventoryItem[]; // First 9 items from inventory
   selectedSlot: number | null; // Currently selected slot (0-8)
   onSlotClick: (slotIndex: number) => void; // Select slot for equipment/use
@@ -29,6 +31,8 @@ interface QuickSlotBarProps {
  * Display-only (no drag-drop) - organization happens in Inventory modal
  */
 const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
+  isTouchDevice = false,
+  compact = false,
   items,
   selectedSlot,
   onSlotClick,
@@ -55,12 +59,27 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
 
   return (
     <div
-      className={`fixed left-1/2 -translate-x-1/2 ${zClass(Z_HUD)} pointer-events-auto
+      data-game-ui
+      aria-label="Quick slots — swipe to see more, hold an item for actions"
+      className={`fixed ${isTouchDevice ? '' : 'left-1/2 -translate-x-1/2'} ${zClass(Z_HUD)} pointer-events-auto
         bottom-5 md:bottom-5 sm:bottom-[90px] px-2 py-2 rounded-lg`}
       onClick={(e) => e.stopPropagation()} // Prevent clicks from passing through to game world
-      style={{ background: 'rgba(0, 0, 0, 0.3)' }} // Subtle backdrop for click area
+      style={{
+        background: 'rgba(0, 0, 0, 0.3)',
+        ...(isTouchDevice
+          ? {
+              bottom: 'calc(8px + env(safe-area-inset-bottom, 0px))',
+              left: `calc(${compact ? 176 : 208}px + env(safe-area-inset-left, 0px))`,
+              right: 'calc(104px + env(safe-area-inset-right, 0px))',
+              transform: 'none',
+              overflowX: 'auto',
+              touchAction: 'pan-x',
+              overscrollBehaviorX: 'contain',
+            }
+          : {}),
+      }} // Subtle backdrop for click area
     >
-      <div className="flex gap-2 md:gap-2 sm:gap-1">
+      <div className="flex gap-2 w-max">
         {slots.map((item, index) => {
           const isEmpty = item === null;
           const isSelected = selectedSlot === index;
@@ -68,6 +87,8 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
           return (
             <button
               key={index}
+              aria-label={`Slot ${index + 1}: ${item?.name ?? 'Empty'}`}
+              aria-pressed={isSelected}
               onClick={() => {
                 // The click the browser synthesises after a hold is not a selection.
                 if (longPress.consumeTap()) return;
@@ -89,7 +110,7 @@ const QuickSlotBar: React.FC<QuickSlotBarProps> = ({
               className={`
                 no-touch-callout
                 relative rounded-lg transition-all
-                w-12 h-12 md:w-12 md:h-12 sm:w-10 sm:h-10
+                w-12 h-12 shrink-0
                 ${
                   isSelected
                     ? 'border-4 border-yellow-400 bg-yellow-900/60 shadow-lg shadow-yellow-500/50'

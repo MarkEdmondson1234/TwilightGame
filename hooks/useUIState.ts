@@ -7,6 +7,7 @@ import type { MiniGameTriggerData } from '../minigames/types';
  * Each overlay has a boolean "show" state.
  */
 export type UIOverlayName =
+  | 'bookshelf'
   | 'inventory'
   | 'cookingUI'
   | 'brewingUI'
@@ -59,6 +60,7 @@ export interface UIContext {
  */
 export interface UIState {
   // Overlay visibility flags
+  bookshelf: boolean;
   inventory: boolean;
   cookingUI: boolean;
   brewingUI: boolean;
@@ -140,6 +142,7 @@ const initialContext: UIContext = {
 };
 
 const initialState: UIState = {
+  bookshelf: false,
   inventory: false,
   cookingUI: false,
   brewingUI: false,
@@ -349,6 +352,7 @@ export function useUIState() {
    */
   const isAnyUIOpen = useCallback((): boolean => {
     return (
+      state.bookshelf ||
       state.inventory ||
       state.cookingUI ||
       state.brewingUI ||

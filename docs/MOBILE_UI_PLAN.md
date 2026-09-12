@@ -26,7 +26,18 @@ The owner subsequently prioritised repeated iPhone Firefox reloads, an oversized
 - Sentry showed five fresh Firefox iOS sessions between 10:58:32 and 10:59:16 UTC on 12 September, each reaching renderer initialisation. No matching uncaught crash established the cause. Added explicit WebGL context-loss and renderer-initialisation reporting plus camera, viewport, framebuffer and texture-memory context. An OS/browser process kill can still prevent any final JavaScript report from uploading. Removed the temporary production vConsole and unbounded console buffer/synchronous storage logger.
 - Settings requests fullscreen and then landscape locking where supported; failure leaves the game usable. iPhone guidance explains Safari → Share → Add to Home Screen. Fixed manifest/icon paths for `/TwilightGame/` and retained standalone display mode. Portrait account/settings access remains available; the game can require landscape play without reliably forcing physical rotation on iPhone.
 
-Validation: `make verify`, lint and production build; browser emulation measured zero map textures before mobile Play and successful world loading afterwards, 75% camera selection and stable framebuffer size under an expanded viewport. Physical iPhone Firefox crash/reload, keyboard, installation and fullscreen checks remain required after deployment. D-pad/HUD refinements, other activity menus, multiplayer chat and mini-game coverage are still outstanding.
+Validation: `make verify`, lint and production build; browser emulation measured zero map textures before mobile Play and successful world loading afterwards, 75% camera selection and stable framebuffer size under an expanded viewport. The owner confirmed that the title screen is recoverable after deployment, then clarified that gameplay still intermittently crashes back to the splash after roughly a minute at normal browser zoom. The crash investigation remains active; this is not a stable-session confirmation. Keyboard, installation and fullscreen checks also remain pending. D-pad/HUD refinements, other activity menus, multiplayer chat and mini-game coverage are still outstanding.
+
+Stage 3 HUD/control changes are implemented on `mobile-landscape-controls`, based on merged PRs #113–115:
+
+- Compact D-pad targets are 48px (56px on taller screens), with visible held state, pointer capture, per-direction pointer ownership and release on pointer cancellation, lost capture, blur, rotation, visibility change and unmount. A second finger cannot release another finger's direction.
+- The satchel stays at 80px on touch devices and uses native click/tap activation, avoiding expansion under the finger and activation from cancelled touches. It occupies the lower-right corner; the D-pad occupies the lower-left.
+- Quick slots stay 48px, retain the same nine inventory indices and long-press actions, and scroll horizontally between the controls when needed. Books opens the existing illustrated spines in a labelled menu using the common viewport shell and central overlay/input guard.
+- Clock/calendar and location sit centrally on touch screens, clear of Account/Books/Help. Multiplayer presence moves below the compact clock group. Settings contains Unstick player and Take photo (when the camera is equipped), plus a brief reminder of existing tap/hold actions.
+
+The browser resize sweep also showed a lighting overlay ending short of the viewport after enlarging a running game from phone to tablet dimensions. This observed rendering issue is recorded for the stage 5 resize/performance investigation; its cause is not established by the HUD checks.
+
+Automated input regression coverage and full-game browser checks supplement the remaining physical-device validation. Activity-menu reflow, chat composer behaviour and mini-game touch coverage remain in stages 4–5; this PR does not complete them or establish sustained iPhone stability.
 
 ## Design decisions
 
