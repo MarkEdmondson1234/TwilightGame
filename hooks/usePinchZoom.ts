@@ -20,6 +20,8 @@ interface UsePinchZoomConfig {
   maxZoom?: number;
   /** Separate indoor and outdoor choices; the mobile interior default is 75%. */
   preferenceKey?: 'world' | 'interior';
+  /** Initial/reset framing, used until this view group has an explicit choice. */
+  defaultZoom?: number;
 }
 
 interface UsePinchZoomResult {
@@ -100,8 +102,9 @@ export function usePinchZoom({
   minZoom = DEFAULT_MIN_ZOOM,
   maxZoom = DEFAULT_MAX_ZOOM,
   preferenceKey = 'world',
+  defaultZoom: configuredDefault,
 }: UsePinchZoomConfig = {}): UsePinchZoomResult {
-  const defaultZoom = preferenceKey === 'interior' ? 0.75 : DEFAULT_ZOOM;
+  const defaultZoom = configuredDefault ?? (preferenceKey === 'interior' ? 0.75 : DEFAULT_ZOOM);
   const [preferences, setPreferences] = useState<Partial<Record<'world' | 'interior', number>>>({});
   const preferredZoom = preferences[preferenceKey] ?? defaultZoom;
   const setZoom = useCallback(
@@ -167,9 +170,13 @@ export function usePinchZoom({
         return;
       }
       if (e.touches.length === 2) {
+        e.preventDefault();
         initialPinchDistance.current = getTouchDistance(e.touches[0], e.touches[1]) || null;
         lastTapTime.current = 0;
         zoomAtPinchStart.current = zoomRef.current;
+      } else if (e.touches.length > 2) {
+        initialPinchDistance.current = null;
+        lastTapTime.current = 0;
       } else if (e.touches.length === 1) {
         const now = Date.now();
         if (now - lastTapTime.current < DOUBLE_TAP_MS) {
@@ -194,16 +201,18 @@ export function usePinchZoom({
       initialPinchDistance.current = null;
     };
 
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd, { passive: true });
     window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+    window.addEventListener('blur', handleTouchEnd);
 
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
       window.removeEventListener('touchcancel', handleTouchEnd);
+      window.removeEventListener('blur', handleTouchEnd);
       initialPinchDistance.current = null;
       lastTapTime.current = 0;
     };

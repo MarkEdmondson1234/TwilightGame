@@ -1,4 +1,4 @@
-import { getPlayerBodyFraction, playerGroundingOffset, isOutsideMobileShopFloor, shopFloorY } from './utils/playerGrounding';
+import { getPlayerBodyFraction, playerGroundingOffset, isOutsideMobileShopFloor } from './utils/playerGrounding';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   TILE_SIZE,
@@ -513,14 +513,17 @@ const App: React.FC = () => {
     activeNPC,
   });
 
-  // A desktop save may be on a counter tile allowed by its centre-anchored layout.
-  // Bring mobile feet onto the adjacent floor without changing the shared save format.
+  // Revalidate a mobile save/entry after maps and NPCs have loaded. A clear
+  // terrain tile can still be occupied by Fox or another moving NPC.
   useEffect(() => {
-    if (constrainShopFloor && isOutsideMobileShopFloor(playerPosRef.current)) {
-      const pos = playerPosRef.current;
-      teleportPlayer({ x: pos.x, y: Math.min(668 / 64, Math.max(shopFloorY(pos.x), pos.y)) });
+    if (!isTouchDevice || !isMapInitialized || !currentMap || movementMode === 'flying') return;
+    const safe = mapManager.findUnoccupiedPosition(currentMap.id, playerPosRef.current,
+      (pos) => currentMap.id !== 'shop' || !isOutsideMobileShopFloor(pos));
+    if (safe && (safe.x !== playerPosRef.current.x || safe.y !== playerPosRef.current.y)) {
+      teleportPlayer(safe);
+      gameState.updatePlayerLocation(currentMap.id, safe, gameState.getPlayerLocation().seed);
     }
-  }, [constrainShopFloor, teleportPlayer, playerPosRef]);
+  }, [isTouchDevice, isMapInitialized, currentMap, movementMode, teleportPlayer, playerPosRef]);
 
   // ── Multiplayer presence ──────────────────────────────────────────────────
   // Refs so the game-loop publisher below reads live values without being
@@ -656,13 +659,7 @@ const App: React.FC = () => {
     activeNPC,
     setActiveNPC,
     npcsRef,
-    onMapTransition: (mapId, pos) => {
-      setCurrentMapId(mapId);
-      teleportPlayer(pos);
-      lastTransitionTime.current = Date.now();
-      npcManager.setCurrentMap(mapId);
-      fairyAttractionManager.reset();
-    },
+    onMapTransition: (mapId, pos) => handleMapTransition(mapId, pos),
     onShowToast: showToast,
     onSelectItemSlot: setSelectedItemSlot,
     // Social actions offered when right-clicking another player.
@@ -755,6 +752,7 @@ const App: React.FC = () => {
     maxZoom: maxCameraZoom,
     enabled: zoomLimits.enabled,
     preferenceKey: isMobileInteriorCamera ? 'interior' : 'world',
+    defaultZoom: isTouchDevice ? (isMobileInteriorCamera ? zoomLimits.minZoom : 0.5) : 1,
   });
 
   const handleCharacterCreated = (character: CharacterCustomization) => {
@@ -775,7 +773,12 @@ const App: React.FC = () => {
     // teleport-home, "sent to bed" — get wall/bounds validation and a safe-spawn
     // fallback too. A stale or mistyped coordinate here must never drop the player
     // inside a solid tile with no way to recover.
-    const { map, spawn } = transitionToMap(mapId, spawnPos);
+    const transition = transitionToMap(mapId, spawnPos);
+    const map = transition.map;
+    const spawn = isTouchDevice
+      ? mapManager.findUnoccupiedPosition(map.id, transition.spawn,
+          (pos) => map.id !== 'shop' || !isOutsideMobileShopFloor(pos)) ?? transition.spawn
+      : transition.spawn;
     setCurrentMapId(map.id);
     teleportPlayer(spawn);
     lastTransitionTime.current = Date.now();
@@ -820,6 +823,7 @@ const App: React.FC = () => {
     } else if (wasShared && !isShared) {
       farmManager.stopSharedSync();
     }
+    return spawn;
   };
 
   // Farm update handler - no-op since EventBus handles this now
@@ -2211,7 +2215,10 @@ const App: React.FC = () => {
       {/* Z_TILE_BACKGROUND ensures canvas stays below foreground parallax (z-250) and weather overlays */}
       {USE_PIXI_RENDERER && (
         <canvas ref={canvasRef} className={`absolute top-0 left-0 ${zClass(Z_TILE_BACKGROUND)}`}
-          style={isMobileInteriorCamera ? { clipPath: `inset(0 0 ${interiorControlInset}px 0)` } : undefined} />
+          style={{
+            touchAction: isTouchDevice && zoomLimits.enabled ? 'none' : undefined,
+            clipPath: isMobileInteriorCamera ? `inset(0 0 ${interiorControlInset}px 0)` : undefined,
+          }} />
       )}
 
       {isMobileInteriorCamera && (
@@ -2584,6 +2591,7 @@ const App: React.FC = () => {
       {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <GameUIControls
           onOpenBooks={() => openUI('bookshelf')}
+          onOpenEmotes={toggleEmoteWheel}
           showHelpBrowser={ui.helpBrowser}
           onToggleHelpBrowser={() => {
             setHelpInitialTab(isTouchDevice ? 'settings' : 'getting-started');
@@ -2634,7 +2642,6 @@ const App: React.FC = () => {
         <TouchControls
           onDirectionPress={touchControls.handleDirectionPress}
           onDirectionRelease={touchControls.handleDirectionRelease}
-          onEmotePress={toggleEmoteWheel}
           compact={isCompactMode}
         />
       )}
@@ -2729,8 +2736,20 @@ const App: React.FC = () => {
       {ui.helpBrowser && (
         <HelpBrowser
           initialTab={helpInitialTab}
+          onOpenEmotes={isTouchDevice ? () => { closeUI('helpBrowser'); setShowEmoteWheel(true); } : undefined}
+          onReload={isTouchDevice ? () => { gameState.flushSave(); window.location.reload(); } : undefined}
           onResetPosition={() => {
-            touchControls.handleResetPress();
+            if (isTouchDevice && currentMap) {
+              const safe = mapManager.findUnoccupiedPosition(currentMap.id, currentMap.spawnPoint,
+                (pos) => !constrainShopFloor || !isOutsideMobileShopFloor(pos));
+              if (safe) {
+                setClickToMoveDestination(null);
+                teleportPlayer(safe);
+                gameState.updatePlayerLocation(currentMap.id, safe, gameState.getPlayerLocation().seed);
+                gameState.flushSave();
+                showToast('Moved to a clear place.', 'success');
+              } else showToast('No clear place found. Please try again in a moment.', 'info');
+            } else touchControls.handleResetPress();
             closeUI('helpBrowser');
           }}
           onTakePhoto={
@@ -2747,6 +2766,7 @@ const App: React.FC = () => {
             max: maxCameraZoom,
             fittedRoom: isBackgroundImageRoom && !isMobileInteriorCamera,
             interiorCamera: isMobileInteriorCamera,
+            mobile: isTouchDevice,
             onChange: setZoomLevel,
           }}
           onClose={() => closeUI('helpBrowser')}

@@ -24,6 +24,8 @@ import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory'
 
 interface HelpBrowserProps {
   onResetPosition?: () => void;
+  onOpenEmotes?: () => void;
+  onReload?: () => void;
   onTakePhoto?: () => void;
   onClose: () => void;
   initialTab?: string;
@@ -33,6 +35,7 @@ interface HelpBrowserProps {
     max?: number;
     fittedRoom: boolean;
     interiorCamera?: boolean;
+    mobile?: boolean;
     onChange: (value: number) => void;
   };
   onOpenCharacterSelect?: () => void;
@@ -74,6 +77,8 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
   initialTab = 'getting-started',
   cameraZoom,
   onResetPosition,
+  onOpenEmotes,
+  onReload,
   onTakePhoto,
 }) => {
   const [showTopics, setShowTopics] = useState(false);
@@ -372,6 +377,14 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
           <h1 className="text-2xl font-serif font-bold" style={{ color: colours.brass }}>
             {selectedTab === ACCOUNT_TAB ? 'Account' : '📖 Game Help'}
           </h1>
+          {cameraZoom?.mobile && onResetPosition && (
+            <button
+              onClick={onResetPosition}
+              className="min-h-12 px-3 rounded border-2 border-[#d4b483] text-[#ffeedd]"
+            >
+              Unstick player
+            </button>
+          )}
           <button
             onClick={onClose}
             className="min-h-12 px-4 py-2 font-serif font-bold rounded transition-all hover:brightness-110"
@@ -409,6 +422,15 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
               >
                 Topics
               </h2>
+              {onOpenEmotes && (
+                <button
+                  onClick={onOpenEmotes}
+                  className="w-full text-left px-4 py-3 mb-2 rounded font-serif font-semibold"
+                  style={{ color: colours.text, background: colours.parchment }}
+                >
+                  Emotes & game icons
+                </button>
+              )}
               <button
                 onClick={() => selectTab(ACCOUNT_TAB)}
                 className="w-full text-left px-4 py-3 mb-2 rounded font-serif font-semibold"
@@ -607,6 +629,11 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                     </div>
                   </>
                 )}
+                {selectedTab === SETTINGS_TAB && cameraZoom?.mobile && (
+                  <p className="text-sm mb-3">
+                    Game version: {(import.meta.env.VITE_APP_VERSION || 'development').slice(0, 12)}
+                  </p>
+                )}
                 {selectedTab === SETTINGS_TAB && cameraZoom && (
                   <section
                     className="rounded-lg p-3 sm:p-6 mb-6 border-2"
@@ -632,6 +659,35 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                         >
                           Fit
                         </button>
+                      )}
+                      {cameraZoom.mobile && !cameraZoom.fittedRoom && (
+                        <>
+                          <button
+                            className="min-h-12 min-w-12 px-3 border-2 rounded disabled:opacity-40"
+                            aria-label="Zoom out"
+                            disabled={cameraZoom.value <= cameraZoom.min + 0.001}
+                            onClick={() =>
+                              cameraZoom.onChange(Math.max(cameraZoom.min, cameraZoom.value - 0.05))
+                            }
+                          >
+                            −
+                          </button>
+                          <span className="self-center" aria-live="polite">
+                            {Math.round(cameraZoom.value * 100)}%
+                          </span>
+                          <button
+                            className="min-h-12 min-w-12 px-3 border-2 rounded disabled:opacity-40"
+                            aria-label="Zoom in"
+                            disabled={cameraZoom.value >= (cameraZoom.max ?? 2) - 0.001}
+                            onClick={() =>
+                              cameraZoom.onChange(
+                                Math.min(cameraZoom.max ?? 2, cameraZoom.value + 0.05)
+                              )
+                            }
+                          >
+                            +
+                          </button>
+                        </>
                       )}
                       {[0.5, 0.75, 1].map((value) => (
                         <button
@@ -666,6 +722,14 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                 {selectedTab === SETTINGS_TAB && (
                   <>
                     <div className="flex flex-wrap gap-3 mb-4">
+                      {onReload && (
+                        <button
+                          onClick={onReload}
+                          className="min-h-12 px-4 border-2 rounded border-[#8b7355]"
+                        >
+                          Save & reload
+                        </button>
+                      )}
                       {onResetPosition && (
                         <button
                           onClick={onResetPosition}
