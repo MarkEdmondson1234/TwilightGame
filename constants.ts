@@ -32,19 +32,34 @@ export const MULTIPLAYER_ENABLED = import.meta.env.VITE_MULTIPLAYER_ENABLED !== 
 
 export const MULTIPLAYER = {
   /**
-   * Maps where other players are visible. Everything else — home interiors,
-   * personal garden, and all RANDOM_* procedural maps — is private.
-   * Procedural maps must stay out: each client generates its own forest from a
-   * different seed, so two players "in the forest" are not in the same forest.
+   * Named maps where other players are visible. The personal garden stays
+   * private. Daily procedural maps are also shared via
+   * isSharedMap() in multiplayer/sharedMaps.ts.
    */
   SHARED_MAPS: new Set([
     'village',
     'farm_area',
     'orchard',
-    'sea_side',
+    'seaSide',
     'magical_lake',
     'ruins',
-    'mushroom_map',
+    'mushroom_forest',
+    'deep_forest',
+    'bear_cave',
+    'witch_hut',
+    // Public interiors: friends can follow one another through these doors.
+    'mums_kitchen',
+    'home_upstairs',
+    'house1',
+    'house2',
+    'house3',
+    'house4',
+    'cottage_interior',
+    'shop',
+    'seed_shed',
+    'mushras_shop',
+    'witch_hut_interior',
+    'bear_den',
   ]),
 
   /** Maximum position writes per second while moving */

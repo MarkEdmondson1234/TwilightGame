@@ -17,12 +17,55 @@
 import { describe, it, expect } from 'vitest';
 import { isSharedMap } from '../multiplayer/sharedMaps';
 import { MULTIPLAYER } from '../constants';
+import { mushroomMap } from '../maps/definitions/mushroomMap';
+import type { MapDefinition } from '../types';
+
+const definitions = import.meta.glob<Record<string, unknown>>('../maps/definitions/*.ts', {
+  eager: true,
+});
+const namedMapIds = new Set(
+  Object.values(definitions).flatMap((module) =>
+    Object.values(module)
+      .filter(
+        (value): value is MapDefinition =>
+          typeof value === 'object' && value !== null && 'id' in value && 'grid' in value
+      )
+      .map((map) => map.id)
+  )
+);
 
 describe('isSharedMap', () => {
-  it('shares the hand-designed outdoor maps', () => {
+  it('keeps players together in Mushra’s forest using its actual map id', () => {
+    expect(isSharedMap(mushroomMap.id)).toBe(true);
+    expect(isSharedMap('mushroom_map')).toBe(false);
+  });
+
+  it('uses real map ids for every shared named map', () => {
     for (const mapId of MULTIPLAYER.SHARED_MAPS) {
+      expect(namedMapIds.has(mapId), mapId).toBe(true);
       expect(isSharedMap(mapId), mapId).toBe(true);
     }
+  });
+
+  it.each([
+    'mums_kitchen',
+    'home_upstairs',
+    'house1',
+    'house2',
+    'house3',
+    'house4',
+    'cottage_interior',
+    'shop',
+    'seed_shed',
+    'mushras_shop',
+    'witch_hut_interior',
+    'bear_den',
+    'deep_forest',
+    'bear_cave',
+    'witch_hut',
+    'seaSide',
+  ])('keeps friends visible in public map %s', (mapId) => {
+    expect(isSharedMap(mapId)).toBe(true);
   });
 
   it('shares the daily procedural forests, mines and lava levels', () => {
@@ -39,9 +82,7 @@ describe('isSharedMap', () => {
     expect(isSharedMap('RANDOM_SHOP')).toBe(false);
   });
 
-  it('keeps interiors private', () => {
-    expect(isSharedMap('mums_kitchen')).toBe(false);
-    expect(isSharedMap('home_upstairs')).toBe(false);
+  it('keeps the personal garden private', () => {
     expect(isSharedMap('personal_garden')).toBe(false);
   });
 

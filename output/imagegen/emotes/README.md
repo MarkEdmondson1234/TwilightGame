@@ -1,5 +1,7 @@
 # Woodland emotes
 
+These AI-generated originals are archived. The runtime emotes now use the hand-drawn mushrooms in `public/assets/icons/ui`. Rebuild their 128×128 transparent thumbnails with `node scripts/build-mushroom-emotes.mjs`. The happy mushroom represents Dance, and the waving mushroom also represents Come and see; all eight existing emote IDs are preserved.
+
 Generated on 12 September 2026 at the owner's request, using the built-in image-generation tool. These are AI-generated additions complementing the game's original hand-drawn artwork, replacing platform emoji in the emote UI and above players.
 
 Eight expressions: wave, laugh, heart (thank you), question, yes, sad, dance and followme (come and see). The direction is a cream woodland spirit with sage leaves, warm pencil contours and chalk texture. Source PNGs retain their generated transparency. Several rejected generations contained painted checkerboards; those are not included here.

@@ -6,8 +6,8 @@
  *
  * Two kinds of map qualify:
  *
- *  1. **Named maps** — the hand-designed outdoor spaces in
- *     `MULTIPLAYER.SHARED_MAPS`. Interiors stay private on purpose.
+ *  1. **Named maps** — the outdoor spaces and public interiors in
+ *     `MULTIPLAYER.SHARED_MAPS`, including Mum's house. The personal garden stays private.
  *
  *  2. **The daily procedural maps** — `forest_<seed>`, `cave_<seed>` and
  *     `lava_<seed>`. These used to be excluded because a `Date.now()` seed made

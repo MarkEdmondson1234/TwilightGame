@@ -165,7 +165,7 @@ export function useMultiplayerController(
       await whenFirebaseSettled();
       const presence: PresenceTransport = getPresenceService();
 
-      // A private map (home, personal garden, any RANDOM_* forest) or an
+      // A private map (personal garden, random shop) or an
       // unavailable backend both mean the same thing: nobody to see here.
       const status = presence.getStatus();
       if (isSharedMap(currentMapId)) noticePresenceState(currentMapId, status.reason);

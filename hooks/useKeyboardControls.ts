@@ -95,7 +95,7 @@ export interface KeyboardControlsConfig {
   onForageResult?: (result: ForageResult) => void;
   onShowToast?: (message: string, type: 'info' | 'warning' | 'error' | 'success') => void;
   onSetSelectedItemSlot?: (slot: number | null) => void;
-  /** T key — open/close the multiplayer emote picker (only wired when multiplayer is on) */
+  /** T key — open/close the emote picker in single-player or multiplayer. */
   onToggleEmoteWheel?: () => void;
   /** Open the chat composer (M). Chat is only wired on shared maps. */
   onStartChat?: () => void;
@@ -259,7 +259,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
       return;
     }
 
-    // T key to toggle the emote picker (the only player-to-player channel)
+    // T key to toggle the emote picker in single-player or multiplayer.
     if ((e.key === 't' || e.key === 'T') && onToggleEmoteWheel && !showMiniGameRef.current) {
       e.preventDefault();
       onToggleEmoteWheel();
