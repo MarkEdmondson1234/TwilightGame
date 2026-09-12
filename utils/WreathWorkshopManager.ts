@@ -3,12 +3,14 @@
  *
  * Manages the seasonal appearance of Mushra's crafting table in the village
  * square during autumn. The table appears on days 1–7 of autumn each year,
- * giving the player a window to accept Mushra's wreath workshop quest.
+ * giving the player a window to accept and work on Mushra's wreath workshop quest.
  *
  * Logic:
- *   - Place table when:  season=Autumn AND day 1–7 AND quest not yet started AND not complete
- *   - Remove table when: above condition no longer true AND quest not active
- *   - If quest is active (accepted), the table stays until quest completes
+ *   - Place table when:  season=Autumn AND day 1–7 AND quest not complete
+ *   - Remove table when: outside that window (regardless of whether the quest
+ *     has been started/is active) — an unfinished quest simply gets another
+ *     window next autumn, rather than leaving the table sitting in the village
+ *     through winter and spring
  *   - If quest is complete, the table is in the seed shed — don't spawn in village
  *
  * Called periodically from App.tsx alongside seasonalEventManager.check().
@@ -19,7 +21,6 @@ import { gameState } from '../GameState';
 import { itemAssets } from '../assets';
 import {
   isWreathWorkshopComplete,
-  isWreathWorkshopActive,
   VILLAGE_CRAFTING_TABLE_ID,
 } from '../data/questHandlers/mushraWreathHandler';
 import { debugLog } from './debugLog';
@@ -40,8 +41,6 @@ class WreathWorkshopManagerClass {
     const isInWindow = isAutumn && time.day >= 1 && time.day <= WORKSHOP_WINDOW_DAYS;
 
     const questComplete = isWreathWorkshopComplete();
-    const questActive = isWreathWorkshopActive();
-
     const tableInVillage = this.isTableInVillage();
 
     if (questComplete) {
@@ -52,16 +51,9 @@ class WreathWorkshopManagerClass {
       return;
     }
 
-    if (questActive) {
-      // Quest accepted — keep the table in place while player works on it
-      // (Table was already spawned when the quest started, or by a previous check)
-      if (!tableInVillage) {
-        this.placeTable();
-      }
-      return;
-    }
-
-    // Quest not yet started: show table only during the autumn window
+    // Quest not complete (whether not started, or started but not finished):
+    // the table only exists during the autumn window. An unfinished quest gets
+    // another window next autumn rather than the table lingering in the village.
     if (isInWindow && !tableInVillage) {
       this.placeTable();
     } else if (!isInWindow && tableInVillage) {
