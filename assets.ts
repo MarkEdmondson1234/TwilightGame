@@ -746,6 +746,13 @@ export const animationAssets = {
   // fireflies: '/TwilightGame/assets-optimized/animations/fireflies.gif',
 };
 
+// Pre-rendered Blender weather instrument. Order: base, turning arrow, weather signs.
+export const weatherVaneAssets = {
+  base: '/TwilightGame/assets/effects/weather-vane/base.png',
+  rotor: '/TwilightGame/assets/effects/weather-vane/rotor-atlas.png',
+  signs: '/TwilightGame/assets/effects/weather-vane/sign-atlas.png',
+};
+
 // Particle assets - PNG sprites for weather particle systems
 export const particleAssets = {
   rain: '/TwilightGame/assets/particles/rain.png',

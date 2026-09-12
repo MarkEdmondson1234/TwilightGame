@@ -1,7 +1,8 @@
-# Blender effects: cave water
+# Blender effects: cave water and magical weather vane
 
-Blender supplies **water only**. The hand-drawn stone columns, cave pools and
-crystals remain the original images. No new formation or prop artwork is generated.
+For the caves, Blender supplies **water only**. The hand-drawn stone columns, cave
+pools and crystals remain the original images. The weather vane is a new Blender-made
+object, mounted above the existing village shop without changing its artwork.
 
 ## Current experiment
 
@@ -54,10 +55,51 @@ bases from the front, skirt pools, move the camera, then leave and re-enter. Wat
 should remain subtle and should never prevent movement. The movement regression
 test exercises the real collision hook against all six solid formation sizes.
 
-## Next: weather vane
+## Magical weather vane
 
-The weather vane should use an artist-supplied drawing/design. Blender's role will
-be a shallow animated support for that artwork. The current weather configuration
-has particle velocities but no shared compass wind direction; weather-driven
-turning therefore needs a small explicit behaviour model. No substitute vane art
-or weather changes are included in this cave experiment.
+Look above the **village shop roof**. Its fixed enamel dial shows the current weather,
+while its copper arrow turns through 16 Blender-rendered views. The symbol stays
+readable even when the arrow is edge-on. It reports the real weather state passed to
+the scenery renderer, including weather changes caused by magic; it does not forecast
+or control weather and its arrow is not a compass.
+
+| Weather | Sign |
+| --- | --- |
+| Clear | Golden sun |
+| Rain | Blue cloud and drops |
+| Snow | Ivory snowflake |
+| Fog | Three low horizontal bands |
+| Mist | Two rising wisps with droplets |
+| Storm | Amber cloud and lightning |
+| Cherry blossoms | Pink five-petalled flower |
+
+The arrow moves gently in calm weather and responds more strongly during storms.
+Reduced-motion mode holds the arrow still but continues updating the weather sign.
+Only the village shop gets this attachment. It inherits the building's depth and
+visibility; it adds no collision or interaction area. The legacy DOM renderer does
+not show the vane.
+
+`data/weatherVane.ts` defines the seven signs, movement and placement;
+`utils/pixi/WeatherVane.ts` renders them. Three textures (base, rotor atlas, sign atlas)
+cost about 5.6 MiB before mipmaps and are resident only for the village. They are
+already at game resolution and bypass the generic image resizer.
+
+![Seven weather signs](../design_docs/blender/weather-vane-states.png)
+
+![Arrow turntable — review only, not gameplay timing](../design_docs/blender/weather-vane-turntable.gif)
+
+To reproduce the editable Blender scene, runtime images and review previews:
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender --background --python-exit-code 1 --python scripts/blender/weather_vane.py -- --out /tmp/twilight-weather-vane
+node scripts/blender/pack-weather-vane.mjs /tmp/twilight-weather-vane
+make verify
+```
+
+Open `design_docs/blender/weather-vane.blend` to edit the model. Weather symbols are
+separate named objects; the saved scene shows the clear sign. The renderer combines
+the fixed body, moving arrow and selected sign without replacing any existing art.
+
+For a manual check, stand near the shop and use F4 to cycle through all seven weather
+states. Watch the dial update, test reduced motion, walk until the shop leaves view,
+then leave the village and return. The vane should remain on the roof in all seasons.
