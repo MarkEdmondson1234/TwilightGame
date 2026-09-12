@@ -12,6 +12,8 @@ import { usePixiRenderer } from './hooks/usePixiRenderer';
 import HUD from './components/HUD';
 import DebugOverlay from './components/DebugOverlay';
 import CharacterCreator from './components/CharacterCreator';
+import { getCachedPerformanceSettings } from './utils/performanceTier';
+import PortraitPlayPrompt from './components/PortraitPlayPrompt';
 import SplashScreen from './components/SplashScreen';
 import TouchControls from './components/TouchControls';
 import UnifiedDialogueBox from './components/dialogue/UnifiedDialogueBox';
@@ -214,12 +216,13 @@ import { reportMessageOnce } from './utils/errorReporting';
 
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
-  const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen } = useUIState();
+  const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen, isAnyUIOpen } = useUIState();
 
   // Title screen shown before anything else. Purely a UI gate — game asset
   // loading (the effect a few lines below) already starts on mount regardless,
   // so by the time the player clicks Play a returning session may already be
   // ready to go straight into gameplay.
+  const [helpInitialTab, setHelpInitialTab] = useState('getting-started');
   const [showSplashScreen, setShowSplashScreen] = useState(true);
 
   const [isMapInitialized, setIsMapInitialized] = useState(false);
@@ -344,22 +347,9 @@ const App: React.FC = () => {
   // Pinch-to-zoom (touch) and mouse wheel zoom (desktop)
   // Background-image rooms (interiors) can only zoom in, not out
   // Disable zoom when UI overlays are open so scroll/pinch works in menus
-  const isAnyOverlayOpen =
-    !!activeNPC ||
-    ui.helpBrowser ||
-    ui.cookingUI ||
-    ui.recipeBook ||
-    ui.characterCreator ||
-    ui.inventory ||
-    ui.shopUI ||
-    ui.giftModal ||
-    ui.glamourModal ||
-    ui.brewingUI ||
-    ui.magicBook ||
-    ui.journal ||
-    ui.miniGame ||
-    ui.devTools ||
-    ui.vfxTestPanel;
+  const isAnyOverlayOpen = !!activeNPC || isAnyUIOpen();
+  const needsLandscape =
+    isTouchDevice && viewportSize.width < 768 && viewportSize.height > viewportSize.width;
   // Background-image rooms (interiors) already fit the viewport responsively via
   // `viewportScale` (see the memo below); pinch/wheel zoom is disabled there so it
   // can't re-fit the room at a different scale mid-frame and rearrange the layout.
@@ -383,13 +373,17 @@ const App: React.FC = () => {
     );
   }, [isBackgroundImageRoom, currentMapId, viewportSize]);
   const zoomLimits = useMemo(
-    () => getZoomLimitsForRoom(isBackgroundImageRoom, isAnyOverlayOpen, coverZoom),
-    [isBackgroundImageRoom, isAnyOverlayOpen, coverZoom]
+    () =>
+      getZoomLimitsForRoom(
+        isBackgroundImageRoom,
+        isAnyOverlayOpen || needsLandscape || showSplashScreen,
+        coverZoom
+      ),
+    [isBackgroundImageRoom, isAnyOverlayOpen, needsLandscape, showSplashScreen, coverZoom]
   );
-  // Always prevent browser-level zoom changes (Ctrl+scroll, Ctrl+/-/0)
-  // Runs independently of game zoom — never disabled, even when overlays are open
-  useBrowserZoomLock();
-  const { zoom, resetZoom } = usePinchZoom({
+  // Menus retain native browser magnification.
+  useBrowserZoomLock(!isAnyOverlayOpen && !showSplashScreen && !needsLandscape);
+  const { zoom, setZoomLevel } = usePinchZoom({
     minZoom: zoomLimits.minZoom,
     maxZoom: zoomLimits.maxZoom,
     enabled: zoomLimits.enabled,
@@ -420,7 +414,22 @@ const App: React.FC = () => {
   // an overlay: the world is live and rendering underneath it the whole time it's
   // up (that's the point — it loads in the background), so without this a stray
   // click-to-move path or keypress would drive the player around behind the splash.
-  const isUIActive = isAnyOverlayOpen || showSplashScreen;
+  const isUIActive = isAnyOverlayOpen || showSplashScreen || needsLandscape;
+  useEffect(() => {
+    const release = () => {
+      for (const key of Object.keys(keysPressed)) keysPressed[key] = false;
+    };
+    if (isUIActive) release();
+    window.addEventListener('blur', release);
+    window.addEventListener('orientationchange', release);
+    document.addEventListener('visibilitychange', release);
+    return () => {
+      release();
+      window.removeEventListener('blur', release);
+      window.removeEventListener('orientationchange', release);
+      document.removeEventListener('visibilitychange', release);
+    };
+  }, [isUIActive, keysPressed]);
 
   // Movement controller - owns player position, direction, animation, pathfinding
   const {
@@ -593,7 +602,6 @@ const App: React.FC = () => {
       lastTransitionTime.current = Date.now();
       npcManager.setCurrentMap(mapId);
       fairyAttractionManager.reset();
-      resetZoom();
     },
     onShowToast: showToast,
     onSelectItemSlot: setSelectedItemSlot,
@@ -701,8 +709,7 @@ const App: React.FC = () => {
     // Reset fairy attraction manager when changing maps
     fairyAttractionManager.reset();
 
-    // Reset zoom on map transition (new map may have different zoom limits)
-    resetZoom();
+    // Camera zoom is clamped to the new room while retaining the player’s preferred view.
 
     // Play Mr. Fox greeting when entering the shop
     if (map.id.includes('shop')) {
@@ -1084,7 +1091,7 @@ const App: React.FC = () => {
   useKeyboardControls({
     playerPosRef,
     activeNPC,
-    isTitleScreenActive: showSplashScreen,
+    isTitleScreenActive: showSplashScreen || needsLandscape,
     showHelpBrowser: ui.helpBrowser,
     showCookingUI: ui.cookingUI,
     showRecipeBook: ui.recipeBook,
@@ -1833,7 +1840,9 @@ const App: React.FC = () => {
     thoughtBubbleLayerRef,
     updateAnimations,
   } = usePixiRenderer({
-    enabled: USE_PIXI_RENDERER,
+    // Mobile keeps the title/account screen free of the world GPU allocation.
+    // Desktop retains background warming for a fast Play transition.
+    enabled: USE_PIXI_RENDERER && (!getCachedPerformanceSettings().isMobile || !showSplashScreen),
     canvasRef,
     mapConfig: {
       isMapInitialized,
@@ -2153,6 +2162,7 @@ const App: React.FC = () => {
   return (
     <div
       ref={gameContainerRef}
+      data-game-world
       className="no-touch-callout text-white w-full h-full overflow-hidden font-sans relative select-none"
       style={{ backgroundColor: '#5A7247' }}
     >
@@ -2313,7 +2323,7 @@ const App: React.FC = () => {
         {/* For background-image rooms, pass gridOffset and effectiveTileSize for viewport scaling */}
         <TransitionIndicators
           onActivate={(transition) => {
-            if (activeNPC || isCutscenePlaying || isAnyOverlayOpen || showSplashScreen) return;
+            if (isCutscenePlaying || isUIActive) return;
             activateTransitionIndicator(
               transition,
               currentMap,
@@ -2510,7 +2520,14 @@ const App: React.FC = () => {
       {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <GameUIControls
           showHelpBrowser={ui.helpBrowser}
-          onToggleHelpBrowser={() => toggleUI('helpBrowser')}
+          onToggleHelpBrowser={() => {
+            setHelpInitialTab('getting-started');
+            toggleUI('helpBrowser');
+          }}
+          onOpenAccount={() => {
+            setHelpInitialTab('account');
+            openUI('helpBrowser');
+          }}
           showCollisionBoxes={showCollisionBoxes}
           onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
           onToggleInventory={() => toggleUI('inventory')}
@@ -2548,32 +2565,22 @@ const App: React.FC = () => {
       )}
 
       {/* Touch controls - hidden when any modal is open or cutscene playing */}
-      {isTouchDevice &&
-        !activeNPC &&
-        !isCutscenePlaying &&
-        !ui.inventory &&
-        !ui.cookingUI &&
-        !ui.recipeBook &&
-        !ui.journal &&
-        !ui.helpBrowser &&
-        !ui.shopUI &&
-        !ui.characterCreator &&
-        !ui.miniGame && (
-          <TouchControls
-            onDirectionPress={touchControls.handleDirectionPress}
-            onDirectionRelease={touchControls.handleDirectionRelease}
-            onResetPress={touchControls.handleResetPress}
-            onEmotePress={toggleEmoteWheel}
-            compact={isCompactMode}
-            onPhotoPress={
-              selectedItemSlot !== null &&
-              inventoryItems[selectedItemSlot]?.id === 'camera' &&
-              !ui.inventory
-                ? touchControls.handlePhotoPress
-                : undefined
-            }
-          />
-        )}
+      {isTouchDevice && !isUIActive && !isCutscenePlaying && (
+        <TouchControls
+          onDirectionPress={touchControls.handleDirectionPress}
+          onDirectionRelease={touchControls.handleDirectionRelease}
+          onResetPress={touchControls.handleResetPress}
+          onEmotePress={toggleEmoteWheel}
+          compact={isCompactMode}
+          onPhotoPress={
+            selectedItemSlot !== null &&
+            inventoryItems[selectedItemSlot]?.id === 'camera' &&
+            !ui.inventory
+              ? touchControls.handlePhotoPress
+              : undefined
+          }
+        />
+      )}
       {activeNPC && !isCutscenePlaying && (
         <UnifiedDialogueBox
           npc={npcManager.getNPCById(activeNPC)!}
@@ -2664,6 +2671,13 @@ const App: React.FC = () => {
       )}
       {ui.helpBrowser && (
         <HelpBrowser
+          initialTab={helpInitialTab}
+          cameraZoom={{
+            value: zoom,
+            min: zoomLimits.minZoom,
+            fittedRoom: isBackgroundImageRoom,
+            onChange: setZoomLevel,
+          }}
           onClose={() => closeUI('helpBrowser')}
           onOpenCharacterSelect={() => openUI('characterCreator')}
         />
@@ -2734,7 +2748,9 @@ const App: React.FC = () => {
               // The one branch that turns a won fight into "nothing happened":
               // the screen closed but nobody told us which NPC it was about.
               // It was silent for months (see tests/hostileConfront.test.ts).
-              console.warn('[Combat] Combat screen closed with no fight registered — cleanup skipped');
+              console.warn(
+                '[Combat] Combat screen closed with no fight registered — cleanup skipped'
+              );
               reportMessageOnce('Combat screen closed with no fight registered', 'combat', {
                 miniGameId,
                 success: !!result?.success,
@@ -2765,12 +2781,16 @@ const App: React.FC = () => {
                     const chosen = chooseLavaEntranceTile(goblin.position, battleMapId, npcId);
                     if (!chosen) {
                       // Boxed in by rock: the player has won and gets no way down.
-                      reportMessageOnce('No clear tile near beaten goblin for the lava passage', 'combat', {
-                        npcId,
-                        mapId: battleMapId,
-                        x: Math.floor(goblin.position.x),
-                        y: Math.floor(goblin.position.y),
-                      });
+                      reportMessageOnce(
+                        'No clear tile near beaten goblin for the lava passage',
+                        'combat',
+                        {
+                          npcId,
+                          mapId: battleMapId,
+                          x: Math.floor(goblin.position.x),
+                          y: Math.floor(goblin.position.y),
+                        }
+                      );
                     } else if (openLavaEntranceAt(battleMapId, chosen)) {
                       entrance = chosen;
                       showToast('A passage to the lava caverns has been revealed!', 'info');
@@ -3203,6 +3223,18 @@ const App: React.FC = () => {
       {/* Character creator overlay (mid-game, via settings button) */}
       {ui.characterCreator && <CharacterCreator onComplete={handleCharacterCreated} />}
 
+      {!showSplashScreen && needsLandscape && !isAnyOverlayOpen && (
+        <PortraitPlayPrompt
+          onOpenAccount={() => {
+            setHelpInitialTab('account');
+            openUI('helpBrowser');
+          }}
+          onOpenHelp={() => {
+            setHelpInitialTab('settings');
+            openUI('helpBrowser');
+          }}
+        />
+      )}
       {splashOverlay}
     </div>
   );

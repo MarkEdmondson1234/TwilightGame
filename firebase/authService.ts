@@ -25,7 +25,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getFirebaseAuth, getFirebaseDb, isFirebaseInitialized } from './config';
 import { UserProfile, FIRESTORE_PATHS } from './types';
-import { setErrorReportingUser } from '../utils/errorReporting';
+import { reportError, setErrorReportingUser } from '../utils/errorReporting';
 import { debugLog } from '../utils/debugLog';
 
 // ============================================
@@ -37,6 +37,7 @@ export interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   isAnonymous: boolean;
+  profileError?: string | null;
 }
 
 type AuthStateListener = (state: AuthState) => void;
@@ -46,6 +47,7 @@ type AuthStateListener = (state: AuthState) => void;
 // ============================================
 
 class AuthService {
+  private profileError: string | null = null;
   private currentUser: User | null = null;
   private isLoading = true;
   private listeners: Set<AuthStateListener> = new Set();
@@ -68,6 +70,7 @@ class AuthService {
     // Set up auth state listener
     this.unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       debugLog('AuthService', 'Auth state changed:', user ? user.uid : 'signed out');
+      if (this.currentUser?.uid !== user?.uid) this.profileError = null;
       this.currentUser = user;
       this.isLoading = false;
       this.notifyListeners();
@@ -110,6 +113,7 @@ class AuthService {
   getState(): AuthState {
     return {
       user: this.currentUser,
+      profileError: this.profileError,
       isLoading: this.isLoading,
       isAuthenticated: this.currentUser !== null,
       isAnonymous: this.currentUser?.isAnonymous ?? false,
@@ -126,7 +130,7 @@ class AuthService {
   async signUp(email: string, password: string, displayName: string): Promise<User> {
     const auth = getFirebaseAuth();
     const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    await this.createUserProfile(user, displayName);
+    await this.syncProfile(user, () => this.createUserProfile(user, displayName));
     debugLog('AuthService', 'User signed up:', user.uid);
     return user;
   }
@@ -137,7 +141,7 @@ class AuthService {
   async signIn(email: string, password: string): Promise<User> {
     const auth = getFirebaseAuth();
     const { user } = await signInWithEmailAndPassword(auth, email, password);
-    await this.updateLastLogin(user.uid);
+    await this.syncProfile(user, () => this.updateLastLogin(user.uid));
     debugLog('AuthService', 'User signed in:', user.uid);
     return user;
   }
@@ -150,13 +154,13 @@ class AuthService {
     const provider = new GoogleAuthProvider();
     const { user } = await signInWithPopup(auth, provider);
 
-    // Check if profile exists, create if not
-    const profileExists = await this.profileExists(user.uid);
-    if (!profileExists) {
-      await this.createUserProfile(user, user.displayName || 'Player');
-    } else {
-      await this.updateLastLogin(user.uid);
-    }
+    await this.syncProfile(user, async () => {
+      if (!(await this.profileExists(user.uid))) {
+        await this.createUserProfile(user, user.displayName || 'Player');
+      } else {
+        await this.updateLastLogin(user.uid);
+      }
+    });
 
     debugLog('AuthService', 'User signed in with Google:', user.uid);
     return user;
@@ -182,7 +186,7 @@ class AuthService {
 
     const credential = EmailAuthProvider.credential(email, password);
     const result: UserCredential = await linkWithCredential(this.currentUser, credential);
-    await this.createUserProfile(result.user, displayName);
+    await this.syncProfile(result.user, () => this.createUserProfile(result.user, displayName));
 
     debugLog('AuthService', 'Anonymous account linked:', result.user.uid);
     return result.user;
@@ -200,6 +204,22 @@ class AuthService {
   // ============================================
   // User Profile Methods
   // ============================================
+
+  /** Authentication has succeeded even when the profile service is unavailable. */
+  private async syncProfile(user: User, write: () => Promise<void>): Promise<void> {
+    this.profileError = null;
+    try {
+      await write();
+    } catch (error) {
+      reportError(error, 'auth', { action: 'syncUserProfile' });
+      if (this.currentUser?.uid === user.uid) {
+        this.profileError =
+          'You are signed in, but your account details could not sync. Check your connection and try signing in again later.';
+      }
+    }
+    // Profile status must not emit another sign-in event: syncManager would
+    // otherwise start a second initial save synchronisation.
+  }
 
   /**
    * Create user profile in Firestore

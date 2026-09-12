@@ -361,6 +361,9 @@ export function useUIState() {
       state.vfxTestPanel ||
       state.shopUI ||
       state.giftModal ||
+      state.glamourModal ||
+      state.photoAlbum ||
+      state.furnitureCatalogueUI ||
       state.basketModal ||
       state.harvestFeastModal ||
       state.journal ||

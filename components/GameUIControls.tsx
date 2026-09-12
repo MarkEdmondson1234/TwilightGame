@@ -5,6 +5,7 @@ import { Z_HUD, zClass } from '../zIndex';
 interface GameUIControlsProps {
   showHelpBrowser: boolean;
   onToggleHelpBrowser: () => void;
+  onOpenAccount?: () => void;
   showCollisionBoxes: boolean;
   onToggleCollisionBoxes: () => void;
   onToggleInventory: () => void;
@@ -23,6 +24,7 @@ interface GameUIControlsProps {
 const GameUIControls: React.FC<GameUIControlsProps> = ({
   showHelpBrowser,
   onToggleHelpBrowser,
+  onOpenAccount,
   showCollisionBoxes,
   onToggleCollisionBoxes,
   onToggleInventory,
@@ -34,11 +36,19 @@ const GameUIControls: React.FC<GameUIControlsProps> = ({
     <>
       {/* Help Button - Top Right (cottagecore styled) */}
       <div
-        className={`absolute right-2 ${zClass(Z_HUD)}`}
+        className={`absolute right-2 flex items-center gap-2 ${zClass(Z_HUD)}`}
         style={{
           top: 'calc(8px + env(safe-area-inset-top, 0px))',
         }}
       >
+        {onOpenAccount && (
+          <button
+            onClick={onOpenAccount}
+            className="min-h-12 px-3 rounded font-serif font-semibold border-2 border-[#8b7355] bg-[#f5f0e1] text-[#5a4636] pointer-events-auto"
+          >
+            Account
+          </button>
+        )}
         <button
           onClick={onToggleHelpBrowser}
           className="w-10 h-10 sm:w-12 sm:h-12 rounded-full font-serif font-bold text-xl sm:text-2xl transition-all pointer-events-auto"
