@@ -2,12 +2,15 @@ import React from 'react';
 import { BRANCHES, COURSES, type CourseId } from './courses';
 import { CrystalArtwork } from './CrystalArtwork';
 import type { State } from './engine';
+import type { PlayMode } from './multiplayer';
 interface Props {
   mode: 'intro' | 'playing' | 'paused';
   frame: State;
   totalGems: number;
   availableGems: number;
   playtest: boolean;
+  playMode?: PlayMode;
+  chooseMode?: (mode: 'coop' | 'race') => void;
   saved: { completed?: boolean; routesCompleted?: CourseId[] };
   startBranch: (id: CourseId) => void;
   finish: () => void;
@@ -20,6 +23,8 @@ export function ExpeditionOverlay({
   totalGems,
   availableGems,
   playtest,
+  playMode = 'solo',
+  chooseMode,
   saved,
   startBranch,
   finish,
@@ -75,7 +80,11 @@ export function ExpeditionOverlay({
               </>
             ) : mode === 'paused' ? (
               <>
-                <p>Your adventure is paused.</p>
+                <p>
+                  {playMode === 'solo'
+                    ? 'Your adventure is paused.'
+                    : 'Your controls are paused. Your friend and the cavern keep going.'}
+                </p>
                 <button onClick={() => setMode('playing')}>Keep exploring</button>
                 <button
                   onClick={() => {
@@ -93,9 +102,9 @@ export function ExpeditionOverlay({
                   passages. Falls bring you back to a safe haven with your treasures intact.
                 </p>
                 <p>
-                  <strong>Move:</strong> A/D or arrows · <strong>Jump:</strong> Space
+                  <strong>Move:</strong> A/D or arrows · <strong>Jump:</strong> W / ↑
                   <br />
-                  <strong>Power:</strong> E · <strong>Choose crystal:</strong> 1/2/3
+                  <strong>Power:</strong> Space · <strong>Choose crystal:</strong> 1/2/3
                   <br />
                   You can also use the buttons below.
                 </p>
@@ -103,6 +112,21 @@ export function ExpeditionOverlay({
                   Chutes glow amber before erupting. Stop on safe ground and watch their rhythm.
                 </p>
                 <button onClick={() => setMode('playing')}>Enter the cavern</button>
+                {chooseMode && !playtest && (
+                  <div className="ll-mode-options">
+                    <button onClick={() => chooseMode('coop')}>Co-op with a friend</button>
+                    <button onClick={() => chooseMode('race')}>Race a friend · split screen</button>
+                    <p>
+                      Co-op shares Frost platforms, Earth seals, treasures and checkpoints. Wind
+                      lifts its owner.
+                    </p>
+                    <p>
+                      Race to the crystal junction on two devices, with all three crystals unlocked.
+                      Nearby rivals can be slowed by Frost, pushed by Wind or briefly power-blocked
+                      by Earth. Your own crystal still helps you.
+                    </p>
+                  </div>
+                )}
               </>
             )}
           </section>

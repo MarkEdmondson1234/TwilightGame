@@ -43,6 +43,11 @@ export interface Input {
   jump: boolean;
   power: boolean;
 }
+/** Teammates' active powers, expressed on this simulation's clock. */
+export interface SharedEffects {
+  ice: Array<Platform & { expires: number }>;
+  seals: Array<{ x: number; expires: number }>;
+}
 export interface State {
   courseId: CourseId;
   bankedGems: number;
@@ -60,6 +65,8 @@ export interface State {
   windUnlocked: boolean;
   crystal: Crystal;
   cooldown: number;
+  slowedUntil: number;
+  blockedUntil: number;
   windUsed: boolean;
   glide: number;
   ice: (Platform & { expires: number }) | null;
@@ -87,6 +94,8 @@ export function createState(windUnlocked = false): State {
     windUnlocked,
     crystal: 'frost',
     cooldown: 0,
+    slowedUntil: 0,
+    blockedUntil: 0,
     windUsed: false,
     glide: 0,
     ice: null,
@@ -123,7 +132,7 @@ export function rescue(s: State): void {
   s.notice = 'Safe again! Your crystals and treasures are still with you.';
 }
 export function activatePower(s: State): boolean {
-  if (s.cooldown > 0) return false;
+  if (s.cooldown > 0 || s.time < s.blockedUntil) return false;
   if (s.crystal === 'frost') {
     const x = Math.max(0, Math.min(COURSES[s.courseId].width - 180, s.x + s.facing * 150 - 75));
     s.ice = { x, y: 440, w: 180, expires: s.time + 5 };
@@ -152,7 +161,7 @@ export function activatePower(s: State): boolean {
   return true;
 }
 /** Call at 120 Hz. Jump and power are edge-triggered commands. */
-export function step(s: State, input: Input, dt: number): void {
+export function step(s: State, input: Input, dt: number, shared?: SharedEffects): void {
   if (s.won) return;
   const course = COURSES[s.courseId];
   s.time += dt;
@@ -171,13 +180,19 @@ export function step(s: State, input: Input, dt: number): void {
   if (input.power) activatePower(s);
   const direction = Number(input.right) - Number(input.left);
   if (direction) s.facing = direction;
-  s.x = Math.max(0, Math.min(course.width - PLAYER.w, s.x + direction * PLAYER.speed * dt));
+  const speed = PLAYER.speed * (s.time < s.slowedUntil ? 0.55 : 1);
+  s.x = Math.max(0, Math.min(course.width - PLAYER.w, s.x + direction * speed * dt));
   const oldBottom = s.y + PLAYER.h;
   s.vy += PLAYER.gravity * dt;
   if (s.glide > 0) s.vy = Math.min(s.vy, 85);
   s.y += s.vy * dt;
   s.grounded = false;
-  for (const p of s.ice ? [...course.platforms, s.ice] : course.platforms) {
+  const platforms = [
+    ...course.platforms,
+    ...(s.ice ? [s.ice] : []),
+    ...(shared?.ice.filter((ice) => ice.expires > s.time) ?? []),
+  ];
+  for (const p of platforms) {
     if (
       s.x + PLAYER.w > p.x &&
       s.x < p.x + p.w &&
@@ -195,6 +210,7 @@ export function step(s: State, input: Input, dt: number): void {
   for (const chute of course.chutes) {
     if (
       ventPhase(course, chute, s.sealedVent, s.time) === 'erupting' &&
+      !shared?.seals.some((seal) => ventPhase(course, chute, seal, s.time) === 'quiet') &&
       s.x + PLAYER.w > chute.x - 18 &&
       s.x < chute.x + 18 &&
       (chute.pressureGroup || s.y + PLAYER.h > 170)

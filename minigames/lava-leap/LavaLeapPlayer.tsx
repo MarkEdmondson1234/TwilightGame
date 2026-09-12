@@ -11,12 +11,14 @@ export function LavaLeapPlayer({
   sprite,
   rescued,
   gliding,
+  name,
 }: {
   x: number;
   y: number;
   sprite?: string;
   rescued: boolean;
   gliding: boolean;
+  name?: string;
 }) {
   const bounds = sprite ? playerArtworkBounds(sprite) : undefined;
   return (
@@ -34,18 +36,19 @@ export function LavaLeapPlayer({
           viewBox={`${bounds[1]} ${bounds[2]} ${bounds[3] - bounds[1] + 1} ${bounds[4] - bounds[2] + 1}`}
           preserveAspectRatio="xMidYMax meet"
           role="img"
-          aria-label="Your character"
+          aria-label={name ?? 'Your character'}
           width="100%"
           height="100%"
         >
           <image href={sprite} width={bounds[0]} height={bounds[0]} />
         </svg>
       ) : sprite ? (
-        <img src={sprite} alt="Your character" />
+        <img src={sprite} alt={name ?? 'Your character'} />
       ) : (
         <span>🧙</span>
       )}
       {gliding && <span className="ll-wind-trail">≈</span>}
+      {name && <span className="ll-player-name">{name}</span>}
     </div>
   );
 }

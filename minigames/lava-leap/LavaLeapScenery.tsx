@@ -22,13 +22,19 @@ export function LavaLeapScenery({
   checkpointTime,
   course,
   sealedVent,
+  sharedSeals = [],
 }: {
   course: Course;
   sealedVent: { x: number; expires: number } | null;
+  sharedSeals?: Array<{ x: number; expires: number }>;
   time: number;
   checkpoint: number;
   checkpointTime: number;
 }) {
+  const sealFor = (chute: Course['chutes'][number]) =>
+    [sealedVent, ...sharedSeals]
+      .filter((seal) => isVentSealed(course, chute, seal, time))
+      .sort((a, b) => b!.expires - a!.expires)[0] ?? null;
   return (
     <>
       {course.chutes
@@ -42,7 +48,7 @@ export function LavaLeapScenery({
           return (
             <div
               key={chute.pressureGroup}
-              className={`ll-pressure-link ${isVentSealed(course, chute, sealedVent, time) ? 'sealed' : ''}`}
+              className={`ll-pressure-link ${sealFor(chute) ? 'sealed' : ''}`}
               style={{
                 left: chute.x,
                 top: ground + 13,
@@ -124,10 +130,11 @@ export function LavaLeapScenery({
         );
       })}
       {course.chutes.map((chute, i) => {
-        const sealed = isVentSealed(course, chute, sealedVent, time);
-        const expiring = sealed && sealedVent!.expires - time < VENT_WARNING_SECONDS;
+        const seal = sealFor(chute);
+        const sealed = !!seal;
+        const expiring = sealed && seal.expires - time < VENT_WARNING_SECONDS;
         const origin = chute.pressureGroup ? -40 : 130;
-        const phase = ventPhase(course, chute, sealedVent, time);
+        const phase = ventPhase(course, chute, seal, time);
         const cycle = (time + chute.phase) % 6;
         const base =
           course.platforms.find((p) => chute.x >= p.x && chute.x < p.x + p.w)?.y ?? LAVA_Y;

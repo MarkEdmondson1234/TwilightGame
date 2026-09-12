@@ -430,3 +430,70 @@
     margin: 7px 0;
   }
 }
+
+.ll-views {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.ll-view {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.ll-views.split .ll-view + .ll-view {
+  border-left: 2px solid #a1c6ce;
+}
+.ll-views.stacked.split {
+  flex-direction: column;
+}
+.ll-views.stacked.split .ll-view + .ll-view {
+  border-left: 0;
+  border-top: 2px solid #a1c6ce;
+}
+.ll-view-name {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  z-index: 2;
+  background: #17232bdd;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font: 14px system-ui;
+}
+.ll-player-name {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  color: #fff3b8;
+  background: #17232bdd;
+  padding: 3px 7px;
+  border-radius: 5px;
+  font: 14px system-ui;
+}
+.ll-rival .ll-player {
+  transition:
+    left 0.18s linear,
+    top 0.18s linear;
+}
+.ll-online-status {
+  display: block;
+}
+.ll-mode-options {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.ll-mode-options p {
+  flex-basis: 100%;
+  font-size: 14px;
+  margin: 4px;
+}
+.ll-shared-ice {
+  border-color: #d8b9ff;
+}

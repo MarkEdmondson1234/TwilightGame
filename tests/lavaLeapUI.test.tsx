@@ -6,6 +6,54 @@ import type { MiniGameContext } from '../minigames/types';
 import { LavaLeapGame } from '../minigames/lava-leap/LavaLeapGame';
 import { LavaLeapPlayer } from '../minigames/lava-leap/LavaLeapPlayer';
 import { PLAYER } from '../minigames/lava-leap/engine';
+import type { LeapRun, LeapPeer } from '../minigames/lava-leap/multiplayer';
+
+const online = vi.hoisted(() => ({
+  update: null as ((run: LeapRun, peers: LeapPeer[]) => void) | null,
+  close: vi.fn(),
+  publish: vi.fn(),
+}));
+vi.mock('../firebase/safe', () => ({ whenFirebaseSettled: async () => true }));
+vi.mock('../firebase/lavaLeapService', () => ({
+  connectLavaLeap: async (
+    _map: string,
+    _mode: string,
+    _name: string,
+    _character: string,
+    update: (run: LeapRun, peers: LeapPeer[]) => void
+  ) => {
+    online.update = update;
+    update(
+      {
+        id: 'test',
+        host: 'alice',
+        guest: '',
+        mode: 'race',
+        startsAt: 0,
+        courseAt: 0,
+        updatedAt: 100000,
+        course: 'lava',
+        gems: 0,
+        checkpoint: 0,
+        wind: false,
+        earth: false,
+        won: false,
+        banked: 0,
+        winner: '',
+      },
+      []
+    );
+    return {
+      uid: 'alice',
+      now: () => 100000,
+      close: online.close,
+      publish: async (...args: unknown[]) => {
+        online.publish(...args);
+      },
+      branch: async () => {},
+    };
+  },
+}));
 
 vi.mock('../GameState', () => ({ gameState: { getSelectedCharacter: () => null } }));
 vi.mock('../utils/characterSprites', () => ({
@@ -37,6 +85,9 @@ function setup(windUnlocked = false, playtest = false) {
 const playerX = () => parseFloat(document.querySelector<HTMLElement>('.ll-player')!.style.left);
 
 beforeEach(() => {
+  online.update = null;
+  online.close.mockClear();
+  online.publish.mockClear();
   now = 0;
   callback = undefined;
   vi.stubGlobal(
@@ -60,6 +111,47 @@ afterEach(() => {
 });
 
 describe('Lava Leap controls', () => {
+  it('waits for the shared start, displays both race views, and disconnects on leaving', async () => {
+    setup();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Race a friend · split screen' }));
+      await vi.dynamicImportSettled();
+    });
+    expect(screen.getByText('Waiting for your friend')).toBeTruthy();
+    const start = playerX();
+    fireEvent.keyDown(window, { key: 'd' });
+    advance();
+    expect(playerX()).toBe(start);
+    expect(screen.getByRole('button', { name: /Wind/ }).hasAttribute('disabled')).toBe(false);
+    act(() =>
+      online.update!(
+        {
+          id: 'test',
+          host: 'alice',
+          guest: 'bob',
+          mode: 'race',
+          startsAt: 99000,
+          courseAt: 99000,
+          updatedAt: 100000,
+          course: 'lava',
+          gems: 0,
+          checkpoint: 0,
+          wind: false,
+          earth: false,
+          won: false,
+          banked: 0,
+          winner: '',
+        },
+        []
+      )
+    );
+    expect(document.querySelectorAll('.ll-view')).toHaveLength(2);
+    fireEvent.keyDown(window, { key: 'd' });
+    advance();
+    expect(playerX()).toBeGreaterThan(start);
+    cleanup();
+    expect(online.close).toHaveBeenCalled();
+  });
   it('anchors the visible artwork to the same ground as the physics', () => {
     render(
       <LavaLeapPlayer
@@ -79,8 +171,25 @@ describe('Lava Leap controls', () => {
   });
   it('keeps the activation keys visible on the action buttons', () => {
     setup();
-    expect(screen.getByRole('button', { name: 'Jump' }).textContent).toContain('Space');
-    expect(screen.getByRole('button', { name: 'Use Frost crystal' }).textContent).toContain('E');
+    expect(screen.getByRole('button', { name: 'Jump' }).textContent).toContain('W');
+    expect(screen.getByRole('button', { name: 'Use Frost crystal' }).textContent).toContain(
+      'Space'
+    );
+  });
+  it('jumps with W and uses Space for powers without jumping', () => {
+    setup();
+    fireEvent.click(screen.getByRole('button', { name: 'Enter the cavern' }));
+    advance();
+    const playerY = () => parseFloat(document.querySelector<HTMLElement>('.ll-player')!.style.top);
+    const ground = playerY();
+    fireEvent.keyDown(window, { key: ' ' });
+    advance();
+    expect(document.querySelector('.ll-ice')).not.toBeNull();
+    expect(playerY()).toBe(ground);
+    fireEvent.keyUp(window, { key: ' ' });
+    fireEvent.keyDown(window, { key: 'w' });
+    advance();
+    expect(playerY()).toBeLessThan(ground);
   });
   it('starts developer practice with fresh unlocks even when normal play has unlocked Wind', () => {
     setup(true, true);

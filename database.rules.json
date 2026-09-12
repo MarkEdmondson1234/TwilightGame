@@ -152,6 +152,125 @@
           }
         }
       }
+    },
+    "lavaLeap": {
+      "$room": {
+        ".read": "auth != null",
+        "run": {
+          ".write": "auth != null && (!data.exists() || data.child('host').val() === auth.uid || data.child('guest').val() === auth.uid || (data.child('guest').val() === '' && newData.child('guest').val() === auth.uid) || data.child('updatedAt').val() < now - 30000 || data.child('winner').val() !== '' || (data.child('won').val() === true && data.child('course').val() !== 'lava'))",
+          "id": {
+            ".validate": "newData.isString() && newData.val().length <= 128"
+          },
+          "host": {
+            ".validate": "newData.isString() && newData.val().length <= 128"
+          },
+          "guest": {
+            ".validate": "newData.isString() && newData.val().length <= 128"
+          },
+          "winner": {
+            ".validate": "newData.isString() && newData.val().length <= 128"
+          },
+          "mode": {
+            ".validate": "newData.val() === 'coop' || newData.val() === 'race'"
+          },
+          "course": {
+            ".validate": "newData.val() === 'lava' || newData.val() === 'grotto' || newData.val() === 'heights' || newData.val() === 'forge'"
+          },
+          "startsAt": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now + 10000"
+          },
+          "courseAt": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now + 10000"
+          },
+          "updatedAt": {
+            ".validate": "newData.isNumber() && newData.val() >= now - 10000 && newData.val() <= now + 10000"
+          },
+          "gems": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1048575"
+          },
+          "checkpoint": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
+          },
+          "banked": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 30"
+          },
+          "wind": {
+            ".validate": "newData.isBoolean()"
+          },
+          "earth": {
+            ".validate": "newData.isBoolean()"
+          },
+          "won": {
+            ".validate": "newData.isBoolean()"
+          },
+          ".validate": "newData.hasChildren([\"id\", \"host\", \"guest\", \"winner\", \"mode\", \"course\", \"startsAt\", \"courseAt\", \"updatedAt\", \"gems\", \"checkpoint\", \"banked\", \"wind\", \"earth\", \"won\"]) && (newData.child('host').val() === auth.uid || newData.child('guest').val() === auth.uid)",
+          "$other": {
+            ".validate": false
+          }
+        },
+        "players": {
+          "$run": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid",
+              "run": {
+                ".validate": "newData.isString() && newData.val().length <= 128"
+              },
+              "name": {
+                ".validate": "newData.isString() && newData.val().length <= 20"
+              },
+              "character": {
+                ".validate": "newData.val() === 'character1' || newData.val() === 'character2'"
+              },
+              "course": {
+                ".validate": "newData.val() === 'lava' || newData.val() === 'grotto' || newData.val() === 'heights' || newData.val() === 'forge'"
+              },
+              "power": {
+                ".validate": "newData.val() === 'frost' || newData.val() === 'wind' || newData.val() === 'earth'"
+              },
+              "x": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000"
+              },
+              "y": {
+                ".validate": "newData.isNumber() && newData.val() >= -1000 && newData.val() <= 540"
+              },
+              "iceX": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000"
+              },
+              "sealX": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 4000"
+              },
+              "iceUntil": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now + 6000"
+              },
+              "sealUntil": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now + 5000"
+              },
+              "castAt": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= now + 1000"
+              },
+              "facing": {
+                ".validate": "newData.val() === -1 || newData.val() === 1"
+              },
+              "t": {
+                ".validate": "newData.val() === now"
+              },
+              "gliding": {
+                ".validate": "newData.isBoolean()"
+              },
+              ".validate": "newData.hasChildren([\"gems\", \"checkpoint\", \"run\", \"name\", \"character\", \"course\", \"power\", \"x\", \"y\", \"iceX\", \"sealX\", \"iceUntil\", \"sealUntil\", \"castAt\", \"facing\", \"t\", \"gliding\"]) && newData.child('run').val() === root.child('lavaLeap').child($room).child('run/id').val() && (root.child('lavaLeap').child($room).child('run/host').val() === auth.uid || root.child('lavaLeap').child($room).child('run/guest').val() === auth.uid) && newData.child('run').val() === $run",
+              "$other": {
+                ".validate": false
+              },
+              "gems": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 1048575"
+              },
+              "checkpoint": {
+                ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

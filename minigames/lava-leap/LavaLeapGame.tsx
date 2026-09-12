@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { MiniGameComponentProps } from '../types';
-import { tileAssets } from '../../assets';
 import { gameState } from '../../GameState';
 import { DEFAULT_CHARACTER, generateCharacterSprites } from '../../utils/characterSprites';
 import { Direction } from '../../types';
 import { Z_MINI_GAME } from '../../zIndex';
 import {
   CRYSTALS,
-  LAVA_Y,
   createState,
   enterBranch,
   rescue,
@@ -17,14 +15,15 @@ import {
   type Input,
 } from './engine';
 import './lavaLeap.css';
-import { LavaLeapPlayer } from './LavaLeapPlayer';
-import { LavaLeapScenery } from './LavaLeapScenery';
 import { lavaSoundEvents } from './soundEvents';
 import { COURSES, type CourseId } from './courses';
 import { ExpeditionOverlay } from './ExpeditionOverlay';
 import { CrystalArtwork } from './CrystalArtwork';
-import { CourseBackdrop } from './CourseBackdrop';
 import { unlockLavaPassage } from './progression';
+import { LeapOnlineOverlay } from './LeapOnlineOverlay';
+import { LeapViews } from './LeapViews';
+import { useLeapMultiplayer } from './useLeapMultiplayer';
+import { type PlayMode } from './multiplayer';
 
 interface Progress {
   windUnlocked?: boolean;
@@ -50,6 +49,8 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
   });
   const [frame, setFrame] = useState(() => ({ ...simulation.current }));
   const [mode, setMode] = useState<'intro' | 'playing' | 'paused'>('intro');
+  const [playMode, setPlayMode] = useState<PlayMode>('solo');
+  const [stacked, setStacked] = useState(false);
   const input = useRef(emptyInput());
   const keys = useRef(new Set<string>());
   const touches = useRef(new Map<number, keyof Input>());
@@ -57,6 +58,15 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
   const stage = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const character = gameState.getSelectedCharacter() || DEFAULT_CHARACTER;
+  const multiplayer = useLeapMultiplayer(
+    playMode,
+    context.gameState?.currentMapId ?? 'practice',
+    character.name ?? 'Explorer',
+    character.characterId ?? 'character1',
+    simulation
+  );
+  const network = useRef(multiplayer);
+  network.current = multiplayer;
   const sprites = useMemo(() => generateCharacterSprites(character), [character]);
   const direction = frame.facing > 0 ? Direction.Right : Direction.Left;
   const sprite =
@@ -69,9 +79,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
   const totalGems = frame.bankedGems + frame.collected.length;
   const availableGems =
     (frame.courseId === 'lava' ? 0 : COURSES.lava.gems.length) + course.gems.length;
-  const camera = Math.max(0, Math.min(course.width - 960, frame.x - 310));
   const active = CRYSTALS[frame.crystal];
-
   const clearInput = () => {
     keys.current.clear();
     touches.current.clear();
@@ -91,12 +99,20 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
   useEffect(() => {
     const element = stage.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) =>
-      setScale(Math.min(entry.contentRect.width / 960, entry.contentRect.height / 540))
-    );
+    const observer = new ResizeObserver(([entry]) => {
+      const split = playMode === 'race';
+      const vertical = entry.contentRect.width < 700;
+      setStacked(vertical);
+      setScale(
+        Math.min(
+          entry.contentRect.width / (split && !vertical ? 1920 : 960),
+          entry.contentRect.height / (split && vertical ? 1080 : 540)
+        )
+      );
+    });
     observer.observe(element);
     return () => observer.disconnect();
-  }, []);
+  }, [playMode]);
 
   useEffect(() => {
     const pause = () => {
@@ -126,7 +142,13 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
       )
         return;
       // Keep Space/Enter behaviour on focused menu buttons; never launch a jump from them.
-      if (mode !== 'playing') return;
+      if (
+        mode !== 'playing' ||
+        !network.current.ready ||
+        network.current.error ||
+        network.current.run?.winner
+      )
+        return;
       e.preventDefault();
       if (key === 'escape') {
         pause();
@@ -135,8 +157,8 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
       keys.current.add(key);
       syncMovement();
       if (e.repeat) return;
-      if ([' ', 'w', 'arrowup'].includes(key)) input.current.jump = true;
-      if (key === 'e') input.current.power = true;
+      if (['w', 'arrowup'].includes(key)) input.current.jump = true;
+      if (key === ' ' || key === 'e') input.current.power = true;
       if (key === '1' || key === '2' || key === '3')
         selectCrystal(simulation.current, key === '1' ? 'frost' : key === '2' ? 'wind' : 'earth');
     };
@@ -158,7 +180,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
   }, [mode]);
 
   useEffect(() => {
-    if (mode !== 'playing' || frame.won) return;
+    if (playMode === 'solo' && (mode !== 'playing' || frame.won)) return;
     let handle = 0;
     let last = 0;
     let accumulator = 0;
@@ -166,30 +188,38 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
     const tick = (now: number) => {
       accumulator += last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
+      const net = network.current;
+      const playing = mode === 'playing' && net.ready && !net.error && !net.run?.winner;
+      const hadWind = simulation.current.windUnlocked;
+      const hadEarth = simulation.current.earthUnlocked;
+      const shared = playMode !== 'solo' ? net.beforeStep(playing) : undefined;
       const s = simulation.current;
-      const hadWind = s.windUnlocked;
       const before = { ...s, collected: [...s.collected] };
       while (accumulator >= 1 / 120) {
-        step(s, input.current, 1 / 120);
+        if (playing && !s.won) {
+          const cooldown = s.cooldown;
+          step(s, input.current, 1 / 120, shared);
+          if (playMode !== 'solo' && input.current.power && s.cooldown > cooldown) net.recordCast();
+        }
         input.current.jump = false;
         input.current.power = false;
         accumulator -= 1 / 120;
       }
-      if (!hadWind && s.windUnlocked) {
+      if (playMode !== 'race' && !hadWind && s.windUnlocked) {
         if (!playtest) context.storage.save({ ...saved, windUnlocked: true });
       }
-      if (!before.earthUnlocked && s.earthUnlocked && !playtest)
+      if (playMode !== 'race' && !hadEarth && s.earthUnlocked && !playtest)
         context.storage.save({ ...saved, windUnlocked: true, earthUnlocked: true });
       for (const sound of lavaSoundEvents(before, s)) context.actions.playSfx(`sfx_lava_${sound}`);
       if (now - painted >= 1000 / 30 || s.won) {
         setFrame({ ...s, collected: [...s.collected] });
         painted = now;
       }
-      if (!s.won) handle = requestAnimationFrame(tick);
+      if (!s.won || playMode !== 'solo') handle = requestAnimationFrame(tick);
     };
     handle = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(handle);
-  }, [mode, frame.won, context.actions, context.storage, saved, playtest]);
+  }, [mode, frame.won, context.actions, context.storage, saved, playtest, playMode]);
 
   const choose = (crystal: Crystal) => {
     selectCrystal(simulation.current, crystal);
@@ -221,6 +251,10 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
   };
   const startBranch = (id: CourseId) => {
     clearInput();
+    if (playMode === 'coop') {
+      void multiplayer.branch(id);
+      return;
+    }
     simulation.current = enterBranch(simulation.current, id);
     setFrame({ ...simulation.current });
     setMode('playing');
@@ -232,7 +266,13 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
       className={
         action === 'jump' || action === 'power' ? 'll-action-button' : 'll-direction-button'
       }
-      disabled={mode !== 'playing' || frame.won}
+      disabled={
+        mode !== 'playing' ||
+        frame.won ||
+        !multiplayer.ready ||
+        !!multiplayer.error ||
+        !!multiplayer.run?.winner
+      }
       onPointerDown={(e) => {
         e.preventDefault();
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -280,6 +320,16 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
                   ? 'The breathing cavern'
                   : 'The great lava river'}
           </span>
+          {playMode !== 'solo' && (
+            <span className="ll-online-status">
+              {playMode === 'coop' ? 'Co-op' : 'Race'} ·{' '}
+              {multiplayer.peers.length
+                ? `With ${multiplayer.peers[0].name}`
+                : multiplayer.run?.guest
+                  ? 'Teammate disconnected — waiting for return'
+                  : 'Waiting for a friend'}
+            </span>
+          )}
         </div>
         <div className="ll-score">
           ◆ {totalGems}/{availableGems}
@@ -297,126 +347,56 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
         <button onClick={onClose}>Leave</button>
       </header>
       <div className="ll-stage" ref={stage}>
-        <div
-          className="ll-viewport"
-          style={{ width: 960, height: 540, transform: `translate(-50%, -50%) scale(${scale})` }}
-          aria-label="Side-scrolling volcanic cavern"
+        <LeapViews
+          frame={frame}
+          scale={scale}
+          sprite={sprite}
+          playMode={playMode}
+          peers={multiplayer.peers}
+          clock={multiplayer.clock}
+          name={character.name}
+          stacked={stacked}
+        />
+        <LeapOnlineOverlay
+          playMode={playMode}
+          multiplayer={multiplayer}
+          won={frame.won}
+          onClose={onClose}
+          backToSolo={() => {
+            clearInput();
+            setPlayMode('solo');
+            simulation.current = createState();
+            setFrame({ ...simulation.current });
+            setMode('intro');
+          }}
         >
-          <div
-            className={`ll-backdrop ${course.id}`}
-            style={{
-              backgroundImage: `linear-gradient(var(--cave-top, #18242be0), var(--cave-bottom, #352639c9)), url(${tileAssets.rock_wall})`,
-              backgroundPositionX: -camera * 0.2,
+          <ExpeditionOverlay
+            mode={mode}
+            frame={frame}
+            totalGems={totalGems}
+            availableGems={availableGems}
+            playtest={playtest}
+            playMode={playMode}
+            chooseMode={(choice) => {
+              clearInput();
+              simulation.current = {
+                ...createState(choice === 'race'),
+                earthUnlocked: choice === 'race',
+              };
+              setFrame({ ...simulation.current });
+              setPlayMode(choice);
+              setMode('playing');
+            }}
+            saved={saved}
+            startBranch={startBranch}
+            finish={finish}
+            setMode={setMode}
+            returnToCheckpoint={() => {
+              rescue(simulation.current);
+              setFrame({ ...simulation.current });
             }}
           />
-          <div
-            className="ll-world"
-            style={{ transform: `translateX(${-camera}px)`, width: course.width }}
-          >
-            <CourseBackdrop course={course} />
-            <div
-              className={`ll-lava ${course.id === 'grotto' ? 'll-pool' : ''} ${course.id === 'heights' ? 'll-mushroom-depths' : ''}`}
-              style={{
-                top: LAVA_Y,
-                backgroundImage:
-                  course.id === 'grotto'
-                    ? `url(${tileAssets.cave_lake})`
-                    : `linear-gradient(#ffad3680, #b72d13a0), url(${tileAssets.lava_floor_tileable})`,
-              }}
-            />
-            {course.platforms.map((p, i) => (
-              <div
-                key={i}
-                className={`ll-rock ${course.id}`}
-                style={{
-                  left: p.x,
-                  top: p.y,
-                  width: p.w,
-                  height: 540 - p.y,
-                  backgroundImage: `url(${tileAssets.rock_wall})`,
-                }}
-              />
-            ))}
-            <LavaLeapScenery
-              time={frame.time}
-              checkpoint={frame.checkpoint}
-              checkpointTime={frame.checkpointTime}
-              course={course}
-              sealedVent={frame.sealedVent}
-            />
-            {frame.courseId === 'lava' && (
-              <>
-                <div className="ll-sign" style={{ left: 235, top: 245 }}>
-                  ❄ Frost makes a foothold
-                  <br />
-                  Use power near the edge
-                </div>
-                <div className="ll-sign" style={{ left: 1730, top: 200 }}>
-                  ≈ Wind crystal
-                  <br />
-                  Jump, then lift and glide
-                </div>
-                <div className="ll-sign" style={{ left: 2570, top: 215 }}>
-                  Crystal junction ahead
-                  <br />
-                  Cross this river to choose one of three passages
-                </div>
-              </>
-            )}
-            {frame.courseId !== 'lava' && frame.courseId !== 'forge' && (
-              <div className="ll-sign" style={{ left: 135, top: 180, maxWidth: 310 }}>
-                {course.name}
-                <br />
-                {course.description}
-              </div>
-            )}
-            <div className="ll-exit" style={{ left: course.width - 120, top: 280 }}>
-              ✧<span>{frame.courseId === 'lava' ? 'Three passages' : 'Way home'}</span>
-            </div>
-            {course.gems.map(
-              (g, i) =>
-                !frame.collected.includes(i) && (
-                  <img
-                    key={i}
-                    className="ll-gem"
-                    src={tileAssets.mine_crystal}
-                    alt=""
-                    style={{ left: g.x - 20, top: g.y - 25 }}
-                  />
-                )
-            )}
-            {frame.ice && (
-              <div
-                className={`ll-ice ${frame.ice.expires - frame.time < 1.5 ? 'crumbling' : ''}`}
-                style={{ left: frame.ice.x, top: frame.ice.y, width: frame.ice.w }}
-              >
-                <span>❄ {Math.ceil(frame.ice.expires - frame.time)}s</span>
-              </div>
-            )}
-            <LavaLeapPlayer
-              x={frame.x}
-              y={frame.y}
-              sprite={sprite}
-              rescued={frame.rescueGlow > 0}
-              gliding={frame.glide > 0}
-            />
-          </div>
-        </div>
-        <ExpeditionOverlay
-          mode={mode}
-          frame={frame}
-          totalGems={totalGems}
-          availableGems={availableGems}
-          playtest={playtest}
-          saved={saved}
-          startBranch={startBranch}
-          finish={finish}
-          setMode={setMode}
-          returnToCheckpoint={() => {
-            rescue(simulation.current);
-            setFrame({ ...simulation.current });
-          }}
-        />
+        </LeapOnlineOverlay>
       </div>
       <div className="ll-notice" role="status">
         {frame.notice}
@@ -455,7 +435,7 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
             'Jump',
             <>
               <span>Jump ↑</span>
-              <small>Space</small>
+              <small>W / ↑</small>
             </>
           )}
           {control(
@@ -464,12 +444,14 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
             <>
               <span>Use {active.name}</span>
               <small>
-                E ·{' '}
-                {frame.cooldown > 0
-                  ? `${frame.cooldown.toFixed(1)}s`
-                  : frame.crystal === 'wind' && frame.windUsed
-                    ? 'Land to recharge'
-                    : 'Ready'}
+                Space ·{' '}
+                {frame.blockedUntil > frame.time
+                  ? `Blocked ${(frame.blockedUntil - frame.time).toFixed(1)}s`
+                  : frame.cooldown > 0
+                    ? `${frame.cooldown.toFixed(1)}s`
+                    : frame.crystal === 'wind' && frame.windUsed
+                      ? 'Land to recharge'
+                      : 'Ready'}
               </small>
             </>
           )}
@@ -478,6 +460,8 @@ export const LavaLeapGame: React.FC<MiniGameComponentProps> = ({
       <div className="ll-help">
         {active.help}{' '}
         {frame.crystal === 'frost' ? 'Switching crystals makes the stone crumble.' : ''}
+        {playMode === 'race' &&
+          ` Nearby rival: ${frame.crystal === 'frost' ? 'brief slow' : frame.crystal === 'wind' ? 'push backwards' : 'one-second power block'}.`}
       </div>
     </div>
   );
