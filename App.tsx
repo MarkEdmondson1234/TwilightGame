@@ -220,6 +220,7 @@ const App: React.FC = () => {
   // loading (the effect a few lines below) already starts on mount regardless,
   // so by the time the player clicks Play a returning session may already be
   // ready to go straight into gameplay.
+  const [helpInitialTab, setHelpInitialTab] = useState('getting-started');
   const [showSplashScreen, setShowSplashScreen] = useState(true);
 
   const [isMapInitialized, setIsMapInitialized] = useState(false);
@@ -2510,7 +2511,14 @@ const App: React.FC = () => {
       {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (
         <GameUIControls
           showHelpBrowser={ui.helpBrowser}
-          onToggleHelpBrowser={() => toggleUI('helpBrowser')}
+          onToggleHelpBrowser={() => {
+            setHelpInitialTab('getting-started');
+            toggleUI('helpBrowser');
+          }}
+          onOpenAccount={() => {
+            setHelpInitialTab('account');
+            openUI('helpBrowser');
+          }}
           showCollisionBoxes={showCollisionBoxes}
           onToggleCollisionBoxes={() => setShowCollisionBoxes(!showCollisionBoxes)}
           onToggleInventory={() => toggleUI('inventory')}
@@ -2664,6 +2672,7 @@ const App: React.FC = () => {
       )}
       {ui.helpBrowser && (
         <HelpBrowser
+          initialTab={helpInitialTab}
           onClose={() => closeUI('helpBrowser')}
           onOpenCharacterSelect={() => openUI('characterCreator')}
         />

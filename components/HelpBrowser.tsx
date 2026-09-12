@@ -22,6 +22,7 @@ import { getChatHistory, onChatHistoryChange } from '../multiplayer/chatHistory'
 
 interface HelpBrowserProps {
   onClose: () => void;
+  initialTab?: string;
   onOpenCharacterSelect?: () => void;
 }
 
@@ -53,9 +54,19 @@ const DOC_FILES: DocFile[] = [
 
 // Special "settings" tab identifier
 const SETTINGS_TAB = 'settings';
+const ACCOUNT_TAB = 'account';
 
-const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelect }) => {
-  const [selectedTab, setSelectedTab] = useState<string>('getting-started');
+const HelpBrowser: React.FC<HelpBrowserProps> = ({
+  onClose,
+  onOpenCharacterSelect,
+  initialTab = 'getting-started',
+}) => {
+  const [showTopics, setShowTopics] = useState(false);
+  const selectTab = (tab: string) => {
+    setSelectedTab(tab);
+    setShowTopics(false);
+  };
+  const [selectedTab, setSelectedTab] = useState<string>(initialTab);
   const [content, setContent] = useState<string>('Loading...');
 
   // API Key settings state
@@ -70,6 +81,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
 
   // Account settings state
   const [authState, setAuthState] = useState<AuthState | null>(null);
+  const [firebaseReady, setFirebaseReady] = useState<boolean | null>(null);
   const [authLoading, setAuthLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string>('');
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
@@ -92,16 +104,15 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
   useEffect(() => {
     return getAuthService().onAuthStateChange((state) => {
       setAuthState(state);
-      setAuthLoading(false);
     });
-  }, []);
+  }, [firebaseReady]);
 
   // Subscribe to sync state changes
   useEffect(() => {
     return getSyncManager().onStateChange((state) => {
       setSyncState(state);
     });
-  }, []);
+  }, [firebaseReady]);
 
   const handleMusicToggle = () => {
     const newMuted = !musicEnabled;
@@ -117,7 +128,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
 
   useEffect(() => {
     // Only load document content for doc tabs, not settings
-    if (selectedTab === SETTINGS_TAB) return;
+    if (selectedTab === SETTINGS_TAB || selectedTab === ACCOUNT_TAB) return;
 
     const docFile = DOC_FILES.find((doc) => doc.name === selectedTab);
     if (docFile) {
@@ -174,19 +185,32 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
    */
   const ensureFirebaseReady = async (): Promise<boolean> => {
     const ready = await safeInitializeFirebase();
+    setFirebaseReady(!!ready);
     if (!ready) {
       setAuthError(
         'Could not reach the cloud service from this browser. Check your connection ' +
-          '(and any tracking/ad blocker) and try again.'
+          'and try again.'
       );
       return false;
     }
     return true;
   };
 
+  // Prepare Firebase before the Google button's user gesture. Subscribe again
+  // when the lazy service replaces the offline stub.
+  useEffect(() => {
+    let active = true;
+    void safeInitializeFirebase().then((ready) => {
+      if (active) setFirebaseReady(!!ready);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   // Auth handlers
   const handleSignIn = async () => {
-    if (!emailInput.trim() || !passwordInput.trim()) {
+    if (!emailInput.trim() || !passwordInput) {
       setAuthError('Please enter email and password');
       return;
     }
@@ -194,7 +218,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAuthError('');
     try {
       if (!(await ensureFirebaseReady())) return;
-      await getAuthService().signIn(emailInput.trim(), passwordInput.trim());
+      await getAuthService().signIn(emailInput.trim(), passwordInput);
       setEmailInput('');
       setPasswordInput('');
     } catch (error: unknown) {
@@ -202,12 +226,13 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
       setAuthError(message);
       reportError(error, 'auth', { action: 'signIn' });
     } finally {
+      setAuthState(getAuthService().getState());
       setAuthLoading(false);
     }
   };
 
   const handleSignUp = async () => {
-    if (!emailInput.trim() || !passwordInput.trim()) {
+    if (!emailInput.trim() || !passwordInput) {
       setAuthError('Please enter email and password');
       return;
     }
@@ -220,7 +245,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     try {
       if (!(await ensureFirebaseReady())) return;
       const displayName = emailInput.split('@')[0];
-      await getAuthService().signUp(emailInput.trim(), passwordInput.trim(), displayName);
+      await getAuthService().signUp(emailInput.trim(), passwordInput, displayName);
       setEmailInput('');
       setPasswordInput('');
     } catch (error: unknown) {
@@ -228,6 +253,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
       setAuthError(message);
       reportError(error, 'auth', { action: 'signUp' });
     } finally {
+      setAuthState(getAuthService().getState());
       setAuthLoading(false);
     }
   };
@@ -236,13 +262,14 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
     setAuthLoading(true);
     setAuthError('');
     try {
-      if (!(await ensureFirebaseReady())) return;
+      if (!firebaseReady) return;
       await getAuthService().signInWithGoogle();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Google sign in failed';
       setAuthError(message);
       reportError(error, 'auth', { action: 'signInWithGoogle' });
     } finally {
+      setAuthState(getAuthService().getState());
       setAuthLoading(false);
     }
   };
@@ -258,6 +285,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
       setAuthError(message);
       reportError(error, 'auth', { action: 'signInAnonymously' });
     } finally {
+      setAuthState(getAuthService().getState());
       setAuthLoading(false);
     }
   };
@@ -289,6 +317,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
       setAuthError(message);
       reportError(error, 'auth', { action: 'signOut' });
     } finally {
+      setAuthState(getAuthService().getState());
       setAuthLoading(false);
     }
   };
@@ -309,10 +338,10 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
 
   return (
     <div
-      className={`fixed inset-0 bg-black/70 flex items-center justify-center ${zClass(Z_HELP_BROWSER)} p-4`}
+      className={`fixed inset-0 bg-black/70 flex items-center justify-center ${zClass(Z_HELP_BROWSER)} p-2 sm:p-4`}
     >
       <div
-        className="w-full max-w-6xl h-[90vh] flex flex-col rounded-lg overflow-hidden"
+        className="w-full max-w-6xl h-[90dvh] flex flex-col rounded-lg overflow-hidden"
         style={{
           background: `linear-gradient(135deg, ${colours.parchment}, ${colours.parchmentDark})`,
           border: `4px solid ${colours.wood}`,
@@ -321,18 +350,18 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
       >
         {/* Header */}
         <div
-          className="p-4 flex items-center justify-between"
+          className="p-3 sm:p-4 shrink-0 flex items-center justify-between gap-2"
           style={{
             background: `linear-gradient(to bottom, ${colours.woodDark}, ${colours.woodDarker})`,
             borderBottom: `3px solid ${colours.woodDarker}`,
           }}
         >
           <h1 className="text-2xl font-serif font-bold" style={{ color: colours.brass }}>
-            📖 Game Help
+            {selectedTab === ACCOUNT_TAB ? 'Account' : '📖 Game Help'}
           </h1>
           <button
             onClick={onClose}
-            className="px-4 py-2 font-serif font-bold rounded transition-all hover:brightness-110"
+            className="min-h-12 px-4 py-2 font-serif font-bold rounded transition-all hover:brightness-110"
             style={{
               background: `linear-gradient(to bottom, #a85454, #8b4444)`,
               color: '#ffeedd',
@@ -340,14 +369,21 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
               boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)',
             }}
           >
-            Close [ESC]
+            Close
           </button>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
+          <button
+            onClick={() => setShowTopics(!showTopics)}
+            className="md:hidden shrink-0 min-h-12 px-4 text-left font-serif"
+            style={{ color: colours.text, background: colours.parchmentDark }}
+          >
+            {showTopics ? 'Back to page' : 'Browse Help & Settings'}
+          </button>
           {/* Sidebar */}
           <div
-            className="w-64 overflow-y-auto"
+            className={`${showTopics ? 'block' : 'hidden'} md:block w-full md:w-64 shrink-0 overflow-y-auto`}
             style={{
               background: `linear-gradient(to right, ${colours.parchmentDarker}, ${colours.parchmentDark})`,
               borderRight: `3px solid ${colours.wood}`,
@@ -360,10 +396,17 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
               >
                 Topics
               </h2>
+              <button
+                onClick={() => selectTab(ACCOUNT_TAB)}
+                className="w-full text-left px-4 py-3 mb-2 rounded font-serif font-semibold"
+                style={{ color: colours.text, background: colours.parchment }}
+              >
+                Account &amp; Cloud Saves
+              </button>
               {DOC_FILES.map((doc) => (
                 <button
                   key={doc.name}
-                  onClick={() => setSelectedTab(doc.name)}
+                  onClick={() => selectTab(doc.name)}
                   className="w-full text-left px-4 py-3 mb-2 rounded font-serif font-semibold transition-all"
                   style={{
                     background:
@@ -390,7 +433,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
 
               {/* Settings Tab */}
               <button
-                onClick={() => setSelectedTab(SETTINGS_TAB)}
+                onClick={() => selectTab(SETTINGS_TAB)}
                 className="w-full text-left px-4 py-3 mb-2 rounded font-serif font-semibold transition-all"
                 style={{
                   background:
@@ -411,141 +454,149 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-8" style={{ background: colours.parchment }}>
-            {selectedTab === SETTINGS_TAB ? (
+          <div
+            className={`${showTopics ? 'hidden' : 'block'} md:block flex-1 min-w-0 min-h-0 overflow-y-auto p-3 sm:p-5 md:p-8`}
+            style={{ background: colours.parchment }}
+          >
+            {selectedTab === SETTINGS_TAB || selectedTab === ACCOUNT_TAB ? (
               /* Settings Panel */
               <div className="max-w-2xl">
-                <h1 className="text-3xl font-serif font-bold mb-6" style={{ color: '#6b546b' }}>
-                  Settings
-                </h1>
+                {selectedTab !== ACCOUNT_TAB && (
+                  <>
+                    <h1 className="text-3xl font-serif font-bold mb-6" style={{ color: '#6b546b' }}>
+                      Settings
+                    </h1>
 
-                {/* Character Section */}
-                <div
-                  className="rounded-lg p-6 mb-6"
-                  style={{
-                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
-                    border: `2px solid ${colours.wood}`,
-                  }}
-                >
-                  <h2
-                    className="text-xl font-serif font-bold mb-4"
-                    style={{ color: colours.brass }}
-                  >
-                    Character
-                  </h2>
-                  <p className="mb-4" style={{ color: colours.textLight }}>
-                    Change your character or update your name.
-                  </p>
-                  <button
-                    onClick={() => {
-                      onClose();
-                      onOpenCharacterSelect?.();
-                    }}
-                    className="px-6 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
-                    style={{
-                      background: 'linear-gradient(to bottom, #4a7c7c, #3d6666)',
-                      color: '#ffeedd',
-                      border: '2px solid #2d4d4d',
-                    }}
-                  >
-                    <span className="text-xl">👤</span>
-                    Change Character
-                  </button>
-                </div>
-
-                {/* Music Section */}
-                <div
-                  className="rounded-lg p-6 mb-6"
-                  style={{
-                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
-                    border: `2px solid ${colours.wood}`,
-                  }}
-                >
-                  <h2
-                    className="text-xl font-serif font-bold mb-4"
-                    style={{ color: colours.brass }}
-                  >
-                    Music & Sound
-                  </h2>
-                  <p className="mb-4" style={{ color: colours.textLight }}>
-                    Toggle music and sound effects on or off. This setting is saved automatically.
-                  </p>
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    <button
-                      onClick={handleMusicToggle}
-                      className="px-5 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
-                      style={{
-                        background: musicEnabled
-                          ? 'linear-gradient(to bottom, #4a7c4a, #3d663d)'
-                          : 'linear-gradient(to bottom, #a85454, #8b4444)',
-                        color: '#ffeedd',
-                        border: `2px solid ${musicEnabled ? '#2d4d2d' : '#6b3434'}`,
-                      }}
-                    >
-                      <span className="text-xl">{musicEnabled ? '🎵' : '🔇'}</span>
-                      {musicEnabled ? 'Music On' : 'Music Off'}
-                    </button>
-                    <button
-                      onClick={handleSfxToggle}
-                      className="px-5 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
-                      style={{
-                        background: sfxEnabled
-                          ? 'linear-gradient(to bottom, #4a7c4a, #3d663d)'
-                          : 'linear-gradient(to bottom, #a85454, #8b4444)',
-                        color: '#ffeedd',
-                        border: `2px solid ${sfxEnabled ? '#2d4d2d' : '#6b3434'}`,
-                      }}
-                    >
-                      <span className="text-xl">{sfxEnabled ? '🔊' : '🔇'}</span>
-                      {sfxEnabled ? 'Effects On' : 'Effects Off'}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Chat history — what was said near you. Bubbles above players'
-                    heads are the live channel; this is only for reading back. */}
-                <div
-                  className="rounded-lg p-6 mb-6"
-                  style={{
-                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
-                    border: `2px solid ${colours.wood}`,
-                  }}
-                >
-                  <h2
-                    className="text-xl font-serif font-bold mb-4"
-                    style={{ color: colours.brass }}
-                  >
-                    💬 Chat History
-                  </h2>
-                  {chatHistory.length === 0 ? (
-                    <p style={{ color: colours.textLight }}>
-                      Nothing said yet. Press <strong>M</strong> (or tap “Say something”) to talk to
-                      players standing near you — what you say appears above your character.
-                    </p>
-                  ) : (
+                    {/* Character Section */}
                     <div
-                      className="max-h-64 overflow-y-auto rounded p-3 text-sm space-y-1"
-                      style={{ background: colours.parchmentDarker }}
+                      className="rounded-lg p-3 sm:p-6 mb-6"
+                      style={{
+                        background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                        border: `2px solid ${colours.wood}`,
+                      }}
                     >
-                      {chatHistory.map((message) => (
-                        <div key={message.id} style={{ color: colours.textLight }}>
-                          <span
-                            className="font-semibold"
-                            style={{ color: message.isLocal ? colours.brass : colours.wood }}
-                          >
-                            {message.name}
-                          </span>
-                          <span>: {message.text}</span>
-                        </div>
-                      ))}
+                      <h2
+                        className="text-xl font-serif font-bold mb-4"
+                        style={{ color: colours.brass }}
+                      >
+                        Character
+                      </h2>
+                      <p className="mb-4" style={{ color: colours.textLight }}>
+                        Change your character or update your name.
+                      </p>
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onOpenCharacterSelect?.();
+                        }}
+                        className="px-6 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
+                        style={{
+                          background: 'linear-gradient(to bottom, #4a7c7c, #3d6666)',
+                          color: '#ffeedd',
+                          border: '2px solid #2d4d4d',
+                        }}
+                      >
+                        <span className="text-xl">👤</span>
+                        Change Character
+                      </button>
                     </div>
-                  )}
-                </div>
 
+                    {/* Music Section */}
+                    <div
+                      className="rounded-lg p-3 sm:p-6 mb-6"
+                      style={{
+                        background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                        border: `2px solid ${colours.wood}`,
+                      }}
+                    >
+                      <h2
+                        className="text-xl font-serif font-bold mb-4"
+                        style={{ color: colours.brass }}
+                      >
+                        Music & Sound
+                      </h2>
+                      <p className="mb-4" style={{ color: colours.textLight }}>
+                        Toggle music and sound effects on or off. This setting is saved
+                        automatically.
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          onClick={handleMusicToggle}
+                          className="px-5 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
+                          style={{
+                            background: musicEnabled
+                              ? 'linear-gradient(to bottom, #4a7c4a, #3d663d)'
+                              : 'linear-gradient(to bottom, #a85454, #8b4444)',
+                            color: '#ffeedd',
+                            border: `2px solid ${musicEnabled ? '#2d4d2d' : '#6b3434'}`,
+                          }}
+                        >
+                          <span className="text-xl">{musicEnabled ? '🎵' : '🔇'}</span>
+                          {musicEnabled ? 'Music On' : 'Music Off'}
+                        </button>
+                        <button
+                          onClick={handleSfxToggle}
+                          className="px-5 py-3 font-serif font-semibold rounded transition-all hover:brightness-110 flex items-center gap-2"
+                          style={{
+                            background: sfxEnabled
+                              ? 'linear-gradient(to bottom, #4a7c4a, #3d663d)'
+                              : 'linear-gradient(to bottom, #a85454, #8b4444)',
+                            color: '#ffeedd',
+                            border: `2px solid ${sfxEnabled ? '#2d4d2d' : '#6b3434'}`,
+                          }}
+                        >
+                          <span className="text-xl">{sfxEnabled ? '🔊' : '🔇'}</span>
+                          {sfxEnabled ? 'Effects On' : 'Effects Off'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Chat history — what was said near you. Bubbles above players'
+                    heads are the live channel; this is only for reading back. */}
+                    <div
+                      className="rounded-lg p-3 sm:p-6 mb-6"
+                      style={{
+                        background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                        border: `2px solid ${colours.wood}`,
+                      }}
+                    >
+                      <h2
+                        className="text-xl font-serif font-bold mb-4"
+                        style={{ color: colours.brass }}
+                      >
+                        💬 Chat History
+                      </h2>
+                      {chatHistory.length === 0 ? (
+                        <p style={{ color: colours.textLight }}>
+                          Nothing said yet. Press <strong>M</strong> (or tap “Say something”) to
+                          talk to players standing near you — what you say appears above your
+                          character.
+                        </p>
+                      ) : (
+                        <div
+                          className="max-h-64 overflow-y-auto rounded p-3 text-sm space-y-1"
+                          style={{ background: colours.parchmentDarker }}
+                        >
+                          {chatHistory.map((message) => (
+                            <div key={message.id} style={{ color: colours.textLight }}>
+                              <span
+                                className="font-semibold"
+                                style={{ color: message.isLocal ? colours.brass : colours.wood }}
+                              >
+                                {message.name}
+                              </span>
+                              <span>: {message.text}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
                 {/* Account Section */}
                 <div
-                  className="rounded-lg p-6 mb-6"
+                  className="rounded-lg p-3 sm:p-6 mb-6"
                   style={{
                     background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
                     border: `2px solid ${colours.wood}`,
@@ -696,20 +747,32 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                       </div>
 
                       {/* Email/Password form */}
-                      <div className="space-y-3">
+                      <form
+                        className="space-y-3"
+                        onSubmit={(event) => {
+                          event.preventDefault();
+                          void (authMode === 'signin' ? handleSignIn() : handleSignUp());
+                        }}
+                      >
                         <div>
                           <label
+                            htmlFor="account-email"
                             className="block mb-1 text-sm font-serif"
                             style={{ color: colours.textLight }}
                           >
                             Email
                           </label>
                           <input
+                            id="account-email"
+                            name="email"
+                            autoComplete="email"
+                            enterKeyHint="next"
+                            required
                             type="email"
                             value={emailInput}
                             onChange={(e) => setEmailInput(e.target.value)}
                             placeholder="your@email.com"
-                            className="w-full px-4 py-2 rounded focus:outline-none"
+                            className="w-full min-h-12 px-3 py-2 text-base rounded focus-visible:outline-2"
                             style={{
                               background: colours.parchment,
                               border: `2px solid ${colours.wood}`,
@@ -719,19 +782,27 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                         </div>
                         <div>
                           <label
+                            htmlFor="account-password"
                             className="block mb-1 text-sm font-serif"
                             style={{ color: colours.textLight }}
                           >
                             Password
                           </label>
                           <input
+                            id="account-password"
+                            name="password"
+                            autoComplete={
+                              authMode === 'signup' ? 'new-password' : 'current-password'
+                            }
+                            enterKeyHint="go"
+                            required
                             type="password"
                             value={passwordInput}
                             onChange={(e) => setPasswordInput(e.target.value)}
                             placeholder={
                               authMode === 'signup' ? 'At least 6 characters' : '••••••••'
                             }
-                            className="w-full px-4 py-2 rounded focus:outline-none"
+                            className="w-full min-h-12 px-3 py-2 text-base rounded focus-visible:outline-2"
                             style={{
                               background: colours.parchment,
                               border: `2px solid ${colours.wood}`,
@@ -740,7 +811,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                           />
                         </div>
                         <button
-                          onClick={authMode === 'signin' ? handleSignIn : handleSignUp}
+                          type="submit"
                           disabled={authLoading}
                           className="w-full px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110 disabled:opacity-50"
                           style={{
@@ -755,7 +826,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                               ? 'Sign In'
                               : 'Create Account'}
                         </button>
-                      </div>
+                      </form>
 
                       {/* Divider */}
                       <div className="flex items-center gap-4 my-4">
@@ -772,11 +843,20 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                         />
                       </div>
 
+                      {firebaseReady === false && (
+                        <button
+                          onClick={() => void ensureFirebaseReady()}
+                          className="w-full min-h-12 underline"
+                          style={{ color: colours.text }}
+                        >
+                          Reconnect to sign-in service
+                        </button>
+                      )}
                       {/* Alternative sign-in methods */}
                       <div className="flex flex-col gap-2">
                         <button
                           onClick={handleGoogleSignIn}
-                          disabled={authLoading}
+                          disabled={authLoading || !firebaseReady}
                           className="w-full px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110 disabled:opacity-50 flex items-center justify-center gap-2"
                           style={{
                             background: 'linear-gradient(to bottom, #fff, #f5f5f5)',
@@ -784,7 +864,8 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                             border: '2px solid #ddd',
                           }}
                         >
-                          <span>🔵</span> Sign in with Google
+                          <span aria-hidden="true">🔵</span>{' '}
+                          {firebaseReady === null ? 'Preparing sign-in…' : 'Sign in with Google'}
                         </button>
                         <button
                           onClick={handlePlayAsGuest}
@@ -802,149 +883,167 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
                     </div>
                   )}
 
+                  {authState?.profileError && (
+                    <p role="status" className="mt-4 font-serif" style={{ color: colours.text }}>
+                      {authState.profileError}
+                    </p>
+                  )}
                   {/* Error message */}
                   {authError && (
-                    <p className="mt-4 text-sm font-serif" style={{ color: '#8b4444' }}>
+                    <p
+                      role="alert"
+                      className="mt-4 text-base font-serif"
+                      style={{ color: '#8b4444' }}
+                    >
                       {authError}
                     </p>
                   )}
                 </div>
 
-                {/* AI Dialogue Section */}
-                <div
-                  className="rounded-lg p-6"
-                  style={{
-                    background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
-                    border: `2px solid ${colours.wood}`,
-                  }}
-                >
-                  <h2
-                    className="text-xl font-serif font-bold mb-4"
-                    style={{ color: colours.brass }}
-                  >
-                    AI Dialogue
-                  </h2>
-                  <p className="mb-4" style={{ color: colours.textLight }}>
-                    Enable dynamic AI-powered conversations with NPCs by providing your own
-                    Anthropic API key. Your key is stored locally in your browser and never sent to
-                    our servers.
-                  </p>
-
-                  {/* Status indicator */}
-                  <div
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-serif font-semibold mb-4"
-                    style={{
-                      background: aiEnabled ? 'rgba(76, 130, 76, 0.2)' : colours.parchmentDarker,
-                      color: aiEnabled ? '#4a7c4a' : colours.textLight,
-                      border: `1px solid ${aiEnabled ? '#4a7c4a' : colours.wood}`,
-                    }}
-                  >
-                    {aiEnabled ? '● AI Enabled' : '○ AI Disabled'}
-                  </div>
-
-                  {hasStoredKey ? (
-                    /* Key already stored */
-                    <div className="space-y-4">
-                      <p style={{ color: '#4a7c4a' }}>
-                        API key is configured and stored in your browser.
-                      </p>
-                      <button
-                        onClick={handleClearApiKey}
-                        className="px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110"
-                        style={{
-                          background: 'linear-gradient(to bottom, #a85454, #8b4444)',
-                          color: '#ffeedd',
-                          border: '2px solid #6b3434',
-                        }}
-                      >
-                        Remove API Key
-                      </button>
-                    </div>
-                  ) : (
-                    /* No key stored - show input */
-                    <div className="space-y-4">
-                      <div>
-                        <label
-                          className="block mb-2 text-sm font-serif"
-                          style={{ color: colours.textLight }}
-                        >
-                          Anthropic API Key
-                        </label>
-                        <input
-                          type="password"
-                          value={apiKeyInput}
-                          onChange={(e) => setApiKeyInput(e.target.value)}
-                          placeholder="sk-ant-..."
-                          className="w-full px-4 py-2 rounded focus:outline-none"
-                          style={{
-                            background: colours.parchment,
-                            border: `2px solid ${colours.wood}`,
-                            color: colours.text,
-                          }}
-                        />
-                      </div>
-                      <button
-                        onClick={handleSaveApiKey}
-                        className="px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110"
-                        style={{
-                          background: 'linear-gradient(to bottom, #8b6f8b, #6b546b)',
-                          color: '#ffeedd',
-                          border: '2px solid #5a445a',
-                        }}
-                      >
-                        Save API Key
-                      </button>
-                      <p className="text-sm" style={{ color: colours.textLight }}>
-                        Get your key at{' '}
-                        <a
-                          href="https://console.anthropic.com/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="underline hover:brightness-125"
-                          style={{ color: '#6b546b' }}
-                        >
-                          console.anthropic.com
-                        </a>
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Save message */}
-                  {saveMessage && (
-                    <p
-                      className="mt-4 text-sm font-serif"
+                {selectedTab !== ACCOUNT_TAB && (
+                  <>
+                    {/* AI Dialogue Section */}
+                    <div
+                      className="rounded-lg p-6"
                       style={{
-                        color:
-                          saveMessage.includes('saved') || saveMessage.includes('enabled')
-                            ? '#4a7c4a'
-                            : saveMessage.includes('removed')
-                              ? colours.brass
-                              : '#8b4444',
+                        background: `linear-gradient(135deg, ${colours.parchmentDark}, ${colours.parchmentDarker})`,
+                        border: `2px solid ${colours.wood}`,
                       }}
                     >
-                      {saveMessage}
-                    </p>
-                  )}
-                </div>
+                      <h2
+                        className="text-xl font-serif font-bold mb-4"
+                        style={{ color: colours.brass }}
+                      >
+                        AI Dialogue
+                      </h2>
+                      <p className="mb-4" style={{ color: colours.textLight }}>
+                        Enable dynamic AI-powered conversations with NPCs by providing your own
+                        Anthropic API key. Your key is stored locally in your browser and never sent
+                        to our servers.
+                      </p>
 
-                {/* Info box */}
-                <div
-                  className="mt-6 rounded-lg p-4"
-                  style={{
-                    background: colours.parchmentDark,
-                    border: `1px solid ${colours.wood}`,
-                  }}
-                >
-                  <h3 className="font-serif font-semibold mb-2" style={{ color: colours.brass }}>
-                    How it works
-                  </h3>
-                  <ul className="text-sm space-y-1" style={{ color: colours.textLight }}>
-                    <li>• Your API key is stored only in your browser's localStorage</li>
-                    <li>• API calls go directly from your browser to Anthropic</li>
-                    <li>• Uses Claude Haiku for fast, cost-effective responses</li>
-                    <li>• Typical cost: less than $0.01 per conversation</li>
-                  </ul>
-                </div>
+                      {/* Status indicator */}
+                      <div
+                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-serif font-semibold mb-4"
+                        style={{
+                          background: aiEnabled
+                            ? 'rgba(76, 130, 76, 0.2)'
+                            : colours.parchmentDarker,
+                          color: aiEnabled ? '#4a7c4a' : colours.textLight,
+                          border: `1px solid ${aiEnabled ? '#4a7c4a' : colours.wood}`,
+                        }}
+                      >
+                        {aiEnabled ? '● AI Enabled' : '○ AI Disabled'}
+                      </div>
+
+                      {hasStoredKey ? (
+                        /* Key already stored */
+                        <div className="space-y-4">
+                          <p style={{ color: '#4a7c4a' }}>
+                            API key is configured and stored in your browser.
+                          </p>
+                          <button
+                            onClick={handleClearApiKey}
+                            className="px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110"
+                            style={{
+                              background: 'linear-gradient(to bottom, #a85454, #8b4444)',
+                              color: '#ffeedd',
+                              border: '2px solid #6b3434',
+                            }}
+                          >
+                            Remove API Key
+                          </button>
+                        </div>
+                      ) : (
+                        /* No key stored - show input */
+                        <div className="space-y-4">
+                          <div>
+                            <label
+                              className="block mb-2 text-sm font-serif"
+                              style={{ color: colours.textLight }}
+                            >
+                              Anthropic API Key
+                            </label>
+                            <input
+                              type="password"
+                              value={apiKeyInput}
+                              onChange={(e) => setApiKeyInput(e.target.value)}
+                              placeholder="sk-ant-..."
+                              className="w-full min-h-12 px-3 py-2 text-base rounded focus-visible:outline-2"
+                              style={{
+                                background: colours.parchment,
+                                border: `2px solid ${colours.wood}`,
+                                color: colours.text,
+                              }}
+                            />
+                          </div>
+                          <button
+                            onClick={handleSaveApiKey}
+                            className="px-4 py-2 font-serif font-semibold rounded transition-all hover:brightness-110"
+                            style={{
+                              background: 'linear-gradient(to bottom, #8b6f8b, #6b546b)',
+                              color: '#ffeedd',
+                              border: '2px solid #5a445a',
+                            }}
+                          >
+                            Save API Key
+                          </button>
+                          <p className="text-sm" style={{ color: colours.textLight }}>
+                            Get your key at{' '}
+                            <a
+                              href="https://console.anthropic.com/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="underline hover:brightness-125"
+                              style={{ color: '#6b546b' }}
+                            >
+                              console.anthropic.com
+                            </a>
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Save message */}
+                      {saveMessage && (
+                        <p
+                          className="mt-4 text-sm font-serif"
+                          style={{
+                            color:
+                              saveMessage.includes('saved') || saveMessage.includes('enabled')
+                                ? '#4a7c4a'
+                                : saveMessage.includes('removed')
+                                  ? colours.brass
+                                  : '#8b4444',
+                          }}
+                        >
+                          {saveMessage}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Info box */}
+                    <div
+                      className="mt-6 rounded-lg p-4"
+                      style={{
+                        background: colours.parchmentDark,
+                        border: `1px solid ${colours.wood}`,
+                      }}
+                    >
+                      <h3
+                        className="font-serif font-semibold mb-2"
+                        style={{ color: colours.brass }}
+                      >
+                        How it works
+                      </h3>
+                      <ul className="text-sm space-y-1" style={{ color: colours.textLight }}>
+                        <li>• Your API key is stored only in your browser's localStorage</li>
+                        <li>• API calls go directly from your browser to Anthropic</li>
+                        <li>• Uses Claude Haiku for fast, cost-effective responses</li>
+                        <li>• Typical cost: less than $0.01 per conversation</li>
+                      </ul>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               /* Documentation Content */
@@ -1081,7 +1180,7 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({ onClose, onOpenCharacterSelec
 
         {/* Footer */}
         <div
-          className="p-3 text-center text-sm font-serif"
+          className="hidden md:block shrink-0 p-3 text-center text-sm font-serif"
           style={{
             background: `linear-gradient(to bottom, ${colours.woodDark}, ${colours.woodDarker})`,
             borderTop: `3px solid ${colours.woodDarker}`,

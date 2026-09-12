@@ -37,6 +37,7 @@ const TITLE_FONT = 'Georgia, "Times New Roman", serif';
 
 const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
   const [showHelp, setShowHelp] = useState(false);
+  const [helpTab, setHelpTab] = useState('getting-started');
 
   // Read the season fresh on each mount rather than memoising — the splash
   // only mounts once per page load, so there's no benefit to memoising and
@@ -69,7 +70,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
   return (
     <div className={`fixed inset-0 ${zClass(Z_SPLASH_SCREEN)}`}>
       {showHelp ? (
-        <HelpBrowser onClose={() => setShowHelp(false)} />
+        <HelpBrowser initialTab={helpTab} onClose={() => setShowHelp(false)} />
       ) : (
         <div className="fixed inset-0 w-full h-full flex flex-col items-center justify-end select-none">
           {/* Composited seasonal scene — each layer full-viewport, bottom to top */}
@@ -125,7 +126,20 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onPlay }) => {
             </button>
 
             <button
-              onClick={() => setShowHelp(true)}
+              onClick={() => {
+                setHelpTab('account');
+                setShowHelp(true);
+              }}
+              className="min-h-12 px-4 text-amber-100 underline underline-offset-4"
+              style={{ fontFamily: TITLE_FONT }}
+            >
+              Account / Multiplayer
+            </button>
+            <button
+              onClick={() => {
+                setHelpTab('getting-started');
+                setShowHelp(true);
+              }}
               className="mt-3 text-sm text-amber-100/70 hover:text-amber-100 transition-colors duration-200 cursor-pointer underline underline-offset-4"
               style={{ fontFamily: TITLE_FONT }}
             >
