@@ -30,6 +30,7 @@ interface HelpBrowserProps {
   cameraZoom?: {
     value: number;
     min: number;
+    max?: number;
     fittedRoom: boolean;
     interiorCamera?: boolean;
     onChange: (value: number) => void;
@@ -636,7 +637,11 @@ const HelpBrowser: React.FC<HelpBrowserProps> = ({
                         <button
                           key={value}
                           onClick={() => cameraZoom.onChange(value)}
-                          disabled={cameraZoom.fittedRoom || value < cameraZoom.min}
+                          disabled={
+                            cameraZoom.fittedRoom ||
+                            value < cameraZoom.min ||
+                            value > (cameraZoom.max ?? Infinity)
+                          }
                           aria-pressed={Math.abs(cameraZoom.value - value) < 0.01}
                           className="min-h-12 min-w-16 px-3 rounded border-2 disabled:opacity-40"
                           style={{

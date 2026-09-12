@@ -17,6 +17,7 @@
  */
 
 import * as PIXI from 'pixi.js';
+import { playerGroundingOffset } from '../playerGrounding';
 import { TILE_SIZE, PLAYER_SIZE } from '../../constants';
 import type { Position } from '../../types';
 import { textureManager } from '../TextureManager';
@@ -132,7 +133,8 @@ export class RemotePlayerLayer extends PixiLayer {
     players: RemotePlayer[],
     characterScale: number = 1.0,
     gridOffset?: Position,
-    tileSize: number = TILE_SIZE
+    tileSize: number = TILE_SIZE,
+    grounded = false
   ): Promise<void> {
     const offsetX = gridOffset?.x ?? 0;
     const offsetY = gridOffset?.y ?? 0;
@@ -163,8 +165,9 @@ export class RemotePlayerLayer extends PixiLayer {
       }
 
       const x = player.position.x * tileSize + offsetX;
-      const y = player.position.y * tileSize + offsetY;
       const size = PLAYER_SIZE * spriteScale * characterScale * tileSize;
+      const y =
+        player.position.y * tileSize + offsetY - (grounded ? playerGroundingOffset(url, size) : 0);
 
       display.sprite.x = x;
       display.sprite.y = y;
