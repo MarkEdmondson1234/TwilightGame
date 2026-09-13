@@ -19,7 +19,7 @@ import { startDiagnosticOperation, logTextureEviction } from './sessionDiagnosti
  * arithmetic — not download size — is what has to fit inside a phone's budget.
  */
 
-import { Assets, Texture } from 'pixi.js';
+import { Assets, Texture, type Container } from 'pixi.js';
 import { getCachedPerformanceSettings } from './performanceTier';
 import { debugLog } from './debugLog';
 
@@ -330,7 +330,7 @@ class TextureManager {
    * texture that a live sprite still points at is the same class of bug as
    * destroying an assigned mask: the crash surfaces later, somewhere else.
    */
-  evictExcept(keep: Iterable<string>): number {
+  evictExcept(keep: Iterable<string>, stage?: Container): number {
     const budgetMB = getCachedPerformanceSettings().textureBudgetMB;
     if (this.getEstimatedMemoryMB() <= budgetMB) return 0;
 
@@ -348,6 +348,15 @@ class TextureManager {
         )
         .map(([, texture]) => texture.source)
     );
+    // The map manifest cannot predict dynamic furniture, decorations or textures
+    // retained by a layer during async loading. Include hidden sprites: they can
+    // become visible again without acquiring a new texture.
+    const protectScene = (node: Container): void => {
+      const texture = (node as Container & { texture?: Texture }).texture;
+      if (texture?.source) protectedSources.add(texture.source);
+      for (const child of node.children) protectScene(child);
+    };
+    if (stage) protectScene(stage);
     const releasedSources = new Set();
 
     for (const [url, texture] of this.textures) {

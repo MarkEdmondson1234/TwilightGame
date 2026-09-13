@@ -21,3 +21,28 @@ Preserve the existing session log ceiling, background-gap handling and constant-
 After deployment, correlate the owner's next village restart with `game.world_ready`, early `game.performance` samples, operations and any context-loss event on that exact release. Compare resident textures, framebuffer dimensions and frame stalls. If those stay flat and the process still disappears without an event, additional physical-device evidence or a measured mobile memory reduction will be needed; do not claim a root cause from missing events alone.
 
 Attribute discovery reference: [Sentry trace-item attributes API](https://docs.sentry.io/api/discover/list-trace-item-attributes/).
+
+## 13 September: captured rendering and keyboard exceptions
+
+Release `7f446d0` produced [JAVASCRIPT-REACT-J](https://twilightgame.sentry.io/issues/146725505/)
+ on iPad Chrome (iOS 17.7.11, 10:12:37 UTC) and iPhone Firefox (iOS 18.7,
+10:14:03 UTC), both tagged `mums_kitchen`. Pixi's batch builder received a null
+texture source and failed reading `alphaMode`. Both event timelines include
+failed furniture/decoration loads and a corrected kitchen spawn immediately
+before the exception. These establish a rendering failure, not an OS memory kill.
+
+The local patch protects texture sources referenced by the current scene during
+eviction, including hidden sprites and dynamic placed items missing from the
+static map texture manifest. Detached textures remain eligible for eviction.
+Placed items discard destroyed base/foreground textures and reacquire them through
+the manager's bounded on-demand path. Item IDs are no longer requested as asset
+URLs; custom painting URLs use the same loading path and arrival notification.
+
+[JAVASCRIPT-REACT-H](https://twilightgame.sentry.io/issues/146725391/) occurred
+in the iPad session at 10:11:36 UTC: `handleKeyUp` received an undefined key.
+Both keyboard handlers now ignore missing, empty or non-string keys.
+
+Regression tests cover missing-key handling, normal key release, placed-item
+texture recovery, and protecting scene textures until detachment. Physical-device
+retesting after deployment remains required. The earlier unexplained village
+reloads remain a separate, unresolved observation.

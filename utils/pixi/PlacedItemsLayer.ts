@@ -33,15 +33,9 @@ export class PlacedItemsLayer extends PixiLayer {
   private blinkState: Map<string, boolean> = new Map(); // Track blink state for each item
   private lastBlinkTime: number = 0;
   private depthContainer: PIXI.Container | null = null;
-  private onTextureLoaded: (() => void) | null = null;
 
   constructor() {
     super(Z_DEPTH_SORTED_BASE, true);
-  }
-
-  /** Set a callback to fire when an async texture finishes loading (used to trigger re-render) */
-  setOnTextureLoaded(cb: () => void): void {
-    this.onTextureLoaded = cb;
   }
 
   /**
@@ -98,39 +92,36 @@ export class PlacedItemsLayer extends PixiLayer {
 
       let sprite = this.sprites.get(key);
 
+      // An item can survive a map refresh while its old texture has been
+      // released. Remove stale sprites before they reach Pixi's batch builder.
+      if (
+        sprite &&
+        (sprite.texture.destroyed || !sprite.texture.source || sprite.texture.source.destroyed)
+      ) {
+        sprite.destroy();
+        this.sprites.delete(key);
+        sprite = undefined;
+      }
+      const previousForeground = this.fgSprites.get(`${key}_fg`);
+      if (
+        previousForeground &&
+        (!item.foregroundImage ||
+          previousForeground.texture.destroyed ||
+          !previousForeground.texture.source ||
+          previousForeground.texture.source.destroyed)
+      ) {
+        previousForeground.destroy();
+        this.fgSprites.delete(`${key}_fg`);
+      }
+
       if (!sprite) {
-        // Determine texture source: custom painting image or standard item image
+        // Only request actual image URLs; item IDs are not asset aliases.
+        // The manager also handles data URLs and bounds retries on failures.
         const imageUrl = item.customImage || item.image;
-        let texture = textureManager.getTexture(imageUrl) || textureManager.getTexture(key);
-
-        // For custom images (paintings with base64 data URLs), create texture
-        if (!texture && item.customImage) {
-          if (item.customImage.startsWith('data:')) {
-            // Base64 data URLs — create Image element and pass to Texture.from()
-            // (PixiJS v8's Texture.from(string) only checks cache; passing an
-            //  HTMLImageElement actually creates the texture)
-            const img = new Image();
-            img.src = item.customImage;
-            texture = PIXI.Texture.from(img);
-            if (texture?.source) {
-              texture.source.scaleMode = 'linear';
-            }
-          } else {
-            // Remote URL — load asynchronously, sprite appears on next render cycle
-            textureManager.loadTexture(key, item.customImage).catch((err) => {
-              console.warn(`[PlacedItemsLayer] Failed to load custom image: ${err}`);
-            });
-            continue;
-          }
-        }
-
-        // item.image set but not yet in texture cache (e.g. seasonal decorations) — load async
-        if (!texture && imageUrl) {
-          textureManager.loadTexture(imageUrl, imageUrl).then(() => {
-            this.onTextureLoaded?.();
-          }).catch((err) => {
-            console.warn(`[PlacedItemsLayer] Failed to load item image: ${err}`);
-          });
+        const texture = imageUrl ? textureManager.getTexture(imageUrl) : undefined;
+        if (imageUrl && !texture) {
+          const foreground = this.fgSprites.get(`${key}_fg`);
+          if (foreground) foreground.visible = false;
           continue;
         }
 
@@ -225,13 +216,7 @@ export class PlacedItemsLayer extends PixiLayer {
 
         if (!fgSprite) {
           const fgTexture = textureManager.getTexture(item.foregroundImage);
-          if (!fgTexture) {
-            textureManager.loadTexture(item.foregroundImage, item.foregroundImage).then(() => {
-              this.onTextureLoaded?.();
-            }).catch((err) => {
-              console.warn(`[PlacedItemsLayer] Failed to load foreground image: ${err}`);
-            });
-          } else {
+          if (fgTexture) {
             if (fgTexture.source) {
               fgTexture.source.scaleMode = 'linear';
             }
