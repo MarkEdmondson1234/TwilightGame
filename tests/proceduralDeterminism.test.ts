@@ -19,9 +19,65 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import ts from 'typescript';
 import { generateRandomForest, generateRandomCave, generateLavaMap } from '../maps/procedural';
 import { dailyProceduralSeed, calendarDayKey } from '../maps/index';
 import type { MapDefinition } from '../types';
+
+/** Inspect executable calls, so comments and string literals cannot trip the guard. */
+function nondeterministicCalls(source: string): string[] {
+  const file = ts.createSourceFile('procedural.ts', source, ts.ScriptTarget.Latest, true);
+  const offenders: string[] = [];
+  function visit(node: ts.Node): void {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression)) {
+      const { expression: receiver, name } = node.expression;
+      if (ts.isIdentifier(receiver)) {
+        const random = receiver.text === 'Math' && name.text === 'random';
+        const clock = receiver.text === 'Date' && name.text === 'now';
+        const parent = node.parent;
+        // The seed is the one clock-dependent value callers may supply themselves.
+        const seedDefault =
+          ts.isParameter(parent) &&
+          parent.initializer === node &&
+          ts.isIdentifier(parent.name) &&
+          parent.name.text === 'seed';
+        if (random || (clock && !seedDefault)) {
+          const { line } = file.getLineAndCharacterOfPosition(node.getStart(file));
+          offenders.push(`${line + 1}: ${node.getText(file)}`);
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  return offenders;
+}
+
+describe('procedural source guard', () => {
+  it('ignores line comments, block comments and descriptive strings (#110)', () => {
+    expect(
+      nondeterministicCalls(`
+      // Avoid Math.random() and Date.now().
+      /* Math.random() must not drive generation. Date.now() either. */
+      const explanation = 'Math.random() and Date.now()';
+    `)
+    ).toEqual([]);
+  });
+
+  it.each(['Math.random()', 'Math . random ()', 'Math.random\n()', 'Date.now()'])(
+    'still rejects executable %s, including inside template expressions',
+    (call) => {
+      expect(nondeterministicCalls(`const value = ${call};`)).toHaveLength(1);
+      expect(nondeterministicCalls('const value = `${' + call + '}`;')).toHaveLength(1);
+    }
+  );
+
+  it('permits a seed default but still rejects a clock read in the same function', () => {
+    expect(
+      nondeterministicCalls('function generate(seed: number = Date.now()) { return Date.now(); }')
+    ).toEqual(['1: Date.now()']);
+  });
+});
 
 /** The parts of a generated map two players must agree on, pixel for pixel. */
 function comparable(map: MapDefinition) {
@@ -70,18 +126,7 @@ describe('procedural map determinism', () => {
   it('generation reads no clock and no unseeded randomness', () => {
     const source = readFileSync(join(__dirname, '../maps/procedural.ts'), 'utf-8');
 
-    const offenders: string[] = [];
-    source.split('\n').forEach((line, i) => {
-      const code = line.replace(/\/\/.*$/, '');
-      if (code.includes('Math.random(')) {
-        offenders.push(`${i + 1}: ${line.trim()}`);
-      }
-      // Date.now() is allowed only as the default seed of an exported
-      // generator — the seed itself is the one value a caller supplies.
-      if (code.includes('Date.now()') && !/seed: number = Date\.now\(\)/.test(code)) {
-        offenders.push(`${i + 1}: ${line.trim()}`);
-      }
-    });
+    const offenders = nondeterministicCalls(source);
 
     expect(
       offenders,
