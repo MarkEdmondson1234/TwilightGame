@@ -232,6 +232,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   };
 
   const handleKeyDown = useRef((e: KeyboardEvent) => {
+    if (typeof e.key !== 'string' || !e.key) return;
     // Ignore all keys if user is typing in an input/textarea
     const target = e.target as HTMLElement;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
@@ -516,6 +517,7 @@ export function useKeyboardControls(config: KeyboardControlsConfig) {
   }).current;
 
   const handleKeyUp = useRef((e: KeyboardEvent) => {
+    if (typeof e.key !== 'string' || !e.key) return;
     keysPressed[e.key.toLowerCase()] = false;
   }).current;
 

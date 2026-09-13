@@ -276,3 +276,19 @@ it('waits for eviction to finish before reloading a revisited map texture', asyn
   finish();
   expect(await reload).not.toBe(old);
 });
+
+it('protects dynamic textures attached to the scene, then evicts them after detachment', async () => {
+  const manager = await freshManager();
+  const { Assets } = await import('pixi.js');
+  await manager.loadUrls(['/tex/furniture.png', '/tex/old-map.png']);
+  const furniture = manager.getTexture('/tex/furniture.png');
+  const stage = { children: [{ visible: false, texture: furniture, children: [] }] };
+  expect(manager.evictExcept([], stage as unknown as import('pixi.js').Container)).toBe(1);
+  expect(manager.hasTexture('/tex/furniture.png')).toBe(true);
+  expect(Assets.unload).not.toHaveBeenCalledWith('/tex/furniture.png');
+  stage.children = [];
+  // Add another texture to exceed the tiny budget again.
+  await manager.loadUrls(['/tex/new-map.png']);
+  expect(manager.evictExcept(['/tex/new-map.png'], stage as unknown as import('pixi.js').Container)).toBe(1);
+  expect(Assets.unload).toHaveBeenCalledWith('/tex/furniture.png');
+});
