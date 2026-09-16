@@ -171,6 +171,8 @@ export enum TileType {
   PILE_OF_LEAVES, // Autumn leaf pile — decorative, walkable, autumn-only (village/mushroom forest/bear cave)
   // Utility tiles
   INVISIBLE_WALL, // Blocks movement but renders as transparent (invisible boundary)
+  // Buildings (appended to keep existing numeric values stable for any persisted data)
+  GREENHOUSE, // Glass greenhouse (private garden — grow any crop all year round)
 }
 
 export interface Position {

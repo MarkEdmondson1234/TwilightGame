@@ -14,7 +14,7 @@ import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
 import { getTileCoords } from './mapUtils';
-import { GROWTH_THRESHOLDS, SHARED_FARM_MAP_IDS } from '../constants';
+import { GROWTH_THRESHOLDS, SHARED_FARM_MAP_IDS, GREENHOUSE_MAP_ID } from '../constants';
 import { getWeatherZone, getWeatherForSlot, WEATHER_SLOT_HOURS } from '../data/weatherConfig';
 import { eventBus, GameEvent } from './EventBus';
 import { findRainWateringTimestamp } from './retroactiveRain';
@@ -245,7 +245,10 @@ class FarmManager {
     ) {
       const herbCrop = plot.cropType ? getCrop(plot.cropType) : null;
       if (herbCrop?.isHerb) {
-        const isWinter = TimeManager.getCurrentTime().season === Season.WINTER;
+        // Greenhouse herbs never dormant — winter stays outside the glass.
+        const isWinter =
+          plot.mapId !== GREENHOUSE_MAP_ID &&
+          TimeManager.getCurrentTime().season === Season.WINTER;
 
         // READY herb → dormant when winter begins
         if (plot.state === FarmPlotState.READY && isWinter) {
@@ -444,9 +447,12 @@ class FarmManager {
       return { success: false, reason: 'Unknown crop type' };
     }
 
-    // Check seasonal restrictions
+    // Check seasonal restrictions. The greenhouse is the one place the season
+    // never reaches — that is its whole point — so its plots plant anything,
+    // all year round.
     const gameTime = TimeManager.getCurrentTime();
-    if (!canPlantInSeason(cropId, gameTime.season)) {
+    const isGreenhouse = mapId === GREENHOUSE_MAP_ID;
+    if (!isGreenhouse && !canPlantInSeason(cropId, gameTime.season)) {
       const seasonNames = crop.plantSeasons.map((s) => s).join(', ');
       console.warn(
         `[FarmManager] Cannot plant ${cropId} in ${gameTime.season} (only: ${seasonNames})`

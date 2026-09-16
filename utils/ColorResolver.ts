@@ -147,6 +147,7 @@ const TILE_TYPE_TO_COLOR_KEY: Partial<Record<TileType, TileColorKey>> = {
   [TileType.CAULDRON]: 'grass', // Cauldron sits on grass
   [TileType.WELL]: 'grass', // Well sits on grass background
   [TileType.RUINS_ENTRANCE]: 'grass', // Ruins entrance sits on grass background
+  [TileType.GREENHOUSE]: 'grass', // Greenhouse sits on grass background
 };
 
 export class ColorResolver {
