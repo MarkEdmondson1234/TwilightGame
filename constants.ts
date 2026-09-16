@@ -249,6 +249,56 @@ export const GROWTH_THRESHOLDS = {
 } as const;
 
 /**
+ * NPC_GARDEN - Villagers tending the public farming patches.
+ *
+ * See design_docs/planned/NPC_GARDENS.md. The garden is global shared world
+ * state: the plan (garden level + request per gardener) lives in Firestore,
+ * the layout is computed deterministically from (day seed, map, plan), and
+ * NPC plants are ordinary shared FarmPlots marked with plantedByNpc.
+ *
+ * Patch sizes interpolate monotonically with the gardener's effective
+ * friendship level (1-9, the max reached by any player): tiles(level) =
+ * min + round((max - min) * (level - 1) / 8). Level 1 across all four
+ * gardeners is 15 tiles (~10% of the 154 public farm tiles); level 9 across
+ * all four is 123 tiles (~80%). The per-map sums never exceed 80%.
+ */
+export const NPC_GARDEN = {
+  /** Patch size per gardener at friendship level 1 (baseline) and level 9. */
+  /** Patch size per gardener at friendship level 1 (baseline) and level 9.
+   *  Sums are ~10% of each map's public tiles at level 1 and ≤80% at level 9
+   *  (village: 34 tiles, farm_area: 120). */
+  PATCH_MIN_MAX: {
+    village_elder: { min: 2, max: 15 },
+    village_child: { min: 1, max: 12 },
+    old_woman_knitting: { min: 7, max: 48 },
+    spring_periwinkle: { min: 5, max: 48 },
+  } as Record<string, { min: number; max: number }>,
+
+  /** Tiles a gardener leaves alone after a player harvests one of her plants
+   *  (game days) — the window a player has to claim the tile themselves. */
+  RECLAIM_GRACE_GAME_DAYS: 2,
+
+  /** Harvest yield cap for NPC-tended crops, and seed drops are always zero.
+   *  The garden is ambience and snacks, not a seed farm. */
+  HARVEST_YIELD_CAP: 2,
+
+  /** Share of a gardener's patch given over to the requested crop:
+   *  ceil(patchSize * min(REQUEST_SHARE_MAX, REQUEST_SHARE_BASE + REQUEST_SHARE_PER_LEVEL * level)).
+   *  Level 3 (first requestable tier) ≈ a third, level 9 ≈ three fifths. */
+  REQUEST_SHARE_BASE: 0.3,
+  REQUEST_SHARE_PER_LEVEL: 0.035,
+  REQUEST_SHARE_MAX: 0.6,
+
+  /** Share of non-requested patch tiles planted with the gardener's favourites
+   *  (the remainder goes to other in-season shop crops). */
+  FAVOURITE_WEIGHT: 0.7,
+
+  /** Seed used for the per-season patch shuffle: season name + season index,
+   *  so patches drift slowly between seasons but never within one. */
+  PATCH_SHUFFLE_PREFIX: 'npc_garden:patches',
+} as const;
+
+/**
  * WATER_CAN - Watering can capacity settings
  *
  * Controls how many uses the watering can has before needing refill.

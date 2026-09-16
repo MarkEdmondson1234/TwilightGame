@@ -7,6 +7,7 @@
 import { NPC, Direction, Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createStaticNPC } from '../createNPC';
+import { gardenRequestNodes } from '../../../data/npcGardeners';
 
 /**
  * Create an old woman knitting NPC with gentle animation
@@ -135,6 +136,10 @@ export function createOldWomanKnittingNPC(
             requiredCookingCourseComplete: true,
             requiredSeason: 'autumn',
             hiddenIfRecipeUnlocked: 'apple_cobbler',
+          },
+          {
+            text: 'Could you plant something for me?',
+            nextId: 'garden_favour',
           },
           {
             text: 'Take care!',
@@ -614,6 +619,10 @@ export function createOldWomanKnittingNPC(
         requiredQuest: 'estranged_sisters',
         requiredQuestStage: 4,
       },
+
+      // Althea tends her long rows in the farm-area field — see
+      // data/npcGardeners.ts and design_docs/planned/NPC_GARDENS.md.
+      ...gardenRequestNodes('old_woman_knitting'),
     ],
     friendshipConfig: {
       canBefriend: true,

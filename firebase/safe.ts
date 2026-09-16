@@ -15,6 +15,7 @@ import type { AuthState } from './authService';
 import type { FarmPlot, PlacedItem } from '../types';
 import type { SharedConversationSummary, SharedWorldEvent, SaveSlot } from './types';
 import type { SharedPlotDoc } from './communityGardenService';
+import type { NpcGardenPlanDoc } from './npcGardenService';
 import type { PresenceEvent, LocalPresenceState } from '../multiplayer/types';
 import type { PresenceStatus } from '../multiplayer/presenceStatus';
 import type { ChatMessage } from '../multiplayer/chat';
@@ -100,6 +101,17 @@ const stubPaintingStorage = {
   loadImage: async () => null as string | null,
   deleteImage: async () => {},
   loadAllImages: async () => new Map<string, string>(),
+};
+
+/** Stub npcGardenService when Firebase is not available */
+const stubNpcGardenService = {
+  startListening: () => {},
+  stopListening: () => {},
+  destroy: () => {},
+  onPlansChanged: (_cb: (plans: Map<string, NpcGardenPlanDoc>) => void) => () => {},
+  getPlan: (_npcId: string): NpcGardenPlanDoc | undefined => undefined,
+  reportGardenProgress: async () => false as boolean,
+  ensurePlan: async () => {},
 };
 
 /** Stub communityGardenService when Firebase is not available */
@@ -468,6 +480,15 @@ export function getNpcSpeechService() {
  */
 export function getCommunityGardenService() {
   return firebaseModule?.communityGardenService ?? stubCommunityGardenService;
+}
+
+/**
+ * Get npcGardenService (real or stub). The stub's reportGardenProgress
+ * resolves false and its plan reads return undefined, which callers treat
+ * as "use local friendship" — the garden works fully offline.
+ */
+export function getNpcGardenService() {
+  return firebaseModule?.npcGardenService ?? stubNpcGardenService;
 }
 
 /**

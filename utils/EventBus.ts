@@ -67,6 +67,9 @@ export enum GameEvent {
 
   // Friendship events
   FRIENDSHIP_REWARD = 'friendship:reward',
+  /** Emitted whenever an NPC's friendship level (1-9) increases. The NPC
+   *  garden subscribes to grow the gardener's patch for everyone. */
+  FRIENDSHIP_LEVEL_CHANGED = 'friendship:level_changed',
 
   // Decoration crafting events
   DECORATION_CRAFTED = 'decoration:crafted',
@@ -170,6 +173,10 @@ export interface EventPayloads {
     mapId: string;
     position: Position;
     cropDisplayName: string;
+  };
+  [GameEvent.FRIENDSHIP_LEVEL_CHANGED]: {
+    npcId: string;
+    level: number;
   };
   [GameEvent.NPC_MOVED]: {
     npcId: string;

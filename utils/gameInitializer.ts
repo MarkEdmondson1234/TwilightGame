@@ -6,6 +6,7 @@ import { characterData } from './CharacterData';
 import { initializePalette } from '../palette';
 import { preloadAllAssets } from './assetPreloader';
 import { farmManager } from './farmManager';
+import { npcGardenManager } from './NpcGardenManager';
 import { inventoryManager } from './inventoryManager';
 import { friendshipManager } from './FriendshipManager';
 import { cookingManager } from './CookingManager';
@@ -320,6 +321,10 @@ export async function initializeGameAssets(
 
   // Update farm states on startup (uses TimeManager internally)
   farmManager.updateAllPlots();
+
+  // NPC garden: load the request fallback, subscribe to plan + friendship
+  // events, and reconcile whichever public map the player is on.
+  npcGardenManager.initialise();
 
   // Register all quest handlers and initialise witch garden tracking
   await import('../data/questHandlers/index');

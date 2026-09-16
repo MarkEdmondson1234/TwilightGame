@@ -28,6 +28,8 @@ import {
   consumeProximityOfferPending,
 } from '../data/questHandlers/mrFoxPicnicHandler';
 import { eventChainManager } from './EventChainManager';
+import { npcGardenManager } from './NpcGardenManager';
+import { getGardener } from '../data/npcGardeners';
 import {
   startWitchGardenQuest,
   startPickledOnionsPhase,
@@ -166,6 +168,12 @@ export function handleDialogueAction(npcId: string, nodeId: string): string | vo
     if (redirect) return redirect;
   }
 
+  // Handle NPC garden requests (gardeners in data/npcGardeners.ts)
+  if (getGardener(npcId)) {
+    const redirect = handleNpcGardenRequest(npcId, nodeId);
+    if (redirect) return redirect;
+  }
+
   // Handle Ghost Queen / Queen Avaricia quest
   if (npcId === 'ghost_queen') {
     const redirect = handleGhostQueenActions(nodeId);
@@ -193,6 +201,26 @@ function handleFriendshipTalk(npcId: string): void {
 
   // Record the daily talk (awards points if not already talked today)
   friendshipManager.recordDailyTalk(npcId, npc);
+}
+
+/**
+ * Handle NPC garden requests — the gardener dialogue flow from
+ * data/npcGardeners.ts. On the hub node, a stranger is gently redirected;
+ * selecting a requestable crop's confirmation node records the request.
+ */
+function handleNpcGardenRequest(npcId: string, nodeId: string): string | void {
+  if (nodeId === 'garden_favour') {
+    if (friendshipManager.getFriendshipTier(npcId) === 'stranger') {
+      return 'garden_favour_stranger';
+    }
+    return;
+  }
+
+  if (nodeId.startsWith('garden_favour_') && nodeId !== 'garden_favour_stranger') {
+    const cropId = nodeId.slice('garden_favour_'.length);
+    npcGardenManager.setRequest(npcId, cropId);
+    debugLog('dialogueHandlers', `NPC garden request: ${npcId} will plant ${cropId}`);
+  }
 }
 
 /**

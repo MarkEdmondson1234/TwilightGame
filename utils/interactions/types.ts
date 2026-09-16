@@ -35,6 +35,7 @@ export type InteractionType =
   | 'farm_harvest_herb'
   | 'farm_remove_herb'
   | 'farm_clear'
+  | 'npc_garden_admire'
   | 'harvest_strawberry'
   | 'harvest_blackberry'
   | 'harvest_blueberry'

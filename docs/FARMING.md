@@ -143,6 +143,38 @@ Shared farm plots are stored in the cloud, not in your personal save. This means
 
 **Without an account:** Shared maps still work as normal local farms. Your changes just won't be visible to other players.
 
+### NPC Gardens — the villagers' patches
+
+The village beds and the farm-area field are never entirely bare: the villagers
+garden them. Four green fingers tend the public patches — the **Village Elder** and
+the **village child** in the village beds, the **Old Woman** and **Spring Periwinkle**
+in the farm-area field.
+
+- **About a tenth of the public tiles** always have something growing, from
+  seedlings to ripe crops — the gardeners water them, so they never wilt or die.
+- **Each gardener has favourites** she plants most (the elder's radish and pea, the
+  child's strawberries, the Old Woman's herbs, Periwinkle's melons), rounded out
+  with whatever else is in season.
+- **Be-friend them and their patch grows.** The garden is shared: when any player
+  befriends a gardener, that gardener plants more *for everyone*. Players who
+  befriend different gardeners each grow their own patch, and together the garden
+  can reach **about 80% of the public tiles** when all four are best friends.
+- **Ask them to plant something.** Once you're acquainted, a gardener will plant
+  whatever you request (from her list, in season) — the friendlier you are, the
+  more of her patch she gives over to it. Just ask: *"Could you plant something
+  for me?"*
+- **Ripe NPC crops are shared** like any other shared plot: first player to pick
+  one gets it, and the gardener quietly replants a couple of days later. Yield is
+  modest (a snack, not a seed farm), and admiring a plant (right-click / long
+  press) tells you who grew it.
+- **In winter** the gardeners rest: nothing new is planted, herbs sleep until
+  spring, and the beds are replanted with the new season's crops when spring comes.
+
+The garden is world state, not player state: the plan (each gardener's patch size
+and current request) is shared via the cloud, and the planting is computed
+deterministically from the day, so everyone sees the same garden with no extra
+tempting network traffic. See `design_docs/planned/NPC_GARDENS.md`.
+
 ### Personal Garden
 
 The **Personal Garden** is your own private farming space. Find it via the path on the east side of the village.
