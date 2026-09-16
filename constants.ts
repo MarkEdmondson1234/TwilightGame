@@ -10,6 +10,13 @@ export const PLAYER_SIZE = 0.8; // fraction of a tile
 /** Map IDs where farm plots are globally shared (all players, Firestore-backed) */
 export const SHARED_FARM_MAP_IDS = new Set(['village', 'farm_area']);
 
+/**
+ * The greenhouse interior (entered from the personal garden). Plots here ignore
+ * the season — grow any crop all year round — and are private, like the rest of
+ * the personal garden. See utils/farmManager.ts for the season exemptions.
+ */
+export const GREENHOUSE_MAP_ID = 'greenhouse';
+
 // PixiJS Feature Flag - Set to true to use WebGL rendering (10-100x faster)
 // Set to false to use DOM rendering (fallback for compatibility)
 export const USE_PIXI_RENDERER = true; // Enabled for testing

@@ -151,6 +151,15 @@ The **Personal Garden** is your own private farming space. Find it via the path 
 - Saved in your personal cloud save (if signed in)
 - Perfect for growing crops without anyone else harvesting them!
 
+### Greenhouse
+
+In the corner of the **Personal Garden** stands a glass greenhouse. Step up to its door to go inside, where two beds of plots grow under glass.
+
+- **Any crop, any season** — the season outside never reaches the glass. Plant radishes in winter, pumpkins in spring.
+- **Herbs never go dormant** here — thyme, mint and lavender keep producing through the winter that sends them to sleep outside.
+- **Rain never reaches in**, so watering is entirely up to you (and never done for you by the weather).
+- Plots are **private**, like the rest of the personal garden, and saved in your personal save.
+
 ## How to Farm
 
 1. **Get seeds** - Visit the Seed Shed in the farm area

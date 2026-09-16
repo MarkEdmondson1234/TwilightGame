@@ -32,6 +32,7 @@ import { mushroomMap } from './definitions/mushroomMap';
 import { mushraShop } from './definitions/mushraShop';
 import { ruins } from './definitions/ruins';
 import { personalGarden } from './definitions/personalGarden';
+import { greenhouse } from './definitions/greenhouse';
 import {
   generateRandomForest,
   generateRandomCave,
@@ -80,6 +81,7 @@ export function initializeMaps(): void {
   mapManager.registerMap(mushraShop);
   mapManager.registerMap(ruins);
   mapManager.registerMap(personalGarden);
+  mapManager.registerMap(greenhouse);
 
   // Generate and register initial random maps
   // These will be regenerated when transitioning to RANDOM_* IDs

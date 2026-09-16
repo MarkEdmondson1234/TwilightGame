@@ -50,6 +50,7 @@ export const tileAssets = {
   garden_shed_summer: '/TwilightGame/assets-optimized/tiles/shed/garden_shed_summer.png',
   garden_shed_autumn: '/TwilightGame/assets-optimized/tiles/shed/garden_shed_autumn.png',
   garden_shed_winter: '/TwilightGame/assets-optimized/tiles/shed/garden_shed_winter.png',
+  greenhouse: '/TwilightGame/assets-optimized/tiles/greenhouse/greenhouse.png',
   floor_1: '/TwilightGame/assets-optimized/tiles/floor_1.png',
   floor_light: '/TwilightGame/assets-optimized/tiles/floor_light.png',
   floor_dark: '/TwilightGame/assets-optimized/tiles/floor_dark.png',

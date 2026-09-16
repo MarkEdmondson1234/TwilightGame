@@ -1295,6 +1295,14 @@ export const TILE_LEGEND: Record<TileType, Omit<TileData, 'type'>> = {
     },
   },
 
+  [TileType.GREENHOUSE]: {
+    name: 'Greenhouse',
+    color: 'bg-palette-sage', // Base grass color for background
+    collisionType: CollisionType.SOLID,
+    image: [tileAssets.greenhouse],
+    baseType: TileType.GRASS, // Render grass beneath — glass art has transparent margins
+  },
+
   // Farmland tiles
   [TileType.SOIL_FALLOW]: {
     name: 'Fallow Soil',

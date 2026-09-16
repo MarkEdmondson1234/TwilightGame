@@ -26,6 +26,10 @@ vi.mock('../constants', async (importOriginal) => {
 import { farmManager } from '../utils/farmManager';
 import { FarmPlotState, FarmPlot, TileType } from '../types';
 import { inventoryManager } from '../utils/inventoryManager';
+import { GREENHOUSE_MAP_ID } from '../constants';
+
+// Season is mutable per test — the greenhouse's whole point is escaping it.
+const seasonState = vi.hoisted(() => ({ season: 'Spring' as string }));
 
 // Mock TimeManager with Season enum
 vi.mock('../utils/TimeManager', () => ({
@@ -38,7 +42,7 @@ vi.mock('../utils/TimeManager', () => ({
   TimeManager: {
     getCurrentTime: () => ({
       year: 0,
-      season: 'Spring',
+      season: seasonState.season,
       day: 1,
       totalDays: 1,
       hour: 12,
@@ -62,6 +66,7 @@ describe('FarmManager', () => {
   beforeEach(() => {
     // Clear all plots before each test
     farmManager.loadPlots([]);
+    seasonState.season = 'Spring'; // Tests opt into other seasons explicitly
     vi.clearAllMocks();
   });
 
@@ -157,6 +162,82 @@ describe('FarmManager', () => {
       const plot = farmManager.getPlot('test_map', position);
       expect(plot?.state).toBe(FarmPlotState.TILLED); // Still tilled
       expect(plot?.cropType).toBeNull();
+    });
+  });
+
+  describe('Seasons and the greenhouse', () => {
+    const now = Date.now();
+
+    beforeEach(() => {
+      vi.mocked(inventoryManager.removeItem).mockReturnValue(true);
+      vi.mocked(inventoryManager.hasItem).mockReturnValue(true);
+    });
+
+    const readyHerb = (mapId: string, x: number, y: number): FarmPlot => ({
+      mapId,
+      position: { x, y },
+      state: FarmPlotState.READY,
+      cropType: 'thyme',
+      plantedAtDay: 1,
+      plantedAtHour: 12,
+      lastWateredDay: 1,
+      lastWateredHour: 12,
+      stateChangedAtDay: 1,
+      stateChangedAtHour: 12,
+      plantedAtTimestamp: now,
+      lastWateredTimestamp: now,
+      stateChangedAtTimestamp: now,
+      quality: 'normal',
+      fertiliserApplied: false,
+    });
+
+    it('rejects out-of-season planting outdoors', () => {
+      seasonState.season = 'Autumn'; // Radish is spring/summer only
+      const position = { x: 5, y: 10 };
+      farmManager.tillSoil('test_map', position);
+
+      const result = farmManager.plantSeed('test_map', position, 'radish', 'seed_radish');
+
+      expect(result.success).toBe(false);
+      expect(result.reason).toContain('can only be planted in');
+      expect(inventoryManager.removeItem).not.toHaveBeenCalled();
+      // Soil stays tilled, ready for an in-season crop
+      expect(farmManager.getPlot('test_map', position)?.state).toBe(FarmPlotState.TILLED);
+    });
+
+    it('the greenhouse grows anything, even out of season', () => {
+      seasonState.season = 'Winter'; // Radish would refuse outdoors
+      const position = { x: 3, y: 2 };
+      farmManager.tillSoil(GREENHOUSE_MAP_ID, position);
+
+      const result = farmManager.plantSeed(
+        GREENHOUSE_MAP_ID,
+        position,
+        'radish',
+        'seed_radish'
+      );
+
+      expect(result.success).toBe(true);
+      const plot = farmManager.getPlot(GREENHOUSE_MAP_ID, position);
+      expect(plot?.state).toBe(FarmPlotState.PLANTED);
+      expect(plot?.cropType).toBe('radish');
+    });
+
+    it('greenhouse herbs stay ready through winter while outdoor ones go dormant', () => {
+      seasonState.season = 'Winter';
+      farmManager.loadPlots([
+        readyHerb('test_map', 3, 3),
+        readyHerb(GREENHOUSE_MAP_ID, 4, 4),
+      ]);
+
+      farmManager.updateAllPlots();
+
+      expect(farmManager.getPlot('test_map', { x: 3, y: 3 })?.state).toBe(
+        FarmPlotState.HERB_DORMANT
+      );
+      expect(farmManager.getPlot(GREENHOUSE_MAP_ID, { x: 4, y: 4 })?.state).toBe(
+        FarmPlotState.READY
+      );
     });
   });
 

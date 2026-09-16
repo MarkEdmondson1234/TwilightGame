@@ -1,6 +1,7 @@
 import { MapDefinition, TileType } from '../../types';
 import { parseGrid } from '../gridParser';
 import { tileAssets } from '../../assets';
+import { GREENHOUSE_MAP_ID } from '../../constants';
 
 /**
  * Personal Garden - A private farming area for the player
@@ -24,6 +25,7 @@ import { tileAssets } from '../../assets';
  * J = Sakura Tree
  * ) = Small Lake (6x6 pond sprite)
  * , = Village Green (decorative ground cover)
+ * z = Greenhouse (leads to the all-season greenhouse interior)
  */
 
 const gridString = `
@@ -46,10 +48,10 @@ LG,,XXXXXXXXX,,L
 )G,,XXXXXXXXX,Go
 LPPPPPPPPPPPPPPL
 LG,,G,,,,,G,,GeL
-tG,G,,G,,G,,G,GL
-LG,,G,,G,,G,,G,L
-oGe,G,,G,,G,,GeL
-LG,,G,,G,,G,,G,t
+tG,G,,G,,G,,,,,L
+LG,,G,,G,,G,,,,L
+oGe,G,,G,,G,,,,L
+LG,,G,,G,,G,,z,t
 LPPPPPPPPPPPPPPL
 LGG,G,lPG,G,,GeL
 ULLtUULtULLoULLU
@@ -77,6 +79,16 @@ export const personalGarden: MapDefinition = {
       toMapId: 'village',
       toPosition: { x: 6, y: 22 }, // Return to village
       label: 'Back to Village',
+    },
+    {
+      // Greenhouse door — the z anchor sits at (12, 21); the walkable door
+      // tile is in front of its centre door, on the row above the path.
+      fromPosition: { x: 12, y: 22 },
+      tileType: TileType.GREENHOUSE,
+      toMapId: GREENHOUSE_MAP_ID,
+      toPosition: { x: 7, y: 6 }, // Just inside the greenhouse door
+      label: 'Enter the Greenhouse',
+      hasDoor: true,
     },
   ],
   npcs: [],

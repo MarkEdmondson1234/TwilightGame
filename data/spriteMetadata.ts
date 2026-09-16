@@ -779,6 +779,24 @@ export const SPRITE_METADATA: SpriteMetadata[] = [
     collisionOffsetY: 0,
   },
   {
+    tileType: TileType.GREENHOUSE,
+    spriteWidth: 5, // 5 tiles wide (square 1000x1000 art, Victorian glasshouse)
+    spriteHeight: 5, // 5 tiles tall — square art, square footprint (CLAUDE.md rule)
+    offsetX: -2, // Centre the 5-wide sprite on the anchor tile
+    offsetY: -4, // Extends upward from anchor — base of the art lands on the door tile
+    image: tileAssets.greenhouse,
+    enableFlip: false,
+    enableRotation: false,
+    enableScale: false,
+    enableBrightness: false,
+    // Collision across the building body on the anchor row (shed pattern);
+    // the walkable door tile sits just below, in front of the centre door.
+    collisionWidth: 3,
+    collisionHeight: 1,
+    collisionOffsetX: -1,
+    collisionOffsetY: 0,
+  },
+  {
     tileType: TileType.WELL,
     spriteWidth: 2, // 2 tiles wide
     spriteHeight: 2, // 2 tiles tall (stone well with dark opening)
