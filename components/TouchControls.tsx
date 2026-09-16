@@ -3,6 +3,24 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Z_TOUCH_CONTROLS, zClass } from '../zIndex';
 
 type Direction = 'up' | 'down' | 'left' | 'right';
+
+/**
+ * Hand-drawn D-pad artwork: one idle frame (no arrow lit) plus one frame per
+ * pressed direction. All five render stacked; only the lit one is visible, so
+ * switching frames never waits on a decode.
+ */
+const DPAD_FRAME_STATES = ['idle', 'up', 'down', 'left', 'right'] as const;
+const dpadFrameSrc = (state: (typeof DPAD_FRAME_STATES)[number]) =>
+  `${import.meta.env.BASE_URL}assets/ui/dpad_${state}.png`;
+
+/** Transparent hit zones over each arrow arm of the artwork (percentages of the square). */
+const HIT_ZONES: Record<Direction, React.CSSProperties> = {
+  up: { left: '24%', top: 0, width: '52%', height: '46%' },
+  down: { left: '24%', bottom: 0, width: '52%', height: '46%' },
+  left: { left: 0, top: '24%', width: '46%', height: '52%' },
+  right: { right: 0, top: '24%', width: '46%', height: '52%' },
+};
+
 interface TouchControlsProps {
   onDirectionPress: (direction: Direction) => void;
   onDirectionRelease: (direction: Direction) => void;
@@ -34,7 +52,7 @@ const TouchControls: React.FC<TouchControlsProps> = ({
     return () => {
       window.removeEventListener('blur', releaseAll);
       window.removeEventListener('orientationchange', releaseAll);
-      document.removeEventListener('visibilitychange', releaseAll);
+      document.addEventListener('visibilitychange', releaseAll);
       for (const direction of pointers.keys()) releaseCallback.current(direction);
       pointers.clear();
     };
@@ -45,13 +63,8 @@ const TouchControls: React.FC<TouchControlsProps> = ({
     releaseCallback.current(direction);
     setPressed([...held.current.keys()]);
   };
-  const positions = {
-    up: 'top-0 left-1/2 -translate-x-1/2 rounded-t-xl',
-    down: 'bottom-0 left-1/2 -translate-x-1/2 rounded-b-xl',
-    left: 'left-0 top-1/2 -translate-y-1/2 rounded-l-xl',
-    right: 'right-0 top-1/2 -translate-y-1/2 rounded-r-xl',
-  };
-  const symbols = { up: '▲', down: '▼', left: '◄', right: '►' };
+  // Only one arrow can be lit at a time — the most recently pressed wins.
+  const lit: Direction | null = pressed.length > 0 ? pressed[pressed.length - 1] : null;
   return (
     <div
       data-game-ui
@@ -63,7 +76,18 @@ const TouchControls: React.FC<TouchControlsProps> = ({
       }}
     >
       <div aria-label="Movement" className={`relative ${compact ? 'w-36 h-36' : 'w-44 h-44'}`}>
-        {(Object.keys(positions) as Direction[]).map((direction) => (
+        {DPAD_FRAME_STATES.map((state) => (
+          <img
+            key={state}
+            data-testid={`dpad-frame-${state}`}
+            src={dpadFrameSrc(state)}
+            alt=""
+            draggable={false}
+            className="pointer-events-none absolute inset-0 w-full h-full select-none"
+            style={{ visibility: state === (lit ?? 'idle') ? 'visible' : 'hidden' }}
+          />
+        ))}
+        {(Object.keys(HIT_ZONES) as Direction[]).map((direction) => (
           <button
             key={direction}
             aria-label={`Move ${direction}`}
@@ -80,13 +104,10 @@ const TouchControls: React.FC<TouchControlsProps> = ({
             onPointerCancel={(e) => release(direction, e.pointerId)}
             onLostPointerCapture={(e) => release(direction, e.pointerId)}
             onContextMenu={(e) => e.preventDefault()}
-            style={{ touchAction: 'none' }}
-            className={`pointer-events-auto absolute ${positions[direction]} ${compact ? 'w-12 h-12' : 'w-14 h-14'} ${pressed.includes(direction) ? 'bg-slate-500' : 'bg-slate-700/90'} border-2 border-slate-500 flex items-center justify-center text-white font-bold text-xl shadow-md`}
-          >
-            {symbols[direction]}
-          </button>
+            style={{ touchAction: 'none', ...HIT_ZONES[direction] }}
+            className="pointer-events-auto absolute"
+          />
         ))}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-slate-800/70 rounded-full border-2 border-slate-600" />
       </div>
       {onEmotePress && (
         <button

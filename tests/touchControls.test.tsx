@@ -58,3 +58,27 @@ describe('D-pad pointer ownership', () => {
     expect(release).toHaveBeenCalledExactlyOnceWith('up');
   });
 });
+
+describe('D-pad hand-drawn frames', () => {
+  it('shows the idle frame when nothing is held and lights the held direction', () => {
+    const { up, right } = setup();
+    expect(screen.getByTestId('dpad-frame-idle')).toBeVisible();
+    expect(screen.getByTestId('dpad-frame-up')).not.toBeVisible();
+    pointer(up, 'pointerdown', 1);
+    expect(screen.getByTestId('dpad-frame-up')).toBeVisible();
+    expect(screen.getByTestId('dpad-frame-idle')).not.toBeVisible();
+    // A second held direction lights only the most recent one.
+    pointer(right, 'pointerdown', 2);
+    expect(screen.getByTestId('dpad-frame-right')).toBeVisible();
+    expect(screen.getByTestId('dpad-frame-up')).not.toBeVisible();
+    pointer(up, 'pointerup', 1);
+    pointer(right, 'pointerup', 2);
+    expect(screen.getByTestId('dpad-frame-idle')).toBeVisible();
+  });
+  it('renders every frame stacked so switching never waits on a decode', () => {
+    setup();
+    for (const state of ['idle', 'up', 'down', 'left', 'right']) {
+      expect(screen.getByTestId(`dpad-frame-${state}`)).toBeInTheDocument();
+    }
+  });
+});
