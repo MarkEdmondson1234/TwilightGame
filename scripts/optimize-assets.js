@@ -657,6 +657,17 @@ async function optimizeNPCs() {
     // Delete output file if it exists (handles case-sensitivity issues on Windows)
     deleteIfExists(outputPath);
 
+    // Eugene renders at 3 tiles (~192 CSS px), so a 1024px canvas is 4MB of GPU
+    // per frame for detail no screen shows — and he carries four frames (asleep
+    // by day, awake at night). 512px still covers a 2x retina render with room
+    // to spare, which matters twice over because he lives on the debug NPC
+    // showcase, the one map that deliberately holds every NPC at once.
+    //
+    // The canvas stays square and untrimmed on purpose: his four frames differ
+    // only in eye and Z position, so trimming per-frame would let each frame's
+    // bounding box drift and the artwork would jitter between frames.
+    const size = file.startsWith('eugene_') ? 512 : NPC_SIZE;
+    //
     // fit:'inside' (not 'contain') preserves the source aspect ratio exactly instead
     // of padding non-square art out to a square. Padding shifts where the artwork sits
     // inside the texture, and SPRITE_METADATA offsets are tuned against the *source*
@@ -665,12 +676,12 @@ async function optimizeNPCs() {
     // originals. For an already-square source 'inside' and 'contain' are identical,
     // so nothing else here changes.
     //
-    // withoutEnlargement stops small sources being upscaled to NPC_SIZE. Upscaling
+    // withoutEnlargement stops small sources being upscaled. Upscaling
     // adds no detail but quadruples GPU memory: witch_wolf at 500x530 costs 1MB as
     // itself and 4MB blown up to 1024x1024. Sprites are scaled to SPRITE_METADATA
     // dimensions at render time regardless of texture size.
     await sharp(inputPath)
-      .resize(NPC_SIZE, NPC_SIZE, {
+      .resize(size, size, {
         fit: 'inside',
         withoutEnlargement: true,
         background: { r: 0, g: 0, b: 0, alpha: 0 }
