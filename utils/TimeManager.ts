@@ -64,8 +64,12 @@ export class TimeManager {
 
   // Time constants
   // 1 real week = 1 game season: 168 hours / 2 hours per day = 84 game days
-  private static readonly DAYS_PER_SEASON = 84;
   private static readonly SEASONS_PER_YEAR = 4;
+
+  /** Game days in one season — public so shared-world seeds (e.g. the NPC
+   *  garden's per-season patch shuffle) can key on season identity. */
+  static readonly DAYS_PER_SEASON = 84;
+
   static readonly DAYS_PER_YEAR =
     TimeManager.DAYS_PER_SEASON * TimeManager.SEASONS_PER_YEAR; // 336 days
 

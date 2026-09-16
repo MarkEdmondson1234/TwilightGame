@@ -7,6 +7,7 @@
 import { NPC, Direction, Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createWanderingNPC } from '../createNPC';
+import { gardenRequestNodes } from '../../../data/npcGardeners';
 
 /**
  * Create a Little Girl (village child) NPC with wandering behavior
@@ -80,6 +81,10 @@ export function createVillageChildNPC(
             requiredSeason: 'winter',
           },
           {
+            text: 'Could you plant something for me?',
+            nextId: 'garden_favour',
+          },
+          {
             text: 'Maybe another time!',
           },
         ],
@@ -139,6 +144,10 @@ export function createVillageChildNPC(
             "Fine... but the forest looks so mysterious at night. I bet there are magical things that only come out when it's dark!",
         },
       },
+
+      // The village child plants her own little patch of the public beds —
+      // see data/npcGardeners.ts and design_docs/planned/NPC_GARDENS.md.
+      ...gardenRequestNodes('village_child'),
     ],
     friendshipConfig: {
       canBefriend: true,

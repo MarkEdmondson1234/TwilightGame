@@ -261,6 +261,14 @@ describe('YAML Event Chain Files', () => {
     expect(kitten!.stageMap.has('adopt')).toBe(true);
     expect(kitten!.stageMap.has('village_cat')).toBe(true);
     expect(kitten!.stageMap.has('happy_ending')).toBe(true);
+
+    // The kitten NPC talks during the chain — every story stage carries
+    // `kitten:` dialogue, which injects into the NPC whose id is 'kitten'.
+    // Missing it here means the kitten falls silent mid-story.
+    for (const stageId of ['found', 'adopt', 'search_owner', 'ask_witch', 'village_cat']) {
+      const stage = kitten!.stageMap.get(stageId);
+      expect(stage?.dialogue?.kitten?.text, `stage '${stageId}' kitten dialogue`).toBeTruthy();
+    }
   });
 
   it('mysterious_lights chain should have tile trigger in deep forest', async () => {
@@ -333,6 +341,86 @@ describe('GameContext - Event Chain Support', () => {
 
     expect(context.activeEventChains).toHaveLength(2);
     expect(context.activeEventChains).toContain('Strange Lights in the Forest');
+  });
+});
+
+// ============================================
+// Lost Kitten — outcome handler
+// ============================================
+
+describe('lost_kitten outcome handler', () => {
+  const CHAIN_ID = 'lost_kitten';
+
+  afterAll(async () => {
+    const { TimeManager } = await import('../utils/TimeManager');
+    TimeManager.clearTimeOverride();
+  });
+
+  beforeEach(async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    eventChainManager.initialise();
+    eventChainManager.resetChain(CHAIN_ID);
+  });
+
+  it('leaves the kitten undecided (visible) until the quest is done', async () => {
+    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+      '../data/questHandlers/lostKittenHandler'
+    );
+    expect(getLostKittenOutcome()).toBeUndefined();
+    expect(shouldShowLostKitten()).toBe(true);
+  });
+
+  it('adopting sends the kitten home — it leaves the well', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+      '../data/questHandlers/lostKittenHandler'
+    );
+
+    await eventChainManager.startChain(CHAIN_ID);
+    // Choice 0 on 'found' is "I'll take the kitten home" → adopt
+    await eventChainManager.makeChoice(CHAIN_ID, 0);
+    // 'adopt' has next: happy_ending (end: true) — the game loop advances it
+    await eventChainManager.checkAutoAdvance();
+
+    expect(eventChainManager.getProgress(CHAIN_ID)?.completed).toBe(true);
+    expect(getLostKittenOutcome()).toBe('adopted');
+    expect(shouldShowLostKitten()).toBe(false);
+  });
+
+  it('a kitten left as the village cat stays by the well forever', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+      '../data/questHandlers/lostKittenHandler'
+    );
+
+    await eventChainManager.startChain(CHAIN_ID);
+    // Choice 1 on 'found' is "Let's ask if anyone's lost a cat" → search_owner
+    await eventChainManager.makeChoice(CHAIN_ID, 1);
+    // Choice 1 on 'search_owner' is "Maybe it's a forest cat — it should stay free"
+    await eventChainManager.makeChoice(CHAIN_ID, 1);
+    // 'village_cat' auto-advances to its happy ending via the game loop
+    await eventChainManager.checkAutoAdvance();
+
+    expect(eventChainManager.getProgress(CHAIN_ID)?.completed).toBe(true);
+    expect(getLostKittenOutcome()).toBe('village_cat');
+    expect(shouldShowLostKitten()).toBe(true);
+  });
+
+  it('resolves pre-handler completions from recorded choice texts', async () => {
+    const { eventChainManager } = await import('../utils/EventChainManager');
+    const { getLostKittenOutcome, shouldShowLostKitten } = await import(
+      '../data/questHandlers/lostKittenHandler'
+    );
+
+    // A save completed before the outcome handler existed has no metadata —
+    // but its choices are recorded. Derive the ending rather than forgetting it.
+    await eventChainManager.startChain(CHAIN_ID);
+    await eventChainManager.makeChoice(CHAIN_ID, 0);
+    await eventChainManager.checkAutoAdvance();
+    const progress = eventChainManager.getProgress(CHAIN_ID)!;
+    delete progress.metadata?.outcome;
+
+    expect(getLostKittenOutcome()).toBe('adopted');
   });
 });
 

@@ -12,6 +12,7 @@ rules_version = '2';
 // - conversations/{npcId}/summaries/{id}         - Shared conversation summaries
 // - sharedEvents/{eventId}                      - Shared world events
 // - shared/farming/plots/{plotId}               - Shared farm plots (village + farm_area)
+// - shared/world/npcGardens/{npcId}             - NPC garden plans (patch level + request)
 // - shared/world/placedItems/{itemId}           - Shared placed items (furniture, wreaths, …)
 // - shared/world/paintings/{paintingId}         - Shared player-made paintings
 // - shared/world/albumPhotos/{photoId}          - Shared photo album (the book at Mum's)
@@ -89,6 +90,17 @@ service cloud.firestore {
 
       // Delete only requires authentication (no request.resource.data on delete)
       allow delete: if isAuthenticated();
+    }
+
+    // NPC garden plans - which villagers tend the public patches, how large
+    // their patches are (driven by the highest friendship level any player
+    // has reached) and what they were last asked to plant. The plants
+    // themselves live in shared/farming/plots like every other crop.
+    // Path: shared/world/npcGardens/{npcId}
+    match /shared/world/npcGardens/{npcId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidNpcGardenPlan(npcId);
+      allow delete: if false; // Plans only ever grow; nobody deletes them
     }
 
     // Shared placed items - furniture, wreaths, snow angels, anything put down
@@ -331,6 +343,17 @@ service cloud.firestore {
              data.x is int &&
              data.y is int &&
              data.state is int;
+    }
+
+    // Validate NPC garden plan
+    function isValidNpcGardenPlan(npcId) {
+      let data = request.resource.data;
+      return npcId in ['village_elder', 'village_child', 'old_woman_knitting', 'spring_periwinkle'] &&
+             data.keys().hasAll(['npcId', 'gardenLevel', 'requestedCrop']) &&
+             data.npcId == npcId &&
+             data.gardenLevel is int && data.gardenLevel >= 1 && data.gardenLevel <= 9 &&
+             (data.requestedCrop == null ||
+              (data.requestedCrop is string && data.requestedCrop.size() <= 32));
     }
 
     // Validate world event

@@ -67,6 +67,7 @@ import { getRestingFurnitureEffect, type RestEffect } from './utils/furnitureRes
 import { buildInventoryActions, hasInventoryActions } from './utils/inventoryActions';
 import { npcManager } from './NPCManager';
 import { farmManager } from './utils/farmManager';
+import { npcGardenManager } from './utils/NpcGardenManager';
 import { audioManager } from './utils/AudioManager';
 import { cookingManager } from './utils/CookingManager';
 import { FOOD_TO_RECIPE_ID } from './data/recipes';
@@ -824,6 +825,9 @@ const App: React.FC = () => {
     } else if (wasShared && !isShared) {
       farmManager.stopSharedSync();
     }
+    // NPC garden: reconcile the public patches whenever the player is on one
+    // (plants what the gardeners should have sown — see utils/NpcGardenManager.ts).
+    npcGardenManager.setActiveMap(map.id);
     return spawn;
   };
 
@@ -1565,6 +1569,7 @@ const App: React.FC = () => {
     // Start shared farm sync if already on a shared map (e.g. game loaded from save on village)
     if (SHARED_FARM_MAP_IDS.has(currentMapId)) {
       farmManager.startSharedSync();
+      npcGardenManager.setActiveMap(currentMapId);
     }
 
     return () => {

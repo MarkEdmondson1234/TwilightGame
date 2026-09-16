@@ -50,4 +50,10 @@ export interface FarmPlot {
   abundantHarvest?: boolean; // Guarantees max seed drops (from potion)
   // Herb cooldown tracking
   harvestedAtTimestamp?: number | null; // Real time when herb was last harvested (for cooldown)
+  // NPC garden marker: the gardener npcId that planted this plot. NPC-tended
+  // plots are ordinary shared plots (they flush to Firestore like any other)
+  // with two behavioural differences: they never wilt or die (the gardener
+  // waters them) and they yield a capped harvest with no seed drops.
+  // See utils/NpcGardenManager.ts and design_docs/planned/NPC_GARDENS.md.
+  plantedByNpc?: string;
 }

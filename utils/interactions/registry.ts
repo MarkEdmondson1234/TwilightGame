@@ -24,6 +24,7 @@ import { berryProvider } from './providers/berries';
 import { leafPileProvider } from './providers/leaves';
 import { fruitTreeProvider } from './providers/fruitTrees';
 import { farmingProvider } from './providers/farming';
+import { npcGardenProvider } from './providers/npcGarden';
 import { forageProvider } from './providers/forage';
 import { deskProvider } from './providers/desk';
 import { decorationPlacementProvider } from './providers/decorationPlacement';
@@ -57,6 +58,7 @@ export const INTERACTION_PROVIDERS: InteractionProvider[] = [
   leafPileProvider,
   fruitTreeProvider,
   farmingProvider,
+  npcGardenProvider,
   forageProvider,
 
   // Placement and furnishing.

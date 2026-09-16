@@ -14,6 +14,7 @@
 import { NPC, Direction, Position } from '../../../types';
 import { npcAssets } from '../../../assets';
 import { createWanderingNPC } from '../createNPC';
+import { gardenRequestNodes } from '../../../data/npcGardeners';
 
 /**
  * Create the Spring Periwinkle NPC.
@@ -90,6 +91,7 @@ export function createSpringPeriwinkleNPC(
             requiredCookingCourseComplete: true,
             hiddenIfRecipeUnlocked: 'melon_granita',
           },
+          { text: 'Could you plant something for me?', nextId: 'garden_favour' },
           { text: 'Lovely to meet you!' },
         ],
       },
@@ -187,6 +189,10 @@ export function createSpringPeriwinkleNPC(
         text: "*she laughs softly* I really couldn't say. But... I do find myself thinking about the village rather a lot lately. *pause* Rather a lot more than before, in any case. *she smiles at you warmly* You had something to do with that picnic, didn't you? I thought so. Thank you.",
         responses: [],
       },
+
+      // Spring Periwinkle plants her corner of the farm-area field before each
+      // visit — see data/npcGardeners.ts and design_docs/planned/NPC_GARDENS.md.
+      ...gardenRequestNodes('spring_periwinkle'),
     ],
   });
 }

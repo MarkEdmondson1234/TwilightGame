@@ -14,7 +14,7 @@ import { TimeManager, Season } from './TimeManager';
 import { inventoryManager } from './inventoryManager';
 import { getSeedItemId, getCropItemId } from '../data/items';
 import { getTileCoords } from './mapUtils';
-import { GROWTH_THRESHOLDS, SHARED_FARM_MAP_IDS, GREENHOUSE_MAP_ID } from '../constants';
+import { GROWTH_THRESHOLDS, SHARED_FARM_MAP_IDS, GREENHOUSE_MAP_ID, NPC_GARDEN } from '../constants';
 import { getWeatherZone, getWeatherForSlot, WEATHER_SLOT_HOURS } from '../data/weatherConfig';
 import { eventBus, GameEvent } from './EventBus';
 import { findRainWateringTimestamp } from './retroactiveRain';
@@ -297,6 +297,30 @@ class FarmManager {
       }
     }
 
+    // NPC-tended plots never wilt or die — their gardener waters them. They
+    // still grow to READY on the unwatered curve, and the herb transitions
+    // above (cooldown, winter dormancy) still apply so the Old Woman's herbs
+    // behave like every other herb. See design_docs/planned/NPC_GARDENS.md.
+    if (plot.plantedByNpc) {
+      const npcCrop = plot.cropType ? getCrop(plot.cropType) : null;
+      if (!npcCrop) return plot;
+      const npcMsSincePlanted =
+        plot.plantedAtTimestamp !== null ? now - plot.plantedAtTimestamp : 0;
+      if (
+        (plot.state === FarmPlotState.PLANTED || plot.state === FarmPlotState.WATERED) &&
+        npcMsSincePlanted >= npcCrop.growthTime
+      ) {
+        return {
+          ...plot,
+          state: FarmPlotState.READY,
+          stateChangedAtDay: currentDay,
+          stateChangedAtHour: currentHour,
+          stateChangedAtTimestamp: now,
+        };
+      }
+      return plot;
+    }
+
     // States that need crop data
     if (!plot.cropType) {
       console.warn('[FarmManager] Plot has no crop type but is in growing state', plot);
@@ -504,6 +528,54 @@ class FarmManager {
   }
 
   /**
+   * Plant an NPC garden plot — the gardener process planting a public tile.
+   *
+   * Unlike plantSeed() this consumes no seeds and takes a back-dated
+   * plantedAtTimestamp (the deterministic stagger computed by
+   * NpcGardenManager), so every client that replants the same tile on the
+   * same day writes essentially identical content. The plot is registered
+   * and marked dirty for the normal shared-farm flush, so from here on it
+   * is an ordinary shared plot that just happens to be marked plantedByNpc.
+   */
+  plantNpcPlot(
+    mapId: string,
+    position: Position,
+    cropId: string,
+    npcId: string,
+    plantedAtTimestamp: number
+  ): boolean {
+    if (!SHARED_FARM_MAP_IDS.has(mapId)) return false;
+    const crop = getCrop(cropId);
+    if (!crop) {
+      console.warn('[FarmManager] plantNpcPlot: unknown crop', cropId);
+      return false;
+    }
+    const backdated = TimeManager.getTimeForTimestamp(plantedAtTimestamp);
+    const plot: FarmPlot = {
+      mapId,
+      position,
+      state: FarmPlotState.PLANTED,
+      cropType: cropId,
+      plantedAtDay: backdated.totalDays,
+      plantedAtHour: backdated.hour,
+      lastWateredDay: backdated.totalDays,
+      lastWateredHour: backdated.hour,
+      stateChangedAtDay: backdated.totalDays,
+      stateChangedAtHour: backdated.hour,
+      plantedAtTimestamp,
+      lastWateredTimestamp: plantedAtTimestamp,
+      stateChangedAtTimestamp: plantedAtTimestamp,
+      quality: 'normal',
+      fertiliserApplied: false,
+      plantedByNpc: npcId,
+    };
+    this.registerPlot(plot);
+    this.syncSharedPlot(mapId, position);
+    eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position, action: 'plant' });
+    return true;
+  }
+
+  /**
    * Check if a crop can be planted in the current season
    */
   canPlantCropNow(cropId: string): boolean {
@@ -689,14 +761,22 @@ class FarmManager {
     // Get quality before reset
     const quality = plot.quality;
 
+    // NPC-tended crops are communal snacks: modest yield, and never any
+    // seeds — the garden is ambience, not a seed farm (NPC_GARDEN doc).
+    const cropYield = plot.plantedByNpc
+      ? Math.min(crop.harvestYield, NPC_GARDEN.HARVEST_YIELD_CAP)
+      : crop.harvestYield;
+
     // Add harvested crops to inventory
     const cropItemId = getCropItemId(plot.cropType);
-    inventoryManager.addItem(cropItemId, crop.harvestYield);
+    inventoryManager.addItem(cropItemId, cropYield);
 
     // Add seed drops (max if abundantHarvest blessing active, otherwise random)
-    const seedsDropped = plot.abundantHarvest
-      ? crop.seedDropMax
-      : Math.floor(Math.random() * (crop.seedDropMax - crop.seedDropMin + 1)) + crop.seedDropMin;
+    const seedsDropped = plot.plantedByNpc
+      ? 0
+      : plot.abundantHarvest
+        ? crop.seedDropMax
+        : Math.floor(Math.random() * (crop.seedDropMax - crop.seedDropMin + 1)) + crop.seedDropMin;
     if (seedsDropped > 0) {
       const seedItemId = getSeedItemId(plot.cropType);
       inventoryManager.addItem(seedItemId, seedsDropped);
@@ -750,7 +830,7 @@ class FarmManager {
       const herbInfo = crop.isHerb ? ' (herb — plot persists, in cooldown)' : '';
       debugLog(
         'FarmManager',
-        `Harvested ${crop.harvestYield}x ${crop.displayName}${qualityStr}${seedsInfo}${herbInfo} at ${position.x},${position.y}`
+        `Harvested ${cropYield}x ${crop.displayName}${qualityStr}${seedsInfo}${herbInfo} at ${position.x},${position.y}`
       );
     }
     eventBus.emit(GameEvent.FARM_PLOT_CHANGED, { position: plot.position, action: 'harvest' });
@@ -767,7 +847,7 @@ class FarmManager {
     // rare collision, which is rolled back below.
     this.claimSharedHarvest(mapId, position, plot, updatedPlot, {
       cropItemId,
-      cropYield: crop.harvestYield,
+      cropYield,
       seedItemId: seedsDropped > 0 ? getSeedItemId(plot.cropType) : null,
       seedsDropped,
       cropDisplayName: crop.displayName,
@@ -775,7 +855,7 @@ class FarmManager {
 
     return {
       cropId: plot.cropType,
-      yield: crop.harvestYield,
+      yield: cropYield,
       seedsDropped,
       quality,
     };
@@ -931,15 +1011,23 @@ class FarmManager {
     let cropYield = 0;
     let seedsDropped = 0;
 
+    const isNpcPlot = Boolean(plot.plantedByNpc);
+
     if (mode === 'flowers') {
-      cropYield = dh.flowerOption.cropYield;
-      seedsDropped = dh.flowerOption.seedYield;
+      cropYield = isNpcPlot
+        ? Math.min(dh.flowerOption.cropYield, NPC_GARDEN.HARVEST_YIELD_CAP)
+        : dh.flowerOption.cropYield;
+      seedsDropped = isNpcPlot ? 0 : dh.flowerOption.seedYield;
     } else {
-      cropYield = dh.seedOption.cropYield;
+      cropYield = isNpcPlot
+        ? Math.min(dh.seedOption.cropYield, NPC_GARDEN.HARVEST_YIELD_CAP)
+        : dh.seedOption.cropYield;
       // Respect abundantHarvest potion: give max seeds if active
-      seedsDropped = plot.abundantHarvest
-        ? Math.max(dh.seedOption.seedYield, crop.seedDropMax)
-        : dh.seedOption.seedYield;
+      seedsDropped = isNpcPlot
+        ? 0 // NPC-tended plots never drop seeds — the garden is not a seed farm
+        : plot.abundantHarvest
+          ? Math.max(dh.seedOption.seedYield, crop.seedDropMax)
+          : dh.seedOption.seedYield;
     }
 
     // Add items to inventory

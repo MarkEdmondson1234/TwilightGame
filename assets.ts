@@ -662,6 +662,10 @@ export const npcAssets = {
   eugene_awake_1: '/TwilightGame/assets-optimized/npcs/eugene/eugene_awake_1.png',
   eugene_awake_2: '/TwilightGame/assets-optimized/npcs/eugene/eugene_awake_2.png',
   eugene_portrait: '/TwilightGame/assets-optimized/npcs/eugene/eugene_awake_1.png',
+  // The lost kitten (village well discovery quest — appears while the quest
+  // is available or in progress; stays forever if it becomes the village cat)
+  kitten: '/TwilightGame/assets-optimized/npcs/kitten/kitten.png',
+  kitten_portrait: '/TwilightGame/assets-optimized/npcs/kitten/kitten.png',
   // Duck assets (pond creature)
   duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
   duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',

@@ -10,6 +10,7 @@ import { createStaticNPC } from '../createNPC';
 import { GARDENING_QUEST_ID, GARDENING_QUEST_STAGES } from '../../../data/questHandlers/gardeningQuestHandler';
 import { FAIRY_BLUEBELLS_QUEST_ID } from '../../../data/questHandlers/fairyBluebellsHandler';
 import { WREATH_WORKSHOP_QUEST_ID } from '../../../data/questHandlers';
+import { gardenRequestNodes } from '../../../data/npcGardeners';
 
 export function createVillageElderNPC(
   id: string,
@@ -99,6 +100,10 @@ export function createVillageElderNPC(
             nextId: 'sunflower_seed_request',
             requiredFriendshipTier: 'acquaintance',
             requiredSeason: 'spring',
+          },
+          {
+            text: 'Could you plant something for me?',
+            nextId: 'garden_favour',
           },
           {
             text: 'Farewell, elder.',
@@ -556,6 +561,10 @@ export function createVillageElderNPC(
         text: '"Ah, I\'m afraid I\'ve already given thee sunflower seeds this spring, young one. Come find me again once the season turns round once more."',
         responses: [{ text: 'Of course, thank you anyway.' }],
       },
+
+      // The elder tends part of the village's public beds — see
+      // data/npcGardeners.ts and design_docs/planned/NPC_GARDENS.md.
+      ...gardenRequestNodes('village_elder'),
     ],
     friendshipConfig: {
       canBefriend: true,

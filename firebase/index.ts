@@ -47,6 +47,9 @@ export { paintingStorageService } from './paintingStorage';
 // Community Garden (Shared Farming)
 export { communityGardenService } from './communityGardenService';
 
+export { npcGardenService } from './npcGardenService';
+export type { NpcGardenPlanDoc } from './npcGardenService';
+
 // Presence (Multiplayer — ephemeral, Realtime Database)
 export { presenceService } from './presenceService';
 

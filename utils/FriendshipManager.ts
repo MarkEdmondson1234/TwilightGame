@@ -296,6 +296,9 @@ class FriendshipManagerClass {
     // Announce level up
     if (newLevel > oldLevel) {
       debugLog('FriendshipManager', `🎉 ${npcId} friendship increased to level ${newLevel}!`);
+      // The NPC garden listens for this to grow that gardener's patch for
+      // everyone (see utils/NpcGardenManager.ts).
+      eventBus.emit(GameEvent.FRIENDSHIP_LEVEL_CHANGED, { npcId, level: newLevel });
     }
 
     // Check for tier change and give rewards

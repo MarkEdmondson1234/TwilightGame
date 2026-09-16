@@ -43,6 +43,8 @@ export interface SharedPlotDoc {
   cropType: string | null;
   plantedBy: string | null; // Display name of player who planted
   plantedByUid: string | null; // Auth UID
+  /** Gardener npcId for NPC-garden plots (no player planted these). */
+  plantedByNpc?: string | null;
   plantedAtTimestamp: number | null;
   lastWateredTimestamp: number | null;
   stateChangedAtTimestamp: number;
@@ -175,8 +177,10 @@ class SharedFarmService {
         y: plot.position.y,
         state: plot.state,
         cropType: plot.cropType,
-        plantedBy: hasPlanting ? user?.displayName || user?.email || 'Unknown' : null,
-        plantedByUid: hasPlanting ? authService.getUserId() || null : null,
+        // NPC-garden plots carry the gardener's id instead of a player's name.
+        plantedByNpc: plot.plantedByNpc ?? null,
+        plantedBy: hasPlanting && !plot.plantedByNpc ? user?.displayName || user?.email || 'Unknown' : null,
+        plantedByUid: hasPlanting && !plot.plantedByNpc ? authService.getUserId() || null : null,
         plantedAtTimestamp: plot.plantedAtTimestamp,
         lastWateredTimestamp: plot.lastWateredTimestamp,
         stateChangedAtTimestamp: plot.stateChangedAtTimestamp,
@@ -323,6 +327,7 @@ class SharedFarmService {
       quality: plotDoc.quality,
       fertiliserApplied: plotDoc.fertiliserApplied,
       abundantHarvest: plotDoc.abundantHarvest,
+      plantedByNpc: plotDoc.plantedByNpc ?? undefined,
     };
   }
 
