@@ -66,6 +66,11 @@ export function useGameEvents(): UseGameEventsReturn {
       eventBus.on(GameEvent.NPC_DESPAWNED, () => {
         setNpcUpdateTrigger((prev) => prev + 1);
       }),
+      // Quest state changed — quest-gated NPCs (the lost kitten) may need to
+      // appear or vanish without waiting for a map reload.
+      eventBus.on(GameEvent.EVENT_CHAIN_UPDATED, () => {
+        setNpcUpdateTrigger((prev) => prev + 1);
+      }),
 
       // Placed items events
       eventBus.on(GameEvent.PLACED_ITEMS_CHANGED, () => {

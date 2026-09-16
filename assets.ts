@@ -656,6 +656,10 @@ export const npcAssets = {
   sparrow_flight_wings_down:
     '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_down.png',
   sparrow_portrait: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_sitting.png',
+  // The lost kitten (village well discovery quest — appears while the quest
+  // is available or in progress; stays forever if it becomes the village cat)
+  kitten: '/TwilightGame/assets-optimized/npcs/kitten/kitten.png',
+  kitten_portrait: '/TwilightGame/assets-optimized/npcs/kitten/kitten.png',
   // Duck assets (pond creature)
   duck_01: '/TwilightGame/assets-optimized/npcs/duck_01.png',
   duck_02: '/TwilightGame/assets-optimized/npcs/duck_02.png',

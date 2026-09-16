@@ -16,12 +16,14 @@ trigger:
 
 stages:
   - id: found
-    text: A tiny ginger kitten is spotted near the village well, mewing softly and looking lost.
+    text: A tiny calico kitten is spotted near the village well, mewing softly and looking lost.
     event:
       title: Lost kitten spotted
-      description: noticed a tiny ginger kitten mewing near the village well
+      description: noticed a tiny calico kitten mewing near the village well
       contributor: A kind-hearted villager
     dialogue:
+      kitten:
+        text: "Mew! The kitten mews softly, blinking one blue eye and one green."
       village_elder:
         text: "Have you seen that little kitten by the well? Poor wee thing looks lost. Someone ought to help."
         expression: thinky
@@ -52,6 +54,8 @@ stages:
       description: gave the lost kitten a warm, loving home
       contributor: A new cat parent
     dialogue:
+      kitten:
+        text: "Purrrr. The kitten nestles into your arms and stops mewing — it is finally home."
       mum:
         text: "You've taken in the kitten? How lovely! Make sure it gets plenty of milk."
         expression: smile
@@ -67,6 +71,8 @@ stages:
       description: asked around but nobody claimed the mysterious little kitten
       contributor: A persistent searcher
     dialogue:
+      kitten:
+        text: "Mew? The kitten tilts its head, wondering what all the asking around is about."
       village_elder:
         text: "Nobody's lost a cat, you say? How peculiar. Perhaps it wandered from far away."
     choices:
@@ -76,14 +82,16 @@ stages:
         next: village_cat
 
   - id: ask_witch
-    text: The witch peers at the kitten with interest. "A ginger cat at the well? That's a sign of good luck, that is."
+    text: The witch peers at the kitten with interest. "A calico at the well? That's a sign of good luck, that is."
     event:
       title: Witch reads the kitten's fortune
-      description: learned from the witch that ginger cats bring good luck
+      description: learned from the witch that calico cats bring good luck
       contributor: A superstitious visitor
     dialogue:
+      kitten:
+        text: "Mew! The kitten puffs up proudly under the witch's gaze."
       witch:
-        text: "This kitten chose your village for a reason. Ginger cats are drawn to places full of kindness."
+        text: "This kitten chose your village for a reason. Calico cats are drawn to places full of kindness."
         expression: smile
     choices:
       - text: "I'll give it a home"
@@ -98,6 +106,8 @@ stages:
       description: watched the little kitten become the village's beloved communal cat
       contributor: The village community
     dialogue:
+      kitten:
+        text: "Purrrr. The kitten has claimed the sunniest spot by the well as its very own."
       village_elder:
         text: "That little cat's made itself right at home! It visits everyone, but I think it likes my doorstep best."
         expression: smile

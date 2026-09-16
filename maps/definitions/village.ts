@@ -10,6 +10,7 @@ import {
   createVillageChildNPC,
   createDuckNPC,
   createSpringPeriwinkleNPC,
+  createKittenNPC,
 } from '../../utils/npcFactories';
 import { createVillageMushraNPC } from '../../utils/npcs/forest/mushra';
 import { TIMING } from '../../constants';
@@ -243,6 +244,11 @@ export const village: MapDefinition = {
     // Only appears in spring (uses visibilityConditions to hide during other seasons)
     // Single duck to make it feel more special and rare
     createDuckNPC('village_duck', { x: 20, y: 17 }, 'Duck'),
+    // The Lost Kitten — subject of the lost_kitten discovery chain. Sits by the
+    // well while the quest is available or in progress; after the ending it
+    // remains only if it became the village cat (adopted kittens go home).
+    // Id must be 'kitten' — the chain's YAML injects its dialogue by that id.
+    createKittenNPC('kitten', { x: 21, y: 18 }),
     // Spring Periwinkle - visiting rabbit, present for 3 days every 8-day cycle
     // Follows the little girl in spring/summer; moves to house2 with her in autumn/winter
     createSpringPeriwinkleNPC('spring_periwinkle', { x: 18, y: 9 }),

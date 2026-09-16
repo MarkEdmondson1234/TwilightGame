@@ -18,6 +18,8 @@ import './mushraWreathHandler';
 // estrangedSistersHandler has no stage handlers (all logic is pull-based)
 // wizardTrialsStrengthHandler has no stage handlers (no dialogue/NPC — pull-based via boulder clicks)
 import './wizardTrialsPatienceHandler';
+// lostKittenHandler records the kitten's fate (adopted vs village cat) as metadata
+import './lostKittenHandler';
 
 // Re-export everything for convenience
 export * from './altheaChoresHandler';
