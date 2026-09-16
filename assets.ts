@@ -656,6 +656,12 @@ export const npcAssets = {
   sparrow_flight_wings_down:
     '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_flight_wings_down.png',
   sparrow_portrait: '/TwilightGame/assets-optimized/npcs/sparrow/sparrow_sitting.png',
+  // Eugene the owl (forest bird - asleep by day, awake at night)
+  eugene_asleep_1: '/TwilightGame/assets-optimized/npcs/eugene/eugene_asleep_1.png',
+  eugene_asleep_2: '/TwilightGame/assets-optimized/npcs/eugene/eugene_asleep_2.png',
+  eugene_awake_1: '/TwilightGame/assets-optimized/npcs/eugene/eugene_awake_1.png',
+  eugene_awake_2: '/TwilightGame/assets-optimized/npcs/eugene/eugene_awake_2.png',
+  eugene_portrait: '/TwilightGame/assets-optimized/npcs/eugene/eugene_awake_1.png',
   // The lost kitten (village well discovery quest — appears while the quest
   // is available or in progress; stays forever if it becomes the village cat)
   kitten: '/TwilightGame/assets-optimized/npcs/kitten/kitten.png',

@@ -19,3 +19,4 @@ export { createSuffleNPC } from './suffle';
 export { createProfessorBirdimenNPC } from './professorBirdimen';
 export { createPossumNPC } from './possum';
 export { createSparrowNPC } from './sparrow';
+export { createEugeneNPC, createEugeneNightNPC } from './eugene';
