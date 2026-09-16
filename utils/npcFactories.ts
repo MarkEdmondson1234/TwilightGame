@@ -39,6 +39,8 @@ export {
   createProfessorBirdimenNPC,
   createPossumNPC,
   createSparrowNPC,
+  createEugeneNPC,
+  createEugeneNightNPC,
   // Farm NPCs
   createCowNPC,
   // Mine NPCs

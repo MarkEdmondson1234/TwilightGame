@@ -19,6 +19,8 @@ import {
   createSuffleNPC,
   createProfessorBirdimenNPC,
   createPossumNPC,
+  createEugeneNPC,
+  createEugeneNightNPC,
 } from '../../utils/npcFactories';
 import { createGoddessOfEyesNPC } from '../../utils/npcs/goddessOfEyes';
 
@@ -84,6 +86,10 @@ const npcs = [
   // Row 1: Small animals
   createCatNPC('debug_cat', { x: 6, y: 6 }, 'Cat'),
   createDogNPC('debug_dog', { x: 10, y: 6 }, 'Dog'),
+  // Eugene the owl — asleep by day, awake at night. Two entries share one
+  // perch; visibilityConditions.timeOfDay swaps them at dusk and dawn.
+  createEugeneNPC('debug_eugene', { x: 14, y: 6 }),
+  createEugeneNightNPC('debug_eugene_night', { x: 14, y: 6 }),
 
   // Row 2: Village folk (pinned — factory bakes in seasonalLocations that would relocate them)
   createVillageElderNPC('debug_elder', { x: 6, y: 10 }, 'Village Elder'),
