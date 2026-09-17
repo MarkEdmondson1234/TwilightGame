@@ -75,16 +75,6 @@ export function getLostKittenOutcome(): LostKittenOutcome | undefined {
   return 'adopted';
 }
 
-/**
- * Whether the kitten should be visible at the well right now:
- * waiting while the quest is available, present while it plays out, and
- * afterwards only if it stayed as the village's own cat.
- */
-export function shouldShowLostKitten(): boolean {
-  if (!isLostKittenCompleted()) return true;
-  return getLostKittenOutcome() === 'village_cat';
-}
-
 // ============================================================================
 // Stage Handlers
 // ============================================================================
