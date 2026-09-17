@@ -41,3 +41,4 @@ art-review/
 
 # Art staging folder — originals only; integrated copies live under public/assets/
 incoming-art/
+regression-detected
