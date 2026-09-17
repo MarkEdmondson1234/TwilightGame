@@ -27,9 +27,16 @@ Three PRs merged to `main` today, all deployed to production
 
 | #143 | **Day 6, §5 M1 part 1.** Weather tint, cloud shadows and parallax crowns drawn by Pixi (`WeatherTint`, `CloudShadowLayer`, `ForegroundParallaxLayer`); the three DOM components deleted; `tests/domEffectBudget.test.ts` bans CSS blur/blend in game components. | No DOM layer composited over the canvas per frame (a compositor cost the headless profile cannot see). React walking 109 → 91 ms/s. |
 
-**Not yet confirmed on a real device.** Every number above is from the
-headless profile or arithmetic. Sentry will show the truth within a session of
-play on today's release: see §2.
+| #144 | **Day 6, M1 part 2.** GIFs → sprite sheets from the optimiser (≤48 × 256²), played by `AnimationLayer` in the depth container; gifsicle gone; house2 off the DOM player. M1 complete — no DOM draws anything in the world. | GIF decode off the main thread; the last per-frame React commit path (house2) gone. |
+
+**First real-device confirmation (iPhone, iOS 18.7, Safari and Firefox), on
+release `2ef9fede` (through #142):** village **58–60 fps** (was 39 average /
+30 minimum on the 13th), worst frames 62–265 ms (was up to 345 ms); forest a
+flat 60 with worst frames ~35 ms; farm 58 fps. The iPhone is at its display
+cap; what is left there is the occasional 130–265 ms worst frame on entering
+a map (texture first-draw — M3). **The iPad — the device that was locked at
+30 fps and dipping to 7.5 — has not reported on any of today's releases yet.**
+Query as in §2 and compare by `release`.
 
 ---
 
@@ -124,11 +131,7 @@ at 10–15 Hz they are fine.
 
 ### B. Plan §5, the medium items (days each; pick by payoff)
 
-- **M1** effects into Pixi — part 1 done (PR #143: cloud shadows, weather
-  tint, parallax crowns). **Part 2 open:** `AnimationOverlay` GIFs
-  (main-thread decode as `<img>`; `dragonfly_stream.gif` has 209 frames,
-  313 across the four) → atlases built by the optimiser + `AnimatedSprite`s
-  in a Pixi layer, counted by the texture budget.
+- ~~**M1** effects into Pixi~~ — done (PRs #143, #144).
 - **M3** GPU warm-up during the loading screen (bind each kept texture after
   `loadUrls` in `usePixiRenderer`'s residency effect) — kills the first-draw
   upload hitch after transitions.

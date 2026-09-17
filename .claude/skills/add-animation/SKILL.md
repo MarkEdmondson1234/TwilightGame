@@ -42,7 +42,7 @@ Fullscreen effects that cover the entire viewport based on weather state.
 
 - **GIF** (recommended for looping animations)
 - **APNG** (animated PNG, also supported)
-- **Note**: GIFs ARE optimized by the asset pipeline! They're automatically resized to 512x512px and compressed with gifsicle
+- **Note**: the GIF is the *source* only. `npm run optimize-assets` turns it into a sprite sheet (`name.sheet.png` + `name.sheet.json`, at most 48 frames of 256²) and PixiJS plays it as an `AnimatedSprite` (`utils/pixi/AnimationLayer.ts`). Register the `.sheet.png` in `animationAssets`. Keep loops under 48 frames — extra frames are dropped from the end.
 
 ## Important: GIF Sizing and Scale Values
 
@@ -80,11 +80,7 @@ Place your animated GIF in `/public/assets/animations/`:
 - Use transparent backgrounds for overlay effects
 - Ensure smooth looping (first and last frames should match)
 
-**IMPORTANT — Infinite looping:** GIF looping is controlled by metadata in the file itself, not by the `loop: true` config property. Always set the loop flag after placing the file:
-```bash
-npx gifsicle --loop=0 --batch public/assets/animations/your_animation.gif
-```
-(`--loop=0` = loop infinitely. Without this, the GIF may play once and stop.)
+**Looping** is the `loop: true` config property (the sheet is played by PixiJS; the GIF's own loop flag no longer matters).
 
 ### 2. Register in assets.ts
 
@@ -152,7 +148,7 @@ export const WEATHER_ANIMATIONS: import('./types').WeatherAnimation[] = [
 
 Check that:
 - Animation file exists at `/public/assets/animations/[fileName].gif`
-- GIF has infinite loop flag set (`npx gifsicle --loop=0 --batch public/assets/animations/[fileName].gif`)
+- `npm run optimize-assets` has been run, so `public/assets-optimized/animations/[fileName].sheet.png` and `.sheet.json` exist (`tests/animationSheets.test.ts` checks)
 - Asset is registered in `animationAssets`
 - Configuration added to `TILE_ANIMATIONS`
 - `make verify` is clean — typecheck plus the full test suite. **Never `npm test`** (watch mode, never exits); use `make test` or `npm run test:run` for tests alone.
@@ -280,7 +276,7 @@ For full-screen effects, set a large radius or use a common tile type:
 ## Performance Considerations
 
 - Animations use viewport culling (only render visible ones)
-- GIFs ARE optimized - run `npm run optimize-assets` to resize and compress with gifsicle
+- Each animation is one sprite sheet texture (≤ 12.6 MB GPU) counted by the per-map texture budget; it is loaded only on maps whose tiles trigger it
 - Too many animations can impact performance
 - Use appropriate radius (larger = more instances rendered)
 
@@ -301,4 +297,4 @@ For full-screen effects, set a large radius or use a common tile type:
 - [ASSETS.md](../../../docs/ASSETS.md) - Complete asset guidelines
 - [constants.ts](../../../constants.ts) - TILE_ANIMATIONS configuration
 - [assets.ts](../../../assets.ts) - animationAssets registry
-- [AnimationOverlay.tsx](../../../components/AnimationOverlay.tsx) - Renderer component
+- [AnimationLayer.ts](../../../utils/pixi/AnimationLayer.ts) - PixiJS renderer; [tileAnimationPlacement.ts](../../../utils/tileAnimationPlacement.ts) - where instances go

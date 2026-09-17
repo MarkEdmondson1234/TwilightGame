@@ -182,9 +182,24 @@ device variant rather than a global downsize).
   real win — no blurred/blended DOM layer composited over the canvas every
   frame — is a compositor cost the headless profile cannot see; it needs a
   device.
-- **Part 2 (the GIFs)** is still open: `AnimationOverlay` decodes four GIFs
-  (313 frames) on the main thread as `<img>`s; they need an atlas pipeline
-  and `AnimatedSprite`s.
+**Day 6, part 2 (§5 M1: the GIFs) — done 2026-09-17.**
+
+- The optimiser turns each animated GIF into a sprite sheet (`name.sheet.png`
+  + `name.sheet.json` with frame delays; at most 48 frames of 256², dropped
+  from the end rather than sampled so motion stays smooth) and no longer ships
+  GIFs at all — gifsicle is gone from the build, CI and the dependencies.
+  `utils/pixi/AnimationLayer.ts` plays them as `AnimatedSprite`s in the
+  depth-sorted container; placement is the pure, seeded
+  `utils/tileAnimationPlacement.ts` (the DOM overlay rolled `Math.random()` for
+  instance counts). Sheets are counted by the per-map texture budget for the
+  maps and seasons that trigger them.
+- house2 no longer needs `useDOMPlayer`: it existed so the hearth-fire GIF
+  could sort behind the player, and the fire is in the depth container now.
+  No map uses the DOM player, so no map pays a React commit per moving frame.
+- `components/AnimationOverlay.tsx` and the never-used `WeatherOverlay.tsx`
+  (+ `WEATHER_ANIMATIONS`) deleted. `tests/animationSheets.test.ts` fails if a
+  sheet is a GIF, lacks its sidecar, or the sidecar disagrees with the PNG.
+- M1 is complete: nothing in the game world is drawn by the DOM any more.
 
 ---
 
@@ -431,7 +446,7 @@ adds up.
 
 | # | Change | Where | Why |
 |---|---|---|---|
-| M1 | **Move CloudShadows, WeatherTintOverlay, AnimationOverlay GIFs and ForegroundParallax into the Pixi stage.** Cloud shadows become a few tinted sprites with a pre-blurred soft-ellipse texture moved in `updateAnimations`; the tint becomes a `Z_WEATHER_TINT` graphic (one already exists in `DarknessLayer`); the four GIFs (313 frames) become `AnimatedSprite`s from atlases, with `dragonfly_stream` cut to ~30 frames. | `components/CloudShadows.tsx`, `WeatherTintOverlay.tsx`, `AnimationOverlay.tsx`, `ForegroundParallax.tsx` | Removes every per-frame DOM layer over the canvas: the blur re-rasterisation, the `mix-blend-mode` composite, main-thread GIF decode, and the second React render loop. |
+| M1 ✅ | **Move CloudShadows, WeatherTintOverlay, AnimationOverlay GIFs and ForegroundParallax into the Pixi stage.** Cloud shadows become a few tinted sprites with a pre-blurred soft-ellipse texture moved in `updateAnimations`; the tint becomes a `Z_WEATHER_TINT` graphic (one already exists in `DarknessLayer`); the four GIFs (313 frames) become `AnimatedSprite`s from atlases, with `dragonfly_stream` cut to ~30 frames. | `components/CloudShadows.tsx`, `WeatherTintOverlay.tsx`, `AnimationOverlay.tsx`, `ForegroundParallax.tsx` | Removes every per-frame DOM layer over the canvas: the blur re-rasterisation, the `mix-blend-mode` composite, main-thread GIF decode, and the second React render loop. |
 | M2 | **Cap multi-tile sprite textures at ≤2× their tile footprint** with per-footprint rules in the optimiser (2×2 → 256, 3×3 → 384, 4×4 → 512, 6×6 → 768); `magical_lake` 2048 → 1024. | `scripts/optimize-assets.js` | −108 MB across the sprite set, −12 MB for the lake; better cache locality. Check with `npm run art-review`. |
 | M3 | **Warm the GPU during the loading screen.** After `loadUrls(keep)` resolves, bind each kept texture once (`renderer.texture.bind(source)` or Pixi's prepare system) before the transition ends. | `usePixiRenderer.ts:905-916` | Walking into a new area never pays `texImage2D` mid-frame. |
 | M4 | **Count room layers in the budget test and ship 1280×720 room variants for mobile**; crop the mostly-transparent overlays (cobwebs, boulders, mess) to sprites instead of six full-screen 7.9 MB layers. | `utils/mapTextureSet.ts:216-218`, `tests/mapTextureBudget.test.ts`, `scripts/optimize-assets.js` | Room maps are 4–7× full-screen fill at DPR-scaled resolution, uncounted. |

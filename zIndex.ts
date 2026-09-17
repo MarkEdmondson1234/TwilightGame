@@ -99,6 +99,13 @@ export const Z_PLACED_ITEMS = 150;
  */
 export const Z_SURFACE_DECORATION = 620;
 
+/**
+ * Tile-triggered foreground animations (petals over a sakura, bees, dragonflies)
+ * inside the depth-sorted container: above every walking entity and above
+ * surface decorations, below a flying player.
+ */
+export const Z_ANIMATION_FOREGROUND = 640;
+
 /** Foreground sprites (trees, buildings - in front of player) - DEPRECATED: use depth sorting */
 export const Z_SPRITE_FOREGROUND = 200;
 

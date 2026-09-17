@@ -75,6 +75,7 @@ box, an out-of-bounds transition dumps the player somewhere arbitrary. Nothing t
 | `doorDestinationLabel.test.ts` | "Go to undefined" on a procedural map, or a size-blocked door losing its reason | Touching `providers/transition.ts` |
 | `shopClickQuantity.test.tsx` | A single click buying more than one, or the quantity picker becoming unreachable | Touching `ShopUI` slot handlers |
 | `wreathWorkshop.test.ts` | Capture geometry, pointer maths under `transform: scale()`, decoration instance matching | Touching the wreath workshop or custom decorations |
+| `animationSheets.test.ts` | A tile animation pointing at a GIF, a sprite sheet without its `.sheet.json` sidecar, or a sidecar that disagrees with the PNG — the layer then draws nothing, or frames cut from the wrong place, with no error | Adding or changing an animation; forgetting `npm run optimize-assets` |
 | `domEffectBudget.test.ts` | A CSS blur or blend mode over the game world — a blurred DOM layer over the WebGL canvas makes the compositor redraw the whole canvas every frame (the cloud shadows and weather tint were exactly that, until they became Pixi layers) | Adding a visual effect as a DOM overlay |
 | `pixiMaskSafety.test.ts` | Raw `.mask =` assignment outside `maskUtils` (guards the "this.mask is null" crash) | Adding/using a PixiJS mask (fog, lighting, spotlights) |
 | `colorResolver.test.ts` | Colour resolution behaviour through map schemes | Touching tile colours or palettes |

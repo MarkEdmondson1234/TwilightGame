@@ -133,7 +133,15 @@ describe('no unseeded randomness in the shared simulation', () => {
     // These two drive things players point at and talk about ("look, the
     // deer!", "there's a fairy by the bluebells"), so they must agree across
     // clients. Anything reintroducing Math.random() here breaks that silently.
-    const guarded = ['NPCManager.ts', 'utils/fairyAttractionManager.ts'];
+    // The tile animations (bees, petals) are placed with a seeded hash too:
+    // the old DOM overlay rolled Math.random() for instance counts, so two
+    // players could see different numbers of bees round one hive.
+    const guarded = [
+      'NPCManager.ts',
+      'utils/fairyAttractionManager.ts',
+      'utils/tileAnimationPlacement.ts',
+      'utils/cloudShadows.ts',
+    ];
 
     const offenders = guarded.filter((file) =>
       readFileSync(join(__dirname, '..', file), 'utf-8').includes('Math.random()')

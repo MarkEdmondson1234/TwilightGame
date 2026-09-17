@@ -627,42 +627,6 @@ export const TILE_ANIMATIONS: import('./types').TileAnimation[] = [
   // },
 ];
 
-/**
- * WEATHER_ANIMATIONS - Fullscreen environmental effects based on weather state
- *
- * These animations render across the entire visible viewport when the weather matches.
- * Use DevTools (F4) to change weather and test these effects.
- */
-export const WEATHER_ANIMATIONS: import('./types').WeatherAnimation[] = [
-  {
-    id: 'cherry_blossoms_weather',
-    image: animationAssets.cherry_spring_petals,
-    weather: 'cherry_blossoms',
-    layer: 'foreground',
-    loop: true,
-    opacity: 0.6,
-    scale: 0.8, // ~410px (6.4 tiles wide) - large atmospheric effect (512px optimized)
-  },
-  // Future weather effects:
-  // {
-  //   id: 'rain_weather',
-  //   image: animationAssets.rain,
-  //   weather: 'rain',
-  //   layer: 'foreground',
-  //   loop: true,
-  //   opacity: 0.7,
-  //   scale: 1.0,
-  // },
-  // {
-  //   id: 'snow_weather',
-  //   image: animationAssets.snow,
-  //   weather: 'snow',
-  //   layer: 'foreground',
-  //   loop: true,
-  //   opacity: 0.8,
-  //   scale: 1.2,
-  // },
-];
 
 /**
  * CAMERA - Photography feature constants
