@@ -112,9 +112,6 @@ import SplashEffect from './components/SplashEffect';
 import { ALL_CUTSCENES, getCutsceneById } from './data/cutscenes';
 import { recordSessionFrame } from './utils/sessionDiagnostics';
 import { performanceMonitor } from './utils/PerformanceMonitor';
-import WeatherTintOverlay from './components/WeatherTintOverlay';
-import ForegroundParallax from './components/ForegroundParallax';
-import CloudShadows from './components/CloudShadows';
 import AmbientClouds from './components/AmbientClouds';
 import CookingInterface from './components/CookingInterface';
 import BrewingInterface from './components/BrewingInterface';
@@ -2238,7 +2235,7 @@ const App: React.FC = () => {
   // setWeather and forceTimeUpdate available for DevTools/magic effects if needed
   const {
     setWeather: _setWeather,
-    isWeatherVisible,
+    isWeatherVisible: _isWeatherVisible,
     forceTimeUpdate: _forceTimeUpdate,
   } = useEnvironmentController({
     currentMapId,
@@ -2668,21 +2665,6 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* Cloud shadows - subtle moving shadows on the ground for outdoor maps */}
-      {currentMap?.hasClouds && (
-        <CloudShadows
-          cameraX={cameraX}
-          cameraY={cameraY}
-          viewFrameRef={viewFrameRef}
-          season={currentSeason}
-          day={currentTime.day}
-          year={currentTime.year}
-          mapWidth={currentMap.width}
-          mapHeight={currentMap.height}
-          weather={currentWeather}
-        />
-      )}
-
       {/* Ambient sky clouds - slow-drifting decorative clouds for background-image rooms */}
       {currentMap?.ambientClouds && currentMap.ambientClouds.length > 0 && (
         <AmbientClouds clouds={currentMap.ambientClouds} />
@@ -2695,20 +2677,6 @@ const App: React.FC = () => {
         cameraY={cameraY}
         onEffectComplete={removeVFX}
       />
-
-      {/* Weather tint overlay - applies weather visual effects over NPCs */}
-      <WeatherTintOverlay weather={currentWeather} visible={isWeatherVisible} />
-
-      {/* Foreground parallax trees - decorative framing for outdoor maps */}
-      {['village', 'forest', 'water_area'].includes(currentMap?.colorScheme ?? '') &&
-        currentMap && (
-          <ForegroundParallax
-            cameraX={cameraX}
-            cameraY={cameraY}
-            mapWidth={currentMap.width}
-            mapHeight={currentMap.height}
-          />
-        )}
 
       {/* Hide UI elements during dialogue, books, minigames, or cutscenes */}
       {!activeNPC && !isAnyBookOpen && !ui.miniGame && !isCutscenePlaying && (

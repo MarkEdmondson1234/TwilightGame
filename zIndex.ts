@@ -102,6 +102,13 @@ export const Z_SURFACE_DECORATION = 620;
 /** Foreground sprites (trees, buildings - in front of player) - DEPRECATED: use depth sorting */
 export const Z_SPRITE_FOREGROUND = 200;
 
+/**
+ * Cloud shadows drifting over the ground. Above every world sprite — a passing
+ * cloud shades the player and the trees too — and below the parallax crowns,
+ * which frame the screen rather than sit in the world.
+ */
+export const Z_CLOUD_SHADOWS = 240;
+
 /** Foreground parallax decorations (edge trees that frame the screen) */
 export const Z_FOREGROUND_PARALLAX = 250;
 

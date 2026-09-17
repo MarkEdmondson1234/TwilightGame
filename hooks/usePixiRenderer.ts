@@ -39,6 +39,9 @@ import { getLocalEmote } from '../multiplayer/localEmote';
 import { getLocalChatBubble } from '../multiplayer/localChat';
 import { ShadowLayer } from '../utils/pixi/ShadowLayer';
 import { WeatherLayer } from '../utils/pixi/WeatherLayer';
+import { CloudShadowLayer } from '../utils/pixi/CloudShadowLayer';
+import { ForegroundParallaxLayer } from '../utils/pixi/ForegroundParallaxLayer';
+import { hasForegroundParallax } from '../data/foregroundParallax';
 import { DarknessLayer, LightSource } from '../utils/pixi/DarknessLayer';
 import { PlacedItemsLayer } from '../utils/pixi/PlacedItemsLayer';
 import { BackgroundImageLayer } from '../utils/pixi/BackgroundImageLayer';
@@ -226,6 +229,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   const highlightLayerRef = useRef<HighlightLayer | null>(null);
   const thoughtBubbleLayerRef = useRef<ThoughtBubbleLayer | null>(null);
   const weatherLayerRef = useRef<WeatherLayer | null>(null);
+  const cloudShadowLayerRef = useRef<CloudShadowLayer | null>(null);
+  const parallaxLayerRef = useRef<ForegroundParallaxLayer | null>(null);
   const darknessLayerRef = useRef<DarknessLayer | null>(null);
   const prevMapIdRef = useRef<string>('');
   const torchPositionsRef = useRef<LightSource[]>([]);
@@ -358,6 +363,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         const glow = darknessLayerRef.current.getGlowContainer();
         if (glow) glow.scale.set(1 / zoom);
       }
+      // The parallax crowns are screen-fixed too, like the DOM layer they replace.
+      parallaxLayerRef.current?.getContainer().scale.set(1 / zoom);
       // A forced layout read — only when something structural changed, not per step.
       if (backgroundImageLayerRef.current && canvasRef.current) {
         backgroundImageLayerRef.current.setViewportDimensions(
@@ -423,6 +430,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     if (darknessLayerRef.current) {
       darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY, zoom);
     }
+    cloudShadowLayerRef.current?.updateCamera(cameraX, cameraY);
+    parallaxLayerRef.current?.update(cameraX, cameraY);
 
     return { moved: true, offsetChanged };
   }, [viewFrameRef, canvasRef]);
@@ -527,6 +536,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     if (weatherLayerRef.current) {
       weatherLayerRef.current.update(deltaTime);
     }
+    cloudShadowLayerRef.current?.update(deltaTime);
     if (spriteLayerRef.current) {
       spriteLayerRef.current.updateAnimations();
     }
@@ -768,6 +778,15 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         highlightLayerRef.current = highlightLayer;
         app.stage.addChild(highlightLayer.getContainer());
 
+        // Cloud shadows (world space) and the parallax tree crowns (screen
+        // space) — the DOM layers that used to sit over the canvas (§5 M1).
+        const cloudShadowLayer = new CloudShadowLayer();
+        cloudShadowLayerRef.current = cloudShadowLayer;
+        app.stage.addChild(cloudShadowLayer.getContainer());
+        const parallaxLayer = new ForegroundParallaxLayer(window.innerWidth, window.innerHeight);
+        parallaxLayerRef.current = parallaxLayer;
+        app.stage.addChild(parallaxLayer.getContainer());
+
         // Create weather layer
         try {
           const weatherLayer = new WeatherLayer(window.innerWidth, window.innerHeight, perfSettings.particleScale);
@@ -972,6 +991,14 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         weatherLayerRef.current.destroy();
         weatherLayerRef.current = null;
       }
+      if (cloudShadowLayerRef.current) {
+        cloudShadowLayerRef.current.destroy();
+        cloudShadowLayerRef.current = null;
+      }
+      if (parallaxLayerRef.current) {
+        parallaxLayerRef.current.destroy();
+        parallaxLayerRef.current = null;
+      }
       if (darknessLayerRef.current) {
         darknessLayerRef.current.destroy();
         darknessLayerRef.current = null;
@@ -998,6 +1025,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         getCachedPerformanceSettings().resolution
       );
       app.renderer.resize(window.innerWidth, window.innerHeight, resolution);
+      parallaxLayerRef.current?.resize(window.innerWidth, window.innerHeight);
 
       if (backgroundImageLayerRef.current && canvasRef.current) {
         backgroundImageLayerRef.current.setViewportDimensions(
@@ -1060,6 +1088,29 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       void layer.loadLayers(map, currentMapId, false);
     }
   }, [enabled, currentMapId, isPixiInitialized]);
+
+  // =========================================================================
+  // EFFECT: Cloud shadows and parallax crowns follow the map, season and date
+  // (timeOfDay is in the deps only so the daily reseed happens within the day)
+  // =========================================================================
+  useEffect(() => {
+    if (!isPixiInitialized) return;
+    const map = mapManager.getCurrentMap();
+    const { season, day, year } = TimeManager.getCurrentTime();
+    cloudShadowLayerRef.current?.configure(
+      map?.hasClouds ?? false,
+      map?.width ?? 0,
+      map?.height ?? 0,
+      season,
+      day,
+      year
+    );
+    cloudShadowLayerRef.current?.setWeather(currentWeather);
+    parallaxLayerRef.current?.setSeason(toSeasonKey(seasonKey));
+    parallaxLayerRef.current?.setMap(hasForegroundParallax(map), map?.height ?? 0);
+    // The trees and shadows are placed from the camera; make the next frame do it.
+    viewDirtyRef.current = true;
+  }, [isPixiInitialized, currentMapId, seasonKey, timeOfDay, currentWeather]);
 
   // =========================================================================
   // EFFECT: Update weather visibility on map change

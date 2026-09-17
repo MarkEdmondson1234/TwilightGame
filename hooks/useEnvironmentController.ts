@@ -186,7 +186,7 @@ export function useEnvironmentController(
         const showWeather = isWeatherAllowedOnMap(state.weather, currentMapId);
         weatherLayerRef.current.setVisible(showWeather);
       }
-      // Update React state for WeatherTintOverlay
+      // Update React state (the weather drives ambient audio and the Pixi tint)
       setCurrentWeather(state.weather);
     });
 

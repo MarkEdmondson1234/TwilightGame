@@ -143,6 +143,10 @@ export const debugNPCs: MapDefinition = {
   height: 30,
   grid: parseGrid(gridString),
   colorScheme: 'village',
+  // Every NPC in the game lives here, so it is already at the mobile texture
+  // budget (tests/mapTextureBudget.test.ts); the village's parallax tree
+  // crowns would tip it over, and a debug showcase does not need framing.
+  foregroundParallax: false,
   isRandom: false,
   spawnPoint: { x: 15, y: 25 }, // Near the exit door
   transitions: [
