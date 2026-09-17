@@ -218,6 +218,14 @@ import { reportMessageOnce } from './utils/errorReporting';
 //   • Don't grow this file. New system → new hook (see the golden rule).
 // ═════════════════════════════════════════════════════════════════════════════
 
+/**
+ * Tiled maps have no grid offset. One shared constant, not a literal in the
+ * render body: the renderer keys its scene-rebuild effects on this object's
+ * identity, and a fresh `{ x: 0, y: 0 }` per render rebuilt every tile and
+ * sprite on every frame (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §3.1).
+ */
+const ZERO_GRID_OFFSET = Object.freeze({ x: 0, y: 0 });
+
 const App: React.FC = () => {
   // Consolidated UI overlay state (inventory, cooking, shop, etc.)
   const { ui, openUI, closeUI, closeAllUI, toggleUI, isAnyBookOpen, isAnyUIOpen } = useUIState();
@@ -448,6 +456,16 @@ const App: React.FC = () => {
   const lastFrameTime = useRef<number>(Date.now()); // For delta time calculation
   const lastChainCheckTime = useRef<number>(0); // Throttle for event chain proximity checks
   const lastSeasonalEventCheckTime = useRef<number>(0); // Throttle for seasonal decoration checks
+  const lastWorldCheckTime = useRef<number>(0); // Throttle for season/fairy bookkeeping
+  // Cached standing-tile tests (lava lake, resting furniture) — see the game loop
+  const standingTileRef = useRef({
+    tileX: NaN,
+    tileY: NaN,
+    mapId: '',
+    checkedAt: 0,
+    isOnLavaLake: false,
+    restingEffect: null as RestEffect | null,
+  });
   const lastTransitionTime = useRef<number>(0);
   const fairyFormTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]); // Timers for fairy form warnings/expiry
 
@@ -1369,10 +1387,23 @@ const App: React.FC = () => {
   });
 
   // ═══════════════════════ GAME LOOP (requestAnimationFrame) ═══════════════════════
+  // Per-frame inputs that change with UI state, mirrored into a ref during
+  // render (same pattern as currentMapIdRef) so gameLoop is not rebuilt on them.
+  const loopStateRef = useRef({ activeNPC, isCutscenePlaying, activeChainPopup, miniGame: ui.miniGame });
+  loopStateRef.current = { activeNPC, isCutscenePlaying, activeChainPopup, miniGame: ui.miniGame };
+
   const gameLoop = useCallback(() => {
     // Track frame-to-frame timing for performance metrics
     performanceMonitor.tick();
     recordSessionFrame();
+
+    // Read the pause conditions and map through refs so this callback keeps one
+    // identity. When they were dependencies, opening or closing any dialogue
+    // rebuilt the loop, and the effect that owns it then cancelled the rAF,
+    // cleared the farm interval and flushed and restarted the shared-farm
+    // Firestore sync — a stall on every conversation.
+    const { activeNPC, isCutscenePlaying, activeChainPopup, miniGame } = loopStateRef.current;
+    const currentMapId = currentMapIdRef.current;
 
     // Calculate delta time for frame-rate independent movement
     const now = Date.now();
@@ -1389,40 +1420,52 @@ const App: React.FC = () => {
     // Pass player position for proximity-triggered state changes (e.g., possum playing dead)
     npcManager.updateNPCs(deltaTime, playerPosRef.current);
 
-    // Check for season changes and update NPC locations if needed
-    // Season changes trigger NPC_MOVED event via EventBus
-    npcManager.checkSeasonChange();
+    // Slow world bookkeeping, polled once a second rather than every frame: a
+    // season changes weekly and fairies spawn on a five-second clock, but each
+    // of these read the clock and re-filtered the map's NPC list per frame.
+    if (now - lastWorldCheckTime.current >= TIMING.WORLD_CHECK_MS) {
+      lastWorldCheckTime.current = now;
 
-    // Check for fairy spawns/despawns (time-based attraction system)
-    const currentNPCs = npcManager.getCurrentMapNPCs();
+      // Check for season changes and update NPC locations if needed
+      // Season changes trigger NPC_MOVED event via EventBus
+      npcManager.checkSeasonChange();
 
-    // Check for fairies to despawn (happens at dawn)
-    // removeDynamicNPC emits NPC_DESPAWNED event
-    const fairyIdsToDespawn = fairyAttractionManager.getFairiesToDespawn(currentNPCs);
-    fairyIdsToDespawn.forEach((npcId) => {
-      npcManager.removeDynamicNPC(npcId);
-    });
+      // Check for fairy spawns/despawns (time-based attraction system)
+      const currentNPCs = npcManager.getCurrentMapNPCs();
 
-    // Check for new fairies to spawn (happens at night near bluebells)
-    // addDynamicNPC emits NPC_SPAWNED event
-    const newFairies = fairyAttractionManager.updateFairySpawns(currentMapId, currentNPCs);
-    newFairies.forEach((fairy) => {
-      npcManager.addDynamicNPC(fairy);
-    });
+      // Check for fairies to despawn (happens at dawn)
+      // removeDynamicNPC emits NPC_DESPAWNED event
+      const fairyIdsToDespawn = fairyAttractionManager.getFairiesToDespawn(currentNPCs);
+      fairyIdsToDespawn.forEach((npcId) => {
+        npcManager.removeDynamicNPC(npcId);
+      });
+
+      // Check for new fairies to spawn (happens at night near bluebells)
+      // addDynamicNPC emits NPC_SPAWNED event
+      const newFairies = fairyAttractionManager.updateFairySpawns(currentMapId, currentNPCs);
+      newFairies.forEach((fairy) => {
+        npcManager.addDynamicNPC(fairy);
+      });
+    }
 
     // Update PixiJS animations (weather particles, sprite animations, tile animations)
     updateAnimations(deltaTime);
 
     // Pause movement when dialogue, cutscene, event chain popup, or a full-screen mini-game is active
-    if (activeNPC || isCutscenePlaying || activeChainPopup || ui.miniGame) {
+    if (activeNPC || isCutscenePlaying || activeChainPopup || miniGame) {
       animationFrameId.current = requestAnimationFrame(gameLoop);
       return;
     }
 
-    // Check event chain tile triggers and objectives (throttled)
+    // Check event chain tile triggers, objectives and position-based cutscene
+    // triggers (throttled together — all three are "is the player near X" tests)
     if (now - lastChainCheckTime.current >= TIMING.EVENT_CHAIN_CHECK_MS) {
       lastChainCheckTime.current = now;
       checkChainProximity(currentMapId, playerPosRef.current.x, playerPosRef.current.y);
+      cutsceneManager.checkAndTriggerCutscenes({
+        playerPosition: playerPosRef.current,
+        currentMapId,
+      });
     }
 
     // Check seasonal festival decoration placement/removal (throttled)
@@ -1450,25 +1493,33 @@ const App: React.FC = () => {
       }
     }
 
-    // Check for position-based cutscene triggers (only when not in dialogue/cutscene)
-    if (!activeNPC && !isCutscenePlaying) {
-      cutsceneManager.checkAndTriggerCutscenes({
-        playerPosition: playerPosRef.current,
-        currentMapId,
-      });
-    }
-
     // Update player movement (handles input, animation, collision, and position)
     const movementResult = updateMovement(deltaTime, now);
     isMovingRef.current = movementResult.isMoving;
 
-    // Check if player is standing within a lava lake's sprite footprint
+    // Standing-tile tests: is the player within a lava lake's sprite footprint,
+    // or resting on a placed bed, bench or armchair? Both scan the map and the
+    // placed items, so they are re-evaluated when the player changes tile (or
+    // after a short while on the same tile, in case furniture appears under
+    // them), not on every frame.
     const _ptx = Math.floor(playerPosRef.current.x);
     const _pty = Math.floor(playerPosRef.current.y);
-    const isOnLavaLake = getLavaLakeAnchor(_ptx, _pty) !== null;
-
-    // Check if player is resting on a placed furniture bed, bench or armchair
-    const restingEffect = getRestingFurnitureEffect(playerPosRef.current, currentMapId);
+    const standing = standingTileRef.current;
+    if (
+      standing.tileX !== _ptx ||
+      standing.tileY !== _pty ||
+      standing.mapId !== currentMapId ||
+      now - standing.checkedAt >= TIMING.EVENT_CHAIN_CHECK_MS
+    ) {
+      standing.tileX = _ptx;
+      standing.tileY = _pty;
+      standing.mapId = currentMapId;
+      standing.checkedAt = now;
+      standing.isOnLavaLake = getLavaLakeAnchor(_ptx, _pty) !== null;
+      standing.restingEffect = getRestingFurnitureEffect(playerPosRef.current, currentMapId);
+    }
+    const isOnLavaLake = standing.isOnLavaLake;
+    const restingEffect = standing.restingEffect;
     const isOnBed = restingEffect === 'sleep';
     const isOnBench = restingEffect === 'rest';
 
@@ -1490,15 +1541,10 @@ const App: React.FC = () => {
     );
 
     animationFrameId.current = requestAnimationFrame(gameLoop);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateAnimations is a stable useCallback destructured from usePixiRenderer below this line
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateAnimations is a stable useCallback destructured from usePixiRenderer below this line; activeNPC, isCutscenePlaying, activeChainPopup, ui.miniGame and currentMapId are read through loopStateRef/currentMapIdRef on purpose (see the comment at the top of the loop)
   }, [
     updateMovement,
-    activeNPC,
-    isCutscenePlaying,
-    activeChainPopup,
     checkChainProximity,
-    currentMapId,
-    ui.miniGame,
     tickMultiplayer,
     isMovingRef,
     playerPosRef,
@@ -1938,7 +1984,7 @@ const App: React.FC = () => {
       visibleRange,
       viewportScale,
       viewportSize,
-      effectiveGridOffset: effectiveGridOffset ?? { x: 0, y: 0 },
+      effectiveGridOffset: effectiveGridOffset ?? ZERO_GRID_OFFSET,
       effectiveTileSize,
       backgroundRoomPan,
       roomViewport,

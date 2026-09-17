@@ -21,14 +21,37 @@ would make the game fast everywhere rather than tuned for one device.
 
 | # | Cause | Evidence | Fix class |
 |---|-------|----------|-----------|
-| 1 | **The whole React tree re-renders every frame**, and each of those renders **rebuilds the entire PixiJS scene** because of a one-line object allocation. | `App.tsx:1942`, `usePixiRenderer.ts:880-897`; iPad hits exactly 30 fps in a room with 4 sprites (§2) | Low-hanging (one line) + architectural (§6A) |
-| 2 | **Three GPU features that are ruinous on mobile**: a live blur filter on every shadow, a full-viewport canvas re-uploaded to the GPU per frame for darkness, and a full-screen mask on fog. | `ShadowLayer.ts:301-308`, `DarknessLayer.ts:355-357,540`, `WeatherLayer.ts:347` | Low-hanging (each is a small change) |
-| 3 | **Memory pressure**: ~440 MB of decoded audio, ~300 MB of textures, ~144 MB of duplicate character bitmaps, all resident at once on an iPad. | `AudioManager.ts:392-420`, `assetPreloader.ts:109-124`, `tests/mapTextureBudget` output | Low-hanging + pipeline (§6C) |
+| 1 ✅ | **The whole React tree re-renders every frame**, and each of those renders **rebuilds the entire PixiJS scene** because of a one-line object allocation. | `App.tsx:1942`, `usePixiRenderer.ts:880-897`; iPad hits exactly 30 fps in a room with 4 sprites (§2) | Low-hanging (one line) + architectural (§6A) |
+| 2 ✅ | **Three GPU features that are ruinous on mobile**: a live blur filter on every shadow, a full-viewport canvas re-uploaded to the GPU per frame for darkness, and a full-screen mask on fog. | `ShadowLayer.ts:301-308`, `DarknessLayer.ts:355-357,540`, `WeatherLayer.ts:347` | Low-hanging (each is a small change) |
+| 3 ✅ | **Memory pressure**: ~440 MB of decoded audio, ~300 MB of textures, ~144 MB of duplicate character bitmaps, all resident at once on an iPad. | `AudioManager.ts:392-420`, `assetPreloader.ts:109-124`, `tests/mapTextureBudget` output | Low-hanging + pipeline (§6C) |
 | 4 | **Stalls**: first-draw texture uploads after a transition, a full-save `JSON.stringify` to localStorage every second while walking, 2–4 s texture batches. | Sentry `game.operation`: `texture_batch` 0.4–4.7 s, `local_save` up to 257 ms; worst frames 800–1095 ms in the village on iPad | Pipeline + persistence |
 
 **Recommended order:** §4 (a day of one-line and small fixes, most of the win),
 then §5 (a few days), then §6 (the architecture, one sprint per area). Each
 step has a measurement attached in §7 so it can be proven rather than assumed.
+
+## Progress
+
+**Day 1 (the frame) — done 2026-09-17**, §4 items 1, 2, 3, 11, 12, 16, 17.
+Measured with a CPU profile of a headless village session under 4× CPU
+throttling (`Emulation.setCPUThrottlingRate`), inclusive main-thread ms per
+second; the software GPU makes fps meaningless here but CPU attribution is
+sound (§7). Before → after:
+
+| Function | Idle | Walking |
+|---|---|---|
+| React (`performWorkOnRoot`) | 224 → **56** | 552 → 627 (unchanged, see below) |
+| `renderTiles` | 25.6 → **0** | 91.5 → **10.3** |
+| `renderSprites` | 9.3 → **0** | 30.8 → **3.2** |
+| `getLavaLakeAnchor` | 11.8 → 0.7 | 8.7 → 1.9 |
+| `cullSprites` | 4.3 → 0 | 13.9 → 1.8 |
+
+Idle is now one App render a second (the NPC-list sync, the HUD clock), and
+the scene is no longer rebuilt on any frame where nothing moved. The walking
+column is unchanged because the player position still goes through React
+state every moving frame (cause B), which is the §6A refactor and its own PR;
+each App render costs ~19 ms at 4× throttle, so on the iPad it is a dropped
+frame per step until that lands.
 
 ---
 
@@ -256,13 +279,13 @@ overlay when it lands.
 | 8 | **Load audio lazily.** `loadBatch` only SFX at boot; ambient/music per map on `playAmbient`/`playMusic` (the `pendingAmbients`/`pendingMusic` queues already handle "requested before loaded"). Cap concurrency. Convert stereo ambients to mono. | `gameInitializer.ts:217-223`, `AudioManager.ts:392-420` | S–M | Frees ~400 MB from every session and removes 53 fetches competing with the 6-slot texture loader at boot. | `game.performance` JS heap; iPhone reloads stop. |
 | 9 | **Preload only the selected character and worn outfit, and drop `imageCache`.** `getCoreTextureUrls` already scopes correctly. | `utils/assetPreloader.ts:18,38,109-124`, `gameInitializer.ts:205` | S | ~144 MB of duplicate bitmaps gone; faster boot. | Same. |
 | 10 | **Downsize player and NPC frames to 512².** | `scripts/optimize-assets.js:57-58` (`SPRITE_SIZE`, `NPC_SIZE`) | S (re-run optimiser) | Player pinned set 64 → 16 MB; village NPCs 86 → 22 MB; forest/lake sets −75%. Still ≥1.7× at resolution 2. Fixes the mipmap-less cache thrash for the sprites drawn every frame. Review with `npm run art-review`. | Budget test totals; village fps. |
-| 11 | **Read `playerPos` from a ref in `useAmbientVFX` and `useVFX`** so the interval is created once and `triggerVFX` is stable. | `hooks/useAmbientVFX.ts:107-170`, `hooks/useVFX.ts:38-63` | S | Fixes both the per-frame interval churn and the "ambient VFX never fires while walking" bug; stabilises `magicEffectCallbacks`. | — |
-| 12 | **gameLoop deps → refs** (`activeNPC`, `isCutscenePlaying`, `activeChainPopup`, `ui.miniGame`; the file already does this for `currentMapIdRef`), and split the rAF effect from the shared-sync lifecycle. | `App.tsx:1483-1495, 1585-1609` | S–M | No Firestore flush/re-subscribe and no rAF restart on every conversation. | Open/close dialogue in the village: no `stopSharedSync` log. |
+| 11 ✅ | **Read `playerPos` from a ref in `useAmbientVFX` and `useVFX`** so the interval is created once and `triggerVFX` is stable. | `hooks/useAmbientVFX.ts:107-170`, `hooks/useVFX.ts:38-63` | S | Fixes both the per-frame interval churn and the "ambient VFX never fires while walking" bug; stabilises `magicEffectCallbacks`. | — |
+| 12 ✅ | **gameLoop deps → refs** (`activeNPC`, `isCutscenePlaying`, `activeChainPopup`, `ui.miniGame`; the file already does this for `currentMapIdRef`), and split the rAF effect from the shared-sync lifecycle. | `App.tsx:1483-1495, 1585-1609` | S–M | No Firestore flush/re-subscribe and no rAF restart on every conversation. | Open/close dialogue in the village: no `stopSharedSync` log. |
 | 13 | **Scale weather by tier**: multiply `maxParticles`/`emitRate` by ~0.4 on mobile; drop the per-particle `Math.random()` alpha jitter there. | `WeatherLayer.ts:262-292, 440-463`, `data/weatherConfig.ts:200-247` | S | Rain/storm on a 2–4 core device. | Rain fps on iPad. |
 | 14 | **Firebase off the boot critical path**: start `safeInitializeFirebase` and `globalEventManager.initialise()` in parallel with asset loading; do not await them before the first map. | `gameInitializer.ts:167-172` | S | Removes an 824 KB download, init, and a network round-trip from time-to-first-frame. | Splash-to-world time on iPad. |
 | 15 | **Do not generate three procedural maps or register `debugNPCs` at boot; validate maps once, not twice; move `runSelfTests`' cross-map position validation into `tests/`.** | `maps/index.ts:67, 88-90`, `MapManager.ts:24-27, 59`, `utils/testUtils.ts:13-35` | S | Hundreds of ms off boot on a throttled CPU. | Same. |
-| 16 | **Throttle in-loop checks** to tile changes or a few Hz: `checkSeasonChange`, `getLavaLakeAnchor` (only on maps with lava), `getRestingFurnitureEffect` (on tile change or `PLACED_ITEMS_CHANGED`), cutscene and fairy checks; cache `getCurrentMapNPCs()` once per frame inside `updateNPCs`. | `App.tsx:1394-1449`, `NPCManager.ts:654-663` | S each | Small individually, worthwhile together on a slow CPU. | — |
-| 17 | **Early-return the remote-player pass when there are no remote players and no local emote/chat.** | `usePixiRenderer.ts:270-303` | S | Removes a Promise + Set allocation per frame in single-player. | — |
+| 16 ✅ | **Throttle in-loop checks** to tile changes or a few Hz: `checkSeasonChange`, `getLavaLakeAnchor` (only on maps with lava), `getRestingFurnitureEffect` (on tile change or `PLACED_ITEMS_CHANGED`), cutscene and fairy checks; cache `getCurrentMapNPCs()` once per frame inside `updateNPCs`. | `App.tsx:1394-1449`, `NPCManager.ts:654-663` | S each | Small individually, worthwhile together on a slow CPU. | — |
+| 17 ✅ | **Early-return the remote-player pass when there are no remote players and no local emote/chat.** | `usePixiRenderer.ts:270-303` | S | Removes a Promise + Set allocation per frame in single-player. | — |
 | 18 | **Delete dead weight**: `PixiLayerManager.ts` (unreferenced), `spriteSheetLoader.ts` + the 2048² `character1/{up,down,left,right}.png` sheets, and stop copying `public/assets/` originals into `dist/` once the 97 unoptimised references are moved to the optimiser. | see §3.3 | S | Deploy 832 MB → ~300 MB; `goblin01.gif` alone is 16 MB of GPU. | `du -sh dist`. |
 
 Items 1–3 together are what §2's "30 fps in an empty kitchen" is about. Items

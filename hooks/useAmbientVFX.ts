@@ -103,12 +103,19 @@ export function useAmbientVFX(config: AmbientVFXConfig): void {
   const lastCherryCheck = useRef(0);
   const lastMotherSeaCheck = useRef(0);
 
+  // The player position changes on every moving frame. Keying the effect on it
+  // tore down and recreated the interval every frame, which also meant the
+  // one-second check could never fire while the player kept walking.
+  const playerPosRef = useRef(playerPos);
+  playerPosRef.current = playerPos;
+
   useEffect(() => {
     if (!enabled) return;
 
     const checkAmbientEffects = () => {
       const now = Date.now();
       const weather = gameState.getWeather();
+      const playerPos = playerPosRef.current;
 
       // Storm lightning
       if (weather === 'storm' && now - lastStormCheck.current >= STORM_CHECK_INTERVAL) {
@@ -167,5 +174,5 @@ export function useAmbientVFX(config: AmbientVFXConfig): void {
     const intervalId = setInterval(checkAmbientEffects, 1000);
 
     return () => clearInterval(intervalId);
-  }, [enabled, playerPos, currentMapId, triggerVFX]);
+  }, [enabled, currentMapId, triggerVFX]);
 }

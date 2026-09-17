@@ -44,6 +44,9 @@ class StaminaManagerClass {
   private callbacks: StaminaCallbacks | null = null;
   private hasShownLowWarning = false;
   private isInitialised = false;
+  private lastEmittedValue = -1;
+  private lastCommitTime = 0;
+  private lastCommittedValue = -1;
 
   /**
    * Initialise the stamina manager with callbacks
@@ -60,6 +63,7 @@ class StaminaManagerClass {
    */
   private emitStaminaChanged(): void {
     const current = gameState.getStamina();
+    this.lastEmittedValue = current;
     eventBus.emit(GameEvent.STAMINA_CHANGED, {
       value: current,
       maxValue: STAMINA.MAX,
@@ -67,23 +71,68 @@ class StaminaManagerClass {
   }
 
   /**
-   * Drain stamina by amount, returns true if exhausted
+   * Write a per-frame stamina change without waking the rest of the game.
+   *
+   * The continuous drains and restores in update() run on every frame, and
+   * routing each through gameState.setStamina() meant a notify() per frame: the
+   * HUD re-rendered at 60 Hz and a full-save JSON.stringify to localStorage was
+   * scheduled continuously (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §3.1,
+   * cause D). Instead the value is written quietly, the bar hears about it when
+   * the whole number changes, and the state is committed (notify + save) at
+   * most once per STAMINA.COMMIT_INTERVAL_MS or when it reaches an edge.
    */
-  private drainStamina(amount: number): boolean {
-    const current = gameState.getStamina();
-    const newValue = Math.max(0, current - amount);
-    gameState.setStamina(newValue);
-    this.emitStaminaChanged();
-    return newValue <= 0;
+  private applyContinuous(delta: number): number {
+    const next = Math.max(0, Math.min(STAMINA.MAX, gameState.getStamina() + delta));
+    gameState.setStaminaQuiet(next);
+
+    if (Math.floor(next) !== Math.floor(this.lastEmittedValue)) {
+      this.emitStaminaChanged();
+    }
+
+    const now = Date.now();
+    const atEdge = next <= 0 || next >= STAMINA.MAX;
+    if (
+      next !== this.lastCommittedValue &&
+      (atEdge || now - this.lastCommitTime >= STAMINA.COMMIT_INTERVAL_MS)
+    ) {
+      this.commit();
+    }
+    return next;
   }
 
-  /**
-   * Restore stamina by amount
-   */
+  /** Notify listeners and schedule a save with the current stamina value. */
+  private commit(): void {
+    this.lastCommitTime = Date.now();
+    this.lastCommittedValue = gameState.getStamina();
+    gameState.setStamina(this.lastCommittedValue);
+  }
+
+  /** Continuous drain (per frame), returns true if exhausted. */
+  private drainStamina(amount: number): boolean {
+    return this.applyContinuous(-amount) <= 0;
+  }
+
+  /** Continuous restore (per frame). */
   private restoreStamina(amount: number): void {
-    const current = gameState.getStamina();
-    const newValue = Math.min(STAMINA.MAX, current + amount);
-    gameState.setStamina(newValue);
+    this.applyContinuous(amount);
+  }
+
+  /** Discrete drain (an activity cost): commits and announces immediately. */
+  private drainStaminaNow(amount: number): boolean {
+    const next = Math.max(0, gameState.getStamina() - amount);
+    this.setStaminaNow(next);
+    return next <= 0;
+  }
+
+  /** Discrete restore (food, potion): commits and announces immediately. */
+  private restoreStaminaNow(amount: number): void {
+    this.setStaminaNow(Math.min(STAMINA.MAX, gameState.getStamina() + amount));
+  }
+
+  private setStaminaNow(value: number): void {
+    gameState.setStamina(value);
+    this.lastCommitTime = Date.now();
+    this.lastCommittedValue = value;
     this.emitStaminaChanged();
   }
 
@@ -91,8 +140,7 @@ class StaminaManagerClass {
    * Restore stamina to full
    */
   private restoreStaminaFull(): void {
-    gameState.setStamina(STAMINA.MAX);
-    this.emitStaminaChanged();
+    this.setStaminaNow(STAMINA.MAX);
   }
 
   /**
@@ -218,7 +266,7 @@ class StaminaManagerClass {
       return false;
     }
 
-    const exhausted = this.drainStamina(cost);
+    const exhausted = this.drainStaminaNow(cost);
     eventBus.emit(GameEvent.STAMINA_ACTIVITY_PERFORMED, { activity, cost });
     this.checkLowStaminaWarning();
 
@@ -241,7 +289,7 @@ class StaminaManagerClass {
 
     const base = STAMINA.FOOD_RESTORATION[foodId] ?? 10; // Default 10 if unknown food
     const restoration = isMastered ? Math.round(base * STAMINA.MASTERY_FOOD_MULTIPLIER) : base;
-    this.restoreStamina(restoration);
+    this.restoreStaminaNow(restoration);
 
     // Reset warning if stamina recovers
     if (gameState.getStamina() > STAMINA.LOW_THRESHOLD) {
@@ -262,7 +310,7 @@ class StaminaManagerClass {
     if (amount >= STAMINA.MAX) {
       this.restoreStaminaFull();
     } else {
-      this.restoreStamina(amount);
+      this.restoreStaminaNow(amount);
     }
 
     // Reset warning if stamina recovers
@@ -347,6 +395,9 @@ class StaminaManagerClass {
    */
   reset(): void {
     this.hasShownLowWarning = false;
+    this.lastEmittedValue = -1;
+    this.lastCommitTime = 0;
+    this.lastCommittedValue = -1;
   }
 }
 

@@ -33,6 +33,12 @@ export interface UseVFXReturn {
 export function useVFX(defaultPosition?: Position): UseVFXReturn {
   const [activeEffects, setActiveEffects] = useState<ActiveVFX[]>([]);
   const effectIdCounter = useRef(0);
+  // The default position is the player position, which is a new object on
+  // every moving frame. Read it through a ref so triggerVFX keeps one identity
+  // — it is a dependency of memos and effects across App that otherwise
+  // rebuilt every frame while walking.
+  const defaultPositionRef = useRef(defaultPosition);
+  defaultPositionRef.current = defaultPosition;
 
   /**
    * Trigger a visual effect at a position
@@ -46,7 +52,7 @@ export function useVFX(defaultPosition?: Position): UseVFXReturn {
       const effect: ActiveVFX = {
         id: effectId,
         vfxType,
-        position: position || defaultPosition || { x: 0, y: 0 },
+        position: position || defaultPositionRef.current || { x: 0, y: 0 },
         startTime: Date.now(),
         duration: definition.duration,
       };
@@ -59,7 +65,7 @@ export function useVFX(defaultPosition?: Position): UseVFXReturn {
         setActiveEffects((prev) => prev.filter((e) => e.id !== effectId));
       }, definition.duration + 100);
     },
-    [defaultPosition]
+    []
   );
 
   /**

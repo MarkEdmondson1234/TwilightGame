@@ -13,6 +13,7 @@
 
 import { useState, useEffect } from 'react';
 import { eventBus, GameEvent } from '../utils/EventBus';
+import { TIMING } from '../constants';
 
 /**
  * Return type for useGameEvents hook
@@ -46,6 +47,7 @@ export function useGameEvents(): UseGameEventsReturn {
   const [remotePlayerUpdateTrigger, setRemotePlayerUpdateTrigger] = useState(0);
 
   useEffect(() => {
+    let npcMoveTimer: ReturnType<typeof setTimeout> | null = null;
     // Subscribe to all relevant events
     const unsubscribers = [
       // Farm events
@@ -56,9 +58,21 @@ export function useGameEvents(): UseGameEventsReturn {
         setFarmUpdateTrigger((prev) => prev + 1);
       }),
 
-      // NPC events
+      // NPC movement fires on every frame an NPC is walking. The PixiJS NPC
+      // layer does not need React for that (it polls npcManager.getVersion()
+      // per frame), and no DOM consumer follows NPCs step by step — App's NPC
+      // list only needs refreshing when membership or visibility changes, which
+      // a season relocation or a time-of-day condition does without an event of
+      // its own. So this is coalesced to once a second: a re-render of the whole
+      // App per NPC step was the largest CPU cost on an idle old iPad, and each
+      // App render is a dropped frame there
+      // (design_docs/planned/PERFORMANCE_MOBILE_PLAN.md §3.1).
       eventBus.on(GameEvent.NPC_MOVED, () => {
-        setNpcUpdateTrigger((prev) => prev + 1);
+        if (npcMoveTimer !== null) return;
+        npcMoveTimer = setTimeout(() => {
+          npcMoveTimer = null;
+          setNpcUpdateTrigger((prev) => prev + 1);
+        }, TIMING.NPC_LIST_SYNC_MS);
       }),
       eventBus.on(GameEvent.NPC_SPAWNED, () => {
         setNpcUpdateTrigger((prev) => prev + 1);
@@ -88,6 +102,7 @@ export function useGameEvents(): UseGameEventsReturn {
 
     // Cleanup: unsubscribe from all events
     return () => {
+      if (npcMoveTimer !== null) clearTimeout(npcMoveTimer);
       unsubscribers.forEach((unsubscribe) => unsubscribe());
     };
   }, []);
