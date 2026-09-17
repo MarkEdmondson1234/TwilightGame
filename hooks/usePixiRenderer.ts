@@ -20,7 +20,7 @@ import {
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as PIXI from 'pixi.js';
-import { Position, Direction, MapDefinition, TileData } from '../types';
+import { Position, Direction, MapDefinition, TileData, NPC } from '../types';
 import { USE_SPRITE_SHADOWS, TILE_LEGEND, PLAYER_SIZE } from '../constants';
 import { Z_DEPTH_SORTED_BASE } from '../zIndex';
 import { VisibleRange } from '../utils/viewportUtils';
@@ -50,12 +50,28 @@ import { getCoreTextureUrls, getResidentTextureUrls, toSeasonKey } from '../util
 import { mapManager } from '../maps';
 import { gameState } from '../GameState';
 import { npcManager } from '../NPCManager';
+import { npcSpeechManager } from '../multiplayer/npcSpeech';
 import { TimeManager, TimeOfDay } from '../utils/TimeManager';
 import { DEFAULT_REFERENCE_VIEWPORT } from './useViewportScale';
 import type { Season } from '../data/shopInventory';
 import { MovementMode } from '../utils/tileCategories';
 import { getCachedPerformanceSettings } from '../utils/performanceTier';
 import { debugLog } from '../utils/debugLog';
+import { useStablePoint } from './useStablePoint';
+
+/** The NPCs to draw on a map: the manager's plus any painted into room layers. */
+function collectSceneNPCs(mapId: string, backgroundLayer: BackgroundImageLayer | null): NPC[] {
+  let npcs = npcManager.getCurrentMapNPCs();
+  if (backgroundLayer) {
+    const layerNPCs = backgroundLayer
+      .getLayerNPCs(mapId)
+      .filter((npc) => npcManager.isNPCVisible(npc));
+    if (layerNPCs.length > 0) {
+      npcs = [...npcs, ...layerNPCs];
+    }
+  }
+  return npcs;
+}
 
 // Weather type
 type WeatherType = 'clear' | 'rain' | 'snow' | 'fog' | 'mist' | 'storm' | 'cherry_blossoms';
@@ -202,10 +218,16 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
    * callbacks below (which are intentionally dependency-free) can read them
    * without being rebuilt every time the camera moves.
    */
+  // Whether the remote-player layer currently shows anything (see updateAnimations).
+  const remoteLayerActiveRef = useRef(false);
+  // npcManager.getVersion() as of the last NPC layer draw (see updateAnimations).
+  const drawnNpcVersionRef = useRef(-1);
+  const npcSpeechShownRef = useRef(false);
   const frameParamsRef = useRef({
     gridOffset: { x: 0, y: 0 } as { x: number; y: number },
     tileSize: 64,
     characterScale: 1,
+    mapId: '',
     groundPlayers: false,
     playerPos: { x: 0, y: 0 } as { x: number; y: number },
   });
@@ -218,13 +240,20 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     visibleRange,
     viewportScale,
     viewportSize,
-    effectiveGridOffset,
+    effectiveGridOffset: rawEffectiveGridOffset,
     effectiveTileSize,
-    backgroundRoomPan,
+    backgroundRoomPan: rawBackgroundRoomPan,
     roomViewport = viewportSize,
     groundPlayers = false,
     zoom = 1.0,
   } = viewport;
+  // App recomputes the room transform on every player step, which hands us a
+  // fresh offset/pan object even when the numbers have not moved. These are
+  // dependencies of the full scene-rebuild effects below, so a new identity
+  // per frame meant re-rendering every tile, sprite and shadow every frame.
+  // Pin identity to value so the effects only run when the offset changes.
+  const effectiveGridOffset = useStablePoint(rawEffectiveGridOffset);
+  const backgroundRoomPan = useStablePoint(rawBackgroundRoomPan);
   const {
     pos: playerPos,
     direction,
@@ -246,6 +275,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     gridOffset: effectiveGridOffset,
     tileSize: effectiveTileSize,
     characterScale: currentMap?.characterScale ?? 1.0,
+    mapId: currentMapId,
     playerPos: groundPlayers ? {
       x: playerPos.x,
       y: playerPos.y - playerGroundingOffset(playerSpriteUrl, PLAYER_SIZE * spriteScale * (currentMap?.characterScale ?? 1) * playerScale),
@@ -267,36 +297,68 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // Tick player flicker (no-op when not flickering)
     playerSpriteRef.current?.tickFlicker(deltaTime);
 
+    // NPCs are drawn from the manager when it says something changed, the same
+    // way remote players are: an NPC step must not cost a React re-render.
+    // (The effect below still redraws on map/offset/scale changes.)
+    // Speech bubbles over NPCs (another player's conversation) appear and
+    // expire on their own clock, so while any exists the layer is drawn every
+    // frame, plus once more after the last one goes so it can be hidden.
+    const speaking = npcSpeechManager.hasAnySpeech();
+    if (
+      npcLayerRef.current &&
+      (npcManager.getVersion() !== drawnNpcVersionRef.current || speaking || npcSpeechShownRef.current)
+    ) {
+      drawnNpcVersionRef.current = npcManager.getVersion();
+      npcSpeechShownRef.current = speaking;
+      const { gridOffset, tileSize, characterScale, mapId } = frameParamsRef.current;
+      void npcLayerRef.current.renderNPCs(
+        collectSceneNPCs(mapId, backgroundImageLayerRef.current),
+        characterScale,
+        gridOffset,
+        tileSize
+      );
+    }
+
     // Remote players are polled straight from the manager every frame rather
     // than pushed through React state — interpolated positions change on every
     // frame and must never cost a re-render.
     if (remotePlayerLayerRef.current) {
-      const { gridOffset, tileSize, characterScale, playerPos: localPos, groundPlayers } = frameParamsRef.current;
-      void remotePlayerLayerRef.current.renderRemotePlayers(
-        remotePlayerManager.getRemotePlayers(),
-        characterScale,
-        gridOffset,
-        tileSize,
-        groundPlayers
-      );
-      // Your own emote, drawn the same way as everybody else's so pressing one
-      // gives immediate feedback instead of a silent hope somebody saw it.
-      remotePlayerLayerRef.current.renderLocalEmote(
-        getLocalEmote(),
-        localPos,
-        characterScale,
-        gridOffset,
-        tileSize
-      );
-      // Likewise your own speech bubble: you should see what you said above your
-      // own head, not only in a panel.
-      remotePlayerLayerRef.current.renderLocalChat(
-        getLocalChatBubble(),
-        localPos,
-        characterScale,
-        gridOffset,
-        tileSize
-      );
+      const remotePlayers = remotePlayerManager.getRemotePlayers();
+      const localEmote = getLocalEmote();
+      const localChat = getLocalChatBubble();
+      const hasWork = remotePlayers.length > 0 || localEmote !== null || localChat !== null;
+      // Single-player is the common case: skip the pass entirely once the layer
+      // has been told there is nothing to show. One more pass runs after the
+      // last player leaves or the last bubble expires, so it can hide them.
+      if (hasWork || remoteLayerActiveRef.current) {
+        remoteLayerActiveRef.current = hasWork;
+        const { gridOffset, tileSize, characterScale, playerPos: localPos, groundPlayers } = frameParamsRef.current;
+        void remotePlayerLayerRef.current.renderRemotePlayers(
+          remotePlayers,
+          characterScale,
+          gridOffset,
+          tileSize,
+          groundPlayers
+        );
+        // Your own emote, drawn the same way as everybody else's so pressing one
+        // gives immediate feedback instead of a silent hope somebody saw it.
+        remotePlayerLayerRef.current.renderLocalEmote(
+          localEmote,
+          localPos,
+          characterScale,
+          gridOffset,
+          tileSize
+        );
+        // Likewise your own speech bubble: you should see what you said above your
+        // own head, not only in a panel.
+        remotePlayerLayerRef.current.renderLocalChat(
+          localChat,
+          localPos,
+          characterScale,
+          gridOffset,
+          tileSize
+        );
+      }
     }
   }, []);
 
@@ -1107,24 +1169,17 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   useEffect(() => {
     if (!enabled || !isPixiInitialized || !npcLayerRef.current) return;
 
-    // Get current NPCs
-    let npcs = npcManager.getCurrentMapNPCs();
-
-    // Add NPCs from background image layers
-    if (backgroundImageLayerRef.current) {
-      const layerNPCs = backgroundImageLayerRef.current
-        .getLayerNPCs(currentMapId)
-        .filter((npc) => npcManager.isNPCVisible(npc));
-      if (layerNPCs.length > 0) {
-        npcs = [...npcs, ...layerNPCs];
-      }
-    }
-
     // Apply map's character scale
     const mapCharacterScale = currentMap?.characterScale ?? 1.0;
 
     // Render NPCs
-    npcLayerRef.current.renderNPCs(npcs, mapCharacterScale, effectiveGridOffset, effectiveTileSize);
+    drawnNpcVersionRef.current = npcManager.getVersion();
+    npcLayerRef.current.renderNPCs(
+      collectSceneNPCs(currentMapId, backgroundImageLayerRef.current),
+      mapCharacterScale,
+      effectiveGridOffset,
+      effectiveTileSize
+    );
   }, [
     enabled,
     npcUpdateTrigger,

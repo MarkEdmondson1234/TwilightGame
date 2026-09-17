@@ -47,8 +47,22 @@ interface NPCState {
   patrolIndex?: number; // Index into the NPC's patrolPath of the waypoint being walked toward
 }
 
+/**
+ * How long a getCurrentMapNPCs() answer may be reused. Well under one frame:
+ * the cache exists to serve the several calls made within a single frame, and
+ * updateNPCs drops it at the start of every frame anyway.
+ */
+const VISIBLE_NPC_CACHE_MAX_AGE_MS = 8;
+
 class NPCManagerClass {
   private npcsByMap: Map<string, NPC[]> = new Map();
+  private visibleNPCCache: { mapId: string; at: number; npcs: NPC[] } | null = null;
+  /**
+   * Bumped whenever anything the renderer draws changes: an NPC moved or
+   * animated, or the list itself changed. The PixiJS NPC layer polls this once
+   * per frame instead of being driven by a React re-render per NPC step.
+   */
+  private npcVersion = 0;
   private npcStates: Map<string, NPCState> = new Map();
   private currentMapId: string | null = null;
   private currentSeason: Season | null = null;
@@ -92,6 +106,7 @@ class NPCManagerClass {
    */
   registerNPCs(mapId: string, npcs: NPC[]): void {
     this.npcsByMap.set(mapId, npcs);
+    this.invalidateVisibleNPCs();
 
     // Initialize state for each NPC (only if not already initialized)
     npcs.forEach((npc) => {
@@ -144,6 +159,7 @@ class NPCManagerClass {
    */
   setCurrentMap(mapId: string): void {
     this.currentMapId = mapId;
+    this.invalidateVisibleNPCs();
 
     // Reset entry animations for NPCs already registered on this map
     const npcs = this.getNPCsForMap(mapId);
@@ -253,9 +269,40 @@ class NPCManagerClass {
    */
   getCurrentMapNPCs(): NPC[] {
     if (!this.currentMapId) return [];
+    // This is asked several times per frame (movement, animation, proximity,
+    // fairies, the renderer, interaction lookups) and each answer re-filtered
+    // the map's NPCs through isNPCVisible, which reads the game clock per NPC.
+    // Answer once per frame: the cache is dropped at the top of updateNPCs and
+    // by every method that adds, removes or relocates an NPC.
+    const cache = this.visibleNPCCache;
+    const now = Date.now();
+    if (
+      cache &&
+      cache.mapId === this.currentMapId &&
+      now - cache.at < VISIBLE_NPC_CACHE_MAX_AGE_MS
+    ) {
+      return cache.npcs;
+    }
     const allNPCs = this.getNPCsForMap(this.currentMapId);
     // Filter by visibility conditions (seasonal creatures, time-based NPCs, etc.)
-    return allNPCs.filter((npc) => this.isNPCVisible(npc));
+    const npcs = allNPCs.filter((npc) => this.isNPCVisible(npc));
+    this.visibleNPCCache = { mapId: this.currentMapId, at: now, npcs };
+    return npcs;
+  }
+
+  /** Forget the per-frame visible-NPC answer (call after any NPC list change). */
+  private invalidateVisibleNPCs(): void {
+    this.visibleNPCCache = null;
+    this.npcVersion++;
+  }
+
+  /**
+   * A counter that changes whenever an NPC moved, animated, appeared or left.
+   * Compare against a remembered value to know whether to redraw — cheaper
+   * than an event per frame, and it never touches React.
+   */
+  getVersion(): number {
+    return this.npcVersion;
   }
 
   /**
@@ -653,6 +700,7 @@ class NPCManagerClass {
    */
   updateNPCs(deltaTime: number, playerPos?: Position): boolean {
     const currentTime = Date.now();
+    this.invalidateVisibleNPCs(); // new frame: visibility conditions may have changed
     const npcs = this.getCurrentMapNPCs();
     let anyNPCMoved = false;
 
@@ -1005,8 +1053,11 @@ class NPCManagerClass {
       }
     });
 
-    // Emit event if any NPC moved
+    // Emit event if any NPC moved. The renderer does not listen for this — it
+    // polls getVersion() per frame — so the event exists for DOM consumers,
+    // which coalesce it (see hooks/useGameEvents.ts).
     if (anyNPCMoved) {
+      this.npcVersion++;
       eventBus.emit(GameEvent.NPC_MOVED, { npcId: 'multiple' });
     }
 
@@ -1043,6 +1094,7 @@ class NPCManagerClass {
     // Add to map
     mapNPCs.push(npc);
     this.npcsByMap.set(this.currentMapId, mapNPCs);
+    this.invalidateVisibleNPCs();
 
     // Initialize state
     if (!this.npcStates.has(npc.id)) {
@@ -1087,6 +1139,7 @@ class NPCManagerClass {
     }
 
     this.npcsByMap.set(targetMapId, filteredNPCs);
+    this.invalidateVisibleNPCs();
     this.npcStates.delete(npcId);
 
     debugLog('NPCManager', `Removed dynamic NPC ${npcId} from map ${targetMapId}`);
@@ -1156,6 +1209,7 @@ class NPCManagerClass {
       this.eventOverrides.set(npcId, { ...npc.position });
     }
     npc.position = { ...position };
+    this.npcVersion++;
     eventBus.emit(GameEvent.NPC_MOVED, { npcId, position });
   }
 
@@ -1180,6 +1234,7 @@ class NPCManagerClass {
       }
       if (npc) {
         npc.position = { ...originalPosition };
+        this.npcVersion++;
         eventBus.emit(GameEvent.NPC_MOVED, { npcId, position: originalPosition });
       }
     }
@@ -1266,6 +1321,7 @@ class NPCManagerClass {
         const filtered = mapNPCs.filter((n) => n.id !== npc.id);
         if (filtered.length !== mapNPCs.length) {
           this.npcsByMap.set(currentMapId, filtered);
+          this.invalidateVisibleNPCs();
         }
       });
 
@@ -1299,6 +1355,7 @@ class NPCManagerClass {
       if (!targetMapNPCs.find((n) => n.id === npc.id)) {
         targetMapNPCs.push(npc);
         this.npcsByMap.set(mapId, targetMapNPCs);
+        this.invalidateVisibleNPCs();
       }
 
       debugLog(
@@ -1338,6 +1395,7 @@ class NPCManagerClass {
    */
   clear(): void {
     this.npcsByMap.clear();
+    this.invalidateVisibleNPCs();
     this.npcStates.clear();
     this.globalNPCs.clear();
     this.currentMapId = null;

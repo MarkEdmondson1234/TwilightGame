@@ -1114,6 +1114,18 @@ class GameStateManager {
   }
 
   /**
+   * Set stamina without notifying listeners or scheduling a save.
+   *
+   * For the per-frame drain in StaminaManager, which commits through
+   * setStamina() on its own cadence. Anything else should use setStamina().
+   */
+  setStaminaQuiet(value: number): void {
+    const max = this.state.statusEffects.maxStamina;
+    this.state.statusEffects.stamina = Math.max(0, Math.min(max, value));
+    this.state.statusEffects.lastStaminaUpdate = Date.now();
+  }
+
+  /**
    * Drain stamina by an amount
    * Returns true if player is now exhausted (stamina <= 0)
    */

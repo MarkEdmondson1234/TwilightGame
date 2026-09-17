@@ -6,6 +6,19 @@ This directory contains design documents for planned features and architectural 
 
 ## Active Plans
 
+### 📱 Performance on Every Device
+
+**Status**: Planned (investigation complete, 2026-09-17)
+**Documents**: [PERFORMANCE_MOBILE_PLAN.md](./PERFORMANCE_MOBILE_PLAN.md)
+
+Why the old iPad and iPhone are still jerky, with real-device numbers from Sentry:
+the React tree re-renders and rebuilds the PixiJS scene every frame, three GPU
+features (blurred shadows, per-frame darkness upload, fog mask) that mobile cannot
+afford, ~440 MB of audio decoded at boot, and the stalls behind the 100 ms+ frames.
+Ranked low-hanging fixes, then the architectural changes that keep them fixed.
+
+---
+
 ### 🧑‍🤝‍🧑 Multiplayer — Shared World
 
 **Status**: Implemented (Phases 0-4). Inert until `VITE_FIREBASE_DATABASE_URL` is set.

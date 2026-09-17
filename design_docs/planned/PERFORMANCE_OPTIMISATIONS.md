@@ -1,7 +1,9 @@
 # Performance & AI Coding Optimisations
 
 **Created:** 2026-03-09
-**Status:** Planned
+**Status:** Planned — the **Game Performance Issues** section is superseded by
+[`PERFORMANCE_MOBILE_PLAN.md`](./PERFORMANCE_MOBILE_PLAN.md) (2026-09-17), which
+records which of these items were done. The AI Coding Efficiency section still stands.
 
 ## Game Performance Issues
 

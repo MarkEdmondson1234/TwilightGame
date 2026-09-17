@@ -106,6 +106,11 @@ class NpcSpeechManager {
    * reading it in the dialogue box, and a bubble repeating it behind the box is
    * clutter.
    */
+  /** Whether any NPC has speech that may need drawing or expiring. */
+  hasAnySpeech(): boolean {
+    return this.speech.size > 0;
+  }
+
   getSpeech(npcId: string, localUid: string | null, now: number = Date.now()): string | null {
     const state = this.speech.get(npcId);
     if (!state) return null;

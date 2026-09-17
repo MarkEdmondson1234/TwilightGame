@@ -225,7 +225,9 @@ export const TIMING = {
   DEFAULT_TILE_ANIMATION_MS: 150, // Default animated tile frame rate
 
   // Event chains
-  EVENT_CHAIN_CHECK_MS: 500, // Proximity check throttle for tile triggers/objectives
+  EVENT_CHAIN_CHECK_MS: 500, // Proximity check throttle for tile triggers/objectives/cutscenes
+  WORLD_CHECK_MS: 1000, // Game-loop poll for slow world bookkeeping (season change, fairy spawns)
+  NPC_LIST_SYNC_MS: 1000, // How often NPC movement may refresh React's NPC list (the renderer polls the manager per frame instead)
 
   // Seasonal events
   SEASONAL_EVENT_CHECK_MS: 10000, // How often to check for seasonal decoration placement/removal (10s)
@@ -328,6 +330,11 @@ export const STAMINA = {
   // Core values
   MAX: 100, // Maximum stamina
   LOW_THRESHOLD: 25, // Show warning/bar below this percentage
+
+  // How often the continuous (per-frame) drain is committed to game state —
+  // each commit notifies every listener and schedules a full local save, so
+  // per-frame commits meant a JSON.stringify of the whole save every second.
+  COMMIT_INTERVAL_MS: 5000,
 
   // Drain rates (per second)
   WALKING_DRAIN_PER_SECOND: 0.08, // ~20 min of continuous walking drains 100 stamina
