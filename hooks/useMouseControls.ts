@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useRef, useState, MutableRefObject } from 'react';
+import type { ViewFrame } from '../utils/viewFrame';
 import { Position } from '../types';
 import { Z_HUD } from '../zIndex';
 import { screenToTile } from '../utils/screenToTile';
@@ -47,6 +48,13 @@ export interface MouseControlsConfig {
   effectiveTileSize?: number;
   /** Grid offset for background-image rooms (centers grid on viewport) */
   gridOffset?: { x: number; y: number };
+  /**
+   * The live camera / room transform, written by the game loop every frame.
+   * When given, clicks map through it instead of the camera props above, which
+   * only carry React's throttled snapshot and can be a step behind the canvas
+   * while the player walks.
+   */
+  viewFrameRef?: MutableRefObject<ViewFrame>;
 }
 
 /**
@@ -147,6 +155,7 @@ export function useMouseControls(config: MouseControlsConfig) {
     enabled,
     effectiveTileSize,
     gridOffset,
+    viewFrameRef,
   } = config;
 
   // Store frequently-changing values in refs to avoid re-creating listeners
@@ -193,15 +202,26 @@ export function useMouseControls(config: MouseControlsConfig) {
       clientY: number,
       isTouch: boolean
     ): MouseClickInfo => {
-      const result = screenToTile(
-        screenX,
-        screenY,
-        zoomRef.current,
-        cameraXRef.current,
-        cameraYRef.current,
-        gridOffsetRef.current,
-        effectiveTileSizeRef.current
-      );
+      const live = viewFrameRef?.current;
+      const result = live
+        ? screenToTile(
+            screenX,
+            screenY,
+            zoomRef.current,
+            live.cameraX,
+            live.cameraY,
+            live.backgroundRoom ? live.gridOffset : undefined,
+            live.backgroundRoom ? live.tileSize : undefined
+          )
+        : screenToTile(
+            screenX,
+            screenY,
+            zoomRef.current,
+            cameraXRef.current,
+            cameraYRef.current,
+            gridOffsetRef.current,
+            effectiveTileSizeRef.current
+          );
 
       return {
         worldPos: { x: result.worldX, y: result.worldY },
@@ -356,5 +376,5 @@ export function useMouseControls(config: MouseControlsConfig) {
     };
     // Only depend on stable values — camera/zoom/callbacks read from refs
     // containerReady triggers re-run when the game container mounts after loading
-  }, [containerRef, enabled, containerReady]);
+  }, [containerRef, enabled, containerReady, viewFrameRef]);
 }

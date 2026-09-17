@@ -18,7 +18,7 @@ import {
  * This hook extracts ~625 lines of PixiJS code from App.tsx to improve maintainability.
  */
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, MutableRefObject } from 'react';
 import * as PIXI from 'pixi.js';
 import { Position, Direction, MapDefinition, TileData, NPC } from '../types';
 import { USE_SPRITE_SHADOWS, TILE_LEGEND, PLAYER_SIZE } from '../constants';
@@ -57,7 +57,8 @@ import type { Season } from '../data/shopInventory';
 import { MovementMode } from '../utils/tileCategories';
 import { getCachedPerformanceSettings } from '../utils/performanceTier';
 import { debugLog } from '../utils/debugLog';
-import { useStablePoint } from './useStablePoint';
+import { getPlayerSpriteInfo } from './useCharacterSprites';
+import { isSameViewFrame, type ViewFrame } from '../utils/viewFrame';
 
 /** The NPCs to draw on a map: the manager's plus any painted into room layers. */
 function collectSceneNPCs(mapId: string, backgroundLayer: BackgroundImageLayer | null): NPC[] {
@@ -96,35 +97,39 @@ export interface UsePixiRendererProps {
 
   /** Viewport and camera state */
   viewport: {
-    cameraX: number;
-    cameraY: number;
+    /**
+     * Where the world sits on screen *this frame*: camera for tiled maps, pan /
+     * grid offset / tile size for background-image rooms. Written by the game
+     * loop from the live player position (utils/viewFrame.ts) and read here in
+     * updateAnimations — never through React, which only sees a throttled
+     * snapshot of the player (PERFORMANCE_MOBILE_PLAN.md §6A).
+     */
+    viewFrameRef: MutableRefObject<ViewFrame>;
     visibleRange: VisibleRange;
     viewportScale: number;
     viewportSize: { width: number; height: number };
-    effectiveGridOffset: { x: number; y: number };
     /** User zoom level (default 1.0) */
     zoom?: number;
+    /** On-screen tile size; React's copy of viewFrameRef.current.tileSize, for effect deps. */
     effectiveTileSize: number;
-    /**
-     * Background-image rooms only: how far the room artwork is offset from dead
-     * centre so the `cover` crop follows the player (issue #26). Already folded
-     * into effectiveGridOffset; passed separately because BackgroundImageLayer
-     * centres each layer by its own size and needs the offset, not the result.
-     */
-    backgroundRoomPan?: { x: number; y: number };
     roomViewport?: { width: number; height: number };
     groundPlayers?: boolean;
   };
 
-  /** Player state */
+  /**
+   * Player state. Position, direction and animation frame are refs because
+   * they change every frame; the sprite is resolved from them per frame with
+   * getPlayerSpriteInfo. The rest changes rarely and comes through React.
+   */
   player: {
-    pos: Position;
-    direction: Direction;
-    animationFrame: number;
-    spriteUrl: string;
-    spriteScale: number;
+    playerPosRef: MutableRefObject<Position>;
+    directionRef: MutableRefObject<Direction>;
+    animationFrameRef: MutableRefObject<number>;
+    /** Frame URLs per direction for the current character (or fairy form). */
+    sprites: Record<Direction, string[]>;
+    isFairyForm: boolean;
+    characterId: string;
     playerScale: number;
-    shouldFlip: boolean;
     movementMode: MovementMode;
     isFairyFormFading?: boolean;
   };
@@ -146,6 +151,20 @@ export interface UsePixiRendererProps {
   /** Optional callback for texture loading progress (used by loading screen) */
   onTextureProgress?: (loaded: number, total: number) => void;
 }
+
+const EMPTY_APPLIED_PLAYER = {
+  x: NaN,
+  y: NaN,
+  url: '',
+  scale: 0,
+  flip: false,
+  mode: 'normal' as MovementMode,
+  grounded: false,
+  offsetX: 0,
+  offsetY: 0,
+  tileSize: 0,
+  visible: true,
+};
 
 /**
  * Return type for usePixiRenderer hook
@@ -223,45 +242,48 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   // npcManager.getVersion() as of the last NPC layer draw (see updateAnimations).
   const drawnNpcVersionRef = useRef(-1);
   const npcSpeechShownRef = useRef(false);
-  const frameParamsRef = useRef({
-    gridOffset: { x: 0, y: 0 } as { x: number; y: number },
-    tileSize: 64,
-    characterScale: 1,
-    mapId: '',
-    groundPlayers: false,
-    playerPos: { x: 0, y: 0 } as { x: number; y: number },
-  });
+  // The view as last applied to the containers, so a still frame costs nothing.
+  const appliedViewRef = useRef<ViewFrame | null>(null);
+  // Set when something structural changed (zoom, viewport, map, lights) and the
+  // whole camera pass must run again even though the view numbers are the same.
+  const viewDirtyRef = useRef(true);
+  // What the player sprite was last told, so it is only touched when it moves.
+  const appliedPlayerRef = useRef<{
+    x: number;
+    y: number;
+    url: string;
+    scale: number;
+    flip: boolean;
+    mode: MovementMode;
+    grounded: boolean;
+    offsetX: number;
+    offsetY: number;
+    tileSize: number;
+    visible: boolean;
+  } | null>(null);
+  // The local player's grounded position, for their own emote/chat bubbles.
+  const localPlayerPosRef = useRef<Position>({ x: 0, y: 0 });
 
   // Destructure for cleaner access
   const { isMapInitialized, currentMapId, currentMap, currentWeather } = mapConfig;
   const {
-    cameraX,
-    cameraY,
+    viewFrameRef,
     visibleRange,
     viewportScale,
     viewportSize,
-    effectiveGridOffset: rawEffectiveGridOffset,
     effectiveTileSize,
-    backgroundRoomPan: rawBackgroundRoomPan,
     roomViewport = viewportSize,
     groundPlayers = false,
     zoom = 1.0,
   } = viewport;
-  // App recomputes the room transform on every player step, which hands us a
-  // fresh offset/pan object even when the numbers have not moved. These are
-  // dependencies of the full scene-rebuild effects below, so a new identity
-  // per frame meant re-rendering every tile, sprite and shadow every frame.
-  // Pin identity to value so the effects only run when the offset changes.
-  const effectiveGridOffset = useStablePoint(rawEffectiveGridOffset);
-  const backgroundRoomPan = useStablePoint(rawBackgroundRoomPan);
   const {
-    pos: playerPos,
-    direction,
-    animationFrame,
-    spriteUrl: playerSpriteUrl,
-    spriteScale,
+    playerPosRef,
+    directionRef,
+    animationFrameRef,
+    sprites: playerSprites,
+    isFairyForm,
+    characterId,
     playerScale,
-    shouldFlip,
     movementMode,
     isFairyFormFading = false,
   } = player;
@@ -271,20 +293,237 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   // Mirror the current frame parameters into the ref read by updateAnimations.
   // Assigning during render (rather than in an effect) keeps them one frame
   // fresher and matches the currentMapIdRef pattern used in App.tsx.
+  const frameParamsRef = useRef({
+    characterScale: 1,
+    mapId: '',
+    groundPlayers: false,
+    useDOMPlayer: false,
+    zoom: 1,
+    visibleRange,
+    playerSprites,
+    isFairyForm: false,
+    characterId: 'character1',
+    playerScale: 1,
+    movementMode: 'normal' as MovementMode,
+  });
   frameParamsRef.current = {
-    gridOffset: effectiveGridOffset,
-    tileSize: effectiveTileSize,
     characterScale: currentMap?.characterScale ?? 1.0,
     mapId: currentMapId,
-    playerPos: groundPlayers ? {
-      x: playerPos.x,
-      y: playerPos.y - playerGroundingOffset(playerSpriteUrl, PLAYER_SIZE * spriteScale * (currentMap?.characterScale ?? 1) * playerScale),
-    } : playerPos,
     groundPlayers,
+    useDOMPlayer: currentMap?.useDOMPlayer ?? false,
+    zoom,
+    visibleRange,
+    playerSprites,
+    isFairyForm,
+    characterId,
+    playerScale,
+    movementMode,
   };
+
+  /**
+   * Apply this frame's view to the stage: zoom, camera containers, the room
+   * artwork's pan, the highlight grid and the torch lights. Runs from the game
+   * loop, not from a React effect, so scrolling the world never costs an App
+   * render. Skipped entirely while nothing has moved.
+   */
+  const syncView = useCallback((): { moved: boolean; offsetChanged: boolean } => {
+    const view = viewFrameRef.current;
+    const prev = appliedViewRef.current;
+    const structural = viewDirtyRef.current;
+    const moved = structural || !isSameViewFrame(prev, view);
+    if (!moved) return { moved: false, offsetChanged: false };
+
+    const { zoom } = frameParamsRef.current;
+    const offsetChanged =
+      structural ||
+      !prev ||
+      prev.tileSize !== view.tileSize ||
+      (prev.gridOffset?.x ?? 0) !== (view.gridOffset?.x ?? 0) ||
+      (prev.gridOffset?.y ?? 0) !== (view.gridOffset?.y ?? 0);
+    appliedViewRef.current = view;
+    viewDirtyRef.current = false;
+
+    if (structural) {
+      // Apply user zoom to the entire stage
+      if (pixiAppRef.current) {
+        pixiAppRef.current.stage.scale.set(zoom);
+      }
+      // Counteract stage zoom for viewport-relative layers (weather, darkness)
+      // These layers should always cover the full viewport regardless of zoom
+      if (weatherLayerRef.current) {
+        weatherLayerRef.current.getContainer().scale.set(1 / zoom);
+      }
+      if (darknessLayerRef.current) {
+        darknessLayerRef.current.getContainer().scale.set(1 / zoom);
+        const glow = darknessLayerRef.current.getGlowContainer();
+        if (glow) glow.scale.set(1 / zoom);
+      }
+      // A forced layout read — only when something structural changed, not per step.
+      if (backgroundImageLayerRef.current && canvasRef.current) {
+        backgroundImageLayerRef.current.setViewportDimensions(
+          canvasRef.current.clientWidth ?? window.innerWidth,
+          canvasRef.current.clientHeight ?? window.innerHeight
+        );
+      }
+    }
+
+    const { cameraX, cameraY } = view;
+
+    // Update camera positions
+    if (backgroundImageLayerRef.current) {
+      // Keep the room artwork on the same pan as everything drawn over it
+      // before moving anything (issue #26).
+      backgroundImageLayerRef.current.setCenteredPan(view.pan.x, view.pan.y);
+      backgroundImageLayerRef.current.updateCamera(cameraX, cameraY);
+    }
+
+    if (view.backgroundRoom) {
+      // For background-image rooms, reset container positions
+      if (depthSortedContainerRef.current) {
+        depthSortedContainerRef.current.x = 0;
+        depthSortedContainerRef.current.y = 0;
+      }
+      if (tileLayerRef.current) {
+        tileLayerRef.current.updateCamera(0, 0);
+      }
+      // placedItemsLayer camera handled by depthSortedContainer
+      if (shadowLayerRef.current) {
+        shadowLayerRef.current.updateCamera(0, 0);
+      }
+      if (highlightLayerRef.current) {
+        highlightLayerRef.current.updateCamera(0, 0);
+        if (offsetChanged) {
+          highlightLayerRef.current.setGridMode(
+            view.tileSize,
+            view.gridOffset?.x ?? 0,
+            view.gridOffset?.y ?? 0
+          );
+        }
+      }
+    } else {
+      // For tiled rooms, apply camera transform
+      if (tileLayerRef.current) {
+        tileLayerRef.current.updateCamera(cameraX, cameraY);
+      }
+      if (depthSortedContainerRef.current) {
+        depthSortedContainerRef.current.x = -cameraX;
+        depthSortedContainerRef.current.y = -cameraY;
+      }
+      // placedItemsLayer camera handled by depthSortedContainer
+      if (shadowLayerRef.current) {
+        shadowLayerRef.current.updateCamera(cameraX, cameraY);
+      }
+      if (highlightLayerRef.current) {
+        highlightLayerRef.current.updateCamera(cameraX, cameraY);
+        if (structural) highlightLayerRef.current.resetGridMode();
+      }
+    }
+
+    // Update torch lights in darkness layer (must track camera every frame)
+    if (darknessLayerRef.current) {
+      darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY, zoom);
+    }
+
+    return { moved: true, offsetChanged };
+  }, [viewFrameRef, canvasRef]);
+
+  /**
+   * Move the player sprite to where the refs say the player is. Per frame,
+   * from the game loop; a no-op when nothing about the player changed.
+   */
+  const syncPlayer = useCallback(() => {
+    const playerSprite = playerSpriteRef.current;
+    if (!playerSprite) return;
+    const p = frameParamsRef.current;
+    const view = viewFrameRef.current;
+    const applied = appliedPlayerRef.current;
+
+    // In rooms with useDOMPlayer the player is rendered as a DOM element so it
+    // can depth-sort above midground DOM animations (e.g. the fireplace fire).
+    // Hide the PixiJS sprite to avoid a double-render.
+    const pos = playerPosRef.current;
+    localPlayerPosRef.current = pos;
+    if (p.useDOMPlayer) {
+      if (!applied || applied.visible) {
+        playerSprite.setVisible(false);
+        appliedPlayerRef.current = { ...(applied ?? EMPTY_APPLIED_PLAYER), visible: false };
+      }
+      return;
+    }
+
+    const direction = directionRef.current;
+    const animationFrame = animationFrameRef.current;
+    const { playerSpriteUrl, spriteScale, shouldFlip } = getPlayerSpriteInfo(
+      p.playerSprites,
+      direction,
+      animationFrame,
+      p.isFairyForm,
+      p.characterId
+    );
+    const effectiveScale = spriteScale * p.characterScale * p.playerScale;
+    const offsetX = view.gridOffset?.x ?? 0;
+    const offsetY = view.gridOffset?.y ?? 0;
+
+    // Bubbles over your own head sit on the grounded position, like everyone else's.
+    if (p.groundPlayers) {
+      localPlayerPosRef.current = {
+        x: pos.x,
+        y: pos.y - playerGroundingOffset(playerSpriteUrl, PLAYER_SIZE * effectiveScale),
+      };
+    }
+
+    if (
+      applied &&
+      applied.visible &&
+      applied.x === pos.x &&
+      applied.y === pos.y &&
+      applied.url === playerSpriteUrl &&
+      applied.scale === effectiveScale &&
+      applied.flip === shouldFlip &&
+      applied.mode === p.movementMode &&
+      applied.grounded === p.groundPlayers &&
+      applied.offsetX === offsetX &&
+      applied.offsetY === offsetY &&
+      applied.tileSize === view.tileSize
+    ) {
+      return;
+    }
+    appliedPlayerRef.current = {
+      x: pos.x,
+      y: pos.y,
+      url: playerSpriteUrl,
+      scale: effectiveScale,
+      flip: shouldFlip,
+      mode: p.movementMode,
+      grounded: p.groundPlayers,
+      offsetX,
+      offsetY,
+      tileSize: view.tileSize,
+      visible: true,
+    };
+
+    playerSprite.setVisible(true);
+    void playerSprite.update(
+      pos,
+      direction,
+      animationFrame,
+      playerSpriteUrl,
+      effectiveScale,
+      view.gridOffset,
+      view.tileSize,
+      shouldFlip,
+      p.movementMode,
+      p.groundPlayers
+    );
+  }, [viewFrameRef, playerPosRef, directionRef, animationFrameRef]);
 
   // Animation update function (called from game loop)
   const updateAnimations = useCallback((deltaTime: number) => {
+    // Where the world is this frame, then where the player is in it. Both
+    // read refs the loop has just written; neither goes through React.
+    const { offsetChanged } = syncView();
+    syncPlayer();
+
     if (weatherLayerRef.current) {
       weatherLayerRef.current.update(deltaTime);
     }
@@ -297,6 +536,21 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     // Tick player flicker (no-op when not flickering)
     playerSpriteRef.current?.tickFlicker(deltaTime);
 
+    const { characterScale, mapId, groundPlayers, visibleRange } = frameParamsRef.current;
+    const { gridOffset, tileSize } = viewFrameRef.current;
+
+    // A background room that pans with the player moves its grid origin, and
+    // everything positioned from that origin has to follow this frame.
+    if (offsetChanged && placedItemsLayerRef.current) {
+      placedItemsLayerRef.current.renderItems(
+        gameState.getPlacedItems(mapId),
+        visibleRange,
+        characterScale,
+        tileSize,
+        gridOffset
+      );
+    }
+
     // NPCs are drawn from the manager when it says something changed, the same
     // way remote players are: an NPC step must not cost a React re-render.
     // (The effect below still redraws on map/offset/scale changes.)
@@ -306,11 +560,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     const speaking = npcSpeechManager.hasAnySpeech();
     if (
       npcLayerRef.current &&
-      (npcManager.getVersion() !== drawnNpcVersionRef.current || speaking || npcSpeechShownRef.current)
+      (offsetChanged ||
+        npcManager.getVersion() !== drawnNpcVersionRef.current ||
+        speaking ||
+        npcSpeechShownRef.current)
     ) {
       drawnNpcVersionRef.current = npcManager.getVersion();
       npcSpeechShownRef.current = speaking;
-      const { gridOffset, tileSize, characterScale, mapId } = frameParamsRef.current;
       void npcLayerRef.current.renderNPCs(
         collectSceneNPCs(mapId, backgroundImageLayerRef.current),
         characterScale,
@@ -332,7 +588,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       // last player leaves or the last bubble expires, so it can hide them.
       if (hasWork || remoteLayerActiveRef.current) {
         remoteLayerActiveRef.current = hasWork;
-        const { gridOffset, tileSize, characterScale, playerPos: localPos, groundPlayers } = frameParamsRef.current;
+        const localPos = localPlayerPosRef.current;
         void remotePlayerLayerRef.current.renderRemotePlayers(
           remotePlayers,
           characterScale,
@@ -360,7 +616,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         );
       }
     }
-  }, []);
+  }, [syncView, syncPlayer, viewFrameRef]);
 
   // =========================================================================
   // EFFECT: PixiJS Initialization
@@ -577,8 +833,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
             placedItems,
             visibleRange,
             initialMap.characterScale ?? 1.0,
-            effectiveTileSize,
-            effectiveGridOffset
+            viewFrameRef.current.tileSize,
+            viewFrameRef.current.gridOffset
           );
 
           if (shadowLayerRef.current) {
@@ -602,17 +858,13 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
             npcs = [...npcs, ...layerNPCs];
           }
           npcLayer.renderNPCs(npcs, initialMap.characterScale ?? 1.0, undefined);
-
-          // Update camera positions
-          backgroundImageLayer.updateCamera(cameraX, cameraY);
-          tileLayer.updateCamera(cameraX, cameraY);
-          depthSortedContainer.x = -cameraX;
-          depthSortedContainer.y = -cameraY;
-          // placedItemsLayer camera handled by depthSortedContainer
-          if (shadowLayerRef.current) {
-            shadowLayerRef.current.updateCamera(cameraX, cameraY);
-          }
         }
+
+        // Camera, zoom and the player sprite are applied by the game loop's
+        // first updateAnimations; make sure it does the full pass.
+        appliedViewRef.current = null;
+        appliedPlayerRef.current = null;
+        viewDirtyRef.current = true;
 
         const endTime = performance.now();
         debugLog('usePixiRenderer', `Initialized in ${(endTime - startTime).toFixed(0)}ms`);
@@ -851,6 +1103,7 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     } else {
       torchPositionsRef.current = [];
     }
+    viewDirtyRef.current = true;
   }, [currentMapId, isPixiInitialized, timeOfDay]);
 
   // =========================================================================
@@ -895,15 +1148,16 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
       );
     }
 
-    // Render placed items
+    // Render placed items (at this frame's grid offset; the loop re-places
+    // them if a background room pans)
     if (placedItemsLayerRef.current) {
       const placedItems = gameState.getPlacedItems(currentMapId);
       placedItemsLayerRef.current.renderItems(
         placedItems,
         visibleRange,
         map.characterScale ?? 1.0,
-        effectiveTileSize,
-        effectiveGridOffset
+        viewFrameRef.current.tileSize,
+        viewFrameRef.current.gridOffset
       );
     }
 
@@ -948,8 +1202,8 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     currentWeather,
     renderVersion,
     textureVersion,
-    effectiveGridOffset,
     effectiveTileSize,
+    viewFrameRef,
   ]);
 
   // =========================================================================
@@ -1005,103 +1259,25 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
   }, [enabled, isPixiInitialized]);
 
   // =========================================================================
-  // EFFECT: Camera Update (every frame)
+  // EFFECT: Structural view changes
+  //
+  // The camera itself is applied per frame by syncView (from the game loop),
+  // not here. This only flags that zoom, viewport, room layout or map changed
+  // so the next frame re-applies the stage scale and layer counter-scales too.
   // =========================================================================
   useEffect(() => {
     if (!enabled || !isPixiInitialized) return;
-
-    // Apply user zoom to the entire stage
-    if (pixiAppRef.current) {
-      pixiAppRef.current.stage.scale.set(zoom);
-    }
-
-    // Counteract stage zoom for viewport-relative layers (weather, darkness)
-    // These layers should always cover the full viewport regardless of zoom
-    if (weatherLayerRef.current) {
-      weatherLayerRef.current.getContainer().scale.set(1 / zoom);
-    }
-    if (darknessLayerRef.current) {
-      darknessLayerRef.current.getContainer().scale.set(1 / zoom);
-      const glow = darknessLayerRef.current.getGlowContainer();
-      if (glow) glow.scale.set(1 / zoom);
-    }
-
-    const isBackgroundImageRoom = currentMap?.renderMode === 'background-image';
-
-    // Update viewport dimensions
-    if (backgroundImageLayerRef.current && canvasRef.current) {
-      backgroundImageLayerRef.current.setViewportDimensions(
-        canvasRef.current.clientWidth ?? window.innerWidth,
-        canvasRef.current.clientHeight ?? window.innerHeight
-      );
-    }
-
-    // Update camera positions
-    if (backgroundImageLayerRef.current) {
-      // Keep the room artwork on the same pan as everything drawn over it
-      // before moving anything (issue #26).
-      backgroundImageLayerRef.current.setCenteredPan(
-        backgroundRoomPan?.x ?? 0,
-        backgroundRoomPan?.y ?? 0
-      );
-      backgroundImageLayerRef.current.updateCamera(cameraX, cameraY);
-    }
-
-    if (isBackgroundImageRoom) {
-      // For background-image rooms, reset container positions
-      if (depthSortedContainerRef.current) {
-        depthSortedContainerRef.current.x = 0;
-        depthSortedContainerRef.current.y = 0;
-      }
-      if (tileLayerRef.current) {
-        tileLayerRef.current.updateCamera(0, 0);
-      }
-      // placedItemsLayer camera handled by depthSortedContainer
-      if (shadowLayerRef.current) {
-        shadowLayerRef.current.updateCamera(0, 0);
-      }
-      if (highlightLayerRef.current) {
-        highlightLayerRef.current.updateCamera(0, 0);
-        highlightLayerRef.current.setGridMode(
-          effectiveTileSize,
-          effectiveGridOffset.x,
-          effectiveGridOffset.y
-        );
-      }
-    } else {
-      // For tiled rooms, apply camera transform
-      if (tileLayerRef.current) {
-        tileLayerRef.current.updateCamera(cameraX, cameraY);
-      }
-      if (depthSortedContainerRef.current) {
-        depthSortedContainerRef.current.x = -cameraX;
-        depthSortedContainerRef.current.y = -cameraY;
-      }
-      // placedItemsLayer camera handled by depthSortedContainer
-      if (shadowLayerRef.current) {
-        shadowLayerRef.current.updateCamera(cameraX, cameraY);
-      }
-      if (highlightLayerRef.current) {
-        highlightLayerRef.current.updateCamera(cameraX, cameraY);
-        highlightLayerRef.current.resetGridMode();
-      }
-    }
-
-    // Update torch lights in darkness layer (must track camera every frame)
-    if (darknessLayerRef.current) {
-      darknessLayerRef.current.updateLights(torchPositionsRef.current, cameraX, cameraY, zoom);
-    }
+    viewDirtyRef.current = true;
   }, [
     enabled,
-    cameraX,
-    cameraY,
-    zoom,
     isPixiInitialized,
+    zoom,
     currentMap?.renderMode,
-    canvasRef,
-    effectiveGridOffset,
+    currentMapId,
     effectiveTileSize,
-    backgroundRoomPan,
+    viewportScale,
+    roomViewport,
+    viewportSize,
   ]);
 
   // =========================================================================
@@ -1112,56 +1288,10 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     playerSpriteRef.current.setFlickering(isFairyFormFading);
   }, [enabled, isPixiInitialized, isFairyFormFading]);
 
-  // EFFECT: Player Sprite Update
+  // EFFECT: Player Sprite — none. The sprite follows the refs per frame in
+  // syncPlayer; a React effect here would put the player position back through
+  // React state every frame, which is what §6A removed.
   // =========================================================================
-  useEffect(() => {
-    if (!enabled || !isPixiInitialized || !playerSpriteRef.current) return;
-
-    // In rooms with useDOMPlayer the player is rendered as a DOM element so it
-    // can depth-sort above midground DOM animations (e.g. the fireplace fire).
-    // Hide the PixiJS sprite to avoid a double-render.
-    if (currentMap?.useDOMPlayer) {
-      playerSpriteRef.current.setVisible(false);
-      return;
-    }
-
-    // Ensure player sprite is visible
-    playerSpriteRef.current.setVisible(true);
-
-    // Calculate effective scale
-    const mapCharacterScale = currentMap?.characterScale ?? 1.0;
-    const effectiveScale = spriteScale * mapCharacterScale * playerScale;
-
-    // Update player position and animation
-    playerSpriteRef.current.update(
-      playerPos,
-      direction,
-      animationFrame,
-      playerSpriteUrl,
-      effectiveScale,
-      effectiveGridOffset,
-      effectiveTileSize,
-      shouldFlip,
-      movementMode,
-      groundPlayers
-    );
-  }, [
-    enabled,
-    playerPos,
-    direction,
-    animationFrame,
-    playerSpriteUrl,
-    spriteScale,
-    playerScale,
-    shouldFlip,
-    isPixiInitialized,
-    currentMap?.useDOMPlayer,
-    currentMap?.characterScale,
-    effectiveGridOffset,
-    effectiveTileSize,
-    movementMode,
-    groundPlayers,
-  ]);
 
   // =========================================================================
   // EFFECT: NPC Layer Update
@@ -1177,17 +1307,17 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
     npcLayerRef.current.renderNPCs(
       collectSceneNPCs(currentMapId, backgroundImageLayerRef.current),
       mapCharacterScale,
-      effectiveGridOffset,
-      effectiveTileSize
+      viewFrameRef.current.gridOffset,
+      viewFrameRef.current.tileSize
     );
   }, [
     enabled,
     npcUpdateTrigger,
     isPixiInitialized,
     currentMap?.characterScale,
-    effectiveGridOffset,
     effectiveTileSize,
     currentMapId,
+    viewFrameRef,
   ]);
 
   return {

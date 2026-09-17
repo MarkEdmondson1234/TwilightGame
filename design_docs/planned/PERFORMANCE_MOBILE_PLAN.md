@@ -104,6 +104,38 @@ device variant rather than a global downsize).
   portraits are unchanged. `tests/textureVariants.test.ts` fails if a sprite
   lands without its sibling.
 
+**Day 4 (§6A, the player leaves React) — done 2026-09-17.**
+
+- `usePlayerMovement` writes `playerPosRef`, `directionRef` and
+  `animationFrameRef` every frame and calls no setter. `useMovementController`
+  commits a **snapshot** to React on a tile change, at most every
+  `TIMING.PLAYER_SNAPSHOT_MS` (100 ms) while walking, and once on stopping;
+  standing still commits nothing (fairy wings flap in the ref). The DOM
+  renderer and `useDOMPlayer` rooms (house2) opt into per-frame snapshots
+  because React draws the player there.
+- One pure `computeViewFrame()` (`utils/viewFrame.ts`: the tiled camera plus
+  `getRoomTransform`) is evaluated at two rates. The loop writes `viewFrameRef`
+  per frame (`hooks/useViewFrame.ts`) and sets the DOM world layer's CSS
+  transform directly; React evaluates it from the snapshot for the overlays.
+  `useMouseControls`/`useMouseHover` map clicks through the live ref, so a
+  click mid-step lands where the canvas shows, not where React last rendered.
+- `usePixiRenderer` lost its camera effect and its player-sprite effect. A
+  per-frame `syncView()`/`syncPlayer()` at the top of `updateAnimations` applies
+  camera, pan, zoom, highlight grid, torch lights and the player sprite from the
+  refs, each only when its inputs changed. Panning background rooms re-place
+  NPCs and placed items in the same pass; the scene-rebuild effects no longer
+  key on the grid offset, so a panning room no longer rebuilds per step.
+- Measured with the CI harness, `movement` scenario, village by day, same
+  window: **App renders 0.955 /frame (36 /s) → 0.08 /frame (4.3 /s)**; the
+  unit guard reads 10 commits for one second of unobstructed walking.
+  `tests/playerPosSnapshot.test.tsx` fails if a per-frame `setState` on the
+  player comes back.
+- Not done here, deliberately: memoising the always-mounted children (§5 M10)
+  now that App renders ~10 Hz at most; `visibleRange` still comes from React's
+  snapshot camera (the 1-tile margin covers the ≤100 ms lag); and the DOM
+  overlays inside the world layer (stamina bar, indicators) are positioned from
+  the snapshot, so they can trail the player by up to half a tile while walking.
+
 ---
 
 ## 2. What the devices are actually doing (Sentry, last 14 days)

@@ -189,6 +189,11 @@ export const TIMING = {
   // Player animation
   PLAYER_FRAME_MS: 150, // Player walk cycle frame duration
   PLAYER_SPEED: 5.0, // Player movement speed (tiles per second)
+  // How often React learns where the player is while they walk. The position
+  // itself lives in a ref and moves every frame; React only needs it for the
+  // HUD, indicators and menus, and an App render costs ~19 ms on an iPad.
+  // A tile change and coming to a stop commit immediately regardless.
+  PLAYER_SNAPSHOT_MS: 100,
 
   // NPC animation
   NPC_FRAME_MS: 280, // NPC animation frame duration

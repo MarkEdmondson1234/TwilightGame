@@ -11,6 +11,7 @@
  */
 
 import { useEffect, useRef, useState, MutableRefObject } from 'react';
+import type { ViewFrame } from '../utils/viewFrame';
 import { Position, TileType } from '../types';
 import { INTERACTION } from '../constants';
 import { screenToTile } from '../utils/screenToTile';
@@ -43,6 +44,8 @@ export interface UseMouseHoverConfig {
   effectiveTileSize?: number;
   /** Grid offset for background-image rooms */
   gridOffset?: { x: number; y: number };
+  /** The live camera / room transform (see useMouseControls). */
+  viewFrameRef?: MutableRefObject<ViewFrame>;
 }
 
 /** Forageable tile types (lightweight check for hover classification) */
@@ -161,6 +164,7 @@ export function useMouseHover(config: UseMouseHoverConfig): void {
     playerPosRef,
     effectiveTileSize,
     gridOffset,
+    viewFrameRef,
   } = config;
 
   // Track when the container DOM element becomes available (after loading screen)
@@ -243,15 +247,26 @@ export function useMouseHover(config: UseMouseHoverConfig): void {
       const screenX = e.clientX - rect.left;
       const screenY = e.clientY - rect.top;
 
-      const result = screenToTile(
-        screenX,
-        screenY,
-        zoomRef.current,
-        cameraXRef.current,
-        cameraYRef.current,
-        gridOffsetRef.current,
-        effectiveTileSizeRef.current
-      );
+      const live = viewFrameRef?.current;
+      const result = live
+        ? screenToTile(
+            screenX,
+            screenY,
+            zoomRef.current,
+            live.cameraX,
+            live.cameraY,
+            live.backgroundRoom ? live.gridOffset : undefined,
+            live.backgroundRoom ? live.tileSize : undefined
+          )
+        : screenToTile(
+            screenX,
+            screenY,
+            zoomRef.current,
+            cameraXRef.current,
+            cameraYRef.current,
+            gridOffsetRef.current,
+            effectiveTileSizeRef.current
+          );
 
       // Only reclassify when tile changes (the expensive part)
       if (result.tileX !== lastTileX || result.tileY !== lastTileY) {
@@ -304,5 +319,5 @@ export function useMouseHover(config: UseMouseHoverConfig): void {
     };
     // Only depend on stable values — everything else read from refs
     // containerReady triggers re-run when the game container mounts after loading
-  }, [containerRef, isTouchDevice, containerReady, playerPosRef]);
+  }, [containerRef, isTouchDevice, containerReady, playerPosRef, viewFrameRef]);
 }
