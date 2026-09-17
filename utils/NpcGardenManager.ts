@@ -147,11 +147,14 @@ function plantedAtFor(
  * client, with no network traffic for the layout itself.
  */
 export function computeGardenTarget(mapId: string, inputs: GardenPlanInputs): NpcGardenTarget[] {
-  if (inputs.season === Season.WINTER) {
-    // Winter is for rest (the Elder will tell you the same). No new
-    // planting; existing plots persist until picked or cleared in spring.
-    return [];
-  }
+  // Winter: the gardeners rest the beds *for the player's seed economy*, but
+  // the patches are never left bare — the whole point of the garden is that
+  // there is always something growing. In winter each gardener keeps her
+  // patch sown with her own favourites (she brings her own seeds, so the
+  // plantSeasons gate — which exists to pace what the player can buy and sow
+  // — does not bind her), and the spring bed-clearing swaps anything the new
+  // season cannot grow.
+  const isWinter = inputs.season === Season.WINTER;
 
   const tiles = getPublicFarmTiles(mapId);
   if (tiles.length === 0) return [];
@@ -165,7 +168,7 @@ export function computeGardenTarget(mapId: string, inputs: GardenPlanInputs): Np
   );
   const orderedTiles = shuffleTiles(tiles, shuffleRandom);
 
-  const inSeasonShopCrops = inSeasonCropIds(inputs.season);
+  const inSeasonShopCrops = isWinter ? null : inSeasonCropIds(inputs.season);
 
   const targets: NpcGardenTarget[] = [];
   let cursor = 0;
@@ -197,7 +200,9 @@ export function computeGardenTarget(mapId: string, inputs: GardenPlanInputs): Np
           ? request
           : pickDailyCrop(
               gardener.favourites,
-              inSeasonShopCrops,
+              // In winter the daily variety comes from the gardener's own
+              // favourites, not the season's shop catalogue.
+              isWinter ? gardener.favourites : inSeasonShopCrops,
               mapId,
               tile.x,
               tile.y,
@@ -403,6 +408,7 @@ class NpcGardenManager {
   reconcileMap(mapId: string, reason: string): void {
     const time = TimeManager.getCurrentTime();
     const nowMs = Date.now();
+    const isWinter = time.season === Season.WINTER;
 
     const effectiveLevels: Record<string, number> = {};
     const requests: Record<string, string | null> = {};
@@ -464,7 +470,10 @@ class NpcGardenManager {
       // Seasonal bed-clearing: an NPC plot still holding a crop that cannot
       // be planted in the current season is cleared and replanted (unless it
       // is READY — that one waits to be picked, then converts on replant).
+      // Never in winter: the winter beds are deliberately out-of-season
+      // (hardy favourites), and spring's arrival re-seeds them anyway.
       if (
+        !isWinter &&
         plot?.plantedByNpc &&
         plot.cropType &&
         !canPlantInSeason(plot.cropType, time.season) &&

@@ -169,10 +169,13 @@ the combined total.
   first picker; the plot reads fallow remotely; after the 2-day reclaim grace the
   next reconciliation pass replants it (deterministically) if nobody claimed the
   tile.
-- **Winter:** no new planting (matches the Elder's advice). Herb patches
-  (`thyme`/`mint`/`lavender`) go through the real herb states and render
-  dormant-but-alive through winter; other NPC plots hold their last planting
-  until the spring bed-clearing.
+- **Winter:** the patches are never bare, winter included. Each gardener keeps
+  her patch sown with her own favourites through the cold — she brings her own
+  seeds, so the `plantSeasons` gate (which paces the *player's* seed economy)
+  does not bind her. Bed-clearing is suspended for winter (winter beds are
+  deliberately out-of-season) and spring's arrival swaps anything the new
+  season cannot grow. Herb patches (`thyme`/`mint`/`lavender`) additionally go
+  through the real herb states and render dormant-but-alive through winter.
 
 ## 4. Dialogue design
 

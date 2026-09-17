@@ -167,8 +167,10 @@ in the farm-area field.
   one gets it, and the gardener quietly replants a couple of days later. Yield is
   modest (a snack, not a seed farm), and admiring a plant (right-click / long
   press) tells you who grew it.
-- **In winter** the gardeners rest: nothing new is planted, herbs sleep until
-  spring, and the beds are replanted with the new season's crops when spring comes.
+- **In winter** the beds are never bare either: the gardeners keep tending
+  hardy beds of their own favourites through the cold (they bring their own
+  seeds, so the shop's seasonal gate doesn't bind them), and spring's
+  arrival re-seeds the beds with the new season's crops.
 
 The garden is world state, not player state: the plan (each gardener's patch size
 and current request) is shared via the cloud, and the planting is computed

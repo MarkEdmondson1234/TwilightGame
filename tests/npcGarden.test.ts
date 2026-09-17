@@ -247,13 +247,29 @@ describe('NPC garden — determinism', () => {
     expect(autumn.every((t) => canPlantInSeason(t.cropId, Season.AUTUMN))).toBe(true);
   });
 
-  it('winter plants nothing new', () => {
+  it('winter keeps the patches planted with the gardeners’ own favourites', () => {
     const winter = computeGardenTarget('village', {
       ...inputs,
       season: Season.WINTER,
       seasonSlot: 4,
     });
-    expect(winter).toEqual([]);
+    // The patches never go bare, even in winter (design requirement).
+    expect(winter.length).toBeGreaterThan(0);
+    const elder = NPC_GARDENERS.find((g) => g.npcId === 'village_elder');
+    const child = NPC_GARDENERS.find((g) => g.npcId === 'village_child');
+    for (const target of winter) {
+      const gardener = target.npcId === 'village_elder' ? elder : child;
+      expect(gardener!.favourites).toContain(target.cropId);
+    }
+    // Requests wait for their season: a request for a spring crop does not
+    // take over tiles in winter.
+    const withRequest = computeGardenTarget('village', {
+      ...inputs,
+      season: Season.WINTER,
+      seasonSlot: 4,
+      requests: { village_elder: 'tomato' },
+    });
+    expect(withRequest.every((t) => t.cropId !== 'tomato')).toBe(true);
   });
 
   it('uses no Math.random in the module (shared-world determinism)', () => {
@@ -270,8 +286,8 @@ describe('NPC garden — determinism', () => {
 });
 
 describe('NPC garden — crops', () => {
-  it('every planted crop is in season and none is a quest crop', () => {
-    for (const season of [Season.SPRING, Season.SUMMER] as const) {
+  it('every planted crop is in season outside winter, and none is a quest crop', () => {
+    for (const season of [Season.SPRING, Season.SUMMER, Season.AUTUMN] as const) {
       const targets = computeGardenTarget('farm_area', {
         season,
         seasonSlot: 1,
