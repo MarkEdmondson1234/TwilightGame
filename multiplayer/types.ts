@@ -31,6 +31,10 @@ export interface PresenceWire {
   s: number;
   /** Fairy form active */
   ff: boolean;
+  /** Worn costume id, or null for the base art. Rules validate the closed
+   *  vocabulary (utils/characterOutfits.ts); which character can wear it is
+   *  resolved client-side. Optional — older clients never send it. */
+  o?: string | null;
   /** Current emote, or null. Rules validate against the closed vocabulary. */
   e: EmoteId | null;
   /** Server timestamp. Rules force this to be the server clock, so a client
@@ -42,6 +46,8 @@ export interface PresenceWire {
 export interface LocalPresenceState {
   name: string;
   characterId: string;
+  /** Worn costume id (utils/characterOutfits.ts); absent/'everyday' = base art. */
+  outfit?: string;
   position: Position;
   direction: Direction;
   sizeTier: number;
@@ -63,6 +69,8 @@ export interface RemotePlayer {
   uid: string;
   name: string;
   characterId: string;
+  /** Worn costume, resolved to a safe id ('everyday' unless valid) */
+  outfit: string;
   /** Interpolated position for this frame */
   position: Position;
   direction: Direction;

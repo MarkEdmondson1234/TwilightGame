@@ -17,6 +17,7 @@ import {
   shouldFlipFairySprite,
   isCustomCharacterSprite,
 } from '../utils/characterSprites';
+import { DEFAULT_OUTFIT, resolveOutfit } from '../utils/characterOutfits';
 import { getScaleForTier, clampTier } from '../utils/MagicEffects';
 import type { CharacterCustomization } from '../GameState';
 import type { RemotePlayer } from './types';
@@ -27,13 +28,15 @@ const frameCache = new Map<string, FrameSet>();
 let fairyFrames: FrameSet | null = null;
 
 /**
- * generateCharacterSprites only reads `characterId` (and requires a non-empty
- * `name` to pass its own validity check), so a minimal stand-in is enough — we
- * never have another player's full customisation and do not need it.
+ * generateCharacterSprites only reads `characterId` and `outfit` (and requires
+ * a non-empty `name` to pass its own validity check), so a minimal stand-in is
+ * enough — we never have another player's full customisation and do not need
+ * it.
  */
-function minimalCustomisation(characterId: string): CharacterCustomization {
+function minimalCustomisation(characterId: string, outfit: string): CharacterCustomization {
   return {
     characterId,
+    outfit,
     name: 'Remote',
     skin: '',
     hairStyle: '',
@@ -48,11 +51,15 @@ function minimalCustomisation(characterId: string): CharacterCustomization {
   };
 }
 
-function getFrames(characterId: string): FrameSet {
-  let frames = frameCache.get(characterId);
+function getFrames(characterId: string, outfit: string = DEFAULT_OUTFIT): FrameSet {
+  // Resolve before caching so an id that never belonged to this character
+  // cannot poison the cache with paths that will never resolve.
+  const resolved = resolveOutfit(characterId, outfit);
+  const cacheKey = `${characterId}/${resolved}`;
+  let frames = frameCache.get(cacheKey);
   if (!frames) {
-    frames = generateCharacterSprites(minimalCustomisation(characterId));
-    frameCache.set(characterId, frames);
+    frames = generateCharacterSprites(minimalCustomisation(characterId, resolved));
+    frameCache.set(cacheKey, frames);
   }
   return frames;
 }
@@ -78,7 +85,9 @@ export interface RemoteSpriteInfo {
  * frames a given character has.
  */
 export function getRemoteSpriteInfo(player: RemotePlayer): RemoteSpriteInfo {
-  const frames = player.fairyForm ? getFairyFrames() : getFrames(player.characterId);
+  const frames = player.fairyForm
+    ? getFairyFrames()
+    : getFrames(player.characterId, player.outfit);
   const directionFrames = frames[player.direction] ?? frames[Direction.Down];
 
   let url: string;

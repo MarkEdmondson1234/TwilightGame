@@ -19,6 +19,7 @@
  * - `items/magicalIngredients.ts`        Magical ingredients — foraged or bought from the witch
  * - `items/potions.ts`                   Potions — brewed at the cauldron, plus quest-specific potions
  * - `items/decorations.ts`               Bought decorations and the raw materials used to craft new ones
+ * - `items/clothing.ts`                  Wearable outfits — buying one unlocks a costume (utils/characterOutfits.ts)
  * - `items/craftingSupplies.ts`          Crafting supplies and stations — paints, easel, crafting table
  * - `items/craftedDecorations.ts`        Player-crafted decorations — paintings, wreaths and seasonal pieces
  * - `items/furniture.ts`                 Furniture and wallpaper — placeable items with utility effects
@@ -40,6 +41,7 @@ import { FOOD_ITEMS } from './items/food';
 import { MAGICAL_INGREDIENT_ITEMS } from './items/magicalIngredients';
 import { POTION_ITEMS } from './items/potions';
 import { DECORATION_ITEMS } from './items/decorations';
+import { CLOTHING_ITEMS } from './items/clothing';
 import { CRAFTING_SUPPLY_ITEMS } from './items/craftingSupplies';
 import { CRAFTED_DECORATION_ITEMS } from './items/craftedDecorations';
 import { FURNITURE_ITEMS } from './items/furniture';
@@ -65,6 +67,7 @@ export const ITEMS: Record<string, ItemDefinition> = {
   ...MAGICAL_INGREDIENT_ITEMS,
   ...POTION_ITEMS,
   ...DECORATION_ITEMS,
+  ...CLOTHING_ITEMS,
   ...CRAFTING_SUPPLY_ITEMS,
   ...CRAFTED_DECORATION_ITEMS,
   ...FURNITURE_ITEMS,

@@ -477,6 +477,12 @@ export const MUSHRAS_SHOP_INVENTORY: ShopItem[] = [
     sellPrice: 2,
     stock: 'unlimited',
   },
+  {
+    itemId: 'clothing_polka_dress',
+    buyPrice: 120,
+    sellPrice: 0,
+    stock: 'unlimited',
+  },
 ];
 
 /**

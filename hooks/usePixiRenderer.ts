@@ -371,11 +371,12 @@ export function usePixiRenderer(props: UsePixiRendererProps): UsePixiRendererRet
         // answers by killing the tab before the first frame. Everything else
         // arrives on map transition, or on demand via requestTexture() when a
         // layer misses. See utils/mapTextureSet.ts.
-        const characterId = gameState.getSelectedCharacter()?.characterId ?? 'character1';
-        textureManager.pin(getCoreTextureUrls(characterId));
+        const character = gameState.getSelectedCharacter();
+        const characterId = character?.characterId ?? 'character1';
+        textureManager.pin(getCoreTextureUrls(characterId, character?.outfit));
         debugLog('usePixiRenderer', 'Preloading core + map textures...');
         await textureManager.loadUrls(
-          getResidentTextureUrls(currentMapId, toSeasonKey(seasonKey), characterId),
+          getResidentTextureUrls(currentMapId, toSeasonKey(seasonKey), characterId, character?.outfit),
           onTextureProgress
         );
 

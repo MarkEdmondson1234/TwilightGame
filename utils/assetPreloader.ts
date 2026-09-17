@@ -5,7 +5,8 @@
  * performance when sprites first appear on screen.
  */
 
-import { getSpriteConfig } from './characterSprites';
+import { getSpriteConfig, CHARACTER_SPRITE_CONFIGS } from './characterSprites';
+import { DEFAULT_OUTFIT, getOutfits, getSpriteDir } from './characterOutfits';
 import { debugLog } from './debugLog';
 
 interface PreloadOptions {
@@ -73,12 +74,16 @@ export async function preloadImages(urls: string[], options?: PreloadOptions): P
 /**
  * Generate all sprite URLs for a character (all directions and frames)
  * Uses per-character sprite configs to only generate valid URLs.
+ * `outfit` selects a costume's frame set — see utils/characterOutfits.ts.
  */
-export function getCharacterSpriteUrls(characterId: string = 'character1'): string[] {
+export function getCharacterSpriteUrls(
+  characterId: string = 'character1',
+  outfit: string = DEFAULT_OUTFIT
+): string[] {
   // Must match the path characterSprites.ts builds, or this preloads one set of
   // files while the game renders a different one — paying the memory twice.
-  const basePath = `/TwilightGame/assets-optimized/${characterId}/base`;
-  const config = getSpriteConfig(characterId);
+  const basePath = `/TwilightGame/assets-optimized/${getSpriteDir(characterId, outfit)}`;
+  const config = getSpriteConfig(characterId, outfit);
   const urls: string[] = [];
 
   for (const [dir, frameCount] of Object.entries(config.frameCounts) as [string, number][]) {
@@ -102,9 +107,18 @@ export function getCharacterSpriteUrls(characterId: string = 'character1'): stri
  * map, from the first frame, and are the only art the player sees continuously.
  */
 export async function preloadAllAssets(options?: PreloadOptions): Promise<void> {
-  const uniqueUrls = [
-    ...new Set([...getCharacterSpriteUrls('character1'), ...getCharacterSpriteUrls('character2')]),
+  const urls: string[] = [
+    ...getCharacterSpriteUrls('character1'),
+    ...getCharacterSpriteUrls('character2'),
   ];
+  // Costumes are small (a handful of frames each) and must appear instantly
+  // when chosen in the character creator — and on the first spawn wearing one.
+  for (const characterId of Object.keys(CHARACTER_SPRITE_CONFIGS)) {
+    for (const outfit of getOutfits(characterId)) {
+      urls.push(...getCharacterSpriteUrls(characterId, outfit.id));
+    }
+  }
+  const uniqueUrls = [...new Set(urls)];
 
   await preloadImages(uniqueUrls, options);
 }

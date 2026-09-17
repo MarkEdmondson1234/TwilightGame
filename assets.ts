@@ -868,6 +868,7 @@ export const itemAssets = {
   // Mushra's Shop items
   velvet_bow: '/TwilightGame/assets-optimized/items/mushras_shop/velvet_bow.png',
   camera: '/TwilightGame/assets-optimized/items/mushras_shop/camera.png',
+  polka_dress: '/TwilightGame/assets-optimized/items/clothing/polka_dress.png',
   sunflower_bouquet:
     '/TwilightGame/assets-optimized/items/mushras_shop/decoration_sunflower_bouquet.png',
   easel: '/TwilightGame/assets-optimized/items/mushras_shop/easel.png',

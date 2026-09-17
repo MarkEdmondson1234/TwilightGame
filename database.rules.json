@@ -12,6 +12,9 @@
           "c": {
             ".validate": "newData.val() === 'character1' || newData.val() === 'character2'"
           },
+          "o": {
+            ".validate": "newData.val() === null || newData.val() === 'polka_dress'"
+          },
           "x": {
             ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 200"
           },

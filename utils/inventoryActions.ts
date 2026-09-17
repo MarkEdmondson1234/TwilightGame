@@ -15,6 +15,7 @@
 import type { RadialMenuOption } from '../components/RadialMenu';
 import type { InventoryItem } from '../components/Inventory';
 import { ItemCategory, getItem, type ItemDefinition } from '../data/items';
+import { DEFAULT_OUTFIT } from './characterOutfits';
 
 /** Items that are given to an NPC rather than drunk by the player. */
 const GIFT_ONLY_POTIONS = new Set(['potion_friendship', 'potion_bitter_grudge']);
@@ -34,6 +35,10 @@ export interface InventoryActionContext {
   onApplyWallpaper: (item: InventoryItem, def: ItemDefinition) => void;
   onOpenFurnitureCatalogue: () => void;
   onGoSkiing: () => void;
+  /** Wear/take off a clothing item — toggles the costume it grants. */
+  onWearOutfit: (item: InventoryItem) => void;
+  /** True when the player is currently wearing this item's outfit. */
+  isWearingOutfit: boolean;
   onDeleteOne: (itemId: string) => void;
   onAskDeleteConfirmation: () => void;
   onCancelDeleteConfirmation: () => void;
@@ -54,6 +59,7 @@ export function hasInventoryActions(itemId: string): boolean {
     def.category === ItemCategory.POTION ||
     def.category === ItemCategory.FOOD ||
     def.category === ItemCategory.DECORATION ||
+    def.category === ItemCategory.CLOTHING ||
     def.category === ItemCategory.FURNITURE ||
     def.edible === true ||
     def.isWallpaper === true ||
@@ -88,6 +94,7 @@ export function buildInventoryActions(ctx: InventoryActionContext): RadialMenuOp
   const isWallpaper = def?.isWallpaper === true;
   const isFood = def !== undefined && (def.category === ItemCategory.FOOD || def.edible === true);
   const isPotion = def?.category === ItemCategory.POTION;
+  const isClothing = def?.category === ItemCategory.CLOTHING && def.outfitId !== undefined;
   const isSkis = item.id === 'tool_skis';
   const isCatalogue = item.id === 'furniture_catalogue';
   const isPlaceable =
@@ -145,6 +152,19 @@ export function buildInventoryActions(ctx: InventoryActionContext): RadialMenuOp
       onSelect: () => {
         ctx.onBeginPlacement(slotIndex);
         ctx.onShowToast('Right-click an apple tree to apply Verdant Surge.', 'info');
+      },
+    });
+  }
+
+  if (isClothing) {
+    options.push({
+      id: 'wear_outfit',
+      label: ctx.isWearingOutfit ? 'Take Off' : 'Wear',
+      icon: ctx.isWearingOutfit ? '🧺' : '👗',
+      color: '#ec4899',
+      onSelect: () => {
+        ctx.onWearOutfit(item);
+        ctx.onCloseInventory(); // closing it is part of the moment — you see the change
       },
     });
   }

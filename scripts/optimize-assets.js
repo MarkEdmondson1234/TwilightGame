@@ -1627,6 +1627,11 @@ async function main() {
       quality: SHOWCASE_QUALITY,
       label: '🚶 Optimising player character sprites (character2)...',
     });
+    await optimizeImageDir('character2/outfits/polka_dress', {
+      size: SPRITE_SIZE,
+      quality: SHOWCASE_QUALITY,
+      label: '👗 Optimising costume sprites (character2 polka dot dress)...',
+    });
     await optimizeImageDir('character1/fairy', {
       size: SPRITE_SIZE,
       quality: SHOWCASE_QUALITY,

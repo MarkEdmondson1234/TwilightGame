@@ -33,6 +33,8 @@ function ctx(overrides: Partial<InventoryActionContext> = {}): InventoryActionCo
     onApplyWallpaper: vi.fn(),
     onOpenFurnitureCatalogue: vi.fn(),
     onGoSkiing: vi.fn(),
+    onWearOutfit: vi.fn(),
+    isWearingOutfit: false,
     onDeleteOne: vi.fn(),
     onAskDeleteConfirmation: vi.fn(),
     onCancelDeleteConfirmation: vi.fn(),

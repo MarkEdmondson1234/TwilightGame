@@ -9,6 +9,7 @@
 import { Direction } from '../types';
 import type { Position } from '../types';
 import { isEmoteId } from './emotes';
+import { DEFAULT_OUTFIT, isValidOutfitId } from '../utils/characterOutfits';
 import type { LocalPresenceState, PresenceWire } from './types';
 
 /**
@@ -58,7 +59,6 @@ export function sanitiseName(name: unknown): string {
 
 /** Only these appearances exist in /public/assets. Anything else is a forgery. */
 const VALID_CHARACTER_IDS = new Set(['character1', 'character2']);
-
 /** Round to 2dp — well below one rendered pixel, and it keeps records small. */
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -66,9 +66,19 @@ function round2(value: number): number {
 
 /** Encode the local player's state for publication. `t` is added by the caller. */
 export function encodePresence(state: LocalPresenceState): Omit<PresenceWire, 't'> {
+  // Only costume wearers publish `o` — the base art stays the default for an
+  // absent field, keeping records minimal for the overwhelming majority of
+  // updates. The vocabulary check mirrors database.rules.json; the pairing
+  // with `c` is re-resolved at render time (resolveOutfit). A costume change
+  // is rare and travels as a 'state-change' publish (see publishPolicy.ts).
+  const costume =
+    state.outfit && state.outfit !== DEFAULT_OUTFIT && isValidOutfitId(state.outfit)
+      ? state.outfit
+      : null;
   return {
     n: sanitiseName(state.name) || 'Traveller',
     c: VALID_CHARACTER_IDS.has(state.characterId) ? state.characterId : 'character1',
+    o: costume,
     x: round2(state.position.x),
     y: round2(state.position.y),
     d: encodeDirection(state.direction),
@@ -101,6 +111,7 @@ export function decodePresence(raw: unknown): PresenceWire | null {
   return {
     n: name,
     c: typeof d.c === 'string' && VALID_CHARACTER_IDS.has(d.c) ? d.c : 'character1',
+    o: typeof d.o === 'string' && isValidOutfitId(d.o) ? d.o : null,
     x: d.x,
     y: d.y,
     d: encodeDirection(direction),

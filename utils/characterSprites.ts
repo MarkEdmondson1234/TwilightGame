@@ -2,6 +2,12 @@ import { CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
 import { generatePlaceholderSprites as generateSVGPlaceholders } from './placeholderSprites';
 import { fairyAssets } from '../assets';
+import {
+  DEFAULT_OUTFIT,
+  getOutfits,
+  getSpriteDir,
+  resolveOutfit,
+} from './characterOutfits';
 
 /**
  * Character Sprite System
@@ -33,9 +39,22 @@ export const CHARACTER_SPRITE_CONFIGS: Record<string, CharacterSpriteConfig> = {
 
 /**
  * Get the sprite config for a character, falling back to character1 defaults.
+ *
+ * A costume can override the per-direction frame counts (it may ship fewer
+ * frames than the base art); everything else — notably directionScales —
+ * stays the character's own.
  */
-export function getSpriteConfig(characterId: string): CharacterSpriteConfig {
-  return CHARACTER_SPRITE_CONFIGS[characterId] || CHARACTER_SPRITE_CONFIGS.character1;
+export function getSpriteConfig(
+  characterId: string,
+  outfit: string = DEFAULT_OUTFIT
+): CharacterSpriteConfig {
+  const config = CHARACTER_SPRITE_CONFIGS[characterId] || CHARACTER_SPRITE_CONFIGS.character1;
+  const outfit_ = getOutfits(characterId).find((candidate) => candidate.id === outfit);
+  if (!outfit_?.frameCounts) return config;
+  return {
+    ...config,
+    frameCounts: { ...config.frameCounts, ...outfit_.frameCounts },
+  };
 }
 
 const DIRECTION_KEYS: Record<Direction, string> = {
@@ -48,8 +67,12 @@ const DIRECTION_KEYS: Record<Direction, string> = {
 /**
  * Get per-direction scale multiplier for a character (defaults to 1.0).
  */
-export function getDirectionScale(characterId: string, direction: Direction): number {
-  const config = getSpriteConfig(characterId);
+export function getDirectionScale(
+  characterId: string,
+  direction: Direction,
+  outfit: string = DEFAULT_OUTFIT
+): number {
+  const config = getSpriteConfig(characterId, outfit);
   return config.directionScales?.[DIRECTION_KEYS[direction]] ?? 1.0;
 }
 
@@ -86,11 +109,14 @@ export function generateCharacterSprites(
 
     if (hasCustomSprites()) {
       const characterId = character.characterId || 'character1';
+      // The worn costume, resolved (unknown ids fall back to the base art —
+      // saved and remote data can carry anything).
+      const outfit = resolveOutfit(characterId, character.outfit);
       // Optimised copies, not the sources: the originals are 2064x2064, which
       // is 17MB of GPU memory per frame for the sprite drawn more often than
       // any other in the game (642MB across character1's 16 frames alone).
-      const basePath = `/TwilightGame/assets-optimized/${characterId}/base`;
-      const config = getSpriteConfig(characterId);
+      const basePath = `/TwilightGame/assets-optimized/${getSpriteDir(characterId, outfit)}`;
+      const config = getSpriteConfig(characterId, outfit);
 
       const buildFrames = (dir: string): string[] => {
         const count = config.frameCounts[dir] || 3;

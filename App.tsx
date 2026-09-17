@@ -158,6 +158,7 @@ import {
 import { startWizardTrialsPatience } from './data/questHandlers/wizardTrialsPatienceHandler';
 import { spawnWizardTrialsMordecaiIfAbsent } from './utils/npcs/mine';
 import { getItem, ItemCategory } from './data/items';
+import { DEFAULT_OUTFIT } from './utils/characterOutfits';
 import { WeatherType } from './data/weatherConfig';
 import { useVFX } from './hooks/useVFX';
 import VFXRenderer from './components/VFXRenderer';
@@ -540,6 +541,7 @@ const App: React.FC = () => {
     return {
       name: character.name,
       characterId: character.characterId || 'character1',
+      outfit: character.outfit,
       position: playerPosRef.current,
       direction: live.direction,
       sizeTier: live.playerSizeTier,
@@ -762,6 +764,30 @@ const App: React.FC = () => {
     closeUI('characterCreator');
     setCharacterVersion((prev) => prev + 1); // Trigger sprite regeneration
     debugLog('App', 'Character created:', character);
+  };
+
+  /**
+   * Wear / take off a clothing item (right-click menu). Reuses the character-
+   * creation path — selectCharacter + version bump — so sprites, portrait and
+   * presence all update the same way they do after the creator.
+   */
+  const handleWearOutfit = (item: InventoryItem) => {
+    const def = getItem(item.id);
+    const outfitId = def?.outfitId;
+    const character = gameState.getSelectedCharacter();
+    if (!def || !outfitId || !character) return;
+    const takingOff = character.outfit === outfitId;
+    gameState.selectCharacter({
+      ...character,
+      outfit: takingOff ? DEFAULT_OUTFIT : outfitId,
+    });
+    setCharacterVersion((prev) => prev + 1); // Trigger sprite regeneration
+    showToast(
+      takingOff
+        ? 'You changed back into your everyday clothes.'
+        : `You put on the ${def.displayName.toLowerCase()}.`,
+      'success'
+    );
   };
 
   // Map transition handler
@@ -3296,6 +3322,10 @@ const App: React.FC = () => {
                 miniGameTriggerData: { triggerType: 'inventory', itemId: 'tool_skis' },
               });
             },
+            onWearOutfit: handleWearOutfit,
+            isWearingOutfit:
+              gameState.getSelectedCharacter()?.outfit ===
+              getItem(inventoryRadialMenu.item.id)?.outfitId,
             onDeleteOne: (itemId) => {
               inventoryManager.removeItem(itemId, 1);
               setInventoryRadialMenu(null);

@@ -8,6 +8,7 @@
 import { CharacterCustomization } from '../GameState';
 import { Direction } from '../types';
 import { fairyAssets } from '../assets';
+import { getSpriteDir, resolveOutfit } from './characterOutfits';
 
 /**
  * Get high-res portrait sprite URL for dialogue boxes
@@ -27,8 +28,12 @@ export function getPortraitSprite(
   const characterId = character.characterId || 'character1';
   const directionName = ['up', 'down', 'left', 'right'][direction];
 
-  // Use original high-res sprites from /assets/ (not optimized)
-  const originalPath = `/TwilightGame/assets/${characterId}/base/${directionName}_0.png`;
+  // Use original high-res sprites from /assets/ (not optimized) — including the
+  // worn costume's set, so the portrait matches the sprite in the world.
+  const originalPath = `/TwilightGame/assets/${getSpriteDir(
+    characterId,
+    resolveOutfit(characterId, character.outfit)
+  )}/${directionName}_0.png`;
 
   return originalPath;
 }
