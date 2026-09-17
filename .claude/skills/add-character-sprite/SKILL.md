@@ -1,241 +1,94 @@
 ---
 name: Add Character Sprite
-description: Add player character sprites to the game, supporting both simple single-sprite and advanced layered customization systems
+description: Add player character sprites or costumes to the game — per-character frame sets, frame counts, and the costume (outfit) system
 ---
 
 # Add Character Sprite
 
-This skill helps you add player character sprites to the TwilightGame project, supporting both simple and advanced layered character customization.
+This skill helps you add player character artwork to the TwilightGame project: a new
+playable character's frame set, replacement frames, or a wearable costume.
 
-## When to Use
+## How the system works (read first)
 
-Use this skill when you need to:
-- Add new player character sprites
-- Add character customization layers (skin tones, hairstyles, clothing, accessories)
-- Set up a simple single-sprite character system
-- Expand the layered character customization system
+The player is a **complete hand-drawn character per direction frame** — not a layered
+composite. What renders is decided by `characterId` (chosen in `components/CharacterCreator.tsx`):
 
-## Two Approaches
+- **Frames:** `public/assets/characterN/base/{up,down,left,right}_{frame}.png`.
+  Frame `_0` is idle; `_1+` is the walk cycle, which **ping-pongs** (0 → 1 → 2 → 3 → 2 → 1 → 0).
+- **Frame counts are data, not convention:** `CHARACTER_SPRITE_CONFIGS` in
+  `utils/characterSprites.ts` declares how many frames each direction has per character.
+  A character with 2-frame directions is fine (character2's up/down).
+- **No assets.ts registration.** Sprite URLs are built in code (`utils/characterSprites.ts`
+  and `utils/assetPreloader.ts` — these must stay in step) and pinned per map via
+  `utils/mapTextureSet.ts`.
+- **Scale:** custom artwork renders at 3× (`isCustomCharacterSprite()` matches
+  `/character\d+/` in the URL). `tests/characterSpriteScale.test.ts` fails if a path
+  change breaks the match — a broken match silently renders the player a third of
+  its intended size, with nothing throwing.
+- **Costumes:** full alternative sprite sets under
+  `public/assets/characterN/outfits/<outfitId>/`, registered in
+  `utils/characterOutfits.ts`, unlocked by buying a clothing item
+  (`data/items/clothing.ts`) and worn from the bag. `COSTUMES_SPRINT.md` is the
+  design doc; the polka-dot dress (`character2/outfits/polka_dress/`) is the
+  worked example.
 
-### Simple Setup (Single Sprite)
-For a basic character with no customization - just one set of sprites for all directions and animations.
+## Rendering Architecture
 
-### Advanced Setup (Layered Customization)
-For character customization with multiple layers (skin, hair, clothes, shoes, glasses) that stack together.
+TwilightGame renders with **PixiJS WebGL** (see CLAUDE.md). Asset registration and
+frame counts are all you touch; `PlayerSprite.ts` handles rendering, and textures
+arrive via `TextureManager` (linear scaling, mipmaps — this game is NOT pixel art).
 
-## Prerequisites
+## Requirements
 
-- Character sprite files ready (PNG format with transparent backgrounds)
-- All sprites same dimensions (e.g., 32x32 or 64x64 pixels)
-- Sprites organized by direction: up, down, left, right
-- 4 frames per direction (frame 0 = idle, frames 1-3 = walking animation)
+- PNG with transparent background, identical dimensions across a character's set
+- Frame 0 = idle pose for each direction present
+- Draw large (current sources are 2064×2064); the optimiser normalises every frame to
+  1024×1024 at showcase quality via `npm run optimize-assets` (the
+  `optimizeImageDir('characterN/base', …)` rules in `scripts/optimize-assets.js`)
+- Character sprites are GPU-pinned textures (`width × height × 4` bytes each) — never
+  load more of them than the selected character and the worn costume need
 
-## Rendering Architecture Note
+## Adding a new playable character
 
-**TwilightGame uses PixiJS WebGL rendering** for high performance (10-100x faster than DOM).
+1. Create `public/assets/characterN/base/` with your frames (transparent PNGs, all
+   the same size). If a direction has no art yet, copy the front frames — see the
+   dress's side-view note in `design_docs/planned/ART_INTEGRATION_BACKLOG.md`.
+2. Add an entry to `CHARACTER_SPRITE_CONFIGS` in `utils/characterSprites.ts` with the
+   real per-direction frame counts.
+3. Add the character card in `components/CharacterCreator.tsx` (`CHARACTER_OPTIONS`).
+4. **Multiplayer:** add the id to `VALID_CHARACTER_IDS` in `multiplayer/wire.ts` AND the
+   `c` validation in `database.rules.json` — the two closed vocabularies must stay in step.
+5. Add the id to `preloadAllAssets()` in `utils/assetPreloader.ts`.
+6. Add an `optimizeImageDir('characterN/base', …)` rule to `scripts/optimize-assets.js`, run it.
+7. `make verify` — `tests/characterSpriteScale.test.ts` walks every generated URL through
+   the 3× detector; extend it if you added a new character id.
 
-**What this means for you:**
-- **Asset registration** (in `assets.ts`): Unchanged
-- **Texture preloading**: Character sprites automatically preloaded into PixiJS TextureManager on game startup
-- **Rendering**: Handled by `PlayerSprite.ts` (PixiJS) with movement logic in `App.tsx`
-- **You don't need PixiJS knowledge** - just register your assets as documented below
+## Adding a costume to an existing character
 
-No additional configuration needed beyond asset registration - the rendering engine handles texture loading and sprite composition automatically
+1. Draw frames into `public/assets/characterN/outfits/<outfitId>/` (+ the item icon
+   under `public/assets/items/clothing/`).
+2. Register one entry in `OUTFITS` in `utils/characterOutfits.ts` (label, icon URL,
+   per-direction `frameCounts` override).
+3. Add the clothing item (`data/items/clothing.ts`) with `outfitId` pointing at the
+   costume, and a stock entry in `data/shopInventory.ts` — buying it is what unlocks
+   the outfit.
+4. Add the outfit id to the `o` validation in `database.rules.json` —
+   `tests/characterOutfits.test.ts` and `tests/clothingActions.test.ts` fail if the
+   client/rules vocabulary or the item↔outfit pairing drifts.
+5. `npm run optimize-assets`, then `make verify`.
 
-## File Naming Convention
+## Verification
 
-All character sprites must follow this pattern:
-- Format: `[direction]_[frameNumber].png`
-- Directions: `up`, `down`, `left`, `right`
-- Frame 0: Idle/standing pose (shown when not moving)
-- Frames 1-3: Walking animation frames
-- Examples: `down_0.png`, `right_2.png`, `up_1.png`
-
-## Simple Setup Steps
-
-### 1. Place Character Sprites
-
-Place all 16 sprite files (4 directions × 4 frames) in `/public/assets/character1/`:
-
-```
-/public/assets/character1/
-├── down_0.png    (idle facing down)
-├── down_1.png
-├── down_2.png
-├── down_3.png
-├── up_0.png      (idle facing up)
-├── up_1.png
-├── up_2.png
-├── up_3.png
-├── left_0.png    (idle facing left)
-├── left_1.png
-├── left_2.png
-├── left_3.png
-├── right_0.png   (idle facing right)
-├── right_1.png
-├── right_2.png
-└── right_3.png
-```
-
-### 2. Register in assets.ts
-
-Add to the `playerAssets` object in `assets.ts`:
-
-```typescript
-export const playerAssets = {
-  down_0: '/TwilightGame/assets-optimized/character1/down_0.png',
-  down_1: '/TwilightGame/assets-optimized/character1/down_1.png',
-  // ... all 16 sprites
-};
-```
-
-### 3. Run Asset Optimization
-
-```bash
-npm run optimize-assets
-```
-
-This will optimize and place files in `/public/assets-optimized/character1/`.
-
-## Advanced Setup Steps (Layered Customization)
-
-### 1. Organize by Layers
-
-Create subdirectories for each customization layer:
-
-```
-/public/assets/character1/
-├── base/                    # Base body outline (required)
-│   ├── down_0.png
-│   ├── down_1.png
-│   └── ... (all 16 frames)
-│
-├── skin/                    # Skin tone options
-│   ├── pale/
-│   │   ├── down_0.png
-│   │   └── ... (all 16 frames)
-│   ├── light/
-│   ├── medium/
-│   ├── tan/
-│   ├── dark/
-│   └── deep/
-│
-├── hair/                    # Hair style/color combinations
-│   ├── short_black/
-│   │   ├── down_0.png
-│   │   └── ... (all 16 frames)
-│   ├── short_brown/
-│   ├── long_blonde/
-│   ├── curly_red/
-│   └── ...
-│
-├── clothes/                 # Clothing style/color combinations
-│   ├── shirt_blue/
-│   │   ├── down_0.png
-│   │   └── ... (all 16 frames)
-│   ├── tunic_green/
-│   ├── dress_pink/
-│   └── ...
-│
-├── shoes/                   # Footwear style/color combinations
-│   ├── boots_brown/
-│   ├── sneakers_white/
-│   └── ...
-│
-└── glasses/                 # Glasses/accessories (optional)
-    ├── round/
-    ├── square/
-    └── sunglasses/
-```
-
-### 2. Layer Composition
-
-The game stacks layers in this order:
-1. base (body outline)
-2. skin (skin tone)
-3. clothes (clothing)
-4. shoes (footwear)
-5. hair (hairstyle)
-6. glasses (accessories)
-
-**Important**: Each layer must have transparency where other layers should show through!
-
-### 3. Register Layered Assets
-
-The character customization system is defined in `utils/characterSprites.ts`. Register your layers there following the existing pattern.
-
-### 4. Run Asset Optimization
-
-```bash
-npm run optimize-assets
-```
-
-The optimization script handles sprite sheet generation for layered characters.
-
-## Sprite Requirements
-
-✅ **Must Have:**
-- Transparent background (required)
-- Same dimensions for all sprites (consistency is critical)
-- All 16 sprites (4 directions × 4 frames)
-- Frame 0 is idle pose for each direction
-- PNG format
-
-✅ **Best Practices:**
-- Use hand-drawn style (this game is NOT pixel art)
-- Keep character centered in sprite bounds
-- Design for smooth animation transitions
-- Test idle and walking animations
-
-## Verification Steps
-
-1. Check original files exist in `/public/assets/character1/`
-2. Check optimized files created in `/public/assets-optimized/character1/`
-3. Verify all 16 sprites are present for each layer
-4. Run full verification: `make verify` (typecheck + full test suite; must be clean)
-   - **Never run `npm test`** — that is vitest in watch mode and will never exit. Use `make verify`, `make test` or `npm run test:run`.
-   - **Expected result:** the suite is fully green — **any** failure is a real regression, including yours.
-   - `tests/assetIntegrity.test.ts` will fail if any `playerAssets` path does not resolve to a real file — typically a typo, a path pointing at `assets/` rather than `assets-optimized/`, or a missing `npm run optimize-assets`.
-   - `tests/walkAnimation.test.ts` covers the walk-cycle frame logic these sprites feed.
-5. Test in-game by running `npm run dev`
-6. Verify animations play correctly (press WASD to move)
-
-## Example: Adding Simple Character
-
-1. Place 16 PNG files in `/public/assets/character1/`
-2. Update `playerAssets` in assets.ts:
-   ```typescript
-   export const playerAssets = {
-     down_0: '/TwilightGame/assets-optimized/character1/down_0.png',
-     down_1: '/TwilightGame/assets-optimized/character1/down_1.png',
-     down_2: '/TwilightGame/assets-optimized/character1/down_2.png',
-     down_3: '/TwilightGame/assets-optimized/character1/down_3.png',
-     // ... repeat for up, left, right
-   };
-   ```
-3. Run `npm run optimize-assets`
-4. Test with `npm run dev`
-
-## Example: Adding Hair Style
-
-1. Create directory: `/public/assets/character1/hair/ponytail_red/`
-2. Place all 16 frames in that directory
-3. Register in `utils/characterSprites.ts` (see existing patterns)
-4. Run `npm run optimize-assets`
-5. Test character customization in-game
-
-## Important Notes
-
-- **All sprites must be same size** - mixing sizes breaks layering
-- **Frame 0 is special** - it's the idle pose shown when not moving
-- **Transparency required** - solid backgrounds will hide other layers
-- Game uses **linear (smooth) scaling** to preserve hand-drawn artwork quality (this game is NOT pixel art)
-- Currently using placeholder sprites - system ready for custom art
-- Character animation speed controlled by `ANIMATION_SPEED_MS` constant (150ms)
+1. `make verify` (typecheck + full suite; never `npm test` — it is watch mode).
+2. Test in-game with `npm run dev`: walk in all four directions, open the creator
+   (mirror), try a costume, check the dialogue portrait.
+3. If the player renders at the wrong size, start at `isCustomCharacterSprite()` —
+   the failure mode is silent (see `tests/characterSpriteScale.test.ts`).
 
 ## Related Documentation
 
-- [ASSETS.md](../../../docs/ASSETS.md) - Complete asset guidelines
-- [utils/characterSprites.ts](../../../utils/characterSprites.ts) - Character sprite system
-- [assets.ts](../../../assets.ts) - Centralized asset registry
-- [App.tsx](../../../App.tsx) - Player movement and animation logic
+- `docs/ASSETS.md` — asset guidelines (player sprites section mirrors this file)
+- `utils/characterOutfits.ts` — the costume registry (SSoT)
+- `design_docs/planned/COSTUMES_SPRINT.md` — costume system design
+- `utils/characterSprites.ts` — sprite URL building and frame configs
+- `tests/characterSpriteScale.test.ts` — the 3× scale guard
