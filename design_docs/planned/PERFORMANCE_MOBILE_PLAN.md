@@ -1,7 +1,8 @@
 # Performance Plan: Smooth on Every Device
 
 **Created:** 2026-09-17
-**Status:** Planned — investigation complete, nothing implemented yet
+**Status:** In progress — days 1–3 shipped 2026-09-17 (see Progress below).
+Fresh session? Read [`PERFORMANCE_HANDOVER.md`](./PERFORMANCE_HANDOVER.md) first.
 **Supersedes:** the "Game Performance Issues" half of
 [`PERFORMANCE_OPTIMISATIONS.md`](./PERFORMANCE_OPTIMISATIONS.md) (March 2026). Its
 AI-maintainability half still stands. Status of its items is in §9.
